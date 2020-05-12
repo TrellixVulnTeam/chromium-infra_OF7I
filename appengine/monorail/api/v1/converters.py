@@ -1153,3 +1153,53 @@ class Converter(object):
               docstring=ld.label_docstring,
               state=state))
     return api_lds
+
+  def ConvertStatusDefs(self, status_defs, project_id):
+    # type: (Sequence[proto.tracker_pb2.StatusDef], int) ->
+    #     Sequence[api_proto.project_objects_pb2.StatusDef]
+    """Convert protorpc StatusDefs to protoc StatusDefs
+
+    Args:
+      status_defs: Sequence of StatusDefs.
+      project_id: ID of the Project these belong to.
+
+    Returns:
+      Sequence of protoc StatusDefs in the same order they are given in
+      `status_defs`.
+    """
+    resource_names_dict = rnc.ConvertStatusDefNames(
+        self.cnxn, [sd.status for sd in status_defs], project_id, self.services)
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    mergeable_statuses = set(config.statuses_offer_merge)
+
+    # Rank is only surfaced as positional value in well_known_statuses
+    rank_by_status = {}
+    for rank, sd in enumerate(config.well_known_statuses):
+      rank_by_status[sd.status] = rank
+
+    api_sds = []
+    for sd in status_defs:
+      state = project_objects_pb2.StatusDef.StatusDefState.Value('ACTIVE')
+      if sd.deprecated:
+        state = project_objects_pb2.StatusDef.StatusDefState.Value('DEPRECATED')
+
+      if sd.means_open:
+        status_type = project_objects_pb2.StatusDef.StatusDefType.Value('OPEN')
+      else:
+        if sd.status in mergeable_statuses:
+          status_type = project_objects_pb2.StatusDef.StatusDefType.Value(
+              'MERGED')
+        else:
+          status_type = project_objects_pb2.StatusDef.StatusDefType.Value(
+              'CLOSED')
+
+      api_sd = project_objects_pb2.StatusDef(
+          name=resource_names_dict.get(sd.status),
+          value=sd.status,
+          type=status_type,
+          rank=rank_by_status[sd.status],
+          docstring=sd.status_docstring,
+          state=state,
+      )
+      api_sds.append(api_sd)
+    return api_sds

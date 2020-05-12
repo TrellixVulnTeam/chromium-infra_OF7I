@@ -217,21 +217,43 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.labeldef_1, self.labeldef_2, self.labeldef_3, self.labeldef_4,
         self.labeldef_5
     ]
+    self.status_1 = tracker_pb2.StatusDef(
+        status='New', means_open=True, status_docstring='status_1 docstring')
+    self.status_2 = tracker_pb2.StatusDef(
+        status='Duplicate',
+        means_open=False,
+        status_docstring='status_2 docstring')
+    self.status_3 = tracker_pb2.StatusDef(
+        status='Accepted',
+        means_open=True,
+        status_docstring='status_3_docstring')
+    self.status_4 = tracker_pb2.StatusDef(
+        status='Gibberish',
+        means_open=True,
+        status_docstring='status_4_docstring',
+        deprecated=True)
+    self.predefined_statuses = [
+        self.status_1, self.status_2, self.status_3, self.status_4
+    ]
     self.services.config.UpdateConfig(
         self.cnxn,
         self.project_1,
-        statuses_offer_merge=['Duplicate'],
+        statuses_offer_merge=[self.status_2.status],
         excl_label_prefixes=['type', 'priority'],
         default_template_for_developers=self.template_2.template_id,
         default_template_for_users=self.template_1.template_id,
         list_prefs=('ID Summary', 'ID', 'status', 'owner', 'owner:me'),
-        # UpdateConfig accepts labels as tuples rather than protorpc LabelDefs
+        # UpdateConfig accepts tuples rather than protorpc *Defs
         well_known_labels=[
             (ld.label, ld.label_docstring, ld.deprecated)
             for ld in predefined_labels
         ],
         approval_defs=[
             (ad.approval_id, ad.approver_ids, ad.survey) for ad in approval_defs
+        ],
+        well_known_statuses=[
+            (sd.status, sd.status_docstring, sd.means_open, sd.deprecated)
+            for sd in self.predefined_statuses
         ])
 
   def _CreateFieldDef(
@@ -1648,3 +1670,56 @@ class ConverterFunctionsTest(unittest.TestCase):
     """We can handle empty input case"""
     actual = self.converter.ConvertLabelDefs([], self.project_1.project_id)
     self.assertEqual([], actual)
+
+  def testConvertStatusDefs(self):
+    """We can convert StatusDefs"""
+    actual = self.converter.ConvertStatusDefs(
+        self.predefined_statuses, self.project_1.project_id)
+    self.assertEqual(len(actual), 4)
+
+    input_names = [sd.status for sd in self.predefined_statuses]
+    names = rnc.ConvertStatusDefNames(
+        self.cnxn, input_names, self.project_1.project_id, self.services)
+    self.assertEqual(names[self.status_1.status], actual[0].name)
+    self.assertEqual(names[self.status_2.status], actual[1].name)
+    self.assertEqual(names[self.status_3.status], actual[2].name)
+    self.assertEqual(names[self.status_4.status], actual[3].name)
+
+    self.assertEqual(self.status_1.status, actual[0].value)
+    self.assertEqual(
+        project_objects_pb2.StatusDef.StatusDefType.Value('OPEN'),
+        actual[0].type)
+    self.assertEqual(0, actual[0].rank)
+    self.assertEqual(self.status_1.status_docstring, actual[0].docstring)
+    self.assertEqual(
+        project_objects_pb2.StatusDef.StatusDefState.Value('ACTIVE'),
+        actual[0].state)
+
+  def testConvertStatusDefs_Empty(self):
+    """Can handle empty input case"""
+    actual = self.converter.ConvertStatusDefs([], self.project_1.project_id)
+    self.assertEqual([], actual)
+
+  def testConvertStatusDefs_Rank(self):
+    """Rank is indepdendent of input order"""
+    input_sds = [self.status_2, self.status_4, self.status_3, self.status_1]
+    actual = self.converter.ConvertStatusDefs(
+        input_sds, self.project_1.project_id)
+    self.assertEqual(1, actual[0].rank)
+    self.assertEqual(3, actual[1].rank)
+
+  def testConvertStatusDefs_type_MERGED(self):
+    """Includes mergeable status when parsed from project config"""
+    actual = self.converter.ConvertStatusDefs(
+        [self.status_2], self.project_1.project_id)
+    self.assertEqual(
+        project_objects_pb2.StatusDef.StatusDefType.Value('MERGED'),
+        actual[0].type)
+
+  def testConvertStatusDefs_state_DEPRECATED(self):
+    """Includes deprecated status"""
+    actual = self.converter.ConvertStatusDefs(
+        [self.status_4], self.project_1.project_id)
+    self.assertEqual(
+        project_objects_pb2.StatusDef.StatusDefState.Value('DEPRECATED'),
+        actual[0].state)

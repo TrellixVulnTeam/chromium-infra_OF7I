@@ -551,26 +551,31 @@ def ConvertTemplateNames(cnxn, project_id, template_ids, services):
   return id_to_resource_names
 
 
-def ConvertStatusDefName(cnxn, status, project_id, services):
-  # MonorailConnection, str, int, Service -> str
-  """Takes a status string and returns a StatusDef resource name
+def ConvertStatusDefNames(cnxn, statuses, project_id, services):
+  # type: (MonorailConnection, Collection[str], int, Service) ->
+  #     Mapping[str, str]
+  """Takes list of status strings and returns StatusDef resource names
 
   Args:
     cnxn: MonorailConnection object.
-    status: status name as string
+    statuses: List of status name strings
     project_id: project id of project this belongs to
     services: Service object.
 
   Returns:
-    String of status's resource name
+    Mapping of string to resource name for all given `statuses`.
 
   Raises:
     NoSuchProjectException if no project exists with given id.
   """
   project = services.project.GetProject(cnxn, project_id)
 
-  return STATUS_DEF_TMPL.format(
-      project_name=project.project_name, status=status)
+  name_dict = {}
+  for status in statuses:
+    name_dict[status] = STATUS_DEF_TMPL.format(
+        project_name=project.project_name, status=status)
+
+  return name_dict
 
 
 def ConvertLabelDefNames(cnxn, labels, project_id, services):

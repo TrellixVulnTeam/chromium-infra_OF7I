@@ -394,21 +394,21 @@ class ResourceNameConverterTest(unittest.TestCase):
             [self.template_1.template_id, self.template_2.template_id],
             self.services), expected)
 
-  def testConvertStatusDefName(self):
+  def testConvertStatusDefNames(self):
     """We can get Status resource name."""
     expected_resource_name = 'projects/{}/statusDefs/{}'.format(
         self.project_1.project_name, self.issue_1.status)
 
-    self.assertEqual(
-        rnc.ConvertStatusDefName(
-            self.cnxn, self.issue_1.status, self.project_1.project_id,
-            self.services), expected_resource_name)
+    actual = rnc.ConvertStatusDefNames(
+        self.cnxn, [self.issue_1.status], self.project_1.project_id,
+        self.services)
+    self.assertEqual(actual[self.issue_1.status], expected_resource_name)
 
-  def testConvertStatusDefName_NoSuchProjectException(self):
+  def testConvertStatusDefNames_NoSuchProjectException(self):
     """We can get an exception if project with id does not exist."""
     with self.assertRaises(exceptions.NoSuchProjectException):
-      rnc.ConvertStatusDefName(
-          self.cnxn, self.issue_1.status, self.dne_project_id, self.services)
+      rnc.ConvertStatusDefNames(
+          self.cnxn, [self.issue_1.status], self.dne_project_id, self.services)
 
   def testConvertLabelDefNames(self):
     """We can get Label resource names."""
