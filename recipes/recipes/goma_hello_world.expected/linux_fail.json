@@ -314,7 +314,9 @@
       "{\"bucket\": \"cron\", \"builder\": \"test_builder\", \"project\": \"project\"}",
       "--is-luci",
       "--buildbot-buildername",
-      "test_builder"
+      "test_builder",
+      "--buildbot-slavename",
+      "fake-bot-id"
     ],
     "name": "postprocess_for_goma.upload_log",
     "~followup_annotations": [
