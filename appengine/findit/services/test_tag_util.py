@@ -15,7 +15,8 @@ from model.flake.flake import TestLocation
 from services import step_util
 from services import swarmed_test_util
 
-DEFAULT_COMPONENT = 'Unknown'
+DEFAULT_VALUE = 'Unknown'
+
 
 # Url to the file with the mapping from the directories to crbug components.
 _COMPONENT_MAPPING_URL = ('https://storage.googleapis.com/chromium-owners/'
@@ -49,22 +50,31 @@ _MAP_GPU_TEST_STEP_NAME_TO_COMPONENTS = {
 }
 
 
-@Cached(CompressedMemCache(), expire_time=3600)
 def _GetChromiumDirectoryToComponentMapping():
   """Returns a dict mapping from directories to components."""
+  return _GetChromiumMapping('dir-to-component')
+
+
+def _GetChromiumDirectoryToTeamMapping():
+  """Returns a dict mapping from directories to team."""
+  return _GetChromiumMapping('dir-to-team')
+
+
+@Cached(CompressedMemCache(), expire_time=3600)
+def _GetChromiumMapping(mapping_name):
+  """Returns a dict mapping."""
   status, content, _ = FinditHttpClient().Get(_COMPONENT_MAPPING_URL)
   if status != 200:
     # None result won't be cached.
     return None
-  mapping = json.loads(content).get('dir-to-component')
+  mapping = json.loads(content).get(mapping_name)
   if not mapping:
     return None
   result = {}
-  for path, component in mapping.iteritems():
+  for path, dict_item in mapping.iteritems():
     path = path + '/' if path[-1] != '/' else path
-    result[path] = component
+    result[path] = dict_item
   return result
-
 
 @Cached(CompressedMemCache(), expire_time=3600)
 def _GetChromiumWATCHLISTS():
@@ -153,7 +163,41 @@ def GetTestComponentFromLocation(test_location, component_mapping):
     index = file_path.rfind('/', 0, index)
     if index > 0 and file_path[0:index + 1] in component_mapping:
       return component_mapping[file_path[0:index + 1]]
-  return DEFAULT_COMPONENT
+  return DEFAULT_VALUE
+
+
+def GetTestDirectoryFromLocation(test_location):
+  """Uses test file path to find the directory.
+
+  Args:
+    test_location (TestLocation): The location of a test in the source tree.
+  Returns:
+    directory (str): Test directory
+  """
+  file_path = test_location.file_path
+  index = len(file_path)
+  index = file_path.rfind('/', 0, index)
+  if index > 0:
+    return file_path[0:index + 1]
+  return DEFAULT_VALUE
+
+
+def GetTestTeamFromLocation(test_location, team_mapping):
+  """Uses test file path to find the best matched team in the mapping.
+
+  Args:
+    test_location (TestLocation): The location of a test in the source tree.
+    team_mapping (dict): Mapping from directories to team.
+  Returns:
+    team (str): Test team or 'Unknown' if it could not be found.
+  """
+  file_path = test_location.file_path
+  index = len(file_path)
+  while index > 0:
+    index = file_path.rfind('/', 0, index)
+    if index > 0 and file_path[0:index + 1] in team_mapping:
+      return team_mapping[file_path[0:index + 1]]
+  return DEFAULT_VALUE
 
 
 def GetTagsFromLocation(tags, test_location, component, watchlists):

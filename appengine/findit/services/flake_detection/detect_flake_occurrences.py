@@ -297,7 +297,7 @@ def _UpdateTestLocationAndTags(flake, occurrences, component_mapping,
           test_tag_util.GetTestComponentsForGPUTest(occurrence.build_id,
                                                     occurrence.step_ui_name))
     components = list(set(components))  # To remove duplicates.
-    components = components or [test_tag_util.DEFAULT_COMPONENT]
+    components = components or [test_tag_util.DEFAULT_VALUE]
     flake.component = components[0]
     flake.tags = test_tag_util.GetTagsForGPUTest(flake.tags, components)
     updated = True

@@ -5,6 +5,7 @@
 import logging
 import os
 import re
+from datetime import datetime
 
 from google.appengine.ext import ndb
 
@@ -71,21 +72,73 @@ def _ExecuteQuery(parameters=None):
     return query
 
   component_mapping = test_tag_util._GetChromiumDirectoryToComponentMapping()
+  team_mapping = test_tag_util._GetChromiumDirectoryToTeamMapping()
+
   watchlists = test_tag_util._GetChromiumWATCHLISTS()
 
   query = GetQuery()
   local_tests = {}
   total_rows = 0
+  bigquery_rows = []
   for row in bigquery_helper.QueryResultIterator(
       appengine_util.GetApplicationId(), query, parameters=parameters):
     total_rows += 1
     _CreateLocalTests(row, local_tests, component_mapping, watchlists)
+    bigquery_rows.append(
+        _CreateBigqueryRow(row, component_mapping, team_mapping))
 
   assert total_rows > 0, '0 rows fetched for disabled tests from BigQuery.'
 
   logging.info('Total fetched %d rows for disabled tests from BigQuery.',
                total_rows)
+  bigquery_helper.ReportRowsToBigquery(bigquery_rows, 'findit-for-me',
+                                       'disabled_tests_summaries',
+                                       'disabled_tests')
   return local_tests
+
+
+def _CreateBigqueryRow(row, component_mapping, team_mapping):
+  """ Create a bigquery row for disabled tests.
+
+  Returns a dict whose keys are column names and values are column values
+  corresponding to the schema of the disabled tests bigquery table.
+  """
+  step_name = row['step_name']
+  test_name = row['test_name']
+  build_id = row['build_id']
+  builder_name = row['builder_name']
+  test_location = test_tag_util.GetTestLocation(
+      build_id, step_name, test_name,
+      Flake.NormalizeStepName(build_id, step_name))
+  bqrow = {
+      'test_location':
+          test_location,
+      'step_name':
+          step_name,
+      'test_name':
+          test_name,
+      'build_id':
+          build_id,
+      'builder_name':
+          builder_name,
+      'bucket':
+          row['bucket'],
+      'project':
+          row['project'],
+      'OS':
+          step_util.GetOS(
+              build_id, builder_name, step_name, partial_match=True),
+      'directory':
+          test_tag_util.GetTestDirectoryFromLocation(test_location),
+      'component':
+          test_tag_util.GetTestComponentFromLocation(test_location,
+                                                     component_mapping),
+      'team':
+          test_tag_util.GetTestTeamFromLocation(test_location, team_mapping),
+      'insert_time':
+          datetime.now()
+  }
+  return bqrow
 
 
 def _GetMemoryFlags(builder_name):
@@ -221,15 +274,15 @@ def _CreateLocationBasedTags(build_id, step_name, test_name,
     return test_tag_util.GetTagsFromLocation(set(), location, component,
                                              watchlists)
   return {
-      'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-      'parent_component::%s' % test_tag_util.DEFAULT_COMPONENT
+      'component::%s' % test_tag_util.DEFAULT_VALUE,
+      'parent_component::%s' % test_tag_util.DEFAULT_VALUE
   }
 
 
 def _GetLocationBasedTagsForGPUTest(build_id, step_name):
   """Gets location-based tags for GPU tests."""
   components = test_tag_util.GetTestComponentsForGPUTest(
-      build_id, step_name) or [test_tag_util.DEFAULT_COMPONENT]
+      build_id, step_name) or [test_tag_util.DEFAULT_VALUE]
   return test_tag_util.GetTagsForGPUTest(set(),
                                          components) if components else set()
 

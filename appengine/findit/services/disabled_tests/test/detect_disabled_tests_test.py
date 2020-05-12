@@ -66,6 +66,14 @@ class DetectTestDisablementTest(WaterfallTestCase):
                 'type': 'STRING',
                 'name': 'bugs',
                 'mode': 'REPEATED'
+            }, {
+                'type': 'STRING',
+                'name': 'bucket',
+                'mode': 'NULLABLE'
+            }, {
+                'type': 'STRING',
+                'name': 'project',
+                'mode': 'NULLABLE'
             }]
         }
     }
@@ -76,7 +84,9 @@ class DetectTestDisablementTest(WaterfallTestCase):
                                          step_name='step_name',
                                          builder_name='builder',
                                          build_id=999,
-                                         bugs=None):
+                                         bugs=None,
+                                         bucket='bucket',
+                                         project='project'):
     """Adds a row to the provided query response for testing.
 
     To obtain a query response for testing for the initial time, please call
@@ -103,6 +113,12 @@ class DetectTestDisablementTest(WaterfallTestCase):
             },
             {
                 'v': bugs
+            },
+            {
+                'v': bucket
+            },
+            {
+                'v': project
             },
         ]
     }
@@ -269,6 +285,46 @@ class DetectTestDisablementTest(WaterfallTestCase):
         }
     }
     self.assertEqual(expected_local_test, local_tests)
+
+  @mock.patch.object(test_tag_util, 'GetTestLocation', return_value='path/a.cc')
+  @mock.patch.object(step_util, 'GetOS', return_value='OS')
+  @mock.patch.object(
+      Flake, 'NormalizeStepName', return_value='telemetry_gpu_integration_test')
+  @mock.patch.object(
+      test_tag_util, 'GetTestDirectoryFromLocation', return_value='base/')
+  @mock.patch.object(
+      test_tag_util, 'GetTestComponentFromLocation', return_value='root>a>b')
+  @mock.patch.object(
+      test_tag_util,
+      'GetTestTeamFromLocation',
+      return_value='infra-dev@chromium.org')
+  def testCreateBigqueryRow(self, *_):
+    row = {
+        'builder_name': 'builder1',
+        'build_id': 123,
+        'step_name': 'step_name',
+        'test_name': 'test_name1',
+        'bucket': 'bucket',
+        'project': 'chromium/src',
+    }
+    bqrow = detect_disabled_tests._CreateBigqueryRow(row, {}, {})
+    bqrow["insert_time"] = datetime(2019, 6, 29, 0, 0, 0)
+    expected_bqrow = {
+        'test_location': 'path/a.cc',
+        'step_name': 'step_name',
+        'test_name': 'test_name1',
+        'build_id': 123,
+        'builder_name': 'builder1',
+        'bucket': 'bucket',
+        'project': 'chromium/src',
+        'OS': 'OS',
+        'directory': 'base/',
+        'component': 'root>a>b',
+        'team': 'infra-dev@chromium.org',
+        'insert_time': datetime(2019, 6, 29, 0, 0, 0)
+    }
+    self.assertEqual(expected_bqrow, bqrow)
+
 
   @mock.patch.object(
       detect_disabled_tests,
@@ -456,8 +512,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
           {
               'test_type::step',
               'step::step (with patch)',
-              'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-              'parent_component::%s' % test_tag_util.DEFAULT_COMPONENT,
+              'component::%s' % test_tag_util.DEFAULT_VALUE,
+              'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
           },
       ),
   ])
@@ -739,9 +795,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       )},
                       issue_keys=[ndb.Key('FlakeIssue', 'chromium@123')],
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -757,9 +812,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       )},
                       issue_keys=[ndb.Key('FlakeIssue', 'chromium@123')],
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -774,9 +828,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       disabled_test_variants={('os:os2',)},
                       issue_keys=[ndb.Key('FlakeIssue', 'chromium@123')],
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -791,9 +844,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                           'os:os1',
                       )},
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -813,9 +865,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       )},
                       issue_keys=[],
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -831,9 +882,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       )},
                       issue_keys=[ndb.Key('FlakeIssue', 'chromium@123')],
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -871,9 +921,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                           'os:os1',
                       )},
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -908,9 +957,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
                           'os:os1',
                       )},
                       tags=sorted({
-                          'component::%s' % test_tag_util.DEFAULT_COMPONENT,
-                          'parent_component::%s' %
-                          test_tag_util.DEFAULT_COMPONENT,
+                          'component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -970,8 +1018,15 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       last_updated_time=datetime(2019, 6, 28, 0, 0, 0))
           },),
   ])
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(
+      detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
       test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(swarmbucket, 'GetMasters', return_value=['chromium.linux'])
   @mock.patch.object(step_util, 'GetOS', return_value='os1')
@@ -1066,8 +1121,13 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       last_updated_time=datetime(2019, 6, 29, 0, 0, 0))
           },),
   ])
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(
+      detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
       test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(swarmbucket, 'GetMasters', return_value=['chromium.linux'])
   @mock.patch.object(step_util, 'GetOS', return_value='os1')
@@ -1165,8 +1225,13 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       last_updated_time=datetime(2019, 6, 29, 0, 0, 0))
           },),
   ])
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(
+      detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
       test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(swarmbucket, 'GetMasters', return_value=['chromium.linux'])
   @mock.patch.object(step_util, 'GetOS', return_value='os1')
@@ -1207,6 +1272,11 @@ class DetectTestDisablementTest(WaterfallTestCase):
           (True, ['row1', 'row2'], None),
       ]),
   ])
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(
+      detect_disabled_tests, '_CreateBigqueryRow', return_value={})
+  @mock.patch.object(
+      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime(2019, 6, 29, 0, 0, 0))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
@@ -1229,6 +1299,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, '_RunBigQuery', return_value='job')
   @mock.patch.object(
       test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(detect_disabled_tests, '_CreateLocalTests')
   @mock.patch.object(bigquery_helper, '_ReadQueryResultsPage')

@@ -41,6 +41,25 @@ class TestTagUtilTest(WaterfallTestCase):
         'p/dir2/': 'd>e>f'
     }, test_tag_util._GetChromiumDirectoryToComponentMapping())
 
+
+  @mock.patch.object(
+      test_tag_util.FinditHttpClient,
+      'Get',
+      return_value=(200,
+                    json.dumps({
+                        'dir-to-team': {
+                            'android_webview/browser':
+                                'android-webview-dev@chromium.org',
+                            'build/android/buildhooks':
+                                'infra-dev@chromium.org'
+                        }
+                    }), None))
+  def testGetChromiumDirectoryToTeamMapping(self, *_):
+    self.assertEqual({
+        'android_webview/browser/': 'android-webview-dev@chromium.org',
+        'build/android/buildhooks/': 'infra-dev@chromium.org'
+    }, test_tag_util._GetChromiumDirectoryToTeamMapping())
+
   @mock.patch.object(
       test_tag_util.CachedGitilesRepository,
       'GetSource',
@@ -95,7 +114,7 @@ class TestTagUtilTest(WaterfallTestCase):
   @parameterized.expand([
       ('base/feature/url', 'root>a>b'),
       ('base/not/feature/url', 'root>a'),
-      ('not/in/mapping', test_tag_util.DEFAULT_COMPONENT),
+      ('not/in/mapping', test_tag_util.DEFAULT_VALUE),
   ])
   def testGetTestComponentFromLocation(self, test_location, expected_component,
                                        *_):
