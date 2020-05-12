@@ -485,3 +485,136 @@ func TestUpdateRackLSE(t *testing.T) {
 		})
 	})
 }
+
+func TestGetRackLSE(t *testing.T) {
+	t.Parallel()
+	Convey("GetRackLSE", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		rackLSE1 := mockRackLSE("rackLSE-1")
+		req := &api.CreateRackLSERequest{
+			RackLSE:   rackLSE1,
+			RackLSEId: "rackLSE-1",
+		}
+		resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, rackLSE1)
+		Convey("Get rackLSE by existing ID", func() {
+			req := &api.GetRackLSERequest{
+				Name: util.AddPrefix(rackLSECollection, "rackLSE-1"),
+			}
+			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+		})
+		Convey("Get rackLSE by non-existing ID", func() {
+			req := &api.GetRackLSERequest{
+				Name: util.AddPrefix(rackLSECollection, "rackLSE-2"),
+			}
+			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get rackLSE - Invalid input empty name", func() {
+			req := &api.GetRackLSERequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get rackLSE - Invalid input invalid characters", func() {
+			req := &api.GetRackLSERequest{
+				Name: util.AddPrefix(rackLSECollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListRackLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("ListRackLSEs", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		rackLSEs := make([]*proto.RackLSE, 0, 4)
+		for i := 0; i < 4; i++ {
+			rackLSE1 := mockRackLSE("rackLSE-1")
+			req := &api.CreateRackLSERequest{
+				RackLSE:   rackLSE1,
+				RackLSEId: fmt.Sprintf("rackLSE-%d", i),
+			}
+			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+			rackLSEs = append(rackLSEs, resp)
+		}
+
+		Convey("ListRackLSEs - page_size negative", func() {
+			req := &api.ListRackLSEsRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListRackLSEs - page_token invalid", func() {
+			req := &api.ListRackLSEsRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListRackLSEs - Full listing Max PageSize", func() {
+			req := &api.ListRackLSEsRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEs, ShouldResembleProto, rackLSEs)
+		})
+
+		Convey("ListRackLSEs - Full listing with no pagination", func() {
+			req := &api.ListRackLSEsRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEs, ShouldResembleProto, rackLSEs)
+		})
+
+		Convey("ListRackLSEs - listing with pagination", func() {
+			req := &api.ListRackLSEsRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEs, ShouldResembleProto, rackLSEs[:3])
+
+			req = &api.ListRackLSEsRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListRackLSEs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEs, ShouldResembleProto, rackLSEs[3:])
+		})
+	})
+}

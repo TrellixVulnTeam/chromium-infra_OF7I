@@ -149,7 +149,14 @@ func (fs *FleetServerImpl) GetRackLSE(ctx context.Context, req *api.GetRackLSERe
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	rackLSE, err := inventory.GetRackLSE(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+	return rackLSE, err
 }
 
 // ListRackLSEs list the rackLSEs information from database.
@@ -160,7 +167,19 @@ func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *api.ListRackLS
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := inventory.ListRackLSEs(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, rackLSE := range result {
+		rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+	}
+	return &api.ListRackLSEsResponse{
+		RackLSEs:      result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
 
 // DeleteRackLSE deletes the rackLSE from database.

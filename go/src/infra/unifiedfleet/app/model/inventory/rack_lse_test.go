@@ -5,6 +5,7 @@
 package inventory
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -76,6 +77,78 @@ func TestUpdateRackLSE(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestGetRackLSE(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	rackLSE1 := mockRackLSE("rackLSE-1")
+	Convey("GetRackLSE", t, func() {
+		Convey("Get rackLSE by existing ID", func() {
+			resp, err := CreateRackLSE(ctx, rackLSE1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+			resp, err = GetRackLSE(ctx, "rackLSE-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+		})
+		Convey("Get rackLSE by non-existing ID", func() {
+			resp, err := GetRackLSE(ctx, "rackLSE-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get rackLSE - invalid ID", func() {
+			resp, err := GetRackLSE(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListRackLSEs(t *testing.T) {
+	t.Parallel()
+	Convey("ListRackLSEs", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		rackLSEs := make([]*proto.RackLSE, 0, 4)
+		for i := 0; i < 4; i++ {
+			rackLSE1 := mockRackLSE(fmt.Sprintf("rackLSE-%d", i))
+			resp, err := CreateRackLSE(ctx, rackLSE1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSE1)
+			rackLSEs = append(rackLSEs, resp)
+		}
+		Convey("List rackLSEs - page_token invalid", func() {
+			resp, nextPageToken, err := ListRackLSEs(ctx, 5, "abc")
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List rackLSEs - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListRackLSEs(ctx, 4, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEs)
+		})
+
+		Convey("List rackLSEs - listing with pagination", func() {
+			resp, nextPageToken, err := ListRackLSEs(ctx, 3, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEs[:3])
+
+			resp, _, err = ListRackLSEs(ctx, 2, nextPageToken)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEs[3:])
 		})
 	})
 }
