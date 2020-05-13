@@ -110,7 +110,7 @@ describe('mr-hotlist-settings-page (connected)', () => {
 
       const args = {name: example.NAME};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'DeleteHotlist', args);
       sinon.assert.calledWith(
           element.page, `/u/${exampleUsers.DISPLAY_NAME}/hotlists`);
     } finally {
@@ -149,7 +149,7 @@ describe('mr-hotlist-settings-page (connected)', () => {
     await element._save();
 
     sinon.assert.calledWith(
-        prpcClient.call, 'monorail.v1.Hotlists', 'UpdateHotlist', args);
+        prpcClient.call, 'monorail.v3.Hotlists', 'UpdateHotlist', args);
     sinon.assert.calledOnce(element._showHotlistSavedSnackbar);
   });
 });

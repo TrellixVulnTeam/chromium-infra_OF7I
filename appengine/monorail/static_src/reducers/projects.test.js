@@ -150,7 +150,7 @@ describe('project action creators', () => {
       sinon.assert.calledWith(dispatch, {type: projects.LIST_START});
 
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Projects', 'ListProjects', {});
+          prpcClient.call, 'monorail.v3.Projects', 'ListProjects', {});
 
       const successAction = {
         type: projects.LIST_SUCCESS,

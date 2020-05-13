@@ -637,12 +637,12 @@ describe('issue', () => {
     })), new Map());
     assert.deepEqual(issueV0.fieldValueMap(wrapIssue({
       fieldValues: [
-        {fieldRef: {fieldName: 'hello'}, value: 'v1'},
+        {fieldRef: {fieldName: 'hello'}, value: 'v3'},
         {fieldRef: {fieldName: 'hello'}, value: 'v2'},
         {fieldRef: {fieldName: 'world'}, value: 'v3'},
       ],
     })), new Map([
-      ['hello', ['v1', 'v2']],
+      ['hello', ['v3', 'v2']],
       ['world', ['v3']],
     ]));
   });
@@ -726,7 +726,7 @@ describe('issue', () => {
       },
       ...wrapIssue({
         fieldValues: [
-          {fieldRef: {fieldName: 'nonApplicable'}, value: 'v1'},
+          {fieldRef: {fieldName: 'nonApplicable'}, value: 'v3'},
         ],
       }),
     }), [

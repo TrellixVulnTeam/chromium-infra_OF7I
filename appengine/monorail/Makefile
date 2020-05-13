@@ -48,14 +48,14 @@ prpc_proto_v0:
 	--python_out=. --prpc-python_out=. api/api_proto/*.proto
 	cd ../../go/src/infra/monorailv2 && \
 	cproto -proto-path ../../../../appengine/monorail/ ../../../../appengine/monorail/api/api_proto/
-prpc_proto_v1:
+prpc_proto_v3:
 	touch ../../ENV/lib/python2.7/site-packages/google/__init__.py
 	PYTHONPATH=../../ENV/lib/python2.7/site-packages \
 	PATH=../../luci/appengine/components/tools:$(PATH) \
 	../../cipd/protoc \
-	--python_out=. --prpc-python_out=. api/v1/api_proto/*.proto
+	--python_out=. --prpc-python_out=. api/v3/api_proto/*.proto
 	cd ../../go/src/infra/monorailv2 && \
-	cproto -proto-path ../../../../appengine/monorail/ ../../../../appengine/monorail/api/v1/api_proto/
+	cproto -proto-path ../../../../appengine/monorail/ ../../../../appengine/monorail/api/v3/api_proto/
 
 prpc_proto_google:
 	touch ../../ENV/lib/python2.7/site-packages/google/__init__.py

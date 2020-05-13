@@ -102,7 +102,7 @@ export const batchGet = (names) => async (dispatch) => {
   try {
     /** @type {{permissionSets: Array<PermissionSet>}} */
     const {permissionSets} = await prpcClient.call(
-        'monorail.v1.Permissions', 'BatchGetPermissionSets', {names});
+        'monorail.v3.Permissions', 'BatchGetPermissionSets', {names});
 
     for (const permissionSet of permissionSets) {
       if (!permissionSet.permissions) {

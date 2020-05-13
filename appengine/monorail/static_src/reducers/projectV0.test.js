@@ -885,7 +885,7 @@ describe('helpers', () => {
 
       const args = {names: ['projects/proj/fieldDefs/testField']};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Permissions',
+          prpcClient.call, 'monorail.v3.Permissions',
           'BatchGetPermissionSets', args);
     });
   });

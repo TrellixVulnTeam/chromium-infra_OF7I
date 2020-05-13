@@ -267,7 +267,7 @@ export const deleteHotlist = (name) => async (dispatch) => {
 
   try {
     const args = {name};
-    await prpcClient.call('monorail.v1.Hotlists', 'DeleteHotlist', args);
+    await prpcClient.call('monorail.v3.Hotlists', 'DeleteHotlist', args);
 
     dispatch({type: DELETE_SUCCESS});
   } catch (error) {
@@ -286,7 +286,7 @@ export const fetch = (name) => async (dispatch) => {
   try {
     /** @type {Hotlist} */
     const hotlist = await prpcClient.call(
-        'monorail.v1.Hotlists', 'GetHotlist', {name});
+        'monorail.v3.Hotlists', 'GetHotlist', {name});
     if (!hotlist.editors) hotlist.editors = [];
 
     const editors = hotlist.editors.map((editor) => editor);
@@ -311,7 +311,7 @@ export const fetchItems = (name) => async (dispatch) => {
     const args = {parent: name, orderBy: 'rank'};
     /** @type {{items: Array<HotlistItem>}} */
     const {items} = await prpcClient.call(
-        'monorail.v1.Hotlists', 'ListHotlistItems', args);
+        'monorail.v3.Hotlists', 'ListHotlistItems', args);
     const itemsWithRank =
         items.map((item) => item.rank ? item : {...item, rank: 0});
 
@@ -339,7 +339,7 @@ export const removeEditors = (name, editors) => async (dispatch) => {
 
   try {
     const args = {name, editors};
-    await prpcClient.call('monorail.v1.Hotlists', 'RemoveHotlistEditors', args);
+    await prpcClient.call('monorail.v3.Hotlists', 'RemoveHotlistEditors', args);
 
     dispatch({type: REMOVE_EDITORS_SUCCESS});
 
@@ -360,7 +360,7 @@ export const removeItems = (name, issues) => async (dispatch) => {
 
   try {
     const args = {parent: name, issues};
-    await prpcClient.call('monorail.v1.Hotlists', 'RemoveHotlistItems', args);
+    await prpcClient.call('monorail.v3.Hotlists', 'RemoveHotlistItems', args);
 
     dispatch({type: REMOVE_ITEMS_SUCCESS});
 
@@ -382,7 +382,7 @@ export const rerankItems = (name, items, index) => async (dispatch) => {
 
   try {
     const args = {name, hotlistItems: items, targetPosition: index};
-    await prpcClient.call('monorail.v1.Hotlists', 'RerankHotlistItems', args);
+    await prpcClient.call('monorail.v3.Hotlists', 'RerankHotlistItems', args);
 
     dispatch({type: RERANK_ITEMS_SUCCESS});
 
@@ -415,7 +415,7 @@ export const update = (name, hotlist) => async (dispatch) => {
 
     /** @type {Hotlist} */
     const updatedHotlist = await prpcClient.call(
-        'monorail.v1.Hotlists', 'UpdateHotlist', args);
+        'monorail.v3.Hotlists', 'UpdateHotlist', args);
 
     dispatch({type: UPDATE_SUCCESS, hotlist: updatedHotlist});
   } catch (error) {

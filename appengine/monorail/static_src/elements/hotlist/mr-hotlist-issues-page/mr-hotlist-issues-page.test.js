@@ -244,7 +244,7 @@ describe('mr-hotlist-issues-page (connected)', () => {
       // https://github.com/sinonjs/sinon/issues/562
       const args = {parent: example.NAME, issues: [exampleIssues.NAME]};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'RemoveHotlistItems', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'RemoveHotlistItems', args);
     } finally {
       prpcClient.call.restore();
     }
@@ -261,7 +261,7 @@ describe('mr-hotlist-issues-page (connected)', () => {
       // https://github.com/sinonjs/sinon/issues/562
       const args = {parent: example.NAME, orderBy: 'rank'};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'ListHotlistItems', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'ListHotlistItems', args);
     } finally {
       prpcClient.call.restore();
     }
@@ -289,7 +289,7 @@ describe('mr-hotlist-issues-page (connected)', () => {
         targetPosition: 2,
       };
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'RerankHotlistItems', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'RerankHotlistItems', args);
     } finally {
       prpcClient.call.restore();
     }

@@ -120,7 +120,7 @@ export const list = () => async (dispatch) => {
   try {
     /** @type {{projects: Array<Project>}} */
     const {projects} = await prpcClient.call(
-        'monorail.v1.Projects', 'ListProjects', {});
+        'monorail.v3.Projects', 'ListProjects', {});
 
     dispatch({type: LIST_SUCCESS, projects});
   } catch (error) {

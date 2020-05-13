@@ -172,7 +172,7 @@ describe('mr-projects-page (connected)', () => {
     document.body.appendChild(element);
     await stateUpdated, element.updateComplete;
 
-    sinon.assert.calledWith(prpcClient.call, 'monorail.v1.Projects',
+    sinon.assert.calledWith(prpcClient.call, 'monorail.v3.Projects',
         'ListProjects', {});
 
     assert.isFalse(element._isFetchingProjects);

@@ -12,7 +12,7 @@ const GOOGLE_ISSUE_TRACKER_REGEX = /^b\/\d+$/;
 
 const GOOGLE_ISSUE_TRACKER_API_ROOT = 'https://issuetracker.corp.googleapis.com';
 const GOOGLE_ISSUE_TRACKER_DISCOVERY_PATH = '/$discovery/rest';
-const GOOGLE_ISSUE_TRACKER_API_VERSION = 'v1';
+const GOOGLE_ISSUE_TRACKER_API_VERSION = 'v3';
 
 // Returns if shortlink is valid for any federated tracker.
 export function isShortlinkValid(shortlink) {

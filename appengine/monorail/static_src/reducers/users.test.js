@@ -82,7 +82,7 @@ describe('user action creators', () => {
 
       const args = {names: [example.NAME]};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Users', 'BatchGetUsers', args);
+          prpcClient.call, 'monorail.v3.Users', 'BatchGetUsers', args);
 
       const action = {type: users.BATCH_GET_SUCCESS, users: [example.USER]};
       sinon.assert.calledWith(dispatch, action);
@@ -112,7 +112,7 @@ describe('user action creators', () => {
 
       const args = {user: example.NAME};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Frontend',
+          prpcClient.call, 'monorail.v3.Frontend',
           'GatherProjectMembershipsForUser', args);
 
       const action = {

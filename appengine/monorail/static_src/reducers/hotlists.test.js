@@ -242,7 +242,7 @@ describe('hotlist action creators', () => {
 
       const args = {name: example.NAME};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'DeleteHotlist', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'DeleteHotlist', args);
 
       sinon.assert.calledWith(dispatch, {type: hotlists.DELETE_SUCCESS});
     });
@@ -270,7 +270,7 @@ describe('hotlist action creators', () => {
 
       const args = {name: example.NAME};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'GetHotlist', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'GetHotlist', args);
 
       const action = {type: hotlists.FETCH_SUCCESS, hotlist: example.HOTLIST};
       sinon.assert.calledWith(dispatch, action);
@@ -298,7 +298,7 @@ describe('hotlist action creators', () => {
 
       const args = {parent: example.NAME, orderBy: 'rank'};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'ListHotlistItems', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'ListHotlistItems', args);
 
       const action = {
         type: hotlists.FETCH_ITEMS_SUCCESS,
@@ -332,7 +332,7 @@ describe('hotlist action creators', () => {
 
       const args = {name: example.NAME, editors};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists',
+          prpcClient.call, 'monorail.v3.Hotlists',
           'RemoveHotlistEditors', args);
 
       sinon.assert.calledWith(dispatch,
@@ -363,7 +363,7 @@ describe('hotlist action creators', () => {
 
       const args = {parent: example.NAME, issues};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists',
+          prpcClient.call, 'monorail.v3.Hotlists',
           'RemoveHotlistItems', args);
 
       sinon.assert.calledWith(dispatch, {type: hotlists.REMOVE_ITEMS_SUCCESS});
@@ -397,7 +397,7 @@ describe('hotlist action creators', () => {
         targetPosition: 0,
       };
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists',
+          prpcClient.call, 'monorail.v3.Hotlists',
           'RerankHotlistItems', args);
 
       sinon.assert.calledWith(dispatch, {type: hotlists.RERANK_ITEMS_SUCCESS});
@@ -437,7 +437,7 @@ describe('hotlist action creators', () => {
       const fieldMask = 'displayName,summary';
       const args = {hotlist: hotlistArg, updateMask: fieldMask};
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v1.Hotlists', 'UpdateHotlist', args);
+          prpcClient.call, 'monorail.v3.Hotlists', 'UpdateHotlist', args);
 
       const successAction = {
         type: hotlists.UPDATE_SUCCESS,

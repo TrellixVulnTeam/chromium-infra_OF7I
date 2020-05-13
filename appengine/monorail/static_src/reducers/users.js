@@ -131,7 +131,7 @@ export const batchGet = (names) => async (dispatch) => {
   try {
     /** @type {{users: Array<User>}} */
     const {users} = await prpcClient.call(
-        'monorail.v1.Users', 'BatchGetUsers', {names});
+        'monorail.v3.Users', 'BatchGetUsers', {names});
 
     dispatch({type: BATCH_GET_SUCCESS, users});
   } catch (error) {
@@ -150,7 +150,7 @@ export const gatherProjectMemberships = (name) => async (dispatch) => {
   try {
     /** @type {{projectMemberships: Array<ProjectMember>}} */
     const {projectMemberships} = await prpcClient.call(
-        'monorail.v1.Frontend', 'GatherProjectMembershipsForUser',
+        'monorail.v3.Frontend', 'GatherProjectMembershipsForUser',
         {user: name});
 
     dispatch({type: GATHER_PROJECT_MEMBERSHIPS_SUCCESS,
