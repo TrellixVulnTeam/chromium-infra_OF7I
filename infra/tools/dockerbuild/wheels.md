@@ -298,6 +298,34 @@ wheel: <
 
 * *universal*
 
+## **WebOb**
+
+### 1.8.6
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/webob-py2_py3"
+  version: "version:1.8.6"
+>
+```
+
+
+* *universal*
+
+## **WebTest**
+
+### 2.0.35
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/webtest-py2_py3"
+  version: "version:2.0.35"
+>
+```
+
+
+* *universal*
+
 ## **Werkzeug**
 
 ### 0.15.2
@@ -656,6 +684,20 @@ wheel: <
 * *manylinux-x86-ucs2*
 * *windows-x64*
 * *windows-x86*
+
+## **beautifulsoup4**
+
+### 4.9.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/beautifulsoup4-py2_py3"
+  version: "version:4.9.0"
+>
+```
+
+
+* *universal*
 
 ## **blessings**
 
@@ -3839,6 +3881,20 @@ wheel: <
 
 * *universal*
 
+## **soupsieve**
+
+### 1.9.5
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/soupsieve-py2_py3"
+  version: "version:1.9.5"
+>
+```
+
+
+* *universal*
+
 ## **subprocess32**
 
 ### 3.5.0rc1
@@ -3978,6 +4034,20 @@ wheel: <
 wheel: <
   name: "infra/python/wheels/virtualenv-clone-py2_py3"
   version: "version:0.5.4"
+>
+```
+
+
+* *universal*
+
+## **waitress**
+
+### 1.4.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/waitress-py2_py3"
+  version: "version:1.4.3"
 >
 ```
 
