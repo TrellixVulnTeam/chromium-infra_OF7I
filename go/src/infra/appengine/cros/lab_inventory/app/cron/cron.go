@@ -286,6 +286,13 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 	logging.Infof(ctx, "Sync AssetInfo from HaRT")
 
 	cfg := config.Get(ctx).GetHart()
+	proj := cfg.GetProject()
+	topic := cfg.GetTopic()
+
+	if proj == "" || topic == "" {
+		return errors.Reason("Invalid config. Project[%v] Topic[%v]",
+			proj, topic).Err()
+	}
 
 	assets, err := datastore.GetAllAssets(ctx, true)
 	if err != nil {
@@ -299,6 +306,8 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 	}
 
 	// Filter assets not yet in datastore
+	// TODO(anushruth): Change to exists after implementation in datastore.
+	// Need not get complete AssetInfo to determine existence
 	res := datastore.GetAssetInfo(ctx, ids)
 	req := make([]string, 0, len(assets))
 	for _, a := range res {
@@ -308,14 +317,7 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 	}
 
 	logging.Infof(ctx, "Syncing %v AssetInfo entit(y|ies) from HaRT", len(req))
-
-	h, err := hart.GetInstance(ctx, cfg.GetProject(), cfg.GetTopic(),
-		cfg.GetSubscription())
-	if err == nil {
-		h.SyncAssetInfoFromHaRT(ctx, req)
-	} else {
-		logging.Warningf(ctx, "Unable to sync AssetInfo from HaRT")
-	}
+	_, err = hart.SyncAssetInfoFromHaRT(ctx, proj, topic, req)
 
 	return err
 }
