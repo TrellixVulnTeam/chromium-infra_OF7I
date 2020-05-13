@@ -90,6 +90,11 @@ func (tsi *TrackerServerImpl) PushBotsForAdminTasks(ctx context.Context, req *fl
 	return &fleet.PushBotsForAdminTasksResponse{}, nil
 }
 
+// PushBotsForAdminAuditTasks implements the fleet.Tracker.pushBotsForAdminTasks() method.
+func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, req *fleet.PushBotsForAdminAuditTasksRequest) (res *fleet.PushBotsForAdminAuditTasksResponse, err error) {
+	return &fleet.PushBotsForAdminAuditTasksResponse{}, nil
+}
+
 // PushRepairJobsForLabstations implements the fleet.Tracker.pushLabstationsForRepair() method.
 func (tsi *TrackerServerImpl) PushRepairJobsForLabstations(ctx context.Context, req *fleet.PushRepairJobsForLabstationsRequest) (res *fleet.PushRepairJobsForLabstationsResponse, err error) {
 	defer func() {

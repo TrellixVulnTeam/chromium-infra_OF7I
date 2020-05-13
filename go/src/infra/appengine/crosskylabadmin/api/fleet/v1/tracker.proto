@@ -19,6 +19,9 @@ service Tracker {
 
   // Report bots metrics.
   rpc ReportBots(ReportBotsRequest) returns (ReportBotsResponse);
+
+  // Filter out and queue the CrOS bots to run admin tasks Audit.
+  rpc PushBotsForAdminAuditTasks(PushBotsForAdminAuditTasksRequest) returns (PushBotsForAdminAuditTasksResponse);
 }
 
 message PushBotsForAdminTasksRequest {
@@ -38,6 +41,12 @@ message ReportBotsRequest {
 }
 
 message ReportBotsResponse {
+}
+
+message PushBotsForAdminAuditTasksRequest {
+}
+
+message PushBotsForAdminAuditTasksResponse {
 }
 
 enum DutState {
