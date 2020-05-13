@@ -56,6 +56,21 @@ func CreateResetTask(ctx context.Context, botID string) (string, error) {
 	return taskURL, nil
 }
 
+// CreateAuditTask kicks off an audit job.
+func CreateAuditTask(ctx context.Context, botID string) (string, error) {
+	actions := "verify-dut-storage,verify-servo-usb-drive"
+	at := worker.AuditTaskWithActions(ctx, actions)
+	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
+	if err != nil {
+		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
+	}
+	taskURL, err := runTaskByDUTName(ctx, at, sc, botID)
+	if err != nil {
+		return "", errors.Annotate(err, "fail to create audit task for %s", botID).Err()
+	}
+	return taskURL, nil
+}
+
 func runTaskByDUTName(ctx context.Context, at worker.Task, sc clients.SwarmingClient, botID string) (string, error) {
 	cfg := config.Get(ctx)
 	tags := swarming.AddCommonTags(

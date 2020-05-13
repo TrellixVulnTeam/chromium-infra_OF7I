@@ -74,6 +74,27 @@ func DeployTaskWithActions(ctx context.Context, actions string) Task {
 	return t
 }
 
+// AuditTaskWithActions returns the information required to create a Skylab
+// task for `skylab_swarming_worker -> lucifer audittask`.
+//
+// actions may be empty to run the default audit task with no actions.
+func AuditTaskWithActions(ctx context.Context, actions string) Task {
+	cmd := worker.Command{
+		TaskName:   "admin_audit",
+		ForceFresh: true,
+		Actions:    actions,
+	}
+	cmd.Config(wrapped(config.Get(ctx)))
+	t := Task{
+		Name: "AdminAudit",
+		Cmd:  cmd.Args(),
+	}
+	if cmd.LogDogAnnotationURL != "" {
+		t.Tags = []string{fmt.Sprintf("log_location:%s", cmd.LogDogAnnotationURL)}
+	}
+	return t
+}
+
 const (
 	luciProject = "chromeos"
 )

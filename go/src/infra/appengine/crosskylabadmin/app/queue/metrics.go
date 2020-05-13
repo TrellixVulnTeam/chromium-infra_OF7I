@@ -32,4 +32,10 @@ var (
 		nil,
 		field.Bool("success"),
 	)
+	runAuditTick = metric.NewCounter(
+		"chromeos/crosskylabadmin/queue/run_audit",
+		"runAudit attempt",
+		nil,
+		field.Bool("success"),
+	)
 )
