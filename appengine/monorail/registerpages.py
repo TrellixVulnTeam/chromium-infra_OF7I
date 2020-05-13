@@ -101,7 +101,7 @@ from tracker import templatedetail
 from tracker import fltconversion
 
 from api import api_routes as api_routes_v0
-from api.v1 import api_routes as api_routes_v1
+from api.v3 import api_routes as api_routes_v3
 
 
 class ServletRegistry(object):
@@ -178,7 +178,7 @@ class ServletRegistry(object):
     # Register pRPC API routes
     prpc_server = prpc.Server(allow_cors=False)
     api_routes_v0.RegisterApiHandlers(prpc_server, services)
-    api_routes_v1.RegisterApiHandlers(prpc_server, services)
+    api_routes_v3.RegisterApiHandlers(prpc_server, services)
     self.routes.extend(prpc_server.get_routes())
 
     autolink.RegisterAutolink(services)
