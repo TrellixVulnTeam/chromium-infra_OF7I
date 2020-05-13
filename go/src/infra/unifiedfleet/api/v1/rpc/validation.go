@@ -28,6 +28,7 @@ const (
 	RackLSENameFormat        string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
 	NicNameFormat            string = "Invalid input - Entity Name pattern should be nics/{nic}."
 	KVMNameFormat            string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
+	RPMNameFormat            string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
 )
 
 var (
@@ -43,6 +44,7 @@ var machineLSERegex = regexp.MustCompile(`machineLSEs\.*`)
 var rackLSERegex = regexp.MustCompile(`rackLSEs\.*`)
 var nicRegex = regexp.MustCompile(`nics\.*`)
 var kvmRegex = regexp.MustCompile(`kvms\.*`)
+var rpmRegex = regexp.MustCompile(`rpms\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -308,6 +310,44 @@ func (r *ListKVMsRequest) Validate() error {
 // Validate validates input requests of DeleteKVM.
 func (r *DeleteKVMRequest) Validate() error {
 	return validateResourceName(kvmRegex, KVMNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateRPM.
+func (r *CreateRPMRequest) Validate() error {
+	if r.RPM == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.RPMId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateRPM.
+func (r *UpdateRPMRequest) Validate() error {
+	if r.RPM == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(rpmRegex, RPMNameFormat, r.RPM.GetName())
+}
+
+// Validate validates input requests of GetRPM.
+func (r *GetRPMRequest) Validate() error {
+	return validateResourceName(rpmRegex, RPMNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListRPMs.
+func (r *ListRPMsRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteRPM.
+func (r *DeleteRPMRequest) Validate() error {
+	return validateResourceName(rpmRegex, RPMNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

@@ -689,3 +689,88 @@ func (s *DecoratedFleet) DeleteKVM(ctx context.Context, req *DeleteKVMRequest) (
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateRPM(ctx context.Context, req *CreateRPMRequest) (rsp *proto1.RPM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateRPM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateRPM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateRPM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateRPM(ctx context.Context, req *UpdateRPMRequest) (rsp *proto1.RPM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateRPM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateRPM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateRPM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetRPM(ctx context.Context, req *GetRPMRequest) (rsp *proto1.RPM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetRPM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetRPM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetRPM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListRPMs(ctx context.Context, req *ListRPMsRequest) (rsp *ListRPMsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListRPMs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListRPMs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListRPMs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteRPM(ctx context.Context, req *DeleteRPMRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteRPM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteRPM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteRPM", rsp, err)
+	}
+	return
+}

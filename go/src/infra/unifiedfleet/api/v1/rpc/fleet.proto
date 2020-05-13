@@ -141,6 +141,21 @@ service Fleet {
 
   // Delete delete the KVM
   rpc DeleteKVM(DeleteKVMRequest) returns (google.protobuf.Empty);
+
+  // CreateRPM creates a new RPM
+  rpc CreateRPM(CreateRPMRequest) returns (proto.RPM);
+
+  // Update updates the RPM
+  rpc UpdateRPM(UpdateRPMRequest) returns (proto.RPM);
+
+  // Get retrieves the details of the RPM
+  rpc GetRPM(GetRPMRequest) returns (proto.RPM);
+
+  // List gets all the RPMs
+  rpc ListRPMs(ListRPMsRequest) returns (ListRPMsResponse);
+
+  // Delete delete the RPM
+  rpc DeleteRPM(DeleteRPMRequest) returns (google.protobuf.Empty);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -622,5 +637,67 @@ message DeleteKVMRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/KVM" }
+  ];
+}
+
+// Contains the required information for creating a RPM represented in
+// the database.
+message CreateRPMRequest {
+  // The RPM to create.
+  proto.RPM RPM = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the RPM, which will become the final component of
+  // the RPM's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string RPM_id = 2;
+}
+
+message UpdateRPMRequest {
+  // The RPM to update.
+  proto.RPM RPM = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetRPMRequest {
+  // The name of the RPM to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RPM" }
+  ];
+}
+
+message ListRPMsRequest {
+  // The maximum number of RPMs to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 RPMs will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListRPMs` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListRPMs` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListRPMsResponse {
+  // The RPMs from datastore.
+  repeated proto.RPM RPMs = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteRPMRequest {
+  // The name of the RPM to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RPM" }
   ];
 }

@@ -516,3 +516,58 @@ func (fs *FleetServerImpl) DeleteKVM(ctx context.Context, req *api.DeleteKVMRequ
 	err = registration.DeleteKVM(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateRPM creates rpm entry in database.
+func (fs *FleetServerImpl) CreateRPM(ctx context.Context, req *api.CreateRPMRequest) (rsp *proto.RPM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// UpdateRPM updates the rpm information in database.
+func (fs *FleetServerImpl) UpdateRPM(ctx context.Context, req *api.UpdateRPMRequest) (rsp *proto.RPM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// GetRPM gets the rpm information from database.
+func (fs *FleetServerImpl) GetRPM(ctx context.Context, req *api.GetRPMRequest) (rsp *proto.RPM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// ListRPMs list the rpms information from database.
+func (fs *FleetServerImpl) ListRPMs(ctx context.Context, req *api.ListRPMsRequest) (rsp *api.ListRPMsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// DeleteRPM deletes the rpm from database.
+func (fs *FleetServerImpl) DeleteRPM(ctx context.Context, req *api.DeleteRPMRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
