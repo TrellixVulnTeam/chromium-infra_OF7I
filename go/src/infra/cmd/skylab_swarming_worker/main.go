@@ -103,7 +103,7 @@ func parseArgs() *args {
 	flag.StringVar(&a.xTestArgs, "test-args", "",
 		"Test args (meaning depends on test)")
 	flag.StringVar(&a.actions, "actions", "",
-		"Actions to execute for a deploytask")
+		"Actions to execute for a task")
 	flag.StringVar(&a.isolatedOutdir, "isolated-outdir", "",
 		"Directory to place isolated output into. Generate no isolated output if not set.")
 	flag.StringVar(&a.sideEffectsConfig, "side-effect-config", "",
@@ -235,7 +235,7 @@ func harnessOptions(a *args) []harness.Option {
 	return ho
 }
 
-// updatesInventory returns true if the task(repair/deploy)
+// updatesInventory returns true if the task(repair/deploy/audit)
 // should update the inventory else false.
 func updatesInventory(a *args) bool {
 	if isRepairTask(a) || isDeployTask(a) || isAuditTask(a) {
