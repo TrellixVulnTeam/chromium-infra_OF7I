@@ -9,20 +9,14 @@ import (
 	"net/http"
 
 	"infra/appengine/sheriff-o-matic/som/analyzer"
-	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/handler"
 
 	"google.golang.org/appengine"
 
-	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/appengine/gaeauth/server"
 	"go.chromium.org/luci/appengine/gaemiddleware/standard"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
-)
-
-const (
-	prodAppID = "sheriff-o-matic"
 )
 
 // base is the root of the middleware chain.
@@ -38,22 +32,9 @@ func base() router.MiddlewareChain {
 }
 
 func withServiceClients(ctx *router.Context, next router.Handler) {
-	a := analyzer.New(5, 100)
-	setServiceClients(ctx, a)
+	a := analyzer.CreateAnalyzer(ctx.Context)
 	ctx.Context = handler.WithAnalyzer(ctx.Context, a)
 	next(ctx)
-}
-
-func setServiceClients(ctx *router.Context, a *analyzer.Analyzer) {
-	if info.AppID(ctx.Context) == prodAppID {
-		findIt, crBug, _ := client.ProdClients(ctx.Context)
-		a.CrBug = crBug
-		a.FindIt = findIt
-	} else {
-		findIt, crBug, _ := client.StagingClients(ctx.Context)
-		a.CrBug = crBug
-		a.FindIt = findIt
-	}
 }
 
 //// Routes.

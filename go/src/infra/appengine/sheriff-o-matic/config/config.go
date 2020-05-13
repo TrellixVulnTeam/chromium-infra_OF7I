@@ -9,4 +9,4 @@ package config
 
 // EnableAutoGrouping is a flag to indicate whether failures should be automatically
 // grouped by step name.
-const EnableAutoGrouping = true
+var EnableAutoGrouping = true

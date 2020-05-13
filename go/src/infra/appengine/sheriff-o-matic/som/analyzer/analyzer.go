@@ -5,11 +5,13 @@
 package analyzer
 
 import (
+	"context"
 	"errors"
 	"expvar"
 	"sync"
 	"time"
 
+	"go.chromium.org/gae/service/info"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/monitoring/messages"
 )
@@ -27,6 +29,8 @@ const (
 
 	// This is a guess, and should be tuned
 	maxConcurrentBuilds = 4
+
+	prodAppID = "sheriff-o-matic"
 )
 
 var (
@@ -118,4 +122,23 @@ func (a *Analyzer) GetRevisionSummaries(hashes []string) ([]*messages.RevisionSu
 	}
 
 	return ret, nil
+}
+
+// CreateAnalyzer creates a new analyzer and set its service clients.
+func CreateAnalyzer(c context.Context) *Analyzer {
+	a := New(5, 100)
+	setServiceClients(c, a)
+	return a
+}
+
+func setServiceClients(c context.Context, a *Analyzer) {
+	if info.AppID(c) == prodAppID {
+		findIt, crBug, _ := client.ProdClients(c)
+		a.CrBug = crBug
+		a.FindIt = findIt
+	} else {
+		findIt, crBug, _ := client.StagingClients(c)
+		a.CrBug = crBug
+		a.FindIt = findIt
+	}
 }
