@@ -900,7 +900,7 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   def test_ComputeFieldValueString_USER_TYPE(self):
     user_id = self.user_1.user_id
-    expected = rnc.ConvertUserNames([user_id]).get(user_id)
+    expected = rnc.ConvertUserName(user_id)
     fv = fake.MakeFieldValue(field_id=self.dne_field_def_id, user_id=user_id)
     output = self.converter._ComputeFieldValueString(fv)
     self.assertEqual(expected, output)
@@ -936,15 +936,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     name = rnc.ConvertApprovalDefNames(
         self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
         self.services).get(self.approval_def_1_id)
-    approvers = [
-        rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
-    ]
+    approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
         'APPROVAL_STATUS_UNSPECIFIED')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
-    setter = rnc.ConvertUserNames([self.user_1.user_id]).get(
-        self.user_1.user_id)
+    setter = rnc.ConvertUserName(self.user_1.user_id)
     phase = fake.MakePhase(self.phase_1_id, name=self.phase_1.name)
     expected = issue_objects_pb2.ApprovalValue(
         name=name,
@@ -969,15 +966,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     name = rnc.ConvertApprovalDefNames(
         self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
         self.services).get(self.approval_def_1_id)
-    approvers = [
-        rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
-    ]
+    approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
         'APPROVAL_STATUS_UNSPECIFIED')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
-    setter = rnc.ConvertUserNames([self.user_1.user_id]).get(
-        self.user_1.user_id)
+    setter = rnc.ConvertUserName(self.user_1.user_id)
     expected = issue_objects_pb2.ApprovalValue(
         name=name,
         approvers=approvers,
@@ -1466,7 +1460,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         project_objects_pb2.FieldDef.Type.Value('INT'), output[1].type)
     self.assertEqual('', output[1].applicable_issue_type)
-    fd1_admins = rnc.ConvertUserNames([self.user_1.user_id]).values()
+    fd1_admins = [rnc.ConvertUserName(self.user_1.user_id)]
     self.assertEqual(fd1_admins, output[0].admins)
 
   def testConvertFieldDefs_Traits(self):
@@ -1620,13 +1614,9 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_docstring = matching_fd.docstring
     self.assertEqual(actual[0].docstring, expected_docstring)
     self.assertEqual(actual[0].survey, self.approval_def_1.survey)
-    expected_approvers = [
-        rnc.ConvertUserNames([self.user_2.user_id]).get(self.user_2.user_id)
-    ]
+    expected_approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     self.assertEqual(actual[0].approvers, expected_approvers)
-    expected_admins = [
-        rnc.ConvertUserNames([self.user_1.user_id]).get(self.user_1.user_id)
-    ]
+    expected_admins = [rnc.ConvertUserName(self.user_1.user_id)]
     self.assertEqual(actual[0].admins, expected_admins)
 
   def testConvertApprovalDefs_Empty(self):
