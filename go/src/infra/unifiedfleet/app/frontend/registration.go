@@ -525,7 +525,14 @@ func (fs *FleetServerImpl) CreateRPM(ctx context.Context, req *api.CreateRPMRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.RPM.Name = req.RPMId
+	rpm, err := registration.CreateRPM(ctx, req.RPM)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+	return rpm, err
 }
 
 // UpdateRPM updates the rpm information in database.
@@ -536,7 +543,14 @@ func (fs *FleetServerImpl) UpdateRPM(ctx context.Context, req *api.UpdateRPMRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.RPM.Name = util.RemovePrefix(req.RPM.Name)
+	rpm, err := registration.UpdateRPM(ctx, req.RPM)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+	return rpm, err
 }
 
 // GetRPM gets the rpm information from database.
@@ -547,7 +561,14 @@ func (fs *FleetServerImpl) GetRPM(ctx context.Context, req *api.GetRPMRequest) (
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	rpm, err := registration.GetRPM(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+	return rpm, err
 }
 
 // ListRPMs list the rpms information from database.
@@ -558,7 +579,19 @@ func (fs *FleetServerImpl) ListRPMs(ctx context.Context, req *api.ListRPMsReques
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListRPMs(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, rpm := range result {
+		rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+	}
+	return &api.ListRPMsResponse{
+		RPMs:          result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
 
 // DeleteRPM deletes the rpm from database.
@@ -569,5 +602,7 @@ func (fs *FleetServerImpl) DeleteRPM(ctx context.Context, req *api.DeleteRPMRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteRPM(ctx, name)
+	return &empty.Empty{}, err
 }

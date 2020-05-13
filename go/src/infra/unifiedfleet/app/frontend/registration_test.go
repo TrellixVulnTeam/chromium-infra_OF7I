@@ -69,6 +69,12 @@ func mockKVM(id string) *proto.KVM {
 	}
 }
 
+func mockRPM(id string) *proto.RPM {
+	return &proto.RPM{
+		Name: util.AddPrefix(rpmCollection, id),
+	}
+}
+
 func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -1553,6 +1559,334 @@ func TestDeleteKVM(t *testing.T) {
 				Name: util.AddPrefix(kvmCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteKVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestCreateRPM(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	RPM1 := mockRPM("")
+	RPM2 := mockRPM("")
+	RPM3 := mockRPM("")
+	Convey("CreateRPM", t, func() {
+		Convey("Create new RPM with RPM_id", func() {
+			req := &api.CreateRPMRequest{
+				RPM:   RPM1,
+				RPMId: "RPM-1",
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, RPM1)
+		})
+
+		Convey("Create existing RPM", func() {
+			req := &api.CreateRPMRequest{
+				RPM:   RPM3,
+				RPMId: "RPM-1",
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+
+		Convey("Create new RPM - Invalid input nil", func() {
+			req := &api.CreateRPMRequest{
+				RPM: nil,
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new RPM - Invalid input empty ID", func() {
+			req := &api.CreateRPMRequest{
+				RPM:   RPM2,
+				RPMId: "",
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new RPM - Invalid input invalid characters", func() {
+			req := &api.CreateRPMRequest{
+				RPM:   RPM2,
+				RPMId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateRPM(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	RPM1 := mockRPM("")
+	RPM2 := mockRPM("RPM-1")
+	RPM3 := mockRPM("RPM-3")
+	RPM4 := mockRPM("a.b)7&")
+	Convey("UpdateRPM", t, func() {
+		Convey("Update existing RPM", func() {
+			req := &api.CreateRPMRequest{
+				RPM:   RPM1,
+				RPMId: "RPM-1",
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, RPM1)
+			ureq := &api.UpdateRPMRequest{
+				RPM: RPM2,
+			}
+			resp, err = tf.Fleet.UpdateRPM(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, RPM2)
+		})
+
+		Convey("Update non-existing RPM", func() {
+			ureq := &api.UpdateRPMRequest{
+				RPM: RPM3,
+			}
+			resp, err := tf.Fleet.UpdateRPM(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Update RPM - Invalid input nil", func() {
+			req := &api.UpdateRPMRequest{
+				RPM: nil,
+			}
+			resp, err := tf.Fleet.UpdateRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update RPM - Invalid input empty name", func() {
+			RPM3.Name = ""
+			req := &api.UpdateRPMRequest{
+				RPM: RPM3,
+			}
+			resp, err := tf.Fleet.UpdateRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update RPM - Invalid input invalid characters", func() {
+			req := &api.UpdateRPMRequest{
+				RPM: RPM4,
+			}
+			resp, err := tf.Fleet.UpdateRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestGetRPM(t *testing.T) {
+	t.Parallel()
+	Convey("GetRPM", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		RPM1 := mockRPM("RPM-1")
+		req := &api.CreateRPMRequest{
+			RPM:   RPM1,
+			RPMId: "RPM-1",
+		}
+		resp, err := tf.Fleet.CreateRPM(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, RPM1)
+		Convey("Get RPM by existing ID", func() {
+			req := &api.GetRPMRequest{
+				Name: util.AddPrefix(rpmCollection, "RPM-1"),
+			}
+			resp, err := tf.Fleet.GetRPM(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, RPM1)
+		})
+		Convey("Get RPM by non-existing ID", func() {
+			req := &api.GetRPMRequest{
+				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+			}
+			resp, err := tf.Fleet.GetRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get RPM - Invalid input empty name", func() {
+			req := &api.GetRPMRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get RPM - Invalid input invalid characters", func() {
+			req := &api.GetRPMRequest{
+				Name: util.AddPrefix(rpmCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListRPMs(t *testing.T) {
+	t.Parallel()
+	Convey("ListRPMs", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		RPMs := make([]*proto.RPM, 0, 4)
+		for i := 0; i < 4; i++ {
+			RPM1 := mockRPM("")
+			req := &api.CreateRPMRequest{
+				RPM:   RPM1,
+				RPMId: fmt.Sprintf("RPM-%d", i),
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, RPM1)
+			RPMs = append(RPMs, resp)
+		}
+
+		Convey("ListRPMs - page_size negative", func() {
+			req := &api.ListRPMsRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListRPMs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListRPMs - page_token invalid", func() {
+			req := &api.ListRPMsRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListRPMs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListRPMs - Full listing Max PageSize", func() {
+			req := &api.ListRPMsRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListRPMs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RPMs, ShouldResembleProto, RPMs)
+		})
+
+		Convey("ListRPMs - Full listing with no pagination", func() {
+			req := &api.ListRPMsRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListRPMs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RPMs, ShouldResembleProto, RPMs)
+		})
+
+		Convey("ListRPMs - listing with pagination", func() {
+			req := &api.ListRPMsRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListRPMs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RPMs, ShouldResembleProto, RPMs[:3])
+
+			req = &api.ListRPMsRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListRPMs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RPMs, ShouldResembleProto, RPMs[3:])
+		})
+	})
+}
+
+func TestDeleteRPM(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteRPM", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete RPM by existing ID", func() {
+			RPM2 := mockRPM("")
+			req := &api.CreateRPMRequest{
+				RPM:   RPM2,
+				RPMId: "RPM-2",
+			}
+			resp, err := tf.Fleet.CreateRPM(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, RPM2)
+
+			dreq := &api.DeleteRPMRequest{
+				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+			}
+			_, err = tf.Fleet.DeleteRPM(tf.C, dreq)
+			So(err, ShouldBeNil)
+
+			greq := &api.GetRPMRequest{
+				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+			}
+			res, err := tf.Fleet.GetRPM(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete RPM by non-existing ID", func() {
+			req := &api.DeleteRPMRequest{
+				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+			}
+			_, err := tf.Fleet.DeleteRPM(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete RPM - Invalid input empty name", func() {
+			req := &api.DeleteRPMRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete RPM - Invalid input invalid characters", func() {
+			req := &api.DeleteRPMRequest{
+				Name: util.AddPrefix(rpmCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteRPM(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
