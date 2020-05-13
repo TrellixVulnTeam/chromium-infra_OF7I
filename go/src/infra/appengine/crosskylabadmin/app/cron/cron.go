@@ -59,6 +59,9 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	// for repair jobs of labstation.
 	r.GET("/internal/cron/push-repair-jobs-for-labstations", mwCron, logAndSetHTTPErr(pushRepairJobsForLabstationsCronHandler))
 
+	// Generate audit jobs for CrOS DUTs.
+	r.GET("/internal/cron/push-admin-audit-tasks-for-duts", mwCron, logAndSetHTTPErr(pushAdminAuditJobsCronHandler))
+
 	// Update device config asynchronously.
 	r.GET("/internal/cron/update-device-configs", mwCron, logAndSetHTTPErr(updateDeviceConfigCronHandler))
 	// Update (part of) manufacturing config asynchronously.
@@ -152,6 +155,26 @@ func pushRepairJobsForLabstationsCronHandler(c *router.Context) (err error) {
 
 	tsi := frontend.TrackerServerImpl{}
 	if _, err := tsi.PushRepairJobsForLabstations(c.Context, &fleet.PushRepairJobsForLabstationsRequest{}); err != nil {
+		return err
+	}
+	logging.Infof(c.Context, "Successfully finished")
+	return nil
+}
+
+// pushAdminAuditJobsCronHandler pushes bots that will run audit tasks to bot queue.
+func pushAdminAuditJobsCronHandler(c *router.Context) (err error) {
+	defer func() {
+		pushAdminAuditTasksCronHandlerTick.Add(c.Context, 1, err == nil)
+	}()
+
+	cfg := config.Get(c.Context)
+	if cfg.RpcControl != nil && cfg.RpcControl.GetDisablePushDutsForAdminAudit() {
+		logging.Infof(c.Context, "PushDutsForAdminAudit is disabled via config.")
+		return nil
+	}
+
+	tsi := frontend.TrackerServerImpl{}
+	if _, err := tsi.PushBotsForAdminAuditTasks(c.Context, &fleet.PushBotsForAdminAuditTasksRequest{}); err != nil {
 		return err
 	}
 	logging.Infof(c.Context, "Successfully finished")

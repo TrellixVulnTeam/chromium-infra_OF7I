@@ -26,6 +26,7 @@ import (
 const repairBotsQueue = "repair-bots"
 const resetBotsQueue = "reset-bots"
 const repairLabstationQueue = "repair-labstations"
+const auditBotsQueue = "audit-bots"
 
 // PushRepairLabstations pushes BOT ids to taskqueue repairLabstationQueue for
 // upcoming repair jobs.
@@ -45,6 +46,11 @@ func PushResetDUTs(ctx context.Context, botIDs []string) error {
 	return pushDUTs(ctx, botIDs, resetBotsQueue, resetTask)
 }
 
+// PushAuditDUTs pushes BOT ids to taskqueue auditBotsQueue for upcoming audit jobs.
+func PushAuditDUTs(ctx context.Context, botIDs []string) error {
+	return pushDUTs(ctx, botIDs, auditBotsQueue, crosAuditTask)
+}
+
 func crosRepairTask(botID string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
@@ -61,6 +67,12 @@ func resetTask(botID string) *taskqueue.Task {
 	values := url.Values{}
 	values.Set("botID", botID)
 	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/reset/%s", botID), values)
+}
+
+func crosAuditTask(botID string) *taskqueue.Task {
+	values := url.Values{}
+	values.Set("botID", botID)
+	return taskqueue.NewPOSTTask(fmt.Sprintf("/internal/task/audit/%s", botID), values)
 }
 
 func pushDUTs(ctx context.Context, botIDs []string, queueName string, taskGenerator func(string) *taskqueue.Task) error {

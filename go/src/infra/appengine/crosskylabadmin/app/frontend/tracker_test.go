@@ -34,6 +34,7 @@ import (
 const repairQ = "repair-bots"
 const resetQ = "reset-bots"
 const repairLabstationQ = "repair-labstations"
+const auditQ = "audit-bots"
 
 func TestFlattenAndDuplicateBots(t *testing.T) {
 	Convey("zero bots", t, func() {
@@ -170,6 +171,51 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 			tasks := tqt.GetScheduledTasks()
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id2"})
 			validateTasksInQueue(tasks, resetQ, "reset", []string{})
+		})
+	})
+}
+
+func TestPushBotsForAdminAuditTasks(t *testing.T) {
+	Convey("Handling types of cros bots", t, func() {
+		bot4 := test.BotForDUT("dut_4", "ready", "label-os_type:OS_TYPE_MOBLAB;id:id4")
+		bot2LabStation := test.BotForDUT("dut_2l", "ready", "label-os_type:OS_TYPE_LABSTATION;id:lab_id2")
+		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
+			for _, v := range paths {
+				arr = append(arr, v.Path)
+			}
+			return arr
+		}
+		validateTasksInQueue := func(tasks taskqueue.QueueData, qKey string, qPath string, botIDs []string) {
+			fmt.Println(tasks)
+			repairTasks, ok := tasks[qKey]
+			So(ok, ShouldBeTrue)
+			repairPaths := appendPaths(repairTasks)
+			var expectedPaths []string
+			for _, botID := range botIDs {
+				expectedPaths = append(expectedPaths, fmt.Sprintf("/internal/task/%s/%s", qPath, botID))
+			}
+			So(repairPaths, ShouldResemble, expectedPaths)
+		}
+		tf, validate := newTestFixture(t)
+		defer validate()
+		tqt := taskqueue.GetTestable(tf.C)
+		tqt.CreateQueue(auditQ)
+
+		Convey("run only for DUTs", func() {
+			tqt.ResetTasks()
+			tf.MockSwarming.EXPECT().ListAliveBotsInPool(
+				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
+				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"ready"}}),
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot4, bot2LabStation}, nil)
+			expectDefaultPerBotRefresh(tf)
+
+			request := fleet.PushBotsForAdminAuditTasksRequest{}
+			res, err := tf.Tracker.PushBotsForAdminAuditTasks(tf.C, &request)
+			So(err, ShouldBeNil)
+			So(res, ShouldNotBeNil)
+
+			tasks := tqt.GetScheduledTasks()
+			validateTasksInQueue(tasks, auditQ, "audit", []string{"id4"})
 		})
 	})
 }

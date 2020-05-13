@@ -92,6 +92,33 @@ func (tsi *TrackerServerImpl) PushBotsForAdminTasks(ctx context.Context, req *fl
 
 // PushBotsForAdminAuditTasks implements the fleet.Tracker.pushBotsForAdminTasks() method.
 func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, req *fleet.PushBotsForAdminAuditTasksRequest) (res *fleet.PushBotsForAdminAuditTasksResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	cfg := config.Get(ctx)
+	sc, err := tsi.newSwarmingClient(ctx, cfg.Swarming.Host)
+	if err != nil {
+		return nil, errors.Annotate(err, "failed to obtain Swarming client").Err()
+	}
+
+	// Schedule audit tasks to ready DUTs.
+	dims := make(strpair.Map)
+	dims[clients.DutStateDimensionKey] = []string{"ready"}
+	bots, err := sc.ListAliveBotsInPool(ctx, cfg.Swarming.BotPool, dims)
+	if err != nil {
+		reason := fmt.Sprintf("failed to list alive cros bots")
+		return nil, errors.Annotate(err, reason).Err()
+	}
+	logging.Infof(ctx, "successfully get %d alive cros bots.", len(bots))
+
+	// Parse BOT id to schedule tasks for readability.
+	botIDs := identifyBotsForAudit(ctx, bots)
+	err = clients.PushAuditDUTs(ctx, botIDs)
+	if err != nil {
+		logging.Infof(ctx, "failed push audit bots: %v", err)
+		return nil, errors.New("failed to push audit bots")
+	}
 	return &fleet.PushBotsForAdminAuditTasksResponse{}, nil
 }
 
@@ -254,6 +281,25 @@ func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (re
 		}
 	}
 	return repairBOTs, resetBOTs
+}
+
+// identifyBotsForAudit identifies duts to run admin audit.
+func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) []string {
+	botIDs := make([]string, 0, len(bots))
+	for _, b := range bots {
+		dims := swarming_utils.DimensionsMap(b.Dimensions)
+		os, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.DutOSDimensionKey)
+		if err != nil || os == "OS_TYPE_LABSTATION" {
+			continue
+		}
+		id, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.BotIDDimensionKey)
+		if err != nil {
+			logging.Warningf(ctx, "failed to obtain BOT id for bot %q", b.BotId)
+			continue
+		}
+		botIDs = append(botIDs, id)
+	}
+	return botIDs
 }
 
 // identifyLabstationsForRepair identifies labstations that need repair.

@@ -75,6 +75,32 @@ func TestSuccessfulPushLabstations(t *testing.T) {
 	})
 }
 
+func TestSuccessfulPushAuditTasks(t *testing.T) {
+	Convey("success", t, func() {
+		ctx := gaetesting.TestingContext()
+		tqt := taskqueue.GetTestable(ctx)
+		qn := "audit-bots"
+		tqt.CreateQueue(qn)
+		hosts := []string{"host1", "host2"}
+		err := PushAuditDUTs(ctx, hosts)
+		So(err, ShouldBeNil)
+		tasks := tqt.GetScheduledTasks()
+		t, ok := tasks[qn]
+		So(ok, ShouldBeTrue)
+		var taskPaths, taskParams []string
+		for _, v := range t {
+			taskPaths = append(taskPaths, v.Path)
+			taskParams = append(taskParams, string(v.Payload))
+		}
+		sort.Strings(taskPaths)
+		sort.Strings(taskParams)
+		expectedPaths := []string{"/internal/task/audit/host1", "/internal/task/audit/host2"}
+		expectedParams := []string{"botID=host1", "botID=host2"}
+		So(taskPaths, ShouldResemble, expectedPaths)
+		So(taskParams, ShouldResemble, expectedParams)
+	})
+}
+
 func TestUnknownQueuePush(t *testing.T) {
 	Convey("no taskqueue", t, func() {
 		ctx := gaetesting.TestingContext()
