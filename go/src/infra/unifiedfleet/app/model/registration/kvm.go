@@ -109,3 +109,14 @@ func putAllKVM(ctx context.Context, kvms []*fleet.KVM, update bool) ([]*fleet.KV
 	}
 	return nil, err
 }
+
+// ImportKVMs creates or updates a batch of kvms in datastore.
+func ImportKVMs(ctx context.Context, kvms []*fleet.KVM) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(kvms))
+	utime := ptypes.TimestampNow()
+	for i, m := range kvms {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newKVMEntity, true, true)
+}

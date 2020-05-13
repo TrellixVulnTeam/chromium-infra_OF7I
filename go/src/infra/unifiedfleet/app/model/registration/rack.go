@@ -126,3 +126,14 @@ func putRack(ctx context.Context, rack *fleet.Rack, update bool) (*fleet.Rack, e
 	}
 	return nil, err
 }
+
+// ImportRacks creates or updates a batch of machines in datastore.
+func ImportRacks(ctx context.Context, racks []*fleet.Rack) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(racks))
+	utime := ptypes.TimestampNow()
+	for i, m := range racks {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newRackEntity, true, true)
+}

@@ -377,5 +377,52 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	logging.Debugf(ctx, "processing datacenter: %s", dc.GetName())
 	racks, kvms, switches, dhcps := util.ProcessDatacenters(dc)
 	logging.Debugf(ctx, "Got %d racks, %d kvms, %d switches, %d dhcp configs", len(racks), len(kvms), len(switches), len(dhcps))
+
+	pageSize := fs.getImportPageSize()
+	// Please note that the importing here is not in one transaction, which
+	// actually may cause data incompleteness. But as the importing job
+	// will be triggered periodically, such incompleteness that's caused by
+	// potential failure will be ignored.
+	logging.Debugf(ctx, "Importing %d racks", len(racks))
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(racks))
+		logging.Debugf(ctx, "importing rack %dth - %dth", i, end-1)
+		res, err := registration.ImportRacks(ctx, racks[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(racks) {
+			break
+		}
+	}
+	logging.Debugf(ctx, "Importing %d kvms", len(kvms))
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(kvms))
+		logging.Debugf(ctx, "importing kvm %dth - %dth", i, end-1)
+		res, err := registration.ImportKVMs(ctx, kvms[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(kvms) {
+			break
+		}
+	}
+	logging.Debugf(ctx, "Importing %d switches", len(switches))
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(switches))
+		logging.Debugf(ctx, "importing switch %dth - %dth", i, end-1)
+		res, err := registration.ImportSwitches(ctx, switches[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(switches) {
+			break
+		}
+	}
+	logging.Debugf(ctx, "Importing %d DHCP configs", len(dhcps))
+	// TODO(xixuan): implementing
 	return successStatus.Proto(), nil
 }

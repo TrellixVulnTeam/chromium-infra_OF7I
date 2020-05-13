@@ -1172,6 +1172,12 @@ func TestImportDatacenters(t *testing.T) {
 			res, err := tf.Fleet.ImportDatacenters(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
+			resp, err := tf.Fleet.ListRacks(ctx, &api.ListRacksRequest{
+				PageSize: 100,
+			})
+			got := getRackNames(resp.GetRacks())
+			So(got, ShouldHaveLength, 2)
+			So(got, ShouldResemble, []string{"racks/cr20", "racks/cr22"})
 		})
 	})
 }
@@ -1180,6 +1186,14 @@ func getMachineNames(res OpResults) []string {
 	names := make([]string, 0)
 	for _, r := range res {
 		names = append(names, r.Data.(*proto.Machine).GetName())
+	}
+	return names
+}
+
+func getRackNames(racks []*proto.Rack) []string {
+	names := make([]string, 0)
+	for _, r := range racks {
+		names = append(names, r.GetName())
 	}
 	return names
 }
