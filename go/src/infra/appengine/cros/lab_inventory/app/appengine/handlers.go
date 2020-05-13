@@ -9,12 +9,15 @@ import (
 
 	"go.chromium.org/luci/appengine/gaemiddleware/standard"
 	"go.chromium.org/luci/common/data/rand/mathrand"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/openid"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/appengine"
 
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/cron"
 	"infra/appengine/cros/lab_inventory/app/frontend"
+	"infra/appengine/cros/lab_inventory/app/pubsub"
 )
 
 func main() {
@@ -31,6 +34,23 @@ func main() {
 	standard.InstallHandlers(r)
 	frontend.InstallHandlers(r, mwBase)
 	cron.InstallHandlers(r, mwBase)
+
+	// Add authenticator for handling JWT tokens. This is required to
+	// authenticate PubSub push responses sent as HTTP POST requests. See
+	// https://cloud.google.com/pubsub/docs/push?hl=en#authentication_and_authorization
+	openIDCheck := auth.Authenticator{
+		Methods: []auth.Method{
+			&openid.GoogleIDTokenAuthMethod{
+				AudienceCheck: openid.AudienceMatchesHost,
+			},
+		},
+	}
+
+	// Add authenticator to middleware chain at the end, This is because
+	// not all POST requests use JWT for authentication. Including this
+	// in all the handlers will result in failures
+	mwBase = mwBase.Extend(openIDCheck.GetMiddleware())
+	pubsub.InstallHandlers(r, mwBase)
 
 	http.DefaultServeMux.Handle("/", r)
 
