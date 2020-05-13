@@ -27,6 +27,7 @@ const (
 	MachineLSENameFormat     string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
 	RackLSENameFormat        string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
 	NicNameFormat            string = "Invalid input - Entity Name pattern should be nics/{nic}."
+	KVMNameFormat            string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
 )
 
 var (
@@ -41,6 +42,7 @@ var rackRegex = regexp.MustCompile(`racks\.*`)
 var machineLSERegex = regexp.MustCompile(`machineLSEs\.*`)
 var rackLSERegex = regexp.MustCompile(`rackLSEs\.*`)
 var nicRegex = regexp.MustCompile(`nics\.*`)
+var kvmRegex = regexp.MustCompile(`kvms\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -268,6 +270,44 @@ func (r *ListNicsRequest) Validate() error {
 // Validate validates input requests of DeleteNic.
 func (r *DeleteNicRequest) Validate() error {
 	return validateResourceName(nicRegex, NicNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateKVM.
+func (r *CreateKVMRequest) Validate() error {
+	if r.KVM == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.KVMId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateKVM.
+func (r *UpdateKVMRequest) Validate() error {
+	if r.KVM == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(kvmRegex, KVMNameFormat, r.KVM.GetName())
+}
+
+// Validate validates input requests of GetKVM.
+func (r *GetKVMRequest) Validate() error {
+	return validateResourceName(kvmRegex, KVMNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListKVMs.
+func (r *ListKVMsRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteKVM.
+func (r *DeleteKVMRequest) Validate() error {
+	return validateResourceName(kvmRegex, KVMNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

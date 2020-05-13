@@ -604,3 +604,88 @@ func (s *DecoratedFleet) ImportDatacenters(ctx context.Context, req *ImportDatac
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateKVM(ctx context.Context, req *CreateKVMRequest) (rsp *proto1.KVM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateKVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateKVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateKVM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateKVM(ctx context.Context, req *UpdateKVMRequest) (rsp *proto1.KVM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateKVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateKVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateKVM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetKVM(ctx context.Context, req *GetKVMRequest) (rsp *proto1.KVM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetKVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetKVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetKVM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListKVMs(ctx context.Context, req *ListKVMsRequest) (rsp *ListKVMsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListKVMs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListKVMs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListKVMs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteKVM(ctx context.Context, req *DeleteKVMRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteKVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteKVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteKVM", rsp, err)
+	}
+	return
+}

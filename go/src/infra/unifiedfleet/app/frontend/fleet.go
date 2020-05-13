@@ -28,6 +28,7 @@ const (
 	machineLSECollection     string = "machineLSEs"
 	rackLSECollection        string = "rackLSEs"
 	nicCollection            string = "nics"
+	kvmCollection            string = "kvms"
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	importPageSize int = 500
 )

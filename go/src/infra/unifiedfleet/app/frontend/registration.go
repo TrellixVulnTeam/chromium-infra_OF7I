@@ -426,3 +426,58 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	// TODO(xixuan): implementing
 	return successStatus.Proto(), nil
 }
+
+// CreateKVM creates kvm entry in database.
+func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *api.CreateKVMRequest) (rsp *proto.KVM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// UpdateKVM updates the kvm information in database.
+func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *api.UpdateKVMRequest) (rsp *proto.KVM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// GetKVM gets the kvm information from database.
+func (fs *FleetServerImpl) GetKVM(ctx context.Context, req *api.GetKVMRequest) (rsp *proto.KVM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// ListKVMs list the kvms information from database.
+func (fs *FleetServerImpl) ListKVMs(ctx context.Context, req *api.ListKVMsRequest) (rsp *api.ListKVMsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
+// DeleteKVM deletes the kvm from database.
+func (fs *FleetServerImpl) DeleteKVM(ctx context.Context, req *api.DeleteKVMRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}

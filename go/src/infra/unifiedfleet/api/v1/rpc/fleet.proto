@@ -19,6 +19,7 @@ import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 import "infra/unifiedfleet/api/v1/proto/machine_lse.proto";
 import "infra/unifiedfleet/api/v1/proto/rack_lse.proto";
 import "infra/unifiedfleet/api/v1/proto/network.proto";
+import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 
 service Fleet {
   // CreateChromePlatform creates a new chromePlatform.
@@ -125,6 +126,21 @@ service Fleet {
 
   // ImportDatacenters imports datacenter & its related info, including kvm & switch.
   rpc ImportDatacenters(ImportDatacentersRequest) returns (google.rpc.Status);
+
+  // CreateKVM creates a new KVM
+  rpc CreateKVM(CreateKVMRequest) returns (proto.KVM);
+
+  // Update updates the KVM
+  rpc UpdateKVM(UpdateKVMRequest) returns (proto.KVM);
+
+  // Get retrieves the details of the KVM
+  rpc GetKVM(GetKVMRequest) returns (proto.KVM);
+
+  // List gets all the KVMs
+  rpc ListKVMs(ListKVMsRequest) returns (ListKVMsResponse);
+
+  // Delete delete the KVM
+  rpc DeleteKVM(DeleteKVMRequest) returns (google.protobuf.Empty);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -545,4 +561,66 @@ message ImportDatacentersRequest {
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;
   }
+}
+
+// Contains the required information for creating a KVM represented in
+// the database.
+message CreateKVMRequest {
+  // The KVM to create.
+  proto.KVM KVM = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the KVM, which will become the final component of
+  // the KVM's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string KVM_id = 2;
+}
+
+message UpdateKVMRequest {
+  // The KVM to update.
+  proto.KVM KVM = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetKVMRequest {
+  // The name of the KVM to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/KVM" }
+  ];
+}
+
+message ListKVMsRequest {
+  // The maximum number of KVMs to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 KVMs will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListKVMs` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListKVMs` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListKVMsResponse {
+  // The KVMs from datastore.
+  repeated proto.KVM KVMs = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteKVMRequest {
+  // The name of the KVM to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/KVM" }
+  ];
 }
