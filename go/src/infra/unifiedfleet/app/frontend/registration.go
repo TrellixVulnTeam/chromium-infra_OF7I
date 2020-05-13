@@ -435,7 +435,14 @@ func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *api.CreateKVMRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.KVM.Name = req.KVMId
+	kvm, err := registration.CreateKVM(ctx, req.KVM)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+	return kvm, err
 }
 
 // UpdateKVM updates the kvm information in database.
@@ -446,7 +453,14 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *api.UpdateKVMRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	req.KVM.Name = util.RemovePrefix(req.KVM.Name)
+	kvm, err := registration.UpdateKVM(ctx, req.KVM)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+	return kvm, err
 }
 
 // GetKVM gets the kvm information from database.
@@ -457,7 +471,14 @@ func (fs *FleetServerImpl) GetKVM(ctx context.Context, req *api.GetKVMRequest) (
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	kvm, err := registration.GetKVM(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+	return kvm, err
 }
 
 // ListKVMs list the kvms information from database.
@@ -468,7 +489,19 @@ func (fs *FleetServerImpl) ListKVMs(ctx context.Context, req *api.ListKVMsReques
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListKVMs(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, kvm := range result {
+		kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+	}
+	return &api.ListKVMsResponse{
+		KVMs:          result,
+		NextPageToken: nextPageToken,
+	}, nil
 }
 
 // DeleteKVM deletes the kvm from database.
@@ -479,5 +512,7 @@ func (fs *FleetServerImpl) DeleteKVM(ctx context.Context, req *api.DeleteKVMRequ
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteKVM(ctx, name)
+	return &empty.Empty{}, err
 }

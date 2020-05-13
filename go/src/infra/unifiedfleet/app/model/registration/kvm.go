@@ -6,6 +6,8 @@ package registration
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +19,7 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 )
 
 // KVMKind is the datastore entity kind KVM.
@@ -57,6 +60,7 @@ func newKVMEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, e
 }
 
 // QueryKVMByPropertyName query's KVM Entity in the datastore
+//
 // If keysOnly is true, then only key field is populated in returned kvms
 func QueryKVMByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.KVM, error) {
 	q := datastore.NewQuery(KVMKind).KeysOnly(keysOnly)
@@ -69,7 +73,7 @@ func QueryKVMByPropertyName(ctx context.Context, propertyName, id string, keysOn
 		logging.Infof(ctx, "No kvms found for the query: %s", id)
 		return nil, nil
 	}
-	kvms := make([]*fleet.KVM, len(entities))
+	kvms := make([]*fleet.KVM, 0, len(entities))
 	for _, entity := range entities {
 		if keysOnly {
 			kvm := &fleet.KVM{
@@ -88,7 +92,116 @@ func QueryKVMByPropertyName(ctx context.Context, propertyName, id string, keysOn
 	return kvms, nil
 }
 
+// CreateKVM creates a new KVM in datastore.
+func CreateKVM(ctx context.Context, KVM *fleet.KVM) (*fleet.KVM, error) {
+	return putKVM(ctx, KVM, false)
+}
+
+// UpdateKVM updates KVM in datastore.
+func UpdateKVM(ctx context.Context, KVM *fleet.KVM) (*fleet.KVM, error) {
+	return putKVM(ctx, KVM, true)
+}
+
+// GetKVM returns KVM for the given id from datastore.
+func GetKVM(ctx context.Context, id string) (*fleet.KVM, error) {
+	pm, err := fleetds.Get(ctx, &fleet.KVM{Name: id}, newKVMEntity)
+	if err == nil {
+		return pm.(*fleet.KVM), err
+	}
+	return nil, err
+}
+
+// ListKVMs lists the KVMs
+//
+// Does a query over KVM entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.KVM, nextPageToken string, err error) {
+	q, err := fleetds.ListQuery(ctx, KVMKind, pageSize, pageToken)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *KVMEntity, cb datastore.CursorCB) error {
+		pm, err := ent.GetProto()
+		if err != nil {
+			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+			return nil
+		}
+		res = append(res, pm.(*fleet.KVM))
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to List KVMs %s", err)
+		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
+}
+
+// DeleteKVM deletes the KVM in datastore
+//
+// For referential data intergrity,
+// Delete if there are no references to the KVM by Machine in the datastore.
+// If there are any references, delete will be rejected and an error message will be thrown.
+func DeleteKVM(ctx context.Context, id string) error {
+	machines, err := QueryMachineByPropertyName(ctx, "kvm_id", id, true)
+	if err != nil {
+		return err
+	}
+	racks, err := QueryRackByPropertyName(ctx, "kvm_ids", id, true)
+	if err != nil {
+		return err
+	}
+	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "kvm_ids", id, true)
+	if err != nil {
+		return err
+	}
+	if len(machines) > 0 || len(racks) > 0 || len(racklses) > 0 {
+		var errorMsg strings.Builder
+		errorMsg.WriteString(fmt.Sprintf("KVM %s cannot be deleted because there are other resources which are referring this KVM.", id))
+		if len(machines) > 0 {
+			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the KVM:\n"))
+			for _, machine := range machines {
+				errorMsg.WriteString(machine.Name + ", ")
+			}
+		}
+		if len(racks) > 0 {
+			errorMsg.WriteString(fmt.Sprintf("\nRacks referring the KVM:\n"))
+			for _, rack := range racks {
+				errorMsg.WriteString(rack.Name + ", ")
+			}
+		}
+		if len(racklses) > 0 {
+			errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the KVM:\n"))
+			for _, racklse := range racklses {
+				errorMsg.WriteString(racklse.Name + ", ")
+			}
+		}
+		logging.Infof(ctx, errorMsg.String())
+		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+	}
+	return fleetds.Delete(ctx, &fleet.KVM{Name: id}, newKVMEntity)
+}
+
+func putKVM(ctx context.Context, KVM *fleet.KVM, update bool) (*fleet.KVM, error) {
+	KVM.UpdateTime = ptypes.TimestampNow()
+	pm, err := fleetds.Put(ctx, KVM, newKVMEntity, update)
+	if err == nil {
+		return pm.(*fleet.KVM), err
+	}
+	return nil, err
+}
+
 // BatchUpdateKVMs updates kvms in datastore.
+//
 // This is a non-atomic operation and doesnt check if the object already exists before
 // update. Must be used within a Transaction where objects are checked before update.
 // Will lead to partial updates if not used in a transaction.
