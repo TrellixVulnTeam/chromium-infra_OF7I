@@ -371,6 +371,26 @@ func (c *Client) GetListedBots(ctx context.Context, dims []*swarming_api.Swarmin
 	return out, nil
 }
 
+// GetFlatBotDimensionsForTask takes a task id and returns the dimensions of the bot that is currently running the task.
+// The output map has exactly one value per dimension. Dimensions where a key k maps to multiple values v1, v2, v3 ... correspond to
+// the pair (k, v1) in the output map.
+// Keys that are present but have no values associated with them get the magical sentinel value "".
+// If the bot does not exist, then an error is returned instead.
+func (c *Client) GetFlatBotDimensionsForTask(ctx context.Context, taskID string) (map[string]string, error) {
+	out := make(map[string]string)
+	call := c.SwarmingService.Task.Result(taskID)
+	results, err := call.Context(ctx).Do()
+	if err != nil {
+		return nil, errors.Annotate(err, "get task for taskID").Err()
+	}
+	for _, dim := range results.BotDimensions {
+		if len(dim.Value) > 0 {
+			out[dim.Key] = dim.Value[0]
+		}
+	}
+	return out, nil
+}
+
 // DutNameToBotID gets the bot id associated with a particular dut by its hostname.
 func (c *Client) DutNameToBotID(ctx context.Context, host string) (string, error) {
 	dims := []*swarming_api.SwarmingRpcsStringPair{
