@@ -24,13 +24,13 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/worker"
 )
 
-func TestRunTaskByDUTName(t *testing.T) {
+func TestRunTaskByBotID(t *testing.T) {
 	Convey("with run repair job with BOT id", t, func() {
 		tf, validate := newTestFixture(t)
 		defer validate()
 		expectTaskCreationForDUT(tf, "task1", "bot_id")
 		at := worker.AdminTaskForType(tf.C, fleet.TaskType_Repair)
-		taskURL, err := runTaskByDUTName(tf.C, at, tf.MockSwarming, "bot_id")
+		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id")
 		So(err, ShouldBeNil)
 		So(taskURL, ShouldContainSubstring, "task1")
 	})

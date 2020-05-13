@@ -35,7 +35,7 @@ func CreateRepairTask(ctx context.Context, botID string) (string, error) {
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
-	taskURL, err := runTaskByDUTName(ctx, at, sc, botID)
+	taskURL, err := runTaskByBotID(ctx, at, sc, botID)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to create repair task for %s", botID).Err()
 	}
@@ -49,7 +49,7 @@ func CreateResetTask(ctx context.Context, botID string) (string, error) {
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
-	taskURL, err := runTaskByDUTName(ctx, at, sc, botID)
+	taskURL, err := runTaskByBotID(ctx, at, sc, botID)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to create reset task for %s", botID).Err()
 	}
@@ -64,14 +64,14 @@ func CreateAuditTask(ctx context.Context, botID string) (string, error) {
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
-	taskURL, err := runTaskByDUTName(ctx, at, sc, botID)
+	taskURL, err := runTaskByBotID(ctx, at, sc, botID)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to create audit task for %s", botID).Err()
 	}
 	return taskURL, nil
 }
 
-func runTaskByDUTName(ctx context.Context, at worker.Task, sc clients.SwarmingClient, botID string) (string, error) {
+func runTaskByBotID(ctx context.Context, at worker.Task, sc clients.SwarmingClient, botID string) (string, error) {
 	cfg := config.Get(ctx)
 	tags := swarming.AddCommonTags(
 		ctx,
