@@ -19,28 +19,34 @@ import (
 
 var instance *Hart // Instance of HaRT
 var once sync.Once
-var projectID string = "hardware-request-tracker"
-var topicID string = "assetInfoRequest"
-var subID string = "AssetInfo"
 
 // Hart is a reference to PubSub connection
 type Hart struct {
-	client *pubsub.Client
-	topic  *pubsub.Topic
+	client         *pubsub.Client
+	topic          *pubsub.Topic
+	ProjectID      string
+	TopicID        string
+	SubscriptionID string
 }
 
 // GetInstance returns instance of Hart.
-func GetInstance(ctx context.Context) (*Hart, error) {
+//
+// Can also set project, topic and subscription, when calling for the first
+// time through dest
+func GetInstance(ctx context.Context, proj, top, sub string) (*Hart, error) {
 	var hart *Hart
 	if instance == nil {
-		client, err := pubsub.NewClient(ctx, projectID)
+		client, err := pubsub.NewClient(ctx, proj)
 		if err != nil {
 			return nil, fmt.Errorf("pubsub.NewClient: %v", err)
 		}
-		topic := client.Topic(topicID)
+		topic := client.Topic(top)
 		hart = &Hart{
-			client: client,
-			topic:  topic,
+			client:         client,
+			topic:          topic,
+			ProjectID:      proj,
+			TopicID:        top,
+			SubscriptionID: sub,
 		}
 	}
 	once.Do(func() {
@@ -52,7 +58,7 @@ func GetInstance(ctx context.Context) (*Hart, error) {
 
 // subscribeRoutine runs a routine that receives any AssetInfo sent by HaRT.
 func (h *Hart) subscribeRoutine(ctx context.Context) {
-	sub := h.client.Subscription(subID)
+	sub := h.client.Subscription(h.SubscriptionID)
 	cctx, cancel := context.WithCancel(ctx)
 	defer func() {
 		// Restart the go routine if there is an unexpected crash

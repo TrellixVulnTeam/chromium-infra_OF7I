@@ -281,10 +281,15 @@ func syncDeviceListToDroneConfigHandler(c *router.Context) error {
 }
 
 func syncAssetInfoFromHaRT(c *router.Context) error {
-	logging.Infof(c.Context, "Sync AssetInfo from HaRT")
-	assets, err := datastore.GetAllAssets(c.Context, true)
+	ctx := c.Context
+
+	logging.Infof(ctx, "Sync AssetInfo from HaRT")
+
+	cfg := config.Get(ctx).GetHart()
+
+	assets, err := datastore.GetAllAssets(ctx, true)
 	if err != nil {
-		logging.Errorf(c.Context, err.Error())
+		logging.Errorf(ctx, err.Error())
 		return err
 	}
 
@@ -294,7 +299,7 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 	}
 
 	// Filter assets not yet in datastore
-	res := datastore.GetAssetInfo(c.Context, ids)
+	res := datastore.GetAssetInfo(ctx, ids)
 	req := make([]string, 0, len(assets))
 	for _, a := range res {
 		if a.Err != nil && ds.IsErrNoSuchEntity(a.Err) {
@@ -302,13 +307,14 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 		}
 	}
 
-	logging.Infof(c.Context, "Syncing %v AssetInfo entit(y|ies) from HaRT", len(req))
+	logging.Infof(ctx, "Syncing %v AssetInfo entit(y|ies) from HaRT", len(req))
 
-	h, err := hart.GetInstance(c.Context)
+	h, err := hart.GetInstance(ctx, cfg.GetProject(), cfg.GetTopic(),
+		cfg.GetSubscription())
 	if err == nil {
-		h.SyncAssetInfoFromHaRT(c.Context, req)
+		h.SyncAssetInfoFromHaRT(ctx, req)
 	} else {
-		logging.Warningf(c.Context, "Unable to sync AssetInfo from HaRT")
+		logging.Warningf(ctx, "Unable to sync AssetInfo from HaRT")
 	}
 
 	return err
