@@ -182,3 +182,80 @@ func TestDeleteRack(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchUpdateRacks(t *testing.T) {
+	t.Parallel()
+	Convey("BatchUpdateRacks", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		Racks := make([]*proto.Rack, 0, 4)
+		for i := 0; i < 4; i++ {
+			Rack1 := mockRack(fmt.Sprintf("Rack-%d", i), 10)
+			resp, err := CreateRack(ctx, Rack1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, Rack1)
+			Racks = append(Racks, resp)
+		}
+		Convey("BatchUpdate all Racks", func() {
+			resp, err := BatchUpdateRacks(ctx, Racks)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, Racks)
+		})
+		Convey("BatchUpdate existing and invalid Racks", func() {
+			Rack5 := mockRack("", 10)
+			Racks = append(Racks, Rack5)
+			resp, err := BatchUpdateRacks(ctx, Racks)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestQueryRackByPropertyName(t *testing.T) {
+	t.Parallel()
+	Convey("QueryRackByPropertyName", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		dummyRack := &proto.Rack{
+			Name: "Rack-1",
+		}
+		Rack1 := &proto.Rack{
+			Name: "Rack-1",
+			Rack: &proto.Rack_ChromeBrowserRack{
+				ChromeBrowserRack: &proto.ChromeBrowserRack{
+					Kvms: []string{"KVM-1", "KVM-2"},
+				},
+			},
+		}
+		resp, cerr := CreateRack(ctx, Rack1)
+		So(cerr, ShouldBeNil)
+		So(resp, ShouldResembleProto, Rack1)
+
+		Racks := make([]*proto.Rack, 0, 1)
+		Racks = append(Racks, Rack1)
+
+		dummyRacks := make([]*proto.Rack, 0, 1)
+		dummyRacks = append(dummyRacks, dummyRack)
+		Convey("Query By existing Rack", func() {
+			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-1", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, Racks)
+		})
+		Convey("Query By non-existing Rack", func() {
+			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-5", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing RackPrototype keysonly", func() {
+			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, dummyRacks)
+		})
+		Convey("Query By non-existing RackPrototype", func() {
+			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-5", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+	})
+}

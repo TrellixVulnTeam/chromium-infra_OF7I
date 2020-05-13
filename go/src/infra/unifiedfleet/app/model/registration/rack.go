@@ -60,6 +60,39 @@ func newRackEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, 
 	}, nil
 }
 
+// QueryRackByPropertyName queries Rack Entity in the datastore
+//
+// If keysOnly is true, then only key field is populated in returned racks
+func QueryRackByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Rack, error) {
+	q := datastore.NewQuery(RackKind).KeysOnly(keysOnly)
+	var entities []*RackEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No racks found for the query: %s", id)
+		return nil, nil
+	}
+	racks := make([]*fleet.Rack, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			rack := &fleet.Rack{
+				Name: entity.ID,
+			}
+			racks = append(racks, rack)
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			racks = append(racks, pm.(*fleet.Rack))
+		}
+	}
+	return racks, nil
+}
+
 // CreateRack creates a new rack in datastore.
 func CreateRack(ctx context.Context, rack *fleet.Rack) (*fleet.Rack, error) {
 	return putRack(ctx, rack, false)
@@ -118,6 +151,15 @@ func DeleteRack(ctx context.Context, id string) error {
 	return fleetds.Delete(ctx, &fleet.Rack{Name: id}, newRackEntity)
 }
 
+// BatchUpdateRacks updates racks in datastore.
+//
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateRacks(ctx context.Context, racks []*fleet.Rack) ([]*fleet.Rack, error) {
+	return putAllRack(ctx, racks, true)
+}
+
 func putRack(ctx context.Context, rack *fleet.Rack, update bool) (*fleet.Rack, error) {
 	rack.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, rack, newRackEntity, update)
@@ -136,4 +178,18 @@ func ImportRacks(ctx context.Context, racks []*fleet.Rack) (*fleetds.OpResults, 
 		protos[i] = m
 	}
 	return fleetds.Insert(ctx, protos, newRackEntity, true, true)
+}
+
+func putAllRack(ctx context.Context, racks []*fleet.Rack, update bool) ([]*fleet.Rack, error) {
+	protos := make([]proto.Message, len(racks))
+	updateTime := ptypes.TimestampNow()
+	for i, rack := range racks {
+		rack.UpdateTime = updateTime
+		protos[i] = rack
+	}
+	_, err := fleetds.PutAll(ctx, protos, newRackEntity, update)
+	if err == nil {
+		return racks, err
+	}
+	return nil, err
 }
