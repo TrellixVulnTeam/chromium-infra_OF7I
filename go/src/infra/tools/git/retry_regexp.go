@@ -81,6 +81,11 @@ var defaultGitRetryRegexpSource = []string{
 
 	// crbug.com/1061473
 	`The requested URL returned error: 429`,
+
+	// b/155578399
+	`RESOURCE_EXHAUSTED`,
+	`Resource has been exhausted`,
+	`check quota`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
