@@ -29,6 +29,7 @@ const (
 	NicNameFormat            string = "Invalid input - Entity Name pattern should be nics/{nic}."
 	KVMNameFormat            string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
 	RPMNameFormat            string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
+	DracNameFormat           string = "Invalid input - Entity Name pattern should be dracs/{drac}."
 )
 
 var (
@@ -45,6 +46,7 @@ var rackLSERegex = regexp.MustCompile(`rackLSEs\.*`)
 var nicRegex = regexp.MustCompile(`nics\.*`)
 var kvmRegex = regexp.MustCompile(`kvms\.*`)
 var rpmRegex = regexp.MustCompile(`rpms\.*`)
+var dracRegex = regexp.MustCompile(`dracs\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -348,6 +350,44 @@ func (r *ListRPMsRequest) Validate() error {
 // Validate validates input requests of DeleteRPM.
 func (r *DeleteRPMRequest) Validate() error {
 	return validateResourceName(rpmRegex, RPMNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateDrac.
+func (r *CreateDracRequest) Validate() error {
+	if r.Drac == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.DracId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateDrac.
+func (r *UpdateDracRequest) Validate() error {
+	if r.Drac == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(dracRegex, DracNameFormat, r.Drac.GetName())
+}
+
+// Validate validates input requests of GetDrac.
+func (r *GetDracRequest) Validate() error {
+	return validateResourceName(dracRegex, DracNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListDracs.
+func (r *ListDracsRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteDrac.
+func (r *DeleteDracRequest) Validate() error {
+	return validateResourceName(dracRegex, DracNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

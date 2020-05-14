@@ -618,3 +618,93 @@ func (fs *FleetServerImpl) DeleteRPM(ctx context.Context, req *api.DeleteRPMRequ
 	err = registration.DeleteRPM(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateDrac creates drac entry in database.
+func (fs *FleetServerImpl) CreateDrac(ctx context.Context, req *api.CreateDracRequest) (rsp *proto.Drac, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Drac.Name = req.DracId
+	drac, err := registration.CreateDrac(ctx, req.Drac)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	drac.Name = util.AddPrefix(dracCollection, drac.Name)
+	return drac, err
+}
+
+// UpdateDrac updates the drac information in database.
+func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *api.UpdateDracRequest) (rsp *proto.Drac, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Drac.Name = util.RemovePrefix(req.Drac.Name)
+	drac, err := registration.UpdateDrac(ctx, req.Drac)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	drac.Name = util.AddPrefix(dracCollection, drac.Name)
+	return drac, err
+}
+
+// GetDrac gets the drac information from database.
+func (fs *FleetServerImpl) GetDrac(ctx context.Context, req *api.GetDracRequest) (rsp *proto.Drac, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	drac, err := registration.GetDrac(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	drac.Name = util.AddPrefix(dracCollection, drac.Name)
+	return drac, err
+}
+
+// ListDracs list the dracs information from database.
+func (fs *FleetServerImpl) ListDracs(ctx context.Context, req *api.ListDracsRequest) (rsp *api.ListDracsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListDracs(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, drac := range result {
+		drac.Name = util.AddPrefix(dracCollection, drac.Name)
+	}
+	return &api.ListDracsResponse{
+		Dracs:         result,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
+// DeleteDrac deletes the drac from database.
+func (fs *FleetServerImpl) DeleteDrac(ctx context.Context, req *api.DeleteDracRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteDrac(ctx, name)
+	return &empty.Empty{}, err
+}

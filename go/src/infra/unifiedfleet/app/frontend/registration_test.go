@@ -76,6 +76,12 @@ func mockRPM(id string) *proto.RPM {
 	}
 }
 
+func mockDrac(id string) *proto.Drac {
+	return &proto.Drac{
+		Name: util.AddPrefix(dracCollection, id),
+	}
+}
+
 func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -1897,6 +1903,376 @@ func TestDeleteRPM(t *testing.T) {
 				Name: util.AddPrefix(rpmCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRPM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestCreateDrac(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	drac1 := mockDrac("")
+	drac2 := mockDrac("")
+	drac3 := mockDrac("")
+	Convey("CreateDrac", t, func() {
+		Convey("Create new drac with drac_id", func() {
+			req := &api.CreateDracRequest{
+				Drac:   drac1,
+				DracId: "Drac-1",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac1)
+		})
+
+		Convey("Create existing drac", func() {
+			req := &api.CreateDracRequest{
+				Drac:   drac3,
+				DracId: "Drac-1",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+
+		Convey("Create new drac - Invalid input nil", func() {
+			req := &api.CreateDracRequest{
+				Drac: nil,
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new drac - Invalid input empty ID", func() {
+			req := &api.CreateDracRequest{
+				Drac:   drac2,
+				DracId: "",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new drac - Invalid input invalid characters", func() {
+			req := &api.CreateDracRequest{
+				Drac:   drac2,
+				DracId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateDrac(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	drac1 := mockDrac("")
+	drac2 := mockDrac("drac-1")
+	drac3 := mockDrac("drac-3")
+	drac4 := mockDrac("a.b)7&")
+	Convey("UpdateDrac", t, func() {
+		Convey("Update existing drac", func() {
+			req := &api.CreateDracRequest{
+				Drac:   drac1,
+				DracId: "drac-1",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac1)
+			ureq := &api.UpdateDracRequest{
+				Drac: drac2,
+			}
+			resp, err = tf.Fleet.UpdateDrac(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac2)
+		})
+
+		Convey("Update non-existing drac", func() {
+			ureq := &api.UpdateDracRequest{
+				Drac: drac3,
+			}
+			resp, err := tf.Fleet.UpdateDrac(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Update drac - Invalid input nil", func() {
+			req := &api.UpdateDracRequest{
+				Drac: nil,
+			}
+			resp, err := tf.Fleet.UpdateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update drac - Invalid input empty name", func() {
+			drac3.Name = ""
+			req := &api.UpdateDracRequest{
+				Drac: drac3,
+			}
+			resp, err := tf.Fleet.UpdateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update drac - Invalid input invalid characters", func() {
+			req := &api.UpdateDracRequest{
+				Drac: drac4,
+			}
+			resp, err := tf.Fleet.UpdateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestGetDrac(t *testing.T) {
+	t.Parallel()
+	Convey("GetDrac", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		drac1 := mockDrac("drac-1")
+		req := &api.CreateDracRequest{
+			Drac:   drac1,
+			DracId: "drac-1",
+		}
+		resp, err := tf.Fleet.CreateDrac(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, drac1)
+		Convey("Get drac by existing ID", func() {
+			req := &api.GetDracRequest{
+				Name: util.AddPrefix(dracCollection, "drac-1"),
+			}
+			resp, err := tf.Fleet.GetDrac(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac1)
+		})
+		Convey("Get drac by non-existing ID", func() {
+			req := &api.GetDracRequest{
+				Name: util.AddPrefix(dracCollection, "drac-2"),
+			}
+			resp, err := tf.Fleet.GetDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get drac - Invalid input empty name", func() {
+			req := &api.GetDracRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get drac - Invalid input invalid characters", func() {
+			req := &api.GetDracRequest{
+				Name: util.AddPrefix(dracCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListDracs(t *testing.T) {
+	t.Parallel()
+	Convey("ListDracs", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		dracs := make([]*proto.Drac, 0, 4)
+		for i := 0; i < 4; i++ {
+			drac1 := mockDrac("")
+			req := &api.CreateDracRequest{
+				Drac:   drac1,
+				DracId: fmt.Sprintf("drac-%d", i),
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac1)
+			dracs = append(dracs, resp)
+		}
+
+		Convey("ListDracs - page_size negative", func() {
+			req := &api.ListDracsRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListDracs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListDracs - page_token invalid", func() {
+			req := &api.ListDracsRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListDracs(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListDracs - Full listing Max PageSize", func() {
+			req := &api.ListDracsRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListDracs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Dracs, ShouldResembleProto, dracs)
+		})
+
+		Convey("ListDracs - Full listing with no pagination", func() {
+			req := &api.ListDracsRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListDracs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Dracs, ShouldResembleProto, dracs)
+		})
+
+		Convey("ListDracs - listing with pagination", func() {
+			req := &api.ListDracsRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListDracs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Dracs, ShouldResembleProto, dracs[:3])
+
+			req = &api.ListDracsRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListDracs(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Dracs, ShouldResembleProto, dracs[3:])
+		})
+	})
+}
+
+func TestDeleteDrac(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteDrac", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete drac by existing ID with machine reference", func() {
+			drac1 := mockDrac("")
+			req := &api.CreateDracRequest{
+				Drac:   drac1,
+				DracId: "drac-1",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac1)
+
+			chromeBrowserMachine1 := &proto.Machine{
+				Name: util.AddPrefix(machineCollection, "machine-1"),
+				Device: &proto.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+						Drac: "drac-1",
+					},
+				},
+			}
+			mreq := &api.CreateMachineRequest{
+				Machine:   chromeBrowserMachine1,
+				MachineId: "machine-1",
+			}
+			mresp, merr := tf.Fleet.CreateMachine(tf.C, mreq)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+
+			dreq := &api.DeleteDracRequest{
+				Name: util.AddPrefix(dracCollection, "drac-1"),
+			}
+			_, err = tf.Fleet.DeleteDrac(tf.C, dreq)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, CannotDelete)
+
+			greq := &api.GetDracRequest{
+				Name: util.AddPrefix(dracCollection, "drac-1"),
+			}
+			res, err := tf.Fleet.GetDrac(tf.C, greq)
+			So(res, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(res, ShouldResembleProto, drac1)
+		})
+
+		Convey("Delete drac by existing ID without references", func() {
+			drac2 := mockDrac("")
+			req := &api.CreateDracRequest{
+				Drac:   drac2,
+				DracId: "drac-2",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac2)
+
+			dreq := &api.DeleteDracRequest{
+				Name: util.AddPrefix(dracCollection, "drac-2"),
+			}
+			_, err = tf.Fleet.DeleteDrac(tf.C, dreq)
+			So(err, ShouldBeNil)
+
+			greq := &api.GetDracRequest{
+				Name: util.AddPrefix(dracCollection, "drac-2"),
+			}
+			res, err := tf.Fleet.GetDrac(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete drac by non-existing ID", func() {
+			req := &api.DeleteDracRequest{
+				Name: util.AddPrefix(dracCollection, "drac-2"),
+			}
+			_, err := tf.Fleet.DeleteDrac(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete drac - Invalid input empty name", func() {
+			req := &api.DeleteDracRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete drac - Invalid input invalid characters", func() {
+			req := &api.DeleteDracRequest{
+				Name: util.AddPrefix(dracCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteDrac(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)

@@ -774,3 +774,88 @@ func (s *DecoratedFleet) DeleteRPM(ctx context.Context, req *DeleteRPMRequest) (
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateDrac(ctx context.Context, req *CreateDracRequest) (rsp *proto1.Drac, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateDrac", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateDrac(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateDrac", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateDrac(ctx context.Context, req *UpdateDracRequest) (rsp *proto1.Drac, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateDrac", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateDrac(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateDrac", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetDrac(ctx context.Context, req *GetDracRequest) (rsp *proto1.Drac, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetDrac", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetDrac(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetDrac", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListDracs(ctx context.Context, req *ListDracsRequest) (rsp *ListDracsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListDracs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListDracs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListDracs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteDrac(ctx context.Context, req *DeleteDracRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteDrac", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteDrac(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteDrac", rsp, err)
+	}
+	return
+}

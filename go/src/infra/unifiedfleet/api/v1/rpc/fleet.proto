@@ -156,6 +156,21 @@ service Fleet {
 
   // Delete delete the RPM
   rpc DeleteRPM(DeleteRPMRequest) returns (google.protobuf.Empty);
+
+  // CreateDrac creates a new drac
+  rpc CreateDrac(CreateDracRequest) returns (proto.Drac);
+
+  // Update updates the drac
+  rpc UpdateDrac(UpdateDracRequest) returns (proto.Drac);
+
+  // Get retrieves the details of the drac
+  rpc GetDrac(GetDracRequest) returns (proto.Drac);
+
+  // List gets all the dracs
+  rpc ListDracs(ListDracsRequest) returns (ListDracsResponse);
+
+  // Delete delete the drac
+  rpc DeleteDrac(DeleteDracRequest) returns (google.protobuf.Empty);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -699,5 +714,67 @@ message DeleteRPMRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RPM" }
+  ];
+}
+
+// Contains the required information for creating a Drac represented in
+// the database.
+message CreateDracRequest {
+  // The drac to create.
+  proto.Drac drac = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the Drac, which will become the final component of
+  // the Drac's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string drac_id = 2;
+}
+
+message UpdateDracRequest {
+  // The drac to update.
+  proto.Drac drac = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetDracRequest {
+  // The name of the drac to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Drac" }
+  ];
+}
+
+message ListDracsRequest {
+  // The maximum number of dracs to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 dracs will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListDracs` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListDracs` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListDracsResponse {
+  // The dracs from datastore.
+  repeated proto.Drac dracs = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteDracRequest {
+  // The name of the Drac to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Drac" }
   ];
 }

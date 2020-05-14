@@ -30,6 +30,7 @@ const (
 	nicCollection            string = "nics"
 	kvmCollection            string = "kvms"
 	rpmCollection            string = "rpms"
+	dracCollection           string = "dracs"
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	importPageSize int = 500
 )
