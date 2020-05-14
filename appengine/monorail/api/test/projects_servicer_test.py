@@ -49,7 +49,7 @@ class ProjectsServicerTest(unittest.TestCase):
 
     self.admin = self.services.user.TestAddUser('admin@example.com', 123)
     self.admin.is_site_admin = True
-    self.services.user.TestAddUser('owner@example.com', 111)
+    self.owner = self.services.user.TestAddUser('owner@example.com', 111)
     self.services.user.TestAddUser('user_222@example.com', 222)
     self.services.user.TestAddUser('user_333@example.com', 333)
     self.services.user.TestAddUser('user_444@example.com', 444)
@@ -390,11 +390,11 @@ class ProjectsServicerTest(unittest.TestCase):
     return response
 
   def testGetVisibleMembers_Normal(self):
-    # Not logged in
-    self.assertVisibleMembers([111, 222, 333], [])
-    # Logged in
-    self.assertVisibleMembers([111, 222, 333], [],
-                              requester='foo@example.com')
+    # Not logged in - Test users have their email addresses obscured to
+    # non-project members by default.
+    self.assertVisibleMembers([], [])
+    # Logged in as non project member
+    self.assertVisibleMembers([], [], requester='foo@example.com')
     # Logged in as owner
     self.assertVisibleMembers([111, 222, 333], [],
                               requester='owner@example.com')
@@ -438,6 +438,25 @@ class ProjectsServicerTest(unittest.TestCase):
     self.project.contributor_ids.extend([999])
     self.assertVisibleMembers([999, 111, 222, 333], [999],
                               requester='owner@example.com')
+
+  def testGetVisibleMembers_ObscuredEmails(self):
+    # Unobscure the owner's email. Non-project members can see.
+    self.services.user.UpdateUserSettings(
+        self.cnxn, 111, self.owner, obscure_email=False)
+
+    # Not logged in
+    self.assertVisibleMembers([111], [])
+    # Logged in as not a project member
+    self.assertVisibleMembers([111], [], requester='foo@example.com')
+    # Logged in as owner
+    self.assertVisibleMembers(
+        [111, 222, 333], [], requester='owner@example.com')
+    # Logged in as committer
+    self.assertVisibleMembers(
+        [111, 222, 333], [], requester='user_222@example.com')
+    # Logged in as contributor
+    self.assertVisibleMembers(
+        [111, 222, 333], [], requester='user_333@example.com')
 
   def testListStatuses(self):
     request = projects_pb2.ListStatusesRequest(project_name='proj')

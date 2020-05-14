@@ -1072,11 +1072,14 @@ def GetVisibleMembers(mr, project, services):
   visible_member_ids = _FilterMemberData(
       mr, project.owner_ids, project.committer_ids, project.contributor_ids,
       indirect_user_ids, project)
+
   visible_member_ids = _MergeLinkedMembers(
       mr.cnxn, services.user, visible_member_ids)
 
   visible_member_views = framework_views.MakeAllUserViews(
       mr.cnxn, services.user, visible_member_ids, group_ids=all_group_ids)
+  framework_views.RevealAllEmailsToMembers(
+      mr.auth, project, visible_member_views)
 
   # Filter out service accounts
   service_acct_emails = set(
@@ -1084,9 +1087,14 @@ def GetVisibleMembers(mr, project, services):
   visible_member_views = {
       m.user_id: m
       for m in visible_member_views.values()
+      # Hide service accounts from autocomplete.
       if not framework_helpers.IsServiceAccount(
-        m.email, client_emails=service_acct_emails)
-      and not m.user_id in ac_exclusion_ids}
+          m.email, client_emails=service_acct_emails)
+      # Hide users who opted out of autocomplete.
+      and not m.user_id in ac_exclusion_ids
+      # Hide users who have obscured email addresses.
+      and not m.obscure_email
+  }
 
   return visible_member_views
 
