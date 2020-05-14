@@ -129,6 +129,91 @@ func (s *DecoratedFleet) ImportChromePlatforms(ctx context.Context, req *ImportC
 	return
 }
 
+func (s *DecoratedFleet) CreateMachineLSEPrototype(ctx context.Context, req *CreateMachineLSEPrototypeRequest) (rsp *proto1.MachineLSEPrototype, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateMachineLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateMachineLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateMachineLSEPrototype", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateMachineLSEPrototype(ctx context.Context, req *UpdateMachineLSEPrototypeRequest) (rsp *proto1.MachineLSEPrototype, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateMachineLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateMachineLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateMachineLSEPrototype", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetMachineLSEPrototype(ctx context.Context, req *GetMachineLSEPrototypeRequest) (rsp *proto1.MachineLSEPrototype, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetMachineLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetMachineLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetMachineLSEPrototype", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListMachineLSEPrototypes(ctx context.Context, req *ListMachineLSEPrototypesRequest) (rsp *ListMachineLSEPrototypesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListMachineLSEPrototypes", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListMachineLSEPrototypes(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListMachineLSEPrototypes", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteMachineLSEPrototype(ctx context.Context, req *DeleteMachineLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteMachineLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteMachineLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteMachineLSEPrototype", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) CreateMachine(ctx context.Context, req *CreateMachineRequest) (rsp *proto1.Machine, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

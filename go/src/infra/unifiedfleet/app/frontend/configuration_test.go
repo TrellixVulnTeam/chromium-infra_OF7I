@@ -41,6 +41,12 @@ func mockChromePlatform(id, desc string) *proto.ChromePlatform {
 	}
 }
 
+func mockMachineLSEPrototype(id string) *proto.MachineLSEPrototype {
+	return &proto.MachineLSEPrototype{
+		Name: util.AddPrefix(machineLSEPrototypeCollection, id),
+	}
+}
+
 func TestCreateChromePlatform(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -460,6 +466,372 @@ func TestImportChromePlatforms(t *testing.T) {
 			s, ok := status.FromError(err)
 			So(ok, ShouldBeTrue)
 			So(s.Code(), ShouldEqual, code.Code_INVALID_ARGUMENT)
+		})
+	})
+}
+
+func TestCreateMachineLSEPrototype(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	machineLSEPrototype1 := mockMachineLSEPrototype("")
+	machineLSEPrototype2 := mockMachineLSEPrototype("")
+	machineLSEPrototype3 := mockMachineLSEPrototype("")
+	Convey("CreateMachineLSEPrototype", t, func() {
+		Convey("Create new machineLSEPrototype with machineLSEPrototype_id", func() {
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype1,
+				MachineLSEPrototypeId: "MachineLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototype1)
+		})
+
+		Convey("Create existing machineLSEPrototype", func() {
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype3,
+				MachineLSEPrototypeId: "MachineLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.AlreadyExists)
+		})
+
+		Convey("Create new machineLSEPrototype - Invalid input nil", func() {
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype: nil,
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new machineLSEPrototype - Invalid input empty ID", func() {
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype2,
+				MachineLSEPrototypeId: "",
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new machineLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype2,
+				MachineLSEPrototypeId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateMachineLSEPrototype(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	machineLSEPrototype1 := mockMachineLSEPrototype("")
+	machineLSEPrototype2 := mockMachineLSEPrototype("machineLSEPrototype-1")
+	machineLSEPrototype3 := mockMachineLSEPrototype("machineLSEPrototype-3")
+	machineLSEPrototype4 := mockMachineLSEPrototype("a.b)7&")
+	Convey("UpdateMachineLSEPrototype", t, func() {
+		Convey("Update existing machineLSEPrototype", func() {
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype1,
+				MachineLSEPrototypeId: "machineLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototype1)
+			ureq := &api.UpdateMachineLSEPrototypeRequest{
+				MachineLSEPrototype: machineLSEPrototype2,
+			}
+			resp, err = tf.Fleet.UpdateMachineLSEPrototype(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototype2)
+		})
+
+		Convey("Update non-existing machineLSEPrototype", func() {
+			ureq := &api.UpdateMachineLSEPrototypeRequest{
+				MachineLSEPrototype: machineLSEPrototype3,
+			}
+			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Update machineLSEPrototype - Invalid input nil", func() {
+			req := &api.UpdateMachineLSEPrototypeRequest{
+				MachineLSEPrototype: nil,
+			}
+			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update machineLSEPrototype - Invalid input empty name", func() {
+			machineLSEPrototype3.Name = ""
+			req := &api.UpdateMachineLSEPrototypeRequest{
+				MachineLSEPrototype: machineLSEPrototype3,
+			}
+			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update machineLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.UpdateMachineLSEPrototypeRequest{
+				MachineLSEPrototype: machineLSEPrototype4,
+			}
+			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestGetMachineLSEPrototype(t *testing.T) {
+	t.Parallel()
+	Convey("GetMachineLSEPrototype", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		machineLSEPrototype1 := mockMachineLSEPrototype("machineLSEPrototype-1")
+		req := &api.CreateMachineLSEPrototypeRequest{
+			MachineLSEPrototype:   machineLSEPrototype1,
+			MachineLSEPrototypeId: "machineLSEPrototype-1",
+		}
+		resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, machineLSEPrototype1)
+		Convey("Get machineLSEPrototype by existing ID", func() {
+			req := &api.GetMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-1"),
+			}
+			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototype1)
+		})
+		Convey("Get machineLSEPrototype by non-existing ID", func() {
+			req := &api.GetMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+			}
+			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+		Convey("Get machineLSEPrototype - Invalid input empty name", func() {
+			req := &api.GetMachineLSEPrototypeRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get machineLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.GetMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListMachineLSEPrototypes(t *testing.T) {
+	t.Parallel()
+	Convey("ListMachineLSEPrototypes", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		machineLSEPrototypes := make([]*proto.MachineLSEPrototype, 0, 4)
+		for i := 0; i < 4; i++ {
+			machineLSEPrototype1 := mockMachineLSEPrototype("")
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype1,
+				MachineLSEPrototypeId: fmt.Sprintf("machineLSEPrototype-%d", i),
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototype1)
+			machineLSEPrototypes = append(machineLSEPrototypes, resp)
+		}
+
+		Convey("ListMachineLSEPrototypes - page_size negative", func() {
+			req := &api.ListMachineLSEPrototypesRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListMachineLSEPrototypes - page_token invalid", func() {
+			req := &api.ListMachineLSEPrototypesRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.InvalidPageToken)
+		})
+
+		Convey("ListMachineLSEPrototypes - Full listing Max PageSize", func() {
+			req := &api.ListMachineLSEPrototypesRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes)
+		})
+
+		Convey("ListMachineLSEPrototypes - Full listing with no pagination", func() {
+			req := &api.ListMachineLSEPrototypesRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes)
+		})
+
+		Convey("ListMachineLSEPrototypes - listing with pagination", func() {
+			req := &api.ListMachineLSEPrototypesRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes[:3])
+
+			req = &api.ListMachineLSEPrototypesRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes[3:])
+		})
+	})
+}
+
+func TestDeleteMachineLSEPrototype(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteMachineLSEPrototype", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete machineLSEPrototype by existing ID with references", func() {
+			machineLSEPrototype1 := mockMachineLSEPrototype("")
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype1,
+				MachineLSEPrototypeId: "machineLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototype1)
+
+			machineLSE1 := &proto.MachineLSE{
+				Name:                util.AddPrefix(machineLSECollection, "machinelse-1"),
+				MachineLsePrototype: "machineLSEPrototype-1",
+			}
+			mreq := &api.CreateMachineLSERequest{
+				MachineLSE:   machineLSE1,
+				MachineLSEId: "machinelse-1",
+			}
+			mresp, merr := tf.Fleet.CreateMachineLSE(tf.C, mreq)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, machineLSE1)
+
+			dreq := &api.DeleteMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-1"),
+			}
+			_, err = tf.Fleet.DeleteMachineLSEPrototype(tf.C, dreq)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
+
+			greq := &api.GetMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-1"),
+			}
+			res, err := tf.Fleet.GetMachineLSEPrototype(tf.C, greq)
+			So(res, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(res, ShouldResembleProto, machineLSEPrototype1)
+		})
+
+		Convey("Delete machineLSEPrototype by existing ID without references", func() {
+			machineLSEPrototype2 := mockMachineLSEPrototype("")
+			req := &api.CreateMachineLSEPrototypeRequest{
+				MachineLSEPrototype:   machineLSEPrototype2,
+				MachineLSEPrototypeId: "machineLSEPrototype-2",
+			}
+			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototype2)
+
+			dreq := &api.DeleteMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+			}
+			_, err = tf.Fleet.DeleteMachineLSEPrototype(tf.C, dreq)
+			So(err, ShouldBeNil)
+
+			greq := &api.GetMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+			}
+			res, err := tf.Fleet.GetMachineLSEPrototype(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Delete machineLSEPrototype by non-existing ID", func() {
+			req := &api.DeleteMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+			}
+			_, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Delete machineLSEPrototype - Invalid input empty name", func() {
+			req := &api.DeleteMachineLSEPrototypeRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete machineLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.DeleteMachineLSEPrototypeRequest{
+				Name: util.AddPrefix(machineLSEPrototypeCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
 }

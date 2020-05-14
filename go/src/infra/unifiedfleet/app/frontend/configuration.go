@@ -178,3 +178,93 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 	s := processImportDatastoreRes(res, err)
 	return s.Proto(), s.Err()
 }
+
+// CreateMachineLSEPrototype creates machinelseprototype entry in database.
+func (fs *FleetServerImpl) CreateMachineLSEPrototype(ctx context.Context, req *api.CreateMachineLSEPrototypeRequest) (rsp *proto.MachineLSEPrototype, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.MachineLSEPrototype.Name = req.MachineLSEPrototypeId
+	machineLSEPrototype, err := configuration.CreateMachineLSEPrototype(ctx, req.MachineLSEPrototype)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+	return machineLSEPrototype, err
+}
+
+// UpdateMachineLSEPrototype updates the machinelseprototype information in database.
+func (fs *FleetServerImpl) UpdateMachineLSEPrototype(ctx context.Context, req *api.UpdateMachineLSEPrototypeRequest) (rsp *proto.MachineLSEPrototype, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.MachineLSEPrototype.Name = util.RemovePrefix(req.MachineLSEPrototype.Name)
+	machineLSEPrototype, err := configuration.UpdateMachineLSEPrototype(ctx, req.MachineLSEPrototype)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+	return machineLSEPrototype, err
+}
+
+// GetMachineLSEPrototype gets the machinelseprototype information from database.
+func (fs *FleetServerImpl) GetMachineLSEPrototype(ctx context.Context, req *api.GetMachineLSEPrototypeRequest) (rsp *proto.MachineLSEPrototype, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	machineLSEPrototype, err := configuration.GetMachineLSEPrototype(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+	return machineLSEPrototype, err
+}
+
+// ListMachineLSEPrototypes list the machinelseprototypes information from database.
+func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *api.ListMachineLSEPrototypesRequest) (rsp *api.ListMachineLSEPrototypesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := configuration.ListMachineLSEPrototypes(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, machineLSEPrototype := range result {
+		machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+	}
+	return &api.ListMachineLSEPrototypesResponse{
+		MachineLSEPrototypes: result,
+		NextPageToken:        nextPageToken,
+	}, nil
+}
+
+// DeleteMachineLSEPrototype deletes the machinelseprototype from database.
+func (fs *FleetServerImpl) DeleteMachineLSEPrototype(ctx context.Context, req *api.DeleteMachineLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = configuration.DeleteMachineLSEPrototype(ctx, name)
+	return &empty.Empty{}, err
+}

@@ -16,22 +16,23 @@ import (
 
 // Error messages for input validation
 const (
-	NilEntity                string = "Invalid input - No Entity to add/update."
-	EmptyID                  string = "Invalid input - Entity ID is empty."
-	EmptyName                string = "Invalid input - Entity Name is empty."
-	InvalidCharacters        string = "Invalid input - Entity ID must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
-	InvalidPageSize          string = "Invalid input - PageSize should be non-negative."
-	MachineNameFormat        string = "Invalid input - Entity Name pattern should be machines/{machine}."
-	RackNameFormat           string = "Invalid input - Entity Name pattern should be racks/{rack}."
-	ChromePlatformNameFormat string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
-	MachineLSENameFormat     string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
-	RackLSENameFormat        string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
-	NicNameFormat            string = "Invalid input - Entity Name pattern should be nics/{nic}."
-	KVMNameFormat            string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
-	RPMNameFormat            string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
-	DracNameFormat           string = "Invalid input - Entity Name pattern should be dracs/{drac}."
-	SwitchNameFormat         string = "Invalid input - Entity Name pattern should be switches/{switch}."
-	VlanNameFormat           string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
+	NilEntity                     string = "Invalid input - No Entity to add/update."
+	EmptyID                       string = "Invalid input - Entity ID is empty."
+	EmptyName                     string = "Invalid input - Entity Name is empty."
+	InvalidCharacters             string = "Invalid input - Entity ID must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
+	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
+	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
+	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
+	ChromePlatformNameFormat      string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
+	MachineLSENameFormat          string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
+	RackLSENameFormat             string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
+	NicNameFormat                 string = "Invalid input - Entity Name pattern should be nics/{nic}."
+	KVMNameFormat                 string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
+	RPMNameFormat                 string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
+	DracNameFormat                string = "Invalid input - Entity Name pattern should be dracs/{drac}."
+	SwitchNameFormat              string = "Invalid input - Entity Name pattern should be switches/{switch}."
+	VlanNameFormat                string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
+	MachineLSEPrototypeNameFormat string = "Invalid input - Entity Name pattern should be machineLSEPrototypes/{machineLSEPrototype}."
 )
 
 var (
@@ -51,6 +52,7 @@ var rpmRegex = regexp.MustCompile(`rpms\.*`)
 var dracRegex = regexp.MustCompile(`dracs\.*`)
 var switchRegex = regexp.MustCompile(`switches\.*`)
 var vlanRegex = regexp.MustCompile(`vlans\.*`)
+var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -88,6 +90,44 @@ func (r *ListChromePlatformsRequest) Validate() error {
 // Validate validates input requests of DeleteChromePlatform.
 func (r *DeleteChromePlatformRequest) Validate() error {
 	return validateResourceName(chromePlatformRegex, ChromePlatformNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateMachineLSEPrototype.
+func (r *CreateMachineLSEPrototypeRequest) Validate() error {
+	if r.MachineLSEPrototype == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.MachineLSEPrototypeId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateMachineLSEPrototype.
+func (r *UpdateMachineLSEPrototypeRequest) Validate() error {
+	if r.MachineLSEPrototype == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(machineLSEPrototypeRegex, MachineLSEPrototypeNameFormat, r.MachineLSEPrototype.GetName())
+}
+
+// Validate validates input requests of GetMachineLSEPrototype.
+func (r *GetMachineLSEPrototypeRequest) Validate() error {
+	return validateResourceName(machineLSEPrototypeRegex, MachineLSEPrototypeNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListMachineLSEPrototypes.
+func (r *ListMachineLSEPrototypesRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteMachineLSEPrototype.
+func (r *DeleteMachineLSEPrototypeRequest) Validate() error {
+	return validateResourceName(machineLSEPrototypeRegex, MachineLSEPrototypeNameFormat, r.Name)
 }
 
 // Validate validates input requests of CreateMachine.
