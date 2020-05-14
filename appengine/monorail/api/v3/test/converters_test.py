@@ -213,10 +213,14 @@ class ConverterFunctionsTest(unittest.TestCase):
         label='mont-blanc',
         label_docstring='test label doc string for mont-blanc',
         deprecated=True)
-    predefined_labels = [
+    self.predefined_labels = [
         self.labeldef_1, self.labeldef_2, self.labeldef_3, self.labeldef_4,
         self.labeldef_5
     ]
+    test_label_ids = {}
+    for index, ld in enumerate(self.predefined_labels):
+      test_label_ids[ld.label] = index
+    self.services.config.TestAddLabelsDict(test_label_ids)
     self.status_1 = tracker_pb2.StatusDef(
         status='New', means_open=True, status_docstring='status_1 docstring')
     self.status_2 = tracker_pb2.StatusDef(
@@ -235,6 +239,16 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.predefined_statuses = [
         self.status_1, self.status_2, self.status_3, self.status_4
     ]
+    self.component_def_1_path = 'foo'
+    self.component_def_1_id = self.services.config.CreateComponentDef(
+        self.cnxn, self.project_1.project_id, self.component_def_1_path,
+        'cd1_docstring', False, [self.user_1.user_id], [self.user_2.user_id],
+        self.PAST_TIME, self.user_1.user_id, [0, 1, 2, 3, 4])
+    self.component_def_2_path = 'foo>bar'
+    self.component_def_2_id = self.services.config.CreateComponentDef(
+        self.cnxn, self.project_1.project_id, self.component_def_2_path,
+        'cd2_docstring', True, [self.user_1.user_id], [self.user_2.user_id],
+        self.PAST_TIME, self.user_1.user_id, [])
     self.services.config.UpdateConfig(
         self.cnxn,
         self.project_1,
@@ -246,7 +260,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         # UpdateConfig accepts tuples rather than protorpc *Defs
         well_known_labels=[
             (ld.label, ld.label_docstring, ld.deprecated)
-            for ld in predefined_labels
+            for ld in self.predefined_labels
         ],
         approval_defs=[
             (ad.approval_id, ad.approver_ids, ad.survey) for ad in approval_defs
@@ -1713,3 +1727,48 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         project_objects_pb2.StatusDef.StatusDefState.Value('DEPRECATED'),
         actual[0].state)
+
+  def testConvertComponentDefs(self):
+    """We can convert ComponentDefs"""
+    project_config = self.services.config.GetProjectConfig(
+        self.cnxn, self.project_1.project_id)
+    self.assertEqual(len(project_config.component_defs), 2)
+
+    actual = self.converter.ConvertComponentDefs(
+        project_config.component_defs, self.project_1.project_id)
+    self.assertEqual(2, len(actual))
+
+    resource_names_dict = rnc.ConvertComponentDefNames(
+        self.cnxn, [self.component_def_1_id, self.component_def_2_id],
+        self.project_1.project_id, self.services)
+    self.assertEqual(
+        resource_names_dict.get(self.component_def_1_id), actual[0].name)
+    self.assertEqual(
+        resource_names_dict.get(self.component_def_2_id), actual[1].name)
+    self.assertEqual(self.component_def_1_path, actual[0].value)
+    self.assertEqual(self.component_def_2_path, actual[1].value)
+    self.assertEqual('cd1_docstring', actual[0].docstring)
+    self.assertEqual(
+        project_objects_pb2.ComponentDef.ComponentDefState.Value('ACTIVE'),
+        actual[0].state)
+    self.assertEqual(
+        project_objects_pb2.ComponentDef.ComponentDefState.Value('DEPRECATED'),
+        actual[1].state)
+    # component_def 1 and 2 have the same admins, ccs, creator, and crate_time
+    expected_admins = [rnc.ConvertUserName(self.user_1.user_id)]
+    self.assertEqual(expected_admins, actual[0].admins)
+    expected_ccs = [rnc.ConvertUserName(self.user_2.user_id)]
+    self.assertEqual(expected_ccs, actual[0].ccs)
+    expected_creator = rnc.ConvertUserName(self.user_1.user_id)
+    self.assertEqual(expected_creator, actual[0].creator)
+    expected_create_time = timestamp_pb2.Timestamp(seconds=self.PAST_TIME)
+    self.assertEqual(expected_create_time, actual[0].create_time)
+
+    expected_labels = [ld.label for ld in self.predefined_labels]
+    self.assertEqual(expected_labels, actual[0].labels)
+    self.assertEqual([], actual[1].labels)
+
+  def testConvertComponentDefs_Empty(self):
+    """Can handle empty input case"""
+    actual = self.converter.ConvertComponentDefs([], self.project_1.project_id)
+    self.assertEqual([], actual)

@@ -1203,3 +1203,58 @@ class Converter(object):
       )
       api_sds.append(api_sd)
     return api_sds
+
+  def ConvertComponentDefs(self, component_defs, project_id):
+    # type: (Sequence[proto.tracker_pb2.ComponentDef], int) ->
+    #     Sequence[api_proto.project_objects.ComponentDef]
+    """Convert sequence of protorpc ComponentDefs to protoc ComponentDefs
+
+    Args:
+      component_defs: Sequence of protoc ComponentDefs.
+      project_id: ID of the Project these belong to.
+
+    Returns:
+      Sequence of protoc ComponentDefs in the same order they are given in
+      `component_defs`.
+    """
+    resource_names_dict = rnc.ConvertComponentDefNames(
+        self.cnxn, [cd.component_id for cd in component_defs], project_id,
+        self.services)
+    involved_user_ids = tbo.UsersInvolvedInComponents(component_defs)
+    user_resource_names_dict = rnc.ConvertUserNames(involved_user_ids)
+
+    all_label_ids = set()
+    for cd in component_defs:
+      all_label_ids.update(cd.label_ids)
+
+    # If this becomes a performance issue, we should add bulk look up.
+    labels_by_id = {
+        label_id: self.services.config.LookupLabel(
+            self.cnxn, project_id, label_id) for label_id in all_label_ids
+    }
+
+    api_cds = []
+    for cd in component_defs:
+      state = project_objects_pb2.ComponentDef.ComponentDefState.Value('ACTIVE')
+      if cd.deprecated:
+        state = project_objects_pb2.ComponentDef.ComponentDefState.Value(
+            'DEPRECATED')
+
+      api_cd = project_objects_pb2.ComponentDef(
+          name=resource_names_dict.get(cd.component_id),
+          value=cd.path,
+          docstring=cd.docstring,
+          state=state,
+          admins=[
+              user_resource_names_dict.get(admin_id)
+              for admin_id in cd.admin_ids
+          ],
+          ccs=[user_resource_names_dict.get(cc_id) for cc_id in cd.cc_ids],
+          creator=user_resource_names_dict.get(cd.creator_id),
+          modifier=user_resource_names_dict.get(cd.modifier_id),
+          create_time=timestamp_pb2.Timestamp(seconds=cd.created),
+          modify_time=timestamp_pb2.Timestamp(seconds=cd.modified),
+          labels=[labels_by_id[label_id] for label_id in cd.label_ids],
+      )
+      api_cds.append(api_cd)
+    return api_cds
