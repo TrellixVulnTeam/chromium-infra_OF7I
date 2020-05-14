@@ -214,6 +214,91 @@ func (s *DecoratedFleet) DeleteMachineLSEPrototype(ctx context.Context, req *Del
 	return
 }
 
+func (s *DecoratedFleet) CreateRackLSEPrototype(ctx context.Context, req *CreateRackLSEPrototypeRequest) (rsp *proto1.RackLSEPrototype, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateRackLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateRackLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateRackLSEPrototype", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateRackLSEPrototype(ctx context.Context, req *UpdateRackLSEPrototypeRequest) (rsp *proto1.RackLSEPrototype, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateRackLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateRackLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateRackLSEPrototype", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetRackLSEPrototype(ctx context.Context, req *GetRackLSEPrototypeRequest) (rsp *proto1.RackLSEPrototype, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetRackLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetRackLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetRackLSEPrototype", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListRackLSEPrototypes(ctx context.Context, req *ListRackLSEPrototypesRequest) (rsp *ListRackLSEPrototypesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListRackLSEPrototypes", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListRackLSEPrototypes(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListRackLSEPrototypes", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteRackLSEPrototype(ctx context.Context, req *DeleteRackLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteRackLSEPrototype", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteRackLSEPrototype(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteRackLSEPrototype", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) CreateMachine(ctx context.Context, req *CreateMachineRequest) (rsp *proto1.Machine, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

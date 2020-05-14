@@ -56,6 +56,21 @@ service Fleet {
   // Delete delete the MachineLSEPrototype
   rpc DeleteMachineLSEPrototype(DeleteMachineLSEPrototypeRequest) returns (google.protobuf.Empty);
 
+  // CreateRackLSEPrototype creates a new RackLSEPrototype.
+  rpc CreateRackLSEPrototype(CreateRackLSEPrototypeRequest) returns (proto.RackLSEPrototype);
+
+  // Update updates the RackLSEPrototype
+  rpc UpdateRackLSEPrototype(UpdateRackLSEPrototypeRequest) returns (proto.RackLSEPrototype);
+
+  // Get retrieves the details of the RackLSEPrototype
+  rpc GetRackLSEPrototype(GetRackLSEPrototypeRequest) returns (proto.RackLSEPrototype);
+
+  // List gets all the RackLSEPrototypes
+  rpc ListRackLSEPrototypes(ListRackLSEPrototypesRequest) returns (ListRackLSEPrototypesResponse);
+
+  // Delete delete the RackLSEPrototype
+  rpc DeleteRackLSEPrototype(DeleteRackLSEPrototypeRequest) returns (google.protobuf.Empty);
+
   // CreateMachine creates a new machine.
   rpc CreateMachine(CreateMachineRequest) returns (proto.Machine);
 
@@ -357,6 +372,68 @@ message DeleteMachineLSEPrototypeRequest {
   string name = 1 [
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSEPrototype" }
+  ];
+}
+
+// Contains the required information for creating a RackLSEPrototype represented in
+// the database.
+message CreateRackLSEPrototypeRequest {
+  // The RackLSEPrototype to create.
+  proto.RackLSEPrototype rackLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The ID to use for the RackLSEPrototype, which will become the final component of
+  // the RackLSEPrototype's resource name.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+   string rackLSEPrototype_id = 2;
+}
+
+message UpdateRackLSEPrototypeRequest {
+  // The RackLSEPrototype to update.
+  proto.RackLSEPrototype rackLSEPrototype = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message GetRackLSEPrototypeRequest {
+  // The name of the RackLSEPrototype to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RackLSEPrototype" }
+  ];
+}
+
+message ListRackLSEPrototypesRequest {
+  // The maximum number of RackLSEPrototypes to return. The service may return fewer than
+  // this value.
+  // If unspecified, at most 100 RackLSEPrototypes will be returned.
+  // The maximum value is 1000; values above 1000 will be coerced to 1000.
+  int32 page_size = 1;
+
+  // A page token, received from a previous `ListRackLSEPrototypes` call.
+  // Provide this to retrieve the subsequent page.
+  //
+  // When paginating, all other parameters provided to `ListRackLSEPrototypes` must match
+  // the call that provided the page token.
+  string page_token = 2;
+}
+
+message ListRackLSEPrototypesResponse {
+  // The RackLSEPrototypes from datastore.
+  repeated proto.RackLSEPrototype rackLSEPrototypes = 1;
+
+  // A token, which can be sent as `page_token` to retrieve the next page.
+  // If this field is omitted, there are no subsequent pages.
+  string next_page_token = 2;
+}
+
+message DeleteRackLSEPrototypeRequest {
+  // The name of the RackLSEPrototype to delete
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/RackLSEPrototype" }
   ];
 }
 

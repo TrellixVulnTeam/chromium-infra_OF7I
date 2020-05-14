@@ -47,6 +47,12 @@ func mockMachineLSEPrototype(id string) *proto.MachineLSEPrototype {
 	}
 }
 
+func mockRackLSEPrototype(id string) *proto.RackLSEPrototype {
+	return &proto.RackLSEPrototype{
+		Name: util.AddPrefix(rackLSEPrototypeCollection, id),
+	}
+}
+
 func TestCreateChromePlatform(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -829,6 +835,372 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 				Name: util.AddPrefix(machineLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestCreateRackLSEPrototype(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rackLSEPrototype1 := mockRackLSEPrototype("")
+	rackLSEPrototype2 := mockRackLSEPrototype("")
+	rackLSEPrototype3 := mockRackLSEPrototype("")
+	Convey("CreateRackLSEPrototype", t, func() {
+		Convey("Create new rackLSEPrototype with rackLSEPrototype_id", func() {
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype1,
+				RackLSEPrototypeId: "RackLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototype1)
+		})
+
+		Convey("Create existing rackLSEPrototype", func() {
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype3,
+				RackLSEPrototypeId: "RackLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.AlreadyExists)
+		})
+
+		Convey("Create new rackLSEPrototype - Invalid input nil", func() {
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype: nil,
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new rackLSEPrototype - Invalid input empty ID", func() {
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype2,
+				RackLSEPrototypeId: "",
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new rackLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype2,
+				RackLSEPrototypeId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateRackLSEPrototype(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rackLSEPrototype1 := mockRackLSEPrototype("")
+	rackLSEPrototype2 := mockRackLSEPrototype("rackLSEPrototype-1")
+	rackLSEPrototype3 := mockRackLSEPrototype("rackLSEPrototype-3")
+	rackLSEPrototype4 := mockRackLSEPrototype("a.b)7&")
+	Convey("UpdateRackLSEPrototype", t, func() {
+		Convey("Update existing rackLSEPrototype", func() {
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype1,
+				RackLSEPrototypeId: "rackLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototype1)
+			ureq := &api.UpdateRackLSEPrototypeRequest{
+				RackLSEPrototype: rackLSEPrototype2,
+			}
+			resp, err = tf.Fleet.UpdateRackLSEPrototype(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototype2)
+		})
+
+		Convey("Update non-existing rackLSEPrototype", func() {
+			ureq := &api.UpdateRackLSEPrototypeRequest{
+				RackLSEPrototype: rackLSEPrototype3,
+			}
+			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Update rackLSEPrototype - Invalid input nil", func() {
+			req := &api.UpdateRackLSEPrototypeRequest{
+				RackLSEPrototype: nil,
+			}
+			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update rackLSEPrototype - Invalid input empty name", func() {
+			rackLSEPrototype3.Name = ""
+			req := &api.UpdateRackLSEPrototypeRequest{
+				RackLSEPrototype: rackLSEPrototype3,
+			}
+			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update rackLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.UpdateRackLSEPrototypeRequest{
+				RackLSEPrototype: rackLSEPrototype4,
+			}
+			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestGetRackLSEPrototype(t *testing.T) {
+	t.Parallel()
+	Convey("GetRackLSEPrototype", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		rackLSEPrototype1 := mockRackLSEPrototype("rackLSEPrototype-1")
+		req := &api.CreateRackLSEPrototypeRequest{
+			RackLSEPrototype:   rackLSEPrototype1,
+			RackLSEPrototypeId: "rackLSEPrototype-1",
+		}
+		resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, rackLSEPrototype1)
+		Convey("Get rackLSEPrototype by existing ID", func() {
+			req := &api.GetRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-1"),
+			}
+			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototype1)
+		})
+		Convey("Get rackLSEPrototype by non-existing ID", func() {
+			req := &api.GetRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+			}
+			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+		Convey("Get rackLSEPrototype - Invalid input empty name", func() {
+			req := &api.GetRackLSEPrototypeRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get rackLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.GetRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListRackLSEPrototypes(t *testing.T) {
+	t.Parallel()
+	Convey("ListRackLSEPrototypes", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		rackLSEPrototypes := make([]*proto.RackLSEPrototype, 0, 4)
+		for i := 0; i < 4; i++ {
+			rackLSEPrototype1 := mockRackLSEPrototype("")
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype1,
+				RackLSEPrototypeId: fmt.Sprintf("rackLSEPrototype-%d", i),
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototype1)
+			rackLSEPrototypes = append(rackLSEPrototypes, resp)
+		}
+
+		Convey("ListRackLSEPrototypes - page_size negative", func() {
+			req := &api.ListRackLSEPrototypesRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListRackLSEPrototypes - page_token invalid", func() {
+			req := &api.ListRackLSEPrototypesRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.InvalidPageToken)
+		})
+
+		Convey("ListRackLSEPrototypes - Full listing Max PageSize", func() {
+			req := &api.ListRackLSEPrototypesRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes)
+		})
+
+		Convey("ListRackLSEPrototypes - Full listing with no pagination", func() {
+			req := &api.ListRackLSEPrototypesRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes)
+		})
+
+		Convey("ListRackLSEPrototypes - listing with pagination", func() {
+			req := &api.ListRackLSEPrototypesRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes[:3])
+
+			req = &api.ListRackLSEPrototypesRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListRackLSEPrototypes(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes[3:])
+		})
+	})
+}
+
+func TestDeleteRackLSEPrototype(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteRackLSEPrototype", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete rackLSEPrototype by existing ID with references", func() {
+			rackLSEPrototype1 := mockRackLSEPrototype("")
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype1,
+				RackLSEPrototypeId: "rackLSEPrototype-1",
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototype1)
+
+			rackLSE1 := &proto.RackLSE{
+				Name:             util.AddPrefix(rackLSECollection, "racklse-1"),
+				RackLsePrototype: "rackLSEPrototype-1",
+			}
+			mreq := &api.CreateRackLSERequest{
+				RackLSE:   rackLSE1,
+				RackLSEId: "racklse-1",
+			}
+			mresp, merr := tf.Fleet.CreateRackLSE(tf.C, mreq)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, rackLSE1)
+
+			dreq := &api.DeleteRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-1"),
+			}
+			_, err = tf.Fleet.DeleteRackLSEPrototype(tf.C, dreq)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
+
+			greq := &api.GetRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-1"),
+			}
+			res, err := tf.Fleet.GetRackLSEPrototype(tf.C, greq)
+			So(res, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(res, ShouldResembleProto, rackLSEPrototype1)
+		})
+
+		Convey("Delete rackLSEPrototype by existing ID without references", func() {
+			rackLSEPrototype2 := mockRackLSEPrototype("")
+			req := &api.CreateRackLSEPrototypeRequest{
+				RackLSEPrototype:   rackLSEPrototype2,
+				RackLSEPrototypeId: "rackLSEPrototype-2",
+			}
+			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototype2)
+
+			dreq := &api.DeleteRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+			}
+			_, err = tf.Fleet.DeleteRackLSEPrototype(tf.C, dreq)
+			So(err, ShouldBeNil)
+
+			greq := &api.GetRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+			}
+			res, err := tf.Fleet.GetRackLSEPrototype(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Delete rackLSEPrototype by non-existing ID", func() {
+			req := &api.DeleteRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+			}
+			_, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+
+		Convey("Delete rackLSEPrototype - Invalid input empty name", func() {
+			req := &api.DeleteRackLSEPrototypeRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete rackLSEPrototype - Invalid input invalid characters", func() {
+			req := &api.DeleteRackLSEPrototypeRequest{
+				Name: util.AddPrefix(rackLSEPrototypeCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)

@@ -33,6 +33,7 @@ const (
 	SwitchNameFormat              string = "Invalid input - Entity Name pattern should be switches/{switch}."
 	VlanNameFormat                string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
 	MachineLSEPrototypeNameFormat string = "Invalid input - Entity Name pattern should be machineLSEPrototypes/{machineLSEPrototype}."
+	RackLSEPrototypeNameFormat    string = "Invalid input - Entity Name pattern should be rackLSEPrototypes/{rackLSEPrototype}."
 )
 
 var (
@@ -53,6 +54,7 @@ var dracRegex = regexp.MustCompile(`dracs\.*`)
 var switchRegex = regexp.MustCompile(`switches\.*`)
 var vlanRegex = regexp.MustCompile(`vlans\.*`)
 var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
+var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -128,6 +130,44 @@ func (r *ListMachineLSEPrototypesRequest) Validate() error {
 // Validate validates input requests of DeleteMachineLSEPrototype.
 func (r *DeleteMachineLSEPrototypeRequest) Validate() error {
 	return validateResourceName(machineLSEPrototypeRegex, MachineLSEPrototypeNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateRackLSEPrototype.
+func (r *CreateRackLSEPrototypeRequest) Validate() error {
+	if r.RackLSEPrototype == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.RackLSEPrototypeId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateRackLSEPrototype.
+func (r *UpdateRackLSEPrototypeRequest) Validate() error {
+	if r.RackLSEPrototype == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(rackLSEPrototypeRegex, RackLSEPrototypeNameFormat, r.RackLSEPrototype.GetName())
+}
+
+// Validate validates input requests of GetRackLSEPrototype.
+func (r *GetRackLSEPrototypeRequest) Validate() error {
+	return validateResourceName(rackLSEPrototypeRegex, RackLSEPrototypeNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListRackLSEPrototypes.
+func (r *ListRackLSEPrototypesRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteRackLSEPrototype.
+func (r *DeleteRackLSEPrototypeRequest) Validate() error {
+	return validateResourceName(rackLSEPrototypeRegex, RackLSEPrototypeNameFormat, r.Name)
 }
 
 // Validate validates input requests of CreateMachine.

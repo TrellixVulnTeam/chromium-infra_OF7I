@@ -268,3 +268,93 @@ func (fs *FleetServerImpl) DeleteMachineLSEPrototype(ctx context.Context, req *a
 	err = configuration.DeleteMachineLSEPrototype(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateRackLSEPrototype creates racklseprototype entry in database.
+func (fs *FleetServerImpl) CreateRackLSEPrototype(ctx context.Context, req *api.CreateRackLSEPrototypeRequest) (rsp *proto.RackLSEPrototype, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.RackLSEPrototype.Name = req.RackLSEPrototypeId
+	rackLSEPrototype, err := configuration.CreateRackLSEPrototype(ctx, req.RackLSEPrototype)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+	return rackLSEPrototype, err
+}
+
+// UpdateRackLSEPrototype updates the racklseprototype information in database.
+func (fs *FleetServerImpl) UpdateRackLSEPrototype(ctx context.Context, req *api.UpdateRackLSEPrototypeRequest) (rsp *proto.RackLSEPrototype, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.RackLSEPrototype.Name = util.RemovePrefix(req.RackLSEPrototype.Name)
+	rackLSEPrototype, err := configuration.UpdateRackLSEPrototype(ctx, req.RackLSEPrototype)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+	return rackLSEPrototype, err
+}
+
+// GetRackLSEPrototype gets the racklseprototype information from database.
+func (fs *FleetServerImpl) GetRackLSEPrototype(ctx context.Context, req *api.GetRackLSEPrototypeRequest) (rsp *proto.RackLSEPrototype, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	rackLSEPrototype, err := configuration.GetRackLSEPrototype(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+	return rackLSEPrototype, err
+}
+
+// ListRackLSEPrototypes list the racklseprototypes information from database.
+func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *api.ListRackLSEPrototypesRequest) (rsp *api.ListRackLSEPrototypesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := configuration.ListRackLSEPrototypes(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, rackLSEPrototype := range result {
+		rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+	}
+	return &api.ListRackLSEPrototypesResponse{
+		RackLSEPrototypes: result,
+		NextPageToken:     nextPageToken,
+	}, nil
+}
+
+// DeleteRackLSEPrototype deletes the racklseprototype from database.
+func (fs *FleetServerImpl) DeleteRackLSEPrototype(ctx context.Context, req *api.DeleteRackLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = configuration.DeleteRackLSEPrototype(ctx, name)
+	return &empty.Empty{}, err
+}

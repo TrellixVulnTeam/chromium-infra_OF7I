@@ -34,6 +34,7 @@ const (
 	switchCollection              string = "switches"
 	vlanCollection                string = "vlans"
 	machineLSEPrototypeCollection string = "machineLSEPrototypes"
+	rackLSEPrototypeCollection    string = "rackLSEPrototypes"
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	importPageSize int = 500
 )
