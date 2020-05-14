@@ -139,12 +139,14 @@ func timeOffsetFromNowInSwarmingFormat(offset time.Duration) string {
 // createTaskArgsMatcher is a gomock matcher to validate a subset of the fields
 // of clients.SwarmingCreateTaskArgs argument.
 type createTaskArgsMatcher struct {
-	BotID        string
-	DutID        string
-	DutName      string
-	DutState     string
-	Priority     int64
-	CmdSubString string
+	BotID                string
+	DutID                string
+	DutName              string
+	DutState             string
+	Priority             int64
+	ExecutionTimeoutSecs int64
+	ExpirationSecs       int64
+	CmdSubString         string
 }
 
 func (m *createTaskArgsMatcher) Matches(x interface{}) bool {
@@ -162,7 +164,9 @@ func (m *createTaskArgsMatcher) Matches(x interface{}) bool {
 		(m.DutID != "" && args.DutID != m.DutID) ||
 		(m.DutName != "" && args.DutName != m.DutName) ||
 		(m.DutState != "" && args.DutState != m.DutState) ||
-		(m.Priority != 0 && args.Priority != m.Priority) {
+		(m.Priority != 0 && args.Priority != m.Priority) ||
+		(m.ExecutionTimeoutSecs != 0 && args.ExecutionTimeoutSecs != m.ExecutionTimeoutSecs) ||
+		(m.ExpirationSecs != 0 && args.ExpirationSecs != m.ExpirationSecs) {
 		return false
 	}
 	if m.CmdSubString != "" {
@@ -190,6 +194,12 @@ func (m *createTaskArgsMatcher) String() string {
 	}
 	if m.Priority != 0 {
 		s = fmt.Sprintf("%s DutState: %d", s, m.Priority)
+	}
+	if m.ExecutionTimeoutSecs != 0 {
+		s = fmt.Sprintf("%s ExecutionTimeoutSecs: %d", s, m.ExecutionTimeoutSecs)
+	}
+	if m.ExpirationSecs != 0 {
+		s = fmt.Sprintf("%s ExpirationSecs: %d", s, m.ExpirationSecs)
 	}
 	if m.CmdSubString != "" {
 		s = fmt.Sprintf("%s CmdSubString: %s", s, m.CmdSubString)

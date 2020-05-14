@@ -28,18 +28,38 @@ func TestRunTaskByBotID(t *testing.T) {
 	Convey("with run repair job with BOT id", t, func() {
 		tf, validate := newTestFixture(t)
 		defer validate()
-		expectTaskCreationForDUT(tf, "task1", "bot_id")
+
+		expectTaskCreationForDUT(tf, "task1", "bot_id", 5, 15)
 		at := worker.AdminTaskForType(tf.C, fleet.TaskType_Repair)
-		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id")
+		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id", 5, 15)
+		So(err, ShouldBeNil)
+		So(taskURL, ShouldContainSubstring, "task1")
+	})
+	Convey("with run audit job with BOT id and custom experation and execution times", t, func() {
+		tf, validate := newTestFixture(t)
+		defer validate()
+		expectTaskCreationForDUT(tf, "task1", "bot_id", 7200, 7200)
+		at := worker.AuditTaskWithActions(tf.C, "action1,action2")
+		So(len(at.Cmd), ShouldEqual, 8)
+		So(at.Cmd[0], ShouldEqual, "/opt/infra-tools/skylab_swarming_worker")
+		So(at.Cmd[1], ShouldEqual, "-actions")
+		So(at.Cmd[2], ShouldEqual, "action1,action2")
+		So(at.Cmd[3], ShouldEqual, "-force-fresh")
+		So(at.Cmd[4], ShouldEqual, "-logdog-annotation-url")
+		So(at.Cmd[6], ShouldEqual, "-task-name")
+		So(at.Cmd[7], ShouldEqual, "admin_audit")
+		taskURL, err := runTaskByBotID(tf.C, at, tf.MockSwarming, "bot_id", 7200, 7200)
 		So(err, ShouldBeNil)
 		So(taskURL, ShouldContainSubstring, "task1")
 	})
 }
 
 // expectTaskCreationByDUTName sets up the expectations for a single task creation based on DUT name.
-func expectTaskCreationForDUT(tf testFixture, taskID, botID string) *gomock.Call {
+func expectTaskCreationForDUT(tf testFixture, taskID, botID string, expSec, execTimeoutSecs int) *gomock.Call {
 	m := &createTaskArgsMatcher{
-		BotID: botID,
+		BotID:                botID,
+		ExpirationSecs:       int64(expSec),
+		ExecutionTimeoutSecs: int64(execTimeoutSecs),
 	}
 	return tf.MockSwarming.EXPECT().CreateTask(gomock.Any(), gomock.Any(), m).Return(taskID, nil)
 }
