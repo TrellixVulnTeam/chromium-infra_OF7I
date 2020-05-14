@@ -31,6 +31,7 @@ const (
 	kvmCollection            string = "kvms"
 	rpmCollection            string = "rpms"
 	dracCollection           string = "dracs"
+	switchCollection         string = "switches"
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	importPageSize int = 500
 )

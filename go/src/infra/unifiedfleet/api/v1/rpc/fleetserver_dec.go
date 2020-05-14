@@ -859,3 +859,88 @@ func (s *DecoratedFleet) DeleteDrac(ctx context.Context, req *DeleteDracRequest)
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateSwitch(ctx context.Context, req *CreateSwitchRequest) (rsp *proto1.Switch, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateSwitch", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateSwitch(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateSwitch", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateSwitch(ctx context.Context, req *UpdateSwitchRequest) (rsp *proto1.Switch, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateSwitch", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateSwitch(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateSwitch", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetSwitch(ctx context.Context, req *GetSwitchRequest) (rsp *proto1.Switch, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetSwitch", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetSwitch(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetSwitch", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListSwitches(ctx context.Context, req *ListSwitchesRequest) (rsp *ListSwitchesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListSwitches", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListSwitches(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListSwitches", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteSwitch(ctx context.Context, req *DeleteSwitchRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteSwitch", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteSwitch(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteSwitch", rsp, err)
+	}
+	return
+}

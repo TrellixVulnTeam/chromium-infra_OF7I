@@ -708,3 +708,93 @@ func (fs *FleetServerImpl) DeleteDrac(ctx context.Context, req *api.DeleteDracRe
 	err = registration.DeleteDrac(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateSwitch creates switch entry in database.
+func (fs *FleetServerImpl) CreateSwitch(ctx context.Context, req *api.CreateSwitchRequest) (rsp *proto.Switch, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Switch.Name = req.SwitchId
+	s, err := registration.CreateSwitch(ctx, req.Switch)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	s.Name = util.AddPrefix(switchCollection, s.Name)
+	return s, err
+}
+
+// UpdateSwitch updates the switch information in database.
+func (fs *FleetServerImpl) UpdateSwitch(ctx context.Context, req *api.UpdateSwitchRequest) (rsp *proto.Switch, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Switch.Name = util.RemovePrefix(req.Switch.Name)
+	s, err := registration.UpdateSwitch(ctx, req.Switch)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	s.Name = util.AddPrefix(switchCollection, s.Name)
+	return s, err
+}
+
+// GetSwitch gets the switch information from database.
+func (fs *FleetServerImpl) GetSwitch(ctx context.Context, req *api.GetSwitchRequest) (rsp *proto.Switch, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	s, err := registration.GetSwitch(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	s.Name = util.AddPrefix(switchCollection, s.Name)
+	return s, err
+}
+
+// ListSwitches list the switches information from database.
+func (fs *FleetServerImpl) ListSwitches(ctx context.Context, req *api.ListSwitchesRequest) (rsp *api.ListSwitchesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListSwitches(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, s := range result {
+		s.Name = util.AddPrefix(switchCollection, s.Name)
+	}
+	return &api.ListSwitchesResponse{
+		Switches:      result,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
+// DeleteSwitch deletes the switch from database.
+func (fs *FleetServerImpl) DeleteSwitch(ctx context.Context, req *api.DeleteSwitchRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteSwitch(ctx, name)
+	return &empty.Empty{}, err
+}

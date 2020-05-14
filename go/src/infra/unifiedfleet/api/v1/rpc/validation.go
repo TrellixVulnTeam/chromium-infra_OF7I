@@ -30,6 +30,7 @@ const (
 	KVMNameFormat            string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
 	RPMNameFormat            string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
 	DracNameFormat           string = "Invalid input - Entity Name pattern should be dracs/{drac}."
+	SwitchNameFormat         string = "Invalid input - Entity Name pattern should be switches/{switch}."
 )
 
 var (
@@ -47,6 +48,7 @@ var nicRegex = regexp.MustCompile(`nics\.*`)
 var kvmRegex = regexp.MustCompile(`kvms\.*`)
 var rpmRegex = regexp.MustCompile(`rpms\.*`)
 var dracRegex = regexp.MustCompile(`dracs\.*`)
+var switchRegex = regexp.MustCompile(`switches\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -388,6 +390,44 @@ func (r *ListDracsRequest) Validate() error {
 // Validate validates input requests of DeleteDrac.
 func (r *DeleteDracRequest) Validate() error {
 	return validateResourceName(dracRegex, DracNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateSwitch.
+func (r *CreateSwitchRequest) Validate() error {
+	if r.Switch == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.SwitchId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateSwitch.
+func (r *UpdateSwitchRequest) Validate() error {
+	if r.Switch == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(switchRegex, SwitchNameFormat, r.Switch.GetName())
+}
+
+// Validate validates input requests of GetSwitch.
+func (r *GetSwitchRequest) Validate() error {
+	return validateResourceName(switchRegex, SwitchNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListSwitches.
+func (r *ListSwitchesRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteSwitch.
+func (r *DeleteSwitchRequest) Validate() error {
+	return validateResourceName(switchRegex, SwitchNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

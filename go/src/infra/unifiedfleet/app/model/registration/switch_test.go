@@ -5,24 +5,218 @@
 package registration
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+	. "infra/unifiedfleet/app/model/datastore"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 )
+
+func TestCreateSwitch(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	switch1 := mockSwitch("Switch-1")
+	switch2 := mockSwitch("")
+	Convey("CreateSwitch", t, func() {
+		Convey("Create new switch", func() {
+			resp, err := CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+		})
+		Convey("Create existing switch", func() {
+			resp, err := CreateSwitch(ctx, switch1)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+		Convey("Create switch - invalid ID", func() {
+			resp, err := CreateSwitch(ctx, switch2)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestUpdateSwitch(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	switch1 := mockSwitch("Switch-1")
+	switch2 := mockSwitch("Switch-1")
+	switch3 := mockSwitch("Switch-3")
+	switch4 := mockSwitch("")
+	Convey("UpdateSwitch", t, func() {
+		Convey("Update existing switch", func() {
+			resp, err := CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+
+			resp, err = UpdateSwitch(ctx, switch2)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch2)
+		})
+		Convey("Update non-existing switch", func() {
+			resp, err := UpdateSwitch(ctx, switch3)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Update switch - invalid ID", func() {
+			resp, err := UpdateSwitch(ctx, switch4)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestGetSwitch(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	switch1 := mockSwitch("Switch-1")
+	Convey("GetSwitch", t, func() {
+		Convey("Get switch by existing ID", func() {
+			resp, err := CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+			resp, err = GetSwitch(ctx, "Switch-1")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+		})
+		Convey("Get switch by non-existing ID", func() {
+			resp, err := GetSwitch(ctx, "switch-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get switch - invalid ID", func() {
+			resp, err := GetSwitch(ctx, "")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestListSwitches(t *testing.T) {
+	t.Parallel()
+	Convey("ListSwitches", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		switches := make([]*proto.Switch, 0, 4)
+		for i := 0; i < 4; i++ {
+			switch1 := mockSwitch(fmt.Sprintf("switch-%d", i))
+			resp, err := CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+			switches = append(switches, resp)
+		}
+		Convey("List switches - page_token invalid", func() {
+			resp, nextPageToken, err := ListSwitches(ctx, 5, "abc")
+			So(resp, ShouldBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("List switches - Full listing with no pagination", func() {
+			resp, nextPageToken, err := ListSwitches(ctx, 4, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switches)
+		})
+
+		Convey("List switches - listing with pagination", func() {
+			resp, nextPageToken, err := ListSwitches(ctx, 3, "")
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldNotBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switches[:3])
+
+			resp, _, err = ListSwitches(ctx, 2, nextPageToken)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switches[3:])
+		})
+	})
+}
+
+func TestDeleteSwitch(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	switch1 := mockSwitch("switch-1")
+	switch2 := mockSwitch("switch-2")
+	Convey("DeleteSwitch", t, func() {
+		Convey("Delete switch by existing ID with machine reference", func() {
+			resp, cerr := CreateSwitch(ctx, switch1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+
+			chromeBrowserMachine1 := &proto.Machine{
+				Name: "machine-1",
+				Device: &proto.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+						NetworkDeviceInterface: &proto.SwitchInterface{
+							Switch: "switch-1",
+						},
+					},
+				},
+			}
+			mresp, merr := CreateMachine(ctx, chromeBrowserMachine1)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+
+			err := DeleteSwitch(ctx, "switch-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, CannotDelete)
+
+			resp, cerr = GetSwitch(ctx, "switch-1")
+			So(resp, ShouldNotBeNil)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+		})
+		Convey("Delete switch successfully by existing ID without references", func() {
+			resp, cerr := CreateSwitch(ctx, switch2)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch2)
+
+			err := DeleteSwitch(ctx, "switch-2")
+			So(err, ShouldBeNil)
+
+			resp, cerr = GetSwitch(ctx, "switch-2")
+			So(resp, ShouldBeNil)
+			So(cerr, ShouldNotBeNil)
+			So(cerr.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete switch by non-existing ID", func() {
+			err := DeleteSwitch(ctx, "switch-2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete switch - invalid ID", func() {
+			err := DeleteSwitch(ctx, "")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
 
 func TestImportSwitches(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	Convey("import nics", t, func() {
+	Convey("import switches", t, func() {
 		switches := []*proto.Switch{
-			mockSwitch("nic1", 10),
-			mockSwitch("nic2", 20),
+			mockSwitch("switch1"),
+			mockSwitch("switch2"),
 		}
 		Convey("happy path", func() {
 			resp, err := ImportSwitches(ctx, switches)
@@ -34,21 +228,20 @@ func TestImportSwitches(t *testing.T) {
 		})
 		Convey("happy path also for importing existing switches", func() {
 			switch1 := []*proto.Switch{
-				mockSwitch("nic1", 100),
+				mockSwitch("switch1"),
 			}
 			resp, err := ImportSwitches(ctx, switch1)
 			So(err, ShouldBeNil)
 			So(resp.Passed(), ShouldHaveLength, len(switch1))
-			s, err := GetSwitch(ctx, "nic1")
+			s, err := GetSwitch(ctx, "switch1")
 			So(err, ShouldBeNil)
-			So(s.GetCapacityPort(), ShouldEqual, 100)
+			So(s, ShouldResembleProto, switch1[0])
 		})
 	})
 }
 
-func mockSwitch(id string, capacity int) *proto.Switch {
+func mockSwitch(id string) *proto.Switch {
 	return &proto.Switch{
-		Name:         id,
-		CapacityPort: int32(capacity),
+		Name: id,
 	}
 }
