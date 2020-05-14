@@ -439,22 +439,11 @@ func getServoHostHostname(dut *inventory.DeviceUnderTest) (string, error) {
 	return "", fmt.Errorf("no \"servo_host\" attribute for hostname (%s)", dut.GetCommon().GetHostname())
 }
 
-// TODO(guocb) Remove this function after fully migration to inventory v2.
-func getDUTv1(ctx context.Context, hostname string) (*inventory.DeviceUnderTest, error) {
-	resp, err := dsinventory.GetSerializedDUTByHostname(ctx, hostname)
-	if err != nil {
-		msg := fmt.Sprintf("getting serialized DUT by hostname for (%s)", hostname)
-		return nil, errors.Annotate(err, msg).Err()
+// getDUT returns the DUT associated with a particular hostname from datastore
+func getDUT(ctx context.Context, ic inventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
+	if ic == nil {
+		return nil, errors.Reason("Inventory Client cannot be nil").Err()
 	}
-	dut := &inventory.DeviceUnderTest{}
-	if err := proto.Unmarshal(resp.Data, dut); err != nil {
-		msg := fmt.Sprintf("unserializing DUT for hostname (%s)", hostname)
-		return nil, errors.Annotate(err, msg).Err()
-	}
-	return dut, nil
-}
-
-func getDUTv2(ctx context.Context, ic inventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
 	resp, _, err := ic.getDutInfo(ctx, &fleet.GetDutInfoRequest{
 		Hostname: hostname,
 	})
@@ -466,20 +455,6 @@ func getDUTv2(ctx context.Context, ic inventoryClient, hostname string) (*invent
 	if err := proto.Unmarshal(resp, dut); err != nil {
 		msg := fmt.Sprintf("unserializing DUT for hostname (%s)", hostname)
 		return nil, errors.Annotate(err, msg).Err()
-	}
-	return dut, nil
-}
-
-// getDUT returns the DUT associated with a particular hostname from datastore
-func getDUT(ctx context.Context, ic inventoryClient, hostname string) (*inventory.DeviceUnderTest, error) {
-	if ic == nil {
-		return getDUTv1(ctx, hostname)
-	}
-	dut, err := getDUTv2(ctx, ic, hostname)
-	if err != nil {
-		logging.Errorf(ctx, "Failed to get DUT from inventory v2: %s", err.Error())
-		logging.Infof(ctx, "Fall back to legacy flow")
-		return getDUTv1(ctx, hostname)
 	}
 	return dut, nil
 }
