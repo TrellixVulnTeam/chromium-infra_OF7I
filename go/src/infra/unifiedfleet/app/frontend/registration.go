@@ -5,6 +5,8 @@
 package frontend
 
 import (
+	"fmt"
+
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
 	luciconfig "go.chromium.org/luci/config"
@@ -131,10 +133,16 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	if err != nil {
 		return nil, machineDBServiceFailureStatus("ListMachines").Err()
 	}
-
+	logging.Debugf(ctx, "Querying machine-db to get the list of nics")
+	nics, err := mdbClient.ListNICs(ctx, &crimson.ListNICsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListNICs").Err()
+	}
+	_, _, _, machineToNics, machineToDracs, machineToSwitch := util.ProcessNics(nics.Nics)
 	logging.Debugf(ctx, "Importing %d machines", len(resp.Machines))
+	fmt.Println("maps: ", machineToNics)
 	pageSize := fs.getImportPageSize()
-	machines := util.ToChromeMachines(resp.GetMachines())
+	machines := util.ToChromeMachines(resp.GetMachines(), machineToNics, machineToDracs, machineToSwitch)
 	for i := 0; ; i += pageSize {
 		end := min(i+pageSize, len(machines))
 		logging.Debugf(ctx, "importing %dth - %dth", i, end-1)
@@ -147,6 +155,7 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 			break
 		}
 	}
+
 	return successStatus.Proto(), nil
 }
 
@@ -348,7 +357,51 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 	if err != nil {
 		return nil, machineDBServiceFailureStatus("ListMachines").Err()
 	}
-	logging.Debugf(ctx, "Importing %d nics", len(resp.Nics))
+	pageSize := fs.getImportPageSize()
+	newNics, newDracs, dhcps, _, _, _ := util.ProcessNics(resp.Nics)
+	// Please note that the importing here is not in one transaction, which
+	// actually may cause data incompleteness. But as the importing job
+	// will be triggered periodically, such incompleteness that's caused by
+	// potential failure will be ignored.
+	logging.Debugf(ctx, "Importing %d nics", len(newNics))
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(newNics))
+		logging.Debugf(ctx, "importing nics %dth - %dth", i, end-1)
+		res, err := registration.ImportNics(ctx, newNics[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(newNics) {
+			break
+		}
+	}
+	logging.Debugf(ctx, "Importing %d dracs", len(newDracs))
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(newDracs))
+		logging.Debugf(ctx, "importing dracs %dth - %dth", i, end-1)
+		res, err := registration.ImportDracs(ctx, newDracs[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(newDracs) {
+			break
+		}
+	}
+	logging.Debugf(ctx, "Importing %d dhcps", len(dhcps))
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(dhcps))
+		logging.Debugf(ctx, "importing dhcps %dth - %dth", i, end-1)
+		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(dhcps) {
+			break
+		}
+	}
 	return successStatus.Proto(), nil
 }
 

@@ -16,6 +16,7 @@ import (
 // CrimsonClient mocks the crimsonClient
 type CrimsonClient struct {
 	MachineNames []string
+	Nics         []*crimson.NIC
 }
 
 // ListDatacenters mocks the ListDatacenters of crimsonClient
@@ -115,8 +116,9 @@ func (c *CrimsonClient) DeleteNIC(ctx context.Context, in *crimson.DeleteNICRequ
 
 // ListNICs mocks the ListNICs of crimsonClient
 func (c *CrimsonClient) ListNICs(ctx context.Context, in *crimson.ListNICsRequest, opts ...grpc.CallOption) (*crimson.ListNICsResponse, error) {
-	out := new(crimson.ListNICsResponse)
-	return out, nil
+	return &crimson.ListNICsResponse{
+		Nics: c.Nics,
+	}, nil
 }
 
 // UpdateNIC mocks the UpdateNIC of crimsonClient

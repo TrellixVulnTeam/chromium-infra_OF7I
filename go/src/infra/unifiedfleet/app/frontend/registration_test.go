@@ -440,7 +440,29 @@ func TestImportMachines(t *testing.T) {
 			machines, _, err := registration.ListMachines(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(machines, ShouldHaveLength, len(testMachines))
-			So(parseAssets(machines), ShouldResemble, testMachines)
+			So(parseAssets(machines, "Name"), ShouldResemble, testMachines)
+			browserMachines := make([]*proto.ChromeBrowserMachine, len(machines))
+			switches := make([]*proto.SwitchInterface, len(machines))
+			for i, m := range machines {
+				browserMachines[i] = m.GetChromeBrowserMachine()
+				switches[i] = m.GetChromeBrowserMachine().GetNetworkDeviceInterface()
+			}
+			So(parseAssets(browserMachines, "Nic"), ShouldResemble, []string{"machine1-eth0", "machine2-eth0", "machine3-eth0"})
+			So(parseAssets(browserMachines, "Drac"), ShouldResemble, []string{"machine1-drac"})
+			So(switches, ShouldResembleProto, []*proto.SwitchInterface{
+				{
+					Switch: "eq017.atl97",
+					Port:   2,
+				},
+				{
+					Switch: "eq017.atl97",
+					Port:   3,
+				},
+				{
+					Switch: "eq041.atl97",
+					Port:   1,
+				},
+			})
 		})
 		Convey("import browser machines with empty machineDB host", func() {
 			req := &api.ImportMachinesRequest{
@@ -1179,8 +1201,17 @@ func TestImportNics(t *testing.T) {
 			res, err := tf.Fleet.ImportNics(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
+			nics, _, err := registration.ListNics(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(parseAssets(nics, "Name"), ShouldResemble, []string{"machine1-eth0", "machine2-eth0", "machine3-eth0"})
+			dracs, _, err := registration.ListDracs(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(parseAssets(dracs, "Name"), ShouldResemble, []string{"machine1-drac"})
+			dhcps, _, err := configuration.ListDHCPConfigs(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(parseAssets(dhcps, "Ip"), ShouldResemble, []string{"ip1.1", "ip1.2", "ip2", "ip3"})
 		})
-		// Invalid & Empty machine DB hosts are tested in TestImportMachines
+		// Invalid & Empty machines DB hosts are tested in TestImportMachines
 		// Skip testing here
 	})
 }
@@ -1209,15 +1240,15 @@ func TestImportDatacenters(t *testing.T) {
 			racks, _, err := registration.ListRacks(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(racks, ShouldHaveLength, 2)
-			So(parseAssets(racks), ShouldResemble, []string{"cr20", "cr22"})
+			So(parseAssets(racks, "Name"), ShouldResemble, []string{"cr20", "cr22"})
 			kvms, _, err := registration.ListKVMs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(kvms, ShouldHaveLength, 3)
-			So(parseAssets(kvms), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
+			So(parseAssets(kvms, "Name"), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
 			switches, _, err := registration.ListSwitches(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(switches, ShouldHaveLength, 4)
-			So(parseAssets(switches), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
+			So(parseAssets(switches, "Name"), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
 		})
 	})
 }
@@ -2992,25 +3023,28 @@ func TestDeleteVlan(t *testing.T) {
 	})
 }
 
-func parseAssets(args interface{}) []string {
+func parseAssets(args interface{}, k string) []string {
 	names := make([]string, 0)
 	v := reflect.ValueOf(args)
 	switch v.Kind() {
 	case reflect.Ptr:
-		names = append(names, parseName(v.Elem()))
+		names = append(names, parse(v.Elem(), k))
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {
-			names = append(names, parseName(v.Index(i).Elem()))
+			n := parse(v.Index(i).Elem(), k)
+			if n != "" {
+				names = append(names, n)
+			}
 		}
 	}
 	return names
 }
 
-func parseName(v reflect.Value) string {
+func parse(v reflect.Value, k string) string {
 	typeOfT := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		f := v.Field(i)
-		if typeOfT.Field(i).Name == "Name" {
+		if typeOfT.Field(i).Name == k {
 			return f.Interface().(string)
 		}
 	}

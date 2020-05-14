@@ -141,3 +141,14 @@ func putNic(ctx context.Context, nic *fleet.Nic, update bool) (*fleet.Nic, error
 	}
 	return nil, err
 }
+
+// ImportNics creates or updates a batch of nics in datastore.
+func ImportNics(ctx context.Context, nics []*fleet.Nic) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(nics))
+	utime := ptypes.TimestampNow()
+	for i, m := range nics {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newNicEntity, true, true)
+}

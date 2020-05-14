@@ -199,3 +199,14 @@ func putAllDrac(ctx context.Context, dracs []*fleet.Drac, update bool) ([]*fleet
 	}
 	return nil, err
 }
+
+// ImportDracs creates or updates a batch of dracs in datastore.
+func ImportDracs(ctx context.Context, dracs []*fleet.Drac) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(dracs))
+	utime := ptypes.TimestampNow()
+	for i, m := range dracs {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newDracEntity, true, true)
+}
