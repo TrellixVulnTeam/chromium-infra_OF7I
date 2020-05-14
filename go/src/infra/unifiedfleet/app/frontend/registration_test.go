@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	proto "infra/unifiedfleet/api/v1/proto"
@@ -436,11 +437,10 @@ func TestImportMachines(t *testing.T) {
 			res, err := tf.Fleet.ImportMachines(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
-			getRes, err := registration.GetAllMachines(ctx)
+			machines, _, err := registration.ListMachines(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(getRes, ShouldHaveLength, len(testMachines))
-			gets := getMachineNames(*getRes)
-			So(gets, ShouldResemble, testMachines)
+			So(machines, ShouldHaveLength, len(testMachines))
+			So(parseAssets(machines), ShouldResemble, testMachines)
 		})
 		Convey("import browser machines with empty machineDB host", func() {
 			req := &api.ImportMachinesRequest{
@@ -1209,15 +1209,15 @@ func TestImportDatacenters(t *testing.T) {
 			racks, _, err := registration.ListRacks(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(racks, ShouldHaveLength, 2)
-			So(getRackNames(racks), ShouldResemble, []string{"cr20", "cr22"})
+			So(parseAssets(racks), ShouldResemble, []string{"cr20", "cr22"})
 			kvms, _, err := registration.ListKVMs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(kvms, ShouldHaveLength, 3)
-			So(getKVMNames(kvms), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
+			So(parseAssets(kvms), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
 			switches, _, err := registration.ListSwitches(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(switches, ShouldHaveLength, 4)
-			So(getSwitchNames(switches), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
+			So(parseAssets(switches), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
 		})
 	})
 }
@@ -2992,34 +2992,27 @@ func TestDeleteVlan(t *testing.T) {
 	})
 }
 
-func getMachineNames(res OpResults) []string {
+func parseAssets(args interface{}) []string {
 	names := make([]string, 0)
-	for _, r := range res {
-		names = append(names, r.Data.(*proto.Machine).GetName())
+	v := reflect.ValueOf(args)
+	switch v.Kind() {
+	case reflect.Ptr:
+		names = append(names, parseName(v.Elem()))
+	case reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			names = append(names, parseName(v.Index(i).Elem()))
+		}
 	}
 	return names
 }
 
-func getRackNames(racks []*proto.Rack) []string {
-	names := make([]string, 0)
-	for _, r := range racks {
-		names = append(names, r.GetName())
+func parseName(v reflect.Value) string {
+	typeOfT := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		if typeOfT.Field(i).Name == "Name" {
+			return f.Interface().(string)
+		}
 	}
-	return names
-}
-
-func getSwitchNames(switches []*proto.Switch) []string {
-	names := make([]string, 0)
-	for _, r := range switches {
-		names = append(names, r.GetName())
-	}
-	return names
-}
-
-func getKVMNames(kvms []*proto.KVM) []string {
-	names := make([]string, 0)
-	for _, r := range kvms {
-		names = append(names, r.GetName())
-	}
-	return names
+	return ""
 }
