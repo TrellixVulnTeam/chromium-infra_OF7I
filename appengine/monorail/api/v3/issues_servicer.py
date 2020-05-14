@@ -43,6 +43,32 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       issue = we.GetIssue(issue_id, allow_viewing_deleted=True)
     return self.converter.ConvertIssue(issue)
 
+  @monorail_servicer.PRPCMethod
+  def SearchIssues(self, mc, request):
+    # type: (MonorailConnection, SearchIssuesRequest) -> SearchIssuesResponse
+    """pRPC API method that implements SearchIssue.
+
+    Raises:
+      InputException: if any given names in `projects` are invalid.
+    """
+    page_size = paginator.CoercePageSize(
+        request.page_size, tracker_constants.MAX_ISSUES_PER_PAGE)
+    # TODO(crbug.com/monorail/7713): parse start from `page_token`
+    start = 0
+
+    project_names = []
+    for resource_name in request.projects:
+      match = rnc._GetResourceNameMatch(resource_name, rnc.PROJECT_NAME_RE)
+      project_names.append(match.group('project_name'))
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      list_result = we.SearchIssues(
+          request.query, project_names, mc.auth.user_id, page_size, start,
+          request.order_by)
+
+    # TODO(crbug.com/monorail/7713): generate `next_page_token`.
+    return issues_pb2.SearchIssuesResponse(
+        issues=self.converter.ConvertIssues(list_result.items))
 
   @monorail_servicer.PRPCMethod
   def ListComments(self, mc, request):

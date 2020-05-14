@@ -969,6 +969,26 @@ class WorkEnv(object):
       result.extend(me_user.linked_child_ids)
     return result
 
+  def SearchIssues(
+      self, query_string, query_project_names, me_user_id, items_per_page,
+      paginate_start, sort_spec):
+    # type: (str, Sequence[str], int, int, int, str) -> ListResult
+    """Search for issues in the given projects."""
+    # TODO(crbug.com/monorail/7678): Remove url_params and can. Replace
+    # project_names with project_ids.
+    # TODO(crbug.com/monorail/6988): Delete ListIssues when endpoints and v1
+    # are deprecated. Move pipeline call to SearchIssues.
+    use_cached_searches = not settings.local_mode
+    pipeline = self.ListIssues(
+        query_string, query_project_names, me_user_id, items_per_page,
+        paginate_start, [], 1, '', sort_spec, use_cached_searches)
+
+    end = paginate_start + items_per_page
+    next_start = None
+    if end < len(pipeline.allowed_results):
+      next_start = end
+    return ListResult(pipeline.visible_results, next_start)
+
   def ListIssues(self, query_string, query_project_names, me_user_id,
                  items_per_page, paginate_start, url_params, can,
                  group_by_spec, sort_spec, use_cached_searches,

@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import unittest
+import mock
 
 from api.v3 import converters
 from api.v3 import issues_servicer
@@ -34,17 +35,40 @@ class IssuesServicerTest(unittest.TestCase):
         self.services, make_rate_limiter=False)
     self.PAST_TIME = 12345
     self.owner = self.services.user.TestAddUser('owner@example.com', 111)
+    self.user_2 = self.services.user.TestAddUser('user_2@example.com', 222)
+
     self.project_1 = self.services.project.TestAddProject(
         'chicken', project_id=789)
-    self.issue_resource_name = 'projects/chicken/issues/1234'
-    self.issue = fake.MakeTestIssue(
+    self.issue_1_resource_name = 'projects/chicken/issues/1234'
+    self.issue_1 = fake.MakeTestIssue(
         self.project_1.project_id,
         1234,
         'sum',
         'New',
         self.owner.user_id,
+        labels=['find-me', 'pri-3'],
         project_name=self.project_1.project_name)
-    self.services.issue.TestAddIssue(self.issue)
+    self.services.issue.TestAddIssue(self.issue_1)
+
+    self.project_2 = self.services.project.TestAddProject('cow', project_id=788)
+    self.issue_2_resource_name = 'projects/cow/issues/1234'
+    self.issue_2 = fake.MakeTestIssue(
+        self.project_2.project_id,
+        1235,
+        'sum',
+        'New',
+        self.user_2.user_id,
+        project_name=self.project_2.project_name)
+    self.services.issue.TestAddIssue(self.issue_2)
+    self.issue_3 = fake.MakeTestIssue(
+        self.project_2.project_id,
+        1236,
+        'sum',
+        'New',
+        self.user_2.user_id,
+        labels=['find-me', 'pri-1'],
+        project_name=self.project_2.project_name)
+    self.services.issue.TestAddIssue(self.issue_3)
 
   def CallWrapped(self, wrapped_handler, mc, *args, **kwargs):
     self.issues_svcr.converter = converters.Converter(mc, self.services)
@@ -52,18 +76,63 @@ class IssuesServicerTest(unittest.TestCase):
 
   def testGetIssue(self):
     """We can get an issue."""
-    request = issues_pb2.GetIssueRequest(name=self.issue_resource_name)
+    request = issues_pb2.GetIssueRequest(name=self.issue_1_resource_name)
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
     actual_response = self.CallWrapped(self.issues_svcr.GetIssue, mc, request)
     self.assertEqual(
-        actual_response, self.issues_svcr.converter.ConvertIssue(self.issue))
+        actual_response, self.issues_svcr.converter.ConvertIssue(self.issue_1))
+
+  @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  @mock.patch('tracker.tracker_constants.MAX_ISSUES_PER_PAGE', 2)
+  def testSearchIssues(self, mock_pipeline):
+    """We can search for issues in some projects."""
+    request = issues_pb2.SearchIssuesRequest(
+        projects=['projects/chicken', 'projects/cow'],
+        query='label:find-me',
+        order_by='-pri',
+        page_size=3)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_2.email)
+
+    instance = mock.Mock(
+        spec=True,
+        visible_results=[self.issue_1, self.issue_3],
+        allowed_results=[self.issue_1, self.issue_3, self.issue_2])
+    mock_pipeline.return_value = instance
+    instance.SearchForIIDs = mock.Mock()
+    instance.MergeAndSortIssues = mock.Mock()
+    instance.Paginate = mock.Mock()
+
+    actual_response = self.CallWrapped(
+        self.issues_svcr.SearchIssues, mc, request)
+    # start index is 0.
+    # number of items is coerced from 3 -> 2
+    mock_pipeline.assert_called_once_with(
+        self.cnxn,
+        self.services,
+        mc.auth, [222],
+        'label:find-me', ['chicken', 'cow'],
+        2,
+        0, [],
+        1,
+        '',
+        '-pri',
+        mc.warnings,
+        mc.errors,
+        True,
+        mc.profiler,
+        display_mode=None,
+        project=None)
+    self.assertEqual(
+        [issue.name for issue in actual_response.issues],
+        ['projects/chicken/issues/1234', 'projects/cow/issues/1236'])
 
   # Note the 'empty' case doesn't make sense for ListComments, as one is created
   # for every issue.
   def testListComments(self):
     """We can list comments."""
-    request = issues_pb2.ListCommentsRequest(parent=self.issue_resource_name)
+    request = issues_pb2.ListCommentsRequest(parent=self.issue_1_resource_name)
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
     actual_response = self.CallWrapped(
