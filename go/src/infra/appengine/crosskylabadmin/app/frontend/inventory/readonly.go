@@ -17,7 +17,6 @@
 package inventory
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -337,7 +336,7 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 	}
 	out.FaftVersion, err = dssv.GetFaftStableVersion(ctx, buildTarget, model)
 	if err != nil {
-		logging.Infof(ctx, "faft stable version does not exist: (%#v)", err)
+		logging.Infof(ctx, "faft stable version does not exist: %#v", err)
 	}
 	// successful early exit if we have a beaglebone servo
 	if buildTarget == beagleboneServo || model == beagleboneServo {
@@ -345,14 +344,11 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 	}
 	out.FirmwareVersion, err = dssv.GetFirmwareStableVersion(ctx, buildTarget, model)
 	if err != nil {
-		logging.Errorf(ctx, "getStableVersionImplNoHostname: failed to get firmware version (%s) (%s)", buildTarget, model)
+		logging.Errorf(ctx, "getStableVersionImplNoHostname: failed to get firmware version %q %q", buildTarget, model)
 		merr = append(merr, err)
 	}
 	if len(merr) != 0 {
-		// TODO(gregorynisbet): Consider a different error handling strategy.
-		// Wrap the error so it's non-transient.
-		logging.Infof(ctx, "getStableVersionImplNoHostname: errors (%#v)", merr)
-		return nil, fmt.Errorf("getStableVersionImplNoHostname: errors (%s)", merr)
+		return nil, errors.Annotate(merr, "getStableVersionImplNoHostname").Err()
 	}
 	return out, nil
 }
@@ -361,25 +357,17 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 // TODO(gregorynisbet): Consider under what circumstances an error leaving this function
 // should be considered transient or non-transient.
 func getStableVersionImplWithHostname(ctx context.Context, ic inventoryClient, hostname string) (*fleet.GetStableVersionResponse, error) {
-	logging.Infof(ctx, "getting stable version for given hostname (%s)", hostname)
 	var err error
 
 	// If the DUT in question is a labstation or a servo (i.e. is a servo host), then it does not have
 	// its own servo host.
 	if looksLikeServo(hostname) {
-		logging.Infof(ctx, "beaglebone servo provided")
 		return getStableVersionImplNoHostname(ctx, beagleboneServo, "")
-	}
-	if looksLikeLabstation(hostname) {
-		logging.Infof(ctx, "concluded that hostname (%s) is a servo host", hostname)
 	}
 
 	dut, err := getDUT(ctx, ic, hostname)
 	if err != nil {
-		logging.Infof(ctx, "failed to get DUT: (%#v)", err)
-		// TODO(gregorynisbet): Consider a different error handling strategy.
-		// Wrap the error so it's non-transient.
-		return nil, fmt.Errorf("failed to get DUT (%s)", err)
+		return nil, errors.Annotate(err, "failed to get DUT %q", dut).Err()
 	}
 
 	buildTarget := dut.GetCommon().GetLabels().GetBoard()
@@ -387,10 +375,7 @@ func getStableVersionImplWithHostname(ctx context.Context, ic inventoryClient, h
 
 	out, err := getStableVersionImplNoHostname(ctx, buildTarget, model)
 	if err != nil {
-		// TODO(gregorynisbet): Consider a different error handling strategy.
-		// Wrap the error so it's non-transient.
-		logging.Infof(ctx, "failed to get stable version info: (%#v)", err)
-		return nil, fmt.Errorf("failed to get stable version info (%s)", err)
+		return nil, errors.Annotate(err, "failed to get stable version info").Err()
 	}
 
 	if looksLikeLabstation(hostname) {
@@ -398,21 +383,15 @@ func getStableVersionImplWithHostname(ctx context.Context, ic inventoryClient, h
 	}
 	servoHostHostname, err := getServoHostHostname(dut)
 	if err != nil {
-		// TODO(gregorynisbet): Consider a different error handling strategy.
-		// Wrap the error so it's non-transient.
-		logging.Infof(ctx, "getting hostname of servohost (%#v)", err)
-		return nil, fmt.Errorf("getting hostname of servohost (%s)", err)
+		return nil, errors.Annotate(err, "getting hostname of servohost %q", servoHostHostname).Err()
 	}
 	if looksLikeFakeServo(servoHostHostname) {
-		logging.Infof(ctx, "concluded servo hostname is fake (%s)", servoHostHostname)
+		logging.Infof(ctx, "concluded servo hostname is fake %q", servoHostHostname)
 		return out, nil
 	}
 	servoStableVersion, err := getCrosVersionFromServoHost(ctx, ic, servoHostHostname)
 	if err != nil {
-		// TODO(gregorynisbet): Consider a different error handling strategy.
-		// Wrap the error so it's non-transient.
-		logging.Infof(ctx, "getting cros version from servo host (%#v)", err)
-		return nil, fmt.Errorf("getting cros version from servo host (%s)", err)
+		return nil, errors.Annotate(err, "getting cros version from servo host %q", servoHostHostname).Err()
 	}
 	out.ServoCrosVersion = servoStableVersion
 
@@ -424,19 +403,19 @@ func getStableVersionImplWithHostname(ctx context.Context, ic inventoryClient, h
 func getServoHostHostname(dut *inventory.DeviceUnderTest) (string, error) {
 	attrs := dut.GetCommon().GetAttributes()
 	if len(attrs) == 0 {
-		return "", fmt.Errorf("attributes for dut with hostname (%s) is unexpectedly empty", dut.GetCommon().GetHostname())
+		return "", errors.Reason("attributes for dut with hostname %q is unexpectedly empty", dut.GetCommon().GetHostname()).Err()
 	}
 	for _, item := range attrs {
 		key := item.GetKey()
 		value := item.GetValue()
 		if key == "servo_host" {
 			if value == "" {
-				return "", fmt.Errorf("\"servo_host\" attribute unexpectedly has value \"\" for hostname (%s)", dut.GetCommon().GetHostname())
+				return "", errors.Reason("\"servo_host\" attribute unexpectedly has value \"\" for hostname %q", dut.GetCommon().GetHostname()).Err()
 			}
 			return value, nil
 		}
 	}
-	return "", fmt.Errorf("no \"servo_host\" attribute for hostname (%s)", dut.GetCommon().GetHostname())
+	return "", errors.Reason("no \"servo_host\" attribute for hostname %q", dut.GetCommon().GetHostname()).Err()
 }
 
 // getDUT returns the DUT associated with a particular hostname from datastore
@@ -448,13 +427,11 @@ func getDUT(ctx context.Context, ic inventoryClient, hostname string) (*inventor
 		Hostname: hostname,
 	})
 	if err != nil {
-		msg := fmt.Sprintf("getting serialized DUT by hostname for (%s)", hostname)
-		return nil, errors.Annotate(err, msg).Err()
+		return nil, errors.Annotate(err, "getting serialized DUT by hostname for %q", hostname).Err()
 	}
 	dut := &inventory.DeviceUnderTest{}
 	if err := proto.Unmarshal(resp, dut); err != nil {
-		msg := fmt.Sprintf("unserializing DUT for hostname (%s)", hostname)
-		return nil, errors.Annotate(err, msg).Err()
+		return nil, errors.Annotate(err, "unserializing DUT for hostname %q", hostname).Err()
 	}
 	return dut, nil
 }
@@ -482,18 +459,16 @@ func looksLikeFakeServo(hostname string) bool {
 // This can happen if the DUT in question is already a labstation, for instance.
 func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostname string) (string, error) {
 	if hostname == "" {
-		logging.Infof(ctx, "getCrosVersionFromServoHost: skipping empty hostname \"\"")
 		return "", nil
 	}
 	if looksLikeLabstation(hostname) {
-		logging.Infof(ctx, "getCrosVersionFromServoHost: identified labstation servohost hostname (%s)", hostname)
 		dut, err := getDUT(ctx, ic, hostname)
 		if err != nil {
 			return "", errors.Annotate(err, "get labstation dut info").Err()
 		}
 		buildTarget := dut.GetCommon().GetLabels().GetBoard()
 		if buildTarget == "" {
-			return "", fmt.Errorf("no buildTarget for hostname (%s)", hostname)
+			return "", errors.Reason("no buildTarget for hostname %q", hostname).Err()
 		}
 		out, err := dssv.GetCrosStableVersion(ctx, buildTarget)
 		if err != nil {
@@ -502,13 +477,11 @@ func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostna
 		return out, nil
 	}
 	if looksLikeServo(hostname) {
-		logging.Infof(ctx, "getCrosVersionFromServoHost: identified beaglebone servohost hostname (%s)", hostname)
 		out, err := dssv.GetCrosStableVersion(ctx, beagleboneServo)
 		if err != nil {
 			return "", errors.Annotate(err, "getting beaglebone servo stable version").Err()
 		}
 		return out, nil
 	}
-	logging.Infof(ctx, "getCrosVersionFromServoHost: unrecognized hostname (%s)", hostname)
-	return "", fmt.Errorf("unrecognized hostname (%s) is not a labstation or beaglebone servo", hostname)
+	return "", errors.Reason("unrecognized hostname %q is not a labstation or beaglebone servo", hostname).Err()
 }
