@@ -113,6 +113,7 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		return err
 	}
 
+	taskID := ""
 	switch {
 	case hasOneHostname:
 		oldhost := args[0]
@@ -120,26 +121,39 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 		if host != oldhost {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", oldhost, host)
 		}
-		return c.leaseDutByHostname(ctx, a, sc, leaseDuration, host)
+		taskID, err = c.leaseDutByHostname(ctx, a, sc, leaseDuration, host)
 	case hasBoard:
-		return c.leaseDUTByBoard(ctx, a, sc, leaseDuration)
+		taskID, err = c.leaseDUTByBoard(ctx, a, sc, leaseDuration)
 	default:
-		return c.leaseDUTByModel(ctx, a, sc, leaseDuration)
+		taskID, err = c.leaseDUTByModel(ctx, a, sc, leaseDuration)
 	}
+	if err != nil {
+		return err
+	}
+
+	dutName, err := c.waitForTaskStart(ctx, sc, taskID)
+	if err != nil {
+		return err
+	}
+	fqdn := dutNameToFQDN(dutName)
+	fmt.Fprintf(a.GetOut(), "%s\n", fqdn)
+	// TODO(ayatane): The time printed here may be off by the poll interval above.
+	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
+	return nil
 }
 
 // leaseDutByHostname leases a DUT by hostname and schedules a follow-up repair task
-func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration, host string) error {
+func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration, host string) (taskID string, err error) {
 	ic, err := c.getInventoryClient(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// TODO(gregorynisbet): Check if model is empty and make sure not to pass
 	// pass it to swarming if it is empty.
 	model, err := getModelForHost(ctx, ic, host)
 	if err != nil {
-		return err
+		return "", err
 	}
 	// TODO(gregorynisbet): instead of just logging the model, actually pass it
 	// to LeaseByHostnameTask and use it to annotate the lease task.
@@ -152,33 +166,24 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 	}
 	id, err := creator.LeaseByHostnameTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Fprintf(a.GetOut(), "Created lease task for host %s: %s\n", host, swarming.TaskURL(e.SwarmingService, id))
 	fmt.Fprintf(a.GetOut(), "Waiting for task to start; lease isn't active yet\n")
-
-	dutName, err := c.waitForTaskStart(ctx, sc, id)
-	if err != nil {
-		return err
-	}
-	fqdn := dutNameToFQDN(dutName)
-	fmt.Fprintf(a.GetOut(), "%s\n", fqdn)
-	// TODO(ayatane): The time printed here may be off by the poll interval above.
-	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
-	return nil
+	return id, nil
 }
 
 // leaseDutByModel leases a DUT by model. Any healthy DUT in the given model may be chosen by the task.
-func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) error {
+func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) (taskID string, err error) {
 	tasks, err := sc.GetActiveLeaseTasksForModel(ctx, c.model)
 	if err != nil {
-		return errors.Annotate(err, "computing existing leases").Err()
+		return "", errors.Annotate(err, "computing existing leases").Err()
 	}
 	if maxTasksPerModel <= 0 {
-		return errors.Reason("Leases by model are disabled").Err()
+		return "", errors.Reason("Leases by model are disabled").Err()
 	}
 	if !c.evilLease && len(tasks) > maxTasksPerModel {
-		return fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), c.model, maxTasksPerModel)
+		return "", fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), c.model, maxTasksPerModel)
 	}
 
 	e := c.envFlags.Env()
@@ -188,33 +193,24 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 	}
 	id, err := creator.LeaseByModelTask(ctx, c.model, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Fprintf(a.GetOut(), "Created lease task for model %s: %s\n", c.model, swarming.TaskURL(e.SwarmingService, id))
-
-	dutName, err := c.waitForTaskStart(ctx, sc, id)
-	if err != nil {
-		return err
-	}
-	fqdn := dutNameToFQDN(dutName)
-	fmt.Fprintf(a.GetOut(), "%s\n", fqdn)
-	// TODO(ayatane): The time printed here may be off by the poll interval above.
-	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
-	return nil
+	return id, nil
 }
 
 // leaseDUTbyBoard leases a DUT by board.
-func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) error {
+func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Application, sc *swarming.Client, leaseDuration time.Duration) (taskID string, err error) {
 	tasks, err := sc.GetActiveLeaseTasksForBoard(ctx, c.board)
 	if err != nil {
-		return errors.Annotate(err, "computing existing lease for board").Err()
+		return "", errors.Annotate(err, "computing existing lease for board").Err()
 	}
 
 	if maxTasksPerBoard <= 0 {
-		return errors.Reason("Leases by board are disabled").Err()
+		return "", errors.Reason("Leases by board are disabled").Err()
 	}
 	if len(tasks) > maxTasksPerBoard {
-		return errors.Reason("number of active tasks %d for board (%s) exceeds cap %d", len(tasks), c.board, maxTasksPerBoard).Err()
+		return "", errors.Reason("number of active tasks %d for board (%s) exceeds cap %d", len(tasks), c.board, maxTasksPerBoard).Err()
 	}
 
 	e := c.envFlags.Env()
@@ -224,19 +220,10 @@ func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Applica
 	}
 	id, err := creator.LeaseByBoardTask(ctx, c.board, c.dims, int(leaseDuration.Seconds()), c.leaseReason)
 	if err != nil {
-		return err
+		return "", err
 	}
 	fmt.Fprintf(a.GetOut(), "Created lease task for board %s: %s\n", c.board, swarming.TaskURL(e.SwarmingService, id))
-
-	dutName, err := c.waitForTaskStart(ctx, sc, id)
-	if err != nil {
-		return err
-	}
-	fqdn := dutNameToFQDN(dutName)
-	fmt.Fprintf(a.GetOut(), "%s\n", fqdn)
-	// TODO(ayatane): The time printed here may be off by the poll interval above.
-	fmt.Fprintf(a.GetOut(), "DUT leased until %s\n", time.Now().Add(leaseDuration).Format(time.RFC1123))
-	return nil
+	return id, nil
 }
 
 // newSwarmingClient creates a new swarming client.
