@@ -15,6 +15,7 @@ import (
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 
@@ -423,7 +424,18 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 		}
 	}
 	logging.Debugf(ctx, "Importing %d DHCP configs", len(dhcps))
-	// TODO(xixuan): implementing
+	for i := 0; ; i += pageSize {
+		end := min(i+pageSize, len(dhcps))
+		logging.Debugf(ctx, "importing dhcp configs %dth - %dth", i, end-1)
+		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
+		s := processImportDatastoreRes(res, err)
+		if s.Err() != nil {
+			return s.Proto(), s.Err()
+		}
+		if i+pageSize >= len(dhcps) {
+			break
+		}
+	}
 	return successStatus.Proto(), nil
 }
 

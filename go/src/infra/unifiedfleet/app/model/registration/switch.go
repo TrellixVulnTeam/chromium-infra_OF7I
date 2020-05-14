@@ -29,7 +29,7 @@ type SwitchEntity struct {
 	Switch []byte `gae:",noindex"`
 }
 
-// GetProto returns the unmarshaled KVM.
+// GetProto returns the unmarshaled switch.
 func (e *SwitchEntity) GetProto() (proto.Message, error) {
 	var p fleet.Switch
 	if err := proto.Unmarshal(e.Switch, &p); err != nil {

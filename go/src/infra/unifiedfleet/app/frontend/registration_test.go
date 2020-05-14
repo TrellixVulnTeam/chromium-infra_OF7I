@@ -10,6 +10,7 @@ import (
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
@@ -1184,12 +1185,21 @@ func TestImportDatacenters(t *testing.T) {
 			res, err := tf.Fleet.ImportDatacenters(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
-			resp, err := tf.Fleet.ListRacks(ctx, &api.ListRacksRequest{
-				PageSize: 100,
-			})
-			got := getRackNames(resp.GetRacks())
-			So(got, ShouldHaveLength, 2)
-			So(got, ShouldResemble, []string{"racks/cr20", "racks/cr22"})
+			dhcps, _, err := configuration.ListDHCPConfigs(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(dhcps, ShouldHaveLength, 3)
+			racks, _, err := registration.ListRacks(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(racks, ShouldHaveLength, 2)
+			So(getRackNames(racks), ShouldResemble, []string{"cr20", "cr22"})
+			kvms, _, err := registration.ListKVMs(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(kvms, ShouldHaveLength, 3)
+			So(getKVMNames(kvms), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
+			switches, _, err := registration.ListSwitches(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(switches, ShouldHaveLength, 4)
+			So(getSwitchNames(switches), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
 		})
 	})
 }
@@ -1905,6 +1915,22 @@ func getMachineNames(res OpResults) []string {
 func getRackNames(racks []*proto.Rack) []string {
 	names := make([]string, 0)
 	for _, r := range racks {
+		names = append(names, r.GetName())
+	}
+	return names
+}
+
+func getSwitchNames(switches []*proto.Switch) []string {
+	names := make([]string, 0)
+	for _, r := range switches {
+		names = append(names, r.GetName())
+	}
+	return names
+}
+
+func getKVMNames(kvms []*proto.KVM) []string {
+	names := make([]string, 0)
+	for _, r := range kvms {
 		names = append(names, r.GetName())
 	}
 	return names

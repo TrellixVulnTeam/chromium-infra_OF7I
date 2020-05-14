@@ -137,7 +137,7 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 		return nil
 	})
 	if err != nil {
-		logging.Errorf(ctx, "Failed to List KVMs %s", err)
+		logging.Errorf(ctx, "Failed to list KVMs %s", err)
 		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
 	}
 	if nextCur != nil {

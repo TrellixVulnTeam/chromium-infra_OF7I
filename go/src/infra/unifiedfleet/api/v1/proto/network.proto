@@ -47,6 +47,8 @@ message DHCPConfig {
     string mac_address = 1;
     string hostname = 2;
     string ip = 3;
+    google.protobuf.Timestamp update_time = 4 [
+        (google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 // Message contains all dhcp configs.
