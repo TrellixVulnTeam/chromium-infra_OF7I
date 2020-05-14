@@ -944,3 +944,88 @@ func (s *DecoratedFleet) DeleteSwitch(ctx context.Context, req *DeleteSwitchRequ
 	}
 	return
 }
+
+func (s *DecoratedFleet) CreateVlan(ctx context.Context, req *CreateVlanRequest) (rsp *proto1.Vlan, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateVlan", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateVlan(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateVlan", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateVlan(ctx context.Context, req *UpdateVlanRequest) (rsp *proto1.Vlan, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateVlan", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateVlan(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateVlan", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetVlan(ctx context.Context, req *GetVlanRequest) (rsp *proto1.Vlan, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetVlan", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetVlan(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetVlan", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ListVlans(ctx context.Context, req *ListVlansRequest) (rsp *ListVlansResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListVlans", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListVlans(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListVlans", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteVlan(ctx context.Context, req *DeleteVlanRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteVlan", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteVlan(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteVlan", rsp, err)
+	}
+	return
+}

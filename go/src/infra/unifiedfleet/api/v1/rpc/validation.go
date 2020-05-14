@@ -31,6 +31,7 @@ const (
 	RPMNameFormat            string = "Invalid input - Entity Name pattern should be rpms/{rpm}."
 	DracNameFormat           string = "Invalid input - Entity Name pattern should be dracs/{drac}."
 	SwitchNameFormat         string = "Invalid input - Entity Name pattern should be switches/{switch}."
+	VlanNameFormat           string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
 )
 
 var (
@@ -49,6 +50,7 @@ var kvmRegex = regexp.MustCompile(`kvms\.*`)
 var rpmRegex = regexp.MustCompile(`rpms\.*`)
 var dracRegex = regexp.MustCompile(`dracs\.*`)
 var switchRegex = regexp.MustCompile(`switches\.*`)
+var vlanRegex = regexp.MustCompile(`vlans\.*`)
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -428,6 +430,44 @@ func (r *ListSwitchesRequest) Validate() error {
 // Validate validates input requests of DeleteSwitch.
 func (r *DeleteSwitchRequest) Validate() error {
 	return validateResourceName(switchRegex, SwitchNameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateVlan.
+func (r *CreateVlanRequest) Validate() error {
+	if r.Vlan == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.VlanId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyID)
+	}
+	if !idRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateVlan.
+func (r *UpdateVlanRequest) Validate() error {
+	if r.Vlan == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	return validateResourceName(vlanRegex, VlanNameFormat, r.Vlan.GetName())
+}
+
+// Validate validates input requests of GetVlan.
+func (r *GetVlanRequest) Validate() error {
+	return validateResourceName(vlanRegex, VlanNameFormat, r.Name)
+}
+
+// Validate validates input requests of ListVlans.
+func (r *ListVlansRequest) Validate() error {
+	return validatePageSize(r.PageSize)
+}
+
+// Validate validates input requests of DeleteVlan.
+func (r *DeleteVlanRequest) Validate() error {
+	return validateResourceName(vlanRegex, VlanNameFormat, r.Name)
 }
 
 func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name string) error {

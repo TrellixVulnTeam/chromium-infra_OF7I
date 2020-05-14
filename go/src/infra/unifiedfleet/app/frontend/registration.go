@@ -798,3 +798,93 @@ func (fs *FleetServerImpl) DeleteSwitch(ctx context.Context, req *api.DeleteSwit
 	err = registration.DeleteSwitch(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateVlan creates vlan entry in database.
+func (fs *FleetServerImpl) CreateVlan(ctx context.Context, req *api.CreateVlanRequest) (rsp *proto.Vlan, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Vlan.Name = req.VlanId
+	vlan, err := registration.CreateVlan(ctx, req.Vlan)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+	return vlan, err
+}
+
+// UpdateVlan updates the vlan information in database.
+func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *api.UpdateVlanRequest) (rsp *proto.Vlan, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Vlan.Name = util.RemovePrefix(req.Vlan.Name)
+	vlan, err := registration.UpdateVlan(ctx, req.Vlan)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+	return vlan, err
+}
+
+// GetVlan gets the vlan information from database.
+func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *api.GetVlanRequest) (rsp *proto.Vlan, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	vlan, err := registration.GetVlan(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+	return vlan, err
+}
+
+// ListVlans list the vlans information from database.
+func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *api.ListVlansRequest) (rsp *api.ListVlansResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := registration.ListVlans(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, vlan := range result {
+		vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+	}
+	return &api.ListVlansResponse{
+		Vlans:         result,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
+// DeleteVlan deletes the vlan from database.
+func (fs *FleetServerImpl) DeleteVlan(ctx context.Context, req *api.DeleteVlanRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = registration.DeleteVlan(ctx, name)
+	return &empty.Empty{}, err
+}
