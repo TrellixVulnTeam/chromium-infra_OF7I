@@ -44,8 +44,8 @@ describe('mr-description', () => {
 
   it('hides selector when only one description', async () => {
     element.descriptionList = [
-      {content: 'Hello world', commenter: {displayName: 'name'}},
-      {content: 'rutabaga', commenter: {displayName: 'name'}},
+      {content: 'Hello world', commenter: {displayName: 'name@email.com'}},
+      {content: 'rutabaga', commenter: {displayName: 'name@email.com'}},
     ];
 
     await element.updateComplete;
@@ -54,11 +54,28 @@ describe('mr-description', () => {
     assert.isFalse(selectMenu.hidden);
 
     element.descriptionList = [
-      {content: 'blehh', commenter: {displayName: 'name'}},
+      {content: 'blehh', commenter: {displayName: 'name@email.com'}},
     ];
 
     await element.updateComplete;
 
     assert.isTrue(selectMenu.hidden);
+  });
+
+  it('selector still renders when one description is deleted', async () => {
+    element.descriptionList = [
+      {content: 'Hello world', commenter: {displayName: 'name@email.com'}},
+      {isDeleted: true},
+    ];
+
+    await element.updateComplete;
+
+    const selectMenu = element.shadowRoot.querySelector('select');
+    assert.isFalse(selectMenu.hidden);
+
+    const options = selectMenu.querySelectorAll('option');
+
+    assert.include(options[0].textContent, 'Description #1 by name@email.com');
+    assert.include(options[1].textContent, 'Description #2');
   });
 });

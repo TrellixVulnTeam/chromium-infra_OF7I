@@ -63,12 +63,7 @@ export class MrDescription extends LitElement {
           @change=${this._selectChanged}
           ?hidden=${!this.descriptionList || this.descriptionList.length <= 1}
           aria-label="Description history menu">
-          ${this.descriptionList.map((description, index) => html`
-            <option value=${index} ?selected=${index === this.selectedIndex}>
-              Description #${index + 1} by ${description.commenter.displayName}
-              (${_relativeTime(description.timestamp)})
-            </option>
-          `)}
+          ${this.descriptionList.map((desc, i) => this._renderDescriptionOption(desc, i))}
         </select>
       </div>
       <mr-comment-content
@@ -85,6 +80,24 @@ export class MrDescription extends LitElement {
           ></mr-attachment>
         `)}
       </div>
+    `;
+  }
+
+  /**
+   * Helper to render a <select> <option> for a single description, for our
+   * description selector.
+   * @param {Comment} description
+   * @param {Number} index
+   * @return {TemplateResult}
+   * @private
+   */
+  _renderDescriptionOption(description, index) {
+    const {commenter, timestamp} = description || {};
+    const byLine = commenter ? `by ${commenter.displayName}` : '';
+    return html`
+      <option value=${index} ?selected=${index === this.selectedIndex}>
+        Description #${index + 1} ${byLine} (${_relativeTime(timestamp)})
+      </option>
     `;
   }
 
