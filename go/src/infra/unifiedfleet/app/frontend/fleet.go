@@ -36,7 +36,9 @@ const (
 	machineLSEPrototypeCollection string = "machineLSEPrototypes"
 	rackLSEPrototypeCollection    string = "rackLSEPrototypes"
 	// https://cloud.google.com/datastore/docs/concepts/limits
-	importPageSize int = 500
+	importPageSize          int    = 500
+	defaultMachineDBService string = "machine-db-dev"
+	datacenterConfigFile    string = "datacenters.cfg"
 )
 
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface

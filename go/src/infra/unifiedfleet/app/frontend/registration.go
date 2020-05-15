@@ -492,6 +492,23 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	return successStatus.Proto(), nil
 }
 
+// ImportDatacenterConfigs imports the datacenter configs
+//
+// It's not an exposed RPC.
+func (fs *FleetServerImpl) ImportDatacenterConfigs(ctx context.Context) ([]string, error) {
+	logging.Debugf(ctx, "Importing the default datacenter config file from luci-config: %s", datacenterConfigFile)
+	cfgInterface := fs.newCfgInterface(ctx)
+	c, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(defaultMachineDBService), datacenterConfigFile, false)
+	if err != nil {
+		return nil, err
+	}
+	dcs := &crimsonconfig.Datacenters{}
+	logging.Debugf(ctx, "%#v", c)
+	resolver := textproto.Message(dcs)
+	resolver.Resolve(c)
+	return dcs.GetDatacenter(), nil
+}
+
 // CreateKVM creates kvm entry in database.
 func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *api.CreateKVMRequest) (rsp *proto.KVM, err error) {
 	defer func() {

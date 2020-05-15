@@ -1253,6 +1253,20 @@ func TestImportDatacenters(t *testing.T) {
 	})
 }
 
+func TestImportDatacenterConfigs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import datacenter configs", t, func() {
+		Convey("happy path", func() {
+			dcs, err := tf.Fleet.ImportDatacenterConfigs(ctx)
+			So(err, ShouldBeNil)
+			So(dcs, ShouldResemble, []string{"dc1", "dc2", "dc3"})
+		})
+	})
+}
+
 func TestCreateKVM(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()

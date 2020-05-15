@@ -15,6 +15,12 @@ import (
 type LuciConfigClient struct {
 }
 
+const dcsContent = `
+datacenter: "dc1"
+datacenter: "dc2"
+datacenter: "dc3"
+`
+
 const dcContent = `
 name: "ATL97"
 description: "Chrome Golo in Atlanta"
@@ -84,6 +90,10 @@ func (c *LuciConfigClient) GetConfig(ctx context.Context, configSet luciconfig.S
 	case "fakeDatacenter.cfg":
 		return &luciconfig.Config{
 			Content: dcContent,
+		}, nil
+	case "datacenters.cfg":
+		return &luciconfig.Config{
+			Content: dcsContent,
 		}, nil
 	}
 	return nil, nil
