@@ -309,6 +309,55 @@ class UpdateBuildTests(BaseTestCase):
         expected_code=prpc.StatusCode.INVALID_ARGUMENT,
     )
 
+  def test_update_tags(self):
+    build = test_util.build(
+        id=123,
+        status=common_pb2.STARTED,
+        tags=[common_pb2.StringPair(key='key1', value='value1')]
+    )
+    build.put()
+
+    build_proto = build_pb2.Build(
+        id=123,
+        tags=[
+            common_pb2.StringPair(key='key1', value='value1'),
+            common_pb2.StringPair(key='key1', value='value1_2'),
+            common_pb2.StringPair(key='key2', value='value2')
+        ]
+    )
+
+    expected_tags = ['key1:value1_2', 'key2:value2'] + build.tags
+    expected_tags.sort()
+
+    req, ctx = self._mk_update_req(build_proto, paths=['build.tags'])
+    self.call(self.api.UpdateBuild, req, ctx=ctx)
+
+    updated_build = model.Build.get_by_id(req.build.id)
+    self.assertEqual(updated_build.tags, expected_tags)
+
+  def test_update_invalid_tags(self):
+    build = test_util.build(id=123, status=common_pb2.STARTED)
+    build.put()
+
+    build_proto = build_pb2.Build(
+        id=123,
+        tags=[
+            common_pb2.StringPair(key='build_address', value='value1'),
+        ]
+    )
+
+    req, ctx = self._mk_update_req(build_proto, paths=['build.tags'])
+    self.call(
+        self.api.UpdateBuild,
+        req,
+        ctx=ctx,
+        expected_code=prpc.StatusCode.INVALID_ARGUMENT,
+        expected_details=(
+            'build.tags: Tag "build_address" cannot be added'
+            ' to an existing build'
+        ),
+    )
+
   @mock.patch('events.on_build_starting_async', autospec=True)
   @mock.patch('events.on_build_started', autospec=True)
   def test_started(self, on_build_started, on_build_starting_async):

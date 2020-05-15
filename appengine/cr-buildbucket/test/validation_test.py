@@ -470,7 +470,10 @@ class UpdateBuildRequestTests(BaseTestCase):
     with open(os.path.join(THIS_DIR, 'steps.pb.txt')) as f:
       text_format.Merge(f.read(), build)
     msg = self._mk_req(
-        ['build.status', 'build.steps', 'build.output.gitiles_commit'],
+        [
+            'build.status', 'build.steps', 'build.output.gitiles_commit',
+            'build.tags'
+        ],
         status=common_pb2.SUCCESS,
         steps=build.steps,
         output=dict(
@@ -482,6 +485,12 @@ class UpdateBuildRequestTests(BaseTestCase):
                 position=1,
             ),
         ),
+        tags=[
+            common_pb2.StringPair(key='tag_key', value='tag_value_from_build'),
+            common_pb2.StringPair(
+                key='another_tag_key', value='another_tag_value'
+            ),
+        ],
     )
     self.assert_valid(msg)
 
@@ -531,6 +540,20 @@ class UpdateBuildRequestTests(BaseTestCase):
     msg = self._mk_req(['build.status'], status=common_pb2.SCHEDULED)
     self.assert_invalid(
         msg, r'build\.status: invalid status SCHEDULED for UpdateBuild'
+    )
+
+  def test_invalid_tags(self):
+    msg = rpc_pb2.UpdateBuildRequest(
+        build=build_pb2.Build(
+            id=1,
+            tags=[
+                common_pb2.StringPair(key='buildset', value='new_value'),
+            ]
+        ),
+        update_mask=field_mask_pb2.FieldMask(paths=['build.tags']),
+    )
+    self.assert_invalid(
+        msg, r'build\.tags: Tag "buildset" cannot be added to an existing build'
     )
 
 

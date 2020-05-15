@@ -287,6 +287,7 @@ UPDATE_BUILD_FIELD_PATHS = {
     'build.output',
     'build.output.properties',
     'build.output.gitiles_commit',
+    'build.tags',
 }
 # Set of valid build statuses supported by UpdateBuild RPC.
 UPDATE_BUILD_STATUSES = {
@@ -334,6 +335,10 @@ def validate_update_build_request(req, make_build_steps_func=None):
     if 'build.output.properties' in update_paths:
       with _enter('output', 'properties'):
         validate_struct(req.build.output.properties)
+
+    if 'build.tags' in update_paths:
+      with _enter('tags'):
+        validate_tags(req.build.tags, 'append')
 
     if 'build.steps' in update_paths:  # pragma: no branch
       with _enter('steps'):

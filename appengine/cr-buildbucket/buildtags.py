@@ -22,6 +22,11 @@ GITILES_REF_KEY = 'gitiles_ref'
 RESERVED_KEYS = {
     BUILD_ADDRESS_KEY,
 }
+BLACKLIST_KEYS_FOR_APPEND = {
+    BUILD_ADDRESS_KEY,
+    BUILDER_KEY,
+    BUILDSET_KEY,
+}
 
 BUILDSET_MAX_LENGTH = 1024
 
@@ -144,6 +149,10 @@ def validate_tags(tags, mode, builder=None):
     if t[0] == ':':
       raise errors.InvalidInputError('Invalid tag "%s": starts with ":"' % t)
     k, v = t.split(':', 1)
+    if mode == 'append' and k in BLACKLIST_KEYS_FOR_APPEND:
+      raise errors.InvalidInputError(
+          'Tag "%s" cannot be added to an existing build' % k
+      )
     if k == BUILDSET_KEY:
       try:
         validate_buildset(v)
@@ -156,10 +165,6 @@ def validate_tags(tags, mode, builder=None):
           )
         seen_gitiles_commit = True
     if k == BUILDER_KEY:
-      if mode == 'append':
-        raise errors.InvalidInputError(
-            'Tag "builder" cannot be added to an existing build'
-        )
       if mode == 'new':  # pragma: no branch
         if builder is not None and v != builder:
           raise errors.InvalidInputError(

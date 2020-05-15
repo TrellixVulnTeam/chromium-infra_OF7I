@@ -342,10 +342,10 @@ def validate_build_token(build, ctx):
 def update_build_async(req, _res, ctx, _mask):
   """Update build as in given request.
 
-  For now, only update build steps.
+  For allowed fields, please refer to UPDATE_BUILD_FIELD_PATHS in validation.py.
 
   Does not mutate res.
-  In practice, clients does not need the response, they just want to provide
+  In practice, clients do not need the response, they just want to provide
   the data.
   """
   now = utils.utcnow()
@@ -432,6 +432,11 @@ def update_build_async(req, _res, ctx, _mask):
               properties=out_prop_bytes,
           ).put_async()
       )
+
+    if 'build.tags' in update_paths:
+      tags = set(build.tags)
+      tags.update(buildtags.unparse(t.key, t.value) for t in req.build.tags)
+      build.tags = sorted(tags)
 
     if model_build_proto_mask:  # pragma: no branch
       # Merge the rest into build.proto using model_build_proto_mask.

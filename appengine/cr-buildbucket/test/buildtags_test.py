@@ -66,6 +66,10 @@ class ValidateTagsTests(unittest.TestCase):
     with self.assertRaises(errors.InvalidInputError):
       buildtags.validate_tags(['build_address:1'], 'append')
 
+  def test_append_buildset(self):
+    with self.assertRaises(errors.InvalidInputError):
+      buildtags.validate_tags(['buildset:patch/gerrit/gerrit/123/5'], 'append')
+
   def test_builder_inconsistent(self):
     err_pattern = r'conflicts with tag'
     with self.assertRaisesRegexp(errors.InvalidInputError, err_pattern):
