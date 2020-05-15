@@ -114,7 +114,7 @@ class ResultDBTest(testing.AppengineTestCase):
   def test_invocation_created(self):
     self.builds_and_configs = [_make_build_and_config(4)]
     response = recorder_pb2.BatchCreateInvocationsResponse(
-        invocations=[invocation_pb2.Invocation(name='invocations/build:4')]
+        invocations=[invocation_pb2.Invocation(name='invocations/build-4')]
     )
     net.request_async.side_effect = _mock_create_request_async(
         response, ['FakeUpdateToken']
@@ -122,7 +122,7 @@ class ResultDBTest(testing.AppengineTestCase):
     resultdb.create_invocations_async(self.builds_and_configs).get_result()
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
-        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:4'
+        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build-4'
     )
 
   def test_invocations_created_protobuf_update_tokens(self):
@@ -132,8 +132,8 @@ class ResultDBTest(testing.AppengineTestCase):
     ]
     response = recorder_pb2.BatchCreateInvocationsResponse(
         invocations=[
-            invocation_pb2.Invocation(name='invocations/build:15'),
-            invocation_pb2.Invocation(name='invocations/build:16'),
+            invocation_pb2.Invocation(name='invocations/build-15'),
+            invocation_pb2.Invocation(name='invocations/build-16'),
         ]
     )
     net.request_async.side_effect = _mock_create_request_async(
@@ -142,11 +142,11 @@ class ResultDBTest(testing.AppengineTestCase):
     resultdb.create_invocations_async(self.builds_and_configs).get_result()
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
-        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build:15'
+        self.builds[0].proto.infra.resultdb.invocation, 'invocations/build-15'
     )
     self.assertEqual(self.builds[1].resultdb_update_token, 'FakeUpdateToken2')
     self.assertEqual(
-        self.builds[1].proto.infra.resultdb.invocation, 'invocations/build:16'
+        self.builds[1].proto.infra.resultdb.invocation, 'invocations/build-16'
     )
 
 
@@ -222,9 +222,9 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
     resultdb._call_finalize_rpc.side_effect = client.RpcError(
         'Permission Denied', codes.StatusCode.PERMISSION_DENIED, {}
     )
-    self._create_and_finalize(3, 'rdb.dev', 'invocations/build:3')
+    self._create_and_finalize(3, 'rdb.dev', 'invocations/build-3')
     resultdb._call_finalize_rpc.assert_called_with(
-        'rdb.dev', self._req('invocations/build:3'), self.metadata
+        'rdb.dev', self._req('invocations/build-3'), self.metadata
     )
     self.assertTrue(mock_err.called)
 
@@ -233,14 +233,14 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
     resultdb._call_finalize_rpc.side_effect = client.RpcError(
         'Failed Precondition', codes.StatusCode.FAILED_PRECONDITION, {}
     )
-    self._create_and_finalize(4, 'rdb.dev', 'invocations/build:4')
+    self._create_and_finalize(4, 'rdb.dev', 'invocations/build-4')
     self.assertTrue(mock_err.called)
 
   @mock.patch.object(logging, 'error')
   def test_success(self, mock_err):
-    self._create_and_finalize(5, 'rdb.dev', 'invocations/build:5')
+    self._create_and_finalize(5, 'rdb.dev', 'invocations/build-5')
     resultdb._call_finalize_rpc.assert_called_with(
-        'rdb.dev', self._req('invocations/build:5'), self.metadata
+        'rdb.dev', self._req('invocations/build-5'), self.metadata
     )
     self.assertFalse(mock_err.called)
 
@@ -249,7 +249,7 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
         'Unavailable', codes.StatusCode.UNAVAILABLE, {}
     )
     with self.assertRaises(client.RpcError):  # Causes retry.
-      self._create_and_finalize(6, 'rdb.dev', 'invocations/build:6')
+      self._create_and_finalize(6, 'rdb.dev', 'invocations/build-6')
     resultdb._call_finalize_rpc.assert_called_with(
-        'rdb.dev', self._req('invocations/build:6'), self.metadata
+        'rdb.dev', self._req('invocations/build-6'), self.metadata
     )

@@ -56,18 +56,14 @@ def create_invocations_async(builds_and_configs):
 @ndb.tasklet
 def _create_invocations_async(builds_and_configs, hostname):
   """Creates a batch of invocations in resultdb for the given NewBuilds."""
-  # TODO(crbug.com/1056007): Create an invocation like
-  #     "build:<project>/<bucket>/<builder>/<number>" if number is available,
-  #     and make it include the "build:<id>" inv.
-
-  # build:<first build id>+<number of other builds in the batch>
-  request_id = 'build:%d+%d' % (
+  # build-<first build id>+<number of other builds in the batch>
+  request_id = 'build-%d+%d' % (
       builds_and_configs[0][0].proto.id, len(builds_and_configs) - 1
   )
   req = recorder_pb2.BatchCreateInvocationsRequest(request_id=request_id)
   for build, cfg in builds_and_configs:
     req.requests.add(
-        invocation_id='build:%d' % build.proto.id,
+        invocation_id='build-%d' % build.proto.id,
         invocation=invocation_pb2.Invocation(
             bigquery_exports=cfg.resultdb.bq_exports,
         ),
