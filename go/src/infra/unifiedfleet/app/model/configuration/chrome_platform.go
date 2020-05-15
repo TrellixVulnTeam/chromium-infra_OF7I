@@ -158,15 +158,15 @@ func DeleteChromePlatform(ctx context.Context, id string) error {
 	return fleetds.Delete(ctx, &fleet.ChromePlatform{Name: id}, newChromePlatformEntity)
 }
 
-// InsertChromePlatforms inserts chrome platforms to datastore.
-func InsertChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*fleetds.OpResults, error) {
+// ImportChromePlatforms inserts chrome platforms to datastore.
+func ImportChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*fleetds.OpResults, error) {
 	protos := make([]proto.Message, len(platforms))
 	utime := ptypes.TimestampNow()
 	for i, p := range platforms {
 		p.UpdateTime = utime
 		protos[i] = p
 	}
-	return fleetds.Insert(ctx, protos, newChromePlatformEntity, false, false)
+	return fleetds.Insert(ctx, protos, newChromePlatformEntity, true, true)
 }
 
 // GetAllChromePlatforms returns all platforms in record.

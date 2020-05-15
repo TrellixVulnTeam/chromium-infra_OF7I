@@ -174,7 +174,7 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 	platforms = util.ToChromePlatforms(oldP)
 
 	logging.Debugf(ctx, "Importing %d platforms", len(platforms))
-	res, err := configuration.InsertChromePlatforms(ctx, platforms)
+	res, err := configuration.ImportChromePlatforms(ctx, platforms)
 	s := processImportDatastoreRes(res, err)
 	return s.Proto(), s.Err()
 }

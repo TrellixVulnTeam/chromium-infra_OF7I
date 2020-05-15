@@ -36,6 +36,7 @@ func InitServer(srv *server.Server, opts Options) {
 
 func run(ctx context.Context, minInterval time.Duration) {
 	cron.Run(ctx, minInterval, dumpConfigurations)
+	cron.Run(ctx, minInterval, importCrimson)
 }
 
 func dumpConfigurations(ctx context.Context) error {

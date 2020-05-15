@@ -5,8 +5,6 @@
 package frontend
 
 import (
-	"fmt"
-
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
 	luciconfig "go.chromium.org/luci/config"
@@ -140,7 +138,6 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	}
 	_, _, _, machineToNics, machineToDracs, machineToSwitch := util.ProcessNics(nics.Nics)
 	logging.Debugf(ctx, "Importing %d machines", len(resp.Machines))
-	fmt.Println("maps: ", machineToNics)
 	pageSize := fs.getImportPageSize()
 	machines := util.ToChromeMachines(resp.GetMachines(), machineToNics, machineToDracs, machineToSwitch)
 	for i := 0; ; i += pageSize {
@@ -425,7 +422,6 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 		return nil, configServiceFailureStatus.Err()
 	}
 	dc := &crimsonconfig.Datacenter{}
-	logging.Debugf(ctx, "%#v", fetchedConfigs)
 	resolver := textproto.Message(dc)
 	resolver.Resolve(fetchedConfigs)
 	logging.Debugf(ctx, "processing datacenter: %s", dc.GetName())
@@ -498,7 +494,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 func (fs *FleetServerImpl) ImportDatacenterConfigs(ctx context.Context) ([]string, error) {
 	logging.Debugf(ctx, "Importing the default datacenter config file from luci-config: %s", datacenterConfigFile)
 	cfgInterface := fs.newCfgInterface(ctx)
-	c, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(defaultMachineDBService), datacenterConfigFile, false)
+	c, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(DefaultMachineDBService), datacenterConfigFile, false)
 	if err != nil {
 		return nil, err
 	}

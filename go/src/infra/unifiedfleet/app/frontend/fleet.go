@@ -36,8 +36,9 @@ const (
 	machineLSEPrototypeCollection string = "machineLSEPrototypes"
 	rackLSEPrototypeCollection    string = "rackLSEPrototypes"
 	// https://cloud.google.com/datastore/docs/concepts/limits
-	importPageSize          int    = 500
-	defaultMachineDBService string = "machine-db-dev"
+	importPageSize int = 500
+	// DefaultMachineDBService indicates the default machineDB host for importing
+	DefaultMachineDBService string = "machine-db-dev"
 	datacenterConfigFile    string = "datacenters.cfg"
 )
 

@@ -9,12 +9,13 @@ import (
 	fleet "infra/unifiedfleet/api/v1/proto"
 	"testing"
 
+	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/registration"
+
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/registration"
 )
 
 func mockChromePlatform(id, desc string) *fleet.ChromePlatform {
@@ -239,7 +240,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 	})
 }
 
-func TestInsertChromePlatforms(t *testing.T) {
+func TestImportChromePlatforms(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
@@ -250,7 +251,7 @@ func TestInsertChromePlatforms(t *testing.T) {
 				mockChromePlatform("platform1", "Camera"),
 				mockChromePlatform("platform2", "Camera"),
 			}
-			dsResp, err := InsertChromePlatforms(ctx, toAdd)
+			dsResp, err := ImportChromePlatforms(ctx, toAdd)
 			So(err, ShouldBeNil)
 			So(dsResp.Passed(), ShouldHaveLength, len(toAdd))
 			So(dsResp.Failed(), ShouldHaveLength, 0)
@@ -274,31 +275,20 @@ func TestInsertChromePlatforms(t *testing.T) {
 				mockChromePlatform("platform1", "Camera"),
 				mockChromePlatform("platform2", "Camera"),
 			}
-			_, err := InsertChromePlatforms(ctx, toAdd)
+			_, err := ImportChromePlatforms(ctx, toAdd)
 			So(err, ShouldBeNil)
 
 			toAddDuplicated := []*fleet.ChromePlatform{
-				mockChromePlatform("platform1", "Camera"),
+				mockChromePlatform("platform1", "Camera2"),
 				mockChromePlatform("platform3", "Camera"),
 			}
-			dsResp, err := InsertChromePlatforms(ctx, toAddDuplicated)
+			dsResp, err := ImportChromePlatforms(ctx, toAddDuplicated)
 			So(err, ShouldBeNil)
-			So(dsResp.Passed(), ShouldHaveLength, 1)
-			So(dsResp.Failed(), ShouldHaveLength, 1)
-			So(dsResp.Passed()[0].Data.(*fleet.ChromePlatform).Name, ShouldEqual, "platform3")
-			So(dsResp.Failed()[0].Data.(*fleet.ChromePlatform).Name, ShouldEqual, "platform1")
+			So(dsResp.Passed(), ShouldHaveLength, 2)
 
-			want := []string{"platform1", "platform2", "platform3"}
-			gets, err := GetAllChromePlatforms(ctx)
+			got, err := GetChromePlatform(ctx, "platform1")
 			So(err, ShouldBeNil)
-			So(gets, ShouldHaveLength, 3)
-			passed := gets.Passed()
-			got := []string{
-				passed[0].Data.(*fleet.ChromePlatform).Name,
-				passed[1].Data.(*fleet.ChromePlatform).Name,
-				passed[2].Data.(*fleet.ChromePlatform).Name,
-			}
-			So(got, ShouldResemble, want)
+			So(got.GetDescription(), ShouldEqual, "Camera2")
 		})
 	})
 }
