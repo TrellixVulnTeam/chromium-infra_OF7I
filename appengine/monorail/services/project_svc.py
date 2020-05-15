@@ -40,11 +40,12 @@ AUTOCOMPLETEEXCLUSION_TABLE_NAME = 'AutocompleteExclusion'
 PROJECT_COLS = [
     'project_id', 'project_name', 'summary', 'description', 'state', 'access',
     'read_only_reason', 'state_reason', 'delete_time', 'issue_notify_address',
-    'attachment_bytes_used', 'attachment_quota',
-    'cached_content_timestamp', 'recent_activity_timestamp', 'moved_to',
-    'process_inbound_email', 'only_owners_remove_restrictions',
-    'only_owners_see_contributors', 'revision_url_format',
-    'home_page', 'docs_url', 'source_url', 'logo_gcs_id', 'logo_file_name']
+    'attachment_bytes_used', 'attachment_quota', 'cached_content_timestamp',
+    'recent_activity_timestamp', 'moved_to', 'process_inbound_email',
+    'only_owners_remove_restrictions', 'only_owners_see_contributors',
+    'revision_url_format', 'home_page', 'docs_url', 'source_url', 'logo_gcs_id',
+    'logo_file_name', 'issue_notify_always_detailed'
+]
 USER2PROJECT_COLS = ['project_id', 'user_id', 'role_name']
 EXTRAPERM_COLS = ['project_id', 'user_id', 'perm']
 MEMBERNOTES_COLS = ['project_id', 'user_id', 'notes']
@@ -72,12 +73,14 @@ class ProjectTwoLevelCache(caches.AbstractTwoLevelCache):
     project_dict = {}
 
     for project_row in project_rows:
-      (project_id, project_name, summary, description, state_name,
-       access_name, read_only_reason, state_reason, delete_time,
-       issue_notify_address, attachment_bytes_used, attachment_quota, cct,
-       recent_activity_timestamp, moved_to, process_inbound_email,
-       oorr, oosc, revision_url_format, home_page, docs_url, source_url,
-       logo_gcs_id, logo_file_name) = project_row
+      (
+          project_id, project_name, summary, description, state_name,
+          access_name, read_only_reason, state_reason, delete_time,
+          issue_notify_address, attachment_bytes_used, attachment_quota, cct,
+          recent_activity_timestamp, moved_to, process_inbound_email, oorr,
+          oosc, revision_url_format, home_page, docs_url, source_url,
+          logo_gcs_id, logo_file_name,
+          issue_notify_always_detailed) = project_row
       project = project_pb2.Project()
       project.project_id = project_id
       project.project_name = project_name
@@ -103,6 +106,7 @@ class ProjectTwoLevelCache(caches.AbstractTwoLevelCache):
       project.source_url = source_url or ''
       project.logo_gcs_id = logo_gcs_id or ''
       project.logo_file_name = logo_file_name or ''
+      project.issue_notify_always_detailed = bool(issue_notify_always_detailed)
       project_dict[project_id] = project
 
     for project_id, user_id, role_name in role_rows:
@@ -369,14 +373,32 @@ class ProjectService(object):
   ### Updating projects
 
   def UpdateProject(
-      self, cnxn, project_id, summary=None, description=None,
-      state=None, state_reason=None, access=None, issue_notify_address=None,
-      attachment_bytes_used=None, attachment_quota=None, moved_to=None,
-      process_inbound_email=None, only_owners_remove_restrictions=None,
-      read_only_reason=None, cached_content_timestamp=None,
-      only_owners_see_contributors=None, delete_time=None,
-      recent_activity=None, revision_url_format=None, home_page=None,
-      docs_url=None, source_url=None, logo_gcs_id=None, logo_file_name=None):
+      self,
+      cnxn,
+      project_id,
+      summary=None,
+      description=None,
+      state=None,
+      state_reason=None,
+      access=None,
+      issue_notify_address=None,
+      attachment_bytes_used=None,
+      attachment_quota=None,
+      moved_to=None,
+      process_inbound_email=None,
+      only_owners_remove_restrictions=None,
+      read_only_reason=None,
+      cached_content_timestamp=None,
+      only_owners_see_contributors=None,
+      delete_time=None,
+      recent_activity=None,
+      revision_url_format=None,
+      home_page=None,
+      docs_url=None,
+      source_url=None,
+      logo_gcs_id=None,
+      logo_file_name=None,
+      issue_notify_always_detailed=None):
     """Update the DB with the given project information."""
     exists = self.project_tbl.SelectValue(
       cnxn, 'project_name', project_id=project_id)
@@ -427,6 +449,8 @@ class ProjectService(object):
       delta['logo_gcs_id'] = logo_gcs_id
     if logo_file_name is not None:
       delta['logo_file_name'] = logo_file_name
+    if issue_notify_always_detailed is not None:
+      delta['issue_notify_always_detailed'] = issue_notify_always_detailed
     if cached_content_timestamp is not None:
       delta['cached_content_timestamp'] = cached_content_timestamp
     self.project_tbl.Update(cnxn, delta, project_id=project_id)

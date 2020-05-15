@@ -1064,15 +1064,32 @@ class ProjectService(object):
             self.no_expand_ids.get(project_id, []))
 
   def UpdateProject(
-      self, _cnxn, project_id, summary=None, description=None,
-      state=None, state_reason=None, access=None,
-      issue_notify_address=None, attachment_bytes_used=None,
-      attachment_quota=None, moved_to=None, process_inbound_email=None,
+      self,
+      _cnxn,
+      project_id,
+      summary=None,
+      description=None,
+      state=None,
+      state_reason=None,
+      access=None,
+      issue_notify_address=None,
+      attachment_bytes_used=None,
+      attachment_quota=None,
+      moved_to=None,
+      process_inbound_email=None,
       only_owners_remove_restrictions=None,
-      read_only_reason=None, cached_content_timestamp=None,
-      only_owners_see_contributors=None, delete_time=None,
-      recent_activity=None, revision_url_format=None, home_page=None,
-      docs_url=None, source_url=None, logo_gcs_id=None, logo_file_name=None):
+      read_only_reason=None,
+      cached_content_timestamp=None,
+      only_owners_see_contributors=None,
+      delete_time=None,
+      recent_activity=None,
+      revision_url_format=None,
+      home_page=None,
+      docs_url=None,
+      source_url=None,
+      logo_gcs_id=None,
+      logo_file_name=None,
+      issue_notify_always_detailed=None):
     project = self.projects_by_id.get(project_id)
     if not project:
       raise exceptions.NoSuchProjectException(

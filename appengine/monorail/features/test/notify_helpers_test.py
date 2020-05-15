@@ -222,6 +222,11 @@ class LinkOnlyLogicTest(unittest.TestCase):
     self.assertFalse(notify_helpers.ShouldUseLinkOnly(
         self.addr_perm, self.issue))
 
+  def testShouldUseLinkOnly_AlwaysDetailed(self):
+    """Issue is not restricted, so go ahead and send comment details."""
+    self.assertFalse(
+        notify_helpers.ShouldUseLinkOnly(self.addr_perm, self.issue, True))
+
   @mock.patch('features.notify_helpers._GetNotifyRestrictedIssues')
   def testShouldUseLinkOnly_NotifyWithDetails(self, fake_gnri):
     """Issue is restricted, and user is allowed to get full comment details."""
@@ -239,6 +244,8 @@ class MakeEmailWorkItemTest(unittest.TestCase):
   def setUp(self):
     self.project = fake.Project(project_name='proj1')
     self.project.process_inbound_email = True
+    self.project2 = fake.Project(project_name='proj2')
+    self.project2.issue_notify_always_detailed = True
     self.commenter_view = framework_views.StuffUserView(
         111, 'test@example.com', True)
     self.expected_html_footer = (
@@ -276,6 +283,16 @@ class MakeEmailWorkItemTest(unittest.TestCase):
         ['reason'], self.issue,
         'body link-only', 'body mem', 'body mem', self.project,
         'example.com', self.commenter_view, self.detail_url)
+    self.assertIn('body mem', email_task['body'])
+
+  def testBodySelection_AlwaysDetailed(self):
+    """Always send full email when project configuration requires it."""
+    email_task = notify_helpers._MakeEmailWorkItem(
+        notify_reasons.AddrPerm(
+            True, 'a@a.com', self.member, REPLY_NOT_ALLOWED,
+            user_pb2.UserPrefs()), ['reason'], self.issue, 'body link-only',
+        'body mem', 'body mem', self.project2, 'example.com',
+        self.commenter_view, self.detail_url)
     self.assertIn('body mem', email_task['body'])
 
   def testBodySelection_NonMember(self):

@@ -101,6 +101,8 @@ CREATE TABLE Project (
   logo_gcs_id VARCHAR(250),
   logo_file_name VARCHAR(250),
 
+  issue_notify_always_detailed BOOLEAN DEFAULT FALSE,
+
   PRIMARY KEY (project_id),
   UNIQUE KEY (project_name)
 ) ENGINE=INNODB;

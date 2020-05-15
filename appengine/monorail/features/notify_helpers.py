@@ -245,7 +245,7 @@ def _GetNotifyRestrictedIssues(user_prefs, email, user):
   return NOTIFY_WITH_LINK_ONLY
 
 
-def ShouldUseLinkOnly(addr_perm, issue):
+def ShouldUseLinkOnly(addr_perm, issue, always_detailed=False):
   """Return true when there is a risk of leaking a restricted issue.
 
   We send notifications that contain only a link to the issue with no other
@@ -255,6 +255,9 @@ def ShouldUseLinkOnly(addr_perm, issue):
      may be a mailing list, or
   - The user has a preference set.
   """
+  if always_detailed:
+    return False
+
   restrictions = permissions.GetRestrictions(issue, perm=permissions.VIEW)
   if not restrictions:
     return False
@@ -276,7 +279,8 @@ def _MakeEmailWorkItem(
     body_for_non_members, body_for_members, project, hostport, commenter_view,
     detail_url, seq_num=None, subject_prefix=None, compact_subject_prefix=None):
   """Make one email task dict for one user, includes a detailed reason."""
-  should_use_link_only = ShouldUseLinkOnly(addr_perm, issue)
+  should_use_link_only = ShouldUseLinkOnly(
+      addr_perm, issue, always_detailed=project.issue_notify_always_detailed)
   subject_format = (
       (subject_prefix or 'Issue ') +
       '%(local_id)d in %(project_name)s')
@@ -426,5 +430,3 @@ def _MakeNotificationFooter(reasons, reply_perm, hostport):
     lines.extend(['', 'Reply to this email to add a comment or make updates.'])
 
   return '\n'.join(lines)
-
-

@@ -55,27 +55,43 @@ class ProjectAdmin(servlet.Servlet):
     access_view = project_views.ProjectAccessView(mr.project.access)
 
     return {
-        'admin_tab_mode': self.ADMIN_TAB_META,
-        'initial_summary': mr.project.summary,
-        'initial_project_home': mr.project.home_page,
-        'initial_docs_url': mr.project.docs_url,
-        'initial_source_url': mr.project.source_url,
-        'initial_logo_gcs_id': mr.project.logo_gcs_id,
-        'initial_logo_file_name': mr.project.logo_file_name,
-        'logo_view': tracker_views.LogoView(mr.project),
-        'initial_description': mr.project.description,
-        'issue_notify': mr.project.issue_notify_address,
-        'process_inbound_email': ezt.boolean(
-            mr.project.process_inbound_email),
-        'email_from_addr': emailfmt.FormatFromAddr(mr.project),
-        'only_owners_remove_restrictions': ezt.boolean(
-            mr.project.only_owners_remove_restrictions),
-        'only_owners_see_contributors': ezt.boolean(
-            mr.project.only_owners_see_contributors),
-        'offer_access_level': ezt.boolean(offer_access_level),
-        'initial_access': access_view,
-        'available_access_levels': available_access_levels,
-        }
+        'admin_tab_mode':
+            self.ADMIN_TAB_META,
+        'initial_summary':
+            mr.project.summary,
+        'initial_project_home':
+            mr.project.home_page,
+        'initial_docs_url':
+            mr.project.docs_url,
+        'initial_source_url':
+            mr.project.source_url,
+        'initial_logo_gcs_id':
+            mr.project.logo_gcs_id,
+        'initial_logo_file_name':
+            mr.project.logo_file_name,
+        'logo_view':
+            tracker_views.LogoView(mr.project),
+        'initial_description':
+            mr.project.description,
+        'issue_notify':
+            mr.project.issue_notify_address,
+        'process_inbound_email':
+            ezt.boolean(mr.project.process_inbound_email),
+        'email_from_addr':
+            emailfmt.FormatFromAddr(mr.project),
+        'only_owners_remove_restrictions':
+            ezt.boolean(mr.project.only_owners_remove_restrictions),
+        'only_owners_see_contributors':
+            ezt.boolean(mr.project.only_owners_see_contributors),
+        'offer_access_level':
+            ezt.boolean(offer_access_level),
+        'initial_access':
+            access_view,
+        'available_access_levels':
+            available_access_levels,
+        'issue_notify_always_detailed':
+            ezt.boolean(mr.project.issue_notify_always_detailed),
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Process the posted form."""
@@ -128,17 +144,26 @@ class ProjectAdmin(servlet.Servlet):
         logo_gcs_id = ''
         logo_file_name = ''
 
+    issue_notify_always_detailed = 'issue_notify_always_detailed' in post_data
+
     # 2. Call services layer to save changes.
     if not mr.errors.AnyErrors():
       with work_env.WorkEnv(mr, self.services) as we:
         we.UpdateProject(
-            mr.project.project_id, issue_notify_address=issue_notify,
-            summary=summary, description=description,
+            mr.project.project_id,
+            issue_notify_address=issue_notify,
+            summary=summary,
+            description=description,
             only_owners_remove_restrictions=only_owners_remove_restrictions,
             only_owners_see_contributors=only_owners_see_contributors,
-            process_inbound_email=process_inbound_email, access=access,
-            home_page=home_page, docs_url=docs_url, source_url=source_url,
-            logo_gcs_id=logo_gcs_id, logo_file_name=logo_file_name)
+            process_inbound_email=process_inbound_email,
+            access=access,
+            home_page=home_page,
+            docs_url=docs_url,
+            source_url=source_url,
+            logo_gcs_id=logo_gcs_id,
+            logo_file_name=logo_file_name,
+            issue_notify_always_detailed=issue_notify_always_detailed)
 
     # 3. Determine the next page in the UI flow.
     if mr.errors.AnyErrors():

@@ -64,12 +64,15 @@ class ProjectAdminTest(unittest.TestCase):
     self.assertFalse(page_data['process_inbound_email'])
     self.assertFalse(page_data['only_owners_remove_restrictions'])
     self.assertFalse(page_data['only_owners_see_contributors'])
+    self.assertFalse(page_data['issue_notify_always_detailed'])
 
     # Now try some alternate Project field values.
     self.project.only_owners_remove_restrictions = True
     self.project.only_owners_see_contributors = True
+    self.project.issue_notify_always_detailed = True
     page_data = self.servlet.GatherPageData(self.mr)
     self.assertTrue(page_data['only_owners_remove_restrictions'])
     self.assertTrue(page_data['only_owners_see_contributors'])
+    self.assertTrue(page_data['issue_notify_always_detailed'])
 
     # TODO(jrobbins): many more tests needed.

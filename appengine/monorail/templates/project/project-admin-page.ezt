@@ -80,6 +80,19 @@
   [# TODO: validate as address is entered ]
 
   [include "../framework/admin-email-sender-part.ezt"]
+
+ <div class="closed">
+  <p>Notification contents
+  <a class="ifClosed toggleHidden" href="#" style="font-size:90%; margin-left:.5em">Learn more</a></p>
+  <div class="ifOpened help">
+      By default, notifications content will be limited based on user preference,
+      Restrict-* labels, and their membership in a given project. This option
+      forces the full notification content to be sent regardless of other factors.
+  </div>
+ </div>
+ <input type="checkbox" name="issue_notify_always_detailed" id="issue_notify_always_detailed"
+        [if-any issue_notify_always_detailed]checked="checked"[end] >
+ <label for="issue_notify_always_detailed">Always send detailed notification content.</label>
 </div>
 
 

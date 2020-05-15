@@ -572,34 +572,62 @@ class WorkEnv(object):
     return owner_projects, archived_projects, member_projects, contrib_projects
 
   def UpdateProject(
-      self, project_id, summary=None, description=None,
-      state=None, state_reason=None, access=None, issue_notify_address=None,
-      attachment_bytes_used=None, attachment_quota=None, moved_to=None,
-      process_inbound_email=None, only_owners_remove_restrictions=None,
-      read_only_reason=None, cached_content_timestamp=None,
-      only_owners_see_contributors=None, delete_time=None,
-      recent_activity=None, revision_url_format=None, home_page=None,
-      docs_url=None, source_url=None, logo_gcs_id=None, logo_file_name=None):
+      self,
+      project_id,
+      summary=None,
+      description=None,
+      state=None,
+      state_reason=None,
+      access=None,
+      issue_notify_address=None,
+      attachment_bytes_used=None,
+      attachment_quota=None,
+      moved_to=None,
+      process_inbound_email=None,
+      only_owners_remove_restrictions=None,
+      read_only_reason=None,
+      cached_content_timestamp=None,
+      only_owners_see_contributors=None,
+      delete_time=None,
+      recent_activity=None,
+      revision_url_format=None,
+      home_page=None,
+      docs_url=None,
+      source_url=None,
+      logo_gcs_id=None,
+      logo_file_name=None,
+      issue_notify_always_detailed=None):
     """Update the DB with the given project information."""
     project = self.GetProject(project_id)
     self._AssertPermInProject(permissions.EDIT_PROJECT, project)
 
     with self.mc.profiler.Phase('updating project %r' % project_id):
       self.services.project.UpdateProject(
-          self.mc.cnxn, project_id, summary=summary, description=description,
-          state=state, state_reason=state_reason, access=access,
+          self.mc.cnxn,
+          project_id,
+          summary=summary,
+          description=description,
+          state=state,
+          state_reason=state_reason,
+          access=access,
           issue_notify_address=issue_notify_address,
           attachment_bytes_used=attachment_bytes_used,
-          attachment_quota=attachment_quota, moved_to=moved_to,
+          attachment_quota=attachment_quota,
+          moved_to=moved_to,
           process_inbound_email=process_inbound_email,
           only_owners_remove_restrictions=only_owners_remove_restrictions,
           read_only_reason=read_only_reason,
           cached_content_timestamp=cached_content_timestamp,
           only_owners_see_contributors=only_owners_see_contributors,
-          delete_time=delete_time, recent_activity=recent_activity,
-          revision_url_format=revision_url_format, home_page=home_page,
-          docs_url=docs_url, source_url=source_url,
-          logo_gcs_id=logo_gcs_id, logo_file_name=logo_file_name)
+          delete_time=delete_time,
+          recent_activity=recent_activity,
+          revision_url_format=revision_url_format,
+          home_page=home_page,
+          docs_url=docs_url,
+          source_url=source_url,
+          logo_gcs_id=logo_gcs_id,
+          logo_file_name=logo_file_name,
+          issue_notify_always_detailed=issue_notify_always_detailed)
 
   def DeleteProject(self, project_id):
     """Mark the project as deletable.  It will be reaped by a cron job.

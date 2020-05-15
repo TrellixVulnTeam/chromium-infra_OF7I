@@ -57,6 +57,7 @@ class ProjectAccess(messages.Enum):
 # project members to collaborate on issues.
 # A project is created on the project creation page, searched on the project
 # list page, and edited on the project admin page.
+# Next message: 74
 class Project(messages.Message):
   """This protocol buffer holds all the metadata associated with a project."""
   state = messages.EnumField(ProjectState, 1, required=True)
@@ -181,6 +182,9 @@ class Project(messages.Message):
   logo_gcs_id = messages.StringField(69)
   # The uploaded file name of the Project's logo.
   logo_file_name = messages.StringField(70)
+
+  # Always send the full content of update in notifications.
+  issue_notify_always_detailed = messages.BooleanField(73, default=False)
 
 
 # This PB documents some of the duties of some of the members

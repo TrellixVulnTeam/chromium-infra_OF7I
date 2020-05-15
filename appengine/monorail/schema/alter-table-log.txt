@@ -1736,3 +1736,9 @@ CREATE TABLE FieldDef2Editor (
 
 
 ALTER TABLE FieldDef ADD COLUMN is_restricted_field BOOL DEFAULT FALSE;
+
+================================================================
+2020-05-14: Add option to force detailed notifications for projects.
+
+ALTER TABLE Project ADD COLUMN issue_notify_always_detailed BOOLEAN DEFAULT FALSE;
+
