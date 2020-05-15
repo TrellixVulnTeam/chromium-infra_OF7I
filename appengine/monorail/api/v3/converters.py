@@ -6,6 +6,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import collections
 import itertools
 import logging
 
@@ -773,44 +774,90 @@ class Converter(object):
       api_ads.append(api_ad)
     return api_ads
 
-  def ConvertApprovalValues(self, approval_values, project_id, phases):
-    # type: (Sequence[proto.tracker_pb2.ApprovalValue], int,
-    #     Sequence[proto.tracker_pb2.Phase]) ->
+  def ConvertApprovalValues(self, approval_values, field_values, phases,
+                            issue_id=None, project_id=None):
+    # type: (Sequence[proto.tracker_pb2.ApprovalValue],
+    #     Sequence[proto.tracker_pb2.FieldValue],
+    #     Sequence[proto.tracker_pb2.Phase], Optional[int], Optional[int]) ->
     #     Sequence[api_proto.issue_objects_pb2.ApprovalValue]
     """Convert sequence of approval_values to protoc ApprovalValues.
 
+    `approval_values` may belong to a template or an issue. If they belong to a
+    template, `project_id` should be given for the project the template is in.
+    If these are issue `approval_values` `issue_id` should be given`.
+    So, one of `issue_id` or `project_id` must be provided.
+    If both are given, we ignore `project_id` and assume the `approval_values`
+    belong to an issue.
+
     Args:
-      approval_values: List of ApprovalValues
-      project_id: ID of the Project that all given `approval_values` belong to.
-      phases: List of Phases
+      approval_values: List of ApprovalValues.
+      field_values: List of FieldValues that may belong to the approval_values.
+      phases: List of Phases that may be associated with the approval_values.
+      issue_id: ID of the Issue that the `approval_values` belong to.
+      project_id: ID of the Project that the `approval_values`
+        template belongs to.
 
     Returns:
       Sequence of protoc ApprovalValues in the same order they are given in
-      in `approval_values`. In the event any approval_value in `approval_values`
-      are not found, they will be omitted from the result.
+      in `approval_values`. In the event any approval definitions in
+      `approval_values` are not found, they will be omitted from the result.
+
+    Raises:
+      InputException if neither `issue_id` nor `project_id` is given.
     """
-    phase_names_by_id = {phase.phase_id: phase.name for phase in phases}
+
     approval_ids = [av.approval_id for av in approval_values]
-    resource_names_dict = rnc.ConvertApprovalDefNames(
+    resource_names_dict = {}
+    if issue_id is not None:
+      # Only issue approval_values have resource names.
+      resource_names_dict = rnc.ConvertApprovalValueNames(
+          self.cnxn, issue_id, self.services)
+      project_id = self.services.issue.GetIssue(self.cnxn, issue_id).project_id
+    elif project_id is None:
+      raise exceptions.InputException(
+          'One  `issue_id` or `project_id` must be given.')
+
+    phase_names_by_id = {phase.phase_id: phase.name for phase in phases}
+    ad_names_dict = rnc.ConvertApprovalDefNames(
         self.cnxn, approval_ids, project_id, self.services)
+
+    # Organize the field values by the approval values they are
+    # associated with.
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+    fvs_by_parent_approvals = collections.defaultdict(list)
+    for fv in field_values:
+      fd = fds_by_id.get(fv.field_id)
+      if fd and fd.approval_id:
+        fvs_by_parent_approvals[fd.approval_id].append(fv)
 
     api_avs = []
     for av in approval_values:
-      if av.approval_id not in resource_names_dict:
+      # We only skip missing approval names if we are converting issue approval
+      # values.
+      if issue_id is not None and av.approval_id not in resource_names_dict:
         continue
+
       name = resource_names_dict.get(av.approval_id)
+      approval_def = ad_names_dict.get(av.approval_id)
       approvers = rnc.ConvertUserNames(av.approver_ids).values()
       status = self._ComputeApprovalValueStatus(av.status)
       set_time = timestamp_pb2.Timestamp()
       set_time.FromSeconds(av.set_on)
-      setter = rnc.ConvertUserNames([av.setter_id]).get(av.setter_id)
+      setter = rnc.ConvertUserName(av.setter_id)
       phase = phase_names_by_id.get(av.phase_id)
+
+      field_values = self.ConvertFieldValues(
+          fvs_by_parent_approvals[av.approval_id], project_id, phases)
+
       api_item = issue_objects_pb2.ApprovalValue(
           name=name,
+          approval_def=approval_def,
           approvers=approvers,
           status=status,
           set_time=set_time,
           setter=setter,
+          field_values=field_values,
           phase=phase)
       api_avs.append(api_item)
 

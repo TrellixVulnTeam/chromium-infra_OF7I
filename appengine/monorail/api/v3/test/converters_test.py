@@ -106,6 +106,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         field_id=self.field_def_1, str_value=self.fv_1_value, derived=False)
     self.fv_1_derived = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value=self.fv_1_value, derived=True)
+    self.fv_6 = fake.MakeFieldValue(
+        field_id=self.field_def_6, str_value='touch-nose')
     self.phase_1_id = 123123
     self.phase_1 = fake.MakePhase(self.phase_1_id, name='some phase name')
     self.av_1 = fake.MakeApprovalValue(
@@ -946,40 +948,67 @@ class ConverterFunctionsTest(unittest.TestCase):
     output = self.converter._ComputeFieldValueDerivation(fv)
     self.assertEqual(expected, output)
 
-  def testConvertApprovalValues(self):
-    name = rnc.ConvertApprovalDefNames(
+  def testConvertApprovalValues_Issue(self):
+    """We can convert issue approval_values."""
+    name = rnc.ConvertApprovalValueNames(
+        self.cnxn, self.issue_1.issue_id, self.services)[self.av_1.approval_id]
+    approval_def_name = rnc.ConvertApprovalDefNames(
         self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
-        self.services).get(self.approval_def_1_id)
+        self.services)[self.approval_def_1_id]
     approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
         'APPROVAL_STATUS_UNSPECIFIED')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserName(self.user_1.user_id)
-    phase = fake.MakePhase(self.phase_1_id, name=self.phase_1.name)
+    api_fvs = self.converter.ConvertFieldValues(
+        [self.fv_6], self.project_1.project_id, [self.phase_1])
+
+    output = self.converter.ConvertApprovalValues(
+        [self.av_1], [self.fv_1, self.fv_6], [self.phase_1],
+        issue_id=self.issue_1.issue_id)
     expected = issue_objects_pb2.ApprovalValue(
         name=name,
+        approval_def=approval_def_name,
         approvers=approvers,
         status=status,
         set_time=set_time,
         setter=setter,
-        phase=self.phase_1.name)
+        phase=self.phase_1.name,
+        field_values=api_fvs)
+    self.assertEqual([expected], output)
 
-    approval_value = fake.MakeApprovalValue(
-        self.approval_def_1_id,
-        setter_id=self.user_1.user_id,
-        set_on=self.PAST_TIME,
-        approver_ids=[self.user_2.user_id],
-        phase_id=self.phase_1_id)
+  def testConvertApprovalValues_Templates(self):
+    """We can convert template approval_values."""
+    approval_def_name = rnc.ConvertApprovalDefNames(
+        self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
+        self.services)[self.approval_def_1_id]
+    approvers = [rnc.ConvertUserName(self.user_2.user_id)]
+    status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
+        'APPROVAL_STATUS_UNSPECIFIED')
+    set_time = timestamp_pb2.Timestamp()
+    set_time.FromSeconds(self.PAST_TIME)
+    setter = rnc.ConvertUserName(self.user_1.user_id)
+    api_fvs = self.converter.ConvertFieldValues(
+        [self.fv_6], self.project_1.project_id, [self.phase_1])
 
     output = self.converter.ConvertApprovalValues(
-        [approval_value], self.project_1.project_id, [phase])
+        [self.av_1], [self.fv_1, self.fv_6], [self.phase_1],
+        project_id=self.project_1.project_id)
+    expected = issue_objects_pb2.ApprovalValue(
+        approval_def=approval_def_name,
+        approvers=approvers,
+        status=status,
+        set_time=set_time,
+        setter=setter,
+        phase=self.phase_1.name,
+        field_values=api_fvs)
     self.assertEqual([expected], output)
 
   def testConvertApprovalValues_NoPhase(self):
-    name = rnc.ConvertApprovalDefNames(
+    approval_def_name = rnc.ConvertApprovalDefNames(
         self.cnxn, [self.approval_def_1_id], self.project_1.project_id,
-        self.services).get(self.approval_def_1_id)
+        self.services)[self.approval_def_1_id]
     approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
         'APPROVAL_STATUS_UNSPECIFIED')
@@ -987,26 +1016,19 @@ class ConverterFunctionsTest(unittest.TestCase):
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserName(self.user_1.user_id)
     expected = issue_objects_pb2.ApprovalValue(
-        name=name,
+        approval_def=approval_def_name,
         approvers=approvers,
         status=status,
         set_time=set_time,
         setter=setter)
 
-    approval_value = fake.MakeApprovalValue(
-        self.approval_def_1_id,
-        setter_id=self.user_1.user_id,
-        set_on=self.PAST_TIME,
-        approver_ids=[self.user_2.user_id],
-        phase_id=self.phase_1_id)
-
     output = self.converter.ConvertApprovalValues(
-        [approval_value], self.project_1.project_id, [])
+        [self.av_1], [], [], project_id=self.project_1.project_id)
     self.assertEqual([expected], output)
 
   def testConvertApprovalValues_Empty(self):
     output = self.converter.ConvertApprovalValues(
-        [], self.project_1.project_id, [])
+        [], [], [], project_id=self.project_1.project_id)
     self.assertEqual([], output)
 
   def testConvertApprovalValues_IgnoresNullFieldDefs(self):
@@ -1014,7 +1036,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     av = fake.MakeApprovalValue(self.dne_field_def_id)
 
     output = self.converter.ConvertApprovalValues(
-        [av], self.project_1.project_id, [])
+        [av], [], [], issue_id=self.issue_1.issue_id)
     self.assertEqual([], output)
 
   def test_ComputeApprovalValueStatus_NOT_SET(self):
