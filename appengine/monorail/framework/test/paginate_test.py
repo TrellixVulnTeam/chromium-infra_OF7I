@@ -56,10 +56,15 @@ class PageTokenTest(unittest.TestCase):
     with self.assertRaises(exceptions.PageTokenException):
       paginate.ValidateAndParsePageToken(token, request_cont_diff)
 
-  def testValidateAndParsePageToken_InvalidTokenFormat(self):
+  def testValidateAndParsePageToken_InvalidSerializedToken(self):
     request_cont = secrets_pb2.ListRequestContents()
     with self.assertRaises(exceptions.PageTokenException):
       paginate.ValidateAndParsePageToken('sldkfj87', request_cont)
+
+  def testValidateAndParsePageToken_InvalidTokenFormat(self):
+    request_cont = secrets_pb2.ListRequestContents()
+    with self.assertRaises(exceptions.PageTokenException):
+      paginate.ValidateAndParsePageToken('///sldkfj87', request_cont)
 
 
 class PaginateTest(unittest.TestCase):

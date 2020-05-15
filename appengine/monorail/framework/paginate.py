@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import base64
 import logging
 import hmac
 
@@ -40,7 +41,12 @@ def GeneratePageToken(request_contents, start):
   token_contents = secrets_pb2.PageTokenContents(
       start=start,
       encrypted_list_request_contents=digester.digest())
-  return token_contents.SerializeToString()
+  serialized_token = token_contents.SerializeToString()
+  # Page tokens must be URL-safe strings (see aip.dev/158)
+  # and proto string fields must be utf-8 strings while
+  # `SerializeToString()` returns binary bytes contained in a str type.
+  # So we must encode with web-safe base64 format.
+  return base64.b64encode(serialized_token)
 
 
 def ValidateAndParsePageToken(token, request_contents):
@@ -61,8 +67,9 @@ def ValidateAndParsePageToken(token, request_contents):
   """
   token_contents = secrets_pb2.PageTokenContents()
   try:
-    token_contents.ParseFromString(token)
-  except message.DecodeError:
+    decoded_serialized_token = base64.b64decode(token)
+    token_contents.ParseFromString(decoded_serialized_token)
+  except (message.DecodeError, TypeError):
     raise exceptions.PageTokenException('Invalid page token.')
 
   start = token_contents.start
