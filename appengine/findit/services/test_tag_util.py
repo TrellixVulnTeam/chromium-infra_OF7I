@@ -35,6 +35,7 @@ _MAP_GPU_TEST_STEP_NAME_TO_COMPONENTS = {
     'pixel_skia_gold_test': ['Internals>GPU>Testing'],
     'pixel_test': ['Internals>GPU>Testing'],
     'screenshot_sync': ['Internals>GPU>Testing'],
+    'webgl2_conformance_validating_tests': ['Internals>GPU>Testing'],
     'webgl_conformance_vulkan_passthrough_tests': [
         'Internals>GPU>Testing', 'Blink>WebGL'
     ],
