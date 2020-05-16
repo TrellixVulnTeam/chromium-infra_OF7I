@@ -301,14 +301,12 @@ export const DEFAULT_ISSUE_FIELD_LIST = defaultIssueFields.map(
  * @param {Issue} issue
  * @param {string} fieldName
  * @param {string} projectName
- * @param {Map} fieldDefMap
  * @return {Array<string>}
  */
-export const stringValuesForIssueField = (issue, fieldName, projectName,
-    fieldDefMap = new Map()) => {
+export const stringValuesForIssueField = (issue, fieldName, projectName) => {
   // Split composite fields into each segment
   return fieldName.split('/').flatMap((fieldKey) => stringValuesExtractor(
-      issue, fieldKey, projectName, fieldDefMap));
+      issue, fieldKey, projectName));
 };
 
 /**
@@ -316,11 +314,9 @@ export const stringValuesForIssueField = (issue, fieldName, projectName,
  * @param {Issue} issue
  * @param {string} fieldName
  * @param {string} projectName
- * @param {Map} fieldDefMap
  * @return {Array<string>}
  */
-const stringValuesExtractor = (issue, fieldName, projectName,
-    fieldDefMap = new Map()) => {
+const stringValuesExtractor = (issue, fieldName, projectName) => {
   const fieldKey = fieldName.toLowerCase();
 
   // Look at whether the field is a built in field first.
@@ -351,21 +347,16 @@ const stringValuesExtractor = (issue, fieldName, projectName,
   if (found) {
     const approvalName = fieldKey.slice(0, -found[0].length);
     const approvalFieldKey = fieldValueMapKey(approvalName);
-    if (fieldDefMap.has(approvalFieldKey)) {
-      const approvalApproversMap = approvalApproversToMap(issue.approvalValues);
-      if (approvalApproversMap.has(approvalFieldKey)) {
-        return approvalApproversMap.get(approvalFieldKey);
-      }
+    const approvalApproversMap = approvalApproversToMap(issue.approvalValues);
+    if (approvalApproversMap.has(approvalFieldKey)) {
+      return approvalApproversMap.get(approvalFieldKey);
     }
   }
 
   // Handle custom approval field columns.
-  if (fieldDefMap.has(fieldKey) && fieldDefMap.get(fieldKey).fieldRef &&
-      fieldDefMap.get(fieldKey).fieldRef.type == fieldTypes.APPROVAL_TYPE) {
-    const approvalValuesMap = approvalValuesToMap(issue.approvalValues);
-    if (approvalValuesMap.has(fieldKey)) {
-      return approvalValuesMap.get(fieldKey);
-    }
+  const approvalValuesMap = approvalValuesToMap(issue.approvalValues);
+  if (approvalValuesMap.has(fieldKey)) {
+    return approvalValuesMap.get(fieldKey);
   }
 
   // Handle custom fields.
@@ -378,11 +369,9 @@ const stringValuesExtractor = (issue, fieldName, projectName,
     // key for fieldValues Map contain the phaseName, if any.
     fieldValueKey = fieldValueMapKey(fieldNameKey, phaseName);
   }
-  if (fieldDefMap.has(fieldNameKey)) {
-    const fieldValuesMap = fieldValuesToMap(issue.fieldValues);
-    if (fieldValuesMap.has(fieldValueKey)) {
-      return fieldValuesMap.get(fieldValueKey);
-    }
+  const fieldValuesMap = fieldValuesToMap(issue.fieldValues);
+  if (fieldValuesMap.has(fieldValueKey)) {
+    return fieldValuesMap.get(fieldValueKey);
   }
 
   // Handle custom labels and ad hoc labels last.

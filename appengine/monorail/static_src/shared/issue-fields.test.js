@@ -357,41 +357,25 @@ describe('stringValuesForIssueField', () => {
 
     it('handles approval approver columns', () => {
       const projectName = 'bird';
-      const fieldDefMap = new Map([
-        ['goose-approval', {
-          fieldRef: {type: 'APPROVAL_TYPE', fieldName: 'Goose-Approval'}}],
-        ['chicken-approval', {
-          fieldRef: {type: 'APPROVAL_TYPE', fieldName: 'Chicken-Approval'}}],
-        ['dodo-approval', {
-          fieldRef: {type: 'APPROVAL_TYPE', fieldName: 'Dodo-Approval'}}],
-      ]);
       assert.deepEqual(stringValuesForIssueField(
           issue, 'goose-approval-approver',
-          projectName, fieldDefMap), []);
+          projectName), []);
       assert.deepEqual(stringValuesForIssueField(
           issue, 'chicken-approval-approver',
-          projectName, fieldDefMap), []);
+          projectName), []);
       assert.deepEqual(stringValuesForIssueField(
           issue, 'dodo-approval-approver',
-          projectName, fieldDefMap), ['kiwi@bird.test', 'mini-dino@bird.test']);
+          projectName), ['kiwi@bird.test', 'mini-dino@bird.test']);
     });
 
     it('handles approval value columns', () => {
       const projectName = 'bird';
-      const fieldDefMap = new Map([
-        ['goose-approval', {
-          fieldRef: {type: 'APPROVAL_TYPE', fieldName: 'Goose-Approval'}}],
-        ['chicken-approval', {
-          fieldRef: {type: 'APPROVAL_TYPE', fieldName: 'Chicken-Approval'}}],
-        ['dodo-approval', {
-          fieldRef: {type: 'APPROVAL_TYPE', fieldName: 'Dodo-Approval'}}],
-      ]);
       assert.deepEqual(stringValuesForIssueField(issue, 'goose-approval',
-          projectName, fieldDefMap), ['NotSet']);
+          projectName), ['NotSet']);
       assert.deepEqual(stringValuesForIssueField(issue, 'chicken-approval',
-          projectName, fieldDefMap), ['Approved']);
+          projectName), ['Approved']);
       assert.deepEqual(stringValuesForIssueField(issue, 'dodo-approval',
-          projectName, fieldDefMap), ['NeedInfo']);
+          projectName), ['NeedInfo']);
     });
   });
 
@@ -419,31 +403,21 @@ describe('stringValuesForIssueField', () => {
 
     it('gets values for custom fields', () => {
       const projectName = 'chromium';
-      const fieldDefMap = new Map([
-        ['astring', {fieldRef: {type: 'STR_TYPE', fieldName: 'aString'}}],
-        ['enum', {fieldRef: {type: 'ENUM_TYPE', fieldName: 'ENUM'}}],
-        ['cow-number', {
-          fieldRef: {type: 'INT_TYPE', fieldName: 'Cow-Number'},
-          bool_is_phase_field: true, is_multivalued: true}],
-      ]);
       assert.deepEqual(stringValuesForIssueField(issue, 'aString',
-          projectName, fieldDefMap), ['test', 'test2']);
+          projectName), ['test', 'test2']);
       assert.deepEqual(stringValuesForIssueField(issue, 'enum',
-          projectName, fieldDefMap), ['a-value']);
+          projectName), ['a-value']);
       assert.deepEqual(stringValuesForIssueField(issue, 'cow-phase.cow-number',
-          projectName, fieldDefMap), ['55', '54']);
+          projectName), ['55', '54']);
       assert.deepEqual(stringValuesForIssueField(issue,
-          'milkcow-phase.cow-number', projectName, fieldDefMap), ['56']);
+          'milkcow-phase.cow-number', projectName), ['56']);
     });
 
     it('custom fields get precedence over label fields', () => {
       const projectName = 'chromium';
-      const fieldDefMap = new Map([
-        ['astring', {fieldRef: {type: 'STR_TYPE', fieldName: 'aString'}}],
-      ]);
       issue.labelRefs = [{label: 'aString-ignore'}];
       assert.deepEqual(stringValuesForIssueField(issue, 'aString',
-          projectName, fieldDefMap), ['test', 'test2']);
+          projectName), ['test', 'test2']);
     });
   });
 
@@ -464,13 +438,12 @@ describe('stringValuesForIssueField', () => {
 
     it('gets values for label prefixes', () => {
       const projectName = 'chromium';
-      const fieldDefMap = new Map();
       assert.deepEqual(stringValuesForIssueField(issue, 'test',
-          projectName, fieldDefMap), ['label', 'label-2']);
+          projectName), ['label', 'label-2']);
       assert.deepEqual(stringValuesForIssueField(issue, 'Milestone',
-          projectName, fieldDefMap), ['UI', 'Goodies']);
+          projectName), ['UI', 'Goodies']);
       assert.deepEqual(stringValuesForIssueField(issue, 'ignore',
-          projectName, fieldDefMap), ['me']);
+          projectName), ['me']);
     });
   });
 

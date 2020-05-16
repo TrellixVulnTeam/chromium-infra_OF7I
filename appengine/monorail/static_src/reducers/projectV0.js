@@ -318,12 +318,10 @@ export const enumFieldDefs = createSelector(
  *   given issue and field name to find the string value for that field, in
  *   the issue.
  */
-export const extractFieldValuesFromIssue = createSelector(viewedProjectName,
-    fieldDefMap,
-    (projectName, fieldDefMap) => {
-      return (issue, fieldName) => stringValuesForIssueField(issue, fieldName,
-          projectName, fieldDefMap);
-    },
+export const extractFieldValuesFromIssue = createSelector(
+    viewedProjectName,
+    (projectName) => (issue, fieldName) =>
+      stringValuesForIssueField(issue, fieldName, projectName),
 );
 
 /**
