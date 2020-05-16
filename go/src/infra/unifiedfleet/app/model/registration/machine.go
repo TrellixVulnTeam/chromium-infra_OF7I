@@ -188,6 +188,7 @@ func ImportMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.Op
 }
 
 // BatchUpdateMachines updates machines in datastore.
+//
 // This is a non-atomic operation and doesnt check if the object already exists before
 // update. Must be used within a Transaction where objects are checked before update.
 // Will lead to partial updates if not used in a transaction.

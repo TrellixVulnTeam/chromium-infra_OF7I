@@ -35,8 +35,8 @@ type NewFunc func(context.Context, proto.Message) (FleetEntity, error)
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
 
-// exists checks if a list of fleet entities exist in datastore.
-func exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
+// Exists checks if a list of fleet entities exist in datastore.
+func Exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
 	res, err := datastore.Exists(ctx, entities)
 	if err != nil {
 		return nil, err
@@ -187,7 +187,7 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, update, upsert 
 			toAddEntities = checkEntities
 			toAddRes = checkRes
 		} else {
-			exists, err := exists(ctx, checkEntities)
+			exists, err := Exists(ctx, checkEntities)
 			if err == nil {
 				for i, e := range checkEntities {
 					if !exists[i] && update {
@@ -295,7 +295,7 @@ func BatchDelete(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults
 	}
 	// Datastore doesn't throw an error if the record doesn't exist.
 	// Check and return err if there is no such entity in the datastore.
-	exists, err := exists(ctx, checkEntities)
+	exists, err := Exists(ctx, checkEntities)
 	if err == nil {
 		for i := range checkEntities {
 			if !exists[i] {

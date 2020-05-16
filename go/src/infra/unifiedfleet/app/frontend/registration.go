@@ -15,6 +15,7 @@ import (
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
@@ -32,7 +33,7 @@ func (fs *FleetServerImpl) CreateMachine(ctx context.Context, req *api.CreateMac
 		return nil, err
 	}
 	req.Machine.Name = req.MachineId
-	machine, err := registration.CreateMachine(ctx, req.Machine)
+	machine, err := controller.CreateMachine(ctx, req.Machine)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func (fs *FleetServerImpl) UpdateMachine(ctx context.Context, req *api.UpdateMac
 		return nil, err
 	}
 	req.Machine.Name = util.RemovePrefix(req.Machine.Name)
-	machine, err := registration.UpdateMachine(ctx, req.Machine)
+	machine, err := controller.UpdateMachine(ctx, req.Machine)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (fs *FleetServerImpl) GetMachine(ctx context.Context, req *api.GetMachineRe
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	machine, err := registration.GetMachine(ctx, name)
+	machine, err := controller.GetMachine(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func (fs *FleetServerImpl) ListMachines(ctx context.Context, req *api.ListMachin
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListMachines(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListMachines(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +110,7 @@ func (fs *FleetServerImpl) DeleteMachine(ctx context.Context, req *api.DeleteMac
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteMachine(ctx, name)
+	err = controller.DeleteMachine(ctx, name)
 	return &empty.Empty{}, err
 }
 
@@ -143,7 +144,7 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	for i := 0; ; i += pageSize {
 		end := min(i+pageSize, len(machines))
 		logging.Debugf(ctx, "importing %dth - %dth", i, end-1)
-		res, err := registration.ImportMachines(ctx, machines[i:end])
+		res, err := controller.ImportMachines(ctx, machines[i:end])
 		s := processImportDatastoreRes(res, err)
 		if s.Err() != nil {
 			return s.Proto(), s.Err()
