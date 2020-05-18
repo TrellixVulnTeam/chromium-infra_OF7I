@@ -67,7 +67,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEn
 // QueryMachineLSEByPropertyName queries MachineLSE Entity in the datastore
 // If keysOnly is true, then only key field is populated in returned machinelses
 func QueryMachineLSEByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.MachineLSE, error) {
-	q := datastore.NewQuery(MachineLSEKind).KeysOnly(keysOnly)
+	q := datastore.NewQuery(MachineLSEKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*MachineLSEEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)

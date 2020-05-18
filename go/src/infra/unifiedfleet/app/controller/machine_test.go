@@ -176,3 +176,61 @@ func TestDeleteMachine(t *testing.T) {
 		})
 	})
 }
+
+func TestReplaceMachine(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("ReplaceMachines", t, func() {
+		Convey("Repalce an old Machine with new machine with MachineLSE reference", func() {
+			oldMachine1 := &proto.Machine{
+				Name: "machine-4",
+			}
+			resp, cerr := CreateMachine(ctx, oldMachine1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, oldMachine1)
+
+			machineLSE1 := &proto.MachineLSE{
+				Name:     "machinelse-1",
+				Machines: []string{"machine-0", "machine-50", "machine-4", "machine-7"},
+			}
+			mresp, merr := inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(merr, ShouldBeNil)
+			So(mresp, ShouldResembleProto, machineLSE1)
+
+			newMachine2 := &proto.Machine{
+				Name: "machine-100",
+			}
+			rresp, rerr := ReplaceMachine(ctx, oldMachine1, newMachine2)
+			So(rerr, ShouldBeNil)
+			So(rresp, ShouldResembleProto, newMachine2)
+
+			mresp, merr = inventory.GetMachineLSE(ctx, "machinelse-1")
+			So(merr, ShouldBeNil)
+			So(mresp.GetMachines(), ShouldResemble, []string{"machine-0", "machine-50", "machine-100", "machine-7"})
+		})
+
+		Convey("Repalce an old Machine with already existing machine", func() {
+			existingMachine1 := &proto.Machine{
+				Name: "machine-105",
+			}
+			resp, cerr := CreateMachine(ctx, existingMachine1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, existingMachine1)
+
+			oldMachine1 := &proto.Machine{
+				Name: "machine-5",
+			}
+			resp, cerr = CreateMachine(ctx, oldMachine1)
+			So(cerr, ShouldBeNil)
+			So(resp, ShouldResembleProto, oldMachine1)
+
+			newMachine2 := &proto.Machine{
+				Name: "machine-105",
+			}
+			rresp, rerr := ReplaceMachine(ctx, oldMachine1, newMachine2)
+			So(rerr, ShouldNotBeNil)
+			So(rresp, ShouldBeNil)
+			So(rerr.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+	})
+}

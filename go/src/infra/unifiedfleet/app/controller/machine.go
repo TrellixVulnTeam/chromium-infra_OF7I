@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"go.chromium.org/gae/service/datastore"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -74,6 +75,75 @@ func DeleteMachine(ctx context.Context, id string) error {
 // ImportMachines creates or updates a batch of machines in datastore
 func ImportMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.OpResults, error) {
 	return registration.ImportMachines(ctx, machines)
+}
+
+// ReplaceMachine replaces an old Machine with new Machine in datastore
+//
+// It does a delete of old machine and create of new Machine.
+// All the steps are in done in a transaction to preserve consistency on failure.
+// Before deleting the old Machine, it will get all the resources referencing
+// the old Machine. It will update all the resources which were referencing
+// the old Machine(got in the last step) with new Machine.
+// Deletes the old Machine.
+// Creates the new Machine.
+// This will preserve data integrity in the system.
+func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *fleet.Machine) (*fleet.Machine, error) {
+	f := func(ctx context.Context) error {
+		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldMachine.Name, false)
+		if err != nil {
+			return err
+		}
+		if machinelses != nil {
+			for _, machinelse := range machinelses {
+				machines := machinelse.GetMachines()
+				for i := range machines {
+					if machines[i] == oldMachine.Name {
+						machines[i] = newMachine.Name
+						break
+					}
+				}
+				machinelse.Machines = machines
+			}
+			_, err := inventory.BatchUpdateMachineLSEs(ctx, machinelses)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = registration.DeleteMachine(ctx, oldMachine.Name)
+		if err != nil {
+			return err
+		}
+
+		err = validateMachine(ctx, newMachine)
+		if err != nil {
+			return err
+		}
+		entity := &registration.MachineEntity{
+			ID: newMachine.Name,
+		}
+		existsResults, err := datastore.Exists(ctx, entity)
+		if err == nil {
+			if existsResults.All() {
+				return status.Errorf(codes.AlreadyExists, fleetds.AlreadyExists)
+			}
+		} else {
+			logging.Debugf(ctx, "Failed to check existence: %s", err)
+			return status.Errorf(codes.Internal, fleetds.InternalError)
+		}
+
+		_, err = registration.BatchUpdateMachines(ctx, []*fleet.Machine{newMachine})
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to replace entity in datastore: %s", err)
+		return nil, err
+	}
+	return newMachine, nil
 }
 
 // validateMachine validates if a machine can be created/updated in the datastore.
