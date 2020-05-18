@@ -143,7 +143,10 @@ import:
   - spanner
   - profiler
 - package: google.golang.org/genproto
-  version: master
+  # Version on master fails with the following Go compilation error:
+  #
+  #   undefined: "github.com/golang/protobuf/proto".ProtoPackageIsVersion4
+  version: b979b6f78d84775ef7a93ffc8034924947960f29
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
@@ -427,7 +430,7 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/go-warnings/warnings.git
 - package: go.skia.org/infra
-  version: 7c1249ec792f0b17a8603c6917b7b67f003219f5
+  version: 68437497a17744fceb3c6daf9c710c5a70d84316
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -555,6 +558,10 @@ import:
   subpackages:
   - runtime/Go/antlr
 - package: github.com/google/cel-go
-  version: ^0.4.2
+  # Version pinned to prevent the following compilation error:
+  #
+  #   github.com/google/cel-go/parser/parser.go:91:7: lexer.SetInputStream
+  #   undefined (type *gen.CELLexer has no field or method SetInputStream)
+  version: 33f7127c822ecfa040b44407911644172a37add6
   repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
 
