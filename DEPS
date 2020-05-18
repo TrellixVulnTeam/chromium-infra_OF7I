@@ -29,7 +29,7 @@ deps = {
 
   "infra/go/src/go.chromium.org/luci":
      "{chromium_git}/infra/luci/luci-go@" +
-     "f5e96056219be846c792a6fdb5fbc81b84737819",
+     "12bde22f6a198dec69d8fecdb884e1e04d14d43e",
 
   "infra/go/src/go.chromium.org/gae":
      "{chromium_git}/infra/luci/gae@" +
