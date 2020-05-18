@@ -10,9 +10,11 @@ import (
 	"net/url"
 
 	ds "go.chromium.org/gae/service/datastore"
-	"go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
+
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
 	"infra/appengine/cr-audit-commits/app/rules"
 )
@@ -23,6 +25,14 @@ import (
 //   - Schedules an audit task for each active ref in the appropriate queue
 func Scheduler(rc *router.Context) {
 	ctx, resp := rc.Context, rc.Writer
+
+	// Create a new cloud task client
+	client, err := cloudtasks.NewClient(ctx)
+	if err != nil {
+		logging.WithError(err).Errorf(ctx, "Could not create cloud task client due to %s", err.Error())
+	}
+	defer client.Close()
+
 	for configName, config := range rules.RuleMap {
 		var refConfigs []*rules.RefConfig
 		var err error
@@ -56,11 +66,21 @@ func Scheduler(rc *router.Context) {
 				http.Error(resp, err.Error(), 500)
 				return
 			}
-			err = taskqueue.Add(ctx, "default",
-				&taskqueue.Task{
-					Method: "GET",
-					Path:   fmt.Sprintf("/_task/auditor?refUrl=%s", url.QueryEscape(refConfig.RepoURL())),
-				})
+
+			// Build the Task payload.
+			req := &taskspb.CreateTaskRequest{
+				Parent: "projects/cr-audit-commits/locations/us-central1/queues/default",
+				Task: &taskspb.Task{
+					MessageType: &taskspb.Task_AppEngineHttpRequest{
+						AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
+							HttpMethod:  taskspb.HttpMethod_GET,
+							RelativeUri: fmt.Sprintf("/_task/auditor?refUrl=%s", url.QueryEscape(refConfig.RepoURL())),
+						},
+					},
+				},
+			}
+
+			_, err := client.CreateTask(ctx, req)
 			if err != nil {
 				logging.WithError(err).Errorf(ctx, "Could not schedule audit for %s due to %s", refConfig.RepoURL(), err.Error())
 				RefAuditsDue.Add(ctx, 1, false)
