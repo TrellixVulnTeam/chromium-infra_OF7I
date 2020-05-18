@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"path"
 	"strings"
 
@@ -129,21 +128,18 @@ func (kitchenSupport) FromSwarming(ctx context.Context, in *swarming.SwarmingRpc
 	bbModProps := kitchenArgs.Properties[bbModPropKey].(map[string]interface{})
 	delete(kitchenArgs.Properties, bbModPropKey)
 
-	pipeR, pipeW := io.Pipe()
-	done := make(chan error)
-	go func() {
-		done <- jsonpb.Unmarshal(pipeR, out.BbagentArgs.Build)
-	}()
-	if err := json.NewEncoder(pipeW).Encode(bbModProps["build"]); err != nil {
+	blob, err := json.Marshal(bbModProps["build"])
+	if err != nil {
 		return errors.Annotate(err, "%s['build'] -> json", bbModPropKey).Err()
 	}
-	if err := <-done; err != nil {
+	if err := jsonpb.Unmarshal(bytes.NewReader(blob), out.BbagentArgs.Build); err != nil {
 		return errors.Annotate(err, "%s['build'] -> jsonpb", bbModPropKey).Err()
 	}
+
 	out.EnsureBasics()
 	out.BbagentArgs.Build.Infra.Buildbucket.Hostname = bbModProps["hostname"].(string)
 
-	err := jsonpb.UnmarshalString(kitchenArgs.Properties.String(),
+	err = jsonpb.UnmarshalString(kitchenArgs.Properties.String(),
 		out.BbagentArgs.Build.Input.Properties)
 	if err != nil {
 		return errors.Annotate(err, "populating properties").Err()
