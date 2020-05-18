@@ -34,7 +34,10 @@ DEPS = [
 # several months and publish_tarball will keep re-running on the same broken
 # version.  This blacklist exists to exclude those broken versions so the bot
 # doesn't keep retrying and sending build failure emails out.
-BLACKLISTED_VERSIONS = []
+BLACKLISTED_VERSIONS = [
+    '84.0.4147.4',
+]
+
 
 def gsutil_upload(api, source, bucket, dest, args):
   api.gsutil.upload(source, bucket, dest, args, name=str('upload ' + dest))
