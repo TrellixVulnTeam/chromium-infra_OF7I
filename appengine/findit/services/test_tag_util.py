@@ -35,19 +35,19 @@ _MAP_GPU_TEST_STEP_NAME_TO_COMPONENTS = {
     'pixel_skia_gold_test': ['Internals>GPU>Testing'],
     'pixel_test': ['Internals>GPU>Testing'],
     'screenshot_sync': ['Internals>GPU>Testing'],
-    'webgl2_conformance_validating_tests': ['Internals>GPU>Testing'],
+    'webgl_conformance_d3d9_passthrough_tests': ['Blink>WebGL'],
+    'webgl_conformance_d3d11_validating_tests': ['Blink>WebGL'],
+    'webgl_conformance_d3d9_validating_tests': ['Blink>WebGL'],
+    'webgl_conformance_gl_passthrough_tests': ['Blink>WebGL'],
+    'webgl_conformance_gles_passthrough': ['Blink>WebGL'],
+    'webgl_conformance_tests': ['Blink>WebGL'],
     'webgl_conformance_vulkan_passthrough_tests': [
         'Internals>GPU>Testing', 'Blink>WebGL'
     ],
     'webgl2_conformance_d3d11_validating_tests': ['Blink>WebGL'],
     'webgl2_conformance_gl_passthrough_tests': ['Blink>WebGL'],
     'webgl2_conformance_tests': ['Blink>WebGL'],
-    'webgl_conformance_d3d11_validating_tests': ['Blink>WebGL'],
-    'webgl_conformance_d3d9_passthrough_tests': ['Blink>WebGL'],
-    'webgl_conformance_d3d9_validating_tests': ['Blink>WebGL'],
-    'webgl_conformance_gl_passthrough_tests': ['Blink>WebGL'],
-    'webgl_conformance_gles_passthrough': ['Blink>WebGL'],
-    'webgl_conformance_tests': ['Blink>WebGL'],
+    'webgl2_conformance_validating_tests': ['Blink>WebGL'],
 }
 
 
