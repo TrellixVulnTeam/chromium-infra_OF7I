@@ -3,8 +3,10 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
@@ -13,8 +15,27 @@ import (
 	"infra/appengine/sheriff-o-matic/som/model"
 )
 
-// alertPopulatorFunc is for unit testing.
+var (
+	somTrees = []string{
+		"android",
+		"chrome_browser_release",
+		"chromeos",
+		"chromium",
+		"chromium.clang",
+		"chromium.gpu.fyi",
+		"chromium.perf",
+		"fuchsia",
+		"ios",
+	}
+)
+
+// alertPopulatorFunc and uuidGenerationFunc are for unit testing.
 type alertPopulatorFunc func(c context.Context) error
+type uuidGenerationFunc func() string
+
+func generateUUID() string {
+	return uuid.New().String()
+}
 
 // MigrateToUngroupedAlerts migrates annotation data in datastore
 // to the new table when we switch off automatic grouping.
@@ -44,12 +65,42 @@ func migrateToUngroupedAlerts(c context.Context, autogrouping bool, apfn alertPo
 		return err
 	}
 
-	q := datastore.NewQuery("Annotation")
+	for _, tree := range somTrees {
+		if err := migrateAnnotationsForTree(c, tree); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func migrateAnnotationsForTree(c context.Context, tree string) error {
+	treeKey := datastore.MakeKey(c, "Tree", tree)
+
+	// annotations is the list of current annotations for the tree.
 	annotations := []*model.Annotation{}
+	q := datastore.NewQuery("Annotation").Ancestor(treeKey)
 	if err := datastore.GetAll(c, q, &annotations); err != nil {
 		return err
 	}
-	annotationsNonGrouping, err := generateAnnotationsNonGrouping(c, annotations)
+
+	// alerts is the list of current UNRESOLVED alerts for the tree.
+	// We should not care about annotations associated with resolved alerts.
+	alerts := []*model.AlertJSON{}
+	q = datastore.NewQuery("AlertJSON").Ancestor(treeKey).Eq("Resolved", false)
+	if err := datastore.GetAll(c, q, &alerts); err != nil {
+		return err
+	}
+
+	annotations = filterAnnotationsByCurrentAlerts(annotations, alerts)
+
+	// alertsNonGrouping is the list of new alerts we need to create annotations for.
+	alertsNonGrouping := []*model.AlertJSONNonGrouping{}
+	q = datastore.NewQuery("AlertJSONNonGrouping").Ancestor(treeKey)
+	if err := datastore.GetAll(c, q, &alertsNonGrouping); err != nil {
+		return err
+	}
+
+	annotationsNonGrouping, err := generateAnnotationsNonGrouping(c, annotations, alertsNonGrouping, generateUUID)
 	if err != nil {
 		return err
 	}
@@ -60,10 +111,117 @@ func migrateToUngroupedAlerts(c context.Context, autogrouping bool, apfn alertPo
 	return nil
 }
 
-func generateAnnotationsNonGrouping(c context.Context, annotations []*model.Annotation) ([]*model.AnnotationNonGrouping, error) {
+func generateAnnotationsNonGrouping(c context.Context, annotations []*model.Annotation, alertsNonGrouping []*model.AlertJSONNonGrouping, gf uuidGenerationFunc) ([]*model.AnnotationNonGrouping, error) {
 	annotationsNonGrouping := []*model.AnnotationNonGrouping{}
-	// TODO(crbug.com/1043371): Implement this function.
+	stepNameToAlertKeyMap, err := generateStepNameToAlertKeyMap(alertsNonGrouping)
+	if err != nil {
+		return annotationsNonGrouping, err
+	}
+	// Process annotations that do not belong to a group
+	for _, ann := range annotations {
+		// ann.GroupID == "" means ann is neither a group nor belongs to a group.
+		if ann.GroupID == "" {
+			stepName, err := ann.GetStepName()
+			if err != nil {
+				return []*model.AnnotationNonGrouping{}, err
+			}
+			alertKeys, ok := stepNameToAlertKeyMap[stepName]
+			if !ok {
+				continue
+			}
+			newAnns, err := generateAnnotationsNonGroupingForSingleAnnotation(ann, alertKeys, gf)
+			if err != nil {
+				return []*model.AnnotationNonGrouping{}, err
+			}
+			annotationsNonGrouping = append(annotationsNonGrouping, newAnns...)
+		} else {
+			// TODO(crbug.com/1043371): Process annotations that belong to a group
+		}
+	}
 	return annotationsNonGrouping, nil
+}
+
+func generateAnnotationsNonGroupingForSingleAnnotation(ann *model.Annotation, alertKeys []string, gf uuidGenerationFunc) ([]*model.AnnotationNonGrouping, error) {
+	ret := []*model.AnnotationNonGrouping{}
+	if len(alertKeys) == 1 {
+		// Old annotation corresponds to a new annotation.
+		// We don't need to create a group for this.
+		newAnn := model.AnnotationNonGrouping(*ann)
+		newAnn.Key = alertKeys[0]
+		newAnn.KeyDigest = model.GenerateKeyDigest(newAnn.Key)
+		ret = append(ret, &newAnn)
+	} else {
+		stepName, err := ann.GetStepName()
+		if err != nil {
+			return ret, err
+		}
+
+		// Create a new group
+		groupName := fmt.Sprintf("Step %q failed in %d builders", stepName, len(alertKeys))
+		groupID := gf()
+		groupAnn := model.AnnotationNonGrouping(*ann)
+		groupAnn.Key = groupID
+		groupAnn.KeyDigest = model.GenerateKeyDigest(groupID)
+		groupAnn.GroupID = groupName
+		ret = append(ret, &groupAnn)
+
+		//Add alerts to the group.
+		for _, alertKey := range alertKeys {
+			newAnn := &model.AnnotationNonGrouping{
+				Tree:             groupAnn.Tree,
+				Key:              alertKey,
+				KeyDigest:        model.GenerateKeyDigest(alertKey),
+				GroupID:          groupAnn.Key,
+				ModificationTime: groupAnn.ModificationTime,
+			}
+			ret = append(ret, newAnn)
+		}
+	}
+	return ret, nil
+}
+
+// generateStepNameToAlertKeyMap generates a mapping between step name and a list of alert ID.
+func generateStepNameToAlertKeyMap(alertsNonGrouping []*model.AlertJSONNonGrouping) (map[string][]string, error) {
+	m := make(map[string][]string)
+	for _, alert := range alertsNonGrouping {
+		stepName, err := alert.GetStepName()
+		if err != nil {
+			return m, err
+		}
+		if _, ok := m[stepName]; !ok {
+			m[stepName] = []string{}
+		}
+		m[stepName] = append(m[stepName], alert.ID)
+	}
+	return m, nil
+}
+
+// filterAnnotationsByCurrentAlerts filters annotations by keeping only those associated with alerts.
+func filterAnnotationsByCurrentAlerts(annotations []*model.Annotation, alerts []*model.AlertJSON) []*model.Annotation {
+	alertMap := make(map[string]bool)
+	groupMap := make(map[string]bool)
+	for _, alert := range alerts {
+		alertMap[alert.ID] = true
+	}
+
+	// Add relevant single annotations
+	ret := []*model.Annotation{}
+	for _, ann := range annotations {
+		if _, ok := alertMap[ann.Key]; ok {
+			ret = append(ret, ann)
+			if ann.GroupID != "" {
+				groupMap[ann.GroupID] = true
+			}
+		}
+	}
+
+	// Add relevant groups
+	for _, ann := range annotations {
+		if _, ok := groupMap[ann.Key]; ok {
+			ret = append(ret, ann)
+		}
+	}
+	return ret
 }
 
 func populateAlertsNonGrouping(c context.Context) error {
@@ -77,9 +235,8 @@ func populateAlertsNonGrouping(c context.Context) error {
 		config.EnableAutoGrouping = prevConfig
 	}()
 
-	trees := []string{"android", "chrome_browser_release", "chromeos", "chromium", "chromium.clang", "chromium.gpu.fyi", "chromium.perf", "fuchsia", "ios"}
 	a := analyzer.CreateAnalyzer(c)
-	for _, tree := range trees {
+	for _, tree := range somTrees {
 		logging.Infof(c, "Populate alerts for tree %s", tree)
 		if _, err := generateBigQueryAlerts(c, a, tree); err != nil {
 			return err

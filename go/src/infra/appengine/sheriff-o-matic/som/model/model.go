@@ -5,10 +5,12 @@
 package model
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"infra/appengine/sheriff-o-matic/som/model/gen"
@@ -172,6 +174,31 @@ func removeFromBugList(knownBugs []MonorailBug, bugToRemove MonorailBug) []Monor
 		}
 	}
 	return knownBugs
+}
+
+// GetStepName retrieves step name for an alert.
+func (a *AlertJSONNonGrouping) GetStepName() (string, error) {
+	// ID is of format  tree:project:bucket:builder:step:firstFailure
+	fields := strings.Split(a.ID, ":")
+	if len(fields) != 6 {
+		return "", fmt.Errorf("invalid alert id %q", a.ID)
+	}
+	return fields[4], nil
+}
+
+// GenerateKeyDigest generates KeyDigest field from key for annotations.
+func GenerateKeyDigest(key string) string {
+	return fmt.Sprintf("%x", sha1.Sum([]byte(key)))
+}
+
+// GetStepName retrieves step name for an annotation.
+func (a *Annotation) GetStepName() (string, error) {
+	// Key is of format  tree.step_name
+	index := strings.Index(a.Key, ".")
+	if index == -1 {
+		return "", fmt.Errorf("invalid Key: %q", a.Key)
+	}
+	return a.Key[index+1:], nil
 }
 
 // Add adds some data to an annotation. Returns true if a refresh of annotation

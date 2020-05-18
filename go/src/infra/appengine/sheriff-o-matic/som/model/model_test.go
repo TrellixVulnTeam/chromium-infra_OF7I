@@ -214,3 +214,46 @@ func TestAnnotation(t *testing.T) {
 		})
 	})
 }
+
+func TestAlertJSONNonGroupingGetStepName(t *testing.T) {
+	Convey("valid ID", t, func() {
+		ann := &AlertJSONNonGrouping{
+			ID: "tree:project:bucket:builder:step:0",
+		}
+		stepName, err := ann.GetStepName()
+		So(err, ShouldBeNil)
+		So(stepName, ShouldEqual, "step")
+	})
+	Convey("invalid ID", t, func() {
+		ann := &AlertJSONNonGrouping{
+			ID: "my key",
+		}
+		_, err := ann.GetStepName()
+		So(err, ShouldNotBeNil)
+	})
+	Convey("invalid ID 1", t, func() {
+		ann := &AlertJSONNonGrouping{
+			ID: "1:2:3:4:5:6:7",
+		}
+		_, err := ann.GetStepName()
+		So(err, ShouldNotBeNil)
+	})
+}
+
+func TestAnnotationGetStepName(t *testing.T) {
+	Convey("Get step name valid", t, func() {
+		ann := &Annotation{
+			Key: "chromium.step_name",
+		}
+		stepName, err := ann.GetStepName()
+		So(err, ShouldBeNil)
+		So(stepName, ShouldEqual, "step_name")
+	})
+	Convey("Get step name invalid", t, func() {
+		ann := &Annotation{
+			Key: "step_name",
+		}
+		_, err := ann.GetStepName()
+		So(err, ShouldNotBeNil)
+	})
+}
