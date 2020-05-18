@@ -189,8 +189,8 @@ export const viewedHotlistOwner = createSelector(
     });
 
 /**
- * Returns the editors of the currently viewed Hotlist. Returns [] if there is
- * no hotlist data. Includes a null in the array for each editor whose User
+ * Returns the editors of the currently viewed Hotlist. Returns null if there
+ * is no hotlist data. Includes a null in the array for each editor whose User
  * data is not in the store.
  * @param {any} state
  * @return {Array<User>}
@@ -198,7 +198,7 @@ export const viewedHotlistOwner = createSelector(
 export const viewedHotlistEditors = createSelector(
     [viewedHotlist, users.byName],
     (hotlist, usersByName) => {
-      if (!hotlist) return [];
+      if (!hotlist) return null;
       return hotlist.editors.map((editor) => usersByName[editor] || null);
     });
 
@@ -278,7 +278,7 @@ export const deleteHotlist = (name) => async (dispatch) => {
 /**
  * Action creator to fetch a Hotlist object.
  * @param {string} name The resource name of the Hotlist to fetch.
- * @return {function(function): Promise<Hotlist>}
+ * @return {function(function): Promise<void>}
  */
 export const fetch = (name) => async (dispatch) => {
   dispatch({type: FETCH_START});
@@ -288,12 +288,11 @@ export const fetch = (name) => async (dispatch) => {
     const hotlist = await prpcClient.call(
         'monorail.v3.Hotlists', 'GetHotlist', {name});
     if (!hotlist.editors) hotlist.editors = [];
+    dispatch({type: FETCH_SUCCESS, hotlist});
 
     const editors = hotlist.editors.map((editor) => editor);
     editors.push(hotlist.owner);
     await dispatch(users.batchGet(editors));
-
-    dispatch({type: FETCH_SUCCESS, hotlist});
   } catch (error) {
     dispatch({type: FETCH_FAILURE, error});
   };

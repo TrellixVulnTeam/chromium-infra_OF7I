@@ -52,15 +52,7 @@ class _MrHotlistPeoplePage extends LitElement {
   render() {
     return html`
       <mr-hotlist-header selected=1></mr-hotlist-header>
-      ${this._hotlist ? this._renderPage() : 'Loading...'}
-    `;
-  }
 
-  /**
-   * @return {TemplateResult}
-   */
-  _renderPage() {
-    return html`
       <section>
         <h2>Owner</h2>
         <p>
@@ -70,15 +62,15 @@ class _MrHotlistPeoplePage extends LitElement {
 
       <section>
         <h2>Editors</h2>
-        ${this._editors.length ? html`
-          <ul>
-            ${this._editors.map((user) => html`
-              <li>${this._renderUserLink(user)}</li>
-            `)}
-          </ul>
-        ` : html`
-          <p>No editors.</p>
-        `}
+        ${this._editors ? html`
+          ${this._editors.length ? html`
+            <ul>
+              ${this._editors.map((user) => html`
+                <li>${this._renderUserLink(user)}</li>
+              `)}
+            </ul>
+          ` : html`<p>No editors.</p>`}
+        ` : html`<div class="placeholder"></div>`}
       </section>
     `;
   }
@@ -110,8 +102,8 @@ class _MrHotlistPeoplePage extends LitElement {
     this._hotlist = null;
     /** @type {?User} */
     this._owner = null;
-    /** @type {Array<User>} */
-    this._editors = [];
+    /** @type {?Array<User>} */
+    this._editors = null;
   }
 };
 

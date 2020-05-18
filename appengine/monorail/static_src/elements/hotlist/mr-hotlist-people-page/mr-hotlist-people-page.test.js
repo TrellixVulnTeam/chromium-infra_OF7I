@@ -27,16 +27,26 @@ describe('mr-hotlist-people-page (unconnected)', () => {
     document.body.removeChild(element);
   });
 
-  it('shows loading message with null hotlist', async () => {
+  it('renders placeholders with no data', async () => {
     await element.updateComplete;
-    assert.include(element.shadowRoot.innerHTML, 'Loading');
+
+    const placeholders = element.shadowRoot.querySelectorAll('.placeholder');
+    assert.equal(placeholders.length, 2);
   });
 
-  it('renders with no user data', async () => {
-    element._hotlist = example.HOTLIST;
+  it('renders placeholders with editors list but no user data', async () => {
+    element._editors = [null, null];
     await element.updateComplete;
 
-    assert.isNotNull(element.shadowRoot.querySelector('.placeholder'));
+    const placeholders = element.shadowRoot.querySelectorAll('.placeholder');
+    assert.equal(placeholders.length, 3);
+  });
+
+  it('renders "No editors"', async () => {
+    element._editors = [];
+    await element.updateComplete;
+
+    assert.include(element.shadowRoot.innerHTML, 'No editors');
   });
 
   it('renders hotlist', async () => {

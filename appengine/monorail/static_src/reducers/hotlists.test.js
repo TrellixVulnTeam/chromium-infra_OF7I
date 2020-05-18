@@ -136,7 +136,7 @@ describe('hotlist selectors', () => {
 
     it('no hotlist', () => {
       const state = {hotlists: {}, users: {}};
-      assert.deepEqual(hotlists.viewedHotlistEditors(state), []);
+      assert.deepEqual(hotlists.viewedHotlistEditors(state), null);
     });
   });
 
