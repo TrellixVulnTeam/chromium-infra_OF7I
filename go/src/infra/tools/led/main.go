@@ -49,7 +49,6 @@ func (kitchenSupport) GenerateCommand(ctx context.Context, bb *job.Buildbucket) 
 	kitchenArgs := cookflags.CookFlags{
 		CacheDir:        bb.BbagentArgs.CacheDir,
 		KnownGerritHost: bb.BbagentArgs.KnownPublicGerritHosts,
-		CheckoutDir:     path.Dir(bb.BbagentArgs.ExecutablePath),
 
 		CallUpdateBuild: false,
 
@@ -64,6 +63,12 @@ func (kitchenSupport) GenerateCommand(ctx context.Context, bb *job.Buildbucket) 
 		},
 	}
 
+	if bb.BbagentArgs.PayloadPath != "" {
+		kitchenArgs.CheckoutDir = bb.BbagentArgs.PayloadPath
+	} else {
+		kitchenArgs.CheckoutDir = path.Dir(bb.BbagentArgs.ExecutablePath)
+	}
+
 	if bb.FinalBuildProtoPath != "" {
 		if !strings.HasSuffix(bb.FinalBuildProtoPath, ".json") {
 			return nil, errors.New("FinalBuildProtoPath for kitchen must end with .json")
@@ -76,6 +81,7 @@ func (kitchenSupport) GenerateCommand(ctx context.Context, bb *job.Buildbucket) 
 	propStruct := buildCopy.Input.Properties
 	buildCopy.Input.Properties = nil
 	buildCopy.Infra.Buildbucket.Hostname = ""
+	buildCopy.Exe.Cmd = nil
 
 	buildStr, err := (&jsonpb.Marshaler{}).MarshalToString(buildCopy)
 	if err != nil {
