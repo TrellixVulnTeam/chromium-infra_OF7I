@@ -31,14 +31,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-type AlwaysInWhitelistAuthDB struct {
-	authtest.FakeDB
-}
-
-func (db AlwaysInWhitelistAuthDB) IsInWhitelist(c context.Context, ip net.IP, whitelist string) (bool, error) {
-	return true, nil
-}
-
 func createTestUploadRequest(serverURL string, master string, data []byte) *http.Request {
 	var buf bytes.Buffer
 	multi := multipart.NewWriter(&buf)
@@ -81,8 +73,8 @@ func TestUploadAndGetHandlers(t *testing.T) {
 
 	withTestingContext := func(c *router.Context, next router.Handler) {
 		c.Context = auth.WithState(ctx, &authtest.FakeState{
-			PeerIPOverride: net.IP{1, 2, 3, 4},
-			FakeDB:         AlwaysInWhitelistAuthDB{},
+			PeerIPOverride:   net.IP{1, 2, 3, 4},
+			PeerIPWhitelists: []string{"bots"},
 		})
 		datastore.GetTestable(ctx).CatchupIndexes()
 		next(c)

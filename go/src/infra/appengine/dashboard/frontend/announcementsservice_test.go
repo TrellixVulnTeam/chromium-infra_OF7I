@@ -22,9 +22,9 @@ func TestAnnouncementsPrelude(t *testing.T) {
 	someone := identity.Identity("user:chicken@example.com")
 	trooper := identity.Identity("user:trooper@example.com")
 	state := &authtest.FakeState{
-		FakeDB: authtest.FakeDB{
-			trooper: {announcementGroup},
-		},
+		FakeDB: authtest.NewFakeDB(
+			authtest.MockMembership(trooper, announcementGroup),
+		),
 	}
 	ctx := auth.WithState(context.Background(), state)
 

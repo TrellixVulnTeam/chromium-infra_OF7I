@@ -712,9 +712,9 @@ func TestPollProjectWhitelistBehavior(t *testing.T) {
 		ctx, tc := testclock.UseTime(ctx, now)
 		ctx = auth.WithState(ctx, &authtest.FakeState{
 			Identity: identity.AnonymousIdentity,
-			FakeDB: authtest.FakeDB{
-				"user:whitelisteduser@example.com": []string{whitelistGroup},
-			},
+			FakeDB: authtest.NewFakeDB(
+				authtest.MockMembership("user:whitelisteduser@example.com", whitelistGroup),
+			),
 		})
 
 		cp := &mockConfigProvider{
