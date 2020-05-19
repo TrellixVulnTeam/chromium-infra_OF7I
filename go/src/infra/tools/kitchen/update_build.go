@@ -222,8 +222,7 @@ func (b *buildUpdater) ParseAnnotations(ctx context.Context, ann *milo.Step) (*b
 
 	tags := parseAdditionalTags(props)
 	if len(tags) > 0 {
-		// TODO(crbug/1040685): Update the tags once cr-buildbucket is ready.
-		logging.Errorf(ctx, "would have sent tags to cr-buildbucket: %v", tags)
+		updatePaths = append(updatePaths, "build.tags")
 	}
 
 	return &buildbucketpb.UpdateBuildRequest{
@@ -234,6 +233,7 @@ func (b *buildUpdater) ParseAnnotations(ctx context.Context, ann *milo.Step) (*b
 				Properties:    props,
 				GitilesCommit: outputCommit,
 			},
+			Tags: tags,
 		},
 		UpdateMask: &field_mask.FieldMask{Paths: updatePaths},
 	}, nil

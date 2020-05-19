@@ -305,7 +305,7 @@ END
 								value:<<END
 								{
 									"k1": ["v1"],
-									"k2": ["v2", "v2_1"]
+									"k2": ["v2"]
 								}
 	END
 							>
@@ -330,12 +330,23 @@ END
 						],
 						"output": {
 							"properties": {}
-						}
+						},
+						"tags": [
+							{
+								"key": "k1",
+								"value": "v1"
+							},
+							{
+								"key": "k2",
+								"value": "v2"
+							}
+						]
 					},
 					"updateMask": {
 						"paths": [
 							"build.steps",
-							"build.output.properties"
+							"build.output.properties",
+							"build.tags"
 						]
 					}
 				}`, expected)
