@@ -53,22 +53,28 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     """
     page_size = paginator.CoercePageSize(
         request.page_size, tracker_constants.MAX_ISSUES_PER_PAGE)
-    # TODO(crbug.com/monorail/7713): parse start from `page_token`
-    start = 0
+    pager = paginator.Paginator(projects=request.projects, page_size=page_size)
 
     project_names = []
     for resource_name in request.projects:
       match = rnc._GetResourceNameMatch(resource_name, rnc.PROJECT_NAME_RE)
       project_names.append(match.group('project_name'))
 
+    # TODO(crbug.com/monorail/6758): Proto string fields are unicode types in
+    # python 2. In python 3 these unicode strings will be represented with
+    # string types. pager.GetStart requires a string token during validation
+    # (compare_digest()). While in python 2, we're converting the unicode
+    # page_token to a string so our existing type annotations can stay accurate
+    # now and after the python 3 migration.
+    token = str(request.page_token)
     with work_env.WorkEnv(mc, self.services) as we:
       list_result = we.SearchIssues(
-          request.query, project_names, mc.auth.user_id, page_size, start,
-          request.order_by)
+          request.query, project_names, mc.auth.user_id, page_size,
+          pager.GetStart(token), request.order_by)
 
-    # TODO(crbug.com/monorail/7713): generate `next_page_token`.
     return issues_pb2.SearchIssuesResponse(
-        issues=self.converter.ConvertIssues(list_result.items))
+        issues=self.converter.ConvertIssues(list_result.items),
+        next_page_token=pager.GenerateNextPageToken(list_result.next_start))
 
   @monorail_servicer.PRPCMethod
   def ListComments(self, mc, request):

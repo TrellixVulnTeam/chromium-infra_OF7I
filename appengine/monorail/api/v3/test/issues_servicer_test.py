@@ -19,21 +19,31 @@ from framework import monorailcontext
 from testing import fake
 from services import service_manager
 
+from google.appengine.ext import testbed
+
 
 class IssuesServicerTest(unittest.TestCase):
 
   def setUp(self):
+    # memcache and datastore needed for generating page tokens.
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_memcache_stub()
+    self.testbed.init_datastore_v3_stub()
+
     self.cnxn = fake.MonorailConnection()
     self.services = service_manager.Services(
         config=fake.ConfigService(),
         issue=fake.IssueService(),
         project=fake.ProjectService(),
+        features=fake.FeaturesService(),
         spam=fake.SpamService(),
         user=fake.UserService(),
         usergroup=fake.UserGroupService())
     self.issues_svcr = issues_servicer.IssuesServicer(
         self.services, make_rate_limiter=False)
     self.PAST_TIME = 12345
+
     self.owner = self.services.user.TestAddUser('owner@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('user_2@example.com', 222)
 
@@ -127,6 +137,15 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual(
         [issue.name for issue in actual_response.issues],
         ['projects/chicken/issues/1234', 'projects/cow/issues/1236'])
+
+    # Check the `next_page_token` can be used to get the next page of results.
+    request.page_token = actual_response.next_page_token
+    self.CallWrapped(self.issues_svcr.SearchIssues, mc, request)
+    # start index is now 2.
+    mock_pipeline.assert_called_with(
+        self.cnxn, self.services, mc.auth, [222], 'label:find-me',
+        ['chicken', 'cow'], 2, 2, [], 1, '', '-pri', mc.warnings,
+        mc.errors, True, mc.profiler, display_mode=None, project=None)
 
   # Note the 'empty' case doesn't make sense for ListComments, as one is created
   # for every issue.

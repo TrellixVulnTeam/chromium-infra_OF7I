@@ -25,7 +25,7 @@ from proto import secrets_pb2
 # code separate and simple.
 
 def GeneratePageToken(request_contents, start):
-  # secrets_pb2.ListRequestContents, int -> str
+  # type: (secrets_pb2.ListRequestContents, int) -> str
   """Encrypts a List requests's contents and generates a next page token.
 
   Args:
@@ -50,7 +50,7 @@ def GeneratePageToken(request_contents, start):
 
 
 def ValidateAndParsePageToken(token, request_contents):
-  # bytes, secrets_pb2.ListRequestContents -> int
+  # type: (str, secrets_pb2.ListRequestContents) -> int
   """Returns the start index of the page if the token is valid.
 
   Args:

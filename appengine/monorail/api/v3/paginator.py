@@ -54,11 +54,14 @@ class Paginator(object):
   Search API method implementation, given the contents of the request.
   """
 
-  def __init__(self, parent=None, page_size=None, order_by=None, query=None):
-    # type: (Optional[str], Optional[int], Optional[str], Optional[str]) -> None
+  def __init__(self, parent=None, page_size=None, order_by=None, query=None,
+               projects=None):
+    # type: (Optional[str], Optional[int], Optional[str], Optional[str],
+    #   Optional[Collection[str]]]) -> None
     # TOD(crbug/monorail/7663): Add `projects` for SearchIssues.
     self.request_contents = secrets_pb2.ListRequestContents(
-        parent=parent, page_size=page_size, order_by=order_by, query=query)
+        parent=parent, page_size=page_size, order_by=order_by, query=query,
+        projects=projects)
 
   def GetStart(self, page_token):
     # type: (Optional[str]) -> int

@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='monorail.secrets',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n\x13proto/secrets.proto\x12\x10monorail.secrets\"Y\n\x13ListRequestContents\x12\x0e\n\x06parent\x18\x01 \x01(\t\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x10\n\x08order_by\x18\x03 \x01(\t\x12\r\n\x05query\x18\x04 \x01(\t\"K\n\x11PageTokenContents\x12\r\n\x05start\x18\x01 \x01(\x05\x12\'\n\x1f\x65ncrypted_list_request_contents\x18\x02 \x01(\x0c\x62\x06proto3')
+  serialized_pb=_b('\n\x13proto/secrets.proto\x12\x10monorail.secrets\"k\n\x13ListRequestContents\x12\x0e\n\x06parent\x18\x01 \x01(\t\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x10\n\x08order_by\x18\x03 \x01(\t\x12\r\n\x05query\x18\x04 \x01(\t\x12\x10\n\x08projects\x18\x05 \x03(\t\"K\n\x11PageTokenContents\x12\r\n\x05start\x18\x01 \x01(\x05\x12\'\n\x1f\x65ncrypted_list_request_contents\x18\x02 \x01(\x0c\x62\x06proto3')
 )
 
 
@@ -60,6 +60,13 @@ _LISTREQUESTCONTENTS = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='projects', full_name='monorail.secrets.ListRequestContents.projects', index=4,
+      number=5, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -73,7 +80,7 @@ _LISTREQUESTCONTENTS = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=41,
-  serialized_end=130,
+  serialized_end=148,
 )
 
 
@@ -110,8 +117,8 @@ _PAGETOKENCONTENTS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=132,
-  serialized_end=207,
+  serialized_start=150,
+  serialized_end=225,
 )
 
 DESCRIPTOR.message_types_by_name['ListRequestContents'] = _LISTREQUESTCONTENTS
