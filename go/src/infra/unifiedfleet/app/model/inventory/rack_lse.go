@@ -66,7 +66,7 @@ func newRackLSEEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntit
 //
 // If keysOnly is true, then only key field is populated in returned racklses
 func QueryRackLSEByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.RackLSE, error) {
-	q := datastore.NewQuery(RackLSEKind).KeysOnly(keysOnly)
+	q := datastore.NewQuery(RackLSEKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*RackLSEEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)

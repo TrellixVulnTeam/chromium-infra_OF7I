@@ -63,7 +63,7 @@ func GetAllMachines(ctx context.Context) (*fleetds.OpResults, error) {
 //
 // For referential data intergrity,
 // Delete if this Machine is not referenced by other resources in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
+// If there are any references, delete will be rejected and an error will be returned.
 func DeleteMachine(ctx context.Context, id string) error {
 	err := validateDeleteMachine(ctx, id)
 	if err != nil {
@@ -147,9 +147,12 @@ func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *
 }
 
 // validateMachine validates if a machine can be created/updated in the datastore.
+//
+// Checks if the resources referenced by the given Machine input already exists
+// in the system. Returns an error if any resource referenced by the Machine input
+// does not exist in the system.
 func validateMachine(ctx context.Context, machine *fleet.Machine) error {
-	var NotFound bool = false
-	var resources []Resource
+	var resources []*Resource
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot create Machine %s:\n", machine.Name))
 
@@ -178,30 +181,13 @@ func validateMachine(ctx context.Context, machine *fleet.Machine) error {
 		resources = append(resources, GetChromePlatformResource(chromePlatformID))
 	}
 
-	if len(resources) == 0 {
-		return nil
-	}
-	checkEntities := make([]fleetds.FleetEntity, 0, len(resources))
-	for _, resource := range resources {
-		checkEntities = append(checkEntities, resource.Entity)
-	}
-	exists, err := fleetds.Exists(ctx, checkEntities)
-	if err == nil {
-		for i := range checkEntities {
-			if !exists[i] {
-				NotFound = true
-				errorMsg.WriteString(fmt.Sprintf(ErrorMessage, resources[i].Kind, resources[i].Kind, resources[i].ID))
-			}
-		}
-	}
-	if NotFound {
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
-	return nil
+	return ResourceExist(ctx, resources, &errorMsg)
 }
 
-//validateDeleteMachine validates if a Machine can be deleted
+// validateDeleteMachine validates if a Machine can be deleted
+//
+// Checks if this Machine(MachineID) is not referenced by other resources in the datastore.
+// If there are any other references, delete will be rejected and an error will be returned.
 func validateDeleteMachine(ctx context.Context, id string) error {
 	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", id, true)
 	if err != nil {

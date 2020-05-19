@@ -5,9 +5,15 @@
 package controller
 
 import (
+	"context"
+	"fmt"
+	"go.chromium.org/luci/common/logging"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"infra/unifiedfleet/app/model/configuration"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
+	"strings"
 )
 
 var (
@@ -23,8 +29,8 @@ type Resource struct {
 }
 
 // GetChromePlatformResource returns a Resource with ChromePlatformEntity
-func GetChromePlatformResource(chromePlatformID string) Resource {
-	return Resource{
+func GetChromePlatformResource(chromePlatformID string) *Resource {
+	return &Resource{
 		Kind: configuration.ChromePlatformKind,
 		ID:   chromePlatformID,
 		Entity: &configuration.ChromePlatformEntity{
@@ -34,8 +40,8 @@ func GetChromePlatformResource(chromePlatformID string) Resource {
 }
 
 // GetMachineLSEProtoTypeResource returns a Resource with MachineLSEProtoTypeEntity
-func GetMachineLSEProtoTypeResource(machineLSEProtoTypeID string) Resource {
-	return Resource{
+func GetMachineLSEProtoTypeResource(machineLSEProtoTypeID string) *Resource {
+	return &Resource{
 		Kind: configuration.MachineLSEPrototypeKind,
 		ID:   machineLSEProtoTypeID,
 		Entity: &configuration.MachineLSEPrototypeEntity{
@@ -45,8 +51,8 @@ func GetMachineLSEProtoTypeResource(machineLSEProtoTypeID string) Resource {
 }
 
 // GetRackLSEProtoTypeResource returns a Resource with RackLSEProtoTypeEntity
-func GetRackLSEProtoTypeResource(rackLSEProtoTypeID string) Resource {
-	return Resource{
+func GetRackLSEProtoTypeResource(rackLSEProtoTypeID string) *Resource {
+	return &Resource{
 		Kind: configuration.RackLSEPrototypeKind,
 		ID:   rackLSEProtoTypeID,
 		Entity: &configuration.RackLSEPrototypeEntity{
@@ -56,8 +62,8 @@ func GetRackLSEProtoTypeResource(rackLSEProtoTypeID string) Resource {
 }
 
 //GetMachineResource returns a Resource with MachineEntity
-func GetMachineResource(machineID string) Resource {
-	return Resource{
+func GetMachineResource(machineID string) *Resource {
+	return &Resource{
 		Kind: registration.MachineKind,
 		ID:   machineID,
 		Entity: &registration.MachineEntity{
@@ -67,8 +73,8 @@ func GetMachineResource(machineID string) Resource {
 }
 
 //GetRackResource returns a Resource with RackEntity
-func GetRackResource(rackID string) Resource {
-	return Resource{
+func GetRackResource(rackID string) *Resource {
+	return &Resource{
 		Kind: registration.RackKind,
 		ID:   rackID,
 		Entity: &registration.RackEntity{
@@ -78,8 +84,8 @@ func GetRackResource(rackID string) Resource {
 }
 
 //GetKVMResource returns a Resource with KVMEntity
-func GetKVMResource(kvmID string) Resource {
-	return Resource{
+func GetKVMResource(kvmID string) *Resource {
+	return &Resource{
 		Kind: registration.KVMKind,
 		ID:   kvmID,
 		Entity: &registration.KVMEntity{
@@ -89,8 +95,8 @@ func GetKVMResource(kvmID string) Resource {
 }
 
 // GetRPMResource returns a Resource with RPMEntity
-func GetRPMResource(rpmID string) Resource {
-	return Resource{
+func GetRPMResource(rpmID string) *Resource {
+	return &Resource{
 		Kind: registration.RPMKind,
 		ID:   rpmID,
 		Entity: &registration.RPMEntity{
@@ -100,8 +106,8 @@ func GetRPMResource(rpmID string) Resource {
 }
 
 // GetSwitchResource returns a Resource with SwitchEntity
-func GetSwitchResource(switchID string) Resource {
-	return Resource{
+func GetSwitchResource(switchID string) *Resource {
+	return &Resource{
 		Kind: registration.SwitchKind,
 		ID:   switchID,
 		Entity: &registration.SwitchEntity{
@@ -111,8 +117,8 @@ func GetSwitchResource(switchID string) Resource {
 }
 
 // GetNicResource returns a Resource with NicEntity
-func GetNicResource(nicID string) Resource {
-	return Resource{
+func GetNicResource(nicID string) *Resource {
+	return &Resource{
 		Kind: registration.NicKind,
 		ID:   nicID,
 		Entity: &registration.NicEntity{
@@ -122,8 +128,8 @@ func GetNicResource(nicID string) Resource {
 }
 
 // GetDracResource returns a Resource with DracEntity
-func GetDracResource(dracID string) Resource {
-	return Resource{
+func GetDracResource(dracID string) *Resource {
+	return &Resource{
 		Kind: registration.DracKind,
 		ID:   dracID,
 		Entity: &registration.DracEntity{
@@ -133,12 +139,45 @@ func GetDracResource(dracID string) Resource {
 }
 
 // GetVlanResource returns a Resource with VlanEntity
-func GetVlanResource(vlanID string) Resource {
-	return Resource{
+func GetVlanResource(vlanID string) *Resource {
+	return &Resource{
 		Kind: registration.VlanKind,
 		ID:   vlanID,
 		Entity: &registration.VlanEntity{
 			ID: vlanID,
 		},
 	}
+}
+
+// ResourceExist checks if the given resources exists in the datastore
+//
+// Returns error if any one resource does not exist in the system.
+// Appends error messages to the the given error message for resources
+// that does not exist in the datastore.
+func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings.Builder) error {
+	if len(resources) == 0 {
+		return nil
+	}
+	var NotFound bool = false
+	checkEntities := make([]fleetds.FleetEntity, 0, len(resources))
+	for _, resource := range resources {
+		checkEntities = append(checkEntities, resource.Entity)
+	}
+	exists, err := fleetds.Exists(ctx, checkEntities)
+	if err == nil {
+		for i := range checkEntities {
+			if !exists[i] {
+				NotFound = true
+				errorMsg.WriteString(fmt.Sprintf(ErrorMessage, resources[i].Kind, resources[i].Kind, resources[i].ID))
+			}
+		}
+	} else {
+		logging.Debugf(ctx, "Failed to check existence: %s", err)
+		return status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if NotFound {
+		logging.Errorf(ctx, errorMsg.String())
+		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+	}
+	return nil
 }

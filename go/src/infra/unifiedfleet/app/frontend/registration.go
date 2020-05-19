@@ -166,7 +166,7 @@ func (fs *FleetServerImpl) CreateRack(ctx context.Context, req *api.CreateRackRe
 		return nil, err
 	}
 	req.Rack.Name = req.RackId
-	rack, err := registration.CreateRack(ctx, req.Rack)
+	rack, err := controller.CreateRack(ctx, req.Rack)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func (fs *FleetServerImpl) UpdateRack(ctx context.Context, req *api.UpdateRackRe
 		return nil, err
 	}
 	req.Rack.Name = util.RemovePrefix(req.Rack.Name)
-	rack, err := registration.UpdateRack(ctx, req.Rack)
+	rack, err := controller.UpdateRack(ctx, req.Rack)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +202,7 @@ func (fs *FleetServerImpl) GetRack(ctx context.Context, req *api.GetRackRequest)
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	rack, err := registration.GetRack(ctx, name)
+	rack, err := controller.GetRack(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (fs *FleetServerImpl) ListRacks(ctx context.Context, req *api.ListRacksRequ
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListRacks(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRacks(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func (fs *FleetServerImpl) DeleteRack(ctx context.Context, req *api.DeleteRackRe
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteRack(ctx, name)
+	err = controller.DeleteRack(ctx, name)
 	return &empty.Empty{}, err
 }
 
@@ -438,7 +438,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	for i := 0; ; i += pageSize {
 		end := min(i+pageSize, len(racks))
 		logging.Debugf(ctx, "importing rack %dth - %dth", i, end-1)
-		res, err := registration.ImportRacks(ctx, racks[i:end])
+		res, err := controller.ImportRacks(ctx, racks[i:end])
 		s := processImportDatastoreRes(res, err)
 		if s.Err() != nil {
 			return s.Proto(), s.Err()
