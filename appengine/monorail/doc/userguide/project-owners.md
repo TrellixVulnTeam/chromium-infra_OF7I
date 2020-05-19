@@ -185,7 +185,10 @@ Project owners may edit any field.  Each field may also specify a list
 of field administrators who are also allowed to edit that field.  This
 helps project owners delegate responsibility for configuring fields
 used in certain development processes to the developers who perform
-those processes.
+those processes.  Each field can also specify a list of field editors
+when the field is restricted.  This helps project owners delegate responsibility
+for changing the value of a custom field (in issues or templates) to specific
+users or monorail groups.
 
 ## How to configure approvals
 

@@ -160,6 +160,10 @@ Attachments:
 *   Project owners can define custom fields of several different types,
     including enums, strings, dates, and users.
 
+*   Project owners and field admins can decide on who is allowed to edit a
+    custom field value. If an user is not allowed to edit a field, the input
+    to change its value will be greyed-out or it will not be rendered.
+
 *   There are three main types of labels:
 
     *   OneWord labels contain no dashes and are treated similarly to hashtags
@@ -222,7 +226,10 @@ from the issue's fields and comments sections.
    answered before a team requests review.
 *  Approvals may have custom fields associated with them. Those custom
    fields will show up with their approvals, separate from the other
-   fields of the issue.
+   fields of the issue. These fields can be restricted and have field
+   editors assigned to them. This allows project owners and admins to use
+   them while having control over who is allowed to edit the value of those
+   fields, which is regularly a desired feature in this context.
 *  Issue gates also hold gate fields configured by project owners. These
    gate fields show up right next to the gate names, separate from other
    issue fields. If an issue does not have any gates, gate fields do not
@@ -282,6 +289,10 @@ for incremental formalization of enum-like values. For example:
 *   Project owners may also grant additional permissions to a project member.
     For example, a user might be a contributor, plus `EditIssue`.
 
+*   Project owners and field admins can restrict custom fields. That will allow
+    them to specify field editors: the only users allowed to edit custom field
+    values in issues and templates.
+
 *   When a user makes a request to the Monorail server, the server checks that
     they can access the project and that they have the needed permission for
     that action. E.g., viewing an issue requires the `View` permission.
@@ -308,7 +319,10 @@ for incremental formalization of enum-like values. For example:
     view the issue. And, issue owners always have permission to edit.
 
 *   Project owners and site administrators are not subject to restriction
-    labels.
+    labels. They can also always edit the value of restricted fields.
+
+*   Admins of a field can always edit the field's value(s) in an issue or
+    template as long as they have permission to edit the issue or template.
 
 ## Project configuration
 
