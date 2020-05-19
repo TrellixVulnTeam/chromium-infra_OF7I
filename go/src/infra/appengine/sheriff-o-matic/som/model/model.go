@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"time"
 
@@ -199,6 +200,16 @@ func (a *Annotation) GetStepName() (string, error) {
 		return "", fmt.Errorf("invalid Key: %q", a.Key)
 	}
 	return a.Key[index+1:], nil
+}
+
+// IsGroupAnnotation returns whether an annotation is a group annotation or a normal annotation
+func (a *Annotation) IsGroupAnnotation() bool {
+	pattern := "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+	matched, err := regexp.Match(pattern, []byte(a.Key))
+	if err != nil {
+		return false
+	}
+	return matched
 }
 
 // Add adds some data to an annotation. Returns true if a refresh of annotation

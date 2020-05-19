@@ -134,11 +134,74 @@ func generateAnnotationsNonGrouping(c context.Context, annotations []*model.Anno
 				return []*model.AnnotationNonGrouping{}, err
 			}
 			annotationsNonGrouping = append(annotationsNonGrouping, newAnns...)
-		} else {
-			// TODO(crbug.com/1043371): Process annotations that belong to a group
 		}
 	}
+
+	// Process annotations that belong to a group
+	newAnns, err := generateAnnotationsNonGroupingForGroupedAnnotations(annotations, stepNameToAlertKeyMap)
+	if err != nil {
+		return []*model.AnnotationNonGrouping{}, err
+	}
+	annotationsNonGrouping = append(annotationsNonGrouping, newAnns...)
 	return annotationsNonGrouping, nil
+}
+
+func generateAnnotationsNonGroupingForGroupedAnnotations(annotations []*model.Annotation, stepNameToAlertKeyMap map[string][]string) ([]*model.AnnotationNonGrouping, error) {
+	ret := []*model.AnnotationNonGrouping{}
+
+	// Preprocess to group annotations by their groups.
+	groupIDToGroupAnnotationMap := make(map[string]*model.Annotation)
+	groupIDToChildAnnotationsMap := make(map[string][]*model.Annotation)
+	for _, ann := range annotations {
+		// This means ann is either a group or belongs to a group
+		if ann.GroupID != "" {
+			if ann.IsGroupAnnotation() {
+				groupIDToGroupAnnotationMap[ann.Key] = ann
+			} else {
+				if _, ok := groupIDToChildAnnotationsMap[ann.GroupID]; !ok {
+					groupIDToChildAnnotationsMap[ann.GroupID] = []*model.Annotation{}
+				}
+				groupIDToChildAnnotationsMap[ann.GroupID] = append(groupIDToChildAnnotationsMap[ann.GroupID], ann)
+			}
+		}
+	}
+
+	// Process group by group.
+	for groupID, groupAnn := range groupIDToGroupAnnotationMap {
+		// groupIDToChildAnnotationsMap[groupID] is guaranteed to exist, thanks to filterAnnotationsByCurrentAlerts.
+		childAnns, _ := groupIDToChildAnnotationsMap[groupID]
+		newGroupAnn := model.AnnotationNonGrouping(*groupAnn)
+		ret = append(ret, &newGroupAnn)
+
+		for _, ann := range childAnns {
+			newAnns, err := generateAnnotationsNonGroupingForGroup(ann, stepNameToAlertKeyMap, newGroupAnn.Key)
+			if err != nil {
+				return []*model.AnnotationNonGrouping{}, err
+			}
+			ret = append(ret, newAnns...)
+		}
+	}
+	return ret, nil
+}
+
+func generateAnnotationsNonGroupingForGroup(ann *model.Annotation, stepNameToAlertKeyMap map[string][]string, groupID string) ([]*model.AnnotationNonGrouping, error) {
+	ret := []*model.AnnotationNonGrouping{}
+	stepName, err := ann.GetStepName()
+	if err != nil {
+		return ret, err
+	}
+	alertKeys, ok := stepNameToAlertKeyMap[stepName]
+	if !ok {
+		return ret, nil
+	}
+	for _, alertKey := range alertKeys {
+		newAnn := model.AnnotationNonGrouping(*ann)
+		newAnn.Key = alertKey
+		newAnn.KeyDigest = model.GenerateKeyDigest(alertKey)
+		newAnn.GroupID = groupID
+		ret = append(ret, &newAnn)
+	}
+	return ret, nil
 }
 
 func generateAnnotationsNonGroupingForSingleAnnotation(ann *model.Annotation, alertKeys []string, gf uuidGenerationFunc) ([]*model.AnnotationNonGrouping, error) {

@@ -257,3 +257,18 @@ func TestAnnotationGetStepName(t *testing.T) {
 		So(err, ShouldNotBeNil)
 	})
 }
+
+func TestIsGroupAnnotation(t *testing.T) {
+	Convey("is group annotation returns true", t, func() {
+		ann := &Annotation{
+			Key: "e2d935ac-c623-4c10-b1e3-73bb54584f8f",
+		}
+		So(ann.IsGroupAnnotation(), ShouldBeTrue)
+	})
+	Convey("is group annotation returns false", t, func() {
+		ann := &Annotation{
+			Key: "abcd",
+		}
+		So(ann.IsGroupAnnotation(), ShouldBeFalse)
+	})
+}
