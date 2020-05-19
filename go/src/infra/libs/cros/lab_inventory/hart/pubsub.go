@@ -57,7 +57,7 @@ func PushHandler(ctx context.Context, r *http.Request) {
 	var response fleet.AssetInfoResponse
 	perr := proto.Unmarshal(data, &response)
 	if perr == nil {
-		if response.GetRequestStatus() == fleet.RequestStatus_SUCCESS {
+		if response.GetRequestStatus() == fleet.RequestStatus_OK {
 			datastore.AddAssetInfo(ctx, response.GetAssets())
 		}
 	}

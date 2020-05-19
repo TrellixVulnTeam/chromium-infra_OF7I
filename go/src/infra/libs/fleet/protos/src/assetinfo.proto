@@ -20,6 +20,7 @@ message AssetInfo {
   string reference_board = 7;
   string ethernet_mac_address = 8;
   string sku = 9;
+  string phase = 10;
 }
 
 message AssetInfoRequest {
@@ -38,7 +39,11 @@ message AssetInfoResponse {
   repeated string failed_asset_tags = 4;
 }
 
+//TODO(anushruth): Use 0 as Undefined inline with https://google.aip.dev/126
 enum RequestStatus {
-  SUCCESS = 0;
-  FAILURE = 1;
+  OK = 0;
+  INVALID_MESSAGE = 1;
+  SERVER_ERROR = 2;
+  NO_ASSET_TAG = 3;
+  NO_GPN = 4;
 }
