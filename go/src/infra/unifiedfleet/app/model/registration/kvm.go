@@ -6,8 +6,6 @@ package registration
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -19,7 +17,6 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 // KVMKind is the datastore entity kind KVM.
@@ -147,47 +144,7 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 }
 
 // DeleteKVM deletes the KVM in datastore
-//
-// For referential data intergrity,
-// Delete if there are no references to the KVM by Machine in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
 func DeleteKVM(ctx context.Context, id string) error {
-	machines, err := QueryMachineByPropertyName(ctx, "kvm_id", id, true)
-	if err != nil {
-		return err
-	}
-	racks, err := QueryRackByPropertyName(ctx, "kvm_ids", id, true)
-	if err != nil {
-		return err
-	}
-	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "kvm_ids", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 || len(racks) > 0 || len(racklses) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("KVM %s cannot be deleted because there are other resources which are referring this KVM.", id))
-		if len(machines) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the KVM:\n"))
-			for _, machine := range machines {
-				errorMsg.WriteString(machine.Name + ", ")
-			}
-		}
-		if len(racks) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRacks referring the KVM:\n"))
-			for _, rack := range racks {
-				errorMsg.WriteString(rack.Name + ", ")
-			}
-		}
-		if len(racklses) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the KVM:\n"))
-			for _, racklse := range racklses {
-				errorMsg.WriteString(racklse.Name + ", ")
-			}
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
 	return fleetds.Delete(ctx, &fleet.KVM{Name: id}, newKVMEntity)
 }
 

@@ -451,7 +451,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	for i := 0; ; i += pageSize {
 		end := min(i+pageSize, len(kvms))
 		logging.Debugf(ctx, "importing kvm %dth - %dth", i, end-1)
-		res, err := registration.ImportKVMs(ctx, kvms[i:end])
+		res, err := controller.ImportKVMs(ctx, kvms[i:end])
 		s := processImportDatastoreRes(res, err)
 		if s.Err() != nil {
 			return s.Proto(), s.Err()
@@ -515,7 +515,7 @@ func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *api.CreateKVMRequ
 		return nil, err
 	}
 	req.KVM.Name = req.KVMId
-	kvm, err := registration.CreateKVM(ctx, req.KVM)
+	kvm, err := controller.CreateKVM(ctx, req.KVM)
 	if err != nil {
 		return nil, err
 	}
@@ -533,7 +533,7 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *api.UpdateKVMRequ
 		return nil, err
 	}
 	req.KVM.Name = util.RemovePrefix(req.KVM.Name)
-	kvm, err := registration.UpdateKVM(ctx, req.KVM)
+	kvm, err := controller.UpdateKVM(ctx, req.KVM)
 	if err != nil {
 		return nil, err
 	}
@@ -551,7 +551,7 @@ func (fs *FleetServerImpl) GetKVM(ctx context.Context, req *api.GetKVMRequest) (
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	kvm, err := registration.GetKVM(ctx, name)
+	kvm, err := controller.GetKVM(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -569,7 +569,7 @@ func (fs *FleetServerImpl) ListKVMs(ctx context.Context, req *api.ListKVMsReques
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListKVMs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListKVMs(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -592,7 +592,7 @@ func (fs *FleetServerImpl) DeleteKVM(ctx context.Context, req *api.DeleteKVMRequ
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteKVM(ctx, name)
+	err = controller.DeleteKVM(ctx, name)
 	return &empty.Empty{}, err
 }
 
