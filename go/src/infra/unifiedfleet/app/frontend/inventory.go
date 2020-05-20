@@ -6,12 +6,15 @@ package frontend
 
 import (
 	empty "github.com/golang/protobuf/ptypes/empty"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
+	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
 )
@@ -204,6 +207,26 @@ func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *api.Impor
 	source := req.GetMachineDbSource()
 	if err := api.ValidateMachineDBSource(source); err != nil {
 		return nil, err
+	}
+	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	if err != nil {
+		return nil, machineDBConnectionFailureStatus.Err()
+	}
+	logging.Debugf(ctx, "Querying machine-db to list the physical hosts")
+	hosts, err := mdbClient.ListPhysicalHosts(ctx, &crimson.ListPhysicalHostsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListPhysicalHosts").Err()
+	}
+	vms, err := mdbClient.ListVMs(ctx, &crimson.ListVMsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListVMs").Err()
+	}
+
+	pageSize := fs.getImportPageSize()
+	res, err := controller.ImportMachineLSEs(ctx, hosts.GetHosts(), vms.GetVms(), pageSize)
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
 	}
 	return successStatus.Proto(), nil
 }

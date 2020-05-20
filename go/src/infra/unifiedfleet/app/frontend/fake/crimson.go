@@ -15,8 +15,10 @@ import (
 
 // CrimsonClient mocks the crimsonClient
 type CrimsonClient struct {
-	MachineNames []string
-	Nics         []*crimson.NIC
+	MachineNames  []string
+	Nics          []*crimson.NIC
+	PhysicalHosts []*crimson.PhysicalHost
+	Vms           []*crimson.VM
 }
 
 // ListDatacenters mocks the ListDatacenters of crimsonClient
@@ -153,8 +155,9 @@ func (c *CrimsonClient) CreatePhysicalHost(ctx context.Context, in *crimson.Crea
 
 // ListPhysicalHosts mocks the ListPhysicalHosts of crimsonClient
 func (c *CrimsonClient) ListPhysicalHosts(ctx context.Context, in *crimson.ListPhysicalHostsRequest, opts ...grpc.CallOption) (*crimson.ListPhysicalHostsResponse, error) {
-	out := new(crimson.ListPhysicalHostsResponse)
-	return out, nil
+	return &crimson.ListPhysicalHostsResponse{
+		Hosts: c.PhysicalHosts,
+	}, nil
 }
 
 // UpdatePhysicalHost mocks the UpdatePhysicalHost of crimsonClient
@@ -177,8 +180,9 @@ func (c *CrimsonClient) CreateVM(ctx context.Context, in *crimson.CreateVMReques
 
 // ListVMs mocks the ListVMs of crimsonClient
 func (c *CrimsonClient) ListVMs(ctx context.Context, in *crimson.ListVMsRequest, opts ...grpc.CallOption) (*crimson.ListVMsResponse, error) {
-	out := new(crimson.ListVMsResponse)
-	return out, nil
+	return &crimson.ListVMsResponse{
+		Vms: c.Vms,
+	}, nil
 }
 
 // UpdateVM mocks the UpdateVM of crimsonClient

@@ -22,6 +22,7 @@ const (
 	NotFound         string = "Entity not found."
 	InternalError    string = "Internal Server Error."
 	CannotDelete     string = "cannot be deleted"
+	InvalidArgument  string = "Invalid argument"
 )
 
 // FleetEntity represents the interface of entity in datastore.

@@ -170,6 +170,66 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 	return newNics, newDracs, dhcps, machineToNics, machineToDracs, machineToSwitch
 }
 
+// ToMachineLSEs converts crimson data to UFS LSEs.
+func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.MachineLSE, []*fleet.IP, []*fleet.DHCPConfig) {
+	hostToVMs := make(map[string][]*fleet.VM, 0)
+	ips := make([]*fleet.IP, 0)
+	dhcps := make([]*fleet.DHCPConfig, 0)
+	for _, vm := range vms {
+		name := vm.GetName()
+		v := &fleet.VM{
+			Name: name,
+			OsVersion: &fleet.OSVersion{
+				Value: vm.GetOs(),
+			},
+			Hostname: getVMHostname(vm.GetHost(), vm.GetName()),
+		}
+		hostToVMs[vm.GetHost()] = append(hostToVMs[vm.GetHost()], v)
+		ip := FormatIP(vm.GetVlan(), vm.GetIpv4(), true)
+		if ip != nil {
+			ips = append(ips, ip)
+		}
+		dhcps = append(dhcps, &fleet.DHCPConfig{
+			Hostname: v.GetHostname(),
+			Ip:       vm.GetIpv4(),
+			// No mac address found
+		})
+	}
+	lses := make([]*fleet.MachineLSE, 0)
+	var lsePrototype string
+	for _, h := range hosts {
+		name := h.GetName()
+		vms := hostToVMs[name]
+		if len(vms) > 0 {
+			lsePrototype = "browser-lab:vm"
+		} else {
+			lsePrototype = "browser-lab:no-vm"
+		}
+		lse := &fleet.MachineLSE{
+			Name:                name,
+			MachineLsePrototype: lsePrototype,
+			Hostname:            name,
+			Machines:            []string{h.GetMachine()},
+			Lse: &fleet.MachineLSE_ChromeBrowserMachineLse{
+				ChromeBrowserMachineLse: &fleet.ChromeBrowserMachineLSE{
+					Vms: vms,
+				},
+			},
+		}
+		lses = append(lses, lse)
+		ip := FormatIP(h.GetVlan(), h.GetIpv4(), true)
+		if ip != nil {
+			ips = append(ips, ip)
+		}
+		dhcps = append(dhcps, &fleet.DHCPConfig{
+			Hostname:   h.GetName(),
+			Ip:         h.GetIpv4(),
+			MacAddress: h.GetMacAddress(),
+		})
+	}
+	return lses, ips, dhcps
+}
+
 func getNicName(nic *crimson.NIC) string {
 	return fmt.Sprintf("%s-%s", nic.GetMachine(), nic.GetName())
 }
@@ -177,4 +237,9 @@ func getNicName(nic *crimson.NIC) string {
 // GetBrowserLabVlanName return a browser lab vlan ID
 func GetBrowserLabVlanName(id int64) string {
 	return fmt.Sprintf("browser-lab:%d", id)
+}
+
+// getVMHostname return a vm hostname
+func getVMHostname(phisicalHost, vmName string) string {
+	return fmt.Sprintf("%s:%s", phisicalHost, vmName)
 }

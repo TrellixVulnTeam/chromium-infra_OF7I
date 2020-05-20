@@ -24,8 +24,9 @@ const DHCPKind string = "DHCP"
 // DHCPEntity is a datastore entity that tracks dhcp.
 type DHCPEntity struct {
 	_kind string `gae:"$kind,DHCP"`
-	ID    string `gae:"$id"`
-	IPv4  string `gae:"ipv4"`
+	// refer to the hostname
+	ID   string `gae:"$id"`
+	IPv4 string `gae:"ipv4"`
 	// fleet.DHCPConfig cannot be directly used as it contains pointer (timestamp).
 	Dhcp []byte `gae:",noindex"`
 }

@@ -142,3 +142,14 @@ func putMachineLSEPrototype(ctx context.Context, machineLSEPrototype *fleet.Mach
 	}
 	return nil, err
 }
+
+// ImportMachineLSEPrototypes creates or updates a batch of machine lse prototypes in datastore
+func ImportMachineLSEPrototypes(ctx context.Context, lps []*fleet.MachineLSEPrototype) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(lps))
+	utime := ptypes.TimestampNow()
+	for i, m := range lps {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newMachineLSEPrototypeEntity, true, true)
+}

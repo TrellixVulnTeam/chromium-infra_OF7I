@@ -89,11 +89,43 @@ var testNics = []*crimson.NIC{
 		Ipv4:       "ip3",
 	},
 }
+var testPhysicalHosts = []*crimson.PhysicalHost{
+	{
+		Name:       "esx-8",
+		Vlan:       40,
+		Machine:    "machine1",
+		Os:         "testing-os",
+		Ipv4:       "192.168.40.60",
+		MacAddress: "00:3e:e1:c8:57:f9",
+		Nic:        "eth0",
+	},
+	{
+		Name:       "web",
+		Vlan:       20,
+		Machine:    "machine2",
+		Os:         "testing-os",
+		Ipv4:       "192.168.20.18",
+		MacAddress: "84:2b:2b:01:b9:c6",
+		Nic:        "eth0",
+	},
+}
+var testVMs = []*crimson.VM{
+	{
+		Name:     "vm578-m4",
+		Vlan:     144,
+		Ipv4:     "192.168.144.63",
+		Host:     "esx-8",
+		HostVlan: 40,
+		Os:       "testing-vm",
+	},
+}
 
 func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonClient, error) {
 	return &fake.CrimsonClient{
-		MachineNames: testMachines,
-		Nics:         testNics,
+		MachineNames:  testMachines,
+		Nics:          testNics,
+		PhysicalHosts: testPhysicalHosts,
+		Vms:           testVMs,
 	}, nil
 }
 

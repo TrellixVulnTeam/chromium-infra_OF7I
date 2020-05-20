@@ -6,11 +6,14 @@ package frontend
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -695,6 +698,38 @@ func TestImportMachineLSEs(t *testing.T) {
 			res, err := tf.Fleet.ImportMachineLSEs(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
+
+			// Verify machine lse prototypes
+			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(parseAssets(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
+
+			// Verify machine lses
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(parseAssets(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
+			lse, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "machine1", false)
+			So(err, ShouldBeNil)
+			So(lse, ShouldHaveLength, 1)
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "browser-lab:vm")
+			So(lse[0].GetHostname(), ShouldEqual, "esx-8")
+			So(lse[0].GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 1)
+			So(lse[0].GetChromeBrowserMachineLse().GetVms()[0].GetHostname(), ShouldEqual, "esx-8:vm578-m4")
+
+			// Verify DHCPs
+			dhcp, err := configuration.GetDHCPConfig(ctx, lse[0].GetHostname())
+			So(err, ShouldBeNil)
+			So(dhcp.GetIp(), ShouldEqual, "192.168.40.60")
+			So(dhcp.GetMacAddress(), ShouldEqual, "00:3e:e1:c8:57:f9")
+
+			// Verify IPs
+			ipv4, err := util.ParseIPv4(dhcp.GetIp())
+			So(err, ShouldBeNil)
+			ips, err := configuration.QueryIPByPropertyName(ctx, "ipv4", strconv.FormatUint(uint64(ipv4), 10))
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeTrue)
+			So(ips[0].GetVlan(), ShouldEqual, util.GetBrowserLabVlanName(40))
 		})
 	})
 }

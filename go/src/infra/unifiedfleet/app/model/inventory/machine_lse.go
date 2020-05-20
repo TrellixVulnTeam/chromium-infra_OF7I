@@ -184,3 +184,14 @@ func putAllMachineLSE(ctx context.Context, machineLSEs []*fleet.MachineLSE, upda
 	}
 	return nil, err
 }
+
+// ImportMachineLSEs creates or updates a batch of machine lses in datastore
+func ImportMachineLSEs(ctx context.Context, lses []*fleet.MachineLSE) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(lses))
+	utime := ptypes.TimestampNow()
+	for i, m := range lses {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newMachineLSEEntity, true, true)
+}
