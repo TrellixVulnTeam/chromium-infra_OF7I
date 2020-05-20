@@ -40,7 +40,7 @@ peripherals: {
   stylus: true
   servo: true
   servo_state: 1
-  servo_type: "servo_v3"
+  servo_type: ""
   smart_usbhub: false
   mimo: true
   huddly: true
@@ -148,7 +148,6 @@ var fullDimensions = Dimensions{
 	"label-touchscreen":      {"True"},
 	"label-servo":            {"True"},
 	"label-servo_state":      {"WORKING"},
-	"label-servo_type":       {"servo_v3"},
 	"label-sku":              {"skuval"},
 	"label-brand":            {"HOMH"},
 	"label-router_802_11ax":  {"True"},
@@ -236,43 +235,6 @@ func TestConvertServoStateWorking(t *testing.T) {
 	}
 }
 
-var servoTypeConvertStateCases = []struct {
-	val           string
-	expectedEmpty bool
-	expectVal     string
-}{
-	{"", true, ""},
-	{"ServoV3", false, "ServoV3"},
-	{"servo_someting", false, "servo_someting"},
-	{"HELLO_WORLD", false, "HELLO_WORLD"},
-	{"Yes", false, "Yes"},
-}
-
-func TestConvertServoTypeWorking(t *testing.T) {
-	for _, testCase := range servoTypeConvertStateCases {
-		t.Run(fmt.Sprintf("ServoType value is %v", testCase.val), func(t *testing.T) {
-			var ls inventory.SchedulableLabels
-			var dims Dimensions
-			protoText := fmt.Sprintf(`peripherals: { servo_type: %#v }`, testCase.val)
-			if err := proto.UnmarshalText(protoText, &ls); err != nil {
-				t.Fatalf("Error unmarshalling example text: %s", err)
-			}
-			if testCase.expectedEmpty {
-				dims = Dimensions{}
-			} else {
-				dims = Dimensions{"label-servo_type": {testCase.expectVal}}
-			}
-			got := Convert(&ls)
-			if diff := pretty.Compare(dims, got); diff != "" {
-				t.Errorf(
-					"Convert servo_type from %q got labels differ -want +got, %s",
-					testCase.expectVal,
-					diff)
-			}
-		})
-	}
-}
-
 func TestRevertEmpty(t *testing.T) {
 	t.Parallel()
 	want := inventory.NewSchedulableLabels()
@@ -312,35 +274,6 @@ func TestRevertServoStateInCaseEffect(t *testing.T) {
 				t.Errorf(
 					"Revert value from %v made labels differ -want +got, %s",
 					testCase.labelValue,
-					diff)
-			}
-		})
-	}
-}
-
-var servoTypeRevertCaseTests = []struct {
-	val       string
-	expectVal string
-}{
-	{"Something", "Something"},
-	{"Servo_v3", "Servo_v3"},
-	{"ServoV3", "ServoV3"},
-	{"SERVO_V3", "SERVO_V3"},
-}
-
-func TestRevertServoTypeInCaseEffect(t *testing.T) {
-	for _, testCase := range servoTypeRevertCaseTests {
-		t.Run(testCase.val, func(t *testing.T) {
-			want := inventory.NewSchedulableLabels()
-			*want.Peripherals.ServoType = testCase.expectVal
-			dims := Dimensions{
-				"label-servo_type": {testCase.val},
-			}
-			got := Revert(dims)
-			if diff := pretty.Compare(want, *got); diff != "" {
-				t.Errorf(
-					"Revert value from %v made labels differ -want +got, %s",
-					testCase.val,
 					diff)
 			}
 		})

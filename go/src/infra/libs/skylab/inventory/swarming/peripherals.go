@@ -90,10 +90,6 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 		}
 	}
 
-	if servoType := p.GetServoType(); len(servoType) > 0 {
-		dims["label-servo_type"] = []string{servoType}
-	}
-
 	n := p.GetWorkingBluetoothBtpeer()
 	btpeers := make([]string, n)
 	for i := range btpeers {
@@ -128,8 +124,6 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 		p.ServoState = &servoState
 		delete(d, "label-servo_state")
 	}
-
-	d = assignLastStringValueAndDropKey(d, p.ServoType, "label-servo_type")
 
 	btpeers := d["label-working_bluetooth_btpeer"]
 	max := 0
