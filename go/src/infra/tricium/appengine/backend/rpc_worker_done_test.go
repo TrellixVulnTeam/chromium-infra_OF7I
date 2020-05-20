@@ -20,6 +20,8 @@ import (
 	"infra/tricium/appengine/common/gerrit"
 	"infra/tricium/appengine/common/track"
 	"infra/tricium/appengine/common/triciumtest"
+
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 // MockIsolator mocks the Isolator interface for testing.
@@ -595,9 +597,9 @@ func TestCreateAnalysisResults(t *testing.T) {
 			tcomment := tricium.Data_Comment{}
 			err := jsonpb.UnmarshalString(string(comments[i].Comment), &tcomment)
 			So(err, ShouldBeNil)
-			So(&tcomment, ShouldResemble, gcomment.Comment)
+			So(&tcomment, ShouldResembleProto, gcomment.Comment)
 			So(gcomment.Analyzer, ShouldEqual, comments[i].Analyzer)
-			So(gcomment.CreatedTime, ShouldResemble, tutils.TimestampProto(comments[i].CreationTime))
+			So(gcomment.CreatedTime, ShouldResembleProto, tutils.TimestampProto(comments[i].CreationTime))
 			platforms, _ := tricium.GetPlatforms(comments[i].Platforms)
 			So(gcomment.Platforms, ShouldResemble, platforms)
 			So(gcomment.Selected, ShouldEqual, selections[i].Included)

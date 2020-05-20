@@ -112,7 +112,16 @@ func TestCreateEvent(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(len(evts), ShouldEqual, 2)
 		for _, evt := range evts {
-			So(evt, ShouldBeIn, expected)
+			So(containsEvent(evt, expected), ShouldBeTrue)
 		}
 	})
+}
+
+func containsEvent(target *gen.TestResultEvent, events []*gen.TestResultEvent) bool {
+	for _, evt := range events {
+		if proto.Equal(target, evt) {
+			return true
+		}
+	}
+	return false
 }

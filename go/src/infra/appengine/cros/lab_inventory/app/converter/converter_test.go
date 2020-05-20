@@ -98,6 +98,9 @@ var testDeviceToBQMsgsData = []struct {
 	},
 }
 
+// Use proto.Equal to compare protobufs message
+var cmpOpt = cmp.Comparer(proto.Equal)
+
 func TestDeviceToBQMsgs(t *testing.T) {
 	t.Parallel()
 	for _, tt := range testDeviceToBQMsgsData {
@@ -107,10 +110,10 @@ func TestDeviceToBQMsgs(t *testing.T) {
 			if isGood != tt.isGood {
 				t.Errorf("error mismatch: expected (%v) got (%v) err was (%#v)", tt.isGood, isGood, err)
 			}
-			if diff := cmp.Diff(tt.out, out); diff != "" {
+			if diff := cmp.Diff(tt.out, out, cmpOpt); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
-			if stateDiff := cmp.Diff(tt.stateOut, stateOut); stateDiff != "" {
+			if stateDiff := cmp.Diff(tt.stateOut, stateOut, cmpOpt); stateDiff != "" {
 				t.Errorf("unexpected diff (%s)", stateDiff)
 			}
 		})
@@ -177,10 +180,10 @@ func TestDeviceToBQMsgsSeq(t *testing.T) {
 			if isGood != tt.isGood {
 				t.Errorf("error mismatch: expected (%v) got (%v) err was (%#v)", tt.isGood, isGood, err)
 			}
-			if diff := cmp.Diff(tt.out, out); diff != "" {
+			if diff := cmp.Diff(tt.out, out, cmpOpt); diff != "" {
 				t.Errorf("unexpected diff (%s)", diff)
 			}
-			if stateDiff := cmp.Diff(tt.stateOut, stateOut); stateDiff != "" {
+			if stateDiff := cmp.Diff(tt.stateOut, stateOut, cmpOpt); stateDiff != "" {
 				t.Errorf("unexpected diff (%s)", stateDiff)
 			}
 		})

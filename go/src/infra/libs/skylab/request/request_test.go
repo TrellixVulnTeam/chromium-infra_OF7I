@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/kylelemons/godebug/pretty"
-	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/ptypes"
@@ -23,6 +22,9 @@ import (
 
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
+
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestBuilderID(t *testing.T) {
@@ -40,9 +42,7 @@ func TestBuilderID(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(req, ShouldNotBeNil)
 			Convey("then request should have a builder ID.", func() {
-				So(req.Builder, ShouldNotBeNil)
-				diff := pretty.Compare(req.Builder, id)
-				So(diff, ShouldBeEmpty)
+				So(req.Builder, ShouldResembleProto, &id)
 			})
 		})
 	})
@@ -86,8 +86,7 @@ func TestDimensionsBB(t *testing.T) {
 					},
 				}
 
-				diff := pretty.Compare(sortBBDimensions(req.Dimensions), sortBBDimensions(want))
-				So(diff, ShouldBeEmpty)
+				So(sortBBDimensions(req.Dimensions), ShouldResembleProto, sortBBDimensions(want))
 			})
 		})
 	})
@@ -144,8 +143,7 @@ func TestPropertiesBB(t *testing.T) {
 				err = jsonpb.UnmarshalString(s, &got)
 				So(err, ShouldBeNil)
 
-				diff := pretty.Compare(got, want)
-				So(diff, ShouldBeEmpty)
+				So(&got, ShouldResembleProto, &want)
 			})
 		})
 	})
@@ -175,8 +173,7 @@ func TestTagsBB(t *testing.T) {
 					},
 				}
 
-				diff := pretty.Compare(sortBBStringPairs(req.Tags), sortBBStringPairs(want))
-				So(diff, ShouldBeEmpty)
+				So(sortBBStringPairs(req.Tags), ShouldResembleProto, sortBBStringPairs(want))
 			})
 		})
 	})

@@ -22,11 +22,15 @@ import (
 	"infra/qscheduler/qslib/protos/metrics"
 	"infra/qscheduler/qslib/tutils"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"go.chromium.org/luci/common/data/stringset"
 )
+
+// Use proto.Equal to compare protobufs message
+var cmpOpt = cmp.Comparer(proto.Equal)
 
 func TestToMetricsSchedulerState(t *testing.T) {
 	Convey("Given a state with some balances, accounts, and requests", t, func() {
@@ -144,7 +148,7 @@ func TestToMetricsSchedulerState(t *testing.T) {
 				tasks,
 				workers,
 			}
-			diff := cmp.Diff(s.state.snapshot(pool), want)
+			diff := cmp.Diff(s.state.snapshot(pool), want, cmpOpt)
 			So(diff, ShouldBeBlank)
 		})
 	})
