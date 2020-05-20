@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
@@ -136,6 +137,24 @@ func TestConstructQueryFromBugList(t *testing.T) {
 }
 
 func TestAnnotations(t *testing.T) {
+	prevConfig := config.EnableAutoGrouping
+	config.EnableAutoGrouping = true
+	defer func() {
+		config.EnableAutoGrouping = prevConfig
+	}()
+	testAnnotations(t)
+}
+
+func TestAnnotationsNonGrouping(t *testing.T) {
+	prevConfig := config.EnableAutoGrouping
+	config.EnableAutoGrouping = false
+	defer func() {
+		config.EnableAutoGrouping = prevConfig
+	}()
+	testAnnotations(t)
+}
+
+func testAnnotations(t *testing.T) {
 	newContext := func() (context.Context, testclock.TestClock) {
 		c := gaetesting.TestingContext()
 		c = authtest.MockAuthConfig(c)
@@ -215,7 +234,7 @@ func TestAnnotations(t *testing.T) {
 				ModificationTime: datastore.RoundTime(clock.Now(c).Add(4 * time.Hour)),
 			}
 
-			So(datastore.Put(c, ann), ShouldBeNil)
+			So(datastorePutAnnotation(c, ann), ShouldBeNil)
 			datastore.GetTestable(c).CatchupIndexes()
 
 			Convey("basic annotation", func() {
@@ -324,8 +343,7 @@ func TestAnnotations(t *testing.T) {
 					})
 
 					So(w.Code, ShouldEqual, 200)
-
-					So(datastore.Get(c, ann), ShouldBeNil)
+					So(datastoreGetAnnotation(c, ann), ShouldBeNil)
 					So(ann.SnoozeTime, ShouldEqual, 123123)
 				})
 
@@ -341,7 +359,7 @@ func TestAnnotations(t *testing.T) {
 
 					So(w.Code, ShouldEqual, 200)
 
-					So(datastore.Get(c, ann), ShouldBeNil)
+					So(datastoreGetAnnotation(c, ann), ShouldBeNil)
 					So(ann.Bugs, ShouldResemble, []model.MonorailBug{{BugID: "123123", ProjectID: "chromium"}})
 				})
 			})
@@ -359,7 +377,7 @@ func TestAnnotations(t *testing.T) {
 				})
 
 				ann.SnoozeTime = 123
-				So(datastore.Put(c, ann), ShouldBeNil)
+				So(datastorePutAnnotation(c, ann), ShouldBeNil)
 
 				Convey("basic", func() {
 					So(ann.SnoozeTime, ShouldEqual, 123)
@@ -375,7 +393,7 @@ func TestAnnotations(t *testing.T) {
 					})
 
 					So(w.Code, ShouldEqual, 200)
-					So(datastore.Get(c, ann), ShouldBeNil)
+					So(datastoreGetAnnotation(c, ann), ShouldBeNil)
 					So(ann.SnoozeTime, ShouldEqual, 0)
 				})
 			})
@@ -409,8 +427,8 @@ func TestAnnotations(t *testing.T) {
 				Bugs:      []model.MonorailBug{{BugID: "555", ProjectID: "fuchsia"}, {BugID: "666", ProjectID: "fuchsia"}},
 			}
 
-			So(datastore.Put(c, ann), ShouldBeNil)
-			So(datastore.Put(c, ann1), ShouldBeNil)
+			So(datastorePutAnnotation(c, ann), ShouldBeNil)
+			So(datastorePutAnnotation(c, ann1), ShouldBeNil)
 			datastore.GetTestable(c).CatchupIndexes()
 
 			Convey("query alerts which have multiple bugs", func() {
