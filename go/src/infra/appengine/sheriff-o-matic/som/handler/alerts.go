@@ -179,6 +179,11 @@ func datastorePutAlertJSONs(c context.Context, alertJSONs []*model.AlertJSON) er
 	return datastore.Put(c, alertJSONsNonGrouping)
 }
 
+func datastorePutAlertJSON(c context.Context, alertJSON *model.AlertJSON) error {
+	alertJSONs := []*model.AlertJSON{alertJSON}
+	return datastorePutAlertJSONs(c, alertJSONs)
+}
+
 func datastoreGetAlertJSONs(c context.Context, alertJSONs []*model.AlertJSON) {
 	if config.EnableAutoGrouping {
 		datastore.Get(c, alertJSONs)

@@ -79,11 +79,16 @@ func datastoreGetAnnotation(c context.Context, annotation *model.Annotation) err
 }
 
 func datastorePutAnnotation(c context.Context, annotation *model.Annotation) error {
+	annotations := []*model.Annotation{annotation}
+	return datastorePutAnnotations(c, annotations)
+}
+
+func datastorePutAnnotations(c context.Context, annotations []*model.Annotation) error {
 	if config.EnableAutoGrouping {
-		return datastore.Put(c, annotation)
+		return datastore.Put(c, annotations)
 	}
-	annotationNonGrouping := model.AnnotationNonGrouping(*annotation)
-	return datastore.Put(c, &annotationNonGrouping)
+	annotationsNonGrouping := convertAnnotationsToAnnotationsNonGrouping(annotations)
+	return datastore.Put(c, annotationsNonGrouping)
 }
 
 func datastoreCreateAnnotationQuery() *datastore.Query {

@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 
@@ -37,8 +38,24 @@ import (
 var _ = fmt.Printf
 
 func TestMain(t *testing.T) {
-	t.Parallel()
+	prevConfig := config.EnableAutoGrouping
+	config.EnableAutoGrouping = true
+	defer func() {
+		config.EnableAutoGrouping = prevConfig
+	}()
+	testMain(t, "AlertJSON")
+}
 
+func TestMainNonGrouping(t *testing.T) {
+	prevConfig := config.EnableAutoGrouping
+	config.EnableAutoGrouping = false
+	defer func() {
+		config.EnableAutoGrouping = prevConfig
+	}()
+	testMain(t, "AlertJSONNonGrouping")
+}
+
+func testMain(t *testing.T, alertTable string) {
 	Convey("main", t, func() {
 		c := gaetesting.TestingContext()
 		c = authtest.MockAuthConfig(c)
@@ -56,7 +73,7 @@ func TestMain(t *testing.T) {
 		So(err, ShouldBeNil)
 		Convey("/api/v1", func() {
 			alertIdx := datastore.IndexDefinition{
-				Kind:     "AlertJSON",
+				Kind:     alertTable,
 				Ancestor: true,
 				SortBy: []datastore.IndexColumn{
 					{
@@ -162,7 +179,7 @@ func TestMain(t *testing.T) {
 						So(w.Code, ShouldEqual, 200)
 					})
 
-					So(datastore.Put(c, alertJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, alertJSON), ShouldBeNil)
 					So(datastore.Put(c, oldRevisionSummaryJSON), ShouldBeNil)
 					So(datastore.Put(c, newRevisionSummaryJSON), ShouldBeNil)
 					datastore.GetTestable(c).CatchupIndexes()
@@ -188,8 +205,8 @@ func TestMain(t *testing.T) {
 						// code and tests except for whatever chromeos needs.
 					})
 
-					So(datastore.Put(c, oldResolvedJSON), ShouldBeNil)
-					So(datastore.Put(c, newResolvedJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, oldResolvedJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, newResolvedJSON), ShouldBeNil)
 
 					Convey("resolved alerts", func() {
 						GetAlertsHandler(&router.Context{
@@ -273,11 +290,11 @@ func TestMain(t *testing.T) {
 						So(w.Code, ShouldEqual, 200)
 					})
 
-					So(datastore.Put(c, alertJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, alertJSON), ShouldBeNil)
 					So(datastore.Put(c, oldRevisionSummaryJSON), ShouldBeNil)
 					So(datastore.Put(c, newRevisionSummaryJSON), ShouldBeNil)
-					So(datastore.Put(c, oldResolvedJSON), ShouldBeNil)
-					So(datastore.Put(c, newResolvedJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, oldResolvedJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, newResolvedJSON), ShouldBeNil)
 					datastore.GetTestable(c).CatchupIndexes()
 
 					Convey("basic alerts", func() {
@@ -359,11 +376,11 @@ func TestMain(t *testing.T) {
 						So(w.Code, ShouldEqual, 200)
 					})
 
-					So(datastore.Put(c, alertJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, alertJSON), ShouldBeNil)
 					So(datastore.Put(c, oldRevisionSummaryJSON), ShouldBeNil)
 					So(datastore.Put(c, newRevisionSummaryJSON), ShouldBeNil)
-					So(datastore.Put(c, oldResolvedJSON), ShouldBeNil)
-					So(datastore.Put(c, newResolvedJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, oldResolvedJSON), ShouldBeNil)
+					So(datastorePutAlertJSON(c, newResolvedJSON), ShouldBeNil)
 					datastore.GetTestable(c).CatchupIndexes()
 
 					Convey("resolved alerts", func() {
@@ -394,7 +411,8 @@ func TestMain(t *testing.T) {
 			Convey("flushOldAnnotations", func() {
 				getAllAnns := func() []*model.Annotation {
 					anns := []*model.Annotation{}
-					So(datastore.GetAll(c, datastore.NewQuery("Annotation"), &anns), ShouldBeNil)
+					q := datastoreCreateAnnotationQuery()
+					So(datastoreGetAnnotationsByQuery(c, &anns, q), ShouldBeNil)
 					return anns
 				}
 
@@ -403,7 +421,7 @@ func TestMain(t *testing.T) {
 					Key:              "foobar",
 					ModificationTime: datastore.RoundTime(cl.Now()),
 				}
-				So(datastore.Put(c, ann), ShouldBeNil)
+				So(datastorePutAnnotation(c, ann), ShouldBeNil)
 				datastore.GetTestable(c).CatchupIndexes()
 
 				Convey("current not deleted", func() {
@@ -414,7 +432,7 @@ func TestMain(t *testing.T) {
 				})
 
 				ann.ModificationTime = cl.Now().Add(-(annotationExpiration + time.Hour))
-				So(datastore.Put(c, ann), ShouldBeNil)
+				So(datastorePutAnnotation(c, ann), ShouldBeNil)
 				datastore.GetTestable(c).CatchupIndexes()
 
 				Convey("old deleted", func() {
@@ -425,11 +443,11 @@ func TestMain(t *testing.T) {
 				})
 
 				datastore.GetTestable(c).CatchupIndexes()
-				q := datastore.NewQuery("Annotation")
+				q := datastoreCreateAnnotationQuery()
 				anns := []*model.Annotation{}
 				datastore.GetTestable(c).CatchupIndexes()
-				datastore.GetAll(c, q, &anns)
-				datastore.Delete(c, anns)
+				datastoreGetAnnotationsByQuery(c, &anns, q)
+				datastoreDeleteAnnotations(c, anns)
 				anns = []*model.Annotation{
 					{
 						KeyDigest:        fmt.Sprintf("%x", sha1.Sum([]byte("foobar2"))),
@@ -442,7 +460,7 @@ func TestMain(t *testing.T) {
 						ModificationTime: datastore.RoundTime(cl.Now().Add(-(annotationExpiration + time.Hour))),
 					},
 				}
-				So(datastore.Put(c, anns), ShouldBeNil)
+				So(datastorePutAnnotations(c, anns), ShouldBeNil)
 				datastore.GetTestable(c).CatchupIndexes()
 
 				Convey("only delete old", func() {
