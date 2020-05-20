@@ -172,7 +172,7 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 			}
 		}
 	} else {
-		logging.Debugf(ctx, "Failed to check existence: %s", err)
+		logging.Errorf(ctx, "Failed to check existence: %s", err)
 		return status.Errorf(codes.Internal, fleetds.InternalError)
 	}
 	if NotFound {

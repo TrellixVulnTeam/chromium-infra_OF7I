@@ -32,7 +32,7 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs"}
 	allow, err := auth.IsMember(ctx, group...)
 	if err != nil {
-		logging.Warningf(ctx, "Check group '%s' membership failed: %s", group, err.Error())
+		logging.Errorf(ctx, "Check group '%s' membership failed: %s", group, err.Error())
 		return ctx, status.Errorf(codes.Internal, "can't check access group membership: %s", err)
 	}
 	if !allow {

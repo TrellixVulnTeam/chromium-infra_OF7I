@@ -152,7 +152,7 @@ func DeleteChromePlatform(ctx context.Context, id string) error {
 				errorMsg.WriteString(kvm.Name + ", ")
 			}
 		}
-		logging.Infof(ctx, errorMsg.String())
+		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return fleetds.Delete(ctx, &fleet.ChromePlatform{Name: id}, newChromePlatformEntity)

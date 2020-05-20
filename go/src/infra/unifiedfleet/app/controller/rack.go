@@ -123,7 +123,7 @@ func ReplaceRack(ctx context.Context, oldRack *fleet.Rack, newRack *fleet.Rack) 
 				return status.Errorf(codes.AlreadyExists, fleetds.AlreadyExists)
 			}
 		} else {
-			logging.Debugf(ctx, "Failed to check existence: %s", err)
+			logging.Errorf(ctx, "Failed to check existence: %s", err)
 			return status.Errorf(codes.Internal, fleetds.InternalError)
 		}
 

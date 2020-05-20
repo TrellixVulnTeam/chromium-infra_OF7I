@@ -128,7 +128,7 @@ func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *
 				return status.Errorf(codes.AlreadyExists, fleetds.AlreadyExists)
 			}
 		} else {
-			logging.Debugf(ctx, "Failed to check existence: %s", err)
+			logging.Errorf(ctx, "Failed to check existence: %s", err)
 			return status.Errorf(codes.Internal, fleetds.InternalError)
 		}
 

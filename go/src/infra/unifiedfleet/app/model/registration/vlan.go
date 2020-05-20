@@ -129,7 +129,7 @@ func DeleteVlan(ctx context.Context, id string) error {
 		for _, machinelse := range machinelses {
 			errorMsg.WriteString(machinelse.Name + ", ")
 		}
-		logging.Infof(ctx, errorMsg.String())
+		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return fleetds.Delete(ctx, &fleet.Vlan{Name: id}, newVlanEntity)

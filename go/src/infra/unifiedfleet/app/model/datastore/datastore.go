@@ -127,7 +127,7 @@ func ListQuery(ctx context.Context, entityKind string, pageSize int32, pageToken
 		cursor, err = datastore.DecodeCursor(ctx, pageToken)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to DecodeCursor from pageToken: %s", err)
-			return nil, status.Errorf(codes.InvalidArgument, InvalidPageToken)
+			return nil, status.Errorf(codes.InvalidArgument, "%s: %s", InvalidPageToken, err.Error())
 		}
 	}
 	q = datastore.NewQuery(entityKind).Limit(pageSize)

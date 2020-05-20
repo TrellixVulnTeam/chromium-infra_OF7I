@@ -162,7 +162,7 @@ func DeleteDrac(ctx context.Context, id string) error {
 		for _, machine := range machines {
 			errorMsg.WriteString(machine.Name + ", ")
 		}
-		logging.Infof(ctx, errorMsg.String())
+		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return fleetds.Delete(ctx, &fleet.Drac{Name: id}, newDracEntity)

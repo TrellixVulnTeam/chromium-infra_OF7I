@@ -128,7 +128,7 @@ func DeleteRackLSEPrototype(ctx context.Context, id string) error {
 		for _, racklse := range racklses {
 			errorMsg.WriteString(racklse.Name + ", ")
 		}
-		logging.Infof(ctx, errorMsg.String())
+		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return fleetds.Delete(ctx, &fleet.RackLSEPrototype{Name: id}, newRackLSEPrototypeEntity)
