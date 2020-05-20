@@ -73,3 +73,9 @@ deploy_cron_prod:
 	cp cron_prod.yaml cron.yaml
 	gcloud app deploy --no-promote --no-stop-previous-version cron.yaml --project sheriff-o-matic
 	cp cron_default.yaml cron.yaml
+
+deploy_index_staging:
+	gcloud app deploy frontend/index.yaml --project sheriff-o-matic-staging
+
+deploy_index_prod:
+	gcloud app deploy frontend/index.yaml --project sheriff-o-matic
