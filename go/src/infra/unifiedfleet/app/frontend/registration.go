@@ -256,7 +256,7 @@ func (fs *FleetServerImpl) CreateNic(ctx context.Context, req *api.CreateNicRequ
 		return nil, err
 	}
 	req.Nic.Name = req.NicId
-	nic, err := registration.CreateNic(ctx, req.Nic)
+	nic, err := controller.CreateNic(ctx, req.Nic)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func (fs *FleetServerImpl) UpdateNic(ctx context.Context, req *api.UpdateNicRequ
 		return nil, err
 	}
 	req.Nic.Name = util.RemovePrefix(req.Nic.Name)
-	nic, err := registration.UpdateNic(ctx, req.Nic)
+	nic, err := controller.UpdateNic(ctx, req.Nic)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +292,7 @@ func (fs *FleetServerImpl) GetNic(ctx context.Context, req *api.GetNicRequest) (
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	nic, err := registration.GetNic(ctx, name)
+	nic, err := controller.GetNic(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +310,7 @@ func (fs *FleetServerImpl) ListNics(ctx context.Context, req *api.ListNicsReques
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListNics(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListNics(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func (fs *FleetServerImpl) DeleteNic(ctx context.Context, req *api.DeleteNicRequ
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteNic(ctx, name)
+	err = controller.DeleteNic(ctx, name)
 	return &empty.Empty{}, err
 }
 
@@ -365,7 +365,7 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 	for i := 0; ; i += pageSize {
 		end := min(i+pageSize, len(newNics))
 		logging.Debugf(ctx, "importing nics %dth - %dth", i, end-1)
-		res, err := registration.ImportNics(ctx, newNics[i:end])
+		res, err := controller.ImportNics(ctx, newNics[i:end])
 		s := processImportDatastoreRes(res, err)
 		if s.Err() != nil {
 			return s.Proto(), s.Err()
