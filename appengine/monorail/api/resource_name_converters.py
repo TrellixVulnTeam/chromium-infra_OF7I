@@ -60,6 +60,7 @@ APPROVAL_VALUE_NAME_TMPL = '%s/approvalValues/{approval_name}' % ISSUE_NAME_TMPL
 
 USER_NAME_TMPL = 'users/{user_id}'
 PROJECT_STAR_NAME_TMPL = 'users/{user_id}/projectStars/{project_name}'
+PROJECT_SQ_NAME_TMPL = 'projects/{project_name}/savedQueries/{query_name}'
 
 ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
 STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
@@ -483,8 +484,6 @@ def ConvertProjectStarName(cnxn, user_id, project_id, services):
   """
   project_name = services.project.LookupProjectNames(
       cnxn, [project_id]).get(project_id)
-  if project_name is None:
-    raise exceptions.NoSuchProjectException(project_id)
 
   return PROJECT_STAR_NAME_TMPL.format(
       user_id=user_id, project_name=project_name)
@@ -533,8 +532,6 @@ def ConvertTemplateNames(cnxn, project_id, template_ids, services):
 
   project_name = services.project.LookupProjectNames(
       cnxn, [project_id]).get(project_id)
-  if project_name is None:
-    raise exceptions.NoSuchProjectException(project_id)
   project_templates = services.template.GetProjectTemplates(cnxn, project_id)
   tmpl_by_id = {tmpl.template_id: tmpl for tmpl in project_templates}
 
@@ -725,8 +722,6 @@ def ConvertProjectName(cnxn, project_id, services):
   """
   project_name = services.project.LookupProjectNames(
       cnxn, [project_id]).get(project_id)
-  if project_name is None:
-    raise exceptions.NoSuchProjectException(project_id)
   return PROJECT_NAME_TMPL.format(project_name=project_name)
 
 
@@ -747,8 +742,6 @@ def ConvertProjectConfigName(cnxn, project_id, services):
   """
   project_name = services.project.LookupProjectNames(
       cnxn, [project_id]).get(project_id)
-  if project_name is None:
-    raise exceptions.NoSuchProjectException(project_id)
   return PROJECT_CONFIG_TMPL.format(project_name=project_name)
 
 
@@ -770,8 +763,42 @@ def ConvertProjectMemberName(cnxn, project_id, user_id, services):
   """
   project_name = services.project.LookupProjectNames(
       cnxn, [project_id]).get(project_id)
-  if project_name is None:
-    raise exceptions.NoSuchProjectException(project_id)
 
   return PROJECT_MEMBER_NAME_TMPL.format(
       project_name=project_name, user_id=user_id)
+
+
+def ConvertProjectSavedQueryNames(cnxn, query_ids, project_id, services):
+  # type: (MonorailConnection, Collection[int], int, Services) ->
+  #     Mapping[int, str]
+  """Takes SavedQuery IDs and returns ProjectSavedQuery resource names.
+
+  Args:
+    cnxn: MonorailConnection object.
+    query_ids: List of SavedQuery ids
+    project_id: project id of project this belongs to
+    services: Services object.
+
+  Returns:
+    Dict of ids to ProjectSavedQuery resource names for all found query ids
+    that belong to given project_id.
+
+  Raises:
+    NoSuchProjectException if no project exists with given id.
+  """
+  project_name = services.project.LookupProjectNames(
+      cnxn, [project_id]).get(project_id)
+  all_project_queries = services.features.GetCannedQueriesByProjectID(
+      cnxn, project_id)
+  query_by_ids = {query.query_id: query for query in all_project_queries}
+  ids_to_names = {}
+  for query_id in query_ids:
+    query = query_by_ids.get(query_id)
+    if not query:
+      logging.info(
+          'Ignoring saved query referencing a non-existent id: %s '
+          'or not in project: %s', query_id, project_id)
+      continue
+    ids_to_names[query_id] = PROJECT_SQ_NAME_TMPL.format(
+        project_name=project_name, query_name=query.name)
+  return ids_to_names

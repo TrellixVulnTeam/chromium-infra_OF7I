@@ -73,6 +73,13 @@ class ResourceNameConverterTest(unittest.TestCase):
         'APPROVAL_TYPE', None, None, None, None, None, None, None, None, None,
         None, None, None, None, None, [], [])
     self.dne_field_def_id = 999999
+    self.psq_1 = tracker_pb2.SavedQuery(
+        query_id=2, name='psq1 name', base_query_id=1, query='foo=bar')
+    self.psq_2 = tracker_pb2.SavedQuery(
+        query_id=3, name='psq2 name', base_query_id=1, query='fizz=buzz')
+    self.dne_psq_id = 987
+    self.services.features.UpdateCannedQueries(
+        self.cnxn, self.project_1.project_id, [self.psq_1, self.psq_2])
 
   def testGetResourceNameMatch(self):
     """We can get a resource name match."""
@@ -510,3 +517,23 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.ConvertProjectMemberName(
           self.cnxn, self.dne_project_id, 111, self.services)
+
+  def testConvertProjectSavedQueryNames(self):
+    query_ids = [self.psq_1.query_id, self.psq_2.query_id, self.dne_psq_id]
+    outcome = rnc.ConvertProjectSavedQueryNames(
+        self.cnxn, query_ids, self.project_1.project_id, self.services)
+
+    expected_value_1 = 'projects/{}/savedQueries/{}'.format(
+        self.project_1.project_name, self.psq_1.name)
+    expected_value_2 = 'projects/{}/savedQueries/{}'.format(
+        self.project_1.project_name, self.psq_2.name)
+    self.assertEqual(
+        outcome, {
+            self.psq_1.query_id: expected_value_1,
+            self.psq_2.query_id: expected_value_2
+        })
+
+  def testConvertProjectSavedQueryNames_NoSuchProjectException(self):
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.ConvertProjectSavedQueryNames(
+          self.cnxn, [self.psq_1.query_id], self.dne_project_id, self.services)
