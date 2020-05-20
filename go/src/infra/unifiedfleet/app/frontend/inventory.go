@@ -8,6 +8,7 @@ import (
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
+	status "google.golang.org/genproto/googleapis/rpc/status"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
@@ -193,4 +194,16 @@ func (fs *FleetServerImpl) DeleteRackLSE(ctx context.Context, req *api.DeleteRac
 	name := util.RemovePrefix(req.Name)
 	err = inventory.DeleteRackLSE(ctx, name)
 	return &empty.Empty{}, err
+}
+
+// ImportMachineLSEs imports browser machines' LSE & related infos (e.g. IP)
+func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *api.ImportMachineLSEsRequest) (response *status.Status, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	source := req.GetMachineDbSource()
+	if err := api.ValidateMachineDBSource(source); err != nil {
+		return nil, err
+	}
+	return successStatus.Proto(), nil
 }

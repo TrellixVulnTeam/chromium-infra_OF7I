@@ -122,6 +122,9 @@ service Fleet {
   // Delete delete the machineLSE
   rpc DeleteMachineLSE(DeleteMachineLSERequest) returns (google.protobuf.Empty);
 
+  // ImportMachineLSEs imports machine LSEs & all related infos.
+  rpc ImportMachineLSEs(ImportMachineLSEsRequest) returns (google.rpc.Status);
+
   // CreateRackLSE creates a new rackLSE
   rpc CreateRackLSE(CreateRackLSERequest) returns (proto.RackLSE);
 
@@ -641,6 +644,13 @@ message DeleteMachineLSERequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/MachineLSE" }
   ];
+}
+
+message ImportMachineLSEsRequest {
+  oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
 }
 
 // Contains the required information for creating a RackLSE represented in

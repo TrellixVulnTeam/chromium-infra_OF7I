@@ -15,6 +15,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	code "google.golang.org/genproto/googleapis/rpc/code"
 )
 
 func mockMachineLSE(id string) *proto.MachineLSE {
@@ -672,6 +673,28 @@ func TestDeleteRackLSE(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestImportMachineLSEs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import machine lses", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportMachineLSEsRequest{
+				Source: &api.ImportMachineLSEsRequest_MachineDbSource{
+					MachineDbSource: &api.MachineDBSource{
+						Host: "fake_host",
+					},
+				},
+			}
+			tf.Fleet.importPageSize = 25
+			res, err := tf.Fleet.ImportMachineLSEs(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
 		})
 	})
 }

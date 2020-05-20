@@ -42,6 +42,8 @@ message MachineLSEPrototype {
     // Record the last update timestamp of this MachineLSEPrototype (In UTC timezone)
     google.protobuf.Timestamp update_time = 4 [
         (google.api.field_behavior) = OUTPUT_ONLY];
+
+    repeated VirtualRequirement virtual_requirements = 5;
 }
 
 // The requirement for peripherals of a LSE. Usually it’s predefined
@@ -59,6 +61,13 @@ message PeripheralRequirement {
     int32 max = 3;
 }
 
+message VirtualRequirement {
+    VirtualType virtual_type = 1;
+    // The minimum/maximum number of the vms that can be setup.
+    int32 min = 2;
+    int32 max = 3;
+}
+
 // The supported peripheral type in LSE definition. The list is not completed
 // as we have many special setups in ChromeOS high-touch labs. Will add them later
 // when it comes to use.
@@ -72,4 +81,10 @@ enum PeripheralType {
     PERIPHERAL_TYPE_BLUETOOTH_BTPEERS = 6;
     PERIPHERAL_TYPE_WIFICELL = 7;
     PERIPHERAL_TYPE_CAMERA = 8;
+}
+
+// The supported virtual type in LSE definition.
+enum VirtualType {
+    VIRTUAL_TYPE_UNSPECIFIED = 0;
+    VIRTUAL_TYPE_VM = 1;
 }

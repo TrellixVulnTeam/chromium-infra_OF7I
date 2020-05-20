@@ -571,6 +571,23 @@ func (s *DecoratedFleet) DeleteMachineLSE(ctx context.Context, req *DeleteMachin
 	return
 }
 
+func (s *DecoratedFleet) ImportMachineLSEs(ctx context.Context, req *ImportMachineLSEsRequest) (rsp *status.Status, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ImportMachineLSEs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ImportMachineLSEs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ImportMachineLSEs", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) CreateRackLSE(ctx context.Context, req *CreateRackLSERequest) (rsp *proto1.RackLSE, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
