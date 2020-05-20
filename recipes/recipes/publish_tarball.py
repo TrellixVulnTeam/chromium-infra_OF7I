@@ -35,6 +35,7 @@ DEPS = [
 # version.  This blacklist exists to exclude those broken versions so the bot
 # doesn't keep retrying and sending build failure emails out.
 BLACKLISTED_VERSIONS = [
+    '84.0.4104.56',
     '84.0.4147.4',
 ]
 
