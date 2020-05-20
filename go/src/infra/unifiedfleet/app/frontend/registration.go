@@ -464,7 +464,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	for i := 0; ; i += pageSize {
 		end := min(i+pageSize, len(switches))
 		logging.Debugf(ctx, "importing switch %dth - %dth", i, end-1)
-		res, err := registration.ImportSwitches(ctx, switches[i:end])
+		res, err := controller.ImportSwitches(ctx, switches[i:end])
 		s := processImportDatastoreRes(res, err)
 		if s.Err() != nil {
 			return s.Proto(), s.Err()
@@ -785,7 +785,7 @@ func (fs *FleetServerImpl) CreateSwitch(ctx context.Context, req *api.CreateSwit
 		return nil, err
 	}
 	req.Switch.Name = req.SwitchId
-	s, err := registration.CreateSwitch(ctx, req.Switch)
+	s, err := controller.CreateSwitch(ctx, req.Switch)
 	if err != nil {
 		return nil, err
 	}
@@ -803,7 +803,7 @@ func (fs *FleetServerImpl) UpdateSwitch(ctx context.Context, req *api.UpdateSwit
 		return nil, err
 	}
 	req.Switch.Name = util.RemovePrefix(req.Switch.Name)
-	s, err := registration.UpdateSwitch(ctx, req.Switch)
+	s, err := controller.UpdateSwitch(ctx, req.Switch)
 	if err != nil {
 		return nil, err
 	}
@@ -821,7 +821,7 @@ func (fs *FleetServerImpl) GetSwitch(ctx context.Context, req *api.GetSwitchRequ
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	s, err := registration.GetSwitch(ctx, name)
+	s, err := controller.GetSwitch(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -839,7 +839,7 @@ func (fs *FleetServerImpl) ListSwitches(ctx context.Context, req *api.ListSwitch
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListSwitches(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListSwitches(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -862,7 +862,7 @@ func (fs *FleetServerImpl) DeleteSwitch(ctx context.Context, req *api.DeleteSwit
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteSwitch(ctx, name)
+	err = controller.DeleteSwitch(ctx, name)
 	return &empty.Empty{}, err
 }
 

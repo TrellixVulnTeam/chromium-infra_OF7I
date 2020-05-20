@@ -152,38 +152,9 @@ func TestDeleteSwitch(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	switch1 := mockSwitch("switch-1")
 	switch2 := mockSwitch("switch-2")
 	Convey("DeleteSwitch", t, func() {
-		Convey("Delete switch by existing ID with machine reference", func() {
-			resp, cerr := CreateSwitch(ctx, switch1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
-
-			chromeBrowserMachine1 := &proto.Machine{
-				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						NetworkDeviceInterface: &proto.SwitchInterface{
-							Switch: "switch-1",
-						},
-					},
-				},
-			}
-			mresp, merr := CreateMachine(ctx, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
-
-			err := DeleteSwitch(ctx, "switch-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetSwitch(ctx, "switch-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
-		})
-		Convey("Delete switch successfully by existing ID without references", func() {
+		Convey("Delete switch successfully by existing ID", func() {
 			resp, cerr := CreateSwitch(ctx, switch2)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch2)
@@ -197,7 +168,7 @@ func TestDeleteSwitch(t *testing.T) {
 			So(cerr.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete switch by non-existing ID", func() {
-			err := DeleteSwitch(ctx, "switch-2")
+			err := DeleteSwitch(ctx, "switch-1")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
