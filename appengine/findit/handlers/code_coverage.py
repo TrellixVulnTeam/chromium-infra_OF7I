@@ -881,10 +881,6 @@ class ProcessCodeCoverageData(BaseHandler):
     properties = dict(build.output.properties.items())
     gs_bucket = properties.get('coverage_gs_bucket')
 
-    # TODO(crbug/1064785): Use only coverage_metadata_gs_paths property and
-    # requires mimic_builder_names property when recipe module api is changed
-    # for multiple test types.
-    gs_metadata_dir = properties.get('coverage_metadata_gs_path')
     gs_metadata_dirs = properties.get('coverage_metadata_gs_paths')
 
     if properties.get('process_coverage_data_failure'):
@@ -895,7 +891,7 @@ class ProcessCodeCoverageData(BaseHandler):
       })
 
     # Ensure that the coverage data is ready.
-    if not gs_bucket or (not gs_metadata_dir and not gs_metadata_dirs):
+    if not gs_bucket or not gs_metadata_dirs:
       logging.warn('coverage GS bucket info not available in %r', build.id)
       return
 
@@ -903,15 +899,14 @@ class ProcessCodeCoverageData(BaseHandler):
       logging.error('Expecting "coverage_is_presubmit" in output properties')
       return
 
-    if not gs_metadata_dirs:
-      gs_metadata_dirs = [gs_metadata_dir]
-
     # Get mimic builder names from builder output properties. Multiple test
     # types' coverage data will be uploaded to separated folders, mimicking
     # these come from different builders.
     mimic_builder_names = properties.get('mimic_builder_names')
     if not mimic_builder_names:
-      mimic_builder_names = [build.builder.builder]
+      logging.error('Couldn\'t find valid mimic_builder_names property from '
+                    'builder output properties.')
+      return
 
     assert (len(mimic_builder_names) == len(gs_metadata_dirs)
            ), 'mimic builder names and gs paths should be of the same length'
