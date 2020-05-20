@@ -10,7 +10,9 @@ import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 
 import * as issueV0 from 'reducers/issueV0.js';
+import * as userV0 from 'reducers/userV0.js';
 import './mr-field-values.js';
+import {isExperimentEnabled, SLO_EXPERIMENT} from 'shared/experiments.js';
 import {EMPTY_FIELD_VALUE} from 'shared/issue-fields.js';
 import {HARDCODED_FIELD_GROUPS, valuesForField, fieldDefsWithGroup,
   fieldDefsWithoutGroup} from 'shared/metadata-helpers.js';
@@ -203,6 +205,13 @@ export class MrMetadata extends connectStore(LitElement) {
               short
             ></chops-timestamp>
           ` : EMPTY_FIELD_VALUE;
+      case 'slo':
+        if (isExperimentEnabled(SLO_EXPERIMENT, this.currentUser)) {
+          // TODO(crbug.com/monorail/7740): SLO rendering implementation.
+          return EMPTY_FIELD_VALUE;
+        } else {
+          return;
+        }
     }
 
     // Non-existent field.
@@ -287,6 +296,7 @@ export class MrMetadata extends connectStore(LitElement) {
       isApproval: {type: Boolean},
       issueRef: {type: Object},
       fieldValueMap: {type: Object},
+      currentUser: {type: Object},
     };
   }
 
@@ -300,7 +310,7 @@ export class MrMetadata extends connectStore(LitElement) {
     // Default built in fields used by issue metadata.
     this.builtInFieldSpec = [
       'Owner', 'CC', cueNameToSpec(cueNames.AVAILABILITY_MSGS),
-      'Status', 'MergedInto', 'Components', 'Modified',
+      'Status', 'MergedInto', 'Components', 'Modified', 'SLO',
     ];
     this.fieldValueMap = new Map();
 
@@ -315,6 +325,7 @@ export class MrMetadata extends connectStore(LitElement) {
     this.mergedInto = undefined;
     this.owner = undefined;
     this.modifiedTimestamp = undefined;
+    this.currentUser = undefined;
   }
 
   /** @override */
@@ -331,6 +342,7 @@ export class MrMetadata extends connectStore(LitElement) {
     this.issueType = issueV0.type(state);
     this.issueRef = issueV0.viewedIssueRef(state);
     this.relatedIssues = issueV0.relatedIssues(state);
+    this.currentUser = userV0.currentUser(state);
   }
 }
 

@@ -196,6 +196,25 @@ describe('mr-metadata', () => {
       assert.equal(labelElement.textContent, 'Modified:');
       assert.equal(dataElement.timestamp, 1234);
     });
+
+    it('does not render SLO if user not in experiment', async () => {
+      await element.updateComplete;
+
+      const tr = element.shadowRoot.querySelector('tr.row-slo');
+      assert.isNull(tr);
+    });
+
+    it('renders SLO if user in experiment', async () => {
+      element.currentUser = {displayName: 'jessan@google.com'};
+      await element.updateComplete;
+
+      const tr = element.shadowRoot.querySelector('tr.row-slo');
+      const labelElement = tr.querySelector('th');
+      const dataElement = tr.querySelector('td');
+
+      assert.equal(labelElement.textContent, 'SLO:');
+      assert.equal(dataElement.textContent.trim(), EMPTY_FIELD_VALUE);
+    });
   });
 
   describe('approval fields', () => {
