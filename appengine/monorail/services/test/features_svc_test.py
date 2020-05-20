@@ -303,26 +303,35 @@ assert_called_once_with(self.cnxn, user_id=user_ids, commit=commit, limit=50)
     self.assertEqual(1, len(saved_queries))
     self.assertEqual(2, saved_queries[0].query_id)
 
-  def SetUpCannedQueriesForProjects(self):
+  def SetUpCannedQueriesForProjects(self, project_ids):
+    query = tracker_bizobj.MakeSavedQuery(
+        2, 'project-query-2', 110, 'owner:goose@chaos.honk')
+    self.features_service.canned_query_cache.CacheItem(12346, [query])
+    self.features_service.canned_query_cache.CacheAll = mock.Mock()
     self.features_service.project2savedquery_tbl.Select(
         self.cnxn, cols=['project_id'] + features_svc.SAVEDQUERY_COLS,
         left_joins=[('SavedQuery ON query_id = id', [])],
-        order_by=[('rank', [])], project_id=[12345]).AndReturn(
+        order_by=[('rank', [])], project_id=project_ids).AndReturn(
         [(12345, 1, 'query1', 100, 'owner:me')])
 
   def testGetCannedQueriesForProjects(self):
-    self.SetUpCannedQueriesForProjects()
+    project_ids = [12345, 12346]
+    self.SetUpCannedQueriesForProjects(project_ids)
     self.mox.ReplayAll()
     results_dict = self.features_service.GetCannedQueriesForProjects(
-        self.cnxn, [12345])
+        self.cnxn, project_ids)
     self.mox.VerifyAll()
     self.assertIn(12345, results_dict)
+    self.assertIn(12346, results_dict)
+    self.features_service.canned_query_cache.CacheAll.assert_called_once_with(
+        results_dict)
 
   def testGetCannedQueriesByProjectID(self):
-    self.SetUpCannedQueriesForProjects()
+    project_id= 12345
+    self.SetUpCannedQueriesForProjects([project_id])
     self.mox.ReplayAll()
     result = self.features_service.GetCannedQueriesByProjectID(
-        self.cnxn, 12345)
+        self.cnxn, project_id)
     self.mox.VerifyAll()
     self.assertEqual(1, len(result))
     self.assertEqual(1, result[0].query_id)
@@ -356,11 +365,14 @@ assert_called_once_with(self.cnxn, user_id=user_ids, commit=commit, limit=50)
     self.features_service.project2savedquery_tbl.InsertRows(
         self.cnxn, features_svc.PROJECT2SAVEDQUERY_COLS,
         project2savedquery_rows, commit=False)
+    self.features_service.canned_query_cache.Invalidate = mock.Mock()
     self.cnxn.Commit()
     self.mox.ReplayAll()
     self.features_service.UpdateCannedQueries(
         self.cnxn, 12345, canned_queries)
     self.mox.VerifyAll()
+    self.features_service.canned_query_cache.Invalidate.assert_called_once_with(
+        self.cnxn, 12345)
 
   def testUpdateUserSavedQueries(self):
     saved_queries = self.SetUpUpdateSavedQueries(False)

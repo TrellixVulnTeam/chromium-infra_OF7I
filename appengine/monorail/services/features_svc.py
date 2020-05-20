@@ -271,6 +271,8 @@ class FeaturesService(object):
 
     self.saved_query_cache = caches.RamCache(
         cache_manager, 'user', max_size=1000)
+    self.canned_query_cache = caches.RamCache(
+        cache_manager, 'project', max_size=1000)
 
     self.hotlist_2lc = HotlistTwoLevelCache(cache_manager, self)
     self.hotlist_id_2lc = HotlistIDTwoLevelCache(cache_manager, self)
@@ -402,20 +404,22 @@ class FeaturesService(object):
 
   def GetCannedQueriesForProjects(self, cnxn, project_ids):
     """Return a dict {project_id: [saved_query]} for the specified projects."""
-    # TODO(jrobbins): caching
-    cannedquery_rows = self.project2savedquery_tbl.Select(
-        cnxn, cols=['project_id'] + SAVEDQUERY_COLS,
-        left_joins=[('SavedQuery ON query_id = id', [])],
-        order_by=[('rank', [])], project_id=project_ids)
+    results_dict, missed_pids = self.canned_query_cache.GetAll(project_ids)
 
-    result_dict = collections.defaultdict(list)
-    for cq_row in cannedquery_rows:
-      project_id = cq_row[0]
-      canned_query_tuple = cq_row[1:]
-      result_dict[project_id].append(
-          tracker_bizobj.MakeSavedQuery(*canned_query_tuple))
+    if missed_pids:
+      cannedquery_rows = self.project2savedquery_tbl.Select(
+          cnxn, cols=['project_id'] + SAVEDQUERY_COLS,
+          left_joins=[('SavedQuery ON query_id = id', [])],
+          order_by=[('rank', [])], project_id=project_ids)
 
-    return result_dict
+      for cq_row in cannedquery_rows:
+        project_id = cq_row[0]
+        canned_query_tuple = cq_row[1:]
+        results_dict.setdefault(project_id ,[]).append(
+            tracker_bizobj.MakeSavedQuery(*canned_query_tuple))
+
+    self.canned_query_cache.CacheAll(results_dict)
+    return results_dict
 
   def GetCannedQueriesByProjectID(self, cnxn, project_id):
     """Return the list of SavedQueries for the specified project."""
@@ -460,6 +464,8 @@ class FeaturesService(object):
         cnxn, PROJECT2SAVEDQUERY_COLS, project2savedquery_rows,
         commit=False)
     cnxn.Commit()
+
+    self.canned_query_cache.Invalidate(cnxn, project_id)
 
   def UpdateUserSavedQueries(self, cnxn, user_id, saved_queries):
     """Store the given saved_queries for the given user."""
