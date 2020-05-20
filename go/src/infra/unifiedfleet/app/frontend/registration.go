@@ -142,7 +142,7 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	pageSize := fs.getImportPageSize()
 	machines := util.ToChromeMachines(resp.GetMachines(), machineToNics, machineToDracs, machineToSwitch)
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(machines))
+		end := util.Min(i+pageSize, len(machines))
 		logging.Debugf(ctx, "importing %dth - %dth", i, end-1)
 		res, err := controller.ImportMachines(ctx, machines[i:end])
 		s := processImportDatastoreRes(res, err)
@@ -363,7 +363,7 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 	// potential failure will be ignored.
 	logging.Debugf(ctx, "Importing %d nics", len(newNics))
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(newNics))
+		end := util.Min(i+pageSize, len(newNics))
 		logging.Debugf(ctx, "importing nics %dth - %dth", i, end-1)
 		res, err := controller.ImportNics(ctx, newNics[i:end])
 		s := processImportDatastoreRes(res, err)
@@ -376,7 +376,7 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 	}
 	logging.Debugf(ctx, "Importing %d dracs", len(newDracs))
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(newDracs))
+		end := util.Min(i+pageSize, len(newDracs))
 		logging.Debugf(ctx, "importing dracs %dth - %dth", i, end-1)
 		res, err := controller.ImportDracs(ctx, newDracs[i:end])
 		s := processImportDatastoreRes(res, err)
@@ -389,7 +389,7 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 	}
 	logging.Debugf(ctx, "Importing %d dhcps", len(dhcps))
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(dhcps))
+		end := util.Min(i+pageSize, len(dhcps))
 		logging.Debugf(ctx, "importing dhcps %dth - %dth", i, end-1)
 		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
 		s := processImportDatastoreRes(res, err)
@@ -436,7 +436,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	// potential failure will be ignored.
 	logging.Debugf(ctx, "Importing %d racks", len(racks))
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(racks))
+		end := util.Min(i+pageSize, len(racks))
 		logging.Debugf(ctx, "importing rack %dth - %dth", i, end-1)
 		res, err := controller.ImportRacks(ctx, racks[i:end])
 		s := processImportDatastoreRes(res, err)
@@ -449,7 +449,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	}
 	logging.Debugf(ctx, "Importing %d kvms", len(kvms))
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(kvms))
+		end := util.Min(i+pageSize, len(kvms))
 		logging.Debugf(ctx, "importing kvm %dth - %dth", i, end-1)
 		res, err := controller.ImportKVMs(ctx, kvms[i:end])
 		s := processImportDatastoreRes(res, err)
@@ -462,7 +462,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	}
 	logging.Debugf(ctx, "Importing %d switches", len(switches))
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(switches))
+		end := util.Min(i+pageSize, len(switches))
 		logging.Debugf(ctx, "importing switch %dth - %dth", i, end-1)
 		res, err := controller.ImportSwitches(ctx, switches[i:end])
 		s := processImportDatastoreRes(res, err)
@@ -475,7 +475,7 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	}
 	logging.Debugf(ctx, "Importing %d DHCP configs", len(dhcps))
 	for i := 0; ; i += pageSize {
-		end := min(i+pageSize, len(dhcps))
+		end := util.Min(i+pageSize, len(dhcps))
 		logging.Debugf(ctx, "importing dhcp configs %dth - %dth", i, end-1)
 		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
 		s := processImportDatastoreRes(res, err)
