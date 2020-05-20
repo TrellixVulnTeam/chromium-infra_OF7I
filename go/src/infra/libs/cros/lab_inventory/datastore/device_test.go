@@ -328,6 +328,7 @@ func TestUpdateDeviceID(t *testing.T) {
 		dev4 := mockLabstation("asdf1", "Asset:02")
 		dev5 := mockDut("dut2", "", "labstation2")
 		dev6 := mockDut("dut3", "Asset:000000", "labstation2")
+		dev7 := mockLabstation("asdf2", "UUID:08")
 		Convey("Update existing devices", func() {
 			var devProto lab.ChromeOSDevice
 			ret, err := AddDevices(ctx, []*lab.ChromeOSDevice{dev1, dev3}, false)
@@ -358,11 +359,11 @@ func TestUpdateDeviceID(t *testing.T) {
 			So(&devProto, ShouldResemble, dev4)
 		})
 		Convey("Update Invalid devices", func() {
-			ret, err := AddDevices(ctx, []*lab.ChromeOSDevice{dev3}, false)
+			ret, err := AddDevices(ctx, []*lab.ChromeOSDevice{dev7}, false)
 			So(err, ShouldBeNil)
 			So(ret.Passed(), ShouldHaveLength, 1)
 			So(ret.Failed(), ShouldHaveLength, 0)
-			err = UpdateDeviceID(ctx, dev3.Id.Value, dev5.Id.Value)
+			err = UpdateDeviceID(ctx, dev7.Id.Value, dev5.Id.Value)
 			So(err, ShouldNotBeNil)
 			// Verify that dev3 wasn't deleted
 			res := GetDevicesByIds(ctx, []string{dev3.Id.Value, dev5.Id.Value})

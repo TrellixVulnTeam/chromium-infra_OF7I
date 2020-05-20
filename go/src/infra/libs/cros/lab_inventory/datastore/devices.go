@@ -351,6 +351,7 @@ func UpdateDeviceID(ctx context.Context, oldDev, newDev string) error {
 			return err
 		}
 		newEntity.DutState = mState
+		newEntity.Hostname = oldEntity.Hostname
 
 		if err := datastore.Delete(ctx, oldEntity); err != nil {
 			return err
