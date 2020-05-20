@@ -43,6 +43,7 @@ from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from services import bigquery_helper as bq
+from services import test_tag_util
 from waterfall import waterfall_config
 
 # The regex to extract the build id from the url path.
@@ -456,7 +457,8 @@ def _GetFileContentFromGitiles(report, file_path,
 
 
 def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries,
-                       mimic_builder_name):
+                       mimic_builder_name, comp_map, team_mapping,
+                       actual_data_type):
   """Create a bigquery row containing coverage data.
 
   Returns a dict whose keys are column names and values are column values
@@ -473,6 +475,10 @@ def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries,
       'commit_timestamp': commit_timestamp.strftime('%Y-%m-%d %H:%M:%S.%f%z'),
       'path': path,
   }
+
+  if actual_data_type == 'dirs':
+    row['component'] = comp_map.get(path[2:len(path) - 1], "")
+    row['team'] = team_mapping.get(path[2:len(path) - 1], "")
 
   for metric in summaries:
     if metric['name'] == 'line':
@@ -674,10 +680,13 @@ class ProcessCodeCoverageData(BaseHandler):
                 builder=mimic_builder_name,
                 data=group_data)
 
-            bq_row = _CreateBigqueryRow(commit, change_log.committer.time,
-                                        builder, group_data['path'],
-                                        group_data['summaries'],
-                                        mimic_builder_name)
+            comp_map = test_tag_util._GetChromiumDirectoryToComponentMapping()
+            team_mapping = test_tag_util._GetChromiumDirectoryToTeamMapping()
+
+            bq_row = _CreateBigqueryRow(
+                commit, change_log.committer.time, builder, group_data['path'],
+                group_data['summaries'], mimic_builder_name, comp_map,
+                team_mapping, actual_data_type)
             if actual_data_type == 'dirs':
               directory_bq_rows.append(bq_row)
             else:

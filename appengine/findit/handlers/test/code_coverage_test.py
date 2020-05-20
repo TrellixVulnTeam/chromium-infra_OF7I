@@ -21,6 +21,7 @@ from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
 from services import bigquery_helper
+from services import test_tag_util
 from waterfall.test.wf_testcase import WaterfallTestCase
 
 
@@ -454,6 +455,15 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
     self.assertEqual(1, len(fetched_entities))
     self.assertEqual(expected_entity, fetched_entities[0])
 
+
+  @mock.patch.object(
+      test_tag_util,
+      '_GetChromiumDirectoryToComponentMapping',
+      return_value={'dir': 'comp'})
+  @mock.patch.object(
+      test_tag_util,
+      '_GetChromiumDirectoryToTeamMapping',
+      return_value={'dir': 'team'})
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value=True)
   @mock.patch.object(code_coverage.ProcessCodeCoverageData,
                      '_FetchAndSaveFileIfNecessary')
@@ -465,7 +475,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
   def testProcessFullRepoData(self, mocked_is_request_from_appself,
                               mocked_get_build, mocked_get_validated_data,
                               mocked_get_change_log, mocked_retrieve_manifest,
-                              mocked_fetch_file, _):
+                              mocked_fetch_file, *_):
     # Mock buildbucket v2 API.
     build = mock.Mock()
     build.builder.project = 'chrome'
