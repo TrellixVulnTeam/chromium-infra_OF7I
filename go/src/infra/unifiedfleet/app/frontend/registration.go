@@ -955,3 +955,35 @@ func (fs *FleetServerImpl) DeleteVlan(ctx context.Context, req *api.DeleteVlanRe
 	err = registration.DeleteVlan(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// ImportVlans imports vlans & all IP-related infos.
+func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *api.ImportVlansRequest) (response *status.Status, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	configSource := req.GetConfigSource()
+	if configSource == nil {
+		return nil, emptyConfigSourceStatus.Err()
+	}
+	if configSource.ConfigServiceName == "" {
+		return nil, invalidConfigServiceName.Err()
+	}
+
+	logging.Debugf(ctx, "Importing vlans from luci-config: %s", configSource.FileName)
+	cfgInterface := fs.newCfgInterface(ctx)
+	fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
+	if err != nil {
+		return nil, configServiceFailureStatus.Err()
+	}
+	vlans := &crimsonconfig.VLANs{}
+	resolver := textproto.Message(vlans)
+	resolver.Resolve(fetchedConfigs)
+
+	pageSize := fs.getImportPageSize()
+	res, err := controller.ImportVlans(ctx, vlans.GetVlan(), pageSize)
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
+	}
+	return successStatus.Proto(), nil
+}

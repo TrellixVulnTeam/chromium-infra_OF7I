@@ -143,3 +143,14 @@ func putVlan(ctx context.Context, vlan *fleet.Vlan, update bool) (*fleet.Vlan, e
 	}
 	return nil, err
 }
+
+// ImportVlans creates or updates a batch of vlan in datastore
+func ImportVlans(ctx context.Context, vlans []*fleet.Vlan) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(vlans))
+	utime := ptypes.TimestampNow()
+	for i, m := range vlans {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newVlanEntity, true, true)
+}

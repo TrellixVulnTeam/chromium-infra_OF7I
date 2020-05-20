@@ -6,7 +6,10 @@ package frontend
 
 import (
 	"fmt"
+	"math"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 
 	proto "infra/unifiedfleet/api/v1/proto"
@@ -1213,6 +1216,39 @@ func TestImportNics(t *testing.T) {
 		})
 		// Invalid & Empty machines DB hosts are tested in TestImportMachines
 		// Skip testing here
+	})
+}
+
+func TestImportVlans(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import vlans", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportVlansRequest{
+				Source: &api.ImportVlansRequest_ConfigSource{
+					ConfigSource: &api.ConfigSource{
+						ConfigServiceName: "fake-service",
+						FileName:          "fakeVlans.cfg",
+					},
+				},
+			}
+			tf.Fleet.importPageSize = 25
+			res, err := tf.Fleet.ImportVlans(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+			vlans, _, err := registration.ListVlans(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(parseAssets(vlans, "Name"), ShouldResemble, []string{"browser-lab:144", "browser-lab:20", "browser-lab:40"})
+			vlan, err := registration.GetVlan(ctx, "browser-lab:40")
+			So(err, ShouldBeNil)
+			expectedCapacity := getCapacity(vlan.GetVlanAddress())
+			So(vlan.GetCapacityIp(), ShouldEqual, int32(expectedCapacity))
+			ips, err := configuration.QueryIPByPropertyName(ctx, "vlan", "browser-lab:40")
+			So(err, ShouldBeNil)
+			So(len(ips), ShouldEqual, expectedCapacity)
+		})
 	})
 }
 
@@ -3063,4 +3099,13 @@ func parse(v reflect.Value, k string) string {
 		}
 	}
 	return ""
+}
+
+func getCapacity(cidr string) float64 {
+	cover := strings.Split(cidr, "/")[1]
+	coverN, err := strconv.Atoi(cover)
+	if err != nil {
+		return 0
+	}
+	return math.Exp2(32 - float64(coverN))
 }

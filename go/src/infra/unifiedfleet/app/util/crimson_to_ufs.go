@@ -173,3 +173,8 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 func getNicName(nic *crimson.NIC) string {
 	return fmt.Sprintf("%s-%s", nic.GetMachine(), nic.GetName())
 }
+
+// GetBrowserLabVlanName return a browser lab vlan ID
+func GetBrowserLabVlanName(id int64) string {
+	return fmt.Sprintf("browser-lab:%d", id)
+}

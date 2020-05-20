@@ -84,6 +84,27 @@ rack {
 }
 `
 
+const vlanContent = `
+vlan {
+  id: 40
+  alias: "vlan-esx"
+  cidr_block: "192.168.40.0/22"
+  state: SERVING
+}
+vlan {
+  id: 20
+  alias: "vlan-dmz"
+  cidr_block: "192.168.20.0/24"
+  state: SERVING
+}
+vlan {
+  id: 144
+  alias: "vlan-master4"
+  cidr_block: "192.168.144.0/22"
+  state: SERVING
+}
+`
+
 // GetConfig returns a config at a path in a config set
 func (c *LuciConfigClient) GetConfig(ctx context.Context, configSet luciconfig.Set, path string, metaOnly bool) (*luciconfig.Config, error) {
 	switch path {
@@ -94,6 +115,10 @@ func (c *LuciConfigClient) GetConfig(ctx context.Context, configSet luciconfig.S
 	case "datacenters.cfg":
 		return &luciconfig.Config{
 			Content: dcsContent,
+		}, nil
+	case "fakeVlans.cfg":
+		return &luciconfig.Config{
+			Content: vlanContent,
 		}, nil
 	}
 	return nil, nil

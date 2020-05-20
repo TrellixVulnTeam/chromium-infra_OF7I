@@ -232,6 +232,9 @@ service Fleet {
 
   // Delete delete the vlan
   rpc DeleteVlan(DeleteVlanRequest) returns (google.protobuf.Empty);
+
+  // ImportVlans imports vlans & all IP-related infos.
+  rpc ImportVlans(ImportVlansRequest) returns (google.rpc.Status);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -1086,4 +1089,11 @@ message DeleteVlanRequest {
     (google.api.field_behavior) = REQUIRED,
     (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Vlan" }
   ];
+}
+
+message ImportVlansRequest {
+  oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
 }

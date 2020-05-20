@@ -92,7 +92,7 @@ var (
 	machineDBServiceFailureStatus    = func(service string) *status.Status {
 		return status.New(codes.Internal, fmt.Sprintf(machineDBServiceFailure, service))
 	}
-	insertDatastoreFailureStatus = status.New(codes.Internal, "Fail to insert chrome platforms into datastore in importing")
+	insertDatastoreFailureStatus = status.New(codes.Internal, "Fail to insert entity into datastore while importing")
 )
 
 func processImportDatastoreRes(resp *datastore.OpResults, err error) *status.Status {

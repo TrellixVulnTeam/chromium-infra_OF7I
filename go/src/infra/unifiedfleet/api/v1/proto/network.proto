@@ -41,6 +41,9 @@ message Vlan {
     // Record the last update timestamp of this Vlan (In UTC timezone)
     google.protobuf.Timestamp update_time = 4 [
         (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // The description of the vlan.
+    string description = 5;
 }
 
 message DHCPConfig {
@@ -56,3 +59,11 @@ message AllDHCPConfigs {
     repeated DHCPConfig configs = 1;
 }
 
+// IP is an intermediate record object, not an object to be exposed by API.
+message IP {
+    string id = 1;
+    // can be converted to and from the string ip address
+    uint32 ipv4 = 2;
+    string vlan = 3;
+    bool occupied = 4;
+}
