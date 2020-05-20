@@ -65,6 +65,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/sync-device-list-to-drone-config", mwCron, logAndSetHTTPErr(syncDeviceListToDroneConfigHandler))
 
 	r.GET("/internal/cron/sync-asset-info-from-hart", mwCron, logAndSetHTTPErr(syncAssetInfoFromHaRT))
+
+	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevices))
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {
@@ -320,6 +322,59 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 	_, err = hart.SyncAssetInfoFromHaRT(ctx, proj, topic, req)
 
 	return err
+}
+
+func backfillAssetTagsToDevices(c *router.Context) error {
+	ctx := c.Context
+
+	logging.Infof(ctx, "Backfill AssetTags to CrosDevices")
+
+	// Attempt to create Hostname from location
+	assets, err := datastore.GetAllAssets(ctx, false)
+	if err != nil {
+		return err
+	}
+	hostAT := make(map[string]string, len(assets))
+	hosts := make([]string, 0, len(assets))
+	for _, a := range assets {
+		loc := a.GetLocation()
+		hostname := fmt.Sprintf("%v-row%v-rack%v-host%v",
+			loc.GetLab(), loc.GetRow(), loc.GetRack(), loc.GetPosition())
+		hostAT[hostname] = a.GetId()
+		hosts = append(hosts, hostname)
+	}
+	devOpRes := datastore.GetDevicesByHostnames(ctx, hosts)
+	for _, dev := range devOpRes {
+		if dev.Err == nil && string(dev.Entity.ID) != hostAT[dev.Entity.Hostname] {
+			//TODO(anushruth): Remove check for the hostname after
+			//testing, before submit.
+			check := func(hostname string) bool {
+				switch hostname {
+				case "chromeos6-row4-rack17-host18":
+					return true
+				case "chromeos6-row4-rack17-host15":
+					return true
+				case "chromeos6-row4-rack12-host12":
+					return true
+				case "chromeos6-row4-rack17-host6":
+					return true
+				case "chromeos6-row4-rack11-host12":
+					return true
+				default:
+					return false
+				}
+			}
+			if check(dev.Entity.Hostname) {
+				logging.Infof(ctx, "Updating %v from %v to %v",
+					dev.Entity.Hostname, dev.Entity.ID,
+					hostAT[dev.Entity.Hostname])
+				datastore.UpdateDeviceID(ctx,
+					string(dev.Entity.ID),
+					hostAT[dev.Entity.Hostname])
+			}
+		}
+	}
+	return nil
 }
 
 func logAndSetHTTPErr(f func(c *router.Context) error) func(*router.Context) {
