@@ -44,7 +44,7 @@ service Issues {
   //   NOT_FOUND if any specified issues are not found.
   //   PERMISSION_DENIED if the requester is not allowed to make the
   //     requested change.
-  rpc ModifyIssues (ModifyIssuesRequest) returns (Issue) {}
+  rpc ModifyIssues (ModifyIssuesRequest) returns (ModifyIssuesResponse) {}
 }
 
 
@@ -145,7 +145,7 @@ message IssueDelta {
   google.protobuf.FieldMask update_mask = 2;
 
   // Values to remove from the repeated fields of the issue.
-  // Values with rule-based Derication will be ignored.
+  // Values with rule-based Derivation will be ignored.
 
   // Cc's to remove.
   repeated string ccs_remove = 3 [
@@ -182,7 +182,7 @@ enum NotifyType {
 
 
 // The request message for Issues.ModifyIssues.
-// Next available tag:4
+// Next available tag: 4
 message ModifyIssuesRequest {
   // The issue changes to make.
   repeated IssueDelta deltas = 1 [
@@ -191,4 +191,12 @@ message ModifyIssuesRequest {
   NotifyType notify_type = 2;
   // The comment text that should be added to each issue in delta.
   string comment_content = 3;
+}
+
+
+// The response message for Issues.ModifyIssues.
+// Next available tag: 2
+message ModifyIssuesResponse {
+  // The updated issues.
+  repeated Issue issues = 1;
 }
