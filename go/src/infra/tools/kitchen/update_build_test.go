@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -354,6 +355,20 @@ END
 
 			actual, err := bu.ParseAnnotations(ctx, ann)
 			So(err, ShouldBeNil)
+
+			// Because the order is undeterministic when iterating the dict during
+			// the process of converting to Tags proto in ParseAnnotations func.
+			sortTagsFunc := func(tags []*buildbucketpb.StringPair) {
+				sort.Slice(tags, func(i, j int) bool {
+					if tags[i].Key != tags[j].Key {
+						return tags[i].Key < tags[j].Key
+					}
+					return tags[i].Value < tags[j].Value
+				})
+			}
+			sortTagsFunc(actual.Build.Tags)
+			sortTagsFunc(expected.Build.Tags)
+
 			So(actual, ShouldResembleProto, expected)
 		})
 	})
