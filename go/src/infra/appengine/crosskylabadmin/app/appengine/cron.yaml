@@ -21,6 +21,11 @@ cron:
     # side effect. If it fails, it can catch the next cron train.
     job_retry_limit: 1
 
+  - description: push bots for admin audit tasks
+  url: /internal/cron/push-admin-audit-tasks-for-duts
+  schedule: every sunday 1:00
+  timezone: America/Los_Angeles
+
 - description: sync device configs to inventory file and datastore
   url: /internal/cron/update-device-configs
   schedule: every 5 minutes
