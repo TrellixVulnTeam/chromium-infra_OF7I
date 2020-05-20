@@ -14,7 +14,6 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 func mockRPM(id string) *proto.RPM {
@@ -158,92 +157,9 @@ func TestDeleteRPM(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	RPM1 := mockRPM("RPM-1")
-	RPM2 := mockRPM("RPM-2")
-	RPM3 := mockRPM("RPM-3")
 	RPM4 := mockRPM("RPM-4")
 	Convey("DeleteRPM", t, func() {
-		Convey("Delete RPM by existing ID with machine reference", func() {
-			resp, cerr := CreateRPM(ctx, RPM1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM1)
-
-			chromeBrowserMachine1 := &proto.Machine{
-				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						RpmInterface: &proto.RPMInterface{
-							Rpm: "RPM-1",
-						},
-					},
-				},
-			}
-			mresp, merr := CreateMachine(ctx, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
-
-			err := DeleteRPM(ctx, "RPM-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetRPM(ctx, "RPM-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM1)
-		})
-		Convey("Delete RPM by existing ID with rack reference", func() {
-			resp, cerr := CreateRPM(ctx, RPM2)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM2)
-
-			chromeBrowserRack1 := &proto.Rack{
-				Name: "rack-1",
-				Rack: &proto.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &proto.ChromeBrowserRack{
-						Rpms: []string{"RPM-2", "RPM-5"},
-					},
-				},
-			}
-			mresp, merr := CreateRack(ctx, chromeBrowserRack1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserRack1)
-
-			err := DeleteRPM(ctx, "RPM-2")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetRPM(ctx, "RPM-2")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM2)
-		})
-		Convey("Delete RPM by existing ID with racklse reference", func() {
-			resp, cerr := CreateRPM(ctx, RPM3)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM3)
-
-			chromeOSRackLSE1 := &proto.RackLSE{
-				Name: "racklse-1",
-				Lse: &proto.RackLSE_ChromeosRackLse{
-					ChromeosRackLse: &proto.ChromeOSRackLSE{
-						Rpms: []string{"RPM-3", "RPM-5"},
-					},
-				},
-			}
-			mresp, merr := inventory.CreateRackLSE(ctx, chromeOSRackLSE1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeOSRackLSE1)
-
-			err := DeleteRPM(ctx, "RPM-3")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetRPM(ctx, "RPM-3")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM3)
-		})
-		Convey("Delete RPM successfully by existing ID without references", func() {
+		Convey("Delete RPM successfully by existing ID", func() {
 			resp, cerr := CreateRPM(ctx, RPM4)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM4)

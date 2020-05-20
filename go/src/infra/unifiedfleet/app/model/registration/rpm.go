@@ -6,8 +6,6 @@ package registration
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -19,7 +17,6 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 // RPMKind is the datastore entity kind RPM.
@@ -112,57 +109,7 @@ func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 }
 
 // DeleteRPM deletes the RPM in datastore
-//
-// For referential data intergrity,
-// Delete if there are no references to the RPM by Machine in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
 func DeleteRPM(ctx context.Context, id string) error {
-	machines, err := QueryMachineByPropertyName(ctx, "rpm_id", id, true)
-	if err != nil {
-		return err
-	}
-	racks, err := QueryRackByPropertyName(ctx, "rpm_ids", id, true)
-	if err != nil {
-		return err
-	}
-	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "rpm_ids", id, true)
-	if err != nil {
-		return err
-	}
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "rpm_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 || len(racks) > 0 || len(racklses) > 0 || len(machinelses) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("RPM %s cannot be deleted because there are other resources which are referring this RPM.", id))
-		if len(machines) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the RPM:\n"))
-			for _, machine := range machines {
-				errorMsg.WriteString(machine.Name + ", ")
-			}
-		}
-		if len(racks) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRacks referring the RPM:\n"))
-			for _, rack := range racks {
-				errorMsg.WriteString(rack.Name + ", ")
-			}
-		}
-		if len(racklses) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the RPM:\n"))
-			for _, racklse := range racklses {
-				errorMsg.WriteString(racklse.Name + ", ")
-			}
-		}
-		if len(machinelses) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring the RPM:\n"))
-			for _, machinelse := range machinelses {
-				errorMsg.WriteString(machinelse.Name + ", ")
-			}
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
 	return fleetds.Delete(ctx, &fleet.RPM{Name: id}, newRPMEntity)
 }
 

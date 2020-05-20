@@ -605,7 +605,7 @@ func (fs *FleetServerImpl) CreateRPM(ctx context.Context, req *api.CreateRPMRequ
 		return nil, err
 	}
 	req.RPM.Name = req.RPMId
-	rpm, err := registration.CreateRPM(ctx, req.RPM)
+	rpm, err := controller.CreateRPM(ctx, req.RPM)
 	if err != nil {
 		return nil, err
 	}
@@ -623,7 +623,7 @@ func (fs *FleetServerImpl) UpdateRPM(ctx context.Context, req *api.UpdateRPMRequ
 		return nil, err
 	}
 	req.RPM.Name = util.RemovePrefix(req.RPM.Name)
-	rpm, err := registration.UpdateRPM(ctx, req.RPM)
+	rpm, err := controller.UpdateRPM(ctx, req.RPM)
 	if err != nil {
 		return nil, err
 	}
@@ -641,7 +641,7 @@ func (fs *FleetServerImpl) GetRPM(ctx context.Context, req *api.GetRPMRequest) (
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	rpm, err := registration.GetRPM(ctx, name)
+	rpm, err := controller.GetRPM(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -659,7 +659,7 @@ func (fs *FleetServerImpl) ListRPMs(ctx context.Context, req *api.ListRPMsReques
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListRPMs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRPMs(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -682,7 +682,7 @@ func (fs *FleetServerImpl) DeleteRPM(ctx context.Context, req *api.DeleteRPMRequ
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteRPM(ctx, name)
+	err = controller.DeleteRPM(ctx, name)
 	return &empty.Empty{}, err
 }
 
