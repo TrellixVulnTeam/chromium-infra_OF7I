@@ -30,6 +30,7 @@
   --chops-gray-600: #757575;
   --chops-gray-700: #616161;
   --chops-gray-800: #424242;
+  --chops-gray-850: #303030;
   --chops-gray-900: #212121;
   /* Making these variables makes it easier to add user-side scripts in a reasonable way. */
   --chops-white: #ffffff;
@@ -135,7 +136,7 @@ a:hover {
   text-align: right;
   padding-top: 1em;
   margin: 3.5em 0em;
-  color: #999;
+  color: var(--chops-gray-500);
   background: var(--chops-footer-bg);
 }
 
@@ -146,8 +147,8 @@ a:hover {
 }
 
 #ac-list {
-  border: 1px solid #bbb;
-  background: #fff;
+  border: 1px solid var(--chops-gray-400);
+  background: var(--chops-white);
   color: var(--chops-link-color);
   padding: 2px;
   z-index: 999;
@@ -157,7 +158,7 @@ a:hover {
 }
 #ac-list { font-size: 95%; }
 #ac-list tr { margin: 1px; cursor: pointer; padding: 0 10px; }
-#ac-list th { color: #333; text-align: left; }
+#ac-list th { color: var(--chops-gray-850); text-align: left; }
 #ac-list .selected,
 #ac-list .selected td { background: var(--chops-active-choice-bg); }
 #ac-list td, #ac-list th { white-space: nowrap; padding-right: 22px}
