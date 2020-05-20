@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='tokenserver.minter',
   syntax='proto3',
   serialized_options=_b('Z\006minter'),
-  serialized_pb=_b('\nAgo.chromium.org/luci/tokenserver/api/minter/v1/token_minter.proto\x12\x12tokenserver.minter\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x45go.chromium.org/luci/server/auth/delegation/messages/delegation.proto\x1a\x38go.chromium.org/luci/tokenserver/api/machine_token.proto\"N\n\x17MintMachineTokenRequest\x12 \n\x18serialized_token_request\x18\x01 \x01(\x0c\x12\x11\n\tsignature\x18\x02 \x01(\x0c\"\xd7\x01\n\x13MachineTokenRequest\x12\x13\n\x0b\x63\x65rtificate\x18\x01 \x01(\x0c\x12\x43\n\x13signature_algorithm\x18\x02 \x01(\x0e\x32&.tokenserver.minter.SignatureAlgorithm\x12-\n\tissued_at\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x31\n\ntoken_type\x18\x04 \x01(\x0e\x32\x1d.tokenserver.MachineTokenTypeJ\x04\x08\x05\x10\x06\"\xbf\x01\n\x18MintMachineTokenResponse\x12\x31\n\nerror_code\x18\x01 \x01(\x0e\x32\x1d.tokenserver.minter.ErrorCode\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12@\n\x0etoken_response\x18\x03 \x01(\x0b\x32(.tokenserver.minter.MachineTokenResponse\x12\x17\n\x0fservice_version\x18\x04 \x01(\t\"\x8d\x01\n\x14MachineTokenResponse\x12\x17\n\x0fservice_version\x18\x02 \x01(\t\x12\x42\n\x12luci_machine_token\x18\x15 \x01(\x0b\x32$.tokenserver.minter.LuciMachineTokenH\x00\x42\x0c\n\ntoken_typeJ\x04\x08\x01\x10\x02J\x04\x08\x14\x10\x15\"U\n\x10LuciMachineToken\x12\x15\n\rmachine_token\x18\x01 \x01(\t\x12*\n\x06\x65xpiry\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\x95\x01\n\x1aMintDelegationTokenRequest\x12\x1a\n\x12\x64\x65legated_identity\x18\x01 \x01(\t\x12\x19\n\x11validity_duration\x18\x02 \x01(\x03\x12\x10\n\x08\x61udience\x18\x03 \x03(\t\x12\x10\n\x08services\x18\x04 \x03(\t\x12\x0e\n\x06intent\x18\x05 \x01(\t\x12\x0c\n\x04tags\x18\x06 \x03(\t\"v\n\x1bMintDelegationTokenResponse\x12\r\n\x05token\x18\x01 \x01(\t\x12/\n\x13\x64\x65legation_subtoken\x18\x02 \x01(\x0b\x32\x12.messages.Subtoken\x12\x17\n\x0fservice_version\x18\x03 \x01(\t\"v\n\x1aMintOAuthTokenGrantRequest\x12\x17\n\x0fservice_account\x18\x01 \x01(\t\x12\x19\n\x11validity_duration\x18\x02 \x01(\x03\x12\x10\n\x08\x65nd_user\x18\x03 \x01(\t\x12\x12\n\naudit_tags\x18\x04 \x03(\t\"w\n\x1bMintOAuthTokenGrantResponse\x12\x13\n\x0bgrant_token\x18\x01 \x01(\t\x12*\n\x06\x65xpiry\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fservice_version\x18\x03 \x01(\t\"|\n\x1dMintOAuthTokenViaGrantRequest\x12\x13\n\x0bgrant_token\x18\x01 \x01(\t\x12\x13\n\x0boauth_scope\x18\x02 \x03(\t\x12\x1d\n\x15min_validity_duration\x18\x03 \x01(\x03\x12\x12\n\naudit_tags\x18\x04 \x03(\t\"{\n\x1eMintOAuthTokenViaGrantResponse\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x01 \x01(\t\x12*\n\x06\x65xpiry\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fservice_version\x18\x03 \x01(\t\"w\n\x17MintProjectTokenRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\x12\x13\n\x0boauth_scope\x18\x02 \x03(\t\x12\x1d\n\x15min_validity_duration\x18\x03 \x01(\x03\x12\x12\n\naudit_tags\x18\x04 \x03(\t\"\x94\x01\n\x18MintProjectTokenResponse\x12\x1d\n\x15service_account_email\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\x12*\n\x06\x65xpiry\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fservice_version\x18\x04 \x01(\t*;\n\x12SignatureAlgorithm\x12\x10\n\x0cUNKNOWN_ALGO\x10\x00\x12\x13\n\x0fSHA256_RSA_ALGO\x10\x01*\xe6\x01\n\tErrorCode\x12\x0b\n\x07SUCCESS\x10\x00\x12\x19\n\x15UNSUPPORTED_SIGNATURE\x10\x01\x12\x1a\n\x16UNSUPPORTED_TOKEN_TYPE\x10\x02\x12\x11\n\rBAD_TIMESTAMP\x10\x03\x12\x1a\n\x16\x42\x41\x44_CERTIFICATE_FORMAT\x10\x04\x12\x11\n\rBAD_SIGNATURE\x10\x05\x12\x19\n\x15UNTRUSTED_CERTIFICATE\x10\x06\x12\x17\n\x13\x42\x41\x44_TOKEN_ARGUMENTS\x10\x07\x12\x1f\n\x1bMACHINE_TOKEN_MINTING_ERROR\x10\x08\x32\xdc\x04\n\x0bTokenMinter\x12m\n\x10MintMachineToken\x12+.tokenserver.minter.MintMachineTokenRequest\x1a,.tokenserver.minter.MintMachineTokenResponse\x12v\n\x13MintDelegationToken\x12..tokenserver.minter.MintDelegationTokenRequest\x1a/.tokenserver.minter.MintDelegationTokenResponse\x12v\n\x13MintOAuthTokenGrant\x12..tokenserver.minter.MintOAuthTokenGrantRequest\x1a/.tokenserver.minter.MintOAuthTokenGrantResponse\x12\x7f\n\x16MintOAuthTokenViaGrant\x12\x31.tokenserver.minter.MintOAuthTokenViaGrantRequest\x1a\x32.tokenserver.minter.MintOAuthTokenViaGrantResponse\x12m\n\x10MintProjectToken\x12+.tokenserver.minter.MintProjectTokenRequest\x1a,.tokenserver.minter.MintProjectTokenResponseB\x08Z\x06minterb\x06proto3')
+  serialized_pb=_b('\nAgo.chromium.org/luci/tokenserver/api/minter/v1/token_minter.proto\x12\x12tokenserver.minter\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x45go.chromium.org/luci/server/auth/delegation/messages/delegation.proto\x1a\x38go.chromium.org/luci/tokenserver/api/machine_token.proto\"N\n\x17MintMachineTokenRequest\x12 \n\x18serialized_token_request\x18\x01 \x01(\x0c\x12\x11\n\tsignature\x18\x02 \x01(\x0c\"\xd7\x01\n\x13MachineTokenRequest\x12\x13\n\x0b\x63\x65rtificate\x18\x01 \x01(\x0c\x12\x43\n\x13signature_algorithm\x18\x02 \x01(\x0e\x32&.tokenserver.minter.SignatureAlgorithm\x12-\n\tissued_at\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x31\n\ntoken_type\x18\x04 \x01(\x0e\x32\x1d.tokenserver.MachineTokenTypeJ\x04\x08\x05\x10\x06\"\xbf\x01\n\x18MintMachineTokenResponse\x12\x31\n\nerror_code\x18\x01 \x01(\x0e\x32\x1d.tokenserver.minter.ErrorCode\x12\x15\n\rerror_message\x18\x02 \x01(\t\x12@\n\x0etoken_response\x18\x03 \x01(\x0b\x32(.tokenserver.minter.MachineTokenResponse\x12\x17\n\x0fservice_version\x18\x04 \x01(\t\"\x8d\x01\n\x14MachineTokenResponse\x12\x17\n\x0fservice_version\x18\x02 \x01(\t\x12\x42\n\x12luci_machine_token\x18\x15 \x01(\x0b\x32$.tokenserver.minter.LuciMachineTokenH\x00\x42\x0c\n\ntoken_typeJ\x04\x08\x01\x10\x02J\x04\x08\x14\x10\x15\"U\n\x10LuciMachineToken\x12\x15\n\rmachine_token\x18\x01 \x01(\t\x12*\n\x06\x65xpiry\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\x95\x01\n\x1aMintDelegationTokenRequest\x12\x1a\n\x12\x64\x65legated_identity\x18\x01 \x01(\t\x12\x19\n\x11validity_duration\x18\x02 \x01(\x03\x12\x10\n\x08\x61udience\x18\x03 \x03(\t\x12\x10\n\x08services\x18\x04 \x03(\t\x12\x0e\n\x06intent\x18\x05 \x01(\t\x12\x0c\n\x04tags\x18\x06 \x03(\t\"v\n\x1bMintDelegationTokenResponse\x12\r\n\x05token\x18\x01 \x01(\t\x12/\n\x13\x64\x65legation_subtoken\x18\x02 \x01(\x0b\x32\x12.messages.Subtoken\x12\x17\n\x0fservice_version\x18\x03 \x01(\t\"v\n\x1aMintOAuthTokenGrantRequest\x12\x17\n\x0fservice_account\x18\x01 \x01(\t\x12\x19\n\x11validity_duration\x18\x02 \x01(\x03\x12\x10\n\x08\x65nd_user\x18\x03 \x01(\t\x12\x12\n\naudit_tags\x18\x04 \x03(\t\"w\n\x1bMintOAuthTokenGrantResponse\x12\x13\n\x0bgrant_token\x18\x01 \x01(\t\x12*\n\x06\x65xpiry\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fservice_version\x18\x03 \x01(\t\"|\n\x1dMintOAuthTokenViaGrantRequest\x12\x13\n\x0bgrant_token\x18\x01 \x01(\t\x12\x13\n\x0boauth_scope\x18\x02 \x03(\t\x12\x1d\n\x15min_validity_duration\x18\x03 \x01(\x03\x12\x12\n\naudit_tags\x18\x04 \x03(\t\"{\n\x1eMintOAuthTokenViaGrantResponse\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x01 \x01(\t\x12*\n\x06\x65xpiry\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fservice_version\x18\x03 \x01(\t\"w\n\x17MintProjectTokenRequest\x12\x14\n\x0cluci_project\x18\x01 \x01(\t\x12\x13\n\x0boauth_scope\x18\x02 \x03(\t\x12\x1d\n\x15min_validity_duration\x18\x03 \x01(\x03\x12\x12\n\naudit_tags\x18\x04 \x03(\t\"\x94\x01\n\x18MintProjectTokenResponse\x12\x1d\n\x15service_account_email\x18\x01 \x01(\t\x12\x14\n\x0c\x61\x63\x63\x65ss_token\x18\x02 \x01(\t\x12*\n\x06\x65xpiry\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fservice_version\x18\x04 \x01(\t\"\xec\x01\n\x1eMintServiceAccountTokenRequest\x12?\n\ntoken_kind\x18\x01 \x01(\x0e\x32+.tokenserver.minter.ServiceAccountTokenKind\x12\x17\n\x0fservice_account\x18\x02 \x01(\t\x12\r\n\x05realm\x18\x03 \x01(\t\x12\x13\n\x0boauth_scope\x18\x04 \x03(\t\x12\x19\n\x11id_token_audience\x18\x05 \x01(\t\x12\x1d\n\x15min_validity_duration\x18\x06 \x01(\x03\x12\x12\n\naudit_tags\x18\x07 \x03(\t\"u\n\x1fMintServiceAccountTokenResponse\x12\r\n\x05token\x18\x01 \x01(\t\x12*\n\x06\x65xpiry\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x17\n\x0fservice_version\x18\x03 \x01(\t*;\n\x12SignatureAlgorithm\x12\x10\n\x0cUNKNOWN_ALGO\x10\x00\x12\x13\n\x0fSHA256_RSA_ALGO\x10\x01*\xe6\x01\n\tErrorCode\x12\x0b\n\x07SUCCESS\x10\x00\x12\x19\n\x15UNSUPPORTED_SIGNATURE\x10\x01\x12\x1a\n\x16UNSUPPORTED_TOKEN_TYPE\x10\x02\x12\x11\n\rBAD_TIMESTAMP\x10\x03\x12\x1a\n\x16\x42\x41\x44_CERTIFICATE_FORMAT\x10\x04\x12\x11\n\rBAD_SIGNATURE\x10\x05\x12\x19\n\x15UNTRUSTED_CERTIFICATE\x10\x06\x12\x17\n\x13\x42\x41\x44_TOKEN_ARGUMENTS\x10\x07\x12\x1f\n\x1bMACHINE_TOKEN_MINTING_ERROR\x10\x08*\x8c\x01\n\x17ServiceAccountTokenKind\x12%\n!SERVICE_ACCOUNT_TOKEN_UNSPECIFIED\x10\x00\x12&\n\"SERVICE_ACCOUNT_TOKEN_ACCESS_TOKEN\x10\x01\x12\"\n\x1eSERVICE_ACCOUNT_TOKEN_ID_TOKEN\x10\x02\x32\xe1\x05\n\x0bTokenMinter\x12m\n\x10MintMachineToken\x12+.tokenserver.minter.MintMachineTokenRequest\x1a,.tokenserver.minter.MintMachineTokenResponse\x12v\n\x13MintDelegationToken\x12..tokenserver.minter.MintDelegationTokenRequest\x1a/.tokenserver.minter.MintDelegationTokenResponse\x12v\n\x13MintOAuthTokenGrant\x12..tokenserver.minter.MintOAuthTokenGrantRequest\x1a/.tokenserver.minter.MintOAuthTokenGrantResponse\x12\x7f\n\x16MintOAuthTokenViaGrant\x12\x31.tokenserver.minter.MintOAuthTokenViaGrantRequest\x1a\x32.tokenserver.minter.MintOAuthTokenViaGrantResponse\x12m\n\x10MintProjectToken\x12+.tokenserver.minter.MintProjectTokenRequest\x1a,.tokenserver.minter.MintProjectTokenResponse\x12\x82\x01\n\x17MintServiceAccountToken\x12\x32.tokenserver.minter.MintServiceAccountTokenRequest\x1a\x33.tokenserver.minter.MintServiceAccountTokenResponseB\x08Z\x06minterb\x06proto3')
   ,
   dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_server_dot_auth_dot_delegation_dot_messages_dot_delegation__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_tokenserver_dot_api_dot_machine__token__pb2.DESCRIPTOR,])
 
@@ -44,8 +44,8 @@ _SIGNATUREALGORITHM = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2010,
-  serialized_end=2069,
+  serialized_start=2368,
+  serialized_end=2427,
 )
 _sym_db.RegisterEnumDescriptor(_SIGNATUREALGORITHM)
 
@@ -95,12 +95,39 @@ _ERRORCODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2072,
-  serialized_end=2302,
+  serialized_start=2430,
+  serialized_end=2660,
 )
 _sym_db.RegisterEnumDescriptor(_ERRORCODE)
 
 ErrorCode = enum_type_wrapper.EnumTypeWrapper(_ERRORCODE)
+_SERVICEACCOUNTTOKENKIND = _descriptor.EnumDescriptor(
+  name='ServiceAccountTokenKind',
+  full_name='tokenserver.minter.ServiceAccountTokenKind',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='SERVICE_ACCOUNT_TOKEN_UNSPECIFIED', index=0, number=0,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='SERVICE_ACCOUNT_TOKEN_ACCESS_TOKEN', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='SERVICE_ACCOUNT_TOKEN_ID_TOKEN', index=2, number=2,
+      serialized_options=None,
+      type=None),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=2663,
+  serialized_end=2803,
+)
+_sym_db.RegisterEnumDescriptor(_SERVICEACCOUNTTOKENKIND)
+
+ServiceAccountTokenKind = enum_type_wrapper.EnumTypeWrapper(_SERVICEACCOUNTTOKENKIND)
 UNKNOWN_ALGO = 0
 SHA256_RSA_ALGO = 1
 SUCCESS = 0
@@ -112,6 +139,9 @@ BAD_SIGNATURE = 5
 UNTRUSTED_CERTIFICATE = 6
 BAD_TOKEN_ARGUMENTS = 7
 MACHINE_TOKEN_MINTING_ERROR = 8
+SERVICE_ACCOUNT_TOKEN_UNSPECIFIED = 0
+SERVICE_ACCOUNT_TOKEN_ACCESS_TOKEN = 1
+SERVICE_ACCOUNT_TOKEN_ID_TOKEN = 2
 
 
 
@@ -744,6 +774,124 @@ _MINTPROJECTTOKENRESPONSE = _descriptor.Descriptor(
   serialized_end=2008,
 )
 
+
+_MINTSERVICEACCOUNTTOKENREQUEST = _descriptor.Descriptor(
+  name='MintServiceAccountTokenRequest',
+  full_name='tokenserver.minter.MintServiceAccountTokenRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='token_kind', full_name='tokenserver.minter.MintServiceAccountTokenRequest.token_kind', index=0,
+      number=1, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='service_account', full_name='tokenserver.minter.MintServiceAccountTokenRequest.service_account', index=1,
+      number=2, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='realm', full_name='tokenserver.minter.MintServiceAccountTokenRequest.realm', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='oauth_scope', full_name='tokenserver.minter.MintServiceAccountTokenRequest.oauth_scope', index=3,
+      number=4, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='id_token_audience', full_name='tokenserver.minter.MintServiceAccountTokenRequest.id_token_audience', index=4,
+      number=5, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='min_validity_duration', full_name='tokenserver.minter.MintServiceAccountTokenRequest.min_validity_duration', index=5,
+      number=6, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='audit_tags', full_name='tokenserver.minter.MintServiceAccountTokenRequest.audit_tags', index=6,
+      number=7, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2011,
+  serialized_end=2247,
+)
+
+
+_MINTSERVICEACCOUNTTOKENRESPONSE = _descriptor.Descriptor(
+  name='MintServiceAccountTokenResponse',
+  full_name='tokenserver.minter.MintServiceAccountTokenResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='token', full_name='tokenserver.minter.MintServiceAccountTokenResponse.token', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='expiry', full_name='tokenserver.minter.MintServiceAccountTokenResponse.expiry', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='service_version', full_name='tokenserver.minter.MintServiceAccountTokenResponse.service_version', index=2,
+      number=3, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2249,
+  serialized_end=2366,
+)
+
 _MACHINETOKENREQUEST.fields_by_name['signature_algorithm'].enum_type = _SIGNATUREALGORITHM
 _MACHINETOKENREQUEST.fields_by_name['issued_at'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _MACHINETOKENREQUEST.fields_by_name['token_type'].enum_type = go_dot_chromium_dot_org_dot_luci_dot_tokenserver_dot_api_dot_machine__token__pb2._MACHINETOKENTYPE
@@ -758,6 +906,8 @@ _MINTDELEGATIONTOKENRESPONSE.fields_by_name['delegation_subtoken'].message_type 
 _MINTOAUTHTOKENGRANTRESPONSE.fields_by_name['expiry'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _MINTOAUTHTOKENVIAGRANTRESPONSE.fields_by_name['expiry'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 _MINTPROJECTTOKENRESPONSE.fields_by_name['expiry'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
+_MINTSERVICEACCOUNTTOKENREQUEST.fields_by_name['token_kind'].enum_type = _SERVICEACCOUNTTOKENKIND
+_MINTSERVICEACCOUNTTOKENRESPONSE.fields_by_name['expiry'].message_type = google_dot_protobuf_dot_timestamp__pb2._TIMESTAMP
 DESCRIPTOR.message_types_by_name['MintMachineTokenRequest'] = _MINTMACHINETOKENREQUEST
 DESCRIPTOR.message_types_by_name['MachineTokenRequest'] = _MACHINETOKENREQUEST
 DESCRIPTOR.message_types_by_name['MintMachineTokenResponse'] = _MINTMACHINETOKENRESPONSE
@@ -771,8 +921,11 @@ DESCRIPTOR.message_types_by_name['MintOAuthTokenViaGrantRequest'] = _MINTOAUTHTO
 DESCRIPTOR.message_types_by_name['MintOAuthTokenViaGrantResponse'] = _MINTOAUTHTOKENVIAGRANTRESPONSE
 DESCRIPTOR.message_types_by_name['MintProjectTokenRequest'] = _MINTPROJECTTOKENREQUEST
 DESCRIPTOR.message_types_by_name['MintProjectTokenResponse'] = _MINTPROJECTTOKENRESPONSE
+DESCRIPTOR.message_types_by_name['MintServiceAccountTokenRequest'] = _MINTSERVICEACCOUNTTOKENREQUEST
+DESCRIPTOR.message_types_by_name['MintServiceAccountTokenResponse'] = _MINTSERVICEACCOUNTTOKENRESPONSE
 DESCRIPTOR.enum_types_by_name['SignatureAlgorithm'] = _SIGNATUREALGORITHM
 DESCRIPTOR.enum_types_by_name['ErrorCode'] = _ERRORCODE
+DESCRIPTOR.enum_types_by_name['ServiceAccountTokenKind'] = _SERVICEACCOUNTTOKENKIND
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 MintMachineTokenRequest = _reflection.GeneratedProtocolMessageType('MintMachineTokenRequest', (_message.Message,), dict(
@@ -866,6 +1019,20 @@ MintProjectTokenResponse = _reflection.GeneratedProtocolMessageType('MintProject
   ))
 _sym_db.RegisterMessage(MintProjectTokenResponse)
 
+MintServiceAccountTokenRequest = _reflection.GeneratedProtocolMessageType('MintServiceAccountTokenRequest', (_message.Message,), dict(
+  DESCRIPTOR = _MINTSERVICEACCOUNTTOKENREQUEST,
+  __module__ = 'go.chromium.org.luci.tokenserver.api.minter.v1.token_minter_pb2'
+  # @@protoc_insertion_point(class_scope:tokenserver.minter.MintServiceAccountTokenRequest)
+  ))
+_sym_db.RegisterMessage(MintServiceAccountTokenRequest)
+
+MintServiceAccountTokenResponse = _reflection.GeneratedProtocolMessageType('MintServiceAccountTokenResponse', (_message.Message,), dict(
+  DESCRIPTOR = _MINTSERVICEACCOUNTTOKENRESPONSE,
+  __module__ = 'go.chromium.org.luci.tokenserver.api.minter.v1.token_minter_pb2'
+  # @@protoc_insertion_point(class_scope:tokenserver.minter.MintServiceAccountTokenResponse)
+  ))
+_sym_db.RegisterMessage(MintServiceAccountTokenResponse)
+
 
 DESCRIPTOR._options = None
 
@@ -875,8 +1042,8 @@ _TOKENMINTER = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=2305,
-  serialized_end=2909,
+  serialized_start=2806,
+  serialized_end=3543,
   methods=[
   _descriptor.MethodDescriptor(
     name='MintMachineToken',
@@ -921,6 +1088,15 @@ _TOKENMINTER = _descriptor.ServiceDescriptor(
     containing_service=None,
     input_type=_MINTPROJECTTOKENREQUEST,
     output_type=_MINTPROJECTTOKENRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='MintServiceAccountToken',
+    full_name='tokenserver.minter.TokenMinter.MintServiceAccountToken',
+    index=5,
+    containing_service=None,
+    input_type=_MINTSERVICEACCOUNTTOKENREQUEST,
+    output_type=_MINTSERVICEACCOUNTTOKENRESPONSE,
     serialized_options=None,
   ),
 ])
