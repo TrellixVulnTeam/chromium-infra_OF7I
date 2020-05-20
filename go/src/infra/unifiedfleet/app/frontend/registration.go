@@ -378,7 +378,7 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 	for i := 0; ; i += pageSize {
 		end := min(i+pageSize, len(newDracs))
 		logging.Debugf(ctx, "importing dracs %dth - %dth", i, end-1)
-		res, err := registration.ImportDracs(ctx, newDracs[i:end])
+		res, err := controller.ImportDracs(ctx, newDracs[i:end])
 		s := processImportDatastoreRes(res, err)
 		if s.Err() != nil {
 			return s.Proto(), s.Err()
@@ -695,7 +695,7 @@ func (fs *FleetServerImpl) CreateDrac(ctx context.Context, req *api.CreateDracRe
 		return nil, err
 	}
 	req.Drac.Name = req.DracId
-	drac, err := registration.CreateDrac(ctx, req.Drac)
+	drac, err := controller.CreateDrac(ctx, req.Drac)
 	if err != nil {
 		return nil, err
 	}
@@ -713,7 +713,7 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *api.UpdateDracRe
 		return nil, err
 	}
 	req.Drac.Name = util.RemovePrefix(req.Drac.Name)
-	drac, err := registration.UpdateDrac(ctx, req.Drac)
+	drac, err := controller.UpdateDrac(ctx, req.Drac)
 	if err != nil {
 		return nil, err
 	}
@@ -731,7 +731,7 @@ func (fs *FleetServerImpl) GetDrac(ctx context.Context, req *api.GetDracRequest)
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	drac, err := registration.GetDrac(ctx, name)
+	drac, err := controller.GetDrac(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -749,7 +749,7 @@ func (fs *FleetServerImpl) ListDracs(ctx context.Context, req *api.ListDracsRequ
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListDracs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListDracs(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -772,7 +772,7 @@ func (fs *FleetServerImpl) DeleteDrac(ctx context.Context, req *api.DeleteDracRe
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteDrac(ctx, name)
+	err = controller.DeleteDrac(ctx, name)
 	return &empty.Empty{}, err
 }
 

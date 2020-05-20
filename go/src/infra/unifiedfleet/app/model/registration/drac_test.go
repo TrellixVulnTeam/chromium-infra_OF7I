@@ -157,36 +157,9 @@ func TestDeleteDrac(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	drac1 := mockDrac("drac-1")
 	drac2 := mockDrac("drac-2")
 	Convey("DeleteDrac", t, func() {
-		Convey("Delete drac by existing ID with machine reference", func() {
-			resp, cerr := CreateDrac(ctx, drac1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, drac1)
-
-			chromeBrowserMachine1 := &proto.Machine{
-				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						Drac: "drac-1",
-					},
-				},
-			}
-			mresp, merr := CreateMachine(ctx, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
-
-			err := DeleteDrac(ctx, "drac-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetDrac(ctx, "drac-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, drac1)
-		})
-		Convey("Delete drac successfully by existing ID without references", func() {
+		Convey("Delete drac successfully by existing ID", func() {
 			resp, cerr := CreateDrac(ctx, drac2)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac2)
@@ -200,7 +173,7 @@ func TestDeleteDrac(t *testing.T) {
 			So(cerr.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete drac by non-existing ID", func() {
-			err := DeleteDrac(ctx, "drac-2")
+			err := DeleteDrac(ctx, "drac-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})

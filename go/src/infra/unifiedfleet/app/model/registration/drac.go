@@ -6,8 +6,6 @@ package registration
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -146,25 +144,7 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 }
 
 // DeleteDrac deletes the drac in datastore
-//
-// For referential data intergrity,
-// Delete if there are no references to the Drac by Machine in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
 func DeleteDrac(ctx context.Context, id string) error {
-	machines, err := QueryMachineByPropertyName(ctx, "drac_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Drac %s cannot be deleted because there are other resources which are referring this Drac.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nMachines referring the Drac:\n"))
-		for _, machine := range machines {
-			errorMsg.WriteString(machine.Name + ", ")
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
 	return fleetds.Delete(ctx, &fleet.Drac{Name: id}, newDracEntity)
 }
 
