@@ -7,7 +7,7 @@
 
 .popup {
     display: none;
-    background: #fff;
+    background: var(--chops-white);
     border: 2px solid #bbb;
     border-width: 0 2px 2px 1px;
     position: absolute;
@@ -39,7 +39,7 @@ div.gridtile {
     border: 2px solid #f1f1f1;
     border-radius: 6px;
     padding: 1px;
-    background: white;
+    background: var(--chops-white);
 }
 
 tr.grid td {
@@ -47,7 +47,7 @@ tr.grid td {
 }
 
 .results .grid th {
-    border-top: 1px solid #fff;
+    border-top: 1px solid var(--chops-white);
 }
 
 tr.grid .idcount {
@@ -131,7 +131,7 @@ div.projecttile:hover {
 .hide_col_14 .popup span.col_14, .hide_col_15 .popup span.col_15,
 .hide_col_16 .popup span.col_16, .hide_col_17 .popup span.col_17,
 .hide_col_18 .popup span.col_18, .hide_col_19 .popup span.col_19,
-.hide_col_20 .popup span.col_20 { display: inline; color: #fff; }
+.hide_col_20 .popup span.col_20 { display: inline; color: var(--chops-white); }
 
 .hide_col_0 .popup tr:hover span.col_0,
 .hide_col_1 .popup tr:hover span.col_1,
@@ -153,7 +153,7 @@ div.projecttile:hover {
 .hide_col_17 .popup tr:hover span.col_17,
 .hide_col_18 .popup tr:hover span.col_18,
 .hide_col_19 .popup tr:hover span.col_19,
-.hide_col_20 .popup tr:hover span.col_20 { color: #fff; }
+.hide_col_20 .popup tr:hover span.col_20 { color: var(--chops-white); }
 
 
 .table_title {

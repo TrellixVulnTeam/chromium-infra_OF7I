@@ -41,18 +41,18 @@
 #controls form {margin:0; padding:0 1em}
 #controls a.revchoose {
   text-decoration: none;
-  color: #000;
+  color: var(--chops-black);
   padding: 4px;
   border: 1px solid #ebeff9;
 }
 #controls a.revchoose:hover {
-  border: 1px inset #fff;
+  border: 1px inset var(--chops-white);
 }
 
 /* Property Diffs */
 .diff .firstseg {padding-left: 2px}
 .diff .lastseg {padding-right: 2px}
-.diff .samepropback {border: 1px solid #000; border-width: 0 1px 0 1px}
+.diff .samepropback {border: 1px solid var(--chops-black); border-width: 0 1px 0 1px}
 .diff td.nopropsep {border-bottom-width: 0px}
 .diff .propname td {font-size: 110%; font-weight: bold; padding: 1em 0.5em}
 .diff .bincontent {border-bottom-width: 1px; font-style: italic; font-size: 110%; padding: 0px 0.5em}
@@ -76,7 +76,7 @@ pre {
 #nums td {text-align:right}
 #nums a {color:#77c; text-decoration:none}
 #nums tr:hover a {color:blue; text-decoration:underline}
-#nums td:target a {color:black; font-weight:bold}
+#nums td:target a {color:var(--chops-black); font-weight:bold}
 .sep {visibility:hidden; width:2px}
 #nums span { cursor: pointer; width: 14px; float: left; background-repeat: no-repeat; }
 #lines td {padding-left:4px;}
@@ -171,7 +171,7 @@ pre.wrap {
   border-color: #999 #ccc #ccc;
   border-width: 1px;
   border-style: solid;
-  background: white;
+  background: var(--chops-white);
 }
 .pending_bubble {
   background-color: #e5ecf9;
