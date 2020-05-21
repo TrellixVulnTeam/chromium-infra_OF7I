@@ -6,13 +6,14 @@
 
 
 DEPS = [
-  'recipe_engine/context',
-  'recipe_engine/file',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/properties',
-  'recipe_engine/step',
-  'recipe_engine/time',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/path',
+    'recipe_engine/platform',
+    'recipe_engine/properties',
+    'recipe_engine/step',
+    'recipe_engine/time',
 ]
 
 
@@ -20,6 +21,9 @@ PLAYGROUND_REPO = 'https://chromium.googlesource.com/playground/access_test'
 
 
 def RunSteps(api):
+  #TODO(crbug/1040685): remove it after testing
+  api.buildbucket.hide_current_build_in_gerrit()
+
   root_dir = api.path['tmp_base'].join('repo')
   api.file.ensure_directory('make dir', root_dir)
 

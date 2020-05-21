@@ -1,5 +1,12 @@
 [
   {
+    "cmd": [],
+    "name": "buildbucket.add_tags_to_current_build",
+    "~followup_annotations": [
+      "@@@SET_BUILD_PROPERTY@$recipe_engine/buildbucket/runtime-tags@{\"hide-in-gerrit\": [\"pointless\"]}@@@"
+    ]
+  },
+  {
     "cmd": [
       "vpython",
       "-u",
