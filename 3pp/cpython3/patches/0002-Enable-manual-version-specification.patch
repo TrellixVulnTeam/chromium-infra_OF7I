@@ -53,12 +53,12 @@ index 620b48a6e7..b5877e6ce8 100644
  AC_ARG_WITH(libs,
              AS_HELP_STRING([--with-libs='lib1 ...'], [link against additional libs]),
 diff --git a/pyconfig.h.in b/pyconfig.h.in
-index a82e82cc9c..6fb3172177 100644
+index ebab5ff518..52c1546b0f 100644
 --- a/pyconfig.h.in
 +++ b/pyconfig.h.in
-@@ -1381,6 +1381,9 @@
- /* Define if you want to enable tracing references for debugging purpose */
- #undef Py_TRACE_REFS
+@@ -1337,7 +1337,9 @@
+    externally defined: 0 */
+ #undef Py_HASH_ALGORITHM
  
 +/* Define to override the PY_VERSION reported Python version. */
 +#undef PY_VERSION_OVERRIDE
