@@ -350,15 +350,15 @@ func backfillAssetTagsToDevices(c *router.Context) error {
 			//testing, before submit.
 			check := func(hostname string) bool {
 				switch hostname {
-				case "chromeos6-row4-rack17-host18":
+				case "chromeos6-row4-rack11-host13":
 					return true
-				case "chromeos6-row4-rack17-host15":
+				case "chromeos6-row3-rack11-host19":
 					return true
-				case "chromeos6-row4-rack12-host12":
+				case "chromeos6-row4-rack11-host16":
 					return true
-				case "chromeos6-row4-rack17-host6":
+				case "chromeos6-row4-rack11-host18":
 					return true
-				case "chromeos6-row4-rack11-host12":
+				case "chromeos6-row3-rack11-host17":
 					return true
 				default:
 					return false
