@@ -80,6 +80,11 @@ class ResultDBTest(testing.AppengineTestCase):
         resultdb._recorder_client.return_value.BatchCreateInvocationsAsync
     )
 
+    self.patch(
+        'google.appengine.api.app_identity.get_default_version_hostname',
+        return_value='buildbucket.example.com',
+    )
+
   @property
   def builds(self):
     # The first item of each build_and_config tuple.
@@ -117,6 +122,7 @@ class ResultDBTest(testing.AppengineTestCase):
                                 table='all_test_results',
                             )
                         ],
+                        producer_resource='//buildbucket.example.com/builds/4',
                     ),
                 )
             ],

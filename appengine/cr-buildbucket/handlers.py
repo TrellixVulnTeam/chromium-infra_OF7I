@@ -173,6 +173,7 @@ def get_frontend_routes():  # pragma: no cover
       webapp2.Route(r'/', MainHandler),
       webapp2.Route(r'/b/<build_id:\d+>', BuildRPCHandler),
       webapp2.Route(r'/build/<build_id:\d+>', ViewBuildHandler),
+      webapp2.Route(r'/builds/<build_id:\d+>', ViewBuildHandler),
       webapp2.Route(r'/log/<build_id:\d+>/<step_name:.+>', ViewLogHandler),
   ]
   routes.extend(endpoints_webapp2.api_routes(endpoints_services))

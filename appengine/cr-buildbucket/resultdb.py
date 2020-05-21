@@ -7,6 +7,7 @@
 import json
 import logging
 
+from google.appengine.api import app_identity
 from google.appengine.ext import ndb
 import webapp2
 
@@ -47,11 +48,13 @@ def create_invocations_async(builds_and_configs):
       builds_and_configs[0][0].proto.id, len(builds_and_configs) - 1
   )
   req = recorder_pb2.BatchCreateInvocationsRequest(request_id=request_id)
+  bb_host = app_identity.get_default_version_hostname()
   for build, cfg in builds_and_configs:
     req.requests.add(
         invocation_id='build-%d' % build.proto.id,
         invocation=invocation_pb2.Invocation(
             bigquery_exports=cfg.resultdb.bq_exports,
+            producer_resource='//%s/builds/%s' % (bb_host, build.key.id()),
         ),
     )
   res = yield _recorder_client(resultdb_host).BatchCreateInvocationsAsync(
