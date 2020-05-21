@@ -616,7 +616,7 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings):
     build_proto.infra.recipe.name = builder_cfg.recipe.name
 
   # If the user specified exe.cmd, we do nothing.
-  if not build_proto.exe.cmd:
+  if len(build_proto.exe.cmd) == 0:
     uses_bbagent = config.builder_matches(
         build_proto.builder, settings.swarming.bbagent_package.builders
     )
