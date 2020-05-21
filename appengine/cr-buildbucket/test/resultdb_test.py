@@ -60,16 +60,6 @@ def _make_build_and_config(
   return bundle.build, builder_cfg or _make_builder_cfg()
 
 
-def _mock_create_request_async(response, pb_update_tokens):
-
-  def inner(*_, **__):
-    response.update_tokens.extend(pb_update_tokens)
-    ret = future(response.SerializeToString())
-    return ret
-
-  return inner
-
-
 class ResultDBTest(testing.AppengineTestCase):
 
   def setUp(self):
@@ -85,6 +75,11 @@ class ResultDBTest(testing.AppengineTestCase):
     )
     self.builds_and_configs = None
 
+    self.patch('resultdb._recorder_client')
+    self.rpc_mock = (
+        resultdb._recorder_client.return_value.BatchCreateInvocationsAsync
+    )
+
   @property
   def builds(self):
     # The first item of each build_and_config tuple.
@@ -96,30 +91,38 @@ class ResultDBTest(testing.AppengineTestCase):
     resultdb.create_invocations_async(self.builds_and_configs).get_result()
     self.assertFalse(net.request_async.called)
 
-  def test_cannot_create_invocation(self):
-    self.builds_and_configs = [_make_build_and_config(3)]
-    net.request_async.side_effect = [
-        future_exception(
-            net.Error(
-                'Internal Error',
-                500,
-                'Internal Error',
-                headers={'X-Prpc-Grpc-Code': '2'}
-            )
-        )
-    ]
-    with self.assertRaises(client.RpcError):
-      resultdb.create_invocations_async(self.builds_and_configs).get_result()
-
   def test_invocation_created(self):
     self.builds_and_configs = [_make_build_and_config(4)]
-    response = recorder_pb2.BatchCreateInvocationsResponse(
-        invocations=[invocation_pb2.Invocation(name='invocations/build-4')]
+
+    self.rpc_mock.return_value = future(
+        recorder_pb2.BatchCreateInvocationsResponse(
+            invocations=[invocation_pb2.Invocation(name='invocations/build-4')],
+            update_tokens=['FakeUpdateToken'],
+        )
     )
-    net.request_async.side_effect = _mock_create_request_async(
-        response, ['FakeUpdateToken']
-    )
+
     resultdb.create_invocations_async(self.builds_and_configs).get_result()
+
+    self.rpc_mock.assert_called_with(
+        recorder_pb2.BatchCreateInvocationsRequest(
+            request_id='build-4+0',
+            requests=[
+                dict(
+                    invocation_id='build-4',
+                    invocation=dict(
+                        bigquery_exports=[
+                            dict(
+                                project='luci-resultdb',
+                                dataset='chromium',
+                                table='all_test_results',
+                            )
+                        ],
+                    ),
+                )
+            ],
+        ),
+        credentials=mock.ANY,
+    )
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
         self.builds[0].proto.infra.resultdb.invocation, 'invocations/build-4'
@@ -130,15 +133,17 @@ class ResultDBTest(testing.AppengineTestCase):
         _make_build_and_config(15),
         _make_build_and_config(16)
     ]
-    response = recorder_pb2.BatchCreateInvocationsResponse(
-        invocations=[
-            invocation_pb2.Invocation(name='invocations/build-15'),
-            invocation_pb2.Invocation(name='invocations/build-16'),
-        ]
+
+    self.rpc_mock.return_value = future(
+        recorder_pb2.BatchCreateInvocationsResponse(
+            invocations=[
+                invocation_pb2.Invocation(name='invocations/build-15'),
+                invocation_pb2.Invocation(name='invocations/build-16'),
+            ],
+            update_tokens=['FakeUpdateToken', 'FakeUpdateToken2'],
+        )
     )
-    net.request_async.side_effect = _mock_create_request_async(
-        response, ['FakeUpdateToken', 'FakeUpdateToken2']
-    )
+
     resultdb.create_invocations_async(self.builds_and_configs).get_result()
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
@@ -183,8 +188,9 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
 
   def setUp(self):
     super(ResultDBFinalizeInvocationTest, self).setUp()
-    self.patch('resultdb._call_finalize_rpc')
     self.metadata = {'update-token': 'FakeToken'}
+    self.patch('resultdb._recorder_client')
+    self.rpc_mock = resultdb._recorder_client.return_value.FinalizeInvocation
 
   def _create_and_finalize(self, build_id, hostname=None, invocation=None):
     bundle = build_bundle(
@@ -209,28 +215,30 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
   def test_no_resultdb(self, mock_err):
     self._create_and_finalize(1)
     self.assertFalse(mock_err.called)
-    self.assertFalse(resultdb._call_finalize_rpc.called)
+    self.assertFalse(self.rpc_mock.called)
 
   @mock.patch.object(logging, 'error')
   def test_no_invocation(self, mock_err):
     self._create_and_finalize(2, 'rdb.com')
     self.assertFalse(mock_err.called)
-    self.assertFalse(resultdb._call_finalize_rpc.called)
+    self.assertFalse(self.rpc_mock.called)
 
   @mock.patch.object(logging, 'error')
   def test_no_permission(self, mock_err):
-    resultdb._call_finalize_rpc.side_effect = client.RpcError(
+    self.rpc_mock.side_effect = client.RpcError(
         'Permission Denied', codes.StatusCode.PERMISSION_DENIED, {}
     )
     self._create_and_finalize(3, 'rdb.dev', 'invocations/build-3')
-    resultdb._call_finalize_rpc.assert_called_with(
-        'rdb.dev', self._req('invocations/build-3'), self.metadata
+    self.rpc_mock.assert_called_with(
+        self._req('invocations/build-3'),
+        credentials=mock.ANY,
+        metadata=self.metadata,
     )
     self.assertTrue(mock_err.called)
 
   @mock.patch.object(logging, 'error')
   def test_failed_precondition(self, mock_err):
-    resultdb._call_finalize_rpc.side_effect = client.RpcError(
+    self.rpc_mock.side_effect = client.RpcError(
         'Failed Precondition', codes.StatusCode.FAILED_PRECONDITION, {}
     )
     self._create_and_finalize(4, 'rdb.dev', 'invocations/build-4')
@@ -239,17 +247,21 @@ class ResultDBFinalizeInvocationTest(testing.AppengineTestCase):
   @mock.patch.object(logging, 'error')
   def test_success(self, mock_err):
     self._create_and_finalize(5, 'rdb.dev', 'invocations/build-5')
-    resultdb._call_finalize_rpc.assert_called_with(
-        'rdb.dev', self._req('invocations/build-5'), self.metadata
+    self.rpc_mock.assert_called_with(
+        self._req('invocations/build-5'),
+        credentials=mock.ANY,
+        metadata=self.metadata,
     )
     self.assertFalse(mock_err.called)
 
   def test_transient_fail(self):
-    resultdb._call_finalize_rpc.side_effect = client.RpcError(
+    self.rpc_mock.side_effect = client.RpcError(
         'Unavailable', codes.StatusCode.UNAVAILABLE, {}
     )
     with self.assertRaises(client.RpcError):  # Causes retry.
       self._create_and_finalize(6, 'rdb.dev', 'invocations/build-6')
-    resultdb._call_finalize_rpc.assert_called_with(
-        'rdb.dev', self._req('invocations/build-6'), self.metadata
+    self.rpc_mock.assert_called_with(
+        self._req('invocations/build-6'),
+        credentials=mock.ANY,
+        metadata=self.metadata,
     )

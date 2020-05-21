@@ -42,20 +42,6 @@ def create_invocations_async(builds_and_configs):
     # buildbucket deployment.
     return
 
-  resp = yield _create_invocations_async(builds_and_configs, resultdb_host)
-  assert (
-      len(resp.invocations) == len(resp.update_tokens) ==
-      len(builds_and_configs)
-  )
-  for inv, tok, (build, _) in zip(resp.invocations, resp.update_tokens,
-                                  builds_and_configs):
-    build.proto.infra.resultdb.invocation = inv.name
-    build.resultdb_update_token = tok
-
-
-@ndb.tasklet
-def _create_invocations_async(builds_and_configs, hostname):
-  """Creates a batch of invocations in resultdb for the given NewBuilds."""
   # build-<first build id>+<number of other builds in the batch>
   request_id = 'build-%d+%d' % (
       builds_and_configs[0][0].proto.id, len(builds_and_configs) - 1
@@ -68,18 +54,19 @@ def _create_invocations_async(builds_and_configs, hostname):
             bigquery_exports=cfg.resultdb.bq_exports,
         ),
     )
-  response_metadata = {}
-  recorder = client.Client(
-      hostname,
-      recorder_prpc_pb2.RecorderServiceDescription,
-  )
-  ret = yield recorder.BatchCreateInvocationsAsync(
+  res = yield _recorder_client(resultdb_host).BatchCreateInvocationsAsync(
       req,
       credentials=client.service_account_credentials(),
-      response_metadata=response_metadata,
   )
-  assert ret.update_tokens
-  raise ndb.Return(ret)
+  assert res.update_tokens
+
+  assert (
+      len(res.invocations) == len(res.update_tokens) == len(builds_and_configs)
+  )
+  for inv, tok, (build, _) in zip(res.invocations, res.update_tokens,
+                                  builds_and_configs):
+    build.proto.infra.resultdb.invocation = inv.name
+    build.resultdb_update_token = tok
 
 
 def enqueue_invocation_finalization_async(build):
@@ -115,10 +102,10 @@ def _finalize_invocation(build_id):
     return
 
   try:
-    _ = _call_finalize_rpc(
-        rdb.hostname,
+    _recorder_client(rdb.hostname).FinalizeInvocation(
         recorder_pb2.FinalizeInvocationRequest(name=rdb.invocation),
-        {'update-token': bundle.build.resultdb_update_token},
+        credentials=client.service_account_credentials(),
+        metadata={'update-token': bundle.build.resultdb_update_token},
     )
   except client.RpcError as rpce:
     if rpce.status_code in (codes.StatusCode.FAILED_PRECONDITION,
@@ -128,11 +115,5 @@ def _finalize_invocation(build_id):
       raise  # Retry other errors.
 
 
-def _call_finalize_rpc(host, req, metadata):  # pragma: no cover
-  recorder = client.Client(
-      host,
-      recorder_prpc_pb2.RecorderServiceDescription,
-  )
-  return recorder.FinalizeInvocation(
-      req, credentials=client.service_account_credentials(), metadata=metadata
-  )
+def _recorder_client(hostname):  # pragma: no cover
+  return client.Client(hostname, recorder_prpc_pb2.RecorderServiceDescription)
