@@ -318,7 +318,7 @@ message ProjectSavedQuery {
 
 
 // Defines a template for filling issues.
-// Next available tag: 9
+// Next available tag: 10
 message IssueTemplate {
   option (google.api.resource) = {
     type: "api.crbug.com/Template"
@@ -330,6 +330,8 @@ message IssueTemplate {
   string display_name = 2 [(google.api.field_behavior) = IMMUTABLE];
   // Canonical Issue for this template
   Issue issue = 3;
+  // ApprovalValues to be created with the issue when using this template.
+  repeated ApprovalValue approval_values = 9;
   // Boolean indicating subsequent issue creation must have delta in summary
   bool summary_must_be_edited = 4;
   // Visibility permission of template

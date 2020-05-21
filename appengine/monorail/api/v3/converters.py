@@ -923,11 +923,15 @@ class Converter(object):
       component_required = template.component_required
       admins = rnc.ConvertUserNames(template.admin_ids).values()
       issue = self._FillIssueFromTemplate(template, project_id)
+      approval_values = self.ConvertApprovalValues(
+          template.approval_values, template.field_values, template.phases,
+          project_id=project_id)
       api_templates.append(
           project_objects_pb2.IssueTemplate(
               name=name,
               display_name=template.name,
               issue=issue,
+              approval_values=approval_values,
               summary_must_be_edited=summary_must_be_edited,
               template_privacy=template_privacy,
               default_owner=default_owner,

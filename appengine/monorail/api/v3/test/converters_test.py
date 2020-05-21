@@ -1208,6 +1208,11 @@ class ConverterFunctionsTest(unittest.TestCase):
         actual.issue,
         self.converter._FillIssueFromTemplate(
             self.template_1, self.project_1.project_id))
+    self.assertListEqual(
+        [av for av in actual.approval_values],
+        self.converter.ConvertApprovalValues(
+            self.template_1.approval_values, self.template_1.field_values,
+            self.template_1.phases, project_id=self.project_1.project_id))
 
   def testConvertIssueTemplates_IgnoresNonExistentTemplate(self):
     result = self.converter.ConvertIssueTemplates(
