@@ -208,7 +208,7 @@ export class MrMetadata extends connectStore(LitElement) {
       case 'slo':
         if (isExperimentEnabled(SLO_EXPERIMENT, this.currentUser)) {
           // TODO(crbug.com/monorail/7740): SLO rendering implementation.
-          return EMPTY_FIELD_VALUE;
+          return html`<mr-issue-slo></mr-issue-slo>`;
         } else {
           return;
         }

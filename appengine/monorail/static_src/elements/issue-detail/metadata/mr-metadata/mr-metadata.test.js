@@ -210,10 +210,10 @@ describe('mr-metadata', () => {
 
       const tr = element.shadowRoot.querySelector('tr.row-slo');
       const labelElement = tr.querySelector('th');
-      const dataElement = tr.querySelector('td');
+      const dataElement = tr.querySelector('mr-issue-slo');
 
       assert.equal(labelElement.textContent, 'SLO:');
-      assert.equal(dataElement.textContent.trim(), EMPTY_FIELD_VALUE);
+      assert.equal(dataElement.shadowRoot.textContent.trim(), 'N/A');
     });
   });
 
