@@ -9,6 +9,7 @@ import copy
 import datetime
 import hashlib
 import itertools
+import json
 import logging
 import random
 
@@ -592,9 +593,6 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings):
     build_proto.execution_timeout.FromTimedelta(_DEFAULT_EXECUTION_TIMEOUT)
 
   # Populate input.
-  build_proto.input.properties.update(
-      flatten_swarmingcfg.read_properties(builder_cfg.recipe)
-  )
 
   build_proto.input.experimental = (
       builder_cfg.experimental == project_config_pb2.YES
@@ -611,9 +609,14 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings):
     build_proto.exe.cipd_version = (
         builder_cfg.recipe.cipd_version or 'refs/heads/master'
     )
+    build_proto.input.properties.update(
+        flatten_swarmingcfg.read_properties(builder_cfg.recipe)
+    )
     build_proto.input.properties['recipe'] = builder_cfg.recipe.name
     build_proto.infra.recipe.cipd_package = builder_cfg.recipe.cipd_package
     build_proto.infra.recipe.name = builder_cfg.recipe.name
+  elif builder_cfg.properties:  # pragma: no branch
+    build_proto.input.properties.update(json.loads(builder_cfg.properties))
 
   # If the user specified exe.cmd, we do nothing.
   if not build_proto.exe.cmd:

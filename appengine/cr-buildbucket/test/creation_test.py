@@ -79,6 +79,7 @@ class CreationTest(testing.AppengineTestCase):
               cmd: "-custom"
               cmd: "-flags"
             }
+            properties: "{\\"recipe\\":\\"something\\"}"
           }
           builders {
             name: "mac"
@@ -205,6 +206,10 @@ class CreationTest(testing.AppengineTestCase):
     )
     build = self.add(dict(builder=builder_id))
     self.assertEqual(build.proto.exe.cmd, ['luciexe', '-custom', '-flags'])
+
+    in_props = model.BuildInputProperties.key_for(build.key).get()
+    actual = in_props.parse()
+    self.assertEqual(actual, bbutil.dict_to_struct({"recipe": "something"}))
 
   def test_non_existing_builder(self):
     builder_id = build_pb2.BuilderID(

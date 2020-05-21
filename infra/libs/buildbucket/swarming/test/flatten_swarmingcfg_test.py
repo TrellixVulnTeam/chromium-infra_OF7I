@@ -400,6 +400,51 @@ class ProjectCfgTest(unittest.TestCase):
       ''',
     )
 
+    # properties
+    test(
+        '''
+          buckets {
+            name: "bucket"
+            swarming {
+              builder_defaults {
+                properties: "{\\"recipe\\":\\"world\\"}"
+              }
+              builders {
+                name: "default"
+                properties: "{\\"fleem\\":\\"baz\\"}"
+              }
+            }
+          }
+        ''',
+        '''
+          name: "default"
+          properties: "{\\"fleem\\":\\"baz\\",\\"recipe\\":\\"world\\"}"
+      ''',
+    )
+
+    # properties override
+    test(
+        '''
+          buckets {
+            name: "bucket"
+            swarming {
+              builder_defaults {
+                properties: "{\\"recipe\\":\\"world\\"}"
+              }
+              builders {
+                name: "default"
+                properties: "{\\"fleem\\":\\"baz\\",\\"recipe\\":\\"nope\\"}"
+              }
+            }
+          }
+        ''',
+        '''
+          name: "default"
+          properties: "{\\"fleem\\":\\"baz\\",\\"recipe\\":\\"nope\\"}"
+      ''',
+    )
+
+
 
   def test_merge_toggle(self):
     unset = project_config_pb2.Builder()
