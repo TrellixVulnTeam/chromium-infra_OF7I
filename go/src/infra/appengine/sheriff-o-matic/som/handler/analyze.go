@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -14,6 +16,7 @@ import (
 	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/analyzer"
 	"infra/appengine/sheriff-o-matic/som/client"
+	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/appengine/sheriff-o-matic/som/model/gen"
 	"infra/monitoring/messages"
 
@@ -209,7 +212,8 @@ func getKeyForAlert(ctx context.Context, bf *messages.BuildFailure, tree string)
 	bucket := bf.Builders[0].Bucket
 	builder := bf.Builders[0].Name
 	firstFailure := bf.Builders[0].FirstFailure
-	return fmt.Sprintf("%s:%s:%s:%s:%s:%d", tree, project, bucket, builder, step, firstFailure)
+	strs := []string{tree, project, bucket, builder, step, strconv.FormatInt(firstFailure, 10)}
+	return strings.Join(strs, model.AlertKeySeparator)
 }
 
 func attachFindItResults(ctx context.Context, failures []*messages.BuildFailure, finditClient client.FindIt) {

@@ -121,20 +121,20 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 
 		alerts := []*model.AlertJSONNonGrouping{
 			{
-				ID: "tree:project:bucket:builder1:step1:0",
+				ID: "tree$!project$!bucket$!builder1$!step1$!0",
 			},
 			{
-				ID: "tree:project:bucket:builder1:step2:0",
+				ID: "tree$!project$!bucket$!builder1$!step2$!0",
 			},
 			{
-				ID: "tree:project:bucket:builder2:step2:0",
+				ID: "tree$!project$!bucket$!builder2$!step2$!0",
 			},
 		}
 
 		expected := []*model.AnnotationNonGrouping{
 			{
-				Key:        "tree:project:bucket:builder1:step1:0",
-				KeyDigest:  "9571f9904d25259886f8c1c74c743b5b8201e1ca",
+				Key:        "tree$!project$!bucket$!builder1$!step1$!0",
+				KeyDigest:  "5e898632e69015f37557efbdc8314d7afa316883",
 				SnoozeTime: 123,
 				Bugs: []model.MonorailBug{
 					{
@@ -166,13 +166,13 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				},
 			},
 			{
-				Key:       "tree:project:bucket:builder1:step2:0",
-				KeyDigest: "5c2976aae380eb2de0b09c20a8bfe947a03d8483",
+				Key:       "tree$!project$!bucket$!builder1$!step2$!0",
+				KeyDigest: "b56302326d7b4cd5dbee9d506aaad19f50143315",
 				GroupID:   "group 1",
 			},
 			{
-				Key:       "tree:project:bucket:builder2:step2:0",
-				KeyDigest: "67ea5df8c714f4046ac970ba16236a86180312b8",
+				Key:       "tree$!project$!bucket$!builder2$!step2$!0",
+				KeyDigest: "66d36fb329c2af86fa19a695825877517c56b6ff",
 				GroupID:   "group 1",
 			},
 		}
@@ -235,13 +235,13 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 
 		alerts := []*model.AlertJSONNonGrouping{
 			{
-				ID: "tree:project:bucket:builder1:step1:0",
+				ID: "tree$!project$!bucket$!builder1$!step1$!0",
 			},
 			{
-				ID: "tree:project:bucket:builder1:step2:0",
+				ID: "tree$!project$!bucket$!builder1$!step2$!0",
 			},
 			{
-				ID: "tree:project:bucket:builder2:step2:0",
+				ID: "tree$!project$!bucket$!builder2$!step2$!0",
 			},
 		}
 
@@ -263,8 +263,8 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				},
 			},
 			{
-				Key:        "tree:project:bucket:builder1:step1:0",
-				KeyDigest:  "9571f9904d25259886f8c1c74c743b5b8201e1ca",
+				Key:        "tree$!project$!bucket$!builder1$!step1$!0",
+				KeyDigest:  "5e898632e69015f37557efbdc8314d7afa316883",
 				SnoozeTime: 123,
 				Bugs: []model.MonorailBug{
 					{
@@ -281,8 +281,8 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 			},
 
 			{
-				Key:        "tree:project:bucket:builder1:step2:0",
-				KeyDigest:  "5c2976aae380eb2de0b09c20a8bfe947a03d8483",
+				Key:        "tree$!project$!bucket$!builder1$!step2$!0",
+				KeyDigest:  "b56302326d7b4cd5dbee9d506aaad19f50143315",
 				SnoozeTime: 456,
 				Bugs: []model.MonorailBug{
 					{
@@ -298,8 +298,8 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				GroupID: "e2d935ac-c623-4c10-b1e3-73bb54584f8f",
 			},
 			{
-				Key:        "tree:project:bucket:builder2:step2:0",
-				KeyDigest:  "67ea5df8c714f4046ac970ba16236a86180312b8",
+				Key:        "tree$!project$!bucket$!builder2$!step2$!0",
+				KeyDigest:  "66d36fb329c2af86fa19a695825877517c56b6ff",
 				SnoozeTime: 456,
 				Bugs: []model.MonorailBug{
 					{

@@ -33,6 +33,8 @@ import (
 const (
 	bqDatasetID = "events"
 	bqTableID   = "annotations"
+	// AlertKeySeparator separates fields in AlertJSONNonGrouping Key.
+	AlertKeySeparator = "$!"
 )
 
 // Tree is a tree which sheriff-o-matic receives and groups alerts for.
@@ -180,7 +182,7 @@ func removeFromBugList(knownBugs []MonorailBug, bugToRemove MonorailBug) []Monor
 // GetStepName retrieves step name for an alert.
 func (a *AlertJSONNonGrouping) GetStepName() (string, error) {
 	// ID is of format  tree:project:bucket:builder:step:firstFailure
-	fields := strings.Split(a.ID, ":")
+	fields := strings.Split(a.ID, AlertKeySeparator)
 	if len(fields) != 6 {
 		return "", fmt.Errorf("invalid alert id %q", a.ID)
 	}

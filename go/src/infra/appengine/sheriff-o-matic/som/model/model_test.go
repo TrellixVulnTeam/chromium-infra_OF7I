@@ -218,7 +218,7 @@ func TestAnnotation(t *testing.T) {
 func TestAlertJSONNonGroupingGetStepName(t *testing.T) {
 	Convey("valid ID", t, func() {
 		ann := &AlertJSONNonGrouping{
-			ID: "tree:project:bucket:builder:step:0",
+			ID: "tree$!project$!bucket$!builder$!step$!0",
 		}
 		stepName, err := ann.GetStepName()
 		So(err, ShouldBeNil)
@@ -233,7 +233,7 @@ func TestAlertJSONNonGroupingGetStepName(t *testing.T) {
 	})
 	Convey("invalid ID 1", t, func() {
 		ann := &AlertJSONNonGrouping{
-			ID: "1:2:3:4:5:6:7",
+			ID: "1$!2$!3$!4$!5$!6$!7",
 		}
 		_, err := ann.GetStepName()
 		So(err, ShouldNotBeNil)
