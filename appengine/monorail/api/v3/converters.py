@@ -1305,3 +1305,40 @@ class Converter(object):
       )
       api_cds.append(api_cd)
     return api_cds
+
+  def ConvertProjectSavedQueries(self, saved_queries, project_id):
+    # type: (Sequence[proto.tracker_pb2.SavedQuery], int) ->
+    #     Sequence(api_proto.project_objects.ProjectSavedQuery)
+    """Convert sequence of protorpc SavedQueries to protoc ProjectSavedQueries
+
+    Args:
+      saved_queries: Sequence of SavedQueries.
+      project_id: ID of the Project these belong to.
+
+    Returns:
+      Sequence of protoc ProjectSavedQueries in the same order they are given in
+      `saved_queries`. In the event any items in `saved_queries` are not found
+      or don't belong to the project, they will be omitted from the result.
+    """
+    resource_names_dict = rnc.ConvertProjectSavedQueryNames(
+        self.cnxn, [sq.query_id for sq in saved_queries], project_id,
+        self.services)
+    api_psqs = []
+    for sq in saved_queries:
+      if sq.query_id not in resource_names_dict:
+        continue
+
+      # TODO(crbug/monorail/7756): Remove base_query_id, avoid confusions.
+      # Until then we have to expand the query by including base_query_id.
+      # base_query_id can only be in the set of DEFAULT_CANNED_QUERIES.
+      if sq.base_query_id:
+        query = '{} {}'.format(tbo.GetBuiltInQuery(sq.base_query_id), sq.query)
+      else:
+        query = sq.query
+
+      api_psqs.append(
+          project_objects_pb2.ProjectSavedQuery(
+              name=resource_names_dict.get(sq.query_id),
+              display_name=sq.name,
+              query=query))
+    return api_psqs

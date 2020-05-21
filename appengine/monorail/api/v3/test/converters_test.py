@@ -25,6 +25,7 @@ from testing import fake
 from testing import testing_helpers
 from services import service_manager
 from proto import tracker_pb2
+from tracker import tracker_bizobj as tbo
 
 EXPLICIT_DERIVATION = issue_objects_pb2.Derivation.Value('EXPLICIT')
 RULE_DERIVATION = issue_objects_pb2.Derivation.Value('RULE')
@@ -40,7 +41,8 @@ class ConverterFunctionsTest(unittest.TestCase):
         usergroup=fake.UserGroupService(),
         user=fake.UserService(),
         config=fake.ConfigService(),
-        template=fake.TemplateService())
+        template=fake.TemplateService(),
+        features=fake.FeaturesService())
     self.cnxn = fake.MonorailConnection()
     self.mc = monorailcontext.MonorailContext(self.services, cnxn=self.cnxn)
     self.converter = converters.Converter(self.mc, self.services)
@@ -271,6 +273,13 @@ class ConverterFunctionsTest(unittest.TestCase):
             (sd.status, sd.status_docstring, sd.means_open, sd.deprecated)
             for sd in self.predefined_statuses
         ])
+    # base_query_id 2 equates to "is:open", defined in tracker_constants.
+    self.psq_1 = tracker_pb2.SavedQuery(
+        query_id=2, name='psq1 name', base_query_id=2, query='foo=bar')
+    self.psq_2 = tracker_pb2.SavedQuery(
+        query_id=3, name='psq2 name', query='fizz=buzz')
+    self.services.features.UpdateCannedQueries(
+        self.cnxn, self.project_1.project_id, [self.psq_1, self.psq_2])
 
   def _CreateFieldDef(
       self,
@@ -1793,4 +1802,41 @@ class ConverterFunctionsTest(unittest.TestCase):
   def testConvertComponentDefs_Empty(self):
     """Can handle empty input case"""
     actual = self.converter.ConvertComponentDefs([], self.project_1.project_id)
+    self.assertEqual([], actual)
+
+  def testConvertProjectSavedQueries(self):
+    """We can convert ProjectSavedQueries"""
+    input_psqs = [self.psq_2]
+    actual = self.converter.ConvertProjectSavedQueries(
+        input_psqs, self.project_1.project_id)
+    self.assertEqual(1, len(actual))
+
+    resource_names_dict = rnc.ConvertProjectSavedQueryNames(
+        self.cnxn, [self.psq_2.query_id], self.project_1.project_id,
+        self.services)
+    self.assertEqual(
+        resource_names_dict.get(self.psq_2.query_id), actual[0].name)
+    self.assertEqual(self.psq_2.name, actual[0].display_name)
+    self.assertEqual(self.psq_2.query, actual[0].query)
+
+  def testConvertProjectSavedQueries_ExpandsBasedOn(self):
+    """We expand query to include base_query_id"""
+    actual = self.converter.ConvertProjectSavedQueries(
+        [self.psq_1], self.project_1.project_id)
+    expected_query = '{} {}'.format(
+        tbo.GetBuiltInQuery(self.psq_1.base_query_id), self.psq_1.query)
+    self.assertEqual(expected_query, actual[0].query)
+
+  def testConvertProjectSavedQueries_NotInProject(self):
+    """We skip over saved queries that don't belong to this project"""
+    psq_not_registered = tracker_pb2.SavedQuery(
+        query_id=4, name='psq no registered name', query='no registered')
+    actual = self.converter.ConvertProjectSavedQueries(
+        [psq_not_registered], self.project_1.project_id)
+    self.assertEqual([], actual)
+
+  def testConvertProjectSavedQueries_Empty(self):
+    """We can handle empty inputs"""
+    actual = self.converter.ConvertProjectSavedQueries(
+        [], self.project_1.project_id)
     self.assertEqual([], actual)
