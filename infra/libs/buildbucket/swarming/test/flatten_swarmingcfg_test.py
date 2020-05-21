@@ -351,6 +351,56 @@ class ProjectCfgTest(unittest.TestCase):
       ''',
     )
 
+    # exe.cmd
+    test(
+        '''
+          buckets {
+            name: "bucket"
+            swarming {
+              builder_defaults {
+                exe {
+                  cmd: "luciexe"
+                }
+              }
+              builders {
+                name: "default"
+              }
+            }
+          }
+        ''',
+        '''
+          name: "default"
+          exe { cmd: "luciexe" }
+      ''',
+    )
+
+    # exe.cmd
+    test(
+        '''
+          buckets {
+            name: "bucket"
+            swarming {
+              builder_defaults {
+                exe {
+                  cmd: "luciexe"
+                }
+              }
+              builders {
+                name: "override"
+                exe {
+                  cmd: "recipes"
+                }
+              }
+            }
+          }
+        ''',
+        '''
+          name: "override"
+          exe { cmd: "recipes" }
+      ''',
+    )
+
+
   def test_merge_toggle(self):
     unset = project_config_pb2.Builder()
     yes = project_config_pb2.Builder(experimental=project_config_pb2.YES)
@@ -382,3 +432,6 @@ class ProjectCfgTest(unittest.TestCase):
 
     flatten_swarmingcfg.merge_builder(b, no)
     self.assertEqual(b.luci_migration_host, '-')
+
+if __name__ == '__main__':
+  unittest.main()

@@ -90,6 +90,10 @@ def merge_builder(b1, b2):
   if b1.HasField('recipe') or b2.HasField('recipe'):  # pragma: no branch
     recipe = copy.deepcopy(b1.recipe)
     _merge_recipe(recipe, b2.recipe)
+  exe = None
+  if b1.HasField('exe') or b2.HasField('exe'):  # pragma: no branch
+    exe = copy.deepcopy(b1.exe)
+    _merge_exe(exe, b2.exe)
 
   b1.MergeFrom(b2)
   b1.dimensions[:] = format_dimensions(dims)
@@ -104,6 +108,9 @@ def merge_builder(b1, b2):
 
   if properties:
     b1.properties = properties
+
+  if exe:
+    b1.exe.CopyFrom(exe)
 
 
 def flatten_builder(builder, defaults, mixins):
@@ -156,6 +163,18 @@ def _merge_recipe(r1, r2):
       for k, v in sorted(props.iteritems())
       if v is not None
   ]
+
+
+def _merge_exe(e1, e2):
+  """Merges Executable message e2 into e1.
+
+  Expects messages to be valid.
+
+  Non-empty "cmd" field from e2 overwrites e1, if specified.
+  """
+  e1.MergeFrom(e2)
+  if e2.cmd:
+    e1.cmd[:] = e2.cmd
 
 
 def _merge_properties(p1, p2):
