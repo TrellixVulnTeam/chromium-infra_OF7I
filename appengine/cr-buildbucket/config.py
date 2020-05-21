@@ -578,3 +578,26 @@ def builder_id_string(builder_id_message):  # pragma: no cover
   """Returns a canonical string representation of a BuilderID."""
   bid = builder_id_message
   return '%s/%s/%s' % (bid.project, bid.bucket, bid.builder)
+
+
+def builder_matches(builder_id_msg, predicate):
+  """Returns True iff builder_id_msg matches the predicate.
+
+  Args:
+    * builder_id_msg (build_pb2.BuilderID)
+    * predicate (service_config_pb2.BuilderPredicate)
+  """
+  builder_str = builder_id_string(builder_id_msg)
+
+  def _matches(regex_list):
+    for pattern in regex_list:
+      try:
+        if re.match('^%s$' % pattern, builder_str):
+          return True
+      except re.error:  # pragma: no cover
+        logging.exception('Regex %r failed on %r', pattern, builder_str)
+    return False
+
+  if _matches(predicate.regex_exclude):
+    return False
+  return not predicate.regex or _matches(predicate.regex)

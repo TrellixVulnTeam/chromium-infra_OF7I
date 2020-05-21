@@ -131,7 +131,7 @@ def compute_task_def(build, settings, fake_build):
 
   task = {
       'name': 'bb-%d-%s' % (build.proto.id, build.builder_id),
-      'tags': _compute_tags(build, settings),
+      'tags': _compute_tags(build),
       'priority': str(sw.priority),
       'task_slices': _compute_task_slices(build, settings),
   }
@@ -162,7 +162,7 @@ def compute_task_def(build, settings, fake_build):
   return task
 
 
-def _compute_tags(build, settings):
+def _compute_tags(build):
   """Computes the Swarming task request tags to use."""
   tags = {
       'buildbucket_bucket:%s' % build.bucket_id,
@@ -177,8 +177,7 @@ def _compute_tags(build, settings):
       'luci_project:%s' % build.proto.builder.project,
   }
 
-  if not _builder_matches(build.proto.builder,
-                          settings.swarming.bbagent_package.builders):
+  if build.proto.exe.cmd[:1] == ['recipes']:
     logdog = build.proto.infra.logdog
     tags.add(
         'log_location:logdog://%s/%s/%s/+/annotations' %
@@ -317,7 +316,7 @@ def _compute_cipd_input(build, settings):
       },
   ]
   for up in settings.swarming.user_packages:
-    if _builder_matches(build.proto.builder, up.builders):
+    if config.builder_matches(build.proto.builder, up.builders):
       path = USER_PACKAGE_DIR
       if up.subdir:
         path = posixpath.join(path, up.subdir)
@@ -328,8 +327,7 @@ def _compute_cipd_input(build, settings):
 
 
 def _compute_command(build, settings):
-  if _builder_matches(build.proto.builder,
-                      settings.swarming.bbagent_package.builders):
+  if build.proto.exe.cmd[:1] != ['recipes']:
     return _compute_bbagent(build, settings)
 
   logdog = build.proto.infra.logdog
@@ -417,19 +415,17 @@ def _cli_encode_proto(message):
 
 def _compute_bbagent(build, settings):
   """Returns the command for bbagent."""
-  is_windows = any(
-      dim.key == 'os' and dim.value.startswith('Windows')
-      for dim in build.proto.infra.swarming.task_dimensions
-  )
-  sep = "\\" if is_windows else "/"
-
-  args = launcher_pb2.BBAgentArgs(
-      executable_path=sep.join((_KITCHEN_CHECKOUT, 'luciexe')),
-      cache_dir=_CACHE_DIR,
-      known_public_gerrit_hosts=settings.known_public_gerrit_hosts,
-      build=build.proto,
-  )
-  return [u'bbagent${EXECUTABLE_SUFFIX}', _cli_encode_proto(args)]
+  return [
+      u'bbagent${EXECUTABLE_SUFFIX}',
+      _cli_encode_proto(
+          launcher_pb2.BBAgentArgs(
+              payload_path=_KITCHEN_CHECKOUT,
+              cache_dir=_CACHE_DIR,
+              known_public_gerrit_hosts=settings.known_public_gerrit_hosts,
+              build=build.proto,
+          )
+      ),
+  ]
 
 
 def validate_build(build):
@@ -1081,20 +1077,3 @@ def _end_build(build_id, status, summary_markdown='', end_time=None):
   build = txn()
   if build:  # pragma: no branch
     events.on_build_completed(build)
-
-
-def _builder_matches(builder_id, predicate):
-  bs = config.builder_id_string(builder_id)
-
-  def matches(regex_list):
-    for r in regex_list:
-      try:
-        if re.match('^%s$' % r, bs):
-          return True
-      except re.error:  # pragma: no cover
-        logging.exception('Regex %r failed on %r', r, bs)
-    return False
-
-  if matches(predicate.regex_exclude):
-    return False
-  return not predicate.regex or matches(predicate.regex)

@@ -150,13 +150,12 @@ class BuildRequest(_BuildRequestBase):
     """
     sbr = self.schedule_build_request
 
-    bp = build_pb2.Build()
+    bp = build_pb2.Build(id=build_id, builder=sbr.builder)
+
     _apply_global_settings(settings, bp)
     if builder_cfg:  # pragma: no branch
-      yield _apply_builder_config_async(builder_cfg, bp)
+      yield _apply_builder_config_async(builder_cfg, bp, settings)
 
-    bp.id = build_id
-    bp.builder.CopyFrom(sbr.builder)
     bp.status = common_pb2.SCHEDULED
     bp.created_by = created_by.to_bytes()
     bp.create_time.FromDatetime(now)
@@ -574,7 +573,7 @@ def _apply_global_settings(settings, build_proto):
 
 
 @ndb.tasklet
-def _apply_builder_config_async(builder_cfg, build_proto):
+def _apply_builder_config_async(builder_cfg, build_proto, settings):
   """Applies project_config_pb2.Builder to a builds_pb2.Build."""
   # Decide if the build will be canary.
   canary_percentage = _DEFAULT_CANARY_PERCENTAGE
@@ -607,7 +606,7 @@ def _apply_builder_config_async(builder_cfg, build_proto):
   # Populate exe.
   build_proto.exe.CopyFrom(builder_cfg.exe)
   # TODO(nodir): remove builder_cfg.recipe. Use only builder_cfg.exe.
-  if builder_cfg.HasField('recipe'):  # pragma: no branch
+  if builder_cfg.HasField('recipe'):
     build_proto.exe.cipd_package = builder_cfg.recipe.cipd_package
     build_proto.exe.cipd_version = (
         builder_cfg.recipe.cipd_version or 'refs/heads/master'
@@ -615,6 +614,20 @@ def _apply_builder_config_async(builder_cfg, build_proto):
     build_proto.input.properties['recipe'] = builder_cfg.recipe.name
     build_proto.infra.recipe.cipd_package = builder_cfg.recipe.cipd_package
     build_proto.infra.recipe.name = builder_cfg.recipe.name
+
+  # If the user specified exe.cmd, we do nothing.
+  if not build_proto.exe.cmd:
+    uses_bbagent = config.builder_matches(
+        build_proto.builder, settings.swarming.bbagent_package.builders
+    )
+    build_proto.exe.cmd.append('luciexe' if uses_bbagent else 'recipes')
+
+  # At this point, build_proto.exe.cmd will be set.
+  #
+  # If its first token is 'recipes', then we're using kitchen. All other values
+  # use bbagent.
+  #
+  # All recipe bundles already support both 'recipes' and 'luciexe' entrypoints.
 
   # Populate swarming fields.
   sw = build_proto.infra.swarming

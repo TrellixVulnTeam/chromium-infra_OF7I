@@ -76,6 +76,7 @@ BUILD_DEFAULTS = build_pb2.Build(
     exe=dict(
         cipd_package='infra/recipe_bundle',
         cipd_version='refs/heads/master',
+        cmd=['luciexe'],
     ),
     infra=dict(
         swarming=dict(

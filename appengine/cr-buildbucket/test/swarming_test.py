@@ -454,7 +454,7 @@ class TaskDefTest(BaseTest):
     actual = self.compute_task_def(build)
 
     expected_args = launcher_pb2.BBAgentArgs(
-        executable_path=swarming._KITCHEN_CHECKOUT + '/luciexe',
+        payload_path=swarming._KITCHEN_CHECKOUT,
         cache_dir=swarming._CACHE_DIR,
         known_public_gerrit_hosts=['chromium-review.googlesource.com'],
         build=build.proto,
@@ -570,8 +570,12 @@ class TaskDefTest(BaseTest):
     #   l % 4 == 1 -> =                (ex "aGk=")
     #   l % 4 == 2 -> ==               (ex "aA==")
     #   l % 4 == 3 -> <invalid state>  (cannot happen in well-formed base64)
-    padding = '=' * (4 - (len(cli_blob) % 4))
-    self.assertLessEqual(len(padding), 2)  # should be '', '=', or '=='
+    remainder = len(cli_blob) % 4
+    if remainder:  # pragma: no cover
+      padding = '=' * (4 - remainder)
+      self.assertLessEqual(len(padding), 2)  # should be '', '=', or '=='
+    else:  # pragma: no cover
+      padding = ''
 
     args = launcher_pb2.BBAgentArgs()
     args.ParseFromString((cli_blob + padding).decode('base64').decode('zlib'))
@@ -586,6 +590,7 @@ class TaskDefTest(BaseTest):
             project='chromium', bucket='try', builder='linux_kitchen'
         ),
     )
+    build.proto.exe.cmd[0] = 'recipes'
     actual = self.compute_task_def(build)
 
     self.assertEqual([
@@ -631,25 +636,6 @@ class TaskDefTest(BaseTest):
         swarming._generate_build_url(None, build),
         ('https://swarming.example.com/task?id=deadbeef')
     )
-
-  @parameterized.expand([
-      ([], [], True),
-      ([], ['chromium/.+'], False),
-      ([], ['v8/.+'], True),
-      (['chromium/.+'], [], True),
-      (['v8/.+'], [], False),
-  ])
-  def test_builder_matches(self, regex, regex_exclude, expected):
-    predicate = service_config_pb2.BuilderPredicate(
-        regex=regex, regex_exclude=regex_exclude
-    )
-    builder_id = build_pb2.BuilderID(
-        project='chromium',
-        bucket='try',
-        builder='linux-rel',
-    )
-    actual = swarming._builder_matches(builder_id, predicate)
-    self.assertEqual(expected, actual)
 
 
 class SyncBuildTest(BaseTest):

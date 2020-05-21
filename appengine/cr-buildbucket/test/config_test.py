@@ -20,7 +20,9 @@ from components.config import validation_context
 from testing_utils import testing
 import mock
 
+from go.chromium.org.luci.buildbucket.proto import build_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
 import config
 import errors
@@ -864,3 +866,25 @@ class ValidateBucketIDTest(testing.AppengineTestCase):
     # We must never pass legacy bucket id to validate_bucket_id().
     with self.assertRaises(AssertionError):
       config.validate_bucket_id(bucket_id)
+
+
+class BuilderMatchesTest(testing.AppengineTestCase):
+
+  @parameterized.expand([
+      ([], [], True),
+      ([], ['chromium/.+'], False),
+      ([], ['v8/.+'], True),
+      (['chromium/.+'], [], True),
+      (['v8/.+'], [], False),
+  ])
+  def test_builder_matches(self, regex, regex_exclude, expected):
+    predicate = service_config_pb2.BuilderPredicate(
+        regex=regex, regex_exclude=regex_exclude
+    )
+    builder_id = build_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='linux-rel',
+    )
+    actual = config.builder_matches(builder_id, predicate)
+    self.assertEqual(expected, actual)

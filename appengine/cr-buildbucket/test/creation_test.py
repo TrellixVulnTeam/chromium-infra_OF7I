@@ -59,6 +59,28 @@ class CreationTest(testing.AppengineTestCase):
             }
           }
           builders {
+            name: "linux_legacy"
+            build_numbers: YES
+            swarming_host: "chromium-swarm.appspot.com"
+            recipe {
+              name: "recipe"
+              cipd_package: "infra/recipe_bundle"
+              cipd_version: "refs/heads/master"
+            }
+          }
+          builders {
+            name: "linux_modern"
+            build_numbers: YES
+            swarming_host: "chromium-swarm.appspot.com"
+            exe {
+              cipd_package: "infra/recipe_bundle"
+              cipd_version: "refs/heads/master"
+              cmd: "luciexe"
+              cmd: "-custom"
+              cmd: "-flags"
+            }
+          }
+          builders {
             name: "mac"
             swarming_host: "chromium-swarm.appspot.com"
             recipe {
@@ -98,6 +120,9 @@ class CreationTest(testing.AppengineTestCase):
     self.settings = service_config_pb2.SettingsCfg(
         swarming=dict(global_caches=[dict(path='git')]),
         logdog=dict(hostname='logs.example.com'),
+    )
+    self.settings.swarming.bbagent_package.builders.regex_exclude.append(
+        'chromium/try/linux_legacy',
     )
     self.patch(
         'config.get_settings_async',
@@ -147,6 +172,8 @@ class CreationTest(testing.AppengineTestCase):
         auth.get_current_identity().to_bytes()
     )
 
+    self.assertEqual(build.proto.exe.cmd, ['luciexe'])
+
     self.assertEqual(build.proto.builder.project, 'chromium')
     self.assertEqual(build.proto.builder.bucket, 'try')
     self.assertEqual(build.proto.builder.builder, 'linux')
@@ -160,6 +187,24 @@ class CreationTest(testing.AppengineTestCase):
         ),
         infra.swarming.caches,
     )
+
+  def test_add_legacy(self):
+    builder_id = build_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='linux_legacy',
+    )
+    build = self.add(dict(builder=builder_id))
+    self.assertEqual(build.proto.exe.cmd, ['recipes'])
+
+  def test_add_custom_exe(self):
+    builder_id = build_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='linux_modern',
+    )
+    build = self.add(dict(builder=builder_id))
+    self.assertEqual(build.proto.exe.cmd, ['luciexe', '-custom', '-flags'])
 
   def test_non_existing_builder(self):
     builder_id = build_pb2.BuilderID(
