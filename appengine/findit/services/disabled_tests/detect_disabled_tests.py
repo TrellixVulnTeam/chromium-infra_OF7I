@@ -109,7 +109,20 @@ def _CreateBigqueryRow(row, component_mapping, team_mapping):
   builder_name = row['builder_name']
   test_location = test_tag_util.GetTestLocation(
       build_id, step_name, test_name,
-      Flake.NormalizeStepName(build_id, step_name))
+      Flake.NormalizeTestName(test_name, step_name))
+
+  if test_location is not None:
+    directory = test_tag_util.GetTestDirectoryFromLocation(test_location)
+    component = test_tag_util.GetTestComponentFromLocation(
+        test_location, component_mapping)
+    team = test_tag_util.GetTestTeamFromLocation(test_location, team_mapping)
+  else:
+    directory = ""
+    component = ""
+    team = ""
+    logging.debug("Failed to get test_name: %s and step_name: %s", test_name,
+                  step_name)
+
   bqrow = {
       'test_location':
           test_location,
@@ -129,12 +142,11 @@ def _CreateBigqueryRow(row, component_mapping, team_mapping):
           step_util.GetOS(
               build_id, builder_name, step_name, partial_match=True),
       'directory':
-          test_tag_util.GetTestDirectoryFromLocation(test_location),
+          directory,
       'component':
-          test_tag_util.GetTestComponentFromLocation(test_location,
-                                                     component_mapping),
+          component,
       'team':
-          test_tag_util.GetTestTeamFromLocation(test_location, team_mapping),
+          team,
       'insert_time':
           datetime.now()
   }
