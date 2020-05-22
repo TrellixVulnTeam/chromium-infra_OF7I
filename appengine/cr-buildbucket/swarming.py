@@ -177,7 +177,7 @@ def _compute_tags(build):
       'luci_project:%s' % build.proto.builder.project,
   }
 
-  if build.proto.exe.cmd[:1] == ['recipes']:
+  if _using_kitchen(build.proto):
     logdog = build.proto.infra.logdog
     tags.add(
         'log_location:logdog://%s/%s/%s/+/annotations' %
@@ -327,7 +327,7 @@ def _compute_cipd_input(build, settings):
 
 
 def _compute_command(build, settings):
-  if build.proto.exe.cmd[:1] != ['recipes']:
+  if not _using_kitchen(build.proto):
     return _compute_bbagent(build, settings)
 
   logdog = build.proto.infra.logdog
@@ -1077,3 +1077,10 @@ def _end_build(build_id, status, summary_markdown='', end_time=None):
   build = txn()
   if build:  # pragma: no branch
     events.on_build_completed(build)
+
+
+def _using_kitchen(build_proto):
+  # cmd can be empty when ScheduleBuild was called on an older version of
+  # buildbucket. After we're transitioned to exe.cmd, we shouldn't need this
+  # function.
+  return not build_proto.exe.cmd or build_proto.exe.cmd[0] == 'recipes'
