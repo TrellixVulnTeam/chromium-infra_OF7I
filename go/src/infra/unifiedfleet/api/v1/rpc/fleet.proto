@@ -238,6 +238,9 @@ service Fleet {
 
   // ImportVlans imports vlans & all IP-related infos.
   rpc ImportVlans(ImportVlansRequest) returns (google.rpc.Status);
+
+  // ImportStates imports states of all objects.
+  rpc ImportStates(ImportStatesRequest) returns (google.rpc.Status);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -1102,6 +1105,13 @@ message DeleteVlanRequest {
 }
 
 message ImportVlansRequest {
+  oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
+}
+
+message ImportStatesRequest {
   oneof source {
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;
