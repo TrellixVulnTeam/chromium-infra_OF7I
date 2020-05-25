@@ -1,3 +1,35 @@
+# Release Notes sheriff-o-matic 2020-05-25
+
+- 16 commits, 2 bugs affected since 5cc75e3 ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - jsca@google.com
+
+## Changes in this release
+
+- [SoM Disable Grouping: Load annotation when tree changes](https://chromium-review.googlesource.com/c/infra/infra/+/2214442) (nqmtuan@google.com)
+- [SoM Disable Grouping: Change separator of alert Key](https://chromium-review.googlesource.com/c/infra/infra/+/2211112) (nqmtuan@google.com)
+- [SoM disable automatic grouping: Add index for AlertJSON](https://chromium-review.googlesource.com/c/infra/infra/+/2209800) (nqmtuan@google.com)
+- [SoM disable grouping: fix main_test](https://chromium-review.googlesource.com/c/infra/infra/+/2209798) (nqmtuan@google.com)
+- [SoM disable grouping: Fix annotation tests](https://chromium-review.googlesource.com/c/infra/infra/+/2209791) (nqmtuan@google.com)
+- [SoM disable grouping: Migrate grouped annotations](https://chromium-review.googlesource.com/c/infra/infra/+/2206568) (nqmtuan@google.com)
+- [Migrate annotations for non-grouped annotations.](https://chromium-review.googlesource.com/c/infra/infra/+/2206073) (nqmtuan@google.com)
+- [SoM disable grouping: Migration script should populate alert data](https://chromium-review.googlesource.com/c/infra/infra/+/2195534) (nqmtuan@google.com)
+- [SoM Disable Grouping: migration script overall flow](https://chromium-review.googlesource.com/c/infra/infra/+/2189855) (nqmtuan@google.com)
+- [SoM Disable Grouping: Add handler for migration script](https://chromium-review.googlesource.com/c/infra/infra/+/2186698) (nqmtuan@google.com)
+- [SoM Disable Grouping: Change Flush annotation](https://chromium-review.googlesource.com/c/infra/infra/+/2186692) (nqmtuan@google.com)
+- [SoM Disable grouping: Get annotations from correct table](https://chromium-review.googlesource.com/c/infra/infra/+/2186690) (nqmtuan@google.com)
+- [SoM Disable Grouping: Put annotation should insert to the correct table](https://chromium-review.googlesource.com/c/infra/infra/+/2183649) (nqmtuan@google.com)
+- [SoM disable grouping: Get alert from correct table](https://chromium-review.googlesource.com/c/infra/infra/+/2182199) (nqmtuan@google.com)
+- [Disable automatic grouping when running analyzer](https://chromium-review.googlesource.com/c/infra/infra/+/2172231) (nqmtuan@google.com)
+- [[som] Release notes 27 April](https://chromium-review.googlesource.com/c/infra/infra/+/2167734) (jsca@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1043371](https://crbug.com/1043371)
+
+
 # Release Notes sheriff-o-matic 2020-04-27
 
 - 4 commits, 2 bugs affected since 121a46e ()
