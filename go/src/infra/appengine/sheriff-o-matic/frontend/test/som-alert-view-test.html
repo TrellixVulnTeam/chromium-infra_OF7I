@@ -137,16 +137,21 @@
       let newPromise = new Promise((resolve, reject) => {
         resolveNewPromise = resolve;
       });
-      window.fetch.onCall(0).returns(oldPromise);
-      window.fetch.onCall(1).returns(newPromise);
+
+      let annotationPromise = new Promise((resolve, reject) => {});
+
+      window.fetch.onCall(0).returns(annotationPromise);
+      window.fetch.onCall(1).returns(oldPromise);
+      window.fetch.onCall(2).returns(annotationPromise);
+      window.fetch.onCall(3).returns(newPromise);
 
       element.tree = {'name': 'chrome'};
       assert.deepEqual(element._alertStreams, ['chrome']);
-      assert.equal(1, window.fetch.callCount);
+      assert.equal(2, window.fetch.callCount);
 
       element.tree = {'name': 'newtree'};
       assert.deepEqual(element._alertStreams, ['newtree']);
-      assert.equal(2, window.fetch.callCount);
+      assert.equal(4, window.fetch.callCount);
 
       resolveNewPromise(newRes);
       let expectedAlerts = {
@@ -235,9 +240,9 @@
 
       element._resolveAlerts([{'key': 'hello'}]);
 
-      assert.isTrue(window.fetch.calledTwice);
+      assert.isTrue(window.fetch.calledThrice);
 
-      let call = window.fetch.getCall(1);
+      let call = window.fetch.getCall(2);
 
       assert.equal('/api/v1/resolve/test', call.args[0]);
     });

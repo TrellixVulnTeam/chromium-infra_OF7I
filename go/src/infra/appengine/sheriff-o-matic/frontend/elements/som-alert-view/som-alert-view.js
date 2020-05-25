@@ -207,6 +207,7 @@ class SomAlertView extends Polymer.mixinBehaviors(
     for (let i in sections) {
       this.$$('#' + sections[i]).style.order = i;
     }
+    this.$.annotations.fetch();
   }
 
   _computeAlertStreams(tree) {
