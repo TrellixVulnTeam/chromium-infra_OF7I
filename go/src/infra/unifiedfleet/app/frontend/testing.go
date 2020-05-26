@@ -55,7 +55,24 @@ func testingContext() context.Context {
 }
 
 var testImportPageSize = 2
-var testMachines = []string{"machine1", "machine2", "machine3"}
+var testMachines = []*crimson.Machine{
+	{
+		Name:     "machine1",
+		Platform: "platform",
+		State:    common.State_SERVING,
+	},
+	{
+		Name:     "machine2",
+		Platform: "platform",
+		State:    common.State_SERVING,
+	},
+	{
+		Name:     "machine3",
+		Platform: "platform2",
+		State:    common.State_SERVING,
+	},
+}
+
 var testNics = []*crimson.NIC{
 	{
 		Name:       "drac",
@@ -99,6 +116,7 @@ var testPhysicalHosts = []*crimson.PhysicalHost{
 		Ipv4:       "192.168.40.60",
 		MacAddress: "00:3e:e1:c8:57:f9",
 		Nic:        "eth0",
+		VmSlots:    10,
 	},
 	{
 		Name:       "web",
@@ -108,6 +126,7 @@ var testPhysicalHosts = []*crimson.PhysicalHost{
 		Ipv4:       "192.168.20.18",
 		MacAddress: "84:2b:2b:01:b9:c6",
 		Nic:        "eth0",
+		VmSlots:    100,
 	},
 }
 var testVMs = []*crimson.VM{
@@ -124,7 +143,7 @@ var testVMs = []*crimson.VM{
 
 func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonClient, error) {
 	return &fake.CrimsonClient{
-		MachineNames:  testMachines,
+		Machines:      testMachines,
 		Nics:          testNics,
 		PhysicalHosts: testPhysicalHosts,
 		Vms:           testVMs,

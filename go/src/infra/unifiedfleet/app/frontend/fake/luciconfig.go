@@ -105,6 +105,17 @@ vlan {
 }
 `
 
+const chromeplatformContent = `
+platform {
+  name: "platform"
+  description: "fake platform"
+}
+platform {
+  name: "platform2"
+  description: "fake platform 2"
+}
+`
+
 // GetConfig returns a config at a path in a config set
 func (c *LuciConfigClient) GetConfig(ctx context.Context, configSet luciconfig.Set, path string, metaOnly bool) (*luciconfig.Config, error) {
 	switch path {
@@ -119,6 +130,10 @@ func (c *LuciConfigClient) GetConfig(ctx context.Context, configSet luciconfig.S
 	case "fakeVlans.cfg":
 		return &luciconfig.Config{
 			Content: vlanContent,
+		}, nil
+	case "fakechromeplatform.cfg":
+		return &luciconfig.Config{
+			Content: chromeplatformContent,
 		}, nil
 	}
 	return nil, nil

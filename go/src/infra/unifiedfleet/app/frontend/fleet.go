@@ -25,8 +25,11 @@ const (
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	importPageSize int = 500
 	// DefaultMachineDBService indicates the default machineDB host for importing
+	// TODO(xixuan): rename this variable in the following CL
 	DefaultMachineDBService string = "machine-db-dev"
-	datacenterConfigFile    string = "datacenters.cfg"
+	// ProdMachineDBService indicates the prod machine db service name
+	ProdMachineDBService string = "machine-db.appspot.com"
+	datacenterConfigFile string = "datacenters.cfg"
 )
 
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface

@@ -26,6 +26,6 @@ message ChromePlatform {
     // Record the last update timestamp of this ChromePlatform (In UTC timezone)
     google.protobuf.Timestamp update_time = 4 [
         (google.api.field_behavior) = OUTPUT_ONLY];
-    // Hold for the next version of UFS proto as it needs more manual input to bootstrap
-    // int32 vm_slots = 5;
+    // Get source of truth from crimson
+    int32 vm_capacity = 5;
 }

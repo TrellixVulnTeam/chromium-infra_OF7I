@@ -10,13 +10,12 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 
-	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 )
 
 // CrimsonClient mocks the crimsonClient
 type CrimsonClient struct {
-	MachineNames  []string
+	Machines      []*crimson.Machine
 	Nics          []*crimson.NIC
 	PhysicalHosts []*crimson.PhysicalHost
 	Vms           []*crimson.VM
@@ -82,15 +81,8 @@ func (c *CrimsonClient) DeleteMachine(ctx context.Context, in *crimson.DeleteMac
 
 // ListMachines mocks the ListMachines of crimsonClient
 func (c *CrimsonClient) ListMachines(ctx context.Context, in *crimson.ListMachinesRequest, opts ...grpc.CallOption) (*crimson.ListMachinesResponse, error) {
-	out := make([]*crimson.Machine, 0)
-	for _, n := range c.MachineNames {
-		out = append(out, &crimson.Machine{
-			Name:  n,
-			State: common.State_SERVING,
-		})
-	}
 	return &crimson.ListMachinesResponse{
-		Machines: out,
+		Machines: c.Machines,
 	}, nil
 }
 

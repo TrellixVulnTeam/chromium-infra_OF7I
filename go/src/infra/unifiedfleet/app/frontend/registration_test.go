@@ -442,8 +442,8 @@ func TestImportMachines(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 			machines, _, err := registration.ListMachines(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(machines, ShouldHaveLength, len(testMachines))
-			So(parseAssets(machines, "Name"), ShouldResemble, testMachines)
+			So(machines, ShouldHaveLength, 3)
+			So(parseAssets(machines, "Name"), ShouldResemble, []string{"machine1", "machine2", "machine3"})
 			browserMachines := make([]*proto.ChromeBrowserMachine, len(machines))
 			switches := make([]*proto.SwitchInterface, len(machines))
 			for i, m := range machines {

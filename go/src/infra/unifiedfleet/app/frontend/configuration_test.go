@@ -1208,6 +1208,40 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 	})
 }
 
+func TestImportVMCapacity(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import vm capacity", t, func() {
+		Convey("happy path", func() {
+			tf.Fleet.importPageSize = 1
+			_, err := tf.Fleet.ImportChromePlatforms(ctx, &api.ImportChromePlatformsRequest{
+				Source: &api.ImportChromePlatformsRequest_ConfigSource{
+					ConfigSource: &api.ConfigSource{
+						ConfigServiceName: "fake-service",
+						FileName:          "fakechromeplatform.cfg",
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			res, err := tf.Fleet.ImportVMCpacity(ctx)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+			cps, _, err := configuration.ListChromePlatforms(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(cps, ShouldHaveLength, 2)
+			So(parseAssets(cps, "Name"), ShouldResemble, []string{"platform", "platform2"})
+			cp1, err := configuration.GetChromePlatform(ctx, "platform")
+			So(err, ShouldBeNil)
+			So(cp1.GetVmCapacity(), ShouldEqual, 100)
+			cp2, err := configuration.GetChromePlatform(ctx, "platform2")
+			So(err, ShouldBeNil)
+			So(cp2.GetVmCapacity(), ShouldEqual, 0)
+		})
+	})
+}
+
 func getLocalPlatformNames() []string {
 	wants := make([]string, len(localPlatforms))
 	for i, p := range localPlatforms {
