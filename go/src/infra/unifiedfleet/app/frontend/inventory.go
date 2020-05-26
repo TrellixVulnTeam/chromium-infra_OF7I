@@ -28,7 +28,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *api.Create
 		return nil, err
 	}
 	req.MachineLSE.Name = req.MachineLSEId
-	machineLSE, err := inventory.CreateMachineLSE(ctx, req.MachineLSE)
+	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *api.Update
 		return nil, err
 	}
 	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
-	machineLSE, err := inventory.UpdateMachineLSE(ctx, req.MachineLSE)
+	machineLSE, err := controller.UpdateMachineLSE(ctx, req.MachineLSE)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *api.GetMachin
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	machineLSE, err := inventory.GetMachineLSE(ctx, name)
+	machineLSE, err := controller.GetMachineLSE(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *api.ListMac
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := inventory.ListMachineLSEs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListMachineLSEs(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *api.Delete
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = inventory.DeleteMachineLSE(ctx, name)
+	err = controller.DeleteMachineLSE(ctx, name)
 	return &empty.Empty{}, err
 }
 

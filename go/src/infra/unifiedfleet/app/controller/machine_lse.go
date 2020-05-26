@@ -6,6 +6,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"strings"
+
+	fleet "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -13,9 +17,50 @@ import (
 
 	"go.chromium.org/luci/common/logging"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
-
-	ufspb "infra/unifiedfleet/api/v1/proto"
 )
+
+// CreateMachineLSE creates a new machinelse in datastore.
+//
+// Checks if the resources referenced by the MachineLSE input already exists
+// in the system before creating a new MachineLSE
+func CreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
+	err := validateMachineLSE(ctx, machinelse)
+	if err != nil {
+		return nil, err
+	}
+	return inventory.CreateMachineLSE(ctx, machinelse)
+}
+
+// UpdateMachineLSE updates machinelse in datastore.
+//
+// Checks if the resources referenced by the MachineLSE input already exists
+// in the system before updating a MachineLSE
+func UpdateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
+	err := validateMachineLSE(ctx, machinelse)
+	if err != nil {
+		return nil, err
+	}
+	return inventory.UpdateMachineLSE(ctx, machinelse)
+}
+
+// GetMachineLSE returns machinelse for the given id from datastore.
+func GetMachineLSE(ctx context.Context, id string) (*fleet.MachineLSE, error) {
+	return inventory.GetMachineLSE(ctx, id)
+}
+
+// ListMachineLSEs lists the machinelses
+func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.MachineLSE, string, error) {
+	return inventory.ListMachineLSEs(ctx, pageSize, pageToken)
+}
+
+// DeleteMachineLSE deletes the machinelse in datastore
+//
+// For referential data intergrity,
+// Delete if this MachineLSE is not referenced by other resources in the datastore.
+// If there are any references, delete will be rejected and an error will be returned.
+func DeleteMachineLSE(ctx context.Context, id string) error {
+	return inventory.DeleteMachineLSE(ctx, id)
+}
 
 // ImportMachineLSEs implements the logic of importing machine lses and related info to backend storage.
 //
@@ -27,12 +72,12 @@ import (
 func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, pageSize int) (*datastore.OpResults, error) {
 	allRes := make(datastore.OpResults, 0)
 	logging.Debugf(ctx, "Importing the basic lse prototypes for browser lab")
-	lps := []*ufspb.MachineLSEPrototype{
+	lps := []*fleet.MachineLSEPrototype{
 		{
 			Name: "browser-lab:no-vm",
-			VirtualRequirements: []*ufspb.VirtualRequirement{
+			VirtualRequirements: []*fleet.VirtualRequirement{
 				{
-					VirtualType: ufspb.VirtualType_VIRTUAL_TYPE_VM,
+					VirtualType: fleet.VirtualType_VIRTUAL_TYPE_VM,
 					Min:         0,
 					Max:         0,
 				},
@@ -40,9 +85,9 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 		},
 		{
 			Name: "browser-lab:vm",
-			VirtualRequirements: []*ufspb.VirtualRequirement{
+			VirtualRequirements: []*fleet.VirtualRequirement{
 				{
-					VirtualType: ufspb.VirtualType_VIRTUAL_TYPE_VM,
+					VirtualType: fleet.VirtualType_VIRTUAL_TYPE_VM,
 					Min:         1,
 					// A random number, not true.
 					Max: 100,
@@ -99,4 +144,41 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 		}
 	}
 	return &allRes, nil
+}
+
+// validateMachineLSE validates if a machinelse can be created/updated in the datastore.
+//
+// Checks if the resources referenced by the given MachineLSE input already exists
+// in the system. Returns an error if any resource referenced by the MachineLSE input
+// does not exist in the system.
+func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error {
+	var resources []*Resource
+	var errorMsg strings.Builder
+	errorMsg.WriteString(fmt.Sprintf("Cannot create MachineLSE %s:\n", machinelse.Name))
+
+	machineIDs := machinelse.GetMachines()
+	machineLSEPrototypeID := machinelse.GetMachineLsePrototype()
+	vlanID := machinelse.GetChromeosMachineLse().GetServer().GetSupportedRestrictedVlan()
+	rpmID := machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().GetRpm()
+	switchID := machinelse.GetChromeosMachineLse().GetDut().GetNetworkDeviceInterface().GetSwitch()
+
+	if len(machineIDs) != 0 {
+		for _, machineID := range machineIDs {
+			resources = append(resources, GetMachineResource(machineID))
+		}
+	}
+	if machineLSEPrototypeID != "" {
+		resources = append(resources, GetMachineLSEProtoTypeResource(machineLSEPrototypeID))
+	}
+	if vlanID != "" {
+		resources = append(resources, GetVlanResource(vlanID))
+	}
+	if rpmID != "" {
+		resources = append(resources, GetRPMResource(rpmID))
+	}
+	if switchID != "" {
+		resources = append(resources, GetSwitchResource(switchID))
+	}
+
+	return ResourceExist(ctx, resources, &errorMsg)
 }
