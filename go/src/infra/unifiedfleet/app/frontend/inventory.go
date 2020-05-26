@@ -15,7 +15,6 @@ import (
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
-	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -118,7 +117,7 @@ func (fs *FleetServerImpl) CreateRackLSE(ctx context.Context, req *api.CreateRac
 		return nil, err
 	}
 	req.RackLSE.Name = req.RackLSEId
-	rackLSE, err := inventory.CreateRackLSE(ctx, req.RackLSE)
+	rackLSE, err := controller.CreateRackLSE(ctx, req.RackLSE)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +135,7 @@ func (fs *FleetServerImpl) UpdateRackLSE(ctx context.Context, req *api.UpdateRac
 		return nil, err
 	}
 	req.RackLSE.Name = util.RemovePrefix(req.RackLSE.Name)
-	rackLSE, err := inventory.UpdateRackLSE(ctx, req.RackLSE)
+	rackLSE, err := controller.UpdateRackLSE(ctx, req.RackLSE)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +153,7 @@ func (fs *FleetServerImpl) GetRackLSE(ctx context.Context, req *api.GetRackLSERe
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	rackLSE, err := inventory.GetRackLSE(ctx, name)
+	rackLSE, err := controller.GetRackLSE(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +171,7 @@ func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *api.ListRackLS
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := inventory.ListRackLSEs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRackLSEs(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +194,7 @@ func (fs *FleetServerImpl) DeleteRackLSE(ctx context.Context, req *api.DeleteRac
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = inventory.DeleteRackLSE(ctx, name)
+	err = controller.DeleteRackLSE(ctx, name)
 	return &empty.Empty{}, err
 }
 
