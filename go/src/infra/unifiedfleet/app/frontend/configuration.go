@@ -64,7 +64,7 @@ func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *api.Cr
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	chromeplatform.Name = util.AddPrefix(chromePlatformCollection, chromeplatform.Name)
+	chromeplatform.Name = util.AddPrefix(util.ChromePlatformCollection, chromeplatform.Name)
 	return chromeplatform, err
 }
 
@@ -82,7 +82,7 @@ func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *api.Up
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	chromeplatform.Name = util.AddPrefix(chromePlatformCollection, chromeplatform.Name)
+	chromeplatform.Name = util.AddPrefix(util.ChromePlatformCollection, chromeplatform.Name)
 	return chromeplatform, err
 }
 
@@ -100,7 +100,7 @@ func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *api.GetCh
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	chromePlatform.Name = util.AddPrefix(chromePlatformCollection, chromePlatform.Name)
+	chromePlatform.Name = util.AddPrefix(util.ChromePlatformCollection, chromePlatform.Name)
 	return chromePlatform, err
 }
 
@@ -119,7 +119,7 @@ func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *api.Lis
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, chromePlatform := range result {
-		chromePlatform.Name = util.AddPrefix(chromePlatformCollection, chromePlatform.Name)
+		chromePlatform.Name = util.AddPrefix(util.ChromePlatformCollection, chromePlatform.Name)
 	}
 	return &api.ListChromePlatformsResponse{
 		ChromePlatforms: result,
@@ -193,7 +193,7 @@ func (fs *FleetServerImpl) CreateMachineLSEPrototype(ctx context.Context, req *a
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+	machineLSEPrototype.Name = util.AddPrefix(util.MachineLSEPrototypeCollection, machineLSEPrototype.Name)
 	return machineLSEPrototype, err
 }
 
@@ -211,7 +211,7 @@ func (fs *FleetServerImpl) UpdateMachineLSEPrototype(ctx context.Context, req *a
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+	machineLSEPrototype.Name = util.AddPrefix(util.MachineLSEPrototypeCollection, machineLSEPrototype.Name)
 	return machineLSEPrototype, err
 }
 
@@ -229,7 +229,7 @@ func (fs *FleetServerImpl) GetMachineLSEPrototype(ctx context.Context, req *api.
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+	machineLSEPrototype.Name = util.AddPrefix(util.MachineLSEPrototypeCollection, machineLSEPrototype.Name)
 	return machineLSEPrototype, err
 }
 
@@ -248,7 +248,7 @@ func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *ap
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, machineLSEPrototype := range result {
-		machineLSEPrototype.Name = util.AddPrefix(machineLSEPrototypeCollection, machineLSEPrototype.Name)
+		machineLSEPrototype.Name = util.AddPrefix(util.MachineLSEPrototypeCollection, machineLSEPrototype.Name)
 	}
 	return &api.ListMachineLSEPrototypesResponse{
 		MachineLSEPrototypes: result,
@@ -283,7 +283,7 @@ func (fs *FleetServerImpl) CreateRackLSEPrototype(ctx context.Context, req *api.
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+	rackLSEPrototype.Name = util.AddPrefix(util.RackLSEPrototypeCollection, rackLSEPrototype.Name)
 	return rackLSEPrototype, err
 }
 
@@ -301,7 +301,7 @@ func (fs *FleetServerImpl) UpdateRackLSEPrototype(ctx context.Context, req *api.
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+	rackLSEPrototype.Name = util.AddPrefix(util.RackLSEPrototypeCollection, rackLSEPrototype.Name)
 	return rackLSEPrototype, err
 }
 
@@ -319,7 +319,7 @@ func (fs *FleetServerImpl) GetRackLSEPrototype(ctx context.Context, req *api.Get
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+	rackLSEPrototype.Name = util.AddPrefix(util.RackLSEPrototypeCollection, rackLSEPrototype.Name)
 	return rackLSEPrototype, err
 }
 
@@ -338,7 +338,7 @@ func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *api.L
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, rackLSEPrototype := range result {
-		rackLSEPrototype.Name = util.AddPrefix(rackLSEPrototypeCollection, rackLSEPrototype.Name)
+		rackLSEPrototype.Name = util.AddPrefix(util.RackLSEPrototypeCollection, rackLSEPrototype.Name)
 	}
 	return &api.ListRackLSEPrototypesResponse{
 		RackLSEPrototypes: result,

@@ -23,13 +23,13 @@ import (
 
 func mockMachineLSE(id string) *proto.MachineLSE {
 	return &proto.MachineLSE{
-		Name: util.AddPrefix(machineLSECollection, id),
+		Name: util.AddPrefix(util.MachineLSECollection, id),
 	}
 }
 
 func mockRackLSE(id string) *proto.RackLSE {
 	return &proto.RackLSE{
-		Name: util.AddPrefix(rackLSECollection, id),
+		Name: util.AddPrefix(util.RackLSECollection, id),
 	}
 }
 
@@ -183,7 +183,7 @@ func TestGetMachineLSE(t *testing.T) {
 		So(resp, ShouldResembleProto, machineLSE1)
 		Convey("Get machineLSE by existing ID", func() {
 			req := &api.GetMachineLSERequest{
-				Name: util.AddPrefix(machineLSECollection, "machineLSE-1"),
+				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
@@ -191,7 +191,7 @@ func TestGetMachineLSE(t *testing.T) {
 		})
 		Convey("Get machineLSE by non-existing ID", func() {
 			req := &api.GetMachineLSERequest{
-				Name: util.AddPrefix(machineLSECollection, "machineLSE-2"),
+				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-2"),
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -209,7 +209,7 @@ func TestGetMachineLSE(t *testing.T) {
 		})
 		Convey("Get machineLSE - Invalid input invalid characters", func() {
 			req := &api.GetMachineLSERequest{
-				Name: util.AddPrefix(machineLSECollection, "a.b)7&"),
+				Name: util.AddPrefix(util.MachineLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -316,12 +316,12 @@ func TestDeleteMachineLSE(t *testing.T) {
 		So(resp, ShouldResembleProto, machineLSE1)
 		Convey("Delete machineLSE by existing ID", func() {
 			req := &api.DeleteMachineLSERequest{
-				Name: util.AddPrefix(machineLSECollection, "machineLSE-1"),
+				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
 			}
 			_, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
 			greq := &api.GetMachineLSERequest{
-				Name: util.AddPrefix(machineLSECollection, "machineLSE-1"),
+				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
 			}
 			res, err := tf.Fleet.GetMachineLSE(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -330,7 +330,7 @@ func TestDeleteMachineLSE(t *testing.T) {
 		})
 		Convey("Delete machineLSE by non-existing ID", func() {
 			req := &api.DeleteMachineLSERequest{
-				Name: util.AddPrefix(machineLSECollection, "machineLSE-2"),
+				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-2"),
 			}
 			_, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -347,7 +347,7 @@ func TestDeleteMachineLSE(t *testing.T) {
 		})
 		Convey("Delete machineLSE - Invalid input invalid characters", func() {
 			req := &api.DeleteMachineLSERequest{
-				Name: util.AddPrefix(machineLSECollection, "a.b)7&"),
+				Name: util.AddPrefix(util.MachineLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -506,7 +506,7 @@ func TestGetRackLSE(t *testing.T) {
 		So(resp, ShouldResembleProto, rackLSE1)
 		Convey("Get rackLSE by existing ID", func() {
 			req := &api.GetRackLSERequest{
-				Name: util.AddPrefix(rackLSECollection, "rackLSE-1"),
+				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-1"),
 			}
 			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
 			So(err, ShouldBeNil)
@@ -514,7 +514,7 @@ func TestGetRackLSE(t *testing.T) {
 		})
 		Convey("Get rackLSE by non-existing ID", func() {
 			req := &api.GetRackLSERequest{
-				Name: util.AddPrefix(rackLSECollection, "rackLSE-2"),
+				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-2"),
 			}
 			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -532,7 +532,7 @@ func TestGetRackLSE(t *testing.T) {
 		})
 		Convey("Get rackLSE - Invalid input invalid characters", func() {
 			req := &api.GetRackLSERequest{
-				Name: util.AddPrefix(rackLSECollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RackLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -639,12 +639,12 @@ func TestDeleteRackLSE(t *testing.T) {
 		So(resp, ShouldResembleProto, rackLSE1)
 		Convey("Delete rackLSE by existing ID", func() {
 			req := &api.DeleteRackLSERequest{
-				Name: util.AddPrefix(rackLSECollection, "rackLSE-1"),
+				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-1"),
 			}
 			_, err := tf.Fleet.DeleteRackLSE(tf.C, req)
 			So(err, ShouldBeNil)
 			greq := &api.GetRackLSERequest{
-				Name: util.AddPrefix(rackLSECollection, "rackLSE-1"),
+				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-1"),
 			}
 			res, err := tf.Fleet.GetRackLSE(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -653,7 +653,7 @@ func TestDeleteRackLSE(t *testing.T) {
 		})
 		Convey("Delete rackLSE by non-existing ID", func() {
 			req := &api.DeleteRackLSERequest{
-				Name: util.AddPrefix(rackLSECollection, "rackLSE-2"),
+				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-2"),
 			}
 			_, err := tf.Fleet.DeleteRackLSE(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -670,7 +670,7 @@ func TestDeleteRackLSE(t *testing.T) {
 		})
 		Convey("Delete rackLSE - Invalid input invalid characters", func() {
 			req := &api.DeleteRackLSERequest{
-				Name: util.AddPrefix(rackLSECollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RackLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)

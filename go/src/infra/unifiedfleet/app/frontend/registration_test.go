@@ -27,7 +27,7 @@ import (
 
 func mockChromeOSMachine(id, lab, board string) *proto.Machine {
 	return &proto.Machine{
-		Name: util.AddPrefix(machineCollection, id),
+		Name: util.AddPrefix(util.MachineCollection, id),
 		Device: &proto.Machine_ChromeosMachine{
 			ChromeosMachine: &proto.ChromeOSMachine{
 				ReferenceBoard: board,
@@ -38,7 +38,7 @@ func mockChromeOSMachine(id, lab, board string) *proto.Machine {
 
 func mockChromeBrowserMachine(id, lab, name string) *proto.Machine {
 	return &proto.Machine{
-		Name: util.AddPrefix(machineCollection, id),
+		Name: util.AddPrefix(util.MachineCollection, id),
 		Device: &proto.Machine_ChromeBrowserMachine{
 			ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 				Description: name,
@@ -57,44 +57,44 @@ func assertMachineEqual(a *proto.Machine, b *proto.Machine) {
 
 func mockRack(id string, rackCapactiy int32) *proto.Rack {
 	return &proto.Rack{
-		Name:       util.AddPrefix(rackCollection, id),
+		Name:       util.AddPrefix(util.RackCollection, id),
 		CapacityRu: rackCapactiy,
 	}
 }
 
 func mockNic(id string) *proto.Nic {
 	return &proto.Nic{
-		Name: util.AddPrefix(nicCollection, id),
+		Name: util.AddPrefix(util.NicCollection, id),
 	}
 }
 
 func mockKVM(id string) *proto.KVM {
 	return &proto.KVM{
-		Name: util.AddPrefix(kvmCollection, id),
+		Name: util.AddPrefix(util.KVMCollection, id),
 	}
 }
 
 func mockRPM(id string) *proto.RPM {
 	return &proto.RPM{
-		Name: util.AddPrefix(rpmCollection, id),
+		Name: util.AddPrefix(util.RPMCollection, id),
 	}
 }
 
 func mockDrac(id string) *proto.Drac {
 	return &proto.Drac{
-		Name: util.AddPrefix(dracCollection, id),
+		Name: util.AddPrefix(util.DracCollection, id),
 	}
 }
 
 func mockSwitch(id string) *proto.Switch {
 	return &proto.Switch{
-		Name: util.AddPrefix(switchCollection, id),
+		Name: util.AddPrefix(util.SwitchCollection, id),
 	}
 }
 
 func mockVlan(id string) *proto.Vlan {
 	return &proto.Vlan{
-		Name: util.AddPrefix(vlanCollection, id),
+		Name: util.AddPrefix(util.VlanCollection, id),
 	}
 }
 
@@ -249,7 +249,7 @@ func TestGetMachine(t *testing.T) {
 		assertMachineEqual(resp, chromeOSMachine1)
 		Convey("Get machine by existing ID", func() {
 			req := &api.GetMachineRequest{
-				Name: util.AddPrefix(machineCollection, "chromeos-asset-1"),
+				Name: util.AddPrefix(util.MachineCollection, "chromeos-asset-1"),
 			}
 			resp, err := tf.Fleet.GetMachine(tf.C, req)
 			So(err, ShouldBeNil)
@@ -257,7 +257,7 @@ func TestGetMachine(t *testing.T) {
 		})
 		Convey("Get machine by non-existing ID", func() {
 			req := &api.GetMachineRequest{
-				Name: util.AddPrefix(machineCollection, "chrome-asset-1"),
+				Name: util.AddPrefix(util.MachineCollection, "chrome-asset-1"),
 			}
 			resp, err := tf.Fleet.GetMachine(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -275,7 +275,7 @@ func TestGetMachine(t *testing.T) {
 		})
 		Convey("Get machine - Invalid input invalid characters", func() {
 			req := &api.GetMachineRequest{
-				Name: util.AddPrefix(machineCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.MachineCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetMachine(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -382,12 +382,12 @@ func TestDeleteMachine(t *testing.T) {
 		assertMachineEqual(resp, chromeOSMachine1)
 		Convey("Delete machine by existing ID", func() {
 			req := &api.DeleteMachineRequest{
-				Name: util.AddPrefix(machineCollection, "chromeos-asset-1"),
+				Name: util.AddPrefix(util.MachineCollection, "chromeos-asset-1"),
 			}
 			_, err := tf.Fleet.DeleteMachine(tf.C, req)
 			So(err, ShouldBeNil)
 			greq := &api.GetMachineRequest{
-				Name: util.AddPrefix(machineCollection, "chromeos-asset-1"),
+				Name: util.AddPrefix(util.MachineCollection, "chromeos-asset-1"),
 			}
 			res, err := tf.Fleet.GetMachine(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -396,7 +396,7 @@ func TestDeleteMachine(t *testing.T) {
 		})
 		Convey("Delete machine by non-existing ID", func() {
 			req := &api.DeleteMachineRequest{
-				Name: util.AddPrefix(machineCollection, "chrome-asset-1"),
+				Name: util.AddPrefix(util.MachineCollection, "chrome-asset-1"),
 			}
 			_, err := tf.Fleet.DeleteMachine(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -413,7 +413,7 @@ func TestDeleteMachine(t *testing.T) {
 		})
 		Convey("Delete machine - Invalid input invalid characters", func() {
 			req := &api.DeleteMachineRequest{
-				Name: util.AddPrefix(machineCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.MachineCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteMachine(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -643,7 +643,7 @@ func TestGetRack(t *testing.T) {
 		So(resp, ShouldResembleProto, rack1)
 		Convey("Get rack by existing ID", func() {
 			req := &api.GetRackRequest{
-				Name: util.AddPrefix(rackCollection, "rack-1"),
+				Name: util.AddPrefix(util.RackCollection, "rack-1"),
 			}
 			resp, err := tf.Fleet.GetRack(tf.C, req)
 			So(err, ShouldBeNil)
@@ -651,7 +651,7 @@ func TestGetRack(t *testing.T) {
 		})
 		Convey("Get rack by non-existing ID", func() {
 			req := &api.GetRackRequest{
-				Name: util.AddPrefix(rackCollection, "rack-2"),
+				Name: util.AddPrefix(util.RackCollection, "rack-2"),
 			}
 			resp, err := tf.Fleet.GetRack(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -669,7 +669,7 @@ func TestGetRack(t *testing.T) {
 		})
 		Convey("Get rack - Invalid input invalid characters", func() {
 			req := &api.GetRackRequest{
-				Name: util.AddPrefix(rackCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RackCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetRack(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -776,12 +776,12 @@ func TestDeleteRack(t *testing.T) {
 		So(resp, ShouldResembleProto, rack1)
 		Convey("Delete rack by existing ID", func() {
 			req := &api.DeleteRackRequest{
-				Name: util.AddPrefix(rackCollection, "rack-1"),
+				Name: util.AddPrefix(util.RackCollection, "rack-1"),
 			}
 			_, err := tf.Fleet.DeleteRack(tf.C, req)
 			So(err, ShouldBeNil)
 			greq := &api.GetRackRequest{
-				Name: util.AddPrefix(rackCollection, "rack-1"),
+				Name: util.AddPrefix(util.RackCollection, "rack-1"),
 			}
 			res, err := tf.Fleet.GetRack(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -790,7 +790,7 @@ func TestDeleteRack(t *testing.T) {
 		})
 		Convey("Delete rack by non-existing ID", func() {
 			req := &api.DeleteRackRequest{
-				Name: util.AddPrefix(rackCollection, "rack-2"),
+				Name: util.AddPrefix(util.RackCollection, "rack-2"),
 			}
 			_, err := tf.Fleet.DeleteRack(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -807,7 +807,7 @@ func TestDeleteRack(t *testing.T) {
 		})
 		Convey("Delete rack - Invalid input invalid characters", func() {
 			req := &api.DeleteRackRequest{
-				Name: util.AddPrefix(rackCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RackCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRack(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -966,7 +966,7 @@ func TestGetNic(t *testing.T) {
 		So(resp, ShouldResembleProto, nic1)
 		Convey("Get nic by existing ID", func() {
 			req := &api.GetNicRequest{
-				Name: util.AddPrefix(nicCollection, "nic-1"),
+				Name: util.AddPrefix(util.NicCollection, "nic-1"),
 			}
 			resp, err := tf.Fleet.GetNic(tf.C, req)
 			So(err, ShouldBeNil)
@@ -974,7 +974,7 @@ func TestGetNic(t *testing.T) {
 		})
 		Convey("Get nic by non-existing ID", func() {
 			req := &api.GetNicRequest{
-				Name: util.AddPrefix(nicCollection, "nic-2"),
+				Name: util.AddPrefix(util.NicCollection, "nic-2"),
 			}
 			resp, err := tf.Fleet.GetNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -992,7 +992,7 @@ func TestGetNic(t *testing.T) {
 		})
 		Convey("Get nic - Invalid input invalid characters", func() {
 			req := &api.GetNicRequest{
-				Name: util.AddPrefix(nicCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.NicCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1100,7 +1100,7 @@ func TestDeleteNic(t *testing.T) {
 			So(resp, ShouldResembleProto, nic1)
 
 			chromeBrowserMachine1 := &proto.Machine{
-				Name: util.AddPrefix(machineCollection, "machine-1"),
+				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 						Nic: "nic-1",
@@ -1116,14 +1116,14 @@ func TestDeleteNic(t *testing.T) {
 			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
 
 			dreq := &api.DeleteNicRequest{
-				Name: util.AddPrefix(nicCollection, "nic-1"),
+				Name: util.AddPrefix(util.NicCollection, "nic-1"),
 			}
 			_, err = tf.Fleet.DeleteNic(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
 			greq := &api.GetNicRequest{
-				Name: util.AddPrefix(nicCollection, "nic-1"),
+				Name: util.AddPrefix(util.NicCollection, "nic-1"),
 			}
 			res, err := tf.Fleet.GetNic(tf.C, greq)
 			So(res, ShouldNotBeNil)
@@ -1142,13 +1142,13 @@ func TestDeleteNic(t *testing.T) {
 			So(resp, ShouldResembleProto, nic2)
 
 			dreq := &api.DeleteNicRequest{
-				Name: util.AddPrefix(nicCollection, "nic-2"),
+				Name: util.AddPrefix(util.NicCollection, "nic-2"),
 			}
 			_, err = tf.Fleet.DeleteNic(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetNicRequest{
-				Name: util.AddPrefix(nicCollection, "nic-2"),
+				Name: util.AddPrefix(util.NicCollection, "nic-2"),
 			}
 			res, err := tf.Fleet.GetNic(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -1158,7 +1158,7 @@ func TestDeleteNic(t *testing.T) {
 
 		Convey("Delete nic by non-existing ID", func() {
 			req := &api.DeleteNicRequest{
-				Name: util.AddPrefix(nicCollection, "nic-2"),
+				Name: util.AddPrefix(util.NicCollection, "nic-2"),
 			}
 			_, err := tf.Fleet.DeleteNic(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -1177,7 +1177,7 @@ func TestDeleteNic(t *testing.T) {
 
 		Convey("Delete nic - Invalid input invalid characters", func() {
 			req := &api.DeleteNicRequest{
-				Name: util.AddPrefix(nicCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.NicCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1452,7 +1452,7 @@ func TestGetKVM(t *testing.T) {
 		So(resp, ShouldResembleProto, KVM1)
 		Convey("Get KVM by existing ID", func() {
 			req := &api.GetKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "KVM-1"),
+				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
 			}
 			resp, err := tf.Fleet.GetKVM(tf.C, req)
 			So(err, ShouldBeNil)
@@ -1460,7 +1460,7 @@ func TestGetKVM(t *testing.T) {
 		})
 		Convey("Get KVM by non-existing ID", func() {
 			req := &api.GetKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "KVM-2"),
+				Name: util.AddPrefix(util.KVMCollection, "KVM-2"),
 			}
 			resp, err := tf.Fleet.GetKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1478,7 +1478,7 @@ func TestGetKVM(t *testing.T) {
 		})
 		Convey("Get KVM - Invalid input invalid characters", func() {
 			req := &api.GetKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.KVMCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1586,7 +1586,7 @@ func TestDeleteKVM(t *testing.T) {
 			So(resp, ShouldResembleProto, KVM1)
 
 			chromeBrowserMachine1 := &proto.Machine{
-				Name: util.AddPrefix(machineCollection, "machine-1"),
+				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 						KvmInterface: &proto.KVMInterface{
@@ -1604,14 +1604,14 @@ func TestDeleteKVM(t *testing.T) {
 			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
 
 			dreq := &api.DeleteKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "KVM-1"),
+				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
 			}
 			_, err = tf.Fleet.DeleteKVM(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
 			greq := &api.GetKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "KVM-1"),
+				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
 			}
 			res, err := tf.Fleet.GetKVM(tf.C, greq)
 			So(res, ShouldNotBeNil)
@@ -1630,13 +1630,13 @@ func TestDeleteKVM(t *testing.T) {
 			So(resp, ShouldResembleProto, KVM2)
 
 			dreq := &api.DeleteKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "KVM-2"),
+				Name: util.AddPrefix(util.KVMCollection, "KVM-2"),
 			}
 			_, err = tf.Fleet.DeleteKVM(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "KVM-2"),
+				Name: util.AddPrefix(util.KVMCollection, "KVM-2"),
 			}
 			res, err := tf.Fleet.GetKVM(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -1646,7 +1646,7 @@ func TestDeleteKVM(t *testing.T) {
 
 		Convey("Delete KVM by non-existing ID", func() {
 			req := &api.DeleteKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "KVM-2"),
+				Name: util.AddPrefix(util.KVMCollection, "KVM-2"),
 			}
 			_, err := tf.Fleet.DeleteKVM(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -1665,7 +1665,7 @@ func TestDeleteKVM(t *testing.T) {
 
 		Convey("Delete KVM - Invalid input invalid characters", func() {
 			req := &api.DeleteKVMRequest{
-				Name: util.AddPrefix(kvmCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.KVMCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1824,7 +1824,7 @@ func TestGetRPM(t *testing.T) {
 		So(resp, ShouldResembleProto, RPM1)
 		Convey("Get RPM by existing ID", func() {
 			req := &api.GetRPMRequest{
-				Name: util.AddPrefix(rpmCollection, "RPM-1"),
+				Name: util.AddPrefix(util.RPMCollection, "RPM-1"),
 			}
 			resp, err := tf.Fleet.GetRPM(tf.C, req)
 			So(err, ShouldBeNil)
@@ -1832,7 +1832,7 @@ func TestGetRPM(t *testing.T) {
 		})
 		Convey("Get RPM by non-existing ID", func() {
 			req := &api.GetRPMRequest{
-				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+				Name: util.AddPrefix(util.RPMCollection, "RPM-2"),
 			}
 			resp, err := tf.Fleet.GetRPM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1850,7 +1850,7 @@ func TestGetRPM(t *testing.T) {
 		})
 		Convey("Get RPM - Invalid input invalid characters", func() {
 			req := &api.GetRPMRequest{
-				Name: util.AddPrefix(rpmCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RPMCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetRPM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1958,13 +1958,13 @@ func TestDeleteRPM(t *testing.T) {
 			So(resp, ShouldResembleProto, RPM2)
 
 			dreq := &api.DeleteRPMRequest{
-				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+				Name: util.AddPrefix(util.RPMCollection, "RPM-2"),
 			}
 			_, err = tf.Fleet.DeleteRPM(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetRPMRequest{
-				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+				Name: util.AddPrefix(util.RPMCollection, "RPM-2"),
 			}
 			res, err := tf.Fleet.GetRPM(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -1974,7 +1974,7 @@ func TestDeleteRPM(t *testing.T) {
 
 		Convey("Delete RPM by non-existing ID", func() {
 			req := &api.DeleteRPMRequest{
-				Name: util.AddPrefix(rpmCollection, "RPM-2"),
+				Name: util.AddPrefix(util.RPMCollection, "RPM-2"),
 			}
 			_, err := tf.Fleet.DeleteRPM(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -1993,7 +1993,7 @@ func TestDeleteRPM(t *testing.T) {
 
 		Convey("Delete RPM - Invalid input invalid characters", func() {
 			req := &api.DeleteRPMRequest{
-				Name: util.AddPrefix(rpmCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RPMCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRPM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2152,7 +2152,7 @@ func TestGetDrac(t *testing.T) {
 		So(resp, ShouldResembleProto, drac1)
 		Convey("Get drac by existing ID", func() {
 			req := &api.GetDracRequest{
-				Name: util.AddPrefix(dracCollection, "drac-1"),
+				Name: util.AddPrefix(util.DracCollection, "drac-1"),
 			}
 			resp, err := tf.Fleet.GetDrac(tf.C, req)
 			So(err, ShouldBeNil)
@@ -2160,7 +2160,7 @@ func TestGetDrac(t *testing.T) {
 		})
 		Convey("Get drac by non-existing ID", func() {
 			req := &api.GetDracRequest{
-				Name: util.AddPrefix(dracCollection, "drac-2"),
+				Name: util.AddPrefix(util.DracCollection, "drac-2"),
 			}
 			resp, err := tf.Fleet.GetDrac(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2178,7 +2178,7 @@ func TestGetDrac(t *testing.T) {
 		})
 		Convey("Get drac - Invalid input invalid characters", func() {
 			req := &api.GetDracRequest{
-				Name: util.AddPrefix(dracCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.DracCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetDrac(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2286,7 +2286,7 @@ func TestDeleteDrac(t *testing.T) {
 			So(resp, ShouldResembleProto, drac1)
 
 			chromeBrowserMachine1 := &proto.Machine{
-				Name: util.AddPrefix(machineCollection, "machine-1"),
+				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 						Drac: "drac-1",
@@ -2302,14 +2302,14 @@ func TestDeleteDrac(t *testing.T) {
 			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
 
 			dreq := &api.DeleteDracRequest{
-				Name: util.AddPrefix(dracCollection, "drac-1"),
+				Name: util.AddPrefix(util.DracCollection, "drac-1"),
 			}
 			_, err = tf.Fleet.DeleteDrac(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
 			greq := &api.GetDracRequest{
-				Name: util.AddPrefix(dracCollection, "drac-1"),
+				Name: util.AddPrefix(util.DracCollection, "drac-1"),
 			}
 			res, err := tf.Fleet.GetDrac(tf.C, greq)
 			So(res, ShouldNotBeNil)
@@ -2328,13 +2328,13 @@ func TestDeleteDrac(t *testing.T) {
 			So(resp, ShouldResembleProto, drac2)
 
 			dreq := &api.DeleteDracRequest{
-				Name: util.AddPrefix(dracCollection, "drac-2"),
+				Name: util.AddPrefix(util.DracCollection, "drac-2"),
 			}
 			_, err = tf.Fleet.DeleteDrac(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetDracRequest{
-				Name: util.AddPrefix(dracCollection, "drac-2"),
+				Name: util.AddPrefix(util.DracCollection, "drac-2"),
 			}
 			res, err := tf.Fleet.GetDrac(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -2344,7 +2344,7 @@ func TestDeleteDrac(t *testing.T) {
 
 		Convey("Delete drac by non-existing ID", func() {
 			req := &api.DeleteDracRequest{
-				Name: util.AddPrefix(dracCollection, "drac-2"),
+				Name: util.AddPrefix(util.DracCollection, "drac-2"),
 			}
 			_, err := tf.Fleet.DeleteDrac(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -2363,7 +2363,7 @@ func TestDeleteDrac(t *testing.T) {
 
 		Convey("Delete drac - Invalid input invalid characters", func() {
 			req := &api.DeleteDracRequest{
-				Name: util.AddPrefix(dracCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.DracCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteDrac(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2522,7 +2522,7 @@ func TestGetSwitch(t *testing.T) {
 		So(resp, ShouldResembleProto, switch1)
 		Convey("Get switch by existing ID", func() {
 			req := &api.GetSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "switch-1"),
+				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),
 			}
 			resp, err := tf.Fleet.GetSwitch(tf.C, req)
 			So(err, ShouldBeNil)
@@ -2530,7 +2530,7 @@ func TestGetSwitch(t *testing.T) {
 		})
 		Convey("Get switch by non-existing ID", func() {
 			req := &api.GetSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "switch-2"),
+				Name: util.AddPrefix(util.SwitchCollection, "switch-2"),
 			}
 			resp, err := tf.Fleet.GetSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2548,7 +2548,7 @@ func TestGetSwitch(t *testing.T) {
 		})
 		Convey("Get switch - Invalid input invalid characters", func() {
 			req := &api.GetSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.SwitchCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2674,14 +2674,14 @@ func TestDeleteSwitch(t *testing.T) {
 			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
 
 			dreq := &api.DeleteSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "switch-1"),
+				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),
 			}
 			_, err = tf.Fleet.DeleteSwitch(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
 			greq := &api.GetSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "switch-1"),
+				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),
 			}
 			res, err := tf.Fleet.GetSwitch(tf.C, greq)
 			So(res, ShouldNotBeNil)
@@ -2700,13 +2700,13 @@ func TestDeleteSwitch(t *testing.T) {
 			So(resp, ShouldResembleProto, switch2)
 
 			dreq := &api.DeleteSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "switch-2"),
+				Name: util.AddPrefix(util.SwitchCollection, "switch-2"),
 			}
 			_, err = tf.Fleet.DeleteSwitch(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "switch-2"),
+				Name: util.AddPrefix(util.SwitchCollection, "switch-2"),
 			}
 			res, err := tf.Fleet.GetSwitch(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -2716,7 +2716,7 @@ func TestDeleteSwitch(t *testing.T) {
 
 		Convey("Delete switch by non-existing ID", func() {
 			req := &api.DeleteSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "switch-2"),
+				Name: util.AddPrefix(util.SwitchCollection, "switch-2"),
 			}
 			_, err := tf.Fleet.DeleteSwitch(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -2735,7 +2735,7 @@ func TestDeleteSwitch(t *testing.T) {
 
 		Convey("Delete switch - Invalid input invalid characters", func() {
 			req := &api.DeleteSwitchRequest{
-				Name: util.AddPrefix(switchCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.SwitchCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2894,7 +2894,7 @@ func TestGetVlan(t *testing.T) {
 		So(resp, ShouldResembleProto, vlan1)
 		Convey("Get vlan by existing ID", func() {
 			req := &api.GetVlanRequest{
-				Name: util.AddPrefix(vlanCollection, "vlan-1"),
+				Name: util.AddPrefix(util.VlanCollection, "vlan-1"),
 			}
 			resp, err := tf.Fleet.GetVlan(tf.C, req)
 			So(err, ShouldBeNil)
@@ -2902,7 +2902,7 @@ func TestGetVlan(t *testing.T) {
 		})
 		Convey("Get vlan by non-existing ID", func() {
 			req := &api.GetVlanRequest{
-				Name: util.AddPrefix(vlanCollection, "vlan-2"),
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			resp, err := tf.Fleet.GetVlan(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2920,7 +2920,7 @@ func TestGetVlan(t *testing.T) {
 		})
 		Convey("Get vlan - Invalid input invalid characters", func() {
 			req := &api.GetVlanRequest{
-				Name: util.AddPrefix(vlanCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.VlanCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetVlan(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -3028,13 +3028,13 @@ func TestDeleteVlan(t *testing.T) {
 			So(resp, ShouldResembleProto, vlan2)
 
 			dreq := &api.DeleteVlanRequest{
-				Name: util.AddPrefix(vlanCollection, "vlan-2"),
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			_, err = tf.Fleet.DeleteVlan(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetVlanRequest{
-				Name: util.AddPrefix(vlanCollection, "vlan-2"),
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			res, err := tf.Fleet.GetVlan(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -3044,7 +3044,7 @@ func TestDeleteVlan(t *testing.T) {
 
 		Convey("Delete vlan by non-existing ID", func() {
 			req := &api.DeleteVlanRequest{
-				Name: util.AddPrefix(vlanCollection, "vlan-2"),
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			_, err := tf.Fleet.DeleteVlan(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -3063,7 +3063,7 @@ func TestDeleteVlan(t *testing.T) {
 
 		Convey("Delete vlan - Invalid input invalid characters", func() {
 			req := &api.DeleteVlanRequest{
-				Name: util.AddPrefix(vlanCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.VlanCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteVlan(tf.C, req)
 			So(resp, ShouldBeNil)

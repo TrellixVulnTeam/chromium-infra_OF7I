@@ -33,7 +33,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *api.Create
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+	machineLSE.Name = util.AddPrefix(util.MachineLSECollection, machineLSE.Name)
 	return machineLSE, err
 }
 
@@ -51,7 +51,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *api.Update
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+	machineLSE.Name = util.AddPrefix(util.MachineLSECollection, machineLSE.Name)
 	return machineLSE, err
 }
 
@@ -69,7 +69,7 @@ func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *api.GetMachin
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+	machineLSE.Name = util.AddPrefix(util.MachineLSECollection, machineLSE.Name)
 	return machineLSE, err
 }
 
@@ -88,7 +88,7 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *api.ListMac
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, machineLSE := range result {
-		machineLSE.Name = util.AddPrefix(machineLSECollection, machineLSE.Name)
+		machineLSE.Name = util.AddPrefix(util.MachineLSECollection, machineLSE.Name)
 	}
 	return &api.ListMachineLSEsResponse{
 		MachineLSEs:   result,
@@ -123,7 +123,7 @@ func (fs *FleetServerImpl) CreateRackLSE(ctx context.Context, req *api.CreateRac
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+	rackLSE.Name = util.AddPrefix(util.RackLSECollection, rackLSE.Name)
 	return rackLSE, err
 }
 
@@ -141,7 +141,7 @@ func (fs *FleetServerImpl) UpdateRackLSE(ctx context.Context, req *api.UpdateRac
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+	rackLSE.Name = util.AddPrefix(util.RackLSECollection, rackLSE.Name)
 	return rackLSE, err
 }
 
@@ -159,7 +159,7 @@ func (fs *FleetServerImpl) GetRackLSE(ctx context.Context, req *api.GetRackLSERe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+	rackLSE.Name = util.AddPrefix(util.RackLSECollection, rackLSE.Name)
 	return rackLSE, err
 }
 
@@ -178,7 +178,7 @@ func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *api.ListRackLS
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, rackLSE := range result {
-		rackLSE.Name = util.AddPrefix(rackLSECollection, rackLSE.Name)
+		rackLSE.Name = util.AddPrefix(util.RackLSECollection, rackLSE.Name)
 	}
 	return &api.ListRackLSEsResponse{
 		RackLSEs:      result,

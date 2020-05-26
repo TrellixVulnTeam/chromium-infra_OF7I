@@ -38,7 +38,7 @@ func (fs *FleetServerImpl) CreateMachine(ctx context.Context, req *api.CreateMac
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machine.Name = util.AddPrefix(machineCollection, machine.Name)
+	machine.Name = util.AddPrefix(util.MachineCollection, machine.Name)
 	return machine, err
 }
 
@@ -56,7 +56,7 @@ func (fs *FleetServerImpl) UpdateMachine(ctx context.Context, req *api.UpdateMac
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machine.Name = util.AddPrefix(machineCollection, machine.Name)
+	machine.Name = util.AddPrefix(util.MachineCollection, machine.Name)
 	return machine, err
 }
 
@@ -74,7 +74,7 @@ func (fs *FleetServerImpl) GetMachine(ctx context.Context, req *api.GetMachineRe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machine.Name = util.AddPrefix(machineCollection, machine.Name)
+	machine.Name = util.AddPrefix(util.MachineCollection, machine.Name)
 	return machine, err
 }
 
@@ -93,7 +93,7 @@ func (fs *FleetServerImpl) ListMachines(ctx context.Context, req *api.ListMachin
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, machine := range result {
-		machine.Name = util.AddPrefix(machineCollection, machine.Name)
+		machine.Name = util.AddPrefix(util.MachineCollection, machine.Name)
 	}
 	return &api.ListMachinesResponse{
 		Machines:      result,
@@ -171,7 +171,7 @@ func (fs *FleetServerImpl) CreateRack(ctx context.Context, req *api.CreateRackRe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rack.Name = util.AddPrefix(rackCollection, rack.Name)
+	rack.Name = util.AddPrefix(util.RackCollection, rack.Name)
 	return rack, err
 }
 
@@ -189,7 +189,7 @@ func (fs *FleetServerImpl) UpdateRack(ctx context.Context, req *api.UpdateRackRe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rack.Name = util.AddPrefix(rackCollection, rack.Name)
+	rack.Name = util.AddPrefix(util.RackCollection, rack.Name)
 	return rack, err
 }
 
@@ -207,7 +207,7 @@ func (fs *FleetServerImpl) GetRack(ctx context.Context, req *api.GetRackRequest)
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rack.Name = util.AddPrefix(rackCollection, rack.Name)
+	rack.Name = util.AddPrefix(util.RackCollection, rack.Name)
 	return rack, err
 }
 
@@ -226,7 +226,7 @@ func (fs *FleetServerImpl) ListRacks(ctx context.Context, req *api.ListRacksRequ
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, rack := range result {
-		rack.Name = util.AddPrefix(rackCollection, rack.Name)
+		rack.Name = util.AddPrefix(util.RackCollection, rack.Name)
 	}
 	return &api.ListRacksResponse{
 		Racks:         result,
@@ -261,7 +261,7 @@ func (fs *FleetServerImpl) CreateNic(ctx context.Context, req *api.CreateNicRequ
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	nic.Name = util.AddPrefix(nicCollection, nic.Name)
+	nic.Name = util.AddPrefix(util.NicCollection, nic.Name)
 	return nic, err
 }
 
@@ -279,7 +279,7 @@ func (fs *FleetServerImpl) UpdateNic(ctx context.Context, req *api.UpdateNicRequ
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	nic.Name = util.AddPrefix(nicCollection, nic.Name)
+	nic.Name = util.AddPrefix(util.NicCollection, nic.Name)
 	return nic, err
 }
 
@@ -297,7 +297,7 @@ func (fs *FleetServerImpl) GetNic(ctx context.Context, req *api.GetNicRequest) (
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	nic.Name = util.AddPrefix(nicCollection, nic.Name)
+	nic.Name = util.AddPrefix(util.NicCollection, nic.Name)
 	return nic, err
 }
 
@@ -316,7 +316,7 @@ func (fs *FleetServerImpl) ListNics(ctx context.Context, req *api.ListNicsReques
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, nic := range result {
-		nic.Name = util.AddPrefix(nicCollection, nic.Name)
+		nic.Name = util.AddPrefix(util.NicCollection, nic.Name)
 	}
 	return &api.ListNicsResponse{
 		Nics:          result,
@@ -520,7 +520,7 @@ func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *api.CreateKVMRequ
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+	kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 	return kvm, err
 }
 
@@ -538,7 +538,7 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *api.UpdateKVMRequ
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+	kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 	return kvm, err
 }
 
@@ -556,7 +556,7 @@ func (fs *FleetServerImpl) GetKVM(ctx context.Context, req *api.GetKVMRequest) (
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+	kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 	return kvm, err
 }
 
@@ -575,7 +575,7 @@ func (fs *FleetServerImpl) ListKVMs(ctx context.Context, req *api.ListKVMsReques
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, kvm := range result {
-		kvm.Name = util.AddPrefix(kvmCollection, kvm.Name)
+		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 	}
 	return &api.ListKVMsResponse{
 		KVMs:          result,
@@ -610,7 +610,7 @@ func (fs *FleetServerImpl) CreateRPM(ctx context.Context, req *api.CreateRPMRequ
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+	rpm.Name = util.AddPrefix(util.RPMCollection, rpm.Name)
 	return rpm, err
 }
 
@@ -628,7 +628,7 @@ func (fs *FleetServerImpl) UpdateRPM(ctx context.Context, req *api.UpdateRPMRequ
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+	rpm.Name = util.AddPrefix(util.RPMCollection, rpm.Name)
 	return rpm, err
 }
 
@@ -646,7 +646,7 @@ func (fs *FleetServerImpl) GetRPM(ctx context.Context, req *api.GetRPMRequest) (
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+	rpm.Name = util.AddPrefix(util.RPMCollection, rpm.Name)
 	return rpm, err
 }
 
@@ -665,7 +665,7 @@ func (fs *FleetServerImpl) ListRPMs(ctx context.Context, req *api.ListRPMsReques
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, rpm := range result {
-		rpm.Name = util.AddPrefix(rpmCollection, rpm.Name)
+		rpm.Name = util.AddPrefix(util.RPMCollection, rpm.Name)
 	}
 	return &api.ListRPMsResponse{
 		RPMs:          result,
@@ -700,7 +700,7 @@ func (fs *FleetServerImpl) CreateDrac(ctx context.Context, req *api.CreateDracRe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	drac.Name = util.AddPrefix(dracCollection, drac.Name)
+	drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 	return drac, err
 }
 
@@ -718,7 +718,7 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *api.UpdateDracRe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	drac.Name = util.AddPrefix(dracCollection, drac.Name)
+	drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 	return drac, err
 }
 
@@ -736,7 +736,7 @@ func (fs *FleetServerImpl) GetDrac(ctx context.Context, req *api.GetDracRequest)
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	drac.Name = util.AddPrefix(dracCollection, drac.Name)
+	drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 	return drac, err
 }
 
@@ -755,7 +755,7 @@ func (fs *FleetServerImpl) ListDracs(ctx context.Context, req *api.ListDracsRequ
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, drac := range result {
-		drac.Name = util.AddPrefix(dracCollection, drac.Name)
+		drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 	}
 	return &api.ListDracsResponse{
 		Dracs:         result,
@@ -790,7 +790,7 @@ func (fs *FleetServerImpl) CreateSwitch(ctx context.Context, req *api.CreateSwit
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	s.Name = util.AddPrefix(switchCollection, s.Name)
+	s.Name = util.AddPrefix(util.SwitchCollection, s.Name)
 	return s, err
 }
 
@@ -808,7 +808,7 @@ func (fs *FleetServerImpl) UpdateSwitch(ctx context.Context, req *api.UpdateSwit
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	s.Name = util.AddPrefix(switchCollection, s.Name)
+	s.Name = util.AddPrefix(util.SwitchCollection, s.Name)
 	return s, err
 }
 
@@ -826,7 +826,7 @@ func (fs *FleetServerImpl) GetSwitch(ctx context.Context, req *api.GetSwitchRequ
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	s.Name = util.AddPrefix(switchCollection, s.Name)
+	s.Name = util.AddPrefix(util.SwitchCollection, s.Name)
 	return s, err
 }
 
@@ -845,7 +845,7 @@ func (fs *FleetServerImpl) ListSwitches(ctx context.Context, req *api.ListSwitch
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, s := range result {
-		s.Name = util.AddPrefix(switchCollection, s.Name)
+		s.Name = util.AddPrefix(util.SwitchCollection, s.Name)
 	}
 	return &api.ListSwitchesResponse{
 		Switches:      result,
@@ -880,7 +880,7 @@ func (fs *FleetServerImpl) CreateVlan(ctx context.Context, req *api.CreateVlanRe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+	vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
 	return vlan, err
 }
 
@@ -898,7 +898,7 @@ func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *api.UpdateVlanRe
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+	vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
 	return vlan, err
 }
 
@@ -916,7 +916,7 @@ func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *api.GetVlanRequest)
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+	vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
 	return vlan, err
 }
 
@@ -935,7 +935,7 @@ func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *api.ListVlansRequ
 	}
 	// https://aip.dev/122 - as per AIP guideline
 	for _, vlan := range result {
-		vlan.Name = util.AddPrefix(vlanCollection, vlan.Name)
+		vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
 	}
 	return &api.ListVlansResponse{
 		Vlans:         result,

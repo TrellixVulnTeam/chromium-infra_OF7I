@@ -5,12 +5,41 @@
 package util
 
 import (
+	"fmt"
 	"strings"
 )
 
 const (
-	defaultPageSize int32 = 100
-	maxPageSize     int32 = 1000
+	// MachineCollection refers to the prefix of the corresponding resource.
+	MachineCollection string = "machines"
+	// RackCollection refers to the prefix of the corresponding resource.
+	RackCollection string = "racks"
+	// VMCollection refers to the prefix of the corresponding resource.
+	VMCollection string = "vms"
+	// ChromePlatformCollection refers to the prefix of the corresponding resource.
+	ChromePlatformCollection string = "chromeplatforms"
+	// MachineLSECollection refers to the prefix of the corresponding resource.
+	MachineLSECollection string = "machineLSEs"
+	// RackLSECollection refers to the prefix of the corresponding resource.
+	RackLSECollection string = "rackLSEs"
+	// NicCollection refers to the prefix of the corresponding resource.
+	NicCollection string = "nics"
+	// KVMCollection refers to the prefix of the corresponding resource.
+	KVMCollection string = "kvms"
+	// RPMCollection refers to the prefix of the corresponding resource.
+	RPMCollection string = "rpms"
+	// DracCollection refers to the prefix of the corresponding resource.
+	DracCollection string = "dracs"
+	// SwitchCollection refers to the prefix of the corresponding resource.
+	SwitchCollection string = "switches"
+	// VlanCollection refers to the prefix of the corresponding resource.
+	VlanCollection string = "vlans"
+	// MachineLSEPrototypeCollection refers to the prefix of the corresponding resource.
+	MachineLSEPrototypeCollection string = "machineLSEPrototypes"
+	// RackLSEPrototypeCollection refers to the prefix of the corresponding resource.
+	RackLSEPrototypeCollection string = "rackLSEPrototypes"
+	defaultPageSize            int32  = 100
+	maxPageSize                int32  = 1000
 )
 
 const separator string = "/"
@@ -42,7 +71,7 @@ func RemovePrefix(name string) string {
 	return name[adjustedPos:]
 }
 
-// AddPrefix concats 2 strings along with a "/" in between
-func AddPrefix(collection string, entity string) string {
-	return collection + separator + entity
+// AddPrefix adds the prefix for a given resource name
+func AddPrefix(collection, entity string) string {
+	return fmt.Sprintf("%s%s%s", collection, separator, entity)
 }

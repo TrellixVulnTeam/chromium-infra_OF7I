@@ -36,20 +36,20 @@ func mockParsePlatformsFunc(path string) (*crimsonconfig.Platforms, error) {
 
 func mockChromePlatform(id, desc string) *proto.ChromePlatform {
 	return &proto.ChromePlatform{
-		Name:        util.AddPrefix(chromePlatformCollection, id),
+		Name:        util.AddPrefix(util.ChromePlatformCollection, id),
 		Description: desc,
 	}
 }
 
 func mockMachineLSEPrototype(id string) *proto.MachineLSEPrototype {
 	return &proto.MachineLSEPrototype{
-		Name: util.AddPrefix(machineLSEPrototypeCollection, id),
+		Name: util.AddPrefix(util.MachineLSEPrototypeCollection, id),
 	}
 }
 
 func mockRackLSEPrototype(id string) *proto.RackLSEPrototype {
 	return &proto.RackLSEPrototype{
-		Name: util.AddPrefix(rackLSEPrototypeCollection, id),
+		Name: util.AddPrefix(util.RackLSEPrototypeCollection, id),
 	}
 }
 
@@ -202,7 +202,7 @@ func TestGetChromePlatform(t *testing.T) {
 		So(resp, ShouldResembleProto, chromePlatform1)
 		Convey("Get chromePlatform by existing ID", func() {
 			req := &api.GetChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-1"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-1"),
 			}
 			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
 			So(err, ShouldBeNil)
@@ -210,7 +210,7 @@ func TestGetChromePlatform(t *testing.T) {
 		})
 		Convey("Get chromePlatform by non-existing ID", func() {
 			req := &api.GetChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -228,7 +228,7 @@ func TestGetChromePlatform(t *testing.T) {
 		})
 		Convey("Get chromePlatform - Invalid input invalid characters", func() {
 			req := &api.GetChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -336,7 +336,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(resp, ShouldResembleProto, chromePlatform1)
 
 			chromeBrowserMachine1 := &proto.Machine{
-				Name: util.AddPrefix(machineCollection, "machine-1"),
+				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-1",
@@ -366,14 +366,14 @@ func TestDeleteChromePlatform(t *testing.T) {
 			*/
 
 			dreq := &api.DeleteChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-1"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-1"),
 			}
 			_, err = tf.Fleet.DeleteChromePlatform(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
 
 			greq := &api.GetChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-1"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-1"),
 			}
 			res, err := tf.Fleet.GetChromePlatform(tf.C, greq)
 			So(res, ShouldNotBeNil)
@@ -392,13 +392,13 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(resp, ShouldResembleProto, chromePlatform2)
 
 			dreq := &api.DeleteChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			_, err = tf.Fleet.DeleteChromePlatform(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			res, err := tf.Fleet.GetChromePlatform(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -408,7 +408,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 
 		Convey("Delete chromePlatform by non-existing ID", func() {
 			req := &api.DeleteChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "chromePlatform-2"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			_, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -427,7 +427,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 
 		Convey("Delete chromePlatform - Invalid input invalid characters", func() {
 			req := &api.DeleteChromePlatformRequest{
-				Name: util.AddPrefix(chromePlatformCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.ChromePlatformCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -625,7 +625,7 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 		So(resp, ShouldResembleProto, machineLSEPrototype1)
 		Convey("Get machineLSEPrototype by existing ID", func() {
 			req := &api.GetMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-1"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-1"),
 			}
 			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
 			So(err, ShouldBeNil)
@@ -633,7 +633,7 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 		})
 		Convey("Get machineLSEPrototype by non-existing ID", func() {
 			req := &api.GetMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -651,7 +651,7 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 		})
 		Convey("Get machineLSEPrototype - Invalid input invalid characters", func() {
 			req := &api.GetMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -759,7 +759,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 			So(resp, ShouldResembleProto, machineLSEPrototype1)
 
 			machineLSE1 := &proto.MachineLSE{
-				Name:                util.AddPrefix(machineLSECollection, "machinelse-1"),
+				Name:                util.AddPrefix(util.MachineLSECollection, "machinelse-1"),
 				MachineLsePrototype: "machineLSEPrototype-1",
 			}
 			mreq := &api.CreateMachineLSERequest{
@@ -771,14 +771,14 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 			So(mresp, ShouldResembleProto, machineLSE1)
 
 			dreq := &api.DeleteMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-1"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-1"),
 			}
 			_, err = tf.Fleet.DeleteMachineLSEPrototype(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
 
 			greq := &api.GetMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-1"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-1"),
 			}
 			res, err := tf.Fleet.GetMachineLSEPrototype(tf.C, greq)
 			So(res, ShouldNotBeNil)
@@ -797,13 +797,13 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 			So(resp, ShouldResembleProto, machineLSEPrototype2)
 
 			dreq := &api.DeleteMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			_, err = tf.Fleet.DeleteMachineLSEPrototype(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			res, err := tf.Fleet.GetMachineLSEPrototype(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -813,7 +813,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 
 		Convey("Delete machineLSEPrototype by non-existing ID", func() {
 			req := &api.DeleteMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "machineLSEPrototype-2"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			_, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -832,7 +832,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 
 		Convey("Delete machineLSEPrototype - Invalid input invalid characters", func() {
 			req := &api.DeleteMachineLSEPrototypeRequest{
-				Name: util.AddPrefix(machineLSEPrototypeCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -991,7 +991,7 @@ func TestGetRackLSEPrototype(t *testing.T) {
 		So(resp, ShouldResembleProto, rackLSEPrototype1)
 		Convey("Get rackLSEPrototype by existing ID", func() {
 			req := &api.GetRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-1"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-1"),
 			}
 			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
 			So(err, ShouldBeNil)
@@ -999,7 +999,7 @@ func TestGetRackLSEPrototype(t *testing.T) {
 		})
 		Convey("Get rackLSEPrototype by non-existing ID", func() {
 			req := &api.GetRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1017,7 +1017,7 @@ func TestGetRackLSEPrototype(t *testing.T) {
 		})
 		Convey("Get rackLSEPrototype - Invalid input invalid characters", func() {
 			req := &api.GetRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1125,7 +1125,7 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 			So(resp, ShouldResembleProto, rackLSEPrototype1)
 
 			rackLSE1 := &proto.RackLSE{
-				Name:             util.AddPrefix(rackLSECollection, "racklse-1"),
+				Name:             util.AddPrefix(util.RackLSECollection, "racklse-1"),
 				RackLsePrototype: "rackLSEPrototype-1",
 			}
 			mreq := &api.CreateRackLSERequest{
@@ -1137,14 +1137,14 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 			So(mresp, ShouldResembleProto, rackLSE1)
 
 			dreq := &api.DeleteRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-1"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-1"),
 			}
 			_, err = tf.Fleet.DeleteRackLSEPrototype(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
 
 			greq := &api.GetRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-1"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-1"),
 			}
 			res, err := tf.Fleet.GetRackLSEPrototype(tf.C, greq)
 			So(res, ShouldNotBeNil)
@@ -1163,13 +1163,13 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 			So(resp, ShouldResembleProto, rackLSEPrototype2)
 
 			dreq := &api.DeleteRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			_, err = tf.Fleet.DeleteRackLSEPrototype(tf.C, dreq)
 			So(err, ShouldBeNil)
 
 			greq := &api.GetRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			res, err := tf.Fleet.GetRackLSEPrototype(tf.C, greq)
 			So(res, ShouldBeNil)
@@ -1179,7 +1179,7 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 
 		Convey("Delete rackLSEPrototype by non-existing ID", func() {
 			req := &api.DeleteRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "rackLSEPrototype-2"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			_, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -1198,7 +1198,7 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 
 		Convey("Delete rackLSEPrototype - Invalid input invalid characters", func() {
 			req := &api.DeleteRackLSEPrototypeRequest{
-				Name: util.AddPrefix(rackLSEPrototypeCollection, "a.b)7&"),
+				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
