@@ -5,11 +5,15 @@
 package frontend
 
 import (
+	"context"
+
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
-	"golang.org/x/net/context"
+	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/controller"
 )
 
 // ImportStates imports states of crimson objects.
@@ -20,6 +24,29 @@ func (fs *FleetServerImpl) ImportStates(ctx context.Context, req *api.ImportStat
 	source := req.GetMachineDbSource()
 	if err := api.ValidateMachineDBSource(source); err != nil {
 		return nil, err
+	}
+	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
+	if err != nil {
+		return nil, machineDBConnectionFailureStatus.Err()
+	}
+	// Skip importing the states of racks, kvms, switches, and vlans, as their states should
+	// be referenced by the states of their related racks & machines.
+	logging.Debugf(ctx, "Querying machine-db to list the machines")
+	machines, err := mdbClient.ListMachines(ctx, &crimson.ListMachinesRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListMachines").Err()
+	}
+	logging.Debugf(ctx, "Querying machine-db to list the vms")
+	vms, err := mdbClient.ListVMs(ctx, &crimson.ListVMsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListVMs").Err()
+	}
+
+	pageSize := fs.getImportPageSize()
+	res, err := controller.ImportStates(ctx, machines.GetMachines(), vms.GetVms(), pageSize)
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
 	}
 	return successStatus.Proto(), nil
 }

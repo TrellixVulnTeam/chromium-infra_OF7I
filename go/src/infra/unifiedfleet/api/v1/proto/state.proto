@@ -10,10 +10,14 @@ option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 
 import "google/protobuf/timestamp.proto";
 
+// Next tag: 10
 enum State {
   STATE_UNSPECIFIED = 0;
   // Equlavant to the concept in ChromeOS lab: needs_deploy
   STATE_REGISTERED = 1;
+  // Deployed but not placed in prod. It's only a temporarily state for browser machine
+  // as there's no service to push a deployed machine to prod automatically yet.
+  STATE_DEPLOYED_PRE_SERVING = 9;
   // Deployed to the prod infrastructure, but for testing.
   STATE_DEPLOYED_TESTING = 2;
   // Deployed to the prod infrastructure, serving.

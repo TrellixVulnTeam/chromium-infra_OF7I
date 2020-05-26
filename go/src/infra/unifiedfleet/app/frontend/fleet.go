@@ -83,8 +83,7 @@ var (
 )
 
 func processImportDatastoreRes(resp *datastore.OpResults, err error) *status.Status {
-	fails := resp.Failed()
-	if err == nil && len(fails) == 0 {
+	if resp == nil && err == nil {
 		return successStatus
 	}
 	if err != nil {
@@ -92,6 +91,10 @@ func processImportDatastoreRes(resp *datastore.OpResults, err error) *status.Sta
 		if ok {
 			return s
 		}
+	}
+	fails := resp.Failed()
+	if err == nil && len(fails) == 0 {
+		return successStatus
 	}
 	if len(fails) > 0 {
 		details := errorToDetails(fails)

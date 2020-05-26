@@ -10,6 +10,7 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 
+	crimsoncommon "go.chromium.org/luci/machine-db/api/common/v1"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	"go.chromium.org/luci/machine-db/api/crimson/v1"
 )
@@ -228,6 +229,25 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.M
 		})
 	}
 	return lses, ips, dhcps
+}
+
+// ToState converts crimson state to UFS state.
+func ToState(state crimsoncommon.State) fleet.State {
+	switch state {
+	case crimsoncommon.State_SERVING:
+		return fleet.State_STATE_SERVING
+	case crimsoncommon.State_DECOMMISSIONED:
+		return fleet.State_STATE_DECOMMISSIONED
+	case crimsoncommon.State_REPAIR:
+		return fleet.State_STATE_NEEDS_REPAIR
+	case crimsoncommon.State_TEST:
+		return fleet.State_STATE_DEPLOYED_TESTING
+	case crimsoncommon.State_PRERELEASE:
+		return fleet.State_STATE_DEPLOYED_PRE_SERVING
+	case crimsoncommon.State_FREE:
+		return fleet.State_STATE_REGISTERED
+	}
+	return fleet.State_STATE_UNSPECIFIED
 }
 
 func getNicName(nic *crimson.NIC) string {

@@ -38,8 +38,12 @@ const (
 	MachineLSEPrototypeCollection string = "machineLSEPrototypes"
 	// RackLSEPrototypeCollection refers to the prefix of the corresponding resource.
 	RackLSEPrototypeCollection string = "rackLSEPrototypes"
-	defaultPageSize            int32  = 100
-	maxPageSize                int32  = 1000
+
+	// DefaultImporter refers to the user of the cron job importer
+	DefaultImporter string = "crimson-importer"
+
+	defaultPageSize int32 = 100
+	maxPageSize     int32 = 1000
 )
 
 const separator string = "/"
