@@ -12,6 +12,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -21,7 +22,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, vms []*crims
 	logging.Debugf(ctx, "collecting states of machines")
 	for _, m := range machines {
 		states = append(states, &ufspb.StateRecord{
-			ResourceName: util.AddPrefix("machine", m.GetName()),
+			ResourceName: util.AddPrefix(util.MachineCollection, m.GetName()),
 			State:        util.ToState(m.GetState()),
 			User:         util.DefaultImporter,
 		})
@@ -29,10 +30,11 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, vms []*crims
 	logging.Debugf(ctx, "collecting states of vms")
 	for _, vm := range vms {
 		states = append(states, &ufspb.StateRecord{
-			ResourceName: util.AddPrefix("vm", vm.GetName()),
+			ResourceName: util.AddPrefix(util.VMCollection, vm.GetName()),
 			State:        util.ToState(vm.GetState()),
 			User:         util.DefaultImporter,
 		})
 	}
-	return nil, nil
+
+	return state.ImportStateRecords(ctx, states)
 }

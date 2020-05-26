@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"google.golang.org/grpc"
 
+	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 )
 
@@ -84,7 +85,8 @@ func (c *CrimsonClient) ListMachines(ctx context.Context, in *crimson.ListMachin
 	out := make([]*crimson.Machine, 0)
 	for _, n := range c.MachineNames {
 		out = append(out, &crimson.Machine{
-			Name: n,
+			Name:  n,
+			State: common.State_SERVING,
 		})
 	}
 	return &crimson.ListMachinesResponse{

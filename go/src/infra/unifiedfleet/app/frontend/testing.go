@@ -18,6 +18,7 @@ import (
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/frontend/fake"
 
+	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 )
 
@@ -117,6 +118,7 @@ var testVMs = []*crimson.VM{
 		Host:     "esx-8",
 		HostVlan: 40,
 		Os:       "testing-vm",
+		State:    common.State_REPAIR,
 	},
 }
 
