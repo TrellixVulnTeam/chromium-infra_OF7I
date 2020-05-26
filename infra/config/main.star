@@ -26,7 +26,7 @@ Includes CI configs for the following subprojects:
   * https://chromium.googlesource.com/infra/testing/expect_tests
 """
 
-lucicfg.check_version('1.7.8', 'Please update depot_tools')
+lucicfg.check_version('1.14.3', 'Please update depot_tools')
 
 # Enable luci.tree_closer.
 lucicfg.enable_experiment("crbug.com/1054172")
