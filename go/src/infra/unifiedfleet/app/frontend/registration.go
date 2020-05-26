@@ -10,18 +10,15 @@ import (
 	luciconfig "go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/server/cfgclient/textproto"
 	"go.chromium.org/luci/grpc/grpcutil"
+	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
+	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
-
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/configuration"
-	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
-
-	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
-	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 )
 
 // CreateMachine creates machine entry in database.
@@ -875,7 +872,7 @@ func (fs *FleetServerImpl) CreateVlan(ctx context.Context, req *api.CreateVlanRe
 		return nil, err
 	}
 	req.Vlan.Name = req.VlanId
-	vlan, err := registration.CreateVlan(ctx, req.Vlan)
+	vlan, err := controller.CreateVlan(ctx, req.Vlan)
 	if err != nil {
 		return nil, err
 	}
@@ -893,7 +890,7 @@ func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *api.UpdateVlanRe
 		return nil, err
 	}
 	req.Vlan.Name = util.RemovePrefix(req.Vlan.Name)
-	vlan, err := registration.UpdateVlan(ctx, req.Vlan)
+	vlan, err := controller.UpdateVlan(ctx, req.Vlan)
 	if err != nil {
 		return nil, err
 	}
@@ -911,7 +908,7 @@ func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *api.GetVlanRequest)
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	vlan, err := registration.GetVlan(ctx, name)
+	vlan, err := controller.GetVlan(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -929,7 +926,7 @@ func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *api.ListVlansRequ
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := registration.ListVlans(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListVlans(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -952,7 +949,7 @@ func (fs *FleetServerImpl) DeleteVlan(ctx context.Context, req *api.DeleteVlanRe
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = registration.DeleteVlan(ctx, name)
+	err = controller.DeleteVlan(ctx, name)
 	return &empty.Empty{}, err
 }
 

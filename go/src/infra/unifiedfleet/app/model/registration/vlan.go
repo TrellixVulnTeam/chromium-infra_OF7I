@@ -6,8 +6,6 @@ package registration
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -16,9 +14,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"infra/unifiedfleet/app/model/inventory"
-
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 )
@@ -113,25 +108,7 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 }
 
 // DeleteVlan deletes the vlan in datastore
-//
-// For referential data intergrity,
-// Delete if there are no references to the Vlan by MachineLSE in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
 func DeleteVlan(ctx context.Context, id string) error {
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "vlan_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machinelses) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Vlan %s cannot be deleted because there are other resources which are referring this Vlan.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring the Vlan:\n"))
-		for _, machinelse := range machinelses {
-			errorMsg.WriteString(machinelse.Name + ", ")
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
 	return fleetds.Delete(ctx, &fleet.Vlan{Name: id}, newVlanEntity)
 }
 

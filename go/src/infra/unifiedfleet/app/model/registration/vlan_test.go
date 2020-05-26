@@ -14,7 +14,6 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 func mockVlan(id string) *proto.Vlan {
@@ -158,43 +157,9 @@ func TestDeleteVlan(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	vlan1 := mockVlan("vlan-1")
 	vlan2 := mockVlan("vlan-2")
 	Convey("DeleteVlan", t, func() {
-		Convey("Delete vlan by existing ID with machinelse reference", func() {
-			resp, cerr := CreateVlan(ctx, vlan1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, vlan1)
-			chromeosServerLse := &proto.ChromeOSServerLSE{
-				SupportedRestrictedVlan: "vlan-1",
-			}
-			chromeoslse := &proto.ChromeOSMachineLSE_Server{
-				Server: chromeosServerLse,
-			}
-			chromeosMachineLse := &proto.ChromeOSMachineLSE{
-				ChromeosLse: chromeoslse,
-			}
-			lse := &proto.MachineLSE_ChromeosMachineLse{
-				ChromeosMachineLse: chromeosMachineLse,
-			}
-			machineLSE1 := &proto.MachineLSE{
-				Name: "machineLSE-1",
-				Lse:  lse,
-			}
-			mresp, merr := inventory.CreateMachineLSE(ctx, machineLSE1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, machineLSE1)
-
-			err := DeleteVlan(ctx, "vlan-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetVlan(ctx, "vlan-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, vlan1)
-		})
-		Convey("Delete vlan successfully by existing ID without references", func() {
+		Convey("Delete vlan successfully by existing ID", func() {
 			resp, cerr := CreateVlan(ctx, vlan2)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlan2)
