@@ -99,6 +99,8 @@ def _buildbucket_property(build):
   export.input.ClearField('properties')
   export.infra.ClearField('recipe')
   export.infra.buildbucket.ClearField('requested_properties')
+  if export.exe.cmd:
+    export.exe.ClearField('cmd')  # useless for kitchen
   build.tags_to_protos(export.tags)
   return {
       'build': json_format.MessageToDict(export),
