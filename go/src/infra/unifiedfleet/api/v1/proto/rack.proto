@@ -39,17 +39,27 @@ message Rack {
 }
 
 // ChromeBrowserRack refers to the rack in Chrome Browser lab
+//
+// TODO: the below rack info should be removed as they belong to rack LSE.
+// Changes needed:
+// validateRackLSE - controller/rack_lse.go
+// validateRack - controller/rack.go
+// validateDeleteSwitch - controller/switch.go
+// validateDeleteRPM - controller/rpm.go
+// validateDeleteKVM - controller/kvm.go
+// newRackEntity - model/registration/rack.go
+// newRackLSEEntity - model/inventory/rack_lse.go
 message ChromeBrowserRack {
-   // RPMs in the rack
-   repeated string rpms = 1 [(google.api.resource_reference) = {
+    // RPMs in the rack
+    repeated string rpms = 1 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/RPM"
     }];
-   // KVMs in the rack
-   repeated string kvms = 2 [(google.api.resource_reference) = {
+    // KVMs in the rack
+    repeated string kvms = 2 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/KVM"
     }];
-   // Switches in the rack
-   repeated string switches = 3 [(google.api.resource_reference) = {
+    // Switches in the rack
+    repeated string switches = 3 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/Switch"
     }];
 }

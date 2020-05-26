@@ -7,6 +7,8 @@ package util
 import (
 	"fmt"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -78,4 +80,9 @@ func RemovePrefix(name string) string {
 // AddPrefix adds the prefix for a given resource name
 func AddPrefix(collection, entity string) string {
 	return fmt.Sprintf("%s%s%s", collection, separator, entity)
+}
+
+// GetUUIDName returns a new UUID name.
+func GetUUIDName() string {
+	return uuid.New().String()
 }

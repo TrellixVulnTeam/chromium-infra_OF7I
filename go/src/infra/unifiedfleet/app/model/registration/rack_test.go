@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+
 	proto "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )

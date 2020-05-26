@@ -11,8 +11,6 @@ option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
-import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
-
 
 // RackLSE is the Rack Lab Setup Environment.
 // It refers to the entity in the lab which has Rack(s) associated with it.
@@ -49,20 +47,28 @@ message RackLSE {
 // ChromeBrowserRackLSE refers to the entity which has
 // kvms and rpms connected to it in Chrome Browser lab
 message ChromeBrowserRackLSE {
-   repeated PeripheralHost rpm_hostnames = 1;
-   repeated PeripheralHost kvm_hostnames = 2;
+    // RPMs in the rack
+    repeated string kvms = 1 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/KVM"
+    }];
+    // KVMs in the rack
+    repeated string switches = 2 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/Switch"
+    }];
 }
 
 // ChromeOSRackLSE refers to the entity which has
 // switches and rpms connected to it in Chrome OS lab
 message ChromeOSRackLSE {
-   // RPMs in the rack
-   repeated string rpms = 1 [(google.api.resource_reference) = {
+    // RPMs in the rack
+    repeated string rpms = 1 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/RPM"
     }];
-   // KVMs in the rack
-   repeated string kvms = 2 [(google.api.resource_reference) = {
+    // KVMs in the rack
+    repeated string kvms = 2 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/KVM"
     }];
-   repeated PeripheralHost rpm_hostnames = 3;
+    repeated string switches = 3 [(google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/Switch"
+    }];
 }

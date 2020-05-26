@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
@@ -50,11 +49,6 @@ func DeleteSwitch(ctx context.Context, id string) error {
 		return err
 	}
 	return registration.DeleteSwitch(ctx, id)
-}
-
-// ImportSwitches creates or updates a batch of switches in datastore
-func ImportSwitches(ctx context.Context, switches []*fleet.Switch) (*fleetds.OpResults, error) {
-	return registration.ImportSwitches(ctx, switches)
 }
 
 // ReplaceSwitch replaces an old Switch with new Switch in datastore

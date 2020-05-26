@@ -30,6 +30,7 @@ type RackLSEEntity struct {
 	RackLSEProtoTypeID string   `gae:"racklse_prototype_id"`
 	KVMIDs             []string `gae:"kvm_ids"`
 	RPMIDs             []string `gae:"rpm_ids"`
+	SwitchIDs          []string `gae:"switch_ids"`
 	// fleet.RackLSE cannot be directly used as it contains pointer.
 	RackLSE []byte `gae:",noindex"`
 }
@@ -58,6 +59,7 @@ func newRackLSEEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntit
 		RackLSEProtoTypeID: p.GetRackLsePrototype(),
 		KVMIDs:             p.GetChromeosRackLse().GetKvms(),
 		RPMIDs:             p.GetChromeosRackLse().GetRpms(),
+		SwitchIDs:          p.GetChromeBrowserRackLse().GetSwitches(),
 		RackLSE:            rackLSE,
 	}, nil
 }
@@ -184,4 +186,15 @@ func putAllRackLSE(ctx context.Context, rackLSEs []*fleet.RackLSE, update bool) 
 		return rackLSEs, err
 	}
 	return nil, err
+}
+
+// ImportRackLSEs creates or updates a batch of rack LSEs in datastore
+func ImportRackLSEs(ctx context.Context, lses []*fleet.RackLSE) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(lses))
+	utime := ptypes.TimestampNow()
+	for i, m := range lses {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newRackLSEEntity, true, true)
 }

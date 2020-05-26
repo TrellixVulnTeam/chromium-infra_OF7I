@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
@@ -64,11 +63,6 @@ func DeleteKVM(ctx context.Context, id string) error {
 		return err
 	}
 	return registration.DeleteKVM(ctx, id)
-}
-
-// ImportKVMs creates or updates a batch of kvms in datastore
-func ImportKVMs(ctx context.Context, kvms []*fleet.KVM) (*fleetds.OpResults, error) {
-	return registration.ImportKVMs(ctx, kvms)
 }
 
 // ReplaceKVM replaces an old KVM with new KVM in datastore

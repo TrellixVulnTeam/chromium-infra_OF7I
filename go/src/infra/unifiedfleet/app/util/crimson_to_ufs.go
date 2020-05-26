@@ -76,10 +76,11 @@ func ToChromePlatforms(oldP *crimsonconfig.Platforms) []*fleet.ChromePlatform {
 }
 
 // ProcessDatacenters converts datacenters to several UFS objects
-func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.KVM, []*fleet.Switch, []*fleet.DHCPConfig) {
+func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.RackLSE, []*fleet.KVM, []*fleet.Switch, []*fleet.DHCPConfig) {
 	dcName := dc.GetName()
 	switches := make([]*fleet.Switch, 0)
 	racks := make([]*fleet.Rack, 0)
+	rackLSEs := make([]*fleet.RackLSE, 0)
 	rackToKvms := make(map[string][]string, 0)
 	kvms := make([]*fleet.KVM, 0)
 	dhcps := make([]*fleet.DHCPConfig, 0)
@@ -113,16 +114,22 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.K
 		r := &fleet.Rack{
 			Name:     rackName,
 			Location: toLocation(rackName, dcName),
-			Rack: &fleet.Rack_ChromeBrowserRack{
-				ChromeBrowserRack: &fleet.ChromeBrowserRack{
-					Switches: switchNames,
+		}
+		rlse := &fleet.RackLSE{
+			Name:             GetUUIDName(),
+			RackLsePrototype: "browser-lab:normal",
+			Lse: &fleet.RackLSE_ChromeBrowserRackLse{
+				ChromeBrowserRackLse: &fleet.ChromeBrowserRackLSE{
 					Kvms:     rackToKvms[rackName],
+					Switches: switchNames,
 				},
 			},
+			Racks: []string{rackName},
 		}
 		racks = append(racks, r)
+		rackLSEs = append(rackLSEs, rlse)
 	}
-	return racks, kvms, switches, dhcps
+	return racks, rackLSEs, kvms, switches, dhcps
 }
 
 // ProcessNics converts nics to several UFS formats for further importing

@@ -13,11 +13,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"go.chromium.org/gae/service/datastore"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+
+	"go.chromium.org/gae/service/datastore"
 )
 
 // CreateRack creates a new rack in datastore.
@@ -65,11 +66,6 @@ func DeleteRack(ctx context.Context, id string) error {
 		return err
 	}
 	return registration.DeleteRack(ctx, id)
-}
-
-// ImportRacks creates or updates a batch of racks in datastore
-func ImportRacks(ctx context.Context, racks []*fleet.Rack) (*fleetds.OpResults, error) {
-	return registration.ImportRacks(ctx, racks)
 }
 
 // ReplaceRack replaces an old Rack with new Rack in datastore

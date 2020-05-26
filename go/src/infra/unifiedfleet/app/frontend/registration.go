@@ -423,65 +423,12 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 	resolver := textproto.Message(dc)
 	resolver.Resolve(fetchedConfigs)
 	logging.Debugf(ctx, "processing datacenter: %s", dc.GetName())
-	racks, kvms, switches, dhcps := util.ProcessDatacenters(dc)
-	logging.Debugf(ctx, "Got %d racks, %d kvms, %d switches, %d dhcp configs", len(racks), len(kvms), len(switches), len(dhcps))
 
 	pageSize := fs.getImportPageSize()
-	// Please note that the importing here is not in one transaction, which
-	// actually may cause data incompleteness. But as the importing job
-	// will be triggered periodically, such incompleteness that's caused by
-	// potential failure will be ignored.
-	logging.Debugf(ctx, "Importing %d racks", len(racks))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(racks))
-		logging.Debugf(ctx, "importing rack %dth - %dth", i, end-1)
-		res, err := controller.ImportRacks(ctx, racks[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(racks) {
-			break
-		}
-	}
-	logging.Debugf(ctx, "Importing %d kvms", len(kvms))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(kvms))
-		logging.Debugf(ctx, "importing kvm %dth - %dth", i, end-1)
-		res, err := controller.ImportKVMs(ctx, kvms[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(kvms) {
-			break
-		}
-	}
-	logging.Debugf(ctx, "Importing %d switches", len(switches))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(switches))
-		logging.Debugf(ctx, "importing switch %dth - %dth", i, end-1)
-		res, err := controller.ImportSwitches(ctx, switches[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(switches) {
-			break
-		}
-	}
-	logging.Debugf(ctx, "Importing %d DHCP configs", len(dhcps))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(dhcps))
-		logging.Debugf(ctx, "importing dhcp configs %dth - %dth", i, end-1)
-		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(dhcps) {
-			break
-		}
+	res, err := controller.ImportDatacenter(ctx, dc, pageSize)
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
 	}
 	return successStatus.Proto(), nil
 }

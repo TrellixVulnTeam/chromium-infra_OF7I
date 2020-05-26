@@ -115,9 +115,3 @@ message Drac {
     google.protobuf.Timestamp update_time = 6 [
             (google.api.field_behavior) = OUTPUT_ONLY];
 }
-
-// Other types of peripherals required to setup LSEs
-message PeripheralHost {
-    string hardware_id = 1;
-    string hostname = 2;
-}

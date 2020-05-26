@@ -142,3 +142,14 @@ func putRackLSEPrototype(ctx context.Context, rackLSEPrototype *fleet.RackLSEPro
 	}
 	return nil, err
 }
+
+// ImportRackLSEPrototypes creates or updates a batch of rack lse prototypes in datastore
+func ImportRackLSEPrototypes(ctx context.Context, lps []*fleet.RackLSEPrototype) (*fleetds.OpResults, error) {
+	protos := make([]proto.Message, len(lps))
+	utime := ptypes.TimestampNow()
+	for i, m := range lps {
+		m.UpdateTime = utime
+		protos[i] = m
+	}
+	return fleetds.Insert(ctx, protos, newRackLSEPrototypeEntity, true, true)
+}

@@ -151,6 +151,16 @@ func (*Rack) XXX_OneofWrappers() []interface{} {
 }
 
 // ChromeBrowserRack refers to the rack in Chrome Browser lab
+//
+// TODO: the below rack info should be removed as they belong to rack LSE.
+// Changes needed:
+// validateRackLSE - controller/rack_lse.go
+// validateRack - controller/rack.go
+// validateDeleteSwitch - controller/switch.go
+// validateDeleteRPM - controller/rpm.go
+// validateDeleteKVM - controller/kvm.go
+// newRackEntity - model/registration/rack.go
+// newRackLSEEntity - model/inventory/rack_lse.go
 type ChromeBrowserRack struct {
 	// RPMs in the rack
 	Rpms []string `protobuf:"bytes,1,rep,name=rpms,proto3" json:"rpms,omitempty"`
