@@ -72,7 +72,6 @@ luci.logdog(gs_bucket = 'chromium-luci-logdog')
 luci.bucket(name = 'ci')
 
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
-luci.builder.defaults.properties.set({'$kitchen': {'emulate_gce' : True}})
 
 
 def ci_builder(
@@ -175,7 +174,8 @@ adhoc_builder(
     os = 'Ubuntu',
     executable = luci.recipe(
       name = 'futures:examples/background_helper',
-      cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py'
+      cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py',
+      use_bbagent = True,
     ),
     schedule = 'with 10m interval',
 )
@@ -184,7 +184,8 @@ adhoc_builder(
     os = 'Windows-10',
     executable = luci.recipe(
       name = 'futures:examples/background_helper',
-      cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py'
+      cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py',
+      use_bbagent = True,
     ),
     schedule = 'with 10m interval',
 )

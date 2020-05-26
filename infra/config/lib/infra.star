@@ -19,6 +19,7 @@ def recipe(name):
   return luci.recipe(
       name = name,
       cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/infra',
+      use_bbagent = True,
   )
 
 

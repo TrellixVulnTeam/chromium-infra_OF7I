@@ -16,12 +16,12 @@ def poller():
   )
 
 
-def recipe(name, use_bbagent=True):
+def recipe(name):
   """Defines a recipe hosted in the build.git recipe bundle."""
   return luci.recipe(
       name = name,
       cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/chromium/tools/build',
-      use_bbagent=use_bbagent,
+      use_bbagent = True,
   )
 
 
