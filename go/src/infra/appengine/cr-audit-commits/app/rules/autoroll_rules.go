@@ -23,6 +23,9 @@ const (
 	fileFuchsiaSDKMac   = "build/fuchsia/mac.sdk.sha1"
 	fileGoMod           = "go.mod"
 	fileGoSum           = "go.sum"
+	filePgoMac          = "chrome/build/mac.pgo.txt"
+	filePgoWin32        = "chrome/build/win32.pgo.txt"
+	filePgoWin64        = "chrome/build/win64.pgo.txt"
 	fileSkiaManifest    = "manifest/skia"
 	fileSkiaTasks       = "infra/bots/tasks.json"
 

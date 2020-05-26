@@ -26,6 +26,9 @@ var RuleMap = map[string]*RefConfig{
 					fileFreeTypeOptionH,
 					fileFuchsiaSDKLinux,
 					fileFuchsiaSDKMac,
+					filePgoMac,
+					filePgoWin32,
+					filePgoWin64,
 				}, []string{
 					dirCrosProfile,
 				}),
