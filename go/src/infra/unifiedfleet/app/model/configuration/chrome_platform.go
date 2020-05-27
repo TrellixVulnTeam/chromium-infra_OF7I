@@ -6,8 +6,6 @@ package configuration
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -19,7 +17,6 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/registration"
 )
 
 // ChromePlatformKind is the datastore entity kind for chrome platforms.
@@ -124,37 +121,7 @@ func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) 
 }
 
 // DeleteChromePlatform deletes the chromePlatform in datastore
-//
-// For referential data intergrity,
-// Delete if there are no references to the ChromePlatform by Machine/KVM in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
 func DeleteChromePlatform(ctx context.Context, id string) error {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "chrome_platform_id", id, true)
-	if err != nil {
-		return err
-	}
-	kvms, err := registration.QueryKVMByPropertyName(ctx, "chrome_platform_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 || len(kvms) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("ChromePlatform %s cannot be deleted because there are other resources which are referring this ChromePlatform.", id))
-		if len(machines) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the ChromPlatform:\n"))
-			for _, machine := range machines {
-				errorMsg.WriteString(machine.Name + ", ")
-			}
-		}
-		if len(kvms) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nKVMs referring the ChromPlatform:\n"))
-			for _, kvm := range kvms {
-				errorMsg.WriteString(kvm.Name + ", ")
-			}
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
 	return fleetds.Delete(ctx, &fleet.ChromePlatform{Name: id}, newChromePlatformEntity)
 }
 

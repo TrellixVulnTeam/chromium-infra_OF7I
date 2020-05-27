@@ -61,7 +61,7 @@ func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *api.Cr
 		return nil, err
 	}
 	req.ChromePlatform.Name = req.ChromePlatformId
-	chromeplatform, err := configuration.CreateChromePlatform(ctx, req.ChromePlatform)
+	chromeplatform, err := controller.CreateChromePlatform(ctx, req.ChromePlatform)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *api.Up
 		return nil, err
 	}
 	req.ChromePlatform.Name = util.RemovePrefix(req.ChromePlatform.Name)
-	chromeplatform, err := configuration.UpdateChromePlatform(ctx, req.ChromePlatform)
+	chromeplatform, err := controller.UpdateChromePlatform(ctx, req.ChromePlatform)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *api.GetCh
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	chromePlatform, err := configuration.GetChromePlatform(ctx, name)
+	chromePlatform, err := controller.GetChromePlatform(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *api.Lis
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := configuration.ListChromePlatforms(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListChromePlatforms(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (fs *FleetServerImpl) DeleteChromePlatform(ctx context.Context, req *api.De
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = configuration.DeleteChromePlatform(ctx, name)
+	err = controller.DeleteChromePlatform(ctx, name)
 	return &empty.Empty{}, err
 }
 
@@ -176,7 +176,7 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 	platforms = util.ToChromePlatforms(oldP)
 
 	logging.Debugf(ctx, "Importing %d platforms", len(platforms))
-	res, err := configuration.ImportChromePlatforms(ctx, platforms)
+	res, err := controller.ImportChromePlatforms(ctx, platforms)
 	s := processImportDatastoreRes(res, err)
 	return s.Proto(), s.Err()
 }

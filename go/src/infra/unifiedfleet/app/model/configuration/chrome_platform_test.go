@@ -6,16 +6,14 @@ package configuration
 
 import (
 	"fmt"
-	fleet "infra/unifiedfleet/api/v1/proto"
 	"testing"
-
-	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/registration"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+	fleet "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/model/datastore"
 )
 
 func mockChromePlatform(id, desc string) *fleet.ChromePlatform {
@@ -160,61 +158,9 @@ func TestDeleteChromePlatform(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	chromePlatform1 := mockChromePlatform("chromePlatform-1", "Camera")
 	chromePlatform2 := mockChromePlatform("chromePlatform-2", "Camera")
-	// TODO(eshwarn) : Remove comment when kvm create/get is added
-	// chromePlatform3 := mockChromePlatform("chromePlatform-3", "Sensor")
 	Convey("DeleteChromePlatform", t, func() {
-		Convey("Delete chromePlatform by existing ID with machine reference", func() {
-			resp, cerr := CreateChromePlatform(ctx, chromePlatform1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, chromePlatform1)
-
-			chromeBrowserMachine1 := &fleet.Machine{
-				Name: "machine-1",
-				Device: &fleet.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &fleet.ChromeBrowserMachine{
-						ChromePlatform: "chromePlatform-1",
-					},
-				},
-			}
-			mresp, merr := registration.CreateMachine(ctx, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
-
-			err := DeleteChromePlatform(ctx, "chromePlatform-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetChromePlatform(ctx, "chromePlatform-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, chromePlatform1)
-		})
-		/* TODO(eshwarn) : Remove comment when kvm create/get is added
-		Convey("Delete chromePlatform by existing ID with KVM reference", func() {
-			resp, cerr := CreateChromePlatform(ctx, chromePlatform3)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, chromePlatform3)
-
-			kvm1 := &fleet.KVM{
-				Name: "kvm-1",
-				ChromePlatform: "chromePlatform-3",
-			}
-			kresp, kerr := registration.CreateKVM(tf.C, kvm1)
-			So(kerr, ShouldBeNil)
-			So(kresp, ShouldResembleProto, kvm1)
-
-			err := DeleteChromePlatform(ctx, "chromePlatform-3")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetChromePlatform(ctx, "chromePlatform-3")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, chromePlatform3)
-		})*/
-		Convey("Delete chromePlatform successfully by existing ID without references", func() {
+		Convey("Delete chromePlatform successfully by existing ID", func() {
 			resp, cerr := CreateChromePlatform(ctx, chromePlatform2)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatform2)
