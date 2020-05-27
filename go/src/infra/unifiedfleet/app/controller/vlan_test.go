@@ -12,9 +12,9 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 	proto "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
-	"infra/unifiedfleet/app/model/registration"
 )
 
 func mockVlan(id string) *proto.Vlan {
@@ -31,7 +31,7 @@ func TestDeleteVlan(t *testing.T) {
 	vlan2 := mockVlan("vlan-2")
 	Convey("DeleteVlan", t, func() {
 		Convey("Delete vlan by existing ID with machinelse reference", func() {
-			resp, cerr := registration.CreateVlan(ctx, vlan1)
+			resp, cerr := configuration.CreateVlan(ctx, vlan1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlan1)
 			chromeosServerLse := &proto.ChromeOSServerLSE{
@@ -58,20 +58,20 @@ func TestDeleteVlan(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
-			resp, cerr = registration.GetVlan(ctx, "vlan-1")
+			resp, cerr = configuration.GetVlan(ctx, "vlan-1")
 			So(resp, ShouldNotBeNil)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlan1)
 		})
 		Convey("Delete vlan successfully by existing ID without references", func() {
-			resp, cerr := registration.CreateVlan(ctx, vlan2)
+			resp, cerr := configuration.CreateVlan(ctx, vlan2)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlan2)
 
 			err := DeleteVlan(ctx, "vlan-2")
 			So(err, ShouldBeNil)
 
-			resp, cerr = registration.GetVlan(ctx, "vlan-2")
+			resp, cerr = configuration.GetVlan(ctx, "vlan-2")
 			So(resp, ShouldBeNil)
 			So(cerr, ShouldNotBeNil)
 			So(cerr.Error(), ShouldContainSubstring, NotFound)

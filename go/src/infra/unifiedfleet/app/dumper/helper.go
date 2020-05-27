@@ -16,6 +16,7 @@ import (
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	apibq "infra/unifiedfleet/api/v1/proto/bigquery"
+	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
@@ -117,7 +118,7 @@ func dumpVlans(ctx context.Context, bqClient *bigquery.Client, curTimeStr string
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("vlans$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListVlans(ctx, pageSize, startToken)
+		res, nextToken, err := controller.ListVlans(ctx, pageSize, startToken)
 		if err != nil {
 			return errors.Annotate(err, "get all vlans").Err()
 		}
