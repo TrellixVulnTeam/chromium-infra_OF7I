@@ -388,3 +388,125 @@ func (fs *FleetServerImpl) DeleteRackLSEPrototype(ctx context.Context, req *api.
 	err = controller.DeleteRackLSEPrototype(ctx, name)
 	return &empty.Empty{}, err
 }
+
+// CreateVlan creates vlan entry in database.
+func (fs *FleetServerImpl) CreateVlan(ctx context.Context, req *api.CreateVlanRequest) (rsp *proto.Vlan, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Vlan.Name = req.VlanId
+	vlan, err := controller.CreateVlan(ctx, req.Vlan)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
+	return vlan, err
+}
+
+// UpdateVlan updates the vlan information in database.
+func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *api.UpdateVlanRequest) (rsp *proto.Vlan, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Vlan.Name = util.RemovePrefix(req.Vlan.Name)
+	vlan, err := controller.UpdateVlan(ctx, req.Vlan)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
+	return vlan, err
+}
+
+// GetVlan gets the vlan information from database.
+func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *api.GetVlanRequest) (rsp *proto.Vlan, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	vlan, err := controller.GetVlan(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
+	return vlan, err
+}
+
+// ListVlans list the vlans information from database.
+func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *api.ListVlansRequest) (rsp *api.ListVlansResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := controller.ListVlans(ctx, pageSize, req.PageToken)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, vlan := range result {
+		vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
+	}
+	return &api.ListVlansResponse{
+		Vlans:         result,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
+// DeleteVlan deletes the vlan from database.
+func (fs *FleetServerImpl) DeleteVlan(ctx context.Context, req *api.DeleteVlanRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = controller.DeleteVlan(ctx, name)
+	return &empty.Empty{}, err
+}
+
+// ImportVlans imports vlans & all IP-related infos.
+func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *api.ImportVlansRequest) (response *status.Status, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	configSource := req.GetConfigSource()
+	if configSource == nil {
+		return nil, emptyConfigSourceStatus.Err()
+	}
+	if configSource.ConfigServiceName == "" {
+		return nil, invalidConfigServiceName.Err()
+	}
+
+	logging.Debugf(ctx, "Importing vlans from luci-config: %s", configSource.FileName)
+	cfgInterface := fs.newCfgInterface(ctx)
+	fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
+	if err != nil {
+		return nil, configServiceFailureStatus.Err()
+	}
+	vlans := &crimsonconfig.VLANs{}
+	resolver := textproto.Message(vlans)
+	resolver.Resolve(fetchedConfigs)
+
+	pageSize := fs.getImportPageSize()
+	res, err := controller.ImportVlans(ctx, vlans.GetVlan(), pageSize)
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
+	}
+	return successStatus.Proto(), nil
+}
