@@ -25,7 +25,8 @@ from infra.services.lkgr_finder import lkgr_lib
 from infra.services.lkgr_finder.status_generator import StatusGeneratorStub
 
 
-# TODO(agable): Test everything else once I can import pymox.
+# Note that many parts of lkgr_lib are not tested due to insufficient mocks.
+
 class FetchBuildbucketBuildsForBuilderTest(unittest.TestCase):
 
   @mock.patch('infra.services.lkgr_finder.lkgr_lib._FetchFromBuildbucketImpl')

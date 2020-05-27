@@ -193,9 +193,6 @@ class IssueStarService(AbstractStarService):
   # pylint: disable=arguments-differ
   def SetStar(
       self, cnxn, services, config, issue_id, starrer_user_id, starred):
-    # TODO(agable): The number of arguments required by this function is
-    # crazy. Find a way to simplify it so that it only needs the same
-    # arguments as AbstractSetStar above.
     """Add or remove a star on the given issue for the given user.
 
     Args:

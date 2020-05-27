@@ -142,7 +142,7 @@ class ProjectExportJSON(jsonfeed.JsonFeed):
           [self._MakeLabelJSON(label) for label in config.well_known_labels],
       'exclusive_label_prefixes':
           [label for label in config.exclusive_label_prefixes],
-      # TODO(agable): Export the projects FieldDefs (not yet used).
+      # TODO(http://crbug.com/monorail/7217): Export the project's FieldDefs.
       'components':
           [self._MakeComponentJSON(component, email_dict)
            for component in config.component_defs],
@@ -170,7 +170,7 @@ class ProjectExportJSON(jsonfeed.JsonFeed):
       'owner': email_dict.get(template.owner_id),
       'status': template.status,
       'labels': [label for label in template.labels],
-      # TODO(agable): Export the template's default Fields (not yet used).
+      # TODO(http://crbug.com/monorail/7217): Export the template's Fields.
       'members_only': template.members_only,
       'owner_defaults_to_member': template.owner_defaults_to_member,
       'component_required': template.component_required,

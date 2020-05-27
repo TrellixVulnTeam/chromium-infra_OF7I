@@ -212,7 +212,7 @@ class FieldRowTwoLevelCache(caches.AbstractTwoLevelCache):
   def _DeserializeFieldRows(self, field_def_rows):
     """Convert DB result rows into a dict {project_id: [row, ...]}."""
     result_dict = collections.defaultdict(list)
-    # TODO(agable): Actually process the rest of the items.
+    # TODO: Actually process the rest of the items.
     for (field_id, project_id, rank, field_name, _field_type, _applicable_type,
          _applicable_predicate, _is_required, _is_niche, _is_multivalued,
          _min_value, _max_value, _regex, _needs_member, _needs_perm,

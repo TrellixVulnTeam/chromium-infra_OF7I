@@ -263,7 +263,7 @@ class IssueExportJSON(jsonfeed.JsonFeed):
         'modified': issue.modified_timestamp,
         'closed': issue.closed_timestamp,
     }
-    # TODO(agable): Export cross-project references as well.
+    # TODO(http://crbug.com/monorail/7217): Export cross-project references.
     if issue.blocked_on_iids:
       issue_json['blocked_on'] = [i.local_id for i in
            self.services.issue.GetIssues(mr.cnxn, issue.blocked_on_iids)

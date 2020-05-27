@@ -805,8 +805,7 @@ def _show_user(request):
 
 
 @deco.access_control_allow_origin_star
-# TODO(agable): remove POST after crrev.com/c/723824 lands.
-@deco.require_methods('GET', 'POST')
+@deco.require_methods('GET')
 @deco.patchset_required
 @deco.json_response
 def get_depends_on_patchset(request):

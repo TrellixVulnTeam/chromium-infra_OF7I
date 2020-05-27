@@ -151,8 +151,6 @@ def ParseArgs(argv):
 
 
 def main(argv):
-  # TODO(agable): Refactor this into multiple sequential helper functions.
-
   args, config_arg_names = ParseArgs(argv)
 
   global LOGGER

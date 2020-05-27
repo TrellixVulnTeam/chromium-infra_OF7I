@@ -20,7 +20,7 @@
 # POSTs, all methods take exactly one input, and all methods return exactly
 # one output.
 #
-# TODO(agable): Actually integrate the rpcexplorer.
+# TODO(http://crbug.com/monorail/1703): Actually integrate the rpcexplorer.
 # You can use the API Explorer here: https://bugs.chromium.org/rpcexplorer
 
 from __future__ import print_function

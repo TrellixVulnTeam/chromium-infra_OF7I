@@ -192,8 +192,6 @@ class Project(messages.Message):
 class ProjectCommitments(messages.Message):
   project_id = messages.IntegerField(50)
 
-  # TODO(agable): Does it still make sense to call it a 'Commitment' when
-  # it doesn't contain duties anymore?
   class MemberCommitment(messages.Message):
     member_id = messages.IntegerField(11, required=True)
     notes = messages.StringField(13)

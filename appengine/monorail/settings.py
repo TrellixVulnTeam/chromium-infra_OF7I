@@ -76,7 +76,6 @@ db_cnxn_pool_size = 5
 num_logical_shards = 10
 
 # "Learn more" link for the site home page
-# TODO(agable): Update this when we have publicly visible documentation.
 learn_more_link = None
 
 # Site name, displayed above the search box on the site home page.
