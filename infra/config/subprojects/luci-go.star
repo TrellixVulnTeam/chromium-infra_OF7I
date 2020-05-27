@@ -22,9 +22,7 @@ def ci_builder(name, os, tree_closing=False):
   infra.builder(
       name = name,
       bucket = 'ci',
-      # the luci-go tests aren't sufficiently isolated from the env when running
-      # under bbagent.
-      executable = infra.recipe('luci_go', use_bbagent=False),
+      executable = infra.recipe('luci_go'),
       os = os,
       triggered_by = [
           luci.gitiles_poller(
@@ -53,9 +51,7 @@ def try_builder(
   infra.builder(
       name = name,
       bucket = 'try',
-      # the luci-go tests aren't sufficiently isolated from the env when running
-      # under bbagent.
-      executable = infra.recipe(recipe or 'luci_go', use_bbagent=False),
+      executable = infra.recipe(recipe or 'luci_go'),
       os = os,
       properties = properties,
   )
