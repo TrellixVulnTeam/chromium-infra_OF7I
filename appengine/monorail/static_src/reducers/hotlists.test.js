@@ -319,6 +319,27 @@ describe('hotlist action creators', () => {
       };
       sinon.assert.calledWith(dispatch, action);
     });
+
+    it('success with empty hotlist', async () => {
+      const response = {items: []};
+      prpcClient.call.returns(Promise.resolve(response));
+
+      const returnValue = await hotlists.fetchItems(example.NAME)(dispatch);
+      assert.deepEqual(returnValue, []);
+
+      sinon.assert.calledWith(dispatch, {type: hotlists.FETCH_ITEMS_START});
+
+      const args = {parent: example.NAME, orderBy: 'rank'};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v3.Hotlists', 'ListHotlistItems', args);
+
+      const action = {
+        type: hotlists.FETCH_ITEMS_SUCCESS,
+        name: example.NAME,
+        items: [],
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
   });
 
   describe('removeEditors', () => {

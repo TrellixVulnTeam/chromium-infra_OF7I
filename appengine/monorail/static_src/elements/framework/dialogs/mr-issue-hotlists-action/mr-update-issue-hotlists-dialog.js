@@ -2,40 +2,28 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import {LitElement, html, css} from 'lit-element';
+import {html, css} from 'lit-element';
 import deepEqual from 'deep-equal';
 
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
-import 'elements/chops/chops-dialog/chops-dialog.js';
-import {store, connectStore} from 'reducers/base.js';
+import {store} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as userV0 from 'reducers/userV0.js';
-import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {prpcClient} from 'prpc-client-instance.js';
+import {MrIssueHotlistsDialog} from './mr-issue-hotlists-dialog';
 
 /**
- * `<mr-update-issue-hotlists>`
+ * `<mr-update-issue-hotlists-dialog>`
  *
  * Displays a dialog with the current hotlists's issues allowing the user to
  * update which hotlists the issues are a member of.
  */
-export class MrUpdateIssueHotlists extends connectStore(LitElement) {
+export class MrUpdateIssueDialog extends MrIssueHotlistsDialog {
   /** @override */
   static get styles() {
     return [
-      SHARED_STYLES,
+      ...super.styles,
       css`
-        :host {
-          font-size: var(--chops-main-font-size);
-          --chops-dialog-max-width: 500px;
-        }
-        select,
-        input {
-          box-sizing: border-box;
-          width: var(--mr-edit-field-width);
-          padding: var(--mr-edit-field-padding);
-          font-size: var(--chops-main-font-size);
-        }
         input[type="checkbox"] {
           width: auto;
           height: auto;
@@ -80,70 +68,70 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
           width: 200px;
           max-width: 100%;
         }
-        .error {
-          max-width: 100%;
-          color: red;
-          margin-bottom: 1px;
-        }
       `,
     ];
   }
 
   /** @override */
-  render() {
+  renderHeader() {
     return html`
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <chops-dialog closeOnOutsideClick>
-        <h3 class="medium-heading">Add issue to hotlists</h3>
-        <form id="issueHotlistsForm">
-          ${this.userHotlists.length ? this.userHotlists.map((hotlist) => html`
-            <chops-checkbox
-              title=${this._checkboxTitle(hotlist, this.issueHotlists)}
-              data-hotlist-name="${hotlist.name}"
-              ?checked=${this.hotlistsToAdd.has(hotlist.name)}
-              @checked-change=${this._targetHotlistChecked}>
-              ${hotlist.name}
-            </chops-checkbox>
-          `) : ''}
-          <h3 class="medium-heading">Create new hotlist</h3>
-          <div class="input-grid">
-            <label for="newHotlistName">New hotlist name:</label>
-            <input type="text" name="newHotlistName">
-          </div>
-          <br>
-          ${this.error ? html`
-            <div class="error">${this.error}</div>
-          `: ''}
-          <div class="edit-actions">
-            <chops-button
-              class="de-emphasized discard-button"
-              ?disabled=${this.disabled}
-              @click=${this.discard}
-            >
-              Discard
-            </chops-button>
-            <chops-button
-              class="emphasized"
-              ?disabled=${this.disabled}
-              @click=${this.save}
-            >
-              Save changes
-            </chops-button>
-          </div>
-        </form>
-      </chops-dialog>
+      <h3 class="medium-heading">Add issue to hotlists</h3>
     `;
+  }
+
+  /** @override */
+  renderContent() {
+    return html`
+      ${this.renderFilter()}
+      <form id="issueHotlistsForm">
+        ${this.renderHotlists()}
+        <h3 class="medium-heading">Create new hotlist</h3>
+        <div class="input-grid">
+          <label for="newHotlistName">New hotlist name:</label>
+          <input type="text" name="newHotlistName">
+        </div>
+        ${this.renderError()}
+        <div class="edit-actions">
+          <chops-button
+            class="de-emphasized discard-button"
+            ?disabled=${this.disabled}
+            @click=${this.discard}
+          >
+            Discard
+          </chops-button>
+          <chops-button
+            class="emphasized"
+            ?disabled=${this.disabled}
+            @click=${this.save}
+          >
+            Save changes
+          </chops-button>
+        </div>
+      </form>
+    `;
+  }
+
+  /** @override */
+  renderFilteredHotlist(hotlist) {
+    return html`
+      <chops-checkbox
+        class="hotlist"
+        title=${this._checkboxTitle(hotlist, this.issueHotlists)}
+        data-hotlist-name="${hotlist.name}"
+        ?checked=${this.hotlistsToAdd.has(hotlist.name)}
+        @checked-change=${this._targetHotlistChecked}
+      >
+        ${hotlist.name}
+      </chops-checkbox>`;
   }
 
   /** @override */
   static get properties() {
     return {
+      ...super.properties,
       viewedIssueRef: {type: Object},
-      issueRefs: {type: Array},
       issueHotlists: {type: Array},
-      userHotlists: {type: Array},
       user: {type: Object},
-      error: {type: String},
       hotlistsToAdd: {
         type: Object,
         hasChanged(newVal, oldVal) {
@@ -155,44 +143,30 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   /** @override */
   stateChanged(state) {
+    super.stateChanged(state);
     this.viewedIssueRef = issueV0.viewedIssueRef(state);
     this.user = userV0.currentUser(state);
-    this.userHotlists = userV0.currentUser(state).hotlists;
   }
 
   /** @override */
   constructor() {
     super();
 
-    /** @type {Array<IssueRef>} */
-    this.issueRefs = [];
-
     /** The list of Hotlists attached to the issueRefs. */
     this.issueHotlists = [];
-    this.userHotlists = [];
 
     /** The Set of Hotlist names that the Issues will be added to. */
     this.hotlistsToAdd = this._initializeHotlistsToAdd();
   }
 
-  /**
-   * Opens the dialog.
-   */
-  open() {
-    this.reset();
-    this.shadowRoot.querySelector('chops-dialog').open();
-  }
-
-  /**
-   * Resets any changes to the form and error.
-   */
+  /** @override */
   reset() {
     const form = this.shadowRoot.querySelector('#issueHotlistsForm');
     form.reset();
     // LitElement's hasChanged needs an assignment to verify Set objects.
     // https://lit-element.polymer-project.org/guide/properties#haschanged
     this.hotlistsToAdd = this._initializeHotlistsToAdd();
-    this.error = '';
+    super.reset();
   }
 
   /**
@@ -200,13 +174,6 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
    */
   discard() {
     this.close();
-  }
-
-  /**
-   * Closes the dialog.
-   */
-  close() {
-    this.shadowRoot.querySelector('chops-dialog').close();
   }
 
   /**
@@ -221,6 +188,7 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
     if (!issueRefs || !changes) return;
 
+    // TODO(https://crbug.com/monorail/7778): Use action creators.
     const promises = [];
     if (changes.added && changes.added.length) {
       promises.push(prpcClient.call(
@@ -270,8 +238,8 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   /**
    * Returns whether a given hotlist matches any of the given issue's hotlists.
-   * @param {HotlistV0} hotlist Hotlist to look for.
-   * @param {Array<HotlistV0>} issueHotlists Issue's hotlists to compare to.
+   * @param {Hotlist} hotlist Hotlist to look for.
+   * @param {Array<Hotlist>} issueHotlists Issue's hotlists to compare to.
    * @return {boolean}
    */
   _issueInHotlist(hotlist, issueHotlists) {
@@ -310,8 +278,8 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
 
   /**
    * The checkbox title for the issue, shown on hover and for a11y.
-   * @param {HotlistV0} hotlist Hotlist to look for.
-   * @param {Array<HotlistV0>} issueHotlists Issue's hotlists to compare to.
+   * @param {Hotlist} hotlist Hotlist to look for.
+   * @param {Array<Hotlist>} issueHotlists Issue's hotlists to compare to.
    * @return {string}
    */
   _checkboxTitle(hotlist, issueHotlists) {
@@ -369,4 +337,4 @@ export class MrUpdateIssueHotlists extends connectStore(LitElement) {
   }
 }
 
-customElements.define('mr-update-issue-hotlists', MrUpdateIssueHotlists);
+customElements.define('mr-update-issue-hotlists-dialog', MrUpdateIssueDialog);

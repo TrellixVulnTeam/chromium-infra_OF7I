@@ -21,7 +21,7 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 import {ISSUE_DELETE_PERMISSION} from 'shared/permissions.js';
 
 // eslint-disable-next-line max-len
-import 'elements/framework/dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
+import 'elements/framework/dialogs/mr-issue-hotlists-action/mr-update-issue-hotlists-dialog.js';
 import '../dialogs/mr-edit-description/mr-edit-description.js';
 import '../dialogs/mr-move-copy-issue/mr-move-copy-issue.js';
 import '../dialogs/mr-convert-issue/mr-convert-issue.js';
@@ -267,11 +267,11 @@ export class MrIssuePage extends connectStore(LitElement) {
         <mr-move-copy-issue id="move-copy-issue"></mr-move-copy-issue>
         <mr-convert-issue id="convert-issue"></mr-convert-issue>
         <mr-related-issues id="reorder-related-issues"></mr-related-issues>
-        <mr-update-issue-hotlists
+        <mr-update-issue-hotlists-dialog
           id="update-issue-hotlists"
           .issueRefs=${[this.issueRef]}
           .issueHotlists=${this.issueHotlists}
-        ></mr-update-issue-hotlists>
+        ></mr-update-issue-hotlists-dialog>
       `;
     }
 

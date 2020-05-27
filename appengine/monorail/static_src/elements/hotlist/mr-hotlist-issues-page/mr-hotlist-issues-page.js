@@ -20,7 +20,9 @@ import * as ui from 'reducers/ui.js';
 import 'elements/chops/chops-filter-chips/chops-filter-chips.js';
 import 'elements/framework/dialogs/mr-change-columns/mr-change-columns.js';
 // eslint-disable-next-line max-len
-import 'elements/framework/dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
+import 'elements/framework/dialogs/mr-issue-hotlists-action/mr-move-issue-hotlists-dialog.js';
+// eslint-disable-next-line max-len
+import 'elements/framework/dialogs/mr-issue-hotlists-action/mr-update-issue-hotlists-dialog.js';
 import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
@@ -77,11 +79,16 @@ export class _MrHotlistIssuesPage extends LitElement {
     const projectName = allProjectNamesEqual ? items[0].projectName : null;
 
     /** @type {HotlistV0} */
-    // Used to populate <mr-update-issue-hotlists>' issueHotlists property.
+    // Populates <mr-update-issue-hotlists-dialog>' issueHotlists property.
     const hotlistV0 = {
       ownerRef: {userId: userNameToId(this._hotlist.owner)},
       name: this._hotlist.displayName,
     };
+
+    const MAY_EDIT = this._permissions.includes(hotlists.ADMINISTER) ||
+                     this._permissions.includes(hotlists.EDIT);
+    // TODO(https://crbug.com/monorail/7776): The UI to allow reranking of
+    // Issues should reflect user permissions.
 
     return html`
       <p>${this._hotlist.summary}</p>
@@ -104,16 +111,20 @@ export class _MrHotlistIssuesPage extends LitElement {
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
         .rerank=${this._rerankItems.bind(this)}
-        ?selectionEnabled=${true}
+        ?selectionEnabled=${MAY_EDIT}
         @selectionChange=${this._onSelectionChange}
       ></mr-issue-list>
 
       <mr-change-columns .columns=${this._columns}></mr-change-columns>
-      <mr-update-issue-hotlists
+      <mr-update-issue-hotlists-dialog
         .issueRefs=${this._selected.map(issueNameToRef)}
         .issueHotlists=${[hotlistV0]}
         @saveSuccess=${this._handleHotlistSaveSuccess}
-      ></mr-update-issue-hotlists>
+      ></mr-update-issue-hotlists-dialog>
+      <mr-move-issue-hotlists-dialog
+        .issueRefs=${this._selected.map(issueNameToRef)}
+        @saveSuccess=${this._handleHotlistSaveSuccess}
+      ><mr-move-issue-hotlists-dialog>
     `;
   }
 
@@ -123,11 +134,19 @@ export class _MrHotlistIssuesPage extends LitElement {
   _buttonBarItems() {
     if (this._selected.length) {
       return [
-        {icon: 'remove', text: 'Remove', handler: this._removeItems.bind(this)},
+        {
+          icon: 'remove_circle_outline',
+          text: 'Remove',
+          handler: this._removeItems.bind(this)},
+        {
+          icon: 'edit',
+          text: 'Update',
+          handler: this._openUpdateIssuesHotlistsDialog.bind(this),
+        },
         {
           icon: 'forward',
-          text: 'Add to another hotlist',
-          handler: this._openAddToAnotherHotlistDialog.bind(this),
+          text: 'Move to...',
+          handler: this._openMoveToHotlistDialog.bind(this),
         },
       ];
     } else {
@@ -148,6 +167,7 @@ export class _MrHotlistIssuesPage extends LitElement {
     return {
       // Populated from Redux.
       _hotlist: {type: Object},
+      _permissions: {type: Array},
       _items: {type: Array},
       _columns: {type: Array},
       _issue: {type: Object},
@@ -165,6 +185,8 @@ export class _MrHotlistIssuesPage extends LitElement {
 
     /** @type {?Hotlist} */
     this._hotlist = null;
+    /** @type {Array<Permission>} */
+    this._permissions = [];
     /** @type {Array<HotlistIssue>} */
     this._items = [];
     /** @type {Array<string>} */
@@ -224,17 +246,21 @@ export class _MrHotlistIssuesPage extends LitElement {
     this.shadowRoot.querySelector('mr-change-columns').open();
   }
 
-  /** Opens a dialog to change the columns shown in the issue list. */
-  _openAddToAnotherHotlistDialog() {
-    this.shadowRoot.querySelector('mr-update-issue-hotlists').open();
-  }
-
   /** Handles successfully saved Hotlist changes. */
   async _handleHotlistSaveSuccess() {}
 
   /** Removes items from the hotlist, dispatching an action to Redux. */
   async _removeItems() {}
 
+  /** Opens a dialog to update attached Hotlists for selected Issues. */
+  _openUpdateIssuesHotlistsDialog() {
+    this.shadowRoot.querySelector('mr-update-issue-hotlists-dialog').open();
+  }
+
+  /** Opens a dialog to move selected Issues to desired Hotlist. */
+  _openMoveToHotlistDialog() {
+    this.shadowRoot.querySelector('mr-move-issue-hotlists-dialog').open();
+  }
   /**
    * Reranks items in the hotlist, dispatching an action to Redux.
    * @param {Array<String>} items The names of the HotlistItems to move.
@@ -249,6 +275,7 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
   /** @override */
   stateChanged(state) {
     this._hotlist = hotlists.viewedHotlist(state);
+    this._permissions = hotlists.viewedHotlistPermissions(state);
     this._items = hotlists.viewedHotlistIssues(state);
 
     const hotlistColumns =

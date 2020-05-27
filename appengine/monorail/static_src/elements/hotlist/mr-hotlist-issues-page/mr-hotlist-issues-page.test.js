@@ -14,6 +14,7 @@ import * as sitewide from 'reducers/sitewide.js';
 import * as example from 'shared/test/constants-hotlists.js';
 import * as exampleIssues from 'shared/test/constants-issueV0.js';
 import * as exampleUsers from 'shared/test/constants-users.js';
+import {PERMISSION_HOTLIST_EDIT} from 'shared/test/constants-permissions.js';
 
 import {MrHotlistIssuesPage} from './mr-hotlist-issues-page.js';
 
@@ -121,6 +122,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
   });
 
   it('updates button bar on list selection', async () => {
+    element._permissions = PERMISSION_HOTLIST_EDIT;
     element._hotlist = example.HOTLIST;
     element._items = [example.HOTLIST_ISSUE];
     await element.updateComplete;
@@ -128,7 +130,8 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     const buttonBar = element.shadowRoot.querySelector('mr-button-bar');
     assert.include(buttonBar.shadowRoot.innerHTML, 'Change columns');
     assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Remove');
-    assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Add to another hotlist');
+    assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Update');
+    assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Move to...');
     assert.deepEqual(element._selected, []);
 
     const issueList = element.shadowRoot.querySelector('mr-issue-list');
@@ -137,8 +140,19 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
     assert.notInclude(buttonBar.shadowRoot.innerHTML, 'Change columns');
     assert.include(buttonBar.shadowRoot.innerHTML, 'Remove');
-    assert.include(buttonBar.shadowRoot.innerHTML, 'Add to another hotlist');
+    assert.include(buttonBar.shadowRoot.innerHTML, 'Update');
+    assert.include(buttonBar.shadowRoot.innerHTML, 'Move to...');
     assert.deepEqual(element._selected, [exampleIssues.NAME]);
+  });
+
+  it('hides issues checkboxes if the user cannot edit', async () => {
+    element._permissions = [];
+    element._hotlist = example.HOTLIST;
+    element._items = [example.HOTLIST_ISSUE];
+    await element.updateComplete;
+
+    const issueList = element.shadowRoot.querySelector('mr-issue-list');
+    assert.notInclude(issueList.shadowRoot.innerHTML, 'input');
   });
 
   it('opens "Change columns" dialog', async () => {
@@ -156,14 +170,15 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     }
   });
 
-  it('opens "Add to another hotlist" dialog', async () => {
+  it('opens "Update" dialog', async () => {
     element._hotlist = example.HOTLIST;
     await element.updateComplete;
 
-    const dialog = element.shadowRoot.querySelector('mr-update-issue-hotlists');
+    const dialog = element.shadowRoot.querySelector(
+        'mr-update-issue-hotlists-dialog');
     sinon.stub(dialog, 'open');
     try {
-      element._openAddToAnotherHotlistDialog();
+      element._openUpdateIssuesHotlistsDialog();
 
       sinon.assert.calledOnce(dialog.open);
     } finally {
@@ -178,7 +193,38 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
     try {
       const dialog =
-          element.shadowRoot.querySelector('mr-update-issue-hotlists');
+          element.shadowRoot.querySelector('mr-update-issue-hotlists-dialog');
+      dialog.dispatchEvent(new Event('saveSuccess'));
+      sinon.assert.calledOnce(element._handleHotlistSaveSuccess);
+    } finally {
+      element._handleHotlistSaveSuccess.restore();
+    }
+  });
+
+  it('opens "Move to..." dialog', async () => {
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    const dialog = element.shadowRoot.querySelector(
+        'mr-move-issue-hotlists-dialog');
+    sinon.stub(dialog, 'open');
+    try {
+      element._openMoveToHotlistDialog();
+
+      sinon.assert.calledOnce(dialog.open);
+    } finally {
+      dialog.open.restore();
+    }
+  });
+
+  it('handles successful save from its move dialog', async () => {
+    sinon.stub(element, '_handleHotlistSaveSuccess');
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    try {
+      const dialog =
+          element.shadowRoot.querySelector('mr-move-issue-hotlists-dialog');
       dialog.dispatchEvent(new Event('saveSuccess'));
       sinon.assert.calledOnce(element._handleHotlistSaveSuccess);
     } finally {

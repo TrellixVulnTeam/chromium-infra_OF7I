@@ -311,6 +311,9 @@ export const fetchItems = (name) => async (dispatch) => {
     /** @type {{items: Array<HotlistItem>}} */
     const {items} = await prpcClient.call(
         'monorail.v3.Hotlists', 'ListHotlistItems', args);
+    if (!items) {
+      dispatch({type: FETCH_ITEMS_SUCCESS, name, items: []});
+    }
     const itemsWithRank =
         items.map((item) => item.rank ? item : {...item, rank: 0});
 

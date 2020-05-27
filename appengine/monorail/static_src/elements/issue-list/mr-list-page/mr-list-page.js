@@ -21,7 +21,7 @@ import {
 import {SHARED_STYLES} from 'shared/shared-styles.js';
 import 'elements/framework/dialogs/mr-change-columns/mr-change-columns.js';
 // eslint-disable-next-line max-len
-import 'elements/framework/dialogs/mr-update-issue-hotlists/mr-update-issue-hotlists.js';
+import 'elements/framework/dialogs/mr-issue-hotlists-action/mr-update-issue-hotlists-dialog.js';
 import 'elements/framework/mr-button-bar/mr-button-bar.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
 import 'elements/framework/mr-issue-list/mr-issue-list.js';
@@ -112,10 +112,10 @@ export class MrListPage extends connectStore(LitElement) {
     return html`
       ${this._renderControls()}
       ${this._renderListBody()}
-      <mr-update-issue-hotlists
+      <mr-update-issue-hotlists-dialog
         .issueRefs=${selectedRefs}
         @saveSuccess=${this._showHotlistSaveSnackbar}
-      ></mr-update-issue-hotlists>
+      ></mr-update-issue-hotlists-dialog>
       <mr-change-columns
         .columns=${this.columns}
         .queryParams=${this._queryParams}
@@ -522,7 +522,7 @@ export class MrListPage extends connectStore(LitElement) {
       this.noneSelectedAlert('add to hotlists');
       return;
     }
-    this.shadowRoot.querySelector('mr-update-issue-hotlists').open();
+    this.shadowRoot.querySelector('mr-update-issue-hotlists-dialog').open();
   }
 
   /**

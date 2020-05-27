@@ -18,3 +18,6 @@ export const PERMISSION_SET_ISSUE = {
 export const BY_NAME = {
   [issue.NAME]: PERMISSION_SET_ISSUE,
 };
+
+/** @type {Array<Permission>} */
+export const PERMISSION_HOTLIST_EDIT = ['HOTLIST_EDIT'];

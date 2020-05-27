@@ -3,15 +3,15 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {MrUpdateIssueHotlists} from './mr-update-issue-hotlists.js';
+import {MrUpdateIssueDialog} from './mr-update-issue-hotlists-dialog.js';
 import {prpcClient} from 'prpc-client-instance.js';
 
 let element;
 let form;
 
-describe('mr-update-issue-hotlists', () => {
+describe('mr-update-issue-hotlists-dialog', () => {
   beforeEach(async () => {
-    element = document.createElement('mr-update-issue-hotlists');
+    element = document.createElement('mr-update-issue-hotlists-dialog');
     document.body.appendChild(element);
 
     await element.updateComplete;
@@ -27,7 +27,7 @@ describe('mr-update-issue-hotlists', () => {
   });
 
   it('initializes', () => {
-    assert.instanceOf(element, MrUpdateIssueHotlists);
+    assert.instanceOf(element, MrUpdateIssueDialog);
   });
 
   it('no changes', () => {

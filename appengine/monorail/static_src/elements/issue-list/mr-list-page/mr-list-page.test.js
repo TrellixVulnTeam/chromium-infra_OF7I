@@ -578,7 +578,7 @@ describe('mr-list-page', () => {
       await element.updateComplete;
 
       const dialog = element.shadowRoot.querySelector(
-          'mr-update-issue-hotlists');
+          'mr-update-issue-hotlists-dialog');
 
       sinon.stub(dialog, 'open');
 
@@ -598,7 +598,7 @@ describe('mr-list-page', () => {
       await element.updateComplete;
 
       const dialog = element.shadowRoot.querySelector(
-          'mr-update-issue-hotlists');
+          'mr-update-issue-hotlists-dialog');
 
       element.addToHotlist();
       dialog.dispatchEvent(new Event('saveSuccess'));
