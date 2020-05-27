@@ -346,32 +346,11 @@ func backfillAssetTagsToDevices(c *router.Context) error {
 	devOpRes := datastore.GetDevicesByHostnames(ctx, hosts)
 	for _, dev := range devOpRes {
 		if dev.Err == nil && string(dev.Entity.ID) != hostAT[dev.Entity.Hostname] {
-			//TODO(anushruth): Remove check for the hostname after
-			//testing, before submit.
-			check := func(hostname string) bool {
-				switch hostname {
-				case "chromeos6-row4-rack11-host13":
-					return true
-				case "chromeos6-row3-rack11-host19":
-					return true
-				case "chromeos6-row4-rack11-host16":
-					return true
-				case "chromeos6-row4-rack11-host18":
-					return true
-				case "chromeos6-row3-rack11-host17":
-					return true
-				default:
-					return false
-				}
-			}
-			if check(dev.Entity.Hostname) {
-				logging.Infof(ctx, "Updating %v from %v to %v",
-					dev.Entity.Hostname, dev.Entity.ID,
-					hostAT[dev.Entity.Hostname])
-				datastore.UpdateDeviceID(ctx,
-					string(dev.Entity.ID),
-					hostAT[dev.Entity.Hostname])
-			}
+			logging.Infof(ctx, "Updating %v from %v to %v",
+				dev.Entity.Hostname, dev.Entity.ID,
+				hostAT[dev.Entity.Hostname])
+			datastore.UpdateDeviceID(ctx, string(dev.Entity.ID),
+				hostAT[dev.Entity.Hostname])
 		}
 	}
 	return nil
