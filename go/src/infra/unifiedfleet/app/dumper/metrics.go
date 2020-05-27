@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	dumpChromePlatformTick = metric.NewCounter(
-		"chromeos/ufs/dumper/dump_chrome_platform",
-		"dumpChromePlatform attempt",
+	dumpToBQTick = metric.NewCounter(
+		"chromeos/ufs/dumper/dump_to_bq",
+		"dumpToBQ attempt",
 		nil,
 		field.Bool("success"), // If the attempt succeed
 	)

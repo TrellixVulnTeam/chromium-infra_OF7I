@@ -102,6 +102,41 @@ func QueryIPByPropertyName(ctx context.Context, propertyName, id string) ([]*fle
 	return ips, nil
 }
 
+// ListIPs lists the ips
+//
+// Does a query over ip entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListIPs(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.IP, nextPageToken string, err error) {
+	q, err := fleetds.ListQuery(ctx, IPKind, pageSize, pageToken)
+	if err != nil {
+		return nil, "", err
+	}
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *IPEntity, cb datastore.CursorCB) error {
+		pm, err := ent.GetProto()
+		if err != nil {
+			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+			return nil
+		}
+		res = append(res, pm.(*fleet.IP))
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to list ips %s", err)
+		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
+}
+
 // ImportIPs creates or updates a batch of ips in datastore
 func ImportIPs(ctx context.Context, ips []*fleet.IP) (*fleetds.OpResults, error) {
 	protos := make([]proto.Message, len(ips))

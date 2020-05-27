@@ -35,11 +35,15 @@ func InitServer(srv *server.Server, opts Options) {
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
-	cron.Run(ctx, minInterval, importCrimson)
+	//cron.Run(ctx, minInterval, importCrimson)
 	cron.Run(ctx, minInterval, dumpToBQ)
 }
 
-func dumpToBQ(ctx context.Context) error {
+func dumpToBQ(ctx context.Context) (err error) {
+	defer func() {
+		dumpToBQTick.Add(ctx, 1, err == nil)
+	}()
+
 	logging.Debugf(ctx, "Dumping to BQ")
 	curTime := time.Now()
 	curTimeStr := bqlib.GetPSTTimeStamp(curTime)
@@ -47,7 +51,15 @@ func dumpToBQ(ctx context.Context) error {
 	if err := dumpConfigurations(ctx, bqClient, curTimeStr); err != nil {
 		return errors.Annotate(err, "dump configurations").Err()
 	}
-
+	if err := dumpRegistration(ctx, bqClient, curTimeStr); err != nil {
+		return errors.Annotate(err, "dump registrations").Err()
+	}
+	if err := dumpInventory(ctx, bqClient, curTimeStr); err != nil {
+		return errors.Annotate(err, "dump inventories").Err()
+	}
+	if err := dumpState(ctx, bqClient, curTimeStr); err != nil {
+		return errors.Annotate(err, "dump states").Err()
+	}
 	logging.Debugf(ctx, "Dump is successfully finished")
 	return nil
 }
