@@ -1,0 +1,9 @@
+name: luci/utils/envoy-statsd-to-tsmon
+extends: ../../../base.yaml
+
+contextdir: ../../../../../go/src/go.chromium.org/luci/server/cmd/statsd-to-tsmon/docker/envoy
+deterministic: true
+
+build:
+  - go_binary: go.chromium.org/luci/server/cmd/statsd-to-tsmon
+    dest: ${contextdir}/bin/statsd-to-tsmon
