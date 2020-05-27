@@ -139,8 +139,8 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 	machineToDracs := make(map[string]string, 0)
 	newNics := make([]*fleet.Nic, 0)
 	newDracs := make([]*fleet.Drac, 0)
-	dhcps := make([]*fleet.DHCPConfig, len(nics))
-	for i, nic := range nics {
+	dhcps := make([]*fleet.DHCPConfig, 0)
+	for _, nic := range nics {
 		name := getNicName(nic)
 		switch nic.GetName() {
 		case "eth0":
@@ -168,11 +168,11 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 			machineToDracs[nic.GetMachine()] = name
 		}
 		if ip := nic.GetIpv4(); ip != "" {
-			dhcps[i] = &fleet.DHCPConfig{
+			dhcps = append(dhcps, &fleet.DHCPConfig{
 				MacAddress: nic.GetMacAddress(),
 				Hostname:   name,
 				Ip:         nic.GetIpv4(),
-			}
+			})
 		}
 	}
 	return newNics, newDracs, dhcps, machineToNics, machineToDracs, machineToSwitch

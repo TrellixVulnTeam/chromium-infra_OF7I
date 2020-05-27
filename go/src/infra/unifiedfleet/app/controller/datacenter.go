@@ -40,7 +40,9 @@ func ImportDatacenter(ctx context.Context, dc *crimsonconfig.Datacenter, pageSiz
 				{
 					PeripheralType: ufspb.PeripheralType_PERIPHERAL_TYPE_SWITCH,
 					Min:            0,
-					Max:            2,
+					// A manual setup with no consideration, the current maximum
+					// switches per rack is 3 in crimson.
+					Max: 5,
 				},
 			},
 		},

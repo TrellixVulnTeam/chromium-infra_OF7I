@@ -30,7 +30,26 @@ func importCrimson(ctx context.Context) error {
 		logging.Debugf(ctx, "Fail to importing chrome platform: %s", string(respCP.GetDetails()[0].GetValue()))
 		return err
 	}
+	res2, err := sv.ImportVMCpacity(ctx)
+	if err != nil {
+		logging.Debugf(ctx, "Fail to import vm capacity for platforms", string(res2.GetDetails()[0].GetValue()))
+	}
 	logging.Debugf(ctx, "Finish importing chrome platforms: %#v", respCP)
+
+	logging.Debugf(ctx, "Importing vlans")
+	respVlan, err := sv.ImportVlans(ctx, &api.ImportVlansRequest{
+		Source: &api.ImportVlansRequest_ConfigSource{
+			ConfigSource: &api.ConfigSource{
+				ConfigServiceName: frontend.DefaultMachineDBService,
+				FileName:          "vlans.cfg",
+			},
+		},
+	})
+	if err != nil {
+		logging.Debugf(ctx, "Fail to importing vlans: %s", string(respVlan.GetDetails()[0].GetValue()))
+		return err
+	}
+	logging.Debugf(ctx, "Finish importing vlans: %#v", respVlan)
 
 	logging.Debugf(ctx, "Reading datacenter configs")
 	dcs, err := sv.ImportDatacenterConfigs(ctx)
@@ -67,7 +86,36 @@ func importCrimson(ctx context.Context) error {
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing nics: %#v", respNic)
-	return err
+
+	logging.Debugf(ctx, "Importing machine LSEs")
+	respMLSE, err := sv.ImportMachineLSEs(ctx, &api.ImportMachineLSEsRequest{
+		Source: &api.ImportMachineLSEsRequest_MachineDbSource{
+			MachineDbSource: &api.MachineDBSource{
+				Host: machineDBHost,
+			},
+		},
+	})
+	if err != nil {
+		logging.Debugf(ctx, "Fail to importing machine LSEs: %s", string(respMLSE.GetDetails()[0].GetValue()))
+		return err
+	}
+	logging.Debugf(ctx, "Finish importing machine LSEs: %#v", respMLSE)
+
+	logging.Debugf(ctx, "Importing states")
+	respStates, err := sv.ImportStates(ctx, &api.ImportStatesRequest{
+		Source: &api.ImportStatesRequest_MachineDbSource{
+			MachineDbSource: &api.MachineDBSource{
+				Host: machineDBHost,
+			},
+		},
+	})
+	if err != nil {
+		logging.Debugf(ctx, "Fail to importing states: %s", string(respStates.GetDetails()[0].GetValue()))
+		return err
+	}
+	logging.Debugf(ctx, "Finish importing states: %#v", respStates)
+
+	return nil
 }
 
 func importDCHelper(ctx context.Context, sv *frontend.FleetServerImpl, cfg string) error {
