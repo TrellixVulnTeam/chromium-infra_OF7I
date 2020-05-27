@@ -101,21 +101,18 @@ class RecipeTrainingFailure(Exception):
 class RecipesRepo(object):
   """An abstraction of a recipes project to encapsulate common interactions."""
 
-  def __init__(self, api, workdir_base, name, url, manifest_name):
+  def __init__(self, api, workdir_base, name, url):
     """
     Args:
       api (RecipeApi): The recipe api for this build.
       workdir_base (Path): The global directory for all recipe repo checkouts.
       name (str): See `name` property.
       url (str): The remote URL for this repo.
-      manifest_name (str): The name of the manifest to upload to Logdog (must
-        be unique per-build).
     """
     self._api = api
     self._workdir = workdir_base.join(name)
     self._name = name
     self._url = url
-    self._manifest_name = manifest_name
 
     self._root = None
     self._cl_revision = None
@@ -200,8 +197,7 @@ class RecipesRepo(object):
           gclient_config=gclient_config,
           # Only try to checkout the CL if this repo is the one that triggered
           # the current build.
-          patch=is_triggering_repo,
-          manifest_name=self._manifest_name)
+          patch=is_triggering_repo)
       self._root = self._workdir.join(ret.json.output['root'])
 
       if is_triggering_repo:
@@ -353,10 +349,9 @@ def RunSteps(api, upstream_id, upstream_url, downstream_id, downstream_url):
   workdir_base = api.path['cache'].join('builder')
 
   upstream_repo = RecipesRepo(
-    api, workdir_base, upstream_id, upstream_url, manifest_name='upstream')
+    api, workdir_base, upstream_id, upstream_url)
   downstream_repo = RecipesRepo(
-    api, workdir_base, downstream_id, downstream_url,
-    manifest_name='downstream')
+    api, workdir_base, downstream_id, downstream_url)
 
   # First, check to see if the user has bypassed this tryjob's analysis
   # entirely.
