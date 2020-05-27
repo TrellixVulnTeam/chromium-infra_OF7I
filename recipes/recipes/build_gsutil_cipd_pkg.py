@@ -90,6 +90,5 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('linux') +
-    api.platform.name('linux') +
-    api.properties.generic(path_config='kitchen')
+    api.platform.name('linux')
   )

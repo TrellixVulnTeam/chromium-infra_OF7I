@@ -195,8 +195,7 @@ def RunSteps(api, project, repo, ref, config, lkgr_status_gs_path, allowed_lag):
 def GenTests(api):
   def test_props(buildername):
     return (
-        api.properties.generic(buildername=buildername) +
-        api.properties(path_config='kitchen'))
+        api.properties.generic(buildername=buildername))
 
   def test_props_and_data(buildername):
     return (

@@ -11,7 +11,6 @@ DEPS = [
   'depot_tools/bot_update',
   'depot_tools/depot_tools',
   'depot_tools/gclient',
-  'depot_tools/infra_paths',
   'depot_tools/osx_sdk',
   'recipe_engine/buildbucket',
   'recipe_engine/context',

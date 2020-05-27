@@ -31,4 +31,4 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield api.test('basic') + api.properties(path_config='kitchen')
+  yield api.test('basic')

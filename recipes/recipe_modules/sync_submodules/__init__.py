@@ -6,7 +6,6 @@ DEPS = [
   'depot_tools/bot_update',
   'depot_tools/gclient',
   'depot_tools/git',
-  'depot_tools/infra_paths',
   'recipe_engine/buildbucket',
   'recipe_engine/context',
   'recipe_engine/file',
