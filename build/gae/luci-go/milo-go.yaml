@@ -1,8 +1,0 @@
-name: luci-go/milo-go
-extends: ../base.yaml
-
-inputsdir: ../../../go/src/go.chromium.org/luci/milo
-
-build:
-  - go_gae_bundle: ${inputsdir}/frontend/appengine/app.yaml
-    dest: ${contextdir}/frontend/appengine
