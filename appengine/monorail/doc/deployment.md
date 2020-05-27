@@ -178,7 +178,7 @@ If any step below fails. Stop the deploy and ping
         1.  [Error Reporting](http://console.cloud.google.com/errors?time=P1D&order=COUNT_DESC&resolution=OPEN&resolution=ACKNOWLEDGED&project=monorail-prod)
     1.  If there are any significant operational problems with Monorail or ChOps
         in general, halt deploy and notify team.
-1.  Asssess
+1.  Assess
     1.  View the existing release branches with
         ```
         git ls-remote origin "refs/releases/monorail/*"
@@ -202,9 +202,9 @@ If any step below fails. Stop the deploy and ping
             git cherry-pick -x [*cherry-picked commit SHA*]
             ```
     1.  Push your local branch to remote origin and tag it as
-        release:refs/releases/monorail/x, where x is your *deployment number*:
+        <your_release_branch_name>:refs/releases/monorail/x, where x is your *deployment number*:
         ```
-        git push origin release:refs/releases/monorail/[*deployment number*]
+        git push origin <your_release_branch_name>:refs/releases/monorail/[*deployment number*]
         ```
         1.  If the branch already exists, [*commit SHA*] must be ahead of the
             current commit that the branch points to.
