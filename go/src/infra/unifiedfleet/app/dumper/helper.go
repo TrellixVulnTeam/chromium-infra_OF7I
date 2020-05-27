@@ -19,12 +19,12 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 )
 
-func dumpChromePlatform(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
+func dumpConfigurations(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
 	defer func() {
 		dumpChromePlatformTick.Add(ctx, 1, err == nil)
 	}()
 
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, "ufs", fmt.Sprintf("chrome_platform$%s", curTimeStr))
+	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, "ufs", fmt.Sprintf("chrome_platforms$%s", curTimeStr))
 	platforms, err := configuration.GetAllChromePlatforms(ctx)
 	if err != nil {
 		return errors.Annotate(err, "dump chrome platforms").Err()

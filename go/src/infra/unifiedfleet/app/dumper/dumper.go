@@ -35,16 +35,16 @@ func InitServer(srv *server.Server, opts Options) {
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
-	cron.Run(ctx, minInterval, dumpConfigurations)
 	cron.Run(ctx, minInterval, importCrimson)
+	cron.Run(ctx, minInterval, dumpToBQ)
 }
 
-func dumpConfigurations(ctx context.Context) error {
-	logging.Debugf(ctx, "Dumping configuration subsystems")
+func dumpToBQ(ctx context.Context) error {
+	logging.Debugf(ctx, "Dumping to BQ")
 	curTime := time.Now()
 	curTimeStr := bqlib.GetPSTTimeStamp(curTime)
 	bqClient := get(ctx)
-	if err := dumpChromePlatform(ctx, bqClient, curTimeStr); err != nil {
+	if err := dumpConfigurations(ctx, bqClient, curTimeStr); err != nil {
 		return errors.Annotate(err, "dump configurations").Err()
 	}
 

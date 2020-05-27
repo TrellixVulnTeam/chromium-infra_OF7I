@@ -9,7 +9,75 @@ package unifiedfleet.api.v1.proto.bigquery;
 option go_package = "infra/unifiedfleet/api/v1/proto/bigquery;apibq";
 
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
+import "infra/unifiedfleet/api/v1/proto/lse_prototype.proto";
+import "infra/unifiedfleet/api/v1/proto/machine.proto";
+import "infra/unifiedfleet/api/v1/proto/machine_lse.proto";
+import "infra/unifiedfleet/api/v1/proto/network.proto";
+import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
+import "infra/unifiedfleet/api/v1/proto/rack.proto";
+import "infra/unifiedfleet/api/v1/proto/rack_lse.proto";
+import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 message ChromePlatformRow {
     proto.ChromePlatform platform = 1;
+}
+
+message VlanRow {
+    proto.Vlan vlan = 1;
+}
+
+message MachineRow {
+    proto.Machine machine = 1;
+}
+
+message RackRow {
+    proto.Rack rack = 1;
+}
+
+message RackLSEPrototypeRow {
+    proto.RackLSEPrototype rack_lse_prototype = 1;
+}
+
+message MachineLSEPrototypeRow {
+    proto.MachineLSEPrototype machine_lse_prototype = 1;
+}
+
+message MachineLSERow {
+    proto.MachineLSE machine_lse = 1;
+}
+
+message RackLSERow {
+    proto.RackLSE rack_lse = 1;
+}
+
+message StateRecordRow {
+    proto.StateRecord state_record = 1;
+}
+
+message KVMRow {
+    proto.KVM kvm = 1;
+}
+
+message RPMRow {
+    proto.RPM rpm = 1;
+}
+
+message SwitchRow {
+    proto.Switch switch = 1;
+}
+
+message DracRow {
+    proto.Drac drac = 1;
+}
+
+message NicRow {
+    proto.Nic nic = 1;
+}
+
+message DHCPConfigRow {
+    proto.DHCPConfig dhcp_config = 1;
+}
+
+message IPRow {
+    proto.IP ip = 1;
 }

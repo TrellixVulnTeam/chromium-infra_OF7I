@@ -60,8 +60,608 @@ func (m *ChromePlatformRow) GetPlatform() *proto1.ChromePlatform {
 	return nil
 }
 
+type VlanRow struct {
+	Vlan                 *proto1.Vlan `protobuf:"bytes,1,opt,name=vlan,proto3" json:"vlan,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *VlanRow) Reset()         { *m = VlanRow{} }
+func (m *VlanRow) String() string { return proto.CompactTextString(m) }
+func (*VlanRow) ProtoMessage()    {}
+func (*VlanRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{1}
+}
+
+func (m *VlanRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_VlanRow.Unmarshal(m, b)
+}
+func (m *VlanRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_VlanRow.Marshal(b, m, deterministic)
+}
+func (m *VlanRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VlanRow.Merge(m, src)
+}
+func (m *VlanRow) XXX_Size() int {
+	return xxx_messageInfo_VlanRow.Size(m)
+}
+func (m *VlanRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_VlanRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_VlanRow proto.InternalMessageInfo
+
+func (m *VlanRow) GetVlan() *proto1.Vlan {
+	if m != nil {
+		return m.Vlan
+	}
+	return nil
+}
+
+type MachineRow struct {
+	Machine              *proto1.Machine `protobuf:"bytes,1,opt,name=machine,proto3" json:"machine,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *MachineRow) Reset()         { *m = MachineRow{} }
+func (m *MachineRow) String() string { return proto.CompactTextString(m) }
+func (*MachineRow) ProtoMessage()    {}
+func (*MachineRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{2}
+}
+
+func (m *MachineRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MachineRow.Unmarshal(m, b)
+}
+func (m *MachineRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MachineRow.Marshal(b, m, deterministic)
+}
+func (m *MachineRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MachineRow.Merge(m, src)
+}
+func (m *MachineRow) XXX_Size() int {
+	return xxx_messageInfo_MachineRow.Size(m)
+}
+func (m *MachineRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_MachineRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MachineRow proto.InternalMessageInfo
+
+func (m *MachineRow) GetMachine() *proto1.Machine {
+	if m != nil {
+		return m.Machine
+	}
+	return nil
+}
+
+type RackRow struct {
+	Rack                 *proto1.Rack `protobuf:"bytes,1,opt,name=rack,proto3" json:"rack,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *RackRow) Reset()         { *m = RackRow{} }
+func (m *RackRow) String() string { return proto.CompactTextString(m) }
+func (*RackRow) ProtoMessage()    {}
+func (*RackRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{3}
+}
+
+func (m *RackRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RackRow.Unmarshal(m, b)
+}
+func (m *RackRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RackRow.Marshal(b, m, deterministic)
+}
+func (m *RackRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RackRow.Merge(m, src)
+}
+func (m *RackRow) XXX_Size() int {
+	return xxx_messageInfo_RackRow.Size(m)
+}
+func (m *RackRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_RackRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RackRow proto.InternalMessageInfo
+
+func (m *RackRow) GetRack() *proto1.Rack {
+	if m != nil {
+		return m.Rack
+	}
+	return nil
+}
+
+type RackLSEPrototypeRow struct {
+	RackLsePrototype     *proto1.RackLSEPrototype `protobuf:"bytes,1,opt,name=rack_lse_prototype,json=rackLsePrototype,proto3" json:"rack_lse_prototype,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
+	XXX_unrecognized     []byte                   `json:"-"`
+	XXX_sizecache        int32                    `json:"-"`
+}
+
+func (m *RackLSEPrototypeRow) Reset()         { *m = RackLSEPrototypeRow{} }
+func (m *RackLSEPrototypeRow) String() string { return proto.CompactTextString(m) }
+func (*RackLSEPrototypeRow) ProtoMessage()    {}
+func (*RackLSEPrototypeRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{4}
+}
+
+func (m *RackLSEPrototypeRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RackLSEPrototypeRow.Unmarshal(m, b)
+}
+func (m *RackLSEPrototypeRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RackLSEPrototypeRow.Marshal(b, m, deterministic)
+}
+func (m *RackLSEPrototypeRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RackLSEPrototypeRow.Merge(m, src)
+}
+func (m *RackLSEPrototypeRow) XXX_Size() int {
+	return xxx_messageInfo_RackLSEPrototypeRow.Size(m)
+}
+func (m *RackLSEPrototypeRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_RackLSEPrototypeRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RackLSEPrototypeRow proto.InternalMessageInfo
+
+func (m *RackLSEPrototypeRow) GetRackLsePrototype() *proto1.RackLSEPrototype {
+	if m != nil {
+		return m.RackLsePrototype
+	}
+	return nil
+}
+
+type MachineLSEPrototypeRow struct {
+	MachineLsePrototype  *proto1.MachineLSEPrototype `protobuf:"bytes,1,opt,name=machine_lse_prototype,json=machineLsePrototype,proto3" json:"machine_lse_prototype,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
+	XXX_unrecognized     []byte                      `json:"-"`
+	XXX_sizecache        int32                       `json:"-"`
+}
+
+func (m *MachineLSEPrototypeRow) Reset()         { *m = MachineLSEPrototypeRow{} }
+func (m *MachineLSEPrototypeRow) String() string { return proto.CompactTextString(m) }
+func (*MachineLSEPrototypeRow) ProtoMessage()    {}
+func (*MachineLSEPrototypeRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{5}
+}
+
+func (m *MachineLSEPrototypeRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MachineLSEPrototypeRow.Unmarshal(m, b)
+}
+func (m *MachineLSEPrototypeRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MachineLSEPrototypeRow.Marshal(b, m, deterministic)
+}
+func (m *MachineLSEPrototypeRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MachineLSEPrototypeRow.Merge(m, src)
+}
+func (m *MachineLSEPrototypeRow) XXX_Size() int {
+	return xxx_messageInfo_MachineLSEPrototypeRow.Size(m)
+}
+func (m *MachineLSEPrototypeRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_MachineLSEPrototypeRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MachineLSEPrototypeRow proto.InternalMessageInfo
+
+func (m *MachineLSEPrototypeRow) GetMachineLsePrototype() *proto1.MachineLSEPrototype {
+	if m != nil {
+		return m.MachineLsePrototype
+	}
+	return nil
+}
+
+type MachineLSERow struct {
+	MachineLse           *proto1.MachineLSE `protobuf:"bytes,1,opt,name=machine_lse,json=machineLse,proto3" json:"machine_lse,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
+}
+
+func (m *MachineLSERow) Reset()         { *m = MachineLSERow{} }
+func (m *MachineLSERow) String() string { return proto.CompactTextString(m) }
+func (*MachineLSERow) ProtoMessage()    {}
+func (*MachineLSERow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{6}
+}
+
+func (m *MachineLSERow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MachineLSERow.Unmarshal(m, b)
+}
+func (m *MachineLSERow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MachineLSERow.Marshal(b, m, deterministic)
+}
+func (m *MachineLSERow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MachineLSERow.Merge(m, src)
+}
+func (m *MachineLSERow) XXX_Size() int {
+	return xxx_messageInfo_MachineLSERow.Size(m)
+}
+func (m *MachineLSERow) XXX_DiscardUnknown() {
+	xxx_messageInfo_MachineLSERow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MachineLSERow proto.InternalMessageInfo
+
+func (m *MachineLSERow) GetMachineLse() *proto1.MachineLSE {
+	if m != nil {
+		return m.MachineLse
+	}
+	return nil
+}
+
+type RackLSERow struct {
+	RackLse              *proto1.RackLSE `protobuf:"bytes,1,opt,name=rack_lse,json=rackLse,proto3" json:"rack_lse,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *RackLSERow) Reset()         { *m = RackLSERow{} }
+func (m *RackLSERow) String() string { return proto.CompactTextString(m) }
+func (*RackLSERow) ProtoMessage()    {}
+func (*RackLSERow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{7}
+}
+
+func (m *RackLSERow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RackLSERow.Unmarshal(m, b)
+}
+func (m *RackLSERow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RackLSERow.Marshal(b, m, deterministic)
+}
+func (m *RackLSERow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RackLSERow.Merge(m, src)
+}
+func (m *RackLSERow) XXX_Size() int {
+	return xxx_messageInfo_RackLSERow.Size(m)
+}
+func (m *RackLSERow) XXX_DiscardUnknown() {
+	xxx_messageInfo_RackLSERow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RackLSERow proto.InternalMessageInfo
+
+func (m *RackLSERow) GetRackLse() *proto1.RackLSE {
+	if m != nil {
+		return m.RackLse
+	}
+	return nil
+}
+
+type StateRecordRow struct {
+	StateRecord          *proto1.StateRecord `protobuf:"bytes,1,opt,name=state_record,json=stateRecord,proto3" json:"state_record,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
+}
+
+func (m *StateRecordRow) Reset()         { *m = StateRecordRow{} }
+func (m *StateRecordRow) String() string { return proto.CompactTextString(m) }
+func (*StateRecordRow) ProtoMessage()    {}
+func (*StateRecordRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{8}
+}
+
+func (m *StateRecordRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StateRecordRow.Unmarshal(m, b)
+}
+func (m *StateRecordRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StateRecordRow.Marshal(b, m, deterministic)
+}
+func (m *StateRecordRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StateRecordRow.Merge(m, src)
+}
+func (m *StateRecordRow) XXX_Size() int {
+	return xxx_messageInfo_StateRecordRow.Size(m)
+}
+func (m *StateRecordRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_StateRecordRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StateRecordRow proto.InternalMessageInfo
+
+func (m *StateRecordRow) GetStateRecord() *proto1.StateRecord {
+	if m != nil {
+		return m.StateRecord
+	}
+	return nil
+}
+
+type KVMRow struct {
+	Kvm                  *proto1.KVM `protobuf:"bytes,1,opt,name=kvm,proto3" json:"kvm,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *KVMRow) Reset()         { *m = KVMRow{} }
+func (m *KVMRow) String() string { return proto.CompactTextString(m) }
+func (*KVMRow) ProtoMessage()    {}
+func (*KVMRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{9}
+}
+
+func (m *KVMRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_KVMRow.Unmarshal(m, b)
+}
+func (m *KVMRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_KVMRow.Marshal(b, m, deterministic)
+}
+func (m *KVMRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KVMRow.Merge(m, src)
+}
+func (m *KVMRow) XXX_Size() int {
+	return xxx_messageInfo_KVMRow.Size(m)
+}
+func (m *KVMRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_KVMRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KVMRow proto.InternalMessageInfo
+
+func (m *KVMRow) GetKvm() *proto1.KVM {
+	if m != nil {
+		return m.Kvm
+	}
+	return nil
+}
+
+type RPMRow struct {
+	Rpm                  *proto1.RPM `protobuf:"bytes,1,opt,name=rpm,proto3" json:"rpm,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *RPMRow) Reset()         { *m = RPMRow{} }
+func (m *RPMRow) String() string { return proto.CompactTextString(m) }
+func (*RPMRow) ProtoMessage()    {}
+func (*RPMRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{10}
+}
+
+func (m *RPMRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RPMRow.Unmarshal(m, b)
+}
+func (m *RPMRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RPMRow.Marshal(b, m, deterministic)
+}
+func (m *RPMRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RPMRow.Merge(m, src)
+}
+func (m *RPMRow) XXX_Size() int {
+	return xxx_messageInfo_RPMRow.Size(m)
+}
+func (m *RPMRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_RPMRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RPMRow proto.InternalMessageInfo
+
+func (m *RPMRow) GetRpm() *proto1.RPM {
+	if m != nil {
+		return m.Rpm
+	}
+	return nil
+}
+
+type SwitchRow struct {
+	Switch               *proto1.Switch `protobuf:"bytes,1,opt,name=switch,proto3" json:"switch,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
+}
+
+func (m *SwitchRow) Reset()         { *m = SwitchRow{} }
+func (m *SwitchRow) String() string { return proto.CompactTextString(m) }
+func (*SwitchRow) ProtoMessage()    {}
+func (*SwitchRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{11}
+}
+
+func (m *SwitchRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SwitchRow.Unmarshal(m, b)
+}
+func (m *SwitchRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SwitchRow.Marshal(b, m, deterministic)
+}
+func (m *SwitchRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SwitchRow.Merge(m, src)
+}
+func (m *SwitchRow) XXX_Size() int {
+	return xxx_messageInfo_SwitchRow.Size(m)
+}
+func (m *SwitchRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_SwitchRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SwitchRow proto.InternalMessageInfo
+
+func (m *SwitchRow) GetSwitch() *proto1.Switch {
+	if m != nil {
+		return m.Switch
+	}
+	return nil
+}
+
+type DracRow struct {
+	Drac                 *proto1.Drac `protobuf:"bytes,1,opt,name=drac,proto3" json:"drac,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *DracRow) Reset()         { *m = DracRow{} }
+func (m *DracRow) String() string { return proto.CompactTextString(m) }
+func (*DracRow) ProtoMessage()    {}
+func (*DracRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{12}
+}
+
+func (m *DracRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DracRow.Unmarshal(m, b)
+}
+func (m *DracRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DracRow.Marshal(b, m, deterministic)
+}
+func (m *DracRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DracRow.Merge(m, src)
+}
+func (m *DracRow) XXX_Size() int {
+	return xxx_messageInfo_DracRow.Size(m)
+}
+func (m *DracRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_DracRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DracRow proto.InternalMessageInfo
+
+func (m *DracRow) GetDrac() *proto1.Drac {
+	if m != nil {
+		return m.Drac
+	}
+	return nil
+}
+
+type NicRow struct {
+	Nic                  *proto1.Nic `protobuf:"bytes,1,opt,name=nic,proto3" json:"nic,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
+	XXX_unrecognized     []byte      `json:"-"`
+	XXX_sizecache        int32       `json:"-"`
+}
+
+func (m *NicRow) Reset()         { *m = NicRow{} }
+func (m *NicRow) String() string { return proto.CompactTextString(m) }
+func (*NicRow) ProtoMessage()    {}
+func (*NicRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{13}
+}
+
+func (m *NicRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NicRow.Unmarshal(m, b)
+}
+func (m *NicRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NicRow.Marshal(b, m, deterministic)
+}
+func (m *NicRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NicRow.Merge(m, src)
+}
+func (m *NicRow) XXX_Size() int {
+	return xxx_messageInfo_NicRow.Size(m)
+}
+func (m *NicRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_NicRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_NicRow proto.InternalMessageInfo
+
+func (m *NicRow) GetNic() *proto1.Nic {
+	if m != nil {
+		return m.Nic
+	}
+	return nil
+}
+
+type DHCPConfigRow struct {
+	DhcpConfig           *proto1.DHCPConfig `protobuf:"bytes,1,opt,name=dhcp_config,json=dhcpConfig,proto3" json:"dhcp_config,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
+}
+
+func (m *DHCPConfigRow) Reset()         { *m = DHCPConfigRow{} }
+func (m *DHCPConfigRow) String() string { return proto.CompactTextString(m) }
+func (*DHCPConfigRow) ProtoMessage()    {}
+func (*DHCPConfigRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{14}
+}
+
+func (m *DHCPConfigRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DHCPConfigRow.Unmarshal(m, b)
+}
+func (m *DHCPConfigRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DHCPConfigRow.Marshal(b, m, deterministic)
+}
+func (m *DHCPConfigRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DHCPConfigRow.Merge(m, src)
+}
+func (m *DHCPConfigRow) XXX_Size() int {
+	return xxx_messageInfo_DHCPConfigRow.Size(m)
+}
+func (m *DHCPConfigRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_DHCPConfigRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DHCPConfigRow proto.InternalMessageInfo
+
+func (m *DHCPConfigRow) GetDhcpConfig() *proto1.DHCPConfig {
+	if m != nil {
+		return m.DhcpConfig
+	}
+	return nil
+}
+
+type IPRow struct {
+	Ip                   *proto1.IP `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
+}
+
+func (m *IPRow) Reset()         { *m = IPRow{} }
+func (m *IPRow) String() string { return proto.CompactTextString(m) }
+func (*IPRow) ProtoMessage()    {}
+func (*IPRow) Descriptor() ([]byte, []int) {
+	return fileDescriptor_22874a6069af15db, []int{15}
+}
+
+func (m *IPRow) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_IPRow.Unmarshal(m, b)
+}
+func (m *IPRow) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_IPRow.Marshal(b, m, deterministic)
+}
+func (m *IPRow) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_IPRow.Merge(m, src)
+}
+func (m *IPRow) XXX_Size() int {
+	return xxx_messageInfo_IPRow.Size(m)
+}
+func (m *IPRow) XXX_DiscardUnknown() {
+	xxx_messageInfo_IPRow.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_IPRow proto.InternalMessageInfo
+
+func (m *IPRow) GetIp() *proto1.IP {
+	if m != nil {
+		return m.Ip
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*ChromePlatformRow)(nil), "unifiedfleet.api.v1.proto.bigquery.ChromePlatformRow")
+	proto.RegisterType((*VlanRow)(nil), "unifiedfleet.api.v1.proto.bigquery.VlanRow")
+	proto.RegisterType((*MachineRow)(nil), "unifiedfleet.api.v1.proto.bigquery.MachineRow")
+	proto.RegisterType((*RackRow)(nil), "unifiedfleet.api.v1.proto.bigquery.RackRow")
+	proto.RegisterType((*RackLSEPrototypeRow)(nil), "unifiedfleet.api.v1.proto.bigquery.RackLSEPrototypeRow")
+	proto.RegisterType((*MachineLSEPrototypeRow)(nil), "unifiedfleet.api.v1.proto.bigquery.MachineLSEPrototypeRow")
+	proto.RegisterType((*MachineLSERow)(nil), "unifiedfleet.api.v1.proto.bigquery.MachineLSERow")
+	proto.RegisterType((*RackLSERow)(nil), "unifiedfleet.api.v1.proto.bigquery.RackLSERow")
+	proto.RegisterType((*StateRecordRow)(nil), "unifiedfleet.api.v1.proto.bigquery.StateRecordRow")
+	proto.RegisterType((*KVMRow)(nil), "unifiedfleet.api.v1.proto.bigquery.KVMRow")
+	proto.RegisterType((*RPMRow)(nil), "unifiedfleet.api.v1.proto.bigquery.RPMRow")
+	proto.RegisterType((*SwitchRow)(nil), "unifiedfleet.api.v1.proto.bigquery.SwitchRow")
+	proto.RegisterType((*DracRow)(nil), "unifiedfleet.api.v1.proto.bigquery.DracRow")
+	proto.RegisterType((*NicRow)(nil), "unifiedfleet.api.v1.proto.bigquery.NicRow")
+	proto.RegisterType((*DHCPConfigRow)(nil), "unifiedfleet.api.v1.proto.bigquery.DHCPConfigRow")
+	proto.RegisterType((*IPRow)(nil), "unifiedfleet.api.v1.proto.bigquery.IPRow")
 }
 
 func init() {
@@ -69,16 +669,41 @@ func init() {
 }
 
 var fileDescriptor_22874a6069af15db = []byte{
-	// 161 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x32, 0xcc, 0xcc, 0x4b, 0x2b,
-	0x4a, 0xd4, 0x2f, 0xcd, 0xcb, 0x4c, 0xcb, 0x4c, 0x4d, 0x49, 0xcb, 0x49, 0x4d, 0x2d, 0xd1, 0x4f,
-	0x2c, 0xc8, 0xd4, 0x2f, 0x33, 0xd4, 0x2f, 0x28, 0xca, 0x2f, 0xc9, 0xd7, 0x4f, 0xca, 0x4c, 0x2f,
-	0x2c, 0x4d, 0x2d, 0xaa, 0xd4, 0x4f, 0x2a, 0xd4, 0x03, 0x8b, 0x08, 0x29, 0x21, 0x2b, 0xd6, 0x4b,
-	0x2c, 0xc8, 0xd4, 0x2b, 0x33, 0x84, 0x48, 0xe9, 0xc1, 0x14, 0x4b, 0x99, 0x12, 0x32, 0x36, 0x39,
-	0xa3, 0x28, 0x3f, 0x37, 0x35, 0xbe, 0x20, 0x27, 0xb1, 0x24, 0x2d, 0xbf, 0x28, 0x17, 0xa2, 0x5f,
-	0x29, 0x8a, 0x4b, 0xd0, 0x19, 0x2c, 0x11, 0x00, 0x15, 0x0f, 0xca, 0x2f, 0x17, 0x72, 0xe5, 0xe2,
-	0x80, 0x29, 0x93, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x36, 0xd2, 0xd4, 0xc3, 0xed, 0x04, 0x34, 0xfd,
-	0x70, 0xad, 0x4e, 0x06, 0x51, 0x7a, 0xc4, 0xfa, 0xd5, 0x3a, 0xb1, 0x20, 0x33, 0xa9, 0x30, 0x89,
-	0x0d, 0x2c, 0x6a, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x41, 0x99, 0x93, 0x79, 0x24, 0x01, 0x00,
-	0x00,
+	// 569 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x95, 0xed, 0x6b, 0x13, 0x41,
+	0x10, 0xc6, 0x69, 0xd5, 0xa4, 0x4e, 0x54, 0x34, 0x45, 0x91, 0x82, 0x6f, 0x0b, 0x8a, 0x5a, 0x7a,
+	0xd7, 0x18, 0x14, 0x7c, 0xfd, 0x60, 0xda, 0x62, 0x6c, 0x2b, 0xc7, 0x05, 0x2a, 0xd6, 0x0f, 0x61,
+	0xb3, 0xd9, 0x34, 0x4b, 0x2e, 0x77, 0x9b, 0xbd, 0x6b, 0x42, 0xc1, 0x3f, 0x5e, 0x66, 0x6f, 0xb7,
+	0xb9, 0x54, 0xbc, 0xdb, 0x6f, 0xb7, 0xdb, 0xe7, 0xf9, 0xcd, 0xce, 0xcc, 0x53, 0x02, 0x2d, 0x11,
+	0x8f, 0x14, 0xf5, 0xcf, 0x63, 0x31, 0x12, 0x7c, 0x38, 0x8a, 0x38, 0xcf, 0x7c, 0x2a, 0x85, 0x3f,
+	0x6f, 0xf9, 0x52, 0x25, 0x59, 0xe2, 0x0f, 0xc4, 0xd9, 0xec, 0x9c, 0xab, 0x0b, 0x7f, 0x30, 0xf3,
+	0xf4, 0x4d, 0x93, 0x14, 0xc5, 0x1e, 0x95, 0xc2, 0x9b, 0xb7, 0xf2, 0x3f, 0x79, 0x56, 0xbc, 0xf5,
+	0xb6, 0x0a, 0xcb, 0xc6, 0x2a, 0x99, 0xf2, 0xbe, 0x8c, 0x68, 0x36, 0x4a, 0xd4, 0x34, 0xf7, 0x6f,
+	0xb5, 0xab, 0x6c, 0x51, 0xca, 0xfb, 0xfa, 0x2b, 0xbb, 0x90, 0xdc, 0x98, 0x76, 0xaa, 0x4c, 0x53,
+	0xca, 0xc6, 0x22, 0xb6, 0xf2, 0x96, 0xa3, 0xbc, 0x1f, 0xa5, 0xce, 0x15, 0x62, 0x9e, 0x2d, 0x12,
+	0x35, 0x71, 0xad, 0x20, 0xb9, 0x12, 0x72, 0xcc, 0x15, 0x8d, 0x52, 0x63, 0x79, 0x5d, 0x65, 0x51,
+	0x94, 0x59, 0xbc, 0xe7, 0xa2, 0x2d, 0xbc, 0x7e, 0xbb, 0x4a, 0x9f, 0x66, 0x34, 0x33, 0x62, 0x72,
+	0x0a, 0xf7, 0x3a, 0x7a, 0x35, 0x81, 0xd9, 0x4c, 0x98, 0x2c, 0x9a, 0xfb, 0xb0, 0x61, 0x17, 0xf5,
+	0x70, 0xed, 0xe9, 0xda, 0xcb, 0xc6, 0x9b, 0x57, 0xde, 0xff, 0x43, 0x70, 0xc5, 0x7f, 0x69, 0x25,
+	0x5f, 0xa0, 0x7e, 0x12, 0xd1, 0x18, 0x89, 0x6d, 0xb8, 0x3e, 0x8f, 0x68, 0x6c, 0x68, 0x4f, 0x4a,
+	0x68, 0xda, 0xa1, 0xc5, 0xe4, 0x3b, 0xc0, 0x71, 0xbe, 0x1b, 0x44, 0x7c, 0x82, 0xba, 0xd9, 0x94,
+	0xa1, 0x90, 0x12, 0x8a, 0xf5, 0x59, 0x0b, 0xbe, 0x25, 0xa4, 0x6c, 0x62, 0xde, 0x82, 0x13, 0x73,
+	0x78, 0x8b, 0x76, 0x68, 0x31, 0x91, 0xb0, 0x89, 0xa7, 0xa3, 0xde, 0x7e, 0x60, 0xe3, 0x88, 0xac,
+	0x5f, 0xd0, 0xb4, 0xd3, 0x5f, 0xe6, 0xd4, 0x90, 0xb7, 0x2b, 0xc8, 0x2b, 0xac, 0xbb, 0x88, 0x39,
+	0x4a, 0xf9, 0xe5, 0x0d, 0xf9, 0x03, 0x0f, 0x4c, 0x17, 0x57, 0x8b, 0x0e, 0xe0, 0x7e, 0x21, 0xb3,
+	0xff, 0xd4, 0xf5, 0xaa, 0xe7, 0xb2, 0x42, 0xdc, 0x34, 0xb0, 0x95, 0xea, 0x3f, 0xe1, 0xf6, 0x52,
+	0x8b, 0x45, 0x0f, 0xa0, 0x51, 0x28, 0x6a, 0x4a, 0x3d, 0x77, 0x2a, 0x15, 0xc2, 0xb2, 0x02, 0x39,
+	0x04, 0x30, 0xcd, 0x23, 0xf5, 0x33, 0x6c, 0xd8, 0xf9, 0x39, 0x6c, 0xd5, 0x1a, 0xeb, 0x66, 0x58,
+	0xe4, 0x37, 0xdc, 0xe9, 0x61, 0x98, 0x43, 0xce, 0x12, 0x35, 0x44, 0x60, 0x17, 0x6e, 0xe9, 0x78,
+	0xf7, 0x95, 0xbe, 0x32, 0xd0, 0x17, 0x25, 0xd0, 0x22, 0xa0, 0x91, 0x2e, 0x0f, 0xe4, 0x03, 0xd4,
+	0x0e, 0x4f, 0x8e, 0x11, 0xba, 0x0b, 0xd7, 0x26, 0x73, 0xfb, 0xaf, 0xf0, 0xb8, 0x84, 0x85, 0x7a,
+	0x94, 0xa2, 0x37, 0x0c, 0xac, 0x57, 0x49, 0x17, 0x2f, 0xea, 0x51, 0x4a, 0x0e, 0xe0, 0x66, 0x6f,
+	0x21, 0x32, 0x36, 0x46, 0xfb, 0x7b, 0xa8, 0xa5, 0xfa, 0x60, 0x08, 0xcf, 0xca, 0x3a, 0xc9, 0x5d,
+	0xc6, 0x80, 0x91, 0xdf, 0x53, 0x94, 0x99, 0xc8, 0x0f, 0x15, 0x65, 0x0e, 0x91, 0xd7, 0x0e, 0x2d,
+	0xc6, 0x1e, 0x7e, 0x08, 0x66, 0x7a, 0x88, 0x05, 0x73, 0xe8, 0x01, 0xf5, 0x28, 0xc5, 0xf8, 0xec,
+	0x7d, 0xeb, 0x04, 0x9d, 0x24, 0x1e, 0x89, 0x33, 0x13, 0x9f, 0xe1, 0x98, 0xc9, 0x3e, 0xd3, 0x37,
+	0x0e, 0xf1, 0x29, 0xd8, 0x01, 0x9d, 0xf9, 0x37, 0x79, 0x07, 0x37, 0xba, 0x01, 0x02, 0x77, 0x60,
+	0x5d, 0x48, 0xc3, 0x79, 0x54, 0xc2, 0xe9, 0x06, 0xe1, 0xba, 0x90, 0x5f, 0x77, 0x4f, 0x3d, 0xd7,
+	0x5f, 0xbe, 0x8f, 0x54, 0x8a, 0xc1, 0x6c, 0x50, 0xd3, 0xb7, 0xed, 0xbf, 0x01, 0x00, 0x00, 0xff,
+	0xff, 0xed, 0xe5, 0x31, 0xc2, 0x32, 0x07, 0x00, 0x00,
 }
