@@ -241,9 +241,20 @@ func TestAlertJSONNonGroupingGetStepName(t *testing.T) {
 }
 
 func TestAnnotationGetStepName(t *testing.T) {
+	c := gaetesting.TestingContext()
 	Convey("Get step name valid", t, func() {
 		ann := &Annotation{
-			Key: "chromium.step_name",
+			Tree: datastore.MakeKey(c, "Tree", "chromium"),
+			Key:  "chromium.step_name",
+		}
+		stepName, err := ann.GetStepName()
+		So(err, ShouldBeNil)
+		So(stepName, ShouldEqual, "step_name")
+	})
+	Convey("Get step name when tree name containing dot", t, func() {
+		ann := &Annotation{
+			Tree: datastore.MakeKey(c, "Tree", "chromium.clang"),
+			Key:  "chromium.clang.step_name",
 		}
 		stepName, err := ann.GetStepName()
 		So(err, ShouldBeNil)
@@ -251,7 +262,8 @@ func TestAnnotationGetStepName(t *testing.T) {
 	})
 	Convey("Get step name invalid", t, func() {
 		ann := &Annotation{
-			Key: "step_name",
+			Tree: datastore.MakeKey(c, "Tree", "chromium"),
+			Key:  "step_name",
 		}
 		_, err := ann.GetStepName()
 		So(err, ShouldNotBeNil)

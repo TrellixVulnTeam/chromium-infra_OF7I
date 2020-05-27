@@ -197,11 +197,11 @@ func GenerateKeyDigest(key string) string {
 // GetStepName retrieves step name for an annotation.
 func (a *Annotation) GetStepName() (string, error) {
 	// Key is of format  tree.step_name
-	index := strings.Index(a.Key, ".")
-	if index == -1 {
+	treePrefix := a.Tree.StringID() + "."
+	if !strings.HasPrefix(a.Key, treePrefix) {
 		return "", fmt.Errorf("invalid Key: %q", a.Key)
 	}
-	return a.Key[index+1:], nil
+	return a.Key[len(treePrefix):], nil
 }
 
 // IsGroupAnnotation returns whether an annotation is a group annotation or a normal annotation

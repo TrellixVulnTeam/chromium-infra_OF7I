@@ -274,7 +274,7 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 
 				// Avoid really large datastore Put.
 				if len(alertJSONs) > maxAlertsAutoResolveCount {
-					err = datastore.Put(c, alertJSONs)
+					err = datastorePutAlertJSONs(c, alertJSONs)
 					if err != nil {
 						return err
 					}
@@ -282,7 +282,7 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 				}
 			}
 		}
-		err = datastore.Put(c, alertJSONs)
+		err = datastorePutAlertJSONs(c, alertJSONs)
 		if err != nil {
 			return err
 		}

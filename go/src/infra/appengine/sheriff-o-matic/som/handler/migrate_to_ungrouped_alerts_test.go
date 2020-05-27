@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"infra/appengine/sheriff-o-matic/som/model"
 )
@@ -85,9 +86,11 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 	gf := func() string {
 		return "group 1"
 	}
+	c := gaetesting.TestingContext()
 	Convey("test generate annotations for standalone annotations", t, func() {
 		annotations := []*model.Annotation{
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree.step1",
 				SnoozeTime: 123,
 				Bugs: []model.MonorailBug{
@@ -103,6 +106,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				},
 			},
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree.step2",
 				SnoozeTime: 456,
 				Bugs: []model.MonorailBug{
@@ -133,6 +137,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 
 		expected := []*model.AnnotationNonGrouping{
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree$!project$!bucket$!builder1$!step1$!0",
 				KeyDigest:  "5e898632e69015f37557efbdc8314d7afa316883",
 				SnoozeTime: 123,
@@ -149,6 +154,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				},
 			},
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "group 1",
 				KeyDigest:  "6d83066ffb09acd6bbdf7b1dbb6688283b8f7a02",
 				GroupID:    "Step \"step2\" failed in 2 builders",
@@ -166,11 +172,13 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				},
 			},
 			{
+				Tree:      datastore.MakeKey(c, "Tree", "tree"),
 				Key:       "tree$!project$!bucket$!builder1$!step2$!0",
 				KeyDigest: "b56302326d7b4cd5dbee9d506aaad19f50143315",
 				GroupID:   "group 1",
 			},
 			{
+				Tree:      datastore.MakeKey(c, "Tree", "tree"),
 				Key:       "tree$!project$!bucket$!builder2$!step2$!0",
 				KeyDigest: "66d36fb329c2af86fa19a695825877517c56b6ff",
 				GroupID:   "group 1",
@@ -184,6 +192,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 	Convey("test generate annotations for grouped annotations", t, func() {
 		annotations := []*model.Annotation{
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree.step1",
 				SnoozeTime: 123,
 				Bugs: []model.MonorailBug{
@@ -200,6 +209,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				GroupID: "e2d935ac-c623-4c10-b1e3-73bb54584f8f",
 			},
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree.step2",
 				SnoozeTime: 456,
 				Bugs: []model.MonorailBug{
@@ -216,6 +226,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				GroupID: "e2d935ac-c623-4c10-b1e3-73bb54584f8f",
 			},
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "e2d935ac-c623-4c10-b1e3-73bb54584f8f",
 				GroupID:    "My group",
 				SnoozeTime: 789,
@@ -247,6 +258,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 
 		expected := []*model.AnnotationNonGrouping{
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "e2d935ac-c623-4c10-b1e3-73bb54584f8f",
 				GroupID:    "My group",
 				SnoozeTime: 789,
@@ -263,6 +275,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				},
 			},
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree$!project$!bucket$!builder1$!step1$!0",
 				KeyDigest:  "5e898632e69015f37557efbdc8314d7afa316883",
 				SnoozeTime: 123,
@@ -281,6 +294,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 			},
 
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree$!project$!bucket$!builder1$!step2$!0",
 				KeyDigest:  "b56302326d7b4cd5dbee9d506aaad19f50143315",
 				SnoozeTime: 456,
@@ -298,6 +312,7 @@ func TestGenerateAnnotationsNonGrouping(t *testing.T) {
 				GroupID: "e2d935ac-c623-4c10-b1e3-73bb54584f8f",
 			},
 			{
+				Tree:       datastore.MakeKey(c, "Tree", "tree"),
 				Key:        "tree$!project$!bucket$!builder2$!step2$!0",
 				KeyDigest:  "66d36fb329c2af86fa19a695825877517c56b6ff",
 				SnoozeTime: 456,
