@@ -218,7 +218,7 @@ func (fs *FleetServerImpl) CreateMachineLSEPrototype(ctx context.Context, req *a
 		return nil, err
 	}
 	req.MachineLSEPrototype.Name = req.MachineLSEPrototypeId
-	machineLSEPrototype, err := configuration.CreateMachineLSEPrototype(ctx, req.MachineLSEPrototype)
+	machineLSEPrototype, err := controller.CreateMachineLSEPrototype(ctx, req.MachineLSEPrototype)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (fs *FleetServerImpl) UpdateMachineLSEPrototype(ctx context.Context, req *a
 		return nil, err
 	}
 	req.MachineLSEPrototype.Name = util.RemovePrefix(req.MachineLSEPrototype.Name)
-	machineLSEPrototype, err := configuration.UpdateMachineLSEPrototype(ctx, req.MachineLSEPrototype)
+	machineLSEPrototype, err := controller.UpdateMachineLSEPrototype(ctx, req.MachineLSEPrototype)
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (fs *FleetServerImpl) GetMachineLSEPrototype(ctx context.Context, req *api.
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	machineLSEPrototype, err := configuration.GetMachineLSEPrototype(ctx, name)
+	machineLSEPrototype, err := controller.GetMachineLSEPrototype(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *ap
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := configuration.ListMachineLSEPrototypes(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListMachineLSEPrototypes(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +295,7 @@ func (fs *FleetServerImpl) DeleteMachineLSEPrototype(ctx context.Context, req *a
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = configuration.DeleteMachineLSEPrototype(ctx, name)
+	err = controller.DeleteMachineLSEPrototype(ctx, name)
 	return &empty.Empty{}, err
 }
 

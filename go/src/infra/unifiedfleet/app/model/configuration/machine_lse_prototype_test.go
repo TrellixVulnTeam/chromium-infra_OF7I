@@ -14,7 +14,6 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 func mockMachineLSEPrototype(id string) *fleet.MachineLSEPrototype {
@@ -158,32 +157,9 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	machineLSEPrototype1 := mockMachineLSEPrototype("machineLSEPrototype-1")
 	machineLSEPrototype2 := mockMachineLSEPrototype("machineLSEPrototype-2")
 	Convey("DeleteMachineLSEPrototype", t, func() {
-		Convey("Delete machineLSEPrototype by existing ID with machine reference", func() {
-			resp, cerr := CreateMachineLSEPrototype(ctx, machineLSEPrototype1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSEPrototype1)
-
-			machineLSE1 := &fleet.MachineLSE{
-				Name:                "machinelse-1",
-				MachineLsePrototype: "machineLSEPrototype-1",
-			}
-			mresp, merr := inventory.CreateMachineLSE(ctx, machineLSE1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, machineLSE1)
-
-			err := DeleteMachineLSEPrototype(ctx, "machineLSEPrototype-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetMachineLSEPrototype(ctx, "machineLSEPrototype-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSEPrototype1)
-		})
-		Convey("Delete machineLSEPrototype successfully by existing ID without references", func() {
+		Convey("Delete machineLSEPrototype successfully by existing ID", func() {
 			resp, cerr := CreateMachineLSEPrototype(ctx, machineLSEPrototype2)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototype2)

@@ -6,8 +6,6 @@ package configuration
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -19,7 +17,6 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 // MachineLSEPrototypeKind is the datastore entity kind for chrome platforms.
@@ -112,25 +109,7 @@ func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken str
 }
 
 // DeleteMachineLSEPrototype deletes the machineLSEPrototype in datastore
-//
-// For referential data intergrity,
-// Delete if there are no references to the MachineLSEPrototype by other resources in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
 func DeleteMachineLSEPrototype(ctx context.Context, id string) error {
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machinelse_prototype_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machinelses) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("MachineLSEPrototype %s cannot be deleted because there are other resources which are referring this MachineLSEPrototype.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring the MachineLSEPrototype:\n"))
-		for _, machinelse := range machinelses {
-			errorMsg.WriteString(machinelse.Name + ", ")
-		}
-		logging.Infof(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
 	return fleetds.Delete(ctx, &fleet.MachineLSEPrototype{Name: id}, newMachineLSEPrototypeEntity)
 }
 
