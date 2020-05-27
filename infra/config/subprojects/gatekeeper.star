@@ -9,9 +9,7 @@ load('//lib/build.star', 'build')
 luci.builder(
     name = 'Chromium Gatekeeper',
     bucket = 'cron',
-    # TODO(crbug.com/1015181): Stop passing use_bbagent=False after
-    # fix(http://crrev.com/c/2217053) lands
-    executable = build.recipe('gatekeeper', use_bbagent=False),
+    executable = build.recipe('gatekeeper'),
     service_account = 'gatekeeper-builder@chops-service-accounts.iam.gserviceaccount.com',
     dimensions = {
         'builder': 'Chromium Gatekeeper',
