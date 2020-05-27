@@ -14,7 +14,6 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 func mockRackLSEPrototype(id string) *fleet.RackLSEPrototype {
@@ -158,32 +157,9 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	rackLSEPrototype1 := mockRackLSEPrototype("rackLSEPrototype-1")
 	rackLSEPrototype2 := mockRackLSEPrototype("rackLSEPrototype-2")
 	Convey("DeleteRackLSEPrototype", t, func() {
-		Convey("Delete rackLSEPrototype by existing ID with rack reference", func() {
-			resp, cerr := CreateRackLSEPrototype(ctx, rackLSEPrototype1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, rackLSEPrototype1)
-
-			rackLSE1 := &fleet.RackLSE{
-				Name:             "racklse-1",
-				RackLsePrototype: "rackLSEPrototype-1",
-			}
-			mresp, merr := inventory.CreateRackLSE(ctx, rackLSE1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, rackLSE1)
-
-			err := DeleteRackLSEPrototype(ctx, "rackLSEPrototype-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetRackLSEPrototype(ctx, "rackLSEPrototype-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, rackLSEPrototype1)
-		})
-		Convey("Delete rackLSEPrototype successfully by existing ID without references", func() {
+		Convey("Delete rackLSEPrototype successfully by existing ID", func() {
 			resp, cerr := CreateRackLSEPrototype(ctx, rackLSEPrototype2)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototype2)

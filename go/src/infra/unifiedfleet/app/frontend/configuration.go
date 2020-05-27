@@ -308,7 +308,7 @@ func (fs *FleetServerImpl) CreateRackLSEPrototype(ctx context.Context, req *api.
 		return nil, err
 	}
 	req.RackLSEPrototype.Name = req.RackLSEPrototypeId
-	rackLSEPrototype, err := configuration.CreateRackLSEPrototype(ctx, req.RackLSEPrototype)
+	rackLSEPrototype, err := controller.CreateRackLSEPrototype(ctx, req.RackLSEPrototype)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +326,7 @@ func (fs *FleetServerImpl) UpdateRackLSEPrototype(ctx context.Context, req *api.
 		return nil, err
 	}
 	req.RackLSEPrototype.Name = util.RemovePrefix(req.RackLSEPrototype.Name)
-	rackLSEPrototype, err := configuration.UpdateRackLSEPrototype(ctx, req.RackLSEPrototype)
+	rackLSEPrototype, err := controller.UpdateRackLSEPrototype(ctx, req.RackLSEPrototype)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +344,7 @@ func (fs *FleetServerImpl) GetRackLSEPrototype(ctx context.Context, req *api.Get
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	rackLSEPrototype, err := configuration.GetRackLSEPrototype(ctx, name)
+	rackLSEPrototype, err := controller.GetRackLSEPrototype(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +362,7 @@ func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *api.L
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := configuration.ListRackLSEPrototypes(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRackLSEPrototypes(ctx, pageSize, req.PageToken)
 	if err != nil {
 		return nil, err
 	}
@@ -385,6 +385,6 @@ func (fs *FleetServerImpl) DeleteRackLSEPrototype(ctx context.Context, req *api.
 		return nil, err
 	}
 	name := util.RemovePrefix(req.Name)
-	err = configuration.DeleteRackLSEPrototype(ctx, name)
+	err = controller.DeleteRackLSEPrototype(ctx, name)
 	return &empty.Empty{}, err
 }

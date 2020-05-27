@@ -6,8 +6,6 @@ package configuration
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -19,7 +17,6 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 )
 
 // RackLSEPrototypeKind is the datastore entity kind for chrome platforms.
@@ -112,25 +109,7 @@ func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string
 }
 
 // DeleteRackLSEPrototype deletes the rackLSEPrototype in datastore
-//
-// For referential data intergrity,
-// Delete if there are no references to the RackLSEPrototype by other resources in the datastore.
-// If there are any references, delete will be rejected and an error message will be thrown.
 func DeleteRackLSEPrototype(ctx context.Context, id string) error {
-	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "racklse_prototype_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(racklses) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("RackLSEPrototype %s cannot be deleted because there are other resources which are referring this RackLSEPrototype.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the RackLSEPrototype:\n"))
-		for _, racklse := range racklses {
-			errorMsg.WriteString(racklse.Name + ", ")
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
 	return fleetds.Delete(ctx, &fleet.RackLSEPrototype{Name: id}, newRackLSEPrototypeEntity)
 }
 
