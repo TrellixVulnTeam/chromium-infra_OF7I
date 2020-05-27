@@ -102,6 +102,7 @@ luci.cq(status_host = 'chromium-cq-status.appspot.com')
 
 # Global builder defaults.
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
+luci.builder.defaults.properties.set({'$kitchen': {'emulate_gce' : True}})
 
 
 # Resources shared by all subprojects.
