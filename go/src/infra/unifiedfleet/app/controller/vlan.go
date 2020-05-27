@@ -17,27 +17,28 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
 
 // CreateVlan creates a new vlan in datastore.
 func CreateVlan(ctx context.Context, vlan *fleet.Vlan) (*fleet.Vlan, error) {
-	return configuration.CreateVlan(ctx, vlan)
+	return registration.CreateVlan(ctx, vlan)
 }
 
 // UpdateVlan updates vlan in datastore.
 func UpdateVlan(ctx context.Context, vlan *fleet.Vlan) (*fleet.Vlan, error) {
-	return configuration.UpdateVlan(ctx, vlan)
+	return registration.UpdateVlan(ctx, vlan)
 }
 
 // GetVlan returns vlan for the given id from datastore.
 func GetVlan(ctx context.Context, id string) (*fleet.Vlan, error) {
-	return configuration.GetVlan(ctx, id)
+	return registration.GetVlan(ctx, id)
 }
 
 // ListVlans lists the vlans
 func ListVlans(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.Vlan, string, error) {
-	return configuration.ListVlans(ctx, pageSize, pageToken)
+	return registration.ListVlans(ctx, pageSize, pageToken)
 }
 
 // DeleteVlan deletes the vlan in datastore
@@ -50,7 +51,7 @@ func DeleteVlan(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	return configuration.DeleteVlan(ctx, id)
+	return registration.DeleteVlan(ctx, id)
 }
 
 // ImportVlans implements the logic of importing vlans and related info to backend storage.
@@ -86,7 +87,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(vs))
 		logging.Debugf(ctx, "importing vlan %dth - %dth", i, end-1)
-		res, err := configuration.ImportVlans(ctx, vs[i:end])
+		res, err := registration.ImportVlans(ctx, vs[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
 			return &allRes, err

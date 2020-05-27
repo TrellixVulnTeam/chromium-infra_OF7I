@@ -141,9 +141,9 @@ func GetDracResource(dracID string) *Resource {
 // GetVlanResource returns a Resource with VlanEntity
 func GetVlanResource(vlanID string) *Resource {
 	return &Resource{
-		Kind: configuration.VlanKind,
+		Kind: registration.VlanKind,
 		ID:   vlanID,
-		Entity: &configuration.VlanEntity{
+		Entity: &registration.VlanEntity{
 			ID: vlanID,
 		},
 	}

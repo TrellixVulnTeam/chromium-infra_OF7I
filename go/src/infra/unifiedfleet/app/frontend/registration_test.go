@@ -93,6 +93,12 @@ func mockSwitch(id string) *proto.Switch {
 	}
 }
 
+func mockVlan(id string) *proto.Vlan {
+	return &proto.Vlan{
+		Name: util.AddPrefix(util.VlanCollection, id),
+	}
+}
+
 func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -1211,6 +1217,39 @@ func TestImportNics(t *testing.T) {
 		})
 		// Invalid & Empty machines DB hosts are tested in TestImportMachines
 		// Skip testing here
+	})
+}
+
+func TestImportVlans(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import vlans", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportVlansRequest{
+				Source: &api.ImportVlansRequest_ConfigSource{
+					ConfigSource: &api.ConfigSource{
+						ConfigServiceName: "fake-service",
+						FileName:          "fakeVlans.cfg",
+					},
+				},
+			}
+			tf.Fleet.importPageSize = 25
+			res, err := tf.Fleet.ImportVlans(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+			vlans, _, err := registration.ListVlans(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(parseAssets(vlans, "Name"), ShouldResemble, []string{"browser-lab:144", "browser-lab:20", "browser-lab:40"})
+			vlan, err := registration.GetVlan(ctx, "browser-lab:40")
+			So(err, ShouldBeNil)
+			expectedCapacity := getCapacity(vlan.GetVlanAddress())
+			So(vlan.GetCapacityIp(), ShouldEqual, int32(expectedCapacity))
+			ips, err := configuration.QueryIPByPropertyName(ctx, "vlan", "browser-lab:40")
+			So(err, ShouldBeNil)
+			So(len(ips), ShouldEqual, expectedCapacity)
+		})
 	})
 }
 
@@ -2709,6 +2748,334 @@ func TestDeleteSwitch(t *testing.T) {
 				Name: util.AddPrefix(util.SwitchCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteSwitch(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestCreateVlan(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	vlan1 := mockVlan("")
+	vlan2 := mockVlan("")
+	vlan3 := mockVlan("")
+	Convey("CreateVlan", t, func() {
+		Convey("Create new vlan with vlan_id", func() {
+			req := &api.CreateVlanRequest{
+				Vlan:   vlan1,
+				VlanId: "Vlan-1",
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, vlan1)
+		})
+
+		Convey("Create existing vlan", func() {
+			req := &api.CreateVlanRequest{
+				Vlan:   vlan3,
+				VlanId: "Vlan-1",
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+		})
+
+		Convey("Create new vlan - Invalid input nil", func() {
+			req := &api.CreateVlanRequest{
+				Vlan: nil,
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Create new vlan - Invalid input empty ID", func() {
+			req := &api.CreateVlanRequest{
+				Vlan:   vlan2,
+				VlanId: "",
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+		})
+
+		Convey("Create new vlan - Invalid input invalid characters", func() {
+			req := &api.CreateVlanRequest{
+				Vlan:   vlan2,
+				VlanId: "a.b)7&",
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestUpdateVlan(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	vlan1 := mockVlan("")
+	vlan2 := mockVlan("vlan-1")
+	vlan3 := mockVlan("vlan-3")
+	vlan4 := mockVlan("a.b)7&")
+	Convey("UpdateVlan", t, func() {
+		Convey("Update existing vlan", func() {
+			req := &api.CreateVlanRequest{
+				Vlan:   vlan1,
+				VlanId: "vlan-1",
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, vlan1)
+			ureq := &api.UpdateVlanRequest{
+				Vlan: vlan2,
+			}
+			resp, err = tf.Fleet.UpdateVlan(tf.C, ureq)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, vlan2)
+		})
+
+		Convey("Update non-existing vlan", func() {
+			ureq := &api.UpdateVlanRequest{
+				Vlan: vlan3,
+			}
+			resp, err := tf.Fleet.UpdateVlan(tf.C, ureq)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Update vlan - Invalid input nil", func() {
+			req := &api.UpdateVlanRequest{
+				Vlan: nil,
+			}
+			resp, err := tf.Fleet.UpdateVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+		})
+
+		Convey("Update vlan - Invalid input empty name", func() {
+			vlan3.Name = ""
+			req := &api.UpdateVlanRequest{
+				Vlan: vlan3,
+			}
+			resp, err := tf.Fleet.UpdateVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Update vlan - Invalid input invalid characters", func() {
+			req := &api.UpdateVlanRequest{
+				Vlan: vlan4,
+			}
+			resp, err := tf.Fleet.UpdateVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestGetVlan(t *testing.T) {
+	t.Parallel()
+	Convey("GetVlan", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		vlan1 := mockVlan("vlan-1")
+		req := &api.CreateVlanRequest{
+			Vlan:   vlan1,
+			VlanId: "vlan-1",
+		}
+		resp, err := tf.Fleet.CreateVlan(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp, ShouldResembleProto, vlan1)
+		Convey("Get vlan by existing ID", func() {
+			req := &api.GetVlanRequest{
+				Name: util.AddPrefix(util.VlanCollection, "vlan-1"),
+			}
+			resp, err := tf.Fleet.GetVlan(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, vlan1)
+		})
+		Convey("Get vlan by non-existing ID", func() {
+			req := &api.GetVlanRequest{
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
+			}
+			resp, err := tf.Fleet.GetVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Get vlan - Invalid input empty name", func() {
+			req := &api.GetVlanRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.GetVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+		Convey("Get vlan - Invalid input invalid characters", func() {
+			req := &api.GetVlanRequest{
+				Name: util.AddPrefix(util.VlanCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.GetVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
+func TestListVlans(t *testing.T) {
+	t.Parallel()
+	Convey("ListVlans", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		vlans := make([]*proto.Vlan, 0, 4)
+		for i := 0; i < 4; i++ {
+			vlan1 := mockVlan("")
+			req := &api.CreateVlanRequest{
+				Vlan:   vlan1,
+				VlanId: fmt.Sprintf("vlan-%d", i),
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, vlan1)
+			vlans = append(vlans, resp)
+		}
+
+		Convey("ListVlans - page_size negative", func() {
+			req := &api.ListVlansRequest{
+				PageSize: -5,
+			}
+			resp, err := tf.Fleet.ListVlans(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+		})
+
+		Convey("ListVlans - page_token invalid", func() {
+			req := &api.ListVlansRequest{
+				PageSize:  5,
+				PageToken: "abc",
+			}
+			resp, err := tf.Fleet.ListVlans(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+		})
+
+		Convey("ListVlans - Full listing Max PageSize", func() {
+			req := &api.ListVlansRequest{
+				PageSize: 2000,
+			}
+			resp, err := tf.Fleet.ListVlans(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Vlans, ShouldResembleProto, vlans)
+		})
+
+		Convey("ListVlans - Full listing with no pagination", func() {
+			req := &api.ListVlansRequest{
+				PageSize: 0,
+			}
+			resp, err := tf.Fleet.ListVlans(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Vlans, ShouldResembleProto, vlans)
+		})
+
+		Convey("ListVlans - listing with pagination", func() {
+			req := &api.ListVlansRequest{
+				PageSize: 3,
+			}
+			resp, err := tf.Fleet.ListVlans(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Vlans, ShouldResembleProto, vlans[:3])
+
+			req = &api.ListVlansRequest{
+				PageSize:  3,
+				PageToken: resp.NextPageToken,
+			}
+			resp, err = tf.Fleet.ListVlans(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Vlans, ShouldResembleProto, vlans[3:])
+		})
+	})
+}
+
+func TestDeleteVlan(t *testing.T) {
+	t.Parallel()
+	Convey("DeleteVlan", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		Convey("Delete vlan by existing ID without references", func() {
+			vlan2 := mockVlan("")
+			req := &api.CreateVlanRequest{
+				Vlan:   vlan2,
+				VlanId: "vlan-2",
+			}
+			resp, err := tf.Fleet.CreateVlan(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, vlan2)
+
+			dreq := &api.DeleteVlanRequest{
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
+			}
+			_, err = tf.Fleet.DeleteVlan(tf.C, dreq)
+			So(err, ShouldBeNil)
+
+			greq := &api.GetVlanRequest{
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
+			}
+			res, err := tf.Fleet.GetVlan(tf.C, greq)
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete vlan by non-existing ID", func() {
+			req := &api.DeleteVlanRequest{
+				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
+			}
+			_, err := tf.Fleet.DeleteVlan(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete vlan - Invalid input empty name", func() {
+			req := &api.DeleteVlanRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteVlan(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete vlan - Invalid input invalid characters", func() {
+			req := &api.DeleteVlanRequest{
+				Name: util.AddPrefix(util.VlanCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
