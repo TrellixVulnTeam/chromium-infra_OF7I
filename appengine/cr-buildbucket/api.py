@@ -404,13 +404,8 @@ def update_build_async(req, _res, ctx, _mask):
   validate_build_token(build, ctx)
 
   # Prepare a field mask to merge req.build into model.Build.proto.
-  # Exclude fields that are stored elsewhere.
-  # Note that update_paths was (indirectly) validated by validation.py
-  # against a whitelist.
-  model_build_proto_mask = protoutil.Mask.from_field_mask(
-      field_mask_pb2.FieldMask(
-          paths=list(update_paths - {'build.steps', 'build.output.properties'})
-      ),
+  build_mask = protoutil.Mask.from_field_mask(
+      field_mask_pb2.FieldMask(paths=list(update_paths)),
       rpc_pb2.UpdateBuildRequest.DESCRIPTOR,
       update_mask=True,
   ).submask('build')
@@ -425,7 +420,7 @@ def update_build_async(req, _res, ctx, _mask):
 
     futures = []
 
-    if 'build.output.properties' in update_paths:
+    if build_mask.includes('output.properties') == protoutil.INCLUDE_ENTIRELY:
       futures.append(
           model.BuildOutputProperties(
               key=model.BuildOutputProperties.key_for(build.key),
@@ -438,9 +433,11 @@ def update_build_async(req, _res, ctx, _mask):
       tags.update(buildtags.unparse(t.key, t.value) for t in req.build.tags)
       build.tags = sorted(tags)
 
-    if model_build_proto_mask:  # pragma: no branch
-      # Merge the rest into build.proto using model_build_proto_mask.
-      model_build_proto_mask.merge(req.build, build.proto)
+    # Clear fields stored in other entities.
+    req.build.output.ClearField('properties')
+    req.build.ClearField('steps')
+    req.build.ClearField('tags')
+    build_mask.merge(req.build, build.proto)
 
     # If we are updating build status, update some other dependent fields
     # and schedule notifications.

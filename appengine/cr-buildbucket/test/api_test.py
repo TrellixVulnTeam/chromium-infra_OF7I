@@ -294,6 +294,25 @@ class UpdateBuildTests(BaseTestCase):
 
     out_props = model.BuildOutputProperties.key_for(build.key).get()
     self.assertEqual(test_util.msg_to_dict(out_props.parse()), expected_props)
+    build = model.Build.get_by_id(build.key.id())
+    self.assertFalse(build.proto.output.properties)
+
+  def test_update_properties_indirectly(self):
+    build = test_util.build(id=123, status=common_pb2.STARTED)
+    build.put()
+
+    expected_props = {'a': 1}
+
+    build_proto = build_pb2.Build(id=123)
+    build_proto.output.properties.update(expected_props)
+
+    req, ctx = self._mk_update_req(build_proto, paths=['build.output'])
+    self.call(self.api.UpdateBuild, req, ctx=ctx)
+
+    out_props = model.BuildOutputProperties.key_for(build.key).get()
+    self.assertEqual(test_util.msg_to_dict(out_props.parse()), expected_props)
+    build = model.Build.get_by_id(build.key.id())
+    self.assertFalse(build.proto.output.properties)
 
   def test_update_properties_of_scheduled_build(self):
     test_util.build(id=123, status=common_pb2.SCHEDULED).put()
