@@ -157,3 +157,13 @@ recipes.simulation_tester(
     console_category = 'misc',
     gatekeeper_group = 'chromium.infra',
 )
+
+luci.cq_tryjob_verifier(
+    builder = 'infra-internal:try/build_limited Roll Tester (infra)',
+    cq_group = 'infra',
+)
+
+luci.cq_tryjob_verifier(
+    builder = 'infra-internal:try/release_scripts Roll Tester (infra)',
+    cq_group = 'infra',
+)
