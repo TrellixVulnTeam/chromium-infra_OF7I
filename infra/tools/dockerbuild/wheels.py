@@ -652,6 +652,7 @@ SPECS.update({
         Universal('pyasn1', '0.4.5'),
         Universal('pyasn1_modules', '0.0.8'),
         Universal('pyasn1_modules', '0.2.4'),
+        Universal('pyfakefs', '3.7.2'),
         Universal('pylint', '1.6.5'),
         Universal('pylint', '1.7.6'),
         Universal('pylint', '2.0.1', pyversions=['py3']),

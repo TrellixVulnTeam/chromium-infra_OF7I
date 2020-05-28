@@ -3058,6 +3058,20 @@ wheel: <
 * *mac-x64*
 * *manylinux-x64*
 
+## **pyfakefs**
+
+### 3.7.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyfakefs-py2_py3"
+  version: "version:3.7.2"
+>
+```
+
+
+* *universal*
+
 ## **pyftpdlib**
 
 ### 0.7.0
