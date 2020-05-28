@@ -51,26 +51,15 @@ _MAP_GPU_TEST_STEP_NAME_TO_COMPONENTS = {
 }
 
 
-def _GetChromiumDirectoryToComponentMapping():
-  """Returns a dict mapping from directories to components."""
-  return _GetChromiumMapping('dir-to-component')
-
-
-def _GetChromiumDirectoryToTeamMapping():
-  """Returns a dict mapping from directories to team."""
-  return _GetChromiumMapping('dir-to-team')
-
-
 @Cached(CompressedMemCache(), expire_time=3600)
 def _GetChromiumMapping(mapping_name):
   """Returns a dict mapping."""
   status, content, _ = FinditHttpClient().Get(_COMPONENT_MAPPING_URL)
   if status != 200:
-    # None result won't be cached.
-    return None
+    return {}
   mapping = json.loads(content).get(mapping_name)
   if not mapping:
-    return None
+    return {}
   result = {}
   for path, dict_item in mapping.iteritems():
     path = path + '/' if path[-1] != '/' else path
@@ -115,6 +104,16 @@ def _NormalizePath(path):
       filtered_parts.append(part)
 
   return '/'.join(filtered_parts)
+
+
+def GetChromiumDirectoryToComponentMapping():
+  """Returns a dict mapping from directories to components."""
+  return _GetChromiumMapping('dir-to-component')
+
+
+def GetChromiumDirectoryToTeamMapping():
+  """Returns a dict mapping from directories to team."""
+  return _GetChromiumMapping('dir-to-team')
 
 
 def GetTestLocation(build_id, step_name, test_name, normalized_test_name):

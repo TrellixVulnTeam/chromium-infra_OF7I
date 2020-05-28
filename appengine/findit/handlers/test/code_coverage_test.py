@@ -458,11 +458,11 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
   @mock.patch.object(
       test_tag_util,
-      '_GetChromiumDirectoryToComponentMapping',
+      'GetChromiumDirectoryToComponentMapping',
       return_value={'dir': 'comp'})
   @mock.patch.object(
       test_tag_util,
-      '_GetChromiumDirectoryToTeamMapping',
+      'GetChromiumDirectoryToTeamMapping',
       return_value={'dir': 'team'})
   @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value=True)
   @mock.patch.object(code_coverage.ProcessCodeCoverageData,

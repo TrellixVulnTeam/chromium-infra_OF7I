@@ -71,8 +71,8 @@ def _ExecuteQuery(parameters=None):
       query = f.read()
     return query
 
-  component_mapping = test_tag_util._GetChromiumDirectoryToComponentMapping()
-  team_mapping = test_tag_util._GetChromiumDirectoryToTeamMapping()
+  component_mapping = test_tag_util.GetChromiumDirectoryToComponentMapping()
+  team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping()
 
   watchlists = test_tag_util._GetChromiumWATCHLISTS()
 

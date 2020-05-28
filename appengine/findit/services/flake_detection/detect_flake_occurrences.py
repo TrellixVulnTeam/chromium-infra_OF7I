@@ -316,7 +316,7 @@ def _UpdateFlakeMetadata(all_occurrences):
   for occurrence in all_occurrences:
     flake_key_to_occurrences[occurrence.key.parent()].append(occurrence)
 
-  component_mapping = test_tag_util._GetChromiumDirectoryToComponentMapping(
+  component_mapping = test_tag_util.GetChromiumDirectoryToComponentMapping(
   ) or {}
   watchlists = test_tag_util._GetChromiumWATCHLISTS() or {}
 

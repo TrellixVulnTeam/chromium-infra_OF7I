@@ -39,7 +39,7 @@ class TestTagUtilTest(WaterfallTestCase):
     self.assertEqual({
         'p/dir1/': 'a>b',
         'p/dir2/': 'd>e>f'
-    }, test_tag_util._GetChromiumDirectoryToComponentMapping())
+    }, test_tag_util.GetChromiumDirectoryToComponentMapping())
 
 
   @mock.patch.object(
@@ -55,10 +55,11 @@ class TestTagUtilTest(WaterfallTestCase):
                         }
                     }), None))
   def testGetChromiumDirectoryToTeamMapping(self, *_):
-    self.assertEqual({
-        'android_webview/browser/': 'android-webview-dev@chromium.org',
-        'build/android/buildhooks/': 'infra-dev@chromium.org'
-    }, test_tag_util._GetChromiumDirectoryToTeamMapping())
+    self.assertEqual(
+        {
+            'android_webview/browser/': 'android-webview-dev@chromium.org',
+            'build/android/buildhooks/': 'infra-dev@chromium.org'
+        }, test_tag_util.GetChromiumDirectoryToTeamMapping())
 
   @mock.patch.object(
       test_tag_util.CachedGitilesRepository,

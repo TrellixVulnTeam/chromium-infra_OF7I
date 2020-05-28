@@ -490,7 +490,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
   @mock.patch.object(test_tag_util, 'GetTestLocation', return_value=None)
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   def testUpdateMetadataForFlakes(self, *_):
     luci_project = 'chromium'
@@ -649,7 +649,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
       time_util, 'GetUTCNow', return_value=datetime(2018, 12, 20))
   @mock.patch.object(test_tag_util, 'GetTestLocation', return_value=None)
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   def testDetectCQHiddenFlakes(self, mocked_get_client, *_):
@@ -713,7 +713,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
       build_util,
       'GetBuilderInfoForLUCIBuild',

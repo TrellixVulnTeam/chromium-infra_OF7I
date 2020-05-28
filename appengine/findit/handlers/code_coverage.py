@@ -680,8 +680,8 @@ class ProcessCodeCoverageData(BaseHandler):
                 builder=mimic_builder_name,
                 data=group_data)
 
-            comp_map = test_tag_util._GetChromiumDirectoryToComponentMapping()
-            team_mapping = test_tag_util._GetChromiumDirectoryToTeamMapping()
+            comp_map = test_tag_util.GetChromiumDirectoryToComponentMapping()
+            team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping()
 
             bq_row = _CreateBigqueryRow(
                 commit, change_log.committer.time, builder, group_data['path'],

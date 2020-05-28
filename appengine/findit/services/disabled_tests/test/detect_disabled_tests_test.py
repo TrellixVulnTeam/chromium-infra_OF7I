@@ -1022,11 +1022,11 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(
       detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(swarmbucket, 'GetMasters', return_value=['chromium.linux'])
   @mock.patch.object(step_util, 'GetOS', return_value='os1')
@@ -1125,9 +1125,9 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(
       detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(swarmbucket, 'GetMasters', return_value=['chromium.linux'])
   @mock.patch.object(step_util, 'GetOS', return_value='os1')
@@ -1229,9 +1229,9 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(
       detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(swarmbucket, 'GetMasters', return_value=['chromium.linux'])
   @mock.patch.object(step_util, 'GetOS', return_value='os1')
@@ -1276,13 +1276,13 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(
       detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime(2019, 6, 29, 0, 0, 0))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, '_RunBigQuery', return_value='job')
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(detect_disabled_tests, '_CreateLocalTests')
   @mock.patch.object(bigquery_helper, '_ReadQueryResultsPage')
@@ -1298,9 +1298,9 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   @mock.patch.object(bigquery_helper, '_RunBigQuery', return_value='job')
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToComponentMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
-      test_tag_util, '_GetChromiumDirectoryToTeamMapping', return_value={})
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(detect_disabled_tests, '_CreateLocalTests')
   @mock.patch.object(bigquery_helper, '_ReadQueryResultsPage')
