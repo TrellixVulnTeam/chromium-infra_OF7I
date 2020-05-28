@@ -53,13 +53,24 @@ func newRackLSEEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntit
 	if err != nil {
 		return nil, errors.Annotate(err, "fail to marshal RackLSE %s", p).Err()
 	}
+	var kvms []string
+	var switches []string
+	var rpms []string
+	if p.GetChromeBrowserRackLse() != nil {
+		kvms = p.GetChromeBrowserRackLse().GetKvms()
+		switches = p.GetChromeBrowserRackLse().GetSwitches()
+	} else if p.GetChromeosRackLse() != nil {
+		kvms = p.GetChromeosRackLse().GetKvms()
+		switches = p.GetChromeosRackLse().GetSwitches()
+		rpms = p.GetChromeosRackLse().GetRpms()
+	}
 	return &RackLSEEntity{
 		ID:                 p.GetName(),
 		RackIDs:            p.GetRacks(),
 		RackLSEProtoTypeID: p.GetRackLsePrototype(),
-		KVMIDs:             p.GetChromeosRackLse().GetKvms(),
-		RPMIDs:             p.GetChromeosRackLse().GetRpms(),
-		SwitchIDs:          p.GetChromeBrowserRackLse().GetSwitches(),
+		KVMIDs:             kvms,
+		RPMIDs:             rpms,
+		SwitchIDs:          switches,
 		RackLSE:            rackLSE,
 	}, nil
 }
