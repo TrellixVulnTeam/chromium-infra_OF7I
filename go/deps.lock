@@ -1,5 +1,5 @@
-hash: df92cdac55861fd2ebb98253077027d81eaaa72b37e83bfe9523b61fc95d9f51
-updated: 2020-05-26T18:49:44.088928576-04:00
+hash: e2b9fd4e271f027f9345c9d690b1aec9e3ad05226d4697f837c7c9ef5165246b
+updated: 2020-05-28T13:41:05.594028603-07:00
 imports:
 - name: cloud.google.com/go
   version: 1c8d9a6d9b02f5a967bad871e1a20b5816c8aa2e
@@ -124,7 +124,7 @@ imports:
   - gomock
   - mockgen
 - name: github.com/golang/protobuf
-  version: 84668698ea25b64748563aa20726db66a6b8d299
+  version: d04d7b157bb510b1e0c10132224b616ac0e26b17
   repo: https://chromium.googlesource.com/external/github.com/golang/protobuf.git
   subpackages:
   - jsonpb
@@ -524,7 +524,7 @@ imports:
   - codes
   - metadata
 - name: google.golang.org/protobuf
-  version: 4f55bf8d21a40367102b23a22432bf7cd1bc85f0
+  version: 74aae6a46c51fc5a8b04b336c49592bc03ef4752
   repo: https://go.googlesource.com/protobuf.git
 - name: gopkg.in/fsnotify.v1
   version: 8611c35ab31c1c28aa903d33cf8b6e44a399b09e
