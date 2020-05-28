@@ -4,6 +4,7 @@
 
 import {assert} from 'chai';
 
+import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
 import * as hotlists from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
@@ -55,18 +56,40 @@ describe('mr-hotlist-people-page (unconnected)', () => {
     element._editors = [exampleUsers.USER_2];
     await element.updateComplete;
   });
+
+  it('shows controls iff user has admin permissions', async () => {
+    element._editors = [exampleUsers.USER_2];
+    await element.updateComplete;
+
+    assert.equal(element.shadowRoot.querySelectorAll('button').length, 0);
+
+    element._permissions = [hotlists.ADMINISTER];
+    await element.updateComplete;
+
+    assert.equal(element.shadowRoot.querySelectorAll('button').length, 1);
+  });
 });
 
 describe('mr-hotlist-people-page (connected)', () => {
   beforeEach(() => {
     store.dispatch(resetState());
+
+    // We can't stub reducers/hotlist methods so stub prpcClient.call()
+    // instead. https://github.com/sinonjs/sinon/issues/562
+    sinon.stub(prpcClient, 'call');
+
     // @ts-ignore
     element = document.createElement('mr-hotlist-people-page');
     document.body.appendChild(element);
+
+    // Stop Redux from overriding values being tested.
+    sinon.stub(element, 'stateChanged');
   });
 
   afterEach(() => {
+    element.stateChanged.restore();
     document.body.removeChild(element);
+    prpcClient.call.restore();
   });
 
   it('initializes', async () => {
@@ -74,13 +97,30 @@ describe('mr-hotlist-people-page (connected)', () => {
   });
 
   it('updates page title and header', async () => {
-    const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
-    store.dispatch(hotlists.select(example.NAME));
-    store.dispatch({type: hotlists.FETCH_SUCCESS, hotlist: hotlistWithName});
+    element._hotlist = {...example.HOTLIST, displayName: 'Hotlist-Name'};
     await element.updateComplete;
 
     const state = store.getState();
     assert.deepEqual(sitewide.pageTitle(state), 'People - Hotlist-Name');
     assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
+
+  it('removes editors', async () => {
+    element._hotlist = example.HOTLIST;
+    element._editors = [exampleUsers.USER_2];
+
+    await element._removeEditor(exampleUsers.NAME_2);
+
+    const args = {name: example.NAME, editors: [exampleUsers.NAME_2]};
+    sinon.assert.calledWith(
+        prpcClient.call, 'monorail.v3.Hotlists', 'RemoveHotlistEditors', args);
+  });
+});
+
+it('mr-hotlist-people-page (stateChanged)', () => {
+  // @ts-ignore
+  element = document.createElement('mr-hotlist-people-page');
+  document.body.appendChild(element);
+  assert.instanceOf(element, MrHotlistPeoplePage);
+  document.body.removeChild(element);
 });
