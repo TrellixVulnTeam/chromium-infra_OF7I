@@ -45,7 +45,7 @@ export class MrApprovalCard extends connectStore(LitElement) {
       css`
         :host {
           width: 100%;
-          background-color: white;
+          background-color: var(--chops-white);
           font-size: var(--chops-main-font-size);
           border-bottom: var(--chops-normal-border);
           box-sizing: border-box;

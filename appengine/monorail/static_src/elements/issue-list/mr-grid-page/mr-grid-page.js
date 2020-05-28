@@ -156,7 +156,7 @@ export class MrGridPage extends connectStore(LitElement) {
         padding: 0.5em 8px;
       }
       progress {
-        background-color: white;
+        background-color: var(--chops-white);
         border: 1px solid var(--chops-gray-500);
         width: 40%;
         margin-left: 1%;
@@ -164,7 +164,7 @@ export class MrGridPage extends connectStore(LitElement) {
         visibility: visible;
       }
       ::-webkit-progress-bar {
-        background-color: white;
+        background-color: var(--chops-white);
       }
       progress::-webkit-progress-value {
         transition: width 1s;

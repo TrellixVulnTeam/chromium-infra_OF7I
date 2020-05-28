@@ -35,11 +35,11 @@ export class MrRestrictionIndicator extends connectStore(LitElement) {
       }
       :host([showWarning]) {
         background-color: var(--chops-red-700);
-        color: white;
+        color: var(--chops-white);
         font-weight: bold;
       }
       :host([showWarning]) i {
-        color: white;
+        color: var(--chops-white);
       }
       :host([hidden]) {
         display: none;

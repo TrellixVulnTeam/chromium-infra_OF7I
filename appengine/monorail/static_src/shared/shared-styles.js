@@ -48,7 +48,7 @@ export const SHARED_STYLES = css`
   chops-button, a.button, .button {
     box-sizing: border-box;
     font-size: var(--chops-main-font-size);
-    background: white;
+    background: var(--chops-white);
     border-radius: 6px;
     padding: 0.25em 8px;
     margin: 0;

@@ -106,7 +106,7 @@ export class MrDropdown extends LitElement {
           overflow: var(--mr-dropdown-menu-overflow);
           top: 90%;
           display: block;
-          background: white;
+          background: var(--chops-white);
           border: var(--chops-accessible-border);
           z-index: 990;
           box-shadow: 2px 3px 8px 0px hsla(0, 0%, 0%, 0.3);

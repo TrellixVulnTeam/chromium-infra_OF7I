@@ -99,7 +99,7 @@ export class MrIssueList extends connectStore(LitElement) {
           -webkit-appearance: none;
           border: 2px solid var(--chops-gray-400);
           position: relative;
-          background: white;
+          background: var(--chops-white);
         }
         th input[type="checkbox"] {
           border-color: var(--chops-gray-500);

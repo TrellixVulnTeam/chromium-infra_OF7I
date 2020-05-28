@@ -24,7 +24,7 @@ export class MrIssueDetails extends connectStore(LitElement) {
     return css`
       :host {
         font-size: var(--chops-main-font-size);
-        background-color: white;
+        background-color: var(--chops-white);
         padding: 0;
         padding-bottom: 1em;
         display: flex;

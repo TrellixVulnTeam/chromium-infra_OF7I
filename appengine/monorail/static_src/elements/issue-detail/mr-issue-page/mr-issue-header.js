@@ -84,7 +84,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
           padding: 1px 6px;
           border-radius: 3px;
           background: #F44336;
-          color: white;
+          color: var(--chops-white);
           font-weight: bold;
           font-size: var(--chops-main-font-size);
           margin-right: 4px;
@@ -99,7 +99,7 @@ export class MrIssueHeader extends connectStore(LitElement) {
         .role-label {
           background-color: var(--chops-gray-600);
           border-radius: 3px;
-          color: white;
+          color: var(--chops-white);
           display: inline-block;
           padding: 2px 4px;
           font-size: 75%;

@@ -48,7 +48,7 @@ export class ChopsDialog extends LitElement {
         * its backdrop pseudoelement.
         */
         box-sizing: border-box;
-        background: white;
+        background: var(--chops-white);
         padding: 1em 16px;
         cursor: default;
         box-shadow: 0px 3px 20px 0px hsla(0, 0%, 0%, 0.4);

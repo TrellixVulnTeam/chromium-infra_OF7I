@@ -70,7 +70,7 @@ export class ChopsAutocomplete extends LitElement {
           font-size: var(--chops-main-font-size);
           color: var(--chops-link-color);
           position: absolute;
-          background: white;
+          background: var(--chops-white);
           border: var(--chops-accessible-border);
           z-index: 999;
           box-shadow: 2px 3px 8px 0px hsla(0, 0%, 0%, 0.3);

@@ -189,7 +189,7 @@ export class MrGrid extends connectStore(LitElement) {
         td {
           border: var(--chops-table-divider);
           padding-left: 0.3em;
-          background-color: white;
+          background-color: var(--chops-white);
           vertical-align: top;
         }
         mr-issue-link {

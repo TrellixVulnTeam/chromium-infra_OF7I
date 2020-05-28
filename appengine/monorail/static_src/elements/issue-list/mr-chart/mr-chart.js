@@ -165,7 +165,7 @@ export default class MrChart extends LitElement {
         background: hsl(0, 0%, 90%);
       }
       .choice.transparent {
-        background: white;
+        background: var(--chops-white);
         border-color: var(--chops-choice-color);
         border-radius: 4px;
       }
@@ -189,14 +189,14 @@ export default class MrChart extends LitElement {
         background-color: var(--chops-orange-50);
       }
       progress {
-        background-color: white;
+        background-color: var(--chops-white);
         border: 1px solid var(--chops-gray-500);
         margin: 0 0 1em;
         width: 100%;
         visibility: visible;
       }
       ::-webkit-progress-bar {
-        background-color: white;
+        background-color: var(--chops-white);
       }
       progress::-webkit-progress-value {
         transition: width 1s;

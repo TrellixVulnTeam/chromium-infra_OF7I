@@ -21,7 +21,7 @@ export class ChopsToggle extends LitElement {
         --chops-toggle-hover-bg: rgba(0, 0, 0, 0.3);
         --chops-toggle-focus-border: hsl(193, 82%, 63%);
         --chops-toggle-checked-bg: rgba(0, 0, 0, 0.6);
-        --chops-toggle-checked-color: white;
+        --chops-toggle-checked-color: var(--chops-white);
       }
       label {
         background: var(--chops-toggle-bg);

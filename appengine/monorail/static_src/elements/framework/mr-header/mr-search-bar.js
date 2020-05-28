@@ -26,7 +26,7 @@ export class MrSearchBar extends LitElement {
   static get styles() {
     return css`
       :host {
-        --mr-search-bar-background: white;
+        --mr-search-bar-background: var(--chops-white);
         --mr-search-bar-border-radius: 4px;
         --mr-search-bar-border: var(--chops-normal-border);
         --mr-search-bar-chip-color: var(--chops-gray-200);

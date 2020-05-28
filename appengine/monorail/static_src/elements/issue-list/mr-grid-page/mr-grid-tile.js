@@ -60,7 +60,7 @@ export class MrGridTile extends LitElement {
         border-radius: 6px;
         padding: 1px;
         margin: 3px;
-        background: white;
+        background: var(--chops-white);
         width: 10em;
         height: 5em;
         float: left;

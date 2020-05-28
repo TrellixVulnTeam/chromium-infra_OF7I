@@ -99,7 +99,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
           margin-bottom: 4em;
         }
         .project {
-          background: white;
+          background: var(--chops-white);
           width: 220px;
           margin-right: 32px;
           margin-bottom: 32px;

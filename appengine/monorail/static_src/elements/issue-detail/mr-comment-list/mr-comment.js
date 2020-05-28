@@ -99,7 +99,7 @@ export class MrComment extends LitElement {
         .role-label {
           background-color: var(--chops-gray-600);
           border-radius: 3px;
-          color: white;
+          color: var(--chops-white);
           display: inline-block;
           padding: 2px 4px;
           font-size: 75%;

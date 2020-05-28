@@ -44,7 +44,7 @@ export class MrDayIcon extends LitElement {
         width: 150px;
         padding: 0.5em 8px;
         background: rgba(0, 0, 0, 0.6);
-        color: white;
+        color: var(--chops-white);
         border-radius: 8px;
         top: 120%;
         left: 50%;
