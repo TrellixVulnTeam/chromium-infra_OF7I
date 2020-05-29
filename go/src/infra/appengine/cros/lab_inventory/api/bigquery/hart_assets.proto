@@ -1,0 +1,26 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package apibq;
+
+import "google/protobuf/timestamp.proto";
+
+message HaRTAsset {
+    string asset_tag = 1;
+    // Person|Team the device is assigned to
+    string assignee = 2;
+    string serial_number = 3;
+    string description = 4;
+    string google_code_name = 5;
+    // Google Part Number
+    string gpn = 6;
+    // Description associated to the part number
+    string gpn_description = 7;
+    string form_factor = 8;
+    string cost_center = 9;
+    string project = 10;
+    google.protobuf.Timestamp updated_time = 11;
+}
