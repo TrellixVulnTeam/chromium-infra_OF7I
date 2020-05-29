@@ -19,6 +19,7 @@ import (
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
 )
 
@@ -29,6 +30,8 @@ const (
 	recentRevisions = time.Hour * 24 * 7
 	// model.AlertJSONs this recently resolved will be returned
 	recentResolved = time.Hour * 24 * 3
+	// resolved alerts will expire after this time
+	resolvedAlertExpiration = time.Hour * 24 * 7
 )
 
 var (
@@ -304,4 +307,39 @@ func putAlertsDatastore(c context.Context, tree string, alertsSummary *messages.
 	}
 
 	return datastore.Put(c, revisionSummaryJSONs)
+}
+
+// FlushOldAlertsHandler deletes old resolved alerts from datastore.
+func FlushOldAlertsHandler(ctx *router.Context) {
+	c, w := ctx.Context, ctx.Writer
+
+	numDeleted, err := flushOldAlerts(c)
+	if err != nil {
+		errStatus(c, w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	s := fmt.Sprintf("deleted %d alerts", numDeleted)
+	logging.Debugf(c, s)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(s))
+}
+
+func flushOldAlerts(c context.Context) (int, error) {
+	q := datastore.NewQuery("AlertJSONNonGrouping").Eq("Resolved", true)
+	q = q.Lt("ResolvedDate", clock.Get(c).Now().Add(-resolvedAlertExpiration))
+	q = q.KeysOnly(true)
+
+	results := []*model.AlertJSONNonGrouping{}
+	err := datastore.GetAll(c, q, &results)
+	if err != nil {
+		return 0, fmt.Errorf("error fetching alerts to delete: %s", err)
+	}
+
+	err = datastore.Delete(c, results)
+	if err != nil {
+		return 0, fmt.Errorf("error deleting alerts: %s", err)
+	}
+
+	return len(results), nil
 }

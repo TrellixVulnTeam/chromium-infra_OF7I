@@ -31,6 +31,10 @@ cron:
   url: /_cron/annotations/flush_old/
   schedule: every 1 hours
 
+- description: Delete old alerts
+  url: /_cron/alerts/flush_old/
+  schedule: every 24 hours
+
 - description: Update Android alerts
   url: /_cron/analyze/android
   schedule: every 5 minutes
