@@ -43,7 +43,7 @@ repos {
   }
 }
 service_account: "tricium-prod@appspot.gserviceaccount.com"
-swarming_service_account: "swarming@tricium-prod.iam.gserviceaccount.
+swarming_service_account: "swarming@tricium-prod.iam.gserviceaccount.com"
 ```
 
 Available functions are in [functions](../functions) directory.
