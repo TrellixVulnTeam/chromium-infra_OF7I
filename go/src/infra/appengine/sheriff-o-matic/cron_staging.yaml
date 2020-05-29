@@ -5,19 +5,23 @@ cron:
 
 - description: Update android bug queue
   url: /_cron/refresh/bugqueue/sheriff-android
-  schedule: every 1 minutes
+  schedule: every 24 hours
 
 - description: Update chromium bug queue
   url: /_cron/refresh/bugqueue/sheriff-chromium
-  schedule: every 1 minutes
+  schedule: every 24 hours
 
 - description: Update fuchsia bug queue
   url: /_cron/refresh/bugqueue/sheriff-fuchsia
-  schedule: every 1 minutes
+  schedule: every 24 hours
 
 - description: Update trooper queue
   url: /_cron/refresh/bugqueue/infra-troopers
-  schedule: every 1 minutes
+  schedule: every 24 hours
+
+- description: Update chrome browser release bug queue
+  url: /_cron/refresh/bugqueue/sheriff-chrome-release
+  schedule: every 24 hours
 
 - description: Update cached annotation metadata
   url: /_cron/annotations/refresh/
