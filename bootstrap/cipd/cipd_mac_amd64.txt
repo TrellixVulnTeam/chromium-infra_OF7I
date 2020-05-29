@@ -6,7 +6,7 @@
 # under that package name.
 
 # Proto3 Protocol Buffers generator (protoc).
-infra/tools/protoc/mac-amd64    protobuf_version:v3.6.1
+infra/tools/protoc/mac-amd64    protobuf_version:v3.12.1
 
 # Node.js deployment.
 infra/nodejs/nodejs/mac-amd64   node_version:12.13.0
