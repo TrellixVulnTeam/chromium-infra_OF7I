@@ -32,12 +32,19 @@ import * as users from './users.js';
 import 'shared/typedef.js';
 /** @typedef {import('redux').AnyAction} AnyAction */
 
+/** @type {Array<IssuesListColumn>} */
+export const DEFAULT_COLUMNS = [
+  {column: 'Rank'}, {column: 'ID'}, {column: 'Status'}, {column: 'Owner'},
+  {column: 'Summary'}, {column: 'Modified'},
+];
+
 // Permissions
 export const EDIT = 'HOTLIST_EDIT';
 export const ADMINISTER = 'HOTLIST_ADMINISTER';
 
 // Actions
 export const SELECT = 'hotlist/SELECT';
+export const RECEIVE_HOTLIST = 'hotlist/RECEIVE_HOTLIST';
 
 export const DELETE_START = 'hotlist/DELETE_START';
 export const DELETE_SUCCESS = 'hotlist/DELETE_SUCCESS';
@@ -102,8 +109,11 @@ export const nameReducer = createReducer(null, {
  * @return {Object<string, Hotlist>}
  */
 export const byNameReducer = createReducer({}, {
-  [FETCH_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
-  [UPDATE_SUCCESS]: (state, {hotlist}) => ({...state, [hotlist.name]: hotlist}),
+  [RECEIVE_HOTLIST]: (state, {hotlist}) => {
+    if (!hotlist.defaultColumns) hotlist.defaultColumns = DEFAULT_COLUMNS;
+    if (!hotlist.editors) hotlist.editors = [];
+    return {...state, [hotlist.name]: hotlist};
+  },
 });
 
 /**
@@ -287,8 +297,8 @@ export const fetch = (name) => async (dispatch) => {
     /** @type {Hotlist} */
     const hotlist = await prpcClient.call(
         'monorail.v3.Hotlists', 'GetHotlist', {name});
-    if (!hotlist.editors) hotlist.editors = [];
-    dispatch({type: FETCH_SUCCESS, hotlist});
+    dispatch({type: FETCH_SUCCESS});
+    dispatch({type: RECEIVE_HOTLIST, hotlist});
 
     const editors = hotlist.editors.map((editor) => editor);
     editors.push(hotlist.owner);
@@ -418,8 +428,8 @@ export const update = (name, hotlist) => async (dispatch) => {
     /** @type {Hotlist} */
     const updatedHotlist = await prpcClient.call(
         'monorail.v3.Hotlists', 'UpdateHotlist', args);
-
-    dispatch({type: UPDATE_SUCCESS, hotlist: updatedHotlist});
+    dispatch({type: UPDATE_SUCCESS});
+    dispatch({type: RECEIVE_HOTLIST, hotlist: updatedHotlist});
   } catch (error) {
     dispatch({type: UPDATE_FAILURE, error});
   }

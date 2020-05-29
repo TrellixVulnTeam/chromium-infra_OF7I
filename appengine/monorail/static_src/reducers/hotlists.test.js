@@ -40,10 +40,25 @@ describe('hotlist reducers', () => {
     assert.deepEqual(actual, example.NAME);
   });
 
-  it('byName updates on FETCH_SUCCESS', () => {
-    const action = {type: hotlists.FETCH_SUCCESS, hotlist: example.HOTLIST};
+  it('byName updates on RECEIVE_HOTLIST', () => {
+    const action = {type: hotlists.RECEIVE_HOTLIST, hotlist: example.HOTLIST};
     const actual = hotlists.byNameReducer({}, action);
     assert.deepEqual(actual, example.BY_NAME);
+  });
+
+  it('byName fills in missing fields on RECEIVE_HOTLIST', () => {
+    const action = {
+      type: hotlists.RECEIVE_HOTLIST,
+      hotlist: {name: example.NAME},
+    };
+    const actual = hotlists.byNameReducer({}, action);
+
+    const hotlist = {
+      name: example.NAME,
+      defaultColumns: hotlists.DEFAULT_COLUMNS,
+      editors: [],
+    };
+    assert.deepEqual(actual, {[example.NAME]: hotlist});
   });
 
   it('hotlistItems updates on FETCH_ITEMS_SUCCESS', () => {
@@ -262,18 +277,19 @@ describe('hotlist action creators', () => {
 
   describe('fetch', () => {
     it('success', async () => {
-      prpcClient.call.returns(Promise.resolve(example.HOTLIST));
+      const hotlist = example.HOTLIST;
+      prpcClient.call.returns(Promise.resolve(hotlist));
 
       await hotlists.fetch(example.NAME)(dispatch);
-
-      sinon.assert.calledWith(dispatch, {type: hotlists.FETCH_START});
 
       const args = {name: example.NAME};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v3.Hotlists', 'GetHotlist', args);
 
-      const action = {type: hotlists.FETCH_SUCCESS, hotlist: example.HOTLIST};
-      sinon.assert.calledWith(dispatch, action);
+      sinon.assert.calledWith(dispatch, {type: hotlists.FETCH_START});
+      sinon.assert.calledWith(dispatch, {type: hotlists.FETCH_SUCCESS});
+      sinon.assert.calledWith(
+          dispatch, {type: hotlists.RECEIVE_HOTLIST, hotlist});
     });
 
     it('failure', async () => {
@@ -294,12 +310,11 @@ describe('hotlist action creators', () => {
       const returnValue = await hotlists.fetchItems(example.NAME)(dispatch);
       assert.deepEqual(returnValue, [{...example.HOTLIST_ITEM, rank: 0}]);
 
-      sinon.assert.calledWith(dispatch, {type: hotlists.FETCH_ITEMS_START});
-
       const args = {parent: example.NAME, orderBy: 'rank'};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v3.Hotlists', 'ListHotlistItems', args);
 
+      sinon.assert.calledWith(dispatch, {type: hotlists.FETCH_ITEMS_START});
       const action = {
         type: hotlists.FETCH_ITEMS_SUCCESS,
         name: example.NAME,
@@ -349,15 +364,14 @@ describe('hotlist action creators', () => {
       const editors = [exampleUsers.NAME];
       await hotlists.removeEditors(example.NAME, editors)(dispatch);
 
-      sinon.assert.calledWith(dispatch, {type: hotlists.REMOVE_EDITORS_START});
-
       const args = {name: example.NAME, editors};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v3.Hotlists',
           'RemoveHotlistEditors', args);
 
-      sinon.assert.calledWith(dispatch,
-          {type: hotlists.REMOVE_EDITORS_SUCCESS});
+      sinon.assert.calledWith(dispatch, {type: hotlists.REMOVE_EDITORS_START});
+      const action = {type: hotlists.REMOVE_EDITORS_SUCCESS};
+      sinon.assert.calledWith(dispatch, action);
     });
 
     it('failure', async () => {
@@ -380,13 +394,12 @@ describe('hotlist action creators', () => {
       const issues = [exampleIssues.NAME];
       await hotlists.removeItems(example.NAME, issues)(dispatch);
 
-      sinon.assert.calledWith(dispatch, {type: hotlists.REMOVE_ITEMS_START});
-
       const args = {parent: example.NAME, issues};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v3.Hotlists',
           'RemoveHotlistItems', args);
 
+      sinon.assert.calledWith(dispatch, {type: hotlists.REMOVE_ITEMS_START});
       sinon.assert.calledWith(dispatch, {type: hotlists.REMOVE_ITEMS_SUCCESS});
     });
 
@@ -410,8 +423,6 @@ describe('hotlist action creators', () => {
       const items = [example.HOTLIST_ITEM_NAME];
       await hotlists.rerankItems(example.NAME, items, 0)(dispatch);
 
-      sinon.assert.calledWith(dispatch, {type: hotlists.RERANK_ITEMS_START});
-
       const args = {
         name: example.NAME,
         hotlistItems: items,
@@ -421,6 +432,7 @@ describe('hotlist action creators', () => {
           prpcClient.call, 'monorail.v3.Hotlists',
           'RerankHotlistItems', args);
 
+      sinon.assert.calledWith(dispatch, {type: hotlists.RERANK_ITEMS_START});
       sinon.assert.calledWith(dispatch, {type: hotlists.RERANK_ITEMS_SUCCESS});
     });
 
@@ -443,13 +455,11 @@ describe('hotlist action creators', () => {
         displayName: example.HOTLIST.displayName + 'foo',
         summary: example.HOTLIST.summary + 'abc',
       };
-      const updatedHotlist = {...example.HOTLIST, ...hotlistOnlyWithUpdates};
-      prpcClient.call.returns(Promise.resolve(updatedHotlist));
+      const hotlist = {...example.HOTLIST, ...hotlistOnlyWithUpdates};
+      prpcClient.call.returns(Promise.resolve(hotlist));
 
       await hotlists.update(
           example.HOTLIST.name, hotlistOnlyWithUpdates)(dispatch);
-
-      sinon.assert.calledWith(dispatch, {type: hotlists.UPDATE_START});
 
       const hotlistArg = {
         ...hotlistOnlyWithUpdates,
@@ -460,11 +470,10 @@ describe('hotlist action creators', () => {
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v3.Hotlists', 'UpdateHotlist', args);
 
-      const successAction = {
-        type: hotlists.UPDATE_SUCCESS,
-        hotlist: updatedHotlist,
-      };
-      sinon.assert.calledWith(dispatch, successAction);
+      sinon.assert.calledWith(dispatch, {type: hotlists.UPDATE_START});
+      sinon.assert.calledWith(dispatch, {type: hotlists.UPDATE_SUCCESS});
+      sinon.assert.calledWith(
+          dispatch, {type: hotlists.RECEIVE_HOTLIST, hotlist});
     });
 
     it('failure', async () => {

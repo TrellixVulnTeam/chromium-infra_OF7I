@@ -253,9 +253,9 @@ describe('mr-hotlist-issues-page (connected)', () => {
 
   it('query string overrides hotlist default columns', () => {
     const defaultColumns = [{column: 'Rank'}, {column: 'Summary'}];
-    const hotlistWithColumns = {...example.HOTLIST, defaultColumns};
+    const hotlist = {...example.HOTLIST, defaultColumns};
     store.dispatch(hotlists.select(example.NAME));
-    store.dispatch({type: hotlists.FETCH_SUCCESS, hotlist: hotlistWithColumns});
+    store.dispatch({type: hotlists.RECEIVE_HOTLIST, hotlist});
 
     assert.deepEqual(element._columns, ['Rank', 'Summary']);
 
@@ -266,9 +266,7 @@ describe('mr-hotlist-issues-page (connected)', () => {
   });
 
   it('updates page title and header', async () => {
-    const hotlistWithName = {...example.HOTLIST, displayName: 'Hotlist-Name'};
-    store.dispatch(hotlists.select(example.NAME));
-    store.dispatch({type: hotlists.FETCH_SUCCESS, hotlist: hotlistWithName});
+    element._hotlist = {...example.HOTLIST, displayName: 'Hotlist-Name'};
     await element.updateComplete;
 
     const state = store.getState();
