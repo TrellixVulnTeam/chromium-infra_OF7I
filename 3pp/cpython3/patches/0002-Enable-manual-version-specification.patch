@@ -1,9 +1,10 @@
-From edd4a0decd7dcf6507e5adb77063b6a897a7c607 Mon Sep 17 00:00:00 2001
-From: Brian Ryner <bryner@google.com>
-Date: Thu, 21 May 2020 13:37:39 +1000
-Subject: [PATCH] Add the "--enable-py-version-override" option, which
- overrides the version that the Python interpreter reports.
+From 72d2ff811459203493ea800c7c20f8a269d3eebb Mon Sep 17 00:00:00 2001
+From: Robert Iannucci <iannucci@chromium.org>
+Date: Tue, 9 Oct 2018 15:36:18 -0700
+Subject: [PATCH 2/2] Enable manual version specification.
 
+Add the "--enable-py-version-override" option, which overrides the
+version that the Python interpreter reports.
 ---
  Include/patchlevel.h | 10 ++++++++++
  configure.ac         | 12 ++++++++++++
@@ -11,7 +12,7 @@ Subject: [PATCH] Add the "--enable-py-version-override" option, which
  3 files changed, 25 insertions(+)
 
 diff --git a/Include/patchlevel.h b/Include/patchlevel.h
-index dbe6b10852..1df76b7b7a 100644
+index d375d2897e..5de8abdad8 100644
 --- a/Include/patchlevel.h
 +++ b/Include/patchlevel.h
 @@ -33,3 +33,13 @@
@@ -29,10 +30,10 @@ index dbe6b10852..1df76b7b7a 100644
 +#define PY_VERSION PY_VERSION_OVERRIDE
 +#endif /* PY_VERSION_OVERRIDE */
 diff --git a/configure.ac b/configure.ac
-index f9dabd86c2..29ee8e46bd 100644
+index 620b48a6e7..b5877e6ce8 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -2949,6 +2949,18 @@ LDFLAGS="-fsanitize=undefined $LDFLAGS"
+@@ -2893,6 +2893,18 @@ LDFLAGS="-fsanitize=address $LDFLAGS"
  AC_CHECK_LIB(nsl, t_open, [LIBS="-lnsl $LIBS"]) # SVR4
  AC_CHECK_LIB(socket, socket, [LIBS="-lsocket $LIBS"], [], $LIBS) # SVR4 sockets
  
@@ -52,12 +53,12 @@ index f9dabd86c2..29ee8e46bd 100644
  AC_ARG_WITH(libs,
              AS_HELP_STRING([--with-libs='lib1 ...'], [link against additional libs]),
 diff --git a/pyconfig.h.in b/pyconfig.h.in
-index ebab5ff518..52c1546b0f 100644
+index a82e82cc9c..6fb3172177 100644
 --- a/pyconfig.h.in
 +++ b/pyconfig.h.in
-@@ -1337,6 +1337,9 @@
-    externally defined: 0 */
- #undef Py_HASH_ALGORITHM
+@@ -1381,6 +1381,9 @@
+ /* Define if you want to enable tracing references for debugging purpose */
+ #undef Py_TRACE_REFS
  
 +/* Define to override the PY_VERSION reported Python version. */
 +#undef PY_VERSION_OVERRIDE
