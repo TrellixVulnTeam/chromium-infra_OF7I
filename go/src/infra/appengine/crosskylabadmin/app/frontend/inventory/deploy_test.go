@@ -28,6 +28,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
+	"github.com/google/go-cmp/cmp"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/api/swarming/swarming/v1"
 	"go.chromium.org/luci/common/data/stringset"
@@ -910,6 +911,86 @@ func TestGetDeploymentStatus(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("GetDeploymentStatus() = %#v; want %#v", got, want)
+	}
+}
+
+func TestDeployActionArgs(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		test string
+		in   *fleet.DutDeploymentActions
+		out  string
+	}{
+		{
+			"empty",
+			&fleet.DutDeploymentActions{},
+			"",
+		},
+		{
+			"StageImageToUsb",
+			&fleet.DutDeploymentActions{
+				StageImageToUsb: true,
+			},
+			"stage-usb",
+		},
+		{
+			"InstallFirmware",
+			&fleet.DutDeploymentActions{
+				InstallFirmware: true,
+			},
+			"install-firmware,verify-recovery-mode",
+		},
+		{
+			"InstallTestImage",
+			&fleet.DutDeploymentActions{
+				InstallTestImage: true,
+			},
+			"install-test-image,update-label",
+		},
+		{
+			"SkipDeployment",
+			&fleet.DutDeploymentActions{
+				SkipDeployment: true,
+			},
+			"",
+		},
+		{
+			"SetupLabstation",
+			&fleet.DutDeploymentActions{
+				SetupLabstation: true,
+			},
+			"setup-labstation,update-label",
+		},
+		{
+			"RunPreDeployVerification",
+			&fleet.DutDeploymentActions{
+				RunPreDeployVerification: true,
+			},
+			"run-pre-deploy-verification",
+		},
+		{
+			"All",
+			&fleet.DutDeploymentActions{
+				StageImageToUsb:          true,
+				InstallFirmware:          true,
+				InstallTestImage:         true,
+				SkipDeployment:           true,
+				SetupLabstation:          true,
+				RunPreDeployVerification: true,
+			},
+			"stage-usb,install-test-image,update-label,install-firmware,verify-recovery-mode,setup-labstation,update-label,run-pre-deploy-verification",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run("Test case "+tc.test, func(t *testing.T) {
+			got := deployActionArgs(tc.in)
+			if diff := cmp.Diff(tc.out, got); diff != "" {
+				t.Errorf(
+					"Convert actions %#v got labels differ -want +got, %s",
+					tc.test,
+					diff)
+			}
+		})
 	}
 }
 

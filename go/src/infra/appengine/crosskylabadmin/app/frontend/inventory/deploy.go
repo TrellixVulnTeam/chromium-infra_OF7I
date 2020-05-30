@@ -599,6 +599,9 @@ func deployActionArgs(a *fleet.DutDeploymentActions) string {
 		s = append(s, "setup-labstation")
 		s = append(s, "update-label")
 	}
+	if a.GetRunPreDeployVerification() {
+		s = append(s, "run-pre-deploy-verification")
+	}
 	return strings.Join(s, ",")
 }
 
