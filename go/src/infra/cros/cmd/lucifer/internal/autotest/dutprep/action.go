@@ -24,6 +24,8 @@ const (
 	InstallTestImage
 	// InstallFirmware action
 	InstallFirmware
+	// RunPreDeployVerification action
+	RunPreDeployVerification
 	// VerifyRecoveryMode action
 	VerifyRecoveryMode
 	// SetupLabstation action
@@ -76,6 +78,7 @@ var actionSequence = [...]Action{
 	StageUSB,
 	InstallTestImage,
 	InstallFirmware,
+	RunPreDeployVerification,
 	VerifyRecoveryMode,
 	SetupLabstation,
 	UpdateLabel,
@@ -84,6 +87,7 @@ var actionArgumentSequence = [...]string{
 	"stage-usb",
 	"install-test-image",
 	"install-firmware",
+	"run-pre-deploy-verification",
 	"verify-recovery-mode",
 	"setup-labstation",
 	"update-label",

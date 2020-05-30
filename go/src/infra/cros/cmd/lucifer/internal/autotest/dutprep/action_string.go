@@ -12,14 +12,15 @@ func _() {
 	_ = x[StageUSB-1]
 	_ = x[InstallTestImage-2]
 	_ = x[InstallFirmware-3]
-	_ = x[VerifyRecoveryMode-4]
-	_ = x[SetupLabstation-5]
-	_ = x[UpdateLabel-6]
+	_ = x[RunPreDeployVerification-4]
+	_ = x[VerifyRecoveryMode-5]
+	_ = x[SetupLabstation-6]
+	_ = x[UpdateLabel-7]
 }
 
-const _Action_name = "NoActionStageUSBInstallTestImageInstallFirmwareVerifyRecoveryModeSetupLabstationUpdateLabel"
+const _Action_name = "NoActionStageUSBInstallTestImageInstallFirmwareRunPreDeployVerificationVerifyRecoveryModeSetupLabstationUpdateLabel"
 
-var _Action_index = [...]uint8{0, 8, 16, 32, 47, 65, 80, 91}
+var _Action_index = [...]uint8{0, 8, 16, 32, 47, 71, 89, 104, 115}
 
 func (i Action) String() string {
 	if i < 0 || i >= Action(len(_Action_index)-1) {
