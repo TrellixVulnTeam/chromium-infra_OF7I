@@ -12,6 +12,7 @@ from google.appengine.ext import ndb
 from components import utils
 
 import bulkproc
+import logging
 import model
 
 PROC_NAME = 'fix_builds'
@@ -37,31 +38,21 @@ def _fix_builds(build_keys):  # pragma: no cover
 
 @ndb.transactional_tasklet
 def _fix_build_async(build_key):  # pragma: no cover
-  in_props_key = model.BuildInputProperties.key_for(build_key)
-  infra_key = model.BuildInfra.key_for(build_key)
-  build, in_props, build_infra = yield ndb.get_multi_async([
-      build_key, in_props_key, infra_key
-  ])
+  out_props_key = model.BuildOutputProperties.key_for(build_key)
+  build, out_props = yield ndb.get_multi_async([build_key, out_props_key])
   if not build or not build.is_ended:
     return
 
   to_put = []
 
-  if not in_props:
+  if not out_props and build.proto.output.HasField('properties'):
     to_put.append(
-        model.BuildInputProperties(
-            key=in_props_key,
-            properties=build.input_properties_bytes or '',
-        )
-    )
-
-  if not build_infra:
-    to_put.append(
-        model.BuildInfra(
-            key=infra_key,
-            infra=build.parse_infra().SerializeToString(),
+        model.BuildOutputProperties(
+            key=out_props_key,
+            properties=build.proto.output.properties.SerializeToString(),
         )
     )
 
   if to_put:
+    logging.info('fixing %s' % build.key.id())
     yield ndb.put_multi_async(to_put)
