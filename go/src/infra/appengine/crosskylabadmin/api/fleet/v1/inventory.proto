@@ -286,6 +286,9 @@ message DutDeploymentActions {
 
   // Setup labstation for deployment.
   bool setup_labstation = 5;
+
+  // Run pre-deploy verification.
+  bool run_pre_deploy_verification = 6;
 }
 
 message DutDeploymentOptions {
