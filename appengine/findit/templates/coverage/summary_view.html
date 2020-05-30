@@ -14,14 +14,17 @@
       font-weight: bold;
       font-size: 18px;
     }
+    .poor-coverage {
+      background-color: #FC8D7E;
+    }
     .low-coverage {
-      background-color: #FFD0D0;
+      background-color: #FAC687;
     }
     .medium-coverage {
-      background-color: #FFFFD0;
+      background-color: #F5F57D;
     }
     .high-coverage {
-      background-color: #D0FFD0;
+      background-color: #A6F5A6;
     }
     .legend {
       font-size: 14px;
@@ -137,8 +140,9 @@
       <div class="legend">
         Legend:
         <div class="color-sample high-coverage"> &ge; 90% </div>
-        <div class="color-sample medium-coverage"> 75% - 90% </div>
-        <div class="color-sample low-coverage"> &lt; 75% </div>
+        <div class="color-sample medium-coverage"> 70% - 90% </div>
+        <div class="color-sample low-coverage"> 50% - 70% </div>
+        <div class="color-sample poor-coverage"> &lt; 50% </div>
       </div>
       <table>
         <thead>
@@ -212,10 +216,12 @@
                   {% endif %}
                   {% if percent >= 90 %}
                     {% set css_class = 'high-coverage' %}
-                  {% elif percent >= 75 %}
+                  {% elif percent >= 70 %}
                     {% set css_class = 'medium-coverage' %}
-                  {% else %}
+                  {% elif percent >=50 %}
                     {% set css_class = 'low-coverage' %}
+                  {% else %}
+                    {% set css_class = 'poor-coverage' %}
                   {% endif %}
                   <td class="{{css_class}}">
                      {{ ('%3d' % percent).replace(' ', '&nbsp;') | safe }}%
@@ -244,10 +250,12 @@
                   {% endif %}
                   {% if percent >= 90 %}
                     {% set css_class = 'high-coverage' %}
-                  {% elif percent >= 75 %}
+                  {% elif percent >= 70 %}
                     {% set css_class = 'medium-coverage' %}
-                  {% else %}
+                  {% elif percent >= 50 %}
                     {% set css_class = 'low-coverage' %}
+                  {% else %}
+                    {% set css_class = 'poor-coverage' %}
                   {% endif %}
                   <td class="{{css_class}}">
                     {{ ('%3d' % percent).replace(' ', '&nbsp;') | safe }}%
