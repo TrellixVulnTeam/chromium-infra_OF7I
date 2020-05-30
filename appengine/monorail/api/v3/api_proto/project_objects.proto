@@ -124,7 +124,7 @@ message LabelDef {
 // Custom fields defined for the project.
 //
 // See monorail/doc/userguide/concepts.md#issue-fields-and-labels.
-// Next available tag: 10
+// Next available tag: 15
 message FieldDef {
   option (google.api.resource) = {
     type: "api.crbug.com/FieldDef"
@@ -141,14 +141,14 @@ message FieldDef {
   // Next available tag: 7
   enum Type {
     // Default enum value. This value is unused.
-    FIELD_DEF_TYPE_UNSPECIFIED = 0;
+    TYPE_UNSPECIFIED = 0;
     // This field can be filled only with enumerated option(s).
     ENUM = 1;
     // This field can be filled with integer(s).
     INT = 2;
     // This field can be filled with string(s).
     STR = 3;
-    // This field can be filled with users(s).
+    // This field can be filled with user(s).
     USER = 4;
     // This field can be filled with date(s).
     DATE = 5;
@@ -166,18 +166,23 @@ message FieldDef {
   ];
 
   // Traits of this field, ie is required or can support multiple values.
-  // Next available tag: 5
+  // Next available tag: 6
   enum Traits {
     // Default enum value. This value is unused.
-    TRAIT_UNSPECIFIED = 0;
-    // This field must be filled out.
+    TRAITS_UNSPECIFIED = 0;
+    // This field must be filled out in issues where it's applicable.
     REQUIRED = 1;
     // This field defaults to hidden.
     DEFAULT_HIDDEN = 2;
     // This field can have multiple values.
     MULTIVALUED = 3;
     // This is a phase field meaning it can only belong to gates.
+    // TODO(monorail:7799): Change PHASE to GATE considering that users are more
+    // familiar with that term.
     PHASE = 4;
+    // Values of this field can only be edited in issues/templates by editors.
+    // Project owners and field admins are not subject of this restriction.
+    RESTRICTED = 5;
   }
   repeated Traits traits = 7;
 
@@ -202,11 +207,80 @@ message FieldDef {
   }
   EnumTypeSettings enum_settings = 9;
 
-  // TODO(monorail:7594): Implement int min/max settings.
-  // TODO(monorail:7595): Implement str regex settings.
-  // TODO(monorail:7596): Implement user settings.
-  // TODO(monorail:7597): Implement date settings.
-  // TODO(monorail:4993): Implement is_restricted_field.
+  // Settings specific to int type fields.
+  // Next available tag: 3
+  message IntTypeSettings {
+    // Minimum value that this field can have.
+    int32 min_value = 1;
+    // Maximum value that this field can have.
+    int32 max_value = 2;
+  }
+  IntTypeSettings int_settings = 10;
+
+  // Settings specific to str type fields.
+  // Next available tag: 2
+  message StrTypeSettings {
+    // Regex that this field value(s) must match.
+    string regex = 1;
+  }
+  StrTypeSettings str_settings = 11;
+
+  // Settings specific to user type fields.
+  // Next available tag: 5
+  message UserTypeSettings {
+    // Event that triggers a notification.
+    // Next available tag: 3
+    enum NotifyTriggers {
+      // Default notify trigger value. This value is unused.
+      NOTIFY_TRIGGERS_UNSPECIFIED = 0;
+      // There are no notifications.
+      NEVER = 1;
+      // Notify whenever any comment is made.
+      ANY_COMMENT = 2;
+    }
+    NotifyTriggers notify_triggers = 1;
+    // Field value(s) can only be set to users that fulfill the role
+    // requirements.
+    // Next available tag: 3
+    enum RoleRequirements {
+      // Default role requirement value. This value is unused.
+      ROLE_REQUIREMENTS_UNSPECIFIED = 0;
+      // There is no requirement.
+      NO_ROLE_REQUIREMENT = 1;
+      // Field value(s) can only be set to users who are members.
+      PROJECT_MEMBER = 2;
+    }
+    RoleRequirements role_requirements = 2;
+    // User(s) named in this field are granted this permission in the issue.
+    string grants_perm = 3;
+    // Field value(s) can only be set to users with this permission.
+    string needs_perm = 4;
+  }
+  UserTypeSettings user_settings = 12;
+
+  // Settings specific to date type fields.
+  // Next available tag: 2
+  message DateTypeSettings {
+    // Action to do when a date field value arrives.
+    // Next available tag: 4
+    enum DateAction {
+      // Default date action value. This value is unused.
+      DATE_ACTION_UNSPECIFIED = 0;
+      // No action will be taken when a date arrives.
+      NO_ACTION = 1;
+      // Notify owner only when a date arrives.
+      NOTIFY_OWNER = 2;
+      // Notify all participants when a date arrives.
+      NOTIFY_PARTICIPANTS = 3;
+    }
+    DateAction date_action = 1;
+  }
+  DateTypeSettings date_settings = 13;
+
+  // Editors of this field, only for RESTRICTED fields.
+  repeated string editors = 14 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }
+  ];
 }
 
 // A high level definition of the part of the software affected by an issue.
