@@ -13,22 +13,68 @@ const ROTATIONS = {
   ],
   'chromeos': [
     {
+      name: 'Sheriff (West)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-sheriffs-west',
+    },
+    {
+      name: 'Sheriff (East)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-sheriffs-east',
+    },
+    {
+      name: 'CI Bobby',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-ci-eng',
+    },
+    {
+      name: 'Infra Deputy',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-test-infra',
+    },
+    {
+      name: 'Gardener',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-gardeners',
+    },
+    {
+      name: 'Shadow Gardener',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-shadow-gardeners',
+    },
+    {
+      name: 'ARC Constable (PST)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-arc-constable-pst',
+    },
+    {
+      name: 'ChromeOS Build Team',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-build-eng',
+    },
+    {
+      name: 'ChromeOS Toolchain Team',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-toolchain',
+    },
+    {
+      name: 'ARC Constable (non-PST)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-arc-constable-nonpst',
+    },
+    {
       name: 'Moblab Peeler',
-      url: 'https://rotation.googleplex.com/json?id=6383984776839168',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:chromeos-moblab-peeler',
     },
     {
       name: 'Jetstream Sheriff',
-      url: 'https://rotation.googleplex.com/json?id=5186988682510336',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:chromeos-jetstream-sheriff',
     },
     {
       name: 'Morning Planner',
-      url: 'https://rotation.googleplex.com/json?id=140009',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:chromeos-morning-planner',
     },
   ],
   'chromium': [
     {
       name: 'Chromium Sheriff',
       url: 'https://rota-ng.appspot.com/legacy/sheriff.json',
+    },
+  ],
+  'chrome_browser_release': [
+    {
+      name: 'Chrome Branch Sheriff',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-branch-sheriff',
     },
   ],
   'chromium.perf': [
@@ -40,15 +86,15 @@ const ROTATIONS = {
   'fuchsia': [
     {
       name: 'Fuchsia Build Cop',
-      url: 'https://oncall.corp.google.com/tq-buildcop/json',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:fuchsia-build-cop',
     },
     {
       name: 'Fuchsia Infra',
-      url: 'https://oncall.corp.google.com/fuchsia-infra/json',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:fuchsia-infra',
     },
     {
       name: 'Fuchsia E2E',
-      url: 'https://rotation.googleplex.com/json?id=5683269937922048',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:fuchsia-e2e',
     },
   ],
 };
@@ -124,14 +170,6 @@ class SomDrawer extends Polymer.Element {
     this.async(this._refreshAsync, drawerRefreshDelayMs);
   }
 
-  _isCros(tree) {
-    return tree && tree.name === 'chromeos';
-  }
-
-  _isBrowserBranch(tree) {
-    return tree && tree.name === 'chrome_browser_release';
-  }
-
   _treeChanged(tree) {
     if (!(tree && this._rotations[tree.name])) {
       this.set('_currentOncalls', []);
@@ -147,6 +185,7 @@ class SomDrawer extends Polymer.Element {
       });
       switch (rotation.url.split('/')[2]) {
         case 'rota-ng.appspot.com':
+        case 'chrome-ops-rotation-proxy.appspot.com':
           fetch(rotation.url, {
             method: 'GET',
           }).then(function(response) {
