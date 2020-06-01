@@ -79,6 +79,6 @@ luci.cq_tryjob_verifier(
     cq_group = 'recipes-py',
 )
 luci.cq_tryjob_verifier(
-    builder = 'infra-internal:try/release_scripts Roll Tester (recipe_engine)',
+    builder = 'infra-internal:try/chrome_release Roll Tester (recipe_engine)',
     cq_group = 'recipes-py',
 )

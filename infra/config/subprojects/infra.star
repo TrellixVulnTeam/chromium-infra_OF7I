@@ -164,6 +164,6 @@ luci.cq_tryjob_verifier(
 )
 
 luci.cq_tryjob_verifier(
-    builder = 'infra-internal:try/release_scripts Roll Tester (infra)',
+    builder = 'infra-internal:try/chrome_release Roll Tester (infra)',
     cq_group = 'infra',
 )

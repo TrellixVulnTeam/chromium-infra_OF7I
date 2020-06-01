@@ -78,7 +78,7 @@ luci.cq_tryjob_verifier(
     cq_group = 'depot_tools',
 )
 luci.cq_tryjob_verifier(
-    builder = 'infra-internal:try/release_scripts Roll Tester (depot_tools)',
+    builder = 'infra-internal:try/chrome_release Roll Tester (depot_tools)',
     cq_group = 'depot_tools',
 )
 
