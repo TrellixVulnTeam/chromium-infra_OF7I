@@ -46,11 +46,6 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
         value: false,
         computed: '_computeShowAlertView(_selectedPage)',
       },
-      _showRotationCalendar: {
-        type: Boolean,
-        value: false,
-        computed: '_computeShowRotationCalendar(_selectedPage)',
-      },
       _showTestExpectations: {
         type: Boolean,
         value: false,
@@ -88,10 +83,6 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
           'help-som': {
             pageId: 'helpSOM',
             displayText: 'Help',
-          },
-          'calendar': {
-            pageId: 'rotationCalendar',
-            displayText: 'Rotation Calendar',
           },
           'test-expectations': {
             pageId: 'testExpectations',
@@ -228,10 +219,6 @@ class SomApp extends Polymer.mixinBehaviors([TimeBehavior], Polymer.Element) {
 
   _computeShowAlertView(selectedPage) {
     return selectedPage == 'alertView';
-  }
-
-  _computeShowRotationCalendar(selectedPage) {
-    return selectedPage == 'rotationCalendar';
   }
 
   _computeShowTestExpectations(selectedPage) {

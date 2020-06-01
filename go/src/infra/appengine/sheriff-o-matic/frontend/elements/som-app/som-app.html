@@ -16,7 +16,6 @@
 <link rel="import" href="../../elements/som-test-expectations/som-test-expectations.html">
 
 <link rel="import" href="../../elements/pages/som-help.html">
-<link rel="import" href="../../elements/pages/som-rotation-calendar.html">
 
 <link rel="import" href="../../elements/tree-status/som-all-status/som-all-status.html">
 <link rel="import" href="../../elements/tree-status/som-tree-status-view/som-tree-status-view.html">
@@ -195,9 +194,6 @@
             collapse-by-default="[[collapseByDefault]]"></som-alert-view>
         </template>
         <som-help id="helpSOM" class="page-body page-body-padded"></som-help>
-        <template is="dom-if" if="[[_showRotationCalendar]]">
-          <som-rotation-calendar id="rotationCalendar" class="page-body page-body-padded"></som-rotation-calendar>
-        </template>
         <template is="dom-if" if="[[_showTestExpectations]]">
           <som-test-expectations class="page-body" id="testExpectations" edited-test-name="{{_editedTestName}}"></som-test-expectations>
         </template>
