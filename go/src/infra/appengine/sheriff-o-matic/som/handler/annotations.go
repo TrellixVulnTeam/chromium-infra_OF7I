@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"google.golang.org/appengine"
@@ -35,6 +36,8 @@ const (
 	annotationsCacheKey = "annotation-metadata"
 	// annotations will expire after this amount of time
 	annotationExpiration = time.Hour * 24 * 10
+	// maxMonorailQuerySize is the maximum number of bugs per monorail query.
+	maxMonorailQuerySize = 100
 )
 
 // AnnotationHandler handles annotation-related requests.
@@ -209,7 +212,6 @@ func (ah *AnnotationHandler) getAnnotationsMetaData(ctx *router.Context) (map[st
 			return nil, err
 		}
 	}
-
 	return val, nil
 }
 
@@ -235,16 +237,38 @@ func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 
 // Builds a map keyed by projectId (i.e "chromium", "fuchsia"), value contains
 // the monorail query string.
-func constructQueryFromBugList(bugs []model.MonorailBug) map[string]string {
-	queries := map[string]string{}
+// Monorail only returns a maximum of 100 bugs at a time, so we need to break queries into chunks.
+func constructQueryFromBugList(bugs []model.MonorailBug, chunkSize int) map[string][]string {
+	projectIDToBugIDMap := make(map[string][]string)
 	for _, bug := range bugs {
-		if val, ok := queries[bug.ProjectID]; ok {
-			queries[bug.ProjectID] = fmt.Sprintf("%s,%s", val, bug.BugID)
+		if bugList, ok := projectIDToBugIDMap[bug.ProjectID]; ok {
+			projectIDToBugIDMap[bug.ProjectID] = append(bugList, bug.BugID)
 		} else {
-			queries[bug.ProjectID] = fmt.Sprintf("id:%s", bug.BugID)
+			projectIDToBugIDMap[bug.ProjectID] = []string{bug.BugID}
+		}
+	}
+	queries := make(map[string][]string)
+	for projectID, bugIDs := range projectIDToBugIDMap {
+		queries[projectID] = []string{}
+		bugChunks := breakToChunks(bugIDs, chunkSize)
+		for _, chunk := range bugChunks {
+			str := "id:" + strings.Join(chunk, ",")
+			queries[projectID] = append(queries[projectID], str)
 		}
 	}
 	return queries
+}
+
+func breakToChunks(bugIDs []string, chunkSize int) [][]string {
+	var result [][]string
+	for i := 0; i < len(bugIDs); i += chunkSize {
+		end := i + chunkSize
+		if end > len(bugIDs) {
+			end = len(bugIDs)
+		}
+		result = append(result, bugIDs[i:end])
+	}
+	return result
 }
 
 func filterDuplicateBugs(bugs []model.MonorailBug) []model.MonorailBug {
@@ -280,17 +304,19 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 
 	allBugs = filterDuplicateBugs(allBugs)
 
-	queries := constructQueryFromBugList(allBugs)
+	queries := constructQueryFromBugList(allBugs, maxMonorailQuerySize)
 	m := make(map[string]monorail.Issue)
-	for project, query := range queries {
-		issues, err := ah.Bqh.getBugsFromMonorail(c, query, project, monorail.IssuesListRequest_ALL)
-		if err != nil {
-			logging.Errorf(c, "error getting bugs from monorail: %v", err)
-			return nil, err
-		}
-		for _, b := range issues.Items {
-			key := fmt.Sprintf("%d", b.Id)
-			m[key] = *b
+	for project, queriesForProj := range queries {
+		for _, query := range queriesForProj {
+			issues, err := ah.Bqh.getBugsFromMonorail(c, query, project, monorail.IssuesListRequest_ALL)
+			if err != nil {
+				logging.Errorf(c, "error getting bugs from monorail: %v", err)
+				return nil, err
+			}
+			for _, b := range issues.Items {
+				key := fmt.Sprintf("%d", b.Id)
+				m[key] = *b
+			}
 		}
 	}
 

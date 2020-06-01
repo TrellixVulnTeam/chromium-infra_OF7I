@@ -123,16 +123,41 @@ func TestConstructQueryFromBugList(t *testing.T) {
 			},
 		}
 
-		result := constructQueryFromBugList(bugs)
+		result := constructQueryFromBugList(bugs, 100)
 		So(
 			result,
 			ShouldResemble,
-			map[string]string{
-				"project_1": "id:bug_1,bug_3,bug_5",
-				"project_2": "id:bug_2",
-				"project_3": "id:bug_4",
+			map[string][]string{
+				"project_1": {"id:bug_1,bug_3,bug_5"},
+				"project_2": {"id:bug_2"},
+				"project_3": {"id:bug_4"},
 			},
 		)
+
+		result = constructQueryFromBugList(bugs, 2)
+		So(
+			result,
+			ShouldResemble,
+			map[string][]string{
+				"project_1": {"id:bug_1,bug_3", "id:bug_5"},
+				"project_2": {"id:bug_2"},
+				"project_3": {"id:bug_4"},
+			},
+		)
+	})
+}
+
+func TestBreakToChunk(t *testing.T) {
+	Convey("Test break bug ids to chunk", t, func() {
+		bugIDs := []string{"bug1", "bug2", "bug3", "bug4", "bug5"}
+		chunks := breakToChunks(bugIDs, 1)
+		So(chunks, ShouldResemble, [][]string{{"bug1"}, {"bug2"}, {"bug3"}, {"bug4"}, {"bug5"}})
+		chunks = breakToChunks(bugIDs, 3)
+		So(chunks, ShouldResemble, [][]string{{"bug1", "bug2", "bug3"}, {"bug4", "bug5"}})
+		chunks = breakToChunks(bugIDs, 5)
+		So(chunks, ShouldResemble, [][]string{{"bug1", "bug2", "bug3", "bug4", "bug5"}})
+		chunks = breakToChunks(bugIDs, 6)
+		So(chunks, ShouldResemble, [][]string{{"bug1", "bug2", "bug3", "bug4", "bug5"}})
 	})
 }
 
