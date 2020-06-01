@@ -368,8 +368,8 @@ func TestUpdateDeviceID(t *testing.T) {
 			// Verify that dev3 wasn't deleted
 			res := GetDevicesByIds(ctx, []string{dev3.Id.Value, dev5.Id.Value})
 			So(res, ShouldHaveLength, 2)
+			So(res[0].Err, ShouldEqual, datastore.ErrNoSuchEntity)
 			So(res[1].Err, ShouldNotBeNil)
-			So(res[0].Err, ShouldBeNil)
 		})
 		Convey("Update non-existent devices", func() {
 			err := UpdateDeviceID(ctx, "slartibartfast", dev6.Id.Value)
