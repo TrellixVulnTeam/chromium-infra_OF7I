@@ -605,6 +605,7 @@ SPECS.update({
         Universal('html5lib', '1.0.1'),
         Universal('idna', '2.5'),
         Universal('idna', '2.8'),
+        Universal('importlib-metadata', '1.6.0'),
         Universal('ipaddress', '1.0.18', pyversions=['py2']),
         Universal('iso8601', '0.1.12'),
         Universal('isort', '4.3.4'),

@@ -1853,6 +1853,20 @@ wheel: <
 
 * *universal*
 
+## **importlib-metadata**
+
+### 1.6.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/importlib-metadata-py2_py3"
+  version: "version:1.6.0"
+>
+```
+
+
+* *universal*
+
 ## **infra_libs-py2**
 
 ### 2.1.0
