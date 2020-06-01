@@ -707,6 +707,7 @@ SPECS.update({
         Universal('yapf', '0.24.0'),
         Universal('yapf', '0.27.0'),
         Universal('yapf', '0.30.0'),
+        Universal('zipp', '3.1.0', pyversions=['py3']),
     )
 })
 

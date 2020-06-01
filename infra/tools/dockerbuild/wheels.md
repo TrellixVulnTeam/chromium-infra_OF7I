@@ -4175,6 +4175,20 @@ wheel: <
 
 * *universal*
 
+## **zipp-py3**
+
+### 3.1.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/zipp-py3"
+  version: "version:3.1.0"
+>
+```
+
+
+* *universal*
+
 
 # Contact
 
