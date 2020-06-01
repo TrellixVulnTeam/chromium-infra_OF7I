@@ -233,3 +233,51 @@ func TestBatchGetRotations(t *testing.T) {
 		So(diff, ShouldEqual, "")
 	})
 }
+
+func TestGetCurrentOncallEmails(t *testing.T) {
+	ctx := gaetesting.TestingContext()
+	server := &RotationProxyServer{}
+	Convey("Test get current oncall emails", t, func() {
+		var rotation = &rpb.Rotation{
+			Name: "rotation",
+			Shifts: []*rpb.Shift{
+				{
+					Oncalls:   []*rpb.OncallPerson{person5},
+					StartTime: &timestamp.Timestamp{Seconds: 777, Nanos: 0},
+				},
+				{
+					Oncalls:   []*rpb.OncallPerson{person3, person4},
+					StartTime: &timestamp.Timestamp{Seconds: 333, Nanos: 0},
+					EndTime:   &timestamp.Timestamp{Seconds: 555, Nanos: 0},
+				},
+			},
+		}
+		updateRequest := &rpb.BatchUpdateRotationsRequest{
+			Requests: []*rpb.UpdateRotationRequest{
+				{Rotation: rotation},
+			},
+		}
+		_, err := server.BatchUpdateRotations(ctx, updateRequest)
+		datastore.GetTestable(ctx).CatchupIndexes()
+		So(err, ShouldBeNil)
+
+		ctx, _ = testclock.UseTime(ctx, time.Unix(444, 0))
+		emails, err := getCurrentOncallEmails(ctx, "rotation")
+		So(err, ShouldBeNil)
+		So(emails, ShouldResemble, []string{"person3@google.com", "person4@google.com"})
+
+		ctx, _ = testclock.UseTime(ctx, time.Unix(666, 0))
+		emails, err = getCurrentOncallEmails(ctx, "rotation")
+		So(err, ShouldBeNil)
+		So(emails, ShouldResemble, []string{})
+
+		ctx, _ = testclock.UseTime(ctx, time.Unix(888, 0))
+		emails, err = getCurrentOncallEmails(ctx, "rotation")
+		So(err, ShouldBeNil)
+		So(emails, ShouldResemble, []string{"person5@google.com"})
+
+		ctx, _ = testclock.UseTime(ctx, time.Unix(888, 0))
+		emails, err = getCurrentOncallEmails(ctx, "anotherrotation")
+		So(err, ShouldNotBeNil)
+	})
+}

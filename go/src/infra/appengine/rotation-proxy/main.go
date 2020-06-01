@@ -8,11 +8,13 @@ package main
 
 import (
 	"context"
+
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
+	"go.chromium.org/luci/server/router"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	rpb "infra/appengine/rotation-proxy/proto"
@@ -39,6 +41,12 @@ func main() {
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
+		// Install regular http service
+		srv.Routes.GET("/current/:name", router.MiddlewareChain{}, func(c *router.Context) {
+			GetCurrentShiftHandler(c)
+		})
+
+		// Install PRPC service
 		rpb.RegisterRotationProxyServiceServer(srv.PRPC, &rpb.DecoratedRotationProxyService{
 			Service: &RotationProxyServer{},
 			Prelude: checkAPIAccess,

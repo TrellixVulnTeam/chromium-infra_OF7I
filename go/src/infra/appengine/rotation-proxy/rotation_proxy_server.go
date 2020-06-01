@@ -6,6 +6,9 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"sort"
 	"time"
 
@@ -13,6 +16,8 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server/router"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	rpb "infra/appengine/rotation-proxy/proto"
@@ -29,15 +34,20 @@ type RotationProxyServer struct{}
 
 // GetRotation returns shift information for a single rotation.
 func (rps *RotationProxyServer) GetRotation(ctx context.Context, request *rpb.GetRotationRequest) (*rpb.Rotation, error) {
-	rotation := &Rotation{Name: request.Name}
+	rotation, err := getRotationByName(ctx, request.Name)
+	if err == datastore.ErrNoSuchEntity {
+		return nil, status.Errorf(codes.NotFound, "rotation %q not found: %v", request.Name, err)
+	}
+	return rotation, err
+}
+
+func getRotationByName(ctx context.Context, name string) (*rpb.Rotation, error) {
+	rotation := &Rotation{Name: name}
 
 	err := datastore.RunInTransaction(ctx, func(ctx context.Context) error {
 		return datastore.Get(ctx, rotation)
 	}, nil)
 	if err != nil {
-		if err == datastore.ErrNoSuchEntity {
-			return nil, status.Errorf(codes.NotFound, "rotation %q not found: %v", request.Name, err)
-		}
 		return nil, err
 	}
 
@@ -132,4 +142,68 @@ func processShiftsForRotation(ctx context.Context, rotation *rpb.Rotation) error
 		return rotation.Shifts[i].StartTime.Seconds < rotation.Shifts[j].StartTime.Seconds
 	})
 	return nil
+}
+
+func errStatus(c context.Context, w http.ResponseWriter, status int, msg string) {
+	logging.Errorf(c, "Status %d msg %s", status, msg)
+	w.WriteHeader(status)
+	w.Write([]byte(msg))
+}
+
+// GetCurrentShiftHandler handles API requests for current shift.
+// Note that this is a JSON endpoint (NOT pRPC) to handle HTTP requests.
+func GetCurrentShiftHandler(ctx *router.Context) {
+	c, w, p := ctx.Context, ctx.Writer, ctx.Params
+	rotationName := p.ByName("name")
+	emails, err := getCurrentOncallEmails(c, rotationName)
+	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			errStatus(c, w, http.StatusNotFound, err.Error())
+		} else {
+			errStatus(c, w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+	shift := make(map[string]interface{})
+	shift["updated_unix_timestamp"] = time.Now().Unix()
+	shift["emails"] = emails
+	data, err := json.Marshal(shift)
+	if err != nil {
+		errStatus(c, w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(data)
+}
+
+func getCurrentOncallEmails(c context.Context, rotationName string) ([]string, error) {
+	rotation, err := getRotationByName(c, rotationName)
+	if err != nil {
+		return nil, err
+	}
+	if len(rotation.Shifts) == 0 {
+		return nil, fmt.Errorf("cannot find shift for rotation %q", rotationName)
+	}
+	if shiftIsCurrent(c, rotation.Shifts[0]) {
+		ret := []string{}
+		for _, oncall := range rotation.Shifts[0].Oncalls {
+			ret = append(ret, oncall.Email)
+		}
+		return ret, nil
+	}
+	return []string{}, nil
+}
+
+func shiftIsCurrent(c context.Context, shift *rpb.Shift) bool {
+	now := clock.Now(c)
+	if startTime, err := ptypes.Timestamp(shift.StartTime); err != nil || startTime.After(now) {
+		return false
+	}
+	// There might be no end time, in which case this shift extends to
+	// infinity (so it should be treated as current).
+	if endTime, err := ptypes.Timestamp(shift.EndTime); err == nil && endTime.Before(now) {
+		return false
+	}
+	return true
 }
