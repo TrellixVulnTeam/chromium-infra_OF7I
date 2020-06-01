@@ -23,6 +23,7 @@ const (
 	fileFuchsiaSDKMac   = "build/fuchsia/mac.sdk.sha1"
 	fileGoMod           = "go.mod"
 	fileGoSum           = "go.sum"
+	filePerfetto        = "tools/perf/core/perfetto_binary_roller/binary_deps.json"
 	filePgoMac          = "chrome/build/mac.pgo.txt"
 	filePgoWin32        = "chrome/build/win32.pgo.txt"
 	filePgoWin64        = "chrome/build/win64.pgo.txt"

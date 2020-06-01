@@ -26,6 +26,7 @@ var RuleMap = map[string]*RefConfig{
 					fileFreeTypeOptionH,
 					fileFuchsiaSDKLinux,
 					fileFuchsiaSDKMac,
+					filePerfetto,
 					filePgoMac,
 					filePgoWin32,
 					filePgoWin64,
