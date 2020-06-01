@@ -19,7 +19,7 @@ const (
 	NilEntity                     string = "Invalid input - No Entity to add/update."
 	EmptyID                       string = "Invalid input - Entity ID is empty."
 	EmptyName                     string = "Invalid input - Entity Name is empty."
-	InvalidCharacters             string = "Invalid input - Entity ID must contain only 4-63 characters, ASCII letters, numbers, dash and underscore."
+	InvalidCharacters             string = "Invalid input - Entity ID must contain only 4-63 characters, ASCII letters, numbers and special characters -._:"
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
@@ -41,7 +41,7 @@ var (
 	invalidHostInMachineDBSourceStatus = status.New(codes.InvalidArgument, "Invalid argument - Host in MachineDB source is empty/invalid")
 )
 
-var idRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{4,63}$`)
+var idRegex = regexp.MustCompile(`^[a-zA-Z0-9-_:.]{4,63}$`)
 var chromePlatformRegex = regexp.MustCompile(`chromeplatforms\.*`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)
