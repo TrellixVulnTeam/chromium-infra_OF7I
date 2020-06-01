@@ -154,6 +154,8 @@ func errStatus(c context.Context, w http.ResponseWriter, status int, msg string)
 // Note that this is a JSON endpoint (NOT pRPC) to handle HTTP requests.
 func GetCurrentShiftHandler(ctx *router.Context) {
 	c, w, p := ctx.Context, ctx.Writer, ctx.Params
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	rotationName := p.ByName("name")
 	emails, err := getCurrentOncallEmails(c, rotationName)
 	if err != nil {
