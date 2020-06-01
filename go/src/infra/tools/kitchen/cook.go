@@ -980,7 +980,7 @@ func (c *cookRun) setResultDBContext(ctx context.Context) context.Context {
 			// Set resultdb parameters in the luci context.
 			return lucictx.SetResultDB(ctx, &lucictx.ResultDB{
 				Hostname: buildProto.GetInfra().GetResultdb().GetHostname(),
-				CurrentInvocation: lucictx.Invocation{
+				CurrentInvocation: &lucictx.ResultDBInvocation{
 					Name:        buildProto.GetInfra().GetResultdb().GetInvocation(),
 					UpdateToken: c.buildSecrets.ResultdbInvocationUpdateToken,
 				},
