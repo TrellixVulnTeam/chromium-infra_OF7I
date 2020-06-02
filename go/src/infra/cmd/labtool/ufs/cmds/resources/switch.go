@@ -40,6 +40,8 @@ func (c switchesApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		s.AddSwitchCmd,
 		s.UpdateSwitchCmd,
+		s.GetSwitchCmd,
+		s.DeleteSwitchCmd,
 	}
 }
 
