@@ -7,6 +7,7 @@ package resources
 import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
+	s "infra/cmd/labtool/ufs/subcmds/registration/switches"
 )
 
 type switches struct {
@@ -36,7 +37,10 @@ func (c *switches) Run(a subcommands.Application, args []string, env subcommands
 
 // GetCommands lists all the subcommands under switch
 func (c switchesApp) GetCommands() []*subcommands.Command {
-	return []*subcommands.Command{}
+	return []*subcommands.Command{
+		s.AddSwitchCmd,
+		s.UpdateSwitchCmd,
+	}
 }
 
 // GetName is cli.Application interface implementation
