@@ -60,7 +60,7 @@ func CreateResetTask(ctx context.Context, botID string) (string, error) {
 
 // CreateAuditTask kicks off an audit job.
 func CreateAuditTask(ctx context.Context, botID string) (string, error) {
-	actions := "verify-dut-storage,verify-servo-usb-drive"
+	actions := "verify-dut-storage,verify-servo-usb-drive,verify-servo-fw"
 	at := worker.AuditTaskWithActions(ctx, actions)
 	sc, err := clients.NewSwarmingClient(ctx, config.Get(ctx).Swarming.Host)
 	if err != nil {
