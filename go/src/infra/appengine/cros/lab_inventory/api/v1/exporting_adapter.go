@@ -28,6 +28,7 @@ var (
 
 var arcBoardMap = map[string]bool{
 	"asuka":                   true,
+	"asurada":                 true,
 	"atlas":                   true,
 	"auron_paine":             true,
 	"auron_yuna":              true,
@@ -40,6 +41,8 @@ var arcBoardMap = map[string]bool{
 	"chell":                   true,
 	"coral":                   true,
 	"cyan":                    true,
+	"dedede":                  true,
+	"drallion":                true,
 	"edgar":                   true,
 	"elm":                     true,
 	"eve":                     true,
@@ -60,6 +63,7 @@ var arcBoardMap = map[string]bool{
 	"nautilus":                true,
 	"nocturne":                true,
 	"octopus":                 true,
+	"puff":                    true,
 	"pyro":                    true,
 	"rammus":                  true,
 	"reef":                    true,
@@ -77,6 +81,7 @@ var arcBoardMap = map[string]bool{
 	"squawks":                 true,
 	"sumo":                    true,
 	"terra":                   true,
+	"trogdor":                 true,
 	"ultima":                  true,
 	"veyron_fievel":           true,
 	"veyron_jaq":              true,
@@ -86,7 +91,9 @@ var arcBoardMap = map[string]bool{
 	"veyron_minnie":           true,
 	"veyron_speedy":           true,
 	"veyron_tiger":            true,
+	"volteer":                 true,
 	"wizpig":                  true,
+	"zork":                    true,
 }
 
 var appMap = map[string]bool{

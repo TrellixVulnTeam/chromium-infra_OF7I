@@ -4,6 +4,10 @@
         "arc": "True"
     },
     {
+        "board": "asuruda",
+        "arc": "True"
+    },
+    {
         "board": "atlas",
         "arc": "True"
     },
@@ -49,6 +53,14 @@
     },
     {
         "board": "cyan",
+        "arc": "True"
+    },
+    {
+        "board": "dedede",
+        "arc": "True"
+    },
+    {
+        "board": "drallion",
         "arc": "True"
     },
     {
@@ -132,6 +144,10 @@
         "arc": "True"
     },
     {
+        "board": "puff",
+        "arc": "True"
+    },
+    {
         "board": "pyro",
         "arc": "True"
     },
@@ -200,6 +216,10 @@
         "arc": "True"
     },
     {
+        "board": "trogdor",
+        "arc": "True"
+    },
+    {
         "board": "ultima",
         "arc": "True"
     },
@@ -236,7 +256,15 @@
         "arc": "True"
     },
     {
+        "board": "volteer",
+        "arc": "True"
+    },
+    {
         "board": "wizpig",
+        "arc": "True"
+    },
+    {
+        "board": "zork",
         "arc": "True"
     }
 ]
