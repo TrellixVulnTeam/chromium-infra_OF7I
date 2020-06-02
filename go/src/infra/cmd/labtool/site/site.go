@@ -19,17 +19,21 @@ import (
 
 // Environment contains environment specific values.
 type Environment struct {
-	InventoryService string
+	InventoryService    string
+	UnifiedFleetService string
 }
 
 // Prod is the environment for prod.
 var Prod = Environment{
 	InventoryService: "cros-lab-inventory.appspot.com",
+	//TODO(eshwarn) : Change it to prod during release
+	UnifiedFleetService: "unified-fleet-system-dev.appspot.com",
 }
 
 // Dev is the environment for dev.
 var Dev = Environment{
-	InventoryService: "cros-lab-inventory-dev.appspot.com",
+	InventoryService:    "cros-lab-inventory-dev.appspot.com",
+	UnifiedFleetService: "unified-fleet-system-dev.appspot.com",
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.
