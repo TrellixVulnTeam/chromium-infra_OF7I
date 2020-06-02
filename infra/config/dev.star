@@ -13,7 +13,7 @@ load('//lib/build.star', 'build')
 load('//lib/infra.star', 'infra')
 
 # Enable luci.tree_closer.
-lucicfg.enable_experiment("crbug.com/1054172")
+lucicfg.enable_experiment('crbug.com/1054172')
 
 
 lucicfg.config(
@@ -173,9 +173,9 @@ adhoc_builder(
     name = 'build-proto-experiment-linux',
     os = 'Ubuntu',
     executable = luci.recipe(
-      name = 'futures:examples/background_helper',
-      cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py',
-      use_bbagent = True,
+        name = 'futures:examples/background_helper',
+        cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py',
+        use_bbagent = True,
     ),
     schedule = 'with 10m interval',
 )
@@ -183,9 +183,9 @@ adhoc_builder(
     name = 'build-proto-experiment-win',
     os = 'Windows-10',
     executable = luci.recipe(
-      name = 'futures:examples/background_helper',
-      cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py',
-      use_bbagent = True,
+        name = 'futures:examples/background_helper',
+        cipd_package = 'infra/recipe_bundles/chromium.googlesource.com/infra/luci/recipes-py',
+        use_bbagent = True,
     ),
     schedule = 'with 10m interval',
 )
