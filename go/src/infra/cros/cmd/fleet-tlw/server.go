@@ -10,6 +10,8 @@ import (
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type server struct {
@@ -23,5 +25,15 @@ func (s server) Serve(l net.Listener) error {
 }
 
 func (s server) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*tls.OpenDutPortResponse, error) {
-	panic("not implemented")
+	addrs, err := net.LookupHost(req.GetName())
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, err.Error())
+	}
+	if len(addrs) == 0 {
+		return nil, status.Errorf(codes.NotFound, "no IP addresses found for DUT")
+	}
+	return &tls.OpenDutPortResponse{
+		Address: addrs[0],
+		Port:    req.GetPort(),
+	}, nil
 }

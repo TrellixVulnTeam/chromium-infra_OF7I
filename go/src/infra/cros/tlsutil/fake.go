@@ -34,6 +34,8 @@ type WiringFake struct {
 	tls.UnimplementedWiringServer
 	// DUTAddress is a static string to return for OpenDutPort.
 	DUTAddress string
+	// DUTPort is a static int to return for OpenDutPort.
+	DUTPort int32
 }
 
 // Serve serves the service using the listener.
@@ -46,9 +48,8 @@ func (s WiringFake) Serve(l net.Listener) error {
 // OpenDutPort implements the respective gRPC.
 func (s WiringFake) OpenDutPort(ctx context.Context, req *tls.OpenDutPortRequest) (*tls.OpenDutPortResponse, error) {
 	return &tls.OpenDutPortResponse{
-		// TODO(ayatane): Temporarily commenting due to proto change.
-		// Status:  tls.OpenDutPortResponse_STATUS_OK,
 		Address: s.DUTAddress,
+		Port:    s.DUTPort,
 	}, nil
 }
 
