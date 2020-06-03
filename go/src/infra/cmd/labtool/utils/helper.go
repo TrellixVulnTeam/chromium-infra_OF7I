@@ -20,12 +20,6 @@ import (
 	ufs "infra/libs/fleet/protos/go"
 )
 
-// TimeFormat for all timestamps handled by labtools
-var timeFormat = "2006-01-02-15:04:05"
-
-// The tab writer which defines the write format
-var tw = tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
-
 // The formatter for log and result file names
 var logFileExp = regexp.MustCompile(`[\d]{4}(-[\d]{1,2}){3}(:[\d]{1,2}){2}-log$`)
 var resFileExp = regexp.MustCompile(`[\d]{4}(-[\d]{1,2}){3}(:[\d]{1,2}){2}-res$`)

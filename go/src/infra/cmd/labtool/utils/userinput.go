@@ -113,3 +113,23 @@ func ParseJSONFile(jsonFile string, pm proto.Message) error {
 	err = jsonpb.Unmarshal(strings.NewReader(string(rawText)), pm)
 	return err
 }
+
+// GetNextPage gets user input for to get next page of items
+func GetNextPage(pageToken string) (bool, error) {
+	if pageToken == "" {
+		fmt.Println("End of list.")
+		return false, nil
+	}
+	fmt.Println("Press Enter to get next page of items.")
+	b := bufio.NewReaderSize(os.Stdin, 1)
+	input, err := b.ReadByte()
+	if err != nil {
+		return false, errors.Annotate(err, "Error in getting input").Err()
+	}
+	// Ctrl-C
+	if input == 3 {
+		fmt.Println("Exiting...")
+		return false, nil
+	}
+	return true, nil
+}

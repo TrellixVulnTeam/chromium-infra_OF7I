@@ -41,6 +41,7 @@ func (c switchesApp) GetCommands() []*subcommands.Command {
 		s.AddSwitchCmd,
 		s.UpdateSwitchCmd,
 		s.GetSwitchCmd,
+		s.ListSwitchCmd,
 		s.DeleteSwitchCmd,
 	}
 }
