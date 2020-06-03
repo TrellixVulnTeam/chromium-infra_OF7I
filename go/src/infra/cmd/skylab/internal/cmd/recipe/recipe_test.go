@@ -99,14 +99,27 @@ func TestSchedulingParam(t *testing.T) {
 			name                  string
 			inputPool             string
 			inputAccount          string
+			inputPriority         int64
 			expectedAccount       string
 			expectedManagedPool   test_platform.Request_Params_Scheduling_ManagedPool
 			expectedUnmanagedPool string
+			expectedPriority      int64
 		}{
 			{
-				name:            "quota account",
-				inputAccount:    "foo account",
-				expectedAccount: "foo account",
+				name:                  "unmanaged pool with Quota Account",
+				inputAccount:          "foo account",
+				inputPriority:         142,
+				inputPool:             "foo-pool",
+				expectedAccount:       "foo account",
+				expectedPriority:      0,
+				expectedUnmanagedPool: "foo-pool",
+			},
+			{
+				name:                  "unmanaged pool without Quota Account",
+				inputPriority:         142,
+				inputPool:             "foo-pool",
+				expectedPriority:      142,
+				expectedUnmanagedPool: "foo-pool",
 			},
 			{
 				name:                "long-named managed pool",
@@ -124,19 +137,22 @@ func TestSchedulingParam(t *testing.T) {
 				expectedManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_CQ,
 			},
 			{
-				name:                  "unmanaged pool",
-				inputPool:             "foo-pool",
-				expectedUnmanagedPool: "foo-pool",
+				// CTS is a managed pool but not enabled Quota Scheduler.
+				name:                "CTS pool with priority",
+				inputPool:           "cts",
+				inputPriority:       142,
+				expectedManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_CTS,
+				expectedPriority:    142,
 			},
 		}
 		for _, c := range cases {
 			Convey(c.name, func() {
-				s := toScheduling(c.inputPool, c.inputAccount, 42)
+				s := toScheduling(c.inputPool, c.inputAccount, c.inputPriority)
 				Convey("then scheduling parameters are correct.", func() {
 					So(s.GetManagedPool(), ShouldResemble, c.expectedManagedPool)
-					So(s.GetQuotaAccount(), ShouldResemble, c.expectedAccount)
 					So(s.GetUnmanagedPool(), ShouldResemble, c.expectedUnmanagedPool)
-					So(s.Priority, ShouldEqual, 42)
+					So(s.Priority, ShouldEqual, c.expectedPriority)
+					So(s.QsAccount, ShouldEqual, c.expectedAccount)
 				})
 			})
 		}

@@ -123,7 +123,6 @@ func (c *createRunCommon) RecipeArgs(tags []string) (recipe.Args, error) {
 
 func (c *createRunCommon) BuildTags() []string {
 	ts := c.tags
-	ts = append(ts, fmt.Sprintf("priority:%d", c.priority))
 	if c.image != "" {
 		ts = append(ts, fmt.Sprintf("build:%s", c.image))
 	}
@@ -135,6 +134,14 @@ func (c *createRunCommon) BuildTags() []string {
 	}
 	if c.pool != "" {
 		ts = append(ts, fmt.Sprintf("label-pool:%s", c.pool))
+	}
+	// Only surface the priority if Quota Account was unset. Note,
+	// tags attached here will NOT be processed by CTP. The "real"
+	// Quota Account or Priority is set in dimension.
+	if c.qsAccount != "" {
+		ts = append(ts, fmt.Sprintf("quota_account:%s", c.qsAccount))
+	} else {
+		ts = append(ts, fmt.Sprintf("priority:%d", c.priority))
 	}
 	return ts
 }

@@ -160,19 +160,21 @@ func (a *Args) TestPlatformRequest() (*test_platform.Request, error) {
 }
 
 func toScheduling(pool string, quotaAccount string, priority int64) *test_platform.Request_Params_Scheduling {
-	s := test_platform.Request_Params_Scheduling{Priority: priority}
-	switch {
-	case quotaAccount != "":
-		s.Pool = &test_platform.Request_Params_Scheduling_QuotaAccount{QuotaAccount: quotaAccount}
-	default:
-		managedPool, isManaged := managedPool(pool)
-		switch isManaged {
-		case true:
-			s.Pool = &test_platform.Request_Params_Scheduling_ManagedPool_{ManagedPool: managedPool}
-		case false:
-			s.Pool = &test_platform.Request_Params_Scheduling_UnmanagedPool{UnmanagedPool: pool}
-		}
+	s := test_platform.Request_Params_Scheduling{}
+	managedPool, isManaged := managedPool(pool)
+	switch isManaged {
+	case true:
+		s.Pool = &test_platform.Request_Params_Scheduling_ManagedPool_{ManagedPool: managedPool}
+	case false:
+		s.Pool = &test_platform.Request_Params_Scheduling_UnmanagedPool{UnmanagedPool: pool}
 	}
+	if quotaAccount != "" {
+		s.QsAccount = quotaAccount
+		return &s
+	}
+	// Priority and Quota Account can not co-exist in a CTP request. Only attach priority
+	// if no Quota Account specified.
+	s.Priority = priority
 	return &s
 }
 
