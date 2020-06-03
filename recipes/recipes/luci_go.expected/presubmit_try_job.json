@@ -169,9 +169,6 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
-    "env": {
-      "GOCACHE": "[CACHE]/builder/go_cache"
-    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -220,7 +217,6 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOCACHE": "[CACHE]/builder/go_cache",
       "PRESUBMIT_BUILDER": "1"
     },
     "name": "presubmit"
