@@ -12,8 +12,12 @@ This is also enforced by PRESUBMIT.py script.
 load('//lib/build.star', 'build')
 load('//lib/infra.star', 'infra')
 
+lucicfg.check_version('1.14.5', 'Please update depot_tools')
+
 # Enable luci.tree_closer.
 lucicfg.enable_experiment('crbug.com/1054172')
+# Enable LUCI Realms support.
+lucicfg.enable_experiment('crbug.com/1085650')
 
 
 lucicfg.config(
@@ -24,6 +28,7 @@ lucicfg.config(
         'luci-notify-dev.cfg',
         'luci-notify-dev/email-templates/*',
         'luci-scheduler-dev.cfg',
+        'realms-dev.cfg',
         'tricium-dev.cfg',
     ],
     fail_on_warnings = True,
@@ -39,6 +44,7 @@ lucicfg.emit(
 
 luci.project(
     name = 'infra',
+    dev = True,
 
     buildbucket = 'cr-buildbucket-dev.appspot.com',
     logdog = 'luci-logdog-dev.appspot.com',
@@ -68,6 +74,31 @@ luci.project(
 )
 
 luci.logdog(gs_bucket = 'chromium-luci-logdog')
+
+
+# ACLs for the Swarming pool used by builders in this config. See pools.cfg in
+# chromium-swarm-dev where 'chromium.tests' pool is associated with
+# 'infra:pool/chromium.tests' realm.
+#
+# These ACLs are here only temporarily to simplify working on Realms roll out.
+# Eventually they'll be moved to chromium/src.
+luci.realm(
+    name = 'pool/chromium.tests',
+    bindings = [
+        luci.binding(
+            roles = 'role/swarming.poolUser',
+            groups = [
+                'chromium-swarm-dev-users',
+                'chromium-swarm-dev-privileged-users',
+            ],
+            projects = [
+                'chromium',
+                'infra-experimental',
+            ],
+        ),
+    ],
+)
+
 
 luci.bucket(name = 'ci')
 
