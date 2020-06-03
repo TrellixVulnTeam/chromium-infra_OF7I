@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import logging
 import unittest
 
 from mock import patch
@@ -65,12 +66,14 @@ class ConverterFunctionsTest(unittest.TestCase):
         admin_ids=[self.user_1.user_id],
         is_required=True,
         is_multivalued=True,
-        is_phase_field=True)
+        is_phase_field=True,
+        regex='abc')
     self.field_def_2_name = 'test_field_2'
     self.field_def_2 = self._CreateFieldDef(
         self.project_1.project_id,
         self.field_def_2_name,
         'INT_TYPE',
+        max_value=37,
         is_niche=True)
     self.field_def_3_name = 'days'
     self.field_def_3 = self._CreateFieldDef(
@@ -81,6 +84,27 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.field_def_5_name = 'yellow'
     self.field_def_5 = self._CreateFieldDef(
         self.project_1.project_id, self.field_def_5_name, 'ENUM_TYPE')
+    self.field_def_7_name = 'redredred'
+    self.field_def_7 = self._CreateFieldDef(
+        self.project_1.project_id,
+        self.field_def_7_name,
+        'ENUM_TYPE',
+        is_restricted_field=True,
+        editor_ids=[self.user_1.user_id])
+    self.field_def_8_name = 'dogandcat'
+    self.field_def_8 = self._CreateFieldDef(
+        self.project_1.project_id,
+        self.field_def_8_name,
+        'USER_TYPE',
+        needs_member=True,
+        needs_perm='EDIT_PROJECT',
+        notify_on=tracker_pb2.NotifyTriggers.ANY_COMMENT)
+    self.field_def_9_name = 'catanddog'
+    self.field_def_9 = self._CreateFieldDef(
+        self.project_1.project_id,
+        self.field_def_8_name,
+        'DATE_TYPE',
+        date_action_str='ping_owner_only')
     self.field_def_project2_name = 'lorem'
     self.field_def_project2 = self._CreateFieldDef(
         self.project_2.project_id, self.field_def_project2_name, 'ENUM_TYPE')
@@ -287,15 +311,27 @@ class ConverterFunctionsTest(unittest.TestCase):
       field_name,
       field_type_str,
       docstring=None,
+      min_value=None,
+      max_value=None,
+      regex=None,
+      needs_member=None,
+      needs_perm=None,
+      grants_perm=None,
+      notify_on=None,
+      date_action_str=None,
       admin_ids=None,
+      editor_ids=None,
       is_required=False,
       is_niche=False,
       is_multivalued=False,
       is_phase_field=False,
-      approval_id=None):
+      approval_id=None,
+      is_restricted_field=False):
     """Calls CreateFieldDef with reasonable defaults, returns the ID."""
     if admin_ids is None:
       admin_ids = []
+    if editor_ids is None:
+      editor_ids = []
     return self.services.config.CreateFieldDef(
         self.cnxn,
         project_id,
@@ -306,18 +342,20 @@ class ConverterFunctionsTest(unittest.TestCase):
         is_required,
         is_niche,
         is_multivalued,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+        min_value,
+        max_value,
+        regex,
+        needs_member,
+        needs_perm,
+        grants_perm,
+        notify_on,
+        date_action_str,
         docstring,
-        admin_ids, [],
+        admin_ids,
+        editor_ids,
         is_phase_field=is_phase_field,
-        approval_id=approval_id)
+        approval_id=approval_id,
+        is_restricted_field=is_restricted_field)
 
   def _GetFieldDefById(self, project_id, fd_id):
     config = self.services.config.GetProjectConfig(self.cnxn, project_id)
@@ -1440,6 +1478,51 @@ class ConverterFunctionsTest(unittest.TestCase):
         expected_project_member,
         self.converter.CreateProjectMember(self.cnxn, 789, 111, 'OWNER'))
 
+  def test_ConvertDateAction(self):
+    """We can convert from protorpc to protoc FieldDef.DateAction"""
+    date_type_settings = project_objects_pb2.FieldDef.DateTypeSettings
+
+    input_type = tracker_pb2.DateAction.NO_ACTION
+    actual = self.converter._ConvertDateAction(input_type)
+    expected = date_type_settings.DateAction.Value('NO_ACTION')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.DateAction.PING_OWNER_ONLY
+    actual = self.converter._ConvertDateAction(input_type)
+    expected = date_type_settings.DateAction.Value('NOTIFY_OWNER')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.DateAction.PING_PARTICIPANTS
+    actual = self.converter._ConvertDateAction(input_type)
+    expected = date_type_settings.DateAction.Value('NOTIFY_PARTICIPANTS')
+    self.assertEqual(expected, actual)
+
+  def test_ConvertRoleRequirements(self):
+    """We can convert from protorpc to protoc FieldDef.RoleRequirements"""
+    user_type_settings = project_objects_pb2.FieldDef.UserTypeSettings
+
+    actual = self.converter._ConvertRoleRequirements(False)
+    expected = user_type_settings.RoleRequirements.Value('NO_ROLE_REQUIREMENT')
+    self.assertEqual(expected, actual)
+
+    actual = self.converter._ConvertRoleRequirements(True)
+    expected = user_type_settings.RoleRequirements.Value('PROJECT_MEMBER')
+    self.assertEqual(expected, actual)
+
+  def test_ConvertNotifyTriggers(self):
+    """We can convert from protorpc to protoc FieldDef.NotifyTriggers"""
+    user_type_settings = project_objects_pb2.FieldDef.UserTypeSettings
+
+    input_type = tracker_pb2.NotifyTriggers.NEVER
+    actual = self.converter._ConvertNotifyTriggers(input_type)
+    expected = user_type_settings.NotifyTriggers.Value('NEVER')
+    self.assertEqual(expected, actual)
+
+    input_type = tracker_pb2.NotifyTriggers.ANY_COMMENT
+    actual = self.converter._ConvertNotifyTriggers(input_type)
+    expected = user_type_settings.NotifyTriggers.Value('ANY_COMMENT')
+    self.assertEqual(expected, actual)
+
   def test_ConvertFieldDefType(self):
     """We can convert from protorpc FieldType to protoc FieldDef.Type"""
     input_type = tracker_pb2.FieldTypes.ENUM_TYPE
@@ -1510,8 +1593,9 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         project_objects_pb2.FieldDef.Type.Value('INT'), output[1].type)
     self.assertEqual('', output[1].applicable_issue_type)
-    fd1_admins = [rnc.ConvertUserName(self.user_1.user_id)]
-    self.assertEqual(fd1_admins, output[0].admins)
+    fd1_admin_editor = [rnc.ConvertUserName(self.user_1.user_id)]
+    self.assertEqual(fd1_admin_editor, output[0].admins)
+    self.assertEqual(fd1_admin_editor, output[5].editors)
 
   def testConvertFieldDefs_Traits(self):
     """We can convert FieldDefs with traits"""
@@ -1567,17 +1651,70 @@ class ConverterFunctionsTest(unittest.TestCase):
         ])
     self.assertEqual(expected_settings, output[0].enum_settings)
 
+  def testConvertFieldDefs_IntTypeSettings(self):
+    """We can convert int FieldDef and its settings"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_2)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+
+    expected_settings = project_objects_pb2.FieldDef.IntTypeSettings(
+        max_value=37)
+    self.assertEqual(expected_settings, output[0].int_settings)
+
+  def testConvertFieldDefs_StrTypeSettings(self):
+    """We can convert str FieldDef and its settings"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_1)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+
+    expected_settings = project_objects_pb2.FieldDef.StrTypeSettings(
+        regex='abc')
+    self.assertEqual(expected_settings, output[0].str_settings)
+
+  def testConvertFieldDefs_UserTypeSettings(self):
+    """We can convert user FieldDef and its settings"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_8)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+
+    user_settings = project_objects_pb2.FieldDef.UserTypeSettings
+    expected_settings = project_objects_pb2.FieldDef.UserTypeSettings(
+        role_requirements=user_settings.RoleRequirements.Value(
+            'PROJECT_MEMBER'),
+        needs_perm='EDIT_PROJECT',
+        notify_triggers=user_settings.NotifyTriggers.Value('ANY_COMMENT'))
+    self.assertEqual(expected_settings, output[0].user_settings)
+
+  def testConvertFieldDefs_DateTypeSettings(self):
+    """We can convert user FieldDef and its settings"""
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_9)
+    output = self.converter.ConvertFieldDefs(
+        [input_fd], self.project_1.project_id)
+    self.assertEqual(1, len(output))
+
+    date_settings = project_objects_pb2.FieldDef.DateTypeSettings
+    expected_settings = project_objects_pb2.FieldDef.DateTypeSettings(
+        date_action=date_settings.DateAction.Value('NOTIFY_OWNER'))
+    self.assertEqual(expected_settings, output[0].date_settings)
+
   def testConvertFieldDefs_SkipsApprovals(self):
     """We skip over approval defs"""
     project_config = self.services.config.GetProjectConfig(
         self.cnxn, self.project_1.project_id)
     input_fds = project_config.field_defs
-    self.assertEqual(7, len(input_fds))
+    self.assertEqual(10, len(input_fds))
     # project_1 is set up to have 6 non-approval fields and 1 approval field
     # assert we skip approval fields
     output = self.converter.ConvertFieldDefs(
         input_fds, self.project_1.project_id)
-    self.assertEqual(6, len(output))
+    self.assertEqual(9, len(output))
 
   def testConvertFieldDefs_NonexistentID(self):
     """We skip over any field defs whose ID does not exist."""
@@ -1612,6 +1749,12 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.project_1.project_id, self.field_def_2)
     actual = self.converter._ComputeFieldDefTraits(input_fd)
     expected = [project_objects_pb2.FieldDef.Traits.Value('DEFAULT_HIDDEN')]
+    self.assertEqual(expected, actual)
+
+    input_fd = self._GetFieldDefById(
+        self.project_1.project_id, self.field_def_7)
+    actual = self.converter._ComputeFieldDefTraits(input_fd)
+    expected = [project_objects_pb2.FieldDef.Traits.Value('RESTRICTED')]
     self.assertEqual(expected, actual)
 
   def test_ComputeFieldDefTraits_Empty(self):

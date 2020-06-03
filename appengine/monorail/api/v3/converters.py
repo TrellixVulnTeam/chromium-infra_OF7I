@@ -541,12 +541,37 @@ class Converter(object):
       field_type = self._ConvertFieldDefType(fd.field_type)
       applicable_issue_type = fd.applicable_type
       admins = rnc.ConvertUserNames(fd.admin_ids).values()
+      editors = rnc.ConvertUserNames(fd.editor_ids).values()
       traits = self._ComputeFieldDefTraits(fd)
       approval_parent = approval_names_dict.get(fd.approval_id)
+
       enum_settings = None
       if field_type == project_objects_pb2.FieldDef.Type.Value('ENUM'):
         enum_settings = project_objects_pb2.FieldDef.EnumTypeSettings(
             choices=self._GetEnumFieldChoices(fd))
+
+      int_settings = None
+      if field_type == project_objects_pb2.FieldDef.Type.Value('INT'):
+        int_settings = project_objects_pb2.FieldDef.IntTypeSettings(
+            min_value=fd.min_value, max_value=fd.max_value)
+
+      str_settings = None
+      if field_type == project_objects_pb2.FieldDef.Type.Value('STR'):
+        str_settings = project_objects_pb2.FieldDef.StrTypeSettings(
+            regex=fd.regex)
+
+      user_settings = None
+      if field_type == project_objects_pb2.FieldDef.Type.Value('USER'):
+        user_settings = project_objects_pb2.FieldDef.UserTypeSettings(
+            role_requirements=self._ConvertRoleRequirements(fd.needs_member),
+            notify_triggers=self._ConvertNotifyTriggers(fd.notify_on),
+            grants_perm=fd.grants_perm,
+            needs_perm=fd.needs_perm)
+
+      date_settings = None
+      if field_type == project_objects_pb2.FieldDef.Type.Value('DATE'):
+        date_settings = project_objects_pb2.FieldDef.DateTypeSettings(
+            date_action=self._ConvertDateAction(fd.date_action))
 
       api_fd = project_objects_pb2.FieldDef(
           name=name,
@@ -557,9 +582,58 @@ class Converter(object):
           admins=admins,
           traits=traits,
           approval_parent=approval_parent,
-          enum_settings=enum_settings)
+          enum_settings=enum_settings,
+          int_settings=int_settings,
+          str_settings=str_settings,
+          user_settings=user_settings,
+          date_settings=date_settings,
+          editors=editors)
       api_fds.append(api_fd)
     return api_fds
+
+  def _ConvertDateAction(self, date_action):
+    # type: (proto.tracker_pb2.DateAction) ->
+    #     api_proto.project_objects_pb2.FieldDef.DateTypeSettings.DateAction
+    """Convert protorpc DateAction to protoc
+       FieldDef.DateTypeSettings.DateAction"""
+    if date_action == tracker_pb2.DateAction.NO_ACTION:
+      return project_objects_pb2.FieldDef.DateTypeSettings.DateAction.Value(
+          'NO_ACTION')
+    elif date_action == tracker_pb2.DateAction.PING_OWNER_ONLY:
+      return project_objects_pb2.FieldDef.DateTypeSettings.DateAction.Value(
+          'NOTIFY_OWNER')
+    elif date_action == tracker_pb2.DateAction.PING_PARTICIPANTS:
+      return project_objects_pb2.FieldDef.DateTypeSettings.DateAction.Value(
+          'NOTIFY_PARTICIPANTS')
+    else:
+      raise ValueError('Unsupported DateAction Value')
+
+  def _ConvertRoleRequirements(self, needs_member):
+    # type: (bool) ->
+    #     api_proto.project_objects_pb2.FieldDef.
+    #     UserTypeSettings.RoleRequirements
+    """Convert protorpc RoleRequirements to protoc
+       FieldDef.UserTypeSettings.RoleRequirements"""
+
+    proto_user_settings = project_objects_pb2.FieldDef.UserTypeSettings
+    if needs_member:
+      return proto_user_settings.RoleRequirements.Value('PROJECT_MEMBER')
+    else:
+      return proto_user_settings.RoleRequirements.Value('NO_ROLE_REQUIREMENT')
+
+  def _ConvertNotifyTriggers(self, notify_trigger):
+    # type: (proto.tracker_pb2.NotifyTriggers) ->
+    #     api_proto.project_objects_pb2.FieldDef.UserTypeSettings.NotifyTriggers
+    """Convert protorpc NotifyTriggers to protoc
+       FieldDef.UserTypeSettings.NotifyTriggers"""
+    if notify_trigger == tracker_pb2.NotifyTriggers.NEVER:
+      return project_objects_pb2.FieldDef.UserTypeSettings.NotifyTriggers.Value(
+          'NEVER')
+    elif notify_trigger == tracker_pb2.NotifyTriggers.ANY_COMMENT:
+      return project_objects_pb2.FieldDef.UserTypeSettings.NotifyTriggers.Value(
+          'ANY_COMMENT')
+    else:
+      raise ValueError('Unsupported NotifyTriggers Value')
 
   def _ConvertFieldDefType(self, field_type):
     # type: (proto.tracker_pb2.FieldTypes) ->
@@ -608,6 +682,9 @@ class Converter(object):
           project_objects_pb2.FieldDef.Traits.Value('MULTIVALUED'))
     if field_def.is_phase_field:
       trait_protos.append(project_objects_pb2.FieldDef.Traits.Value('PHASE'))
+    if field_def.is_restricted_field:
+      trait_protos.append(
+          project_objects_pb2.FieldDef.Traits.Value('RESTRICTED'))
     return trait_protos
 
   def _GetEnumFieldChoices(self, field_def):
