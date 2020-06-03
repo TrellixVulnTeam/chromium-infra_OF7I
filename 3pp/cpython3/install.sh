@@ -17,7 +17,9 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # $PATCH_VERSION.
 PY_VERSION="$_3PP_VERSION+${_3PP_PATCH_VERSION}"
 
-CFLAGS="-I$DEPS_PREFIX/include"
+# Make sure we don't pick up any modules from the host PYTHONPATH.
+export PYTHONPATH=""
+
 CPPFLAGS="-I$DEPS_PREFIX/include"
 LDFLAGS="-L$DEPS_PREFIX/lib"
 
@@ -223,7 +225,7 @@ cat "$SCRIPT_DIR/../cpython_common/ssl_suffix.py" >> $PREFIX/lib/python*/ssl.py
 
 # TODO: maybe strip python executable?
 
-$INTERP `which pip_bootstrap.py` "$PREFIX"
+$INTERP "$(which pip_bootstrap.py)" "$PREFIX"
 
 PYTHON_MAJOR=$(cd $PREFIX/lib && echo python*)
 
