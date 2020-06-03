@@ -13,7 +13,9 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
+	"infra/cmd/labtool/audit"
 	"infra/cmd/labtool/meta"
+	"infra/cmd/labtool/query"
 	"infra/cmd/labtool/site"
 	"infra/cmd/labtool/ufs/cmds/resources"
 )
@@ -34,6 +36,9 @@ func getApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
+			subcommands.Section("Lab audit"),
+			audit.AuditCmd,
+			query.GetAssetsCmd,
 			subcommands.Section("Registration"),
 			resources.SwitchCmd,
 		},
