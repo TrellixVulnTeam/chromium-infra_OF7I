@@ -47,8 +47,8 @@ func createRotationSource(rotation string) *UserSource_Rotation {
 func TestConfigValidator(t *testing.T) {
 	t.Parallel()
 
-	rules := &validation.RuleSet{}
-	rules.RegisterVar("appid", func(context.Context) (string, error) {
+	rules := validation.NewRuleSet()
+	rules.Vars.Register("appid", func(context.Context) (string, error) {
 		return "my_app", nil
 	})
 	SetupValidation(rules)
