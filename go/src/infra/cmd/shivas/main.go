@@ -41,6 +41,7 @@ func getApplication() *cli.Application {
 			audit.AuditCmd,
 			query.GetAssetsCmd,
 			subcommands.Section("Registration"),
+			resources.MachineCmd,
 			resources.SwitchCmd,
 		},
 	}
