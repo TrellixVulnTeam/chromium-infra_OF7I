@@ -58,6 +58,7 @@ var failedToLookupWhiteList map[string]bool = stringSliceToStringSet([]string{
 	"hatch;unprovisioned_helios",
 	"hatch;unprovisioned_kindred",
 	"hatch;unprovisioned_kohaku",
+	"puff;unprovisioned_puff",
 })
 
 func stringSliceToStringSet(input []string) map[string]bool {
