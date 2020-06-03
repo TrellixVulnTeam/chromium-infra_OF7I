@@ -28,6 +28,7 @@ var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
 	"guado_cfm",
 	"guado_kernelnext",
 	"hana_kernelnext",
+	"hatch_diskswap",
 	"kalista_cfm",
 	"kefka_kernelnext",
 	"nami_kvm",
