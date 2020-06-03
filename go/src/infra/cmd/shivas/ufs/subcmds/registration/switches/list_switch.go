@@ -11,8 +11,8 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
-	"infra/cmd/labtool/site"
-	"infra/cmd/labtool/utils"
+	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
 )
@@ -23,16 +23,16 @@ var ListSwitchCmd = &subcommands.Command{
 	ShortDesc: "list all Switches",
 	LongDesc: `list all Switches
 
-	./labtool switch ls
+	./shivas switch ls
 	Fetches 100 items and prints the output in table format
 
-	./labtool switch ls -n 50
+	./shivas switch ls -n 50
 	Fetches 50 items and prints the output in table format
 
-	./labtool switch ls -json
+	./shivas switch ls -json
 	Fetches 100 items and prints the output in JSON format
 
-	./labtool switch ls -n 50 -json
+	./shivas switch ls -n 50 -json
 	Fetches 50 items and prints the output in JSON format
 	`,
 	CommandRun: func() subcommands.CommandRun {

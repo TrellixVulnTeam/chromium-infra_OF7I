@@ -7,7 +7,7 @@ package resources
 import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
-	s "infra/cmd/labtool/ufs/subcmds/registration/switches"
+	s "infra/cmd/shivas/ufs/subcmds/registration/switches"
 )
 
 type switches struct {

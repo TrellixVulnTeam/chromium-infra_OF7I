@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package site contains site local constants for the labtool
+// Package site contains site local constants for the shivas
 package site
 
 import (
@@ -67,7 +67,7 @@ func SecretsDir() string {
 	if configDir == "" {
 		configDir = filepath.Join(os.Getenv("HOME"), ".cache")
 	}
-	return filepath.Join(configDir, "labtool", "auth")
+	return filepath.Join(configDir, "shivas", "auth")
 }
 
 // DefaultPRPCOptions is used for PRPC clients.  If it is nil, the
@@ -76,5 +76,5 @@ func SecretsDir() string {
 // This is provided so it can be overridden for testing.
 var DefaultPRPCOptions *prpc.Options
 
-// CipdInstalledPath is the installed path for labtool package.
-var CipdInstalledPath = "chromiumos/infra/labtool/"
+// CipdInstalledPath is the installed path for shivas package.
+var CipdInstalledPath = "chromiumos/infra/shivas/"

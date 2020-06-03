@@ -1,6 +1,7 @@
 // Copyright 2020 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+
 package main
 
 import (
@@ -13,16 +14,16 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
-	"infra/cmd/labtool/audit"
-	"infra/cmd/labtool/meta"
-	"infra/cmd/labtool/query"
-	"infra/cmd/labtool/site"
-	"infra/cmd/labtool/ufs/cmds/resources"
+	"infra/cmd/shivas/audit"
+	"infra/cmd/shivas/meta"
+	"infra/cmd/shivas/query"
+	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/ufs/cmds/resources"
 )
 
 func getApplication() *cli.Application {
 	return &cli.Application{
-		Name:  "labtool",
+		Name:  "shivas",
 		Title: "Unified Fleet System Management",
 		Context: func(ctx context.Context) context.Context {
 			return ctx

@@ -9,7 +9,7 @@ import (
 
 	"github.com/maruel/subcommands"
 
-	"infra/cmd/labtool/utils"
+	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 )
 

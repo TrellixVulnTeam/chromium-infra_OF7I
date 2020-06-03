@@ -10,15 +10,15 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 
-	"infra/cmd/labtool/site"
+	"infra/cmd/shivas/site"
 	"infra/libs/cros/cipd"
 )
 
-// Update subcommand: Update labtool tool.
+// Update subcommand: Update shivas tool.
 var Update = &subcommands.Command{
 	UsageLine: "update",
-	ShortDesc: "update labtool",
-	LongDesc: `Update labtool.
+	ShortDesc: "update shivas",
+	LongDesc: `Update shivas.
 
 This is a thin wrapper around CIPD.`,
 	CommandRun: func() subcommands.CommandRun {
@@ -45,7 +45,7 @@ func (c *updateRun) innerRun(a subcommands.Application, args []string, env subco
 	if err := cipd.UpdatePackage(site.CipdInstalledPath, a.GetOut(), a.GetErr()); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.GetErr(), "%s: You may need to run labtool login again after the update\n", a.GetName())
-	fmt.Fprintf(a.GetErr(), "%s: Run labtool whoami to check login status\n", a.GetName())
+	fmt.Fprintf(a.GetErr(), "%s: You may need to run shivas login again after the update\n", a.GetName())
+	fmt.Fprintf(a.GetErr(), "%s: Run shivas whoami to check login status\n", a.GetName())
 	return nil
 }

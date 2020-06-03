@@ -20,7 +20,7 @@ var (
 	switchTitle = []string{"Switch Name", "CapacityPort", "UpdateTime"}
 )
 
-// TimeFormat for all timestamps handled by labtools
+// TimeFormat for all timestamps handled by shivas
 var timeFormat = "2006-01-02-15:04:05"
 
 // The tab writer which defines the write format

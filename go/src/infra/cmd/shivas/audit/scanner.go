@@ -22,8 +22,8 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleetAPI "infra/appengine/cros/lab_inventory/api/v1"
-	"infra/cmd/labtool/site"
-	"infra/cmd/labtool/utils"
+	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	invUtils "infra/libs/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
@@ -40,9 +40,9 @@ var ScannerCmd = &subcommands.Command{
 	Once the next location is scanned, the last location and its related asset
 	tags will be recorded to registration system.
 
-	Every scan will be recorded in local log file: <home>/.labtool/timestamp-log
+	Every scan will be recorded in local log file: <home>/.shivas/timestamp-log
 	Every interaction with registration system will be recorded in local res file:
-		<home>/.labtool/timestamp-res
+		<home>/.shivas/timestamp-res
 	`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &bcScanner{}
@@ -66,9 +66,9 @@ func getLogDir() string {
 	// Attempt to use home dir for logs, failing which use /tmp
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "/tmp/.labtool"
+		return "/tmp/.shivas"
 	}
-	return filepath.Join(home, ".labtool")
+	return filepath.Join(home, ".shivas")
 }
 
 func createLogDir(logDir string) error {

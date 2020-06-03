@@ -11,15 +11,15 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 
-	"infra/cmd/labtool/site"
+	"infra/cmd/shivas/site"
 	"infra/libs/cros/cipd"
 )
 
-// Version subcommand: Version labtool.
+// Version subcommand: Version shivas.
 var Version = &subcommands.Command{
 	UsageLine: "version",
-	ShortDesc: "print labtool version",
-	LongDesc:  "Print labtool version.",
+	ShortDesc: "print shivas version",
+	LongDesc:  "Print shivas version.",
 	CommandRun: func() subcommands.CommandRun {
 		c := &versionRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -41,7 +41,7 @@ func (c *versionRun) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (c *versionRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	p, err := cipd.FindPackage("labtool", site.CipdInstalledPath)
+	p, err := cipd.FindPackage("shivas", site.CipdInstalledPath)
 	if err != nil {
 		return err
 	}

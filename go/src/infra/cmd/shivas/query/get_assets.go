@@ -14,8 +14,8 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"go.chromium.org/luci/grpc/prpc"
-	"infra/cmd/labtool/site"
-	"infra/cmd/labtool/utils"
+	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 
 	fleetAPI "infra/appengine/cros/lab_inventory/api/v1"

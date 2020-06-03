@@ -11,8 +11,8 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
-	"infra/cmd/labtool/site"
-	"infra/cmd/labtool/utils"
+	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
@@ -23,10 +23,10 @@ var AddSwitchCmd = &subcommands.Command{
 	UsageLine: "add",
 	ShortDesc: "add Switch by name",
 	LongDesc: `add switch by name.
-	./labtool switch add -j -f switch.json
+	./shivas switch add -j -f switch.json
 	Adds a Switch by reading a JSON file input.
 
-	./labtool switch -i
+	./shivas switch -i
 	Adds a Switch by reading input through interactive mode.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addSwitch{}
