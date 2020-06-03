@@ -13,21 +13,11 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/impl/memory"
 	ds "go.chromium.org/gae/service/datastore"
-	"go.chromium.org/gae/service/mail"
 	"go.chromium.org/gae/service/user"
 
 	"infra/appengine/cr-audit-commits/app/rules"
 	"infra/monorail"
 )
-
-// sendEmailForFinditViolation is not actually used by any AccountRules its purpose
-// is to illustrate how one would use SendEmailForViolation to notify about
-// violations via email.
-func sendEmailForFinditViolation(ctx context.Context, cfg *rules.RefConfig, rc *rules.RelevantCommit, cs *rules.Clients, state string) (string, error) {
-	recipients := []string{"eng-team@dummy.com"}
-	subject := "A policy violation was detected on commit %s"
-	return rules.SendEmailForViolation(ctx, cfg, rc, cs, state, recipients, subject)
-}
 
 func TestNotifier(t *testing.T) {
 
@@ -147,8 +137,6 @@ func TestNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(rc.GetNotificationState("rules"), ShouldEqual, "BUG=12345")
 				So(rc.NotifiedAll, ShouldBeTrue)
-				m := mail.GetTestable(ctx)
-				So(m.SentMessages(), ShouldBeEmpty)
 
 			})
 			Convey("Exceeded retries", func() {
@@ -251,78 +239,6 @@ func TestNotifier(t *testing.T) {
 			err = ds.Get(ctx, rc)
 			So(rc.GetNotificationState("rulesAck"), ShouldEqual, "Comment posted on BUG(S)=8675389")
 			So(rc.NotifiedAll, ShouldBeTrue)
-			m := mail.GetTestable(ctx)
-			So(m.SentMessages(), ShouldBeEmpty)
-		})
-		Convey("Failed audits - email only", func() {
-			cfg := &rules.RefConfig{
-				BaseRepoURL:     "https://old.googlesource.com/old-email.git",
-				GerritURL:       "https://old-review.googlesource.com",
-				BranchName:      "master",
-				StartingCommit:  "000000",
-				MonorailAPIURL:  "https://monorail-fake.appspot.com/_ah/api/monorail/v1",
-				MonorailProject: "fakeproject",
-				NotifierEmail:   "notifier@cr-audit-commits-test.appspotmail.com",
-				Rules: map[string]rules.AccountRules{"rulesEmail": {
-					Account: "author@test.com",
-					Rules: []rules.Rule{
-						rules.DummyRule{
-							Name: "Dummy rule",
-							Result: &rules.RuleResult{
-								RuleName:         "Dummy rule",
-								RuleResultStatus: rules.RulePassed,
-								Message:          "",
-								MetaData:         "",
-							},
-						},
-					},
-					NotificationFunction: sendEmailForFinditViolation,
-				}},
-			}
-			rules.RuleMap["old-repo-email"] = cfg
-			repoState := &rules.RepoState{
-				RepoURL:            "https://old.googlesource.com/old-email.git/+/master",
-				LastKnownCommit:    "123456",
-				LastRelevantCommit: "999999",
-			}
-			ds.Put(ctx, repoState)
-			rsk := ds.KeyForObj(ctx, repoState)
-			rc := &rules.RelevantCommit{
-				RepoStateKey: rsk,
-				CommitHash:   "badc0de",
-				Status:       rules.AuditCompletedWithActionRequired,
-				Result: []rules.RuleResult{{
-					RuleName:         "DummyRule",
-					RuleResultStatus: rules.RuleFailed,
-					Message:          "This commit is bad",
-					MetaData:         "",
-				}},
-				CommitterAccount: "committer@test.com",
-				AuthorAccount:    "author@test.com",
-				CommitMessage:    "This commit failed all audits.",
-			}
-			err := ds.Put(ctx, rc)
-			So(err, ShouldBeNil)
-
-			err = notifyAboutViolations(ctx, cfg, repoState, testClients)
-			So(err, ShouldBeNil)
-			rc = &rules.RelevantCommit{
-				RepoStateKey: rsk,
-				CommitHash:   "badc0de",
-			}
-			err = ds.Get(ctx, rc)
-			So(err, ShouldBeNil)
-			m := mail.GetTestable(ctx)
-			So(rc.NotifiedAll, ShouldBeTrue)
-			So(m.SentMessages()[0], ShouldResemble,
-				&mail.TestMessage{
-					Message: mail.Message{
-						Sender:  "notifier@cr-audit-commits-test.appspotmail.com",
-						To:      []string{"eng-team@dummy.com"},
-						Subject: "A policy violation was detected on commit badc0de",
-						Body:    "Here are the messages from the rules that were broken by this commit:\n\nThis commit is bad",
-					}})
-
 		})
 	})
 }
