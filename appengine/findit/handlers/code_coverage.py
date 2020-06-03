@@ -457,8 +457,7 @@ def _GetFileContentFromGitiles(report, file_path,
 
 
 def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries,
-                       mimic_builder_name, comp_map, team_mapping,
-                       actual_data_type):
+                       mimic_builder_name, component, team, actual_data_type):
   """Create a bigquery row containing coverage data.
 
   Returns a dict whose keys are column names and values are column values
@@ -477,8 +476,8 @@ def _CreateBigqueryRow(commit, commit_timestamp, builder, path, summaries,
   }
 
   if actual_data_type == 'dirs':
-    row['component'] = comp_map.get(path[2:len(path) - 1], "")
-    row['team'] = team_mapping.get(path[2:len(path) - 1], "")
+    row['component'] = component
+    row['team'] = team
 
   for metric in summaries:
     if metric['name'] == 'line':
@@ -645,6 +644,8 @@ class ProcessCodeCoverageData(BaseHandler):
       total = 0
 
       component_summaries = []
+      comp_map = test_tag_util.GetChromiumDirectoryToComponentMapping()
+      team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping()
       for dataset in data_iterator:
         for group_data in dataset:
           if actual_data_type == 'components':
@@ -680,13 +681,12 @@ class ProcessCodeCoverageData(BaseHandler):
                 builder=mimic_builder_name,
                 data=group_data)
 
-            comp_map = test_tag_util.GetChromiumDirectoryToComponentMapping()
-            team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping()
-
+            path = group_data['path']
             bq_row = _CreateBigqueryRow(
                 commit, change_log.committer.time, builder, group_data['path'],
-                group_data['summaries'], mimic_builder_name, comp_map,
-                team_mapping, actual_data_type)
+                group_data['summaries'], mimic_builder_name,
+                comp_map.get(path[2:len(path) - 1], ""),
+                team_mapping.get(path[2:len(path) - 1], ""), actual_data_type)
             if actual_data_type == 'dirs':
               directory_bq_rows.append(bq_row)
             else:

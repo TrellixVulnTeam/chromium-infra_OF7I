@@ -139,7 +139,13 @@ def GetTestLocation(build_id, step_name, test_name, normalized_test_name):
   # For Gtest, we read the test location from the output.json
   step_metadata = step_util.GetStepMetadata(
       build_id, step_name, partial_match=True)
-  task_ids = step_metadata.get('swarm_task_ids')
+
+  task_ids = step_metadata.get('swarm_task_ids') if step_metadata else []
+  if not task_ids:
+    logging.debug(
+        "Failed to get step_metadata for  build_id : %s and step_name : %s",
+        build_id, step_name)
+    return None
   for task_id in task_ids:
     test_path = swarmed_test_util.GetTestLocation(task_id, test_name)
     if test_path:
