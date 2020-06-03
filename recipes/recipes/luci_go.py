@@ -37,7 +37,7 @@ def RunSteps(api, GOARCH, run_integration_tests):
   co.gclient_runhooks()
 
 
-  env = {}
+  env = {'GOCACHE': api.buildbucket.builder_cache_path.join('go_cache')}
   if GOARCH is not None:
     env['GOARCH'] = GOARCH
   if run_integration_tests:

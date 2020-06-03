@@ -154,7 +154,8 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOARCH": "386"
+      "GOARCH": "386",
+      "GOCACHE": "[CACHE]/builder/go_cache"
     },
     "infra_step": true,
     "name": "init infra go env",
@@ -187,7 +188,8 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOARCH": "386"
+      "GOARCH": "386",
+      "GOCACHE": "[CACHE]/builder/go_cache"
     },
     "name": "go build"
   },
@@ -202,7 +204,8 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOARCH": "386"
+      "GOARCH": "386",
+      "GOCACHE": "[CACHE]/builder/go_cache"
     },
     "name": "go test"
   },
@@ -218,7 +221,8 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOARCH": "386"
+      "GOARCH": "386",
+      "GOCACHE": "[CACHE]/builder/go_cache"
     },
     "name": "go test -race"
   },
