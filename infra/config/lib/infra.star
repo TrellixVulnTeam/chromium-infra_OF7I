@@ -164,7 +164,8 @@ infra = struct(
     SERVICE_ACCOUNT_TRY = 'infra-try-builder@chops-service-accounts.iam.gserviceaccount.com',
     SERVICE_ACCOUNT_CI = 'infra-ci-builder@chops-service-accounts.iam.gserviceaccount.com',
 
-    cache_gclient_with_go = swarming.cache('infra_gclient_with_go'),
+    cache_gclient_with_go = swarming.cache('infra_gclient_with_go',
+                                           wait_for_warm_cache=time.minute),
     cache_osx_sdk = swarming.cache('osx_sdk'),
 
     poller = poller,
