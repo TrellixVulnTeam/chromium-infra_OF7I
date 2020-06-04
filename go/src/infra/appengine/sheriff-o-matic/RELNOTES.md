@@ -1,3 +1,27 @@
+# Release Notes sheriff-o-matic 2020-06-04
+
+- 4 commits, 3 bugs affected since 36809f9 (2020-05-31T23:31:24Z)
+- 2 Authors:
+  - nqmtuan@google.com
+  - jsca@google.com
+
+## Changes in this release
+
+- [[som] Fetch Chromium Sheriff from the rotation proxy.](https://chromium-review.googlesource.com/c/infra/infra/+/2227847) (jsca@google.com)
+- [[som] Use the rotation proxy for rotations in SoM.](https://chromium-review.googlesource.com/c/infra/infra/+/2076819) (jsca@google.com)
+- [[som] Replace the rotation calendar iframe with a link to chromecals.](https://chromium-review.googlesource.com/c/infra/infra/+/2224460) (jsca@google.com)
+- [SoM: Break Monorail query into chunks](https://chromium-review.googlesource.com/c/infra/infra/+/2220112) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1056005](https://crbug.com/1056005)
+  -  [https://crbug.com/1071344](https://crbug.com/1071344)
+
+- nqmtuan@google.com:
+  -  [https://crbug.com/1087689](https://crbug.com/1087689)
+
+
 # Release Notes sheriff-o-matic 2020-05-25
 
 - 16 commits, 2 bugs affected since 5cc75e3 ()
