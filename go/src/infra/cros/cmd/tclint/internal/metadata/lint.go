@@ -13,6 +13,8 @@ import (
 	"strings"
 	"unicode"
 
+	"infra/cros/cmd/tclint/internal/diagnostics"
+
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
 	"go.chromium.org/chromiumos/config/go/api/test/metadata/v1"
@@ -22,18 +24,18 @@ import (
 
 // Lint checks a given metadata specification for violations of requirements
 // stated in the API definition.
-func Lint(spec *metadata.Specification) Result {
+func Lint(spec *metadata.Specification) diagnostics.Result {
 	l := linter{}
 	return l.Lint(spec)
 }
 
 type linter struct {
-	result Result
+	result diagnostics.Result
 }
 
-func (l *linter) Lint(spec *metadata.Specification) Result {
+func (l *linter) Lint(spec *metadata.Specification) diagnostics.Result {
 	// (Re)start with an empty result.
-	l.result = Result{}
+	l.result = diagnostics.Result{}
 	if len(spec.RemoteTestDrivers) == 0 {
 		l.result.AppendError("Specification must contain at least one RemoteTestDriver")
 		return l.result
@@ -172,7 +174,7 @@ func (l *linter) lintTestName(name string, rtdName string) {
 // caller can provide better context about the object being named (e.g.
 // "RemoteTestDriver <name>" instead of "<name>").
 func (l *linter) lintResourceName(name string) bool {
-	result := Result{}
+	result := diagnostics.Result{}
 	defer func() {
 		l.result.Merge(result)
 	}()

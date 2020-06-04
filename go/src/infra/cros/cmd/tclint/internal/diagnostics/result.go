@@ -2,9 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Package metadata provides functions to lint Chrome OS integration test
-// metadata.
-package metadata
+// Package diagnostics provides utilities to collect diagnostics for lint.
+package diagnostics
 
 import (
 	"fmt"
@@ -15,7 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
-// Result contains diagnostic messages from metadata lint.
+// Result contains diagnostic messages from lint.
 type Result struct {
 	Errors   errors.MultiError
 	prefixes []string
