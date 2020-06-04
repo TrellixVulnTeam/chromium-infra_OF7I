@@ -216,7 +216,7 @@ var servoStateConvertStateCases = []struct {
 	{2, []string{"servo_state:NOT_CONNECTED"}},
 	{3, []string{"servo_state:BROKEN"}},
 	{4, []string{"servo_state:WRONG_CONFIG"}},
-	{5, []string{}}, //wrong value
+	{99, []string{}}, //wrong value
 }
 
 func TestConvertServoStateWorking(t *testing.T) {
