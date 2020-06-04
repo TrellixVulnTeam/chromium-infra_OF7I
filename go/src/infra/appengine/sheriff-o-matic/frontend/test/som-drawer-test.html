@@ -81,7 +81,7 @@
       });
     });
 
-    test('computes sheriffs from rota-ng JSON', function(done) {
+    test('computes sheriffs from rotation-proxy JSON', function(done) {
       const body = {emails: ['foo@example.com', 'bar@example.com']};
       const init = {status: 200, headers: responseHeaders.json};
       const response = new window.Response(JSON.stringify(body), init);
@@ -91,7 +91,7 @@
         'chromium': [
           {
             name: 'Chromium Sheriff',
-            url: 'https://rota-ng.appspot.com/legacy/sheriff.json',
+            url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-build-sheriff',
           },
         ],
       };
@@ -107,65 +107,27 @@
       });
     });
 
-    test('computes sheriffs from oncall JSON', function(done) {
-      const body = [{
-        "person": "foo",
-        "position": 1,
-      },{
-        "person": "bar",
-        "position": 2,
-      }];
+    test('computes sheriffs from rotation-proxy JSON with nobody oncall', function(done) {
+      const body = {emails: []};
       const init = {status: 200, headers: responseHeaders.json};
       const response = new window.Response(JSON.stringify(body), init);
       stubbedFetch.returns(Promise.resolve(response));
 
       element._rotations = {
-        'chromeos': [
+        'chromium': [
           {
-            name: 'CI Bobby',
-            url: 'https://oncall.corp.google.com/chromeos-ci-eng/json',
+            name: 'Chromium Sheriff',
+            url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-build-sheriff',
           },
         ],
       };
-      element.tree = {'name': 'chromeos'};
+      element.tree = {'name': 'chromium'};
 
       flush(function () {
         assert.equal(1, element._currentOncalls.length);
         assert.deepEqual({
-          name: 'CI Bobby',
-          people: 'foo, bar',
-        }, element._currentOncalls[0]);
-        done();
-      });
-    });
-
-    test('computes sheriffs from oncall JSON with nobody oncall', function(done) {
-      const body = [{
-        "person": "",
-        "position": 1,
-      },{
-        "person": "",
-        "position": 2,
-      }];
-      const init = {status: 200, headers: responseHeaders.json};
-      const response = new window.Response(JSON.stringify(body), init);
-      stubbedFetch.returns(Promise.resolve(response));
-
-      element._rotations = {
-        'chromeos': [
-          {
-            name: 'CI Bobby',
-            url: 'https://oncall.corp.google.com/chromeos-ci-eng/json',
-          },
-        ],
-      };
-      element.tree = {'name': 'chromeos'};
-
-      flush(function () {
-        assert.equal(1, element._currentOncalls.length);
-        assert.deepEqual({
-          name: 'CI Bobby',
-          people: 'None',
+          name: 'Chromium Sheriff',
+          people: '',
         }, element._currentOncalls[0]);
         done();
       });

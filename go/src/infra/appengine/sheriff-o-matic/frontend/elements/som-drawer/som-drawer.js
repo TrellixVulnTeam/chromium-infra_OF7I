@@ -53,10 +53,6 @@ const ROTATIONS = {
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-arc-constable-nonpst',
     },
     {
-      name: 'Moblab Peeler',
-      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:chromeos-moblab-peeler',
-    },
-    {
       name: 'Jetstream Sheriff',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/grotation:chromeos-jetstream-sheriff',
     },
@@ -68,7 +64,7 @@ const ROTATIONS = {
   'chromium': [
     {
       name: 'Chromium Sheriff',
-      url: 'https://rota-ng.appspot.com/legacy/sheriff.json',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-build-sheriff',
     },
   ],
   'chrome_browser_release': [
@@ -183,53 +179,16 @@ class SomDrawer extends Polymer.Element {
         name: rotation.name,
         people: 'Loading...',
       });
-      switch (rotation.url.split('/')[2]) {
-        case 'rota-ng.appspot.com':
-        case 'chrome-ops-rotation-proxy.appspot.com':
-          fetch(rotation.url, {
-            method: 'GET',
-          }).then(function(response) {
-            return response.json();
-          }).then(function(response) {
-            self.splice('_currentOncalls', index, 1, {
-              name: rotation.name,
-              people: response.emails.join(', '),
-            });
-          });
-          break;
-        case 'rotation.googleplex.com':
-          fetch(rotation.url, {
-            method: 'GET',
-            credentials: 'include',
-          }).then(function(response) {
-            return response.json();
-          }).then(function(response) {
-            self.splice('_currentOncalls', index, 1, {
-              name: rotation.name,
-              people: response.primary,
-            });
-          });
-          break;
-        case 'oncall.corp.google.com':
-          fetch(rotation.url, {
-            method: 'GET',
-            credentials: 'include',
-          }).then(function(response) {
-            return response.json();
-          }).then(function(response) {
-            const people = [];
-            response.forEach(function(entry) {
-              if (entry.person) {
-                people.push(entry.person);
-              }
-            });
-            self.splice('_currentOncalls', index, 1, {
-              name: rotation.name,
-              people: people.length ? people.join(', ') : 'None',
-            });
-          });
-          break;
-      }
+      fetch(rotation.url, {
+        method: 'GET',
+      }).then(function(response) {
+        return response.json();
+      }).then(function(response) {
+        self.splice('_currentOncalls', index, 1, {
+          name: rotation.name,
+          people: response.emails.join(', '),
+        });
+      });
     });
   }
 
