@@ -62,6 +62,16 @@ var failedToLookupWhiteList map[string]bool = stringSliceToStringSet([]string{
 	"puff;unprovisioned_puff",
 })
 
+// These are the DUTs that are exempted from version mismatches.
+// Currently (2020 Q2), we just confirm that the firmware version and OS version are
+// part of the same build. This assumption is not always met during bring-up.
+// Add the models that are exempted here.
+//
+// Entries in this list have the form "board;model".
+var invalidVersionWhiteList map[string]bool = stringSliceToStringSet([]string{
+	"zork;dalboz",
+})
+
 func stringSliceToStringSet(input []string) map[string]bool {
 	var out = make(map[string]bool, len(input))
 	for _, item := range input {

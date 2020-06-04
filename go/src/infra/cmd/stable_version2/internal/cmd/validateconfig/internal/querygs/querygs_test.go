@@ -335,6 +335,26 @@ var testRemoveWhiteListData = []struct {
 			"failed_to_lookup": [{"build_target": "NOT WHITELISTED", "model": "NOT WHITELISTED"}]
 		}`,
 	},
+	{
+		"remove explicit invalid version mismatch",
+		"6683d1ca-089e-4401-b189-a6db046631d1",
+		`{
+			"invalid_versions": [{"build_target": "zork", "model": "dalboz", "wanted": "XXX", "got": "XXX"}]
+		}`,
+		`{
+			"invalid_versions": null
+		}`,
+	},
+	{
+		"retain non-whitelisted invalid version mismatch",
+		"fb105639-2eea-438a-809e-f01a9d98492b",
+		`{
+			"invalid_versions": [{"build_target": "A", "model": "B", "wanted": "C", "got": "D"}]
+		}`,
+		`{
+			"invalid_versions": [{"build_target": "A", "model": "B", "wanted": "C", "got": "D"}]
+		}`,
+	},
 }
 
 func TestRemoveWhiteList(t *testing.T) {

@@ -50,6 +50,7 @@ type ValidationResult struct {
 func (r *ValidationResult) RemoveWhitelistedDUTs() {
 	var newMissingBoards []string
 	var newFailedToLookup []*BoardModel
+	var newInvalidVersions []*VersionMismatch
 	if len(r.MissingBoards) != 0 {
 		for _, item := range r.MissingBoards {
 			if !missingBoardWhitelist[item] {
@@ -64,8 +65,16 @@ func (r *ValidationResult) RemoveWhitelistedDUTs() {
 			}
 		}
 	}
+	if len(r.InvalidVersions) != 0 {
+		for _, item := range r.InvalidVersions {
+			if !invalidVersionWhiteList[fmt.Sprintf("%s;%s", item.BuildTarget, item.Model)] {
+				newInvalidVersions = append(newInvalidVersions, item)
+			}
+		}
+	}
 	r.MissingBoards = newMissingBoards
 	r.FailedToLookup = newFailedToLookup
+	r.InvalidVersions = newInvalidVersions
 }
 
 // AnomalyCount counts the total number of issues found in the results summary.
