@@ -88,6 +88,10 @@ var Known = []*Master{
 		Identifier: "client.devtools-frontend.integration",
 	},
 	{
+		Name:       "DevtoolsFrontendTry",
+		Identifier: "tryserver.devtools-frontend",
+	},
+	{
 		Name:       "V8Chromium",
 		Identifier: "client.v8.chromium",
 	},
