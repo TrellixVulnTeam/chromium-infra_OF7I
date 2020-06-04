@@ -49,8 +49,8 @@ func (r *Result) Merge(o Result) {
 }
 
 // AppendError appends an error to result, prefixed with current context.
-func (r *Result) AppendError(fmt string, args ...interface{}) {
-	r.Errors = append(r.Errors, errors.Reason(r.prefixWithContext(fmt), args...).Err())
+func (r *Result) AppendError(f string, args ...interface{}) {
+	r.Errors = append(r.Errors, errors.New(fmt.Sprintf(r.prefixWithContext(f), args...)))
 }
 
 // IsValid returns false if the result contains any validation errors, true
