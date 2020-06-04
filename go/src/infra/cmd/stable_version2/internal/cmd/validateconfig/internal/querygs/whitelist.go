@@ -60,6 +60,8 @@ var failedToLookupWhiteList map[string]bool = stringSliceToStringSet([]string{
 	"hatch;unprovisioned_kindred",
 	"hatch;unprovisioned_kohaku",
 	"puff;unprovisioned_puff",
+	"zork;dalboz",
+	"zork;trembyle",
 })
 
 // These are the DUTs that are exempted from version mismatches.
