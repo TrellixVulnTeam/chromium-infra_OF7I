@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import logging
+
+from google.appengine.api import app_identity
+from google.appengine.ext import ndb
+
 from components import endpoints_webapp2
 from components import ereporter2
 from components import utils
@@ -36,5 +41,11 @@ def create_backend_app():  # pragma: no cover
 
 def initialize():  # pragma: no cover
   """Bootstraps the global state and creates WSGI applications."""
+  # ndb.Key (unused) -> bool indicating whether to use memcache or not.
+  should_use_memcache = lambda _: True
+  if app_identity.get_application_id().endswith('-dev'):
+    logging.info('disabling memcache on dev instance')
+    should_use_memcache = lambda _: False
+  ndb.get_context().set_memcache_policy(should_use_memcache)
   ereporter2.register_formatter()
   return create_frontend_app(), create_backend_app()
