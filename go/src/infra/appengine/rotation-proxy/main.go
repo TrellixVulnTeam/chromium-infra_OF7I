@@ -20,9 +20,17 @@ import (
 	rpb "infra/appengine/rotation-proxy/proto"
 )
 
+var (
+	rotationExporterServiceAccount = "user:chrome-ops-rotation-exporter@system.gserviceaccount.com"
+)
+
 func checkAPIAccess(ctx context.Context, methodName string, req proto.Message) (context.Context, error) {
-	// TODO(crbug.com/1081112): Remove the if condition when I figure out a way to authenticate from borg.
+	identity := string(auth.CurrentIdentity(ctx))
+	permissionErr := status.Errorf(codes.PermissionDenied, "%s does not have access to method %s of Rotation Proxy", identity, methodName)
 	if methodName == "BatchUpdateRotations" {
+		if identity != rotationExporterServiceAccount {
+			return nil, permissionErr
+		}
 		return ctx, nil
 	}
 	hasAccess, err := auth.IsMember(ctx, "rotation-proxy-access")
@@ -30,7 +38,7 @@ func checkAPIAccess(ctx context.Context, methodName string, req proto.Message) (
 		return nil, err
 	}
 	if !hasAccess {
-		return nil, status.Errorf(codes.PermissionDenied, "%s does not have access to method %s of Rotation Proxy", auth.CurrentIdentity(ctx), methodName)
+		return nil, permissionErr
 	}
 	return ctx, nil
 }
