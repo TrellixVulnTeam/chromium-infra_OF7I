@@ -10,40 +10,53 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"go.chromium.org/luci/common/errors"
 )
 
 // Result contains diagnostic messages from metadata lint.
 type Result struct {
-	Errors errors.MultiError
+	Errors   errors.MultiError
+	prefixes []string
 }
 
-// Merge merges another result into the current result.
-func (r *Result) Merge(o Result) {
-	r.Errors = append(r.Errors, o.Errors...)
-}
-
-// MergeWithContext merges another result into the current result, prefixed with
-// some context.
-func (r *Result) MergeWithContext(o Result, fmt string, args ...interface{}) {
-	for _, err := range o.Errors {
-		// This captures the wrong stack frame. errors.Annotate() doesn't have
-		// a way to specify skipping N frames (similar to testing.T.Helper())
-		// yet. We don't actually render the stack trace, so this is OK.
-		r.Errors = append(r.Errors, errors.Annotate(err, fmt, args...).Err())
+// PushContext adds context to be prepended to all diagnostic messages.
+//
+// Contexts can be stacked by calling PushContext() repeatedly.
+// Returns a function to pop the pushed context.
+func (r *Result) PushContext(c string) (popContext func()) {
+	r.prefixes = append(r.prefixes, fmt.Sprintf("%s: ", c))
+	// Stay true to our API -- returned function can only pop one context.
+	// We still don't deal with the possibility that the returned closers from
+	// multiple PushContext() calls can be called in arbitrary order, and will
+	// have the same effect.
+	o := sync.Once{}
+	return func() {
+		o.Do(r.dropContext)
 	}
 }
 
-// AppendError appends an error to result.
-func (r *Result) AppendError(fmt string, args ...interface{}) {
-	r.Errors = append(r.Errors, errors.Reason(fmt, args...).Err())
+// Merge merges another result into the current result.
+//
+// Diagnostic messages from the incoming Result are prefixed with the current
+// Result's context.
+// Context from the incoming Result is ignored.
+func (r *Result) Merge(o Result) {
+	for _, err := range o.Errors {
+		r.AppendError(err.Error())
+	}
 }
 
-// AppendErrorWithContext appends an error to result, prefixed with some
-// context.
-func (r *Result) AppendErrorWithContext(err error, fmt string, args ...interface{}) {
-	r.Errors = append(r.Errors, errors.Annotate(err, fmt, args...).Err())
+// AppendError appends an error to result, prefixed with current context.
+func (r *Result) AppendError(fmt string, args ...interface{}) {
+	r.Errors = append(r.Errors, errors.Reason(r.prefixWithContext(fmt), args...).Err())
+}
+
+// IsValid returns false if the result contains any validation errors, true
+// otherwise.
+func (r *Result) IsValid() bool {
+	return len(r.Errors) == 0
 }
 
 // Display returns a user-friendly display of diagnostics from a Result.
@@ -59,10 +72,12 @@ func (r *Result) Display() []string {
 	return breakAndIndentMultiLine(ss)
 }
 
-func errorResult(fmt string, args ...interface{}) Result {
-	return Result{
-		Errors: errors.NewMultiError(errors.Reason(fmt, args...).Err()),
-	}
+func (r *Result) dropContext() {
+	r.prefixes = r.prefixes[:len(r.prefixes)-1]
+}
+
+func (r *Result) prefixWithContext(s string) string {
+	return strings.Join(r.prefixes, "") + s
 }
 
 func breakAndIndentMultiLine(ss []string) []string {

@@ -4,7 +4,7 @@
             "name": "remoteTestDrivers/tauto",
             "tests": [
                 {
-                    "name": "remoteTestDrivers/tauto/tests/foo/baz"
+                    "name": "remoteTestDrivers/tauto/tests/foo/baz/brr"
                 }
             ]
         }

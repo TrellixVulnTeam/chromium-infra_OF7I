@@ -1,4 +1,4 @@
 [
 "## Errors ##",
-"Test 'remoteTestDrivers/tauto/tests/foo/baz': name must be of the form 'tests/{test}', found trailing suffix 'baz'"
+"Test 'remoteTestDrivers/tauto/tests/foo/baz/brr': name must be of the form 'tests/{test}', found trailing suffix 'baz/brr'"
 ]
