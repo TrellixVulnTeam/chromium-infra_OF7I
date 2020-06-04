@@ -7,7 +7,7 @@ syntax = "proto3";
 package fleet;
 
 // Required by protoc-gen-go
-option go_package = "infra/libs/fleet/protos/go";
+option go_package = "infra/libs/fleet/protos/go;";
 
 // Next Tag: 7
 message Location {

@@ -505,7 +505,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 			Duts: []*inventory.DeviceUnderTest{&d1},
 		})
 		So(err, ShouldBeNil)
-		dataCopy := data
+		dataCopy := proto.Clone(&data).(*ExtendedDeviceData)
 
 		Convey("empty input", func() {
 			_, err := AdaptToV1DutSpec(&ExtendedDeviceData{})
@@ -514,19 +514,19 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 		})
 		Convey("empty hwid data", func() {
 			dataCopy.HwidData = nil
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(d.GetCommon().GetHostname(), ShouldEqual, "test_host")
 		})
 		Convey("empty device config", func() {
 			dataCopy.DeviceConfig = nil
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(d.GetCommon().GetHostname(), ShouldEqual, "test_host")
 		})
 		Convey("empty manufacturing config", func() {
 			dataCopy.ManufacturingConfig = nil
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(d.GetCommon().GetHostname(), ShouldEqual, "test_host")
 		})
@@ -545,7 +545,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 
 			dataCopy.LabConfig = proto.Clone(data.LabConfig).(*lab.ChromeOSDevice)
 			dataCopy.LabConfig.GetDeviceConfigId().GetPlatformId().Value = board
-			d2, err := AdaptToV1DutSpec(&dataCopy)
+			d2, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			s2, err := inventory.WriteLabToString(&inventory.Lab{
 				Duts: []*inventory.DeviceUnderTest{d2},
@@ -554,7 +554,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 		})
 		Convey("servo_state is UNKNOWN/false by default", func() {
 			dataCopy.DutState = &lab.DutState{}
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState, ShouldEqual, inventory.PeripheralState_UNKNOWN)
 			So(*d.GetCommon().GetLabels().GetPeripherals().Servo, ShouldBeFalse)
@@ -562,7 +562,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 		Convey("servo_state is broken", func() {
 			dataCopy.DutState = &lab.DutState{}
 			dataCopy.DutState.Servo = lab.PeripheralState_BROKEN
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState,
 				ShouldEqual,
@@ -572,7 +572,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 		Convey("servo_state is wrong_config", func() {
 			dataCopy.DutState = &lab.DutState{}
 			dataCopy.DutState.Servo = lab.PeripheralState_WRONG_CONFIG
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState,
 				ShouldEqual,
@@ -582,7 +582,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 		Convey("servo_state is working", func() {
 			dataCopy.DutState = &lab.DutState{}
 			dataCopy.DutState.Servo = lab.PeripheralState_WORKING
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState,
 				ShouldEqual,
@@ -592,7 +592,7 @@ func TestAdaptToV1DutSpec(t *testing.T) {
 		Convey("servo_state is not_connected", func() {
 			dataCopy.DutState = &lab.DutState{}
 			dataCopy.DutState.Servo = lab.PeripheralState_NOT_CONNECTED
-			d, err := AdaptToV1DutSpec(&dataCopy)
+			d, err := AdaptToV1DutSpec(dataCopy)
 			So(err, ShouldBeNil)
 			So(*d.GetCommon().GetLabels().GetPeripherals().ServoState,
 				ShouldEqual,
