@@ -98,6 +98,7 @@ luci.milo(
     favicon = 'https://storage.googleapis.com/chrome-infra-public/logo/favicon.ico',
 )
 luci.cq(status_host = 'chromium-cq-status.appspot.com')
+luci.notify(tree_closing_enabled = True)
 
 
 # Global builder defaults.
