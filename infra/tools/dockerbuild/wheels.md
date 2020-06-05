@@ -3360,6 +3360,20 @@ wheel: <
 
 * *universal*
 
+## **pyperclip**
+
+### 1.8.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyperclip-py2_py3"
+  version: "version:1.8.0"
+>
+```
+
+
+* *universal*
+
 ## **pypiwin32**
 
 ### 219

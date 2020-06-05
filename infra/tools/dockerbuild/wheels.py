@@ -511,6 +511,7 @@ SPECS.update({
         UniversalSource('pylint', '1.8.4', patches=('disable-log-spam',)),
         UniversalSource('pylint', '1.9.5', patches=('disable-log-spam',)),
         UniversalSource('pylint-quotes', '0.1.8'),
+        UniversalSource('pyperclip', '1.8.0'),
         UniversalSource('requests-unixsocket', '0.1.5'),
         UniversalSource('retrying', '1.3.3'),
         UniversalSource('tlslite', '0.4.9'),
