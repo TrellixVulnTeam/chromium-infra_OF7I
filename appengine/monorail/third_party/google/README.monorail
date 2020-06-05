@@ -1,0 +1,12 @@
+Name: Google Authentication
+Short Name: google-auth
+Version: 1.16.0
+Revision: d0149bd9112926c49709066282716e5e2318264e
+Home-page: https://github.com/googleapis/google-auth-library-python
+License: Apache 2.0
+
+Local Modifications: See update.sh.
+
+How to update:
+Run update script and update this file.
+$ ./update.sh <version>
