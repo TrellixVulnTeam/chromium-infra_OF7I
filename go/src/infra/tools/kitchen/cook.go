@@ -36,8 +36,6 @@ import (
 	"go.chromium.org/luci/common/system/exitcode"
 	"go.chromium.org/luci/common/system/filesystem"
 	"go.chromium.org/luci/grpc/prpc"
-	"go.chromium.org/luci/logdog/client/annotee"
-	"go.chromium.org/luci/logdog/client/annotee/annotation"
 	"go.chromium.org/luci/logdog/client/butler"
 	"go.chromium.org/luci/logdog/client/butler/bootstrap"
 	"go.chromium.org/luci/logdog/client/butler/output"
@@ -47,6 +45,8 @@ import (
 	"go.chromium.org/luci/logdog/client/butlerlib/streamclient"
 	"go.chromium.org/luci/logdog/common/types"
 	"go.chromium.org/luci/lucictx"
+	"go.chromium.org/luci/luciexe/legacy/annotee"
+	"go.chromium.org/luci/luciexe/legacy/annotee/annotation"
 
 	"infra/libs/infraenv"
 	"infra/tools/kitchen/build"

@@ -9,10 +9,10 @@ package logdog
 import (
 	"io"
 
-	"go.chromium.org/luci/logdog/client/annotee"
 	"go.chromium.org/luci/logdog/client/butler"
 	"go.chromium.org/luci/logdog/client/butler/output"
 	"go.chromium.org/luci/logdog/common/types"
+	"go.chromium.org/luci/luciexe/legacy/annotee"
 )
 
 // Options is passed to New to configure client creation.

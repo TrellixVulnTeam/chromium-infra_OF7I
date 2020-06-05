@@ -15,14 +15,14 @@ import (
 
 	"github.com/pkg/errors"
 	"go.chromium.org/luci/auth"
-	"go.chromium.org/luci/logdog/client/annotee"
-	"go.chromium.org/luci/logdog/client/annotee/annotation"
 	"go.chromium.org/luci/logdog/client/butler"
 	"go.chromium.org/luci/logdog/client/butler/output"
 	"go.chromium.org/luci/logdog/client/butler/output/logdog"
 	"go.chromium.org/luci/logdog/client/butlerlib/streamclient"
 	"go.chromium.org/luci/logdog/common/types"
 	"go.chromium.org/luci/lucictx"
+	"go.chromium.org/luci/luciexe/legacy/annotee"
+	"go.chromium.org/luci/luciexe/legacy/annotee/annotation"
 )
 
 // New initializes a Client according to the Options.
