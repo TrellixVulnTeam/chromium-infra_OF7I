@@ -43,6 +43,8 @@ func getApplication() *cli.Application {
 			subcommands.Section("Registration"),
 			resources.MachineCmd,
 			resources.SwitchCmd,
+			subcommands.Section("Inventory"),
+			resources.MachinelseCmd,
 		},
 	}
 }
