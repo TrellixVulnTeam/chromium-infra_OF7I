@@ -107,9 +107,15 @@ var quotaAccountsForLegacyPools = map[test_platform.Request_Params_Scheduling_Ma
 
 func setQuotaAccountForLegacyPools(req *test_platform.Request) {
 	if qa, ok := quotaAccountsForLegacyPools[req.GetParams().GetScheduling().GetManagedPool()]; ok {
-		req.Params.Scheduling.Pool = &test_platform.Request_Params_Scheduling_QuotaAccount{
-			QuotaAccount: qa,
+		req.Params.Scheduling.Pool = &test_platform.Request_Params_Scheduling_ManagedPool_{
+			ManagedPool: test_platform.Request_Params_Scheduling_MANAGED_POOL_QUOTA,
 		}
+		// Newer clients will specify quota accounts overriding the legacy pool-derived values.
+		if req.Params.Scheduling.GetQsAccount() == "" {
+			req.Params.Scheduling.QsAccount = qa
+		}
+		// Quota scheduler does not support manually set priorities.
+		req.Params.Scheduling.Priority = 0
 	}
 }
 
