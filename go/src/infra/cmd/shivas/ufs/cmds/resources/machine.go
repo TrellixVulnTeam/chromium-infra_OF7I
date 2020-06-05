@@ -41,6 +41,7 @@ func (c machineApp) GetCommands() []*subcommands.Command {
 		m.AddMachineCmd,
 		m.UpdateMachineCmd,
 		m.GetMachineCmd,
+		m.ListMachineCmd,
 		m.DeleteMachineCmd,
 	}
 }
