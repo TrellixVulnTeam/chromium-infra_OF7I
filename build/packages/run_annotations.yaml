@@ -1,0 +1,20 @@
+package: infra/tools/run_annotations/${platform}
+description: A LUCI Executable converting @@@annotations@@@ to build message
+platforms:
+  - linux-386
+  - linux-amd64
+  - linux-arm64
+  - linux-armv6l
+  - linux-mipsle
+  - linux-mips64
+  - linux-mips64le
+  - mac-amd64
+  - windows-386
+  - windows-amd64
+go_packages:
+  - go.chromium.org/luci/luciexe/legacy/cmd/run_annotations
+install_mode: copy
+root: ../../go/bin
+data:
+  - file: run_annotations${exe_suffix}
+  - version_file: .versions/run_annotations${exe_suffix}.cipd_version
