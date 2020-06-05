@@ -5,6 +5,7 @@
 package ufspb
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -15,11 +16,12 @@ import (
 )
 
 // Error messages for input validation
-const (
+var (
 	NilEntity                     string = "Invalid input - No Entity to add/update."
 	EmptyID                       string = "Invalid input - Entity ID is empty."
 	EmptyName                     string = "Invalid input - Entity Name is empty."
-	InvalidCharacters             string = "Invalid input - Entity ID must contain only 4-63 characters, ASCII letters, numbers and special characters -._:"
+	ValidName                     string = "Name must contain only 4-63 characters, ASCII letters, numbers and special characters )(,_: ."
+	InvalidCharacters             string = fmt.Sprintf("%s,%s", "Invalid input -", ValidName)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
@@ -41,7 +43,8 @@ var (
 	invalidHostInMachineDBSourceStatus = status.New(codes.InvalidArgument, "Invalid argument - Host in MachineDB source is empty/invalid")
 )
 
-var idRegex = regexp.MustCompile(`^[a-zA-Z0-9-_:.]{4,63}$`)
+// IDRegex regular expression for checking resource Name/ID
+var IDRegex = regexp.MustCompile(`^[a-zA-Z0-9-)(,_: .]{4,63}$`)
 var chromePlatformRegex = regexp.MustCompile(`chromeplatforms\.*`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)
@@ -65,7 +68,7 @@ func (r *CreateChromePlatformRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -103,7 +106,7 @@ func (r *CreateMachineLSEPrototypeRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -141,7 +144,7 @@ func (r *CreateRackLSEPrototypeRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -179,7 +182,7 @@ func (r *CreateMachineRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -217,7 +220,7 @@ func (r *CreateRackRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -255,7 +258,7 @@ func (r *CreateMachineLSERequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -293,7 +296,7 @@ func (r *CreateRackLSERequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -331,7 +334,7 @@ func (r *CreateNicRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -369,7 +372,7 @@ func (r *CreateKVMRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -407,7 +410,7 @@ func (r *CreateRPMRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -445,7 +448,7 @@ func (r *CreateDracRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -483,7 +486,7 @@ func (r *CreateSwitchRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -521,7 +524,7 @@ func (r *CreateVlanRequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !idRegex.MatchString(id) {
+	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
@@ -558,7 +561,7 @@ func validateResourceName(resourceRegex *regexp.Regexp, resourceNameFormat, name
 	if !resourceRegex.MatchString(name) {
 		return status.Errorf(codes.InvalidArgument, resourceNameFormat)
 	}
-	if !idRegex.MatchString(util.RemovePrefix(name)) {
+	if !IDRegex.MatchString(util.RemovePrefix(name)) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
