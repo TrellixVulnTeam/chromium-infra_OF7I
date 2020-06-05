@@ -7,6 +7,7 @@ package resources
 import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
+	m "infra/cmd/shivas/ufs/subcmds/registration/machine"
 )
 
 type machine struct {
@@ -36,7 +37,10 @@ func (c *machine) Run(a subcommands.Application, args []string, env subcommands.
 
 // GetCommands lists all the subcommands under machine
 func (c machineApp) GetCommands() []*subcommands.Command {
-	return []*subcommands.Command{}
+	return []*subcommands.Command{
+		m.AddMachineCmd,
+		m.UpdateMachineCmd,
+	}
 }
 
 // GetName is cli.Application interface implementation
