@@ -28,6 +28,10 @@ class ProjectAlreadyExists(Error):
   """Tried to create a project that already exists."""
 
 
+class FieldDefAlreadyExists(Error):
+  """Tried to create a custom field that already exists."""
+
+
 class NoSuchProjectException(Error):
   """No project with the specified name exists."""
   pass

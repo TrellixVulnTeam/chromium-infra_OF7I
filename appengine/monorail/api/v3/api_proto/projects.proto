@@ -14,6 +14,15 @@ import "api/v3/api_proto/project_objects.proto";
 
 // Projects service includes all methods needed for managing Projects.
 service Projects {
+  // Creates a new fieldDef (custom field).
+  //
+  // Raises:
+  //   NOT_FOUND if some given users do not exist.
+  //   ALREADY_EXISTS if a field with the same name owned by the project
+  //   already exists.
+  //   INVALID_INPUT if there was a problem with the input.
+  //   PERMISSION_DENIED if the user cannot edit the project.
+  rpc CreateFieldDef (CreateFieldDefRequest) returns (FieldDef) {}
   // Returns all templates for specified project.
   //
   // Raises:
@@ -22,6 +31,18 @@ service Projects {
   rpc ListIssueTemplates (ListIssueTemplatesRequest) returns (ListIssueTemplatesResponse) {}
   // Returns all projects hosted on Monorail.
   rpc ListProjects (ListProjectsRequest) returns (ListProjectsResponse) {}
+}
+
+// Request message for CreateFieldDef method.
+// Next available tag: 3
+message CreateFieldDefRequest {
+  // The project resource where this field will be created.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "api.crbug.com/Project" }];
+  // The field to create.
+  // It must have a display_name and a type with its corresponding settings.
+  FieldDef fielddef = 2 [ (google.api.field_behavior) = REQUIRED ];
 }
 
 // Request message for ListIssueTemplates
