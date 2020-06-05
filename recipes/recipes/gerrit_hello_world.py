@@ -23,6 +23,9 @@ PLAYGROUND_REPO = 'https://chromium.googlesource.com/playground/access_test'
 def RunSteps(api):
   #TODO(crbug/1040685): remove it after testing
   api.buildbucket.hide_current_build_in_gerrit()
+  api.buildbucket.hide_current_build_in_gerrit()
+  tags = api.buildbucket.tags(k1='v1', k2=['v2', 'v2', 'v2_1'])
+  api.buildbucket.add_tags_to_current_build(tags)
 
   root_dir = api.path['tmp_base'].join('repo')
   api.file.ensure_directory('make dir', root_dir)

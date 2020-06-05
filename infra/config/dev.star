@@ -173,7 +173,7 @@ adhoc_builder(
 adhoc_builder(
     name = 'gerrit-hello-world-xenial-64',
     os = 'Ubuntu-16.04',
-    executable = infra.recipe('gerrit_hello_world', use_bbagent=False),
+    executable = infra.recipe('gerrit_hello_world', use_bbagent=True),
     schedule = 'triggered',  # triggered manually via Scheduler UI
 )
 adhoc_builder(
