@@ -40,6 +40,8 @@ func (c machineApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		m.AddMachineCmd,
 		m.UpdateMachineCmd,
+		m.GetMachineCmd,
+		m.DeleteMachineCmd,
 	}
 }
 
