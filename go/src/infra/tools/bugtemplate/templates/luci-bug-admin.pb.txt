@@ -23,6 +23,12 @@ NOTE: editing ACLs of existing CIPD prefix is responsibility of the prefix
 OWNER, which you can find via `cipd acl-list <prefix>` command, e.g.:
   $ cipd acl-list infra/tools/cpython
 
+(DO NOT DELETE) Instruction for trooper: To create a new root prefix, run the
+following `cipd` command:
+  $ cipd acl-edit <new_prefix>/ -owner group:<owning_group>
+
+After that, verify owner is set correctly by manually navigating to the new
+prefix (i.e. https://chrome-infra-packages.appspot.com/p/<new_prefix>)
 
 === Edit permissions to view LUCI BigQuery data ===
 
