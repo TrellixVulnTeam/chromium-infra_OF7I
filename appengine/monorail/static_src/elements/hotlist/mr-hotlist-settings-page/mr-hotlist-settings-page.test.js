@@ -5,9 +5,8 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
-import * as hotlists from 'reducers/hotlists.js';
+import {hotlists} from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import * as example from 'shared/test/constants-hotlists.js';
@@ -63,10 +62,6 @@ describe('mr-hotlist-settings-page (connected)', () => {
   beforeEach(() => {
     store.dispatch(resetState());
 
-    // We can't stub reducers/hotlist methods so stub prpcClient.call()
-    // instead. https://github.com/sinonjs/sinon/issues/562
-    sinon.stub(prpcClient, 'call');
-
     // @ts-ignore
     element = document.createElement('mr-hotlist-settings-page');
     document.body.appendChild(element);
@@ -78,7 +73,6 @@ describe('mr-hotlist-settings-page (connected)', () => {
   afterEach(() => {
     element.stateChanged.restore();
     document.body.removeChild(element);
-    prpcClient.call.restore();
   });
 
   it('updates page title and header', async () => {
@@ -105,15 +99,16 @@ describe('mr-hotlist-settings-page (connected)', () => {
 
     const pageStub = sinon.stub(element, 'page');
 
+    const deleteHotlist = sinon.spy(hotlists, 'deleteHotlist');
+
     try {
       await element._delete();
 
-      const args = {name: example.NAME};
-      sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v3.Hotlists', 'DeleteHotlist', args);
+      sinon.assert.calledWith(deleteHotlist, example.NAME);
       sinon.assert.calledWith(
           element.page, `/u/${exampleUsers.DISPLAY_NAME}/hotlists`);
     } finally {
+      deleteHotlist.restore();
       pageStub.restore();
       confirmStub.restore();
     }
@@ -124,17 +119,14 @@ describe('mr-hotlist-settings-page (connected)', () => {
     element._permissions = [hotlists.ADMINISTER];
     await element.updateComplete;
 
-    sinon.stub(element, '_showHotlistSavedSnackbar');
     const saveButton = element.shadowRoot.getElementById('save-hotlist');
     assert.isNotNull(saveButton);
     assert.isTrue(saveButton.hasAttribute('disabled'));
 
     const hlist = {
-      name: example.HOTLIST.name,
       displayName: element._hotlist.displayName + 'foo',
       summary: element._hotlist.summary + 'abc',
     };
-    const args = {hotlist: hlist, updateMask: 'displayName,summary'};
 
     const summaryInput = element.shadowRoot.getElementById('summary');
     /** @type {HTMLInputElement} */ (summaryInput).value += 'abc';
@@ -146,11 +138,16 @@ describe('mr-hotlist-settings-page (connected)', () => {
         new Event('change'));
     assert.isFalse(saveButton.hasAttribute('disabled'));
 
-    await element._save();
-
-    sinon.assert.calledWith(
-        prpcClient.call, 'monorail.v3.Hotlists', 'UpdateHotlist', args);
-    sinon.assert.calledOnce(element._showHotlistSavedSnackbar);
+    const snackbarStub = sinon.stub(element, '_showHotlistSavedSnackbar');
+    const update = sinon.spy(hotlists, 'update');
+    try {
+      await element._save();
+      sinon.assert.calledWith(update, example.HOTLIST.name, hlist);
+      sinon.assert.calledOnce(snackbarStub);
+    } finally {
+      update.restore();
+      snackbarStub.restore();
+    }
   });
 });
 

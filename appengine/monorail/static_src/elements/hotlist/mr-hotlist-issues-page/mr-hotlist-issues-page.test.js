@@ -5,9 +5,8 @@
 import {assert} from 'chai';
 import sinon from 'sinon';
 
-import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
-import * as hotlists from 'reducers/hotlists.js';
+import {hotlists} from 'reducers/hotlists.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 
@@ -278,36 +277,24 @@ describe('mr-hotlist-issues-page (connected)', () => {
     element._hotlist = example.HOTLIST;
     element._selected = [exampleIssues.NAME];
 
-    sinon.stub(prpcClient, 'call');
-
+    const removeItems = sinon.spy(hotlists, 'removeItems');
     try {
       element._removeItems();
-
-      // We can't stub hotlists.removeItems(), so stub prpcClient.call()
-      // instead.
-      // https://github.com/sinonjs/sinon/issues/562
-      const args = {parent: example.NAME, issues: [exampleIssues.NAME]};
-      sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v3.Hotlists', 'RemoveHotlistItems', args);
+      sinon.assert.calledWith(removeItems, example.NAME, [exampleIssues.NAME]);
     } finally {
-      prpcClient.call.restore();
+      removeItems.restore();
     }
   });
 
   it('fetches a hotlist when handling a successful save', () => {
     element._hotlist = example.HOTLIST;
-    sinon.stub(prpcClient, 'call');
 
+    const fetchItems = sinon.spy(hotlists, 'fetchItems');
     try {
       element._handleHotlistSaveSuccess();
-      // We can't stub hotlists.fetchItems(), so stub prpcClient.call()
-      // instead.
-      // https://github.com/sinonjs/sinon/issues/562
-      const args = {parent: example.NAME, orderBy: 'rank'};
-      sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v3.Hotlists', 'ListHotlistItems', args);
+      sinon.assert.calledWith(fetchItems, example.NAME);
     } finally {
-      prpcClient.call.restore();
+      fetchItems.restore();
     }
   });
 
@@ -319,23 +306,14 @@ describe('mr-hotlist-issues-page (connected)', () => {
       example.HOTLIST_ISSUE_OTHER_PROJECT,
     ];
 
-    sinon.stub(prpcClient, 'call');
-
+    const rerankItems = sinon.spy(hotlists, 'rerankItems');
     try {
       element._rerankItems([example.HOTLIST_ITEM_NAME], 1);
 
-      // We can't stub hotlists.rerankItems(), so stub prpcClient.call()
-      // instead.
-      // https://github.com/sinonjs/sinon/issues/562
-      const args = {
-        name: example.NAME,
-        hotlistItems: [example.HOTLIST_ITEM_NAME],
-        targetPosition: 2,
-      };
       sinon.assert.calledWith(
-          prpcClient.call, 'monorail.v3.Hotlists', 'RerankHotlistItems', args);
+          rerankItems, example.NAME, [example.HOTLIST_ITEM_NAME], 2);
     } finally {
-      prpcClient.call.restore();
+      rerankItems.restore();
     }
   });
 });

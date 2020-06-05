@@ -5,7 +5,7 @@
 import {html, css} from 'lit-element';
 
 import 'elements/framework/mr-warning/mr-warning.js';
-import * as hotlists from 'reducers/hotlists.js';
+import {hotlists} from 'reducers/hotlists.js';
 import {prpcClient} from 'prpc-client-instance.js';
 import {MrIssueHotlistsDialog} from './mr-issue-hotlists-dialog';
 

@@ -11,7 +11,7 @@ import {getServerStatusCron} from 'shared/cron.js';
 import 'elements/framework/mr-site-banner/mr-site-banner.js';
 import {store, connectStore} from 'reducers/base.js';
 import * as projectV0 from 'reducers/projectV0.js';
-import * as hotlists from 'reducers/hotlists.js';
+import {hotlists} from 'reducers/hotlists.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as permissions from 'reducers/permissions.js';
 import * as users from 'reducers/users.js';

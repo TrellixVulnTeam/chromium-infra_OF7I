@@ -12,7 +12,7 @@ import {issueNameToRef, issueToName, userNameToId}
 import {DEFAULT_ISSUE_FIELD_LIST} from 'shared/issue-fields.js';
 
 import {store, connectStore} from 'reducers/base.js';
-import * as hotlists from 'reducers/hotlists.js';
+import {hotlists} from 'reducers/hotlists.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';

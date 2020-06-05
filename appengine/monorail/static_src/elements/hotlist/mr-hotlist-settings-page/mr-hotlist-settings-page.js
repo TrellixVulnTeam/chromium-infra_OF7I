@@ -7,7 +7,7 @@ import {LitElement, html, css} from 'lit-element';
 import page from 'page';
 import 'shared/typedef.js';
 import {store, connectStore} from 'reducers/base.js';
-import * as hotlists from 'reducers/hotlists.js';
+import {hotlists} from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
 import * as ui from 'reducers/ui.js';
 import * as userV0 from 'reducers/userV0.js';

@@ -128,7 +128,7 @@ export const hotlistItemsReducer = createReducer({}, {
   [FETCH_ITEMS_SUCCESS]: (state, {name, items}) => ({...state, [name]: items}),
 });
 
-const requestsReducer = combineReducers({
+export const requestsReducer = combineReducers({
   deleteHotlist: createRequestReducer(
       DELETE_START, DELETE_SUCCESS, DELETE_FAILURE),
   fetch: createRequestReducer(
@@ -457,4 +457,42 @@ export const getHotlistName = async (owner, hotlist) => {
   } catch (error) {
     return null;
   };
+};
+
+export const hotlists = {
+  // Permissions
+  EDIT,
+  ADMINISTER,
+
+  // Actions
+  SELECT,
+  RECEIVE_HOTLIST,
+
+  // Reducer
+  reducer,
+
+  // Selectors
+  name,
+  byName,
+  hotlistItems,
+  viewedHotlist,
+  viewedHotlistOwner,
+  viewedHotlistEditors,
+  viewedHotlistItems,
+  viewedHotlistIssues,
+  viewedHotlistPermissions,
+  requests,
+
+  // Action creators
+  deleteHotlist,
+  fetch,
+  fetchItems,
+  removeEditors,
+  removeItems,
+  rerankItems,
+  select,
+  update,
+
+  // Helpers
+  getHotlistName,
 };

@@ -5,7 +5,7 @@
 import {connect} from 'pwa-helpers/connect-mixin.js';
 import {applyMiddleware, combineReducers, compose, createStore} from 'redux';
 import thunk from 'redux-thunk';
-import * as hotlists from './hotlists.js';
+import {hotlists} from './hotlists.js';
 import * as issueV0 from './issueV0.js';
 import * as permissions from './permissions.js';
 import * as projects from './projects.js';

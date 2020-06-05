@@ -3,10 +3,10 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
+import sinon from 'sinon';
 
-import {prpcClient} from 'prpc-client-instance.js';
 import {store, resetState} from 'reducers/base.js';
-import * as hotlists from 'reducers/hotlists.js';
+import {hotlists} from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
 
 import * as example from 'shared/test/constants-hotlists.js';
@@ -74,10 +74,6 @@ describe('mr-hotlist-people-page (connected)', () => {
   beforeEach(() => {
     store.dispatch(resetState());
 
-    // We can't stub reducers/hotlist methods so stub prpcClient.call()
-    // instead. https://github.com/sinonjs/sinon/issues/562
-    sinon.stub(prpcClient, 'call');
-
     // @ts-ignore
     element = document.createElement('mr-hotlist-people-page');
     document.body.appendChild(element);
@@ -89,7 +85,6 @@ describe('mr-hotlist-people-page (connected)', () => {
   afterEach(() => {
     element.stateChanged.restore();
     document.body.removeChild(element);
-    prpcClient.call.restore();
   });
 
   it('initializes', async () => {
@@ -109,11 +104,15 @@ describe('mr-hotlist-people-page (connected)', () => {
     element._hotlist = example.HOTLIST;
     element._editors = [exampleUsers.USER_2];
 
-    await element._removeEditor(exampleUsers.NAME_2);
+    const removeEditors = sinon.spy(hotlists, 'removeEditors');
+    try {
+      await element._removeEditor(exampleUsers.NAME_2);
 
-    const args = {name: example.NAME, editors: [exampleUsers.NAME_2]};
-    sinon.assert.calledWith(
-        prpcClient.call, 'monorail.v3.Hotlists', 'RemoveHotlistEditors', args);
+      sinon.assert.calledWith(
+          removeEditors, example.NAME, [exampleUsers.NAME_2]);
+    } finally {
+      removeEditors.restore();
+    }
   });
 });
 
