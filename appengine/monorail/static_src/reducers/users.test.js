@@ -16,10 +16,12 @@ describe('user reducers', () => {
   it('root reducer initial state', () => {
     const actual = users.reducer(undefined, {type: null});
     const expected = {
+      currentUserName: {},
       byName: {},
       projectMemberships: {},
       requests: {
         batchGet: {},
+        fetch: {},
         gatherProjectMemberships: {},
       },
     };
@@ -94,6 +96,35 @@ describe('user action creators', () => {
       await users.batchGet([example.NAME])(dispatch);
 
       const action = {type: users.BATCH_GET_FAILURE, error: sinon.match.any};
+      sinon.assert.calledWith(dispatch, action);
+    });
+  });
+
+  describe('fetch', () => {
+    it('success', async () => {
+      prpcClient.call.returns(Promise.resolve(example.USER));
+
+      await users.fetch(example.NAME)(dispatch);
+
+      sinon.assert.calledWith(dispatch, {type: users.FETCH_START});
+
+      const args = {name: example.NAME};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v3.Users', 'GetUser', args);
+
+      const fetchAction = {type: users.FETCH_SUCCESS, user: example.USER};
+      sinon.assert.calledWith(dispatch, fetchAction);
+
+      const logInAction = {type: users.LOG_IN, user: example.USER};
+      sinon.assert.calledWith(dispatch, logInAction);
+    });
+
+    it('failure', async () => {
+      prpcClient.call.throws();
+
+      await users.fetch(example.NAME)(dispatch);
+
+      const action = {type: users.FETCH_FAILURE, error: sinon.match.any};
       sinon.assert.calledWith(dispatch, action);
     });
   });

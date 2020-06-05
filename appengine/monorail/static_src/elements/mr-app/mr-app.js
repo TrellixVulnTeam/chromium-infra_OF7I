@@ -14,7 +14,8 @@ import * as projectV0 from 'reducers/projectV0.js';
 import * as hotlists from 'reducers/hotlists.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as permissions from 'reducers/permissions.js';
-import * as userV0 from 'reducers/userV0.js';
+import * as users from 'reducers/users.js';
+import * as userv0 from 'reducers/userV0.js';
 import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
 import {arrayToEnglish} from 'shared/helpers.js';
@@ -222,7 +223,11 @@ export class MrApp extends connectStore(LitElement) {
   /** @override */
   updated(changedProperties) {
     if (changedProperties.has('userDisplayName')) {
-      store.dispatch(userV0.fetch(this.userDisplayName));
+      // TODO(https://crbug.com/monorail/7238): Migrate userv0 calls to v3 API.
+      store.dispatch(userv0.fetch(this.userDisplayName));
+
+      // Typically we would prefer 'users/<userId>' instead.
+      store.dispatch(users.fetch(`users/${this.userDisplayName}`));
     }
 
     if (changedProperties.has('pageTitle')) {

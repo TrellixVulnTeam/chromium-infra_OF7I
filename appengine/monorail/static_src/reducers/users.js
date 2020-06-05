@@ -22,9 +22,15 @@ import 'shared/typedef.js';
 /** @typedef {import('redux').AnyAction} AnyAction */
 
 // Actions
+export const LOG_IN = 'user/LOG_IN';
+
 export const BATCH_GET_START = 'user/BATCH_GET_START';
 export const BATCH_GET_SUCCESS = 'user/BATCH_GET_SUCCESS';
 export const BATCH_GET_FAILURE = 'user/BATCH_GET_FAILURE';
+
+export const FETCH_START = 'user/FETCH_START';
+export const FETCH_SUCCESS = 'user/FETCH_SUCCESS';
+export const FETCH_FAILURE = 'user/FETCH_FAILURE';
 
 export const GATHER_PROJECT_MEMBERSHIPS_START =
   'user/GATHER_PROJECT_MEMBERSHIPS_START';
@@ -35,16 +41,30 @@ export const GATHER_PROJECT_MEMBERSHIPS_FAILURE =
 
 /* State Shape
 {
+  currentUserName: ?string,
+
   byName: Object<UserName, User>,
 
   requests: {
     batchGet: ReduxRequestState,
+    fetch: ReduxRequestState,
     gatherProjectMemberships: ReduxRequestState,
   },
 }
 */
 
 // Reducers
+
+/**
+ * A reference to the currently logged in user.
+ * @param {?string} state The current user name.
+ * @param {AnyAction} action
+ * @param {User} action.user The user that was logged in.
+ * @return {?string}
+ */
+export const currentUserNameReducer = createReducer({}, {
+  [LOG_IN]: (state, {user}) => ({...state, ['currentUserName']: user.name}),
+});
 
 /**
  * All User data indexed by User name.
@@ -61,6 +81,7 @@ export const byNameReducer = createReducer({}, {
     }
     return newState;
   },
+  [FETCH_SUCCESS]: (state, {user}) => ({...state, [user.name]: user}),
 });
 
 /**
@@ -90,12 +111,15 @@ export const projectMembershipsReducer = createReducer({}, {
 const requestsReducer = combineReducers({
   batchGet: createKeyedRequestReducer(
       BATCH_GET_START, BATCH_GET_SUCCESS, BATCH_GET_FAILURE),
+  fetch: createKeyedRequestReducer(
+      FETCH_START, FETCH_SUCCESS, FETCH_FAILURE),
   gatherProjectMemberships: createKeyedRequestReducer(
       GATHER_PROJECT_MEMBERSHIPS_START, GATHER_PROJECT_MEMBERSHIPS_SUCCESS,
       GATHER_PROJECT_MEMBERSHIPS_FAILURE),
 });
 
 export const reducer = combineReducers({
+  currentUserName: currentUserNameReducer,
   byName: byNameReducer,
   projectMemberships: projectMembershipsReducer,
 
@@ -103,6 +127,13 @@ export const reducer = combineReducers({
 });
 
 // Selectors
+
+/**
+ * Returns the currently logged in user name, or null if there is none.
+ * @param {any} state
+ * @return {?string}
+ */
+export const currentUserName = (state) => state.users.currentUserName;
 
 /**
  * Returns all the User data in the store as a mapping from name to User.
@@ -137,6 +168,26 @@ export const batchGet = (names) => async (dispatch) => {
   } catch (error) {
     dispatch({type: BATCH_GET_FAILURE, error});
   };
+};
+
+/**
+ * Action creator to fetch a single User object.
+ * TODO(https://crbug.com/monorail/7824): Maybe decouple LOG_IN from
+ * FETCH_SUCCESS once we move away from server-side logins.
+ * @param {UserName} name The resource name of the User to fetch.
+ * @return {function(function): Promise<void>}
+ */
+export const fetch = (name) => async (dispatch) => {
+  dispatch({type: FETCH_START});
+
+  try {
+    /** @type {User} */
+    const user = await prpcClient.call('monorail.v3.Users', 'GetUser', {name});
+    dispatch({type: FETCH_SUCCESS, user});
+    dispatch({type: LOG_IN, user});
+  } catch (error) {
+    dispatch({type: FETCH_FAILURE, error});
+  }
 };
 
 /**

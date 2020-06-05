@@ -161,6 +161,8 @@ export class MrIssueHotlistsDialog extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.userHotlists = userV0.currentUser(state).hotlists;
+    // TODO(https://crbug.com/monorail/7778): Switch to users.js and use V3 API
+    // to make a call to GatherHotlistsForUser.
   }
 
   /** @override */
