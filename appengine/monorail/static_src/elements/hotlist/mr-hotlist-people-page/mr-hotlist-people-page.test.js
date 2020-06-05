@@ -123,11 +123,3 @@ it('mr-hotlist-people-page (stateChanged)', () => {
   assert.instanceOf(element, MrHotlistPeoplePage);
   document.body.removeChild(element);
 });
-
-it('mr-hotlist-people-page (stateChanged)', () => {
-  // @ts-ignore
-  element = document.createElement('mr-hotlist-people-page');
-  document.body.appendChild(element);
-  assert.instanceOf(element, MrHotlistPeoplePage);
-  document.body.removeChild(element);
-});

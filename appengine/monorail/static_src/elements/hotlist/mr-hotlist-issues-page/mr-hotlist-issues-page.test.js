@@ -235,33 +235,24 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 describe('mr-hotlist-issues-page (connected)', () => {
   beforeEach(() => {
     store.dispatch(resetState());
+
     // @ts-ignore
     element = document.createElement('mr-hotlist-issues-page');
     element._extractFieldValuesFromIssue =
       projectV0.extractFieldValuesFromIssue({});
     document.body.appendChild(element);
+
+    // Stop Redux from overriding values being tested.
+    sinon.stub(element, 'stateChanged');
   });
 
   afterEach(() => {
+    element.stateChanged.restore();
     document.body.removeChild(element);
   });
 
   it('initializes', () => {
     assert.instanceOf(element, MrHotlistIssuesPage);
-  });
-
-  it('query string overrides hotlist default columns', () => {
-    const defaultColumns = [{column: 'Rank'}, {column: 'Summary'}];
-    const hotlist = {...example.HOTLIST, defaultColumns};
-    store.dispatch(hotlists.select(example.NAME));
-    store.dispatch({type: hotlists.RECEIVE_HOTLIST, hotlist});
-
-    assert.deepEqual(element._columns, ['Rank', 'Summary']);
-
-    const queryParams = {colspec: 'Rank ID Summary'};
-    store.dispatch(sitewide.setQueryParams(queryParams));
-
-    assert.deepEqual(element._columns, ['Rank', 'ID', 'Summary']);
   });
 
   it('updates page title and header', async () => {
@@ -316,4 +307,12 @@ describe('mr-hotlist-issues-page (connected)', () => {
       rerankItems.restore();
     }
   });
+});
+
+it('mr-hotlist-issues-page (stateChanged)', () => {
+  // @ts-ignore
+  element = document.createElement('mr-hotlist-issues-page');
+  document.body.appendChild(element);
+  assert.instanceOf(element, MrHotlistIssuesPage);
+  document.body.removeChild(element);
 });

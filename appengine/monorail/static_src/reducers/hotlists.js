@@ -27,15 +27,15 @@ import {pathsToFieldMask} from 'shared/converters.js';
 
 import * as issueV0 from './issueV0.js';
 import * as permissions from './permissions.js';
+import * as sitewide from './sitewide.js';
 import * as users from './users.js';
 
 import 'shared/typedef.js';
 /** @typedef {import('redux').AnyAction} AnyAction */
 
-/** @type {Array<IssuesListColumn>} */
+/** @type {Array<string>} */
 export const DEFAULT_COLUMNS = [
-  {column: 'Rank'}, {column: 'ID'}, {column: 'Status'}, {column: 'Owner'},
-  {column: 'Summary'}, {column: 'Modified'},
+  'Rank', 'ID', 'Status', 'Owner', 'Summary', 'Modified',
 ];
 
 // Permissions
@@ -110,7 +110,7 @@ export const nameReducer = createReducer(null, {
  */
 export const byNameReducer = createReducer({}, {
   [RECEIVE_HOTLIST]: (state, {hotlist}) => {
-    if (!hotlist.defaultColumns) hotlist.defaultColumns = DEFAULT_COLUMNS;
+    if (!hotlist.defaultColumns) hotlist.defaultColumns = [];
     if (!hotlist.editors) hotlist.editors = [];
     return {...state, [hotlist.name]: hotlist};
   },
@@ -241,6 +241,20 @@ export const viewedHotlistIssues = createSelector(
         ...item,
         adder: usersByName[item.adder],
       }));
+    });
+
+/**
+ * Returns the currently viewed Hotlist columns.
+ * @param {any} state
+ * @return {Array<string>}
+ */
+export const viewedHotlistColumns = createSelector(
+    [viewedHotlist, sitewide.currentColumns],
+    (hotlist, sitewideCurrentColumns) => {
+      if (sitewideCurrentColumns) return sitewideCurrentColumns;
+      if (!hotlist) return DEFAULT_COLUMNS;
+      if (!hotlist.defaultColumns.length) return DEFAULT_COLUMNS;
+      return hotlist.defaultColumns.map((col) => col.column);
     });
 
 /**
@@ -464,10 +478,6 @@ export const hotlists = {
   EDIT,
   ADMINISTER,
 
-  // Actions
-  SELECT,
-  RECEIVE_HOTLIST,
-
   // Reducer
   reducer,
 
@@ -480,6 +490,7 @@ export const hotlists = {
   viewedHotlistEditors,
   viewedHotlistItems,
   viewedHotlistIssues,
+  viewedHotlistColumns,
   viewedHotlistPermissions,
   requests,
 

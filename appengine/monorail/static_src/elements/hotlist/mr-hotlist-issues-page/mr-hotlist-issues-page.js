@@ -277,11 +277,7 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
     this._hotlist = hotlists.viewedHotlist(state);
     this._permissions = hotlists.viewedHotlistPermissions(state);
     this._items = hotlists.viewedHotlistIssues(state);
-
-    const hotlistColumns =
-        this._hotlist && this._hotlist.defaultColumns.map((col) => col.column);
-    this._columns = sitewide.currentColumns(state) || hotlistColumns;
-
+    this._columns = hotlists.viewedHotlistColumns(state);
     this._extractFieldValuesFromIssue =
       projectV0.extractFieldValuesFromIssue(state);
   }

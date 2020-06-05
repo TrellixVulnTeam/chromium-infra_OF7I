@@ -53,11 +53,7 @@ describe('hotlist reducers', () => {
     };
     const actual = hotlists.byNameReducer({}, action);
 
-    const hotlist = {
-      name: example.NAME,
-      defaultColumns: hotlists.DEFAULT_COLUMNS,
-      editors: [],
-    };
+    const hotlist = {name: example.NAME, defaultColumns: [], editors: []};
     assert.deepEqual(actual, {[example.NAME]: hotlist});
   });
 
@@ -211,6 +207,45 @@ describe('hotlist selectors', () => {
         users: {byName: {}},
       };
       assert.deepEqual(hotlists.viewedHotlistIssues(state), []);
+    });
+  });
+
+  describe('viewedHotlistColumns', () => {
+    it('sitewide currentColumns overrides hotlist defaultColumns', () => {
+      const state = {
+        sitewide: {queryParams: {colspec: 'Summary+ColumnName'}},
+        hotlists: {},
+      };
+      const actual = hotlists.viewedHotlistColumns(state);
+      assert.deepEqual(actual, ['Summary', 'ColumnName']);
+    });
+
+    it('uses DEFAULT_COLUMNS when no hotlist', () => {
+      const actual = hotlists.viewedHotlistColumns({hotlists: {}});
+      assert.deepEqual(actual, hotlists.DEFAULT_COLUMNS);
+    });
+
+    it('uses DEFAULT_COLUMNS when hotlist has empty defaultColumns', () => {
+      const state = {hotlists: {
+        name: example.HOTLIST.name,
+        byName: {
+          [example.HOTLIST.name]: {...example.HOTLIST, defaultColumns: []},
+        },
+      }};
+      const actual = hotlists.viewedHotlistColumns(state);
+      assert.deepEqual(actual, hotlists.DEFAULT_COLUMNS);
+    });
+
+    it('uses hotlist defaultColumns', () => {
+      const state = {hotlists: {
+        name: example.HOTLIST.name,
+        byName: {[example.HOTLIST.name]: {
+          ...example.HOTLIST,
+          defaultColumns: [{column: 'ID'}, {column: 'ColumnName'}],
+        }},
+      }};
+      const actual = hotlists.viewedHotlistColumns(state);
+      assert.deepEqual(actual, ['ID', 'ColumnName']);
     });
   });
 
