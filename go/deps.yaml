@@ -557,3 +557,6 @@ import:
 - package: github.com/google/cel-go
   version: master
   repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
+- package: github.com/protocolbuffers/txtpbfmt
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/protocolbuffers/txtpbfmt.git
