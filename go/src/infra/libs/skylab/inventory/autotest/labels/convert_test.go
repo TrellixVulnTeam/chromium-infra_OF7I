@@ -15,6 +15,10 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
+var prettyConfig = &pretty.Config{
+	TrackCycles: true,
+}
+
 const fullTextProto = `
 variant: "somevariant"
 test_coverage_hints {
@@ -202,7 +206,7 @@ func TestConvertFull(t *testing.T) {
 	sort.Sort(sort.StringSlice(got))
 	want := make([]string, len(fullLabels))
 	copy(want, fullLabels)
-	if diff := pretty.Compare(want, got); diff != "" {
+	if diff := prettyConfig.Compare(want, got); diff != "" {
 		t.Errorf("labels differ -want +got, %s", diff)
 	}
 }
@@ -229,7 +233,7 @@ func TestConvertServoStateWorking(t *testing.T) {
 			}
 			want := testCase.expectLabels
 			got := Convert(&ls)
-			if diff := pretty.Compare(want, got); diff != "" {
+			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(
 					"Convert servo_state %#v got labels differ -want +got, %s",
 					testCase.stateValue,
@@ -260,7 +264,7 @@ func TestConvertStorageState(t *testing.T) {
 			}
 			want := testCase.expectLabels
 			got := Convert(&ls)
-			if diff := pretty.Compare(want, got); diff != "" {
+			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(
 					"Convert storage_state %#v got labels differ -want +got, %s",
 					testCase.stateValue,
@@ -291,7 +295,7 @@ func TestConvertServoUSBState(t *testing.T) {
 			}
 			want := testCase.expectLabels
 			got := Convert(&ls)
-			if diff := pretty.Compare(want, got); diff != "" {
+			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(
 					"Convert servo_usb_state %#v got labels differ -want +got, %s",
 					testCase.stateValue,
@@ -321,7 +325,7 @@ func TestConvertServoTypeWorking(t *testing.T) {
 			}
 			want := testCase.expectLabels
 			got := Convert(&ls)
-			if diff := pretty.Compare(want, got); diff != "" {
+			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf(
 					"Convert servo_type %#v got labels differ -want +got, %s",
 					testCase.val,
@@ -335,7 +339,7 @@ func TestRevertEmpty(t *testing.T) {
 	t.Parallel()
 	want := inventory.NewSchedulableLabels()
 	got := Revert(nil)
-	if diff := pretty.Compare(want, *got); diff != "" {
+	if diff := prettyConfig.Compare(&want, got); diff != "" {
 		t.Errorf("labels differ -want +got, %s", diff)
 	}
 }
@@ -346,7 +350,7 @@ func TestRevertServoStateWithWrongCase(t *testing.T) {
 	*want.Peripherals.ServoState = inventory.PeripheralState_NOT_CONNECTED
 	labels := []string{"servo_state:Not_Connected"}
 	got := Revert(labels)
-	if diff := pretty.Compare(want, *got); diff != "" {
+	if diff := prettyConfig.Compare(&want, got); diff != "" {
 		t.Errorf("labels differ -want +got, %s", diff)
 	}
 }
@@ -375,7 +379,7 @@ func TestRevertServoStateWithWrongValue(t *testing.T) {
 			*want.Peripherals.ServoState = testCase.expectState
 			labels := []string{fmt.Sprintf("servo_state:%s", testCase.labelValue)}
 			got := Revert(labels)
-			if diff := pretty.Compare(want, *got); diff != "" {
+			if diff := prettyConfig.Compare(&want, got); diff != "" {
 				t.Errorf(
 					"Revert servo_state from %v made labels differ -want +got, %s",
 					testCase.labelValue,
@@ -408,7 +412,7 @@ func TestRevertServoTypeValues(t *testing.T) {
 				labels = []string{fmt.Sprintf("servo_type:%s", testCase.labelValue)}
 			}
 			got := Revert(labels)
-			if diff := pretty.Compare(want, *got); diff != "" {
+			if diff := prettyConfig.Compare(&want, got); diff != "" {
 				t.Errorf(
 					"Revert servo_type from %v made labels differ -want +got, %s",
 					testCase.labelValue,
@@ -427,7 +431,7 @@ func TestRevertFull(t *testing.T) {
 	labels := make([]string, len(fullLabels))
 	copy(labels, fullLabels)
 	got := Revert(labels)
-	if diff := pretty.Compare(want, *got); diff != "" {
+	if diff := prettyConfig.Compare(&want, got); diff != "" {
 		t.Errorf("labels differ -want +got, %s", diff)
 	}
 }
@@ -610,7 +614,7 @@ func TestRevertSpecial(t *testing.T) {
 	labels := make([]string, len(fullLabelsSpecial))
 	copy(labels, fullLabelsSpecial)
 	got := Revert(labels)
-	if diff := pretty.Compare(want, *got); diff != "" {
+	if diff := prettyConfig.Compare(&want, got); diff != "" {
 		t.Errorf("labels differ -want +got, %s", diff)
 	}
 }

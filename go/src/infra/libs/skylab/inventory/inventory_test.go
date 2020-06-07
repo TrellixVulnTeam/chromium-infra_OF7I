@@ -12,8 +12,6 @@ import (
 	"strings"
 	"testing"
 	"unicode"
-
-	"github.com/kylelemons/godebug/pretty"
 )
 
 func TestWriteAndLoadLab(t *testing.T) {
@@ -55,7 +53,7 @@ func TestWriteAndLoadLab(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if diff := pretty.Compare(lab, got); diff != "" {
+			if diff := prettyConfig.Compare(lab, got); diff != "" {
 				t.Errorf("Loaded Lab differs -want +got, %s", diff)
 			}
 		})
@@ -92,7 +90,7 @@ func TestWriteLabPythonifies(t *testing.T) {
     }
 	}`, "\n")
 	want = stripWhitespace(want)
-	if diff := pretty.Compare(want, lines); diff != "" {
+	if diff := prettyConfig.Compare(want, lines); diff != "" {
 		t.Errorf("Loaded Lab differs -want +got, %s", diff)
 	}
 }

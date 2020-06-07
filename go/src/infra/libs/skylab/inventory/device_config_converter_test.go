@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/kylelemons/godebug/pretty"
 
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 )
@@ -127,7 +126,7 @@ func TestConvertDeviceConfig(t *testing.T) {
 		t.Fatalf("error unmarshalling testing common specs: %s", err.Error())
 	}
 	ConvertDeviceConfig(allConfigs.Configs[0], &got)
-	if diff := pretty.Compare(want, got); diff != "" {
+	if diff := prettyConfig.Compare(&want, &got); diff != "" {
 		t.Errorf("device config differ -want +got, %s", diff)
 	}
 }
@@ -142,7 +141,7 @@ func TestCopyDCAmongLabels(t *testing.T) {
 		t.Fatalf("error unmarshalling testing common specs: %s", err.Error())
 	}
 	CopyDCAmongLabels(got.Labels, want.Labels)
-	if diff := pretty.Compare(want, got); diff != "" {
+	if diff := prettyConfig.Compare(&want, &got); diff != "" {
 		t.Errorf("device config differ -want +got, %s", diff)
 	}
 }
@@ -159,7 +158,7 @@ func TestCopyDCAmongEmptyLabels(t *testing.T) {
 	got.Labels.Capabilities = nil
 	got.Labels.Peripherals = nil
 	CopyDCAmongLabels(got.Labels, want.Labels)
-	if diff := pretty.Compare(want, got); diff != "" {
+	if diff := prettyConfig.Compare(&want, &got); diff != "" {
 		t.Errorf("device config differ -want +got, %s", diff)
 	}
 }
