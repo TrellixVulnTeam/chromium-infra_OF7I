@@ -408,11 +408,34 @@ message Peripherals {
 
 // copy of enum from dut_state.proto
 enum PeripheralState {
+  // Please keep for all unknown states.
   UNKNOWN = 0;
+  // Device and software on it is working as expected.
   WORKING = 1;
-  NOT_CONNECTED = 2;
-  BROKEN = 3;
+  // Configuration for device is not provided.
+  MISSING_CONFIG = 5;
+  // Configuration contains incorrect information.
   WRONG_CONFIG = 4;
+  // Device is not connected/plugged.
+  NOT_CONNECTED = 2;
+  // Device is not reachable over ssh.
+  NO_SSH = 6;
+  // Device is broken or not working as expected. the state used if no specified state for the issue.
+  BROKEN = 3;
+  // Device cannot be repaired or required manual attention to fix/replace it.
+  NEED_REPLACEMENT = 7;
+
+  // Servo specific states.
+  // Servod daemon cannot start on servo-host because cr50 testlab not enabled.
+  CCD_TESTLAB_ISSUE = 8;
+  // Servod daemon cannot start on servo-host.
+  SERVOD_ISSUE = 9;
+  // device lid is not open.
+  LID_OPEN_FAILED = 10;
+  // the ribbon cable between servo and DUT is broken or not connected.
+  BAD_RIBBON_CABLE = 11;
+  // the EC on the DUT has issue.
+  EC_BROKEN = 12;
 }
 
 // copy of enum from dut_state.proto
