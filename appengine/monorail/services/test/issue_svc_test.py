@@ -389,6 +389,49 @@ class IssueServiceTest(unittest.TestCase):
 
   ### Issue ID lookups
 
+  def testLookupIssueIDsFollowMoves(self):
+    moved_issue_id = 78901
+    moved_pair = (789, 1)
+    missing_pair = (1, 1)
+    cached_issue_id = 78902
+    cached_pair = (789, 2)
+    uncached_issue_id = 78903
+    uncached_pair = (789, 3)
+    uncached_issue_id_2 = 78904
+    uncached_pair_2 = (789, 4)
+    self.services.issue.issue_id_2lc.CacheItem(cached_pair, cached_issue_id)
+
+    # Simulate rows returned in reverse order (to verify the method still
+    # returns them in the specified order).
+    uncached_rows = [
+        (uncached_pair_2[0], uncached_pair_2[1], uncached_issue_id_2),
+        (uncached_pair[0], uncached_pair[1], uncached_issue_id)
+    ]
+    self.services.issue.issue_tbl.Select(
+        self.cnxn,
+        cols=['project_id', 'local_id', 'id'],
+        or_where_conds=True,
+        where=mox.IgnoreArg()).AndReturn(uncached_rows)
+    # Moved issue is found.
+    self.services.issue.issueformerlocations_tbl.SelectValue(
+        self.cnxn,
+        'issue_id',
+        default=0,
+        project_id=moved_pair[0],
+        local_id=moved_pair[1]).AndReturn(moved_issue_id)
+
+    self.mox.ReplayAll()
+    found_ids, misses = self.services.issue.LookupIssueIDsFollowMoves(
+        self.cnxn,
+        [moved_pair, missing_pair, cached_pair, uncached_pair, uncached_pair_2])
+    self.mox.VerifyAll()
+
+    expected_found_ids = [
+        moved_issue_id, cached_issue_id, uncached_issue_id, uncached_issue_id_2
+    ]
+    self.assertListEqual(expected_found_ids, found_ids)
+    self.assertListEqual([missing_pair], misses)
+
   def testLookupIssueIDs_Hit(self):
     self.services.issue.issue_id_2lc.CacheItem((789, 1), 78901)
     self.services.issue.issue_id_2lc.CacheItem((789, 2), 78902)

@@ -196,6 +196,22 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.InputException):
       rnc.IngestIssueName(self.cnxn, 'issues/1', self.services)
 
+  def testIngestIssueName_Moved(self):
+    """We can get a moved issue."""
+    moved_to_project_id = 987
+    self.services.project.TestAddProject(
+        'other', project_id=moved_to_project_id)
+    new_issue_id = 1010
+    issue = fake.MakeTestIssue(
+        moved_to_project_id, 200, 'sum', 'New', 111, issue_id=new_issue_id)
+    self.services.issue.TestAddIssue(issue)
+    self.services.issue.TestAddMovedIssueRef(
+        self.project_1.project_id, 404, moved_to_project_id, 200)
+
+    self.assertEqual(
+        rnc.IngestIssueName(
+            self.cnxn, 'projects/proj/issues/404', self.services), new_issue_id)
+
   def testIngestIssueNames(self):
     """We can get an Issue global ids from resource names."""
     self.assertEqual(

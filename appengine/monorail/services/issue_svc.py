@@ -558,6 +558,48 @@ class IssueService(object):
 
   ### Issue ID lookups
 
+  def LookupIssueIDsFollowMoves(self, cnxn, project_local_id_pairs):
+    # type: (MonorailConnection, Sequence[Tuple(int, int)]) ->
+    #     (Sequence[int], Sequence[Tuple(int, int)])
+    """Find the global issue IDs given the project ID and local ID of each.
+
+    If any (project_id, local_id) pairs refer to an issue that has been moved,
+    the issue ID will still be returned.
+
+    Args:
+      cnxn: Monorail connection.
+      project_local_id_pairs: (project_id, local_id) pairs to look up.
+
+    Returns:
+      A tuple of two items.
+      1. A sequence of global issue IDs in the `project_local_id_pairs` order.
+      2. A sequence of (project_id, local_id) containing each pair provided
+         for which no matching issue is found.
+    """
+
+    issue_id_dict, misses = self.issue_id_2lc.GetAll(
+        cnxn, project_local_id_pairs)
+    for miss in misses:
+      project_id, local_id = miss
+      issue_id = int(
+          self.issueformerlocations_tbl.SelectValue(
+              cnxn,
+              'issue_id',
+              default=0,
+              project_id=project_id,
+              local_id=local_id))
+      if issue_id:
+        misses.remove(miss)
+        issue_id_dict[miss] = issue_id
+    # Put the Issue IDs in the order specified by project_local_id_pairs
+    issue_ids = [
+        issue_id_dict[pair]
+        for pair in project_local_id_pairs
+        if pair in issue_id_dict
+    ]
+
+    return issue_ids, misses
+
   def LookupIssueIDs(self, cnxn, project_local_id_pairs):
     """Find the global issue IDs given the project ID and local ID of each."""
     issue_id_dict, misses = self.issue_id_2lc.GetAll(
@@ -954,6 +996,7 @@ class IssueService(object):
 
     return open_issues, closed_issues
 
+  # TODO(crbug.com/monorail/7822): Delete this method when V0 API retired.
   def GetCurrentLocationOfMovedIssue(self, cnxn, project_id, local_id):
     """Return the current location of a moved issue based on old location."""
     issue_id = int(self.issueformerlocations_tbl.SelectValue(

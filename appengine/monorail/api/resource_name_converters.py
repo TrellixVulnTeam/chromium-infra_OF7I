@@ -89,7 +89,8 @@ def _GetResourceNameMatch(name, regex):
 
 
 def _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services):
-  # (MonorailConnection, Sequence[Tuple(str, int)], Services -> Sequence[int]
+  # type: (MonorailConnection, Sequence[Tuple(str, int)], Services ->
+  #     Sequence[int]
   """Fetches issue IDs using the given project/local ID pairs."""
   # Fetch Project ids from Project names.
   project_ids_by_name = services.project.LookupProjectIDs(
@@ -105,7 +106,8 @@ def _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services):
       raise exceptions.NoSuchProjectException(
           'Project %s not found' % project_name)
 
-  issue_ids, misses = services.issue.LookupIssueIDs(cnxn, project_id_local_ids)
+  issue_ids, misses = services.issue.LookupIssueIDsFollowMoves(
+      cnxn, project_id_local_ids)
   if misses:
     raise exceptions.NoSuchIssueException('Issue(s) %r not found' % misses)
   return issue_ids

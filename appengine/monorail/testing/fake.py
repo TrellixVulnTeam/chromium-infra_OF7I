@@ -1709,6 +1709,19 @@ class IssueService(object):
 
     return hits, misses
 
+  def LookupIssueIDsFollowMoves(self, _cnxn, project_local_id_pairs):
+    hits = []
+    misses = []
+    for pair in project_local_id_pairs:
+      project_id, local_id = self.moved_issues.get(pair, pair)
+      try:
+        issue = self.issues_by_project[project_id][local_id]
+        hits.append(issue.issue_id)
+      except KeyError:
+        misses.append((project_id, local_id))
+
+    return hits, misses
+
   def LookupIssueID(self, _cnxn, project_id, local_id):
     try:
       issue = self.issues_by_project[project_id][local_id]
