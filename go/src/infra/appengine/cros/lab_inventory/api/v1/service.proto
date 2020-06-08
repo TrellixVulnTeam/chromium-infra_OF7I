@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package inventory;
 
-option go_package = "api";
+option go_package = "infra/appengine/cros/lab_inventory/api/v1;api";
 
 import "go.chromium.org/chromiumos/infra/proto/src/lab/device.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/lab/dut_state.proto";

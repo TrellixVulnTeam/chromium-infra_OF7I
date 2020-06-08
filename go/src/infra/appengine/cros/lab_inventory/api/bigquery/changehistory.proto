@@ -6,6 +6,8 @@ syntax = "proto3";
 
 package apibq;
 
+option go_package = "infra/appengine/cros/lab_inventory/api/bigquery;apibq";
+
 import "google/protobuf/timestamp.proto";
 
 message ChangeHistory{
