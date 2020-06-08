@@ -18,8 +18,9 @@ func TestIsLocation(t *testing.T) {
 			"ROW1-RACK2-HOST3",
 			"chromeos6-floor",
 			"chromeos6-rack1",
-			"prometheus-storage",
-			"storage-white",
+			"chromeos6-storage1",
+			"2081-storage1",
+			"em25-desk-stagenut",
 		}
 		for _, l := range location {
 			So(IsLocation(l), ShouldBeTrue)
