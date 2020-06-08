@@ -12,7 +12,7 @@ This is also enforced by PRESUBMIT.py script.
 load('//lib/build.star', 'build')
 load('//lib/infra.star', 'infra')
 
-lucicfg.check_version('1.14.5', 'Please update depot_tools')
+lucicfg.check_version('1.15.0', 'Please update depot_tools')
 
 # Enable luci.tree_closer.
 lucicfg.enable_experiment('crbug.com/1054172')
