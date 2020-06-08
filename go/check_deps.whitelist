@@ -23,6 +23,7 @@ github.com/google/uuid
 github.com/googleapis/gax-go
 github.com/GoogleCloudPlatform/
 github.com/pkg/errors
+github.com/protocolbuffers/txtpbfmt/
 
 # Microsoft related github packages
 github.com/microsoft/go-winio
