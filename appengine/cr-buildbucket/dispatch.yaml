@@ -15,6 +15,14 @@ dispatch:
   - url: "*/rpcexplorer/*"
     service: default-go
 
-  # GetBuild is implemented in go, so serve it from there.
+  # New services are written in Go, so serve the discovery services from there.
+  - url: "*/prpc/discovery.Discovery/*"
+    service: default-go
+
+  # Builders service is implemened in Go, so serve it from there.
+  - url: "*/prpc/buildbucket.v2.Builders/*"
+    service: default-go
+
+  # GetBuild is implemented in Go, so serve it from there.
   - url: "*/prpc/buildbucket.v2.Builds/GetBuild"
     service: default-go
