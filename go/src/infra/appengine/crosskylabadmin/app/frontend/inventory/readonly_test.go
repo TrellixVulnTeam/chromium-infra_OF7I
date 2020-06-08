@@ -30,7 +30,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/kylelemons/godebug/pretty"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
@@ -232,7 +231,7 @@ func TestListRemovedDuts(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ListRemovedDuts returned error: %s", err)
 		}
-		want := fleet.ListRemovedDutsResponse{
+		want := &fleet.ListRemovedDutsResponse{
 			Duts: []*fleet.ListRemovedDutsResponse_Dut{
 				{
 					Id:       "c7b2ae28-d597-4316-be5f-7df23c762c1e",
@@ -248,7 +247,7 @@ func TestListRemovedDuts(t *testing.T) {
 				},
 			},
 		}
-		if diff := pretty.Compare(want, resp); diff != "" {
+		if diff := prettyConfig.Compare(want, resp); diff != "" {
 			t.Errorf("Unexpected response -want +got, %s", diff)
 		}
 	})

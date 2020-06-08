@@ -58,6 +58,10 @@ import (
 	"infra/libs/skylab/inventory"
 )
 
+var prettyConfig = &pretty.Config{
+	TrackCycles: true,
+}
+
 // GerritFactory is a contsructor for a GerritClient
 type GerritFactory func(c context.Context, host string) (gerrit.GerritClient, error)
 
@@ -511,7 +515,7 @@ func UpdateDCAndCheckIfSkipLabelUpdate(ctx context.Context, req updateDutLabelsR
 	logging.Infof(ctx, "checking lables for dut ID: %s", req.dutID)
 	logging.Infof(ctx, "labels before update: %s", req.oldLabels.String())
 	logging.Infof(ctx, "labels after update: %s", req.labels.String())
-	logging.Infof(ctx, "comparison between old and new: \n%s", pretty.Compare(req.oldLabels, req.labels))
+	logging.Infof(ctx, "comparison between old and new: \n%s", prettyConfig.Compare(req.oldLabels, req.labels))
 	if req.oldLabels.String() == "" {
 		logging.Warningf(ctx, "old labels hasn't been set, won't skip update")
 		return false
