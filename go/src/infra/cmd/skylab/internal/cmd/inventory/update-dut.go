@@ -210,9 +210,10 @@ func (c *updateDutRun) triggerRedeploy(ctx context.Context, ic fleet.InventoryCl
 		OldSpecs: serializedOld,
 		NewSpecs: serializedUpdated,
 		Actions: &fleet.DutDeploymentActions{
-			StageImageToUsb:  c.stageImageToUsb(),
-			InstallFirmware:  c.installFirmware,
-			InstallTestImage: c.installOS,
+			StageImageToUsb:          c.stageImageToUsb(),
+			InstallFirmware:          c.installFirmware,
+			InstallTestImage:         c.installOS,
+			RunPreDeployVerification: true,
 		},
 		Options: &fleet.DutDeploymentOptions{
 			AssignServoPortIfMissing: true,
