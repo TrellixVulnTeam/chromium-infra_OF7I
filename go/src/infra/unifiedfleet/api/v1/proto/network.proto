@@ -11,6 +11,7 @@ option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 
 message Nic {
     option (google.api.resource) = {
@@ -24,6 +25,8 @@ message Nic {
     // Record the last update timestamp of this machine (In UTC timezone)
     google.protobuf.Timestamp update_time = 3 [
             (google.api.field_behavior) = OUTPUT_ONLY];
+
+    SwitchInterface switch_interface = 4;
 }
 
 message Vlan {

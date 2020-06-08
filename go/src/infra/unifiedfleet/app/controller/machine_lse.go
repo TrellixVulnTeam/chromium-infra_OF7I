@@ -160,7 +160,6 @@ func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error
 	machineLSEPrototypeID := machinelse.GetMachineLsePrototype()
 	vlanID := machinelse.GetChromeosMachineLse().GetServer().GetSupportedRestrictedVlan()
 	rpmID := machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().GetRpm()
-	switchID := machinelse.GetChromeosMachineLse().GetDut().GetNetworkDeviceInterface().GetSwitch()
 
 	if len(machineIDs) != 0 {
 		for _, machineID := range machineIDs {
@@ -176,9 +175,5 @@ func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error
 	if rpmID != "" {
 		resources = append(resources, GetRPMResource(rpmID))
 	}
-	if switchID != "" {
-		resources = append(resources, GetSwitchResource(switchID))
-	}
-
 	return ResourceExist(ctx, resources, &errorMsg)
 }

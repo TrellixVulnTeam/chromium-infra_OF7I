@@ -5,6 +5,12 @@
 package frontend
 
 import (
+	proto "infra/unifiedfleet/api/v1/proto"
+	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/controller"
+	"infra/unifiedfleet/app/model/configuration"
+	"infra/unifiedfleet/app/util"
+
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
 	luciconfig "go.chromium.org/luci/config"
@@ -14,11 +20,6 @@ import (
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
-	proto "infra/unifiedfleet/api/v1/proto"
-	api "infra/unifiedfleet/api/v1/rpc"
-	"infra/unifiedfleet/app/controller"
-	"infra/unifiedfleet/app/model/configuration"
-	"infra/unifiedfleet/app/util"
 )
 
 // CreateMachine creates machine entry in database.
@@ -134,10 +135,10 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	if err != nil {
 		return nil, machineDBServiceFailureStatus("ListNICs").Err()
 	}
-	_, _, _, machineToNics, machineToDracs, machineToSwitch := util.ProcessNics(nics.Nics)
+	_, _, _, machineToNics, machineToDracs := util.ProcessNics(nics.Nics)
 	logging.Debugf(ctx, "Importing %d machines", len(resp.Machines))
 	pageSize := fs.getImportPageSize()
-	machines := util.ToChromeMachines(resp.GetMachines(), machineToNics, machineToDracs, machineToSwitch)
+	machines := util.ToChromeMachines(resp.GetMachines(), machineToNics, machineToDracs)
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(machines))
 		logging.Debugf(ctx, "importing %dth - %dth", i, end-1)
@@ -353,7 +354,7 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 		return nil, machineDBServiceFailureStatus("ListMachines").Err()
 	}
 	pageSize := fs.getImportPageSize()
-	newNics, newDracs, dhcps, _, _, _ := util.ProcessNics(resp.Nics)
+	newNics, newDracs, dhcps, _, _ := util.ProcessNics(resp.Nics)
 	// Please note that the importing here is not in one transaction, which
 	// actually may cause data incompleteness. But as the importing job
 	// will be triggered periodically, such incompleteness that's caused by

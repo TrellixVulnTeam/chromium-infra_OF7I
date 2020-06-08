@@ -6,14 +6,12 @@ package registration
 
 import (
 	"context"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/machine-db/api/crimson/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -26,14 +24,13 @@ const MachineKind string = "Machine"
 
 // MachineEntity is a datastore entity that tracks Machine.
 type MachineEntity struct {
-	_kind            string `gae:"$kind,Machine"`
-	ID               string `gae:"$id"`
-	SwitchID         string `gae:"switch_id"`
-	KVMID            string `gae:"kvm_id"`
-	RPMID            string `gae:"rpm_id"`
-	NicID            string `gae:"nic_id"`
-	DracID           string `gae:"drac_id"`
-	ChromePlatformID string `gae:"chrome_platform_id"`
+	_kind            string   `gae:"$kind,Machine"`
+	ID               string   `gae:"$id"`
+	KVMID            string   `gae:"kvm_id"`
+	RPMID            string   `gae:"rpm_id"`
+	NicIDs           []string `gae:"nic_ids"`
+	DracID           string   `gae:"drac_id"`
+	ChromePlatformID string   `gae:"chrome_platform_id"`
 	// fleet.Machine cannot be directly used as it contains pointer.
 	Machine []byte `gae:",noindex"`
 }
@@ -58,10 +55,9 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntit
 	}
 	return &MachineEntity{
 		ID:               p.GetName(),
-		SwitchID:         p.GetChromeBrowserMachine().GetNetworkDeviceInterface().GetSwitch(),
 		KVMID:            p.GetChromeBrowserMachine().GetKvmInterface().GetKvm(),
 		RPMID:            p.GetChromeBrowserMachine().GetRpmInterface().GetRpm(),
-		NicID:            p.GetChromeBrowserMachine().GetNic(),
+		NicIDs:           p.GetChromeBrowserMachine().GetNics(),
 		DracID:           p.GetChromeBrowserMachine().GetDrac(),
 		ChromePlatformID: p.GetChromeBrowserMachine().GetChromePlatform(),
 		Machine:          machine,
@@ -217,46 +213,4 @@ func putAllMachine(ctx context.Context, machines []*fleet.Machine, update bool) 
 		return machines, err
 	}
 	return nil, err
-}
-
-// ToChromeMachines converts crimson machines to UFS format.
-func ToChromeMachines(old []*crimson.Machine) []*fleet.Machine {
-	newObjects := make([]*fleet.Machine, len(old))
-	for i, o := range old {
-		newObjects[i] = &fleet.Machine{
-			// Temporarily use existing display name as browser machine's name instead of serial number/assettag
-			Name:     o.Name,
-			Location: toLocation(o.Rack, o.Datacenter),
-			Device: &fleet.Machine_ChromeBrowserMachine{
-				ChromeBrowserMachine: &fleet.ChromeBrowserMachine{
-					DisplayName:    o.Name,
-					ChromePlatform: o.Platform,
-					// TODO(xixuan): add Nic, KvmInterface, RpmInterface, NetworkDeviceInterface, Drac later
-					DeploymentTicket: o.DeploymentTicket,
-				},
-			},
-		}
-	}
-	return newObjects
-}
-
-func toLocation(rack, datacenter string) *fleet.Location {
-	l := &fleet.Location{
-		Rack: rack,
-	}
-	switch strings.ToLower(datacenter) {
-	case "atl97":
-		l.Lab = fleet.Lab_LAB_DATACENTER_ATL97
-	case "iad97":
-		l.Lab = fleet.Lab_LAB_DATACENTER_IAD97
-	case "mtv96":
-		l.Lab = fleet.Lab_LAB_DATACENTER_MTV96
-	case "mtv97":
-		l.Lab = fleet.Lab_LAB_DATACENTER_MTV97
-	case "lab01":
-		l.Lab = fleet.Lab_LAB_DATACENTER_FUCHSIA
-	default:
-		l.Lab = fleet.Lab_LAB_UNSPECIFIED
-	}
-	return l
 }

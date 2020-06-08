@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"go.chromium.org/gae/service/datastore"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -156,28 +156,19 @@ func validateMachine(ctx context.Context, machine *fleet.Machine) error {
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot create Machine %s:\n", machine.Name))
 
-	kvmID := machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm()
-	rpmID := machine.GetChromeBrowserMachine().GetRpmInterface().GetRpm()
-	switchID := machine.GetChromeBrowserMachine().GetNetworkDeviceInterface().GetSwitch()
-	nicID := machine.GetChromeBrowserMachine().GetNic()
-	dracID := machine.GetChromeBrowserMachine().GetDrac()
-	chromePlatformID := machine.GetChromeBrowserMachine().GetChromePlatform()
-	if kvmID != "" {
+	if kvmID := machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm(); kvmID != "" {
 		resources = append(resources, GetKVMResource(kvmID))
 	}
-	if rpmID != "" {
+	if rpmID := machine.GetChromeBrowserMachine().GetRpmInterface().GetRpm(); rpmID != "" {
 		resources = append(resources, GetRPMResource(rpmID))
 	}
-	if switchID != "" {
-		resources = append(resources, GetSwitchResource(switchID))
+	for _, nid := range machine.GetChromeBrowserMachine().GetNics() {
+		resources = append(resources, GetNicResource(nid))
 	}
-	if nicID != "" {
-		resources = append(resources, GetNicResource(nicID))
-	}
-	if dracID != "" {
+	if dracID := machine.GetChromeBrowserMachine().GetDrac(); dracID != "" {
 		resources = append(resources, GetDracResource(dracID))
 	}
-	if chromePlatformID != "" {
+	if chromePlatformID := machine.GetChromeBrowserMachine().GetChromePlatform(); chromePlatformID != "" {
 		resources = append(resources, GetChromePlatformResource(chromePlatformID))
 	}
 

@@ -71,7 +71,7 @@ func ReplaceSwitch(ctx context.Context, oldSwitch *fleet.Switch, newSwitch *flee
 // Checks if this Switch(SwitchID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
 func validateDeleteSwitch(ctx context.Context, id string) error {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "switch_id", id, true)
+	nics, err := registration.QueryNicByPropertyName(ctx, "switch_id", id, true)
 	if err != nil {
 		return err
 	}
@@ -87,29 +87,29 @@ func validateDeleteSwitch(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	if len(machines) > 0 || len(racks) > 0 || len(dracs) > 0 || len(machinelses) > 0 {
+	if len(nics) > 0 || len(racks) > 0 || len(dracs) > 0 || len(machinelses) > 0 {
 		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Switch %s cannot be deleted because there are other resources which are referring this Switch.", id))
-		if len(machines) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the Switch:\n"))
-			for _, machine := range machines {
-				errorMsg.WriteString(machine.Name + ", ")
+		errorMsg.WriteString(fmt.Sprintf("Switch %s cannot be deleted because there are other resources which are referring to this Switch.", id))
+		if len(nics) > 0 {
+			errorMsg.WriteString(fmt.Sprintf("\nNics referring to the Switch:\n"))
+			for _, nic := range nics {
+				errorMsg.WriteString(nic.Name + ", ")
 			}
 		}
 		if len(racks) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRacks referring the Switch:\n"))
+			errorMsg.WriteString(fmt.Sprintf("\nRacks referring to the Switch:\n"))
 			for _, rack := range racks {
 				errorMsg.WriteString(rack.Name + ", ")
 			}
 		}
 		if len(dracs) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nDracs referring the Switch:\n"))
+			errorMsg.WriteString(fmt.Sprintf("\nDracs referring to the Switch:\n"))
 			for _, drac := range dracs {
 				errorMsg.WriteString(drac.Name + ", ")
 			}
 		}
 		if len(machinelses) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring the Switch:\n"))
+			errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring to the Switch:\n"))
 			for _, machinelse := range machinelses {
 				errorMsg.WriteString(machinelse.Name + ", ")
 			}

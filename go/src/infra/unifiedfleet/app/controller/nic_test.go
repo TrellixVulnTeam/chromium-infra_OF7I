@@ -35,7 +35,7 @@ func TestDeleteNic(t *testing.T) {
 				Name: "machine-1",
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						Nic: "nic-1",
+						Nics: []string{"nic-1"},
 					},
 				},
 			}

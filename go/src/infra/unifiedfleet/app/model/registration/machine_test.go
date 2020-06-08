@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+
 	proto "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
@@ -256,11 +257,8 @@ func TestQueryMachineByPropertyName(t *testing.T) {
 			Device: &proto.Machine_ChromeBrowserMachine{
 				ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 					ChromePlatform: "chromePlatform-1",
-					Nic:            "nic-1",
+					Nics:           []string{"nic-1"},
 					Drac:           "drac-1",
-					NetworkDeviceInterface: &proto.SwitchInterface{
-						Switch: "switch-1",
-					},
 					KvmInterface: &proto.KVMInterface{
 						Kvm: "kvm-1",
 					},
@@ -300,12 +298,12 @@ func TestQueryMachineByPropertyName(t *testing.T) {
 			So(resp, ShouldBeNil)
 		})
 		Convey("Query By existing Nic", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "nic_id", "nic-1", true)
+			resp, err := QueryMachineByPropertyName(ctx, "nic_ids", "nic-1", true)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machines)
 		})
 		Convey("Query By non-existing Nic", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "nic_id", "nic-2", true)
+			resp, err := QueryMachineByPropertyName(ctx, "nic_ids", "nic-2", true)
 			So(err, ShouldBeNil)
 			So(resp, ShouldBeNil)
 		})
@@ -316,16 +314,6 @@ func TestQueryMachineByPropertyName(t *testing.T) {
 		})
 		Convey("Query By non-existing Drac", func() {
 			resp, err := QueryMachineByPropertyName(ctx, "drac_id", "drac-2", true)
-			So(err, ShouldBeNil)
-			So(resp, ShouldBeNil)
-		})
-		Convey("Query By existing switch", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "switch_id", "switch-1", true)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machines)
-		})
-		Convey("Query By non-existing switch", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "switch_id", "switch-2", true)
 			So(err, ShouldBeNil)
 			So(resp, ShouldBeNil)
 		})

@@ -91,11 +91,19 @@ var testNics = []*crimson.NIC{
 		Ipv4:       "ip1.2",
 	},
 	{
+		Name:       "eth1",
+		Machine:    "machine1",
+		MacAddress: "machine1-mac3",
+		Switch:     "eq017.atl97",
+		Switchport: 3,
+		Ipv4:       "ip1.3",
+	},
+	{
 		Name:       "eth0",
 		Machine:    "machine2",
 		MacAddress: "machine2-mac1",
 		Switch:     "eq017.atl97",
-		Switchport: 3,
+		Switchport: 4,
 		Ipv4:       "ip2",
 	},
 	{

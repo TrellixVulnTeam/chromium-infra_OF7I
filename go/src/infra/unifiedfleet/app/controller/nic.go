@@ -76,7 +76,7 @@ func ReplaceNic(ctx context.Context, oldNic *fleet.Nic, newNic *fleet.Nic) (*fle
 // Checks if this Nic(NicID) is not referenced by other resources in the datastore.
 // If there are any other references, delete will be rejected and an error will be returned.
 func validateDeleteNic(ctx context.Context, id string) error {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "nic_id", id, true)
+	machines, err := registration.QueryMachineByPropertyName(ctx, "nic_ids", id, true)
 	if err != nil {
 		return err
 	}

@@ -31,19 +31,15 @@ func TestDeleteSwitch(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch1)
 
-			chromeBrowserMachine1 := &proto.Machine{
-				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						NetworkDeviceInterface: &proto.SwitchInterface{
-							Switch: "switch-1",
-						},
-					},
+			nic := &proto.Nic{
+				Name: "machine1-eth0",
+				SwitchInterface: &proto.SwitchInterface{
+					Switch: "switch-1",
 				},
 			}
-			mresp, merr := CreateMachine(ctx, chromeBrowserMachine1)
+			mresp, merr := CreateNic(ctx, nic)
 			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+			So(mresp, ShouldResembleProto, nic)
 
 			err := DeleteSwitch(ctx, "switch-1")
 			So(err, ShouldNotBeNil)

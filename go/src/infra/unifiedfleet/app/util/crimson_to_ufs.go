@@ -16,7 +16,7 @@ import (
 )
 
 // ToChromeMachines converts crimson machines to UFS format.
-func ToChromeMachines(old []*crimson.Machine, machineToNics map[string]string, machineToDracs map[string]string, machineToSwitch map[string]*fleet.SwitchInterface) []*fleet.Machine {
+func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string, machineToDracs map[string]string) []*fleet.Machine {
 	newObjects := make([]*fleet.Machine, len(old))
 	for i, o := range old {
 		newObjects[i] = &fleet.Machine{
@@ -27,12 +27,12 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string]string, m
 				ChromeBrowserMachine: &fleet.ChromeBrowserMachine{
 					// RpmInterface is not available for browser machine.
 					// KvmInterface is currently attached to rack.
-					DisplayName:            o.Name,
-					ChromePlatform:         o.Platform,
-					Nic:                    machineToNics[o.Name],
-					NetworkDeviceInterface: machineToSwitch[o.Name],
-					Drac:                   machineToDracs[o.Name],
-					DeploymentTicket:       o.DeploymentTicket,
+					// NetworkDeviceInterface is attached to the nics.
+					DisplayName:      o.Name,
+					ChromePlatform:   o.Platform,
+					Nics:             machineToNics[o.Name],
+					Drac:             machineToDracs[o.Name],
+					DeploymentTicket: o.DeploymentTicket,
 				},
 			},
 		}
@@ -133,9 +133,8 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 }
 
 // ProcessNics converts nics to several UFS formats for further importing
-func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHCPConfig, map[string]string, map[string]string, map[string]*fleet.SwitchInterface) {
-	machineToSwitch := make(map[string]*fleet.SwitchInterface, 0)
-	machineToNics := make(map[string]string, 0)
+func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHCPConfig, map[string][]string, map[string]string) {
+	machineToNics := make(map[string][]string, 0)
 	machineToDracs := make(map[string]string, 0)
 	newNics := make([]*fleet.Nic, 0)
 	newDracs := make([]*fleet.Drac, 0)
@@ -143,17 +142,6 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 	for _, nic := range nics {
 		name := getNicName(nic)
 		switch nic.GetName() {
-		case "eth0":
-			newNic := &fleet.Nic{
-				Name:       name,
-				MacAddress: nic.GetMacAddress(),
-			}
-			newNics = append(newNics, newNic)
-			machineToSwitch[nic.GetMachine()] = &fleet.SwitchInterface{
-				Switch: nic.GetSwitch(),
-				Port:   nic.GetSwitchport(),
-			}
-			machineToNics[nic.GetMachine()] = name
 		case "drac":
 			d := &fleet.Drac{
 				Name:        name,
@@ -166,6 +154,18 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 			}
 			newDracs = append(newDracs, d)
 			machineToDracs[nic.GetMachine()] = name
+		default:
+			// Multiple nic names, e.g. eth0, eth1, bmc
+			newNic := &fleet.Nic{
+				Name:       name,
+				MacAddress: nic.GetMacAddress(),
+				SwitchInterface: &fleet.SwitchInterface{
+					Switch: nic.GetSwitch(),
+					Port:   nic.GetSwitchport(),
+				},
+			}
+			newNics = append(newNics, newNic)
+			machineToNics[nic.GetMachine()] = append(machineToNics[nic.GetMachine()], name)
 		}
 		if ip := nic.GetIpv4(); ip != "" {
 			dhcps = append(dhcps, &fleet.DHCPConfig{
@@ -175,7 +175,7 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 			})
 		}
 	}
-	return newNics, newDracs, dhcps, machineToNics, machineToDracs, machineToSwitch
+	return newNics, newDracs, dhcps, machineToNics, machineToDracs
 }
 
 // ToMachineLSEs converts crimson data to UFS LSEs.

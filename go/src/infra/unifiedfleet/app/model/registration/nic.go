@@ -24,8 +24,9 @@ const NicKind string = "Nic"
 
 // NicEntity is a datastore entity that tnics Nic.
 type NicEntity struct {
-	_kind string `gae:"$kind,Nic"`
-	ID    string `gae:"$id"`
+	_kind    string `gae:"$kind,Nic"`
+	ID       string `gae:"$id"`
+	SwitchID string `gae:"switch_id"`
 	// fleet.Nic cannot be directly used as it contains pointer.
 	Nic []byte `gae:",noindex"`
 }
@@ -49,8 +50,9 @@ func newNicEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, e
 		return nil, errors.Annotate(err, "fail to marshal Nic %s", p).Err()
 	}
 	return &NicEntity{
-		ID:  p.GetName(),
-		Nic: nic,
+		ID:       p.GetName(),
+		SwitchID: p.GetSwitchInterface().GetSwitch(),
+		Nic:      nic,
 	}, nil
 }
 
@@ -71,6 +73,38 @@ func GetNic(ctx context.Context, id string) (*fleet.Nic, error) {
 		return pm.(*fleet.Nic), err
 	}
 	return nil, err
+}
+
+// QueryNicByPropertyName query's Nic Entity in the datastore
+//
+// If keysOnly is true, then only key field is populated in returned nics
+func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Nic, error) {
+	q := datastore.NewQuery(NicKind).KeysOnly(keysOnly)
+	var entities []*NicEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No nics found for the query: %s", id)
+		return nil, nil
+	}
+	nics := make([]*fleet.Nic, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			nics = append(nics, &fleet.Nic{
+				Name: entity.ID,
+			})
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			nics = append(nics, pm.(*fleet.Nic))
+		}
+	}
+	return nics, nil
 }
 
 // ListNics lists the nics

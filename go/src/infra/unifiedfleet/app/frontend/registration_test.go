@@ -439,28 +439,20 @@ func TestImportMachines(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(machines, ShouldHaveLength, 3)
 			So(parseAssets(machines, "Name"), ShouldResemble, []string{"machine1", "machine2", "machine3"})
-			browserMachines := make([]*proto.ChromeBrowserMachine, len(machines))
-			switches := make([]*proto.SwitchInterface, len(machines))
-			for i, m := range machines {
-				browserMachines[i] = m.GetChromeBrowserMachine()
-				switches[i] = m.GetChromeBrowserMachine().GetNetworkDeviceInterface()
+			for _, m := range machines {
+				bm := m.GetChromeBrowserMachine()
+				switch m.GetName() {
+				case "machine1":
+					So(bm.GetNics(), ShouldResemble, []string{"machine1-eth0", "machine1-eth1"})
+					So(bm.GetDrac(), ShouldEqual, "machine1-drac")
+				case "machine2":
+					So(bm.GetNics(), ShouldResemble, []string{"machine2-eth0"})
+					So(bm.GetDrac(), ShouldEqual, "")
+				case "machine3":
+					So(bm.GetNics(), ShouldResemble, []string{"machine3-eth0"})
+					So(bm.GetDrac(), ShouldEqual, "")
+				}
 			}
-			So(parseAssets(browserMachines, "Nic"), ShouldResemble, []string{"machine1-eth0", "machine2-eth0", "machine3-eth0"})
-			So(parseAssets(browserMachines, "Drac"), ShouldResemble, []string{"machine1-drac"})
-			So(switches, ShouldResembleProto, []*proto.SwitchInterface{
-				{
-					Switch: "eq017.atl97",
-					Port:   2,
-				},
-				{
-					Switch: "eq017.atl97",
-					Port:   3,
-				},
-				{
-					Switch: "eq041.atl97",
-					Port:   1,
-				},
-			})
 		})
 		Convey("import browser machines with empty machineDB host", func() {
 			req := &api.ImportMachinesRequest{
@@ -1098,7 +1090,7 @@ func TestDeleteNic(t *testing.T) {
 				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						Nic: "nic-1",
+						Nics: []string{"nic-1"},
 					},
 				},
 			}
@@ -1201,13 +1193,35 @@ func TestImportNics(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 			nics, _, err := registration.ListNics(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(nics, "Name"), ShouldResemble, []string{"machine1-eth0", "machine2-eth0", "machine3-eth0"})
+			So(parseAssets(nics, "Name"), ShouldResemble, []string{"machine1-eth0", "machine1-eth1", "machine2-eth0", "machine3-eth0"})
+			switches := make([]*proto.SwitchInterface, len(nics))
+			for i, nic := range nics {
+				switches[i] = nic.GetSwitchInterface()
+			}
+			So(switches, ShouldResembleProto, []*proto.SwitchInterface{
+				{
+					Switch: "eq017.atl97",
+					Port:   2,
+				},
+				{
+					Switch: "eq017.atl97",
+					Port:   3,
+				},
+				{
+					Switch: "eq017.atl97",
+					Port:   4,
+				},
+				{
+					Switch: "eq041.atl97",
+					Port:   1,
+				},
+			})
 			dracs, _, err := registration.ListDracs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(parseAssets(dracs, "Name"), ShouldResemble, []string{"machine1-drac"})
 			dhcps, _, err := configuration.ListDHCPConfigs(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(dhcps, "Ip"), ShouldResemble, []string{"ip1.1", "ip1.2", "ip2", "ip3"})
+			So(parseAssets(dhcps, "Ip"), ShouldResemble, []string{"ip1.1", "ip1.2", "ip1.3", "ip2", "ip3"})
 		})
 		// Invalid & Empty machines DB hosts are tested in TestImportMachines
 		// Skip testing here
@@ -2626,23 +2640,19 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch1)
 
-			chromeBrowserMachine1 := &proto.Machine{
-				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						NetworkDeviceInterface: &proto.SwitchInterface{
-							Switch: "switch-1",
-						},
-					},
+			nic := &proto.Nic{
+				Name: "machine1-eth0",
+				SwitchInterface: &proto.SwitchInterface{
+					Switch: "switch-1",
 				},
 			}
-			mreq := &api.CreateMachineRequest{
-				Machine:   chromeBrowserMachine1,
-				MachineId: "machine-1",
+			mreq := &api.CreateNicRequest{
+				Nic:   nic,
+				NicId: nic.Name,
 			}
-			mresp, merr := tf.Fleet.CreateMachine(tf.C, mreq)
+			mresp, merr := tf.Fleet.CreateNic(tf.C, mreq)
 			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+			So(mresp, ShouldResembleProto, nic)
 
 			dreq := &api.DeleteSwitchRequest{
 				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),

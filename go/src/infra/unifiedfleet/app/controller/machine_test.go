@@ -42,11 +42,8 @@ func TestCreateMachine(t *testing.T) {
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-3",
-						Nic:            "nic-3",
+						Nics:           []string{"nic-3"},
 						Drac:           "drac-3",
-						NetworkDeviceInterface: &proto.SwitchInterface{
-							Switch: "switch-3",
-						},
 						KvmInterface: &proto.KVMInterface{
 							Kvm: "kvm-3",
 						},
@@ -72,6 +69,9 @@ func TestCreateMachine(t *testing.T) {
 
 			nic2 := &proto.Nic{
 				Name: "nic-2",
+				SwitchInterface: &proto.SwitchInterface{
+					Switch: "switch-2",
+				},
 			}
 			nresp, err := registration.CreateNic(ctx, nic2)
 			So(err, ShouldBeNil)
@@ -110,11 +110,8 @@ func TestCreateMachine(t *testing.T) {
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-2",
-						Nic:            "nic-2",
+						Nics:           []string{"nic-2"},
 						Drac:           "drac-2",
-						NetworkDeviceInterface: &proto.SwitchInterface{
-							Switch: "switch-2",
-						},
 						KvmInterface: &proto.KVMInterface{
 							Kvm: "kvm-2",
 						},
