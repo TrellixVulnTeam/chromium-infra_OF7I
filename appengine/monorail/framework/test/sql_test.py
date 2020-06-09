@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import logging
 import mock
 import time
 import unittest
@@ -617,6 +618,14 @@ class StatementTest(unittest.TestCase):
         'SELECT emp_id, fulltime FROM Employee',
         stmt_str)
     self.assertEqual([], args)
+
+  def testAddWhereTerms_EmptyArray(self):
+    """Add empty array should throw an exception."""
+    stmt = sql.Statement.MakeUpdate('SpamVerdict', {'user_id': 1})
+    # See https://crbug.com/monorail/6735.
+    with mock.patch.object(logging, 'error') as mock_log:
+      stmt.AddWhereTerms([], user_id=[])
+      mock_log.assert_called_once_with('Empty array value for %r', 'user_id')
 
   def testAddWhereTerms_MulitpleTerms(self):
     stmt = sql.Statement.MakeSelect('Employee', ['emp_id', 'fulltime'])

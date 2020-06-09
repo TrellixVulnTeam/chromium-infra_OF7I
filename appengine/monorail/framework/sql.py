@@ -735,6 +735,8 @@ class Statement(object):
         val = list(val)  # MySQL inteface cannot handle sets.
 
       if val is None or val == []:
+        if val == []:
+          logging.error('Empty array value for %r', col)
         op = 'IS' if eq else 'IS NOT'
         self.where_conds.append(col + ' ' + op + ' NULL')
       elif isinstance(val, list):
