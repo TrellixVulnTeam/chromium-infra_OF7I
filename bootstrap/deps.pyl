@@ -1,6 +1,12 @@
 # See README.md, there is a section about this file.
 #vim: ft=python:
 {
+  # 'wheel' is needed by build_deps.py.
+  'wheel': {
+    'version': '0.24.0',
+    'build': '0',
+    'gs': 'c02262299489646af253067e8136c060a93572e3.tar.gz',
+  },
   'argcomplete': {
     'version': '0.8.0',
     'build': '0',
@@ -163,9 +169,10 @@
     'rev': '496f40dca9a47c0f1dfe0cd841256485708c8442',
   },
   'protobuf': {
-    'version': '3.6.1',
+    # See also custom_builds/protobuf.py.
+    'version': '3.12.1',
     'build': '0',
-    'gs': '34e4719103d0979fa157e5d3a7574c7d99df9085.tar.gz',
+    'gs': 'e191796cf26b6da159154103a57bc0f970ad509f.tar.gz',
   },
   'pyasn1': {
     'version': '0.1.7',

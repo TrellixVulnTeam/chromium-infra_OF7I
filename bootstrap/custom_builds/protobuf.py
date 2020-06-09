@@ -7,16 +7,26 @@ import subprocess
 import sys
 
 
-def Build(source_path, wheelhouse_path):
-  # First, have to compile the protoc executable. Note that this
-  # 1) only runs on unix-like systems, and
-  # 2) requires autoconf and libtool to be installed (e.g. via apt-get).
-  subprocess.check_call(['./autogen.sh'], cwd=source_path)
-  subprocess.check_call(['./configure'], cwd=source_path)
-  subprocess.check_call(['make'], cwd=source_path)
+# Should match protobuf lib version in deps.pyl.
+PROTOC_VERSION = '3.12.1'
 
-  # Now that we have <source_path>/src/protoc, we can build the python package.
+
+def Build(source_path, wheelhouse_path):
+  # Need a protoc of the same version in PATH already. Use `go/env.py` to grab
+  # it from CIPD.
+  ver = ''
+  try:
+    ver = subprocess.check_output(['protoc', '--version']).strip()
+  except OSError:
+    pass
+  if ver != 'libprotoc %s' % PROTOC_VERSION:
+    raise ValueError('Need protoc v%s in PATH' % PROTOC_VERSION)
+
+  # This uses protoc in PATH to compile *.proto.
   cwd = os.path.join(source_path, 'python')
   subprocess.check_call(
-      ['python', 'setup.py', 'bdist_wheel', '--dist-dir', wheelhouse_path],
+      [
+          'python', 'setup.py', 'bdist_wheel', '--universal',
+          '--dist-dir', wheelhouse_path,
+      ],
       cwd=cwd)
