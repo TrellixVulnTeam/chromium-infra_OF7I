@@ -9,9 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kylelemons/godebug/pretty"
-
 	"infra/cmd/skylab_swarming_worker/internal/lucifer"
+	"infra/cmd/skylab_swarming_worker/internal/pretty"
 )
 
 func TestInfo_LuciferConfig(t *testing.T) {
@@ -21,11 +20,11 @@ func TestInfo_LuciferConfig(t *testing.T) {
 		LuciferBinDir: "/opt/lucifer",
 	}
 	got := b.LuciferConfig()
-	want := lucifer.Config{
+	want := &lucifer.Config{
 		AutotestPath: "/usr/local/autotest",
 		BinDir:       "/opt/lucifer",
 	}
-	if diff := pretty.Compare(want, got); diff != "" {
+	if diff := pretty.PrettyConfig.Compare(want, &got); diff != "" {
 		t.Errorf("LuciferConfig() differs -want +got:\n %s", diff)
 	}
 }

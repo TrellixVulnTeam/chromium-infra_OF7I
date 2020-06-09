@@ -14,12 +14,12 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/retry"
 
 	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/cmd/skylab_swarming_worker/internal/pretty"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/libs/skylab/inventory"
 )
@@ -166,7 +166,7 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc,
 		return nil, errors.Annotate(err, "load DUT host info").Err()
 	}
 
-	log.Printf("Comparison between V1 & V2: \n%s", pretty.Compare(dutV2, &d))
+	log.Printf("Comparison between V1 & V2: \n%s", pretty.PrettyConfig.Compare(dutV2, &d))
 	// TODO(gregorynisbet): should failure to get the stableversion information
 	// cause the entire request to error out?
 	hostname := d.GetCommon().GetHostname()
