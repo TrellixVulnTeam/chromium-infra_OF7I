@@ -14,8 +14,15 @@ import "api/v3/api_proto/project_objects.proto";
 
 service Frontend {
   // Returns all project specific configurations needed for the SPA client.
+  //
+  // Raises:
+  //   INVALID_ARGUMENT if the project resource name provided is invalid.
+  //   NOT_FOUND if the parent project is not found.
+  //   PERMISSION_DENIED if user is not allowed to view this project.
   rpc GatherProjectEnvironment (GatherProjectEnvironmentRequest) returns (GatherProjectEnvironmentResponse) {};
+
   // Returns all of a given user's project memberships.
+  //
   // Raises:
   //   NOT_FOUND if the user is not found.
   //   INVALID_ARGUMENT if the user resource name provided is invalid.
