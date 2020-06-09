@@ -35,8 +35,17 @@ func InitServer(srv *server.Server, opts Options) {
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
-	//cron.Run(ctx, minInterval, importCrimson)
-	cron.Run(ctx, minInterval, dumpToBQ)
+	cron.Run(ctx, minInterval, dump)
+}
+
+func dump(ctx context.Context) error {
+	// Execute importing before dumping
+	err1 := importCrimson(ctx)
+	err2 := dumpToBQ(ctx)
+	if err1 == nil && err2 == nil {
+		return nil
+	}
+	return errors.NewMultiError(err1, err2)
 }
 
 func dumpToBQ(ctx context.Context) (err error) {
