@@ -114,13 +114,11 @@ class MonorailServicerTest(unittest.TestCase):
         cache_manager=fake.CacheManager())
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, owner_ids=[111])
-    # whitelisted_bot's email is whitelisted in testing/api_clients.cfg.
-    self.whitelisted_bot = self.services.user.TestAddUser(
-        '123456789@developer.gserviceaccount.com', 999)
-    # whitelisted_client_id_user is used to test accounts that are only
-    # whitelisted with the client_id.
+    # whitelisted_client_id_user's client_id is whitelisted in
+    # testing/api_clients.cfg
     self.whitelisted_client_id_user = self.services.user.TestAddUser(
         'whitelisted-with-client-id@developer.gserviceaccount.com', 888)
+    self.whitelisted_client_id = '98723764876'
     self.non_member = self.services.user.TestAddUser(
         'nonmember@example.com', 222)
     self.allowed_domain_user = self.services.user.TestAddUser(
@@ -133,22 +131,6 @@ class MonorailServicerTest(unittest.TestCase):
     self.prpc_context.set_code(codes.StatusCode.OK)
     self.prpc_context._invocation_metadata = [
         (monorail_servicer.XSRF_TOKEN_HEADER, self.nonmember_token)]
-
-    self.oauth_patcher = mock.patch(
-        'google.appengine.api.oauth.get_current_user')
-    self.mock_oauth_gcu = self.oauth_patcher.start()
-    self.mock_oauth_gcu.return_value = None
-
-    self.oauth_client_id_patcher = mock.patch(
-        'google.appengine.api.oauth.get_client_id')
-    self.mock_oauth_gcid = self.oauth_client_id_patcher.start()
-    self.mock_oauth_gcid.return_value = "1234common.clientid"
-
-    # TODO(b/144508063): remove this workaround.
-    self.oauth_authorized_scopes_patcher = mock.patch(
-        'google.appengine.api.oauth.get_authorized_scopes')
-    self.mock_oauth_gas = self.oauth_authorized_scopes_patcher.start()
-    self.mock_oauth_gas.return_value = [framework_constants.MONORAIL_SCOPE]
 
   def tearDown(self):
     self.mox.UnsetStubs()
@@ -273,70 +255,80 @@ class MonorailServicerTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
-  def testGetAndAssertRequester_Oauth_AllowedDomain_NoMonorailScope(self):
-    """We reject users with allowed domains but no monorail scope."""
-    metadata = {}
-    self.mock_oauth_gcu.return_value = None
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_Oauth_Whitelisted(self, mock_verifier):
+    """We allow requests from whitelisted clients."""
+    metadata = {'authorization': 'Bearer whitelisted-user-id-token'}
 
-    with self.assertRaises(permissions.PermissionException):
-      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
-
-  def testGetAndAssertRequester_Oauth_BadDomain_MonorailScope(self):
-    """We reject users with bad domains using the monorail scope."""
-    metadata = {}
-    def side_effect(scope=None):
-      if scope == framework_constants.MONORAIL_SCOPE:
-        return testing_helpers.Blank(
-            email=lambda: 'testchicken@chicken.com', client_id=lambda: 7899)
-      return None
-    self.mock_oauth_gcu.side_effect = side_effect
-
-    with self.assertRaises(permissions.PermissionException):
-      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
-
-  def testGetAndAssertRequester_Oauth_AllowedDomain_MonorailScope(self):
-    """We get and allow users with allowed domains using the monorail scope."""
-    metadata = {}
-    def side_effect(scope=None):
-      if scope == framework_constants.MONORAIL_SCOPE:
-        return testing_helpers.Blank(
-            email=lambda: self.allowed_domain_user.email,
-            client_id=lambda: 7899)
-      return None
-    self.mock_oauth_gcu.side_effect = side_effect
-
-    user_auth = self.svcr.GetAndAssertRequesterAuth(
-        self.cnxn, metadata, self.services)
-    self.assertEqual(user_auth.email, self.allowed_domain_user.email)
-
-  def testGetAndAssertRequesterAuth_Oauth_Whitelisted(self):
-    metadata = {}
     # Signed in with oauth.
-    self.mock_oauth_gcu.return_value = testing_helpers.Blank(
-        email=lambda: self.whitelisted_bot.email)
+    mock_verifier.return_value = {
+        'aud': self.whitelisted_client_id,
+        'email': self.whitelisted_client_id_user.email,
+        }
 
     bot_auth = self.svcr.GetAndAssertRequesterAuth(
         self.cnxn, metadata, self.services)
-    self.assertEqual(bot_auth.email, self.whitelisted_bot.email)
+    self.assertEqual(bot_auth.email, self.whitelisted_client_id_user.email)
 
-  def testGetAndAssertRequesterAuth_Oauth_NotWhitelisted(self):
-    metadata = {}
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_Oauth_CaseInsensitiveBearer(
+      self, mock_verifier):
+    """We are case-insensitive when looking for the 'bearer' string."""
+    metadata = {'authorization': 'beaReR whitelisted-user-id-token'}
+
     # Signed in with oauth.
-    self.mock_oauth_gcu.return_value = testing_helpers.Blank(
-        email=lambda: 'who-is-this@test.com')
+    mock_verifier.return_value = {
+        'aud': self.whitelisted_client_id,
+        'email': self.whitelisted_client_id_user.email,
+        }
+
+    self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services)
+    mock_verifier.assert_called_once_with('whitelisted-user-id-token', mock.ANY)
+
+  def testGetAndAssertRequesterAuth_Oauth_InvalidAuthToken(self):
+    """We raise an exception if 'bearer' is missing from headers."""
+    metadata = {'authorization': 'whitelisted-user-id-token'}
 
     with self.assertRaises(permissions.PermissionException):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
-  def testGetAndAssertRequesterAuth_Oauth_ClientIDOnly(self):
-    """We get and allow accounts that only have their client_id whitelisted."""
-    metadata = {}
-    self.mock_oauth_gcu.return_value = testing_helpers.Blank(
-        email=lambda: self.whitelisted_client_id_user.email)
-    self.mock_oauth_gcid.return_value = "98723764876"
-    both_auth = self.svcr.GetAndAssertRequesterAuth(
-        self.cnxn, metadata, self.services)
-    self.assertEqual(both_auth.email, self.whitelisted_client_id_user.email)
+
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_Oauth_NotWhitelisted(self, mock_verifier):
+    """We raise an exception if ID token is valid but user is not whitelisted"""
+    metadata = {'authorization': 'Bearer non-whitelisted-user-id-token'}
+
+    # Signed in with oauth.
+    mock_verifier.return_value = {
+        'aud': 'not-whitelisted-client-id.apps.googleusercontent.com',
+        'email': 'bigbadwolf@grandmashouse.com',
+        }
+
+    with self.assertRaises(permissions.PermissionException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_Oauth_NoEmail(self, mock_verifier):
+    """We raise an exception if ID token has no email information."""
+    metadata = {'authorization': 'Bearer whitelisted-user-id-token'}
+
+    # Signed in with oauth.
+    mock_verifier.return_value = {
+        'aud': self.whitelisted_client_id}
+
+    with self.assertRaises(permissions.PermissionException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_Oauth_InvalidIDToken(self, mock_verifier):
+    """We raise an exception if the ID token is invalid."""
+    metadata = {'authorization': 'Bearer bad-token'}
+
+    mock_verifier.side_effect = ValueError()
+
+    with self.assertRaises(permissions.PermissionException):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
   def testGetAndAssertRequesterAuth_Banned(self):
     self.non_member.banned = 'Spammer'

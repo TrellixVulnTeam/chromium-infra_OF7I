@@ -10,10 +10,15 @@ from __future__ import absolute_import
 import cgi
 import functools
 import logging
-import sys
 import time
-from google.appengine.api import oauth
+import sys
 
+from third_party.google.oauth2 import id_token
+# requests must be imported here to use google.auth.transport.requests
+from third_party import requests
+from third_party.google.auth.transport import requests as google_requests
+
+from google.appengine.api import oauth
 from google.appengine.api import users
 from google.protobuf import json_format
 from components.prpc import codes
@@ -140,40 +145,51 @@ class MonorailServicer(object):
 
     return response
 
-  def _GetAllowedEmailDomainAuth(self, cnxn, services):
-    """Checks if the requester's email is found in api_allowed_email_domains
-       and is authorized by the custom monorail scope.
+  def CheckIDToken(self, cnxn, metadata):
+    # type: (MonorailConnection, Mapping[str, str]) -> Optional[AuthData]
+    """Authenticate user from an ID token.
 
     Args:
       cnxn: connection to the SQL database.
-      services: connections to backend services.
+      metadata: metadata sent by the client.
 
     Returns:
-      A new AuthData object if the method determines the requester is allowed
-      to access the API, otherwise, None.
+      A new AuthData object representing the user making the request or
+      None if no bearer token was found in the headers.
+
+    Raises:
+      permissions.PermissionException: If the token is invalid, the client ID
+        is not whitelisted, or no user email was found in the ID token.
     """
+    bearer = metadata.get('authorization')
+    if not bearer:
+      return None
+    if bearer.lower().startswith('bearer '):
+      token = bearer[7:]
+    else:
+      raise permissions.PermissionException('Invalid authorization token.')
+    # TODO(crbug.com/monorail/7724): Use cachecontrol module to cache
+    # certification used for verification.
+    request = google_requests.Request()
+
     try:
-      # Note: get_current_user(scopes) returns the User with the User's email.
-      # So, in addition to requesting any scope listed in 'scopes', it also
-      # always requests the email scope.
-      monorail_scope_user = oauth.get_current_user(
-          framework_constants.MONORAIL_SCOPE)
-      logging.info('monorail scope user %r', monorail_scope_user)
-      # TODO(b/144508063): remove this workaround.
-      authorized_scopes = oauth.get_authorized_scopes(
-          framework_constants.MONORAIL_SCOPE)
-      if framework_constants.MONORAIL_SCOPE not in authorized_scopes:
-        raise oauth.Error('Work around for b/144508063')
-      logging.info(authorized_scopes)
-      if (monorail_scope_user and monorail_scope_user.email().endswith(
-          settings.api_allowed_email_domains)):
-        logging.info('User %r authenticated with Oauth and monorail',
-                     monorail_scope_user.email())
-        return authdata.AuthData.FromEmail(
-            cnxn, monorail_scope_user.email(), services)
-    except oauth.Error as ex:
-      logging.info('oauth.Error for monorail scope: %s' % ex)
-    return None
+      id_info = id_token.verify_oauth2_token(token, request)
+      logging.info('ID token info: %r' % id_info)
+    except ValueError:
+      raise permissions.PermissionException(
+          'Invalid bearer token.')
+
+    auth_client_ids, _auth_email = (
+        client_config_svc.GetClientConfigSvc().GetClientIDEmails())
+    if id_info['aud']  not in auth_client_ids:
+      raise permissions.PermissionException(
+          'client ID %s not whitelisted' % id_info['aud'])
+    email = id_info.get('email')
+    if not email:
+      raise permissions.PermissionException(
+          'No email found in token info. '
+          'Make sure requests are made with scopes `openid` and `email`')
+    return authdata.AuthData.FromEmail(cnxn, email, self.services)
 
   def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
     """Gets the requester identity and checks if the user has permission
@@ -215,26 +231,9 @@ class MonorailServicer(object):
       logging.info('Using test_account: %r' % test_account)
       requester_auth = authdata.AuthData.FromEmail(cnxn, test_account, services)
 
-    # Oauth for users with email domains in api_allowed_email_domains.
+    # Oauth2 ID token auth.
     if not requester_auth:
-      requester_auth = self._GetAllowedEmailDomainAuth(cnxn, services)
-
-    # Oauth for whitelisted users
-    if not requester_auth:
-      try:
-        client_id = oauth.get_client_id(framework_constants.OAUTH_SCOPE)
-        user = oauth.get_current_user(framework_constants.OAUTH_SCOPE)
-        if user:
-          auth_client_ids, auth_emails = (
-              client_config_svc.GetClientConfigSvc().GetClientIDEmails())
-          logging.info('Oauth requester %s', user.email())
-          # Check if email or client_id is whitelisted
-          if (user.email() in auth_emails) or (client_id in auth_client_ids):
-            logging.info('Client %r is whitelisted', user.email())
-            requester_auth = authdata.AuthData.FromEmail(
-                cnxn, user.email(), services)
-      except oauth.Error as ex:
-        logging.info('Got oauth error: %r', ex)
+      requester_auth = self.CheckIDToken(cnxn, metadata)
 
     # Cookie-based auth for signed in and anonymous users.
     if not requester_auth:

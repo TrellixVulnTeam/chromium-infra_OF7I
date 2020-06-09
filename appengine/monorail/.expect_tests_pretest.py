@@ -35,6 +35,15 @@ SDK_LIBRARY_PATHS = [
 ]
 sys.path.extend(SDK_LIBRARY_PATHS)
 
+# Add monorail/third_party/ to sys.path before any paths of
+# pretest_APPENGINE_ENV_PATH, so modules in third_party are used
+# in imports instead of modules found in google_appengine, which
+# may be very outdated.
+# See doc linked in crbug.com/monorail/7724 for more info.
+pretest_THIRD_PARTY = os.path.abspath('appengine/monorail/third_party')
+sys.path.insert(0, pretest_THIRD_PARTY)
+
+
 os.environ['SERVER_SOFTWARE'] = 'test ' + os.environ.get('SERVER_SOFTWARE', '')
 os.environ['CURRENT_VERSION_ID'] = 'test.123'
 os.environ.setdefault('NO_GCE_CHECK', 'True')
