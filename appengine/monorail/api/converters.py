@@ -548,8 +548,10 @@ def IngestUserRefs(cnxn, user_refs, user_service, autocreate=False):
   # 3. Build the result from emails_to_ids or straight from user_ref's
   # user_id.
   # Note: user_id can be specified as 0 to clear the issue owner.
-  result = [emails_to_ids.get(user_ref.display_name, user_ref.user_id)
-            for user_ref in user_refs]
+  result = [
+      emails_to_ids.get(user_ref.display_name.lower(), user_ref.user_id)
+      for user_ref in user_refs
+  ]
   return result
 
 

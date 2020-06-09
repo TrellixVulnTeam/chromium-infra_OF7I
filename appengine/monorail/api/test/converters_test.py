@@ -1170,6 +1170,13 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.cnxn, [ref1, ref2, ref3], self.services.user)
     self.assertEqual([111, 222, 333], actual)
 
+  def testIngestUserRefs_UppercaseEmail(self):
+    """Request can include uppercase letters in email"""
+    self.services.user.TestAddUser('user1@example.com', 111)
+    ref = common_pb2.UserRef(display_name='USER1@example.com')
+    actual = converters.IngestUserRefs(self.cnxn, [ref], self.services.user)
+    self.assertEqual([111], actual)
+
   def testIngestPrefValues(self):
     """We can convert a list of UserPrefValues from protoc to protorpc."""
     self.assertEqual(
