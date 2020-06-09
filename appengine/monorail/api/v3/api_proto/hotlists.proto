@@ -135,7 +135,7 @@ message ListHotlistItemsRequest {
   // The parent hotlist, which owns this collection of items.
   string parent = 1 [
       (google.api.field_behavior) = REQUIRED,
-      (google.api.resource_reference) = {child_type: "api.crbug.com/HotlistItem"} ];
+      (google.api.resource_reference) = {type: "api.crbug.com/Hotlist"} ];
   // The maximum number of items to return. The service may return fewer than
   // this value.
   // If unspecified, at most 1000 items will be returned.

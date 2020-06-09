@@ -29,7 +29,7 @@ class PermissionsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def BatchGetPermissionSets(self, mc, request):
-    # type: (MonorailConnection, BatchGetPermissionSetsRequest) ->
+    # type: (MonorailContext, BatchGetPermissionSetsRequest) ->
     # BatchGetPermissionSetsResponse
     """pRPC API method that implements BatchGetPermissionSets.
 

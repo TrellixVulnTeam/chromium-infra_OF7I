@@ -31,7 +31,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListHotlistItems(self, mc, request):
-    # type: (MonorailConnection, ListHotlistItemsRequest) ->
+    # type: (MonorailContext, ListHotlistItemsRequest) ->
     #     ListHotlistItemsResponse
     """pRPC API method that implements ListHotlistItems.
 
@@ -69,7 +69,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def RerankHotlistItems(self, mc, request):
-    # type: (MonorailConnection, RerankHotlistItemsRequest) -> Empty
+    # type: (MonorailContext, RerankHotlistItemsRequest) -> Empty
     """pRPC API method that implements RerankHotlistItems.
 
     Raises:
@@ -92,7 +92,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def RemoveHotlistItems(self, mc, request):
-    # type: (MonorailConnection, RemoveHotlistItemsRequest) -> Empty
+    # type: (MonorailContext, RemoveHotlistItemsRequest) -> Empty
     """pPRC API method that implements RemoveHotlistItems.
 
     Raises:
@@ -113,7 +113,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def AddHotlistItems(self, mc, request):
-    # type: (MonorailConnection, AddHotlistItemsRequest) -> Empty
+    # type: (MonorailContext, AddHotlistItemsRequest) -> Empty
     """pRPC API method that implements AddHotlistItems.
 
     Raises:
@@ -133,7 +133,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def RemoveHotlistEditors(self, mc, request):
-    # type: (MonorailConnection, RemoveHotlistEditorsRequest) -> Empty
+    # type: (MonorailContext, RemoveHotlistEditorsRequest) -> Empty
     """pPRC API method that implements RemoveHotlistEditors.
 
     Raises:
@@ -143,7 +143,8 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     """
 
     hotlist_id = rnc.IngestHotlistName(request.name)
-    remove_user_ids = rnc.IngestUserNames(mc, request.editors, self.services)
+    remove_user_ids = rnc.IngestUserNames(
+        mc.cnxn, request.editors, self.services)
 
     with work_env.WorkEnv(mc, self.services) as we:
       we.RemoveHotlistEditors(hotlist_id, remove_user_ids)
@@ -153,7 +154,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GetHotlist(self, mc, request):
-    # type: (MonorailConnection, GetHotlistRequest) -> Hotlist
+    # type: (MonorailContext, GetHotlistRequest) -> Hotlist
     """pRPC API method that implements GetHotlist.
 
     Raises:
@@ -171,7 +172,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GatherHotlistsForUser(self, mc, request):
-    # type: (MonorailConnection, GatherHotlistsForUserRequest)
+    # type: (MonorailContext, GatherHotlistsForUserRequest)
     #   -> GatherHotlistsForUserResponse
     """pRPC API method that implements GatherHotlistsForUser.
 
@@ -190,7 +191,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def UpdateHotlist(self, mc, request):
-    # type: (MonorailConnection, UpdateHotlistRequest) -> UpdateHotlistResponse
+    # type: (MonorailContext, UpdateHotlistRequest) -> UpdateHotlistResponse
     """pRPC API method that implements UpdateHotlist.
 
     Raises:
@@ -236,7 +237,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def DeleteHotlist(self, mc, request):
-    # type: (MonorailConnection, GetHotlistRequest) -> Empty
+    # type: (MonorailContext, GetHotlistRequest) -> Empty
     """pRPC API method that implements DeleteHotlist.
 
     Raises:

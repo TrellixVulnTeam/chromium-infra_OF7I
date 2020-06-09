@@ -27,7 +27,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GetUser(self, mc, request):
-    # type: (MonorailConnection, GetUserRequest) ->
+    # type: (MonorailContext, GetUserRequest) ->
     # GetUserResponse
     """pRPC API method that implements GetUser.
 
@@ -44,7 +44,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def BatchGetUsers(self, mc, request):
-    # type: (MonorailConnection, BatchGetUsersRequest) ->
+    # type: (MonorailContext, BatchGetUsersRequest) ->
     # BatchGetUsersResponse
     """pRPC API method that implements BatchGetUsers.
 
@@ -65,7 +65,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def StarProject(self, mc, request):
-    # type: (MonorailConnection, StarProjectRequest) ->
+    # type: (MonorailContext, StarProjectRequest) ->
     # ProjectStar
     """pRPC API method that implements StarProject.
 
@@ -86,7 +86,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def UnStarProject(self, mc, request):
-    # type: (MonorailConnection, UnStarProjectRequest) ->
+    # type: (MonorailContext, UnStarProjectRequest) ->
     # Empty
     """pRPC API method that implements UnStarProject.
 
@@ -103,7 +103,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListProjectStars(self, mc, request):
-    # type: (MonorailConnection, ListProjectStarsRequest) ->
+    # type: (MonorailContext, ListProjectStarsRequest) ->
     #   ListProjectStarsResponse
     """pRPC API method that implements ListProjectStars.
 

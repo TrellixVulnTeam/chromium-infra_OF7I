@@ -1243,7 +1243,7 @@ class Converter(object):
         custom_issue_entry_url=project_config.custom_issue_entry_url)
 
   def CreateProjectMember(self, cnxn, project_id, user_id, role):
-    # type: (MonorailConnection, int, int, str) ->
+    # type: (MonorailContext, int, int, str) ->
     #     api_proto.project_objects_pb2.ProjectMember
     """Creates a ProjectMember object from specified parameters.
 

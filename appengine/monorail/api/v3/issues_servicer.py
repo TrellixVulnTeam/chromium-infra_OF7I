@@ -30,7 +30,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GetIssue(self, mc, request):
-    # type: (MonorailConnection, GetIssueRequest) -> Issue
+    # type: (MonorailContext, GetIssueRequest) -> Issue
     """pRPC API method that implements GetIssue.
 
     Raises:
@@ -45,7 +45,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def SearchIssues(self, mc, request):
-    # type: (MonorailConnection, SearchIssuesRequest) -> SearchIssuesResponse
+    # type: (MonorailContext, SearchIssuesRequest) -> SearchIssuesResponse
     """pRPC API method that implements SearchIssue.
 
     Raises:
@@ -78,7 +78,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListComments(self, mc, request):
-    # type: (MonorailConnection, ListCommentsRequest) -> ListCommentsResponse
+    # type: (MonorailContext, ListCommentsRequest) -> ListCommentsResponse
     """pRPC API method that implements ListComments.
 
     Raises:

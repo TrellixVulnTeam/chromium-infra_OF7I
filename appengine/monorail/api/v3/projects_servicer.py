@@ -25,7 +25,7 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListIssueTemplates(self, mc, request):
-    # type: (MonorailConnection, ListIssueTemplatesRequest) ->
+    # type: (MonorailContext, ListIssueTemplatesRequest) ->
     #   ListIssueTemplatesResponse
     """pRPC API method that implements ListIssueTemplates.
 
@@ -43,7 +43,7 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListProjects(self, mc, _):
-    # type: (MonorailConnection, ListProjectsRequest) -> ListProjectsResponse
+    # type: (MonorailContext, ListProjectsRequest) -> ListProjectsResponse
     """pRPC API method that implements ListProjects.
 
       Raises:

@@ -26,14 +26,14 @@ class FrontendServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def GatherProjectEnvironment(self, _mc, _request):
-    # type: (MonorailConnection, GatherProjectEnvironmentRequest) ->
+    # type: (MonorailContext, GatherProjectEnvironmentRequest) ->
     #     GatherProjectEnvironmentResponse
     """pRPC API method that implements GatherProjectEnvironment."""
     return frontend_pb2.GatherProjectEnvironmentResponse()
 
   @monorail_servicer.PRPCMethod
   def GatherProjectMembershipsForUser(self, mc, request):
-    # type: (MonorailConnection, GatherProjectMembershipsForUserRequest) ->
+    # type: (MonorailContext, GatherProjectMembershipsForUserRequest) ->
     #     GatherProjectMembershipsForUserResponse
     """pRPC API method that implements GatherProjectMembershipsForUser.
 
@@ -42,7 +42,7 @@ class FrontendServicer(monorail_servicer.MonorailServicer):
       InputException if the user resource name is invalid.
     """
 
-    user_id = rnc.IngestUserName(mc, request.user, self.services)
+    user_id = rnc.IngestUserName(mc.cnxn, request.user, self.services)
 
     project_memberships = []
 
