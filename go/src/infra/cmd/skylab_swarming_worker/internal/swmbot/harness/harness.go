@@ -9,7 +9,6 @@ package harness
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 
@@ -18,7 +17,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	invV2 "infra/appengine/cros/lab_inventory/api/v1"
-	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/libs/skylab/inventory"
 
 	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
@@ -208,32 +206,7 @@ func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *
 
 	log.Printf("Calling inventory v2 to update state")
 	if err := u.updateV2(ctx, dutID, old, new); err != nil {
-		log.Printf("fail to update to inventory V2: %#v", err)
-	}
-
-	log.Printf("Calling admin service to update labels")
-	oldLabels := old.GetCommon().GetLabels()
-	newLabels := new.GetCommon().GetLabels()
-	if proto.Equal(oldLabels, newLabels) {
-		log.Printf("Skipping label update since there are no changes")
-		return nil
-	}
-	log.Printf("Labels changed from %s to %s", oldLabels.String(), newLabels.String())
-	client, err := swmbot.InventoryClient(ctx, u.botInfo)
-	if err != nil {
-		return errors.Annotate(err, "update inventory labels").Err()
-	}
-	req, err := u.makeRequest(dutID, oldLabels, newLabels)
-	if err != nil {
-		return errors.Annotate(err, "update inventory labels").Err()
-	}
-	resp, err := client.UpdateDutLabels(ctx, req)
-	if err != nil {
-		log.Printf("(not fatal) fail to update to inventory V1: %#v", err)
-		return nil
-	}
-	if url := resp.GetUrl(); url != "" {
-		log.Printf("Updated DUT labels at %s", url)
+		return errors.Annotate(err, "fail to update to inventory V2").Err()
 	}
 	return nil
 }
@@ -340,22 +313,4 @@ func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inve
 		return errors.Annotate(err, "update inventory V2 labels").Err()
 	}
 	return nil
-}
-
-func (u labelUpdater) makeRequest(dutID string, old *inventory.SchedulableLabels, new *inventory.SchedulableLabels) (*fleet.UpdateDutLabelsRequest, error) {
-	nl, err := proto.Marshal(new)
-	if err != nil {
-		return nil, err
-	}
-	ol, err := proto.Marshal(old)
-	if err != nil {
-		return nil, err
-	}
-	req := fleet.UpdateDutLabelsRequest{
-		DutId:     dutID,
-		Labels:    nl,
-		Reason:    fmt.Sprintf("%s %s", u.taskName, u.botInfo.TaskRunURL()),
-		OldLabels: ol,
-	}
-	return &req, nil
 }
