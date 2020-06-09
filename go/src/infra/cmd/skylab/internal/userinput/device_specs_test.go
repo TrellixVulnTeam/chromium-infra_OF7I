@@ -17,6 +17,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
+var prettyConfig = &pretty.Config{
+	TrackCycles: true,
+}
+
 func TestGetDeviceSpecs(t *testing.T) {
 	s := &deviceSpecsGetter{
 		inputFunc: newRegexpReplacer(regexp.MustCompile(`some\-hostname`), "this-other-hostname"),
@@ -40,7 +44,7 @@ func TestGetDeviceSpecs(t *testing.T) {
 		},
 	}
 	if !proto.Equal(&want, got) {
-		t.Errorf("incorrect response from GetDeviceSpecs, -want, +got:\n%s", pretty.Compare(want, got))
+		t.Errorf("incorrect response from GetDeviceSpecs, -want, +got:\n%s", prettyConfig.Compare(&want, got))
 	}
 }
 
@@ -112,14 +116,14 @@ func TestGetDeviceSpecsIterateOnError(t *testing.T) {
 	if !p.Called {
 		t.Errorf("user not prompted for retry on input error")
 	}
-	want := inventory.DeviceUnderTest{
+	want := &inventory.DeviceUnderTest{
 		Common: &inventory.CommonDeviceSpecs{
 			Id:       stringPtr("myid"),
 			Hostname: stringPtr("yourhost"),
 		},
 	}
-	if !proto.Equal(&want, got) {
-		t.Errorf("incorrect response from GetDeviceSpecs, -want, +got:\n%s", pretty.Compare(want, got))
+	if diff := prettyConfig.Compare(want, got); diff != "" {
+		t.Errorf("Incorrect response from GetDeviceSpecs, -want, +got:\n%s", diff)
 	}
 }
 

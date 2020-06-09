@@ -16,6 +16,10 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 )
 
+var prettyConfig = &pretty.Config{
+	TrackCycles: true,
+}
+
 func TestRequest(t *testing.T) {
 	a := Args{
 		Board:                      "foo-board",
@@ -85,7 +89,7 @@ func TestRequest(t *testing.T) {
 			},
 		},
 	}
-	if diff := pretty.Compare(got, want); diff != "" {
+	if diff := prettyConfig.Compare(got, want); diff != "" {
 		t.Errorf("Unexpected diff (-got +want): %s", diff)
 	}
 	if err != nil {
