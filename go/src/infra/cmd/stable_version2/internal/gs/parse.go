@@ -10,10 +10,10 @@ import (
 	"fmt"
 	"strings"
 
+	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
-	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"infra/cmd/stable_version2/internal/utils"
 	svlib "infra/libs/cros/stableversion"
 	svdata "infra/libs/cros/stableversion/proto"
