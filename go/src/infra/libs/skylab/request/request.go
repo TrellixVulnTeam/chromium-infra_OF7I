@@ -98,7 +98,7 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 // getBBDimensions returns both required and optional dimensions that will be
 // used to match this request with a Swarming bot.
 func (a *Args) getBBDimensions() ([]*buildbucket_pb.RequestedDimension, error) {
-	ret := schedulableLabelsToBBDimensions(a.SchedulableLabels)
+	ret := schedulableLabelsToBBDimensions(&a.SchedulableLabels)
 
 	pd, err := dims(a.ProvisionableDimensions).BBDimensions()
 	if err != nil {
@@ -119,9 +119,9 @@ func (a *Args) getBBDimensions() ([]*buildbucket_pb.RequestedDimension, error) {
 	return ret, nil
 }
 
-func schedulableLabelsToBBDimensions(inv inventory.SchedulableLabels) []*buildbucket_pb.RequestedDimension {
+func schedulableLabelsToBBDimensions(inv *inventory.SchedulableLabels) []*buildbucket_pb.RequestedDimension {
 	var ret []*buildbucket_pb.RequestedDimension
-	id := swarming_inventory.Convert(&inv)
+	id := swarming_inventory.Convert(inv)
 	for key, values := range id {
 		for _, value := range values {
 			ret = append(ret, &buildbucket_pb.RequestedDimension{
@@ -246,7 +246,7 @@ func (a *Args) SwarmingNewTaskRequest() (*swarming.SwarmingRpcsNewTaskRequest, e
 // StaticDimensions() do not include dimensions used to optimize task
 // scheduling.
 func (a *Args) StaticDimensions() ([]*swarming.SwarmingRpcsStringPair, error) {
-	ret := schedulableLabelsToPairs(a.SchedulableLabels)
+	ret := schedulableLabelsToPairs(&a.SchedulableLabels)
 	d, err := stringToPairs(a.Dimensions...)
 	if err != nil {
 		return nil, errors.Annotate(err, "get static dimensions").Err()
@@ -323,8 +323,8 @@ func stringToPairs(dimensions ...string) ([]*swarming.SwarmingRpcsStringPair, er
 	return pairs, nil
 }
 
-func schedulableLabelsToPairs(inv inventory.SchedulableLabels) []*swarming.SwarmingRpcsStringPair {
-	dimensions := swarming_inventory.Convert(&inv)
+func schedulableLabelsToPairs(inv *inventory.SchedulableLabels) []*swarming.SwarmingRpcsStringPair {
+	dimensions := swarming_inventory.Convert(inv)
 	pairs := make([]*swarming.SwarmingRpcsStringPair, 0, len(dimensions))
 	for key, values := range dimensions {
 		for _, value := range values {

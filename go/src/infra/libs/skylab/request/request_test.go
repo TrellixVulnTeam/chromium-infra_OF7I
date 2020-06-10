@@ -27,6 +27,10 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
+var prettyConfig = &pretty.Config{
+	TrackCycles: true,
+}
+
 func TestBuilderID(t *testing.T) {
 	Convey("Given request arguments that specify a builder ID", t, func() {
 		id := buildbucket_pb.BuilderID{
@@ -258,11 +262,11 @@ func TestProvisionableDimensions(t *testing.T) {
 					fmt.Sprintf("label-model:%s", model),
 					"k1:v1",
 				})
-				diff := pretty.Compare(sortDimensions(s1.Properties.Dimensions), sortDimensions(s1Expect))
+				diff := prettyConfig.Compare(sortDimensions(s1.Properties.Dimensions), sortDimensions(s1Expect))
 				So(diff, ShouldBeEmpty)
 
 				s0Expect := append(s1Expect, toStringPairs([]string{"k2:v2", "k3:v3"})...)
-				diff = pretty.Compare(sortDimensions(s0.Properties.Dimensions), sortDimensions(s0Expect))
+				diff = prettyConfig.Compare(sortDimensions(s0.Properties.Dimensions), sortDimensions(s0Expect))
 				So(diff, ShouldBeEmpty)
 
 				// First slice command doesn't include provisioning.
@@ -326,17 +330,17 @@ func TestSliceExpiration(t *testing.T) {
 func TestStaticDimensions(t *testing.T) {
 	cases := []struct {
 		Tag  string
-		Args request.Args
+		Args *request.Args
 		Want []*swarming.SwarmingRpcsStringPair
 	}{
 		{
 			Tag:  "empty args",
-			Args: request.Args{},
+			Args: &request.Args{},
 			Want: toStringPairs([]string{"pool:ChromeOSSkylab"}),
 		},
 		{
 			Tag: "one schedulable label",
-			Args: request.Args{
+			Args: &request.Args{
 				SchedulableLabels: inventory.SchedulableLabels{
 					Model: stringPtr("some_model"),
 				},
@@ -345,21 +349,21 @@ func TestStaticDimensions(t *testing.T) {
 		},
 		{
 			Tag: "one dimension",
-			Args: request.Args{
+			Args: &request.Args{
 				Dimensions: []string{"some:value"},
 			},
 			Want: toStringPairs([]string{"pool:ChromeOSSkylab", "some:value"}),
 		},
 		{
 			Tag: "one provisionable dimension",
-			Args: request.Args{
+			Args: &request.Args{
 				ProvisionableDimensions: []string{"cros-version:value"},
 			},
 			Want: toStringPairs([]string{"pool:ChromeOSSkylab"}),
 		},
 		{
 			Tag: "one of each",
-			Args: request.Args{
+			Args: &request.Args{
 				SchedulableLabels: inventory.SchedulableLabels{
 					Model: stringPtr("some_model"),
 				},
@@ -378,7 +382,7 @@ func TestStaticDimensions(t *testing.T) {
 			}
 			want := sortDimensions(c.Want)
 			got = sortDimensions(got)
-			if diff := pretty.Compare(want, got); diff != "" {
+			if diff := prettyConfig.Compare(want, got); diff != "" {
 				t.Errorf("Incorrect static dimensions, -want +got: %s", diff)
 			}
 		})
