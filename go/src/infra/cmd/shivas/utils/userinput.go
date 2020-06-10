@@ -31,6 +31,12 @@ const (
 	ChooseOption              string = "\n Choose an option\n"
 	ChooseChromePlatform      string = "\n Choose a ChromePlatform\n"
 	ChooseMachineLSEPrototype string = "\n Choose a MachineLSE Prototype\n"
+	ChooseChameleonType       string = "\n Choose a ChameleonType \n"
+	ChooseCameraType          string = "\n Choose a CameraType \n"
+	ChooseAntennaConnection   string = "\n Choose an AntennaConnection \n"
+	ChooseRouter              string = "\n Choose a Router \n"
+	ChooseCableType           string = "\n Choose a Cable \n"
+	ChooseCameraboxFacing     string = "\n Choose a Facing for CameraBox \n"
 	OptionToEnter             string = "\nDo you want to enter a "
 	OptionToEnterMore         string = "\nDo you want to enter one more "
 	ChooseLab                 string = "\n Choose a Lab\n"
@@ -718,7 +724,198 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 // -> Wificell(bool) -> AntennaConnection(enum) -> Router(enum) ->
 // -> Touch Mimo(bool) -> Carrier(string) -> Camerabox(bool) ->
 // -> Chaos(bool) -> Cable(repeated enum) -> Camerabox Info(enum)
-func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {}
+func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+	machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Chameleon = &chromeos.Chameleon{}
+	input := &Input{
+		Key:      "Chameleon Peripherals (y/n)",
+		Desc:     fmt.Sprintf("%sChameleon Peripheral?", OptionToEnter),
+		Required: true,
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			// repeated enum Chameleon Peripherals
+			case "Chameleon Peripherals (y/n)":
+				vals, done := getRepeatedEnumInput(scanner, value, "Chameleon Peripheral", chromeos.ChameleonType_name, input)
+				if done {
+					cps := make([]chromeos.ChameleonType, 0, len(vals))
+					for _, val := range vals {
+						cps = append(cps, chromeos.ChameleonType(val))
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetChameleon().ChameleonPeripherals = cps
+					input = &Input{
+						Key:      "Audio Board (y/n)",
+						Required: true,
+					}
+				}
+			// bool Audio Board
+			case "Audio Board (y/n)":
+				flag, done := getBoolInput(value, input)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetChameleon().AudioBoard = flag
+					input = &Input{
+						Key:      "Cameras (y/n)",
+						Desc:     fmt.Sprintf("%sCamera?", OptionToEnter),
+						Required: true,
+					}
+				}
+			// repeated enum Camera
+			case "Cameras (y/n)":
+				vals, done := getRepeatedEnumInput(scanner, value, "Camera", chromeos.CameraType_name, input)
+				if done {
+					cameras := make([]*chromeos.Camera, 0, len(vals))
+					for _, val := range vals {
+						camera := &chromeos.Camera{
+							CameraType: chromeos.CameraType(val),
+						}
+						cameras = append(cameras, camera)
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().ConnectedCamera = cameras
+					input = &Input{
+						Key:      "Audio Box (y/n)",
+						Required: true,
+					}
+				}
+			// bool Audio Box
+			case "Audio Box (y/n)":
+				flag, done := getBoolInput(value, input)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Audio = &chromeos.Audio{
+						AudioBox: flag,
+					}
+					input = &Input{
+						Key:      "Atrus (y/n)",
+						Required: true,
+					}
+				}
+			// bool Artus
+			case "Atrus (y/n)":
+				flag, done := getBoolInput(value, input)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetAudio().Atrus = flag
+					input = &Input{
+						Key:      "Wificell (y/n)",
+						Required: true,
+					}
+				}
+			// bool Wificell
+			case "Wificell (y/n)":
+				flag, done := getBoolInput(value, input)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Wifi = &chromeos.Wifi{
+						Wificell: flag,
+					}
+					input = &Input{
+						Key:  "AntennaConnection",
+						Desc: fmt.Sprintf("%s%s", ChooseAntennaConnection, createKeyValuePairs(chromeos.Wifi_AntennaConnection_name)),
+					}
+				}
+			// enum AntennaConnection
+			case "AntennaConnection":
+				if value != "" {
+					option := getSelectionInput(value, chromeos.Wifi_AntennaConnection_name, input)
+					if option == -1 {
+						break
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetWifi().AntennaConn = chromeos.Wifi_AntennaConnection(option)
+				}
+				input = &Input{
+					Key:  "Router",
+					Desc: fmt.Sprintf("%s%s", ChooseRouter, createKeyValuePairs(chromeos.Wifi_Router_name)),
+				}
+			// enum Router
+			case "Router":
+				if value != "" {
+					option := getSelectionInput(value, chromeos.Wifi_Router_name, input)
+					if option == -1 {
+						break
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetWifi().Router = chromeos.Wifi_Router(option)
+				}
+				input = &Input{
+					Key:      "Touch Mimo (y/n)",
+					Required: true,
+				}
+			// bool Touch Mimo
+			case "Touch Mimo (y/n)":
+				flag, done := getBoolInput(value, input)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Touch = &chromeos.Touch{
+						Mimo: flag,
+					}
+					input = &Input{
+						Key: "Carrier",
+					}
+				}
+			case "Carrier":
+				machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Carrier = value
+				input = &Input{
+					Key: "Camerabox (y/n)",
+				}
+			// bool CameraBox
+			case "Camerabox (y/n)":
+				flag, done := getBoolInput(value, input)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Camerabox = flag
+					input = &Input{
+						Key: "Chaos (y/n)",
+					}
+				}
+			// bool chaos
+			case "Chaos (y/n)":
+				flag, done := getBoolInput(value, input)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Chaos = flag
+					input = &Input{
+						Key:      "Cable (y/n)",
+						Desc:     fmt.Sprintf("%sCable?", OptionToEnter),
+						Required: true,
+					}
+				}
+			// repeated enum Cable
+			case "Cable (y/n)":
+				vals, done := getRepeatedEnumInput(scanner, value, "Cable", chromeos.CableType_name, input)
+				if done {
+					cables := make([]*chromeos.Cable, 0, len(vals))
+					for _, val := range vals {
+						cable := &chromeos.Cable{
+							Type: chromeos.CableType(val),
+						}
+						cables = append(cables, cable)
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Cable = cables
+					input = &Input{
+						Key:  "Camerabox Info",
+						Desc: fmt.Sprintf("%s%s", ChooseCameraboxFacing, createKeyValuePairs(chromeos.Camerabox_Facing_name)),
+					}
+				}
+			// enum CameraBox Info
+			case "Camerabox Info":
+				if value != "" {
+					option := getSelectionInput(value, chromeos.Camerabox_Facing_name, input)
+					if option == -1 {
+						break
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().CameraboxInfo = &chromeos.Camerabox{
+						Facing: chromeos.Camerabox_Facing(option),
+					}
+				}
+				input = nil
+			}
+			break
+		}
+	}
+}
 
 // getBrowserMachinelseInteractiveInput get Browser MachineLSE input in interactive mode
 //
@@ -817,6 +1014,19 @@ func GetNextPage(pageToken string) (bool, error) {
 	return true, nil
 }
 
+func getBoolInput(value string, input *Input) (bool, bool) {
+	value = strings.ToLower(value)
+	if value != "y" && value != "n" {
+		input.Desc = fmt.Sprintf("%s", WrongInput)
+		return false, false
+	}
+	// User has entered some valid input so we can go to the next input field
+	if value == "y" {
+		return true, true
+	}
+	return false, true
+}
+
 func getIntInput(value string, input *Input) int32 {
 	i, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
@@ -880,6 +1090,65 @@ func getRepeatedStringInput(ctx context.Context, ic UfleetAPI.FleetClient, scann
 				if value != "" {
 					values = append(values, value)
 				}
+				input = &Input{
+					Key:      key + YesNo,
+					Desc:     fmt.Sprintf("%s%s?", OptionToEnterMore, key),
+					Required: true,
+				}
+			}
+			break
+		}
+	}
+	return values, true
+}
+
+func getRepeatedEnumInput(scanner *bufio.Scanner, yn, key string, m map[int32]string, input *Input) ([]int32, bool) {
+	yn = strings.ToLower(yn)
+	if yn != "y" && yn != "n" {
+		input.Desc = fmt.Sprintf("%s%s%s?", WrongInput, OptionToEnter, key)
+		return nil, false
+	}
+	if yn == "n" {
+		return nil, true
+	}
+	values := make([]int32, 0, 0)
+	input = &Input{
+		Key:      key,
+		Desc:     fmt.Sprintf("%s%s", "\nChoose a "+key+"\n", createKeyValuePairs(m)),
+		Required: true,
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case key + YesNo:
+				value = strings.ToLower(value)
+				if value == "y" {
+					input = &Input{
+						Key:      key,
+						Desc:     fmt.Sprintf("%s%s", "\nChoose a "+key+"\n", createKeyValuePairs(m)),
+						Required: true,
+					}
+				} else if value == "n" {
+					input = nil
+				} else {
+					input.Desc = fmt.Sprintf("%s%s%s?", WrongInput, OptionToEnter, key)
+				}
+			case key:
+				option := getSelectionInput(value, m, input)
+				if option == -1 {
+					break
+				}
+				values = append(values, option)
 				input = &Input{
 					Key:      key + YesNo,
 					Desc:     fmt.Sprintf("%s%s?", OptionToEnterMore, key),
