@@ -40,6 +40,8 @@ func (c machinelseApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		m.AddMachinelseCmd,
 		m.UpdateMachinelseCmd,
+		m.GetMachinelseCmd,
+		m.DeleteMachinelseCmd,
 	}
 }
 
