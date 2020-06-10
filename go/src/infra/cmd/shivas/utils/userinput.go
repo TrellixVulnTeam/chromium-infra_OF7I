@@ -919,10 +919,152 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 
 // getBrowserMachinelseInteractiveInput get Browser MachineLSE input in interactive mode
 //
-// Hostname(string) -> MachineLSEPrototype(string, resource) ->
+// Hostname(string) -> MachineLSEPrototype(string, resource) -> getVms()
+func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+	machinelse.Lse = &fleet.MachineLSE_ChromeBrowserMachineLse{
+		ChromeBrowserMachineLse: &fleet.ChromeBrowserMachineLSE{},
+	}
+	input := &Input{
+		Key: "Hostname",
+	}
+	machineLSEPrototypes := getAllMachineLSEPrototypes(ctx, ic, "browser-lab:")
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Hostname":
+				machinelse.Hostname = value
+				if len(machineLSEPrototypes) == 0 {
+					getVms(ctx, ic, scanner, machinelse)
+					input = nil
+				} else {
+					input = &Input{
+						Key:  "MachineLSEPrototype",
+						Desc: fmt.Sprintf("%s%s", ChooseMachineLSEPrototype, createKeyValuePairs(machineLSEPrototypes)),
+					}
+				}
+			case "MachineLSEPrototype":
+				if value != "" {
+					option := getSelectionInput(value, machineLSEPrototypes, input)
+					if option == -1 {
+						break
+					}
+					machinelse.MachineLsePrototype = machineLSEPrototypes[option]
+				}
+				getVms(ctx, ic, scanner, machinelse)
+				input = nil
+			}
+			break
+		}
+	}
+}
+
+// getVms get Vms for Browser MachineLSE input in interactive mode
+//
 // -> VMs(repeated) -> VM Name(string) -> VM OS Version(string) ->
 // -> VM OS Description(string) -> VM Mac Address(string) -> VM Hostname(string)
-func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+func getVms(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+	pr := getMachineLSEPrototype(ctx, ic, machinelse.GetMachineLsePrototype())
+	vrs := pr.GetVirtualRequirements()
+	var maxVM int
+	for _, vr := range vrs {
+		if vr.GetVirtualType() == fleet.VirtualType_VIRTUAL_TYPE_VM {
+			maxVM = int(vr.GetMax())
+			break
+		}
+	}
+	if maxVM == 0 {
+		return
+	}
+	input := &Input{
+		Key:      "VMs (y/n)",
+		Desc:     fmt.Sprintf("%sVM?", OptionToEnter),
+		Required: true,
+	}
+	vms := make([]*fleet.VM, 0, 0)
+	var vm *fleet.VM
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			// ChromeBrowserMachineLSE
+			// repeated VMs
+			case "VMs (y/n)":
+				value = strings.ToLower(value)
+				if value == "y" {
+					input = &Input{
+						Key: "VM Name",
+					}
+				} else if value == "n" {
+					input = nil
+				} else {
+					input = &Input{
+						Key:      "VMs (y/n)",
+						Desc:     fmt.Sprintf("%s%sVM?", WrongInput, OptionToEnter),
+						Required: true,
+					}
+				}
+			case "VM Name":
+				vm = &fleet.VM{
+					Name: value,
+				}
+				input = &Input{
+					Key: "VM OS Version",
+				}
+			case "VM OS Version":
+				vm.OsVersion = &fleet.OSVersion{
+					Value: value,
+				}
+				input = &Input{
+					Key: "VM OS Description",
+				}
+			case "VM OS Description":
+				vm.GetOsVersion().Description = value
+				input = &Input{
+					Key: "VM Mac Address",
+				}
+			case "VM Mac Address":
+				vm.MacAddress = value
+				input = &Input{
+					Key: "VM Hostname",
+				}
+			case "VM Hostname":
+				vm.Hostname = value
+				vms = append(vms, vm)
+				machinelse.GetChromeBrowserMachineLse().Vms = vms
+				if len(vms) == maxVM {
+					fmt.Print("\nYou have added the maximum VMs for this "+
+						"MachineLSE as defined by MachineLSEPrototype ",
+						machinelse.GetMachineLsePrototype()+"\n")
+					return
+				}
+				input = &Input{
+					Key:      "VMs (y/n)",
+					Desc:     fmt.Sprintf("%sVM?", OptionToEnterMore),
+					Required: true,
+				}
+			}
+			break
+		}
+	}
 }
 
 func createKeyValuePairs(m map[int32]string) string {

@@ -5,6 +5,7 @@
 package utils
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"os"
@@ -18,6 +19,9 @@ import (
 
 	"infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
+	UfleetUtil "infra/unifiedfleet/app/util"
 )
 
 // The formatter for log and result file names
@@ -334,4 +338,15 @@ func GetAssetsInOrder(logFile string) ([]*fleet.ChopsAsset, error) {
 		}
 	}
 	return assets, err
+}
+
+// getMachineLSEPrototype gets the given MachineLSEPrototype
+func getMachineLSEPrototype(ctx context.Context, ic UfleetAPI.FleetClient, name string) *ufspb.MachineLSEPrototype {
+	if len(name) == 0 {
+		return nil
+	}
+	res, _ := ic.GetMachineLSEPrototype(ctx, &UfleetAPI.GetMachineLSEPrototypeRequest{
+		Name: UfleetUtil.AddPrefix(UfleetUtil.MachineLSEPrototypeCollection, name),
+	})
+	return res
 }
