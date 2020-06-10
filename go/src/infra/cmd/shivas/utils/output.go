@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -23,6 +24,9 @@ var (
 		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
 		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
 		"Drac", "DeploymentTicket", "Description", "Realm", "UpdateTime"}
+	machinelseprototypeTitle = []string{"MachineLSEPrototype Name",
+		"Occupied Capacity", "PeripheralTypes", "VirtualTypes",
+		"UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -125,6 +129,47 @@ func printMachine(m *fleet.Machine) {
 // PrintMachinesJSON prints the machine details in json format.
 func PrintMachinesJSON(machines []*fleet.Machine) {
 	for _, m := range machines {
+		m.Name = UfleetUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m)
+	}
+}
+
+// PrintMachineLSEPrototypes prints the all msleps in table form.
+func PrintMachineLSEPrototypes(msleps []*fleet.MachineLSEPrototype) {
+	defer tw.Flush()
+	printTitle(machinelseprototypeTitle)
+	for _, m := range msleps {
+		printMachineLSEPrototype(m)
+	}
+}
+
+func printMachineLSEPrototype(m *fleet.MachineLSEPrototype) {
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	m.Name = UfleetUtil.RemovePrefix(m.Name)
+	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%d\t", m.GetOccupiedCapacityRu())
+	prs := m.GetPeripheralRequirements()
+	var peripheralTypes string
+	for _, pr := range prs {
+		peripheralTypes += fmt.Sprintf("%s,", pr.GetPeripheralType())
+	}
+	out += fmt.Sprintf("%s\t", strings.TrimSuffix(peripheralTypes, ","))
+	vms := m.GetVirtualRequirements()
+	var virtualTypes string
+	for _, vm := range vms {
+		virtualTypes += fmt.Sprintf("%s,", vm.GetVirtualType())
+	}
+	out += fmt.Sprintf("%s\t", strings.TrimSuffix(virtualTypes, ","))
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintMachineLSEPrototypesJSON prints the mslep details in json format.
+func PrintMachineLSEPrototypesJSON(msleps []*fleet.MachineLSEPrototype) {
+	for _, m := range msleps {
 		m.Name = UfleetUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m)
 	}

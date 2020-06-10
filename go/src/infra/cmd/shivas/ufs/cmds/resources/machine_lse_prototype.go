@@ -41,6 +41,7 @@ func (c machinelsePrototypeApp) GetCommands() []*subcommands.Command {
 		m.AddMachinelsePrototypeCmd,
 		m.UpdateMachinelsePrototypeCmd,
 		m.GetMachinelsePrototypeCmd,
+		m.ListMachinelsePrototypeCmd,
 		m.DeleteMachinelsePrototypeCmd,
 	}
 }
