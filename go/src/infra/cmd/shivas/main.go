@@ -45,6 +45,8 @@ func getApplication() *cli.Application {
 			resources.SwitchCmd,
 			subcommands.Section("Inventory"),
 			resources.MachinelseCmd,
+			subcommands.Section("Configuration"),
+			resources.MachinelsePrototypeCmd,
 		},
 	}
 }
