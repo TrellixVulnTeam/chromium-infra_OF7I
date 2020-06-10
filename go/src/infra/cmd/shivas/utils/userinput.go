@@ -18,6 +18,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	fleet "infra/unifiedfleet/api/v1/proto"
+	chromeos "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
 	UfleetUtil "infra/unifiedfleet/app/util"
 )
@@ -572,7 +573,152 @@ func getOSMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClie
 // -> Servo Port(int) -> Servo Serial(string) -> Servo Type(string) ->
 // -> Pools(repeated string) -> getACSLabConfig()
 func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
+	machinelse.GetChromeosMachineLse().ChromeosLse = &fleet.ChromeOSMachineLSE_Dut{
+		Dut: &fleet.ChromeOSDeviceLSE{},
+	}
+	input := &Input{
+		Key: "RPM",
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			// ChromeOSDeviceLSE
+			// RPMInterface
+			case "RPM":
+				if value != "" && !RPMExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				machinelse.GetChromeosMachineLse().GetDut().RpmInterface = &fleet.RPMInterface{
+					Rpm: value,
+				}
+				if value != "" {
+					input = &Input{
+						Key: "RPM Port",
+					}
+				} else {
+					input = &Input{
+						Key: "Switch",
+					}
+				}
+			case "RPM Port":
+				if value != "" {
+					port := getIntInput(value, input)
+					if port == -1 {
+						break
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().Port = port
+				}
+				input = &Input{
+					Key: "Switch",
+				}
+			// SwitchInterface
+			case "Switch":
+				if value != "" && !SwitchExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				machinelse.GetChromeosMachineLse().GetDut().NetworkDeviceInterface = &fleet.SwitchInterface{
+					Switch: value,
+				}
+				if value != "" {
+					input = &Input{
+						Key: "Switch Port",
+					}
+				} else {
+					input = &Input{
+						Key: "Servo Hostname",
+					}
+				}
+			case "Switch Port":
+				if value != "" {
+					port := getIntInput(value, input)
+					if port == -1 {
+						break
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetNetworkDeviceInterface().Port = port
+				}
+				input = &Input{
+					Key: "Servo Hostname",
+				}
+			// DeviceUnderTest Dut Config
+			// Pheripherals
+			// Servo
+			case "Servo Hostname":
+				machinelse.GetChromeosMachineLse().GetDut().Config = &chromeos.DeviceUnderTest{
+					Hostname: machinelse.Hostname,
+				}
+				machinelse.GetChromeosMachineLse().GetDut().GetConfig().Peripherals = &chromeos.Peripherals{
+					Servo: &chromeos.Servo{
+						ServoHostname: value,
+					},
+					Rpm: &chromeos.RPM{
+						PowerunitName:   machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().GetRpm(),
+						PowerunitOutlet: fmt.Sprint(machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().GetPort()),
+					},
+				}
+				input = &Input{
+					Key: "Servo Port",
+				}
+			case "Servo Port":
+				if value != "" {
+					port := getIntInput(value, input)
+					if port == -1 {
+						break
+					}
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetServo().ServoPort = port
+				}
+				input = &Input{
+					Key: "Servo Serial",
+				}
+			case "Servo Serial":
+				// TODO(eshwarn) : this is available in Hart indexed by asset tag
+				machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetServo().ServoSerial = value
+				input = &Input{
+					Key: "Servo Type",
+				}
+			case "Servo Type":
+				// TODO(eshwarn) : this is available in Hart as google code name
+				machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetServo().ServoType = value
+				input = &Input{
+					Key:      "Pools (y/n)",
+					Desc:     fmt.Sprintf("%sPool?", OptionToEnter),
+					Required: true,
+				}
+			// repeated pools
+			case "Pools (y/n)":
+				vals, done := getRepeatedStringInput(ctx, ic, scanner, value, "Pool", input, false)
+				if done {
+					machinelse.GetChromeosMachineLse().GetDut().GetConfig().Pools = vals
+					if acs {
+						getACSLabConfig(scanner, machinelse)
+					}
+					input = nil
+				}
+			}
+			break
+		}
+	}
 }
+
+// getACSLabConfig get ACSLab Config input in interactive mode
+//
+// Chameleon Peripherals(repeated enum) -> Audio Board(bool) ->
+// -> Cameras(repeated enum) -> Audio Box(bool) -> Atrus(bool) ->
+// -> Wificell(bool) -> AntennaConnection(enum) -> Router(enum) ->
+// -> Touch Mimo(bool) -> Carrier(string) -> Camerabox(bool) ->
+// -> Chaos(bool) -> Cable(repeated enum) -> Camerabox Info(enum)
+func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {}
 
 // getBrowserMachinelseInteractiveInput get Browser MachineLSE input in interactive mode
 //
