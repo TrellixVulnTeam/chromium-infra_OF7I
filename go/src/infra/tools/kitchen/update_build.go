@@ -183,7 +183,7 @@ func (b *buildUpdater) ParseAnnotations(ctx context.Context, ann *milo.Step) (*b
 	updatePaths := []string{"build.steps", "build.output.properties"}
 	prefix, _ := b.annAddr.Path.Split()
 	fullPrefix := fmt.Sprintf("%s/%s", b.annAddr.Project, prefix)
-	steps, err := annotee.ConvertBuildSteps(ctx, ann.Substep, b.annAddr.Host, fullPrefix)
+	steps, err := annotee.ConvertBuildSteps(ctx, ann.Substep, true, b.annAddr.Host, fullPrefix)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to parse steps from an annotation proto").Err()
 	}
