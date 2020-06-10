@@ -51,6 +51,9 @@ const (
 	Unknown                   string = "Unknown"
 	maxPageSize               int32  = 1000
 	YesNo                     string = " (y/n)"
+	ATLLab                    string = "atl-lab:"
+	ACSLab                    string = "acs-lab:"
+	BrowserLab                string = "browser-lab:"
 )
 
 // Input deatils for the input variable
@@ -525,9 +528,9 @@ func getOSMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClie
 	}
 	var machineLSEPrototypes map[int32]string
 	if acs {
-		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, "acs-lab:")
+		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, ACSLab)
 	} else {
-		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, "atl-lab:")
+		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, ATLLab)
 	}
 	input := &Input{
 		Key: "Hostname",
@@ -927,7 +930,7 @@ func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.Flee
 	input := &Input{
 		Key: "Hostname",
 	}
-	machineLSEPrototypes := getAllMachineLSEPrototypes(ctx, ic, "browser-lab:")
+	machineLSEPrototypes := getAllMachineLSEPrototypes(ctx, ic, BrowserLab)
 	for input != nil {
 		if input.Desc != "" {
 			fmt.Println(input.Desc)
@@ -1068,7 +1071,92 @@ func getVms(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanne
 }
 
 // GetMachinelsePrototypeInteractiveInput gets MachineLSEPrototype input in interactive mode
+//
+// Name(string) -> Broswer/ATL/ACS LAB(choice) ->Occupied Capacity(int) ->
+// -> getPeripheralRequirements() -> getVirtualRequirements()
 func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, mlsep *fleet.MachineLSEPrototype) {
+	input := &Input{
+		Key:      "Broswer/ATL/ACS LAB",
+		Desc:     fmt.Sprintf("%s%s", ChooseLab, BrowserOrATLOrACSLab),
+		Required: true,
+	}
+	var prefix string
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Broswer/ATL/ACS LAB":
+				input = &Input{
+					Key:      "Name",
+					Desc:     UfleetAPI.ValidName,
+					Required: true,
+				}
+				switch value {
+				case "1":
+					// Browser lab
+					prefix = BrowserLab
+				case "2":
+					// ATL lab
+					prefix = ATLLab
+				case "3":
+					// ACS lab
+					prefix = ACSLab
+				default:
+					input = &Input{
+						Key:      "Broswer/ATL/ACS LAB",
+						Desc:     fmt.Sprintf("%s%s%s", WrongInput, ChooseLab, BrowserOrATLOrACSLab),
+						Required: true,
+					}
+				}
+			case "Name":
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					input.Desc = UfleetAPI.ValidName
+					break
+				}
+				if MachineLSEPrototypeExists(ctx, ic, prefix+value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				}
+				mlsep.Name = prefix + value
+				input = &Input{
+					Key: "Occupied Capacity",
+					Desc: "Indicates the Rack Unit capacity of this setup, " +
+						"corresponding to a Rack’s Rack Unit capacity.",
+				}
+			case "Occupied Capacity":
+				if value != "" {
+					val := getIntInput(value, input)
+					if val == -1 {
+						break
+					}
+					mlsep.OccupiedCapacityRu = val
+				}
+				getPeripheralRequirements(scanner, mlsep)
+				getVirtualRequirements(scanner, mlsep)
+				input = nil
+			}
+			break
+		}
+	}
+}
+
+// getPeripheralRequirements get PeripheralRequirements for MachineLSEPrototype input in interactive mode
+func getPeripheralRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEPrototype) {
+}
+
+// getVirtualRequirements get VirtualRequirements for MachineLSEPrototype input in interactive mode
+func getVirtualRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEPrototype) {
 }
 
 func createKeyValuePairs(m map[int32]string) string {
