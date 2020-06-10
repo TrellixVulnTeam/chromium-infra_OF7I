@@ -1,4 +1,4 @@
-# Copyright 2016 Google LLC
+# Copyright 2016 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,9 +47,8 @@ def from_dict(data, require=None):
 
     if missing:
         raise ValueError(
-            "Service account info was not in the expected format, missing "
-            "fields {}.".format(", ".join(missing))
-        )
+            'Service account info was not in the expected format, missing '
+            'fields {}.'.format(', '.join(missing)))
 
     # Create a signer.
     signer = crypt.RSASigner.from_service_account_info(data)
@@ -69,6 +68,6 @@ def from_filename(filename, require=None):
         Tuple[ Mapping[str, str], google.auth.crypt.Signer ]: The verified
             info and a signer instance.
     """
-    with io.open(filename, "r", encoding="utf-8") as json_file:
+    with io.open(filename, 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
         return data, from_dict(data, require=require)

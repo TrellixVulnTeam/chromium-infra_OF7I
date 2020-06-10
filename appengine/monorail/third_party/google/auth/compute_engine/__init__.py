@@ -1,4 +1,4 @@
-# Copyright 2016 Google LLC
+# Copyright 2016 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,4 +18,7 @@ from google.auth.compute_engine.credentials import Credentials
 from google.auth.compute_engine.credentials import IDTokenCredentials
 
 
-__all__ = ["Credentials", "IDTokenCredentials"]
+__all__ = [
+    'Credentials',
+    'IDTokenCredentials',
+]
