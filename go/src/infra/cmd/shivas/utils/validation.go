@@ -15,6 +15,8 @@ const (
 // EntityExists checks if the given resource exists in the system
 func EntityExists(ctx context.Context, ic UfleetAPI.FleetClient, resource, name string) bool {
 	switch resource {
+	case "MachineLSE":
+		return MachineLSEExists(ctx, ic, name)
 	case "Machine":
 		return MachineExists(ctx, ic, name)
 	case "Rack":
@@ -34,6 +36,20 @@ func EntityExists(ctx context.Context, ic UfleetAPI.FleetClient, resource, name 
 	default:
 		return false
 	}
+}
+
+// MachineLSEExists checks if the given MachineLSE exists in the system
+func MachineLSEExists(ctx context.Context, ic UfleetAPI.FleetClient, name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	_, err := ic.GetMachineLSE(ctx, &UfleetAPI.GetMachineLSERequest{
+		Name: UfleetUtil.AddPrefix(UfleetUtil.MachineLSECollection, name),
+	})
+	if err != nil && (strings.Contains(err.Error(), notFound) || strings.Contains(err.Error(), UfleetAPI.InvalidCharacters)) {
+		return false
+	}
+	return true
 }
 
 // MachineExists checks if the given Machine exists in the system

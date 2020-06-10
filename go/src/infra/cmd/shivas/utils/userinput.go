@@ -33,6 +33,7 @@ const (
 	OptionToEnterMore    string = "\nDo you want to enter one more "
 	ChooseLab            string = "\n Choose a Lab\n"
 	BroswerOrOSLab       string = "1=\"Browser Lab\"\n2=\"OS Lab\"\n"
+	BrowserOrATLOrACSLab string = "1=\"Browser Lab\"\n2=\"ATL Lab\"\n3=\"ACS Lab\"\n"
 	DutOrServer          string = "1=\"DUT\"\n2=\"Server\"\n"
 	DoesNotExist         string = " doesnt not exist in the system. Please check and enter again."
 	AlreadyExists        string = " already exists in the system. Please check and enter again."
@@ -425,6 +426,100 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 			break
 		}
 	}
+}
+
+// GetMachinelseInteractiveInput get MachineLSE input in interactive mode
+//
+// Name(string) -> Broswer/ATL/ACS LAB(choice to branch) ->
+// -> getBrowserMachinelseInteractiveInput()/getOSMachinelseInteractiveInput() ->
+// -> Machine(repeated string, resource)
+func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machinelse *fleet.MachineLSE) {
+	input := &Input{
+		Key:      "Name",
+		Desc:     UfleetAPI.ValidName,
+		Required: true,
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Name":
+				// TODO(eshwarn) : Have a different format for Machinelse names
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					input.Desc = UfleetAPI.ValidName
+					break
+				}
+				if MachineLSEExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				}
+				machinelse.Name = value
+				input = &Input{
+					Key:      "Broswer/ATL/ACS LAB",
+					Desc:     fmt.Sprintf("%s%s", ChooseLab, BrowserOrATLOrACSLab),
+					Required: true,
+				}
+			case "Broswer/ATL/ACS LAB":
+				input = &Input{
+					Key:      "Machines (y/n)",
+					Desc:     fmt.Sprintf("%sMachine?", OptionToEnter),
+					Required: true,
+				}
+				switch value {
+				case "1":
+					// Browser lab
+					getBrowserMachinelseInteractiveInput(ctx, ic, scanner, machinelse)
+				case "2":
+					// ATL lab
+					getOSMachinelseInteractiveInput(ctx, ic, scanner, machinelse, false)
+				case "3":
+					// ACS lab
+					getOSMachinelseInteractiveInput(ctx, ic, scanner, machinelse, true)
+				default:
+					input = &Input{
+						Key:      "Broswer/ATL/ACS LAB",
+						Desc:     fmt.Sprintf("%s%s%s", WrongInput, ChooseLab, BrowserOrATLOrACSLab),
+						Required: true,
+					}
+				}
+			// repeated Machines
+			case "Machines (y/n)":
+				vals, done := getRepeatedStringInput(ctx, ic, scanner, value, "Machine", input, true)
+				if done {
+					machinelse.Machines = vals
+					input = nil
+				}
+			}
+			break
+		}
+	}
+}
+
+// getOSMachinelseInteractiveInput get ChormeOS MachineLSE input in interactive mode
+//
+// Hostname(string) -> MachineLSEPrototype(string, resource) ->
+// -> DUT or Server(choice to branch) ->
+// -> getOSDevicelseInteractiveInput()/getOSServerlseInteractiveInput()
+func getOSMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
+}
+
+// getBrowserMachinelseInteractiveInput get Browser MachineLSE input in interactive mode
+//
+// Hostname(string) -> MachineLSEPrototype(string, resource) ->
+// -> VMs(repeated) -> VM Name(string) -> VM OS Version(string) ->
+// -> VM OS Description(string) -> VM Mac Address(string) -> VM Hostname(string)
+func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 }
 
 func createKeyValuePairs(m map[int32]string) string {

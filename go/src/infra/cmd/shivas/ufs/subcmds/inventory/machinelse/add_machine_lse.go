@@ -175,7 +175,7 @@ func (c *addMachinelse) innerRun(a subcommands.Application, args []string, env s
 	})
 	var machinelse fleet.MachineLSE
 	if c.interactive {
-		//utils.GetMachinelseInteractiveInput(ctx, ic, &machinelse)
+		utils.GetMachinelseInteractiveInput(ctx, ic, &machinelse)
 	} else {
 		err = utils.ParseJSONFile(c.newSpecsFile, &machinelse)
 		if err != nil {
