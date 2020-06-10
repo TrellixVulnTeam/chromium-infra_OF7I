@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -25,7 +24,6 @@ import (
 
 // Interactive mode messages for user input
 const (
-	NameFormat           string = "Name must contain only 4-63 characters, ASCII letters, numbers and special characters -._:"
 	InputDetails         string = "Please enter the details: "
 	RequiredField        string = "is a required field. It cannot be blank/empty."
 	WrongInput           string = "\n  WRONG INPUT!!\n"
@@ -45,8 +43,6 @@ const (
 	maxPageSize          int32  = 1000
 	YesNo                string = " (y/n)"
 )
-
-var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9-_:.]{4,63}$`)
 
 // Input deatils for the input variable
 //
@@ -79,7 +75,7 @@ func GetInteractiveInput() []string {
 func GetSwitchInteractiveInput(s *fleet.Switch) {
 	input := &Input{
 		Key:      "Name",
-		Desc:     NameFormat,
+		Desc:     UfleetAPI.ValidName,
 		Required: true,
 	}
 	scanner := bufio.NewScanner(os.Stdin)
@@ -98,7 +94,7 @@ func GetSwitchInteractiveInput(s *fleet.Switch) {
 			}
 			switch input.Key {
 			case "Name":
-				if !nameRegex.MatchString(value) {
+				if !UfleetAPI.IDRegex.MatchString(value) {
 					break
 				}
 				s.Name = value
@@ -132,7 +128,7 @@ func GetSwitchInteractiveInput(s *fleet.Switch) {
 func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machine *fleet.Machine) {
 	input := &Input{
 		Key:      "Name",
-		Desc:     NameFormat,
+		Desc:     UfleetAPI.ValidName,
 		Required: true,
 	}
 	scanner := bufio.NewScanner(os.Stdin)
@@ -151,8 +147,8 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 			}
 			switch input.Key {
 			case "Name":
-				if !nameRegex.MatchString(value) {
-					input.Desc = NameFormat
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					input.Desc = UfleetAPI.ValidName
 					break
 				}
 				if MachineExists(ctx, ic, value) {
