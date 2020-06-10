@@ -16,7 +16,8 @@ import (
 	"go.chromium.org/luci/common/gcloud/gs"
 
 	fleetAPI "infra/appengine/cros/lab_inventory/api/v1"
-	"infra/libs/fleet/protos"
+	utilslib "infra/libs/cros/lab_inventory/utils"
+	fleet "infra/libs/fleet/protos"
 )
 
 // Updater is used to asynchronously update to datastore and write logs while
@@ -88,6 +89,7 @@ func NewUpdater(ctx context.Context, c fleetAPI.InventoryClient, gsc gs.Client, 
 // AddAsset asynchronously adds asset
 func (u *Updater) AddAsset(assetList []*fleet.ChopsAsset) {
 	defer u.logFile.Flush()
+	assetList = utilslib.SanitizeChopsAsset(assetList)
 	for _, a := range assetList {
 		// Write input log and then update the channel
 		u.logFile.Write(assetToStringList(a))

@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
+	"infra/libs/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
 )
@@ -191,6 +192,7 @@ func DeleteAsset(ctx context.Context, ids []string) []*AssetOpResult {
 // putAssets determines if an update of existing object is being performed or
 // a new object is being created and return the responses accordingly
 func putAssets(ctx context.Context, assets []*fleet.ChopsAsset, update bool) ([]*AssetOpResult, error) {
+	assets = utils.SanitizeChopsAsset(assets)
 	allResponses := make([]*AssetOpResult, len(assets))
 	updated := time.Now().UTC()
 	putEntities := make([]*AssetEntity, 0, len(assets))

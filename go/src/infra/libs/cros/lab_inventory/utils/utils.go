@@ -11,12 +11,14 @@ import (
 	"regexp"
 	"strings"
 
+	"infra/libs/cros/git"
+	ca "infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos/go"
+
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	authclient "go.chromium.org/luci/auth"
 	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/server/auth"
-	"infra/libs/cros/git"
-	fleet "infra/libs/fleet/protos/go"
 )
 
 // Host, project and branch to get dhcpd.conf file
@@ -126,6 +128,40 @@ func getMacHostMapping(conf string) map[string]string {
 		}
 	}
 	return res
+}
+
+// SanitizeChopsAsset removes all the trailing and leading whitespaces in
+// all ChopsAsset proto string fields in the input slice
+func SanitizeChopsAsset(a []*ca.ChopsAsset) []*ca.ChopsAsset {
+	for idx, asset := range a {
+		a[idx] = trimWhiteSpaceInChopsAsset(asset)
+	}
+	return a
+}
+
+// trimWhitespaceInChopsAsset trims trailing and leading whitespace in
+// ChopsAsset proto
+func trimWhiteSpaceInChopsAsset(a *ca.ChopsAsset) *ca.ChopsAsset {
+	if a == nil {
+		return a
+	}
+	a.Id = strings.TrimSpace(a.Id)
+	a.Location = trimWhiteSpaceInLocation(a.Location)
+	return a
+}
+
+// trimWhitespaceInLocation trims trailing and leading whitespace in Location
+func trimWhiteSpaceInLocation(a *fleet.Location) *fleet.Location {
+	if a == nil {
+		return a
+	}
+	a.Lab = strings.TrimSpace(a.Lab)
+	a.Aisle = strings.TrimSpace(a.Aisle)
+	a.Row = strings.TrimSpace(a.Row)
+	a.Rack = strings.TrimSpace(a.Rack)
+	a.Shelf = strings.TrimSpace(a.Shelf)
+	a.Position = strings.TrimSpace(a.Position)
+	return a
 }
 
 /* Regular expressions to match various parts of the input string - START */
