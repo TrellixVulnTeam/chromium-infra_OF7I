@@ -61,6 +61,7 @@ func TestParseTestControlExecutionEnvironment(t *testing.T) {
 	}{
 		{"default value", ``, api.AutotestTest_EXECUTION_ENVIRONMENT_UNSPECIFIED},
 		{"malformed value", `TEST_TYPE = "notclient"`, api.AutotestTest_EXECUTION_ENVIRONMENT_UNSPECIFIED},
+		{"ignore comment", `# TEST_TYPE = "client"`, api.AutotestTest_EXECUTION_ENVIRONMENT_UNSPECIFIED},
 		{"client test", `TEST_TYPE = "client"`, api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT},
 		{"server test", `TEST_TYPE = 'server'`, api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER},
 		{"server test mixed case", `TEST_TYPE = 'SeRvEr'`, api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER},
@@ -88,6 +89,7 @@ func TestParseTestControlSyncCount(t *testing.T) {
 		WantDutCount          int32
 	}{
 		{"default value", ``, false, 0},
+		{"ignore comment", `# SYNC_COUNT = 0`, false, 0},
 		{"explicit zero", `SYNC_COUNT = 0`, false, 0},
 		{"multi dut", `SYNC_COUNT = 3`, true, 3},
 	}
@@ -116,6 +118,7 @@ func TestParseTestControlRetries(t *testing.T) {
 		WantMaxRetries   int32
 	}{
 		{"default value", ``, true, 1},
+		{"ignore comment", `## JOB_RETRIES = 3`, true, 1},
 		{"multiple retries", `JOB_RETRIES = 3`, true, 3},
 		{"no retries", `JOB_RETRIES = 0`, false, 0},
 	}
@@ -143,6 +146,7 @@ func TestParseTestControlDependencies(t *testing.T) {
 		Want stringset.Set
 	}{
 		{"default value", ``, stringset.NewFromSlice()},
+		{"ignore comment", `# DEPENDENCIES = 'dep'`, stringset.NewFromSlice()},
 		{"one value", `DEPENDENCIES = 'dep'`, stringset.NewFromSlice("dep")},
 		{"one valuewith colon", `DEPENDENCIES = 'model:mario'`, stringset.NewFromSlice("model:mario")},
 		{"two values with space", `DEPENDENCIES = "dep1, dep2"`, stringset.NewFromSlice("dep1", "dep2")},
@@ -189,6 +193,7 @@ func TestParseTestControlSuites(t *testing.T) {
 	}{
 		{"default value", ``, stringset.NewFromSlice()},
 		{"unrelated dependency", `ATTRIBUTES = 'dep'`, stringset.NewFromSlice()},
+		{"ignore comment", `## ATTRIBUTES = 'suite:network_nightly'`, stringset.NewFromSlice()},
 		{"one suite", `ATTRIBUTES = 'suite:network_nightly'`, stringset.NewFromSlice("network_nightly")},
 		{"two suites", `ATTRIBUTES = "suite:bvt, suite:bvt-inline"`, stringset.NewFromSlice("bvt", "bvt-inline")},
 		{"one suite in context", `ATTRIBUTES = "suite:cts,another_attribute"`, stringset.NewFromSlice("cts")},
@@ -196,6 +201,7 @@ func TestParseTestControlSuites(t *testing.T) {
 		{"one suite with mistmatched quotes", `ATTRIBUTES = "suite:cts'`, stringset.NewFromSlice()},
 		{"suite in parens", `ATTRIBUTES = ('suite:network_nightly')`, stringset.NewFromSlice("network_nightly")},
 		{"suite in parens and space", `ATTRIBUTES = ( 'suite:network_nightly' )`, stringset.NewFromSlice("network_nightly")},
+		{"ignore comment and parens", `# ATTRIBUTES = ('suite:wifi_perf')`, stringset.NewFromSlice()},
 		{
 			"suite in parens and newline with spaces",
 			`ATTRIBUTES = ('suite:network_nightly,'
