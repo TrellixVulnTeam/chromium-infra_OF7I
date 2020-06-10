@@ -21,4 +21,34 @@ describe('mr-issue-slo', () => {
   it('initializes', () => {
     assert.instanceOf(element, MrIssueSlo);
   });
+
+  it('handles ineligible issues', async () => {
+    element._determineSloStatus = () => {
+      return null;
+    };
+    element.issue = {};
+    await element.updateComplete;
+    assert.equal(element.shadowRoot.textContent, 'N/A');
+  });
+
+  it('handles issues that have completed the SLO criteria', async () => {
+    element._determineSloStatus = () => {
+      return {target: null};
+    };
+    element.issue = {};
+    await element.updateComplete;
+    assert.equal(element.shadowRoot.textContent, 'Done');
+  });
+
+  it('handles issues that have not completed the SLO criteria', async () => {
+    element._determineSloStatus = () => {
+      return {target: 1234};
+    };
+    element.issue = {};
+    await element.updateComplete;
+    const timestampElement =
+        element.shadowRoot.querySelector('chops-timestamp');
+
+    assert.equal(timestampElement.timestamp, 1234);
+  });
 });

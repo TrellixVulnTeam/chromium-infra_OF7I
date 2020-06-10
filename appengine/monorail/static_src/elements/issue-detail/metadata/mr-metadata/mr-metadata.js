@@ -8,6 +8,7 @@ import {connectStore} from 'reducers/base.js';
 import 'elements/chops/chops-timestamp/chops-timestamp.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
+import 'elements/framework/mr-issue-slo/mr-issue-slo.js';
 
 import * as issueV0 from 'reducers/issueV0.js';
 import * as userV0 from 'reducers/userV0.js';
@@ -207,8 +208,7 @@ export class MrMetadata extends connectStore(LitElement) {
           ` : EMPTY_FIELD_VALUE;
       case 'slo':
         if (isExperimentEnabled(SLO_EXPERIMENT, this.currentUser)) {
-          // TODO(crbug.com/monorail/7740): SLO rendering implementation.
-          return html`<mr-issue-slo></mr-issue-slo>`;
+          return html`<mr-issue-slo .issue=${this.issue}></mr-issue-slo>`;
         } else {
           return;
         }
@@ -288,6 +288,7 @@ export class MrMetadata extends connectStore(LitElement) {
       components: {type: Array},
       fieldDefs: {type: Array},
       fieldGroups: {type: Array},
+      issue: {type: Object},
       issueStatus: {type: String},
       issueType: {type: String},
       mergedInto: {type: Object},
@@ -320,6 +321,7 @@ export class MrMetadata extends connectStore(LitElement) {
     this.cc = undefined;
     this.components = undefined;
     this.fieldDefs = undefined;
+    this.issue = undefined;
     this.issueStatus = undefined;
     this.issueType = undefined;
     this.mergedInto = undefined;
@@ -339,6 +341,7 @@ export class MrMetadata extends connectStore(LitElement) {
   /** @override */
   stateChanged(state) {
     this.fieldValueMap = issueV0.fieldValueMap(state);
+    this.issue = issueV0.viewedIssue(state);
     this.issueType = issueV0.type(state);
     this.issueRef = issueV0.viewedIssueRef(state);
     this.relatedIssues = issueV0.relatedIssues(state);

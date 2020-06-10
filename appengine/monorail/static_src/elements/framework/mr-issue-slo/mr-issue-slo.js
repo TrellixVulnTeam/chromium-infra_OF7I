@@ -4,6 +4,10 @@
 
 import {LitElement, html, css} from 'lit-element';
 
+import 'elements/chops/chops-timestamp/chops-timestamp.js';
+import {determineSloStatus} from './slo-rules.js';
+
+/** @typedef {import('./slo-rules.js').SloStatus} SloStatus */
 
 /**
  * `<mr-issue-slo>`
@@ -18,18 +22,38 @@ export class MrIssueSlo extends LitElement {
 
   /** @override */
   render() {
-    // TODO(crbug.com/monorail/7740): SLO rendering implementation.
-    return html`N/A`;
+    const sloStatus = this._determineSloStatus();
+    if (!sloStatus) {
+      return html`N/A`;
+    }
+    if (!sloStatus.target) {
+      return html`Done`;
+    }
+    return html`
+      <chops-timestamp .timestamp=${sloStatus.target} short></chops-timestamp>`;
+  }
+
+  /**
+   * Wrapper around slo-rules.js determineSloStatus to allow tests to override
+   * the return value.
+   * @private
+   * @return {SloStatus}
+   */
+  _determineSloStatus() {
+    return this.issue ? determineSloStatus(this.issue) : null;
   }
 
   /** @override */
   static get properties() {
-    return {};
+    return {
+      issue: {type: Object},
+    };
   }
-
   /** @override */
   constructor() {
     super();
+    /** @type {Issue} */
+    this.issue;
   }
 }
 customElements.define('mr-issue-slo', MrIssueSlo);
