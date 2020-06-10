@@ -167,6 +167,22 @@ message IssueDelta {
   // TODO(crbug.com/monorail/7657): add Attachment uploading and removing.
 }
 
+// The differences to an approval field. Used to update or make issue.
+// Next available tag: 6
+message ApprovalDelta {
+  // The ApprovalValue we want to update.
+  ApprovalValue approval_value = 1;
+  // Repeated fields found in `update_mask` will be appended to.
+  google.protobuf.FieldMask update_mask = 2;
+  // Resource names of the approvers we want to remove.
+  repeated string approvers_remove = 3 [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
+  // FieldValues that do not belong to `approval_value` will be ignored.
+  repeated FieldValue field_vals_add = 4;
+  // FieldValues that do not belong to `approval_value` will be ignored.
+  repeated FieldValue field_vals_remove = 5;
+  // TODO(crbug.com/monorail/7657): add Attachment uploading and removing.
+}
+
 
 // The type of notification a change should trigger.
 // See monorail/doc/userguide/email.md
