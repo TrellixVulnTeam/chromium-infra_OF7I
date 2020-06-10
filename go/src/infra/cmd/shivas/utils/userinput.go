@@ -43,6 +43,7 @@ const (
 	Browser              string = "Browser"
 	Unknown              string = "Unknown"
 	maxPageSize          int32  = 1000
+	YesNo                string = " (y/n)"
 )
 
 var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9-_:.]{4,63}$`)
@@ -338,13 +339,15 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					machine.GetChromeBrowserMachine().ChromePlatform = chromePlatforms[option]
 				}
 				input = &Input{
-					Key: "Nic",
+					Key:      "Nics (y/n)",
+					Desc:     fmt.Sprintf("%s%s?", OptionToEnter, "Nic"),
+					Required: true,
 				}
-			case "Nic":
-				if value != "" && !NicExists(ctx, ic, value) {
-					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
-				} else {
-					machine.GetChromeBrowserMachine().Nic = value
+				// repeated Nic
+			case "Nics (y/n)":
+				vals, done := getRepeatedStringInput(ctx, ic, scanner, value, "Nic", input, true)
+				if done {
+					machine.GetChromeBrowserMachine().Nics = vals
 					input = &Input{
 						Key: "KVM",
 					}
@@ -391,7 +394,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					}
 				} else {
 					input = &Input{
-						Key: "Switch",
+						Key: "Drac",
 					}
 				}
 			case "RPM Port":
@@ -401,38 +404,6 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 						break
 					}
 					machine.GetChromeBrowserMachine().RpmInterface.Port = port
-				}
-				input = &Input{
-					Key: "Switch",
-				}
-			case "Switch":
-				if value != "" && !SwitchExists(ctx, ic, value) {
-					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
-					break
-				}
-				machine.GetChromeBrowserMachine().NetworkDeviceInterface = &fleet.SwitchInterface{
-					Switch: value,
-				}
-				if value != "" {
-					input = &Input{
-						Key: "Switch Port",
-					}
-				} else {
-					input = &Input{
-						Key: "Drac",
-					}
-				}
-			case "Switch Port":
-				if value != "" {
-					i, err := strconv.ParseInt(value, 10, 32)
-					if err != nil {
-						input = &Input{
-							Key:  "Switch Port",
-							Desc: fmt.Sprintf("%s", WrongInput),
-						}
-						break
-					}
-					machine.GetChromeBrowserMachine().NetworkDeviceInterface.Port = int32(i)
 				}
 				input = &Input{
 					Key: "Drac",
@@ -565,4 +536,61 @@ func getSelectionInput(value string, m map[int32]string, input *Input) int32 {
 		return -1
 	}
 	return int32(i)
+}
+
+func getRepeatedStringInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, yn, key string, input *Input, isResource bool) ([]string, bool) {
+	yn = strings.ToLower(yn)
+	if yn != "y" && yn != "n" {
+		input.Desc = fmt.Sprintf("%s%s%s?", WrongInput, OptionToEnter, input.Key)
+		return nil, false
+	}
+	if yn == "n" {
+		return nil, true
+	}
+	values := make([]string, 0, 0)
+	input = &Input{
+		Key: key,
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case key + YesNo:
+				value = strings.ToLower(value)
+				if value == "y" {
+					input = &Input{
+						Key: key,
+					}
+				} else if value == "n" {
+					input = nil
+				} else {
+					input.Desc = fmt.Sprintf("%s%s%s?", WrongInput, OptionToEnter, key)
+				}
+			case key:
+				if isResource && value != "" && !EntityExists(ctx, ic, key, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				if value != "" {
+					values = append(values, value)
+				}
+				input = &Input{
+					Key:      key + YesNo,
+					Desc:     fmt.Sprintf("%s%s?", OptionToEnterMore, key),
+					Required: true,
+				}
+			}
+			break
+		}
+	}
+	return values, true
 }

@@ -12,6 +12,30 @@ const (
 	notFound string = "Entity not found."
 )
 
+// EntityExists checks if the given resource exists in the system
+func EntityExists(ctx context.Context, ic UfleetAPI.FleetClient, resource, name string) bool {
+	switch resource {
+	case "Machine":
+		return MachineExists(ctx, ic, name)
+	case "Rack":
+		return RackExists(ctx, ic, name)
+	case "ChromePlatform":
+		return ChromePlatformExists(ctx, ic, name)
+	case "Nic":
+		return NicExists(ctx, ic, name)
+	case "KVM":
+		return KVMExists(ctx, ic, name)
+	case "RPM":
+		return RPMExists(ctx, ic, name)
+	case "Switch":
+		return SwitchExists(ctx, ic, name)
+	case "Drac":
+		return DracExists(ctx, ic, name)
+	default:
+		return false
+	}
+}
+
 // MachineExists checks if the given Machine exists in the system
 func MachineExists(ctx context.Context, ic UfleetAPI.FleetClient, name string) bool {
 	if len(name) == 0 {

@@ -19,7 +19,10 @@ import (
 
 var (
 	switchTitle  = []string{"Switch Name", "CapacityPort", "UpdateTime"}
-	machineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row", "Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform", "Nic", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port", "Drac", "DeploymentTicket", "Description", "Realm", "UpdateTime"}
+	machineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
+		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
+		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
+		"Drac", "DeploymentTicket", "Description", "Realm", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -104,7 +107,7 @@ func printMachine(m *fleet.Machine) {
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetPosition())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDisplayName())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetNic())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetNics())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetKvmInterface().GetKvm())
 	out += fmt.Sprintf("%d\t", m.GetChromeBrowserMachine().GetKvmInterface().GetPort())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetRpmInterface().GetRpm())

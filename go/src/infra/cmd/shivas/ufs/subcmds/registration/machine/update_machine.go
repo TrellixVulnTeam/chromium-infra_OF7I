@@ -45,7 +45,7 @@ Example Browser Lab Machine: {
 	"chromeBrowserMachine": {
 		"displayName": "ax105-34-230",
 		"chromePlatform": "Dell R230",
-		"nic": "ax105-34-230-eth0",
+		"nic": ["ax105-34-230-eth0",]
 		"kvmInterface": {
 			"kvm": "kvm.mtv97",
 			"port": 34
@@ -53,10 +53,6 @@ Example Browser Lab Machine: {
 		"rpmInterface": {
 			"rpm": "rpm.mtv97",
 			"port": 65
-		},
-		"networkDeviceInterface": {
-			"switch": "sq005.mtv97",
-			"port": 98
 		},
 		"drac": "ax105-34-230-drac",
 		"deploymentTicket": "846026"
