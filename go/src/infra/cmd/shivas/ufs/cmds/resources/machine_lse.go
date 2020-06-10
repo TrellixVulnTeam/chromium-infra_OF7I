@@ -7,6 +7,7 @@ package resources
 import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
+	m "infra/cmd/shivas/ufs/subcmds/inventory/machinelse"
 )
 
 type machinelse struct {
@@ -36,7 +37,10 @@ func (c *machinelse) Run(a subcommands.Application, args []string, env subcomman
 
 // GetCommands lists all the subcommands under machinelse
 func (c machinelseApp) GetCommands() []*subcommands.Command {
-	return []*subcommands.Command{}
+	return []*subcommands.Command{
+		m.AddMachinelseCmd,
+		m.UpdateMachinelseCmd,
+	}
 }
 
 // GetName is cli.Application interface implementation
