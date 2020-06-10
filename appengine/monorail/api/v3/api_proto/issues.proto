@@ -45,6 +45,11 @@ service Issues {
   //   PERMISSION_DENIED if the requester is not allowed to make the
   //     requested change.
   rpc ModifyIssues (ModifyIssuesRequest) returns (ModifyIssuesResponse) {}
+  // Makes an issue from an IssueTemplate and deltas.
+  //
+  // Raises:
+  //   TODO(crbug/monorail/7197): Document errors when implemented
+  rpc MakeIssueFromTemplate (MakeIssueFromTemplateRequest) returns (Issue) {}
 }
 
 
@@ -175,7 +180,9 @@ message ApprovalDelta {
   // Repeated fields found in `update_mask` will be appended to.
   google.protobuf.FieldMask update_mask = 2;
   // Resource names of the approvers we want to remove.
-  repeated string approvers_remove = 3 [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
+  repeated string approvers_remove = 3 [
+      (google.api.resource_reference) = { type: "api.crbug.com/User" }
+  ];
   // FieldValues that do not belong to `approval_value` will be ignored.
   repeated FieldValue field_vals_add = 4;
   // FieldValues that do not belong to `approval_value` will be ignored.
@@ -215,4 +222,20 @@ message ModifyIssuesRequest {
 message ModifyIssuesResponse {
   // The updated issues.
   repeated Issue issues = 1;
+}
+
+// The request message for MakeIssueFromTemplate.
+// Next available tag: 4
+message MakeIssueFromTemplateRequest {
+  // Resource name of the template to use for filling in default values
+  // and adding approvals and phases.
+  string template = 1 [
+      (google.api.resource_reference) = { type: "api.crbug.com/Template" }
+  ];
+  // The issue differences relative to the `template.issue` default.
+  IssueDelta template_issue_delta = 2;
+  // Changes to fields belonging to approvals relative to template default.
+  // While ApprovalDelta can hold additional information, this method only
+  // allows adding and removing field values, all other deltas will be ignored.
+  repeated ApprovalDelta template_approval_deltas = 3;
 }

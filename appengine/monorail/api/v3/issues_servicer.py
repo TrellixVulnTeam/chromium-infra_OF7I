@@ -97,3 +97,14 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     return issues_pb2.ListCommentsResponse(
         comments=self.converter.ConvertComments(issue_id, list_result.items),
         next_page_token=pager.GenerateNextPageToken(list_result.next_start))
+
+  @monorail_servicer.PRPCMethod
+  def MakeIssueFromTemplate(self, _mc, _request):
+    # type: (MonorailContext, MakeIssueFromTemplateRequest) -> Issue
+    """pRPC API method that implements MakeIssueFromTemplate.
+
+    Raises:
+      TODO(crbug/monorail/7197): Document errors when implemented
+    """
+    # TODO(crbug/monorail/7197): Actually implement
+    return issue_objects_pb2.Issue();
