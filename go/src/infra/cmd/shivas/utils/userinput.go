@@ -37,6 +37,8 @@ const (
 	ChooseRouter              string = "\n Choose a Router \n"
 	ChooseCableType           string = "\n Choose a Cable \n"
 	ChooseCameraboxFacing     string = "\n Choose a Facing for CameraBox \n"
+	ChoosePheripheralType     string = "\n Choose a PheripheralType \n"
+	ChooseVirtualType         string = "\n Choose a VirtualType \n"
 	OptionToEnter             string = "\nDo you want to enter a "
 	OptionToEnterMore         string = "\nDo you want to enter one more "
 	ChooseLab                 string = "\n Choose a Lab\n"
@@ -54,6 +56,7 @@ const (
 	ATLLab                    string = "atl-lab:"
 	ACSLab                    string = "acs-lab:"
 	BrowserLab                string = "browser-lab:"
+	MinMaxError               string = "Maximum value must be greater than or equal to Minimum value."
 )
 
 // Input deatils for the input variable
@@ -1152,11 +1155,191 @@ func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.Fl
 }
 
 // getPeripheralRequirements get PeripheralRequirements for MachineLSEPrototype input in interactive mode
+//
+// PeripheralRequirements(repeated) -> PeripheralType(enum) -> min(int) -> max(int)
 func getPeripheralRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEPrototype) {
+	input := &Input{
+		Key:      "PeripheralRequirements (y/n)",
+		Desc:     fmt.Sprintf("%sPeripheralRequirement?", OptionToEnter),
+		Required: true,
+	}
+	prs := make([]*fleet.PeripheralRequirement, 0, 0)
+	var pr *fleet.PeripheralRequirement
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			// repeated PeripheralRequirements
+			case "PeripheralRequirements (y/n)":
+				value = strings.ToLower(value)
+				if value == "y" {
+					input = &Input{
+						Key:  "PeripheralType",
+						Desc: fmt.Sprintf("%s%s", ChoosePheripheralType, createKeyValuePairs(fleet.PeripheralType_name)),
+					}
+				} else if value == "n" {
+					mlsep.PeripheralRequirements = prs
+					input = nil
+				} else {
+					input = &Input{
+						Key:      "PeripheralRequirements (y/n)",
+						Desc:     fmt.Sprintf("%s%sPeripheralRequirement?", WrongInput, OptionToEnter),
+						Required: true,
+					}
+				}
+			case "PeripheralType":
+				if value == "" || value == "0" {
+					pr = &fleet.PeripheralRequirement{}
+				} else {
+					option := getSelectionInput(value, fleet.PeripheralType_name, input)
+					if option == -1 {
+						break
+					}
+					pr = &fleet.PeripheralRequirement{
+						PeripheralType: fleet.PeripheralType(option),
+					}
+				}
+				input = &Input{
+					Key: "Minimum Pheripherals",
+					Desc: "The minimum/maximum number of the peripherals " +
+						"that is needed by a LSE, e.g. A test needs 1-3 bluetooth " +
+						"bt peers to be set up.",
+				}
+			case "Minimum Pheripherals":
+				if value != "" {
+					val := getIntInput(value, input)
+					if val == -1 {
+						break
+					}
+					pr.Min = val
+				}
+				input = &Input{
+					Key: "Maximum Pheripherals",
+				}
+			case "Maximum Pheripherals":
+				if value != "" {
+					val := getIntInput(value, input)
+					if val == -1 {
+						break
+					}
+					if val < pr.Min {
+						input.Desc = fmt.Sprintf("%s%s", WrongInput, MinMaxError)
+						break
+					}
+					pr.Max = val
+				}
+				prs = append(prs, pr)
+				input = &Input{
+					Key:      "PeripheralRequirements (y/n)",
+					Desc:     fmt.Sprintf("%sPeripheralRequirement?", OptionToEnterMore),
+					Required: true,
+				}
+			}
+			break
+		}
+	}
 }
 
 // getVirtualRequirements get VirtualRequirements for MachineLSEPrototype input in interactive mode
+//
+// VirtualRequirements(repeated) -> VirtualType(enum) -> min(int) -> max(int)
 func getVirtualRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEPrototype) {
+	input := &Input{
+		Key:      "VirtualRequirements (y/n)",
+		Desc:     fmt.Sprintf("%sVirtualRequirement?", OptionToEnter),
+		Required: true,
+	}
+	prs := make([]*fleet.VirtualRequirement, 0, 0)
+	var pr *fleet.VirtualRequirement
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			// repeated VirtualRequirements
+			case "VirtualRequirements (y/n)":
+				value = strings.ToLower(value)
+				if value == "y" {
+					input = &Input{
+						Key:  "VirtualType",
+						Desc: fmt.Sprintf("%s%s", ChooseVirtualType, createKeyValuePairs(fleet.VirtualType_name)),
+					}
+				} else if value == "n" {
+					mlsep.VirtualRequirements = prs
+					input = nil
+				} else {
+					input = &Input{
+						Key:      "VirtualRequirements (y/n)",
+						Desc:     fmt.Sprintf("%s%sVirtualRequirement?", WrongInput, OptionToEnter),
+						Required: true,
+					}
+				}
+			case "VirtualType":
+				if value == "" || value == "0" {
+					pr = &fleet.VirtualRequirement{}
+				} else {
+					option := getSelectionInput(value, fleet.VirtualType_name, input)
+					if option == -1 {
+						break
+					}
+					pr = &fleet.VirtualRequirement{
+						VirtualType: fleet.VirtualType(option),
+					}
+				}
+				input = &Input{
+					Key:  "Minimum",
+					Desc: "The minimum/maximum number of virtual types that can be setup.",
+				}
+			case "Minimum":
+				if value != "" {
+					val := getIntInput(value, input)
+					if val == -1 {
+						break
+					}
+					pr.Min = val
+				}
+				input = &Input{
+					Key: "Maximum",
+				}
+			case "Maximum":
+				if value != "" {
+					val := getIntInput(value, input)
+					if val == -1 {
+						break
+					}
+					if val < pr.Min {
+						input.Desc = fmt.Sprintf("%s%s", WrongInput, MinMaxError)
+						break
+					}
+					pr.Max = val
+				}
+				prs = append(prs, pr)
+				input = &Input{
+					Key:      "VirtualRequirements (y/n)",
+					Desc:     fmt.Sprintf("%sVirtualRequirement?", OptionToEnterMore),
+					Required: true,
+				}
+			}
+			break
+		}
+	}
 }
 
 func createKeyValuePairs(m map[int32]string) string {
