@@ -25,7 +25,6 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/bb"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/swarming"
-	"infra/libs/skylab/common/errctx"
 )
 
 // SkylabExecute subcommand: Run a set of enumerated tests against skylab backend.
@@ -260,21 +259,28 @@ func (c *skylabExecuteRun) updateWithEnumerationErrors(ctx context.Context, resp
 	}
 }
 
-var timeoutTag = errors.BoolTag{Key: errors.NewTagKey("this error occurred because of timeout")}
-
 // runWithDeadline runs f() with the given deadline.
 //
-// In case of a timeout, the error is returned as timeoutError. All other errors
-// are returned as fErr.
+// In case of a highest level timeout, the error is returned as timeoutError.
+// All other errors are returned as fErr.
 func runWithDeadline(ctx context.Context, f func(context.Context) error, deadline time.Time) (timeoutError error, fErr error) {
-	tErr := fmt.Errorf("hit cros_test_platform request deadline (%s)", deadline)
-	tErr = timeoutTag.Apply(tErr)
-	ctx, cancel := errctx.WithDeadline(ctx, deadline, tErr)
-	defer cancel(context.Canceled)
+	ctx, cancel := context.WithDeadline(ctx, deadline)
+	defer cancel()
 
-	ierr := f(ctx)
-	if timeoutTag.In(ierr) {
-		return ierr, nil
+	err := f(ctx)
+	if isGlobalTimeoutError(ctx, err) {
+		return errors.Annotate(err, "hit cros_test_platform request deadline (%s)", deadline).Err(), nil
 	}
-	return nil, ierr
+	return nil, err
+}
+
+// isGlobalTimeoutError returns true iff the error is consistent with being due
+// to hitting the high level deadline.
+//
+// If the error contains no DeadlineExceeded then the cause is not a timeout.
+// If the error contains DeadlineExceeded and the deadline has not been
+// reached then it is due to a timeout lower in the stack.
+func isGlobalTimeoutError(ctx context.Context, err error) bool {
+	d, ok := ctx.Deadline()
+	return ok && time.Now().After(d) && errors.Contains(err, context.DeadlineExceeded)
 }
