@@ -1067,6 +1067,10 @@ func getVms(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanne
 	}
 }
 
+// GetMachinelsePrototypeInteractiveInput gets MachineLSEPrototype input in interactive mode
+func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, mlsep *fleet.MachineLSEPrototype) {
+}
+
 func createKeyValuePairs(m map[int32]string) string {
 	keys := make([]int32, 0, len(m))
 	for k := range m {
