@@ -40,10 +40,12 @@ func (c machinelsePrototypeApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		m.AddMachinelsePrototypeCmd,
 		m.UpdateMachinelsePrototypeCmd,
+		m.GetMachinelsePrototypeCmd,
+		m.DeleteMachinelsePrototypeCmd,
 	}
 }
 
 // GetName is cli.Application interface implementation
 func (c machinelsePrototypeApp) GetName() string {
-	return "machinelsePrototype"
+	return "machinelseprototype"
 }
