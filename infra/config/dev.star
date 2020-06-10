@@ -99,8 +99,15 @@ luci.realm(
     ],
 )
 
-
-luci.bucket(name = 'ci')
+# TODO(crbug.com/1066839): remove or fix the bindings after integration testing.
+luci.bucket(name = 'ci', bindings=[
+    luci.binding(
+        roles = 'role/swarming.realmUser',
+        groups = [
+            'chromium-swarm-dev-users',
+        ],
+    )
+])
 
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
 
