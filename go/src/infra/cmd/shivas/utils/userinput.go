@@ -24,25 +24,26 @@ import (
 
 // Interactive mode messages for user input
 const (
-	InputDetails         string = "Please enter the details: "
-	RequiredField        string = "is a required field. It cannot be blank/empty."
-	WrongInput           string = "\n  WRONG INPUT!!\n"
-	ChooseOption         string = "\n Choose an option\n"
-	ChooseChromePlatform string = "\n Choose a ChromePlatform\n"
-	OptionToEnter        string = "\nDo you want to enter a "
-	OptionToEnterMore    string = "\nDo you want to enter one more "
-	ChooseLab            string = "\n Choose a Lab\n"
-	BroswerOrOSLab       string = "1=\"Browser Lab\"\n2=\"OS Lab\"\n"
-	BrowserOrATLOrACSLab string = "1=\"Browser Lab\"\n2=\"ATL Lab\"\n3=\"ACS Lab\"\n"
-	DutOrServer          string = "1=\"DUT\"\n2=\"Server\"\n"
-	DoesNotExist         string = " doesnt not exist in the system. Please check and enter again."
-	AlreadyExists        string = " already exists in the system. Please check and enter again."
-	ATL                  string = "ATL"
-	ACS                  string = "ACS"
-	Browser              string = "Browser"
-	Unknown              string = "Unknown"
-	maxPageSize          int32  = 1000
-	YesNo                string = " (y/n)"
+	InputDetails              string = "Please enter the details: "
+	RequiredField             string = "is a required field. It cannot be blank/empty."
+	WrongInput                string = "\n  WRONG INPUT!!\n"
+	ChooseOption              string = "\n Choose an option\n"
+	ChooseChromePlatform      string = "\n Choose a ChromePlatform\n"
+	ChooseMachineLSEPrototype string = "\n Choose a MachineLSE Prototype\n"
+	OptionToEnter             string = "\nDo you want to enter a "
+	OptionToEnterMore         string = "\nDo you want to enter one more "
+	ChooseLab                 string = "\n Choose a Lab\n"
+	BroswerOrOSLab            string = "1=\"Browser Lab\"\n2=\"OS Lab\"\n"
+	BrowserOrATLOrACSLab      string = "1=\"Browser Lab\"\n2=\"ATL Lab\"\n3=\"ACS Lab\"\n"
+	DutOrServer               string = "1=\"DUT\"\n2=\"Server\"\n"
+	DoesNotExist              string = " doesnt not exist in the system. Please check and enter again."
+	AlreadyExists             string = " already exists in the system. Please check and enter again."
+	ATL                       string = "ATL"
+	ACS                       string = "ACS"
+	Browser                   string = "Browser"
+	Unknown                   string = "Unknown"
+	maxPageSize               int32  = 1000
+	YesNo                     string = " (y/n)"
 )
 
 // Input deatils for the input variable
@@ -512,6 +513,65 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 // -> DUT or Server(choice to branch) ->
 // -> getOSDevicelseInteractiveInput()/getOSServerlseInteractiveInput()
 func getOSMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
+	machinelse.Lse = &fleet.MachineLSE_ChromeosMachineLse{
+		ChromeosMachineLse: &fleet.ChromeOSMachineLSE{},
+	}
+	var machineLSEPrototypes map[int32]string
+	if acs {
+		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, "acs-lab:")
+	} else {
+		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, "atl-lab:")
+	}
+	input := &Input{
+		Key: "Hostname",
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Hostname":
+				machinelse.Hostname = value
+				if len(machineLSEPrototypes) == 0 {
+					getOSDevicelseInteractiveInput(ctx, ic, scanner, machinelse, acs)
+					input = nil
+				} else {
+					input = &Input{
+						Key:  "MachineLSEPrototype",
+						Desc: fmt.Sprintf("%s%s", ChooseMachineLSEPrototype, createKeyValuePairs(machineLSEPrototypes)),
+					}
+				}
+			case "MachineLSEPrototype":
+				if value != "" {
+					option := getSelectionInput(value, machineLSEPrototypes, input)
+					if option == -1 {
+						break
+					}
+					machinelse.MachineLsePrototype = machineLSEPrototypes[option]
+				}
+				getOSDevicelseInteractiveInput(ctx, ic, scanner, machinelse, acs)
+				input = nil
+			}
+			break
+		}
+	}
+}
+
+// getOSDevicelseInteractiveInput get ChromeOSDeviceLSE input in interactive mode
+//
+// RPM(string, resource) -> RPM Port(int) -> Switch(string, resource) ->
+// -> Switch Port(int) -> Servo Hostname(string) ->
+// -> Servo Port(int) -> Servo Serial(string) -> Servo Type(string) ->
+// -> Pools(repeated string) -> getACSLabConfig()
+func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
 }
 
 // getBrowserMachinelseInteractiveInput get Browser MachineLSE input in interactive mode
@@ -684,4 +744,33 @@ func getRepeatedStringInput(ctx context.Context, ic UfleetAPI.FleetClient, scann
 		}
 	}
 	return values, true
+}
+
+// getAllMachineLSEPrototypes gets all MachineLSEPrototypes in the system
+func getAllMachineLSEPrototypes(ctx context.Context, ic UfleetAPI.FleetClient, lab string) map[int32]string {
+	m := make(map[int32]string)
+	var pageToken string
+	var index int32
+	for {
+		req := &UfleetAPI.ListMachineLSEPrototypesRequest{
+			PageSize:  int32(maxPageSize),
+			PageToken: pageToken,
+		}
+		res, err := ic.ListMachineLSEPrototypes(ctx, req)
+		if err != nil {
+			return m
+		}
+		for _, cp := range res.GetMachineLSEPrototypes() {
+			name := UfleetUtil.RemovePrefix(cp.GetName())
+			if strings.Contains(name, lab) {
+				m[index] = name
+				index++
+			}
+		}
+		pageToken = res.GetNextPageToken()
+		if pageToken == "" {
+			break
+		}
+	}
+	return m
 }
