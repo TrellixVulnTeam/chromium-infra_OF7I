@@ -66,6 +66,35 @@
 
 
 /**
+ * Resource name of an IssueStar.
+ *
+ * Examples of valid IssueStar resource names:
+ * - users/1234/issueStars/monorail.5556
+ * - users/1234/issueStars/test-project.4321
+ *
+ * @typedef {string} IssueStarName
+ */
+
+
+/**
+ * Resource name of a ProjectStar.
+ *
+ * Examples of valid ProjectStar resource names:
+ * - users/1234/projectStars/monorail
+ * - users/1234/projectStars/test-project
+ *
+ * @typedef {string} ProjectStarName
+ */
+
+
+/**
+ * Resource name of a Star.
+ *
+ * @typedef {ProjectStarName|IssueStarName} StarName
+ */
+
+
+/**
  * Resource name of a Project.
  *
  * Examples of valid Project resource names:
@@ -594,4 +623,24 @@
  * @property {string=} name
  * @property {string=} displayName
  * @property {string=} availabilityMessage
+ */
+
+/**
+ * A ProjectStar Object returned by the pRPC v3 API from user_objects.proto.
+ *
+ * @typedef {Object} ProjectStar
+ * @property {string=} name
+ */
+
+/**
+ * A IssueStar Object returned by the pRPC v3 API from user_objects.proto.
+ *
+ * @typedef {Object} IssueStar
+ * @property {string=} name
+ */
+
+/**
+ * Type alias for any Star object.
+ *
+ * @typedef {ProjectStar|IssueStar} Star
  */

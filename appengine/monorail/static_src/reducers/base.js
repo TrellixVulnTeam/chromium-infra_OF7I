@@ -11,6 +11,7 @@ import * as permissions from './permissions.js';
 import * as projects from './projects.js';
 import * as projectV0 from './projectV0.js';
 import * as sitewide from './sitewide.js';
+import {stars} from './stars.js';
 import * as users from './users.js';
 import * as userV0 from './userV0.js';
 import * as ui from './ui.js';
@@ -47,6 +48,7 @@ const reducer = combineReducers({
   users: users.reducer,
   userV0: userV0.reducer,
   sitewide: sitewide.reducer,
+  stars: stars.reducer,
 
   ui: ui.reducer,
 });
