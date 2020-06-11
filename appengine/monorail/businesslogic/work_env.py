@@ -170,6 +170,84 @@ class WorkEnv(object):
       raise permissions.PermissionException(
         'User lacks permission %r in issue' % perm)
 
+  def _AssertUserCanModifyIssues(
+      self, issue_delta_pairs, is_description_change, comment_content=None):
+    # type: (Tuple[Issue, IssueDelta], Boolean, Optional[str]) -> None
+    """Make sure the user may make the delta changes for each paired issue."""
+    # We assume that view permission for each issue, and therefore project,
+    # was checked by the caller.
+    project_ids = list(
+        {issue.project_id for (issue, _delta) in issue_delta_pairs})
+    projects_by_id = self.services.project.GetProjects(
+        self.mc.cnxn, project_ids)
+    configs_by_id = self.services.config.GetProjectConfigs(
+        self.mc.cnxn, project_ids)
+
+    project_perms_by_ids = {}
+    for project_id, project in projects_by_id.items():
+      project_perms_by_ids[project_id] = permissions.GetPermissions(
+          self.mc.auth.user_pb, self.mc.auth.effective_ids, project)
+
+    for issue, delta in issue_delta_pairs:
+      project_perms = project_perms_by_ids.get(issue.project_id)
+      config = configs_by_id.get(issue.project_id)
+      project = projects_by_id.get(issue.project_id)
+      granted_perms = tracker_bizobj.GetGrantedPerms(
+          issue, self.mc.auth.effective_ids, config)
+      issue_perms = permissions.UpdateIssuePermissions(
+          project_perms,
+          project,
+          issue,
+          self.mc.auth.effective_ids,
+          granted_perms=granted_perms)
+
+      # User cannot merge any issue into an issue they cannot edit.
+      if delta.merged_into:
+        merged_into_issue = self.GetIssue(
+            delta.merged_into, use_cache=False, allow_viewing_deleted=True)
+        self._AssertPermInIssue(merged_into_issue, permissions.EDIT_ISSUE)
+
+      if issue_perms.HasPerm(permissions.EDIT_ISSUE, self.mc.auth.user_id,
+                             project):
+        continue
+
+      # The user does not have general EDIT_ISSUE permissions, but may
+      # have perms to modify certain issue parts/fields.
+
+      # Description changes can only be made by users with EDIT_ISSUE.
+      if is_description_change:
+        raise permissions.PermissionException(
+            'User not allowed to edit description in issue %r' % issue)
+
+      if comment_content and not issue_perms.HasPerm(
+          permissions.ADD_ISSUE_COMMENT, self.mc.auth.user_id, project):
+        raise permissions.PermissionException(
+            'User not allowed to add comment in issue %r' % issue)
+
+      if delta == tracker_pb2.IssueDelta():
+        continue
+
+      allowed_delta = tracker_pb2.IssueDelta()
+      if issue_perms.HasPerm(permissions.EDIT_ISSUE_STATUS,
+                             self.mc.auth.user_id, project):
+        allowed_delta.status = delta.status
+      if issue_perms.HasPerm(permissions.EDIT_ISSUE_SUMMARY,
+                             self.mc.auth.user_id, project):
+        allowed_delta.summary = delta.summary
+      if issue_perms.HasPerm(permissions.EDIT_ISSUE_OWNER, self.mc.auth.user_id,
+                             project):
+        allowed_delta.owner_id = delta.owner_id
+      if issue_perms.HasPerm(permissions.EDIT_ISSUE_CC, self.mc.auth.user_id,
+                             project):
+        allowed_delta.cc_ids_add = delta.cc_ids_add
+        allowed_delta.cc_ids_remove = delta.cc_ids_remove
+      # We do not check for or add other fields (e.g. comps, labels, fields)
+      # of `delta` to `allowed_delta` because they are only allowed
+      # with EDIT_ISSUE perms.
+      if delta != allowed_delta:
+        raise permissions.PermissionException(
+            'User lack permission to make these changes to issue %r' % issue)
+
   def _AssertUserCanDeleteComment(self, issue, comment):
     issue_perms = self._AssertUserCanViewIssue(
        issue, allow_viewing_deleted=True)

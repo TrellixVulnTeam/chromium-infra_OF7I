@@ -899,9 +899,9 @@ class ProjectService(object):
   def TestAddProject(
       self, name, summary='', state=project_pb2.ProjectState.LIVE,
       owner_ids=None, committer_ids=None, contrib_ids=None,
-      issue_notify_address=None, state_reason='',
-      description=None, project_id=None, process_inbound_email=None,
-      access=None):
+      issue_notify_address=None, state_reason='', description=None,
+      project_id=None, process_inbound_email=None, access=None,
+      extra_perms=None):
     """Add a project to the fake ProjectService object.
 
     Args:
@@ -919,6 +919,7 @@ class ProjectService(object):
       project_id: A unique integer identifier for the created project.
       process_inbound_email: True to make this project accept inbound email.
       access: One of the values of enum project_pb2.ProjectAccess.
+      extra_perms: List of ExtraPerms PBs for project members.
 
     Returns:
       A populated project PB.
@@ -929,6 +930,7 @@ class ProjectService(object):
     proj_pb.summary = summary
     proj_pb.state = state
     proj_pb.state_reason = state_reason
+    proj_pb.extra_perms = extra_perms or []
     if description is not None:
       proj_pb.description = description
 

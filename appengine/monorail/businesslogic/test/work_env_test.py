@@ -91,6 +91,116 @@ class WorkEnvTest(unittest.TestCase):
     self.mr.perms = permissions.GetPermissions(
         self.mr.auth.user_pb, self.mr.auth.effective_ids, self.project)
 
+  def testAssertUserCanModifyIssues_Empty(self):
+    with self.work_env as we:
+      we._AssertUserCanModifyIssues([], True)
+
+  def testAssertUserCanModifyIssues_HasEditPerms(self):
+    issue = fake.MakeTestIssue(
+        789, 1, 'summary', 'Available', self.admin_user.user_id)
+    self.services.issue.TestAddIssue(issue)
+    delta = tracker_pb2.IssueDelta(summary='changing summary', cc_ids_add=[111])
+    issue_delta_pairs = [(issue, delta)]
+
+    # Committer can edit issues.
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      we._AssertUserCanModifyIssues(
+          issue_delta_pairs, True, comment_content='ping')
+
+  def testAssertUserCanModifyIssues_MergedInto(self):
+    issue = fake.MakeTestIssue(
+        789, 1, 'summary', 'Available', self.admin_user.user_id)
+    self.services.issue.TestAddIssue(issue)
+
+    restricted_issue = fake.MakeTestIssue(
+        789, 2, 'summary', 'Aavailable', self.admin_user.user_id,
+        labels=['Restrict-View-Chicken'])
+    self.services.issue.TestAddIssue(restricted_issue)
+
+    issue_delta_pairs = [
+        (issue, tracker_pb2.IssueDelta(merged_into=restricted_issue.issue_id))
+    ]
+
+    # Committer cannot merge into issue they cannot edit.
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we._AssertUserCanModifyIssues(
+            issue_delta_pairs, True, comment_content='ping')
+
+  def testAssertUserCanModifyIssues_HasFineGrainedPerms(self):
+    self.services.project.TestAddProject(
+        'projWithExtraPerms',
+        project_id=788,
+        contrib_ids=[self.user_1.user_id],
+        extra_perms=[
+            project_pb2.Project.ExtraPerms(
+                member_id=self.user_1.user_id,
+                perms=[
+                    permissions.ADD_ISSUE_COMMENT,
+                    permissions.EDIT_ISSUE_SUMMARY
+                ])
+        ])
+
+    issue_1 = fake.MakeTestIssue(
+        788, 1, 'summary', 'Available', self.admin_user.user_id)
+    self.services.issue.TestAddIssue(issue_1)
+    issue_delta_pairs = [(issue_1, tracker_pb2.IssueDelta(summary='bok bok'))]
+
+    # user_1 can add new comments and update the summary
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.work_env as we:
+      we._AssertUserCanModifyIssues(
+          issue_delta_pairs, False, comment_content='ping')
+
+    issue_2 = fake.MakeTestIssue(
+        788, 2, 'hey hey', 'Available', self.admin_user.user_id)
+    self.services.issue.TestAddIssue(issue_2)
+    # User does not have EDIT_ISSUE_CC perms in project.
+    issue_delta_pairs.append(
+        (
+            issue_2,
+            tracker_pb2.IssueDelta(
+                summary='too many chickens', cc_ids_add=[777])))
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we._AssertUserCanModifyIssues(
+            issue_delta_pairs, False, comment_content='ping')
+
+  def testAssertUserCanModifyIssues_IssueGrantedPerms(self):
+    """We properly take issue granted permissions into account."""
+    granting_fd = tracker_pb2.FieldDef(
+        field_name='grants_editissue',
+        field_id=1,
+        field_type=tracker_pb2.FieldTypes.USER_TYPE,
+        grants_perm='editissue')
+    config = fake.MakeTestConfig(789, [], [])
+    config.field_defs = [granting_fd]
+    self.services.config.StoreConfig('cnxn', config)
+
+    # we add user_2 to "grants_editissue" field which should grant them
+    # "EditIssue" in this issue.
+    issue = fake.MakeTestIssue(
+        789, 1, 'summary', 'Available', self.admin_user.user_id,
+        field_values=[
+            tracker_pb2.FieldValue(field_id=1, user_id=self.user_2.user_id)
+        ])
+    self.services.issue.TestAddIssue(issue)
+    issue_delta_pairs = [
+        (issue, tracker_pb2.IssueDelta(summary='changing summary'))
+    ]
+
+    self.SignIn(user_id=self.user_2.user_id)
+    with self.work_env as we:
+      we._AssertUserCanModifyIssues(issue_delta_pairs, False)
+
+    self.SignIn(user_id=self.user_3.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we._AssertUserCanModifyIssues(issue_delta_pairs, False)
+
+
   # FUTURE: GetSiteReadOnlyState()
   # FUTURE: SetSiteReadOnlyState()
   # FUTURE: GetSiteBannerMessage()
