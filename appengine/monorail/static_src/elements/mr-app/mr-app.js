@@ -222,7 +222,7 @@ export class MrApp extends connectStore(LitElement) {
 
   /** @override */
   updated(changedProperties) {
-    if (changedProperties.has('userDisplayName')) {
+    if (changedProperties.has('userDisplayName') && this.userDisplayName) {
       // TODO(https://crbug.com/monorail/7238): Migrate userv0 calls to v3 API.
       store.dispatch(userv0.fetch(this.userDisplayName));
 
