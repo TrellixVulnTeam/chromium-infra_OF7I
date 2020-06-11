@@ -6,7 +6,6 @@ package dumper
 
 import (
 	"context"
-	"infra/unifiedfleet/app/cron"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -15,6 +14,7 @@ import (
 	"go.chromium.org/luci/server"
 
 	bqlib "infra/libs/cros/lab_inventory/bq"
+	"infra/unifiedfleet/app/cron"
 )
 
 // Options is the dumper server configuration.

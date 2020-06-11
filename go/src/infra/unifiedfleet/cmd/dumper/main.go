@@ -35,8 +35,7 @@ func main() {
 		srv.RunInBackground("ufs.config", cfgLoader.ReloadLoop)
 		srv.Context = config.Use(srv.Context, cfgLoader.Config())
 
-		// TODO(xixuan): use flag srv.Options.CloudProject instead of hardcoding
-		client, err := bigquery.NewClient(srv.Context, "unified-fleet-system-dev")
+		client, err := bigquery.NewClient(srv.Context, srv.Options.CloudProject)
 		if err != nil {
 			return err
 		}
