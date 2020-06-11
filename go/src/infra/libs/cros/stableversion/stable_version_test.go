@@ -409,6 +409,11 @@ func TestJoinBuildTargetModel(t *testing.T) {
 			So(s, ShouldEqual, "a;m")
 			So(err, ShouldBeNil)
 		})
+		Convey("non-empty strings with upper case good", func() {
+			s, err := JoinBuildTargetModel("Aaa", "Mmm")
+			So(s, ShouldEqual, "aaa;mmm")
+			So(err, ShouldBeNil)
+		})
 		Convey("empty string bad", func() {
 			s, err := JoinBuildTargetModel("", "m")
 			So(s, ShouldEqual, "")

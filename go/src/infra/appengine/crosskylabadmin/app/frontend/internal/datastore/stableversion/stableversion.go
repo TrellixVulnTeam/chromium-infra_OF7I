@@ -55,7 +55,7 @@ func GetCrosStableVersion(ctx context.Context, buildTarget string) (string, erro
 	if buildTarget == "" {
 		return "", fmt.Errorf("GetCrosStableVersion: buildTarget cannot be empty")
 	}
-	entity := &crosStableVersionEntity{ID: buildTarget}
+	entity := &crosStableVersionEntity{ID: libsv.BuildTargetKey(buildTarget)}
 	if err := datastore.Get(ctx, entity); err != nil {
 		return "", errors.Annotate(err, "GetCrosStableVersion").Err()
 	}
@@ -72,7 +72,7 @@ func PutManyCrosStableVersion(ctx context.Context, crosOfBuildTarget map[string]
 	removeEmptyKeyOrValue(ctx, crosOfBuildTarget)
 	var entities []*crosStableVersionEntity
 	for buildTarget, cros := range crosOfBuildTarget {
-		entities = append(entities, &crosStableVersionEntity{ID: buildTarget, Cros: cros})
+		entities = append(entities, &crosStableVersionEntity{ID: libsv.BuildTargetKey(buildTarget), Cros: cros})
 	}
 	if err := datastore.Put(ctx, entities); err != nil {
 		return errors.Annotate(err, "PutManyCrosStableVersion").Err()

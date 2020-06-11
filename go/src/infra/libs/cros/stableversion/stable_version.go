@@ -95,10 +95,17 @@ const separator = ";"
 
 // JoinBuildTargetModel -- join a buildTarget string and a model string to produce a combined key
 func JoinBuildTargetModel(buildTarget string, model string) (string, error) {
-	if err := ValidateJoinBuildTargetModel(buildTarget, model); err != nil {
+	b := strings.ToLower(buildTarget)
+	m := strings.ToLower(model)
+	if err := ValidateJoinBuildTargetModel(b, m); err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s%s%s", buildTarget, separator, model), nil
+	return fmt.Sprintf("%s%s%s", b, separator, m), nil
+}
+
+// BuildTargetKey creates the key based on the given build target
+func BuildTargetKey(buildTarget string) string {
+	return strings.ToLower(buildTarget)
 }
 
 // ValidateJoinBuildTargetModel -- checks that a buildTarget and model are valid

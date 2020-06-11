@@ -676,7 +676,7 @@ func getStableVersionRecords(ctx context.Context, stableVersions *lab_platform.S
 	for _, item := range stableVersions.GetCros() {
 		buildTarget := item.GetKey().GetBuildTarget().GetName()
 		version := item.GetVersion()
-		cros[buildTarget] = version
+		cros[sv.BuildTargetKey(buildTarget)] = version
 	}
 	for _, item := range stableVersions.GetFirmware() {
 		buildTarget := item.GetKey().GetBuildTarget().GetName()

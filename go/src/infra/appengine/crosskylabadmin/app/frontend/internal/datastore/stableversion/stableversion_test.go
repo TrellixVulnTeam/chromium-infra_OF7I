@@ -49,6 +49,13 @@ func TestUpdateAndGet(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(item, ShouldEqual, crosVersion)
 			})
+			Convey("Cros is not case-sensitive", func() {
+				err := PutSingleCrosStableVersion(ctx, "AAA", crosVersion)
+				So(err, ShouldBeNil)
+				item, err := GetCrosStableVersion(ctx, "Aaa")
+				So(err, ShouldBeNil)
+				So(item, ShouldEqual, crosVersion)
+			})
 		})
 		Convey("Faft", func() {
 			Convey("Faft not present initially", func() {
@@ -65,6 +72,13 @@ func TestUpdateAndGet(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(item, ShouldEqual, faftVersion)
 			})
+			Convey("Faft is not case-sensitive", func() {
+				err := PutSingleFaftStableVersion(ctx, "AAA", "BBB", faftVersion)
+				So(err, ShouldBeNil)
+				item, err := GetFaftStableVersion(ctx, "Aaa", "Bbb")
+				So(err, ShouldBeNil)
+				So(item, ShouldEqual, faftVersion)
+			})
 		})
 		Convey("Firmware", func() {
 			Convey("Firmware not present initially", func() {
@@ -78,6 +92,13 @@ func TestUpdateAndGet(t *testing.T) {
 			})
 			Convey("Firmware present after write", func() {
 				item, err := GetFirmwareStableVersion(ctx, buildTarget, model)
+				So(err, ShouldBeNil)
+				So(item, ShouldEqual, firmwareVersion)
+			})
+			Convey("Firmware is not case-sensitive", func() {
+				err := PutSingleFirmwareStableVersion(ctx, "AAA", "BBB", firmwareVersion)
+				So(err, ShouldBeNil)
+				item, err := GetFirmwareStableVersion(ctx, "Aaa", "Bbb")
 				So(err, ShouldBeNil)
 				So(item, ShouldEqual, firmwareVersion)
 			})
