@@ -191,6 +191,9 @@ type AssetInfoEntity struct {
 	Info     ufs.AssetInfo `gae:",noindex"`
 }
 
+// AssetInfoEntityKind is the datastore entity kind for AssetInfo entities.
+const AssetInfoEntityKind = "AssetInfo"
+
 // NewAssetInfo creates an AssetInfoEntity object from AssetInfo object
 func NewAssetInfo(a *ufs.AssetInfo) (*AssetInfoEntity, error) {
 	if a.GetAssetTag() == "" {

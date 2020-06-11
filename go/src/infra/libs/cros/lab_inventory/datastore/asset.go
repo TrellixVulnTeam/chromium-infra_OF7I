@@ -373,3 +373,20 @@ func GetAssetInfo(ctx context.Context, ids []string) []*AssetInfoOpRes {
 	}
 	return queryResults
 }
+
+// GetAllAssetInfo returns all AssetInfo from datastore.
+//
+// If keysOnly is true, then only key field is populated in returned assets
+func GetAllAssetInfo(ctx context.Context, keysOnly bool) ([]*ufs.AssetInfo, error) {
+	q := datastore.NewQuery(AssetInfoEntityKind)
+	q = q.KeysOnly(keysOnly)
+	var assetInfoEntities []*AssetInfoEntity
+	if err := datastore.GetAll(ctx, q, &assetInfoEntities); err != nil {
+		return nil, err
+	}
+	assetinfo := make([]*ufs.AssetInfo, 0, len(assetInfoEntities))
+	for _, ae := range assetInfoEntities {
+		assetinfo = append(assetinfo, &ae.Info)
+	}
+	return assetinfo, nil
+}

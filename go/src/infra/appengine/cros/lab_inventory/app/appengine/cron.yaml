@@ -27,6 +27,10 @@ cron:
   url: /internal/cron/dump-registered-assets-snapshot
   schedule: every 1 hours
 
+- description: Dump AssetInfo
+  url: /internal/cron/dump-asset-info-to-bq
+  schedule: every 1 hours
+
 - description: Dump inventory snapshot
   url: /internal/cron/dump-inventory-snapshot
   schedule: every day 00:00

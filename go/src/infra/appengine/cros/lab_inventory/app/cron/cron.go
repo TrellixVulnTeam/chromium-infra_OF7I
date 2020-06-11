@@ -52,6 +52,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	r.GET("/internal/cron/dump-other-configs-snapshot", mwCron, logAndSetHTTPErr(dumpOtherConfigsCronHandler))
 
+	r.GET("/internal/cron/dump-asset-info-to-bq", mwCron, logAndSetHTTPErr(dumpAssetInfoToBQHandler))
+
 	r.GET("/internal/cron/sync-dev-config", mwCron, logAndSetHTTPErr(syncDevConfigHandler))
 
 	r.GET("/internal/cron/sync-manufacturing-config", mwCron, logAndSetHTTPErr(syncManufacturingConfigHandler))
@@ -114,6 +116,34 @@ func dumpRegisteredAssetsCronHandler(c *router.Context) error {
 		return err
 	}
 	logging.Debugf(ctx, "Dump is successfully finished")
+	return nil
+}
+
+func dumpAssetInfoToBQHandler(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(ctx, "Starting to dump asset info to BQ")
+
+	uploader, err := bqlib.InitBQUploader(ctx, info.AppID(ctx), "inventory", fmt.Sprintf("asset_info$%s", bqlib.GetPSTTimeStamp(time.Now())))
+	if err != nil {
+		return err
+	}
+	msgs, err := datastore.GetAllAssetInfo(ctx, false)
+
+	// uploader only accepts proto.Message interface. Casting AssetInfo
+	// to proto.Message interface
+	data := make([]proto.Message, len(msgs))
+	for idx, msg := range msgs {
+		data[idx] = msg
+	}
+	if err != nil {
+		return err
+	}
+
+	logging.Debugf(ctx, "Dumping %d asset info records to BQ", len(data))
+	if err := uploader.Put(ctx, data...); err != nil {
+		return err
+	}
+	logging.Debugf(ctx, "Dumped all asset info records to BQ")
 	return nil
 }
 
