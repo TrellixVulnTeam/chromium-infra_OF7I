@@ -48,7 +48,7 @@ func mockLabstation(hostname, id string) *lab.ChromeOSDevice {
 		Device: &lab.ChromeOSDevice_Labstation{
 			Labstation: &lab.Labstation{
 				Hostname: hostname,
-				Servos:   []*lab.Servo{mockServo(hostname)},
+				Servos:   []*lab.Servo{makeServo(hostname, "LabSerial", 9990)},
 			},
 		},
 	}
@@ -168,10 +168,11 @@ func TestAddDevices(t *testing.T) {
 		})
 
 		Convey("Add device with existing hostname", func() {
-			devsToAdd := []*lab.ChromeOSDevice{
-				mockDut("dut1", "ID_FAIL", "labstation1"),
-				mockDut("dut2", "ID_PASS", "labstation1"),
-			}
+			dut1 := mockDut("dut1", "ID_FAIL", "labstation1")
+			dut2 := mockDut("dut2", "ID_PASS", "labstation1")
+			dut2.GetDut().GetPeripherals().Servo.ServoPort = 9998
+			dut2.GetDut().GetPeripherals().Servo.ServoSerial = "dut-3"
+			devsToAdd := []*lab.ChromeOSDevice{dut1, dut2}
 
 			dsResp, _ := AddDevices(ctx, devsToAdd, false)
 			So(dsResp.Passed(), ShouldHaveLength, 1)
@@ -181,8 +182,12 @@ func TestAddDevices(t *testing.T) {
 			So(dsResp.Failed()[0].Data.(*lab.ChromeOSDevice).GetId().GetValue(), ShouldEqual, "ID_FAIL")
 		})
 		Convey("Add device with existing ID", func() {
+			dut3 := mockDut("dut3", "ID_PASS", "labstation1")
+			//excluding duplicate servo errors
+			dut3.GetDut().GetPeripherals().Servo.ServoPort = 9997
+			dut3.GetDut().GetPeripherals().Servo.ServoSerial = "dut-3"
 			devsToAdd := []*lab.ChromeOSDevice{
-				mockDut("dut3", "ID_PASS", "labstation1"),
+				dut3,
 			}
 
 			dsResp, _ := AddDevices(ctx, devsToAdd, false)
@@ -198,9 +203,13 @@ func TestRemoveDevices(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	Convey("Remove devices from datastore", t, func() {
+		dut1 := mockDut("dut1", "", "labstation1")
+		dut2 := mockDut("dut2", "UUID:02", "labstation1")
+		dut2.GetDut().Peripherals.Servo.ServoPort = 9995
+		dut2.GetDut().Peripherals.Servo.ServoSerial = "ServoDut2"
 		devsToAdd := []*lab.ChromeOSDevice{
-			mockDut("dut1", "", "labstation1"),
-			mockDut("dut2", "UUID:02", "labstation1"),
+			dut1,
+			dut2,
 			mockLabstation("labstation1", "ASSET_ID_123"),
 		}
 		_, err := AddDevices(ctx, devsToAdd, false)
@@ -399,11 +408,29 @@ func TestUpdateDeviceSetup(t *testing.T) {
 		So(int(labConfig.GetDut().GetPeripherals().GetServo().GetServoPort()), ShouldEqual, 8888)
 
 		datastore.GetTestable(ctx).Consistent(true)
+		Convey("Update existing devices with the same servo info", func() {
+			dut1 := mockDut("dut1", "UUID:01", "labstation2")
+			result, err := UpdateDeviceSetup(ctx, []*lab.ChromeOSDevice{dut1}, false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldHaveLength, 1)
+			So(passed[0].Entity.ID, ShouldEqual, "UUID:01")
+			labConfig := getLabConfigByID(ctx, t, DeviceEntityID("UUID:01"))
+			So(int(labConfig.GetDut().GetPeripherals().GetServo().GetServoPort()), ShouldEqual, 8888)
+
+			failed := result.Failed()
+			So(failed, ShouldHaveLength, 0)
+		})
 		Convey("Update non-existing devices", func() {
 			dut1 := mockDut("dut1", "UUID:01", "labstation2")
 			dut1.GetDut().GetPeripherals().GetServo().ServoPort = 0
+			dut2 := mockDut("dut1", "UUID:ghost", "labstation1")
+			dut2.GetDut().GetPeripherals().GetServo().ServoPort = 9991
+			dut2.GetDut().GetPeripherals().GetServo().ServoSerial = "dut-2"
 			result, err := UpdateDeviceSetup(ctx, []*lab.ChromeOSDevice{
-				mockDut("dut1", "UUID:ghost", "labstation1"),
+				dut2,
 				dut1,
 			}, true)
 			if err != nil {
@@ -419,7 +446,6 @@ func TestUpdateDeviceSetup(t *testing.T) {
 			So(failed, ShouldHaveLength, 1)
 			So(failed[0].Entity.ID, ShouldEqual, "UUID:ghost")
 		})
-
 	})
 }
 

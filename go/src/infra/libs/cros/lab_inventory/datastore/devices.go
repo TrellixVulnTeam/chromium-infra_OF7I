@@ -66,10 +66,36 @@ func sanityCheckForAdding(ctx context.Context, d *lab.ChromeOSDevice, q *datasto
 	}
 	if !strings.HasPrefix(id, UUIDPrefix) {
 		if err := datastore.Get(ctx, &newEntity); err != datastore.ErrNoSuchEntity {
-			return errors.Reason("failed to add device %s due to ID conflication", newEntity).Err()
+			return errors.Reason("failed to add device %s due to ID confliction", newEntity).Err()
 		}
 	}
 	return nil
+}
+
+func getDutServo(ctx context.Context, d *lab.ChromeOSDevice) (*lab.Servo, error) {
+	id := d.GetId().GetValue()
+	entity := &DeviceEntity{
+		ID:     DeviceEntityID(id),
+		Parent: fakeAcestorKey(ctx),
+	}
+	if err := datastore.Get(ctx, entity); err != nil {
+		if datastore.IsErrNoSuchEntity(err) {
+			// hiding error, device not exist and cannot provide old servo
+			logging.Errorf(ctx, "device with ID: %s not exits", id)
+			return nil, nil
+		}
+		logging.Errorf(ctx, "Failed to get entity from datastore: %s", err)
+		return nil, errors.Annotate(err, "Internal error when try to find the device with id: %s", id).Err()
+	}
+	var labConfig lab.ChromeOSDevice
+	if err := entity.GetCrosDeviceProto(&labConfig); err != nil {
+		return nil, errors.Annotate(err, "failed to unmarshal lab config data for %s", id).Err()
+	}
+	dut := labConfig.GetDut()
+	if dut == nil {
+		return nil, nil
+	}
+	return dut.GetPeripherals().GetServo(), nil
 }
 
 // AddDevices creates a new Device datastore entity with a unique ID.
@@ -111,8 +137,9 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoP
 			if dut := message.GetDut(); dut != nil {
 				// Update associated labstation if the DUT has a new servo. Also
 				// assign new servo port if specified.
-				if err := r.amendServoToLabstation(ctx, dut, assignServoPort); err != nil {
-					return err
+				if err := r.amendServoToLabstation(ctx, dut, nil, assignServoPort); err != nil {
+					devToAdd.logError(err)
+					continue
 				}
 			}
 
@@ -427,7 +454,11 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice, assig
 		updatingResults[i].Entity = entities[i]
 
 		if dut := devices[i].GetDut(); dut != nil {
-			if err := r.amendServoToLabstation(ctx, dut, assignServoPort); err != nil {
+			oldServo, err := getDutServo(ctx, d)
+			if err != nil {
+				return nil, err
+			}
+			if err := r.amendServoToLabstation(ctx, dut, oldServo, assignServoPort); err != nil {
 				return nil, err
 			}
 		}

@@ -110,7 +110,7 @@ func looksLikeLabstation(hostname string) bool {
 // When we create/update a DUT, we must also add/update the servo information to the
 // associated labstation. Optionally, we should also assign a servo port to the
 // DUT.
-func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.DeviceUnderTest, assignServoPort bool) error {
+func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.DeviceUnderTest, oldServo *lab.Servo, assignServoPort bool) error {
 	servo := d.GetPeripherals().GetServo()
 	if servo == nil {
 		return nil
@@ -140,6 +140,13 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 			return err
 		}
 		servo.ServoPort = int32(p)
+	} else {
+		if err := checkDuplicatePort(servo, oldServo, servos); err != nil {
+			return err
+		}
+		if err := checkDuplicateSerial(servo, oldServo, servos); err != nil {
+			return err
+		}
 	}
 
 	servoHost.Servos = mergeServo(servos, servo)
@@ -200,6 +207,34 @@ func firstFreePort(servos []*lab.Servo) (int, error) {
 		}
 	}
 	return 0, errors.Reason("no free servo port available").Err()
+}
+
+// checkDuplicatePort verify that labstation does not have servo with the same port
+func checkDuplicatePort(newServo, oldServo *lab.Servo, servos []*lab.Servo) error {
+	newPort := newServo.GetServoPort()
+	if newServo.GetServoHostname() == oldServo.GetServoHostname() && newPort == oldServo.GetServoPort() {
+		return nil
+	}
+	for _, s := range servos {
+		if newPort == s.GetServoPort() {
+			return errors.Reason("the servo port: '%d' is already used in %q", newPort, s.GetServoHostname()).Err()
+		}
+	}
+	return nil
+}
+
+// checkDuplicateSerial verify that labstation does not have servo with the same serial number
+func checkDuplicateSerial(newServo, oldServo *lab.Servo, servos []*lab.Servo) error {
+	newSerial := newServo.GetServoSerial()
+	if newServo.GetServoHostname() == oldServo.GetServoHostname() && newSerial == oldServo.GetServoSerial() {
+		return nil
+	}
+	for _, s := range servos {
+		if newSerial == s.GetServoSerial() {
+			return errors.Reason("the servo serial number: %q is already used in %q", newSerial, s.GetServoHostname()).Err()
+		}
+	}
+	return nil
 }
 
 // A servo is identified by its serial number. If the SN of servo to be merged

@@ -435,27 +435,41 @@ func TestGetCrosDevices(t *testing.T) {
 
 func TestUpdateCrosDevicesSetup(t *testing.T) {
 	t.Parallel()
-	dut1 := lab.ChromeOSDevice{
-		Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
-		Device: &lab.ChromeOSDevice_Dut{
-			Dut: &lab.DeviceUnderTest{
-				Hostname:    "dut1",
-				Peripherals: &lab.Peripherals{},
+	getDut := func(servo *lab.Servo) *lab.ChromeOSDevice {
+		if servo == nil {
+			servo = &lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     8887,
+				ServoSerial:   "SN0002",
+				ServoType:     "v4",
+			}
+		}
+		return &lab.ChromeOSDevice{
+			Id: &lab.ChromeOSDeviceID{Value: "UUID:01"},
+			Device: &lab.ChromeOSDevice_Dut{
+				Dut: &lab.DeviceUnderTest{
+					Hostname: "dut1",
+					Peripherals: &lab.Peripherals{
+						Servo: servo,
+					},
+				},
 			},
-		},
+		}
 	}
-	labstation1 := lab.ChromeOSDevice{
-		Id: &lab.ChromeOSDeviceID{Value: "UUID:02"},
-		Device: &lab.ChromeOSDevice_Labstation{
-			Labstation: &lab.Labstation{Hostname: "labstation1"},
-		},
+	getLab := func() *lab.ChromeOSDevice {
+		return &lab.ChromeOSDevice{
+			Id: &lab.ChromeOSDeviceID{Value: "UUID:02"},
+			Device: &lab.ChromeOSDevice_Labstation{
+				Labstation: &lab.Labstation{Hostname: "labstation1"},
+			},
+		}
 	}
 	Convey("Update Chrome OS devices setup", t, func() {
 		ctx := testingContext()
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 
-		for _, d := range []*lab.ChromeOSDevice{&labstation1, &dut1} {
+		for _, d := range []*lab.ChromeOSDevice{getLab(), getDut(nil)} {
 			req := &api.AddCrosDevicesRequest{
 				Devices: []*lab.ChromeOSDevice{d},
 			}
@@ -465,22 +479,37 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 		}
 
 		Convey("Happy path", func() {
-			servo := lab.Servo{
+			servo := &lab.Servo{
 				ServoHostname: "labstation1",
 				ServoPort:     1234,
-				ServoSerial:   "SN0001",
-				ServoType:     "v3",
+				ServoSerial:   "SN0002",
+				ServoType:     "v4",
 			}
-			dut1.GetDut().GetPeripherals().Servo = &servo
-			labstation1.GetLabstation().Servos = []*lab.Servo{&servo}
 
-			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{&dut1, &labstation1}}
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{getDut(servo), getLab()}}
 			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
 
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.UpdatedDevices, ShouldHaveLength, 2)
+		})
 
+		Convey("Fail update the DUT when update servo info and labstation already have registration of this servo", func() {
+			servo := &lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     1230,
+				ServoSerial:   "SN0001",
+				ServoType:     "v3",
+			}
+			dut1 := getDut(servo)
+			labstation1 := getLab()
+			labstation1.GetLabstation().Servos = []*lab.Servo{servo}
+
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
+			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
 		})
 
 		Convey("Update non-existing devices", func() {
