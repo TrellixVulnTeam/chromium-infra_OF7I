@@ -13,7 +13,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/impl/memory"
 	ds "go.chromium.org/gae/service/datastore"
-	"go.chromium.org/gae/service/user"
 
 	"infra/appengine/cr-audit-commits/app/rules"
 	"infra/monorail"
@@ -23,8 +22,6 @@ func TestNotifier(t *testing.T) {
 
 	Convey("ViolationNotifier handler test", t, func() {
 		ctx := memory.UseWithAppID(context.Background(), "cr-audit-commits-test")
-
-		user.GetTestable(ctx).Login("notifier@cr-audit-commits-test.appspotmail.com", "", false)
 
 		testClients := &rules.Clients{}
 		Convey("Existing Repo", func() {
