@@ -11,10 +11,12 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
+	"go.chromium.org/chromiumos/infra/proto/go/project_mgmt"
 )
 
 func TestParseConfigBundle(t *testing.T) {
@@ -118,6 +120,30 @@ func TestParseConfigBundle(t *testing.T) {
 				default:
 					t.Errorf("Invalid model:sku: %s", modelWithSku)
 				}
+			}
+		})
+	})
+}
+
+func TestParsePrograms(t *testing.T) {
+	Convey("Test parsing programs", t, func() {
+		var programs project_mgmt.Config
+		b, err := ioutil.ReadFile("test_project_mgmt.cfg")
+		So(err, ShouldBeNil)
+		err = proto.UnmarshalText(string(b), &programs)
+		So(err, ShouldBeNil)
+		Convey("Happy path", func() {
+			gitInfos, err := parsePrograms(&programs, "chrome-internal.googlesource.com")
+			So(err, ShouldBeNil)
+			So(gitInfos, ShouldHaveLength, 4)
+			for _, gi := range gitInfos {
+				So(gi.path, ShouldBeIn, []string{"generated/config.jsonproto"})
+				So(gi.project, ShouldBeIn, []string{
+					"chromeos/program/galaxy",
+					"chromeos/project/galaxy/milkyway",
+					"chromeos/project/galaxy/andromeda",
+					"chromeos/project/galaxy/sombrero",
+				})
 			}
 		})
 	})

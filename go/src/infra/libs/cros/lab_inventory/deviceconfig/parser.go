@@ -11,7 +11,50 @@ import (
 	"go.chromium.org/chromiumos/config/go/api"
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
+	"go.chromium.org/chromiumos/infra/proto/go/project_mgmt"
 )
+
+type gitilesInfo struct {
+	project string
+	path    string
+}
+
+func parsePrograms(programs *project_mgmt.Config, gitilesHost string) ([]*gitilesInfo, error) {
+	var gitInfos []*gitilesInfo
+	for _, pg := range programs.GetPrograms().GetValue() {
+		// Add program-level config bundle path
+		project, err := parseRepo(pg.GetRepo(), gitilesHost)
+		if err != nil {
+			return nil, err
+		}
+		gitInfos = append(gitInfos, &gitilesInfo{
+			project: project,
+			path:    pg.GetConfigPath(),
+		})
+		// Add project-level config bundle path
+		for _, pj := range pg.GetProjects().GetValue() {
+			project, err := parseRepo(pj.GetRepo(), gitilesHost)
+			if err != nil {
+				return nil, err
+			}
+			gitInfos = append(gitInfos, &gitilesInfo{
+				project: project,
+				path:    pj.GetConfigPath(),
+			})
+		}
+	}
+	return gitInfos, nil
+}
+
+func parseRepo(repo, gitilesHost string) (string, error) {
+	if !strings.Contains(repo, gitilesHost) {
+		return "", fmt.Errorf("%s is not a valid gitiles host, should contain %s", repo, gitilesHost)
+	}
+	// Example paths: "https://chrome-internal.googlesource.com/chromeos/project/galaxy/milkyway"
+	paths := strings.SplitAfter(repo, gitilesHost)
+	// Return "chromeos/project/galaxy/milkyway" as project name
+	return paths[1][1:], nil
+}
 
 func parseConfigBundle(configBundle payload.ConfigBundle) []*device.Config {
 	designs := configBundle.GetDesigns().GetValue()
