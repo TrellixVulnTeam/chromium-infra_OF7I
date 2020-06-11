@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"unicode"
 
 	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/common/gcloud/gs"
@@ -37,6 +38,8 @@ type VersionMismatch struct {
 
 // ValidationResult is a summary of the result of validating a stable version config file.
 type ValidationResult struct {
+	// Non-Lowercase entries
+	NonLowercaseEntries []string `json:"non_lowercase_entries"`
 	// MissingBoards are the boards that don't have a metadata file in Google Storage.
 	MissingBoards []string `json:"missing_boards"`
 	// FailedToLookup are board/model pairs that aren't present in the descriptions fetched from Google Storage.
@@ -79,7 +82,7 @@ func (r *ValidationResult) RemoveWhitelistedDUTs() {
 
 // AnomalyCount counts the total number of issues found in the results summary.
 func (r *ValidationResult) AnomalyCount() int {
-	return len(r.MissingBoards) + len(r.FailedToLookup) + len(r.InvalidVersions)
+	return len(r.MissingBoards) + len(r.FailedToLookup) + len(r.InvalidVersions) + len(r.NonLowercaseEntries)
 }
 
 type downloader func(gsPath gs.Path) ([]byte, error)
@@ -127,6 +130,10 @@ func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResu
 	for _, item := range sv.GetCros() {
 		bt := item.GetKey().GetBuildTarget().GetName()
 		version := item.GetVersion()
+		if !isLowercase(bt) {
+			out.NonLowercaseEntries = append(out.NonLowercaseEntries, bt)
+			continue
+		}
 		if _, err := r.getAllModelsForBuildTarget(bt, version); err != nil {
 			out.MissingBoards = append(out.MissingBoards, bt)
 			continue
@@ -138,6 +145,10 @@ func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResu
 		model := item.GetKey().GetModelId().GetValue()
 		cfgVersion := item.GetVersion()
 		realVersion, err := r.getFirmwareVersion(bt, model, cfgCrosVersions[bt])
+		if !isLowercase(bt) || !isLowercase(model) {
+			out.NonLowercaseEntries = append(out.NonLowercaseEntries, fmt.Sprintf("%s;%s", bt, model))
+			continue
+		}
 		if err != nil {
 			out.FailedToLookup = append(out.FailedToLookup, &BoardModel{bt, model})
 			continue
@@ -208,4 +219,16 @@ func (r *Reader) maybeDownloadFile(buildTarget string, crosVersion string) error
 		r.cache[buildTarget][model] = version
 	}
 	return nil
+}
+
+// check if string has entirely lowercase letters
+func isLowercase(s string) bool {
+	for _, ch := range s {
+		if unicode.IsLetter(ch) {
+			if unicode.IsUpper(ch) {
+				return false
+			}
+		}
+	}
+	return true
 }

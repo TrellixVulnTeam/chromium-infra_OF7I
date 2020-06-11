@@ -205,8 +205,8 @@ var testValidateConfigData = []struct {
 			"firmware": [
 				{
 					"key": {
-						"modelId": {"value": "NONEXISTENT-MODEL"},
-						"buildTarget": {"name": "NONEXISTENT-BOARD"}
+						"modelId": {"value": "nonexistent-model"},
+						"buildTarget": {"name": "nonexistent-board"}
 					},
 					"version": "Google_Nami.52.53.54"
 				}
@@ -216,8 +216,8 @@ var testValidateConfigData = []struct {
 			"missing_boards": null,
 			"failed_to_lookup": [
 				{
-					"build_target": "NONEXISTENT-BOARD",
-					"model": "NONEXISTENT-MODEL"
+					"build_target": "nonexistent-board",
+					"model": "nonexistent-model"
 				}
 			],
 			"invalid_versions": null
@@ -232,7 +232,7 @@ var testValidateConfigData = []struct {
 			"cros": [
 				{
 					"key": {
-						"buildTarget": {"name": "NONEXISTENT-BUILD-TARGET"},
+						"buildTarget": {"name": "nonexistent-build-target"},
 						"modelId": {}
 					},
 					"version": "R81-12835.0.0"
@@ -240,7 +240,7 @@ var testValidateConfigData = []struct {
 			]
 		}`,
 		`{
-			"missing_boards": ["NONEXISTENT-BUILD-TARGET"],
+			"missing_boards": ["nonexistent-build-target"],
 			"failed_to_lookup": null,
 			"invalid_versions": null
 		}`,
@@ -369,6 +369,93 @@ func TestRemoveWhiteList(t *testing.T) {
 			if diff := cmp.Diff(out, in); diff != "" {
 				msg := fmt.Sprintf("uuid (%s): unexpected diff (%s)", tt.uuid, diff)
 				t.Errorf(msg)
+			}
+		})
+	}
+}
+
+func TestNonLowercaseIsMalformed(t *testing.T) {
+	cases := []struct {
+		name         string
+		fileContents string
+		in           string
+		out          string
+	}{
+		{
+			"uppercase buildTarget in cros version",
+			"",
+			`{
+				"cros": [
+					{
+						"key": {
+							"buildTarget": {"name": "naMi"},
+							"modelId": {}
+						},
+						"version": "xxx-fake-version"
+					}
+				]
+			}`,
+			`{
+				"non_lowercase_entries": ["naMi"]
+			}`,
+		},
+	}
+
+	t.Parallel()
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var out ValidationResult
+			unmarshalOrPanic(tt.out, &out)
+
+			var r Reader
+			r.dld = makeConstantDownloader(tt.fileContents)
+
+			in := parseStableVersionsOrPanic(tt.in)
+			res, err := r.ValidateConfig(in)
+			if err != nil {
+				t.Errorf("unexpected error %s", err)
+			}
+			if diff := cmp.Diff(&out, res); diff != "" {
+				t.Errorf("comparison failure: %s", diff)
+			}
+		})
+	}
+}
+
+func TestIsLowercase(t *testing.T) {
+	cases := []struct {
+		in  string
+		out bool
+	}{
+		{
+			"",
+			true,
+		},
+		{
+			"a",
+			true,
+		},
+		{
+			"A",
+			false,
+		},
+		{
+			"aA",
+			false,
+		},
+	}
+
+	t.Parallel()
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.in, func(t *testing.T) {
+			t.Parallel()
+			if isLowercase(tt.in) != tt.out {
+				t.Errorf("isLowercase(%s) is unexpectedly %v", tt.in, tt.out)
 			}
 		})
 	}
