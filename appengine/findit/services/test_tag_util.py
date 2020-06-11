@@ -4,6 +4,7 @@
 
 import ast
 import json
+import logging
 import re
 
 from common.findit_http_client import FinditHttpClient
@@ -142,7 +143,7 @@ def GetTestLocation(build_id, step_name, test_name, normalized_test_name):
 
   task_ids = step_metadata.get('swarm_task_ids') if step_metadata else []
   if not task_ids:
-    logging.debug(
+    logging.info(
         "Failed to get step_metadata for  build_id : %s and step_name : %s",
         build_id, step_name)
     return None
