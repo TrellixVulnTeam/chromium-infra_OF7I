@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
 	"github.com/kylelemons/godebug/pretty"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
@@ -42,8 +41,6 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
@@ -326,36 +323,9 @@ func getHWID(dut *inventory.DeviceUnderTest) (string, error) {
 
 // UpdateDutLabels implements the method from fleet.InventoryServer interface.
 func (is *ServerImpl) UpdateDutLabels(ctx context.Context, req *fleet.UpdateDutLabelsRequest) (resp *fleet.UpdateDutLabelsResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-	req2, err := unpackUpdateDutLabelsRequest(req)
-	if UpdateDCAndCheckIfSkipLabelUpdate(ctx, req2) {
-		logging.Infof(ctx, "skip label update if there's no difference except device config between old and new labels")
-		return &fleet.UpdateDutLabelsResponse{}, nil
-	}
-	is.initUpdateLimiterOnce(ctx)
-	if !is.updateLimiter.TryRequest() {
-		return nil, status.Error(codes.Unavailable, "update is rate limited")
-	}
-	if err != nil {
-		return nil, err
-	}
-	store, err := is.newStore(ctx)
-	if err != nil {
-		return nil, err
-	}
-	err = retry.Retry(
-		ctx,
-		transientErrorRetries(),
-		func() error {
-			var err2 error
-			resp, err2 = updateDutLabels(ctx, store, req2)
-			return err2
-		},
-		retry.LogCallback(ctx, "updateDutLabels"),
-	)
-	return resp, err
+	// TODO fully remove it when remove all calls of thi method
+	// https://crbug.com/1092948
+	return nil, nil
 }
 
 func validateBatchUpdateDutsRequest(req *fleet.BatchUpdateDutsRequest) error {
@@ -510,34 +480,6 @@ func queenDroneName(env string) string {
 
 const queenDronePrefix = "drone-queen-"
 
-// UpdateDCAndCheckIfSkipLabelUpdate updates DUT labels with cached device config and checks if skipping DUT label update.
-func UpdateDCAndCheckIfSkipLabelUpdate(ctx context.Context, req updateDutLabelsRequest) bool {
-	logging.Infof(ctx, "checking lables for dut ID: %s", req.dutID)
-	logging.Infof(ctx, "labels before update: %s", req.oldLabels.String())
-	logging.Infof(ctx, "labels after update: %s", req.labels.String())
-	logging.Infof(ctx, "comparison between old and new: \n%s", prettyConfig.Compare(req.oldLabels, req.labels))
-	if req.oldLabels.String() == "" {
-		logging.Warningf(ctx, "old labels hasn't been set, won't skip update")
-		return false
-	}
-	if getIDForInventoryLabels(ctx, req.labels) != getIDForInventoryLabels(ctx, req.oldLabels) {
-		logging.Warningf(ctx, "inconsistent device config ID, won't skip update")
-		return false
-	}
-	if err := UpdateLabelsWithDeviceConfig(ctx, req.labels); err != nil {
-		logging.Warningf(ctx, "fail to sync device config for new labels %s", req.labels.String())
-	}
-	if err := UpdateLabelsWithDeviceConfig(ctx, req.oldLabels); err != nil {
-		logging.Warningf(ctx, "fail to sync device config for old labels %s", req.oldLabels.String())
-	}
-	if proto.Equal(req.oldLabels, req.labels) {
-		logging.Infof(ctx, "no difference between old and new labels except device config")
-		return true
-	}
-	logging.Infof(ctx, "device config differ between old and new labels, won't skip update")
-	return false
-}
-
 // DumpStableVersionToDatastore takes stable version info from the git repo where it lives
 // and dumps it to datastore
 func (is *ServerImpl) DumpStableVersionToDatastore(ctx context.Context, in *fleet.DumpStableVersionToDatastoreRequest) (*fleet.DumpStableVersionToDatastoreResponse, error) {
@@ -580,66 +522,11 @@ func dumpStableVersionToDatastoreImpl(ctx context.Context, getFile func(context.
 	return &fleet.DumpStableVersionToDatastoreResponse{}, nil
 }
 
-// initUpdateLimiterOnce initializes the updateLimiter.  This should
-// be called before using updateLimiter always.
-func (is *ServerImpl) initUpdateLimiterOnce(ctx context.Context) {
-	is.updateLimiterOnce.Do(func() {
-		is.updateLimiter.limitPerPeriod = int(config.Get(ctx).Inventory.UpdateLimitPerMinute)
-		is.updateLimiter.period = time.Minute
-	})
-}
-
-func unpackUpdateDutLabelsRequest(req *fleet.UpdateDutLabelsRequest) (updateDutLabelsRequest, error) {
-	req2 := updateDutLabelsRequest{
-		dutID:     req.GetDutId(),
-		reason:    req.GetReason(),
-		labels:    &inventory.SchedulableLabels{},
-		oldLabels: &inventory.SchedulableLabels{},
-	}
-	if err := proto.Unmarshal(req.GetLabels(), req2.labels); err != nil {
-		return updateDutLabelsRequest{}, err
-	}
-	if err := proto.Unmarshal(req.GetOldLabels(), req2.oldLabels); err != nil {
-		return updateDutLabelsRequest{}, err
-	}
-	// Discard unknown labels to not break the inventory schema.
-	proto.DiscardUnknown(req2.labels)
-	proto.DiscardUnknown(req2.oldLabels)
-	return req2, nil
-}
-
 type updateDutLabelsRequest struct {
 	dutID     string
 	labels    *inventory.SchedulableLabels
 	reason    string
 	oldLabels *inventory.SchedulableLabels
-}
-
-func updateDutLabels(ctx context.Context, s *gitstore.InventoryStore, req updateDutLabelsRequest) (*fleet.UpdateDutLabelsResponse, error) {
-	var resp fleet.UpdateDutLabelsResponse
-	if err := s.Refresh(ctx); err != nil {
-		return nil, errors.Annotate(err, "updateDutLabels").Err()
-	}
-
-	dut, ok := getDUTByID(s.Lab, req.dutID)
-	if !ok {
-		return nil, errors.Reason("updateDutLabels: no DUT found").Err()
-	}
-	c := dut.GetCommon()
-	// Repair should not change pool labels.
-	req.labels.CriticalPools = c.Labels.CriticalPools
-	req.labels.SelfServePools = c.Labels.SelfServePools
-	c.Labels = req.labels
-	url, err := s.Commit(ctx, fmt.Sprintf("Update DUT labels for %s", req.reason))
-	if gitstore.IsEmptyErr(err) {
-		return &resp, nil
-	}
-	if err != nil {
-		return nil, errors.Annotate(err, "updateDutLabels").Err()
-	}
-	resp.Url = url
-
-	return &resp, nil
 }
 
 func getDUTByID(lab *inventory.Lab, id string) (*inventory.DeviceUnderTest, bool) {
