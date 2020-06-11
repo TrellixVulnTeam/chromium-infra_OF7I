@@ -116,11 +116,38 @@ ENV \
   PYTHONXCPREFIX="${cross_python_prefix}" \
   XPYTHONPATH="$${CROSS_PREFIX}/lib/python2.7/site-packages"
 
+# Install libffi. Currently this only builds a host version, for python3 below.
+WORKDIR $${SETUP_ROOT}/libffi
+COPY \
+  ${resources_relpath}/install-06-libffi.sh \
+  ${libffi_relpath} \
+  ./
+RUN ARCHIVE_PATH=$$(basename ${libffi_relpath}) \
+  ./install-06-libffi.sh \
+&& rm -rf $${SETUP_ROOT}/libffi
+
+# Install python3. Currently this only builds a host version, installed
+# as 'python3', that can be used for running setup.py.
+WORKDIR $${SETUP_ROOT}/python3
+COPY \
+  ${resources_relpath}/install-07-python3.sh \
+  ${python3_relpath} \
+  ./
+RUN ARCHIVE_PATH=$$(basename ${python3_relpath}) \
+  ./install-07-python3.sh \
+&& rm -rf $${SETUP_ROOT}/python3
+
 # Install host "pip", needed to build wheels via "setup.py".
 WORKDIR $${SETUP_ROOT}
 COPY ${get_pip_relpath} ./
 RUN \
   $${LOCAL_PREFIX}/bin/python \
+    ./$$(basename ${get_pip_relpath}) \
+    --prefix="$$LOCAL_PREFIX"
+
+env PYTHONPATH=""
+RUN \
+  $${LOCAL_PREFIX}/bin/python3 \
     ./$$(basename ${get_pip_relpath}) \
     --prefix="$$LOCAL_PREFIX"
 
@@ -152,7 +179,9 @@ RUN ARCHIVE_PATH=$$(basename ${cffi_relpath}) \
 RUN rm -rf "${SETUP_ROOT}"
 
 # Install auxiliary "pip" wheels into default Python environment.
-RUN pip install virtualenv cffi distutilscross auditwheel numpy
+RUN pip2 install virtualenv cffi distutilscross auditwheel numpy
+
+env PYTHONPATH="$${LOCAL_PREFIX}/lib/python2.7/site-packages"
 
 ### Add helper script, chmod user-accessible scripts.
 COPY ${resources_relpath}/start.sh /

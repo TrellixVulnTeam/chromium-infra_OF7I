@@ -39,7 +39,7 @@ def _docker_image_exists(system, identifier):
 class Builder(object):
 
   # Tag used for pushed Docker images.
-  DOCKER_IMAGE_TAG = 'v1.4.5'
+  DOCKER_IMAGE_TAG = 'v1.4.6'
 
   # The Docker repository to use.
   DOCKER_REPOSITORY = 'https://gcr.io'
@@ -50,12 +50,18 @@ class Builder(object):
   # _Template contains the template parameters used in the "Dockerfile.template"
   # resource.
   _Template = collections.namedtuple('_Template', (
-      'image_id', 'dockcross_base', 'resources_relpath',
-      'cross_prefix', 'cross_python_prefix',
-      'python27_relpath', 'python27_unicode',
+      'image_id',
+      'dockcross_base',
+      'resources_relpath',
+      'cross_prefix',
+      'cross_python_prefix',
+      'python27_relpath',
+      'python27_unicode',
+      'python3_relpath',
       'perl5_relpath',
       'get_pip_relpath',
-      'libffi_relpath', 'libffi_lib_dir',
+      'libffi_relpath',
+      'libffi_lib_dir',
       'cffi_relpath',
       'zlib_relpath',
       'ncurses_relpath',
@@ -113,6 +119,7 @@ class Builder(object):
       return rp(src)
 
     python_relpath = ensure_src('python')
+    python3_relpath = ensure_src('python3')
     perl_relpath = ensure_src('perl')
     libffi_relpath = ensure_src('libffi')
     cffi_relpath = ensure_src('cffi')
@@ -141,6 +148,7 @@ class Builder(object):
         cross_python_prefix=cross_python_prefix,
         python27_relpath=python_relpath,
         python27_unicode='ucs4' if ucs4 else 'ucs2',
+        python3_relpath=python3_relpath,
         perl5_relpath=perl_relpath,
         get_pip_relpath=get_pip_relpath,
         libffi_relpath=libffi_relpath,
@@ -368,55 +376,52 @@ def NativeImage(system, plat):
 
 # Sources used for Builder Docker image construction.
 SOURCES = {
-  'python': source.remote_archive(
-    name='python',
-    version='2.7.13',
-    url='https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz',
-  ),
-
-  'perl': source.remote_archive(
-    name='perl',
-    version='5.24.1',
-    url='http://www.cpan.org/src/5.0/perl-5.24.1.tar.gz',
-  ),
-
-  'get-pip': source.remote_file(
-    name='get-pip',
-    version='19.1',
-    url='https://bootstrap.pypa.io/get-pip.py',
-  ),
-
-  'zlib': source.remote_file(
-    name='zlib',
-    version='1.2.11',
-    url='https://downloads.sourceforge.net/project/libpng/zlib/1.2.11/'
+    'python': source.remote_archive(
+        name='python',
+        version='2.7.13',
+        url='https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tgz',
+    ),
+    'python3': source.remote_archive(
+        name='python3',
+        version='3.8.3',
+        url='https://www.python.org/ftp/python/3.8.3/Python-3.8.3.tgz',
+    ),
+    'perl': source.remote_archive(
+        name='perl',
+        version='5.24.1',
+        url='http://www.cpan.org/src/5.0/perl-5.24.1.tar.gz',
+    ),
+    'get-pip': source.remote_file(
+        name='get-pip',
+        version='20.1.1',
+        url='https://bootstrap.pypa.io/get-pip.py',
+    ),
+    'zlib': source.remote_file(
+        name='zlib',
+        version='1.2.11',
+        url='https://downloads.sourceforge.net/project/libpng/zlib/1.2.11/'
         'zlib-1.2.11.tar.gz',
-  ),
-
-  'libffi': source.remote_archive(
-    name='libffi',
-    version='3.2.1',
-    url='ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz',
-  ),
-
-  'cffi': source.pypi_sdist('cffi', '1.10.0'),
-
-  'mysql': source.remote_archive(
-    name='mysql',
-    version='5.7.21',
-    url='https://dev.mysql.com/get/Downloads/MySQL-5.7/mysql-5.7.21.tar.gz',
-  ),
-
-  'boost': source.remote_archive(
-    name='boost',
-    version='1.59.0',
-    # pylint: disable=line-too-long
-    url='https://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.bz2',
-  ),
-
-  'ncurses': source.remote_archive(
-    name='ncurses',
-    version='6.1',
-    url='http://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.1.tar.gz',
-  ),
+    ),
+    'libffi': source.remote_archive(
+        name='libffi',
+        version='3.2.1',
+        url='ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz',
+    ),
+    'cffi': source.pypi_sdist('cffi', '1.10.0'),
+    'mysql': source.remote_archive(
+        name='mysql',
+        version='5.7.21',
+        url='https://dev.mysql.com/get/Downloads/MySQL-5.7/mysql-5.7.21.tar.gz',
+    ),
+    'boost': source.remote_archive(
+        name='boost',
+        version='1.59.0',
+        # pylint: disable=line-too-long
+        url='https://downloads.sourceforge.net/project/boost/boost/1.59.0/boost_1_59_0.tar.bz2',
+    ),
+    'ncurses': source.remote_archive(
+        name='ncurses',
+        version='6.1',
+        url='http://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.1.tar.gz',
+    ),
 }
