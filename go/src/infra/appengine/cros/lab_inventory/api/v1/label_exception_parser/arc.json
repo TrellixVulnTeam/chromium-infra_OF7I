@@ -84,10 +84,6 @@
         "arc": "True"
     },
     {
-        "board": "gnawty",
-        "arc": "True"
-    },
-    {
         "board": "grunt",
         "arc": "True"
     },
@@ -208,10 +204,6 @@
         "arc": "True"
     },
     {
-        "board": "sumo",
-        "arc": "True"
-    },
-    {
         "board": "terra",
         "arc": "True"
     },
@@ -236,19 +228,11 @@
         "arc": "True"
     },
     {
-        "board": "veyron_mickey",
-        "arc": "True"
-    },
-    {
         "board": "veyron_mighty",
         "arc": "True"
     },
     {
         "board": "veyron_minnie",
-        "arc": "True"
-    },
-    {
-        "board": "veyron_speedy",
         "arc": "True"
     },
     {
