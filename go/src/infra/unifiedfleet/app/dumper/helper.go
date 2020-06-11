@@ -170,7 +170,7 @@ func dumpMachineLSEPrototypes(ctx context.Context, bqClient *bigquery.Client, cu
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machine_lse_prototypes$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListMachineLSEPrototypes(ctx, pageSize, startToken)
+		res, nextToken, err := configuration.ListMachineLSEPrototypes(ctx, pageSize, startToken, "")
 		if err != nil {
 			return errors.Annotate(err, "get all vlans").Err()
 		}

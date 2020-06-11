@@ -272,7 +272,7 @@ func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *ap
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListMachineLSEPrototypes(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListMachineLSEPrototypes(ctx, pageSize, req.PageToken, req.Filter)
 	if err != nil {
 		return nil, err
 	}

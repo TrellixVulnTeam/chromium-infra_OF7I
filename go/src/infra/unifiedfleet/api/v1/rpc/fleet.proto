@@ -365,6 +365,9 @@ message ListMachineLSEPrototypesRequest {
   // When paginating, all other parameters provided to `ListMachineLSEPrototypes` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter
+  string filter = 3;
 }
 
 message ListMachineLSEPrototypesResponse {

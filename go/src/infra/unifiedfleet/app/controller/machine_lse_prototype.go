@@ -34,8 +34,8 @@ func GetMachineLSEPrototype(ctx context.Context, id string) (*fleet.MachineLSEPr
 }
 
 // ListMachineLSEPrototypes lists the machinelseprototypes
-func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.MachineLSEPrototype, string, error) {
-	return configuration.ListMachineLSEPrototypes(ctx, pageSize, pageToken)
+func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) ([]*fleet.MachineLSEPrototype, string, error) {
+	return configuration.ListMachineLSEPrototypes(ctx, pageSize, pageToken, filter)
 }
 
 // DeleteMachineLSEPrototype deletes the machinelseprototype in datastore

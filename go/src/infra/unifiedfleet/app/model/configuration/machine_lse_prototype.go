@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -14,7 +15,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 )
@@ -77,11 +77,13 @@ func GetMachineLSEPrototype(ctx context.Context, id string) (*fleet.MachineLSEPr
 //
 // Does a query over MachineLSEPrototype entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.MachineLSEPrototype, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, MachineLSEPrototypeKind, pageSize, pageToken)
+func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*fleet.MachineLSEPrototype, nextPageToken string, err error) {
+	// Passing -1 for query limit fetches all the entities from the datastore
+	q, err := fleetds.ListQuery(ctx, MachineLSEPrototypeKind, -1, pageToken)
 	if err != nil {
 		return nil, "", err
 	}
+	prefix := fleetds.GetLabPrefix(filter)
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *MachineLSEPrototypeEntity, cb datastore.CursorCB) error {
 		pm, err := ent.GetProto()
@@ -89,7 +91,13 @@ func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken str
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.MachineLSEPrototype))
+		if prefix != "" {
+			if strings.Contains(pm.(*fleet.MachineLSEPrototype).GetName(), prefix) {
+				res = append(res, pm.(*fleet.MachineLSEPrototype))
+			}
+		} else {
+			res = append(res, pm.(*fleet.MachineLSEPrototype))
+		}
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

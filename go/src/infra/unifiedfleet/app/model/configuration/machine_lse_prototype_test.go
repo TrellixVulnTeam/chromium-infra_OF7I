@@ -116,39 +116,48 @@ func TestListMachineLSEPrototypes(t *testing.T) {
 		datastore.GetTestable(ctx).Consistent(true)
 		machineLSEPrototypes := make([]*fleet.MachineLSEPrototype, 0, 4)
 		for i := 0; i < 4; i++ {
-			machineLSEPrototype1 := mockMachineLSEPrototype(fmt.Sprintf("machineLSEPrototype-%d", i))
+			var machineLSEPrototype1 *fleet.MachineLSEPrototype
+			if i == 0 {
+				machineLSEPrototype1 = mockMachineLSEPrototype(fmt.Sprintf("browser-lab:machineLSEPrototype-%d", i))
+			} else {
+				machineLSEPrototype1 = mockMachineLSEPrototype(fmt.Sprintf("machineLSEPrototype-%d", i))
+			}
 			resp, err := CreateMachineLSEPrototype(ctx, machineLSEPrototype1)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototype1)
 			machineLSEPrototypes = append(machineLSEPrototypes, resp)
 		}
 		Convey("List machineLSEPrototypes - page_token invalid", func() {
-			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 5, "abc")
+			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 5, "abc", "")
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
 		})
-
 		Convey("List machineLSEPrototypes - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 4, "")
+			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 4, "", "")
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototypes)
 		})
-
 		Convey("List machineLSEPrototypes - listing with pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 3, "")
+			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 3, "", "")
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototypes[:3])
 
-			resp, _, err = ListMachineLSEPrototypes(ctx, 2, nextPageToken)
+			resp, _, err = ListMachineLSEPrototypes(ctx, 2, nextPageToken, "")
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototypes[3:])
+		})
+		Convey("List machineLSEPrototypes - filter only browser lab prototypes", func() {
+			resp, _, err := ListMachineLSEPrototypes(ctx, 10, "", Lab+FilterConditionSeparator+Browser)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSEPrototypes[:1])
 		})
 	})
 }

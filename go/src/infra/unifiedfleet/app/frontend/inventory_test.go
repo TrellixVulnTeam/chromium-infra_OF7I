@@ -700,7 +700,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 
 			// Verify machine lse prototypes
-			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "")
+			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", "")
 			So(err, ShouldBeNil)
 			So(parseAssets(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
 
