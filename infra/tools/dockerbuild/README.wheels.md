@@ -104,7 +104,7 @@ Finally, we need to build it:
 
     path/to/infra.git/run.py         \
        infra.tools.dockerbuild       \
-       --logs-debug --upload-source  \
+       --logs-debug --upload-sources \
        wheel-build                   \
        --wheel 'scandir-1.9.0'       \
        --upload
@@ -130,7 +130,7 @@ NOTE: If this shows a change for `infra_libs` it means that someone modified
 
     path/to/infra.git/run.py         \
        infra.tools.dockerbuild       \
-       --logs-debug --upload-source  \
+       --logs-debug --upload-sources \
        wheel-build                   \
        --wheel_re 'infra_libs.*'     \
        --upload
