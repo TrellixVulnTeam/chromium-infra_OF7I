@@ -1508,3 +1508,37 @@ class EnumFieldHelpersTest(unittest.TestCase):
         ('basket', 'ld_3_docstring')
     ]
     self.assertEqual(expected, actual)
+
+
+class ModifyIssuesHelpersTest(unittest.TestCase):
+
+  def testGroupUniqueDeltaIssues(self):
+    """We can identify unique IssueDeltas and group Issues by their deltas."""
+    issue_1 = _Issue('proj', 1, 'summary', 'Available')
+    delta_1 = tracker_pb2.IssueDelta(cc_ids_add=[111])
+
+    issue_2 = _Issue('proj', 2, 'summary', 'Available')
+    delta_2 = tracker_pb2.IssueDelta(cc_ids_add=[111], cc_ids_remove=[222])
+
+    issue_3 = _Issue('proj', 3, 'summary', 'Available')
+    delta_3 = tracker_pb2.IssueDelta(cc_ids_add=[111])
+
+    issue_4 = _Issue('proj', 5, 'summary', 'Available')
+    delta_4 = tracker_pb2.IssueDelta()
+
+    issue_5 = _Issue('proj', 5, 'summary', 'Available')
+    delta_5 = tracker_pb2.IssueDelta()
+
+    issue_delta_pairs = [
+        (issue_1, delta_1), (issue_2, delta_2), (issue_3, delta_3),
+        (issue_4, delta_4), (issue_5, delta_5)
+    ]
+    unique_deltas, issues_for_deltas = tracker_helpers.GroupUniqueDeltaIssues(
+        issue_delta_pairs)
+
+    expected_unique_deltas = [delta_1, delta_2, delta_4]
+    self.assertEqual(unique_deltas, expected_unique_deltas)
+    expected_issues_for_deltas = [
+        [issue_1, issue_3], [issue_2], [issue_4, issue_5]
+    ]
+    self.assertEqual(issues_for_deltas, expected_issues_for_deltas)

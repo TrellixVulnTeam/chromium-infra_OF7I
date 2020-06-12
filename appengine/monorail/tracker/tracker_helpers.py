@@ -1259,6 +1259,39 @@ def _GetEnumFieldValuesAndDocstrings(field_def, config):
   return tuples
 
 
+def GroupUniqueDeltaIssues(issue_delta_pairs):
+  # type: (Tuple[Issue, IssueDelta]) -> (
+  #     Sequence[IssueDelta], Sequence[Sequence[Issue]])
+  """Identifies unique IssueDeltas and groups Issues with identical IssueDeltas.
+
+    Args:
+      issue_delta_pairs: List of tuples that couple Issues with the IssueDeltas
+          that represent the updates we want to make to each Issue.
+
+    Returns:
+      (unique_deltas, issues_for_unique_deltas):
+      unique_deltas: List of unique IssueDeltas found in issue_delta_pairs.
+      issues_for_unique_deltas: List of Issue lists. Each Issue list
+              contains all the Issues that had identical IssueDeltas.
+              Each issues_for_unique_deltas[i] is the list of Issues
+              that had unique_deltas[i] as their IssueDeltas.
+  """
+  unique_deltas = []
+  issues_for_unique_deltas = []
+  for issue, delta in issue_delta_pairs:
+    try:
+      delta_index = unique_deltas.index(delta)
+      issues_for_unique_deltas[delta_index].append(issue)
+    except ValueError:
+      # delta is not in unique_deltas yet.
+      # Add delta to unique_deltas and add a new list of issues
+      # to issues_for_unique_deltas at the same index.
+      unique_deltas.append(delta)
+      issues_for_unique_deltas.append([issue])
+
+  return unique_deltas, issues_for_unique_deltas
+
+
 class Error(Exception):
   """Base class for errors from this module."""
 
