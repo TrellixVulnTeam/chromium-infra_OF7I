@@ -17,6 +17,11 @@ class PlatformNotSupported(Exception):
   not support."""
 
 
+def _IsPy3OnlyUniversalWheel(spec):
+  """Returns true if the wheel is a universal py3-only wheel."""
+  return spec.universal and spec.universal.pyversions == ['py3']
+
+
 class Builder(object):
 
   def __init__(self, spec, arch_map=None, abi_map=None,
@@ -86,7 +91,7 @@ class Builder(object):
 
   def wheel(self, system, plat):
     # If the wheel is only for python3, make sure to use newer version.
-    if self._spec.universal and self._spec.universal.pyversions == ['py3']:
+    if _IsPy3OnlyUniversalWheel(self._spec):
       # "3.8.0" is the oldest version of python supported by chromium.
       #
       # The value here a filter for pip; it will only find wheels which support
@@ -188,27 +193,38 @@ def StageWheelForPackage(system, wheel_dir, wheel):
   shutil.copy(source_path, dst)
 
 
+def _InterpreterForWheel(wheel):
+  """Returns the Python interpreter to use for building a wheel."""
+  return 'python3' if _IsPy3OnlyUniversalWheel(wheel.spec) else 'python'
+
+
+def _EnvForWheel(wheel):
+  """Returns any extra environment variables for building a wheel."""
+  # If the wheel is python3, clear PYTHONPATH to avoid picking up
+  # the default Python (2) modules.
+  wheel_env = dict()
+  if _IsPy3OnlyUniversalWheel(wheel.spec):
+    wheel_env['PYTHONPATH'] = ''
+  return wheel_env
+
+
 def BuildPackageFromPyPiWheel(system, wheel):
   """Builds a wheel by obtaining a matching wheel from PyPi."""
-  # Figure out which version of python to use.
-  if wheel.spec.universal and wheel.spec.universal.pyversions == ['py3']:
-    interp = 'python3'
-  else:
-    interp = 'python'
-
   with system.temp_subdir('%s_%s' % wheel.spec.tuple) as tdir:
     util.check_run(
         system,
         None,
-        tdir,
-        [
-          interp, '-m', 'pip', 'download',
-          '--no-deps',
-          '--only-binary=:all:',
-          '--abi=%s' % (wheel.abi,),
-          '--python-version=%s' % (wheel.pyversion,),
-          '--platform=%s' % (wheel.primary_platform,),
-          '%s==%s' % (wheel.spec.name, wheel.spec.version),
+        tdir, [
+            _InterpreterForWheel(wheel),
+            '-m',
+            'pip',
+            'download',
+            '--no-deps',
+            '--only-binary=:all:',
+            '--abi=%s' % (wheel.abi,),
+            '--python-version=%s' % (wheel.pyversion,),
+            '--platform=%s' % (wheel.primary_platform,),
+            '%s==%s' % (wheel.spec.name, wheel.spec.version),
         ],
         cwd=tdir)
 
@@ -235,18 +251,22 @@ def BuildPackageFromSource(system, wheel, src, env=None):
       subprocess.check_call(cmd, cwd=build_dir)
 
     cmd = [
-      'python', '-m', 'pip', 'wheel',
-      '--no-deps',
-      '--only-binary=:all:',
-      '--wheel-dir', tdir,
-      '.',
+        _InterpreterForWheel(wheel),
+        '-m',
+        'pip',
+        'wheel',
+        '--no-deps',
+        '--only-binary=:all:',
+        '--wheel-dir',
+        tdir,
+        '.',
     ]
 
-    extra_env = {}
+    extra_env = _EnvForWheel(wheel)
     if dx.platform:
-      extra_env = {
-        'host_alias': dx.platform.cross_triple,
-      }
+      extra_env.update({
+          'host_alias': dx.platform.cross_triple,
+      })
     if env:
       extra_env.update(env)
 
