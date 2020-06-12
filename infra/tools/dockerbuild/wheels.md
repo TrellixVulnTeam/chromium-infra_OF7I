@@ -699,6 +699,20 @@ wheel: <
 
 * *universal*
 
+## **black-py3**
+
+### 19.10b0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/black-py3"
+  version: "version:19.10b0"
+>
+```
+
+
+* *universal*
+
 ## **blessings**
 
 ### 1.7

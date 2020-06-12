@@ -471,6 +471,7 @@ SPECS.update({
         UniversalSource('apache-beam', '2.0.0'),
         UniversalSource('backport_ipaddress', '0.1', pyversions=['py2']),
         UniversalSource('backports.ssl_match_hostname', '3.5.0.1'),
+        UniversalSource('black', '19.10b0', pyversions=['py3']),
         UniversalSource('configparser', '3.5.0'),
         UniversalSource('crontab', '0.22.0'),
         UniversalSource('distlib', '0.3.0', pyversions=['py2']),
