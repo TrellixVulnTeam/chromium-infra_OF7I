@@ -42,8 +42,19 @@ class BasePage(webapp.RequestHandler):
   """Utility functions needed to validate user and display a template."""
   # Initialized in bootstrap(), which is called serially at process startup.
   APP_NAME = ''
-  _VALID_PUBLIC_EMAIL = re.compile(r"^.*@(chromium\.org|google\.com)$")
-  _VALID_PRIVATE_EMAIL = re.compile(r"^.*@(google\.com)$")
+  _VALID_PUBLIC_EMAIL = re.compile(
+      r"""
+      ^(
+        .*@chromium\.org|
+        .*@google\.com|
+        luci-notify@appspot.gserviceaccount.com
+      )$""", re.VERBOSE)
+  _VALID_PRIVATE_EMAIL = re.compile(
+      r"""
+      ^(
+        .*@google\.com|
+        luci-notify@appspot.gserviceaccount.com
+      )$""", re.VERBOSE)
   PUBLIC_ACCESS = False
   IS_CHROMIUMOS = False
   PREAMBLE = ''
