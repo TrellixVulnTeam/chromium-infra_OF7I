@@ -15,9 +15,9 @@ import (
 
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
+	luciproto "go.chromium.org/luci/common/proto"
 	luciconfig "go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/impl/remote"
-	"go.chromium.org/luci/config/server/cfgclient/textproto"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
@@ -170,8 +170,9 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 			return nil, configServiceFailureStatus.Err()
 		}
 		logging.Debugf(ctx, "fetched configs: %#v", fetchedConfigs)
-		resolver := textproto.Message(oldP)
-		resolver.Resolve(fetchedConfigs)
+		if err := luciproto.UnmarshalTextML(fetchedConfigs.Content, oldP); err != nil {
+			return nil, invalidConfigFileContentStatus.Err()
+		}
 	}
 	platforms = util.ToChromePlatforms(oldP)
 
@@ -499,8 +500,9 @@ func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *api.ImportVlans
 		return nil, configServiceFailureStatus.Err()
 	}
 	vlans := &crimsonconfig.VLANs{}
-	resolver := textproto.Message(vlans)
-	resolver.Resolve(fetchedConfigs)
+	if err := luciproto.UnmarshalTextML(fetchedConfigs.Content, vlans); err != nil {
+		return nil, invalidConfigFileContentStatus.Err()
+	}
 
 	pageSize := fs.getImportPageSize()
 	res, err := controller.ImportVlans(ctx, vlans.GetVlan(), pageSize)

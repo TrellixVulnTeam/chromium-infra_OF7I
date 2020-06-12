@@ -13,8 +13,8 @@ import (
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
+	luciproto "go.chromium.org/luci/common/proto"
 	luciconfig "go.chromium.org/luci/config"
-	"go.chromium.org/luci/config/server/cfgclient/textproto"
 	"go.chromium.org/luci/grpc/grpcutil"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
@@ -421,8 +421,9 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 		return nil, configServiceFailureStatus.Err()
 	}
 	dc := &crimsonconfig.Datacenter{}
-	resolver := textproto.Message(dc)
-	resolver.Resolve(fetchedConfigs)
+	if err := luciproto.UnmarshalTextML(fetchedConfigs.Content, dc); err != nil {
+		return nil, invalidConfigFileContentStatus.Err()
+	}
 	logging.Debugf(ctx, "processing datacenter: %s", dc.GetName())
 
 	pageSize := fs.getImportPageSize()
@@ -446,8 +447,9 @@ func (fs *FleetServerImpl) ImportDatacenterConfigs(ctx context.Context) ([]strin
 	}
 	dcs := &crimsonconfig.Datacenters{}
 	logging.Debugf(ctx, "%#v", c)
-	resolver := textproto.Message(dcs)
-	resolver.Resolve(c)
+	if err := luciproto.UnmarshalTextML(c.Content, dcs); err != nil {
+		return nil, err
+	}
 	return dcs.GetDatacenter(), nil
 }
 
