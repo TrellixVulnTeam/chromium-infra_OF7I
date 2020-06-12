@@ -30,7 +30,8 @@ import (
 var WaitTask = &subcommands.Command{
 	UsageLine: "wait-task [FLAGS...] TASK_ID",
 	ShortDesc: "wait for a task to complete",
-	LongDesc:  `Wait for the task with the given Buildbucket task id to complete, and summarize its results.`,
+	LongDesc: `Wait for the tasks with the given Buildbucket build id to complete, and summarize its results.
+Only tasks created via the skylab tool are supported`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &waitTaskRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -89,7 +90,7 @@ func (c *waitTaskRun) innerRunBuildbucket(a subcommands.Application, env subcomm
 	if err != nil {
 		return nil, err
 	}
-	return responseToTaskResult(bClient, build), nil
+	return responseToTaskResult(bClient, build)
 }
 
 func parseBBTaskID(arg string) (int64, error) {
@@ -103,7 +104,7 @@ func parseBBTaskID(arg string) (int64, error) {
 	return ID, nil
 }
 
-func responseToTaskResult(bClient *bb.Client, build *bb.Build) *skylab_tool.WaitTaskResult {
+func responseToTaskResult(bClient *bb.Client, build *bb.Build) (*skylab_tool.WaitTaskResult, error) {
 	buildID := build.ID
 	u := bClient.BuildURL(buildID)
 	// TODO(pprabhu) Add verdict to WaitTaskResult_Task and deprecate Failure /
@@ -118,8 +119,19 @@ func responseToTaskResult(bClient *bb.Client, build *bb.Build) *skylab_tool.Wait
 		Failure:       isBuildFailed(build),
 		Success:       isBuildPassed(build),
 	}
+	rs := build.Responses.GetTaggedResponses()
+	if rs == nil {
+		return nil, errors.Reason("missing tagged_responses").Err()
+	}
+
+	// CTP runs created using the Skylab tool have a single response tagged "default".
+	r, ok := rs["default"]
+	if !ok {
+		return nil, errors.Reason("missing 'default' response in %+v", rs).Err()
+	}
+
 	var childResults []*skylab_tool.WaitTaskResult_Task
-	for _, child := range build.Response.GetTaskResults() {
+	for _, child := range r.GetTaskResults() {
 		verdict := child.GetState().GetVerdict()
 		failure := verdict == test_platform.TaskState_VERDICT_FAILED
 		success := verdict == test_platform.TaskState_VERDICT_PASSED
@@ -137,7 +149,7 @@ func responseToTaskResult(bClient *bb.Client, build *bb.Build) *skylab_tool.Wait
 		ChildResults: childResults,
 		Result:       tr,
 		// Note: Stdout it not set.
-	}
+	}, nil
 }
 
 func isBuildFailed(build *bb.Build) bool {
