@@ -16,7 +16,7 @@ syntax = "proto3";
 
 package backend.tq;
 
-option go_package = "backend";
+option go_package = "infra/appengine/arquebus/app/backend";
 
 // ScheduleAssignerTask is to schedule a new task for a given assigner.
 //

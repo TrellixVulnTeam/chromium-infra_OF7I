@@ -1,6 +1,16 @@
-// Copyright 2019 The LUCI Authors. All rights reserved.
-// Use of this source code is governed under the Apache License, Version 2.0
-// that can be found in the LICENSE file.
+// Copyright 2019 The LUCI Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 syntax = "proto3";
 
@@ -8,25 +18,25 @@ package arquebus.config;
 
 import "google/protobuf/duration.proto";
 
-option go_package = "config";
+option go_package = "infra/appengine/arquebus/app/config";
 
 // Config is the service-wide configuration data for Arquebus
 message Config {
-    // AccessGroup is the luci-auth group who has access to admin pages and
-    // APIs.
-    string access_group = 1;
+  // AccessGroup is the luci-auth group who has access to admin pages and
+  // APIs.
+  string access_group = 1;
 
-    // The endpoint for Monorail APIs.
-    string monorail_hostname = 2;
+  // The endpoint for Monorail APIs.
+  string monorail_hostname = 2;
 
-    // A list of Assigner config(s).
-    repeated Assigner assigners = 3;
+  // A list of Assigner config(s).
+  repeated Assigner assigners = 3;
 
-    // The endpoint for RotaNG APIs.
-    string rotang_hostname = 4;
+  // The endpoint for RotaNG APIs.
+  string rotang_hostname = 4;
 
-    // The endpoint for Rotation Proxy APIs.
-    string rotation_proxy_hostname = 5;
+  // The endpoint for Rotation Proxy APIs.
+  string rotation_proxy_hostname = 5;
 }
 
 // IssueQuery describes the issue query to be used for searching unassigned
