@@ -443,6 +443,11 @@ def get_go_environ_diff(layout):
           # Don't use default cache in '~'.
           'GOCACHE': os.path.join(layout.workspace, '.cache'),
 
+          # Infra Go workspace doesn't use advanced build systems,
+          # which inject custom `gopackagesdriver` binary. See also
+          # https://github.com/golang/tools/blob/54c614fe050cac95ace393a63f164149942ecbde/go/packages/external.go#L49
+          'GOPACKAGESDRIVER': 'off',
+
           # Infra Go workspace is not ready for modules yet, attempting to use
           # them will cause pain.
           'GOPROXY': 'off',
