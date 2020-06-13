@@ -43,6 +43,15 @@ func http200res(c *router.Context) {
 	fmt.Fprintln(c.Writer, "OK")
 }
 
+func updateConfig(c *router.Context) {
+	ctx := c.Context
+	if err := config.Update(ctx); err != nil {
+		http500res(c, err, "failed to update config")
+		return
+	}
+	http200res(c)
+}
+
 func updateAssigners(c *router.Context) {
 	ctx := c.Context
 	cfgs := config.Get(ctx).Assigners
@@ -90,6 +99,7 @@ func InstallHandlers(r *router.Router, dispatcher *tq.Dispatcher, mwBase router.
 		rc.Context = util.SetDispatcher(rc.Context, dispatcher)
 		next(rc)
 	})
+	r.GET("/internal/cron/update-config", m, updateConfig)
 	r.GET("/internal/cron/update-assigners", m, updateAssigners)
 	r.GET("/internal/cron/schedule-assigners", m, scheduleAssigners)
 }

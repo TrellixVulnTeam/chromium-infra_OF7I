@@ -11,11 +11,18 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/duration"
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
+	"go.chromium.org/gae/impl/memory"
+	"go.chromium.org/luci/config"
+	"go.chromium.org/luci/config/cfgclient"
+	cfgmem "go.chromium.org/luci/config/impl/memory"
 	"go.chromium.org/luci/config/validation"
+	"go.chromium.org/luci/server/caching"
+	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/arquebus/app/util"
+
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func createConfig(id string) *Config {
@@ -44,21 +51,31 @@ func createRotationSource(rotation string) *UserSource_Rotation {
 	}
 }
 
+func TestMiddleware(t *testing.T) {
+	t.Parallel()
+
+	Convey("loads config and updates context", t, func() {
+		c := memory.Use(context.Background())
+		c = caching.WithEmptyProcessCache(c)
+		c = cfgclient.Use(c, cfgmem.New(map[config.Set]cfgmem.Files{
+			"services/${appid}": {
+				cachedCfg.Path: createConfig("assigner").String(),
+			},
+		}))
+
+		Middleware(&router.Context{Context: c}, func(c *router.Context) {
+			So(Get(c.Context).AccessGroup, ShouldEqual, "trooper")
+			So(GetConfigRevision(c.Context), ShouldNotEqual, "")
+		})
+	})
+}
+
 func TestConfigValidator(t *testing.T) {
 	t.Parallel()
 
-	rules := validation.NewRuleSet()
-	rules.Vars.Register("appid", func(context.Context) (string, error) {
-		return "my_app", nil
-	})
-	SetupValidation(rules)
-
 	validate := func(cfg *Config) error {
 		c := validation.Context{Context: context.Background()}
-		err := rules.ValidateConfig(
-			&c, "services/my_app", configFile, []byte(cfg.String()),
-		)
-		So(err, ShouldBeNil)
+		validateConfig(&c, cfg)
 		return c.Finalize()
 	}
 

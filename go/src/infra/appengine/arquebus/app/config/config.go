@@ -16,79 +16,76 @@
 package config
 
 import (
+	"context"
 	"net/http"
+
+	"google.golang.org/protobuf/proto"
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config"
-	"go.chromium.org/luci/config/server/cfgclient"
-	"go.chromium.org/luci/config/server/cfgclient/textproto"
+	"go.chromium.org/luci/config/server/cfgcache"
 	"go.chromium.org/luci/config/validation"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 
 	"infra/appengine/arquebus/app/util"
 )
 
-const (
-	configFile = "config.cfg"
-)
+// A string with unique address used to store and retrieve context values.
+var ctxKeyConfig = "arquebus.config"
 
-// unique type to prevent assignment.
-type ctxKeyTypeConfig struct{}
-type ctxKeyTypeConfigMeta struct{}
+// contextState is stored in the context under &ctxKeyConfig.
+type contextState struct {
+	config   *Config
+	revision string
+}
 
-// unique key used to store and retrieve context.
-var ctxKeyConfig = ctxKeyTypeConfig{}
-var ctxKeyConfigMeta = ctxKeyTypeConfigMeta{}
+// Cached service config.
+var cachedCfg = cfgcache.Register(&cfgcache.Entry{
+	Path: "config.cfg",
+	Type: (*Config)(nil),
+	Validator: func(ctx *validation.Context, msg proto.Message) error {
+		validateConfig(ctx, msg.(*Config))
+		return nil
+	},
+})
+
+// Update fetches the config and puts it into the datastore.
+//
+// It is then used by all requests that go through Middleware.
+func Update(c context.Context) error {
+	_, err := cachedCfg.Update(c, nil)
+	return err
+}
 
 // Get returns the config stored in the context.
 func Get(c context.Context) *Config {
-	return c.Value(ctxKeyConfig).(*Config)
+	return c.Value(&ctxKeyConfig).(*contextState).config
 }
 
 // Middleware loads the service config and installs it into the context.
 func Middleware(c *router.Context, next router.Handler) {
-	var cfg Config
 	var meta config.Meta
-	err := cfgclient.Get(
-		c.Context,
-		cfgclient.AsService,
-		cfgclient.CurrentServiceConfigSet(c.Context),
-		configFile,
-		textproto.Message(&cfg),
-		&meta,
-	)
+	cfg, err := cachedCfg.Get(c.Context, &meta)
 	if err != nil {
 		logging.WithError(err).Errorf(c.Context, "could not load application config")
 		http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-
-	c.Context = SetConfig(c.Context, &cfg)
-	c.Context = SetConfigMeta(c.Context, &meta)
+	c.Context = SetConfig(c.Context, cfg.(*Config), meta.Revision)
 	next(c)
 }
 
 // SetConfig installs cfg into c.
-func SetConfig(c context.Context, cfg *Config) context.Context {
-	return context.WithValue(c, ctxKeyConfig, cfg)
-}
-
-// SetConfigMeta installs the Config.Meta into c.
-func SetConfigMeta(c context.Context, meta *config.Meta) context.Context {
-	return context.WithValue(c, ctxKeyConfigMeta, meta)
+func SetConfig(c context.Context, cfg *Config, rev string) context.Context {
+	return context.WithValue(c, &ctxKeyConfig, &contextState{
+		config:   cfg,
+		revision: rev,
+	})
 }
 
 // GetConfigRevision returns the revision of the current config.
 func GetConfigRevision(c context.Context) string {
-	meta := c.Value(ctxKeyConfigMeta).(*config.Meta)
-	return meta.Revision
-}
-
-// SetupValidation adds validation rules for configuration data pushed via
-// luci-config.
-func SetupValidation(rules *validation.RuleSet) {
-	rules.Add("services/${appid}", configFile, validateConfig)
+	return c.Value(&ctxKeyConfig).(*contextState).revision
 }
 
 // IsEqual returns whether the IssueQuery objects are equal.

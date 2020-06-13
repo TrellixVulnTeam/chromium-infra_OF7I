@@ -15,13 +15,11 @@
 package config
 
 import (
+	"net/mail"
+	"net/url"
 	"regexp"
 	"time"
 
-	"net/mail"
-	"net/url"
-
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 
 	"go.chromium.org/luci/common/data/stringset"
@@ -37,18 +35,11 @@ var rotationNameRegex = regexp.MustCompile(`^([[:alnum:]][[:word:]- ]?)*[[:alnum
 // The regex rule for rotation-proxy rotation names.
 var rotationProxyNameRegex = regexp.MustCompile(`^(oncallator|grotation):[a-z0-9\-]+$`)
 
-func validateConfig(c *validation.Context, configSet, path string, content []byte) error {
-	cfg := &Config{}
-	if err := proto.UnmarshalText(string(content), cfg); err != nil {
-		c.Errorf("not a valid Config proto message: %s", err)
-		return nil
-	}
-
+func validateConfig(c *validation.Context, cfg *Config) {
 	validateAccessGroup(c, cfg.AccessGroup)
 	validateMonorailHostname(c, cfg.MonorailHostname)
 	validateAssigners(c, cfg.Assigners)
 	validateRotangHostname(c, cfg.RotangHostname)
-	return nil
 }
 
 func validateAccessGroup(c *validation.Context, group string) {

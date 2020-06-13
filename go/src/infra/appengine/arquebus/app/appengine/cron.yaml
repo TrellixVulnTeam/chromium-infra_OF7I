@@ -1,4 +1,8 @@
 cron:
+- description: Preload config.cfg from luci-config into the datastore
+  url: /internal/cron/update-config
+  schedule: every 10 minutes
+
 - description: Update assigner configs from luci-config
   url: /internal/cron/update-assigners
   schedule: every 10 minutes

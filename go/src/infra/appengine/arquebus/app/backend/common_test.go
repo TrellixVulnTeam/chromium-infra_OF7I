@@ -27,8 +27,8 @@ import (
 	"infra/appengine/arquebus/app/config"
 	"infra/appengine/arquebus/app/util"
 	"infra/appengine/rotang/proto/rotangapi"
-	"infra/appengine/rotation-proxy/proto"
-	"infra/monorailv2/api/api_proto"
+	rotationproxy "infra/appengine/rotation-proxy/proto"
+	monorail "infra/monorailv2/api/api_proto"
 )
 
 var (
@@ -125,7 +125,7 @@ func createTestContextWithTQ() context.Context {
 		RotangHostname:   "example.net",
 
 		Assigners: []*config.Assigner{},
-	})
+	}, "config-rev")
 
 	// install TQ handlers
 	d := &tq.Dispatcher{}

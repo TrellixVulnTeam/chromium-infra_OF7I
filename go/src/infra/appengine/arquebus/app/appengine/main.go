@@ -23,7 +23,6 @@ import (
 	"go.chromium.org/luci/appengine/gaemiddleware/standard"
 	"go.chromium.org/luci/appengine/tq"
 	"go.chromium.org/luci/common/data/rand/mathrand"
-	"go.chromium.org/luci/config/validation"
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/arquebus/app/backend"
@@ -50,7 +49,6 @@ func main() {
 	frontend.InstallHandlers(r, m)
 	cron.InstallHandlers(r, dispatcher, m)
 
-	config.SetupValidation(&validation.Rules)
 	http.DefaultServeMux.Handle("/", r)
 
 	appengine.Main()
