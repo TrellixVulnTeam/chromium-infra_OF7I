@@ -33,8 +33,8 @@ import (
 	"infra/appengine/arquebus/app/config"
 	"infra/appengine/arquebus/app/util"
 	"infra/appengine/rotang/proto/rotangapi"
-	"infra/appengine/rotation-proxy/proto"
-	"infra/monorailv2/api/api_proto"
+	rotationproxy "infra/appengine/rotation-proxy/proto"
+	monorail "infra/monorailv2/api/api_proto"
 )
 
 var (
@@ -271,6 +271,13 @@ func startTaskRun(c context.Context, assignerID string, taskID int64) (assigner 
 			task.WriteLog(c, "the assigner has been drained; cancelling")
 			task.Ended = now
 
+		case !assigner.HasMostRecentFormat():
+			// Don't risk running the task with a stale Assigner. Better to wait until
+			// it is updated.
+			task.Status = model.TaskStatus_Cancelled
+			task.WriteLog(c, "Skipping the task, its assigner config has stale format.")
+			task.Ended = now
+
 		case nextSch.Before(now.Add(maxIssueUpdatesExecutionTime)):
 			// It's either the task is stale or the remaining time is not long
 			// enough to have the maximum issue update execution time.
@@ -337,7 +344,7 @@ func runAssignerTaskHandler(c context.Context, tqTask proto.Message) error {
 	)
 	// if the error was due to the context timeout, override issueUpdateErr
 	// with it so that endTaskRun() can recognize the timeout error.
-	if err != nil && timedCtx.Err() == context.DeadlineExceeded {
+	if issueUpdateErr != nil && timedCtx.Err() == context.DeadlineExceeded {
 		issueUpdateErr = context.DeadlineExceeded
 	}
 

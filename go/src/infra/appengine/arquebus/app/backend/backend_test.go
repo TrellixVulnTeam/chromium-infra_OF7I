@@ -41,7 +41,7 @@ func TestBackend(t *testing.T) {
 
 	Convey("runAssignerTaskHandler", t, func() {
 		c := createTestContextWithTQ()
-		createAssigner(c, assignerID)
+		assigner := createAssigner(c, assignerID)
 		tasks := triggerScheduleTaskHandler(c, assignerID)
 		So(tasks, ShouldNotBeNil)
 
@@ -89,6 +89,16 @@ func TestBackend(t *testing.T) {
 			So(processedTask.Status, ShouldEqual, task.Status)
 			So(processedTask.Started, ShouldEqual, task.Started)
 			So(processedTask.Ended, ShouldEqual, task.Ended)
+		})
+
+		Convey("skips assigners with stale format", func() {
+			assigner.FormatVersion = 0
+			datastore.Put(c, assigner)
+
+			for _, task := range tasks {
+				task = triggerRunTaskHandler(c, assignerID, task.ID)
+				So(task.Status, ShouldEqual, model.TaskStatus_Cancelled)
+			}
 		})
 
 		Convey("cancelling tasks, if the assigner has been drained.", func() {

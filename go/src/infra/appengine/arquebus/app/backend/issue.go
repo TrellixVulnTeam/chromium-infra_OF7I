@@ -36,7 +36,7 @@ import (
 
 	"infra/appengine/arquebus/app/backend/model"
 	"infra/appengine/arquebus/app/config"
-	"infra/monorailv2/api/api_proto"
+	monorail "infra/monorailv2/api/api_proto"
 )
 
 const (
@@ -86,9 +86,14 @@ func searchAndUpdateIssues(c context.Context, assigner *model.Assigner, task *mo
 func searchIssues(c context.Context, mc monorail.IssuesClient, assigner *model.Assigner, task *model.Task) ([]*monorail.Issue, error) {
 	task.WriteLog(c, "Started searching issues")
 
+	issueQuery, err := assigner.IssueQuery()
+	if err != nil {
+		return nil, err
+	}
+
 	// Inject -label:Arquebus-Opt-Out into the search query.
 	var query strings.Builder
-	s := strings.Split(assigner.IssueQuery.Q, " OR ")
+	s := strings.Split(issueQuery.Q, " OR ")
 	for i, q := range s {
 		// Split("ABC OR ", " OR ") returns ["ABC", ""]
 		if q == "" {
@@ -103,7 +108,7 @@ func searchIssues(c context.Context, mc monorail.IssuesClient, assigner *model.A
 	res, err := mc.ListIssues(c, &monorail.ListIssuesRequest{
 		Query:        query.String(),
 		CannedQuery:  uint32(monorail.SearchScope_OPEN),
-		ProjectNames: assigner.IssueQuery.ProjectNames,
+		ProjectNames: issueQuery.ProjectNames,
 
 		// TODO(crbug/965385) - paginate through the search results, until
 		// the total number of issues to be updated reaches the maximum number

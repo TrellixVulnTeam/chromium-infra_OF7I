@@ -27,8 +27,8 @@ import (
 	"infra/appengine/arquebus/app/backend/model"
 	"infra/appengine/arquebus/app/config"
 	"infra/appengine/rotang/proto/rotangapi"
-	"infra/appengine/rotation-proxy/proto"
-	"infra/monorailv2/api/api_proto"
+	rotationproxy "infra/appengine/rotation-proxy/proto"
+	monorail "infra/monorailv2/api/api_proto"
 )
 
 var (
@@ -70,7 +70,7 @@ func findAssigneeAndCCs(c context.Context, assigner *model.Assigner, task *model
 	return assignees[0], ccs, nil
 }
 
-func resolveUserSources(c context.Context, task *model.Task, sources []config.UserSource) (users []*monorail.UserRef, err error) {
+func resolveUserSources(c context.Context, task *model.Task, sources []*config.UserSource) (users []*monorail.UserRef, err error) {
 	for _, source := range sources {
 		if rotation := source.GetRotation(); rotation != nil {
 			userRefs, err := findOncallers(c, task, rotation, true)

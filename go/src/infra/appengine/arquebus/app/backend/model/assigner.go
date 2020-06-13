@@ -32,6 +32,12 @@ import (
 const (
 	// The interval of schedule-assigners cron job
 	scheduleAssignerCronInterval = 60 * time.Second
+
+	// Most up-to-date value for FormatVersion field.
+	//
+	// Bump if you change updateIfChanged and want to rerun it against existing
+	// configs.
+	currentFormatVersion = 1
 )
 
 // Assigner is a job object that periodically runs to perform issue update
@@ -43,12 +49,17 @@ type Assigner struct {
 	// ID is a globally unique identifier of the assigner.
 	ID string `gae:"$id,"`
 
+	// FormatVersion is used to trigger updates even if the config revision
+	// stays the same.
+	FormatVersion int64 `gae:",noindex"`
+
 	// Owners contain an email list of the owners.
 	Owners []string `gae:",noindex"`
 
-	// IssueQuery defines a search query to be sent to Monorail for issue
-	// searches.
-	IssueQuery config.IssueQuery `gae:",noindex"`
+	// IssueQueryRaw is a blob with serialized config.IssueQuery.
+	//
+	// It defines a search query to be sent to Monorail for issue searches.
+	IssueQueryRaw []byte `gae:",noindex"`
 
 	// Interval specifies the delay between each individual runs of the
 	// assigner.
@@ -89,13 +100,14 @@ type Assigner struct {
 //
 // It returns true if an update has been performed. False, otherwise.
 func (a *Assigner) updateIfChanged(c context.Context, cfg *config.Assigner, rev string) bool {
-	// skip updating if the revision is the same.
-	if a.ConfigRevision == rev {
+	// skip updating if the revision and format are up-to-date.
+	if a.ConfigRevision == rev && a.HasMostRecentFormat() {
 		return false
 	}
 
+	a.FormatVersion = currentFormatVersion
 	a.Owners = cfg.Owners
-	a.IssueQuery = *cfg.IssueQuery
+	a.IssueQueryRaw, _ = proto.Marshal(cfg.IssueQuery)
 	a.Description = cfg.Description
 	a.Comment = cfg.Comment
 	a.IsDryRun = cfg.DryRun
@@ -115,11 +127,26 @@ func (a *Assigner) updateIfChanged(c context.Context, cfg *config.Assigner, rev 
 	return true
 }
 
+// HasMostRecentFormat is false if the entity format is stale.
+//
+// Stale Assigner entities must be skipped. They'll eventually be updated to
+// have the most recent format.
+func (a *Assigner) HasMostRecentFormat() bool {
+	return a.FormatVersion == currentFormatVersion
+}
+
+// IssueQuery returns a search query to be sent to Monorail for issue searches.
+func (a *Assigner) IssueQuery() (*config.IssueQuery, error) {
+	q := &config.IssueQuery{}
+	return q, proto.Unmarshal(a.IssueQueryRaw, q)
+}
+
 // Assignees returns a list of UserSource to look for issue assignees from.
-func (a *Assigner) Assignees() ([]config.UserSource, error) {
-	results := make([]config.UserSource, len(a.AssigneesRaw))
+func (a *Assigner) Assignees() ([]*config.UserSource, error) {
+	results := make([]*config.UserSource, len(a.AssigneesRaw))
 	for i, raw := range a.AssigneesRaw {
-		if err := proto.Unmarshal(raw, &results[i]); err != nil {
+		results[i] = &config.UserSource{}
+		if err := proto.Unmarshal(raw, results[i]); err != nil {
 			return nil, err
 		}
 	}
@@ -127,10 +154,11 @@ func (a *Assigner) Assignees() ([]config.UserSource, error) {
 }
 
 // CCs returns a list of UserSource to look for whom to cc issues from.
-func (a *Assigner) CCs() ([]config.UserSource, error) {
-	results := make([]config.UserSource, len(a.CCsRaw))
+func (a *Assigner) CCs() ([]*config.UserSource, error) {
+	results := make([]*config.UserSource, len(a.CCsRaw))
 	for i, raw := range a.CCsRaw {
-		if err := proto.Unmarshal(raw, &results[i]); err != nil {
+		results[i] = &config.UserSource{}
+		if err := proto.Unmarshal(raw, results[i]); err != nil {
 			return nil, err
 		}
 	}
@@ -140,7 +168,7 @@ func (a *Assigner) CCs() ([]config.UserSource, error) {
 // UpdateAssigners update all the Assigner entities, on presumed valid
 // configs.
 //
-// For removed configs, the Assigner entities are marked as removed.
+// For removed configs, the Assigner entities are removed.
 // For new configs, new Assigner entities are created.
 // For updated configs, the Assigner entities are updated,
 // based on the updated content.
