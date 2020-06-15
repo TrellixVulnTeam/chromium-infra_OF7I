@@ -44,6 +44,9 @@ import (
 // These handlers can only be called by appengine's cron service.
 func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	mwCron := mwBase.Extend(gaemiddleware.RequireCron)
+
+	r.GET("/internal/cron/import-service-config", mwCron, logAndSetHTTPErr(importServiceConfig))
+
 	r.GET("/internal/cron/dump-to-bq", mwCron, logAndSetHTTPErr(dumpToBQCronHandler))
 
 	r.GET("/internal/cron/dump-registered-assets-snapshot", mwCron, logAndSetHTTPErr(dumpRegisteredAssetsCronHandler))
@@ -69,6 +72,10 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/sync-asset-info-from-hart", mwCron, logAndSetHTTPErr(syncAssetInfoFromHaRT))
 
 	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevices))
+}
+
+func importServiceConfig(c *router.Context) error {
+	return config.Import(c.Context)
 }
 
 func dumpToBQCronHandler(c *router.Context) (err error) {

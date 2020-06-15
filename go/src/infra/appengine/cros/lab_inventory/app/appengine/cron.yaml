@@ -1,6 +1,6 @@
 cron:
-- description: LUCI config datastore cache periodic refresh
-  url: /admin/config/cache/manager
+- description: Import config.cfg from LUCI Config
+  url: /internal/cron/import-service-config
   schedule: every 10 minutes
 - description: Device config data periodic refresh
   url: /internal/cron/sync-dev-config

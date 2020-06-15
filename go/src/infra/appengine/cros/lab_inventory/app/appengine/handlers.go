@@ -28,8 +28,6 @@ func main() {
 	r := router.New()
 	mwBase := standard.Base().Extend(config.Middleware)
 
-	config.SetupValidation()
-
 	// Install auth, config and tsmon handlers.
 	standard.InstallHandlers(r)
 	frontend.InstallHandlers(r, mwBase)
