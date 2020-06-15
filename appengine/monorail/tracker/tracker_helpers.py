@@ -1292,6 +1292,27 @@ def GroupUniqueDeltaIssues(issue_delta_pairs):
   return unique_deltas, issues_for_unique_deltas
 
 
+def AssertIssueChangesValid(cnxn, project, issue_delta_pairs, services):
+  # type: (MonorailConnection, Project, Tuple[Issue, IssueDelta], Services) ->
+  #     None
+  """Assert that the delta changes are valid for each paired issue.
+
+    Note: this method does not check if the changes trigger any FilterRule
+      `warnings` or `errors`.
+  """
+  for issue, delta in issue_delta_pairs:
+    if delta.merged_into and issue.issue_id == delta.merged_into:
+      raise exceptions.InputException('Cannot merge an issue into itself')
+    if (issue.issue_id in set(delta.blocked_on_add)) or (issue.issue_id in set(
+        delta.blocking_add)):
+      raise exceptions.InputException('Cannot block an issue on itself')
+    if (delta.owner_id is not None) and (delta.owner_id != issue.owner_id):
+      parsed_owner_valid, msg = IsValidIssueOwner(
+          cnxn, project, delta.owner_id, services)
+      if not parsed_owner_valid:
+        raise exceptions.InputException(msg)
+
+
 class Error(Exception):
   """Base class for errors from this module."""
 
