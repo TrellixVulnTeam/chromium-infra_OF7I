@@ -57,6 +57,12 @@ def builder(
   properties = properties or {}
   properties['mastername'] = 'chromium.infra.codesearch'
 
+  properties['$build/goma'] = {
+      'server_host': 'goma.chromium.org',
+      'rpc_extra_params': '?prod',
+      'goma_enable_ats': True,  # True for Linux/Win only. Must set to false on Mac.
+  }
+
   luci.builder(
       name = name,
       bucket = 'codesearch',
