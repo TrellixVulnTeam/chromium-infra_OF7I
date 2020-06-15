@@ -52,8 +52,8 @@ cron:
   url: /internal/cron/push-inventory-to-queen
   schedule: every 10 minutes
 
-- description: LUCI config datastore cache periodic refresh
-  url: /admin/config/cache/manager
+- description: Import config.cfg from LUCI Config
+  url: /internal/cron/import-service-config
   schedule: every 10 minutes
 
 - description: tsmon house keeping

@@ -47,6 +47,10 @@ import (
 // These handlers can only be called by appengine's cron service.
 func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	mwCron := mwBase.Extend(gaemiddleware.RequireCron)
+
+	// Import config.cfg from LUCI Config.
+	r.GET("/internal/cron/import-service-config", mwCron, logAndSetHTTPErr(importServiceConfig))
+
 	r.GET("/internal/cron/refresh-inventory", mwCron, logAndSetHTTPErr(refreshInventoryCronHandler))
 	r.GET("/internal/cron/balance-pools", mwCron, logAndSetHTTPErr(balancePoolCronHandler))
 
@@ -76,6 +80,10 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	// dump information from stable version file to datastore
 	r.GET("/internal/cron/dump-stable-version-to-datastore", mwCron, logAndSetHTTPErr(dumpStableVersionToDatastoreHandler))
+}
+
+func importServiceConfig(c *router.Context) error {
+	return config.Import(c.Context)
 }
 
 func updateDeviceConfigCronHandler(c *router.Context) (err error) {
