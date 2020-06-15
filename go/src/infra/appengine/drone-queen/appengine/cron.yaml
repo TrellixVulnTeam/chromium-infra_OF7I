@@ -1,11 +1,11 @@
 cron:
-- description: LUCI config datastore cache periodic refresh
-  url: /admin/config/cache/manager
-  schedule: every 10 minutes
 - description: tsmon house keeping
   url: /internal/cron/ts_mon/housekeeping
   schedule: every 1 minutes
 
+- description: Import config.cfg from LUCI Config
+  url: /internal/cron/import-service-config
+  schedule: every 10 minutes
 - description: Free invalid DUT assignments
   url: /internal/cron/free-invalid-duts
   schedule: every 5 minutes

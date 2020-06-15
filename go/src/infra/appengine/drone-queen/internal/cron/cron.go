@@ -39,6 +39,7 @@ import (
 // These handlers can only be called by appengine's cron service.
 func InstallHandlers(r *router.Router, mw router.MiddlewareChain) {
 	mw = mw.Extend(gaemiddleware.RequireCron)
+	r.GET("/internal/cron/import-service-config", mw, errHandler(importServiceConfig))
 	r.GET("/internal/cron/free-invalid-duts", mw, errHandler(freeInvalidDUTs))
 	r.GET("/internal/cron/prune-expired-drones", mw, errHandler(pruneExpiredDrones))
 	r.GET("/internal/cron/prune-drained-duts", mw, errHandler(pruneDrainedDUTs))
@@ -52,6 +53,10 @@ func errHandler(f func(*router.Context) error) router.Handler {
 			http.Error(c.Writer, "Internal server error", http.StatusInternalServerError)
 		}
 	}
+}
+
+func importServiceConfig(c *router.Context) error {
+	return config.Import(c.Context)
 }
 
 func freeInvalidDUTs(c *router.Context) (err error) {

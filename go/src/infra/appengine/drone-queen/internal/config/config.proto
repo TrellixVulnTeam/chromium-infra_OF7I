@@ -8,7 +8,7 @@ import "google/protobuf/duration.proto";
 
 package drone_queen.config;
 
-option go_package = "config";
+option go_package = "infra/appengine/drone-queen/internal/config";
 
 // Config is the configuration data served by luci-config for this app.
 message Config {

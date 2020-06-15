@@ -16,25 +16,35 @@
 package config
 
 import (
+	"context"
 	"net/http"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
+
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/config/server/cfgclient"
-	"go.chromium.org/luci/config/server/cfgclient/textproto"
-	"go.chromium.org/luci/config/validation"
+	"go.chromium.org/luci/config/server/cfgcache"
 	"go.chromium.org/luci/server/router"
-	"golang.org/x/net/context"
 )
 
 //go:generate cproto
 
-// File is the path of the LUCI config file.
-const File = "config.cfg"
-
 type key struct{}
+
+// Defines how to fetch and cache the config.
+var cachedCfg = cfgcache.Register(&cfgcache.Entry{
+	Path: "config.cfg",
+	Type: (*Config)(nil),
+})
+
+// Import fetches the most recent config and stores it in the datastore.
+//
+// Must be called periodically to make sure Get and Middleware use the freshest
+// config.
+func Import(ctx context.Context) error {
+	_, err := cachedCfg.Update(ctx, nil)
+	return err
+}
 
 // Get gets the config in the context.  If the context does not have a
 // config, return a nil config.
@@ -56,35 +66,16 @@ func Use(ctx context.Context, c *Config) context.Context {
 	return context.WithValue(ctx, key{}, c)
 }
 
-// Validate is a LUCI config validation function.
-func Validate(ctx *validation.Context, configSet, path string, content []byte) error {
-	var c Config
-	if err := proto.UnmarshalText(string(content), &c); err != nil {
-		ctx.Errorf("unmarshaling config proto: %s", err)
-		return nil
-	}
-	return nil
-}
-
 // Middleware loads the service config and installs it into the context.
 func Middleware(ctx *router.Context, next router.Handler) {
-	var cfg Config
-	err := cfgclient.Get(
-		ctx.Context,
-		cfgclient.AsService,
-		cfgclient.CurrentServiceConfigSet(ctx.Context),
-		File,
-		textproto.Message(&cfg),
-		nil,
-	)
+	msg, err := cachedCfg.Get(ctx.Context, nil)
 	if err != nil {
 		logging.WithError(err).Errorf(ctx.Context, "could not load application config")
 		http.Error(ctx.Writer, "Internal server error", http.StatusInternalServerError)
-		return
+	} else {
+		ctx.Context = Use(ctx.Context, msg.(*Config))
+		next(ctx)
 	}
-
-	ctx.Context = Use(ctx.Context, &cfg)
-	next(ctx)
 }
 
 // Instance returns the configured instance of the service.

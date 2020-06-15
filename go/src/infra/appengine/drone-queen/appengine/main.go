@@ -21,7 +21,6 @@ import (
 	"net/http"
 
 	"go.chromium.org/luci/appengine/gaemiddleware/standard"
-	"go.chromium.org/luci/config/validation"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/appengine"
 
@@ -32,7 +31,6 @@ import (
 
 func main() {
 	seedRand()
-	setupConfigValidation()
 
 	r := router.New()
 	standard.InstallHandlers(r)
@@ -50,8 +48,4 @@ func seedRand() {
 		panic(err)
 	}
 	rand.Seed(int64(binary.LittleEndian.Uint64(b[:])))
-}
-
-func setupConfigValidation() {
-	validation.Rules.Add("services/${appid}", config.File, config.Validate)
 }
