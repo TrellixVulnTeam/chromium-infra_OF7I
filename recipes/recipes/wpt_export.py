@@ -45,7 +45,7 @@ def RunSteps(api):
 
   script = api.path['checkout'].join('third_party', 'blink', 'tools',
                                      'wpt_export.py')
-  args = ['--credentials-json', creds]
+  args = ['--credentials-json', creds, '--surface-failures-to-gerrit']
   api.python('Export Chromium commits and in-flight CLs to WPT', script, args)
 
 
