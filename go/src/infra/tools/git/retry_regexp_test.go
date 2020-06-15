@@ -47,6 +47,7 @@ func TestDefaultGitRetryRegexps(t *testing.T) {
 			`fatal: remote error: Access denied to $TRAILING_CONTENT`,
 			`The requested URL returned error: 429`,
 			`fatal: expected wanted-ref, got '0176ERR RESOURCE_EXHAUSTED: Resource has been exhausted (e.g. check quota).'`,
+			`fatal: fetch-pack: protocol error: bad band #48`,
 		} {
 			Convey(fmt.Sprintf(`Matches line: %q`, line), func() {
 				So(DefaultGitRetryRegexp.MatchString(line), ShouldBeTrue)

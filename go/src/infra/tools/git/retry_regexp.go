@@ -86,6 +86,9 @@ var defaultGitRetryRegexpSource = []string{
 	`RESOURCE_EXHAUSTED`,
 	`Resource has been exhausted`,
 	`check quota`,
+
+	// b/158498614
+	`fetch-pack: protocol error: bad band #\d+`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
