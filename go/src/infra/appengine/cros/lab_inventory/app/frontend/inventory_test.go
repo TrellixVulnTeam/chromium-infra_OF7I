@@ -494,23 +494,24 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			So(resp.UpdatedDevices, ShouldHaveLength, 2)
 		})
 
-		Convey("Fail update the DUT when update servo info and labstation already have registration of this servo", func() {
-			servo := &lab.Servo{
-				ServoHostname: "labstation1",
-				ServoPort:     1230,
-				ServoSerial:   "SN0001",
-				ServoType:     "v3",
-			}
-			dut1 := getDut(servo)
-			labstation1 := getLab()
-			labstation1.GetLabstation().Servos = []*lab.Servo{servo}
+		// TODO(otabek) blocked by crbug.com/1094428
+		// Convey("Fail update the DUT when update servo info and labstation already have registration of this servo", func() {
+		// 	servo := &lab.Servo{
+		// 		ServoHostname: "labstation1",
+		// 		ServoPort:     1230,
+		// 		ServoSerial:   "SN0001",
+		// 		ServoType:     "v3",
+		// 	}
+		// 	dut1 := getDut(servo)
+		// 	labstation1 := getLab()
+		// 	labstation1.GetLabstation().Servos = []*lab.Servo{servo}
 
-			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
-			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+		// 	req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
+		// 	resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
 
-			So(err, ShouldNotBeNil)
-			So(resp, ShouldBeNil)
-		})
+		// 	So(err, ShouldNotBeNil)
+		// 	So(resp, ShouldBeNil)
+		// })
 
 		Convey("Update non-existing devices", func() {
 			ghost := lab.ChromeOSDevice{

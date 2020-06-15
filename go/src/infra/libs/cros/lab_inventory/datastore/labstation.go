@@ -141,12 +141,13 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 		}
 		servo.ServoPort = int32(p)
 	} else {
-		if err := checkDuplicatePort(servo, oldServo, servos); err != nil {
-			return err
-		}
-		if err := checkDuplicateSerial(servo, oldServo, servos); err != nil {
-			return err
-		}
+		// TODO(otabek) blocked by crbug.com/1094428
+		// if err := checkDuplicatePort(servo, oldServo, servos); err != nil {
+		// 	return err
+		// }
+		// if err := checkDuplicateSerial(servo, oldServo, servos); err != nil {
+		// 	return err
+		// }
 	}
 
 	servoHost.Servos = mergeServo(servos, servo)
