@@ -17,6 +17,8 @@ var fuchsiaRobots = []string{
 
 // RuleMap maps each monitored repository to a list of account/rules structs.
 var RuleMap = map[string]*RefConfig{
+	// Chromium
+
 	"chromium-src-master": {
 		BaseRepoURL: "https://chromium.googlesource.com/chromium/src.git",
 		GerritURL:   "https://chromium-review.googlesource.com",
@@ -186,34 +188,9 @@ var RuleMap = map[string]*RefConfig{
 		},
 		DynamicRefFunction: ReleaseConfig,
 	},
-	"skia-master": {
-		BaseRepoURL: "https://skia.googlesource.com/skia.git",
-		GerritURL:   "https://skia-review.googlesource.com",
-		BranchName:  "refs/heads/master",
-		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "82a33425166aacd0726bdd283c6de749420819a8",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
-		MonorailProject: "chromium",
-		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRulesForFilesAndDirs("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{fileDEPS}, dirsSKCMS),
-			"bookmaker":           AutoRollRulesAPIDocs("skia-bookmaker@skia-swarming-bots.iam.gserviceaccount.com"),
-			"recreate-skps":       AutoRollRulesForFilesAndDirs("skia-recreate-skps@skia-swarming-bots.iam.gserviceaccount.com", []string{SkiaAsset("go_deps"), SkiaAsset("skp"), "go.mod", "go.sum", "infra/bots/tasks.json"}, []string{}),
-		},
-	},
-	"skia-lottie-ci": {
-		BaseRepoURL: "https://skia.googlesource.com/lottie-ci.git",
-		GerritURL:   "https://skia-review.googlesource.com",
-		BranchName:  "refs/heads/master",
-		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "6844651ced137fd86d73a11cd0c4d74e71c6fb98",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
-		MonorailProject: "chromium",
-		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRulesDEPSAndTasks("skia-autoroll@skia-public.iam.gserviceaccount.com"),
-		},
-	},
+
+	// Fuchsia
+
 	"fuchsia-infra-recipes-master": {
 		BaseRepoURL: "https://fuchsia.googlesource.com/infra/recipes.git",
 		GerritURL:   "https://fuchsia-review.googlesource.com",
@@ -244,6 +221,37 @@ var RuleMap = map[string]*RefConfig{
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]AccountRules{
 			"autoroll-rules-skia": AutoRollRulesSkiaManifest("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com"),
+		},
+	},
+
+	// Skia
+
+	"skia-master": {
+		BaseRepoURL: "https://skia.googlesource.com/skia.git",
+		GerritURL:   "https://skia-review.googlesource.com",
+		BranchName:  "refs/heads/master",
+		// No special meaning, ToT as of the time this line was added.
+		StartingCommit:  "82a33425166aacd0726bdd283c6de749420819a8",
+		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailProject: "chromium",
+		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
+		Rules: map[string]AccountRules{
+			"autoroll-rules-skia": AutoRollRulesForFilesAndDirs("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{fileDEPS}, dirsSKCMS),
+			"bookmaker":           AutoRollRulesAPIDocs("skia-bookmaker@skia-swarming-bots.iam.gserviceaccount.com"),
+			"recreate-skps":       AutoRollRulesForFilesAndDirs("skia-recreate-skps@skia-swarming-bots.iam.gserviceaccount.com", []string{SkiaAsset("go_deps"), SkiaAsset("skp"), "go.mod", "go.sum", "infra/bots/tasks.json"}, []string{}),
+		},
+	},
+	"skia-lottie-ci": {
+		BaseRepoURL: "https://skia.googlesource.com/lottie-ci.git",
+		GerritURL:   "https://skia-review.googlesource.com",
+		BranchName:  "refs/heads/master",
+		// No special meaning, ToT as of the time this line was added.
+		StartingCommit:  "6844651ced137fd86d73a11cd0c4d74e71c6fb98",
+		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailProject: "chromium",
+		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
+		Rules: map[string]AccountRules{
+			"autoroll-rules-skia": AutoRollRulesDEPSAndTasks("skia-autoroll@skia-public.iam.gserviceaccount.com"),
 		},
 	},
 }
