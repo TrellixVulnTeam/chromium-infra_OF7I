@@ -125,6 +125,9 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 		}
 		return nil
 	}
+	if servo.GetServoSerial() == "" {
+		return errors.Reason("the servo serial number missed for: %q", servoHostname).Err()
+	}
 
 	// For labstation, we need to merge the current servo information to the
 	// labstation servo list.
@@ -266,6 +269,10 @@ func checkDuplicateSerial(newServo, oldServo *lab.Servo, servos []*lab.Servo) er
 func mergeServo(servos []*lab.Servo, servo *lab.Servo) []*lab.Servo {
 	mapping := map[string]*lab.Servo{}
 	for _, s := range servos {
+		if s.GetServoSerial() == "" {
+			// to avoid cases when serial is empty.
+			continue
+		}
 		mapping[s.GetServoSerial()] = s
 	}
 	mapping[servo.GetServoSerial()] = servo
