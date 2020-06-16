@@ -23,6 +23,7 @@ func mockServo(servoHost string) *lab.Servo {
 		ServoType:     "v3",
 	}
 }
+
 func mockDut(hostname, id, servoHost string) *lab.ChromeOSDevice {
 	return &lab.ChromeOSDevice{
 		Id: &lab.ChromeOSDeviceID{
@@ -203,57 +204,117 @@ func TestRemoveDevices(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	Convey("Remove devices from datastore", t, func() {
-		dut1 := mockDut("dut1", "", "labstation1")
-		dut2 := mockDut("dut2", "UUID:02", "labstation1")
+
+		dut1 := mockDut("dut1", "dut-01", "labstation1")
+		dut1.GetDut().Peripherals.Servo.ServoPort = 9993
+		dut1.GetDut().Peripherals.Servo.ServoSerial = "ServoDut1"
+		dut2 := mockDut("dut2", "dut-02", "labstation1")
 		dut2.GetDut().Peripherals.Servo.ServoPort = 9995
 		dut2.GetDut().Peripherals.Servo.ServoSerial = "ServoDut2"
+		dut3 := mockDut("dut3", "dut-03", "labstation1")
+		dut3.GetDut().Peripherals.Servo.ServoPort = 9997
+		dut3.GetDut().Peripherals.Servo.ServoSerial = "ServoDut3"
 		devsToAdd := []*lab.ChromeOSDevice{
 			dut1,
 			dut2,
-			mockLabstation("labstation1", "ASSET_ID_123"),
+			dut3,
+			mockLabstation("labstation1", "ASSET_ID_111"),
+			mockLabstation("labstation2", "ASSET_ID_123"),
 		}
 		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
 		datastore.GetTestable(ctx).Consistent(true)
 
-		Convey("Remove non-existing devices by Ids and hostnames", func() {
-			resp := DeleteDevicesByIds(ctx, []string{"1234", "abcd"})
-			So(resp.Passed(), ShouldHaveLength, 2)
-			So(resp.Failed(), ShouldHaveLength, 0)
+		findServoWithSerial := func(serial string) *lab.Servo {
+			var devs []*DeviceEntity
+			q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
+			err := datastore.GetAll(ctx, q.Eq("Hostname", "labstation1"), &devs)
+			if err != nil || len(devs) != 1 {
+				return nil
+			}
+			var crosDev lab.ChromeOSDevice
+			if err := proto.Unmarshal(devs[0].LabConfig, &crosDev); err != nil {
+				return nil
+			}
+			for _, servo := range crosDev.GetLabstation().GetServos() {
+				if servo.GetServoSerial() == serial {
+					return servo
+				}
+			}
+			return nil
+		}
+		expectDeviceCount := func(count int) {
+			var devs []*DeviceEntity
+			err = datastore.GetAll(ctx, datastore.NewQuery(DeviceKind), &devs)
+			So(err, ShouldBeNil)
+			So(devs, ShouldHaveLength, count)
+		}
 
-			resp = DeleteDevicesByHostnames(ctx, []string{"dutX", "labstationX"})
+		Convey("Try to remove non-existing devices by Ids", func() {
+			expectDeviceCount(5)
+
+			resp := DeleteDevicesByIds(ctx, []string{"1234", "abcd"})
 			So(resp.Passed(), ShouldHaveLength, 0)
 			So(resp.Failed(), ShouldHaveLength, 2)
 
-			// There are still 3 device entities unchanged.
-			var devs []*DeviceEntity
-			err = datastore.GetAll(ctx, datastore.NewQuery(DeviceKind), &devs)
-			So(err, ShouldBeNil)
-			So(devs, ShouldHaveLength, 3)
+			// There are still all device entities unchanged.
+			expectDeviceCount(5)
 		})
+		Convey("Try to remove non-existing devices by hostnames", func() {
+			expectDeviceCount(5)
 
-		Convey("Happy path", func() {
-			var devs []*DeviceEntity
-			err = datastore.GetAll(ctx, datastore.NewQuery(DeviceKind), &devs)
-			So(err, ShouldBeNil)
-			So(devs, ShouldHaveLength, 3)
+			resp := DeleteDevicesByHostnames(ctx, []string{"dutX", "labstationX"})
+			So(resp.Passed(), ShouldHaveLength, 0)
+			So(resp.Failed(), ShouldHaveLength, 2)
 
-			resp := DeleteDevicesByIds(ctx, []string{"ASSET_ID_123"})
-			So(resp.Passed(), ShouldHaveLength, 1)
-			So(resp.Failed(), ShouldHaveLength, 0)
-			devs = nil
-			err = datastore.GetAll(ctx, datastore.NewQuery(DeviceKind), &devs)
-			So(err, ShouldBeNil)
-			So(devs, ShouldHaveLength, 2)
+			// There are still all device entities unchanged.
+			expectDeviceCount(5)
+		})
+		Convey("Happy path to delete by hostnames", func() {
+			expectDeviceCount(5)
+			servo1 := findServoWithSerial("ServoDut1")
+			servo2 := findServoWithSerial("ServoDut2")
+			servo3 := findServoWithSerial("ServoDut3")
+			So(servo1, ShouldNotBeNil)
+			So(servo1.GetServoPort(), ShouldEqual, 9993)
+			So(servo2, ShouldNotBeNil)
+			So(servo2.GetServoPort(), ShouldEqual, 9995)
+			So(servo3, ShouldNotBeNil)
+			So(servo3.GetServoPort(), ShouldEqual, 9997)
 
-			resp = DeleteDevicesByHostnames(ctx, []string{"dut1", "dut2"})
+			resp := DeleteDevicesByHostnames(ctx, []string{"dut3", "dut2"})
 			So(resp.Passed(), ShouldHaveLength, 2)
 			So(resp.Failed(), ShouldHaveLength, 0)
-			devs = nil
-			err = datastore.GetAll(ctx, datastore.NewQuery(DeviceKind), &devs)
-			So(err, ShouldBeNil)
-			So(devs, ShouldHaveLength, 0)
+
+			expectDeviceCount(3)
+			servo1 = findServoWithSerial("ServoDut1")
+			servo2 = findServoWithSerial("ServoDut2")
+			servo3 = findServoWithSerial("ServoDut3")
+			So(servo1, ShouldNotBeNil)
+			So(servo1.GetServoPort(), ShouldEqual, 9993)
+			So(servo2, ShouldBeNil)
+			So(servo3, ShouldBeNil)
+		})
+		Convey("Happy path to delete by IDs", func() {
+			expectDeviceCount(5)
+			servo2 := findServoWithSerial("ServoDut2")
+			servo3 := findServoWithSerial("ServoDut3")
+			So(servo2, ShouldNotBeNil)
+			So(servo2.GetServoPort(), ShouldEqual, 9995)
+			So(servo3, ShouldNotBeNil)
+			So(servo3.GetServoPort(), ShouldEqual, 9997)
+
+			resp := DeleteDevicesByIds(ctx, []string{"dut-02", "ASSET_ID_123"})
+			So(resp.Passed(), ShouldHaveLength, 2)
+			So(resp.Failed(), ShouldHaveLength, 0)
+
+			expectDeviceCount(3)
+			servo2 = findServoWithSerial("ServoDut2")
+			servo3 = findServoWithSerial("ServoDut3")
+			So(servo2, ShouldBeNil)
+			So(servo3, ShouldNotBeNil)
+			So(servo3.GetServoPort(), ShouldEqual, 9997)
 		})
 	})
 }

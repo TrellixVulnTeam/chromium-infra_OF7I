@@ -188,7 +188,7 @@ func TestDeleteCrosDevices(t *testing.T) {
 			},
 		},
 	}
-	devID1 := api.DeviceID{
+	labstationID1 := api.DeviceID{
 		Id: &api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: "ASSET_ID_123"},
 	}
 	devID2 := api.DeviceID{
@@ -212,7 +212,7 @@ func TestDeleteCrosDevices(t *testing.T) {
 			}
 
 			reqDelete := &api.DeleteCrosDevicesRequest{
-				Ids: []*api.DeviceID{&devID1, &devID2},
+				Ids: []*api.DeviceID{&labstationID1, &devID2},
 			}
 			rsp, err := tf.Inventory.DeleteCrosDevices(tf.C, reqDelete)
 			So(err, ShouldBeNil)
@@ -223,15 +223,13 @@ func TestDeleteCrosDevices(t *testing.T) {
 				removedDeviceNames[i] = r.Hostname
 			}
 			So("dut1", ShouldBeIn, removedDeviceNames)
-			// "labstation1" won't be in the removed device names
-			// since it was removed by its id.
-			So("", ShouldBeIn, removedDeviceNames)
+			So("labstation1", ShouldBeIn, removedDeviceNames)
 
 			So(rsp.FailedDevices, ShouldHaveLength, 0)
 		})
 
 		Convey("Bad request: duplicated ID", func() {
-			req := &api.DeleteCrosDevicesRequest{Ids: []*api.DeviceID{&devID1, &devID1}}
+			req := &api.DeleteCrosDevicesRequest{Ids: []*api.DeviceID{&labstationID1, &labstationID1}}
 			rsp, err := tf.Inventory.DeleteCrosDevices(tf.C, req)
 			So(rsp, ShouldBeNil)
 			So(err, ShouldNotBeNil)

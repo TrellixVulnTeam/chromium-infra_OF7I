@@ -171,22 +171,47 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoP
 // DeleteDevicesByIds deletes entities by specified Ids.
 // The datastore implementation doesn't raise error when deleting non-existing
 // entities: https://github.com/googleapis/google-cloud-go/issues/501
+//
+// As additional deleting servo from labstation for deleted device.
 func DeleteDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
-	removingResults := make(DeviceOpResults, len(ids))
-	entities := make([]*DeviceEntity, len(ids))
-	for i, id := range ids {
-		entities[i] = &DeviceEntity{
-			ID:     DeviceEntityID(id),
-			Parent: fakeAcestorKey(ctx),
+	var removingResults DeviceOpResults
+	r := newServoHostRegistryFromProtoMsgs(ctx, nil)
+
+	f := func(ctx context.Context) error {
+		removingResults = GetDevicesByIds(ctx, ids)
+		var entities []*DeviceEntity
+		for _, deviceResult := range removingResults {
+			if deviceResult.Err != nil || deviceResult.Entity == nil {
+				continue
+			}
+			entity := deviceResult.Entity
+			var devProto lab.ChromeOSDevice
+			if err := entity.GetCrosDeviceProto(&devProto); err != nil {
+				deviceResult.logError(errors.Annotate(err, "failed to unmarshal lab config data for %s", entity.Hostname).Err())
+				continue
+			}
+			if dut := devProto.GetDut(); dut != nil {
+				err := r.removeDeviceFromLabstation(ctx, dut)
+				if err != nil {
+					deviceResult.logError(errors.Annotate(err, "failed to delete servo from labstation for: %s", entity.Hostname).Err())
+					continue
+				}
+			}
+			entities = append(entities, entity)
 		}
-		removingResults[i].Entity = entities[i]
+		if err := datastore.Delete(ctx, entities); err != nil {
+			for i, e := range err.(errors.MultiError) {
+				removingResults[i].logError(e)
+			}
+		}
+		logLifeCycleEvent(ctx, changehistory.LifeCycleDecomm, removingResults)
+		return r.saveToDatastore(ctx)
 	}
-	if err := datastore.Delete(ctx, entities); err != nil {
-		for i, e := range err.(errors.MultiError) {
-			removingResults[i].logError(e)
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		for _, result := range removingResults {
+			result.logError(err)
 		}
 	}
-	logLifeCycleEvent(ctx, changehistory.LifeCycleDecomm, removingResults)
 	return removingResults
 }
 
@@ -210,38 +235,63 @@ func logLifeCycleEvent(ctx context.Context, event changehistory.LifeCycleEvent, 
 }
 
 // DeleteDevicesByHostnames deletes entities by specified hostnames.
+//
+// As additional deleting servo from labstation for deleted device.
 func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpResults {
-	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
 	removingResults := make(DeviceOpResults, len(hostnames))
-	entities := make([]*DeviceEntity, 0, len(hostnames))
-	entityResults := make([]*DeviceOpResult, 0, len(hostnames))
+	r := newServoHostRegistryFromProtoMsgs(ctx, nil)
 
-	// Filter out invalid input hostnames.
-	for i, hostname := range hostnames {
-		removingResults[i].Entity = &DeviceEntity{Hostname: hostname}
-		var devs []*DeviceEntity
-		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
-			removingResults[i].logError(errors.Annotate(err, "failed to get host by hostname %s", hostname).Err())
-			continue
+	f := func(ctx context.Context) error {
+		q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
+		entities := make([]*DeviceEntity, 0, len(hostnames))
+		entityResults := make([]*DeviceOpResult, 0, len(hostnames))
+
+		// Filter out invalid input hostnames.
+		for i, hostname := range hostnames {
+			removingResults[i].Entity = &DeviceEntity{Hostname: hostname}
+			var devs []*DeviceEntity
+			if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
+				removingResults[i].logError(errors.Annotate(err, "failed to get host by hostname %s", hostname).Err())
+				continue
+			}
+			if len(devs) == 0 {
+				removingResults[i].logError(errors.Reason("No such host: %s", hostname).Err())
+				continue
+			}
+			if len(devs) > 1 {
+				removingResults[i].logError(errors.Reason("multiple entities found with hostname %s: %v", hostname, devs).Err())
+				continue
+			}
+			entity := devs[0]
+			var devProto lab.ChromeOSDevice
+			if err := entity.GetCrosDeviceProto(&devProto); err != nil {
+				removingResults[i].logError(errors.Annotate(err, "failed to unmarshal lab config data for %s", hostname).Err())
+				continue
+			}
+			if dut := devProto.GetDut(); dut != nil {
+				err := r.removeDeviceFromLabstation(ctx, dut)
+				if err != nil {
+					removingResults[i].logError(errors.Annotate(err, "failed to delete servo from labstation for: %s", hostname).Err())
+					continue
+				}
+			}
+			removingResults[i].Entity = entity
+			entities = append(entities, entity)
+			entityResults = append(entityResults, &removingResults[i])
 		}
-		if len(devs) == 0 {
-			removingResults[i].logError(errors.Reason("No such host: %s", hostname).Err())
-			continue
+		if err := datastore.Delete(ctx, entities); err != nil {
+			for i, e := range err.(errors.MultiError) {
+				entityResults[i].logError(e)
+			}
 		}
-		if len(devs) > 1 {
-			removingResults[i].logError(errors.Reason("multiple entities found with hostname %s: %v", hostname, devs).Err())
-			continue
-		}
-		removingResults[i].Entity = devs[0]
-		entities = append(entities, devs[0])
-		entityResults = append(entityResults, &removingResults[i])
+		logLifeCycleEvent(ctx, changehistory.LifeCycleDecomm, removingResults)
+		return r.saveToDatastore(ctx)
 	}
-	if err := datastore.Delete(ctx, entities); err != nil {
-		for i, e := range err.(errors.MultiError) {
-			entityResults[i].logError(e)
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		for _, result := range removingResults {
+			result.logError(err)
 		}
 	}
-	logLifeCycleEvent(ctx, changehistory.LifeCycleDecomm, removingResults)
 	return removingResults
 }
 

@@ -72,7 +72,7 @@ func (r servoHostRegistry) getServoHost(ctx context.Context, hostname string) (*
 		q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx)).Eq("Hostname", hostname)
 		var servoHosts []*DeviceEntity
 		if err := datastore.GetAll(ctx, q, &servoHosts); err != nil {
-			return nil, errors.Annotate(err, "get servo host when add devices").Err()
+			return nil, errors.Annotate(err, "get servo host").Err()
 		}
 		switch len(servoHosts) {
 		case 0:
@@ -151,6 +151,29 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 	}
 
 	servoHost.Servos = mergeServo(servos, servo)
+	return nil
+}
+
+// When we delete a DUT, we must also delete the servo information to the
+// associated labstation.
+func (r servoHostRegistry) removeDeviceFromLabstation(ctx context.Context, d *lab.DeviceUnderTest) error {
+	servo := d.GetPeripherals().GetServo()
+	if servo == nil || servo.GetServoSerial() == "" {
+		return nil
+	}
+	servoHostname := servo.GetServoHostname()
+
+	// Skip the deleting when the servo host is a servo v3
+	if !looksLikeLabstation(servoHostname) {
+		return nil
+	}
+
+	// For labstation, we need to delete the current servo information from the labstation servo list.
+	servoHost, err := r.getServoHost(ctx, servoHostname)
+	if err != nil {
+		return err
+	}
+	servoHost.Servos = deleteServo(servoHost.GetServos(), servo)
 	return nil
 }
 
@@ -250,6 +273,20 @@ func mergeServo(servos []*lab.Servo, servo *lab.Servo) []*lab.Servo {
 	result := make([]*lab.Servo, 0, len(mapping))
 	for _, v := range mapping {
 		result = append(result, v)
+	}
+	return result
+}
+
+// A servo is identified by its serial number. If the SN of servo to be delete is existing, then overwrite the existing record.
+func deleteServo(servos []*lab.Servo, servo *lab.Servo) []*lab.Servo {
+	var result []*lab.Servo
+	serial := servo.GetServoSerial()
+	for _, s := range servos {
+		if s.GetServoSerial() == serial {
+			// that is servo we need to delete
+			continue
+		}
+		result = append(result, s)
 	}
 	return result
 }
