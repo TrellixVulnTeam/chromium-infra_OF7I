@@ -38,6 +38,14 @@ const (
 	// get restarted. Drone container image upgrade, drone server memory overflow, or
 	// drone server restart can cause the swarming bots to restart.
 	HostNeedsDeploy HostState = "needs_deploy"
+	// Device reserved for analysis or hold by lab
+	HostReserved HostState = "reserved"
+	// Device under manual repair interaction by lab
+	HostManualRepair HostState = "manual_repair"
+	// Device required manual attention to be fixed
+	HostNeedsManualRepair HostState = "needs_manual_repair"
+	// Device is not fixable due issues with hardware and has to be replaced
+	HostNeedsReplacement HostState = "needs_replacement"
 
 	// Deprecated
 	HostRunning HostState = "running"
