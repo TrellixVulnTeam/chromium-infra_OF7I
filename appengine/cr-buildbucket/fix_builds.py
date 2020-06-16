@@ -7,9 +7,13 @@
 This code changes each time something needs to be migrated once.
 """
 
+import datetime
+
 from google.appengine.ext import ndb
 
 from components import utils
+
+from go.chromium.org.luci.buildbucket.proto import build_pb2
 
 import bulkproc
 import logging
@@ -38,20 +42,24 @@ def _fix_builds(build_keys):  # pragma: no cover
 
 @ndb.transactional_tasklet
 def _fix_build_async(build_key):  # pragma: no cover
-  out_props_key = model.BuildOutputProperties.key_for(build_key)
-  build, out_props = yield ndb.get_multi_async([build_key, out_props_key])
+  steps_key = model.BuildSteps.key_for(build_key)
+  build, steps = yield ndb.get_multi_async([build_key, steps_key])
   if not build or not build.is_ended:
     return
 
   to_put = []
 
-  if not out_props and build.proto.output.HasField('properties'):
-    to_put.append(
-        model.BuildOutputProperties(
-            key=out_props_key,
-            properties=build.proto.output.properties.SerializeToString(),
-        )
-    )
+  if steps and not steps.step_container_bytes_zipped:
+    # Prior to the introduction of step_container_bytes_zipped, steps were
+    # compressed using ndb's compression instead of explicit zipping. Go doesn't
+    # understand this compression, so fix these entities (all entities created
+    # before an arbitrary date by which the change was hopefully released).
+    # See 96753cfd8462af82ea365a4c8918539786f4c3bd for more details.
+    if build.create_time < datetime.datetime(2019, 4, 1):
+      p = build_pb2.Build()
+      steps.read_steps(p)
+      steps.write_steps(p)
+      to_put.append(steps)
 
   if to_put:
     logging.info('fixing %s' % build.key.id())
