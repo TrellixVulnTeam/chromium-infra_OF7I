@@ -11,6 +11,7 @@ import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import 'elements/framework/mr-issue-slo/mr-issue-slo.js';
 
 import * as issueV0 from 'reducers/issueV0.js';
+import * as sitewide from 'reducers/sitewide.js';
 import * as userV0 from 'reducers/userV0.js';
 import './mr-field-values.js';
 import {isExperimentEnabled, SLO_EXPERIMENT} from 'shared/experiments.js';
@@ -207,7 +208,8 @@ export class MrMetadata extends connectStore(LitElement) {
             ></chops-timestamp>
           ` : EMPTY_FIELD_VALUE;
       case 'slo':
-        if (isExperimentEnabled(SLO_EXPERIMENT, this.currentUser)) {
+        if (isExperimentEnabled(
+            SLO_EXPERIMENT, this.currentUser, this.queryParams)) {
           return html`<mr-issue-slo .issue=${this.issue}></mr-issue-slo>`;
         } else {
           return;
@@ -298,6 +300,7 @@ export class MrMetadata extends connectStore(LitElement) {
       issueRef: {type: Object},
       fieldValueMap: {type: Object},
       currentUser: {type: Object},
+      queryParams: {type: Object},
     };
   }
 
@@ -328,6 +331,7 @@ export class MrMetadata extends connectStore(LitElement) {
     this.owner = undefined;
     this.modifiedTimestamp = undefined;
     this.currentUser = undefined;
+    this.queryParams = {};
   }
 
   /** @override */
@@ -346,6 +350,7 @@ export class MrMetadata extends connectStore(LitElement) {
     this.issueRef = issueV0.viewedIssueRef(state);
     this.relatedIssues = issueV0.relatedIssues(state);
     this.currentUser = userV0.currentUser(state);
+    this.queryParams = sitewide.queryParams(state);
   }
 }
 
