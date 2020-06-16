@@ -201,7 +201,7 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 		tqt := taskqueue.GetTestable(tf.C)
 		tqt.CreateQueue(auditQ)
 
-		Convey("run only for DUTs", func() {
+		Convey("run only for ready DUTs", func() {
 			tqt.ResetTasks()
 			tf.MockSwarming.EXPECT().ListAliveBotsInPool(
 				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),

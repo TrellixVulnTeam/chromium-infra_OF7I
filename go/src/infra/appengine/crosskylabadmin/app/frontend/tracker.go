@@ -107,10 +107,9 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 	dims[clients.DutStateDimensionKey] = []string{"ready"}
 	bots, err := sc.ListAliveBotsInPool(ctx, cfg.Swarming.BotPool, dims)
 	if err != nil {
-		reason := fmt.Sprintf("failed to list alive cros bots")
-		return nil, errors.Annotate(err, reason).Err()
+		return nil, errors.Annotate(err, "failed to list alive cros bots").Err()
 	}
-	logging.Infof(ctx, "successfully get %d alive cros bots.", len(bots))
+	logging.Infof(ctx, "successfully get %d alive cros bots", len(bots))
 
 	// Parse BOT id to schedule tasks for readability.
 	botIDs := identifyBotsForAudit(ctx, bots)

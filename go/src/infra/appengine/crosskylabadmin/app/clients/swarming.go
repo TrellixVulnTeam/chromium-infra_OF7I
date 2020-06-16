@@ -34,6 +34,8 @@ import (
 	"go.chromium.org/luci/common/data/strpair"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/google"
+	"go.chromium.org/luci/common/retry"
+	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 )
@@ -160,10 +162,15 @@ func (sc *swarmingClientImpl) ListAliveIdleBotsInPool(c context.Context, pool st
 func (sc *swarmingClientImpl) ListAliveBotsInPool(c context.Context, pool string, dims strpair.Map) ([]*swarming.SwarmingRpcsBotInfo, error) {
 	bis := []*swarming.SwarmingRpcsBotInfo{}
 	dims.Set(PoolDimensionKey, pool)
-	call := sc.Bots.List().Dimensions(dims.Format()...).IsDead("FALSE")
+	call := sc.Bots.List().Dimensions(dims.Format()...).IsDead("FALSE").Limit(500)
 	for {
-		ic, _ := context.WithTimeout(c, 60*time.Second)
-		response, err := call.Context(ic).Do()
+		var response *swarming.SwarmingRpcsBotList
+		f := func() (err error) {
+			ic, _ := context.WithTimeout(c, 60*time.Second)
+			response, err = call.Context(ic).Do()
+			return err
+		}
+		err := retry.Retry(c, transient.Only(retry.Default), f, retry.LogCallback(c, "retry get Swarming bots"))
 		if err != nil {
 			return nil, errors.Reason("failed to list alive bots in pool %s", pool).InternalReason(err.Error()).Err()
 		}
