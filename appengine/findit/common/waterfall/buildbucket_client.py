@@ -9,12 +9,10 @@ import logging
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
-from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
-from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import BuildPredicate
-from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import GetBuildRequest
-from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import ScheduleBuildRequest
-from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import SearchBuildsRequest
-from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import SearchBuildsResponse
+from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builds_service_pb2 import (
+    BuildPredicate, GetBuildRequest, ScheduleBuildRequest, SearchBuildsRequest,
+    SearchBuildsResponse)
 from common.findit_http_client import FinditHttpClient
 from libs.math.integers import constrain
 

@@ -32,7 +32,7 @@ from infra.libs import git
 
 from infra import init_python_pb2  # pylint: disable=unused-import
 from go.chromium.org.luci.buildbucket.proto import common_pb2
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2
 
 
 class RunLogger(logging.Filter):
@@ -153,7 +153,7 @@ _DEFAULT_BUILDBUCKET_INSTANCE = 'cr-buildbucket.appspot.com'
 def _FetchFromBuildbucketImpl(
     project, bucket_name, builder,
     service_account_file=None):  # pragma: no cover
-  request_pb = rpc_pb2.SearchBuildsRequest()
+  request_pb = builds_service_pb2.SearchBuildsRequest()
   request_pb.predicate.builder.project = project
   request_pb.predicate.builder.bucket = bucket_name
   request_pb.predicate.builder.builder = builder
@@ -189,7 +189,7 @@ def _FetchFromBuildbucketImpl(
   if grpc_code != '0':
     raise httplib2.HttpLib2Error('Invalid GRPC exit code: %s\n%s' % (
         grpc_code, content))
-  response_pb = rpc_pb2.SearchBuildsResponse()
+  response_pb = builds_service_pb2.SearchBuildsResponse()
   response_pb.ParseFromString(content)
 
   return response_pb

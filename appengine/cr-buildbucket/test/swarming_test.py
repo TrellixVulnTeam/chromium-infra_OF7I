@@ -29,6 +29,7 @@ import webapp2
 
 from legacy import api_common
 from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import launcher_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
@@ -405,7 +406,7 @@ class TaskDefTest(BaseTest):
         number=1,
         scheduling_timeout=dict(seconds=3600),
         execution_timeout=dict(seconds=3600),
-        builder=build_pb2.BuilderID(
+        builder=builder_pb2.BuilderID(
             project='chromium', bucket='try', builder='linux'
         ),
         exe=dict(
@@ -480,8 +481,7 @@ class TaskDefTest(BaseTest):
                 'value': ['cache/vpython'],
             },
         ],
-        'execution_timeout_secs':
-            '3600',
+        'execution_timeout_secs': '3600',
         'command': [
             'bbagent${EXECUTABLE_SUFFIX}',
             swarming._cli_encode_proto(expected_args),
@@ -586,7 +586,7 @@ class TaskDefTest(BaseTest):
 
   def test_legacy_kitchen(self):
     build = self._test_build(
-        builder=build_pb2.BuilderID(
+        builder=builder_pb2.BuilderID(
             project='chromium', bucket='try', builder='linux_kitchen'
         ),
     )
@@ -848,18 +848,15 @@ class SyncBuildTest(BaseTest):
                   {'key': 'id', 'value': ['bot1']},
               ],
           },
-          'status':
-              common_pb2.SUCCESS,
+          'status': common_pb2.SUCCESS,
           'bot_dimensions': [
               common_pb2.StringPair(key='id', value='bot1'),
               common_pb2.StringPair(key='os', value='Trusty'),
               common_pb2.StringPair(key='os', value='Ubuntu'),
               common_pb2.StringPair(key='pool', value='luci.chromium.try'),
           ],
-          'start_time':
-              tspb(seconds=1517260502, nanos=649750000),
-          'end_time':
-              tspb(seconds=1517271318, nanos=162860000),
+          'start_time': tspb(seconds=1517260502, nanos=649750000),
+          'end_time': tspb(seconds=1517271318, nanos=162860000),
       },),
       ({
           'task_result': {
@@ -1057,17 +1054,16 @@ class SubNotifyTest(BaseTest):
                 '1', 'data':
                     b64json({
                         'task_id':
-                            'deadbeef',
-                        'userdata':
-                            json.dumps({
-                                'created_ts': 1448841600000000,
-                                'swarming_hostname': 'swarming.example.com',
-                                'build_id': 1L,
-                            })
+                            'deadbeef', 'userdata':
+                                json.dumps({
+                                    'created_ts': 1448841600000000,
+                                    'swarming_hostname': 'swarming.example.com',
+                                    'build_id': 1L,
+                                })
                     })
         }), (
-            'swarming.example.com', datetime.datetime(2015, 11, 30), 'deadbeef',
-            1
+            'swarming.example.com', datetime.datetime(2015, 11,
+                                                      30), 'deadbeef', 1
         )
     )
 

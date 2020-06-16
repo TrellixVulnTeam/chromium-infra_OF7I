@@ -5,7 +5,7 @@
 import logging
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
-from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
 from google.protobuf.field_mask_pb2 import FieldMask
 
 from common import constants
@@ -111,7 +111,7 @@ def GetLatestCommitPositionAndRevision(master_name, builder_name, target_name):
 
   Returns:
     (int, str): The latest commit position known and its corresponding revision.
-  
+
   """
   latest_targets = (
       IsolatedTarget.FindLatestIsolateByMaster(

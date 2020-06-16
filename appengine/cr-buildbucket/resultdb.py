@@ -16,9 +16,9 @@ from components import net
 from components.prpc import client
 from components.prpc import codes
 from go.chromium.org.luci.buildbucket.proto import common_pb2
-from go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder_pb2
-from go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder_prpc_pb2
-from go.chromium.org.luci.resultdb.proto.rpc.v1 import invocation_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import recorder_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import recorder_prpc_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import invocation_pb2
 
 import config
 import model

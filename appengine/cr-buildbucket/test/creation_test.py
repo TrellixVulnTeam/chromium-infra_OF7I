@@ -13,8 +13,9 @@ from testing_utils import testing
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
 import bbutil
@@ -156,7 +157,7 @@ class CreationTest(testing.AppengineTestCase):
     return creation.add_async(br).get_result()
 
   def test_add(self):
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux',
@@ -190,7 +191,7 @@ class CreationTest(testing.AppengineTestCase):
     )
 
   def test_add_legacy(self):
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux_legacy',
@@ -199,7 +200,7 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(build.proto.exe.cmd, ['recipes'])
 
   def test_add_custom_exe(self):
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux_modern',
@@ -212,7 +213,7 @@ class CreationTest(testing.AppengineTestCase):
     self.assertEqual(actual, bbutil.dict_to_struct({"recipe": "something"}))
 
   def test_non_existing_builder(self):
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='non-existing',
@@ -225,7 +226,7 @@ class CreationTest(testing.AppengineTestCase):
     config.put_bucket(
         'legacy', 'try', test_util.parse_bucket_cfg('name: "luci.legacy.try"')
     )
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='legacy',
         bucket='try',
         builder='non-existing',

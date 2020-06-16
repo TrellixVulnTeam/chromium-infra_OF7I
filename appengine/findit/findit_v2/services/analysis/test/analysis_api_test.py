@@ -9,8 +9,9 @@ import mock
 
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto.build_pb2 import Build
-from go.chromium.org.luci.buildbucket.proto.build_pb2 import BuilderID
-from go.chromium.org.luci.buildbucket.proto.rpc_pb2 import SearchBuildsResponse
+from go.chromium.org.luci.buildbucket.proto.builder_pb2 import BuilderID
+from go.chromium.org.luci.buildbucket.proto.builds_service_pb2 import (
+    SearchBuildsResponse)
 from go.chromium.org.luci.buildbucket.proto.step_pb2 import Step
 from google.appengine.ext import ndb
 
@@ -824,54 +825,54 @@ class AnalysisAPITest(wf_testcase.TestCase):
   @mock.patch.object(
       git, 'GetCommitPositionFromRevision', side_effect=[66680, 66666, 66680])
   def testSaveFailureAnalysisNoNeed(self, *_):
-      build_311_info = self._GetBuildInfo(311)
+    build_311_info = self._GetBuildInfo(311)
 
-      output_target = json.dumps({
-          'category': 'chromeos-base',
-          'packageName': 'target1'
-      })
+    output_target = json.dumps({
+        'category': 'chromeos-base',
+        'packageName': 'target1'
+    })
 
-      detailed_compile_failures = {
-          'install packages': {
-              'failures': {
-                  frozenset([output_target]): {
-                      'properties': {
-                          'rule': 'emerge',
-                          'needs_bisection': False,
-                      },
-                      'first_failed_build': build_311_info,
-                      'last_passed_build': None,
-                  },
-              },
-              'first_failed_build': build_311_info,
-              'last_passed_build': None,
-          },
-      }
+    detailed_compile_failures = {
+        'install packages': {
+            'failures': {
+                frozenset([output_target]): {
+                    'properties': {
+                        'rule': 'emerge',
+                        'needs_bisection': False,
+                    },
+                    'first_failed_build': build_311_info,
+                    'last_passed_build': None,
+                },
+            },
+            'first_failed_build': build_311_info,
+            'last_passed_build': None,
+        },
+    }
 
-      self.analysis_api.SaveFailures(self.context, self.build,
-                                     detailed_compile_failures)
+    self.analysis_api.SaveFailures(self.context, self.build,
+                                   detailed_compile_failures)
 
-      first_failures_in_current_build = {
-          'failures': {
-              'install packages': {
-                  'atomic_failures': [frozenset([output_target])],
-                  'last_passed_build': {
-                      'id': 310,
-                      'number': 310,
-                      'commit_id': 'git_sha_121',
-                  },
-              },
-          },
-          'last_passed_build': {
-              'id': 310,
-              'number': 310,
-              'commit_id': 'git_sha_121',
-          },
-      }
-      analysis = self.analysis_api.SaveFailureAnalysis(
-          ChromeOSProjectAPI(), self.context, self.build,
-          first_failures_in_current_build, False)
-      self.assertIsNone(analysis)
+    first_failures_in_current_build = {
+        'failures': {
+            'install packages': {
+                'atomic_failures': [frozenset([output_target])],
+                'last_passed_build': {
+                    'id': 310,
+                    'number': 310,
+                    'commit_id': 'git_sha_121',
+                },
+            },
+        },
+        'last_passed_build': {
+            'id': 310,
+            'number': 310,
+            'commit_id': 'git_sha_121',
+        },
+    }
+    analysis = self.analysis_api.SaveFailureAnalysis(
+        ChromeOSProjectAPI(), self.context, self.build,
+        first_failures_in_current_build, False)
+    self.assertIsNone(analysis)
 
   @mock.patch.object(
       ChromiumProjectAPI,

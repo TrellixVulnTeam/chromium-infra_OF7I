@@ -32,9 +32,9 @@ import gae_ts_mon
 
 from legacy import api
 from legacy import api_common
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 from test import test_util
 from test.test_util import future, future_exception
 import bbutil

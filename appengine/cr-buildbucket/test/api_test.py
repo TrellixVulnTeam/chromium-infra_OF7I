@@ -16,8 +16,9 @@ from testing_utils import testing
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_pb2
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import notification_pb2
 from test import test_util
 import api
@@ -146,7 +147,7 @@ class GetBuildTests(BaseTestCase):
 
   @mock.patch('search.search_async', autospec=True)
   def test_by_number(self, search_async):
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='chromium', bucket='try', builder='linux-try'
     )
     build = test_util.build(id=1, builder=builder_id, number=2)
@@ -170,7 +171,7 @@ class GetBuildTests(BaseTestCase):
     self.call(self.api.GetBuild, req, expected_code=prpc.StatusCode.NOT_FOUND)
 
   def test_not_found_by_number(self):
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='chromium', bucket='try', builder='linux-try'
     )
     req = rpc_pb2.GetBuildRequest(builder=builder_id, build_number=2)
@@ -612,8 +613,9 @@ class ScheduleBuildTests(BaseTestCase):
             critical=common_pb2.YES,
             exe=common_pb2.Executable(cipd_package='package_from_host'),
             infra=build_pb2.BuildInfra(
-                swarming=build_pb2.BuildInfra
-                .Swarming(parent_run_id='id_from_build')
+                swarming=build_pb2.BuildInfra.Swarming(
+                    parent_run_id='id_from_build'
+                )
             ),
         ),
     )
@@ -644,8 +646,9 @@ class ScheduleBuildTests(BaseTestCase):
             critical=common_pb2.NO,
             exe=common_pb2.Executable(cipd_package=''),
             infra=build_pb2.BuildInfra(
-                swarming=build_pb2.BuildInfra
-                .Swarming(parent_run_id='id_from_req')
+                swarming=build_pb2.BuildInfra.Swarming(
+                    parent_run_id='id_from_req'
+                )
             ),
         ),
     )
@@ -860,9 +863,9 @@ class BatchTests(BaseTestCase):
   @mock.patch('service.get_async', autospec=True)
   @mock.patch('search.search_async', autospec=True)
   def test_get_and_search(self, search_async, get_async):
-    search_async.return_value = future(([
-        test_util.build(id=1), test_util.build(id=2)
-    ], ''))
+    search_async.return_value = future(
+        ([test_util.build(id=1), test_util.build(id=2)], '')
+    )
     get_async.return_value = future(test_util.build(id=3))
 
     req = rpc_pb2.BatchRequest(

@@ -130,7 +130,7 @@ def validate_tags(string_pairs, mode):
 
 
 def validate_builder_id(builder_id, require_bucket=True, require_builder=True):
-  """Validates build_pb2.BuilderID."""
+  """Validates builder_pb2.BuilderID."""
   assert require_bucket or not require_builder
   _check_truth(builder_id, 'project')
   if require_bucket:

@@ -19,7 +19,7 @@ import google.protobuf.message
 
 from infra import init_python_pb2  # pylint: disable=unused-import
 from go.chromium.org.luci.buildbucket.proto import common_pb2
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2
 
 from infra.services.lkgr_finder import lkgr_lib
 from infra.services.lkgr_finder.status_generator import StatusGeneratorStub
@@ -31,7 +31,7 @@ class FetchBuildbucketBuildsForBuilderTest(unittest.TestCase):
 
   @mock.patch('infra.services.lkgr_finder.lkgr_lib._FetchFromBuildbucketImpl')
   def testFetchSucceeded(self, mocked_fetch):
-    response_pb = rpc_pb2.SearchBuildsResponse()
+    response_pb = builds_service_pb2.SearchBuildsResponse()
     build_pb = response_pb.builds.add()
     build_pb.number = 123
     build_pb.status = common_pb2.SUCCESS
@@ -67,7 +67,7 @@ class FetchBuildbucketBuildsForBuilderTest(unittest.TestCase):
 
   @mock.patch('infra.services.lkgr_finder.lkgr_lib._FetchFromBuildbucketImpl')
   def testFetchBuildCanceled(self, mocked_fetch):
-    response_pb = rpc_pb2.SearchBuildsResponse()
+    response_pb = builds_service_pb2.SearchBuildsResponse()
     build_pb = response_pb.builds.add()
     build_pb.number = 123
     build_pb.status = common_pb2.CANCELED
@@ -82,7 +82,7 @@ class FetchBuildbucketBuildsForBuilderTest(unittest.TestCase):
 
   @mock.patch('infra.services.lkgr_finder.lkgr_lib._FetchFromBuildbucketImpl')
   def testFetchBuildFailed(self, mocked_fetch):
-    response_pb = rpc_pb2.SearchBuildsResponse()
+    response_pb = builds_service_pb2.SearchBuildsResponse()
     build_pb = response_pb.builds.add()
     build_pb.number = 123
     build_pb.status = common_pb2.FAILURE
@@ -97,7 +97,7 @@ class FetchBuildbucketBuildsForBuilderTest(unittest.TestCase):
 
   @mock.patch('infra.services.lkgr_finder.lkgr_lib._FetchFromBuildbucketImpl')
   def testFetchMissingPieces(self, mocked_fetch):
-    response_pb = rpc_pb2.SearchBuildsResponse()
+    response_pb = builds_service_pb2.SearchBuildsResponse()
     build_pb = response_pb.builds.add()
     build_pb.number = 123
     build_pb.status = common_pb2.SCHEDULED

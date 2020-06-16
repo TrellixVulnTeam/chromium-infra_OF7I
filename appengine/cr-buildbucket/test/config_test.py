@@ -21,6 +21,7 @@ from testing_utils import testing
 import mock
 
 from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
@@ -881,7 +882,7 @@ class BuilderMatchesTest(testing.AppengineTestCase):
     predicate = service_config_pb2.BuilderPredicate(
         regex=regex, regex_exclude=regex_exclude
     )
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project='chromium',
         bucket='try',
         builder='linux-rel',

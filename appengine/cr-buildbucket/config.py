@@ -584,7 +584,7 @@ def builder_matches(builder_id_msg, predicate):
   """Returns True iff builder_id_msg matches the predicate.
 
   Args:
-    * builder_id_msg (build_pb2.BuilderID)
+    * builder_id_msg (builder_pb2.BuilderID)
     * predicate (service_config_pb2.BuilderPredicate)
   """
   builder_str = builder_id_string(builder_id_msg)

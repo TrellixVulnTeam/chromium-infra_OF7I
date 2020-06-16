@@ -24,9 +24,10 @@ import gae_ts_mon
 
 from legacy import api_common
 from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_pb2
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 import backfill_tag_index
 import bbutil
 import buildtags
@@ -261,7 +262,7 @@ def put_request_message_to_build_request(put_request):
 
   # Create a v2 request.
   sbr = rpc_pb2.ScheduleBuildRequest(
-      builder=build_pb2.BuilderID(builder=builder),
+      builder=builder_pb2.BuilderID(builder=builder),
       properties=bbutil.dict_to_struct(props),
       request_id=put_request.client_operation_id,
       experimental=bbutil.BOOLISH_TO_TRINARY[put_request.experimental],

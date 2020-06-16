@@ -16,10 +16,10 @@ from components import prpc
 from components import utils
 
 # Some of these imports are required to populate proto symbol db.
-from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import build_pb2  # pylint: disable=unused-import
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2  # pylint: disable=unused-import
-from go.chromium.org.luci.buildbucket.proto import rpc_prpc_pb2
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2  # pylint: disable=unused-import
+from go.chromium.org.luci.buildbucket.proto import builds_service_prpc_pb2
+from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import step_pb2  # pylint: disable=unused-import
 
 import bbutil
@@ -70,8 +70,10 @@ def current_identity_cannot(action_format, *args):
 
 
 METHODS_BY_NAME = {
-    m.name: m
-    for m in rpc_prpc_pb2.BuildsServiceDescription['service_descriptor'].method
+    m.name: m for m in (
+        builds_service_prpc_pb2.BuildsServiceDescription['service_descriptor']
+        .method
+    )
 }
 
 
@@ -617,7 +619,7 @@ class BuildsApi(object):
   # "mask" parameter in RPC implementations is added by rpc_impl_async.
   # pylint: disable=no-value-for-parameter
 
-  DESCRIPTION = rpc_prpc_pb2.BuildsServiceDescription
+  DESCRIPTION = builds_service_prpc_pb2.BuildsServiceDescription
 
   def _res_if_ok(self, res, ctx):
     return res if ctx.code == prpc.StatusCode.OK else None

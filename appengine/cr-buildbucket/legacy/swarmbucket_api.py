@@ -18,6 +18,7 @@ import gae_ts_mon
 from legacy import api
 from legacy import api_common
 from go.chromium.org.luci.buildbucket.proto import build_pb2
+from go.chromium.org.luci.buildbucket.proto import builder_pb2
 import config
 import errors
 import flatten_swarmingcfg
@@ -236,7 +237,7 @@ class SwarmbucketApi(remote.Service):
           (request.builder, bucket_id)
       )
 
-    builder_id = build_pb2.BuilderID(
+    builder_id = builder_pb2.BuilderID(
         project=project, bucket=bucket, builder=request.builder
     )
     seq_name = sequence.builder_seq_name(builder_id)

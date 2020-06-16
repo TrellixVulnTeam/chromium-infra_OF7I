@@ -16,12 +16,12 @@ from components.prpc import client, codes
 from testing_utils import testing
 import mock
 
+from go.chromium.org.luci.buildbucket.proto import builds_service_pb2 as rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
-from go.chromium.org.luci.buildbucket.proto import rpc_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
-from go.chromium.org.luci.resultdb.proto.rpc.v1 import invocation_pb2
-from go.chromium.org.luci.resultdb.proto.rpc.v1 import recorder_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import invocation_pb2
+from go.chromium.org.luci.resultdb.proto.v1 import recorder_pb2
 from test.test_util import build_bundle, future, future_exception
 import main
 import model
