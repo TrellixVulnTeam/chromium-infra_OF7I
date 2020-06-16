@@ -15,6 +15,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
+	Ufleetds "infra/unifiedfleet/app/model/datastore"
 )
 
 // ListMachinelsePrototypeCmd list all MachineLSEPrototype.
@@ -29,11 +30,11 @@ var ListMachinelsePrototypeCmd = &subcommands.Command{
 	./shivas machinelseprototype ls -n 50
 	Fetches 50 items and prints the output in table format
 
+	./shivas machinelseprototype ls -lab acs
+	Fetches only ACS lab items and prints the output in table format
+
 	./shivas machinelseprototype ls -json
 	Fetches 100 items and prints the output in JSON format
-
-	./shivas machinelseprototype ls -n 50 -json
-	Fetches 50 items and prints the output in JSON format
 	`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &listMachinelsePrototype{}
@@ -43,6 +44,10 @@ var ListMachinelsePrototypeCmd = &subcommands.Command{
 			`number of items to get. The service may return fewer than this value. If unspecified, at most 100 items will be returned.
 The maximum value is 1000; values above 1000 will be coerced to 1000.`)
 		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
+		c.Flags.StringVar(&c.labFilter, "lab", "", "lab name to filter the results.\n"+
+			"acs for ACS lab MachineLSEPrototypes\n"+
+			"atl for ATL lab MachineLSEPrototypes\n"+
+			"browser for Browser lab MachineLSEPrototytpes")
 		return c
 	},
 }
@@ -53,6 +58,7 @@ type listMachinelsePrototype struct {
 	envFlags  site.EnvFlags
 	pageSize  int
 	json      bool
+	labFilter string
 }
 
 func (c *listMachinelsePrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -62,7 +68,11 @@ func (c *listMachinelsePrototype) Run(a subcommands.Application, args []string, 
 	}
 	return 0
 }
+
 func (c *listMachinelsePrototype) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	if err := c.validateArgs(); err != nil {
+		return err
+	}
 	ctx := cli.GetContext(a, c, env)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
@@ -80,6 +90,7 @@ func (c *listMachinelsePrototype) innerRun(a subcommands.Application, args []str
 		req := &UfleetAPI.ListMachineLSEPrototypesRequest{
 			PageSize:  int32(c.pageSize),
 			PageToken: pageToken,
+			Filter:    Ufleetds.Lab + Ufleetds.FilterConditionSeparator + c.labFilter,
 		}
 		res, err := ic.ListMachineLSEPrototypes(ctx, req)
 		if err != nil {
@@ -99,4 +110,18 @@ func (c *listMachinelsePrototype) innerRun(a subcommands.Application, args []str
 			return nil
 		}
 	}
+}
+
+func (c *listMachinelsePrototype) validateArgs() error {
+	if c.labFilter != "" {
+		if c.labFilter != Ufleetds.ATL &&
+			c.labFilter != Ufleetds.ACS &&
+			c.labFilter != Ufleetds.Browser {
+			return cmdlib.NewUsageError(c.Flags, "Please provide a correct filter\n"+
+				"acs for ACS lab MachineLSEPrototypes\n"+
+				"atl for ATL lab MachineLSEPrototypes\n"+
+				"browser for Browser lab MachineLSEPrototytpes")
+		}
+	}
+	return nil
 }
