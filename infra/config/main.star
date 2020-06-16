@@ -29,7 +29,9 @@ Includes CI configs for the following subprojects:
 lucicfg.check_version('1.15.0', 'Please update depot_tools')
 
 # Enable luci.tree_closer.
-lucicfg.enable_experiment("crbug.com/1054172")
+lucicfg.enable_experiment('crbug.com/1054172')
+# Enable LUCI Realms support.
+lucicfg.enable_experiment('crbug.com/1085650')
 
 # Tell lucicfg what files it is allowed to touch.
 lucicfg.config(
@@ -43,6 +45,7 @@ lucicfg.config(
         'luci-notify/email-templates/*.template',
         'luci-scheduler.cfg',
         'project.cfg',
+        'realms.cfg',
     ],
     fail_on_warnings = True,
 )
