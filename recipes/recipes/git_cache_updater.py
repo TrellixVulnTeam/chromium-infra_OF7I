@@ -121,7 +121,7 @@ def _do_update_bootstrap(api, url, work_dir, gc_aggressive):
       # an arbitrary scaling factor, but it allows multiple small repos to run
       # in parallel but allows large repos (e.g. chromium) to exclusively use
       # all the memory on the system.
-      mem_cost = int((stats['size'] + stats['size-pack']) ** 2)
+      mem_cost = 2 * int((stats['size'] + stats['size-pack']) ** 2)
       if mem_cost == 0:
         # some repos can be empty (e.g. they're an "ACL-only" repo), and
         # update-bootstrap doesn't like that, so skip them.
