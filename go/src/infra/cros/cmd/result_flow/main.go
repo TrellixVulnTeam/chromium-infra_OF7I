@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/data/rand/mathrand"
 	"go.chromium.org/luci/common/logging/gologger"
 
+	"infra/cros/cmd/result_flow/internal/cmd"
 	"infra/cros/cmd/result_flow/internal/site"
 )
 
@@ -36,6 +37,7 @@ func getApplication() *cli.Application {
 
 			subcommands.Section("Steps"),
 			// TODO(lxn): The subcommands will be added in following CLs.
+			cmd.Publish,
 		},
 	}
 }

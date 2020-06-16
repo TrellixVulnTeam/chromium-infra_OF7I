@@ -13,54 +13,8 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 )
 
-// PubSubConfig contains the config to interact with Pub/Sub.
-type PubSubConfig struct {
-	Project              string
-	Topic                string
-	Subscription         string
-	MaxReceivingMessages int
-}
-
-// BuildbucketConfig contains the config to interact with Buildbucket.
-type BuildbucketConfig struct {
-	Host    string
-	Project string
-	Bucket  string
-	Builder string
-}
-
-// BigqueryConfig contains the config to interact with Bigquery.
-type BigqueryConfig struct {
-	Project string
-	Dataset string
-	Table   string
-}
-
-// Source is a wrapper for the source side configuration.
-type Source struct {
-	PubSub PubSubConfig
-	BB     BuildbucketConfig
-	Fields []string
-}
-
-// Target is a wrapper for the target side configuration.
-type Target struct {
-	BQ BigqueryConfig
-}
-
-// Environment contains environment specific values.
-// TODO(linxinan): move the environment config to infra/config repo before
-// result flow is ready to run in Recipe.
-type Environment struct {
-	// Source of the flow.
-	CTP    Source
-	Skylab Source
-
-	// Destination of th flow.
-	TestPlanResult Target
-	TestRunResult  Target
-	TestCaseResult Target
-}
+// DefaultDeadlineSeconds is the default command deadline in seconds.
+const DefaultDeadlineSeconds = 60
 
 const (
 	authScopeBigquery = "https://www.googleapis.com/auth/bigquery.insertdata"
