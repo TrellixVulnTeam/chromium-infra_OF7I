@@ -18,17 +18,17 @@ from go.chromium.org.luci.resultdb.proto.v1 import invocation_pb2 as go_dot_chro
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/resultdb/proto/v1/deriver.proto',
-  package='luci.resultdb.rpc.v1',
+  package='luci.resultdb.v1',
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n4go.chromium.org/luci/resultdb/proto/v1/deriver.proto\x12\x14luci.resultdb.rpc.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x37go.chromium.org/luci/resultdb/proto/v1/invocation.proto\"\xb9\x01\n\x1f\x44\x65riveChromiumInvocationRequest\x12^\n\rswarming_task\x18\x01 \x01(\x0b\x32\x42.luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest.SwarmingTaskB\x03\xe0\x41\x02\x1a\x36\n\x0cSwarmingTask\x12\x15\n\x08hostname\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x0f\n\x02id\x18\x02 \x01(\tB\x03\xe0\x41\x02*\x9e\x01\n/DeriveChromiumInvocationPreconditionFailureType\x12\x44\n@DERIVE_CHROMIUM_INVOCATION_PRECONDITION_FAILURE_TYPE_UNSPECIFIED\x10\x00\x12%\n!INCOMPLETE_CHROMIUM_SWARMING_TASK\x10\x01\x32\x80\x01\n\x07\x44\x65river\x12u\n\x18\x44\x65riveChromiumInvocation\x12\x35.luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n4go.chromium.org/luci/resultdb/proto/v1/deriver.proto\x12\x10luci.resultdb.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x37go.chromium.org/luci/resultdb/proto/v1/invocation.proto\"\xb5\x01\n\x1f\x44\x65riveChromiumInvocationRequest\x12Z\n\rswarming_task\x18\x01 \x01(\x0b\x32>.luci.resultdb.v1.DeriveChromiumInvocationRequest.SwarmingTaskB\x03\xe0\x41\x02\x1a\x36\n\x0cSwarmingTask\x12\x15\n\x08hostname\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x0f\n\x02id\x18\x02 \x01(\tB\x03\xe0\x41\x02*\x9e\x01\n/DeriveChromiumInvocationPreconditionFailureType\x12\x44\n@DERIVE_CHROMIUM_INVOCATION_PRECONDITION_FAILURE_TYPE_UNSPECIFIED\x10\x00\x12%\n!INCOMPLETE_CHROMIUM_SWARMING_TASK\x10\x01\x32x\n\x07\x44\x65river\x12m\n\x18\x44\x65riveChromiumInvocation\x12\x31.luci.resultdb.v1.DeriveChromiumInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
   ,
   dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_invocation__pb2.DESCRIPTOR,])
 
 _DERIVECHROMIUMINVOCATIONPRECONDITIONFAILURETYPE = _descriptor.EnumDescriptor(
   name='DeriveChromiumInvocationPreconditionFailureType',
-  full_name='luci.resultdb.rpc.v1.DeriveChromiumInvocationPreconditionFailureType',
+  full_name='luci.resultdb.v1.DeriveChromiumInvocationPreconditionFailureType',
   filename=None,
   file=DESCRIPTOR,
   create_key=_descriptor._internal_create_key,
@@ -46,8 +46,8 @@ _DERIVECHROMIUMINVOCATIONPRECONDITIONFAILURETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=357,
-  serialized_end=515,
+  serialized_start=349,
+  serialized_end=507,
 )
 _sym_db.RegisterEnumDescriptor(_DERIVECHROMIUMINVOCATIONPRECONDITIONFAILURETYPE)
 
@@ -59,21 +59,21 @@ INCOMPLETE_CHROMIUM_SWARMING_TASK = 1
 
 _DERIVECHROMIUMINVOCATIONREQUEST_SWARMINGTASK = _descriptor.Descriptor(
   name='SwarmingTask',
-  full_name='luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest.SwarmingTask',
+  full_name='luci.resultdb.v1.DeriveChromiumInvocationRequest.SwarmingTask',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='hostname', full_name='luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest.SwarmingTask.hostname', index=0,
+      name='hostname', full_name='luci.resultdb.v1.DeriveChromiumInvocationRequest.SwarmingTask.hostname', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=b'\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='id', full_name='luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest.SwarmingTask.id', index=1,
+      name='id', full_name='luci.resultdb.v1.DeriveChromiumInvocationRequest.SwarmingTask.id', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -91,20 +91,20 @@ _DERIVECHROMIUMINVOCATIONREQUEST_SWARMINGTASK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=300,
-  serialized_end=354,
+  serialized_start=292,
+  serialized_end=346,
 )
 
 _DERIVECHROMIUMINVOCATIONREQUEST = _descriptor.Descriptor(
   name='DeriveChromiumInvocationRequest',
-  full_name='luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest',
+  full_name='luci.resultdb.v1.DeriveChromiumInvocationRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='swarming_task', full_name='luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest.swarming_task', index=0,
+      name='swarming_task', full_name='luci.resultdb.v1.DeriveChromiumInvocationRequest.swarming_task', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -122,8 +122,8 @@ _DERIVECHROMIUMINVOCATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=169,
-  serialized_end=354,
+  serialized_start=165,
+  serialized_end=346,
 )
 
 _DERIVECHROMIUMINVOCATIONREQUEST_SWARMINGTASK.containing_type = _DERIVECHROMIUMINVOCATIONREQUEST
@@ -137,12 +137,12 @@ DeriveChromiumInvocationRequest = _reflection.GeneratedProtocolMessageType('Deri
   'SwarmingTask' : _reflection.GeneratedProtocolMessageType('SwarmingTask', (_message.Message,), {
     'DESCRIPTOR' : _DERIVECHROMIUMINVOCATIONREQUEST_SWARMINGTASK,
     '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.deriver_pb2'
-    # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest.SwarmingTask)
+    # @@protoc_insertion_point(class_scope:luci.resultdb.v1.DeriveChromiumInvocationRequest.SwarmingTask)
     })
   ,
   'DESCRIPTOR' : _DERIVECHROMIUMINVOCATIONREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.deriver_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.DeriveChromiumInvocationRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.DeriveChromiumInvocationRequest)
   })
 _sym_db.RegisterMessage(DeriveChromiumInvocationRequest)
 _sym_db.RegisterMessage(DeriveChromiumInvocationRequest.SwarmingTask)
@@ -155,17 +155,17 @@ _DERIVECHROMIUMINVOCATIONREQUEST.fields_by_name['swarming_task']._options = None
 
 _DERIVER = _descriptor.ServiceDescriptor(
   name='Deriver',
-  full_name='luci.resultdb.rpc.v1.Deriver',
+  full_name='luci.resultdb.v1.Deriver',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=518,
-  serialized_end=646,
+  serialized_start=509,
+  serialized_end=629,
   methods=[
   _descriptor.MethodDescriptor(
     name='DeriveChromiumInvocation',
-    full_name='luci.resultdb.rpc.v1.Deriver.DeriveChromiumInvocation',
+    full_name='luci.resultdb.v1.Deriver.DeriveChromiumInvocation',
     index=0,
     containing_service=None,
     input_type=_DERIVECHROMIUMINVOCATIONREQUEST,

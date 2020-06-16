@@ -15,11 +15,11 @@ _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/resultdb/proto/v1/common.proto',
-  package='luci.resultdb.rpc.v1',
+  package='luci.resultdb.v1',
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n3go.chromium.org/luci/resultdb/proto/v1/common.proto\x12\x14luci.resultdb.rpc.v1\"j\n\x07Variant\x12\x33\n\x03\x64\x65\x66\x18\x01 \x03(\x0b\x32&.luci.resultdb.rpc.v1.Variant.DefEntry\x1a*\n\x08\x44\x65\x66\x45ntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"(\n\nStringPair\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\tB1Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n3go.chromium.org/luci/resultdb/proto/v1/common.proto\x12\x10luci.resultdb.v1\"f\n\x07Variant\x12/\n\x03\x64\x65\x66\x18\x01 \x03(\x0b\x32\".luci.resultdb.v1.Variant.DefEntry\x1a*\n\x08\x44\x65\x66\x45ntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"(\n\nStringPair\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\tB1Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
 )
 
 
@@ -27,21 +27,21 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _VARIANT_DEFENTRY = _descriptor.Descriptor(
   name='DefEntry',
-  full_name='luci.resultdb.rpc.v1.Variant.DefEntry',
+  full_name='luci.resultdb.v1.Variant.DefEntry',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='key', full_name='luci.resultdb.rpc.v1.Variant.DefEntry.key', index=0,
+      name='key', full_name='luci.resultdb.v1.Variant.DefEntry.key', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='value', full_name='luci.resultdb.rpc.v1.Variant.DefEntry.value', index=1,
+      name='value', full_name='luci.resultdb.v1.Variant.DefEntry.value', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -59,20 +59,20 @@ _VARIANT_DEFENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=141,
-  serialized_end=183,
+  serialized_start=133,
+  serialized_end=175,
 )
 
 _VARIANT = _descriptor.Descriptor(
   name='Variant',
-  full_name='luci.resultdb.rpc.v1.Variant',
+  full_name='luci.resultdb.v1.Variant',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='def', full_name='luci.resultdb.rpc.v1.Variant.def', index=0,
+      name='def', full_name='luci.resultdb.v1.Variant.def', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -90,28 +90,28 @@ _VARIANT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=77,
-  serialized_end=183,
+  serialized_start=73,
+  serialized_end=175,
 )
 
 
 _STRINGPAIR = _descriptor.Descriptor(
   name='StringPair',
-  full_name='luci.resultdb.rpc.v1.StringPair',
+  full_name='luci.resultdb.v1.StringPair',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='key', full_name='luci.resultdb.rpc.v1.StringPair.key', index=0,
+      name='key', full_name='luci.resultdb.v1.StringPair.key', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='value', full_name='luci.resultdb.rpc.v1.StringPair.value', index=1,
+      name='value', full_name='luci.resultdb.v1.StringPair.value', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -129,8 +129,8 @@ _STRINGPAIR = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=185,
-  serialized_end=225,
+  serialized_start=177,
+  serialized_end=217,
 )
 
 _VARIANT_DEFENTRY.containing_type = _VARIANT
@@ -144,12 +144,12 @@ Variant = _reflection.GeneratedProtocolMessageType('Variant', (_message.Message,
   'DefEntry' : _reflection.GeneratedProtocolMessageType('DefEntry', (_message.Message,), {
     'DESCRIPTOR' : _VARIANT_DEFENTRY,
     '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.common_pb2'
-    # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.Variant.DefEntry)
+    # @@protoc_insertion_point(class_scope:luci.resultdb.v1.Variant.DefEntry)
     })
   ,
   'DESCRIPTOR' : _VARIANT,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.common_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.Variant)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.Variant)
   })
 _sym_db.RegisterMessage(Variant)
 _sym_db.RegisterMessage(Variant.DefEntry)
@@ -157,7 +157,7 @@ _sym_db.RegisterMessage(Variant.DefEntry)
 StringPair = _reflection.GeneratedProtocolMessageType('StringPair', (_message.Message,), {
   'DESCRIPTOR' : _STRINGPAIR,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.common_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.StringPair)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.StringPair)
   })
 _sym_db.RegisterMessage(StringPair)
 

@@ -16,11 +16,11 @@ from go.chromium.org.luci.resultdb.proto.v1 import common_pb2 as go_dot_chromium
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/resultdb/proto/v1/predicate.proto',
-  package='luci.resultdb.rpc.v1',
+  package='luci.resultdb.v1',
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n6go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x12\x14luci.resultdb.rpc.v1\x1a\x33go.chromium.org/luci/resultdb/proto/v1/common.proto\"\xed\x01\n\x13TestResultPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x37\n\x07variant\x18\x02 \x01(\x0b\x32&.luci.resultdb.rpc.v1.VariantPredicate\x12H\n\nexpectancy\x18\x03 \x01(\x0e\x32\x34.luci.resultdb.rpc.v1.TestResultPredicate.Expectancy\";\n\nExpectancy\x12\x07\n\x03\x41LL\x10\x00\x12$\n VARIANTS_WITH_UNEXPECTED_RESULTS\x10\x01\"k\n\x18TestExonerationPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x37\n\x07variant\x18\x02 \x01(\x0b\x32&.luci.resultdb.rpc.v1.VariantPredicate\"\x83\x01\n\x10VariantPredicate\x12/\n\x06\x65quals\x18\x01 \x01(\x0b\x32\x1d.luci.resultdb.rpc.v1.VariantH\x00\x12\x31\n\x08\x63ontains\x18\x02 \x01(\x0b\x32\x1d.luci.resultdb.rpc.v1.VariantH\x00\x42\x0b\n\tpredicateB1Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n6go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x12\x10luci.resultdb.v1\x1a\x33go.chromium.org/luci/resultdb/proto/v1/common.proto\"\xe5\x01\n\x13TestResultPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\x12\x44\n\nexpectancy\x18\x03 \x01(\x0e\x32\x30.luci.resultdb.v1.TestResultPredicate.Expectancy\";\n\nExpectancy\x12\x07\n\x03\x41LL\x10\x00\x12$\n VARIANTS_WITH_UNEXPECTED_RESULTS\x10\x01\"g\n\x18TestExonerationPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\"{\n\x10VariantPredicate\x12+\n\x06\x65quals\x18\x01 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x12-\n\x08\x63ontains\x18\x02 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x42\x0b\n\tpredicateB1Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
   ,
   dependencies=[go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_common__pb2.DESCRIPTOR,])
 
@@ -28,7 +28,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _TESTRESULTPREDICATE_EXPECTANCY = _descriptor.EnumDescriptor(
   name='Expectancy',
-  full_name='luci.resultdb.rpc.v1.TestResultPredicate.Expectancy',
+  full_name='luci.resultdb.v1.TestResultPredicate.Expectancy',
   filename=None,
   file=DESCRIPTOR,
   create_key=_descriptor._internal_create_key,
@@ -46,36 +46,36 @@ _TESTRESULTPREDICATE_EXPECTANCY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=312,
-  serialized_end=371,
+  serialized_start=300,
+  serialized_end=359,
 )
 _sym_db.RegisterEnumDescriptor(_TESTRESULTPREDICATE_EXPECTANCY)
 
 
 _TESTRESULTPREDICATE = _descriptor.Descriptor(
   name='TestResultPredicate',
-  full_name='luci.resultdb.rpc.v1.TestResultPredicate',
+  full_name='luci.resultdb.v1.TestResultPredicate',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='test_id_regexp', full_name='luci.resultdb.rpc.v1.TestResultPredicate.test_id_regexp', index=0,
+      name='test_id_regexp', full_name='luci.resultdb.v1.TestResultPredicate.test_id_regexp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='variant', full_name='luci.resultdb.rpc.v1.TestResultPredicate.variant', index=1,
+      name='variant', full_name='luci.resultdb.v1.TestResultPredicate.variant', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='expectancy', full_name='luci.resultdb.rpc.v1.TestResultPredicate.expectancy', index=2,
+      name='expectancy', full_name='luci.resultdb.v1.TestResultPredicate.expectancy', index=2,
       number=3, type=14, cpp_type=8, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -94,28 +94,28 @@ _TESTRESULTPREDICATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=134,
-  serialized_end=371,
+  serialized_start=130,
+  serialized_end=359,
 )
 
 
 _TESTEXONERATIONPREDICATE = _descriptor.Descriptor(
   name='TestExonerationPredicate',
-  full_name='luci.resultdb.rpc.v1.TestExonerationPredicate',
+  full_name='luci.resultdb.v1.TestExonerationPredicate',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='test_id_regexp', full_name='luci.resultdb.rpc.v1.TestExonerationPredicate.test_id_regexp', index=0,
+      name='test_id_regexp', full_name='luci.resultdb.v1.TestExonerationPredicate.test_id_regexp', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='variant', full_name='luci.resultdb.rpc.v1.TestExonerationPredicate.variant', index=1,
+      name='variant', full_name='luci.resultdb.v1.TestExonerationPredicate.variant', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -133,28 +133,28 @@ _TESTEXONERATIONPREDICATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=373,
-  serialized_end=480,
+  serialized_start=361,
+  serialized_end=464,
 )
 
 
 _VARIANTPREDICATE = _descriptor.Descriptor(
   name='VariantPredicate',
-  full_name='luci.resultdb.rpc.v1.VariantPredicate',
+  full_name='luci.resultdb.v1.VariantPredicate',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='equals', full_name='luci.resultdb.rpc.v1.VariantPredicate.equals', index=0,
+      name='equals', full_name='luci.resultdb.v1.VariantPredicate.equals', index=0,
       number=1, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='contains', full_name='luci.resultdb.rpc.v1.VariantPredicate.contains', index=1,
+      name='contains', full_name='luci.resultdb.v1.VariantPredicate.contains', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -172,13 +172,13 @@ _VARIANTPREDICATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
     _descriptor.OneofDescriptor(
-      name='predicate', full_name='luci.resultdb.rpc.v1.VariantPredicate.predicate',
+      name='predicate', full_name='luci.resultdb.v1.VariantPredicate.predicate',
       index=0, containing_type=None,
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=483,
-  serialized_end=614,
+  serialized_start=466,
+  serialized_end=589,
 )
 
 _TESTRESULTPREDICATE.fields_by_name['variant'].message_type = _VARIANTPREDICATE
@@ -201,21 +201,21 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 TestResultPredicate = _reflection.GeneratedProtocolMessageType('TestResultPredicate', (_message.Message,), {
   'DESCRIPTOR' : _TESTRESULTPREDICATE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.predicate_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.TestResultPredicate)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.TestResultPredicate)
   })
 _sym_db.RegisterMessage(TestResultPredicate)
 
 TestExonerationPredicate = _reflection.GeneratedProtocolMessageType('TestExonerationPredicate', (_message.Message,), {
   'DESCRIPTOR' : _TESTEXONERATIONPREDICATE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.predicate_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.TestExonerationPredicate)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.TestExonerationPredicate)
   })
 _sym_db.RegisterMessage(TestExonerationPredicate)
 
 VariantPredicate = _reflection.GeneratedProtocolMessageType('VariantPredicate', (_message.Message,), {
   'DESCRIPTOR' : _VARIANTPREDICATE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.predicate_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.VariantPredicate)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.VariantPredicate)
   })
 _sym_db.RegisterMessage(VariantPredicate)
 

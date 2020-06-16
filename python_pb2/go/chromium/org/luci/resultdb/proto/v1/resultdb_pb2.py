@@ -21,11 +21,11 @@ from go.chromium.org.luci.resultdb.proto.v1 import test_result_pb2 as go_dot_chr
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/resultdb/proto/v1/resultdb.proto',
-  package='luci.resultdb.rpc.v1',
+  package='luci.resultdb.v1',
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n5go.chromium.org/luci/resultdb/proto/v1/resultdb.proto\x12\x14luci.resultdb.rpc.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x35go.chromium.org/luci/resultdb/proto/v1/artifact.proto\x1a\x37go.chromium.org/luci/resultdb/proto/v1/invocation.proto\x1a\x36go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x1a\x38go.chromium.org/luci/resultdb/proto/v1/test_result.proto\")\n\x14GetInvocationRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\")\n\x14GetTestResultRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"X\n\x16ListTestResultsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"j\n\x17ListTestResultsResponse\x12\x36\n\x0ctest_results\x18\x01 \x03(\x0b\x32 .luci.resultdb.rpc.v1.TestResult\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\")\n\x19GetTestExonerationRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"]\n\x1bListTestExonerationsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"y\n\x1cListTestExonerationsResponse\x12@\n\x11test_exonerations\x18\x01 \x03(\x0b\x32%.luci.resultdb.rpc.v1.TestExoneration\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xc5\x01\n\x17QueryTestResultsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12<\n\tpredicate\x18\x02 \x01(\x0b\x32).luci.resultdb.rpc.v1.TestResultPredicate\x12\x30\n\rmax_staleness\x18\x03 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x11\n\tpage_size\x18\x04 \x01(\x05\x12\x12\n\npage_token\x18\x05 \x01(\t\"k\n\x18QueryTestResultsResponse\x12\x36\n\x0ctest_results\x18\x01 \x03(\x0b\x32 .luci.resultdb.rpc.v1.TestResult\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xd4\x01\n\x1cQueryTestExonerationsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12\x46\n\tpredicate\x18\x02 \x01(\x0b\x32..luci.resultdb.rpc.v1.TestExonerationPredicateB\x03\xe0\x41\x02\x12\x30\n\rmax_staleness\x18\x03 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x11\n\tpage_size\x18\x04 \x01(\x05\x12\x12\n\npage_token\x18\x05 \x01(\t\"z\n\x1dQueryTestExonerationsResponse\x12@\n\x11test_exonerations\x18\x01 \x03(\x0b\x32%.luci.resultdb.rpc.v1.TestExoneration\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n QueryTestResultStatisticsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12\x30\n\rmax_staleness\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"?\n!QueryTestResultStatisticsResponse\x12\x1a\n\x12total_test_results\x18\x01 \x01(\x03\"\'\n\x12GetArtifactRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"R\n\x14ListArtifactsRequest\x12\x13\n\x06parent\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"c\n\x15ListArtifactsResponse\x12\x31\n\tartifacts\x18\x01 \x03(\x0b\x32\x1e.luci.resultdb.rpc.v1.Artifact\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xe1\x02\n\x15QueryArtifactsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12M\n\x0c\x66ollow_edges\x18\x02 \x01(\x0b\x32\x37.luci.resultdb.rpc.v1.QueryArtifactsRequest.EdgeTypeSet\x12H\n\x15test_result_predicate\x18\x03 \x01(\x0b\x32).luci.resultdb.rpc.v1.TestResultPredicate\x12\x30\n\rmax_staleness\x18\x04 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x11\n\tpage_size\x18\x05 \x01(\x05\x12\x12\n\npage_token\x18\x06 \x01(\t\x1a\x41\n\x0b\x45\x64geTypeSet\x12\x1c\n\x14included_invocations\x18\x01 \x01(\x08\x12\x14\n\x0ctest_results\x18\x02 \x01(\x08\"d\n\x16QueryArtifactsResponse\x12\x31\n\tartifacts\x18\x01 \x03(\x0b\x32\x1e.luci.resultdb.rpc.v1.Artifact\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xf0\t\n\x08ResultDB\x12_\n\rGetInvocation\x12*.luci.resultdb.rpc.v1.GetInvocationRequest\x1a .luci.resultdb.rpc.v1.Invocation\"\x00\x12_\n\rGetTestResult\x12*.luci.resultdb.rpc.v1.GetTestResultRequest\x1a .luci.resultdb.rpc.v1.TestResult\"\x00\x12p\n\x0fListTestResults\x12,.luci.resultdb.rpc.v1.ListTestResultsRequest\x1a-.luci.resultdb.rpc.v1.ListTestResultsResponse\"\x00\x12n\n\x12GetTestExoneration\x12/.luci.resultdb.rpc.v1.GetTestExonerationRequest\x1a%.luci.resultdb.rpc.v1.TestExoneration\"\x00\x12\x7f\n\x14ListTestExonerations\x12\x31.luci.resultdb.rpc.v1.ListTestExonerationsRequest\x1a\x32.luci.resultdb.rpc.v1.ListTestExonerationsResponse\"\x00\x12s\n\x10QueryTestResults\x12-.luci.resultdb.rpc.v1.QueryTestResultsRequest\x1a..luci.resultdb.rpc.v1.QueryTestResultsResponse\"\x00\x12\x82\x01\n\x15QueryTestExonerations\x12\x32.luci.resultdb.rpc.v1.QueryTestExonerationsRequest\x1a\x33.luci.resultdb.rpc.v1.QueryTestExonerationsResponse\"\x00\x12\x8e\x01\n\x19QueryTestResultStatistics\x12\x36.luci.resultdb.rpc.v1.QueryTestResultStatisticsRequest\x1a\x37.luci.resultdb.rpc.v1.QueryTestResultStatisticsResponse\"\x00\x12Y\n\x0bGetArtifact\x12(.luci.resultdb.rpc.v1.GetArtifactRequest\x1a\x1e.luci.resultdb.rpc.v1.Artifact\"\x00\x12j\n\rListArtifacts\x12*.luci.resultdb.rpc.v1.ListArtifactsRequest\x1a+.luci.resultdb.rpc.v1.ListArtifactsResponse\"\x00\x12m\n\x0eQueryArtifacts\x12+.luci.resultdb.rpc.v1.QueryArtifactsRequest\x1a,.luci.resultdb.rpc.v1.QueryArtifactsResponse\"\x00\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n5go.chromium.org/luci/resultdb/proto/v1/resultdb.proto\x12\x10luci.resultdb.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x35go.chromium.org/luci/resultdb/proto/v1/artifact.proto\x1a\x37go.chromium.org/luci/resultdb/proto/v1/invocation.proto\x1a\x36go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x1a\x38go.chromium.org/luci/resultdb/proto/v1/test_result.proto\")\n\x14GetInvocationRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\")\n\x14GetTestResultRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"X\n\x16ListTestResultsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"f\n\x17ListTestResultsResponse\x12\x32\n\x0ctest_results\x18\x01 \x03(\x0b\x32\x1c.luci.resultdb.v1.TestResult\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\")\n\x19GetTestExonerationRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\"]\n\x1bListTestExonerationsRequest\x12\x17\n\ninvocation\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"u\n\x1cListTestExonerationsResponse\x12<\n\x11test_exonerations\x18\x01 \x03(\x0b\x32!.luci.resultdb.v1.TestExoneration\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xc1\x01\n\x17QueryTestResultsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12\x38\n\tpredicate\x18\x02 \x01(\x0b\x32%.luci.resultdb.v1.TestResultPredicate\x12\x30\n\rmax_staleness\x18\x03 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x11\n\tpage_size\x18\x04 \x01(\x05\x12\x12\n\npage_token\x18\x05 \x01(\t\"g\n\x18QueryTestResultsResponse\x12\x32\n\x0ctest_results\x18\x01 \x03(\x0b\x32\x1c.luci.resultdb.v1.TestResult\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xd0\x01\n\x1cQueryTestExonerationsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12\x42\n\tpredicate\x18\x02 \x01(\x0b\x32*.luci.resultdb.v1.TestExonerationPredicateB\x03\xe0\x41\x02\x12\x30\n\rmax_staleness\x18\x03 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x11\n\tpage_size\x18\x04 \x01(\x05\x12\x12\n\npage_token\x18\x05 \x01(\t\"v\n\x1dQueryTestExonerationsResponse\x12<\n\x11test_exonerations\x18\x01 \x03(\x0b\x32!.luci.resultdb.v1.TestExoneration\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n QueryTestResultStatisticsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12\x30\n\rmax_staleness\x18\x02 \x01(\x0b\x32\x19.google.protobuf.Duration\"?\n!QueryTestResultStatisticsResponse\x12\x1a\n\x12total_test_results\x18\x01 \x01(\x03\"\'\n\x12GetArtifactRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"R\n\x14ListArtifactsRequest\x12\x13\n\x06parent\x18\x01 \x01(\tB\x03\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"_\n\x15ListArtifactsResponse\x12-\n\tartifacts\x18\x01 \x03(\x0b\x32\x1a.luci.resultdb.v1.Artifact\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xd9\x02\n\x15QueryArtifactsRequest\x12\x13\n\x0binvocations\x18\x01 \x03(\t\x12I\n\x0c\x66ollow_edges\x18\x02 \x01(\x0b\x32\x33.luci.resultdb.v1.QueryArtifactsRequest.EdgeTypeSet\x12\x44\n\x15test_result_predicate\x18\x03 \x01(\x0b\x32%.luci.resultdb.v1.TestResultPredicate\x12\x30\n\rmax_staleness\x18\x04 \x01(\x0b\x32\x19.google.protobuf.Duration\x12\x11\n\tpage_size\x18\x05 \x01(\x05\x12\x12\n\npage_token\x18\x06 \x01(\t\x1a\x41\n\x0b\x45\x64geTypeSet\x12\x1c\n\x14included_invocations\x18\x01 \x01(\x08\x12\x14\n\x0ctest_results\x18\x02 \x01(\x08\"`\n\x16QueryArtifactsResponse\x12-\n\tartifacts\x18\x01 \x03(\x0b\x32\x1a.luci.resultdb.v1.Artifact\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\x97\t\n\x08ResultDB\x12W\n\rGetInvocation\x12&.luci.resultdb.v1.GetInvocationRequest\x1a\x1c.luci.resultdb.v1.Invocation\"\x00\x12W\n\rGetTestResult\x12&.luci.resultdb.v1.GetTestResultRequest\x1a\x1c.luci.resultdb.v1.TestResult\"\x00\x12h\n\x0fListTestResults\x12(.luci.resultdb.v1.ListTestResultsRequest\x1a).luci.resultdb.v1.ListTestResultsResponse\"\x00\x12\x66\n\x12GetTestExoneration\x12+.luci.resultdb.v1.GetTestExonerationRequest\x1a!.luci.resultdb.v1.TestExoneration\"\x00\x12w\n\x14ListTestExonerations\x12-.luci.resultdb.v1.ListTestExonerationsRequest\x1a..luci.resultdb.v1.ListTestExonerationsResponse\"\x00\x12k\n\x10QueryTestResults\x12).luci.resultdb.v1.QueryTestResultsRequest\x1a*.luci.resultdb.v1.QueryTestResultsResponse\"\x00\x12z\n\x15QueryTestExonerations\x12..luci.resultdb.v1.QueryTestExonerationsRequest\x1a/.luci.resultdb.v1.QueryTestExonerationsResponse\"\x00\x12\x86\x01\n\x19QueryTestResultStatistics\x12\x32.luci.resultdb.v1.QueryTestResultStatisticsRequest\x1a\x33.luci.resultdb.v1.QueryTestResultStatisticsResponse\"\x00\x12Q\n\x0bGetArtifact\x12$.luci.resultdb.v1.GetArtifactRequest\x1a\x1a.luci.resultdb.v1.Artifact\"\x00\x12\x62\n\rListArtifacts\x12&.luci.resultdb.v1.ListArtifactsRequest\x1a\'.luci.resultdb.v1.ListArtifactsResponse\"\x00\x12\x65\n\x0eQueryArtifacts\x12\'.luci.resultdb.v1.QueryArtifactsRequest\x1a(.luci.resultdb.v1.QueryArtifactsResponse\"\x00\x42\x31Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
   ,
   dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_protobuf_dot_duration__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_artifact__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_invocation__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_predicate__pb2.DESCRIPTOR,go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_test__result__pb2.DESCRIPTOR,])
 
@@ -34,14 +34,14 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 
 _GETINVOCATIONREQUEST = _descriptor.Descriptor(
   name='GetInvocationRequest',
-  full_name='luci.resultdb.rpc.v1.GetInvocationRequest',
+  full_name='luci.resultdb.v1.GetInvocationRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='luci.resultdb.rpc.v1.GetInvocationRequest.name', index=0,
+      name='name', full_name='luci.resultdb.v1.GetInvocationRequest.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -59,21 +59,21 @@ _GETINVOCATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=370,
-  serialized_end=411,
+  serialized_start=366,
+  serialized_end=407,
 )
 
 
 _GETTESTRESULTREQUEST = _descriptor.Descriptor(
   name='GetTestResultRequest',
-  full_name='luci.resultdb.rpc.v1.GetTestResultRequest',
+  full_name='luci.resultdb.v1.GetTestResultRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='luci.resultdb.rpc.v1.GetTestResultRequest.name', index=0,
+      name='name', full_name='luci.resultdb.v1.GetTestResultRequest.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -91,35 +91,35 @@ _GETTESTRESULTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=413,
-  serialized_end=454,
+  serialized_start=409,
+  serialized_end=450,
 )
 
 
 _LISTTESTRESULTSREQUEST = _descriptor.Descriptor(
   name='ListTestResultsRequest',
-  full_name='luci.resultdb.rpc.v1.ListTestResultsRequest',
+  full_name='luci.resultdb.v1.ListTestResultsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='invocation', full_name='luci.resultdb.rpc.v1.ListTestResultsRequest.invocation', index=0,
+      name='invocation', full_name='luci.resultdb.v1.ListTestResultsRequest.invocation', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=b'\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_size', full_name='luci.resultdb.rpc.v1.ListTestResultsRequest.page_size', index=1,
+      name='page_size', full_name='luci.resultdb.v1.ListTestResultsRequest.page_size', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_token', full_name='luci.resultdb.rpc.v1.ListTestResultsRequest.page_token', index=2,
+      name='page_token', full_name='luci.resultdb.v1.ListTestResultsRequest.page_token', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -137,28 +137,28 @@ _LISTTESTRESULTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=456,
-  serialized_end=544,
+  serialized_start=452,
+  serialized_end=540,
 )
 
 
 _LISTTESTRESULTSRESPONSE = _descriptor.Descriptor(
   name='ListTestResultsResponse',
-  full_name='luci.resultdb.rpc.v1.ListTestResultsResponse',
+  full_name='luci.resultdb.v1.ListTestResultsResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='test_results', full_name='luci.resultdb.rpc.v1.ListTestResultsResponse.test_results', index=0,
+      name='test_results', full_name='luci.resultdb.v1.ListTestResultsResponse.test_results', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='next_page_token', full_name='luci.resultdb.rpc.v1.ListTestResultsResponse.next_page_token', index=1,
+      name='next_page_token', full_name='luci.resultdb.v1.ListTestResultsResponse.next_page_token', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -176,21 +176,21 @@ _LISTTESTRESULTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=546,
-  serialized_end=652,
+  serialized_start=542,
+  serialized_end=644,
 )
 
 
 _GETTESTEXONERATIONREQUEST = _descriptor.Descriptor(
   name='GetTestExonerationRequest',
-  full_name='luci.resultdb.rpc.v1.GetTestExonerationRequest',
+  full_name='luci.resultdb.v1.GetTestExonerationRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='luci.resultdb.rpc.v1.GetTestExonerationRequest.name', index=0,
+      name='name', full_name='luci.resultdb.v1.GetTestExonerationRequest.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -208,35 +208,35 @@ _GETTESTEXONERATIONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=654,
-  serialized_end=695,
+  serialized_start=646,
+  serialized_end=687,
 )
 
 
 _LISTTESTEXONERATIONSREQUEST = _descriptor.Descriptor(
   name='ListTestExonerationsRequest',
-  full_name='luci.resultdb.rpc.v1.ListTestExonerationsRequest',
+  full_name='luci.resultdb.v1.ListTestExonerationsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='invocation', full_name='luci.resultdb.rpc.v1.ListTestExonerationsRequest.invocation', index=0,
+      name='invocation', full_name='luci.resultdb.v1.ListTestExonerationsRequest.invocation', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=b'\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_size', full_name='luci.resultdb.rpc.v1.ListTestExonerationsRequest.page_size', index=1,
+      name='page_size', full_name='luci.resultdb.v1.ListTestExonerationsRequest.page_size', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_token', full_name='luci.resultdb.rpc.v1.ListTestExonerationsRequest.page_token', index=2,
+      name='page_token', full_name='luci.resultdb.v1.ListTestExonerationsRequest.page_token', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -254,28 +254,28 @@ _LISTTESTEXONERATIONSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=697,
-  serialized_end=790,
+  serialized_start=689,
+  serialized_end=782,
 )
 
 
 _LISTTESTEXONERATIONSRESPONSE = _descriptor.Descriptor(
   name='ListTestExonerationsResponse',
-  full_name='luci.resultdb.rpc.v1.ListTestExonerationsResponse',
+  full_name='luci.resultdb.v1.ListTestExonerationsResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='test_exonerations', full_name='luci.resultdb.rpc.v1.ListTestExonerationsResponse.test_exonerations', index=0,
+      name='test_exonerations', full_name='luci.resultdb.v1.ListTestExonerationsResponse.test_exonerations', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='next_page_token', full_name='luci.resultdb.rpc.v1.ListTestExonerationsResponse.next_page_token', index=1,
+      name='next_page_token', full_name='luci.resultdb.v1.ListTestExonerationsResponse.next_page_token', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -293,49 +293,49 @@ _LISTTESTEXONERATIONSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=792,
-  serialized_end=913,
+  serialized_start=784,
+  serialized_end=901,
 )
 
 
 _QUERYTESTRESULTSREQUEST = _descriptor.Descriptor(
   name='QueryTestResultsRequest',
-  full_name='luci.resultdb.rpc.v1.QueryTestResultsRequest',
+  full_name='luci.resultdb.v1.QueryTestResultsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='invocations', full_name='luci.resultdb.rpc.v1.QueryTestResultsRequest.invocations', index=0,
+      name='invocations', full_name='luci.resultdb.v1.QueryTestResultsRequest.invocations', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='predicate', full_name='luci.resultdb.rpc.v1.QueryTestResultsRequest.predicate', index=1,
+      name='predicate', full_name='luci.resultdb.v1.QueryTestResultsRequest.predicate', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='max_staleness', full_name='luci.resultdb.rpc.v1.QueryTestResultsRequest.max_staleness', index=2,
+      name='max_staleness', full_name='luci.resultdb.v1.QueryTestResultsRequest.max_staleness', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_size', full_name='luci.resultdb.rpc.v1.QueryTestResultsRequest.page_size', index=3,
+      name='page_size', full_name='luci.resultdb.v1.QueryTestResultsRequest.page_size', index=3,
       number=4, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_token', full_name='luci.resultdb.rpc.v1.QueryTestResultsRequest.page_token', index=4,
+      name='page_token', full_name='luci.resultdb.v1.QueryTestResultsRequest.page_token', index=4,
       number=5, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -353,28 +353,28 @@ _QUERYTESTRESULTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=916,
-  serialized_end=1113,
+  serialized_start=904,
+  serialized_end=1097,
 )
 
 
 _QUERYTESTRESULTSRESPONSE = _descriptor.Descriptor(
   name='QueryTestResultsResponse',
-  full_name='luci.resultdb.rpc.v1.QueryTestResultsResponse',
+  full_name='luci.resultdb.v1.QueryTestResultsResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='test_results', full_name='luci.resultdb.rpc.v1.QueryTestResultsResponse.test_results', index=0,
+      name='test_results', full_name='luci.resultdb.v1.QueryTestResultsResponse.test_results', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='next_page_token', full_name='luci.resultdb.rpc.v1.QueryTestResultsResponse.next_page_token', index=1,
+      name='next_page_token', full_name='luci.resultdb.v1.QueryTestResultsResponse.next_page_token', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -392,49 +392,49 @@ _QUERYTESTRESULTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1115,
-  serialized_end=1222,
+  serialized_start=1099,
+  serialized_end=1202,
 )
 
 
 _QUERYTESTEXONERATIONSREQUEST = _descriptor.Descriptor(
   name='QueryTestExonerationsRequest',
-  full_name='luci.resultdb.rpc.v1.QueryTestExonerationsRequest',
+  full_name='luci.resultdb.v1.QueryTestExonerationsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='invocations', full_name='luci.resultdb.rpc.v1.QueryTestExonerationsRequest.invocations', index=0,
+      name='invocations', full_name='luci.resultdb.v1.QueryTestExonerationsRequest.invocations', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='predicate', full_name='luci.resultdb.rpc.v1.QueryTestExonerationsRequest.predicate', index=1,
+      name='predicate', full_name='luci.resultdb.v1.QueryTestExonerationsRequest.predicate', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=b'\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='max_staleness', full_name='luci.resultdb.rpc.v1.QueryTestExonerationsRequest.max_staleness', index=2,
+      name='max_staleness', full_name='luci.resultdb.v1.QueryTestExonerationsRequest.max_staleness', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_size', full_name='luci.resultdb.rpc.v1.QueryTestExonerationsRequest.page_size', index=3,
+      name='page_size', full_name='luci.resultdb.v1.QueryTestExonerationsRequest.page_size', index=3,
       number=4, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_token', full_name='luci.resultdb.rpc.v1.QueryTestExonerationsRequest.page_token', index=4,
+      name='page_token', full_name='luci.resultdb.v1.QueryTestExonerationsRequest.page_token', index=4,
       number=5, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -452,28 +452,28 @@ _QUERYTESTEXONERATIONSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1225,
-  serialized_end=1437,
+  serialized_start=1205,
+  serialized_end=1413,
 )
 
 
 _QUERYTESTEXONERATIONSRESPONSE = _descriptor.Descriptor(
   name='QueryTestExonerationsResponse',
-  full_name='luci.resultdb.rpc.v1.QueryTestExonerationsResponse',
+  full_name='luci.resultdb.v1.QueryTestExonerationsResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='test_exonerations', full_name='luci.resultdb.rpc.v1.QueryTestExonerationsResponse.test_exonerations', index=0,
+      name='test_exonerations', full_name='luci.resultdb.v1.QueryTestExonerationsResponse.test_exonerations', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='next_page_token', full_name='luci.resultdb.rpc.v1.QueryTestExonerationsResponse.next_page_token', index=1,
+      name='next_page_token', full_name='luci.resultdb.v1.QueryTestExonerationsResponse.next_page_token', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -491,28 +491,28 @@ _QUERYTESTEXONERATIONSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1439,
-  serialized_end=1561,
+  serialized_start=1415,
+  serialized_end=1533,
 )
 
 
 _QUERYTESTRESULTSTATISTICSREQUEST = _descriptor.Descriptor(
   name='QueryTestResultStatisticsRequest',
-  full_name='luci.resultdb.rpc.v1.QueryTestResultStatisticsRequest',
+  full_name='luci.resultdb.v1.QueryTestResultStatisticsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='invocations', full_name='luci.resultdb.rpc.v1.QueryTestResultStatisticsRequest.invocations', index=0,
+      name='invocations', full_name='luci.resultdb.v1.QueryTestResultStatisticsRequest.invocations', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='max_staleness', full_name='luci.resultdb.rpc.v1.QueryTestResultStatisticsRequest.max_staleness', index=1,
+      name='max_staleness', full_name='luci.resultdb.v1.QueryTestResultStatisticsRequest.max_staleness', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
@@ -530,21 +530,21 @@ _QUERYTESTRESULTSTATISTICSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1563,
-  serialized_end=1668,
+  serialized_start=1535,
+  serialized_end=1640,
 )
 
 
 _QUERYTESTRESULTSTATISTICSRESPONSE = _descriptor.Descriptor(
   name='QueryTestResultStatisticsResponse',
-  full_name='luci.resultdb.rpc.v1.QueryTestResultStatisticsResponse',
+  full_name='luci.resultdb.v1.QueryTestResultStatisticsResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='total_test_results', full_name='luci.resultdb.rpc.v1.QueryTestResultStatisticsResponse.total_test_results', index=0,
+      name='total_test_results', full_name='luci.resultdb.v1.QueryTestResultStatisticsResponse.total_test_results', index=0,
       number=1, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
@@ -562,21 +562,21 @@ _QUERYTESTRESULTSTATISTICSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1670,
-  serialized_end=1733,
+  serialized_start=1642,
+  serialized_end=1705,
 )
 
 
 _GETARTIFACTREQUEST = _descriptor.Descriptor(
   name='GetArtifactRequest',
-  full_name='luci.resultdb.rpc.v1.GetArtifactRequest',
+  full_name='luci.resultdb.v1.GetArtifactRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='name', full_name='luci.resultdb.rpc.v1.GetArtifactRequest.name', index=0,
+      name='name', full_name='luci.resultdb.v1.GetArtifactRequest.name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -594,35 +594,35 @@ _GETARTIFACTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1735,
-  serialized_end=1774,
+  serialized_start=1707,
+  serialized_end=1746,
 )
 
 
 _LISTARTIFACTSREQUEST = _descriptor.Descriptor(
   name='ListArtifactsRequest',
-  full_name='luci.resultdb.rpc.v1.ListArtifactsRequest',
+  full_name='luci.resultdb.v1.ListArtifactsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='parent', full_name='luci.resultdb.rpc.v1.ListArtifactsRequest.parent', index=0,
+      name='parent', full_name='luci.resultdb.v1.ListArtifactsRequest.parent', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=b'\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_size', full_name='luci.resultdb.rpc.v1.ListArtifactsRequest.page_size', index=1,
+      name='page_size', full_name='luci.resultdb.v1.ListArtifactsRequest.page_size', index=1,
       number=2, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_token', full_name='luci.resultdb.rpc.v1.ListArtifactsRequest.page_token', index=2,
+      name='page_token', full_name='luci.resultdb.v1.ListArtifactsRequest.page_token', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -640,28 +640,28 @@ _LISTARTIFACTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1776,
-  serialized_end=1858,
+  serialized_start=1748,
+  serialized_end=1830,
 )
 
 
 _LISTARTIFACTSRESPONSE = _descriptor.Descriptor(
   name='ListArtifactsResponse',
-  full_name='luci.resultdb.rpc.v1.ListArtifactsResponse',
+  full_name='luci.resultdb.v1.ListArtifactsResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='artifacts', full_name='luci.resultdb.rpc.v1.ListArtifactsResponse.artifacts', index=0,
+      name='artifacts', full_name='luci.resultdb.v1.ListArtifactsResponse.artifacts', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='next_page_token', full_name='luci.resultdb.rpc.v1.ListArtifactsResponse.next_page_token', index=1,
+      name='next_page_token', full_name='luci.resultdb.v1.ListArtifactsResponse.next_page_token', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -679,28 +679,28 @@ _LISTARTIFACTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1860,
-  serialized_end=1959,
+  serialized_start=1832,
+  serialized_end=1927,
 )
 
 
 _QUERYARTIFACTSREQUEST_EDGETYPESET = _descriptor.Descriptor(
   name='EdgeTypeSet',
-  full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.EdgeTypeSet',
+  full_name='luci.resultdb.v1.QueryArtifactsRequest.EdgeTypeSet',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='included_invocations', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.EdgeTypeSet.included_invocations', index=0,
+      name='included_invocations', full_name='luci.resultdb.v1.QueryArtifactsRequest.EdgeTypeSet.included_invocations', index=0,
       number=1, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='test_results', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.EdgeTypeSet.test_results', index=1,
+      name='test_results', full_name='luci.resultdb.v1.QueryArtifactsRequest.EdgeTypeSet.test_results', index=1,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -718,55 +718,55 @@ _QUERYARTIFACTSREQUEST_EDGETYPESET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2250,
-  serialized_end=2315,
+  serialized_start=2210,
+  serialized_end=2275,
 )
 
 _QUERYARTIFACTSREQUEST = _descriptor.Descriptor(
   name='QueryArtifactsRequest',
-  full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest',
+  full_name='luci.resultdb.v1.QueryArtifactsRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='invocations', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.invocations', index=0,
+      name='invocations', full_name='luci.resultdb.v1.QueryArtifactsRequest.invocations', index=0,
       number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='follow_edges', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.follow_edges', index=1,
+      name='follow_edges', full_name='luci.resultdb.v1.QueryArtifactsRequest.follow_edges', index=1,
       number=2, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='test_result_predicate', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.test_result_predicate', index=2,
+      name='test_result_predicate', full_name='luci.resultdb.v1.QueryArtifactsRequest.test_result_predicate', index=2,
       number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='max_staleness', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.max_staleness', index=3,
+      name='max_staleness', full_name='luci.resultdb.v1.QueryArtifactsRequest.max_staleness', index=3,
       number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_size', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.page_size', index=4,
+      name='page_size', full_name='luci.resultdb.v1.QueryArtifactsRequest.page_size', index=4,
       number=5, type=5, cpp_type=1, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='page_token', full_name='luci.resultdb.rpc.v1.QueryArtifactsRequest.page_token', index=5,
+      name='page_token', full_name='luci.resultdb.v1.QueryArtifactsRequest.page_token', index=5,
       number=6, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -784,28 +784,28 @@ _QUERYARTIFACTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1962,
-  serialized_end=2315,
+  serialized_start=1930,
+  serialized_end=2275,
 )
 
 
 _QUERYARTIFACTSRESPONSE = _descriptor.Descriptor(
   name='QueryArtifactsResponse',
-  full_name='luci.resultdb.rpc.v1.QueryArtifactsResponse',
+  full_name='luci.resultdb.v1.QueryArtifactsResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='artifacts', full_name='luci.resultdb.rpc.v1.QueryArtifactsResponse.artifacts', index=0,
+      name='artifacts', full_name='luci.resultdb.v1.QueryArtifactsResponse.artifacts', index=0,
       number=1, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='next_page_token', full_name='luci.resultdb.rpc.v1.QueryArtifactsResponse.next_page_token', index=1,
+      name='next_page_token', full_name='luci.resultdb.v1.QueryArtifactsResponse.next_page_token', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -823,8 +823,8 @@ _QUERYARTIFACTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2317,
-  serialized_end=2417,
+  serialized_start=2277,
+  serialized_end=2373,
 )
 
 _LISTTESTRESULTSRESPONSE.fields_by_name['test_results'].message_type = go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_test__result__pb2._TESTRESULT
@@ -865,112 +865,112 @@ _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 GetInvocationRequest = _reflection.GeneratedProtocolMessageType('GetInvocationRequest', (_message.Message,), {
   'DESCRIPTOR' : _GETINVOCATIONREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.GetInvocationRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.GetInvocationRequest)
   })
 _sym_db.RegisterMessage(GetInvocationRequest)
 
 GetTestResultRequest = _reflection.GeneratedProtocolMessageType('GetTestResultRequest', (_message.Message,), {
   'DESCRIPTOR' : _GETTESTRESULTREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.GetTestResultRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.GetTestResultRequest)
   })
 _sym_db.RegisterMessage(GetTestResultRequest)
 
 ListTestResultsRequest = _reflection.GeneratedProtocolMessageType('ListTestResultsRequest', (_message.Message,), {
   'DESCRIPTOR' : _LISTTESTRESULTSREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.ListTestResultsRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ListTestResultsRequest)
   })
 _sym_db.RegisterMessage(ListTestResultsRequest)
 
 ListTestResultsResponse = _reflection.GeneratedProtocolMessageType('ListTestResultsResponse', (_message.Message,), {
   'DESCRIPTOR' : _LISTTESTRESULTSRESPONSE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.ListTestResultsResponse)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ListTestResultsResponse)
   })
 _sym_db.RegisterMessage(ListTestResultsResponse)
 
 GetTestExonerationRequest = _reflection.GeneratedProtocolMessageType('GetTestExonerationRequest', (_message.Message,), {
   'DESCRIPTOR' : _GETTESTEXONERATIONREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.GetTestExonerationRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.GetTestExonerationRequest)
   })
 _sym_db.RegisterMessage(GetTestExonerationRequest)
 
 ListTestExonerationsRequest = _reflection.GeneratedProtocolMessageType('ListTestExonerationsRequest', (_message.Message,), {
   'DESCRIPTOR' : _LISTTESTEXONERATIONSREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.ListTestExonerationsRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ListTestExonerationsRequest)
   })
 _sym_db.RegisterMessage(ListTestExonerationsRequest)
 
 ListTestExonerationsResponse = _reflection.GeneratedProtocolMessageType('ListTestExonerationsResponse', (_message.Message,), {
   'DESCRIPTOR' : _LISTTESTEXONERATIONSRESPONSE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.ListTestExonerationsResponse)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ListTestExonerationsResponse)
   })
 _sym_db.RegisterMessage(ListTestExonerationsResponse)
 
 QueryTestResultsRequest = _reflection.GeneratedProtocolMessageType('QueryTestResultsRequest', (_message.Message,), {
   'DESCRIPTOR' : _QUERYTESTRESULTSREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryTestResultsRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryTestResultsRequest)
   })
 _sym_db.RegisterMessage(QueryTestResultsRequest)
 
 QueryTestResultsResponse = _reflection.GeneratedProtocolMessageType('QueryTestResultsResponse', (_message.Message,), {
   'DESCRIPTOR' : _QUERYTESTRESULTSRESPONSE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryTestResultsResponse)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryTestResultsResponse)
   })
 _sym_db.RegisterMessage(QueryTestResultsResponse)
 
 QueryTestExonerationsRequest = _reflection.GeneratedProtocolMessageType('QueryTestExonerationsRequest', (_message.Message,), {
   'DESCRIPTOR' : _QUERYTESTEXONERATIONSREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryTestExonerationsRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryTestExonerationsRequest)
   })
 _sym_db.RegisterMessage(QueryTestExonerationsRequest)
 
 QueryTestExonerationsResponse = _reflection.GeneratedProtocolMessageType('QueryTestExonerationsResponse', (_message.Message,), {
   'DESCRIPTOR' : _QUERYTESTEXONERATIONSRESPONSE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryTestExonerationsResponse)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryTestExonerationsResponse)
   })
 _sym_db.RegisterMessage(QueryTestExonerationsResponse)
 
 QueryTestResultStatisticsRequest = _reflection.GeneratedProtocolMessageType('QueryTestResultStatisticsRequest', (_message.Message,), {
   'DESCRIPTOR' : _QUERYTESTRESULTSTATISTICSREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryTestResultStatisticsRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryTestResultStatisticsRequest)
   })
 _sym_db.RegisterMessage(QueryTestResultStatisticsRequest)
 
 QueryTestResultStatisticsResponse = _reflection.GeneratedProtocolMessageType('QueryTestResultStatisticsResponse', (_message.Message,), {
   'DESCRIPTOR' : _QUERYTESTRESULTSTATISTICSRESPONSE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryTestResultStatisticsResponse)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryTestResultStatisticsResponse)
   })
 _sym_db.RegisterMessage(QueryTestResultStatisticsResponse)
 
 GetArtifactRequest = _reflection.GeneratedProtocolMessageType('GetArtifactRequest', (_message.Message,), {
   'DESCRIPTOR' : _GETARTIFACTREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.GetArtifactRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.GetArtifactRequest)
   })
 _sym_db.RegisterMessage(GetArtifactRequest)
 
 ListArtifactsRequest = _reflection.GeneratedProtocolMessageType('ListArtifactsRequest', (_message.Message,), {
   'DESCRIPTOR' : _LISTARTIFACTSREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.ListArtifactsRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ListArtifactsRequest)
   })
 _sym_db.RegisterMessage(ListArtifactsRequest)
 
 ListArtifactsResponse = _reflection.GeneratedProtocolMessageType('ListArtifactsResponse', (_message.Message,), {
   'DESCRIPTOR' : _LISTARTIFACTSRESPONSE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.ListArtifactsResponse)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.ListArtifactsResponse)
   })
 _sym_db.RegisterMessage(ListArtifactsResponse)
 
@@ -979,12 +979,12 @@ QueryArtifactsRequest = _reflection.GeneratedProtocolMessageType('QueryArtifacts
   'EdgeTypeSet' : _reflection.GeneratedProtocolMessageType('EdgeTypeSet', (_message.Message,), {
     'DESCRIPTOR' : _QUERYARTIFACTSREQUEST_EDGETYPESET,
     '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-    # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryArtifactsRequest.EdgeTypeSet)
+    # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryArtifactsRequest.EdgeTypeSet)
     })
   ,
   'DESCRIPTOR' : _QUERYARTIFACTSREQUEST,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryArtifactsRequest)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryArtifactsRequest)
   })
 _sym_db.RegisterMessage(QueryArtifactsRequest)
 _sym_db.RegisterMessage(QueryArtifactsRequest.EdgeTypeSet)
@@ -992,7 +992,7 @@ _sym_db.RegisterMessage(QueryArtifactsRequest.EdgeTypeSet)
 QueryArtifactsResponse = _reflection.GeneratedProtocolMessageType('QueryArtifactsResponse', (_message.Message,), {
   'DESCRIPTOR' : _QUERYARTIFACTSRESPONSE,
   '__module__' : 'go.chromium.org.luci.resultdb.proto.v1.resultdb_pb2'
-  # @@protoc_insertion_point(class_scope:luci.resultdb.rpc.v1.QueryArtifactsResponse)
+  # @@protoc_insertion_point(class_scope:luci.resultdb.v1.QueryArtifactsResponse)
   })
 _sym_db.RegisterMessage(QueryArtifactsResponse)
 
@@ -1008,17 +1008,17 @@ _LISTARTIFACTSREQUEST.fields_by_name['parent']._options = None
 
 _RESULTDB = _descriptor.ServiceDescriptor(
   name='ResultDB',
-  full_name='luci.resultdb.rpc.v1.ResultDB',
+  full_name='luci.resultdb.v1.ResultDB',
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=2420,
-  serialized_end=3684,
+  serialized_start=2376,
+  serialized_end=3551,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetInvocation',
-    full_name='luci.resultdb.rpc.v1.ResultDB.GetInvocation',
+    full_name='luci.resultdb.v1.ResultDB.GetInvocation',
     index=0,
     containing_service=None,
     input_type=_GETINVOCATIONREQUEST,
@@ -1028,7 +1028,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='GetTestResult',
-    full_name='luci.resultdb.rpc.v1.ResultDB.GetTestResult',
+    full_name='luci.resultdb.v1.ResultDB.GetTestResult',
     index=1,
     containing_service=None,
     input_type=_GETTESTRESULTREQUEST,
@@ -1038,7 +1038,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='ListTestResults',
-    full_name='luci.resultdb.rpc.v1.ResultDB.ListTestResults',
+    full_name='luci.resultdb.v1.ResultDB.ListTestResults',
     index=2,
     containing_service=None,
     input_type=_LISTTESTRESULTSREQUEST,
@@ -1048,7 +1048,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='GetTestExoneration',
-    full_name='luci.resultdb.rpc.v1.ResultDB.GetTestExoneration',
+    full_name='luci.resultdb.v1.ResultDB.GetTestExoneration',
     index=3,
     containing_service=None,
     input_type=_GETTESTEXONERATIONREQUEST,
@@ -1058,7 +1058,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='ListTestExonerations',
-    full_name='luci.resultdb.rpc.v1.ResultDB.ListTestExonerations',
+    full_name='luci.resultdb.v1.ResultDB.ListTestExonerations',
     index=4,
     containing_service=None,
     input_type=_LISTTESTEXONERATIONSREQUEST,
@@ -1068,7 +1068,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='QueryTestResults',
-    full_name='luci.resultdb.rpc.v1.ResultDB.QueryTestResults',
+    full_name='luci.resultdb.v1.ResultDB.QueryTestResults',
     index=5,
     containing_service=None,
     input_type=_QUERYTESTRESULTSREQUEST,
@@ -1078,7 +1078,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='QueryTestExonerations',
-    full_name='luci.resultdb.rpc.v1.ResultDB.QueryTestExonerations',
+    full_name='luci.resultdb.v1.ResultDB.QueryTestExonerations',
     index=6,
     containing_service=None,
     input_type=_QUERYTESTEXONERATIONSREQUEST,
@@ -1088,7 +1088,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='QueryTestResultStatistics',
-    full_name='luci.resultdb.rpc.v1.ResultDB.QueryTestResultStatistics',
+    full_name='luci.resultdb.v1.ResultDB.QueryTestResultStatistics',
     index=7,
     containing_service=None,
     input_type=_QUERYTESTRESULTSTATISTICSREQUEST,
@@ -1098,7 +1098,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='GetArtifact',
-    full_name='luci.resultdb.rpc.v1.ResultDB.GetArtifact',
+    full_name='luci.resultdb.v1.ResultDB.GetArtifact',
     index=8,
     containing_service=None,
     input_type=_GETARTIFACTREQUEST,
@@ -1108,7 +1108,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='ListArtifacts',
-    full_name='luci.resultdb.rpc.v1.ResultDB.ListArtifacts',
+    full_name='luci.resultdb.v1.ResultDB.ListArtifacts',
     index=9,
     containing_service=None,
     input_type=_LISTARTIFACTSREQUEST,
@@ -1118,7 +1118,7 @@ _RESULTDB = _descriptor.ServiceDescriptor(
   ),
   _descriptor.MethodDescriptor(
     name='QueryArtifacts',
-    full_name='luci.resultdb.rpc.v1.ResultDB.QueryArtifacts',
+    full_name='luci.resultdb.v1.ResultDB.QueryArtifacts',
     index=10,
     containing_service=None,
     input_type=_QUERYARTIFACTSREQUEST,
