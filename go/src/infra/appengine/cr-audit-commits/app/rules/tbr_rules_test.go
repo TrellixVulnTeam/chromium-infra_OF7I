@@ -109,15 +109,13 @@ func TestTBRRules(t *testing.T) {
 		testClients := &Clients{}
 		testClients.gerrit = &mockGerritClient{q: q}
 
-		expectedStatus := RulePassed
+		expectedStatus := RuleInvalid
 		var gerritCalls []string
 
 		Convey("Pass", func() {
-			rr, _ := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
-			// Check result code.
-			So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
-
+			expectedStatus = RulePassed
 		})
+
 		Convey("Non-Pass", func() {
 			Convey("Fail", func() {
 				rc.CommitHash = "7b12c0de2"
@@ -128,8 +126,8 @@ func TestTBRRules(t *testing.T) {
 				rc.CommitHash = "7b12c0de2"
 				rc.CommitTime = time.Now().Add(-23 * time.Hour)
 				expectedStatus = RulePending
-
 			})
+
 			Convey("Pending - send notification", func() {
 				rc.CommitHash = "7b12c0de2"
 				rc.CommitTime = time.Now().Add(-25 * time.Hour)
@@ -139,19 +137,19 @@ func TestTBRRules(t *testing.T) {
 				})
 				expectedStatus = RulePending
 				gerritCalls = []string{"SetReview"}
-
 			})
-			rr, _ := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
-			So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
-			So(testClients.gerrit.(*mockGerritClient).calls, ShouldResemble, gerritCalls)
 		})
+
 		Convey("Skip", func() {
 			expectedStatus = RuleSkipped
-			rc.AuthorAccount = "recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com"
-			rr, _ := ChangeReviewed{}.Run(ctx, ap, rc, testClients)
-			// Check result code.
-			So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
-
+			rc.AuthorAccount = "robot2@example.com"
 		})
+
+		c := ChangeReviewed{
+			Robots: []string{"robot1@example.com", "robot2@example.com"},
+		}
+		rr, _ := c.Run(ctx, ap, rc, testClients)
+		So(rr.RuleResultStatus, ShouldEqual, expectedStatus)
+		So(testClients.gerrit.(*mockGerritClient).calls, ShouldResemble, gerritCalls)
 	})
 }

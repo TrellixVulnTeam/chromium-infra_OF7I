@@ -4,6 +4,17 @@
 
 package rules
 
+var chromiumRobots = []string{
+	"chromium-autoroll@skia-public.iam.gserviceaccount.com",
+	"image-builder@chops-service-accounts.iam.gserviceaccount.com",
+	"recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com",
+}
+
+var fuchsiaRobots = []string{
+	"docs-roller@fuchsia-infra.iam.gserviceaccount.com",
+	"global-integration-roller@fuchsia-infra.iam.gserviceaccount.com",
+}
+
 // RuleMap maps each monitored repository to a list of account/rules structs.
 var RuleMap = map[string]*RefConfig{
 	"chromium-src-master": {
@@ -76,7 +87,7 @@ var RuleMap = map[string]*RefConfig{
 			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
-					ChangeReviewed{},
+					ChangeReviewed{Robots: chromiumRobots},
 				},
 				NotificationFunction: FileBugForTBRViolation,
 			},
@@ -99,7 +110,7 @@ var RuleMap = map[string]*RefConfig{
 			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
-					ChangeReviewed{},
+					ChangeReviewed{Robots: chromiumRobots},
 				},
 				NotificationFunction: FileBugForTBRViolation,
 			},
@@ -118,7 +129,7 @@ var RuleMap = map[string]*RefConfig{
 			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
-					ChangeReviewed{},
+					ChangeReviewed{Robots: chromiumRobots},
 				},
 				NotificationFunction: FileBugForTBRViolation,
 			},
@@ -145,7 +156,7 @@ var RuleMap = map[string]*RefConfig{
 			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
-					ChangeReviewed{},
+					ChangeReviewed{Robots: chromiumRobots},
 				},
 				NotificationFunction: FileBugForTBRViolation,
 			},
@@ -216,7 +227,7 @@ var RuleMap = map[string]*RefConfig{
 			"manual-changes": {
 				Account: "*",
 				Rules: []Rule{
-					ChangeReviewed{},
+					ChangeReviewed{Robots: fuchsiaRobots},
 				},
 				NotificationFunction: FileBugForTBRViolation,
 			},

@@ -83,8 +83,10 @@ func (as AuditStatus) ToShortString() string {
 type RuleStatus int
 
 const (
+	// RuleInvalid is an invalid value, for testing.
+	RuleInvalid RuleStatus = iota
 	// RuleFailed is the status when a rule has failed.
-	RuleFailed RuleStatus = iota
+	RuleFailed
 	// RulePassed is the status when a rule has passed.
 	RulePassed
 	// RuleSkipped is the status when a rule has been skipped.

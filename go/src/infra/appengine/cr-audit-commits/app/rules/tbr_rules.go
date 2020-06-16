@@ -13,7 +13,6 @@ import (
 	"context"
 
 	"go.chromium.org/luci/common/api/gerrit"
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 )
 
@@ -24,15 +23,6 @@ const (
 	gracePeriod = time.Hour * 24 * 7
 	// Post the reminder about the TBR deadline only after 1 day.
 	reminderDelay = time.Hour * 24
-)
-
-// TBRWhiteList is the list of accounts that can create TBR commits that do not need
-// to be audited.
-var TBRWhiteList = stringset.NewFromSlice(
-	"recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com",
-	"chromium-autoroll@skia-public.iam.gserviceaccount.com",
-	"image-builder@chops-service-accounts.iam.gserviceaccount.com",
-	"global-integration-roller@fuchsia-infra.iam.gserviceaccount.com",
 )
 
 // getMaxLabelValue determines the highest possible value of a vote for a given
@@ -61,24 +51,31 @@ func getMaxLabelValue(values map[string]string) (int, error) {
 
 // ChangeReviewed is a RuleFunc that verifies that someone other than the
 // owner has reviewed the change.
-type ChangeReviewed struct{}
+type ChangeReviewed struct {
+	Robots []string
+}
 
 // GetName returns the name of the rule.
-func (rule ChangeReviewed) GetName() string {
+func (r ChangeReviewed) GetName() string {
 	return "ChangeReviewed"
 }
 
 // shouldSkip decides if a given commit shouldn't be audited with this rule.
 //
 // E.g. if it's authored by an authorized automated account.
-func (rule ChangeReviewed) shouldSkip(rc *RelevantCommit) bool {
-	return TBRWhiteList.Has(rc.AuthorAccount)
+func (r ChangeReviewed) shouldSkip(rc *RelevantCommit) bool {
+	for _, rob := range r.Robots {
+		if rc.AuthorAccount == rob {
+			return true
+		}
+	}
+	return false
 }
 
 // Run executes the rule.
-func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
+func (r ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
 	result := &RuleResult{}
-	result.RuleName = rule.GetName()
+	result.RuleName = r.GetName()
 	prevResult := PreviousResult(ctx, rc, result.RuleName)
 	if prevResult != nil && (prevResult.RuleResultStatus != RulePending ||
 		// If we checked gerrit recently, wait before checking again, leave the rule as pending.
@@ -88,7 +85,7 @@ func (rule ChangeReviewed) Run(ctx context.Context, ap *AuditParams, rc *Relevan
 		// Preserve any metadata from the previous execution of the rule.
 		result.MetaData = prevResult.MetaData
 	}
-	if rule.shouldSkip(rc) {
+	if r.shouldSkip(rc) {
 		result.RuleResultStatus = RuleSkipped
 		return result, nil
 	}
