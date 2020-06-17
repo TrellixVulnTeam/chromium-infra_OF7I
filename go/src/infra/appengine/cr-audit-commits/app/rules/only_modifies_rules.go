@@ -24,26 +24,26 @@ const (
 // verify that only the given files and directories are modified by the audited
 // CL.
 type OnlyModifiesFilesAndDirsRule struct {
-	name  string
-	files []string
-	dirs  []string
+	Name  string
+	Files []string
+	Dirs  []string
 }
 
-// GetName returns the name of the rule, from the struct field 'name'.
+// GetName returns the name of the rule, from the struct field 'Name'.
 func (rule OnlyModifiesFilesAndDirsRule) GetName() string {
-	return rule.name
+	return rule.Name
 }
 
-// Run executes the rule as configured by the struct fields 'files' and 'dirs'.
+// Run executes the rule as configured by the struct fields 'Files' and 'Dirs'.
 func (rule OnlyModifiesFilesAndDirsRule) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
-	paths := make([]*Path, 0, len(rule.files)+len(rule.dirs))
-	for _, f := range rule.files {
+	paths := make([]*Path, 0, len(rule.Files)+len(rule.Dirs))
+	for _, f := range rule.Files {
 		paths = append(paths, &Path{
 			Name: f,
 			Type: typeFile,
 		})
 	}
-	for _, d := range rule.dirs {
+	for _, d := range rule.Dirs {
 		paths = append(paths, &Path{
 			Name: d,
 			Type: typeDir,

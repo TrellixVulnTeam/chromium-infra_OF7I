@@ -49,9 +49,9 @@ func AutoRollRulesForFilesAndDirs(account string, files, dirs []string) AccountR
 		Account: account,
 		Rules: []Rule{
 			OnlyModifiesFilesAndDirsRule{
-				name:  fmt.Sprintf("OnlyModifies_%s", strings.Join(append(files, dirs...), "+")),
-				files: files,
-				dirs:  dirs,
+				Name:  fmt.Sprintf("OnlyModifies_%s", strings.Join(append(files, dirs...), "+")),
+				Files: files,
+				Dirs:  dirs,
 			},
 		},
 		NotificationFunction: FileBugForAutoRollViolation,

@@ -65,8 +65,8 @@ var RuleMap = map[string]*RefConfig{
 				Account: "chrome-release-bot@chromium.org",
 				Rules: []Rule{
 					OnlyModifiesFilesAndDirsRule{
-						name: "OnlyModifiesReleaseFiles",
-						files: []string{
+						Name: "OnlyModifiesReleaseFiles",
+						Files: []string{
 							"chrome/MAJOR_BRANCH_DATE",
 							"chrome/VERSION",
 						},

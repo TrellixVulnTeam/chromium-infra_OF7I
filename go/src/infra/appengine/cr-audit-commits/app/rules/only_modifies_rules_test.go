@@ -75,8 +75,8 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name:  "ruleName",
-				files: []string{"somefile"},
+				Name:  "ruleName",
+				Files: []string{"somefile"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -110,15 +110,15 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name: "ruleName",
-				dirs: []string{"somedir"},
+				Name: "ruleName",
+				Dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 
 		})
-		Convey("Only modifies files+dirs", func() {
+		Convey("Only modifies Files+Dirs", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
@@ -150,9 +150,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name:  "ruleName",
-				dirs:  []string{"mydir"},
-				files: []string{"a.txt"},
+				Name:  "ruleName",
+				Dirs:  []string{"mydir"},
+				Files: []string{"a.txt"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -191,9 +191,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name:  "ruleName",
-				dirs:  []string{"mydir"},
-				files: []string{"a.txt"},
+				Name:  "ruleName",
+				Dirs:  []string{"mydir"},
+				Files: []string{"a.txt"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
@@ -230,9 +230,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name:  "ruleName",
-				dirs:  []string{"mydir"},
-				files: []string{"a.txt"},
+				Name:  "ruleName",
+				Dirs:  []string{"mydir"},
+				Files: []string{"a.txt"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
@@ -264,8 +264,8 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name: "ruleName",
-				dirs: []string{"somedir"},
+				Name: "ruleName",
+				Dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -298,8 +298,8 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name: "ruleName",
-				dirs: []string{"somedir"},
+				Name: "ruleName",
+				Dirs: []string{"somedir"},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -364,8 +364,8 @@ func TestReleaseBotRules(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				name: "OnlyModifiesReleaseFiles",
-				files: []string{
+				Name: "OnlyModifiesReleaseFiles",
+				Files: []string{
 					"chrome/MAJOR_BRANCH_DATE",
 					"chrome/VERSION",
 				},
@@ -407,8 +407,8 @@ func TestReleaseBotRules(t *testing.T) {
 				}, nil)
 				// Run rule
 				rr, _ := OnlyModifiesFilesAndDirsRule{
-					name: "OnlyModifiesReleaseFiles",
-					files: []string{
+					Name: "OnlyModifiesReleaseFiles",
+					Files: []string{
 						"chrome/MAJOR_BRANCH_DATE",
 						"chrome/VERSION",
 					},
@@ -442,8 +442,8 @@ func TestReleaseBotRules(t *testing.T) {
 				}, nil)
 				// Run rule
 				rr, _ := OnlyModifiesFilesAndDirsRule{
-					name: "OnlyModifiesReleaseFiles",
-					files: []string{
+					Name: "OnlyModifiesReleaseFiles",
+					Files: []string{
 						"chrome/MAJOR_BRANCH_DATE",
 						"chrome/VERSION",
 					},
