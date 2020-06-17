@@ -321,7 +321,10 @@
   },
   {
     "cmd": [],
-    "name": "find last non-crashing upstream revision"
+    "name": "find last non-crashing upstream revision",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -355,12 +358,70 @@
     ],
     "name": "find last non-crashing upstream revision.train recipes at upstream master",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "--",
+      "."
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.clear diffs from upstream master",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.git clean",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "HEAD~"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.checkout upstream at master~1",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[CACHE]/builder/depot_tools/depot_tools/some/path/recipes.py",
+      "-O",
+      "recipe_engine=[CACHE]/builder/recipe_engine/recipe_engine",
+      "test",
+      "train",
+      "--no-docs"
+    ],
+    "name": "find last non-crashing upstream revision.train recipes at upstream master~1",
+    "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "find last non-crashing upstream revision.using upstream master as base",
+    "name": "find last non-crashing upstream revision.using upstream master~1 as base",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -414,11 +475,56 @@
       "git",
       "rebase",
       "--autostash",
-      "abcd"
+      "deadbeef"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "rebase CL onto abcd"
+    "name": "rebase CL onto deadbeef",
+    "~followup_annotations": [
+      "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "rebase",
+      "--abort"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git rebase"
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-xf"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "git clean (3)"
+  },
+  {
+    "cmd": [
+      "git",
+      "checkout",
+      "-f",
+      "deadbeef"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "sync recipe_engine to CL (2)"
+  },
+  {
+    "cmd": [
+      "git",
+      "rebase",
+      "--autostash",
+      "refs/remotes/origin/master"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "rebase CL onto refs/remotes/origin/master"
   },
   {
     "cmd": [
@@ -431,28 +537,30 @@
       "train",
       "--no-docs"
     ],
-    "name": "train recipes at upstream CL",
-    "~followup_annotations": [
-      "@@@STEP_FAILURE@@@"
-    ]
+    "name": "train recipes at upstream CL"
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--exit-code"
+    ],
+    "cwd": "[CACHE]/builder/depot_tools/depot_tools",
+    "infra_step": true,
+    "name": "post-train diff at upstream CL"
   },
   {
     "cmd": [
       "python",
       "-u",
-      "import sys; sys.exit(1)"
+      "import sys; sys.exit(0)"
     ],
-    "name": "MISSING FOOTER IN CL MESSAGE",
+    "name": "Roll OK",
     "~followup_annotations": [
-      "@@@STEP_TEXT@<br/><br/>Add<br/><br/>    Recipe-Manual-Change: depot_tools<br/><br/>To your CL message.<br/><br/>This means that your upstream CL (this one) will require MANUAL CODE CHANGES<br/>in the downstream repo 'depot_tools'. Best practice is to prepare all downstream<br/>changes before landing the upstream CL, using:<br/><br/>    depot_tools/some/path/recipes.py -O recipe_engine=/path/to/local/recipe_engine test train<br/><br/>When that CL has been reviewed, you can land this upstream change. Once the<br/>upstream change lands, roll it into your downstream CL:<br/><br/>    depot_tools/recipes.py manual_roll   # may require running multiple times.<br/><br/>Re-train expectations and upload the expectations plus the roll to your<br/>downstream CL. It's customary to copy the outputs of manual_roll to create<br/>a changelog to attach to the downstream CL as well to help reviewers understand<br/>what the roll contains.@@@",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_TEXT@CL is trivial and message contains no footers for this repo.@@@"
     ]
   },
   {
-    "failure": {
-      "failure": {},
-      "humanReason": "Step('MISSING FOOTER IN CL MESSAGE') (retcode: 1)"
-    },
     "name": "$result"
   }
 ]

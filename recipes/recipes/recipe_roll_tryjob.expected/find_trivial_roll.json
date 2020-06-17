@@ -368,6 +368,19 @@
   {
     "cmd": [
       "git",
+      "rev-parse",
+      "HEAD"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "find last non-crashing upstream revision.get upstream base revision",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
       "add",
       "--all"
     ],
@@ -401,11 +414,11 @@
       "git",
       "rebase",
       "--autostash",
-      "refs/remotes/origin/master"
+      "abcd"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "rebase CL onto master"
+    "name": "rebase CL onto abcd"
   },
   {
     "cmd": [

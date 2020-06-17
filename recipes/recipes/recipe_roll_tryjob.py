@@ -145,7 +145,7 @@ class RecipesRepo(object):
           recipes_cfg.get('recipes_path', ''), 'recipes.py')
     return self._recipes_py
 
-  def checkout_cl(self):
+  def checkout_cl(self, base):
     """Sync the repo the CL that triggered this build.
 
     Assumes this repo is the repo for the CL.
@@ -153,8 +153,12 @@ class RecipesRepo(object):
     assert self._cl_revision
     self.checkout(self._cl_revision, 'sync %s to CL' % self.name)
     with self._api.context(cwd=self.root):
-      self._api.git(
-          'rebase', '--autostash', MASTER_REF, name='rebase CL onto master')
+      try:
+        self._api.git(
+            'rebase', '--autostash', base, name='rebase CL onto %s' % base)
+      except self._api.step.StepFailure:
+        self._api.git('rebase', '--abort')
+        raise
 
   def checkout_master(self):
     """Sync the repo to master."""
@@ -290,6 +294,8 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
 
   upstream_repo.checkout_master()
 
+  last_non_crashing_revision = None
+
   # Starting from the tip of the upstream master branch, go back in history
   # until we find a commit that we can train the downstream repo against
   # without a crash. We'll use the downstream diff caused by this commit to the
@@ -319,12 +325,29 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
         downstream_repo.clear_diffs('clear diffs from upstream %s' % ref)
       else:
         api.step('using upstream %s as base' % ref, None)
+        with api.context(cwd=upstream_repo.root):
+          rev_parse_step = api.git(
+              'rev-parse',
+              'HEAD',
+              name='get upstream base revision',
+              stdout=api.raw_io.output(),
+              step_test_data=lambda: api.raw_io.test_api.stream_output('abcd'))
+          last_non_crashing_revision = rev_parse_step.stdout.strip()
         break
 
   with api.context(cwd=downstream_repo.root):
     api.git('add', '--all', name='save post-train downstream diff')
 
-  upstream_repo.checkout_cl()
+  # If we failed to find a non-crashing revision, just rebase onto master.
+  rebase_onto = last_non_crashing_revision or MASTER_REF
+
+  try:
+    upstream_repo.checkout_cl(base=rebase_onto)
+  except api.step.StepFailure:
+    # If this CL doesn't rebase cleanly on top of the last non-crashing
+    # revision, we'll fall back to rebasing on top of master. Training after
+    # this will probably fail unless the CL actually fixes the crash.
+    upstream_repo.checkout_cl(base=MASTER_REF)
 
   try:
     downstream_repo.train(upstream_repo, 'train recipes at upstream CL')
@@ -500,6 +523,18 @@ def GenTests(api):
         '.train recipes at upstream master',
         retcode=1)
   )
+
+  # The current upstream master causes a crash in the downstream repo, but the
+  # trivial CL fixes that.
+  yield (test('trivial_roll_upstream_master_broken_rebase_fails') +
+         api.step_data(
+             'find last non-crashing upstream revision'
+             '.train recipes at upstream master',
+             retcode=1) + api.step_data(
+                 'find last non-crashing upstream revision'
+                 '.get upstream base revision',
+                 stdout=api.raw_io.output('deadbeef')) +
+         api.step_data('rebase CL onto deadbeef', retcode=1))
 
   # None of the ancestor commits of the upstream repo's master branch are
   # compatible with the downstream repo (they all cause crashes).
