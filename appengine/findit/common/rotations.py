@@ -11,7 +11,8 @@ from common.findit_http_client import FinditHttpClient
 from libs import time_util
 from model.wf_config import FinditConfig
 
-_ROTATIONS_URL = 'https://rota-ng.appspot.com/legacy/sheriff.json'
+_ROTATIONS_URL = ('https://chrome-ops-rotation-proxy.appspot.com/current/'
+                  'oncallator:chrome-build-sheriff')
 
 _HTTP_CLIENT = FinditHttpClient()
 
@@ -21,7 +22,7 @@ def current_sheriffs():
   if status_code == 200:
     content = json.loads(content)
     if 'emails' not in content:
-      raise Exception('Malformed sheriff.json at %s' % _ROTATIONS_URL)
+      raise Exception('Malformed sheriff json at %s' % _ROTATIONS_URL)
     return content['emails']
   else:
     raise Exception('Could not retrieve sheriff list from %s, got code %d' %
