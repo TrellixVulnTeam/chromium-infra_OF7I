@@ -75,15 +75,6 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 	if err != nil {
 		return err
 	}
-	var s fleet.Switch
-	if c.interactive {
-		utils.GetSwitchInteractiveInput(&s)
-	} else {
-		err = utils.ParseJSONFile(c.newSpecsFile, &s)
-		if err != nil {
-			return err
-		}
-	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
@@ -91,6 +82,15 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	var s fleet.Switch
+	if c.interactive {
+		utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
+	} else {
+		err = utils.ParseJSONFile(c.newSpecsFile, &s)
+		if err != nil {
+			return err
+		}
+	}
 	s.Name = UfleetUtil.AddPrefix(UfleetUtil.SwitchCollection, s.Name)
 	res, err := ic.UpdateSwitch(ctx, &UfleetAPI.UpdateSwitchRequest{
 		Switch: &s,

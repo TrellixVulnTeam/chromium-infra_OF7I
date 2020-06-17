@@ -99,7 +99,7 @@ func (c *addMachinelsePrototype) innerRun(a subcommands.Application, args []stri
 	})
 	var machinelsePrototype fleet.MachineLSEPrototype
 	if c.interactive {
-		utils.GetMachinelsePrototypeInteractiveInput(ctx, ic, &machinelsePrototype)
+		utils.GetMachinelsePrototypeInteractiveInput(ctx, ic, &machinelsePrototype, false)
 	} else {
 		err = utils.ParseJSONFile(c.newSpecsFile, &machinelsePrototype)
 		if err != nil {

@@ -87,7 +87,7 @@ func GetInteractiveInput() []string {
 }
 
 // GetSwitchInteractiveInput get switch input in interactive mode
-func GetSwitchInteractiveInput(s *fleet.Switch) {
+func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s *fleet.Switch, update bool) {
 	input := &Input{
 		Key:      "Name",
 		Desc:     UfleetAPI.ValidName,
@@ -110,6 +110,13 @@ func GetSwitchInteractiveInput(s *fleet.Switch) {
 			switch input.Key {
 			case "Name":
 				if !UfleetAPI.IDRegex.MatchString(value) {
+					break
+				}
+				if !update && SwitchExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !SwitchExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
 				s.Name = value
@@ -140,7 +147,7 @@ func GetSwitchInteractiveInput(s *fleet.Switch) {
 // Name(string) -> Lab(enum) -> Browser/OS LAB(choice to branch) ->
 // -> getBrowserMachineInteractiveInput()/getOSMachineInteractiveInput() ->
 // -> Realm(string)
-func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machine *fleet.Machine) {
+func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machine *fleet.Machine, update bool) {
 	input := &Input{
 		Key:      "Name",
 		Desc:     UfleetAPI.ValidName,
@@ -166,8 +173,11 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 					input.Desc = UfleetAPI.ValidName
 					break
 				}
-				if MachineExists(ctx, ic, value) {
+				if !update && MachineExists(ctx, ic, value) {
 					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !MachineExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
 				machine.Name = value
@@ -447,7 +457,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 // Name(string) -> Broswer/ATL/ACS LAB(choice to branch) ->
 // -> getBrowserMachinelseInteractiveInput()/getOSMachinelseInteractiveInput() ->
 // -> Machine(repeated string, resource)
-func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machinelse *fleet.MachineLSE) {
+func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machinelse *fleet.MachineLSE, update bool) {
 	input := &Input{
 		Key:      "Name",
 		Desc:     UfleetAPI.ValidName,
@@ -474,8 +484,11 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 					input.Desc = UfleetAPI.ValidName
 					break
 				}
-				if MachineLSEExists(ctx, ic, value) {
+				if !update && MachineLSEExists(ctx, ic, value) {
 					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !MachineLSEExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
 				machinelse.Name = value
@@ -1077,7 +1090,7 @@ func getVms(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanne
 //
 // Name(string) -> Broswer/ATL/ACS LAB(choice) ->Occupied Capacity(int) ->
 // -> getPeripheralRequirements() -> getVirtualRequirements()
-func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, mlsep *fleet.MachineLSEPrototype) {
+func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, mlsep *fleet.MachineLSEPrototype, update bool) {
 	input := &Input{
 		Key:      "Broswer/ATL/ACS LAB",
 		Desc:     fmt.Sprintf("%s%s", ChooseLab, BrowserOrATLOrACSLab),
@@ -1127,8 +1140,11 @@ func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.Fl
 					input.Desc = UfleetAPI.ValidName
 					break
 				}
-				if MachineLSEPrototypeExists(ctx, ic, prefix+value) {
+				if !update && MachineLSEPrototypeExists(ctx, ic, prefix+value) {
 					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !MachineLSEPrototypeExists(ctx, ic, prefix+value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
 				mlsep.Name = prefix + value

@@ -119,7 +119,7 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 	})
 	var machine fleet.Machine
 	if c.interactive {
-		utils.GetMachineInteractiveInput(ctx, ic, &machine)
+		utils.GetMachineInteractiveInput(ctx, ic, &machine, false)
 	} else {
 		err = utils.ParseJSONFile(c.newSpecsFile, &machine)
 		if err != nil {

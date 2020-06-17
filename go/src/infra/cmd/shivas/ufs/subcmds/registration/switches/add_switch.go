@@ -74,15 +74,6 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 	if err != nil {
 		return err
 	}
-	var s fleet.Switch
-	if c.interactive {
-		utils.GetSwitchInteractiveInput(&s)
-	} else {
-		err = utils.ParseJSONFile(c.newSpecsFile, &s)
-		if err != nil {
-			return err
-		}
-	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
@@ -90,6 +81,15 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	var s fleet.Switch
+	if c.interactive {
+		utils.GetSwitchInteractiveInput(ctx, ic, &s, false)
+	} else {
+		err = utils.ParseJSONFile(c.newSpecsFile, &s)
+		if err != nil {
+			return err
+		}
+	}
 	res, err := ic.CreateSwitch(ctx, &UfleetAPI.CreateSwitchRequest{
 		Switch:   &s,
 		SwitchId: s.GetName(),
