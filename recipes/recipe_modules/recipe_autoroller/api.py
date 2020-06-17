@@ -313,11 +313,12 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       if s.set_autosubmit:
         upload_args.append('--enable-auto-submit')
 
-    cc_list = set()
-    for commits in picked_details['commit_infos'].itervalues():
-      for commit in commits:
-        cc_list.add(commit['author_email'])
-    upload_args.append('--cc=%s' % ','.join(sorted(cc_list)))
+    if not spec.autoroll_recipe_options.no_cc_authors:
+      cc_list = set()
+      for commits in picked_details['commit_infos'].itervalues():
+        for commit in commits:
+          cc_list.add(commit['author_email'])
+      upload_args.append('--cc=%s' % ','.join(sorted(cc_list)))
     upload_args.extend(['--bypass-hooks', '-f'])
 
     commit_message = get_commit_message(roll_result)

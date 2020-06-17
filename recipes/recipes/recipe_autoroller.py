@@ -157,3 +157,7 @@ def GenTests(api):
       api.recipe_autoroller.roll_data(
           'build', repo_spec(include_autoroll_options=False), trivial=False)
   )
+
+  yield (
+      test('no_cc_authors') +
+      api.recipe_autoroller.roll_data('build', repo_spec(no_cc_authors=True)))

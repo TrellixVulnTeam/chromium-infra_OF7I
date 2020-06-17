@@ -179,7 +179,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"disable_reason\": \"\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"no_cc_authors\": false, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"no_cc_authors\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@    \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"extra_reviewer_emails\": [@@@",
@@ -220,26 +220,8 @@
     "name": "build.gsutil repo_state",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@ (trivial)@@@",
-      "@@@STEP_LINK@Issue 123456789@https://codereview.chromium.org/123456789@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "status",
-      "--issue",
-      "123456789",
-      "--field",
-      "status"
-    ],
-    "cwd": "[CACHE]/builder/recipe_autoroller/build",
-    "name": "build.git cl status",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@closed@@@"
+      "@@@STEP_LOG_LINE@stderr@No URLs matched@@@",
+      "@@@STEP_LOG_END@stderr@@@"
     ]
   },
   {
@@ -276,7 +258,7 @@
       "@@@STEP_LOG_LINE@json.output@      \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"disable_reason\": \"\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"no_cc_authors\": false, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"no_cc_authors\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"extra_reviewer_emails\": [@@@",
@@ -320,7 +302,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"disable_reason\": \"\", @@@",
-      "@@@STEP_LOG_LINE@json.output@          \"no_cc_authors\": false, @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"no_cc_authors\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@            \"extra_reviewer_emails\": [@@@",
@@ -390,7 +372,6 @@
       "--tbrs=meep@example.com",
       "--tbr-owners",
       "--use-commit-queue",
-      "--cc=foo@chromium.org",
       "--bypass-hooks",
       "-f",
       "--message-file",
@@ -432,7 +413,7 @@
       "RECIPE_REPO[depot_tools]/gsutil.py",
       "----",
       "cp",
-      "{\"issue\": \"123456789\", \"issue_url\": \"https://codereview.chromium.org/123456789\", \"last_roll_ts_utc\": \"2016-01-01T00:00:03\", \"trivial\": true}",
+      "{\"issue\": \"123456789\", \"issue_url\": \"https://codereview.chromium.org/123456789\", \"last_roll_ts_utc\": \"2012-05-14T12:53:21\", \"trivial\": true}",
       "gs://recipe-mega-roller-crappy-db/repo_metadata/aHR0cHM6Ly9leGFtcGxlLmNvbS9idWlsZC5naXQ="
     ],
     "infra_step": true,

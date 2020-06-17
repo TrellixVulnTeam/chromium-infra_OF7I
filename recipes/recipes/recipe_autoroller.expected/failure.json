@@ -179,6 +179,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"disable_reason\": \"\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"no_cc_authors\": false, @@@",
       "@@@STEP_LOG_LINE@json.output@    \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"extra_reviewer_emails\": [@@@",
@@ -259,6 +260,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"disable_reason\": \"\", @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"no_cc_authors\": false, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@            \"extra_reviewer_emails\": [@@@",
@@ -287,7 +289,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"trivial\": null@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LOG_LINE@candidate #1@{\"api_version\": 2, \"autoroll_recipe_options\": {\"disable_reason\": \"\", \"nontrivial\": {\"automatic_commit_dry_run\": true, \"extra_reviewer_emails\": [\"foo@chromium.org\", \"foo@bar.example.com\", \"meep@example.com\"], \"set_autosubmit\": true}, \"trivial\": {\"automatic_commit\": true, \"dry_run\": false, \"tbr_emails\": [\"foo@bar.example.com\", \"meep@example.com\"]}}, \"deps\": {\"recipe_engine\": {}}}@@@",
+      "@@@STEP_LOG_LINE@candidate #1@{\"api_version\": 2, \"autoroll_recipe_options\": {\"disable_reason\": \"\", \"no_cc_authors\": false, \"nontrivial\": {\"automatic_commit_dry_run\": true, \"extra_reviewer_emails\": [\"foo@chromium.org\", \"foo@bar.example.com\", \"meep@example.com\"], \"set_autosubmit\": true}, \"trivial\": {\"automatic_commit\": true, \"dry_run\": false, \"tbr_emails\": [\"foo@bar.example.com\", \"meep@example.com\"]}}, \"deps\": {\"recipe_engine\": {}}}@@@",
       "@@@STEP_LOG_END@candidate #1@@@"
     ]
   },

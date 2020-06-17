@@ -20,7 +20,8 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
                 trivial_dryrun=False,
                 nontrivial_dryrun=True,
                 nontrivial_autosubmit=True,
-                include_autoroll_options=True):
+                include_autoroll_options=True,
+                no_cc_authors=False):
     spec = {
       'api_version': 2,
       'deps': {
@@ -40,6 +41,7 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
               'set_autosubmit': nontrivial_autosubmit,
           },
           'disable_reason': disable_reason,
+          'no_cc_authors': no_cc_authors,
       }
     return spec
 
