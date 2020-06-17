@@ -12,7 +12,7 @@
 # >
 # wheel: <
 #   name: "infra/python/wheels/yapf-py2_py3"
-#   version: "version:0.27.0"
+#   version: "version:0.30.0"
 # >
 # [VPYTHON:END]
 
