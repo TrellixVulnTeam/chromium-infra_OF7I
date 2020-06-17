@@ -191,6 +191,44 @@ var RuleMap = map[string]*RefConfig{
 
 	// Fuchsia
 
+	"fuchsia-infra-infra-master": {
+		BaseRepoURL: "https://fuchsia.googlesource.com/infra/infra.git",
+		GerritURL:   "https://fuchsia-review.googlesource.com",
+		BranchName:  "refs/heads/master",
+		// No special meaning, ToT as of the time this line was added.
+		StartingCommit:  "bd088ea214e2da0b4b3df13388d4c02d97fe0a56",
+		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailProject: "fuchsia",
+		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
+		Rules: map[string]AccountRules{
+			"manual-changes": {
+				Account: "*",
+				Rules: []Rule{
+					ChangeReviewed{Robots: fuchsiaRobots},
+				},
+				NotificationFunction: FileBugForTBRViolation,
+			},
+		},
+	},
+	"fuchsia-infra-prebuilt-master": {
+		BaseRepoURL: "https://fuchsia.googlesource.com/infra/prebuilt.git",
+		GerritURL:   "https://fuchsia-review.googlesource.com",
+		BranchName:  "refs/heads/master",
+		// No special meaning, ToT as of the time this line was added.
+		StartingCommit:  "3b321ef9895192d07bb043c64cdcb7aab16be595",
+		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailProject: "fuchsia",
+		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
+		Rules: map[string]AccountRules{
+			"manual-changes": {
+				Account: "*",
+				Rules: []Rule{
+					ChangeReviewed{Robots: fuchsiaRobots},
+				},
+				NotificationFunction: FileBugForTBRViolation,
+			},
+		},
+	},
 	"fuchsia-infra-recipes-master": {
 		BaseRepoURL: "https://fuchsia.googlesource.com/infra/recipes.git",
 		GerritURL:   "https://fuchsia-review.googlesource.com",
