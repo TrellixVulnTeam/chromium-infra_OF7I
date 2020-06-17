@@ -16,8 +16,9 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/common/gcloud/gs"
 
-	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	gslib "infra/cmd/stable_version2/internal/gs"
+
+	labPlatform "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 )
 
 // BoardModel is a combined build target and model. It is used for models that aren't present
@@ -48,29 +49,29 @@ type ValidationResult struct {
 	InvalidVersions []*VersionMismatch `json:"invalid_versions"`
 }
 
-// RemoveWhitelistedDUTs removes DUTs that are whitelisted from the validation error summary.
+// RemoveAllowedDUTs removes DUTs that are exempted from the validation error summary.
 // examples include labstations
-func (r *ValidationResult) RemoveWhitelistedDUTs() {
+func (r *ValidationResult) RemoveAllowedDUTs() {
 	var newMissingBoards []string
 	var newFailedToLookup []*BoardModel
 	var newInvalidVersions []*VersionMismatch
 	if len(r.MissingBoards) != 0 {
 		for _, item := range r.MissingBoards {
-			if !missingBoardWhitelist[item] {
+			if !missingBoardAllowList[item] {
 				newMissingBoards = append(newMissingBoards, item)
 			}
 		}
 	}
 	if len(r.FailedToLookup) != 0 {
 		for _, item := range r.FailedToLookup {
-			if !failedToLookupWhiteList[fmt.Sprintf("%s;%s", item.BuildTarget, item.Model)] {
+			if !failedToLookupAllowList[fmt.Sprintf("%s;%s", item.BuildTarget, item.Model)] {
 				newFailedToLookup = append(newFailedToLookup, item)
 			}
 		}
 	}
 	if len(r.InvalidVersions) != 0 {
 		for _, item := range r.InvalidVersions {
-			if !invalidVersionWhiteList[fmt.Sprintf("%s;%s", item.BuildTarget, item.Model)] {
+			if !invalidVersionAllowList[fmt.Sprintf("%s;%s", item.BuildTarget, item.Model)] {
 				newInvalidVersions = append(newInvalidVersions, item)
 			}
 		}

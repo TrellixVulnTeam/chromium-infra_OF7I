@@ -108,7 +108,7 @@ func (c *command) innerRun(a subcommands.Application, args []string, env subcomm
 	if err != nil {
 		return fmt.Errorf("valdating config using Google Storage: %s", err)
 	}
-	res.RemoveWhitelistedDUTs()
+	res.RemoveAllowedDUTs()
 	msg, err := json.MarshalIndent(res, "", "    ")
 	if err != nil {
 		panic("failed to marshal JSON")

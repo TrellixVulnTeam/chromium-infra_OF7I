@@ -287,7 +287,7 @@ func TestValidateConfig(t *testing.T) {
 	}
 }
 
-var testRemoveWhiteListData = []struct {
+var testRemoveAllowedData = []struct {
 	name string
 	uuid string
 	in   string
@@ -300,7 +300,7 @@ var testRemoveWhiteListData = []struct {
 		"{}",
 	},
 	{
-		"remove explicitly whitelisted board buddy_cfm",
+		"remove explicitly allowed board buddy_cfm",
 		"ef203c4d-6224-44df-ba80-9253dc47e4f7",
 		`{
 			"missing_boards": ["buddy_cfm"]
@@ -308,13 +308,13 @@ var testRemoveWhiteListData = []struct {
 		"{}",
 	},
 	{
-		"don't remove non-whitelisted board",
+		"don't remove non-allowed board",
 		"41655030-dd58-481f-bcb4-4be4dfc01f07",
 		`{
-			"missing_boards": ["NOT A WHITELISTED BOARD"]
+			"missing_boards": ["NOT AN ALLOWED BOARD"]
 		}`,
 		`{
-			"missing_boards": ["NOT A WHITELISTED BOARD"]
+			"missing_boards": ["NOT AN ALLOWED BOARD"]
 		}`,
 	},
 	{
@@ -326,13 +326,13 @@ var testRemoveWhiteListData = []struct {
 		"{}",
 	},
 	{
-		"leave non-whitelisted build target in place",
+		"leave non-allowed build target in place",
 		"24d51d50-8d34-498f-8c1d-b15341dfc549",
 		`{
-			"failed_to_lookup": [{"build_target": "NOT WHITELISTED", "model": "NOT WHITELISTED"}]
+			"failed_to_lookup": [{"build_target": "NOT ALLOWED", "model": "NOT ALLOWED"}]
 		}`,
 		`{
-			"failed_to_lookup": [{"build_target": "NOT WHITELISTED", "model": "NOT WHITELISTED"}]
+			"failed_to_lookup": [{"build_target": "NOT ALLOWED", "model": "NOT ALLOWED"}]
 		}`,
 	},
 	{
@@ -346,7 +346,7 @@ var testRemoveWhiteListData = []struct {
 		}`,
 	},
 	{
-		"retain non-whitelisted invalid version mismatch",
+		"retain non-allowed invalid version mismatch",
 		"fb105639-2eea-438a-809e-f01a9d98492b",
 		`{
 			"invalid_versions": [{"build_target": "A", "model": "B", "wanted": "C", "got": "D"}]
@@ -357,15 +357,15 @@ var testRemoveWhiteListData = []struct {
 	},
 }
 
-func TestRemoveWhiteList(t *testing.T) {
+func TestRemoveAllowed(t *testing.T) {
 	t.Parallel()
-	for _, tt := range testRemoveWhiteListData {
+	for _, tt := range testRemoveAllowedData {
 		t.Run(tt.uuid, func(t *testing.T) {
 			var in ValidationResult
 			var out ValidationResult
 			unmarshalOrPanic(tt.in, &in)
 			unmarshalOrPanic(tt.out, &out)
-			in.RemoveWhitelistedDUTs()
+			in.RemoveAllowedDUTs()
 			if diff := cmp.Diff(out, in); diff != "" {
 				msg := fmt.Sprintf("uuid (%s): unexpected diff (%s)", tt.uuid, diff)
 				t.Errorf(msg)

@@ -8,7 +8,7 @@
 
 package querygs
 
-var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
+var missingBoardAllowList map[string]bool = stringSliceToStringSet([]string{
 	"atlas_kvm",
 	"buddy_cfm",
 	"caroline_arcnext",
@@ -54,7 +54,7 @@ var missingBoardWhitelist map[string]bool = stringSliceToStringSet([]string{
 	"x86_zgb_he",
 })
 
-var failedToLookupWhiteList map[string]bool = stringSliceToStringSet([]string{
+var failedToLookupAllowList map[string]bool = stringSliceToStringSet([]string{
 	"fizz-labstation;fizz-labstation",
 	"hatch;unprovisioned_helios",
 	"hatch;unprovisioned_kindred",
@@ -70,7 +70,7 @@ var failedToLookupWhiteList map[string]bool = stringSliceToStringSet([]string{
 // Add the models that are exempted here.
 //
 // Entries in this list have the form "board;model".
-var invalidVersionWhiteList map[string]bool = stringSliceToStringSet([]string{
+var invalidVersionAllowList map[string]bool = stringSliceToStringSet([]string{
 	"zork;dalboz",
 })
 
