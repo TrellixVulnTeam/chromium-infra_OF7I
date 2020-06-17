@@ -93,6 +93,15 @@ func (kitchenSupport) GenerateCommand(ctx context.Context, bb *job.Buildbucket) 
 	if err != nil {
 		return nil, errors.Annotate(err, "deserializing build").Err()
 	}
+	propStruct.Fields["$recipe_engine/runtime"] = &structpb.Value{
+		Kind: &structpb.Value_StructValue{StructValue: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"is_luci": {Kind: &structpb.Value_BoolValue{BoolValue: true}},
+				"is_experimental": {Kind: &structpb.Value_BoolValue{
+					BoolValue: bb.BbagentArgs.Build.Input.Experimental,
+				}},
+			},
+		}}}
 
 	kitchenArgs.RecipeName = propStruct.Fields["recipe"].GetStringValue()
 
