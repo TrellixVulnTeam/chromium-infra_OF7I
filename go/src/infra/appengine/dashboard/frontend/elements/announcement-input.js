@@ -26,7 +26,8 @@ export class AnnouncementInput extends LitElement {
     super();
     this.disabled = true;
     // TODO(jojwang): Fetch platforms from luci-config when that is set up.
-    this.platformNames = ['chromium-review', 'chrome-internal-review'];
+    this.platformNames = ['chromium-review', 'chrome-internal-review',
+      'monorail'];
   }
 
   static get styles() {
