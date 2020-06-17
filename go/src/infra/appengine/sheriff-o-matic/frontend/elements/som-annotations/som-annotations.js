@@ -282,7 +282,6 @@ class SomAnnotations extends Polymer.mixinBehaviors([
         (error) => {
           this.$.fileBug.onBugLinkedFailed(error);
         });
-    return response;
   }
 
   _builderFailureInfo(builder) {
