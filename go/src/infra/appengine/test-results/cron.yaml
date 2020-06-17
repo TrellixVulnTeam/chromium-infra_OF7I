@@ -6,9 +6,6 @@ cron:
     url: /internal/cron/delete_old_results
     # TODO(sergiyb): Reduce to every 1 hour after initial cleanup of old data.
     schedule: every 1 minutes
-  - description: Update datastore config cache.
-    url: /admin/config/cache/manager
-    schedule: every 10 minutes
   - description: Update latest write age metrics
     url: /internal/cron/update_write_age_metrics
     schedule: every 1 minutes
