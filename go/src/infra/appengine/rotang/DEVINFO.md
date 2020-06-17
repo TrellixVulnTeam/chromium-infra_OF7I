@@ -1,4 +1,4 @@
-# Developer information.
+# Developer information
 
 # Table of contents
 - [Code Layout](#code-layout)
