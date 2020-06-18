@@ -141,6 +141,11 @@ Then, to run the frontend tests, run:
 make karma
 ```
 
+If you want to skip the coverage for karma, run:
+```
+make karma_debug
+```
+
 To run only one test or a subset of tests, you can add `.only` to the test
 function you want to isolate:
 

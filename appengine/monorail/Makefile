@@ -127,6 +127,9 @@ node_deps:
 karma:
 	npx karma start --debug --coverage
 
+karma_debug:
+	npx karma start --debug
+
 pylint:
 	pylint -f parseable *py {$(PY_DIRS)}{/,/test/}*py
 
