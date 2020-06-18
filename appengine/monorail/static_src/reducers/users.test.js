@@ -16,7 +16,7 @@ describe('user reducers', () => {
   it('root reducer initial state', () => {
     const actual = users.reducer(undefined, {type: null});
     const expected = {
-      currentUserName: {},
+      currentUserName: null,
       byName: {},
       projectMemberships: {},
       requests: {
@@ -26,6 +26,12 @@ describe('user reducers', () => {
       },
     };
     assert.deepEqual(actual, expected);
+  });
+
+  it('currentUserName updates on LOG_IN', () => {
+    const action = {type: users.LOG_IN, user: example.USER};
+    const actual = users.currentUserNameReducer(null, action);
+    assert.deepEqual(actual, example.NAME);
   });
 
   it('byName updates on BATCH_GET_SUCCESS', () => {
@@ -52,6 +58,11 @@ describe('user reducers', () => {
 });
 
 describe('user selectors', () => {
+  it('currentUserName', () => {
+    const state = {users: {currentUserName: example.NAME}};
+    assert.deepEqual(users.currentUserName(state), example.NAME);
+  });
+
   it('byName', () => {
     const state = {users: {byName: example.BY_NAME}};
     assert.deepEqual(users.byName(state), example.BY_NAME);

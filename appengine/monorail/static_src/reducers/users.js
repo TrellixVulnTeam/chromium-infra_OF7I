@@ -62,8 +62,8 @@ export const GATHER_PROJECT_MEMBERSHIPS_FAILURE =
  * @param {User} action.user The user that was logged in.
  * @return {?string}
  */
-export const currentUserNameReducer = createReducer({}, {
-  [LOG_IN]: (state, {user}) => ({...state, ['currentUserName']: user.name}),
+export const currentUserNameReducer = createReducer(null, {
+  [LOG_IN]: (_state, {user}) => user.name,
 });
 
 /**
