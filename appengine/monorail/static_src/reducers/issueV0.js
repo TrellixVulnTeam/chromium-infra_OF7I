@@ -33,13 +33,13 @@ import 'shared/typedef.js';
 // Actions
 export const VIEW_ISSUE = 'VIEW_ISSUE';
 
-export const FETCH_START = 'issue/FETCH_START';
-export const FETCH_SUCCESS = 'issue/FETCH_SUCCESS';
-export const FETCH_FAILURE = 'issue/FETCH_FAILURE';
+export const FETCH_START = 'issueV0/FETCH_START';
+export const FETCH_SUCCESS = 'issueV0/FETCH_SUCCESS';
+export const FETCH_FAILURE = 'issueV0/FETCH_FAILURE';
 
-export const FETCH_ISSUES_START = 'issue/FETCH_ISSUES_START';
-export const FETCH_ISSUES_SUCCESS = 'issue/FETCH_ISSUES_SUCCESS';
-export const FETCH_ISSUES_FAILURE = 'issue/FETCH_ISSUES_FAILURE';
+export const FETCH_ISSUES_START = 'issueV0/FETCH_ISSUES_START';
+export const FETCH_ISSUES_SUCCESS = 'issueV0/FETCH_ISSUES_SUCCESS';
+export const FETCH_ISSUES_FAILURE = 'issueV0/FETCH_ISSUES_FAILURE';
 
 const FETCH_HOTLISTS_START = 'FETCH_HOTLISTS_START';
 export const FETCH_HOTLISTS_SUCCESS = 'FETCH_HOTLISTS_SUCCESS';
