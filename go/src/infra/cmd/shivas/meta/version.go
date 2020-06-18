@@ -7,6 +7,7 @@ package meta
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -14,6 +15,27 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/libs/cros/cipd"
 )
+
+// VersionNumber is the version number for the tool. It follows the Semantic
+// Versioning Specification (http://semver.org) and the format is:
+// "MAJOR.MINOR.0+BUILD_TIME".
+// We can ignore the PATCH part (i.e. it's always 0) to make the maintenance
+// work easier.
+// We can also print out the build time (e.g. 20060102150405) as the METADATA
+// when show version to users.
+var VersionNumber = fmt.Sprintf("%d.%d.%d", Major, Minor, Patch)
+
+// Major is the Major version number
+const Major = 1
+
+// Minor is the Minor version number
+const Minor = 0
+
+// Patch is the PAtch version number
+const Patch = 0
+
+// ClientVersion used as a key in metadata within context
+const ClientVersion string = "clientversion"
 
 // Version subcommand: Version shivas.
 var Version = &subcommands.Command{
@@ -51,9 +73,11 @@ func (c *versionRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 
-	fmt.Printf("Package:\t%s\n", p.Package)
-	fmt.Printf("Version:\t%s\n", p.Pin.InstanceID)
-	fmt.Printf("Updated:\t%s\n", d.RegisteredTs)
-	fmt.Printf("Tracking:\t%s\n", p.Tracking)
+	fmt.Printf("shivas CLI tool: v%s+%s\n", VersionNumber, time.Time(d.RegisteredTs).Format("20060102150405"))
+	fmt.Printf("CIPD Package:\t%s\n", p.Package)
+	fmt.Printf("CIPD Version:\t%s\n", p.Pin.InstanceID)
+	fmt.Printf("CIPD Updated:\t%s\n", d.RegisteredTs)
+	fmt.Printf("CIPD Tracking:\t%s\n", p.Tracking)
+
 	return nil
 }

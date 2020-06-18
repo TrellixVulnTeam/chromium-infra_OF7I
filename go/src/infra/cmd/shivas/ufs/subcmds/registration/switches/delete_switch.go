@@ -53,6 +53,7 @@ func (c *deleteSwitch) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
+	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err

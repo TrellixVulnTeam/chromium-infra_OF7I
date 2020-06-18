@@ -64,6 +64,7 @@ func (c *listMachine) Run(a subcommands.Application, args []string, env subcomma
 }
 func (c *listMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
+	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
