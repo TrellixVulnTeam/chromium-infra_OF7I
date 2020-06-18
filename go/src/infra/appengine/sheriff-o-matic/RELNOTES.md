@@ -1,3 +1,25 @@
+# Release Notes sheriff-o-matic 2020-06-18
+
+- 3 commits, 2 bugs affected since 116f261 (2020-06-04T04:27:40Z)
+- 2 Authors:
+  - jsca@google.com
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[som] Remove examine iframes for non-chromium projects.](https://chromium-review.googlesource.com/c/infra/infra/+/2249184) (jsca@google.com)
+- [[som] Fix runtime error caused by undefined variable.](https://chromium-review.googlesource.com/c/infra/infra/+/2249185) (jsca@google.com)
+- [SoM: Change text of link in examine page](https://chromium-review.googlesource.com/c/infra/infra/+/2230431) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1062096](https://crbug.com/1062096)
+
+- nqmtuan@google.com:
+  -  [https://crbug.com/1087062](https://crbug.com/1087062)
+
+
 # Release Notes sheriff-o-matic 2020-06-04
 
 - 4 commits, 3 bugs affected since 36809f9 (2020-05-31T23:31:24Z)
