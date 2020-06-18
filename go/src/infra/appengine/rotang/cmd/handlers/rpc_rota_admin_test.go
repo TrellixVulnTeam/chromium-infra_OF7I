@@ -161,7 +161,7 @@ func TestRPCCreateExternal(t *testing.T) {
 				return
 			}
 
-			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(&wantPB, &res); diff != "" {
 				t.Fatalf("%s: h.DeleteExternal(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})
@@ -277,7 +277,7 @@ func TestRPCDeleteExternal(t *testing.T) {
 				return
 			}
 
-			if diff := prettyConfig.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfig.Compare(&wantPB, &res); diff != "" {
 				t.Fatalf("%s: h.DeleteExternal(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})

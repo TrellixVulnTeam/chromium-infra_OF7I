@@ -514,7 +514,7 @@ func TestRPCRotationMembers(t *testing.T) {
 				return
 			}
 
-			if diff := prettyConfigIgnoreUnexported.Compare(wantPB, res); diff != "" {
+			if diff := prettyConfigIgnoreUnexported.Compare(&wantPB, &res); diff != "" {
 				t.Fatalf("%s: h.RotationMembers(ctx, _) differ -want +got: %s", tst.name, diff)
 			}
 		})
