@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmdsupport/cmdlib"
+	"infra/cros/cmd/result_flow/internal/bb"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
 )
@@ -95,11 +96,35 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 		return
 	}
 	bIDs := message.ToBuildIDs(ctx, msgs)
-	// TODO(linxinan): Next CL will call BB to get those builds.
-	// At this stage, the subcommand print out the build ID pulled
-	// from Pub/Sub.
-	for _, bID := range bIDs {
-		logging.Infof(ctx, "Fetched Build IDs from PubSub: %d", bID)
+
+	authOpts, err := c.authFlags.Options()
+	if err != nil {
+		ch <- state{result_flow.State_FAILED, err}
+		return
+	}
+	bc, err := bb.NewClient(
+		ctx,
+		c.source.GetBb(),
+		c.source.GetFields(),
+		authOpts,
+	)
+	if err != nil {
+		ch <- state{result_flow.State_FAILED, err}
+		return
+	}
+	builds, err := bc.GetTargetBuilds(ctx, bIDs)
+	if err != nil {
+		ch <- state{result_flow.State_FAILED, err}
+		return
+	}
+	// TODO(linxinan): Next CL will print the CTP request inside the build.
+	for _, build := range builds {
+		logging.Infof(
+			ctx,
+			"Fetched Build from Buildbucket. Build ID: %d, Build status: %v",
+			build.GetId(),
+			build.GetStatus(),
+		)
 	}
 
 	if err = mClient.AckMessages(ctx, msgs); err != nil {
