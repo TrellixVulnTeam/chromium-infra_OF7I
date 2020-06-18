@@ -256,6 +256,7 @@ const TEST_ALERTS = {
             "first_failure": 64888,
             "latest_failure": 64889,
             "name": "WebKit Linux",
+            "project": "chromium",
             "start_time": 1463700341.603623,
             "url": "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Linux"
           },
@@ -263,6 +264,7 @@ const TEST_ALERTS = {
             "first_failure": 12559,
             "latest_failure": 12559,
             "name": "WebKit Linux Trusty",
+            "project": "chromium",
             "start_time": 1463700596.653962,
             "url": "https://build.chromium.org/p/chromium.webkit/builders/WebKit%20Linux%20Trusty"
           }

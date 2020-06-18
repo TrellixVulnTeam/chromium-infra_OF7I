@@ -53,30 +53,32 @@
     </template>
 
     <!-- iframe for each builder/build/test log etc -->
-    <paper-tabs id="builderTabs" selected="{{selectedBuilder}}" attr-for-selected="id" scrollable>
-      <template is="dom-repeat" items="[[alert.extension.builders]]" as="builder">
-        <paper-tab id$="[[_tabId(builder)]]">
-          [[_tabTitle(builder)]]
-          <a href$="[[builder.url]]"
-              title="Open in a new window"
-              target="_blank">
-            <iron-icon icon="open-in-new"></iron-icon>
-          </a>
-        </paper-tab>
-      </template>
-    </paper-tabs>
-    <iron-pages id="builderPages" selected="{{selectedBuilder}}" attr-for-selected="id">
-      <template is="dom-repeat" items="[[alert.extension.builders]]" as="builder">
-        <div id$="[[builder.name]]:[[builder.latest_failure]]" class="builder-page">
-          <div>Builds: [[builder.first_failure]]-[[builder.latest_failure]]</div>
-          <template is="dom-if" if="[[!hideWebKitTests]]">
-            <som-webkit-tests builder="[[builder]]" test-name="[[selectedTest]]" test-type="[[alert.extension.reason.step]]">
-            </som-webkit-tests>
-          </template>
-          <iframe src$="[[builder.url]]"></iframe>
-        </div>
-      </template>
-    </iron-pages>
+    <template is="dom-if" if="[[showIframes]]">
+      <paper-tabs id="builderTabs" selected="{{selectedBuilder}}" attr-for-selected="id" scrollable>
+        <template is="dom-repeat" items="[[alert.extension.builders]]" as="builder">
+          <paper-tab id$="[[_tabId(builder)]]">
+            [[_tabTitle(builder)]]
+            <a href$="[[builder.url]]"
+                title="Open in a new window"
+                target="_blank">
+              <iron-icon icon="open-in-new"></iron-icon>
+            </a>
+          </paper-tab>
+        </template>
+      </paper-tabs>
+      <iron-pages id="builderPages" selected="{{selectedBuilder}}" attr-for-selected="id">
+        <template is="dom-repeat" items="[[alert.extension.builders]]" as="builder">
+          <div id$="[[builder.name]]:[[builder.latest_failure]]" class="builder-page">
+            <div>Builds: [[builder.first_failure]]-[[builder.latest_failure]]</div>
+            <template is="dom-if" if="[[!hideWebKitTests]]">
+              <som-webkit-tests builder="[[builder]]" test-name="[[selectedTest]]" test-type="[[alert.extension.reason.step]]">
+              </som-webkit-tests>
+            </template>
+            <iframe src$="[[builder.url]]"></iframe>
+          </div>
+        </template>
+      </iron-pages>
+    </template>
   </template>
   <script src="som-examine.js"></script>
 </dom-module>

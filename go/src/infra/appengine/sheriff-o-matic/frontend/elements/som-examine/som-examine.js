@@ -27,6 +27,10 @@ class SomExamine extends Polymer.LegacyElementMixin(Polymer.Element) {
         type: String,
         value: '',
       },
+      showIframes: {
+        type: Boolean,
+        computed: '_shouldShowIframes(alert)',
+      },
       hideTests: {
         type: Boolean,
         value: true,
@@ -74,6 +78,16 @@ class SomExamine extends Polymer.LegacyElementMixin(Polymer.Element) {
       this.hideTests = true;
       this.hideWebKitTests = true;
     }
+  }
+
+  _shouldShowIframes(alert) {
+    // We only show iframes for the chromium project, since iframes don't
+    // work for private builders (see crbug.com/1062096).
+    if (!alert.extension || !alert.extension.builders ||
+        !alert.extension.builders.length) {
+      return false;
+    }
+    return alert.extension.builders[0].project === 'chromium';
   }
 
   _tabId(builder) {
