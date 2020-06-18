@@ -85,8 +85,8 @@ export class _MrHotlistIssuesPage extends LitElement {
       name: this._hotlist.displayName,
     };
 
-    const MAY_EDIT = this._permissions.includes(hotlists.ADMINISTER) ||
-                     this._permissions.includes(hotlists.EDIT);
+    const mayEdit = this._permissions.includes(hotlists.ADMINISTER) ||
+                    this._permissions.includes(hotlists.EDIT);
     // TODO(https://crbug.com/monorail/7776): The UI to allow reranking of
     // Issues should reflect user permissions.
 
@@ -110,8 +110,8 @@ export class _MrHotlistIssuesPage extends LitElement {
         .columns=${this._columns}
         .defaultFields=${DEFAULT_HOTLIST_FIELDS}
         .extractFieldValues=${this._extractFieldValues.bind(this)}
-        .rerank=${this._rerankItems.bind(this)}
-        ?selectionEnabled=${MAY_EDIT}
+        .rerank=${mayEdit ? this._rerankItems.bind(this) : null}
+        ?selectionEnabled=${mayEdit}
         @selectionChange=${this._onSelectionChange}
       ></mr-issue-list>
 

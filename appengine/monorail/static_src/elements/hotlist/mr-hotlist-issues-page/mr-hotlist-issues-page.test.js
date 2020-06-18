@@ -59,6 +59,19 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
     assert.isNull(issueList.projectName);
   });
 
+  it('needs permissions to rerank', async () => {
+    element._hotlist = example.HOTLIST;
+    await element.updateComplete;
+
+    const issueList = element.shadowRoot.querySelector('mr-issue-list');
+    assert.isNull(issueList.rerank);
+
+    element._permissions = [hotlists.EDIT];
+    await element.updateComplete;
+
+    assert.isNotNull(issueList.rerank);
+  });
+
   it('memoizes issues', async () => {
     element._hotlist = example.HOTLIST;
     element._items = [example.HOTLIST_ISSUE];

@@ -39,6 +39,7 @@ export const DEFAULT_COLUMNS = [
 ];
 
 // Permissions
+// TODO(crbug.com/monorail/7879): Move these to a permissions constants file.
 export const EDIT = 'HOTLIST_EDIT';
 export const ADMINISTER = 'HOTLIST_ADMINISTER';
 
