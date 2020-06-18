@@ -68,6 +68,14 @@ describe('mr-hotlist-people-page (unconnected)', () => {
 
     assert.equal(element.shadowRoot.querySelectorAll('button').length, 1);
   });
+
+  it('shows remove button if user is editing themselves', async () => {
+    element._editors = [exampleUsers.USER, exampleUsers.USER_2];
+    element._currentUserName = exampleUsers.USER_2.name;
+    await element.updateComplete;
+
+    assert.equal(element.shadowRoot.querySelectorAll('button').length, 1);
+  });
 });
 
 describe('mr-hotlist-people-page (connected)', () => {

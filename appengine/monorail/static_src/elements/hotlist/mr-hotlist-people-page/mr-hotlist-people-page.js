@@ -9,6 +9,7 @@ import {userV3ToRef} from 'shared/convertersV0.js';
 import {store, connectStore} from 'reducers/base.js';
 import {hotlists} from 'reducers/hotlists.js';
 import * as sitewide from 'reducers/sitewide.js';
+import * as users from 'reducers/users.js';
 
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import 'elements/hotlist/mr-hotlist-header/mr-hotlist-header.js';
@@ -117,10 +118,13 @@ class _MrHotlistPeoplePage extends LitElement {
   _renderEditor(editor) {
     if (!editor) return html`<li class="placeholder"></li>`;
 
+    const canRemove = this._permissions.includes(hotlists.ADMINISTER) ||
+        editor.name === this._currentUserName;
+
     return html`
       <li>
         <mr-user-link .userRef=${userV3ToRef(editor)}></mr-user-link>
-        ${this._permissions.includes(hotlists.ADMINISTER) ? html`
+        ${canRemove ? html`
           <button @click=${this._removeEditor.bind(this, editor.name)}>
             <i class="material-icons">clear</i>
           </button>
@@ -136,6 +140,7 @@ class _MrHotlistPeoplePage extends LitElement {
       _owner: {type: Object},
       _editors: {type: Array},
       _permissions: {type: Array},
+      _currentUserName: {type: String},
     };
   }
 
@@ -147,6 +152,7 @@ class _MrHotlistPeoplePage extends LitElement {
     /** @type {?User} */ this._owner = null;
     /** @type {Array<User>} */ this._editors = null;
     /** @type {Array<Permission>} */ this._permissions = [];
+    /** @type {?String} */ this._currentUserName = null;
   }
 
   /**
@@ -164,6 +170,7 @@ export class MrHotlistPeoplePage extends connectStore(_MrHotlistPeoplePage) {
     this._owner = hotlists.viewedHotlistOwner(state);
     this._editors = hotlists.viewedHotlistEditors(state);
     this._permissions = hotlists.viewedHotlistPermissions(state);
+    this._currentUserName = users.currentUserName(state);
   }
 
   /** @override */
