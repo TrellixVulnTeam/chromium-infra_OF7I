@@ -28,6 +28,7 @@ import {pathsToFieldMask} from 'shared/converters.js';
 import * as issueV0 from './issueV0.js';
 import * as permissions from './permissions.js';
 import * as sitewide from './sitewide.js';
+import * as ui from './ui.js';
 import * as users from './users.js';
 
 import 'shared/typedef.js';
@@ -445,8 +446,14 @@ export const update = (name, hotlist) => async (dispatch) => {
         'monorail.v3.Hotlists', 'UpdateHotlist', args);
     dispatch({type: UPDATE_SUCCESS});
     dispatch({type: RECEIVE_HOTLIST, hotlist: updatedHotlist});
+
+    const editors = updatedHotlist.editors.map((editor) => editor);
+    editors.push(updatedHotlist.owner);
+    await dispatch(users.batchGet(editors));
   } catch (error) {
     dispatch({type: UPDATE_FAILURE, error});
+    dispatch(ui.showSnackbar(UPDATE_FAILURE, error.message));
+    throw error;
   }
 };
 

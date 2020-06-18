@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import debounce from 'debounce';
 import {LitElement, html, css} from 'lit-element';
 
 import {userV3ToRef} from 'shared/convertersV0.js';
@@ -35,19 +36,27 @@ class _MrHotlistPeoplePage extends LitElement {
       li {
         list-style-type: none;
       }
-      p, li {
+      p, li, form {
         display: flex;
       }
-      p, ul, li {
+      p, ul, li, form {
         margin: 12px 0;
       }
 
+      input {
+        margin-left; -6px;
+        padding: 4px;
+        width: 320px;
+      }
+
       button {
+        align-items: center;
+        background-color: transparent;
         border: 0;
         cursor: pointer;
         display: inline-flex;
-        padding: 0;
         margin: 0 4px;
+        padding: 0;
       }
       .material-icons {
         font-size: 18px;
@@ -83,6 +92,13 @@ class _MrHotlistPeoplePage extends LitElement {
       <section>
         <h2>Editors</h2>
         ${this._renderEditors(this._editors)}
+
+        ${this._permissions.includes(hotlists.ADMINISTER) ? html`
+          <form @submit=${this._onAddEditors}>
+            <input id="add" placeholder="List of email addresses"></input>
+            <button><i class="material-icons">add</i></button>
+          </form>
+        ` : html``}
       </section>
     `;
   }
@@ -153,7 +169,33 @@ class _MrHotlistPeoplePage extends LitElement {
     /** @type {Array<User>} */ this._editors = null;
     /** @type {Array<Permission>} */ this._permissions = [];
     /** @type {?String} */ this._currentUserName = null;
+
+    this._debouncedAddEditors = debounce(this._addEditors, 400, true);
   }
+
+  /** Adds hotlist editors.
+   * @param {Event} event
+   */
+  async _onAddEditors(event) {
+    event.preventDefault();
+
+    const input =
+      /** @type {HTMLInputElement} */ (this.shadowRoot.getElementById('add'));
+    const emails = input.value.split(/[\s,;]/).filter((e) => e);
+    if (!emails.length) return;
+    const editors = emails.map((email) => 'users/' + email);
+    try {
+      await this._debouncedAddEditors(editors);
+      input.value = '';
+    } catch (error) {
+      // The `hotlists.update()` call shows a snackbar on errors.
+    }
+  }
+
+  /** Adds hotlist editors.
+   * @param {Array<string>} editors An Array of User resource names.
+   */
+  async _addEditors(editors) {}
 
   /**
    * Removes a hotlist editor.
@@ -183,6 +225,11 @@ export class MrHotlistPeoplePage extends connectStore(_MrHotlistPeoplePage) {
       const headerTitle = 'Hotlist ' + this._hotlist.displayName;
       store.dispatch(sitewide.setHeaderTitle(headerTitle));
     }
+  }
+
+  /** @override */
+  async _addEditors(editors) {
+    await store.dispatch(hotlists.update(this._hotlist.name, {editors}));
   }
 
   /** @override */

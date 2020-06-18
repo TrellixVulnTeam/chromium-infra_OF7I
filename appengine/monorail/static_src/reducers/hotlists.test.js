@@ -517,8 +517,12 @@ describe('hotlist action creators', () => {
         displayName: example.HOTLIST.displayName + 'foo',
         summary: example.HOTLIST.summary + 'abc',
       };
-      await hotlists.update(
-          example.HOTLIST.name, hotlistOnlyWithUpdates)(dispatch);
+      try {
+        // TODO(crbug.com/monorail/7883): Use Chai Promises plugin
+        // to assert promise rejected.
+        await hotlists.update(
+            example.HOTLIST.name, hotlistOnlyWithUpdates)(dispatch);
+      } catch (e) {}
 
       const action = {
         type: hotlists.UPDATE_FAILURE,

@@ -66,7 +66,7 @@ describe('mr-hotlist-people-page (unconnected)', () => {
     element._permissions = [hotlists.ADMINISTER];
     await element.updateComplete;
 
-    assert.equal(element.shadowRoot.querySelectorAll('button').length, 1);
+    assert.equal(element.shadowRoot.querySelectorAll('button').length, 2);
   });
 
   it('shows remove button if user is editing themselves', async () => {
@@ -108,16 +108,52 @@ describe('mr-hotlist-people-page (connected)', () => {
     assert.deepEqual(sitewide.headerTitle(state), 'Hotlist Hotlist-Name');
   });
 
+  it('adds editors', async () => {
+    element._hotlist = example.HOTLIST;
+    element._permissions = [hotlists.ADMINISTER];
+    await element.updateComplete;
+
+    const input = /** @type {HTMLInputElement} */
+        (element.shadowRoot.getElementById('add'));
+    input.value = 'test@example.com, test2@example.com';
+
+    const update = sinon.spy(hotlists, 'update');
+    try {
+      await element._onAddEditors(new Event('submit'));
+
+      const editors = ['users/test@example.com', 'users/test2@example.com'];
+      sinon.assert.calledWith(update, example.HOTLIST.name, {editors});
+    } finally {
+      update.restore();
+    }
+  });
+
+  it('_onAddEditors ignores empty input', async () => {
+    element._permissions = [hotlists.ADMINISTER];
+    await element.updateComplete;
+
+    const input = /** @type {HTMLInputElement} */
+        (element.shadowRoot.getElementById('add'));
+    input.value = '  ';
+
+    const update = sinon.spy(hotlists, 'update');
+    try {
+      await element._onAddEditors(new Event('submit'));
+      sinon.assert.notCalled(update);
+    } finally {
+      update.restore();
+    }
+  });
+
   it('removes editors', async () => {
     element._hotlist = example.HOTLIST;
-    element._editors = [exampleUsers.USER_2];
 
     const removeEditors = sinon.spy(hotlists, 'removeEditors');
     try {
       await element._removeEditor(exampleUsers.NAME_2);
 
       sinon.assert.calledWith(
-          removeEditors, example.NAME, [exampleUsers.NAME_2]);
+          removeEditors, example.HOTLIST.name, [exampleUsers.NAME_2]);
     } finally {
       removeEditors.restore();
     }

@@ -287,8 +287,13 @@ class HotlistsServicerTest(unittest.TestCase):
     request = hotlists_pb2.UpdateHotlistRequest(
         update_mask=field_mask_pb2.FieldMask(
             paths=[
-                'summary', 'description', 'default_columns', 'hotlist_privacy',
-                'display_name'
+                'summary',
+                'description',
+                'default_columns',
+                'hotlist_privacy',
+                'display_name',
+                'owner',
+                'editors',
             ]),
         hotlist=feature_objects_pb2.Hotlist(
             name=self.hotlist_resource_name,
@@ -299,14 +304,16 @@ class HotlistsServicerTest(unittest.TestCase):
                 issue_objects_pb2.IssuesListColumn(column='new-chicken-egg')
             ],
             hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
-                'PUBLIC')))
+                'PUBLIC'),
+            owner=self.user_ids_to_name[self.user_2.user_id],
+            editors=[self.user_ids_to_name[self.user_3.user_id]]))
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.user_1.email)
     mc.LookupLoggedInUserPerms(None)
     api_hotlist = self.CallWrapped(
         self.hotlists_svcr.UpdateHotlist, mc, request)
     user_names_by_id = rnc.ConvertUserNames(
-        [self.user_2.user_id, self.user_1.user_id])
+        [self.user_3.user_id, self.user_2.user_id, self.user_1.user_id])
     expected_hotlist = feature_objects_pb2.Hotlist(
         name=self.hotlist_resource_name,
         display_name='newName',
@@ -317,8 +324,11 @@ class HotlistsServicerTest(unittest.TestCase):
         ],
         hotlist_privacy=feature_objects_pb2.Hotlist.HotlistPrivacy.Value(
             'PUBLIC'),
-        owner=user_names_by_id[self.user_1.user_id],
-        editors=[user_names_by_id[self.user_2.user_id]])
+        owner=user_names_by_id[self.user_2.user_id],
+        editors=[
+            user_names_by_id[self.user_2.user_id],
+            user_names_by_id[self.user_3.user_id]
+        ])
     self.assertEqual(api_hotlist, expected_hotlist)
 
   def testUpdateHotlist_OneField(self):

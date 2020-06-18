@@ -139,7 +139,7 @@ describe('mr-hotlist-settings-page (connected)', () => {
     assert.isFalse(saveButton.hasAttribute('disabled'));
 
     const snackbarStub = sinon.stub(element, '_showHotlistSavedSnackbar');
-    const update = sinon.spy(hotlists, 'update');
+    const update = sinon.stub(hotlists, 'update').returns(async () => {});
     try {
       await element._save();
       sinon.assert.calledWith(update, example.HOTLIST.name, hlist);

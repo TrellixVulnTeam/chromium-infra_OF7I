@@ -216,6 +216,13 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
     for path in request.update_mask.paths:
       if path == 'display_name':
         update_args['hotlist_name'] = hotlist.display_name
+      elif path == 'owner':
+        owner_id = rnc.IngestUserName(mc.cnxn, hotlist.owner, self.services)
+        update_args['owner_id'] = owner_id
+      elif path == 'editors':
+        add_editor_ids = rnc.IngestUserNames(
+            mc.cnxn, hotlist.editors, self.services)
+        update_args['add_editor_ids'] = add_editor_ids
       elif path == 'summary':
         update_args['summary'] = hotlist.summary
       elif path == 'description':
@@ -228,7 +235,7 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
         update_args[
             'default_col_spec'] = self.converter.IngestIssuesListColumns(
                 hotlist.default_columns)
-      # TODO(crbug/monorail/7104): Add hotlist owner and editors.
+
     with work_env.WorkEnv(mc, self.services) as we:
       we.UpdateHotlist(hotlist_id, **update_args)
       hotlist = we.GetHotlist(hotlist_id, use_cache=False)
