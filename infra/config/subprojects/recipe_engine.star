@@ -64,8 +64,9 @@ recipes.roll_trybots(
         'depot_tools',
         'fuchsia',
         'infra',
-        'skia',
-        'skiabuildbot',
+        # These repos are stuck in the roller. (http://bugs.skia.org/10401)
+        #'skia',
+        #'skiabuildbot',
     ],
     cq_group = 'recipes-py',
     # TODO(tandrii): make this default for rollers and remove from here.

@@ -65,8 +65,9 @@ recipes.roll_trybots(
         'build',
         'chromiumos',
         'infra',
-        'skia',
-        'skiabuildbot',
+        # These repos are stuck in the roller. (http://bugs.skia.org/10401)
+        # 'skia',
+        # 'skiabuildbot',
     ],
     cq_group = 'depot_tools',
 )
