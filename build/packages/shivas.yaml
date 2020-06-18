@@ -2,6 +2,7 @@ package: chromiumos/infra/shivas/${platform}
 description: Chrome and ChromeOS lab commandline tool.
 platforms:
   - linux-amd64
+  - mac-amd64
 go_packages:
   - infra/cmd/shivas
 root: ../../go/bin
