@@ -130,12 +130,20 @@ def builder(
   )
 
 
-def _tree_closer():
-  return luci.tree_closer(
-      name = 'infra tree closer',
-      tree_status_host = 'infra-status.appspot.com',
+def _tree_closing_notifiers():
+  return [
+    luci.tree_closer(
+        name = 'infra tree closer',
+        tree_status_host = 'infra-status.appspot.com',
+        template = 'default',
+    ),
+    luci.notifier(
+      name = 'notify tandrii@',
+      on_new_status = ['FAILURE'],
+      notify_emails = ['tandrii+infra-continuous-self-appointed-gardener@google.com'],
       template = 'default',
-  )
+    ),
+  ]
 
 
 _OS_TO_CATEGORY = {
@@ -172,7 +180,7 @@ infra = struct(
     console_view = console_view,
     cq_group = cq_group,
     builder = builder,
-    tree_closer = _tree_closer,
+    tree_closing_notifiers = _tree_closing_notifiers,
 
     category_from_os = category_from_os,
 )

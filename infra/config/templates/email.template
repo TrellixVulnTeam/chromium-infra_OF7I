@@ -1,0 +1,5 @@
+[infra tree failures] {{ .Build.Builder.Builder }} build failure
+
+Build: {{ buildUrl . }}
+Failed steps: {{ stepNames .MatchingFailedSteps }}
+Commit {{ .Build.Output.GitilesCommit.Id }} on {{ .Build.Builder.Builder }}

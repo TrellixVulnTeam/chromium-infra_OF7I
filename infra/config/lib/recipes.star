@@ -57,7 +57,7 @@ def simulation_tester(
       service_account = infra.SERVICE_ACCOUNT_CI,
       build_numbers = True,
       triggered_by = [triggered_by],
-      notifies = [infra.tree_closer()],
+      notifies = infra.tree_closing_notifiers(),
   )
   if console_view:
     luci.console_view_entry(

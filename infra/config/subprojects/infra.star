@@ -37,10 +37,7 @@ def ci_builder(
       properties = properties,
       gatekeeper_group = '' if experimental else 'chromium.infra',
       extra_dimensions=extra_dimensions,
-      # Tree closing is currently dry run only in LUCI-Notify, so this won't
-      # cause it to actually close the tree. Just to monitor these builders and
-      # log when it would have taken action.
-      notifies = [infra.tree_closer()] if tree_closing else None,
+      notifies = infra.tree_closing_notifiers() if tree_closing else None,
   )
   luci.console_view_entry(
       builder = name,
