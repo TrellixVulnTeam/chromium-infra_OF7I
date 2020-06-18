@@ -59,7 +59,7 @@ luci.builder(
     service_account = 'cros-flash@chops-service-accounts.iam.gserviceaccount.com',
     dimensions = {
         'os': 'ChromeOS',
-        'pool': 'chrome-cros-dut',
+        'pool': 'chrome-cros-dut.non-template',
     },
     execution_timeout = 2 * time.hour,
 )
