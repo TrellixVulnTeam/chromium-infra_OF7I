@@ -14,12 +14,6 @@
     'rev': 'a88dcaae3132003ae123d39a2cd9924113b8f985',
     'implicit': True,  # Required by expect_tests
   },
-  'attrs': {
-    'version': '18.2.0',
-    'build': '0',
-    'repo': 'external/github.com/python-attrs/attrs',
-    'rev': 'aaeba93b0618b24d6bcb37971445d0dcb5f52910',
-  },
   'backports.ssl_match_hostname': {
     'build': '0',
     'gs': '0567c136707a5f53b95aa793b79cc8d5c61d8e22.tar.gz',
