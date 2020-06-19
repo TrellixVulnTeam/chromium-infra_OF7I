@@ -5,30 +5,18 @@
 package rules
 
 import (
+	"context"
 	"testing"
 	"time"
 
-	"context"
-
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/api/gerrit"
 )
 
 func TestTBRRules(t *testing.T) {
-	// TODO(crbug.com/798843): Uncomment this and make the tests not racy.
-	//t.Parallel()
-
 	Convey("TBR Rules", t, func() {
-		ctx := memory.Use(context.Background())
-		datastore.GetTestable(ctx).CatchupIndexes()
-		rs := &RepoState{
-			RepoURL: "https://a.googlesource.com/a.git/+/master",
-		}
-		datastore.Put(ctx, rs)
+		ctx := context.Background()
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
 			CommitHash:       "7b12c0de1",
 			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),

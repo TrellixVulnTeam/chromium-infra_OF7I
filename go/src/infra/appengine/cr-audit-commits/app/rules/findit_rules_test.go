@@ -5,15 +5,12 @@
 package rules
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 	"time"
-
-	"context"
-
-	"google.golang.org/genproto/protobuf/field_mask"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
@@ -23,12 +20,11 @@ import (
 	"go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 func TestFinditRules(t *testing.T) {
-	// TODO(crbug.com/798843): Uncomment this and make the tests not racy.
-	//t.Parallel()
-
+	// This test uses the DB so run it serially.
 	Convey("Findit rules work", t, func() {
 		ctx := memory.Use(context.Background())
 		datastore.GetTestable(ctx).CatchupIndexes()

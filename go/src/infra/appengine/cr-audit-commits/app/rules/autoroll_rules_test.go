@@ -5,29 +5,22 @@
 package rules
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
 
-	"context"
-
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
 
 func TestAutoRollRules(t *testing.T) {
+	t.Parallel()
 	Convey("AutoRoll rules work", t, func() {
-		ctx := memory.Use(context.Background())
-		rs := &RepoState{
-			RepoURL: "https://a.googlesource.com/a.git/+/master",
-		}
-		datastore.Put(ctx, rs)
+		ctx := context.Background()
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
 			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -75,7 +68,6 @@ func TestAutoRollRules(t *testing.T) {
 			rr, _ := AutoRollRules(rc.CommitterAccount, []string{"DEPS"}, nil).Rules[0].Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
-
 		})
 		Convey("Introduces unexpected changes", func() {
 			Convey("Modifies other file", func() {
@@ -141,7 +133,6 @@ func TestAutoRollRules(t *testing.T) {
 				// Check result code
 				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
-
 		})
 	})
 }

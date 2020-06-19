@@ -5,27 +5,19 @@
 package rules
 
 import (
+	"context"
 	"testing"
 
-	"context"
+	"infra/monorail"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
-	"go.chromium.org/gae/service/datastore"
-
-	"infra/monorail"
 )
 
 func TestMergeAckRules(t *testing.T) {
-
+	t.Parallel()
 	Convey("Merge Acknowledgement rules work", t, func() {
-		ctx := memory.Use(context.Background())
-		rs := &RepoState{
-			RepoURL: "https://a.googlesource.com/a.git/+/master",
-		}
-		datastore.Put(ctx, rs)
+		ctx := context.Background()
 		rc := &RelevantCommit{
-			RepoStateKey:  datastore.KeyForObj(ctx, rs),
 			CommitHash:    "b07c0de",
 			Status:        AuditScheduled,
 			CommitMessage: "Acknowledging merges into a release branch",

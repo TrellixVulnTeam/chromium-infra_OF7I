@@ -5,55 +5,20 @@
 package config
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
-	"go.chromium.org/luci/common/proto/git"
-
-	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 func TestRulesConfig(t *testing.T) {
 	t.Parallel()
 	Convey("Ensure ruleMap keys are valid", t, func() {
-		for k := range ruleMap {
+		for k := range GetRuleMap() {
 			// This is a special value.
 			So(k, ShouldNotEqual, "AuditFailure")
 			// ":" is used to separate config name from concrete ref
 			// when accepting ref patterns.
 			So(k, ShouldNotContainSubstring, ":")
-
-		}
-	})
-	// TODO(maruel): Move into rules.
-	Convey("AccountRules", t, func() {
-		commit := &git.Commit{
-			Author:    &git.Commit_User{Email: "dummy1@test1.com"},
-			Committer: &git.Commit_User{Email: "dummy2@test2.com"},
-		}
-		So(rules.AccountRules{Account: "dummy1@test1.com"}.MatchesCommit(commit), ShouldBeTrue)
-		So(rules.AccountRules{Account: "dummy2@test2.com"}.MatchesCommit(commit), ShouldBeTrue)
-		So(rules.AccountRules{Account: "dummy3@test3.com"}.MatchesCommit(commit), ShouldBeFalse)
-		So(rules.AccountRules{Account: "*"}.MatchesCommit(commit), ShouldBeTrue)
-	})
-	Convey("Ensure starting commit, branch name, and milestone number are valid", t, func() {
-		ctx := memory.Use(context.Background())
-		cfg := rules.RefConfig{}
-		milestoneNumber := ""
-		success := false
-		branchRefsURLContents := []string{"\"commit\": \"e8b8df68cc0a4623567482825115b8a321d01eb9\""}
-		branchInfos := []rules.BranchInfo{{PdfiumBranch: "", SkiaBranch: "", WebrtcBranch: "", V8Branch: "", ChromiumBranch: "3440", Milestone: 68}}
-		// Call the release config method
-		concreteConfigs, err := rules.GetReleaseConfig(ctx, cfg, branchRefsURLContents, branchInfos)
-		So(err, ShouldBeNil)
-		for i := range concreteConfigs {
-			So(concreteConfigs[i].StartingCommit, ShouldEqual, "e8b8df68cc0a4623567482825115b8a321d01eb9")
-			So(concreteConfigs[i].BranchName, ShouldEqual, "refs/branch-heads/3440")
-			milestoneNumber, success = rules.GetToken(ctx, "MilestoneNumber", concreteConfigs[i].Metadata)
-			So(milestoneNumber, ShouldEqual, "68")
-			So(success, ShouldEqual, true)
 		}
 	})
 }

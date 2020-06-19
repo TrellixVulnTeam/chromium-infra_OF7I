@@ -5,27 +5,19 @@
 package rules
 
 import (
+	"context"
 	"testing"
 
-	"context"
-
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
-	"go.chromium.org/gae/service/datastore"
 
 	"infra/monorail"
 )
 
 func TestMergeApprovalRules(t *testing.T) {
-
+	t.Parallel()
 	Convey("Merge Approval rules work", t, func() {
-		ctx := memory.Use(context.Background())
-		rs := &RepoState{
-			RepoURL: "https://a.googlesource.com/a.git/+/master",
-		}
-		datastore.Put(ctx, rs)
+		ctx := context.Background()
 		rc := &RelevantCommit{
-			RepoStateKey:  datastore.KeyForObj(ctx, rs),
 			CommitHash:    "b07c0de",
 			Status:        AuditScheduled,
 			CommitMessage: "Making sure changes committed are approved",

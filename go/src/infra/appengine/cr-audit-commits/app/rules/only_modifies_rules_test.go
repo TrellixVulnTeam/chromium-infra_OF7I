@@ -5,31 +5,22 @@
 package rules
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
 
-	"context"
-
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
 
 func TestOnlyModifiesPaths(t *testing.T) {
 	t.Parallel()
-
 	Convey("OnlyModifiesPaths rules work", t, func() {
-		ctx := memory.Use(context.Background())
-		rs := &RepoState{
-			RepoURL: "https://a.googlesource.com/a.git/+/master",
-		}
-		datastore.Put(ctx, rs)
+		ctx := context.Background()
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
 			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -116,7 +107,6 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
-
 		})
 		Convey("Only modifies Files+Dirs", func() {
 			// Inject gitiles log response
@@ -310,15 +300,9 @@ func TestOnlyModifiesPaths(t *testing.T) {
 
 func TestReleaseBotRules(t *testing.T) {
 	t.Parallel()
-
 	Convey("ReleaseBot rules work", t, func() {
-		ctx := memory.Use(context.Background())
-		rs := &RepoState{
-			RepoURL: "https://a.googlesource.com/a.git/+/master",
-		}
-		datastore.Put(ctx, rs)
+		ctx := context.Background()
 		rc := &RelevantCommit{
-			RepoStateKey:     datastore.KeyForObj(ctx, rs),
 			CommitHash:       "b07c0de",
 			Status:           AuditScheduled,
 			CommitTime:       time.Date(2017, time.August, 25, 15, 0, 0, 0, time.UTC),
@@ -451,7 +435,6 @@ func TestReleaseBotRules(t *testing.T) {
 				// Check result code
 				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
-
 		})
 	})
 }
