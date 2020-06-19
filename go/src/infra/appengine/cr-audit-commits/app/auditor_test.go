@@ -73,7 +73,8 @@ func TestAuditor(t *testing.T) {
 
 		})
 		Convey("Dummy Repo", func() {
-			rules.RuleMap["dummy-repo"] = &rules.RefConfig{
+			// TODO: Do not mutate global state.
+			rules.GetRuleMap()["dummy-repo"] = &rules.RefConfig{
 				BaseRepoURL:    "https://dummy.googlesource.com/dummy.git",
 				GerritURL:      "https://dummy-review.googlesource.com",
 				BranchName:     "refs/heads/master",
@@ -233,7 +234,8 @@ func TestAuditor(t *testing.T) {
 						}
 					})
 					Convey("Some fail", func() {
-						dummyRuleTmp := rules.RuleMap["dummy-repo"].Rules["rules"].Rules[0].(rules.DummyRule)
+						// TODO: Do not depend on global state.
+						dummyRuleTmp := rules.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0].(rules.DummyRule)
 						dummyRuleTmp.Result.RuleResultStatus = rules.RuleFailed
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
@@ -249,7 +251,8 @@ func TestAuditor(t *testing.T) {
 						}
 					})
 					Convey("Some error", func() {
-						rules.RuleMap["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
+						// TODO: Do not mutate global state.
+						rules.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)

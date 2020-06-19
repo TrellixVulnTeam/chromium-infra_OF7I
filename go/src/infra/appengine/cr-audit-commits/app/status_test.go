@@ -55,7 +55,8 @@ func TestStatusPage(t *testing.T) {
 			So(resp.StatusCode, ShouldEqual, 200)
 		})
 		Convey("Valid Repo", func() {
-			rules.RuleMap["new-repo"] = &rules.RefConfig{
+			// TODO: Do not mutate global state.
+			rules.GetRuleMap()["new-repo"] = &rules.RefConfig{
 				BaseRepoURL:    "https://new.googlesource.com/new.git",
 				GerritURL:      "https://new-review.googlesource.com",
 				BranchName:     "master",
@@ -91,7 +92,8 @@ func TestStatusPage(t *testing.T) {
 				// There is a link to the last scanned rev
 				b, err := ioutil.ReadAll(resp.Body)
 				resp.Body.Close()
-				linkText := fmt.Sprintf("%s/+/000000", rules.RuleMap["new-repo"].BaseRepoURL)
+				// TODO: Do not depend on global state.
+				linkText := fmt.Sprintf("%s/+/000000", rules.GetRuleMap()["new-repo"].BaseRepoURL)
 				So(string(b), ShouldContainSubstring, linkText)
 			})
 			Convey("Some interesting revisions", func() {
@@ -145,7 +147,8 @@ func TestStatusPage(t *testing.T) {
 				b, err := ioutil.ReadAll(resp.Body)
 				So(resp.StatusCode, ShouldEqual, 200)
 				for i := 1; i < 12; i++ {
-					linkText := fmt.Sprintf("%s/+/%02d%02d%02d", rules.RuleMap["new-repo"].BaseRepoURL, i, i, i)
+					// TODO: Do not depend on global state.
+					linkText := fmt.Sprintf("%s/+/%02d%02d%02d", rules.GetRuleMap()["new-repo"].BaseRepoURL, i, i, i)
 					So(string(b), ShouldContainSubstring, linkText)
 				}
 			})

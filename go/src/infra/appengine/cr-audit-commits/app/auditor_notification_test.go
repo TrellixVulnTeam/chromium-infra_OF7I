@@ -49,7 +49,8 @@ func TestNotifier(t *testing.T) {
 					NotificationFunction: rules.FileBugForFinditViolation,
 				}},
 			}
-			rules.RuleMap["old-repo"] = cfg
+			// TODO: Do not mutate global state.
+			rules.GetRuleMap()["old-repo"] = cfg
 			repoState := &rules.RepoState{
 				RepoURL:            "https://old.googlesource.com/old.git/+/master",
 				LastKnownCommit:    "123456",
@@ -201,7 +202,8 @@ func TestNotifier(t *testing.T) {
 				}},
 				Metadata: "MilestoneNumber:70",
 			}
-			rules.RuleMap["old-repo-ack"] = cfg
+			// TODO: Do not mutate global state.
+			rules.GetRuleMap()["old-repo-ack"] = cfg
 			repoState := &rules.RepoState{
 				RepoURL:            "https://old.googlesource.com/old-ack.git/+/master",
 				LastKnownCommit:    "123456",

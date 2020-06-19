@@ -16,7 +16,7 @@ import (
 // DynamicRefFunc is a functype for functions that match a RefConfig with a
 // dynamically determined ref.
 //
-// It is expected to receive the generic RefConfig as hardcoded in RulesMap,
+// It is expected to receive the generic RefConfig as hardcoded in ruleMap,
 // passed by value to prevent the implementation from modifying it.
 // It is expected to return a slice of references to RefConfigs, where each
 // matches a ref to audit, and its values BranchName and Metadata have been

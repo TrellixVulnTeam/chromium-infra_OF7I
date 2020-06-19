@@ -44,7 +44,7 @@ func Auditor(rc *router.Context) {
 	ctx, cancelInnerCtx := context.WithTimeout(outerCtx, time.Second*time.Duration(4*60+30))
 	defer cancelInnerCtx()
 
-	cfg, repoState, err := rules.LoadConfigFromContext(rc)
+	cfg, repoState, err := loadConfig(rc.Context, rc.Request.FormValue("refUrl"))
 	if err != nil {
 		http.Error(resp, err.Error(), 400)
 		return
@@ -354,4 +354,19 @@ func reportAuditFailure(ctx context.Context, cfg *rules.RefConfig, rc *rules.Rel
 		rc.NotifiedAll = true
 	}
 	return err
+}
+
+// loadConfig returns both repository status and config based on given refURL.
+func loadConfig(ctx context.Context, refURL string) (*rules.RefConfig, *rules.RepoState, error) {
+	rs := &rules.RepoState{RepoURL: refURL}
+	err := ds.Get(ctx, rs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cfg, ok := rules.GetRuleMap()[rs.ConfigName]
+	if !ok {
+		return nil, nil, fmt.Errorf("Unknown or missing config %s", rs.ConfigName)
+	}
+	return cfg.SetConcreteRef(ctx, rs), rs, nil
 }

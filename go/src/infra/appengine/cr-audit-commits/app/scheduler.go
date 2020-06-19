@@ -19,10 +19,11 @@ import (
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
-// Scheduler is the periodic task that
-//   - Determines the concrete ref for every audit configuration in RuleMap
-//   - Creates a new RepoState entry for any new refs
-//   - Schedules an audit task for each active ref in the appropriate queue
+// Scheduler is the periodic task that:
+//
+//   - Determines the concrete ref for every audit configuration configured.
+//   - Creates a new RepoState entry for any new refs.
+//   - Schedules an audit task for each active ref in the appropriate queue.
 func Scheduler(rc *router.Context) {
 	ctx, resp := rc.Context, rc.Writer
 
@@ -33,7 +34,7 @@ func Scheduler(rc *router.Context) {
 	}
 	defer client.Close()
 
-	for configName, config := range rules.RuleMap {
+	for configName, config := range rules.GetRuleMap() {
 		var refConfigs []*rules.RefConfig
 		var err error
 		if config.DynamicRefFunction != nil {

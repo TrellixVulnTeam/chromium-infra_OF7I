@@ -69,8 +69,8 @@ func skiaAsset(asset string) string {
 	return fmt.Sprintf("infra/bots/assets/%s/VERSION", asset)
 }
 
-// RuleMap maps each monitored repository to a list of account/rules structs.
-var RuleMap = map[string]*RefConfig{
+// ruleMap maps each monitored repository to a list of account/rules structs.
+var ruleMap = map[string]*RefConfig{
 	// Chromium
 
 	"chromium-src-master": {
@@ -353,4 +353,11 @@ var RuleMap = map[string]*RefConfig{
 			"autoroll-rules-skia": AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS", "go.mod", "go.sum", "infra/bots/tasks.json"}, nil),
 		},
 	},
+}
+
+// GetRuleMap returns a map of each monitored repository to a list of
+// account/rules structs.
+func GetRuleMap() map[string]*RefConfig {
+	// TODO: Load from a configuration store.
+	return ruleMap
 }

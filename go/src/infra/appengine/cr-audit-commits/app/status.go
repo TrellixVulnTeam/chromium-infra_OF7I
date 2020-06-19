@@ -27,10 +27,10 @@ func Status(rctx *router.Context) {
 	if refURL == "" {
 		refURL = "https://chromium.googlesource.com/chromium/src.git/+/master"
 	}
-	cfg, repoState, err := rules.LoadConfig(ctx, refURL)
+	cfg, repoState, err := loadConfig(ctx, refURL)
 	if err != nil {
 		args := templates.Args{
-			"RuleMap": rules.RuleMap,
+			"RuleMap": rules.GetRuleMap(),
 			"Error":   fmt.Sprintf("Unknown repository %s", refURL),
 		}
 		templates.MustRender(ctx, resp, "pages/status.html", args)

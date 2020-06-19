@@ -6,6 +6,7 @@ package rules
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,11 +14,8 @@ import (
 	"sort"
 	"strings"
 
-	"context"
-
 	"google.golang.org/genproto/protobuf/field_mask"
 
-	ds "go.chromium.org/gae/service/datastore"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/api/gitiles"
@@ -25,7 +23,6 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
-	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/cr-audit-commits/buildstatus"
 	"infra/monorail"
@@ -375,34 +372,6 @@ func (c *Clients) ConnectAll(ctx context.Context, cfg *RefConfig, client *http.C
 	c.GitilesFactory = ProdGitilesClientFactory
 	c.buildbucketFactory = ProdBuildbucketClientFactory
 	return nil
-}
-
-// LoadConfigFromContext finds the repo config and repo state matching the git
-// ref given as the "refUrl" parameter in the http request bound to the router
-// context.
-//
-// If the given ref matches a configuration set to dynamic refs, this function
-// calls the config's method to populate the concrete ref parameters and returns
-// the result of that method.
-func LoadConfigFromContext(rc *router.Context) (*RefConfig, *RepoState, error) {
-	ctx, req := rc.Context, rc.Request
-	refURL := req.FormValue("refUrl")
-	return LoadConfig(ctx, refURL)
-}
-
-// LoadConfig returns both repository status and config based on given refURL.
-func LoadConfig(ctx context.Context, refURL string) (*RefConfig, *RepoState, error) {
-	rs := &RepoState{RepoURL: refURL}
-	err := ds.Get(ctx, rs)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	cfg, ok := RuleMap[rs.ConfigName]
-	if !ok {
-		return nil, nil, fmt.Errorf("Unknown or missing config %s", rs.ConfigName)
-	}
-	return cfg.SetConcreteRef(ctx, rs), rs, nil
 }
 
 // InitializeClients returns clients that connects to given repositories.
