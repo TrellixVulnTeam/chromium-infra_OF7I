@@ -95,6 +95,41 @@ class WorkEnvTest(unittest.TestCase):
     with self.work_env as we:
       we._AssertUserCanModifyIssues([], True)
 
+  def testAssertUserCanModifyIssues_RestrictedFields(self):
+    restricted_int_fd = tracker_pb2.FieldDef(
+        field_name='int_field',
+        field_id=1,
+        field_type=tracker_pb2.FieldTypes.INT_TYPE,
+        is_restricted_field=True)
+    restricted_enum_fd = tracker_pb2.FieldDef(
+        field_name='enum_field',
+        field_id=2,
+        field_type=tracker_pb2.FieldTypes.ENUM_TYPE,
+        is_restricted_field=True)
+    config = fake.MakeTestConfig(789, [], [])
+    config.field_defs = [restricted_enum_fd, restricted_int_fd]
+    self.services.config.StoreConfig('cnxn', config)
+
+    issue = fake.MakeTestIssue(
+        789, 1, 'summary', 'Available', self.admin_user.user_id)
+    self.services.issue.TestAddIssue(issue)
+    delta = tracker_pb2.IssueDelta(
+        summary='changing summary',
+        fields_clear=[restricted_int_fd.field_id],
+        labels_remove=['int_field-test'])
+    issue_delta_pairs = [(issue, delta)]
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we._AssertUserCanModifyIssues(issue_delta_pairs, True)
+
+    # Add user_1 as an editor
+    restricted_int_fd.editor_ids = [self.user_1.user_id]
+    restricted_enum_fd.editor_ids = [self.user_1.user_id]
+    with self.work_env as we:
+      we._AssertUserCanModifyIssues(issue_delta_pairs, True)
+
   def testAssertUserCanModifyIssues_HasEditPerms(self):
     issue = fake.MakeTestIssue(
         789, 1, 'summary', 'Available', self.admin_user.user_id)

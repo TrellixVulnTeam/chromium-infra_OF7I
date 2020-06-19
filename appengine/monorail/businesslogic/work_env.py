@@ -207,6 +207,14 @@ class WorkEnv(object):
             delta.merged_into, use_cache=False, allow_viewing_deleted=True)
         self._AssertPermInIssue(merged_into_issue, permissions.EDIT_ISSUE)
 
+      # User cannot change values for restricted fields they cannot edit.
+      field_ids = [fv.field_id for fv in delta.field_vals_add]
+      field_ids.extend([fv.field_id for fv in delta.field_vals_remove])
+      field_ids.extend(delta.fields_clear)
+      labels = itertools.chain(delta.labels_add, delta.labels_remove)
+      self._AssertUserCanEditFieldsAndEnumMaskedLabels(
+          project, config, field_ids, labels)
+
       if issue_perms.HasPerm(permissions.EDIT_ISSUE, self.mc.auth.user_id,
                              project):
         continue
