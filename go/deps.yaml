@@ -560,3 +560,6 @@ import:
 - package: github.com/protocolbuffers/txtpbfmt
   version: master
   repo: https://chromium.googlesource.com/external/github.com/protocolbuffers/txtpbfmt.git
+- package: github.com/bazelbuild/buildtools
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
