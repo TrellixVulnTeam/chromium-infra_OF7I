@@ -42,7 +42,7 @@ export class _MrHotlistIssuesPage extends LitElement {
       :host {
         display: block;
       }
-      p, div {
+      section, p, div {
         margin: 16px 24px;
       }
       div {
@@ -62,7 +62,7 @@ export class _MrHotlistIssuesPage extends LitElement {
   render() {
     return html`
       <mr-hotlist-header selected=0></mr-hotlist-header>
-      ${this._hotlist ? this._renderPage() : 'Loading...'}
+      ${this._renderPage()}
     `;
   }
 
@@ -70,6 +70,14 @@ export class _MrHotlistIssuesPage extends LitElement {
    * @return {TemplateResult}
    */
   _renderPage() {
+    if (!this._hotlist) {
+      if (this._fetchError) {
+        return html`<section>${this._fetchError.message}</section>`;
+      } else {
+        return html`<section>Loading...</section>`;
+      }
+    }
+
     // Memoize the issues passed to <mr-issue-list> so that
     // out property updates don't cause it to re-render.
     const items = _filterIssues(this._filter, this._items);
@@ -170,7 +178,7 @@ export class _MrHotlistIssuesPage extends LitElement {
       _permissions: {type: Array},
       _items: {type: Array},
       _columns: {type: Array},
-      _issue: {type: Object},
+      _fetchError: {type: Object},
       _extractFieldValuesFromIssue: {type: Object},
 
       // Populated from events.
@@ -183,6 +191,7 @@ export class _MrHotlistIssuesPage extends LitElement {
   constructor() {
     super();
 
+    // Populated from Redux.
     /** @type {?Hotlist} */
     this._hotlist = null;
     /** @type {Array<Permission>} */
@@ -191,6 +200,8 @@ export class _MrHotlistIssuesPage extends LitElement {
     this._items = [];
     /** @type {Array<string>} */
     this._columns = [];
+    /** @type {?Error} */
+    this._fetchError = null;
     /**
      * @param {Issue} _issue
      * @param {string} _fieldName
@@ -198,9 +209,9 @@ export class _MrHotlistIssuesPage extends LitElement {
      */
     this._extractFieldValuesFromIssue = (_issue, _fieldName) => [];
 
+    // Populated from events.
     /** @type {Object<string, boolean>} */
     this._filter = {Open: true};
-
     /**
      * An array of selected Issue Names.
      * TODO(https://crbug.com/monorail/7440): Update typedef.
@@ -278,6 +289,7 @@ export class MrHotlistIssuesPage extends connectStore(_MrHotlistIssuesPage) {
     this._permissions = hotlists.viewedHotlistPermissions(state);
     this._items = hotlists.viewedHotlistIssues(state);
     this._columns = hotlists.viewedHotlistColumns(state);
+    this._fetchError = hotlists.requests(state).fetch.error;
     this._extractFieldValuesFromIssue =
       projectV0.extractFieldValuesFromIssue(state);
   }

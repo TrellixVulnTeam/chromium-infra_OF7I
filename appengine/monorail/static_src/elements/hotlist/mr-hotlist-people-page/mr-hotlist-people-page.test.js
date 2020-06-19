@@ -28,6 +28,12 @@ describe('mr-hotlist-people-page (unconnected)', () => {
     document.body.removeChild(element);
   });
 
+  it('shows hotlist fetch error', async () => {
+    element._fetchError = new Error('This is an important error');
+    await element.updateComplete;
+    assert.include(element.shadowRoot.innerHTML, 'important error');
+  });
+
   it('renders placeholders with no data', async () => {
     await element.updateComplete;
 

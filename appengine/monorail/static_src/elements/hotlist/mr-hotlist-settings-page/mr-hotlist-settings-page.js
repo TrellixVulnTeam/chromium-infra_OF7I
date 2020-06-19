@@ -35,14 +35,10 @@ class _MrHotlistSettingsPage extends LitElement {
         :host {
           display: block;
         }
-        section {
-          margin: 16px 24px;
-        }
         h2 {
           font-weight: normal;
         }
-        dl,
-        form {
+        section, dl, form {
           margin: 16px 24px;
         }
         dt {
@@ -83,7 +79,7 @@ class _MrHotlistSettingsPage extends LitElement {
   render() {
     return html`
       <mr-hotlist-header selected=2></mr-hotlist-header>
-      ${this._hotlist ? this._renderPage() : 'Loading...'}
+      ${this._renderPage()}
     `;
   }
 
@@ -91,6 +87,14 @@ class _MrHotlistSettingsPage extends LitElement {
    * @return {TemplateResult}
    */
   _renderPage() {
+    if (!this._hotlist) {
+      if (this._fetchError) {
+        return html`<section>${this._fetchError.message}</section>`;
+      } else {
+        return html`<section>Loading...</section>`;
+      }
+    }
+
     const defaultColumns = this._hotlist.defaultColumns
         .map((col) => col.column).join(' ');
     if (this._permissions.includes(hotlists.ADMINISTER)) {
@@ -182,23 +186,23 @@ class _MrHotlistSettingsPage extends LitElement {
   /** @override */
   static get properties() {
     return {
+      // Populated from Redux.
       _hotlist: {type: Object},
       _permissions: {type: Array},
       _currentUser: {type: Object},
+      _fetchError: {type: Object},
     };
   }
 
   /** @override */
   constructor() {
     super();
-    /** @type {?Hotlist} */
-    this._hotlist = null;
 
-    /** @type {Array<Permission>} */
-    this._permissions = [];
-
-    /** @type {UserRef} */
-    this._currentUser = null;
+    // Populated from Redux.
+    /** @type {?Hotlist} */ this._hotlist = null;
+    /** @type {Array<Permission>} */ this._permissions = [];
+    /** @type {UserRef} */ this._currentUser = null;
+    /** @type {?Error} */ this._fetchError = null;
 
     // Expose page.js for test stubbing.
     this.page = page;
@@ -230,6 +234,7 @@ export class MrHotlistSettingsPage
     this._hotlist = hotlists.viewedHotlist(state);
     this._permissions = hotlists.viewedHotlistPermissions(state);
     this._currentUser = userV0.currentUser(state);
+    this._fetchError = hotlists.requests(state).fetch.error;
   }
 
   /** @override */

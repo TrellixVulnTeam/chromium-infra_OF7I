@@ -28,6 +28,12 @@ describe('mr-hotlist-settings-page (unconnected)', () => {
     document.body.removeChild(element);
   });
 
+  it('shows hotlist fetch error', async () => {
+    element._fetchError = new Error('This is an important error');
+    await element.updateComplete;
+    assert.include(element.shadowRoot.innerHTML, 'important error');
+  });
+
   it('shows loading message with null hotlist', async () => {
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'Loading');

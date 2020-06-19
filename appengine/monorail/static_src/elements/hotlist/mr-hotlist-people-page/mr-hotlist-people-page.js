@@ -81,8 +81,21 @@ class _MrHotlistPeoplePage extends LitElement {
   /** @override */
   render() {
     return html`
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <mr-hotlist-header selected=1></mr-hotlist-header>
+      ${this._renderPage()}
+    `;
+  }
+
+  /**
+   * @return {TemplateResult}
+   */
+  _renderPage() {
+    if (this._fetchError) {
+      return html`<section>${this._fetchError.message}</section>`;
+    }
+
+    return html`
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
       <section>
         <h2>Owner</h2>
@@ -152,11 +165,13 @@ class _MrHotlistPeoplePage extends LitElement {
   /** @override */
   static get properties() {
     return {
+      // Populated from Redux.
       _hotlist: {type: Object},
       _owner: {type: Object},
       _editors: {type: Array},
       _permissions: {type: Array},
       _currentUserName: {type: String},
+      _fetchError: {type: Object},
     };
   }
 
@@ -164,11 +179,13 @@ class _MrHotlistPeoplePage extends LitElement {
   constructor() {
     super();
 
+    // Populated from Redux.
     /** @type {?Hotlist} */ this._hotlist = null;
     /** @type {?User} */ this._owner = null;
     /** @type {Array<User>} */ this._editors = null;
     /** @type {Array<Permission>} */ this._permissions = [];
     /** @type {?String} */ this._currentUserName = null;
+    /** @type {?Error} */ this._fetchError = null;
 
     this._debouncedAddEditors = debounce(this._addEditors, 400, true);
   }
@@ -213,6 +230,7 @@ export class MrHotlistPeoplePage extends connectStore(_MrHotlistPeoplePage) {
     this._editors = hotlists.viewedHotlistEditors(state);
     this._permissions = hotlists.viewedHotlistPermissions(state);
     this._currentUserName = users.currentUserName(state);
+    this._fetchError = hotlists.requests(state).fetch.error;
   }
 
   /** @override */
