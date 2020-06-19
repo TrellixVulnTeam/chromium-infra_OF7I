@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
@@ -22,27 +23,12 @@ import (
 var ListMachinelsePrototypeCmd = &subcommands.Command{
 	UsageLine: "ls",
 	ShortDesc: "list all MachineLSEPrototypes",
-	LongDesc: `list all MachineLSEPrototypes
-
-	./shivas machinelseprototype ls
-	Fetches 100 items and prints the output in table format
-
-	./shivas machinelseprototype ls -n 50
-	Fetches 50 items and prints the output in table format
-
-	./shivas machinelseprototype ls -lab acs
-	Fetches only ACS lab items and prints the output in table format
-
-	./shivas machinelseprototype ls -json
-	Fetches 100 items and prints the output in JSON format
-	`,
+	LongDesc:  cmdhelp.ListMachinelsePrototypeLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &listMachinelsePrototype{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.IntVar(&c.pageSize, "n", 100,
-			`number of items to get. The service may return fewer than this value. If unspecified, at most 100 items will be returned.
-The maximum value is 1000; values above 1000 will be coerced to 1000.`)
+		c.Flags.IntVar(&c.pageSize, "n", 100, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
 		c.Flags.StringVar(&c.labFilter, "lab", "", "lab name to filter the results.\n"+
 			"acs for ACS lab MachineLSEPrototypes\n"+

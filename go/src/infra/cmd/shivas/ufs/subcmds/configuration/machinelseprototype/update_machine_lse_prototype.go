@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
@@ -23,41 +24,12 @@ import (
 var UpdateMachinelsePrototypeCmd = &subcommands.Command{
 	UsageLine: "set",
 	ShortDesc: "update MachineLSEPrototype by name",
-	LongDesc: `update MachineLSEPrototype by name.
-	./shivas machinelseprototype set -j -f machinelseprototype.json
-	Updates a MachineLSEPrototype by reading a JSON file input.
-
-	./shivas machinelseprototype -i
-	Updates a MachineLSEPrototype by reading input through interactive mode.`,
+	LongDesc:  cmdhelp.UpdateMachinelsePrototypeLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateMachinelsePrototype{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.newSpecsFile, "f", "",
-			`Path to a file containing MachineLSEPrototype specification in JSON format.
-This file must contain one MachineLSEPrototype JSON message.
-Example MachineLsePrototype:
-{
-	"name": "browser-lab:vm",
-	"peripheralRequirements": [
-		{
-			"peripheralType": "PERIPHERAL_TYPE_SWITCH",
-			"min": 5,
-			"max": 7
-		}
-	],
-	"occupiedCapacityRu": 32,
-	"virtualRequirements": [
-		{
-			"virtualType": "VIRTUAL_TYPE_VM",
-			"min": 3,
-			"max": 4
-		}
-	]
-}
-
-The protobuf definition of MachineLSEPrototype is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/lse_prototype.proto#29`)
+		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachinelsePrototypeFileText)
 		c.Flags.BoolVar(&c.json, "j", false, `interpret the input file as a JSON file.`)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c

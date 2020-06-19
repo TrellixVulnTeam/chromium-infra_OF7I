@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
@@ -23,26 +24,12 @@ import (
 var UpdateSwitchCmd = &subcommands.Command{
 	UsageLine: "set",
 	ShortDesc: "update Switch by name",
-	LongDesc: `update Switch by name.
-	./shivas switch set -j -f switch.json
-	Updates a Switch by reading a JSON file input.
-
-	./shivas switch -i
-	Updates a Switch by reading input through interactive mode.`,
+	LongDesc:  cmdhelp.UpdateSwitchLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.newSpecsFile, "f", "",
-			`Path to a file containing Switch specification in JSON format.
-This file must contain one Switch JSON message.
-Example : {
-	"name": "switch-test-example",
-	"capacityPort": 456
- }
-
-The protobuf definition of Switch is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto#71`)
+		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.SwitchFileText)
 		c.Flags.BoolVar(&c.json, "j", false, `interpret the input file as a JSON file.`)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c
