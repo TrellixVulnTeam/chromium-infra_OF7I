@@ -156,11 +156,9 @@ message IssueDelta {
   repeated string ccs_remove = 3 [
       (google.api.resource_reference) = {type: "api.crbug.com/User"}];
   // Blocked_on issues to remove.
-  repeated string blocked_on_issues_remove = 4 [
-      (google.api.resource_reference) = {type: "api.crbug.com/Issue"}];
+  repeated IssueRef blocked_on_issues_remove = 4;
   // Blocking issues to remove.
-  repeated string blocking_issues_remove = 5 [
-      (google.api.resource_reference) = {type: "api.crbug.com/Issue"}];
+  repeated IssueRef blocking_issues_remove = 5;
   // Components to remove.
   repeated string components_remove = 6 [
       (google.api.resource_reference) = {type: "api.crbug.com/ComponentDef"}];
