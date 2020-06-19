@@ -18,6 +18,7 @@ import (
 	"infra/cros/cmd/result_flow/internal/bb"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
+	"infra/cros/cmd/result_flow/internal/transform"
 )
 
 // CTP subcommand pipelines CTP builds to analytics BQ table represented in the form
@@ -117,14 +118,14 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
-	// TODO(linxinan): Next CL will print the CTP request inside the build.
+
 	for _, build := range builds {
-		logging.Infof(
-			ctx,
-			"Fetched Build from Buildbucket. Build ID: %d, Build status: %v",
-			build.GetId(),
-			build.GetStatus(),
-		)
+		cBuild, err := transform.LoadRawBuildBucketResp(ctx, build, c.source.GetBb())
+		if err != nil {
+			logging.Errorf(ctx, "Failed to extract data from build: %v", err)
+		}
+		// TODO(linxinan): Next CL will insert the TestPlanRun to BQ.
+		logging.Infof(ctx, "Fetched Build from Buildbucket: %v", cBuild.ToTestPlanRuns(ctx))
 	}
 
 	if err = mClient.AckMessages(ctx, msgs); err != nil {
