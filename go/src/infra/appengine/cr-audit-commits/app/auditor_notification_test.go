@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/gae/impl/memory"
 	ds "go.chromium.org/gae/service/datastore"
 
+	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 	"infra/monorail"
 )
@@ -53,7 +54,7 @@ func TestNotifier(t *testing.T) {
 				}},
 			}
 			// TODO: Do not mutate global state.
-			rules.GetRuleMap()["old-repo"] = cfg
+			config.GetRuleMap()["old-repo"] = cfg
 			repoState := &rules.RepoState{
 				RepoURL:            "https://old.googlesource.com/old.git/+/master",
 				LastKnownCommit:    "123456",
@@ -206,7 +207,7 @@ func TestNotifier(t *testing.T) {
 				Metadata: "MilestoneNumber:70",
 			}
 			// TODO: Do not mutate global state.
-			rules.GetRuleMap()["old-repo-ack"] = cfg
+			config.GetRuleMap()["old-repo-ack"] = cfg
 			repoState := &rules.RepoState{
 				RepoURL:            "https://old.googlesource.com/old-ack.git/+/master",
 				LastKnownCommit:    "123456",

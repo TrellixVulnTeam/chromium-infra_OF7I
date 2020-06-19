@@ -16,6 +16,7 @@ import (
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
+	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
@@ -34,7 +35,7 @@ func Scheduler(rc *router.Context) {
 	}
 	defer client.Close()
 
-	for configName, config := range rules.GetRuleMap() {
+	for configName, config := range config.GetRuleMap() {
 		var refConfigs []*rules.RefConfig
 		var err error
 		if config.DynamicRefFunction != nil {

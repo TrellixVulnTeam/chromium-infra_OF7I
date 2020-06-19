@@ -2,9 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package rules
+package config
 
-import "fmt"
+import (
+	"fmt"
+
+	"infra/appengine/cr-audit-commits/app/rules"
+)
 
 var (
 	chromiumRobots = []string{
@@ -65,7 +69,7 @@ var (
 
 	// fileBugForTBRViolation is the notification function for manual-changes
 	// rules.
-	fileBugForTBRViolation = CommentOrFileMonorailIssue{
+	fileBugForTBRViolation = rules.CommentOrFileMonorailIssue{
 		Components: []string{"Infra>Audit"},
 		Labels:     []string{"CommitLog-Audit-Violation", "TBR-Violation"},
 	}
@@ -77,7 +81,7 @@ func skiaAsset(asset string) string {
 }
 
 // ruleMap maps each monitored repository to a list of account/rules structs.
-var ruleMap = map[string]*RefConfig{
+var ruleMap = map[string]*rules.RefConfig{
 	// Chromium
 
 	"chromium-src-master": {
@@ -89,8 +93,8 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
-			"autoroll-rules-chromium": AutoRollRules(
+		Rules: map[string]rules.AccountRules{
+			"autoroll-rules-chromium": rules.AutoRollRules(
 				"chromium-autoroll@skia-public.iam.gserviceaccount.com",
 				[]string{
 					"chrome/android/profiles/newest.txt",
@@ -108,28 +112,28 @@ var ruleMap = map[string]*RefConfig{
 				[]string{
 					"chromeos/profiles",
 				}),
-			"autoroll-rules-chromium-internal": AutoRollRules("chromium-internal-autoroll@skia-corp.google.com.iam.gserviceaccount.com", []string{"DEPS"}, nil),
-			"autoroll-rules-wpt":               AutoRollRules("wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com", nil, []string{"third_party/blink/web_tests"}),
+			"autoroll-rules-chromium-internal": rules.AutoRollRules("chromium-internal-autoroll@skia-corp.google.com.iam.gserviceaccount.com", []string{"DEPS"}, nil),
+			"autoroll-rules-wpt":               rules.AutoRollRules("wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com", nil, []string{"third_party/blink/web_tests"}),
 			"findit-rules": {
 				Account: "findit-for-me@appspot.gserviceaccount.com",
-				Rules: []Rule{
-					AutoCommitsPerDay{},
-					AutoRevertsPerDay{},
-					CulpritAge{},
-					CulpritInBuild{},
-					FailedBuildIsAppropriateFailure{},
-					RevertOfCulprit{},
-					OnlyCommitsOwnChange{},
+				Rules: []rules.Rule{
+					rules.AutoCommitsPerDay{},
+					rules.AutoRevertsPerDay{},
+					rules.CulpritAge{},
+					rules.CulpritInBuild{},
+					rules.FailedBuildIsAppropriateFailure{},
+					rules.RevertOfCulprit{},
+					rules.OnlyCommitsOwnChange{},
 				},
-				Notification: CommentOrFileMonorailIssue{
+				Notification: rules.CommentOrFileMonorailIssue{
 					Components: []string{"Tools>Test>Findit>Autorevert"},
 					Labels:     []string{"CommitLog-Audit-Violation"},
 				},
 			},
 			"release-bot-rules": {
 				Account: "chrome-release-bot@chromium.org",
-				Rules: []Rule{
-					OnlyModifiesFilesAndDirsRule{
+				Rules: []rules.Rule{
+					rules.OnlyModifiesFilesAndDirsRule{
 						Name: "OnlyModifiesReleaseFiles",
 						Files: []string{
 							"chrome/MAJOR_BRANCH_DATE",
@@ -137,7 +141,7 @@ var ruleMap = map[string]*RefConfig{
 						},
 					},
 				},
-				Notification: CommentOrFileMonorailIssue{
+				Notification: rules.CommentOrFileMonorailIssue{
 					Components: []string{"Infra>Client>Chrome>Release"},
 					Labels:     []string{"CommitLog-Audit-Violation"},
 				},
@@ -153,18 +157,19 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
-				Rules: []Rule{
-					ChangeReviewed{Robots: chromiumRobots},
+				Rules: []rules.Rule{
+					rules.ChangeReviewed{Robots: chromiumRobots},
 				},
 				Notification: fileBugForTBRViolation,
 			},
-			"images-pins-roller": AutoRollRules(
+			"images-pins-roller": rules.AutoRollRules(
 				"images-pins-roller@chops-service-accounts.iam.gserviceaccount.com",
 				[]string{"build/images/pins.yaml"},
-				nil),
+				nil,
+			),
 		},
 	},
 	"chromium-infra-luci-go": {
@@ -176,11 +181,11 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
-				Rules: []Rule{
-					ChangeReviewed{Robots: chromiumRobots},
+				Rules: []rules.Rule{
+					rules.ChangeReviewed{Robots: chromiumRobots},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -195,15 +200,15 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
-				Rules: []Rule{
-					ChangeReviewed{Robots: chromiumRobots},
+				Rules: []rules.Rule{
+					rules.ChangeReviewed{Robots: chromiumRobots},
 				},
 				Notification: fileBugForTBRViolation,
 			},
-			"image-autoroller": AutoRollRules(
+			"image-autoroller": rules.AutoRollRules(
 				"image-builder@chops-service-accounts.iam.gserviceaccount.com",
 				[]string{
 					"configs/gce-provider/vms.cfg",
@@ -222,11 +227,11 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
-				Rules: []Rule{
-					ChangeReviewed{Robots: chromiumRobots},
+				Rules: []rules.Rule{
+					rules.ChangeReviewed{Robots: chromiumRobots},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -238,29 +243,29 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"merge-approval-rules": {
 				Account: "*",
-				Rules: []Rule{
-					OnlyMergeApprovedChange{
+				Rules: []rules.Rule{
+					rules.OnlyMergeApprovedChange{
 						AllowedRobots: chromeMergeRobots,
 						AllowedUsers:  chromeTPMs,
 					},
 				},
-				Notification: FileBugForMergeApprovalViolation{
+				Notification: rules.FileBugForMergeApprovalViolation{
 					Components: []string{"Programs>PMO>Browser>Release"},
 					Labels:     []string{"CommitLog-Audit-Violation", "Merge-Without-Approval"},
 				},
 			},
 			"merge-ack-rules": {
 				Account: "*",
-				Rules: []Rule{
-					AcknowledgeMerge{},
+				Rules: []rules.Rule{
+					rules.AcknowledgeMerge{},
 				},
-				Notification: CommentOnBugToAcknowledgeMerge{},
+				Notification: rules.CommentOnBugToAcknowledgeMerge{},
 			},
 		},
-		DynamicRefFunction: ReleaseConfig,
+		DynamicRefFunction: rules.ReleaseConfig,
 	},
 
 	// Fuchsia
@@ -274,11 +279,11 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
-				Rules: []Rule{
-					ChangeReviewed{Robots: fuchsiaRobots},
+				Rules: []rules.Rule{
+					rules.ChangeReviewed{Robots: fuchsiaRobots},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -293,11 +298,11 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
-				Rules: []Rule{
-					ChangeReviewed{Robots: fuchsiaRobots},
+				Rules: []rules.Rule{
+					rules.ChangeReviewed{Robots: fuchsiaRobots},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -312,11 +317,11 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
+		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
-				Rules: []Rule{
-					ChangeReviewed{Robots: fuchsiaRobots},
+				Rules: []rules.Rule{
+					rules.ChangeReviewed{Robots: fuchsiaRobots},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -331,8 +336,8 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRules("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com", []string{"manifest/skia"}, nil),
+		Rules: map[string]rules.AccountRules{
+			"autoroll-rules-skia": rules.AutoRollRules("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com", []string{"manifest/skia"}, nil),
 		},
 	},
 
@@ -347,10 +352,10 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS"}, []string{"include/third_party/skcms", "third_party/skcms"}),
-			"bookmaker":           AutoRollRules("skia-bookmaker@skia-swarming-bots.iam.gserviceaccount.com", nil, []string{"site/user/api"}),
-			"recreate-skps": AutoRollRules(
+		Rules: map[string]rules.AccountRules{
+			"autoroll-rules-skia": rules.AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS"}, []string{"include/third_party/skcms", "third_party/skcms"}),
+			"bookmaker":           rules.AutoRollRules("skia-bookmaker@skia-swarming-bots.iam.gserviceaccount.com", nil, []string{"site/user/api"}),
+			"recreate-skps": rules.AutoRollRules(
 				"skia-recreate-skps@skia-swarming-bots.iam.gserviceaccount.com",
 				[]string{skiaAsset("go_deps"), skiaAsset("skp"), "go.mod", "go.sum", "infra/bots/tasks.json"},
 				nil),
@@ -365,15 +370,15 @@ var ruleMap = map[string]*RefConfig{
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
-		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS", "go.mod", "go.sum", "infra/bots/tasks.json"}, nil),
+		Rules: map[string]rules.AccountRules{
+			"autoroll-rules-skia": rules.AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS", "go.mod", "go.sum", "infra/bots/tasks.json"}, nil),
 		},
 	},
 }
 
 // GetRuleMap returns a map of each monitored repository to a list of
 // account/rules structs.
-func GetRuleMap() map[string]*RefConfig {
+func GetRuleMap() map[string]*rules.RefConfig {
 	// TODO: Load from a configuration store.
 	return ruleMap
 }

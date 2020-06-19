@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
 
+	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
@@ -30,7 +31,7 @@ func Status(rctx *router.Context) {
 	cfg, repoState, err := loadConfig(ctx, refURL)
 	if err != nil {
 		args := templates.Args{
-			"RuleMap": rules.GetRuleMap(),
+			"RuleMap": config.GetRuleMap(),
 			"Error":   fmt.Sprintf("Unknown repository %s", refURL),
 		}
 		templates.MustRender(ctx, resp, "pages/status.html", args)

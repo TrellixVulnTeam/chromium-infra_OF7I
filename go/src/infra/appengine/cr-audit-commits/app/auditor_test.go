@@ -21,6 +21,7 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/router"
 
+	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
@@ -76,7 +77,7 @@ func TestAuditor(t *testing.T) {
 		})
 		Convey("Dummy Repo", func() {
 			// TODO: Do not mutate global state.
-			rules.GetRuleMap()["dummy-repo"] = &rules.RefConfig{
+			config.GetRuleMap()["dummy-repo"] = &rules.RefConfig{
 				BaseRepoURL:    "https://dummy.googlesource.com/dummy.git",
 				GerritURL:      "https://dummy-review.googlesource.com",
 				BranchName:     "refs/heads/master",
@@ -237,7 +238,7 @@ func TestAuditor(t *testing.T) {
 					})
 					Convey("Some fail", func() {
 						// TODO: Do not depend on global state.
-						dummyRuleTmp := rules.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0].(rules.DummyRule)
+						dummyRuleTmp := config.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0].(rules.DummyRule)
 						dummyRuleTmp.Result.RuleResultStatus = rules.RuleFailed
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
@@ -254,7 +255,7 @@ func TestAuditor(t *testing.T) {
 					})
 					Convey("Some error", func() {
 						// TODO: Do not mutate global state.
-						rules.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
+						config.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)

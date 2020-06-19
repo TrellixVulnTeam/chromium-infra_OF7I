@@ -162,8 +162,7 @@ func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConf
 					}
 					mergeAckComment := "The following revision refers to this bug: \n%s\n\nCommit: %s\nAuthor: %s\nCommiter: %s\nDate: %s\n\n%s"
 					comment := fmt.Sprintf(mergeAckComment, cfg.LinkToCommit(rc.CommitHash), rc.CommitHash, rc.AuthorAccount, rc.CommitterAccount, rc.CommitTime, rc.CommitMessage)
-					err = postComment(ctx, cfg, int32(vIssue.Id), comment, cs, labels)
-					if err != nil {
+					if err = postComment(ctx, cfg, int32(vIssue.Id), comment, cs, labels); err != nil {
 						logging.Errorf(ctx, "Could not comment on bug %s", bug)
 						continue
 					}

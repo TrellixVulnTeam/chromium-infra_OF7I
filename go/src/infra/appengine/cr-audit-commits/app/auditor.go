@@ -19,6 +19,7 @@ import (
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/router"
 
+	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
@@ -364,7 +365,7 @@ func loadConfig(ctx context.Context, refURL string) (*rules.RefConfig, *rules.Re
 		return nil, nil, err
 	}
 
-	cfg, ok := rules.GetRuleMap()[rs.ConfigName]
+	cfg, ok := config.GetRuleMap()[rs.ConfigName]
 	if !ok {
 		return nil, nil, fmt.Errorf("Unknown or missing config %s", rs.ConfigName)
 	}
