@@ -34,6 +34,7 @@ By default all actions runnings. To run specified action provide it via flags.`,
 		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 10, "The expiration minutes of the repair request.")
 		c.Flags.BoolVar(&c.runVerifyServoUSB, "run-verify-servo-usb", false, "Run the verifier for servo usb drive.")
 		c.Flags.BoolVar(&c.runVerifyDUTStorage, "run-verify-dut-storage", false, "Run the verifier for DUT storage.")
+		c.Flags.BoolVar(&c.runVerifyServoFw, "run-verify-servo-fw", false, "Run the verifier for servo firmware update.")
 		return c
 	},
 }
@@ -46,6 +47,7 @@ type auditRun struct {
 	expirationMins      int
 	runVerifyServoUSB   bool
 	runVerifyDUTStorage bool
+	runVerifyServoFw    bool
 }
 
 func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -117,15 +119,19 @@ func (c *auditRun) validateArgs(args []string) error {
 // Collect actions to run. If we do not by specified action or all of them if no action specified.
 func (c *auditRun) actions() (string, error) {
 	var a []string
-	if !(c.runVerifyDUTStorage || c.runVerifyServoUSB) {
+	if !(c.runVerifyDUTStorage || c.runVerifyServoUSB || c.runVerifyServoFw) {
 		c.runVerifyDUTStorage = true
 		c.runVerifyServoUSB = true
+		c.runVerifyServoFw = true
 	}
 	if c.runVerifyDUTStorage {
 		a = append(a, "verify-dut-storage")
 	}
 	if c.runVerifyServoUSB {
 		a = append(a, "verify-servo-usb-drive")
+	}
+	if c.runVerifyServoFw {
+		a = append(a, "verify-servo-fw")
 	}
 	if len(a) == 0 {
 		return "", errors.Reason("No actions to run").Err()

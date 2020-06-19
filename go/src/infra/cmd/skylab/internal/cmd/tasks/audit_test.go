@@ -20,15 +20,16 @@ func TestActions(t *testing.T) {
 		{
 			"all",
 			auditRun{},
-			"verify-dut-storage,verify-servo-usb-drive",
+			"verify-dut-storage,verify-servo-usb-drive,verify-servo-fw",
 		},
 		{
 			"all-2",
 			auditRun{
 				runVerifyServoUSB:   true,
 				runVerifyDUTStorage: true,
+				runVerifyServoFw:    true,
 			},
-			"verify-dut-storage,verify-servo-usb-drive",
+			"verify-dut-storage,verify-servo-usb-drive,verify-servo-fw",
 		},
 		{
 			"runVerifyServoUSB",
@@ -43,6 +44,13 @@ func TestActions(t *testing.T) {
 				runVerifyDUTStorage: true,
 			},
 			"verify-dut-storage",
+		},
+		{
+			"runVerifyServoFw",
+			auditRun{
+				runVerifyServoFw: true,
+			},
+			"verify-servo-fw",
 		},
 	}
 	for _, tt := range actionsCases {
