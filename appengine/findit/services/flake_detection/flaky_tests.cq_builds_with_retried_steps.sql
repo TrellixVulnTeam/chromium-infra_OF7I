@@ -9,27 +9,26 @@ WITH
   # builds for the issues that have cq attempts.
   issues AS (
   SELECT
-    ca.cq_name,
-    ca.issue,
+    # Legacy concept in legacy CQ, only keep it to minimize the change of
+    # migrating to new cq table.
+    'chromium/chromium/src' AS cq_name,
+    change.change AS issue,
     # As CQ will reuse successful builds within the last 24 hours from an early
     # equivalent patchset (including the patchset itself), dedup is needed.
-    ARRAY_AGG(DISTINCT build_id) AS build_ids
+    ARRAY_AGG(DISTINCT build.id) AS build_ids
   FROM
-      `chrome-infra-events.raw_events.cq` AS ca
+      `commit-queue.raw.attempts` AS ca
     CROSS JOIN
-      UNNEST(ca.contributing_buildbucket_ids) AS build_id
+      UNNEST(ca.builds) AS build
+    CROSS JOIN
+      UNNEST(ca.gerrit_changes) AS change
   WHERE
-    # cq_events table is not partitioned.
-    ca.attempt_start_usec >= UNIX_MICROS(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 day))
-    AND ca.cq_name in (
-      'chromium/chromium/src' # iOS does not support (without patch) yet.
-      #, 'chromium/angle/angle' # Projects other than Chromium are not supported for now.
-      #, 'webrtc/src'  # WebRTC does not retry (without patch) for failed tests.
-      #, 'chromium/v8/v8'  # V8 does not retry (without patch) for failed tests.
-    )
+    _PARTITIONTIME >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 day)
+    AND change.trigger_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 day)
+    AND ca.luci_project = 'chromium'
   GROUP BY
-    ca.cq_name,
-    ca.issue)
+    cq_name,
+    issue)
 
 # Filter builds to keep the ones with 'FindIt Flakiness' step.
 SELECT
