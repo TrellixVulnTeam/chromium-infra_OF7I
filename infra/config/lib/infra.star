@@ -135,13 +135,12 @@ def _tree_closing_notifiers():
     luci.tree_closer(
         name = 'infra tree closer',
         tree_status_host = 'infra-status.appspot.com',
-        template = 'default',
+        template = 'status',
     ),
     luci.notifier(
       name = 'notify tandrii@',
       on_new_status = ['FAILURE'],
       notify_emails = ['tandrii+infra-continuous-self-appointed-gardener@google.com'],
-      template = 'default',
     ),
   ]
 

@@ -142,8 +142,8 @@ luci.bucket(
 )
 
 luci.notifier_template(
-    name = 'default',
-    body = '{{ stepNames .MatchingFailedSteps }} on {{ buildUrl . }} {{ .Build.Builder.Builder }} from {{ .Build.Output.GitilesCommit.Id }}',
+    name = 'status',
+    body = '{{ stepNames .MatchingFailedSteps }} on {{ buildUrl . }} {{ .Build.Builder.Builder }}{{ if .Build.Output.GitilesCommit }} from {{ .Build.Output.GitilesCommit.Id }}{{end}}'
 )
 
 
