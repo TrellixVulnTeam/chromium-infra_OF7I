@@ -417,6 +417,23 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 	return resp, nil
 }
 
+// UpdateLabstations updates the given labstations.
+func (is *InventoryServerImpl) UpdateLabstations(ctx context.Context, req *api.UpdateLabstationsRequest) (resp *api.UpdateLabstationsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	err = datastore.UpdateLabstations(ctx, req.GetHostname(), req.GetDeletedServos())
+	if err != nil {
+		return nil, err
+	}
+	return &api.UpdateLabstationsResponse{}, nil
+}
+
 // UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data in
 // the inventory.
 func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *api.UpdateCrosDevicesSetupRequest) (resp *api.UpdateCrosDevicesSetupResponse, err error) {

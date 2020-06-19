@@ -8,6 +8,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
+	"go.chromium.org/luci/appengine/gaetesting"
 )
 
 func makeServo(servoHost, serial string, port int) *lab.Servo {
@@ -17,6 +18,32 @@ func makeServo(servoHost, serial string, port int) *lab.Servo {
 		ServoSerial:   serial,
 		ServoType:     "v3",
 	}
+}
+
+func TestUpdateLabstations(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	Convey("Test labstation updates", t, func() {
+		servos := []*lab.Servo{
+			makeServo("labstation1", "ser1", 2),
+			makeServo("labstation1", "ser2", 3),
+			makeServo("labstation1", "ser3", 4),
+		}
+		l := mockLabstation("labstation1", "labstation1_id")
+		l.GetLabstation().Servos = servos
+		_, err := AddDevices(ctx, []*lab.ChromeOSDevice{l}, false)
+		So(err, ShouldBeNil)
+		Convey("Delete servos for a labstation", func() {
+			ls := getLabConfigByHostname(ctx, t, "labstation1")
+			So(ls.GetLabstation().GetServos(), ShouldHaveLength, len(servos))
+			err := UpdateLabstations(ctx, "labstation1", []string{"ser1", "ser2"})
+			So(err, ShouldBeNil)
+			newLs := getLabConfigByHostname(ctx, t, "labstation1")
+			newServos := newLs.GetLabstation().GetServos()
+			So(newServos, ShouldHaveLength, 1)
+			So(newServos[0].GetServoSerial(), ShouldEqual, "ser3")
+		})
+	})
 }
 
 func TestCheckDuplicates(t *testing.T) {

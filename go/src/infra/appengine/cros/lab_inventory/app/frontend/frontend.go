@@ -51,7 +51,7 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 		accessGroup = cfg.GetStatusWriters()
 	case "DeleteCrosDevices":
 		accessGroup = cfg.GetPrivilegedWriters()
-	case "AddAssets", "UpdateAssets", "DeleteAssets", "GetAssets":
+	case "AddAssets", "UpdateAssets", "DeleteAssets", "GetAssets", "UpdateLabstations":
 		accessGroup = cfg.GetPrivilegedWriters()
 	default:
 		logging.Warningf(ctx, "RPC %s doesn't set proper permission", rpcName)

@@ -34,6 +34,7 @@ type Client interface {
 	DeleteDUTs(context.Context, []string, *authcli.Flags, skycmdlib.RemovalReason, io.Writer) (bool, error)
 	BatchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error
 	FilterDUTHostnames(context.Context, []string) ([]string, error)
+	UpdateLabstations(context.Context, string, string) (*invV2Api.UpdateLabstationsResponse, error)
 }
 
 type inventoryClientV2 struct {
@@ -49,6 +50,13 @@ func NewInventoryClient(hc *http.Client, env site.Environment) Client {
 			Options: site.DefaultPRPCOptions,
 		}),
 	}
+}
+
+func (client *inventoryClientV2) UpdateLabstations(ctx context.Context, hostname, servosToDelete string) (*invV2Api.UpdateLabstationsResponse, error) {
+	return client.ic.UpdateLabstations(ctx, &invV2Api.UpdateLabstationsRequest{
+		Hostname:      hostname,
+		DeletedServos: []string{servosToDelete},
+	})
 }
 
 func (client *inventoryClientV2) BatchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {

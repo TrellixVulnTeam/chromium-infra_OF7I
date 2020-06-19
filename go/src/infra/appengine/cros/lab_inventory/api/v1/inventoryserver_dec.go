@@ -91,6 +91,23 @@ func (s *DecoratedInventory) UpdateCrosDevicesSetup(ctx context.Context, req *Up
 	return
 }
 
+func (s *DecoratedInventory) UpdateLabstations(ctx context.Context, req *UpdateLabstationsRequest) (rsp *UpdateLabstationsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateLabstations", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateLabstations(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateLabstations", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedInventory) DeleteCrosDevices(ctx context.Context, req *DeleteCrosDevicesRequest) (rsp *DeleteCrosDevicesResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

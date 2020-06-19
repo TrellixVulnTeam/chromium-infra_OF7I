@@ -112,6 +112,14 @@ func (r *GetCrosDevicesRequest) Validate() error {
 }
 
 // Validate validates input requests and return error if it's not.
+func (r *UpdateLabstationsRequest) Validate() error {
+	if r.GetHostname() == "" {
+		return status.Errorf(codes.InvalidArgument, "Empty labstation hostname")
+	}
+	return nil
+}
+
+// Validate validates input requests and return error if it's not.
 func (r *UpdateCrosDevicesSetupRequest) Validate() error {
 	if r.Devices == nil || len(r.Devices) == 0 {
 		return status.Errorf(codes.InvalidArgument, "no devices to update")

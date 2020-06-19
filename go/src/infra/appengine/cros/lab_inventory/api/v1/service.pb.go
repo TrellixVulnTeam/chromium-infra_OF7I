@@ -636,6 +636,108 @@ func (x *GetCrosDevicesResponse) GetFailedDevices() []*DeviceOpResult {
 	return nil
 }
 
+type UpdateLabstationsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Hostname      string   `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	DeletedServos []string `protobuf:"bytes,2,rep,name=deletedServos,proto3" json:"deletedServos,omitempty"`
+}
+
+func (x *UpdateLabstationsRequest) Reset() {
+	*x = UpdateLabstationsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateLabstationsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateLabstationsRequest) ProtoMessage() {}
+
+func (x *UpdateLabstationsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateLabstationsRequest.ProtoReflect.Descriptor instead.
+func (*UpdateLabstationsRequest) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *UpdateLabstationsRequest) GetHostname() string {
+	if x != nil {
+		return x.Hostname
+	}
+	return ""
+}
+
+func (x *UpdateLabstationsRequest) GetDeletedServos() []string {
+	if x != nil {
+		return x.DeletedServos
+	}
+	return nil
+}
+
+type UpdateLabstationsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Labstation *lab.ChromeOSDevice `protobuf:"bytes,1,opt,name=labstation,proto3" json:"labstation,omitempty"`
+}
+
+func (x *UpdateLabstationsResponse) Reset() {
+	*x = UpdateLabstationsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateLabstationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateLabstationsResponse) ProtoMessage() {}
+
+func (x *UpdateLabstationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateLabstationsResponse.ProtoReflect.Descriptor instead.
+func (*UpdateLabstationsResponse) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UpdateLabstationsResponse) GetLabstation() *lab.ChromeOSDevice {
+	if x != nil {
+		return x.Labstation
+	}
+	return nil
+}
+
 type UpdateDutsStatusRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -653,7 +755,7 @@ type UpdateDutsStatusRequest struct {
 func (x *UpdateDutsStatusRequest) Reset() {
 	*x = UpdateDutsStatusRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[10]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -666,7 +768,7 @@ func (x *UpdateDutsStatusRequest) String() string {
 func (*UpdateDutsStatusRequest) ProtoMessage() {}
 
 func (x *UpdateDutsStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[10]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -679,7 +781,7 @@ func (x *UpdateDutsStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDutsStatusRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDutsStatusRequest) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{10}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *UpdateDutsStatusRequest) GetStates() []*lab.DutState {
@@ -723,7 +825,7 @@ type DutMeta struct {
 func (x *DutMeta) Reset() {
 	*x = DutMeta{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[11]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -736,7 +838,7 @@ func (x *DutMeta) String() string {
 func (*DutMeta) ProtoMessage() {}
 
 func (x *DutMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[11]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -749,7 +851,7 @@ func (x *DutMeta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DutMeta.ProtoReflect.Descriptor instead.
 func (*DutMeta) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{11}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DutMeta) GetChromeosDeviceId() string {
@@ -786,7 +888,7 @@ type LabMeta struct {
 func (x *LabMeta) Reset() {
 	*x = LabMeta{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[12]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -799,7 +901,7 @@ func (x *LabMeta) String() string {
 func (*LabMeta) ProtoMessage() {}
 
 func (x *LabMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[12]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -812,7 +914,7 @@ func (x *LabMeta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LabMeta.ProtoReflect.Descriptor instead.
 func (*LabMeta) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{12}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *LabMeta) GetChromeosDeviceId() string {
@@ -848,7 +950,7 @@ type UpdateDutsStatusResponse struct {
 func (x *UpdateDutsStatusResponse) Reset() {
 	*x = UpdateDutsStatusResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[13]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -861,7 +963,7 @@ func (x *UpdateDutsStatusResponse) String() string {
 func (*UpdateDutsStatusResponse) ProtoMessage() {}
 
 func (x *UpdateDutsStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[13]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -874,7 +976,7 @@ func (x *UpdateDutsStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDutsStatusResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDutsStatusResponse) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{13}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UpdateDutsStatusResponse) GetUpdatedDevices() []*DeviceOpResult {
@@ -904,7 +1006,7 @@ type UpdateCrosDevicesSetupRequest struct {
 func (x *UpdateCrosDevicesSetupRequest) Reset() {
 	*x = UpdateCrosDevicesSetupRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[14]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -917,7 +1019,7 @@ func (x *UpdateCrosDevicesSetupRequest) String() string {
 func (*UpdateCrosDevicesSetupRequest) ProtoMessage() {}
 
 func (x *UpdateCrosDevicesSetupRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[14]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -930,7 +1032,7 @@ func (x *UpdateCrosDevicesSetupRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCrosDevicesSetupRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCrosDevicesSetupRequest) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{14}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *UpdateCrosDevicesSetupRequest) GetDevices() []*lab.ChromeOSDevice {
@@ -966,7 +1068,7 @@ type UpdateCrosDevicesSetupResponse struct {
 func (x *UpdateCrosDevicesSetupResponse) Reset() {
 	*x = UpdateCrosDevicesSetupResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[15]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -979,7 +1081,7 @@ func (x *UpdateCrosDevicesSetupResponse) String() string {
 func (*UpdateCrosDevicesSetupResponse) ProtoMessage() {}
 
 func (x *UpdateCrosDevicesSetupResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[15]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -992,7 +1094,7 @@ func (x *UpdateCrosDevicesSetupResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCrosDevicesSetupResponse.ProtoReflect.Descriptor instead.
 func (*UpdateCrosDevicesSetupResponse) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{15}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UpdateCrosDevicesSetupResponse) GetUpdatedDevices() []*DeviceOpResult {
@@ -1021,7 +1123,7 @@ type DeleteCrosDevicesRequest struct {
 func (x *DeleteCrosDevicesRequest) Reset() {
 	*x = DeleteCrosDevicesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[16]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1034,7 +1136,7 @@ func (x *DeleteCrosDevicesRequest) String() string {
 func (*DeleteCrosDevicesRequest) ProtoMessage() {}
 
 func (x *DeleteCrosDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[16]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1047,7 +1149,7 @@ func (x *DeleteCrosDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCrosDevicesRequest.ProtoReflect.Descriptor instead.
 func (*DeleteCrosDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{16}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DeleteCrosDevicesRequest) GetIds() []*DeviceID {
@@ -1077,7 +1179,7 @@ type DeleteCrosDevicesResponse struct {
 func (x *DeleteCrosDevicesResponse) Reset() {
 	*x = DeleteCrosDevicesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[17]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1090,7 +1192,7 @@ func (x *DeleteCrosDevicesResponse) String() string {
 func (*DeleteCrosDevicesResponse) ProtoMessage() {}
 
 func (x *DeleteCrosDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[17]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1103,7 +1205,7 @@ func (x *DeleteCrosDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCrosDevicesResponse.ProtoReflect.Descriptor instead.
 func (*DeleteCrosDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{17}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *DeleteCrosDevicesResponse) GetRemovedDevices() []*DeviceOpResult {
@@ -1133,7 +1235,7 @@ type DeviceProperty struct {
 func (x *DeviceProperty) Reset() {
 	*x = DeviceProperty{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[18]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1146,7 +1248,7 @@ func (x *DeviceProperty) String() string {
 func (*DeviceProperty) ProtoMessage() {}
 
 func (x *DeviceProperty) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[18]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1159,7 +1261,7 @@ func (x *DeviceProperty) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceProperty.ProtoReflect.Descriptor instead.
 func (*DeviceProperty) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{18}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DeviceProperty) GetHostname() string {
@@ -1194,7 +1296,7 @@ type BatchUpdateDevicesRequest struct {
 func (x *BatchUpdateDevicesRequest) Reset() {
 	*x = BatchUpdateDevicesRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[19]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1207,7 +1309,7 @@ func (x *BatchUpdateDevicesRequest) String() string {
 func (*BatchUpdateDevicesRequest) ProtoMessage() {}
 
 func (x *BatchUpdateDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[19]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1220,7 +1322,7 @@ func (x *BatchUpdateDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchUpdateDevicesRequest.ProtoReflect.Descriptor instead.
 func (*BatchUpdateDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{19}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *BatchUpdateDevicesRequest) GetDeviceProperties() []*DeviceProperty {
@@ -1239,7 +1341,7 @@ type BatchUpdateDevicesResponse struct {
 func (x *BatchUpdateDevicesResponse) Reset() {
 	*x = BatchUpdateDevicesResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[20]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1252,7 +1354,7 @@ func (x *BatchUpdateDevicesResponse) String() string {
 func (*BatchUpdateDevicesResponse) ProtoMessage() {}
 
 func (x *BatchUpdateDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[20]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1265,7 +1367,7 @@ func (x *BatchUpdateDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchUpdateDevicesResponse.ProtoReflect.Descriptor instead.
 func (*BatchUpdateDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{20}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{22}
 }
 
 type AssetResult struct {
@@ -1280,7 +1382,7 @@ type AssetResult struct {
 func (x *AssetResult) Reset() {
 	*x = AssetResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[21]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1293,7 +1395,7 @@ func (x *AssetResult) String() string {
 func (*AssetResult) ProtoMessage() {}
 
 func (x *AssetResult) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[21]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1306,7 +1408,7 @@ func (x *AssetResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssetResult.ProtoReflect.Descriptor instead.
 func (*AssetResult) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{21}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AssetResult) GetAsset() *protos.ChopsAsset {
@@ -1334,7 +1436,7 @@ type AssetList struct {
 func (x *AssetList) Reset() {
 	*x = AssetList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[22]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1347,7 +1449,7 @@ func (x *AssetList) String() string {
 func (*AssetList) ProtoMessage() {}
 
 func (x *AssetList) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[22]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1360,7 +1462,7 @@ func (x *AssetList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssetList.ProtoReflect.Descriptor instead.
 func (*AssetList) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{22}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *AssetList) GetAsset() []*protos.ChopsAsset {
@@ -1382,7 +1484,7 @@ type AssetResponse struct {
 func (x *AssetResponse) Reset() {
 	*x = AssetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[23]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1395,7 +1497,7 @@ func (x *AssetResponse) String() string {
 func (*AssetResponse) ProtoMessage() {}
 
 func (x *AssetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[23]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1408,7 +1510,7 @@ func (x *AssetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssetResponse.ProtoReflect.Descriptor instead.
 func (*AssetResponse) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{23}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *AssetResponse) GetPassed() []*AssetResult {
@@ -1436,7 +1538,7 @@ type AssetIDList struct {
 func (x *AssetIDList) Reset() {
 	*x = AssetIDList{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[24]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1449,7 +1551,7 @@ func (x *AssetIDList) String() string {
 func (*AssetIDList) ProtoMessage() {}
 
 func (x *AssetIDList) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[24]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1462,7 +1564,7 @@ func (x *AssetIDList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssetIDList.ProtoReflect.Descriptor instead.
 func (*AssetIDList) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{24}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *AssetIDList) GetId() []string {
@@ -1484,7 +1586,7 @@ type AssetIDResult struct {
 func (x *AssetIDResult) Reset() {
 	*x = AssetIDResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[25]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1497,7 +1599,7 @@ func (x *AssetIDResult) String() string {
 func (*AssetIDResult) ProtoMessage() {}
 
 func (x *AssetIDResult) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[25]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1510,7 +1612,7 @@ func (x *AssetIDResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssetIDResult.ProtoReflect.Descriptor instead.
 func (*AssetIDResult) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{25}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *AssetIDResult) GetId() string {
@@ -1539,7 +1641,7 @@ type AssetIDResponse struct {
 func (x *AssetIDResponse) Reset() {
 	*x = AssetIDResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[26]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1552,7 +1654,7 @@ func (x *AssetIDResponse) String() string {
 func (*AssetIDResponse) ProtoMessage() {}
 
 func (x *AssetIDResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[26]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1565,7 +1667,7 @@ func (x *AssetIDResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AssetIDResponse.ProtoReflect.Descriptor instead.
 func (*AssetIDResponse) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{26}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *AssetIDResponse) GetPassed() []*AssetIDResult {
@@ -1594,7 +1696,7 @@ type DeleteCrosDevicesRequest_Reason struct {
 func (x *DeleteCrosDevicesRequest_Reason) Reset() {
 	*x = DeleteCrosDevicesRequest_Reason{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[28]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1607,7 +1709,7 @@ func (x *DeleteCrosDevicesRequest_Reason) String() string {
 func (*DeleteCrosDevicesRequest_Reason) ProtoMessage() {}
 
 func (x *DeleteCrosDevicesRequest_Reason) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[28]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1620,7 +1722,7 @@ func (x *DeleteCrosDevicesRequest_Reason) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteCrosDevicesRequest_Reason.ProtoReflect.Descriptor instead.
 func (*DeleteCrosDevicesRequest_Reason) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{16, 0}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{18, 0}
 }
 
 func (x *DeleteCrosDevicesRequest_Reason) GetBug() string {
@@ -1649,7 +1751,7 @@ type DeviceProperty_Rpm struct {
 func (x *DeviceProperty_Rpm) Reset() {
 	*x = DeviceProperty_Rpm{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[29]
+		mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1662,7 +1764,7 @@ func (x *DeviceProperty_Rpm) String() string {
 func (*DeviceProperty_Rpm) ProtoMessage() {}
 
 func (x *DeviceProperty_Rpm) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[29]
+	mi := &file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1675,7 +1777,7 @@ func (x *DeviceProperty_Rpm) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeviceProperty_Rpm.ProtoReflect.Descriptor instead.
 func (*DeviceProperty_Rpm) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{18, 0}
+	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP(), []int{20, 0}
 }
 
 func (x *DeviceProperty_Rpm) GetPowerunitName() string {
@@ -1799,7 +1901,18 @@ var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDesc = []byt
 	0x69, 0x6c, 0x65, 0x64, 0x5f, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03,
 	0x28, 0x0b, 0x32, 0x19, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x44,
 	0x65, 0x76, 0x69, 0x63, 0x65, 0x4f, 0x70, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x0d, 0x66,
-	0x61, 0x69, 0x6c, 0x65, 0x64, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x22, 0xba, 0x01, 0x0a,
+	0x61, 0x69, 0x6c, 0x65, 0x64, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73, 0x22, 0x5c, 0x0a, 0x18,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x68, 0x6f, 0x73, 0x74,
+	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x68, 0x6f, 0x73, 0x74,
+	0x6e, 0x61, 0x6d, 0x65, 0x12, 0x24, 0x0a, 0x0d, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x53,
+	0x65, 0x72, 0x76, 0x6f, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x64, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x64, 0x53, 0x65, 0x72, 0x76, 0x6f, 0x73, 0x22, 0x50, 0x0a, 0x19, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x4c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x33, 0x0a, 0x0a, 0x6c, 0x61, 0x62, 0x73, 0x74,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x6c, 0x61,
+	0x62, 0x2e, 0x43, 0x68, 0x72, 0x6f, 0x6d, 0x65, 0x4f, 0x53, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65,
+	0x52, 0x0a, 0x6c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xba, 0x01, 0x0a,
 	0x17, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x44, 0x75, 0x74, 0x73, 0x53, 0x74, 0x61, 0x74, 0x75,
 	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x25, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74,
 	0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0d, 0x2e, 0x6c, 0x61, 0x62, 0x2e, 0x44,
@@ -1928,7 +2041,7 @@ var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDesc = []byt
 	0x73, 0x65, 0x64, 0x12, 0x30, 0x0a, 0x06, 0x66, 0x61, 0x69, 0x6c, 0x65, 0x64, 0x18, 0x02, 0x20,
 	0x03, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2e,
 	0x41, 0x73, 0x73, 0x65, 0x74, 0x49, 0x44, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x52, 0x06, 0x66,
-	0x61, 0x69, 0x6c, 0x65, 0x64, 0x32, 0xae, 0x07, 0x0a, 0x09, 0x49, 0x6e, 0x76, 0x65, 0x6e, 0x74,
+	0x61, 0x69, 0x6c, 0x65, 0x64, 0x32, 0x8e, 0x08, 0x0a, 0x09, 0x49, 0x6e, 0x76, 0x65, 0x6e, 0x74,
 	0x6f, 0x72, 0x79, 0x12, 0x55, 0x0a, 0x0e, 0x41, 0x64, 0x64, 0x43, 0x72, 0x6f, 0x73, 0x44, 0x65,
 	0x76, 0x69, 0x63, 0x65, 0x73, 0x12, 0x20, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72,
 	0x79, 0x2e, 0x41, 0x64, 0x64, 0x43, 0x72, 0x6f, 0x73, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73,
@@ -1953,6 +2066,12 @@ var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDesc = []byt
 	0x73, 0x74, 0x1a, 0x29, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x55,
 	0x70, 0x64, 0x61, 0x74, 0x65, 0x43, 0x72, 0x6f, 0x73, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73,
 	0x53, 0x65, 0x74, 0x75, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a,
+	0x11, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x12, 0x23, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x4c, 0x61, 0x62, 0x73, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74,
+	0x6f, 0x72, 0x79, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4c, 0x61, 0x62, 0x73, 0x74, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a,
 	0x11, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x43, 0x72, 0x6f, 0x73, 0x44, 0x65, 0x76, 0x69, 0x63,
 	0x65, 0x73, 0x12, 0x23, 0x2e, 0x69, 0x6e, 0x76, 0x65, 0x6e, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x44,
 	0x65, 0x6c, 0x65, 0x74, 0x65, 0x43, 0x72, 0x6f, 0x73, 0x44, 0x65, 0x76, 0x69, 0x63, 0x65, 0x73,
@@ -2005,7 +2124,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescGZIP() 
 	return file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDescData
 }
 
-var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 30)
+var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_goTypes = []interface{}{
 	(*DeviceConfigsExistsRequest)(nil),      // 0: inventory.DeviceConfigsExistsRequest
 	(*DeviceConfigsExistsResponse)(nil),     // 1: inventory.DeviceConfigsExistsResponse
@@ -2017,94 +2136,99 @@ var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_goTypes = []int
 	(*HwidData)(nil),                        // 7: inventory.HwidData
 	(*ExtendedDeviceData)(nil),              // 8: inventory.ExtendedDeviceData
 	(*GetCrosDevicesResponse)(nil),          // 9: inventory.GetCrosDevicesResponse
-	(*UpdateDutsStatusRequest)(nil),         // 10: inventory.UpdateDutsStatusRequest
-	(*DutMeta)(nil),                         // 11: inventory.DutMeta
-	(*LabMeta)(nil),                         // 12: inventory.LabMeta
-	(*UpdateDutsStatusResponse)(nil),        // 13: inventory.UpdateDutsStatusResponse
-	(*UpdateCrosDevicesSetupRequest)(nil),   // 14: inventory.UpdateCrosDevicesSetupRequest
-	(*UpdateCrosDevicesSetupResponse)(nil),  // 15: inventory.UpdateCrosDevicesSetupResponse
-	(*DeleteCrosDevicesRequest)(nil),        // 16: inventory.DeleteCrosDevicesRequest
-	(*DeleteCrosDevicesResponse)(nil),       // 17: inventory.DeleteCrosDevicesResponse
-	(*DeviceProperty)(nil),                  // 18: inventory.DeviceProperty
-	(*BatchUpdateDevicesRequest)(nil),       // 19: inventory.BatchUpdateDevicesRequest
-	(*BatchUpdateDevicesResponse)(nil),      // 20: inventory.BatchUpdateDevicesResponse
-	(*AssetResult)(nil),                     // 21: inventory.AssetResult
-	(*AssetList)(nil),                       // 22: inventory.AssetList
-	(*AssetResponse)(nil),                   // 23: inventory.AssetResponse
-	(*AssetIDList)(nil),                     // 24: inventory.AssetIDList
-	(*AssetIDResult)(nil),                   // 25: inventory.AssetIDResult
-	(*AssetIDResponse)(nil),                 // 26: inventory.AssetIDResponse
-	nil,                                     // 27: inventory.DeviceConfigsExistsResponse.ExistsEntry
-	(*DeleteCrosDevicesRequest_Reason)(nil), // 28: inventory.DeleteCrosDevicesRequest.Reason
-	(*DeviceProperty_Rpm)(nil),              // 29: inventory.DeviceProperty.Rpm
-	(*device.ConfigId)(nil),                 // 30: device.ConfigId
-	(*lab.ChromeOSDevice)(nil),              // 31: lab.ChromeOSDevice
-	(*device.Config)(nil),                   // 32: device.Config
-	(*manufacturing.Config)(nil),            // 33: manufacturing.Config
-	(*lab.DutState)(nil),                    // 34: lab.DutState
-	(*protos.ChopsAsset)(nil),               // 35: fleet.ChopsAsset
+	(*UpdateLabstationsRequest)(nil),        // 10: inventory.UpdateLabstationsRequest
+	(*UpdateLabstationsResponse)(nil),       // 11: inventory.UpdateLabstationsResponse
+	(*UpdateDutsStatusRequest)(nil),         // 12: inventory.UpdateDutsStatusRequest
+	(*DutMeta)(nil),                         // 13: inventory.DutMeta
+	(*LabMeta)(nil),                         // 14: inventory.LabMeta
+	(*UpdateDutsStatusResponse)(nil),        // 15: inventory.UpdateDutsStatusResponse
+	(*UpdateCrosDevicesSetupRequest)(nil),   // 16: inventory.UpdateCrosDevicesSetupRequest
+	(*UpdateCrosDevicesSetupResponse)(nil),  // 17: inventory.UpdateCrosDevicesSetupResponse
+	(*DeleteCrosDevicesRequest)(nil),        // 18: inventory.DeleteCrosDevicesRequest
+	(*DeleteCrosDevicesResponse)(nil),       // 19: inventory.DeleteCrosDevicesResponse
+	(*DeviceProperty)(nil),                  // 20: inventory.DeviceProperty
+	(*BatchUpdateDevicesRequest)(nil),       // 21: inventory.BatchUpdateDevicesRequest
+	(*BatchUpdateDevicesResponse)(nil),      // 22: inventory.BatchUpdateDevicesResponse
+	(*AssetResult)(nil),                     // 23: inventory.AssetResult
+	(*AssetList)(nil),                       // 24: inventory.AssetList
+	(*AssetResponse)(nil),                   // 25: inventory.AssetResponse
+	(*AssetIDList)(nil),                     // 26: inventory.AssetIDList
+	(*AssetIDResult)(nil),                   // 27: inventory.AssetIDResult
+	(*AssetIDResponse)(nil),                 // 28: inventory.AssetIDResponse
+	nil,                                     // 29: inventory.DeviceConfigsExistsResponse.ExistsEntry
+	(*DeleteCrosDevicesRequest_Reason)(nil), // 30: inventory.DeleteCrosDevicesRequest.Reason
+	(*DeviceProperty_Rpm)(nil),              // 31: inventory.DeviceProperty.Rpm
+	(*device.ConfigId)(nil),                 // 32: device.ConfigId
+	(*lab.ChromeOSDevice)(nil),              // 33: lab.ChromeOSDevice
+	(*device.Config)(nil),                   // 34: device.Config
+	(*manufacturing.Config)(nil),            // 35: manufacturing.Config
+	(*lab.DutState)(nil),                    // 36: lab.DutState
+	(*protos.ChopsAsset)(nil),               // 37: fleet.ChopsAsset
 }
 var file_infra_appengine_cros_lab_inventory_api_v1_service_proto_depIdxs = []int32{
-	30, // 0: inventory.DeviceConfigsExistsRequest.configIds:type_name -> device.ConfigId
-	27, // 1: inventory.DeviceConfigsExistsResponse.exists:type_name -> inventory.DeviceConfigsExistsResponse.ExistsEntry
-	31, // 2: inventory.AddCrosDevicesRequest.devices:type_name -> lab.ChromeOSDevice
+	32, // 0: inventory.DeviceConfigsExistsRequest.configIds:type_name -> device.ConfigId
+	29, // 1: inventory.DeviceConfigsExistsResponse.exists:type_name -> inventory.DeviceConfigsExistsResponse.ExistsEntry
+	33, // 2: inventory.AddCrosDevicesRequest.devices:type_name -> lab.ChromeOSDevice
 	2,  // 3: inventory.AddCrosDevicesResponse.passed_devices:type_name -> inventory.DeviceOpResult
 	2,  // 4: inventory.AddCrosDevicesResponse.failed_devices:type_name -> inventory.DeviceOpResult
 	3,  // 5: inventory.GetCrosDevicesRequest.ids:type_name -> inventory.DeviceID
-	31, // 6: inventory.ExtendedDeviceData.lab_config:type_name -> lab.ChromeOSDevice
-	32, // 7: inventory.ExtendedDeviceData.device_config:type_name -> device.Config
-	33, // 8: inventory.ExtendedDeviceData.manufacturing_config:type_name -> manufacturing.Config
+	33, // 6: inventory.ExtendedDeviceData.lab_config:type_name -> lab.ChromeOSDevice
+	34, // 7: inventory.ExtendedDeviceData.device_config:type_name -> device.Config
+	35, // 8: inventory.ExtendedDeviceData.manufacturing_config:type_name -> manufacturing.Config
 	7,  // 9: inventory.ExtendedDeviceData.hwid_data:type_name -> inventory.HwidData
-	34, // 10: inventory.ExtendedDeviceData.dut_state:type_name -> lab.DutState
+	36, // 10: inventory.ExtendedDeviceData.dut_state:type_name -> lab.DutState
 	8,  // 11: inventory.GetCrosDevicesResponse.data:type_name -> inventory.ExtendedDeviceData
 	2,  // 12: inventory.GetCrosDevicesResponse.failed_devices:type_name -> inventory.DeviceOpResult
-	34, // 13: inventory.UpdateDutsStatusRequest.states:type_name -> lab.DutState
-	11, // 14: inventory.UpdateDutsStatusRequest.dut_metas:type_name -> inventory.DutMeta
-	12, // 15: inventory.UpdateDutsStatusRequest.lab_metas:type_name -> inventory.LabMeta
-	2,  // 16: inventory.UpdateDutsStatusResponse.updated_devices:type_name -> inventory.DeviceOpResult
-	2,  // 17: inventory.UpdateDutsStatusResponse.failed_devices:type_name -> inventory.DeviceOpResult
-	31, // 18: inventory.UpdateCrosDevicesSetupRequest.devices:type_name -> lab.ChromeOSDevice
-	2,  // 19: inventory.UpdateCrosDevicesSetupResponse.updated_devices:type_name -> inventory.DeviceOpResult
-	2,  // 20: inventory.UpdateCrosDevicesSetupResponse.failed_devices:type_name -> inventory.DeviceOpResult
-	3,  // 21: inventory.DeleteCrosDevicesRequest.ids:type_name -> inventory.DeviceID
-	28, // 22: inventory.DeleteCrosDevicesRequest.reason:type_name -> inventory.DeleteCrosDevicesRequest.Reason
-	2,  // 23: inventory.DeleteCrosDevicesResponse.removed_devices:type_name -> inventory.DeviceOpResult
-	2,  // 24: inventory.DeleteCrosDevicesResponse.failed_devices:type_name -> inventory.DeviceOpResult
-	29, // 25: inventory.DeviceProperty.rpm:type_name -> inventory.DeviceProperty.Rpm
-	18, // 26: inventory.BatchUpdateDevicesRequest.device_properties:type_name -> inventory.DeviceProperty
-	35, // 27: inventory.AssetResult.asset:type_name -> fleet.ChopsAsset
-	35, // 28: inventory.AssetList.asset:type_name -> fleet.ChopsAsset
-	21, // 29: inventory.AssetResponse.passed:type_name -> inventory.AssetResult
-	21, // 30: inventory.AssetResponse.failed:type_name -> inventory.AssetResult
-	25, // 31: inventory.AssetIDResponse.passed:type_name -> inventory.AssetIDResult
-	25, // 32: inventory.AssetIDResponse.failed:type_name -> inventory.AssetIDResult
-	4,  // 33: inventory.Inventory.AddCrosDevices:input_type -> inventory.AddCrosDevicesRequest
-	6,  // 34: inventory.Inventory.GetCrosDevices:input_type -> inventory.GetCrosDevicesRequest
-	10, // 35: inventory.Inventory.UpdateDutsStatus:input_type -> inventory.UpdateDutsStatusRequest
-	14, // 36: inventory.Inventory.UpdateCrosDevicesSetup:input_type -> inventory.UpdateCrosDevicesSetupRequest
-	16, // 37: inventory.Inventory.DeleteCrosDevices:input_type -> inventory.DeleteCrosDevicesRequest
-	19, // 38: inventory.Inventory.BatchUpdateDevices:input_type -> inventory.BatchUpdateDevicesRequest
-	22, // 39: inventory.Inventory.AddAssets:input_type -> inventory.AssetList
-	24, // 40: inventory.Inventory.GetAssets:input_type -> inventory.AssetIDList
-	24, // 41: inventory.Inventory.DeleteAssets:input_type -> inventory.AssetIDList
-	22, // 42: inventory.Inventory.UpdateAssets:input_type -> inventory.AssetList
-	0,  // 43: inventory.Inventory.DeviceConfigsExists:input_type -> inventory.DeviceConfigsExistsRequest
-	5,  // 44: inventory.Inventory.AddCrosDevices:output_type -> inventory.AddCrosDevicesResponse
-	9,  // 45: inventory.Inventory.GetCrosDevices:output_type -> inventory.GetCrosDevicesResponse
-	13, // 46: inventory.Inventory.UpdateDutsStatus:output_type -> inventory.UpdateDutsStatusResponse
-	15, // 47: inventory.Inventory.UpdateCrosDevicesSetup:output_type -> inventory.UpdateCrosDevicesSetupResponse
-	17, // 48: inventory.Inventory.DeleteCrosDevices:output_type -> inventory.DeleteCrosDevicesResponse
-	20, // 49: inventory.Inventory.BatchUpdateDevices:output_type -> inventory.BatchUpdateDevicesResponse
-	23, // 50: inventory.Inventory.AddAssets:output_type -> inventory.AssetResponse
-	23, // 51: inventory.Inventory.GetAssets:output_type -> inventory.AssetResponse
-	26, // 52: inventory.Inventory.DeleteAssets:output_type -> inventory.AssetIDResponse
-	23, // 53: inventory.Inventory.UpdateAssets:output_type -> inventory.AssetResponse
-	1,  // 54: inventory.Inventory.DeviceConfigsExists:output_type -> inventory.DeviceConfigsExistsResponse
-	44, // [44:55] is the sub-list for method output_type
-	33, // [33:44] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	33, // 13: inventory.UpdateLabstationsResponse.labstation:type_name -> lab.ChromeOSDevice
+	36, // 14: inventory.UpdateDutsStatusRequest.states:type_name -> lab.DutState
+	13, // 15: inventory.UpdateDutsStatusRequest.dut_metas:type_name -> inventory.DutMeta
+	14, // 16: inventory.UpdateDutsStatusRequest.lab_metas:type_name -> inventory.LabMeta
+	2,  // 17: inventory.UpdateDutsStatusResponse.updated_devices:type_name -> inventory.DeviceOpResult
+	2,  // 18: inventory.UpdateDutsStatusResponse.failed_devices:type_name -> inventory.DeviceOpResult
+	33, // 19: inventory.UpdateCrosDevicesSetupRequest.devices:type_name -> lab.ChromeOSDevice
+	2,  // 20: inventory.UpdateCrosDevicesSetupResponse.updated_devices:type_name -> inventory.DeviceOpResult
+	2,  // 21: inventory.UpdateCrosDevicesSetupResponse.failed_devices:type_name -> inventory.DeviceOpResult
+	3,  // 22: inventory.DeleteCrosDevicesRequest.ids:type_name -> inventory.DeviceID
+	30, // 23: inventory.DeleteCrosDevicesRequest.reason:type_name -> inventory.DeleteCrosDevicesRequest.Reason
+	2,  // 24: inventory.DeleteCrosDevicesResponse.removed_devices:type_name -> inventory.DeviceOpResult
+	2,  // 25: inventory.DeleteCrosDevicesResponse.failed_devices:type_name -> inventory.DeviceOpResult
+	31, // 26: inventory.DeviceProperty.rpm:type_name -> inventory.DeviceProperty.Rpm
+	20, // 27: inventory.BatchUpdateDevicesRequest.device_properties:type_name -> inventory.DeviceProperty
+	37, // 28: inventory.AssetResult.asset:type_name -> fleet.ChopsAsset
+	37, // 29: inventory.AssetList.asset:type_name -> fleet.ChopsAsset
+	23, // 30: inventory.AssetResponse.passed:type_name -> inventory.AssetResult
+	23, // 31: inventory.AssetResponse.failed:type_name -> inventory.AssetResult
+	27, // 32: inventory.AssetIDResponse.passed:type_name -> inventory.AssetIDResult
+	27, // 33: inventory.AssetIDResponse.failed:type_name -> inventory.AssetIDResult
+	4,  // 34: inventory.Inventory.AddCrosDevices:input_type -> inventory.AddCrosDevicesRequest
+	6,  // 35: inventory.Inventory.GetCrosDevices:input_type -> inventory.GetCrosDevicesRequest
+	12, // 36: inventory.Inventory.UpdateDutsStatus:input_type -> inventory.UpdateDutsStatusRequest
+	16, // 37: inventory.Inventory.UpdateCrosDevicesSetup:input_type -> inventory.UpdateCrosDevicesSetupRequest
+	10, // 38: inventory.Inventory.UpdateLabstations:input_type -> inventory.UpdateLabstationsRequest
+	18, // 39: inventory.Inventory.DeleteCrosDevices:input_type -> inventory.DeleteCrosDevicesRequest
+	21, // 40: inventory.Inventory.BatchUpdateDevices:input_type -> inventory.BatchUpdateDevicesRequest
+	24, // 41: inventory.Inventory.AddAssets:input_type -> inventory.AssetList
+	26, // 42: inventory.Inventory.GetAssets:input_type -> inventory.AssetIDList
+	26, // 43: inventory.Inventory.DeleteAssets:input_type -> inventory.AssetIDList
+	24, // 44: inventory.Inventory.UpdateAssets:input_type -> inventory.AssetList
+	0,  // 45: inventory.Inventory.DeviceConfigsExists:input_type -> inventory.DeviceConfigsExistsRequest
+	5,  // 46: inventory.Inventory.AddCrosDevices:output_type -> inventory.AddCrosDevicesResponse
+	9,  // 47: inventory.Inventory.GetCrosDevices:output_type -> inventory.GetCrosDevicesResponse
+	15, // 48: inventory.Inventory.UpdateDutsStatus:output_type -> inventory.UpdateDutsStatusResponse
+	17, // 49: inventory.Inventory.UpdateCrosDevicesSetup:output_type -> inventory.UpdateCrosDevicesSetupResponse
+	11, // 50: inventory.Inventory.UpdateLabstations:output_type -> inventory.UpdateLabstationsResponse
+	19, // 51: inventory.Inventory.DeleteCrosDevices:output_type -> inventory.DeleteCrosDevicesResponse
+	22, // 52: inventory.Inventory.BatchUpdateDevices:output_type -> inventory.BatchUpdateDevicesResponse
+	25, // 53: inventory.Inventory.AddAssets:output_type -> inventory.AssetResponse
+	25, // 54: inventory.Inventory.GetAssets:output_type -> inventory.AssetResponse
+	28, // 55: inventory.Inventory.DeleteAssets:output_type -> inventory.AssetIDResponse
+	25, // 56: inventory.Inventory.UpdateAssets:output_type -> inventory.AssetResponse
+	1,  // 57: inventory.Inventory.DeviceConfigsExists:output_type -> inventory.DeviceConfigsExistsResponse
+	46, // [46:58] is the sub-list for method output_type
+	34, // [34:46] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() }
@@ -2234,7 +2358,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDutsStatusRequest); i {
+			switch v := v.(*UpdateLabstationsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2246,7 +2370,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DutMeta); i {
+			switch v := v.(*UpdateLabstationsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2258,7 +2382,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*LabMeta); i {
+			switch v := v.(*UpdateDutsStatusRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2270,7 +2394,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateDutsStatusResponse); i {
+			switch v := v.(*DutMeta); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2282,7 +2406,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateCrosDevicesSetupRequest); i {
+			switch v := v.(*LabMeta); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2294,7 +2418,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateCrosDevicesSetupResponse); i {
+			switch v := v.(*UpdateDutsStatusResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2306,7 +2430,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteCrosDevicesRequest); i {
+			switch v := v.(*UpdateCrosDevicesSetupRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2318,7 +2442,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteCrosDevicesResponse); i {
+			switch v := v.(*UpdateCrosDevicesSetupResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2330,7 +2454,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeviceProperty); i {
+			switch v := v.(*DeleteCrosDevicesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2342,7 +2466,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchUpdateDevicesRequest); i {
+			switch v := v.(*DeleteCrosDevicesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2354,7 +2478,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BatchUpdateDevicesResponse); i {
+			switch v := v.(*DeviceProperty); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2366,7 +2490,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AssetResult); i {
+			switch v := v.(*BatchUpdateDevicesRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2378,7 +2502,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AssetList); i {
+			switch v := v.(*BatchUpdateDevicesResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2390,7 +2514,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AssetResponse); i {
+			switch v := v.(*AssetResult); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2402,7 +2526,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AssetIDList); i {
+			switch v := v.(*AssetList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2414,7 +2538,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AssetIDResult); i {
+			switch v := v.(*AssetResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2426,7 +2550,19 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AssetIDResponse); i {
+			switch v := v.(*AssetIDList); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AssetIDResult); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2438,6 +2574,18 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			}
 		}
 		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AssetIDResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteCrosDevicesRequest_Reason); i {
 			case 0:
 				return &v.state
@@ -2449,7 +2597,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 				return nil
 			}
 		}
-		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
+		file_infra_appengine_cros_lab_inventory_api_v1_service_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeviceProperty_Rpm); i {
 			case 0:
 				return &v.state
@@ -2472,7 +2620,7 @@ func file_infra_appengine_cros_lab_inventory_api_v1_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_infra_appengine_cros_lab_inventory_api_v1_service_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   30,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -2507,6 +2655,8 @@ type InventoryClient interface {
 	// UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data
 	// in the inventory.
 	UpdateCrosDevicesSetup(ctx context.Context, in *UpdateCrosDevicesSetupRequest, opts ...grpc.CallOption) (*UpdateCrosDevicesSetupResponse, error)
+	// UpdateLabstations updates a selected ChromeOS labstations in lab.
+	UpdateLabstations(ctx context.Context, in *UpdateLabstationsRequest, opts ...grpc.CallOption) (*UpdateLabstationsResponse, error)
 	// DeleteCrosDevices delete the selelcted devices from the inventory.
 	DeleteCrosDevices(ctx context.Context, in *DeleteCrosDevicesRequest, opts ...grpc.CallOption) (*DeleteCrosDevicesResponse, error)
 	// BatchUpdateDevices updates some specific device properties in batch.
@@ -2560,6 +2710,15 @@ func (c *inventoryPRPCClient) UpdateDutsStatus(ctx context.Context, in *UpdateDu
 func (c *inventoryPRPCClient) UpdateCrosDevicesSetup(ctx context.Context, in *UpdateCrosDevicesSetupRequest, opts ...grpc.CallOption) (*UpdateCrosDevicesSetupResponse, error) {
 	out := new(UpdateCrosDevicesSetupResponse)
 	err := c.client.Call(ctx, "inventory.Inventory", "UpdateCrosDevicesSetup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inventoryPRPCClient) UpdateLabstations(ctx context.Context, in *UpdateLabstationsRequest, opts ...grpc.CallOption) (*UpdateLabstationsResponse, error) {
+	out := new(UpdateLabstationsResponse)
+	err := c.client.Call(ctx, "inventory.Inventory", "UpdateLabstations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2673,6 +2832,15 @@ func (c *inventoryClient) UpdateCrosDevicesSetup(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *inventoryClient) UpdateLabstations(ctx context.Context, in *UpdateLabstationsRequest, opts ...grpc.CallOption) (*UpdateLabstationsResponse, error) {
+	out := new(UpdateLabstationsResponse)
+	err := c.cc.Invoke(ctx, "/inventory.Inventory/UpdateLabstations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *inventoryClient) DeleteCrosDevices(ctx context.Context, in *DeleteCrosDevicesRequest, opts ...grpc.CallOption) (*DeleteCrosDevicesResponse, error) {
 	out := new(DeleteCrosDevicesResponse)
 	err := c.cc.Invoke(ctx, "/inventory.Inventory/DeleteCrosDevices", in, out, opts...)
@@ -2747,6 +2915,8 @@ type InventoryServer interface {
 	// UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data
 	// in the inventory.
 	UpdateCrosDevicesSetup(context.Context, *UpdateCrosDevicesSetupRequest) (*UpdateCrosDevicesSetupResponse, error)
+	// UpdateLabstations updates a selected ChromeOS labstations in lab.
+	UpdateLabstations(context.Context, *UpdateLabstationsRequest) (*UpdateLabstationsResponse, error)
 	// DeleteCrosDevices delete the selelcted devices from the inventory.
 	DeleteCrosDevices(context.Context, *DeleteCrosDevicesRequest) (*DeleteCrosDevicesResponse, error)
 	// BatchUpdateDevices updates some specific device properties in batch.
@@ -2778,6 +2948,9 @@ func (*UnimplementedInventoryServer) UpdateDutsStatus(context.Context, *UpdateDu
 }
 func (*UnimplementedInventoryServer) UpdateCrosDevicesSetup(context.Context, *UpdateCrosDevicesSetupRequest) (*UpdateCrosDevicesSetupResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCrosDevicesSetup not implemented")
+}
+func (*UnimplementedInventoryServer) UpdateLabstations(context.Context, *UpdateLabstationsRequest) (*UpdateLabstationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateLabstations not implemented")
 }
 func (*UnimplementedInventoryServer) DeleteCrosDevices(context.Context, *DeleteCrosDevicesRequest) (*DeleteCrosDevicesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCrosDevices not implemented")
@@ -2873,6 +3046,24 @@ func _Inventory_UpdateCrosDevicesSetup_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(InventoryServer).UpdateCrosDevicesSetup(ctx, req.(*UpdateCrosDevicesSetupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Inventory_UpdateLabstations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateLabstationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InventoryServer).UpdateLabstations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/inventory.Inventory/UpdateLabstations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InventoryServer).UpdateLabstations(ctx, req.(*UpdateLabstationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3022,6 +3213,10 @@ var _Inventory_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateCrosDevicesSetup",
 			Handler:    _Inventory_UpdateCrosDevicesSetup_Handler,
+		},
+		{
+			MethodName: "UpdateLabstations",
+			Handler:    _Inventory_UpdateLabstations_Handler,
 		},
 		{
 			MethodName: "DeleteCrosDevices",

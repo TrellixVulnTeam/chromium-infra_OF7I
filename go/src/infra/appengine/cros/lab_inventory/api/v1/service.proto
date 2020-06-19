@@ -33,6 +33,9 @@ service Inventory {
   // in the inventory.
   rpc UpdateCrosDevicesSetup(UpdateCrosDevicesSetupRequest) returns (UpdateCrosDevicesSetupResponse);
 
+  // UpdateLabstations updates a selected ChromeOS labstations in lab.
+  rpc UpdateLabstations(UpdateLabstationsRequest) returns (UpdateLabstationsResponse);
+
   // DeleteCrosDevices delete the selelcted devices from the inventory.
   rpc DeleteCrosDevices(DeleteCrosDevicesRequest) returns (DeleteCrosDevicesResponse);
 
@@ -113,6 +116,15 @@ message ExtendedDeviceData {
 message GetCrosDevicesResponse {
   repeated ExtendedDeviceData data = 1;
   repeated DeviceOpResult failed_devices = 2;
+}
+
+message UpdateLabstationsRequest {
+  string hostname = 1;
+  repeated string deletedServos = 2;
+}
+
+message UpdateLabstationsResponse {
+  lab.ChromeOSDevice labstation = 1;
 }
 
 message UpdateDutsStatusRequest {

@@ -164,7 +164,7 @@ func LogChromeOSDeviceChanges(old *lab.ChromeOSDevice, newData *lab.ChromeOSDevi
 	changes.log("manufacturing.config_id", old.GetManufacturingId().GetValue(), newData.GetManufacturingId().GetValue())
 	changes = append(changes, logDeviceConfigID(old.GetDeviceConfigId(), newData.GetDeviceConfigId())...)
 	changes = append(changes, logDutChange(old.GetDut(), newData.GetDut())...)
-	changes = append(changes, logLabstationChange(old.GetLabstation(), newData.GetLabstation())...)
+	changes = append(changes, LogLabstationChange(old.GetLabstation(), newData.GetLabstation())...)
 
 	// Set id and hostname for all changes.
 	id := old.GetId().GetValue()
@@ -176,7 +176,8 @@ func LogChromeOSDeviceChanges(old *lab.ChromeOSDevice, newData *lab.ChromeOSDevi
 	return
 }
 
-func logLabstationChange(old *lab.Labstation, newData *lab.Labstation) (changes Changes) {
+// LogLabstationChange logs the labstation changes
+func LogLabstationChange(old *lab.Labstation, newData *lab.Labstation) (changes Changes) {
 	if old == nil || newData == nil {
 		changes.log("Labstation", old, newData)
 		return

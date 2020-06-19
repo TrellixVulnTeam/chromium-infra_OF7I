@@ -53,6 +53,7 @@ func getApplication() *cli.Application {
 			inventory.RemoveDuts,
 			inventory.UpdateDut,
 			inventory.BatchUpdateDuts,
+			inventory.UpdateLabstation,
 			subcommands.Section("Pool Operations"),
 			pool.EnsurePoolHealthy,
 			pool.ResizePool,

@@ -897,6 +897,68 @@ func TestDeleteAsset(t *testing.T) {
 	})
 }
 
+func TestUpdateLabstations(t *testing.T) {
+	t.Parallel()
+
+	Convey("Test updating labstations", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		labstation1 := lab.ChromeOSDevice{
+			Id: &lab.ChromeOSDeviceID{},
+			Device: &lab.ChromeOSDevice_Labstation{
+				Labstation: &lab.Labstation{
+					Hostname: "labstation1",
+					Servos: []*lab.Servo{
+						{
+							ServoHostname: "labstation1",
+							ServoPort:     8887,
+							ServoSerial:   "SN0001",
+						},
+						{
+							ServoHostname: "labstation1",
+							ServoPort:     8888,
+							ServoSerial:   "SN0002",
+						},
+						{
+							ServoHostname: "labstation1",
+							ServoPort:     8889,
+							ServoSerial:   "SN0003",
+						},
+					},
+				},
+			},
+		}
+		req := &api.AddCrosDevicesRequest{
+			Devices: []*lab.ChromeOSDevice{&labstation1},
+		}
+		resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+		So(err, ShouldBeNil)
+		So(resp.GetPassedDevices(), ShouldHaveLength, 1)
+		Convey("Deleting servos", func() {
+			_, err := tf.Inventory.UpdateLabstations(tf.C, &api.UpdateLabstationsRequest{
+				Hostname:      "labstation1",
+				DeletedServos: []string{"SN0001", "SN0002"},
+			})
+			So(err, ShouldBeNil)
+			resp, err := tf.Inventory.GetCrosDevices(tf.C, &api.GetCrosDevicesRequest{
+				Ids: []*api.DeviceID{
+					{
+						Id: &api.DeviceID_Hostname{
+							Hostname: "labstation1",
+						},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			ds := resp.GetData()
+			So(ds, ShouldHaveLength, 1)
+			So(ds[0].GetLabConfig().GetLabstation().GetServos(), ShouldHaveLength, 1)
+			So(ds[0].GetLabConfig().GetLabstation().GetServos()[0].GetServoSerial(), ShouldEqual, "SN0003")
+		})
+	})
+}
+
 type devcfgEntity struct {
 	_kind     string `gae:"$kind,DevConfig"`
 	ID        string `gae:"$id"`
