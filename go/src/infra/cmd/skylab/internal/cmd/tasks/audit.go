@@ -25,14 +25,15 @@ var Audit = &subcommands.Command{
 	ShortDesc: "create audit tasks",
 	LongDesc: `Create audit tasks.
 
-This command does not wait for the tasks to start running.`,
+This command does not wait for the tasks to start running.
+By default all actions runnings. To run specified action provide it via flags.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &auditRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 10, "The expiration minutes of the repair request.")
-		c.Flags.BoolVar(&c.skipVerifyServoUSB, "skip-verify-servo-usb", false, "Do not run verifyer for servo usb drive.")
-		c.Flags.BoolVar(&c.skipVerifyDUTStorage, "skip-verify-dut-storage", false, "Do not run verifyer for DUT storage.")
+		c.Flags.BoolVar(&c.runVerifyServoUSB, "run-verify-servo-usb", false, "Run the verifier for servo usb drive.")
+		c.Flags.BoolVar(&c.runVerifyDUTStorage, "run-verify-dut-storage", false, "Run the verifier for DUT storage.")
 		return c
 	},
 }
@@ -42,11 +43,9 @@ type auditRun struct {
 	authFlags authcli.Flags
 	envFlags  skycmdlib.EnvFlags
 
-	expirationMins       int
-	skipVerifyServoUSB   bool
-	skipVerifyDUTStorage bool
-
-	actions string
+	expirationMins      int
+	runVerifyServoUSB   bool
+	runVerifyDUTStorage bool
 }
 
 func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -59,6 +58,10 @@ func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands
 
 func (c *auditRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(args); err != nil {
+		return err
+	}
+	actions, err := c.actions()
+	if err != nil {
 		return err
 	}
 
@@ -75,7 +78,7 @@ func (c *auditRun) innerRun(a subcommands.Application, args []string, env subcom
 		if dutName != host {
 			fmt.Fprintf(a.GetErr(), "correcting (%s) to (%s)\n", host, dutName)
 		}
-		task, err := creator.AuditTask(ctx, dutName, c.actions, c.expirationMins*60)
+		task, err := creator.AuditTask(ctx, dutName, actions, c.expirationMins*60)
 		if err != nil {
 			errorMap[dutName] = err
 		} else {
@@ -108,20 +111,24 @@ func (c *auditRun) validateArgs(args []string) error {
 	if len(args) == 0 {
 		return errors.Reason("at least one host has to provided").Err()
 	}
-	return c.validateActions()
+	return nil
 }
 
-func (c *auditRun) validateActions() error {
+// Collect actions to run. If we do not by specified action or all of them if no action specified.
+func (c *auditRun) actions() (string, error) {
 	var a []string
-	if !c.skipVerifyDUTStorage {
+	if !(c.runVerifyDUTStorage || c.runVerifyServoUSB) {
+		c.runVerifyDUTStorage = true
+		c.runVerifyServoUSB = true
+	}
+	if c.runVerifyDUTStorage {
 		a = append(a, "verify-dut-storage")
 	}
-	if !c.skipVerifyServoUSB {
+	if c.runVerifyServoUSB {
 		a = append(a, "verify-servo-usb-drive")
 	}
 	if len(a) == 0 {
-		return errors.Reason("All actions were skiped! At least one action has to be allowed to run").Err()
+		return "", errors.Reason("No actions to run").Err()
 	}
-	c.actions = strings.Join(a, ",")
-	return nil
+	return strings.Join(a, ","), nil
 }
