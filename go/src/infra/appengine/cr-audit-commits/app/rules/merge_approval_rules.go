@@ -5,68 +5,50 @@
 package rules
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"context"
 	"go.chromium.org/luci/common/logging"
 )
 
 const (
-	chromeReleaseBotAcc        = "chrome-release-bot@chromium.org"
-	chromeReleaseAutoRollerAcc = "chromium-release-autoroll@skia-public.iam.gserviceaccount.com"
-	mergeApprovedLabel         = "Merge-Approved-%s"
+	mergeApprovedLabel = "Merge-Approved-%s"
 )
 
-var chromeTPMs = []string{"govind@chromium.org", "govind@google.com",
-	"srinivassista@chromium.org", "srinivassista@google.com",
-	"bhthompson@chromium.org", "bhthompson@google.com",
-	"josafat@chromium.org", "josafat@chromium.org",
-	"gkihumba@chromium.org", "gkihumba@google.com",
-	"kbleicher@chromium.org", "kbleicher@google.com",
-	"mmoss@chromium.org", "mmoss@google.com",
-	"benmason@chromium.org", "benmason@google.com",
-	"sheriffbot@chromium.org",
-	"ketakid@chromium.org", "ketakid@google.com",
-	"cindyb@chromium.org", "cindyb@google.com",
-	"geohsu@chromium.org", "geohsu@google.com",
-	"shawnku@chromium.org", "shawnku@google.com",
-	"kariahda@chromium.org", "kariahda@google.com",
-	"djmm@chromium.org", "djmm@google.com",
-	"pbommana@google.com", "pbommana@chromium.org",
-	"bindusuvarna@google.com", "bindusuvarna@chromium.org",
-	"dgagnon@chromium.org", "dgagnon@google.com",
-	"adetaylor@google.com", "adetaylor@chromium.org"}
-
-// OnlyMergeApprovedChange is a Rule that verifies that only approved changes are merged into a release branch.
-type OnlyMergeApprovedChange struct{}
+// OnlyMergeApprovedChange is a Rule that verifies that only approved changes
+// are merged into a release branch.
+type OnlyMergeApprovedChange struct {
+	// AllowedUsers is the list of users who are allowed to author and commit
+	// merges.
+	AllowedUsers []string
+	// AllowedRobots is the list of robot accounts who are allowed to author
+	// merges.
+	AllowedRobots []string
+}
 
 // GetName returns the name of the rule.
-func (rule OnlyMergeApprovedChange) GetName() string {
+func (r OnlyMergeApprovedChange) GetName() string {
 	return "OnlyMergeApprovedChange"
 }
 
 // Run executes the rule.
-func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
-	result := &RuleResult{}
-	result.RuleResultStatus = RuleFailed
-
-	// Exclude Chrome release bot changes
-	if rc.AuthorAccount == chromeReleaseBotAcc || rc.AuthorAccount == chromeReleaseAutoRollerAcc {
-		result.RuleResultStatus = RulePassed
-		return result, nil
+func (r OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc *RelevantCommit, cs *Clients) (*RuleResult, error) {
+	result := &RuleResult{RuleResultStatus: RuleFailed}
+	for _, a := range r.AllowedUsers {
+		if rc.AuthorAccount == a || rc.CommitterAccount == a {
+			result.RuleResultStatus = RulePassed
+			return result, nil
+		}
 	}
-
-	// Exclude Chrome TPM changes
-	for _, tpm := range chromeTPMs {
-		if (rc.AuthorAccount == tpm) || (rc.CommitterAccount == tpm) {
+	for _, a := range r.AllowedRobots {
+		if rc.AuthorAccount == a {
 			result.RuleResultStatus = RulePassed
 			return result, nil
 		}
 	}
 	bugID, err := bugIDFromCommitMessage(rc.CommitMessage)
-
 	if err != nil {
 		result.Message = fmt.Sprintf("Revision %s was merged to %s release branch with no bug attached!"+
 			"\nPlease explain why this change was merged to the branch!", rc.CommitHash, ap.RepoCfg.BranchName)
@@ -102,9 +84,8 @@ func (rule OnlyMergeApprovedChange) Run(ctx context.Context, ap *AuditParams, rc
 			for _, label := range labels {
 				if label == mergeLabel {
 					author := comment.Author.Name
-					// Check if the author of the merge approval is a TPM
-					for _, tpm := range chromeTPMs {
-						if author == tpm {
+					for _, a := range r.AllowedUsers {
+						if author == a {
 							result.RuleResultStatus = RulePassed
 							return result, nil
 						}

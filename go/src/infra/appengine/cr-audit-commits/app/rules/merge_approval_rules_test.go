@@ -47,6 +47,11 @@ func TestMergeApprovalRules(t *testing.T) {
 				Issue: &monorail.Issue{},
 			},
 		}
+
+		r := OnlyMergeApprovedChange{
+			AllowedRobots: []string{"bot@example.com"},
+			AllowedUsers:  []string{"human@example.com"},
+		}
 		Convey("Change to commit has a valid bug with merge approval label in comment history", func() {
 			testClients.Monorail = MockMonorailClient{
 				Gi: &monorail.Issue{
@@ -55,7 +60,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				Cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "human@example.com"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{
@@ -70,7 +75,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			}
 			rc.CommitMessage = "This change has a valid bug ID with merge approval label in comment history \nBug:123456"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
@@ -82,7 +87,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				Cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "human@example.com"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{
@@ -97,7 +102,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			}
 			rc.CommitMessage = "This change has a valid bug ID with merge approval label in comment history \nBug: chromium:123456"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
@@ -109,7 +114,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				Cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "human@example.com"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{
@@ -124,7 +129,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			}
 			rc.CommitMessage = "This change to commit has multiple bugs including an invalid one \nBug:123456, 654321"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
@@ -137,7 +142,7 @@ func TestMergeApprovalRules(t *testing.T) {
 				Cl: &monorail.ListCommentsResponse{
 					Items: []*monorail.Comment{
 						{
-							Author: &monorail.AtomPerson{Name: "benmason@chromium.org"},
+							Author: &monorail.AtomPerson{Name: "human@example.com"},
 							Updates: &monorail.Update{
 								Status: "Fixed",
 								Labels: []string{},
@@ -148,7 +153,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			}
 			rc.CommitMessage = "Change to commit has an invalid bug and a valid one with no merge approval label \nBug: 265485, 123456"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 		})
@@ -164,33 +169,33 @@ func TestMergeApprovalRules(t *testing.T) {
 			}
 			rc.CommitMessage = "All bugs listed on this change to commit are all invalid \nBug: 654321, 587469"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 		})
-		Convey("Change to commit is authored by a Chrome TPM", func() {
-			rc.CommitMessage = "This change's author is a Chrome TPM"
-			rc.AuthorAccount = "benmason@chromium.org"
+		Convey("Change to commit is authored by an allowed user", func() {
+			rc.CommitMessage = "This change's author is an allowed user"
+			rc.AuthorAccount = "human@example.com"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
-		Convey("Change to commit is committed by a Chrome TPM", func() {
-			rc.CommitMessage = "This change's committer is a Chrome TPM"
-			rc.CommitterAccount = "benmason@chromium.org"
+		Convey("Change to commit is committed by an allowed user", func() {
+			rc.CommitMessage = "This change's committer is an allowed user"
+			rc.CommitterAccount = "human@example.com"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
 		})
-		Convey("Change to commit is by Chrome release bot", func() {
-			rc.CommitMessage = "This change's author is Chrome release bot"
-			rc.AuthorAccount = "chrome-release-bot@chromium.org"
+		Convey("Change to commit is by an allowed bot", func() {
+			rc.CommitMessage = "This change's author is an allowed bot"
+			rc.AuthorAccount = "bot@example.com"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
@@ -199,7 +204,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			rc.CommitMessage = "This change does not have a bug ID field"
 			rc.CommitHash = "a1b2c3d4e5f6"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			//Check result message
@@ -210,7 +215,7 @@ func TestMergeApprovalRules(t *testing.T) {
 			rc.CommitMessage = "This change has an invalid bug ID \nBug=none"
 			rc.CommitHash = "a1b2c3d4e5f6"
 			// Run rule
-			rr, _ := OnlyMergeApprovedChange{}.Run(ctx, ap, rc, testClients)
+			rr, _ := r.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			//Check result message

@@ -4,16 +4,63 @@
 
 package rules
 
-var chromiumRobots = []string{
-	"chromium-autoroll@skia-public.iam.gserviceaccount.com",
-	"image-builder@chops-service-accounts.iam.gserviceaccount.com",
-	"recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com",
-}
+var (
+	chromiumRobots = []string{
+		"chromium-autoroll@skia-public.iam.gserviceaccount.com",
+		"image-builder@chops-service-accounts.iam.gserviceaccount.com",
+		"recipe-mega-autoroller@chops-service-accounts.iam.gserviceaccount.com",
+	}
 
-var fuchsiaRobots = []string{
-	"docs-roller@fuchsia-infra.iam.gserviceaccount.com",
-	"global-integration-roller@fuchsia-infra.iam.gserviceaccount.com",
-}
+	chromeMergeRobots = []string{
+		"chrome-release-bot@chromium.org",
+		"chromium-release-autoroll@skia-public.iam.gserviceaccount.com",
+	}
+
+	chromeTPMs = []string{
+		"adetaylor@chromium.org",
+		"adetaylor@google.com",
+		"benmason@chromium.org",
+		"benmason@google.com",
+		"bhthompson@chromium.org",
+		"bhthompson@google.com",
+		"bindusuvarna@chromium.org",
+		"bindusuvarna@google.com",
+		"cindyb@chromium.org",
+		"cindyb@google.com",
+		"dgagnon@chromium.org",
+		"dgagnon@google.com",
+		"djmm@chromium.org",
+		"djmm@google.com",
+		"geohsu@chromium.org",
+		"geohsu@google.com",
+		"gkihumba@chromium.org",
+		"gkihumba@google.com",
+		"govind@chromium.org",
+		"govind@google.com",
+		"josafat@chromium.org",
+		"josafat@chromium.org",
+		"kariahda@chromium.org",
+		"kariahda@google.com",
+		"kbleicher@chromium.org",
+		"kbleicher@google.com",
+		"ketakid@chromium.org",
+		"ketakid@google.com",
+		"mmoss@chromium.org",
+		"mmoss@google.com",
+		"pbommana@chromium.org",
+		"pbommana@google.com",
+		"shawnku@chromium.org",
+		"shawnku@google.com",
+		"sheriffbot@chromium.org",
+		"srinivassista@chromium.org",
+		"srinivassista@google.com",
+	}
+
+	fuchsiaRobots = []string{
+		"docs-roller@fuchsia-infra.iam.gserviceaccount.com",
+		"global-integration-roller@fuchsia-infra.iam.gserviceaccount.com",
+	}
+)
 
 // RuleMap maps each monitored repository to a list of account/rules structs.
 var RuleMap = map[string]*RefConfig{
@@ -174,7 +221,10 @@ var RuleMap = map[string]*RefConfig{
 			"merge-approval-rules": {
 				Account: "*",
 				Rules: []Rule{
-					OnlyMergeApprovedChange{},
+					OnlyMergeApprovedChange{
+						AllowedRobots: chromeMergeRobots,
+						AllowedUsers:  chromeTPMs,
+					},
 				},
 				NotificationFunction: FileBugForMergeApprovalViolation,
 			},
