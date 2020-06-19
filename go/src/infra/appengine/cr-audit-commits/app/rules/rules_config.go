@@ -4,6 +4,8 @@
 
 package rules
 
+import "fmt"
+
 var (
 	chromiumRobots = []string{
 		"chromium-autoroll@skia-public.iam.gserviceaccount.com",
@@ -62,6 +64,11 @@ var (
 	}
 )
 
+// skiaAsset returns the path to the named Skia asset version file.
+func skiaAsset(asset string) string {
+	return fmt.Sprintf("infra/bots/assets/%s/VERSION", asset)
+}
+
 // RuleMap maps each monitored repository to a list of account/rules structs.
 var RuleMap = map[string]*RefConfig{
 	// Chromium
@@ -76,25 +83,26 @@ var RuleMap = map[string]*RefConfig{
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]AccountRules{
-			"autoroll-rules-chromium": AutoRollRulesForFilesAndDirs(
+			"autoroll-rules-chromium": AutoRollRules(
 				"chromium-autoroll@skia-public.iam.gserviceaccount.com",
 				[]string{
-					fileAFDO,
-					fileDEPS,
-					fileFreeTypeReadme,
-					fileFreeTypeConfigH,
-					fileFreeTypeOptionH,
-					fileFuchsiaSDKLinux,
-					fileFuchsiaSDKMac,
-					filePerfetto,
-					filePgoMac,
-					filePgoWin32,
-					filePgoWin64,
-				}, []string{
-					dirCrosProfile,
+					"chrome/android/profiles/newest.txt",
+					"DEPS",
+					"third_party/freetype/README.chromium",
+					"third_party/freetype/include/freetype-custom-config/ftconfig.h",
+					"third_party/freetype/include/freetype-custom-config/ftoption.h",
+					"build/fuchsia/linux.sdk.sha1",
+					"build/fuchsia/mac.sdk.sha1",
+					"tools/perf/core/perfetto_binary_roller/binary_deps.json",
+					"chrome/build/mac.pgo.txt",
+					"chrome/build/win32.pgo.txt",
+					"chrome/build/win64.pgo.txt",
+				},
+				[]string{
+					"chromeos/profiles",
 				}),
-			"autoroll-rules-chromium-internal": AutoRollRulesDEPS("chromium-internal-autoroll@skia-corp.google.com.iam.gserviceaccount.com"),
-			"autoroll-rules-wpt":               AutoRollRulesLayoutTests("wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com"),
+			"autoroll-rules-chromium-internal": AutoRollRules("chromium-internal-autoroll@skia-corp.google.com.iam.gserviceaccount.com", []string{"DEPS"}, nil),
+			"autoroll-rules-wpt":               AutoRollRules("wpt-autoroller@chops-service-accounts.iam.gserviceaccount.com", nil, []string{"third_party/blink/web_tests"}),
 			"findit-rules": {
 				Account: "findit-for-me@appspot.gserviceaccount.com",
 				Rules: []Rule{
@@ -140,10 +148,10 @@ var RuleMap = map[string]*RefConfig{
 				},
 				NotificationFunction: FileBugForTBRViolation,
 			},
-			"images-pins-roller": AutoRollRulesForFileList(
+			"images-pins-roller": AutoRollRules(
 				"images-pins-roller@chops-service-accounts.iam.gserviceaccount.com",
 				[]string{"build/images/pins.yaml"},
-			),
+				nil),
 		},
 	},
 	"chromium-infra-luci-go": {
@@ -182,7 +190,7 @@ var RuleMap = map[string]*RefConfig{
 				},
 				NotificationFunction: FileBugForTBRViolation,
 			},
-			"image-autoroller": AutoRollRulesForFilesAndDirs(
+			"image-autoroller": AutoRollRules(
 				"image-builder@chops-service-accounts.iam.gserviceaccount.com",
 				[]string{
 					"configs/gce-provider/vms.cfg",
@@ -308,7 +316,7 @@ var RuleMap = map[string]*RefConfig{
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRulesSkiaManifest("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com"),
+			"autoroll-rules-skia": AutoRollRules("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com", []string{"manifest/skia"}, nil),
 		},
 	},
 
@@ -324,9 +332,12 @@ var RuleMap = map[string]*RefConfig{
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRulesForFilesAndDirs("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{fileDEPS}, dirsSKCMS),
-			"bookmaker":           AutoRollRulesAPIDocs("skia-bookmaker@skia-swarming-bots.iam.gserviceaccount.com"),
-			"recreate-skps":       AutoRollRulesForFilesAndDirs("skia-recreate-skps@skia-swarming-bots.iam.gserviceaccount.com", []string{SkiaAsset("go_deps"), SkiaAsset("skp"), "go.mod", "go.sum", "infra/bots/tasks.json"}, []string{}),
+			"autoroll-rules-skia": AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS"}, []string{"include/third_party/skcms", "third_party/skcms"}),
+			"bookmaker":           AutoRollRules("skia-bookmaker@skia-swarming-bots.iam.gserviceaccount.com", nil, []string{"site/user/api"}),
+			"recreate-skps": AutoRollRules(
+				"skia-recreate-skps@skia-swarming-bots.iam.gserviceaccount.com",
+				[]string{skiaAsset("go_deps"), skiaAsset("skp"), "go.mod", "go.sum", "infra/bots/tasks.json"},
+				nil),
 		},
 	},
 	"skia-lottie-ci": {
@@ -339,7 +350,7 @@ var RuleMap = map[string]*RefConfig{
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]AccountRules{
-			"autoroll-rules-skia": AutoRollRulesDEPSAndTasks("skia-autoroll@skia-public.iam.gserviceaccount.com"),
+			"autoroll-rules-skia": AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS", "go.mod", "go.sum", "infra/bots/tasks.json"}, nil),
 		},
 	},
 }

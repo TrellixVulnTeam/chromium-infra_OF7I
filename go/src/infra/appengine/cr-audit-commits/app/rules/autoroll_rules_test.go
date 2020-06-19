@@ -72,7 +72,7 @@ func TestAutoRollRules(t *testing.T) {
 				},
 			}, nil)
 			// Run rule
-			rr, _ := AutoRollRulesDEPS(rc.CommitterAccount).Rules[0].Run(ctx, ap, rc, testClients)
+			rr, _ := AutoRollRules(rc.CommitterAccount, []string{"DEPS"}, nil).Rules[0].Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 
@@ -108,7 +108,7 @@ func TestAutoRollRules(t *testing.T) {
 					},
 				}, nil)
 				// Run rule
-				rr, _ := AutoRollRulesDEPS(rc.CommitterAccount).Rules[0].Run(ctx, ap, rc, testClients)
+				rr, _ := AutoRollRules(rc.CommitterAccount, []string{"DEPS"}, nil).Rules[0].Run(ctx, ap, rc, testClients)
 				// Check result code
 				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
@@ -137,7 +137,7 @@ func TestAutoRollRules(t *testing.T) {
 					},
 				}, nil)
 				// Run rule
-				rr, _ := AutoRollRulesDEPS(rc.CommitterAccount).Rules[0].Run(ctx, ap, rc, testClients)
+				rr, _ := AutoRollRules(rc.CommitterAccount, []string{"DEPS"}, nil).Rules[0].Run(ctx, ap, rc, testClients)
 				// Check result code
 				So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 			})
