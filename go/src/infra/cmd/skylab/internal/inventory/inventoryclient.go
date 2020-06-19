@@ -161,9 +161,6 @@ func (client *inventoryClientV2) updateAssets(ctx context.Context, deletedDevice
 		for _, assetResult := range assetResponse.Passed {
 			fmt.Fprintf(b, "AssetId: %s , Old Location: %s\n", assetResult.GetAsset().GetId(), assetResult.GetAsset().GetLocation().String())
 		}
-		for _, assetResult := range assetResponse.Failed {
-			fmt.Fprintf(b, "failed to get asset from registration for %s : %s\n", assetResult.Asset.GetId(), assetResult.GetErrorMsg())
-		}
 	}
 	// Update existing assets in registration system
 	assetResponse, _ = client.ic.UpdateAssets(ctx, &invV2Api.AssetList{Asset: existingAssets})
