@@ -184,3 +184,73 @@ func TestDeleteNic(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchUpdateNics(t *testing.T) {
+	t.Parallel()
+	Convey("BatchUpdateNics", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		nics := make([]*proto.Nic, 0, 4)
+		for i := 0; i < 4; i++ {
+			nic1 := mockNic(fmt.Sprintf("nic-%d", i))
+			resp, err := CreateNic(ctx, nic1)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic1)
+			nics = append(nics, resp)
+		}
+		Convey("BatchUpdate all nics", func() {
+			resp, err := BatchUpdateNics(ctx, nics)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nics)
+		})
+		Convey("BatchUpdate existing and non-existing nics", func() {
+			Nic5 := mockNic("")
+			nics = append(nics, Nic5)
+			resp, err := BatchUpdateNics(ctx, nics)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, InternalError)
+		})
+	})
+}
+
+func TestQueryNicByPropertyName(t *testing.T) {
+	t.Parallel()
+	Convey("QueryNicByPropertyName", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		dummyNic := &proto.Nic{
+			Name: "nic-15",
+		}
+		nic1 := &proto.Nic{
+			Name: "nic-15",
+			SwitchInterface: &proto.SwitchInterface{
+				Switch: "switch-1",
+			},
+		}
+		resp, cerr := CreateNic(ctx, nic1)
+		So(cerr, ShouldBeNil)
+		So(resp, ShouldResembleProto, nic1)
+
+		nics := make([]*proto.Nic, 0, 1)
+		nics = append(nics, nic1)
+
+		nics1 := make([]*proto.Nic, 0, 1)
+		nics1 = append(nics1, dummyNic)
+		Convey("Query By existing Switch keysonly", func() {
+			resp, err := QueryNicByPropertyName(ctx, "switch_id", "switch-1", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nics1)
+		})
+		Convey("Query By non-existing Switch", func() {
+			resp, err := QueryNicByPropertyName(ctx, "switch_id", "switch-2", true)
+			So(err, ShouldBeNil)
+			So(resp, ShouldBeNil)
+		})
+		Convey("Query By existing Switch", func() {
+			resp, err := QueryNicByPropertyName(ctx, "switch_id", "switch-1", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nics)
+		})
+	})
+}

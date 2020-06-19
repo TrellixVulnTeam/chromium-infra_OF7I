@@ -19,12 +19,26 @@ import (
 )
 
 // CreateNic creates a new nic in datastore.
+//
+// Checks if the resources referenced by the Nic input already exists
+// in the system before creating a new Nic
 func CreateNic(ctx context.Context, nic *fleet.Nic) (*fleet.Nic, error) {
+	err := validateNic(ctx, nic)
+	if err != nil {
+		return nil, err
+	}
 	return registration.CreateNic(ctx, nic)
 }
 
 // UpdateNic updates nic in datastore.
+//
+// Checks if the resources referenced by the Nic input already exists
+// in the system before updating a Nic
 func UpdateNic(ctx context.Context, nic *fleet.Nic) (*fleet.Nic, error) {
+	err := validateNic(ctx, nic)
+	if err != nil {
+		return nil, err
+	}
 	return registration.UpdateNic(ctx, nic)
 }
 
@@ -69,6 +83,24 @@ func ImportNics(ctx context.Context, nics []*fleet.Nic) (*fleetds.OpResults, err
 func ReplaceNic(ctx context.Context, oldNic *fleet.Nic, newNic *fleet.Nic) (*fleet.Nic, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
+}
+
+// validateNic validates if a nic can be created/updated in the datastore.
+//
+// Checks if the resources referenced by the given Nic input already exists
+// in the system. Returns an error if any resource referenced by the Nic input
+// does not exist in the system.
+func validateNic(ctx context.Context, nic *fleet.Nic) error {
+	var resources []*Resource
+	var errorMsg strings.Builder
+	errorMsg.WriteString(fmt.Sprintf("Cannot create Nic %s:\n", nic.Name))
+
+	switchID := nic.GetSwitchInterface().GetSwitch()
+	if switchID != "" {
+		resources = append(resources, GetSwitchResource(switchID))
+	}
+
+	return ResourceExist(ctx, resources, &errorMsg)
 }
 
 // validateDeleteNic validates if a Nic can be deleted

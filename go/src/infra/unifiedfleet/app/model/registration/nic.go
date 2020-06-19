@@ -156,6 +156,29 @@ func putNic(ctx context.Context, nic *fleet.Nic, update bool) (*fleet.Nic, error
 	return nil, err
 }
 
+// BatchUpdateNics updates nics in datastore.
+//
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateNics(ctx context.Context, nics []*fleet.Nic) ([]*fleet.Nic, error) {
+	return putAllNic(ctx, nics, true)
+}
+
+func putAllNic(ctx context.Context, nics []*fleet.Nic, update bool) ([]*fleet.Nic, error) {
+	protos := make([]proto.Message, len(nics))
+	updateTime := ptypes.TimestampNow()
+	for i, nic := range nics {
+		nic.UpdateTime = updateTime
+		protos[i] = nic
+	}
+	_, err := fleetds.PutAll(ctx, protos, newNicEntity, update)
+	if err == nil {
+		return nics, err
+	}
+	return nil, err
+}
+
 // ImportNics creates or updates a batch of nics in datastore.
 func ImportNics(ctx context.Context, nics []*fleet.Nic) (*fleetds.OpResults, error) {
 	protos := make([]proto.Message, len(nics))

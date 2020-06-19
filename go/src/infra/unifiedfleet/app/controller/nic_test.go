@@ -9,6 +9,7 @@ import (
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/registration"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -18,6 +19,44 @@ func mockNic(id string) *proto.Nic {
 	return &proto.Nic{
 		Name: id,
 	}
+}
+
+func TestCreateNic(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("CreateNics", t, func() {
+		Convey("Create new nic with non existing switch", func() {
+			nic1 := &proto.Nic{
+				Name: "nic-1",
+				SwitchInterface: &proto.SwitchInterface{
+					Switch: "switch-1",
+				},
+			}
+			resp, err := CreateNic(ctx, nic1)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, CannotCreate)
+		})
+
+		Convey("Create new nic with existing resources", func() {
+			switch2 := &proto.Switch{
+				Name: "switch-2",
+			}
+			sresp, err := registration.CreateSwitch(ctx, switch2)
+			So(err, ShouldBeNil)
+			So(sresp, ShouldResembleProto, switch2)
+
+			nic2 := &proto.Nic{
+				Name: "nic-2",
+				SwitchInterface: &proto.SwitchInterface{
+					Switch: "switch-2",
+				},
+			}
+			resp, err := CreateNic(ctx, nic2)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic2)
+		})
+	})
 }
 
 func TestDeleteNic(t *testing.T) {
