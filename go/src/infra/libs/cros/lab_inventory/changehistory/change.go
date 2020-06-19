@@ -164,7 +164,7 @@ func LogChromeOSDeviceChanges(old *lab.ChromeOSDevice, newData *lab.ChromeOSDevi
 	changes.log("manufacturing.config_id", old.GetManufacturingId().GetValue(), newData.GetManufacturingId().GetValue())
 	changes = append(changes, logDeviceConfigID(old.GetDeviceConfigId(), newData.GetDeviceConfigId())...)
 	changes = append(changes, logDutChange(old.GetDut(), newData.GetDut())...)
-	changes = append(changes, LogLabstationChange(old.GetLabstation(), newData.GetLabstation())...)
+	changes = append(changes, logLabstationChange(old.GetLabstation(), newData.GetLabstation())...)
 
 	// Set id and hostname for all changes.
 	id := old.GetId().GetValue()
@@ -177,7 +177,7 @@ func LogChromeOSDeviceChanges(old *lab.ChromeOSDevice, newData *lab.ChromeOSDevi
 }
 
 // LogLabstationChange logs the labstation changes
-func LogLabstationChange(old *lab.Labstation, newData *lab.Labstation) (changes Changes) {
+func logLabstationChange(old *lab.Labstation, newData *lab.Labstation) (changes Changes) {
 	if old == nil || newData == nil {
 		changes.log("Labstation", old, newData)
 		return
@@ -185,14 +185,33 @@ func LogLabstationChange(old *lab.Labstation, newData *lab.Labstation) (changes 
 	changes.log("hostname", old.GetHostname(), newData.GetHostname())
 	changes = append(changes, logServosChange(old.GetServos(), newData.GetServos())...)
 	changes = append(changes, logRPMChange(old.GetRpm(), newData.GetRpm())...)
+	return
+}
 
+// LogChromeOSLabstationChange logs the change of the given labstation
+func LogChromeOSLabstationChange(old *lab.ChromeOSDevice, newData *lab.ChromeOSDevice) (changes Changes) {
+	oldL := old.GetLabstation()
+	newL := newData.GetLabstation()
+	if oldL == nil || newL == nil {
+		return
+	}
+	changes.log("hostname", oldL.GetHostname(), newL.GetHostname())
+	changes = append(changes, logServosChange(oldL.GetServos(), newL.GetServos())...)
+	changes = append(changes, logRPMChange(oldL.GetRpm(), newL.GetRpm())...)
+	// Set id and hostname for all changes.
+	id := old.GetId().GetValue()
+	hostname := utils.GetHostname(newData)
+	for i := range changes {
+		changes[i].DeviceID = id
+		changes[i].Hostname = hostname
+	}
 	return
 }
 
 func logServosChange(old []*lab.Servo, newData []*lab.Servo) (changes Changes) {
 	// Sort oldValue and newValue by serial number in alphabet order and then
 	// compare.
-	sort.Slice(old, func(i, j int) bool { return old[i].ServoSerial < old[i].ServoSerial })
+	sort.Slice(old, func(i, j int) bool { return old[i].ServoSerial < old[j].ServoSerial })
 	sort.Slice(newData, func(i, j int) bool { return newData[i].ServoSerial < newData[j].ServoSerial })
 	i, j := 0, 0
 	for i < len(old) && j < len(newData) {

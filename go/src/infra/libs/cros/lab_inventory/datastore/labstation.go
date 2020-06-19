@@ -64,15 +64,15 @@ func UpdateLabstations(ctx context.Context, hostname string, servoToDelete []str
 		return errors.Reason("%s is not a valid labstation hostname", hostname).Err()
 	}
 
-	var oldLabstation lab.Labstation
-	proto.Merge(&oldLabstation, l.GetLabstation())
+	var oldLabstation lab.ChromeOSDevice
+	proto.Merge(&oldLabstation, &l)
 
 	l.GetLabstation().Servos = deleteServosBySN(l.GetLabstation().GetServos(), servoToDelete)
 	newConfig, err := proto.Marshal(&l)
 	if err != nil {
 		return errors.Reason("fail to marshal the new labstation message after updating servos").Err()
 	}
-	changes := changehistory.LogLabstationChange(&oldLabstation, l.GetLabstation())
+	changes := changehistory.LogChromeOSLabstationChange(&oldLabstation, &l)
 	now := time.Now().UTC()
 	f := func(ctx context.Context) error {
 		if err := changes.SaveToDatastore(ctx); err != nil {
