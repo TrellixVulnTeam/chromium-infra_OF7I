@@ -44,7 +44,7 @@ class _MrHotlistPeoplePage extends LitElement {
       }
 
       input {
-        margin-left; -6px;
+        margin-left: -6px;
         padding: 4px;
         width: 320px;
       }
