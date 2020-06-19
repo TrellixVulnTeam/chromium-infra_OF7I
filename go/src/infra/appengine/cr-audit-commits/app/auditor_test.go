@@ -44,7 +44,9 @@ func (rule errorRule) Run(c context.Context, ap *rules.AuditParams, rc *rules.Re
 	}, fmt.Errorf("error rule")
 }
 
-func dummyNotifier(ctx context.Context, cfg *rules.RefConfig, rc *rules.RelevantCommit, cs *rules.Clients, state string) (string, error) {
+type dummyNotifier struct{}
+
+func (d dummyNotifier) Notify(ctx context.Context, cfg *rules.RefConfig, rc *rules.RelevantCommit, cs *rules.Clients, state string) (string, error) {
 	return "NotificationSent", nil
 }
 
@@ -92,7 +94,7 @@ func TestAuditor(t *testing.T) {
 							},
 						},
 					},
-					NotificationFunction: dummyNotifier,
+					Notification: dummyNotifier{},
 				}},
 			}
 			escapedRepoURL := url.QueryEscape("https://dummy.googlesource.com/dummy.git/+/refs/heads/master")

@@ -46,7 +46,10 @@ func TestNotifier(t *testing.T) {
 							},
 						},
 					},
-					NotificationFunction: rules.FileBugForFinditViolation,
+					Notification: rules.CommentOrFileMonorailIssue{
+						Components: []string{"Tools>Test>Findit>Autorevert"},
+						Labels:     []string{"CommitLog-Audit-Violation"},
+					},
 				}},
 			}
 			// TODO: Do not mutate global state.
@@ -198,7 +201,7 @@ func TestNotifier(t *testing.T) {
 							},
 						},
 					},
-					NotificationFunction: rules.CommentOnBugToAcknowledgeMerge,
+					Notification: rules.CommentOnBugToAcknowledgeMerge{},
 				}},
 				Metadata: "MilestoneNumber:70",
 			}

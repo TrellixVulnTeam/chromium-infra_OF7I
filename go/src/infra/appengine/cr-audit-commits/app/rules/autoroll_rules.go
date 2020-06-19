@@ -21,6 +21,9 @@ func AutoRollRules(account string, files, dirs []string) AccountRules {
 				Dirs:  dirs,
 			},
 		},
-		NotificationFunction: FileBugForAutoRollViolation,
+		Notification: CommentOrFileMonorailIssue{
+			Components: []string{"Infra>Audit>AutoRoller"},
+			Labels:     []string{"CommitLog-Audit-Violation"},
+		},
 	}
 }

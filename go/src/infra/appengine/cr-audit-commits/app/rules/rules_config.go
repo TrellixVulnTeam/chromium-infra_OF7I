@@ -62,6 +62,13 @@ var (
 		"docs-roller@fuchsia-infra.iam.gserviceaccount.com",
 		"global-integration-roller@fuchsia-infra.iam.gserviceaccount.com",
 	}
+
+	// fileBugForTBRViolation is the notification function for manual-changes
+	// rules.
+	fileBugForTBRViolation = CommentOrFileMonorailIssue{
+		Components: []string{"Infra>Audit"},
+		Labels:     []string{"CommitLog-Audit-Violation", "TBR-Violation"},
+	}
 )
 
 // skiaAsset returns the path to the named Skia asset version file.
@@ -114,7 +121,10 @@ var ruleMap = map[string]*RefConfig{
 					RevertOfCulprit{},
 					OnlyCommitsOwnChange{},
 				},
-				NotificationFunction: FileBugForFinditViolation,
+				Notification: CommentOrFileMonorailIssue{
+					Components: []string{"Tools>Test>Findit>Autorevert"},
+					Labels:     []string{"CommitLog-Audit-Violation"},
+				},
 			},
 			"release-bot-rules": {
 				Account: "chrome-release-bot@chromium.org",
@@ -127,7 +137,10 @@ var ruleMap = map[string]*RefConfig{
 						},
 					},
 				},
-				NotificationFunction: FileBugForReleaseBotViolation,
+				Notification: CommentOrFileMonorailIssue{
+					Components: []string{"Infra>Client>Chrome>Release"},
+					Labels:     []string{"CommitLog-Audit-Violation"},
+				},
 			},
 		},
 	},
@@ -146,7 +159,7 @@ var ruleMap = map[string]*RefConfig{
 				Rules: []Rule{
 					ChangeReviewed{Robots: chromiumRobots},
 				},
-				NotificationFunction: FileBugForTBRViolation,
+				Notification: fileBugForTBRViolation,
 			},
 			"images-pins-roller": AutoRollRules(
 				"images-pins-roller@chops-service-accounts.iam.gserviceaccount.com",
@@ -169,7 +182,7 @@ var ruleMap = map[string]*RefConfig{
 				Rules: []Rule{
 					ChangeReviewed{Robots: chromiumRobots},
 				},
-				NotificationFunction: FileBugForTBRViolation,
+				Notification: fileBugForTBRViolation,
 			},
 		},
 	},
@@ -188,7 +201,7 @@ var ruleMap = map[string]*RefConfig{
 				Rules: []Rule{
 					ChangeReviewed{Robots: chromiumRobots},
 				},
-				NotificationFunction: FileBugForTBRViolation,
+				Notification: fileBugForTBRViolation,
 			},
 			"image-autoroller": AutoRollRules(
 				"image-builder@chops-service-accounts.iam.gserviceaccount.com",
@@ -215,7 +228,7 @@ var ruleMap = map[string]*RefConfig{
 				Rules: []Rule{
 					ChangeReviewed{Robots: chromiumRobots},
 				},
-				NotificationFunction: FileBugForTBRViolation,
+				Notification: fileBugForTBRViolation,
 			},
 		},
 	},
@@ -234,14 +247,17 @@ var ruleMap = map[string]*RefConfig{
 						AllowedUsers:  chromeTPMs,
 					},
 				},
-				NotificationFunction: FileBugForMergeApprovalViolation,
+				Notification: FileBugForMergeApprovalViolation{
+					Components: []string{"Programs>PMO>Browser>Release"},
+					Labels:     []string{"CommitLog-Audit-Violation", "Merge-Without-Approval"},
+				},
 			},
 			"merge-ack-rules": {
 				Account: "*",
 				Rules: []Rule{
 					AcknowledgeMerge{},
 				},
-				NotificationFunction: CommentOnBugToAcknowledgeMerge,
+				Notification: CommentOnBugToAcknowledgeMerge{},
 			},
 		},
 		DynamicRefFunction: ReleaseConfig,
@@ -264,7 +280,7 @@ var ruleMap = map[string]*RefConfig{
 				Rules: []Rule{
 					ChangeReviewed{Robots: fuchsiaRobots},
 				},
-				NotificationFunction: FileBugForTBRViolation,
+				Notification: fileBugForTBRViolation,
 			},
 		},
 	},
@@ -283,7 +299,7 @@ var ruleMap = map[string]*RefConfig{
 				Rules: []Rule{
 					ChangeReviewed{Robots: fuchsiaRobots},
 				},
-				NotificationFunction: FileBugForTBRViolation,
+				Notification: fileBugForTBRViolation,
 			},
 		},
 	},
@@ -302,7 +318,7 @@ var ruleMap = map[string]*RefConfig{
 				Rules: []Rule{
 					ChangeReviewed{Robots: fuchsiaRobots},
 				},
-				NotificationFunction: FileBugForTBRViolation,
+				Notification: fileBugForTBRViolation,
 			},
 		},
 	},

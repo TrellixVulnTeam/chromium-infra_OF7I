@@ -84,9 +84,9 @@ func (rc *RefConfig) SetConcreteRef(ctx context.Context, rs *RepoState) *RefConf
 // account as either its author or its committer.
 type AccountRules struct {
 	// Account is the account to filter on for account specific rules.
-	Account              string
-	Rules                []Rule
-	NotificationFunction NotificationFunc
+	Account      string
+	Rules        []Rule
+	Notification Notification
 }
 
 // MatchesCommit determines whether the AccountRules set it's bound to, applies

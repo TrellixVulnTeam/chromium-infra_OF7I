@@ -283,7 +283,7 @@ func notifyAboutViolations(ctx context.Context, cfg *rules.RefConfig, repoState 
 		for ruleSetName, ruleSet := range cfg.Rules {
 			if ruleSet.MatchesRelevantCommit(rc) {
 				state := rc.GetNotificationState(ruleSetName)
-				state, err = ruleSet.NotificationFunction(ctx, cfg, rc, cs, state)
+				state, err = ruleSet.Notification.Notify(ctx, cfg, rc, cs, state)
 				if err == context.DeadlineExceeded {
 					return err
 				} else if err != nil {

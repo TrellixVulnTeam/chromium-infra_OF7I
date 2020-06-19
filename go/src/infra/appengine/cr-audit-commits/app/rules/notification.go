@@ -6,6 +6,7 @@ package rules
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -17,8 +18,9 @@ import (
 	"infra/monorail"
 )
 
-// NotificationFunc is a type that needs to be implemented by functions
+// Notification is a type that needs to be implemented by functions
 // intended to notify about violations in rules.
+//
 // The notification function is expected to determine if there is a violation
 // by checking the results of calling .GetViolations() on the RelevantCommit
 // and not just blindly send a notification.
@@ -33,47 +35,71 @@ import (
 // notification, as that would indicate that a previous call already took care
 // of that. The state string is a short freeform string that only needs to be
 // understood by the NotificationFunc itself, and should exclude colons (`:`).
-type NotificationFunc func(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error)
-
-// FileBugForTBRViolation is the notification function for manual-changes
-// rules.
-func FileBugForTBRViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
-	components := []string{"Infra>Audit"}
-	labels := []string{"CommitLog-Audit-Violation", "TBR-Violation"}
-	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
+type Notification interface {
+	Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error)
 }
 
-// FileBugForAutoRollViolation is the notification function for AutoRoll rules.
-func FileBugForAutoRollViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
-	components := []string{"Infra>Audit>AutoRoller"}
-	labels := []string{"CommitLog-Audit-Violation"}
-	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
+// CommentOrFileMonorailIssue files a bug to Monorail.
+//
+// It checks if the failure has already been reported to Monorail and files a
+// new bug if it hasn't. If a bug already exists this function will try to add
+// a comment and associate it to the bug.
+type CommentOrFileMonorailIssue struct {
+	Components []string
+	Labels     []string
 }
 
-// FileBugForFinditViolation is the notification function for Findit rules.
-func FileBugForFinditViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
-	components := []string{"Tools>Test>Findit>Autorevert"}
-	labels := []string{"CommitLog-Audit-Violation"}
-	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
-}
+// Notify implements Notification.
+func (c CommentOrFileMonorailIssue) Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+	summary := fmt.Sprintf("Audit violation detected on %q", rc.CommitHash)
+	// Make sure that at least one of the rules that were violated had
+	// .FileBug set to true.
+	violations := rc.GetViolations()
+	fileBug := len(violations) > 0
+	labels := append([]string{"Restrict-View-Google"}, c.Labels...)
+	if fileBug && state == "" {
+		issueID := int32(0)
+		sa, err := info.ServiceAccount(ctx)
+		if err != nil {
+			return "", err
+		}
 
-// FileBugForReleaseBotViolation is the notification function for
-// release-bot-rules.
-func FileBugForReleaseBotViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
-	components := []string{"Infra>Client>Chrome>Release"}
-	labels := []string{"CommitLog-Audit-Violation"}
-	return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
+		existingIssue, err := getIssueBySummaryAndAccount(ctx, cfg, summary, sa, cs)
+		if err != nil {
+			return "", err
+		}
+
+		if existingIssue == nil || !isValidIssue(existingIssue, sa, cfg) {
+			if issueID, err = PostIssue(ctx, cfg, summary, resultText(cfg, rc, false), cs, c.Components, labels); err != nil {
+				return "", err
+			}
+		} else {
+			// The issue exists and is valid, but it's not
+			// associated with the datastore entity for this commit.
+			issueID = existingIssue.Id
+			if err = postComment(ctx, cfg, existingIssue.Id, resultText(cfg, rc, true), cs, labels); err != nil {
+				return "", err
+			}
+		}
+		state = fmt.Sprintf("BUG=%d", issueID)
+	}
+	return state, nil
 }
 
 // FileBugForMergeApprovalViolation is the notification function for
 // merge-approval-rules.
-func FileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
-	components := []string{"Programs>PMO>Browser>Release"}
+type FileBugForMergeApprovalViolation struct {
+	Components []string
+	Labels     []string
+}
+
+// Notify implements Notification.
+func (f FileBugForMergeApprovalViolation) Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
 		return "", fmt.Errorf("MilestoneNumber not specified in repository configuration")
 	}
-	labels := []string{"CommitLog-Audit-Violation", "Merge-Without-Approval", fmt.Sprintf("M-%s", milestone)}
+	labels := append([]string{fmt.Sprintf("M-%s", milestone)}, f.Labels...)
 	for _, result := range rc.Result {
 		if result.RuleResultStatus != RuleFailed {
 			continue
@@ -89,7 +115,11 @@ func FileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *R
 				}
 				return fmt.Sprintf("Comment posted on BUG=%d", int32(bugID)), nil
 			}
-			return fileBugForViolation(ctx, cfg, rc, cs, state, components, labels)
+			c := CommentOrFileMonorailIssue{
+				Components: f.Components,
+				Labels:     labels,
+			}
+			return c.Notify(ctx, cfg, rc, cs, state)
 		}
 	}
 	return "No violation found", nil
@@ -97,7 +127,10 @@ func FileBugForMergeApprovalViolation(ctx context.Context, cfg *RefConfig, rc *R
 
 // CommentOnBugToAcknowledgeMerge is used as the notification function of
 // merge-ack-rule.
-func CommentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
+type CommentOnBugToAcknowledgeMerge struct{}
+
+// Notify implements Notification.
+func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {
 	milestone, ok := GetToken(ctx, "MilestoneNumber", cfg.Metadata)
 	if !ok {
 		return "", fmt.Errorf("MilestoneNumber not specified in repository configuration")
@@ -150,47 +183,30 @@ func CommentOnBugToAcknowledgeMerge(ctx context.Context, cfg *RefConfig, rc *Rel
 	return "No notification required", nil
 }
 
-// fileBugForViolation checks if the failure has already been reported to
-// monorail and files a new bug if it hasn't. If a bug already exists this
-// function will try to add a comment and associate it to the bug.
-func fileBugForViolation(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string, components, labels []string) (string, error) {
-	summary := fmt.Sprintf("Audit violation detected on %q", rc.CommitHash)
-	// Make sure that at least one of the rules that were violated had
-	// .FileBug set to true.
-	violations := rc.GetViolations()
-	fileBug := len(violations) > 0
-	labels = append(labels, "Restrict-View-Google")
-	if fileBug && state == "" {
-		issueID := int32(0)
-		sa, err := info.ServiceAccount(ctx)
-		if err != nil {
-			return "", err
-		}
-
-		existingIssue, err := getIssueBySummaryAndAccount(ctx, cfg, summary, sa, cs)
-		if err != nil {
-			return "", err
-		}
-
-		if existingIssue == nil || !isValidIssue(existingIssue, sa, cfg) {
-			issueID, err = PostIssue(ctx, cfg, summary, resultText(cfg, rc, false), cs, components, labels)
-			if err != nil {
-				return "", err
-			}
-
-		} else {
-			// The issue exists and is valid, but it's not
-			// associated with the datastore entity for this commit.
-			issueID = existingIssue.Id
-
-			err = postComment(ctx, cfg, existingIssue.Id, resultText(cfg, rc, true), cs, labels)
-			if err != nil {
-				return "", err
-			}
-		}
-		state = fmt.Sprintf("BUG=%d", issueID)
+// PostIssue will create an issue based on the given parameters.
+func PostIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
+	// The components for the issue will be the additional components
+	// depending on which rules were violated, and the component defined
+	// for the repo(if any).
+	iss := &monorail.Issue{
+		Description: d,
+		Components:  components,
+		Labels:      labels,
+		Status:      monorail.StatusUntriaged,
+		Summary:     s,
+		ProjectId:   cfg.MonorailProject,
 	}
-	return state, nil
+
+	req := &monorail.InsertIssueRequest{
+		Issue:     iss,
+		SendEmail: true,
+	}
+
+	resp, err := cs.Monorail.InsertIssue(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+	return resp.Issue.Id, nil
 }
 
 // isValidIssue checks that the monorail issue was created by the app and
@@ -213,4 +229,64 @@ func isValidIssue(iss *monorail.Issue, sa string, cfg *RefConfig) bool {
 		return true
 	}
 	return false
+}
+
+func getIssueBySummaryAndAccount(ctx context.Context, cfg *RefConfig, s, a string, cs *Clients) (*monorail.Issue, error) {
+	q := fmt.Sprintf("summary:\"%s\" reporter:\"%s\"", s, a)
+	req := &monorail.IssuesListRequest{
+		ProjectId: cfg.MonorailProject,
+		Can:       monorail.IssuesListRequest_ALL,
+		Q:         q,
+	}
+	resp, err := cs.Monorail.IssuesList(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	for _, iss := range resp.Items {
+		if iss.Summary == s {
+			return iss, nil
+		}
+	}
+	return nil, nil
+}
+
+func postComment(ctx context.Context, cfg *RefConfig, iID int32, c string, cs *Clients, labels []string) error {
+	req := &monorail.InsertCommentRequest{
+		Comment: &monorail.InsertCommentRequest_Comment{
+			Content: c,
+			Updates: &monorail.Update{
+				Labels: labels,
+			},
+		},
+		Issue: &monorail.IssueRef{
+			IssueId:   iID,
+			ProjectId: cfg.MonorailProject,
+		},
+	}
+	_, err := cs.Monorail.InsertComment(ctx, req)
+	return err
+}
+
+func resultText(cfg *RefConfig, rc *RelevantCommit, issueExists bool) string {
+	sort.Slice(rc.Result, func(i, j int) bool {
+		if rc.Result[i].RuleResultStatus == rc.Result[j].RuleResultStatus {
+			return rc.Result[i].RuleName < rc.Result[j].RuleName
+		}
+		return rc.Result[i].RuleResultStatus < rc.Result[j].RuleResultStatus
+	})
+	rows := []string{}
+	for _, rr := range rc.Result {
+		rows = append(rows, fmt.Sprintf(" - %s: %s -- %s", rr.RuleName, rr.RuleResultStatus.ToString(), rr.Message))
+	}
+
+	results := fmt.Sprintf("Here's a summary of the rules that were executed: \n%s",
+		strings.Join(rows, "\n"))
+
+	if issueExists {
+		return results
+	}
+
+	description := "An audit of the git commit at %q found at least one violation. \n" +
+		" The commit was created by %s and committed by %s.\n\n%s"
+	return fmt.Sprintf(description, cfg.LinkToCommit(rc.CommitHash), rc.AuthorAccount, rc.CommitterAccount, results)
 }

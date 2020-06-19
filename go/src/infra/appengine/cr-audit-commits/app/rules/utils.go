@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"sort"
 	"strings"
 
 	"google.golang.org/genproto/protobuf/field_mask"
@@ -135,68 +134,6 @@ func bugIDFromCommitMessage(m string) (string, error) {
 	return "", fmt.Errorf("commit message does not contain any bug id")
 }
 
-func getIssueBySummaryAndAccount(ctx context.Context, cfg *RefConfig, s, a string, cs *Clients) (*monorail.Issue, error) {
-	q := fmt.Sprintf("summary:\"%s\" reporter:\"%s\"", s, a)
-	req := &monorail.IssuesListRequest{
-		ProjectId: cfg.MonorailProject,
-		Can:       monorail.IssuesListRequest_ALL,
-		Q:         q,
-	}
-	resp, err := cs.Monorail.IssuesList(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	for _, iss := range resp.Items {
-		if iss.Summary == s {
-			return iss, nil
-		}
-	}
-	return nil, nil
-}
-
-func postComment(ctx context.Context, cfg *RefConfig, iID int32, c string, cs *Clients, labels []string) error {
-	req := &monorail.InsertCommentRequest{
-		Comment: &monorail.InsertCommentRequest_Comment{
-			Content: c,
-			Updates: &monorail.Update{
-				Labels: labels,
-			},
-		},
-		Issue: &monorail.IssueRef{
-			IssueId:   iID,
-			ProjectId: cfg.MonorailProject,
-		},
-	}
-	_, err := cs.Monorail.InsertComment(ctx, req)
-	return err
-}
-
-// PostIssue will create an issue based on the given parameters.
-func PostIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
-	// The components for the issue will be the additional components
-	// depending on which rules were violated, and the component defined
-	// for the repo(if any).
-	iss := &monorail.Issue{
-		Description: d,
-		Components:  components,
-		Labels:      labels,
-		Status:      monorail.StatusUntriaged,
-		Summary:     s,
-		ProjectId:   cfg.MonorailProject,
-	}
-
-	req := &monorail.InsertIssueRequest{
-		Issue:     iss,
-		SendEmail: true,
-	}
-
-	resp, err := cs.Monorail.InsertIssue(ctx, req)
-	if err != nil {
-		return 0, err
-	}
-	return resp.Issue.Id, nil
-}
-
 func issueFromID(ctx context.Context, cfg *RefConfig, ID int32, cs *Clients) (*monorail.Issue, error) {
 	req := &monorail.GetIssueRequest{
 		Issue: &monorail.IssueRef{
@@ -219,32 +156,6 @@ func listCommentsFromIssueID(ctx context.Context, cfg *RefConfig, ID int32, cs *
 		return nil, err
 	}
 	return resp.Items, nil
-}
-
-func resultText(cfg *RefConfig, rc *RelevantCommit, issueExists bool) string {
-	sort.Slice(rc.Result, func(i, j int) bool {
-		if rc.Result[i].RuleResultStatus == rc.Result[j].RuleResultStatus {
-			return rc.Result[i].RuleName < rc.Result[j].RuleName
-		}
-		return rc.Result[i].RuleResultStatus < rc.Result[j].RuleResultStatus
-	})
-	rows := []string{}
-	for _, rr := range rc.Result {
-		rows = append(rows, fmt.Sprintf(" - %s: %s -- %s", rr.RuleName, rr.RuleResultStatus.ToString(), rr.Message))
-	}
-
-	results := fmt.Sprintf("Here's a summary of the rules that were executed: \n%s",
-		strings.Join(rows, "\n"))
-
-	if issueExists {
-		return results
-	}
-
-	description := "An audit of the git commit at %q found at least one violation. \n" +
-		" The commit was created by %s and committed by %s.\n\n%s"
-
-	return fmt.Sprintf(description, cfg.LinkToCommit(rc.CommitHash), rc.AuthorAccount, rc.CommitterAccount, results)
-
 }
 
 func getBuildByURL(ctx context.Context, buildURL string, cs *Clients, fm *field_mask.FieldMask) (*buildbucketpb.Build, error) {
