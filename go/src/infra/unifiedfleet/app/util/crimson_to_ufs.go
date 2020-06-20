@@ -220,7 +220,8 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.M
 			Machines:            []string{h.GetMachine()},
 			Lse: &fleet.MachineLSE_ChromeBrowserMachineLse{
 				ChromeBrowserMachineLse: &fleet.ChromeBrowserMachineLSE{
-					Vms: vms,
+					Vms:        vms,
+					VmCapacity: h.GetVmSlots(),
 				},
 			},
 		}

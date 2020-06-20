@@ -30,10 +30,6 @@ func importCrimson(ctx context.Context) error {
 		logging.Debugf(ctx, "Fail to importing chrome platform: %s", string(respCP.GetDetails()[0].GetValue()))
 		return err
 	}
-	res2, err := sv.ImportVMCpacity(ctx)
-	if err != nil {
-		logging.Debugf(ctx, "Fail to import vm capacity for platforms", string(res2.GetDetails()[0].GetValue()))
-	}
 	logging.Debugf(ctx, "Finish importing chrome platforms: %#v", respCP)
 
 	logging.Debugf(ctx, "Importing vlans")

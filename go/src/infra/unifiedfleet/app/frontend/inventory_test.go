@@ -708,6 +708,14 @@ func TestImportMachineLSEs(t *testing.T) {
 			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(parseAssets(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
+			for _, r := range machineLSEs {
+				switch r.GetName() {
+				case "esx-8":
+					So(r.GetChromeBrowserMachineLse().GetVmCapacity(), ShouldEqual, 10)
+				case "web":
+					So(r.GetChromeBrowserMachineLse().GetVmCapacity(), ShouldEqual, 100)
+				}
+			}
 			lse, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "machine1", false)
 			So(err, ShouldBeNil)
 			So(lse, ShouldHaveLength, 1)

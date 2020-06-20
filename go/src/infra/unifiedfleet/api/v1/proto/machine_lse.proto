@@ -59,6 +59,8 @@ message ChromeBrowserMachineLSE {
    // Indicate if VM is needed to set up
    // number of vms on the host
    repeated VM vms = 1;
+   // The allowed vm slots for this browser machine, usually it's manually set based on sysadmin's judgement.
+   int32 vm_capacity = 2;
 }
 
 message VM {

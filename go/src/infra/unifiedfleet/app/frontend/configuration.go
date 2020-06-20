@@ -19,7 +19,6 @@ import (
 	luciconfig "go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/impl/remote"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
-	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
@@ -180,34 +179,6 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 	res, err := controller.ImportChromePlatforms(ctx, platforms)
 	s := processImportDatastoreRes(res, err)
 	return s.Proto(), s.Err()
-}
-
-// ImportVMCpacity imports the vm capacity by existing crimson data.
-//
-// It's not an exposed RPC.
-func (fs *FleetServerImpl) ImportVMCpacity(ctx context.Context) (*status.Status, error) {
-	logging.Debugf(ctx, "Importing the default datacenter config file from luci-config: %s", datacenterConfigFile)
-	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, ProdMachineDBService)
-	if err != nil {
-		return nil, machineDBConnectionFailureStatus.Err()
-	}
-	logging.Debugf(ctx, "Querying machine-db to list the machines")
-	machines, err := mdbClient.ListMachines(ctx, &crimson.ListMachinesRequest{})
-	if err != nil {
-		return nil, machineDBServiceFailureStatus("ListMachines").Err()
-	}
-	logging.Debugf(ctx, "Querying machine-db to list the physical hosts")
-	hosts, err := mdbClient.ListPhysicalHosts(ctx, &crimson.ListPhysicalHostsRequest{})
-	if err != nil {
-		return nil, machineDBServiceFailureStatus("ListPhysicalHosts").Err()
-	}
-	pageSize := fs.getImportPageSize()
-	res, err := controller.ImportVMCapacity(ctx, machines.GetMachines(), hosts.GetHosts(), pageSize)
-	s := processImportDatastoreRes(res, err)
-	if s.Err() != nil {
-		return s.Proto(), s.Err()
-	}
-	return successStatus.Proto(), nil
 }
 
 // CreateMachineLSEPrototype creates machinelseprototype entry in database.

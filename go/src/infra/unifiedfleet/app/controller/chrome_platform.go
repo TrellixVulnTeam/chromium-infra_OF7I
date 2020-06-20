@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
@@ -56,44 +55,6 @@ func DeleteChromePlatform(ctx context.Context, id string) error {
 // ImportChromePlatforms inserts chrome platforms to datastore.
 func ImportChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*datastore.OpResults, error) {
 	return configuration.ImportChromePlatforms(ctx, platforms)
-}
-
-// ImportVMCapacity imports the vm capacity for chrome platform.
-func ImportVMCapacity(ctx context.Context, machines []*crimson.Machine, hosts []*crimson.PhysicalHost, pageSize int) (*datastore.OpResults, error) {
-	platformToVMCapacity := make(map[string]int32, 0)
-	machineToVMCapacity := make(map[string]int32, 0)
-	for _, h := range hosts {
-		m := h.GetMachine()
-		if machineToVMCapacity[m] < h.GetVmSlots() {
-			machineToVMCapacity[m] = h.GetVmSlots()
-		}
-	}
-	for _, m := range machines {
-		p := m.GetPlatform()
-		if platformToVMCapacity[p] < machineToVMCapacity[m.GetName()] {
-			platformToVMCapacity[p] = machineToVMCapacity[m.GetName()]
-		}
-	}
-	allRes := make(datastore.OpResults, 0)
-	for startToken := ""; ; {
-		cps, nextToken, err := configuration.ListChromePlatforms(ctx, int32(pageSize), startToken)
-		if err != nil {
-			return &allRes, err
-		}
-		for _, cp := range cps {
-			cp.VmCapacity = platformToVMCapacity[cp.GetName()]
-		}
-		res, err := configuration.ImportChromePlatforms(ctx, cps)
-		allRes = append(allRes, *res...)
-		if err != nil {
-			return &allRes, err
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	return &allRes, nil
 }
 
 // ReplaceChromePlatform replaces an old ChromePlatform with new ChromePlatform in datastore
