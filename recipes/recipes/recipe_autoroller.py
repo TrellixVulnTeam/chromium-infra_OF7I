@@ -5,17 +5,18 @@
 """Rolls recipes.cfg dependencies for public projects."""
 
 DEPS = [
-  'recipe_autoroller',
-
-  'recipe_engine/json',
-  'recipe_engine/properties',
-  'recipe_engine/runtime',
-  'recipe_engine/time',
+    'recipe_autoroller',
+    'recipe_engine/json',
+    'recipe_engine/properties',
+    'recipe_engine/proto',
+    'recipe_engine/runtime',
+    'recipe_engine/time',
 ]
 
 from recipe_engine import recipe_api
 from recipe_engine.post_process import MustRun
 
+from PB.recipe_engine.recipes_cfg import RepoSpec, DepRepoSpecs
 
 PROPERTIES = {
     'projects':
@@ -158,6 +159,12 @@ def GenTests(api):
           'build', repo_spec(include_autoroll_options=False), trivial=False)
   )
 
+  no_cc_authors_spec = RepoSpec()
+  no_cc_authors_spec.autoroll_recipe_options.no_cc_authors = True
+
   yield (
-      test('no_cc_authors') +
-      api.recipe_autoroller.roll_data('build', repo_spec(no_cc_authors=True)))
+      test('no_cc_authors') + api.recipe_autoroller.roll_data('build') +
+      api.override_step_data(
+          'build.get deps',
+          api.proto.output(
+              DepRepoSpecs(repo_specs={'recipe_engine': no_cc_authors_spec}))))

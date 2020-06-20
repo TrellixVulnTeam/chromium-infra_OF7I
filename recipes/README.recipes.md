@@ -341,7 +341,7 @@ APIs for interacting with omahaproxy.
 &emsp; **@staticmethod**<br>&mdash; **def [split\_version](/recipes/recipe_modules/omahaproxy/api.py#14)(text):**
 ### *recipe_modules* / [recipe\_autoroller](/recipes/recipe_modules/recipe_autoroller)
 
-[DEPS](/recipes/recipe_modules/recipe_autoroller/__init__.py#5): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/random][recipe_engine/recipe_modules/random], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipe_modules/recipe_autoroller/__init__.py#5): [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/random][recipe_engine/recipe_modules/random], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 #### **class [RecipeAutorollerApi](/recipes/recipe_modules/recipe_autoroller/api.py#116)([RecipeApi][recipe_engine/wkt/RecipeApi]):**
 
@@ -1054,11 +1054,11 @@ Pushes a trivial CL to Gerrit to verify git authentication works on LUCI.
 &mdash; **def [trigger\_publish\_tarball\_jobs](/recipes/recipes/publish_tarball.py#205)(api):**
 ### *recipes* / [recipe\_autoroller](/recipes/recipes/recipe_autoroller.py)
 
-[DEPS](/recipes/recipes/recipe_autoroller.py#7): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/time][recipe_engine/recipe_modules/time]
+[DEPS](/recipes/recipes/recipe_autoroller.py#7): [recipe\_autoroller](#recipe_modules-recipe_autoroller), [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/proto][recipe_engine/recipe_modules/proto], [recipe\_engine/runtime][recipe_engine/recipe_modules/runtime], [recipe\_engine/time][recipe_engine/recipe_modules/time]
 
 Rolls recipes.cfg dependencies for public projects.
 
-&mdash; **def [RunSteps](/recipes/recipes/recipe_autoroller.py#32)(api, projects, db_gcs_bucket):**
+&mdash; **def [RunSteps](/recipes/recipes/recipe_autoroller.py#33)(api, projects, db_gcs_bucket):**
 ### *recipes* / [recipe\_bundler](/recipes/recipes/recipe_bundler.py)
 
 [DEPS](/recipes/recipes/recipe_bundler.py#8): [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1205,6 +1205,7 @@ Runs a step which adds a link to the current CL if there is one.
 [recipe_engine/recipe_modules/path]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/ee828f03fefb220251ed066a9e55bd652385ed90/README.recipes.md#recipe_modules-path
 [recipe_engine/recipe_modules/platform]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/ee828f03fefb220251ed066a9e55bd652385ed90/README.recipes.md#recipe_modules-platform
 [recipe_engine/recipe_modules/properties]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/ee828f03fefb220251ed066a9e55bd652385ed90/README.recipes.md#recipe_modules-properties
+[recipe_engine/recipe_modules/proto]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/ee828f03fefb220251ed066a9e55bd652385ed90/README.recipes.md#recipe_modules-proto
 [recipe_engine/recipe_modules/python]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/ee828f03fefb220251ed066a9e55bd652385ed90/README.recipes.md#recipe_modules-python
 [recipe_engine/recipe_modules/random]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/ee828f03fefb220251ed066a9e55bd652385ed90/README.recipes.md#recipe_modules-random
 [recipe_engine/recipe_modules/raw_io]: https://chromium.googlesource.com/infra/luci/recipes-py.git/+/ee828f03fefb220251ed066a9e55bd652385ed90/README.recipes.md#recipe_modules-raw_io
