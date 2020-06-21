@@ -62,6 +62,10 @@ func (f *fakeGitClient) GetFile(ctx context.Context, path string) (string, error
 	return f.getFile(ctx, path)
 }
 
+func (f *fakeGitClient) SwitchProject(ctx context.Context, project string) error {
+	return nil
+}
+
 func (tf *testFixture) setStableVersionFactory(stableVersionFileContent string) {
 	is := tf.Inventory
 	is.StableVersionGitClientFactory = func(c context.Context) (git.ClientInterface, error) {

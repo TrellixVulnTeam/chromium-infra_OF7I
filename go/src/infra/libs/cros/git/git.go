@@ -33,6 +33,7 @@ type Client struct {
 // ClientInterface is the public API of a stableversion git client
 type ClientInterface interface {
 	GetFile(ctx context.Context, path string) (string, error)
+	SwitchProject(ctx context.Context, project string) error
 }
 
 // NewClient produces a new client using only simple types available in a command line context
@@ -76,6 +77,17 @@ func (c *Client) Init(ctx context.Context, hc *http.Client, gerritHost string, g
 	return nil
 }
 
+// SwitchProject switches the project and changes the latest hash to fetch.
+func (c *Client) SwitchProject(ctx context.Context, project string) error {
+	latestSHA1, err := c.fetchLatestSHA1(ctx)
+	if err != nil {
+		return errors.Annotate(err, fmt.Sprintf("get latest sha1 for repo %s", c.project)).Err()
+	}
+	c.project = project
+	c.latestSHA1 = latestSHA1
+	return nil
+}
+
 // GetFile returns the contents of the file located at a given path within the project
 func (c *Client) GetFile(ctx context.Context, path string) (string, error) {
 	if c.latestSHA1 == "" {
@@ -89,7 +101,7 @@ func (c *Client) GetFile(ctx context.Context, path string) (string, error) {
 	}
 	res, err := c.gitilesC.DownloadFile(ctx, req)
 	if err != nil {
-		return "", err
+		return "", errors.Annotate(err, "fail to get file for %s:%s", c.project, c.latestSHA1).Err()
 	}
 	if res == nil {
 		panic(fmt.Sprintf("gitiles.DownloadFile unexpectedly returned nil on success path (%s)", path))
