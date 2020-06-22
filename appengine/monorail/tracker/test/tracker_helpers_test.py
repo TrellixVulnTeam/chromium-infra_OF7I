@@ -1630,3 +1630,67 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     with self.assertRaises(exceptions.InputException):
       tracker_helpers.AssertIssueChangesValid(
           self.cnxn, issue_delta_pairs, self.services)
+
+
+class IssueChangeImpactedIssuesTest(unittest.TestCase):
+  """Tests for the IssueChangeImpactedIssues class."""
+
+  def testTrackImpactedIssues(self):
+    issue_delta_pairs = []
+
+    issue_1 = _Issue('project', 1, 'summary', 'Available')
+    delta_1 = tracker_pb2.IssueDelta(
+        blocked_on_add=[78901, 78902],
+        blocked_on_remove=[78903, 78904],
+    )
+    issue_delta_pairs.append((issue_1, delta_1))
+
+    issue_2 = _Issue('project', 2, 'summary', 'Available')
+    delta_2 = tracker_pb2.IssueDelta(
+        blocking_add=[78901, 78902],
+        blocking_remove=[78903, 78904],
+    )
+    issue_delta_pairs.append((issue_2, delta_2))
+
+    issue_3 = _Issue('project', 3, 'summary', 'Available')
+    issue_3.merged_into = 78902
+    delta_3 = tracker_pb2.IssueDelta(merged_into=78901)
+    issue_delta_pairs.append((issue_3, delta_3))
+
+    issue_4 = _Issue('project', 4, 'summary', 'Available')
+    issue_4.merged_into = 78901
+    delta_4 = tracker_pb2.IssueDelta(
+        merged_into=framework_constants.NO_ISSUE_SPECIFIED)
+    issue_delta_pairs.append((issue_4, delta_4))
+
+    impacted_issues = tracker_helpers.IssueChangeImpactedIssues()
+    for issue, delta in issue_delta_pairs:
+      impacted_issues.TrackImpactedIssues(issue, delta)
+
+    self.assertEqual(
+        impacted_issues.blocking_add, {
+            78901: [issue_1.issue_id],
+            78902: [issue_1.issue_id]
+        })
+    self.assertEqual(
+        impacted_issues.blocking_remove, {
+            78903: [issue_1.issue_id],
+            78904: [issue_1.issue_id]
+        })
+    self.assertEqual(
+        impacted_issues.blocked_on_add, {
+            78901: [issue_2.issue_id],
+            78902: [issue_2.issue_id]
+        })
+    self.assertEqual(
+        impacted_issues.blocked_on_remove, {
+            78903: [issue_2.issue_id],
+            78904: [issue_2.issue_id]
+        })
+    self.assertEqual(
+        impacted_issues.merged_from_add, {78901: [issue_3.issue_id]})
+    self.assertEqual(
+        impacted_issues.merged_from_remove, {
+            78901: [issue_4.issue_id],
+            78902: [issue_3.issue_id]
+        })

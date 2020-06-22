@@ -1325,6 +1325,52 @@ def AssertIssueChangesValid(cnxn, issue_delta_pairs, services):
       raise exceptions.InputException('\n'.join(fvs_err_msgs))
 
 
+class IssueChangeImpactedIssues():
+  """Class to track changes of issues impacted by updates to other issues."""
+
+  def __init__(self):
+
+    # Each of the dicts below should be used to track
+    # {impacted_issue_id: [issues being modified that impact the keyed issue]}.
+
+    # e.g. `blocking_remove` with {iid_1: [iid_2, iid_3]} means that
+    # `TrackImpactedIssues` has been called with a delta of
+    # IssueDelta(blocked_on_remove=[iid_1]) for both issue 2 and issue 3.
+    self.blocking_add = collections.defaultdict(list)
+    self.blocking_remove = collections.defaultdict(list)
+    self.blocked_on_add = collections.defaultdict(list)
+    self.blocked_on_remove = collections.defaultdict(list)
+    self.merged_from_add = collections.defaultdict(list)
+    self.merged_from_remove = collections.defaultdict(list)
+
+  def TrackImpactedIssues(self, issue, delta):
+    # type: (Issue, IssueDelta) -> None
+    """Track impacted issues from when `delta` is applied to `issue`.
+
+    Args:
+      issue: Issue that the delta will be applied to, but has not yet.
+      delta: IssueDelta representing the changes that will be made to
+        the issue.
+    """
+    for impacted_iid in delta.blocked_on_add:
+      self.blocking_add[impacted_iid].append(issue.issue_id)
+    for impacted_iid in delta.blocked_on_remove:
+      self.blocking_remove[impacted_iid].append(issue.issue_id)
+
+    for impacted_iid in delta.blocking_add:
+      self.blocked_on_add[impacted_iid].append(issue.issue_id)
+    for impacted_iid in delta.blocking_remove:
+      self.blocked_on_remove[impacted_iid].append(issue.issue_id)
+
+    if (delta.merged_into == framework_constants.NO_ISSUE_SPECIFIED and
+        issue.merged_into):
+      self.merged_from_remove[issue.merged_into].append(issue.issue_id)
+    elif delta.merged_into:
+      self.merged_from_add[delta.merged_into].append(issue.issue_id)
+      if issue.merged_into:
+        self.merged_from_remove[issue.merged_into].append(issue.issue_id)
+
+
 class Error(Exception):
   """Base class for errors from this module."""
 
