@@ -254,7 +254,7 @@ def ParseFieldValues(cnxn, user_service, field_val_strs, phase_field_val_strs,
   return field_values
 
 
-def ValidateCustomFieldValue(mr, project, services, field_def, field_val):
+def ValidateCustomFieldValue(cnxn, project, services, field_def, field_val):
   """Validate one custom field value and return an error string or None."""
   if field_def.field_type == tracker_pb2.FieldTypes.INT_TYPE:
     if (field_def.min_value is not None and
@@ -276,8 +276,8 @@ def ValidateCustomFieldValue(mr, project, services, field_def, field_val):
         return None
 
   elif field_def.field_type == tracker_pb2.FieldTypes.USER_TYPE:
-    field_val_user = services.user.GetUser(mr.cnxn, field_val.user_id)
-    auth = authdata.AuthData.FromUser(mr.cnxn, field_val_user, services)
+    field_val_user = services.user.GetUser(cnxn, field_val.user_id)
+    auth = authdata.AuthData.FromUser(cnxn, field_val_user, services)
     if auth.user_pb.user_id == INVALID_USER_ID:
       return 'User not found'
     if field_def.needs_member:
@@ -312,16 +312,22 @@ def ValidateCustomFieldValue(mr, project, services, field_def, field_val):
   return None
 
 
-def ValidateCustomFields(mr, services, field_values, config, errors):
-  """Validate each of the given fields and report problems in errors object."""
+def ValidateCustomFields(
+    cnxn, services, field_values, config, project, ezt_errors=None):
+  # type: (MonorailConnection, Services, Collection[FieldValue],
+  #     ProjectConfig, Project, Optional[EZTError]) -> Sequence[str]
+  """Validate each of the given fields and report problems in error messages."""
   fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+  err_msgs = []
   for fv in field_values:
     fd = fds_by_id.get(fv.field_id)
     if fd:
-      err_msg = ValidateCustomFieldValue(mr, mr.project, services, fd, fv)
+      err_msg = ValidateCustomFieldValue(cnxn, project, services, fd, fv)
       if err_msg:
-        errors.SetCustomFieldError(fv.field_id, err_msg)
-
+        err_msgs.append('Error for %r, %s' % (fv, err_msg))
+        if ezt_errors:
+          ezt_errors.SetCustomFieldError(fv.field_id, err_msg)
+  return err_msgs
 
 def AssertCustomFieldsEditPerms(
     mr, config, field_vals, field_vals_remove, fields_clear, labels,

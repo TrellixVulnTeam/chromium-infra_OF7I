@@ -10,7 +10,9 @@ from __future__ import absolute_import
 
 import time
 import unittest
+import re
 
+from framework import exceptions
 from framework import permissions
 from framework import template_helpers
 from proto import project_pb2
@@ -35,8 +37,9 @@ class FieldHelpersTest(unittest.TestCase):
         usergroup=fake.UserGroupService(),
         config=fake.ConfigService(),
         user=fake.UserService())
+    self.project = fake.Project()
     self.mr = testing_helpers.MakeMonorailRequest(
-        project=fake.Project(), services=self.services)
+        project=self.project, services=self.services)
     self.mr.cnxn = fake.MonorailConnection()
     self.errors = template_helpers.EZTError()
 
@@ -408,18 +411,18 @@ class FieldHelpersTest(unittest.TestCase):
         tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
     fv = tracker_bizobj.MakeFieldValue(123, 8086, None, None, None, None, False)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertIsNone(msg)
 
     fd.min_value = 1
     fd.max_value = 999
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertEqual('Value must be <= 999', msg)
 
     fv.int_value = 0
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertEqual('Value must be >= 1', msg)
 
   def test_StrType(self):
@@ -430,17 +433,17 @@ class FieldHelpersTest(unittest.TestCase):
     fv = tracker_bizobj.MakeFieldValue(
         123, None, 'i386', None, None, None, False)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertIsNone(msg)
 
     fd.regex = r'^\d*$'
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertEqual(r'Value must match regular expression: ^\d*$', msg)
 
     fv.str_value = '386'
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertIsNone(msg)
 
   def test_UserType(self):
@@ -470,41 +473,41 @@ class FieldHelpersTest(unittest.TestCase):
     # Normal
     for fv in (owner, committer, user):
       msg = field_helpers.ValidateCustomFieldValue(
-          self.mr, self.mr.project, self.services, fd, fv)
+          self.mr.cnxn, self.mr.project, self.services, fd, fv)
       self.assertIsNone(msg)
 
     # Needs to be member (user isn't a member).
     fd.needs_member = True
     for fv in (owner, committer):
       msg = field_helpers.ValidateCustomFieldValue(
-          self.mr, self.mr.project, self.services, fd, fv)
+          self.mr.cnxn, self.mr.project, self.services, fd, fv)
       self.assertIsNone(msg)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, user)
+        self.mr.cnxn, self.mr.project, self.services, fd, user)
     self.assertEqual('User must be a member of the project', msg)
 
     # Needs DeleteAny permission (only owner has it).
     fd.needs_perm = 'DeleteAny'
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, owner)
+        self.mr.cnxn, self.mr.project, self.services, fd, owner)
     self.assertIsNone(msg)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, committer)
+        self.mr.cnxn, self.mr.project, self.services, fd, committer)
     self.assertEqual('User must have permission "DeleteAny"', msg)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, user)
+        self.mr.cnxn, self.mr.project, self.services, fd, user)
     self.assertEqual('User must be a member of the project', msg)
 
     # Needs custom permission (only committer has it).
     fd.needs_perm = 'FooPerm'
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, owner)
+        self.mr.cnxn, self.mr.project, self.services, fd, owner)
     self.assertEqual('User must have permission "FooPerm"', msg)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, committer)
+        self.mr.cnxn, self.mr.project, self.services, fd, committer)
     self.assertIsNone(msg)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, user)
+        self.mr.cnxn, self.mr.project, self.services, fd, user)
     self.assertEqual('User must be a member of the project', msg)
 
   def test_DateType(self):
@@ -519,22 +522,22 @@ class FieldHelpersTest(unittest.TestCase):
     fv = tracker_bizobj.MakeFieldValue(
         123, None, None, None, None, 'www.google.com', False)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertIsNone(msg)
 
     fv.url_value = 'go/puppies'
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertIsNone(msg)
 
     fv.url_value = 'go/213'
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertIsNone(msg)
 
     fv.url_value = 'puppies'
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertEqual('Value must be a valid url', msg)
 
   def test_OtherType(self):
@@ -546,13 +549,15 @@ class FieldHelpersTest(unittest.TestCase):
     fv = tracker_bizobj.MakeFieldValue(
         123, None, None, None, 1234567890, None, False)
     msg = field_helpers.ValidateCustomFieldValue(
-        self.mr, self.mr.project, self.services, fd, fv)
+        self.mr.cnxn, self.mr.project, self.services, fd, fv)
     self.assertIsNone(msg)
 
   def testValidateCustomFields_NoCustomFieldValues(self):
-    field_helpers.ValidateCustomFields(
-        self.mr, self.services, [], self.config, self.errors)
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr, self.services, [], self.config, self.mr.project,
+        ezt_errors=self.errors)
     self.assertFalse(self.errors.AnyErrors())
+    self.assertEqual(err_msgs, [])
 
   def testValidateCustomFields_NoErrors(self):
     fd = tracker_bizobj.MakeFieldDef(
@@ -564,9 +569,11 @@ class FieldHelpersTest(unittest.TestCase):
         123, 8086, None, None, None, None, False)
     fv2 = tracker_bizobj.MakeFieldValue(123, 486, None, None, None, None, False)
 
-    field_helpers.ValidateCustomFields(
-        self.mr, self.services, [fv1, fv2], self.config, self.errors)
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr, self.services, [fv1, fv2], self.config, self.mr.project,
+        ezt_errors=self.errors)
     self.assertFalse(self.errors.AnyErrors())
+    self.assertEqual(err_msgs, [])
 
   def testValidateCustomFields_SomeValueErrors(self):
     fd = tracker_bizobj.MakeFieldDef(
@@ -580,13 +587,16 @@ class FieldHelpersTest(unittest.TestCase):
 
     fd.min_value = 1
     fd.max_value = 999
-    field_helpers.ValidateCustomFields(
-        self.mr, self.services, [fv1, fv2], self.config, self.errors)
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr, self.services, [fv1, fv2], self.config, self.mr.project,
+        ezt_errors=self.errors)
     self.assertTrue(self.errors.AnyErrors())
     self.assertEqual(1, len(self.errors.custom_fields))
     custom_field_error = self.errors.custom_fields[0]
     self.assertEqual(123, custom_field_error.field_id)
     self.assertEqual('Value must be <= 999', custom_field_error.message)
+    self.assertEqual(len(err_msgs), 1)
+    self.assertTrue(re.search(r'Value must be <= 999', err_msgs[0]))
 
   def testAssertCustomFieldsEditPerms_Empty(self):
     self.assertIsNone(

@@ -375,7 +375,8 @@ class IssueEntry(servlet.Servlet):
         template.labels)
 
     field_helpers.ValidateCustomFields(
-        mr, self.services, field_values, config, mr.errors)
+        mr.cnxn, self.services, field_values, config, mr.project,
+        ezt_errors=mr.errors)
 
     hotlist_pbs = ProcessParsedHotlistRefs(
         mr, self.services, parsed.hotlists.hotlist_refs)

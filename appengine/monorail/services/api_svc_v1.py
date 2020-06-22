@@ -528,10 +528,10 @@ class MonorailApi(remote.Service):
               request.updates.fieldValues, mar, self._services))
 
     field_helpers.ValidateCustomFields(
-        mar, self._services,
+        mar.cnxn, self._services,
         (updates_dict.get('field_vals_add', []) +
          updates_dict.get('field_vals_remove', [])),
-        mar.config, mar.errors)
+        mar.config, mar.project, ezt_errors=mar.errors)
     if mar.errors.AnyErrors():
       raise endpoints.BadRequestException(
           'Invalid field values: %s' % mar.errors.custom_fields)
@@ -931,7 +931,8 @@ class MonorailApi(remote.Service):
           api_pb2_v1_helpers.convert_field_values(
               request.fieldValues, mar, self._services))
       field_helpers.ValidateCustomFields(
-          mar, self._services, fields_add, mar.config, mar.errors)
+          mar.cnxn, self._services, fields_add, mar.config, mar.project,
+          ezt_errors=mar.errors)
       if mar.errors.AnyErrors():
         raise endpoints.BadRequestException(
             'Invalid field values: %s' % mar.errors.custom_fields)

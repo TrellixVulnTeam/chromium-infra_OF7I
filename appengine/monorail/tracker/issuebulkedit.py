@@ -231,7 +231,8 @@ class IssueBulkEdit(servlet.Servlet):
         mr, config, field_vals, field_vals_remove, parsed.fields.fields_clear,
         parsed.labels, parsed.labels_remove)
     field_helpers.ValidateCustomFields(
-        mr, self.services, field_vals, config, mr.errors)
+        mr.cnxn, self.services, field_vals, config, mr.project,
+        ezt_errors=mr.errors)
 
     # Treat status '' as no change and explicit 'clear' as clearing the status.
     status = parsed.status

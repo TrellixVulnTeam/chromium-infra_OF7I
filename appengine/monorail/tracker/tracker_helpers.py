@@ -1292,15 +1292,23 @@ def GroupUniqueDeltaIssues(issue_delta_pairs):
   return unique_deltas, issues_for_unique_deltas
 
 
-def AssertIssueChangesValid(cnxn, project, issue_delta_pairs, services):
-  # type: (MonorailConnection, Project, Tuple[Issue, IssueDelta], Services) ->
+def AssertIssueChangesValid(cnxn, issue_delta_pairs, services):
+  # type: (MonorailConnection, Tuple[Issue, IssueDelta], Services) ->
   #     None
   """Assert that the delta changes are valid for each paired issue.
 
     Note: this method does not check if the changes trigger any FilterRule
       `warnings` or `errors`.
   """
+  project_ids = list(
+      {issue.project_id for (issue, _delta) in issue_delta_pairs})
+  projects_by_id = services.project.GetProjects(cnxn, project_ids)
+  configs_by_id = services.config.GetProjectConfigs(cnxn, project_ids)
+
   for issue, delta in issue_delta_pairs:
+    project = projects_by_id.get(issue.project_id)
+    config = configs_by_id.get(issue.project_id)
+
     if delta.merged_into and issue.issue_id == delta.merged_into:
       raise exceptions.InputException('Cannot merge an issue into itself')
     if (issue.issue_id in set(delta.blocked_on_add)) or (issue.issue_id in set(
@@ -1311,6 +1319,10 @@ def AssertIssueChangesValid(cnxn, project, issue_delta_pairs, services):
           cnxn, project, delta.owner_id, services)
       if not parsed_owner_valid:
         raise exceptions.InputException(msg)
+    fvs_err_msgs = field_helpers.ValidateCustomFields(
+        cnxn, services, delta.field_vals_add, config, project)
+    if fvs_err_msgs:
+      raise exceptions.InputException('\n'.join(fvs_err_msgs))
 
 
 class Error(Exception):

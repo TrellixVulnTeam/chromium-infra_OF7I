@@ -1524,10 +1524,19 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     self.project_member = self.services.user.TestAddUser(
         'user_1@example.com', 111)
-    self.project = project_pb2.Project(
-        committer_ids=[self.project_member.user_id])
+    self.project = self.services.project.TestAddProject(
+        'proj', project_id=789, committer_ids=[self.project_member.user_id])
     self.no_project_user = self.services.user.TestAddUser(
         'user_2@example.com', 222)
+
+    self.config = fake.MakeTestConfig(self.project.project_id, [], [])
+    self.int_fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.INT_TYPE, None, '', False,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.int_fd.max_value = 999
+    self.config.field_defs = [self.int_fd]
+    self.services.config.StoreConfig('cnxn', self.config)
 
   def testGroupUniqueDeltaIssues(self):
     """We can identify unique IssueDeltas and group Issues by their deltas."""
@@ -1574,13 +1583,17 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_4 = _Issue('chicken', 4, 'summary', 'Available')
     delta_4 = tracker_pb2.IssueDelta(owner_id=self.project_member.user_id)
 
+    issue_5 = _Issue('chicken', 5, 'summary', 'Available')
+    fv = tracker_bizobj.MakeFieldValue(
+        self.int_fd.field_id, 998, None, None, None, None, False)
+    delta_5 = tracker_pb2.IssueDelta(field_vals_add=[fv])
 
     issue_delta_pairs = [
         (issue_1, delta_1), (issue_2, delta_2), (issue_3, delta_3),
-        (issue_4, delta_4)
+        (issue_4, delta_4), (issue_5, delta_5)
     ]
     tracker_helpers.AssertIssueChangesValid(
-        self.cnxn, self.project, issue_delta_pairs, self.services)
+        self.cnxn, issue_delta_pairs, self.services)
 
   def testAssertIssueChangesValid_Invalid(self):
     """We can raise exceptions when deltas are not valid for issues. """
@@ -1590,22 +1603,30 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_delta_pairs = [(issue, delta_1)]
     with self.assertRaises(exceptions.InputException):
       tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, self.project, issue_delta_pairs, self.services)
+          self.cnxn, issue_delta_pairs, self.services)
 
     delta_2 = tracker_pb2.IssueDelta(blocked_on_add=[issue.issue_id])
     issue_delta_pairs = [(issue, delta_2)]
     with self.assertRaises(exceptions.InputException):
       tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, self.project, issue_delta_pairs, self.services)
+          self.cnxn, issue_delta_pairs, self.services)
 
     delta_3 = tracker_pb2.IssueDelta(blocking_add=[issue.issue_id])
     issue_delta_pairs = [(issue, delta_3)]
     with self.assertRaises(exceptions.InputException):
       tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, self.project, issue_delta_pairs, self.services)
+          self.cnxn, issue_delta_pairs, self.services)
 
     delta_4 = tracker_pb2.IssueDelta(owner_id=self.no_project_user.user_id)
     issue_delta_pairs = [(issue, delta_4)]
     with self.assertRaises(exceptions.InputException):
       tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, self.project, issue_delta_pairs, self.services)
+          self.cnxn, issue_delta_pairs, self.services)
+
+    fv = tracker_bizobj.MakeFieldValue(
+        self.int_fd.field_id, 1000, None, None, None, None, False)
+    delta_5 = tracker_pb2.IssueDelta(field_vals_add=[fv])
+    issue_delta_pairs = [(issue, delta_5)]
+    with self.assertRaises(exceptions.InputException):
+      tracker_helpers.AssertIssueChangesValid(
+          self.cnxn, issue_delta_pairs, self.services)
