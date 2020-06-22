@@ -1,3 +1,19 @@
+# Release Notes sheriff-o-matic 2020-06-22
+
+- 1 commits, 1 bugs affected since 7f82b1d (2020-06-18T04:39:55Z)
+- 1 Authors:
+  - jsca@google.com
+
+## Changes in this release
+
+- [[som] Fetch Android sheriff from rotation proxy.](https://chromium-review.googlesource.com/c/infra/infra/+/2249178) (jsca@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1094753](https://crbug.com/1094753)
+
+
 # Release Notes sheriff-o-matic 2020-06-18
 
 - 3 commits, 2 bugs affected since 116f261 (2020-06-04T04:27:40Z)
