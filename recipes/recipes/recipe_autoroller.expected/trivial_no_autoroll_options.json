@@ -286,6 +286,26 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/builder/recipe_engine/recipes.py",
+      "--package",
+      "[CACHE]/builder/recipe_autoroller/build/infra/config/recipes.cfg",
+      "dump_specs"
+    ],
+    "name": "build.get deps",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"repo_specs\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@    \"recipe_engine\": {}@@@",
+      "@@@STEP_LOG_LINE@proto.output@  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
+    ]
+  },
+  {
+    "cmd": [
       "git",
       "commit",
       "-a",
@@ -307,9 +327,9 @@
       "upload",
       "--send-mail",
       "--tbr-owners",
-      "--cc=foo@chromium.org",
       "--bypass-hooks",
       "-f",
+      "--cc=foo@chromium.org",
       "--message-file",
       "Roll recipe dependencies (trivial).\n\nThis is an automated CL created by the recipe roller. This CL rolls recipe\nchanges from upstream projects (recipe_engine) into this repository.\n\nrecipe_engine:\n  https://crrev.com/123abc (foo@chromium.org)\n    some commit message\n\nMore info is at https://goo.gl/zkKdpD. Use https://goo.gl/noib3a to file a bug.\n\nRecipe-Tryjob-Bypass-Reason: Autoroller\nBugdroid-Send-Email: False\n"
     ],

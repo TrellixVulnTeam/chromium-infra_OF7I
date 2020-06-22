@@ -10,7 +10,7 @@ import re
 from google.protobuf import json_format as jsonpb
 
 from recipe_engine import recipe_api
-from PB.recipe_engine.recipes_cfg import RepoSpec
+from PB.recipe_engine.recipes_cfg import RepoSpec, DepRepoSpecs
 
 
 class RepoData(object):
@@ -265,6 +265,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
 
     if roll_result['success'] and roll_result['picked_roll_details']:
       self._process_successful_roll(project_url, roll_step, workdir,
+                                    recipes_dir, recipes_cfg_path,
                                     db_gcs_bucket)
       return ROLL_SUCCESS
 
@@ -280,7 +281,7 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
     return ROLL_FAILURE
 
   def _process_successful_roll(self, project_url, roll_step, workdir,
-                               db_gcs_bucket):
+                               recipes_dir, recipes_cfg_path, db_gcs_bucket):
     """
     Args:
       roll_step - The StepResult of the actual roll command. This is used to
@@ -313,12 +314,6 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       if s.set_autosubmit:
         upload_args.append('--enable-auto-submit')
 
-    if not spec.autoroll_recipe_options.no_cc_authors:
-      cc_list = set()
-      for commits in picked_details['commit_infos'].itervalues():
-        for commit in commits:
-          cc_list.add(commit['author_email'])
-      upload_args.append('--cc=%s' % ','.join(sorted(cc_list)))
     upload_args.extend(['--bypass-hooks', '-f'])
 
     commit_message = get_commit_message(roll_result)
@@ -328,6 +323,35 @@ class RecipeAutorollerApi(recipe_api.RecipeApi):
       roll_step.presentation.step_text += ' (trivial)'
     else:
       roll_step.presentation.status = self.m.step.FAILURE
+
+    dep_specs = None
+    try:
+      dep_specs = self.m.python(
+          'get deps',
+          recipes_dir.join('recipes.py'), [
+              '--package',
+              recipes_cfg_path,
+              'dump_specs',
+          ],
+          stdout=self.m.proto.output(DepRepoSpecs, codec='JSONPB'),
+          step_test_data=lambda: self.m.proto.test_api.output_stream(
+              DepRepoSpecs(repo_specs={'recipe_engine': RepoSpec()})),
+          venv=True).stdout
+    except self.m.step.StepFailure:
+      # TODO(fxbug.dev/54380): delete this `except` after crrev.com/c/2252547
+      # has rolled into all downstream repos that are rolled by an autoroller.
+      pass
+
+    cc_list = set()
+    for dep, commits in picked_details['commit_infos'].iteritems():
+      if dep_specs:
+        dep_spec = dep_specs.repo_specs[dep]
+        if dep_spec.autoroll_recipe_options.no_cc_authors:
+          continue
+      for commit in commits:
+        cc_list.add(commit['author_email'])
+    if cc_list:
+      upload_args.append('--cc=%s' % ','.join(sorted(cc_list)))
 
     with self.m.context(cwd=workdir):
       self.m.git('commit', '-a', '-m', 'roll recipes.cfg')

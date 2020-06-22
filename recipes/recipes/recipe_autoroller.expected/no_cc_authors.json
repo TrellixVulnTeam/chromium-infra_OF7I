@@ -179,7 +179,7 @@
       "@@@STEP_LOG_LINE@json.output@  \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"disable_reason\": \"\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"no_cc_authors\": true, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"no_cc_authors\": false, @@@",
       "@@@STEP_LOG_LINE@json.output@    \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@      \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"extra_reviewer_emails\": [@@@",
@@ -258,7 +258,7 @@
       "@@@STEP_LOG_LINE@json.output@      \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@      \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@        \"disable_reason\": \"\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"no_cc_authors\": true, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"no_cc_authors\": false, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"extra_reviewer_emails\": [@@@",
@@ -302,7 +302,7 @@
       "@@@STEP_LOG_LINE@json.output@        \"api_version\": 2, @@@",
       "@@@STEP_LOG_LINE@json.output@        \"autoroll_recipe_options\": {@@@",
       "@@@STEP_LOG_LINE@json.output@          \"disable_reason\": \"\", @@@",
-      "@@@STEP_LOG_LINE@json.output@          \"no_cc_authors\": true, @@@",
+      "@@@STEP_LOG_LINE@json.output@          \"no_cc_authors\": false, @@@",
       "@@@STEP_LOG_LINE@json.output@          \"nontrivial\": {@@@",
       "@@@STEP_LOG_LINE@json.output@            \"automatic_commit_dry_run\": true, @@@",
       "@@@STEP_LOG_LINE@json.output@            \"extra_reviewer_emails\": [@@@",
@@ -345,6 +345,30 @@
       "@@@STEP_LOG_LINE@commit_message@Recipe-Tryjob-Bypass-Reason: Autoroller@@@",
       "@@@STEP_LOG_LINE@commit_message@Bugdroid-Send-Email: False@@@",
       "@@@STEP_LOG_END@commit_message@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "[CACHE]/builder/recipe_engine/recipes.py",
+      "--package",
+      "[CACHE]/builder/recipe_autoroller/build/infra/config/recipes.cfg",
+      "dump_specs"
+    ],
+    "name": "build.get deps",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@proto.output@{@@@",
+      "@@@STEP_LOG_LINE@proto.output@  \"repo_specs\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@    \"recipe_engine\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@      \"autoroll_recipe_options\": {@@@",
+      "@@@STEP_LOG_LINE@proto.output@        \"no_cc_authors\": true@@@",
+      "@@@STEP_LOG_LINE@proto.output@      }@@@",
+      "@@@STEP_LOG_LINE@proto.output@    }@@@",
+      "@@@STEP_LOG_LINE@proto.output@  }@@@",
+      "@@@STEP_LOG_LINE@proto.output@}@@@",
+      "@@@STEP_LOG_END@proto.output@@@"
     ]
   },
   {
