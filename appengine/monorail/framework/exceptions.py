@@ -9,6 +9,39 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+
+class ErrorAggregator():
+  """Class for holding errors and raising an exception for many."""
+
+  def __init__(self, exc_type):
+    # type: (type) -> None
+    self.exc_type = exc_type
+    self.error_messages = []
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_value, exc_traceback):
+    # If no exceptions were raised within the context, we check
+    # if any error messages were accumulated that we should raise
+    # an exception for.
+    if exc_type == None:
+      self.RaiseIfErrors()
+    # If there were exceptions raised within the context, we do
+    # nothing to suppress them.
+
+  def AddErrorMessage(self, message):
+    # type: (str) -> None
+    """Add a new error message."""
+    self.error_messages.append(message)
+
+  def RaiseIfErrors(self):
+    # type: () -> None
+    """If there are errors, raise one exception."""
+    if self.error_messages:
+      raise self.exc_type("\n".join(self.error_messages))
+
+
 class Error(Exception):
   """Base class for errors from this module."""
   pass
