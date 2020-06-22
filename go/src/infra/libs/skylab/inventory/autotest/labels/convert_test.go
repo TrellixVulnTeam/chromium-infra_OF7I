@@ -37,6 +37,9 @@ test_coverage_hints {
 }
 self_serve_pools: "poolval"
 reference_design: "reef"
+hwid_component: [
+	"cellular/fake_cellular"
+]
 wifi_chip: "wireless_xxxx"
 platform: "platformval"
 phase: 4
@@ -146,6 +149,7 @@ var fullLabels = []string{
 	"huddly",
 	"hw_video_acc_enc_vp9",
 	"hw_video_acc_enc_vp9_2",
+	"hwid_component:cellular/fake_cellular",
 	"internal_display",
 	"lucidsleep",
 	"meet_app",

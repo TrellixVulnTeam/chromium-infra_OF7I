@@ -5,8 +5,10 @@
 package swarming
 
 import (
-	"infra/libs/skylab/inventory"
+	"fmt"
 	"strings"
+
+	"infra/libs/skylab/inventory"
 )
 
 func init() {
@@ -53,6 +55,13 @@ func basicConverter(dims Dimensions, ls *inventory.SchedulableLabels) {
 			appendDim(dims, "label-variant", v)
 		}
 	}
+	for _, c := range ls.GetHwidComponent() {
+		if strings.HasPrefix(c, "cellular/") {
+			if v := strings.Split(c, "/")[1]; v != "" {
+				dims["label-cellular_modem"] = []string{v}
+			}
+		}
+	}
 }
 
 func basicReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -64,6 +73,11 @@ func basicReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
 	d = assignLastStringValueAndDropKey(d, ls.Platform, "label-platform")
 	d = assignLastStringValueAndDropKey(d, ls.ReferenceDesign, "label-reference_design")
 	d = assignLastStringValueAndDropKey(d, ls.WifiChip, "label-wifi_chip")
+	if v, ok := getLastStringValue(d, "label-cellular_modem"); ok {
+		ls.HwidComponent = append(ls.HwidComponent, fmt.Sprintf("cellular/%s", v))
+		delete(d, "label-cellular_modem")
+	}
+
 	if v, ok := getLastStringValue(d, "label-ec_type"); ok {
 		if ec, ok := inventory.SchedulableLabels_ECType_value[v]; ok {
 			*ls.EcType = inventory.SchedulableLabels_ECType(ec)

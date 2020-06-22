@@ -37,6 +37,9 @@ test_coverage_hints {
 self_serve_pools: "poolval"
 reference_design: "reef"
 wifi_chip: "wireless_xxxx"
+hwid_component: [
+	"cellular/fake_cellular"
+]
 platform: "platformval"
 phase: 8
 peripherals: {
@@ -114,6 +117,7 @@ var fullDimensions = Dimensions{
 	"label-camerabox":             {"True"},
 	"label-camerabox_facing":      {"CAMERABOX_FACING_BACK"},
 	"label-carrier":               {"CARRIER_TMOBILE"},
+	"label-cellular_modem":        {"fake_cellular"},
 	"label-chameleon":             {"True"},
 	"label-chameleon_type": {
 		"CHAMELEON_TYPE_DP_HDMI",
