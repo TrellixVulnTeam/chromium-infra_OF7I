@@ -15,6 +15,8 @@ import (
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
 
+	"infra/libs/cros/git"
+	"infra/libs/cros/gs"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 )
 
@@ -82,6 +84,11 @@ func UpdateDatastore(ctx context.Context, client gitiles.GitilesClient, project,
 	}
 
 	return cfg2datastore.SyncProtoToDatastore(ctx, cfgs, newDevCfgEntity)
+}
+
+// UpdateDatastoreFromBoxster updates datastore from boxster (go/boxster)
+func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsClient gs.ClientInterface) error {
+	return nil
 }
 
 // GetCachedConfig gets the device config data from datastore.

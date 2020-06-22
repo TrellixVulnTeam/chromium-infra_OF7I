@@ -5,6 +5,7 @@
 package deviceconfig
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -13,6 +14,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/proto/gitiles"
+	"golang.org/x/net/context"
 )
 
 var deviceConfigJSON = `
@@ -253,6 +255,44 @@ func TestDeviceConfigsExists(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(exists[0], ShouldBeFalse)
 			So(exists[1], ShouldBeTrue)
+		})
+	})
+}
+
+type fakeGitClient struct {
+	project string
+}
+
+type fakeGSClient struct{}
+
+func (gc *fakeGitClient) GetFile(ctx context.Context, path string) (string, error) {
+	if gc.project != "chromeos/project/galaxy/milkyway" {
+		return "", nil
+	}
+	b, err := ioutil.ReadFile("test_device_config_v2.jsonproto")
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func (gc *fakeGitClient) SwitchProject(ctx context.Context, project string) error {
+	gc.project = project
+	return nil
+}
+
+func (gsClient *fakeGSClient) GetFile(ctx context.Context, path string) ([]byte, error) {
+	return []byte{}, nil
+}
+
+func TestUpdateDatastoreFromBoxter(t *testing.T) {
+	Convey("Test update device config from boxster", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		gitilesMock := &fakeGitClient{}
+		gsClientMock := &fakeGSClient{}
+		Convey("Happy path", func() {
+			err := UpdateDatastoreFromBoxster(ctx, gitilesMock, gsClientMock)
+			So(err, ShouldBeNil)
 		})
 	})
 }
