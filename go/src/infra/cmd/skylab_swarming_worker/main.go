@@ -51,10 +51,15 @@ import (
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness"
 )
 
-const repairTaskName = "repair"
-const deployTaskName = "deploy"
-const auditTaskName = "audit"
-const setStateNeedsRepairTaskName = "set_needs_repair"
+// Task names.
+const (
+	repairTaskName               = "repair"
+	deployTaskName               = "deploy"
+	auditTaskName                = "audit"
+	setStateNeedsRepairTaskName  = "set_needs_repair"
+	setStateReservedTaskName     = "set_reserved"
+	setStateManualRepairTaskName = "set_manual_repair"
+)
 
 const gcpProject = "chromeos-skylab"
 
@@ -138,6 +143,10 @@ func mainInner(a *args) error {
 	switch a.taskName {
 	case setStateNeedsRepairTaskName:
 		i.BotInfo.HostState = swmbot.HostNeedsRepair
+	case setStateReservedTaskName:
+		i.BotInfo.HostState = swmbot.HostReserved
+	case setStateManualRepairTaskName:
+		i.BotInfo.HostState = swmbot.HostManualRepair
 	default:
 		luciferErr = luciferFlow(ctx, a, i, annotWriter)
 	}
