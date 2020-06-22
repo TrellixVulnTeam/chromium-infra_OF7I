@@ -99,6 +99,7 @@ CIPD_PACKAGE_BUILDERS = {
     'linux-ppc64',       # ~40 sec
     'linux-ppc64le',     # ~40 sec
     'linux-s390x',       # ~40 sec
+    'aix-ppc64',         # ~40 sec
   ],
   'infra-packager-mac-64': ['native:test'],
   'infra-packager-win-64': ['native:test', 'windows-386:test'],
