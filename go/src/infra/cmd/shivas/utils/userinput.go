@@ -71,6 +71,8 @@ type Input struct {
 }
 
 // GetInteractiveInput collects the scanned string list.
+//
+// Name(string) -> CapacityPort(int)
 func GetInteractiveInput() []string {
 	inputs := make([]string, 0)
 	fmt.Print("Please scan: ")
@@ -125,15 +127,11 @@ func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s 
 				}
 			case "CapacityPort":
 				if value != "" {
-					i, err := strconv.ParseInt(value, 10, 32)
-					if err != nil {
-						input = &Input{
-							Key:  "CapacityPort",
-							Desc: fmt.Sprintf("%s", WrongInput),
-						}
+					port := getIntInput(value, input)
+					if port == -1 {
 						break
 					}
-					s.CapacityPort = int32(i)
+					s.CapacityPort = port
 				}
 				input = nil
 			}
@@ -145,8 +143,7 @@ func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s 
 // GetMachineInteractiveInput get Machine input in interactive mode
 //
 // Name(string) -> Lab(enum) -> Browser/OS LAB(choice to branch) ->
-// -> getBrowserMachineInteractiveInput()/getOSMachineInteractiveInput() ->
-// -> Realm(string)
+// -> getBrowserMachine()/getOSMachine() -> Realm(string)
 func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machine *fleet.Machine, update bool) {
 	input := &Input{
 		Key:      "Name",
@@ -205,11 +202,11 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 					}
 					if getLab(machine.Location.Lab) == Browser {
 						// Chorome Browser lab
-						getBrowserMachineInteractiveInput(ctx, ic, scanner, machine)
+						getBrowserMachine(ctx, ic, scanner, machine)
 					} else if getLab(machine.Location.Lab) == ACS ||
 						getLab(machine.Location.Lab) == ATL {
 						// ChromeOS lab
-						getOSMachineInteractiveInput(ctx, ic, scanner, machine)
+						getOSMachine(ctx, ic, scanner, machine)
 					} else {
 						// Unknown or fleet.Lab_LAB_CHROMEOS_SANTIEM
 						input = &Input{
@@ -222,13 +219,13 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 			case "Browser/OS LAB":
 				if value == "1" {
 					// Chrome Browser lab
-					getBrowserMachineInteractiveInput(ctx, ic, scanner, machine)
+					getBrowserMachine(ctx, ic, scanner, machine)
 					input = &Input{
 						Key: "Realm",
 					}
 				} else if value == "2" {
 					// Chrome OS lab
-					getOSMachineInteractiveInput(ctx, ic, scanner, machine)
+					getOSMachine(ctx, ic, scanner, machine)
 					input = &Input{
 						Key: "Realm",
 					}
@@ -244,11 +241,11 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 	}
 }
 
-// getOSMachineInteractiveInput get Chrome OS Machine input in interactive mode
+// getOSMachine get Chrome OS Machine input in interactive mode
 //
 // Rack(string) -> Aisle(string) -> Row(string) -> Rack Number(string) ->
 // -> Shelf(string) -> Position(string)
-func getOSMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machine *fleet.Machine) {
+func getOSMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machine *fleet.Machine) {
 	machine.Device = &fleet.Machine_ChromeosMachine{
 		ChromeosMachine: &fleet.ChromeOSMachine{},
 	}
@@ -307,16 +304,17 @@ func getOSMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient,
 	}
 }
 
-// getBrowserMachineInteractiveInput get Browser Machine input in interactive mode
+// getBrowserMachine get Browser Machine input in interactive mode
 //
 // Rack(string, resource) -> DisplayName(string) ->
 // -> ChromePlatform(string, resource) -> Nics(repeated string, resource) ->
 // -> KVM(string, resource) -> KVM Port(int) -> RPM(string, resource) ->
 // -> RPM Port(int) -> Switch(string, resource) -> Switch Port(int) ->
 // -> Drac(string, resource) -> DeploymentTicket(string) -> Description(string)
-func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machine *fleet.Machine) {
+func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machine *fleet.Machine) {
+	browserMachine := &fleet.ChromeBrowserMachine{}
 	machine.Device = &fleet.Machine_ChromeBrowserMachine{
-		ChromeBrowserMachine: &fleet.ChromeBrowserMachine{},
+		ChromeBrowserMachine: browserMachine,
 	}
 	chromePlatforms := getAllChromePlatforms(ctx, ic)
 	input := &Input{
@@ -346,7 +344,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					}
 				}
 			case "DisplayName":
-				machine.GetChromeBrowserMachine().DisplayName = value
+				browserMachine.DisplayName = value
 				input = &Input{
 					Key:  "ChromePlatform",
 					Desc: fmt.Sprintf("%s%s", ChooseChromePlatform, createKeyValuePairs(chromePlatforms)),
@@ -357,7 +355,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					if option == -1 {
 						break
 					}
-					machine.GetChromeBrowserMachine().ChromePlatform = chromePlatforms[option]
+					browserMachine.ChromePlatform = chromePlatforms[option]
 				}
 				input = &Input{
 					Key:      "Nics (y/n)",
@@ -368,7 +366,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 			case "Nics (y/n)":
 				vals, done := getRepeatedStringInput(ctx, ic, scanner, value, "Nic", input, true)
 				if done {
-					machine.GetChromeBrowserMachine().Nics = vals
+					browserMachine.Nics = vals
 					input = &Input{
 						Key: "KVM",
 					}
@@ -378,7 +376,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
-				machine.GetChromeBrowserMachine().KvmInterface = &fleet.KVMInterface{
+				browserMachine.KvmInterface = &fleet.KVMInterface{
 					Kvm: value,
 				}
 				if value != "" {
@@ -396,7 +394,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					if port == -1 {
 						break
 					}
-					machine.GetChromeBrowserMachine().KvmInterface.Port = port
+					browserMachine.KvmInterface.Port = port
 				}
 				input = &Input{
 					Key: "RPM",
@@ -406,7 +404,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
-				machine.GetChromeBrowserMachine().RpmInterface = &fleet.RPMInterface{
+				browserMachine.RpmInterface = &fleet.RPMInterface{
 					Rpm: value,
 				}
 				if value != "" {
@@ -424,7 +422,7 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 					if port == -1 {
 						break
 					}
-					machine.GetChromeBrowserMachine().RpmInterface.Port = port
+					browserMachine.RpmInterface.Port = port
 				}
 				input = &Input{
 					Key: "Drac",
@@ -433,18 +431,18 @@ func getBrowserMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetCl
 				if value != "" && !DracExists(ctx, ic, value) {
 					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 				} else {
-					machine.GetChromeBrowserMachine().Drac = value
+					browserMachine.Drac = value
 					input = &Input{
 						Key: "DeploymentTicket",
 					}
 				}
 			case "DeploymentTicket":
-				machine.GetChromeBrowserMachine().DeploymentTicket = value
+				browserMachine.DeploymentTicket = value
 				input = &Input{
 					Key: "Description",
 				}
 			case "Description":
-				machine.GetChromeBrowserMachine().Description = value
+				browserMachine.Description = value
 				input = nil
 			}
 			break
