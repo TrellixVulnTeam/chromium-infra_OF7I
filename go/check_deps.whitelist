@@ -14,6 +14,8 @@ github.com/luci/
 github.com/maruel/subcommands
 
 # Google-related github packages
+github.com/GoogleCloudPlatform/
+github.com/bazelbuild/buildtools
 github.com/bradfitz/gomemcache/memcache
 github.com/docker/
 github.com/golang/mock/gomock
@@ -21,7 +23,6 @@ github.com/golang/protobuf/
 github.com/google/cel-go
 github.com/google/uuid
 github.com/googleapis/gax-go
-github.com/GoogleCloudPlatform/
 github.com/pkg/errors
 github.com/protocolbuffers/txtpbfmt/
 
