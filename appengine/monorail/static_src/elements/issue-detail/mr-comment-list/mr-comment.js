@@ -256,7 +256,7 @@ export class MrComment extends LitElement {
     const options = [];
     if (_canExpandDeletedComment(this.comment)) {
       const text =
-        (this.isExpandedIfDeleted ? 'Hide' : 'Show') + ' comment content';
+        (this._isExpandedIfDeleted ? 'Hide' : 'Show') + ' comment content';
       options.push({
         text: text,
         handler: this._toggleHideDeletedComment.bind(this),
