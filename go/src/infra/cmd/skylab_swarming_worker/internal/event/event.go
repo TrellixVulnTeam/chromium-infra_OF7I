@@ -67,6 +67,10 @@ const (
 	// NeedsDeploy indicates that the host fails the deploy task and needs
 	// to be deployed again.
 	HostNeedsDeploy Event = "host_needs_deploy"
+	// HostNeedsManualRepair indicates that the host required manual attention to be fixed
+	HostNeedsManualRepair Event = "host_needs_manual_repair"
+	// HostNeedsReplacement indicates that the host is not fixable due issues with hardware and has to be replaced
+	HostNeedsReplacement Event = "host_needs_replacement"
 )
 
 // Handler is the type for valid functions to pass to Handle.

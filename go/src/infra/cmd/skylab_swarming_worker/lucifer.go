@@ -57,8 +57,10 @@ var hostStateUpdates = map[event.Event]swmbot.HostState{
 	event.HostReady:        swmbot.HostReady,
 	// event.HostReadyToRun
 	// event.HostRunning
-	event.HostFailedRepair: swmbot.HostRepairFailed,
-	event.HostNeedsDeploy:  swmbot.HostNeedsDeploy,
+	event.HostFailedRepair:      swmbot.HostRepairFailed,
+	event.HostNeedsDeploy:       swmbot.HostNeedsDeploy,
+	event.HostNeedsManualRepair: swmbot.HostNeedsManualRepair,
+	event.HostNeedsReplacement:  swmbot.HostNeedsReplacement,
 }
 
 func isHostStatus(e event.Event) bool {
