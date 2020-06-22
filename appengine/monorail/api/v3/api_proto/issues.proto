@@ -223,7 +223,7 @@ message ModifyIssuesResponse {
 }
 
 // The request message for MakeIssueFromTemplate.
-// Next available tag: 4
+// Next available tag: 5
 message MakeIssueFromTemplateRequest {
   // Resource name of the template to use for filling in default values
   // and adding approvals and phases.
@@ -236,4 +236,6 @@ message MakeIssueFromTemplateRequest {
   // While ApprovalDelta can hold additional information, this method only
   // allows adding and removing field values, all other deltas will be ignored.
   repeated ApprovalDelta template_approval_deltas = 3;
+  // The issue description, will be saved as the first comment.
+  string description = 4;
 }
