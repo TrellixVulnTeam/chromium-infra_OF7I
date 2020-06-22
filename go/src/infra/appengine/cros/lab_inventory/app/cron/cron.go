@@ -8,6 +8,7 @@ package cron
 import (
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"cloud.google.com/go/bigquery"
@@ -361,6 +362,21 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 	return err
 }
 
+// List of regexp to compare Servos. This is used to avoid backfilling
+// asset tags to devices using servo asset tags
+var notDUT = []*regexp.Regexp{
+	regexp.MustCompile(`Servo\ v4\ Type\-[AC]`),
+}
+
+func isDUT(googleCodeName string) bool {
+	for _, exp := range notDUT {
+		if exp.MatchString(googleCodeName) {
+			return false
+		}
+	}
+	return true
+}
+
 func backfillAssetTagsToDevices(c *router.Context) error {
 	ctx := c.Context
 
@@ -371,14 +387,25 @@ func backfillAssetTagsToDevices(c *router.Context) error {
 	if err != nil {
 		return err
 	}
+
+	assetIDs := make([]string, 0, len(assets))
+	for _, a := range assets {
+		assetIDs = append(assetIDs, a.GetId())
+	}
+	assetInfoRes := datastore.GetAssetInfo(ctx, assetIDs)
+
 	hostAT := make(map[string]string, len(assets))
 	hosts := make([]string, 0, len(assets))
-	for _, a := range assets {
-		loc := a.GetLocation()
-		hostname := fmt.Sprintf("%v-row%v-rack%v-host%v",
-			loc.GetLab(), loc.GetRow(), loc.GetRack(), loc.GetPosition())
-		hostAT[hostname] = a.GetId()
-		hosts = append(hosts, hostname)
+	for idx, a := range assets {
+		// Ignore assets that are servos or are missing asset info
+		if assetInfoRes[idx].Err == nil &&
+			isDUT(assetInfoRes[idx].Entity.Info.GetGoogleCodeName()) {
+			loc := a.GetLocation()
+			hostname := fmt.Sprintf("%v-row%v-rack%v-host%v",
+				loc.GetLab(), loc.GetRow(), loc.GetRack(), loc.GetPosition())
+			hostAT[hostname] = a.GetId()
+			hosts = append(hosts, hostname)
+		}
 	}
 	devOpRes := datastore.GetDevicesByHostnames(ctx, hosts)
 	for _, dev := range devOpRes {
