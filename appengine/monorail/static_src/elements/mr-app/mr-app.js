@@ -20,6 +20,7 @@ import * as ui from 'reducers/ui.js';
 import * as sitewide from 'reducers/sitewide.js';
 import {arrayToEnglish} from 'shared/helpers.js';
 import {trackPageChange} from 'shared/ga-helpers.js';
+import 'elements/chops/chops-announcement/chops-announcement.js';
 import 'elements/issue-list/mr-list-page/mr-list-page.js';
 import 'elements/issue-entry/mr-issue-entry-page.js';
 import 'elements/framework/mr-header/mr-header.js';
@@ -77,6 +78,7 @@ export class MrApp extends connectStore(LitElement) {
         .loginUrl=${this.loginUrl}
         .logoutUrl=${this.logoutUrl}
       ></mr-header>
+      <chops-announcement service="monorail"></chops-announcement>
       <mr-site-banner></mr-site-banner>
       <mr-cue
         cuePrefName=${cueNames.SWITCH_TO_PARENT_ACCOUNT}
