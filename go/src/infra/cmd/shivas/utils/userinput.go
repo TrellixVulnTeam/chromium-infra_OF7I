@@ -938,7 +938,8 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 
 // getBrowserMachinelseInteractiveInput get Browser MachineLSE input in interactive mode
 //
-// Hostname(string) -> MachineLSEPrototype(string, resource) -> getVms()
+// Hostname(string) -> MachineLSEPrototype(string, resource) ->
+// -> VM capacity(int) -> getVms()
 func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 	machinelse.Lse = &fleet.MachineLSE_ChromeBrowserMachineLse{
 		ChromeBrowserMachineLse: &fleet.ChromeBrowserMachineLSE{},
@@ -963,8 +964,11 @@ func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.Flee
 			case "Hostname":
 				machinelse.Hostname = value
 				if len(machineLSEPrototypes) == 0 {
-					getVms(ctx, ic, scanner, machinelse)
-					input = nil
+					input = &Input{
+						Key:      "VM Capactiy",
+						Required: true,
+						Desc:     "The maximum number of the VMs allowed on this Browser Machine LSE.",
+					}
 				} else {
 					input = &Input{
 						Key:  "MachineLSEPrototype",
@@ -979,6 +983,19 @@ func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.Flee
 					}
 					machinelse.MachineLsePrototype = machineLSEPrototypes[option]
 				}
+				input = &Input{
+					Key:      "VM Capactiy",
+					Required: true,
+					Desc:     "The maximum number of the VMs allowed on this Browser Machine LSE.",
+				}
+			case "VM Capactiy":
+				if value != "" {
+					capacity := getIntInput(value, input)
+					if capacity == -1 {
+						break
+					}
+					machinelse.GetChromeBrowserMachineLse().VmCapacity = capacity
+				}
 				getVms(ctx, ic, scanner, machinelse)
 				input = nil
 			}
@@ -992,16 +1009,9 @@ func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.Flee
 // -> VMs(repeated) -> VM Name(string) -> VM OS Version(string) ->
 // -> VM OS Description(string) -> VM Mac Address(string) -> VM Hostname(string)
 func getVms(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
-	pr := getMachineLSEPrototype(ctx, ic, machinelse.GetMachineLsePrototype())
-	vrs := pr.GetVirtualRequirements()
-	var maxVM int
-	for _, vr := range vrs {
-		if vr.GetVirtualType() == fleet.VirtualType_VIRTUAL_TYPE_VM {
-			maxVM = int(vr.GetMax())
-			break
-		}
-	}
-	if maxVM == 0 {
+	maxVMAllowed := machinelse.GetChromeBrowserMachineLse().GetVmCapacity()
+	if maxVMAllowed == 0 {
+		fmt.Print("\nvm_capacity is 0. Increase vm_capacity to add VMs.\n")
 		return
 	}
 	input := &Input{
@@ -1069,10 +1079,9 @@ func getVms(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanne
 				vm.Hostname = value
 				vms = append(vms, vm)
 				machinelse.GetChromeBrowserMachineLse().Vms = vms
-				if len(vms) == maxVM {
-					fmt.Print("\nYou have added the maximum VMs for this "+
-						"MachineLSE as defined by MachineLSEPrototype ",
-						machinelse.GetMachineLsePrototype()+"\n")
+				if len(vms) == int(maxVMAllowed) {
+					fmt.Print("\nYou have added the maximum VMs for this MachineLSE.\n" +
+						"If you want to add more please increase the vm_capacity.\n")
 					return
 				}
 				input = &Input{

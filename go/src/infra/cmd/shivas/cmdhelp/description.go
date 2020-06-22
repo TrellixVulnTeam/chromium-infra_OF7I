@@ -156,24 +156,34 @@ This file must contain one MachineLSE JSON message
 
 Example Browser Lab MachineLSE:
 {
-	"name": "test-machinelseBrowser",
+	"name": "A-Browser-MachineLSE-1",
 	"machineLsePrototype": "browser-lab:vm",
-	"hostname": "Dell",
+	"hostname": "Dell Server 3200",
 	"chromeBrowserMachineLse": {
 		"vms": [
 			{
-				"name": "Windows Server 2008",
+				"name": "Windows8.0",
 				"osVersion": {
-					"value": "Server edition 2008",
+					"value": "8.0",
 					"description": "Windows Server"
 				},
-				"macAddress": "23.1.34.5",
-				"hostname": "WinVM"
+				"macAddress": "2.44.65.23",
+				"hostname": "Windows8-lab1"
+			},
+			{
+				"name": "Linux3.4",
+				"osVersion": {
+					"value": "3.4",
+					"description": "Ubuntu Server"
+				},
+				"macAddress": "32.45.12.32",
+				"hostname": "Ubuntu-lab2"
 			}
-		]
-	},
+		],
+		"vmCapacity": 3
+	}
 	"machines": [
-		"machine-test-123"
+		"machine-DellServer-123"
 	]
 }
 
