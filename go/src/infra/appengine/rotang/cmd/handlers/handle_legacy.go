@@ -289,10 +289,15 @@ var chromeBuildSheriffRotations = []string{
 	"Chrome Build Sheriff EMEA",
 }
 
-func (h *State) getBuildSheriffs(ctx *router.Context) (*sheriffJSON, error) {
+var clankBuildSheriffRotations = []string{
+	"Clank Build Sheriff AMER",
+	"Clank Build Sheriff EMEA",
+}
+
+func (h *State) getExternalSheriffs(ctx *router.Context, sheriffRotations []string) (*sheriffJSON, error) {
 	now := clock.Now(ctx.Context)
-	emails := make([]string, 0, len(chromeBuildSheriffRotations))
-	for _, name := range chromeBuildSheriffRotations {
+	emails := make([]string, 0, len(sheriffRotations))
+	for _, name := range sheriffRotations {
 		email, err := h.getCurrentOncall(ctx, name, now)
 		if err != nil {
 			return nil, err
@@ -307,14 +312,14 @@ func (h *State) getBuildSheriffs(ctx *router.Context) (*sheriffJSON, error) {
 	}, nil
 }
 
-// buildSheriff produces a sheriff.json file containing sheriffs sourced from external calendar events.
-func (h *State) buildSheriff(ctx *router.Context, file string) (string, error) {
+// sheriffJSONFromExternal produces a sheriff.json file containing sheriffs sourced from external calendar events.
+func (h *State) sheriffJSONFromExternal(ctx *router.Context, file string, sheriffRotations []string) (string, error) {
 	sp := strings.Split(file, ".")
 	if len(sp) != 2 {
 		return "", status.Errorf(codes.InvalidArgument, "filename in wrong format")
 	}
 
-	sheriffs, err := h.getBuildSheriffs(ctx)
+	sheriffs, err := h.getExternalSheriffs(ctx, sheriffRotations)
 	if err != nil {
 		return "", status.Errorf(codes.Internal, "Unable to fetch sheriffs list")
 	}
@@ -343,11 +348,18 @@ func (h *State) buildSheriff(ctx *router.Context, file string) (string, error) {
 	}
 }
 
+func (h *State) buildSheriff(ctx *router.Context, file string) (string, error) {
+	return h.sheriffJSONFromExternal(ctx, file, chromeBuildSheriffRotations)
+}
+
+func (h *State) androidSheriff(ctx *router.Context, file string) (string, error) {
+	return h.sheriffJSONFromExternal(ctx, file, clankBuildSheriffRotations)
+}
+
 var rotaToName = map[string]string{
 	"angle":             "The ANGLE Wrangle",
 	"ios_internal_roll": "Bling Piper Roll",
 	"blink_bug_triage":  "Blink Bug Triage",
-	"android":           "Chrome on Android Build Sheriff",
 	"android_stability": "Clank Stability Sheriff (go/clankss)",
 	"ecosystem_infra":   "Ecosystem Infra rotation",
 	"gitadmin":          "Chrome Infra Git Admin Rotation",
