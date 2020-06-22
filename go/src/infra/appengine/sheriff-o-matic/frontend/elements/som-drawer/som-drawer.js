@@ -8,7 +8,7 @@ const ROTATIONS = {
   'android': [
     {
       name: 'Android Sheriff',
-      url: 'https://rota-ng.appspot.com/legacy/sheriff_android.json',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-android-sheriff',
     },
   ],
   'chromeos': [
