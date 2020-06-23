@@ -6,17 +6,16 @@ package deviceconfig
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
 
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
-	"go.chromium.org/chromiumos/infra/proto/go/project_mgmt"
 )
 
 func TestParseConfigBundle(t *testing.T) {
@@ -127,14 +126,17 @@ func TestParseConfigBundle(t *testing.T) {
 
 func TestParsePrograms(t *testing.T) {
 	Convey("Test parsing programs", t, func() {
-		var programs project_mgmt.Config
-		b, err := ioutil.ReadFile("test_project_mgmt.cfg")
+		b, err := ioutil.ReadFile("test_program_configs.json")
 		So(err, ShouldBeNil)
-		err = proto.UnmarshalText(string(b), &programs)
+		var programs Programs
+		err = json.Unmarshal(b, &programs)
 		So(err, ShouldBeNil)
 		Convey("Happy path", func() {
-			gitInfos, err := parsePrograms(&programs, "chrome-internal.googlesource.com")
+			gitInfos, err := parsePrograms(&programs)
 			So(err, ShouldBeNil)
+			for _, g := range gitInfos {
+				fmt.Println(g.path, g.project)
+			}
 			So(gitInfos, ShouldHaveLength, 4)
 			for _, gi := range gitInfos {
 				So(gi.path, ShouldBeIn, []string{"generated/config.jsonproto"})

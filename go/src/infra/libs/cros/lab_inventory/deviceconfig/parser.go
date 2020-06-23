@@ -11,7 +11,6 @@ import (
 	"go.chromium.org/chromiumos/config/go/api"
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
-	"go.chromium.org/chromiumos/infra/proto/go/project_mgmt"
 )
 
 type gitilesInfo struct {
@@ -19,41 +18,51 @@ type gitilesInfo struct {
 	path    string
 }
 
-func parsePrograms(programs *project_mgmt.Config, gitilesHost string) ([]*gitilesInfo, error) {
+// Programs defines the structure of a DLM program list.
+type Programs struct {
+	Programs []struct {
+		Name           string `json:"name,omitempty"`
+		Repo           *Repo  `json:"repo,omitempty"`
+		DeviceProjects []struct {
+			Repo *Repo `json:"repo,omitempty"`
+		} `json:"deviceProjects,omitempty"`
+	} `json:"programs,omitempty"`
+}
+
+// Repo defines the repo info in DLM configs.
+type Repo struct {
+	Name       string `json:"name,omitempty"`
+	RepoPath   string `json:"repoPath,omitempty"`
+	ConfigPath string `json:"configPath,omitempty"`
+}
+
+func parsePrograms(programs *Programs) ([]*gitilesInfo, error) {
 	var gitInfos []*gitilesInfo
-	for _, pg := range programs.GetPrograms().GetValue() {
+	for _, pg := range programs.Programs {
 		// Add program-level config bundle path
-		project, err := parseRepo(pg.GetRepo(), gitilesHost)
-		if err != nil {
-			return nil, err
-		}
-		gitInfos = append(gitInfos, &gitilesInfo{
-			project: project,
-			path:    pg.GetConfigPath(),
-		})
-		// Add project-level config bundle path
-		for _, pj := range pg.GetProjects().GetValue() {
-			project, err := parseRepo(pj.GetRepo(), gitilesHost)
-			if err != nil {
-				return nil, err
-			}
+		r := pg.Repo
+		if validRepo(r) {
 			gitInfos = append(gitInfos, &gitilesInfo{
-				project: project,
-				path:    pj.GetConfigPath(),
+				project: r.Name,
+				path:    r.ConfigPath,
 			})
+		}
+		// Add project-level config bundle path
+		for _, p := range pg.DeviceProjects {
+			r := p.Repo
+			if validRepo(r) {
+				gitInfos = append(gitInfos, &gitilesInfo{
+					project: r.Name,
+					path:    r.ConfigPath,
+				})
+			}
 		}
 	}
 	return gitInfos, nil
 }
 
-func parseRepo(repo, gitilesHost string) (string, error) {
-	if !strings.Contains(repo, gitilesHost) {
-		return "", fmt.Errorf("%s is not a valid gitiles host, should contain %s", repo, gitilesHost)
-	}
-	// Example paths: "https://chrome-internal.googlesource.com/chromeos/project/galaxy/milkyway"
-	paths := strings.SplitAfter(repo, gitilesHost)
-	// Return "chromeos/project/galaxy/milkyway" as project name
-	return paths[1][1:], nil
+func validRepo(r *Repo) bool {
+	return r != nil && r.Name != "" && r.ConfigPath != ""
 }
 
 func parseConfigBundle(configBundle payload.ConfigBundle) []*device.Config {

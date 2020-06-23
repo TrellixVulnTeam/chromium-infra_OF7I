@@ -1,0 +1,38 @@
+{
+  "programs": [{
+    "name": "generic"
+  }, {
+    "name": "galaxy",
+    "repo": {
+      "name": "chromeos/program/galaxy",
+      "repoPath": "https://chrome-internal.googlesource.com/chromeos/program/galaxy",
+      "configPath": "generated/config.jsonproto",
+      "repoCheckoutPath": "src/program/galaxy"
+    },
+    "deviceProjects": [{
+      "googleCodeName": "milkyway",
+      "repo": {
+        "name": "chromeos/project/galaxy/milkyway",
+        "repoPath": "https://chrome-internal.googlesource.com/chromeos/project/galaxy/milkyway",
+        "configPath": "generated/config.jsonproto",
+        "repoCheckoutPath": "src/project/galaxy/milkyway"
+      }
+    }, {
+      "googleCodeName": "andromeda",
+      "repo": {
+        "name": "chromeos/project/galaxy/andromeda",
+        "repoPath": "https://chrome-internal.googlesource.com/chromeos/project/galaxy/andromeda",
+        "configPath": "generated/config.jsonproto",
+        "repoCheckoutPath": "src/project/galaxy/andromeda"
+      }
+    }, {
+      "googleCodeName": "sombrero",
+      "repo": {
+        "name": "chromeos/project/galaxy/sombrero",
+        "repoPath": "https://chrome-internal.googlesource.com/chromeos/project/galaxy/sombrero",
+        "configPath": "generated/config.jsonproto",
+        "repoCheckoutPath": "src/project/galaxy/sombrero"
+      }
+    }]
+  }]
+}
