@@ -506,12 +506,20 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    actual_local_id, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'sum',
-        'New', 111, [], ['Type-Defect'], [], [], 111, 'content',
-        index_now=False, timestamp=self.now, approval_values=approval_values)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn,
+        self.services,
+        789,
+        'sum',
+        'New',
+        111, [], ['Type-Defect'], [], [],
+        111,
+        'content',
+        index_now=False,
+        timestamp=self.now,
+        approval_values=approval_values)
     self.mox.VerifyAll()
-    self.assertEqual(1, actual_local_id)
+    self.assertEqual(1, created_issue.local_id)
 
   def testCreateIssue_NonmemberSpamCheck(self):
     """A non-member must pass a non-member spam check."""
@@ -544,12 +552,19 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    actual_local_id, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'sum',
-        'New', 111, [], [',', '', ' ', ', '], [], [], 111, 'content',
-        index_now=False, timestamp=self.now)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn,
+        self.services,
+        789,
+        'sum',
+        'New',
+        111, [], [',', '', ' ', ', '], [], [],
+        111,
+        'content',
+        index_now=False,
+        timestamp=self.now)
     self.mox.VerifyAll()
-    self.assertEqual(1, actual_local_id)
+    self.assertEqual(1, created_issue.local_id)
 
   def SetUpUpdateIssuesModified(self, iids, modified_timestamp=None):
     self.services.issue.issue_tbl.Update(
@@ -572,12 +587,19 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    actual_local_id, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'sum',
-        'New', 111, [], ['Type-Defect'], [], [], 111, 'content',
-        index_now=False, timestamp=self.now)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn,
+        self.services,
+        789,
+        'sum',
+        'New',
+        111, [], ['Type-Defect'], [], [],
+        111,
+        'content',
+        index_now=False,
+        timestamp=self.now)
     self.mox.VerifyAll()
-    self.assertEqual(1, actual_local_id)
+    self.assertEqual(1, created_issue.local_id)
 
   def testCreateIssue_Spam(self):
     settings.classifier_spam_thresh = 0.9
@@ -595,12 +617,19 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    actual_local_id, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'sum',
-        'New', 111, [], ['Type-Defect'], [], [], 111, 'content',
-        index_now=False, timestamp=self.now)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn,
+        self.services,
+        789,
+        'sum',
+        'New',
+        111, [], ['Type-Defect'], [], [],
+        111,
+        'content',
+        index_now=False,
+        timestamp=self.now)
     self.mox.VerifyAll()
-    self.assertEqual(1, actual_local_id)
+    self.assertEqual(1, created_issue.local_id)
 
   def testCreateIssue_FederatedReferences(self):
     self.SetUpAllocateNextLocalID(789, None, None)
@@ -648,13 +677,21 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
     self.mox.ReplayAll()
 
-    actual_local_id, comment = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'sum',
-        'New', 111, [], [',', '', ' ', ', '], [], [], 111, 'content',
-        index_now=False, timestamp=self.now, importer_id=222)
+    created_issue, comment = self.services.issue.CreateIssue(
+        self.cnxn,
+        self.services,
+        789,
+        'sum',
+        'New',
+        111, [], [',', '', ' ', ', '], [], [],
+        111,
+        'content',
+        index_now=False,
+        timestamp=self.now,
+        importer_id=222)
 
     self.mox.VerifyAll()
-    self.assertEqual(1, actual_local_id)
+    self.assertEqual(1, created_issue.local_id)
     self.assertEqual(111, comment.user_id)
     self.assertEqual(222, comment.importer_id)
     self.assertEqual(self.now, comment.timestamp)

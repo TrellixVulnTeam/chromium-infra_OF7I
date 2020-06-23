@@ -692,7 +692,7 @@ class IssueService(object):
       dangling_blocking: a list of DanglingIssueRefs that this issue blocks.
 
     Returns:
-      A tuple (the integer local ID of the new issue, Comment PB for the
+      A tuple (the newly created Issue PB and Comment PB for the
       issue description).
     """
     config = self._config_service.GetProjectConfig(cnxn, project_id)
@@ -839,7 +839,7 @@ class IssueService(object):
     else:
       self.EnqueueIssuesForIndexing(cnxn, [issue.issue_id])
 
-    return issue.local_id, comment
+    return issue, comment
 
   def AllocateNewLocalIDs(self, cnxn, issues):
     # Filter to just the issues that need new local IDs.

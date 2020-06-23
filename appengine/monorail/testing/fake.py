@@ -1796,7 +1796,7 @@ class IssueService(object):
     self.TestAddIssue(issue, importer_id=importer_id)
     comment = self.comments_by_iid[issue.issue_id][0]
     comment.content = marked_description
-    return issue.local_id, comment
+    return issue, comment
 
   def GetIssueApproval(self, cnxn, issue_id, approval_id, use_cache=True):
     issue = self.GetIssue(cnxn, issue_id, use_cache=use_cache)

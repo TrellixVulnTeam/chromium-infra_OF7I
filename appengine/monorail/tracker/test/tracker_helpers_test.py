@@ -1163,18 +1163,12 @@ class IssueMergeTest(unittest.TestCase):
     self.assertEqual('Cannot merge issue into itself', errors.merge_into_id)
 
   def testParseMergeFields_NewIssueToMerge(self):
-    merged_local_id, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services,
-        self.project.project_id, 'unused_summary', 'unused_status', 111,
-        [], [], [], [], 111, 'unused_marked_description')
-    mergee_local_id, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services,
-        self.project.project_id, 'unused_summary', 'unused_status', 111,
-        [], [], [], [], 111, 'unused_marked_description')
-    merged_issue = self.services.issue.GetIssueByLocalID(
-        self.cnxn, self.project.project_id, merged_local_id)
-    mergee_issue = self.services.issue.GetIssueByLocalID(
-        self.cnxn, self.project.project_id, mergee_local_id)
+    merged_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, self.project.project_id, 'unused_summary',
+        'unused_status', 111, [], [], [], [], 111, 'unused_marked_description')
+    mergee_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, self.project.project_id, 'unused_summary',
+        'unused_status', 111, [], [], [], [], 111, 'unused_marked_description')
 
     errors = template_helpers.EZTError()
     post_data = {'merge_into': str(mergee_issue.local_id)}

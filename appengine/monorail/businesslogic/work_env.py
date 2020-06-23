@@ -950,20 +950,34 @@ class WorkEnv(object):
       importer_id = None
 
     with self.mc.profiler.Phase('creating issue in project %r' % project_id):
-      new_local_id, comment = self.services.issue.CreateIssue(
-          self.mc.cnxn, self.services, project_id, summary, status,
-          owner_id, cc_ids, labels, field_values, component_ids, reporter_id,
-          marked_description, blocked_on=blocked_on, blocking=blocking,
-          attachments=attachments, index_now=False, phases=phases,
-          approval_values=approval_values, timestamp=timestamp,
-          importer_id=importer_id, dangling_blocked_on=dangling_blocked_on,
+      new_issue, comment = self.services.issue.CreateIssue(
+          self.mc.cnxn,
+          self.services,
+          project_id,
+          summary,
+          status,
+          owner_id,
+          cc_ids,
+          labels,
+          field_values,
+          component_ids,
+          reporter_id,
+          marked_description,
+          blocked_on=blocked_on,
+          blocking=blocking,
+          attachments=attachments,
+          index_now=False,
+          phases=phases,
+          approval_values=approval_values,
+          timestamp=timestamp,
+          importer_id=importer_id,
+          dangling_blocked_on=dangling_blocked_on,
           dangling_blocking=dangling_blocking)
-      logging.info('created issue %r in project %r', new_local_id, project_id)
+      logging.info(
+          'created issue %r in project %r', new_issue.local_id, project_id)
 
     with self.mc.profiler.Phase('following up after issue creation'):
       self.services.project.UpdateRecentActivity(self.mc.cnxn, project_id)
-      new_issue = self.services.issue.GetIssueByLocalID(
-          self.mc.cnxn, project_id, new_local_id)
 
     if send_email:
       with self.mc.profiler.Phase('queueing notification tasks'):

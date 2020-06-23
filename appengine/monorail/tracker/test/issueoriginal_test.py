@@ -53,10 +53,10 @@ class IssueOriginalTest(unittest.TestCase):
     status = 'New'
     cnxn = 'fake connection'
     self.services.user.TestAddUser('commenter@example.com', 222)
-    self.local_id_1, desc = self.services.issue.CreateIssue(
-        cnxn, self.services,
-        789, summary, status, 111, [], [], [], [], 111,
+    created_issue_1, desc = self.services.issue.CreateIssue(
+        cnxn, self.services, 789, summary, status, 111, [], [], [], [], 111,
         'The screen is just dark when I press power on')
+    self.local_id_1 = created_issue_1.local_id
     comment_0 = tracker_pb2.IssueComment(
         issue_id=desc.issue_id, user_id=222, project_id=789,
         content=STRIPPED_MSG, inbound_message=ORIG_MSG)
