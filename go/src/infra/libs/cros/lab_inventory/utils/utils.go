@@ -185,6 +185,7 @@ var racks = []*regexp.Regexp{
 var hosts = []*regexp.Regexp{
 	regexp.MustCompile(`HOST[\d]*`),
 	regexp.MustCompile(`host[\d]*`),
+	regexp.MustCompile(`labstation[\d]*`),
 }
 
 /* Regular expressions to match various parts of the input string - END */
