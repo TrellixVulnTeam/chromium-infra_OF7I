@@ -36,7 +36,7 @@ func TestUpdateLabstations(t *testing.T) {
 		Convey("Delete servos for a labstation", func() {
 			ls := getLabConfigByHostname(ctx, t, "labstation1")
 			So(ls.GetLabstation().GetServos(), ShouldHaveLength, len(servos))
-			err := UpdateLabstations(ctx, "labstation1", []string{"ser1", "ser2"})
+			_, err := UpdateLabstations(ctx, "labstation1", []string{"ser1", "ser2"})
 			So(err, ShouldBeNil)
 			newLs := getLabConfigByHostname(ctx, t, "labstation1")
 			newServos := newLs.GetLabstation().GetServos()

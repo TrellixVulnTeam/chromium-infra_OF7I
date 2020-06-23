@@ -43,25 +43,25 @@ type servoHostRecord struct {
 type servoHostRegistry map[string]*servoHostRecord
 
 // UpdateLabstations updates a labstation's info, e.g. servos
-func UpdateLabstations(ctx context.Context, hostname string, servoToDelete []string) error {
+func UpdateLabstations(ctx context.Context, hostname string, servoToDelete []string) (*lab.ChromeOSDevice, error) {
 	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx)).Eq("Hostname", hostname)
 	var servoHosts []*DeviceEntity
 	if err := datastore.GetAll(ctx, q, &servoHosts); err != nil {
-		return errors.Annotate(err, "get servo host %s", hostname).Err()
+		return nil, errors.Annotate(err, "get servo host %s", hostname).Err()
 	}
 	if len(servoHosts) == 0 {
-		return errors.Reason("No such labstation: %s", hostname).Err()
+		return nil, errors.Reason("No such labstation: %s", hostname).Err()
 	}
 	if len(servoHosts) > 1 {
-		return errors.Reason("multiple servo host with same name '%s'", hostname).Err()
+		return nil, errors.Reason("multiple servo host with same name '%s'", hostname).Err()
 	}
 	entity := servoHosts[0]
 	var l lab.ChromeOSDevice
 	if err := proto.Unmarshal(entity.LabConfig, &l); err != nil {
-		return errors.Annotate(err, "unmarshal labstation message").Err()
+		return nil, errors.Annotate(err, "unmarshal labstation message").Err()
 	}
 	if l.GetLabstation() == nil {
-		return errors.Reason("%s is not a valid labstation hostname", hostname).Err()
+		return nil, errors.Reason("%s is not a valid labstation hostname", hostname).Err()
 	}
 
 	var oldLabstation lab.ChromeOSDevice
@@ -70,7 +70,7 @@ func UpdateLabstations(ctx context.Context, hostname string, servoToDelete []str
 	l.GetLabstation().Servos = deleteServosBySN(l.GetLabstation().GetServos(), servoToDelete)
 	newConfig, err := proto.Marshal(&l)
 	if err != nil {
-		return errors.Reason("fail to marshal the new labstation message after updating servos").Err()
+		return nil, errors.Reason("fail to marshal the new labstation message after updating servos").Err()
 	}
 	changes := changehistory.LogChromeOSLabstationChange(&oldLabstation, &l)
 	now := time.Now().UTC()
@@ -86,9 +86,9 @@ func UpdateLabstations(ctx context.Context, hostname string, servoToDelete []str
 		return nil
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &l, nil
 }
 
 // newServohostRegistryFromProtoMsgs creates a new servoHostRegistry instance

@@ -427,11 +427,13 @@ func (is *InventoryServerImpl) UpdateLabstations(ctx context.Context, req *api.U
 		return nil, err
 	}
 
-	err = datastore.UpdateLabstations(ctx, req.GetHostname(), req.GetDeletedServos())
+	l, err := datastore.UpdateLabstations(ctx, req.GetHostname(), req.GetDeletedServos())
 	if err != nil {
 		return nil, err
 	}
-	return &api.UpdateLabstationsResponse{}, nil
+	return &api.UpdateLabstationsResponse{
+		Labstation: l,
+	}, nil
 }
 
 // UpdateCrosDevicesSetup updates the selected Chrome OS devices setup data in
