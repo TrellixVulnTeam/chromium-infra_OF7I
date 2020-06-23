@@ -46,6 +46,11 @@ ISSUE_NAME_RE = re.compile(r'%s$' % ISSUE_PATTERN)
 
 USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
 
+# We currently do not place much limit on template names, see
+# https://monorail-dev.appspot.com/p/monorail/adminTemplates for examples
+ISSUE_TEMPLATE_RE = re.compile(
+    r'%s\/templates\/(?P<template_name>.*)$' % (PROJECT_NAME_PATTERN))
+
 # Constants that hold the template patterns for creating resource names.
 PROJECT_NAME_TMPL = 'projects/{project_name}'
 PROJECT_CONFIG_TMPL = 'projects/{project_name}/config'
@@ -514,6 +519,7 @@ def IngestProjectName(cnxn, name, services):
 
   return id_dict.get(project_name)
 
+
 def ConvertTemplateNames(cnxn, project_id, template_ids, services):
   # MonorailConnection, int, Collection[int] Service -> Mapping[int, str]
   """Takes Template IDs and returns the Templates' resource names
@@ -548,6 +554,41 @@ def ConvertTemplateNames(cnxn, project_id, template_ids, services):
         template_name=tmpl_by_id.get(template_id).name)
 
   return id_to_resource_names
+
+
+def IngestTemplateName(cnxn, name, services):
+  # type: (MonorailConnection, str, Services) -> (str, int)
+  """Takes a IssueTemplate's resource name and returns the IssueTemplate's name
+     and the Project's ID that it belongs.
+
+  Args:
+    cnxn: MonorailConnection to the database.
+    name: Resource name of a IssueTemplate.
+    services: Services object for connections to backend services.
+
+  Returns:
+    The IssueTemplate's name and the Project's ID.
+
+  Raises:
+    InputException if the given name does not have a valid format.
+    NoSuchProjectException if the given project name does not exists.
+    NoSuchTemplateException if the given template name does not exists.
+  """
+  match = _GetResourceNameMatch(name, ISSUE_TEMPLATE_RE)
+  template_name = match.group('template_name')
+  project_name = match.group('project_name')
+  id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
+  project_id = id_dict.get(project_name)
+  if project_id is None:
+    raise exceptions.NoSuchProjectException(
+        'Project not found: %s.' % project_name)
+  template = services.template.GetTemplateByName(
+      cnxn, template_name, project_id)
+  if template is None:
+    raise exceptions.NoSuchTemplateException(
+        'Template not found: %s.' % template_name)
+
+  return template_name, project_id
 
 
 def ConvertStatusDefNames(cnxn, statuses, project_id, services):

@@ -417,6 +417,26 @@ class ResourceNameConverterTest(unittest.TestCase):
             [self.template_1.template_id, self.template_2.template_id],
             self.services), expected)
 
+  def testIngestTemplateName(self):
+    """We can get IssueTemplate's resource match"""
+    self.assertEqual(
+        rnc.IngestTemplateName(
+            self.cnxn, 'projects/proj/templates/template_1_name',
+            self.services), ('template_1_name', 789))
+
+  def testIngestTemplateName_InvalidName(self):
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestTemplateName(
+          self.cnxn, 'projects/asdf/misspelled_template/xyz', self.services)
+
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.IngestTemplateName(
+          self.cnxn, 'projects/asdf/templates/template_1_name', self.services)
+
+    with self.assertRaises(exceptions.NoSuchTemplateException):
+      rnc.IngestTemplateName(
+          self.cnxn, 'projects/proj/templates/template_dne_name', self.services)
+
   def testConvertStatusDefNames(self):
     """We can get Status resource name."""
     expected_resource_name = 'projects/{}/statusDefs/{}'.format(

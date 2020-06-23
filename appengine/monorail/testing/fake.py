@@ -2196,6 +2196,17 @@ class TemplateService(object):
     self.templates_by_project_id[project_id].append(template_id)
     return template
 
+  def GetTemplateByName(self, cnxn, template_name, project_id):
+    if project_id not in self.templates_by_project_id:
+      return None
+    else:
+      project_templates = self.templates_by_project_id[project_id]
+      for template_id in project_templates:
+        template = self.GetTemplateById(cnxn, template_id)
+        if template.name == template_name:
+          return template
+    return None
+
   def GetTemplateById(self, cnxn, template_id):
     return self.templates_by_id.get(template_id)
 
