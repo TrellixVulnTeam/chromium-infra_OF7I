@@ -96,7 +96,7 @@ Score = Sum(CQ flake type weight * impacted CLs) + Sum(CI flake type weight * oc
 
 ### Workflow
 #### For CQ flakes
-* It leverages existing data sources for CQ ([cq_raw]), completed builds
+* It leverages existing data sources for CQ ([cq_attempts]), completed builds
  ([completed_builds]) and test results ([test_results]) BigQuery tables.
 * Cron jobs that execute [SQL queries] run once every 30 minutes to detect flaky tests and store the results.
   * The query for cq hidden flakes is executed every 2 hours.
@@ -202,7 +202,7 @@ For any breakage report and feature requests, please
 [component==Blink>Accessibility]: https://analysis.chromium.org/p/chromium/flake-portal/flakes?flake_filter=component::Blink>Accessibility
 [Component Report]: images/component_report.png
 [CQ]: https://chrome-internal.googlesource.com/infra/infra_internal/+/master/infra_internal/services/cq/README.md
-[cq_raw]: https://bigquery.cloud.google.com/table/chrome-infra-events:raw_events.cq
+[cq_attempts]: https://bigquery.cloud.google.com/table/commit-queue:raw.attempts
 [CTI group]: https://groups.google.com/a/google.com/forum/#!forum/chops-cti
 [directory==base/]: https://analysis.chromium.org/p/chromium/flake-portal/flakes?flake_filter=directory::base/
 [Example of gtests with different parameters]: images/gtests_with_different_parameters.png
