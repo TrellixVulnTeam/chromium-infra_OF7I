@@ -91,7 +91,7 @@ class _MrHotlistPeoplePage extends LitElement {
    */
   _renderPage() {
     if (this._fetchError) {
-      return html`<section>${this._fetchError.message}</section>`;
+      return html`<section>${this._fetchError.description}</section>`;
     }
 
     return html`

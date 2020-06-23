@@ -89,7 +89,7 @@ class _MrHotlistSettingsPage extends LitElement {
   _renderPage() {
     if (!this._hotlist) {
       if (this._fetchError) {
-        return html`<section>${this._fetchError.message}</section>`;
+        return html`<section>${this._fetchError.description}</section>`;
       } else {
         return html`<section>Loading...</section>`;
       }

@@ -35,6 +35,7 @@ describe('mr-hotlist-issues-page (unconnected)', () => {
 
   it('shows hotlist fetch error', async () => {
     element._fetchError = new Error('This is an important error');
+    element._fetchError.description = 'This is an important error';
     await element.updateComplete;
     assert.include(element.shadowRoot.innerHTML, 'important error');
   });

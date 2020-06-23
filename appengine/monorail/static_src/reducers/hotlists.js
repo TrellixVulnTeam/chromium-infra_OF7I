@@ -452,7 +452,7 @@ export const update = (name, hotlist) => async (dispatch) => {
     await dispatch(users.batchGet(editors));
   } catch (error) {
     dispatch({type: UPDATE_FAILURE, error});
-    dispatch(ui.showSnackbar(UPDATE_FAILURE, error.message));
+    dispatch(ui.showSnackbar(UPDATE_FAILURE, error.description));
     throw error;
   }
 };
