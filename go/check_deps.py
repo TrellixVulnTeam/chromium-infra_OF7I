@@ -62,13 +62,13 @@ def read_and_merge(*go_list_data_func):
   return ret
 
 
-def apply_whitelist(import_to_users, whitelist):
-  used_whitelist = set()
+def apply_allowlist(import_to_users, allowlist):
+  used_allowlist = set()
 
   def matches(imp):
-    for x in whitelist:
+    for x in allowlist:
       if imp.startswith(x):
-        used_whitelist.add(x)
+        used_allowlist.add(x)
         return True
     return False
 
@@ -82,10 +82,10 @@ def apply_whitelist(import_to_users, whitelist):
       del import_to_users[imp]
       continue
 
-  return whitelist - used_whitelist
+  return allowlist - used_allowlist
 
 
-def load_whitelist(path):
+def load_allowlist(path):
   ret = set()
   with open(path, 'r') as f:
     for line in f.readlines():
@@ -117,13 +117,13 @@ def check_all_googlesource_mirrors():
   return ret
 
 
-def check_only_whitelisted_deps():
+def check_only_allowlisted_deps():
   ret = []
 
-  whitelist = load_whitelist(os.path.join(SCRIPT_DIR, 'check_deps.whitelist'))
+  allowlist = load_allowlist(os.path.join(SCRIPT_DIR, 'check_deps.allowlist'))
   import_to_users = read_and_merge(*map(scan_os_async, GOOS_TO_CHECK))
 
-  unused_whitelist = apply_whitelist(import_to_users, whitelist)
+  unused_allowlist = apply_allowlist(import_to_users, allowlist)
 
   if import_to_users:
     pkg_to_bad_imports = {}
@@ -140,9 +140,9 @@ def check_only_whitelisted_deps():
         ret.append('    - %s' % imp)
     ret.append('')
 
-  if unused_whitelist:
-    ret.append('Unused whitelist entries:')
-    for entry in sorted(unused_whitelist):
+  if unused_allowlist:
+    ret.append('Unused allowlist entries:')
+    for entry in sorted(unused_allowlist):
       ret.append('  %s' % entry)
     ret.append('')
 
@@ -152,7 +152,7 @@ def check_only_whitelisted_deps():
 def main():
   lines = []
   lines += check_all_googlesource_mirrors()
-  lines += check_only_whitelisted_deps()
+  lines += check_only_allowlisted_deps()
 
   for l in lines:
     print l

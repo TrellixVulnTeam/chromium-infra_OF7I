@@ -113,11 +113,11 @@ def GoCheckers(input_api, output_api):
 
 def GoPackageImportsCheck(input_api, output_api):
   trigger_on = [
-    'DEPS',
-    'go/check_deps.py',
-    'go/check_deps.whitelist',
-    'go/deps.lock',
-    'go/deps.yaml',
+      'DEPS',
+      'go/check_deps.py',
+      'go/check_deps.allowlist',
+      'go/deps.lock',
+      'go/deps.yaml',
   ]
   for f in input_api.change.AffectedFiles(include_deletes=True):
     lp = f.LocalPath()
