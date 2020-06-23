@@ -458,13 +458,13 @@ describe('mr-issue-list', () => {
 
     await element.updateComplete;
 
-    let stars = element.shadowRoot.querySelectorAll('mr-star-button');
+    let stars = element.shadowRoot.querySelectorAll('mr-star');
     assert.equal(stars.length, 0);
 
     element.starringEnabled = true;
     await element.updateComplete;
 
-    stars = element.shadowRoot.querySelectorAll('mr-star-button');
+    stars = element.shadowRoot.querySelectorAll('mr-star');
     assert.equal(stars.length, 2);
   });
 

@@ -3,16 +3,16 @@
 // found in the LICENSE file.
 
 import {assert} from 'chai';
-import {MrStarButton} from './mr-star-button.js';
+import {MrStar} from './mr-star.js';
 import {issueRefToString} from 'shared/convertersV0.js';
 import sinon from 'sinon';
 
 
 let element;
 
-describe('mr-star-button', () => {
+describe('mr-star', () => {
   beforeEach(() => {
-    element = document.createElement('mr-star-button');
+    element = document.createElement('mr-star');
     document.body.appendChild(element);
   });
 
@@ -21,12 +21,12 @@ describe('mr-star-button', () => {
   });
 
   it('initializes', () => {
-    assert.instanceOf(element, MrStarButton);
+    assert.instanceOf(element, MrStar);
   });
 
   it('clicking star toggles star', async () => {
     sinon.spy(element, 'toggleStar');
-    element._isLoggedIn = true;
+    element._currentUserName = 'users/1234';
 
     await element.updateComplete;
 
@@ -41,7 +41,7 @@ describe('mr-star-button', () => {
   });
 
   it('starring is disabled when user is not logged in', async () => {
-    element._isLoggedIn = false;
+    element._currentUserName = undefined;
 
     await element.updateComplete;
 
@@ -65,7 +65,7 @@ describe('mr-star-button', () => {
   });
 
   it('starring is disabled when _isStarring true', async () => {
-    element._isLoggedIn = true;
+    element._currentUserName = 'users/1234';
     sinon.stub(element, '_isStarring').get(() => true);
 
     await element.updateComplete;
@@ -75,7 +75,7 @@ describe('mr-star-button', () => {
   });
 
   it('starring is disabled when _fetchingIsStarred true', async () => {
-    element._isLoggedIn = true;
+    element._currentUserName = 'users/1234';
     element._fetchingIsStarred = true;
 
     await element.updateComplete;

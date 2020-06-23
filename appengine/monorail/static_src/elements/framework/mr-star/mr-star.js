@@ -4,23 +4,23 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {connectStore, store} from 'reducers/base.js';
-import * as userV0 from 'reducers/userV0.js';
+import * as users from 'reducers/users.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import {issueRefToString} from 'shared/convertersV0.js';
 
 /**
- * `<mr-star-button>`
+ * `<mr-star>`
  *
  * A button for starring an issue.
  *
  */
-export class MrStarButton extends connectStore(LitElement) {
+export class MrStar extends connectStore(LitElement) {
   /** @override */
   static get styles() {
     return css`
       :host {
         display: block;
-        --mr-star-button-size: var(--chops-icon-font-size);
+        --mr-star-size: var(--chops-icon-font-size);
       }
       button {
         background: none;
@@ -36,7 +36,7 @@ export class MrStarButton extends connectStore(LitElement) {
         cursor: default;
       }
       i.material-icons {
-        font-size: var(--mr-star-button-size);
+        font-size: var(--mr-star-size);
         color: var(--chops-primary-icon-color);
       }
       i.material-icons.starred {
@@ -53,7 +53,7 @@ export class MrStarButton extends connectStore(LitElement) {
       <button class="star-button"
         @click=${this.toggleStar}
         ?disabled=${!this._canStar}
-        title=${this._renderStarToolTip(isStarred, this._isLoggedIn)}
+        title=${this._renderStarToolTip(isStarred, !!this._currentUserName)}
         aria-checked=${isStarred ? 'true' : 'false'}
       >
         ${isStarred ? html`
@@ -108,18 +108,24 @@ export class MrStarButton extends connectStore(LitElement) {
        * The currently logged in user. Required to determine if the user can
        * star.
        */
-      _isLoggedIn: {type: Object},
+      _currentUserName: {type: String},
     };
   }
 
   /** @override */
   stateChanged(state) {
-    this._isLoggedIn = userV0.isLoggedIn(state);
+    this._currentUserName = users.currentUserName(state);
+
+    // TODO(crbug.com/monorail/7374): Remove references to issueV0 in
+    // <mr-star>.
     this._starringIssues = issueV0.starringIssues(state);
     this._starredIssues = issueV0.starredIssues(state);
     this._fetchingIsStarred = issueV0.requests(state).fetchIsStarred.requesting;
   }
 
+  /**
+   * @return {boolean} Whether there's an in-flight star request.
+   */
   get _isStarring() {
     const requestKey = issueRefToString(this.issueRef);
     if (this._starringIssues.has(requestKey)) {
@@ -128,10 +134,17 @@ export class MrStarButton extends connectStore(LitElement) {
     return false;
   }
 
+  /**
+   * @return {boolean} Whether the user is able to star the current object.
+   */
   get _canStar() {
-    return this._isLoggedIn && !this._fetchingIsStarred && !this._isStarring;
+    return this._currentUserName && !this._fetchingIsStarred &&
+        !this._isStarring;
   }
 
+  /**
+   * Stars or unstars the resource based on the user's interaction.
+   */
   toggleStar() {
     if (!this._canStar) return;
     const newIsStarred = !this._starredIssues.has(
@@ -142,4 +155,4 @@ export class MrStarButton extends connectStore(LitElement) {
   }
 }
 
-customElements.define('mr-star-button', MrStarButton);
+customElements.define('mr-star', MrStar);

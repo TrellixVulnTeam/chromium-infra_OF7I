@@ -4,16 +4,16 @@
 
 import {LitElement, html, css} from 'lit-element';
 import {issueRefToUrl, issueToIssueRef} from 'shared/convertersV0.js';
-import '../../framework/mr-star-button/mr-star-button.js';
+import '../../framework/mr-star/mr-star.js';
 
 export class MrGridTile extends LitElement {
   /** @override */
   render() {
     return html`
       <div class="tile-header">
-        <mr-star-button
+        <mr-star
           .issueRef=${this.issueRef}
-        ></mr-star-button>
+        ></mr-star>
         <a class="issue-id" href=${issueRefToUrl(this.issue, this.queryParams)}>
           ${this.issue.localId}
         </a>
@@ -77,8 +77,8 @@ export class MrGridTile extends LitElement {
         width: 100%;
         margin-bottom: 0.1em;
       }
-      mr-star-button {
-        --mr-star-button-size: 16px;
+      mr-star {
+        --mr-star-size: 16px;
       }
       a.issue-id {
         font-weight: 500;

@@ -5,7 +5,7 @@
 import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import 'elements/framework/mr-star-button/mr-star-button.js';
+import 'elements/framework/mr-star/mr-star.js';
 import 'shared/typedef.js';
 import 'elements/chops/chops-chip/chops-chip.js';
 
@@ -226,7 +226,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
             </span>
           </span>
 
-          <mr-star-button></mr-star-button>
+          <mr-star></mr-star>
         </div>
         <p>
           ${project.summary}
