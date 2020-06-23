@@ -19,10 +19,9 @@ describe('star reducers', () => {
     const expected = {
       byName: {},
       requests: {
-        listProjects: {
-          error: null,
-          requesting: false,
-        },
+        listProjects: {error: null, requesting: false},
+        starProject: {},
+        unstarProject: {},
       },
     };
     assert.deepEqual(actual, expected);
@@ -65,6 +64,36 @@ describe('star reducers', () => {
       };
       assert.deepEqual(actual, expected);
     });
+
+    it('adds star on STAR_PROJECT_SUCCESS', () => {
+      const originalState = {
+        [example.PROJECT_STAR_NAME]: example.PROJECT_STAR,
+      };
+      const action = {type: stars.STAR_PROJECT_SUCCESS,
+        projectStar: example.PROJECT_STAR_2};
+      const actual = stars.byNameReducer(originalState, action);
+
+      const expected = {
+        [example.PROJECT_STAR_NAME]: example.PROJECT_STAR,
+        [example.PROJECT_STAR_NAME_2]: example.PROJECT_STAR_2,
+      };
+      assert.deepEqual(actual, expected);
+    });
+
+    it('removes star on UNSTAR_PROJECT_SUCCESS', () => {
+      const originalState = {
+        [example.PROJECT_STAR_NAME]: example.PROJECT_STAR,
+        [example.PROJECT_STAR_NAME_2]: example.PROJECT_STAR_2,
+      };
+      const action = {type: stars.UNSTAR_PROJECT_SUCCESS,
+        starName: example.PROJECT_STAR_NAME};
+      const actual = stars.byNameReducer(originalState, action);
+
+      const expected = {
+        [example.PROJECT_STAR_NAME_2]: example.PROJECT_STAR_2,
+      };
+      assert.deepEqual(actual, expected);
+    });
   });
 });
 
@@ -79,15 +108,18 @@ describe('project selectors', () => {
     assert.deepEqual(stars.byName(state), normalizedStars);
   });
 
-
   it('requests', () => {
     const state = {stars: {
       requests: {
         listProjects: {error: null, requesting: false},
+        starProject: {},
+        unstarProject: {},
       },
     }};
     assert.deepEqual(stars.requests(state), {
       listProjects: {error: null, requesting: false},
+      starProject: {},
+      unstarProject: {},
     });
   });
 });
@@ -131,6 +163,82 @@ describe('star action creators', () => {
 
       const action = {
         type: stars.LIST_PROJECTS_FAILURE,
+        error: sinon.match.any,
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
+  });
+
+  describe('starProject', () => {
+    it('success', async () => {
+      const starResponse = example.PROJECT_STAR;
+      prpcClient.call.returns(Promise.resolve(starResponse));
+
+      await stars.starProject('projects/monorail', 'users/1234')(dispatch);
+
+      sinon.assert.calledWith(dispatch, {
+        type: stars.STAR_PROJECT_START,
+        requestKey: example.PROJECT_STAR_NAME,
+      });
+
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v3.Users', 'StarProject',
+          {project: 'projects/monorail'});
+
+      const successAction = {
+        type: stars.STAR_PROJECT_SUCCESS,
+        requestKey: example.PROJECT_STAR_NAME,
+        projectStar: example.PROJECT_STAR,
+      };
+      sinon.assert.calledWith(dispatch, successAction);
+    });
+
+    it('failure', async () => {
+      prpcClient.call.throws();
+
+      await stars.starProject('projects/monorail', 'users/1234')(dispatch);
+
+      const action = {
+        type: stars.STAR_PROJECT_FAILURE,
+        requestKey: example.PROJECT_STAR_NAME,
+        error: sinon.match.any,
+      };
+      sinon.assert.calledWith(dispatch, action);
+    });
+  });
+
+  describe('unstarProject', () => {
+    it('success', async () => {
+      const starResponse = {};
+      prpcClient.call.returns(Promise.resolve(starResponse));
+
+      await stars.unstarProject('projects/monorail', 'users/1234')(dispatch);
+
+      sinon.assert.calledWith(dispatch, {
+        type: stars.UNSTAR_PROJECT_START,
+        requestKey: example.PROJECT_STAR_NAME,
+      });
+
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v3.Users', 'UnStarProject',
+          {project: 'projects/monorail'});
+
+      const successAction = {
+        type: stars.UNSTAR_PROJECT_SUCCESS,
+        requestKey: example.PROJECT_STAR_NAME,
+        starName: example.PROJECT_STAR_NAME,
+      };
+      sinon.assert.calledWith(dispatch, successAction);
+    });
+
+    it('failure', async () => {
+      prpcClient.call.throws();
+
+      await stars.unstarProject('projects/monorail', 'users/1234')(dispatch);
+
+      const action = {
+        type: stars.UNSTAR_PROJECT_FAILURE,
+        requestKey: example.PROJECT_STAR_NAME,
         error: sinon.match.any,
       };
       sinon.assert.calledWith(dispatch, action);
