@@ -6,16 +6,22 @@ package cmd
 
 import (
 	"context"
+
 	"time"
+
+	"cloud.google.com/go/bigquery"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
+	lucibq "go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/logging"
 
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/cmd/result_flow/internal/bb"
+	"infra/cros/cmd/result_flow/internal/bq"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
 	"infra/cros/cmd/result_flow/internal/transform"
@@ -103,11 +109,18 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
+
+	httpClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
+	if err != nil {
+		ch <- state{result_flow.State_FAILED, err}
+		return
+	}
+
 	bc, err := bb.NewClient(
 		ctx,
 		c.source.GetBb(),
 		c.source.GetFields(),
-		authOpts,
+		httpClient,
 	)
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
@@ -119,15 +132,29 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 		return
 	}
 
+	bqClient, err := bq.NewInserter(ctx,
+		bq.Options{
+			Target:     c.target.GetBq(),
+			HTTPClient: httpClient,
+		},
+	)
+	if err != nil {
+		ch <- state{result_flow.State_FAILED, err}
+		return
+	}
+	defer bqClient.Close()
+
 	for _, build := range builds {
 		cBuild, err := transform.LoadRawBuildBucketResp(ctx, build, c.source.GetBb())
 		if err != nil {
-			logging.Errorf(ctx, "Failed to extract data from build: %v", err)
+			logging.Errorf(ctx, "failed to extract data from build: %v", err)
+			continue
 		}
-		// TODO(linxinan): Next CL will insert the TestPlanRun to BQ.
-		logging.Infof(ctx, "Fetched Build from Buildbucket: %v", cBuild.ToTestPlanRuns(ctx))
+		if err = bqClient.Insert(ctx, toRows(ctx, bqClient, cBuild)...); err != nil {
+			logging.Errorf(ctx, "failed to upload build data to Bigquery: %v", err)
+		}
 	}
-
+	bqClient.CloseAndDrain(ctx)
 	if err = mClient.AckMessages(ctx, msgs); err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
@@ -151,4 +178,12 @@ func (c *ctpFlowRun) loadCTPRequest() error {
 	}
 	c.deadline = getDeadline(r.GetDeadline(), site.DefaultDeadlineSeconds)
 	return nil
+}
+
+func toRows(ctx context.Context, c bq.Inserter, b transform.Build) []bigquery.ValueSaver {
+	var rows []bigquery.ValueSaver
+	for _, t := range b.ToTestPlanRuns(ctx) {
+		rows = append(rows, &lucibq.Row{Message: t, InsertID: t.GetUid()})
+	}
+	return rows
 }

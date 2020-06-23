@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
-	"go.chromium.org/luci/auth"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/retry/transient"
@@ -34,14 +32,9 @@ type resultFlowBBClient struct {
 }
 
 // NewClient creates a new Client to interact with BuildBucket.
-func NewClient(ctx context.Context, conf *result_flow.BuildbucketConfig, fields []string, authOpts auth.Options) (Client, error) {
-	hClient, err := httpClient(ctx, authOpts)
-	if err != nil {
-		return nil, err
-	}
-
+func NewClient(ctx context.Context, conf *result_flow.BuildbucketConfig, fields []string, h *http.Client) (Client, error) {
 	b := pb.NewBuildsPRPCClient(&prpc.Client{
-		C:    hClient,
+		C:    h,
 		Host: conf.Host,
 	})
 
@@ -49,14 +42,6 @@ func NewClient(ctx context.Context, conf *result_flow.BuildbucketConfig, fields 
 		client:        b,
 		requestFields: fields,
 	}, nil
-}
-
-func httpClient(ctx context.Context, authOpts auth.Options) (*http.Client, error) {
-	httpClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to create http client").Err()
-	}
-	return httpClient, nil
 }
 
 // GetTargetBuilds gets the pb.Build object from BuildBucket API via a batch request.
