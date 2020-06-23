@@ -123,6 +123,7 @@ class ResultDBTest(testing.AppengineTestCase):
                             )
                         ],
                         producer_resource='//buildbucket.example.com/builds/4',
+                        realm='chromium:try',
                     ),
                 )
             ],

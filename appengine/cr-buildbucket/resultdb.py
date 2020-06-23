@@ -25,6 +25,17 @@ import model
 import tq
 
 
+def _split_by_project(builds_and_configs):
+  """Splits the list of pairs into multiple where each belongs to one project.
+  """
+  batches = {}
+  for build, cfg in builds_and_configs:
+    project = build.proto.builder.project
+    batches.setdefault(project, [])
+    batches[project].append((build, cfg))
+  return batches.values()
+
+
 @ndb.tasklet
 def create_invocations_async(builds_and_configs):
   """Creates resultdb invocations for each build.
@@ -43,33 +54,49 @@ def create_invocations_async(builds_and_configs):
     # buildbucket deployment.
     return
 
-  # build-<first build id>+<number of other builds in the batch>
-  request_id = 'build-%d+%d' % (
-      builds_and_configs[0][0].proto.id, len(builds_and_configs) - 1
-  )
-  req = recorder_pb2.BatchCreateInvocationsRequest(request_id=request_id)
   bb_host = app_identity.get_default_version_hostname()
-  for build, cfg in builds_and_configs:
-    req.requests.add(
-        invocation_id='build-%d' % build.proto.id,
-        invocation=invocation_pb2.Invocation(
-            bigquery_exports=cfg.resultdb.bq_exports,
-            producer_resource='//%s/builds/%s' % (bb_host, build.key.id()),
-        ),
+  # We need to do one batch request per project, since the rpc to create
+  # invocations uses per-project credentials.
+  batches = _split_by_project(builds_and_configs)
+  batch_reqs_and_creds = []
+  for batch in batches:
+    project = batch[0][0].proto.builder.project
+    req = recorder_pb2.BatchCreateInvocationsRequest(
+        # build-<first build id>+<number of other builds in the batch>
+        request_id='build-%d+%d' % (batch[0][0].proto.id, len(batch) - 1)
     )
-  res = yield _recorder_client(resultdb_host).BatchCreateInvocationsAsync(
-      req,
-      credentials=client.service_account_credentials(),
-  )
-  assert res.update_tokens
 
-  assert (
-      len(res.invocations) == len(res.update_tokens) == len(builds_and_configs)
-  )
-  for inv, tok, (build, _) in zip(res.invocations, res.update_tokens,
-                                  builds_and_configs):
-    build.proto.infra.resultdb.invocation = inv.name
-    build.resultdb_update_token = tok
+    for build, cfg in batch:
+      req.requests.add(
+          invocation_id='build-%d' % build.proto.id,
+          invocation=invocation_pb2.Invocation(
+              realm='%s:%s' % (project, build.proto.builder.bucket),
+              bigquery_exports=cfg.resultdb.bq_exports,
+              producer_resource='//%s/builds/%s' % (bb_host, build.key.id()),
+          ),
+      )
+    # Accumulate one (request, credentials) pair per batch.
+    batch_reqs_and_creds.append((
+        req,
+        client.composite_call_credentials(
+            client.service_account_credentials(),
+            client.project_credentials(project)
+        )
+    ))
+
+  rec_client = _recorder_client(resultdb_host)
+  # Do rpcs in parallel.
+  resps = yield [
+      rec_client.BatchCreateInvocationsAsync(req, credentials=creds)
+      for req, creds in batch_reqs_and_creds
+  ]
+
+  for batch, res in zip(batches, resps):
+    assert len(res.invocations) == len(res.update_tokens) == len(batch)
+    # Populate the builds' name and token from the rpc response.
+    for inv, tok, (build, _) in zip(res.invocations, res.update_tokens, batch):
+      build.proto.infra.resultdb.invocation = inv.name
+      build.resultdb_update_token = tok
 
 
 def enqueue_invocation_finalization_async(build):
