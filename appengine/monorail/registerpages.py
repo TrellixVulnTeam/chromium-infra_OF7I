@@ -430,8 +430,6 @@ class ServletRegistry(object):
     self._AddRoute('/projects/', webcomponentspage.ProjectListPage, 'GET')
     self._AddRoute(
         '/hotlists<unused:.*>', webcomponentspage.WebComponentsPage, 'GET')
-    self._AddRoute('/projects<unused:.*>', webcomponentspage.WebComponentsPage,
-                   'GET')
     self._AddRoute('/users<unused:.*>', webcomponentspage.WebComponentsPage,
                    'GET')
 
