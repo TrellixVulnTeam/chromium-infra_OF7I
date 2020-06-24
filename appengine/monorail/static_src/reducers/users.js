@@ -211,3 +211,12 @@ export const gatherProjectMemberships = (name) => async (dispatch) => {
     dispatch({type: GATHER_PROJECT_MEMBERSHIPS_FAILURE, error});
   };
 };
+
+export const users = {
+  currentUserName,
+  byName,
+  projectMemberships,
+  batchGet,
+  fetch,
+  gatherProjectMemberships,
+};

@@ -6,6 +6,7 @@ import {assert} from 'chai';
 import sinon from 'sinon';
 import {prpcClient} from 'prpc-client-instance.js';
 import {stateUpdated} from 'reducers/base.js';
+import {users} from 'reducers/users.js';
 import {MrProjectsPage} from './mr-projects-page.js';
 
 let element;
@@ -93,59 +94,81 @@ describe('mr-projects-page', () => {
     assert.equal(element.shadowRoot.textContent.trim(), 'No projects found.');
   });
 
-  it('renders user projects', async () => {
-    element._isFetchingProjects = false;
-    sinon.stub(element, 'myProjects').get(() => [
-      {name: 'projects/chromium', displayName: 'chromium',
-        summary: 'Best project ever'},
-      {name: 'projects/infra', displayName: 'infra',
-        summary: 'Make it work'},
-    ]);
-    sinon.stub(element, 'otherProjects').get(() => []);
+  describe('project grouping', () => {
+    beforeEach(() => {
+      element._projects = [
+        {name: 'projects/chromium', displayName: 'chromium',
+          summary: 'Best project ever'},
+        {name: 'projects/infra', displayName: 'infra',
+          summary: 'Make it work'},
+        {name: 'projects/test', displayName: 'test',
+          summary: 'Hmm'},
+        {name: 'projects/a-project', displayName: 'a-project',
+          summary: 'I am Monkeyrail'},
+      ];
+      element._roleByProjectName = {
+        'projects/chromium': 'Owner',
+        'projects/infra': 'Committer',
+      };
+      element._isFetchingProjects = false;
+    });
 
-    await element.updateComplete;
+    it('myProjects filters out non-member projects', () => {
+      assert.deepEqual(element.myProjects, [
+        {name: 'projects/chromium', displayName: 'chromium',
+          summary: 'Best project ever'},
+        {name: 'projects/infra', displayName: 'infra',
+          summary: 'Make it work'},
+      ]);
+    });
 
-    const projects = element.shadowRoot.querySelectorAll(
-        '.my-projects > .project');
+    it('otherProjects filters out member projects', () => {
+      assert.deepEqual(element.otherProjects, [
+        {name: 'projects/test', displayName: 'test',
+          summary: 'Hmm'},
+        {name: 'projects/a-project', displayName: 'a-project',
+          summary: 'I am Monkeyrail'},
+      ]);
+    });
 
-    assert.equal(projects.length, 2);
-    assert.include(projects[0].querySelector('h3').textContent, 'chromium');
-    assert.include(projects[0].textContent, 'Best project ever');
+    it('renders user projects', async () => {
+      await element.updateComplete;
 
-    assert.include(projects[1].querySelector('h3').textContent, 'infra');
-    assert.include(projects[1].textContent, 'Make it work');
-  });
+      const projects = element.shadowRoot.querySelectorAll(
+          '.my-projects > .project');
 
-  it('renders other projects', async () => {
-    element._isFetchingProjects = false;
-    sinon.stub(element, 'myProjects').get(() => [
-      {name: 'projects/chromium', displayName: 'chromium',
-        summary: 'Best project ever'},
-    ]);
-    sinon.stub(element, 'otherProjects').get(() => [
-      {name: 'projects/test', displayName: 'test',
-        summary: 'whatevs'},
-      {name: 'projects/lit-element', displayName: 'lit-element',
-        summary: 'hello world'},
-    ]);
+      assert.equal(projects.length, 2);
+      assert.include(projects[0].querySelector('h3').textContent, 'chromium');
+      assert.include(projects[0].textContent, 'Best project ever');
+      assert.include(projects[0].querySelector('.subtitle').textContent,
+          'Owner');
 
-    await element.updateComplete;
+      assert.include(projects[1].querySelector('h3').textContent, 'infra');
+      assert.include(projects[1].textContent, 'Make it work');
+      assert.include(projects[1].querySelector('.subtitle').textContent,
+          'Committer');
+    });
 
-    const projects = element.shadowRoot.querySelectorAll(
-        '.other-projects > .project');
+    it('renders other projects', async () => {
+      await element.updateComplete;
 
-    assert.equal(projects.length, 2);
-    assert.include(projects[0].querySelector('h3').textContent, 'test');
-    assert.include(projects[0].textContent, 'whatevs');
+      const projects = element.shadowRoot.querySelectorAll(
+          '.other-projects > .project');
 
-    assert.include(projects[1].querySelector('h3').textContent, 'lit-element');
-    assert.include(projects[1].textContent, 'hello world');
+      assert.equal(projects.length, 2);
+      assert.include(projects[0].querySelector('h3').textContent, 'test');
+      assert.include(projects[0].textContent, 'Hmm');
+
+      assert.include(projects[1].querySelector('h3').textContent, 'a-project');
+      assert.include(projects[1].textContent, 'I am Monkeyrail');
+    });
   });
 });
 
 describe('mr-projects-page (connected)', () => {
   beforeEach(() => {
     sinon.stub(prpcClient, 'call');
+    sinon.spy(users, 'gatherProjectMemberships');
 
     element = document.createElement('mr-projects-page');
   });
@@ -156,6 +179,7 @@ describe('mr-projects-page (connected)', () => {
     }
 
     prpcClient.call.restore();
+    users.gatherProjectMemberships.restore();
   });
 
   it('fetches projects when connected', async () => {
@@ -179,5 +203,24 @@ describe('mr-projects-page (connected)', () => {
     assert.deepEqual(element._projects,
         [{name: 'projects/proj', displayName: 'proj',
           summary: 'test'}]);
+  });
+
+  it('does not gather projects when user is logged out', async () => {
+    document.body.appendChild(element);
+    element._currentUser = '';
+
+    await element.updateComplete;
+
+    sinon.assert.notCalled(users.gatherProjectMemberships);
+  });
+
+  it('gathers user projects when user is logged in', async () => {
+    document.body.appendChild(element);
+    element._currentUser = 'users/1234';
+
+    await element.updateComplete;
+
+    sinon.assert.calledOnce(users.gatherProjectMemberships);
+    sinon.assert.calledWith(users.gatherProjectMemberships, 'users/1234');
   });
 });

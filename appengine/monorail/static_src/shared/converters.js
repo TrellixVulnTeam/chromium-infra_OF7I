@@ -1,11 +1,27 @@
 // Copyright 2020 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+// Based on: https://source.chromium.org/chromium/infra/infra/+/master:appengine/monorail/project/project_constants.py;l=13
+const PROJECT_NAME_PATTERN = '[a-z0-9][-a-z0-9]*[a-z0-9]';
+const USER_ID_PATTERN = '\\d+';
 
-const USER_NAME_REGEX = /users\/(\d+)/i;
+const PROJECT_MEMBER_NAME_REGEX = new RegExp(
+    `projects/(${PROJECT_NAME_PATTERN})/members/(${USER_ID_PATTERN})`);
 
-// See also: https://source.chromium.org/chromium/infra/infra/+/master:appengine/monorail/project/project_constants.py;l=13
-const PROJECT_NAME_REGEX = /projects\/([a-z0-9][-a-z0-9]*[a-z0-9])/i;
+const USER_NAME_REGEX = new RegExp(`users/(${USER_ID_PATTERN})`);
+
+const PROJECT_NAME_REGEX = new RegExp(`projects/(${PROJECT_NAME_PATTERN})`);
+
+
+/**
+ * Custom error class for handling invalidly formatted resource names.
+ */
+export class ResourceNameError extends Error {
+  /** @override */
+  constructor(message) {
+    super(message || 'Invalid resource name format');
+  }
+}
 
 /**
  * Returns a FieldMask given an array of string paths.
@@ -28,7 +44,7 @@ export function pathsToFieldMask(paths) {
 export function extractUserId(user) {
   const matches = user.match(USER_NAME_REGEX);
   if (!matches) {
-    throw new Error('Improperly formatted resource name.');
+    throw new ResourceNameError();
   }
   return matches[1];
 }
@@ -42,7 +58,21 @@ export function extractUserId(user) {
 export function extractProjectDisplayName(project) {
   const matches = project.match(PROJECT_NAME_REGEX);
   if (!matches) {
-    throw new Error('Improperly formatted resource name.');
+    throw new ResourceNameError();
+  }
+  return matches[1];
+}
+
+/**
+ * Gets the displayName of the Project referenced in a ProjectMember
+ * resource name.
+ * @param {ProjectMemberName} projectMember ProjectMember resource name.
+ * @return {string} A display name for a project.
+ */
+export function extractProjectFromProjectMember(projectMember) {
+  const matches = projectMember.match(PROJECT_MEMBER_NAME_REGEX);
+  if (!matches) {
+    throw new ResourceNameError();
   }
   return matches[1];
 }
@@ -58,4 +88,14 @@ export function projectAndUserToStarName(project, user) {
   const userId = extractUserId(user);
   const projectName = extractProjectDisplayName(project);
   return `users/${userId}/projectStars/${projectName}`;
+}
+
+/**
+ * Converts a given ProjectMemberName to just the ProjectName segment present.
+ * @param {ProjectMemberName} projectMember Resource name of a ProjectMember.
+ * @return {ProjectName} Resource name of the referenced project.
+ */
+export function projectMemberToProjectName(projectMember) {
+  const project = extractProjectFromProjectMember(projectMember);
+  return `projects/${project}`;
 }

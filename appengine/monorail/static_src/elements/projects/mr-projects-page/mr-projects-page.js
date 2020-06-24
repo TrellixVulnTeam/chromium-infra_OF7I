@@ -10,6 +10,8 @@ import 'shared/typedef.js';
 import 'elements/chops/chops-chip/chops-chip.js';
 
 import * as projects from 'reducers/projects.js';
+import {users} from 'reducers/users.js';
+import {computeRoleByProjectName} from './helpers.js';
 
 
 /**
@@ -164,10 +166,13 @@ export class MrProjectsPage extends connectStore(LitElement) {
       `;
     }
 
+    const myProjectsTemplate = myProjects.map((project) => this._renderProject(
+        project, this._roleByProjectName[project.name]));
+
     return html`
       <h2>My projects</h2>
       <div class="project-container my-projects">
-        ${myProjects.map((project) => this._renderProject(project, 'Owner'))}
+        ${myProjectsTemplate}
       </div>
 
       <h2>Browse other projects</h2>
@@ -182,6 +187,8 @@ export class MrProjectsPage extends connectStore(LitElement) {
     return {
       _projects: {type: Array},
       _isFetchingProjects: {type: Boolean},
+      _currentUser: {type: String},
+      _roleByProjectName: {type: Array},
     };
   }
 
@@ -196,6 +203,14 @@ export class MrProjectsPage extends connectStore(LitElement) {
      * @type {boolean}
      */
     this._isFetchingProjects = false;
+    /**
+     * @type {string}
+     */
+    this._currentUser = undefined;
+    /**
+     * @type {Object<ProjectName, string>}
+     */
+    this._roleByProjectName = {};
   }
 
   /** @override */
@@ -205,9 +220,20 @@ export class MrProjectsPage extends connectStore(LitElement) {
   }
 
   /** @override */
+  updated(changedProperties) {
+    if (changedProperties.has('_currentUser') && this._currentUser) {
+      store.dispatch(users.gatherProjectMemberships(this._currentUser));
+    }
+  }
+
+  /** @override */
   stateChanged(state) {
     this._projects = projects.all(state);
     this._isFetchingProjects = projects.requests(state).list.requesting;
+    this._currentUser = users.currentUserName(state);
+    const allProjectMemberships = users.projectMemberships(state);
+    this._roleByProjectName = computeRoleByProjectName(
+        allProjectMemberships[this._currentUser]);
   }
 
   /**
@@ -243,8 +269,8 @@ export class MrProjectsPage extends connectStore(LitElement) {
    * @return {Array<Project>}
    */
   get myProjects() {
-    // TODO(crbug.com/monorail/6966): Implement this.
-    return [];
+    return this._projects.filter(
+        ({name}) => this._userIsMemberOfProject(name));
   }
 
   /**
@@ -252,7 +278,17 @@ export class MrProjectsPage extends connectStore(LitElement) {
    * @return {Array<Project>}
    */
   get otherProjects() {
-    return this._projects;
+    return this._projects.filter(
+        ({name}) => !this._userIsMemberOfProject(name));
+  }
+
+  /**
+   * Helper to check if a user is a member of a project.
+   * @param {ProjectName} project Resource name of a project.
+   * @return {boolean} Whether the user a member of the given project.
+   */
+  _userIsMemberOfProject(project) {
+    return project in this._roleByProjectName;
   }
 }
 customElements.define('mr-projects-page', MrProjectsPage);

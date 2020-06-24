@@ -19,6 +19,10 @@ import {SHARED_STYLES} from 'shared/shared-styles.js';
 
 import ClientLogger from 'monitoring/client-logger.js';
 
+/**
+ * @type {Object<string, string>} JS coding of enum values from
+ *    appengine/monorail/api/v3/api_proto/project_objects.proto.
+ */
 const projectRoles = Object.freeze({
   OWNER: 'Owner',
   MEMBER: 'Member',
