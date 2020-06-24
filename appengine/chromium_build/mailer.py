@@ -16,7 +16,6 @@ import gae_ts_mon
 
 
 GATEKEEPER_SERVICE_ACCOUNT_EMAILS = (
-    'gatekeeper@chromium-build.iam.gserviceaccount.com',
     'gatekeeper-builder@chops-service-accounts.iam.gserviceaccount.com',
     'infra-internal-gatekeeper@chops-service-accounts.iam.gserviceaccount.com')
 
