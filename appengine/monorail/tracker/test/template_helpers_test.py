@@ -141,7 +141,7 @@ class TemplateHelpers(unittest.TestCase):
     self.assertEqual(parsed.admin_str, 'jojwang@test.com, annajo@test.com')
     self.assertItemsEqual(parsed.phase_names,
                           ['Canary', 'Stable-Exp', 'Stable', '', '', 'Oops'])
-    self.assertEqual(parsed.approvals_to_phase_idx, {3:2, 4:None})
+    self.assertEqual(parsed.approvals_to_phase_idx, {3: 2, 4: None})
     self.assertItemsEqual(parsed.required_approval_ids, [3, 4])
 
   def testGetTemplateInfoFromParsed_Normal(self):
@@ -186,7 +186,7 @@ class TemplateHelpers(unittest.TestCase):
     self.config.approval_defs.extend([self.ad_3, self.ad_4, self.ad_5])
 
     phase_names = ['Canary', '', 'Stable-Exp', '', '', '']
-    approvals_to_phase_idx = {3:0, 4:None, 5:2}
+    approvals_to_phase_idx = {3: 0, 4: None, 5: 2}
     required_approval_ids = [3, 5]
 
     phases, approval_values = template_helpers._GetPhasesAndApprovalsFromParsed(
@@ -218,7 +218,7 @@ class TemplateHelpers(unittest.TestCase):
     required_approval_ids = []
 
     phase_names = ['Canary', 'Extra', 'Stable-Exp', '', '', '']
-    approvals_to_phase_idx = {3:0, 4:None, 5:2}
+    approvals_to_phase_idx = {3: 0, 4: None, 5: 2}
 
     template_helpers._GetPhasesAndApprovalsFromParsed(
         self.mr, phase_names, approvals_to_phase_idx, required_approval_ids)
@@ -231,7 +231,7 @@ class TemplateHelpers(unittest.TestCase):
     required_approval_ids = []
 
     phase_names = ['Canary', 'canary', 'Stable-Exp', '', '', '']
-    approvals_to_phase_idx = {3:0, 4:None, 5:2}
+    approvals_to_phase_idx = {3: 0, 4: None, 5: 2}
 
     template_helpers._GetPhasesAndApprovalsFromParsed(
         self.mr, phase_names, approvals_to_phase_idx, required_approval_ids)
@@ -244,7 +244,7 @@ class TemplateHelpers(unittest.TestCase):
     required_approval_ids = []
 
     phase_names = ['Canary', 'A B', 'Stable-Exp', '', '', '']
-    approvals_to_phase_idx = {3:0, 4:None, 5:2}
+    approvals_to_phase_idx = {3: 0, 4: None, 5: 2}
 
     template_helpers._GetPhasesAndApprovalsFromParsed(
         self.mr, phase_names, approvals_to_phase_idx, required_approval_ids)
@@ -277,8 +277,79 @@ class TemplateHelpers(unittest.TestCase):
     self.assertEqual(len(phases), 6)
 
   def testGetCheckedApprovalsFromParsed(self):
-    approvals_to_phase_idx = {23:0, 25:1, 26:None}
+    approvals_to_phase_idx = {23: 0, 25: 1, 26: None}
     checked = template_helpers.GetCheckedApprovalsFromParsed(
         approvals_to_phase_idx)
     self.assertItemsEqual(checked,
                           ['23_phase_0', '25_phase_1', '26'])
+
+  def testGetIssueFromTemplate(self):
+    """Can fill and return the templated issue"""
+    expected_fvs = [
+        tracker_pb2.FieldValue(field_id=123, str_value='fv_1_value'),
+        tracker_pb2.FieldValue(field_id=124, str_value='fv_2_value'),
+    ]
+    expected_phases = [
+        tracker_pb2.Phase(phase_id=123, name='phase_1_name', rank=1)
+    ]
+    expected_avs = [
+        tracker_pb2.ApprovalValue(
+            approval_id=1,
+            setter_id=111,
+            set_on=1232352,
+            approver_ids=[111],
+            phase_id=123),
+    ]
+    input_template = tracker_pb2.TemplateDef(
+        summary='expected_summary',
+        owner_id=111,
+        status='expected_status',
+        labels=['expected-label_1, expected-label_2'],
+        field_values=expected_fvs,
+        component_ids=[987],
+        phases=expected_phases,
+        approval_values=expected_avs)
+    reporter_id = 321
+    project_id = 1
+
+    actual = template_helpers.GetIssueFromTemplate(
+        input_template, project_id, reporter_id)
+    expected = tracker_pb2.Issue(
+        project_id=project_id,
+        summary='expected_summary',
+        status='expected_status',
+        owner_id=111,
+        labels=['expected-label_1, expected-label_2'],
+        component_ids=[987],
+        reporter_id=reporter_id,
+        field_values=expected_fvs,
+        phases=expected_phases,
+        approval_values=expected_avs)
+    self.assertEqual(actual, expected)
+
+  def testGetIssueFromTemplate_NoOwner(self):
+    """Uses reporter as owner when owner_defaults_to_member"""
+    input_template = tracker_pb2.TemplateDef(owner_defaults_to_member=False)
+
+    actual = template_helpers.GetIssueFromTemplate(input_template, 1, 1)
+    self.assertEqual(actual.owner_id, None)
+
+  def testGetIssueFromTemplate_DefaultsOwnerToReporter(self):
+    """Uses reporter as owner when owner_defaults_to_member"""
+    input_template = tracker_pb2.TemplateDef(owner_defaults_to_member=True)
+    reporter_id = 321
+
+    actual = template_helpers.GetIssueFromTemplate(
+        input_template, 1, reporter_id)
+    self.assertEqual(actual.owner_id, reporter_id)
+
+  def testGetIssueFromTemplate_SpecifiedOwnerOverridesReporter(self):
+    """Specified owner overrides owner_defaults_to_member"""
+    expected_owner_id = 111
+    input_template = tracker_pb2.TemplateDef(
+        owner_id=expected_owner_id, owner_defaults_to_member=True)
+    reporter_id = 321
+
+    actual = template_helpers.GetIssueFromTemplate(
+        input_template, 1, reporter_id)
+    self.assertEqual(actual.owner_id, expected_owner_id)

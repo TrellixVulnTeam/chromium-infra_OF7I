@@ -225,3 +225,37 @@ def GetCheckedApprovalsFromParsed(approvals_to_phase_idx):
     else:
       checked_approvals.append('%d' % approval_id)
   return checked_approvals
+
+
+def GetIssueFromTemplate(template, project_id, reporter_id):
+  # type: (proto.tracker_pb2.TemplateDef, int, int) ->
+  #     proto.tracker_pb2.Issue
+  """Build a templated issue from TemplateDef.
+
+  Args:
+    template: Template that issue creation is based on.
+    project_id: ID of the Project the template belongs to.
+    reporter_id: Requesting user's ID.
+
+  Returns:
+    protorpc Issue filled with data from given `template`.
+  """
+  owner_id = None
+  if template.owner_id:
+    owner_id = template.owner_id
+  elif template.owner_defaults_to_member:
+    owner_id = reporter_id
+
+  issue = tracker_pb2.Issue(
+      project_id=project_id,
+      summary=template.summary,
+      status=template.status,
+      owner_id=owner_id,
+      labels=template.labels,
+      component_ids=template.component_ids,
+      reporter_id=reporter_id,
+      field_values=template.field_values,
+      phases=template.phases,
+      approval_values=template.approval_values)
+
+  return issue
