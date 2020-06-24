@@ -49,11 +49,13 @@ func GetRegisteredAssetsProtos(ctx context.Context) []proto.Message {
 	if err != nil {
 		return nil
 	}
+	ts := ptypes.TimestampNow()
 	msgs := make([]proto.Message, len(assets))
 	for i, a := range assets {
 		msgs[i] = &apibq.RegisteredAsset{
-			Id:    a.GetId(),
-			Asset: a,
+			Id:          a.GetId(),
+			Asset:       a,
+			UpdatedTime: ts,
 		}
 	}
 	return msgs
