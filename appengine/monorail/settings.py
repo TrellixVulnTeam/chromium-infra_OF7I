@@ -268,21 +268,26 @@ priviledged_user_domains = [
 # Branded domains:  Any UI GET to a project listed below on prod or staging
 # should have the specified host, otherwise it will be redirected such that
 # the specified host is used.
-branded_domains_prod = {
-  'fuchsia': 'bugs.fuchsia.dev',
-  '*': 'bugs.chromium.org',
-  }
+branded_domains = {}  # defaults to empty for localhost
+branded_domains_dev = {
+    'fuchsia': 'bugs-dev.fuchsia.dev',
+    '*': 'bugs-dev.chromium.org',
+}
 branded_domains_staging = {
-  'fuchsia': 'bugs-staging.fuchsia.dev',
-  '*': 'bugs-staging.chromium.org',
-  }
-branded_domains = {}  # empty for dev
+    'fuchsia': 'bugs-staging.fuchsia.dev',
+    '*': 'bugs-staging.chromium.org',
+}
+branded_domains_prod = {
+    'fuchsia': 'bugs.fuchsia.dev',
+    '*': 'bugs.chromium.org',
+}
 
 # The site home page will immediately redirect to a default project for these
 # domains, if the project can be viewed.  Structure is {hostport: project_name}.
-domain_to_default_project = {}  # empty for dev and localhost
-domain_to_default_project_prod = {'bugs.fuchsia.dev': 'fuchsia'}
+domain_to_default_project = {}  # defaults to empty for localhost
+domain_to_default_project_dev = {'bugs-dev.fuchsia.dev': 'fuchsia'}
 domain_to_default_project_staging = {'bugs-staging.fuchsia.dev': 'fuchsia'}
+domain_to_default_project_prod = {'bugs.fuchsia.dev': 'fuchsia'}
 
 
 # Names of projects on code.google.com which we allow cross-linking to.
@@ -314,6 +319,8 @@ else:
     banner_message = 'This dev site does not send emails.'
     # The Google Cloud SQL databases to use.
     db_cloud_project = app_id
+    branded_domains = branded_domains_dev
+    domain_to_default_project = domain_to_default_project_dev
 
   elif app_id == 'monorail-prod':
     send_all_email_to = None  # Deliver it to the intended users.
