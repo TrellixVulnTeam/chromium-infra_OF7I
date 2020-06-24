@@ -378,7 +378,6 @@ class WorkEnv(object):
           self.mc.cnxn, self.mc.auth.user_pb, self.mc.auth.effective_ids,
           domain=domain, use_cache=use_cache)
 
-    project_ids = sorted(project_ids)
     return project_ids
 
   def CheckProjectName(self, project_name):
