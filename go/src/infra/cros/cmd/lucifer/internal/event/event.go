@@ -70,9 +70,15 @@ const (
 	// handler may mark the host as dirty if the handler is
 	// tracking host dirtiness.
 	HostRunning Event = "host_running"
-	// NeedsDeploy indicates that the host fails the deploy task and needs
+	// HostNeedsDeploy indicates that the host fails the deploy task and needs
 	// to be deployed again.
 	HostNeedsDeploy Event = "host_needs_deploy"
+	// HostNeedsManualRepair indicates that the host required manual attention
+	// to be fixed.
+	HostNeedsManualRepair Event = "host_needs_manual_repair"
+	// HostNeedsReplacement indicates that the host is not fixable due issues
+	// with hardware and has to be replaced.
+	HostNeedsReplacement Event = "host_needs_replacement"
 )
 
 // SendWithMsg sends an event with a message by printing to stdout.

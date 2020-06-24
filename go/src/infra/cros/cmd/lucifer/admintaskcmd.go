@@ -8,6 +8,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -19,6 +21,8 @@ import (
 	"infra/cros/cmd/lucifer/internal/event"
 	"infra/cros/cmd/lucifer/internal/flagx"
 )
+
+const dutStateFilename = "dut_state.repair"
 
 type adminTaskCmd struct {
 	commonOpts
@@ -138,7 +142,10 @@ func runTask(ctx context.Context, ac *api.Client, m *atutil.MainJob, t *atutil.A
 		if err == nil {
 			e = te.pass
 		} else {
-			e = te.fail
+			e = readDUTStateFile(t)
+			if e == "" {
+				e = te.fail
+			}
 		}
 		sendHostStatus(ctx, ac, []string{t.Host}, e)
 	}()
@@ -147,4 +154,45 @@ func runTask(ctx context.Context, ac *api.Client, m *atutil.MainJob, t *atutil.A
 		return fmt.Errorf("task %s failed: %s", t.Type, err)
 	}
 	return nil
+}
+
+// readDUTStateFile reads DUT state from dut_state.repair file and convert it to the event.
+//
+// The file will be exist if repair process requires to set special state to the DUT.
+func readDUTStateFile(t *atutil.AdminTask) event.Event {
+	if t.ResultsDir == "" {
+		return ""
+	}
+
+	path := filepath.Join(t.ResultsDir, dutStateFilename)
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	state := string(data)
+	log.Printf("The file %q contains DUT state: %q", path, state)
+	return convertDUTStateToEvent(state)
+}
+
+// repairEvents represents list of expected special Events from repair process.
+var repairEvents = map[event.Event]bool{
+	event.HostNeedsManualRepair: true,
+	event.HostNeedsReplacement:  true,
+}
+
+// convertDUTStateToEvent converts DUT state to the Event.
+//
+// The Event has to be present repairEvents set.
+// The Event is a state with prefix 'host_'.
+func convertDUTStateToEvent(state string) event.Event {
+	if state == "" {
+		return ""
+	}
+	e := event.Event("host_" + state)
+	if _, ok := repairEvents[e]; ok {
+		return e
+	}
+	log.Printf("unexpected DUT state: %q", state)
+	return ""
 }
