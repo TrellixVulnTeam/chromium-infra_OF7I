@@ -8,7 +8,7 @@ import {connectStore} from 'reducers/base.js';
 import * as issueV0 from 'reducers/issueV0.js';
 import * as projectV0 from 'reducers/projectV0.js';
 import * as userV0 from 'reducers/userV0.js';
-import 'elements/framework/mr-star/mr-star.js';
+import 'elements/framework/mr-star/mr-issue-star.js';
 import 'elements/framework/links/mr-user-link/mr-user-link.js';
 import 'elements/framework/links/mr-hotlist-link/mr-hotlist-link.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
@@ -89,7 +89,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
           align-items: center;
           justify-content: center;
         }
-        mr-star {
+        mr-issue-star {
           margin-right: 4px;
           padding-bottom: 2px;
         }
@@ -103,9 +103,9 @@ export class MrIssueMetadata extends connectStore(LitElement) {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <div class="star-line">
-        <mr-star
+        <mr-issue-star
           .issueRef=${this.issueRef}
-        ></mr-star>
+        ></mr-issue-star>
         Starred by ${this.issue.starCount || 0} ${pluralize(this.issue.starCount, 'user')}
       </div>
       <mr-metadata

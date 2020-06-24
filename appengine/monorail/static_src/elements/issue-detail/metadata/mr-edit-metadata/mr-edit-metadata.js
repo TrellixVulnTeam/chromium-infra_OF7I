@@ -8,7 +8,7 @@ import debounce from 'debounce';
 
 import 'elements/chops/chops-button/chops-button.js';
 import 'elements/framework/mr-upload/mr-upload.js';
-import 'elements/framework/mr-star/mr-star.js';
+import 'elements/framework/mr-star/mr-issue-star.js';
 import 'elements/chops/chops-checkbox/chops-checkbox.js';
 import 'elements/chops/chops-chip/chops-chip.js';
 import 'elements/framework/mr-error/mr-error.js';
@@ -162,7 +162,7 @@ export class MrEditMetadata extends connectStore(LitElement) {
           margin-top: 4px;
           padding: 2px 4px 2px 8px;
         }
-        mr-star {
+        mr-issue-star {
           margin-right: 4px;
         }
         .predicted-component {
@@ -237,9 +237,9 @@ export class MrEditMetadata extends connectStore(LitElement) {
 
     return html`
       <div class="star-line">
-        <mr-star
+        <mr-issue-star
           .issueRef=${this.issueRef}
-        ></mr-star>
+        ></mr-issue-star>
         <span>
           ${this.isStarred ? `
             You have voted for this issue and will receive notifications.

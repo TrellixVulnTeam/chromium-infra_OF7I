@@ -4,9 +4,6 @@
 
 import {assert} from 'chai';
 import {MrStar} from './mr-star.js';
-import {issueRefToString} from 'shared/convertersV0.js';
-import sinon from 'sinon';
-
 
 let element;
 
@@ -26,22 +23,45 @@ describe('mr-star', () => {
 
   it('clicking star toggles star', async () => {
     sinon.spy(element, 'toggleStar');
-    element._currentUserName = 'users/1234';
+    element._canStar = true;
 
     await element.updateComplete;
 
-    assert.isTrue(element._canStar);
-    assert.isTrue(element.toggleStar.notCalled);
+    sinon.assert.notCalled(element.toggleStar);
 
     element.shadowRoot.querySelector('button').click();
 
-    assert.isTrue(element.toggleStar.called);
-
-    element.toggleStar.restore();
+    sinon.assert.calledOnce(element.toggleStar);
   });
 
-  it('starring is disabled when user is not logged in', async () => {
-    element._currentUserName = undefined;
+  it('toggleStar stars when unstarred', () => {
+    sinon.spy(element, 'star');
+    sinon.spy(element, 'unstar');
+
+    element._canStar = true;
+    element._isStarred = false;
+
+    element.toggleStar();
+
+    sinon.assert.calledOnce(element.star);
+    sinon.assert.notCalled(element.unstar);
+  });
+
+  it('toggleStar unstars when starred', () => {
+    sinon.spy(element, 'star');
+    sinon.spy(element, 'unstar');
+
+    element._canStar = true;
+    element._isStarred = true;
+
+    element.toggleStar();
+
+    sinon.assert.calledOnce(element.unstar);
+    sinon.assert.notCalled(element.star);
+  });
+
+  it('starring is disabled when canStar is false', async () => {
+    element._canStar = false;
 
     await element.updateComplete;
 
@@ -49,55 +69,38 @@ describe('mr-star', () => {
     assert.isTrue(star.disabled);
   });
 
-  it('_isStarring true only when issue ref is being starred', async () => {
-    element._starringIssues = new Map([['chromium:22', {requesting: true}]]);
-    element.issueRef = {projectName: 'chromium', localId: 5};
-
-    assert.isFalse(element._isStarring);
-
-    element.issueRef = {projectName: 'chromium', localId: 22};
-
-    assert.isTrue(element._isStarring);
-
-    element._starringIssues = new Map([['chromium:22', {requesting: false}]]);
-
-    assert.isFalse(element._isStarring);
-  });
-
-  it('starring is disabled when _isStarring true', async () => {
-    element._currentUserName = 'users/1234';
-    sinon.stub(element, '_isStarring').get(() => true);
-
-    await element.updateComplete;
-
-    const star = element.shadowRoot.querySelector('button');
-    assert.isTrue(star.disabled);
-  });
-
-  it('starring is disabled when _fetchingIsStarred true', async () => {
-    element._currentUserName = 'users/1234';
-    element._fetchingIsStarred = true;
-
-    await element.updateComplete;
-
-    const star = element.shadowRoot.querySelector('button');
-    assert.isTrue(star.disabled);
-  });
-
-  it('_starredIssues changes displayed icon', async () => {
-    element.issueRef = {projectName: 'proj', localId: 1};
-
-    element._starredIssues = new Set([issueRefToString(element.issueRef)]);
-
+  it('isStarred changes displayed icon', async () => {
+    element._isStarred = true;
     await element.updateComplete;
 
     const star = element.shadowRoot.querySelector('button');
     assert.equal(star.textContent.trim(), 'star');
 
-    element._starredIssues = new Set();
-
+    element._isStarred = false;
     await element.updateComplete;
 
     assert.equal(star.textContent.trim(), 'star_border');
+  });
+
+  describe('_starToolTip', () => {
+    it('no permission to star', () => {
+      element._canStar = false;
+      assert.equal(element._starToolTip,
+          `You don't have permission to star this issue.`);
+    });
+
+    it('issue is not starred', () => {
+      element._canStar = true;
+      element._isStarred = false;
+      assert.equal(element._starToolTip,
+          `Star this issue.`);
+    });
+
+    it('issue is starred', () => {
+      element._canStar = true;
+      element._isStarred = true;
+      assert.equal(element._starToolTip,
+          `Unstar this issue.`);
+    });
   });
 });

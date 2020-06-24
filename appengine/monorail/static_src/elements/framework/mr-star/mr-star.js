@@ -3,18 +3,16 @@
 // found in the LICENSE file.
 
 import {LitElement, html, css} from 'lit-element';
-import {connectStore, store} from 'reducers/base.js';
-import * as users from 'reducers/users.js';
-import * as issueV0 from 'reducers/issueV0.js';
-import {issueRefToString} from 'shared/convertersV0.js';
 
 /**
  * `<mr-star>`
  *
- * A button for starring an issue.
+ * A button for starring a resource. Does not directly integrate with app
+ * state. Subclasses by <mr-issue-star> and <mr-project-star>, which add
+ * resource-specific logic for state management.
  *
  */
-export class MrStar extends connectStore(LitElement) {
+export class MrStar extends LitElement {
   /** @override */
   static get styles() {
     return css`
@@ -47,13 +45,13 @@ export class MrStar extends connectStore(LitElement) {
 
   /** @override */
   render() {
-    const isStarred = this._starredIssues.has(issueRefToString(this.issueRef));
+    const {isStarred, canStar} = this;
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <button class="star-button"
         @click=${this.toggleStar}
-        ?disabled=${!this._canStar}
-        title=${this._renderStarToolTip(isStarred, !!this._currentUserName)}
+        ?disabled=${!canStar}
+        title=${this._starToolTip}
         aria-checked=${isStarred ? 'true' : 'false'}
       >
         ${isStarred ? html`
@@ -69,89 +67,84 @@ export class MrStar extends connectStore(LitElement) {
     `;
   }
 
-  /**
-   *
-   * @param {boolean} isStarred Whether the issue is starred.
-   * @param {boolean} isLoggedIn Whether the current user is logged in.
-   * @return {string} the title to display on the star button.
-   */
-  _renderStarToolTip(isStarred, isLoggedIn) {
-    if (isStarred) {
-      return `Unstar this issue`;
-    }
-
-    return `${isLoggedIn ? 'Click' : 'Log in'} to star this issue`;
-  }
-
   /** @override */
   static get properties() {
     return {
-      /**
-       * A reference to the issue that the star button interacts with.
-       */
-      issueRef: {type: Object},
-      /**
-       * Whether the issue is starred (used for accessing easily).
-       */
-      _starredIssues: {type: Set},
-      /**
-       * Whether the issue's star state is being fetched. This is taken from
-       * the component's parent, which is expected to handle fetching initial
-       * star state for an issue.
-       */
-      _fetchingIsStarred: {type: Boolean},
-      /**
-       * A Map of all issues currently being starred.
-       */
-      _starringIssues: {type: Object},
-      /**
-       * The currently logged in user. Required to determine if the user can
-       * star.
-       */
-      _currentUserName: {type: String},
+      _isStarred: {type: Boolean},
+      _canStar: {type: Boolean},
     };
   }
 
   /** @override */
-  stateChanged(state) {
-    this._currentUserName = users.currentUserName(state);
+  constructor() {
+    super();
+    /**
+     * @type {boolean} Whether the user has starred the issue or not.
+     */
+    this._isStarred = false;
 
-    // TODO(crbug.com/monorail/7374): Remove references to issueV0 in
-    // <mr-star>.
-    this._starringIssues = issueV0.starringIssues(state);
-    this._starredIssues = issueV0.starredIssues(state);
-    this._fetchingIsStarred = issueV0.requests(state).fetchIsStarred.requesting;
+    /**
+     * @return {boolean} Whether the user is able to star the current object.
+     */
+    this._canStar = false;
   }
 
   /**
-   * @return {boolean} Whether there's an in-flight star request.
+   * Gets whether a resource is starred or not.
+   *
+   * Note: In order for re-renders to happen based on this getter,
+   * the subclass must compute this value based on a property.
+   * @return {boolean} Whether the resource is starred or not.
    */
-  get _isStarring() {
-    const requestKey = issueRefToString(this.issueRef);
-    if (this._starringIssues.has(requestKey)) {
-      return this._starringIssues.get(requestKey).requesting;
+  get isStarred() {
+    return this._isStarred;
+  }
+
+  /**
+   * Gets whether a user can star the current resource.
+   *
+   * Note: In order for re-renders to happen based on this getter,
+   * the subclass must compute this value based on a property.
+   * @return {boolean} If the user can star.
+   */
+  get canStar() {
+    return this._canStar;
+  }
+
+  /**
+   * @return {string} the title to display on the star button.
+   */
+  get _starToolTip() {
+    if (!this.canStar) {
+      return `You don't have permission to star this issue.`;
     }
-    return false;
-  }
-
-  /**
-   * @return {boolean} Whether the user is able to star the current object.
-   */
-  get _canStar() {
-    return this._currentUserName && !this._fetchingIsStarred &&
-        !this._isStarring;
+    return `${this.isStarred ? 'Unstar' : 'Star'} this issue.`;
   }
 
   /**
    * Stars or unstars the resource based on the user's interaction.
    */
   toggleStar() {
-    if (!this._canStar) return;
-    const newIsStarred = !this._starredIssues.has(
-        issueRefToString(this.issueRef));
-    // This component assumes that the user of this component is connected to
-    // Redux and will update their star state based on this.
-    store.dispatch(issueV0.star(this.issueRef, newIsStarred));
+    if (!this.canStar) return;
+    if (this.isStarred) {
+      this.unstar();
+    } else {
+      this.star();
+    }
+  }
+
+  /**
+   * Stars the given resource.
+   */
+  star() {
+    return;
+  }
+
+  /**
+   * Unstars the given resource.
+   */
+  unstar() {
+    return;
   }
 }
 

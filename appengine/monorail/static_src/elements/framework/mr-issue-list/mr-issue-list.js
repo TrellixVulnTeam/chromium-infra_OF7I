@@ -11,7 +11,7 @@ import * as sitewide from 'reducers/sitewide.js';
 import 'elements/framework/links/mr-issue-link/mr-issue-link.js';
 import 'elements/framework/links/mr-crbug-link/mr-crbug-link.js';
 import 'elements/framework/mr-dropdown/mr-dropdown.js';
-import 'elements/framework/mr-star/mr-star.js';
+import 'elements/framework/mr-star/mr-issue-star.js';
 import {constructHref, prepareDataForDownload} from './list-to-csv-helpers.js';
 import {
   issueRefToUrl,
@@ -83,7 +83,7 @@ export class MrIssueList extends connectStore(LitElement) {
           flex-wrap: no-wrap;
           align-items: center;
         }
-        mr-star {
+        mr-issue-star {
           --mr-star-size: 18px;
           margin-bottom: 1px;
           margin-left: 4px;
@@ -480,9 +480,9 @@ export class MrIssueList extends connectStore(LitElement) {
               />
             ` : ''}
             ${this.starringEnabled ? html`
-              <mr-star
+              <mr-issue-star
                 .issueRef=${issueToIssueRef(issue)}
-              ></mr-star>
+              ></mr-issue-star>
             ` : ''}
           </div>
         </td>
