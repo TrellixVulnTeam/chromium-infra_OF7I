@@ -106,5 +106,16 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     Raises:
       TODO(crbug/monorail/7197): Document errors when implemented
     """
-    # TODO(crbug/monorail/7197): Actually implement
-    return issue_objects_pb2.Issue();
+    # Phase 1: Gather info
+    #   Get project id and template name from template resource name.
+    #   Get template pb.
+    #   Make tracker_pb2.IssueDelta from request.template_issue_delta, share
+    #   code with v3/ModifyIssue
+
+    # with work_env.WorkEnv(mc, self.services) as we:
+    #   created_issue = we.MakeIssueFromTemplate(issue, description, delta)
+
+    # Return newly created API issue.
+    # return converters.ConvertIssue(created_issue)
+
+    return issue_objects_pb2.Issue()

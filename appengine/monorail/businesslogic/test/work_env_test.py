@@ -1006,6 +1006,10 @@ class WorkEnvTest(unittest.TestCase):
             789, 'sum', 'New', 222, [333], ['Hot'], [], [], 'desc',
             send_email=False, reporter_id=222, timestamp=PAST_TIME)
 
+  def testCreateIssueFromDelta(self):
+    # TODO(crbug/monorail/7197): implement tests
+    pass
+
   @mock.patch('services.tracker_fulltext.IndexIssues')
   @mock.patch('services.tracker_fulltext.UnindexIssues')
   def testMoveIssue_Normal(self, mock_unindex, mock_index):

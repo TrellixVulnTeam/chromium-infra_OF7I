@@ -941,6 +941,19 @@ class WorkEnv(object):
     project = self.GetProject(project_id)
     self._AssertPermInProject(permissions.CREATE_ISSUE, project)
 
+    # TODO(crbug/monorail/7197): The following are needed for v3 API
+    # Phase 5.1 Validate input
+    # Check proposed owner is in project, else throw
+    # Check proposed owner is not a group, else throw
+    # Check summary is not too long, else throw
+    # Check description is not blank string, else throw
+    # Check description is not too long, else throw
+    # Check every proposed field value is valid against field def, else throw
+    # Phase 5.2 Validate sufficient attachment quota and update
+    # Phase 5.3 Must respect filter rule errors, either update underlying
+    # issue_svc.CreateIssue to throw/accumulate filter rule errors, or check
+    # filter rule errors here
+
     if reporter_id and reporter_id != self.mc.auth.user_id:
       self._AssertPermInProject(permissions.IMPORT_COMMENT, project)
       importer_id = self.mc.auth.user_id
@@ -989,6 +1002,39 @@ class WorkEnv(object):
             reporter_id)
 
     return new_issue, comment
+
+  def MakeIssueFromTemplate(self, _template, _description, _issue_delta):
+    # type: (tracker_pb2.TemplateDef, str, tracker_pb2.IssueDelta) ->
+    #     tracker_pb2.Issue
+    """Creates issue from template, issue description, and delta.
+
+    Args:
+      template: Template that issue creation is based on.
+      description: Issue description string.
+      issue_delta: Difference between desired issue and base issue.
+
+    Returns:
+      Newly created issue, as protorpc Issue.
+
+    Raises:
+      TODO(crbug/monorail/7197): Document errors when implemented
+    """
+    # Phase 2: Build Issue from TemplateDef
+    # Use helper method, likely from template_helpers
+
+    # Phase 3: Validate proposed deltas and check permissions
+    # Check summary has been edited if required, else throw
+    # Check description is different from template default, else throw
+    # Check edit permission on field values of issue deltas, else throw
+
+    # Phase 4: Merge template, delta, and defaults
+    # Merge delta into issue
+    # Apply approval def defaults to approval values
+    # Capitalize every line of description
+
+    # Phase 5: Create issue by calling work_env.CreateIssue
+
+    return tracker_pb2.Issue()
 
   def MoveIssue(self, issue, target_project):
     """Move issue to the target_project.
