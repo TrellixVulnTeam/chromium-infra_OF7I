@@ -107,7 +107,7 @@ export const all = createSelector([byName, _allNames],
 /**
  * Returns the Project requests.
  * @param {any} state
- * @return {Object.<string, ReduxRequestState>}
+ * @return {Object<string, ReduxRequestState>}
  */
 export const requests = (state) => state.projects.requests;
 

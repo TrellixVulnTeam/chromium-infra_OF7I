@@ -14,7 +14,7 @@ const DEFAULT_SNACKBAR_TIMEOUT_MS = 10 * 1000;
  * Object of various constant strings used to uniquely identify
  * snackbar instances used in the app.
  * TODO(https://crbug.com/monorail/7491): Avoid using this Object.
- * @type {Object.<string, string>}
+ * @type {Object<string, string>}
  */
 export const snackbarNames = Object.freeze({
   // Issue list page snackbars.

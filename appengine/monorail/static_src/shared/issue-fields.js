@@ -284,7 +284,7 @@ const defaultIssueFields = Object.freeze([
 /**
  * Lowercase field name -> field object. This uses an Object instead of a Map
  * so that it can be frozen.
- * @type {Object.<string, DefaultIssueField>}
+ * @type {Object<string, DefaultIssueField>}
  */
 export const defaultIssueFieldMap = Object.freeze(
     defaultIssueFields.reduce((acc, field) => {

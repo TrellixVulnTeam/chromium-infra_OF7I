@@ -54,13 +54,13 @@ const FETCH_TEMPLATES_FAILURE = 'projectV0/FETCH_TEMPLATES_FAILURE';
 {
   name: string,
 
-  configs: Object.<string, Config>,
-  presentationConfigs: Object.<string, PresentationConfig>,
-  customPermissions: Object.<string, Array<string>>,
+  configs: Object<string, Config>,
+  presentationConfigs: Object<string, PresentationConfig>,
+  customPermissions: Object<string, Array<string>>,
   visibleMembers:
-      Object.<string, {userRefs: Array<UserRef>, groupRefs: Array<UserRef>}>,
-  templates: Object.<string, Array<TemplateDef>>,
-  presentationConfigsLoaded: Object.<string, boolean>,
+      Object<string, {userRefs: Array<UserRef>, groupRefs: Array<UserRef>}>,
+  templates: Object<string, Array<TemplateDef>>,
+  presentationConfigsLoaded: Object<string, boolean>,
 
   requests: {
     fetchConfig: ReduxRequestState,
@@ -94,9 +94,9 @@ export const presentationConfigsReducer = createReducer({}, {
 
 /**
  * Adds custom permissions to Redux in a normalized state.
- * @param {Object.<string, Array<String>>} state Redux state.
+ * @param {Object<string, Array<String>>} state Redux state.
  * @param {AnyAction} Action
- * @return {Object.<string, Array<String>>}
+ * @return {Object<string, Array<String>>}
  */
 export const customPermissionsReducer = createReducer({}, {
   [FETCH_CUSTOM_PERMISSIONS_SUCCESS]:

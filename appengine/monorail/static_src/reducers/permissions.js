@@ -85,7 +85,7 @@ export const byName = (state) => state.permissions.byName;
 /**
  * Returns the Permissions requests.
  * @param {any} state
- * @return {Object.<string, ReduxRequestState>}
+ * @return {Object<string, ReduxRequestState>}
  */
 export const requests = (state) => state.permissions.requests;
 

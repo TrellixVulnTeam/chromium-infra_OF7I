@@ -276,7 +276,7 @@ export const viewedHotlistPermissions = createSelector(
 /**
  * Returns the Hotlist requests.
  * @param {any} state
- * @return {Object.<string, ReduxRequestState>}
+ * @return {Object<string, ReduxRequestState>}
  */
 export const requests = (state) => state.hotlists.requests;
 

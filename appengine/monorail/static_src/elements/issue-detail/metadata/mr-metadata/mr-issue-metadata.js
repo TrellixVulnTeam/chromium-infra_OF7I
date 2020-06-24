@@ -261,7 +261,7 @@ export class MrIssueMetadata extends connectStore(LitElement) {
   }
 
   /**
-   * @return {Object.<string, Array<Hotlist>>}
+   * @return {Object<string, Array<Hotlist>>}
    * @private
    */
   get _hotlistsByRole() {

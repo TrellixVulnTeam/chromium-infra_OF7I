@@ -108,7 +108,7 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
 
 /* State Shape
 {
-  issuesByRefString: Object.<IssueRefString, Issue>,
+  issuesByRefString: Object<IssueRefString, Issue>,
 
   viewedIssueRef: IssueRefString,
 
@@ -122,7 +122,7 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
   commentReferences: Object,
   relatedIssues: Object,
   referencedUsers: Array<UserV0>,
-  starredIssues: Object.<IssueRefString, Boolean>,
+  starredIssues: Object<IssueRefString, Boolean>,
   permissions: Array<string>,
   presubmitResponse: Object,
   predictedComponent: string,
@@ -132,7 +132,7 @@ const UPDATE_APPROVAL_FAILURE = 'UPDATE_APPROVAL_FAILURE';
     fetchHotlists: ReduxRequestState,
     fetchIssueList: ReduxRequestState,
     fetchPermissions: ReduxRequestState,
-    starringIssues: Object.<string, ReduxRequestState>,
+    starringIssues: Object<string, ReduxRequestState>,
     presubmit: ReduxRequestState,
     predictComponent: ReduxRequestState,
     fetchComments: ReduxRequestState,
@@ -176,9 +176,9 @@ const updateApprovalValues = (issue, approval) => {
 /**
  * Creates a new issuesByRefString Object with a single issue's data
  * edited.
- * @param {Object.<IssueRefString, Issue>} issuesByRefString
+ * @param {Object<IssueRefString, Issue>} issuesByRefString
  * @param {Issue} issue The new issue data to add to the state.
- * @return {Object.<IssueRefString, Issue>}
+ * @return {Object<IssueRefString, Issue>}
  */
 const updateSingleIssueInState = (issuesByRefString, issue) => {
   return {
@@ -192,7 +192,7 @@ const updateSingleIssueInState = (issuesByRefString, issue) => {
 /**
  * Adds issues fetched by a ListIssues request to the Redux store in a
  * normalized format.
- * @param {Object.<IssueRefString, Issue>} state Redux state.
+ * @param {Object<IssueRefString, Issue>} state Redux state.
  * @param {AnyAction} action
  * @param {Array<Issue>} action.issues The list of issues that was fetched.
  * @param {Issue=} action.issue The issue being updated.
@@ -335,13 +335,13 @@ const commentReferencesReducer = createReducer({}, {
  * Handles state for related issues such as blocking and blocked on issues,
  * including federated references that could reference external issues outside
  * Monorail.
- * @param {Object.<IssueRefString, Issue>} state
+ * @param {Object<IssueRefString, Issue>} state
  * @param {AnyAction} action
- * @param {Object.<IssueRefString, Issue>=} action.relatedIssues New related
+ * @param {Object<IssueRefString, Issue>=} action.relatedIssues New related
  *   issues.
  * @param {Array<IssueRef>=} action.fedRefIssueRefs List of fetched federated
  *   issue references.
- * @return {Object.<IssueRefString, Issue>}
+ * @return {Object<IssueRefString, Issue>}
  */
 export const relatedIssuesReducer = createReducer({}, {
   [FETCH_RELATED_ISSUES_SUCCESS]: (_state, {relatedIssues}) => relatedIssues,
@@ -362,10 +362,10 @@ export const relatedIssuesReducer = createReducer({}, {
 
 /**
  * Stores data for users referenced by issue. ie: Owner, CC, etc.
- * @param {Object.<string, UserV0>} state
+ * @param {Object<string, UserV0>} state
  * @param {AnyAction} action
- * @param {Object.<string, UserV0>} action.referencedUsers
- * @return {Object.<string, UserV0>}
+ * @param {Object<string, UserV0>} action.referencedUsers
+ * @return {Object<string, UserV0>}
  */
 const referencedUsersReducer = createReducer({}, {
   [FETCH_REFERENCED_USERS_SUCCESS]: (_state, {referencedUsers}) =>
@@ -374,13 +374,13 @@ const referencedUsersReducer = createReducer({}, {
 
 /**
  * Handles updating state of all starred issues.
- * @param {Object.<IssueRefString, boolean>} state Set of starred issues,
+ * @param {Object<IssueRefString, boolean>} state Set of starred issues,
  *   stored in a serializeable Object form.
  * @param {AnyAction} action
  * @param {IssueRef=} action.issueRef An issue with a star state being updated.
  * @param {boolean=} action.starred Whether the issue is starred or unstarred.
  * @param {Array<IssueRef>=} action.starredIssueRefs A list of starred issues.
- * @return {Object.<IssueRefString, boolean>}
+ * @return {Object<IssueRefString, boolean>}
  */
 export const starredIssuesReducer = createReducer({}, {
   [STAR_SUCCESS]: (state, {issueRef, starred}) => {
@@ -522,7 +522,7 @@ const RESTRICT_COMMENT_PREFIX = 'restrict-addissuecomment-';
  * Selector to retrieve all normalized Issue data in the Redux store,
  * keyed by IssueRefString.
  * @param {any} state
- * @return {Object.<IssueRefString, Issue>}
+ * @return {Object<IssueRefString, Issue>}
  */
 const issuesByRefString = (state) => state.issue.issuesByRefString;
 

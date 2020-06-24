@@ -34,7 +34,7 @@ export const UNSTAR_PROJECT_FAILURE = 'stars/UNSTAR_PROJECT_FAILURE';
 
 /* State Shape
 {
-  byName: Object.<StarName, Star>,
+  byName: Object<StarName, Star>,
 
   requests: {
     listProjects: ReduxRequestState,
@@ -44,13 +44,13 @@ export const UNSTAR_PROJECT_FAILURE = 'stars/UNSTAR_PROJECT_FAILURE';
 
 /**
  * All star data indexed by resource name.
- * @param {Object.<ProjectName, Star>} state Existing Project data.
+ * @param {Object<ProjectName, Star>} state Existing Project data.
  * @param {AnyAction} action
  * @param {Array<Star>} action.star The Stars that were fetched.
  * @param {ProjectStar} action.projectStar A single ProjectStar that was
  *   created.
  * @param {StarName} action.starName The StarName that was mutated.
- * @return {Object.<ProjectName, Star>}
+ * @return {Object<ProjectName, Star>}
  */
 export const byNameReducer = createReducer({}, {
   [LIST_PROJECTS_SUCCESS]: (state, {stars}) => {
@@ -90,7 +90,7 @@ export const reducer = combineReducers({
 /**
  * Returns normalized star data by name.
  * @param {any} state
- * @return {Object.<StarName, Star>}
+ * @return {Object<StarName, Star>}
  * @private
  */
 export const byName = (state) => state.stars.byName;
@@ -98,7 +98,7 @@ export const byName = (state) => state.stars.byName;
 /**
  * Returns star requests.
  * @param {any} state
- * @return {Object.<string, ReduxRequestState>}
+ * @return {Object<string, ReduxRequestState>}
  */
 export const requests = (state) => state.stars.requests;
 
