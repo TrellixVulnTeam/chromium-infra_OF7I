@@ -17,7 +17,7 @@ const projectRoles = Object.freeze({
  * Creates a mapping of project names to the user's role in that project.
  * @param {Array<ProjectMember>} projectMembers Project memebrships
  *   for a given user.
- * @return {Object.<ProjectName, string>} Mapping of a user's roles,
+ * @return {Object<ProjectName, string>} Mapping of a user's roles,
  *   by project name.
  */
 export function computeRoleByProjectName(projectMembers) {

@@ -163,6 +163,7 @@ export const unstarProject = (project, user) => async (dispatch) => {
 };
 
 export const stars = {
+  reducer,
   byName,
   requests,
   listProjects,

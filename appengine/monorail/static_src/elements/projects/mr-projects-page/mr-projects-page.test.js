@@ -7,6 +7,7 @@ import sinon from 'sinon';
 import {prpcClient} from 'prpc-client-instance.js';
 import {stateUpdated} from 'reducers/base.js';
 import {users} from 'reducers/users.js';
+import {stars} from 'reducers/stars.js';
 import {MrProjectsPage} from './mr-projects-page.js';
 
 let element;
@@ -169,6 +170,7 @@ describe('mr-projects-page (connected)', () => {
   beforeEach(() => {
     sinon.stub(prpcClient, 'call');
     sinon.spy(users, 'gatherProjectMemberships');
+    sinon.spy(stars, 'listProjects');
 
     element = document.createElement('mr-projects-page');
   });
@@ -180,6 +182,7 @@ describe('mr-projects-page (connected)', () => {
 
     prpcClient.call.restore();
     users.gatherProjectMemberships.restore();
+    stars.listProjects.restore();
   });
 
   it('fetches projects when connected', async () => {
@@ -222,5 +225,24 @@ describe('mr-projects-page (connected)', () => {
 
     sinon.assert.calledOnce(users.gatherProjectMemberships);
     sinon.assert.calledWith(users.gatherProjectMemberships, 'users/1234');
+  });
+
+  it('does not fetch stars user is logged out', async () => {
+    document.body.appendChild(element);
+    element._currentUser = '';
+
+    await element.updateComplete;
+
+    sinon.assert.notCalled(stars.listProjects);
+  });
+
+  it('fetches stars when user is logged in', async () => {
+    document.body.appendChild(element);
+    element._currentUser = 'users/1234';
+
+    await element.updateComplete;
+
+    sinon.assert.calledOnce(stars.listProjects);
+    sinon.assert.calledWith(stars.listProjects, 'users/1234');
   });
 });

@@ -5,12 +5,13 @@
 import {LitElement, html, css} from 'lit-element';
 import {store, connectStore} from 'reducers/base.js';
 import {SHARED_STYLES} from 'shared/shared-styles.js';
-import 'elements/framework/mr-star/mr-star.js';
+import 'elements/framework/mr-star/mr-project-star.js';
 import 'shared/typedef.js';
 import 'elements/chops/chops-chip/chops-chip.js';
 
 import * as projects from 'reducers/projects.js';
 import {users} from 'reducers/users.js';
+import {stars} from 'reducers/stars.js';
 import {computeRoleByProjectName} from './helpers.js';
 
 
@@ -222,7 +223,9 @@ export class MrProjectsPage extends connectStore(LitElement) {
   /** @override */
   updated(changedProperties) {
     if (changedProperties.has('_currentUser') && this._currentUser) {
-      store.dispatch(users.gatherProjectMemberships(this._currentUser));
+      const userName = this._currentUser;
+      store.dispatch(users.gatherProjectMemberships(userName));
+      store.dispatch(stars.listProjects(userName));
     }
   }
 
@@ -252,7 +255,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
             </span>
           </span>
 
-          <mr-star></mr-star>
+          <mr-project-star .name=${project.name}></mr-project-star>
         </div>
         <p>
           ${project.summary}

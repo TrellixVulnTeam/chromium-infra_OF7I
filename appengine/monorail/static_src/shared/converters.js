@@ -85,6 +85,7 @@ export function extractProjectFromProjectMember(projectMember) {
  * @throws {Error} If the project or user resource name is invalid.
  */
 export function projectAndUserToStarName(project, user) {
+  if (!project || !user) return undefined;
   const userId = extractUserId(user);
   const projectName = extractProjectDisplayName(project);
   return `users/${userId}/projectStars/${projectName}`;
