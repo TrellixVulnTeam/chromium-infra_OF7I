@@ -1,8 +1,9 @@
 // Copyright 2019 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
+import sinon from 'sinon';
 import {assert} from 'chai';
+
 import {MrStar} from './mr-star.js';
 
 let element;
@@ -14,7 +15,9 @@ describe('mr-star', () => {
   });
 
   afterEach(() => {
-    document.body.removeChild(element);
+    if (document.body.contains(element)) {
+      document.body.removeChild(element);
+    }
   });
 
   it('initializes', () => {
@@ -80,6 +83,22 @@ describe('mr-star', () => {
     await element.updateComplete;
 
     assert.equal(star.textContent.trim(), 'star_border');
+  });
+
+  it('clicking on star inside a link does not cause navigation', async () => {
+    const parent = document.createElement('a');
+    parent.setAttribute('href', '#test-hash');
+    sinon.spy(element, 'toggleStar');
+
+    parent.appendChild(element);
+
+    element._canStar = true;
+    await element.updateComplete;
+
+    element.shadowRoot.querySelector('button').click();
+
+    assert.notEqual(window.location.hash, '#test-hash');
+    sinon.assert.calledOnce(element.toggleStar);
   });
 
   describe('_starToolTip', () => {

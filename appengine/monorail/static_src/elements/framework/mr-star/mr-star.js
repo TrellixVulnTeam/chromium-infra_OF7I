@@ -49,7 +49,7 @@ export class MrStar extends LitElement {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <button class="star-button"
-        @click=${this.toggleStar}
+        @click=${this._toggleStar}
         ?disabled=${!canStar}
         title=${this._starToolTip}
         aria-checked=${isStarred ? 'true' : 'false'}
@@ -119,6 +119,15 @@ export class MrStar extends LitElement {
       return `You don't have permission to star this issue.`;
     }
     return `${this.isStarred ? 'Unstar' : 'Star'} this issue.`;
+  }
+
+  /**
+   * Click handler for triggering toggleStar.
+   * @param {MouseEvent} e
+   */
+  _toggleStar(e) {
+    e.preventDefault();
+    this.toggleStar();
   }
 
   /**
