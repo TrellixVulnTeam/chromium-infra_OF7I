@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"cloud.google.com/go/pubsub"
@@ -60,32 +59,62 @@ func PushHandler(ctx context.Context, r *http.Request) {
 		if response.GetRequestStatus() == fleet.RequestStatus_OK {
 			datastore.AddAssetInfo(ctx, response.GetAssets())
 		}
+		logging.Infof(ctx, "Status: %v", response.GetRequestStatus())
+		missing := response.GetMissingAssetTags()
+		logging.Infof(ctx, "Missing[%v]: %v", len(missing), missing)
+		failed := response.GetFailedAssetTags()
+		logging.Infof(ctx, "Failed[%v]: %v", len(failed), failed)
+		logging.Infof(ctx, "Success reported for %v assets", len(response.GetAssets()))
 	}
 }
 
 // publish a message to the topic in Hart, Blocks until ack.
-func publish(ctx context.Context, topic *pubsub.Topic, ids []string) (serverID string, err error) {
-	msg := &fleet.AssetInfoRequest{
-		AssetTags: ids,
+func publish(ctx context.Context, topic *pubsub.Topic, ids []string) (serverID []string, err []error) {
+	// Based on assets per second claim from HaRT
+	// TODO(anushruth): Enforce 100 QPS
+	batchSize := 100
+	serverID = make([]string, (len(ids)/batchSize)+1)
+	err = make([]error, (len(ids)/batchSize)+1)
+	for i := 0; i < len(ids); i += batchSize {
+		var msg *fleet.AssetInfoRequest
+		if (i + batchSize) <= len(ids) {
+			msg = &fleet.AssetInfoRequest{
+				AssetTags: ids[i : i+batchSize],
+			}
+		} else {
+			msg = &fleet.AssetInfoRequest{
+				AssetTags: ids[i:],
+			}
+		}
+		data, e := proto.Marshal(msg)
+		if e != nil {
+			serverID = append(serverID, "")
+			err = append(err, e)
+			continue
+		}
+		result := topic.Publish(ctx, &pubsub.Message{
+			Data: data,
+		})
+		// Wait until the transaction is completed
+		s, e := result.Get(ctx)
+		serverID = append(serverID, s)
+		err = append(err, e)
 	}
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return "", err
-	}
-	result := topic.Publish(ctx, &pubsub.Message{
-		Data: data,
-	})
-	//Blocking until the result is returned
-	return result.Get(ctx)
+	return
 }
 
 // SyncAssetInfoFromHaRT publishes the request for the ids to be synced.
-// Returns server id response and error.
-func SyncAssetInfoFromHaRT(ctx context.Context, proj, topic string, ids []string) (string, error) {
+func SyncAssetInfoFromHaRT(ctx context.Context, proj, topic string, ids []string) {
 	client, err := pubsub.NewClient(ctx, proj)
 	if err != nil {
-		return "", fmt.Errorf("pubsub.NewClient: %v", err)
+		logging.Errorf(ctx, "pubsub.NewClient: %v", err)
+		return
 	}
 	top := client.Topic(topic)
-	return publish(ctx, top, ids)
+	servers, errs := publish(ctx, top, ids)
+	for idx, e := range errs {
+		if e != nil {
+			logging.Errorf(ctx, "Error requesting asset info [%v]: %v", servers[idx], e)
+		}
+	}
 }

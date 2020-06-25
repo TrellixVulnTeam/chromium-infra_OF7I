@@ -357,9 +357,9 @@ func syncAssetInfoFromHaRT(c *router.Context) error {
 	}
 
 	logging.Infof(ctx, "Syncing %v AssetInfo entit(y|ies) from HaRT", len(req))
-	_, err = hart.SyncAssetInfoFromHaRT(ctx, proj, topic, req)
+	hart.SyncAssetInfoFromHaRT(ctx, proj, topic, req)
 
-	return err
+	return nil
 }
 
 // List of regexp to compare Servos. This is used to avoid backfilling
