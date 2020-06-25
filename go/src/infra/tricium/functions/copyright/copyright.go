@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	fileWhitelist = []string{".c", ".cc", ".cpp", ".h", ".java", ".js", ".py", ".sh"}
+	fileAllowlist = []string{".c", ".cc", ".cpp", ".h", ".java", ".js", ".py", ".sh"}
 	// A comment is any amount of whitespace followed by any of the following
 	// character sets: #, //, /*, *, ;
 	commentRegexp    = regexp.MustCompile(`^[ \t\n\r\v\f]*[#|\/\/|\/\*|\*|;].*`)
@@ -68,7 +68,7 @@ func main() {
 			log.Printf("Skipping binary file %q.", file.Path)
 			continue
 		}
-		if !isWhitelisted(file.Path) {
+		if !isAllowed(file.Path) {
 			log.Printf("Skipping file: %q.", file.Path)
 			continue
 		}
@@ -86,8 +86,8 @@ func main() {
 	log.Printf("Wrote RESULTS data to %q.", path)
 }
 
-func isWhitelisted(path string) bool {
-	for _, ext := range fileWhitelist {
+func isAllowed(path string) bool {
+	for _, ext := range fileAllowlist {
 		if ext == filepath.Ext(path) || ext == filepath.Base(path) {
 			return true
 		}

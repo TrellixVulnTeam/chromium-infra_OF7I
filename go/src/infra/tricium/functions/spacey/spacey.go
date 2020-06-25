@@ -24,8 +24,8 @@ const (
 )
 
 var (
-	mixedWhitespaceBlacklist = []string{".go", "makefile", "Makefile", ".mk", ".patch"}
-	trailingSpaceBlacklist   = []string{".patch", ".pdf"}
+	mixedWhitespaceIgnorelist = []string{".go", "makefile", "Makefile", ".mk", ".patch"}
+	trailingSpaceIgnorelist   = []string{".patch", ".pdf"}
 )
 
 func main() {
@@ -118,7 +118,7 @@ func analyzeFile(scanner *bufio.Scanner, path string) []*tricium.Data_Comment {
 //
 // TODO(qyearsley): Check for space mix in the middle of the line too.
 func checkSpaceMix(path, line string, pos int) *tricium.Data_Comment {
-	if isInBlacklist(path, mixedWhitespaceBlacklist) {
+	if isInIgnorelist(path, mixedWhitespaceIgnorelist) {
 		log.Printf("Not emitting comments for file: %s", path)
 		return nil
 	}
@@ -200,7 +200,7 @@ func checkSpaceMix(path, line string, pos int) *tricium.Data_Comment {
 
 // checkTrailingSpace looks for white spaces at the end of the provided line.
 func checkTrailingSpace(path, line string, pos int) *tricium.Data_Comment {
-	if isInBlacklist(path, trailingSpaceBlacklist) {
+	if isInIgnorelist(path, trailingSpaceIgnorelist) {
 		log.Printf("Not emitting comments for file: %s", path)
 		return nil
 	}
@@ -247,10 +247,10 @@ func checkTrailingSpace(path, line string, pos int) *tricium.Data_Comment {
 	return nil
 }
 
-// Checks whether a path matches the given blacklist, where the blacklist
+// Checks whether a path matches the given ignorelist, where the ignorelist
 // contains either file extensions or complete filenames.
-func isInBlacklist(path string, blacklist []string) bool {
-	for _, ext := range blacklist {
+func isInIgnorelist(path string, ignorelist []string) bool {
+	for _, ext := range ignorelist {
 		if ext == filepath.Ext(path) || ext == filepath.Base(path) {
 			return true
 		}

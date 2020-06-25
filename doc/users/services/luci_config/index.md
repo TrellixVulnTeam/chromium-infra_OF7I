@@ -60,7 +60,7 @@ A project declares its visibility in `project.cfg` configuration file in
 
     access: "group:all"
 
-Means the project is public. If not set, it is visible only to a whitelist of
+Means the project is public. If not set, it is visible only to an allowlist of
 trusted services.
 
 ## See also

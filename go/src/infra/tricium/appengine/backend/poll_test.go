@@ -561,7 +561,7 @@ func TestPollProjectDescriptionFlagBehavior(t *testing.T) {
 				ShouldResemble, map[string]string{"Key-Name": "yEs"})
 			So(extractFooterFlags("summary\n\nkey-name: yEs\nhttp://example.com\n"),
 				ShouldResemble, map[string]string{"Key-Name": "yEs"})
-			// Only some URL schemas are blacklisted, others are still treated as keys.
+			// Only some URL schemas are treated specially; others are treated as keys.
 			So(extractFooterFlags("summary\n\nkey-name: yEs\nfoo://example.com\n"),
 				ShouldResemble, map[string]string{"Key-Name": "yEs", "Foo": "//example.com"})
 		})

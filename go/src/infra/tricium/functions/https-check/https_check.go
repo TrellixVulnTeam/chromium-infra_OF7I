@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	fileAllowList = []string{".md"}
+	fileAllowlist = []string{".md"}
 	httpRegexp    = regexp.MustCompile(`http:\/\/[^\s]*`)
 )
 
@@ -47,7 +47,7 @@ func main() {
 			log.Printf("Skipping binary file %q.", file.Path)
 			continue
 		}
-		if !isWhitelisted(file.Path) {
+		if !isAllowed(file.Path) {
 			log.Printf("Skipping file: %q.", file.Path)
 			continue
 		}
@@ -62,8 +62,8 @@ func main() {
 	log.Printf("Wrote RESULTS data to %q.", path)
 }
 
-func isWhitelisted(path string) bool {
-	for _, ext := range fileAllowList {
+func isAllowed(path string) bool {
+	for _, ext := range fileAllowlist {
 		if ext == filepath.Ext(path) || ext == filepath.Base(path) {
 			return true
 		}

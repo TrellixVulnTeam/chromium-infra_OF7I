@@ -36,8 +36,8 @@ var (
 	// Commit message footer values that tell Tricium to skip.
 	skipValues = stringset.NewFromSlice("disable", "skip", "no", "none", "false")
 	// Strings that won't be treated as footer keys.
-	footerKeyBlacklist = stringset.NewFromSlice("Http", "Https")
-	paragraphBreak     = regexp.MustCompile(`\n\s*\n`)
+	footerKeyIgnorelist = stringset.NewFromSlice("Http", "Https")
+	paragraphBreak      = regexp.MustCompile(`\n\s*\n`)
 	// Pattern for a commit message footer: A key which can have dashes but not
 	// spaces, colon and optional space, and a value.
 	footerPattern = regexp.MustCompile(`^\s*([\w-]+): *(.*)$`)
@@ -563,7 +563,7 @@ func extractFooterFlags(message string) map[string]string {
 			continue
 		}
 		key := strings.Title(strings.ToLower(matches[1]))
-		if footerKeyBlacklist.Has(key) {
+		if footerKeyIgnorelist.Has(key) {
 			continue
 		}
 		flags[key] = matches[2]
