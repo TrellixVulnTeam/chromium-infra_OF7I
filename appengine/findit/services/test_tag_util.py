@@ -18,38 +18,15 @@ from services import swarmed_test_util
 
 DEFAULT_VALUE = 'Unknown'
 
-
 # Url to the file with the mapping from the directories to crbug components.
 _COMPONENT_MAPPING_URL = ('https://storage.googleapis.com/chromium-owners/'
                           'component_map_subdirs.json')
 
-# Special mapping between gpu test step names and components.
+# Components for gpu test steps.
 # So that Findit can still auto assign the component to some flakes' bugs even
 # if cannot get their components based on test location.
-_MAP_GPU_TEST_STEP_NAME_TO_COMPONENTS = {
-    'context_lost_tests': ['Internals>GPU>Testing'],
-    'depth_capture_tests': ['Internals>GPU>Testing'],
-    'gpu_process_launch_tests': ['Internals>GPU>Testing'],
-    'hardware_accelerated_feature_tests': ['Internals>GPU>Testing'],
-    'info_collection_tests': ['Internals>GPU>Testing'],
-    'maps_pixel_test': ['Internals>GPU>Testing'],
-    'pixel_skia_gold_test': ['Internals>GPU>Testing'],
-    'pixel_test': ['Internals>GPU>Testing'],
-    'screenshot_sync': ['Internals>GPU>Testing'],
-    'webgl_conformance_d3d9_passthrough_tests': ['Blink>WebGL'],
-    'webgl_conformance_d3d11_validating_tests': ['Blink>WebGL'],
-    'webgl_conformance_d3d9_validating_tests': ['Blink>WebGL'],
-    'webgl_conformance_gl_passthrough_tests': ['Blink>WebGL'],
-    'webgl_conformance_gles_passthrough': ['Blink>WebGL'],
-    'webgl_conformance_tests': ['Blink>WebGL'],
-    'webgl_conformance_vulkan_passthrough_tests': [
-        'Internals>GPU>Testing', 'Blink>WebGL'
-    ],
-    'webgl2_conformance_d3d11_validating_tests': ['Blink>WebGL'],
-    'webgl2_conformance_gl_passthrough_tests': ['Blink>WebGL'],
-    'webgl2_conformance_tests': ['Blink>WebGL'],
-    'webgl2_conformance_validating_tests': ['Blink>WebGL'],
-}
+_WEBGL_STEP_COMPONENT_LIST = ['Blink>WebGL']
+_GPU_STEP_COMPONENT_LIST = ['Internals>GPU>Testing']
 
 
 @Cached(CompressedMemCache(), expire_time=3600)
@@ -67,11 +44,12 @@ def _GetChromiumMapping(mapping_name):
     result[path] = dict_item
   return result
 
+
 @Cached(CompressedMemCache(), expire_time=3600)
 def _GetChromiumWATCHLISTS():
   repo_url = 'https://chromium.googlesource.com/chromium/src'
-  source = CachedGitilesRepository(FinditHttpClient(), repo_url).GetSource(
-      'WATCHLISTS', 'master')
+  source = CachedGitilesRepository(FinditHttpClient(),
+                                   repo_url).GetSource('WATCHLISTS', 'master')
   if not source:
     return None
 
@@ -257,8 +235,9 @@ def GetTestComponentsForGPUTest(build_id, step_name):
   """
   canonical_step_name = step_util.GetCanonicalStepName(
       build_id, step_name) or step_name.split()[0]
-  return sorted(
-      _MAP_GPU_TEST_STEP_NAME_TO_COMPONENTS.get(canonical_step_name, []))
+  if canonical_step_name.startswith('webgl'):
+    return _WEBGL_STEP_COMPONENT_LIST
+  return _GPU_STEP_COMPONENT_LIST
 
 
 def GetTagsForGPUTest(tags, components):

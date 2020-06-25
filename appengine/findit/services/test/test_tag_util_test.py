@@ -41,7 +41,6 @@ class TestTagUtilTest(WaterfallTestCase):
         'p/dir2/': 'd>e>f'
     }, test_tag_util.GetChromiumDirectoryToComponentMapping())
 
-
   @mock.patch.object(
       test_tag_util.FinditHttpClient,
       'Get',
@@ -77,10 +76,11 @@ class TestTagUtilTest(WaterfallTestCase):
                            }
                          }"""))
   def testGetChromiumWATCHLISTS(self, *_):
-    self.assertEqual({
-        'watchlist1': r'path/to/source\.cc',
-        'watchlist2': r'a/to/file1\.cc|b/to/file2\.cc',
-    }, test_tag_util._GetChromiumWATCHLISTS())
+    self.assertEqual(
+        {
+            'watchlist1': r'path/to/source\.cc',
+            'watchlist2': r'a/to/file1\.cc|b/to/file2\.cc',
+        }, test_tag_util._GetChromiumWATCHLISTS())
 
   @mock.patch.object(
       test_tag_util.step_util,
@@ -101,8 +101,7 @@ class TestTagUtilTest(WaterfallTestCase):
   def testGetTestLocationBWT(self, *_):
     self.assertEqual(
         'third_party/blink/web_tests/normalized_test_name',
-        test_tag_util.GetTestLocation(123, 'blink_web_tests',
-                                      'test_name',
+        test_tag_util.GetTestLocation(123, 'blink_web_tests', 'test_name',
                                       'normalized_test_name').file_path)
 
   @mock.patch.object(test_name_util, 'GTEST_REGEX')
@@ -133,10 +132,9 @@ class TestTagUtilTest(WaterfallTestCase):
       (
           'step_name',
           'webgl_conformance_vulkan_passthrough_tests',
-          ['Blink>WebGL', 'Internals>GPU>Testing'],
+          ['Blink>WebGL'],
       ),
       ('context_lost_tests step_name', None, ['Internals>GPU>Testing']),
-      ('step_name_not_in_mapping', None, []),
   ])
   @mock.patch.object(step_util, 'GetCanonicalStepName')
   def testGetTestComponentsForGPUTest(self, step_name, canonical_step_name,
