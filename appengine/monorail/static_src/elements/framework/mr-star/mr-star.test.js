@@ -85,41 +85,71 @@ describe('mr-star', () => {
     assert.equal(star.textContent.trim(), 'star_border');
   });
 
-  it('clicking on star inside a link does not cause navigation', async () => {
-    const parent = document.createElement('a');
-    parent.setAttribute('href', '#test-hash');
-    sinon.spy(element, 'toggleStar');
+  describe('mr-star nested inside a link', () => {
+    let parent;
+    let oldHash;
 
-    parent.appendChild(element);
+    beforeEach(() => {
+      parent = document.createElement('a');
+      parent.setAttribute('href', '#test-hash');
+      parent.appendChild(element);
 
-    element._canStar = true;
-    await element.updateComplete;
+      oldHash = window.location.hash;
+    });
 
-    element.shadowRoot.querySelector('button').click();
+    afterEach(() => {
+      window.location.hash = oldHash;
+    });
 
-    assert.notEqual(window.location.hash, '#test-hash');
-    sinon.assert.calledOnce(element.toggleStar);
+    it('clicking to star does not cause navigation', async () => {
+      sinon.spy(element, 'toggleStar');
+      element._canStar = true;
+      await element.updateComplete;
+
+      element.shadowRoot.querySelector('button').click();
+
+      assert.notEqual(window.location.hash, '#test-hash');
+      sinon.assert.calledOnce(element.toggleStar);
+    });
+
+    it('clicking on disabled star does not cause navigation', async () => {
+      element._canStar = false;
+      await element.updateComplete;
+
+      element.shadowRoot.querySelector('button').click();
+
+      assert.notEqual(window.location.hash, '#test-hash');
+    });
+
+    it('clicking on link still navigates', async () => {
+      element._canStar = true;
+      await element.updateComplete;
+
+      parent.click();
+
+      assert.equal(window.location.hash, '#test-hash');
+    });
   });
 
   describe('_starToolTip', () => {
     it('no permission to star', () => {
       element._canStar = false;
       assert.equal(element._starToolTip,
-          `You don't have permission to star this issue.`);
+          `You don't have permission to star this resource.`);
     });
 
     it('issue is not starred', () => {
       element._canStar = true;
       element._isStarred = false;
       assert.equal(element._starToolTip,
-          `Star this issue.`);
+          `Star this resource.`);
     });
 
     it('issue is starred', () => {
       element._canStar = true;
       element._isStarred = true;
       assert.equal(element._starToolTip,
-          `Unstar this issue.`);
+          `Unstar this resource.`);
     });
   });
 });

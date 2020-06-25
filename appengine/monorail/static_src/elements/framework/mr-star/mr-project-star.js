@@ -81,6 +81,11 @@ export class MrProjectStar extends connectStore(MrStar) {
     this._unstarringProjects = requests.unstarProject;
   }
 
+  /** @override */
+  get type() {
+    return 'project';
+  }
+
   /**
    * @return {string} The resource name of the ProjectStar.
    */

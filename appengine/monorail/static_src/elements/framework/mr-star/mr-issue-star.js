@@ -55,6 +55,11 @@ export class MrIssueStar extends connectStore(MrStar) {
     this._fetchingIsStarred = issueV0.requests(state).fetchIsStarred.requesting;
   }
 
+  /** @override */
+  get type() {
+    return 'issue';
+  }
+
   /**
    * @return {boolean} Whether there's an in-flight star request.
    */

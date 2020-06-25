@@ -49,7 +49,7 @@ export class MrStar extends LitElement {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <button class="star-button"
-        @click=${this._toggleStar}
+        @click=${this.toggleStar}
         ?disabled=${!canStar}
         title=${this._starToolTip}
         aria-checked=${isStarred ? 'true' : 'false'}
@@ -89,6 +89,15 @@ export class MrStar extends LitElement {
     this._canStar = false;
   }
 
+  /** @override */
+  connectedCallback() {
+    super.connectedCallback();
+
+    // Prevent clicks on this element from causing navigation if the element
+    // is embedded inside a link.
+    this.addEventListener('click', (e) => e.preventDefault());
+  }
+
   /**
    * Gets whether a resource is starred or not.
    *
@@ -112,22 +121,21 @@ export class MrStar extends LitElement {
   }
 
   /**
+   * @return {string} The name of the resource kind being starred.
+   * ie: issue, project, etc.
+   */
+  get type() {
+    return 'resource';
+  }
+
+  /**
    * @return {string} the title to display on the star button.
    */
   get _starToolTip() {
     if (!this.canStar) {
-      return `You don't have permission to star this issue.`;
+      return `You don't have permission to star this ${this.type}.`;
     }
-    return `${this.isStarred ? 'Unstar' : 'Star'} this issue.`;
-  }
-
-  /**
-   * Click handler for triggering toggleStar.
-   * @param {MouseEvent} e
-   */
-  _toggleStar(e) {
-    e.preventDefault();
-    this.toggleStar();
+    return `${this.isStarred ? 'Unstar' : 'Star'} this ${this.type}.`;
   }
 
   /**
