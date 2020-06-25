@@ -246,7 +246,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
    */
   _renderProject(project, role) {
     return html`
-      <a href="/p/${project.displayName}/" class="project">
+      <a href="/p/${project.displayName}/issues/list" class="project">
         <div class="project-header">
           <span class="project-title">
             <h3>${project.displayName}</h3>
