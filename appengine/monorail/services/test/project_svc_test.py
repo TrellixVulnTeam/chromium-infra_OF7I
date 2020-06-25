@@ -492,6 +492,15 @@ class ProjectServiceTest(unittest.TestCase):
     self.assertItemsEqual([123], membered_project_ids)
     self.assertItemsEqual([], contrib_project_ids)
 
+  def testGetUserRolesInAllProjectsWithoutEffectiveIds(self):
+    self.mox.ReplayAll()
+    actual = self.project_service.GetUserRolesInAllProjects(self.cnxn, {})
+    owned_project_ids, membered_project_ids, contrib_project_ids = actual
+    self.mox.VerifyAll()
+    self.assertItemsEqual([], owned_project_ids)
+    self.assertItemsEqual([], membered_project_ids)
+    self.assertItemsEqual([], contrib_project_ids)
+
   def SetUpUpdateExtraPerms(self):
     self.project_service.extraperm_tbl.Delete(
         self.cnxn, project_id=234, user_id=111, commit=False)

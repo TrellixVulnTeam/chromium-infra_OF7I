@@ -533,8 +533,10 @@ class ProjectService(object):
     membered_project_ids = set()
     contrib_project_ids = set()
 
-    rows = self.user2project_tbl.Select(
-        cnxn, cols=['project_id', 'role_name'], user_id=effective_ids)
+    rows = []
+    if effective_ids:
+      rows = self.user2project_tbl.Select(
+          cnxn, cols=['project_id', 'role_name'], user_id=effective_ids)
 
     for project_id, role_name in rows:
       if role_name == 'owner':
