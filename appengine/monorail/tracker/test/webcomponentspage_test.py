@@ -38,16 +38,6 @@ class WebComponentsPageTest(unittest.TestCase):
     self.servlet = webcomponentspage.WebComponentsPage(
         'req', 'res', services=self.services)
 
-  def testIssueListPage_OldUiUrl(self):
-    mr = testing_helpers.MakeMonorailRequest(
-        user_info={'user_id': 111},
-        path='/p/proj/issues/list?q=hello',
-        services=self.services)
-
-    page_data = self.servlet.GatherPageData(mr)
-    self.assertTrue(
-        page_data['old_ui_url'].endswith('/p/proj/issues/list_old?q=hello'))
-
   def testHotlistPage_OldUiUrl(self):
     mr = testing_helpers.MakeMonorailRequest(
         user_info={'user_id': 111},

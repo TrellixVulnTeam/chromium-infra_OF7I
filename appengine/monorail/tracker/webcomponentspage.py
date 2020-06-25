@@ -44,9 +44,7 @@ class WebComponentsPage(servlet.Servlet):
     # Create link to view in old UI for the list view pages.
     old_ui_url = None
     url = mr.request.url
-    if 'issues/list' in url:
-      old_ui_url = url.replace('issues/list', 'issues/list_old')
-    elif '/hotlists/' in url:
+    if '/hotlists/' in url:
       hotlist = self.services.features.GetHotlist(mr.cnxn, mr.hotlist_id)
       if '/people' in url:
         old_ui_url = '/u/%s/hotlists/%s/people' % (
