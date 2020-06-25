@@ -193,7 +193,7 @@ export class MrHeader extends connectStore(LitElement) {
   _renderNonProjectScope() {
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <a class="hamburger-icon" title="Main menu">
+      <a class="hamburger-icon" title="Main menu" hidden>
         <i class="material-icons">menu</i>
       </a>
       ${this._headerTitle ?
