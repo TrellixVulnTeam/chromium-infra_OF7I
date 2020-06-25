@@ -258,6 +258,8 @@ export class MrApp extends connectStore(LitElement) {
 
     const postRouteHandler = this._postRouteHandler.bind(this);
 
+    // Populate the project route parameter before _preRouteHandler runs.
+    page('/p/:project/*', (_ctx, next) => next());
     page('*', this._preRouteHandler.bind(this));
 
     page('/hotlists/:hotlist', (ctx) => {
@@ -272,8 +274,7 @@ export class MrApp extends connectStore(LitElement) {
         this._loadHotlistSettingsPage.bind(this), postRouteHandler);
 
     page('/p', '/projects');
-    page('/projects', this._loadProjectsPage.bind(this));
-    page('/p/:project/*', this._selectProject.bind(this));
+    page('/projects', this._loadProjectsPage.bind(this), postRouteHandler);
     page('/p/:project/issues/list', this._loadListPage.bind(this),
         postRouteHandler);
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this),
@@ -338,6 +339,8 @@ export class MrApp extends connectStore(LitElement) {
     });
     ctx.queryParams = lowerCaseParams;
 
+    this._selectProject(ctx.params.project);
+
     next();
   }
 
@@ -392,17 +395,19 @@ export class MrApp extends connectStore(LitElement) {
   }
 
   /**
-   * Handler that runs after a project page has loaded.
-   * @param {PageJS.Context} ctx A page.js Context containing routing state.
-   * @param {function} next Passes execution on to the next registered callback.
+   * Helper to manage syncing project route state to Redux.
+   * @param {string=} project displayName for a referenced project.
+   *   Defaults to null for consistency with Redux.
    */
-  _selectProject(ctx, next) {
-    if (projectV0.viewedProjectName(store.getState()) !== ctx.params.project) {
-      store.dispatch(projectV0.select(ctx.params.project));
-      store.dispatch(projectV0.fetch(ctx.params.project));
+  _selectProject(project = null) {
+    if (projectV0.viewedProjectName(store.getState()) !== project) {
+      // Note: We want to update the project even if the new project
+      // is null.
+      store.dispatch(projectV0.select(project));
+      if (project) {
+        store.dispatch(projectV0.fetch(project));
+      }
     }
-
-    next();
   }
 
   /**

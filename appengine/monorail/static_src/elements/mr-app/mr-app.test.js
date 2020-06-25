@@ -92,7 +92,7 @@ describe('mr-app', () => {
   });
 
   it('_preRouteHandler calls next()', () => {
-    const ctx = {};
+    const ctx = {params: {}};
 
     element._preRouteHandler(ctx, next);
 
@@ -101,7 +101,7 @@ describe('mr-app', () => {
 
   it('_preRouteHandler does not call next() on same page nav', () => {
     element._lastContext = {path: '123'};
-    const ctx = {path: '123'};
+    const ctx = {params: {}, path: '123'};
 
     element._preRouteHandler(ctx, next);
 
@@ -110,14 +110,15 @@ describe('mr-app', () => {
   });
 
   it('_preRouteHandler parses queryParams', () => {
-    const ctx = {querystring: 'q=owner:me&colspec=Summary'};
+    const ctx = {params: {}, querystring: 'q=owner:me&colspec=Summary'};
     element._preRouteHandler(ctx, next);
 
     assert.deepEqual(ctx.queryParams, {q: 'owner:me', colspec: 'Summary'});
   });
 
   it('_preRouteHandler ignores case for queryParams keys', () => {
-    const ctx = {querystring: 'Q=owner:me&ColSpeC=Summary&x=owner'};
+    const ctx = {params: {},
+      querystring: 'Q=owner:me&ColSpeC=Summary&x=owner'};
     element._preRouteHandler(ctx, next);
 
     assert.deepEqual(ctx.queryParams, {q: 'owner:me', colspec: 'Summary',
@@ -125,7 +126,8 @@ describe('mr-app', () => {
   });
 
   it('_preRouteHandler ignores case for queryParams keys', () => {
-    const ctx = {querystring: 'Q=owner:me&ColSpeC=Summary&x=owner'};
+    const ctx = {params: {},
+      querystring: 'Q=owner:me&ColSpeC=Summary&x=owner'};
     element._preRouteHandler(ctx, next);
 
     assert.deepEqual(ctx.queryParams, {q: 'owner:me', colspec: 'Summary',
@@ -157,17 +159,17 @@ describe('mr-app', () => {
 
     it('scrolls page to top on initial load', () => {
       element._lastContext = null;
-      const ctx = {path: '1234'};
+      const ctx = {params: {}, path: '1234'};
       element._postRouteHandler(ctx, next);
 
       sinon.assert.calledWith(window.scrollTo, 0, 0);
     });
 
     it('scrolls page to top on parh change', () => {
-      element._lastContext = {pathname: '/list', path: '/list?q=123',
-        querystring: '?q=123', queryParams: {q: '123'}};
-      const ctx = {pathname: '/other', path: '/other?q=123',
-        querystring: '?q=123', queryParams: {q: '123'}};
+      element._lastContext = {params: {}, pathname: '/list',
+        path: '/list?q=123', querystring: '?q=123', queryParams: {q: '123'}};
+      const ctx = {params: {}, pathname: '/other',
+        path: '/other?q=123', querystring: '?q=123', queryParams: {q: '123'}};
 
       element._postRouteHandler(ctx, next);
 
@@ -264,9 +266,7 @@ describe('mr-app', () => {
       const projectName = 'chromium';
       assert.notEqual(store.getState().projectV0.name, projectName);
 
-      element._selectProject(
-          {params: {project: projectName}},
-          next);
+      element._selectProject(projectName);
 
       sinon.assert.calledTwice(store.dispatch);
     });
@@ -280,11 +280,23 @@ describe('mr-app', () => {
 
       assert.equal(store.getState().projectV0.name, projectName);
 
-      element._selectProject(
-          {params: {project: projectName}},
-          next);
+      element._selectProject(projectName);
 
       sinon.assert.notCalled(store.dispatch);
+    });
+
+    it('selects without fetching when transitioning to null', () => {
+      const projectName = 'chromium';
+
+      store.dispatch.restore();
+      store.dispatch(select(projectName));
+      sinon.spy(store, 'dispatch');
+
+      assert.equal(store.getState().projectV0.name, projectName);
+
+      element._selectProject(null);
+
+      sinon.assert.calledOnce(store.dispatch);
     });
   });
 });
