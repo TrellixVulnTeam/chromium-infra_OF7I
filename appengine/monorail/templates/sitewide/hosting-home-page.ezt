@@ -22,6 +22,12 @@
   [end]
 [end]
 
+<a href="/projects" style="display: block; padding: 0.5em 8px; width: 50%;
+  text-align: center; margin: auto; border: var(--chops-normal-border);
+  border-radius: 8px;">
+Preview a new project list for Monorail.
+</a>
+
 <div id="controls">
   [include "../sitewide/project-list-controls.ezt" arg1]
 </div>
