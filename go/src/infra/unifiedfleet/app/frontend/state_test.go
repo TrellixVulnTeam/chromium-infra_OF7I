@@ -45,3 +45,38 @@ func TestImportStates(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateState(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Update state", t, func() {
+		Convey("happy path", func() {
+			req := &api.UpdateStateRequest{
+				State: &ufspb.StateRecord{
+					ResourceName: "hosts/chromeos1-row2-rack3-host4",
+					State:        ufspb.State_STATE_RESERVED,
+				},
+			}
+			_, err := tf.Fleet.UpdateState(ctx, req)
+			So(err, ShouldBeNil)
+		})
+	})
+}
+
+func TestGetState(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Update state", t, func() {
+		Convey("happy path", func() {
+			req := &api.GetStateRequest{
+				ResourceName: "hosts/chromeos1-row2-rack3-host4",
+			}
+			_, err := tf.Fleet.GetState(ctx, req)
+			So(err, ShouldBeNil)
+		})
+	})
+}

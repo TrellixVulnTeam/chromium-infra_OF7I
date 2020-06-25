@@ -21,6 +21,7 @@ import "infra/unifiedfleet/api/v1/proto/rack_lse.proto";
 import "infra/unifiedfleet/api/v1/proto/network.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 import "infra/unifiedfleet/api/v1/proto/lse_prototype.proto";
+import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 service Fleet {
   // CreateChromePlatform creates a new chromePlatform.
@@ -241,6 +242,13 @@ service Fleet {
 
   // ImportStates imports states of all objects.
   rpc ImportStates(ImportStatesRequest) returns (google.rpc.Status);
+
+  // UpdateState updates the state for a resource.
+  // If the state doesn't exist before, it will create the state record for the resource.
+  rpc UpdateState(UpdateStateRequest) returns (proto.StateRecord);
+
+  // GetState retrieves the state of a resource.
+  rpc GetState(GetStateRequest) returns (proto.StateRecord);
 }
 
 // Contains the required information for creating a ChromePlatform represented in
@@ -1119,4 +1127,19 @@ message ImportStatesRequest {
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;
   }
+}
+
+message GetStateRequest {
+  // The name of the resource to retrieve the state.
+  string resource_name = 1 [
+    (google.api.field_behavior) = REQUIRED
+  ];
+}
+
+message UpdateStateRequest {
+  // The state record to update.
+  proto.StateRecord state = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 2;
 }

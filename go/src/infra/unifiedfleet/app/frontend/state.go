@@ -12,6 +12,7 @@ import (
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 )
@@ -49,4 +50,14 @@ func (fs *FleetServerImpl) ImportStates(ctx context.Context, req *api.ImportStat
 		return s.Proto(), s.Err()
 	}
 	return successStatus.Proto(), nil
+}
+
+// UpdateState updates the state for a resource.
+func (fs *FleetServerImpl) UpdateState(ctx context.Context, req *api.UpdateStateRequest) (response *ufspb.StateRecord, err error) {
+	return nil, nil
+}
+
+// GetState returns the state for a resource.
+func (fs *FleetServerImpl) GetState(ctx context.Context, req *api.GetStateRequest) (response *ufspb.StateRecord, err error) {
+	return nil, nil
 }

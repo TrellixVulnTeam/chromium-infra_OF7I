@@ -1250,3 +1250,37 @@ func (s *DecoratedFleet) ImportStates(ctx context.Context, req *ImportStatesRequ
 	}
 	return
 }
+
+func (s *DecoratedFleet) UpdateState(ctx context.Context, req *UpdateStateRequest) (rsp *proto1.StateRecord, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateState", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateState(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateState", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetState(ctx context.Context, req *GetStateRequest) (rsp *proto1.StateRecord, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetState", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetState(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetState", rsp, err)
+	}
+	return
+}
