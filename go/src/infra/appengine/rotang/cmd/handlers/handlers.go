@@ -195,21 +195,15 @@ func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) 
 		"trooper.json":        h.legacyTrooper,
 		"current_trooper.txt": h.legacyTrooper,
 
-		// Trooper files by rotations.
-		"chrome-ops-devx.json":         h.legacyTrooperByRotation,
-		"chrome-ops-foundation.json":   h.legacyTrooperByRotation,
-		"chrome-ops-client-infra.json": h.legacyTrooperByRotation,
-		"chrome-ops-sre.json":          h.legacyTrooperByRotation,
-
 		// Sheriff files.
 		"sheriff.js":                  h.buildSheriff,
 		"sheriff_gpu.js":              h.legacySheriff,
 		"sheriff_android.js":          h.androidSheriff,
+		"sheriff_ios.js":              h.legacySheriff,
 		"sheriff.json":                h.buildSheriff,
 		"sheriff_perf.json":           h.legacySheriff,
 		"sheriff_gpu.json":            h.legacySheriff,
 		"sheriff_angle.json":          h.legacySheriff,
-		"sheriff_android.json":        h.androidSheriff,
 		"sheriff_ios.json":            h.legacySheriff,
 		"sheriff_perfbot.json":        h.legacySheriff,
 		"sheriff_flutter_engine.json": h.legacySheriff,

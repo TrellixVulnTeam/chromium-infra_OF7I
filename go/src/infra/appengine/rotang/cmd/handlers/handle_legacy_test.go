@@ -125,12 +125,12 @@ func TestLegacySheriff(t *testing.T) {
 			Context: ctx,
 			Writer:  httptest.NewRecorder(),
 		},
-		file: "sheriff.js",
+		file: "sheriff_ios.js",
 		time: midnight,
 		cfgs: []*rotang.Configuration{
 			{
 				Config: rotang.Config{
-					Name: "Build Sheriff",
+					Name: "Chrome iOS Build Sheriff",
 				},
 			},
 		},
@@ -164,12 +164,12 @@ func TestLegacySheriff(t *testing.T) {
 			Context: ctx,
 			Writer:  httptest.NewRecorder(),
 		},
-		file: "sheriff.json",
+		file: "sheriff_ios.json",
 		time: midnight.Add(6 * fullDay),
 		cfgs: []*rotang.Configuration{
 			{
 				Config: rotang.Config{
-					Name: "Build Sheriff",
+					Name: "Chrome iOS Build Sheriff",
 				},
 			},
 		},
@@ -214,7 +214,7 @@ func TestLegacySheriff(t *testing.T) {
 			Context: ctx,
 			Writer:  httptest.NewRecorder(),
 		},
-		file: "sheriff.js",
+		file: "sheriff_ios.js",
 		time: midnight,
 	}, {
 		name:    "Calendar fail",
@@ -224,12 +224,12 @@ func TestLegacySheriff(t *testing.T) {
 			Context: ctx,
 			Writer:  httptest.NewRecorder(),
 		},
-		file: "sheriff.json",
+		file: "sheriff_ios.json",
 		time: midnight.Add(6 * fullDay),
 		cfgs: []*rotang.Configuration{
 			{
 				Config: rotang.Config{
-					Name: "Build Sheriff",
+					Name: "Chrome iOS Build Sheriff",
 				},
 			},
 		},
@@ -447,253 +447,6 @@ func TestLegacyTroopers(t *testing.T) {
 			},
 		},
 		file: "unknown_trooper.txt",
-	}, {
-		name: "Success CCI trooper by rotation",
-		ctx: &router.Context{
-			Context: ctx,
-		},
-		time:       midnight,
-		legacyFunc: h.legacyTrooperByRotation,
-		cfg: rotang.Configuration{
-			Config: rotang.Config{
-				Name: cciRota,
-			},
-			Members: []rotang.ShiftMember{
-				{
-					Email:     "primary@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary1@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary2@oncall.com",
-					ShiftName: "external",
-				},
-			},
-		},
-		members: []rotang.Member{
-			{
-				Email: "primary@oncall.com",
-			}, {
-				Email: "secondary1@oncall.com",
-			}, {
-				Email: "secondary2@oncall.com",
-			},
-		},
-		shifts: []rotang.ShiftEntry{
-			{
-				StartTime: midnight.Add(-1 * fullDay),
-				EndTime:   midnight.Add(fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email:     "primary@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary1@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary2@oncall.com",
-						ShiftName: "external",
-					},
-				},
-			},
-		},
-		file: "chrome-ops-client-infra.json",
-		want: `{"primary":"primary@oncall.com","secondaries":["secondary1@oncall.com","secondary2@oncall.com"],"updated_unix_timestamp":1143849600}` + "\n",
-	}, {
-		name: "Success Foundation trooper by rotation",
-		ctx: &router.Context{
-			Context: ctx,
-		},
-		time:       midnight,
-		legacyFunc: h.legacyTrooperByRotation,
-		cfg: rotang.Configuration{
-			Config: rotang.Config{
-				Name: "Foundation-Trooper",
-			},
-			Members: []rotang.ShiftMember{
-				{
-					Email:     "primary@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary1@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary2@oncall.com",
-					ShiftName: "external",
-				},
-			},
-		},
-		members: []rotang.Member{
-			{
-				Email: "primary@oncall.com",
-			}, {
-				Email: "secondary1@oncall.com",
-			}, {
-				Email: "secondary2@oncall.com",
-			},
-		},
-		shifts: []rotang.ShiftEntry{
-			{
-				StartTime: midnight.Add(-1 * fullDay),
-				EndTime:   midnight.Add(fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email:     "primary@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary1@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary2@oncall.com",
-						ShiftName: "external",
-					},
-				},
-			},
-		},
-		file: "chrome-ops-foundation.json",
-		want: `{"primary":"primary@oncall.com","secondaries":["secondary1@oncall.com","secondary2@oncall.com"],"updated_unix_timestamp":1143849600}` + "\n",
-	}, {
-		name: "Success DevX trooper by rotation",
-		ctx: &router.Context{
-			Context: ctx,
-		},
-		time:       midnight,
-		legacyFunc: h.legacyTrooperByRotation,
-		cfg: rotang.Configuration{
-			Config: rotang.Config{
-				Name: "DevX Trooper",
-			},
-			Members: []rotang.ShiftMember{
-				{
-					Email:     "primary@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary1@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary2@oncall.com",
-					ShiftName: "external",
-				},
-			},
-		},
-		members: []rotang.Member{
-			{
-				Email: "primary@oncall.com",
-			}, {
-				Email: "secondary1@oncall.com",
-			}, {
-				Email: "secondary2@oncall.com",
-			},
-		},
-		shifts: []rotang.ShiftEntry{
-			{
-				StartTime: midnight.Add(-1 * fullDay),
-				EndTime:   midnight.Add(fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email:     "primary@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary1@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary2@oncall.com",
-						ShiftName: "external",
-					},
-				},
-			},
-		},
-		file: "chrome-ops-devx.json",
-		want: `{"primary":"primary@oncall.com","secondaries":["secondary1@oncall.com","secondary2@oncall.com"],"updated_unix_timestamp":1143849600}` + "\n",
-	}, {
-		name: "Success DevX trooper by rotation",
-		ctx: &router.Context{
-			Context: ctx,
-		},
-		time:       midnight,
-		legacyFunc: h.legacyTrooperByRotation,
-		cfg: rotang.Configuration{
-			Config: rotang.Config{
-				Name: "SRE-Trooper",
-			},
-			Members: []rotang.ShiftMember{
-				{
-					Email:     "primary@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary1@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary2@oncall.com",
-					ShiftName: "external",
-				},
-			},
-		},
-		members: []rotang.Member{
-			{
-				Email: "primary@oncall.com",
-			}, {
-				Email: "secondary1@oncall.com",
-			}, {
-				Email: "secondary2@oncall.com",
-			},
-		},
-		shifts: []rotang.ShiftEntry{
-			{
-				StartTime: midnight.Add(-1 * fullDay),
-				EndTime:   midnight.Add(fullDay),
-				OnCall: []rotang.ShiftMember{
-					{
-						Email:     "primary@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary1@oncall.com",
-						ShiftName: "external",
-					}, {
-						Email:     "secondary2@oncall.com",
-						ShiftName: "external",
-					},
-				},
-			},
-		},
-		file: "chrome-ops-sre.json",
-		want: `{"primary":"primary@oncall.com","secondaries":["secondary1@oncall.com","secondary2@oncall.com"],"updated_unix_timestamp":1143849600}` + "\n",
-	}, {
-		name: "DevX nobody on-call",
-		ctx: &router.Context{
-			Context: ctx,
-		},
-		time:       midnight,
-		legacyFunc: h.legacyTrooperByRotation,
-		cfg: rotang.Configuration{
-			Config: rotang.Config{
-				Name: "SRE-Trooper",
-			},
-			Members: []rotang.ShiftMember{
-				{
-					Email:     "primary@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary1@oncall.com",
-					ShiftName: "external",
-				}, {
-					Email:     "secondary2@oncall.com",
-					ShiftName: "external",
-				},
-			},
-		},
-		members: []rotang.Member{
-			{
-				Email: "primary@oncall.com",
-			}, {
-				Email: "secondary1@oncall.com",
-			}, {
-				Email: "secondary2@oncall.com",
-			},
-		},
-		file: "chrome-ops-devx.json",
-		want: `{"primary":"None","secondaries":[],"updated_unix_timestamp":1143936000}` + "\n",
 	},
 	}
 
