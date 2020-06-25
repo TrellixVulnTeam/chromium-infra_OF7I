@@ -66,8 +66,8 @@ func CreateAuditTask(ctx context.Context, botID string) (string, error) {
 	if err != nil {
 		return "", errors.Annotate(err, "failed to obtain swarming client").Err()
 	}
-	expSec := int64(7200)          // 2 hours
-	execTimeoutSecs := int64(7200) // 2 hours
+	expSec := int64(4 * 60 * 60)
+	execTimeoutSecs := int64(6 * 60 * 60)
 	taskURL, err := runTaskByBotID(ctx, at, sc, botID, expSec, execTimeoutSecs)
 	if err != nil {
 		return "", errors.Annotate(err, "fail to create audit task for %s", botID).Err()
