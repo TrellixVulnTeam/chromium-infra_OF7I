@@ -20,6 +20,7 @@ from services import bigquery_helper
 from services import step_util
 from services import test_tag_util
 
+
 _DEFAULT_LUCI_PROJECT = 'chromium'
 
 _DEFAULT_CONFIG = 'Unknown'
@@ -148,7 +149,7 @@ def _CreateBigqueryRow(row, component_mapping, team_mapping):
       'team':
           team,
       'insert_time':
-          datetime.now()
+          time_util.GetUTCNow().strftime('%Y-%m-%d %H:%M:%S.%f%z')
   }
   return bqrow
 
