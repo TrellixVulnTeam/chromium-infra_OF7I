@@ -15,6 +15,6 @@ fi
 version="${1}"
 
 find . | grep -F '/' | grep -F -v './update.sh' | grep -F -v 'README.monorail' | \
-    sort -r | xargs -r rm -r
+    sort -r | xargs rm -r
 curl -sL https://github.com/etingof/pyasn1-modules/archive/v"${version}".tar.gz | \
     tar xvz --strip-components 2 pyasn1-modules-"${version}"/pyasn1_modules

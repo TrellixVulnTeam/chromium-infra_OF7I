@@ -15,6 +15,6 @@ fi
 version="${1}"
 
 find . | grep -F '/' | grep -F -v './update.sh' | grep -F -v 'README.monorail' | \
-    sort -r | xargs -r rm -r
+    sort -r | xargs rm -r
 curl -sL https://github.com/googleapis/google-auth-library-python/archive/v"${version}".tar.gz | \
     tar xvz --strip-components 2 google-auth-library-python-"${version}"/google

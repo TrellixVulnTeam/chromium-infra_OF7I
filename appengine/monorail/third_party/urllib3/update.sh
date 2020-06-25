@@ -15,6 +15,6 @@ fi
 version="${1}"
 
 find . | grep -F '/' | grep -F -v './update.sh' | grep -F -v 'README.monorail' | \
-    sort -r | xargs -r rm -r
+    sort -r | xargs rm -r
 curl -sL https://github.com/urllib3/urllib3/archive/"${version}".tar.gz | \
     tar xvz --strip-components 3 urllib3-"${version}"/src/urllib3
