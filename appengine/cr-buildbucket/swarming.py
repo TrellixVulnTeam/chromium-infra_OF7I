@@ -57,6 +57,10 @@ import tokens
 import tq
 import user
 
+# Name of a push task queue that handles the first attempt of the swarming task
+# creation; a push task per build.
+CREATE_QUEUE_NAME = 'swarming-build-create'
+
 # Name of a push task queue that synchronizes a buildbucket build and a swarming
 # task; a push task per build.
 SYNC_QUEUE_NAME = 'swarming-build-sync'
@@ -647,7 +651,7 @@ def _create_swarming_task(build):
 class TaskSyncBuild(webapp2.RequestHandler):  # pragma: no cover
   """Sync a LUCI build with swarming."""
 
-  @decorators.require_taskqueue(SYNC_QUEUE_NAME)
+  @decorators.require_taskqueue(CREATE_QUEUE_NAME, SYNC_QUEUE_NAME)
   def post(self, build_id):  # pylint: disable=unused-argument
     body = json.loads(self.request.body)
     _sync_build(body['id'], body['generation'])

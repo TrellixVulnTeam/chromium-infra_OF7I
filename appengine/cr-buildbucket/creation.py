@@ -373,7 +373,7 @@ class NewBuild(object):
           build_infra.put_async(),
       ]
       if sync_task:
-        futs.append(tq.enqueue_async(swarming.SYNC_QUEUE_NAME, [sync_task]))
+        futs.append(tq.enqueue_async(swarming.CREATE_QUEUE_NAME, [sync_task]))
       yield futs
 
     yield txn_async()

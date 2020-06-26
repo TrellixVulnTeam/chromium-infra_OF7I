@@ -3,6 +3,9 @@ queue:
 - name: swarming-build-sync
   target: backend
   rate: 500/s
+- name: swarming-build-create
+  target: backend
+  rate: 500/s
 - name: backend-default
   target: backend
   rate: 100/s
