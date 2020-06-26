@@ -15,35 +15,36 @@ from waterfall.test import wf_testcase
 # https://crbug.com/947753.
 class FlakeTest(wf_testcase.WaterfallTestCase):
 
-  @parameterized.expand(
-      [({
+  @parameterized.expand([
+      ({
           'isolate_return_value': 'isolate_target',
           'isolate_fn_call_count': 1,
           'canonical_return_value': None,
           'canonical_fn_call_count': 0,
           'expected_step_name': 'isolate_target',
       },),
-       ({
-           'isolate_return_value': 'isolate_webkit_layout_tests',
-           'isolate_fn_call_count': 1,
-           'canonical_return_value': None,
-           'canonical_fn_call_count': 0,
-           'expected_step_name': 'webkit_layout_tests'
-       },),
-       ({
-           'isolate_return_value': None,
-           'isolate_fn_call_count': 1,
-           'canonical_return_value': 'canonical_name',
-           'canonical_fn_call_count': 1,
-           'expected_step_name': 'canonical_name'
-       },),
-       ({
-           'isolate_return_value': None,
-           'isolate_fn_call_count': 1,
-           'canonical_return_value': None,
-           'canonical_fn_call_count': 1,
-           'expected_step_name': 'step_name'
-       },)])
+      ({
+          'isolate_return_value': 'isolate_webkit_layout_tests',
+          'isolate_fn_call_count': 1,
+          'canonical_return_value': None,
+          'canonical_fn_call_count': 0,
+          'expected_step_name': 'webkit_layout_tests'
+      },),
+      ({
+          'isolate_return_value': None,
+          'isolate_fn_call_count': 1,
+          'canonical_return_value': 'canonical_name',
+          'canonical_fn_call_count': 1,
+          'expected_step_name': 'canonical_name'
+      },),
+      ({
+          'isolate_return_value': None,
+          'isolate_fn_call_count': 1,
+          'canonical_return_value': None,
+          'canonical_fn_call_count': 1,
+          'expected_step_name': 'step_name'
+      },)
+  ])
   @mock.patch.object(step_util, 'GetCanonicalStepName')
   @mock.patch.object(step_util, 'GetIsolateTargetName')
   def testNormalizeStepName(self, cases, mock_isolate, mock_canonical):
@@ -201,6 +202,10 @@ class FlakeTest(wf_testcase.WaterfallTestCase):
     self.assertEqual('a.html', Flake.NormalizeTestName('a/b.html'))
     self.assertEqual('a/b.html',
                      Flake.NormalizeTestName('a/b.html', 'blink_web_tests'))
+    self.assertEqual(
+        'rendering.desktop/aquarium',
+        Flake.NormalizeTestName('rendering.desktop/aquarium',
+                                'rendering_representative_perf_tests'))
 
   def testGetTestLabelName(self):
     self.assertEqual('suite.test',
@@ -226,6 +231,11 @@ class FlakeTest(wf_testcase.WaterfallTestCase):
     self.assertEqual(
         'a/b.html?*',
         Flake.GetTestLabelName('a/b.html?1000-2000', 'blink_web_tests'))
+
+    self.assertEqual(
+        'rendering.desktop/aquarium',
+        Flake.GetTestLabelName('rendering.desktop/aquarium',
+                               'rendering_representative_perf_tests'))
 
   def testGetId(self):
     luci_project = 'chromium'

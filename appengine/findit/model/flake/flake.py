@@ -186,8 +186,8 @@ class Flake(ndb.Model):
     # canonical_step_name or step_name.split()[0].
     logging.error((
         'Failed to obtain isolate_target_name for step: %s in build: %s/%s/%s. '
-        'Fall back to use canonical_step_name.') % (step_name, master_name,
-                                                    builder_name, build_number))
+        'Fall back to use canonical_step_name.') %
+                  (step_name, master_name, builder_name, build_number))
     canonical_step_name = step_util.LegacyGetCanonicalStepName(
         master_name=master_name,
         builder_name=builder_name,
@@ -280,10 +280,12 @@ class Flake(ndb.Model):
     Returns:
       Normalized version of the given test name.
     """
-    if step_name and (
-        'webkit_layout_tests' in step_name or 'blink_web_tests' in step_name):
+    if step_name and ('webkit_layout_tests' in step_name or
+                      'blink_web_tests' in step_name):
       return test_name_util.RemoveSuffixFromBlinkWebTestName(
           test_name_util.RemoveVirtualLayersFromBlinkWebTestName(test_name))
+    if step_name and 'rendering_representative_perf_tests' in step_name:
+      return test_name
 
     test_name = test_name_util.RemoveAllPrefixesFromGTestName(
         test_name_util.RemoveParametersFromGTestName(test_name))
@@ -308,8 +310,9 @@ class Flake(ndb.Model):
       A test name with the variable parts being replaced with mask '*'.
     """
     if 'webkit_layout_tests' in step_name or 'blink_web_tests' in step_name:
-      return test_name_util.ReplaceSuffixFromBlinkWebTestNameWithMask(
-          test_name)
+      return test_name_util.ReplaceSuffixFromBlinkWebTestNameWithMask(test_name)
+    if step_name and 'rendering_representative_perf_tests' in step_name:
+      return test_name
 
     return test_name_util.ReplaceAllPrefixesFromGtestNameWithMask(
         test_name_util.ReplaceParametersFromGtestNameWithMask(test_name))
