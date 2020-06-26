@@ -113,7 +113,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     #   code with v3/ModifyIssue
 
     # with work_env.WorkEnv(mc, self.services) as we:
-    #   created_issue = we.MakeIssueFromTemplate(issue, description, delta)
+    #   created_issue = we.MakeIssueFromTemplate(template, description, delta)
 
     # Return newly created API issue.
     # return converters.ConvertIssue(created_issue)
