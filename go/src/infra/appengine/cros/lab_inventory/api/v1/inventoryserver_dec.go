@@ -226,3 +226,37 @@ func (s *DecoratedInventory) DeviceConfigsExists(ctx context.Context, req *Devic
 	}
 	return
 }
+
+func (s *DecoratedInventory) GetDeviceManualRepairRecords(ctx context.Context, req *GetDeviceManualRepairRecordsRequest) (rsp *GetDeviceManualRepairRecordsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetDeviceManualRepairRecords", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetDeviceManualRepairRecords(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetDeviceManualRepairRecords", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedInventory) UpdateDeviceManualRepairRecords(ctx context.Context, req *UpdateDeviceManualRepairRecordsRequest) (rsp *UpdateDeviceManualRepairRecordsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateDeviceManualRepairRecords", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateDeviceManualRepairRecords(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateDeviceManualRepairRecords", rsp, err)
+	}
+	return
+}

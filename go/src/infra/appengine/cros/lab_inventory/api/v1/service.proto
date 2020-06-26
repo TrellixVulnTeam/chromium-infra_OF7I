@@ -14,6 +14,8 @@ import "go.chromium.org/chromiumos/infra/proto/src/device/config.proto";
 import "go.chromium.org/chromiumos/infra/proto/src/manufacturing/config.proto";
 import "device/config_id.proto";
 import "infra/libs/fleet/protos/asset.proto";
+import "infra/appengine/cros/lab_inventory/api/v1/repair_record.proto";
+import "google/protobuf/timestamp.proto";
 
 // The RPCs below to get/add/update/delete devices support batch operation, and
 // the response contains the detail result for each device. The RPCs return OK
@@ -56,6 +58,12 @@ service Inventory {
 
   // DeviceConfigsExists checks if the device_configs exists in the datastore
   rpc DeviceConfigsExists(DeviceConfigsExistsRequest) returns (DeviceConfigsExistsResponse);
+
+  // Get devices info and combine with repair information if exists in datastore
+  rpc GetDeviceManualRepairRecords(GetDeviceManualRepairRecordsRequest) returns (GetDeviceManualRepairRecordsResponse);
+
+  // Update devices repair action and state in datastore
+  rpc UpdateDeviceManualRepairRecords(UpdateDeviceManualRepairRecordsRequest) returns (UpdateDeviceManualRepairRecordsResponse);
 }
 
 message DeviceConfigsExistsRequest {
@@ -226,3 +234,17 @@ message AssetIDResponse {
   repeated AssetIDResult passed = 1;
   repeated AssetIDResult failed = 2;
 }
+
+message GetDeviceManualRepairRecordsRequest {
+  repeated string hostname = 1;
+}
+
+message GetDeviceManualRepairRecordsResponse {
+  repeated DeviceManualRepairRecord device_repair_record = 1;
+}
+
+message UpdateDeviceManualRepairRecordsRequest {
+  repeated DeviceManualRepairRecord device_repair_record = 1;
+}
+
+message UpdateDeviceManualRepairRecordsResponse {}

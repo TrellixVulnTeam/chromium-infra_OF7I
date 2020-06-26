@@ -1,0 +1,92 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package inventory;
+
+option go_package = "infra/appengine/cros/lab_inventory/api/v1;api";
+
+import "google/protobuf/timestamp.proto";
+
+// Next tag: 18
+message DeviceManualRepairRecord {
+  string hostname = 1;
+  string asset_tag = 2;
+
+  // The triggering device that led you to work on this repair.
+  //
+  // ie. If the DUT repairs dashboard led you to work on this device, then it is
+  // a DUT repair. If the Servo or Labstation dashboard lead to you work on this
+  // device, then it is a Servo or Labstation repair.
+  // Next tag: 3
+  enum RepairTargetType {
+    TYPE_DUT = 0;
+    TYPE_LABSTATION = 1;
+    TYPE_SERVO = 2;
+  };
+  RepairTargetType repair_target_type = 3;
+
+  // State for tracking manual repair progress.
+  // Next tag: 4
+  enum RepairState {
+    STATE_INVALID = 0;
+    STATE_NOT_STARTED = 1;
+    STATE_IN_PROGRESS = 2;
+    STATE_COMPLETED = 3;
+  }
+  RepairState repair_state = 4;
+
+  // Buganizer bug tracking https://b/XXXXXXXXX.
+  string buganizer_bug_url = 5;
+  // Chromium bug tracking https://crbug.com/XXXXXXX.
+  string chromium_bug_url = 6;
+  // DUT repair failure description.
+  string dut_repair_failure_description = 7;
+  // The last DUT repair verifier that failed.
+  string dut_verifier_failure_description = 8;
+  // Servo repair failure description.
+  string servo_repair_failure_description = 9;
+  // The last Servo repair verifier that failed.
+  string servo_verifier_failure_description = 10;
+  // Diagnosis of what is wrong with the device.
+  string diagnosis = 11;
+  // The procedure that fixed the device. This can be a best guess. Assumption
+  // is that admin/skylab repairs will run to verify the repair post fix.
+  string repair_procedure = 12;
+
+  // Standard manual repair actions taken to fix the device.
+  // Next tag: 7
+  enum ManualRepairAction {
+    // Fix Labstation
+    ACTION_FIX_LABSTATION = 0;
+    // Fix Servo
+    ACTION_FIX_SERVO = 1;
+    // Fix Yoshi cable / servo_micro
+    ACTION_FIX_YOSHI_CABLE = 2;
+    // Visual Inspection
+    ACTION_VISUAL_INSPECTION = 3;
+    // Check / Fix Power for DUT
+    ACTION_DUT_POWER = 4;
+    // Troubleshoot DUT
+    ACTION_TROUBLESHOOT_DUT = 5;
+    // Reimage / Reflash DUT
+    ACTION_REIMAGE_DUT = 6;
+  }
+  repeated ManualRepairAction manual_repair_actions = 13;
+
+  // Input by Lab Tech as a best guess on how much time (in minutes) it took to
+  // investigate and resolve the repair. This is to give a better repair time
+  // estimate that excludes time spent waiting. Record updations may not happen
+  // right after a repair is completed so calculating from other timestamps may
+  // not accurately portray the time a Lab Tech spent actually investigating and
+  // repairing the device.
+  int32 time_taken = 14;
+  // Timestamp when repair record was created.
+  google.protobuf.Timestamp created_time = 15;
+  // Timestamp when repair record was last updated.
+  google.protobuf.Timestamp updated_time = 16;
+  // Timestamp when repair record was marked completed.
+  google.protobuf.Timestamp completed_time = 17;
+}
