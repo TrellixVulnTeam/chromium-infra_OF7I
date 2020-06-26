@@ -76,11 +76,16 @@ func (c *auditTaskCmd) innerExecute(ctx context.Context, f *flag.FlagSet, _ ...i
 	defer res.Close()
 
 	ac := res.apiClient()
+	var errors []error
 	for _, a := range c.actions {
 		if err := c.runAction(ctx, ac, a); err != nil {
-			sendHostStatus(ctx, ac, []string{c.host}, event.HostNeedsReset)
-			return err
+			// Allows to run all actions and collect errors.
+			errors = append(errors, err)
 		}
+	}
+	if len(errors) > 0 {
+		sendHostStatus(ctx, ac, []string{c.host}, event.HostNeedsReset)
+		return fmt.Errorf("errors %s", errors)
 	}
 	return nil
 }
