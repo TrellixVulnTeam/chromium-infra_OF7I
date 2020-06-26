@@ -60,6 +60,9 @@ dispatch:
   - url: "*/p/fuchsia/coverage*"
     module: code-coverage-frontend
 
+  - url: "*/p/openscreen/coverage*"
+    module: code-coverage-frontend
+
   # TODO(crbug.com/924573): Remove once the migration is done.
   - url: "*/coverage*"
     module: code-coverage-frontend
