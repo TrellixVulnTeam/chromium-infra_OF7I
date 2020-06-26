@@ -15,6 +15,8 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
+
+	"infra/appengine/cros/lab_inventory/app/config"
 )
 
 var deviceConfigJSON = `
@@ -282,12 +284,23 @@ func (gc *fakeGitClient) SwitchProject(ctx context.Context, project string) erro
 }
 
 func (gsClient *fakeGSClient) GetFile(ctx context.Context, path string) ([]byte, error) {
-	return []byte{}, nil
+	b, err := ioutil.ReadFile("test_program_configs.json")
+	if err != nil {
+		return []byte{}, err
+	}
+	return b, nil
 }
 
 func TestUpdateDatastoreFromBoxter(t *testing.T) {
 	Convey("Test update device config from boxster", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
+		ctx = config.Use(ctx, &config.Config{
+			ProjectConfigSource: &config.ProjectConfigLocation{
+				ProgramConfigsGsPath: "gs://fake-path/config.json",
+				GitilesHost:          "https://fake-host.appspot.com",
+			},
+		})
+
 		gitilesMock := &fakeGitClient{}
 		gsClientMock := &fakeGSClient{}
 		Convey("Happy path", func() {

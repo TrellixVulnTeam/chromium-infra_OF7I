@@ -15,6 +15,7 @@ message LuciAuthGroup {
 }
 
 // Config is the configuration data served by luci-config for this app.
+// Next tag: 17
 message Config {
   reserved 1;
 
@@ -49,6 +50,20 @@ message Config {
   // HaRT PubSub Configs
   HaRT hart = 14;
   LuciAuthGroup pubsub_pushers = 15;
+
+  ProjectConfigLocation project_config_source = 16;
+}
+
+// Next tag: 5
+message ProjectConfigLocation {
+  // The gs bucket path for program configs in DLM.
+  string program_configs_gs_path = 1;
+  // The gitiles host for the actual device project configs, e.g. 'chrome-internal.googlesource.com'.
+  string gitiles_host = 2;
+  // The project name for any device project, e.g. "chromeos/programs/galaxy"
+  string project = 3;
+  // The branch to get the config file, e.g. "master"
+  string branch = 4;
 }
 
 message AdminService {

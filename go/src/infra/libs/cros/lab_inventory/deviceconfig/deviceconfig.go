@@ -11,10 +11,12 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
 
+	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/libs/cros/git"
 	"infra/libs/cros/gs"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
@@ -88,6 +90,16 @@ func UpdateDatastore(ctx context.Context, client gitiles.GitilesClient, project,
 
 // UpdateDatastoreFromBoxster updates datastore from boxster (go/boxster)
 func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsClient gs.ClientInterface) error {
+	// gc is used in later CLs to download device project configs.
+	cfg := config.Get(ctx).GetProjectConfigSource()
+	programs, err := getProgramConfigs(ctx, gsClient, cfg.GetProgramConfigsGsPath())
+	if err != nil {
+		return err
+	}
+	_, err = parsePrograms(programs)
+	if err != nil {
+		return errors.Annotate(err, "UpdateDatastoreFromBoxster: fail to parse programs").Err()
+	}
 	return nil
 }
 

@@ -5,12 +5,16 @@
 package deviceconfig
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"go.chromium.org/chromiumos/config/go/api"
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
+
+	"infra/libs/cros/gs"
 )
 
 type gitilesInfo struct {
@@ -34,6 +38,18 @@ type Repo struct {
 	Name       string `json:"name,omitempty"`
 	RepoPath   string `json:"repoPath,omitempty"`
 	ConfigPath string `json:"configPath,omitempty"`
+}
+
+func getProgramConfigs(ctx context.Context, gsClient gs.ClientInterface, p string) (*Programs, error) {
+	b, err := gsClient.GetFile(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+	var programs Programs
+	if err := json.Unmarshal(b, &programs); err != nil {
+		return nil, err
+	}
+	return &programs, nil
 }
 
 func parsePrograms(programs *Programs) ([]*gitilesInfo, error) {
