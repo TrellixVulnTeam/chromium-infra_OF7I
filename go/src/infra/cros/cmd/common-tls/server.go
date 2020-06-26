@@ -5,12 +5,11 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"net"
 	"strings"
-	"sync"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"golang.org/x/crypto/ssh"
@@ -98,51 +97,12 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		stream.Send(resp)
 		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
 	}
-
-	var wg sync.WaitGroup
-	defer wg.Wait()
-
-	stdoutReader, err := session.StdoutPipe()
-	if err != nil {
-		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
-	}
-	stdoutScanner := bufio.NewScanner(stdoutReader)
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for stdoutScanner.Scan() {
-			stdoutResp := &tls.ExecDutCommandResponse{
-				ExitInfo: &tls.ExecDutCommandResponse_ExitInfo{
-					Started: true,
-					Status:  255,
-				},
-				Stdout: stdoutScanner.Bytes(),
-			}
-			stream.Send(stdoutResp)
-		}
-	}()
-
-	// Reading stderr of session and stream to client.
-	stderrReader, err := session.StderrPipe()
-	if err != nil {
-		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
-	}
-	stderrScanner := bufio.NewScanner(stderrReader)
-	go func() {
-		defer wg.Done()
-		for stderrScanner.Scan() {
-			stderrResp := &tls.ExecDutCommandResponse{
-				ExitInfo: &tls.ExecDutCommandResponse_ExitInfo{
-					Started: true,
-					Status:  255,
-				},
-				Stderr: stderrScanner.Bytes(),
-			}
-			stream.Send(stderrResp)
-		}
-	}()
-
 	defer session.Close()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	session.Stdout = &stdout
+	session.Stderr = &stderr
 
 	args := req.GetArgs()
 	if len(args) == 0 {
@@ -166,11 +126,13 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		resp.ExitInfo.ErrorMessage = err.Error()
 	default:
 		resp.ExitInfo.ErrorMessage = err.Error()
+		fmt.Fprintf(&stderr, "tls: unknown SSH session error: %s\n", err)
 	}
 
+	resp.Stdout = stdout.Bytes()
+	resp.Stderr = stderr.Bytes()
 	resp.ExitInfo.Status = 0
 	_ = stream.Send(resp)
-
 	return nil
 }
 
