@@ -66,6 +66,16 @@ func GetStateRecord(ctx context.Context, id string) (*ufspb.StateRecord, error) 
 	return nil, err
 }
 
+// UpdateStateRecord updates a state record in datastore.
+func UpdateStateRecord(ctx context.Context, stateRecord *ufspb.StateRecord) (*ufspb.StateRecord, error) {
+	stateRecord.UpdateTime = ptypes.TimestampNow()
+	pm, err := fleetds.PutSingle(ctx, stateRecord, newRecordEntity)
+	if err == nil {
+		return pm.(*ufspb.StateRecord), err
+	}
+	return nil, err
+}
+
 // ListStateRecords lists all the states
 func ListStateRecords(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.StateRecord, nextPageToken string, err error) {
 	q, err := fleetds.ListQuery(ctx, RecordKind, pageSize, pageToken)

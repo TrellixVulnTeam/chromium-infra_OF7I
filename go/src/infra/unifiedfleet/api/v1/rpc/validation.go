@@ -36,6 +36,7 @@ var (
 	VlanNameFormat                string = "Invalid input - Entity Name pattern should be vlans/{vlan}."
 	MachineLSEPrototypeNameFormat string = "Invalid input - Entity Name pattern should be machineLSEPrototypes/{machineLSEPrototype}."
 	RackLSEPrototypeNameFormat    string = "Invalid input - Entity Name pattern should be rackLSEPrototypes/{rackLSEPrototype}."
+	ResourceFormat                string = "Invalid input - Entity Name pattern should be in a format of resource_names/XXX, resource_names includes machines/racks/vms/hosts/vlans."
 )
 
 var (
@@ -58,6 +59,17 @@ var switchRegex = regexp.MustCompile(`switches\.*`)
 var vlanRegex = regexp.MustCompile(`vlans\.*`)
 var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
+
+// It's used to validate a host or vm in resource_name
+var hostRegex = regexp.MustCompile(`hosts\.*`)
+var vmRegex = regexp.MustCompile(`vms\.*`)
+var resourceRegexs = []*regexp.Regexp{
+	machineRegex,
+	rackRegex,
+	vlanRegex,
+	hostRegex,
+	vmRegex,
+}
 
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
@@ -338,6 +350,29 @@ func (r *CreateNicRequest) Validate() error {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
 	return nil
+}
+
+// Validate validates input requests of UpdateState.
+func (r *UpdateStateRequest) Validate() error {
+	if r.State == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	for _, rg := range resourceRegexs {
+		if err := validateResourceName(rg, "invalid resource name format", r.State.GetResourceName()); err == nil {
+			return nil
+		}
+	}
+	return status.Errorf(codes.InvalidArgument, ResourceFormat)
+}
+
+// Validate validates input requests of GetState.
+func (r *GetStateRequest) Validate() error {
+	for _, rg := range resourceRegexs {
+		if err := validateResourceName(rg, "invalid resource name format", r.GetResourceName()); err == nil {
+			return nil
+		}
+	}
+	return status.Errorf(codes.InvalidArgument, ResourceFormat)
 }
 
 // Validate validates input requests of UpdateNic.

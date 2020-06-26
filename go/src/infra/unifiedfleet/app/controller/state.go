@@ -52,3 +52,13 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, vms []*crims
 	}
 	return &allRes, nil
 }
+
+// UpdateState updates state record for a resource.
+func UpdateState(ctx context.Context, stateRecord *ufspb.StateRecord) (*ufspb.StateRecord, error) {
+	return state.UpdateStateRecord(ctx, stateRecord)
+}
+
+// GetState returns state record for a resource.
+func GetState(ctx context.Context, resourceName string) (*ufspb.StateRecord, error) {
+	return state.GetStateRecord(ctx, resourceName)
+}

@@ -45,7 +45,7 @@ func Exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
 	return res.List(0), nil
 }
 
-// Put Creates or Updates an entity in the datastore
+// Put either creates or updates an entity in the datastore
 func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.Message, error) {
 	entity, err := nf(ctx, pm)
 	if err != nil {
@@ -73,6 +73,23 @@ func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, err
+	}
+	return pm, nil
+}
+
+// PutSingle upserts a single entity in the datastore.
+//
+// If you have a clean intention to create or update an entity, please use Put().
+// This function doesn't need to be called in a transaction.
+func PutSingle(ctx context.Context, pm proto.Message, nf NewFunc) (proto.Message, error) {
+	entity, err := nf(ctx, pm)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
+		return nil, status.Errorf(codes.Internal, InternalError)
+	}
+	if err := datastore.Put(ctx, entity); err != nil {
+		logging.Errorf(ctx, "Failed to put in datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, InternalError)
 	}
 	return pm, nil
 }

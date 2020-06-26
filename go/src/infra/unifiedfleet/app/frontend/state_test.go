@@ -8,10 +8,12 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
 	"google.golang.org/genproto/googleapis/rpc/code"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/state"
 )
 
@@ -59,8 +61,44 @@ func TestUpdateState(t *testing.T) {
 					State:        ufspb.State_STATE_RESERVED,
 				},
 			}
-			_, err := tf.Fleet.UpdateState(ctx, req)
+			res, err := tf.Fleet.UpdateState(ctx, req)
 			So(err, ShouldBeNil)
+			s, err := state.GetStateRecord(ctx, "hosts/chromeos1-row2-rack3-host4")
+			So(err, ShouldBeNil)
+			So(res, ShouldResembleProto, s)
+		})
+		Convey("invalid resource prefix", func() {
+			req := &api.UpdateStateRequest{
+				State: &ufspb.StateRecord{
+					ResourceName: "resources/chromeos1-row2-rack3-host4",
+					State:        ufspb.State_STATE_RESERVED,
+				},
+			}
+			_, err := tf.Fleet.UpdateState(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
+		})
+		Convey("empty resource name", func() {
+			req := &api.UpdateStateRequest{
+				State: &ufspb.StateRecord{
+					ResourceName: "",
+					State:        ufspb.State_STATE_RESERVED,
+				},
+			}
+			_, err := tf.Fleet.UpdateState(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
+		})
+		Convey("invalid characters in resource name", func() {
+			req := &api.UpdateStateRequest{
+				State: &ufspb.StateRecord{
+					ResourceName: "hosts/host1@_@",
+					State:        ufspb.State_STATE_RESERVED,
+				},
+			}
+			_, err := tf.Fleet.UpdateState(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
 		})
 	})
 }
@@ -70,13 +108,52 @@ func TestGetState(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	Convey("Update state", t, func() {
+	Convey("Get state", t, func() {
 		Convey("happy path", func() {
+			s := &ufspb.StateRecord{
+				ResourceName: "hosts/chromeos1-row2-rack3-host4",
+				State:        ufspb.State_STATE_RESERVED,
+			}
+			_, err := state.UpdateStateRecord(ctx, s)
+			So(err, ShouldBeNil)
 			req := &api.GetStateRequest{
 				ResourceName: "hosts/chromeos1-row2-rack3-host4",
 			}
-			_, err := tf.Fleet.GetState(ctx, req)
+			res, err := tf.Fleet.GetState(ctx, req)
 			So(err, ShouldBeNil)
+			So(res, ShouldResembleProto, s)
+		})
+		Convey("valid resource name, but not found", func() {
+			res, err := tf.Fleet.GetState(ctx, &api.GetStateRequest{
+				ResourceName: "hosts/chromeos-fakehost",
+			})
+			So(err, ShouldNotBeNil)
+			So(res, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+		})
+		Convey("invalid resource prefix", func() {
+			req := &api.GetStateRequest{
+				ResourceName: "resources/chromeos1-row2-rack3-host4",
+			}
+			_, err := tf.Fleet.GetState(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
+		})
+		Convey("empty resource name", func() {
+			req := &api.GetStateRequest{
+				ResourceName: "",
+			}
+			_, err := tf.Fleet.GetState(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
+		})
+		Convey("invalid characters in resource name", func() {
+			req := &api.GetStateRequest{
+				ResourceName: "hosts/host1@_@",
+			}
+			_, err := tf.Fleet.GetState(ctx, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.ResourceFormat)
 		})
 	})
 }

@@ -54,10 +54,20 @@ func (fs *FleetServerImpl) ImportStates(ctx context.Context, req *api.ImportStat
 
 // UpdateState updates the state for a resource.
 func (fs *FleetServerImpl) UpdateState(ctx context.Context, req *api.UpdateStateRequest) (response *ufspb.StateRecord, err error) {
-	return nil, nil
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	stateRecord, err := controller.UpdateState(ctx, req.State)
+	if err != nil {
+		return nil, err
+	}
+	return stateRecord, err
 }
 
 // GetState returns the state for a resource.
 func (fs *FleetServerImpl) GetState(ctx context.Context, req *api.GetStateRequest) (response *ufspb.StateRecord, err error) {
-	return nil, nil
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return controller.GetState(ctx, req.ResourceName)
 }
