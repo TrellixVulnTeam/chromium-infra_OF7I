@@ -61,7 +61,7 @@ send_noreply_email_as_format = 'monorail+noreply@%(domain)s'
 # Replica names for -prod, -staging, and -dev may diverge if replicas ever fail.
 # In such cases the db_replica_names list can be overwritten in Part 5.
 db_database_name = 'monorail'
-db_master_name = 'master-g2'
+db_primary_name = 'master-g2'
 db_replica_names = [
         'replica-g2-00', 'replica-g2-01', 'replica-g2-02', 'replica-g2-03',
         'replica-g2-04', 'replica-g2-05', 'replica-g2-06', 'replica-g2-07',
@@ -72,7 +72,7 @@ db_region = 'us-central1'
 db_cnxn_pool_size = 5
 
 # The number of logical database shards used.  Each replica is complete copy
-# of the master, so any replica DB can answer queries about any logical shard.
+# of the primary, so any replica DB can answer queries about any logical shard.
 num_logical_shards = 10
 
 # "Learn more" link for the site home page
@@ -336,8 +336,8 @@ if local_mode:
   site_name = 'Monorail Local'
   num_logical_shards = 10
 
-# Combine the customized info above to make the name of the master DB instance.
-db_instance = db_cloud_project + ':' + db_region + ':' + db_master_name
+# Combine the customized info above to make the name of the primary DB instance.
+db_instance = db_cloud_project + ':' + db_region + ':' + db_primary_name
 
 # Format string for the name of the physical database replicas.
 physical_db_name_format = (db_cloud_project + ':' + db_region + ':%s')

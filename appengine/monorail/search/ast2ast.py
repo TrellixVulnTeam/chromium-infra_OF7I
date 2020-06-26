@@ -18,8 +18,8 @@ The simplified main query is better because:
   + Since less RAM is used to process the main query on each shard, query
     execution time is more consistent with less variability under load.  Less
     variability is good because the user must wait for the slowest shard.
-  + The config tables (LabelDef, StatusDef, etc.) exist only on the master, so
-    they cannot be mentioned in a query that runs on a shard.
+  + The config tables (LabelDef, StatusDef, etc.) exist only on the primary DB,
+    so they cannot be mentioned in a query that runs on a shard.
   + The query string itself is shorter when numeric IDs are substituted, which
     means that we can handle user queries with long lists of labels in a
     reasonable-sized query.

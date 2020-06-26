@@ -73,7 +73,7 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
   `sudo install_name_tool -change libmysqlclient.18.dylib \
   /usr/local/mysql/lib/libmysqlclient.18.dylib \
   /Library/Python/2.7/site-packages/_mysql.so`
-1.  Set up one master SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
+1.  Set up one primary SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
     1. On Debian
         1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
         1.  `mysql --user=root monorail < schema/framework.sql`

@@ -249,16 +249,16 @@ RENAME TABLE ParticipantNotes TO MemberNotes;
 ================================================================
 2013-08-22: renamed issue_id to local_id
 
--- On master and all shards
+-- On primary and all shards
 ALTER TABLE Issue CHANGE issue_id local_id INT NOT NULL;
 
--- On master only
+-- On primary only
 ALTER TABLE IssueFormerLocations CHANGE issue_id local_id INT NOT NULL;
 
 ================================================================
 2013-08-24: renamed iid to issue_id
 
--- On master and all shards
+-- On primary and all shards
 
 ALTER TABLE IssueSummary DROP FOREIGN KEY IssueSummary_ibfk_1;
 ALTER TABLE IssueSummary CHANGE iid issue_id INT NOT NULL;
@@ -294,7 +294,7 @@ ALTER TABLE Issue2FieldValue DROP FOREIGN KEY Issue2FieldValue_ibfk_1;
 ALTER TABLE Issue2FieldValue CHANGE iid issue_id INT NOT NULL;
 ALTER TABLE Issue2FieldValue ADD FOREIGN KEY (issue_id) REFERENCES Issue(id);
 
--- On master only
+-- On primary only
 ALTER TABLE Comment DROP FOREIGN KEY Comment_ibfk_2;
 ALTER TABLE Comment CHANGE iid issue_id INT NOT NULL;
 ALTER TABLE Comment ADD FOREIGN KEY (issue_id) REFERENCES Issue(id);
@@ -319,7 +319,7 @@ ALTER TABLE ReindexQueue ADD FOREIGN KEY (issue_id) REFERENCES Issue(id);
 ================================================================
 2013-08-30: added per-project email sending flag
 
--- On master and all shards
+-- On primary and all shards
 ALTER TABLE Project ADD COLUMN deliver_outbound_email BOOLEAN DEFAULT FALSE;
 
 
@@ -343,7 +343,7 @@ CHANGE prompt_members_only members_only BOOLEAN;
 
 
 ================================================================
-2013-11-18: add LocalIDCounter to master DB only, and fill in values.
+2013-11-18: add LocalIDCounter to primary DB only, and fill in values.
 
 CREATE TABLE LocalIDCounter (
   project_id SMALLINT UNSIGNED NOT NULL,
@@ -832,7 +832,7 @@ Local:
 % pt-online-schema-change --alter "ADD COLUMN is_description BOOLEAN DEFAULT FALSE" D=monorail,t=Comment --host=localhost --user=root --alter-foreign-keys-method=rebuild_constraints --execute
 
 Staging/Production:
-% pt-online-schema-change --alter "ADD COLUMN is_description BOOLEAN DEFAULT FALSE" D=monorail,t=Comment,h=<master IP address>,u=$USER,p=test --alter-forieign-keys-method=rebuild_constraints --recursion-method=hosts --execute
+% pt-online-schema-change --alter "ADD COLUMN is_description BOOLEAN DEFAULT FALSE" D=monorail,t=Comment,h=<primary IP address>,u=$USER,p=test --alter-forieign-keys-method=rebuild_constraints --recursion-method=hosts --execute
 
 ================================================================
 2016-05-13: Add table AutocompleteExclusion
@@ -858,11 +858,11 @@ ALTER TABLE `monorail`.`IssueUpdate` CONVERT TO CHARACTER SET utf8mb4 COLLATE ut
 ALTER TABLE `monorail`.`IssueSummary` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 /* This is what I ran on production: */
-% pt-online-schema-change --alter "CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" D=monorail,t=Comment,h=<master IP> --alter-foreign-keys-method=rebuild_constraints --no-drop-old-table --recursion-method=hosts --check-slave-lag=h=<one of the replicas' IP> --print --execute
+% pt-online-schema-change --alter "CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" D=monorail,t=Comment,h=<primary IP> --alter-foreign-keys-method=rebuild_constraints --no-drop-old-table --recursion-method=hosts --check-slave-lag=h=<one of the replicas' IP> --print --execute
 
-% pt-online-schema-change --alter "CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" D=monorail,t=IssueUpdate,h=<master IP> --alter-foreign-keys-method=rebuild_constraints --no-drop-old-table --recursion-method=hosts --check-slave-lag=h=<one of the replicas' IP> --print --execute
+% pt-online-schema-change --alter "CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" D=monorail,t=IssueUpdate,h=<primary IP> --alter-foreign-keys-method=rebuild_constraints --no-drop-old-table --recursion-method=hosts --check-slave-lag=h=<one of the replicas' IP> --print --execute
 
-% pt-online-schema-change --alter "CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" D=monorail,t=IssueSummary,h=<master IP> --alter-foreign-keys-method=rebuild_constraints --no-drop-old-table --recursion-method=hosts --check-slave-lag=h=<one of the replicas' IP> --print --execute
+% pt-online-schema-change --alter "CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci" D=monorail,t=IssueSummary,h=<primary IP> --alter-foreign-keys-method=rebuild_constraints --no-drop-old-table --recursion-method=hosts --check-slave-lag=h=<one of the replicas' IP> --print --execute
 
 /* And then these two which ran very quickly: */
 ALTER TABLE `monorail`.`Template` CHANGE `content` `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -892,7 +892,7 @@ ALTER TABLE Issue
 Staging/Production:
 % pt-online-schema-change \
   --alter "ADD COLUMN owner_modified INT, ADD COLUMN status_modified INT, ADD COLUMN component_modified INT" \
-  D=monorail,t=Issue,h=<master IP address>,u=$USER,p=<your mysql password> \
+  D=monorail,t=Issue,h=<primary IP address>,u=$USER,p=<your mysql password> \
   --alter-foreign-keys-method=rebuild_constraints --recursion-method=hosts --execute
 
 ==============================================================

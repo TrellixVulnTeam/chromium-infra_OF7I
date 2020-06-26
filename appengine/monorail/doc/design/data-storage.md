@@ -89,13 +89,13 @@ We mitigate several of the downsides of this approach as follows:
 
 Monorail is a GAE application with multiple services that each have
 automatic scaling of the number of instances.  The database is a MySQL
-database with one master for most types of reads and all writes, plus
+database with one primary for most types of reads and all writes, plus
 a set of read-only replicas that are used for sharded issue queries
 and comments.  The main purpose of the sharded replicas is to
 parallelize the work needed to scan table rows during issue search
 queries, and to increase the total amount of RAM used for SQL sorting.
 A few other queries are sent to random replicas to reduce load on the
-master.
+primary.
 
 To increase the DB RAM cache hit ratio, each logical data shard is
 sent to a specific DB replica.  E.g., queries for shard 1 are sent to
@@ -221,7 +221,7 @@ the pool.  To ensure that that commit is really empty, we roll back
 any uncommitted updates for any request that had an exception.
 
 A `MonorailConnection` is a collection of SQL connections with one for
-the master DB and one for each replica that is used during the current
+the primary DB and one for each replica that is used during the current
 request.  Creating a connection to a given replica can fail if that
 replica is offline.  Replicas can be restarted by the Google Cloud SQL
 service at any time, e.g., to update DB server software.  When

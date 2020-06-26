@@ -120,7 +120,7 @@ def SearchProjectCan(
   """Return a list of issue global IDs in the projects that satisfy the query.
 
   Args:
-    cnxn: Regular database connection to the master DB.
+    cnxn: Regular database connection to the primary DB.
     services: interface to issue storage backends.
     project_ids: list of int IDs of the project to search
     query_ast: A QueryAST PB with conjunctions and conditions.

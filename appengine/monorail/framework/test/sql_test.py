@@ -163,12 +163,12 @@ class MonorailConnectionTest(unittest.TestCase):
     settings.local_mode = self.orig_local_mode
     settings.num_logical_shards = self.orig_num_logical_shards
 
-  def testGetMasterConnection(self):
-    sql_cnxn = self.cnxn.GetMasterConnection()
+  def testGetPrimaryConnection(self):
+    sql_cnxn = self.cnxn.GetPrimaryConnection()
     self.assertEqual(settings.db_instance, sql_cnxn.instance)
     self.assertEqual(settings.db_database_name, sql_cnxn.database)
 
-    sql_cnxn2 = self.cnxn.GetMasterConnection()
+    sql_cnxn2 = self.cnxn.GetPrimaryConnection()
     self.assertIs(sql_cnxn2, sql_cnxn)
 
   def testGetConnectionForShard(self):
@@ -183,13 +183,13 @@ class MonorailConnectionTest(unittest.TestCase):
     self.assertIs(sql_cnxn2, sql_cnxn)
 
   def testClose(self):
-    sql_cnxn = self.cnxn.GetMasterConnection()
+    sql_cnxn = self.cnxn.GetPrimaryConnection()
     self.cnxn.Close()
     self.assertFalse(sql_cnxn.has_uncommitted)
 
-  def testExecute_Master(self):
-    """Execute() with no shard passes the statement to the master sql cnxn."""
-    sql_cnxn = self.cnxn.GetMasterConnection()
+  def testExecute_Primary(self):
+    """Execute() with no shard passes the statement to the primary sql cnxn."""
+    sql_cnxn = self.cnxn.GetPrimaryConnection()
     with mock.patch.object(self.cnxn, '_ExecuteWithSQLConnection') as ewsc:
       ewsc.return_value = 'db result'
       actual_result = self.cnxn.Execute('statement', [])
@@ -248,45 +248,42 @@ class TableManagerTest(unittest.TestCase):
   def setUp(self):
     self.emp_tbl = sql.SQLTableManager('Employee')
     self.cnxn = sql.MonorailConnection()
-    self.master_cnxn = self.cnxn.GetMasterConnection()
+    self.primary_cnxn = self.cnxn.GetPrimaryConnection()
 
   def testSelect_Trivial(self):
-    self.master_cnxn.result_rows = [(111, True), (222, False)]
+    self.primary_cnxn.result_rows = [(111, True), (222, False)]
     rows = self.emp_tbl.Select(self.cnxn)
-    self.assertEqual('SELECT * FROM Employee', self.master_cnxn.last_executed)
+    self.assertEqual('SELECT * FROM Employee', self.primary_cnxn.last_executed)
     self.assertEqual([(111, True), (222, False)], rows)
 
   def testSelect_Conditions(self):
-    self.master_cnxn.result_rows = [(111,)]
+    self.primary_cnxn.result_rows = [(111,)]
     rows = self.emp_tbl.Select(
         self.cnxn, cols=['emp_id'], fulltime=True, dept_id=[10, 20])
     self.assertEqual(
         'SELECT emp_id FROM Employee'
         '\nWHERE dept_id IN (10,20)'
-        '\n  AND fulltime = 1',
-        self.master_cnxn.last_executed)
+        '\n  AND fulltime = 1', self.primary_cnxn.last_executed)
     self.assertEqual([(111,)], rows)
 
   def testSelectRow(self):
-    self.master_cnxn.result_rows = [(111,)]
+    self.primary_cnxn.result_rows = [(111,)]
     row = self.emp_tbl.SelectRow(
         self.cnxn, cols=['emp_id'], fulltime=True, dept_id=[10, 20])
     self.assertEqual(
         'SELECT DISTINCT emp_id FROM Employee'
         '\nWHERE dept_id IN (10,20)'
-        '\n  AND fulltime = 1',
-        self.master_cnxn.last_executed)
+        '\n  AND fulltime = 1', self.primary_cnxn.last_executed)
     self.assertEqual((111,), row)
 
   def testSelectRow_NoMatches(self):
-    self.master_cnxn.result_rows = []
+    self.primary_cnxn.result_rows = []
     row = self.emp_tbl.SelectRow(
         self.cnxn, cols=['emp_id'], fulltime=True, dept_id=[99])
     self.assertEqual(
         'SELECT DISTINCT emp_id FROM Employee'
         '\nWHERE dept_id IN (99)'
-        '\n  AND fulltime = 1',
-        self.master_cnxn.last_executed)
+        '\n  AND fulltime = 1', self.primary_cnxn.last_executed)
     self.assertEqual(None, row)
 
     row = self.emp_tbl.SelectRow(
@@ -295,25 +292,23 @@ class TableManagerTest(unittest.TestCase):
     self.assertEqual((-1,), row)
 
   def testSelectValue(self):
-    self.master_cnxn.result_rows = [(111,)]
+    self.primary_cnxn.result_rows = [(111,)]
     val = self.emp_tbl.SelectValue(
         self.cnxn, 'emp_id', fulltime=True, dept_id=[10, 20])
     self.assertEqual(
         'SELECT DISTINCT emp_id FROM Employee'
         '\nWHERE dept_id IN (10,20)'
-        '\n  AND fulltime = 1',
-        self.master_cnxn.last_executed)
+        '\n  AND fulltime = 1', self.primary_cnxn.last_executed)
     self.assertEqual(111, val)
 
   def testSelectValue_NoMatches(self):
-    self.master_cnxn.result_rows = []
+    self.primary_cnxn.result_rows = []
     val = self.emp_tbl.SelectValue(
         self.cnxn, 'emp_id', fulltime=True, dept_id=[99])
     self.assertEqual(
         'SELECT DISTINCT emp_id FROM Employee'
         '\nWHERE dept_id IN (99)'
-        '\n  AND fulltime = 1',
-        self.master_cnxn.last_executed)
+        '\n  AND fulltime = 1', self.primary_cnxn.last_executed)
     self.assertEqual(None, val)
 
     val = self.emp_tbl.SelectValue(
@@ -322,45 +317,38 @@ class TableManagerTest(unittest.TestCase):
     self.assertEqual(-1, val)
 
   def testInsertRow(self):
-    self.master_cnxn.rowcount = 1
+    self.primary_cnxn.rowcount = 1
     generated_id = self.emp_tbl.InsertRow(self.cnxn, emp_id=111, fulltime=True)
     self.assertEqual(
         'INSERT INTO Employee (emp_id, fulltime)'
-        '\nVALUES (%s,%s)',
-        self.master_cnxn.last_executed)
-    self.assertEqual(
-        ([111, 1],),
-        self.master_cnxn.last_executed_args)
+        '\nVALUES (%s,%s)', self.primary_cnxn.last_executed)
+    self.assertEqual(([111, 1],), self.primary_cnxn.last_executed_args)
     self.assertEqual(123, generated_id)
 
   def testInsertRows_Empty(self):
     generated_id = self.emp_tbl.InsertRows(
         self.cnxn, ['emp_id', 'fulltime'], [])
-    self.assertIsNone(self.master_cnxn.last_executed)
-    self.assertIsNone(self.master_cnxn.last_executed_args)
+    self.assertIsNone(self.primary_cnxn.last_executed)
+    self.assertIsNone(self.primary_cnxn.last_executed_args)
     self.assertEqual(None, generated_id)
 
   def testInsertRows(self):
-    self.master_cnxn.rowcount = 2
+    self.primary_cnxn.rowcount = 2
     generated_ids = self.emp_tbl.InsertRows(
         self.cnxn, ['emp_id', 'fulltime'], [(111, True), (222, False)])
     self.assertEqual(
         'INSERT INTO Employee (emp_id, fulltime)'
-        '\nVALUES (%s,%s)',
-        self.master_cnxn.last_executed)
-    self.assertEqual(
-        ([111, 1], [222, 0]),
-        self.master_cnxn.last_executed_args)
+        '\nVALUES (%s,%s)', self.primary_cnxn.last_executed)
+    self.assertEqual(([111, 1], [222, 0]), self.primary_cnxn.last_executed_args)
     self.assertEqual([], generated_ids)
 
   def testUpdate(self):
-    self.master_cnxn.rowcount = 2
+    self.primary_cnxn.rowcount = 2
     rowcount = self.emp_tbl.Update(
         self.cnxn, {'fulltime': True}, emp_id=[111, 222])
     self.assertEqual(
         'UPDATE Employee SET fulltime=1'
-        '\nWHERE emp_id IN (111,222)',
-        self.master_cnxn.last_executed)
+        '\nWHERE emp_id IN (111,222)', self.primary_cnxn.last_executed)
     self.assertEqual(2, rowcount)
 
   def testUpdate_Limit(self):
@@ -369,27 +357,24 @@ class TableManagerTest(unittest.TestCase):
     self.assertEqual(
         'UPDATE Employee SET fulltime=1'
         '\nWHERE emp_id IN (111,222)'
-        '\nLIMIT 8',
-        self.master_cnxn.last_executed)
+        '\nLIMIT 8', self.primary_cnxn.last_executed)
 
   def testIncrementCounterValue(self):
-    self.master_cnxn.rowcount = 1
-    self.master_cnxn.lastrowid = 9
+    self.primary_cnxn.rowcount = 1
+    self.primary_cnxn.lastrowid = 9
     new_counter_val = self.emp_tbl.IncrementCounterValue(
         self.cnxn, 'years_worked', emp_id=111)
     self.assertEqual(
         'UPDATE Employee SET years_worked = LAST_INSERT_ID(years_worked + 1)'
-        '\nWHERE emp_id = 111',
-        self.master_cnxn.last_executed)
+        '\nWHERE emp_id = 111', self.primary_cnxn.last_executed)
     self.assertEqual(9, new_counter_val)
 
   def testDelete(self):
-    self.master_cnxn.rowcount = 1
+    self.primary_cnxn.rowcount = 1
     rowcount = self.emp_tbl.Delete(self.cnxn, fulltime=True)
     self.assertEqual(
         'DELETE FROM Employee'
-        '\nWHERE fulltime = 1',
-        self.master_cnxn.last_executed)
+        '\nWHERE fulltime = 1', self.primary_cnxn.last_executed)
     self.assertEqual(1, rowcount)
 
   def testDelete_Limit(self):
@@ -397,8 +382,7 @@ class TableManagerTest(unittest.TestCase):
     self.assertEqual(
         'DELETE FROM Employee'
         '\nWHERE fulltime = 1'
-        '\nLIMIT 3',
-        self.master_cnxn.last_executed)
+        '\nLIMIT 3', self.primary_cnxn.last_executed)
 
 
 class StatementTest(unittest.TestCase):

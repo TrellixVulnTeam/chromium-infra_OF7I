@@ -1848,7 +1848,7 @@ class IssueServiceTest(unittest.TestCase):
     self._testGetCommentsByID_ReplicationLag(False)
 
   def _testGetCommentsByID_ReplicationLag(self, use_cache):
-    """If not all comments are on the replica, we try the master."""
+    """If not all comments are on the replica, we try the primary DB."""
     comment_ids = [101001, 101002, 101003]
     replica_comment_ids = comment_ids[:-1]
 

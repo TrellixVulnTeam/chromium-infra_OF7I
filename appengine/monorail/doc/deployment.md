@@ -215,11 +215,11 @@ If any step below fails. Stop the deploy and ping
         ```
         If you don't see any changes since the last deploy, skip this section.
     1.  Copy and paste updates to the
-        [master DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-dev)
+        [primary DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-dev)
         in the `monorail-dev` project. Please be careful when pasting into SQL
         prompt.
     1.  Copy and paste the new changes into the
-        [master DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-staging)
+        [primary DB](http://console.cloud.google.com/sql/instances/master-g2/overview?project=monorail-staging)
         in staging.
 1.  Start deployment
     1.  Navigate to the Monorail Delivery page at
@@ -309,11 +309,11 @@ errors please ping the [Monorail chat](http://chat/room/AAAACV9ZZ8k) for help.
 
 1.  Create new GAE apps for production and staging.
 1.  Configure GCP billing.
-1.  Create new master DBs and 10 read replicas for prod and staging.
+1.  Create new primary DBs and 10 read replicas for prod and staging.
     1.  Set up IP address and configure admin password and allowed IP addr.
         [Instructions](https://cloud.google.com/sql/docs/mysql-client#configure-instance-mysql).
-    1.  Set up backups on master. The first backup must be created before you
-        can configure replicas.
+    1.  Set up backups on primary DB. The first backup must be created before
+        you can configure replicas.
 1.  Fork settings.py and configure every part of it, especially trusted domains
     and "all" email settings.
 1.  You might want to also update `*/*_constants.py` files.

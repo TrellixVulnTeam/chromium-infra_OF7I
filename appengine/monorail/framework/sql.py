@@ -96,7 +96,7 @@ def cnxn_ctor(instance, database):
   return cnxn
 
 
-# One connection pool per database instance (master, replicas are each an
+# One connection pool per database instance (primary, replicas are each an
 # instance). We'll have four connections per instance because we fetch
 # issue comments, stars, spam verdicts and spam verdict history in parallel
 # with promises.
@@ -104,8 +104,8 @@ cnxn_pool = ConnectionPool(settings.db_cnxn_pool_size)
 
 # MonorailConnection maintains a dictionary of connections to SQL databases.
 # Each is identified by an int shard ID.
-# And there is one connection to the master DB identified by key MASTER_CNXN.
-MASTER_CNXN = 'master_cnxn'
+# And there is one connection to the primary DB identified by key PRIMARY_CNXN.
+PRIMARY_CNXN = 'primary_cnxn'
 
 # When one replica is temporarily unresponseive, we can use a different one.
 BAD_SHARD_AVOIDANCE_SEC = 45
@@ -177,18 +177,18 @@ class MonorailConnection(object):
   unavailable_shards = {}  # {shard_id: timestamp of failed attempt}
 
   def __init__(self):
-    self.sql_cnxns = {}   # {MASTER_CNXN: cnxn, shard_id: cnxn, ...}
+    self.sql_cnxns = {}  # {PRIMARY_CNXN: cnxn, shard_id: cnxn, ...}
 
   @framework_helpers.retry(1, delay=0.1, backoff=2)
-  def GetMasterConnection(self):
-    """Return a connection to the master SQL DB."""
-    if MASTER_CNXN not in self.sql_cnxns:
-      self.sql_cnxns[MASTER_CNXN] = cnxn_pool.get(
+  def GetPrimaryConnection(self):
+    """Return a connection to the primary SQL DB."""
+    if PRIMARY_CNXN not in self.sql_cnxns:
+      self.sql_cnxns[PRIMARY_CNXN] = cnxn_pool.get(
           settings.db_instance, settings.db_database_name)
       logging.info(
-          'created a master connection %r', self.sql_cnxns[MASTER_CNXN])
+          'created a primary connection %r', self.sql_cnxns[PRIMARY_CNXN])
 
-    return self.sql_cnxns[MASTER_CNXN]
+    return self.sql_cnxns[PRIMARY_CNXN]
 
   @framework_helpers.retry(1, delay=0.1, backoff=2)
   def GetConnectionForShard(self, shard_id):
@@ -211,8 +211,8 @@ class MonorailConnection(object):
   def Execute(self, stmt_str, stmt_args, shard_id=None, commit=True, retries=2):
     """Execute the given SQL statement on one of the relevant databases."""
     if shard_id is None:
-      # No shard was specified, so hit the master.
-      sql_cnxn = self.GetMasterConnection()
+      # No shard was specified, so hit the primary.
+      sql_cnxn = self.GetPrimaryConnection()
     else:
       if shard_id in self.unavailable_shards:
         bad_age_sec = int(time.time()) - self.unavailable_shards[shard_id]
@@ -280,7 +280,7 @@ class MonorailConnection(object):
 
   def Commit(self):
     """Explicitly commit any pending txns.  Normally done automatically."""
-    sql_cnxn = self.GetMasterConnection()
+    sql_cnxn = self.GetPrimaryConnection()
     try:
       sql_cnxn.commit()
     except MySQLdb.DatabaseError:

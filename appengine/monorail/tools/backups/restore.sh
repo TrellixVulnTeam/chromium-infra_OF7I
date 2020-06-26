@@ -7,14 +7,14 @@
 # The existing replicas all have this prefix:
 REPLICA_PREFIX="replica-7"
 
-# The new replicas made from the restored master will have this prefix:
+# The new replicas made from the restored primary will have this prefix:
 NEW_REPLICA_PREFIX="replica-8"
 
 CLOUD_PROJECT="monorail-staging"
 
 DRY_RUN=true
 
-echo Restoring backups to master for $CLOUD_PROJECT. Dry run: $DRY_RUN
+echo Restoring backups to primary for $CLOUD_PROJECT. Dry run: $DRY_RUN
 echo This will delete all read replicas with the prefix "$REPLICA_PREFIX"
 echo and create a new set of replicas with the prefix "$NEW_REPLICA_PREFIX"
 echo
@@ -64,7 +64,7 @@ fi
 
 if [ "$DUE_TIME_INDEX" -ne "0" ]; then
   echo "You've restored an older-than-latest backup. Please contact speckle-oncall@"
-  echo "to request an on-demand backup of the master before attemtping to restart replicas,"
+  echo "to request an on-demand backup of the primary before attempting to restart replicas,"
   echo "which this script does not do automatically in this case."
   echo "run 'gcloud sql instances create' commands to create new replicas manually after"
   echo "you have confirmed with speckle-oncall@ the on-demand backup is complete."
@@ -83,7 +83,7 @@ echo Waiting on restore operation ID: ${RESTORE_OP_IDS[0]}
 # with e.g. "Failed in: CATCHING_UP Operation token: 03dd57a9-37a9-4f6f-9aa6-9c3b8ece01bd Message: Saw error in IO and/or SQL thread"
 gcloud sql operations wait ${RESTORE_OP_IDS[0]} --instance=master --project=$CLOUD_PROJECT
 
-echo Restore is finished on master. Now create the new set of read replicas with the new name prefix $NEW_REPLICA_PREFIX:
+echo Restore is finished on primary. Now create the new set of read replicas with the new name prefix $NEW_REPLICA_PREFIX:
 
 for i in `seq 0 9`; do
   cmd="gcloud sql instances create $NEW_REPLICA_PREFIX-0$i --master-instance-name master --project=$CLOUD_PROJECT --follow-gae-app=$CLOUD_PROJECT --authorized-gae-apps=$CLOUD_PROJECT --async --tier=D2"

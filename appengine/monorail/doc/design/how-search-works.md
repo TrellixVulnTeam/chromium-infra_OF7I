@@ -95,7 +95,7 @@ The parts of Monorail's architecture relevant to search consists of:
    can be shared among all users, and `nonviewable` requests that do
    permission checks in bulk for a given user.
 
-* A master DB instance and 10 replicas.  The database has an
+* A primary DB instance and 10 replicas.  The database has an
    Invalidate table used for distributed invalidation.  And,
    issue-related tables include a `shard` column that allows us to
    define a DB index that includes the shard ID.  The worst (least

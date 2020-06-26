@@ -367,7 +367,7 @@ class IssueTwoLevelCache(caches.AbstractTwoLevelCache):
     return results_dict
 
   # Note: sharding is used to here to allow us to load issues from the replicas
-  # without placing load on the master.  Writes are not sharded.
+  # without placing load on the primary DB. Writes are not sharded.
   # pylint: disable=arguments-differ
   def FetchItems(self, cnxn, issue_ids, shard_id=None):
     """Retrieve and deserialize issues."""
@@ -442,10 +442,11 @@ class CommentTwoLevelCache(caches.AbstractTwoLevelCache):
       self.issue_svc.replication_lag_retries.increment()
       logging.info('issue3755: expected %d, but got %d rows from shard %d',
                    len(keys), len(comment_rows), shard_id)
-      shard_id = None  # Will use Master DB.
+      shard_id = None  # Will use Primary DB.
       comment_rows = self.issue_svc.comment_tbl.Select(
           cnxn, cols=COMMENT_COLS, id=keys, shard_id=None)
-      logging.info('Retry got %d comment rows from master', len(comment_rows))
+      logging.info(
+          'Retry got %d comment rows from the primary DB', len(comment_rows))
 
     cids = [row[0] for row in comment_rows]
     commentcontent_ids = [row[-1] for row in comment_rows]
@@ -1092,7 +1093,7 @@ class IssueService(object):
            issue.star_count, issue.attachment_count,
            issue.is_spam)
     # ISSUE_COLs[1:] to skip setting the ID
-    # Insert into the Master DB.
+    # Insert into the Primary DB.
     generated_ids = self.issue_tbl.InsertRows(
         cnxn, ISSUE_COLS[1:], [row], commit=False, return_generated_ids=True)
     issue_id = generated_ids[0]
@@ -2128,7 +2129,7 @@ class IssueService(object):
       A list of the IssueComment protocol buffers for comment_ids.
     """
     # Try loading issue comments from a random shard to reduce load on
-    # master DB.
+    # primary DB.
     if shard_id is None:
       shard_id = sql.RandomShardID()
 
