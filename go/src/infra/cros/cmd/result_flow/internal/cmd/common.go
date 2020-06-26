@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,8 +17,11 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
+	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/google"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
 )
 
 type state struct {
@@ -150,4 +154,16 @@ func verifyBigquery(t *result_flow.BigqueryConfig, missing []string) []string {
 		missing = append(missing, "target Bigquery Table")
 	}
 	return missing
+}
+
+func newHTTPClient(ctx context.Context, a auth.Options) (*http.Client, error) {
+	return auth.NewAuthenticator(ctx, auth.SilentLogin, a).Client()
+}
+
+func newGRPCClientOptions(ctx context.Context, a auth.Options) (option.ClientOption, error) {
+	grpcCreds, err := auth.NewAuthenticator(ctx, auth.SilentLogin, a).PerRPCCredentials()
+	if err != nil {
+		return nil, err
+	}
+	return option.WithGRPCDialOption(grpc.WithPerRPCCredentials(grpcCreds)), nil
 }

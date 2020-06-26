@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
+	"google.golang.org/api/option"
 
 	"infra/cmdsupport/cmdlib"
 	"infra/cros/cmd/result_flow/internal/message"
@@ -49,6 +50,8 @@ type publishRun struct {
 	deadline time.Time
 
 	config *result_flow.PubSubConfig
+
+	clientOpts option.ClientOption
 }
 
 func (c *publishRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -64,10 +67,19 @@ func (c *publishRun) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (c *publishRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+	var err error
 	if err := c.loadPublishRequest(); err != nil {
 		return err
 	}
 	ctx := context.Background()
+
+	authOpts, err := c.authFlags.Options()
+	if err != nil {
+		return err
+	}
+	if c.clientOpts, err = newGRPCClientOptions(ctx, authOpts); err != nil {
+		return err
+	}
 
 	var cf context.CancelFunc
 	logging.Infof(ctx, "Running with deadline %s (current time: %s)", c.deadline.UTC(), time.Now().UTC())
@@ -95,7 +107,8 @@ func (c *publishRun) runWithDeadline(ctx context.Context) (result_flow.State, er
 
 func (c *publishRun) pipelineRun(ctx context.Context, ch chan state) {
 	defer close(ch)
-	if err := message.PublishBuildID(ctx, c.buildID, c.config); err != nil {
+
+	if err := message.PublishBuildID(ctx, c.buildID, c.config, c.clientOpts); err != nil {
 		ch <- state{
 			result_flow.State_FAILED,
 			errors.Annotate(err, "failed to publish build ID %d", c.buildID).Err(),

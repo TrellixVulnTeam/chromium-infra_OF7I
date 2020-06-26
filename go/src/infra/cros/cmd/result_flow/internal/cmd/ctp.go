@@ -6,14 +6,15 @@ package cmd
 
 import (
 	"context"
+	"net/http"
 
 	"time"
 
 	"cloud.google.com/go/bigquery"
+	"google.golang.org/api/option"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
-	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	lucibq "go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/cli"
@@ -55,6 +56,9 @@ type ctpFlowRun struct {
 	deadline time.Time
 	source   *result_flow.Source
 	target   *result_flow.Target
+
+	clientOpts option.ClientOption
+	httpClient *http.Client
 }
 
 func (c *ctpFlowRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -70,6 +74,17 @@ func (c *ctpFlowRun) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
+
+	authOpts, err := c.authFlags.Options()
+	if err != nil {
+		return err
+	}
+	if c.clientOpts, err = newGRPCClientOptions(ctx, authOpts); err != nil {
+		return err
+	}
+	if c.httpClient, err = newHTTPClient(ctx, authOpts); err != nil {
+		return err
+	}
 
 	var cf context.CancelFunc
 	logging.Infof(ctx, "Running with deadline %s (current time: %s)", c.deadline.UTC(), time.Now().UTC())
@@ -91,7 +106,8 @@ func (c *ctpFlowRun) innerRun(a subcommands.Application, args []string, env subc
 
 func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 	defer close(ch)
-	mClient, err := message.NewClient(ctx, c.source.GetPubsub())
+
+	mClient, err := message.NewClient(ctx, c.source.GetPubsub(), c.clientOpts)
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
@@ -104,23 +120,11 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 	}
 	bIDs := message.ToBuildIDs(ctx, msgs)
 
-	authOpts, err := c.authFlags.Options()
-	if err != nil {
-		ch <- state{result_flow.State_FAILED, err}
-		return
-	}
-
-	httpClient, err := auth.NewAuthenticator(ctx, auth.SilentLogin, authOpts).Client()
-	if err != nil {
-		ch <- state{result_flow.State_FAILED, err}
-		return
-	}
-
 	bc, err := bb.NewClient(
 		ctx,
 		c.source.GetBb(),
 		c.source.GetFields(),
-		httpClient,
+		c.httpClient,
 	)
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
@@ -135,7 +139,7 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 	bqClient, err := bq.NewInserter(ctx,
 		bq.Options{
 			Target:     c.target.GetBq(),
-			HTTPClient: httpClient,
+			HTTPClient: c.httpClient,
 		},
 	)
 	if err != nil {
