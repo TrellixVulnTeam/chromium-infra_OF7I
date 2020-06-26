@@ -23,10 +23,13 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
                 include_autoroll_options=True,
                 no_cc_authors=False):
     spec = {
-      'api_version': 2,
-      'deps': {
-        'recipe_engine': {},
-      },
+        'api_version': 2,
+        'deps': {
+            'recipe_engine': {
+                'url':
+                    'https://chromium.googlesource.com/infra/luci/recipes-py',
+            },
+        },
     }
     if include_autoroll_options:
       spec['autoroll_recipe_options'] = {
@@ -45,8 +48,13 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
       }
     return spec
 
-  def roll_data(self, project, spec=None, success=True, trivial=True,
-                empty=False):
+  def roll_data(self,
+                project,
+                spec=None,
+                success=True,
+                trivial=True,
+                empty=False,
+                num_commits=1):
     """Returns mock roll and recipes.cfg data for |project|."""
     if spec is None:
       spec = self.repo_spec()
@@ -57,21 +65,25 @@ class RecipeAutorollerTestApi(recipe_test_api.RecipeTestApi):
     if spec.get('autoroll_recipe_options', {}).get('disable_reason'):
       return ret
 
-    picked_roll_details = {
-      'commit_infos': {
-        'recipe_engine': [
-          {
-            'author_email': 'foo@chromium.org',
-            'message_lines': [
-              'some commit message',
-              'R=bar@chromium.org,baz@chromium.org,invalid1,invalid2@chromium',
+    commit_infos = []
+    for i in range(num_commits):
+      commit_infos.append({
+          'author_email': 'foo@chromium.org',
+          'message_lines': [
+              ('some commit summary that is too long to fit in a single '
+               'line in Gerrit'),
+              ('R=bar@chromium.org,baz@chromium.org,invalid1,'
+               'invalid2@chromium'),
               'BUG=123,456',
-            ],
-            'revision': '123abc',
-          },
-        ],
-      },
-      'spec': spec,
+          ],
+          'revision': '%d23abc' % (i + 1),
+      })
+
+    picked_roll_details = {
+        'commit_infos': {
+            'recipe_engine': commit_infos,
+        },
+        'spec': spec,
     }
 
     roll_result = {

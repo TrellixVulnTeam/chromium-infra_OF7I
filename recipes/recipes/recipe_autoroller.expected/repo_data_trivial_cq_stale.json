@@ -202,7 +202,9 @@
       "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }, @@@",
       "@@@STEP_LOG_LINE@json.output@  \"deps\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"recipe_engine\": {}@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"recipe_engine\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"url\": \"https://chromium.googlesource.com/infra/luci/recipes-py\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"

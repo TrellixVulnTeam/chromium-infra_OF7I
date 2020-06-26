@@ -51,6 +51,9 @@ def GenTests(api):
   yield (test('basic') + api.properties(db_gcs_bucket='somebucket') +
          api.recipe_autoroller.roll_data('build'))
 
+  yield (test('multiple_commits') + api.properties(db_gcs_bucket='somebucket') +
+         api.recipe_autoroller.roll_data('build', num_commits=3))
+
   yield (
       test('nontrivial') +
       api.recipe_autoroller.roll_data('build', trivial=False)

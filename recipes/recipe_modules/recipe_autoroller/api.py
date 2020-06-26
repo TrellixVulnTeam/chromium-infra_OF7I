@@ -4,7 +4,6 @@
 
 import base64
 import datetime
-import hashlib
 import re
 
 from google.protobuf import json_format as jsonpb
@@ -46,8 +45,8 @@ class RepoData(object):
 
 
 COMMIT_MESSAGE_HEADER = ("""
-This is an automated CL created by the recipe roller. This CL rolls recipe
-changes from upstream projects (%s) into this repository.
+This is an automated CL created by the recipe roller. This CL rolls
+recipe changes from upstream projects (%s) into this repository.
 """)
 
 NON_TRIVIAL_MESSAGE = ("""
@@ -86,6 +85,7 @@ def get_commit_message(roll_result):
   """
   picked = roll_result['picked_roll_details']
   commit_infos = picked['commit_infos']
+  deps = picked['spec']['deps']
   roll_projects = sorted(commit_infos.keys())
   trivial = roll_result['trivial']
 
@@ -99,15 +99,25 @@ def get_commit_message(roll_result):
 
   blame = []
   for project, commits in commit_infos.iteritems():
+    blame.append('')
     blame.append('%s:' % project)
+    remote = deps[project]['url']
+    if len(commits) == 1:
+      blame.append('%s/+/%s' % (remote, commits[0]['revision']))
+    else:
+      blame.append('%s/+log/%s~..%s' %
+                   (remote, commits[0]['revision'], commits[-1]['revision']))
     for commit in commits:
-      blame.append('  https://crrev.com/%s (%s)' % (commit['revision'],
-                                                    commit['author_email']))
-      summary = commit['message_lines']
-      summary = summary[0] if summary else 'n/a'
-      blame.append('    %s' % summary)
+      blame.append('  %s (%s)' %
+                   (commit['revision'][:7], commit['author_email']))
+      message_lines = commit['message_lines']
+      summary_line = '      %s' % message_lines[0] if message_lines else 'n/a'
+      max_line_length = 72
+      if len(summary_line) > max_line_length:
+        summary_line = summary_line[:max_line_length - 3].rstrip() + '...'
+      blame.append(summary_line)
 
-  message += '\n%s\n' % '\n'.join(blame)
+  message += ''.join(l + '\n' for l in blame)
   message += COMMIT_MESSAGE_INFO
   message += COMMIT_MESSAGE_FOOTER
   return message
