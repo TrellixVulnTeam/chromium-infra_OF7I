@@ -289,7 +289,7 @@ class IssueTwoLevelCacheTest(unittest.TestCase):
         self.phase_rows, self.approvalvalue_rows, self.av_approver_rows)
     self.assertEqual('b/1234567', issue_dict[78901].merged_into_external)
 
-  def SetUpFetchItems(self, issue_ids):
+  def SetUpFetchItems(self, issue_ids, has_approvalvalues=True):
     shard_id = None
     self.issue_service.issue_tbl.Select(
         self.cnxn, cols=issue_svc.ISSUE_COLS, id=issue_ids,
@@ -312,12 +312,19 @@ class IssueTwoLevelCacheTest(unittest.TestCase):
     self.issue_service.issue2fieldvalue_tbl.Select(
         self.cnxn, cols=issue_svc.ISSUE2FIELDVALUE_COLS, shard_id=shard_id,
         issue_id=issue_ids).AndReturn(self.fieldvalue_rows)
-    self.issue_service.issuephasedef_tbl.Select(
-        self.cnxn, cols=issue_svc.ISSUEPHASEDEF_COLS,
-        id=[1, 2]).AndReturn(self.phase_rows)
-    self.issue_service.issue2approvalvalue_tbl.Select(
-        self.cnxn, cols=issue_svc.ISSUE2APPROVALVALUE_COLS,
-        issue_id=issue_ids).AndReturn(self.approvalvalue_rows)
+    if has_approvalvalues:
+      self.issue_service.issuephasedef_tbl.Select(
+          self.cnxn, cols=issue_svc.ISSUEPHASEDEF_COLS,
+          id=[1, 2]).AndReturn(self.phase_rows)
+      self.issue_service.issue2approvalvalue_tbl.Select(
+          self.cnxn,
+          cols=issue_svc.ISSUE2APPROVALVALUE_COLS,
+          issue_id=issue_ids).AndReturn(self.approvalvalue_rows)
+    else:
+      self.issue_service.issue2approvalvalue_tbl.Select(
+          self.cnxn,
+          cols=issue_svc.ISSUE2APPROVALVALUE_COLS,
+          issue_id=issue_ids).AndReturn([])
     self.issue_service.issueapproval2approver_tbl.Select(
         self.cnxn, cols=issue_svc.ISSUEAPPROVAL2APPROVER_COLS,
         issue_id=issue_ids).AndReturn(self.av_approver_rows)
@@ -347,6 +354,16 @@ class IssueTwoLevelCacheTest(unittest.TestCase):
     issue_dict = self.issue_2lc.FetchItems(self.cnxn, issue_ids)
     self.mox.VerifyAll()
     self.assertItemsEqual(issue_ids, list(issue_dict.keys()))
+    self.assertEqual(2, len(issue_dict[78901].phases))
+
+  def testFetchItemsNoApprovalValues(self):
+    issue_ids = [78901]
+    self.SetUpFetchItems(issue_ids, False)
+    self.mox.ReplayAll()
+    issue_dict = self.issue_2lc.FetchItems(self.cnxn, issue_ids)
+    self.mox.VerifyAll()
+    self.assertItemsEqual(issue_ids, list(issue_dict.keys()))
+    self.assertEqual([], issue_dict[78901].phases)
 
 
 class IssueServiceTest(unittest.TestCase):

@@ -390,8 +390,10 @@ class IssueTwoLevelCache(caches.AbstractTwoLevelCache):
     approvalvalue_rows = self.issue_service.issue2approvalvalue_tbl.Select(
         cnxn, cols=ISSUE2APPROVALVALUE_COLS, issue_id=issue_ids)
     phase_ids = [av_row[2] for av_row in approvalvalue_rows]
-    phase_rows = self.issue_service.issuephasedef_tbl.Select(
-        cnxn, cols=ISSUEPHASEDEF_COLS, id=list(set(phase_ids)))
+    phase_rows = []
+    if phase_ids:
+      phase_rows = self.issue_service.issuephasedef_tbl.Select(
+          cnxn, cols=ISSUEPHASEDEF_COLS, id=list(set(phase_ids)))
     av_approver_rows = self.issue_service.issueapproval2approver_tbl.Select(
         cnxn, cols=ISSUEAPPROVAL2APPROVER_COLS, issue_id=issue_ids)
     if issue_ids:
