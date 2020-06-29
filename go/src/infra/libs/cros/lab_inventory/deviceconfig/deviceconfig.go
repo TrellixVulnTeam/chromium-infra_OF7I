@@ -96,11 +96,20 @@ func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsC
 	if err != nil {
 		return err
 	}
-	_, err = parsePrograms(programs)
+	gitInfos, err := parsePrograms(programs)
 	if err != nil {
 		return errors.Annotate(err, "UpdateDatastoreFromBoxster: fail to parse programs").Err()
 	}
-	return nil
+	allDCs, err := getDeviceConfigs(ctx, gc, gitInfos)
+	if err != nil {
+		return errors.Annotate(err, "UpdateDatastoreFromBoxster: fail to read all device configs").Err()
+	}
+	cfgs := make([]proto.Message, len(allDCs))
+	for i, c := range allDCs {
+		cfgs[i] = c
+		logging.Debugf(ctx, "device config %#v", c)
+	}
+	return cfg2datastore.SyncProtoToDatastore(ctx, cfgs, newDevCfgEntity)
 }
 
 // GetCachedConfig gets the device config data from datastore.

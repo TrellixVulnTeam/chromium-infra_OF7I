@@ -10,11 +10,19 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/chromiumos/config/go/api"
 	"go.chromium.org/chromiumos/config/go/payload"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 
+	"infra/libs/cros/git"
 	"infra/libs/cros/gs"
+)
+
+var (
+	unmarshaller = jsonpb.Unmarshaler{AllowUnknownFields: true}
 )
 
 type gitilesInfo struct {
@@ -50,6 +58,34 @@ func getProgramConfigs(ctx context.Context, gsClient gs.ClientInterface, p strin
 		return nil, err
 	}
 	return &programs, nil
+}
+
+func getDeviceConfigs(ctx context.Context, gc git.ClientInterface, gitInfos []*gitilesInfo) ([]*device.Config, error) {
+	var allCfgs []*device.Config
+	for _, gi := range gitInfos {
+		err := gc.SwitchProject(ctx, gi.project)
+		if err != nil {
+			// Raise error as encountering invalid project, stop scanning
+			// other device projects as the program config may be not trustable.
+			return nil, err
+		}
+		content, err := gc.GetFile(ctx, gi.path)
+		if err != nil {
+			logging.Debugf(ctx, "fail to get config file for project %s(%s): %s", gi.project, gi.path, err.Error())
+			continue
+		}
+		if content == "" {
+			logging.Debugf(ctx, "skip empty config file %s for project %s", gi.path, gi.project)
+			continue
+		}
+		var payload payload.ConfigBundle
+		if err := unmarshaller.Unmarshal(strings.NewReader(content), &payload); err != nil {
+			return nil, errors.Annotate(err, "fail to unmarshal %s", gi.path).Err()
+		}
+		dcs := parseConfigBundle(payload)
+		allCfgs = append(allCfgs, dcs...)
+	}
+	return allCfgs, nil
 }
 
 func parsePrograms(programs *Programs) ([]*gitilesInfo, error) {

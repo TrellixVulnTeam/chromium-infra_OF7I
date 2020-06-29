@@ -306,6 +306,13 @@ func TestUpdateDatastoreFromBoxter(t *testing.T) {
 		Convey("Happy path", func() {
 			err := UpdateDatastoreFromBoxster(ctx, gitilesMock, gsClientMock)
 			So(err, ShouldBeNil)
+			// There should be 6 entities created in datastore as
+			// test_device_config_v2.jsonproto contains 6 device configs.
+			var cfgs []*devcfgEntity
+			datastore.GetTestable(ctx).Consistent(true)
+			err = datastore.GetAll(ctx, datastore.NewQuery(entityKind), &cfgs)
+			So(err, ShouldBeNil)
+			So(cfgs, ShouldHaveLength, 6)
 		})
 	})
 }
