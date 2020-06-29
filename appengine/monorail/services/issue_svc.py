@@ -2685,6 +2685,8 @@ class IssueService(object):
 
   def GetIIDsByLabelIDs(self, cnxn, label_ids, project_id, shard_id):
     """Return a list of IIDs for issues with any of the given label IDs."""
+    if not label_ids:
+      return []
     where = []
     if shard_id is not None:
       slice_term = ('shard = %s', [shard_id])
@@ -2694,7 +2696,6 @@ class IssueService(object):
         cnxn, shard_id=shard_id, cols=['id'],
         left_joins=[('Issue2Label ON Issue.id = Issue2Label.issue_id', [])],
         label_id=label_ids, project_id=project_id, where=where)
-
     return [row[0] for row in rows]
 
   def GetIIDsByParticipant(self, cnxn, user_ids, project_ids, shard_id):

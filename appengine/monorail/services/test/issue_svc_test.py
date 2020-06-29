@@ -2474,6 +2474,12 @@ class IssueServiceTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertEqual([1, 2, 3], iids)
 
+  def testGetIIDsByLabelIDsWithEmptyLabelIds(self):
+    self.mox.ReplayAll()
+    iids = self.services.issue.GetIIDsByLabelIDs(self.cnxn, [], 789, 1)
+    self.mox.VerifyAll()
+    self.assertEqual([], iids)
+
   def SetUpGetIIDsByParticipant(self):
     self.services.issue.issue_tbl.Select(
         self.cnxn, shard_id=1, cols=['id'],

@@ -114,6 +114,8 @@ class BackendNonviewable(jsonfeed.InternalTask):
 
   def GetAtRiskIIDs(
     self, cnxn, user, effective_ids, project, perms, shard_id):
+    # type: (MonorailConnection, proto.user_pb2.User, Sequence[int], Project,
+    #     permission_objects_pb2.PermissionSet, int) -> Sequence[int]
     """Return IIDs of restricted issues that user might not be able to view."""
     at_risk_label_ids = search_helpers.GetPersonalAtRiskLabelIDs(
       cnxn, user, self.services.config, effective_ids, project, perms)
