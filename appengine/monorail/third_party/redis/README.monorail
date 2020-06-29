@@ -1,0 +1,10 @@
+Name: redis-py
+Short Name: redis-py
+URL: https://github.com/andymccurdy/redis-py
+Version: 3.5.2
+License: MIT
+License File: https://github.com/andymccurdy/redis-py/blob/master/LICENSE
+
+Description:
+The Python interface to the Redis key-value store.
+    

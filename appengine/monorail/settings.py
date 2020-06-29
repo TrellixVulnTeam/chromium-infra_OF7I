@@ -192,6 +192,11 @@ user_cache_max_size = 150 * 1000
 # memcache namespace.  E.g., os.environ.get('CURRENT_VERSION_ID')
 memcache_namespace = None  # Should be None when committed.
 
+# IP address for Redis instance
+redis_host = '10.150.170.251'
+# Port for Redis instance
+redis_port = '6379'
+
 # Recompute derived issue fields via work items rather than while
 # the user is waiting for a page to load.
 recompute_derived_fields_in_worker = True
