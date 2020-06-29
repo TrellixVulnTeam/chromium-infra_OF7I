@@ -33,6 +33,7 @@ var BoardToPlatformMap = map[string]string{
 	"bob":                     "gru",
 	"kevin":                   "gru",
 	"kahlee":                  "grunt",
+	"excelsior":               "fizz",
 	"fizz-labstation":         "fizz",
 	"fizz-moblab":             "fizz",
 	"guado-kernelnext":        "jecht",
