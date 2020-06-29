@@ -30,13 +30,18 @@ describe('mr-project-star (disconnected)', () => {
     assert.instanceOf(element, MrProjectStar);
   });
 
-  it('starring is disabled when user is not logged in', async () => {
+  it('clicking on star when logged out logs in user', async () => {
     element._currentUserName = undefined;
+    sinon.stub(element, 'login');
 
     await element.updateComplete;
 
     const star = element.shadowRoot.querySelector('button');
-    assert.isTrue(star.disabled);
+    assert.isFalse(star.disabled);
+
+    star.click();
+
+    sinon.assert.calledOnce(element.login);
   });
 
   it('star dispatches star request', () => {
@@ -106,45 +111,45 @@ describe('mr-project-star (disconnected)', () => {
     });
   });
 
-  describe('canStar', () => {
+  describe('disabled', () => {
     beforeEach(() => {
       element._currentUserName = 'users/1234';
       element.name = 'projects/monorail';
     });
 
-    it('false when user is not logged in', () => {
+    it('enabled when user is not logged in', () => {
       element._currentUserName = '';
 
-      assert.isFalse(element.canStar);
+      assert.isFalse(element.disabled);
     });
 
-    it('false when stars are being fetched', () => {
+    it('disabled when stars are being fetched', () => {
       element._fetchingStars = true;
       element._starringProjects = {};
       element._unstarringProjects = {};
 
-      assert.isFalse(element.canStar);
+      assert.isTrue(element.disabled);
     });
 
-    it('false when user is starring project', () => {
+    it('disabled when user is starring project', () => {
       element._fetchingStars = false;
       element._starringProjects =
           {'users/1234/projectStars/monorail': {requesting: true}};
       element._unstarringProjects = {};
 
-      assert.isFalse(element.canStar);
+      assert.isTrue(element.disabled);
     });
 
-    it('false when user is unstarring project', () => {
+    it('disabled when user is unstarring project', () => {
       element._fetchingStars = false;
       element._starringProjects = {};
       element._unstarringProjects =
           {'users/1234/projectStars/monorail': {requesting: true}};
 
-      assert.isFalse(element.canStar);
+      assert.isTrue(element.disabled);
     });
 
-    it('true when user is starring an unrelated project', () => {
+    it('enabled when user is starring an unrelated project', () => {
       element._fetchingStars = false;
       element._starringProjects = {
         'users/1234/projectStars/chromium': {requesting: true},
@@ -152,10 +157,10 @@ describe('mr-project-star (disconnected)', () => {
       };
       element._unstarringProjects = {};
 
-      assert.isTrue(element.canStar);
+      assert.isFalse(element.disabled);
     });
 
-    it('true when user is unstarring an unrelated project', () => {
+    it('enabled when user is unstarring an unrelated project', () => {
       element._fetchingStars = false;
       element._starringProjects = {};
       element._unstarringProjects = {
@@ -163,15 +168,15 @@ describe('mr-project-star (disconnected)', () => {
         'users/1234/projectStars/monorail': {requesting: false},
       };
 
-      assert.isTrue(element.canStar);
+      assert.isFalse(element.disabled);
     });
 
-    it('true when no in-flight requests', () => {
+    it('enabled when no in-flight requests', () => {
       element._fetchingStars = false;
       element._starringProjects = {};
       element._unstarringProjects = {};
 
-      assert.isTrue(element.canStar);
+      assert.isFalse(element.disabled);
     });
   });
 });

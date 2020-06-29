@@ -24,52 +24,174 @@ describe('mr-star', () => {
     assert.instanceOf(element, MrStar);
   });
 
-  it('clicking star toggles star', async () => {
-    sinon.spy(element, 'toggleStar');
+  it('unimplemented methods throw errors', () => {
+    assert.throws(element.star, 'Method not implemented.');
+    assert.throws(element.unstar, 'Method not implemented.');
+  });
+
+  describe('clicking star toggles star state', () => {
+    beforeEach(() => {
+      sinon.stub(element, 'star');
+      sinon.stub(element, 'unstar');
+      element._isLoggedIn = true;
+      element._canStar = true;
+    });
+
+    it('unstarred star', async () => {
+      element._isStarred = false;
+
+      await element.updateComplete;
+
+      sinon.assert.notCalled(element.star);
+      sinon.assert.notCalled(element.unstar);
+
+      element.shadowRoot.querySelector('button').click();
+
+      sinon.assert.calledOnce(element.star);
+      sinon.assert.notCalled(element.unstar);
+    });
+
+    it('starred star', async () => {
+      element._isStarred = true;
+
+      await element.updateComplete;
+
+      sinon.assert.notCalled(element.star);
+      sinon.assert.notCalled(element.unstar);
+
+      element.shadowRoot.querySelector('button').click();
+
+      sinon.assert.notCalled(element.star);
+      sinon.assert.calledOnce(element.unstar);
+    });
+  });
+
+  it('clicking while logged out logs you in', async () => {
+    sinon.stub(element, 'login');
+    element._isLoggedIn = false;
     element._canStar = true;
 
     await element.updateComplete;
 
-    sinon.assert.notCalled(element.toggleStar);
+    sinon.assert.notCalled(element.login);
 
     element.shadowRoot.querySelector('button').click();
 
-    sinon.assert.calledOnce(element.toggleStar);
+    sinon.assert.calledOnce(element.login);
   });
 
-  it('toggleStar stars when unstarred', () => {
-    sinon.spy(element, 'star');
-    sinon.spy(element, 'unstar');
+  describe('toggleStar', () => {
+    beforeEach(() => {
+      sinon.stub(element, 'star');
+      sinon.stub(element, 'unstar');
+    });
 
-    element._canStar = true;
-    element._isStarred = false;
+    it('stars when unstarred', () => {
+      element._isLoggedIn = true;
+      element._canStar = true;
+      element._isStarred = false;
 
-    element.toggleStar();
+      element.toggleStar();
 
-    sinon.assert.calledOnce(element.star);
-    sinon.assert.notCalled(element.unstar);
+      sinon.assert.calledOnce(element.star);
+      sinon.assert.notCalled(element.unstar);
+    });
+
+    it('unstars when starred', () => {
+      element._isLoggedIn = true;
+      element._canStar = true;
+      element._isStarred = true;
+
+      element.toggleStar();
+
+      sinon.assert.calledOnce(element.unstar);
+      sinon.assert.notCalled(element.star);
+    });
+
+    it('does nothing when user is not logged in', () => {
+      element._isLoggedIn = false;
+      element._canStar = true;
+      element._isStarred = true;
+
+      element.toggleStar();
+
+      sinon.assert.notCalled(element.unstar);
+      sinon.assert.notCalled(element.star);
+    });
+
+    it('does nothing when user does not have permission', () => {
+      element._isLoggedIn = true;
+      element._canStar = false;
+      element._isStarred = true;
+
+      element.toggleStar();
+
+      sinon.assert.notCalled(element.unstar);
+      sinon.assert.notCalled(element.star);
+    });
+
+    it('does nothing when stars are being fetched', () => {
+      element._isLoggedIn = true;
+      element._canStar = true;
+      element._isStarred = true;
+      element._requesting = true;
+
+      element.toggleStar();
+
+      sinon.assert.notCalled(element.unstar);
+      sinon.assert.notCalled(element.star);
+    });
   });
 
-  it('toggleStar unstars when starred', () => {
-    sinon.spy(element, 'star');
-    sinon.spy(element, 'unstar');
+  describe('disabling star button', () => {
+    it('enabled when user is logged in and has permission', async () => {
+      element._isLoggedIn = true;
+      element._canStar = true;
+      element._isStarred = true;
+      element._requesting = false;
 
-    element._canStar = true;
-    element._isStarred = true;
+      await element.updateComplete;
 
-    element.toggleStar();
+      const star = element.shadowRoot.querySelector('button');
+      assert.isFalse(star.disabled);
+    });
 
-    sinon.assert.calledOnce(element.unstar);
-    sinon.assert.notCalled(element.star);
-  });
+    it('enabled when user is logged out', async () => {
+      element._isLoggedIn = false;
+      element._canStar = false;
+      element._isStarred = false;
+      element._requesting = false;
 
-  it('starring is disabled when canStar is false', async () => {
-    element._canStar = false;
+      await element.updateComplete;
 
-    await element.updateComplete;
+      const star = element.shadowRoot.querySelector('button');
+      assert.isFalse(star.disabled);
+      assert.isFalse(element._starringEnabled);
+    });
 
-    const star = element.shadowRoot.querySelector('button');
-    assert.isTrue(star.disabled);
+    it('disabled when user has no permission', async () => {
+      element._isLoggedIn = true;
+      element._canStar = false;
+      element._isStarred = true;
+      element._requesting = false;
+
+      await element.updateComplete;
+
+      const star = element.shadowRoot.querySelector('button');
+      assert.isTrue(star.disabled);
+    });
+
+    it('disabled when requesting star', async () => {
+      element._isLoggedIn = true;
+      element._canStar = true;
+      element._isStarred = true;
+      element._requesting = true;
+
+      await element.updateComplete;
+
+      const star = element.shadowRoot.querySelector('button');
+      assert.isTrue(star.disabled);
+    });
   });
 
   it('isStarred changes displayed icon', async () => {
@@ -95,6 +217,9 @@ describe('mr-star', () => {
       parent.appendChild(element);
 
       oldHash = window.location.hash;
+
+      sinon.stub(element, 'star');
+      sinon.stub(element, 'unstar');
     });
 
     afterEach(() => {
@@ -103,6 +228,7 @@ describe('mr-star', () => {
 
     it('clicking to star does not cause navigation', async () => {
       sinon.spy(element, 'toggleStar');
+      element._isLoggedIn = true;
       element._canStar = true;
       await element.updateComplete;
 
@@ -113,6 +239,7 @@ describe('mr-star', () => {
     });
 
     it('clicking on disabled star does not cause navigation', async () => {
+      element._isLoggedIn = true;
       element._canStar = false;
       await element.updateComplete;
 
@@ -122,6 +249,7 @@ describe('mr-star', () => {
     });
 
     it('clicking on link still navigates', async () => {
+      element._isLoggedIn = true;
       element._canStar = true;
       await element.updateComplete;
 
@@ -132,13 +260,30 @@ describe('mr-star', () => {
   });
 
   describe('_starToolTip', () => {
+    it('not logged in', () => {
+      element._isLoggedIn = false;
+      element._canStar = false;
+      assert.equal(element._starToolTip,
+          `Login to star this resource.`);
+    });
+
     it('no permission to star', () => {
+      element._isLoggedIn = true;
       element._canStar = false;
       assert.equal(element._starToolTip,
           `You don't have permission to star this resource.`);
     });
 
+    it('star is loading', () => {
+      element._isLoggedIn = true;
+      element._canStar = true;
+      element._requesting = true;
+      assert.equal(element._starToolTip,
+          `Loading star state for this resource.`);
+    });
+
     it('issue is not starred', () => {
+      element._isLoggedIn = true;
       element._canStar = true;
       element._isStarred = false;
       assert.equal(element._starToolTip,
@@ -146,6 +291,7 @@ describe('mr-star', () => {
     });
 
     it('issue is starred', () => {
+      element._isLoggedIn = true;
       element._canStar = true;
       element._isStarred = true;
       assert.equal(element._starToolTip,

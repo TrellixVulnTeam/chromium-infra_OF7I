@@ -24,13 +24,18 @@ describe('mr-issue-star', () => {
     assert.instanceOf(element, MrIssueStar);
   });
 
-  it('starring is disabled when user is not logged in', async () => {
+  it('starring logins user when user is not logged in', async () => {
     element._currentUserName = undefined;
+    sinon.stub(element, 'login');
 
     await element.updateComplete;
 
     const star = element.shadowRoot.querySelector('button');
-    assert.isTrue(star.disabled);
+    assert.isFalse(star.disabled);
+
+    star.click();
+
+    sinon.assert.calledOnce(element.login);
   });
 
   it('_isStarring true only when issue ref is being starred', async () => {

@@ -45,6 +45,16 @@ export class MrIssueStar extends connectStore(MrStar) {
   }
 
   /** @override */
+  constructor() {
+    super();
+
+    /**
+     * @type {IssueRef}
+     */
+    this.issueRef = {};
+  }
+
+  /** @override */
   stateChanged(state) {
     this._currentUserName = users.currentUserName(state);
 
@@ -72,9 +82,13 @@ export class MrIssueStar extends connectStore(MrStar) {
   }
 
   /** @override */
-  get canStar() {
-    return this._currentUserName && !this._fetchingIsStarred &&
-        !this._isStarring;
+  get isLoggedIn() {
+    return !!this._currentUserName;
+  }
+
+  /** @override */
+  get requesting() {
+    return this._fetchingIsStarred || this._isStarring;
   }
 
   /** @override */

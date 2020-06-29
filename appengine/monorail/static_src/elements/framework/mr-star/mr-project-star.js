@@ -120,9 +120,13 @@ export class MrProjectStar extends connectStore(MrStar) {
   }
 
   /** @override */
-  get canStar() {
-    return !!(this._currentUserName && !this._fetchingStars &&
-        !this._isStarring);
+  get isLoggedIn() {
+    return !!this._currentUserName;
+  }
+
+  /** @override */
+  get requesting() {
+    return this._fetchingStars || this._isStarring;
   }
 
   /** @override */
