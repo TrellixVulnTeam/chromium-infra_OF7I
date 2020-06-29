@@ -405,6 +405,7 @@ class MonorailApi(remote.Service):
             'User is not allowed to attribue comments to others')
       reporter_id = self._services.user.LookupUserID(
               mar.cnxn, request.author.name, autocreate=True)
+      logging.info('Importing issue or comment.')
       if request.published:
         timestamp = calendar.timegm(request.published.utctimetuple())
 
