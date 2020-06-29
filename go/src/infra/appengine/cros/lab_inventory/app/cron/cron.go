@@ -17,6 +17,8 @@ import (
 	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/appengine/gaemiddleware"
+	authclient "go.chromium.org/luci/auth"
+	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -29,6 +31,8 @@ import (
 	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/appengine/cros/lab_inventory/app/converter"
 	dronequeenapi "infra/appengine/drone-queen/api"
+	"infra/libs/cros/git"
+	"infra/libs/cros/gs"
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
 	"infra/libs/cros/lab_inventory/changehistory"
@@ -86,15 +90,29 @@ func dumpToBQCronHandler(c *router.Context) (err error) {
 
 func syncDevConfigHandler(c *router.Context) error {
 	logging.Infof(c.Context, "Start syncing device_config repo")
-	cfg := config.Get(c.Context).GetDeviceConfigSource()
-	cli, err := cfg2datastore.NewGitilesClient(c.Context, cfg.GetHost())
+	cfg := config.Get(c.Context)
+	if cfg.GetProjectConfigSource().GetEnableProjectConfig() {
+		t, err := auth.GetRPCTransport(c.Context, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, gitilesapi.OAuthScope))
+		if err != nil {
+			return err
+		}
+		bsCfg := cfg.GetProjectConfigSource()
+		gitClient, err := git.NewClient(c.Context, &http.Client{Transport: t}, "", bsCfg.GetGitilesHost(), bsCfg.GetProject(), bsCfg.GetBranch())
+		if err != nil {
+			return err
+		}
+		gsClient, err := gs.NewClient(c.Context, t)
+		if err != nil {
+			return err
+		}
+		return deviceconfig.UpdateDatastoreFromBoxster(c.Context, gitClient, gsClient)
+	}
+	dCcfg := cfg.GetDeviceConfigSource()
+	cli, err := cfg2datastore.NewGitilesClient(c.Context, dCcfg.GetHost())
 	if err != nil {
 		return err
 	}
-	project := cfg.GetProject()
-	committish := cfg.GetCommittish()
-	path := cfg.GetPath()
-	return deviceconfig.UpdateDatastore(c.Context, cli, project, committish, path)
+	return deviceconfig.UpdateDatastore(c.Context, cli, dCcfg.GetProject(), dCcfg.GetCommittish(), dCcfg.GetPath())
 }
 
 func syncManufacturingConfigHandler(c *router.Context) error {

@@ -54,7 +54,7 @@ message Config {
   ProjectConfigLocation project_config_source = 16;
 }
 
-// Next tag: 5
+// Next tag: 6
 message ProjectConfigLocation {
   // The gs bucket path for program configs in DLM.
   string program_configs_gs_path = 1;
@@ -64,6 +64,8 @@ message ProjectConfigLocation {
   string project = 3;
   // The branch to get the config file, e.g. "master"
   string branch = 4;
+  // Indicate if new project configs are fully enabled.
+  bool enable_project_config = 5;
 }
 
 message AdminService {
