@@ -33,23 +33,27 @@ WITH
     3,
     4),
   recent_tests AS (
-  SELECT
-    tr.build_id,
-    tr.step_name,
-    tr.path,
-    tr.run
-  FROM
-    `test-results-hrd.events.test_results` tr
-  WHERE
-    # Add extra conditions to filter for actual unexpectedly failing tests.
-    # As-is, this may pick up tests that have unexpected results but do not
-    # represent actual "failures".
-    tr.run.is_unexpected
-    # This is limited to 1 day of test results because this table is huge
-    # and will cost a lot of money to scan for longer periods of time.
-    # Increase this INTERVAL value only if it turns out that we need test
-    # results from futher than 1 day back in practice.
-    AND _PARTITIONTIME > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY) )
+    SELECT
+      SUBSTR(exported.id, 7) as build_id,
+      parent_tag.value as step_name,
+      my_tag.value as test_name,
+    FROM
+      `RESULTDB_PROJECT.chromium.ci_test_results`,
+      unnest(parent.tags) as parent_tag,
+      unnest(tags) as my_tag
+    WHERE
+      partition_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
+      AND parent_tag.key = "step_name"
+      AND my_tag.key = "test_name"
+    GROUP BY
+      build_id,
+      step_name,
+      test_name
+    HAVING
+      # We do not care about unexpectedly passed tests.
+      LOGICAL_AND(not expected)
+      AND LOGICAL_AND(status != 'PASS')
+  )
 SELECT
   project,
   bucket,
@@ -63,15 +67,15 @@ SELECT
   ANY_VALUE(b.latest.critical) critical,
   ANY_VALUE(b.latest.output.gitiles_commit) output_commit,
   ANY_VALUE(b.latest.input.gitiles_commit) input_commit,
-  FARM_FINGERPRINT(STRING_AGG(tr.path, "\n"
+  FARM_FINGERPRINT(STRING_AGG(tr.test_name, "\n"
     ORDER BY
-      tr.path)) AS test_names_fp,
-  STRING_AGG(tr.path, "\n"
+      tr.test_name)) AS test_names_fp,
+  STRING_AGG(tr.test_name, "\n"
   ORDER BY
-    tr.path
+    tr.test_name
   LIMIT
     40) AS test_names_trunc,
-  COUNT(tr.path) AS num_tests
+  COUNT(tr.test_name) AS num_tests
 FROM
   latest_builds b,
   b.latest.steps s
