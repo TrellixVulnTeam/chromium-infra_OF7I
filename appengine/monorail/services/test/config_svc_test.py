@@ -270,16 +270,6 @@ class ConfigRowTwoLevelCacheTest(unittest.TestCase):
         self.cnxn, cols=config_svc.COMPONENTDEF_COLS, project_id=project_ids,
         is_deleted=False,
         order_by=[('path', [])]).AndReturn(self.componentdef_rows)
-    component_ids = [cd_row[0] for cd_row in self.componentdef_rows]
-    self.config_service.component2admin_tbl.Select(
-        self.cnxn, cols=config_svc.COMPONENT2ADMIN_COLS,
-        component_id=component_ids).AndReturn(self.component2admin_rows)
-    self.config_service.component2cc_tbl.Select(
-        self.cnxn, cols=config_svc.COMPONENT2CC_COLS,
-        component_id=component_ids).AndReturn(self.component2cc_rows)
-    self.config_service.component2label_tbl.Select(
-        self.cnxn, cols=config_svc.COMPONENT2LABEL_COLS,
-        component_id=component_ids).AndReturn(self.component2label_rows)
 
   def testFetchConfigs(self):
     keys = [789]
@@ -646,25 +636,10 @@ class ConfigServiceTest(unittest.TestCase):
     self.config_service.fielddef_tbl.Select(
         self.cnxn, cols=config_svc.FIELDDEF_COLS,
         project_id=project_ids, order_by=[('field_name', [])]).AndReturn([])
-    self.config_service.fielddef2admin_tbl.Select(
-        self.cnxn, cols=config_svc.FIELDDEF2ADMIN_COLS,
-        field_id=[]).AndReturn([])
-    self.config_service.fielddef2editor_tbl.Select(
-        self.cnxn, cols=config_svc.FIELDDEF2EDITOR_COLS, field_id=[]).AndReturn(
-            [])
     self.config_service.componentdef_tbl.Select(
         self.cnxn, cols=config_svc.COMPONENTDEF_COLS,
         is_deleted=False,
         project_id=project_ids, order_by=[('path', [])]).AndReturn([])
-    self.config_service.component2admin_tbl.Select(
-        self.cnxn, cols=config_svc.COMPONENT2ADMIN_COLS,
-        component_id=[]).AndReturn([])
-    self.config_service.component2cc_tbl.Select(
-        self.cnxn, cols=config_svc.COMPONENT2CC_COLS,
-        component_id=[]).AndReturn([])
-    self.config_service.component2label_tbl.Select(
-        self.cnxn, cols=config_svc.COMPONENT2LABEL_COLS,
-        component_id=[]).AndReturn([])
 
   def testGetProjectConfigs(self):
     project_ids = [789, 679]
