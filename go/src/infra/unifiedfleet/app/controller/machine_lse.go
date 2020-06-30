@@ -9,14 +9,16 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	fleet "infra/unifiedfleet/api/v1/proto"
+	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
-	"infra/unifiedfleet/app/model/datastore"
+	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
 )
@@ -26,10 +28,21 @@ import (
 // Checks if the resources referenced by the MachineLSE input already exists
 // in the system before creating a new MachineLSE
 func CreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
+	machinelse.Name = machinelse.GetHostname()
 	err := validateMachineLSE(ctx, machinelse)
 	if err != nil {
 		return nil, err
 	}
+	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+		// ChromeOSMachineLSE for a DUT
+		machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = machinelse.GetHostname()
+		return createChromeOSMachineLSEDUT(ctx, machinelse)
+	}
+	// Make the Hostname of the Labstation same as the machinelse name
+	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
+	}
+	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	return inventory.CreateMachineLSE(ctx, machinelse)
 }
 
@@ -71,8 +84,8 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 //      * the first error that it meets
 //
 // The function will stop at the very first error.
-func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, pageSize int) (*datastore.OpResults, error) {
-	allRes := make(datastore.OpResults, 0)
+func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, pageSize int) (*fleetds.OpResults, error) {
+	allRes := make(fleetds.OpResults, 0)
 	logging.Debugf(ctx, "Importing the basic lse prototypes for browser lab")
 	lps := []*fleet.MachineLSEPrototype{
 		{
@@ -148,6 +161,102 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	return &allRes, nil
 }
 
+// createChromeOSMachineLSEDUT creates ChromeOSMachineLSE entities.
+//
+// creates one MachineLSE for DUT and updates another MachineLSE for the
+// Labstation(with new Servo info from DUT)
+func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
+	f := func(ctx context.Context) error {
+		machinelses := make([]*fleet.MachineLSE, 0, 0)
+
+		// A. Check if the MachineLSE(DUT) already exists in the system for
+		existingMachinelse, err := inventory.GetMachineLSE(ctx, machinelse.GetName())
+		if status.Code(err) == codes.Internal {
+			return err
+		}
+		if existingMachinelse != nil {
+			return status.Errorf(codes.AlreadyExists, fleetds.AlreadyExists)
+		}
+		machinelses = append(machinelses, machinelse)
+
+		// B. Check if the DUT has Servo information.
+		// Update Labstation MachineLSE with new Servo info.
+		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+		if newServo != nil {
+			// 1. Check if the ServoHostName and ServoPort are already in use
+			err := validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
+			if err != nil {
+				return err
+			}
+			// 2. Check if the Labstation MachineLSE exists in the system.
+			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
+			if err != nil {
+				return err
+			}
+			// 3. Update the Labstation MachineLSE with new Servo information.
+			// Append the new Servo entry to the Labstation
+			appendServoEntryToLabstation(newServo, labstationMachinelse)
+			machinelses = append(machinelses, labstationMachinelse)
+		}
+
+		// C. BatchUpdate both DUT and Labstation
+		_, err = inventory.BatchUpdateMachineLSEs(ctx, machinelses)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to BatchUpdate MachineLSEs %s", err)
+			return err
+		}
+		return nil
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to create/update MachineLSE in datastore: %s", err)
+		return nil, err
+	}
+	return machinelse, nil
+}
+
+// validateServoInfoForDUT Checks if the DUT Machinelse has ServoHostname and ServoPort
+// already used by a different deployed DUT
+func validateServoInfoForDUT(ctx context.Context, servo *chromeosLab.Servo, DUTHostname string) error {
+	servoID := fleetds.GetServoID(servo.GetServoHostname(), servo.GetServoPort())
+	dutMachinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "servo_id", servoID, true)
+	if err != nil {
+		return err
+	}
+	if dutMachinelses != nil && dutMachinelses[0].GetName() != DUTHostname {
+		var errorMsg strings.Builder
+		errorMsg.WriteString(fmt.Sprintf("Port: %d in Labstation: %s is already "+
+			"in use by DUT: %s. Please provide a different ServoPort.\n",
+			servo.GetServoPort(), servo.GetServoHostname(), dutMachinelses[0].GetName()))
+		logging.Errorf(ctx, errorMsg.String())
+		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+	}
+	return nil
+}
+
+// getLabstationMachineLSE get the Labstation MachineLSE
+func getLabstationMachineLSE(ctx context.Context, labstationMachinelseName string) (*fleet.MachineLSE, error) {
+	labstationMachinelse, err := inventory.GetMachineLSE(ctx, labstationMachinelseName)
+	if status.Code(err) == codes.Internal {
+		return nil, err
+	}
+	if labstationMachinelse == nil {
+		// There is no Labstation MachineLSE existing in the system
+		errorMsg := fmt.Sprintf("Labstation %s not found in the system. "+
+			"Please deploy the Labstation %s before deploying the DUT.",
+			labstationMachinelseName, labstationMachinelseName)
+		logging.Errorf(ctx, errorMsg)
+		return nil, status.Errorf(codes.FailedPrecondition, errorMsg)
+	}
+	return labstationMachinelse, nil
+}
+
+// appendServoEntryToLabstation append servo entry to the Labstation
+func appendServoEntryToLabstation(newServo *chromeosLab.Servo, labstationMachinelse *fleet.MachineLSE) {
+	existingServos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	existingServos = append(existingServos, newServo)
+	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = existingServos
+}
+
 // validateMachineLSE validates if a machinelse can be created/updated in the datastore.
 //
 // Checks if the resources referenced by the given MachineLSE input already exists
@@ -156,7 +265,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error {
 	var resources []*Resource
 	var errorMsg strings.Builder
-	errorMsg.WriteString(fmt.Sprintf("Cannot create MachineLSE %s:\n", machinelse.Name))
+	errorMsg.WriteString(fmt.Sprintf("Cannot deploy Machine %s:\n", machinelse.Name))
 
 	// This check is only for a Labstation
 	// Check if labstation MachineLSE is adding or updating any servo information

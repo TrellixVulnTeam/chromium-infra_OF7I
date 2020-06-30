@@ -23,7 +23,8 @@ import (
 
 func mockMachineLSE(id string) *proto.MachineLSE {
 	return &proto.MachineLSE{
-		Name: util.AddPrefix(util.MachineLSECollection, id),
+		Name:     util.AddPrefix(util.MachineLSECollection, id),
+		Hostname: id,
 	}
 }
 
@@ -103,7 +104,6 @@ func TestUpdateMachineLSE(t *testing.T) {
 	defer validate()
 	machineLSE1 := mockMachineLSE("machineLSE-1")
 	machineLSE2 := mockMachineLSE("machineLSE-1")
-	machineLSE2.Hostname = "Linux Server"
 	machineLSE3 := mockMachineLSE("machineLSE-3")
 	machineLSE4 := mockMachineLSE("")
 	machineLSE5 := mockMachineLSE("a.b)7&")
@@ -228,9 +228,11 @@ func TestListMachineLSEs(t *testing.T) {
 		machineLSEs := make([]*proto.MachineLSE, 0, 4)
 		for i := 0; i < 4; i++ {
 			machineLSE1 := mockMachineLSE("machineLSE-1")
+			hostname := fmt.Sprintf("machineLSE-%d", i)
+			machineLSE1.Hostname = hostname
 			req := &api.CreateMachineLSERequest{
 				MachineLSE:   machineLSE1,
-				MachineLSEId: fmt.Sprintf("machineLSE-%d", i),
+				MachineLSEId: hostname,
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
@@ -307,6 +309,7 @@ func TestDeleteMachineLSE(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		machineLSE1 := mockMachineLSE("")
+		machineLSE1.Hostname = "machineLSE-1"
 		req := &api.CreateMachineLSERequest{
 			MachineLSE:   machineLSE1,
 			MachineLSEId: "machineLSE-1",

@@ -26,7 +26,7 @@ message MachineLSE {
         type: "unified-fleet-system.appspot.com/MachineLSE"
         pattern: "machineLSEs/{machineLSE}"
     };
-    // a unique random generated string
+    // This is the unique hostname of the MachineLSE
     // The format will be machineLSEs/XXX
     string name = 1;
     // The prototype that this machine LSE should follow. System will use this
@@ -38,7 +38,9 @@ message MachineLSE {
         (google.api.field_behavior) = REQUIRED
     ];
     // The hostname is also recorded in DHCP configs
-    string hostname = 3;
+    string hostname = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     oneof lse {
         ChromeBrowserMachineLSE chrome_browser_machine_lse = 4;
         ChromeOSMachineLSE chromeos_machine_lse = 5;

@@ -767,6 +767,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 			machineLSE1 := &proto.MachineLSE{
 				Name:                util.AddPrefix(util.MachineLSECollection, "machinelse-1"),
 				MachineLsePrototype: "machineLSEPrototype-1",
+				Hostname:            "machinelse-1",
 			}
 			mreq := &api.CreateMachineLSERequest{
 				MachineLSE:   machineLSE1,
