@@ -17,3 +17,14 @@ the build-under-test, to determine which tests to run, with what arguments.
 
 #### `autotest-execute` or `skylab-execute`
 Execute the enumerated tests, in the correct backend; wait for them to complete, and collect and summarize their results.
+
+
+## How to run unittests
+
+Make sure you run set up the environment properly first by running `eval` step
+in [the setup guide](https://chromium.googlesource.com/infra/infra/+/master/go/#get-the-code)
+first. Note that the `eval` command setup temporary environment for the shell,
+so it need to be run every time a new terminal spawned.
+
+After that, invoke `go test` from the [`go/src/infra`](../../) folder, e.g:
+`$ go test infra/cmd/cros_test_platform/internal/execution`
