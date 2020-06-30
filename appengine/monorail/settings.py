@@ -388,11 +388,11 @@ classifier_spam_thresh = 0.995
 
 # Users with email addresses ending with these will not be subject to
 # spam filtering.
-spam_whitelisted_suffixes = (
-  '@chromium.org',
-  '.gserviceaccount.com',
-  '@google.com',
-  '@webrtc.org',
+spam_allowlisted_suffixes = (
+    '@chromium.org',
+    '.gserviceaccount.com',
+    '@google.com',
+    '@webrtc.org',
 )
 
 # These users default to getting a UX that is more similar to
@@ -407,9 +407,7 @@ corp_mode_user_groups = [
   ]
 
 # These email suffixes are allowed to create new alert bugs via email.
-alert_whitelisted_suffixes = (
-  '@google.com',
-)
+alert_allowlisted_suffixes = ('@google.com',)
 
 # The person who is notified if there is an unexpected problem in the alert
 # pipeline.

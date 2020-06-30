@@ -22,9 +22,9 @@ from tracker import tracker_helpers
 AlertEmailHeader = emailfmt.AlertEmailHeader
 
 
-def IsWhitelisted(email_addr):
-  """Returns whether a given email is from one of the whitelisted domains."""
-  return email_addr.endswith(settings.alert_whitelisted_suffixes)
+def IsAllowlisted(email_addr):
+  """Returns whether a given email is from one of the allowlisted domains."""
+  return email_addr.endswith(settings.alert_allowlisted_suffixes)
 
 
 def FindAlertIssue(services, cnxn, project_id, incident_label):
@@ -133,8 +133,8 @@ def ProcessEmailNotification(
   Side-effect:
     Creates an issue or issue comment, if no error was reported.
   """
-  # Make sure the email address is whitelisted.
-  if not IsWhitelisted(from_addr):
+  # Make sure the email address is allowlisted.
+  if not IsAllowlisted(from_addr):
     logging.info('Unauthorized %s tried to send alert to %s',
                  from_addr, project_addr)
     return

@@ -116,15 +116,15 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
     self.mox.UnsetStubs()
     self.mox.ResetAll()
 
-  def testGoogleAddrsAreWhitelistedSender(self):
-    self.assertTrue(alert2issue.IsWhitelisted('test@google.com'))
-    self.assertFalse(alert2issue.IsWhitelisted('test@notgoogle.com'))
+  def testGoogleAddrsAreAllowlistedSender(self):
+    self.assertTrue(alert2issue.IsAllowlisted('test@google.com'))
+    self.assertFalse(alert2issue.IsAllowlisted('test@notgoogle.com'))
 
-  def testSkipNotification_IfFromNonWhitelistedSender(self):
-    self.mox.StubOutWithMock(alert2issue, 'IsWhitelisted')
-    alert2issue.IsWhitelisted(self.from_addr).AndReturn(False)
+  def testSkipNotification_IfFromNonAllowlistedSender(self):
+    self.mox.StubOutWithMock(alert2issue, 'IsAllowlisted')
+    alert2issue.IsAllowlisted(self.from_addr).AndReturn(False)
 
-    # None of them should be called, if the sender has not been whitelisted.
+    # None of them should be called, if the sender has not been allowlisted.
     self.mox.StubOutWithMock(self.services.issue, 'CreateIssueComment')
     self.mox.StubOutWithMock(self.services.issue, 'CreateIssue')
     self.mox.ReplayAll()
@@ -135,9 +135,9 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
         self.incident_label, self.msg, self.trooper_queue)
     self.mox.VerifyAll()
 
-  def testProcessNotification_IfFromWhitelistedSender(self):
-    self.mox.StubOutWithMock(alert2issue, 'IsWhitelisted')
-    alert2issue.IsWhitelisted(self.from_addr).AndReturn(True)
+  def testProcessNotification_IfFromAllowlistedSender(self):
+    self.mox.StubOutWithMock(alert2issue, 'IsAllowlisted')
+    alert2issue.IsAllowlisted(self.from_addr).AndReturn(True)
 
     self.mox.StubOutWithMock(tracker_helpers, 'LookupComponentIDs')
     tracker_helpers.LookupComponentIDs(
@@ -147,7 +147,7 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
     self.mox.StubOutWithMock(self.services.issue, 'CreateIssue')
     self.mox.ReplayAll()
 
-    # Either of the methods should be called, if the sender is whitelisted.
+    # Either of the methods should be called, if the sender is allowlisted.
     with self.assertRaises(mox.UnexpectedMethodCallError):
       alert2issue.ProcessEmailNotification(
           self.services, self.cnxn, self.project, self.project_addr,
@@ -158,8 +158,8 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
 
   def testIssueCreated_ForNewIncident(self):
     """Tests if a new issue is created for a new incident."""
-    self.mox.StubOutWithMock(alert2issue, 'IsWhitelisted')
-    alert2issue.IsWhitelisted(self.from_addr).AndReturn(True)
+    self.mox.StubOutWithMock(alert2issue, 'IsAllowlisted')
+    alert2issue.IsAllowlisted(self.from_addr).AndReturn(True)
 
     # FindAlertIssue() returns None for a new incident.
     self.mox.StubOutWithMock(alert2issue, 'FindAlertIssue')
@@ -191,8 +191,8 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
 
   def testProcessEmailNotification_ExistingIssue(self):
     """When an alert for an ongoing incident comes in, add a comment."""
-    self.mox.StubOutWithMock(alert2issue, 'IsWhitelisted')
-    alert2issue.IsWhitelisted(self.from_addr).AndReturn(True)
+    self.mox.StubOutWithMock(alert2issue, 'IsAllowlisted')
+    alert2issue.IsAllowlisted(self.from_addr).AndReturn(True)
 
     # FindAlertIssue() returns None for a new incident.
     self.mox.StubOutWithMock(alert2issue, 'FindAlertIssue')
@@ -534,25 +534,26 @@ class GetAlertPropertiesTests(unittest.TestCase, TestData):
     self.assertCaseInsensitiveEqual(props['status'], expected_status)
     self.mox.VerifyAll()
 
-  @parameterized.expand([
-      # None and '' should result in None returned.
-      (None, None),
-      ('', None),
-      (' ', None),
+  @parameterized.expand(
+      [
+          # None and '' should result in None returned.
+          (None, None),
+          ('', None),
+          (' ', None),
 
-      # whitelisted issue types
-      ('Bug', 'Type-Bug'),
-      ('Bug-Regression', 'Type-Bug-Regression'),
-      ('Bug-Security', 'Type-Bug-Security'),
-      ('Task', 'Type-Task'),
+          # allowlisted issue types
+          ('Bug', 'Type-Bug'),
+          ('Bug-Regression', 'Type-Bug-Regression'),
+          ('Bug-Security', 'Type-Bug-Security'),
+          ('Task', 'Type-Task'),
 
-      # non-whitelisted issue types
-      ('foo', None),
-      ('bar', None),
-      ('Bug,Bug-Regression', None),
-      ('Bug,', None),
-      (',Task', None),
-  ])
+          # non-allowlisted issue types
+          ('foo', None),
+          ('bar', None),
+          ('Bug,Bug-Regression', None),
+          ('Bug,', None),
+          (',Task', None),
+      ])
   def testGetIssueType(self, header_value, expected_issue_type):
     """Tests _GetIssueType."""
     self.test_msg.replace_header(AlertEmailHeader.TYPE, header_value)
@@ -561,28 +562,31 @@ class GetAlertPropertiesTests(unittest.TestCase, TestData):
         self.trooper_queue, self.test_msg)
     self.assertCaseInsensitiveEqual(props['issue_type'], expected_issue_type)
 
-  @parameterized.expand([
-      # None and '' should result in an empty list returned.
-      (None, []),
-      ('', []),
-      (' ', []),
+  @parameterized.expand(
+      [
+          # None and '' should result in an empty list returned.
+          (None, []),
+          ('', []),
+          (' ', []),
 
-      # a single, whitelisted os
-      ('Android', ['OS-Android']),
-      # a single, non-whitelisted OS
-      ('Bendroid', []),
-      # multiple, whitelisted oses
-      ('Android,Windows', ['OS-Android', 'OS-Windows']),
-      # multiple, non-whitelisted oses
-      ('Bendroid,Findows', []),
-      # a mix of whitelisted and non-whitelisted oses
-      ('Android,Findows,Windows,Bendroid', ['OS-Android', 'OS-Windows']),
-      # a mix of whitelisted and non-whitelisted oses with trailing commas.
-      ('Android,Findows,Windows,Bendroid,,', ['OS-Android', 'OS-Windows']),
-      # a mix of whitelisted and non-whitelisted oses with commas at the
-      # beginning.
-      (',,Android,Findows,Windows,Bendroid,,', ['OS-Android', 'OS-Windows']),
-  ])
+          # a single, allowlisted os
+          ('Android', ['OS-Android']),
+          # a single, non-allowlisted OS
+          ('Bendroid', []),
+          # multiple, allowlisted oses
+          ('Android,Windows', ['OS-Android', 'OS-Windows']),
+          # multiple, non-allowlisted oses
+          ('Bendroid,Findows', []),
+          # a mix of allowlisted and non-allowlisted oses
+          ('Android,Findows,Windows,Bendroid', ['OS-Android', 'OS-Windows']),
+          # a mix of allowlisted and non-allowlisted oses with trailing commas.
+          ('Android,Findows,Windows,Bendroid,,', ['OS-Android', 'OS-Windows']),
+          # a mix of allowlisted and non-allowlisted oses with commas at the
+          # beginning.
+          (
+              ',,Android,Findows,Windows,Bendroid,,',
+              ['OS-Android', 'OS-Windows']),
+      ])
   def testGetOSes(self, header_value, expected_oses):
     """Tests _GetOSes."""
     self.test_msg.replace_header(AlertEmailHeader.OS, header_value)

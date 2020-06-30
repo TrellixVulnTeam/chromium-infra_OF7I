@@ -1,5 +1,5 @@
 [# Safely display some text that includes some markup.  Only the tags
-   that we explicitly whitelist are allowed, everything else gets
+   that we explicitly allowlist are allowed, everything else gets
    escaped.
 
    description.text_runs is a list of element EZT objects that have a

@@ -114,13 +114,13 @@ class MonorailServicerTest(unittest.TestCase):
         cache_manager=fake.CacheManager())
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, owner_ids=[111])
-    # whitelisted_bot's email is whitelisted in testing/api_clients.cfg.
-    self.whitelisted_bot = self.services.user.TestAddUser(
+    # allowlisted_bot's email is allowlisted in testing/api_clients.cfg.
+    self.allowlisted_bot = self.services.user.TestAddUser(
         '123456789@developer.gserviceaccount.com', 999)
-    # whitelisted_client_id_user is used to test accounts that are only
-    # whitelisted with the client_id.
-    self.whitelisted_client_id_user = self.services.user.TestAddUser(
-        'whitelisted-with-client-id@developer.gserviceaccount.com', 888)
+    # allowlisted_client_id_user is used to test accounts that are only
+    # allowlisted with the client_id.
+    self.allowlisted_client_id_user = self.services.user.TestAddUser(
+        'allowlisted-with-client-id@developer.gserviceaccount.com', 888)
     self.non_member = self.services.user.TestAddUser(
         'nonmember@example.com', 222)
     self.allowed_domain_user = self.services.user.TestAddUser(
@@ -309,17 +309,17 @@ class MonorailServicerTest(unittest.TestCase):
         self.cnxn, metadata, self.services)
     self.assertEqual(user_auth.email, self.allowed_domain_user.email)
 
-  def testGetAndAssertRequesterAuth_Oauth_Whitelisted(self):
+  def testGetAndAssertRequesterAuth_Oauth_Allowlisted(self):
     metadata = {}
     # Signed in with oauth.
     self.mock_oauth_gcu.return_value = testing_helpers.Blank(
-        email=lambda: self.whitelisted_bot.email)
+        email=lambda: self.allowlisted_bot.email)
 
     bot_auth = self.svcr.GetAndAssertRequesterAuth(
         self.cnxn, metadata, self.services)
-    self.assertEqual(bot_auth.email, self.whitelisted_bot.email)
+    self.assertEqual(bot_auth.email, self.allowlisted_bot.email)
 
-  def testGetAndAssertRequesterAuth_Oauth_NotWhitelisted(self):
+  def testGetAndAssertRequesterAuth_Oauth_NotAllowlisted(self):
     metadata = {}
     # Signed in with oauth.
     self.mock_oauth_gcu.return_value = testing_helpers.Blank(
@@ -329,14 +329,14 @@ class MonorailServicerTest(unittest.TestCase):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
   def testGetAndAssertRequesterAuth_Oauth_ClientIDOnly(self):
-    """We get and allow accounts that only have their client_id whitelisted."""
+    """We get and allow accounts that only have their client_id allowlisted."""
     metadata = {}
     self.mock_oauth_gcu.return_value = testing_helpers.Blank(
-        email=lambda: self.whitelisted_client_id_user.email)
+        email=lambda: self.allowlisted_client_id_user.email)
     self.mock_oauth_gcid.return_value = "98723764876"
     both_auth = self.svcr.GetAndAssertRequesterAuth(
         self.cnxn, metadata, self.services)
-    self.assertEqual(both_auth.email, self.whitelisted_client_id_user.email)
+    self.assertEqual(both_auth.email, self.allowlisted_client_id_user.email)
 
   def testGetAndAssertRequesterAuth_Banned(self):
     self.non_member.banned = 'Spammer'

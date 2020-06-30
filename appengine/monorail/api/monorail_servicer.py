@@ -175,7 +175,7 @@ class MonorailServicer(object):
   def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
     """Gets the requester identity and checks if the user has permission
        to make the request.
-       Any users successfully authenticated with oauth must be whitelisted or
+       Any users successfully authenticated with oauth must be allowlisted or
        have accounts with the domains in api_allowed_email_domains.
        Users identified using cookie-based auth must have valid XSRF tokens.
        Test accounts ending with @example.com are only allowed in the
@@ -193,7 +193,7 @@ class MonorailServicer(object):
       exceptions.NoSuchUserException: If the requester does not exist
       permissions.BannedUserException: If the user has been banned from the site
       permissions.PermissionException: If the user is not authorized with the
-        Monorail scope, is not whitelisted, and has an invalid token.
+        Monorail scope, is not allowlisted, and has an invalid token.
     """
     # TODO(monorail:6538): Move different authentication methods into separate
     # functions.
@@ -216,7 +216,7 @@ class MonorailServicer(object):
     if not requester_auth:
       requester_auth = self._GetAllowedEmailDomainAuth(cnxn, services)
 
-    # Oauth for whitelisted users
+    # Oauth for allowlisted users
     if not requester_auth:
       try:
         client_id = oauth.get_client_id(framework_constants.OAUTH_SCOPE)
@@ -225,9 +225,9 @@ class MonorailServicer(object):
           auth_client_ids, auth_emails = (
               client_config_svc.GetClientConfigSvc().GetClientIDEmails())
           logging.info('Oauth requester %s', user.email())
-          # Check if email or client_id is whitelisted
+          # Check if email or client_id is allowlisted
           if (user.email() in auth_emails) or (client_id in auth_client_ids):
-            logging.info('Client %r is whitelisted', user.email())
+            logging.info('Client %r is allowlisted', user.email())
             requester_auth = authdata.AuthData.FromEmail(
                 cnxn, user.email(), services)
       except oauth.Error as ex:
@@ -281,13 +281,14 @@ class MonorailServicer(object):
   def GetRequestProject(self, cnxn, request):
     """Return the Project business object that the user is viewing or None."""
     if hasattr(request, 'project_name'):
-        project = self.services.project.GetProjectByName(
-            cnxn, request.project_name)
-        if not project:
-          logging.info('Request has project_name: %r but it does not exist.',
-                       request.project_name)
-          return None
-        return project
+      project = self.services.project.GetProjectByName(
+          cnxn, request.project_name)
+      if not project:
+        logging.info(
+            'Request has project_name: %r but it does not exist.',
+            request.project_name)
+        return None
+      return project
     else:
       return None
 

@@ -336,8 +336,8 @@ class SpamService(object):
   def _IsExempt(self, author, is_project_member):
     """Return True if the user is exempt from spam checking."""
     if author.email is not None and author.email.endswith(
-        settings.spam_whitelisted_suffixes):
-      logging.info('%s whitelisted from spam filtering', author.email)
+        settings.spam_allowlisted_suffixes):
+      logging.info('%s allowlisted from spam filtering', author.email)
       return True
 
     if is_project_member:
@@ -416,133 +416,153 @@ class SpamService(object):
 
   def GetIssueClassifierQueue(
       self, cnxn, _issue_service, project_id, offset=0, limit=10):
-     """Returns list of recent issues with spam verdicts,
+    """Returns list of recent issues with spam verdicts,
      ranked in ascending order of confidence (so uncertain items are first).
      """
-     # TODO(seanmccullough): Optimize pagination. This query probably gets
-     # slower as the number of SpamVerdicts grows, regardless of offset
-     # and limit values used here.  Using offset,limit in general may not
-     # be the best way to do this.
-     issue_results = self.verdict_tbl.Select(cnxn,
-         cols=['issue_id', 'is_spam', 'reason', 'classifier_confidence',
-               'created'],
-         where=[
-             ('project_id = %s', [project_id]),
-             ('classifier_confidence <= %s',
-                 [settings.classifier_moderation_thresh]),
-             ('overruled = %s', [False]),
-             ('issue_id IS NOT NULL', []),
-         ],
-         order_by=[
-             ('classifier_confidence ASC', []),
-             ('created ASC', []),
-             ],
-         group_by=['issue_id'],
-         offset=offset,
-         limit=limit,
-         )
+    # TODO(seanmccullough): Optimize pagination. This query probably gets
+    # slower as the number of SpamVerdicts grows, regardless of offset
+    # and limit values used here.  Using offset,limit in general may not
+    # be the best way to do this.
+    issue_results = self.verdict_tbl.Select(
+        cnxn,
+        cols=[
+            'issue_id', 'is_spam', 'reason', 'classifier_confidence', 'created'
+        ],
+        where=[
+            ('project_id = %s', [project_id]),
+            (
+                'classifier_confidence <= %s',
+                [settings.classifier_moderation_thresh]),
+            ('overruled = %s', [False]),
+            ('issue_id IS NOT NULL', []),
+        ],
+        order_by=[
+            ('classifier_confidence ASC', []),
+            ('created ASC', []),
+        ],
+        group_by=['issue_id'],
+        offset=offset,
+        limit=limit,
+    )
 
-     ret = []
-     for row in issue_results:
-       ret.append(ModerationItem(
-         issue_id=int(row[0]),
-         is_spam=row[1] == 1,
-         reason=row[2],
-         classifier_confidence=row[3],
-         verdict_time='%s' % row[4],
-       ))
+    ret = []
+    for row in issue_results:
+      ret.append(
+          ModerationItem(
+              issue_id=int(row[0]),
+              is_spam=row[1] == 1,
+              reason=row[2],
+              classifier_confidence=row[3],
+              verdict_time='%s' % row[4],
+          ))
 
-     count = self.verdict_tbl.SelectValue(cnxn,
-         col='COUNT(*)',
-         where=[
-             ('project_id = %s', [project_id]),
-             ('classifier_confidence <= %s',
-                 [settings.classifier_moderation_thresh]),
-             ('overruled = %s', [False]),
-             ('issue_id IS NOT NULL', []),
-         ])
+    count = self.verdict_tbl.SelectValue(
+        cnxn,
+        col='COUNT(*)',
+        where=[
+            ('project_id = %s', [project_id]),
+            (
+                'classifier_confidence <= %s',
+                [settings.classifier_moderation_thresh]),
+            ('overruled = %s', [False]),
+            ('issue_id IS NOT NULL', []),
+        ])
 
-     return ret, count
+    return ret, count
 
   def GetIssueFlagQueue(
       self, cnxn, _issue_service, project_id, offset=0, limit=10):
-     """Returns list of recent issues that have been flagged by users"""
-     issue_flags = self.report_tbl.Select(cnxn,
-         cols = ["Issue.project_id", "Report.issue_id", "count(*) as count",
-                 "max(Report.created) as latest",
-                 "count(distinct Report.user_id) as users"],
-         left_joins=["Issue ON Issue.id = Report.issue_id"],
-         where=[('Report.issue_id IS NOT NULL', []),
-                ("Issue.project_id == %v", [project_id])],
-         order_by=[('count DESC', [])],
-         group_by=['Report.issue_id'],
-         offset=offset, limit=limit)
-     ret = []
-     for row in issue_flags:
-       ret.append(ModerationItem(
-         project_id=row[0],
-         issue_id=row[1],
-         count=row[2],
-         latest_report=row[3],
-         num_users=row[4],
-       ))
+    """Returns list of recent issues that have been flagged by users"""
+    issue_flags = self.report_tbl.Select(
+        cnxn,
+        cols=[
+            "Issue.project_id", "Report.issue_id", "count(*) as count",
+            "max(Report.created) as latest",
+            "count(distinct Report.user_id) as users"
+        ],
+        left_joins=["Issue ON Issue.id = Report.issue_id"],
+        where=[
+            ('Report.issue_id IS NOT NULL', []),
+            ("Issue.project_id == %v", [project_id])
+        ],
+        order_by=[('count DESC', [])],
+        group_by=['Report.issue_id'],
+        offset=offset,
+        limit=limit)
+    ret = []
+    for row in issue_flags:
+      ret.append(
+          ModerationItem(
+              project_id=row[0],
+              issue_id=row[1],
+              count=row[2],
+              latest_report=row[3],
+              num_users=row[4],
+          ))
 
-     count = self.verdict_tbl.SelectValue(cnxn,
-         col='COUNT(DISTINCT Report.issue_id)',
-         where=[('Issue.project_id = %s', [project_id])],
-         left_joins=["Issue ON Issue.id = SpamReport.issue_id"])
-     return ret, count
+    count = self.verdict_tbl.SelectValue(
+        cnxn,
+        col='COUNT(DISTINCT Report.issue_id)',
+        where=[('Issue.project_id = %s', [project_id])],
+        left_joins=["Issue ON Issue.id = SpamReport.issue_id"])
+    return ret, count
 
 
   def GetCommentClassifierQueue(
       self, cnxn, _issue_service, project_id, offset=0, limit=10):
-     """Returns list of recent comments with spam verdicts,
+    """Returns list of recent comments with spam verdicts,
      ranked in ascending order of confidence (so uncertain items are first).
      """
-     # TODO(seanmccullough): Optimize pagination. This query probably gets
-     # slower as the number of SpamVerdicts grows, regardless of offset
-     # and limit values used here.  Using offset,limit in general may not
-     # be the best way to do this.
-     comment_results = self.verdict_tbl.Select(cnxn,
-         cols=['issue_id', 'is_spam', 'reason', 'classifier_confidence',
-               'created'],
-         where=[
-             ('project_id = %s', [project_id]),
-             ('classifier_confidence <= %s',
-                 [settings.classifier_moderation_thresh]),
-             ('overruled = %s', [False]),
-             ('comment_id IS NOT NULL', []),
-         ],
-         order_by=[
-             ('classifier_confidence ASC', []),
-             ('created ASC', []),
-             ],
-         group_by=['comment_id'],
-         offset=offset,
-         limit=limit,
-         )
+    # TODO(seanmccullough): Optimize pagination. This query probably gets
+    # slower as the number of SpamVerdicts grows, regardless of offset
+    # and limit values used here.  Using offset,limit in general may not
+    # be the best way to do this.
+    comment_results = self.verdict_tbl.Select(
+        cnxn,
+        cols=[
+            'issue_id', 'is_spam', 'reason', 'classifier_confidence', 'created'
+        ],
+        where=[
+            ('project_id = %s', [project_id]),
+            (
+                'classifier_confidence <= %s',
+                [settings.classifier_moderation_thresh]),
+            ('overruled = %s', [False]),
+            ('comment_id IS NOT NULL', []),
+        ],
+        order_by=[
+            ('classifier_confidence ASC', []),
+            ('created ASC', []),
+        ],
+        group_by=['comment_id'],
+        offset=offset,
+        limit=limit,
+    )
 
-     ret = []
-     for row in comment_results:
-       ret.append(ModerationItem(
-         comment_id=int(row[0]),
-         is_spam=row[1] == 1,
-         reason=row[2],
-         classifier_confidence=row[3],
-         verdict_time='%s' % row[4],
-       ))
+    ret = []
+    for row in comment_results:
+      ret.append(
+          ModerationItem(
+              comment_id=int(row[0]),
+              is_spam=row[1] == 1,
+              reason=row[2],
+              classifier_confidence=row[3],
+              verdict_time='%s' % row[4],
+          ))
 
-     count = self.verdict_tbl.SelectValue(cnxn,
-         col='COUNT(*)',
-         where=[
-             ('project_id = %s', [project_id]),
-             ('classifier_confidence <= %s',
-                 [settings.classifier_moderation_thresh]),
-             ('overruled = %s', [False]),
-             ('comment_id IS NOT NULL', []),
-         ])
+    count = self.verdict_tbl.SelectValue(
+        cnxn,
+        col='COUNT(*)',
+        where=[
+            ('project_id = %s', [project_id]),
+            (
+                'classifier_confidence <= %s',
+                [settings.classifier_moderation_thresh]),
+            ('overruled = %s', [False]),
+            ('comment_id IS NOT NULL', []),
+        ])
 
-     return ret, count
+    return ret, count
 
 
   def GetTrainingIssues(self, cnxn, issue_service, since, offset=0, limit=100):

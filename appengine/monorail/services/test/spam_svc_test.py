@@ -295,7 +295,7 @@ class SpamServiceTest(unittest.TestCase):
     author = user_pb2.MakeUser(111, email='test@example.com')
     self.assertTrue(self.spam_service._IsExempt(author, True))
 
-  def testIsExempt_WhitelistedDomain(self):
+  def testIsExempt_AllowlistedDomain(self):
     author = user_pb2.MakeUser(111, email='test@google.com')
     self.assertTrue(self.spam_service._IsExempt(author, False))
 
@@ -322,7 +322,7 @@ class SpamServiceTest(unittest.TestCase):
     res = self.spam_service.ClassifyIssue(issue, comment_pb, reporter, False)
     self.assertEqual(1.0, res['confidence_is_spam'])
 
-  def testClassifyIssue_Whitelisted(self):
+  def testClassifyIssue_Allowlisted(self):
     issue = fake.MakeTestIssue(
         project_id=789, local_id=1, reporter_id=111, owner_id=456,
         summary='sum', status='Live', issue_id=78901, is_spam=True)
@@ -358,7 +358,7 @@ class SpamServiceTest(unittest.TestCase):
     res = self.spam_service.ClassifyComment('this is spam', commenter, False)
     self.assertEqual(1.0, res['confidence_is_spam'])
 
-  def testClassifyComment_Whitelisted(self):
+  def testClassifyComment_Allowlisted(self):
     self.spam_service._predict = assert_unreached
 
     # Prevent missing service inits to fail the test.

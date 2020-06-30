@@ -3406,7 +3406,7 @@ class WorkEnvTest(unittest.TestCase):
 
   @mock.patch('settings.linkable_domains', {'example.com': ['other.com']})
   def testInviteLinkedParent_BadDomain(self):
-    """We only allow linkage invites between whitelisted domains."""
+    """We only allow linkage invites between allowlisted domains."""
     self.SignIn()
     with self.work_env as we:
       with self.assertRaises(exceptions.InputException) as cm:

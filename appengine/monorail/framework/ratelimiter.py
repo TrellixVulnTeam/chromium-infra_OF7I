@@ -47,7 +47,8 @@ COUNTRY_LIMITS = {
 
 # Modules not in this list will not have rate limiting applied by this
 # class.
-MODULE_WHITELIST = ['default']
+MODULE_ALLOWLIST = ['default']
+
 
 def _CacheKeys(request, now_sec):
   """ Returns an array of arrays. Each array contains strings with
@@ -135,8 +136,8 @@ class RateLimiter(object):
     self.fail_open = fail_open
 
   def CheckStart(self, request, now=None):
-    if (modules.get_current_module_name() not in MODULE_WHITELIST or
-          users.is_current_user_admin()):
+    if (modules.get_current_module_name() not in MODULE_ALLOWLIST or
+        users.is_current_user_admin()):
       return
     logging.info('X-AppEngine-Country: %s' %
       request.headers.get(COUNTRY_HEADER, 'ZZ'))
@@ -193,7 +194,7 @@ class RateLimiter(object):
     based on keys created from start_time instead of now.
     now and start_time are float seconds.
     """
-    if (modules.get_current_module_name() not in MODULE_WHITELIST):
+    if (modules.get_current_module_name() not in MODULE_ALLOWLIST):
       return
 
     elapsed_ms = int((now - start_time) * 1000)

@@ -324,7 +324,7 @@ errors please ping the [Monorail chat](http://chat/room/AAAACV9ZZ8k) for help.
 1.  Fork and customize some of HTML in templates/framework/master-header.ezt,
     master-footer.ezt, and some CSS to give the instance a visually different
     appearance.
-1.  Get From-address whitelisted so that the "View issue" link in Gmail/Inbox
+1.  Get From-address allowlisted so that the "View issue" link in Gmail/Inbox
     works.
 1.  Set up a custom domain with SSL and get that configured into GAE. Make sure
     to have some kind of reminder system set up so that you know before cert
@@ -335,7 +335,7 @@ errors please ping the [Monorail chat](http://chat/room/AAAACV9ZZ8k) for help.
 1.  Gain permission to sync GGG user groups. Set up borgcron job to sync user
     groups. Configure that job to hit the API for your instance. (Or, maybe
     decide not to sync any user groups.)
-1.  Monorail does not not access any internal APIs, so no whitelisting is
+1.  Monorail does not not access any internal APIs, so no allowlisting is
     required.
 1.  For projects on code.google.com, coordinate with that team to set flags to
     do per-issue redirects from old project to new site. As each project is

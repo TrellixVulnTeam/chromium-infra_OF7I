@@ -122,7 +122,7 @@ class ClientConfigService(object):
 
   # Reload no more than once every 15 minutes.
   # Different GAE instances can load it at different times,
-  # so clients may get inconsistence responses shortly after whitelisting.
+  # so clients may get inconsistence responses shortly after allowlisting.
   EXPIRES_IN = 15 * framework_constants.SECS_PER_MINUTE
 
   def __init__(self):

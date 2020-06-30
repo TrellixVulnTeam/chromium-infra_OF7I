@@ -53,7 +53,7 @@ If you have questions, feel free to chat with members of the monorail team.
 
 * Afterglow
   * Problems with existing functionality that our users depend on.
-  * Requests for API whitelisting.
+  * Requests for API allowlisting.
   * Operational changes that are needed to keep the site available (e.g., monitoring).
 * Retrofit
   * Technology-driven changes needed for us to maintain the site over the long run.

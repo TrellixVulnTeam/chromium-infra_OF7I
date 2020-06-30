@@ -1564,9 +1564,10 @@ class MonorailApiTest(testing.EndpointsTestCase):
     self.SetUpComponents(12345, 1, 'API')
 
     cd_dict = {
-      'componentName': 'Test',
-      'description':'test comp',
-      'cc': ['requester@example.com', '']}
+        'componentName': 'Test',
+        'description': 'test comp',
+        'cc': ['requester@example.com', '']
+    }
     self.request.update(cd_dict)
 
     resp = self.call_api('components_create', self.request).json_body
@@ -1749,11 +1750,11 @@ class AllBaseChecksTest(unittest.TestCase):
         framework_constants.MONORAIL_SCOPE]
     oauth.get_current_user.return_value = RequesterMock(
         email=self.user_2.email)
-    whitelisted_client_ids = []
-    whitelisted_emails = []
+    allowlisted_client_ids = []
+    allowlisted_emails = []
     client_id, email = api_svc_v1.api_base_checks(
-        None, None, self.services, None,
-        whitelisted_client_ids, whitelisted_emails)
+        None, None, self.services, None, allowlisted_client_ids,
+        allowlisted_emails)
     self.assertEqual(client_id, self.auth_client_ids[0])
     self.assertEqual(email, self.user_2.email)
 
@@ -1761,23 +1762,25 @@ class AllBaseChecksTest(unittest.TestCase):
     oauth.get_authorized_scopes.return_value = []
     oauth.get_current_user.return_value = RequesterMock(
         email=self.user_2.email)
-    whitelisted_client_ids = []
-    whitelisted_emails = []
+    allowlisted_client_ids = []
+    allowlisted_emails = []
     with self.assertRaises(endpoints.UnauthorizedException):
-      api_svc_v1.api_base_checks(None, None, self.services, None,
-                                 whitelisted_client_ids, whitelisted_emails)
+      api_svc_v1.api_base_checks(
+          None, None, self.services, None, allowlisted_client_ids,
+          allowlisted_emails)
 
   def testAllowedDomain_BadEmail(self):
     oauth.get_authorized_scopes.return_value = [
         framework_constants.MONORAIL_SCOPE]
     oauth.get_current_user.return_value = RequesterMock(
         email='chicken@chicken.test')
-    whitelisted_client_ids = []
-    whitelisted_emails = []
+    allowlisted_client_ids = []
+    allowlisted_emails = []
     self.services.user.TestAddUser('chicken@chicken.test', 333)
     with self.assertRaises(endpoints.UnauthorizedException):
-      api_svc_v1.api_base_checks(None, None, self.services, None,
-                                 whitelisted_client_ids, whitelisted_emails)
+      api_svc_v1.api_base_checks(
+          None, None, self.services, None, allowlisted_client_ids,
+          allowlisted_emails)
 
   def testNoOauthUser(self):
     oauth.get_current_user.side_effect = oauth.Error()
@@ -1862,12 +1865,12 @@ class AllBaseChecksTest(unittest.TestCase):
     api_svc_v1.api_base_checks(
         request, requester, self.services, None, [], ['test@example.com'])
 
-    # Any client_id is OK if the email is whitelisted.
+    # Any client_id is OK if the email is allowlisted.
     oauth.get_client_id = Mock(return_value='anything')
     api_svc_v1.api_base_checks(
         request, requester, self.services, None, [], ['test@example.com'])
 
-    # Reject request when neither client ID nor email is whitelisted.
+    # Reject request when neither client ID nor email is allowlisted.
     with self.assertRaises(endpoints.UnauthorizedException):
       api_svc_v1.api_base_checks(
           request, requester, self.services, None, [], [])

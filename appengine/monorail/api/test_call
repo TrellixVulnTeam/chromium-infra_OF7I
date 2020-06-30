@@ -28,7 +28,7 @@ To test an anonymous request to your monorail staging server:
 To test a signed-in request to your monorail staging server using
 the client_id for monorail-staging and your own account:
 1. Make sure that you have a role in the monorail-staging project.
-2. Have your account whitelisted by email address.
+2. Have your account allowlisted by email address.
 3. Download the monorail-staging app credientials via
    `gcloud --project=monorail-staging auth login`.
 4. `./api/test_call monorail.Projects ListComponents
@@ -45,8 +45,8 @@ is a bad practice.)
    Press "+ Create Service Account".
    Fill in the form and submit it to save a service account .json file
    to your local disk.  Keep this file private.
-2. File an issue on /p/monorail to whitelist your client_id and/or
-   client_email.  Or, author a CL yourself to add it to the whitelist.
+2. File an issue on /p/monorail to allowlist your client_id and/or
+   client_email.  Or, author a CL yourself to add it to the allowlist.
 3. `./api/test_call monorail.Projects ListComponents
     '{"project_name": "monorail", "include_admin_info": true}'
     --host=12345-76697e9-tainted-jrobbins-dot-monorail-staging.appspot.com

@@ -159,7 +159,7 @@ class MonorailServicer(object):
 
     Raises:
       permissions.PermissionException: If the token is invalid, the client ID
-        is not whitelisted, or no user email was found in the ID token.
+        is not allowlisted, or no user email was found in the ID token.
     """
     bearer = metadata.get('authorization')
     if not bearer:
@@ -183,7 +183,7 @@ class MonorailServicer(object):
         client_config_svc.GetClientConfigSvc().GetClientIDEmails())
     if id_info['aud']  not in auth_client_ids:
       raise permissions.PermissionException(
-          'client ID %s not whitelisted' % id_info['aud'])
+          'client ID %s not allowlisted' % id_info['aud'])
     email = id_info.get('email')
     if not email:
       raise permissions.PermissionException(
@@ -194,7 +194,7 @@ class MonorailServicer(object):
   def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
     """Gets the requester identity and checks if the user has permission
        to make the request.
-       Any users successfully authenticated with oauth must be whitelisted or
+       Any users successfully authenticated with oauth must be allowlisted or
        have accounts with the domains in api_allowed_email_domains.
        Users identified using cookie-based auth must have valid XSRF tokens.
        Test accounts ending with @example.com are only allowed in the
@@ -212,7 +212,7 @@ class MonorailServicer(object):
       exceptions.NoSuchUserException: If the requester does not exist
       permissions.BannedUserException: If the user has been banned from the site
       permissions.PermissionException: If the user is not authorized with the
-        Monorail scope, is not whitelisted, and has an invalid token.
+        Monorail scope, is not allowlisted, and has an invalid token.
     """
     # TODO(monorail:6538): Move different authentication methods into separate
     # functions.

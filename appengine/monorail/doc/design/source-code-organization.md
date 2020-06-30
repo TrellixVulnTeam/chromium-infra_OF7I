@@ -157,7 +157,7 @@ Services layer
 *  `services/config_svc.py`: Persistence for issue tracking
    configuration in a project, except templates.
 
-*  `services/client_config_svc.py`: Persistence for API whitelist.
+*  `services/client_config_svc.py`: Persistence for API allowlist.
 
 *  `services/tracker_fulltext.py`: Connection to GAE fulltext search
    index.

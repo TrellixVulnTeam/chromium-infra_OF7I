@@ -15,7 +15,7 @@ handlers.
 
 Responsibilities of request handers (legacy UI and external API) and associated
 frameworks:
-+ API: check oauth client whitelist or XSRF token
++ API: check oauth client allowlist or XSRF token
 + Rate-limiting
 + Create a MonorailContext (or MonorailRequest) object:
   - Parse the request, including syntactic validation, e.g, non-negative ints
@@ -1806,7 +1806,8 @@ class WorkEnv(object):
             comment, self.mc.auth.user_id, perms)
 
         # By default, all fields should get filtered out.
-        # i.e. this is a whitelist rather than blacklist to reduce leaking info.
+        # i.e. this is an allowlist rather than a denylist to reduce leaking
+        # info.
         filtered_comment = tracker_pb2.IssueComment(
             id=comment.id,
             issue_id=comment.issue_id,

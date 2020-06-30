@@ -123,7 +123,7 @@ def monorail_api_method(
       except (permissions.BannedUserException,
               permissions.PermissionException) as e:
         approximate_http_status = 403
-        logging.info('Whitelist ID %r email %r', auth_client_ids, auth_emails)
+        logging.info('Allowlist ID %r email %r', auth_client_ids, auth_emails)
         raise endpoints.ForbiddenException(str(e))
       except endpoints.BadRequestException:
         approximate_http_status = 400
@@ -232,12 +232,12 @@ def api_base_checks(request, requester, services, cnxn,
 
   if client_id and requester:
     if client_id in auth_client_ids:
-      # A whitelisted client app can make requests for any user or anon.
-      logging.info('Client ID %r is whitelisted', client_id)
+      # A allowlisted client app can make requests for any user or anon.
+      logging.info('Client ID %r is allowlisted', client_id)
       valid_user = True
     elif requester.email() in auth_emails:
-      # A whitelisted user account can make requests via any client app.
-      logging.info('Client email %r is whitelisted', requester.email())
+      # A allowlisted user account can make requests via any client app.
+      logging.info('Client email %r is allowlisted', requester.email())
       valid_user = True
     elif _is_requester_in_allowed_domains(requester):
       # A user with an allowed-domain email and authenticated with the
@@ -246,8 +246,9 @@ def api_base_checks(request, requester, services, cnxn,
           'User email %r is within the allowed domains', requester.email())
       valid_user = True
     else:
-      auth_err = ('Neither client ID %r nor email %r is whitelisted' %
-                  (client_id, requester.email()))
+      auth_err = (
+          'Neither client ID %r nor email %r is allowlisted' %
+          (client_id, requester.email()))
 
   if not valid_user:
     raise endpoints.UnauthorizedException('Auth error: %s' % auth_err)
