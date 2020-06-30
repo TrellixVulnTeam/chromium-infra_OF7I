@@ -128,8 +128,10 @@ class TemplateDefTwoLevelCache(caches.AbstractTwoLevelCache):
         template2approvalvalue_tbl.Select(
             cnxn, cols=TEMPLATE2APPROVALVALUE_COLS, template_id=keys)
     phase_ids = [av_row[2] for av_row in template2approvalvalue_rows]
-    phase_rows = self.template_service.issuephasedef_tbl.Select(
-        cnxn, cols=ISSUEPHASEDEF_COLS, id=list(set(phase_ids)))
+    phase_rows = []
+    if phase_ids:
+      phase_rows = self.template_service.issuephasedef_tbl.Select(
+          cnxn, cols=ISSUEPHASEDEF_COLS, id=list(set(phase_ids)))
 
     # Build TemplateDef with all related data.
     for template_row in template_rows:

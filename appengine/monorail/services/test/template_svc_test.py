@@ -83,8 +83,6 @@ class TemplateDefTwoLevelCacheTest(unittest.TestCase):
         .return_value = []
     self.template_def_2lc.template_service.template2fieldvalue_tbl.Select\
         .return_value = []
-    self.template_def_2lc.template_service.issuephasedef_tbl.Select\
-        .return_value = []
     self.template_def_2lc.template_service.template2approvalvalue_tbl.Select\
         .return_value = []
 
