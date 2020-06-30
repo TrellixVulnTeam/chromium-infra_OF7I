@@ -31,6 +31,7 @@ type MachineLSEEntity struct {
 	SwitchID              string   `gae:"switch_id"`
 	RPMID                 string   `gae:"rpm_id"`
 	VlanID                string   `gae:"vlan_id"`
+	ServoID               string   `gae:"servo_id"`
 	// fleet.MachineLSE cannot be directly used as it contains pointer.
 	MachineLSE []byte `gae:",noindex"`
 }
@@ -53,13 +54,16 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEn
 	if err != nil {
 		return nil, errors.Annotate(err, "fail to marshal MachineLSE %s", p).Err()
 	}
+	servo := p.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+	servoID := fleetds.GetServoID(servo.GetServoHostname(), servo.GetServoPort())
 	return &MachineLSEEntity{
 		ID:                    p.GetName(),
 		MachineIDs:            p.GetMachines(),
 		MachineLSEProtoTypeID: p.GetMachineLsePrototype(),
-		SwitchID:              p.GetChromeosMachineLse().GetDut().GetNetworkDeviceInterface().GetSwitch(),
-		RPMID:                 p.GetChromeosMachineLse().GetDut().GetRpmInterface().GetRpm(),
-		VlanID:                p.GetChromeosMachineLse().GetServer().GetSupportedRestrictedVlan(),
+		SwitchID:              p.GetChromeosMachineLse().GetDeviceLse().GetNetworkDeviceInterface().GetSwitch(),
+		RPMID:                 p.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
+		VlanID:                p.GetChromeosMachineLse().GetServerLse().GetSupportedRestrictedVlan(),
+		ServoID:               servoID,
 		MachineLSE:            machineLSE,
 	}, nil
 }

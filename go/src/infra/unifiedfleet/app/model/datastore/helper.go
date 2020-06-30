@@ -4,6 +4,10 @@
 
 package datastore
 
+import (
+	"fmt"
+)
+
 // message for filtering
 const (
 	FilterConditionSeparator string = ":"
@@ -28,4 +32,12 @@ func GetLabPrefix(filter string) string {
 	default:
 		return ""
 	}
+}
+
+// GetServoID returns the servo_id for searching
+func GetServoID(servoHostname string, servoPort int32) string {
+	if servoHostname != "" && servoPort != 0 {
+		return fmt.Sprintf("%s%d", servoHostname, servoPort)
+	}
+	return ""
 }

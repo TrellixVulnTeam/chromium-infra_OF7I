@@ -37,8 +37,8 @@ func TestDeleteVlan(t *testing.T) {
 			chromeosServerLse := &proto.ChromeOSServerLSE{
 				SupportedRestrictedVlan: "vlan-1",
 			}
-			chromeoslse := &proto.ChromeOSMachineLSE_Server{
-				Server: chromeosServerLse,
+			chromeoslse := &proto.ChromeOSMachineLSE_ServerLse{
+				ServerLse: chromeosServerLse,
 			}
 			chromeosMachineLse := &proto.ChromeOSMachineLSE{
 				ChromeosLse: chromeoslse,

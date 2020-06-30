@@ -79,20 +79,26 @@ message OSVersion {
 }
 
 // ChromeOSMachineLSE refers to the entity in Chrome OS lab
-// which can be a DUT, test bed or a server
+// which can be a Device(DUT, test Bed or Labstation) or a server
 message ChromeOSMachineLSE {
    oneof chromeos_lse {
-       ChromeOSDeviceLSE dut = 1;
-       ChromeOSServerLSE server = 2;
+        ChromeOSDeviceLSE dut = 1 [deprecated = true];
+        ChromeOSServerLSE server = 2 [deprecated = true];
+        ChromeOSDeviceLSE device_lse = 3;
+        ChromeOSServerLSE server_lse = 4;
    }
 }
 
 // ChromeOSDeviceLSE refers to the entity in Chrome OS lab
-// which is a DUT
+// which is a DUT, test Bed or a Labstation
 message ChromeOSDeviceLSE {
-   chromeos.lab.DeviceUnderTest config = 1;
-   RPMInterface rpm_interface = 2;
-   SwitchInterface network_device_interface = 3;
+    chromeos.lab.DeviceUnderTest config = 1 [deprecated = true];
+    RPMInterface rpm_interface = 2;
+    SwitchInterface network_device_interface = 3;
+    oneof device {
+        chromeos.lab.DeviceUnderTest dut = 4;
+        chromeos.lab.Labstation labstation = 5;
+    };
 }
 
 // ChromeOSServerLSE refers to the entity in Chrome OS lab
@@ -104,4 +110,5 @@ message ChromeOSServerLSE {
    string supported_restricted_vlan = 1 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/Vlan"
     }];
+    int32 service_port = 2;
 }

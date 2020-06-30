@@ -158,8 +158,8 @@ func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error
 
 	machineIDs := machinelse.GetMachines()
 	machineLSEPrototypeID := machinelse.GetMachineLsePrototype()
-	vlanID := machinelse.GetChromeosMachineLse().GetServer().GetSupportedRestrictedVlan()
-	rpmID := machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().GetRpm()
+	vlanID := machinelse.GetChromeosMachineLse().GetServerLse().GetSupportedRestrictedVlan()
+	rpmID := machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm()
 
 	if len(machineIDs) != 0 {
 		for _, machineID := range machineIDs {
