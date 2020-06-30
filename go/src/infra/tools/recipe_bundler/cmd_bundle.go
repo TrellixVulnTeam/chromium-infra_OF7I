@@ -332,7 +332,7 @@ func (c *cmdBundle) createBundle(ctx context.Context, pkg packageInfo, spec, res
 		}
 
 		if err = repo.ensureFetched(ctx, resolvedSpec); err == nil {
-			err = repo.git(ctx, "checkout", resolvedSpec.revision)
+			err = repo.git(ctx, "checkout", "--force", resolvedSpec.revision)
 		}
 	}
 	if err != nil {
