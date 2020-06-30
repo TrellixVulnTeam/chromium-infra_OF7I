@@ -88,9 +88,9 @@ export class MrProjectsPage extends connectStore(LitElement) {
           color: var(--chops-link-color);
         }
         .subtitle {
-          color: var(--chops-gray-600);
+          color: var(--chops-gray-700);
           font-size: var(--chops-main-font-size);
-          line-height: var(--chops-main-font-size);
+          line-height: 100%;
           font-weight: normal;
         }
         .project-container {
@@ -99,7 +99,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
           flex-wrap: wrap;
           width: 100%;
           padding: 0.5em 0;
-          margin-bottom: 4em;
+          margin-bottom: 3em;
         }
         .project {
           background: var(--chops-white);
@@ -176,7 +176,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
         ${myProjectsTemplate}
       </div>
 
-      <h2>Browse other projects</h2>
+      <h2>Other projects</h2>
       <div class="project-container other-projects">
         ${otherProjects.map((project) => this._renderProject(project))}
       </div>
@@ -251,7 +251,7 @@ export class MrProjectsPage extends connectStore(LitElement) {
           <span class="project-title">
             <h3>${project.displayName}</h3>
             <span class="subtitle" ?hidden=${!role} title="My role: ${role}">
-              ${role}
+              Role: ${role}
             </span>
           </span>
 
