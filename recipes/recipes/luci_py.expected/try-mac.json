@@ -186,7 +186,6 @@
     ],
     "cwd": "[START_DIR]/infra/luci/appengine/swarming/swarming_bot",
     "name": "swarming bot.run tests python2",
-    "timeout": 120,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -204,7 +203,6 @@
     ],
     "cwd": "[START_DIR]/infra/luci/appengine/swarming/swarming_bot",
     "name": "swarming bot.run tests python3",
-    "timeout": 120,
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

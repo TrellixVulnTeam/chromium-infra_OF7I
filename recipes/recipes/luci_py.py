@@ -56,18 +56,12 @@ def RunSteps(api):
 
     with api.step.nest('swarming bot'):
       bot_dir = appeng_dir.join('swarming', 'swarming_bot')
-      # TODO(crbug.com/1019105): remove this timeout.
-      if api.platform.is_mac:
-        timeout = 120
-      else:
-        timeout = None
-      _step_run_py_tests(api, bot_dir, timeout=timeout)
+      _step_run_py_tests(api, bot_dir)
       # TODO(crbug.com/1017545): enable python3 on Windows and Mac.
       # swarming bot tests run in python3, but it ignores failures on Windows
       # and Mac.
       ok_ret = (0,) if api.platform.is_linux else 'any'
-      _step_run_py_tests(api, bot_dir, timeout=timeout, ok_ret=ok_ret,
-                         python3=True)
+      _step_run_py_tests(api, bot_dir, ok_ret=ok_ret, python3=True)
 
     # swarming server
     if api.platform.is_linux:
