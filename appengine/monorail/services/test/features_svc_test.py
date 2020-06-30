@@ -272,18 +272,29 @@ assert_called_once_with(self.cnxn, user_id=user_ids, commit=commit, limit=50)
     self.mox.VerifyAll()
     self.assertIsNone(saved_query)
 
-  def SetUpUsersSavedQueries(self):
+  def SetUpUsersSavedQueries(self, has_query_id=True):
     query = tracker_bizobj.MakeSavedQuery(1, 'query1', 100, 'owner:me')
     self.features_service.saved_query_cache.CacheItem(1, [query])
-    self.features_service.user2savedquery_tbl.Select(
-        self.cnxn,
-        cols=features_svc.SAVEDQUERY_COLS + ['user_id', 'subscription_mode'],
-        left_joins=[('SavedQuery ON query_id = id', [])],
-        order_by=[('rank', [])], user_id=[2]).AndReturn(
-        [(2, 'query2', 100, 'status:New', 2, 'Sub_Mode')])
-    self.features_service.savedqueryexecutesinproject_tbl.Select(
-          self.cnxn, cols=features_svc.SAVEDQUERYEXECUTESINPROJECT_COLS,
+
+    if has_query_id:
+      self.features_service.user2savedquery_tbl.Select(
+          self.cnxn,
+          cols=features_svc.SAVEDQUERY_COLS + ['user_id', 'subscription_mode'],
+          left_joins=[('SavedQuery ON query_id = id', [])],
+          order_by=[('rank', [])],
+          user_id=[2]).AndReturn(
+              [(2, 'query2', 100, 'status:New', 2, 'Sub_Mode')])
+      self.features_service.savedqueryexecutesinproject_tbl.Select(
+          self.cnxn,
+          cols=features_svc.SAVEDQUERYEXECUTESINPROJECT_COLS,
           query_id=set([2])).AndReturn([(2, 12345)])
+    else:
+      self.features_service.user2savedquery_tbl.Select(
+          self.cnxn,
+          cols=features_svc.SAVEDQUERY_COLS + ['user_id', 'subscription_mode'],
+          left_joins=[('SavedQuery ON query_id = id', [])],
+          order_by=[('rank', [])],
+          user_id=[2]).AndReturn([])
 
   def testGetUsersSavedQueriesDict(self):
     self.SetUpUsersSavedQueries()
@@ -293,6 +304,15 @@ assert_called_once_with(self.cnxn, user_id=user_ids, commit=commit, limit=50)
     self.mox.VerifyAll()
     self.assertIn(1, results_dict)
     self.assertIn(2, results_dict)
+
+  def testGetUsersSavedQueriesDictWithoutSavedQueries(self):
+    self.SetUpUsersSavedQueries(False)
+    self.mox.ReplayAll()
+    results_dict = self.features_service._GetUsersSavedQueriesDict(
+        self.cnxn, [1, 2])
+    self.mox.VerifyAll()
+    self.assertIn(1, results_dict)
+    self.assertNotIn(2, results_dict)
 
   def testGetSavedQueriesByUserID(self):
     self.SetUpUsersSavedQueries()

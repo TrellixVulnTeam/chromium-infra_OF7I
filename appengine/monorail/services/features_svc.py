@@ -347,6 +347,8 @@ class FeaturesService(object):
   def GetSavedQueries(self, cnxn, query_ids):
     """Retrieve the specified SaveQuery PBs."""
     # TODO(jrobbins): RAM cache
+    if not query_ids:
+      return {}
     saved_queries = {}
     savedquery_rows = self.savedquery_tbl.Select(
         cnxn, cols=SAVEDQUERY_COLS, id=query_ids)
@@ -356,8 +358,7 @@ class FeaturesService(object):
           qid, name, base_id, query)
 
     sqeip_rows = self.savedqueryexecutesinproject_tbl.Select(
-        cnxn, cols=SAVEDQUERYEXECUTESINPROJECT_COLS,
-        query_id=query_ids)
+        cnxn, cols=SAVEDQUERYEXECUTESINPROJECT_COLS, query_id=query_ids)
     for query_id, project_id in sqeip_rows:
       saved_queries[query_id].executes_in_project_ids.append(project_id)
 
@@ -377,12 +378,13 @@ class FeaturesService(object):
           cnxn, cols=SAVEDQUERY_COLS + ['user_id', 'subscription_mode'],
           left_joins=[('SavedQuery ON query_id = id', [])],
           order_by=[('rank', [])], user_id=missed_uids)
-      sqeip_rows = self.savedqueryexecutesinproject_tbl.Select(
-          cnxn, cols=SAVEDQUERYEXECUTESINPROJECT_COLS,
-          query_id={row[0] for row in savedquery_rows})
       sqeip_dict = {}
-      for qid, pid in sqeip_rows:
-        sqeip_dict.setdefault(qid, []).append(pid)
+      if savedquery_rows:
+        query_ids = {row[0] for row in savedquery_rows}
+        sqeip_rows = self.savedqueryexecutesinproject_tbl.Select(
+            cnxn, cols=SAVEDQUERYEXECUTESINPROJECT_COLS, query_id=query_ids)
+        for qid, pid in sqeip_rows:
+          sqeip_dict.setdefault(qid, []).append(pid)
 
       for saved_query_tuple in savedquery_rows:
         query_id, name, base_id, query, uid, sub_mode = saved_query_tuple
