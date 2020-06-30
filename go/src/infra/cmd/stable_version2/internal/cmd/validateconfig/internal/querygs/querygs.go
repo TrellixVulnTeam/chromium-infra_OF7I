@@ -28,8 +28,10 @@ type BoardModel struct {
 	Model       string `json:"model"`
 }
 
-// VersionMismatch is a discrepancy between the version in config file and the version in the
-// associated stable_versions.cfg file.
+// VersionMismatch is a manifestation of a mismatched firmware version.
+// For the purposes of analyzing the stable version file, we always assume
+// that the CrOS version is correct and that the firmware version is potentially
+// out of sync with it, rather than the other way around.
 type VersionMismatch struct {
 	BuildTarget string `json:"build_target"`
 	Model       string `json:"model"`
