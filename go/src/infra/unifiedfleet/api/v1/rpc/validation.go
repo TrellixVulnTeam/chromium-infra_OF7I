@@ -6,6 +6,7 @@ package ufspb
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -20,7 +21,7 @@ var (
 	NilEntity                     string = "Invalid input - No Entity to add/update."
 	EmptyID                       string = "Invalid input - Entity ID is empty."
 	EmptyName                     string = "Invalid input - Entity Name is empty."
-	ValidName                     string = "Name must contain only 4-63 characters, ASCII letters, numbers and special characters )(,_: ."
+	ValidName                     string = "Name must contain only 4-63 characters, ASCII letters, numbers and special characters )(,_:."
 	InvalidCharacters             string = fmt.Sprintf("%s,%s", "Invalid input -", ValidName)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
@@ -45,7 +46,7 @@ var (
 )
 
 // IDRegex regular expression for checking resource Name/ID
-var IDRegex = regexp.MustCompile(`^[a-zA-Z0-9-)(,_: .]{4,63}$`)
+var IDRegex = regexp.MustCompile(`^[a-zA-Z0-9-)(,_:.]{4,63}$`)
 var chromePlatformRegex = regexp.MustCompile(`chromeplatforms\.*`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)
@@ -618,4 +619,46 @@ func ValidateMachineDBSource(machinedb *MachineDBSource) error {
 		return invalidHostInMachineDBSourceStatus.Err()
 	}
 	return nil
+}
+
+// ValidateResourceKey validates a key of a resource
+//
+// TODO(xixuan): add validation for all imported data
+func ValidateResourceKey(resources interface{}, k string) error {
+	vs := ParseResources(resources, k)
+	for _, v := range vs {
+		if !IDRegex.MatchString(v) {
+			return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+		}
+	}
+	return nil
+}
+
+// ParseResources parse a list of resources and returns a string slice by key
+func ParseResources(args interface{}, k string) []string {
+	names := make([]string, 0)
+	v := reflect.ValueOf(args)
+	switch v.Kind() {
+	case reflect.Ptr:
+		names = append(names, parse(v.Elem(), k))
+	case reflect.Slice:
+		for i := 0; i < v.Len(); i++ {
+			n := parse(v.Index(i).Elem(), k)
+			if n != "" {
+				names = append(names, n)
+			}
+		}
+	}
+	return names
+}
+
+func parse(v reflect.Value, k string) string {
+	typeOfT := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		if typeOfT.Field(i).Name == k {
+			return f.Interface().(string)
+		}
+	}
+	return ""
 }

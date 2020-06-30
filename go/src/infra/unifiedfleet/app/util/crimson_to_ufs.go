@@ -67,7 +67,7 @@ func ToChromePlatforms(oldP *crimsonconfig.Platforms) []*fleet.ChromePlatform {
 	newP := make([]*fleet.ChromePlatform, len(ps))
 	for i, p := range ps {
 		newP[i] = &fleet.ChromePlatform{
-			Name:         p.GetName(),
+			Name:         FormatResourceName(p.GetName()),
 			Manufacturer: p.GetManufacturer(),
 			Description:  p.GetDescription(),
 		}

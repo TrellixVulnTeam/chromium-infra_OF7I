@@ -37,7 +37,7 @@ func TestImportStates(t *testing.T) {
 
 			states, _, err := state.ListStateRecords(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(states, "ResourceName"), ShouldResemble, []string{"machines/machine1", "machines/machine2", "machines/machine3", "vms/vm578-m4"})
+			So(api.ParseResources(states, "ResourceName"), ShouldResemble, []string{"machines/machine1", "machines/machine2", "machines/machine3", "vms/vm578-m4"})
 			s, err := state.GetStateRecord(ctx, "machines/machine1")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)

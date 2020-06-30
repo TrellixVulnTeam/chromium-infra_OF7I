@@ -84,3 +84,8 @@ func AddPrefix(collection, entity string) string {
 func GetRackHostname(rackName string) string {
 	return fmt.Sprintf("%s-host", rackName)
 }
+
+// FormatResourceName formats the resource name
+func FormatResourceName(old string) string {
+	return strings.Replace(old, " ", "_", -1)
+}

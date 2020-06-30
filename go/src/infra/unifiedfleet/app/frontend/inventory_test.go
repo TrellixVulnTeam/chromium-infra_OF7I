@@ -705,12 +705,12 @@ func TestImportMachineLSEs(t *testing.T) {
 			// Verify machine lse prototypes
 			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", "")
 			So(err, ShouldBeNil)
-			So(parseAssets(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
+			So(api.ParseResources(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
 
 			// Verify machine lses
 			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
+			So(api.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
 			for _, r := range machineLSEs {
 				switch r.GetName() {
 				case "esx-8":

@@ -7,7 +7,6 @@ package frontend
 import (
 	"fmt"
 	"math"
-	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -438,7 +437,7 @@ func TestImportMachines(t *testing.T) {
 			machines, _, err := registration.ListMachines(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(machines, ShouldHaveLength, 3)
-			So(parseAssets(machines, "Name"), ShouldResemble, []string{"machine1", "machine2", "machine3"})
+			So(api.ParseResources(machines, "Name"), ShouldResemble, []string{"machine1", "machine2", "machine3"})
 			for _, m := range machines {
 				bm := m.GetChromeBrowserMachine()
 				switch m.GetName() {
@@ -1193,7 +1192,7 @@ func TestImportNics(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 			nics, _, err := registration.ListNics(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(nics, "Name"), ShouldResemble, []string{"machine1-eth0", "machine1-eth1", "machine2-eth0", "machine3-eth0"})
+			So(api.ParseResources(nics, "Name"), ShouldResemble, []string{"machine1-eth0", "machine1-eth1", "machine2-eth0", "machine3-eth0"})
 			switches := make([]*proto.SwitchInterface, len(nics))
 			for i, nic := range nics {
 				switches[i] = nic.GetSwitchInterface()
@@ -1218,10 +1217,10 @@ func TestImportNics(t *testing.T) {
 			})
 			dracs, _, err := registration.ListDracs(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(dracs, "Name"), ShouldResemble, []string{"machine1-drac"})
+			So(api.ParseResources(dracs, "Name"), ShouldResemble, []string{"machine1-drac"})
 			dhcps, _, err := configuration.ListDHCPConfigs(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(dhcps, "Ip"), ShouldResemble, []string{"ip1.1", "ip1.2", "ip1.3", "ip2", "ip3"})
+			So(api.ParseResources(dhcps, "Ip"), ShouldResemble, []string{"ip1.1", "ip1.2", "ip1.3", "ip2", "ip3"})
 		})
 		// Invalid & Empty machines DB hosts are tested in TestImportMachines
 		// Skip testing here
@@ -1252,15 +1251,15 @@ func TestImportDatacenters(t *testing.T) {
 			racks, _, err := registration.ListRacks(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(racks, ShouldHaveLength, 2)
-			So(parseAssets(racks, "Name"), ShouldResemble, []string{"cr20", "cr22"})
+			So(api.ParseResources(racks, "Name"), ShouldResemble, []string{"cr20", "cr22"})
 			kvms, _, err := registration.ListKVMs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(kvms, ShouldHaveLength, 3)
-			So(parseAssets(kvms, "Name"), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
+			So(api.ParseResources(kvms, "Name"), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
 			switches, _, err := registration.ListSwitches(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(switches, ShouldHaveLength, 4)
-			So(parseAssets(switches, "Name"), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
+			So(api.ParseResources(switches, "Name"), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
 			rackLSEs, _, err := inventory.ListRackLSEs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(rackLSEs, ShouldHaveLength, 2)
@@ -2724,34 +2723,6 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
 		})
 	})
-}
-
-func parseAssets(args interface{}, k string) []string {
-	names := make([]string, 0)
-	v := reflect.ValueOf(args)
-	switch v.Kind() {
-	case reflect.Ptr:
-		names = append(names, parse(v.Elem(), k))
-	case reflect.Slice:
-		for i := 0; i < v.Len(); i++ {
-			n := parse(v.Index(i).Elem(), k)
-			if n != "" {
-				names = append(names, n)
-			}
-		}
-	}
-	return names
-}
-
-func parse(v reflect.Value, k string) string {
-	typeOfT := v.Type()
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		if typeOfT.Field(i).Name == k {
-			return f.Interface().(string)
-		}
-	}
-	return ""
 }
 
 func getCapacity(cidr string) float64 {

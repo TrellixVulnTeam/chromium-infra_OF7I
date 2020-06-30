@@ -23,9 +23,9 @@ import (
 )
 
 var localPlatforms = []*crimsonconfig.Platform{
-	{Name: "platform1"},
-	{Name: "platform2"},
-	{Name: "platform3"},
+	{Name: "fake platform1"},
+	{Name: "fake platform2"},
+	{Name: "fake platform3"},
 }
 
 func mockParsePlatformsFunc(path string) (*crimsonconfig.Platforms, error) {
@@ -465,9 +465,8 @@ func TestImportChromePlatforms(t *testing.T) {
 			getRes, err := configuration.GetAllChromePlatforms(ctx)
 			So(err, ShouldBeNil)
 			So(getRes, ShouldHaveLength, len(localPlatforms))
-			wants := getLocalPlatformNames()
 			gets := getReturnedPlatformNames(*getRes)
-			So(gets, ShouldResemble, wants)
+			So(gets, ShouldResemble, []string{"fake_platform1", "fake_platform2", "fake_platform3"})
 		})
 		Convey("import platforms with invalid argument", func() {
 			req := &api.ImportChromePlatformsRequest{
@@ -1564,7 +1563,7 @@ func TestImportVlans(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 			vlans, _, err := configuration.ListVlans(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(parseAssets(vlans, "Name"), ShouldResemble, []string{"browser-lab:144", "browser-lab:20", "browser-lab:40"})
+			So(api.ParseResources(vlans, "Name"), ShouldResemble, []string{"browser-lab:144", "browser-lab:20", "browser-lab:40"})
 			vlan, err := configuration.GetVlan(ctx, "browser-lab:40")
 			So(err, ShouldBeNil)
 			expectedCapacity := getCapacity(vlan.GetVlanAddress())
@@ -1574,14 +1573,6 @@ func TestImportVlans(t *testing.T) {
 			So(len(ips), ShouldEqual, expectedCapacity)
 		})
 	})
-}
-
-func getLocalPlatformNames() []string {
-	wants := make([]string, len(localPlatforms))
-	for i, p := range localPlatforms {
-		wants[i] = p.GetName()
-	}
-	return wants
 }
 
 func getReturnedPlatformNames(res datastore.OpResults) []string {
