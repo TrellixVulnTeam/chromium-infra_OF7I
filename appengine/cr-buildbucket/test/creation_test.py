@@ -70,6 +70,16 @@ class CreationTest(testing.AppengineTestCase):
             }
           }
           builders {
+            name: "linux_wait"
+            wait_for_capacity: YES
+            swarming_host: "chromium-swarm.appspot.com"
+            recipe {
+              name: "recipe"
+              cipd_package: "infra/recipe_bundle"
+              cipd_version: "refs/heads/master"
+            }
+          }
+          builders {
             name: "linux_modern"
             build_numbers: YES
             swarming_host: "chromium-swarm.appspot.com"
@@ -189,6 +199,7 @@ class CreationTest(testing.AppengineTestCase):
         ),
         infra.swarming.caches,
     )
+    self.assertEqual(build.proto.wait_for_capacity, False)
 
   def test_add_legacy(self):
     builder_id = builder_pb2.BuilderID(
@@ -198,6 +209,15 @@ class CreationTest(testing.AppengineTestCase):
     )
     build = self.add(dict(builder=builder_id))
     self.assertEqual(build.proto.exe.cmd, ['recipes'])
+
+  def test_add_wait(self):
+    builder_id = builder_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='linux_wait',
+    )
+    build = self.add(dict(builder=builder_id))
+    self.assertEqual(build.proto.wait_for_capacity, True)
 
   def test_add_custom_exe(self):
     builder_id = builder_pb2.BuilderID(

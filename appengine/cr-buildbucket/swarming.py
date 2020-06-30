@@ -215,25 +215,20 @@ def _compute_task_slices(build, settings):
 
   base_slice = {
       'expiration_secs': str(build.proto.scheduling_timeout.seconds),
-      'wait_for_capacity': False,
+      'wait_for_capacity': build.proto.wait_for_capacity,
       'properties': {
-          'cipd_input':
-              _compute_cipd_input(build, settings),
-          'execution_timeout_secs':
-              str(build.proto.execution_timeout.seconds),
+          'cipd_input': _compute_cipd_input(build, settings),
+          'execution_timeout_secs': str(build.proto.execution_timeout.seconds),
           'caches': [{
               'path': posixpath.join(_CACHE_DIR, c.path), 'name': c.name
           } for c in build.proto.infra.swarming.caches],
-          'dimensions':
-              base_dims,
-          'env_prefixes':
-              _compute_env_prefixes(build, settings),
+          'dimensions': base_dims,
+          'env_prefixes': _compute_env_prefixes(build, settings),
           'env': [{
               'key': 'BUILDBUCKET_EXPERIMENTAL',
               'value': str(build.experimental).upper(),
           }],
-          'command':
-              _compute_command(build, settings),
+          'command': _compute_command(build, settings),
       },
   }
 

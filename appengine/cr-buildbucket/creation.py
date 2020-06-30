@@ -592,6 +592,10 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings):
   if not build_proto.execution_timeout.seconds:
     build_proto.execution_timeout.FromTimedelta(_DEFAULT_EXECUTION_TIMEOUT)
 
+  build_proto.wait_for_capacity = (
+      builder_cfg.wait_for_capacity == common_pb2.YES
+  )
+
   # Populate input.
 
   build_proto.input.experimental = (
