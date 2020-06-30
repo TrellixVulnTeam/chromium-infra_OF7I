@@ -83,6 +83,8 @@ nav.bottom-pager ul.pager {
                 <a href="mailto://{{.GetEmail}}">email://{{.GetEmail}}</a>
               {{else if .GetOncall}}
                 <a href=#>{{.GetOncall}}</a>
+              {{else if .GetRotation}}
+                <a href=#>{{.GetRotation}}</a>
               {{end}}
             {{end}}
           </div>
@@ -97,6 +99,8 @@ nav.bottom-pager ul.pager {
                 <a href="mailto://{{.GetEmail}}">email://{{.GetEmail}}</a>
               {{else if .GetOncall}}
                 <a href=#>{{.GetOncall}}</a>
+              {{else if .GetRotation}}
+                <a href=#>{{.GetRotation}}</a>
               {{end}}
             {{end}}
           </div>
