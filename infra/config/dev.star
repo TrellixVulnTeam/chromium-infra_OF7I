@@ -118,7 +118,7 @@ def ci_builder(
         executable = infra.recipe(recipe),
         os = os,
         cpu = "x86-64",
-        pool = "chromium.tests",  # no point in creating a dedicated pool on -dev
+        pool = "luci.chromium.ci",
         service_account = "adhoc-testing@luci-token-server-dev.iam.gserviceaccount.com",
         triggered_by = [infra.poller()],
         notifies = ["dev tree closer"] if tree_closing else None,
