@@ -74,9 +74,11 @@ export class MrIssueList extends connectStore(LitElement) {
       SHARED_STYLES,
       css`
         :host {
-          display: table;
           width: 100%;
           font-size: var(--chops-main-font-size);
+        }
+        table {
+          width: 100%;
         }
         .edit-widget-container {
           display: flex;
@@ -145,7 +147,6 @@ export class MrIssueList extends connectStore(LitElement) {
           background: var(--chops-table-header-bg);
           white-space: nowrap;
           text-align: left;
-          z-index: 10;
           border-bottom: var(--chops-normal-border);
         }
         th.selection-header {
@@ -224,6 +225,7 @@ export class MrIssueList extends connectStore(LitElement) {
           .first-row th {
             position: sticky;
             top: var(--monorail-header-height);
+            z-index: 10;
           }
         }
       `,
@@ -237,46 +239,48 @@ export class MrIssueList extends connectStore(LitElement) {
 
     return html`
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-      <thead>
-        <tr class="first-row">
-          ${this.rerank ? html`<th></th>` : ''}
-          <th class="selection-header">
-            <div class="edit-widget-container">
-              ${this.selectionEnabled ? html`
-                <input
-                  class="select-all"
-                  .checked=${selectAllChecked}
-                  type="checkbox"
-                  aria-label=${checkboxLabel}
-                  title=${checkboxLabel}
-                  @change=${this._selectAll}
-                />
-              ` : ''}
-            </div>
-          </th>
-          ${this.columns.map((column, i) => this._renderHeader(column, i))}
-          <th style="z-index: ${this.highestZIndex};">
-            <mr-show-columns-dropdown
-              title="Show columns"
-              menuAlignment="right"
-              .columns=${this.columns}
-              .issues=${this.issues}
-              .defaultFields=${this.defaultFields}
-            ></mr-show-columns-dropdown>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        ${this._renderIssues()}
-      </tbody>
-      ${this.userDisplayName && html`
-        <tfoot><tr><td colspan=999 class="csv-download-container">
-          <a id="download-link" aria-label="Download page as CSV"
-              @click=${this._downloadCsv} href>CSV</a>
-          <a id="hidden-data-link" download="${this.projectName}-issues.csv"
-            href=${this._csvDataHref}></a>
-        </td></tr></tfoot>
-      `}
+      <table cellspacing="0">
+        <thead>
+          <tr class="first-row">
+            ${this.rerank ? html`<th></th>` : ''}
+            <th class="selection-header">
+              <div class="edit-widget-container">
+                ${this.selectionEnabled ? html`
+                  <input
+                    class="select-all"
+                    .checked=${selectAllChecked}
+                    type="checkbox"
+                    aria-label=${checkboxLabel}
+                    title=${checkboxLabel}
+                    @change=${this._selectAll}
+                  />
+                ` : ''}
+              </div>
+            </th>
+            ${this.columns.map((column, i) => this._renderHeader(column, i))}
+            <th style="z-index: ${this.highestZIndex};">
+              <mr-show-columns-dropdown
+                title="Show columns"
+                menuAlignment="right"
+                .columns=${this.columns}
+                .issues=${this.issues}
+                .defaultFields=${this.defaultFields}
+              ></mr-show-columns-dropdown>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          ${this._renderIssues()}
+        </tbody>
+        ${this.userDisplayName && html`
+          <tfoot><tr><td colspan=999 class="csv-download-container">
+            <a id="download-link" aria-label="Download page as CSV"
+                @click=${this._downloadCsv} href>CSV</a>
+            <a id="hidden-data-link" download="${this.projectName}-issues.csv"
+              href=${this._csvDataHref}></a>
+          </td></tr></tfoot>
+        `}
+      </table>
     `;
   }
 
@@ -587,14 +591,6 @@ export class MrIssueList extends connectStore(LitElement) {
        */
       starringEnabled: {type: Boolean},
       /**
-       * Attribute set to make host element into a table for accessibility.
-       * Do not override.
-       */
-      role: {
-        type: String,
-        reflect: true,
-      },
-      /**
        * A query representing the current set of matching issues in the issue
        * list. Does not necessarily match queryParams.q since queryParams.q can
        * be empty while currentQuery is set to a default project query.
@@ -691,11 +687,6 @@ export class MrIssueList extends connectStore(LitElement) {
     /** @type {Array} */
     this.groups = [];
     this.userDisplayName = '';
-    /**
-     * @type {string}
-     * Role attribute set for accessibility. Do not override.
-     */
-    this.role = 'table';
 
     /** @type {function(KeyboardEvent): void} */
     this._boundRunListHotKeys = this._runListHotKeys.bind(this);
