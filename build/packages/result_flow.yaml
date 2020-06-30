@@ -1,0 +1,10 @@
+package: chromiumos/infra/result_flow/${platform}
+description: Tool for pipelining the test implementation result to Bigquery.
+platforms:
+  - linux-amd64
+go_packages:
+  - infra/cros/cmd/result_flow
+root: ../../go/bin
+data:
+  - file: result_flow${exe_suffix}
+  - version_file: .versions/result_flow${exe_suffix}.cipd_version
