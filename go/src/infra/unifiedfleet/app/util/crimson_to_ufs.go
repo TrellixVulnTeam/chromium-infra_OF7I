@@ -116,7 +116,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 			Location: toLocation(rackName, dcName),
 		}
 		rlse := &fleet.RackLSE{
-			Name:             GetUUIDName(),
+			Name:             GetRackHostname(rackName),
 			RackLsePrototype: "browser-lab:normal",
 			Lse: &fleet.RackLSE_ChromeBrowserRackLse{
 				ChromeBrowserRackLse: &fleet.ChromeBrowserRackLSE{

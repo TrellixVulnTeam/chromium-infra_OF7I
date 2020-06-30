@@ -7,8 +7,6 @@ package util
 import (
 	"fmt"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -82,7 +80,7 @@ func AddPrefix(collection, entity string) string {
 	return fmt.Sprintf("%s%s%s", collection, separator, entity)
 }
 
-// GetUUIDName returns a new UUID name.
-func GetUUIDName() string {
-	return uuid.New().String()
+// GetRackHostname returns a rack host name.
+func GetRackHostname(rackName string) string {
+	return fmt.Sprintf("%s-host", rackName)
 }
