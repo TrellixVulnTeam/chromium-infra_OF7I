@@ -151,13 +151,15 @@ class RecipesRepo(object):
     Assumes this repo is the repo for the CL.
     """
     assert self._cl_revision
-    self.checkout(self._cl_revision, 'sync %s to CL' % self.name)
+    self.checkout(base, 'checkout base for cherry-pick')
     with self._api.context(cwd=self.root):
       try:
         self._api.git(
-            'rebase', '--autostash', base, name='rebase CL onto %s' % base)
+            'cherry-pick',
+            self._cl_revision,
+            name='cherry-pick CL onto %s' % base)
       except self._api.step.StepFailure:
-        self._api.git('rebase', '--abort')
+        self._api.git('cherry-pick', '--abort')
         raise
 
   def checkout_master(self):
@@ -338,15 +340,15 @@ def _get_expected_footer(api, upstream_repo, downstream_repo):
   with api.context(cwd=downstream_repo.root):
     api.git('add', '--all', name='save post-train downstream diff')
 
-  # If we failed to find a non-crashing revision, just rebase onto master.
-  rebase_onto = last_non_crashing_revision or MASTER_REF
+  # If we failed to find a non-crashing revision, just cherry-pick onto master.
+  base = last_non_crashing_revision or MASTER_REF
 
   try:
-    upstream_repo.checkout_cl(base=rebase_onto)
+    upstream_repo.checkout_cl(base=base)
   except api.step.StepFailure:
-    # If this CL doesn't rebase cleanly on top of the last non-crashing
-    # revision, we'll fall back to rebasing on top of master. Training after
-    # this will probably fail unless the CL actually fixes the crash.
+    # If this CL doesn't cherry-pick cleanly on top of the last non-crashing
+    # revision, we'll fall back to cherry-picking on top of master. Training
+    # after this will probably fail unless the CL actually fixes the crash.
     upstream_repo.checkout_cl(base=MASTER_REF)
 
   try:
@@ -534,7 +536,7 @@ def GenTests(api):
                  'find last non-crashing upstream revision'
                  '.get upstream base revision',
                  stdout=api.raw_io.output('deadbeef')) +
-         api.step_data('rebase CL onto deadbeef', retcode=1))
+         api.step_data('cherry-pick CL onto deadbeef', retcode=1))
 
   # None of the ancestor commits of the upstream repo's master branch are
   # compatible with the downstream repo (they all cause crashes).

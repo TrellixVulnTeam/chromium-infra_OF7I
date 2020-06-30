@@ -468,18 +468,17 @@
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "sync recipe_engine to CL"
+    "name": "checkout base for cherry-pick"
   },
   {
     "cmd": [
       "git",
-      "rebase",
-      "--autostash",
+      "cherry-pick",
       "deadbeef"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "rebase CL onto deadbeef",
+    "name": "cherry-pick CL onto deadbeef",
     "~followup_annotations": [
       "@@@STEP_EXCEPTION@@@"
     ]
@@ -487,12 +486,12 @@
   {
     "cmd": [
       "git",
-      "rebase",
+      "cherry-pick",
       "--abort"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "git rebase"
+    "name": "git cherry-pick"
   },
   {
     "cmd": [
@@ -509,22 +508,21 @@
       "git",
       "checkout",
       "-f",
-      "deadbeef"
-    ],
-    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
-    "infra_step": true,
-    "name": "sync recipe_engine to CL (2)"
-  },
-  {
-    "cmd": [
-      "git",
-      "rebase",
-      "--autostash",
       "refs/remotes/origin/master"
     ],
     "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
     "infra_step": true,
-    "name": "rebase CL onto refs/remotes/origin/master"
+    "name": "checkout base for cherry-pick (2)"
+  },
+  {
+    "cmd": [
+      "git",
+      "cherry-pick",
+      "deadbeef"
+    ],
+    "cwd": "[CACHE]/builder/recipe_engine/recipe_engine",
+    "infra_step": true,
+    "name": "cherry-pick CL onto refs/remotes/origin/master"
   },
   {
     "cmd": [
