@@ -6,7 +6,7 @@
 """A class to display the a message explaining that the user has been banned.
 
 We can ban a user for anti-social behavior.  We indicate that the user is
-banned by adding a 'banned' field to his/her User PB in the DB.  Whenever
+banned by adding a 'banned' field to their User PB in the DB.  Whenever
 a user with a banned indicator visits any page, AssertBasePermission()
 checks has_banned and redirects to this page.
 """

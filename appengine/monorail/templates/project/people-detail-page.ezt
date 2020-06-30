@@ -21,7 +21,7 @@
    [else]
      [define offer_role_select]No[end]
    [end]
-   [# But, don't offer it if the user could remove himself as the last owner.]
+   [# But, don't offer it if the user could remove themselves as the last owner.]
    [is total_num_owners "1"][if-any warn_abandonment]
      [define offer_role_select]No[end]
    [end][end]

@@ -582,7 +582,7 @@ function TKR_isDirty() {
 
 /**
  * The user has clicked the 'Discard' button on the issue update form.
- * If the form has been edited, ask if he/she is sure about discarding
+ * If the form has been edited, ask if they are sure about discarding
  * before then navigating to the given URL.  This can go up to some
  * other page, or reload the current page with a fresh form.
  * @param {string} nextUrl The page to show after discarding.
@@ -596,7 +596,7 @@ function TKR_confirmDiscardUpdate(nextUrl) {
 
 /**
  * The user has clicked the 'Discard' button on the issue entry form.
- * If the form has been edited, this function asks if he/she is sure about
+ * If the form has been edited, this function asks if they are sure about
  * discarding before doing it.
  * @param {Element} discardButton The 'Discard' button.
  */
@@ -1406,7 +1406,7 @@ function TKR_checkRangeSelect(evt, el) {
 /**
  * Make a link to a given issue that includes context parameters that allow
  * the user to see the same list columns, sorting, query, and pagination state
- * if he/she ever navigates up to the list again.
+ * if they ever navigate up to the list again.
  * @param {{issue_url: string}} issueRef The dict with info about an issue,
  *     including a url to the issue detail page.
  */

@@ -68,7 +68,7 @@ let TKR_quickEditStore;
  * This is a list of label prefixes that each issue should only use once.
  * E.g., each issue should only have one Priority-* label.  We do not prevent
  * the user from using multiple such labels, we just warn the user before
- * he/she submits.
+ * they submit.
  */
 let TKR_exclPrefixes = [];
 

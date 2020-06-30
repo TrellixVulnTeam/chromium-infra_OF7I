@@ -33,7 +33,7 @@ To run any training jobs locally, you'll need Python 2 and TensorFlow 1.2:
 pip install -r requirements.txt
 ```
 
-Run a local training job with dummy data:
+Run a local training job with placeholder data:
 
 ```sh
 make TRAIN_FILE=./sample_spam_training_data.csv train_local_spam

@@ -64,7 +64,7 @@ class ProjectSummaryTest(unittest.TestCase):
     help_data = self.servlet.GatherHelpData(mr, {})
     self.assertEqual('document_team_duties', help_data['cue'])
 
-    # Now he set up notes too.
+    # Now help set up notes too.
     project_commitments = project_pb2.ProjectCommitments()
     project_commitments.project_id = self.project.project_id
     project_commitments.commitments.append(

@@ -158,7 +158,7 @@ class HelperFunctionsTest(unittest.TestCase):
             self.regular_user),
         self.members_only_project)
 
-    # The other user cannot see the project, so he does not see it in either
+    # The other user cannot see the project, so they do not see it in either
     # list of starred projects.
     self.assertProjectsAnyOrder(
         sitewide_helpers.GetViewableStarredProjects(

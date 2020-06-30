@@ -28,7 +28,7 @@
      issues.
   <a class="ifClosed toggleHidden" href="#" style="font-size:90%; margin-left:.5em">Learn more</a></p>
   <div class="ifOpened help">
-      Normally, if a project member may edit the labels, then he or she may also
+      Normally, if a project member may edit the labels, then they may also
       edit restriction labels.  That allows project committers to adjust access
       controls for the items that they are working on.  However, some project
       owners may prefer that once a restriction label is in place, only a project

@@ -178,7 +178,7 @@ function _ac_cancel() {
 
 /** add a handler without whacking any existing handler. @private */
 function ac_addHandler_(node, handlerName, handler) {
-  let oldHandler = node[handlerName];
+  const oldHandler = node[handlerName];
   if (!oldHandler) {
     node[handlerName] = handler;
   } else {
@@ -209,8 +209,8 @@ function ac_cancelEvent_(event) {
 */
 function ac_fnchain_(a, b) {
   return function() {
-    let ar = a.apply(this, arguments);
-    let br = b.apply(this, arguments);
+    const ar = a.apply(this, arguments);
+    const br = b.apply(this, arguments);
 
     // NOTE 1: (undefined && false) -> undefined
     // NOTE 2: returning FALSE from a onkeypressed cancels it,
@@ -228,12 +228,12 @@ function ac_fnchain_(a, b) {
 function ac_keyevent_(event) {
   event = event || window.event;
 
-  let source = getTargetFromEvent(event);
-  if (('INPUT' == source.tagName && source.type.match(/^text|email$/i))
-       || 'TEXTAREA' == source.tagName) {
-    let code = GetKeyCode(event);
-    let isDown = event.type == 'keydown';
-    let isShiftKey = event.shiftKey;
+  const source = getTargetFromEvent(event);
+  if (('INPUT' == source.tagName && source.type.match(/^text|email$/i)) ||
+       'TEXTAREA' == source.tagName) {
+    const code = GetKeyCode(event);
+    const isDown = event.type == 'keydown';
+    const isShiftKey = event.shiftKey;
     let storeFound = true;
 
     if ((source !== ac_focusedInput) || (ac_store === null)) {
@@ -241,12 +241,12 @@ function ac_keyevent_(event) {
       storeFound = false;
       if (ENTER_KEYCODE !== code && ESC_KEYCODE !== code) {
         for (let i = 0; i < ac_storeConstructors.length; ++i) {
-          let store = (ac_storeConstructors[i])(source, event);
+          const store = (ac_storeConstructors[i])(source, event);
           if (store) {
             ac_store = store;
             ac_store.setAvoid(event);
             ac_oldBlurHandler = ac_addHandler_(
-              ac_focusedInput, 'onblur', _ac_ob);
+                ac_focusedInput, 'onblur', _ac_ob);
             storeFound = true;
             break;
           }
@@ -266,17 +266,17 @@ function ac_keyevent_(event) {
       // ac-table rows need to be removed when switching to another input.
       ac_updateCompletionList(false);
     }
-    // If the user hit Escape when the auto-complete menu was not shown,
+    // If the user typed Esc when the auto-complete menu was not shown,
     // then blur the input text field so that the user can use keyboard
     // shortcuts.
-    let acList = document.getElementById('ac-list');
+    const acList = document.getElementById('ac-list');
     if (ESC_KEYCODE == code &&
         (!acList || acList.style.display == 'none')) {
       ac_focusedInput.blur();
     }
     if (storeFound) {
-      let isCompletion = ac_store.isCompletionKey(code, isDown, isShiftKey);
-      let hasResults = ac_completions && (ac_completions.length > 0);
+      const isCompletion = ac_store.isCompletionKey(code, isDown, isShiftKey);
+      const hasResults = ac_completions && (ac_completions.length > 0);
       let cancelEvent = false;
 
       if (isCompletion && hasResults) {
@@ -362,8 +362,8 @@ _AC_Store.prototype.commaCompletes = true;
  * the process.
  */
 _AC_Store.prototype.isCompletionKey = function(code, isDown, isShiftKey) {
-  if (!isDown && (ENTER_KEYCODE === code
-                  || (AC_COMMA_KEYCODE == code && this.commaCompletes))) {
+  if (!isDown && (ENTER_KEYCODE === code ||
+                  (AC_COMMA_KEYCODE == code && this.commaCompletes))) {
     return true;
   }
   if (TAB_KEYCODE === code && !isShiftKey) {
@@ -382,15 +382,15 @@ _AC_Store.prototype.setAvoid = function(event) {
   } else {
     ac_avoidValues = this.computeAvoid();
   }
-  ac_avoidValues = ac_avoidValues.map(val => val.toLowerCase());
-}
+  ac_avoidValues = ac_avoidValues.map((val) => val.toLowerCase());
+};
 
 /* Subclasses may implement this to compute values to avoid
    offering in the current input field, i.e., because those
    values are already used. */
 _AC_Store.prototype.computeAvoid = function() {
   return [];
-}
+};
 
 
 function _AC_AddItemToFirstCharMap(firstCharMap, ch, s) {
@@ -420,11 +420,11 @@ function _AC_SimpleStore(strings, opt_docStrings) {
       s = s + ' ' + opt_docStrings[s];
     }
 
-    let parts = s.split(/\W+/);
+    const parts = s.split(/\W+/);
     for (let j = 0; j < parts.length; ++j) {
       if (parts[j]) {
         _AC_AddItemToFirstCharMap(
-          this.firstCharMap_, parts[j].charAt(0).toLowerCase(), strings[i]);
+            this.firstCharMap_, parts[j].charAt(0).toLowerCase(), strings[i]);
       }
     }
   }
@@ -442,7 +442,7 @@ _AC_SimpleStore.prototype.completable =
     let start = 0;
     let state = 0;
     for (let i = 0; i < caret; ++i) {
-      let ch = inputValue.charAt(i);
+      const ch = inputValue.charAt(i);
       switch (state) {
         case 0:
           if ('"' == ch) {
@@ -469,9 +469,9 @@ _AC_SimpleStore.prototype.completable =
 /** Simple function to create a <span> with matching text in bold.
  */
 function _AC_CreateSpanWithMatchHighlighted(match) {
-  let span = document.createElement('span');
+  const span = document.createElement('span');
   span.appendChild(document.createTextNode(match[1] || ''));
-  let bold = document.createElement('b');
+  const bold = document.createElement('b');
   span.appendChild(bold);
   bold.appendChild(document.createTextNode(match[2]));
   span.appendChild(document.createTextNode(match[3] || ''));
@@ -495,30 +495,30 @@ _AC_SimpleStore.prototype.completions = function(prefix) {
   // Since we use prefix to build a regular expression, we need to escape RE
   // characters. We match '-', '{', '$' and others in the prefix and convert
   // them into "\-", "\{", "\$".
-  let regexForRegexCharacters = /([\^*+\-\$\\\{\}\(\)\[\]\#?\.])/g;
-  let modifiedPrefix = prefix.replace(regexForRegexCharacters, '\\$1');
+  const regexForRegexCharacters = /([\^*+\-\$\\\{\}\(\)\[\]\#?\.])/g;
+  const modifiedPrefix = prefix.replace(regexForRegexCharacters, '\\$1');
 
   // Match the modifiedPrefix anywhere as long as it is either at the very
   // beginning "Th" -> "The Hobbit", or comes immediately after a word separator
   // such as "Ga" -> "The-Great-Gatsby".
-  let patternRegex = '^(.*\\W)?(' + modifiedPrefix + ')(.*)';
-  let pattern = new RegExp(patternRegex, 'i' /* ignore case */);
+  const patternRegex = '^(.*\\W)?(' + modifiedPrefix + ')(.*)';
+  const pattern = new RegExp(patternRegex, 'i' /* ignore case */);
 
   // We keep separate lists of possible completions that were generated
   // by matching a value or generated by matching a docstring.  We return
   // a concatenated list so that value matches all come before docstring
   // matches.
-  let completions = [];
-  let docCompletions = [];
+  const completions = [];
+  const docCompletions = [];
 
   if (toFilter) {
-    let toFilterLength = toFilter.length;
+    const toFilterLength = toFilter.length;
     for (let i = 0; i < toFilterLength; ++i) {
-      let docStr = this.docstrings[toFilter[i].value];
+      const docStr = this.docstrings[toFilter[i].value];
       let compSpan = null;
       let docSpan = null;
-      let matches = toFilter[i].value.match(pattern);
-      let docMatches = docStr && docStr.match(pattern);
+      const matches = toFilter[i].value.match(pattern);
+      const docMatches = docStr && docStr.match(pattern);
       if (matches) {
         compSpan = _AC_CreateSpanWithMatchHighlighted(matches);
         if (docStr) docSpan = document.createTextNode(docStr);
@@ -528,8 +528,8 @@ _AC_SimpleStore.prototype.completions = function(prefix) {
       }
 
       if (compSpan) {
-        let newCompletion = new _AC_Completion(
-          toFilter[i].value, compSpan, docSpan);
+        const newCompletion = new _AC_Completion(
+            toFilter[i].value, compSpan, docSpan);
 
         if (matches) {
           completions.push(newCompletion);
@@ -557,8 +557,8 @@ _AC_SimpleStore.prototype.autoselectFirstRow = function() {
 // Comparison function for _AC_Completion
 function _AC_CompareACCompletion(a, b) {
   // convert it to lower case and remove all leading junk
-  let aval = a.value.toLowerCase().replace(/^\W*/, '');
-  let bval = b.value.toLowerCase().replace(/^\W*/, '');
+  const aval = a.value.toLowerCase().replace(/^\W*/, '');
+  const bval = b.value.toLowerCase().replace(/^\W*/, '');
 
   if (a.value === b.value) {
     return 0;
@@ -622,8 +622,8 @@ var ac_completions = null;
 /** -1 or in [0, _AC_Completions.length).  @private */
 var ac_selected = -1;
 
-/** Maxium number of options dislpayed in menu. @private */
-let ac_max_options = 100;
+/** Maximum number of options displayed in menu. @private */
+const ac_max_options = 100;
 
 /** Don't offer these values because they are already used. @private */
 let ac_avoidValues = [];
@@ -637,7 +637,7 @@ function ac_handleKey_(code, isDown, isShiftKey) {
   // check completions
   ac_checkCompletions();
   let show = true;
-  let numCompletions = ac_completions ? ac_completions.length : 0;
+  const numCompletions = ac_completions ? ac_completions.length : 0;
   // handle enter and tab on key press and the rest on key down
   if (ac_store.isCompletionKey(code, isDown, isShiftKey)) {
     if (ac_selected < 0 && numCompletions >= 1 &&
@@ -645,8 +645,8 @@ function ac_handleKey_(code, isDown, isShiftKey) {
       ac_selected = 0;
     }
     if (ac_selected >= 0) {
-      let backupInput = ac_focusedInput;
-      let completeValue = ac_completions[ac_selected].value;
+      const backupInput = ac_focusedInput;
+      const completeValue = ac_completions[ac_selected].value;
       ac_complete();
       if (ac_store.oncomplete) {
         ac_store.oncomplete(true, code, backupInput, completeValue);
@@ -669,7 +669,7 @@ function ac_handleKey_(code, isDown, isShiftKey) {
       case DOWN_KEYCODE: // down
         if (isDown) {
           ac_selected = Math.min(
-            ac_max_options - 1, Math.min(numCompletions - 1, ac_selected + 1));
+              ac_max_options - 1, Math.min(numCompletions - 1, ac_selected + 1));
         }
         break;
     }
@@ -720,12 +720,12 @@ function _ac_mouseover(optionIndex) {
 
 /** perform the substitution of the currently selected item. */
 function ac_complete() {
-  let caret = ac_getCaretPosition_(ac_focusedInput);
-  let completion = ac_completions[ac_selected];
+  const caret = ac_getCaretPosition_(ac_focusedInput);
+  const completion = ac_completions[ac_selected];
 
   ac_focusedInput.value = ac_store.substitute(
-    ac_focusedInput.value, caret,
-    ac_lastCompletable, completion);
+      ac_focusedInput.value, caret,
+      ac_lastCompletable, completion);
   // When the prefix starts with '*' we want to return the complete set of all
   // possible completions. We treat the ac_lastCompletable value as empty so
   // that the caret is correctly calculated (i.e. the caret should not consider
@@ -767,8 +767,8 @@ var ac_everTyped = false;
  */
 function ac_checkCompletions() {
   if (ac_focusedInput && !ac_suppressCompletions) {
-    let caret = ac_getCaretPosition_(ac_focusedInput);
-    let completable = ac_store.completable(ac_focusedInput.value, caret);
+    const caret = ac_getCaretPosition_(ac_focusedInput);
+    const completable = ac_store.completable(ac_focusedInput.value, caret);
 
     // If we already have completed, then our work here is done.
     if (completable == ac_lastCompletable) {
@@ -778,14 +778,14 @@ function ac_checkCompletions() {
     ac_completions = null;
     ac_selected = -1;
 
-    let oldSelected =
+    const oldSelected =
       ((ac_selected >= 0 && ac_selected < ac_completions.length) ?
         ac_completions[ac_selected].value : null);
     ac_completions = ac_store.completions(completable);
     // Don't offer options for values that the user has already used
     // in another part of the current form.
-    ac_completions = ac_completions.filter(comp =>
-        FindInArray(ac_avoidValues, comp.value.toLowerCase()) === -1);
+    ac_completions = ac_completions.filter((comp) =>
+      FindInArray(ac_avoidValues, comp.value.toLowerCase()) === -1);
 
     ac_selected = oldSelected ? 0 : -1;
     ac_lastCompletable = completable;
@@ -802,7 +802,7 @@ function ac_checkCompletions() {
  */
 function ac_updateCompletionList(show) {
   let clist = document.getElementById('ac-list');
-  let input = ac_focusedInput;
+  const input = ac_focusedInput;
   if (input) {
     input.setAttribute('aria-activedescendant', 'ac-status-row-none');
   }
@@ -847,14 +847,14 @@ function ac_updateCompletionList(show) {
       if (ac_completions[i].heading) {
         var rowEl = document.createElement('tr');
         tableBody.appendChild(rowEl);
-        let cellEl = document.createElement('th');
+        const cellEl = document.createElement('th');
         rowEl.appendChild(cellEl);
         cellEl.setAttribute('colspan', 2);
         if (headerCount) {
           cellEl.appendChild(document.createElement('br'));
         }
         cellEl.appendChild(
-          document.createTextNode(ac_completions[i].heading));
+            document.createTextNode(ac_completions[i].heading));
         headerCount++;
       } else {
         var rowEl = document.createElement('tr');
@@ -873,7 +873,7 @@ function ac_updateCompletionList(show) {
           while (target && target.tagName != 'TR') {
             target = target.parentNode;
           }
-          let idx = Number(target.getAttribute('data-index'));
+          const idx = Number(target.getAttribute('data-index'));
           try {
             _ac_select(idx);
           } finally {
@@ -885,15 +885,15 @@ function ac_updateCompletionList(show) {
           while (target && target.tagName != 'TR') {
             target = target.parentNode;
           }
-          let idx = Number(target.getAttribute('data-index'));
+          const idx = Number(target.getAttribute('data-index'));
           _ac_mouseover(idx);
         });
-        let valCellEl = document.createElement('td');
+        const valCellEl = document.createElement('td');
         rowEl.appendChild(valCellEl);
         if (ac_completions[i].compSpan) {
           valCellEl.appendChild(ac_completions[i].compSpan);
         }
-        let docCellEl = document.createElement('td');
+        const docCellEl = document.createElement('td');
         rowEl.appendChild(docCellEl);
         if (ac_completions[i].docSpan &&
             ac_completions[i].docSpan.textContent) {
@@ -904,7 +904,7 @@ function ac_updateCompletionList(show) {
     }
 
     // position
-    let inputBounds = nodeBounds(ac_focusedInput);
+    const inputBounds = nodeBounds(ac_focusedInput);
     clist.style.left = inputBounds.x + 'px';
     clist.style.top = (inputBounds.y + inputBounds.h) + 'px';
 
@@ -930,13 +930,13 @@ function ac_updateCompletionList(show) {
 
 /** Scroll the autocomplete menu to show the currently selected row. */
 function ac_autoscroll() {
-  let acList = document.getElementById('ac-list');
-  let acSelRow = acList.getElementsByClassName('selected')[0];
-  let acSelRowTop = acSelRow ? acSelRow.offsetTop : 0;
-  let acSelRowHeight = acSelRow ? acSelRow.offsetHeight : 0;
+  const acList = document.getElementById('ac-list');
+  const acSelRow = acList.getElementsByClassName('selected')[0];
+  const acSelRowTop = acSelRow ? acSelRow.offsetTop : 0;
+  const acSelRowHeight = acSelRow ? acSelRow.offsetHeight : 0;
 
 
-  let EXTRA = 8; // Go an extra few pixels so the next row is partly exposed.
+  const EXTRA = 8; // Go an extra few pixels so the next row is partly exposed.
 
   if (!acList || !acSelRow) return;
 
@@ -973,8 +973,8 @@ function ac_getCaretPosition_(textField) {
       // ie
     } else if (document.selection) {
       // get an empty selection range
-      let range = document.selection.createRange();
-      let origSelectionLength = range.text.length;
+      const range = document.selection.createRange();
+      const origSelectionLength = range.text.length;
       // Force selection start to 0 position
       range.moveStart('character', -caret);
       // the caret end position is the new selection length

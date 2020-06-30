@@ -219,8 +219,8 @@ max_tiles_in_grid = 1000
 # Maximum number of project results to display on a single pagination page
 max_project_search_results_per_page = 100
 
-# Maxium number of results per pagination page, regardless of what
-# the user specified in his/her request.  This exists to prevent someone
+# Maximum number of results per pagination page, regardless of what
+# the user specified in their request.  This exists to prevent someone
 # from doing a DoS attack that makes our servers do a huge amount of work.
 max_artifact_search_results_per_page = 1000
 

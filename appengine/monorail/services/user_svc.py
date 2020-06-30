@@ -701,7 +701,7 @@ class UserService(object):
   def TotalUsersCount(self, cnxn):
     """Returns the total number of rows in the User table.
 
-    The dummy User reserved for representing deleted users within Monorail
+    The placeholder User reserved for representing deleted users within Monorail
     will not be counted.
     """
     # Subtract one so we don't count the deleted user with
@@ -714,8 +714,8 @@ class UserService(object):
     This method can be used for listing all user emails in Monorail's DB.
     The list will contain at most [limit] emails, and be ordered by
     user_id. The list will start at the given offset value. The email for
-    the dummy User reserved for representing deleted users within Monorail
-    will never be returned.
+    the placeholder User reserved for representing deleted users within
+    Monorail will never be returned.
 
     Args:
       cnxn: connection to SQL database.

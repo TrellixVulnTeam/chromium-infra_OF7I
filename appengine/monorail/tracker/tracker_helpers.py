@@ -522,7 +522,7 @@ def GetAllowedOpenedAndClosedIssues(mr, issue_ids, services):
 
   The function then filters the results to only the issues that the user
   is allowed to view.  E.g., we only auto-link to issues that the user
-  would be able to view if he/she clicked the link.
+  would be able to view if they clicked the link.
 
   Args:
     mr: commonly used info parsed from the request.

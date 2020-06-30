@@ -197,8 +197,8 @@ function raise(msg) {
  * This way, if someone introduces a new value for this enum
  * without noticing this switch statement, then the code will
  * fail if the logic allows it to reach the switch with the
- * new value, alerting the developer that he should add a
- * case to the switch to handle the new value he has introduced.
+ * new value, alerting the developer that they should add a
+ * case to the switch to handle the new value they have introduced.
  *
  * @param {string} opt_msg to display for failure
  *                 DEFAULT: "Assertion failed"

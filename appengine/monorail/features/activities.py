@@ -83,7 +83,7 @@ class ActivityView(template_helpers.PBProxy):
           mr.project_name, pb, users_by_id, autolink,
           all_ref_artifacts, mr, issue)
 
-      # TODO(jrobbins): pass effective_ids of the commenter so that he/she
+      # TODO(jrobbins): pass effective_ids of the commenter so that they
       # can be identified as a project member or not.
       config = prefetched_configs[issue.project_id]
       self.issue = tracker_views.IssueView(issue, users_by_id, config)

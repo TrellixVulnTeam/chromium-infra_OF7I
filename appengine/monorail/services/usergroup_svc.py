@@ -404,7 +404,7 @@ class UserGroupService(object):
       group_id_list: list of int user IDs for all user groups to be examined.
       perms: optional PermissionSet for the user viewing this page.
       effective_ids: set of int user IDs for that user and all
-          his/her group memberships.
+          their group memberships.
       services: backend services.
 
     Returns:

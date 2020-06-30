@@ -377,7 +377,7 @@ def GetPermissions(user, effective_ids, project):
   Args:
     user: The User PB for the signed-in user, or None for anon users.
     effective_ids: set of int user IDs for the current user and all user
-        groups that s/he is a member of.  This will be an empty set for
+        groups that they are a member of.  This will be an empty set for
         anonymous users.
     project: either a Project protobuf, or None for a page whose scope is
         wider than a single project.
@@ -414,7 +414,7 @@ def GetPermissions(user, effective_ids, project):
     role, status, access = _GetPermissionKey(None, project)
     return _LookupPermset(USER_ROLE, status, access)
 
-  # Signed-in user gets the union of all his/her PermissionSets from the table.
+  # Signed-in user gets the union of all their PermissionSets from the table.
   for user_id in effective_ids:
     role, status, access = _GetPermissionKey(user_id, project)
     role_perms = _LookupPermset(role, status, access)
@@ -442,7 +442,7 @@ def UpdateIssuePermissions(
     project: The Project PB for the issue project.
     issue: The Issue PB.
     effective_ids: Set of int user IDs for the current user and all user
-        groups that s/he is a member of.  This will be an empty set for
+        groups that they are a member of.  This will be an empty set for
         anonymous users.
     granted_perms: optional list of strings of permissions that the user is
         granted only within the scope of one issue, e.g., by being named in

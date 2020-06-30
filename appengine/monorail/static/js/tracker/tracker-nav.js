@@ -112,7 +112,7 @@ const _PRETOKENIZED_FIELDS = [
   'owner', 'reporter', 'cc', 'commentby', 'component'];
 
 /**
- * The user wants to narrow his/her search results by adding a search term
+ * The user wants to narrow their search results by adding a search term
  * for the given prefix and value. Reload the issue list page with that
  * additional search term.
  * @param {string} prefix Field or label prefix, e.g., "Priority".
@@ -139,7 +139,7 @@ function TKR_filterTo(prefix, suffix) {
 
 
 /**
- * The user wants to sort his/her search results by adding a sort spec
+ * The user wants to sort their search results by adding a sort spec
  * for the given column. Reload the issue list page with that
  * additional sort spec.
  * @param {string} colname Field or label prefix, e.g., "Priority".

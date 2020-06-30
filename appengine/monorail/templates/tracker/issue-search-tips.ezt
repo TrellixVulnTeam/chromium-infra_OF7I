@@ -103,8 +103,8 @@ is:open, or to just closed issues by using a minus sign to negate it:
  <input type="submit" name="btn" value="Search"></p>
 </form>
 
-<p>When searching for issues owned by a specific user, you can use his
-or her email address, or part of it.  When referring to yourself, you can also
+<p>When searching for issues owned by a specific user, you can use their
+email address, or part of it.  When referring to yourself, you can also
  use the special term <tt>me</tt>. For example, this restricts the search to
 issues that are owned by you.</p>
 
