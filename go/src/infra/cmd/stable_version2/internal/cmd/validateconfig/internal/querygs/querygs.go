@@ -122,6 +122,32 @@ func (r *Reader) Init(ctx context.Context, t http.RoundTripper, unmarshaler json
 	return nil
 }
 
+// combinedKey combines a board and a model into a single key
+// and returns just the board name when the model is "".
+func combinedKey(board string, model string) string {
+	if model == "" {
+		return board
+	}
+	return fmt.Sprintf("%s;%s", board, model)
+}
+
+// lookupBestVersion takes a list of cros versions that are either (a) or (b)
+// and a model and a board and returns the most specific version present or
+// an error.
+//
+// a)         board only (e.g. nami)
+// b) model + board      (e.g. nami;vayne)
+func lookupBestVersion(cfgCrosVersions map[string]string, board string, model string) (string, error) {
+	combined := fmt.Sprintf("%s;%s", board, model)
+	if value, ok := cfgCrosVersions[combined]; ok {
+		return value, nil
+	}
+	if value, ok := cfgCrosVersions[board]; ok {
+		return value, nil
+	}
+	return "", fmt.Errorf("no matching CrOS versions for board %q and model %q", board, model)
+}
+
 // ValidateConfig takes a stable version protobuf and attempts to validate every entry.
 func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResult, error) {
 	var cfgCrosVersions = make(map[string]string, len(sv.GetCros()))
@@ -132,26 +158,41 @@ func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResu
 	// use the CrOS keys in the sv file to seed the reader.
 	for _, item := range sv.GetCros() {
 		bt := item.GetKey().GetBuildTarget().GetName()
+		model := item.GetKey().GetModelId().GetValue()
+		combined := combinedKey(bt, model)
 		version := item.GetVersion()
 		if !isLowercase(bt) {
 			out.NonLowercaseEntries = append(out.NonLowercaseEntries, bt)
+			continue
+		}
+		if !isLowercase(model) {
+			out.NonLowercaseEntries = append(out.NonLowercaseEntries, model)
 			continue
 		}
 		if _, err := r.getAllModelsForBuildTarget(bt, version); err != nil {
 			out.MissingBoards = append(out.MissingBoards, bt)
 			continue
 		}
-		cfgCrosVersions[bt] = version
+		cfgCrosVersions[combined] = version
 	}
 	for _, item := range sv.GetFirmware() {
 		bt := item.GetKey().GetBuildTarget().GetName()
 		model := item.GetKey().GetModelId().GetValue()
 		cfgVersion := item.GetVersion()
-		realVersion, err := r.getFirmwareVersion(bt, model, cfgCrosVersions[bt])
+
 		if !isLowercase(bt) || !isLowercase(model) {
 			out.NonLowercaseEntries = append(out.NonLowercaseEntries, fmt.Sprintf("%s;%s", bt, model))
 			continue
 		}
+
+		cfgCrosVersion, err := lookupBestVersion(cfgCrosVersions, bt, model)
+		if err != nil {
+			out.FailedToLookup = append(out.FailedToLookup, &BoardModel{bt, model})
+			continue
+		}
+
+		realVersion, err := r.getFirmwareVersion(bt, model, cfgCrosVersion)
+
 		if err != nil {
 			out.FailedToLookup = append(out.FailedToLookup, &BoardModel{bt, model})
 			continue

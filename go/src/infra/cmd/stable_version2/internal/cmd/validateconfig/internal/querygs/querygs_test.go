@@ -7,6 +7,7 @@ package querygs
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -169,6 +170,51 @@ var testValidateConfigData = []struct {
 					"key": {
 						"buildTarget": {"name": "nami"},
 						"modelId": {}
+					},
+					"version": "R81-12835.0.0"
+				}
+			],
+			"firmware": [
+				{
+					"key": {
+						"modelId": {"value": "sona"},
+						"buildTarget": {"name": "nami"}
+					},
+					"version": "Google_Nami.42.43.44"
+				},
+				{
+					"key": {
+						"modelId": {"value": "akali360"},
+						"buildTarget": {"name": "nami"}
+					},
+					"version": "Google_Nami.52.53.54"
+				}
+			]
+		}`,
+		`{
+			"missing_boards": null,
+			"failed_to_lookup": null,
+			"invalid_versions": null
+		}`,
+		NOERROR,
+	},
+	{
+		"two present boards with specific CrOS entries",
+		"f63476d1-0382-4098-8a15-18fcb1a2e61a",
+		exampleMetadataJSON,
+		`{
+			"cros": [
+				{
+					"key": {
+						"buildTarget": {"name": "nami"},
+						"modelId": {"value": "sona"}
+					},
+					"version": "R81-12835.0.0"
+				},
+				{
+					"key": {
+						"buildTarget": {"name": "nami"},
+						"modelId": {"value": "akali360"}
 					},
 					"version": "R81-12835.0.0"
 				}
@@ -461,6 +507,103 @@ func TestIsLowercase(t *testing.T) {
 	}
 }
 
+func testCombinedKey(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		board string
+		model string
+		out   string
+	}{
+		{
+			"",
+			"",
+			"",
+		},
+		{
+			"a",
+			"",
+			"a",
+		},
+		{
+			"",
+			"b",
+			";b",
+		},
+		{
+			"a",
+			"b",
+			"a;b",
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.out, func(t *testing.T) {
+			t.Parallel()
+			want := tt.out
+			got := combinedKey(tt.board, tt.model)
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Errorf("diff (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestLookupBestVersion(t *testing.T) {
+	cases := []struct {
+		cfgCrosVersions map[string]string
+		board           string
+		model           string
+		out             string
+		errPat          string
+	}{
+		{
+			nil,
+			"",
+			"",
+			"",
+			"^no matching CrOS versions.*$",
+		},
+		{
+			map[string]string{
+				"fake-board": "107",
+			},
+			"fake-board",
+			"fake-model",
+			"107",
+			"",
+		},
+		{
+			map[string]string{
+				"fake-board":            "107",
+				"fake-board;fake-model": "208",
+			},
+			"fake-board",
+			"fake-model",
+			"208",
+			"",
+		},
+	}
+
+	for _, tt := range cases {
+		tt := tt
+		t.Run(tt.out, func(t *testing.T) {
+			t.Parallel()
+			want := tt.out
+			got, e := lookupBestVersion(tt.cfgCrosVersions, tt.board, tt.model)
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Errorf("diff (-want +got):\n%s", diff)
+			}
+			if err := validateMatches(tt.errPat, errorToString(e)); err != nil {
+				t.Errorf("error message does not match: %s", err)
+				if e != nil {
+					t.Errorf("error message: %s", e)
+				}
+			}
+		})
+	}
+}
+
 func makeConstantDownloader(content string) downloader {
 	return func(gsPath gs.Path) ([]byte, error) {
 		return []byte(content), nil
@@ -519,4 +662,22 @@ func unmarshalOrPanic(content string, dest interface{}) {
 	if err := json.Unmarshal([]byte(content), dest); err != nil {
 		panic(err.Error())
 	}
+}
+
+func validateMatches(pattern string, s string) error {
+	b, err := regexp.MatchString(pattern, s)
+	if err != nil {
+		return err
+	}
+	if b {
+		return nil
+	}
+	return fmt.Errorf("no part of string %q matches pattern %q", s, pattern)
+}
+
+func errorToString(e error) string {
+	if e == nil {
+		return ""
+	}
+	return e.Error()
 }
