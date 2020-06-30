@@ -49,7 +49,6 @@
         'V8 Win32 - debug',
         'V8 Win64',
         'V8 Win64 - debug',
-        'V8 Win64 - msvc',
 
         # client.v8.ports
         'V8 Arm - builder',
