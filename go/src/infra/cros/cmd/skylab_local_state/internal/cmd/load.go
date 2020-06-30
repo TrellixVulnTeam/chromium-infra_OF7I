@@ -115,12 +115,7 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 
-	dutID := dut.GetCommon().GetId()
-	if dutID == "" {
-		return fmt.Errorf("No DUT ID for %s", request.DutName)
-	}
-
-	dutState, err := getDutState(request.Config.AutotestDir, dutID)
+	dutState, err := getDutState(request.Config.AutotestDir, request.DutId)
 	if err != nil {
 		return err
 	}
@@ -165,6 +160,10 @@ func validateLoadRequest(request *skylab_local_state.LoadRequest) error {
 	}
 
 	if request.RunId == "" {
+		missingArgs = append(missingArgs, "Swarming run ID")
+	}
+
+	if request.DutId == "" {
 		missingArgs = append(missingArgs, "Swarming run ID")
 	}
 
