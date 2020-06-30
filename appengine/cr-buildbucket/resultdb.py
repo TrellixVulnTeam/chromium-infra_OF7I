@@ -75,23 +75,18 @@ def create_invocations_async(builds_and_configs):
               producer_resource='//%s/builds/%s' % (bb_host, build.key.id()),
           ),
       )
-    # TODO(crbug.com/1099149): use client.project_credentials instead of setting
-    # the 'X-Luci-Project' header below.
 
     # Accumulate one (request, credentials) pair per batch.
     batch_reqs_and_creds.append((
         req,
-        client.service_account_credentials(),
+        client.project_credentials(project),
     ))
 
   rec_client = _recorder_client(resultdb_host)
   # Do rpcs in parallel.
   resps = yield [
-      rec_client.BatchCreateInvocationsAsync(
-          req,
-          credentials=creds,
-          metadata={'X-Luci-Project': project},
-      ) for req, creds in batch_reqs_and_creds
+      rec_client.BatchCreateInvocationsAsync(req, credentials=creds)
+      for req, creds in batch_reqs_and_creds
   ]
 
   for batch, res in zip(batches, resps):

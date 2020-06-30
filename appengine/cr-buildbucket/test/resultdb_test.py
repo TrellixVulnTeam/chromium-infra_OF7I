@@ -129,7 +129,6 @@ class ResultDBTest(testing.AppengineTestCase):
             ],
         ),
         credentials=mock.ANY,
-        metadata={'X-Luci-Project': 'chromium'},
     )
     self.assertEqual(self.builds[0].resultdb_update_token, 'FakeUpdateToken')
     self.assertEqual(
