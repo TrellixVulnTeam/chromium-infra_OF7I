@@ -7,13 +7,17 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
+
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
-	"strings"
 )
 
 var (
@@ -180,4 +184,21 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return nil
+}
+
+// testServoEq checks if the 2 slice of servos are equal
+func testServoEq(a, b []*chromeosLab.Servo) bool {
+	// If one is nil, the other must also be nil.
+	if (a == nil) != (b == nil) {
+		return false
+	}
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if !proto.Equal(a[i], b[i]) {
+			return false
+		}
+	}
+	return true
 }
