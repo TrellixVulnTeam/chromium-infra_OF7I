@@ -132,7 +132,7 @@ func TestNonExistentBot(t *testing.T) {
 		ctx := setLogger(context.Background(), &ml)
 		board := "foo-board"
 		args := &request.Args{
-			SchedulableLabels: inventory.SchedulableLabels{
+			SchedulableLabels: &inventory.SchedulableLabels{
 				Board: &board,
 			},
 		}

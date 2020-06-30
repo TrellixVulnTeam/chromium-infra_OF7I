@@ -25,6 +25,7 @@ import (
 	"go.chromium.org/luci/common/logging/memlogger"
 
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
+	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/request"
 )
 
@@ -74,6 +75,7 @@ func TestNonExistentBot(t *testing.T) {
 		var ml memlogger.MemLogger
 		ctx := setLogger(context.Background(), &ml)
 		var args request.Args
+		args.SchedulableLabels = &inventory.SchedulableLabels{}
 		addBoard(&args, "nonexistent-board")
 		Convey("the validation fails.", func() {
 			exists, err := skylab.ValidateArgs(ctx, &args)
@@ -108,6 +110,7 @@ func TestExistingBot(t *testing.T) {
 			swarmingClient: swarming,
 		}
 		var args request.Args
+		args.SchedulableLabels = &inventory.SchedulableLabels{}
 		addBoard(&args, "existing-board")
 		Convey("the validation passes.", func() {
 			exists, err := skylab.ValidateArgs(context.Background(), &args)

@@ -59,7 +59,7 @@ func TestDimensionsBB(t *testing.T) {
 			Dimensions:                       []string{"k1:v1"},
 			ProvisionableDimensions:          []string{"provisionable-k2:v2", "provisionable-k3:v3"},
 			ProvisionableDimensionExpiration: 30 * time.Second,
-			SchedulableLabels:                inventory.SchedulableLabels{Model: &model},
+			SchedulableLabels:                &inventory.SchedulableLabels{Model: &model},
 			TestRunnerRequest:                &skylab_test_runner.Request{},
 		}
 		Convey("when a request is formed", func() {
@@ -240,7 +240,7 @@ func TestProvisionableDimensions(t *testing.T) {
 		args := request.Args{
 			Dimensions:              []string{"k1:v1"},
 			ProvisionableDimensions: []string{"k2:v2", "k3:v3"},
-			SchedulableLabels:       inventory.SchedulableLabels{Model: &model},
+			SchedulableLabels:       &inventory.SchedulableLabels{Model: &model},
 		}
 		Convey("when a request is formed", func() {
 			req, err := args.SwarmingNewTaskRequest()
@@ -341,7 +341,7 @@ func TestStaticDimensions(t *testing.T) {
 		{
 			Tag: "one schedulable label",
 			Args: &request.Args{
-				SchedulableLabels: inventory.SchedulableLabels{
+				SchedulableLabels: &inventory.SchedulableLabels{
 					Model: stringPtr("some_model"),
 				},
 			},
@@ -364,7 +364,7 @@ func TestStaticDimensions(t *testing.T) {
 		{
 			Tag: "one of each",
 			Args: &request.Args{
-				SchedulableLabels: inventory.SchedulableLabels{
+				SchedulableLabels: &inventory.SchedulableLabels{
 					Model: stringPtr("some_model"),
 				},
 				Dimensions:              []string{"some:value"},

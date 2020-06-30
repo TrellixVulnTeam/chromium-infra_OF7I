@@ -156,7 +156,7 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 
 	return request.Args{
 		Cmd:                              *cmd,
-		SchedulableLabels:                *labels,
+		SchedulableLabels:                labels,
 		Dimensions:                       g.params.GetFreeformAttributes().GetSwarmingDimensions(),
 		ParentTaskID:                     g.parentTaskID,
 		Priority:                         g.params.GetScheduling().GetPriority(),

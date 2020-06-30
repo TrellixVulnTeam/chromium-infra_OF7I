@@ -47,7 +47,7 @@ type Args struct {
 	Dimensions []string
 	// SchedulableLabels specifies schedulable label requirements that will
 	// be translated to dimensions.
-	SchedulableLabels inventory.SchedulableLabels
+	SchedulableLabels *inventory.SchedulableLabels
 	Timeout           time.Duration
 	Priority          int64
 	ParentTaskID      string
@@ -98,7 +98,7 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 // getBBDimensions returns both required and optional dimensions that will be
 // used to match this request with a Swarming bot.
 func (a *Args) getBBDimensions() ([]*buildbucket_pb.RequestedDimension, error) {
-	ret := schedulableLabelsToBBDimensions(&a.SchedulableLabels)
+	ret := schedulableLabelsToBBDimensions(a.SchedulableLabels)
 
 	pd, err := dims(a.ProvisionableDimensions).BBDimensions()
 	if err != nil {
@@ -246,7 +246,7 @@ func (a *Args) SwarmingNewTaskRequest() (*swarming.SwarmingRpcsNewTaskRequest, e
 // StaticDimensions() do not include dimensions used to optimize task
 // scheduling.
 func (a *Args) StaticDimensions() ([]*swarming.SwarmingRpcsStringPair, error) {
-	ret := schedulableLabelsToPairs(&a.SchedulableLabels)
+	ret := schedulableLabelsToPairs(a.SchedulableLabels)
 	d, err := stringToPairs(a.Dimensions...)
 	if err != nil {
 		return nil, errors.Annotate(err, "get static dimensions").Err()
