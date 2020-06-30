@@ -119,3 +119,13 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     # return converters.ConvertIssue(created_issue)
 
     return issue_objects_pb2.Issue()
+
+  @monorail_servicer.PRPCMethod
+  def MakeIssue(self, _mc, _request):
+    # type: (MonorailContext, MakeIssueRequest) -> Issue
+    """pRPC API method that implements MakeIssue.
+
+    Raises:
+      TODO(crbug/monorail/7919): Document errors when implemented
+    """
+    return issue_objects_pb2.Issue()

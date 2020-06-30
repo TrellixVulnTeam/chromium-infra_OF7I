@@ -157,3 +157,7 @@ class IssuesServicerTest(unittest.TestCase):
     actual_response = self.CallWrapped(
         self.issues_svcr.ListComments, mc, request)
     self.assertEqual(1, len(actual_response.comments))
+
+  def testMakeIssue(self):
+    # TODO(crbug/monorail/7197): Implement
+    pass

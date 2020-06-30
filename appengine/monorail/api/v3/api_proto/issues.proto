@@ -50,6 +50,14 @@ service Issues {
   // Raises:
   //   TODO(crbug/monorail/7197): Document errors when implemented
   rpc MakeIssueFromTemplate (MakeIssueFromTemplateRequest) returns (Issue) {}
+  // Makes a basic issue, does not support phases, approvals, or approval
+  // fields.
+  // We do not offer a standard CreateIssue because Issue descriptions are
+  // required, but not included in the Issue proto.
+  //
+  // Raises:
+  //   TODO(crbug/monorail/7919): Document errors when implemented
+  rpc MakeIssue (MakeIssueRequest) returns (Issue) {}
 }
 
 
@@ -238,4 +246,19 @@ message MakeIssueFromTemplateRequest {
   repeated ApprovalDelta template_approval_deltas = 3;
   // The issue description, will be saved as the first comment.
   string description = 4;
+}
+
+// The request message for MakeIssue.
+// Next available tag: 5
+message MakeIssueRequest {
+  // The name of the project the issue should belong to.
+  string parent = 1 [
+    (google.api.resource_reference) = {type: "api.crbug.com/Project"},
+    (google.api.field_behavior) = REQUIRED ];
+  // The issue to be created.
+  Issue issue = 2;
+  // The issue description.
+  string description = 3;
+  // The type of notification the creation should trigger.
+  NotifyType notify_type = 4;
 }
