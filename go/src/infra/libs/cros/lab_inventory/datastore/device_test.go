@@ -49,7 +49,6 @@ func mockLabstation(hostname, id string) *lab.ChromeOSDevice {
 		Device: &lab.ChromeOSDevice_Labstation{
 			Labstation: &lab.Labstation{
 				Hostname: hostname,
-				Servos:   []*lab.Servo{makeServo(hostname, "LabSerial", 9990)},
 			},
 		},
 	}
@@ -221,6 +220,7 @@ func TestRemoveDevices(t *testing.T) {
 			mockLabstation("labstation1", "ASSET_ID_111"),
 			mockLabstation("labstation2", "ASSET_ID_123"),
 		}
+		totalCount := len(devsToAdd)
 		_, err := AddDevices(ctx, devsToAdd, false)
 		So(err, ShouldBeNil)
 
@@ -252,27 +252,53 @@ func TestRemoveDevices(t *testing.T) {
 		}
 
 		Convey("Try to remove non-existing devices by Ids", func() {
-			expectDeviceCount(5)
+			expectDeviceCount(totalCount)
 
 			resp := DeleteDevicesByIds(ctx, []string{"1234", "abcd"})
 			So(resp.Passed(), ShouldHaveLength, 0)
 			So(resp.Failed(), ShouldHaveLength, 2)
+			So(resp.Failed()[0].Err.Error(), ShouldContainSubstring, "datastore: no such entity")
+			So(resp.Failed()[1].Err.Error(), ShouldContainSubstring, "datastore: no such entity")
 
 			// There are still all device entities unchanged.
-			expectDeviceCount(5)
+			expectDeviceCount(totalCount)
 		})
 		Convey("Try to remove non-existing devices by hostnames", func() {
-			expectDeviceCount(5)
+			expectDeviceCount(totalCount)
 
 			resp := DeleteDevicesByHostnames(ctx, []string{"dutX", "labstationX"})
 			So(resp.Passed(), ShouldHaveLength, 0)
 			So(resp.Failed(), ShouldHaveLength, 2)
+			So(resp.Failed()[0].Err.Error(), ShouldContainSubstring, "No such host:")
+			So(resp.Failed()[1].Err.Error(), ShouldContainSubstring, "No such host:")
 
 			// There are still all device entities unchanged.
-			expectDeviceCount(5)
+			expectDeviceCount(totalCount)
+		})
+		Convey("Try to remove labstation with servos by hostnames", func() {
+			expectDeviceCount(totalCount)
+
+			resp := DeleteDevicesByHostnames(ctx, []string{"labstation1"})
+			So(resp.Passed(), ShouldHaveLength, 0)
+			So(resp.Failed(), ShouldHaveLength, 1)
+			So(resp.Failed()[0].Err.Error(), ShouldContainSubstring, "cannot delete labstation:")
+
+			// There are still all device entities unchanged.
+			expectDeviceCount(totalCount)
+		})
+		Convey("Try to remove labstation with servos by Ids", func() {
+			expectDeviceCount(totalCount)
+
+			resp := DeleteDevicesByIds(ctx, []string{"ASSET_ID_111"})
+			So(resp.Passed(), ShouldHaveLength, 0)
+			So(resp.Failed(), ShouldHaveLength, 1)
+			So(resp.Failed()[0].Err.Error(), ShouldContainSubstring, "cannot delete labstation:")
+
+			// There are still all device entities unchanged.
+			expectDeviceCount(totalCount)
 		})
 		Convey("Happy path to delete by hostnames", func() {
-			expectDeviceCount(5)
+			expectDeviceCount(totalCount)
 			servo1 := findServoWithSerial("ServoDut1")
 			servo2 := findServoWithSerial("ServoDut2")
 			servo3 := findServoWithSerial("ServoDut3")
@@ -287,7 +313,7 @@ func TestRemoveDevices(t *testing.T) {
 			So(resp.Passed(), ShouldHaveLength, 2)
 			So(resp.Failed(), ShouldHaveLength, 0)
 
-			expectDeviceCount(3)
+			expectDeviceCount(totalCount - 2)
 			servo1 = findServoWithSerial("ServoDut1")
 			servo2 = findServoWithSerial("ServoDut2")
 			servo3 = findServoWithSerial("ServoDut3")
@@ -297,7 +323,7 @@ func TestRemoveDevices(t *testing.T) {
 			So(servo3, ShouldBeNil)
 		})
 		Convey("Happy path to delete by IDs", func() {
-			expectDeviceCount(5)
+			expectDeviceCount(totalCount)
 			servo2 := findServoWithSerial("ServoDut2")
 			servo3 := findServoWithSerial("ServoDut3")
 			So(servo2, ShouldNotBeNil)
@@ -309,7 +335,7 @@ func TestRemoveDevices(t *testing.T) {
 			So(resp.Passed(), ShouldHaveLength, 2)
 			So(resp.Failed(), ShouldHaveLength, 0)
 
-			expectDeviceCount(3)
+			expectDeviceCount(totalCount - 2)
 			servo2 = findServoWithSerial("ServoDut2")
 			servo3 = findServoWithSerial("ServoDut3")
 			So(servo2, ShouldBeNil)

@@ -174,13 +174,14 @@ func AddDevices(ctx context.Context, devices []*lab.ChromeOSDevice, assignServoP
 //
 // As additional deleting servo from labstation for deleted device.
 func DeleteDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
-	var removingResults DeviceOpResults
+	removingResults := make(DeviceOpResults, len(ids))
 	r := newServoHostRegistryFromProtoMsgs(ctx, nil)
 
 	f := func(ctx context.Context) error {
 		removingResults = GetDevicesByIds(ctx, ids)
 		var entities []*DeviceEntity
-		for _, deviceResult := range removingResults {
+		for i := range removingResults {
+			deviceResult := &removingResults[i]
 			if deviceResult.Err != nil || deviceResult.Entity == nil {
 				continue
 			}
@@ -194,6 +195,11 @@ func DeleteDevicesByIds(ctx context.Context, ids []string) DeviceOpResults {
 				err := r.removeDeviceFromLabstation(ctx, dut)
 				if err != nil {
 					deviceResult.logError(errors.Annotate(err, "failed to delete servo from labstation for: %s", entity.Hostname).Err())
+					continue
+				}
+			} else if labstation := devProto.GetLabstation(); labstation != nil {
+				if len(labstation.GetServos()) > 0 {
+					deviceResult.logError(errors.Reason("cannot delete labstation: %s used by the DUTs", entity.Hostname).Err())
 					continue
 				}
 			}
@@ -274,7 +280,13 @@ func DeleteDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpR
 					removingResults[i].logError(errors.Annotate(err, "failed to delete servo from labstation for: %s", hostname).Err())
 					continue
 				}
+			} else if labstation := devProto.GetLabstation(); labstation != nil {
+				if len(labstation.GetServos()) > 0 {
+					removingResults[i].logError(errors.Reason("cannot delete labstation: %s used by the DUTs", hostname).Err())
+					continue
+				}
 			}
+
 			removingResults[i].Entity = entity
 			entities = append(entities, entity)
 			entityResults = append(entityResults, &removingResults[i])
