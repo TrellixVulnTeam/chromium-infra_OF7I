@@ -222,4 +222,8 @@ See: [Monorail Deployment](doc/deployment.md)
 
 # User guide
 
-For information on how to user Monorail, see the [Monorail User Guide](doc/userguide/README.md).
+For information on how to use Monorail, see the [Monorail User Guide](doc/userguide/README.md).
+
+## Setting up a new instance of Monorail
+
+See: [Creating a new Monorail instance](doc/instance.md)
