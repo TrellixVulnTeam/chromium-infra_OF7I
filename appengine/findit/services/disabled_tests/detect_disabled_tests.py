@@ -5,11 +5,9 @@
 import logging
 import os
 import re
-from datetime import datetime
 
 from google.appengine.ext import ndb
 
-from common.swarmbucket import swarmbucket
 from gae_libs import appengine_util
 from libs import test_name_util
 from libs import time_util
@@ -52,15 +50,6 @@ _STEP_BASED_TAGS = [
     'step',
     'test_type',
 ]
-
-
-def _GetQueryParameters():
-  return [
-      bigquery_helper.GenerateArrayQueryParameter(
-          'supported_masters', 'STRING',
-          swarmbucket.GetMasters('luci.chromium.ci') +
-          swarmbucket.GetMasters('luci.chromium.try'))
-  ]
 
 
 def _ExecuteQuery(parameters=None):
@@ -554,6 +543,6 @@ def _UpdateNoLongerDisabledTests(currently_disabled_test_keys, query_time):
 
 def ProcessQueryForDisabledTests():
   query_time = time_util.GetUTCNow()
-  local_tests = _ExecuteQuery(parameters=_GetQueryParameters())
+  local_tests = _ExecuteQuery()
   _UpdateCurrentlyDisabledTests(local_tests, query_time)
   _UpdateNoLongerDisabledTests(local_tests.keys(), query_time)
