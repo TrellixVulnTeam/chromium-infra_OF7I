@@ -75,7 +75,6 @@ func getApplication() *cli.Application {
 			subcommands.Section("Internal use"),
 			internalcmds.ListDroneDuts,
 			internalcmds.PrintBotInfo,
-			internalcmds.VerifyInventory,
 			internalcmds.WaitTask,
 		},
 	}
