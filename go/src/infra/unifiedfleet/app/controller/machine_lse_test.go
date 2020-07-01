@@ -224,3 +224,160 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateMachineLSEDUT(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	labstationMachinelse := mockLabstationMachineLSE("BlueLabstation-10")
+	inventory.CreateMachineLSE(ctx, labstationMachinelse)
+
+	servo1 := &chromeosLab.Servo{
+		ServoHostname: "BlueLabstation-10",
+		ServoPort:     21,
+	}
+	peripherals1 := &chromeosLab.Peripherals{
+		Servo: servo1,
+	}
+	dutMachinelse1 := mockDutMachineLSE("DUTMachineLSE-21")
+	dutMachinelse1.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals1
+	CreateMachineLSE(ctx, dutMachinelse1)
+
+	servo2 := &chromeosLab.Servo{
+		ServoHostname: "BlueLabstation-10",
+		ServoPort:     22,
+	}
+	peripherals2 := &chromeosLab.Peripherals{
+		Servo: servo2,
+	}
+	dutMachinelse2 := mockDutMachineLSE("DUTMachineLSE-22")
+	dutMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
+	CreateMachineLSE(ctx, dutMachinelse2)
+
+	labstationMachinelse, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
+	servos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	Convey("UpdateMachineLSE for a DUT", t, func() {
+		Convey("Update non-existing machineLSE DUT", func() {
+			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-23")
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Update machineLSE DUT with same ServerPort and same ServoHostname", func() {
+			servo3 := &chromeosLab.Servo{
+				ServoHostname: "BlueLabstation-10",
+				ServoPort:     21,
+			}
+			peripherals3 := &chromeosLab.Peripherals{
+				Servo: servo3,
+			}
+			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-21")
+			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, dutMachinelse3)
+
+			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
+			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos,
+				ShouldResembleProto, servos)
+		})
+
+		Convey("Update machineLSE DUT with different ServerPort and same ServoHostname", func() {
+			servo3 := &chromeosLab.Servo{
+				ServoHostname: "BlueLabstation-10",
+				ServoPort:     358,
+			}
+			peripherals3 := &chromeosLab.Peripherals{
+				Servo: servo3,
+			}
+			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-22")
+			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, dutMachinelse3)
+
+			dummyServos := []*chromeosLab.Servo{servo1, servo3}
+
+			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
+			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos,
+				ShouldResembleProto, dummyServos)
+		})
+
+		Convey("Update machineLSE DUT with different ServoHostname", func() {
+			labstationMachinelse1 := mockLabstationMachineLSE("BlueLabstation-17")
+			resp, err := inventory.CreateMachineLSE(ctx, labstationMachinelse1)
+
+			labstationMachinelse2 := mockLabstationMachineLSE("BlueLabstation-18")
+			resp, err = inventory.CreateMachineLSE(ctx, labstationMachinelse2)
+
+			servo1 := &chromeosLab.Servo{
+				ServoHostname: "BlueLabstation-17",
+				ServoPort:     17,
+			}
+			peripherals1 := &chromeosLab.Peripherals{
+				Servo: servo1,
+			}
+			dutMachinelse1 := mockDutMachineLSE("DUTMachineLSE-17")
+			dutMachinelse1.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals1
+			resp, err = CreateMachineLSE(ctx, dutMachinelse1)
+
+			servo2 := &chromeosLab.Servo{
+				ServoHostname: "BlueLabstation-18",
+				ServoPort:     18,
+			}
+			peripherals2 := &chromeosLab.Peripherals{
+				Servo: servo2,
+			}
+			dutMachinelse2 := mockDutMachineLSE("DUTMachineLSE-17")
+			dutMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
+			resp, err = UpdateMachineLSE(ctx, dutMachinelse2)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, dutMachinelse2)
+
+			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-17")
+			servos := resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+			So(servos, ShouldBeEmpty)
+
+			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-18")
+			servos = resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+			So(servo2, ShouldResembleProto, servos[0])
+		})
+	})
+}
+
+func TestUpdateMachineLSELabstation(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("UpdateMachineLSE for a Labstation", t, func() {
+		Convey("Update machineLSE Labstation with Servo Info", func() {
+			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-10")
+			inventory.CreateMachineLSE(ctx, labstationMachinelse1)
+
+			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-10")
+			servo := &chromeosLab.Servo{
+				ServoHostname: "RedLabstation-10",
+				ServoPort:     22,
+			}
+			labstationMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "not allowed to update Servo")
+		})
+
+		Convey("Update machineLSE Labstation without Servo Info", func() {
+			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-11")
+			inventory.CreateMachineLSE(ctx, labstationMachinelse1)
+
+			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-11")
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, labstationMachinelse2)
+		})
+	})
+}

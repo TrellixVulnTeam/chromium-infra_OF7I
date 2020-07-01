@@ -51,10 +51,21 @@ func CreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet
 // Checks if the resources referenced by the MachineLSE input already exists
 // in the system before updating a MachineLSE
 func UpdateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
+	machinelse.Name = machinelse.GetHostname()
 	err := validateMachineLSE(ctx, machinelse)
 	if err != nil {
 		return nil, err
 	}
+	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+		// ChromeOSMachineLSE for a DUT
+		machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = machinelse.GetHostname()
+		return updateChromeOSMachineLSEDUT(ctx, machinelse)
+	}
+	// Make the Hostname of the Labstation same as the machinelse name
+	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
+	}
+	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	return inventory.UpdateMachineLSE(ctx, machinelse)
 }
 
@@ -214,6 +225,80 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineL
 	return machinelse, nil
 }
 
+// updateChromeOSMachineLSEDUT updates ChromeOSMachineLSE entities.
+//
+// updates one MachineLSE for DUT and updates Labstation MachineLSE
+// (with new Servo info from DUT). If DUT is connected to the same
+// Labstation but different port, The servo entry in Labstation is updated.
+// If DUT is connected to a different labstation, then old servo info of DUT
+// is removed from old Labstation and new servo info from the DUT is added
+// to the new labstation.
+func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
+	f := func(ctx context.Context) error {
+		machinelses := make([]*fleet.MachineLSE, 0, 0)
+
+		// A. Check if the MachineLSE(DUT) doesnt exist in the system
+		oldMachinelse, err := inventory.GetMachineLSE(ctx, machinelse.GetName())
+		if status.Code(err) == codes.Internal {
+			return err
+		}
+		if oldMachinelse == nil {
+			return status.Errorf(codes.NotFound, fleetds.NotFound)
+		}
+		machinelses = append(machinelses, machinelse)
+
+		// B. Check if the DUT has Servo information.
+		// Update Labstation MachineLSE with new Servo info.
+		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+		if newServo != nil {
+			// 1. Check if the ServoHostName and ServoPort are already in use
+			err := validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
+			if err != nil {
+				return err
+			}
+			// 2. Check if the Labstation MachineLSE exists in the system.
+			newLabstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
+			if err != nil {
+				return err
+			}
+			// 3. Update the Labstation MachineLSE with new Servo information.
+			oldServo := oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+			// check if the DUT is connected to the same Labstation or different Labstation
+			if newServo.GetServoHostname() == oldServo.GetServoHostname() {
+				// DUT is connected to the same Labstation,
+				// 1. replace the oldServo entry from the Labstation with the newServo entry
+				replaceServoEntryInLabstation(oldServo, newServo, newLabstationMachinelse)
+				machinelses = append(machinelses, newLabstationMachinelse)
+			} else {
+				// DUT is connected to a different Labstation,
+				// 1. remove the oldServo entry of DUT form oldLabstationMachinelse
+				oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
+				if err != nil {
+					return err
+				}
+				removeServoEntryFromLabstation(oldServo, oldLabstationMachinelse)
+				machinelses = append(machinelses, oldLabstationMachinelse)
+				// 2. Append the newServo entry of DUT to the newLabstationMachinelse
+				appendServoEntryToLabstation(newServo, newLabstationMachinelse)
+				machinelses = append(machinelses, newLabstationMachinelse)
+			}
+		}
+
+		// C. BatchUpdate both DUT and Labstation/s
+		_, err = inventory.BatchUpdateMachineLSEs(ctx, machinelses)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to BatchUpdate MachineLSEs %s", err)
+			return err
+		}
+		return nil
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to update MachineLSE DUT in datastore: %s", err)
+		return nil, err
+	}
+	return machinelse, nil
+}
+
 // validateServoInfoForDUT Checks if the DUT Machinelse has ServoHostname and ServoPort
 // already used by a different deployed DUT
 func validateServoInfoForDUT(ctx context.Context, servo *chromeosLab.Servo, DUTHostname string) error {
@@ -255,6 +340,31 @@ func appendServoEntryToLabstation(newServo *chromeosLab.Servo, labstationMachine
 	existingServos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
 	existingServos = append(existingServos, newServo)
 	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = existingServos
+}
+
+// replaceServoEntryInLabstation replaces oldServo entry with newServo entry in the Labstation
+func replaceServoEntryInLabstation(oldServo, newServo *chromeosLab.Servo, labstationMachinelse *fleet.MachineLSE) {
+	servos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	for i, s := range servos {
+		if s.GetServoHostname() == oldServo.GetServoHostname() && s.GetServoPort() == oldServo.GetServoPort() {
+			servos[i] = newServo
+			break
+		}
+	}
+	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = servos
+}
+
+// removeServoEntryFromLabstation removes servo entry from the Labstation
+func removeServoEntryFromLabstation(servo *chromeosLab.Servo, labstationMachinelse *fleet.MachineLSE) {
+	servos := labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	for i, s := range servos {
+		if s.GetServoHostname() == servo.GetServoHostname() && s.GetServoPort() == servo.GetServoPort() {
+			servos[i] = servos[len(servos)-1]
+			servos = servos[:len(servos)-1]
+			break
+		}
+	}
+	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = servos
 }
 
 // validateMachineLSE validates if a machinelse can be created/updated in the datastore.
