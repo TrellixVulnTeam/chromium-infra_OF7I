@@ -25,6 +25,10 @@ const ROTATIONS = {
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-ci-eng',
     },
     {
+      name: 'CI Bobby (APAC)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-ci-apac',
+    },
+    {
       name: 'Infra Deputy',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-test-infra',
     },
