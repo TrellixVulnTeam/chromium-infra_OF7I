@@ -44,23 +44,20 @@ def RunSteps(api):
       with api.step.nest('isolate'):
         _step_run_py_tests(api, appeng_dir.join('isolate'))
 
-    # TODO(crbug.com/1017545): enable on Windows and Mac.
-    # clients tests run in python2/3, but it ignores failures on Windows
-    # in python2, and ignores failures on Windows and Mac in python3.
+    # TODO(crbug.com/1017545): enable on Windows.
+    # clients tests run in python2/3, but it ignores failures on Windows.
     with api.step.nest('client'):
       ok_ret = 'any' if api.platform.is_win else (0,)
       _step_run_py_tests(api, luci_dir.join('client'), ok_ret=ok_ret)
-      ok_ret = (0,) if api.platform.is_linux else 'any'
       _step_run_py_tests(api, luci_dir.join('client'), ok_ret=ok_ret,
                          python3=True)
 
     with api.step.nest('swarming bot'):
       bot_dir = appeng_dir.join('swarming', 'swarming_bot')
       _step_run_py_tests(api, bot_dir)
-      # TODO(crbug.com/1017545): enable python3 on Windows and Mac.
-      # swarming bot tests run in python3, but it ignores failures on Windows
-      # and Mac.
-      ok_ret = (0,) if api.platform.is_linux else 'any'
+      # TODO(crbug.com/1017545): enable python3 on Windows.
+      # swarming bot tests run in python3, but it ignores failures on Windows.
+      ok_ret = 'any' if api.platform.is_win else (0,)
       _step_run_py_tests(api, bot_dir, ok_ret=ok_ret, python3=True)
 
     # swarming server
