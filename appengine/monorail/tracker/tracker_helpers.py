@@ -810,9 +810,7 @@ def MergeCCsAndAddComment(services, mr, issue, merge_into_issue):
 def MergeCCsAndAddCommentMultipleIssues(
     services, mr, issues, merge_into_issue):
   """Modify the CC field of the target issue and add a comment to it."""
-  merge_into_restricts = permissions.GetRestrictions(merge_into_issue)
   merge_comment = ''
-  source_cc = set()
   for issue in issues:
     if issue.project_name == merge_into_issue.project_name:
       issue_ref_str = '%d' % issue.local_id
@@ -822,21 +820,7 @@ def MergeCCsAndAddCommentMultipleIssues(
       merge_comment += '\n'
     merge_comment += 'Issue %s has been merged into this issue.' % issue_ref_str
 
-    if permissions.HasRestrictions(issue, perm='View'):
-      restricts = permissions.GetRestrictions(issue)
-      # Don't leak metadata from a restricted issue.
-      if (issue.project_id != merge_into_issue.project_id or
-          set(restricts) != set(merge_into_restricts)):
-        # TODO(jrobbins): user option to choose to merge CC or not.
-        # TODO(jrobbins): add a private comment rather than nothing
-        continue
-
-    source_cc.update(issue.cc_ids)
-    if issue.owner_id:  # owner_id == 0 means no owner
-      source_cc.update([issue.owner_id])
-
-  target_cc = merge_into_issue.cc_ids
-  add_cc = [user_id for user_id in source_cc if user_id not in target_cc]
+  add_cc = _ComputeNewCcsFromIssueMerge(merge_into_issue, issues)
 
   config = services.config.GetProjectConfig(
       mr.cnxn, merge_into_issue.project_id)
@@ -1323,6 +1307,29 @@ def AssertIssueChangesValid(cnxn, issue_delta_pairs, services):
         cnxn, services, delta.field_vals_add, config, project)
     if fvs_err_msgs:
       raise exceptions.InputException('\n'.join(fvs_err_msgs))
+
+
+def _ComputeNewCcsFromIssueMerge(merge_into_issue, source_issues):
+  # type: (Issue, Collection[Issue]) -> Collection[int]
+  """Compute ccs that should be added from source_issues to merge_into_issue."""
+
+  merge_into_restrictions = permissions.GetRestrictions(merge_into_issue)
+  new_cc_ids = set()
+  for issue in source_issues:
+    # We don't want to leak metadata like ccs of restricted issues.
+    # So we don't merge ccs from restricted source issues, unless their
+    # restrictions match the restrictions of the target.
+    if permissions.HasRestrictions(issue, perm='View'):
+      source_restrictions = permissions.GetRestrictions(issue)
+      if (issue.project_id != merge_into_issue.project_id or
+          set(source_restrictions) != set(merge_into_restrictions)):
+        continue
+
+    new_cc_ids.update(issue.cc_ids)
+    if issue.owner_id:
+      new_cc_ids.add(issue.owner_id)
+
+  return [cc_id for cc_id in new_cc_ids if cc_id not in merge_into_issue.cc_ids]
 
 
 class IssueChangeImpactedIssues():

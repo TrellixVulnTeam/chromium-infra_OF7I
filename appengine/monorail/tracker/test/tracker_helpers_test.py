@@ -1625,6 +1625,45 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
       tracker_helpers.AssertIssueChangesValid(
           self.cnxn, issue_delta_pairs, self.services)
 
+  def testComputeNewCcsFromIssueMerge(self):
+    """We can compute the new ccs to add to a merge-into issue."""
+    target_issue = fake.MakeTestIssue(789, 10, 'Target issue', 'New', 111)
+    source_issue_1 = fake.MakeTestIssue(
+        789, 11, 'Source issue', 'New', 111)  # different restrictions
+    source_issue_2 = fake.MakeTestIssue(
+        789, 12, 'Source issue', 'New', 222)  # same restrictions
+    source_issue_3 = fake.MakeTestIssue(
+        789, 13, 'Source issue', 'New', 222)  # no restrictions
+    source_issue_4 = fake.MakeTestIssue(
+        789, 14, 'Source issue', 'New', 666)  # empty ccs
+    source_issue_5 = fake.MakeTestIssue(
+        788, 15, 'Source issue', 'New', 666)  # different project
+    source_issue_1.cc_ids.append(333)
+    source_issue_2.cc_ids.append(444)
+    source_issue_3.cc_ids.append(555)
+    source_issue_5.cc_ids.append(999)
+
+    target_issue.labels.append('Restrict-View-Chicken')
+    source_issue_1.labels.append('Restrict-View-Cow')
+    source_issue_2.labels.append('Restrict-View-Chicken')
+
+    self.services.issue.TestAddIssue(target_issue)
+    self.services.issue.TestAddIssue(source_issue_1)
+    self.services.issue.TestAddIssue(source_issue_2)
+    self.services.issue.TestAddIssue(source_issue_3)
+    self.services.issue.TestAddIssue(source_issue_4)
+    self.services.issue.TestAddIssue(source_issue_5)
+
+    new_cc_ids = tracker_helpers._ComputeNewCcsFromIssueMerge(
+        target_issue, [source_issue_1, source_issue_2, source_issue_3])
+    self.assertItemsEqual(new_cc_ids, [444, 555, 222])
+
+  def testComputeNewCcsFromIssueMerge_Empty(self):
+    target_issue = fake.MakeTestIssue(789, 10, 'Target issue', 'New', 111)
+    self.services.issue.TestAddIssue(target_issue)
+    new_cc_ids = tracker_helpers._ComputeNewCcsFromIssueMerge(target_issue, [])
+    self.assertItemsEqual(new_cc_ids, [])
+
 
 class IssueChangeImpactedIssuesTest(unittest.TestCase):
   """Tests for the IssueChangeImpactedIssues class."""
