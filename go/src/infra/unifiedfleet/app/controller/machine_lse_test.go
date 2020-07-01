@@ -381,3 +381,64 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 		})
 	})
 }
+
+func TestDeleteMachineLSEDUT(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("DeleteMachineLSE for a DUT", t, func() {
+		Convey("Delete machineLSE DUT with Servo Info", func() {
+			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-92")
+			inventory.CreateMachineLSE(ctx, labstationMachinelse)
+
+			servo := &chromeosLab.Servo{
+				ServoHostname: "RedLabstation-92",
+				ServoPort:     92,
+			}
+			peripherals := &chromeosLab.Peripherals{
+				Servo: servo,
+			}
+			dutMachinelse := mockDutMachineLSE("DUTMachineLse-92")
+			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
+			inventory.CreateMachineLSE(ctx, dutMachinelse)
+
+			err := DeleteMachineLSE(ctx, "DUTMachineLse-92")
+			So(err, ShouldBeNil)
+
+			resp, _ := inventory.GetMachineLSE(ctx, "RedLabstation-92")
+			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos(), ShouldBeEmpty)
+		})
+	})
+}
+
+func TestDeleteMachineLSELabstation(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("DeleteMachineLSE for a Labstation", t, func() {
+		Convey("Delete machineLSE Labstation with Servo Info", func() {
+			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-90")
+			inventory.CreateMachineLSE(ctx, labstationMachinelse)
+
+			servo := &chromeosLab.Servo{
+				ServoHostname: "RedLabstation-90",
+				ServoPort:     90,
+			}
+			peripherals := &chromeosLab.Peripherals{
+				Servo: servo,
+			}
+			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-90")
+			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
+			CreateMachineLSE(ctx, dutMachinelse)
+
+			err := DeleteMachineLSE(ctx, "RedLabstation-90")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "cannot be deleted")
+		})
+		Convey("Delete machineLSE Labstation without Servo Info", func() {
+			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-100")
+			inventory.CreateMachineLSE(ctx, labstationMachinelse)
+
+			err := DeleteMachineLSE(ctx, "RedLabstation-100")
+			So(err, ShouldBeNil)
+		})
+	})
+}

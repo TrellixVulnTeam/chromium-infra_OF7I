@@ -85,7 +85,42 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string) ([]*
 // Delete if this MachineLSE is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteMachineLSE(ctx context.Context, id string) error {
-	return inventory.DeleteMachineLSE(ctx, id)
+	err := validateDeleteMachineLSE(ctx, id)
+	if err != nil {
+		return err
+	}
+	f := func(ctx context.Context) error {
+		existingMachinelse, err := inventory.GetMachineLSE(ctx, id)
+		if err != nil {
+			return err
+		}
+		// Check if it is a DUT MachineLSE and has servo info.
+		// Update corresponding Labstation MachineLSE.
+		if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
+			existingServo := existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
+			if existingServo != nil {
+				// 1. remove the existingServo entry of DUT form existingLabstationMachinelse
+				existingLabstationMachinelse, err := inventory.GetMachineLSE(ctx, existingServo.GetServoHostname())
+				if err != nil {
+					return err
+				}
+				removeServoEntryFromLabstation(existingServo, existingLabstationMachinelse)
+				// BatchUpdate Labstation - Using Batch update and not UpdateMachineLSE,
+				// because we cant have nested transaction in datastore
+				_, err = inventory.BatchUpdateMachineLSEs(ctx, []*fleet.MachineLSE{existingLabstationMachinelse})
+				if err != nil {
+					logging.Errorf(ctx, "Failed to BatchUpdate Labstation MachineLSE %s", err)
+					return err
+				}
+			}
+		}
+		return inventory.DeleteMachineLSE(ctx, id)
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete MachineLSE in datastore: %s", err)
+		return err
+	}
+	return nil
 }
 
 // ImportMachineLSEs implements the logic of importing machine lses and related info to backend storage.
