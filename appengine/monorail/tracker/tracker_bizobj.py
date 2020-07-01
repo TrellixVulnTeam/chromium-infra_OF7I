@@ -1171,7 +1171,7 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
       add_ref = None
 
     amendments.append(MakeMergedIntoAmendment(
-        add_ref, remove_ref, default_project_name=issue.project_name))
+        [add_ref], [remove_ref], default_project_name=issue.project_name))
 
   if (delta.merged_into_external is not None and
       delta.merged_into_external != issue.merged_into_external and
@@ -1198,7 +1198,7 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
 
     issue.merged_into = 0
     issue.merged_into_external = delta.merged_into_external
-    amendments.append(MakeMergedIntoAmendment(add_ref, remove_ref,
+    amendments.append(MakeMergedIntoAmendment([add_ref], [remove_ref],
         default_project_name=issue.project_name))
 
   if delta.summary and delta.summary != issue.summary:
@@ -1476,10 +1476,11 @@ def MakeBlockingAmendment(added_refs, removed_refs, default_project_name=None):
       default_project_name=default_project_name)
 
 
-def MakeMergedIntoAmendment(added_ref, removed_ref, default_project_name=None):
+def MakeMergedIntoAmendment(
+    added_refs, removed_refs, default_project_name=None):
   """Make an Amendment PB for a change to the merged-into issue."""
   return _PlusMinusRefsAmendment(
-      tracker_pb2.FieldID.MERGEDINTO, [added_ref], [removed_ref],
+      tracker_pb2.FieldID.MERGEDINTO, added_refs, removed_refs,
       default_project_name=default_project_name)
 
 

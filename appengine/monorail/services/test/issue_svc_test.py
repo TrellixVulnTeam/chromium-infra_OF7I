@@ -1352,7 +1352,7 @@ class IssueServiceTest(unittest.TestCase):
         self.cnxn, issue, commit=False, invalidate=False)
     amendments = [
         tracker_bizobj.MakeMergedIntoAmendment(
-            ('proj', 2), None, default_project_name='proj')]
+            [('proj', 2)], [None], default_project_name='proj')]
     self.services.issue.CreateIssueComment(
         self.cnxn, issue, commenter_id, 'comment text', attachments=None,
         amendments=amendments, commit=False, is_description=False,

@@ -1331,7 +1331,7 @@ class BizobjTest(unittest.TestCase):
        tracker_bizobj.MakeLabelsAmendment(['c', 'd'], []),
        tracker_bizobj.MakeBlockedOnAmendment([(None, 70)], []),
        tracker_bizobj.MakeBlockingAmendment([(None, 71)], []),
-       tracker_bizobj.MakeMergedIntoAmendment((None, 72), (None, 73)),
+       tracker_bizobj.MakeMergedIntoAmendment([(None, 72)], [(None, 73)]),
        tracker_bizobj.MakeSummaryAmendment('New summary', 'Sum'),
        ],
       actual_amendments)
@@ -1361,7 +1361,7 @@ class BizobjTest(unittest.TestCase):
     self.assertEqual(
       [tracker_bizobj.MakeBlockedOnAmendment([], []),
        tracker_bizobj.MakeBlockingAmendment([], []),
-       tracker_bizobj.MakeMergedIntoAmendment(None, None),
+       tracker_bizobj.MakeMergedIntoAmendment([], []),
        ],
       actual_amendments)
     self.assertEqual(
@@ -1867,9 +1867,11 @@ class BizobjTest(unittest.TestCase):
   def testMakeMergedIntoAmendment(self):
     ref1 = (None, 1)
     ref2 = ('other-proj', 2)
-    amendment = tracker_bizobj.MakeMergedIntoAmendment(ref1, ref2)
+    ref3 = ('chicken-proj', 3)
+    amendment = tracker_bizobj.MakeMergedIntoAmendment(
+        [ref1, None], [ref2, ref3])
     self.assertEqual(tracker_pb2.FieldID.MERGEDINTO, amendment.field)
-    self.assertEqual('-other-proj:2 1', amendment.newvalue)
+    self.assertEqual('-other-proj:2 -chicken-proj:3 1', amendment.newvalue)
 
   def testMakeProjectAmendment(self):
     self.assertEqual(
