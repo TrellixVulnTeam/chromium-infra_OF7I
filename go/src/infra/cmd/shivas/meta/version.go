@@ -26,7 +26,7 @@ import (
 var VersionNumber = fmt.Sprintf("%d.%d.%d", Major, Minor, Patch)
 
 // Major is the Major version number
-const Major = 1
+const Major = 2
 
 // Minor is the Minor version number
 const Minor = 0

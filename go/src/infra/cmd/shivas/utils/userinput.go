@@ -18,7 +18,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	fleet "infra/unifiedfleet/api/v1/proto"
-	chromeos "infra/unifiedfleet/api/v1/proto/chromeos/lab"
+	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
 	UfleetUtil "infra/unifiedfleet/app/util"
 )
@@ -44,7 +44,7 @@ const (
 	ChooseLab                 string = "\n Choose a Lab\n"
 	BroswerOrOSLab            string = "1=\"Browser Lab\"\n2=\"OS Lab\"\n"
 	BrowserOrATLOrACSLab      string = "1=\"Browser Lab\"\n2=\"ATL Lab\"\n3=\"ACS Lab\"\n"
-	DutOrServer               string = "1=\"DUT\"\n2=\"Server\"\n"
+	DutOrLabstationOrServer   string = "1=\"DUT\"\n2=\"Labstation\"\n3=\"Server\"\n"
 	DoesNotExist              string = " doesnt not exist in the system. Please check and enter again."
 	AlreadyExists             string = " already exists in the system. Please check and enter again."
 	ATL                       string = "ATL"
@@ -453,7 +453,7 @@ func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *b
 // GetMachinelseInteractiveInput get MachineLSE input in interactive mode
 //
 // Name(string) -> Broswer/ATL/ACS LAB(choice to branch) ->
-// -> getBrowserMachinelseInteractiveInput()/getOSMachinelseInteractiveInput() ->
+// -> getBrowserMachineLse()/getOSMachineLse() ->
 // -> Machine(repeated string, resource)
 func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machinelse *fleet.MachineLSE, update bool) {
 	input := &Input{
@@ -504,13 +504,13 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 				switch value {
 				case "1":
 					// Browser lab
-					getBrowserMachinelseInteractiveInput(ctx, ic, scanner, machinelse)
+					getBrowserMachineLse(ctx, ic, scanner, machinelse)
 				case "2":
 					// ATL lab
-					getOSMachinelseInteractiveInput(ctx, ic, scanner, machinelse, false)
+					getOSMachineLse(ctx, ic, scanner, machinelse, false)
 				case "3":
 					// ACS lab
-					getOSMachinelseInteractiveInput(ctx, ic, scanner, machinelse, true)
+					getOSMachineLse(ctx, ic, scanner, machinelse, true)
 				default:
 					input = &Input{
 						Key:      "Broswer/ATL/ACS LAB",
@@ -531,12 +531,12 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 	}
 }
 
-// getOSMachinelseInteractiveInput get ChormeOS MachineLSE input in interactive mode
+// getOSMachineLse get ChormeOS MachineLSE input in interactive mode
 //
 // Hostname(string) -> MachineLSEPrototype(string, resource) ->
-// -> DUT or Server(choice to branch) ->
-// -> getOSDevicelseInteractiveInput()/getOSServerlseInteractiveInput()
-func getOSMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
+// -> DUT, Labstation or Server(choice to branch) ->
+// -> getOSDeviceLse()/getOSServerLse()
+func getOSMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
 	machinelse.Lse = &fleet.MachineLSE_ChromeosMachineLse{
 		ChromeosMachineLse: &fleet.ChromeOSMachineLSE{},
 	}
@@ -565,8 +565,11 @@ func getOSMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClie
 			case "Hostname":
 				machinelse.Hostname = value
 				if len(machineLSEPrototypes) == 0 {
-					getOSDevicelseInteractiveInput(ctx, ic, scanner, machinelse, acs)
-					input = nil
+					input = &Input{
+						Key:      "DUT, Labstation or Server",
+						Desc:     fmt.Sprintf("%s%s", ChooseOption, DutOrLabstationOrServer),
+						Required: true,
+					}
 				} else {
 					input = &Input{
 						Key:  "MachineLSEPrototype",
@@ -581,23 +584,41 @@ func getOSMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClie
 					}
 					machinelse.MachineLsePrototype = machineLSEPrototypes[option]
 				}
-				getOSDevicelseInteractiveInput(ctx, ic, scanner, machinelse, acs)
-				input = nil
+				input = &Input{
+					Key:      "DUT, Labstation or Server",
+					Desc:     fmt.Sprintf("%s%s", ChooseOption, DutOrLabstationOrServer),
+					Required: true,
+				}
+			case "DUT, Labstation or Server":
+				if value == "1" {
+					// ChromeOSDeviceLse - DUT
+					getOSDeviceLse(ctx, ic, scanner, machinelse, acs, true)
+					input = nil
+				} else if value == "2" {
+					// ChromeOSDeviceLse - Labstation
+					getOSDeviceLse(ctx, ic, scanner, machinelse, acs, false)
+					input = nil
+				} else if value == "3" {
+					// ChromeOSServerLse - Server
+					getOSServerLse(ctx, ic, scanner, machinelse)
+					input = nil
+				} else {
+					input.Desc = fmt.Sprintf("%s%s%s", WrongInput, ChooseOption, DutOrLabstationOrServer)
+				}
 			}
 			break
 		}
 	}
 }
 
-// getOSDevicelseInteractiveInput get ChromeOSDeviceLSE input in interactive mode
+// getOSDeviceLse get ChromeOSDeviceLSE input in interactive mode
 //
 // RPM(string, resource) -> RPM Port(int) -> Switch(string, resource) ->
-// -> Switch Port(int) -> Servo Hostname(string) ->
-// -> Servo Port(int) -> Servo Serial(string) -> Servo Type(string) ->
-// -> Pools(repeated string) -> getACSLabConfig()
-func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
-	machinelse.GetChromeosMachineLse().ChromeosLse = &fleet.ChromeOSMachineLSE_Dut{
-		Dut: &fleet.ChromeOSDeviceLSE{},
+// -> Switch Port(int) -> geDut()/getLabstation()
+func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs, dut bool) {
+	deviceLse := &fleet.ChromeOSDeviceLSE{}
+	machinelse.GetChromeosMachineLse().ChromeosLse = &fleet.ChromeOSMachineLSE_DeviceLse{
+		DeviceLse: deviceLse,
 	}
 	input := &Input{
 		Key: "RPM",
@@ -622,7 +643,7 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
-				machinelse.GetChromeosMachineLse().GetDut().RpmInterface = &fleet.RPMInterface{
+				deviceLse.RpmInterface = &fleet.RPMInterface{
 					Rpm: value,
 				}
 				if value != "" {
@@ -640,7 +661,7 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 					if port == -1 {
 						break
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().Port = port
+					deviceLse.GetRpmInterface().Port = port
 				}
 				input = &Input{
 					Key: "Switch",
@@ -651,7 +672,7 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
-				machinelse.GetChromeosMachineLse().GetDut().NetworkDeviceInterface = &fleet.SwitchInterface{
+				deviceLse.NetworkDeviceInterface = &fleet.SwitchInterface{
 					Switch: value,
 				}
 				if value != "" {
@@ -659,9 +680,14 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 						Key: "Switch Port",
 					}
 				} else {
-					input = &Input{
-						Key: "Servo Hostname",
+					if dut {
+						// DUT
+						getDut(scanner, machinelse, acs)
+					} else {
+						// Labstation
+						getLabstation(scanner, machinelse)
 					}
+					input = nil
 				}
 			case "Switch Port":
 				if value != "" {
@@ -669,25 +695,60 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 					if port == -1 {
 						break
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetNetworkDeviceInterface().Port = port
+					deviceLse.GetNetworkDeviceInterface().Port = port
 				}
-				input = &Input{
-					Key: "Servo Hostname",
+				if dut {
+					// DUT
+					getDut(scanner, machinelse, acs)
+				} else {
+					// Labstation
+					getLabstation(scanner, machinelse)
 				}
+				input = nil
+			}
+			break
+		}
+	}
+}
+
+// getDut get DeviceUnderTest input in interactive mode
+//
+// Servo Hostname(string) -> Servo Port(int) -> Servo Serial(string) ->
+// -> Servo Type(string) -> Pools(repeated string) -> getACSLabConfig()
+func getDut(scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
+	dut := &chromeosLab.DeviceUnderTest{
+		Hostname: machinelse.Hostname,
+	}
+	machinelse.GetChromeosMachineLse().GetDeviceLse().Device = &fleet.ChromeOSDeviceLSE_Dut{
+		Dut: dut,
+	}
+	input := &Input{
+		Key: "Servo Hostname",
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
 			// DeviceUnderTest Dut Config
 			// Pheripherals
 			// Servo
 			case "Servo Hostname":
-				machinelse.GetChromeosMachineLse().GetDut().Config = &chromeos.DeviceUnderTest{
-					Hostname: machinelse.Hostname,
-				}
-				machinelse.GetChromeosMachineLse().GetDut().GetConfig().Peripherals = &chromeos.Peripherals{
-					Servo: &chromeos.Servo{
+				dut.Peripherals = &chromeosLab.Peripherals{
+					Servo: &chromeosLab.Servo{
 						ServoHostname: value,
 					},
-					Rpm: &chromeos.RPM{
-						PowerunitName:   machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().GetRpm(),
-						PowerunitOutlet: fmt.Sprint(machinelse.GetChromeosMachineLse().GetDut().GetRpmInterface().GetPort()),
+					Rpm: &chromeosLab.RPM{
+						PowerunitName:   machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
+						PowerunitOutlet: fmt.Sprint(machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetPort()),
 					},
 				}
 				input = &Input{
@@ -699,20 +760,20 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 					if port == -1 {
 						break
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetServo().ServoPort = port
+					dut.GetPeripherals().GetServo().ServoPort = port
 				}
 				input = &Input{
 					Key: "Servo Serial",
 				}
 			case "Servo Serial":
 				// TODO(eshwarn) : this is available in Hart indexed by asset tag
-				machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetServo().ServoSerial = value
+				dut.GetPeripherals().GetServo().ServoSerial = value
 				input = &Input{
 					Key: "Servo Type",
 				}
 			case "Servo Type":
 				// TODO(eshwarn) : this is available in Hart as google code name
-				machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetServo().ServoType = value
+				dut.GetPeripherals().GetServo().ServoType = value
 				input = &Input{
 					Key:      "Pools (y/n)",
 					Desc:     fmt.Sprintf("%sPool?", OptionToEnter),
@@ -720,9 +781,9 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 				}
 			// repeated pools
 			case "Pools (y/n)":
-				vals, done := getRepeatedStringInput(ctx, ic, scanner, value, "Pool", input, false)
+				vals, done := getRepeatedStringInput(nil, nil, scanner, value, "Pool", input, false)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().Pools = vals
+					dut.Pools = vals
 					if acs {
 						getACSLabConfig(scanner, machinelse)
 					}
@@ -742,7 +803,8 @@ func getOSDevicelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClien
 // -> Touch Mimo(bool) -> Carrier(string) -> Camerabox(bool) ->
 // -> Chaos(bool) -> Cable(repeated enum) -> Camerabox Info(enum)
 func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
-	machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Chameleon = &chromeos.Chameleon{}
+	peripherals := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals()
+	peripherals.Chameleon = &chromeosLab.Chameleon{}
 	input := &Input{
 		Key:      "Chameleon Peripherals (y/n)",
 		Desc:     fmt.Sprintf("%sChameleon Peripheral?", OptionToEnter),
@@ -763,13 +825,13 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			switch input.Key {
 			// repeated enum Chameleon Peripherals
 			case "Chameleon Peripherals (y/n)":
-				vals, done := getRepeatedEnumInput(scanner, value, "Chameleon Peripheral", chromeos.ChameleonType_name, input)
+				vals, done := getRepeatedEnumInput(scanner, value, "Chameleon Peripheral", chromeosLab.ChameleonType_name, input)
 				if done {
-					cps := make([]chromeos.ChameleonType, 0, len(vals))
+					cps := make([]chromeosLab.ChameleonType, 0, len(vals))
 					for _, val := range vals {
-						cps = append(cps, chromeos.ChameleonType(val))
+						cps = append(cps, chromeosLab.ChameleonType(val))
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetChameleon().ChameleonPeripherals = cps
+					peripherals.GetChameleon().ChameleonPeripherals = cps
 					input = &Input{
 						Key:      "Audio Board (y/n)",
 						Required: true,
@@ -779,7 +841,7 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			case "Audio Board (y/n)":
 				flag, done := getBoolInput(value, input)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetChameleon().AudioBoard = flag
+					peripherals.GetChameleon().AudioBoard = flag
 					input = &Input{
 						Key:      "Cameras (y/n)",
 						Desc:     fmt.Sprintf("%sCamera?", OptionToEnter),
@@ -788,16 +850,16 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 				}
 			// repeated enum Camera
 			case "Cameras (y/n)":
-				vals, done := getRepeatedEnumInput(scanner, value, "Camera", chromeos.CameraType_name, input)
+				vals, done := getRepeatedEnumInput(scanner, value, "Camera", chromeosLab.CameraType_name, input)
 				if done {
-					cameras := make([]*chromeos.Camera, 0, len(vals))
+					cameras := make([]*chromeosLab.Camera, 0, len(vals))
 					for _, val := range vals {
-						camera := &chromeos.Camera{
-							CameraType: chromeos.CameraType(val),
+						camera := &chromeosLab.Camera{
+							CameraType: chromeosLab.CameraType(val),
 						}
 						cameras = append(cameras, camera)
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().ConnectedCamera = cameras
+					peripherals.ConnectedCamera = cameras
 					input = &Input{
 						Key:      "Audio Box (y/n)",
 						Required: true,
@@ -807,7 +869,7 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			case "Audio Box (y/n)":
 				flag, done := getBoolInput(value, input)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Audio = &chromeos.Audio{
+					peripherals.Audio = &chromeosLab.Audio{
 						AudioBox: flag,
 					}
 					input = &Input{
@@ -819,7 +881,7 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			case "Atrus (y/n)":
 				flag, done := getBoolInput(value, input)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetAudio().Atrus = flag
+					peripherals.GetAudio().Atrus = flag
 					input = &Input{
 						Key:      "Wificell (y/n)",
 						Required: true,
@@ -829,35 +891,35 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			case "Wificell (y/n)":
 				flag, done := getBoolInput(value, input)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Wifi = &chromeos.Wifi{
+					peripherals.Wifi = &chromeosLab.Wifi{
 						Wificell: flag,
 					}
 					input = &Input{
 						Key:  "AntennaConnection",
-						Desc: fmt.Sprintf("%s%s", ChooseAntennaConnection, createKeyValuePairs(chromeos.Wifi_AntennaConnection_name)),
+						Desc: fmt.Sprintf("%s%s", ChooseAntennaConnection, createKeyValuePairs(chromeosLab.Wifi_AntennaConnection_name)),
 					}
 				}
 			// enum AntennaConnection
 			case "AntennaConnection":
 				if value != "" {
-					option := getSelectionInput(value, chromeos.Wifi_AntennaConnection_name, input)
+					option := getSelectionInput(value, chromeosLab.Wifi_AntennaConnection_name, input)
 					if option == -1 {
 						break
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetWifi().AntennaConn = chromeos.Wifi_AntennaConnection(option)
+					peripherals.GetWifi().AntennaConn = chromeosLab.Wifi_AntennaConnection(option)
 				}
 				input = &Input{
 					Key:  "Router",
-					Desc: fmt.Sprintf("%s%s", ChooseRouter, createKeyValuePairs(chromeos.Wifi_Router_name)),
+					Desc: fmt.Sprintf("%s%s", ChooseRouter, createKeyValuePairs(chromeosLab.Wifi_Router_name)),
 				}
 			// enum Router
 			case "Router":
 				if value != "" {
-					option := getSelectionInput(value, chromeos.Wifi_Router_name, input)
+					option := getSelectionInput(value, chromeosLab.Wifi_Router_name, input)
 					if option == -1 {
 						break
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().GetWifi().Router = chromeos.Wifi_Router(option)
+					peripherals.GetWifi().Router = chromeosLab.Wifi_Router(option)
 				}
 				input = &Input{
 					Key:      "Touch Mimo (y/n)",
@@ -867,7 +929,7 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			case "Touch Mimo (y/n)":
 				flag, done := getBoolInput(value, input)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Touch = &chromeos.Touch{
+					peripherals.Touch = &chromeosLab.Touch{
 						Mimo: flag,
 					}
 					input = &Input{
@@ -875,7 +937,7 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 					}
 				}
 			case "Carrier":
-				machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Carrier = value
+				peripherals.Carrier = value
 				input = &Input{
 					Key: "Camerabox (y/n)",
 				}
@@ -883,7 +945,7 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			case "Camerabox (y/n)":
 				flag, done := getBoolInput(value, input)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Camerabox = flag
+					peripherals.Camerabox = flag
 					input = &Input{
 						Key: "Chaos (y/n)",
 					}
@@ -892,7 +954,7 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 			case "Chaos (y/n)":
 				flag, done := getBoolInput(value, input)
 				if done {
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Chaos = flag
+					peripherals.Chaos = flag
 					input = &Input{
 						Key:      "Cable (y/n)",
 						Desc:     fmt.Sprintf("%sCable?", OptionToEnter),
@@ -901,30 +963,30 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 				}
 			// repeated enum Cable
 			case "Cable (y/n)":
-				vals, done := getRepeatedEnumInput(scanner, value, "Cable", chromeos.CableType_name, input)
+				vals, done := getRepeatedEnumInput(scanner, value, "Cable", chromeosLab.CableType_name, input)
 				if done {
-					cables := make([]*chromeos.Cable, 0, len(vals))
+					cables := make([]*chromeosLab.Cable, 0, len(vals))
 					for _, val := range vals {
-						cable := &chromeos.Cable{
-							Type: chromeos.CableType(val),
+						cable := &chromeosLab.Cable{
+							Type: chromeosLab.CableType(val),
 						}
 						cables = append(cables, cable)
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().Cable = cables
+					peripherals.Cable = cables
 					input = &Input{
 						Key:  "Camerabox Info",
-						Desc: fmt.Sprintf("%s%s", ChooseCameraboxFacing, createKeyValuePairs(chromeos.Camerabox_Facing_name)),
+						Desc: fmt.Sprintf("%s%s", ChooseCameraboxFacing, createKeyValuePairs(chromeosLab.Camerabox_Facing_name)),
 					}
 				}
 			// enum CameraBox Info
 			case "Camerabox Info":
 				if value != "" {
-					option := getSelectionInput(value, chromeos.Camerabox_Facing_name, input)
+					option := getSelectionInput(value, chromeosLab.Camerabox_Facing_name, input)
 					if option == -1 {
 						break
 					}
-					machinelse.GetChromeosMachineLse().GetDut().GetConfig().GetPeripherals().CameraboxInfo = &chromeos.Camerabox{
-						Facing: chromeos.Camerabox_Facing(option),
+					peripherals.CameraboxInfo = &chromeosLab.Camerabox{
+						Facing: chromeosLab.Camerabox_Facing(option),
 					}
 				}
 				input = nil
@@ -934,11 +996,23 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 	}
 }
 
-// getBrowserMachinelseInteractiveInput get Browser MachineLSE input in interactive mode
+// getLabstation get Labstation input in interactive mode
+//
+// Pools(repeated string) ->
+func getLabstation(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+}
+
+// getOSServerLse get ChromeOSServerLSE input in interactive mode
+//
+// Vlan(string, resource) ->
+func getOSServerLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+}
+
+// getBrowserMachineLse get Browser MachineLSE input in interactive mode
 //
 // Hostname(string) -> MachineLSEPrototype(string, resource) ->
 // -> VM capacity(int) -> getVms()
-func getBrowserMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+func getBrowserMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 	machinelse.Lse = &fleet.MachineLSE_ChromeBrowserMachineLse{
 		ChromeBrowserMachineLse: &fleet.ChromeBrowserMachineLSE{},
 	}

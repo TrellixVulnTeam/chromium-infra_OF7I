@@ -181,95 +181,79 @@ Example Browser Lab MachineLSE:
 			}
 		],
 		"vmCapacity": 3
-	}
+	},
 	"machines": [
 		"machine-DellServer-123"
 	]
 }
 
-Example OS Lab MachineLSE:
+Example OS Lab MachineLSE for DUT:
 {
-	"name": "test-machinelse-OS",
-	"machineLsePrototype": "acs-lab:qwer",
-	"hostname": "ChromeOSMachineLSE",
+	"name": "A-ChromeOS-DUT",
+	"machineLsePrototype": "acs-lab:wifi",
+	"hostname": "chromeOSDUT",
 	"chromeosMachineLse": {
 		"deviceLse": {
-			"chromeosDevice": {
-				"id": {
-					"value": "22565c49-93d2-43f4-ab4f-f9171e3f252d"
-				},
-				"manufacturingId": {
-					"value": "samus"
-				},
-				"deviceConfigId": {
-					"platformId": {
-						"value": "samus"
+			"dut": {
+				"hostname": "chromeOSDUT",
+				"peripherals": {
+					"servo": {
+						"servoHostname": "RedServo",
+						"servoPort": 12,
+						"servoSerial": "1234",
+						"servoType": "V3"
 					},
-					"modelId": {
-						"value": "veyron"
+					"chameleon": {
+						"chameleonPeripherals": [
+							"CHAMELEON_TYPE_HDMI",
+							"CHAMELEON_TYPE_BT_BLE_HID"
+						],
+						"audioBoard": true
 					},
-					"variantId": {
-						"value": "2.0"
+					"rpm": {
+						"powerunitName": "rpm-1",
+						"powerunitOutlet": "23"
 					},
-					"brandId": {
-						"value": "chrome"
+					"connectedCamera": [{
+							"cameraType": "CAMERA_HUDDLY"
+						},
+						{
+							"cameraType": "CAMERA_PTZPRO2"
+						},
+						{
+							"cameraType": "CAMERA_HUDDLY"
+						}
+					],
+					"audio": {
+						"audioBox": true,
+						"atrus": true
+					},
+					"wifi": {
+						"wificell": true,
+						"antennaConn": "CONN_OTA",
+						"router": "ROUTER_802_11AX"
+					},
+					"touch": {
+						"mimo": true
+					},
+					"carrier": "Att",
+					"camerabox": true,
+					"chaos": true,
+					"cable": [{
+							"type": "CABLE_USBAUDIO"
+						},
+						{
+							"type": "CABLE_USBPRINTING"
+						}
+					],
+					"cameraboxInfo": {
+						"facing": "FACING_FRONT"
 					}
 				},
-				"dut": {
-					"hostname": "ChromeOSMachineLSE",
-					"peripherals": {
-						"servo": {
-							"servoHostname": "v3",
-							"servoPort": 23,
-							"servoSerial": "3456",
-							"servoType": "v3"
-						},
-						"chameleon": {
-							"chameleonPeripherals": [
-								"CHAMELEON_TYPE_VGA",
-								"CHAMELEON_TYPE_HDMI"
-							],
-							"audioBoard": true
-						},
-						"rpm": {
-							"powerunitOutlet": "0"
-						},
-						"connectedCamera": [
-							{
-								"cameraType": "CAMERA_HUDDLY"
-							}
-						],
-						"audio": {
-							"audioBox": true,
-							"atrus": true
-						},
-						"wifi": {
-							"wificell": true,
-							"antennaConn": "CONN_CONDUCTIVE",
-							"router": "ROUTER_802_11AX"
-						},
-						"touch": {
-							"mimo": true
-						},
-						"carrier": "ATT",
-						"camerabox": true,
-						"chaos": true,
-						"cable": [
-							{
-								"type": "CABLE_USBPRINTING"
-							},
-							{
-								"type": "CABLE_HDMIAUDIO"
-							}
-						],
-						"cameraboxInfo": {
-							"facing": "FACING_BACK"
-						}
-					},
-					"pools": [
-						"ACS_LAB"
-					]
-				}
+				"pools": [
+					"ATL-LAB_POOL",
+					"ACS_QUOTA"
+				]
 			},
 			"rpmInterface": {
 				"rpm": "rpm-1",
@@ -282,9 +266,8 @@ Example OS Lab MachineLSE:
 		}
 	},
 	"machines": [
-		"test-machine-1"
-	],
-	"updateTime": "2020-06-18T17:25:48.123623554Z"
+		"ChromeBook-samus"
+	]
 }
 
 The protobuf definition of MachineLSE is part of
