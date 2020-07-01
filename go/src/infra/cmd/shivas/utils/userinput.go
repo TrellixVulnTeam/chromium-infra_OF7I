@@ -596,6 +596,10 @@ func getOSMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *buf
 					input = nil
 				} else if value == "2" {
 					// ChromeOSDeviceLse - Labstation
+					// Hostname for a Labstation must be the same as the
+					// MachineLSE name. we use Labstation Hostname(ServoHostname)
+					// from a DUT to update the Labstation with Servo info
+					machinelse.Hostname = machinelse.GetName()
 					getOSDeviceLse(ctx, ic, scanner, machinelse, acs, false)
 					input = nil
 				} else if value == "3" {
@@ -685,7 +689,7 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 						getDut(scanner, machinelse, acs)
 					} else {
 						// Labstation
-						getLabstation(scanner, machinelse)
+						getLabstation(ctx, ic, scanner, machinelse)
 					}
 					input = nil
 				}
@@ -702,7 +706,7 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 					getDut(scanner, machinelse, acs)
 				} else {
 					// Labstation
-					getLabstation(scanner, machinelse)
+					getLabstation(ctx, ic, scanner, machinelse)
 				}
 				input = nil
 			}
@@ -998,8 +1002,66 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 
 // getLabstation get Labstation input in interactive mode
 //
-// Pools(repeated string) ->
-func getLabstation(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+// Pools(repeated string) -> getServos()
+func getLabstation(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+	labstation := &chromeosLab.Labstation{
+		// Hostname for a Labstation must be the same as the MachineLSE name.
+		// we use Labstation Hostname(ServoHostname) from a DUT to update the
+		// Labstation with Servo info
+		Hostname: machinelse.GetName(),
+		Rpm: &chromeosLab.RPM{
+			PowerunitName:   machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
+			PowerunitOutlet: fmt.Sprint(machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetPort()),
+		},
+	}
+	machinelse.GetChromeosMachineLse().GetDeviceLse().Device = &fleet.ChromeOSDeviceLSE_Labstation{
+		Labstation: labstation,
+	}
+	input := &Input{
+		Key:      "Pools (y/n)",
+		Desc:     fmt.Sprintf("%sPool?", OptionToEnter),
+		Required: true,
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			// Labstation
+			// repeated pools
+			case "Pools (y/n)":
+				vals, done := getRepeatedStringInput(nil, nil, scanner, value, "Pool", input, false)
+				if done {
+					labstation.Pools = vals
+					getServos(ctx, ic, machinelse)
+					input = nil
+				}
+			}
+			break
+		}
+	}
+}
+
+// getServos get the servos from existing MachineLSE
+//
+// MachineLSE Labstation update is not allowed to change the servo info in the
+// Labstation, so during update call we get the existing servo info from the
+// labstation and copy it to the input. For Create call we do nothing.
+func getServos(ctx context.Context, ic UfleetAPI.FleetClient, machinelse *fleet.MachineLSE) {
+	labstationMachineLse, _ := ic.GetMachineLSE(ctx, &UfleetAPI.GetMachineLSERequest{
+		Name: UfleetUtil.AddPrefix(UfleetUtil.MachineLSECollection, machinelse.GetName()),
+	})
+	if labstationMachineLse != nil {
+		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = labstationMachineLse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+	}
 }
 
 // getOSServerLse get ChromeOSServerLSE input in interactive mode

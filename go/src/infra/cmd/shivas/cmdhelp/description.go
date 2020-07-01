@@ -270,6 +270,39 @@ Example OS Lab MachineLSE for DUT:
 	]
 }
 
+Example OS Lab MachineLSE for Labstation:
+{
+	"name": "RedLabstation",
+	"hostname": "RedLabstation",
+	"chromeosMachineLse": {
+		"deviceLse": {
+			"labstation": {
+				"hostname": "RedLabstation",
+				"servos": [],
+				"rpm": {
+					"powerunitName": "rpm-1",
+					"powerunitOutlet": "23"
+				},
+				"pools": [
+					"ACS_POOL",
+					"ACS_QUOTA"
+				]
+			},
+			"rpmInterface": {
+				"rpm": "rpm-1",
+				"port": 23
+			},
+			"networkDeviceInterface": {
+				"switch": "switch-1",
+				"port": 23
+			}
+		}
+	},
+	"machines": [
+		"machine-Labstation-samus"
+	]
+}
+
 The protobuf definition of MachineLSE is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto#24`
 
