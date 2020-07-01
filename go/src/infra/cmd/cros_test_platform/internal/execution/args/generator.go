@@ -163,7 +163,7 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		ProvisionableDimensions:          provisionableDimensions,
 		ProvisionableDimensionExpiration: provisionableDimensionExpiration,
 		StatusTopic:                      g.params.GetNotification().GetPubsubTopic(),
-		SwarmingTags:                     g.swarmingTags(cmd),
+		SwarmingTags:                     g.swarmingTags(ctx, kv, cmd),
 		TestRunnerRequest:                trr,
 		Timeout:                          timeout,
 	}, nil
@@ -383,11 +383,12 @@ var reservedTags = map[string]bool{
 	"log_location": true,
 }
 
-func (g *Generator) swarmingTags(cmd *worker.Command) []string {
+func (g *Generator) swarmingTags(ctx context.Context, kv map[string]string, cmd *worker.Command) []string {
 	tags := []string{
 		"luci_project:" + g.workerConfig.LuciProject,
 		"log_location:" + cmd.LogDogAnnotationURL,
 	}
+	tags = append(tags, "display_name:"+g.displayName(ctx, kv))
 	if qa := g.params.GetScheduling().GetQsAccount(); qa != "" {
 		tags = append(tags, "qs_account:"+qa)
 	} else {
