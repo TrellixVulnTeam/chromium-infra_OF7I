@@ -2823,6 +2823,18 @@ wheel: <
 
 * *universal*
 
+### 3.12.2
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/protobuf-py2_py3"
+  version: "version:3.12.2"
+>
+```
+
+
+* *universal*
+
 ### 3.2.0
 
 ```protobuf

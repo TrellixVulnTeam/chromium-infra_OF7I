@@ -650,6 +650,7 @@ SPECS.update({
         Universal('protobuf', '3.6.0'),
         Universal('protobuf', '3.6.1'),
         Universal('protobuf', '3.10.0'),
+        Universal('protobuf', '3.12.2'),
         Universal('py', '1.5.3'),
         Universal('pyasn1', '0.2.3'),
         Universal('pyasn1', '0.4.5'),
