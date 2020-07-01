@@ -457,7 +457,7 @@ func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *b
 // -> Machine(repeated string, resource)
 func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machinelse *fleet.MachineLSE, update bool) {
 	input := &Input{
-		Key:      "Name",
+		Key:      "Hostname",
 		Desc:     UfleetAPI.ValidName,
 		Required: true,
 	}
@@ -476,8 +476,7 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 				continue
 			}
 			switch input.Key {
-			case "Name":
-				// TODO(eshwarn) : Have a different format for Machinelse names
+			case "Hostname":
 				if !UfleetAPI.IDRegex.MatchString(value) {
 					input.Desc = UfleetAPI.ValidName
 					break
@@ -489,7 +488,9 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
 					break
 				}
+				// Name and Hostname of a MachineLSE must be same.
 				machinelse.Name = value
+				machinelse.Hostname = value
 				input = &Input{
 					Key:      "Broswer/ATL/ACS LAB",
 					Desc:     fmt.Sprintf("%s%s", ChooseLab, BrowserOrATLOrACSLab),
@@ -504,12 +505,15 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 				switch value {
 				case "1":
 					// Browser lab
+					getPrototype(ctx, ic, scanner, machinelse, BrowserLab)
 					getBrowserMachineLse(ctx, ic, scanner, machinelse)
 				case "2":
 					// ATL lab
+					getPrototype(ctx, ic, scanner, machinelse, ATLLab)
 					getOSMachineLse(ctx, ic, scanner, machinelse, false)
 				case "3":
 					// ACS lab
+					getPrototype(ctx, ic, scanner, machinelse, ACSLab)
 					getOSMachineLse(ctx, ic, scanner, machinelse, true)
 				default:
 					input = &Input{
@@ -531,23 +535,17 @@ func GetMachinelseInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient
 	}
 }
 
-// getOSMachineLse get ChormeOS MachineLSE input in interactive mode
+// getPrototype get MachineLSE prototype
 //
-// Hostname(string) -> MachineLSEPrototype(string, resource) ->
-// -> DUT, Labstation or Server(choice to branch) ->
-// -> getOSDeviceLse()/getOSServerLse()
-func getOSMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
-	machinelse.Lse = &fleet.MachineLSE_ChromeosMachineLse{
-		ChromeosMachineLse: &fleet.ChromeOSMachineLSE{},
-	}
-	var machineLSEPrototypes map[int32]string
-	if acs {
-		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, ACSLab)
-	} else {
-		machineLSEPrototypes = getAllMachineLSEPrototypes(ctx, ic, ATLLab)
+// MachineLSEPrototype(selection) ->
+func getPrototype(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, lab string) {
+	machineLSEPrototypes := getAllMachineLSEPrototypes(ctx, ic, lab)
+	if len(machineLSEPrototypes) == 0 {
+		return
 	}
 	input := &Input{
-		Key: "Hostname",
+		Key:  "MachineLSEPrototype",
+		Desc: fmt.Sprintf("%s%s", ChooseMachineLSEPrototype, createKeyValuePairs(machineLSEPrototypes)),
 	}
 	for input != nil {
 		if input.Desc != "" {
@@ -562,20 +560,6 @@ func getOSMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *buf
 				continue
 			}
 			switch input.Key {
-			case "Hostname":
-				machinelse.Hostname = value
-				if len(machineLSEPrototypes) == 0 {
-					input = &Input{
-						Key:      "DUT, Labstation or Server",
-						Desc:     fmt.Sprintf("%s%s", ChooseOption, DutOrLabstationOrServer),
-						Required: true,
-					}
-				} else {
-					input = &Input{
-						Key:  "MachineLSEPrototype",
-						Desc: fmt.Sprintf("%s%s", ChooseMachineLSEPrototype, createKeyValuePairs(machineLSEPrototypes)),
-					}
-				}
 			case "MachineLSEPrototype":
 				if value != "" {
 					option := getSelectionInput(value, machineLSEPrototypes, input)
@@ -584,11 +568,39 @@ func getOSMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *buf
 					}
 					machinelse.MachineLsePrototype = machineLSEPrototypes[option]
 				}
-				input = &Input{
-					Key:      "DUT, Labstation or Server",
-					Desc:     fmt.Sprintf("%s%s", ChooseOption, DutOrLabstationOrServer),
-					Required: true,
-				}
+				input = nil
+			}
+			break
+		}
+	}
+}
+
+// getOSMachineLse get ChormeOS MachineLSE input in interactive mode
+//
+// DUT, Labstation or Server(choice to branch) ->
+// -> getOSDeviceLse()/getOSServerLse()
+func getOSMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
+	machinelse.Lse = &fleet.MachineLSE_ChromeosMachineLse{
+		ChromeosMachineLse: &fleet.ChromeOSMachineLSE{},
+	}
+	input := &Input{
+		Key:      "DUT, Labstation or Server",
+		Desc:     fmt.Sprintf("%s%s", ChooseOption, DutOrLabstationOrServer),
+		Required: true,
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
 			case "DUT, Labstation or Server":
 				if value == "1" {
 					// ChromeOSDeviceLse - DUT
@@ -596,10 +608,6 @@ func getOSMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *buf
 					input = nil
 				} else if value == "2" {
 					// ChromeOSDeviceLse - Labstation
-					// Hostname for a Labstation must be the same as the
-					// MachineLSE name. we use Labstation Hostname(ServoHostname)
-					// from a DUT to update the Labstation with Servo info
-					machinelse.Hostname = machinelse.GetName()
 					getOSDeviceLse(ctx, ic, scanner, machinelse, acs, false)
 					input = nil
 				} else if value == "3" {
@@ -718,10 +726,15 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 // getDut get DeviceUnderTest input in interactive mode
 //
 // Servo Hostname(string) -> Servo Port(int) -> Servo Serial(string) ->
-// -> Servo Type(string) -> Pools(repeated string) -> getACSLabConfig()
+// -> Servo Type(string) -> RPM PowerunitName(string) ->
+// -> RPM PowerunitOutlet(string) -> Pools(repeated string) -> getACSLabConfig()
 func getDut(scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
 	dut := &chromeosLab.DeviceUnderTest{
 		Hostname: machinelse.Hostname,
+		Peripherals: &chromeosLab.Peripherals{
+			Servo: &chromeosLab.Servo{},
+			Rpm:   &chromeosLab.RPM{},
+		},
 	}
 	machinelse.GetChromeosMachineLse().GetDeviceLse().Device = &fleet.ChromeOSDeviceLSE_Dut{
 		Dut: dut,
@@ -743,18 +756,10 @@ func getDut(scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
 			}
 			switch input.Key {
 			// DeviceUnderTest Dut Config
-			// Pheripherals
+			// Peripherals
 			// Servo
 			case "Servo Hostname":
-				dut.Peripherals = &chromeosLab.Peripherals{
-					Servo: &chromeosLab.Servo{
-						ServoHostname: value,
-					},
-					Rpm: &chromeosLab.RPM{
-						PowerunitName:   machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
-						PowerunitOutlet: fmt.Sprint(machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetPort()),
-					},
-				}
+				dut.GetPeripherals().GetServo().ServoHostname = value
 				input = &Input{
 					Key: "Servo Port",
 				}
@@ -778,6 +783,16 @@ func getDut(scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
 			case "Servo Type":
 				// TODO(eshwarn) : this is available in Hart as google code name
 				dut.GetPeripherals().GetServo().ServoType = value
+				input = &Input{
+					Key: "RPM PowerunitName",
+				}
+			case "RPM PowerunitName":
+				dut.GetPeripherals().GetRpm().PowerunitName = value
+				input = &Input{
+					Key: "RPM PowerunitOutlet",
+				}
+			case "RPM PowerunitOutlet":
+				dut.GetPeripherals().GetRpm().PowerunitOutlet = value
 				input = &Input{
 					Key:      "Pools (y/n)",
 					Desc:     fmt.Sprintf("%sPool?", OptionToEnter),
@@ -1002,25 +1017,22 @@ func getACSLabConfig(scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 
 // getLabstation get Labstation input in interactive mode
 //
-// Pools(repeated string) -> getServos()
+// -> RPM PowerunitName(string) -> RPM PowerunitOutlet(string) ->
+// -> Pools(repeated string) -> getServos()
 func getLabstation(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 	labstation := &chromeosLab.Labstation{
 		// Hostname for a Labstation must be the same as the MachineLSE name.
+		// MachineLSE Name is the MachineLSE Hostname
 		// we use Labstation Hostname(ServoHostname) from a DUT to update the
 		// Labstation with Servo info
-		Hostname: machinelse.GetName(),
-		Rpm: &chromeosLab.RPM{
-			PowerunitName:   machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
-			PowerunitOutlet: fmt.Sprint(machinelse.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetPort()),
-		},
+		Hostname: machinelse.GetHostname(),
+		Rpm:      &chromeosLab.RPM{},
 	}
 	machinelse.GetChromeosMachineLse().GetDeviceLse().Device = &fleet.ChromeOSDeviceLSE_Labstation{
 		Labstation: labstation,
 	}
 	input := &Input{
-		Key:      "Pools (y/n)",
-		Desc:     fmt.Sprintf("%sPool?", OptionToEnter),
-		Required: true,
+		Key: "RPM PowerunitName",
 	}
 	for input != nil {
 		if input.Desc != "" {
@@ -1036,6 +1048,18 @@ func getLabstation(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio
 			}
 			switch input.Key {
 			// Labstation
+			case "RPM PowerunitName":
+				labstation.GetRpm().PowerunitName = value
+				input = &Input{
+					Key: "RPM PowerunitOutlet",
+				}
+			case "RPM PowerunitOutlet":
+				labstation.GetRpm().PowerunitOutlet = value
+				input = &Input{
+					Key:      "Pools (y/n)",
+					Desc:     fmt.Sprintf("%sPool?", OptionToEnter),
+					Required: true,
+				}
 			// repeated pools
 			case "Pools (y/n)":
 				vals, done := getRepeatedStringInput(nil, nil, scanner, value, "Pool", input, false)
@@ -1072,16 +1096,16 @@ func getOSServerLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 
 // getBrowserMachineLse get Browser MachineLSE input in interactive mode
 //
-// Hostname(string) -> MachineLSEPrototype(string, resource) ->
-// -> VM capacity(int) -> getVms()
+// VM capacity(int) -> getVms()
 func getBrowserMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
 	machinelse.Lse = &fleet.MachineLSE_ChromeBrowserMachineLse{
 		ChromeBrowserMachineLse: &fleet.ChromeBrowserMachineLSE{},
 	}
 	input := &Input{
-		Key: "Hostname",
+		Key:      "VM Capactiy",
+		Required: true,
+		Desc:     "The maximum number of the VMs allowed on this Browser Machine LSE.",
 	}
-	machineLSEPrototypes := getAllMachineLSEPrototypes(ctx, ic, BrowserLab)
 	for input != nil {
 		if input.Desc != "" {
 			fmt.Println(input.Desc)
@@ -1095,33 +1119,6 @@ func getBrowserMachineLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner
 				continue
 			}
 			switch input.Key {
-			case "Hostname":
-				machinelse.Hostname = value
-				if len(machineLSEPrototypes) == 0 {
-					input = &Input{
-						Key:      "VM Capactiy",
-						Required: true,
-						Desc:     "The maximum number of the VMs allowed on this Browser Machine LSE.",
-					}
-				} else {
-					input = &Input{
-						Key:  "MachineLSEPrototype",
-						Desc: fmt.Sprintf("%s%s", ChooseMachineLSEPrototype, createKeyValuePairs(machineLSEPrototypes)),
-					}
-				}
-			case "MachineLSEPrototype":
-				if value != "" {
-					option := getSelectionInput(value, machineLSEPrototypes, input)
-					if option == -1 {
-						break
-					}
-					machinelse.MachineLsePrototype = machineLSEPrototypes[option]
-				}
-				input = &Input{
-					Key:      "VM Capactiy",
-					Required: true,
-					Desc:     "The maximum number of the VMs allowed on this Browser Machine LSE.",
-				}
 			case "VM Capactiy":
 				if value != "" {
 					capacity := getIntInput(value, input)
