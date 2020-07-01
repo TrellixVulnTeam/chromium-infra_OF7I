@@ -52,6 +52,7 @@ func (is *ServerImpl) ListServers(ctx context.Context, req *fleet.ListServersReq
 }
 
 // GetDutInfo implements the method from fleet.InventoryServer interface.
+// Deprecated: Do not use.
 func (is *ServerImpl) GetDutInfo(ctx context.Context, req *fleet.GetDutInfoRequest) (resp *fleet.GetDutInfoResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)

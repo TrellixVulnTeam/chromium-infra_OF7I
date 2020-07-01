@@ -89,7 +89,9 @@ service Inventory {
   // This RPC returns possibly cached data about a single DUT. The cache is
   // updated asynchronously and guaranteed to be a relatively fresh snapshot of
   // the inventory data.
-  rpc GetDutInfo(GetDutInfoRequest) returns (GetDutInfoResponse);
+  rpc GetDutInfo(GetDutInfoRequest) returns (GetDutInfoResponse){
+    option deprecated = true;
+  };
 
   // GetDroneConfig returns the inventory configuration for a drone.
   //
