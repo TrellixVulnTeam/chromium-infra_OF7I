@@ -1072,43 +1072,13 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
       delta.fields_clear)
   amendments.extend(fv_amendments)
 
-  if delta.blocked_on_add or delta.blocked_on_remove:
-    old_blocked_on = issue.blocked_on_iids
-    blocked_on_add = [iid for iid in delta.blocked_on_add
-                      if iid not in old_blocked_on]
-    add_refs = [
-        (ref_issue.project_name, ref_issue.local_id)
-        for ref_issue in issue_service.GetIssues(cnxn, delta.blocked_on_add)]
-    blocked_on_rm = [iid for iid in delta.blocked_on_remove
-                     if iid in old_blocked_on]
-    remove_refs = [
-        (ref_issue.project_name, ref_issue.local_id)
-        for ref_issue in issue_service.GetIssues(cnxn, blocked_on_rm)]
-    amendments.append(MakeBlockedOnAmendment(
-        add_refs, remove_refs, default_project_name=issue.project_name))
-    blocked_on = [iid for iid in old_blocked_on + blocked_on_add
-                  if iid not in delta.blocked_on_remove]
-    (issue.blocked_on_iids, issue.blocked_on_ranks
-     ) = issue_service.SortBlockedOn(cnxn, issue, blocked_on)
-    impacted_iids.update(blocked_on_add + blocked_on_rm)
-
-  if delta.blocking_add or delta.blocking_remove:
-    old_blocking = issue.blocking_iids
-    blocking_add = [iid for iid in delta.blocking_add
-                    if iid not in old_blocking]
-    add_refs = [(ref_issue.project_name, ref_issue.local_id)
-                for ref_issue in issue_service.GetIssues(cnxn, blocking_add)]
-    blocking_remove = [iid for iid in delta.blocking_remove
-                       if iid in old_blocking]
-    remove_refs = [
-        (ref_issue.project_name, ref_issue.local_id)
-        for ref_issue in issue_service.GetIssues(cnxn, blocking_remove)]
-    amendments.append(MakeBlockingAmendment(
-        add_refs, remove_refs, default_project_name=issue.project_name))
-    blocking_refs = [iid for iid in old_blocking + blocking_add
-                     if iid not in blocking_remove]
-    issue.blocking_iids = blocking_refs
-    impacted_iids.update(blocking_add + blocking_remove)
+  # Update blocking and blocked on issues.
+  (block_changes_amendments,
+   block_changes_impacted_iids) = ApplyIssueBlockRelationChanges(
+       cnxn, issue, delta.blocked_on_add, delta.blocked_on_remove,
+       delta.blocking_add, delta.blocking_remove, issue_service)
+  amendments.extend(block_changes_amendments)
+  impacted_iids.update(block_changes_impacted_iids)
 
   # Update external issue references.
   if delta.ext_blocked_on_add or delta.ext_blocked_on_remove:
@@ -1204,6 +1174,77 @@ def ApplyIssueDelta(cnxn, issue_service, issue, delta, config):
   if delta.summary and delta.summary != issue.summary:
     amendments.append(MakeSummaryAmendment(delta.summary, issue.summary))
     issue.summary = delta.summary
+
+  return amendments, impacted_iids
+
+
+def ApplyIssueBlockRelationChanges(
+    cnxn, issue, blocked_on_add, blocked_on_remove, blocking_add,
+    blocking_remove, issue_service):
+  # type: (MonorailConnection, Issue, Collection[int], Collection[int],
+  #     Collection[int], Collection[int], IssueService) ->
+  #     Sequence[Amendment], Collection[int]
+  """Apply issue blocking/blocked_on relation changes to an issue in RAM.
+
+  Args:
+    cnxn: connection to SQL database.
+    issue: Issue PB that we are applying the changes to.
+    blocked_on_add: list of issue IDs that we want to add as blocked_on.
+    blocked_on_remove: list of issue IDs that we want to remove from blocked_on.
+    blocking_add: list of issue IDs that we want to add as blocking.
+    blocking_remove: list of issue IDs that we want to remove from blocking.
+    issue_service: IssueService used to fetch info from DB or cache.
+
+  Returns:
+    A tuple that holds the list of Amendments that represent the applied changes
+    and a set of issue IDs that are impacted by the changes.
+
+
+  Side-effect:
+    The given issue's blocked_on and blocking fields will be modified.
+  """
+  amendments = []
+  impacted_iids = set()
+
+  def addAmendment(add_iids, remove_iids, amendment_func):
+    add_refs = issue_service.LookupIssueRefs(cnxn, add_iids).values()
+    remove_refs = issue_service.LookupIssueRefs(cnxn, remove_iids).values()
+    new_am = amendment_func(
+        add_refs, remove_refs, default_project_name=issue.project_name)
+    amendments.append(new_am)
+
+  # Apply blocked_on changes.
+  old_blocked_on = issue.blocked_on_iids
+  blocked_on_add = [iid for iid in blocked_on_add if iid not in old_blocked_on]
+  blocked_on_remove = [
+      iid for iid in blocked_on_remove if iid in old_blocked_on
+  ]
+  # blocked_on_add and blocked_on_remove are filtered above such that they
+  # could not contain matching items.
+  if blocked_on_add or blocked_on_remove:
+    addAmendment(blocked_on_add, blocked_on_remove, MakeBlockedOnAmendment)
+
+    new_blocked_on_iids = [
+        iid for iid in old_blocked_on + blocked_on_add
+        if iid not in blocked_on_remove
+    ]
+    (issue.blocked_on_iids,
+     issue.blocked_on_ranks) = issue_service.SortBlockedOn(
+         cnxn, issue, new_blocked_on_iids)
+    impacted_iids.update(blocked_on_add + blocked_on_remove)
+
+  # Apply blocking changes.
+  old_blocking = issue.blocking_iids
+  blocking_add = [iid for iid in blocking_add if iid not in old_blocking]
+  blocking_remove = [iid for iid in blocking_remove if iid in old_blocking]
+  # blocking_add and blocking_remove are filtered above such that they
+  # could not contain matching items.
+  if blocking_add or blocking_remove:
+    addAmendment(blocking_add, blocking_remove, MakeBlockingAmendment)
+    issue.blocking_iids = [
+        iid for iid in old_blocking + blocking_add if iid not in blocking_remove
+    ]
+    impacted_iids.update(blocking_add + blocking_remove)
 
   return amendments, impacted_iids
 

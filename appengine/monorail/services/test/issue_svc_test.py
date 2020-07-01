@@ -1383,6 +1383,7 @@ class IssueServiceTest(unittest.TestCase):
 
     self.mox.StubOutWithMock(self.services.issue, 'GetIssue')
     self.mox.StubOutWithMock(self.services.issue, 'GetIssues')
+    self.mox.StubOutWithMock(self.services.issue, 'LookupIssueRefs')
     self.mox.StubOutWithMock(self.services.issue, 'UpdateIssue')
     self.mox.StubOutWithMock(self.services.issue, 'CreateIssueComment')
     self.mox.StubOutWithMock(self.services.issue, '_UpdateIssuesModified')
@@ -1390,10 +1391,13 @@ class IssueServiceTest(unittest.TestCase):
 
     # Calls in ApplyIssueDelta
     # Call to find added blockedon issues.
-    self.services.issue.GetIssues(
-        self.cnxn, [blockedon_issue.issue_id]).AndReturn([blockedon_issue])
+    issue_refs = {blockedon_issue.issue_id: (
+        blockedon_issue.project_name, blockedon_issue.local_id)}
+    self.services.issue.LookupIssueRefs(
+        self.cnxn, [blockedon_issue.issue_id]).AndReturn(issue_refs)
+
     # Call to find removed blockedon issues.
-    self.services.issue.GetIssues(self.cnxn, []).AndReturn([])
+    self.services.issue.LookupIssueRefs(self.cnxn, []).AndReturn({})
     # Call to sort blockedon issues.
     self.services.issue.SortBlockedOn(
         self.cnxn, issue, [blockedon_issue.issue_id]).AndReturn(([78902], [0]))
@@ -1449,6 +1453,7 @@ class IssueServiceTest(unittest.TestCase):
 
     self.mox.StubOutWithMock(self.services.issue, 'GetIssue')
     self.mox.StubOutWithMock(self.services.issue, 'GetIssues')
+    self.mox.StubOutWithMock(self.services.issue, 'LookupIssueRefs')
     self.mox.StubOutWithMock(self.services.issue, 'UpdateIssue')
     self.mox.StubOutWithMock(self.services.issue, 'CreateIssueComment')
     self.mox.StubOutWithMock(self.services.issue, '_UpdateIssuesModified')
@@ -1456,10 +1461,12 @@ class IssueServiceTest(unittest.TestCase):
 
     # Calls in ApplyIssueDelta
     # Call to find added blocking issues.
-    self.services.issue.GetIssues(
-        self.cnxn, [blocking_issue.issue_id]).AndReturn([blocking_issue])
+    issue_refs = {blocking_issue: (
+        blocking_issue.project_name, blocking_issue.local_id)}
+    self.services.issue.LookupIssueRefs(
+        self.cnxn, [blocking_issue.issue_id]).AndReturn(issue_refs)
     # Call to find removed blocking issues.
-    self.services.issue.GetIssues(self.cnxn, []).AndReturn([])
+    self.services.issue.LookupIssueRefs(self.cnxn, []).AndReturn({})
 
     self.services.issue.UpdateIssue(
         self.cnxn, issue, commit=False, invalidate=False)

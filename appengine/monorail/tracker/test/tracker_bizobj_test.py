@@ -1588,6 +1588,77 @@ class BizobjTest(unittest.TestCase):
       tracker_bizobj.ApplyIssueDelta(self.cnxn, self.services.issue, issue,
           delta, self.config)
 
+  def testApplyIssueBlockRelationChanges(self):
+    """We can apply blocking and blocked_on relation changes to an issue."""
+
+    blocked_on = fake.MakeTestIssue(
+        789, 2, 'Something that must be done before', 'New', 111,
+        project_name='proj')
+    self.services.issue.TestAddIssue(blocked_on)
+    blocking = fake.MakeTestIssue(
+        789, 3, 'Something that must be done after', 'New', 111,
+        project_name='proj')
+    self.services.issue.TestAddIssue(blocking)
+
+    issue = tracker_pb2.Issue(
+        project_name='chicken',
+        blocked_on_iids=[blocked_on.issue_id, 78904],
+        blocking_iids=[blocking.issue_id, 78905])
+    blocked_on_add = fake.MakeTestIssue(
+        789, 6, 'Something that must be done before', 'New', 111,
+        project_name='chicken')
+    self.services.issue.TestAddIssue(blocked_on_add)
+    blocking_add = fake.MakeTestIssue(
+        789, 7, 'Something that must be done after', 'New', 111,
+        project_name='chicken')
+    self.services.issue.TestAddIssue(blocking_add)
+
+    (actual_amendments, actual_impacted_iids
+    ) = tracker_bizobj.ApplyIssueBlockRelationChanges(
+        self.cnxn,
+        issue,
+        # 78904 ref already exists can't be added, shuold ignore.
+        # 78404 ref does not exist, can't be removed, should ignore.
+        # blocked_on is ignored in the add list, but honored in the remove.
+        [blocked_on_add.issue_id, 78904, blocked_on.issue_id],
+        [78404, blocked_on.issue_id],
+        # 78905 ref already exists, can't be added, should ignore.
+        # 79404 ref does not exist in issue, can't be removed, should ignore.
+        # blocking_add is ignored in the remove list, but honored in the add.
+        [blocking_add.issue_id, 78905],
+        [79404, blocking.issue_id, blocking_add.issue_id],
+        self.services.issue)
+
+    expected_amendments = [
+        tracker_bizobj.MakeBlockedOnAmendment(
+            [('chicken', blocked_on_add.local_id)],
+            [('proj', blocked_on.local_id)],
+            default_project_name=issue.project_name),
+        tracker_bizobj.MakeBlockingAmendment(
+            [('chicken', blocking_add.local_id)], [('proj', blocking.local_id)],
+            default_project_name=issue.project_name)
+    ]
+    self.assertEqual(actual_amendments, expected_amendments)
+    self.assertItemsEqual(
+        actual_impacted_iids, [
+            blocked_on_add.issue_id, blocking_add.issue_id, blocked_on.issue_id,
+            blocking.issue_id
+        ])
+    self.assertEqual(issue.blocked_on_iids, [78904, blocked_on_add.issue_id])
+    self.assertEqual(issue.blocking_iids, [78905, blocking_add.issue_id])
+
+  def testApplyIssueBlockRelationChanges_Empty(self):
+    """We can handle empty blocking and blocked_on relation changes."""
+    issue = tracker_pb2.Issue(blocked_on_iids=[78901], blocking_iids=[78902])
+    (actual_amendments,
+     actual_impacted_iids) = tracker_bizobj.ApplyIssueBlockRelationChanges(
+         self.cnxn, issue, [], [], [], [], self.services.issue)
+
+    self.assertEqual(actual_amendments, [])
+    self.assertEqual(actual_impacted_iids, set())
+    self.assertEqual(issue.blocked_on_iids, [78901])
+    self.assertEqual(issue.blocking_iids, [78902])
+
   def testMakeAmendment(self):
     amendment = tracker_bizobj.MakeAmendment(
         tracker_pb2.FieldID.STATUS, 'new', [111], [222])
