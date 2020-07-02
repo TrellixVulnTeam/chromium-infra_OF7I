@@ -44,6 +44,7 @@ func init() {
 	standard.InstallHandlers(r)
 
 	r.GET("/_cron/analyze/:tree", basemw, handler.GetAnalyzeHandler)
+	r.GET("/_cron/bq_query/:project", basemw, handler.GetBQQueryHandler)
 	r.GET("/_ah/queue/addannotationtrees", basemw, handler.AnnotationTreeWorker)
 	r.GET("/_ah/queue/migrate_to_ungrouped_alerts", basemw, handler.MigrateToUngroupedAlerts)
 

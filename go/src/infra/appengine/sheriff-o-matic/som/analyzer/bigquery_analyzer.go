@@ -1,8 +1,8 @@
 package analyzer
 
 import (
+	"encoding/json"
 	"fmt"
-	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/analyzer/step"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
@@ -14,13 +14,16 @@ import (
 	"cloud.google.com/go/bigquery"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/gae/service/info"
+	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 )
 
-const selectFromWhere = `
+const bqMemcacheFormat = "bq-%s"
+
+const selectFrom = `
 SELECT
   Project,
   Bucket,
@@ -43,7 +46,9 @@ SELECT
   StartTime,
   BuildStatus
 FROM
-	` + "`%s.%s.sheriffable_failures`" + `
+	` + "`%s.%s.sheriffable_failures`"
+
+const selectFromWhere = selectFrom + `
 WHERE
 `
 
@@ -57,31 +62,35 @@ LIMIT
 	1000
 `
 
-const androidFailuresQuery = selectFromWhere + `
-MasterName IN ("internal.client.clank",
-    "internal.client.clank_tot",
-    "chromium.android")
-  OR (MasterName = "chromium"
-    AND builder="Android")
-  OR (MasterName = "chromium.webkit"
-    AND builder IN ("Android Builder",
-	  "Webkit Android (Nexus4)"))
-  OR builder IN (
-	"android-arm-official-tests",
-	"android-arm64-official-tests",
-        "android-arm-beta-tests",
-	"android-arm64-beta-tests",
-	"android-arm-stable-tests",
-	"android-arm64-stable-tests",
-	"android-arm-beta",
-	"android-arm64-beta",
-	"android-arm64-stable",
-	"android-arm64-stable",
-	"android-arm-stable"
-	)
-LIMIT
-	1000
-`
+var androidFilterFunc = func(r failureRow) bool {
+	masterName := r.MasterName.String()
+	if sliceContains([]string{"internal.client.clank", "internal.client.clank_tot", "chromium.android"}, masterName) {
+		return true
+	}
+	if masterName == "chromium" && r.Builder == "Android" {
+		return true
+	}
+	if masterName == "chromium.webkit" && sliceContains([]string{"Android Builder", "Webkit Android (Nexus4)"}, r.Builder) {
+		return true
+	}
+	validBuilders := []string{
+		"android-arm-official-tests",
+		"android-arm64-official-tests",
+		"android-arm-beta-tests",
+		"android-arm64-beta-tests",
+		"android-arm-stable-tests",
+		"android-arm64-stable-tests",
+		"android-arm-beta",
+		"android-arm64-beta",
+		"android-arm64-stable",
+		"android-arm64-stable",
+		"android-arm-stable",
+	}
+	if sliceContains(validBuilders, r.Builder) {
+		return true
+	}
+	return false
+}
 
 const chromiumGPUFYIFailuresQuery = selectFromWhere + `
 	MasterName = "chromium.gpu.fyi"
@@ -222,8 +231,6 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 	bbProjectFilter := getBuildBucketProjectFilterFromTree(ctx, tree)
 
 	switch tree {
-	case "android":
-		return fmt.Sprintf(androidFailuresQuery, appID, "chrome")
 	case "chromium":
 		return fmt.Sprintf(chromiumFailuresQuery, appID, "chrome")
 	case "chromium.gpu.fyi":
@@ -252,28 +259,119 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 //     for each failing step on a builder. If step_a and step_b are failing on the same
 //     builder or set of builders, they should be merged into a single alert.
 func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailure, error) {
-	appID := info.AppID(ctx)
-	if appID == "None" {
-		appID = "sheriff-o-matic-staging"
+	failureRows := []failureRow{}
+	var err error
+	if shouldUseCache(tree) {
+		failureRows, err = getFailureRowsForTree(ctx, tree)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		appID := getAppID(ctx)
+		queryStr := generateSQLQuery(ctx, tree, appID)
+		failureRows, err = getFailureRowsForQuery(ctx, queryStr)
+		if err != nil {
+			return nil, err
+		}
 	}
+	return processBQResults(ctx, failureRows)
+}
+
+func shouldUseCache(tree string) bool {
+	// TODO(crbug.com/1092710) Use cache for all other trees
+	// trees := []string{"android", "chromium", "chromium.gpu.fyi", "ios", "chromium.perf", "chrome_browser_release"}
+	trees := []string{"android"}
+	return sliceContains(trees, tree)
+}
+
+func getFilterFuncForTree(tree string) func(failureRow) bool {
+	// TODO (crbug.com/1092710) Add functions for other trees
+	return androidFilterFunc
+}
+
+func getFailureRowsForTree(ctx context.Context, tree string) ([]failureRow, error) {
+	// Read from memcache
+	key := fmt.Sprintf(bqMemcacheFormat, "chrome")
+	item, err := memcache.GetKey(ctx, key)
+	if err != nil {
+		return []failureRow{}, err
+	}
+
+	allFailureRows := []failureRow{}
+	err = json.Unmarshal(item.Value(), &allFailureRows)
+	filterFunc := getFilterFuncForTree(tree)
+	failureRows := []failureRow{}
+	for _, row := range allFailureRows {
+		if filterFunc(row) {
+			failureRows = append(failureRows, row)
+		}
+	}
+	return failureRows, nil
+}
+
+func generateQueryForProject(appID string, project string) string {
+	return fmt.Sprintf(selectFrom, appID, project)
+}
+
+// QueryBQForProject queries the sheriffable_failures for a project and stores the result in memcache.
+func QueryBQForProject(ctx context.Context, project string) error {
+	appID := getAppID(ctx)
+	queryStr := generateQueryForProject(appID, project)
+	failureRows, err := getFailureRowsForQuery(ctx, queryStr)
+	if err != nil {
+		return err
+	}
+
+	// TODO (crbug.com/1092710): compress this
+	// Store in memcache
+	bytes, err := json.Marshal(failureRows)
+	if err != nil {
+		return err
+	}
+	item := memcache.NewItem(ctx, fmt.Sprintf(bqMemcacheFormat, project)).SetValue(bytes)
+	if err = memcache.Set(ctx, item); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getFailureRowsForQuery(ctx context.Context, queryStr string) ([]failureRow, error) {
+	failureRows := []failureRow{}
+	appID := getAppID(ctx)
 	ctx, _ = context.WithTimeout(ctx, 10*time.Minute)
 	client, err := bigquery.NewClient(ctx, appID)
 	if err != nil {
 		return nil, err
 	}
 
-	queryStr := generateSQLQuery(ctx, tree, appID)
-
 	logging.Infof(ctx, "query: %s", queryStr)
 	q := client.Query(queryStr)
 	it, err := q.Read(ctx)
 	if err != nil {
-		return nil, err
+		return failureRows, err
 	}
-	if config.EnableAutoGrouping {
-		return processBQResultsWithAutomaticGrouping(ctx, it)
+
+	for {
+		var r failureRow
+		err := it.Next(&r)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return failureRows, err
+		}
+		failureRows = append(failureRows, r)
 	}
-	return processBQResults(ctx, it)
+	return failureRows, nil
+}
+
+func getAppID(ctx context.Context) string {
+	appID := info.AppID(ctx)
+	logging.Infof(ctx, "app_id: %s", appID)
+	if appID == "None" {
+		appID = "sheriff-o-matic-staging"
+	}
+	return appID
 }
 
 // Queries BuildBucketProjectFilter from datastore on specified tree.
@@ -306,18 +404,9 @@ func generateBuildURL(project string, bucket string, builderName string, buildID
 	return "" // Go does not allow null value :(
 }
 
-func processBQResults(ctx context.Context, it nexter) ([]*messages.BuildFailure, error) {
+func processBQResults(ctx context.Context, failureRows []failureRow) ([]*messages.BuildFailure, error) {
 	ret := []*messages.BuildFailure{}
-	for {
-		var r failureRow
-		err := it.Next(&r)
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
+	for _, r := range failureRows {
 		ab := generateAlertedBuilder(ctx, r)
 		regressionRanges := getRegressionRanges(ab.LatestPassingRev, ab.FirstFailingRev)
 
@@ -622,4 +711,13 @@ func (a byStepName) Len() int      { return len(a) }
 func (a byStepName) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 func (a byStepName) Less(i, j int) bool {
 	return a[i].StepAtFault.Step.Name < a[j].StepAtFault.Step.Name
+}
+
+func sliceContains(haystack []string, needle string) bool {
+	for _, item := range haystack {
+		if needle == item {
+			return true
+		}
+	}
+	return false
 }

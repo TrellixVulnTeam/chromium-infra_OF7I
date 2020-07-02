@@ -114,7 +114,7 @@ func formatQuery(query string) string {
 func TestGenerateSQLQuery(t *testing.T) {
 	c := gaetesting.TestingContext()
 
-	Convey("Test generate SQL query for android", t, func() {
+	Convey("Test generate SQL query for project", t, func() {
 		expected := `
 			SELECT
 			  Project,
@@ -138,38 +138,11 @@ func TestGenerateSQLQuery(t *testing.T) {
 			  StartTime,
 			  BuildStatus
 			FROM
-				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
-			WHERE
-			  MasterName IN (
-			    "internal.client.clank",
-			    "internal.client.clank_tot",
-			    "chromium.android")
-			  OR (
-			    MasterName = "chromium"
-			    AND builder="Android")
-			  OR (
-			    MasterName = "chromium.webkit"
-			    AND builder IN (
-			      "Android Builder",
-				    "Webkit Android (Nexus4)"))
-			  OR builder IN (
-				"android-arm-official-tests",
-				"android-arm64-official-tests",
-				"android-arm-beta-tests",
-				"android-arm64-beta-tests",
-				"android-arm-stable-tests",
-				"android-arm64-stable-tests",
-				"android-arm-beta",
-				"android-arm64-beta",
-				"android-arm64-stable",
-				"android-arm64-stable",
-				"android-arm-stable")
-			LIMIT
-				1000
-		`
-		actual := generateSQLQuery(c, "android", "sheriff-o-matic")
+				` + "`sheriff-o-matic.chrome.sheriffable_failures`"
+		actual := generateQueryForProject("sheriff-o-matic", "chrome")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
+
 	Convey("Test generate SQL query for chromium", t, func() {
 		treeName := "chromium"
 		tree := &model.Tree{
@@ -498,100 +471,94 @@ func TestProcessBQResults(t *testing.T) {
 	ctx = gologger.StdConfig.Use(ctx)
 
 	Convey("smoke", t, func() {
-		mr := &mockResults{}
-		got, err := processBQResults(ctx, mr)
+		failureRows := []failureRow{}
+		got, err := processBQResults(ctx, failureRows)
 		So(err, ShouldEqual, nil)
 		So(got, ShouldBeEmpty)
 	})
 
 	Convey("single result, only start/end build numbers", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "some step",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "some builder",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "some step",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "some builder",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 1)
 	})
 
 	Convey("single result, only end build number", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "some step",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "some builder",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "some step",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "some builder",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 1)
 	})
 
 	Convey("single result, start/end build numbers, single test name", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "some step",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "some builder",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "some step",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "some builder",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 1)
 		reason := got[0].Reason
@@ -609,71 +576,69 @@ func TestProcessBQResults(t *testing.T) {
 	})
 
 	Convey("multiple results, start/end build numbers, same step, same test name", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "some step",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 1",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "some step",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
 				},
-				{
-					StepName: "some step",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 2",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
+				Builder: "builder 1",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+			},
+			{
+				StepName: "some step",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "builder 2",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 2)
 		reason := got[0].Reason
@@ -692,71 +657,69 @@ func TestProcessBQResults(t *testing.T) {
 	})
 
 	Convey("multiple results, start/end build numbers, different steps, different sets of test names", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "some step 1",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 1",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name/1\nsome/test/name/2",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "some step 1",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
 				},
-				{
-					StepName: "some step 2",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 2",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name/3",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
+				Builder: "builder 1",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name/1\nsome/test/name/2",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
+				},
+			},
+			{
+				StepName: "some step 2",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "builder 2",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name/3",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		sort.Sort(byStepName(got))
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 2)
@@ -792,71 +755,69 @@ func TestProcessBQResults(t *testing.T) {
 	})
 
 	Convey("multiple results, start/end build numbers, same step, different sets of test names", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "some step 1",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 1",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name/1\nsome/test/name/2",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "some step 1",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
 				},
-				{
-					StepName: "some step 1",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 2",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name/3",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
+				Builder: "builder 1",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name/1\nsome/test/name/2",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
+				},
+			},
+			{
+				StepName: "some step 1",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "builder 2",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name/3",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		sort.Sort(byTests(got))
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 2)
@@ -894,71 +855,69 @@ func TestProcessBQResults(t *testing.T) {
 	})
 
 	Convey("chromium.perf case: multiple results, different start build numbers, same end build number, same step, different sets of test names", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "performance_test_suite",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "win-10-perf",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 100,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 110,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "A1\nA2\nA3",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 3,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "performance_test_suite",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
 				},
-				{
-					StepName: "performance_test_suite",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "win-10-perf",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 102,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 110,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "B1\nB2\nB3",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 3,
-						Valid: true,
-					},
+				Builder: "win-10-perf",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 100,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 110,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "A1\nA2\nA3",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 3,
+					Valid: true,
+				},
+			},
+			{
+				StepName: "performance_test_suite",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "win-10-perf",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 102,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 110,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "B1\nB2\nB3",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 3,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		sort.Sort(byTests(got))
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 2)
@@ -1013,71 +972,69 @@ func TestProcessBQResults(t *testing.T) {
 	})
 
 	Convey("chromium.perf case: multiple results, same step, same truncated list of test names, different test name fingerprints", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "performance_test_suite",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "win-10-perf",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 100,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 110,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "A1\nA2\nA3",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 3,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "performance_test_suite",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
 				},
-				{
-					StepName: "performance_test_suite",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "win-10-perf",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 102,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 110,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "A1\nA2\nA3",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 3,
-						Valid: true,
-					},
+				Builder: "win-10-perf",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 100,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 110,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "A1\nA2\nA3",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 3,
+					Valid: true,
+				},
+			},
+			{
+				StepName: "performance_test_suite",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "win-10-perf",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 102,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 110,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "A1\nA2\nA3",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 3,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		sort.Sort(byFirstFailure(got))
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 2)
@@ -1133,71 +1090,69 @@ func TestProcessBQResults(t *testing.T) {
 	})
 
 	Convey("multiple results, start/end build numbers, different steps, same set of test names", t, func() {
-		mr := &mockResults{
-			failures: []failureRow{
-				{
-					StepName: "some step 1",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 1",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name/1\nsome/test/name/2",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
+		failureRows := []failureRow{
+			{
+				StepName: "some step 1",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
 				},
-				{
-					StepName: "some step 2",
-					MasterName: bigquery.NullString{
-						StringVal: "some master",
-						Valid:     true,
-					},
-					Builder: "builder 2",
-					Project: "some project",
-					Bucket:  "some bucket",
-					BuildIDBegin: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					BuildIDEnd: bigquery.NullInt64{
-						Int64: 10,
-						Valid: true,
-					},
-					TestNamesFingerprint: bigquery.NullInt64{
-						Int64: 1,
-						Valid: true,
-					},
-					TestNamesTrunc: bigquery.NullString{
-						StringVal: "some/test/name/1\nsome/test/name/2",
-						Valid:     true,
-					},
-					NumTests: bigquery.NullInt64{
-						Int64: 2,
-						Valid: true,
-					},
+				Builder: "builder 1",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name/1\nsome/test/name/2",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
+				},
+			},
+			{
+				StepName: "some step 2",
+				MasterName: bigquery.NullString{
+					StringVal: "some master",
+					Valid:     true,
+				},
+				Builder: "builder 2",
+				Project: "some project",
+				Bucket:  "some bucket",
+				BuildIDBegin: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				BuildIDEnd: bigquery.NullInt64{
+					Int64: 10,
+					Valid: true,
+				},
+				TestNamesFingerprint: bigquery.NullInt64{
+					Int64: 1,
+					Valid: true,
+				},
+				TestNamesTrunc: bigquery.NullString{
+					StringVal: "some/test/name/1\nsome/test/name/2",
+					Valid:     true,
+				},
+				NumTests: bigquery.NullInt64{
+					Int64: 2,
+					Valid: true,
 				},
 			},
 		}
-		got, err := processBQResults(ctx, mr)
+		got, err := processBQResults(ctx, failureRows)
 		sort.Sort(byStepName(got))
 		So(err, ShouldEqual, nil)
 		So(len(got), ShouldEqual, 2)
@@ -2295,5 +2250,15 @@ func TestFilterHierarchicalSteps(t *testing.T) {
 		So(got[2].StepAtFault.Step.Name, ShouldEqual, "test baz")
 		So(len(got[3].Builders), ShouldEqual, 2)
 		So(got[3].StepAtFault.Step.Name, ShouldEqual, "check build results|build results|chromeos.postsubmit.beaglebone_servo-postsubmit")
+	})
+}
+
+func TestSliceContains(t *testing.T) {
+	Convey("slice contains", t, func() {
+		haystack := []string{"a", "b", "c"}
+		So(sliceContains(haystack, "a"), ShouldBeTrue)
+		So(sliceContains(haystack, "b"), ShouldBeTrue)
+		So(sliceContains(haystack, "c"), ShouldBeTrue)
+		So(sliceContains(haystack, "d"), ShouldBeFalse)
 	})
 }

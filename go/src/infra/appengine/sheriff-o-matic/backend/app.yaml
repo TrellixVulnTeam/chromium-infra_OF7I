@@ -8,6 +8,11 @@ handlers:
   secure: always
   login: admin
 
+- url: /_cron/bq_query/.*
+  script: auto
+  secure: always
+  login: admin
+
 - url: /_ah/queue/.*
   script: auto
   secure: always

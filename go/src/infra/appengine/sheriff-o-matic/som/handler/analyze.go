@@ -110,6 +110,21 @@ func GetAnalyzeHandler(ctx *router.Context) {
 	w.Write([]byte("ok"))
 }
 
+// GetBQQueryHandler queries BQ sheriffable_failures for a particular project, and caches the result.
+// This is usually hit by appengine cron rather than manually.
+func GetBQQueryHandler(ctx *router.Context) {
+	c, w, r, p := ctx.Context, ctx.Writer, ctx.Request, ctx.Params
+	c = appengine.WithContext(c, r)
+	project := p.ByName("project")
+	err := analyzer.QueryBQForProject(c, project)
+	if err != nil {
+		errStatus(c, w, http.StatusInternalServerError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write([]byte("ok"))
+}
+
 func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string) (*messages.AlertsSummary, error) {
 	gkRules, err := getGatekeeperRules(c)
 	if err != nil {

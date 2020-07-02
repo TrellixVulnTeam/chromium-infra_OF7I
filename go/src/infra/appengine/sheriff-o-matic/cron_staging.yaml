@@ -79,3 +79,8 @@ cron:
   url: /_cron/analyze/chrome_browser_release
   schedule: every 24 hours
   target: analyzer
+
+- description: Query BigQuery Chrome Project
+  url: /_cron/bq_query/chrome
+  schedule: every 24 hours
+  target: analyzer
