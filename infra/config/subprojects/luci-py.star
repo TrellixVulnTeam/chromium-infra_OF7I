@@ -50,13 +50,11 @@ try_builder(
 try_builder(
     name = "luci-py-try-mac10.13-64",
     os = "Mac-10.13",
-    experiment_percentage = 100,
 )
 
 try_builder(
     name = "luci-py-try-mac10.15-64",
     os = "Mac-10.15",
-    experiment_percentage = 100,
 )
 
 try_builder(
