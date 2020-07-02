@@ -2262,3 +2262,14 @@ func TestSliceContains(t *testing.T) {
 		So(sliceContains(haystack, "d"), ShouldBeFalse)
 	})
 }
+
+func TestZipUnzipData(t *testing.T) {
+	Convey("zip and unzip data", t, func() {
+		data := []byte("abcdef")
+		zippedData, err := zipData(data)
+		So(err, ShouldBeNil)
+		unzippedData, err := unzipData(zippedData)
+		So(err, ShouldBeNil)
+		So(unzippedData, ShouldResemble, data)
+	})
+}

@@ -1,11 +1,14 @@
 package analyzer
 
 import (
+	"bytes"
+	"compress/zlib"
 	"encoding/json"
 	"fmt"
 	"infra/appengine/sheriff-o-matic/som/analyzer/step"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
+	"io/ioutil"
 	"net/url"
 	"sort"
 	"strings"
@@ -290,15 +293,10 @@ func getFilterFuncForTree(tree string) func(failureRow) bool {
 }
 
 func getFailureRowsForTree(ctx context.Context, tree string) ([]failureRow, error) {
-	// Read from memcache
-	key := fmt.Sprintf(bqMemcacheFormat, "chrome")
-	item, err := memcache.GetKey(ctx, key)
+	allFailureRows, err := retrieveFailureRowsFromMemcache(ctx, "chrome")
 	if err != nil {
-		return []failureRow{}, err
+		return nil, err
 	}
-
-	allFailureRows := []failureRow{}
-	err = json.Unmarshal(item.Value(), &allFailureRows)
 	filterFunc := getFilterFuncForTree(tree)
 	failureRows := []failureRow{}
 	for _, row := range allFailureRows {
@@ -321,18 +319,7 @@ func QueryBQForProject(ctx context.Context, project string) error {
 	if err != nil {
 		return err
 	}
-
-	// TODO (crbug.com/1092710): compress this
-	// Store in memcache
-	bytes, err := json.Marshal(failureRows)
-	if err != nil {
-		return err
-	}
-	item := memcache.NewItem(ctx, fmt.Sprintf(bqMemcacheFormat, project)).SetValue(bytes)
-	if err = memcache.Set(ctx, item); err != nil {
-		return err
-	}
-	return nil
+	return storeFailureRowsToMemcache(ctx, failureRows, project)
 }
 
 func getFailureRowsForQuery(ctx context.Context, queryStr string) ([]failureRow, error) {
@@ -720,4 +707,67 @@ func sliceContains(haystack []string, needle string) bool {
 		}
 	}
 	return false
+}
+
+func storeFailureRowsToMemcache(ctx context.Context, failureRows []failureRow, project string) error {
+	data, err := json.Marshal(failureRows)
+	if err != nil {
+		return err
+	}
+	val, err := zipData(data)
+	if err != nil {
+		return err
+	}
+
+	item := memcache.NewItem(ctx, fmt.Sprintf(bqMemcacheFormat, project)).SetValue(val)
+	return memcache.Set(ctx, item)
+}
+
+func retrieveFailureRowsFromMemcache(ctx context.Context, project string) ([]failureRow, error) {
+	failureRows := []failureRow{}
+	// Read from memcache
+	key := fmt.Sprintf(bqMemcacheFormat, project)
+	item, err := memcache.GetKey(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decompress using zlib.
+	val, err := unzipData(item.Value())
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert from JSON.
+	if err := json.Unmarshal(val, &failureRows); err != nil {
+		return nil, err
+	}
+	return failureRows, nil
+}
+
+func zipData(data []byte) ([]byte, error) {
+	b := bytes.Buffer{}
+	w := zlib.NewWriter(&b)
+	if _, err := w.Write(data); err != nil {
+		return nil, err
+	}
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
+func unzipData(data []byte) ([]byte, error) {
+	r, err := zlib.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	var unzippedData []byte
+	if unzippedData, err = ioutil.ReadAll(r); err != nil {
+		return nil, err
+	}
+	if err := r.Close(); err != nil {
+		return nil, err
+	}
+	return unzippedData, nil
 }
