@@ -106,6 +106,10 @@ message Comment {
 
 
 // Many values on an issue can be set either explicitly or by a rule.
+//
+// Note: Though Derivations are used as OUTPUT_ONLY, values including them
+// will still be ingested even though the Derivation is ignored.
+//
 // Next available tag: 3
 enum Derivation {
   // The default derivation. This value is used if the derivation is omitted.
@@ -134,7 +138,7 @@ message FieldValue {
   // URL_TYPE(str) => value
   string value = 2;
   // How the value was derived.
-  Derivation derivation = 3;
+  Derivation derivation = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
   // Issues with phase-specific fields can have values for each phase.
   string phase = 4;
 }
@@ -155,7 +159,7 @@ message Issue {
       (google.api.resource_reference) = { type: "api.crbug.com/ComponentDef" }
     ];
     // How the component was derived.
-    Derivation derivation = 2;
+    Derivation derivation = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // A possibly rule-derived label for an issue.
@@ -164,7 +168,7 @@ message Issue {
     // The label.
     string label = 1;
     // How the label was derived.
-    Derivation derivation = 2;
+    Derivation derivation = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // A possibly rule-derived status for an issue.
@@ -172,10 +176,10 @@ message Issue {
   message StatusValue {
     // The status of the issue. Note that in rare cases this can be a
     // value not defined in the project's StatusDefs (e.g. if the issue
-    // was moved from another project)
+    // was moved from another project).
     string status = 1;
     // How the status was derived.
-    Derivation derivation = 2;
+    Derivation derivation = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // A possibly rule-derived user value on an issue.
@@ -185,7 +189,7 @@ message Issue {
     string user = 1
         [(google.api.resource_reference) = { type: "api.crbug.com/User" }];
     // How the user value was derived.
-    Derivation derivation = 2;
+    Derivation derivation = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
   }
 
   // Resource name of the issue.
@@ -207,14 +211,14 @@ message Issue {
   UserValue owner = 6;
   // Additional users receiving notifications on the issue.
   repeated UserValue cc_users = 7;
-  // Labels applied to the issue
+  // Labels applied to the issue.
   repeated LabelValue labels = 8;
   // Components the issue is associated with.
   repeated ComponentValue components = 9;
   // Values for custom fields on the issue.
   repeated FieldValue field_values = 10;
   // An issue can be merged into another. If this value is set, the issue
-  // to referred should be considered the primary source for further updates.
+  // referred to should be considered the primary source for further updates.
   IssueRef merged_into_issue_ref = 11;
   // Issues preventing the completion of this issue.
   repeated IssueRef blocked_on_issue_refs = 12;
