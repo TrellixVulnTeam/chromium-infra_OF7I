@@ -143,85 +143,6 @@ func TestGenerateSQLQuery(t *testing.T) {
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
 
-	Convey("Test generate SQL query for chromium", t, func() {
-		treeName := "chromium"
-		tree := &model.Tree{
-			Name: treeName,
-		}
-		So(datastore.Put(c, tree), ShouldBeNil)
-		datastore.GetTestable(c).CatchupIndexes()
-		expected := `
-			SELECT
-			  Project,
-			  Bucket,
-			  Builder,
-			  MasterName,
-			  StepName,
-			  TestNamesFingerprint,
-			  TestNamesTrunc,
-			  NumTests,
-			  BuildIdBegin,
-			  BuildIdEnd,
-			  BuildNumberBegin,
-			  BuildNumberEnd,
-			  CPRangeOutputBegin,
-			  CPRangeOutputEnd,
-			  CPRangeInputBegin,
-			  CPRangeInputEnd,
-			  CulpritIdRangeBegin,
-			  CulpritIdRangeEnd,
-			  StartTime,
-			  BuildStatus
-			FROM
-				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
-			WHERE
-			MasterName IN(
-				"chrome",
-				"chromium",
-				"chromium.chromiumos",
-				"chromium.gpu",
-				"chromium.linux",
-				"chromium.mac",
-				"chromium.memory",
-				"chromium.win"
-				)
-			AND Bucket = "ci"
-			LIMIT
-				1000
-		`
-		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
-		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
-	})
-	Convey("Test generate SQL query for chromium.gpu.fyi", t, func() {
-		expected := `
-			SELECT
-			  Project,
-			  Bucket,
-			  Builder,
-			  MasterName,
-			  StepName,
-			  TestNamesFingerprint,
-			  TestNamesTrunc,
-			  NumTests,
-			  BuildIdBegin,
-			  BuildIdEnd,
-			  BuildNumberBegin,
-			  BuildNumberEnd,
-			  CPRangeOutputBegin,
-			  CPRangeOutputEnd,
-			  CPRangeInputBegin,
-			  CPRangeInputEnd,
-			  CulpritIdRangeBegin,
-			  CulpritIdRangeEnd,
-			  StartTime,
-			  BuildStatus
-			FROM
-				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
-			WHERE MasterName = "chromium.gpu.fyi"
-		`
-		actual := generateSQLQuery(c, "chromium.gpu.fyi", "sheriff-o-matic")
-		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
-	})
 	Convey("Test generate SQL query for chromeos", t, func() {
 		treeName := "chromeos"
 		tree := &model.Tree{
@@ -260,50 +181,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
-	Convey("Test generate SQL query for ios", t, func() {
-		expected := `
-			SELECT
-			  Project,
-			  Bucket,
-			  Builder,
-			  MasterName,
-			  StepName,
-			  TestNamesFingerprint,
-			  TestNamesTrunc,
-			  NumTests,
-			  BuildIdBegin,
-			  BuildIdEnd,
-			  BuildNumberBegin,
-			  BuildNumberEnd,
-			  CPRangeOutputBegin,
-			  CPRangeOutputEnd,
-			  CPRangeInputBegin,
-			  CPRangeInputEnd,
-			  CulpritIdRangeBegin,
-			  CulpritIdRangeEnd,
-			  StartTime,
-			  BuildStatus
-			FROM
-				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
-			WHERE
-			(
-				project = "chrome"
-				AND MasterName = "internal.bling.main"
-			)
-			OR (
-				project = "chromium"
-				AND MasterName IN ("chromium.mac")
-				AND builder IN (
-					"ios-device",
-					"ios-simulator",
-					"ios-simulator-full-configs",
-					"ios-simulator-noncq"
-				)
-			)
-		`
-		actual := generateSQLQuery(c, "ios", "sheriff-o-matic")
-		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
-	})
+
 	Convey("Test generate SQL query for fuchsia", t, func() {
 		treeName := "fuchsia"
 		tree := &model.Tree{
@@ -346,88 +224,7 @@ func TestGenerateSQLQuery(t *testing.T) {
 		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
 	})
-	Convey("Test generate SQL query for chromium.perf", t, func() {
-		treeName := "chromium.perf"
-		tree := &model.Tree{
-			Name: treeName,
-		}
-		So(datastore.Put(c, tree), ShouldBeNil)
-		datastore.GetTestable(c).CatchupIndexes()
-		expected := `
-			SELECT
-			  Project,
-			  Bucket,
-			  Builder,
-			  MasterName,
-			  StepName,
-			  TestNamesFingerprint,
-			  TestNamesTrunc,
-			  NumTests,
-			  BuildIdBegin,
-			  BuildIdEnd,
-			  BuildNumberBegin,
-			  BuildNumberEnd,
-			  CPRangeOutputBegin,
-			  CPRangeOutputEnd,
-			  CPRangeInputBegin,
-			  CPRangeInputEnd,
-			  CulpritIdRangeBegin,
-			  CulpritIdRangeEnd,
-			  StartTime,
-			  BuildStatus
-			FROM
-				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
-			WHERE
-				(Project = "chromium.perf" OR MasterName = "chromium.perf")
-				AND Bucket NOT IN ("try", "cq", "staging", "general")
-				AND (Mastername IS NULL OR Mastername NOT LIKE "%.fyi")
-				AND Builder NOT LIKE "%bisect%"
-			LIMIT
-				1000
-		`
-		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
-		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
-	})
-	Convey("Test generate SQL query for release branch", t, func() {
-		treeName := "chrome_browser_release"
-		tree := &model.Tree{
-			Name: treeName,
-		}
-		So(datastore.Put(c, tree), ShouldBeNil)
-		datastore.GetTestable(c).CatchupIndexes()
-		expected := `
-			SELECT
-			  Project,
-			  Bucket,
-			  Builder,
-			  MasterName,
-			  StepName,
-			  TestNamesFingerprint,
-			  TestNamesTrunc,
-			  NumTests,
-			  BuildIdBegin,
-			  BuildIdEnd,
-			  BuildNumberBegin,
-			  BuildNumberEnd,
-			  CPRangeOutputBegin,
-			  CPRangeOutputEnd,
-			  CPRangeInputBegin,
-			  CPRangeInputEnd,
-			  CulpritIdRangeBegin,
-			  CulpritIdRangeEnd,
-			  StartTime,
-			  BuildStatus
-			FROM
-				` + "`sheriff-o-matic.chrome.sheriffable_failures`" + `
-			WHERE
-				project = "chromium"
-				AND bucket LIKE "ci-m%"
-			LIMIT
-				1000
-		`
-		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
-		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
-	})
+
 	Convey("Test generate SQL query for default builders", t, func() {
 		expected := `
 			SELECT
@@ -2271,5 +2068,24 @@ func TestZipUnzipData(t *testing.T) {
 		unzippedData, err := unzipData(zippedData)
 		So(err, ShouldBeNil)
 		So(unzippedData, ShouldResemble, data)
+	})
+}
+
+func TestGetFilterFuncForTree(t *testing.T) {
+	Convey("get filter func for tree", t, func() {
+		_, err := getFilterFuncForTree("android")
+		So(err, ShouldBeNil)
+		_, err = getFilterFuncForTree("chromium")
+		So(err, ShouldBeNil)
+		_, err = getFilterFuncForTree("chromium.gpu.fyi")
+		So(err, ShouldBeNil)
+		_, err = getFilterFuncForTree("chromium.perf")
+		So(err, ShouldBeNil)
+		_, err = getFilterFuncForTree("ios")
+		So(err, ShouldBeNil)
+		_, err = getFilterFuncForTree("chrome_browser_release")
+		So(err, ShouldBeNil)
+		_, err = getFilterFuncForTree("another")
+		So(err, ShouldNotBeNil)
 	})
 }

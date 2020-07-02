@@ -65,6 +65,22 @@ LIMIT
 	1000
 `
 
+// TODO (nqmtuan): Filter the critical for other projects
+// But firstly make sure it is working with chrome os first
+const crosFailuresQuery = selectFromWhere + `
+	project = "chromeos"
+	AND bucket IN ("postsubmit")
+	AND (critical != "NO" OR critical is NULL)
+`
+
+const fuchsiaFailuresQuery = selectFromWhere + `
+	Project = %q
+	AND Bucket = "global.roller"
+	AND Builder NOT LIKE "%%bisect%%"
+LIMIT
+	1000
+`
+
 var androidFilterFunc = func(r failureRow) bool {
 	masterName := r.MasterName.String()
 	if sliceContains([]string{"internal.client.clank", "internal.client.clank_tot", "chromium.android"}, masterName) {
@@ -95,67 +111,56 @@ var androidFilterFunc = func(r failureRow) bool {
 	return false
 }
 
-const chromiumGPUFYIFailuresQuery = selectFromWhere + `
-	MasterName = "chromium.gpu.fyi"
-`
-const chromiumFailuresQuery = selectFromWhere +
-	`
-MasterName IN(
-	"chrome",
-	"chromium",
-	"chromium.chromiumos",
-	"chromium.gpu",
-	"chromium.linux",
-	"chromium.mac",
-	"chromium.memory",
-	"chromium.win"
-	)
-AND Bucket = "ci"
-LIMIT
-	1000
-`
+var chromiumFilterFunc = func(r failureRow) bool {
+	masterName := r.MasterName.String()
 
-// TODO (nqmtuan): Filter the critical for other projects
-// But firstly make sure it is working with chrome os first
-const crosFailuresQuery = selectFromWhere + `
-	project = "chromeos"
-	AND bucket IN ("postsubmit")
-	AND (critical != "NO" OR critical is NULL)
-`
+	validMasterNames := []string{
+		"chrome",
+		"chromium",
+		"chromium.chromiumos",
+		"chromium.gpu",
+		"chromium.linux",
+		"chromium.mac",
+		"chromium.memory",
+		"chromium.win",
+	}
+	return sliceContains(validMasterNames, masterName) && r.Bucket == "ci"
+}
 
-const fuchsiaFailuresQuery = selectFromWhere + `
-	Project = %q
-	AND Bucket = "global.roller"
-	AND Builder NOT LIKE "%%bisect%%"
-LIMIT
-	1000
-`
+var chromiumGPUFilterFunc = func(r failureRow) bool {
+	return r.MasterName.String() == "chromium.gpu.fyi"
+}
 
-// This list of builders is from
-// https://cs.chromium.org/chromium/build/scripts/slave/recipe_modules/gatekeeper/resources/gatekeeper_trees.json?l=44
-const iosFailuresQuery = selectFromWhere + `
-	(
-		project = "chrome"
-		AND MasterName = "internal.bling.main"
-	)
-	OR (
-		project = "chromium"
-		AND MasterName IN ("chromium.mac")
-		AND builder IN (
-			"ios-device",
-			"ios-simulator",
-			"ios-simulator-full-configs",
-			"ios-simulator-noncq"
-		)
-	)
-`
+var chromiumPerfFilterFunc = func(r failureRow) bool {
+	if strings.Contains(r.Builder, "bisect") {
+		return false
+	}
+	excludedBuckets := []string{"try", "cq", "staging", "general"}
+	if sliceContains(excludedBuckets, r.Bucket) {
+		return false
+	}
+	return (r.Project == "chromium.perf" || r.MasterName.String() == "chromium.perf") && (!r.MasterName.Valid || !strings.HasSuffix(r.MasterName.String(), ".fyi"))
+}
 
-const releaseBranchFailuresQuery = selectFromWhere + `
-	project = "chromium"
-	AND bucket LIKE "ci-m%%"
-LIMIT
-	1000
-`
+var iosFilterFunc = func(r failureRow) bool {
+	if r.Project == "chrome" && r.MasterName.String() == "internal.bling.main" {
+		return true
+	}
+	validBuilders := []string{
+		"ios-device",
+		"ios-simulator",
+		"ios-simulator-full-configs",
+		"ios-simulator-noncq",
+	}
+	if r.Project == "chromium" && r.MasterName.String() == "chromium.mac" && sliceContains(validBuilders, r.Builder) {
+		return true
+	}
+	return false
+}
+
+var chromeBrowserReleaseFilterFunc = func(r failureRow) bool {
+	return r.Project == "chromium" && strings.HasPrefix(r.Bucket, "ci-m")
+}
 
 type failureRow struct {
 	TestNamesFingerprint bigquery.NullInt64
@@ -234,20 +239,10 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 	bbProjectFilter := getBuildBucketProjectFilterFromTree(ctx, tree)
 
 	switch tree {
-	case "chromium":
-		return fmt.Sprintf(chromiumFailuresQuery, appID, "chrome")
-	case "chromium.gpu.fyi":
-		return fmt.Sprintf(chromiumGPUFYIFailuresQuery, appID, "chromium")
 	case "chromeos":
 		return fmt.Sprintf(crosFailuresQuery, appID, "chromeos")
-	case "ios":
-		return fmt.Sprintf(iosFailuresQuery, appID, "chrome")
 	case "fuchsia":
 		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter)
-	case "chromium.perf":
-		return fmt.Sprintf(failuresQuery, appID, "chrome", tree, tree)
-	case "chrome_browser_release":
-		return fmt.Sprintf(releaseBranchFailuresQuery, appID, "chrome")
 	default:
 		return fmt.Sprintf(failuresQuery, appID, "chromium", tree, tree)
 	}
@@ -281,15 +276,27 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 }
 
 func shouldUseCache(tree string) bool {
-	// TODO(crbug.com/1092710) Use cache for all other trees
-	// trees := []string{"android", "chromium", "chromium.gpu.fyi", "ios", "chromium.perf", "chrome_browser_release"}
-	trees := []string{"android"}
+	trees := []string{"android", "chromium", "chromium.gpu.fyi", "ios", "chromium.perf", "chrome_browser_release"}
 	return sliceContains(trees, tree)
 }
 
-func getFilterFuncForTree(tree string) func(failureRow) bool {
-	// TODO (crbug.com/1092710) Add functions for other trees
-	return androidFilterFunc
+func getFilterFuncForTree(tree string) (func(failureRow) bool, error) {
+	switch tree {
+	case "android":
+		return androidFilterFunc, nil
+	case "chromium":
+		return chromiumFilterFunc, nil
+	case "chromium.gpu.fyi":
+		return chromiumGPUFilterFunc, nil
+	case "chromium.perf":
+		return chromiumPerfFilterFunc, nil
+	case "ios":
+		return iosFilterFunc, nil
+	case "chrome_browser_release":
+		return chromeBrowserReleaseFilterFunc, nil
+	default:
+		return nil, fmt.Errorf("could not find filter function for tree %s", tree)
+	}
 }
 
 func getFailureRowsForTree(ctx context.Context, tree string) ([]failureRow, error) {
@@ -297,7 +304,10 @@ func getFailureRowsForTree(ctx context.Context, tree string) ([]failureRow, erro
 	if err != nil {
 		return nil, err
 	}
-	filterFunc := getFilterFuncForTree(tree)
+	filterFunc, err := getFilterFuncForTree(tree)
+	if err != nil {
+		return nil, err
+	}
 	failureRows := []failureRow{}
 	for _, row := range allFailureRows {
 		if filterFunc(row) {
