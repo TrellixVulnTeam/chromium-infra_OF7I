@@ -1,3 +1,28 @@
+# Release Notes sheriff-o-matic 2020-07-03
+
+- 6 commits, 2 bugs affected since 8b9e54f ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - jsca@google.com
+
+## Changes in this release
+
+- [SoM: read from memcache for other chrome trees](https://chromium-review.googlesource.com/c/infra/infra/+/2277696) (nqmtuan@google.com)
+- [SoM: zip the data before store in memcache](https://chromium-review.googlesource.com/c/infra/infra/+/2277692) (nqmtuan@google.com)
+- [SoM: Store BQ result in memcache](https://chromium-review.googlesource.com/c/infra/infra/+/2275575) (nqmtuan@google.com)
+- [[som] Add APAC CI bobby to sidebar.](https://chromium-review.googlesource.com/c/infra/infra/+/2275565) (jsca@google.com)
+- [[SoM] Change BQ to query test results from ResultDB](https://chromium-review.googlesource.com/c/infra/infra/+/2265536) (nqmtuan@google.com)
+- [SoM: Do not join table with test-results if project does not have test results](https://chromium-review.googlesource.com/c/infra/infra/+/2256778) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1101185](https://crbug.com/1101185)
+  
+- nqmtuan@google.com:
+  -  [https://crbug.com/1092710](https://crbug.com/1092710)
+
+
 # Release Notes sheriff-o-matic 2020-06-22
 
 - 1 commits, 1 bugs affected since 7f82b1d (2020-06-18T04:39:55Z)
