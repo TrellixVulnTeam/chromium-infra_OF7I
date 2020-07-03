@@ -7,6 +7,7 @@ package frontend
 import (
 	"context"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
@@ -37,10 +38,16 @@ func (fs *FleetServerImpl) ImportStates(ctx context.Context, req *api.ImportStat
 	if err != nil {
 		return nil, machineDBServiceFailureStatus("ListMachines").Err()
 	}
+	if err := api.ValidateResourceKey(machines.GetMachines(), "Name"); err != nil {
+		return nil, errors.Annotate(err, "machines has invalid chars").Err()
+	}
 	logging.Debugf(ctx, "Querying machine-db to list the vms")
 	vms, err := mdbClient.ListVMs(ctx, &crimson.ListVMsRequest{})
 	if err != nil {
 		return nil, machineDBServiceFailureStatus("ListVMs").Err()
+	}
+	if err := api.ValidateResourceKey(vms.GetVms(), "Name"); err != nil {
+		return nil, errors.Annotate(err, "vms has invalid chars").Err()
 	}
 
 	pageSize := fs.getImportPageSize()

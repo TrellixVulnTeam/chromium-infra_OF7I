@@ -29,7 +29,7 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 					// KvmInterface is currently attached to rack.
 					// NetworkDeviceInterface is attached to the nics.
 					DisplayName:      o.Name,
-					ChromePlatform:   o.Platform,
+					ChromePlatform:   FormatResourceName(o.Platform),
 					Nics:             machineToNics[o.Name],
 					Drac:             machineToDracs[o.Name],
 					DeploymentTicket: o.DeploymentTicket,
@@ -89,7 +89,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 		k := &fleet.KVM{
 			Name:           name,
 			MacAddress:     oldKVM.GetMacAddress(),
-			ChromePlatform: oldKVM.GetPlatform(),
+			ChromePlatform: FormatResourceName(oldKVM.GetPlatform()),
 		}
 		kvms = append(kvms, k)
 		rackName := oldKVM.GetRack()

@@ -58,17 +58,17 @@ var testImportPageSize = 2
 var testMachines = []*crimson.Machine{
 	{
 		Name:     "machine1",
-		Platform: "platform",
+		Platform: "fake platform",
 		State:    common.State_SERVING,
 	},
 	{
 		Name:     "machine2",
-		Platform: "platform",
+		Platform: "fake platform",
 		State:    common.State_SERVING,
 	},
 	{
 		Name:     "machine3",
-		Platform: "platform2",
+		Platform: "fake platform2",
 		State:    common.State_SERVING,
 	},
 }

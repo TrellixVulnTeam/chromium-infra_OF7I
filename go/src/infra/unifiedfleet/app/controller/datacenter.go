@@ -7,10 +7,12 @@ package controller
 import (
 	"context"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -55,6 +57,21 @@ func ImportDatacenter(ctx context.Context, dc *crimsonconfig.Datacenter, pageSiz
 
 	racks, rackLSEs, kvms, switches, dhcps := util.ProcessDatacenters(dc)
 	logging.Debugf(ctx, "Got %d racks, %d fack LSEs, %d kvms, %d switches, %d dhcp configs", len(racks), len(rackLSEs), len(kvms), len(switches), len(dhcps))
+	if err := api.ValidateResourceKey(racks, "Name"); err != nil {
+		return nil, errors.Annotate(err, "racks has invalid chars").Err()
+	}
+	if err := api.ValidateResourceKey(rackLSEs, "Name"); err != nil {
+		return nil, errors.Annotate(err, "rackLSEs has invalid chars").Err()
+	}
+	if err := api.ValidateResourceKey(kvms, "Name"); err != nil {
+		return nil, errors.Annotate(err, "kvms has invalid chars").Err()
+	}
+	if err := api.ValidateResourceKey(switches, "Name"); err != nil {
+		return nil, errors.Annotate(err, "switches has invalid chars").Err()
+	}
+	if err := api.ValidateResourceKey(dhcps, "Hostname"); err != nil {
+		return nil, errors.Annotate(err, "dhcps has invalid chars").Err()
+	}
 
 	// Please note that the importing here is not in one transaction, which
 	// actually may cause data incompleteness. But as the importing job

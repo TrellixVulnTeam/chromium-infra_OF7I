@@ -444,12 +444,15 @@ func TestImportMachines(t *testing.T) {
 				case "machine1":
 					So(bm.GetNics(), ShouldResemble, []string{"machine1-eth0", "machine1-eth1"})
 					So(bm.GetDrac(), ShouldEqual, "machine1-drac")
+					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform")
 				case "machine2":
 					So(bm.GetNics(), ShouldResemble, []string{"machine2-eth0"})
 					So(bm.GetDrac(), ShouldEqual, "")
+					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform")
 				case "machine3":
 					So(bm.GetNics(), ShouldResemble, []string{"machine3-eth0"})
 					So(bm.GetDrac(), ShouldEqual, "")
+					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform2")
 				}
 			}
 		})
@@ -1256,6 +1259,7 @@ func TestImportDatacenters(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(kvms, ShouldHaveLength, 3)
 			So(api.ParseResources(kvms, "Name"), ShouldResemble, []string{"cr20-kvm1", "cr22-kvm1", "cr22-kvm2"})
+			So(api.ParseResources(kvms, "ChromePlatform"), ShouldResemble, []string{"Raritan_DKX3", "Raritan_DKX3", "Raritan_DKX3"})
 			switches, _, err := registration.ListSwitches(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(switches, ShouldHaveLength, 4)
