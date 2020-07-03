@@ -209,7 +209,11 @@ func findShift(c context.Context, task *model.Task, rotation string, useRotation
 }
 
 func findOncallers(c context.Context, task *model.Task, oncall *config.Oncall, useRotationProxy bool) ([]*monorail.UserRef, error) {
-	shift, err := findShift(c, task, oncall.Rotation, useRotationProxy)
+	name := oncall.Name
+	if name == "" {
+		name = oncall.Rotation
+	}
+	shift, err := findShift(c, task, name, useRotationProxy)
 	if err != nil {
 		return nil, err
 	}

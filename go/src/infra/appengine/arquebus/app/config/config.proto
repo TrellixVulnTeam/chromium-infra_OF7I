@@ -48,9 +48,9 @@ message IssueQuery {
   repeated string project_names = 2;
 }
 
-// Oncall represents a rotation shift modelled in RotaNG.
+// Oncall represents a rotation shift modelled in Rotation Proxy.
 message Oncall {
-  // The name of a rotation.
+  // Deprecated: Use Rotation.name instead.
   string rotation = 1;
 
   enum Position {
@@ -60,16 +60,18 @@ message Oncall {
   }
   // The oncall position in the shift.
   Position position = 2;
+  // The name of the rotation.
+  string name = 3;
 }
 
 // UserSource represents a single source to find a valid Monorail user to whom
 // Arquebus will assign or cc issues found.
 message UserSource {
   oneof from {
-    // Represents a rotation shift modelled in RotaNG.
-    Oncall oncall = 1;
+    // Deprecated: Use UserSource.Rotation instead.
+    Oncall oncall = 1 [deprecated = true];
 
-    // user refers to the email address of a Monorail user account.
+    // The email address of a Monorail user account.
     string email = 2; // e.g., user@chromium.org
 
     // Represents a rotation shift modelled in rotation-proxy.

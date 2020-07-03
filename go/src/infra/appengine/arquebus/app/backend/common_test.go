@@ -209,10 +209,10 @@ func oncallUserSource(rotation string, position config.Oncall_Position) *config.
 	}
 }
 
-func rotationUserSource(rotation string, position config.Oncall_Position) *config.UserSource {
+func rotationUserSource(name string, position config.Oncall_Position) *config.UserSource {
 	return &config.UserSource{
 		From: &config.UserSource_Rotation{Rotation: &config.Oncall{
-			Rotation: rotation, Position: position,
+			Name: name, Position: position,
 		}},
 	}
 }

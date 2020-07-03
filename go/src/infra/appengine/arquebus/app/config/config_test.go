@@ -149,7 +149,7 @@ func TestConfigValidator(t *testing.T) {
 
 			Convey("Without ccs", func() {
 				cfg.Assigners[0].Ccs = []*UserSource{}
-				So(validate(cfg), ShouldErrLike, "at least one of assignees or ccs must be given.")
+				So(validate(cfg), ShouldErrLike, "at least one of assignees or ccs must be given")
 			})
 		})
 
@@ -164,7 +164,7 @@ func TestConfigValidator(t *testing.T) {
 
 			Convey("Without assignees", func() {
 				cfg.Assigners[0].Assignees = []*UserSource{}
-				So(validate(cfg), ShouldErrLike, "at least one of assignees or ccs must be given.")
+				So(validate(cfg), ShouldErrLike, "at least one of assignees or ccs must be given")
 			})
 		})
 
@@ -224,9 +224,9 @@ func TestConfigValidator(t *testing.T) {
 				source.From = createOncallSource(" ")
 				So(validate(cfg), ShouldErrLike, invalidID)
 				source.From = createOncallSource("")
-				So(validate(cfg), ShouldErrLike, invalidID)
+				So(validate(cfg), ShouldErrLike, "either name or rotation must be specified")
 				source.From = createRotationSource("")
-				So(validate(cfg), ShouldErrLike, invalidID)
+				So(validate(cfg), ShouldErrLike, "either name or rotation must be specified")
 				source.From = createRotationSource("foo-bar")
 				So(validate(cfg), ShouldErrLike, invalidID)
 				source.From = createRotationSource("oncallator: foo-bar")
