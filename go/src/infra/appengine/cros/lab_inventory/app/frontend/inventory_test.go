@@ -431,6 +431,61 @@ func TestGetCrosDevices(t *testing.T) {
 	})
 }
 
+func TestListCrosDevicesLabConfig(t *testing.T) {
+	t.Parallel()
+
+	dut1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{Hostname: "dut1"},
+		},
+	}
+	dut2 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{Hostname: "dut2"},
+		},
+	}
+	labstation1 := lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{Value: "ASSET_ID_123"},
+		Device: &lab.ChromeOSDevice_Labstation{
+			Labstation: &lab.Labstation{Hostname: "labstation1"},
+		},
+	}
+
+	Convey("List ChromeOS device lab configs", t, func() {
+		ctx := testingContext()
+		tf, validate := newTestFixtureWithContext(ctx, t)
+		defer validate()
+		for _, d := range []*lab.ChromeOSDevice{&dut1, &dut2, &labstation1} {
+			req := &api.AddCrosDevicesRequest{
+				Devices: []*lab.ChromeOSDevice{d},
+			}
+			resp, err := tf.Inventory.AddCrosDevices(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.PassedDevices, ShouldHaveLength, 1)
+		}
+
+		resp, err := tf.Inventory.ListCrosDevicesLabConfig(tf.C, &api.ListCrosDevicesLabConfigRequest{})
+		So(err, ShouldBeNil)
+		So(resp.GetLabConfigs(), ShouldHaveLength, 3)
+		duts := make([]string, 0, 2)
+		labstations := make([]string, 0, 1)
+		for _, lc := range resp.GetLabConfigs() {
+			c := lc.GetConfig()
+			if c.GetDut() != nil {
+				duts = append(duts, c.GetDut().GetHostname())
+			}
+			if c.GetLabstation() != nil {
+				labstations = append(labstations, c.GetLabstation().GetHostname())
+			}
+		}
+		So(duts, ShouldContain, "dut1")
+		So(duts, ShouldContain, "dut2")
+		So(labstations, ShouldContain, "labstation1")
+	})
+}
+
 func TestUpdateCrosDevicesSetup(t *testing.T) {
 	t.Parallel()
 	getDut := func(servo *lab.Servo) *lab.ChromeOSDevice {

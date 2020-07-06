@@ -64,6 +64,22 @@ service Inventory {
 
   // Update devices repair action and state in datastore
   rpc UpdateDeviceManualRepairRecords(UpdateDeviceManualRepairRecordsRequest) returns (UpdateDeviceManualRepairRecordsResponse);
+
+  // ListCrosDevicesLabConfig lists the lab configs of all devices saved in Inventor v2.
+  rpc ListCrosDevicesLabConfig(ListCrosDevicesLabConfigRequest) returns (ListCrosDevicesLabConfigResponse);
+}
+
+message ListCrosDevicesLabConfigRequest {
+}
+
+message ListCrosDevicesLabConfigResponse {
+  repeated LabConfig lab_configs = 1;
+  // Omit the page tokens as it's only used internally by UFS.
+
+  message LabConfig {
+    lab.ChromeOSDevice config = 1;
+    google.protobuf.Timestamp updated_time = 2;
+  }
 }
 
 message DeviceConfigsExistsRequest {

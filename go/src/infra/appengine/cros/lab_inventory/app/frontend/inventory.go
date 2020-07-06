@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
@@ -578,6 +579,36 @@ func (is *InventoryServerImpl) GetAssets(ctx context.Context, req *api.AssetIDLi
 		Failed: failed,
 	}
 	return response, err
+}
+
+// ListCrosDevicesLabConfig retrieves all lab configs
+func (is *InventoryServerImpl) ListCrosDevicesLabConfig(ctx context.Context, req *api.ListCrosDevicesLabConfigRequest) (response *api.ListCrosDevicesLabConfigResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	allDevices, err := datastore.GetAllDevices(ctx)
+	logging.Debugf(ctx, "got devices (%d)", len(allDevices))
+	if err != nil {
+		return nil, errors.Annotate(err, "get all devices").Err()
+	}
+	labConfigs := make([]*api.ListCrosDevicesLabConfigResponse_LabConfig, 0, len(allDevices))
+	for _, d := range allDevices {
+		if d.Entity == nil || d.Err != nil || d.Entity.ID == "" {
+			continue
+		}
+		dev := &lab.ChromeOSDevice{}
+		if err := d.Entity.GetCrosDeviceProto(dev); err != nil {
+			logging.Debugf(ctx, "fail to get lab config proto for %s (%s)", d.Entity.ID, d.Entity.Hostname)
+		}
+		utime, _ := ptypes.TimestampProto(d.Entity.Updated)
+		labConfigs = append(labConfigs, &api.ListCrosDevicesLabConfigResponse_LabConfig{
+			Config:      dev,
+			UpdatedTime: utime,
+		})
+	}
+	return &api.ListCrosDevicesLabConfigResponse{
+		LabConfigs: labConfigs,
+	}, nil
 }
 
 // DeleteAssets deletes the asset information from datastore
