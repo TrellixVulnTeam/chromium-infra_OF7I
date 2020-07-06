@@ -56,67 +56,7 @@ func GetDutsByEnvironment(ctx context.Context, s *gitstore.InventoryStore) ([]*i
 
 // AssignDutsToDrones implements the method from fleet.InventoryServer interface.
 func (is *ServerImpl) AssignDutsToDrones(ctx context.Context, req *fleet.AssignDutsToDronesRequest) (resp *fleet.AssignDutsToDronesResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-	if err = req.Validate(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
-	s, err := is.newStore(ctx)
-	if err != nil {
-		return nil, err
-	}
-	f := func() error {
-		if err := s.Refresh(ctx); err != nil {
-			return err
-		}
-		assigned, err := processDUTAssignments(ctx, s, req.Assignments)
-		if err != nil {
-			return err
-		}
-		url, err := s.Commit(ctx, "assign DUTs")
-		if err != nil {
-			return err
-		}
-		resp = &fleet.AssignDutsToDronesResponse{
-			Assigned: assigned,
-			Url:      url,
-		}
-		return nil
-	}
-	if err = retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "assignDutsToDronesNoRetry")); err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func processDUTAssignments(ctx context.Context, s *gitstore.InventoryStore, a []*fleet.AssignDutsToDronesRequest_Item) ([]*fleet.AssignDutsToDronesResponse_Item, error) {
-	c := newGlobalInvCache(ctx, s)
-	assigned := make([]*fleet.AssignDutsToDronesResponse_Item, 0, len(a))
-	for _, a := range a {
-		var dutID string
-		switch {
-		case a.DutHostname != "":
-			var ok bool
-			dutID, ok = c.hostnameToID[a.DutHostname]
-			if !ok {
-				return nil, status.Errorf(codes.NotFound, "unknown DUT hostname %s", a.DutHostname)
-			}
-		case a.DutId != "":
-			dutID = a.DutId
-		default:
-			return nil, status.Errorf(codes.InvalidArgument, "must supply one of DUT hostname or ID")
-		}
-		d, err := assignDUT(ctx, c, dutID)
-		if err != nil {
-			return nil, err
-		}
-		assigned = append(assigned, &fleet.AssignDutsToDronesResponse_Item{
-			DroneHostname: d,
-			DutId:         dutID,
-		})
-	}
-	return assigned, nil
+	return nil, nil
 }
 
 // RemoveDutsFromDrones implements the method from fleet.InventoryServer interface.

@@ -76,7 +76,9 @@ service Inventory {
   rpc RemoveDutsFromDrones(RemoveDutsFromDronesRequest) returns (RemoveDutsFromDronesResponse);
 
   // AssignDutsToDrones assigns the given duts to drones.
-  rpc AssignDutsToDrones(AssignDutsToDronesRequest) returns (AssignDutsToDronesResponse);
+  rpc AssignDutsToDrones(AssignDutsToDronesRequest) returns (AssignDutsToDronesResponse) {
+    option deprecated = true;
+  };
 
   // ///////////////////////////////////////////////////////////////////////////
   // Inventory ReadOnly RPCs
