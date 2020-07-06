@@ -15,7 +15,6 @@
 
   suite('basic tests', function() {
     var element;
-    var server;
     var stubbedFetch;
     var responseHeaders = {
         json: {'Content-Type': 'application/json'},
@@ -24,10 +23,7 @@
 
     setup(function() {
       element = fixture('basic');
-      server = sinon.fakeServer.create();
       stubbedFetch = sinon.stub(window, 'fetch');
-
-      element.$.fetchTrooper.auto = false;
 
       element.trees = {
         'name': 'chromium',
@@ -36,47 +32,63 @@
     });
 
     teardown(function() {
-      server.restore();
       stubbedFetch.restore();
     });
 
-    test('renders current trooper', function(done) {
-      element._trooperString = 'faketrooper';
+    test('shows an error if sheriff loading failed', function(done) {
+      stubbedFetch.onCall(0).returns(Promise.reject(new Error('fail')));
+      stubbedFetch.onCall(1).returns(Promise.reject(new Error('fail')));
+
+      element._rotations = {
+        'chromium': [
+          {
+            name: 'Chromium Sheriff',
+            url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-build-sheriff',
+          },
+        ],
+      };
+      element.tree = {'name': 'chromium'};
+
       flush(function () {
-        assert.equal('faketrooper (primary)',
-          element.$.currentTroopers.textContent.trim());
+        assert.equal(2, element._currentOncalls.length);
+        assert.deepEqual([{
+          name: 'Trooper',
+          people: 'Error: fail',
+          isTrooper: true,
+        }, {
+          name: 'Chromium Sheriff',
+          people: 'Error: fail',
+          isTrooper: false,
+        }], element._currentOncalls);
         done();
       });
     });
 
-    test('renders primary/secondary troopers', function(done) {
-      element._trooperString = 'faketrooper,troopertoo';
-      flush(function () {
-        let troopers = element.$.currentTroopers.querySelectorAll('li');
-        assert.equal(2, troopers.length);
-        assert.equal('faketrooper (primary)', troopers[0].textContent.trim());
-        assert.equal('troopertoo (secondary)', troopers[1].textContent.trim());
-        done();
-      });
-    });
+    test('shows "Loading" before sheriffs are loaded', function(done) {
+      stubbedFetch.onCall(0).returns(new Promise(function() {}));
+      stubbedFetch.onCall(1).returns(new Promise(function() {}));
 
-    test('gets current trooper', function(done) {
-      server.respondWith(
-        'GET',
-        'https://rota-ng.appspot.com/legacy/current_trooper.txt', [
-          200,
-          responseHeaders.text,
-          'helloworld'
-        ]
-      );
-
-      element._refresh();
-
-      server.respond();
+      element._rotations = {
+        'chromium': [
+          {
+            name: 'Chromium Sheriff',
+            url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-build-sheriff',
+          },
+        ],
+      };
+      element.tree = {'name': 'chromium'};
 
       flush(function () {
-        assert.equal('helloworld', element._trooperString);
-        assert.deepEqual(['helloworld (primary)'], element._troopers);
+        assert.equal(2, element._currentOncalls.length);
+        assert.deepEqual([{
+          name: 'Trooper',
+          people: 'Loading...',
+          isTrooper: true,
+        }, {
+          name: 'Chromium Sheriff',
+          people: 'Loading...',
+          isTrooper: false,
+        }], element._currentOncalls);
         done();
       });
     });
@@ -85,7 +97,8 @@
       const body = {emails: ['foo@example.com', 'bar@example.com']};
       const init = {status: 200, headers: responseHeaders.json};
       const response = new window.Response(JSON.stringify(body), init);
-      stubbedFetch.returns(Promise.resolve(response));
+      stubbedFetch.onCall(0).returns(new Promise(function() {}));
+      stubbedFetch.onCall(1).returns(Promise.resolve(response));
 
       element._rotations = {
         'chromium': [
@@ -98,11 +111,12 @@
       element.tree = {'name': 'chromium'};
 
       flush(function () {
-        assert.equal(1, element._currentOncalls.length);
+        assert.equal(2, element._currentOncalls.length);
         assert.deepEqual({
           name: 'Chromium Sheriff',
           people: 'foo@example.com, bar@example.com',
-        }, element._currentOncalls[0]);
+          isTrooper: false,
+        }, element._currentOncalls[1]);
         done();
       });
     });
@@ -111,7 +125,8 @@
       const body = {emails: []};
       const init = {status: 200, headers: responseHeaders.json};
       const response = new window.Response(JSON.stringify(body), init);
-      stubbedFetch.returns(Promise.resolve(response));
+      stubbedFetch.onCall(0).returns(new Promise(function() {}));
+      stubbedFetch.onCall(1).returns(Promise.resolve(response));
 
       element._rotations = {
         'chromium': [
@@ -124,16 +139,22 @@
       element.tree = {'name': 'chromium'};
 
       flush(function () {
-        assert.equal(1, element._currentOncalls.length);
+        assert.equal(2, element._currentOncalls.length);
         assert.deepEqual({
           name: 'Chromium Sheriff',
           people: '',
-        }, element._currentOncalls[0]);
+          isTrooper: false,
+        }, element._currentOncalls[1]);
         done();
       });
     });
 
-    test('shows empty sheriff list for tree with no rotations', function(done) {
+    test('shows trooper only for tree with no rotations', function(done) {
+      const body = {emails: ['foo@example.com', 'bar@example.com']};
+      const init = {status: 200, headers: responseHeaders.json};
+      const response = new window.Response(JSON.stringify(body), init);
+      stubbedFetch.onCall(0).returns(Promise.resolve(response));
+
       element._rotations = {
         'chromium': [],
       };
@@ -142,7 +163,12 @@
       element.tree = {'name': 'empty'};
 
       flush(function () {
-        assert.equal(0, element._currentOncalls.length);
+        assert.equal(1, element._currentOncalls.length);
+        assert.deepEqual({
+          name: 'Trooper',
+          people: 'foo@example.com, bar@example.com',
+          isTrooper: true,
+        }, element._currentOncalls[0]);
         done();
       });
     });

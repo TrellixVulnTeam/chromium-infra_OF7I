@@ -1,6 +1,5 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 
-<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../../bower_components/paper-radio-button/paper-radio-button.html">
@@ -69,13 +68,6 @@
         float: right;
       }
     </style>
-    <iron-ajax
-        id="fetchTrooper"
-        auto
-        url="https://rota-ng.appspot.com/legacy/current_trooper.txt"
-        handle-as="text"
-        last-response="{{_trooperString}}"
-    ></iron-ajax>
     <som-settings
         collapse-by-default="{{collapseByDefault}}"
         default-tree="{{_defaultTree}}"
@@ -117,16 +109,14 @@
     </h2>
 
     <iron-collapse id="onCallMenu" opened no-animation>
-      <label>Trooper (<a href="https://goto.google.com/bugatrooper" target="_blank">go/bugatrooper</a>)</label>
-      <ul id="currentTroopers">
-        <template is="dom-repeat" items="[[_troopers]]" as="trooper">
-          <li>[[trooper]]</li>
-        </template>
-      </ul>
-
       <template is="dom-if" if="[[_currentOncalls]]">
         <template is="dom-repeat" items="[[_currentOncalls]]" as="rotation">
-          <div class="rotation-name">[[rotation.name]]</div>
+          <div class="rotation-name">
+            [[rotation.name]]
+            <template is="dom-if" if="[[rotation.isTrooper]]">
+              (<a href="https://goto.google.com/bugatrooper" target="_blank">go/bugatrooper</a>)
+            </template>
+          </div>
           <div class="rotation-members">[[rotation.people]]</div>
         </template>
       </template>

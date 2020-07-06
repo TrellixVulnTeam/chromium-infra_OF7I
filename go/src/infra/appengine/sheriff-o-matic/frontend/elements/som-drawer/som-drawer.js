@@ -99,6 +99,12 @@ const ROTATIONS = {
   ],
 };
 
+const TROOPER_ROTATION = {
+  name: 'Trooper',
+  url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-ops-client-infra',
+  isTrooper: true,
+};
+
 class SomDrawer extends Polymer.Element {
   static get is() {
     return 'som-drawer';
@@ -135,12 +141,6 @@ class SomDrawer extends Polymer.Element {
         type: Array,
         computed: '_computeTreesList(trees)',
       },
-      _trooperString: String,
-      _troopers: {
-        type: Array,
-        computed: '_computeTroopers(_trooperString)',
-        value: null,
-      },
       // Settings.
       collapseByDefault: {
         type: Boolean,
@@ -161,27 +161,26 @@ class SomDrawer extends Polymer.Element {
     this.async(this._refreshAsync, drawerRefreshDelayMs);
   }
 
-  _refresh() {
-    this.$.fetchTrooper.generateRequest();
-  }
-
   _refreshAsync() {
     this._refresh();
     this.async(this._refreshAsync, drawerRefreshDelayMs);
   }
 
   _treeChanged(tree) {
-    if (!(tree && this._rotations[tree.name])) {
-      this.set('_currentOncalls', []);
-      return;
+    // Copy the list of rotations and add the trooper to the start.
+    let rotationsForTree = [];
+    if (tree && this._rotations[tree.name]) {
+      rotationsForTree = [...this._rotations[tree.name]];
     }
+    rotationsForTree.unshift(TROOPER_ROTATION);
 
     this._currentOncalls = [];
     const self = this;
-    this._rotations[tree.name].forEach(function(rotation, index) {
+    rotationsForTree.forEach(function(rotation, index) {
       self.push('_currentOncalls', {
         name: rotation.name,
         people: 'Loading...',
+        isTrooper: !!rotation.isTrooper,
       });
       fetch(rotation.url, {
         method: 'GET',
@@ -191,6 +190,13 @@ class SomDrawer extends Polymer.Element {
         self.splice('_currentOncalls', index, 1, {
           name: rotation.name,
           people: response.emails.join(', '),
+          isTrooper: !!rotation.isTrooper,
+        });
+      }).catch(function(reason) {
+        self.splice('_currentOncalls', index, 1, {
+          name: rotation.name,
+          people: '' + reason,
+          isTrooper: !!rotation.isTrooper,
         });
       });
     });
@@ -208,22 +214,6 @@ class SomDrawer extends Polymer.Element {
 
   _computeTreesList(trees) {
     return Object.values(trees);
-  }
-
-  _computeTroopers(trooperString) {
-    if (!trooperString) {
-      return [];
-    }
-
-    const troopers = trooperString.split(',');
-    troopers[0] = troopers[0] + ' (primary)';
-    if (troopers.length == 1) {
-      return troopers;
-    }
-    troopers.slice(1).forEach(function(trooper, i) {
-      troopers[i + 1] = trooper + ' (secondary)';
-    });
-    return troopers;
   }
 
   _formatDate(date) {
