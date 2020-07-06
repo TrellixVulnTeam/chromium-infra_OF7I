@@ -236,3 +236,17 @@ func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *api.Impor
 	}
 	return successStatus.Proto(), nil
 }
+
+// ImportOSMachineLSEs imports chromeos devices machine lses
+func (fs *FleetServerImpl) ImportOSMachineLSEs(ctx context.Context, req *api.ImportOSMachineLSEsRequest) (response *status.Status, err error) {
+	source := req.GetMachineDbSource()
+	if err := api.ValidateMachineDBSource(source); err != nil {
+		return nil, err
+	}
+	_, err = fs.newCrosInventoryInterfaceFactory(ctx, source.GetHost())
+	if err != nil {
+		return nil, crosInventoryConnectionFailureStatus.Err()
+	}
+	// TODO: implement importing logics
+	return successStatus.Proto(), nil
+}

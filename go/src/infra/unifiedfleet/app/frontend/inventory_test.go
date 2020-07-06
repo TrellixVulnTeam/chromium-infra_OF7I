@@ -744,3 +744,25 @@ func TestImportMachineLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestImportOSMachineLSEs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import ChromeOS machine lses", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportOSMachineLSEsRequest{
+				Source: &api.ImportOSMachineLSEsRequest_MachineDbSource{
+					MachineDbSource: &api.MachineDBSource{
+						Host: "fake_host",
+					},
+				},
+			}
+			tf.Fleet.importPageSize = 25
+			res, err := tf.Fleet.ImportOSMachineLSEs(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+		})
+	})
+}

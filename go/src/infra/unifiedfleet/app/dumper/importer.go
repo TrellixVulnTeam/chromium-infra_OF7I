@@ -14,6 +14,7 @@ import (
 )
 
 const machineDBHost = "machine-db.appspot.com"
+const crosInventoryHost = "cros-lab-inventory.appspot.com"
 
 func importCrimson(ctx context.Context) error {
 	sv := &frontend.FleetServerImpl{}
@@ -129,5 +130,18 @@ func importDCHelper(ctx context.Context, sv *frontend.FleetServerImpl, cfg strin
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing datacenters: %#v", resp)
+	return nil
+}
+
+func importCrosInventory(ctx context.Context) error {
+	sv := &frontend.FleetServerImpl{}
+	logging.Debugf(ctx, "Importing ChromeOS inventory")
+	sv.ImportOSMachineLSEs(ctx, &api.ImportOSMachineLSEsRequest{
+		Source: &api.ImportOSMachineLSEsRequest_MachineDbSource{
+			MachineDbSource: &api.MachineDBSource{
+				Host: crosInventoryHost,
+			},
+		},
+	})
 	return nil
 }

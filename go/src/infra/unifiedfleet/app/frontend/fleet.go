@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"go.chromium.org/luci/server/auth"
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 )
 
 const (
@@ -40,11 +41,15 @@ type CfgInterfaceFactory func(ctx context.Context) luciconfig.Interface
 // For potential unittest usage
 type MachineDBInterfaceFactory func(ctx context.Context, host string) (crimson.CrimsonClient, error)
 
+// CrosInventoryInterfaceFactory is a constructor for a invV2Api.InventoryClient
+type CrosInventoryInterfaceFactory func(ctx context.Context, host string) (invV2Api.InventoryClient, error)
+
 // FleetServerImpl implements the configuration server interfaces.
 type FleetServerImpl struct {
-	cfgInterfaceFactory       CfgInterfaceFactory
-	machineDBInterfaceFactory MachineDBInterfaceFactory
-	importPageSize            int
+	cfgInterfaceFactory           CfgInterfaceFactory
+	machineDBInterfaceFactory     MachineDBInterfaceFactory
+	crosInventoryInterfaceFactory CrosInventoryInterfaceFactory
+	importPageSize                int
 }
 
 func (cs *FleetServerImpl) newMachineDBInterfaceFactory(ctx context.Context, host string) (crimson.CrimsonClient, error) {
@@ -60,6 +65,20 @@ func (cs *FleetServerImpl) newMachineDBInterfaceFactory(ctx context.Context, hos
 		Host: host,
 	}
 	return crimson.NewCrimsonPRPCClient(pclient), nil
+}
+
+func (cs *FleetServerImpl) newCrosInventoryInterfaceFactory(ctx context.Context, host string) (invV2Api.InventoryClient, error) {
+	if cs.crosInventoryInterfaceFactory != nil {
+		return cs.crosInventoryInterfaceFactory(ctx, host)
+	}
+	t, err := auth.GetRPCTransport(ctx, auth.AsCredentialsForwarder)
+	if err != nil {
+		return nil, err
+	}
+	return invV2Api.NewInventoryPRPCClient(&prpc.Client{
+		C:    &http.Client{Transport: t},
+		Host: host,
+	}), nil
 }
 
 func (cs *FleetServerImpl) getImportPageSize() int {
@@ -82,7 +101,8 @@ var (
 	machineDBServiceFailureStatus    = func(service string) *status.Status {
 		return status.New(codes.Internal, fmt.Sprintf(machineDBServiceFailure, service))
 	}
-	insertDatastoreFailureStatus = status.New(codes.Internal, "Fail to insert entity into datastore while importing")
+	crosInventoryConnectionFailureStatus = status.New(codes.Internal, "Fail to initialize connection to Inventory V2")
+	insertDatastoreFailureStatus         = status.New(codes.Internal, "Fail to insert entity into datastore while importing")
 )
 
 func processImportDatastoreRes(resp *datastore.OpResults, err error) *status.Status {

@@ -32,6 +32,9 @@ func InitServer(srv *server.Server, opts Options) {
 		}
 		run(ctx, minInterval)
 	})
+	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, dumpCrosInvcentory)
+	})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
@@ -71,6 +74,13 @@ func dumpToBQ(ctx context.Context) (err error) {
 	}
 	logging.Debugf(ctx, "Dump is successfully finished")
 	return nil
+}
+
+func dumpCrosInvcentory(ctx context.Context) (err error) {
+	defer func() {
+		dumpCrosInvcentoryTick.Add(ctx, 1, err == nil)
+	}()
+	return importCrosInventory(ctx)
 }
 
 // unique key used to store and retrieve context.

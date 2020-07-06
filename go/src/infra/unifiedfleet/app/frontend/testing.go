@@ -14,12 +14,12 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	luciconfig "go.chromium.org/luci/config"
-
-	"infra/unifiedfleet/app/config"
-	"infra/unifiedfleet/app/frontend/fake"
-
 	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
+
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
+	"infra/unifiedfleet/app/config"
+	"infra/unifiedfleet/app/frontend/fake"
 )
 
 type testFixture struct {
@@ -34,9 +34,10 @@ func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, 
 	mc := gomock.NewController(t)
 
 	tf.Fleet = &FleetServerImpl{
-		cfgInterfaceFactory:       fakeCfgInterfaceFactory,
-		machineDBInterfaceFactory: fakeMachineDBInterface,
-		importPageSize:            testImportPageSize,
+		cfgInterfaceFactory:           fakeCfgInterfaceFactory,
+		machineDBInterfaceFactory:     fakeMachineDBInterface,
+		crosInventoryInterfaceFactory: fakeCrosInventoryInterface,
+		importPageSize:                testImportPageSize,
 	}
 
 	validate := func() {
@@ -156,6 +157,10 @@ func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonCl
 		PhysicalHosts: testPhysicalHosts,
 		Vms:           testVMs,
 	}, nil
+}
+
+func fakeCrosInventoryInterface(ctx context.Context, host string) (invV2Api.InventoryClient, error) {
+	return nil, nil
 }
 
 func fakeCfgInterfaceFactory(ctx context.Context) luciconfig.Interface {

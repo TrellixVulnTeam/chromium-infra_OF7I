@@ -126,6 +126,9 @@ service Fleet {
   // ImportMachineLSEs imports machine LSEs & all related infos.
   rpc ImportMachineLSEs(ImportMachineLSEsRequest) returns (google.rpc.Status);
 
+  // ImportOSMachineLSEs imports ChromeOS machine LSEs & all related infos if needed.
+  rpc ImportOSMachineLSEs(ImportOSMachineLSEsRequest) returns (google.rpc.Status);
+
   // CreateRackLSE creates a new rackLSE
   rpc CreateRackLSE(CreateRackLSERequest) returns (proto.RackLSE);
 
@@ -662,6 +665,14 @@ message DeleteMachineLSERequest {
 
 message ImportMachineLSEsRequest {
   oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
+}
+
+message ImportOSMachineLSEsRequest {
+  oneof source {
+    // Continue to use machine_db_source to specify any service host for consistency
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;
   }
