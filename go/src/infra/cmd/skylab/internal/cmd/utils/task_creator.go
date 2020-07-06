@@ -60,6 +60,56 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skyc
 	return tc, nil
 }
 
+// Set it to 2 hours to allow deploy to finish
+const deployTaskExecutionTimeout = 7200
+
+// Set it 5 hours, to allow any kicked off deploy tasks to finish
+const deployTaskExpirationTimeout = 18000
+
+// Set deploy task as the highest priority to avoid the case that a scheduled repair job is run before a scheduled deployment task
+const deployTaskPriority = 24
+
+// DeployTask creates deploy task for a particular DUT
+//
+// The deployment task's parameters are hardcoded by the system instead of users now.
+// TODO: Call DeployTask in add-dut and update-dut directly instead of calling crosskylabadmin.
+func (tc *TaskCreator) DeployTask(ctx context.Context, dutID, actions string) (taskID string, err error) {
+	r := tc.getDeployTaskRequest(dutID, actions)
+	ctx, cf := context.WithTimeout(ctx, 60*time.Second)
+	defer cf()
+	resp, err := tc.Client.CreateTask(ctx, r)
+	if err != nil {
+		return "", errors.Annotate(err, "failed to create task").Err()
+	}
+	return resp.TaskId, nil
+}
+
+func (tc *TaskCreator) getDeployTaskRequest(dutID, actions string) *swarming_api.SwarmingRpcsNewTaskRequest {
+	c := worker.Command{
+		TaskName: "deploy",
+		Actions:  actions,
+	}
+	c.Config(tc.Environment.Wrapped())
+	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
+		ExpirationSecs: deployTaskExpirationTimeout,
+		Properties: &swarming_api.SwarmingRpcsTaskProperties{
+			Command:              c.Args(),
+			Dimensions:           dimsWithDUTID(dutID),
+			ExecutionTimeoutSecs: deployTaskExecutionTimeout,
+			// We never want tasks deduplicated with earlier tasks.
+			Idempotent: false,
+		},
+		WaitForCapacity: true,
+	}}
+	return &swarming_api.SwarmingRpcsNewTaskRequest{
+		Name:           "deploy",
+		Tags:           tc.combineTags("deploy", c.LogDogAnnotationURL, []string{fmt.Sprintf("deploy_task:%s", dutID)}),
+		TaskSlices:     slices,
+		Priority:       deployTaskPriority,
+		ServiceAccount: tc.Environment.ServiceAccount,
+	}
+}
+
 // RepairTask creates admin_repair task for particular DUT
 func (tc *TaskCreator) RepairTask(ctx context.Context, host string, expirationSec int) (taskID string, err error) {
 	dims, err := tc.dimsWithBotID(ctx, host)
@@ -403,11 +453,17 @@ func (tc *TaskCreator) dimsWithBotID(ctx context.Context, host string) ([]*swarm
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to get bot ID for %s", host).Err()
 	}
-	dims := []*swarming_api.SwarmingRpcsStringPair{
+	return []*swarming_api.SwarmingRpcsStringPair{
 		{Key: "pool", Value: swarming.SkylabPool},
 		{Key: "id", Value: id},
+	}, nil
+}
+
+func dimsWithDUTID(dutID string) []*swarming_api.SwarmingRpcsStringPair {
+	return []*swarming_api.SwarmingRpcsStringPair{
+		{Key: "pool", Value: swarming.SkylabPool},
+		{Key: "dut_id", Value: dutID},
 	}
-	return dims, nil
 }
 
 func (tc *TaskCreator) combineTags(toolName, logDogURL string, customTags []string) []string {

@@ -1,12 +1,14 @@
 package utils
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"infra/cmd/skylab/internal/site"
-
+	. "github.com/smartystreets/goconvey/convey"
 	swarming_api "go.chromium.org/luci/common/api/swarming/swarming/v1"
+
+	"infra/cmd/skylab/internal/site"
 )
 
 var appendUniqueDimensionsCases = []struct {
@@ -245,4 +247,38 @@ func TestCombineTags(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeployTask(t *testing.T) {
+	t.Parallel()
+	Convey("Test deploytask of task creator", t, func() {
+		Convey("Verify deploy task has the highest priority", func() {
+			So(deployTaskPriority, ShouldBeLessThan, defaultTaskPriority)
+		})
+		Convey("Verify deploy task request is correct formated", func() {
+			tc := &TaskCreator{
+				Client:      nil,
+				Environment: site.Dev,
+				session:     "session0",
+			}
+			r := tc.getDeployTaskRequest("fake_dut_id", "fake_actions")
+			So(r.Name, ShouldEqual, "deploy")
+			So(r.TaskSlices, ShouldHaveLength, 1)
+			command := strings.Join(r.TaskSlices[0].Properties.Command, " ")
+			So(command, ShouldContainSubstring, "/opt/infra-tools/skylab_swarming_worker -actions fake_actions -logdog-annotation-url")
+			So(command, ShouldContainSubstring, "-task-name deploy")
+			for _, d := range r.TaskSlices[0].Properties.Dimensions {
+				switch d.Key {
+				case "pool":
+					So(d.Value, ShouldEqual, "ChromeOSSkylab")
+				case "dut_id":
+					So(d.Value, ShouldEqual, "fake_dut_id")
+				}
+			}
+			So("skylab-tool:deploy", ShouldBeIn, r.Tags)
+			So("admin_session:session0", ShouldBeIn, r.Tags)
+			So("deploy_task:fake_dut_id", ShouldBeIn, r.Tags)
+			So("pool:ChromeOSSkylab", ShouldBeIn, r.Tags)
+		})
+	})
 }
