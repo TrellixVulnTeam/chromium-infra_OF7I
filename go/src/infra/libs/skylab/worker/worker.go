@@ -28,7 +28,6 @@ type Command struct {
 	Actions    string
 	ClientTest bool
 	Deadline   time.Time
-	ForceFresh bool
 	Keyvals    map[string]string
 	// LogDogAnnotationURL can be set automatically with Env.
 	LogDogAnnotationURL string
@@ -59,9 +58,6 @@ func (c *Command) Args() []string {
 	}
 	if !c.Deadline.IsZero() {
 		args = append(args, "-deadline", stiptime(c.Deadline))
-	}
-	if c.ForceFresh {
-		args = append(args, "-force-fresh")
 	}
 	if c.Keyvals != nil {
 		b, err := json.Marshal(c.Keyvals)

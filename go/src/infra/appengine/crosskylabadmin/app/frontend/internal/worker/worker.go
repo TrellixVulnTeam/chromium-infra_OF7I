@@ -59,9 +59,8 @@ func AdminTaskForType(ctx context.Context, ttype fleet.TaskType) Task {
 // actions may be empty to run the default deploytask with no actions.
 func DeployTaskWithActions(ctx context.Context, actions string) Task {
 	cmd := worker.Command{
-		TaskName:   "deploy",
-		ForceFresh: true,
-		Actions:    actions,
+		TaskName: "deploy",
+		Actions:  actions,
 	}
 	cmd.Config(wrapped(config.Get(ctx)))
 	t := Task{
@@ -80,9 +79,8 @@ func DeployTaskWithActions(ctx context.Context, actions string) Task {
 // actions may be empty to run the default audit task with no actions.
 func AuditTaskWithActions(ctx context.Context, actions string) Task {
 	cmd := worker.Command{
-		TaskName:   "admin_audit",
-		ForceFresh: true,
-		Actions:    actions,
+		TaskName: "admin_audit",
+		Actions:  actions,
 	}
 	cmd.Config(wrapped(config.Get(ctx)))
 	t := Task{
