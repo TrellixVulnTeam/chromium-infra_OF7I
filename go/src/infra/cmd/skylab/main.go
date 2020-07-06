@@ -43,7 +43,6 @@ func getApplication() *cli.Application {
 			subcommands.Section("Inventory Queries"),
 			inventory.DutInfo,
 			inventory.DutList,
-			inventory.ListRemovedDuts,
 			subcommands.Section("Inventory Operations"),
 			inventory.AddDut,
 			inventory.QuickAddDuts,

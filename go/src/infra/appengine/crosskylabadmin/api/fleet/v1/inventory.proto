@@ -101,7 +101,9 @@ service Inventory {
   rpc GetDroneConfig(GetDroneConfigRequest) returns (GetDroneConfigResponse);
 
   // ListRemovedDuts lists removed DUTs (DUTs not assigned to any drone).
-  rpc ListRemovedDuts(ListRemovedDutsRequest) returns (ListRemovedDutsResponse);
+  rpc ListRemovedDuts(ListRemovedDutsRequest) returns (ListRemovedDutsResponse) {
+    option deprecated = true;
+  };
 
   // ///////////////////////////////////////////////////////////////////////////
   // RPCs used internally by the infrastructure. Not for end-user tools.
