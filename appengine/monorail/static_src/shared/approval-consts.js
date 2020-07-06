@@ -9,7 +9,7 @@
 
 // Only approvers are allowed to set an approval state to one of these states.
 export const APPROVER_RESTRICTED_STATUSES = new Set(
-    ['NA', 'Approved', 'NotApproved']);
+    ['Approved', 'NotApproved']);
 
 // Map the internal enum names used in Monorail's backend from approval
 // statuses to user friendly names.

@@ -131,11 +131,12 @@ describe('mr-approval-card', () => {
 
     element.statusEnum = 'NEEDS_REVIEW';
 
-    assert.equal(element._availableStatuses.length, 4);
+    assert.equal(element._availableStatuses.length, 5);
     assert.equal(element._availableStatuses[0].status, 'NeedsReview');
-    assert.equal(element._availableStatuses[1].status, 'ReviewRequested');
-    assert.equal(element._availableStatuses[2].status, 'ReviewStarted');
-    assert.equal(element._availableStatuses[3].status, 'NeedInfo');
+    assert.equal(element._availableStatuses[1].status, 'NA');
+    assert.equal(element._availableStatuses[2].status, 'ReviewRequested');
+    assert.equal(element._availableStatuses[3].status, 'ReviewStarted');
+    assert.equal(element._availableStatuses[4].status, 'NeedInfo');
   });
 
   it('non-approvers see restricted approval status when set', () => {
@@ -146,12 +147,13 @@ describe('mr-approval-card', () => {
 
     element.statusEnum = 'APPROVED';
 
-    assert.equal(element._availableStatuses.length, 5);
+    assert.equal(element._availableStatuses.length, 6);
     assert.equal(element._availableStatuses[0].status, 'NeedsReview');
-    assert.equal(element._availableStatuses[1].status, 'ReviewRequested');
-    assert.equal(element._availableStatuses[2].status, 'ReviewStarted');
-    assert.equal(element._availableStatuses[3].status, 'NeedInfo');
-    assert.equal(element._availableStatuses[4].status, 'Approved');
+    assert.equal(element._availableStatuses[1].status, 'NA');
+    assert.equal(element._availableStatuses[2].status, 'ReviewRequested');
+    assert.equal(element._availableStatuses[3].status, 'ReviewStarted');
+    assert.equal(element._availableStatuses[4].status, 'NeedInfo');
+    assert.equal(element._availableStatuses[5].status, 'Approved');
   });
 
   it('expands to show focused comment', async () => {

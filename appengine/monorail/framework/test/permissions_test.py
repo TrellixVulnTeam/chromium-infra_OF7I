@@ -1630,7 +1630,7 @@ class IssuePermissionsTest(unittest.TestCase):
     # restricted status
     self.assertFalse(permissions.CanUpdateApprovalStatus(
         {111, 222}, permissions.PermissionSet([]), self.PROJECT,
-        [333], tracker_pb2.ApprovalStatus.NA))
+        [333], tracker_pb2.ApprovalStatus.NOT_APPROVED))
 
   def testCanUpdateApprovers_Approver(self):
     self.assertTrue(permissions.CanUpdateApprovers(
