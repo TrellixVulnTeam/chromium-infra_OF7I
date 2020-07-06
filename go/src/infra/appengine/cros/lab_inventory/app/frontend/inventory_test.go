@@ -492,24 +492,55 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			So(resp.UpdatedDevices, ShouldHaveLength, 2)
 		})
 
-		// TODO(otabek) blocked by crbug.com/1094428
-		// Convey("Fail update the DUT when update servo info and labstation already have registration of this servo", func() {
-		// 	servo := &lab.Servo{
-		// 		ServoHostname: "labstation1",
-		// 		ServoPort:     1230,
-		// 		ServoSerial:   "SN0001",
-		// 		ServoType:     "v3",
-		// 	}
-		// 	dut1 := getDut(servo)
-		// 	labstation1 := getLab()
-		// 	labstation1.GetLabstation().Servos = []*lab.Servo{servo}
+		Convey("Fail update the DUT when update servo with existed serial number under labstation", func() {
+			dutServo := &lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     1230,
+				ServoSerial:   "SN0001",
+				ServoType:     "v3",
+			}
+			labServo := &lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     1231,
+				ServoSerial:   "SN0001",
+				ServoType:     "v3",
+			}
+			dut1 := getDut(dutServo)
+			labstation1 := getLab()
+			labstation1.GetLabstation().Servos = []*lab.Servo{labServo}
 
-		// 	req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
-		// 	resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
+			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
 
-		// 	So(err, ShouldNotBeNil)
-		// 	So(resp, ShouldBeNil)
-		// })
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "the servo serial number: \"SN0001\" is already used in \"labstation1\"")
+			So(resp, ShouldBeNil)
+		})
+
+		Convey("Fail update the DUT when update servo with existed port number under labstation", func() {
+			dutServo := &lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     1230,
+				ServoSerial:   "SN0001",
+				ServoType:     "v3",
+			}
+			labServo := &lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     1230,
+				ServoSerial:   "SN0002",
+				ServoType:     "v3",
+			}
+			dut1 := getDut(dutServo)
+			labstation1 := getLab()
+			labstation1.GetLabstation().Servos = []*lab.Servo{labServo}
+
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
+			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "the servo port: '1230' is already used in \"labstation1\"")
+			So(resp, ShouldBeNil)
+		})
 
 		Convey("Update non-existing devices", func() {
 			ghost := lab.ChromeOSDevice{
