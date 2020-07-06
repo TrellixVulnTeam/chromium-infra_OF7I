@@ -240,9 +240,9 @@ func parseStorage(hf *api.HardwareFeatures) device.Config_Storage {
 	// STORAGE_HDD
 	// STORAGE_UFS
 	switch hf.GetStorage().GetStorageType() {
-	case api.HardwareFeatures_Storage_NVME:
+	case api.Component_Storage_NVME:
 		return device.Config_STORAGE_NVME
-	case api.HardwareFeatures_Storage_EMMC:
+	case api.Component_Storage_EMMC:
 		return device.Config_STORAGE_MMC
 	default:
 		return device.Config_STORAGE_UNSPECIFIED
