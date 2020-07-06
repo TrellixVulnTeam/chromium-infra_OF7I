@@ -14,6 +14,8 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/isolatedclient"
 	"go.chromium.org/luci/common/logging"
+
+	admin "infra/tricium/api/admin/v1"
 )
 
 const (
@@ -62,9 +64,24 @@ func (s swarmingServer) Trigger(c context.Context, params *TriggerParameters) (*
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to create swarming client").Err()
 	}
+
+	// Get the command from the params.Worker.
+	var command []string
+	worker := params.Worker
+	switch wi := worker.Impl.(type) {
+	case *admin.Worker_Cmd:
+		// Expected case.
+		command = append([]string{wi.Cmd.Exec}, wi.Cmd.Args...)
+	case nil:
+		return nil, errors.Reason("missing Impl for worker %s", worker.Name).Err()
+	default:
+		return nil, errors.Reason("Impl for worker %s has unexpected type %T", worker.Name, wi).Err()
+	}
+
 	// TODO(qyearsley): Read timeouts from the analyzer config.
 	// Prepare properties.
 	props := &swarming.SwarmingRpcsTaskProperties{
+		Command:              command,
 		Dimensions:           dims,
 		ExecutionTimeoutSecs: 600,
 		IoTimeoutSecs:        600,
