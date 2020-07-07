@@ -5,6 +5,7 @@
 package request_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -200,8 +201,28 @@ func TestPriorityBB(t *testing.T) {
 	})
 }
 
-func TestStatusTopicBB(t *testing.T) {
-	Convey("Given request arguments that specify a Pubsub topic for status updates", t, func() {
+func TestStatusTopicBWithParentUID(t *testing.T) {
+	Convey("Given request arguments that specify a Pubsub topic and parent UID for status updates", t, func() {
+		args := request.Args{
+			StatusTopic:       "a topic name",
+			ParentRequestUID:  "testPlanRun/12345689/foo",
+			TestRunnerRequest: &skylab_test_runner.Request{},
+		}
+		Convey("when a request is formed", func() {
+			req, err := args.NewBBRequest(nil)
+			So(err, ShouldBeNil)
+			So(req, ShouldNotBeNil)
+			Convey("then request should have the Pubsub topic assigned.", func() {
+				So(req.Notify, ShouldNotBeNil)
+				So(req.Notify.PubsubTopic, ShouldEqual, "a topic name")
+				So(extractParentRequestUID(req.Notify.UserData), ShouldEqual, "testPlanRun/12345689/foo")
+			})
+		})
+	})
+}
+
+func TestStatusTopicBWithoutParentUID(t *testing.T) {
+	Convey("Given request arguments that specify a Pubsub topic but no parent UID for status updates", t, func() {
 		args := request.Args{
 			StatusTopic:       "a topic name",
 			TestRunnerRequest: &skylab_test_runner.Request{},
@@ -213,6 +234,7 @@ func TestStatusTopicBB(t *testing.T) {
 			Convey("then request should have the Pubsub topic assigned.", func() {
 				So(req.Notify, ShouldNotBeNil)
 				So(req.Notify.PubsubTopic, ShouldEqual, "a topic name")
+				So(extractParentRequestUID(req.Notify.UserData), ShouldBeEmpty)
 			})
 		})
 	})
@@ -427,4 +449,10 @@ func sortDimensions(dims []*swarming.SwarmingRpcsStringPair) []*swarming.Swarmin
 		return dims[i].Key < dims[j].Key || (dims[i].Key == dims[j].Key && dims[i].Value < dims[j].Value)
 	})
 	return dims
+}
+
+func extractParentRequestUID(b []byte) string {
+	payload := &request.MessagePayload{}
+	json.Unmarshal(b, payload)
+	return payload.ParentRequestUID
 }

@@ -7,6 +7,7 @@
 package request
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -51,10 +52,16 @@ type Args struct {
 	Timeout           time.Duration
 	Priority          int64
 	ParentTaskID      string
+	ParentRequestUID  string
 	//Pubsub Topic for status updates on the tests run for the request
 	StatusTopic string
 	// Test describes the test to be run.
 	TestRunnerRequest *skylab_test_runner.Request
+}
+
+// MessagePayload contains the information for Pubsub subscribers.
+type MessagePayload struct {
+	ParentRequestUID string `json:"parent_request_uid,omitempty"`
 }
 
 // NewBBRequest returns the Buildbucket request to create the test_runner build
@@ -91,7 +98,12 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 		Swarming: &buildbucket_pb.ScheduleBuildRequest_Swarming{
 			ParentRunId: a.ParentTaskID,
 		},
-		Notify: newNotificationConfig(a.StatusTopic),
+		Notify: newNotificationConfig(
+			a.StatusTopic,
+			constructMessagePayload(
+				&MessagePayload{a.ParentRequestUID},
+			),
+		),
 	}, nil
 }
 
@@ -206,7 +218,7 @@ func requestToStructPB(from *skylab_test_runner.Request) (*structpb.Value, error
 }
 
 // newNotificationConfig constructs a valid NotificationConfig.
-func newNotificationConfig(topic string) *buildbucket_pb.NotificationConfig {
+func newNotificationConfig(topic string, payload []byte) *buildbucket_pb.NotificationConfig {
 	if topic == "" {
 		// BB will crash if it encounters a non-nil NotificationConfig with an
 		// empty PubsubTopic.
@@ -214,6 +226,7 @@ func newNotificationConfig(topic string) *buildbucket_pb.NotificationConfig {
 	}
 	return &buildbucket_pb.NotificationConfig{
 		PubsubTopic: topic,
+		UserData:    payload,
 	}
 }
 
@@ -332,4 +345,12 @@ func schedulableLabelsToPairs(inv *inventory.SchedulableLabels) []*swarming.Swar
 		}
 	}
 	return pairs
+}
+
+func constructMessagePayload(p *MessagePayload) []byte {
+	data, err := json.Marshal(p)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to marshal the payload: %v", err))
+	}
+	return data
 }
