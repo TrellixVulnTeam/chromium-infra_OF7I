@@ -12,7 +12,11 @@
 
 package site
 
-import "go.chromium.org/luci/grpc/prpc"
+import (
+	"fmt"
+
+	"go.chromium.org/luci/grpc/prpc"
+)
 
 func init() {
 	if false { // Change this to true.
