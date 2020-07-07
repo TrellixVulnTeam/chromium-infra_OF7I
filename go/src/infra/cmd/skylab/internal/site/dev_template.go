@@ -18,6 +18,9 @@ func init() {
 	if false { // Change this to true.
 		Dev.AdminService = "0.0.0.0:8082"
 		Prod = Dev
-		DefaultPRPCOptions = &prpc.Options{Insecure: true}
+		DefaultPRPCOptions = &prpc.Options{
+			Insecure:  true,
+			UserAgent: fmt.Sprintf("skylab/%s", VersionNumber),
+		}
 	}
 }
