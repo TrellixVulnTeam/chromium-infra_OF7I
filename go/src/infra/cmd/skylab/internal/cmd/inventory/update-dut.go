@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -21,15 +20,16 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
+	"infra/cmd/skylab/internal/cmd/utils"
 	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
+	"infra/libs/skylab/swarming"
 )
 
 // UpdateDut subcommand: update and redeploy an existing DUT.
@@ -57,7 +57,6 @@ https://developers.google.com/protocol-buffers/docs/proto3#json
 
 The protobuf definition of inventory.DeviceUnderTest is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/libs/skylab/inventory/device.proto`)
-		c.Flags.BoolVar(&c.tail, "tail", false, "Wait for the deployment task to complete.")
 
 		c.Flags.BoolVar(&c.installOS, "install-os", false, "Force DUT OS re-install.")
 		c.Flags.BoolVar(&c.installFirmware, "install-firmware", false, "Force DUT firmware re-install.")
@@ -98,18 +97,13 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 	ctx := cli.GetContext(a, c, env)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "update dut").Err()
 	}
-	e := c.envFlags.Env()
-	ic := fleet.NewInventoryPRPCClient(&prpc.Client{
-		C:       hc,
-		Host:    e.AdminService,
-		Options: site.DefaultPRPCOptions,
-	})
 
-	oldSpecs, err := getOldDeviceSpecs(ctx, hc, e, hostname)
+	icV2 := inv.NewInventoryClient(hc, c.envFlags.Env())
+	oldSpecs, err := getOldDeviceSpecs(ctx, icV2, hostname)
 	if err != nil {
-		return err
+		return errors.Annotate(err, "update dut").Err()
 	}
 	newSpecs, err := c.getNewSpecs(a, oldSpecs)
 	if err != nil {
@@ -121,23 +115,18 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		return nil
 	}
 
-	deploymentID, err := c.triggerRedeploy(ctx, ic, oldSpecs, newSpecs)
+	creator, err := utils.NewTaskCreator(ctx, &c.authFlags, c.envFlags)
 	if err != nil {
 		return err
 	}
-	ds, err := ic.GetDeploymentStatus(ctx, &fleet.GetDeploymentStatusRequest{
-		DeploymentId: deploymentID,
-	})
+	taskID, err := c.triggerRedeploy(ctx, icV2, oldSpecs, newSpecs, creator)
 	if err != nil {
+		if utils.IsSwarmingTaskErr(err) {
+			fmt.Fprintf(a.GetOut(), "DUT change has been updated to inventory, but fails to trigger deploy task. Please rerun `skylab update-dut`.\n")
+		}
 		return err
 	}
-	if err := printDeploymentStatus(a.GetOut(), deploymentID, ds); err != nil {
-		return err
-	}
-
-	if c.tail {
-		return tailDeployment(ctx, a.GetOut(), ic, deploymentID, ds)
-	}
+	fmt.Fprintf(a.GetOut(), "Deploy task URL:\t%s\n", swarming.TaskURL(creator.Environment.SwarmingService, taskID))
 	return nil
 }
 
@@ -196,43 +185,23 @@ func parseSpecsFile(specsFile string) (*inventory.DeviceUnderTest, error) {
 // triggerRedeploy kicks off a RedeployDut attempt via crosskylabadmin.
 //
 // This function returns the deployment task ID for the attempt.
-func (c *updateDutRun) triggerRedeploy(ctx context.Context, ic fleet.InventoryClient, old, updated *inventory.DeviceUnderTest) (string, error) {
-	serializedOld, err := proto.Marshal(old.GetCommon())
-	if err != nil {
-		return "", errors.Annotate(err, "trigger redeploy").Err()
+func (c *updateDutRun) triggerRedeploy(ctx context.Context, ic inv.Client, old, updated *inventory.DeviceUnderTest, creator *utils.TaskCreator) (string, error) {
+	newSpecs := updated.GetCommon()
+	if !proto.Equal(old.GetCommon(), newSpecs) {
+		if err := ic.UpdateDUT(ctx, newSpecs); err != nil {
+			return "", errors.Annotate(err, "update DUT to inventory").Err()
+		}
 	}
-	serializedUpdated, err := proto.Marshal(updated.GetCommon())
-	if err != nil {
-		return "", errors.Annotate(err, "trigger redeploy").Err()
-	}
-
-	resp, err := ic.RedeployDut(ctx, &fleet.RedeployDutRequest{
-		OldSpecs: serializedOld,
-		NewSpecs: serializedUpdated,
-		Actions: &fleet.DutDeploymentActions{
-			StageImageToUsb:          c.stageImageToUsb(),
-			InstallFirmware:          c.installFirmware,
-			InstallTestImage:         c.installOS,
-			RunPreDeployVerification: true,
-		},
-		Options: &fleet.DutDeploymentOptions{
-			AssignServoPortIfMissing: true,
-		},
-	})
-	if err != nil {
-		return "", errors.Annotate(err, "trigger redeploy").Err()
-	}
-	return resp.GetDeploymentId(), nil
+	return creator.DeployTask(ctx, old.GetCommon().GetId(), c.deployActions())
 }
 
 func (c *updateDutRun) stageImageToUsb() bool {
 	return (c.installFirmware || c.installOS) && !c.skipImageDownload
 }
 
-// getOldDeviceSpecs gets the current device specs for hostname from
-// crosskylabadmin.
-func getOldDeviceSpecs(ctx context.Context, hc *http.Client, e site.Environment, hostname string) (*inventory.DeviceUnderTest, error) {
-	oldDut, err := inv.NewInventoryClient(hc, e).GetDutInfo(ctx, hostname, true)
+// getOldDeviceSpecs gets the current device specs for hostname from Inventory v2.
+func getOldDeviceSpecs(ctx context.Context, ic inv.Client, hostname string) (*inventory.DeviceUnderTest, error) {
+	oldDut, err := ic.GetDutInfo(ctx, hostname, true)
 	if err != nil {
 		return nil, errors.Annotate(err, "get old specs").Err()
 	}
@@ -250,4 +219,21 @@ func printDeploymentStatus(w io.Writer, deploymentID string, ds *fleet.GetDeploy
 
 func isStatusFinal(s fleet.GetDeploymentStatusResponse_Status) bool {
 	return s != fleet.GetDeploymentStatusResponse_DUT_DEPLOYMENT_STATUS_IN_PROGRESS
+}
+
+func (c *updateDutRun) deployActions() string {
+	s := make([]string, 0, 5)
+	if c.stageImageToUsb() {
+		s = append(s, "stage-usb")
+	}
+	if c.installOS {
+		s = append(s, "install-test-image")
+		s = append(s, "update-label")
+	}
+	if c.installFirmware {
+		s = append(s, "install-firmware")
+		s = append(s, "verify-recovery-mode")
+	}
+	s = append(s, "run-pre-deploy-verification")
+	return strings.Join(s, ",")
 }

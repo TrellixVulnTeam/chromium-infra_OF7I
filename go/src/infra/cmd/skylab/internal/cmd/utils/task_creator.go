@@ -60,6 +60,20 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, envFlags skyc
 	return tc, nil
 }
 
+// IsSwarmingTaskErr returns true if the given error is because of a swarming task failure
+func IsSwarmingTaskErr(e error) bool {
+	_, ok := e.(swarmingTaskError)
+	return ok
+}
+
+type swarmingTaskError struct {
+	err error
+}
+
+func (e swarmingTaskError) Error() string {
+	return e.err.Error()
+}
+
 // Set it to 2 hours to allow deploy to finish
 const deployTaskExecutionTimeout = 7200
 
@@ -79,7 +93,7 @@ func (tc *TaskCreator) DeployTask(ctx context.Context, dutID, actions string) (t
 	defer cf()
 	resp, err := tc.Client.CreateTask(ctx, r)
 	if err != nil {
-		return "", errors.Annotate(err, "failed to create task").Err()
+		return "", swarmingTaskError{err}
 	}
 	return resp.TaskId, nil
 }

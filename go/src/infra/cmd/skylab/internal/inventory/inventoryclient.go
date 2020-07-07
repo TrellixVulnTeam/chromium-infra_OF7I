@@ -12,9 +12,12 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/retry"
+	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/grpc/prpc"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
@@ -35,6 +38,7 @@ type Client interface {
 	BatchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error
 	FilterDUTHostnames(context.Context, []string) ([]string, error)
 	UpdateLabstations(context.Context, string, string) (*invV2Api.UpdateLabstationsResponse, error)
+	UpdateDUT(context.Context, *inventory.CommonDeviceSpecs) error
 }
 
 type inventoryClientV2 struct {
@@ -50,6 +54,36 @@ func NewInventoryClient(hc *http.Client, env site.Environment) Client {
 			Options: site.DefaultPRPCOptions,
 		}),
 	}
+}
+
+func (client *inventoryClientV2) UpdateDUT(ctx context.Context, newSpecs *inventory.CommonDeviceSpecs) error {
+	// Copy from https://chromium.git.corp.google.com/infra/infra/+/d0b7fa7d180b2fa273ddd93cf6e6183b65c3b32a/go/src/infra/appengine/crosskylabadmin/app/frontend/inventory/clientv2.go#145
+	devicesToUpdate, labstations, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{newSpecs})
+	if err != nil {
+		return errors.Annotate(err, "convert DUT spec").Err()
+	}
+	if len(devicesToUpdate) == 0 {
+		devicesToUpdate = labstations
+	}
+
+	f := func() error {
+		if rsp, err := client.ic.UpdateCrosDevicesSetup(ctx, &invV2Api.UpdateCrosDevicesSetupRequest{
+			Devices:       devicesToUpdate,
+			PickServoPort: true,
+		}); err != nil {
+			return err
+		} else if len(rsp.FailedDevices) > 0 {
+			// There's only one device under updating.
+			return errors.Reason(rsp.FailedDevices[0].ErrorMsg).Err()
+		}
+		return nil
+	}
+	err = retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "UpdateDUT (v2)"))
+	if err != nil {
+		return errors.Annotate(err, "update setup configs").Err()
+	}
+
+	return nil
 }
 
 func (client *inventoryClientV2) UpdateLabstations(ctx context.Context, hostname, servosToDelete string) (*invV2Api.UpdateLabstationsResponse, error) {
@@ -188,4 +222,25 @@ func (client *inventoryClientV2) FilterDUTHostnames(ctx context.Context, hostnam
 
 	}
 	return out, nil
+}
+
+// Set up the client-side retry strategy for inventory APIs.
+// Slow down the retry to not flood the external APIs.
+var transientErrorRetriesTemplate = retry.ExponentialBackoff{
+	Limited: retry.Limited{
+		Delay:   200 * time.Millisecond,
+		Retries: 3,
+	},
+	Multiplier: 4,
+	MaxDelay:   5 * time.Second,
+}
+
+// transientErrorRetries returns a retry.Factory to use on transient errors on
+// outbound requests.
+func transientErrorRetries() retry.Factory {
+	next := func() retry.Iterator {
+		it := transientErrorRetriesTemplate
+		return &it
+	}
+	return transient.Only(next)
 }
