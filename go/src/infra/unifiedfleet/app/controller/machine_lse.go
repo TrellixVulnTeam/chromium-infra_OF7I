@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
@@ -121,6 +122,39 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		return err
 	}
 	return nil
+}
+
+// ImportOSMachineLSEs implements the logic of importing ChromeOS machine lses and related info to backend storage.
+//
+// The function will return:
+//      * all of the results of the operations that already run
+//      * the first error that it meets
+//
+// The function will stop at the very first error.
+func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, pageSize int) (*fleetds.OpResults, error) {
+	allRes := make(fleetds.OpResults, 0)
+	logging.Debugf(ctx, "Importing the machine lse prototypes for OS lab")
+	res, err := configuration.ImportMachineLSEPrototypes(ctx, util.GetOSMachineLSEPrototypes())
+	if err != nil {
+		return res, err
+	}
+	allRes = append(allRes, *res...)
+
+	lses := util.ToOSMachineLSEs(labConfigs)
+	logging.Debugf(ctx, "Importing %d lses", len(lses))
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(lses))
+		logging.Debugf(ctx, "importing lses %dth - %dth", i, end-1)
+		res, err := inventory.ImportMachineLSEs(ctx, lses[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(lses) {
+			break
+		}
+	}
+	return &allRes, nil
 }
 
 // ImportMachineLSEs implements the logic of importing machine lses and related info to backend storage.

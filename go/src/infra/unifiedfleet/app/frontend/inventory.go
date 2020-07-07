@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
@@ -243,10 +244,19 @@ func (fs *FleetServerImpl) ImportOSMachineLSEs(ctx context.Context, req *api.Imp
 	if err := api.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	_, err = fs.newCrosInventoryInterfaceFactory(ctx, source.GetHost())
+	client, err := fs.newCrosInventoryInterfaceFactory(ctx, source.GetHost())
 	if err != nil {
 		return nil, crosInventoryConnectionFailureStatus.Err()
 	}
-	// TODO: implement importing logics
+	resp, err := client.ListCrosDevicesLabConfig(ctx, &invV2Api.ListCrosDevicesLabConfigRequest{})
+	if err != nil {
+		return nil, crosInventoryServiceFailureStatus("ListCrosDevicesLabConfig").Err()
+	}
+	pageSize := fs.getImportPageSize()
+	res, err := controller.ImportOSMachineLSEs(ctx, resp.GetLabConfigs(), pageSize)
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
+	}
 	return successStatus.Proto(), nil
 }

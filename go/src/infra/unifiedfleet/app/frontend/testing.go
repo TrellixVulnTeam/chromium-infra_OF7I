@@ -17,7 +17,6 @@ import (
 	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
-	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/frontend/fake"
 )
@@ -159,8 +158,8 @@ func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonCl
 	}, nil
 }
 
-func fakeCrosInventoryInterface(ctx context.Context, host string) (invV2Api.InventoryClient, error) {
-	return nil, nil
+func fakeCrosInventoryInterface(ctx context.Context, host string) (CrosInventoryClient, error) {
+	return &fake.InventoryClient{}, nil
 }
 
 func fakeCfgInterfaceFactory(ctx context.Context) luciconfig.Interface {

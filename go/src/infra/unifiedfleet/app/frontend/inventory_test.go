@@ -763,6 +763,47 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			res, err := tf.Fleet.ImportOSMachineLSEs(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
+
+			// Verify machine lse prototypes
+			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", "")
+			So(err, ShouldBeNil)
+			So(api.ParseResources(lps, "Name"), ShouldResemble, []string{"acs-lab:camera", "acs-lab:wificell", "atl-lab:labstation", "atl-lab:standard"})
+
+			// Verify machine lses
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "")
+			So(err, ShouldBeNil)
+			So(api.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"chromeos2-test_host", "chromeos3-test_host", "chromeos5-test_host", "test_servo"})
+			// Spot check some fields
+			for _, r := range machineLSEs {
+				switch r.GetName() {
+				case "test_host", "chromeos1-test_host", "chromeos3-test_host":
+					So(r.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPools(), ShouldResemble, []string{"DUT_POOL_QUOTA", "hotrod"})
+					So(r.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetSmartUsbhub(), ShouldBeTrue)
+				case "test_servo":
+					So(r.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetPools(), ShouldResemble, []string{"labstation_main"})
+					So(r.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetRpm().GetPowerunitName(), ShouldEqual, "test_power_unit_name")
+				}
+			}
+			lse, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_dut_id", false)
+			So(err, ShouldBeNil)
+			So(lse, ShouldHaveLength, 1)
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "atl-lab:standard")
+			So(lse[0].GetHostname(), ShouldEqual, "chromeos2-test_host")
+			lse, err = inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_camera_dut_id", false)
+			So(err, ShouldBeNil)
+			So(lse, ShouldHaveLength, 1)
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "acs-lab:camera")
+			So(lse[0].GetHostname(), ShouldEqual, "chromeos3-test_host")
+			lse, err = inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_wifi_dut_id", false)
+			So(err, ShouldBeNil)
+			So(lse, ShouldHaveLength, 1)
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "acs-lab:wificell")
+			So(lse[0].GetHostname(), ShouldEqual, "chromeos5-test_host")
+			lse, err = inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_labstation_id", false)
+			So(err, ShouldBeNil)
+			So(lse, ShouldHaveLength, 1)
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "atl-lab:labstation")
+			So(lse[0].GetHostname(), ShouldEqual, "test_servo")
 		})
 	})
 }

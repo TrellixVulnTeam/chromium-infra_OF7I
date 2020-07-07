@@ -12,6 +12,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -42,7 +43,7 @@ type CfgInterfaceFactory func(ctx context.Context) luciconfig.Interface
 type MachineDBInterfaceFactory func(ctx context.Context, host string) (crimson.CrimsonClient, error)
 
 // CrosInventoryInterfaceFactory is a constructor for a invV2Api.InventoryClient
-type CrosInventoryInterfaceFactory func(ctx context.Context, host string) (invV2Api.InventoryClient, error)
+type CrosInventoryInterfaceFactory func(ctx context.Context, host string) (CrosInventoryClient, error)
 
 // FleetServerImpl implements the configuration server interfaces.
 type FleetServerImpl struct {
@@ -50,6 +51,11 @@ type FleetServerImpl struct {
 	machineDBInterfaceFactory     MachineDBInterfaceFactory
 	crosInventoryInterfaceFactory CrosInventoryInterfaceFactory
 	importPageSize                int
+}
+
+// CrosInventoryClient refers to the fake inventory v2 client
+type CrosInventoryClient interface {
+	ListCrosDevicesLabConfig(ctx context.Context, in *invV2Api.ListCrosDevicesLabConfigRequest, opts ...grpc.CallOption) (*invV2Api.ListCrosDevicesLabConfigResponse, error)
 }
 
 func (cs *FleetServerImpl) newMachineDBInterfaceFactory(ctx context.Context, host string) (crimson.CrimsonClient, error) {
@@ -67,11 +73,11 @@ func (cs *FleetServerImpl) newMachineDBInterfaceFactory(ctx context.Context, hos
 	return crimson.NewCrimsonPRPCClient(pclient), nil
 }
 
-func (cs *FleetServerImpl) newCrosInventoryInterfaceFactory(ctx context.Context, host string) (invV2Api.InventoryClient, error) {
+func (cs *FleetServerImpl) newCrosInventoryInterfaceFactory(ctx context.Context, host string) (CrosInventoryClient, error) {
 	if cs.crosInventoryInterfaceFactory != nil {
 		return cs.crosInventoryInterfaceFactory(ctx, host)
 	}
-	t, err := auth.GetRPCTransport(ctx, auth.AsCredentialsForwarder)
+	t, err := auth.GetRPCTransport(ctx, auth.AsSelf)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +96,8 @@ func (cs *FleetServerImpl) getImportPageSize() int {
 
 // Error messages for data import
 var (
-	machineDBServiceFailure = "Fail to call machine DB service: %s"
+	machineDBServiceFailure     = "Fail to call machine DB service: %s"
+	crosInventoryServiceFailure = "Fail to call Inventory V2 service: %s"
 
 	successStatus                    = status.New(codes.OK, "")
 	emptyConfigSourceStatus          = status.New(codes.InvalidArgument, "Invalid argument - Config source is empty")
@@ -102,7 +109,10 @@ var (
 		return status.New(codes.Internal, fmt.Sprintf(machineDBServiceFailure, service))
 	}
 	crosInventoryConnectionFailureStatus = status.New(codes.Internal, "Fail to initialize connection to Inventory V2")
-	insertDatastoreFailureStatus         = status.New(codes.Internal, "Fail to insert entity into datastore while importing")
+	crosInventoryServiceFailureStatus    = func(service string) *status.Status {
+		return status.New(codes.Internal, fmt.Sprintf(crosInventoryServiceFailure, service))
+	}
+	insertDatastoreFailureStatus = status.New(codes.Internal, "Fail to insert entity into datastore while importing")
 )
 
 func processImportDatastoreRes(resp *datastore.OpResults, err error) *status.Status {
