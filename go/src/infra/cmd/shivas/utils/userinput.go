@@ -145,6 +145,7 @@ func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s 
 // Name(string) -> Lab(enum) -> Browser/OS LAB(choice to branch) ->
 // -> getBrowserMachine()/getOSMachine() -> Realm(string)
 func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, machine *fleet.Machine, update bool) {
+	machine.Location = &fleet.Location{}
 	input := &Input{
 		Key:      "Name",
 		Desc:     UfleetAPI.ValidName,
@@ -194,9 +195,7 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 					if option == -1 {
 						break
 					}
-					machine.Location = &fleet.Location{
-						Lab: fleet.Lab(option),
-					}
+					machine.Location.Lab = fleet.Lab(option)
 					input = &Input{
 						Key: "Realm",
 					}
