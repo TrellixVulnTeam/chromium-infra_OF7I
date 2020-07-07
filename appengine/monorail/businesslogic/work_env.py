@@ -188,73 +188,82 @@ class WorkEnv(object):
       project_perms_by_ids[project_id] = permissions.GetPermissions(
           self.mc.auth.user_pb, self.mc.auth.effective_ids, project)
 
-    for issue, delta in issue_delta_pairs:
-      project_perms = project_perms_by_ids.get(issue.project_id)
-      config = configs_by_id.get(issue.project_id)
-      project = projects_by_id.get(issue.project_id)
-      granted_perms = tracker_bizobj.GetGrantedPerms(
-          issue, self.mc.auth.effective_ids, config)
-      issue_perms = permissions.UpdateIssuePermissions(
-          project_perms,
-          project,
-          issue,
-          self.mc.auth.effective_ids,
-          granted_perms=granted_perms)
+    with exceptions.ErrorAggregator(permissions.PermissionException) as err_agg:
+      for issue, delta in issue_delta_pairs:
+        project_perms = project_perms_by_ids.get(issue.project_id)
+        config = configs_by_id.get(issue.project_id)
+        project = projects_by_id.get(issue.project_id)
+        granted_perms = tracker_bizobj.GetGrantedPerms(
+            issue, self.mc.auth.effective_ids, config)
+        issue_perms = permissions.UpdateIssuePermissions(
+            project_perms,
+            project,
+            issue,
+            self.mc.auth.effective_ids,
+            granted_perms=granted_perms)
 
-      # User cannot merge any issue into an issue they cannot edit.
-      if delta.merged_into:
-        merged_into_issue = self.GetIssue(
-            delta.merged_into, use_cache=False, allow_viewing_deleted=True)
-        self._AssertPermInIssue(merged_into_issue, permissions.EDIT_ISSUE)
+        # User cannot merge any issue into an issue they cannot edit.
+        if delta.merged_into:
+          merged_into_issue = self.GetIssue(
+              delta.merged_into, use_cache=False, allow_viewing_deleted=True)
+          self._AssertPermInIssue(merged_into_issue, permissions.EDIT_ISSUE)
 
-      # User cannot change values for restricted fields they cannot edit.
-      field_ids = [fv.field_id for fv in delta.field_vals_add]
-      field_ids.extend([fv.field_id for fv in delta.field_vals_remove])
-      field_ids.extend(delta.fields_clear)
-      labels = itertools.chain(delta.labels_add, delta.labels_remove)
-      self._AssertUserCanEditFieldsAndEnumMaskedLabels(
-          project, config, field_ids, labels)
+        # User cannot change values for restricted fields they cannot edit.
+        field_ids = [fv.field_id for fv in delta.field_vals_add]
+        field_ids.extend([fv.field_id for fv in delta.field_vals_remove])
+        field_ids.extend(delta.fields_clear)
+        labels = itertools.chain(delta.labels_add, delta.labels_remove)
+        try:
+          self._AssertUserCanEditFieldsAndEnumMaskedLabels(
+              project, config, field_ids, labels)
+        except permissions.PermissionException as e:
+          err_agg.AddErrorMessage(e.message)
 
-      if issue_perms.HasPerm(permissions.EDIT_ISSUE, self.mc.auth.user_id,
-                             project):
-        continue
+        if issue_perms.HasPerm(permissions.EDIT_ISSUE, self.mc.auth.user_id,
+                               project):
+          continue
 
-      # The user does not have general EDIT_ISSUE permissions, but may
-      # have perms to modify certain issue parts/fields.
+        # The user does not have general EDIT_ISSUE permissions, but may
+        # have perms to modify certain issue parts/fields.
 
-      # Description changes can only be made by users with EDIT_ISSUE.
-      if is_description_change:
-        raise permissions.PermissionException(
-            'User not allowed to edit description in issue %r' % issue)
+        # Description changes can only be made by users with EDIT_ISSUE.
+        if is_description_change:
+          err_agg.AddErrorMessage(
+              'User not allowed to edit description in issue %s:%d' %
+              (issue.project_name, issue.local_id))
 
-      if comment_content and not issue_perms.HasPerm(
-          permissions.ADD_ISSUE_COMMENT, self.mc.auth.user_id, project):
-        raise permissions.PermissionException(
-            'User not allowed to add comment in issue %r' % issue)
+        if comment_content and not issue_perms.HasPerm(
+            permissions.ADD_ISSUE_COMMENT, self.mc.auth.user_id, project):
+          err_agg.AddErrorMessage(
+              'User not allowed to add comment in issue %s:%d' %
+              (issue.project_name, issue.local_id))
 
-      if delta == tracker_pb2.IssueDelta():
-        continue
+        if delta == tracker_pb2.IssueDelta():
+          continue
 
-      allowed_delta = tracker_pb2.IssueDelta()
-      if issue_perms.HasPerm(permissions.EDIT_ISSUE_STATUS,
-                             self.mc.auth.user_id, project):
-        allowed_delta.status = delta.status
-      if issue_perms.HasPerm(permissions.EDIT_ISSUE_SUMMARY,
-                             self.mc.auth.user_id, project):
-        allowed_delta.summary = delta.summary
-      if issue_perms.HasPerm(permissions.EDIT_ISSUE_OWNER, self.mc.auth.user_id,
-                             project):
-        allowed_delta.owner_id = delta.owner_id
-      if issue_perms.HasPerm(permissions.EDIT_ISSUE_CC, self.mc.auth.user_id,
-                             project):
-        allowed_delta.cc_ids_add = delta.cc_ids_add
-        allowed_delta.cc_ids_remove = delta.cc_ids_remove
-      # We do not check for or add other fields (e.g. comps, labels, fields)
-      # of `delta` to `allowed_delta` because they are only allowed
-      # with EDIT_ISSUE perms.
-      if delta != allowed_delta:
-        raise permissions.PermissionException(
-            'User lack permission to make these changes to issue %r' % issue)
+        allowed_delta = tracker_pb2.IssueDelta()
+        if issue_perms.HasPerm(permissions.EDIT_ISSUE_STATUS,
+                               self.mc.auth.user_id, project):
+          allowed_delta.status = delta.status
+        if issue_perms.HasPerm(permissions.EDIT_ISSUE_SUMMARY,
+                               self.mc.auth.user_id, project):
+          allowed_delta.summary = delta.summary
+        if issue_perms.HasPerm(permissions.EDIT_ISSUE_OWNER,
+                               self.mc.auth.user_id, project):
+          allowed_delta.owner_id = delta.owner_id
+        if issue_perms.HasPerm(permissions.EDIT_ISSUE_CC, self.mc.auth.user_id,
+                               project):
+          allowed_delta.cc_ids_add = delta.cc_ids_add
+          allowed_delta.cc_ids_remove = delta.cc_ids_remove
+        # We do not check for or add other fields (e.g. comps, labels, fields)
+        # of `delta` to `allowed_delta` because they are only allowed
+        # with EDIT_ISSUE perms.
+        if delta != allowed_delta:
+          err_agg.AddErrorMessage(
+              'User lack permission to make these changes to issue %s:%d' %
+              (issue.project_name, issue.local_id))
+
+  # end of `with` block.
 
   def _AssertUserCanDeleteComment(self, issue, comment):
     issue_perms = self._AssertUserCanViewIssue(
@@ -282,7 +291,7 @@ class WorkEnv(object):
     if not permissions.CanEditValueForFieldDef(
         self.mc.auth.effective_ids, self.mc.perms, project, fielddef):
       raise permissions.PermissionException(
-          'User is not allowed to edit this custom field')
+          'User is not allowed to edit custom field %s' % fielddef.field_name)
 
   def _AssertUserCanEditFieldsAndEnumMaskedLabels(
       self, project, config, field_ids, labels):
@@ -300,10 +309,14 @@ class WorkEnv(object):
         field_ids.add(enum_fds_by_name.get(enum_field_name))
 
     fds_by_id = {fd.field_id: fd for fd in config.field_defs}
-    for field_id in field_ids:
-      fd = fds_by_id.get(field_id)
-      if fd:
-        self._AssertUserCanEditValueForFieldDef(project, fd)
+    with exceptions.ErrorAggregator(permissions.PermissionException) as err_agg:
+      for field_id in field_ids:
+        fd = fds_by_id.get(field_id)
+        if fd:
+          try:
+            self._AssertUserCanEditValueForFieldDef(project, fd)
+          except permissions.PermissionException as e:
+            err_agg.AddErrorMessage(e.message)
 
   def _AssertUserCanViewFieldDef(self, project, field):
     """Make sure the user may view the field."""

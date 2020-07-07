@@ -116,11 +116,12 @@ class WorkEnvTest(unittest.TestCase):
     delta = tracker_pb2.IssueDelta(
         summary='changing summary',
         fields_clear=[restricted_int_fd.field_id],
-        labels_remove=['int_field-test'])
+        labels_remove=['enum_field-test'])
     issue_delta_pairs = [(issue, delta)]
 
     self.SignIn(user_id=self.user_1.user_id)
-    with self.assertRaises(permissions.PermissionException):
+    with self.assertRaisesRegexp(permissions.PermissionException,
+                                 r'.+int_field\n.+enum_field'):
       with self.work_env as we:
         we._AssertUserCanModifyIssues(issue_delta_pairs, True)
 
@@ -174,31 +175,47 @@ class WorkEnvTest(unittest.TestCase):
                 member_id=self.user_1.user_id,
                 perms=[
                     permissions.ADD_ISSUE_COMMENT,
-                    permissions.EDIT_ISSUE_SUMMARY
+                    permissions.EDIT_ISSUE_SUMMARY, permissions.EDIT_ISSUE_OWNER
                 ])
         ])
+    error_messages_re = []
 
+    # user_1 can update issue summaries in the project.
     issue_1 = fake.MakeTestIssue(
-        788, 1, 'summary', 'Available', self.admin_user.user_id)
+        788, 1, 'summary', 'Available', self.admin_user.user_id,
+        project_name='farm')
     self.services.issue.TestAddIssue(issue_1)
     issue_delta_pairs = [(issue_1, tracker_pb2.IssueDelta(summary='bok bok'))]
 
-    # user_1 can add new comments and update the summary
-    self.SignIn(user_id=self.user_1.user_id)
-    with self.work_env as we:
-      we._AssertUserCanModifyIssues(
-          issue_delta_pairs, False, comment_content='ping')
-
+    # user_1 does not have EDIT_ISSUE_CC perms in project.
+    error_messages_re.append(r'.+changes to issue farm:2')
     issue_2 = fake.MakeTestIssue(
-        788, 2, 'hey hey', 'Available', self.admin_user.user_id)
+        788, 2, 'summary', 'Fixed', self.admin_user.user_id,
+        project_name='farm')
     self.services.issue.TestAddIssue(issue_2)
-    # User does not have EDIT_ISSUE_CC perms in project.
     issue_delta_pairs.append(
-        (
-            issue_2,
-            tracker_pb2.IssueDelta(
-                summary='too many chickens', cc_ids_add=[777])))
-    with self.assertRaises(permissions.PermissionException):
+        (issue_2, tracker_pb2.IssueDelta(cc_ids_add=[777])))
+
+    # user_1 does not have EDIT_ISSUE_STATUS perms in project.
+    error_messages_re.append(r'.+changes to issue farm:3')
+    issue_3 = fake.MakeTestIssue(
+        788, 3, 'summary', 'Fixed', self.admin_user.user_id,
+        project_name='farm')
+    self.services.issue.TestAddIssue(issue_3)
+    issue_delta_pairs.append(
+        (issue_3, tracker_pb2.IssueDelta(status='eggsHatching')))
+
+    # user_1 can update issue owners in the project.
+    issue_4 = fake.MakeTestIssue(
+        788, 4, 'summary', 'Fixed', self.admin_user.user_id,
+        project_name='farm')
+    self.services.issue.TestAddIssue(issue_3)
+    issue_delta_pairs.append(
+        (issue_4, tracker_pb2.IssueDelta(owner_id=self.user_2.user_id)))
+
+    self.SignIn(user_id=self.user_1.user_id)
+    with self.assertRaisesRegexp(permissions.PermissionException,
+                                 '\n'.join(error_messages_re)):
       with self.work_env as we:
         we._AssertUserCanModifyIssues(
             issue_delta_pairs, False, comment_content='ping')
