@@ -12,18 +12,16 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='api/v3/api_proto/permission_objects.proto',
   package='monorail.v3',
   syntax='proto3',
-  serialized_options=None,
+  serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n)api/v3/api_proto/permission_objects.proto\x12\x0bmonorail.v3\x1a,google_proto/google/api/field_behavior.proto\"O\n\rPermissionSet\x12\x10\n\x08resource\x18\x01 \x01(\t\x12,\n\x0bpermissions\x18\x02 \x03(\x0e\x32\x17.monorail.v3.Permission*\x90\x01\n\nPermission\x12\x1a\n\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x10\n\x0cHOTLIST_EDIT\x10\x01\x12\x16\n\x12HOTLIST_ADMINISTER\x10\x02\x12\x0e\n\nISSUE_EDIT\x10\x03\x12\x12\n\x0e\x46IELD_DEF_EDIT\x10\x04\x12\x18\n\x14\x46IELD_DEF_VALUE_EDIT\x10\x05\x62\x06proto3'
-  ,
-  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,])
+  serialized_pb=b'\n)api/v3/api_proto/permission_objects.proto\x12\x0bmonorail.v3\"O\n\rPermissionSet\x12\x10\n\x08resource\x18\x01 \x01(\t\x12,\n\x0bpermissions\x18\x02 \x03(\x0e\x32\x17.monorail.v3.Permission*\x90\x01\n\nPermission\x12\x1a\n\x16PERMISSION_UNSPECIFIED\x10\x00\x12\x10\n\x0cHOTLIST_EDIT\x10\x01\x12\x16\n\x12HOTLIST_ADMINISTER\x10\x02\x12\x0e\n\nISSUE_EDIT\x10\x03\x12\x12\n\x0e\x46IELD_DEF_EDIT\x10\x04\x12\x18\n\x14\x46IELD_DEF_VALUE_EDIT\x10\x05\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+)
 
 _PERMISSION = _descriptor.EnumDescriptor(
   name='Permission',
@@ -65,8 +63,8 @@ _PERMISSION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=186,
-  serialized_end=330,
+  serialized_start=140,
+  serialized_end=284,
 )
 _sym_db.RegisterEnumDescriptor(_PERMISSION)
 
@@ -114,8 +112,8 @@ _PERMISSIONSET = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=104,
-  serialized_end=183,
+  serialized_start=58,
+  serialized_end=137,
 )
 
 _PERMISSIONSET.fields_by_name['permissions'].enum_type = _PERMISSION
@@ -131,4 +129,5 @@ PermissionSet = _reflection.GeneratedProtocolMessageType('PermissionSet', (_mess
 _sym_db.RegisterMessage(PermissionSet)
 
 
+DESCRIPTOR._options = None
 # @@protoc_insertion_point(module_scope)

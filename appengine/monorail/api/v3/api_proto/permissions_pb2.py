@@ -19,9 +19,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='api/v3/api_proto/permissions.proto',
   package='monorail.v3',
   syntax='proto3',
-  serialized_options=None,
+  serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\"api/v3/api_proto/permissions.proto\x12\x0bmonorail.v3\x1a,google_proto/google/api/field_behavior.proto\x1a)api/v3/api_proto/permission_objects.proto\",\n\x17GetPermissionSetRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"3\n\x1d\x42\x61tchGetPermissionSetsRequest\x12\x12\n\x05names\x18\x01 \x03(\tB\x03\xe0\x41\x02\"U\n\x1e\x42\x61tchGetPermissionSetsResponse\x12\x33\n\x0fpermission_sets\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.PermissionSet2\xda\x01\n\x0bPermissions\x12V\n\x10GetPermissionSet\x12$.monorail.v3.GetPermissionSetRequest\x1a\x1a.monorail.v3.PermissionSet\"\x00\x12s\n\x16\x42\x61tchGetPermissionSets\x12*.monorail.v3.BatchGetPermissionSetsRequest\x1a+.monorail.v3.BatchGetPermissionSetsResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\"api/v3/api_proto/permissions.proto\x12\x0bmonorail.v3\x1a,google_proto/google/api/field_behavior.proto\x1a)api/v3/api_proto/permission_objects.proto\",\n\x17GetPermissionSetRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"3\n\x1d\x42\x61tchGetPermissionSetsRequest\x12\x12\n\x05names\x18\x01 \x03(\tB\x03\xe0\x41\x02\"U\n\x1e\x42\x61tchGetPermissionSetsResponse\x12\x33\n\x0fpermission_sets\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.PermissionSet2\xda\x01\n\x0bPermissions\x12V\n\x10GetPermissionSet\x12$.monorail.v3.GetPermissionSetRequest\x1a\x1a.monorail.v3.PermissionSet\"\x00\x12s\n\x16\x42\x61tchGetPermissionSets\x12*.monorail.v3.BatchGetPermissionSetsRequest\x1a+.monorail.v3.BatchGetPermissionSetsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
   dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_permission__objects__pb2.DESCRIPTOR,])
 
@@ -151,6 +151,7 @@ BatchGetPermissionSetsResponse = _reflection.GeneratedProtocolMessageType('Batch
 _sym_db.RegisterMessage(BatchGetPermissionSetsResponse)
 
 
+DESCRIPTOR._options = None
 _GETPERMISSIONSETREQUEST.fields_by_name['name']._options = None
 _BATCHGETPERMISSIONSETSREQUEST.fields_by_name['names']._options = None
 

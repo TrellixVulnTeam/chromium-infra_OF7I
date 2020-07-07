@@ -10,6 +10,8 @@ syntax = "proto3";
 
 package monorail.v3;
 
+option go_package = "api/v3/api_proto";
+
 import "google_proto/google/api/field_behavior.proto";
 import "google_proto/google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
