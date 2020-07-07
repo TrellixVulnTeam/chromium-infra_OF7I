@@ -7,20 +7,11 @@ package analyzer
 import (
 	"net/url"
 	"testing"
-	"time"
 
 	"golang.org/x/net/context"
 
 	"infra/monitoring/messages"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
-
-func fakeNow(t time.Time) func() time.Time {
-	return func() time.Time {
-		return t
-	}
-}
 
 func urlParse(s string, t *testing.T) *url.URL {
 	p, err := url.Parse(s)
@@ -30,84 +21,12 @@ func urlParse(s string, t *testing.T) *url.URL {
 	return p
 }
 
-type fakeReasonRaw struct {
-	signature string
-}
-
-func (f *fakeReasonRaw) Signature() string {
-	if f.signature != "" {
-		return f.signature
-	}
-
-	return "fakeSignature"
-}
-
-func (f *fakeReasonRaw) Kind() string {
-	return "fakeKind"
-}
-
-func (f *fakeReasonRaw) Title([]*messages.BuildStep) string {
-	return "fakeTitle"
-}
-
-func (f *fakeReasonRaw) Severity() messages.Severity {
-	return messages.NewFailure
-}
-
-type fakeAnalyzer struct {
-}
-
-func (f *fakeAnalyzer) Analyze(ctx context.Context, failures []*messages.BuildStep, tree string) ([]messages.ReasonRaw, []error) {
-	return fakeFinder(ctx, failures, tree), nil
-}
-
-func fakeFinder(ctx context.Context, failures []*messages.BuildStep, tree string) []messages.ReasonRaw {
-	raws := make([]messages.ReasonRaw, len(failures))
-	for i := range failures {
-		raws[i] = &fakeReasonRaw{}
-	}
-	return raws
-}
-
 func newTestAnalyzer(minBuilds, maxBuilds int) *Analyzer {
 	a := New(minBuilds, maxBuilds)
 	a.CrBug = nil
 	a.FindIt = nil
 
 	return a
-}
-
-func TestWouldCloseTree(t *testing.T) {
-	ctx := context.Background()
-	Convey("gatekepeer", t, func() {
-		gkr := NewGatekeeperRules(ctx, []*messages.GatekeeperConfig{
-			{
-				Masters: map[string][]messages.MasterConfig{
-					"https://ci.chromium.org/p/fake.master": {{
-						Builders: map[string]messages.BuilderConfig{
-							"fake.builder": {
-								ClosingSteps: []string{"*"},
-							},
-						},
-						ExcludedBuilders: []string{"other.builder"},
-					}},
-				},
-			},
-		}, map[string][]messages.TreeMasterConfig{
-			"test_tree": {
-				messages.TreeMasterConfig{
-					Masters: map[messages.MasterLocation][]string{
-						{URL: *urlParse(
-							"https://ci.chromium.org/p/fake.master", t)}: {"fake.builder", "other.builder"},
-					},
-				},
-			},
-		})
-
-		loc := &messages.MasterLocation{URL: *urlParse("https://ci.chromium.org/p/fake.master", t)}
-		So(gkr.WouldCloseTree(ctx, loc, "fake.builder", "fake.step"), ShouldEqual, true)
-		So(gkr.WouldCloseTree(ctx, loc, "other.builder", "fake.step"), ShouldEqual, false)
-	})
 }
 
 func TestExcludeFailure(t *testing.T) {

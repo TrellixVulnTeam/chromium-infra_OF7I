@@ -19,42 +19,22 @@ type GatekeeperRules struct {
 }
 
 type categoryAggregator struct {
-	excludedSteps     stringset.Set
-	forgivingSteps    stringset.Set
-	forgivingOptional stringset.Set
-	sheriffClasses    stringset.Set
-	closingSteps      stringset.Set
-	closingOptional   stringset.Set
+	excludedSteps stringset.Set
 }
 
 func aggregatorFromBuilderConfig(b messages.BuilderConfig) categoryAggregator {
 	return categoryAggregator{
-		excludedSteps:     stringset.NewFromSlice(b.ExcludedSteps...),
-		forgivingSteps:    stringset.NewFromSlice(b.ForgivingSteps...),
-		forgivingOptional: stringset.NewFromSlice(b.ForgivingOptional...),
-		sheriffClasses:    stringset.NewFromSlice(b.SheriffClasses...),
-		closingSteps:      stringset.NewFromSlice(b.ClosingSteps...),
-		closingOptional:   stringset.NewFromSlice(b.ClosingOptional...),
+		excludedSteps: stringset.NewFromSlice(b.ExcludedSteps...),
 	}
 }
 
 func (c *categoryAggregator) addCategoryConfig(categoryCfg messages.CategoryConfig) {
 	c.excludedSteps = c.excludedSteps.Union(stringset.NewFromSlice(categoryCfg.ExcludedSteps...))
-	c.forgivingSteps = c.forgivingSteps.Union(stringset.NewFromSlice(categoryCfg.ForgivingSteps...))
-	c.forgivingOptional = c.forgivingOptional.Union(stringset.NewFromSlice(categoryCfg.ForgivingOptional...))
-	c.sheriffClasses = c.sheriffClasses.Union(stringset.NewFromSlice(categoryCfg.SheriffClasses...))
-	c.closingSteps = c.closingSteps.Union(stringset.NewFromSlice(categoryCfg.ClosingSteps...))
-	c.closingOptional = c.closingOptional.Union(stringset.NewFromSlice(categoryCfg.ClosingOptional...))
 }
 
 func (c categoryAggregator) toBuilderConfig() messages.BuilderConfig {
 	return messages.BuilderConfig{
-		ExcludedSteps:     c.excludedSteps.ToSlice(),
-		ForgivingSteps:    c.forgivingSteps.ToSlice(),
-		ForgivingOptional: c.forgivingOptional.ToSlice(),
-		SheriffClasses:    c.sheriffClasses.ToSlice(),
-		ClosingSteps:      c.closingSteps.ToSlice(),
-		ClosingOptional:   c.closingOptional.ToSlice(),
+		ExcludedSteps: c.excludedSteps.ToSlice(),
 	}
 }
 
@@ -115,43 +95,6 @@ func (r *GatekeeperRules) getAllowedBuilders(tree string, master *messages.Maste
 	}
 
 	return allowed
-}
-
-// WouldCloseTree returns true if a step failure on given builder/master would
-// cause it to close the tree.
-func (r *GatekeeperRules) WouldCloseTree(ctx context.Context, master *messages.MasterLocation, builder, step string) bool {
-	mcs, ok := r.findMaster(master)
-	if !ok {
-		logging.Errorf(ctx, "Missing master cfg: %s", master)
-		return false
-	}
-	mc := mcs[0]
-	bc, ok := mc.Builders[builder]
-	if !ok {
-		bc, ok = mc.Builders["*"]
-		if !ok {
-			return false
-		}
-	}
-
-	// TODO: Check for cfg.Categories
-	for _, xstep := range bc.ExcludedSteps {
-		if xstep == step {
-			return false
-		}
-	}
-
-	csteps := []string{}
-	csteps = append(csteps, bc.ClosingSteps...)
-	csteps = append(csteps, bc.ClosingOptional...)
-
-	for _, cs := range csteps {
-		if cs == "*" || cs == step {
-			return true
-		}
-	}
-
-	return false
 }
 
 func contains(arr []string, s string) bool {
