@@ -428,7 +428,7 @@ func (is *InventoryServerImpl) UpdateLabstations(ctx context.Context, req *api.U
 		return nil, err
 	}
 
-	l, err := datastore.UpdateLabstations(ctx, req.GetHostname(), req.GetDeletedServos())
+	l, err := datastore.UpdateLabstations(ctx, req.GetHostname(), req.GetDeletedServos(), req.GetAddedDUTs())
 	if err != nil {
 		return nil, err
 	}

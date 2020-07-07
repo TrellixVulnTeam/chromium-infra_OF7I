@@ -145,6 +145,7 @@ message GetCrosDevicesResponse {
 message UpdateLabstationsRequest {
   string hostname = 1;
   repeated string deletedServos = 2;
+  repeated string addedDUTs = 3;
 }
 
 message UpdateLabstationsResponse {

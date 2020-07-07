@@ -43,7 +43,7 @@ type servoHostRecord struct {
 type servoHostRegistry map[string]*servoHostRecord
 
 // UpdateLabstations updates a labstation's info, e.g. servos
-func UpdateLabstations(ctx context.Context, hostname string, servoToDelete []string) (*lab.ChromeOSDevice, error) {
+func UpdateLabstations(ctx context.Context, hostname string, servoToDelete, addedDUTs []string) (*lab.ChromeOSDevice, error) {
 	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx)).Eq("Hostname", hostname)
 	var servoHosts []*DeviceEntity
 	if err := datastore.GetAll(ctx, q, &servoHosts); err != nil {
@@ -68,6 +68,17 @@ func UpdateLabstations(ctx context.Context, hostname string, servoToDelete []str
 	proto.Merge(&oldLabstation, &l)
 
 	l.GetLabstation().Servos = deleteServosBySN(l.GetLabstation().GetServos(), servoToDelete)
+	if len(addedDUTs) > 0 {
+		dutServos, err := getDUTServoByHostname(ctx, addedDUTs)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed add get servo from DUT").Err()
+		}
+		servos, err := addServosFromDUTs(hostname, l.GetLabstation().GetServos(), dutServos)
+		if err != nil {
+			return nil, errors.Annotate(err, "failed add servo from DUT").Err()
+		}
+		l.GetLabstation().Servos = servos
+	}
 	newConfig, err := proto.Marshal(&l)
 	if err != nil {
 		return nil, errors.Reason("fail to marshal the new labstation message after updating servos").Err()
@@ -358,4 +369,26 @@ func deleteServosBySN(servos []*lab.Servo, servoToDelete []string) []*lab.Servo 
 		}
 	}
 	return newServos
+}
+
+func addServosFromDUTs(hostname string, servos, dutServos []*lab.Servo) ([]*lab.Servo, error) {
+	servoBySN := make(map[string]*lab.Servo, len(servos))
+	servoByPort := make(map[int32]bool, len(servos))
+	for _, s := range servos {
+		servoBySN[s.GetServoSerial()] = s
+		servoByPort[s.GetServoPort()] = true
+	}
+	for _, servo := range dutServos {
+		if servo.GetServoHostname() != hostname {
+			return nil, errors.Reason("DUT does not use selected labstation as servo_hostname for %s", hostname).Err()
+		} else if servo.GetServoSerial() == "" {
+			return nil, errors.Reason("DUT servo does not have serial number").Err()
+		} else if _, ok := servoBySN[servo.GetServoSerial()]; ok {
+			return nil, errors.Reason("The labstation %s already has servo with serial number: %s", hostname, servo.GetServoSerial()).Err()
+		} else if _, ok := servoByPort[servo.GetServoPort()]; ok {
+			return nil, errors.Reason("The labstation %s already has servo with port number: %d", hostname, servo.GetServoPort()).Err()
+		}
+		servos = append(servos, servo)
+	}
+	return servos, nil
 }

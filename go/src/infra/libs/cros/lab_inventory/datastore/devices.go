@@ -350,6 +350,37 @@ func GetDevicesByHostnames(ctx context.Context, hostnames []string) DeviceOpResu
 	return retrievingResults
 }
 
+func getDUTServoByHostname(ctx context.Context, hostnames []string) ([]*lab.Servo, error) {
+	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx))
+	var servos []*lab.Servo
+
+	for _, hostname := range hostnames {
+		var devs []*DeviceEntity
+		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
+			return nil, errors.Annotate(err, "failed to get DUT by hostname %s", hostname).Err()
+		} else if len(devs) == 0 {
+			return nil, errors.Reason("No such host: %s", hostname).Err()
+		} else if len(devs) > 1 {
+			return nil, errors.Reason("multiple entities found with hostname %s: %v", hostname, devs).Err()
+		}
+		entity := devs[0]
+		var devProto lab.ChromeOSDevice
+		if err := entity.GetCrosDeviceProto(&devProto); err != nil {
+			return nil, errors.Annotate(err, "failed to unmarshal lab config data for %s", hostname).Err()
+		}
+		dut := devProto.GetDut()
+		if dut == nil {
+			continue
+		}
+		servo := dut.GetPeripherals().GetServo()
+		if servo == nil {
+			continue
+		}
+		servos = append(servos, servo)
+	}
+	return servos, nil
+}
+
 // GetAllDevices  returns all device entities.
 //
 // TODO(guocb) optimize for performance if needed.
