@@ -125,10 +125,12 @@ class RankFlakes(BaseHandler):
           luci_project, self.request.get('cursor'),
           self.request.get('direction').strip(), page_size)
 
-    enabled_flakes = flake_detection_utils.RemoveDisabledFlakes(flakes)
+    # TODO(crbug.com/1095671): Resume the feature when detecting disabled tests
+    # is back to normal.
+    # Hides the flakes if they have been disabled.
+    # enabled_flakes = flake_detection_utils.RemoveDisabledFlakes(flakes)
 
-    flakes_data = flake_detection_utils.GenerateFlakesData(
-        enabled_flakes, bool(bug_id))
+    flakes_data = flake_detection_utils.GenerateFlakesData(flakes, bool(bug_id))
 
     data = {
         'flakes_data':
@@ -139,14 +141,14 @@ class RankFlakes(BaseHandler):
             cursor,
         'n': (page_size
               if page_size != flake_detection_utils.DEFAULT_PAGE_SIZE else ''),
-        'luci_project': (
-            luci_project if luci_project != _DEFAULT_LUCI_PROJECT else ''),
+        'luci_project':
+            (luci_project if luci_project != _DEFAULT_LUCI_PROJECT else ''),
         'flake_filter':
             flake_filter,
         'bug_id':
             bug_id or '',
-        'monorail_project': (
-            luci_project if luci_project != _DEFAULT_MONORAIL_PROJECT else ''),
+        'monorail_project':
+            (luci_project if luci_project != _DEFAULT_MONORAIL_PROJECT else ''),
         'error_message':
             error_message,
         'flake_weights': [[

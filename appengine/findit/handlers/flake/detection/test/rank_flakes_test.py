@@ -152,35 +152,33 @@ class RankFlakesTest(WaterfallTestCase):
     self.flake6_dict = self.flake6.to_dict()
     self.flake6_dict['flake_issue'] = flake_issue0_dict
 
-    for data, flake in ((self.flake1_dict, self.flake1),
-                        (self.flake3_dict, self.flake3), (self.flake4_dict,
-                                                          self.flake4),
-                        (self.flake5_dict, self.flake5), (self.flake6_dict,
-                                                          self.flake6)):
+    self.flake7_dict = self.flake7.to_dict()
+
+    for data, flake in ((self.flake1_dict, self.flake1), (self.flake3_dict,
+                                                          self.flake3),
+                        (self.flake4_dict, self.flake4), (self.flake5_dict,
+                                                          self.flake5),
+                        (self.flake6_dict, self.flake6), (self.flake7_dict,
+                                                          self.flake7)):
       data['flake_urlsafe_key'] = flake.key.urlsafe()
       data['time_delta'] = '1 day, 01:00:00'
-      data['flake_counts_last_week'] = [
-          {
-              'flake_type': 'cq false rejection',
-              'impacted_cl_count': 0,
-              'occurrence_count': 0
-          },
-          {
-              'flake_type': 'cq step level retry',
-              'impacted_cl_count': 0,
-              'occurrence_count': 0
-          },
-          {
-              'flake_type': 'cq hidden flake',
-              'impacted_cl_count': 0,
-              'occurrence_count': 0
-          },
-          {
-              'flake_type': 'ci failed step',
-              'impacted_cl_count': 0,
-              'occurrence_count': 0
-          }
-      ]
+      data['flake_counts_last_week'] = [{
+          'flake_type': 'cq false rejection',
+          'impacted_cl_count': 0,
+          'occurrence_count': 0
+      }, {
+          'flake_type': 'cq step level retry',
+          'impacted_cl_count': 0,
+          'occurrence_count': 0
+      }, {
+          'flake_type': 'cq hidden flake',
+          'impacted_cl_count': 0,
+          'occurrence_count': 0
+      }, {
+          'flake_type': 'ci failed step',
+          'impacted_cl_count': 0,
+          'occurrence_count': 0
+      }]
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2018, 10, 2, 1))
@@ -192,35 +190,38 @@ class RankFlakesTest(WaterfallTestCase):
         },
         status=200)
     self.assertEqual(
-        json.dumps({
-            'flakes_data': [
-                self.flake3_dict, self.flake4_dict, self.flake6_dict
-            ],
-            'prev_cursor':
-                '',
-            'cursor':
-                '',
-            'n':
-                '',
-            'luci_project':
-                '',
-            'flake_filter':
-                '',
-            'bug_id':
-                '',
-            'monorail_project':
-                '',
-            'error_message':
-                None,
-            'flake_weights': [('cq false rejection', 100),
-                              ('cq step level retry', 10),
-                              ('cq hidden flake', 1), ('ci failed step', 10)],
-            'filter_names': [
-                tag for tag in SUPPORTED_TAGS
-                if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
-            ]
-        },
-                   default=str), response.body)
+        json.dumps(
+            {
+                'flakes_data': [
+                    self.flake3_dict, self.flake7_dict, self.flake4_dict,
+                    self.flake6_dict
+                ],
+                'prev_cursor':
+                    '',
+                'cursor':
+                    '',
+                'n':
+                    '',
+                'luci_project':
+                    '',
+                'flake_filter':
+                    '',
+                'bug_id':
+                    '',
+                'monorail_project':
+                    '',
+                'error_message':
+                    None,
+                'flake_weights': [('cq false rejection', 100),
+                                  ('cq step level retry', 10),
+                                  ('cq hidden flake', 1),
+                                  ('ci failed step', 10)],
+                'filter_names': [
+                    tag for tag in SUPPORTED_TAGS
+                    if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
+                ]
+            },
+            default=str), response.body)
 
   @mock.patch.object(Flake, 'NormalizeTestName', return_value='suite.test1')
   def testSearchRedirectOldFlake(self, _):
@@ -231,8 +232,9 @@ class RankFlakesTest(WaterfallTestCase):
         },
         status=302)
 
-    expected_url_suffix = ('/p/chromium/flake-portal/flakes/occurrences?key=%s'
-                           % self.flake2.key.urlsafe())
+    expected_url_suffix = (
+        '/p/chromium/flake-portal/flakes/occurrences?key=%s' %
+        self.flake2.key.urlsafe())
 
     self.assertTrue(
         response.headers.get('Location', '').endswith(expected_url_suffix))
@@ -246,8 +248,9 @@ class RankFlakesTest(WaterfallTestCase):
         },
         status=302)
 
-    expected_url_suffix = ('/p/chromium/flake-portal/flakes/occurrences?key=%s'
-                           % self.flake3.key.urlsafe())
+    expected_url_suffix = (
+        '/p/chromium/flake-portal/flakes/occurrences?key=%s' %
+        self.flake3.key.urlsafe())
 
     self.assertTrue(
         response.headers.get('Location', '').endswith(expected_url_suffix))
@@ -263,37 +266,40 @@ class RankFlakesTest(WaterfallTestCase):
         status=200)
 
     self.assertEqual(
-        json.dumps({
-            'flakes_data': [self.flake3_dict],
-            'prev_cursor':
-                '',
-            'cursor':
-                'CtsBChwKFWZsYWtlX3Njb3JlX2xhc3Rfd2VlaxIDCLBUCh8KEmxhc3Rfb2N'
-                'jdXJyZWRfdGltZRIJCIDA_-P3490CCi4KFG5vcm1hbGl6ZWRfc3RlcF9uYW1'
-                'lEhYaFG5vcm1hbGl6ZWRfc3RlcF9uYW1lCiAKD3Rlc3RfbGFiZWxfbmFtZRIN'
-                'GgtzdWl0ZS50ZXN0MhJEagx0ZXN0YmVkLXRlc3RyNAsSBUZsYWtlIiljaHJvbW'
-                'l1bUBub3JtYWxpemVkX3N0ZXBfbmFtZUBzdWl0ZS50ZXN0MgwYACAB',
-            'n':
-                1,
-            'luci_project':
-                '',
-            'flake_filter':
-                'suite::suite',
-            'bug_id':
-                '',
-            'monorail_project':
-                '',
-            'error_message':
-                None,
-            'flake_weights': [('cq false rejection', 100),
-                              ('cq step level retry', 10),
-                              ('cq hidden flake', 1), ('ci failed step', 10)],
-            'filter_names': [
-                tag for tag in SUPPORTED_TAGS
-                if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
-            ]
-        },
-                   default=str), response.body)
+        json.dumps(
+            {
+                'flakes_data': [self.flake3_dict],
+                'prev_cursor':
+                    '',
+                'cursor':
+                    'CtsBChwKFWZsYWtlX3Njb3JlX2xhc3Rfd2VlaxIDCLBUCh8KEmxhc3Rfb2'
+                    'NjdXJyZWRfdGltZRIJCIDA_-P3490CCi4KFG5vcm1hbGl6ZWRfc3RlcF9u'
+                    'YW1lEhYaFG5vcm1hbGl6ZWRfc3RlcF9uYW1lCiAKD3Rlc3RfbGFiZWxfb'
+                    'mFtZRINGgtzdWl0ZS50ZXN0MhJEagx0ZXN0YmVkLXRlc3RyNAsSBUZsYWt'
+                    'lIiljaHJvbWl1bUBub3JtYWxpemVkX3N0ZXBfbmFtZUBzdWl0ZS50ZXN0M'
+                    'gwYACAB',
+                'n':
+                    1,
+                'luci_project':
+                    '',
+                'flake_filter':
+                    'suite::suite',
+                'bug_id':
+                    '',
+                'monorail_project':
+                    '',
+                'error_message':
+                    None,
+                'flake_weights': [('cq false rejection', 100),
+                                  ('cq step level retry', 10),
+                                  ('cq hidden flake', 1),
+                                  ('ci failed step', 10)],
+                'filter_names': [
+                    tag for tag in SUPPORTED_TAGS
+                    if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
+                ]
+            },
+            default=str), response.body)
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2018, 10, 2, 1))
@@ -313,33 +319,35 @@ class RankFlakesTest(WaterfallTestCase):
         },
         status=200)
     self.assertEqual(
-        json.dumps({
-            'flakes_data': [self.flake3_dict],
-            'prev_cursor':
-                '',
-            'cursor':
-                cursor,
-            'n':
-                '',
-            'luci_project':
-                '',
-            'flake_filter':
-                'test_type::flavored_tests@-test_type::tests',
-            'bug_id':
-                '',
-            'monorail_project':
-                '',
-            'error_message':
-                None,
-            'flake_weights': [('cq false rejection', 100),
-                              ('cq step level retry', 10),
-                              ('cq hidden flake', 1), ('ci failed step', 10)],
-            'filter_names': [
-                tag for tag in SUPPORTED_TAGS
-                if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
-            ]
-        },
-                   default=str), response.body)
+        json.dumps(
+            {
+                'flakes_data': [self.flake3_dict],
+                'prev_cursor':
+                    '',
+                'cursor':
+                    cursor,
+                'n':
+                    '',
+                'luci_project':
+                    '',
+                'flake_filter':
+                    'test_type::flavored_tests@-test_type::tests',
+                'bug_id':
+                    '',
+                'monorail_project':
+                    '',
+                'error_message':
+                    None,
+                'flake_weights': [('cq false rejection', 100),
+                                  ('cq step level retry', 10),
+                                  ('cq hidden flake', 1),
+                                  ('ci failed step', 10)],
+                'filter_names': [
+                    tag for tag in SUPPORTED_TAGS
+                    if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
+                ]
+            },
+            default=str), response.body)
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2018, 10, 2, 1))
@@ -352,36 +360,38 @@ class RankFlakesTest(WaterfallTestCase):
         },
         status=200)
     self.assertEqual(
-        json.dumps({
-            'flakes_data': [
-                self.flake3_dict, self.flake5_dict, self.flake6_dict,
-                self.flake1_dict
-            ],
-            'prev_cursor':
-                '',
-            'cursor':
-                '',
-            'n':
-                '',
-            'luci_project':
-                '',
-            'flake_filter':
-                '',
-            'bug_id':
-                bug_id,
-            'monorail_project':
-                '',
-            'error_message':
-                None,
-            'flake_weights': [('cq false rejection', 100),
-                              ('cq step level retry', 10),
-                              ('cq hidden flake', 1), ('ci failed step', 10)],
-            'filter_names': [
-                tag for tag in SUPPORTED_TAGS
-                if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
-            ]
-        },
-                   default=str), response.body)
+        json.dumps(
+            {
+                'flakes_data': [
+                    self.flake3_dict, self.flake5_dict, self.flake6_dict,
+                    self.flake1_dict
+                ],
+                'prev_cursor':
+                    '',
+                'cursor':
+                    '',
+                'n':
+                    '',
+                'luci_project':
+                    '',
+                'flake_filter':
+                    '',
+                'bug_id':
+                    bug_id,
+                'monorail_project':
+                    '',
+                'error_message':
+                    None,
+                'flake_weights': [('cq false rejection', 100),
+                                  ('cq step level retry', 10),
+                                  ('cq hidden flake', 1),
+                                  ('ci failed step', 10)],
+                'filter_names': [
+                    tag for tag in SUPPORTED_TAGS
+                    if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
+                ]
+            },
+            default=str), response.body)
 
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime.datetime(2018, 10, 2, 1))
@@ -395,30 +405,32 @@ class RankFlakesTest(WaterfallTestCase):
         status=200)
 
     self.assertEqual(
-        json.dumps({
-            'flakes_data': [self.flake1_dict],
-            'prev_cursor':
-                '',
-            'cursor':
-                '',
-            'n':
-                '',
-            'luci_project':
-                '',
-            'flake_filter':
-                '',
-            'bug_id':
-                bug_id,
-            'monorail_project':
-                '',
-            'error_message':
-                None,
-            'flake_weights': [('cq false rejection', 100),
-                              ('cq step level retry', 10),
-                              ('cq hidden flake', 1), ('ci failed step', 10)],
-            'filter_names': [
-                tag for tag in SUPPORTED_TAGS
-                if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
-            ]
-        },
-                   default=str), response.body)
+        json.dumps(
+            {
+                'flakes_data': [self.flake1_dict],
+                'prev_cursor':
+                    '',
+                'cursor':
+                    '',
+                'n':
+                    '',
+                'luci_project':
+                    '',
+                'flake_filter':
+                    '',
+                'bug_id':
+                    bug_id,
+                'monorail_project':
+                    '',
+                'error_message':
+                    None,
+                'flake_weights': [('cq false rejection', 100),
+                                  ('cq step level retry', 10),
+                                  ('cq hidden flake', 1),
+                                  ('ci failed step', 10)],
+                'filter_names': [
+                    tag for tag in SUPPORTED_TAGS
+                    if tag not in rank_flakes._TAGS_NOT_FOR_FILTER
+                ]
+            },
+            default=str), response.body)
