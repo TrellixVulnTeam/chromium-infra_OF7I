@@ -11,12 +11,10 @@ import (
 )
 
 const (
-	gkConfigURL         = "https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules/gatekeeper/resources/gatekeeper.json?format=text"
-	gkTreesURL          = "https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules/gatekeeper/resources/gatekeeper_trees.json?format=text"
-	gkConfigInternalURL = "https://chrome-internal.googlesource.com/chrome/tools/build_limited/scripts/slave/+/master/recipes/gatekeeper_internal.resources/gatekeeper_internal.json?format=text"
-	gkTreesInternalURL  = "https://chrome-internal.googlesource.com/chrome/tools/build_limited/scripts/slave/+/master/recipes/gatekeeper_internal.resources/gatekeeper_trees_internal.json?format=text"
-	gkUnkeptConfigURL   = "https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/appengine/sheriff-o-matic/config/unkept_gatekeeper.json?format=text"
-	gkUnkeptTreesURL    = "https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/appengine/sheriff-o-matic/config/unkept_gatekeeper_trees.json?format=text"
+	gkConfigURL       = "https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules/gatekeeper/resources/gatekeeper.json?format=text"
+	gkTreesURL        = "https://chromium.googlesource.com/chromium/tools/build/+/master/scripts/slave/recipe_modules/gatekeeper/resources/gatekeeper_trees.json?format=text"
+	gkUnkeptConfigURL = "https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/appengine/sheriff-o-matic/config/unkept_gatekeeper.json?format=text"
+	gkUnkeptTreesURL  = "https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/appengine/sheriff-o-matic/config/unkept_gatekeeper_trees.json?format=text"
 )
 
 func getGatekeeperRules(c context.Context) (*analyzer.GatekeeperRules, error) {
@@ -35,7 +33,7 @@ func getGatekeeperRules(c context.Context) (*analyzer.GatekeeperRules, error) {
 
 func getGatekeeperConfigs(c context.Context) ([]*messages.GatekeeperConfig, error) {
 	ret := []*messages.GatekeeperConfig{}
-	for _, URL := range []string{gkConfigURL, gkConfigInternalURL, gkUnkeptConfigURL} {
+	for _, URL := range []string{gkConfigURL, gkUnkeptConfigURL} {
 		b, err := client.GetGitilesCached(c, URL)
 		if err != nil {
 			return nil, err
@@ -55,7 +53,7 @@ func getGatekeeperConfigs(c context.Context) ([]*messages.GatekeeperConfig, erro
 func getGatekeeperTrees(c context.Context) (map[string][]messages.TreeMasterConfig, error) {
 	ret := map[string][]messages.TreeMasterConfig{}
 
-	for _, URL := range []string{gkTreesURL, gkTreesInternalURL, gkUnkeptTreesURL} {
+	for _, URL := range []string{gkTreesURL, gkUnkeptTreesURL} {
 		gkBytes, err := client.GetGitilesCached(c, URL)
 		if err != nil {
 			return nil, err
