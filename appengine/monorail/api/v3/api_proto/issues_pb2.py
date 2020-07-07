@@ -25,7 +25,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1d\x61pi/v3/api_proto/issues.proto\x12\x0bmonorail.v3\x1a google/protobuf/field_mask.proto\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v3/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"\x8e\x01\n\x13SearchIssuesRequest\x12/\n\x08projects\x18\x01 \x03(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n\x13ListCommentsRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"W\n\x14ListCommentsResponse\x12&\n\x08\x63omments\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Comment\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xa1\x03\n\nIssueDelta\x12>\n\x05issue\x18\x01 \x01(\x0b\x32\x12.monorail.v3.IssueB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12+\n\nccs_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x37\n\x18\x62locked_on_issues_remove\x18\x04 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12\x35\n\x16\x62locking_issues_remove\x18\x05 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12:\n\x11\x63omponents_remove\x18\x06 \x03(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/ComponentDef\x12\x15\n\rlabels_remove\x18\x07 \x03(\t\x12\x32\n\x11\x66ield_vals_remove\x18\x08 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\x8c\x02\n\rApprovalDelta\x12\x32\n\x0e\x61pproval_value\x18\x01 \x01(\x0b\x32\x1a.monorail.v3.ApprovalValue\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12\x31\n\x10\x61pprovers_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12/\n\x0e\x66ield_vals_add\x18\x04 \x03(\x0b\x32\x17.monorail.v3.FieldValue\x12\x32\n\x11\x66ield_vals_remove\x18\x05 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\x8a\x01\n\x13ModifyIssuesRequest\x12,\n\x06\x64\x65ltas\x18\x01 \x03(\x0b\x32\x17.monorail.v3.IssueDeltaB\x03\xe0\x41\x02\x12,\n\x0bnotify_type\x18\x02 \x01(\x0e\x32\x17.monorail.v3.NotifyType\x12\x17\n\x0f\x63omment_content\x18\x03 \x01(\t\":\n\x14ModifyIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\"\xd7\x01\n\x1cMakeIssueFromTemplateRequest\x12-\n\x08template\x18\x01 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x35\n\x14template_issue_delta\x18\x02 \x01(\x0b\x32\x17.monorail.v3.IssueDelta\x12<\n\x18template_approval_deltas\x18\x03 \x03(\x0b\x32\x1a.monorail.v3.ApprovalDelta\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\"\xa7\x01\n\x10MakeIssueRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.v3.Issue\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12,\n\x0bnotify_type\x18\x04 \x01(\x0e\x32\x17.monorail.v3.NotifyType*I\n\nNotifyType\x12\x1b\n\x17NOTIFY_TYPE_UNSPECIFIED\x10\x00\x12\t\n\x05\x45MAIL\x10\x01\x12\x13\n\x0fNO_NOTIFICATION\x10\x02\x32\xe9\x03\n\x06Issues\x12>\n\x08GetIssue\x12\x1c.monorail.v3.GetIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x12U\n\x0cSearchIssues\x12 .monorail.v3.SearchIssuesRequest\x1a!.monorail.v3.SearchIssuesResponse\"\x00\x12U\n\x0cListComments\x12 .monorail.v3.ListCommentsRequest\x1a!.monorail.v3.ListCommentsResponse\"\x00\x12U\n\x0cModifyIssues\x12 .monorail.v3.ModifyIssuesRequest\x1a!.monorail.v3.ModifyIssuesResponse\"\x00\x12X\n\x15MakeIssueFromTemplate\x12).monorail.v3.MakeIssueFromTemplateRequest\x1a\x12.monorail.v3.Issue\"\x00\x12@\n\tMakeIssue\x12\x1d.monorail.v3.MakeIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x1d\x61pi/v3/api_proto/issues.proto\x12\x0bmonorail.v3\x1a google/protobuf/field_mask.proto\x1a)google_proto/google/api/annotations.proto\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a$api/v3/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"C\n\x15\x42\x61tchGetIssuesRequest\x12*\n\x05names\x18\x01 \x03(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"<\n\x16\x42\x61tchGetIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\"\x8e\x01\n\x13SearchIssuesRequest\x12/\n\x08projects\x18\x01 \x03(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n\x13ListCommentsRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"W\n\x14ListCommentsResponse\x12&\n\x08\x63omments\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Comment\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\xa1\x03\n\nIssueDelta\x12>\n\x05issue\x18\x01 \x01(\x0b\x32\x12.monorail.v3.IssueB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12+\n\nccs_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x37\n\x18\x62locked_on_issues_remove\x18\x04 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12\x35\n\x16\x62locking_issues_remove\x18\x05 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12:\n\x11\x63omponents_remove\x18\x06 \x03(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/ComponentDef\x12\x15\n\rlabels_remove\x18\x07 \x03(\t\x12\x32\n\x11\x66ield_vals_remove\x18\x08 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\x8c\x02\n\rApprovalDelta\x12\x32\n\x0e\x61pproval_value\x18\x01 \x01(\x0b\x32\x1a.monorail.v3.ApprovalValue\x12/\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMask\x12\x31\n\x10\x61pprovers_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12/\n\x0e\x66ield_vals_add\x18\x04 \x03(\x0b\x32\x17.monorail.v3.FieldValue\x12\x32\n\x11\x66ield_vals_remove\x18\x05 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\x8a\x01\n\x13ModifyIssuesRequest\x12,\n\x06\x64\x65ltas\x18\x01 \x03(\x0b\x32\x17.monorail.v3.IssueDeltaB\x03\xe0\x41\x02\x12,\n\x0bnotify_type\x18\x02 \x01(\x0e\x32\x17.monorail.v3.NotifyType\x12\x17\n\x0f\x63omment_content\x18\x03 \x01(\t\":\n\x14ModifyIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\"\xd7\x01\n\x1cMakeIssueFromTemplateRequest\x12-\n\x08template\x18\x01 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x35\n\x14template_issue_delta\x18\x02 \x01(\x0b\x32\x17.monorail.v3.IssueDelta\x12<\n\x18template_approval_deltas\x18\x03 \x03(\x0b\x32\x1a.monorail.v3.ApprovalDelta\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\"\xa7\x01\n\x10MakeIssueRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.v3.Issue\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12,\n\x0bnotify_type\x18\x04 \x01(\x0e\x32\x17.monorail.v3.NotifyType*I\n\nNotifyType\x12\x1b\n\x17NOTIFY_TYPE_UNSPECIFIED\x10\x00\x12\t\n\x05\x45MAIL\x10\x01\x12\x13\n\x0fNO_NOTIFICATION\x10\x02\x32\xc6\x04\n\x06Issues\x12>\n\x08GetIssue\x12\x1c.monorail.v3.GetIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x12[\n\x0e\x42\x61tchGetIssues\x12\".monorail.v3.BatchGetIssuesRequest\x1a#.monorail.v3.BatchGetIssuesResponse\"\x00\x12U\n\x0cSearchIssues\x12 .monorail.v3.SearchIssuesRequest\x1a!.monorail.v3.SearchIssuesResponse\"\x00\x12U\n\x0cListComments\x12 .monorail.v3.ListCommentsRequest\x1a!.monorail.v3.ListCommentsResponse\"\x00\x12U\n\x0cModifyIssues\x12 .monorail.v3.ModifyIssuesRequest\x1a!.monorail.v3.ModifyIssuesResponse\"\x00\x12X\n\x15MakeIssueFromTemplate\x12).monorail.v3.MakeIssueFromTemplateRequest\x1a\x12.monorail.v3.Issue\"\x00\x12@\n\tMakeIssue\x12\x1d.monorail.v3.MakeIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x62\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_annotations__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
 
@@ -54,8 +54,8 @@ _NOTIFYTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2015,
-  serialized_end=2088,
+  serialized_start=2146,
+  serialized_end=2219,
 )
 _sym_db.RegisterEnumDescriptor(_NOTIFYTYPE)
 
@@ -95,6 +95,70 @@ _GETISSUEREQUEST = _descriptor.Descriptor(
   ],
   serialized_start=247,
   serialized_end=307,
+)
+
+
+_BATCHGETISSUESREQUEST = _descriptor.Descriptor(
+  name='BatchGetIssuesRequest',
+  full_name='monorail.v3.BatchGetIssuesRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='names', full_name='monorail.v3.BatchGetIssuesRequest.names', index=0,
+      number=1, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=b'\372A\025\n\023api.crbug.com/Issue\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=309,
+  serialized_end=376,
+)
+
+
+_BATCHGETISSUESRESPONSE = _descriptor.Descriptor(
+  name='BatchGetIssuesResponse',
+  full_name='monorail.v3.BatchGetIssuesResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='issues', full_name='monorail.v3.BatchGetIssuesResponse.issues', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=378,
+  serialized_end=438,
 )
 
 
@@ -153,8 +217,8 @@ _SEARCHISSUESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=310,
-  serialized_end=452,
+  serialized_start=441,
+  serialized_end=583,
 )
 
 
@@ -192,8 +256,8 @@ _SEARCHISSUESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=454,
-  serialized_end=537,
+  serialized_start=585,
+  serialized_end=668,
 )
 
 
@@ -238,8 +302,8 @@ _LISTCOMMENTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=539,
-  serialized_end=644,
+  serialized_start=670,
+  serialized_end=775,
 )
 
 
@@ -277,8 +341,8 @@ _LISTCOMMENTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=646,
-  serialized_end=733,
+  serialized_start=777,
+  serialized_end=864,
 )
 
 
@@ -358,8 +422,8 @@ _ISSUEDELTA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=736,
-  serialized_end=1153,
+  serialized_start=867,
+  serialized_end=1284,
 )
 
 
@@ -418,8 +482,8 @@ _APPROVALDELTA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1156,
-  serialized_end=1424,
+  serialized_start=1287,
+  serialized_end=1555,
 )
 
 
@@ -464,8 +528,8 @@ _MODIFYISSUESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1427,
-  serialized_end=1565,
+  serialized_start=1558,
+  serialized_end=1696,
 )
 
 
@@ -496,8 +560,8 @@ _MODIFYISSUESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1567,
-  serialized_end=1625,
+  serialized_start=1698,
+  serialized_end=1756,
 )
 
 
@@ -549,8 +613,8 @@ _MAKEISSUEFROMTEMPLATEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1628,
-  serialized_end=1843,
+  serialized_start=1759,
+  serialized_end=1974,
 )
 
 
@@ -602,10 +666,11 @@ _MAKEISSUEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1846,
-  serialized_end=2013,
+  serialized_start=1977,
+  serialized_end=2144,
 )
 
+_BATCHGETISSUESRESPONSE.fields_by_name['issues'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE
 _SEARCHISSUESRESPONSE.fields_by_name['issues'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE
 _LISTCOMMENTSRESPONSE.fields_by_name['comments'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._COMMENT
 _ISSUEDELTA.fields_by_name['issue'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE
@@ -625,6 +690,8 @@ _MAKEISSUEFROMTEMPLATEREQUEST.fields_by_name['template_approval_deltas'].message
 _MAKEISSUEREQUEST.fields_by_name['issue'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE
 _MAKEISSUEREQUEST.fields_by_name['notify_type'].enum_type = _NOTIFYTYPE
 DESCRIPTOR.message_types_by_name['GetIssueRequest'] = _GETISSUEREQUEST
+DESCRIPTOR.message_types_by_name['BatchGetIssuesRequest'] = _BATCHGETISSUESREQUEST
+DESCRIPTOR.message_types_by_name['BatchGetIssuesResponse'] = _BATCHGETISSUESRESPONSE
 DESCRIPTOR.message_types_by_name['SearchIssuesRequest'] = _SEARCHISSUESREQUEST
 DESCRIPTOR.message_types_by_name['SearchIssuesResponse'] = _SEARCHISSUESRESPONSE
 DESCRIPTOR.message_types_by_name['ListCommentsRequest'] = _LISTCOMMENTSREQUEST
@@ -644,6 +711,20 @@ GetIssueRequest = _reflection.GeneratedProtocolMessageType('GetIssueRequest', (_
   # @@protoc_insertion_point(class_scope:monorail.v3.GetIssueRequest)
   })
 _sym_db.RegisterMessage(GetIssueRequest)
+
+BatchGetIssuesRequest = _reflection.GeneratedProtocolMessageType('BatchGetIssuesRequest', (_message.Message,), {
+  'DESCRIPTOR' : _BATCHGETISSUESREQUEST,
+  '__module__' : 'api.v3.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v3.BatchGetIssuesRequest)
+  })
+_sym_db.RegisterMessage(BatchGetIssuesRequest)
+
+BatchGetIssuesResponse = _reflection.GeneratedProtocolMessageType('BatchGetIssuesResponse', (_message.Message,), {
+  'DESCRIPTOR' : _BATCHGETISSUESRESPONSE,
+  '__module__' : 'api.v3.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v3.BatchGetIssuesResponse)
+  })
+_sym_db.RegisterMessage(BatchGetIssuesResponse)
 
 SearchIssuesRequest = _reflection.GeneratedProtocolMessageType('SearchIssuesRequest', (_message.Message,), {
   'DESCRIPTOR' : _SEARCHISSUESREQUEST,
@@ -717,6 +798,7 @@ _sym_db.RegisterMessage(MakeIssueRequest)
 
 
 _GETISSUEREQUEST.fields_by_name['name']._options = None
+_BATCHGETISSUESREQUEST.fields_by_name['names']._options = None
 _SEARCHISSUESREQUEST.fields_by_name['projects']._options = None
 _LISTCOMMENTSREQUEST.fields_by_name['parent']._options = None
 _ISSUEDELTA.fields_by_name['issue']._options = None
@@ -734,8 +816,8 @@ _ISSUES = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=2091,
-  serialized_end=2580,
+  serialized_start=2222,
+  serialized_end=2804,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetIssue',
@@ -748,9 +830,19 @@ _ISSUES = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
+    name='BatchGetIssues',
+    full_name='monorail.v3.Issues.BatchGetIssues',
+    index=1,
+    containing_service=None,
+    input_type=_BATCHGETISSUESREQUEST,
+    output_type=_BATCHGETISSUESRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
     name='SearchIssues',
     full_name='monorail.v3.Issues.SearchIssues',
-    index=1,
+    index=2,
     containing_service=None,
     input_type=_SEARCHISSUESREQUEST,
     output_type=_SEARCHISSUESRESPONSE,
@@ -760,7 +852,7 @@ _ISSUES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='ListComments',
     full_name='monorail.v3.Issues.ListComments',
-    index=2,
+    index=3,
     containing_service=None,
     input_type=_LISTCOMMENTSREQUEST,
     output_type=_LISTCOMMENTSRESPONSE,
@@ -770,7 +862,7 @@ _ISSUES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='ModifyIssues',
     full_name='monorail.v3.Issues.ModifyIssues',
-    index=3,
+    index=4,
     containing_service=None,
     input_type=_MODIFYISSUESREQUEST,
     output_type=_MODIFYISSUESRESPONSE,
@@ -780,7 +872,7 @@ _ISSUES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='MakeIssueFromTemplate',
     full_name='monorail.v3.Issues.MakeIssueFromTemplate',
-    index=4,
+    index=5,
     containing_service=None,
     input_type=_MAKEISSUEFROMTEMPLATEREQUEST,
     output_type=api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE,
@@ -790,7 +882,7 @@ _ISSUES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='MakeIssue',
     full_name='monorail.v3.Issues.MakeIssue',
-    index=5,
+    index=6,
     containing_service=None,
     input_type=_MAKEISSUEREQUEST,
     output_type=api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE,

@@ -22,6 +22,14 @@ service Issues {
   //   NOT_FOUND if the issue does not exist.
   //   PERMISSION_DENIED if the requester is not allowed to view the issue.
   rpc GetIssue (GetIssueRequest) returns (Issue) {}
+  // Returns the requested Issues.
+  //
+  // Raises:
+  //   INVALID_ARGUMENT if `names` is formatted incorrectly or missing.
+  //   NOT_FOUND if any of the given issues do not exist.
+  //   PERMISSION_DENIED if the requester does not have permission to view one
+  //       (or more) of the given issues.
+  rpc BatchGetIssues(BatchGetIssuesRequest) returns (BatchGetIssuesResponse) {}
   // Searches over issues within the specified projects.
   // TODO(monorail:6988): Document possible errors when implemented.
   rpc SearchIssues (SearchIssuesRequest) returns (SearchIssuesResponse) {}
@@ -68,6 +76,22 @@ message GetIssueRequest {
   string name = 1 [
       (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
       (google.api.field_behavior) = REQUIRED ];
+}
+
+// The request message for Issues.BatchGetIssues.
+// Next available tag: 2
+message BatchGetIssuesRequest {
+  // The names of the Issues to request.
+  repeated string names = 1 [
+      (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
+      (google.api.field_behavior) = REQUIRED ];
+}
+
+// The response message for Issues.BatchGetIssues.
+// Next available tag: 2
+message BatchGetIssuesResponse {
+  // Issues matching the given request.
+  repeated Issue issues = 1;
 }
 
 // The request message for Issues.SearchIssues.
