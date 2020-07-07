@@ -26,8 +26,6 @@ import (
 
 const dayInMinutes = 24 * 60
 
-const threeDaysInMinutes = 3 * dayInMinutes
-
 // maxTasksPerModel is the maximum number of tasks that are allowed to be executing
 // at the same time for a given model.
 const maxTasksPerModel = 1
@@ -96,8 +94,8 @@ func (c *leaseDutRun) innerRun(a subcommands.Application, args []string, env sub
 	if c.leaseMinutes < 0 {
 		return cmdlib.NewUsageError(c.Flags, fmt.Sprintf("minutes to lease (%d) cannot be negative", int64(c.leaseMinutes)))
 	}
-	if c.leaseMinutes >= threeDaysInMinutes {
-		return cmdlib.NewUsageError(c.Flags, "Lease duration (%d minutes) cannot exceed 3 days [%d minutes]", int64(c.leaseMinutes), threeDaysInMinutes)
+	if c.leaseMinutes >= dayInMinutes {
+		return cmdlib.NewUsageError(c.Flags, "Lease duration (%d minutes) cannot exceed 1 day [%d minutes]", int64(c.leaseMinutes), dayInMinutes)
 	}
 	if len(c.leaseReason) > 30 {
 		return cmdlib.NewUsageError(c.Flags, "the lease reason is limited in 30 characters")
