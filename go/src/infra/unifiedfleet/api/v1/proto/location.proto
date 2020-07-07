@@ -39,10 +39,11 @@ message Location {
 
 // Lab refers to the different Labs under chrome org
 // More labs to be added later if needed
+// Next tag: 12
 enum Lab {
     LAB_UNSPECIFIED = 0;
     LAB_CHROME_ATLANTA = 1;
-    LAB_CHROMEOS_SANTIEM = 2;
+    LAB_CHROMEOS_SANTIAM = 2;
     LAB_CHROMEOS_DESTINY = 3;
     LAB_CHROMEOS_PROMETHEUS = 4;
     LAB_CHROMEOS_ATLANTIS = 5;
