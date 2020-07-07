@@ -53,25 +53,38 @@ class IssueOriginalTest(unittest.TestCase):
     status = 'New'
     cnxn = 'fake connection'
     self.services.user.TestAddUser('commenter@example.com', 222)
-    created_issue_1, desc = self.services.issue.CreateIssue(
-        cnxn, self.services, 789, summary, status, 111, [], [], [], [], 111,
-        'The screen is just dark when I press power on')
+
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, summary, status, 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     self.local_id_1 = created_issue_1.local_id
     comment_0 = tracker_pb2.IssueComment(
-        issue_id=desc.issue_id, user_id=222, project_id=789,
-        content=STRIPPED_MSG, inbound_message=ORIG_MSG)
+        issue_id=created_issue_1.issue_id,
+        user_id=222,
+        project_id=789,
+        content=STRIPPED_MSG,
+        inbound_message=ORIG_MSG)
     self.services.issue.InsertComment(cnxn, comment_0)
     comment_1 = tracker_pb2.IssueComment(
-        issue_id=desc.issue_id, user_id=222, project_id=789,
-        content=STRIPPED_MSG, inbound_message=BAD_UNICODE_MSG)
+        issue_id=created_issue_1.issue_id,
+        user_id=222,
+        project_id=789,
+        content=STRIPPED_MSG,
+        inbound_message=BAD_UNICODE_MSG)
     self.services.issue.InsertComment(cnxn, comment_1)
     comment_2 = tracker_pb2.IssueComment(
-        issue_id=desc.issue_id, user_id=222, project_id=789,
-        content=STRIPPED_MSG, inbound_message=GMAIL_CRUFT_MSG)
+        issue_id=created_issue_1.issue_id,
+        user_id=222,
+        project_id=789,
+        content=STRIPPED_MSG,
+        inbound_message=GMAIL_CRUFT_MSG)
     self.services.issue.InsertComment(cnxn, comment_2)
     comment_3 = tracker_pb2.IssueComment(
-        issue_id=desc.issue_id, user_id=222, project_id=789,
-        content=STRIPPED_MSG, inbound_message=GOOD_UNICODE_MSG)
+        issue_id=created_issue_1.issue_id,
+        user_id=222,
+        project_id=789,
+        content=STRIPPED_MSG,
+        inbound_message=GOOD_UNICODE_MSG)
     self.services.issue.InsertComment(cnxn, comment_3)
     self.issue_1 = self.services.issue.GetIssueByLocalID(
         cnxn, 789, self.local_id_1)

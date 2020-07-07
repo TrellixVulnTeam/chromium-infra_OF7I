@@ -260,9 +260,14 @@ class ShouldShowFlipperTest(unittest.TestCase):
     mr.project = project
 
     for idx in range(create_issues):
-      _created_issue, _ = services.issue.CreateIssue(
-          self.cnxn, services, project.project_id, 'summary_%d' % idx, 'status',
-          111, [], [], [], [], 111, 'description_%d' % idx)
+      _created_issue = fake.MakeTestIssue(
+          project.project_id,
+          idx,
+          'summary_%d' % idx,
+          'status',
+          111,
+          reporter_id=111)
+      services.issue.TestAddIssue(_created_issue)
 
     self.assertEqual(expected, issuedetailezt._ShouldShowFlipper(mr, services))
 

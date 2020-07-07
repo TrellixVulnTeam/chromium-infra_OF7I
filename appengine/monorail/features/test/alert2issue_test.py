@@ -74,7 +74,8 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
         issue=fake.IssueService(),
         user=fake.UserService(),
         usergroup=fake.UserGroupService(),
-        project=fake.ProjectService())
+        project=fake.ProjectService(),
+        features=fake.FeaturesService())
 
     # project
     self.project = self.services.project.TestAddProject(

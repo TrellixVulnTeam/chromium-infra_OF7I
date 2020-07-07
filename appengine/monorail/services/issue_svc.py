@@ -662,98 +662,45 @@ class IssueService(object):
   ### Issue objects
 
   def CreateIssue(
-      self, cnxn, services, project_id, summary, status,
-      owner_id, cc_ids, labels, field_values, component_ids, reporter_id,
-      marked_description, blocked_on=None, blocking=None, attachments=None,
-      timestamp=None, index_now=False, phases=None, approval_values=None,
-      importer_id=None, dangling_blocked_on=None, dangling_blocking=None):
+      self,
+      cnxn,
+      services,
+      issue,
+      marked_description,
+      attachments=None,
+      index_now=False,
+      importer_id=None):
     """Create and store a new issue with all the given information.
 
     Args:
       cnxn: connection to SQL database.
       services: persistence layer for users, issues, and projects.
-      project_id: int ID for the current project.
-      summary: one-line summary string summarizing this issue.
-      status: string issue status value.  E.g., 'New'.
-      owner_id: user ID of the issue owner.
-      cc_ids: list of user IDs for users to be CC'd on changes.
-      labels: list of label strings.  E.g., 'Priority-High'.
-      field_values: list of FieldValue PBs.
-      component_ids: list of int component IDs.
-      reporter_id: user ID of the user who reported the issue.
+      issue: Issue PB to create.
       marked_description: issue description with initial HTML markup.
-      blocked_on: list of issue_ids that this issue is blocked on.
-      blocking: list of issue_ids that this issue blocks.
       attachments: [(filename, contents, mimetype),...] attachments uploaded at
           the time the comment was made.
-      timestamp: time that the issue was entered, defaults to now.
       index_now: True if the issue should be updated in the full text index.
-      phases: list of Phase PBs, if any.
-      approval_values: list of ApprovalValue PBs, if any.
       importer_id: optional user ID of API client importing issues for users.
-      dangling_blocked_on: a list of DanglingIssueRefs this issue is blocked on.
-      dangling_blocking: a list of DanglingIssueRefs that this issue blocks.
 
     Returns:
       A tuple (the newly created Issue PB and Comment PB for the
       issue description).
     """
+    project_id = issue.project_id
+    reporter_id = issue.reporter_id
+    timestamp = issue.opened_timestamp
     config = self._config_service.GetProjectConfig(cnxn, project_id)
+
     iids_to_invalidate = set()
-
-    status = framework_bizobj.CanonicalizeLabel(status)
-    labels = [framework_bizobj.CanonicalizeLabel(l) for l in labels]
-    labels = [l for l in labels if l]
-
-    issue = tracker_pb2.Issue()
-    issue.project_id = project_id
-    issue.project_name = services.project.LookupProjectNames(
-        cnxn, [project_id]).get(project_id)
-    issue.summary = summary
-    issue.status = status
-    issue.owner_id = owner_id
-    issue.cc_ids.extend(cc_ids)
-    issue.labels.extend(labels)
-    issue.field_values.extend(field_values)
-    issue.component_ids.extend(component_ids)
-    issue.reporter_id = reporter_id
-    if blocked_on is not None:
-      iids_to_invalidate.update(blocked_on)
-      issue.blocked_on_iids = blocked_on
-      issue.blocked_on_ranks = [0] * len(blocked_on)
-    if blocking is not None:
-      iids_to_invalidate.update(blocking)
-      issue.blocking_iids = blocking
-    if dangling_blocked_on is not None:
-      issue.dangling_blocked_on_refs = dangling_blocked_on
-    if dangling_blocking is not None:
-      issue.dangling_blocking_refs = dangling_blocking
-    if attachments:
-      issue.attachment_count = len(attachments)
-    if phases:
-      issue.phases = phases
-    if approval_values:
-      issue.approval_values = approval_values
-    timestamp = timestamp or int(time.time())
-    issue.opened_timestamp = timestamp
-    issue.modified_timestamp = timestamp
-    issue.owner_modified_timestamp = timestamp
-    issue.status_modified_timestamp = timestamp
-    issue.component_modified_timestamp = timestamp
+    if len(issue.blocked_on_iids) != 0:
+      iids_to_invalidate.update(issue.blocked_on_iids)
+    if len(issue.blocking_iids) != 0:
+      iids_to_invalidate.update(issue.blocking_iids)
 
     comment = self._MakeIssueComment(
         project_id, reporter_id, marked_description,
         attachments=attachments, timestamp=timestamp,
         is_description=True, importer_id=importer_id)
-
-    # Set the closed_timestamp both before and after filter rules.
-    if not tracker_helpers.MeansOpenInProject(
-        tracker_bizobj.GetStatus(issue), config):
-      issue.closed_timestamp = timestamp
-    filterrules_helpers.ApplyFilterRules(cnxn, services, issue, config)
-    if not tracker_helpers.MeansOpenInProject(
-        tracker_bizobj.GetStatus(issue), config):
-      issue.closed_timestamp = timestamp
 
     reporter = services.user.GetUser(cnxn, reporter_id)
     project = services.project.GetProject(cnxn, project_id)
@@ -774,9 +721,9 @@ class IssueService(object):
 
     # Create approval surveys
     approval_comments = []
-    if approval_values:
+    if len(issue.approval_values) != 0:
       approval_defs_by_id = {ad.approval_id: ad for ad in config.approval_defs}
-      for av in approval_values:
+      for av in issue.approval_values:
         ad = approval_defs_by_id.get(av.approval_id)
         if ad:
           survey = ''
@@ -818,14 +765,14 @@ class IssueService(object):
 
     # Add a comment to existing issues saying they are now blocking or
     # blocked on this issue.
-    blocked_add_issues = self.GetIssues(cnxn, blocked_on or [])
+    blocked_add_issues = self.GetIssues(cnxn, issue.blocked_on_iids)
     for add_issue in blocked_add_issues:
       self.CreateIssueComment(
           cnxn, add_issue, reporter_id, content='',
           amendments=[tracker_bizobj.MakeBlockingAmendment(
               [(issue.project_name, issue.local_id)], [],
               default_project_name=add_issue.project_name)])
-    blocking_add_issues = self.GetIssues(cnxn, blocking or [])
+    blocking_add_issues = self.GetIssues(cnxn, issue.blocking_iids)
     for add_issue in blocking_add_issues:
       self.CreateIssueComment(
           cnxn, add_issue, reporter_id, content='',

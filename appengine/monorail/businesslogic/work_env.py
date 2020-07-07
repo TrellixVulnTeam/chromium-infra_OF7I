@@ -975,29 +975,64 @@ class WorkEnv(object):
       importer_id = None
 
     with self.mc.profiler.Phase('creating issue in project %r' % project_id):
+      config = self.services.config.GetProjectConfig(self.mc.cnxn, project_id)
+
+      status = framework_bizobj.CanonicalizeLabel(status)
+      labels = [framework_bizobj.CanonicalizeLabel(l) for l in labels]
+      labels = [l for l in labels if l]
+
+      issue = tracker_pb2.Issue()
+      issue.project_id = project_id
+      issue.project_name = self.services.project.LookupProjectNames(
+          self.mc.cnxn, [project_id]).get(project_id)
+      issue.summary = summary
+      issue.status = status
+      issue.owner_id = owner_id
+      issue.cc_ids.extend(cc_ids)
+      issue.labels.extend(labels)
+      issue.field_values.extend(field_values)
+      issue.component_ids.extend(component_ids)
+      issue.reporter_id = reporter_id
+      if blocked_on is not None:
+        issue.blocked_on_iids = blocked_on
+        issue.blocked_on_ranks = [0] * len(blocked_on)
+      if blocking is not None:
+        issue.blocking_iids = blocking
+      if dangling_blocked_on is not None:
+        issue.dangling_blocked_on_refs = dangling_blocked_on
+      if dangling_blocking is not None:
+        issue.dangling_blocking_refs = dangling_blocking
+      if attachments:
+        issue.attachment_count = len(attachments)
+      if phases:
+        issue.phases = phases
+      if approval_values:
+        issue.approval_values = approval_values
+      timestamp = timestamp or int(time.time())
+      issue.opened_timestamp = timestamp
+      issue.modified_timestamp = timestamp
+      issue.owner_modified_timestamp = timestamp
+      issue.status_modified_timestamp = timestamp
+      issue.component_modified_timestamp = timestamp
+
+      # Set the closed_timestamp both before and after filter rules.
+      if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
+                                                config):
+        issue.closed_timestamp = timestamp
+      filterrules_helpers.ApplyFilterRules(
+          self.mc.cnxn, self.services, issue, config)
+      if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
+                                                config):
+        issue.closed_timestamp = timestamp
+
       new_issue, comment = self.services.issue.CreateIssue(
           self.mc.cnxn,
           self.services,
-          project_id,
-          summary,
-          status,
-          owner_id,
-          cc_ids,
-          labels,
-          field_values,
-          component_ids,
-          reporter_id,
+          issue,
           marked_description,
-          blocked_on=blocked_on,
-          blocking=blocking,
           attachments=attachments,
           index_now=False,
-          phases=phases,
-          approval_values=approval_values,
-          timestamp=timestamp,
-          importer_id=importer_id,
-          dangling_blocked_on=dangling_blocked_on,
-          dangling_blocking=dangling_blocking)
+          importer_id=importer_id)
       logging.info(
           'created issue %r in project %r', new_issue.local_id, project_id)
 

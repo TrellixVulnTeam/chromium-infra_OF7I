@@ -1746,49 +1746,15 @@ class IssueService(object):
     return issue.issue_id
 
   def CreateIssue(
-      self, cnxn, services, project_id,
-      summary, status, owner_id, cc_ids, labels, field_values,
-      component_ids, reporter_id, marked_description, blocked_on=None,
-      blocking=None, attachments=None, timestamp=None, index_now=False,
-      phases=None, approval_values=None, importer_id=None,
-      dangling_blocked_on=None, dangling_blocking=None):
-    issue = tracker_pb2.Issue()
-    issue.project_id = project_id
-    if services and services.project:
-      project = services.project.GetProject(cnxn, project_id)
-      issue.project_name = project.project_name
-    issue.summary = summary
-    issue.status = status
-    if owner_id:
-      issue.owner_id = owner_id
-    issue.cc_ids.extend(cc_ids)
-    issue.labels.extend(labels)
-    issue.field_values.extend(field_values)
-    issue.component_ids.extend(component_ids)
-    issue.reporter_id = reporter_id
-    if timestamp:
-      issue.opened_timestamp = timestamp
-
-    if blocked_on:
-      issue.blocked_on_iids.extend(blocked_on)
-      issue.blocked_on_ranks.extend(
-          list(range(sys.maxint - 1, sys.maxint - len(blocked_on) - 1, -1)))
-    if blocking:
-      issue.blocking.extend(blocking)
-
-    if blocking:
-      issue.blocking_iids.extend(blocking)
-
-    if dangling_blocked_on is not None:
-      issue.dangling_blocked_on_refs = dangling_blocked_on
-    if dangling_blocking is not None:
-      issue.dangling_blocking_refs = dangling_blocking
-
-    if phases:
-      issue.phases = phases
-
-    if approval_values:
-      issue.approval_values = approval_values
+      self,
+      cnxn,
+      services,
+      issue,
+      marked_description,
+      attachments=None,
+      index_now=False,
+      importer_id=None):
+    project_id = issue.project_id
 
     issue.local_id = self.AllocateNextLocalID(cnxn, project_id)
     issue.issue_id = project_id * 1000000 + issue.local_id

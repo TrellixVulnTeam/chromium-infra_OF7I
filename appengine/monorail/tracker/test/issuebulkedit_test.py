@@ -85,9 +85,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testGatherPageData(self):
     """Test GPD works in a normal no-corner-cases case."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', None, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 0, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project)
@@ -98,9 +98,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testGatherPageData_CustomFieldEdition(self):
     """Test GPD works in a normal no-corner-cases case."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', None, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 0, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project, perms=permissions.PermissionSet([]))
@@ -166,9 +166,15 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testGatherPageData_FilteredIssues(self):
     """Test GPD when all specified issues get filtered out."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', None, [],
-        ['restrict-view-Googler'], [], [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789,
+        1,
+        'issue summary',
+        'New',
+        0,
+        reporter_id=111,
+        labels=['restrict-view-Googler'])
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project)
@@ -179,9 +185,15 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testGatherPageData_TypeLabels(self):
     """Test that GPD displays a custom field for appropriate issues."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', None, [],
-        ['type-customlabels'], [], [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789,
+        1,
+        'issue summary',
+        'New',
+        0,
+        reporter_id=111,
+        labels=['type-customlabels'])
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project)
@@ -198,10 +210,11 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData(self):
     """Test that PFD works in a normal no-corner-cases case."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
+
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
         perms=permissions.OWNER_ACTIVE_PERMISSIONSET,
@@ -277,9 +290,9 @@ class IssueBulkEditTest(unittest.TestCase):
     # 400 == bad request
     self.assertEqual(400, self.servlet.response.status)
 
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr.perms = permissions.OWNER_ACTIVE_PERMISSIONSET
     mr.local_id_list = [local_id_1]
@@ -315,9 +328,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_BadUserField(self):
     """Test PFD when a nonexistent user is added as a field value."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -340,9 +353,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_CustomFields(self):
     """Test PFD processes edits to custom fields."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -374,9 +387,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_RestrictedCustomFieldsAccept(self):
     """We accept edits to restricted fields by editors (or admins)."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -430,9 +443,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_RestrictedCustomFieldsReject(self):
     """We reject edits to restricted fields by non-editors (and non-admins)."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -558,13 +571,14 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_DuplicateStatus_MergeSameIssue(self):
     """Test PFD processes null/cleared status values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, self.project.project_id, 'issue summary',
-        'New', 111, [], [], [], [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
-    created_issue_2, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, self.project.project_id, 'issue summary2',
-        'New', 112, [], [], [], [], 112, 'test issue2')
+
+    created_issue_2 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 112, reporter_id=112)
+    self.services.issue.TestAddIssue(created_issue_2)
     merge_into_local_id_2 = created_issue_2.local_id
 
     mr = testing_helpers.MakeMonorailRequest(
@@ -589,13 +603,13 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_DuplicateStatus_MergeMissingIssue(self):
     """Test PFD processes null/cleared status values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, self.project.project_id, 'issue summary',
-        'New', 111, [], [], [], [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
-    created_issue_2, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, self.project.project_id, 'issue summary2',
-        'New', 112, [], [], [], [], 112, 'test issue2')
+    created_issue_2 = fake.MakeTestIssue(
+        789, 1, 'issue summary2', 'New', 112, reporter_id=112)
+    self.services.issue.TestAddIssue(created_issue_2)
     local_id_2 = created_issue_2.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -614,17 +628,17 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_DuplicateStatus_Success(self):
     """Test PFD processes null/cleared status values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, self.project.project_id, 'issue summary',
-        'New', 111, [], [], [], [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
-    created_issue_2, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, self.project.project_id, 'issue summary2',
-        'New', 111, [], [], [], [], 111, 'test issue2')
+    created_issue_2 = fake.MakeTestIssue(
+        789, 2, 'issue summary2', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_2)
     local_id_2 = created_issue_2.local_id
-    created_issue_3, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, self.project.project_id, 'issue summary3',
-        'New', 112, [], [], [], [], 112, 'test issue3')
+    created_issue_3 = fake.MakeTestIssue(
+        789, 3, 'issue summary3', 'New', 112, reporter_id=112)
+    self.services.issue.TestAddIssue(created_issue_3)
     merge_into_local_id_3 = created_issue_3.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -695,9 +709,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_ClearStatus(self):
     """Test PFD processes null/cleared status values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -716,9 +730,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_InvalidOwner(self):
     """Test PFD rejects invalid owner emails."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', None, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 0, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -734,9 +748,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_MoveTo(self):
     """Test PFD processes move_to values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue to move', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     move_to_project = self.services.project.TestAddProject(
         name='proj2', project_id=790, owner_ids=[111])
@@ -761,9 +775,9 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_InvalidBlockIssues(self):
     """Test PFD processes invalid blocked_on and blocking values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -785,13 +799,13 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_BlockIssuesOnItself(self):
     """Test PFD processes invalid blocked_on and blocking values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
-    created_issue_2, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_2 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_2)
     local_id_2 = created_issue_2.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,
@@ -813,17 +827,19 @@ class IssueBulkEditTest(unittest.TestCase):
 
   def testProcessFormData_NormalBlockIssues(self):
     """Test PFD processes blocked_on and blocking values."""
-    created_issue_1, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'issue summary', 'New', 111, [], [], [],
-        [], 111, 'test issue')
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
     local_id_1 = created_issue_1.local_id
-    created_issueid, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'blocking', 'New', 111, [], [], [], [],
-        111, 'test issue')
+
+    created_issueid = fake.MakeTestIssue(
+        789, 2, 'blocking', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issueid)
     blocking_id = created_issueid.local_id
-    created_issueid, _ = self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'blocked on', 'New', 111, [], [], [], [],
-        111, 'test issue')
+
+    created_issueid = fake.MakeTestIssue(
+        789, 3, 'blocked on', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issueid)
     blocked_on_id = created_issueid.local_id
     mr = testing_helpers.MakeMonorailRequest(
         project=self.project,

@@ -523,18 +523,19 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    created_issue, _ = self.services.issue.CreateIssue(
-        self.cnxn,
-        self.services,
+    issue = fake.MakeTestIssue(
         789,
+        1,
         'sum',
         'New',
-        111, [], ['Type-Defect'], [], [],
         111,
-        'content',
-        index_now=False,
-        timestamp=self.now,
+        reporter_id=111,
+        labels=['Type-Defect'],
+        opened_timestamp=self.now,
+        modified_timestamp=self.now,
         approval_values=approval_values)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, issue, 'content')
     self.mox.VerifyAll()
     self.assertEqual(1, created_issue.local_id)
 
@@ -569,17 +570,17 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    created_issue, _ = self.services.issue.CreateIssue(
-        self.cnxn,
-        self.services,
+    issue = fake.MakeTestIssue(
         789,
+        1,
         'sum',
         'New',
-        111, [], [',', '', ' ', ', '], [], [],
         111,
-        'content',
-        index_now=False,
-        timestamp=self.now)
+        reporter_id=111,
+        opened_timestamp=self.now,
+        modified_timestamp=self.now)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, issue, 'content')
     self.mox.VerifyAll()
     self.assertEqual(1, created_issue.local_id)
 
@@ -604,17 +605,18 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    created_issue, _ = self.services.issue.CreateIssue(
-        self.cnxn,
-        self.services,
+    issue = fake.MakeTestIssue(
         789,
+        1,
         'sum',
         'New',
-        111, [], ['Type-Defect'], [], [],
         111,
-        'content',
-        index_now=False,
-        timestamp=self.now)
+        reporter_id=111,
+        labels=['Type-Defect'],
+        opened_timestamp=self.now,
+        modified_timestamp=self.now)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, issue, 'content')
     self.mox.VerifyAll()
     self.assertEqual(1, created_issue.local_id)
 
@@ -634,17 +636,18 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    created_issue, _ = self.services.issue.CreateIssue(
-        self.cnxn,
-        self.services,
+    issue = fake.MakeTestIssue(
         789,
+        1,
         'sum',
         'New',
-        111, [], ['Type-Defect'], [], [],
         111,
-        'content',
-        index_now=False,
-        timestamp=self.now)
+        reporter_id=111,
+        labels=['Type-Defect'],
+        opened_timestamp=self.now,
+        modified_timestamp=self.now)
+    created_issue, _ = self.services.issue.CreateIssue(
+        self.cnxn, self.services, issue, 'content')
     self.mox.VerifyAll()
     self.assertEqual(1, created_issue.local_id)
 
@@ -666,16 +669,25 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
-    self.services.issue.CreateIssue(
-        self.cnxn, self.services, 789, 'sum',
-        'New', 111, [], ['Type-Defect'], [], [], 111, 'content',
-        index_now=False, timestamp=self.now,
-        dangling_blocked_on=[
-          tracker_pb2.DanglingIssueRef(ext_issue_identifier=shortlink)
-          for shortlink in ['b/1234', 'b/5678']],
-        dangling_blocking=[
-          tracker_pb2.DanglingIssueRef(ext_issue_identifier=shortlink)
-          for shortlink in ['b/9876', 'b/5432']])
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        reporter_id=111,
+        labels=['Type-Defect'],
+        opened_timestamp=self.now,
+        modified_timestamp=self.now)
+    issue.dangling_blocked_on_refs = [
+        tracker_pb2.DanglingIssueRef(ext_issue_identifier=shortlink)
+        for shortlink in ['b/1234', 'b/5678']
+    ]
+    issue.dangling_blocking_refs = [
+        tracker_pb2.DanglingIssueRef(ext_issue_identifier=shortlink)
+        for shortlink in ['b/9876', 'b/5432']
+    ]
+    self.services.issue.CreateIssue(self.cnxn, self.services, issue, 'content')
     self.mox.VerifyAll()
 
   def testCreateIssue_Imported(self):
@@ -694,18 +706,17 @@ class IssueServiceTest(unittest.TestCase):
     self.SetUpEnqueueIssuesForIndexing([78901])
     self.mox.ReplayAll()
 
-    created_issue, comment = self.services.issue.CreateIssue(
-        self.cnxn,
-        self.services,
+    issue = fake.MakeTestIssue(
         789,
+        1,
         'sum',
         'New',
-        111, [], [',', '', ' ', ', '], [], [],
         111,
-        'content',
-        index_now=False,
-        timestamp=self.now,
-        importer_id=222)
+        reporter_id=111,
+        opened_timestamp=self.now,
+        modified_timestamp=self.now)
+    created_issue, comment = self.services.issue.CreateIssue(
+        self.cnxn, self.services, issue, 'content', importer_id=222)
 
     self.mox.VerifyAll()
     self.assertEqual(1, created_issue.local_id)
