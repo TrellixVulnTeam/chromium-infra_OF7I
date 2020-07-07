@@ -13,6 +13,11 @@ bootstrap, you will need to upload it manually to the
 (TODO: We should enable Dockerbuild to upload to wheelhouse too.) Check the
 `.dockerbuild/wheels` directory for the local wheel.
 
+> **Note:** The tooling outlined here supports building a python virtualenv for
+> use *only* in the infra.git repo. `vpython` is a more distributed tool that
+> accomplishes a similar thing, but is *not* described in this file. See
+> [here][vypy doc] for its documentation.
+
 ## TL;DR - Workflows
 
 ### Setting up the env with already-built-deps
@@ -245,6 +250,7 @@ to be e.g. `2.1.3.0`.
 [wheel files]: https://www.python.org/dev/peps/pep-0427/
 [virtualenv]: https://github.com/pypa/virtualenv
 [pip]: https://github.com/pypa/pip
+[vypy doc]: https://chromium.googlesource.com/infra/infra/+/master/go/src/infra/tools/vpython/README.md
 
 ## Platform Problems
 
