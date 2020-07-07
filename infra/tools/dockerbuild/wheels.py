@@ -629,6 +629,7 @@ SPECS.update({
         Universal('mozterm', '1.0.0'),
         Universal('nose', '1.3.7'),
         Universal('nose2', '0.9.1'),
+        Universal('nose2', '0.9.2'),
         Universal('oauth2client', '4.0.0'),
         Universal('oauth2client', '4.1.2'),
         Universal('oauth2client', '4.1.3'),
