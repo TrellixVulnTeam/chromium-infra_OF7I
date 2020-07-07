@@ -115,7 +115,7 @@ def _CreateBigqueryRow(row, component_mapping, team_mapping):
 
   bqrow = {
       'test_location':
-          test_location,
+          str(test_location.to_dict()) if test_location else '',
       'step_name':
           step_name,
       'test_name':

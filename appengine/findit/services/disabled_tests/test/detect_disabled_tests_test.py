@@ -286,7 +286,10 @@ class DetectTestDisablementTest(WaterfallTestCase):
     }
     self.assertEqual(expected_local_test, local_tests)
 
-  @mock.patch.object(test_tag_util, 'GetTestLocation', return_value='path/a.cc')
+  @mock.patch.object(
+      test_tag_util,
+      'GetTestLocation',
+      return_value=TestLocation(file_path='path/a.cc'))
   @mock.patch.object(step_util, 'GetOS', return_value='OS')
   @mock.patch.object(
       Flake, 'NormalizeStepName', return_value='telemetry_gpu_integration_test')
@@ -310,7 +313,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
     bqrow = detect_disabled_tests._CreateBigqueryRow(row, {}, {})
     bqrow["insert_time"] = datetime(2019, 6, 29, 0, 0, 0)
     expected_bqrow = {
-        'test_location': 'path/a.cc',
+        'test_location': "{'line_number': None, 'file_path': 'path/a.cc'}",
         'step_name': 'step_name',
         'test_name': 'test_name1',
         'build_id': 123,
