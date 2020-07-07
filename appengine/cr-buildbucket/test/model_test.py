@@ -33,6 +33,15 @@ class BuildTest(testing.AppengineTestCase):
     with self.assertRaises(AssertionError):
       build.put()
 
+  def test_put_with_bad_experiments(self):
+    build = test_util.build()
+    build.experiments.extend(['+chromium.exp_foo', '-chromium.exp_bar'])
+    build.put()  # Success
+
+    build.experiments.append('no_plus_or_minus_prefix')
+    with self.assertRaises(AssertionError):
+      build.put()
+
   def test_create_build_id_generates_monotonically_decreasing_ids(self):
     now = datetime.datetime(2015, 2, 24)
     ids = []
