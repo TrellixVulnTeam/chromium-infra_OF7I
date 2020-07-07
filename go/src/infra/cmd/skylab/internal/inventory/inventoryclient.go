@@ -37,7 +37,7 @@ type Client interface {
 	DeleteDUTs(context.Context, []string, *authcli.Flags, skycmdlib.RemovalReason, io.Writer) (bool, error)
 	BatchUpdateDUTs(context.Context, *invV1Api.BatchUpdateDutsRequest, io.Writer) error
 	FilterDUTHostnames(context.Context, []string) ([]string, error)
-	UpdateLabstations(context.Context, string, string) (*invV2Api.UpdateLabstationsResponse, error)
+	UpdateLabstations(context.Context, string, string, string) (*invV2Api.UpdateLabstationsResponse, error)
 	UpdateDUT(context.Context, *inventory.CommonDeviceSpecs) error
 }
 
@@ -86,10 +86,11 @@ func (client *inventoryClientV2) UpdateDUT(ctx context.Context, newSpecs *invent
 	return nil
 }
 
-func (client *inventoryClientV2) UpdateLabstations(ctx context.Context, hostname, servosToDelete string) (*invV2Api.UpdateLabstationsResponse, error) {
+func (client *inventoryClientV2) UpdateLabstations(ctx context.Context, hostname, servosToDelete, dutToAdd string) (*invV2Api.UpdateLabstationsResponse, error) {
 	return client.ic.UpdateLabstations(ctx, &invV2Api.UpdateLabstationsRequest{
 		Hostname:      hostname,
 		DeletedServos: []string{servosToDelete},
+		AddedDUTs:     []string{dutToAdd},
 	})
 }
 

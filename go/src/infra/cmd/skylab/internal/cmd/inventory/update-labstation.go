@@ -27,6 +27,7 @@ var UpdateLabstation = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.servoToDelete, "delete-servo-serial", "", "the serial number of the servo to be deleted")
+		c.Flags.StringVar(&c.dutToAdd, "add-dut", "", "the servo from DUT by hostname will be added")
 		return c
 	},
 }
@@ -36,6 +37,7 @@ type updateLabstationRun struct {
 	authFlags     authcli.Flags
 	envFlags      skycmdlib.EnvFlags
 	servoToDelete string
+	dutToAdd      string
 }
 
 // Run implements the subcommands.CommandRun interface.
@@ -53,22 +55,30 @@ func (c *updateLabstationRun) innerRun(a subcommands.Application, args []string,
 	if err != nil {
 		return err
 	}
-
+	c.dutToAdd = skycmdlib.FixSuspiciousHostname(c.dutToAdd)
 	e := c.envFlags.Env()
 	ic := inv.NewInventoryClient(hc, e)
 	hostname := args[0]
-	res, err := ic.UpdateLabstations(ctx, hostname, c.servoToDelete)
+	res, err := ic.UpdateLabstations(ctx, hostname, c.servoToDelete, c.dutToAdd)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Successfully delete servo %s for labstation %s\n", c.servoToDelete, hostname)
-	fmt.Printf("The left servos for this labstation are:\n")
-	for _, servo := range res.GetLabstation().GetLabstation().GetServos() {
-		if servo.GetServoSerial() == c.servoToDelete {
-			fmt.Printf("Warning: servo %s is not deleted, stop printing...\n", c.servoToDelete)
-			break
-		} else {
-			fmt.Printf("%v\n", servo)
+	if c.servoToDelete != "" {
+		fmt.Printf("Successfully delete servo %s for labstation %s\n", c.servoToDelete, hostname)
+		fmt.Println("The left servos for this labstation are:")
+		for _, servo := range res.GetLabstation().GetLabstation().GetServos() {
+			if servo.GetServoSerial() == c.servoToDelete {
+				fmt.Printf("Warning: servo %s is not deleted, stop printing...\n", c.servoToDelete)
+				break
+			}
+			fmt.Println(servo)
+		}
+	}
+	if c.dutToAdd != "" {
+		fmt.Printf("Successfully added servo from host %s for labstation %s\n", c.dutToAdd, hostname)
+		fmt.Println("The servos for this labstation are:")
+		for _, servo := range res.GetLabstation().GetLabstation().GetServos() {
+			fmt.Println(servo)
 		}
 	}
 	return nil
