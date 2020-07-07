@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package machinelse
+package labsetup
 
 import (
 	"fmt"
@@ -15,37 +15,36 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	fleet "infra/unifiedfleet/api/v1/proto"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// AddMachinelseCmd add MachineLSE to the system.
-var AddMachinelseCmd = &subcommands.Command{
-	UsageLine: "add",
-	ShortDesc: "add MachineLSE by name",
-	LongDesc:  cmdhelp.AddMachinelseLongDesc,
+// RedeployMachineCmd set MachineLSE by given name.
+var RedeployMachineCmd = &subcommands.Command{
+	UsageLine: "redeploy-machine [Options...]",
+	ShortDesc: "Redeploy a machine in the lab",
+	LongDesc:  cmdhelp.RedeployMachineLongDesc,
 	CommandRun: func() subcommands.CommandRun {
-		c := &addMachinelse{}
+		c := &redeployMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachinelseFileText)
-		c.Flags.BoolVar(&c.json, "j", false, `interpret the input file as a JSON file.`)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c
 	},
 }
 
-type addMachinelse struct {
+type redeployMachine struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
 	newSpecsFile string
-	json         bool
 	interactive  bool
 }
 
-func (c *addMachinelse) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *redeployMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -53,7 +52,7 @@ func (c *addMachinelse) Run(a subcommands.Application, args []string, env subcom
 	return 0
 }
 
-func (c *addMachinelse) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *redeployMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -65,33 +64,33 @@ func (c *addMachinelse) innerRun(a subcommands.Application, args []string, env s
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	var machinelse fleet.MachineLSE
+	var machinelse ufspb.MachineLSE
 	if c.interactive {
-		utils.GetMachinelseInteractiveInput(ctx, ic, &machinelse, false)
+		utils.GetMachinelseInteractiveInput(ctx, ic, &machinelse, true)
 	} else {
 		err = utils.ParseJSONFile(c.newSpecsFile, &machinelse)
 		if err != nil {
 			return err
 		}
 	}
-	res, err := ic.CreateMachineLSE(ctx, &UfleetAPI.CreateMachineLSERequest{
-		MachineLSE:   &machinelse,
-		MachineLSEId: machinelse.GetName(),
+	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
+	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
+		MachineLSE: &machinelse,
 	})
 	if err != nil {
 		return err
 	}
-	res.Name = UfleetUtil.RemovePrefix(res.Name)
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
 	return nil
 }
 
-func (c *addMachinelse) validateArgs() error {
+func (c *redeployMachine) validateArgs() error {
 	if !c.interactive && c.newSpecsFile == "" {
 		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
 	}

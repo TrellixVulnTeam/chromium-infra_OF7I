@@ -18,6 +18,7 @@ import (
 	"infra/cmd/shivas/meta"
 	"infra/cmd/shivas/query"
 	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/ufs/cmds/labsetup"
 	"infra/cmd/shivas/ufs/cmds/resources"
 )
 
@@ -40,12 +41,14 @@ func getApplication() *cli.Application {
 			subcommands.Section("Lab audit"),
 			audit.AuditCmd,
 			query.GetAssetsCmd,
-			subcommands.Section("Registration"),
+			subcommands.Section("Registration Management"),
 			resources.MachineCmd,
 			resources.SwitchCmd,
-			subcommands.Section("Inventory"),
-			resources.MachinelseCmd,
-			subcommands.Section("Configuration"),
+			subcommands.Section("Lab Setup Management"),
+			labsetup.DeployMachineCmd,
+			labsetup.RedeployMachineCmd,
+			labsetup.AbandonMachineCmd,
+			subcommands.Section("Configuration Management"),
 			resources.MachinelsePrototypeCmd,
 		},
 	}

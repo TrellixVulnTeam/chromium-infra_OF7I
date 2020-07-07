@@ -38,10 +38,7 @@ func (c *machinelse) Run(a subcommands.Application, args []string, env subcomman
 // GetCommands lists all the subcommands under machinelse
 func (c machinelseApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
-		m.AddMachinelseCmd,
-		m.UpdateMachinelseCmd,
 		m.GetMachinelseCmd,
-		m.DeleteMachinelseCmd,
 	}
 }
 

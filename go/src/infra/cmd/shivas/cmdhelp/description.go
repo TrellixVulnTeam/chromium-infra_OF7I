@@ -134,31 +134,35 @@ Example OS Lab Machine:
 The protobuf definition of Machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto#19`
 
-	// AddMachinelseLongDesc long description for AddMachinelseCmd
-	AddMachinelseLongDesc string = `add MachineLSE by name.
-./shivas machinelse add -j -f machinelse.json
-Adds a MachineLSE by reading a JSON file input.
+	// DeployMachineLongDesc long description for DeployMachineCmd
+	DeployMachineLongDesc string = `Deploy a machine as a DUT, Labstation, DevServer, Caching Server or a VM Server.
 
-./shivas machinelse add -i
-Adds a MachineLSE by reading input through interactive mode.`
+Examples:	
+shivas deploy-machine -f machinelse.json
+Deploys a machine by reading a JSON file input.
 
-	// UpdateMachinelseLongDesc long description for UpdateMachinelseCmd
-	UpdateMachinelseLongDesc string = `update MachineLSE by name.
-./shivas machinelse set -j -f machinelse.json
-Updates a MachineLSE by reading a JSON file input.
+shivas deploy-machine -i
+Deploys a machine by reading input through interactive mode.`
 
-./shivas machinelse set -i
-Updates a MachineLSE by reading input through interactive mode.`
+	// RedeployMachineLongDesc long description for RedeployMachineCmd
+	RedeployMachineLongDesc string = `Redeploy a machine as a DUT, Labstation, DevServer, Caching Server or a VM Server
+	
+Examples:
+shivas redeploy-machine -f machinelse.json
+Redeploys a machine by reading a JSON file input.
+
+shivas redeploy-machine -i
+Redeploys a machine by reading input through interactive mode.`
 
 	// MachinelseFileText description for machinelse file input
-	MachinelseFileText string = `Path to a file containing MachineLSE specification in JSON format.
-This file must contain one MachineLSE JSON message
+	MachinelseFileText string = `Path to a file containing machine deployment specification in JSON format.
+This file must contain one machine deployment JSON message
 
-Example Browser Lab MachineLSE:
+Example Browser machine deployment:
 {
 	"name": "A-Browser-MachineLSE-1",
 	"machineLsePrototype": "browser-lab:vm",
-	"hostname": "Dell Server 3200",
+	"hostname": "A-Browser-MachineLSE-1",
 	"chromeBrowserMachineLse": {
 		"vms": [
 			{
@@ -187,18 +191,18 @@ Example Browser Lab MachineLSE:
 	]
 }
 
-Example OS Lab MachineLSE for DUT:
+Example OS machine deployment for a DUT:
 {
-	"name": "A-ChromeOS-DUT",
+	"name": "chromeos3-row2-rack3-host5",
 	"machineLsePrototype": "acs-lab:wifi",
-	"hostname": "chromeOSDUT",
+	"hostname": "chromeos3-row2-rack3-host5",
 	"chromeosMachineLse": {
 		"deviceLse": {
 			"dut": {
-				"hostname": "chromeOSDUT",
+				"hostname": "chromeos3-row2-rack3-host5",
 				"peripherals": {
 					"servo": {
-						"servoHostname": "RedServo",
+						"servoHostname": "chromeos3-row6-rack6-labstation6",
 						"servoPort": 12,
 						"servoSerial": "1234",
 						"servoType": "V3"
@@ -256,7 +260,7 @@ Example OS Lab MachineLSE for DUT:
 				]
 			},
 			"rpmInterface": {
-				"rpm": "rpm-1",
+				"rpm": "rpm-asset-tag-123",
 				"port": 23
 			},
 			"networkDeviceInterface": {
@@ -270,14 +274,14 @@ Example OS Lab MachineLSE for DUT:
 	]
 }
 
-Example OS Lab MachineLSE for Labstation:
+Example OS machine deployment for a Labstation:
 {
-	"name": "RedLabstation",
-	"hostname": "RedLabstation",
+	"name": "chromeos3-row6-rack6-labstation6",
+	"hostname": "chromeos3-row6-rack6-labstation6",
 	"chromeosMachineLse": {
 		"deviceLse": {
 			"labstation": {
-				"hostname": "RedLabstation",
+				"hostname": "chromeos3-row6-rack6-labstation6",
 				"servos": [],
 				"rpm": {
 					"powerunitName": "rpm-1",
@@ -289,7 +293,7 @@ Example OS Lab MachineLSE for Labstation:
 				]
 			},
 			"rpmInterface": {
-				"rpm": "rpm-1",
+				"rpm": "rpm-asset-tag-123",
 				"port": 23
 			},
 			"networkDeviceInterface": {
@@ -303,7 +307,7 @@ Example OS Lab MachineLSE for Labstation:
 	]
 }
 
-The protobuf definition of MachineLSE is part of
+The protobuf definition of a deployed machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto#24`
 
 	// AddMachinelsePrototypeLongDesc long description for AddMachinelsePrototypeCmd
