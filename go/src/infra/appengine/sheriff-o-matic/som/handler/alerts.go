@@ -35,10 +35,8 @@ const (
 )
 
 var (
-	masterStateURL = "https://chrome-internal.googlesource.com/infradata/master-manager/+/master/desired_master_state.json?format=text"
-	masterStateKey = "masterState"
-	// ErrUnrecognizedTree indicates that a request specificed an unrecognized tree.
-	ErrUnrecognizedTree = fmt.Errorf("Unrecognized tree name")
+	// ErrUnrecognizedTree indicates that a request specified an unrecognized tree.
+	ErrUnrecognizedTree = fmt.Errorf("unrecognized tree name")
 )
 
 // GetAlerts handles API requests for alerts.

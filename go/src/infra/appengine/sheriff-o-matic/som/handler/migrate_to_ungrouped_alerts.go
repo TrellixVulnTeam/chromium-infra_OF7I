@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"infra/appengine/sheriff-o-matic/config"
+	"infra/appengine/sheriff-o-matic/som/analyzer"
+	"infra/appengine/sheriff-o-matic/som/model"
+
 	"github.com/google/uuid"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/router"
-	"infra/appengine/sheriff-o-matic/config"
-	"infra/appengine/sheriff-o-matic/som/analyzer"
-	"infra/appengine/sheriff-o-matic/som/model"
 )
 
 var (
@@ -169,7 +170,7 @@ func generateAnnotationsNonGroupingForGroupedAnnotations(annotations []*model.An
 	// Process group by group.
 	for groupID, groupAnn := range groupIDToGroupAnnotationMap {
 		// groupIDToChildAnnotationsMap[groupID] is guaranteed to exist, thanks to filterAnnotationsByCurrentAlerts.
-		childAnns, _ := groupIDToChildAnnotationsMap[groupID]
+		childAnns := groupIDToChildAnnotationsMap[groupID]
 		newGroupAnn := model.AnnotationNonGrouping(*groupAnn)
 		ret = append(ret, &newGroupAnn)
 

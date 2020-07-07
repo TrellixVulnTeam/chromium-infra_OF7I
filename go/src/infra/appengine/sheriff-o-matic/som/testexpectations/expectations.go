@@ -114,7 +114,6 @@ func LoadAll(c context.Context) (*FileSet, error) {
 			}
 			r.file = &File{Path: path, Expectations: stmts}
 			rCh <- r
-			return
 		}()
 	}
 
@@ -231,13 +230,10 @@ func (es *ExpectationStatement) ExpandModifiers() []string {
 		switch strings.ToLower(m) {
 		case "mac":
 			ret = append(ret, "retina", "mac10.9", "mac10.11", "mac10.12")
-			break
 		case "win":
 			ret = append(ret, "win7", "win10")
-			break
 		case "linux":
 			ret = append(ret, "trusty")
-			break
 		case "android":
 			ret = append(ret, "kitkat")
 		}
@@ -255,7 +251,7 @@ func (es *ExpectationStatement) ModifierMatch(mod string) bool {
 	}
 
 	for _, m := range es.ExpandModifiers() {
-		if strings.ToLower(m) == strings.ToLower(mod) {
+		if strings.EqualFold(m, mod) {
 			return true
 		}
 	}

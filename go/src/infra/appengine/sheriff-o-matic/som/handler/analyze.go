@@ -23,36 +23,14 @@ import (
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/tsmon/field"
-	"go.chromium.org/luci/common/tsmon/metric"
 	"go.chromium.org/luci/server/router"
 
 	"cloud.google.com/go/bigquery"
 )
 
 const (
-	logdiffQueue = "logdiff"
-
-	// groupingPoolSize controls the number of goroutines used to creating
-	// groupings when post processing the generated alerts. Has not been tuned.
-	groupingPoolSize = 2
-
 	bqDatasetID = "events"
 	bqTableID   = "alerts"
-)
-
-var (
-	alertCount = metric.NewInt("sheriff_o_matic/analyzer/alert_count",
-		"Number of alerts generated.",
-		nil,
-		field.String("tree"),
-		field.String("category")) // "consistent", "new" etc
-
-	alertGroupCount = metric.NewInt("sheriff_o_matic/analyzer/alert_group_count",
-		"Number of alert groups active.",
-		nil,
-		field.String("tree"),
-		field.String("category")) // "consistent", "new" etc
 )
 
 var errStatus = func(c context.Context, w http.ResponseWriter, status int, msg string) {
@@ -253,20 +231,6 @@ func attachFindItResults(ctx context.Context, failures []*messages.BuildFailure,
 		}
 	}
 }
-
-func alertCategory(a *messages.Alert) string {
-	cat := "other"
-	if a.Severity == messages.NewFailure {
-		cat = "new"
-	} else if a.Severity == messages.ReliableFailure {
-		cat = "consistent"
-	}
-	return cat
-}
-
-// groupCounts maps alert category to a map of group IDs to counts of alerts
-// in that category and group.
-type groupCounts map[string]map[string]int
 
 func storeAlertsSummary(c context.Context, a *analyzer.Analyzer, tree string, alertsSummary *messages.AlertsSummary) error {
 	sort.Sort(messages.Alerts(alertsSummary.Alerts))

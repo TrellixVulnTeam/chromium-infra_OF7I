@@ -23,7 +23,7 @@ var retryBaseDelay = time.Second
 func retry(f func() (bool, error), maxAttempts int) error {
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		again, err := f()
-		if again == false {
+		if !again {
 			return err
 		}
 
@@ -52,7 +52,7 @@ func (sc *simpleClient) attemptReq(ctx context.Context, r *http.Request, v inter
 	defer resp.Body.Close()
 	status := resp.StatusCode
 	if status != http.StatusOK {
-		return status, fmt.Errorf("Bad response code: %v", status)
+		return status, fmt.Errorf("bad response code: %v", status)
 	}
 
 	if err = json.NewDecoder(resp.Body).Decode(v); err != nil {
@@ -66,36 +66,6 @@ func (sc *simpleClient) attemptReq(ctx context.Context, r *http.Request, v inter
 		return status, err
 	}
 
-	return status, err
-}
-
-func (sc *simpleClient) attemptJSONGet(ctx context.Context, url string, v interface{}) (int, error) {
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logging.Errorf(ctx, "error while creating request: %q, possibly retrying.", err.Error())
-		return 0, err
-	}
-
-	return sc.attemptReq(ctx, req, v)
-}
-
-// getJSON does a simple HTTP GET on a getJSON endpoint.
-//
-// Returns the status code and the error, if any.
-func (sc *simpleClient) getJSON(ctx context.Context, url string, v interface{}) (status int, err error) {
-	err = retry(func() (bool, error) {
-		status, err = sc.attemptJSONGet(ctx, url, v)
-		if status >= 400 && status < 500 {
-			return false, fmt.Errorf("HTTP status %d, not retrying: %s", status, url)
-		}
-
-		if err != nil {
-			logging.Errorf(ctx, "Error attempting fetch: %v", err)
-			return true, err
-		}
-
-		return false, nil
-	}, maxRetries)
 	return status, err
 }
 

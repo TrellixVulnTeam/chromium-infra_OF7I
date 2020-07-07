@@ -305,7 +305,7 @@ func (a *Annotation) Add(c context.Context, r io.Reader) (bool, error) {
 
 func intToTimestamp(s int) (*timestamp.Timestamp, error) {
 	if s == 0 {
-		return nil, fmt.Errorf("Cannot convert 0 to timestamp.Timestamp")
+		return nil, fmt.Errorf("cannot convert 0 to timestamp.Timestamp")
 	}
 
 	ret, err := ptypes.TimestampProto(time.Unix(int64(s/1000), 0))
@@ -340,7 +340,7 @@ func (a *Annotation) Remove(c context.Context, r io.Reader) (bool, error) {
 	deletedComments := []Comment{}
 	for _, i := range change.Comments {
 		if i < 0 || i >= len(a.Comments) {
-			return false, errors.New("Invalid comment index")
+			return false, errors.New("invalid comment index")
 		}
 		deletedComments = append(deletedComments, a.Comments[i])
 		a.Comments = append(a.Comments[:i], a.Comments[i+1:]...)

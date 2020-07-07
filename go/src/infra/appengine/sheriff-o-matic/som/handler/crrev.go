@@ -100,5 +100,5 @@ func getRevRangeHandler(ctx *router.Context, crRev client.CrRev) {
 		return
 	}
 
-	http.Redirect(w, r, string(itm.Value()), 301)
+	http.Redirect(w, r, string(itm.Value()), http.StatusMovedPermanently)
 }

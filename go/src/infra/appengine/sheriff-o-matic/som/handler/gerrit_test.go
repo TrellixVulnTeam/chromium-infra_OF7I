@@ -65,11 +65,9 @@ func TestGerritClient(t *testing.T) {
 				})
 				fmt.Fprintf(w, ")]}'\n%s", string(marshalled))
 				created = true
-				break
 			case "PUT":
 				w.WriteHeader(http.StatusOK)
 				uploaded = true
-				break
 			default:
 				w.WriteHeader(http.StatusBadRequest)
 			}

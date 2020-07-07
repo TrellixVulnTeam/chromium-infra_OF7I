@@ -63,6 +63,4 @@ func AnnotationTreeWorker(ctx *router.Context) {
 	logging.Infof(c, "%v", out)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(out))
-
-	return
 }

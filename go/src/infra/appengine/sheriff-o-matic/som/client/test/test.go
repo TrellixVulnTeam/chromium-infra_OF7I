@@ -2,19 +2,12 @@ package test
 
 import (
 	"fmt"
-	"time"
 
 	"golang.org/x/net/context"
 
 	"infra/appengine/test-results/model"
 	"infra/monitoring/messages"
 )
-
-func fakeNow(t time.Time) func() time.Time {
-	return func() time.Time {
-		return t
-	}
-}
 
 // MockReader is a mock reader used for testing.
 type MockReader struct {

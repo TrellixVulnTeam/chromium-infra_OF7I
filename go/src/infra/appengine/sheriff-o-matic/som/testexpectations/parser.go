@@ -253,7 +253,7 @@ func (p *Parser) Parse() (*ExpectationStatement, error) {
 		if isBug(lit) {
 			for {
 				stmt.Bugs = append(stmt.Bugs, lit)
-				tok, lit = p.scanIgnoreWhitespace()
+				_, lit = p.scanIgnoreWhitespace()
 				if !isBug(lit) {
 					p.unscan()
 					break

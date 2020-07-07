@@ -9,7 +9,6 @@ import (
 
 	"infra/appengine/sheriff-o-matic/som/analyzer"
 	testhelper "infra/appengine/sheriff-o-matic/som/client/test"
-	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 
 	"go.chromium.org/gae/impl/dummy"
@@ -17,7 +16,6 @@ import (
 	"go.chromium.org/gae/service/info"
 	"go.chromium.org/gae/service/urlfetch"
 	"go.chromium.org/luci/appengine/gaetesting"
-	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -117,15 +115,6 @@ func setUpGitiles(c context.Context) context.Context {
 		}})
 }
 
-type mockBuildBucket struct {
-	builds []*bbpb.Build
-	err    error
-}
-
-func (b *mockBuildBucket) LatestBuilds(ctx context.Context, builderIDs []*bbpb.BuilderID) ([]*bbpb.Build, error) {
-	return b.builds, b.err
-}
-
 type mockFindit struct {
 	res []*messages.FinditResultV2
 	err error
@@ -218,46 +207,4 @@ func TestStoreAlertsSummary(t *testing.T) {
 		})
 		So(err, ShouldBeNil)
 	})
-}
-
-type fakeReasonRaw struct {
-	signature string
-	title     string
-}
-
-func (f *fakeReasonRaw) Signature() string {
-	if f.signature != "" {
-		return f.signature
-	}
-
-	return "fakeSignature"
-}
-
-func (f *fakeReasonRaw) Kind() string {
-	return "fakeKind"
-}
-
-func (f *fakeReasonRaw) Title([]*messages.BuildStep) string {
-	if f.title == "" {
-		return "fakeTitle"
-	}
-	return f.title
-}
-
-func (f *fakeReasonRaw) Severity() messages.Severity {
-	return messages.NewFailure
-}
-
-type annList []model.Annotation
-
-func (a annList) Len() int {
-	return len(a)
-}
-
-func (a annList) Less(i, j int) bool {
-	return a[i].Key < a[j].Key
-}
-
-func (a annList) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
 }

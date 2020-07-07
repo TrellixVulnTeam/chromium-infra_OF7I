@@ -5,43 +5,13 @@
 package step
 
 import (
-	"encoding/json"
 	"net/url"
 	"testing"
-	"time"
 
-	"golang.org/x/net/context"
-
-	testhelper "infra/appengine/sheriff-o-matic/som/client/test"
-	te "infra/appengine/sheriff-o-matic/som/testexpectations"
 	"infra/monitoring/messages"
-
-	"go.chromium.org/gae/service/info"
-	"go.chromium.org/gae/service/urlfetch"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
-
-type giMock struct {
-	info.RawInterface
-	token  string
-	expiry time.Time
-	err    error
-}
-
-func (gi giMock) AccessToken(scopes ...string) (token string, expiry time.Time, err error) {
-	return gi.token, gi.expiry, gi.err
-}
-
-func setUpGitiles(c context.Context) context.Context {
-	data, _ := json.Marshal(map[string]*te.BuilderConfig{})
-
-	return urlfetch.Set(c, &testhelper.MockGitilesTransport{
-		Responses: map[string]string{
-			"https://chromium.googlesource.com/chromium/src/+/master/third_party/blink/tools/blinkpy/common/config/builders.json?format=TEXT": string(data),
-		},
-	})
-}
 
 func TestTruncateTestName(t *testing.T) {
 	Convey("testTrunc", t, func() {

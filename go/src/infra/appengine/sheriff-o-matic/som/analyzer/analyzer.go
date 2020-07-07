@@ -6,41 +6,20 @@ package analyzer
 
 import (
 	"context"
-	"errors"
-	"expvar"
 	"sync"
 	"time"
 
-	"go.chromium.org/gae/service/info"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/monitoring/messages"
+
+	"go.chromium.org/gae/service/info"
 )
 
 const (
 	// StepCompletedRun is a synthetic step name used to indicate the build run is complete.
 	StepCompletedRun = "completed run"
 
-	// Step result values.
-	resInfraFailure = float64(4)
-
-	// This is pretty aggressive, and tuned mainly for chromium.perf. Consider
-	// making this a per-tree setting.
-	maxConcurrentBuilders = 2
-
-	// This is a guess, and should be tuned
-	maxConcurrentBuilds = 4
-
 	prodAppID = "sheriff-o-matic"
-)
-
-var (
-	expvars = expvar.NewMap("analyzer")
-)
-
-var (
-	errNoBuildSteps      = errors.New("No build steps")
-	errNoRecentBuilds    = errors.New("No recent builds")
-	errNoCompletedBuilds = errors.New("No completed builds")
 )
 
 // Analyzer runs the process of checking masters, builders, test results and so on,

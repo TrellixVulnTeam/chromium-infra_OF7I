@@ -105,10 +105,7 @@ var androidFilterFunc = func(r failureRow) bool {
 		"android-arm64-stable",
 		"android-arm-stable",
 	}
-	if sliceContains(validBuilders, r.Builder) {
-		return true
-	}
-	return false
+	return sliceContains(validBuilders, r.Builder)
 }
 
 var chromiumFilterFunc = func(r failureRow) bool {
@@ -257,7 +254,7 @@ func generateSQLQuery(ctx context.Context, tree string, appID string) string {
 //     for each failing step on a builder. If step_a and step_b are failing on the same
 //     builder or set of builders, they should be merged into a single alert.
 func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailure, error) {
-	failureRows := []failureRow{}
+	var failureRows []failureRow
 	var err error
 	if shouldUseCache(tree) {
 		failureRows, err = getFailureRowsForTree(ctx, tree)

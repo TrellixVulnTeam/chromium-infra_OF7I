@@ -8,17 +8,9 @@ import (
 	"fmt"
 	"strings"
 
-	"golang.org/x/net/context"
-
 	te "infra/appengine/sheriff-o-matic/som/testexpectations"
 	"infra/monitoring/messages"
 )
-
-// Max number of failed tests to put in resulting json. Needed because of datastore size limits.
-var maxFailedTests = 40
-
-// Text to put in test names indicating results were snipped.
-const tooManyFailuresText = "...... too many results, data snipped...."
 
 // TestFailure is a failure of a single test suite. May include multiple test cases.
 // Can also include information about failure causes, including findit information.
@@ -103,21 +95,6 @@ type TestWithResult struct {
 	Artifacts    []ArtifactLink             `json:"artifacts"`
 }
 
-// tests is a slice of tests with Findit results.
-type tests []TestWithResult
-
-func (slice tests) Len() int {
-	return len(slice)
-}
-
-func (slice tests) Less(i, j int) bool {
-	return (len(slice[i].SuspectedCLs) > 0 && len(slice[j].SuspectedCLs) == 0) || (slice[i].IsFlaky && !slice[j].IsFlaky)
-}
-
-func (slice tests) Swap(i, j int) {
-	slice[i], slice[j] = slice[j], slice[i]
-}
-
 // GetTestSuite returns the name of the test suite executed in a step. Currently, it has
 // a bunch of custom logic to parse through all the suffixes added by various recipe code.
 // Eventually, it should just read something structured from the step.
@@ -154,15 +131,6 @@ func GetTestSuite(bs *messages.BuildStep) string {
 	}
 
 	return testSuite
-}
-
-func getExpectationsForTest(ctx context.Context, testName string, config *te.BuilderConfig) ([]*te.ExpectationStatement, error) {
-	fs, err := te.LoadAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return fs.ForTest(testName, config), nil
 }
 
 func contains(haystack []string, needle string) bool {

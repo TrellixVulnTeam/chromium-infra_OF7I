@@ -13,8 +13,7 @@ func TestRetry(t *testing.T) {
 	Convey("test retry logic", t, func() {
 		Convey("success, no retry", func() {
 			i := 0
-			var err error
-			err = retry(func() (bool, error) {
+			err := retry(func() (bool, error) {
 				i++
 				return false, nil
 			}, 3)
@@ -24,8 +23,7 @@ func TestRetry(t *testing.T) {
 
 		Convey("success, retry", func() {
 			i := 0
-			var err error
-			err = retry(func() (bool, error) {
+			err := retry(func() (bool, error) {
 				i++
 				if i < 3 {
 					return true, fmt.Errorf("fail")
@@ -38,8 +36,7 @@ func TestRetry(t *testing.T) {
 
 		Convey("fail, no retry", func() {
 			i := 0
-			var err error
-			err = retry(func() (bool, error) {
+			err := retry(func() (bool, error) {
 				i++
 				return false, fmt.Errorf("fail")
 			}, 3)
@@ -49,8 +46,7 @@ func TestRetry(t *testing.T) {
 
 		Convey("fail, retry", func() {
 			i := 0
-			var err error
-			err = retry(func() (bool, error) {
+			err := retry(func() (bool, error) {
 				i++
 				return true, fmt.Errorf("fail")
 			}, 3)

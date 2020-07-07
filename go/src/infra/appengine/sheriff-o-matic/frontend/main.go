@@ -178,9 +178,7 @@ func requireGoogler(c *router.Context, next router.Handler) {
 	}
 }
 
-func noopHandler(ctx *router.Context) {
-	return
-}
+func noopHandler(ctx *router.Context) {}
 
 func getXSRFToken(ctx *router.Context) {
 	c, w := ctx.Context, ctx.Writer

@@ -9,11 +9,9 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"net/url"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -26,8 +24,6 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 )
-
-type contextKey string
 
 const (
 	maxRetries = 3
@@ -66,7 +62,7 @@ func BuilderURL(viewPath string) string {
 		Host:   miloHost,
 	}
 
-	r := regexp.MustCompile("/\\d+/?$")
+	r := regexp.MustCompile(`/\d+/?$`)
 	URL.Path = r.ReplaceAllString(viewPath, "")
 	return URL.String()
 }
@@ -100,12 +96,7 @@ type Writer interface {
 type trackingHTTPClient struct {
 	c *http.Client
 	// Some counters for reporting. Only modify through synchronized methods.
-	// TODO: add some more detailed stats about response times so we can
-	// track and alert on those too.
-	totalReqs  int64
-	totalErrs  int64
-	totalBytes int64
-	currReqs   int64
+	currReqs int64
 }
 
 type writer struct {
@@ -133,21 +124,6 @@ type Master struct {
 // Test represents information about Tests in a master.
 type Test struct {
 	Builders []string `json:"builders"`
-}
-
-func cacheKeyForBuild(master *messages.MasterLocation, builder string, number int64) string {
-	return filepath.FromSlash(
-		fmt.Sprintf("%s/%s/%d.json", url.QueryEscape(master.String()), url.QueryEscape(builder), number))
-}
-
-func contains(arr []string, s string) bool {
-	for _, itm := range arr {
-		if itm == s {
-			return true
-		}
-	}
-
-	return false
 }
 
 // CrBugs is a minimal Monorail client for fetching issues.
@@ -182,10 +158,6 @@ type FinditAPIResponse struct {
 // FinditAPIResponseV2 represents a response from the findit api.
 type FinditAPIResponseV2 struct {
 	Responses []*messages.FinditResultV2 `json:"responses"`
-}
-
-func cacheable(b *messages.Build) bool {
-	return len(b.Times) > 1 && b.Times[1] != 0
 }
 
 // NewWriter returns a new Client, which will post alerts to alertsBase.
@@ -259,7 +231,7 @@ func (hc *trackingHTTPClient) attemptReq(ctx context.Context, r *http.Request, v
 	defer resp.Body.Close()
 	status := resp.StatusCode
 	if status != http.StatusOK {
-		return false, status, 0, fmt.Errorf("Bad response code: %v", status)
+		return false, status, 0, fmt.Errorf("bad response code: %v", status)
 	}
 
 	if err = json.NewDecoder(resp.Body).Decode(v); err != nil {
@@ -274,47 +246,6 @@ func (hc *trackingHTTPClient) attemptReq(ctx context.Context, r *http.Request, v
 	}
 
 	return true, status, resp.ContentLength, err
-}
-
-// postJSON does a simple HTTP POST on a endpoint, with retries and backoff.
-//
-// Returns the status code and the error, if any.
-func (hc *trackingHTTPClient) postJSON(ctx context.Context, url string, data []byte, v interface{}) (status int, err error) {
-	req, err := http.NewRequest("POST", url, bytes.NewReader(data))
-	req.Header.Set("Content-Type", "application/json")
-	if err != nil {
-		return 0, err
-	}
-
-	err = hc.trackRequestStats(func() (length int64, err error) {
-		attempts := 0
-		for {
-			if attempts > 0 {
-				logging.Infof(ctx, "Fetching json (%d in flight, attempt %d of %d): %s", hc.currReqs, attempts, maxRetries, url)
-			}
-			done, tStatus, length, err := hc.attemptReq(ctx, req, v)
-			status = tStatus
-			if done {
-				return length, err
-			}
-			if err != nil {
-				logging.Errorf(ctx, "Error attempting fetch: %v", err)
-			}
-
-			attempts++
-			if attempts > maxRetries {
-				return 0, fmt.Errorf("error fetching %s, max retries exceeded", url)
-			}
-
-			if status >= 400 && status < 500 {
-				return 0, fmt.Errorf("HTTP status %d, not retrying: %s", status, url)
-			}
-
-			time.Sleep(time.Duration(math.Pow(2, float64(attempts))) * time.Second)
-		}
-	})
-
-	return status, err
 }
 
 // getJSON does a simple HTTP GET on a getJSON endpoint.
@@ -350,42 +281,6 @@ func (hc *trackingHTTPClient) getJSON(ctx context.Context, url string, v interfa
 	})
 
 	return status, err
-}
-
-// getText does a simple HTTP GET on a text endpoint.
-//
-// Returns the status code and the error, if any.
-func (hc *trackingHTTPClient) getText(ctx context.Context, url string) (ret string, status int, err error) {
-	err = hc.trackRequestStats(func() (length int64, err error) {
-
-		logging.Infof(ctx, "Fetching text (%d): %s", hc.currReqs, url)
-		resp, err := hc.c.Get(url)
-		if err != nil {
-			err = fmt.Errorf("couldn't resolve %s: %s", url, err)
-			return
-		}
-		defer resp.Body.Close()
-
-		b, err := ioutil.ReadAll(resp.Body)
-		status = resp.StatusCode
-		if err != nil {
-			return
-		}
-
-		if resp.StatusCode >= 400 {
-			err = fmt.Errorf("http status %d: %s", resp.StatusCode, url)
-			return
-		}
-
-		ret = string(b)
-		length = resp.ContentLength
-
-		if resp.StatusCode != 200 {
-			logging.Infof(ctx, "Fetched(%d) text: %s", resp.StatusCode, url)
-		}
-		return length, err
-	})
-	return ret, status, nil
 }
 
 // getAsSelfOAuthClient returns a client capable of making HTTP requests authenticated

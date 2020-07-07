@@ -297,9 +297,7 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 
 	allBugs := []model.MonorailBug{}
 	for _, annotation := range results {
-		for _, b := range annotation.Bugs {
-			allBugs = append(allBugs, b)
-		}
+		allBugs = append(allBugs, annotation.Bugs...)
 	}
 
 	allBugs = filterDuplicateBugs(allBugs)
