@@ -92,6 +92,10 @@ message ChromeOSMachine {
     // HaRT doesn't guarantee its existence.
     string mac_address = 6;
     string sku = 7;
+    // Phase of the device [PVT, EVT, etc,.] if available.
+    string phase = 8;
+    // Cost center associated with the asset.
+    string cost_center = 9;
 }
 
 // ChromeOSDeviceType refers to the different types of
