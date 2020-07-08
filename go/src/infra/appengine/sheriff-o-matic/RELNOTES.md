@@ -1,3 +1,34 @@
+# Release Notes sheriff-o-matic 2020-07-08
+
+- 9 commits, 4 bugs affected since 5e77859 (2020-07-02T23:47:14Z)
+- 3 Authors:
+  - nqmtuan@google.com
+  - orodley@chromium.org
+  - jsca@google.com
+
+## Changes in this release
+
+- [Flip UseGatekeeperConfigs to false.](https://chromium-review.googlesource.com/c/infra/infra/+/2286177) (orodley@chromium.org)
+- [Add new config format to replace the Gatekeeper configs.](https://chromium-review.googlesource.com/c/infra/infra/+/2286171) (orodley@chromium.org)
+- [[som] Run staticcheck on som and fix findings.](https://chromium-review.googlesource.com/c/infra/infra/+/2283473) (jsca@google.com)
+- [[som] Regenerate protos with the latest compiler.](https://chromium-review.googlesource.com/c/infra/infra/+/2283474) (jsca@google.com)
+- [[som] Step fetching internal gatekeeper config.](https://chromium-review.googlesource.com/c/infra/infra/+/2283472) (jsca@google.com)
+- [Delete a bunch of dead Gatekeeper-related code in SOM.](https://chromium-review.googlesource.com/c/infra/infra/+/2283471) (orodley@chromium.org)
+- [[som] Remove release_branch GK config.](https://chromium-review.googlesource.com/c/infra/infra/+/2283470) (jsca@google.com)
+- [[som] Fetch troopers from rotation proxy.](https://chromium-review.googlesource.com/c/infra/infra/+/2282186) (jsca@google.com)
+- [SoM release note 3 July](https://chromium-review.googlesource.com/c/infra/infra/+/2279391) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- jsca@google.com:
+  -  [https://crbug.com/1048940](https://crbug.com/1048940)
+  -  [https://crbug.com/1071344](https://crbug.com/1071344)
+  -  [https://crbug.com/1101659](https://crbug.com/1101659)
+
+- orodley@chromium.org:
+  -  [https://crbug.com/1102703](https://crbug.com/1102703)
+
+
 # Release Notes sheriff-o-matic 2020-07-03
 
 - 6 commits, 2 bugs affected since 8b9e54f ()
