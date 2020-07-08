@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import copy
 import mock
 import unittest
 
@@ -37,7 +38,7 @@ TEST_ID_MAP = {
     }
 
 
-def _Issue(project_name, local_id, summary, status):
+def _Issue(project_name, local_id, summary='', status=''):
   issue = tracker_pb2.Issue()
   issue.project_name = project_name
   issue.project_id = 789
@@ -921,16 +922,16 @@ class HelpersTest(unittest.TestCase):
 class MakeViewsForUsersInIssuesTest(unittest.TestCase):
 
   def setUp(self):
-    self.issue1 = _Issue('proj', 1, 'summary 1', 'New')
+    self.issue1 = _Issue('proj', 1)
     self.issue1.owner_id = 1001
     self.issue1.reporter_id = 1002
 
-    self.issue2 = _Issue('proj', 2, 'summary 2', 'New')
+    self.issue2 = _Issue('proj', 2)
     self.issue2.owner_id = 2001
     self.issue2.reporter_id = 2002
     self.issue2.cc_ids.extend([1, 1001, 1002, 1003])
 
-    self.issue3 = _Issue('proj', 3, 'summary 3', 'New')
+    self.issue3 = _Issue('proj', 3)
     self.issue3.owner_id = 1001
     self.issue3.reporter_id = 3002
 
@@ -1544,19 +1545,19 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
   def testGroupUniqueDeltaIssues(self):
     """We can identify unique IssueDeltas and group Issues by their deltas."""
-    issue_1 = _Issue('proj', 1, 'summary', 'Available')
+    issue_1 = _Issue('proj', 1)
     delta_1 = tracker_pb2.IssueDelta(cc_ids_add=[111])
 
-    issue_2 = _Issue('proj', 2, 'summary', 'Available')
+    issue_2 = _Issue('proj', 2)
     delta_2 = tracker_pb2.IssueDelta(cc_ids_add=[111], cc_ids_remove=[222])
 
-    issue_3 = _Issue('proj', 3, 'summary', 'Available')
+    issue_3 = _Issue('proj', 3)
     delta_3 = tracker_pb2.IssueDelta(cc_ids_add=[111])
 
-    issue_4 = _Issue('proj', 5, 'summary', 'Available')
+    issue_4 = _Issue('proj', 5)
     delta_4 = tracker_pb2.IssueDelta()
 
-    issue_5 = _Issue('proj', 5, 'summary', 'Available')
+    issue_5 = _Issue('proj', 5)
     delta_5 = tracker_pb2.IssueDelta()
 
     issue_delta_pairs = [
@@ -1575,19 +1576,19 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
   def testAssertIssueChangesValid_Valid(self):
     """We can assert when deltas are valid for issues."""
-    issue_1 = _Issue('chicken', 1, 'summary', 'Available')
+    issue_1 = _Issue('chicken', 1)
     delta_1 = tracker_pb2.IssueDelta(merged_into=78901)
 
-    issue_2 = _Issue('chicken', 2, 'summary', 'Available')
+    issue_2 = _Issue('chicken', 2)
     delta_2 = tracker_pb2.IssueDelta(blocked_on_add=[78901])
 
-    issue_3 = _Issue('chicken', 3, 'summary', 'Available')
+    issue_3 = _Issue('chicken', 3)
     delta_3 = tracker_pb2.IssueDelta()
 
-    issue_4 = _Issue('chicken', 4, 'summary', 'Available')
+    issue_4 = _Issue('chicken', 4)
     delta_4 = tracker_pb2.IssueDelta(owner_id=self.project_member.user_id)
 
-    issue_5 = _Issue('chicken', 5, 'summary', 'Available')
+    issue_5 = _Issue('chicken', 5)
     fv = tracker_bizobj.MakeFieldValue(
         self.int_fd.field_id, 998, None, None, None, None, False)
     delta_5 = tracker_pb2.IssueDelta(field_vals_add=[fv])
@@ -1601,7 +1602,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
   def testAssertIssueChangesValid_Invalid(self):
     """We can raise exceptions when deltas are not valid for issues. """
-    issue = _Issue('chicken', 1, 'summary', 'Available')
+    issue = _Issue('chicken', 1)
 
     delta_1 = tracker_pb2.IssueDelta(merged_into=issue.issue_id)
     issue_delta_pairs = [(issue, delta_1)]
@@ -1678,29 +1679,34 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 class IssueChangeImpactedIssuesTest(unittest.TestCase):
   """Tests for the IssueChangeImpactedIssues class."""
 
+  def setUp(self):
+    self.services = service_manager.Services(
+        issue=fake.IssueService())
+    self.cnxn = 'fake connection'
+
   def testTrackImpactedIssues(self):
     issue_delta_pairs = []
 
-    issue_1 = _Issue('project', 1, 'summary', 'Available')
+    issue_1 = _Issue('project', 1)
     delta_1 = tracker_pb2.IssueDelta(
         blocked_on_add=[78901, 78902],
         blocked_on_remove=[78903, 78904],
     )
     issue_delta_pairs.append((issue_1, delta_1))
 
-    issue_2 = _Issue('project', 2, 'summary', 'Available')
+    issue_2 = _Issue('project', 2)
     delta_2 = tracker_pb2.IssueDelta(
         blocking_add=[78901, 78902],
         blocking_remove=[78903, 78904],
     )
     issue_delta_pairs.append((issue_2, delta_2))
 
-    issue_3 = _Issue('project', 3, 'summary', 'Available')
+    issue_3 = _Issue('project', 3)
     issue_3.merged_into = 78902
     delta_3 = tracker_pb2.IssueDelta(merged_into=78901)
     issue_delta_pairs.append((issue_3, delta_3))
 
-    issue_4 = _Issue('project', 4, 'summary', 'Available')
+    issue_4 = _Issue('project', 4)
     issue_4.merged_into = 78901
     delta_4 = tracker_pb2.IssueDelta(
         merged_into=framework_constants.NO_ISSUE_SPECIFIED)
@@ -1737,3 +1743,107 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
             78901: [issue_4.issue_id],
             78902: [issue_3.issue_id]
         })
+
+  def testApplyImpactedIssueChanges(self):
+    impacted_tracker = tracker_helpers.IssueChangeImpactedIssues()
+    impacted_issue = _Issue('proj', 1)
+    impacted_iid = impacted_issue.issue_id
+
+    # Setup.
+    bo_add = _Issue('proj', 2)
+    self.services.issue.TestAddIssue(bo_add)
+    impacted_tracker.blocked_on_add[impacted_iid].append(bo_add.issue_id)
+
+    bo_remove = _Issue('proj', 3)
+    self.services.issue.TestAddIssue(bo_remove)
+    impacted_tracker.blocked_on_remove[impacted_iid].append(
+        bo_remove.issue_id)
+
+    b_add = _Issue('proj', 4)
+    self.services.issue.TestAddIssue(b_add)
+    impacted_tracker.blocking_add[impacted_iid].append(
+        b_add.issue_id)
+
+    b_remove = _Issue('proj', 5)
+    self.services.issue.TestAddIssue(b_remove)
+    impacted_tracker.blocking_remove[impacted_iid].append(
+        b_remove.issue_id)
+
+    m_add = _Issue('proj', 6)
+    m_add.cc_ids = [666, 777]
+    self.services.issue.TestAddIssue(m_add)
+    m_add_no_ccs = _Issue('proj', 7, '', '')
+    self.services.issue.TestAddIssue(m_add_no_ccs)
+    impacted_tracker.merged_from_add[impacted_iid].extend(
+        [m_add.issue_id, m_add_no_ccs.issue_id])
+
+    m_remove = _Issue('proj', 8)
+    m_remove.cc_ids = [888]
+    self.services.issue.TestAddIssue(m_remove)
+    impacted_tracker.merged_from_remove[impacted_iid].append(
+        m_remove.issue_id)
+
+
+    impacted_issue.cc_ids = [666]
+    impacted_issue.blocked_on_iids = [78404, bo_remove.issue_id]
+    impacted_issue.blocking_iids = [78405, b_remove.issue_id]
+    expected_issue = copy.deepcopy(impacted_issue)
+
+    # Verify.
+    actual_amendments = impacted_tracker.ApplyImpactedIssueChanges(
+        self.cnxn, impacted_issue, self.services.issue)
+    expected_amendments = [
+        tracker_bizobj.MakeBlockedOnAmendment(
+            [('proj', bo_add.local_id)],
+            [('proj', bo_remove.local_id)], default_project_name='proj'),
+        tracker_bizobj.MakeBlockingAmendment(
+            [('proj', b_add.local_id)],
+            [('proj', b_remove.local_id)], default_project_name='proj'),
+        tracker_bizobj.MakeCcAmendment([777], []),
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [('proj', m_add.local_id), ('proj', m_add_no_ccs.local_id)],
+            [('proj', m_remove.local_id)], default_project_name='proj')
+        ]
+    self.assertEqual(actual_amendments, expected_amendments)
+
+    expected_issue.cc_ids.append(777)
+    expected_issue.blocked_on_iids = [78404, bo_add.issue_id]
+    # By default new blocked_on issues that appear in blocked_on_iids
+    # with no prior rank associated with it are un-ranked and assigned rank 0.
+    # See SortBlockedOn in issue_svc.py.
+    expected_issue.blocked_on_ranks = [0, 0]
+    expected_issue.blocking_iids = [78405, b_add.issue_id]
+    self.assertEqual(impacted_issue, expected_issue)
+
+  def testApplyImpactedIssueChanges_Empty(self):
+    impacted_tracker = tracker_helpers.IssueChangeImpactedIssues()
+    impacted_issue = _Issue('proj', 1)
+    expected_issue = copy.deepcopy(impacted_issue)
+
+    actual_amendments = impacted_tracker.ApplyImpactedIssueChanges(
+        self.cnxn, impacted_issue, self.services.issue)
+
+    expected_amendments = []
+    self.assertEqual(actual_amendments, expected_amendments)
+    self.assertEqual(impacted_issue, expected_issue)
+
+  def testApplyImpactedIssueChanges_PartiallyEmptyMergedFrom(self):
+    """We can process merged_from changes when one of the lists is empty."""
+    impacted_tracker = tracker_helpers.IssueChangeImpactedIssues()
+    impacted_issue = _Issue('proj', 1)
+    impacted_iid = impacted_issue.issue_id
+    expected_issue = copy.deepcopy(impacted_issue)
+
+    m_add = _Issue('proj', 2)
+    self.services.issue.TestAddIssue(m_add)
+    impacted_tracker.merged_from_add[impacted_iid].append(
+        m_add.issue_id)
+    # We're leaving impacted_tracker.merged_from_remove empty.
+
+    actual_amendments = impacted_tracker.ApplyImpactedIssueChanges(
+        self.cnxn, impacted_issue, self.services.issue)
+
+    expected_amendments = [tracker_bizobj.MakeMergedIntoAmendment(
+            [('proj', m_add.local_id)], [], default_project_name='proj')]
+    self.assertEqual(actual_amendments, expected_amendments)
+    self.assertEqual(impacted_issue, expected_issue)

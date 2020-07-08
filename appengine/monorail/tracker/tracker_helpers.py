@@ -1377,6 +1377,59 @@ class IssueChangeImpactedIssues():
       if issue.merged_into:
         self.merged_from_remove[issue.merged_into].append(issue.issue_id)
 
+  def ApplyImpactedIssueChanges(self, cnxn, impacted_issue, issue_service):
+    # type: (MonorailConnection, Issue, IssueService) -> Collection[Amendment]
+    """Apply the tracked changes in RAM for the given impacted issue.
+
+    Args:
+      cnxn: connection to SQL database.
+      impacted_issue: Issue PB that we are applying the changes to.
+      issue_service: IssueService used to fetch info from DB or cache.
+
+    Returns:
+      All the amendments that represent the changes applied to the issue.
+
+    Side-effect:
+      The given impacted_issue will be updated in RAM.
+    """
+    issue_id = impacted_issue.issue_id
+
+    # Process changes for blocking/blocked_on issue changes.
+    amendments, _impacted_iids = tracker_bizobj.ApplyIssueBlockRelationChanges(
+        cnxn,
+        impacted_issue,
+        self.blocked_on_add[issue_id],
+        self.blocked_on_remove[issue_id],
+        self.blocking_add[issue_id],
+        self.blocking_remove[issue_id],
+        issue_service)
+
+    # Process changes in merged issues.
+    merged_from_add = self.merged_from_add[issue_id]
+    merged_from_remove = self.merged_from_remove[issue_id]
+
+    # Merge ccs into impacted_issue from all merged issues.
+    if merged_from_add:
+      merged_from_add_issues = issue_service.GetIssuesDict(
+          cnxn, merged_from_add).values()
+      new_cc_ids = _ComputeNewCcsFromIssueMerge(
+          impacted_issue, merged_from_add_issues)
+      if new_cc_ids:
+        impacted_issue.cc_ids.extend(new_cc_ids)
+        amendments.append(
+            tracker_bizobj.MakeCcAmendment(new_cc_ids, []))
+
+    if merged_from_add or merged_from_remove:
+      merged_from_add_refs = issue_service.LookupIssueRefs(
+          cnxn, merged_from_add).values()
+      merged_from_remove_refs = issue_service.LookupIssueRefs(
+          cnxn, merged_from_remove).values()
+      amendments.append(
+          tracker_bizobj.MakeMergedIntoAmendment(
+              merged_from_add_refs, merged_from_remove_refs,
+              default_project_name=impacted_issue.project_name))
+    return amendments
+
 
 class Error(Exception):
   """Base class for errors from this module."""
