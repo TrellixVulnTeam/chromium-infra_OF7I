@@ -563,3 +563,6 @@ import:
 - package: github.com/bazelbuild/buildtools
   version: master
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
+- package: github.com/microcosm-cc/bluemonday
+  version: upstream/master
+  repo: https://chromium.googlesource.com/external/github.com/microcosm-cc/bluemonday.git
