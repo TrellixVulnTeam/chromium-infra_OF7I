@@ -104,7 +104,15 @@ func GetBQQueryHandler(ctx *router.Context) {
 }
 
 func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string) (*messages.AlertsSummary, error) {
-	gkRules, err := getGatekeeperRules(c)
+	var gkRules interface {
+		ExcludeFailure(ctx context.Context, tree string, master *messages.MasterLocation, builder, step string) bool
+	}
+	var err error
+	if config.UseGatekeeperConfigs {
+		gkRules, err = getGatekeeperRules(c)
+	} else {
+		gkRules, err = analyzer.GetConfigRules(c)
+	}
 	if err != nil {
 		logging.Errorf(c, "error getting gatekeeper rules: %v", err)
 		return nil, err

@@ -21,18 +21,11 @@ func urlParse(s string, t *testing.T) *url.URL {
 	return p
 }
 
-func newTestAnalyzer(minBuilds, maxBuilds int) *Analyzer {
-	a := New(minBuilds, maxBuilds)
-	a.CrBug = nil
-	a.FindIt = nil
-
-	return a
-}
-
 func TestExcludeFailure(t *testing.T) {
 	tests := []struct {
 		name                        string
 		gk                          messages.GatekeeperConfig
+		cr                          *ConfigRules
 		gkt                         map[string][]messages.TreeMasterConfig
 		master, builder, step, tree string
 		want                        bool
@@ -51,6 +44,13 @@ func TestExcludeFailure(t *testing.T) {
 			master:  "fake.master",
 			builder: "fake.builder",
 			step:    "fake_step",
+			cr: &ConfigRules{
+				MasterCfgs: map[string]MasterConfig{
+					"https://ci.chromium.org/p/fake.master": {
+						ExcludedBuilders: []string{"fake.builder"},
+					},
+				},
+			},
 			gk: messages.GatekeeperConfig{Masters: map[string][]messages.MasterConfig{
 				"https://ci.chromium.org/p/fake.master": {{
 					ExcludedBuilders: []string{"fake.builder"},
@@ -64,6 +64,9 @@ func TestExcludeFailure(t *testing.T) {
 			master:  "fake.master",
 			builder: "fake.builder",
 			step:    "fake_step",
+			cr: &ConfigRules{
+				IgnoredSteps: []string{"fake_step"},
+			},
 			gk: messages.GatekeeperConfig{Masters: map[string][]messages.MasterConfig{
 				"https://ci.chromium.org/p/fake.master": {{
 					ExcludedSteps: []string{"fake_step"},
@@ -77,6 +80,9 @@ func TestExcludeFailure(t *testing.T) {
 			master:  "fake.master",
 			builder: "fake.builder",
 			step:    "fake_step",
+			cr: &ConfigRules{
+				IgnoredSteps: []string{"fake_step"},
+			},
 			gk: messages.GatekeeperConfig{Masters: map[string][]messages.MasterConfig{
 				"https://ci.chromium.org/p/fake.master": {{
 					Builders: map[string]messages.BuilderConfig{
@@ -88,6 +94,7 @@ func TestExcludeFailure(t *testing.T) {
 			},
 			want: true,
 		},
+		// Not tested for ConfigRules as it doesn't support this feature.
 		{
 			name:    "wildcard builder excluded",
 			tree:    "test_tree5",
@@ -101,6 +108,7 @@ func TestExcludeFailure(t *testing.T) {
 			}},
 			want: true,
 		},
+		// Not tested for ConfigRules as it doesn't support this feature.
 		{
 			name:    "config should exclude builder (tree config)",
 			tree:    "test_tree6",
@@ -126,6 +134,7 @@ func TestExcludeFailure(t *testing.T) {
 			},
 			want: true,
 		},
+		// Not tested for ConfigRules as it doesn't support this feature.
 		{
 			name:    "config shouldn't exclude builder (tree config)",
 			tree:    "test_tree7",
@@ -151,6 +160,7 @@ func TestExcludeFailure(t *testing.T) {
 			},
 			want: false,
 		},
+		// Not tested for ConfigRules as it doesn't support this feature.
 		{
 			name:    "config shouldn't exclude builder (tree config glob)",
 			tree:    "test_tree8",
@@ -182,6 +192,9 @@ func TestExcludeFailure(t *testing.T) {
 			master:  "fake.master",
 			builder: "fake.builder",
 			step:    "fake_step (experimental)",
+			cr: &ConfigRules{
+				IgnoredSteps: []string{"* (experimental)"},
+			},
 			gk: messages.GatekeeperConfig{Masters: map[string][]messages.MasterConfig{
 				"https://ci.chromium.org/p/fake.master": {{
 					Builders: map[string]messages.BuilderConfig{
@@ -204,6 +217,7 @@ func TestExcludeFailure(t *testing.T) {
 			},
 			want: true,
 		},
+		// Not tested for ConfigRules as it doesn't support this feature.
 		{
 			name:    "partial glob step excluded by builder category",
 			tree:    "test_tree10",
@@ -232,6 +246,7 @@ func TestExcludeFailure(t *testing.T) {
 			},
 			want: true,
 		},
+		// Not tested for ConfigRules as it doesn't support this feature.
 		{
 			name:    "partial glob step excluded by master category",
 			tree:    "test_tree11",
@@ -263,12 +278,18 @@ func TestExcludeFailure(t *testing.T) {
 
 	ctx := context.Background()
 
-	a := newTestAnalyzer(0, 10)
 	for _, test := range tests {
-		a.Gatekeeper = NewGatekeeperRules(ctx, []*messages.GatekeeperConfig{&test.gk}, test.gkt)
-		got := a.Gatekeeper.ExcludeFailure(ctx, test.tree, &messages.MasterLocation{URL: *urlParse("https://ci.chromium.org/p/"+test.master, t)}, test.builder, test.step)
+		gk := NewGatekeeperRules(ctx, []*messages.GatekeeperConfig{&test.gk}, test.gkt)
+		got := gk.ExcludeFailure(ctx, test.tree, &messages.MasterLocation{URL: *urlParse("https://ci.chromium.org/p/"+test.master, t)}, test.builder, test.step)
 		if got != test.want {
-			t.Errorf("%s failed. Got: %+v, want: %+v", test.name, got, test.want)
+			t.Errorf("%s failed for GK rules. Got: %+v, want: %+v", test.name, got, test.want)
+		}
+
+		if test.cr != nil {
+			got = test.cr.ExcludeFailure(ctx, test.tree, &messages.MasterLocation{URL: *urlParse("https://ci.chromium.org/p/"+test.master, t)}, test.builder, test.step)
+			if got != test.want {
+				t.Errorf("%s failed for config rules. Got: %+v, want: %+v", test.name, got, test.want)
+			}
 		}
 	}
 }

@@ -1,3 +1,6 @@
+// TODO(crbug.com/1102703): Remove all Gatekeeper-related code in SOM once the
+// migration has finished.
+
 package analyzer
 
 import (

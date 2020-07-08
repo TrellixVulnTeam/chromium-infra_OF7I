@@ -1,0 +1,55 @@
+{
+  "ignored_steps": [
+    "slave steps",
+    "Run Clank Test Annotator",
+    "*(experimental)*"
+  ],
+  "masters": {
+    "chromium": {
+      "excluded_builders": [
+        "android-official",
+        "fuchsia-official",
+        "linux-official",
+        "win-archive-dbg",
+        "win32-archive-dbg"
+      ]
+    },
+    "chromium.android": {
+      "excluded_builders": [
+        "android-incremental-dbg",
+        "android-nougat-arm64-rel",
+        "Oreo Phone Tester"
+      ]
+    },
+    "chromium.gpu": {
+      "excluded_builders": [
+        "GPU Linux Builder (dbg)",
+        "GPU Mac Builder (dbg)",
+        "GPU Win x64 Builder (dbg)",
+        "Linux Debug (NVIDIA)",
+        "Mac Debug (Intel)"
+      ]
+    },
+    "chromium.linux": {
+      "excluded_builders": [
+        "Leak Detection Linux"
+      ]
+    },
+    "chromium.mac": {
+      "excluded_builders": [
+        "mac-osxbeta-rel"
+      ]
+    },
+    "chromium.memory": {
+      "excluded_builders": [
+        "Android CFI",
+        "android-asan"
+      ]
+    },
+    "chromium.win": {
+      "excluded_builders": [
+        "Win10 Tests x64 (dbg)"
+      ]
+    }
+  }
+}

@@ -47,9 +47,6 @@ type Analyzer struct {
 	// triggering a "stale master" alert.
 	StaleMasterThreshold time.Duration
 
-	// Gatekeeper is a the parsed gatekeeper.json config file.
-	Gatekeeper *GatekeeperRules
-
 	// These limit the scope analysis, useful for debugging.
 	MasterOnly  string
 	BuilderOnly string
@@ -78,7 +75,6 @@ func New(minBuilds, maxBuilds int) *Analyzer {
 		OfflineBuilderThresh:   90 * time.Minute,
 		IdleBuilderCountThresh: 50,
 		StaleMasterThreshold:   10 * time.Minute,
-		Gatekeeper:             &GatekeeperRules{},
 		rslck:                  &sync.Mutex{},
 		revisionSummaries:      map[string]messages.RevisionSummary{},
 		Now: func() time.Time {
