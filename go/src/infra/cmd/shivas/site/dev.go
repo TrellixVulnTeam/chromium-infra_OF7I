@@ -12,13 +12,20 @@
 
 package site
 
-import "go.chromium.org/luci/grpc/prpc"
+import (
+	"fmt"
+
+	"go.chromium.org/luci/grpc/prpc"
+)
 
 func init() {
 	if true { // Change this to true.
 		Dev.InventoryService = "0.0.0.0:8082"
 		Dev.UnifiedFleetService = "127.0.0.1:8800"
 		Prod = Dev
-		DefaultPRPCOptions = &prpc.Options{Insecure: true}
+		DefaultPRPCOptions = &prpc.Options{
+			Insecure:  true,
+			UserAgent: fmt.Sprintf("shivas/%s", VersionNumber),
+		}
 	}
 }

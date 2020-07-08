@@ -9,11 +9,14 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc/metadata"
-	"infra/cmd/shivas/meta"
+	"infra/cmd/shivas/site"
 )
+
+// ClientVersion used as a key in metadata within context
+const ClientVersion string = "clientversion"
 
 // SetupContext sets up context with client major version number
 func SetupContext(ctx context.Context) context.Context {
-	md := metadata.Pairs(meta.ClientVersion, fmt.Sprintf("%d", meta.Major))
+	md := metadata.Pairs(ClientVersion, fmt.Sprintf("%d", site.Major))
 	return metadata.NewOutgoingContext(ctx, md)
 }

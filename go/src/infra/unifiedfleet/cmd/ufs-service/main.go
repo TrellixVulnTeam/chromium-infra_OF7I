@@ -8,8 +8,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"regexp"
 	"strconv"
 
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
@@ -58,22 +60,38 @@ func versionInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "Retrieving metadata failed.")
 	}
-	version, ok := md["clientversion"]
-	if !ok || len(version) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "Client major version not supplied.")
+	userAgentExists, userAgentErr := validateUserAgent(md)
+	if userAgentExists && userAgentErr != nil {
+		return nil, userAgentErr
 	}
-	major, err := strconv.ParseInt(version[0], 10, 32)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Client major version format error.")
+	if !userAgentExists {
+		return nil, status.Errorf(codes.InvalidArgument, "user-agent is not specified in the incoming request")
 	}
-	if major < SupportedClientMajorVersionNumber {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			fmt.Sprintf("Unsupported client version. Please update your client "+
-				"version to v%d.X.X or above.", SupportedClientMajorVersionNumber))
-	}
+	logging.Debugf(ctx, "Successfully pass user-agent version check: major version %d", SupportedClientMajorVersionNumber)
+	return handler(ctx, req)
+}
 
-	// Calls the handler
-	h, err := handler(ctx, req)
+// Assuming the version number for major, minor and patch are less than 1000.
+var versionRegex = regexp.MustCompile(`[0-9]{1,3}`)
 
-	return h, err
+// validateUserAgent returns a tuple
+//     (if user-agent exists, if user-agent is valid)
+func validateUserAgent(md metadata.MD) (bool, error) {
+	version, ok := md["user-agent"]
+	// Only check version for skylab commands which already set user-agent
+	if ok {
+		majors := versionRegex.FindAllString(version[0], 1)
+		if len(majors) != 1 {
+			return ok, status.Errorf(codes.InvalidArgument, "user-agent %s doesn't contain major version", version[0])
+		}
+		major, err := strconv.ParseInt(majors[0], 10, 32)
+		if err != nil {
+			return ok, status.Errorf(codes.InvalidArgument, "user-agent %s has wrong major version format", version[0])
+		}
+		if major < SupportedClientMajorVersionNumber {
+			return ok, status.Errorf(codes.FailedPrecondition,
+				fmt.Sprintf("Unsupported client version. Please update your client version to v%d.X.X or above.", SupportedClientMajorVersionNumber))
+		}
+	}
+	return ok, nil
 }
