@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/server/auth"
 
+	admin "infra/tricium/api/admin/v1"
 	tricium "infra/tricium/api/v1"
 )
 
@@ -42,10 +43,11 @@ type IsolateAPI interface {
 	// Note that this isolate has no command and includes no other isolates.
 	IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error)
 
-	// IsolateWorker isolates the provided worker's input.
+	// IsolateWorker isolates the provided worker.
 	//
-	// The provided isolated input hash is included.
-	IsolateWorker(c context.Context, serverURL string, isolatedInput string) (string, error)
+	// The provided isolated input hash is included in the worker isolate.
+	// The command of the worker is used as the command of the worker isolate.
+	IsolateWorker(c context.Context, serverURL string, worker *admin.Worker, isolatedInput string) (string, error)
 
 	// LayerIsolates creates isolates files from the provided isolates
 	// input and output.
@@ -125,13 +127,21 @@ func (s isolateServer) IsolateGitFileDetails(c context.Context, serverURL string
 }
 
 // IsolateWorker implements the IsolateAPI interface.
-//
-// Specifically, it sends request(s) to the isolated service to store some
-// isolated input there which will be used in a subsequent request to swarming.
-func (s isolateServer) IsolateWorker(c context.Context, serverURL string, isolatedInput string) (string, error) {
+func (s isolateServer) IsolateWorker(c context.Context, serverURL string, worker *admin.Worker, isolatedInput string) (string, error) {
+	// TODO(qyearsley): Include command deadline.
+	mode := 0444
 	h := isolated.GetHash(isolateNamespace)
 	iso := isolated.New(h)
-	// TODO(crbug/1102545): Stop using iso.Includes
+	switch wi := worker.Impl.(type) {
+	case *admin.Worker_Recipe:
+		break
+	case *admin.Worker_Cmd:
+		iso.Command = append([]string{wi.Cmd.Exec}, wi.Cmd.Args...)
+	case nil:
+		return "", errors.Reason("missing Impl when isolating worker %s", worker.Name).Err()
+	default:
+		return "", errors.Reason("Impl.Impl has unexpected type %T", wi).Err()
+	}
 	iso.Includes = []isolated.HexDigest{isolated.HexDigest(isolatedInput)}
 	isoData, err := json.Marshal(iso)
 	if err != nil {
@@ -142,7 +152,6 @@ func (s isolateServer) IsolateWorker(c context.Context, serverURL string, isolat
 		data:  []byte(isoData),
 		isIso: true,
 	}
-	mode := 0444
 	chunk.file = &isolated.File{
 		Digest: isolated.HashBytes(h, chunk.data),
 		Mode:   &mode,
@@ -164,7 +173,6 @@ func (s isolateServer) LayerIsolates(c context.Context, serverURL, namespace, is
 	h := isolated.GetHash(namespace)
 	iso := isolated.New(h)
 	iso.Files = outIso.Files
-	// TODO(crbug/1102545): Stop using iso.Includes
 	iso.Includes = []isolated.HexDigest{isolated.HexDigest(isolatedInput)}
 	isoData, err := json.Marshal(iso)
 	if err != nil {
@@ -309,7 +317,7 @@ func (mockIsolator) IsolateGitFileDetails(c context.Context, serverURL string, d
 // IsolateWorker is a mock function for MockIsolator.
 //
 // For any testing actually using the return values, create a new mock.
-func (mockIsolator) IsolateWorker(c context.Context, serverURL string, inputIsolate string) (string, error) {
+func (mockIsolator) IsolateWorker(c context.Context, serverURL string, worker *admin.Worker, inputIsolate string) (string, error) {
 	return "mockmockmock", nil
 }
 
