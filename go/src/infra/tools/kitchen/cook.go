@@ -31,7 +31,6 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	log "go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/milo"
 	"go.chromium.org/luci/common/system/environ"
 	"go.chromium.org/luci/common/system/exitcode"
 	"go.chromium.org/luci/common/system/filesystem"
@@ -47,6 +46,7 @@ import (
 	"go.chromium.org/luci/lucictx"
 	"go.chromium.org/luci/luciexe/legacy/annotee"
 	"go.chromium.org/luci/luciexe/legacy/annotee/annotation"
+	annopb "go.chromium.org/luci/luciexe/legacy/annotee/proto"
 
 	"infra/libs/infraenv"
 	"infra/tools/kitchen/build"
@@ -862,7 +862,7 @@ func (c *cookRun) runWithLogdogButler(ctx context.Context, env environ.Env, res 
 // watchSubprocessOutput annotates stdout/stderr and writes the annotation
 // messages to a stream, and optionally sends build info to Buildbucket server
 // (if c.CallUpdateBuild is true).
-func (c *cookRun) watchSubprocessOutput(ctx context.Context, annStreamName types.StreamName, stdout, stderr io.Reader, execMetadata *annotation.Execution, b *butler.Butler, stopSubprocess func()) (build *milo.Step, err error) {
+func (c *cookRun) watchSubprocessOutput(ctx context.Context, annStreamName types.StreamName, stdout, stderr io.Reader, execMetadata *annotation.Execution, b *butler.Butler, stopSubprocess func()) (build *annopb.Step, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -1009,12 +1009,12 @@ func parseProperties(properties map[string]interface{}, propertiesFile string) (
 	return
 }
 
-func setAnnotationText(s *milo.Step) {
+func setAnnotationText(s *annopb.Step) {
 	// TODO(nodir,iaanucci): clean this up when we define a new UI proto
 	s.Text = nil
 	for _, substep := range s.Substep {
 		ss := substep.GetStep()
-		if ss != nil && ss.Status == milo.Status_FAILURE && ss.Name != "Failure reason" {
+		if ss != nil && ss.Status == annopb.Status_FAILURE && ss.Name != "Failure reason" {
 			s.Text = append(s.Text, fmt.Sprintf("Failure %s", ss.Name))
 		}
 	}

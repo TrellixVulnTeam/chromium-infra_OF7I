@@ -23,9 +23,9 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/errors"
-	"go.chromium.org/luci/common/proto/milo"
 	"go.chromium.org/luci/logdog/common/types"
 	"go.chromium.org/luci/lucictx"
+	annopb "go.chromium.org/luci/luciexe/legacy/annotee/proto"
 
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	luciproto "go.chromium.org/luci/common/proto"
@@ -34,14 +34,14 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
-func newAnn(stepNames ...string) *milo.Step {
-	ann := &milo.Step{
-		Substep: make([]*milo.Step_Substep, len(stepNames)),
+func newAnn(stepNames ...string) *annopb.Step {
+	ann := &annopb.Step{
+		Substep: make([]*annopb.Step_Substep, len(stepNames)),
 	}
 	for i, n := range stepNames {
-		ann.Substep[i] = &milo.Step_Substep{
-			Substep: &milo.Step_Substep_Step{
-				Step: &milo.Step{Name: n},
+		ann.Substep[i] = &annopb.Step_Substep{
+			Substep: &annopb.Step_Substep_Step{
+				Step: &annopb.Step{Name: n},
 			},
 		}
 	}
@@ -211,7 +211,7 @@ func TestBuildUpdater(t *testing.T) {
 		})
 
 		Convey("ParseAnnotations", func() {
-			ann := &milo.Step{}
+			ann := &annopb.Step{}
 			err := luciproto.UnmarshalTextML(`
 				substep: <
 					step: <
@@ -293,7 +293,7 @@ END
 		})
 
 		Convey(`test addtional tags`, func(c C) {
-			ann := &milo.Step{}
+			ann := &annopb.Step{}
 			err := luciproto.UnmarshalTextML(`
 					substep: <
 						step: <

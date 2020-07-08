@@ -1,10 +1,11 @@
 syntax = "proto3";
 
 package luci.build;
-option go_package = "build";
+
+option go_package = "infra/tools/kitchen/build;build";
 
 import "infra/tools/kitchen/third_party/recipe_engine/result.proto";
-import "go.chromium.org/luci/common/proto/milo/annotations.proto";
+import "go.chromium.org/luci/luciexe/legacy/annotee/proto/annotations.proto";
 
 
 // Result of a build run from the perspective of a build bootstrapper.
@@ -18,7 +19,7 @@ message BuildRunResult {
   // Results returned by recipe engine.
   recipe_engine.Result recipe_result = 3;
   // Final state of the annotation proto.
-  milo.Step annotations = 4;
+  annotation.Step annotations = 4;
   // URL where the annotations (above) can be fetched from.
   // In practice, a LogDog URL.
   string annotation_url = 5;

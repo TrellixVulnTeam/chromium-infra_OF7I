@@ -26,10 +26,10 @@ import (
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/milo"
 	"go.chromium.org/luci/logdog/common/types"
 	"go.chromium.org/luci/lucictx"
 	"go.chromium.org/luci/luciexe/legacy/annotee"
+	annopb "go.chromium.org/luci/luciexe/legacy/annotee/proto"
 )
 
 // buildUpdater implements an annotee callback for updated annotations
@@ -41,7 +41,7 @@ type buildUpdater struct {
 	client     buildbucketpb.BuildsClient
 
 	// annotations contains latest state of the build in the form of
-	// binary serialized milo.Step.
+	// binary serialized annopb.Step.
 	// Must not be closed.
 	annotations chan []byte
 }
@@ -154,7 +154,7 @@ func (b *buildUpdater) run(
 // updateBuildBytes is a version of updateBuild that accepts raw annotation
 // bytes.
 func (b *buildUpdater) updateBuildBytes(ctx context.Context, annBytes []byte) error {
-	ann := &milo.Step{}
+	ann := &annopb.Step{}
 	if err := proto.Unmarshal(annBytes, ann); err != nil {
 		return errors.Annotate(err, "failed to parse annotation proto").Err()
 	}
@@ -179,7 +179,7 @@ func (b *buildUpdater) UpdateBuild(ctx context.Context, req *buildbucketpb.Updat
 
 // ParseAnnotations converts an annotation proto to a UpdateBuildRequest that
 // updates steps, output properties and output gitiles commit.
-func (b *buildUpdater) ParseAnnotations(ctx context.Context, ann *milo.Step) (*buildbucketpb.UpdateBuildRequest, error) {
+func (b *buildUpdater) ParseAnnotations(ctx context.Context, ann *annopb.Step) (*buildbucketpb.UpdateBuildRequest, error) {
 	updatePaths := []string{"build.steps", "build.output.properties"}
 	prefix, _ := b.annAddr.Path.Split()
 	fullPrefix := fmt.Sprintf("%s/%s", b.annAddr.Project, prefix)
@@ -188,7 +188,7 @@ func (b *buildUpdater) ParseAnnotations(ctx context.Context, ann *milo.Step) (*b
 		return nil, errors.Annotate(err, "failed to parse steps from an annotation proto").Err()
 	}
 
-	props, err := milo.ExtractProperties(ann)
+	props, err := annopb.ExtractProperties(ann)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to extract properties from an annotation proto").Err()
 	}
