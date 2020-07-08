@@ -39,7 +39,7 @@ def ci_builder(
     luci.console_view_entry(
         builder = name,
         console_view = "infra",
-        category = console_category or infra.category_from_os(os, short = True),
+        category = console_category or infra.category_from_os(os),
     )
 
 def try_builder(
@@ -64,14 +64,12 @@ def try_builder(
     )
 
 # CI Linux.
-ci_builder(name = "infra-continuous-zesty-64", os = "Ubuntu-17.04")
-ci_builder(name = "infra-continuous-yakkety-64", os = "Ubuntu-16.10")
-ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
-ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", experimental = True)
 ci_builder(name = "infra-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
+ci_builder(name = "infra-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
+ci_builder(name = "infra-continuous-xenial-arm64", os = "Ubuntu-16.04", cpu = "arm64", experimental = True, console_category = "linux|16.04|ARM")
+ci_builder(name = "infra-continuous-bionic-64", os = "Ubuntu-18.04")
 
 # CI OSX.
-ci_builder(name = "infra-continuous-mac-10.11-64", os = "Mac-10.11")
 ci_builder(name = "infra-continuous-mac-10.12-64", os = "Mac-10.12")
 ci_builder(name = "infra-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True)
 ci_builder(name = "infra-continuous-mac-10.14-64", os = "Mac-10.14")
