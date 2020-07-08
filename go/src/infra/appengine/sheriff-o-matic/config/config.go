@@ -14,4 +14,4 @@ var EnableAutoGrouping = false
 // UseGatekeeperConfigs is a flag to indicate whether we should read the
 // Gatekeeper config file to filter builders and steps. If not, we use our own
 // config file (config.json in this directory).
-var UseGatekeeperConfigs = true
+var UseGatekeeperConfigs = false
