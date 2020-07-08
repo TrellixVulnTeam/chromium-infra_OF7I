@@ -26,7 +26,8 @@ service Issues {
   // Returns the requested Issues.
   //
   // Raises:
-  //   INVALID_ARGUMENT if `names` is formatted incorrectly or missing.
+  //   INVALID_ARGUMENT if `names` is formatted incorrectly. Or if a parent
+  //       collection in `names` does not match the value in `parent`.
   //   NOT_FOUND if any of the given issues do not exist.
   //   PERMISSION_DENIED if the requester does not have permission to view one
   //       (or more) of the given issues.
@@ -80,12 +81,15 @@ message GetIssueRequest {
 }
 
 // The request message for Issues.BatchGetIssues.
-// Next available tag: 2
+// Next available tag: 3
 message BatchGetIssuesRequest {
-  // The names of the Issues to request.
-  repeated string names = 1 [
-      (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
-      (google.api.field_behavior) = REQUIRED ];
+  // The project name from which to batch get issues. If included, the parent
+  // of all the issues specified in `names` must match this field.
+  string parent = 1 [
+    (google.api.resource_reference) = {type: "api.crbug.com/Project"} ];
+  // The names of the issues to request.
+  repeated string names = 2 [
+      (google.api.resource_reference) = {type: "api.crbug.com/Issue"} ];
 }
 
 // The response message for Issues.BatchGetIssues.
