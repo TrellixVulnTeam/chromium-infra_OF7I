@@ -1039,7 +1039,7 @@ describe('issue', () => {
     });
 
     // TODO(kweng@) remove once crbug.com/monorail/6641 is fixed
-    it('has sane default for empty response', async () => {
+    it('has expected default for empty response', async () => {
       prpcCall.onFirstCall().returns({});
 
       const dispatch = sinon.stub();

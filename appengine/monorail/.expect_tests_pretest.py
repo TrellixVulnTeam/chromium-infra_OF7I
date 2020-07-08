@@ -20,7 +20,7 @@ pretest_APPENGINE_ENV_PATH = os.path.join(
     'gcloud', 'platform', 'google_appengine')
 sys.path.append(pretest_APPENGINE_ENV_PATH)
 
-# Crazy hack, because of appengine.
+# Unfortunate hack, because of appengine.
 # Importing dev_appserver is probably not officially supported and fix_sys_path
 # may be an implementation detail subject to change.
 import dev_appserver as pretest_dev_appserver

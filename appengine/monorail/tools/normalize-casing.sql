@@ -167,7 +167,7 @@ BEGIN
   DECLARE c_pid SMALLINT UNSIGNED;
   DECLARE c_label VARCHAR(80) BINARY;
 
-  -- This crazy query takes the Actions table (defined below) and combines it
+  -- This complex query takes the Actions table (defined below) and combines it
   -- with the set of all permissions granted in the project to construct a list
   -- of all possible Restrict-Action-Permission labels. It then combines that
   -- with LabelDef to see which ones are actually used (whether or not they are
@@ -216,11 +216,11 @@ BEGIN
   DECLARE c_pid SMALLINT UNSIGNED;
   DECLARE c_label VARCHAR(80) BINARY;
 
-  -- This crazy query takes the Actions table (defined below) and combines it
-  -- with the set of all permissions granted in the project to construct a list
-  -- of all possible Restrict-Action-Permission labels. It then combines that
-  -- with LabelDef to see which ones are actually used (whether or not they are
-  -- also defined as well-known labels).
+  -- This complex query takes the Actions table (defined below) and combines
+  -- it with the set of all permissions granted in the project to construct a
+  -- list of all possible Restrict-Action-Permission labels. It then combines
+  -- that with LabelDef to see which ones are actually used (whether or not
+  -- they are also defined as well-known labels).
   DECLARE curs CURSOR FOR SELECT LabelDef.id, LabelDef.project_id, RapDef.label FROM (
       SELECT DISTINCT CONCAT_WS('-', 'Restrict', Actions.action, ExtraPerm.perm)
       AS label FROM ExtraPerm, Actions where ExtraPerm.project_id=16) AS RapDef
