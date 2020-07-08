@@ -57,13 +57,12 @@ def try_builder(
         disable_reuse = (properties or {}).get("presubmit"),
     )
 
-ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
-ci_builder(name = "luci-go-continuous-mac-10.11-64", os = "Mac-10.11")
-ci_builder(name = "luci-go-continuous-mac-10.12-64", os = "Mac-10.12")
+ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
+ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04")
 ci_builder(name = "luci-go-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True)
-ci_builder(name = "luci-go-continuous-mac-10.14-64", os = "Mac-10.14")
-ci_builder(name = "luci-go-continuous-mac-10.15-64", os = "Mac-10.15")
+ci_builder(name = "luci-go-continuous-mac-10.14-64", os = "Mac-10.14", tree_closing = True)
+ci_builder(name = "luci-go-continuous-mac-10.15-64", os = "Mac-10.15", tree_closing = True)
 ci_builder(name = "luci-go-continuous-win7-64", os = "Windows", tree_closing = True)
 ci_builder(name = "luci-go-continuous-win10-64", os = "Windows-10", tree_closing = True)
 
