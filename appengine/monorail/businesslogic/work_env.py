@@ -428,7 +428,7 @@ class WorkEnv(object):
       parent_path: optional str with the path of the parent component.
       component_name: str with the name of the proposed component.
 
-    Return:
+    Returns:
       None if the user can create a component with that name, or a string with
       the reason the name can't be used.
     """
@@ -457,7 +457,7 @@ class WorkEnv(object):
           field.
       field_name: str with the name of the proposed field.
 
-    Return:
+    Returns:
       None if the user can create a field with that name, or a string with
       the reason the name can't be used.
     """
