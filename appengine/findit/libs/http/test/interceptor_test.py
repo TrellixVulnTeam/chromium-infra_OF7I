@@ -44,8 +44,7 @@ class InterceptorTest(testing.AppengineTestCase):
     self.assertEqual(status_code, 200)
     self.assertEqual(content, 'hello')
     self.assertEqual(response_headers, {})
-    mock_logging.assert_called_once_with('got response status 200 for url %s',
-                                         url)
+    mock_logging.assert_not_called()
 
   @mock.patch.object(logging, 'warning')
   def testWithException(self, mock_logging):

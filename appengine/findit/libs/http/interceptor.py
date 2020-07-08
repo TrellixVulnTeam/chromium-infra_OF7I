@@ -123,9 +123,8 @@ class LoggingInterceptor(HttpInterceptorBase):
     super(LoggingInterceptor, self).__init__(*args, **kwargs)
 
   def OnResponse(self, request, response):
-    if response.get('status_code') == 200:
-      logging.info('got response status 200 for url %s', request.get('url'))
-    elif response.get('status_code') not in self.no_error_logging_statuses:
+    if response.get('status_code') != 200 and response.get(
+        'status_code') not in self.no_error_logging_statuses:
       logging.info('request to %s responded with %d http status and headers %s',
                    request.get('url'), response.get('status_code', 0),
                    json.dumps(response.get('headers', {}).items()))
