@@ -162,3 +162,8 @@ class InvalidExternalIssueReference(Error):
 class PageTokenException(Error):
   """Incorrect page tokens."""
   pass
+
+
+class FilterRuleException(Error):
+  """Violates a filter rule that should show error."""
+  pass

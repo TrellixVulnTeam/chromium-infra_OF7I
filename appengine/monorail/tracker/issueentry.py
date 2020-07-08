@@ -400,20 +400,31 @@ class IssueEntry(servlet.Servlet):
           if approval_values:
             _AttachDefaultApprovers(config, approval_values)
 
+          # To preserve previous behavior, do not raise filter rule errors.
           issue, _ = we.CreateIssue(
-              mr.project_id, parsed.summary, parsed.status,
-              parsed.users.owner_id, parsed.users.cc_ids, labels, field_values,
-              component_ids, marked_description,
+              mr.project_id,
+              parsed.summary,
+              parsed.status,
+              parsed.users.owner_id,
+              parsed.users.cc_ids,
+              labels,
+              field_values,
+              component_ids,
+              marked_description,
               blocked_on=parsed.blocked_on.iids,
               blocking=parsed.blocking.iids,
               dangling_blocked_on=[
-                tracker_pb2.DanglingIssueRef(ext_issue_identifier=ref_string)
-                for ref_string in parsed.blocked_on.federated_ref_strings],
+                  tracker_pb2.DanglingIssueRef(ext_issue_identifier=ref_string)
+                  for ref_string in parsed.blocked_on.federated_ref_strings
+              ],
               dangling_blocking=[
-                tracker_pb2.DanglingIssueRef(ext_issue_identifier=ref_string)
-                for ref_string in parsed.blocking.federated_ref_strings],
+                  tracker_pb2.DanglingIssueRef(ext_issue_identifier=ref_string)
+                  for ref_string in parsed.blocking.federated_ref_strings
+              ],
               attachments=parsed.attachments,
-              approval_values=approval_values, phases=phases)
+              approval_values=approval_values,
+              phases=phases,
+              raise_filter_errors=False)
 
           if has_star:
             we.StarIssue(issue, True)

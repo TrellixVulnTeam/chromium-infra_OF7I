@@ -155,13 +155,19 @@ def ProcessEmailNotification(
       services.issue.CreateIssueComment(
           cnxn, alert_issue, auth.user_id, formatted_body)
     else:
-      # Create a new issue for this incident.
+      # Create a new issue for this incident. To preserve previous behavior do
+      # not raise filter rule errors.
       alert_issue, _ = we.CreateIssue(
-          project.project_id, subject,
-          alert_props['status'], alert_props['owner_id'],
-          alert_props['cc_ids'], alert_props['labels'],
-          alert_props['field_values'], alert_props['component_ids'],
-          formatted_body)
+          project.project_id,
+          subject,
+          alert_props['status'],
+          alert_props['owner_id'],
+          alert_props['cc_ids'],
+          alert_props['labels'],
+          alert_props['field_values'],
+          alert_props['component_ids'],
+          formatted_body,
+          raise_filter_errors=False)
 
     # Update issue using commands.
     lines = body.strip().split('\n')

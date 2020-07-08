@@ -918,11 +918,29 @@ class WorkEnv(object):
   ### Issue methods
 
   def CreateIssue(
-      self, project_id, summary, status, owner_id, cc_ids, labels,
-      field_values, component_ids, marked_description, blocked_on=None,
-      blocking=None, attachments=None, phases=None, approval_values=None,
-      send_email=True, reporter_id=None, timestamp=None,
-      dangling_blocked_on=None, dangling_blocking=None):
+      self,
+      project_id,  # type: int
+      summary,  # type: str
+      status,  # type: str
+      owner_id,  # type: int
+      cc_ids,  # type: Sequence[int]
+      labels,  # type: Sequence[str]
+      field_values,  # type: Sequence[proto.tracker_pb2.FieldValue]
+      component_ids,  # type: Sequence[int]
+      marked_description,  # type: str
+      blocked_on=None,  # type: Sequence[int]
+      blocking=None,  # type: Sequence[int]
+      attachments=None,  # type: Sequence[Tuple[str, str, str]]
+      phases=None,  # type: Sequence[proto.tracker_pb2.Phase]
+      approval_values=None,  # type: Sequence[proto.tracker_pb2.ApprovalValue]
+      send_email=True,  # type: bool
+      reporter_id=None,  # type: int
+      timestamp=None,  # type: int
+      dangling_blocked_on=None,  # type: Sequence[DanglingIssueRef]
+      dangling_blocking=None,  # type: Sequence[DanglingIssueRef]
+      raise_filter_errors=True,  # type: bool
+  ):
+    # type: (...) -> (proto.tracker_pb2.Issue, proto.tracker_pb2.IssueComment)
     """Create and store a new issue with all the given information.
 
     Args:
@@ -947,9 +965,14 @@ class WorkEnv(object):
       timestamp: optional int timestamp of an imported issue.
       dangling_blocked_on: a list of DanglingIssueRefs this issue is blocked on.
       dangling_blocking: a list of DanglingIssueRefs that this issue blocks.
+      raise_filter_errors: whether to raise when filter rules produce errors.
 
     Returns:
       A tuple (newly created Issue, Comment PB for the description).
+
+    Raises:
+      FilterRuleException if creation violates any filter rule that shows error.
+      PermissionException if user lacks sufficient permissions.
     """
     project = self.GetProject(project_id)
     self._AssertPermInProject(permissions.CREATE_ISSUE, project)
@@ -963,9 +986,6 @@ class WorkEnv(object):
     # Check description is not too long, else throw
     # Check every proposed field value is valid against field def, else throw
     # Phase 5.2 Validate sufficient attachment quota and update
-    # Phase 5.3 Must respect filter rule errors, either update underlying
-    # issue_svc.CreateIssue to throw/accumulate filter rule errors, or check
-    # filter rule errors here
 
     if reporter_id and reporter_id != self.mc.auth.user_id:
       self._AssertPermInProject(permissions.IMPORT_COMMENT, project)
@@ -1021,6 +1041,8 @@ class WorkEnv(object):
         issue.closed_timestamp = timestamp
       filterrules_helpers.ApplyFilterRules(
           self.mc.cnxn, self.services, issue, config)
+      if issue.derived_errors and raise_filter_errors:
+        raise exceptions.FilterRuleException(issue.derived_errors)
       if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
                                                 config):
         issue.closed_timestamp = timestamp

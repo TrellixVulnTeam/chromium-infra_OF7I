@@ -2731,7 +2731,7 @@ class FeaturesService(object):
     self.expunged_users_in_quick_edits.extend(user_ids)
 
   def GetFilterRules(self, cnxn, project_id):
-    return []
+    return self.test_rules[project_id]
 
   def GetCannedQueriesByProjectID(self, cnxn, project_id):
     return [sq for (pid, _, sq) in self.saved_queries if pid == project_id]

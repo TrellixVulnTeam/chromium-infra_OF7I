@@ -941,16 +941,25 @@ class MonorailApi(remote.Service):
 
       logging.info('request.author is %r', request.author)
       reporter_id, timestamp = self.parse_imported_reporter(mar, request)
+      # To preserve previous behavior, do not raise filter rule errors.
       new_issue, _ = we.CreateIssue(
-          mar.project_id, request.summary, request.status, owner_id,
-          cc_ids, request.labels + fields_labels, fields_add,
-          comp_ids, request.description,
+          mar.project_id,
+          request.summary,
+          request.status,
+          owner_id,
+          cc_ids,
+          request.labels + fields_labels,
+          fields_add,
+          comp_ids,
+          request.description,
           blocked_on=api_pb2_v1_helpers.convert_issueref_pbs(
               request.blockedOn, mar, self._services),
           blocking=api_pb2_v1_helpers.convert_issueref_pbs(
               request.blocking, mar, self._services),
-          reporter_id=reporter_id, timestamp=timestamp,
-          send_email=request.sendEmail)
+          reporter_id=reporter_id,
+          timestamp=timestamp,
+          send_email=request.sendEmail,
+          raise_filter_errors=False)
       we.StarIssue(new_issue, True)
 
     return api_pb2_v1_helpers.convert_issue(
