@@ -61,6 +61,14 @@ LUCI_CHROMIUM_TRY = test_util.parse_bucket_cfg(
         name: "linux"
         swarming_host: "swarming.example.com"
         task_template_canary_percentage { value: 10 }
+        experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 10
+        }
+        experiments {
+          key: "luci.non_production"
+          value: 0
+        }
         dimensions: "os:Linux"
         dimensions: "pool:luci.chromium.try"
         recipe {
@@ -80,6 +88,14 @@ LUCI_DART_TRY = test_util.parse_bucket_cfg(
       builders {
         name: "linux"
         dimensions: "pool:Dart.LUCI"
+        experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 10
+        }
+        experiments {
+          key: "luci.non_production"
+          value: 0
+        }
         recipe {
           cipd_package: "infra/recipe_bundle"
           cipd_version: "refs/heads/master"
@@ -627,6 +643,123 @@ class ConfigTest(testing.AppengineTestCase):
     actual = config.Builder.make_key('dart', 'try', 'linux').get()
     self.assertTrue(actual)
     self.assertEqual(actual.config, LUCI_DART_TRY.swarming.builders[0])
+
+  @mock.patch('components.config.get_project_configs', autospec=True)
+  def test_cron_update_buckets_backfill_experiments(self, get_project_configs):
+    infra_experiments_cfg = parse_cfg(
+        '''
+        buckets {
+          name: "try"
+          swarming {
+            hostname: "swarming.example.com"
+            builders {
+              name: "empty"
+            }
+            builders {
+              name: "backfill"
+              experimental: YES
+              task_template_canary_percentage { value: 30 }
+            }
+            builders {
+              name: "exists"
+              experimental: YES
+              task_template_canary_percentage { value: 30 }
+              experiments {
+                key: "luci.non_production"
+                value: 0
+              }
+              experiments {
+                key: "luci.buildbucket.canary_software"
+                value: 50
+              }
+            }
+          }
+        }
+        '''
+    )
+
+    get_project_configs.return_value = {
+        'infra-exp': ('deadbeef', infra_experiments_cfg, None),
+    }
+
+    config.cron_update_buckets()
+
+    actual = config.Builder.query().fetch()
+    actual = sorted(actual, key=lambda b: b.key)
+
+    expected_empty = text_format.Parse(
+        '''
+        name: "empty"
+        dimensions: "pool:luci.infra-exp.try"
+        swarming_host: "swarming.example.com"
+        experiments {
+          key: "luci.non_production"
+          value: 0
+        }
+        experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 10
+        }
+        ''', project_config_pb2.Builder()
+    )
+    expected_backfill = text_format.Parse(
+        '''
+        name: "backfill"
+        dimensions: "pool:luci.infra-exp.try"
+        swarming_host: "swarming.example.com"
+        experimental: YES
+        task_template_canary_percentage { value: 30 }
+        experiments {
+          key: "luci.non_production"
+          value: 100
+        }
+        experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 30
+        }
+        ''', project_config_pb2.Builder()
+    )
+    expected_exists = text_format.Parse(
+        '''
+        name: "exists"
+        dimensions: "pool:luci.infra-exp.try"
+        swarming_host: "swarming.example.com"
+        experimental: YES
+        task_template_canary_percentage { value: 30 }
+        experiments {
+          key: "luci.non_production"
+          value: 0
+        }
+        experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 50
+        }
+        ''', project_config_pb2.Builder()
+    )
+    expected = [
+        config.Builder(
+            parent=ndb.Key(config.Project, 'infra-exp', config.Bucket, 'try'),
+            id='backfill',
+            config=expected_backfill,
+            config_hash=hashlib.sha256(expected_backfill.SerializeToString()
+                                      ).hexdigest(),
+        ),
+        config.Builder(
+            parent=ndb.Key(config.Project, 'infra-exp', config.Bucket, 'try'),
+            id='empty',
+            config=expected_empty,
+            config_hash=hashlib.sha256(expected_empty.SerializeToString()
+                                      ).hexdigest(),
+        ),
+        config.Builder(
+            parent=ndb.Key(config.Project, 'infra-exp', config.Bucket, 'try'),
+            id='exists',
+            config=expected_exists,
+            config_hash=hashlib.sha256(expected_exists.SerializeToString()
+                                      ).hexdigest(),
+        ),
+    ]
+    self.assertEqual(actual, expected)
 
   def cfg_validation_test(self, cfg, expected_messages):
     ctx = config_component.validation.Context()

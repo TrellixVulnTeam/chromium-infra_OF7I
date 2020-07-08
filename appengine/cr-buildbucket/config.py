@@ -28,8 +28,17 @@ from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 import errors
 
-CURRENT_BUCKET_SCHEMA_VERSION = 8
+CURRENT_BUCKET_SCHEMA_VERSION = 9
 ACL_SET_NAME_RE = re.compile('^[a-z0-9_]+$')
+
+# Names of well-known experiments
+EXPERIMENT_CANARY = 'luci.buildbucket.canary_software'
+EXPERIMENT_NON_PROD = 'luci.non_production'
+
+# The default percentage of builds that are marked as canary.
+# This number is relatively high so we treat canary seriously and that we have
+# a strong signal if the canary is broken.
+_DEFAULT_CANARY_PERCENTAGE = 10
 
 
 @utils.cache
@@ -405,6 +414,31 @@ def _normalize_acls(acls):
       del acls[i]
 
 
+def _backfill_experiments(builder_cfg):
+  """Sets well-known experiments defined by deprecated fields in Builder.
+
+  The mapping between deprecated fields and well-known experiments is:
+
+  {
+    'experimental': 'luci.non_production',
+    'task_template_canary_percentage': 'luci.buildbucket.canary_software',
+  }
+
+  If the well-known experiment is already set in the Builder's `experiments`
+  map, this function won't update it.
+  """
+  if EXPERIMENT_CANARY not in builder_cfg.experiments:
+    builder_cfg.experiments[EXPERIMENT_CANARY] = (
+        builder_cfg.task_template_canary_percentage.value
+        if builder_cfg.HasField('task_template_canary_percentage') else
+        _DEFAULT_CANARY_PERCENTAGE
+    )
+  if EXPERIMENT_NON_PROD not in builder_cfg.experiments:
+    builder_cfg.experiments[EXPERIMENT_NON_PROD] = (
+        100 if builder_cfg.experimental == project_config_pb2.YES else 0
+    )
+
+
 def put_bucket(project_id, revision, bucket_cfg):
   # New Bucket format uses short bucket names, e.g. "try" instead of
   # "luci.chromium.try".
@@ -514,6 +548,7 @@ def cron_update_buckets():
           flatten_swarmingcfg.flatten_builder(
               b, defaults, builder_mixins_by_name
           )
+          _backfill_experiments(b)
           builder_key = Builder.make_key(project_id, bucket_key.id(), b.name)
           builders_to_delete.discard(builder_key)
           builder = builders.get(builder_key)

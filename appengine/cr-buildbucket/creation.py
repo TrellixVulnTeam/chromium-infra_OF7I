@@ -38,11 +38,6 @@ import swarming
 import swarmingcfg
 import tq
 
-# The default percentage of builds that are marked as canary.
-# This number is relatively high so we treat canary seriously and that we have
-# a strong signal if the canary is broken.
-_DEFAULT_CANARY_PERCENTAGE = 10
-
 # Default value of Build.infra.swarming.priority.
 _DEFAULT_SWARMING_PRIORITY = 30
 # Default value of Build.scheduling_timeout.
@@ -577,7 +572,7 @@ def _apply_global_settings(settings, build_proto):
 def _apply_builder_config_async(builder_cfg, build_proto, settings):
   """Applies project_config_pb2.Builder to a builds_pb2.Build."""
   # Decide if the build will be canary.
-  canary_percentage = _DEFAULT_CANARY_PERCENTAGE
+  canary_percentage = config._DEFAULT_CANARY_PERCENTAGE
   if builder_cfg.HasField(  # pragma: no branch
       'task_template_canary_percentage'):
     canary_percentage = builder_cfg.task_template_canary_percentage.value
