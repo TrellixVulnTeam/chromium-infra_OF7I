@@ -693,7 +693,7 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 				} else {
 					if dut {
 						// DUT
-						getDut(scanner, machinelse, acs)
+						getDut(ctx, ic, scanner, machinelse, acs)
 					} else {
 						// Labstation
 						getLabstation(ctx, ic, scanner, machinelse)
@@ -710,7 +710,7 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 				}
 				if dut {
 					// DUT
-					getDut(scanner, machinelse, acs)
+					getDut(ctx, ic, scanner, machinelse, acs)
 				} else {
 					// Labstation
 					getLabstation(ctx, ic, scanner, machinelse)
@@ -727,7 +727,7 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 // Servo Hostname(string) -> Servo Port(int) -> Servo Serial(string) ->
 // -> Servo Type(string) -> RPM PowerunitName(string) ->
 // -> RPM PowerunitOutlet(string) -> Pools(repeated string) -> getACSLabConfig()
-func getDut(scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
+func getDut(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
 	dut := &chromeosLab.DeviceUnderTest{
 		Hostname: machinelse.Hostname,
 		Peripherals: &chromeosLab.Peripherals{
@@ -758,9 +758,21 @@ func getDut(scanner *bufio.Scanner, machinelse *fleet.MachineLSE, acs bool) {
 			// Peripherals
 			// Servo
 			case "Servo Hostname":
+				if value != "" && !MachineLSEExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("Specified labstation %s is not "+
+						"deployed. Please use deploy-machine command to "+
+						"deploy the labstation %s first.", value, value)
+					break
+				}
 				dut.GetPeripherals().GetServo().ServoHostname = value
-				input = &Input{
-					Key: "Servo Port",
+				if value != "" {
+					input = &Input{
+						Key: "Servo Port",
+					}
+				} else {
+					input = &Input{
+						Key: "RPM PowerunitName",
+					}
 				}
 			case "Servo Port":
 				if value != "" {
