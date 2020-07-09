@@ -1332,7 +1332,7 @@ def _ComputeNewCcsFromIssueMerge(merge_into_issue, source_issues):
   return [cc_id for cc_id in new_cc_ids if cc_id not in merge_into_issue.cc_ids]
 
 
-class IssueChangeImpactedIssues():
+class _IssueChangeImpactedIssues():
   """Class to track changes of issues impacted by updates to other issues."""
 
   def __init__(self):
@@ -1349,6 +1349,13 @@ class IssueChangeImpactedIssues():
     self.blocked_on_remove = collections.defaultdict(list)
     self.merged_from_add = collections.defaultdict(list)
     self.merged_from_remove = collections.defaultdict(list)
+
+  def ComputeAllImpactedIIDs(self):
+    # type: () -> Collection[int]
+    """Computes the unique set of all impacted issue ids."""
+    return set(self.blocking_add.keys() + self.blocking_remove.keys() +
+               self.blocked_on_add.keys() + self.blocked_on_remove.keys() +
+               self.merged_from_add.keys() + self.merged_from_remove.keys())
 
   def TrackImpactedIssues(self, issue, delta):
     # type: (Issue, IssueDelta) -> None

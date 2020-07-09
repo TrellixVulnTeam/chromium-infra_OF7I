@@ -1677,12 +1677,34 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
 
 class IssueChangeImpactedIssuesTest(unittest.TestCase):
-  """Tests for the IssueChangeImpactedIssues class."""
+  """Tests for the _IssueChangeImpactedIssues class."""
 
   def setUp(self):
     self.services = service_manager.Services(
         issue=fake.IssueService())
     self.cnxn = 'fake connection'
+
+  def testComputeAllImpactedIDs(self):
+    tracker = tracker_helpers._IssueChangeImpactedIssues()
+    tracker.blocking_add[78901].append(1)
+    tracker.blocking_remove[78902].append(2)
+    tracker.blocked_on_add[78903].append(1)
+    tracker.blocked_on_remove[78904].append(1)
+    tracker.merged_from_add[78905].append(3)
+    tracker.merged_from_remove[78906].append(3)
+
+    # Repeat a few iids.
+    tracker.blocked_on_remove[78901].append(1)
+    tracker.merged_from_add[78903].append(1)
+
+    actual = tracker.ComputeAllImpactedIIDs()
+    expected = {78901, 78902, 78903, 78904, 78905, 78906}
+    self.assertEqual(actual, expected)
+
+  def testComputeAllImpactedIDs_Empty(self):
+    tracker = tracker_helpers._IssueChangeImpactedIssues()
+    actual = tracker.ComputeAllImpactedIIDs()
+    self.assertEqual(actual, set())
 
   def testTrackImpactedIssues(self):
     issue_delta_pairs = []
@@ -1712,7 +1734,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
         merged_into=framework_constants.NO_ISSUE_SPECIFIED)
     issue_delta_pairs.append((issue_4, delta_4))
 
-    impacted_issues = tracker_helpers.IssueChangeImpactedIssues()
+    impacted_issues = tracker_helpers._IssueChangeImpactedIssues()
     for issue, delta in issue_delta_pairs:
       impacted_issues.TrackImpactedIssues(issue, delta)
 
@@ -1745,7 +1767,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
         })
 
   def testApplyImpactedIssueChanges(self):
-    impacted_tracker = tracker_helpers.IssueChangeImpactedIssues()
+    impacted_tracker = tracker_helpers._IssueChangeImpactedIssues()
     impacted_issue = _Issue('proj', 1)
     impacted_iid = impacted_issue.issue_id
 
@@ -1816,7 +1838,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
     self.assertEqual(impacted_issue, expected_issue)
 
   def testApplyImpactedIssueChanges_Empty(self):
-    impacted_tracker = tracker_helpers.IssueChangeImpactedIssues()
+    impacted_tracker = tracker_helpers._IssueChangeImpactedIssues()
     impacted_issue = _Issue('proj', 1)
     expected_issue = copy.deepcopy(impacted_issue)
 
@@ -1829,7 +1851,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
 
   def testApplyImpactedIssueChanges_PartiallyEmptyMergedFrom(self):
     """We can process merged_from changes when one of the lists is empty."""
-    impacted_tracker = tracker_helpers.IssueChangeImpactedIssues()
+    impacted_tracker = tracker_helpers._IssueChangeImpactedIssues()
     impacted_issue = _Issue('proj', 1)
     impacted_iid = impacted_issue.issue_id
     expected_issue = copy.deepcopy(impacted_issue)
