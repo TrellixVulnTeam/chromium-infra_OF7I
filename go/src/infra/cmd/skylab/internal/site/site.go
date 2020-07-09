@@ -33,6 +33,9 @@ type Environment struct {
 	BuildbucketProject string
 	BuildbucketBucket  string
 	BuildbucketBuilder string
+
+	// UFS-specific values
+	UFSService string
 }
 
 // Wrapped returns the environment wrapped in a helper type to satisfy
@@ -77,6 +80,8 @@ var Prod = Environment{
 	BuildbucketProject: "chromeos",
 	BuildbucketBucket:  "testplatform",
 	BuildbucketBuilder: "cros_test_platform",
+
+	UFSService: "https://ufs.api.cr.dev",
 }
 
 // Dev is the environment for dev.
@@ -94,6 +99,8 @@ var Dev = Environment{
 	BuildbucketProject: "chromeos",
 	BuildbucketBucket:  "testplatform",
 	BuildbucketBuilder: "cros_test_platform-dev",
+
+	UFSService: "https://staging.ufs.api.cr.dev",
 }
 
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra

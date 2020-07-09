@@ -78,7 +78,7 @@ func QueryMachineLSEByPropertyName(ctx context.Context, propertyName, id string,
 		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No machineLSEs found for the query: %s", id)
+		logging.Infof(ctx, "No machineLSEs found for the query: %s=%s", propertyName, id)
 		return nil, nil
 	}
 	machineLSEs := make([]*fleet.MachineLSE, 0, len(entities))
@@ -170,7 +170,7 @@ func putMachineLSE(ctx context.Context, machineLSE *fleet.MachineLSE, update boo
 	machineLSE.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, machineLSE, newMachineLSEEntity, update)
 	if err == nil {
-		return pm.(*fleet.MachineLSE), err
+		return pm.(*fleet.MachineLSE), errors.Annotate(err, "put machine LSE").Err()
 	}
 	return nil, err
 }

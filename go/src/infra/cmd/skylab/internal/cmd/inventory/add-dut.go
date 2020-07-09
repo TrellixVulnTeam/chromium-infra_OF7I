@@ -18,12 +18,15 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // AddDut subcommand: add a new DUT to inventory and prepare it for tasks.
@@ -134,6 +137,24 @@ func (c *addDutRun) innerRun(a subcommands.Application, args []string, env subco
 		setIgnoredID(spec)
 	}
 
+	// Duplicate traffic to UFS (in experiment)
+	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.UFSService,
+		Options: site.DefaultPRPCOptions,
+	})
+	fmt.Fprintf(a.GetOut(), "Using ufs service: %s\n", e.UFSService)
+	if err := c.deployToUFS(ctx, ufsClient, specs); err != nil {
+		fmt.Fprintf(a.GetOut(), "####### NOT FATAL! JUST FOR TESTING #######\n")
+		fmt.Fprintf(a.GetOut(), "Failed to deploy to UFS: %s\n", err.Error())
+	} else {
+		fmt.Fprintf(a.GetOut(), "Successfully deploy the following duts to UFS:\n")
+		for _, spec := range specs {
+			fmt.Fprintf(a.GetOut(), "\t%s\n", spec.GetCommon().GetHostname())
+		}
+	}
+	fmt.Fprintf(a.GetOut(), "\n")
+
 	deploymentID, err := c.triggerDeploy(ctx, ic, specs)
 	if err != nil {
 		return err
@@ -212,6 +233,25 @@ func serializeMany(specs []*inventory.DeviceUnderTest) ([][]byte, error) {
 		out = append(out, serialized)
 	}
 	return out, nil
+}
+
+// deployToUFS kicks off the inventory updates to UFS
+func (c *addDutRun) deployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, specs []*inventory.DeviceUnderTest) error {
+	for _, spec := range specs {
+		devicesToAdd, _, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{spec.GetCommon()})
+		if len(devicesToAdd) != 1 {
+			return errors.Reason("Cannot parse lab config from the host %s's spec", spec.GetCommon().GetHostname()).Err()
+		}
+		mlse := ufsUtil.DUTToLSE(devicesToAdd[0].GetDut(), "", nil)
+		_, err = ufsClient.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
+			MachineLSE:   mlse,
+			MachineLSEId: mlse.GetName(),
+		})
+		if err != nil {
+			return errors.Annotate(err, "fail to add host %s to UFS inventory system", mlse.GetName()).Err()
+		}
+	}
+	return nil
 }
 
 // triggerDeploy kicks off a DeployDut attempt via crosskylabadmin.

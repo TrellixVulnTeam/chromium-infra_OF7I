@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"google.golang.org/grpc/codes"
@@ -32,7 +33,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet
 	machinelse.Name = machinelse.GetHostname()
 	err := validateMachineLSE(ctx, machinelse)
 	if err != nil {
-		return nil, err
+		return nil, errors.Annotate(err, "create machine LSE").Err()
 	}
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 		// ChromeOSMachineLSE for a DUT
@@ -246,6 +247,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 // creates one MachineLSE for DUT and updates another MachineLSE for the
 // Labstation(with new Servo info from DUT)
 func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
+	logging.Debugf(ctx, "Creating ChromeOS DUT's LSE")
 	f := func(ctx context.Context) error {
 		machinelses := make([]*fleet.MachineLSE, 0, 0)
 
@@ -371,6 +373,7 @@ func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineL
 // validateServoInfoForDUT Checks if the DUT Machinelse has ServoHostname and ServoPort
 // already used by a different deployed DUT
 func validateServoInfoForDUT(ctx context.Context, servo *chromeosLab.Servo, DUTHostname string) error {
+	logging.Debugf(ctx, "Validating the DUT's servo is already occupied")
 	servoID := fleetds.GetServoID(servo.GetServoHostname(), servo.GetServoPort())
 	dutMachinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "servo_id", servoID, true)
 	if err != nil {
@@ -484,7 +487,10 @@ func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error
 
 	if len(machineIDs) != 0 {
 		for _, machineID := range machineIDs {
-			resources = append(resources, GetMachineResource(machineID))
+			// TODO: should disallow deploying un-registered machines later
+			if machineID != "" {
+				resources = append(resources, GetMachineResource(machineID))
+			}
 		}
 	}
 	if machineLSEPrototypeID != "" {

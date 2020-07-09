@@ -165,6 +165,7 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 	var NotFound bool = false
 	checkEntities := make([]fleetds.FleetEntity, 0, len(resources))
 	for _, resource := range resources {
+		logging.Debugf(ctx, "checking resource existence: %#v", resource)
 		checkEntities = append(checkEntities, resource.Entity)
 	}
 	exists, err := fleetds.Exists(ctx, checkEntities)
@@ -177,7 +178,7 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 		}
 	} else {
 		logging.Errorf(ctx, "Failed to check existence: %s", err)
-		return status.Errorf(codes.Internal, fleetds.InternalError)
+		return status.Errorf(codes.Internal, err.Error())
 	}
 	if NotFound {
 		logging.Errorf(ctx, errorMsg.String())

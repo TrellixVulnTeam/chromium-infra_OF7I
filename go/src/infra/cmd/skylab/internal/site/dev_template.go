@@ -21,6 +21,8 @@ import (
 func init() {
 	if false { // Change this to true.
 		Dev.AdminService = "0.0.0.0:8082"
+		Dev.InventoryService = "0.0.0.0:8081"
+		Dev.UFSService = "127.0.0.1:8800"
 		Prod = Dev
 		DefaultPRPCOptions = &prpc.Options{
 			Insecure:  true,
