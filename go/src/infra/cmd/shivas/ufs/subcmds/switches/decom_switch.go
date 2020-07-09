@@ -12,35 +12,38 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// DeleteSwitchCmd delete Switch by given name.
-var DeleteSwitchCmd = &subcommands.Command{
-	UsageLine: "del",
-	ShortDesc: "delete Switch by name",
-	LongDesc: `delete Switch by name.
-	./shivas switch del {Switch Name}
-	Deletes the given Switch.`,
+// DecomSwitchCmd delete Switch by given name.
+var DecomSwitchCmd = &subcommands.Command{
+	UsageLine: "switch {Switch Name}",
+	ShortDesc: "Decommission/Delete a switch by name",
+	LongDesc: `Decommission/Delete a switch by name.
+
+Example:
+shivas decom switch {Switch Name}
+Deletes the given switch.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &deleteSwitch{}
+		c := &decomSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type deleteSwitch struct {
+type decomSwitch struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
 }
 
-func (c *deleteSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *decomSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -48,7 +51,7 @@ func (c *deleteSwitch) Run(a subcommands.Application, args []string, env subcomm
 	return 0
 }
 
-func (c *deleteSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *decomSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -64,13 +67,13 @@ func (c *deleteSwitch) innerRun(a subcommands.Application, args []string, env su
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	_, err = ic.DeleteSwitch(ctx, &UfleetAPI.DeleteSwitchRequest{
-		Name: UfleetUtil.AddPrefix(UfleetUtil.SwitchCollection, args[0]),
+	_, err = ic.DeleteSwitch(ctx, &ufsAPI.DeleteSwitchRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, args[0]),
 	})
 	if err == nil {
 		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
@@ -79,9 +82,9 @@ func (c *deleteSwitch) innerRun(a subcommands.Application, args []string, env su
 	return err
 }
 
-func (c *deleteSwitch) validateArgs() error {
+func (c *decomSwitch) validateArgs() error {
 	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide a Switch Name")
+		return cmdlib.NewUsageError(c.Flags, "Please provide the switch name to be deleted.")
 	}
 	return nil
 }

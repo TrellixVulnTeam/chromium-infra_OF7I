@@ -11,41 +11,40 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	fleet "infra/unifiedfleet/api/v1/proto"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// UpdateSwitchCmd set Switch by given name.
-var UpdateSwitchCmd = &subcommands.Command{
-	UsageLine: "set",
-	ShortDesc: "update Switch by name",
-	LongDesc:  cmdhelp.UpdateSwitchLongDesc,
+// RegisterSwitchCmd register Switch in the lab.
+var RegisterSwitchCmd = &subcommands.Command{
+	UsageLine: "switch [Options...]",
+	ShortDesc: "Register a switch by name",
+	LongDesc:  cmdhelp.RegisterSwitchLongDesc,
 	CommandRun: func() subcommands.CommandRun {
-		c := &updateSwitch{}
+		c := &registerSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.SwitchFileText)
-		c.Flags.BoolVar(&c.json, "j", false, `interpret the input file as a JSON file.`)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c
 	},
 }
 
-type updateSwitch struct {
+type registerSwitch struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
 	newSpecsFile string
-	json         bool
 	interactive  bool
 }
 
-func (c *updateSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *registerSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -53,7 +52,7 @@ func (c *updateSwitch) Run(a subcommands.Application, args []string, env subcomm
 	return 0
 }
 
-func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *registerSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -65,34 +64,36 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	var s fleet.Switch
+	var s ufspb.Switch
 	if c.interactive {
-		utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
+		utils.GetSwitchInteractiveInput(ctx, ic, &s, false)
 	} else {
 		err = utils.ParseJSONFile(c.newSpecsFile, &s)
 		if err != nil {
 			return err
 		}
 	}
-	s.Name = UfleetUtil.AddPrefix(UfleetUtil.SwitchCollection, s.Name)
-	res, err := ic.UpdateSwitch(ctx, &UfleetAPI.UpdateSwitchRequest{
-		Switch: &s,
+	res, err := ic.CreateSwitch(ctx, &ufsAPI.CreateSwitchRequest{
+		Switch:   &s,
+		SwitchId: s.GetName(),
 	})
 	if err != nil {
 		return err
 	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
+	fmt.Println()
 	return nil
 }
 
-func (c *updateSwitch) validateArgs() error {
+func (c *registerSwitch) validateArgs() error {
 	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!")
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
 	}
 	return nil
 }

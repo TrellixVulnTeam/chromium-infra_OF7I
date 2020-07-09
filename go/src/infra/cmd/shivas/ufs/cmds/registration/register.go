@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/shivas/ufs/subcmds/machine"
+	"infra/cmd/shivas/ufs/subcmds/switches"
 )
 
 type register struct {
@@ -41,6 +42,7 @@ func (c registerApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
 		machine.RegisterMachineCmd,
+		switches.RegisterSwitchCmd,
 	}
 }
 

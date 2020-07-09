@@ -38,11 +38,8 @@ func (c *switches) Run(a subcommands.Application, args []string, env subcommands
 // GetCommands lists all the subcommands under switch
 func (c switchesApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
-		s.AddSwitchCmd,
-		s.UpdateSwitchCmd,
 		s.GetSwitchCmd,
 		s.ListSwitchCmd,
-		s.DeleteSwitchCmd,
 	}
 }
 

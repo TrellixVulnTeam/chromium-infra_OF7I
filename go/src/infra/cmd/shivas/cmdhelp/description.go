@@ -9,21 +9,25 @@ var (
 	ListPageSizeDesc string = `number of items to get. The service may return fewer than this value.If unspecified, at most 100 items will be returned.
 The maximum value is 1000; values above 1000 will be coerced to 1000.`
 
-	// AddSwitchLongDesc long description for AddSwitchCmd
-	AddSwitchLongDesc string = `add switch by name.
-./shivas switch add -j -f switch.json
-Adds a Switch by reading a JSON file input.
+	// RegisterSwitchLongDesc long description for RegisterSwitchCmd
+	RegisterSwitchLongDesc string = `Register a switch by name.
 
-./shivas switch add -i
-Adds a Switch by reading input through interactive mode.`
+Examples:
+shivas register switch -f switch.json
+Register a switch by reading a JSON file input.
 
-	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
-	UpdateSwitchLongDesc string = `update switch by name.
-./shivas switch set -j -f switch.json
-Adds a Switch by reading a JSON file input.
+shivas register switch -i
+Register a switch by reading input through interactive mode.`
 
-./shivas switch set -i
-Adds a Switch by reading input through interactive mode.`
+	// ReregisterSwitchLongDesc long description for ReregisterSwitchCmd
+	ReregisterSwitchLongDesc string = `Reregister/Update a switch by name.
+
+Examples:
+shivas reregister switch -f switch.json
+Reregister/Update a switch by reading a JSON file input.
+
+shivas reregister switch -i
+Reregister/Update a switch by reading input through interactive mode.`
 
 	// ListSwitchLongDesc long description for ListSwitchCmd
 	ListSwitchLongDesc string = `list all Switches
@@ -42,16 +46,16 @@ Fetches 50 items and prints the output in JSON format
 `
 
 	// SwitchFileText description for switch file input
-	SwitchFileText string = `Path to a file containing Switch specification in JSON format.
-This file must contain one Switch JSON message
+	SwitchFileText string = `Path to a file containing switch specification in JSON format.
+This file must contain one switch JSON message
 
-Switch Example :
+Example switch:
 {
     "name": "switch-test-example",
     "capacityPort": 456
 }
 
-The protobuf definition of Switch is part of
+The protobuf definition of switch is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto#71`
 
 	// RegisterMachineLongDesc long description for RegisterMachineCmd

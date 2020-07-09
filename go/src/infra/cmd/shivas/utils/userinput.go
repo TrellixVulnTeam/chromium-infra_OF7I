@@ -71,8 +71,6 @@ type Input struct {
 }
 
 // GetInteractiveInput collects the scanned string list.
-//
-// Name(string) -> CapacityPort(int)
 func GetInteractiveInput() []string {
 	inputs := make([]string, 0)
 	fmt.Print("Please scan: ")
@@ -89,6 +87,8 @@ func GetInteractiveInput() []string {
 }
 
 // GetSwitchInteractiveInput get switch input in interactive mode
+//
+// Name(string) -> CapacityPort(int)
 func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s *fleet.Switch, update bool) {
 	input := &Input{
 		Key:      "Name",
