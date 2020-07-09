@@ -43,7 +43,8 @@ const (
 	DefaultImporter string = "crimson-importer"
 
 	defaultPageSize int32 = 100
-	maxPageSize     int32 = 1000
+	// MaxPageSize maximum page size for list operations
+	MaxPageSize int32 = 1000
 )
 
 const separator string = "/"
@@ -53,8 +54,8 @@ func GetPageSize(pageSize int32) int32 {
 	switch {
 	case pageSize == 0:
 		return defaultPageSize
-	case pageSize > maxPageSize:
-		return maxPageSize
+	case pageSize > MaxPageSize:
+		return MaxPageSize
 	default:
 		return pageSize
 	}
