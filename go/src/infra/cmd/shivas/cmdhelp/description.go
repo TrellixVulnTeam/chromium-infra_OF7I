@@ -315,6 +315,22 @@ Example OS machine deployment for a Labstation:
 	]
 }
 
+Example OS machine deployment for a Caching server/Dev server/VM server:
+{
+	"name": "A-ChromeOS-Server",
+	"machineLsePrototype": "acs-lab:qwer",
+	"hostname": "DevServer-1",
+	"chromeosMachineLse": {
+		"serverLse": {
+			"supportedRestrictedVlan": "vlan-1",
+			"service_port": 23
+		}
+	},
+	"machines": [
+		"machine-DellLinux-Server"
+	]
+}
+
 The protobuf definition of a deployed machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto#24`
 

@@ -35,6 +35,8 @@ func EntityExists(ctx context.Context, ic UfleetAPI.FleetClient, resource, name 
 		return SwitchExists(ctx, ic, name)
 	case "Drac":
 		return DracExists(ctx, ic, name)
+	case "Vlan":
+		return VlanExists(ctx, ic, name)
 	default:
 		return false
 	}
@@ -173,6 +175,20 @@ func DracExists(ctx context.Context, ic UfleetAPI.FleetClient, name string) bool
 	}
 	_, err := ic.GetDrac(ctx, &UfleetAPI.GetDracRequest{
 		Name: UfleetUtil.AddPrefix(UfleetUtil.DracCollection, name),
+	})
+	if err != nil && (strings.Contains(err.Error(), notFound) || strings.Contains(err.Error(), UfleetAPI.InvalidCharacters)) {
+		return false
+	}
+	return true
+}
+
+// VlanExists checks if the given Vlan exists in the system
+func VlanExists(ctx context.Context, ic UfleetAPI.FleetClient, name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	_, err := ic.GetVlan(ctx, &UfleetAPI.GetVlanRequest{
+		Name: UfleetUtil.AddPrefix(UfleetUtil.VlanCollection, name),
 	})
 	if err != nil && (strings.Contains(err.Error(), notFound) || strings.Contains(err.Error(), UfleetAPI.InvalidCharacters)) {
 		return false

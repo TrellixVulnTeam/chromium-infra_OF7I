@@ -1101,8 +1101,53 @@ func getServos(ctx context.Context, ic UfleetAPI.FleetClient, machinelse *fleet.
 
 // getOSServerLse get ChromeOSServerLSE input in interactive mode
 //
-// Vlan(string, resource) ->
+// Vlan(string, resource) -> Service Port(int)
 func getOSServerLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machinelse *fleet.MachineLSE) {
+	serverLse := &fleet.ChromeOSServerLSE{}
+	machinelse.GetChromeosMachineLse().ChromeosLse = &fleet.ChromeOSMachineLSE_ServerLse{
+		ServerLse: serverLse,
+	}
+	input := &Input{
+		Key: "Vlan",
+	}
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+
+			switch input.Key {
+			// ChromeOSServerLSE
+			// Vlan
+			case "Vlan":
+				if value != "" && !VlanExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				serverLse.SupportedRestrictedVlan = value
+				input = &Input{
+					Key: "Service Port",
+				}
+			case "Service Port":
+				if value != "" {
+					port := getIntInput(value, input)
+					if port == -1 {
+						break
+					}
+					serverLse.ServicePort = port
+				}
+				input = nil
+			}
+			break
+		}
+	}
 }
 
 // getBrowserMachineLse get Browser MachineLSE input in interactive mode
