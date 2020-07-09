@@ -31,7 +31,7 @@ import (
 // in the system before creating a new MachineLSE
 func CreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
 	machinelse.Name = machinelse.GetHostname()
-	err := validateMachineLSE(ctx, machinelse)
+	err := validateCreateMachineLSE(ctx, machinelse)
 	if err != nil {
 		return nil, errors.Annotate(err, "create machine LSE").Err()
 	}
@@ -54,7 +54,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet
 // in the system before updating a MachineLSE
 func UpdateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet.MachineLSE, error) {
 	machinelse.Name = machinelse.GetHostname()
-	err := validateMachineLSE(ctx, machinelse)
+	err := validateUpdateMachineLSE(ctx, machinelse)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +271,7 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineL
 				return err
 			}
 			// 2. Check if the ServoHostName and ServoPort are already in use
-			err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
+			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
@@ -328,7 +328,7 @@ func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineL
 				return err
 			}
 			// 2. Check if the ServoHostName and ServoPort are already in use
-			err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
+			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
@@ -372,12 +372,12 @@ func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineL
 
 // validateServoInfoForDUT Checks if the DUT Machinelse has ServoHostname and ServoPort
 // already used by a different deployed DUT
-func validateServoInfoForDUT(ctx context.Context, servo *chromeosLab.Servo, DUTHostname string) error {
+func validateServoInfoForDUT(ctx context.Context, servo *chromeosLab.Servo, DUTHostname string) (string, error) {
 	logging.Debugf(ctx, "Validating the DUT's servo is already occupied")
 	servoID := fleetds.GetServoID(servo.GetServoHostname(), servo.GetServoPort())
 	dutMachinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "servo_id", servoID, true)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if dutMachinelses != nil && dutMachinelses[0].GetName() != DUTHostname {
 		var errorMsg strings.Builder
@@ -385,9 +385,12 @@ func validateServoInfoForDUT(ctx context.Context, servo *chromeosLab.Servo, DUTH
 			"in use by DUT: %s. Please provide a different ServoPort.\n",
 			servo.GetServoPort(), servo.GetServoHostname(), dutMachinelses[0].GetName()))
 		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+		return dutMachinelses[0].GetName(), status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
-	return nil
+	if dutMachinelses != nil {
+		return dutMachinelses[0].GetName(), nil
+	}
+	return "", nil
 }
 
 // getLabstationMachineLSE get the Labstation MachineLSE
@@ -439,19 +442,21 @@ func removeServoEntryFromLabstation(servo *chromeosLab.Servo, labstationMachinel
 	labstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = servos
 }
 
-// validateMachineLSE validates if a machinelse can be created/updated in the datastore.
-//
-// Checks if the resources referenced by the given MachineLSE input already exists
-// in the system. Returns an error if any resource referenced by the MachineLSE input
-// does not exist in the system.
-func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error {
-	var resources []*Resource
-	var errorMsg strings.Builder
-	errorMsg.WriteString(fmt.Sprintf("Cannot deploy Machine %s:\n", machinelse.Name))
+// validateCreateMachineLSE validates if a machinelse can be created in the datastore.
+func validateCreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error {
+	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
+		newServos := machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
+		if len(newServos) != 0 {
+			return status.Errorf(codes.FailedPrecondition, "Servos are not allowed to be added in deploying labstations")
+		}
+	}
+	return validateMachineLSEResources(ctx, machinelse)
+}
 
+// validateUpdateMachineLSE validates if a machinelse can be updated in the datastore.
+func validateUpdateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error {
 	// This check is only for a Labstation
-	// Check if labstation MachineLSE is adding or updating any servo information
-	// For a Labstation create/update call it is not allowed to add any new servo info.
+	// Check if labstation MachineLSE is updating any servo information
 	// It is also not allowed to update the servo Hostname and servo Port of any servo.
 	// Servo info is added/updated into Labstation only when a DUT(MachineLSE) is added/updated
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
@@ -460,26 +465,19 @@ func validateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) error
 		if status.Code(err) == codes.Internal {
 			return err
 		}
-		if existingLabstationMachinelse == nil && len(newServos) != 0 {
-			errorMsg.WriteString("You are not allowed to add Servo info while" +
-				"deploying a Labstation.\nYou can only add the Servo info to this " +
-				"labstation when you deploy/redeploy a DUT")
-			logging.Errorf(ctx, errorMsg.String())
-			return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-		}
 		if existingLabstationMachinelse != nil {
 			existingServos := existingLabstationMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
 			if !testServoEq(newServos, existingServos) {
-				errorMsg.WriteString("You are not allowed to update Servo info while " +
-					"redeploying a Labstation.\nYou can only update the Servo info to this " +
-					"labstation when you deploy/redeploy a DUT")
-				logging.Errorf(ctx, errorMsg.String())
-				return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+				return status.Errorf(codes.FailedPrecondition, "Servos are not allowed to be updated in redeploying labstations")
 			}
 		}
 	}
+	return validateMachineLSEResources(ctx, machinelse)
+}
 
-	// check other resources
+func validateMachineLSEResources(ctx context.Context, machinelse *fleet.MachineLSE) error {
+	var resources []*Resource
+	var errorMsg strings.Builder
 	machineIDs := machinelse.GetMachines()
 	machineLSEPrototypeID := machinelse.GetMachineLsePrototype()
 	vlanID := machinelse.GetChromeosMachineLse().GetServerLse().GetSupportedRestrictedVlan()
@@ -513,13 +511,17 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 	}
 	if existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		existingServos := existingMachinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
-		if len(existingServos) != 0 {
-			var errorMsg strings.Builder
-			errorMsg.WriteString(fmt.Sprintf("Labstation %s cannot be "+
-				"deleted because there are Servos in the labstation referenced by "+
-				"other DUTs.", id))
-			logging.Errorf(ctx, errorMsg.String())
-			return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+		nonDeletedHosts := make([]string, 0, len(existingServos))
+		for _, servo := range existingServos {
+			dutHostName, err := validateServoInfoForDUT(ctx, servo, "")
+			if err != nil {
+				nonDeletedHosts = append(nonDeletedHosts, dutHostName)
+			}
+		}
+		if len(nonDeletedHosts) != 0 {
+			errorMsg := fmt.Sprintf("Labstation %s cannot be deleted because there are servos in the labstation referenced by other DUTs: %s.", id, strings.Join(nonDeletedHosts, ", "))
+			logging.Errorf(ctx, errorMsg)
+			return status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
 	}
 	return nil

@@ -81,7 +81,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			resp, err := CreateMachineLSE(ctx, machineLSE1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDeploy)
+			So(err.Error(), ShouldContainSubstring, "There is no Machine")
 		})
 		Convey("Create new machineLSE with existing machines", func() {
 			machine1 := &fleet.Machine{
@@ -213,7 +213,7 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 			resp, err := CreateMachineLSE(ctx, labstationMachinelse1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "not allowed to add Servo")
+			So(err.Error(), ShouldContainSubstring, "Servos are not allowed to be added")
 		})
 		Convey("Create machineLSE Labstation without Servo Info", func() {
 			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-1")
@@ -366,7 +366,7 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "not allowed to update Servo")
+			So(err.Error(), ShouldContainSubstring, "Servos are not allowed to be updated")
 		})
 
 		Convey("Update machineLSE Labstation without Servo Info", func() {

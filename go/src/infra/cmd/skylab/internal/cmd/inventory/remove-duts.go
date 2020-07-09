@@ -6,6 +6,7 @@ package inventory
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +17,8 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
@@ -24,6 +27,8 @@ import (
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // RemoveDuts subcommand: RemoveDuts a DUT from inventory system.
@@ -80,6 +85,25 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		return nil
 	}
 
+	// Duplicate traffic to UFS (in experiment)
+	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.UFSService,
+		Options: site.DefaultPRPCOptions,
+	})
+	fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
+	if err := c.deleteFromUFS(ctx, ufsClient, hostnames); err != nil {
+		fmt.Fprintf(a.GetOut(), "%s\n", err.Error())
+		fmt.Fprintf(a.GetOut(), "####### The above error is NOT FATAL #######\n")
+	} else {
+		fmt.Fprintf(a.GetOut(), "Successfully undeploy the following machines from UFS:\n")
+		for _, h := range hostnames {
+			fmt.Fprintf(a.GetOut(), "\t%s\n", h)
+		}
+		fmt.Fprintf(a.GetOut(), "####### Finish TESTING #######\n")
+	}
+	fmt.Fprintf(a.GetOut(), "\n")
+
 	ic := iv.NewInventoryClient(hc, e)
 	modified, err := ic.DeleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
 	if err != nil {
@@ -88,6 +112,19 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 	if !modified {
 		fmt.Fprintln(a.GetOut(), "No DUTs modified")
 		return nil
+	}
+	return nil
+}
+
+// deleteFromUFS kicks off the inventory updates to UFS
+func (c *removeDutsRun) deleteFromUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, hostnames []string) error {
+	for _, hostname := range hostnames {
+		_, err := ufsClient.DeleteMachineLSE(ctx, &ufsAPI.DeleteMachineLSERequest{
+			Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, hostname),
+		})
+		if err != nil {
+			return errors.Annotate(err, "fail to delete host %s from UFS inventory system", hostname).Err()
+		}
 	}
 	return nil
 }

@@ -18,7 +18,6 @@ import (
 // error msgs used for testing
 const (
 	CannotCreate string = "Cannot create"
-	CannotDeploy string = "Cannot deploy"
 )
 
 func testingContext() context.Context {
