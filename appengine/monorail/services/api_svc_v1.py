@@ -912,7 +912,7 @@ class MonorailApi(remote.Service):
           (mar.auth.email, mar.project_name))
 
     with work_env.WorkEnv(mar, self._services) as we:
-      owner_id = None
+      owner_id = framework_constants.NO_USER_SPECIFIED
       if request.owner and request.owner.name:
         try:
           owner_id = self._services.user.LookupUserID(

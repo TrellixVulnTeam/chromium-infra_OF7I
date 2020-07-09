@@ -1516,6 +1516,90 @@ class EnumFieldHelpersTest(unittest.TestCase):
     self.assertEqual(expected, actual)
 
 
+class CreateIssueHelpersTest(unittest.TestCase):
+
+  def setUp(self):
+    self.services = service_manager.Services(
+        project=fake.ProjectService(),
+        config=fake.ConfigService(),
+        issue=fake.IssueService(),
+        user=fake.UserService(),
+        usergroup=fake.UserGroupService())
+    self.cnxn = 'fake cnxn'
+
+    self.project_member = self.services.user.TestAddUser(
+        'user_1@example.com', 111)
+    self.project_group_member = self.services.user.TestAddUser(
+        'group@example.com', 999)
+    self.project = self.services.project.TestAddProject(
+        'proj',
+        project_id=789,
+        committer_ids=[
+            self.project_member.user_id, self.project_group_member.user_id
+        ])
+    self.no_project_user = self.services.user.TestAddUser(
+        'user_2@example.com', 222)
+    self.config = fake.MakeTestConfig(self.project.project_id, [], [])
+    self.int_fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.INT_TYPE, None, '', False,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.int_fd.max_value = 999
+    self.config.field_defs = [self.int_fd]
+    self.services.config.StoreConfig('cnxn', self.config)
+    self.services.usergroup.TestAddGroupSettings(999, 'group@example.com')
+
+  def testAssertValidIssueForCreate_Valid(self):
+    input_issue = tracker_pb2.Issue(summary='sum', owner_id=111, project_id=789)
+    tracker_helpers.AssertValidIssueForCreate(
+        self.cnxn, self.services, input_issue, 'nonempty description')
+
+  def testAssertValidIssueForCreate_ValidatesOwner(self):
+    input_issue = tracker_pb2.Issue(summary='sum', owner_id=222, project_id=789)
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Issue owner must be a project member'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+    input_issue.owner_id = 333
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Issue owner user ID not found'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+    input_issue.owner_id = 999
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Issue owner cannot be a user group'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+
+  def testAssertValidIssueForCreate_ValidatesSummary(self):
+    input_issue = tracker_pb2.Issue(summary='', owner_id=111, project_id=789)
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Summary is required'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+      input_issue.summary = '   '
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+
+  def testAssertValidIssueForCreate_ValidatesDescription(self):
+    input_issue = tracker_pb2.Issue(summary='', owner_id=111, project_id=789)
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Description is required'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, '')
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, '    ')
+
+  def testAssertValidIssueForCreate_ValidatesFieldDef(self):
+    fv = tracker_bizobj.MakeFieldValue(
+        self.int_fd.field_id, 1000, None, None, None, None, False)
+    input_issue = tracker_pb2.Issue(
+        summary='', owner_id=111, project_id=789, field_values=[fv])
+    with self.assertRaises(exceptions.InputException):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+
+
 class ModifyIssuesHelpersTest(unittest.TestCase):
 
   def setUp(self):

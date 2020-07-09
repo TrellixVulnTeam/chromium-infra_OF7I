@@ -1309,6 +1309,31 @@ def AssertIssueChangesValid(cnxn, issue_delta_pairs, services):
       raise exceptions.InputException('\n'.join(fvs_err_msgs))
 
 
+def AssertValidIssueForCreate(cnxn, services, issue, description):
+  # type: (MonorailConnection, Services, Issue, str) -> None
+  """Assert that issue proto is valid for issue creation."""
+  project = services.project.GetProject(cnxn, issue.project_id)
+  config = services.config.GetProjectConfig(cnxn, issue.project_id)
+
+  with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+    owner_is_valid, owner_err_msg = IsValidIssueOwner(
+        cnxn, project, issue.owner_id, services)
+    if not owner_is_valid:
+      err_agg.AddErrorMessage(owner_err_msg)
+    if not issue.summary.strip():
+      err_agg.AddErrorMessage('Summary is required')
+    if not description.strip():
+      err_agg.AddErrorMessage('Description is required')
+    if len(issue.summary) > tracker_constants.MAX_SUMMARY_CHARS:
+      err_agg.AddErrorMessage('Summary is too long')
+    if len(description) > tracker_constants.MAX_COMMENT_CHARS:
+      err_agg.AddErrorMessage('Description is too long')
+    field_validity_errors = field_helpers.ValidateCustomFields(
+        cnxn, services, issue.field_values, config, project)
+    if field_validity_errors:
+      err_agg.AddErrorMessage("\n".join(field_validity_errors))
+
+
 def _ComputeNewCcsFromIssueMerge(merge_into_issue, source_issues):
   # type: (Issue, Collection[Issue]) -> Collection[int]
   """Compute ccs that should be added from source_issues to merge_into_issue."""

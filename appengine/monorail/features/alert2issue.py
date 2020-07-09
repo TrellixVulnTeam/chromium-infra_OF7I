@@ -15,6 +15,7 @@ import rfc822
 import settings
 from businesslogic import work_env
 from features import commitlogcommands
+from framework import framework_constants
 from framework import monorailcontext
 from framework import emailfmt
 from tracker import tracker_helpers
@@ -212,9 +213,10 @@ def _GetOwnerID(user_svc, cnxn, owner_email):
   if owner_email:
     owner_email = owner_email.strip()
   if not owner_email:
-    return None
+    return framework_constants.NO_USER_SPECIFIED
   emails = [addr for _, addr in rfc822.AddressList(owner_email)]
-  return user_svc.LookupExistingUserIDs(cnxn, emails).get(owner_email)
+  return user_svc.LookupExistingUserIDs(
+      cnxn, emails).get(owner_email) or framework_constants.NO_USER_SPECIFIED
 
 
 def _GetCCIDs(user_svc, cnxn, cc_emails):

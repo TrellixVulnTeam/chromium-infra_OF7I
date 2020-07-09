@@ -52,15 +52,16 @@ class TestData(object):
   # All the tests in this class use the following alert properties, and
   # the generator functions/logic should be tested in a separate class.
   alert_props = {
-      'owner_id': None,
+      'owner_id': 0,
       'cc_ids': [],
       'status': 'Available',
       'incident_label': incident_label,
       'priority': 'Pri-0',
       'trooper_queue': trooper_queue,
       'field_values': [],
-      'labels': ['Restrict-View-Google', 'Pri-0', incident_label,
-                 trooper_queue],
+      'labels': [
+          'Restrict-View-Google', 'Pri-0', incident_label, trooper_queue
+      ],
       'component_ids': [component_id],
   }
 
@@ -240,7 +241,8 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
     self.assertEqual(actual_issue.status, alert_props['status'])
     self.assertEqual(actual_issue.reporter_id, self.user_id)
     self.assertEqual(actual_issue.component_ids, [self.component_id])
-    self.assertEqual(actual_issue.owner_id, alert_props['owner_id'])
+    if alert_props['owner_id']:
+      self.assertEqual(actual_issue.owner_id, alert_props['owner_id'])
     self.assertEqual(sorted(actual_issue.labels), sorted(alert_props['labels']))
     return actual_comments
 
@@ -368,9 +370,9 @@ class GetAlertPropertiesTests(unittest.TestCase, TestData):
       self.assertIn(os, props['labels'])
 
   @parameterized.expand([
-      (None, None),
-      ('', None),
-      (' ', None),
+      (None, 0),
+      ('', 0),
+      (' ', 0),
   ])
   def testDefaultOwnerID(self, header_value, expected_owner_id):
     """Checks if _GetOwnerID returns None in default."""
@@ -380,12 +382,13 @@ class GetAlertPropertiesTests(unittest.TestCase, TestData):
         self.trooper_queue, self.test_msg)
     self.assertEqual(props['owner_id'], expected_owner_id)
 
-  @parameterized.expand([
-      # an existing user with userID 1.
-      ('owner@example.org', 1),
-      # a non-existing user.
-      ('owner@example.org', None),
-  ])
+  @parameterized.expand(
+      [
+          # an existing user with userID 1.
+          ('owner@example.org', 1),
+          # a non-existing user.
+          ('owner@example.org', 0),
+      ])
   def testGetOwnerID(self, owner, expected_owner_id):
     """Tests _GetOwnerID returns the ID of the owner."""
     self.test_msg.replace_header(AlertEmailHeader.CC, '')

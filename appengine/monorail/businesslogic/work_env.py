@@ -72,6 +72,7 @@ from search import frontendsearchpipeline
 from services import features_svc
 from services import tracker_fulltext
 from sitewide import sitewide_helpers
+from tracker import field_helpers
 from tracker import rerank_helpers
 from tracker import tracker_bizobj
 from tracker import tracker_constants
@@ -978,13 +979,6 @@ class WorkEnv(object):
     self._AssertPermInProject(permissions.CREATE_ISSUE, project)
 
     # TODO(crbug/monorail/7197): The following are needed for v3 API
-    # Phase 5.1 Validate input
-    # Check proposed owner is in project, else throw
-    # Check proposed owner is not a group, else throw
-    # Check summary is not too long, else throw
-    # Check description is not blank string, else throw
-    # Check description is not too long, else throw
-    # Check every proposed field value is valid against field def, else throw
     # Phase 5.2 Validate sufficient attachment quota and update
 
     if reporter_id and reporter_id != self.mc.auth.user_id:
@@ -995,8 +989,8 @@ class WorkEnv(object):
       importer_id = None
 
     with self.mc.profiler.Phase('creating issue in project %r' % project_id):
-      config = self.services.config.GetProjectConfig(self.mc.cnxn, project_id)
-
+      # TODO(crbug/monorail/8000): Refactor issue proto construction
+      # to the caller.
       status = framework_bizobj.CanonicalizeLabel(status)
       labels = [framework_bizobj.CanonicalizeLabel(l) for l in labels]
       labels = [l for l in labels if l]
@@ -1035,17 +1029,12 @@ class WorkEnv(object):
       issue.status_modified_timestamp = timestamp
       issue.component_modified_timestamp = timestamp
 
-      # Set the closed_timestamp both before and after filter rules.
-      if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
-                                                config):
-        issue.closed_timestamp = timestamp
-      filterrules_helpers.ApplyFilterRules(
-          self.mc.cnxn, self.services, issue, config)
-      if issue.derived_errors and raise_filter_errors:
-        raise exceptions.FilterRuleException(issue.derived_errors)
-      if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
-                                                config):
-        issue.closed_timestamp = timestamp
+      # Validate the issue
+      tracker_helpers.AssertValidIssueForCreate(
+          self.mc.cnxn, self.services, issue, marked_description)
+
+      # Apply filter rules
+      self._ApplyFilterRules(issue, raise_filter_errors)
 
       new_issue, comment = self.services.issue.CreateIssue(
           self.mc.cnxn,
@@ -1072,6 +1061,24 @@ class WorkEnv(object):
             reporter_id)
 
     return new_issue, comment
+
+  def _ApplyFilterRules(self, issue, raise_filter_errors):
+    # type: (tracker_pb2.Issue, bool) -> None
+    """Applies project filter rules to input issue as side effect."""
+    config = self.services.config.GetProjectConfig(
+        self.mc.cnxn, issue.project_id)
+
+    # Set the closed_timestamp both before and after filter rules.
+    if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
+                                              config):
+      issue.closed_timestamp = timestamp
+    filterrules_helpers.ApplyFilterRules(
+        self.mc.cnxn, self.services, issue, config)
+    if issue.derived_errors and raise_filter_errors:
+      raise exceptions.FilterRuleException(issue.derived_errors)
+    if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
+                                              config):
+      issue.closed_timestamp = timestamp
 
   def MakeIssueFromTemplate(self, _template, _description, _issue_delta):
     # type: (tracker_pb2.TemplateDef, str, tracker_pb2.IssueDelta) ->

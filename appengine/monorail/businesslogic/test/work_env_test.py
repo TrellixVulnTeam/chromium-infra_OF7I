@@ -79,11 +79,70 @@ class WorkEnvTest(unittest.TestCase):
     self.dne_hotlist_id = 1234
     self.mr = testing_helpers.MakeMonorailRequest(project=self.project)
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
+    self.field_def_1_name = 'test_field_1'
+    self.field_def_1 = self._CreateFieldDef(
+        self.project.project_id,
+        self.field_def_1_name,
+        'INT_TYPE',
+        max_value=10)
     self.PAST_TIME = 12345
+    self.dne_project_id = 999
     sorting.InitializeArtValues(self.services)
 
     self.work_env = work_env.WorkEnv(
       self.mr, self.services, 'Testing phase')
+
+  def _CreateFieldDef(
+      self,
+      project_id,
+      field_name,
+      field_type_str,
+      docstring=None,
+      min_value=None,
+      max_value=None,
+      regex=None,
+      needs_member=None,
+      needs_perm=None,
+      grants_perm=None,
+      notify_on=None,
+      date_action_str=None,
+      admin_ids=None,
+      editor_ids=None,
+      is_required=False,
+      is_niche=False,
+      is_multivalued=False,
+      is_phase_field=False,
+      approval_id=None,
+      is_restricted_field=False):
+    """Calls CreateFieldDef with reasonable defaults, returns the ID."""
+    if admin_ids is None:
+      admin_ids = []
+    if editor_ids is None:
+      editor_ids = []
+    return self.services.config.CreateFieldDef(
+        self.cnxn,
+        project_id,
+        field_name,
+        field_type_str,
+        None,
+        None,
+        is_required,
+        is_niche,
+        is_multivalued,
+        min_value,
+        max_value,
+        regex,
+        needs_member,
+        needs_perm,
+        grants_perm,
+        notify_on,
+        date_action_str,
+        docstring,
+        admin_ids,
+        editor_ids,
+        is_phase_field=is_phase_field,
+        approval_id=approval_id,
+        is_restricted_field=is_restricted_field)
 
   def SignIn(self, user_id=111):
     self.mr.auth = authdata.AuthData.FromUserID(
@@ -819,7 +878,7 @@ class WorkEnvTest(unittest.TestCase):
     self.services.config.strict = True
     with self.assertRaises(exceptions.NoSuchProjectException):
       with self.work_env as we:
-        _actual = we.GetProjectConfig(789)
+        _actual = we.GetProjectConfig(self.dne_project_id)
 
   def testListProjectTemplates_IsMember(self):
     private_tmpl = tracker_pb2.TemplateDef(name='Chicken', members_only=True)
@@ -867,7 +926,7 @@ class WorkEnvTest(unittest.TestCase):
     with self.work_env as we:
       actual = we.GetFieldDef(field_id, self.project)
 
-    self.assertEqual(config.field_defs[0], actual)
+    self.assertEqual(config.field_defs[1], actual)
 
   def testGetFieldDef_NoSuchFieldDef(self):
     """We reject attempts to get a non-existent field."""
@@ -890,13 +949,18 @@ class WorkEnvTest(unittest.TestCase):
     phases = [tracker_pb2.Phase(name='Canary', phase_id=3)]
     with self.work_env as we:
       actual_issue, comment = we.CreateIssue(
-          789, 'sum', 'New', 222, [333], ['Hot'], [], [], 'desc',
-          phases=phases, approval_values=approval_values)
+          789,
+          'sum',
+          'New',
+          111, [333], ['Hot'], [], [],
+          'desc',
+          phases=phases,
+          approval_values=approval_values)
     self.assertEqual(789, actual_issue.project_id)
     self.assertEqual('sum', actual_issue.summary)
     self.assertEqual('New', actual_issue.status)
     self.assertEqual(111, actual_issue.reporter_id)
-    self.assertEqual(222, actual_issue.owner_id)
+    self.assertEqual(111, actual_issue.owner_id)
     self.assertEqual([333], actual_issue.cc_ids)
     self.assertEqual([], actual_issue.field_values)
     self.assertEqual([], actual_issue.component_ids)
@@ -933,7 +997,7 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(user_id=111)
     with self.work_env as we:
       actual_issue, comment = we.CreateIssue(
-          789, 'sum', 'New', 222, [333], ['Hot'], [], [], 'desc')
+          789, 'sum', 'New', 111, [333], ['Hot'], [], [], 'desc')
 
     self.assertEqual('proj', actual_issue.project_name)
     # Verify that tasks were queued to send email notifications.
@@ -956,7 +1020,7 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(user_id=111)
     with self.work_env as we:
       actual_issue, comment = we.CreateIssue(
-          789, 'sum', 'New', 222, [333], ['Hot'], [], [], 'desc')
+          789, 'sum', 'New', 111, [333], ['Hot'], [], [], 'desc')
 
     self.assertEqual('proj', actual_issue.project_name)
     # Verify that tasks were queued to send email notifications.
@@ -975,7 +1039,11 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(user_id=111)
     with self.work_env as we:
       actual_issue, comment = we.CreateIssue(
-          789, 'sum', 'New', 222, [333], ['Hot'], [], [], 'desc',
+          789,
+          'sum',
+          'New',
+          111, [333], ['Hot'], [], [],
+          'desc',
           send_email=False)
     self.assertEqual(789, actual_issue.project_id)
     self.assertEqual('sum', actual_issue.summary)
@@ -998,8 +1066,14 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(user_id=111)
     with self.work_env as we:
       actual_issue, comment = we.CreateIssue(
-          789, 'sum', 'New', 222, [333], ['Hot'], [], [], 'desc',
-          send_email=False, reporter_id=222, timestamp=PAST_TIME)
+          789,
+          'sum',
+          'New',
+          111, [333], ['Hot'], [], [],
+          'desc',
+          send_email=False,
+          reporter_id=222,
+          timestamp=PAST_TIME)
     self.assertEqual(789, actual_issue.project_id)
     self.assertEqual('sum', actual_issue.summary)
     self.assertEqual(222, actual_issue.reporter_id)
@@ -1027,6 +1101,64 @@ class WorkEnvTest(unittest.TestCase):
       'features.send_notifications.PrepareAndSendIssueBlockingNotification')
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testCreateIssue_OnwerValidation(self, _fake_pasicn, _fake_pasibn):
+    """We validate the owner."""
+    self.SignIn(user_id=111)
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Issue owner must be a project member'):
+      with self.work_env as we:
+        # user_id 222 is not a project member
+        we.CreateIssue(789, 'sum', 'New', 222, [333], ['Hot'], [], [], 'desc')
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testCreateIssue_SummaryValidation(self, _fake_pasicn, _fake_pasibn):
+    """We validate the summary."""
+    self.SignIn(user_id=111)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        # Summary cannot be empty
+        we.CreateIssue(789, '', 'New', 111, [333], ['Hot'], [], [], 'desc')
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        # Summary cannot be only spaces
+        we.CreateIssue(789, ' ', 'New', 111, [333], ['Hot'], [], [], 'desc')
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testCreateIssue_DescriptionValidation(self, _fake_pasicn, _fake_pasibn):
+    """We validate the description."""
+    self.SignIn(user_id=111)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        # Description cannot be empty
+        we.CreateIssue(789, 'sum', 'New', 111, [333], ['Hot'], [], [], '')
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        # Description cannot be only spaces
+        we.CreateIssue(789, 'sum', 'New', 111, [333], ['Hot'], [], [], ' ')
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testCreateIssue_FieldValueValidation(self, _fake_pasicn, _fake_pasibn):
+    """We validate field values against field definitions."""
+    self.SignIn(user_id=111)
+    # field_def_1 has a max of 10.
+    fv = fake.MakeFieldValue(field_id=self.field_def_1, int_value=11)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.CreateIssue(789, 'sum', 'New', 111, [], [], [fv], [], '')
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
   def testCreateIssue_AppliesFilterRules(self, _fake_pasicn, _fake_pasibn):
     """We apply filter rules."""
     self.services.features.TestAddFilterRule(
@@ -1035,7 +1167,7 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(user_id=111)
     with self.work_env as we:
       actual_issue, _ = we.CreateIssue(
-          789, 'sum', 'New', 222, [333], [], [], [], 'desc')
+          789, 'sum', 'New', 111, [333], [], [], [], 'desc')
     self.assertEqual(len(actual_issue.derived_labels), 1)
     self.assertEqual(actual_issue.derived_labels[0], 'no-component')
 
@@ -1054,7 +1186,7 @@ class WorkEnvTest(unittest.TestCase):
             789,
             'sum',
             'New',
-            222, [], [], [], [],
+            111, [], [], [], [],
             'desc',
             send_email=False,
             timestamp=PAST_TIME)
@@ -1072,7 +1204,7 @@ class WorkEnvTest(unittest.TestCase):
           789,
           'sum',
           'New',
-          222, [], [], [], [],
+          111, [], [], [], [],
           'desc',
           send_email=False,
           raise_filter_errors=False)

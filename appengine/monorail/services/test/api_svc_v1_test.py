@@ -355,8 +355,7 @@ class MonorailApiTest(testing.EndpointsTestCase):
     """Create an issue as requested."""
 
     self.services.project.TestAddProject(
-        'test-project', owner_ids=[222],
-        project_id=12345)
+        'test-project', owner_ids=[222], committer_ids=[111], project_id=12345)
     self.SetUpFieldDefs(1, 12345, 'Field1', tracker_pb2.FieldTypes.INT_TYPE)
 
     issue1 = fake.MakeTestIssue(
@@ -419,7 +418,7 @@ class MonorailApiTest(testing.EndpointsTestCase):
 
     new_issue = self.services.issue.GetIssueByLocalID(
         'fake cnxn', 12345, resp['id'])
-    self.assertIsNone(new_issue.owner_id)
+    self.assertEqual(new_issue.owner_id, 0)
 
   def testIssuesList_NoPermission(self):
     """No permission for additional projects."""
