@@ -10,16 +10,13 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/retry"
 
 	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/cmd/skylab_swarming_worker/internal/pretty"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/libs/skylab/inventory"
 )
@@ -62,29 +59,14 @@ func (s *Store) Close() error {
 // to the loaded DUT info.
 type UpdateFunc func(dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error
 
-// LoadCached loads the bot's DUT's info from the inventory. Returned inventory
-// data may be slightly stale compared to the source of truth of the inventory.
+// Load loads the bot's DUT's info from the inventory V2.
 //
 // This function returns a Store that should be closed to update the inventory
-// with any changes to the info, using a supplied UpdateFunc.  If UpdateFunc is
+// with any changes to the info, using a supplied UpdateFunc. If UpdateFunc is
 // nil, the inventory is not updated.
-func LoadCached(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
-	return load(ctx, b, f, getCached, getDutInfoFromV2)
+func Load(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
+	return load(ctx, b, f, getDutInfoFromV2)
 }
-
-// LoadFresh loads the bot's DUT's info from the inventory. Returned inventory
-// data is guaranteed to be up-to-date with the source of truth of the
-// inventory. This function may take longer than LoadCached because it needs
-// to wait for the caches to be updated.
-//
-// This function returns a Store that should be closed to update the inventory
-// with any changes to the info, using a supplied UpdateFunc.  If UpdateFunc is
-// nil, the inventory is not updated.
-func LoadFresh(ctx context.Context, b *swmbot.Info, f UpdateFunc) (*Store, error) {
-	return load(ctx, b, f, getUncached, getDutInfoFromV2)
-}
-
-type getDutInfoFunc func(context.Context, fleet.InventoryClient, *fleet.GetDutInfoRequest) (*fleet.GetDutInfoResponse, error)
 
 type getDutInfoFuncV2 func(context.Context, invV2.InventoryClient, *invV2.GetCrosDevicesRequest) (*invV2.GetCrosDevicesResponse, error)
 
@@ -142,7 +124,7 @@ func loadFromV2(ctx context.Context, b *swmbot.Info, gf getDutInfoFuncV2) (*inve
 	return dut, nil
 }
 
-func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc, gfV2 getDutInfoFuncV2) (*Store, error) {
+func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gfV2 getDutInfoFuncV2) (*Store, error) {
 	ctx, err := swmbot.WithSystemAccount(ctx)
 	if err != nil {
 		return nil, errors.Annotate(err, "load DUT host info").Err()
@@ -157,19 +139,9 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc,
 	if err != nil {
 		return nil, errors.Annotate(err, "load DUT host info").Err()
 	}
-	resp, err := gf(ctx, c, &fleet.GetDutInfoRequest{Id: b.DUTID})
-	if err != nil {
-		return nil, errors.Annotate(err, "load DUT host info").Err()
-	}
-	var d inventory.DeviceUnderTest
-	if err := proto.Unmarshal(resp.Spec, &d); err != nil {
-		return nil, errors.Annotate(err, "load DUT host info").Err()
-	}
-
-	log.Printf("Comparison between V1 & V2: \n%s", pretty.PrettyConfig.Compare(dutV2, &d))
 	// TODO(gregorynisbet): should failure to get the stableversion information
 	// cause the entire request to error out?
-	hostname := d.GetCommon().GetHostname()
+	hostname := dutV2.GetCommon().GetHostname()
 	sv, err := getStableVersion(ctx, c, hostname)
 	if err != nil {
 		sv = map[string]string{}
@@ -177,8 +149,8 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc,
 	}
 	// once we reach this point, sv is guaranteed to be non-nil
 	store := &Store{
-		DUT:            &d,
-		oldDUT:         proto.Clone(&d).(*inventory.DeviceUnderTest),
+		DUT:            dutV2,
+		oldDUT:         proto.Clone(dutV2).(*inventory.DeviceUnderTest),
 		updateFunc:     uf,
 		StableVersions: sv,
 	}
@@ -186,81 +158,19 @@ func load(ctx context.Context, b *swmbot.Info, uf UpdateFunc, gf getDutInfoFunc,
 }
 
 func getDutInfoFromV2(ctx context.Context, c invV2.InventoryClient, req *invV2.GetCrosDevicesRequest) (*invV2.GetCrosDevicesResponse, error) {
-	resp, err := c.GetCrosDevices(ctx, req)
-	if err != nil {
-		return nil, errors.Annotate(err, "get dut info from inventory V2").Err()
+	var resp *invV2.GetCrosDevicesResponse
+	f := func() (err error) {
+		resp, err = c.GetCrosDevices(ctx, req)
+		return err
+	}
+	if err := retry.Retry(ctx, retry.Default, f, retry.LogCallback(ctx, "dutinfo.getDutInfoFromV2")); err != nil {
+		return nil, errors.Annotate(err, "retry getDutInfoFromV2").Err()
 	}
 	if len(resp.GetFailedDevices()) > 0 {
-		f := resp.GetFailedDevices()[0]
-		return nil, errors.New(fmt.Sprintf("fail to load %s from V2: %s", f.GetHostname(), f.GetErrorMsg()))
+		fd := resp.GetFailedDevices()[0]
+		return nil, errors.New(fmt.Sprintf("fail to load %s from V2: %s", fd.GetHostname(), fd.GetErrorMsg()))
 	}
 	return resp, nil
-}
-
-// getCached obtains DUT info from the inventory service ignoring cache
-// freshness.
-func getCached(ctx context.Context, c fleet.InventoryClient, req *fleet.GetDutInfoRequest) (*fleet.GetDutInfoResponse, error) {
-	resp, err := c.GetDutInfo(ctx, req)
-	if err != nil {
-		return nil, errors.Annotate(err, "get cached").Err()
-	}
-	return resp, nil
-}
-
-// getUncached obtains DUT info from the inventory service ensuring that
-// returned info is up-to-date with the source of truth.
-func getUncached(ctx context.Context, c fleet.InventoryClient, req *fleet.GetDutInfoRequest) (*fleet.GetDutInfoResponse, error) {
-	var resp *fleet.GetDutInfoResponse
-	start := time.Now().UTC()
-	f := func() error {
-		iresp, err := getCached(ctx, c, req)
-		if err != nil {
-			return err
-		}
-		if err := ensureResponseUpdatedSince(iresp, start); err != nil {
-			return err
-		}
-
-		// Only update captured variables on success.
-		resp = iresp
-		return nil
-	}
-
-	if err := retry.Retry(ctx, cacheRefreshRetryFactory, f, retry.LogCallback(ctx, "dutinfo.getCached")); err != nil {
-		return nil, errors.Annotate(err, "get uncached").Err()
-	}
-	return resp, nil
-}
-
-// cacheRefreshRetryFactory is a retry.Factory to configure retries to wait for
-// inventory cache to be refreshed.
-func cacheRefreshRetryFactory() retry.Iterator {
-	// Cache is refreshed via a cron task that runs every minute or so.
-	// Retry at: 10s, 30s, 70s, 2m10s, 3m10s, 4m10s, 5m10s
-	return &retry.ExponentialBackoff{
-		Limited: retry.Limited{
-			Delay: 10 * time.Second,
-			// Leave a little headroom for the last retry at 5m10s.
-			MaxTotal: 5*time.Minute + 20*time.Second,
-			// We enforce limit via MaxTotal
-			Retries: -1,
-		},
-		MaxDelay: 1 * time.Minute,
-	}
-}
-
-func ensureResponseUpdatedSince(r *fleet.GetDutInfoResponse, t time.Time) error {
-	if r.Updated == nil {
-		return errors.Reason("ensure uncached response: updated field is nil").Err()
-	}
-	u, err := ptypes.Timestamp(r.Updated)
-	if err != nil {
-		return errors.Annotate(err, "ensure uncached response").Err()
-	}
-	if t.After(u) {
-		return errors.Reason("ensure uncached response: last update %s before start", t.Sub(u).String()).Err()
-	}
-	return nil
 }
 
 func retryGetStableVersion(ctx context.Context, client fleet.InventoryClient, req *fleet.GetStableVersionRequest) (*fleet.GetStableVersionResponse, error) {

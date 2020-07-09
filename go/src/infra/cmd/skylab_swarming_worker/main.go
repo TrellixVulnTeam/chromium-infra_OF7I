@@ -77,7 +77,6 @@ type args struct {
 	adminService        string
 	deadline            time.Time
 	actions             string
-	forceFreshInventory bool
 	isolatedOutdir      string
 	logdogAnnotationURL string
 	sideEffectsConfig   string
@@ -97,8 +96,6 @@ func parseArgs() *args {
 		"LogDog annotation URL, like logdog://HOST/PROJECT/PREFIX/+/annotations")
 	flag.StringVar(&a.adminService, "admin-service", "",
 		"Admin service host, e.g. foo.appspot.com")
-	flag.BoolVar(&a.forceFreshInventory, "force-fresh", false,
-		"Use fresh inventory information. This flag can increase task runtime.")
 	flag.BoolVar(&a.xClientTest, "client-test", false,
 		"This is a client side test")
 	flag.Var(lflag.CommaList(&a.xProvisionLabels), "provision-labels",
@@ -236,9 +233,6 @@ func harnessOptions(a *args) []harness.Option {
 	var ho []harness.Option
 	if updatesInventory(a) {
 		ho = append(ho, harness.UpdateInventory(getTaskName(a)))
-	}
-	if a.forceFreshInventory {
-		ho = append(ho, harness.WaitForFreshInventory)
 	}
 	return ho
 }

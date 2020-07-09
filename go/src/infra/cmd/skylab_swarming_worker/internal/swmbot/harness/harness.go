@@ -37,8 +37,7 @@ type Info struct {
 	DUTName    string
 	BotInfo    *swmbot.LocalState
 
-	fetchFreshDUTInfo bool
-	labelUpdater      labelUpdater
+	labelUpdater labelUpdater
 
 	// err tracks errors during setup to simplify error handling
 	// logic.
@@ -122,11 +121,7 @@ func (i *Info) loadDUTInfo(ctx context.Context, b *swmbot.Info) (*inventory.Devi
 		return nil, nil
 	}
 	var s *dutinfo.Store
-	if i.fetchFreshDUTInfo {
-		s, i.err = dutinfo.LoadFresh(ctx, b, i.labelUpdater.update)
-	} else {
-		s, i.err = dutinfo.LoadCached(ctx, b, i.labelUpdater.update)
-	}
+	s, i.err = dutinfo.Load(ctx, b, i.labelUpdater.update)
 	if i.err != nil {
 		return nil, nil
 	}
