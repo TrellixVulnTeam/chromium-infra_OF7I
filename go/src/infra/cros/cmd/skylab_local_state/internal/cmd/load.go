@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -18,7 +17,7 @@ import (
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/lucictx"
 
-	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	fleet "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/cros/cmd/skylab_local_state/internal/location"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/autotest/labels"
@@ -105,7 +104,7 @@ func (c *loadRun) innerRun(a subcommands.Application, args []string, env subcomm
 
 	ctx := cli.GetContext(a, c, env)
 
-	client, err := newInventoryClient(ctx, request.Config.AdminService, &c.authFlags)
+	client, err := newInventoryClient(ctx, request.Config.CrosInventoryService, &c.authFlags)
 	if err != nil {
 		return err
 	}
@@ -174,8 +173,8 @@ func validateLoadRequest(request *skylab_local_state.LoadRequest) error {
 	return nil
 }
 
-// newInventoryClient creates an admin service client.
-func newInventoryClient(ctx context.Context, adminService string, authFlags *authcli.Flags) (fleet.InventoryClient, error) {
+// newInventoryClient creates an cros inventory service client.
+func newInventoryClient(ctx context.Context, crosInventoryService string, authFlags *authcli.Flags) (fleet.InventoryClient, error) {
 	authOpts, err := authFlags.Options()
 	if err != nil {
 		return nil, errors.Annotate(err, "create new inventory client").Err()
@@ -198,7 +197,7 @@ func newInventoryClient(ctx context.Context, adminService string, authFlags *aut
 
 	pc := prpc.Client{
 		C:    httpClient,
-		Host: adminService,
+		Host: crosInventoryService,
 	}
 
 	return fleet.NewInventoryPRPCClient(&pc), nil
@@ -206,15 +205,34 @@ func newInventoryClient(ctx context.Context, adminService string, authFlags *aut
 
 // getDutInfo fetches the DUT inventory entry from the admin service.
 func getDutInfo(ctx context.Context, client fleet.InventoryClient, dutName string) (*inventory.DeviceUnderTest, error) {
-	resp, err := client.GetDutInfo(ctx, &fleet.GetDutInfoRequest{Hostname: dutName})
+	devID := &fleet.DeviceID{Id: &fleet.DeviceID_Hostname{Hostname: dutName}}
+	req := &fleet.GetCrosDevicesRequest{
+		Ids: []*fleet.DeviceID{devID},
+	}
+	resp, err := client.GetCrosDevices(ctx, req)
 	if err != nil {
-		return nil, errors.Annotate(err, "get DUT info").Err()
+		return nil, errors.Annotate(err, fmt.Sprintf("get DUT info for %s", dutName)).Err()
 	}
-	var dut inventory.DeviceUnderTest
-	if err := proto.Unmarshal(resp.Spec, &dut); err != nil {
-		return nil, errors.Annotate(err, "get DUT info").Err()
+
+	devices := resp.GetData()
+	if len(devices) == 1 {
+		dut, err := fleet.AdaptToV1DutSpec(devices[0])
+		if err != nil {
+			return nil, errors.Annotate(err, fmt.Sprintf("get DUT info for %s", dutName)).Err()
+		}
+		return dut, nil
+	} else if len(devices) > 1 {
+		return nil, errors.Reason("get DUT info for %s: more than 1 DUT was returned in passed list!", dutName).Err()
 	}
-	return &dut, nil
+
+	failedDevies := resp.GetFailedDevices()
+	if len(failedDevies) == 1 {
+		return nil, errors.Reason(failedDevies[0].ErrorMsg).Err()
+	} else if len(failedDevies) > 1 {
+		return nil, errors.Reason("get DUT info for %s: more than 1 DUT was returned in failed list!", dutName).Err()
+	}
+
+	return nil, errors.Reason("get DUT info for %s: no data responded in either passed or failed list!", dutName).Err()
 }
 
 // hostInfoFromDutInfo extracts attributes and labels from an inventory
