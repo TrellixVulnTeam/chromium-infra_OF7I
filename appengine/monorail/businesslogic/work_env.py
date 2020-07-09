@@ -1679,6 +1679,28 @@ class WorkEnv(object):
             issue.issue_id, hostport, delta_blocked_on_iids,
             reporter_id, send_email=send_email)
 
+  def ModifyIssues(
+      self, issue_id_delta_pairs, is_description, comment_content=None):
+    # type: (Tuple[int, IssueDelta], Boolean, Optional[str]) -> None
+    """Modify issues by the given deltas."""
+
+    # PHASE 1: Assert requester has permission to make changes.
+    # Assert that changes are valid. Assert we do not update more than 100
+    # issues at once.
+    # Assert attachments do not exceed project quota limits.
+    # AssertUserCanModifyIssues(), AssertIssueChangesValid(),
+    # AssertQuotaNotExceeded()
+
+    # PHASE 2: Organize data. tracker_helpers.GroupUniqueDeltaIssues()
+
+    # PHASE 3-5: implemented in tracker_helpers.ModifyIssuePBs.
+
+    # PHASE 6: UpdateIssues, CreateIssueComments, combine merged_into starrers
+
+    # PHASE 7: Send notifications for each group of issues from Phase 2.
+
+    # PHASE 8: Create new issue indexing task.
+
   def DeleteIssue(self, issue, delete):
     """Mark or unmark the given issue as deleted."""
     self._AssertPermInIssue(issue, permissions.DELETE_ISSUE)
