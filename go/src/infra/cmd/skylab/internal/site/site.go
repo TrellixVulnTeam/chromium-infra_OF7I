@@ -81,7 +81,7 @@ var Prod = Environment{
 	BuildbucketBucket:  "testplatform",
 	BuildbucketBuilder: "cros_test_platform",
 
-	UFSService: "https://ufs.api.cr.dev",
+	UFSService: "ufs.api.cr.dev",
 }
 
 // Dev is the environment for dev.
@@ -100,7 +100,7 @@ var Dev = Environment{
 	BuildbucketBucket:  "testplatform",
 	BuildbucketBuilder: "cros_test_platform-dev",
 
-	UFSService: "https://staging.ufs.api.cr.dev",
+	UFSService: "staging.ufs.api.cr.dev",
 }
 
 // DefaultAuthOptions is an auth.Options struct prefilled with chrome-infra

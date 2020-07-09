@@ -28,13 +28,13 @@ type Environment struct {
 var Prod = Environment{
 	InventoryService: "cros-lab-inventory.appspot.com",
 	//TODO(eshwarn) : Change it to prod during release
-	UnifiedFleetService: "unified-fleet-system-dev.appspot.com",
+	UnifiedFleetService: "staging.ufs.api.cr.dev",
 }
 
 // Dev is the environment for dev.
 var Dev = Environment{
 	InventoryService:    "cros-lab-inventory-dev.appspot.com",
-	UnifiedFleetService: "unified-fleet-system-dev.appspot.com",
+	UnifiedFleetService: "staging.ufs.api.cr.dev",
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.
