@@ -10,7 +10,7 @@ option go_package = "infra/appengine/cros/lab_inventory/api/v1;api";
 
 import "google/protobuf/timestamp.proto";
 
-// Next tag: 18
+// Next tag: 20
 message DeviceManualRepairRecord {
   string hostname = 1;
   string asset_tag = 2;
@@ -75,6 +75,11 @@ message DeviceManualRepairRecord {
     ACTION_REIMAGE_DUT = 6;
   }
   repeated ManualRepairAction manual_repair_actions = 13;
+
+  // Boolean value of whether the primary issue has been fixed or not.
+  bool issue_fixed = 18;
+  // User ldap of who started the device repair
+  string user_ldap = 19;
 
   // Input by Lab Tech as a best guess on how much time (in minutes) it took to
   // investigate and resolve the repair. This is to give a better repair time

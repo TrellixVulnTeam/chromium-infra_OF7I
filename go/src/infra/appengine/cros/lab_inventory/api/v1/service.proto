@@ -62,6 +62,9 @@ service Inventory {
   // Get devices info and combine with repair information if exists in datastore
   rpc GetDeviceManualRepairRecords(GetDeviceManualRepairRecordsRequest) returns (GetDeviceManualRepairRecordsResponse);
 
+  // Add devices repair action and state in datastore
+  rpc CreateDeviceManualRepairRecords(CreateDeviceManualRepairRecordsRequest) returns (CreateDeviceManualRepairRecordsResponse);
+
   // Update devices repair action and state in datastore
   rpc UpdateDeviceManualRepairRecords(UpdateDeviceManualRepairRecordsRequest) returns (UpdateDeviceManualRepairRecordsResponse);
 
@@ -259,6 +262,12 @@ message GetDeviceManualRepairRecordsRequest {
 message GetDeviceManualRepairRecordsResponse {
   repeated DeviceManualRepairRecord device_repair_record = 1;
 }
+
+message CreateDeviceManualRepairRecordsRequest {
+  repeated DeviceManualRepairRecord device_repair_record = 1;
+}
+
+message CreateDeviceManualRepairRecordsResponse {}
 
 message UpdateDeviceManualRepairRecordsRequest {
   repeated DeviceManualRepairRecord device_repair_record = 1;

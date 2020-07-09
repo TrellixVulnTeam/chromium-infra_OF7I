@@ -244,6 +244,23 @@ func (s *DecoratedInventory) GetDeviceManualRepairRecords(ctx context.Context, r
 	return
 }
 
+func (s *DecoratedInventory) CreateDeviceManualRepairRecords(ctx context.Context, req *CreateDeviceManualRepairRecordsRequest) (rsp *CreateDeviceManualRepairRecordsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateDeviceManualRepairRecords", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateDeviceManualRepairRecords(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateDeviceManualRepairRecords", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedInventory) UpdateDeviceManualRepairRecords(ctx context.Context, req *UpdateDeviceManualRepairRecordsRequest) (rsp *UpdateDeviceManualRepairRecordsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

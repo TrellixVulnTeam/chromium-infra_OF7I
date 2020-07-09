@@ -681,12 +681,20 @@ func (is *InventoryServerImpl) DeviceConfigsExists(ctx context.Context, req *api
 	return response, err
 }
 
-// GetDeviceManualRepairRecords checks if there are current manual repairs for given device hostnames.
+// GetDeviceManualRepairRecords checks and returns manual repair records for
+// given device hostnames if they exist.
 func (is *InventoryServerImpl) GetDeviceManualRepairRecords(ctx context.Context, req *api.GetDeviceManualRepairRecordsRequest) (rsp *api.GetDeviceManualRepairRecordsResponse, err error) {
 	return nil, nil
 }
 
-// UpdateDeviceManualRepairRecords updates the current manual repair records for given device hostnames.
+// CreateDeviceManualRepairRecords adds new submitted manual repair records for
+// given devices.
+func (is *InventoryServerImpl) CreateDeviceManualRepairRecords(ctx context.Context, req *api.CreateDeviceManualRepairRecordsRequest) (rsp *api.CreateDeviceManualRepairRecordsResponse, err error) {
+	return nil, nil
+}
+
+// UpdateDeviceManualRepairRecords updates existing manual repair records with
+// new submitted info for given devices.
 func (is *InventoryServerImpl) UpdateDeviceManualRepairRecords(ctx context.Context, req *api.UpdateDeviceManualRepairRecordsRequest) (rsp *api.UpdateDeviceManualRepairRecordsResponse, err error) {
 	return nil, nil
 }
