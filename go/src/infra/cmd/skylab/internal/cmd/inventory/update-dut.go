@@ -20,7 +20,9 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/grpc/prpc"
 
+	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/cmd/utils"
@@ -30,6 +32,8 @@ import (
 	"infra/cmdsupport/cmdlib"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/swarming"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // UpdateDut subcommand: update and redeploy an existing DUT.
@@ -100,7 +104,8 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		return errors.Annotate(err, "update dut").Err()
 	}
 
-	icV2 := inv.NewInventoryClient(hc, c.envFlags.Env())
+	e := c.envFlags.Env()
+	icV2 := inv.NewInventoryClient(hc, e)
 	oldSpecs, err := getOldDeviceSpecs(ctx, icV2, hostname)
 	if err != nil {
 		return errors.Annotate(err, "update dut").Err()
@@ -115,6 +120,23 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		return nil
 	}
 
+	// Duplicate traffic to UFS (in experiment)
+	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.UFSService,
+		Options: site.DefaultPRPCOptions,
+	})
+	fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
+	if err := c.redeployToUFS(ctx, ufsClient, newSpecs); err != nil {
+		fmt.Fprintf(a.GetOut(), "%s\n", err.Error())
+		fmt.Fprintf(a.GetOut(), "####### The above error is NOT FATAL #######\n")
+	} else {
+		fmt.Fprintf(a.GetOut(), "Successfully redeploy the following duts to UFS:\n")
+		fmt.Fprintf(a.GetOut(), "\t%s\n", newSpecs.GetCommon().GetHostname())
+		fmt.Fprintf(a.GetOut(), "####### Finish TESTING #######\n")
+	}
+	fmt.Fprintf(a.GetOut(), "\n")
+
 	creator, err := utils.NewTaskCreator(ctx, &c.authFlags, c.envFlags)
 	if err != nil {
 		return err
@@ -127,6 +149,23 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 	fmt.Fprintf(a.GetOut(), "Deploy task URL:\t%s\n", swarming.TaskURL(creator.Environment.SwarmingService, taskID))
+	return nil
+}
+
+// redeployToUFS kicks off the inventory updates to UFS
+func (c *updateDutRun) redeployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, spec *inventory.DeviceUnderTest) error {
+	devicesToAdd, _, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{spec.GetCommon()})
+	if len(devicesToAdd) != 1 {
+		return errors.Reason("Cannot parse lab config from the host %s's spec", spec.GetCommon().GetHostname()).Err()
+	}
+	mlse := ufsUtil.DUTToLSE(devicesToAdd[0].GetDut(), "", nil)
+	mlse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, mlse.Name)
+	_, err = ufsClient.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
+		MachineLSE: mlse,
+	})
+	if err != nil {
+		return errors.Annotate(err, "fail to update host %s to UFS inventory system", mlse.GetHostname()).Err()
+	}
 	return nil
 }
 

@@ -143,15 +143,16 @@ func (c *addDutRun) innerRun(a subcommands.Application, args []string, env subco
 		Host:    e.UFSService,
 		Options: site.DefaultPRPCOptions,
 	})
-	fmt.Fprintf(a.GetOut(), "Using ufs service: %s\n", e.UFSService)
+	fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
 	if err := c.deployToUFS(ctx, ufsClient, specs); err != nil {
-		fmt.Fprintf(a.GetOut(), "####### NOT FATAL! JUST FOR TESTING #######\n")
-		fmt.Fprintf(a.GetOut(), "Failed to deploy to UFS: %s\n", err.Error())
+		fmt.Fprintf(a.GetOut(), "%s\n", err.Error())
+		fmt.Fprintf(a.GetOut(), "####### The above error is NOT FATAL #######\n")
 	} else {
 		fmt.Fprintf(a.GetOut(), "Successfully deploy the following duts to UFS:\n")
 		for _, spec := range specs {
 			fmt.Fprintf(a.GetOut(), "\t%s\n", spec.GetCommon().GetHostname())
 		}
+		fmt.Fprintf(a.GetOut(), "####### Finish TESTING #######\n")
 	}
 	fmt.Fprintf(a.GetOut(), "\n")
 
