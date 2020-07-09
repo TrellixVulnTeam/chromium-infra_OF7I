@@ -15,7 +15,7 @@ Table of contents:
   * [Group Similar Flaky Tests on UI](#group-similar-flaky-tests-on-UI)
   * [Rank Flaky Tests](#rank-flaky-tests)
   * [Search Flaky Tests](#search-flaky-tests)
-  * [Workflow](#workflow)
+  * [Workflow and Data Source](#workflow-and-data-source)
   * [Bug Filing Criteria](#bug-filing-criteria)
 * [Report](#report)
 * [Analysis](#analysis)
@@ -94,12 +94,16 @@ Score = Sum(CQ flake type weight * impacted CLs) + Sum(CI flake type weight * oc
 
 ![Filter Flakes Example]
 
-### Workflow
+### Workflow and Data Source
 #### For CQ flakes
-* It leverages existing data sources for CQ ([cq_attempts]), completed builds
- ([completed_builds]) and test results ([test_results]) BigQuery tables.
-* Cron jobs that execute [SQL queries] run once every 30 minutes to detect flaky tests and store the results.
-  * The query for cq hidden flakes is executed every 2 hours.
+* **CQ false rejection** and **CQ step level retry** flakes are based on recipe
+  logs, and specifically a step called "FindIt Flakiness", see [example](https://logs.chromium.org/logs/chromium/buildbucket/cr-buildbucket.appspot.com/8880268772938154864/+/steps/FindIt_Flakiness/0/logs/step_metadata/0).
+  Once applicable CQ builds finish running, Flake Protal receives notifications
+  via buildbucket pubsub and starts processing and storing the flake data.
+* **CQ hidden flake** leverages existing data sources for CQ ([cq_attempts]),
+  completed builds ([completed_builds]) and test results ([test_results])
+  BigQuery tables. Cron jobs that execute [SQL queries] run once every 6 hours
+  to detect hidden flaky tests and store the results.
 
 #### For CI flakes
 When a test step fails on a CI waterfall build, [Findit] runs a deflake swarming
