@@ -21,6 +21,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/ufs/cmds/configuration"
 	"infra/cmd/shivas/ufs/cmds/labsetup"
+	q "infra/cmd/shivas/ufs/cmds/query"
 	"infra/cmd/shivas/ufs/cmds/registration"
 )
 
@@ -55,6 +56,9 @@ func getApplication() *cli.Application {
 			configuration.AddMachineLSEPrototypeCmd,
 			configuration.UpdateMachineLSEPrototypeCmd,
 			configuration.DeleteMachineLSEPrototypeCmd,
+			subcommands.Section("Query Unified Fleet"),
+			q.GetCmd,
+			q.ListCmd,
 		},
 	}
 }
