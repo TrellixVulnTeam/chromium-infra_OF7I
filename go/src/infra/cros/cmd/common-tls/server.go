@@ -5,11 +5,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"golang.org/x/crypto/ssh"
@@ -43,6 +43,9 @@ func (s *server) Serve(l net.Listener) error {
 }
 
 func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Common_ExecDutCommandServer) error {
+	// Batch size of stdout, stderr.
+	const messageSize = 5000
+
 	ctx := stream.Context()
 
 	resp := &tls.ExecDutCommandResponse{
@@ -80,7 +83,7 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		c, err = s.clientPool.Get(addr)
 		if err != nil {
 			resp.ExitInfo.ErrorMessage = err.Error()
-			stream.Send(resp)
+			_ = stream.Send(resp)
 			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
 		}
 		session, err = c.NewSession()
@@ -94,15 +97,59 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 
 	if err != nil {
 		resp.ExitInfo.ErrorMessage = err.Error()
-		stream.Send(resp)
+		_ = stream.Send(resp)
 		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
 	}
-	defer session.Close()
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	session.Stdout = &stdout
-	session.Stderr = &stderr
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	// Reading stdout of session and stream to client.
+	stdoutReader, stdoutReaderErr := session.StdoutPipe()
+	if stdoutReaderErr != nil {
+		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), stdoutReaderErr))
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		stdout := make([]byte, messageSize)
+		stdoutResp := &tls.ExecDutCommandResponse{}
+		for {
+			stdoutN, stdoutReaderErr := stdoutReader.Read(stdout)
+			if stdoutN > 0 {
+				stdoutResp.Stdout = stdout[:stdoutN]
+				_ = stream.Send(stdoutResp)
+			}
+			if stdoutReaderErr != nil {
+				break
+			}
+		}
+	}()
+
+	// Reading stderr of session and stream to client.
+	stderrReader, stderrReaderErr := session.StderrPipe()
+	if stderrReaderErr != nil {
+		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), stderrReaderErr))
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		stderr := make([]byte, messageSize)
+		stderrResp := &tls.ExecDutCommandResponse{}
+		for {
+			stderrN, stderrReaderErr := stderrReader.Read(stderr)
+			if stderrN > 0 {
+				stderrResp.Stderr = stderr[:stderrN]
+				_ = stream.Send(stderrResp)
+			}
+			if stderrReaderErr != nil {
+				break
+			}
+		}
+	}()
+
+	defer session.Close()
 
 	args := req.GetArgs()
 	if len(args) == 0 {
@@ -125,14 +172,14 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		clientOk = true
 		resp.ExitInfo.ErrorMessage = err.Error()
 	default:
-		resp.ExitInfo.ErrorMessage = err.Error()
-		fmt.Fprintf(&stderr, "tls: unknown SSH session error: %s\n", err)
+		if err != nil {
+			resp.ExitInfo.ErrorMessage = err.Error()
+		}
 	}
 
-	resp.Stdout = stdout.Bytes()
-	resp.Stderr = stderr.Bytes()
 	resp.ExitInfo.Status = 0
 	_ = stream.Send(resp)
+
 	return nil
 }
 
