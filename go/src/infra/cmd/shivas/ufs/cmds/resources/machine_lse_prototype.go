@@ -38,11 +38,8 @@ func (c *machinelsePrototype) Run(a subcommands.Application, args []string, env 
 // GetCommands lists all the subcommands under machinelsePrototype
 func (c machinelsePrototypeApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
-		m.AddMachinelsePrototypeCmd,
-		m.UpdateMachinelsePrototypeCmd,
 		m.GetMachinelsePrototypeCmd,
 		m.ListMachinelsePrototypeCmd,
-		m.DeleteMachinelsePrototypeCmd,
 	}
 }
 

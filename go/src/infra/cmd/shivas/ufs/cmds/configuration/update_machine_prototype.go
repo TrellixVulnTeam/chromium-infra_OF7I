@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package machinelseprototype
+package configuration
 
 import (
 	"fmt"
@@ -11,41 +11,40 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	fleet "infra/unifiedfleet/api/v1/proto"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// UpdateMachinelsePrototypeCmd set MachineLSEPrototype by given name.
-var UpdateMachinelsePrototypeCmd = &subcommands.Command{
-	UsageLine: "set",
-	ShortDesc: "update MachineLSEPrototype by name",
-	LongDesc:  cmdhelp.UpdateMachinelsePrototypeLongDesc,
+// UpdateMachineLSEPrototypeCmd update MachineLSEPrototype by given name.
+var UpdateMachineLSEPrototypeCmd = &subcommands.Command{
+	UsageLine: "update-machine-prototype",
+	ShortDesc: "Update prototype for machine deployment",
+	LongDesc:  cmdhelp.UpdateMachineLSEPrototypeLongDesc,
 	CommandRun: func() subcommands.CommandRun {
-		c := &updateMachinelsePrototype{}
+		c := &updateMachineLSEPrototype{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachinelsePrototypeFileText)
-		c.Flags.BoolVar(&c.json, "j", false, `interpret the input file as a JSON file.`)
+		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineLSEPrototypeFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c
 	},
 }
 
-type updateMachinelsePrototype struct {
+type updateMachineLSEPrototype struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
 	newSpecsFile string
-	json         bool
 	interactive  bool
 }
 
-func (c *updateMachinelsePrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *updateMachineLSEPrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -53,7 +52,7 @@ func (c *updateMachinelsePrototype) Run(a subcommands.Application, args []string
 	return 0
 }
 
-func (c *updateMachinelsePrototype) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *updateMachineLSEPrototype) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -65,12 +64,12 @@ func (c *updateMachinelsePrototype) innerRun(a subcommands.Application, args []s
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	var machinelsePrototype fleet.MachineLSEPrototype
+	var machinelsePrototype ufspb.MachineLSEPrototype
 	if c.interactive {
 		utils.GetMachinelsePrototypeInteractiveInput(ctx, ic, &machinelsePrototype, true)
 	} else {
@@ -79,19 +78,20 @@ func (c *updateMachinelsePrototype) innerRun(a subcommands.Application, args []s
 			return err
 		}
 	}
-	machinelsePrototype.Name = UfleetUtil.AddPrefix(UfleetUtil.MachineLSEPrototypeCollection, machinelsePrototype.Name)
-	res, err := ic.UpdateMachineLSEPrototype(ctx, &UfleetAPI.UpdateMachineLSEPrototypeRequest{
+	machinelsePrototype.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSEPrototypeCollection, machinelsePrototype.Name)
+	res, err := ic.UpdateMachineLSEPrototype(ctx, &ufsAPI.UpdateMachineLSEPrototypeRequest{
 		MachineLSEPrototype: &machinelsePrototype,
 	})
 	if err != nil {
 		return err
 	}
-	res.Name = UfleetUtil.RemovePrefix(res.Name)
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
+	fmt.Println()
 	return nil
 }
 
-func (c *updateMachinelsePrototype) validateArgs() error {
+func (c *updateMachineLSEPrototype) validateArgs() error {
 	if !c.interactive && c.newSpecsFile == "" {
 		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
 	}

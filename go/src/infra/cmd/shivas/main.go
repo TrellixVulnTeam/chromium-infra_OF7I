@@ -14,13 +14,14 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/data/rand/mathrand"
+
 	"infra/cmd/shivas/audit"
 	"infra/cmd/shivas/meta"
 	"infra/cmd/shivas/query"
 	"infra/cmd/shivas/site"
+	"infra/cmd/shivas/ufs/cmds/configuration"
 	"infra/cmd/shivas/ufs/cmds/labsetup"
 	"infra/cmd/shivas/ufs/cmds/registration"
-	"infra/cmd/shivas/ufs/cmds/resources"
 )
 
 func getApplication() *cli.Application {
@@ -51,7 +52,9 @@ func getApplication() *cli.Application {
 			labsetup.RedeployMachineCmd,
 			labsetup.AbandonMachineCmd,
 			subcommands.Section("Configuration Management"),
-			resources.MachinelsePrototypeCmd,
+			configuration.AddMachineLSEPrototypeCmd,
+			configuration.UpdateMachineLSEPrototypeCmd,
+			configuration.DeleteMachineLSEPrototypeCmd,
 		},
 	}
 }

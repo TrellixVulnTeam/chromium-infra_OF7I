@@ -318,21 +318,25 @@ Example OS machine deployment for a Labstation:
 The protobuf definition of a deployed machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto#24`
 
-	// AddMachinelsePrototypeLongDesc long description for AddMachinelsePrototypeCmd
-	AddMachinelsePrototypeLongDesc string = `add MachineLSEPrototype by name.
-./shivas machinelseprototype add -j -f machinelseprototype.json
-Adds a MachineLSEPrototype by reading a JSON file input.
+	// AddMachineLSEPrototypeLongDesc long description for AddMachineLSEPrototypeCmd
+	AddMachineLSEPrototypeLongDesc string = `Add prototype for machine deployment.
 
-./shivas machinelseprototype add -i
-Adds a MachineLSEPrototype by reading input through interactive mode.`
+Examples:	
+shivas add-machine-prototype -f machineprototype.json
+Adds a machine prototype by reading a JSON file input.
 
-	// UpdateMachinelsePrototypeLongDesc long description for UpdateMachinelsePrototypeCmd
-	UpdateMachinelsePrototypeLongDesc string = `update MachineLSEPrototype by name.
-./shivas machinelseprototype set -j -f machinelseprototype.json
-Updates a MachineLSEPrototype by reading a JSON file input.
+shivas add-machine-prototype -i
+Adds a machine prototype by reading input through interactive mode.`
 
-./shivas machinelseprototype set -i
-Updates a MachineLSEPrototype by reading input through interactive mode.`
+	// UpdateMachineLSEPrototypeLongDesc long description for UpdateMachineLSEPrototypeCmd
+	UpdateMachineLSEPrototypeLongDesc string = `Update prototype for machine deployment.
+
+Examples:
+shivas update-machine-prototype -f machineprototype.json
+Updates a machine prototype by reading a JSON file input.
+
+shivas update-machine-prototype -i
+Updates a machine prototype by reading input through interactive mode.`
 
 	// ListMachinelsePrototypeLongDesc long description for ListMachinelsePrototypeCmd
 	ListMachinelsePrototypeLongDesc string = `list all MachineLSEPrototypes
@@ -350,11 +354,11 @@ Fetches only ACS lab items and prints the output in table format
 Fetches 100 items and prints the output in JSON format
 `
 
-	// MachinelsePrototypeFileText description for machinelseprototype file input
-	MachinelsePrototypeFileText string = `Path to a file containing MachineLSEPrototype specification in JSON format.
-This file must contain one MachineLSEPrototype JSON message
+	// MachineLSEPrototypeFileText description for MachineLSEPrototype file input
+	MachineLSEPrototypeFileText string = `Path to a file containing prototype for machine deployment specification in JSON format.
+This file must contain one machine prototype JSON message
 
-Example MachineLSEPrototype:
+Example prototype for machine deployment:
 {
 	"name": "browser-lab:vm",
 	"peripheralRequirements": [{
@@ -370,6 +374,6 @@ Example MachineLSEPrototype:
 	}]
 }
 
-The protobuf definition of MachineLSEPrototype is part of
+The protobuf definition of prototype for machine deployment is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/lse_prototype.proto#29`
 )
