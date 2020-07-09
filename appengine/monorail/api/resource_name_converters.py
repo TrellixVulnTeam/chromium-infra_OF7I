@@ -303,10 +303,14 @@ def IngestIssueNames(cnxn, names, services):
     NoSuchProjectException if an Issue's Project is not found.
   """
   project_local_id_pairs = []
-  for name in names:
-    match = _GetResourceNameMatch(name, ISSUE_NAME_RE)
-    project_local_id_pairs.append(
-        (match.group('project'), int(match.group('local_id'))))
+  with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+    for name in names:
+      try:
+        match = _GetResourceNameMatch(name, ISSUE_NAME_RE)
+        project_local_id_pairs.append(
+            (match.group('project'), int(match.group('local_id'))))
+      except exceptions.InputException as e:
+        err_agg.AddErrorMessage(e.message)
   return _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services)
 
 

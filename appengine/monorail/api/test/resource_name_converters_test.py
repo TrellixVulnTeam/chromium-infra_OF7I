@@ -223,6 +223,18 @@ class ResourceNameConverterTest(unittest.TestCase):
     """We get an empty list when providing an empty list of issue names."""
     self.assertEqual(rnc.IngestIssueNames(self.cnxn, [], self.services), [])
 
+  def testIngestIssueNames_WithBadInputs(self):
+    """We aggregate input exceptions."""
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Invalid resource name: projects/proj/badformat/1.\n' +
+        'Invalid resource name: badformat/proj/issues/1.'):
+      rnc.IngestIssueNames(
+          self.cnxn, [
+              'projects/proj/badformat/1', 'badformat/proj/issues/1',
+              'projects/proj/issues/1'
+          ], self.services)
+
   def testIngestIssueNames_OneDoesNotExist(self):
     """We get an exception if one issue name provided does not exist."""
     with self.assertRaises(exceptions.NoSuchIssueException):
