@@ -263,13 +263,13 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineL
 		// Update Labstation MachineLSE with new Servo info.
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 		if newServo != nil {
-			// 1. Check if the ServoHostName and ServoPort are already in use
-			err := validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
+			// 1. Check if the Labstation MachineLSE exists in the system.
+			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
 				return err
 			}
-			// 2. Check if the Labstation MachineLSE exists in the system.
-			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
+			// 2. Check if the ServoHostName and ServoPort are already in use
+			err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
@@ -320,13 +320,13 @@ func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *fleet.MachineL
 		// Update Labstation MachineLSE with new Servo info.
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 		if newServo != nil {
-			// 1. Check if the ServoHostName and ServoPort are already in use
-			err := validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
+			// 1. Check if the Labstation MachineLSE exists in the system.
+			newLabstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
 				return err
 			}
-			// 2. Check if the Labstation MachineLSE exists in the system.
-			newLabstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
+			// 2. Check if the ServoHostName and ServoPort are already in use
+			err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
