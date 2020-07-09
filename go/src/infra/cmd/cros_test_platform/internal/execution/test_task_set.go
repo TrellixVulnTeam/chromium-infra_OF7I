@@ -9,7 +9,6 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"math"
-	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -27,9 +26,9 @@ type testTaskSet struct {
 	tasks         []*skylab.Task
 }
 
-func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time) (*testTaskSet, error) {
+func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*testTaskSet, error) {
 	t := testTaskSet{runnable: true, Name: invocation.GetTest().GetName()}
-	t.argsGenerator = args.NewGenerator(invocation, params, workerConfig, parentTaskID, deadline)
+	t.argsGenerator = args.NewGenerator(invocation, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
 	t.maxAttempts = 1 + int(inferTestMaxRetries(invocation))
 	return &t, nil
 }

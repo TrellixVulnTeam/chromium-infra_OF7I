@@ -36,7 +36,14 @@ import (
 	"infra/libs/skylab/request"
 )
 
-var noDeadline time.Time
+var (
+	noDeadline        time.Time
+	fakeTaskSetConfig = &execution.TaskSetConfig{
+		"foo-parent-task-id",
+		"TestPlanRuns/12345678/foo",
+		noDeadline,
+	}
+)
 
 type fakeSkylab struct {
 	autotestResultGenerator autotestResultGenerator
@@ -206,7 +213,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 		}
 
 		Convey("when running a skylab execution", func() {
-			ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
 			err = run.LaunchAndWait(ctx, skylab)
@@ -243,7 +250,7 @@ func TestLaunchAndWaitTest(t *testing.T) {
 		invs = append(invs, clientTestInvocation("", ""), clientTestInvocation("", ""))
 
 		Convey("when running a skylab execution", func() {
-			ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -302,7 +309,7 @@ func TestTaskStates(t *testing.T) {
 		}
 		for _, c := range cases {
 			Convey(c.description, func() {
-				ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -329,7 +336,7 @@ func TestServiceError(t *testing.T) {
 		skylab := newFakeSkylab()
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -360,7 +367,7 @@ func TestTaskURL(t *testing.T) {
 		skylab.setURL("foo-url")
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -381,7 +388,7 @@ func TestIncompleteWait(t *testing.T) {
 		skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -414,7 +421,7 @@ func TestRequestArguments(t *testing.T) {
 		inv.DisplayName = "given_name"
 		invs := []*steps.EnumerationResponse_AutotestInvocation{inv}
 
-		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -428,7 +435,8 @@ func TestRequestArguments(t *testing.T) {
 			So(launchArgs.SwarmingTags, ShouldContain, "luci_project:foo-luci-project")
 			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag1")
 			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag2")
-			So(launchArgs.ParentTaskID, ShouldEqual, "foo-parent-task-id")
+			So(launchArgs.ParentTaskID, ShouldEqual, fakeTaskSetConfig.ParentTaskID)
+			So(launchArgs.ParentRequestUID, ShouldEqual, fakeTaskSetConfig.RequestUID)
 
 			So(launchArgs.Priority, ShouldEqual, 79)
 
@@ -552,7 +560,7 @@ func TestInvocationKeyvals(t *testing.T) {
 		Convey("and a request without keyvals", func() {
 			p := basicParams()
 			p.Decorations = nil
-			ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), fakeTaskSetConfig)
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -575,7 +583,7 @@ func TestInvocationKeyvals(t *testing.T) {
 					"suite": "someOtherSuite",
 				},
 			}
-			ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
+			ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), fakeTaskSetConfig)
 			So(err, ShouldBeNil)
 			run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -640,7 +648,7 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 			}
 
 			Convey("created commands include common suite keyval and different label keyvals", func() {
-				ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(invs, p, basicConfig(), fakeTaskSetConfig)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, skylab)
@@ -679,7 +687,7 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 				inv.Test.MaxRetries = 2
 			}
 			Convey("for skylab execution", func() {
-				ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, skylab)
@@ -921,7 +929,7 @@ func TestRetries(t *testing.T) {
 				}
 				var ml memlogger.MemLogger
 				ctx = logging.SetFactory(ctx, func(context.Context) logging.Logger { return &ml })
-				ts, err := execution.NewRequestTaskSet(c.invocations, params, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(c.invocations, params, basicConfig(), fakeTaskSetConfig)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, skylab)
@@ -1000,7 +1008,7 @@ func TestClientTestArg(t *testing.T) {
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("name1", "")}
 
-		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, basicParams(), basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -1029,7 +1037,7 @@ func TestQuotaSchedulerAccount(t *testing.T) {
 			// the legacy user will not be interrupted.
 			QsAccount: "",
 		}
-		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -1059,7 +1067,7 @@ func TestQuotaSchedulerAccountOnQSAccount(t *testing.T) {
 			},
 			QsAccount: "foo-account",
 		}
-		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -1091,7 +1099,7 @@ func TestReservedTagShouldNotBeSetByUsers(t *testing.T) {
 		params.Decorations = &test_platform.Request_Params_Decorations{
 			Tags: []string{"qs_account:fake-account"},
 		}
-		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -1121,7 +1129,7 @@ func TestRequestShouldNotSetBothQSAccountAndQuotaAccount(t *testing.T) {
 			},
 			QsAccount: "foo-account",
 		}
-		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 		Convey("The test should end up with a panic.", func() {
@@ -1143,7 +1151,7 @@ func TestRequestShouldNotSetBothQSAccountAndPriority(t *testing.T) {
 			QsAccount: "foo-account",
 			Priority:  50,
 		}
-		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 		Convey("The test should end up with a panic.", func() {
@@ -1162,7 +1170,7 @@ func TestUnmanagedPool(t *testing.T) {
 			UnmanagedPool: "foo-pool",
 		}
 
-		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		ts, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(ts)
 
@@ -1196,7 +1204,7 @@ func TestResponseVerdict(t *testing.T) {
 		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 		params := basicParams()
 
-		taskSets, err := execution.NewRequestTaskSet(invs, params, basicConfig(), "foo-parent-task-id", noDeadline)
+		taskSets, err := execution.NewRequestTaskSet(invs, params, basicConfig(), fakeTaskSetConfig)
 		So(err, ShouldBeNil)
 		run := execution.NewRunnerWithRequestTaskSets(taskSets)
 
@@ -1309,7 +1317,7 @@ func TestIncompatibleDependencies(t *testing.T) {
 		skylab := newFakeSkylab()
 		for _, c := range cases {
 			Convey(fmt.Sprintf("with %s", c.Tag), func() {
-				ts, err := execution.NewRequestTaskSet(c.Invs, c.Params, basicConfig(), "foo-parent-task-id", noDeadline)
+				ts, err := execution.NewRequestTaskSet(c.Invs, c.Params, basicConfig(), fakeTaskSetConfig)
 				So(err, ShouldBeNil)
 				run := execution.NewRunnerWithRequestTaskSets(ts)
 				err = run.LaunchAndWait(ctx, skylab)

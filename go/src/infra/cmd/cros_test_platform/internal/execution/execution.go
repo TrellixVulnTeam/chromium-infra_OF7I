@@ -16,6 +16,10 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
+// ctpRequestUIDTemplate is the template to generate the UID of
+// a test plan run, a.k.a. CTP request.
+const ctpRequestUIDTemplate = "TestPlanRuns/%d/%s"
+
 // Runner manages task sets for multiple cros_test_platform requests.
 type Runner struct {
 	requestTaskSets map[string]*RequestTaskSet
@@ -37,11 +41,20 @@ func NewRunnerWithRequestTaskSets(requestTaskSets ...*RequestTaskSet) *Runner {
 }
 
 // NewRunner returns a Runner that will execute the given requests.
-func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, requests map[string]*steps.ExecuteRequest) (*Runner, error) {
+func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, request steps.ExecuteRequests) (*Runner, error) {
 	ts := make(map[string]*RequestTaskSet)
-	for t, r := range requests {
+	for t, r := range request.GetTaggedRequests() {
 		var err error
-		ts[t], err = NewRequestTaskSet(r.Enumeration.AutotestInvocations, r.RequestParams, workerConfig, parentTaskID, deadline)
+		ts[t], err = NewRequestTaskSet(
+			r.Enumeration.AutotestInvocations,
+			r.RequestParams,
+			workerConfig,
+			&TaskSetConfig{
+				parentTaskID,
+				constructRequestUID(request.GetBuild().GetId(), t),
+				deadline,
+			},
+		)
 		if err != nil {
 			return nil, errors.Annotate(err, "new skylab runner").Err()
 		}
@@ -118,4 +131,8 @@ func (r *Runner) Responses() map[string]*steps.ExecuteResponse {
 		resps[t] = ts.response(running)
 	}
 	return resps
+}
+
+func constructRequestUID(buildID int64, key string) string {
+	return fmt.Sprintf(ctpRequestUIDTemplate, buildID, key)
 }

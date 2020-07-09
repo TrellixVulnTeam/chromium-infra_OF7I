@@ -24,11 +24,18 @@ type RequestTaskSet struct {
 	retries          int32
 }
 
+// TaskSetConfig is a wrapper for the parameters common to the testTaskSets.
+type TaskSetConfig struct {
+	ParentTaskID string
+	RequestUID   string
+	Deadline     time.Time
+}
+
 // NewRequestTaskSet creates a new RequestTaskSet.
-func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time) (*RequestTaskSet, error) {
+func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*RequestTaskSet, error) {
 	testTaskSets := make([]*testTaskSet, len(tests))
 	for i, test := range tests {
-		t, err := newTestTaskSet(test, params, workerConfig, parentTaskID, deadline)
+		t, err := newTestTaskSet(test, params, workerConfig, tc)
 		if err != nil {
 			return nil, errors.Annotate(err, "new task set").Err()
 		}

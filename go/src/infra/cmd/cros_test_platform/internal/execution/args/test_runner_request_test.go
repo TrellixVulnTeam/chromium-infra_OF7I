@@ -28,7 +28,7 @@ func TestProvisionableLabels(t *testing.T) {
 		setFWRO(&params, "foo-ro-firmware")
 		setFWRW(&params, "foo-rw-firmware")
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(basicInvocation(), &params, nil, "", noDeadline)
+			g := NewGenerator(basicInvocation(), &params, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the provisionable labels match the software dependencies", func() {
@@ -48,7 +48,7 @@ func TestClientTest(t *testing.T) {
 		var inv steps.EnumerationResponse_AutotestInvocation
 		setExecutionEnvironment(&inv, build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT)
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(&inv, &test_platform.Request_Params{}, nil, "", noDeadline)
+			g := NewGenerator(&inv, &test_platform.Request_Params{}, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("it should be marked as such.", func() {
@@ -66,7 +66,7 @@ func TestServerTest(t *testing.T) {
 		var inv steps.EnumerationResponse_AutotestInvocation
 		setExecutionEnvironment(&inv, build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER)
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(&inv, &test_platform.Request_Params{}, nil, "", noDeadline)
+			g := NewGenerator(&inv, &test_platform.Request_Params{}, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("it should be marked as such.", func() {
@@ -84,7 +84,7 @@ func TestUnspecifiedTestEnvironment(t *testing.T) {
 		var inv steps.EnumerationResponse_AutotestInvocation
 		setTestName(&inv, "foo-test")
 		Convey("the test runner request generation fails.", func() {
-			g := NewGenerator(&inv, &test_platform.Request_Params{}, nil, "", noDeadline)
+			g := NewGenerator(&inv, &test_platform.Request_Params{}, nil, "", "", noDeadline)
 			_, err := g.testRunnerRequest(ctx)
 			So(err, ShouldNotBeNil)
 		})
@@ -97,7 +97,7 @@ func TestTestName(t *testing.T) {
 		inv := basicInvocation()
 		setTestName(inv, "foo-test")
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &test_platform.Request_Params{}, nil, "", noDeadline)
+			g := NewGenerator(inv, &test_platform.Request_Params{}, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the test name is populated correctly.", func() {
@@ -115,7 +115,7 @@ func TestTestArgs(t *testing.T) {
 		inv := basicInvocation()
 		setTestArgs(inv, "foo=bar baz=qux")
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &test_platform.Request_Params{}, nil, "", noDeadline)
+			g := NewGenerator(inv, &test_platform.Request_Params{}, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the test args are propagated correctly.", func() {
@@ -134,7 +134,7 @@ func TestTestLevelKeyval(t *testing.T) {
 		setTestKeyval(inv, "key", "test-value")
 		var params test_platform.Request_Params
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &params, nil, "", noDeadline)
+			g := NewGenerator(inv, &params, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the keyval is propagated.", func() {
@@ -154,7 +154,7 @@ func TestRequestLevelKeyval(t *testing.T) {
 		setTestKeyval(inv, "key", "test-value")
 		var params test_platform.Request_Params
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &params, nil, "", noDeadline)
+			g := NewGenerator(inv, &params, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the keyval is propagated.", func() {
@@ -175,7 +175,7 @@ func TestKeyvalOverride(t *testing.T) {
 		var params test_platform.Request_Params
 		setRequestKeyval(&params, "ambiguous-key", "request-value")
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &params, nil, "", noDeadline)
+			g := NewGenerator(inv, &params, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the keyval from the request takes precedence.", func() {
@@ -197,7 +197,7 @@ func TestConstructedDisplayName(t *testing.T) {
 		setBuild(&params, "foo-build")
 		setRequestKeyval(&params, "suite", "foo-suite")
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &params, nil, "", noDeadline)
+			g := NewGenerator(inv, &params, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the display name is generated correctly.", func() {
@@ -219,7 +219,7 @@ func TestExplicitDisplayName(t *testing.T) {
 		setDisplayName(inv, "fancy-name")
 		var params test_platform.Request_Params
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &params, nil, "", noDeadline)
+			g := NewGenerator(inv, &params, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the display name is propagated correctly.", func() {
@@ -239,7 +239,7 @@ func TestParentIDKeyval(t *testing.T) {
 		inv := basicInvocation()
 		var params test_platform.Request_Params
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &params, nil, "foo-id", noDeadline)
+			g := NewGenerator(inv, &params, nil, "foo-id", "testPlanRun/12345689/foo", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the corresponding keyval is populated.", func() {
@@ -259,7 +259,7 @@ func TestBuildKeyval(t *testing.T) {
 		var params test_platform.Request_Params
 		setBuild(&params, "foo-build")
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(inv, &params, nil, "", noDeadline)
+			g := NewGenerator(inv, &params, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the corresponding keyval is populated.", func() {
@@ -277,7 +277,7 @@ func TestDeadline(t *testing.T) {
 		ctx := context.Background()
 		ts, _ := time.Parse(time.RFC3339, "2020-02-27T12:47:42Z")
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(basicInvocation(), &test_platform.Request_Params{}, nil, "", ts)
+			g := NewGenerator(basicInvocation(), &test_platform.Request_Params{}, nil, "", "", ts)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the deadline is set correctly.", func() {
@@ -291,7 +291,7 @@ func TestNoDeadline(t *testing.T) {
 	Convey("Given a request that does not specify a deadline", t, func() {
 		ctx := context.Background()
 		Convey("when generating a test runner request", func() {
-			g := NewGenerator(basicInvocation(), &test_platform.Request_Params{}, nil, "", noDeadline)
+			g := NewGenerator(basicInvocation(), &test_platform.Request_Params{}, nil, "", "", noDeadline)
 			got, err := g.testRunnerRequest(ctx)
 			So(err, ShouldBeNil)
 			Convey("the deadline should not be set.", func() {
@@ -334,7 +334,7 @@ func TestEnableSynchronousOffload(t *testing.T) {
 				var params test_platform.Request_Params
 				c.setter(&params)
 				Convey("the generated test runner request matches", func() {
-					g := NewGenerator(basicInvocation(), &params, nil, "", noDeadline)
+					g := NewGenerator(basicInvocation(), &params, nil, "", "", noDeadline)
 					got, err := g.testRunnerRequest(ctx)
 					So(err, ShouldBeNil)
 					So(got, ShouldNotBeNil)

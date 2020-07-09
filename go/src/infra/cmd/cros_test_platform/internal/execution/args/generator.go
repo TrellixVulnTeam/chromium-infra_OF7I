@@ -39,17 +39,22 @@ type Generator struct {
 	workerConfig *config.Config_SkylabWorker
 	// parentTaskID is the Swarming ID of the CTP task.
 	parentTaskID string
-	deadline     time.Time
+	// parentRequestUID is the UID of the CTP request which kicked off this
+	// test run. This is needed for the analytics usage. Test execution
+	// does not require this parameter.
+	parentRequestUID string
+	deadline         time.Time
 }
 
 // NewGenerator constructs an args Generator.
-func NewGenerator(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time) *Generator {
+func NewGenerator(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID, parentReqUID string, deadline time.Time) *Generator {
 	return &Generator{
-		invocation:   invocation,
-		params:       params,
-		workerConfig: workerConfig,
-		parentTaskID: parentTaskID,
-		deadline:     deadline,
+		invocation:       invocation,
+		params:           params,
+		workerConfig:     workerConfig,
+		parentTaskID:     parentTaskID,
+		parentRequestUID: parentReqUID,
+		deadline:         deadline,
 	}
 }
 
@@ -159,6 +164,7 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		SchedulableLabels:                labels,
 		Dimensions:                       g.params.GetFreeformAttributes().GetSwarmingDimensions(),
 		ParentTaskID:                     g.parentTaskID,
+		ParentRequestUID:                 g.parentRequestUID,
 		Priority:                         g.params.GetScheduling().GetPriority(),
 		ProvisionableDimensions:          provisionableDimensions,
 		ProvisionableDimensionExpiration: provisionableDimensionExpiration,
