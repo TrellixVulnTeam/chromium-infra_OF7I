@@ -54,21 +54,25 @@ Switch Example :
 The protobuf definition of Switch is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto#71`
 
-	// AddMachineLongDesc long description for AddMachineCmd
-	AddMachineLongDesc string = `add Machine by name.
-./shivas machine add -j -f machine.json
-Adds a Machine by reading a JSON file input.
+	// RegisterMachineLongDesc long description for RegisterMachineCmd
+	RegisterMachineLongDesc string = `Register a machine(ChromeBook, Bare metal server, Macbook.) by name.
 
-./shivas machine add -i
-Adds a Machine by reading input through interactive mode.`
+Examples:
+shivas register machine -f machine.json
+Registers a machine by reading a JSON file input.
 
-	// UpdateMachineLongDesc long description for UpdateMachineCmd
-	UpdateMachineLongDesc string = `update Machine by name.
-./shivas machine set -j -f machine.json
-Adds a Machine by reading a JSON file input.
+shivas register machine -i
+Registers a machine by reading input through interactive mode.`
 
-./shivas machine set -i
-Adds a Machine by reading input through interactive mode.`
+	// ReregisterMachineLongDesc long description for ReregisterMachineCmd
+	ReregisterMachineLongDesc string = `Reregister/Update a machine(ChromeBook, Bare metal server, Macbook.) by name.
+
+Examples:
+shivas reregister machine -f machine.json
+Reregister/Update a machine by reading a JSON file input.
+
+shivas reregister machine -i
+Reregister/Update a machine by reading input through interactive mode.`
 
 	// ListMachineLongDesc long description for ListMachineCmd
 	ListMachineLongDesc string = `list all Machines
@@ -87,10 +91,10 @@ Fetches 50 items and prints the output in JSON format
 `
 
 	// MachineFileText description for machine file input
-	MachineFileText string = `Path to a file containing Machine specification in JSON format.
-This file must contain one Machine JSON message
+	MachineFileText string = `Path to a file containing machine specification in JSON format.
+This file must contain one machine JSON message
 
-Example Browser Lab Machine:
+Example Browser machine:
 {
 	"name": "machine-BROWSERLAB-example",
 	"location": {
@@ -115,7 +119,7 @@ Example Browser Lab Machine:
 	"realm": "Browserlab"
 }
 
-Example OS Lab Machine:
+Example OS machine:
 {
 	"name": "machine-OSLAB-example",
 	"location": {
@@ -131,13 +135,13 @@ Example OS Lab Machine:
 	"realm": "OSlab"
 }
 
-The protobuf definition of Machine is part of
+The protobuf definition of machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto#19`
 
 	// DeployMachineLongDesc long description for DeployMachineCmd
 	DeployMachineLongDesc string = `Deploy a machine as a DUT, Labstation, DevServer, Caching Server or a VM Server.
 
-Examples:	
+Examples:
 shivas deploy-machine -f machinelse.json
 Deploys a machine by reading a JSON file input.
 
@@ -146,7 +150,7 @@ Deploys a machine by reading input through interactive mode.`
 
 	// RedeployMachineLongDesc long description for RedeployMachineCmd
 	RedeployMachineLongDesc string = `Redeploy a machine as a DUT, Labstation, DevServer, Caching Server or a VM Server
-	
+
 Examples:
 shivas redeploy-machine -f machinelse.json
 Redeploys a machine by reading a JSON file input.

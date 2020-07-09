@@ -11,41 +11,40 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	fleet "infra/unifiedfleet/api/v1/proto"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// UpdateMachineCmd set Machine by given name.
-var UpdateMachineCmd = &subcommands.Command{
-	UsageLine: "set",
-	ShortDesc: "update Machine by name",
-	LongDesc:  cmdhelp.UpdateMachineLongDesc,
+// RegisterMachineCmd add Machine to the system.
+var RegisterMachineCmd = &subcommands.Command{
+	UsageLine: "machine [Options...]",
+	ShortDesc: "Register a machine(ChromeBook, Bare metal server, Macbook.) by name",
+	LongDesc:  cmdhelp.RegisterMachineLongDesc,
 	CommandRun: func() subcommands.CommandRun {
-		c := &updateMachine{}
+		c := &registerMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineFileText)
-		c.Flags.BoolVar(&c.json, "j", false, `interpret the input file as a JSON file.`)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c
 	},
 }
 
-type updateMachine struct {
+type registerMachine struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
 	newSpecsFile string
-	json         bool
 	interactive  bool
 }
 
-func (c *updateMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *registerMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -53,7 +52,7 @@ func (c *updateMachine) Run(a subcommands.Application, args []string, env subcom
 	return 0
 }
 
-func (c *updateMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *registerMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -65,33 +64,34 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	var machine fleet.Machine
+	var machine ufspb.Machine
 	if c.interactive {
-		utils.GetMachineInteractiveInput(ctx, ic, &machine, true)
+		utils.GetMachineInteractiveInput(ctx, ic, &machine, false)
 	} else {
 		err = utils.ParseJSONFile(c.newSpecsFile, &machine)
 		if err != nil {
 			return err
 		}
 	}
-	machine.Name = UfleetUtil.AddPrefix(UfleetUtil.MachineCollection, machine.Name)
-	res, err := ic.UpdateMachine(ctx, &UfleetAPI.UpdateMachineRequest{
-		Machine: &machine,
+	res, err := ic.CreateMachine(ctx, &ufsAPI.CreateMachineRequest{
+		Machine:   &machine,
+		MachineId: machine.GetName(),
 	})
 	if err != nil {
 		return err
 	}
-	res.Name = UfleetUtil.RemovePrefix(res.Name)
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
+	fmt.Println()
 	return nil
 }
 
-func (c *updateMachine) validateArgs() error {
+func (c *registerMachine) validateArgs() error {
 	if !c.interactive && c.newSpecsFile == "" {
 		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
 	}

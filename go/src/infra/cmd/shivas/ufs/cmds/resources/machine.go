@@ -38,11 +38,8 @@ func (c *machine) Run(a subcommands.Application, args []string, env subcommands.
 // GetCommands lists all the subcommands under machine
 func (c machineApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
-		m.AddMachineCmd,
-		m.UpdateMachineCmd,
 		m.GetMachineCmd,
 		m.ListMachineCmd,
-		m.DeleteMachineCmd,
 	}
 }
 

@@ -7,6 +7,8 @@ package registration
 import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
+
+	"infra/cmd/shivas/ufs/subcmds/machine"
 )
 
 type register struct {
@@ -38,6 +40,7 @@ func (c *register) Run(a subcommands.Application, args []string, env subcommands
 func (c registerApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
+		machine.RegisterMachineCmd,
 	}
 }
 
