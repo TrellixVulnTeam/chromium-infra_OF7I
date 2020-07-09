@@ -15,6 +15,7 @@ from api.v3 import converters
 from api.v3 import issues_servicer
 from api.v3.api_proto import issues_pb2
 from api.v3.api_proto import issue_objects_pb2
+from framework import exceptions
 from framework import monorailcontext
 from testing import fake
 from services import service_manager
@@ -92,6 +93,87 @@ class IssuesServicerTest(unittest.TestCase):
     actual_response = self.CallWrapped(self.issues_svcr.GetIssue, mc, request)
     self.assertEqual(
         actual_response, self.issues_svcr.converter.ConvertIssue(self.issue_1))
+
+  def testBatchGetIssues(self):
+    """We can batch get issues."""
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.BatchGetIssuesRequest(
+        names=['projects/cow/issues/1235', 'projects/cow/issues/1236'])
+    actual_response = self.CallWrapped(
+        self.issues_svcr.BatchGetIssues, mc, request)
+    self.assertEqual(
+        [issue.name for issue in actual_response.issues],
+        ['projects/cow/issues/1235', 'projects/cow/issues/1236'])
+
+  def testBatchGetIssues_Empty(self):
+    """We can return a response if the request has no names."""
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.BatchGetIssuesRequest(names=[])
+    actual_response = self.CallWrapped(
+        self.issues_svcr.BatchGetIssues, mc, request)
+    self.assertEqual(
+        actual_response, issues_pb2.BatchGetIssuesResponse(issues=[]))
+
+  def testBatchGetIssues_WithParent(self):
+    """We can batch get issues with a given parent."""
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.BatchGetIssuesRequest(
+        parent='projects/cow',
+        names=['projects/cow/issues/1235', 'projects/cow/issues/1236'])
+    actual_response = self.CallWrapped(
+        self.issues_svcr.BatchGetIssues, mc, request)
+    self.assertEqual(
+        [issue.name for issue in actual_response.issues],
+        ['projects/cow/issues/1235', 'projects/cow/issues/1236'])
+
+  def testBatchGetIssues_FromMultipleProjects(self):
+    """We can batch get issues from multiple projects."""
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.BatchGetIssuesRequest(
+        names=[
+            'projects/chicken/issues/1234', 'projects/cow/issues/1235',
+            'projects/cow/issues/1236'
+        ])
+    actual_response = self.CallWrapped(
+        self.issues_svcr.BatchGetIssues, mc, request)
+    self.assertEqual(
+        [issue.name for issue in actual_response.issues], [
+            'projects/chicken/issues/1234', 'projects/cow/issues/1235',
+            'projects/cow/issues/1236'
+        ])
+
+  def testBatchGetIssues_WithBadInput(self):
+    """We raise an exception with bad input to batch get issues."""
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.BatchGetIssuesRequest(
+        parent='projects/cow',
+        names=['projects/cow/issues/1235', 'projects/chicken/issues/1234'])
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'projects/chicken/issues/1234 is not a child issue of projects/cow.'):
+      self.CallWrapped(self.issues_svcr.BatchGetIssues, mc, request)
+
+    request = issues_pb2.BatchGetIssuesRequest(
+        parent='projects/sheep',
+        names=['projects/cow/issues/1235', 'projects/chicken/issues/1234'])
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'projects/cow/issues/1235 is not a child issue of projects/sheep.\n' +
+        'projects/chicken/issues/1234 is not a child issue of projects/sheep.'):
+      self.CallWrapped(self.issues_svcr.BatchGetIssues, mc, request)
+
+    request = issues_pb2.BatchGetIssuesRequest(
+        parent='projects/cow',
+        names=['projects/cow/badformat/1235', 'projects/chicken/issues/1234'])
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Invalid resource name: projects/cow/badformat/1235.'):
+      self.CallWrapped(self.issues_svcr.BatchGetIssues, mc, request)
 
   @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
   @mock.patch('tracker.tracker_constants.MAX_ISSUES_PER_PAGE', 2)

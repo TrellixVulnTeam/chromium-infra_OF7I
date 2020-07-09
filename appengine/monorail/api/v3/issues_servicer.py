@@ -44,6 +44,40 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     return self.converter.ConvertIssue(issue)
 
   @monorail_servicer.PRPCMethod
+  def BatchGetIssues(self, mc, request):
+    # type: (MonorailContext, BatchGetIssuesRequest) -> BatchGetIssuesResponse
+    """pRPC API method that implements BatchGetIssues.
+
+    Raises:
+      InputException: If `names` is formatted incorrectly. Or if a parent
+          collection in `names` does not match the value in `parent`.
+      NoSuchIssueException: If any of the given issues do not exist.
+      PermissionException If the requester does not have permission to view one
+          (or more) of the given issues.
+    """
+    if request.parent:
+      parent_match = rnc._GetResourceNameMatch(
+          request.parent, rnc.PROJECT_NAME_RE)
+      parent_project = parent_match.group('project_name')
+      with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+        for name in request.names:
+          try:
+            name_match = rnc._GetResourceNameMatch(name, rnc.ISSUE_NAME_RE)
+            issue_project = name_match.group('project')
+            if issue_project != parent_project:
+              err_agg.AddErrorMessage(
+                  '%s is not a child issue of %s.' % (name, request.parent))
+          except exceptions.InputException as e:
+            err_agg.AddErrorMessage(e.message)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      issue_ids = rnc.IngestIssueNames(mc.cnxn, request.names, self.services)
+      issues_by_iid = we.GetIssuesDict(issue_ids)
+    return issues_pb2.BatchGetIssuesResponse(
+        issues=self.converter.ConvertIssues(
+            [issues_by_iid[issue_id] for issue_id in issue_ids]))
+
+  @monorail_servicer.PRPCMethod
   def SearchIssues(self, mc, request):
     # type: (MonorailContext, SearchIssuesRequest) -> SearchIssuesResponse
     """pRPC API method that implements SearchIssue.
