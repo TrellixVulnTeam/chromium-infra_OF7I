@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 
+	inv "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/libs/cros/lab_inventory/changehistory"
 	"infra/libs/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
@@ -206,3 +207,103 @@ func NewAssetInfo(a *ufs.AssetInfo) (*AssetInfoEntity, error) {
 }
 
 /* Asset Info and helper functions end */
+
+/* Device Manual Repair Record Entity and helper functions */
+
+// DeviceManualRepairRecordEntity is a datastore entity that tracks a manual
+// repair record of a device.
+//
+// Possible RepairState based on proto enum:
+//  STATE_INVALID = 0;
+// 	STATE_NOT_STARTED = 1;
+// 	STATE_IN_PROGRESS = 2;
+// 	STATE_COMPLETED = 3;
+type DeviceManualRepairRecordEntity struct {
+	_kind       string `gae:"$kind,DeviceManualRepairRecord"`
+	ID          string `gae:"$id"`
+	Hostname    string
+	AssetTag    string
+	RepairState string
+	Content     []byte `gae:",noindex"`
+}
+
+// DeviceManualRepairRecordEntityKind is the datastore entity kind for
+// DeviceManualRepairRecord entities.
+const DeviceManualRepairRecordEntityKind = "DeviceManualRepairRecord"
+
+// NewDeviceManualRepairRecordEntity creates a new
+// DeviceManualRepairRecordEntity from a DeviceManualRepairRecord object.
+func NewDeviceManualRepairRecordEntity(r *inv.DeviceManualRepairRecord) (*DeviceManualRepairRecordEntity, error) {
+	hostname := r.GetHostname()
+	assetTag := r.GetAssetTag()
+	createdTime := r.GetCreatedTime().String()
+
+	if hostname == "" {
+		return nil, errors.Reason("Hostname cannot be empty").Err()
+	} else if assetTag == "" {
+		return nil, errors.Reason("Asset Tag cannot be empty").Err()
+	} else if createdTime == "" {
+		return nil, errors.Reason("Created Time cannot be empty").Err()
+	}
+	content, err := proto.Marshal(r)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := generateRepairRecordID(hostname, assetTag, createdTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DeviceManualRepairRecordEntity{
+		ID:          id,
+		Hostname:    hostname,
+		AssetTag:    assetTag,
+		RepairState: r.GetRepairState().String(),
+		Content:     content,
+	}, nil
+}
+
+// UpdateDeviceManualRepairRecordEntity sets the proto data to the entity.
+func (e *DeviceManualRepairRecordEntity) UpdateDeviceManualRepairRecordEntity(r *inv.DeviceManualRepairRecord) error {
+	var oldMsg inv.DeviceManualRepairRecord
+	if err := proto.Unmarshal(e.Content, &oldMsg); err != nil {
+		return err
+	}
+
+	if r.GetHostname() == "" {
+		return errors.Reason("Hostname cannot be empty").Err()
+	} else if r.GetAssetTag() == "" {
+		return errors.Reason("Asset Tag cannot be empty").Err()
+	} else if r.GetCreatedTime().String() == "" {
+		return errors.Reason("Created Time cannot be empty").Err()
+	}
+
+	// Update record if the message is different from the old one.
+	if !proto.Equal(r, &oldMsg) {
+		data, err := proto.Marshal(r)
+		if err != nil {
+			return err
+		}
+		e.RepairState = r.GetRepairState().String()
+		e.Content = data
+	}
+
+	return nil
+}
+
+// Returns the predefined ID format of $hostname-$assetTag-$createdTime
+func generateRepairRecordID(hostname string, assetTag string, createdTime string) (string, error) {
+	var err error
+	if hostname == "" {
+		err = errors.Reason("Hostname cannot be empty").Err()
+	} else if assetTag == "" {
+		err = errors.Reason("Asset Tag cannot be empty").Err()
+	} else if createdTime == "" {
+		err = errors.Reason("Created Time cannot be empty").Err()
+	}
+
+	return hostname + "-" + assetTag + "-" + createdTime, err
+}
+
+/* Device Manual Repair Record Entity and helper functions end */
