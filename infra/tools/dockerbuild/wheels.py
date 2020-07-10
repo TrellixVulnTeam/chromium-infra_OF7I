@@ -695,6 +695,7 @@ SPECS.update({
         Universal('six', '1.11.0'),
         Universal('six', '1.12.0'),
         Universal('six', '1.14.0'),
+        Universal('six', '1.15.0'),
         Universal('smmap2', '2.0.3'),
         Universal('soupsieve', '1.9.5'),
         Universal('tempora', '1.11'),
