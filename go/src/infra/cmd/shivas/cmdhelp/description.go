@@ -6,8 +6,7 @@ package cmdhelp
 
 var (
 	// ListPageSizeDesc description for List PageSize
-	ListPageSizeDesc string = `number of items to get. The service may return fewer than this value.If unspecified, at most 100 items will be returned.
-The maximum value is 1000; values above 1000 will be coerced to 1000.`
+	ListPageSizeDesc string = `number of items to get. The service may return fewer than this value.`
 
 	// RegisterSwitchLongDesc long description for RegisterSwitchCmd
 	RegisterSwitchLongDesc string = `Register a switch by name.
@@ -354,20 +353,21 @@ Updates a machine prototype by reading a JSON file input.
 shivas update-machine-prototype -i
 Updates a machine prototype by reading input through interactive mode.`
 
-	// ListMachinelsePrototypeLongDesc long description for ListMachinelsePrototypeCmd
-	ListMachinelsePrototypeLongDesc string = `list all MachineLSEPrototypes
+	// ListMachineLSEPrototypeLongDesc long description for ListMachineLSEPrototypeCmd
+	ListMachineLSEPrototypeLongDesc string = `List all machine prototypes
 
-./shivas machinelseprototype ls
-Fetches 100 items and prints the output in table format
+Examples:
+shivas ls machine-prototype
+Fetches all the machine prototypes in table format
 
-./shivas machinelseprototype ls -n 50
-Fetches 50 items and prints the output in table format
+shivas ls machine-prototype -n 50
+Fetches 50 machine prototypes and prints the output in table format
 
-./shivas machinelseprototype ls -lab acs
-Fetches only ACS lab items and prints the output in table format
+shivas ls machine-prototype -lab acs -json
+Fetches only ACS lab machine prototypes and prints the output in json format
 
-./shivas machinelseprototype ls -json
-Fetches 100 items and prints the output in JSON format
+shivas ls machine-prototype -n 5 -lab atl -json
+Fetches 5 machine prototypes for ATL lab and prints the output in JSON format
 `
 
 	// MachineLSEPrototypeFileText description for MachineLSEPrototype file input

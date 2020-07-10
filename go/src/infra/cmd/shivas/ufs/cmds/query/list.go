@@ -7,6 +7,8 @@ package query
 import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
+
+	"infra/cmd/shivas/ufs/subcmds/machineprototype"
 )
 
 type list struct {
@@ -18,7 +20,7 @@ var ListCmd = &subcommands.Command{
 	UsageLine: "ls <sub-command>",
 	ShortDesc: "List entries for hardware asset/deployed asset/configuration",
 	LongDesc: `List entries for hardware asset(machine/rack/kvm/rpm/switch/drac/nic)
-or deployed machine/rack or configuration(machineconfig/rackconfig/chromeplatform)`,
+or deployed machine/rack or configuration(machine-prototype/rack-prototype/chromeplatform)`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &list{}
 		return c
@@ -39,6 +41,7 @@ func (c *list) Run(a subcommands.Application, args []string, env subcommands.Env
 func (c listApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
+		machineprototype.ListMachineLSEPrototypeCmd,
 	}
 }
 

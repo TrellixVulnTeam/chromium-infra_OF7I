@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package machinelseprototype
+package machineprototype
 
 import (
 	"fmt"
@@ -11,35 +11,38 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// GetMachinelsePrototypeCmd get MachineLSEPrototype by given name.
-var GetMachinelsePrototypeCmd = &subcommands.Command{
-	UsageLine: "get",
-	ShortDesc: "get MachineLSEPrototype by name",
-	LongDesc: `get MachineLSEPrototype by name.
-	./shivas machinelseprototype get {MachineLSEPrototype Name}
-	Gets the MachineLSEPrototype and prints the output in JSON format.`,
+// GetMachineLSEPrototypeCmd get MachineLSEPrototype by given name.
+var GetMachineLSEPrototypeCmd = &subcommands.Command{
+	UsageLine: "machine-prototype {Machine Prototype Name}",
+	ShortDesc: "Get machine prototype details by name",
+	LongDesc: `Get machine prototype details by name.
+
+Example:
+shivas get machine-prototype {Machine Prototype Name}
+Gets the machine prototype and prints the output in JSON format.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &getMachinelsePrototype{}
+		c := &getMachineLSEPrototype{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type getMachinelsePrototype struct {
+type getMachineLSEPrototype struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
 }
 
-func (c *getMachinelsePrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *getMachineLSEPrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -47,7 +50,7 @@ func (c *getMachinelsePrototype) Run(a subcommands.Application, args []string, e
 	return 0
 }
 
-func (c *getMachinelsePrototype) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *getMachineLSEPrototype) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -59,25 +62,26 @@ func (c *getMachinelsePrototype) innerRun(a subcommands.Application, args []stri
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetMachineLSEPrototype(ctx, &UfleetAPI.GetMachineLSEPrototypeRequest{
-		Name: UfleetUtil.AddPrefix(UfleetUtil.MachineLSEPrototypeCollection, args[0]),
+	res, err := ic.GetMachineLSEPrototype(ctx, &ufsAPI.GetMachineLSEPrototypeRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSEPrototypeCollection, args[0]),
 	})
 	if err != nil {
 		return err
 	}
-	res.Name = UfleetUtil.RemovePrefix(res.Name)
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
+	fmt.Println()
 	return nil
 }
 
-func (c *getMachinelsePrototype) validateArgs() error {
+func (c *getMachineLSEPrototype) validateArgs() error {
 	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide a MachineLSEPrototype Name")
+		return cmdlib.NewUsageError(c.Flags, "Please provide the machine prototype name.")
 	}
 	return nil
 }
