@@ -138,7 +138,7 @@ class BuildRequest(_BuildRequestBase):
 
   @ndb.tasklet
   def create_build_proto_async(
-      self, build_id, settings, builder_cfg, created_by, now
+      self, build_id, settings, builder_cfg, created_by, experiments, now
   ):
     """Converts the request to a build_pb2.Build.
 
@@ -158,9 +158,7 @@ class BuildRequest(_BuildRequestBase):
     if sbr.critical != common_pb2.UNSET:
       bp.critical = sbr.critical
     bp.exe.cipd_version = sbr.exe.cipd_version or bp.exe.cipd_version
-    # If the SBR expressed canary preference, override what the config said.
-    if sbr.canary != common_pb2.UNSET:
-      bp.canary = sbr.canary == common_pb2.YES
+    bp.canary = experiments.get(config.EXPERIMENT_CANARY, False)
 
     # Populate input.
     # Override properties from the config with values in the request.
@@ -168,12 +166,15 @@ class BuildRequest(_BuildRequestBase):
     if sbr.HasField('gitiles_commit'):
       bp.input.gitiles_commit.CopyFrom(sbr.gitiles_commit)
     bp.input.gerrit_changes.extend(sbr.gerrit_changes)
+    bp.input.experimental = experiments.get(config.EXPERIMENT_NON_PROD, False)
+    bp.input.experiments.extend(
+        exp for exp, enabled in experiments.iteritems() if enabled
+    )
+    bp.input.experiments.sort()
 
     # Populate infra fields.
     bp.infra.buildbucket.requested_properties.CopyFrom(sbr.properties)
     bp.infra.buildbucket.requested_dimensions.extend(sbr.dimensions)
-    if sbr.experimental != common_pb2.UNSET:
-      bp.input.experimental = sbr.experimental == common_pb2.YES
 
     bp.infra.logdog.project = bp.builder.project
     bp.infra.logdog.prefix = 'buildbucket/%s/%s' % (
@@ -219,6 +220,29 @@ class BuildRequest(_BuildRequestBase):
 
     return tags
 
+  @staticmethod
+  def compute_experiments(sbr, builder_cfg):
+    """Returns a Dict[str, bool] of enabled/disabled experiments."""
+    experiments = {}
+
+    if builder_cfg:
+      for exp, percentage in builder_cfg.experiments.iteritems():
+        experiments[exp] = _should_enable_experiment(percentage)
+
+    # Check if the well-known experiments are set via deprecated fields.
+    if sbr.canary != common_pb2.UNSET:
+      experiments[config.EXPERIMENT_CANARY] = sbr.canary == common_pb2.YES
+
+    if sbr.experimental != common_pb2.UNSET:
+      experiments[config.EXPERIMENT_NON_PROD] = (
+          sbr.experimental == common_pb2.YES
+      )
+
+    # overrides the result from Builder config or deprecated fields in SBR
+    experiments.update(sbr.experiments)
+
+    return experiments
+
   @ndb.tasklet
   def create_build_async(
       self, build_id, settings, builder_cfg, created_by, now
@@ -228,9 +252,10 @@ class BuildRequest(_BuildRequestBase):
     Assumes self is valid.
     """
     sbr = self.schedule_build_request
+    experiments = self.compute_experiments(sbr, builder_cfg)
 
     build_proto = yield self.create_build_proto_async(
-        build_id, settings, builder_cfg, created_by, now
+        build_id, settings, builder_cfg, created_by, experiments, now
     )
     build = model.Build(
         id=build_id,
@@ -239,6 +264,8 @@ class BuildRequest(_BuildRequestBase):
             buildtags.unparse(k, v)
             for k, v in sorted(self.compute_tag_set(sbr))
         ],
+        experiments=sorted([('+' if enabled else '-') + exp
+                            for exp, enabled in experiments.iteritems()]),
         parameters=copy.deepcopy(self.parameters or {}),
         created_by=created_by,
         create_time=now,
@@ -535,7 +562,7 @@ def _should_update_builder(probability):  # pragma: no cover
   return random.random() < probability
 
 
-def _should_be_canary(percentage):  # pragma: no cover
+def _should_enable_experiment(percentage):  # pragma: no cover
   return random.randint(0, 99) < percentage
 
 
@@ -571,13 +598,6 @@ def _apply_global_settings(settings, build_proto):
 @ndb.tasklet
 def _apply_builder_config_async(builder_cfg, build_proto, settings):
   """Applies project_config_pb2.Builder to a builds_pb2.Build."""
-  # Decide if the build will be canary.
-  canary_percentage = config._DEFAULT_CANARY_PERCENTAGE
-  if builder_cfg.HasField(  # pragma: no branch
-      'task_template_canary_percentage'):
-    canary_percentage = builder_cfg.task_template_canary_percentage.value
-  build_proto.canary = _should_be_canary(canary_percentage)
-
   # Populate timeouts.
   build_proto.scheduling_timeout.seconds = builder_cfg.expiration_secs
   if not build_proto.scheduling_timeout.seconds:
@@ -589,12 +609,6 @@ def _apply_builder_config_async(builder_cfg, build_proto, settings):
 
   build_proto.wait_for_capacity = (
       builder_cfg.wait_for_capacity == common_pb2.YES
-  )
-
-  # Populate input.
-
-  build_proto.input.experimental = (
-      builder_cfg.experimental == project_config_pb2.YES
   )
 
   # Populate criticality

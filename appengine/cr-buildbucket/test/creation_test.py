@@ -102,6 +102,19 @@ class CreationTest(testing.AppengineTestCase):
             }
           }
           builders {
+            name: "mac_exp"
+            swarming_host: "chromium-swarm.appspot.com"
+            recipe {
+              name: "recipe"
+              cipd_package: "infra/recipe_bundle"
+              cipd_version: "refs/heads/master"
+            }
+            experiments {
+              key: "chromium.exp_foo"
+              value: 10
+            }
+          }
+          builders {
             name: "win"
             swarming_host: "chromium-swarm.appspot.com"
             recipe {
@@ -143,7 +156,9 @@ class CreationTest(testing.AppengineTestCase):
     )
 
     self.patch('creation._should_update_builder', side_effect=lambda p: p > 0.5)
-    self.patch('creation._should_be_canary', side_effect=lambda p: p > 50)
+    self.patch(
+        'creation._should_enable_experiment', side_effect=lambda p: p > 50
+    )
 
     self.patch('search.TagIndex.random_shard_index', return_value=0)
 
@@ -262,16 +277,41 @@ class CreationTest(testing.AppengineTestCase):
     build = self.add()
     self.assertEqual(build.proto.critical, common_pb2.UNSET)
 
+  def _test_canary(self, req, is_canary):
+    build = self.add(req)
+    if is_canary:
+      self.assertTrue(build.proto.canary)
+      self.assertIn(config.EXPERIMENT_CANARY, build.proto.input.experiments)
+      self.assertIn('+%s' % config.EXPERIMENT_CANARY, build.experiments)
+    else:
+      self.assertFalse(build.proto.canary)
+      self.assertNotIn(config.EXPERIMENT_CANARY, build.proto.input.experiments)
+      self.assertIn('-%s' % config.EXPERIMENT_CANARY, build.experiments)
+
+  def test_canary_in_request_deprecated(self):
+    self._test_canary(dict(canary=common_pb2.NO), False)
+    self._test_canary(dict(canary=common_pb2.YES), True)
+
   def test_canary_in_request(self):
-    build = self.add(dict(canary=common_pb2.YES))
-    self.assertTrue(build.proto.canary)
+    self._test_canary(
+        dict(experiments={config.EXPERIMENT_CANARY: False}), False
+    )
+    self._test_canary(dict(experiments={config.EXPERIMENT_CANARY: True}), True)
+
+  def test_canary_in_request_conflict(self):
+    req = {
+        'canary': common_pb2.YES,
+        'experiments': {config.EXPERIMENT_CANARY: False},
+    }
+    self._test_canary(req, False)
 
   def test_canary_in_builder(self):
     with self.mutate_builder_cfg() as cfg:
-      cfg.task_template_canary_percentage.value = 100
-
-    build = self.add()
-    self.assertTrue(build.proto.canary)
+      cfg.experiments[config.EXPERIMENT_CANARY] = 10
+    self._test_canary({}, False)
+    with self.mutate_builder_cfg() as cfg:
+      cfg.experiments[config.EXPERIMENT_CANARY] = 100
+    self._test_canary({}, True)
 
   def test_properties(self):
     props = {'foo': 'bar', 'qux': 1}
@@ -286,17 +326,81 @@ class CreationTest(testing.AppengineTestCase):
     infra = model.BuildInfra.key_for(build.key).get().parse()
     self.assertEqual(infra.buildbucket.requested_properties, prop_struct)
 
-  def test_experimental(self):
-    build = self.add(dict(experimental=common_pb2.YES))
-    self.assertTrue(build.proto.input.experimental)
+  def _test_experimental(self, req, is_experimental):
+    build = self.add(req)
     infra = model.BuildInfra.key_for(build.key).get().parse()
-    self.assertEqual(infra.swarming.priority, 60)
+    if is_experimental:
+      self.assertTrue(build.proto.input.experimental)
+      self.assertIn(config.EXPERIMENT_NON_PROD, build.proto.input.experiments)
+      self.assertIn('+%s' % config.EXPERIMENT_NON_PROD, build.experiments)
+      self.assertEqual(infra.swarming.priority, 60)
+    else:
+      self.assertFalse(build.proto.input.experimental)
+      self.assertNotIn(
+          config.EXPERIMENT_NON_PROD, build.proto.input.experiments
+      )
+      self.assertIn('-%s' % config.EXPERIMENT_NON_PROD, build.experiments)
+      self.assertEqual(infra.swarming.priority, 30)
 
-  def test_non_experimental(self):
-    build = self.add(dict(experimental=common_pb2.NO))
-    self.assertFalse(build.proto.input.experimental)
-    infra = model.BuildInfra.key_for(build.key).get().parse()
-    self.assertEqual(infra.swarming.priority, 30)
+  def test_experimental_in_request_deprecated(self):
+    self._test_experimental(dict(experimental=common_pb2.NO), False)
+    self._test_experimental(dict(experimental=common_pb2.YES), True)
+
+  def test_experimental_in_request(self):
+    self._test_experimental(
+        dict(experiments={config.EXPERIMENT_NON_PROD: False}), False
+    )
+    self._test_experimental(
+        dict(experiments={config.EXPERIMENT_NON_PROD: True}), True
+    )
+
+  def test_experimental_in_request_conflict(self):
+    req = {
+        'experimental': common_pb2.YES,
+        'experiments': {config.EXPERIMENT_NON_PROD: False},
+    }
+    self._test_experimental(req, False)
+
+  def test_experimental_in_builder(self):
+    with self.mutate_builder_cfg() as cfg:
+      cfg.experiments[config.EXPERIMENT_NON_PROD] = 10
+    self._test_experimental({}, False)
+    with self.mutate_builder_cfg() as cfg:
+      cfg.experiments[config.EXPERIMENT_NON_PROD] = 100
+    self._test_experimental({}, True)
+
+  def test_builder_config_experiments(self):
+    builder_id = builder_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='mac_exp',
+    )
+    build = self.add(dict(builder=builder_id))
+    self.assertFalse(build.proto.input.experiments)
+    self.assertEqual(build.experiments, [
+        '-chromium.exp_foo',
+    ])
+
+  def test_schedule_build_request_experiments(self):
+    builder_id = builder_pb2.BuilderID(
+        project='chromium',
+        bucket='try',
+        builder='mac_exp',
+    )
+    build = self.add({
+        'builder': builder_id,
+        'experiments': {
+            'chromium.exp_foo': True,  # override the one in builder config
+            'chromium.exp_bar': False,
+        }
+    })
+    self.assertEqual(build.proto.input.experiments, ['chromium.exp_foo'])
+    self.assertEqual(
+        build.experiments, [
+            '+chromium.exp_foo',
+            '-chromium.exp_bar',
+        ]
+    )
 
   def test_configured_caches(self):
     with self.mutate_builder_cfg() as cfg:
