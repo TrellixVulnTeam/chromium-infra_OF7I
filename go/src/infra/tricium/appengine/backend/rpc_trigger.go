@@ -83,19 +83,12 @@ func trigger(c context.Context, req *admin.TriggerRequest, wp config.WorkflowCac
 			return errors.Annotate(err, "failed to call trigger on buildbucket API").Err()
 		}
 	case *admin.Worker_Cmd:
-		workerIsolate, err := isolator.IsolateWorker(c, workflow.IsolateServer, req.IsolatedInputHash)
-		if err != nil {
-			return errors.Annotate(err, "failed to isolate command for trigger").Err()
-		}
-		logging.Fields{
-			"workerIsolate": workerIsolate,
-		}.Infof(c, "Created worker isolate.")
 		// Trigger worker.
 		result, err = sw.Trigger(c, &common.TriggerParameters{
 			Server:           workflow.SwarmingServer,
 			IsolateServerURL: workflow.IsolateServer,
 			Worker:           worker,
-			WorkerIsolate:    workerIsolate,
+			WorkerIsolate:    req.IsolatedInputHash,
 			PubsubUserdata:   userdata,
 			Tags:             tags,
 		})

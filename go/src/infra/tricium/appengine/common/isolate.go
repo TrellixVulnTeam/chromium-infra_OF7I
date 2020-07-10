@@ -42,17 +42,13 @@ type IsolateAPI interface {
 	// Note that this isolate has no command and includes no other isolates.
 	IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error)
 
-	// IsolateWorker isolates the provided worker's input.
+	// LayerIsolates creates isolate files from the provided input and output.
 	//
-	// The provided isolated input hash is included.
-	IsolateWorker(c context.Context, serverURL string, isolatedInput string) (string, error)
-
-	// LayerIsolates creates isolates files from the provided isolates
-	// input and output.
+	// - isolatedOutput is the direct input to the next worker (e.g. FILES data)
+	// - isolatedInput was the input to the isolator worker (e.g. GIT_FILE_DETAILS data)
 	//
-	// Layered isolates are used to communicate data from one worker to its
-	// successor workers. The content of the isolates output is copied and
-	// the provided isolated input is added as an include.
+	// TODO(crbug/1102545): Stop using iso.Includes; the isolatedInput is actually probably
+	// not needed.
 	//
 	// The input and output use the same hash namespace.
 	LayerIsolates(c context.Context, serverURL, namespace, isolatedInput, isolatedOutput string) (string, error)
@@ -122,36 +118,6 @@ func (s isolateServer) IsolateGitFileDetails(c context.Context, serverURL string
 
 	// Return isolate hash.
 	return string(chunks[1].file.Digest), nil
-}
-
-// IsolateWorker implements the IsolateAPI interface.
-//
-// Specifically, it sends request(s) to the isolated service to store some
-// isolated input there which will be used in a subsequent request to swarming.
-func (s isolateServer) IsolateWorker(c context.Context, serverURL string, isolatedInput string) (string, error) {
-	h := isolated.GetHash(isolateNamespace)
-	iso := isolated.New(h)
-	// TODO(crbug/1102545): Stop using iso.Includes
-	iso.Includes = []isolated.HexDigest{isolated.HexDigest(isolatedInput)}
-	isoData, err := json.Marshal(iso)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to marshal worker isolate").Err()
-	}
-	isoSize := int64(len(isoData))
-	chunk := &isoChunk{
-		data:  []byte(isoData),
-		isIso: true,
-	}
-	mode := 0444
-	chunk.file = &isolated.File{
-		Digest: isolated.HashBytes(h, chunk.data),
-		Mode:   &mode,
-		Size:   &isoSize,
-	}
-	if err := s.isolateChunks(c, serverURL, []*isoChunk{chunk}); err != nil {
-		return "", errors.Annotate(err, "failed to isolate chunk").Err()
-	}
-	return string(chunk.file.Digest), nil
 }
 
 // LayerIsolates implements the IsolateAPI interface.
@@ -303,13 +269,6 @@ type mockIsolator struct{}
 //
 // For any testing actually using the return values, create a new mock.
 func (mockIsolator) IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error) {
-	return "mockmockmock", nil
-}
-
-// IsolateWorker is a mock function for MockIsolator.
-//
-// For any testing actually using the return values, create a new mock.
-func (mockIsolator) IsolateWorker(c context.Context, serverURL string, inputIsolate string) (string, error) {
 	return "mockmockmock", nil
 }
 

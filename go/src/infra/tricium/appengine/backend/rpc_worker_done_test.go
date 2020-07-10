@@ -30,9 +30,6 @@ type mockIsolator struct{}
 func (*mockIsolator) IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error) {
 	return "", nil
 }
-func (*mockIsolator) IsolateWorker(c context.Context, serverURL string, inputIsolate string) (string, error) {
-	return "", nil
-}
 func (*mockIsolator) LayerIsolates(c context.Context, serverURL, namespace, isolatedInput, isolatedOutput string) (string, error) {
 	return "", nil
 }
