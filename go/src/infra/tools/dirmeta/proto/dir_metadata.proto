@@ -4,22 +4,36 @@
 
 syntax = "proto3";
 
+package chrome.dir_metadata;
+
+option go_package = "infra/tools/dirmeta/proto;dirmetapb";
+
 // Metadata information for a directory.
 message Metadata {
   // Monorail metadata. Its component field should always map to the same
   // team_email field (see below) for every directory that it is listed in.
   Monorail monorail = 1;
+
   // The team responsible for the directory. Only a single email is allowed.
   // For example, “team-email@chromium.org”.
   string team_email = 2;
+
   // The code in this directory is specific to this OS.
   OS os = 3;
-  // Whether wpt-importer should notify the team about new failures.
-  bool wpt_notify = 4;
+
+  // WPT-specific metadata.
+  WPT wpt = 4;
+
   // Reserved for metadata information for third-party code. See
   // https://opensource.google/docs/thirdparty/metadata/
   reserved 13;
   reserved "third_party";
+}
+
+// WPT is WebPlatformTest-specific metadata.
+message WPT {
+  // Whether wpt-importer should notify the team about new failures.
+  bool notify = 1;
 }
 
 // Supported OS to tag a directory.
