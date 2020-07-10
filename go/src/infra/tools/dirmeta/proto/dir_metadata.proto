@@ -10,11 +10,12 @@ option go_package = "infra/tools/dirmeta/proto;dirmetapb";
 
 // Metadata information for a directory.
 //
-// Unless specified otherwise, individual fields/subfields are inherited by
-// subdirectories.
+// Individual fields/subfields are inherited by subdirectories.
 // For example, if a/DIR_METADATA specifies `monorail.project="chromium"` and
 // a/b/DIR_METADATA file exists and does not specify `monorail.project`, then
 // `a/b`'s Monorail project is "chromium".
+// Note: this semantics can be extended to opt-out individual fields from
+// inheritance.
 message Metadata {
   // Monorail metadata. Its component field should always map to the same
   // team_email field (see below) for every directory that it is listed in.

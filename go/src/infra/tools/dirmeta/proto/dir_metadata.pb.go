@@ -96,11 +96,12 @@ func (OS) EnumDescriptor() ([]byte, []int) {
 
 // Metadata information for a directory.
 //
-// Unless specified otherwise, individual fields/subfields are inherited by
-// subdirectories.
+// Individual fields/subfields are inherited by subdirectories.
 // For example, if a/DIR_METADATA specifies `monorail.project="chromium"` and
 // a/b/DIR_METADATA file exists and does not specify `monorail.project`, then
 // `a/b`'s Monorail project is "chromium".
+// Note: this semantics can be extended to opt-out individual fields from
+// inheritance.
 type Metadata struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
