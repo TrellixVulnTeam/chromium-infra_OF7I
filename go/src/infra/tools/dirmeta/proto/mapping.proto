@@ -1,0 +1,30 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package chrome.dir_metadata;
+
+option go_package = "infra/tools/dirmeta/proto;dirmetapb";
+
+import "infra/tools/dirmeta/proto/dir_metadata.proto";
+
+// Maps from a directory to its metadata.
+//
+// A mapping may contain redudnant information. For example, it is redundant to
+// specify the same value for the same metadata attribute in both "a/" and
+// "a/b/".
+// A mapping is called "reduced" if it has no redundancies, and "expanded"
+// if all information is duplicated for each directory with DIR_METADATA file.
+// Go package "dirmeta" contains functions to convert between the two.
+message Mapping {
+  // Dirs maps from a directory to its metadata.
+  //
+  // The key is directory name, relative to the root.
+  // Special key "." represents the root directory.
+  //
+  // The root must be known from the context where Mapping is used and is not
+  // part of the this message.
+  map<string, Metadata> dirs = 1;
+}
