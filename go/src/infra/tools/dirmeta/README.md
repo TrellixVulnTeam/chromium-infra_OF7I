@@ -1,38 +1,24 @@
-# Chromium METADATA files
+# DIR_METADATA files
 
-METADATA.chromium files are a source-focused mechanism by which owners can
+DIR_METADATA files are a source-focused mechanism by which owners can
 provide users of their code important information, including:
 
 * The team responsible for the code.
 * The Monorail component where bugs should be filed.
 * The OS type.
 
-METADATA.chromium files are structured protobuf files that are amenable to
+DIR_METADATA files are structured protobuf files that are amenable to
 programmatic interaction.
-
-## Contents
-
-This directory contains the
-[proto definition](https://source.chromium.org/chromium/chromium/src/+/master:tools/directory_metadata/directory_metadata.proto)
-for METADATA.chromium files, which is the source of truth about
-METADATA.chromium file contents.
-
-Historical information can be found in the
-[original proposal](https://docs.google.com/document/d/17WMlceIMwge2ZiCvBWaBuk0w60YgieBd-ly3I8XsbzU/preview).
 
 ## Usage
 
-METADATA.chromium files apply to all contents of a directory including its
+DIR_METADATA files apply to all contents of a directory including its
 subdirectories.
 
-There is no inheritance mechanism, so any information in METADATA.chromium files
-in parent directories is ignored.
+By default, individual fields are inherited by subdirectories. In the following,
+example, the value of `monorail.project` field in directory `a/b` is "chromium".
 
-For example, given the files below, the value of the `os` field for
-a/b/METADATA.chromium would be `OS_UNSPECIFIED` regardless of the contents of
-a/METADATA.chromium.
-
-**a/METADATA.chromium**
+**a/DIR_METADATA**
 ```
 monorail {
   project: "chromium"
@@ -42,11 +28,19 @@ team_email: "team@chromium.org"
 os: OS_LINUX
 ```
 
-**a/b/METADATA.chromium**
+**a/b/DIR_METADATA**
 ```
 monorail {
-  project: "chromium"
   component: "Component>Foo"
 }
 team_email: "foo-team@chromium.org"
 ```
+
+## File schema
+
+For file schema, see `Metadata` message in
+[dir_metadata.proto](./proto/dir_metadata.proto).
+
+## Links
+
+* [Original design doc](https://docs.google.com/document/d/17WMlceIMwge2ZiCvBWaBuk0w60YgieBd-ly3I8XsbzU/preview).
