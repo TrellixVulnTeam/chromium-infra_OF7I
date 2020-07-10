@@ -439,6 +439,7 @@ func TestImportMachines(t *testing.T) {
 			So(machines, ShouldHaveLength, 3)
 			So(api.ParseResources(machines, "Name"), ShouldResemble, []string{"machine1", "machine2", "machine3"})
 			for _, m := range machines {
+				So(m.GetRealm(), ShouldEqual, util.BrowserLabAdminRealm)
 				bm := m.GetChromeBrowserMachine()
 				switch m.GetName() {
 				case "machine1":
