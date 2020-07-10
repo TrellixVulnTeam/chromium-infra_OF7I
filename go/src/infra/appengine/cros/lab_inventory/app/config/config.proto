@@ -15,7 +15,7 @@ message LuciAuthGroup {
 }
 
 // Config is the configuration data served by luci-config for this app.
-// Next tag: 17
+// Next tag: 18
 message Config {
   reserved 1;
 
@@ -52,6 +52,9 @@ message Config {
   LuciAuthGroup pubsub_pushers = 15;
 
   ProjectConfigLocation project_config_source = 16;
+
+  // Asset tag backfilling configuration
+  AssetTagBackfill backfilling_config = 17;
 }
 
 // Next tag: 6
@@ -97,4 +100,15 @@ message HaRT {
   string project = 1;
   string topic = 2;
   string subscription = 3;
+}
+
+// Next Tag: 5
+message AssetTagBackfill {
+  bool enable = 1;
+  // Number of devices to be backfilled per hour
+  int32 rate = 2;
+  // BQ table to use for backfilling (assets_in_swarming)
+  string table = 3;
+  // Dataset for the said BQ table (inventory)
+  string dataset = 4;
 }
