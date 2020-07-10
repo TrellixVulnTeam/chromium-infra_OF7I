@@ -1696,13 +1696,13 @@ class WorkEnv(object):
     # issues at once.
     # Assert attachments do not exceed project quota limits.
     # AssertUserCanModifyIssues(), AssertIssueChangesValid(),
-    # AssertQuotaNotExceeded()
 
     # PHASE 2: Organize data. tracker_helpers.GroupUniqueDeltaIssues()
 
     # PHASE 3-5: implemented in tracker_helpers.ModifyIssuePBs.
 
-    # PHASE 6: UpdateIssues, CreateIssueComments, combine merged_into starrers
+    # PHASE 6: Check and update attachments quota
+    # UpdateIssues, CreateIssueComments, combine merged_into starrers
 
     # PHASE 7: Send notifications for each group of issues from Phase 2.
 

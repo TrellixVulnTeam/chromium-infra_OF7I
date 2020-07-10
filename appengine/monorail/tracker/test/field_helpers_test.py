@@ -418,12 +418,12 @@ class FieldHelpersTest(unittest.TestCase):
     fd.max_value = 999
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, fv)
-    self.assertEqual('Value must be <= 999', msg)
+    self.assertEqual('Value must be <= 999.', msg)
 
     fv.int_value = 0
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, fv)
-    self.assertEqual('Value must be >= 1', msg)
+    self.assertEqual('Value must be >= 1.', msg)
 
   def test_StrType(self):
     fd = tracker_bizobj.MakeFieldDef(
@@ -439,7 +439,7 @@ class FieldHelpersTest(unittest.TestCase):
     fd.regex = r'^\d*$'
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, fv)
-    self.assertEqual(r'Value must match regular expression: ^\d*$', msg)
+    self.assertEqual(r'Value must match regular expression: ^\d*$.', msg)
 
     fv.str_value = '386'
     msg = field_helpers.ValidateCustomFieldValue(
@@ -484,7 +484,7 @@ class FieldHelpersTest(unittest.TestCase):
       self.assertIsNone(msg)
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, user)
-    self.assertEqual('User must be a member of the project', msg)
+    self.assertEqual('User must be a member of the project.', msg)
 
     # Needs DeleteAny permission (only owner has it).
     fd.needs_perm = 'DeleteAny'
@@ -493,22 +493,22 @@ class FieldHelpersTest(unittest.TestCase):
     self.assertIsNone(msg)
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, committer)
-    self.assertEqual('User must have permission "DeleteAny"', msg)
+    self.assertEqual('User must have permission "DeleteAny".', msg)
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, user)
-    self.assertEqual('User must be a member of the project', msg)
+    self.assertEqual('User must be a member of the project.', msg)
 
     # Needs custom permission (only committer has it).
     fd.needs_perm = 'FooPerm'
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, owner)
-    self.assertEqual('User must have permission "FooPerm"', msg)
+    self.assertEqual('User must have permission "FooPerm".', msg)
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, committer)
     self.assertIsNone(msg)
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, user)
-    self.assertEqual('User must be a member of the project', msg)
+    self.assertEqual('User must be a member of the project.', msg)
 
   def test_DateType(self):
     pass  # TODO(jrobbins): write this test. @@@
@@ -538,7 +538,7 @@ class FieldHelpersTest(unittest.TestCase):
     fv.url_value = 'puppies'
     msg = field_helpers.ValidateCustomFieldValue(
         self.mr.cnxn, self.mr.project, self.services, fd, fv)
-    self.assertEqual('Value must be a valid url', msg)
+    self.assertEqual('Value must be a valid url.', msg)
 
   def test_OtherType(self):
     # There are currently no validation options for date-type custom fields.
@@ -594,9 +594,9 @@ class FieldHelpersTest(unittest.TestCase):
     self.assertEqual(1, len(self.errors.custom_fields))
     custom_field_error = self.errors.custom_fields[0]
     self.assertEqual(123, custom_field_error.field_id)
-    self.assertEqual('Value must be <= 999', custom_field_error.message)
+    self.assertEqual('Value must be <= 999.', custom_field_error.message)
     self.assertEqual(len(err_msgs), 1)
-    self.assertTrue(re.search(r'Value must be <= 999', err_msgs[0]))
+    self.assertTrue(re.search(r'Value must be <= 999.', err_msgs[0]))
 
   def testAssertCustomFieldsEditPerms_Empty(self):
     self.assertIsNone(

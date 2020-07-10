@@ -349,7 +349,7 @@ class IssueBulkEditTest(unittest.TestCase):
         q=[''], colspec=[''], sort=[''], groupby=[''], start=[0], num=[100])
     self._MockMethods()
     self.servlet.ProcessFormData(mr, post_data)
-    self.assertEqual('User not found', mr.errors.custom_fields[0].message)
+    self.assertEqual('User not found.', mr.errors.custom_fields[0].message)
 
   def testProcessFormData_CustomFields(self):
     """Test PFD processes edits to custom fields."""

@@ -259,17 +259,17 @@ def ValidateCustomFieldValue(cnxn, project, services, field_def, field_val):
   if field_def.field_type == tracker_pb2.FieldTypes.INT_TYPE:
     if (field_def.min_value is not None and
         field_val.int_value < field_def.min_value):
-      return 'Value must be >= %d' % field_def.min_value
+      return 'Value must be >= %d.' % field_def.min_value
     if (field_def.max_value is not None and
         field_val.int_value > field_def.max_value):
-      return 'Value must be <= %d' % field_def.max_value
+      return 'Value must be <= %d.' % field_def.max_value
 
   elif field_def.field_type == tracker_pb2.FieldTypes.STR_TYPE:
     if field_def.regex and field_val.str_value:
       try:
         regex = re.compile(field_def.regex)
         if not regex.match(field_val.str_value):
-          return 'Value must match regular expression: %s' % field_def.regex
+          return 'Value must match regular expression: %s.' % field_def.regex
       except re.error:
         logging.info('Failed to process regex %r with value %r. Allowing.',
                      field_def.regex, field_val.str_value)
@@ -279,19 +279,19 @@ def ValidateCustomFieldValue(cnxn, project, services, field_def, field_val):
     field_val_user = services.user.GetUser(cnxn, field_val.user_id)
     auth = authdata.AuthData.FromUser(cnxn, field_val_user, services)
     if auth.user_pb.user_id == INVALID_USER_ID:
-      return 'User not found'
+      return 'User not found.'
     if field_def.needs_member:
       user_value_in_project = framework_bizobj.UserIsInProject(
           project, auth.effective_ids)
       if not user_value_in_project:
-        return 'User must be a member of the project'
+        return 'User must be a member of the project.'
       if field_def.needs_perm:
         user_perms = permissions.GetPermissions(
             auth.user_pb, auth.effective_ids, project)
         has_perm = user_perms.CanUsePerm(
             field_def.needs_perm, auth.effective_ids, project, [])
         if not has_perm:
-          return 'User must have permission "%s"' % field_def.needs_perm
+          return 'User must have permission "%s".' % field_def.needs_perm
     return None
 
   elif field_def.field_type == tracker_pb2.FieldTypes.DATE_TYPE:
@@ -307,7 +307,7 @@ def ValidateCustomFieldValue(cnxn, project, services, field_def, field_val):
                   field_val.url_value)
               or autolink_constants.IS_IMPLIED_LINK_RE.match(
                   field_val.url_value)):
-        return 'Value must be a valid url'
+        return 'Value must be a valid url.'
 
   return None
 
@@ -324,7 +324,7 @@ def ValidateCustomFields(
     if fd:
       err_msg = ValidateCustomFieldValue(cnxn, project, services, fd, fv)
       if err_msg:
-        err_msgs.append('Error for %r, %s' % (fv, err_msg))
+        err_msgs.append('Error for %r: %s' % (fv, err_msg))
         if ezt_errors:
           ezt_errors.SetCustomFieldError(fv.field_id, err_msg)
   return err_msgs

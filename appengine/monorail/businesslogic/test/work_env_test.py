@@ -2322,7 +2322,7 @@ class WorkEnvTest(unittest.TestCase):
     with self.work_env as we:
       with self.assertRaises(exceptions.InputException) as cm:
         we.UpdateIssue(issue, delta, '')
-    self.assertEqual('Issue owner user ID not found',
+    self.assertEqual('Issue owner user ID not found.',
                      cm.exception.message)
 
     # Not a member
@@ -2330,7 +2330,7 @@ class WorkEnvTest(unittest.TestCase):
     with self.work_env as we:
       with self.assertRaises(exceptions.InputException) as cm:
         we.UpdateIssue(issue, delta, '')
-    self.assertEqual('Issue owner must be a project member',
+    self.assertEqual('Issue owner must be a project member.',
                      cm.exception.message)
 
   @mock.patch(

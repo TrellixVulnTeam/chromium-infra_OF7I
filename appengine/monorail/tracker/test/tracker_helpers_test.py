@@ -1677,48 +1677,66 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         self.int_fd.field_id, 998, None, None, None, None, False)
     delta_5 = tracker_pb2.IssueDelta(field_vals_add=[fv])
 
+    issue_6 = _Issue('chicken', 6)
+    delta_6 = tracker_pb2.IssueDelta(
+        summary='  ' + 's' * tracker_constants.MAX_SUMMARY_CHARS + '  ')
+
     issue_delta_pairs = [
         (issue_1, delta_1), (issue_2, delta_2), (issue_3, delta_3),
-        (issue_4, delta_4), (issue_5, delta_5)
+        (issue_4, delta_4), (issue_5, delta_5), (issue_6, delta_6)
     ]
+    comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
+    tracker_helpers.AssertIssueChangesValid(
+        self.cnxn, issue_delta_pairs, self.services, comment_content=comment)
+
+    # Check we can handle None `comment_content`.
     tracker_helpers.AssertIssueChangesValid(
         self.cnxn, issue_delta_pairs, self.services)
 
   def testAssertIssueChangesValid_Invalid(self):
     """We can raise exceptions when deltas are not valid for issues. """
-    issue = _Issue('chicken', 1)
+    issue_delta_pairs = []
+    expected_err_msgs = []
 
-    delta_1 = tracker_pb2.IssueDelta(merged_into=issue.issue_id)
-    issue_delta_pairs = [(issue, delta_1)]
-    with self.assertRaises(exceptions.InputException):
-      tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, issue_delta_pairs, self.services)
+    comment = 'c' * (tracker_constants.MAX_COMMENT_CHARS + 1)
+    expected_err_msgs.append('Comment is too long.')
 
-    delta_2 = tracker_pb2.IssueDelta(blocked_on_add=[issue.issue_id])
-    issue_delta_pairs = [(issue, delta_2)]
-    with self.assertRaises(exceptions.InputException):
-      tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, issue_delta_pairs, self.services)
+    issue_1 = _Issue('chicken', 1)
+    issue_1_ref = '%s:%d' % (issue_1.project_name, issue_1.local_id)
 
-    delta_3 = tracker_pb2.IssueDelta(blocking_add=[issue.issue_id])
-    issue_delta_pairs = [(issue, delta_3)]
-    with self.assertRaises(exceptions.InputException):
-      tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, issue_delta_pairs, self.services)
+    delta_1 = tracker_pb2.IssueDelta(
+        merged_into=issue_1.issue_id, blocked_on_add=[issue_1.issue_id])
 
-    delta_4 = tracker_pb2.IssueDelta(owner_id=self.no_project_user.user_id)
-    issue_delta_pairs = [(issue, delta_4)]
-    with self.assertRaises(exceptions.InputException):
-      tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, issue_delta_pairs, self.services)
+    issue_delta_pairs.append((issue_1, delta_1))
+    expected_err_msgs.extend(
+        [
+            '%s: Cannot merge an issue into itself.' % issue_1_ref,
+            '%s: Cannot block an issue on itself.' % issue_1_ref
+        ])
+
+    issue_2 = _Issue('chicken', 2)
+    issue_2_ref = '%s:%d' % (issue_2.project_name, issue_2.local_id)
 
     fv = tracker_bizobj.MakeFieldValue(
         self.int_fd.field_id, 1000, None, None, None, None, False)
-    delta_5 = tracker_pb2.IssueDelta(field_vals_add=[fv])
-    issue_delta_pairs = [(issue, delta_5)]
-    with self.assertRaises(exceptions.InputException):
+    delta_2 = tracker_pb2.IssueDelta(
+        blocking_add=[issue_2.issue_id],
+        summary='s' * (tracker_constants.MAX_SUMMARY_CHARS + 1),
+        owner_id=self.no_project_user.user_id,
+        field_vals_add=[fv])
+    issue_delta_pairs.append((issue_2, delta_2))
+    expected_err_msgs.extend(
+        [
+            '%s: Cannot block an issue on itself.' % issue_2_ref,
+            '%s: Issue owner must be a project member.' % issue_2_ref,
+            '%s: Summary is too long.' % issue_2_ref,
+            '%s: Error for %r: Value must be <= 999.' % (issue_2_ref, fv)
+        ])
+
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 '\n'.join(expected_err_msgs)):
       tracker_helpers.AssertIssueChangesValid(
-          self.cnxn, issue_delta_pairs, self.services)
+          self.cnxn, issue_delta_pairs, self.services, comment_content=comment)
 
   def testComputeNewCcsFromIssueMerge(self):
     """We can compute the new ccs to add to a merge-into issue."""

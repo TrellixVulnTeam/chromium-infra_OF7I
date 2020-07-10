@@ -505,14 +505,14 @@ def IsValidIssueOwner(cnxn, project, owner_id, services):
   try:
     auth = authdata.AuthData.FromUserID(cnxn, owner_id, services)
     if not framework_bizobj.UserIsInProject(project, auth.effective_ids):
-      return False, 'Issue owner must be a project member'
+      return False, 'Issue owner must be a project member.'
   except exceptions.NoSuchUserException:
-    return False, 'Issue owner user ID not found'
+    return False, 'Issue owner user ID not found.'
 
   group_ids = services.usergroup.DetermineWhichUserIDsAreGroups(
       cnxn, [owner_id])
   if owner_id in group_ids:
-    return False, 'Issue owner cannot be a user group'
+    return False, 'Issue owner cannot be a user group.'
 
   return True, None
 
@@ -1276,9 +1276,10 @@ def GroupUniqueDeltaIssues(issue_delta_pairs):
   return unique_deltas, issues_for_unique_deltas
 
 
-def AssertIssueChangesValid(cnxn, issue_delta_pairs, services):
-  # type: (MonorailConnection, Tuple[Issue, IssueDelta], Services) ->
-  #     None
+def AssertIssueChangesValid(
+    cnxn, issue_delta_pairs, services, comment_content=None):
+  # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services,
+  #     Optional[str]) -> None
   """Assert that the delta changes are valid for each paired issue.
 
     Note: this method does not check if the changes trigger any FilterRule
@@ -1289,24 +1290,35 @@ def AssertIssueChangesValid(cnxn, issue_delta_pairs, services):
   projects_by_id = services.project.GetProjects(cnxn, project_ids)
   configs_by_id = services.config.GetProjectConfigs(cnxn, project_ids)
 
-  for issue, delta in issue_delta_pairs:
-    project = projects_by_id.get(issue.project_id)
-    config = configs_by_id.get(issue.project_id)
+  with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+    if (comment_content and
+        len(comment_content.strip()) > tracker_constants.MAX_COMMENT_CHARS):
+      err_agg.AddErrorMessage('Comment is too long.')
 
-    if delta.merged_into and issue.issue_id == delta.merged_into:
-      raise exceptions.InputException('Cannot merge an issue into itself')
-    if (issue.issue_id in set(delta.blocked_on_add)) or (issue.issue_id in set(
-        delta.blocking_add)):
-      raise exceptions.InputException('Cannot block an issue on itself')
-    if (delta.owner_id is not None) and (delta.owner_id != issue.owner_id):
-      parsed_owner_valid, msg = IsValidIssueOwner(
-          cnxn, project, delta.owner_id, services)
-      if not parsed_owner_valid:
-        raise exceptions.InputException(msg)
-    fvs_err_msgs = field_helpers.ValidateCustomFields(
-        cnxn, services, delta.field_vals_add, config, project)
-    if fvs_err_msgs:
-      raise exceptions.InputException('\n'.join(fvs_err_msgs))
+    for issue, delta in issue_delta_pairs:
+      project = projects_by_id.get(issue.project_id)
+      config = configs_by_id.get(issue.project_id)
+      issue_ref = '%s:%d' % (issue.project_name, issue.local_id)
+
+      if delta.merged_into and issue.issue_id == delta.merged_into:
+        err_agg.AddErrorMessage(
+            '%s: Cannot merge an issue into itself.' % issue_ref)
+      if (issue.issue_id in set(
+          delta.blocked_on_add)) or (issue.issue_id in set(delta.blocking_add)):
+        err_agg.AddErrorMessage(
+            '%s: Cannot block an issue on itself.' % issue_ref)
+      if (delta.owner_id is not None) and (delta.owner_id != issue.owner_id):
+        parsed_owner_valid, msg = IsValidIssueOwner(
+            cnxn, project, delta.owner_id, services)
+        if not parsed_owner_valid:
+          err_agg.AddErrorMessage('%s: %s' % (issue_ref, msg))
+      if (delta.summary and
+          len(delta.summary.strip()) > tracker_constants.MAX_SUMMARY_CHARS):
+        err_agg.AddErrorMessage('%s: Summary is too long.' % issue_ref)
+      fvs_err_msgs = field_helpers.ValidateCustomFields(
+          cnxn, services, delta.field_vals_add, config, project)
+      if fvs_err_msgs:
+        err_agg.AddErrorMessage('%s: %s' % (issue_ref, '\n'.join(fvs_err_msgs)))
 
 
 def AssertValidIssueForCreate(cnxn, services, issue, description):
