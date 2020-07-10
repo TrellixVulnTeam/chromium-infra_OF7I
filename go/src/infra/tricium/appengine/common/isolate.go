@@ -42,17 +42,6 @@ type IsolateAPI interface {
 	// Note that this isolate has no command and includes no other isolates.
 	IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error)
 
-	// LayerIsolates creates isolate files from the provided input and output.
-	//
-	// - isolatedOutput is the direct input to the next worker (e.g. FILES data)
-	// - isolatedInput was the input to the isolator worker (e.g. GIT_FILE_DETAILS data)
-	//
-	// TODO(crbug/1102545): Stop using iso.Includes; the isolatedInput is actually probably
-	// not needed.
-	//
-	// The input and output use the same hash namespace.
-	LayerIsolates(c context.Context, serverURL, namespace, isolatedInput, isolatedOutput string) (string, error)
-
 	// FetchIsolatedResult fetches isolated Tricium result output as a JSON
 	// string.
 	//
@@ -120,38 +109,6 @@ func (s isolateServer) IsolateGitFileDetails(c context.Context, serverURL string
 	return string(chunks[1].file.Digest), nil
 }
 
-// LayerIsolates implements the IsolateAPI interface.
-func (s isolateServer) LayerIsolates(c context.Context, serverURL, namespace, isolatedInput, isolatedOutput string) (string, error) {
-	mode := 0444
-	outIso, err := s.fetchIsolated(c, serverURL, namespace, isolatedOutput)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to fetch output isolate").Err()
-	}
-	h := isolated.GetHash(namespace)
-	iso := isolated.New(h)
-	iso.Files = outIso.Files
-	// TODO(crbug/1102545): Stop using iso.Includes
-	iso.Includes = []isolated.HexDigest{isolated.HexDigest(isolatedInput)}
-	isoData, err := json.Marshal(iso)
-	if err != nil {
-		return "", errors.Annotate(err, "failed to marshal layered isolate").Err()
-	}
-	isoSize := int64(len(isoData))
-	chunk := &isoChunk{
-		data:  []byte(isoData),
-		isIso: true,
-	}
-	chunk.file = &isolated.File{
-		Digest: isolated.HashBytes(h, chunk.data),
-		Mode:   &mode,
-		Size:   &isoSize,
-	}
-	if err := s.isolateChunks(c, serverURL, []*isoChunk{chunk}); err != nil {
-		return "", errors.Annotate(err, "failed to isolate chunk for layered isolate").Err()
-	}
-	return string(chunk.file.Digest), nil
-}
-
 // FetchIsolatedResults implements the IsolateAPI interface.
 func (s isolateServer) FetchIsolatedResults(c context.Context, serverURL, namespace, digest string) (string, error) {
 	outIso, err := s.fetchIsolated(c, serverURL, namespace, digest)
@@ -166,7 +123,8 @@ func (s isolateServer) FetchIsolatedResults(c context.Context, serverURL, namesp
 	if err := s.fetch(c, serverURL, namespace, string(resultsFile.Digest), buf); err != nil {
 		return "", errors.Annotate(err, "failed to fetch result file").Err()
 	}
-	// TODO(qyearsley): Switch to io.Reader to avoid keeping the whole buffer in memory.
+	// Note: if there's an issue with keeping all output in memory, this could
+	// potentially be changed to use io.Reader.
 	return string(buf.Bytes()), nil
 }
 
@@ -269,13 +227,6 @@ type mockIsolator struct{}
 //
 // For any testing actually using the return values, create a new mock.
 func (mockIsolator) IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error) {
-	return "mockmockmock", nil
-}
-
-// LayerIsolates is a mock function for MockIsolator.
-//
-// For any testing that actually uses the return values, create a new mock.
-func (mockIsolator) LayerIsolates(c context.Context, serverURL, namespace, isolatedInput, isolatedOutput string) (string, error) {
 	return "mockmockmock", nil
 }
 

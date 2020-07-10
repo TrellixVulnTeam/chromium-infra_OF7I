@@ -160,22 +160,14 @@ func collect(c context.Context, req *admin.CollectRequest,
 		return nil
 	}
 
-	// If we have isolated output, create layered isolated input, include the input
-	// in the collect request and massage the isolated output into new isolated input.
-	isolatedInput := req.IsolatedInputHash
-	if result.IsolatedOutputHash != "" {
-		isolatedInput, err = isolator.LayerIsolates(
-			c, wf.IsolateServer, result.IsolatedNamespace, req.IsolatedInputHash, result.IsolatedOutputHash)
-		if err != nil {
-			return errors.Annotate(err, "failed layer isolates").Err()
-		}
-	}
-
 	// Enqueue trigger requests for successors.
+	//
+	// The input of any successors is the output of the worker that just
+	// completed, for example the FILES data from GitFileIsolator.
 	for _, worker := range wf.GetNext(req.Worker) {
 		b, err := proto.Marshal(&admin.TriggerRequest{
 			RunId:             req.RunId,
-			IsolatedInputHash: isolatedInput,
+			IsolatedInputHash: result.IsolatedOutputHash,
 			Worker:            worker,
 		})
 		if err != nil {

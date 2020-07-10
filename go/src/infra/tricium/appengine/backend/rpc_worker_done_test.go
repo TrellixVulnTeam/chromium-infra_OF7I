@@ -30,9 +30,7 @@ type mockIsolator struct{}
 func (*mockIsolator) IsolateGitFileDetails(c context.Context, serverURL string, d *tricium.Data_GitFileDetails) (string, error) {
 	return "", nil
 }
-func (*mockIsolator) LayerIsolates(c context.Context, serverURL, namespace, isolatedInput, isolatedOutput string) (string, error) {
-	return "", nil
-}
+
 func (*mockIsolator) FetchIsolatedResults(c context.Context, serverURL, namespace, isolatedOutput string) (string, error) {
 	result := &tricium.Data_Results{
 		Comments: []*tricium.Data_Comment{
