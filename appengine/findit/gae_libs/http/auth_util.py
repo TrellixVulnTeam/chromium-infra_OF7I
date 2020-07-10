@@ -48,8 +48,6 @@ class Authenticator(object):
     for host_regex, path_regex, scope in _HOST_PATH_REGEX_TO_SCOPES:
       if (host_regex.match(result.netloc) and
           (not path_regex or path_regex.match(result.path))):
-        logging.debug('Authorization header of scope %s was created for %s',
-                      scope, url)
         return {'Authorization': 'Bearer %s' % GetAuthToken(scope)}
 
     return {}
