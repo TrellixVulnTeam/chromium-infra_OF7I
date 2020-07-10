@@ -45,13 +45,13 @@ message WPT {
 // Supported OS to tag a directory.
 enum OS {
   OS_UNSPECIFIED = 0;
-  OS_LINUX = 1;
-  OS_WINDOWS = 2;
-  OS_MAC = 3;
-  OS_ANDROID = 4;
-  OS_IOS = 5;
-  OS_CHROME_OS = 6;
-  OS_FUCHSIA = 7;
+  LINUX = 1;
+  WINDOWS = 2;
+  MAC = 3;
+  ANDROID = 4;
+  IOS = 5;
+  CHROME_OS = 6;
+  FUCHSIA = 7;
 }
 
 // Monorail specific metadata.

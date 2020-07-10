@@ -26,7 +26,7 @@ func TestReadMapping(t *testing.T) {
 				},
 				"subdir_with_owners": {
 					TeamEmail: "team-email@chromium.org",
-					Os:        dirmetapb.OS_OS_IOS,
+					Os:        dirmetapb.OS_IOS,
 					Monorail: &dirmetapb.Monorail{
 						Project:   "chromium",
 						Component: "Some>Component",

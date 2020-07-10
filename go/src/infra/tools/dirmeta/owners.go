@@ -76,10 +76,10 @@ func parseOSFromOwners(s string) (dirmetapb.OS, error) {
 
 	if s == "CHROMEOS" {
 		// ChromeOS is the only one for which the code below does not work.
-		return dirmetapb.OS_OS_CHROME_OS, nil
+		return dirmetapb.OS_CHROME_OS, nil
 	}
 
-	value := dirmetapb.OS(dirmetapb.OS_value["OS_"+s])
+	value := dirmetapb.OS(dirmetapb.OS_value[s])
 	if value == dirmetapb.OS_OS_UNSPECIFIED {
 		return 0, errors.Reason("failed to parse %q as an OS", s).Err()
 	}

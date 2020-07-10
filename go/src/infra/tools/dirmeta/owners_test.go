@@ -30,7 +30,7 @@ someone@example.com
 			So(err, ShouldBeNil)
 			So(actual, ShouldResembleProto, &dirmetapb.Metadata{
 				TeamEmail: "team-email@chromium.org",
-				Os:        dirmetapb.OS_OS_IOS,
+				Os:        dirmetapb.OS_IOS,
 				Monorail: &dirmetapb.Monorail{
 					Project:   "chromium",
 					Component: "Some>Component",
@@ -41,7 +41,7 @@ someone@example.com
 		Convey(`ChromeOS`, func() {
 			actual, err := parseOwners(strings.NewReader(`# OS: ChromeOS`))
 			So(err, ShouldBeNil)
-			So(actual.Os, ShouldEqual, dirmetapb.OS_OS_CHROME_OS)
+			So(actual.Os, ShouldEqual, dirmetapb.OS_CHROME_OS)
 		})
 
 	})
