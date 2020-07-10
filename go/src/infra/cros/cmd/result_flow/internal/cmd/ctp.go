@@ -149,12 +149,12 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 	defer bqClient.Close()
 
 	for _, build := range builds {
-		cBuild, err := transform.LoadRawBuildBucketResp(ctx, build, c.source.GetBb())
+		cBuild, err := transform.LoadCTPBuildBucketResp(ctx, build, c.source.GetBb())
 		if err != nil {
 			logging.Errorf(ctx, "failed to extract data from build: %v", err)
 			continue
 		}
-		if err = bqClient.Insert(ctx, toRows(ctx, bqClient, cBuild)...); err != nil {
+		if err = bqClient.Insert(ctx, toRows(ctx, cBuild)...); err != nil {
 			logging.Errorf(ctx, "failed to upload build data to Bigquery: %v", err)
 		}
 	}
@@ -184,7 +184,7 @@ func (c *ctpFlowRun) loadCTPRequest() error {
 	return nil
 }
 
-func toRows(ctx context.Context, c bq.Inserter, b transform.Build) []bigquery.ValueSaver {
+func toRows(ctx context.Context, b transform.CTPBuildResults) []bigquery.ValueSaver {
 	var rows []bigquery.ValueSaver
 	for _, t := range b.ToTestPlanRuns(ctx) {
 		rows = append(rows, &lucibq.Row{Message: t, InsertID: t.GetUid()})

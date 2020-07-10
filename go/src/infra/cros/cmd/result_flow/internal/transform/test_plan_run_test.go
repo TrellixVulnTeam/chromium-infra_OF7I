@@ -67,7 +67,7 @@ func TestBuildToTestPlanRuns(t *testing.T) {
 	for _, c := range cases {
 		Convey(c.description, t, func() {
 			Convey("then CTP build is correctly converted to TestPlanRun.", func() {
-				build, _ := transform.LoadRawBuildBucketResp(ctx, c.in, fakeSource.Bb)
+				build, _ := transform.LoadCTPBuildBucketResp(ctx, c.in, fakeSource.Bb)
 				got := build.ToTestPlanRuns(ctx)
 				sort.Slice(got, func(i, j int) bool { return got[i].Uid < got[j].Uid })
 				So(got, ShouldNotBeNil)

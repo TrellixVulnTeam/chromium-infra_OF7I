@@ -25,8 +25,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-// Build presents a CTP build containing multiple TestPlanRuns.
-type Build interface {
+// CTPBuildResults presents a CTP build containing multiple TestPlanRuns.
+type CTPBuildResults interface {
 	ToTestPlanRuns(context.Context) []*analytics.TestPlanRun
 }
 
@@ -41,8 +41,8 @@ type ctpBuild struct {
 	resps      map[string]*steps.ExecuteResponse
 }
 
-// LoadRawBuildBucketResp loads a CTP build from Buildbucket response.
-func LoadRawBuildBucketResp(ctx context.Context, b *bbpb.Build, bb *result_flow.BuildbucketConfig) (Build, error) {
+// LoadCTPBuildBucketResp loads a CTP build from Buildbucket response.
+func LoadCTPBuildBucketResp(ctx context.Context, b *bbpb.Build, bb *result_flow.BuildbucketConfig) (CTPBuildResults, error) {
 	if b == nil {
 		return nil, fmt.Errorf("empty build")
 	}
@@ -62,7 +62,7 @@ func LoadRawBuildBucketResp(ctx context.Context, b *bbpb.Build, bb *result_flow.
 	setDefaultStructValues(prop)
 	op := prop.GetFields()
 	if rValue, ok := op["request"]; ok {
-		request, err := structPBToRequest(rValue)
+		request, err := structPBToCTPRequest(rValue)
 		if err != nil {
 			return nil, errors.Annotate(err, "failed to extract CTP request").Err()
 		}
@@ -71,11 +71,11 @@ func LoadRawBuildBucketResp(ctx context.Context, b *bbpb.Build, bb *result_flow.
 		}
 	}
 	if raw, ok := op["requests"]; ok {
-		if c.reqs, err = structPBToRequests(raw); err != nil {
+		if c.reqs, err = structPBToCTPRequests(raw); err != nil {
 			return nil, errors.Annotate(err, "failed to extract CTP requests").Err()
 		}
 	}
-	v, ok := getCTPResponseValue(b)
+	v, ok := getOutputPropertiesValue(b, "compressed_responses")
 	if !ok {
 		logging.Infof(ctx, "Build has no output properties yet, %d", b.GetId())
 		return c, nil
@@ -96,7 +96,7 @@ func (c *ctpBuild) ToTestPlanRuns(ctx context.Context) []*analytics.TestPlanRun 
 
 func (c *ctpBuild) genTestPlanRun(key string) *analytics.TestPlanRun {
 	return &analytics.TestPlanRun{
-		Uid:           c.createUID(key),
+		Uid:           c.createTestPlanRunUID(key),
 		Suite:         c.getSuiteName(key),
 		ExecutionUrl:  inferExecutionURL(c.bb, c.id),
 		DutPool:       c.getDutPool(key),
@@ -107,7 +107,7 @@ func (c *ctpBuild) genTestPlanRun(key string) *analytics.TestPlanRun {
 	}
 }
 
-func (c *ctpBuild) createUID(key string) string {
+func (c *ctpBuild) createTestPlanRunUID(key string) string {
 	return fmt.Sprintf("TestPlanRuns/%d/%s", c.id, key)
 }
 
@@ -158,55 +158,67 @@ func (c *ctpBuild) getTimeline() *analytics.Timeline {
 	}
 }
 
-// TODO(linxinan): Original code is at "infra/cmd/skylab/internal/bb/bb.go". Consider
-// moving them to shared libs.
 func extractCTPBuildResponses(rs *structpb.Value) (map[string]*steps.ExecuteResponse, error) {
 	if b64 := rs.GetStringValue(); b64 != "" {
-		responses, err := compressedPBToExecuteResponses(b64)
+		pb, err := unmarshalCompressedString(b64, &steps.ExecuteResponses{})
 		if err != nil {
-			return nil, errors.Annotate(err, "extractBuildData").Err()
+			return nil, errors.Annotate(err, "extract CTP Responses").Err()
+		}
+		responses, ok := pb.(*steps.ExecuteResponses)
+		if !ok {
+			return nil, fmt.Errorf("failed to extract ExecuteResponses")
 		}
 		return responses.TaggedResponses, nil
 	}
 	return nil, fmt.Errorf("Failed to find response field")
 }
 
-func getCTPResponseValue(b *bbpb.Build) (*structpb.Value, bool) {
-	op := b.GetOutput().GetProperties().GetFields()
-	if op == nil {
-		return nil, false
+func structPBToCTPRequests(from *structpb.Value) (map[string]*test_platform.Request, error) {
+	requests := make(map[string]*test_platform.Request)
+	m, err := structPBStructToMap(from)
+	if err != nil {
+		return nil, errors.Annotate(err, "struct PB to CTP requests").Err()
 	}
-	v, ok := op["compressed_responses"]
-	return v, ok
+	for k, v := range m {
+		if requests[k], err = structPBToCTPRequest(v); err != nil {
+			return nil, err
+		}
+	}
+	return requests, nil
 }
 
-func structPBToRequest(from *structpb.Value) (*test_platform.Request, error) {
-	m := jsonpb.Marshaler{}
-	json, err := m.MarshalToString(from)
+func structPBToCTPRequest(from *structpb.Value) (*test_platform.Request, error) {
+	pb, err := unmarshalStructPB(from, &test_platform.Request{})
 	if err != nil {
-		return nil, errors.Annotate(err, "structPBToExecuteRequest").Err()
+		return nil, errors.Annotate(err, "struct PB to CTP request").Err()
 	}
-	request := &test_platform.Request{}
-	if err := jsonpb.UnmarshalString(json, request); err != nil {
-		return nil, errors.Annotate(err, "structPBToExecuteRequest").Err()
+	request, ok := pb.(*test_platform.Request)
+	if !ok {
+		return nil, fmt.Errorf("failed to extract CTP request")
 	}
 	return request, nil
 }
 
-func structPBToRequests(from *structpb.Value) (map[string]*test_platform.Request, error) {
-	requests := make(map[string]*test_platform.Request)
-	m, err := structPBStructToMap(from)
+// TODO(lxn@): Below functions are PB neutral, and will be moved to common.go in the next CL.
+func getOutputPropertiesValue(b *bbpb.Build, field string) (*structpb.Value, bool) {
+	op := b.GetOutput().GetProperties().GetFields()
+	if op == nil {
+		return nil, false
+	}
+	v, ok := op[field]
+	return v, ok
+}
+
+func unmarshalStructPB(from *structpb.Value, to proto.Message) (proto.Message, error) {
+	m := jsonpb.Marshaler{}
+	json, err := m.MarshalToString(from)
 	if err != nil {
-		return nil, errors.Annotate(err, "struct PB to requests").Err()
+		return nil, errors.Annotate(err, "unmarshal Struct PB").Err()
 	}
-	for k, v := range m {
-		r, err := structPBToRequest(v)
-		if err != nil {
-			return nil, errors.Annotate(err, "struct PB to requests").Err()
-		}
-		requests[k] = r
+	if err := jsonpb.UnmarshalString(json, to); err != nil {
+		return nil, errors.Annotate(err, "unmarshal Struct PB").Err()
 	}
-	return requests, nil
+	return to, nil
 }
 
 func structPBStructToMap(from *structpb.Value) (map[string]*structpb.Value, error) {
@@ -221,35 +233,27 @@ func structPBStructToMap(from *structpb.Value) (map[string]*structpb.Value, erro
 	}
 }
 
-func compressedPBToExecuteResponses(from string) (*steps.ExecuteResponses, error) {
+func unmarshalCompressedString(from string, to proto.Message) (proto.Message, error) {
+	var err error
 	if from == "" {
 		return nil, nil
 	}
 	bs, err := base64.StdEncoding.DecodeString(from)
 	if err != nil {
-		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+		return nil, errors.Annotate(err, "unmarshal compressed string to PB").Err()
 	}
 	reader, err := zlib.NewReader(bytes.NewReader(bs))
 	if err != nil {
-		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+		return nil, errors.Annotate(err, "unmarshal compressed string to PB").Err()
 	}
 	bs, err = ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+		return nil, errors.Annotate(err, "unmarshal compressed string to PB").Err()
 	}
-	resp, err := binPBToExecuteResponses(bs)
-	if err != nil {
-		return nil, errors.Annotate(err, "compressedPBToExecuteResponses").Err()
+	if err := proto.Unmarshal(bs, to); err != nil {
+		return nil, errors.Annotate(err, "unmarshal compressed string to PB").Err()
 	}
-	return resp, nil
-}
-
-func binPBToExecuteResponses(from []byte) (*steps.ExecuteResponses, error) {
-	response := &steps.ExecuteResponses{}
-	if err := proto.Unmarshal(from, response); err != nil {
-		return nil, errors.Annotate(err, "binPBToExecuteResponses").Err()
-	}
-	return response, nil
+	return to, nil
 }
 
 // setDefaultStructValues defaults nil or empty values inside the given
