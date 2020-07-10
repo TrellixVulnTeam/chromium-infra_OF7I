@@ -50,7 +50,7 @@ enum OS {
   OS_MAC = 3;
   OS_ANDROID = 4;
   OS_IOS = 5;
-  OS_CHROME = 6;
+  OS_CHROME_OS = 6;
   OS_FUCHSIA = 7;
 }
 
