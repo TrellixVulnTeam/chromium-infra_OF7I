@@ -29,7 +29,8 @@ export class MrStar extends LitElement {
         display: flex;
         align-items: center;
       }
-      button[disabled] {
+      /* TODO(crbug.com/monorail/8008): Add nicer looking loading style. */
+      button.loading {
         opacity: 0.5;
         cursor: default;
       }
@@ -50,9 +51,10 @@ export class MrStar extends LitElement {
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <button class="star-button"
         @click=${this._loginOrStar}
-        ?disabled=${this.disabled}
         title=${this._starToolTip}
+        role="checkbox"
         aria-checked=${isStarred ? 'true' : 'false'}
+        class=${this.requesting ? 'loading' : ''}
       >
         ${isStarred ? html`
           <i class="material-icons starred" role="presentation">
@@ -145,15 +147,6 @@ export class MrStar extends LitElement {
    */
   get canStar() {
     return this._canStar;
-  }
-
-  /**
-   * @return {boolean} If the star button should be disabled right now.
-   * Note that the star button can be enabled either because the user is logged
-   * in or because the user is able to star.
-   */
-  get disabled() {
-    return this.isLoggedIn && !this._starringEnabled;
   }
 
   /**

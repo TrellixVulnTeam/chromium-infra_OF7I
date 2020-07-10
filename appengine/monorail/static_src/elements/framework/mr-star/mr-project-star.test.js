@@ -37,7 +37,6 @@ describe('mr-project-star (disconnected)', () => {
     await element.updateComplete;
 
     const star = element.shadowRoot.querySelector('button');
-    assert.isFalse(star.disabled);
 
     star.click();
 
@@ -111,16 +110,16 @@ describe('mr-project-star (disconnected)', () => {
     });
   });
 
-  describe('disabled', () => {
+  describe('_starringEnabled', () => {
     beforeEach(() => {
       element._currentUserName = 'users/1234';
       element.name = 'projects/monorail';
     });
 
-    it('enabled when user is not logged in', () => {
+    it('disabled when user is not logged in', () => {
       element._currentUserName = '';
 
-      assert.isFalse(element.disabled);
+      assert.isFalse(element._starringEnabled);
     });
 
     it('disabled when stars are being fetched', () => {
@@ -128,7 +127,7 @@ describe('mr-project-star (disconnected)', () => {
       element._starringProjects = {};
       element._unstarringProjects = {};
 
-      assert.isTrue(element.disabled);
+      assert.isFalse(element._starringEnabled);
     });
 
     it('disabled when user is starring project', () => {
@@ -137,7 +136,7 @@ describe('mr-project-star (disconnected)', () => {
           {'users/1234/projectStars/monorail': {requesting: true}};
       element._unstarringProjects = {};
 
-      assert.isTrue(element.disabled);
+      assert.isFalse(element._starringEnabled);
     });
 
     it('disabled when user is unstarring project', () => {
@@ -146,7 +145,7 @@ describe('mr-project-star (disconnected)', () => {
       element._unstarringProjects =
           {'users/1234/projectStars/monorail': {requesting: true}};
 
-      assert.isTrue(element.disabled);
+      assert.isFalse(element._starringEnabled);
     });
 
     it('enabled when user is starring an unrelated project', () => {
@@ -157,7 +156,7 @@ describe('mr-project-star (disconnected)', () => {
       };
       element._unstarringProjects = {};
 
-      assert.isFalse(element.disabled);
+      assert.isTrue(element._starringEnabled);
     });
 
     it('enabled when user is unstarring an unrelated project', () => {
@@ -168,7 +167,7 @@ describe('mr-project-star (disconnected)', () => {
         'users/1234/projectStars/monorail': {requesting: false},
       };
 
-      assert.isFalse(element.disabled);
+      assert.isTrue(element._starringEnabled);
     });
 
     it('enabled when no in-flight requests', () => {
@@ -176,7 +175,7 @@ describe('mr-project-star (disconnected)', () => {
       element._starringProjects = {};
       element._unstarringProjects = {};
 
-      assert.isFalse(element.disabled);
+      assert.isTrue(element._starringEnabled);
     });
   });
 });

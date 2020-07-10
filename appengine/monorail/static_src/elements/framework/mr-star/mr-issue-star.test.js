@@ -31,7 +31,6 @@ describe('mr-issue-star', () => {
     await element.updateComplete;
 
     const star = element.shadowRoot.querySelector('button');
-    assert.isFalse(star.disabled);
 
     star.click();
 
@@ -53,24 +52,18 @@ describe('mr-issue-star', () => {
     assert.isFalse(element._isStarring);
   });
 
-  it('starring is disabled when _isStarring true', async () => {
+  it('starring is disabled when _isStarring true', () => {
     element._currentUserName = 'users/1234';
     sinon.stub(element, '_isStarring').get(() => true);
 
-    await element.updateComplete;
-
-    const star = element.shadowRoot.querySelector('button');
-    assert.isTrue(star.disabled);
+    assert.isFalse(element._starringEnabled);
   });
 
-  it('starring is disabled when _fetchingIsStarred true', async () => {
+  it('starring is disabled when _fetchingIsStarred true', () => {
     element._currentUserName = 'users/1234';
     element._fetchingIsStarred = true;
 
-    await element.updateComplete;
-
-    const star = element.shadowRoot.querySelector('button');
-    assert.isTrue(star.disabled);
+    assert.isFalse(element._starringEnabled);
   });
 
   it('_starredIssues changes displayed icon', async () => {
