@@ -31,7 +31,7 @@ const _ = proto.ProtoPackageIsVersion4
 
 // Maps from a directory to its metadata.
 //
-// A mapping may contain redudnant information. For example, it is redundant to
+// A mapping may contain redundant information. For example, it is redundant to
 // specify the same value for the same metadata attribute in both "a/" and
 // "a/b/".
 // A mapping is called "reduced" if it has no redundancies, and "expanded"
