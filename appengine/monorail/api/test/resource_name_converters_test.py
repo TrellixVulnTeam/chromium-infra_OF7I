@@ -144,6 +144,17 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.IngestHotlistItemNames(self.cnxn, names, self.services)
 
+  def testIngestHotlistItemNames_MultipleProjectsNotFound(self):
+    """Aggregated exceptions raised if projects are not found."""
+    names = [
+        'hotlists/78909/items/proj.1', 'hotlists/78909/items/chicken.2',
+        'hotlists/78909/items/cow.3'
+    ]
+    with self.assertRaisesRegexp(exceptions.NoSuchProjectException,
+                                 'Project chicken not found.\n' +
+                                 'Project cow not found.'):
+      rnc.IngestHotlistItemNames(self.cnxn, names, self.services)
+
   def testIngestHotlistItems_IssueNotFound(self):
     """Exception is raised if an Issue is not found."""
     names = [
@@ -241,6 +252,17 @@ class ResourceNameConverterTest(unittest.TestCase):
       rnc.IngestIssueNames(
           self.cnxn, ['projects/proj/issues/1', 'projects/proj/issues/2'],
           self.services)
+
+  def testIngestIssueNames_ProjectsNotExist(self):
+    """Aggregated exceptions raised if projects are not found."""
+    with self.assertRaisesRegexp(exceptions.NoSuchProjectException,
+                                 'Project chicken not found.\n' +
+                                 'Project cow not found.'):
+      rnc.IngestIssueNames(
+          self.cnxn, [
+              'projects/chicken/issues/2', 'projects/cow/issues/3',
+              'projects/proj/issues/1'
+          ], self.services)
 
   def testConvertCommentNames(self):
     """We can create comment names."""

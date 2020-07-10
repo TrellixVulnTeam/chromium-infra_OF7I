@@ -103,13 +103,13 @@ def _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services):
 
   # Create (project_id, issue_local_id) pairs from project_local_id_pairs.
   project_id_local_ids = []
-  for project_name, local_id in project_local_id_pairs:
-    try:
-      project_id = project_ids_by_name[project_name]
-      project_id_local_ids.append((project_id, local_id))
-    except KeyError:
-      raise exceptions.NoSuchProjectException(
-          'Project %s not found' % project_name)
+  with exceptions.ErrorAggregator(exceptions.NoSuchProjectException) as err_agg:
+    for project_name, local_id in project_local_id_pairs:
+      try:
+        project_id = project_ids_by_name[project_name]
+        project_id_local_ids.append((project_id, local_id))
+      except KeyError:
+        err_agg.AddErrorMessage('Project %s not found.' % project_name)
 
   issue_ids, misses = services.issue.LookupIssueIDsFollowMoves(
       cnxn, project_id_local_ids)
