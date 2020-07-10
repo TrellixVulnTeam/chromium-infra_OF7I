@@ -22,6 +22,7 @@ message Mapping {
   // Dirs maps from a directory to its metadata.
   //
   // The key is directory name, relative to the root.
+  // The key must use forward slash as directory separator.
   // Special key "." represents the root directory.
   //
   // The root must be known from the context where Mapping is used and is not

@@ -43,7 +43,11 @@ type Mapping struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Dirs maps from a directory to its metadata.
+	//
 	// The key is directory name, relative to the root.
+	// The key must use forward slash as directory separator.
+	// Special key "." represents the root directory.
+	//
 	// The root must be known from the context where Mapping is used and is not
 	// part of the this message.
 	Dirs map[string]*Metadata `protobuf:"bytes,1,rep,name=dirs,proto3" json:"dirs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`

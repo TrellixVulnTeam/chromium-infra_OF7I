@@ -60,6 +60,8 @@ func ReadMapping(root string) (*Mapping, error) {
 		if err != nil {
 			return err
 		}
+		// The key must be in canonical form.
+		key = filepath.ToSlash(key)
 
 		switch meta, err := ReadMetadata(path); {
 		case err != nil:
