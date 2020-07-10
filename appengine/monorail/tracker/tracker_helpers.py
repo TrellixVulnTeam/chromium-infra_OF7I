@@ -680,7 +680,7 @@ def ComputeNewQuotaBytesUsed(project, attachments):
   quota = (project.attachment_quota or
            tracker_constants.ISSUE_ATTACHMENTS_QUOTA_HARD)
   if new_bytes_used > quota:
-    raise OverAttachmentQuota(new_bytes_used - quota)
+    raise exceptions.OverAttachmentQuota(new_bytes_used - quota)
   return new_bytes_used
 
 
@@ -1473,11 +1473,3 @@ class _IssueChangeImpactedIssues():
               merged_from_add_refs, merged_from_remove_refs,
               default_project_name=impacted_issue.project_name))
     return amendments
-
-
-class Error(Exception):
-  """Base class for errors from this module."""
-
-
-class OverAttachmentQuota(Error):
-  """Project will exceed quota if the current operation is allowed."""

@@ -445,6 +445,8 @@ class MonorailServicerTest(unittest.TestCase):
         codes.StatusCode.INVALID_ARGUMENT,
         details='Invalid arguments: echoed values')
     self.CheckExceptionStatus(
+        exceptions.OverAttachmentQuota(), codes.StatusCode.RESOURCE_EXHAUSTED)
+    self.CheckExceptionStatus(
         ratelimiter.ApiRateLimitExceeded('client_id', 'email'),
         codes.StatusCode.PERMISSION_DENIED)
     self.CheckExceptionStatus(

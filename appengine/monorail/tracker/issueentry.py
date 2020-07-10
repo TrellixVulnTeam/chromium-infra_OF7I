@@ -17,6 +17,7 @@ import time
 from businesslogic import work_env
 from features import hotlist_helpers
 from features import send_notifications
+from framework import exceptions
 from framework import framework_bizobj
 from framework import framework_constants
 from framework import framework_helpers
@@ -437,7 +438,7 @@ class IssueEntry(servlet.Servlet):
                 mr.cnxn, hotlist_ids, issue_tuple, self.services.issue,
                 self.services.chart)
 
-        except tracker_helpers.OverAttachmentQuota:
+        except exceptions.OverAttachmentQuota:
           mr.errors.attachments = 'Project attachment quota exceeded.'
 
     mr.template_name = parsed.template_name
