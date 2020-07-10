@@ -541,11 +541,11 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/mattn/go-tty.git
 - package: golang.org/x/mod
+  version: master
   repo: https://go.googlesource.com/mod.git
-  version: master
 - package: golang.org/x/xerrors
-  repo: https://go.googlesource.com/xerrors.git
   version: master
+  repo: https://go.googlesource.com/xerrors.git
 - package: github.com/bazelbuild/remote-apis
   version: upstream/master
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
@@ -566,3 +566,6 @@ import:
 - package: github.com/microcosm-cc/bluemonday
   version: upstream/master
   repo: https://chromium.googlesource.com/external/github.com/microcosm-cc/bluemonday.git
+- package: github.com/bazelbuild/remote-apis-sdks
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
