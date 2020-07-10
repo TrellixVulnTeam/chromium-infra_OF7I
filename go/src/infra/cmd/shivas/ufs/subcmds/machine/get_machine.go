@@ -10,21 +10,29 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetMachineCmd get machine by given name.
 var GetMachineCmd = &subcommands.Command{
-	UsageLine: "get",
-	ShortDesc: "get Machine by name",
-	LongDesc: `get Machine by name.
-	./shivas machine get {Machine Name}
-	Gets the Machine and prints the output in JSON format.`,
+	UsageLine: "machine {Machine Name/Hostname}",
+	ShortDesc: "Get machine details by name or get deployed machine details by hostname",
+	LongDesc: `Get machine details by name or get deployed machine details by hostname.
+
+Example:
+
+shivas get machine {Machine Name}
+Gets the machine and prints the output in JSON format.
+
+shivas get machine {Machine Hostname}
+Gets the deployed machine and prints the output in JSON format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -59,25 +67,36 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetMachine(ctx, &UfleetAPI.GetMachineRequest{
-		Name: UfleetUtil.AddPrefix(UfleetUtil.MachineCollection, args[0]),
+	machineRes, err := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, args[0]),
 	})
 	if err != nil {
-		return err
+		// If get Machine fails, check for get MachineLSE
+		machinelseRes, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+			Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, args[0]),
+		})
+		if err != nil {
+			return errors.Annotate(err, "Given argument is neither a machine name nor a machine hostname").Err()
+		}
+		machinelseRes.Name = ufsUtil.RemovePrefix(machinelseRes.Name)
+		utils.PrintProtoJSON(machinelseRes)
+		fmt.Println()
+		return nil
 	}
-	res.Name = UfleetUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	machineRes.Name = ufsUtil.RemovePrefix(machineRes.Name)
+	utils.PrintProtoJSON(machineRes)
+	fmt.Println()
 	return nil
 }
 
 func (c *getMachine) validateArgs() error {
 	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide a Machine Name")
+		return cmdlib.NewUsageError(c.Flags, "Please provide the machine name or deployed machine hostname.")
 	}
 	return nil
 }

@@ -78,19 +78,20 @@ shivas reregister machine -i
 Reregister/Update a machine by reading input through interactive mode.`
 
 	// ListMachineLongDesc long description for ListMachineCmd
-	ListMachineLongDesc string = `list all Machines
+	ListMachineLongDesc string = `List all Machines
 
-./shivas machine ls
-Fetches 100 items and prints the output in table format
+Examples:
+shivas ls machine
+Fetches all the machines in table format
 
-./shivas machine ls -n 50
-Fetches 50 items and prints the output in table format
+shivas ls machine -deployed
+Fetches all the deployed machines in table format
 
-./shivas machine ls -json
-Fetches 100 items and prints the output in JSON format
+shivas ls machine -n 50 -deployed -json
+Fetches 50 deployed machines and prints the output in JSON format
 
-./shivas machine ls -n 50 -json
-Fetches 50 items and prints the output in JSON format
+shivas ls machine -n 5 -json
+Fetches 5 machines and prints the output in JSON format
 `
 
 	// MachineFileText description for machine file input

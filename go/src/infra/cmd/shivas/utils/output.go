@@ -49,14 +49,15 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 	fmt.Print("[")
 	if pageSize == 0 {
 		for {
-			pageToken, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter)
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter)
 			if err != nil {
 				return err
 			}
-			if pageToken == "" {
+			if token == "" {
 				break
 			}
 			fmt.Print(",")
+			pageToken = token
 		}
 	} else {
 		for i := int32(0); i < pageSize; i = i + ufsUtil.MaxPageSize {
@@ -66,15 +67,16 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 			} else {
 				size = ufsUtil.MaxPageSize
 			}
-			pageToken, err := f(ctx, ic, json, size, pageToken, filter)
+			token, err := f(ctx, ic, json, size, pageToken, filter)
 			if err != nil {
 				return err
 			}
-			if pageToken == "" {
+			if token == "" {
 				break
 			} else if i+ufsUtil.MaxPageSize < pageSize {
 				fmt.Print(",")
 			}
+			pageToken = token
 		}
 	}
 	fmt.Println("]")
@@ -86,13 +88,14 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 	var pageToken string
 	if pageSize == 0 {
 		for {
-			pageToken, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter)
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter)
 			if err != nil {
 				return err
 			}
-			if pageToken == "" {
+			if token == "" {
 				break
 			}
+			pageToken = token
 		}
 	} else {
 		for i := int32(0); i < pageSize; i = i + ufsUtil.MaxPageSize {
@@ -102,13 +105,14 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 			} else {
 				size = ufsUtil.MaxPageSize
 			}
-			pageToken, err := f(ctx, ic, json, size, pageToken, filter)
+			token, err := f(ctx, ic, json, size, pageToken, filter)
 			if err != nil {
 				return err
 			}
-			if pageToken == "" {
+			if token == "" {
 				break
 			}
+			pageToken = token
 		}
 	}
 	return nil
@@ -203,9 +207,14 @@ func printMachine(m *ufspb.Machine) {
 
 // PrintMachinesJSON prints the machine details in json format.
 func PrintMachinesJSON(machines []*ufspb.Machine) {
-	for _, m := range machines {
+	len := len(machines) - 1
+	for i, m := range machines {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
 	}
 }
 
@@ -246,6 +255,19 @@ func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype) {
 func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype) {
 	len := len(msleps) - 1
 	for i, m := range msleps {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintMachineLSEsJSON prints the machinelse details in json format.
+func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE) {
+	len := len(machinelses) - 1
+	for i, m := range machinelses {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m)
 		if i < len {
