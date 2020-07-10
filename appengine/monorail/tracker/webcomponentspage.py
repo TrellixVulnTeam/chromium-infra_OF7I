@@ -78,10 +78,9 @@ class ProjectListPage(WebComponentsPage):
     """
     redirect_msg = self._MaybeRedirectToDomainDefaultProject(mr)
     logging.info(redirect_msg)
-
     return {
         'local_id': None,
-        'old_ui_url': '/hosting/',
+        'old_ui_url': '/hosting_old/',
     }
 
   def _MaybeRedirectToDomainDefaultProject(self, mr):

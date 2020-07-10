@@ -273,8 +273,12 @@ export class MrApp extends connectStore(LitElement) {
     page('/hotlists/:hotlist/settings',
         this._loadHotlistSettingsPage.bind(this), postRouteHandler);
 
-    page('/p', '/projects');
-    page('/projects', this._loadProjectsPage.bind(this), postRouteHandler);
+    // Handle Monorail's landing page.
+    page('/p', '/');
+    page('/projects', '/');
+    page('/hosting', '/');
+    page('/', this._loadProjectsPage.bind(this), postRouteHandler);
+
     page('/p/:project/issues/list', this._loadListPage.bind(this),
         postRouteHandler);
     page('/p/:project/issues/detail', this._loadIssuePage.bind(this),

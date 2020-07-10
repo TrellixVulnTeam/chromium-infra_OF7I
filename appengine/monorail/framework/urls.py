@@ -9,7 +9,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 # URLs of site-wide Monorail pages
-HOSTING_HOME = '/hosting/'  # the big search box w/ popular labels
+HOSTING_HOME = '/hosting_old/'
 PROJECT_CREATE = '/hosting/createProject'
 USER_SETTINGS = '/hosting/settings'
 PROJECT_MOVED = '/hosting/moved'

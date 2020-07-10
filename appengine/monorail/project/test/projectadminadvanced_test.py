@@ -32,8 +32,9 @@ class ProjectAdminAdvancedTest(unittest.TestCase):
         'req', 'res', services=services)
     self.project = services.project.TestAddProject('proj', owner_ids=[111])
     self.mr = testing_helpers.MakeMonorailRequest(
-        project=self.project, perms=permissions.OWNER_ACTIVE_PERMISSIONSET,
-        user_info={'user_id':111})
+        project=self.project,
+        perms=permissions.OWNER_ACTIVE_PERMISSIONSET,
+        user_info={'user_id': 111})
 
   def testAssertBasePermission(self):
     # Signed-out users cannot edit the project
@@ -124,4 +125,4 @@ class ProjectAdminAdvancedTest(unittest.TestCase):
     self.project.state = project_pb2.ProjectState.ARCHIVED
     post_data = fake.PostData(deletebtn='1')
     next_url = self.servlet.ProcessFormData(self.mr, post_data)
-    self.assertEqual('http://127.0.0.1/hosting/', next_url)
+    self.assertEqual('http://127.0.0.1/hosting_old/', next_url)
