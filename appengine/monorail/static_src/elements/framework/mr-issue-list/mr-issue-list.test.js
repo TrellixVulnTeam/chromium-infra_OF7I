@@ -76,10 +76,10 @@ describe('mr-issue-list', () => {
 
     assert.equal(labels[0].textContent.trim(), 'Security');
     assert.include(labels[0].href,
-        '/p/chromium/issues/list?q=label%3ASecurity');
+        '/p/test/issues/list?q=label%3ASecurity');
     assert.equal(labels[1].textContent.trim(), 'A11y');
     assert.include(labels[1].href,
-        '/p/chromium/issues/list?q=label%3AA11y');
+        '/p/test/issues/list?q=label%3AA11y');
   });
 
   it('blocking column renders issue links', async () => {

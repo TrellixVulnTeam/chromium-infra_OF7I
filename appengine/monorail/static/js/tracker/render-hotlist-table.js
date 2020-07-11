@@ -126,14 +126,15 @@ function enter_detector(e) {
 /**
  * Helper function to set attributes and add Nodes for an Summary cell.
  * @param {Element} td element to be added to current row in table.
- * @param {dict} cell dictionary {'projectName': 'name', .. } of relevant cell info.
+ * @param {dict} cell dictionary {'values': [], .. } of relevant cell info.
+ * @param {string=} projectName The name of the project the summary references.
 */
 function createSummaryCell(td, cell) {
-  // TODO(jojwang): detect when links are present and make clicking on cell go to
-  // link, not issue details page
+  // TODO(jojwang): detect when links are present and make clicking on cell go
+  // to link, not issue details page
   td.setAttribute('style', 'width:100%');
   fillValues(td, cell['values']);
-  fillNonColumnLabels(td, cell['nonColLabels']);
+  fillNonColumnLabels(td, cell['nonColLabels'], projectName);
 }
 
 
@@ -197,14 +198,20 @@ function createIssuesCell(td, cell) {
 /**
  * Helper function to fill a td element with a cell's non-column labels.
  * @param {Element} td element to be added to current row in table.
- * @param {list} labels list of dictionaries with relevant (key, value) for each label
+ * @param {list} labels list of dictionaries with relevant (key, value) for
+ *   each label
+ * @param {string=} projectName The name of the project the labels reference.
  */
-function fillNonColumnLabels(td, labels) {
+function fillNonColumnLabels(td, labels, projectName) {
   labels.forEach( function(label) {
-    let aLabel = document.createElement('a');
-    setAttributes(aLabel, {'class': 'label', 'href': 'list?q=label:' + label['value']});
+    const aLabel = document.createElement('a');
+    setAttributes(aLabel,
+        {
+          'class': 'label',
+          'href': `/p/${projectName}/issues/list?q=label:${label['value']}`,
+        });
     if (label['isDerived']) {
-      let i = document.createElement('i');
+      const i = document.createElement('i');
       i.textContent = label['value'];
       aLabel.appendChild(i);
     } else {
@@ -263,14 +270,14 @@ function renderHotlistRow(tableRow, pageSettings) {
     if (cell['type'] == 'ID') {
       createIDCell(td, tableRow, (pageSettings['isCrossProject'] == 'True'));
     } else if (cell['type'] == 'summary') {
-      createSummaryCell(td, cell);
+      createSummaryCell(td, cell, tableRow['projectName']);
     } else if (cell['type'] == 'note') {
       if (pageSettings['ownerPerm'] || pageSettings['editorPerm']) {
         createEditableNoteCell(
           td, cell, tableRow['projectName'], tableRow['localID'],
           pageSettings['hotlistID']);
       } else {
-        createSummaryCell(td, cell);
+        createSummaryCell(td, cell, tableRow['projectName']);
       }
     } else if (cell['type'] == 'project') {
       createProjectCell(td, tableRow);

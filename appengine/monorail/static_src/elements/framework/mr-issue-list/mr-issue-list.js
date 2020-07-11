@@ -518,7 +518,7 @@ export class MrIssueList extends connectStore(LitElement) {
         ${labelRefsToOneWordLabels(issue.labelRefs).map(({label}) => html`
           <a
             class="summary-label"
-            href="${this._baseUrl()}?q=label%3A${label}"
+            href="/p/${issue.projectName}/issues/list?q=label%3A${label}"
           >${label}</a>
         `)}
       `;
