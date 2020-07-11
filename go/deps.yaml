@@ -116,6 +116,7 @@ import:
   - logging/v1beta3
   - option
   - pubsub/v1
+  - sheets/v4
   - support/bundler
   - taskqueue/v1beta2
 - package: google.golang.org/appengine

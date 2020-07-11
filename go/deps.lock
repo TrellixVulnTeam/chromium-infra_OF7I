@@ -1,8 +1,8 @@
-hash: cefdb26b4e421c1f511274ce3c962812983f3f0dad806d8c02f6655aca4df902
-updated: 2020-07-10T11:40:28.897186+09:00
+hash: 447019782c3d2195f85357ef9bf04337d865ac100279ec609fbd1b90bc17d185
+updated: 2020-07-10T16:01:33.523059697-07:00
 imports:
 - name: cloud.google.com/go
-  version: e49379923675df447266c6014fd7968271197de4
+  version: 7a73be85484b4eb67803fa2aae72ff558ca4c784
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -423,7 +423,7 @@ imports:
   version: 474f21a9602da421b967d43fd1106f1898c70e2e
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 2aa5be62af1330713e58054add0523b97c18581c
+  version: cd7372b93161a7997a89a1819afda07d1df8d25b
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -479,7 +479,7 @@ imports:
   version: 3af7569d3a1e776fc2a3c1cec133b43105ea9c2e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: e327e1019dfe9666f36595a556421e217caa4562
+  version: f1c4188a97a1cbc0a5408db2e5b0d7b0dca73271
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -495,7 +495,7 @@ imports:
   version: 9bdfabe68543c54f90421aeb9a60ef8061b5b544
   repo: https://go.googlesource.com/xerrors.git
 - name: google.golang.org/api
-  version: 30520cad6b66366c70faae9372cdf781e2c7d3f2
+  version: d7c35e88bfd56f1ae4689f8e3d3751a1333bcfac
   repo: https://code.googlesource.com/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -507,6 +507,7 @@ imports:
   - logging/v1beta3
   - option
   - pubsub/v1
+  - sheets/v4
   - support/bundler
   - taskqueue/v1beta2
 - name: google.golang.org/appengine
@@ -524,7 +525,7 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: 7a2ca40e9dc324f00c1e7ea8786ddf6366d9e803
+  version: 20a17af7bd0e4f36067f15aa96b4c1ebf1e4b3de
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
