@@ -22,6 +22,7 @@ import (
 type Environment struct {
 	InventoryService    string
 	UnifiedFleetService string
+	SwarmingService     string
 }
 
 // Prod is the environment for prod.
@@ -29,12 +30,14 @@ var Prod = Environment{
 	InventoryService: "cros-lab-inventory.appspot.com",
 	//TODO(eshwarn) : Change it to prod during release
 	UnifiedFleetService: "staging.ufs.api.cr.dev",
+	SwarmingService:     "https://chromeos-swarming.appspot.com/",
 }
 
 // Dev is the environment for dev.
 var Dev = Environment{
 	InventoryService:    "cros-lab-inventory-dev.appspot.com",
 	UnifiedFleetService: "staging.ufs.api.cr.dev",
+	SwarmingService:     "https://chromium-swarm-dev.appspot.com/",
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.

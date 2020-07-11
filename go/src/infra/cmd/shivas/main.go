@@ -19,6 +19,7 @@ import (
 	"infra/cmd/shivas/meta"
 	"infra/cmd/shivas/query"
 	"infra/cmd/shivas/site"
+	sw_cmds "infra/cmd/shivas/swarming/cmds"
 	"infra/cmd/shivas/ufs/cmds/configuration"
 	"infra/cmd/shivas/ufs/cmds/labsetup"
 	q "infra/cmd/shivas/ufs/cmds/query"
@@ -59,6 +60,8 @@ func getApplication() *cli.Application {
 			subcommands.Section("Query Unified Fleet"),
 			q.GetCmd,
 			q.ListCmd,
+			subcommands.Section("State"),
+			sw_cmds.ReserveDutsCmd,
 		},
 	}
 }
