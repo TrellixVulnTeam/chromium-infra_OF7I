@@ -119,11 +119,6 @@ func (c *auditRun) validateArgs(args []string) error {
 // Collect actions to run. If we do not by specified action or all of them if no action specified.
 func (c *auditRun) actions() (string, error) {
 	var a []string
-	if !(c.runVerifyDUTStorage || c.runVerifyServoUSB || c.runVerifyServoFw) {
-		c.runVerifyDUTStorage = true
-		c.runVerifyServoUSB = true
-		c.runVerifyServoFw = true
-	}
 	if c.runVerifyDUTStorage {
 		a = append(a, "verify-dut-storage")
 	}

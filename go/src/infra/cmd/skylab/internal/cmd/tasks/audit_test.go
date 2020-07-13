@@ -16,11 +16,13 @@ func TestActions(t *testing.T) {
 		name string
 		in   auditRun
 		out  string
+		err  bool
 	}{
 		{
-			"all",
+			"default",
 			auditRun{},
-			"verify-dut-storage,verify-servo-usb-drive,verify-servo-fw",
+			"",
+			true,
 		},
 		{
 			"all-2",
@@ -30,6 +32,7 @@ func TestActions(t *testing.T) {
 				runVerifyServoFw:    true,
 			},
 			"verify-dut-storage,verify-servo-usb-drive,verify-servo-fw",
+			false,
 		},
 		{
 			"runVerifyServoUSB",
@@ -37,6 +40,7 @@ func TestActions(t *testing.T) {
 				runVerifyServoUSB: true,
 			},
 			"verify-servo-usb-drive",
+			false,
 		},
 		{
 			"runVerifyDUTStorage",
@@ -44,6 +48,7 @@ func TestActions(t *testing.T) {
 				runVerifyDUTStorage: true,
 			},
 			"verify-dut-storage",
+			false,
 		},
 		{
 			"runVerifyServoFw",
@@ -51,6 +56,7 @@ func TestActions(t *testing.T) {
 				runVerifyServoFw: true,
 			},
 			"verify-servo-fw",
+			false,
 		},
 	}
 	for _, tt := range actionsCases {
@@ -59,9 +65,10 @@ func TestActions(t *testing.T) {
 			t.Parallel()
 			got, err := tt.in.actions()
 			if err != nil {
-				t.Errorf("%q got err %s\n", tt.name, err)
-			}
-			if diff := cmp.Diff(tt.out, got); diff != "" {
+				if !tt.err {
+					t.Errorf("%q got err %s\n", tt.name, err)
+				}
+			} else if diff := cmp.Diff(tt.out, got); diff != "" {
 				t.Errorf("%q output mismatch (-want +got): %s\n", tt.name, diff)
 			}
 		})
