@@ -99,6 +99,7 @@ def ParseDEPSContent(deps_content, keys=('deps', 'deps_os')):
   var = VarImpl(local_scope)
   global_scope = {
       'Var': var.Lookup,
+      'Str': lambda str_value: str_value,
       'vars': {},
       'allowed_hosts': [],
       'deps': {},
