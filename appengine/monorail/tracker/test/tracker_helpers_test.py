@@ -1670,6 +1670,211 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     self.config.field_defs = [self.int_fd]
     self.services.config.StoreConfig('cnxn', self.config)
 
+  def testApplyAllIssueChanges(self):
+    issue_delta_pairs = []
+    no_change_iid = 78942
+
+    expected_issues_to_update = {}
+    expected_amendments = {}
+    expected_imp_amendments = {}
+    expected_old_owners = {}
+    expected_merged_from_add = {}
+
+    issue_main = _Issue('proj', 100)
+    issue_main_ref = ('proj', issue_main.local_id)
+    issue_main.owner_id = 999
+    issue_main.cc_ids = [111, 222]
+    issue_main.labels = ['dont_touch', 'remove_me']
+
+    expected_main = copy.deepcopy(issue_main)
+    expected_main.owner_id = 888
+    expected_main.cc_ids = [111, 333]
+    expected_main.labels = ['dont_touch', 'add_me']
+    expected_amendments[issue_main.issue_id] = [
+        tracker_bizobj.MakeOwnerAmendment(888, 999),
+        tracker_bizobj.MakeCcAmendment([333], [222]),
+        tracker_bizobj.MakeLabelsAmendment(['add_me'], ['remove_me'])
+    ]
+    expected_old_owners[issue_main.issue_id] = 999
+
+    # blocked_on issues changes setup.
+    bo_add = _Issue('proj', 1)
+    self.services.issue.TestAddIssue(bo_add)
+    expected_bo_add = copy.deepcopy(bo_add)
+    expected_bo_add.blocking_iids = [issue_main.issue_id]
+    expected_issues_to_update[expected_bo_add.issue_id] = expected_bo_add
+    expected_imp_amendments[bo_add.issue_id] = [
+        tracker_bizobj.MakeBlockingAmendment(
+            [issue_main_ref], [], default_project_name='proj')
+    ]
+
+    bo_remove = _Issue('proj', 2)
+    bo_remove.blocking_iids = [issue_main.issue_id]
+    self.services.issue.TestAddIssue(bo_remove)
+    expected_bo_remove = copy.deepcopy(bo_remove)
+    expected_bo_remove.blocking_iids = []
+    expected_issues_to_update[expected_bo_remove.issue_id] = expected_bo_remove
+    expected_imp_amendments[bo_remove.issue_id] = [
+        tracker_bizobj.MakeBlockingAmendment(
+            [], [issue_main_ref], default_project_name='proj')
+    ]
+
+    issue_main.blocked_on_iids = [no_change_iid, bo_remove.issue_id]
+    # By default new blocked_on issues that appear in blocked_on_iids
+    # with no prior rank associated with it are un-ranked and assigned rank 0.
+    # See SortBlockedOn in issue_svc.py.
+    issue_main.blocked_on_ranks = [0, 0]
+    expected_main.blocked_on_iids = [no_change_iid, bo_add.issue_id]
+    expected_main.blocked_on_ranks = [0, 0]
+    expected_amendments[issue_main.issue_id].append(
+        tracker_bizobj.MakeBlockedOnAmendment(
+            [('proj', bo_add.local_id)], [('proj', bo_remove.local_id)],
+            default_project_name='proj'))
+
+    # blocking_issues changes setup.
+    b_add = _Issue('proj', 3)
+    self.services.issue.TestAddIssue(b_add)
+    expected_b_add = copy.deepcopy(b_add)
+    expected_b_add.blocked_on_iids = [issue_main.issue_id]
+    expected_b_add.blocked_on_ranks = [0]
+    expected_issues_to_update[expected_b_add.issue_id] = expected_b_add
+    expected_imp_amendments[b_add.issue_id] = [
+        tracker_bizobj.MakeBlockedOnAmendment(
+            [issue_main_ref], [], default_project_name='proj')
+    ]
+
+    b_remove = _Issue('proj', 4)
+    b_remove.blocked_on_iids = [issue_main.issue_id]
+    self.services.issue.TestAddIssue(b_remove)
+    expected_b_remove = copy.deepcopy(b_remove)
+    expected_b_remove.blocked_on_iids = []
+    # Test we can process delta changes and impact changes.
+    delta_b_remove = tracker_pb2.IssueDelta(labels_add=['more_chickens'])
+    expected_b_remove.labels = ['more_chickens']
+    issue_delta_pairs.append((b_remove, delta_b_remove))
+    expected_issues_to_update[expected_b_remove.issue_id] = expected_b_remove
+    expected_imp_amendments[b_remove.issue_id] = [
+        tracker_bizobj.MakeBlockedOnAmendment(
+            [], [issue_main_ref], default_project_name='proj')
+    ]
+    expected_amendments[b_remove.issue_id] = [
+        tracker_bizobj.MakeLabelsAmendment(['more_chickens'], [])
+    ]
+
+    issue_main.blocking_iids = [no_change_iid, b_remove.issue_id]
+    expected_main.blocking_iids = [no_change_iid, b_add.issue_id]
+    expected_amendments[issue_main.issue_id].append(
+        tracker_bizobj.MakeBlockingAmendment(
+            [('proj', b_add.local_id)], [('proj', b_remove.local_id)],
+            default_project_name='proj'))
+
+    # Merged issues changes setup.
+    merge_remove = _Issue('proj', 5)
+    self.services.issue.TestAddIssue(merge_remove)
+    expected_merge_remove = copy.deepcopy(merge_remove)
+    expected_issues_to_update[
+        expected_merge_remove.issue_id] = expected_merge_remove
+    expected_imp_amendments[merge_remove.issue_id] = [
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [], [issue_main_ref], default_project_name='proj')
+    ]
+
+    merge_add = _Issue('proj', 6)
+    self.services.issue.TestAddIssue(merge_add)
+    expected_merge_add = copy.deepcopy(merge_add)
+    # We are adding 333 and removing 222 in issue_main with delta_main.
+    expected_merge_add.cc_ids = [expected_main.owner_id, 333, 111]
+    expected_merged_from_add[expected_merge_add.issue_id] = [
+        issue_main.issue_id
+    ]
+    expected_issues_to_update[expected_merge_add.issue_id] = expected_merge_add
+    expected_imp_amendments[merge_add.issue_id] = [
+        tracker_bizobj.MakeCcAmendment(expected_merge_add.cc_ids, []),
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [issue_main_ref], [], default_project_name='proj')
+    ]
+
+    issue_main.merged_into = merge_remove.issue_id
+    expected_main.merged_into = merge_add.issue_id
+    expected_amendments[issue_main.issue_id].append(
+        tracker_bizobj.MakeMergedIntoAmendment(
+            [('proj', merge_add.local_id)], [('proj', merge_remove.local_id)],
+            default_project_name='proj'))
+
+    self.services.issue.TestAddIssue(issue_main)
+    expected_issues_to_update[expected_main.issue_id] = expected_main
+
+
+    # Issues we'll put in delta_main.*_remove fields that aren't in issue_main.
+    # These issues should not show up in issues_to_update.
+    missing_1 = _Issue('proj', 404)
+    expected_missing_1 = copy.deepcopy(missing_1)
+    self.services.issue.TestAddIssue(missing_1)
+    missing_2 = _Issue('proj', 405)
+    self.services.issue.TestAddIssue(missing_2)
+    expected_missing_2 = copy.deepcopy(missing_2)
+
+    delta_main = tracker_pb2.IssueDelta(
+        owner_id=888,
+        cc_ids_remove=[222, 404], cc_ids_add=[333],
+        labels_remove=['remove_me', 'remove_404'], labels_add=['add_me'],
+        merged_into=merge_add.issue_id,
+        blocked_on_add=[bo_add.issue_id],
+        blocked_on_remove=[bo_remove.issue_id, missing_1.issue_id],
+        blocking_add=[b_add.issue_id],
+        blocking_remove=[b_remove.issue_id, missing_2.issue_id])
+    issue_delta_pairs.append((issue_main, delta_main))
+
+    actual_tuple = tracker_helpers.ApplyAllIssueChanges(
+        self.cnxn, issue_delta_pairs, self.services)
+
+    expected_tuple = tracker_helpers._IssueChangesTuple(
+        expected_issues_to_update,
+        expected_merged_from_add,
+        expected_amendments,
+        expected_imp_amendments,
+        expected_old_owners)
+    self.assertEqual(actual_tuple, expected_tuple)
+
+    self.assertEqual(missing_1, expected_missing_1)
+    self.assertEqual(missing_2, expected_missing_2)
+
+  def testApplyAllIssueChanges_NOOP(self):
+    """Check we can ignore issue-delta pairs that are NOOP."""
+    noop_issue = _Issue('proj', 1)
+    bo_add_noop = _Issue('proj', 2)
+    bo_remove_noop = _Issue('proj', 3)
+
+    noop_issue.owner_id = 111
+    noop_issue.cc_ids = [222]
+    noop_issue.blocked_on_iids = [bo_add_noop.issue_id]
+    bo_add_noop.blocking_iids = [noop_issue.issue_id]
+
+    self.services.issue.TestAddIssue(noop_issue)
+    self.services.issue.TestAddIssue(bo_add_noop)
+    self.services.issue.TestAddIssue(bo_remove_noop)
+    expected_noop_issue = copy.deepcopy(noop_issue)
+    noop_delta = tracker_pb2.IssueDelta(
+        owner_id=noop_issue.owner_id,
+        cc_ids_add=noop_issue.cc_ids, cc_ids_remove=[333],
+        blocked_on_add=noop_issue.blocked_on_iids,
+        blocked_on_remove=[bo_remove_noop.issue_id])
+    issue_delta_pairs = [(noop_issue, noop_delta)]
+
+    actual_tuple = tracker_helpers.ApplyAllIssueChanges(
+        self.cnxn, issue_delta_pairs, self.services)
+    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {})
+    self.assertEqual(actual_tuple, expected_tuple)
+
+    self.assertEqual(noop_issue, expected_noop_issue)
+
+  def testApplyAllIssueChanges_Empty(self):
+    issue_delta_pairs = []
+    actual_tuple = tracker_helpers.ApplyAllIssueChanges(
+        self.cnxn, issue_delta_pairs, self.services)
+    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {})
+    self.assertEqual(actual_tuple, expected_tuple)
+
   def testGroupUniqueDeltaIssues(self):
     """We can identify unique IssueDeltas and group Issues by their deltas."""
     issue_1 = _Issue('proj', 1)

@@ -1243,6 +1243,81 @@ def _GetEnumFieldValuesAndDocstrings(field_def, config):
   return tuples
 
 
+# _IssueChangesTuple is returned by ApplyAllIssueChanges() and is used to bundle
+# the updated issues. resulting amendments, and other information needed by the
+# called to process the changes in the DB and send notifications.
+_IssueChangesTuple = collections.namedtuple(
+    '_IssueChangesTuple', [
+        'issues_to_update_dict', 'merged_from_add_by_iid', 'amendments_by_iid',
+        'imp_amendments_by_iid', 'old_owners_by_iid'
+    ])
+# type: (Mapping[int, Issue], DefaultDict[int, Sequence],
+#     Mapping[int, Amendment], Mapping[int, Amendment], Mapping[int, int])
+#     -> None
+
+
+def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
+  # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services) ->
+  #     IssueChangesTuple
+  """Modify the given issues with the given deltas and impacted issues in RAM.
+
+    Filter rules are not applied in this method.
+    This method implements phases 3 and 4 of the process for modifying issues.
+    See WorkEnv.ModifyIssues() for other phases and overall process.
+
+    Args:
+      cnxn: MonorailConnection object.
+      issue_delta_pairs: List of tuples that couple Issues with the IssueDeltas
+          that represent the updates we want to make to each Issue.
+      services: Services object for connection to backend services.
+
+    Returns:
+      An _IssueChangesTuple named tuple.
+  """
+
+  impacted_tracker = _IssueChangeImpactedIssues()
+  project_ids = {issue.project_id for issue, _delta in issue_delta_pairs}
+  configs_by_pid = services.config.GetProjectConfigs(cnxn, list(project_ids))
+
+  # Track issues which have been modified in RAM and will need to
+  # be updated in the DB.
+  issues_to_update_dict = {}
+
+  amendments_by_iid = {}
+  old_owners_by_iid = {}
+  # PHASE 3: Update the main issues in RAM (not indirectly, impacted issues).
+  for issue, delta in issue_delta_pairs:
+    if issue.owner_id and issue.owner_id != delta.owner_id:
+      old_owners_by_iid[issue.issue_id] = issue.owner_id
+    impacted_tracker.TrackImpactedIssues(issue, delta)
+    config = configs_by_pid.get(issue.project_id)
+    amendments, _impacted_iids = tracker_bizobj.ApplyIssueDelta(
+        cnxn, services.issue, issue, delta, config)
+    if amendments:
+      issues_to_update_dict[issue.issue_id] = issue
+      amendments_by_iid[issue.issue_id] = amendments
+
+  # PHASE 4: Update impacted issues in RAM.
+  imp_amendments_by_iid = {}
+  impacted_iids = impacted_tracker.ComputeAllImpactedIIDs()
+  for issue_id in impacted_iids:
+    # Changes made to an impacted issue should be on top of changes
+    # made to it in PHASE 3 where it might have been a 'main' issue.
+    issue = issues_to_update_dict.get(
+        issue_id, services.issue.GetIssue(cnxn, issue_id))
+
+    # Apply impacted changes.
+    amendments = impacted_tracker.ApplyImpactedIssueChanges(
+        cnxn, issue, services.issue)
+    if amendments:
+      imp_amendments_by_iid[issue.issue_id] = amendments
+      issues_to_update_dict[issue.issue_id] = issue
+
+  return _IssueChangesTuple(
+      issues_to_update_dict, impacted_tracker.merged_from_add,
+      amendments_by_iid, imp_amendments_by_iid, old_owners_by_iid)
+
+
 def GroupUniqueDeltaIssues(issue_delta_pairs):
   # type: (Tuple[Issue, IssueDelta]) -> (
   #     Sequence[IssueDelta], Sequence[Sequence[Issue]])
@@ -1456,8 +1531,8 @@ class _IssueChangeImpactedIssues():
         issue_service)
 
     # Process changes in merged issues.
-    merged_from_add = self.merged_from_add[issue_id]
-    merged_from_remove = self.merged_from_remove[issue_id]
+    merged_from_add = self.merged_from_add.get(issue_id, [])
+    merged_from_remove = self.merged_from_remove.get(issue_id, [])
 
     # Merge ccs into impacted_issue from all merged issues.
     if merged_from_add:

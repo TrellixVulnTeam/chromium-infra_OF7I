@@ -1699,7 +1699,9 @@ class WorkEnv(object):
 
     # PHASE 2: Organize data. tracker_helpers.GroupUniqueDeltaIssues()
 
-    # PHASE 3-5: implemented in tracker_helpers.ModifyIssuePBs.
+    # PHASE 3-4: implemented in tracker_helpers.ApplyAllIssueChanges.
+
+    # PHASE 5: Apply filter rules.
 
     # PHASE 6: Check and update attachments quota
     # UpdateIssues, CreateIssueComments, combine merged_into starrers
