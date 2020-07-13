@@ -74,7 +74,7 @@ class UserTest(testing.AppengineTestCase):
     )
 
   def get_role(self, bucket_id):
-    return user.get_role_async(bucket_id).get_result()
+    return user.get_role_async_deprecated(bucket_id).get_result()
 
   @mock.patch('components.auth.is_group_member', autospec=True)
   def test_get_role(self, is_group_member):
@@ -173,7 +173,7 @@ class UserTest(testing.AppengineTestCase):
     self.assertIsNone(user.get_accessible_buckets_async().get_result())
 
   def mock_role(self, role):
-    self.patch('user.get_role_async', return_value=future(role))
+    self.patch('user.get_role_async_deprecated', return_value=future(role))
 
   def can(self, action):
     return user.can_async('project/bucket', action).get_result()
@@ -209,6 +209,23 @@ class UserTest(testing.AppengineTestCase):
     build = test_util.build()
     self.assertTrue(user.can_view_build_async(build).get_result())
     self.assertFalse(user.can_lease_build_async(build).get_result())
+
+  def test_permitted_actions_async_no_roles(self):
+    self.mock_role(None)
+    self.assertEqual(
+        user.permitted_actions_async('project/bucket').get_result(),
+        (),
+    )
+
+  def test_permitted_actions_async_some_role(self):
+    self.mock_role(Acl.READER)
+    self.assertEqual(
+        user.permitted_actions_async('project/bucket').get_result(),
+        (
+            user.Action.VIEW_BUILD, user.Action.SEARCH_BUILDS,
+            user.Action.ACCESS_BUCKET
+        ),
+    )
 
   @mock.patch('user.auth.delegate_async', autospec=True)
   def test_delegate_async(self, delegate_async):

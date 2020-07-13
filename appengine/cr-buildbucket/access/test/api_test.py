@@ -106,7 +106,3 @@ class AccessApiTest(testing.AppengineTestCase):
         set(resource.actions.keys()),
         {action.name for action in user.ACTION_DESCRIPTIONS.keys()},
     )
-    self.assertEqual(
-        set(resource.roles.keys()),
-        set(Acl.Role.keys()),
-    )

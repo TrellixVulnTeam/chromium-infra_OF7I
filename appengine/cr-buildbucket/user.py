@@ -53,8 +53,6 @@ class Action(messages.Enum):
   SET_NEXT_NUMBER = 12
 
 
-_action_dict = Action.to_dict()
-
 # Maps an Action to a description.
 ACTION_DESCRIPTIONS = {
     Action.ADD_BUILD:
@@ -78,15 +76,6 @@ ACTION_DESCRIPTIONS = {
     Action.SET_NEXT_NUMBER:
         'Set the number for the next build in a builder.',
 }
-# Maps a project_config_pb2.Acl.Role to a description.
-ROLE_DESCRIPTIONS = {
-    project_config_pb2.Acl.READER:
-        'Can do read-only operations, such as search for builds.',
-    project_config_pb2.Acl.SCHEDULER:
-        'Same as READER + can schedule and cancel builds.',
-    project_config_pb2.Acl.WRITER:
-        'Can do all write operations.',
-}
 
 # Maps an Action to a minimum project_config_pb2.Acl.Role required for the
 # action.
@@ -108,8 +97,9 @@ ACTION_TO_MIN_ROLE = {
 
 # Maps a project_config_pb2.Acl.Role to a set of permitted Actions.
 ROLE_TO_ACTIONS = {
-    r: {a for a, mr in ACTION_TO_MIN_ROLE.iteritems() if r >= mr
-       } for r in project_config_pb2.Acl.Role.values()
+    r:
+    tuple(sorted({a for a, mr in ACTION_TO_MIN_ROLE.iteritems() if r >= mr}))
+    for r in project_config_pb2.Acl.Role.values()
 }
 
 ################################################################################
@@ -150,7 +140,7 @@ def can_update_build_async():  # pragma: no cover
 ## Implementation.
 
 
-def get_role_async(bucket_id):
+def get_role_async_deprecated(bucket_id):
   """Returns the most permissive role of the current user in |bucket_id|.
 
   The most permissive role is the role that allows most actions, e.g. WRITER
@@ -208,8 +198,17 @@ def get_role_async(bucket_id):
 def can_async(bucket_id, action):
   config.validate_bucket_id(bucket_id)
   assert isinstance(action, Action)
-  role = yield get_role_async(bucket_id)
+  role = yield get_role_async_deprecated(bucket_id)
   raise ndb.Return(role is not None and role >= ACTION_TO_MIN_ROLE[action])
+
+
+@ndb.tasklet
+def permitted_actions_async(bucket_id):
+  """Returns a tuple of actions (as Action enums) permitted to the caller."""
+  role = yield get_role_async_deprecated(bucket_id)
+  if role is None:
+    raise ndb.Return(())
+  raise ndb.Return(ROLE_TO_ACTIONS[role])
 
 
 def get_accessible_buckets_async():

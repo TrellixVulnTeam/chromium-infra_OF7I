@@ -12,18 +12,10 @@ from components import utils
 from access import access_pb2
 from access import access_prpc_pb2
 from legacy import api_common
-from go.chromium.org.luci.buildbucket.proto import project_config_pb2
+
 import user
 
 __all__ = ['AccessServicer']
-
-
-def create_resource_permissions(role):
-  if role is None:
-    return access_pb2.PermittedActionsResponse.ResourcePermissions()
-  return access_pb2.PermittedActionsResponse.ResourcePermissions(
-      actions=sorted(action.name for action in user.ROLE_TO_ACTIONS[role]),
-  )
 
 
 class AccessServicer(object):
@@ -45,12 +37,15 @@ class AccessServicer(object):
     bucket_ids = dict(
         utils.async_apply(request.resource_ids, api_common.to_bucket_id_async)
     )
-    roles = dict(
-        utils.async_apply(bucket_ids.itervalues(), user.get_role_async)
+    actions = dict(
+        utils.async_apply(
+            bucket_ids.itervalues(), user.permitted_actions_async
+        )
     )
     permitted = {
-        rid: create_resource_permissions(roles[bucket_ids[rid]])
-        for rid in request.resource_ids
+        rid: access_pb2.PermittedActionsResponse.ResourcePermissions(
+            actions=sorted(a.name for a in actions[bucket_ids[rid]]),
+        ) for rid in request.resource_ids
     }
     logging.debug('Permitted: %s', permitted)
     return access_pb2.PermittedActionsResponse(
@@ -71,14 +66,7 @@ class AccessServicer(object):
                     for action, desc in user.ACTION_DESCRIPTIONS.iteritems()
                 },
                 roles={
-                    project_config_pb2.Acl.Role.Name(role):
-                    access_pb2.DescriptionResponse.ResourceDescription.Role(
-                        allowed_actions=sorted(
-                            action.name for action in user.ROLE_TO_ACTIONS[role]
-                        ),
-                        comment=description,
-                    )
-                    for role, description in user.ROLE_DESCRIPTIONS.iteritems()
+                    # No longer supported. Nothing is calling this API anyway.
                 },
             )
         ],
