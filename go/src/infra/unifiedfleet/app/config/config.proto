@@ -11,4 +11,20 @@ option go_package = "infra/unifiedfleet/app/config";
 // Config is the configuration data served by luci-config for this app.
 message Config {
   string luci_config_service = 1;
+  OSNetworkConfig cros_network_config = 2;
 }
+
+message OSNetworkConfig {
+  string gitiles_host = 1;
+  string project = 2;
+  string branch = 3;
+
+  message OSNetworkTopology {
+    string name = 1;
+    string remote_path = 2;
+    string sheet_id = 3;
+  }
+
+  repeated OSNetworkTopology cros_network_topology = 4;
+}
+

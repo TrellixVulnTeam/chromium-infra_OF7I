@@ -49,7 +49,20 @@ func testingContext() context.Context {
 	c := gaetesting.TestingContextWithAppID("dev~infra-unified-fleet-system")
 	c = gologger.StdConfig.Use(c)
 	c = logging.SetLevel(c, logging.Debug)
-	c = config.Use(c, &config.Config{})
+	c = config.Use(c, &config.Config{
+		CrosNetworkConfig: &config.OSNetworkConfig{
+			GitilesHost: "test_gitiles",
+			Project:     "test_project",
+			Branch:      "test_branch",
+			CrosNetworkTopology: []*config.OSNetworkConfig_OSNetworkTopology{
+				{
+					Name:       "test_name",
+					RemotePath: "test_git_path",
+					SheetId:    "test_sheet",
+				},
+			},
+		},
+	})
 	datastore.GetTestable(c).Consistent(true)
 	return c
 }
