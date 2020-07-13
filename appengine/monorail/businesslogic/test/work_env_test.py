@@ -65,6 +65,8 @@ class WorkEnvTest(unittest.TestCase):
         spam=fake.SpamService())
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, committer_ids=[111])
+    config = fake.MakeTestConfig(self.project.project_id, [], [])
+    self.services.config.StoreConfig(self.cnxn, config)
     self.admin_user = self.services.user.TestAddUser(
         'admin@example.com', 444)
     self.admin_user.is_site_admin = True
@@ -80,69 +82,16 @@ class WorkEnvTest(unittest.TestCase):
     self.mr = testing_helpers.MakeMonorailRequest(project=self.project)
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
     self.field_def_1_name = 'test_field_1'
-    self.field_def_1 = self._CreateFieldDef(
-        self.project.project_id,
-        self.field_def_1_name,
-        'INT_TYPE',
-        max_value=10)
+    self.field_def_1 = fake.MakeTestFieldDef(
+        1, self.project.project_id, tracker_pb2.FieldTypes.INT_TYPE,
+        field_name=self.field_def_1_name, max_value=10)
+    self.services.config.TestAddFieldDef(self.field_def_1)
     self.PAST_TIME = 12345
     self.dne_project_id = 999
     sorting.InitializeArtValues(self.services)
 
     self.work_env = work_env.WorkEnv(
       self.mr, self.services, 'Testing phase')
-
-  def _CreateFieldDef(
-      self,
-      project_id,
-      field_name,
-      field_type_str,
-      docstring=None,
-      min_value=None,
-      max_value=None,
-      regex=None,
-      needs_member=None,
-      needs_perm=None,
-      grants_perm=None,
-      notify_on=None,
-      date_action_str=None,
-      admin_ids=None,
-      editor_ids=None,
-      is_required=False,
-      is_niche=False,
-      is_multivalued=False,
-      is_phase_field=False,
-      approval_id=None,
-      is_restricted_field=False):
-    """Calls CreateFieldDef with reasonable defaults, returns the ID."""
-    if admin_ids is None:
-      admin_ids = []
-    if editor_ids is None:
-      editor_ids = []
-    return self.services.config.CreateFieldDef(
-        self.cnxn,
-        project_id,
-        field_name,
-        field_type_str,
-        None,
-        None,
-        is_required,
-        is_niche,
-        is_multivalued,
-        min_value,
-        max_value,
-        regex,
-        needs_member,
-        needs_perm,
-        grants_perm,
-        notify_on,
-        date_action_str,
-        docstring,
-        admin_ids,
-        editor_ids,
-        is_phase_field=is_phase_field,
-        approval_id=approval_id,
-        is_restricted_field=is_restricted_field)
 
   def SignIn(self, user_id=111):
     self.mr.auth = authdata.AuthData.FromUserID(
@@ -155,19 +104,16 @@ class WorkEnvTest(unittest.TestCase):
       we._AssertUserCanModifyIssues([], True)
 
   def testAssertUserCanModifyIssues_RestrictedFields(self):
-    restricted_int_fd = tracker_pb2.FieldDef(
-        field_name='int_field',
-        field_id=1,
-        field_type=tracker_pb2.FieldTypes.INT_TYPE,
-        is_restricted_field=True)
-    restricted_enum_fd = tracker_pb2.FieldDef(
+    restricted_int_fd = fake.MakeTestFieldDef(
+        1, 789, tracker_pb2.FieldTypes.INT_TYPE,
+        field_name='int_field', is_restricted_field=True)
+    self.services.config.TestAddFieldDef(restricted_int_fd)
+
+    restricted_enum_fd = fake.MakeTestFieldDef(
+        2, 789, tracker_pb2.FieldTypes.ENUM_TYPE,
         field_name='enum_field',
-        field_id=2,
-        field_type=tracker_pb2.FieldTypes.ENUM_TYPE,
         is_restricted_field=True)
-    config = fake.MakeTestConfig(789, [], [])
-    config.field_defs = [restricted_enum_fd, restricted_int_fd]
-    self.services.config.StoreConfig('cnxn', config)
+    self.services.config.TestAddFieldDef(restricted_enum_fd)
 
     issue = fake.MakeTestIssue(
         789, 1, 'summary', 'Available', self.admin_user.user_id)
@@ -433,34 +379,30 @@ class WorkEnvTest(unittest.TestCase):
           self.project.project_id, '**Field**'))
 
   def testCheckFieldName_FieldAlreadyExists(self):
-    self.services.config.CreateFieldDef(
-        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        [], [])
+    fd = fake.MakeTestFieldDef(
+        1, self.project.project_id, tracker_pb2.FieldTypes.STR_TYPE,
+        field_name='Field')
+    self.services.config.TestAddFieldDef(fd)
     self.SignIn()
     with self.work_env as we:
       self.assertIsNotNone(we.CheckFieldName(
           self.project.project_id, 'Field'))
 
   def testCheckFieldName_FieldIsPrefixOfAnother(self):
-    self.services.config.CreateFieldDef(
-        self.cnxn, self.project.project_id, 'Foo', 'STR_TYPE', None, None, None,
-        None, None, None, None, None, None, None, None, None, None, None, [],
-        [])
-    self.services.config.CreateFieldDef(
-        self.cnxn, self.project.project_id, 'Field-Foo', 'STR_TYPE', None, None,
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        [], [])
+    fd = fake.MakeTestFieldDef(
+        1, self.project.project_id, tracker_pb2.FieldTypes.STR_TYPE,
+        field_name='Field-Foo')
+    self.services.config.TestAddFieldDef(fd)
     self.SignIn()
     with self.work_env as we:
       self.assertIsNotNone(we.CheckFieldName(
           self.project.project_id, 'Field'))
 
   def testCheckFieldName_AnotherFieldIsPrefix(self):
-    self.services.config.CreateFieldDef(
-        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        [], [])
+    fd = fake.MakeTestFieldDef(
+        1, self.project.project_id, tracker_pb2.FieldTypes.STR_TYPE,
+        field_name='Field')
+    self.services.config.TestAddFieldDef(fd)
     self.SignIn()
     with self.work_env as we:
       self.assertIsNotNone(we.CheckFieldName(
@@ -918,22 +860,19 @@ class WorkEnvTest(unittest.TestCase):
 
   def testGetFieldDef_Normal(self):
     """We can get an existing fielddef by field_id."""
-    field_id = self.services.config.CreateFieldDef(
-        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        [], [])
+    fd = fake.MakeTestFieldDef(
+        2, self.project.project_id, tracker_pb2.FieldTypes.STR_TYPE,
+        field_name='Field')
+    self.services.config.TestAddFieldDef(fd)
     config = self.services.config.GetProjectConfig(self.cnxn, 789)
+
     with self.work_env as we:
-      actual = we.GetFieldDef(field_id, self.project)
+      actual = we.GetFieldDef(fd.field_id, self.project)
 
     self.assertEqual(config.field_defs[1], actual)
 
   def testGetFieldDef_NoSuchFieldDef(self):
     """We reject attempts to get a non-existent field."""
-    _field_id = self.services.config.CreateFieldDef(
-        self.cnxn, self.project.project_id, 'Field', 'STR_TYPE', None, None,
-        None, None, None, None, None, None, None, None, None, None, None, None,
-        [], [])
     with self.assertRaises(exceptions.NoSuchFieldDefException):
       with self.work_env as we:
         _actual = we.GetFieldDef(999, self.project)
@@ -1150,7 +1089,7 @@ class WorkEnvTest(unittest.TestCase):
     """We validate field values against field definitions."""
     self.SignIn(user_id=111)
     # field_def_1 has a max of 10.
-    fv = fake.MakeFieldValue(field_id=self.field_def_1, int_value=11)
+    fv = fake.MakeFieldValue(field_id=self.field_def_1.field_id, int_value=11)
     with self.assertRaises(exceptions.InputException):
       with self.work_env as we:
         we.CreateIssue(789, 'sum', 'New', 111, [], [], [fv], [], '')

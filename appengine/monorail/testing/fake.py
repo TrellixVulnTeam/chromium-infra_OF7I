@@ -79,6 +79,23 @@ def Project(
       contributor_ids=contributor_ids)
 
 
+def MakeTestFieldDef(
+    field_id, project_id, field_type, field_name='', applic_type=None,
+    applic_pred=None, is_required=False, is_niche=False, is_multivalued=False,
+    min_value=None, max_value=None, regex=None, needs_member=False,
+    needs_perm=None, grants_perm=None, notify_on=None, date_action_str=None,
+    docstring=None, admin_ids=None, editor_ids=None, approval_id=None,
+    is_phase_field=False, is_restricted_field=False):
+  return  tracker_bizobj.MakeFieldDef(
+        field_id, project_id, field_name, field_type, applic_type, applic_pred,
+        is_required, is_niche, is_multivalued, min_value, max_value, regex,
+        needs_member, needs_perm, grants_perm, notify_on, date_action_str,
+        docstring, False,
+        approval_id=approval_id, is_phase_field=is_phase_field,
+        is_restricted_field=is_restricted_field, admin_ids=admin_ids,
+        editor_ids=editor_ids)
+
+
 def MakePhase(phase_id, name='', rank=0):
   return tracker_pb2.Phase(phase_id=phase_id, name=name, rank=rank)
 
@@ -1171,6 +1188,9 @@ class ConfigService(object):
         label_id: label
         for label, label_id in list(self.label_to_id.items())}
 
+  def TestAddFieldDef(self, fd):
+    self.project_configs[fd.project_id].field_defs.append(fd)
+
   def ExpungeConfig(self, _cnxn, project_id):
     self.expunged_configs.append(project_id)
 
@@ -1316,9 +1336,8 @@ class ConfigService(object):
         field_id, project_id, field_name, field_type, applic_type, applic_pred,
         is_required, is_niche, is_multivalued, min_value, max_value, regex,
         needs_member, needs_perm, grants_perm, notify_on, date_action_str,
-        docstring, False, approval_id, is_phase_field, is_restricted_field)
-    fd.admin_ids = admin_ids
-    fd.editor_ids = editor_ids
+        docstring, False, approval_id, is_phase_field, is_restricted_field,
+        admin_ids=admin_ids, editor_ids=editor_ids)
     config.field_defs.append(fd)
     self.StoreConfig(cnxn, config)
     return field_id

@@ -277,7 +277,9 @@ def MakeFieldDef(
     is_deleted,
     approval_id=None,
     is_phase_field=False,
-    is_restricted_field=False):
+    is_restricted_field=False,
+    admin_ids=None,
+    editor_ids=None):
   """Make a FieldDef PB for the given FieldDef table row tuple."""
   if isinstance(date_action, string_types):
     date_action = date_action.upper()
@@ -309,6 +311,10 @@ def MakeFieldDef(
     fd.needs_perm = needs_perm
   if approval_id is not None:
     fd.approval_id = approval_id
+  if admin_ids:
+    fd.admin_ids = admin_ids
+  if editor_ids:
+    fd.editor_ids = editor_ids
   return fd
 
 
