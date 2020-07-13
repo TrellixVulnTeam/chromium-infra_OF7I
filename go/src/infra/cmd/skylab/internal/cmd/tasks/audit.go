@@ -35,6 +35,7 @@ By default all actions runnings. To run specified action provide it via flags.`,
 		c.Flags.BoolVar(&c.runVerifyServoUSB, "run-verify-servo-usb", false, "Run the verifier for servo usb drive.")
 		c.Flags.BoolVar(&c.runVerifyDUTStorage, "run-verify-dut-storage", false, "Run the verifier for DUT storage.")
 		c.Flags.BoolVar(&c.runVerifyServoFw, "run-verify-servo-fw", false, "Run the verifier for servo firmware update.")
+		c.Flags.BoolVar(&c.runFlashServoKeyboardMap, "run-flash-servo-keyboard-map", false, "Run the action to flash Servo keyboard map to the DUT.")
 		return c
 	},
 }
@@ -44,10 +45,11 @@ type auditRun struct {
 	authFlags authcli.Flags
 	envFlags  skycmdlib.EnvFlags
 
-	expirationMins      int
-	runVerifyServoUSB   bool
-	runVerifyDUTStorage bool
-	runVerifyServoFw    bool
+	expirationMins           int
+	runVerifyServoUSB        bool
+	runVerifyDUTStorage      bool
+	runVerifyServoFw         bool
+	runFlashServoKeyboardMap bool
 }
 
 func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -127,6 +129,9 @@ func (c *auditRun) actions() (string, error) {
 	}
 	if c.runVerifyServoFw {
 		a = append(a, "verify-servo-fw")
+	}
+	if c.runFlashServoKeyboardMap {
+		a = append(a, "flash-servo-keyboard-map")
 	}
 	if len(a) == 0 {
 		return "", errors.Reason("No actions to run").Err()

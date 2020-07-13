@@ -58,6 +58,14 @@ func TestActions(t *testing.T) {
 			"verify-servo-fw",
 			false,
 		},
+		{
+			"runFlashServoKeyboardMap",
+			auditRun{
+				runFlashServoKeyboardMap: true,
+			},
+			"flash-servo-keyboard-map",
+			false,
+		},
 	}
 	for _, tt := range actionsCases {
 		tt := tt
