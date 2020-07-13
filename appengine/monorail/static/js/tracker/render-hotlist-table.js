@@ -129,7 +129,7 @@ function enter_detector(e) {
  * @param {dict} cell dictionary {'values': [], .. } of relevant cell info.
  * @param {string=} projectName The name of the project the summary references.
 */
-function createSummaryCell(td, cell) {
+function createSummaryCell(td, cell, projectName) {
   // TODO(jojwang): detect when links are present and make clicking on cell go
   // to link, not issue details page
   td.setAttribute('style', 'width:100%');
