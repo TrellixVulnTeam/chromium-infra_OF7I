@@ -36,6 +36,7 @@ By default all actions runnings. To run specified action provide it via flags.`,
 		c.Flags.BoolVar(&c.runVerifyDUTStorage, "run-verify-dut-storage", false, "Run the verifier for DUT storage.")
 		c.Flags.BoolVar(&c.runVerifyServoFw, "run-verify-servo-fw", false, "Run the verifier for servo firmware update.")
 		c.Flags.BoolVar(&c.runFlashServoKeyboardMap, "run-flash-servo-keyboard-map", false, "Run the action to flash Servo keyboard map to the DUT.")
+		c.Flags.BoolVar(&c.runVerifyDutMacaddr, "run-verify-dut-macaddr", false, "Ru the verifier to check and update mac address of DUT NIC to Servo.")
 		return c
 	},
 }
@@ -50,6 +51,7 @@ type auditRun struct {
 	runVerifyDUTStorage      bool
 	runVerifyServoFw         bool
 	runFlashServoKeyboardMap bool
+	runVerifyDutMacaddr      bool
 }
 
 func (c *auditRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -132,6 +134,9 @@ func (c *auditRun) actions() (string, error) {
 	}
 	if c.runFlashServoKeyboardMap {
 		a = append(a, "flash-servo-keyboard-map")
+	}
+	if c.runVerifyDutMacaddr {
+		a = append(a, "verify-dut-macaddr")
 	}
 	if len(a) == 0 {
 		return "", errors.Reason("No actions to run").Err()

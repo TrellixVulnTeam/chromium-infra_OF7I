@@ -66,6 +66,14 @@ func TestActions(t *testing.T) {
 			"flash-servo-keyboard-map",
 			false,
 		},
+		{
+			"runVerifyDutMacaddr",
+			auditRun{
+				runVerifyDutMacaddr: true,
+			},
+			"verify-dut-macaddr",
+			false,
+		},
 	}
 	for _, tt := range actionsCases {
 		tt := tt
