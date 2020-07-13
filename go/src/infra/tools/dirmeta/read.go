@@ -44,12 +44,10 @@ func ReadMetadata(dir string) (*dirmetapb.Metadata, error) {
 
 // ReadMapping reads metadata from the given directory tree.
 //
-// The returned metadata is neither reduced, not expanded. It represents
-// data from the files as is.
+// The returned metadata represents data from the files as is.
+// In particular, it is neither reduced, nor represents inherited metadata.
 func ReadMapping(root string) (*Mapping, error) {
-	ret := &Mapping{
-		Dirs: map[string]*dirmetapb.Metadata{},
-	}
+	ret := NewMapping(0)
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
 			return nil

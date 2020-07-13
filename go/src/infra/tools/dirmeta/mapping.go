@@ -18,68 +18,89 @@ import (
 // It wraps the corresponding protobuf message and adds utility functions.
 type Mapping dirmetapb.Mapping
 
+// NewMapping initializes an empty mapping.
+func NewMapping(size int) *Mapping {
+	return &Mapping{
+		Dirs: make(map[string]*dirmetapb.Metadata, size),
+	}
+}
+
 // Proto converts m back to the protobuf message.
 func (m *Mapping) Proto() *dirmetapb.Mapping {
 	return (*dirmetapb.Mapping)(m)
 }
 
-// Reduce returns a new mapping with all redundancies removed.
-func (m *Mapping) Reduce() *Mapping {
-	panic("not implemented")
+// Clone returns a deep copy of m.
+func (m *Mapping) Clone() *Mapping {
+	return (*Mapping)(proto.Clone(m.Proto()).(*dirmetapb.Mapping))
 }
 
-// Expand returns a new mapping where each dir has attributes inherited
-// from the parent dir.
-func (m *Mapping) Expand() *Mapping {
-	ret := &Mapping{
-		Dirs: make(map[string]*dirmetapb.Metadata, len(m.Dirs)),
-	}
-
-	// nearestAncestor returns metadata of the nearest ancestor in ret.
-	nearestAncestor := func(dir string) *dirmetapb.Metadata {
-		for {
-			parent := path.Dir(dir)
-			if parent == dir {
-				// We have reached the root.
-				return nil
-			}
-			dir = parent
-
-			if meta, ok := ret.Dirs[dir]; ok {
-				return meta
-			}
-		}
-	}
-
+// ComputeAll computes full metadata for each dir.
+func (m *Mapping) ComputeAll() {
 	// Process directories in the shorest-path to longest-path order,
 	// such that, when computing the expanded metadata for a given directory,
 	// we only need to check the nearest ancestor.
-	for _, dir := range m.dirsSortedByLength() {
-		if ancestor := nearestAncestor(dir); ancestor == nil {
-			ret.Dirs[dir] = m.Dirs[dir]
-		} else {
-			meta := proto.Clone(ancestor).(*dirmetapb.Metadata)
-			proto.Merge(meta, m.Dirs[dir])
-			ret.Dirs[dir] = meta
-		}
+	for _, dir := range m.keysByLength() {
+		meta := cloneMD(m.nearestAncestor(dir))
+		Merge(meta, m.Dirs[dir])
+		m.Dirs[dir] = meta
 	}
-
-	return ret
 }
 
-// dirsSortedByLength returns directory names sorted by length.
-// Directory "." is treated as shortest of all.
-func (m *Mapping) dirsSortedByLength() []string {
+// nearestAncestor returns metadata of the nearest ancestor.
+func (m *Mapping) nearestAncestor(dir string) *dirmetapb.Metadata {
+	for {
+		parent := path.Dir(dir)
+		if parent == dir {
+			// We have reached the root.
+			return nil
+		}
+		dir = parent
+
+		if meta, ok := m.Dirs[dir]; ok {
+			return meta
+		}
+	}
+}
+
+// keysByLength returns keys sorted by length.
+// Key "." is treated as shortest of all.
+func (m *Mapping) keysByLength() []string {
 	ret := make([]string, 0, len(m.Dirs))
 	for k := range m.Dirs {
 		ret = append(ret, k)
 	}
-	sort.Slice(ret, func(i, j int) bool {
+
+	sortKey := func(dirKey string) int {
 		// "." is considered shortest of all.
-		if ret[i] == "." {
-			return true
+		if dirKey == "." {
+			return -1
 		}
-		return len(ret[i]) < len(ret[j])
+		return len(dirKey)
+	}
+	sort.Slice(ret, func(i, j int) bool {
+		return sortKey(ret[i]) < sortKey(ret[j])
 	})
 	return ret
+}
+
+// Merge merges metadata from src to dst, where dst is metadata inherited from
+// ancestors and src contains directory-specific metadata.
+// Does nothing is src is nil.
+//
+// The current implementation is just proto.Merge, but it may change in the
+// future.
+func Merge(dst, src *dirmetapb.Metadata) {
+	if src != nil {
+		proto.Merge(dst, src)
+	}
+}
+
+// cloneMD returns a deep copy of meta.
+// If md is nil, returns a new message.
+func cloneMD(md *dirmetapb.Metadata) *dirmetapb.Metadata {
+	if md == nil {
+		return &dirmetapb.Metadata{}
+	}
+	return proto.Clone(md).(*dirmetapb.Metadata)
 }

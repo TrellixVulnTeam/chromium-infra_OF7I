@@ -34,9 +34,7 @@ const _ = proto.ProtoPackageIsVersion4
 // A mapping may contain redundant information. For example, it is redundant to
 // specify the same value for the same metadata attribute in both "a/" and
 // "a/b/".
-// A mapping is called "reduced" if it has no redundancies, and "expanded"
-// if all information is duplicated for each directory with DIR_METADATA file.
-// Go package "dirmeta" contains functions to convert between the two.
+// A mapping is called "reduced" if it has no redundancies.
 type Mapping struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

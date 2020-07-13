@@ -5,19 +5,30 @@
 package dirmeta
 
 import (
-	dirmetapb "infra/tools/dirmeta/proto"
 	"testing"
+
+	dirmetapb "infra/tools/dirmeta/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
-func TestExpand(t *testing.T) {
+func TestComputeAll(t *testing.T) {
 	t.Parallel()
 
-	Convey(`Expand`, t, func() {
+	Convey(`Nearest ancestor`, t, func() {
+		m := &Mapping{
+			Dirs: map[string]*dirmetapb.Metadata{
+				".": {TeamEmail: "0"},
+			},
+		}
+		So(m.nearestAncestor("a/b/c").TeamEmail, ShouldEqual, "0")
+		So(m.nearestAncestor("."), ShouldBeNil)
+	})
+
+	Convey(`ComputeAll`, t, func() {
 		Convey(`Works`, func() {
-			input := &Mapping{
+			m := &Mapping{
 				Dirs: map[string]*dirmetapb.Metadata{
 					".": {
 						TeamEmail: "team@example.com",
@@ -37,10 +48,10 @@ func TestExpand(t *testing.T) {
 					},
 				},
 			}
-			actual := input.Expand()
-			So(actual.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
+			m.ComputeAll()
+			So(m.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
 				Dirs: map[string]*dirmetapb.Metadata{
-					".": input.Dirs["."], // did not change
+					".": m.Dirs["."], // did not change
 					"a": {
 						TeamEmail: "team-email@chromium.org",
 						Wpt:       &dirmetapb.WPT{Notify: true},
@@ -54,15 +65,15 @@ func TestExpand(t *testing.T) {
 		})
 
 		Convey(`Deep nesting`, func() {
-			input := &Mapping{
+			m := &Mapping{
 				Dirs: map[string]*dirmetapb.Metadata{
 					".":   {TeamEmail: "team@example.com"},
 					"a":   {},
 					"a/b": {},
 				},
 			}
-			actual := input.Expand()
-			So(actual.Dirs["a/b"].TeamEmail, ShouldEqual, "team@example.com")
+			m.ComputeAll()
+			So(m.Dirs["a/b"].TeamEmail, ShouldEqual, "team@example.com")
 		})
 
 		Convey(`No root`, func() {
@@ -72,8 +83,10 @@ func TestExpand(t *testing.T) {
 					"b": {TeamEmail: "b"},
 				},
 			}
-			actual := input.Expand()
-			So(actual.Proto(), ShouldResembleProto, input.Proto())
+
+			actual := input.Clone()
+			actual.ComputeAll()
+			So(input.Proto(), ShouldResembleProto, input.Proto())
 		})
 	})
 }
