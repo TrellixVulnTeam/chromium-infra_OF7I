@@ -79,8 +79,10 @@ test_no_coverage:
 
 coverage:
 	@echo "Running tests + HTML coverage report in ~/monorail-coverage:"
-	../../test.py test appengine/monorail --html-report ~/monorail-coverage
+	../../test.py test appengine/monorail --html-report ~/monorail-coverage --coveragerc appengine/monorail/.coveragerc
 
+# Shows coverage on the tests themselves, helps illuminate when we have test
+# methods that aren't used.
 test_coverage:
 	@echo "Running tests + HTML coverage report (for tests) in ~/monorail-test-coverage:"
 	../../test.py test appengine/monorail --html-report ~/monorail-test-coverage --coveragerc appengine/monorail/.testcoveragerc
