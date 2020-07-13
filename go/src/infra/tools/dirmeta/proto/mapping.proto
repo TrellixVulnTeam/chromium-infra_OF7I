@@ -11,11 +11,6 @@ option go_package = "infra/tools/dirmeta/proto;dirmetapb";
 import "infra/tools/dirmeta/proto/dir_metadata.proto";
 
 // Maps from a directory to its metadata.
-//
-// A mapping may contain redundant information. For example, it is redundant to
-// specify the same value for the same metadata attribute in both "a/" and
-// "a/b/".
-// A mapping is called "reduced" if it has no redundancies.
 message Mapping {
   // Dirs maps from a directory to its metadata.
   //
@@ -26,4 +21,26 @@ message Mapping {
   // The root must be known from the context where Mapping is used and is not
   // part of the this message.
   map<string, Metadata> dirs = 1;
+}
+
+// A known form of the Mapping.
+enum MappingForm {
+  // The mapping represents the metadata files as is.
+  // In particular, a Dirs entry exists iff the directory defines metadata.
+  // The metadata of the entry does not include inherited metadata.
+  ORIGINAL = 0;
+
+  // Like ORIGINAL, but each entry includes inherited metadata.
+  COMPUTED = 1;
+
+  // Like COMPUTED, but a Dirs entry exists even if the directory does not
+  // define any metadata.
+  FULL = 2;
+
+  // The mapping contains no redundant information.
+  // For example, it is redundant to specify the same value for the same
+  // metadata attribute in both "a" and "a/b".
+  // It is also redundant to have an Dirs entry with empty metadata.
+  // This is the most compact form without a dataloss.
+  REDUCED = 3;
 }
