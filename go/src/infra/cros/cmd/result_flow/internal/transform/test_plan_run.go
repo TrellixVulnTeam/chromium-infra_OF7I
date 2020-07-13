@@ -91,6 +91,7 @@ func (c *ctpBuild) ToTestPlanRuns(ctx context.Context) []*analytics.TestPlanRun 
 func (c *ctpBuild) genTestPlanRun(key string) *analytics.TestPlanRun {
 	return &analytics.TestPlanRun{
 		Uid:           c.createTestPlanRunUID(key),
+		BuildId:       c.id,
 		Suite:         c.getSuiteName(key),
 		ExecutionUrl:  inferExecutionURL(c.bb, c.id),
 		DutPool:       c.getDutPool(key),

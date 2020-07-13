@@ -84,6 +84,7 @@ func genFakeTestRuns(label string, finished bool) []*analytics.TestPlanRun {
 	runs := []*analytics.TestPlanRun{
 		{
 			Uid:           genFakeUID(label),
+			BuildId:       fakeBuildID,
 			Suite:         genFakeSuite(label),
 			ExecutionUrl:  genFakeExecutionURL(),
 			DutPool:       genFakePool(label),
@@ -185,6 +186,7 @@ func genFakeTestPlatformRequest(board string) *test_platform.Request {
 
 func checkEquality(want, got *analytics.TestPlanRun) {
 	So(want.Uid, ShouldEqual, got.Uid)
+	So(want.BuildId, ShouldEqual, got.BuildId)
 	So(want.Suite, ShouldEqual, got.Suite)
 	So(want.ExecutionUrl, ShouldEqual, got.ExecutionUrl)
 	So(want.DutPool, ShouldEqual, got.DutPool)
