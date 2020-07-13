@@ -74,6 +74,7 @@ from services import tracker_fulltext
 from sitewide import sitewide_helpers
 from tracker import field_helpers
 from tracker import rerank_helpers
+from tracker import field_helpers
 from tracker import tracker_bizobj
 from tracker import tracker_constants
 from tracker import tracker_helpers
@@ -1112,6 +1113,31 @@ class WorkEnv(object):
     # Phase 5: Create issue by calling work_env.CreateIssue
 
     return tracker_pb2.Issue()
+
+  def MakeIssue(self, issue, description, send_email):
+    # type: (tracker_pb2.Issue, str, bool) -> tracker_pb2.Issue
+    """Check restricted field permissions and create issue."""
+    config = self.GetProjectConfig(issue.project_id)
+    project = self.GetProject(issue.project_id)
+    self._AssertUserCanEditFieldsAndEnumMaskedLabels(
+        project, config, [fv.field_id for fv in issue.field_values],
+        issue.labels)
+    issue, _comment = self.CreateIssue(
+        issue.project_id,
+        issue.summary,
+        issue.status,
+        issue.owner_id,
+        issue.cc_ids,
+        issue.labels,
+        issue.field_values,
+        issue.component_ids,
+        description,
+        blocked_on=issue.blocked_on_iids,
+        blocking=issue.blocking_iids,
+        dangling_blocked_on=issue.dangling_blocked_on_refs,
+        dangling_blocking=issue.dangling_blocking_refs,
+        send_email=send_email)
+    return issue
 
   def MoveIssue(self, issue, target_project):
     """Move issue to the target_project.

@@ -1210,9 +1210,116 @@ class WorkEnvTest(unittest.TestCase):
           raise_filter_errors=False)
     self.assertEqual(len(actual_issue.component_ids), 0)
 
-  def testCreateIssueFromDelta(self):
+  def testMakeIssueFromDelta(self):
     # TODO(crbug/monorail/7197): implement tests
     pass
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testMakeIssue_Normal(self, _fake_pasicn, _fake_pasibn):
+    self.SignIn(user_id=111)
+    fd_id = self.services.config.CreateFieldDef(
+        self.cnxn,
+        self.project.project_id,
+        'Restricted-Foo',
+        'STR_TYPE',
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None, [], [111],
+        is_restricted_field=True)
+    input_fv = tracker_pb2.FieldValue(field_id=fd_id, str_value='Bar')
+    input_issue = tracker_pb2.Issue(
+        project_id=789,
+        owner_id=111,
+        summary='sum',
+        status='New',
+        field_values=[input_fv])
+    with self.work_env as we:
+      actual_issue = we.MakeIssue(input_issue, 'description', False)
+    self.assertEqual(actual_issue.project_id, 789)
+    self.assertEqual(actual_issue.summary, 'sum')
+    self.assertEqual(actual_issue.status, 'New')
+    self.assertEqual(actual_issue.reporter_id, 111)
+    self.assertEqual(actual_issue.field_values, [input_fv])
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testMakeIssue_ChecksRestrictedFields(self, _fake_pasicn, _fake_pasibn):
+    self.SignIn(user_id=222)
+    fd_id = self.services.config.CreateFieldDef(
+        self.cnxn,
+        self.project.project_id,
+        'Restricted-Foo',
+        'STR_TYPE',
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None, [], [111],
+        is_restricted_field=True)
+    input_fv = tracker_pb2.FieldValue(field_id=fd_id, str_value='Bar')
+    input_issue = tracker_pb2.Issue(
+        project_id=789, summary='sum', status='New', field_values=[input_fv])
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.MakeIssue(input_issue, 'description', False)
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testMakeIssue_ChecksRestrictedLabels(self, _fake_pasicn, _fake_pasibn):
+    """Also checks restricted field that are masked as labels."""
+    self.SignIn(user_id=222)
+    self.services.config.CreateFieldDef(
+        self.cnxn,
+        self.project.project_id,
+        'Rfoo',
+        'ENUM_TYPE',
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None, [], [111],
+        is_restricted_field=True)
+    input_issue = tracker_pb2.Issue(
+        project_id=789, summary='sum', status='New', labels=['Rfoo-bar'])
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.MakeIssue(input_issue, 'description', False)
 
   @mock.patch('services.tracker_fulltext.IndexIssues')
   @mock.patch('services.tracker_fulltext.UnindexIssues')
