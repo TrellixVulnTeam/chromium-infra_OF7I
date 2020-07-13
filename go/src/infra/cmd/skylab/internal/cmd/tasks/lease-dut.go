@@ -183,7 +183,7 @@ func (c *leaseDutRun) leaseDUTByModel(ctx context.Context, a subcommands.Applica
 		return "", errors.Reason("Leases by model are disabled").Err()
 	}
 	if !c.evilLease && len(tasks) > maxTasksPerModel {
-		return "", fmt.Errorf("number of active tasks %d for model (%s) exceeds cap %d", len(tasks), c.model, maxTasksPerModel)
+		return "", fmt.Errorf("number of active tasks %d for model %q exceeds global limit for all users %d", len(tasks), c.model, maxTasksPerModel)
 	}
 
 	e := c.envFlags.Env()
@@ -210,7 +210,7 @@ func (c *leaseDutRun) leaseDUTByBoard(ctx context.Context, a subcommands.Applica
 		return "", errors.Reason("Leases by board are disabled").Err()
 	}
 	if len(tasks) > maxTasksPerBoard {
-		return "", errors.Reason("number of active tasks %d for board (%s) exceeds cap %d", len(tasks), c.board, maxTasksPerBoard).Err()
+		return "", errors.Reason("number of active tasks %d for board %q exceeds global limit for all users %d", len(tasks), c.board, maxTasksPerBoard).Err()
 	}
 
 	e := c.envFlags.Env()
