@@ -49,7 +49,7 @@ func FormatIP(vlan int64, ipAddress string, occupied bool) *ufspb.IP {
 	return &ufspb.IP{
 		Id:       getIPName(vlan, ipv4),
 		Ipv4:     ipv4,
-		Vlan:     GetBrowserLabVlanName(vlan),
+		Vlan:     GetBrowserLabName(Int64ToStr(vlan)),
 		Occupied: occupied,
 	}
 }

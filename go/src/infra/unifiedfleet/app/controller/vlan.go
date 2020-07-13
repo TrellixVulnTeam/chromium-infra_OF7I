@@ -65,7 +65,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	IPs := make([]*fleet.IP, 0)
 	vs := make([]*fleet.Vlan, len(vlans))
 	for i, vlan := range vlans {
-		vlanName := util.GetBrowserLabVlanName(vlan.GetId())
+		vlanName := util.GetBrowserLabName(util.Int64ToStr(vlan.GetId()))
 		ips, length, err := util.ParseVlan(vlan)
 		if err != nil {
 			return nil, err

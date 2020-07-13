@@ -740,7 +740,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeTrue)
-			So(ips[0].GetVlan(), ShouldEqual, util.GetBrowserLabVlanName(40))
+			So(ips[0].GetVlan(), ShouldEqual, "browser-lab:40")
 		})
 	})
 }

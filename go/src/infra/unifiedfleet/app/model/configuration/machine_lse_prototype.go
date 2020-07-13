@@ -15,8 +15,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // MachineLSEPrototypeKind is the datastore entity kind for chrome platforms.
@@ -83,7 +85,7 @@ func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, fi
 	if err != nil {
 		return nil, "", err
 	}
-	prefix := fleetds.GetLabPrefix(filter)
+	prefix := util.GetLabPrefix(filter)
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *MachineLSEPrototypeEntity, cb datastore.CursorCB) error {
 		pm, err := ent.GetProto()

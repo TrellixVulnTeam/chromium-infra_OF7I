@@ -17,7 +17,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsds "infra/unifiedfleet/app/model/datastore"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // ListMachineLSEPrototypeCmd list all MachineLSEPrototypes.
@@ -73,9 +73,9 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.json {
-		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsds.Lab+ufsds.FilterConditionSeparator+c.labFilter)
+		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter))
 	}
-	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsds.Lab+ufsds.FilterConditionSeparator+c.labFilter)
+	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter))
 }
 
 func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {
@@ -97,15 +97,11 @@ func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json 
 }
 
 func (c *listMachineLSEPrototype) validateArgs() error {
-	if c.labFilter != "" {
-		if c.labFilter != ufsds.ATL &&
-			c.labFilter != ufsds.ACS &&
-			c.labFilter != ufsds.Browser {
-			return cmdlib.NewUsageError(c.Flags, "Please provide a correct filter\n"+
-				"acs - ACS lab machine prototypes\n"+
-				"atl - ATL lab machine prototypes\n"+
-				"browser - Browser lab machine prototytpes")
-		}
+	if c.labFilter != "" && !ufsUtil.IsValidFilter(c.labFilter) {
+		return cmdlib.NewUsageError(c.Flags, "Please provide a correct filter\n"+
+			"acs - ACS lab machine prototypes\n"+
+			"atl - ATL lab machine prototypes\n"+
+			"browser - Browser lab machine prototytpes")
 	}
 	return nil
 }

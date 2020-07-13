@@ -154,7 +154,7 @@ func TestListMachineLSEPrototypes(t *testing.T) {
 			So(resp, ShouldResembleProto, machineLSEPrototypes[3:])
 		})
 		Convey("List machineLSEPrototypes - filter only browser lab prototypes", func() {
-			resp, _, err := ListMachineLSEPrototypes(ctx, 10, "", Lab+FilterConditionSeparator+Browser)
+			resp, _, err := ListMachineLSEPrototypes(ctx, 10, "", "lab:browser")
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototypes[:1])
