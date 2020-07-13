@@ -40,3 +40,31 @@ func TestCopyLabstation(t *testing.T) {
 		})
 	})
 }
+
+func TestParseATLTopology(t *testing.T) {
+	Convey("Verify ParseATLTopology", t, func() {
+		Convey("happy path", func() {
+			resp, err := fake.SheetData("../frontend/fake/sheet_data.json")
+			So(err, ShouldBeNil)
+			topology := ParseATLTopology(resp)
+			So(topology, ShouldHaveLength, 2)
+			So(topology, ShouldContainKey, "100.115.224.0")
+			So(topology, ShouldContainKey, "100.115.226.0")
+			for k, vlan := range topology {
+				switch k {
+				case "100.115.224.0":
+					So(vlan.GetName(), ShouldEqual, "atl-lab:201")
+					So(vlan.GetCapacityIp(), ShouldEqual, 510)
+					So(vlan.GetVlanAddress(), ShouldEqual, "100.115.224.0/23")
+					So(vlan.GetDescription(), ShouldEqual, "ATL-DUT-Row1_2")
+				case "100.115.226.0":
+					So(vlan.GetName(), ShouldEqual, "atl-lab:202")
+					So(vlan.GetCapacityIp(), ShouldEqual, 510)
+					So(vlan.GetVlanAddress(), ShouldEqual, "100.115.226.0/23")
+					So(vlan.GetDescription(), ShouldEqual, "ATL-DUT-Row3_4")
+				}
+			}
+
+		})
+	})
+}

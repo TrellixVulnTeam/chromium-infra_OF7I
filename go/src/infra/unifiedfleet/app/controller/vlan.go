@@ -13,7 +13,10 @@ import (
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"infra/libs/cros/sheet"
 	fleet "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -113,12 +116,20 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 }
 
 // ImportOSVlans imports the logic of parse and save network infos.
-func ImportOSVlans(ctx context.Context, pageSize int) (*datastore.OpResults, error) {
+func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, pageSize int) (*datastore.OpResults, error) {
+	networkCfg := config.Get(ctx).GetCrosNetworkConfig()
 	allVlans := make([]*fleet.Vlan, 0)
 	allIPs := make([]*fleet.IP, 0)
 	allDhcps := make([]*fleet.DHCPConfig, 0)
 
 	// TODO: add logic to parse vlans
+	for _, cfg := range networkCfg.GetCrosNetworkTopology() {
+		resp, err := sheetClient.Get(ctx, cfg.GetSheetId(), []string{"VLANs and Netblocks"})
+		if err != nil {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
+		util.ParseATLTopology(resp)
+	}
 
 	allRes := make(datastore.OpResults, 0)
 	logging.Debugf(ctx, "Importing %d vlans", len(allVlans))

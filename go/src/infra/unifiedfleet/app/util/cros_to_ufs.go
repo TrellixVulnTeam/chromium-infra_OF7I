@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	lab "go.chromium.org/chromiumos/infra/proto/go/lab"
+	"google.golang.org/api/sheets/v4"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/proto"
@@ -192,4 +193,61 @@ func GetOSMachineLSEPrototypes() []*ufspb.MachineLSEPrototype {
 			},
 		},
 	}
+}
+
+// ParseATLTopology parse the topology of ATL lab based on a Google sheet
+func ParseATLTopology(data *sheets.Spreadsheet) map[string]*ufspb.Vlan {
+	resp := make(map[string]*ufspb.Vlan, 0)
+	header := make([]string, 0)
+	for i, row := range data.Sheets[0].Data[0].RowData {
+		// Skip empty line
+		if row.Values[0].FormattedValue == "" {
+			continue
+		}
+
+		// Skip but parse header
+		if i == 0 {
+			for _, cell := range row.Values {
+				header = append(header, cell.FormattedValue)
+			}
+			// Invalid sheet info
+			if len(header) == 0 {
+				break
+			}
+			continue
+		}
+
+		addr, vlan := parseTopologyRow(header, row.Values)
+		if addr != "" && vlan.Name != "" {
+			resp[addr] = vlan
+		}
+	}
+	return resp
+}
+
+func parseTopologyRow(header []string, rowValue []*sheets.CellData) (string, *ufspb.Vlan) {
+	vlan := &ufspb.Vlan{}
+	addr := ""
+	mask := ""
+	for j, cell := range rowValue {
+		if j >= len(header) {
+			break
+		}
+		switch header[j] {
+		case "Subnet Name":
+			vlan.Description = cell.FormattedValue
+		case "VLAN #":
+			vlan.Name = GetATLLabName(cell.FormattedValue)
+		case "Allocated Size":
+			vlan.CapacityIp = int32(*cell.EffectiveValue.NumberValue)
+		case "Address":
+			addr = cell.FormattedValue
+		case "Mask":
+			mask = cell.FormattedValue
+		}
+		if addr != "" && mask != "" {
+			vlan.VlanAddress = addr + mask
+		}
+	}
+	return addr, vlan
 }

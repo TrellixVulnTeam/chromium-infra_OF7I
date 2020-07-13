@@ -493,7 +493,11 @@ func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *api.ImportOSV
 	if err := api.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
-	res, err := controller.ImportOSVlans(ctx, fs.getImportPageSize())
+	sheetClient, err := fs.newSheetInterface(ctx)
+	if err != nil {
+		return nil, sheetConnectionFailureStatus.Err()
+	}
+	res, err := controller.ImportOSVlans(ctx, sheetClient, fs.getImportPageSize())
 	s := processImportDatastoreRes(res, err)
 	if s.Err() != nil {
 		return s.Proto(), s.Err()

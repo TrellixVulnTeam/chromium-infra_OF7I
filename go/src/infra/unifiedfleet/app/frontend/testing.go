@@ -17,6 +17,7 @@ import (
 	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 
+	"infra/libs/cros/sheet"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/frontend/fake"
 )
@@ -36,6 +37,7 @@ func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, 
 		cfgInterfaceFactory:           fakeCfgInterfaceFactory,
 		machineDBInterfaceFactory:     fakeMachineDBInterface,
 		crosInventoryInterfaceFactory: fakeCrosInventoryInterface,
+		sheetInterfaceFactory:         fakeSheetInterfaceFactory,
 		importPageSize:                testImportPageSize,
 	}
 
@@ -177,4 +179,8 @@ func fakeCrosInventoryInterface(ctx context.Context, host string) (CrosInventory
 
 func fakeCfgInterfaceFactory(ctx context.Context) luciconfig.Interface {
 	return &fake.LuciConfigClient{}
+}
+
+func fakeSheetInterfaceFactory(ctx context.Context) (sheet.ClientInterface, error) {
+	return &fake.SheetClient{}, nil
 }
