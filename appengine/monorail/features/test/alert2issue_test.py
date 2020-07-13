@@ -83,6 +83,13 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
         self.project_name, project_id=self.project_id,
         process_inbound_email=True, contrib_ids=[self.user_id])
 
+    # config
+    proj_config = fake.MakeTestConfig(self.project_id, [], ['Available'])
+    comp_def_1 = tracker_pb2.ComponentDef(
+        component_id=123, project_id=987, path='FOO', docstring='foo docstring')
+    proj_config.component_defs = [comp_def_1]
+    self.services.config.StoreConfig(self.cnxn, proj_config)
+
     # sender
     self.auth = authdata.AuthData(user_id=self.user_id, email=self.from_addr)
 

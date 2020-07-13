@@ -1546,16 +1546,28 @@ class CreateIssueHelpersTest(unittest.TestCase):
         tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
     self.int_fd.max_value = 999
     self.config.field_defs = [self.int_fd]
+    self.status_1 = tracker_pb2.StatusDef(
+        status='New', means_open=True, status_docstring='status_1 docstring')
+    self.config.well_known_statuses = [self.status_1]
+    self.component_def_1 = tracker_pb2.ComponentDef(
+        component_id=1, path='compFOO')
+    self.config.component_defs = [self.component_def_1]
     self.services.config.StoreConfig('cnxn', self.config)
     self.services.usergroup.TestAddGroupSettings(999, 'group@example.com')
 
   def testAssertValidIssueForCreate_Valid(self):
-    input_issue = tracker_pb2.Issue(summary='sum', owner_id=111, project_id=789)
+    input_issue = tracker_pb2.Issue(
+        summary='sum',
+        status='New',
+        owner_id=111,
+        project_id=789,
+        component_ids=[1])
     tracker_helpers.AssertValidIssueForCreate(
         self.cnxn, self.services, input_issue, 'nonempty description')
 
   def testAssertValidIssueForCreate_ValidatesOwner(self):
-    input_issue = tracker_pb2.Issue(summary='sum', owner_id=222, project_id=789)
+    input_issue = tracker_pb2.Issue(
+        summary='sum', status='New', owner_id=222, project_id=789)
     with self.assertRaisesRegexp(exceptions.InputException,
                                  'Issue owner must be a project member'):
       tracker_helpers.AssertValidIssueForCreate(
@@ -1572,7 +1584,8 @@ class CreateIssueHelpersTest(unittest.TestCase):
           self.cnxn, self.services, input_issue, 'nonempty description')
 
   def testAssertValidIssueForCreate_ValidatesSummary(self):
-    input_issue = tracker_pb2.Issue(summary='', owner_id=111, project_id=789)
+    input_issue = tracker_pb2.Issue(
+        summary='', status='New', owner_id=111, project_id=789)
     with self.assertRaisesRegexp(exceptions.InputException,
                                  'Summary is required'):
       tracker_helpers.AssertValidIssueForCreate(
@@ -1582,7 +1595,8 @@ class CreateIssueHelpersTest(unittest.TestCase):
           self.cnxn, self.services, input_issue, 'nonempty description')
 
   def testAssertValidIssueForCreate_ValidatesDescription(self):
-    input_issue = tracker_pb2.Issue(summary='', owner_id=111, project_id=789)
+    input_issue = tracker_pb2.Issue(
+        summary='sum', status='New', owner_id=111, project_id=789)
     with self.assertRaisesRegexp(exceptions.InputException,
                                  'Description is required'):
       tracker_helpers.AssertValidIssueForCreate(
@@ -1594,8 +1608,37 @@ class CreateIssueHelpersTest(unittest.TestCase):
     fv = tracker_bizobj.MakeFieldValue(
         self.int_fd.field_id, 1000, None, None, None, None, False)
     input_issue = tracker_pb2.Issue(
-        summary='', owner_id=111, project_id=789, field_values=[fv])
+        summary='sum',
+        status='New',
+        owner_id=111,
+        project_id=789,
+        field_values=[fv])
     with self.assertRaises(exceptions.InputException):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+
+  def testAssertValidIssueForCreate_ValidatesStatus(self):
+    input_issue = tracker_pb2.Issue(
+        summary='sum', status='DNE_status', owner_id=111, project_id=789)
+
+    def mock_status_lookup(*_args, **_kwargs):
+      return None
+
+    self.services.config.LookupStatusID = mock_status_lookup
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Undefined status: DNE_status'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+
+  def testAssertValidIssueForCreate_ValidatesComponents(self):
+    input_issue = tracker_pb2.Issue(
+        summary='',
+        status='New',
+        owner_id=111,
+        project_id=789,
+        component_ids=[2])
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'Undefined component with id: 2'):
       tracker_helpers.AssertValidIssueForCreate(
           self.cnxn, self.services, input_issue, 'nonempty description')
 

@@ -1071,14 +1071,14 @@ class WorkEnv(object):
     # Set the closed_timestamp both before and after filter rules.
     if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
                                               config):
-      issue.closed_timestamp = timestamp
+      issue.closed_timestamp = issue.opened_timestamp
     filterrules_helpers.ApplyFilterRules(
         self.mc.cnxn, self.services, issue, config)
     if issue.derived_errors and raise_filter_errors:
       raise exceptions.FilterRuleException(issue.derived_errors)
     if not tracker_helpers.MeansOpenInProject(tracker_bizobj.GetStatus(issue),
                                               config):
-      issue.closed_timestamp = timestamp
+      issue.closed_timestamp = issue.opened_timestamp
 
   def MakeIssueFromTemplate(self, _template, _description, _issue_delta):
     # type: (tracker_pb2.TemplateDef, str, tracker_pb2.IssueDelta) ->

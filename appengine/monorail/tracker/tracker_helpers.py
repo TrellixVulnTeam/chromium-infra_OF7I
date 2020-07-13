@@ -1344,6 +1344,13 @@ def AssertValidIssueForCreate(cnxn, services, issue, description):
         cnxn, services, issue.field_values, config, project)
     if field_validity_errors:
       err_agg.AddErrorMessage("\n".join(field_validity_errors))
+    if not services.config.LookupStatusID(cnxn, issue.project_id, issue.status,
+                                          autocreate=False):
+      err_agg.AddErrorMessage('Undefined status: %s' % issue.status)
+    all_comp_ids = {cd.component_id for cd in config.component_defs}
+    for comp_id in issue.component_ids:
+      if comp_id not in all_comp_ids:
+        err_agg.AddErrorMessage('Undefined component with id: %d' % comp_id)
 
 
 def _ComputeNewCcsFromIssueMerge(merge_into_issue, source_issues):
