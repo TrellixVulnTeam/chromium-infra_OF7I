@@ -1575,6 +1575,28 @@ func TestImportVlans(t *testing.T) {
 	})
 }
 
+func TestOSImportVlans(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Import OS vlan-related infos", t, func() {
+		Convey("happy path", func() {
+			req := &api.ImportOSVlansRequest{
+				Source: &api.ImportOSVlansRequest_MachineDbSource{
+					MachineDbSource: &api.MachineDBSource{
+						Host: "fake_host",
+					},
+				},
+			}
+			tf.Fleet.importPageSize = 25
+			res, err := tf.Fleet.ImportOSVlans(ctx, req)
+			So(err, ShouldBeNil)
+			So(res.Code, ShouldEqual, code.Code_OK)
+		})
+	})
+}
+
 func getReturnedPlatformNames(res datastore.OpResults) []string {
 	gets := make([]string, len(res))
 	for i, r := range res {

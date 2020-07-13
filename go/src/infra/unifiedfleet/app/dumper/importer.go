@@ -136,12 +136,28 @@ func importDCHelper(ctx context.Context, sv *frontend.FleetServerImpl, cfg strin
 func importCrosInventory(ctx context.Context) error {
 	sv := &frontend.FleetServerImpl{}
 	logging.Debugf(ctx, "Importing ChromeOS inventory")
-	sv.ImportOSMachineLSEs(ctx, &api.ImportOSMachineLSEsRequest{
+	_, err := sv.ImportOSMachineLSEs(ctx, &api.ImportOSMachineLSEsRequest{
 		Source: &api.ImportOSMachineLSEsRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{
 				Host: crosInventoryHost,
 			},
 		},
 	})
-	return nil
+	return err
+}
+
+func importCrosNetwork(ctx context.Context) error {
+	sv := &frontend.FleetServerImpl{}
+	logging.Debugf(ctx, "Importing ChromeOS networks")
+	_, err := sv.ImportOSVlans(ctx, &api.ImportOSVlansRequest{
+		Source: &api.ImportOSVlansRequest_MachineDbSource{
+			MachineDbSource: &api.MachineDBSource{
+				Host: crosInventoryHost,
+			},
+		},
+	})
+	if err == nil {
+		logging.Debugf(ctx, "Finish importing CrOS network configs")
+	}
+	return err
 }

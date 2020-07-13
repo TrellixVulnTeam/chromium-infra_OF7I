@@ -35,6 +35,9 @@ func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
 		cron.Run(ctx, 60*time.Minute, dumpCrosInvcentory)
 	})
+	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
+	})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
@@ -81,6 +84,13 @@ func dumpCrosInvcentory(ctx context.Context) (err error) {
 		dumpCrosInvcentoryTick.Add(ctx, 1, err == nil)
 	}()
 	return importCrosInventory(ctx)
+}
+
+func dumpCrosNetwork(ctx context.Context) (err error) {
+	defer func() {
+		dumpCrosNetworkTick.Add(ctx, 1, err == nil)
+	}()
+	return importCrosNetwork(ctx)
 }
 
 // unique key used to store and retrieve context.

@@ -243,6 +243,9 @@ service Fleet {
   // ImportVlans imports vlans & all IP-related infos.
   rpc ImportVlans(ImportVlansRequest) returns (google.rpc.Status);
 
+  // ImportOSVlans imports the ChromeOS vlans, ips, and dhcp configs.
+  rpc ImportOSVlans(ImportOSVlansRequest) returns (google.rpc.Status);
+
   // ImportStates imports states of all objects.
   rpc ImportStates(ImportStatesRequest) returns (google.rpc.Status);
 
@@ -1127,6 +1130,13 @@ message DeleteVlanRequest {
 }
 
 message ImportVlansRequest {
+  oneof source {
+    MachineDBSource machine_db_source = 1;
+    ConfigSource config_source = 2;
+  }
+}
+
+message ImportOSVlansRequest {
   oneof source {
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;

@@ -112,6 +112,59 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	return &allRes, nil
 }
 
+// ImportOSVlans imports the logic of parse and save network infos.
+func ImportOSVlans(ctx context.Context, pageSize int) (*datastore.OpResults, error) {
+	allVlans := make([]*fleet.Vlan, 0)
+	allIPs := make([]*fleet.IP, 0)
+	allDhcps := make([]*fleet.DHCPConfig, 0)
+
+	// TODO: add logic to parse vlans
+
+	allRes := make(datastore.OpResults, 0)
+	logging.Debugf(ctx, "Importing %d vlans", len(allVlans))
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(allVlans))
+		logging.Debugf(ctx, "importing vlan %dth - %dth", i, end-1)
+		res, err := configuration.ImportVlans(ctx, allVlans[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(allVlans) {
+			break
+		}
+	}
+
+	logging.Debugf(ctx, "Importing %d ips", len(allIPs))
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(allIPs))
+		logging.Debugf(ctx, "importing ip %dth - %dth", i, end-1)
+		res, err := configuration.ImportIPs(ctx, allIPs[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(allIPs) {
+			break
+		}
+	}
+
+	logging.Debugf(ctx, "Importing %d ips", len(allDhcps))
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(allDhcps))
+		logging.Debugf(ctx, "importing ip %dth - %dth", i, end-1)
+		res, err := configuration.ImportDHCPConfigs(ctx, allDhcps[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(allDhcps) {
+			break
+		}
+	}
+	return &allRes, nil
+}
+
 // ReplaceVlan replaces an old Vlan with new Vlan in datastore
 //
 // It does a delete of old vlan and create of new Vlan.

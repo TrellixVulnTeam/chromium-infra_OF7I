@@ -486,3 +486,17 @@ func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *api.ImportVlans
 	}
 	return successStatus.Proto(), nil
 }
+
+// ImportOSVlans imports the ChromeOS vlans, ips and dhcp configs.
+func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *api.ImportOSVlansRequest) (response *status.Status, err error) {
+	source := req.GetMachineDbSource()
+	if err := api.ValidateMachineDBSource(source); err != nil {
+		return nil, err
+	}
+	res, err := controller.ImportOSVlans(ctx, fs.getImportPageSize())
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
+	}
+	return successStatus.Proto(), nil
+}

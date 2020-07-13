@@ -1251,6 +1251,23 @@ func (s *DecoratedFleet) ImportVlans(ctx context.Context, req *ImportVlansReques
 	return
 }
 
+func (s *DecoratedFleet) ImportOSVlans(ctx context.Context, req *ImportOSVlansRequest) (rsp *status.Status, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ImportOSVlans", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ImportOSVlans(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ImportOSVlans", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) ImportStates(ctx context.Context, req *ImportStatesRequest) (rsp *status.Status, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
