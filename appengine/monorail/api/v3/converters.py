@@ -415,6 +415,91 @@ class Converter(object):
       converted_issues.append(result)
     return converted_issues
 
+  def IngestIssue(self, issue):
+    # type: (api_proto.issue_objects_pb2.Issue) -> proto.tracker_pb2.Issue
+    """Ingest a protoc Issue into a protorpc Issue.
+
+    Args:
+      issue: the protoc issue to ingest.
+
+    Returns:
+      protorpc version of `issue`, ignoring all OUTPUT_ONLY fields.
+
+    Raises:
+      InputException: if any provided fields were invalid.
+    """
+    ingestedDict = {
+      'summary': issue.summary
+    }
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      self._ExtractOwner(issue, ingestedDict, err_agg)
+      try:
+        ingestedDict['cc_ids'] = rnc.IngestUserNames(
+            self.cnxn, [cc.user for cc in issue.cc_users], self.services,
+            autocreate=True)
+      except exceptions.InputException as e:
+        err_agg.AddErrorMessage('Error ingesting cc_users: {}', e)
+
+      # TODO(jessan): Decide if state should be OUTPUT_0NLY.
+      # TODO(jessan): Validate and then ingest status.
+      # TODO(jessan): Ingest component name.
+      # TODO(jessan): Migrate & use _RedistributeEnumFieldsIntoLabels from v0.
+
+      self._ExtractIssueRefs(issue, ingestedDict, err_agg)
+    return tracker_pb2.Issue(**ingestedDict)
+
+  def _ExtractOwner(self, issue, ingestedDict, err_agg):
+    # type: (api_proto.issue_objects_pb2.Issue, Dict[str, Any], ErrorAggregator)
+    #     -> None
+    """Fills 'owner' into `ingestedDict`, if it can be extracted."""
+    if issue.HasField('owner'):
+      try:
+        # Unlike for cc's, we require owner be an existing user, thus call we
+        # do not autocreate.
+        ingestedDict['owner_id'] = rnc.IngestUserName(
+            self.cnxn, issue.owner.user, self.services, autocreate=False)
+      except exceptions.InputException as e:
+        err_agg.AddErrorMessage(
+            'Error ingesting owner ({}): {}', issue.owner.user, e)
+      except exceptions.NoSuchUserException as e:
+        err_agg.AddErrorMessage(
+            'User ({}) not found when ingesting owner', e)
+
+  def _ExtractIssueRefs(self, issue, ingestedDict, err_agg):
+    # type: (api_proto.issue_objects_pb2.Issue, Dict[str, Any], ErrorAggregator)
+    #     -> None
+    """Fills issue relationships into `ingestedDict` from `issue`."""
+    # TODO(jessan): ingest blocked, blocking.
+    if issue.HasField('merged_into_issue_ref'):
+      try:
+        merged_into_ref = self._IngestIssueRef(issue.merged_into_issue_ref)
+        if isinstance(merged_into_ref, tracker_pb2.DanglingIssueRef):
+          ingestedDict['merged_into_external'] = (
+              merged_into_ref.ext_issue_identifier)
+        else:
+          ingestedDict['merged_into'] = merged_into_ref
+      except (exceptions.InputException, exceptions.NoSuchIssueException,
+          exceptions.NoSuchProjectException) as e:
+        err_agg.AddErrorMessage('Error ingesting merged_into_ref: {}', e)
+
+  def _IngestIssueRef(self, issue_ref):
+    # type: (api_proto.issue_objects.IssueRef) ->
+    #     Union[int, tracker_pb2.DanglingIssueRef]
+    """Given a protoc IssueRef, returns an issue id or DanglingIssueRef."""
+    if issue_ref.issue and issue_ref.ext_identifier:
+      raise exceptions.InputException(
+        'IssueRefs MUST NOT have both `issue` and `ext_identifier`')
+    if issue_ref.issue:
+      return rnc.IngestIssueName(self.cnxn, issue_ref.issue, self.services)
+    if issue_ref.ext_identifier:
+      # TODO(crbug.com/monorail/7208): Handle ingestion/conversion of CodeSite
+      # refs. We may be able to avoid ever needing to ingest them.
+      return tracker_pb2.DanglingIssueRef(
+          ext_issue_identifier=issue_ref.ext_identifier
+        )
+    raise exceptions.InputException(
+        'IssueRefs MUST have least one of `issue` and `ext_identifier`')
+
   def IngestIssuesListColumns(self, issues_list_columns):
     # type: (Sequence[proto.issue_objects_pb2.IssuesListColumn] -> str
     """Ingest a list of protoc IssueListColumns and returns a string."""

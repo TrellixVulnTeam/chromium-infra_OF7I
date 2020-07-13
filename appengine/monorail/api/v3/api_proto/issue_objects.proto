@@ -209,7 +209,8 @@ message Issue {
     (google.api.resource_reference) = { type: "api.crbug.com/User" },
     (google.api.field_behavior) = OUTPUT_ONLY
   ];
-  // The user currently responsible for the issue.
+  // The user currently responsible for the issue. This user must be a member of
+  // the Project.
   UserValue owner = 6;
   // Additional users receiving notifications on the issue.
   repeated UserValue cc_users = 7;
@@ -276,7 +277,8 @@ message IssuesListColumn {
 }
 
 // Refers to an issue that may or may not be tracked in Monorail.
-// Only one of `issue` and `ext_identifier` should be set.
+// At least one of `issue` and `ext_identifier` MUST be set; they MUST NOT both
+// be set.
 // Next available tag: 3
 message IssueRef {
   // Resource name of an issue tracked in Monorail

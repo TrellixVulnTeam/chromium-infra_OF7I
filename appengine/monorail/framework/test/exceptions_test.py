@@ -47,3 +47,18 @@ class ErrorsManagerTest(unittest.TestCase):
       with exceptions.ErrorAggregator(exceptions.InputException) as errors:
         errors.AddErrorMessage('We can raise this now.')
         return True
+
+  def testAddErrorMessage(self):
+    """We properly handle string formatting when needed."""
+    err_aggregator = exceptions.ErrorAggregator(exceptions.InputException)
+    err_aggregator.AddErrorMessage('No args')
+    err_aggregator.AddErrorMessage('No args2', 'unused', unused2=1)
+    err_aggregator.AddErrorMessage('{}', 'One arg')
+    err_aggregator.AddErrorMessage('{}, {two}', '1', two='2')
+
+    # Verify exceptions formatting a message don't clear the earlier messages.
+    with self.assertRaises(IndexError):
+      err_aggregator.AddErrorMessage('{}')
+
+    expected = ['No args', 'No args2', 'One arg', '1, 2']
+    self.assertEqual(err_aggregator.error_messages, expected)

@@ -30,10 +30,16 @@ class ErrorAggregator():
     # If there were exceptions raised within the context, we do
     # nothing to suppress them.
 
-  def AddErrorMessage(self, message):
-    # type: (str) -> None
-    """Add a new error message."""
-    self.error_messages.append(message)
+  def AddErrorMessage(self, message, *args, **kwargs):
+    # type: (str, *Any, **Any) -> None
+    """Add a new error message.
+
+    Args:
+      message: An error message, to be formatted using *args and **kwargs.
+      *args: passed in to str.format.
+      **kwargs: passed in to str.format.
+    """
+    self.error_messages.append(message.format(*args, **kwargs))
 
   def RaiseIfErrors(self):
     # type: () -> None

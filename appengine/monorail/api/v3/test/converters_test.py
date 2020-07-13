@@ -829,6 +829,76 @@ class ConverterFunctionsTest(unittest.TestCase):
             self.user_1.user_id, [self.project_1, self.project_2]),
         expected_stars)
 
+  def testIngestIssue(self):
+    ingest = issue_objects_pb2.Issue(
+        name='projects/proj/issues/1',  # Ignored.
+        summary='sum',
+        reporter='users/111',  # Ignored.
+        owner=issue_objects_pb2.Issue.UserValue(
+            derivation=EXPLICIT_DERIVATION, user='users/111'),
+        cc_users=[
+            issue_objects_pb2.Issue.UserValue(
+                derivation=EXPLICIT_DERIVATION, user='users/new@user.com'),
+            issue_objects_pb2.Issue.UserValue(
+                derivation=RULE_DERIVATION, user='users/333')
+        ],
+        merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'),
+        # All following fields ignored.
+        create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        component_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        status_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        owner_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        star_count=1,
+        attachment_count=5,
+        phases=[self.phase_1.name])
+
+    actual = self.converter.IngestIssue(ingest)
+
+    expected_cc1_id = self.services.user.LookupUserID(
+        self.cnxn, 'new@user.com', autocreate=False)
+    expected = tracker_pb2.Issue(
+        summary='sum',
+        owner_id=111,
+        cc_ids=[expected_cc1_id, 333],
+        merged_into_external='b/1',
+    )
+    self.assertEqual(actual, expected)
+
+  def testIngestIssue_Empty(self):
+    empty = issue_objects_pb2.Issue()
+    expected = tracker_pb2.Issue(
+        summary='' # Summary gets set to empty str on conversion.
+    )
+    self.assertEqual(self.converter.IngestIssue(empty), expected)
+
+  def testIngestIssue_Errors(self):
+    # TODO(jessan): Test non-existant issue.
+    # TODO(jessan): Test non-existant project.
+    # TODO(jessan): Test empty IssueRef.
+    invalid_issue_ref = issue_objects_pb2.IssueRef(
+        ext_identifier='b/1',
+        issue='projects/proj/issues/1')
+    ingest = issue_objects_pb2.Issue(
+        name='projects/proj/issues/1',
+        summary='sum',
+        owner=issue_objects_pb2.Issue.UserValue(
+            derivation=EXPLICIT_DERIVATION, user='users/nonexisting@user.com'),
+        cc_users=[
+            issue_objects_pb2.Issue.UserValue(
+                derivation=EXPLICIT_DERIVATION, user='invalidFormat1'),
+            issue_objects_pb2.Issue.UserValue(
+                derivation=RULE_DERIVATION, user='invalidFormat2')
+        ],
+        merged_into_issue_ref=invalid_issue_ref)
+    error_messages_re = '\n'.join([
+        '.+not found when ingesting owner',
+        '.+cc_users: Invalid resource name: invalidFormat1.',
+        '.+merged_into_ref: IssueRefs MUST NOT have both',
+    ])
+    with self.assertRaisesRegexp(exceptions.InputException, error_messages_re):
+      self.converter.IngestIssue(ingest)
+
   def testIngestIssuesListColumns(self):
     columns = [
         issue_objects_pb2.IssuesListColumn(column='chicken'),
