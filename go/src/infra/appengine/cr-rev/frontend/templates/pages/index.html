@@ -1,0 +1,24 @@
+{{define "title"}}cr-rev{{end}}
+
+{{define "content"}}
+<h3>Welcome to cr-rev!</h3>
+<p>Usage:
+  <ul>
+    <li>crrev.com/&lt;git commit position, git sha, rietveld issue&gt;
+    </li>
+    <li>crrev.com/c/&lt;gerrit CL number&gt;
+      <a href="https://chromium-review.googlesource.com/dashboard/self">
+        (chromium-review)
+      </a>
+    </li>
+    <li>crrev.com/i/&lt;gerrit CL number&gt;
+      <a href="https://chrome-internal-review.googlesource.com/dashboard/self">
+        (chrome-internal-review)
+      </a>
+    </li>
+  </ul>
+</p>
+<p>You can append subpaths to each short rev too to navigate to
+   subdirs in gitiles.  e.g. crrev.com/&lt;git sha1&gt;/tools/OWNERS
+</p>
+{{end}}
