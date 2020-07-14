@@ -2203,13 +2203,15 @@
   "programs": {},
   "softwareConfigs": [
     {
-      "audioConfig": {
-        "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-        "cardName": "fakeaudiocard",
-        "dspFile": "audio/fakeaudiocard/dsp.ini",
-        "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-        "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
-      },
+      "audioConfigs": [
+        {
+          "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
+          "cardName": "fakeaudiocard",
+          "dspFile": "audio/fakeaudiocard/dsp.ini",
+          "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
+          "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
+        }
+      ],
       "bluetoothConfig": {
         "flags": {
           "enable-suspend-management": true
@@ -2273,14 +2275,16 @@
       }
     },
     {
-      "audioConfig": {
-        "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-        "cardName": "fakeaudiocard",
-        "dspFile": "audio/fakeaudiocard/dsp.ini",
-        "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-        "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
-        "ucmSuffix": "2mic"
-      },
+      "audioConfigs": [
+        {
+          "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
+          "cardName": "fakeaudiocard",
+          "dspFile": "audio/fakeaudiocard/dsp.ini",
+          "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
+          "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
+          "ucmSuffix": "2mic"
+        }
+      ],
       "designConfigId": {
         "value": "FAKE-REF-DESIGN:2"
       },
@@ -2339,16 +2343,18 @@
       }
     },
     {
-      "audioConfig": {
-        "boardFile": "audio/cras-config/board.ini",
-        "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-        "cardName": "fakeaudiocard",
-        "dspFile": "audio/fakeaudiocard/dsp.ini",
-        "moduleFile": "audio/alsa-module-config/alsa-project-a.conf",
-        "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-        "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
-        "ucmSuffix": "2mic"
-      },
+      "audioConfigs": [
+        {
+          "boardFile": "audio/cras-config/board.ini",
+          "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
+          "cardName": "fakeaudiocard",
+          "dspFile": "audio/fakeaudiocard/dsp.ini",
+          "moduleFile": "audio/alsa-module-config/alsa-project-a.conf",
+          "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
+          "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
+          "ucmSuffix": "2mic"
+        }
+      ],
       "bluetoothConfig": {
         "flags": {
           "enable-suspend-management": true
@@ -2412,14 +2418,16 @@
       }
     },
     {
-      "audioConfig": {
-        "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-        "cardName": "fakeaudiocard",
-        "dspFile": "audio/fakeaudiocard/dsp.ini",
-        "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-        "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
-        "ucmSuffix": "2mic"
-      },
+      "audioConfigs": [
+        {
+          "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
+          "cardName": "fakeaudiocard",
+          "dspFile": "audio/fakeaudiocard/dsp.ini",
+          "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
+          "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf",
+          "ucmSuffix": "2mic"
+        }
+      ],
       "bluetoothConfig": {
         "flags": {
           "enable-suspend-management": true
@@ -2483,13 +2491,15 @@
       }
     },
     {
-      "audioConfig": {
-        "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-        "cardName": "fakeaudiocard",
-        "dspFile": "audio/fakeaudiocard/dsp.ini",
-        "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-        "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
-      },
+      "audioConfigs": [
+        {
+          "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
+          "cardName": "fakeaudiocard",
+          "dspFile": "audio/fakeaudiocard/dsp.ini",
+          "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
+          "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
+        }
+      ],
       "bluetoothConfig": {
         "flags": {
           "enable-suspend-management": true
@@ -2553,13 +2563,15 @@
       }
     },
     {
-      "audioConfig": {
-        "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
-        "cardName": "fakeaudiocard",
-        "dspFile": "audio/fakeaudiocard/dsp.ini",
-        "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
-        "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
-      },
+      "audioConfigs": [
+        {
+          "cardConfigFile": "audio/fakeaudiocard/fakeaudiocard",
+          "cardName": "fakeaudiocard",
+          "dspFile": "audio/fakeaudiocard/dsp.ini",
+          "ucmFile": "ucm-config/fakeaudiocard/HiFi.conf",
+          "ucmMasterFile": "ucm-config/fakeaudiocard/fakeaudiocard.conf"
+        }
+      ],
       "designConfigId": {
         "value": "PROJECT-WL:64"
       },
