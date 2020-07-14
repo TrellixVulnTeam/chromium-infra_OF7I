@@ -3,8 +3,10 @@ package datastore
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 
 	inv "infra/appengine/cros/lab_inventory/api/v1"
 )
@@ -43,6 +45,39 @@ func GetDeviceManualRepairRecords(ctx context.Context, ids []string) []*DeviceMa
 		queryResults[i] = qrMap[id]
 	}
 	return queryResults
+}
+
+// GetRepairRecordByPropertyName queries DeviceManualRepairRecord entity in the
+// datastore using a given propertyName and propertyValue. Should return both
+// a Record and an Entity.
+func GetRepairRecordByPropertyName(ctx context.Context, propertyName, propertyValue string) ([]*DeviceManualRepairRecordsOpRes, error) {
+	q := datastore.NewQuery(DeviceManualRepairRecordEntityKind)
+	var entities []*DeviceManualRepairRecordEntity
+
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, propertyValue), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, err
+	}
+
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No repair records found for the query: %s, %s", propertyName, propertyValue)
+		return nil, nil
+	}
+
+	repairRecords := make([]*DeviceManualRepairRecordsOpRes, len(entities))
+	for i, e := range entities {
+		var r inv.DeviceManualRepairRecord
+		opRes := &DeviceManualRepairRecordsOpRes{
+			Entity: e,
+		}
+		if err := proto.Unmarshal(e.Content, &r); err != nil {
+			opRes.logError(err)
+		}
+		opRes.Record = &r
+		repairRecords[i] = opRes
+	}
+
+	return repairRecords, nil
 }
 
 // AddDeviceManualRepairRecords creates a DeviceManualRepairRecord with the

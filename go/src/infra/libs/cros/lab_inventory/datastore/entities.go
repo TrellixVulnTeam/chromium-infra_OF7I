@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -221,9 +222,9 @@ func NewAssetInfo(a *ufs.AssetInfo) (*AssetInfoEntity, error) {
 type DeviceManualRepairRecordEntity struct {
 	_kind       string `gae:"$kind,DeviceManualRepairRecord"`
 	ID          string `gae:"$id"`
-	Hostname    string
-	AssetTag    string
-	RepairState string
+	Hostname    string `gae:"hostname"`
+	AssetTag    string `gae:"asset_tag"`
+	RepairState string `gae:"repair_state"`
 	Content     []byte `gae:",noindex"`
 }
 
@@ -236,7 +237,7 @@ const DeviceManualRepairRecordEntityKind = "DeviceManualRepairRecord"
 func NewDeviceManualRepairRecordEntity(r *inv.DeviceManualRepairRecord) (*DeviceManualRepairRecordEntity, error) {
 	hostname := r.GetHostname()
 	assetTag := r.GetAssetTag()
-	createdTime := r.GetCreatedTime().String()
+	createdTime := ptypes.TimestampString(r.GetCreatedTime())
 
 	if hostname == "" {
 		return nil, errors.Reason("Hostname cannot be empty").Err()
@@ -275,7 +276,7 @@ func (e *DeviceManualRepairRecordEntity) UpdateDeviceManualRepairRecordEntity(r 
 		return errors.Reason("Hostname cannot be empty").Err()
 	} else if r.GetAssetTag() == "" {
 		return errors.Reason("Asset Tag cannot be empty").Err()
-	} else if r.GetCreatedTime().String() == "" {
+	} else if ptypes.TimestampString(r.GetCreatedTime()) == "" {
 		return errors.Reason("Created Time cannot be empty").Err()
 	}
 
