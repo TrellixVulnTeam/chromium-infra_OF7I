@@ -59,7 +59,7 @@ def try_builder(
 
 ci_builder(name = "luci-go-continuous-trusty-64", os = "Ubuntu-14.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-xenial-64", os = "Ubuntu-16.04", tree_closing = True)
-ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04")
+ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.14-64", os = "Mac-10.14", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.15-64", os = "Mac-10.15", tree_closing = True)
