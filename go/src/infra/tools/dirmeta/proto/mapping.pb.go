@@ -103,6 +103,7 @@ type Mapping struct {
 	//
 	// The key is directory name, relative to the root.
 	// The key must use forward slash as directory separator.
+	// The key must be clean: https://pkg.go.dev/path?tab=doc#Clean
 	// Special key "." represents the root directory.
 	//
 	// The root must be known from the context where Mapping is used and is not

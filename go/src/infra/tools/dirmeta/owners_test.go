@@ -5,9 +5,10 @@
 package dirmeta
 
 import (
-	dirmetapb "infra/tools/dirmeta/proto"
 	"strings"
 	"testing"
+
+	dirmetapb "infra/tools/dirmeta/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"

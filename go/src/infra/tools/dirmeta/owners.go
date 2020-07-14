@@ -83,7 +83,7 @@ func parseOwners(r io.Reader) (*dirmetapb.Metadata, error) {
 }
 
 // parseOSFromOwners parses a value of "OS" key in an OWNERS file
-// to a the OS enum.
+// to OS enum.
 func parseOSFromOwners(s string) (dirmetapb.OS, error) {
 	s = strings.ToUpper(s)
 
