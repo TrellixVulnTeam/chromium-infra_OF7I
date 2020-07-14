@@ -3,16 +3,16 @@
 # found in the LICENSE file.
 
 DEPS = [
-  'depot_tools/bot_update',
-  'depot_tools/gclient',
-  'depot_tools/git',
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/properties',
-  'recipe_engine/python',
-  'recipe_engine/step',
+    'infra_checkout',
+    'depot_tools/bot_update',
+    'depot_tools/gclient',
+    'depot_tools/git',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/path',
+    'recipe_engine/platform',
+    'recipe_engine/python',
+    'recipe_engine/step',
 ]
 
 ASSETS_DIFF_FAILURE_MESSAGE = '''
@@ -21,9 +21,8 @@ ASSETS_DIFF_FAILURE_MESSAGE = '''
 
 
 def RunSteps(api):
-  api.gclient.set_config('luci_py')
-  api.bot_update.ensure_checkout()
-  api.gclient.runhooks()
+  co = api.infra_checkout.checkout('luci_py', patch_root='infra/luci')
+  co.gclient_runhooks()
 
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):

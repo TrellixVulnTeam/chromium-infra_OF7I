@@ -3,6 +3,21 @@
     "cmd": [
       "vpython",
       "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/infra_gclient_with_go"
+    ],
+    "infra_step": true,
+    "name": "ensure builder dir"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
       "RECIPE_REPO[depot_tools]/gerrit_client.py",
       "changes",
       "--host",
@@ -18,6 +33,7 @@
       "-o",
       "DOWNLOAD_COMMANDS"
     ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
@@ -63,6 +79,7 @@
       "--revision",
       "infra/luci@origin/master"
     ],
+    "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
       "GIT_HTTP_LOW_SPEED_LIMIT": "102400",
       "GIT_HTTP_LOW_SPEED_TIME": "300"
@@ -123,7 +140,7 @@
       "RECIPE_REPO[depot_tools]/gclient.py",
       "runhooks"
     ],
-    "cwd": "[START_DIR]/infra",
+    "cwd": "[CACHE]/infra_gclient_with_go",
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -139,14 +156,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython",
+      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/client/unittest.cfg"
+      "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
     ],
-    "cwd": "[START_DIR]/infra/luci/client",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
     "name": "client.run tests python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -156,14 +173,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython3",
+      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython3",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/client/unittest.cfg"
+      "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
     ],
-    "cwd": "[START_DIR]/infra/luci/client",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
     "name": "client.run tests python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -177,14 +194,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython",
+      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
+      "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
     ],
-    "cwd": "[START_DIR]/infra/luci/appengine/swarming/swarming_bot",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot",
     "name": "swarming bot.run tests python2",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
@@ -194,14 +211,14 @@
     "cmd": [
       "vpython",
       "-vpython-spec",
-      "[START_DIR]/infra/luci/.vpython3",
+      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython3",
       "-u",
       "test.py",
       "-v",
       "--conf",
-      "[START_DIR]/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
+      "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot/unittest.cfg"
     ],
-    "cwd": "[START_DIR]/infra/luci/appengine/swarming/swarming_bot",
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/swarming_bot",
     "name": "swarming bot.run tests python3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
