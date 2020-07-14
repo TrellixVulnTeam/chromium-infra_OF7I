@@ -87,11 +87,16 @@ func (client *inventoryClientV2) UpdateDUT(ctx context.Context, newSpecs *invent
 }
 
 func (client *inventoryClientV2) UpdateLabstations(ctx context.Context, hostname, servosToDelete, dutToAdd string) (*invV2Api.UpdateLabstationsResponse, error) {
-	return client.ic.UpdateLabstations(ctx, &invV2Api.UpdateLabstationsRequest{
-		Hostname:      hostname,
-		DeletedServos: []string{servosToDelete},
-		AddedDUTs:     []string{dutToAdd},
-	})
+	req := &invV2Api.UpdateLabstationsRequest{
+		Hostname: hostname,
+	}
+	if servosToDelete != "" {
+		req.DeletedServos = []string{servosToDelete}
+	}
+	if dutToAdd != "" {
+		req.AddedDUTs = []string{dutToAdd}
+	}
+	return client.ic.UpdateLabstations(ctx, req)
 }
 
 func (client *inventoryClientV2) BatchUpdateDUTs(ctx context.Context, req *fleet.BatchUpdateDutsRequest, writer io.Writer) error {
