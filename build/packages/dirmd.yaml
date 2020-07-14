@@ -1,4 +1,4 @@
-package: infra/tools/dirmeta/${platform}
+package: infra/tools/dirmd/${platform}
 description: A tool to work with DIR_METADATA files
 platforms:
   - linux-386
@@ -15,9 +15,9 @@ platforms:
   - windows-386
   - windows-amd64
 go_packages:
-  - infra/tools/dirmeta/cmd/dirmeta
+  - infra/tools/dirmd/cmd/dirmd
 install_mode: copy
 root: ../../go/bin
 data:
-  - file: dirmeta${exe_suffix}
-  - version_file: .versions/dirmeta${exe_suffix}.cipd_version
+  - file: dirmd${exe_suffix}
+  - version_file: .versions/dirmd${exe_suffix}.cipd_version

@@ -13,8 +13,8 @@ import (
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/tools/dirmeta"
-	dirmetapb "infra/tools/dirmeta/proto"
+	"infra/tools/dirmd"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 func cmdExport() *subcommands.Command {
@@ -57,13 +57,13 @@ func (r *exportRun) run(ctx context.Context, args []string) error {
 		return errors.Reason("unexpected positional arguments: %q", args).Err()
 	}
 
-	formInt, ok := dirmetapb.MappingForm_value[strings.ToUpper(r.formString)]
+	formInt, ok := dirmdpb.MappingForm_value[strings.ToUpper(r.formString)]
 	if !ok {
 		return errors.Reason("invalid value of -form").Err()
 	}
-	form := dirmetapb.MappingForm(formInt)
+	form := dirmdpb.MappingForm(formInt)
 
-	mapping, err := dirmeta.ReadMapping(r.root, form)
+	mapping, err := dirmd.ReadMapping(r.root, form)
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,7 @@
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
-package dirmeta
+package dirmd
 
 import (
 	"bufio"
@@ -14,7 +14,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	dirmetapb "infra/tools/dirmeta/proto"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 // The file implements reading of metadata from legacy OWNERS files.
@@ -24,7 +24,7 @@ var ownerKeyValuePairRe = regexp.MustCompile(`#\s*([\w\-]+)\s*:\s*(\S+)`)
 
 // readOwners reads metadata from legacy OWNERS of the given directory.
 // Returns (nil, nil) if OWNERS file does not exist.
-func readOwners(dir string) (*dirmetapb.Metadata, error) {
+func readOwners(dir string) (*dirmdpb.Metadata, error) {
 	// Note: this function is case-sensitive wrt the filename,
 	// because there are no OWNERS file in src.git that use different casing.
 
@@ -41,8 +41,8 @@ func readOwners(dir string) (*dirmetapb.Metadata, error) {
 }
 
 // parseOwners extracts metadata from a content of an OWNERS file.
-func parseOwners(r io.Reader) (*dirmetapb.Metadata, error) {
-	ret := &dirmetapb.Metadata{}
+func parseOwners(r io.Reader) (*dirmdpb.Metadata, error) {
+	ret := &dirmdpb.Metadata{}
 
 	scan := bufio.NewScanner(r)
 	for scan.Scan() {
@@ -55,7 +55,7 @@ func parseOwners(r io.Reader) (*dirmetapb.Metadata, error) {
 				ret.TeamEmail = value
 
 			case "COMPONENT":
-				ret.Monorail = &dirmetapb.Monorail{
+				ret.Monorail = &dirmdpb.Monorail{
 					Project:   "chromium",
 					Component: value,
 				}
@@ -69,9 +69,9 @@ func parseOwners(r io.Reader) (*dirmetapb.Metadata, error) {
 			case "WPT-NOTIFY":
 				switch strings.ToLower(value) {
 				case "true":
-					ret.Wpt = &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES}
+					ret.Wpt = &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES}
 				case "false":
-					ret.Wpt = &dirmetapb.WPT{Notify: dirmetapb.Trinary_NO}
+					ret.Wpt = &dirmdpb.WPT{Notify: dirmdpb.Trinary_NO}
 				default:
 					return nil, errors.Reason("WPT-NOTIFY: expected true or false, got %q", value).Err()
 				}
@@ -84,16 +84,16 @@ func parseOwners(r io.Reader) (*dirmetapb.Metadata, error) {
 
 // parseOSFromOwners parses a value of "OS" key in an OWNERS file
 // to OS enum.
-func parseOSFromOwners(s string) (dirmetapb.OS, error) {
+func parseOSFromOwners(s string) (dirmdpb.OS, error) {
 	s = strings.ToUpper(s)
 
 	if s == "CHROMEOS" {
 		// ChromeOS is the only one for which the code below does not work.
-		return dirmetapb.OS_CHROME_OS, nil
+		return dirmdpb.OS_CHROME_OS, nil
 	}
 
-	value := dirmetapb.OS(dirmetapb.OS_value[s])
-	if value == dirmetapb.OS_OS_UNSPECIFIED {
+	value := dirmdpb.OS(dirmdpb.OS_value[s])
+	if value == dirmdpb.OS_OS_UNSPECIFIED {
 		return 0, errors.Reason("failed to parse %q as an OS", s).Err()
 	}
 

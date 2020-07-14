@@ -9,7 +9,7 @@ import (
 
 	"go.chromium.org/luci/common/data/rand/mathrand"
 
-	"infra/tools/dirmeta/cli"
+	"infra/tools/dirmd/cli"
 )
 
 func main() {

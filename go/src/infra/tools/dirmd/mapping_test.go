@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package dirmeta
+package dirmd
 
 import (
 	"testing"
 
-	dirmetapb "infra/tools/dirmeta/proto"
+	dirmdpb "infra/tools/dirmd/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -16,14 +16,14 @@ import (
 func TestMerge(t *testing.T) {
 	Convey(`Merge`, t, func() {
 		Convey(`wpt.notify false value is not overwritten/ignored`, func() {
-			inherited := &dirmetapb.Metadata{
-				Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
+			inherited := &dirmdpb.Metadata{
+				Wpt: &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
 			}
-			own := &dirmetapb.Metadata{
-				Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_NO},
+			own := &dirmdpb.Metadata{
+				Wpt: &dirmdpb.WPT{Notify: dirmdpb.Trinary_NO},
 			}
 			Merge(inherited, own)
-			So(inherited.Wpt.Notify, ShouldEqual, dirmetapb.Trinary_NO)
+			So(inherited.Wpt.Notify, ShouldEqual, dirmdpb.Trinary_NO)
 		})
 	})
 }
@@ -33,7 +33,7 @@ func TestComputeAll(t *testing.T) {
 
 	Convey(`Nearest ancestor`, t, func() {
 		m := &Mapping{
-			Dirs: map[string]*dirmetapb.Metadata{
+			Dirs: map[string]*dirmdpb.Metadata{
 				".": {TeamEmail: "0"},
 			},
 		}
@@ -44,33 +44,33 @@ func TestComputeAll(t *testing.T) {
 	Convey(`ComputeAll`, t, func() {
 		Convey(`Works`, func() {
 			m := &Mapping{
-				Dirs: map[string]*dirmetapb.Metadata{
+				Dirs: map[string]*dirmdpb.Metadata{
 					".": {
 						TeamEmail: "team@example.com",
 						// Will be inherited entirely.
-						Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
+						Wpt: &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
 
 						// Will be inherited partially.
-						Monorail: &dirmetapb.Monorail{
+						Monorail: &dirmdpb.Monorail{
 							Project: "chromium",
 						},
 					},
 					"a": {
 						TeamEmail: "team-email@chromium.org",
-						Monorail: &dirmetapb.Monorail{
+						Monorail: &dirmdpb.Monorail{
 							Component: "Component",
 						},
 					},
 				},
 			}
 			m.ComputeAll()
-			So(m.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
-				Dirs: map[string]*dirmetapb.Metadata{
+			So(m.Proto(), ShouldResembleProto, &dirmdpb.Mapping{
+				Dirs: map[string]*dirmdpb.Metadata{
 					".": m.Dirs["."], // did not change
 					"a": {
 						TeamEmail: "team-email@chromium.org",
-						Wpt:       &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
-						Monorail: &dirmetapb.Monorail{
+						Wpt:       &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
+						Monorail: &dirmdpb.Monorail{
 							Project:   "chromium",
 							Component: "Component",
 						},
@@ -81,7 +81,7 @@ func TestComputeAll(t *testing.T) {
 
 		Convey(`Deep nesting`, func() {
 			m := &Mapping{
-				Dirs: map[string]*dirmetapb.Metadata{
+				Dirs: map[string]*dirmdpb.Metadata{
 					".":   {TeamEmail: "team@example.com"},
 					"a":   {},
 					"a/b": {},
@@ -93,7 +93,7 @@ func TestComputeAll(t *testing.T) {
 
 		Convey(`No root`, func() {
 			input := &Mapping{
-				Dirs: map[string]*dirmetapb.Metadata{
+				Dirs: map[string]*dirmdpb.Metadata{
 					"a": {TeamEmail: "a"},
 					"b": {TeamEmail: "b"},
 				},

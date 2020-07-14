@@ -12,7 +12,7 @@ import (
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 
-	"infra/tools/dirmeta"
+	"infra/tools/dirmd"
 )
 
 func cmdCompute() *subcommands.Command {
@@ -32,7 +32,7 @@ func cmdCompute() *subcommands.Command {
 			r.RegisterOutputFlag()
 
 			// -root does not have a default intentionally, otherwise it is easy
-			// to run `dirmeta compute` from no a repo root and notice the problem.
+			// to run `dirmd compute` from no a repo root and notice the problem.
 			r.Flags.StringVar(&r.root, "root", "", "Path to the root directory")
 			return r
 		},
@@ -54,7 +54,7 @@ func (r *computeRun) run(ctx context.Context, targets []string) error {
 		return errors.Reason("-root is required").Err()
 	}
 
-	mapping, err := dirmeta.ReadComputed(r.root, targets...)
+	mapping, err := dirmd.ReadComputed(r.root, targets...)
 	if err != nil {
 		return err
 	}

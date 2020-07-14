@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package dirmeta
+package dirmd
 
 import (
 	"strings"
 	"testing"
 
-	dirmetapb "infra/tools/dirmeta/proto"
+	dirmdpb "infra/tools/dirmd/proto"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -30,21 +30,21 @@ someone@example.com
 # WPT-NOTIFY: true
 			`))
 			So(err, ShouldBeNil)
-			So(actual, ShouldResembleProto, &dirmetapb.Metadata{
+			So(actual, ShouldResembleProto, &dirmdpb.Metadata{
 				TeamEmail: "team-email@chromium.org",
-				Os:        dirmetapb.OS_IOS,
-				Monorail: &dirmetapb.Monorail{
+				Os:        dirmdpb.OS_IOS,
+				Monorail: &dirmdpb.Monorail{
 					Project:   "chromium",
 					Component: "Some>Component",
 				},
-				Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
+				Wpt: &dirmdpb.WPT{Notify: dirmdpb.Trinary_YES},
 			})
 		})
 
 		Convey(`ChromeOS`, func() {
 			actual, err := parseOwners(strings.NewReader(`# OS: ChromeOS`))
 			So(err, ShouldBeNil)
-			So(actual.Os, ShouldEqual, dirmetapb.OS_CHROME_OS)
+			So(actual.Os, ShouldEqual, dirmdpb.OS_CHROME_OS)
 		})
 
 	})

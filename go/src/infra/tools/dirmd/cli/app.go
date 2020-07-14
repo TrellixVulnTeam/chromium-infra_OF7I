@@ -23,7 +23,7 @@ var logCfg = gologger.LoggerConfig{
 // application creates the application and configures its subcommands.
 func application() *cli.Application {
 	return &cli.Application{
-		Name:  "dirmeta",
+		Name:  "dirmd",
 		Title: "A tool to work with DIR_METADATA files",
 		Context: func(ctx context.Context) context.Context {
 			return logCfg.Use(ctx)
@@ -39,7 +39,7 @@ func application() *cli.Application {
 	}
 }
 
-// Main is the main function of the dirmeta application.
+// Main is the main function of the dirmd application.
 func Main(args []string) int {
 	return subcommands.Run(application(), fixflagpos.FixSubcommands(args))
 }

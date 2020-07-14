@@ -2,7 +2,7 @@
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
-package dirmeta
+package dirmd
 
 import (
 	"path"
@@ -10,23 +10,23 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	dirmetapb "infra/tools/dirmeta/proto"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 // Mapping is a mapping from a directory to its metadata.
 //
 // It wraps the corresponding protobuf message and adds utility functions.
-type Mapping dirmetapb.Mapping
+type Mapping dirmdpb.Mapping
 
 // NewMapping initializes an empty mapping.
 func NewMapping(size int) *Mapping {
 	return &Mapping{
-		Dirs: make(map[string]*dirmetapb.Metadata, size),
+		Dirs: make(map[string]*dirmdpb.Metadata, size),
 	}
 }
 
 // Compute computes metadata for the given directory key.
-func (m *Mapping) Compute(key string) *dirmetapb.Metadata {
+func (m *Mapping) Compute(key string) *dirmdpb.Metadata {
 	parent := path.Dir(key)
 	if parent == key {
 		return cloneMD(m.Dirs[key])
@@ -38,13 +38,13 @@ func (m *Mapping) Compute(key string) *dirmetapb.Metadata {
 }
 
 // Proto converts m back to the protobuf message.
-func (m *Mapping) Proto() *dirmetapb.Mapping {
-	return (*dirmetapb.Mapping)(m)
+func (m *Mapping) Proto() *dirmdpb.Mapping {
+	return (*dirmdpb.Mapping)(m)
 }
 
 // Clone returns a deep copy of m.
 func (m *Mapping) Clone() *Mapping {
-	return (*Mapping)(proto.Clone(m.Proto()).(*dirmetapb.Mapping))
+	return (*Mapping)(proto.Clone(m.Proto()).(*dirmdpb.Mapping))
 }
 
 // ComputeAll computes full metadata for each dir.
@@ -60,7 +60,7 @@ func (m *Mapping) ComputeAll() {
 }
 
 // nearestAncestor returns metadata of the nearest ancestor.
-func (m *Mapping) nearestAncestor(dir string) *dirmetapb.Metadata {
+func (m *Mapping) nearestAncestor(dir string) *dirmdpb.Metadata {
 	for {
 		parent := path.Dir(dir)
 		if parent == dir {
@@ -102,7 +102,7 @@ func (m *Mapping) keysByLength() []string {
 //
 // The current implementation is just proto.Merge, but it may change in the
 // future.
-func Merge(dst, src *dirmetapb.Metadata) {
+func Merge(dst, src *dirmdpb.Metadata) {
 	if src != nil {
 		proto.Merge(dst, src)
 	}
@@ -110,9 +110,9 @@ func Merge(dst, src *dirmetapb.Metadata) {
 
 // cloneMD returns a deep copy of meta.
 // If md is nil, returns a new message.
-func cloneMD(md *dirmetapb.Metadata) *dirmetapb.Metadata {
+func cloneMD(md *dirmdpb.Metadata) *dirmdpb.Metadata {
 	if md == nil {
-		return &dirmetapb.Metadata{}
+		return &dirmdpb.Metadata{}
 	}
-	return proto.Clone(md).(*dirmetapb.Metadata)
+	return proto.Clone(md).(*dirmdpb.Metadata)
 }

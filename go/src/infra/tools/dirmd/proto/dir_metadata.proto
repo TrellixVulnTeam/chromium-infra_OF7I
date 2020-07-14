@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package chrome.dir_metadata;
 
-option go_package = "infra/tools/dirmeta/proto;dirmetapb";
+option go_package = "infra/tools/dirmd/proto;dirmdpb";
 
 // Metadata information for a directory.
 //

@@ -6,7 +6,7 @@ package cli
 
 import (
 	"fmt"
-	"infra/tools/dirmeta"
+	"infra/tools/dirmd"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/data/text"
@@ -39,7 +39,7 @@ type validateRun struct {
 func (r *validateRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	exitCode := 0
 	for _, fileName := range args {
-		if err := dirmeta.ValidateFile(fileName); err != nil {
+		if err := dirmd.ValidateFile(fileName); err != nil {
 			fmt.Printf("%s: %s\n", fileName, err)
 			exitCode = 1
 		} else {

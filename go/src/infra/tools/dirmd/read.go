@@ -2,7 +2,7 @@
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
-package dirmeta
+package dirmd
 
 import (
 	"io/ioutil"
@@ -14,7 +14,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	dirmetapb "infra/tools/dirmeta/proto"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 // Filename is the standard name of the metadata file.
@@ -24,7 +24,7 @@ const Filename = "DIR_METADATA"
 // See also MappingReader.
 //
 // Returns (nil, nil) if the metadata is not defined.
-func ReadMetadata(dir string) (*dirmetapb.Metadata, error) {
+func ReadMetadata(dir string) (*dirmdpb.Metadata, error) {
 	fullPath := filepath.Join(dir, Filename)
 	contents, err := ioutil.ReadFile(fullPath)
 	switch {
@@ -36,7 +36,7 @@ func ReadMetadata(dir string) (*dirmetapb.Metadata, error) {
 		return nil, err
 	}
 
-	var ret dirmetapb.Metadata
+	var ret dirmdpb.Metadata
 	if err := prototext.Unmarshal(contents, &ret); err != nil {
 		return nil, errors.Annotate(err, "failed to parse %q", fullPath).Err()
 	}
@@ -44,7 +44,7 @@ func ReadMetadata(dir string) (*dirmetapb.Metadata, error) {
 }
 
 // ReadMapping reads all metadata from the directory tree at root.
-func ReadMapping(root string, form dirmetapb.MappingForm) (*Mapping, error) {
+func ReadMapping(root string, form dirmdpb.MappingForm) (*Mapping, error) {
 	r := &mappingReader{Root: root}
 	if err := r.ReadAll(form); err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ type mappingReader struct {
 
 // ReadAll reads metadata from the entire directory tree, overwriting
 // r.Mapping.
-func (r *mappingReader) ReadAll(form dirmetapb.MappingForm) error {
+func (r *mappingReader) ReadAll(form dirmdpb.MappingForm) error {
 	r.Mapping = *NewMapping(0)
 	err := filepath.Walk(r.Root, func(dir string, info os.FileInfo, err error) error {
 		switch {
@@ -110,9 +110,9 @@ func (r *mappingReader) ReadAll(form dirmetapb.MappingForm) error {
 		case meta != nil:
 			r.Dirs[key] = meta
 
-		case form == dirmetapb.MappingForm_FULL:
+		case form == dirmdpb.MappingForm_FULL:
 			// Put an empty metadata, so that ComputeAll() populates it below.
-			r.Dirs[key] = &dirmetapb.Metadata{}
+			r.Dirs[key] = &dirmdpb.Metadata{}
 		}
 		return nil
 	})
@@ -121,9 +121,9 @@ func (r *mappingReader) ReadAll(form dirmetapb.MappingForm) error {
 	}
 
 	switch form {
-	case dirmetapb.MappingForm_REDUCED:
+	case dirmdpb.MappingForm_REDUCED:
 		r.Mapping.Reduce()
-	case dirmetapb.MappingForm_COMPUTED, dirmetapb.MappingForm_FULL:
+	case dirmdpb.MappingForm_COMPUTED, dirmdpb.MappingForm_FULL:
 		r.Mapping.ComputeAll()
 	}
 
@@ -152,7 +152,7 @@ func (r *mappingReader) readUpMissing(target string) error {
 
 		case meta != nil:
 			if r.Dirs == nil {
-				r.Dirs = map[string]*dirmetapb.Metadata{}
+				r.Dirs = map[string]*dirmdpb.Metadata{}
 			}
 			r.Dirs[key] = meta
 		}

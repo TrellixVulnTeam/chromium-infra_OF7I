@@ -2,7 +2,7 @@
 // Use of this source code is governed under the Apache License, Version 2.0
 // that can be found in the LICENSE file.
 
-package dirmeta
+package dirmd
 
 import (
 	"io/ioutil"
@@ -13,7 +13,7 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 
-	dirmetapb "infra/tools/dirmeta/proto"
+	dirmdpb "infra/tools/dirmd/proto"
 )
 
 // ValidateFile returns a non-nil error if the metadata file is invalid.
@@ -37,7 +37,7 @@ func ValidateFile(fileName string) error {
 		if err != nil {
 			return err
 		}
-		return prototext.Unmarshal(contents, &dirmetapb.Metadata{})
+		return prototext.Unmarshal(contents, &dirmdpb.Metadata{})
 	}
 
 	_, err = parseOwners(f)

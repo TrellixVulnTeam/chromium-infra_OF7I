@@ -13,11 +13,11 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/logging"
 
-	"infra/tools/dirmeta"
+	"infra/tools/dirmd"
 )
 
 // baseCommandRun provides common command run functionality.
-// All dirmeta subcommands must embed it directly or indirectly.
+// All dirmd subcommands must embed it directly or indirectly.
 type baseCommandRun struct {
 	subcommands.CommandRunBase
 
@@ -38,7 +38,7 @@ func (r *baseCommandRun) done(ctx context.Context, err error) int {
 	return 0
 }
 
-func (r *baseCommandRun) writeMapping(m *dirmeta.Mapping) error {
+func (r *baseCommandRun) writeMapping(m *dirmd.Mapping) error {
 	data, err := protojson.Marshal(m.Proto())
 	if err != nil {
 		return err
