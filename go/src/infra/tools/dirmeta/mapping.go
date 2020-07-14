@@ -25,6 +25,18 @@ func NewMapping(size int) *Mapping {
 	}
 }
 
+// Compute computes metadata for the given directory key.
+func (m *Mapping) Compute(key string) *dirmetapb.Metadata {
+	parent := path.Dir(key)
+	if parent == key {
+		return cloneMD(m.Dirs[key])
+	}
+
+	ret := m.Compute(parent)
+	Merge(ret, m.Dirs[key])
+	return ret
+}
+
 // Proto converts m back to the protobuf message.
 func (m *Mapping) Proto() *dirmetapb.Mapping {
 	return (*dirmetapb.Mapping)(m)

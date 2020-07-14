@@ -13,18 +13,14 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
-func TestMappingReader(t *testing.T) {
+func TestRead(t *testing.T) {
 	t.Parallel()
 
-	Convey(`MappingReader`, t, func() {
-		r := &MappingReader{
-			Root: "testdata/root",
-		}
-
+	Convey(`ReadMapping`, t, func() {
 		Convey(`Original`, func() {
-			err := r.ReadAll(dirmetapb.MappingForm_ORIGINAL)
+			m, err := ReadMapping("testdata/root", dirmetapb.MappingForm_ORIGINAL)
 			So(err, ShouldBeNil)
-			So(r.Mapping.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
+			So(m.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
 				Dirs: map[string]*dirmetapb.Metadata{
 					".": {
 						TeamEmail: "chromium-review@chromium.org",
@@ -45,9 +41,9 @@ func TestMappingReader(t *testing.T) {
 		})
 
 		Convey(`Full`, func() {
-			err := r.ReadAll(dirmetapb.MappingForm_FULL)
+			m, err := ReadMapping("testdata/root", dirmetapb.MappingForm_FULL)
 			So(err, ShouldBeNil)
-			So(r.Mapping.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
+			So(m.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
 				Dirs: map[string]*dirmetapb.Metadata{
 					".": {
 						TeamEmail: "chromium-review@chromium.org",
@@ -74,9 +70,9 @@ func TestMappingReader(t *testing.T) {
 		})
 
 		Convey(`Computed`, func() {
-			err := r.ReadAll(dirmetapb.MappingForm_COMPUTED)
+			m, err := ReadMapping("testdata/root", dirmetapb.MappingForm_COMPUTED)
 			So(err, ShouldBeNil)
-			So(r.Mapping.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
+			So(m.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
 				Dirs: map[string]*dirmetapb.Metadata{
 					".": {
 						TeamEmail: "chromium-review@chromium.org",
@@ -92,26 +88,49 @@ func TestMappingReader(t *testing.T) {
 					},
 				},
 			})
+		})
 
-			Convey(`Reduced`, func() {
-				err := r.ReadAll(dirmetapb.MappingForm_REDUCED)
-				So(err, ShouldBeNil)
-				So(r.Mapping.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
-					Dirs: map[string]*dirmetapb.Metadata{
-						".": {
-							TeamEmail: "chromium-review@chromium.org",
-							Os:        dirmetapb.OS_LINUX,
-						},
-						"subdir_with_owners": {
-							TeamEmail: "team-email@chromium.org",
-							Monorail: &dirmetapb.Monorail{
-								Project:   "chromium",
-								Component: "Some>Component",
-							},
+		Convey(`Reduced`, func() {
+			m, err := ReadMapping("testdata/root", dirmetapb.MappingForm_REDUCED)
+			So(err, ShouldBeNil)
+			So(m.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
+				Dirs: map[string]*dirmetapb.Metadata{
+					".": {
+						TeamEmail: "chromium-review@chromium.org",
+						Os:        dirmetapb.OS_LINUX,
+					},
+					"subdir_with_owners": {
+						TeamEmail: "team-email@chromium.org",
+						Monorail: &dirmetapb.Monorail{
+							Project:   "chromium",
+							Component: "Some>Component",
 						},
 					},
-				})
+				},
 			})
+		})
+	})
+
+	Convey(`ReadComputed`, t, func() {
+		m, err := ReadComputed("testdata/inheritance", "testdata/inheritance/a", "testdata/inheritance/a/b")
+		So(err, ShouldBeNil)
+		So(m.Proto(), ShouldResembleProto, &dirmetapb.Mapping{
+			Dirs: map[string]*dirmetapb.Metadata{
+				"a": {
+					TeamEmail: "chromium-review@chromium.org",
+					Monorail: &dirmetapb.Monorail{
+						Project:   "chromium",
+						Component: "Component",
+					},
+				},
+				"a/b": {
+					TeamEmail: "chromium-review@chromium.org",
+					Monorail: &dirmetapb.Monorail{
+						Project:   "chromium",
+						Component: "Component>Child",
+					},
+				},
+			},
 		})
 	})
 }

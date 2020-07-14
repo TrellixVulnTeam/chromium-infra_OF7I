@@ -30,7 +30,7 @@ func cmdExport() *subcommands.Command {
 		CommandRun: func() subcommands.CommandRun {
 			r := &exportRun{}
 			r.RegisterOutputFlag()
-			r.Flags.StringVar(&r.Root, "root", ".", "Path to the root directory")
+			r.Flags.StringVar(&r.root, "root", ".", "Path to the root directory")
 			r.Flags.StringVar(&r.formString, "form", "original", text.Doc(`
 				The form of the returned mapping.
 				Valid values: "original", "reduced", "computed", "full".
@@ -43,7 +43,7 @@ func cmdExport() *subcommands.Command {
 
 type exportRun struct {
 	baseCommandRun
-	dirmeta.MappingReader
+	root       string
 	formString string
 }
 
@@ -63,8 +63,9 @@ func (r *exportRun) run(ctx context.Context, args []string) error {
 	}
 	form := dirmetapb.MappingForm(formInt)
 
-	if err := r.ReadAll(form); err != nil {
+	mapping, err := dirmeta.ReadMapping(r.root, form)
+	if err != nil {
 		return err
 	}
-	return r.writeMapping(&r.Mapping)
+	return r.writeMapping(mapping)
 }

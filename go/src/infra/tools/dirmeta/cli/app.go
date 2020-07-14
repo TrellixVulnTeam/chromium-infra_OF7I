@@ -31,6 +31,7 @@ func application() *cli.Application {
 		Commands: []*subcommands.Command{
 			cmdValidate(),
 			cmdExport(),
+			cmdCompute(),
 
 			{},
 			subcommands.CmdHelp,
