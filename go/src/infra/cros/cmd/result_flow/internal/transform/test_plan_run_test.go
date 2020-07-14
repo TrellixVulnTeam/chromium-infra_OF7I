@@ -26,7 +26,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	. "github.com/smartystreets/goconvey/convey"
-	pb "go.chromium.org/luci/buildbucket/proto"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 )
 
@@ -49,18 +49,18 @@ var (
 func TestBuildToTestPlanRuns(t *testing.T) {
 	cases := []struct {
 		description string
-		in          *pb.Build
+		in          *bbpb.Build
 		want        []*analytics.TestPlanRun
 	}{
 		{
 			"Transform an ongoing CTP build to analytics.TestPlanRun",
 			genFakeBuild("foo", false),
-			genFakeTestRuns("foo", false),
+			genFakeTestPlanRuns("foo", false),
 		},
 		{
 			"Transform a completed CTP build to analytics.TestPlanRun",
 			genFakeBuild("hoo", true),
-			genFakeTestRuns("hoo", true),
+			genFakeTestPlanRuns("hoo", true),
 		},
 	}
 	ctx := context.Background()
@@ -72,7 +72,7 @@ func TestBuildToTestPlanRuns(t *testing.T) {
 				sort.Slice(got, func(i, j int) bool { return got[i].Uid < got[j].Uid })
 				So(got, ShouldNotBeNil)
 				for i := 0; i < len(got); i++ {
-					checkEquality(c.want[i], got[i])
+					checkTestPlanRunEquality(c.want[i], got[i])
 				}
 
 			})
@@ -80,7 +80,7 @@ func TestBuildToTestPlanRuns(t *testing.T) {
 	}
 }
 
-func genFakeTestRuns(label string, finished bool) []*analytics.TestPlanRun {
+func genFakeTestPlanRuns(label string, finished bool) []*analytics.TestPlanRun {
 	runs := []*analytics.TestPlanRun{
 		{
 			Uid:           genFakeUID(label),
@@ -101,24 +101,25 @@ func genFakeTestRuns(label string, finished bool) []*analytics.TestPlanRun {
 	return runs
 }
 
-func genFakeBuild(label string, finished bool) *pb.Build {
-	res := &pb.Build{
+func genFakeBuild(label string, finished bool) *bbpb.Build {
+	res := &bbpb.Build{
 		Id:         fakeBuildID,
 		CreateTime: fakeCreateTime,
 		StartTime:  fakeStartTime,
 		EndTime:    fakeEndTime,
-		Input: requestToInputField(
+		Input: ctpRequestsToInputField(
 			map[string]*test_platform.Request{
 				label: genFakeTestPlatformRequest(label),
 			},
 		),
 	}
 	if finished {
-		res.Output = responseToOutputField(
+		res.Output = pbToOutputField(
 			genFakeTestPlatformResponses(
 				label,
 				test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 			),
+			"compressed_responses",
 		)
 	}
 	return res
@@ -184,7 +185,7 @@ func genFakeTestPlatformRequest(board string) *test_platform.Request {
 	}
 }
 
-func checkEquality(want, got *analytics.TestPlanRun) {
+func checkTestPlanRunEquality(want, got *analytics.TestPlanRun) {
 	So(want.Uid, ShouldEqual, got.Uid)
 	So(want.BuildId, ShouldEqual, got.BuildId)
 	So(want.Suite, ShouldEqual, got.Suite)
@@ -196,9 +197,9 @@ func checkEquality(want, got *analytics.TestPlanRun) {
 	So(want.Timeline, ShouldResemble, got.Timeline)
 }
 
-func requestToInputField(requests map[string]*test_platform.Request) *pb.Build_Input {
-	rs, _ := requestsToStructPB(requests)
-	return &pb.Build_Input{
+func ctpRequestsToInputField(requests map[string]*test_platform.Request) *bbpb.Build_Input {
+	rs, _ := ctpRequestsToStructPB(requests)
+	return &bbpb.Build_Input{
 		Properties: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"requests": rs,
@@ -207,25 +208,10 @@ func requestToInputField(requests map[string]*test_platform.Request) *pb.Build_I
 	}
 }
 
-func requestToStructPB(from *test_platform.Request) (*structpb.Value, error) {
-	m := jsonpb.Marshaler{}
-	jsonStr, err := m.MarshalToString(from)
-	if err != nil {
-		return nil, err
-	}
-	reqStruct := &structpb.Struct{}
-	if err := jsonpb.UnmarshalString(jsonStr, reqStruct); err != nil {
-		return nil, err
-	}
-	return &structpb.Value{
-		Kind: &structpb.Value_StructValue{StructValue: reqStruct},
-	}, nil
-}
-
-func requestsToStructPB(from map[string]*test_platform.Request) (*structpb.Value, error) {
+func ctpRequestsToStructPB(from map[string]*test_platform.Request) (*structpb.Value, error) {
 	fs := make(map[string]*structpb.Value)
 	for k, r := range from {
-		v, err := requestToStructPB(r)
+		v, err := marshalPB(r)
 		if err != nil {
 			return nil, errors.Annotate(err, "requests to struct pb (%s)", k).Err()
 		}
@@ -252,13 +238,13 @@ func genFakeTestPlatformResponses(key string, lifeCycle test_platform.TaskState_
 	}
 }
 
-func responseToOutputField(responses *steps.ExecuteResponses) *pb.Build_Output {
-	return &pb.Build_Output{
+func pbToOutputField(from proto.Message, field string) *bbpb.Build_Output {
+	return &bbpb.Build_Output{
 		Properties: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"compressed_responses": {
+				field: {
 					Kind: &structpb.Value_StringValue{
-						StringValue: compress(responses),
+						StringValue: compressPBToString(from),
 					},
 				},
 			},
@@ -266,11 +252,26 @@ func responseToOutputField(responses *steps.ExecuteResponses) *pb.Build_Output {
 	}
 }
 
-func compress(responses *steps.ExecuteResponses) string {
-	wire, _ := proto.Marshal(responses)
+func compressPBToString(from proto.Message) string {
+	wire, _ := proto.Marshal(from)
 	var b bytes.Buffer
 	w := zlib.NewWriter(&b)
 	w.Write(wire)
 	w.Close()
 	return base64.StdEncoding.EncodeToString(b.Bytes())
+}
+
+func marshalPB(from proto.Message) (*structpb.Value, error) {
+	m := jsonpb.Marshaler{}
+	jsonStr, err := m.MarshalToString(from)
+	if err != nil {
+		return nil, err
+	}
+	to := &structpb.Struct{}
+	if err := jsonpb.UnmarshalString(jsonStr, to); err != nil {
+		return nil, err
+	}
+	return &structpb.Value{
+		Kind: &structpb.Value_StructValue{StructValue: to},
+	}, nil
 }
