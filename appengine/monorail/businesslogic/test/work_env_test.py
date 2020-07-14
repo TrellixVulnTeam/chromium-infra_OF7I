@@ -83,7 +83,7 @@ class WorkEnvTest(unittest.TestCase):
     self.mr.perms = permissions.READ_ONLY_PERMISSIONSET
     self.field_def_1_name = 'test_field_1'
     self.field_def_1 = fake.MakeTestFieldDef(
-        1, self.project.project_id, tracker_pb2.FieldTypes.INT_TYPE,
+        101, self.project.project_id, tracker_pb2.FieldTypes.INT_TYPE,
         field_name=self.field_def_1_name, max_value=10)
     self.services.config.TestAddFieldDef(self.field_def_1)
     self.PAST_TIME = 12345
