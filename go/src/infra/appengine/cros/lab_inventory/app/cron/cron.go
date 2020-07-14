@@ -26,6 +26,7 @@ import (
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
 	"golang.org/x/oauth2"
+	"google.golang.org/api/iterator"
 
 	apibq "infra/appengine/cros/lab_inventory/api/bigquery"
 	"infra/appengine/cros/lab_inventory/app/config"
@@ -76,7 +77,7 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 
 	r.GET("/internal/cron/sync-asset-info-from-hart", mwCron, logAndSetHTTPErr(syncAssetInfoFromHaRT))
 
-	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevices))
+	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevicesHandler))
 }
 
 func importServiceConfig(c *router.Context) error {
@@ -395,44 +396,76 @@ func isDUT(googleCodeName string) bool {
 	return true
 }
 
-func backfillAssetTagsToDevices(c *router.Context) error {
+// backfillAssetTagsToDevicesHandler uses BQ table in the project to
+// update devices with their asset tag
+//
+// This job is run every hour and the 'rate per hour'/'batch size' can
+// can be configured in the project configs.
+func backfillAssetTagsToDevicesHandler(c *router.Context) error {
 	ctx := c.Context
 
-	logging.Infof(ctx, "Backfill AssetTags to CrosDevices")
+	cfg := config.Get(ctx).GetBackfillingConfig()
 
-	// Attempt to create Hostname from location
-	assets, err := datastore.GetAllAssets(ctx, false)
+	batchSize := int(cfg.GetRate())
+
+	if cfg.GetEnable() {
+		logging.Infof(ctx, "Backfill asset tags to CrosDevices.")
+	} else {
+		logging.Infof(ctx, "Backfilling asset tags not enabled.")
+		return nil
+	}
+
+	client, err := bigquery.NewClient(ctx, info.AppID(ctx))
+
 	if err != nil {
 		return err
 	}
 
-	assetIDs := make([]string, 0, len(assets))
-	for _, a := range assets {
-		assetIDs = append(assetIDs, a.GetId())
+	// HostNameAT is used here to record the mapping between
+	// HostName and Asset tag from bigquery
+	type HostNameAT struct {
+		Hostname string
+		AssetTag string
 	}
-	assetInfoRes := datastore.GetAssetInfo(ctx, assetIDs)
 
-	hostAT := make(map[string]string, len(assets))
-	hosts := make([]string, 0, len(assets))
-	for idx, a := range assets {
-		// Ignore assets that are servos or are missing asset info
-		if assetInfoRes[idx].Err == nil &&
-			isDUT(assetInfoRes[idx].Entity.Info.GetGoogleCodeName()) {
-			loc := a.GetLocation()
-			hostname := fmt.Sprintf("%v-row%v-rack%v-host%v",
-				loc.GetLab(), loc.GetRow(), loc.GetRack(), loc.GetPosition())
-			hostAT[hostname] = a.GetId()
-			hosts = append(hosts, hostname)
-		}
+	// Get all the known hostname <-> Asset tag mapping
+	q := client.Query("SELECT s_host_name as hostname, a_asset_tag as assetTag FROM `" +
+		cfg.GetDataset() + "." + cfg.GetTable() +
+		"` WHERE a_asset_tag NOT IN (SELECT id FROM `" + cfg.GetDataset() +
+		".lab` WHERE hostname=s_host_name)")
+	it, err := q.Read(ctx)
+	if err != nil {
+		return err
 	}
-	devOpRes := datastore.GetDevicesByHostnames(ctx, hosts)
-	for _, dev := range devOpRes {
-		if dev.Err == nil && string(dev.Entity.ID) != hostAT[dev.Entity.Hostname] {
-			logging.Infof(ctx, "Updating %v from %v to %v",
-				dev.Entity.Hostname, dev.Entity.ID,
-				hostAT[dev.Entity.Hostname])
-			datastore.UpdateDeviceID(ctx, string(dev.Entity.ID),
-				hostAT[dev.Entity.Hostname])
+
+	for batchSize > 0 {
+		hostAT := make(map[string]string, batchSize)
+		hosts := make([]string, 0, batchSize)
+
+		for idx := 0; idx < batchSize; idx++ {
+			var value HostNameAT
+			err := it.Next(&value)
+			if err != nil {
+				if err == iterator.Done {
+					batchSize = len(hostAT)
+					break
+				}
+				return err
+			}
+			hostAT[value.Hostname] = value.AssetTag
+			hosts = append(hosts, value.Hostname)
+		}
+
+		devOpRes := datastore.GetDevicesByHostnames(ctx, hosts)
+		for _, dev := range devOpRes {
+			if dev.Err == nil && string(dev.Entity.ID) != hostAT[dev.Entity.Hostname] {
+				logging.Infof(ctx, "Updating %v from %v to %v",
+					dev.Entity.Hostname, dev.Entity.ID,
+					hostAT[dev.Entity.Hostname])
+				datastore.UpdateDeviceID(ctx, string(dev.Entity.ID),
+					hostAT[dev.Entity.Hostname])
+				batchSize--
+			}
 		}
 	}
 	return nil
