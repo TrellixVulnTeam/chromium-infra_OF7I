@@ -55,34 +55,24 @@ class SearchTest(testing.AppengineTestCase):
         'components.auth.get_current_identity',
         side_effect=lambda: self.current_identity
     )
-    self.patch('user.can_async', return_value=future(True))
     self.now = datetime.datetime(2015, 1, 1)
     self.patch('components.utils.utcnow', side_effect=lambda: self.now)
 
-    self.chromium_try = project_config_pb2.Bucket(name='try')
-
     self.patch(
         'config.get_bucket_async',
-        return_value=future({'deadbeef': self.chromium_try})
+        return_value=future({'deadbeef': project_config_pb2.Bucket(name='try')})
     )
-    self.patch(
-        'user.get_accessible_buckets_async',
-        autospec=True,
-        return_value=future({'chromium/try'}),
-    )
+    self.patch('user.get_accessible_buckets_async', autospec=True)
     self.patch('search.TagIndex.random_shard_index', return_value=0)
 
-  def mock_cannot(self, action, bucket_id=None):
+    self.perms = test_util.mock_permissions(self)
+    self.mock_searchable_buckets('chromium/try')
 
-    def can_async(requested_bucket_id, requested_action, _identity=None):
-      match = (
-          requested_action == action and
-          (bucket_id is None or requested_bucket_id == bucket_id)
-      )
-      return future(not match)
-
-    # user.can_async is patched in setUp()
-    user.can_async.side_effect = can_async
+  def mock_searchable_buckets(self, *bucket_ids):
+    self.perms.clear()
+    for b in bucket_ids:
+      self.perms[b] = [user.PERM_BUILDS_LIST]
+    user.get_accessible_buckets_async.return_value = future(set(bucket_ids))
 
   def put_many_builds(self, count, **build_proto_fields):
     return [self.put_build(**build_proto_fields) for _ in xrange(count)]
@@ -111,10 +101,10 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(keys(first), keys(second))
 
   def test_without_buckets(self):
-    self.mock_cannot(user.Action.SEARCH_BUILDS, 'chromium/ci')
+    self.mock_searchable_buckets('proj/try')
 
-    build1 = self.put_build(builder=dict(bucket='try'))
-    build2 = self.put_build(builder=dict(bucket='ci'))
+    build1 = self.put_build(builder=dict(project='proj', bucket='try'))
+    build2 = self.put_build(builder=dict(project='proj', bucket='ci'))
 
     builds, _ = self.search()
     self.assertEqual(builds, [build1])
@@ -122,23 +112,22 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(builds, [build1])
 
     # All buckets are available.
+    self.mock_searchable_buckets('proj/try', 'proj/ci')
     user.get_accessible_buckets_async.return_value = future(None)
-    user.can_async.side_effect = None
     builds, _ = self.search()
     self.assertEqual(builds, [build2, build1])
     builds, _ = self.search(tags=[self.INDEXED_TAG])
     self.assertEqual(builds, [build2, build1])
 
     # No buckets are available.
-    user.get_accessible_buckets_async.return_value = future(set())
-    self.mock_cannot(user.Action.SEARCH_BUILDS)
+    self.mock_searchable_buckets()
     builds, _ = self.search()
     self.assertEqual(builds, [])
     builds, _ = self.search(tags=[self.INDEXED_TAG])
     self.assertEqual(builds, [])
 
   def test_auth_error(self):
-    self.mock_cannot(user.Action.SEARCH_BUILDS)
+    self.mock_searchable_buckets()
     with self.assertRaises(auth.AuthorizationError):
       self.search(bucket_ids=['chromium/try'])
 
@@ -178,9 +167,8 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(builds, [build])
 
   def test_filter_by_project(self):
-    user.get_accessible_buckets_async.return_value = future({
-        'chromium/try', 'v8/try'
-    })
+    self.mock_searchable_buckets('chromium/try', 'v8/try')
+
     build = self.put_build(builder=dict(project='chromium'))
     self.put_build(builder=dict(project='v8'))
 
@@ -188,10 +176,12 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(builds, [build])
 
   def test_filter_by_bucket(self):
-    build1 = self.put_build(builder=dict(project='chromium', bucket='1'))
-    self.put_build(builder=dict(project='chromium', bucket='2'))
+    self.mock_searchable_buckets('proj/1', 'proj/2')
 
-    builds, _ = self.search(bucket_ids=['chromium/1'])
+    build1 = self.put_build(builder=dict(project='proj', bucket='1'))
+    self.put_build(builder=dict(project='proj', bucket='2'))
+
+    builds, _ = self.search(bucket_ids=['proj/1'])
     self.assertEqual(builds, [build1])
 
   def test_filter_by_builder(self):
@@ -209,19 +199,23 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(builds, [build1])
 
   def test_filter_by_project_admin(self):
+    self.mock_searchable_buckets('proj1/bucket', 'proj2/bucket')
     user.get_accessible_buckets_async.return_value = future(None)
-    build = self.put_build(builder=dict(project='chromium'))
-    self.put_build(builder=dict(project='v8'))
 
-    builds, _ = self.search(project='chromium')
+    build = self.put_build(builder=dict(project='proj1', bucket='bucket'))
+    self.put_build(builder=dict(project='proj2', bucket='bucket'))
+
+    builds, _ = self.search(project='proj1')
     self.assertEqual(builds, [build])
 
   def test_filter_by_project_indexed(self):
-    build1 = self.put_build(builder=dict(project='1'))
-    self.put_build(builder=dict(project='2'))
+    self.mock_searchable_buckets('proj1/bucket', 'proj2/bucket')
+
+    build1 = self.put_build(builder=dict(project='proj1', bucket='bucket'))
+    self.put_build(builder=dict(project='proj2', bucket='bucket'))
 
     builds, _ = self.search(
-        project='1',
+        project='proj1',
         tags=[self.INDEXED_TAG],
     )
     self.assertEqual(builds, [build1])
@@ -434,7 +428,8 @@ class SearchTest(testing.AppengineTestCase):
     self.assertEqual(builds, [build1])
 
   def test_filter_by_retry_of_with_auth_error(self):
-    self.mock_cannot(user.Action.SEARCH_BUILDS, bucket_id='chromium/try')
+    self.mock_searchable_buckets()
+
     orig_build = self.put_build(id=1)
     retried_build = self.put_build(id=1)
     retried_build.retry_of = orig_build.key.id()
@@ -507,8 +502,6 @@ class SearchTest(testing.AppengineTestCase):
       self.search(tags=['a:b'], max_builds=-2)
 
   def test_filter_by_indexed_tag(self):
-    self.mock_cannot(user.Action.SEARCH_BUILDS, 'secret/secret.bucket')
-
     self.put_build(builder=dict(project='chromium', bucket='try'),)
     self.put_build(builder=dict(project='chromium', bucket='secret'),)
     build = self.put_build(
@@ -683,7 +676,7 @@ class SearchTest(testing.AppengineTestCase):
       self.search(start_cursor='a bad cursor',)
 
   def test_no_permissions(self):
-    user.can_async.return_value = future(False)
+    self.mock_searchable_buckets()
     with self.assertRaises(auth.AuthorizationError):
       self.search(bucket_ids=['chromium/try'])
 

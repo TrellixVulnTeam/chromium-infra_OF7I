@@ -136,8 +136,8 @@ class SwarmbucketApi(remote.Service):
       bucket_ids = map(api_common.parse_luci_bucket, request.bucket)
       bucket_ids = [bid for bid in bucket_ids if bid]
       # Filter out inaccessible ones.
-      bids_can = utils.async_apply(bucket_ids, user.can_access_bucket_async)
-      bucket_ids = [bid for bid, can in bids_can if can]
+      visible = user.filter_buckets_by_perm(user.PERM_BUILDERS_LIST, bucket_ids)
+      bucket_ids = [bid for bid in bucket_ids if bid in visible]
     else:
       # Buckets were not specified explicitly.
       # Use the available ones.
@@ -227,7 +227,7 @@ class SwarmbucketApi(remote.Service):
   def set_next_build_number(self, request):
     """Sets the build number that will be used for the next build."""
     bucket_id = api.convert_bucket(request.bucket)
-    if not user.can_set_next_number_async(bucket_id).get_result():
+    if not user.has_perm(user.PERM_BUILDERS_SET_NUM, bucket_id):
       raise endpoints.ForbiddenException('access denied')
 
     project, bucket = config.parse_bucket_id(bucket_id)

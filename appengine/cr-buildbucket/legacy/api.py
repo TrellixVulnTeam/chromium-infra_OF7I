@@ -415,7 +415,7 @@ def convert_bucket(bucket):
 
   # Check access here to return user-supplied bucket name,
   # as opposed to computed bucket id to prevent sniffing bucket names.
-  if not bucket_id or not user.can_access_bucket_async(bucket_id).get_result():
+  if not bucket_id or not user.has_perm(user.PERM_BUCKETS_GET, bucket_id):
     raise user.current_identity_cannot('access bucket %r', bucket)
 
   return bucket_id
@@ -482,8 +482,9 @@ def check_scheduling_permissions(bucket_ids):
 
   Raises auth.AuthorizationError on insufficient permissions.
   """
-  can_add = utils.async_apply(set(bucket_ids), user.can_add_build_async)
-  forbidden = [b for b, can in can_add if not can]
+  bucket_ids = set(bucket_ids)
+  can_add = user.filter_buckets_by_perm(user.PERM_BUILDS_ADD, bucket_ids)
+  forbidden = sorted(bucket_ids - can_add)
   if forbidden:
     raise user.current_identity_cannot('add builds to buckets %s', forbidden)
 

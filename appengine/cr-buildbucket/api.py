@@ -490,7 +490,7 @@ def schedule_build_async(req, res, _ctx, mask):
   req = yield prepare_schedule_build_request_async(req)
 
   bucket_id = config.format_bucket_id(req.builder.project, req.builder.bucket)
-  if not (yield user.can_add_build_async(bucket_id)):
+  if not (yield user.has_perm_async(user.PERM_BUILDS_ADD, bucket_id)):
     raise current_identity_cannot('schedule builds to bucket %s', bucket_id)
 
   build_req = creation.BuildRequest(schedule_build_request=req)
@@ -551,12 +551,12 @@ def schedule_build_multi(batch):
   ]
 
   bucket_ids = {get_bucket_id(x.request) for x in valid_items}
-  can_add = dict(utils.async_apply(bucket_ids, user.can_add_build_async))
+  can_add = user.filter_buckets_by_perm(user.PERM_BUILDS_ADD, bucket_ids)
   identity_str = auth.get_current_identity().to_bytes()
   to_schedule = []
   for x in valid_items:
     bid = get_bucket_id(x.request)
-    if can_add[bid]:
+    if bid in can_add:
       to_schedule.append(x)
     else:
       x.response.error.code = prpc.StatusCode.PERMISSION_DENIED.value

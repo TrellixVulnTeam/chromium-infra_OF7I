@@ -41,7 +41,14 @@ class BaseTestCase(testing.AppengineTestCase):
   def setUp(self):
     super(BaseTestCase, self).setUp()
 
-    self.patch('user.can_async', return_value=future(True))
+    self.perms = test_util.mock_permissions(self)
+    self.perms['chromium/try'] = [
+        user.PERM_BUILDS_GET,
+        user.PERM_BUILDS_LIST,
+        user.PERM_BUILDS_ADD,
+        user.PERM_BUILDS_CANCEL,
+        user.PERM_BUILDERS_LIST,
+    ]
     self.patch(
         'user.get_accessible_buckets_async',
         autospec=True,
@@ -818,11 +825,10 @@ class ScheduleBuildTests(BaseTestCase):
 
   @mock.patch('service.get_async', autospec=True)
   def test_schedule_with_unauthorized_template_build_id(self, get_async):
-    user.can_async.return_value = future(False)
     get_async.return_value = future(
         test_util.build(
             id=44,
-            builder=dict(project='chromium', bucket='try', builder='linux'),
+            builder=dict(project='chromium', bucket='another', builder='linux'),
         ),
     )
     req = rpc_pb2.ScheduleBuildRequest(template_build_id=44)
@@ -833,7 +839,7 @@ class ScheduleBuildTests(BaseTestCase):
     )
 
   def test_forbidden(self):
-    user.can_async.return_value = future(False)
+    self.perms['chromium/try'].remove(user.PERM_BUILDS_ADD)
     req = rpc_pb2.ScheduleBuildRequest(
         builder=dict(project='chromium', bucket='try', builder='linux'),
     )
@@ -950,10 +956,6 @@ class BatchTests(BaseTestCase):
         (None, Exception('unexpected')),
         (None, auth.AuthorizationError('bad')),
     ])
-
-    user.can_async.side_effect = (
-        lambda bucket_id, _: future('forbidden' not in bucket_id)
-    )
 
     req = rpc_pb2.BatchRequest(
         requests=[

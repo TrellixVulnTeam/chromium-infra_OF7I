@@ -81,7 +81,7 @@ class RedirectHandlerBase(auth.AuthenticatingHandler):  # pragma: no cover
       self.abort(400)
 
     build = model.Build.get_by_id(build_id)
-    can_view = build and user.can_view_build_async(build).get_result()
+    can_view = build and user.has_perm(user.PERM_BUILDS_GET, build.bucket_id)
 
     if not can_view:
       if auth.get_current_identity().is_anonymous:

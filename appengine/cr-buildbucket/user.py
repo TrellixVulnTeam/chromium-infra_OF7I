@@ -26,8 +26,122 @@ import errors
 # Group whitelisting users to update builds. They are expected to be robots.
 UPDATE_BUILD_ALLOWED_USERS = 'buildbucket-update-build-users'
 
+
 ################################################################################
-## Role definitions.
+## Permissions-based API (implemented in terms of Buildbucket roles for now).
+
+ALL_PERMISSIONS = set()
+
+
+def _permission(name):
+  perm = auth.Permission(name)
+  ALL_PERMISSIONS.add(perm)
+  return perm
+
+
+# Builds permissions.
+
+# See all information about a build.
+PERM_BUILDS_GET = _permission('buildbucket.builds.get')
+# List and search builds in a bucket.
+PERM_BUILDS_LIST = _permission('buildbucket.builds.list')
+# Schedule new builds in the bucket.
+PERM_BUILDS_ADD = _permission('buildbucket.builds.add')
+# Cancel a build in the bucket.
+PERM_BUILDS_CANCEL = _permission('buildbucket.builds.cancel')
+# Lease and control a build via v1 API, deprecated.
+PERM_BUILDS_LEASE = _permission('buildbucket.builds.lease')
+# Unlease and reset state of an existing build via v1 API, deprecated.
+PERM_BUILDS_RESET = _permission('buildbucket.builds.reset')
+
+# Builders permissions.
+
+# List and search builders (but not builds).
+PERM_BUILDERS_LIST = _permission('buildbucket.builders.list')
+# Set the next build number.
+PERM_BUILDERS_SET_NUM = _permission('buildbucket.builders.setBuildNumber')
+
+# Bucket permissions.
+
+# See existence of a bucket, used only by v1 APIs, deprecated.
+PERM_BUCKETS_GET = _permission('buildbucket.buckets.get')
+# Delete all scheduled builds from a bucket.
+PERM_BUCKETS_DELETE_BUILDS = _permission('buildbucket.buckets.deleteBuilds')
+# Pause/resume leasing builds in a bucket via v1 API, deprecated.
+PERM_BUCKETS_PAUSE = _permission('buildbucket.buckets.pause')
+
+# Forbid adding more permission from other modules or tests after this point.
+ALL_PERMISSIONS = frozenset(ALL_PERMISSIONS)
+
+# Maps a Permission to a minimum required project_config_pb2.Acl.Role.
+PERM_TO_MIN_ROLE = {
+    # Reader.
+    PERM_BUILDS_GET: project_config_pb2.Acl.READER,
+    PERM_BUILDS_LIST: project_config_pb2.Acl.READER,
+    PERM_BUILDERS_LIST: project_config_pb2.Acl.READER,
+    PERM_BUCKETS_GET: project_config_pb2.Acl.READER,
+
+    # Scheduler.
+    PERM_BUILDS_ADD: project_config_pb2.Acl.SCHEDULER,
+    PERM_BUILDS_CANCEL: project_config_pb2.Acl.SCHEDULER,
+
+    # Writer.
+    PERM_BUILDS_LEASE: project_config_pb2.Acl.WRITER,
+    PERM_BUILDS_RESET: project_config_pb2.Acl.WRITER,
+    PERM_BUILDERS_SET_NUM: project_config_pb2.Acl.WRITER,
+    PERM_BUCKETS_DELETE_BUILDS: project_config_pb2.Acl.WRITER,
+    PERM_BUCKETS_PAUSE: project_config_pb2.Acl.WRITER,
+}
+assert sorted(PERM_TO_MIN_ROLE.keys()) == sorted(ALL_PERMISSIONS)
+
+
+@ndb.tasklet
+def has_perm_async(perm, bucket_id):
+  """Returns True if the caller has the given permission in the bucket.
+
+  Args:
+    perm: an instance of auth.Permission.
+    bucket_id: a bucket ID string, i.e. "<project>/<bucket>".
+  """
+  assert isinstance(perm, auth.Permission), perm
+  assert perm in ALL_PERMISSIONS, perm
+  config.validate_bucket_id(bucket_id)
+  role = yield get_role_async_deprecated(bucket_id)
+  raise ndb.Return(role is not None and role >= PERM_TO_MIN_ROLE[perm])
+
+
+def has_perm(perm, bucket_id):
+  """Returns True if the caller has the given permission in the bucket.
+
+  Args:
+    perm: an instance of auth.Permission.
+    bucket_id: a bucket ID string, i.e. "<project>/<bucket>".
+  """
+  return has_perm_async(perm, bucket_id).get_result()
+
+
+def filter_buckets_by_perm(perm, bucket_ids):
+  """Filters given buckets keeping only ones the caller has the permission in.
+
+  Note that this function is not async!
+
+  Args:
+    perm: an instance of auth.Permission.
+    bucket_ids: an iterable with bucket IDs.
+
+  Returns:
+    A set of bucket IDs.
+  """
+  pairs = utils.async_apply(
+      bucket_ids if isinstance(bucket_ids, set) else set(bucket_ids),
+      lambda bid: has_perm_async(perm, bid),
+      unordered=True,
+  )
+  return {bid for bid, has_perm in pairs if has_perm}
+
+
+################################################################################
+## Role definitions (DEPRECATED).
 
 
 class Action(messages.Enum):
@@ -106,33 +220,10 @@ ROLE_TO_ACTIONS = {
 ## Granular actions. API uses these.
 
 
-def can_async_fn(action):
-  assert isinstance(action, Action)
-  return lambda bucket: can_async(bucket, action)  # pragma: no cover
-
-
-def can_async_fn_for_build(action):
-  assert isinstance(action, Action)
-  return lambda build: can_async(build.bucket_id, action)
-
-
-# Functions for each Action.
-# Some accept build as first param, others accept bucket name.
-can_view_build_async = can_async_fn_for_build(Action.VIEW_BUILD)
-can_search_builds_async = can_async_fn(Action.SEARCH_BUILDS)
-can_add_build_async = can_async_fn(Action.ADD_BUILD)
-can_lease_build_async = can_async_fn_for_build(Action.LEASE_BUILD)
-can_cancel_build_async = can_async_fn_for_build(Action.CANCEL_BUILD)
-can_reset_build_async = can_async_fn_for_build(Action.RESET_BUILD)
-can_delete_scheduled_builds_async = can_async_fn(Action.DELETE_SCHEDULED_BUILDS)
-can_pause_buckets_async = can_async_fn(Action.PAUSE_BUCKET)
-can_access_bucket_async = can_async_fn(Action.ACCESS_BUCKET)
-can_set_next_number_async = can_async_fn(Action.SET_NEXT_NUMBER)
-
-
 @ndb.tasklet
 def can_update_build_async():  # pragma: no cover
   """Returns if the current identity is whitelisted to update builds."""
+  # TODO(crbug.com/1091604): Implementing using has_perm_async.
   raise ndb.Return(auth.is_group_member(UPDATE_BUILD_ALLOWED_USERS))
 
 
@@ -195,16 +286,9 @@ def get_role_async_deprecated(bucket_id):
 
 
 @ndb.tasklet
-def can_async(bucket_id, action):
-  config.validate_bucket_id(bucket_id)
-  assert isinstance(action, Action)
-  role = yield get_role_async_deprecated(bucket_id)
-  raise ndb.Return(role is not None and role >= ACTION_TO_MIN_ROLE[action])
-
-
-@ndb.tasklet
 def permitted_actions_async(bucket_id):
   """Returns a tuple of actions (as Action enums) permitted to the caller."""
+  # TODO(crbug.com/1091604): Implementing in terms of has_perm_async.
   role = yield get_role_async_deprecated(bucket_id)
   if role is None:
     raise ndb.Return(())
@@ -223,6 +307,7 @@ def get_accessible_buckets_async():
       a set of bucket ids strings
       or None if all buckets are available.
   """
+  # TODO(crbug.com/1091604): Implement in terms of has_perm_async.
 
   # TODO(vadimsh): This function doesn't understand 'project:...' identities.
 

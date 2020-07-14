@@ -76,7 +76,7 @@ def get_async(build_id):
   build = yield model.Build.get_by_id_async(build_id)
   if not build:
     raise ndb.Return(None)
-  if not (yield user.can_view_build_async(build)):
+  if not (yield user.has_perm_async(user.PERM_BUILDS_GET, build.bucket_id)):
     raise user.current_identity_cannot('view build %s', build.key.id())
   raise ndb.Return(build)
 
@@ -141,12 +141,14 @@ def peek(bucket_ids, max_builds=None, start_cursor=None):
   ).get_result()
 
 
-def _get_leasable_build(build_id):
+def _get_leasable_build(build_id, perm):
+  assert perm in (user.PERM_BUILDS_LEASE, user.PERM_BUILDS_RESET), perm
   build = model.Build.get_by_id(build_id)
   if build is None:
     raise errors.BuildNotFoundError()
-  if not user.can_lease_build_async(build).get_result():
-    raise user.current_identity_cannot('lease build %s', build.key.id())
+  if not user.has_perm(perm, build.bucket_id):
+    action = 'reset' if perm == user.PERM_BUILDS_RESET else 'lease'
+    raise user.current_identity_cannot('%s build %s', action, build.key.id())
   if build.is_luci:
     raise errors.InvalidInputError('cannot lease a swarmbucket build')
   return build
@@ -175,7 +177,7 @@ def lease(build_id, lease_expiration_date=None):
 
   @ndb.transactional
   def try_lease():
-    build = _get_leasable_build(build_id)
+    build = _get_leasable_build(build_id, user.PERM_BUILDS_LEASE)
 
     if build.proto.status != common_pb2.SCHEDULED or build.is_leased:
       return False, build
@@ -212,9 +214,7 @@ def reset(build_id):
 
   @ndb.transactional
   def txn():
-    build = _get_leasable_build(build_id)
-    if not user.can_reset_build_async(build).get_result():
-      raise user.current_identity_cannot('reset build %s', build.key.id())
+    build = _get_leasable_build(build_id, user.PERM_BUILDS_RESET)
     if build.is_ended:
       raise errors.BuildIsCompletedError('Cannot reset a completed build')
     build.proto.status = common_pb2.SCHEDULED
@@ -245,7 +245,7 @@ def start(build_id, lease_key, url):
 
   @ndb.transactional
   def txn():
-    build = _get_leasable_build(build_id)
+    build = _get_leasable_build(build_id, user.PERM_BUILDS_LEASE)
 
     if build.proto.status == common_pb2.STARTED:
       if build.url == url:
@@ -391,7 +391,7 @@ def _complete(
 
   @ndb.transactional
   def txn():
-    build = _get_leasable_build(build_id)
+    build = _get_leasable_build(build_id, user.PERM_BUILDS_LEASE)
 
     if build.is_ended:
       if (build.proto.status == status and
@@ -510,8 +510,10 @@ def cancel_async(build_id, summary_markdown='', result_details=None):
     if not bundle:
       raise errors.BuildNotFoundError()
     build = bundle.build
-    if check_access and not (yield user.can_cancel_build_async(build)):
-      raise user.current_identity_cannot('cancel build %s', build.key.id())
+    if check_access:
+      has = yield user.has_perm_async(user.PERM_BUILDS_CANCEL, build.bucket_id)
+      if not has:
+        raise user.current_identity_cannot('cancel build %s', build.key.id())
     # If the build is ended, do not update the build
     raise ndb.Return(bundle, not build.is_ended)
 
@@ -560,7 +562,7 @@ def delete_many_builds(bucket_id, status, tags=None, created_by=None):
     raise errors.InvalidInputError(
         'status can be STARTED or SCHEDULED, not %s' % status
     )
-  if not user.can_delete_scheduled_builds_async(bucket_id).get_result():
+  if not user.has_perm(user.PERM_BUCKETS_DELETE_BUILDS, bucket_id):
     raise user.current_identity_cannot('delete builds of %s', bucket_id)
   # Validate created_by prior scheduled a push task.
   created_by = user.parse_identity(created_by)
@@ -625,8 +627,8 @@ def _reject_swarming_bucket(bucket_id):
 
 
 def pause(bucket_id, is_paused):
-  if not user.can_pause_buckets_async(bucket_id).get_result():
-    raise user.current_identity_cannot('pause bucket of %s', bucket_id)
+  if not user.has_perm(user.PERM_BUCKETS_PAUSE, bucket_id):
+    raise user.current_identity_cannot('pause bucket %s', bucket_id)
 
   _reject_swarming_bucket(bucket_id)
 

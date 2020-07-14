@@ -100,7 +100,7 @@ def check_acls_async(bucket_ids, inc_metric=None):
   for bucket_id in bucket_ids:
     config.validate_bucket_id(bucket_id)
 
-  futs = [user.can_search_builds_async(b) for b in bucket_ids]
+  futs = [user.has_perm_async(user.PERM_BUILDS_LIST, b) for b in bucket_ids]
   for bucket_id, fut in zip(bucket_ids, futs):
     if not (yield fut):
       if inc_metric:  # pragma: no cover
@@ -596,7 +596,7 @@ def _tag_index_search_async(q):
       if check_permissions:
         has = has_access_cache.get(e.bucket_id)
         if has is None:
-          has = yield user.can_search_builds_async(e.bucket_id)
+          has = yield user.has_perm_async(user.PERM_BUILDS_LIST, e.bucket_id)
           has_access_cache[e.bucket_id] = has
         if not has:
           continue

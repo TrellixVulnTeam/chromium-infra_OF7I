@@ -26,6 +26,13 @@ import user
 
 class BuildBucketServiceTest(testing.AppengineTestCase):
 
+  TEST_BUCKETS = [
+      'chromium/try',
+      'chromium/luci',
+      'chromium/master.foo',
+      'chromium/master.bar',
+  ]
+
   def setUp(self):
     super(BuildBucketServiceTest, self).setUp()
     user.clear_request_cache()
@@ -35,9 +42,12 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
         'components.auth.get_current_identity',
         side_effect=lambda: self.current_identity
     )
-    self.patch('user.can_async', return_value=future(True))
     self.now = datetime.datetime(2015, 1, 1)
     self.patch('components.utils.utcnow', side_effect=lambda: self.now)
+
+    self.perms = test_util.mock_permissions(self)
+    for b in self.TEST_BUCKETS:
+      self.perms[b] = list(user.ALL_PERMISSIONS)
 
     config.put_bucket(
         'chromium',
@@ -102,17 +112,9 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
 
     test_util.build_bundle(id=1).infra.put()
 
-  def mock_cannot(self, action, bucket_id=None):
-
-    def can_async(requested_bucket_id, requested_action, _identity=None):
-      match = (
-          requested_action == action and
-          (bucket_id is None or requested_bucket_id == bucket_id)
-      )
-      return future(not match)
-
-    # user.can_async is patched in setUp()
-    user.can_async.side_effect = can_async
+  def mock_no_perm(self, perm):
+    for perms in self.perms.values():
+      perms.remove(perm)
 
   def put_many_builds(self, count=100, **build_proto_fields):
     builds = []
@@ -140,7 +142,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     self.assertIsNone(service.get_async(42).get_result())
 
   def test_get_with_auth_error(self):
-    self.mock_cannot(user.Action.VIEW_BUILD)
+    self.mock_no_perm(user.PERM_BUILDS_GET)
     self.classic_build(id=1).put()
     with self.assertRaises(auth.AuthorizationError):
       service.get_async(1).get_result()
@@ -175,7 +177,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
 
   def test_cancel_with_auth_error(self):
     self.new_started_build(id=1)
-    self.mock_cannot(user.Action.CANCEL_BUILD)
+    self.mock_no_perm(user.PERM_BUILDS_CANCEL)
     with self.assertRaises(auth.AuthorizationError):
       service.cancel_async(1).get_result()
 
@@ -242,7 +244,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
       service.peek(bucket_ids=[])
 
   def test_peek_with_auth_error(self):
-    self.mock_cannot(user.Action.SEARCH_BUILDS)
+    self.mock_no_perm(user.PERM_BUILDS_LIST)
     build = self.classic_build(builder=dict(project='chromium', bucket='try'))
     build.put()
     with self.assertRaises(auth.AuthorizationError):
@@ -277,7 +279,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     self.assertEqual(build.leasee, self.current_identity)
 
   def test_lease_build_with_auth_error(self):
-    self.mock_cannot(user.Action.LEASE_BUILD)
+    self.mock_no_perm(user.PERM_BUILDS_LEASE)
     self.classic_build(id=1).put()
     with self.assertRaises(auth.AuthorizationError):
       self.lease(1)
@@ -329,7 +331,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
 
   def test_reset_with_auth_error(self):
     self.new_leased_build(id=1)
-    self.mock_cannot(user.Action.RESET_BUILD)
+    self.mock_no_perm(user.PERM_BUILDS_RESET)
     with self.assertRaises(auth.AuthorizationError):
       service.reset(1)
 
@@ -591,7 +593,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     self.assertIsNotNone(bundle1.build.key.get())
 
   def test_delete_many_builds_auth_error(self):
-    self.mock_cannot(user.Action.DELETE_SCHEDULED_BUILDS)
+    self.mock_no_perm(user.PERM_BUCKETS_DELETE_BUILDS)
     with self.assertRaises(auth.AuthorizationError):
       service.delete_many_builds('chromium/try', model.BuildStatus.SCHEDULED)
 
@@ -662,7 +664,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     self.assertEqual(len(builds), 1)
 
   def test_pause_bucket_auth_error(self):
-    self.mock_cannot(user.Action.PAUSE_BUCKET)
+    self.mock_no_perm(user.PERM_BUCKETS_PAUSE)
     with self.assertRaises(auth.AuthorizationError):
       service.pause('chromium/no.such.bucket', True)
 

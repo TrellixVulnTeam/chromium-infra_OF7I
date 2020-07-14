@@ -41,9 +41,11 @@ class CreationTest(testing.AppengineTestCase):
         'components.auth.get_current_identity',
         side_effect=lambda: self.current_identity
     )
-    self.patch('user.can_async', return_value=future(True))
     self.now = datetime.datetime(2015, 1, 1)
     self.patch('components.utils.utcnow', side_effect=lambda: self.now)
+
+    perms = test_util.mock_permissions(self)
+    perms['chromium/try'] = [user.PERM_BUILDS_ADD]
 
     self.chromium_try = test_util.parse_bucket_cfg(
         '''

@@ -175,40 +175,47 @@ class UserTest(testing.AppengineTestCase):
   def mock_role(self, role):
     self.patch('user.get_role_async_deprecated', return_value=future(role))
 
-  def can(self, action):
-    return user.can_async('project/bucket', action).get_result()
-
-  def test_can(self):
+  def test_has_perm(self):
     self.mock_role(Acl.READER)
 
-    self.assertTrue(self.can(user.Action.VIEW_BUILD))
-    self.assertFalse(self.can(user.Action.CANCEL_BUILD))
-    self.assertFalse(self.can(user.Action.SET_NEXT_NUMBER))
+    self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'proj/bucket'))
+    self.assertFalse(user.has_perm(user.PERM_BUILDS_CANCEL, 'proj/bucket'))
+    self.assertFalse(user.has_perm(user.PERM_BUILDERS_SET_NUM, 'proj/bucket'))
 
     # Memcache coverage
-    self.assertFalse(self.can(user.Action.SET_NEXT_NUMBER))
+    self.assertFalse(user.has_perm(user.PERM_BUILDERS_SET_NUM, 'proj/bucket'))
 
-    self.assertFalse(user.can_add_build_async('project/bucket').get_result())
-
-  def test_can_no_roles(self):
+  def test_has_perm_no_roles(self):
     self.mock_role(None)
-    bid = 'project/bucket'
-    for action in user.Action:
-      self.assertFalse(user.can_async(bid, action).get_result())
+    for perm in user.PERM_TO_MIN_ROLE:
+      self.assertFalse(user.has_perm(perm, 'proj/bucket'))
 
-  def test_can_bad_input(self):
+  def test_has_perm_bad_input(self):
     with self.assertRaises(errors.InvalidInputError):
       bid = 'bad project id/bucket'
-      user.can_async(bid, user.Action.VIEW_BUILD).get_result()
+      user.has_perm(user.PERM_BUILDS_GET, bid)
     with self.assertRaises(errors.InvalidInputError):
       bid = 'project_id/bad bucket name'
-      user.can_async(bid, user.Action.VIEW_BUILD).get_result()
+      user.has_perm(user.PERM_BUILDS_GET, bid)
 
-  def test_can_view_build(self):
-    self.mock_role(Acl.READER)
-    build = test_util.build()
-    self.assertTrue(user.can_view_build_async(build).get_result())
-    self.assertFalse(user.can_lease_build_async(build).get_result())
+  @mock.patch('user.get_role_async_deprecated')
+  def test_filter_buckets_by_perm(self, get_role_async):
+    get_role_async.side_effect = lambda bid: future({
+        'p/read': Acl.READER,
+        'p/read-sched': Acl.SCHEDULER,
+        'p/read-sched-write': Acl.WRITER,
+    }.get(bid))
+
+    all_buckets = ['p/read', 'p/read-sched', 'p/read-sched-write', 'p/unknown']
+
+    filtered = user.filter_buckets_by_perm(user.PERM_BUILDS_GET, all_buckets)
+    self.assertEqual(filtered, {'p/read', 'p/read-sched', 'p/read-sched-write'})
+
+    filtered = user.filter_buckets_by_perm(user.PERM_BUILDS_ADD, all_buckets)
+    self.assertEqual(filtered, {'p/read-sched', 'p/read-sched-write'})
+
+    filtered = user.filter_buckets_by_perm(user.PERM_BUILDS_LEASE, all_buckets)
+    self.assertEqual(filtered, {'p/read-sched-write'})
 
   def test_permitted_actions_async_no_roles(self):
     self.mock_role(None)

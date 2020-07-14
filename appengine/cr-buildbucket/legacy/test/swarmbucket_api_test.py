@@ -13,7 +13,7 @@ from legacy import api_common
 from legacy import swarmbucket_api
 from go.chromium.org.luci.buildbucket.proto import service_config_pb2
 from test import test_util
-from test.test_util import future
+from test.test_util import future, mock_permissions
 import config
 import model
 import sequence
@@ -43,11 +43,17 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     auth.bootstrap_group('all', [auth.Anonymous])
     user.clear_request_cache()
 
+    # TODO(crbug.com/1091604): Stop setting `acls` in fake configs.
+    # get_builds implementation uses get_accessible_buckets_async
+    # so we still need to keep `acls { ... }` stanzas in config, even though
+    # we mock user.has_perm_async.
+    self.perms = mock_permissions(self)
+
     chromium_cfg = test_util.parse_bucket_cfg(
         '''
           name: "luci.chromium.try"
           acls {
-            role: SCHEDULER
+            role: READER
             group: "all"
           }
           swarming {
@@ -97,17 +103,25 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     )
     config.put_bucket('chromium', 'deadbeef', chromium_cfg)
     config.put_builders('chromium', 'try', *chromium_cfg.swarming.builders)
+    self.perms['chromium/try'] = [
+        user.PERM_BUCKETS_GET,
+        user.PERM_BUILDERS_LIST,
+    ]
 
     v8_cfg = test_util.parse_bucket_cfg(
         '''
-      name: "luci.v8.try"
-      acls {
-        role: READER
-        group: "all"
-      }
+          name: "luci.v8.try"
+          acls {
+            role: READER
+            group: "all"
+          }
     '''
     )
     config.put_bucket('v8', 'deadbeef', v8_cfg)
+    self.perms['v8/try'] = [
+        user.PERM_BUCKETS_GET,
+        user.PERM_BUILDERS_LIST,
+    ]
 
     self.settings = service_config_pb2.SettingsCfg(
         swarming=dict(
@@ -180,7 +194,7 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     other_bucket = '''
       name: "luci.other.try"
       acls {
-        role: SCHEDULER
+        role: READER
         group: "all"
       }
       swarming {
@@ -194,6 +208,10 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     config.put_bucket(
         'other', 'deadbeef', test_util.parse_bucket_cfg(other_bucket)
     )
+    self.perms['other/try'] = [
+        user.PERM_BUCKETS_GET,
+        user.PERM_BUILDERS_LIST,
+    ]
 
     req = {
         'bucket': ['luci.chromium.try'],
@@ -387,7 +405,7 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     self.call_api('set_next_build_number', req, status=403)
     self.assertEqual(seq.key.get().next_number, 10)
 
-    self.patch('user.can_set_next_number_async', return_value=future(True))
+    self.perms['chromium/try'].append(user.PERM_BUILDERS_SET_NUM)
     self.call_api('set_next_build_number', req)
     self.assertEqual(seq.key.get().next_number, 20)
 

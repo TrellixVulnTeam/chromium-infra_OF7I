@@ -20,7 +20,9 @@ from go.chromium.org.luci.buildbucket.proto import common_pb2
 from go.chromium.org.luci.buildbucket.proto import project_config_pb2
 import bbutil
 import buildtags
+import config
 import model
+import user
 
 
 def ununicode(jsonish):  # pragma: no cover
@@ -194,3 +196,29 @@ def create_struct(props):  # pragma: no cover
   s = struct_pb2.Struct()
   s.update(props)
   return s
+
+
+def mock_permissions(test):  # pragma: no cover
+  """Mocks results of user.has_perm_async calls.
+
+  Args:
+    test: a test case instance.
+
+  Returns:
+    An empty mutable dict {bucket id => list of permissions}. Mutate it to
+    add/remove mocked permissions.
+  """
+  bucket_to_perms = {}
+
+  def mocked_has_perm_async(perm, bucket_id):
+    assert isinstance(perm, auth.Permission), perm
+    assert perm in user.ALL_PERMISSIONS, perm
+    config.validate_bucket_id(bucket_id)
+    f = ndb.Future()
+    f.set_result(perm in bucket_to_perms.get(bucket_id, []))
+    return f
+
+  mock = test.patch('user.has_perm_async', autospec=True)
+  mock.side_effect = mocked_has_perm_async
+
+  return bucket_to_perms
