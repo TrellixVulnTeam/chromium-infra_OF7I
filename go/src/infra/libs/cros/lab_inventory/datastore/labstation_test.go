@@ -97,6 +97,12 @@ func TestUpdateLabstations(t *testing.T) {
 				So(err.Error(), ShouldContainSubstring, "The labstation labstation1 already has servo with serial number: ser2")
 				checkServosCount(initServoCount)
 			})
+			Convey("Skip empty hostnames", func() {
+				checkServosCount(initServoCount)
+				_, err := UpdateLabstations(ctx, "labstation1", nil, []string{""})
+				So(err, ShouldBeNil)
+				checkServosCount(initServoCount)
+			})
 			Convey("happy path", func() {
 				checkServosCount(initServoCount)
 				_, err := UpdateLabstations(ctx, "labstation1", nil, []string{"dut3"})

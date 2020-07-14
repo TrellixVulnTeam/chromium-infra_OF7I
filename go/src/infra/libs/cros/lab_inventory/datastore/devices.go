@@ -355,6 +355,9 @@ func getDUTServoByHostname(ctx context.Context, hostnames []string) ([]*lab.Serv
 	var servos []*lab.Servo
 
 	for _, hostname := range hostnames {
+		if hostname == "" {
+			continue
+		}
 		var devs []*DeviceEntity
 		if err := datastore.GetAll(ctx, q.Eq("Hostname", hostname), &devs); err != nil {
 			return nil, errors.Annotate(err, "failed to get DUT by hostname %s", hostname).Err()
