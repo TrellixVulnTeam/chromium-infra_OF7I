@@ -275,6 +275,7 @@ class ScheduleBuildRequestTests(BaseTestCase):
         dimensions=[
             dict(key='d1', value='dv1'),
             dict(key='d2', value='dv2'),
+            dict(key='d2', value='dv3'),
         ],
         priority=100,
         notify=dict(
@@ -292,18 +293,6 @@ class ScheduleBuildRequestTests(BaseTestCase):
     )
     self.assert_invalid(
         msg, r'properties\.a: value is not set; for null, initialize null_value'
-    )
-
-  def test_repeating_dimension_key_and_expiration(self):
-    msg = rpc_pb2.ScheduleBuildRequest(
-        builder=dict(project='chromium', bucket='try', builder='linux-rel'),
-        dimensions=[
-            dict(key='a', value='b'),
-            dict(key='a', value='b'),
-        ],
-    )
-    self.assert_invalid(
-        msg, r'dimensions: key "a" and expiration 0s are not unique'
     )
 
   def test_no_builder_and_template_build_id(self):

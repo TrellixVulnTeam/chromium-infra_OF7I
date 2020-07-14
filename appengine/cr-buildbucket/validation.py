@@ -241,17 +241,6 @@ def validate_schedule_build_request(req, legacy=False):
 
   _check_repeated(req, 'dimensions', validate_requested_dimension)
 
-  key_exp = set()
-  with _enter('dimensions'):
-    for d in req.dimensions:
-      t = (d.key, d.expiration.seconds)
-      if t in key_exp:
-        _err(
-            'key "%s" and expiration %ds are not unique', d.key,
-            d.expiration.seconds
-        )
-      key_exp.add(t)
-
   if req.priority < 0 or req.priority > 255:
     _enter_err('priority', 'must be in [0, 255]')
 
