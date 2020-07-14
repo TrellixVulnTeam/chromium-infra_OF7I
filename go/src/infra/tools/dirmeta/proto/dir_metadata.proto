@@ -40,7 +40,7 @@ message Metadata {
 // WPT is WebPlatformTest-specific metadata.
 message WPT {
   // Whether wpt-importer should notify the team about new failures.
-  bool notify = 1;
+  Trinary notify = 1;
 }
 
 // Supported OS to tag a directory.
@@ -62,4 +62,25 @@ message Monorail {
   // The Monorail component. For example, “UI>Browser>Zoom”.
   // Only a single component is allowed.
   string component = 2;
+}
+
+// Trinary is a tri-state boolean.
+//
+// It is convenient for conceptually-boolean fields that need inheritance.
+// Plain bool does not work well because proto3 does not distinguish between
+// false and absence of the value. Unlike bool, the default value of Trinary
+// is TRINARY_UNSPECIFIED which is different from NO.
+//
+// Unfortunately the JSON representation are strings "YES" and "NO", as opposed
+// to more natural true and false.
+// The alternative to Trinary is BoolValue
+// https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/wrappers.proto#L101
+// which has JSON representation as `true` and `false`, but then the text-proto
+// representation is verbose: `wpt { notify { value: true }}`.
+// Given that we will have more DIR_METADATA files than code that interprets
+// the files, we make a choice in favor of clean DIR_METADATA files.
+enum Trinary {
+  TRINARY_UNSPECIFIED = 0;
+  YES = 1;
+  NO = 2;
 }

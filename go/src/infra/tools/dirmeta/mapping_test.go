@@ -13,6 +13,21 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
+func TestMerge(t *testing.T) {
+	Convey(`Merge`, t, func() {
+		Convey(`wpt.notify false value is not overwritten/ignored`, func() {
+			inherited := &dirmetapb.Metadata{
+				Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
+			}
+			own := &dirmetapb.Metadata{
+				Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_NO},
+			}
+			Merge(inherited, own)
+			So(inherited.Wpt.Notify, ShouldEqual, dirmetapb.Trinary_NO)
+		})
+	})
+}
+
 func TestComputeAll(t *testing.T) {
 	t.Parallel()
 
@@ -33,7 +48,7 @@ func TestComputeAll(t *testing.T) {
 					".": {
 						TeamEmail: "team@example.com",
 						// Will be inherited entirely.
-						Wpt: &dirmetapb.WPT{Notify: true},
+						Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
 
 						// Will be inherited partially.
 						Monorail: &dirmetapb.Monorail{
@@ -54,7 +69,7 @@ func TestComputeAll(t *testing.T) {
 					".": m.Dirs["."], // did not change
 					"a": {
 						TeamEmail: "team-email@chromium.org",
-						Wpt:       &dirmetapb.WPT{Notify: true},
+						Wpt:       &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
 						Monorail: &dirmetapb.Monorail{
 							Project:   "chromium",
 							Component: "Component",

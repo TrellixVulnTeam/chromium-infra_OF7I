@@ -28,7 +28,7 @@ func TestReduce(t *testing.T) {
 					},
 					"a": {
 						TeamEmail: "team@example.com", // redundant
-						Wpt:       &dirmetapb.WPT{Notify: true},
+						Wpt:       &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
 						Monorail: &dirmetapb.Monorail{
 							Project:   "chromium", // redundant
 							Component: "Component",
@@ -43,7 +43,7 @@ func TestReduce(t *testing.T) {
 				Dirs: map[string]*dirmetapb.Metadata{
 					".": input.Dirs["."], // did not change
 					"a": {
-						Wpt: &dirmetapb.WPT{Notify: true},
+						Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
 						Monorail: &dirmetapb.Monorail{
 							Component: "Component",
 						},

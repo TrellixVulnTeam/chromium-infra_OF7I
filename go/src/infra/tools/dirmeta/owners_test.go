@@ -26,6 +26,7 @@ someone@example.com
 # TEAM: team-email@chromium.org
 # OS: iOS
 # COMPONENT: Some>Component
+# WPT-NOTIFY: true
 			`))
 			So(err, ShouldBeNil)
 			So(actual, ShouldResembleProto, &dirmetapb.Metadata{
@@ -35,6 +36,7 @@ someone@example.com
 					Project:   "chromium",
 					Component: "Some>Component",
 				},
+				Wpt: &dirmetapb.WPT{Notify: dirmetapb.Trinary_YES},
 			})
 		})
 
