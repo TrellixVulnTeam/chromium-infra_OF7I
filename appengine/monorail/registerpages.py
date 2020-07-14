@@ -90,8 +90,6 @@ from tracker import issueentry
 from tracker import issueentryafterlogin
 from tracker import issueexport
 from tracker import issueimport
-from tracker import issuelist
-from tracker import issuelistcsv
 from tracker import issueoriginal
 from tracker import issuereindex
 from tracker import issuetips
@@ -208,9 +206,6 @@ class ServletRegistry(object):
   def _RegisterIssueHandlers(self):
     """Register page and form handlers for the issue tracker."""
     self._SetupServlets({
-        # Note: there is both a site-wide and per-project issue list.
-        urls.ISSUE_LIST: issuelist.IssueList,
-
         # Note: the following are at URLs that are not externaly accessible.
         urls.BACKEND_SEARCH: backendsearch.BackendSearch,
         urls.BACKEND_NONVIEWABLE: backendnonviewable.BackendNonviewable,
@@ -242,13 +237,9 @@ class ServletRegistry(object):
                     urls.ISSUE_DETAIL, 'p', keep_qs=True),
             urls.ISSUE_LIST:
                 webcomponentspage.WebComponentsPage,
-            urls.ISSUE_LIST_OLD:
-                issuelist.IssueList,
             urls.ISSUE_LIST_NEW_TEMP:
                 registerpages_helpers.MakeRedirectInScope(
                     urls.ISSUE_LIST, 'p', keep_qs=True),
-            urls.ISSUE_LIST_CSV:
-                issuelistcsv.IssueListCsv,
             urls.ISSUE_REINDEX:
                 issuereindex.IssueReindex,
             urls.ISSUE_DETAIL_FLIPPER_NEXT:

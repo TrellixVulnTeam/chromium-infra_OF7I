@@ -119,6 +119,3 @@ class SearchPipelineTest(unittest.TestCase):
         [111, 222], 'owner:me')
     self.assertEqual('owner:111,222', actual)
     self.assertEqual([], warnings)
-
-  def testParseQuery(self):
-    pass  # TODO(jrobbins): write tests

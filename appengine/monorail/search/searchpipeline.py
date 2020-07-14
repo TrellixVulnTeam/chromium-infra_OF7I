@@ -88,29 +88,3 @@ def ReplaceKeywordsWithUserIDs(me_user_ids, query):
       query = KEYWORD_ME_RE.sub('', query)
 
   return query, warnings
-
-
-def ParseQuery(mr, config, services):
-  """Parse the user's query.
-
-  Args:
-    mr: commonly used info parsed from the request.
-    config: The ProjectConfig PB for the project.
-    services: connections to backends.
-
-  Returns:
-    A pair (ast, is_fulltext) with the parsed query abstract syntax tree
-    and a boolean that is True if the query included any fulltext terms.
-  """
-  canned_query = savedqueries_helpers.SavedQueryIDToCond(
-    mr.cnxn, services.features, mr.can)
-  query_ast = query2ast.ParseUserQuery(
-    mr.query, canned_query, query2ast.BUILTIN_ISSUE_FIELDS, config)
-
-  is_fulltext_query = bool(
-    query_ast.conjunctions and
-    fulltext_helpers.BuildFTSQuery(
-      query_ast.conjunctions[0], tracker_fulltext.ISSUE_FULLTEXT_FIELDS))
-
-  return query_ast, is_fulltext_query
-

@@ -433,10 +433,7 @@ export class MrSearchBar extends LitElement {
    * @private
    */
   _navigateToList(params, newTab = false) {
-    const isOldPage = window.location.pathname.endsWith('list_old');
-
-    const pathname = `/p/${this.projectName}/issues/${isOldPage ?
-      'list_old' : 'list'}`;
+    const pathname = `/p/${this.projectName}/issues/list`;
 
     const hasChanges = !window.location.pathname.startsWith(pathname) ||
       this.queryParams.q !== params.q ||

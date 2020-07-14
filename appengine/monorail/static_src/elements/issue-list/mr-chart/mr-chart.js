@@ -420,9 +420,7 @@ export default class MrChart extends LitElement {
    * @param {Object<string, string>} newParams
    */
   _changeUrlParams(newParams) {
-    const isSpa = window.location.pathname.endsWith('list');
-    const list = isSpa ? 'list' : 'list_old';
-    const newUrl = urlWithNewParams(`/p/${this.projectName}/issues/${list}`,
+    const newUrl = urlWithNewParams(`/p/${this.projectName}/issues/list`,
         this.queryParams, newParams);
     this._page(newUrl);
   }
