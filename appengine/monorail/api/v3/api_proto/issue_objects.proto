@@ -201,9 +201,9 @@ message Issue {
   // not. Resolve this discrepancy.
   string summary = 2;
   // The state of the issue.
-  IssueContentState state = 3;
+  IssueContentState state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
   // The current status of the issue.
-  StatusValue status = 4;
+  StatusValue status = 4 [(google.api.field_behavior) = REQUIRED];
   // The user who created the issue.
   string reporter = 5 [
     (google.api.resource_reference) = { type: "api.crbug.com/User" },

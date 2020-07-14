@@ -831,9 +831,9 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   def testIngestIssue(self):
     ingest = issue_objects_pb2.Issue(
-        name='projects/proj/issues/1',  # Ignored.
         summary='sum',
-        reporter='users/111',  # Ignored.
+        status=issue_objects_pb2.Issue.StatusValue(
+            status='new', derivation=RULE_DERIVATION),
         owner=issue_objects_pb2.Issue.UserValue(
             derivation=EXPLICIT_DERIVATION, user='users/111'),
         cc_users=[
@@ -843,7 +843,10 @@ class ConverterFunctionsTest(unittest.TestCase):
                 derivation=RULE_DERIVATION, user='users/333')
         ],
         merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'),
-        # All following fields ignored.
+        # All the following fields should be ignored.
+        name='projects/proj/issues/1',
+        state=issue_objects_pb2.IssueContentState.Value('SPAM'),
+        reporter='users/111',
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
         modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
         component_modify_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
@@ -859,18 +862,23 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.cnxn, 'new@user.com', autocreate=False)
     expected = tracker_pb2.Issue(
         summary='sum',
+        status='new',
         owner_id=111,
         cc_ids=[expected_cc1_id, 333],
         merged_into_external='b/1',
     )
     self.assertEqual(actual, expected)
 
-  def testIngestIssue_Empty(self):
-    empty = issue_objects_pb2.Issue()
-    expected = tracker_pb2.Issue(
-        summary='' # Summary gets set to empty str on conversion.
+  def testIngestIssue_Minimal(self):
+    """Test IngestIssue with as few fields set as possible."""
+    minimal = issue_objects_pb2.Issue(
+        status=issue_objects_pb2.Issue.StatusValue(status='new')
     )
-    self.assertEqual(self.converter.IngestIssue(empty), expected)
+    expected = tracker_pb2.Issue(
+        summary='', # Summary gets set to empty str on conversion.
+        status='new'
+    )
+    self.assertEqual(self.converter.IngestIssue(minimal), expected)
 
   def testIngestIssue_Errors(self):
     # TODO(jessan): Test non-existant issue.
@@ -894,6 +902,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     error_messages_re = '\n'.join([
         '.+not found when ingesting owner',
         '.+cc_users: Invalid resource name: invalidFormat1.',
+        'Status is required when creating an issue',
         '.+merged_into_ref: IssueRefs MUST NOT have both',
     ])
     with self.assertRaisesRegexp(exceptions.InputException, error_messages_re):

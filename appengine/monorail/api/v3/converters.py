@@ -433,6 +433,8 @@ class Converter(object):
     }
     with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
       self._ExtractOwner(issue, ingestedDict, err_agg)
+
+      # Extract ccs.
       try:
         ingestedDict['cc_ids'] = rnc.IngestUserNames(
             self.cnxn, [cc.user for cc in issue.cc_users], self.services,
@@ -440,8 +442,12 @@ class Converter(object):
       except exceptions.InputException as e:
         err_agg.AddErrorMessage('Error ingesting cc_users: {}', e)
 
-      # TODO(jessan): Decide if state should be OUTPUT_0NLY.
-      # TODO(jessan): Validate and then ingest status.
+      # Extract status.
+      if issue.HasField('status') and issue.status.status:
+        ingestedDict['status'] = issue.status.status
+      else:
+        err_agg.AddErrorMessage('Status is required when creating an issue')
+
       # TODO(jessan): Ingest component name.
       # TODO(jessan): Migrate & use _RedistributeEnumFieldsIntoLabels from v0.
 
