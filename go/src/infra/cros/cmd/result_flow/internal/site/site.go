@@ -17,7 +17,7 @@ import (
 const DefaultDeadlineSeconds = 60
 
 const (
-	authScopeBigquery = "https://www.googleapis.com/auth/bigquery.insertdata"
+	authScopeBigquery = "https://www.googleapis.com/auth/bigquery"
 	authScopePubsub   = "https://www.googleapis.com/auth/pubsub"
 )
 
