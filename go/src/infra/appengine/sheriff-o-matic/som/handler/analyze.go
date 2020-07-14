@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -104,17 +103,9 @@ func GetBQQueryHandler(ctx *router.Context) {
 }
 
 func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string) (*messages.AlertsSummary, error) {
-	var gkRules interface {
-		ExcludeFailure(ctx context.Context, tree string, master *messages.MasterLocation, builder, step string) bool
-	}
-	var err error
-	if config.UseGatekeeperConfigs {
-		gkRules, err = getGatekeeperRules(c)
-	} else {
-		gkRules, err = analyzer.GetConfigRules(c)
-	}
+	configRules, err := analyzer.GetConfigRules(c)
 	if err != nil {
-		logging.Errorf(c, "error getting gatekeeper rules: %v", err)
+		logging.Errorf(c, "error getting config rules: %v", err)
 		return nil, err
 	}
 
@@ -128,19 +119,11 @@ func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string
 	for _, ba := range builderAlerts {
 		builders := []*messages.AlertedBuilder{}
 		for _, b := range ba.Builders {
-			masterURL, err := url.Parse(fmt.Sprintf("https://build.chromium.org/p/%s", b.Master))
-			if err != nil {
-				return nil, err
-			}
-			master := &messages.MasterLocation{
-				URL: *masterURL,
-			}
-
 			// The chromium.clang tree specifically wants all of the failures.
 			// Some other trees, who also reference chromium.clang builders do *not* want all of them.
 			// This extra tree == "chromium.clang" condition works around this shortcoming of the gatekeeper
 			// tree config format.
-			if tree == "chromium.clang" || !gkRules.ExcludeFailure(c, tree, master, b.Name, ba.StepAtFault.Step.Name) {
+			if tree == "chromium.clang" || !configRules.ExcludeFailure(c, b.Master, b.Name, ba.StepAtFault.Step.Name) {
 				builders = append(builders, b)
 			}
 		}

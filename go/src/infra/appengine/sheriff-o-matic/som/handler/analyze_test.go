@@ -8,13 +8,11 @@ import (
 	"golang.org/x/net/context"
 
 	"infra/appengine/sheriff-o-matic/som/analyzer"
-	testhelper "infra/appengine/sheriff-o-matic/som/client/test"
 	"infra/monitoring/messages"
 
 	"go.chromium.org/gae/impl/dummy"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/gae/service/info"
-	"go.chromium.org/gae/service/urlfetch"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock"
 
@@ -39,80 +37,6 @@ type giMock struct {
 
 func (gi giMock) AccessToken(scopes ...string) (token string, expiry time.Time, err error) {
 	return gi.token, gi.expiry, gi.err
-}
-
-func setUpGitiles(c context.Context) context.Context {
-	return urlfetch.Set(c, &testhelper.MockGitilesTransport{
-		Responses: map[string]string{
-			gkTreesURL: `{    "chromium": {
-        "build-db": "waterfall_build_db.json",
-        "masters": {
-            "https://build.chromium.org/p/chromium": ["*"]
-        },
-        "open-tree": true,
-        "password-file": "/creds/gatekeeper/chromium_status_password",
-        "revision-properties": "got_revision_cp",
-        "set-status": true,
-        "status-url": "https://chromium-status.appspot.com",
-        "track-revisions": true
-    }}`,
-			gkUnkeptTreesURL: `{    "chromium": {
-        "build-db": "waterfall_build_db.json",
-        "masters": {
-            "https://build.chromium.org/p/chromium": ["*"]
-        },
-        "open-tree": true,
-        "password-file": "/creds/gatekeeper/chromium_status_password",
-        "revision-properties": "got_revision_cp",
-        "set-status": true,
-        "status-url": "https://chromium-status.appspot.com",
-        "track-revisions": true
-    }}`,
-			gkConfigURL: `
-{
-  "comment": ["This is a configuration file for gatekeeper_ng.py",
-              "Look at that for documentation on this file's format."],
-  "masters": {
-    "https://build.chromium.org/p/chromium": [
-      {
-        "categories": [
-          "chromium_tree_closer"
-        ],
-        "builders": {
-          "Win": {
-            "categories": [
-              "chromium_windows"
-            ]
-          },
-          "*": {}
-        }
-      }
-    ]
-   }
-}`,
-			gkUnkeptConfigURL: `
-{
-  "comment": ["This is a configuration file for gatekeeper_ng.py",
-              "Look at that for documentation on this file's format."],
-  "masters": {
-    "https://build.chromium.org/p/chromium": [
-      {
-        "categories": [
-          "chromium_tree_closer"
-        ],
-        "builders": {
-          "Win": {
-            "categories": [
-              "chromium_windows"
-            ]
-          },
-          "*": {}
-        }
-      }
-    ]
-   }
-}`,
-		}})
 }
 
 type mockFindit struct {
@@ -191,7 +115,6 @@ func TestStoreAlertsSummary(t *testing.T) {
 		c = info.SetFactory(c, func(ic context.Context) info.RawInterface {
 			return giMock{dummy.Info(), "", clock.Now(c), nil}
 		})
-		c = setUpGitiles(c)
 		a := analyzer.New(5, 100)
 		err := storeAlertsSummary(c, a, "some tree", &messages.AlertsSummary{
 			Alerts: []*messages.Alert{

@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"infra/appengine/sheriff-o-matic/som/client"
-	"infra/monitoring/messages"
 
 	"go.chromium.org/luci/common/logging"
 	"golang.org/x/net/context"
@@ -49,11 +48,8 @@ func ParseConfigRules(cfgJSON []byte) (*ConfigRules, error) {
 
 // ExcludeFailure determines whether a particular failure should be ignored,
 // according to the rules in the config.
-// TODO(crbug.com/1102703): This signature contains some unnecessary stuff, to
-// match the signature of the gatekeeper analyser. Once we've migrated over,
-// clean this up.
-func (r *ConfigRules) ExcludeFailure(ctx context.Context, tree string, master *messages.MasterLocation, builder, step string) bool {
-	if cfg, ok := r.MasterCfgs[master.String()]; ok {
+func (r *ConfigRules) ExcludeFailure(ctx context.Context, master, builder, step string) bool {
+	if cfg, ok := r.MasterCfgs[master]; ok {
 		if contains(cfg.ExcludedBuilders, builder) {
 			return true
 		}
@@ -64,6 +60,16 @@ func (r *ConfigRules) ExcludeFailure(ctx context.Context, tree string, master *m
 		if err != nil {
 			logging.Errorf(ctx, "Malformed step pattern: %s", stepPattern)
 		} else if matched {
+			return true
+		}
+	}
+
+	return false
+}
+
+func contains(arr []string, s string) bool {
+	for _, itm := range arr {
+		if itm == s {
 			return true
 		}
 	}
