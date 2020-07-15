@@ -25,6 +25,8 @@ func EntityExists(ctx context.Context, ic UfleetAPI.FleetClient, resource, name 
 		return ChromePlatformExists(ctx, ic, name)
 	case "MachineLSEPrototype":
 		return MachineLSEPrototypeExists(ctx, ic, name)
+	case "RackLSEPrototype":
+		return MachineLSEPrototypeExists(ctx, ic, name)
 	case "Nic":
 		return NicExists(ctx, ic, name)
 	case "KVM":
@@ -105,6 +107,20 @@ func MachineLSEPrototypeExists(ctx context.Context, ic UfleetAPI.FleetClient, na
 	}
 	_, err := ic.GetMachineLSEPrototype(ctx, &UfleetAPI.GetMachineLSEPrototypeRequest{
 		Name: UfleetUtil.AddPrefix(UfleetUtil.MachineLSEPrototypeCollection, name),
+	})
+	if err != nil && (strings.Contains(err.Error(), notFound) || strings.Contains(err.Error(), UfleetAPI.InvalidCharacters)) {
+		return false
+	}
+	return true
+}
+
+// RackLSEPrototypeExists checks if the given RackLSEPrototype exists in the system
+func RackLSEPrototypeExists(ctx context.Context, ic UfleetAPI.FleetClient, name string) bool {
+	if len(name) == 0 {
+		return false
+	}
+	_, err := ic.GetRackLSEPrototype(ctx, &UfleetAPI.GetRackLSEPrototypeRequest{
+		Name: UfleetUtil.AddPrefix(UfleetUtil.RackLSEPrototypeCollection, name),
 	})
 	if err != nil && (strings.Contains(err.Error(), notFound) || strings.Contains(err.Error(), UfleetAPI.InvalidCharacters)) {
 		return false

@@ -33,7 +33,7 @@ func ImportDatacenter(ctx context.Context, dc *crimsonconfig.Datacenter, pageSiz
 	lps := []*ufspb.RackLSEPrototype{
 		{
 			Name: "browser-lab:normal",
-			PeripheralRequirement: []*ufspb.PeripheralRequirement{
+			PeripheralRequirements: []*ufspb.PeripheralRequirement{
 				{
 					PeripheralType: ufspb.PeripheralType_PERIPHERAL_TYPE_KVM,
 					Min:            0,

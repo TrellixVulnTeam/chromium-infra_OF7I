@@ -20,7 +20,7 @@ message RackLSEPrototype {
     // A unique name for the RackLSEPrototype.
     // The format will be rackLSEPrototypes/XXX
     string name = 1;
-    repeated PeripheralRequirement peripheral_requirement = 2;
+    repeated PeripheralRequirement peripheral_requirements = 2;
     // Record the last update timestamp of this RackLSEPrototype (In UTC timezone)
     google.protobuf.Timestamp update_time = 3 [
         (google.api.field_behavior) = OUTPUT_ONLY];

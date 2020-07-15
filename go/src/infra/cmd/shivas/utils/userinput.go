@@ -1284,7 +1284,7 @@ func getVms(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanne
 
 // GetMachinelsePrototypeInteractiveInput gets MachineLSEPrototype input in interactive mode
 //
-// Name(string) -> Broswer/ATL/ACS LAB(choice) ->Occupied Capacity(int) ->
+// Name(string) -> Broswer/ATL/ACS LAB(choice) -> Occupied Capacity(int) ->
 // -> getPeripheralRequirements() -> getVirtualRequirements()
 func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, mlsep *fleet.MachineLSEPrototype, update bool) {
 	input := &Input{
@@ -1357,7 +1357,7 @@ func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.Fl
 					}
 					mlsep.OccupiedCapacityRu = val
 				}
-				getPeripheralRequirements(scanner, mlsep)
+				mlsep.PeripheralRequirements = getPeripheralRequirements(scanner)
 				getVirtualRequirements(scanner, mlsep)
 				input = nil
 			}
@@ -1366,10 +1366,81 @@ func GetMachinelsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.Fl
 	}
 }
 
-// getPeripheralRequirements get PeripheralRequirements for MachineLSEPrototype input in interactive mode
+// GetRacklsePrototypeInteractiveInput gets RackLSEPrototype input in interactive mode
 //
-// PeripheralRequirements(repeated) -> PeripheralType(enum) -> min(int) -> max(int)
-func getPeripheralRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEPrototype) {
+// Name(string) -> Broswer/ATL/ACS LAB(choice)  -> getPeripheralRequirements()
+func GetRacklsePrototypeInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, rlsep *fleet.RackLSEPrototype, update bool) {
+	input := &Input{
+		Key:      "Broswer/ATL/ACS LAB",
+		Desc:     fmt.Sprintf("%s%s", ChooseLab, BrowserOrATLOrACSLab),
+		Required: true,
+	}
+	var prefix string
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Broswer/ATL/ACS LAB":
+				input = &Input{
+					Key:      "Name",
+					Desc:     UfleetAPI.ValidName,
+					Required: true,
+				}
+				switch value {
+				case "1":
+					// Browser lab
+					prefix = BrowserLab
+				case "2":
+					// ATL lab
+					prefix = ATLLab
+				case "3":
+					// ACS lab
+					prefix = ACSLab
+				default:
+					input = &Input{
+						Key:      "Broswer/ATL/ACS LAB",
+						Desc:     fmt.Sprintf("%s%s%s", WrongInput, ChooseLab, BrowserOrATLOrACSLab),
+						Required: true,
+					}
+				}
+			case "Name":
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					input.Desc = UfleetAPI.ValidName
+					break
+				}
+				if !update && RackLSEPrototypeExists(ctx, ic, prefix+value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !RackLSEPrototypeExists(ctx, ic, prefix+value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				rlsep.Name = prefix + value
+				rlsep.PeripheralRequirements = getPeripheralRequirements(scanner)
+				input = nil
+			}
+			break
+		}
+	}
+}
+
+// getPeripheralRequirements get PeripheralRequirements for
+// Machine/Rack LSEPrototype input in interactive mode
+//
+// PeripheralRequirements(repeated) -> PeripheralType(enum) -> min(int) ->
+// -> max(int)
+func getPeripheralRequirements(scanner *bufio.Scanner) []*fleet.PeripheralRequirement {
 	input := &Input{
 		Key:      "PeripheralRequirements (y/n)",
 		Desc:     fmt.Sprintf("%sPeripheralRequirement?", OptionToEnter),
@@ -1399,8 +1470,7 @@ func getPeripheralRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEPr
 						Desc: fmt.Sprintf("%s%s", ChoosePheripheralType, createKeyValuePairs(fleet.PeripheralType_name)),
 					}
 				} else if value == "n" {
-					mlsep.PeripheralRequirements = prs
-					input = nil
+					return prs
 				} else {
 					input = &Input{
 						Key:      "PeripheralRequirements (y/n)",
@@ -1459,6 +1529,7 @@ func getPeripheralRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEPr
 			break
 		}
 	}
+	return nil
 }
 
 // getVirtualRequirements get VirtualRequirements for MachineLSEPrototype input in interactive mode

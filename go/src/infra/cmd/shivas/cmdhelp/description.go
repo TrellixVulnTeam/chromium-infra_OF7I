@@ -462,4 +462,58 @@ Example prototype for machine deployment:
 
 The protobuf definition of prototype for machine deployment is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/lse_prototype.proto#29`
+
+	// AddRackLSEPrototypeLongDesc long description for AddRackLSEPrototypeCmd
+	AddRackLSEPrototypeLongDesc string = `Add prototype for rack deployment.
+
+Examples:	
+shivas add-rack-prototype -f rackprototype.json
+Adds a rack prototype by reading a JSON file input.
+
+shivas add-rack-prototype -i
+Adds a rack prototype by reading input through interactive mode.`
+
+	// UpdateRackLSEPrototypeLongDesc long description for UpdateRackLSEPrototypeCmd
+	UpdateRackLSEPrototypeLongDesc string = `Update prototype for rack deployment.
+
+Examples:
+shivas update-rack-prototype -f rackprototype.json
+Updates a rack prototype by reading a JSON file input.
+
+shivas update-rack-prototype -i
+Updates a rack prototype by reading input through interactive mode.`
+
+	// ListRackLSEPrototypeLongDesc long description for ListRackLSEPrototypeCmd
+	ListRackLSEPrototypeLongDesc string = `List all rack prototypes
+
+Examples:
+shivas ls rack-prototype
+Fetches all the rack prototypes in table format
+
+shivas ls rack-prototype -n 50
+Fetches 50 rack prototypes and prints the output in table format
+
+shivas ls rack-prototype -lab acs -json
+Fetches only ACS lab rack prototypes and prints the output in json format
+
+shivas ls rack-prototype -n 5 -lab atl -json
+Fetches 5 rack prototypes for ATL lab and prints the output in JSON format
+`
+
+	// RackLSEPrototypeFileText description for RackLSEPrototype file input
+	RackLSEPrototypeFileText string = `Path to a file containing prototype for rack deployment specification in JSON format.
+This file must contain one rack prototype JSON message
+
+Example prototype for rack deployment:
+{
+	"name": "browser-lab:vm",
+	"peripheralRequirements": [{
+		"peripheralType": "PERIPHERAL_TYPE_SWITCH",
+		"min": 5,
+		"max": 7
+	}]
+}
+
+The protobuf definition of prototype for rack deployment is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/lse_prototype.proto`
 )
