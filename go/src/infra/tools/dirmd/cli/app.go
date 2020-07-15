@@ -32,6 +32,7 @@ func application() *cli.Application {
 			cmdValidate(),
 			cmdExport(),
 			cmdCompute(),
+			cmdChromiumUpdate(),
 
 			{},
 			subcommands.CmdHelp,
