@@ -109,6 +109,23 @@ shivas ls drac -n 50 -json
 Fetches 50 dracs and prints the output in JSON format
 `
 
+	// ListNicLongDesc long description for ListNicCmd
+	ListNicLongDesc string = `List all nics
+
+Examples:
+shivas ls nic
+Fetches all nics and prints the output in table format
+
+shivas ls nic -n 50
+Fetches 50 nics and prints the output in table format
+
+shivas ls nic -json
+Fetches all nics and prints the output in JSON format
+
+shivas ls nic -n 50 -json
+Fetches 50 nics and prints the output in JSON format
+`
+
 	// RegisterMachineLongDesc long description for RegisterMachineCmd
 	RegisterMachineLongDesc string = `Register a machine(ChromeBook, Bare metal server, Macbook.) by name.
 

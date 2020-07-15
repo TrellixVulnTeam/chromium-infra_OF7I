@@ -29,6 +29,8 @@ var (
 		"UpdateTime"}
 	dracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
 		"Switch Port", "Password", "UpdateTime"}
+	nicTitle = []string{"Nic Name", "MAC Address", "Switch", "Switch Port",
+		"UpdateTime"}
 	machineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
 		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
 		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
@@ -273,6 +275,41 @@ func printDrac(drac *ufspb.Drac) {
 func PrintDracsJSON(dracs []*ufspb.Drac) {
 	len := len(dracs) - 1
 	for i, s := range dracs {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
+		PrintProtoJSON(s)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintNics prints the all nics in table form.
+func PrintNics(nics []*ufspb.Nic) {
+	defer tw.Flush()
+	printTitle(nicTitle)
+	for _, nic := range nics {
+		printNic(nic)
+	}
+}
+
+func printNic(nic *ufspb.Nic) {
+	var ts string
+	if t, err := ptypes.Timestamp(nic.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(nic.Name))
+	out += fmt.Sprintf("%s\t", nic.GetMacAddress())
+	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetSwitch())
+	out += fmt.Sprintf("%d\t", nic.GetSwitchInterface().GetPort())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintNicsJSON prints the nic details in json format.
+func PrintNicsJSON(nics []*ufspb.Nic) {
+	len := len(nics) - 1
+	for i, s := range nics {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s)
 		if i < len {
