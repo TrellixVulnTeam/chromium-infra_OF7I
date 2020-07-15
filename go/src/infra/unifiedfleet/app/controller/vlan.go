@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
 	fleet "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/config"
@@ -116,7 +117,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 }
 
 // ImportOSVlans imports the logic of parse and save network infos.
-func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, pageSize int) (*datastore.OpResults, error) {
+func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitClient git.ClientInterface, pageSize int) (*datastore.OpResults, error) {
 	networkCfg := config.Get(ctx).GetCrosNetworkConfig()
 	allVlans := make([]*fleet.Vlan, 0)
 	allIPs := make([]*fleet.IP, 0)
@@ -129,6 +130,10 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, pageS
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		}
 		util.ParseATLTopology(resp)
+		_, err = gitClient.GetFile(ctx, cfg.GetRemotePath())
+		if err != nil {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
 	}
 
 	allRes := make(datastore.OpResults, 0)

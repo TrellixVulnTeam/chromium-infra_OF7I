@@ -497,7 +497,12 @@ func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *api.ImportOSV
 	if err != nil {
 		return nil, sheetConnectionFailureStatus.Err()
 	}
-	res, err := controller.ImportOSVlans(ctx, sheetClient, fs.getImportPageSize())
+	networkCfg := config.Get(ctx).GetCrosNetworkConfig()
+	gitClient, err := fs.newGitInterface(ctx, networkCfg.GetGitilesHost(), networkCfg.GetProject(), networkCfg.GetBranch())
+	if err != nil {
+		return nil, gitConnectionFailureStatus.Err()
+	}
+	res, err := controller.ImportOSVlans(ctx, sheetClient, gitClient, fs.getImportPageSize())
 	s := processImportDatastoreRes(res, err)
 	if s.Err() != nil {
 		return s.Proto(), s.Err()

@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	authclient "go.chromium.org/luci/auth"
+	gitilesapi "go.chromium.org/luci/common/api/gitiles"
 	"golang.org/x/net/context"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
@@ -22,6 +23,7 @@ import (
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"go.chromium.org/luci/server/auth"
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
+	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
 )
 
@@ -52,12 +54,16 @@ type CrosInventoryInterfaceFactory func(ctx context.Context, host string) (CrosI
 // SheetInterfaceFactory is a constructor for a sheet.ClientInterface
 type SheetInterfaceFactory func(ctx context.Context) (sheet.ClientInterface, error)
 
+// GitInterfaceFactory is a constructor for a git.ClientInterface
+type GitInterfaceFactory func(ctx context.Context) (git.ClientInterface, error)
+
 // FleetServerImpl implements the configuration server interfaces.
 type FleetServerImpl struct {
 	cfgInterfaceFactory           CfgInterfaceFactory
 	machineDBInterfaceFactory     MachineDBInterfaceFactory
 	crosInventoryInterfaceFactory CrosInventoryInterfaceFactory
 	sheetInterfaceFactory         SheetInterfaceFactory
+	gitInterfaceFactory           GitInterfaceFactory
 	importPageSize                int
 }
 
@@ -106,6 +112,17 @@ func (cs *FleetServerImpl) newSheetInterface(ctx context.Context) (sheet.ClientI
 	return sheet.NewClient(ctx, &http.Client{Transport: t})
 }
 
+func (cs *FleetServerImpl) newGitInterface(ctx context.Context, gitilesHost, project, branch string) (git.ClientInterface, error) {
+	if cs.sheetInterfaceFactory != nil {
+		return cs.gitInterfaceFactory(ctx)
+	}
+	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, gitilesapi.OAuthScope))
+	if err != nil {
+		return nil, err
+	}
+	return git.NewClient(ctx, &http.Client{Transport: t}, "", gitilesHost, project, branch)
+}
+
 func (cs *FleetServerImpl) getImportPageSize() int {
 	if cs.importPageSize == 0 {
 		return importPageSize
@@ -132,6 +149,7 @@ var (
 		return status.New(codes.Internal, fmt.Sprintf(crosInventoryServiceFailure, service))
 	}
 	sheetConnectionFailureStatus = status.New(codes.Internal, "Fail to initialize connection to Google sheet")
+	gitConnectionFailureStatus   = status.New(codes.Internal, "Fail to initialize connection to Gitiles")
 	insertDatastoreFailureStatus = status.New(codes.Internal, "Fail to insert entity into datastore while importing")
 )
 
