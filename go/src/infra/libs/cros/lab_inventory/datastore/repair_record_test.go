@@ -93,20 +93,23 @@ func TestAddRecord(t *testing.T) {
 			res, err := AddDeviceManualRepairRecords(ctx, records)
 			So(err, ShouldBeNil)
 			So(res, ShouldHaveLength, 2)
-			for i, r := range records {
-				So(res[i].Err, ShouldBeNil)
-				So(res[i].Entity.Hostname, ShouldEqual, r.GetHostname())
-				So(res[i].Entity.AssetTag, ShouldEqual, r.GetAssetTag())
-				So(res[i].Entity.RepairState, ShouldEqual, r.GetRepairState().String())
+
+			// Put and Get order should be the same as the order in which the records
+			// were passed in as arguments.
+			for i, r := range res {
+				So(r.Err, ShouldBeNil)
+				So(r.Entity.Hostname, ShouldEqual, records[i].GetHostname())
+				So(r.Entity.AssetTag, ShouldEqual, records[i].GetAssetTag())
+				So(r.Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
 			}
 
 			res = GetDeviceManualRepairRecords(ctx, ids1)
 			So(res, ShouldHaveLength, 2)
-			for i, r := range records {
-				So(res[i].Err, ShouldBeNil)
-				So(res[i].Entity.Hostname, ShouldEqual, r.GetHostname())
-				So(res[i].Entity.AssetTag, ShouldEqual, r.GetAssetTag())
-				So(res[i].Entity.RepairState, ShouldEqual, r.GetRepairState().String())
+			for i, r := range res {
+				So(r.Err, ShouldBeNil)
+				So(r.Entity.Hostname, ShouldEqual, records[i].GetHostname())
+				So(r.Entity.AssetTag, ShouldEqual, records[i].GetAssetTag())
+				So(r.Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
 			}
 		})
 		Convey("Add existing record to datastore", func() {
@@ -130,11 +133,11 @@ func TestAddRecord(t *testing.T) {
 			// Check both records are in datastore.
 			res = GetDeviceManualRepairRecords(ctx, ids2)
 			So(res, ShouldHaveLength, 2)
-			for i, r := range req {
-				So(res[i].Err, ShouldBeNil)
-				So(res[i].Entity.Hostname, ShouldEqual, r.GetHostname())
-				So(res[i].Entity.AssetTag, ShouldEqual, r.GetAssetTag())
-				So(res[i].Entity.RepairState, ShouldEqual, r.GetRepairState().String())
+			for i, r := range res {
+				So(r.Err, ShouldBeNil)
+				So(r.Entity.Hostname, ShouldEqual, req[i].GetHostname())
+				So(r.Entity.AssetTag, ShouldEqual, req[i].GetAssetTag())
+				So(r.Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
 			}
 		})
 		Convey("Add record without hostname to datastore", func() {
@@ -264,19 +267,19 @@ func TestUpdateRecord(t *testing.T) {
 			res = GetDeviceManualRepairRecords(ctx, []string{rec1ID})
 			So(res, ShouldHaveLength, 1)
 			So(res[0].Err, ShouldBeNil)
-			So(res[0].Entity.RepairState, ShouldEqual, record1.GetRepairState().String())
+			So(res[0].Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
 
 			// Update and check
 			reqUpdate := map[string]*inv.DeviceManualRepairRecord{rec1ID: record1Update}
-			res2, err := UpdateDeviceManualRepairRecords(ctx, reqUpdate)
+			res, err = UpdateDeviceManualRepairRecords(ctx, reqUpdate)
 			So(err, ShouldBeNil)
-			So(res2, ShouldHaveLength, 1)
-			So(res2[0].Err, ShouldBeNil)
+			So(res, ShouldHaveLength, 1)
+			So(res[0].Err, ShouldBeNil)
 
 			res = GetDeviceManualRepairRecords(ctx, []string{rec1ID})
 			So(res, ShouldHaveLength, 1)
 			So(res[0].Err, ShouldBeNil)
-			So(res[0].Entity.RepairState, ShouldEqual, record1Update.GetRepairState().String())
+			So(res[0].Entity.RepairState, ShouldEqual, "STATE_COMPLETED")
 		})
 		Convey("Update non-existent record in datastore", func() {
 			rec2ID, _ := generateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
@@ -316,8 +319,8 @@ func TestUpdateRecord(t *testing.T) {
 			So(res, ShouldHaveLength, 2)
 			So(res[0].Err, ShouldBeNil)
 			So(res[1].Err, ShouldBeNil)
-			So(res[0].Entity.RepairState, ShouldEqual, record3Update.GetRepairState().String())
-			So(res[1].Entity.RepairState, ShouldEqual, record4.GetRepairState().String())
+			So(res[0].Entity.RepairState, ShouldEqual, "STATE_COMPLETED")
+			So(res[1].Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
 		})
 		Convey("Update record without ID to datastore", func() {
 			rec5ID, _ := generateRepairRecordID(record5.Hostname, record5.AssetTag, ptypes.TimestampString(record5.CreatedTime))
