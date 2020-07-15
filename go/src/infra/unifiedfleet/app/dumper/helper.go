@@ -144,7 +144,7 @@ func dumpRackLSEPrototypes(ctx context.Context, bqClient *bigquery.Client, curTi
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("rack_lse_prototypes$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListRackLSEPrototypes(ctx, pageSize, startToken)
+		res, nextToken, err := configuration.ListRackLSEPrototypes(ctx, pageSize, startToken, "")
 		if err != nil {
 			return errors.Annotate(err, "get all rack lse prototypes").Err()
 		}

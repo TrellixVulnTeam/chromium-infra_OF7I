@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	fleet "infra/unifiedfleet/api/v1/proto"
 	fleetds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // RackLSEPrototypeKind is the datastore entity kind for chrome platforms.
@@ -77,11 +79,13 @@ func GetRackLSEPrototype(ctx context.Context, id string) (*fleet.RackLSEPrototyp
 //
 // Does a query over RackLSEPrototype entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.RackLSEPrototype, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, RackLSEPrototypeKind, pageSize, pageToken)
+func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*fleet.RackLSEPrototype, nextPageToken string, err error) {
+	// Passing -1 for query limit fetches all the entities from the datastore
+	q, err := fleetds.ListQuery(ctx, RackLSEPrototypeKind, -1, pageToken)
 	if err != nil {
 		return nil, "", err
 	}
+	prefix := util.GetLabPrefix(filter)
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *RackLSEPrototypeEntity, cb datastore.CursorCB) error {
 		pm, err := ent.GetProto()
@@ -89,7 +93,13 @@ func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.RackLSEPrototype))
+		if prefix != "" {
+			if strings.Contains(pm.(*fleet.RackLSEPrototype).GetName(), prefix) {
+				res = append(res, pm.(*fleet.RackLSEPrototype))
+			}
+		} else {
+			res = append(res, pm.(*fleet.RackLSEPrototype))
+		}
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

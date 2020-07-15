@@ -34,8 +34,8 @@ func GetRackLSEPrototype(ctx context.Context, id string) (*fleet.RackLSEPrototyp
 }
 
 // ListRackLSEPrototypes lists the racklseprototypes
-func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.RackLSEPrototype, string, error) {
-	return configuration.ListRackLSEPrototypes(ctx, pageSize, pageToken)
+func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string, filter string) ([]*fleet.RackLSEPrototype, string, error) {
+	return configuration.ListRackLSEPrototypes(ctx, pageSize, pageToken, filter)
 }
 
 // DeleteRackLSEPrototype deletes the racklseprototype in datastore

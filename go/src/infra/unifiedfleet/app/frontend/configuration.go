@@ -337,7 +337,7 @@ func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *api.L
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListRackLSEPrototypes(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRackLSEPrototypes(ctx, pageSize, req.PageToken, req.Filter)
 	if err != nil {
 		return nil, err
 	}

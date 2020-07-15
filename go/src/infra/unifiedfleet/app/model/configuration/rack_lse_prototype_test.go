@@ -116,14 +116,19 @@ func TestListRackLSEPrototypes(t *testing.T) {
 		datastore.GetTestable(ctx).Consistent(true)
 		rackLSEPrototypes := make([]*fleet.RackLSEPrototype, 0, 4)
 		for i := 0; i < 4; i++ {
-			rackLSEPrototype1 := mockRackLSEPrototype(fmt.Sprintf("rackLSEPrototype-%d", i))
+			var rackLSEPrototype1 *fleet.RackLSEPrototype
+			if i == 0 {
+				rackLSEPrototype1 = mockRackLSEPrototype(fmt.Sprintf("browser-lab:rackLSEPrototype-%d", i))
+			} else {
+				rackLSEPrototype1 = mockRackLSEPrototype(fmt.Sprintf("rackLSEPrototype-%d", i))
+			}
 			resp, err := CreateRackLSEPrototype(ctx, rackLSEPrototype1)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototype1)
 			rackLSEPrototypes = append(rackLSEPrototypes, resp)
 		}
 		Convey("List rackLSEPrototypes - page_token invalid", func() {
-			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 5, "abc")
+			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 5, "abc", "")
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +136,7 @@ func TestListRackLSEPrototypes(t *testing.T) {
 		})
 
 		Convey("List rackLSEPrototypes - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 4, "")
+			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 4, "", "")
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -139,16 +144,23 @@ func TestListRackLSEPrototypes(t *testing.T) {
 		})
 
 		Convey("List rackLSEPrototypes - listing with pagination", func() {
-			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 3, "")
+			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 3, "", "")
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototypes[:3])
 
-			resp, _, err = ListRackLSEPrototypes(ctx, 2, nextPageToken)
+			resp, _, err = ListRackLSEPrototypes(ctx, 2, nextPageToken, "")
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototypes[3:])
+		})
+
+		Convey("List rackLSEPrototypes - filter only browser lab prototypes", func() {
+			resp, _, err := ListRackLSEPrototypes(ctx, 10, "", "lab:browser")
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototypes[:1])
 		})
 	})
 }
