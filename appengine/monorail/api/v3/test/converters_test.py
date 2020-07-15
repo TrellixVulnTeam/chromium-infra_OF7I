@@ -843,6 +843,17 @@ class ConverterFunctionsTest(unittest.TestCase):
                 derivation=RULE_DERIVATION, user='users/333')
         ],
         merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'),
+        blocked_on_issue_refs=[
+            # Reversing natural ordering to ensure order is respected.
+            issue_objects_pb2.IssueRef(issue='projects/goose/issues/4'),
+            issue_objects_pb2.IssueRef(issue='projects/proj/issues/3'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/555'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/2')
+        ],
+        blocking_issue_refs=[
+            issue_objects_pb2.IssueRef(issue='projects/goose/issues/5'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/3')
+        ],
         # All the following fields should be ignored.
         name='projects/proj/issues/1',
         state=issue_objects_pb2.IssueContentState.Value('SPAM'),
@@ -856,6 +867,37 @@ class ConverterFunctionsTest(unittest.TestCase):
         attachment_count=5,
         phases=[self.phase_1.name])
 
+    blocked_on_1 = fake.MakeTestIssue(
+        self.project_1.project_id,
+        3,
+        'sum3',
+        'New',
+        self.user_1.user_id,
+        issue_id=301,
+        project_name=self.project_1.project_name,
+    )
+    blocked_on_2 = fake.MakeTestIssue(
+        self.project_2.project_id,
+        4,
+        'sum4',
+        'New',
+        self.user_1.user_id,
+        issue_id=401,
+        project_name=self.project_2.project_name,
+    )
+    blocking = fake.MakeTestIssue(
+        self.project_2.project_id,
+        5,
+        'sum5',
+        'New',
+        self.user_1.user_id,
+        issue_id=501,
+        project_name=self.project_2.project_name,
+    )
+    self.services.issue.TestAddIssue(blocked_on_1)
+    self.services.issue.TestAddIssue(blocked_on_2)
+    self.services.issue.TestAddIssue(blocking)
+
     actual = self.converter.IngestIssue(ingest)
 
     expected_cc1_id = self.services.user.LookupUserID(
@@ -866,6 +908,15 @@ class ConverterFunctionsTest(unittest.TestCase):
         owner_id=111,
         cc_ids=[expected_cc1_id, 333],
         merged_into_external='b/1',
+        blocked_on_iids=[blocked_on_2.issue_id, blocked_on_1.issue_id],
+        blocking_iids=[blocking.issue_id],
+        dangling_blocked_on_refs=[
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/555'),
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/2')
+        ],
+        dangling_blocking_refs=[
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/3')
+        ],
     )
     self.assertEqual(actual, expected)
 
@@ -881,14 +932,10 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(self.converter.IngestIssue(minimal), expected)
 
   def testIngestIssue_Errors(self):
-    # TODO(jessan): Test non-existant issue.
-    # TODO(jessan): Test non-existant project.
-    # TODO(jessan): Test empty IssueRef.
     invalid_issue_ref = issue_objects_pb2.IssueRef(
         ext_identifier='b/1',
         issue='projects/proj/issues/1')
     ingest = issue_objects_pb2.Issue(
-        name='projects/proj/issues/1',
         summary='sum',
         owner=issue_objects_pb2.Issue.UserValue(
             derivation=EXPLICIT_DERIVATION, user='users/nonexisting@user.com'),
@@ -898,13 +945,25 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.Issue.UserValue(
                 derivation=RULE_DERIVATION, user='invalidFormat2')
         ],
-        merged_into_issue_ref=invalid_issue_ref)
-    error_messages_re = '\n'.join([
-        '.+not found when ingesting owner',
-        '.+cc_users: Invalid resource name: invalidFormat1.',
-        'Status is required when creating an issue',
-        '.+merged_into_ref: IssueRefs MUST NOT have both',
-    ])
+        merged_into_issue_ref=invalid_issue_ref,
+        blocked_on_issue_refs=[
+            issue_objects_pb2.IssueRef(),
+            issue_objects_pb2.IssueRef(issue='projects/404/issues/1')
+        ],
+        blocking_issue_refs=[
+            issue_objects_pb2.IssueRef(issue='projects/proj/issues/404')
+        ],
+    )
+    error_messages = [
+        r'.+not found when ingesting owner',
+        r'.+cc_users: Invalid resource name: invalidFormat1.',
+        r'Status is required when creating an issue',
+        r'.+merged_into_ref: IssueRefs MUST NOT have both.+',
+        r'.+blocked_on_issue_refs: IssueRefs MUST have.+',
+        r'.+blocked_on_issue_refs: Project 404 not found.',
+        r'.+blocking_issue_refs: Issue.+404.+not found'
+    ]
+    error_messages_re = '\n'.join(error_messages)
     with self.assertRaisesRegexp(exceptions.InputException, error_messages_re):
       self.converter.IngestIssue(ingest)
 

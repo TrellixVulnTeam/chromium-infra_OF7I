@@ -475,7 +475,6 @@ class Converter(object):
     # type: (api_proto.issue_objects_pb2.Issue, Dict[str, Any], ErrorAggregator)
     #     -> None
     """Fills issue relationships into `ingestedDict` from `issue`."""
-    # TODO(jessan): ingest blocked, blocking.
     if issue.HasField('merged_into_issue_ref'):
       try:
         merged_into_ref = self._IngestIssueRef(issue.merged_into_issue_ref)
@@ -487,6 +486,26 @@ class Converter(object):
       except (exceptions.InputException, exceptions.NoSuchIssueException,
           exceptions.NoSuchProjectException) as e:
         err_agg.AddErrorMessage('Error ingesting merged_into_ref: {}', e)
+    for blocked_on in issue.blocked_on_issue_refs:
+      try:
+        ref = self._IngestIssueRef(blocked_on)
+        if isinstance(ref, tracker_pb2.DanglingIssueRef):
+          ingestedDict.setdefault('dangling_blocked_on_refs', []).append(ref)
+        else:
+          ingestedDict.setdefault('blocked_on_iids', []).append(ref)
+      except (exceptions.InputException, exceptions.NoSuchIssueException,
+          exceptions.NoSuchProjectException) as e:
+        err_agg.AddErrorMessage('Error ingesting blocked_on_issue_refs: {}', e)
+    for blocking in issue.blocking_issue_refs:
+      try:
+        ref = self._IngestIssueRef(blocking)
+        if isinstance(ref, tracker_pb2.DanglingIssueRef):
+          ingestedDict.setdefault('dangling_blocking_refs', []).append(ref)
+        else:
+          ingestedDict.setdefault('blocking_iids', []).append(ref)
+      except (exceptions.InputException, exceptions.NoSuchIssueException,
+          exceptions.NoSuchProjectException) as e:
+        err_agg.AddErrorMessage('Error ingesting blocking_issue_refs: {}', e)
 
   def _IngestIssueRef(self, issue_ref):
     # type: (api_proto.issue_objects.IssueRef) ->
