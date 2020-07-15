@@ -42,7 +42,7 @@ func getApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 			authcli.SubcommandLogin(site.DefaultAuthOptions, "login", false),
 			authcli.SubcommandLogout(site.DefaultAuthOptions, "logout", false),
-			subcommands.Section("Lab audit"),
+			subcommands.Section("ChromeOS Lab (only) audit"),
 			audit.AuditCmd,
 			query.GetAssetsCmd,
 			subcommands.Section("Registration Management"),
