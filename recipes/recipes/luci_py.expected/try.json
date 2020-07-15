@@ -150,6 +150,150 @@
   },
   {
     "cmd": [],
+    "name": "check changes",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@changes@client: False@@@",
+      "@@@STEP_LOG_LINE@changes@components: False@@@",
+      "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
+      "@@@STEP_LOG_LINE@changes@swarming_ui: False@@@",
+      "@@@STEP_LOG_LINE@changes@isolate: False@@@",
+      "@@@STEP_LOG_LINE@changes@config_service: False@@@",
+      "@@@STEP_LOG_LINE@changes@swarming: True@@@",
+      "@@@STEP_LOG_LINE@changes@auth_service: False@@@",
+      "@@@STEP_LOG_END@changes@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "DEPS"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on DEPS",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "client"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on client",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "appengine/auth_service"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on appengine/auth_service",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "appengine/config_service"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on appengine/config_service",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "appengine/components"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on appengine/components",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "appengine/isolate"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on appengine/isolate",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "appengine/swarming"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on appengine/swarming",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@change list@appengine/swarming/foo.py@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      "appengine/swarming/ui2"
+    ],
+    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci",
+    "infra_step": true,
+    "name": "check changes.get change list on appengine/swarming/ui2",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [],
     "name": "auth_service"
   },
   {

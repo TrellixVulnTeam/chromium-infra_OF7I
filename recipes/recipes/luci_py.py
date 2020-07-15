@@ -12,6 +12,7 @@ DEPS = [
     'recipe_engine/path',
     'recipe_engine/platform',
     'recipe_engine/python',
+    'recipe_engine/raw_io',
     'recipe_engine/step',
 ]
 
@@ -27,6 +28,10 @@ def RunSteps(api):
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):
     appeng_dir = luci_dir.join('appengine')
+
+    with api.step.nest('check changes') as presentation:
+      changes = _check_changes(api).items()
+      presentation.logs['changes'] = ['%s: %s' % (p, j) for p, j in changes]
 
     if api.platform.is_linux:
       with api.step.nest('auth_service'):
@@ -67,6 +72,50 @@ def RunSteps(api):
     # swarming ui
     if api.platform.is_linux:
       _step_swarming_ui_tests(api)
+
+
+def _check_changes(api):
+  return {
+      'DEPS':
+          _has_changed_files(api, 'DEPS'),
+      'client':
+          _has_changed_files(api, 'client'),
+      'auth_service':
+          _has_changed_files(api, 'appengine/auth_service'),
+      'config_service':
+          _has_changed_files(api, 'appengine/config_service'),
+      'components':
+          _has_changed_files(api, 'appengine/components'),
+      'isolate':
+          _has_changed_files(api, 'appengine/isolate'),
+      'swarming':
+          _has_changed_files(
+              api, 'appengine/swarming', exclude_dir='appengine/swarming/ui2'),
+      'swarming_ui':
+          _has_changed_files(api, 'appengine/swarming/ui2'),
+  }
+
+
+def _has_changed_files(api, subdir, exclude_dir=None):
+  result = api.m.git(
+      'diff',
+      '--name-only',
+      '--cached',
+      subdir,
+      name='get change list on %s' % subdir,
+      stdout=api.m.raw_io.output())
+  files = result.stdout.splitlines()
+
+  # exclude files if exclude_dir is specified.
+  if exclude_dir:
+    filtered = []
+    for f in files:
+      if not f.startswith(exclude_dir):
+        filtered.append(f)
+    files = filtered
+
+  result.presentation.logs['change list'] = sorted(files)
+  return len(files) > 0
 
 
 def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
@@ -116,13 +165,20 @@ def GenTests(api):
       )
   )
 
-  yield (
-      api.test('try') +
-      api.buildbucket.try_build(
-          'infra', 'try', 'Luci-py Linux',
-          git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-      )
-  )
+  yield (api.test('try') + api.buildbucket.try_build(
+      'infra',
+      'try',
+      'Luci-py Linux',
+      git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
+  ) + api.step_data(
+      'check changes.get change list on appengine/swarming',
+      api.raw_io.stream_output(
+          '\n'.join([
+              'appengine/swarming/foo.py',
+              'appengine/swarming/ui2/bar.js',
+          ]),
+          stream='stdout'),
+  ))
 
   yield (
       api.test('try-mac') +
