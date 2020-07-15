@@ -15,6 +15,7 @@ import time
 from third_party import ezt
 
 from businesslogic import work_env
+from features import savedqueries_helpers
 from framework import permissions
 from framework import jsonfeed
 from framework import servlet
