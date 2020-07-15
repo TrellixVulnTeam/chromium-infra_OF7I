@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/frontend/fake"
 )
 
@@ -46,7 +47,7 @@ func TestParseATLTopology(t *testing.T) {
 		Convey("happy path", func() {
 			resp, err := fake.SheetData("../frontend/fake/sheet_data.json")
 			So(err, ShouldBeNil)
-			topology := ParseATLTopology(resp)
+			topology, _ := ParseATLTopology(resp)
 			So(topology, ShouldHaveLength, 2)
 			So(topology, ShouldContainKey, "100.115.224.0")
 			So(topology, ShouldContainKey, "100.115.226.0")
@@ -65,6 +66,56 @@ func TestParseATLTopology(t *testing.T) {
 				}
 			}
 
+		})
+	})
+}
+
+func TestParseOSDhcpdConf(t *testing.T) {
+	Convey("Verify ParseOSDhcpdConf", t, func() {
+		Convey("happy path", func() {
+			resp, err := fake.SheetData("../frontend/fake/sheet_data.json")
+			So(err, ShouldBeNil)
+			topology, _ := ParseATLTopology(resp)
+			b, err := fake.GitData("../frontend/fake/dhcp_test.conf")
+			So(err, ShouldBeNil)
+
+			parsed, err := ParseOSDhcpdConf(string(b), topology)
+			So(err, ShouldBeNil)
+			So(parsed.ValidVlans, ShouldHaveLength, 2)
+			So(parsed.ValidIPs, ShouldHaveLength, 510)
+			ipMaps := make(map[string]*ufspb.IP, 0)
+			for _, ip := range parsed.ValidIPs {
+				ipMaps[ip.GetId()] = ip
+			}
+			So(len(ipMaps), ShouldEqual, 510)
+			ip, ok := ipMaps["atl-lab:201/100.115.224.1"]
+			So(ok, ShouldBeTrue)
+			So(ip.GetOccupied(), ShouldBeTrue)
+			So(ip.GetVlan(), ShouldEqual, "atl-lab:201")
+			ip2, ok := ipMaps["atl-lab:201/100.115.224.2"]
+			So(ok, ShouldBeTrue)
+			So(ip2.GetOccupied(), ShouldBeTrue)
+			So(ip2.GetVlan(), ShouldEqual, "atl-lab:201")
+			ip3, ok := ipMaps["atl-lab:201/100.115.224.3"]
+			So(ok, ShouldBeTrue)
+			So(ip3.GetOccupied(), ShouldBeTrue)
+			So(ip3.GetVlan(), ShouldEqual, "atl-lab:201")
+
+			So(parsed.ValidDHCPs, ShouldHaveLength, 3)
+			for _, dhcp := range parsed.ValidDHCPs {
+				So([]string{"host1", "host2", "host3"}, ShouldContain, dhcp.GetHostname())
+				switch dhcp.GetHostname() {
+				case "host1":
+					So(dhcp.GetIp(), ShouldEqual, "100.115.224.1")
+					So(dhcp.GetMacAddress(), ShouldEqual, "aa:00:00:00:00:00")
+				case "host2":
+					So(dhcp.GetIp(), ShouldEqual, "100.115.224.2")
+					So(dhcp.GetMacAddress(), ShouldEqual, "")
+				case "host3":
+					So(dhcp.GetIp(), ShouldEqual, "100.115.224.3")
+					So(dhcp.GetMacAddress(), ShouldEqual, "")
+				}
+			}
 		})
 	})
 }

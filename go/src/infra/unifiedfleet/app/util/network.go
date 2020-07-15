@@ -42,7 +42,7 @@ func ParseVlan(vlan *crimsonconfig.VLAN) ([]*ufspb.IP, int, error) {
 
 // FormatIP initialize an IP object
 func FormatIP(vlan int64, ipAddress string, occupied bool) *ufspb.IP {
-	ipv4, err := ParseIPv4(ipAddress)
+	ipv4, err := IPv4StrToInt(ipAddress)
 	if err != nil {
 		return nil
 	}
@@ -58,8 +58,8 @@ func getIPName(vlan int64, ipv4 uint32) string {
 	return fmt.Sprintf("vlan-%d/%d", vlan, ipv4)
 }
 
-// ParseIPv4 returns an uint32 address from the given ip address.
-func ParseIPv4(ipAddress string) (uint32, error) {
+// IPv4StrToInt returns an uint32 address from the given ip address string.
+func IPv4StrToInt(ipAddress string) (uint32, error) {
 	ip := net.ParseIP(ipAddress)
 	if ip != nil {
 		ip = ip.To4()
@@ -68,4 +68,19 @@ func ParseIPv4(ipAddress string) (uint32, error) {
 		return 0, errors.Reason("invalid IPv4 address %q", ipAddress).Err()
 	}
 	return binary.BigEndian.Uint32(ip), nil
+}
+
+// IPv4IntToStr returns a string ip address
+func IPv4IntToStr(ipAddress uint32) string {
+	ip := make(net.IP, 4)
+	binary.BigEndian.PutUint32(ip, ipAddress)
+	return ip.String()
+}
+
+// parseCidrBlock returns a tuple of (cidr_block, capacity of this block)
+func parseCidrBlock(subnet, mask string) (string, int) {
+	maskIP := net.ParseIP(mask)
+	maskAddr := maskIP.To4()
+	ones, sz := net.IPv4Mask(maskAddr[0], maskAddr[1], maskAddr[2], maskAddr[3]).Size()
+	return fmt.Sprintf("%s/%d", subnet, ones), 1 << uint32(sz-ones)
 }

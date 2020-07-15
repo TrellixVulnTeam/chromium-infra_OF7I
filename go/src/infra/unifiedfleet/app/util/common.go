@@ -60,6 +60,11 @@ func FormatLabFilter(userFilter string) string {
 	return Lab + FilterConditionSeparator + userFilter
 }
 
+// GetIPName returns a formatted IP name
+func GetIPName(vlanName, ipv4Str string) string {
+	return fmt.Sprintf("%s/%s", vlanName, ipv4Str)
+}
+
 // IsValidFilter checks if a filter is valid
 func IsValidFilter(filter string) bool {
 	for _, lab := range validLabs {

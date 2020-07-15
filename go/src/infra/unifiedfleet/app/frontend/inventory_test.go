@@ -734,7 +734,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(dhcp.GetMacAddress(), ShouldEqual, "00:3e:e1:c8:57:f9")
 
 			// Verify IPs
-			ipv4, err := util.ParseIPv4(dhcp.GetIp())
+			ipv4, err := util.IPv4StrToInt(dhcp.GetIp())
 			So(err, ShouldBeNil)
 			ips, err := configuration.QueryIPByPropertyName(ctx, "ipv4", strconv.FormatUint(uint64(ipv4), 10))
 			So(err, ShouldBeNil)

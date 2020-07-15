@@ -18,11 +18,7 @@ type GitClient struct {
 // GetFile mocks git.ClientInterface.GetFile()
 func (gc *GitClient) GetFile(ctx context.Context, path string) (string, error) {
 	if path == "test_git_path" {
-		b, err := ioutil.ReadFile("../frontend/fake/dhcp_test.conf")
-		if err != nil {
-			return "", err
-		}
-		return string(b), nil
+		return GitData("../frontend/fake/dhcp_test.conf")
 	}
 	return "", errors.Reason("Unspecified mock path %s", path).Err()
 }
@@ -30,4 +26,13 @@ func (gc *GitClient) GetFile(ctx context.Context, path string) (string, error) {
 // SwitchProject mocks git.ClientInterface.SwitchProject()
 func (gc *GitClient) SwitchProject(ctx context.Context, project string) error {
 	return nil
+}
+
+// GitData mocks a git file content based on a given filepath
+func GitData(path string) (string, error) {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

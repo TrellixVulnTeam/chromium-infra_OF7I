@@ -123,17 +123,37 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitCl
 	allIPs := make([]*fleet.IP, 0)
 	allDhcps := make([]*fleet.DHCPConfig, 0)
 
-	// TODO: add logic to parse vlans
 	for _, cfg := range networkCfg.GetCrosNetworkTopology() {
+		logging.Debugf(ctx, "########### Parse %s ###########", cfg.GetName())
 		resp, err := sheetClient.Get(ctx, cfg.GetSheetId(), []string{"VLANs and Netblocks"})
 		if err != nil {
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		}
-		util.ParseATLTopology(resp)
-		_, err = gitClient.GetFile(ctx, cfg.GetRemotePath())
+		topology, dupcatedVlan := util.ParseATLTopology(resp)
+		logging.Debugf(ctx, "Topology length %d", len(topology))
+		logging.Debugf(ctx, "Duplicated vlans found in topology:")
+		logVlans(ctx, dupcatedVlan)
+		conf, err := gitClient.GetFile(ctx, cfg.GetRemotePath())
 		if err != nil {
 			return nil, status.Error(codes.FailedPrecondition, err.Error())
 		}
+		parsed, err := util.ParseOSDhcpdConf(conf, topology)
+		if err != nil {
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		}
+		logging.Debugf(ctx, "Duplicated vlans found in dhcp conf file:")
+		logVlans(ctx, parsed.DuplicatedVlans)
+		logging.Debugf(ctx, "Vlans not existing in pre-defined topology:")
+		logVlans(ctx, parsed.MismatchedVlans)
+		logging.Debugf(ctx, "Invalid dhcps without vlan:")
+		logDHCPs(ctx, parsed.DHCPsWithoutVlan)
+		logging.Debugf(ctx, "Duplicated ips found in dhcp conf file:")
+		logIPs(ctx, parsed.DuplicatedIPs)
+
+		logging.Debugf(ctx, "Get %d vlans, %d ips, %d dhcps for %s", len(parsed.ValidVlans), len(parsed.ValidIPs), len(parsed.ValidDHCPs), cfg.GetName())
+		allVlans = append(allVlans, parsed.ValidVlans...)
+		allIPs = append(allIPs, parsed.ValidIPs...)
+		allDhcps = append(allDhcps, parsed.ValidDHCPs...)
 	}
 
 	allRes := make(datastore.OpResults, 0)
@@ -179,6 +199,38 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitCl
 		}
 	}
 	return &allRes, nil
+}
+
+func logVlans(ctx context.Context, vlans []*fleet.Vlan) {
+	if vlans != nil && len(vlans) > 0 {
+		for _, v := range vlans {
+			logging.Debugf(ctx, "\tVlan %s (%s)", v.GetName(), v.GetVlanAddress())
+		}
+		return
+	}
+	logging.Debugf(ctx, "\tNot found")
+}
+
+func logDHCPs(ctx context.Context, dhcps []*fleet.DHCPConfig) {
+	if dhcps != nil && len(dhcps) > 0 {
+		logging.Debugf(ctx, "enter")
+		for _, v := range dhcps {
+			logging.Debugf(ctx, "\tHost %s (%s)", v.GetHostname(), v.GetIp())
+		}
+		return
+	}
+	logging.Debugf(ctx, "\tNot found")
+
+}
+
+func logIPs(ctx context.Context, ips []*fleet.IP) {
+	if ips != nil && len(ips) > 0 {
+		for _, v := range ips {
+			logging.Debugf(ctx, "\tIP %s", v.GetId())
+		}
+		return
+	}
+	logging.Debugf(ctx, "\tNot found")
 }
 
 // ReplaceVlan replaces an old Vlan with new Vlan in datastore
