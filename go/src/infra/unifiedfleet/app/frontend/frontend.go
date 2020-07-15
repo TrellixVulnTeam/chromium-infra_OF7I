@@ -28,8 +28,17 @@ func InstallServices(apiServer *prpc.Server) {
 // checkAccess verifies that the request is from an authorized user.
 func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.Context, error) {
 	logging.Debugf(ctx, "Check access for %s", rpcName)
-	// TODO(xixuan): use the two below groups first before setting up the ufs auth group in config file
 	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs"}
+	switch rpcName {
+	case "ListMachines", "DeleteMachine":
+		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-privileged-access")
+	case "GetMachine":
+		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-readonly-access")
+	case "CreateMachineLSE", "UpdateMachineLSE":
+		group = append(group, "chromeos-inventory-setup-label-write-access")
+	case "DeleteMachineLSE":
+		group = append(group, "chromeos-inventory-privileged-access")
+	}
 	allow, err := auth.IsMember(ctx, group...)
 	if err != nil {
 		logging.Errorf(ctx, "Check group '%s' membership failed: %s", group, err.Error())
