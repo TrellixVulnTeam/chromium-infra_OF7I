@@ -206,7 +206,7 @@ class IssuesServicerTest(unittest.TestCase):
         mc.auth, [222],
         'label:find-me', ['chicken', 'cow'],
         2,
-        0, [],
+        0,
         1,
         '',
         '-pri',
@@ -225,9 +225,21 @@ class IssuesServicerTest(unittest.TestCase):
     self.CallWrapped(self.issues_svcr.SearchIssues, mc, request)
     # start index is now 2.
     mock_pipeline.assert_called_with(
-        self.cnxn, self.services, mc.auth, [222], 'label:find-me',
-        ['chicken', 'cow'], 2, 2, [], 1, '', '-pri', mc.warnings,
-        mc.errors, True, mc.profiler, display_mode=None, project=None)
+        self.cnxn,
+        self.services,
+        mc.auth, [222],
+        'label:find-me', ['chicken', 'cow'],
+        2,
+        2,
+        1,
+        '',
+        '-pri',
+        mc.warnings,
+        mc.errors,
+        True,
+        mc.profiler,
+        display_mode=None,
+        project=None)
 
   # Note the 'empty' case doesn't make sense for ListComments, as one is created
   # for every issue.

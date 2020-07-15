@@ -1250,14 +1250,14 @@ class WorkEnv(object):
       paginate_start, sort_spec):
     # type: (str, Sequence[str], int, int, int, str) -> ListResult
     """Search for issues in the given projects."""
-    # TODO(crbug.com/monorail/7678): Remove url_params and can. Replace
+    # TODO(crbug.com/monorail/7678): Remove can. Replace
     # project_names with project_ids.
     # TODO(crbug.com/monorail/6988): Delete ListIssues when endpoints and v1
     # are deprecated. Move pipeline call to SearchIssues.
     use_cached_searches = not settings.local_mode
     pipeline = self.ListIssues(
         query_string, query_project_names, me_user_id, items_per_page,
-        paginate_start, [], 1, '', sort_spec, use_cached_searches)
+        paginate_start, 1, '', sort_spec, use_cached_searches)
 
     end = paginate_start + items_per_page
     next_start = None
@@ -1265,10 +1265,19 @@ class WorkEnv(object):
       next_start = end
     return ListResult(pipeline.visible_results, next_start)
 
-  def ListIssues(self, query_string, query_project_names, me_user_id,
-                 items_per_page, paginate_start, url_params, can,
-                 group_by_spec, sort_spec, use_cached_searches,
-                 display_mode=None, project=None):
+  def ListIssues(
+      self,
+      query_string,
+      query_project_names,
+      me_user_id,
+      items_per_page,
+      paginate_start,
+      can,
+      group_by_spec,
+      sort_spec,
+      use_cached_searches,
+      display_mode=None,
+      project=None):
     """Do an issue search w/ mc + passed in args to return a pipeline object."""
     # Permission to view a project is checked in Frontendsearchpipeline().
     # Individual results are filtered by permissions in SearchForIIDs().
@@ -1276,11 +1285,23 @@ class WorkEnv(object):
     with self.mc.profiler.Phase('searching issues'):
       me_user_ids = self._MergeLinkedAccounts(me_user_id)
       pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-          self.mc.cnxn, self.services, self.mc.auth, me_user_ids,
-          query_string, query_project_names, items_per_page, paginate_start,
-          url_params, can, group_by_spec, sort_spec, self.mc.warnings,
-          self.mc.errors, use_cached_searches, self.mc.profiler,
-          display_mode=display_mode, project=project)
+          self.mc.cnxn,
+          self.services,
+          self.mc.auth,
+          me_user_ids,
+          query_string,
+          query_project_names,
+          items_per_page,
+          paginate_start,
+          can,
+          group_by_spec,
+          sort_spec,
+          self.mc.warnings,
+          self.mc.errors,
+          use_cached_searches,
+          self.mc.profiler,
+          display_mode=display_mode,
+          project=project)
       if not self.mc.errors.AnyErrors():
         pipeline.SearchForIIDs()
         pipeline.MergeAndSortIssues()
@@ -1298,20 +1319,29 @@ class WorkEnv(object):
     Returns:
       A 4-tuple of flipper info: (prev_iid, cur_index, next_iid, total_count).
     """
-    # Permission to view a project is checked in Frontendsearchpipeline().
+    # Permission to view a project is checked in FrontendSearchPipeline().
     # Individual results are filtered by permissions in SearchForIIDs().
 
     with self.mc.profiler.Phase('finding issue position in search'):
-      url_params = [(name, self.mc.GetParam(name)) for name in
-                    framework_helpers.RECOGNIZED_PARAMS]
       me_user_ids = self._MergeLinkedAccounts(self.mc.me_user_id)
       pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-           self.mc.cnxn, self.services, self.mc.auth, me_user_ids,
-           self.mc.query, self.mc.query_project_names, self.mc.num,
-           self.mc.start, url_params, self.mc.can, self.mc.group_by_spec,
-           self.mc.sort_spec, self.mc.warnings, self.mc.errors,
-           self.mc.use_cached_searches, self.mc.profiler,
-           display_mode=self.mc.mode, project=self.mc.project)
+          self.mc.cnxn,
+          self.services,
+          self.mc.auth,
+          me_user_ids,
+          self.mc.query,
+          self.mc.query_project_names,
+          self.mc.num,
+          self.mc.start,
+          self.mc.can,
+          self.mc.group_by_spec,
+          self.mc.sort_spec,
+          self.mc.warnings,
+          self.mc.errors,
+          self.mc.use_cached_searches,
+          self.mc.profiler,
+          display_mode=self.mc.mode,
+          project=self.mc.project)
       if not self.mc.errors.AnyErrors():
         # Only do the search if the user's query parsed OK.
         pipeline.SearchForIIDs()
@@ -1320,6 +1350,7 @@ class WorkEnv(object):
       # sorted list, we only need to know the position on such a list of the
       # current issue.
       prev_iid, cur_index, next_iid = pipeline.DetermineIssuePosition(issue)
+
       return prev_iid, cur_index, next_iid, pipeline.total_count
 
   # TODO(crbug/monorail/6988): add boolean to ignore_private_issues

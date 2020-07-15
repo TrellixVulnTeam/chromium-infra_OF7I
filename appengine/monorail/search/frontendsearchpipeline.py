@@ -74,13 +74,26 @@ class FrontendSearchPipeline(object):
   is pretty much in the order of the source code lines here.
   """
 
-  def __init__(self, cnxn, services, auth, me_user_ids,
-               query, query_project_names, items_per_page, paginate_start,
-               url_params, can, group_by_spec, sort_spec, warnings,
-               errors, use_cached_searches, profiler, display_mode='list',
-               project=None):
+  def __init__(
+      self,
+      cnxn,
+      services,
+      auth,
+      me_user_ids,
+      query,
+      query_project_names,
+      items_per_page,
+      paginate_start,
+      can,
+      group_by_spec,
+      sort_spec,
+      warnings,
+      errors,
+      use_cached_searches,
+      profiler,
+      display_mode='list',
+      project=None):
     self.cnxn = cnxn
-    self.url_params = url_params
     self.me_user_ids = me_user_ids
     self.auth = auth
     self.logged_in_user_id = auth.user_id or 0
@@ -88,7 +101,6 @@ class FrontendSearchPipeline(object):
     self.items_per_page = items_per_page
     self.paginate_start = paginate_start
     self.subqueries = query.split(' OR ')
-    self.url_params = url_params
     self.group_by_spec = group_by_spec
     self.sort_spec = sort_spec
     self.warnings = warnings
@@ -161,8 +173,8 @@ class FrontendSearchPipeline(object):
           self.search_limit_reached, self.nonviewable_iids,
           self.error_responses, self.services, self.me_user_ids,
           self.logged_in_user_id, self.items_per_page + self.paginate_start,
-          self.url_params, self.subqueries, self.can, self.group_by_spec,
-          self.sort_spec, self.warnings, self.use_cached_searches)
+          self.subqueries, self.can, self.group_by_spec, self.sort_spec,
+          self.warnings, self.use_cached_searches)
 
     with self.profiler.Phase('Waiting for Backends'):
       try:
@@ -470,9 +482,11 @@ class FrontendSearchPipeline(object):
       # We don't paginate the grid view.  But, pagination object shows counts.
       self.pagination = paginate.ArtifactPagination(
           self.allowed_results,
-          self.items_per_page, self.paginate_start,
-          self.project_name, urls.ISSUE_LIST,
-          total_count=self.total_count, url_params=self.url_params)
+          self.items_per_page,
+          self.paginate_start,
+          self.project_name,
+          urls.ISSUE_LIST,
+          total_count=self.total_count)
       # We limited the results, but still show the original total count.
       self.visible_results = self.allowed_results
 
@@ -483,10 +497,13 @@ class FrontendSearchPipeline(object):
         limit_reached |= shard_limit_reached
       self.pagination = paginate.ArtifactPagination(
           self.allowed_results,
-          self.items_per_page, self.paginate_start, self.project_name,
-          urls.ISSUE_LIST, total_count=self.total_count,
-          limit_reached=limit_reached, skipped=self.num_skipped_at_start,
-          url_params=self.url_params)
+          self.items_per_page,
+          self.paginate_start,
+          self.project_name,
+          urls.ISSUE_LIST,
+          total_count=self.total_count,
+          limit_reached=limit_reached,
+          skipped=self.num_skipped_at_start)
       self.visible_results = self.pagination.visible_results
 
     # If we were not forced to look up visible users already, do it now.
@@ -535,15 +552,33 @@ def _CheckQuery(
 
 
 def _MakeBackendCallback(func, *args):
+  # type: (Callable[[*Any], Any], *Any) -> Callable[[*Any], Any]
+  """Helper to store a particular function and argument set into a callback.
+
+  Args:
+    func: Function to callback.
+    *args: The arguments to pass into the function.
+
+  Returns:
+    Callback function based on specified arguments.
+  """
   return lambda: func(*args)
 
 
 def _StartBackendSearch(
     cnxn, query_project_names, query_project_ids, harmonized_config,
-    unfiltered_iids_dict, search_limit_reached_dict,
-    nonviewable_iids, error_responses, services, me_user_ids,
-    logged_in_user_id, new_url_num, url_params, subqueries, can, group_by_spec,
-    sort_spec, warnings, use_cached_searches):
+    unfiltered_iids_dict, search_limit_reached_dict, nonviewable_iids,
+    error_responses, services, me_user_ids, logged_in_user_id, new_url_num,
+    subqueries, can, group_by_spec, sort_spec, warnings, use_cached_searches):
+  # type: (MonorailConnection, Sequence[str], Sequence[int],
+  #     proto.tracker_pb2.ProjectIssueConfig,
+  #     Mapping[Tuple(int, str), Sequence[int]],
+  #     Mapping[Tuple(int, str), Sequence[bool]],
+  #     Mapping[Tuple(int, str), Collection[int]], Sequence[Tuple(int, str)],
+  #     Services, Sequence[int], int, int, Sequence[str], int, str, str,
+  #     Sequence[Tuple(str, Sequence[str])], bool) ->
+  #     Sequence[Tuple(int, Tuple(int, str),
+  #         google.appengine.api.apiproxy_stub_map.UserRPC)]
   """Request that our backends search and return a list of matching issue IDs.
 
   Args:
@@ -566,10 +601,9 @@ def _StartBackendSearch(
         viewing someone else's dashboard, or the subscribing user's ID when
         evaluating subscriptions.  And, any linked accounts.
     logged_in_user_id: user_id of the logged in user, 0 otherwise
-    new_url_num: the new value of the 'num' parameter
-    url_params: list of (param_name, param_value) we want to keep
-        in any new urls.
-    subqueries:
+    new_url_num: the number of issues for BackendSearchPipeline to query.
+        Computed based on pagination offset + number of items per page.
+    subqueries: split up list of query string segments.
     can: "canned query" number to scope the user's search.
     group_by_spec: string that lists the grouping order.
     sort_spec: string that lists the sort order.
@@ -626,18 +660,23 @@ def _StartBackendSearch(
   # come back, they are also put into unfiltered_iids_dict.
   for shard_key in needed_shard_keys:
     rpc = _StartBackendSearchCall(
-        query_project_names, shard_key,
+        query_project_names,
+        shard_key,
         services.cache_manager.processed_invalidations_up_to,
-        me_user_ids, logged_in_user_id, new_url_num, url_params,
-        sort_spec=sort_spec, group_by_spec=group_by_spec)
+        me_user_ids,
+        logged_in_user_id,
+        new_url_num,
+        can=can,
+        sort_spec=sort_spec,
+        group_by_spec=group_by_spec)
     rpc_tuple = (time.time(), shard_key, rpc)
     rpc.callback = _MakeBackendCallback(
         _HandleBackendSearchResponse, query_project_names, rpc_tuple,
         rpc_tuples, settings.backend_retries, unfiltered_iids_dict,
         search_limit_reached_dict,
-        services.cache_manager.processed_invalidations_up_to,
-        error_responses, me_user_ids, logged_in_user_id, new_url_num,
-        url_params, sort_spec, group_by_spec)
+        services.cache_manager.processed_invalidations_up_to, error_responses,
+        me_user_ids, logged_in_user_id, new_url_num, can, sort_spec,
+        group_by_spec)
     rpc_tuples.append(rpc_tuple)
 
   return rpc_tuples
@@ -895,25 +934,60 @@ def _MakeBackendRequestHeaders(failfast):
 
 
 def _StartBackendSearchCall(
-    query_project_names, shard_key, invalidation_timestep,
-    me_user_ids, logged_in_user_id, new_url_num, url_params,
-    sort_spec=None, group_by_spec=None, deadline=None, failfast=True):
-  """Ask a backend to query one shard of the database."""
+    query_project_names,
+    shard_key,
+    invalidation_timestep,
+    me_user_ids,
+    logged_in_user_id,
+    new_url_num,
+    can=None,
+    sort_spec=None,
+    group_by_spec=None,
+    deadline=None,
+    failfast=True):
+  # type: (Sequence[str], Tuple(int, str), int, Sequence[int], int,
+  #     int, str, str, int, bool) ->
+  #     google.appengine.api.apiproxy_stub_map.UserRPC
+  """Ask a backend to query one shard of the database.
+
+  Args:
+    query_project_names: List of project names queried.
+    shard_key: Tuple specifying which DB shard to query.
+    invalidation_timestep: int timestep to use keep cached items fresh.
+    me_user_ids: Empty list when no user is logged in, or user ID of the logged
+        in user when doing an interactive search, or the viewed user ID when
+        viewing someone else's dashboard, or the subscribing user's ID when
+        evaluating subscriptions.  And, any linked accounts.
+    logged_in_user_id: Id of the logged in user.
+    new_url_num: the number of issues for BackendSearchPipeline to query.
+        Computed based on pagination offset + number of items per page.
+    can: Id of th canned query to use.
+    sort_spec: Str specifying how issues should be sorted.
+    group_by_spec: Str specifying how issues should be grouped.
+    deadline: Max time for the RPC to take before failing.
+    failfast: Whether to set the X-AppEngine-FailFast request header.
+
+  Returns:
+    UserRPC for the created RPC call.
+  """
   shard_id, subquery = shard_key
   backend_host = modules.get_hostname(module='besearch')
-  # We use `sort` and `groupby` in the URL param because in besearch's
-  # MonorailRequest populates sort_spec and group_by_spec from these params.
-  # We also insert them in front of url_params to give priority to sort and
-  # groupby if specified in url_params already.
-  url_params.insert(0, ('sort', sort_spec))
-  url_params.insert(0, ('groupby', group_by_spec))
-  url = 'http://%s%s' % (backend_host, framework_helpers.FormatURL(
-      url_params, urls.BACKEND_SEARCH,
-      projects=','.join(query_project_names),
-      q=subquery, start=0, num=new_url_num,
-      logged_in_user_id=logged_in_user_id,
-      me_user_ids=','.join(str(uid) for uid in me_user_ids),
-      shard_id=shard_id, invalidation_timestep=invalidation_timestep))
+  url = 'http://%s%s' % (
+      backend_host,
+      framework_helpers.FormatURL(
+          [],
+          urls.BACKEND_SEARCH,
+          projects=','.join(query_project_names),
+          q=subquery,
+          start=0,
+          num=new_url_num,
+          can=can,
+          sort=sort_spec,
+          groupby=group_by_spec,
+          logged_in_user_id=logged_in_user_id,
+          me_user_ids=','.join(str(uid) for uid in me_user_ids),
+          shard_id=shard_id,
+          invalidation_timestep=invalidation_timestep))
   logging.info('\n\nCalling backend: %s', url)
   rpc = urlfetch.create_rpc(
       deadline=deadline or settings.backend_deadline)
@@ -945,9 +1019,44 @@ def _StartBackendNonviewableCall(
 def _HandleBackendSearchResponse(
     query_project_names, rpc_tuple, rpc_tuples, remaining_retries,
     unfiltered_iids, search_limit_reached, invalidation_timestep,
-    error_responses, me_user_ids, logged_in_user_id, new_url_num, url_params,
+    error_responses, me_user_ids, logged_in_user_id, new_url_num, can,
     sort_spec, group_by_spec):
-  """Process one backend response and retry if there was an error."""
+  # type: (Sequence[str], Tuple(int, Tuple(int, str),
+  #         google.appengine.api.apiproxy_stub_map.UserRPC),
+  #     Sequence[Tuple(int, Tuple(int, str),
+  #         google.appengine.api.apiproxy_stub_map.UserRPC)],
+  #     int, Mapping[Tuple(int, str), Sequence[int]],
+  #     Mapping[Tuple(int, str), bool], int, Collection[Tuple(int, str)],
+  #     Sequence[int], int, int, int, str, str) -> None
+  #
+  """Process one backend response and retry if there was an error.
+
+  SIDE EFFECTS: This function edits many of the passed in parameters in place.
+    For example, search_limit_reached and unfiltered_iids are updated with
+    response data from the RPC, keyed by shard_key.
+
+  Args:
+    query_project_names: List of projects to query.
+    rpc_tuple: Tuple containing an RPC response object, the time it happened,
+      and what shard the RPC was queried against.
+    rpc_tuples: List of RPC responses to mutate with any retry responses that
+      heppened.
+    remaining_retries: Number of times left to retry.
+    unfiltered_iids: Dict of Issue ids, before they've been filtered by
+      permissions.
+    search_limit_reached: Dict of whether the search limit for a particular
+      shard has been hit.
+    invalidation_timestep: int timestep to use keep cached items fresh.
+    error_responses:
+    me_user_ids: List of relevant user IDs. ie: the currently logged in user
+      and linked account IDs if applicable.
+    logged_in_user_id: Logged in user's ID.
+    new_url_num: the number of issues for BackendSearchPipeline to query.
+        Computed based on pagination offset + number of items per page.
+    can: Canned query ID to use.
+    sort_spec: str specifying how issues should be sorted.
+    group_by_spec: str specifying how issues should be grouped.
+  """
   start_time, shard_key, rpc = rpc_tuple
   duration_sec = time.time() - start_time
 
@@ -986,17 +1095,23 @@ def _HandleBackendSearchResponse(
 
     logging.error('backend call for shard %r failed, retrying', shard_key)
     retry_rpc = _StartBackendSearchCall(
-        query_project_names, shard_key, invalidation_timestep,
-        me_user_ids, logged_in_user_id, new_url_num, url_params,
-        sort_spec=sort_spec, group_by_spec=group_by_spec,
+        query_project_names,
+        shard_key,
+        invalidation_timestep,
+        me_user_ids,
+        logged_in_user_id,
+        new_url_num,
+        can=can,
+        sort_spec=sort_spec,
+        group_by_spec=group_by_spec,
         failfast=remaining_retries > 2)
     retry_rpc_tuple = (time.time(), shard_key, retry_rpc)
     retry_rpc.callback = _MakeBackendCallback(
-        _HandleBackendSearchResponse, query_project_names,
-        retry_rpc_tuple, rpc_tuples, remaining_retries - 1, unfiltered_iids,
+        _HandleBackendSearchResponse, query_project_names, retry_rpc_tuple,
+        rpc_tuples, remaining_retries - 1, unfiltered_iids,
         search_limit_reached, invalidation_timestep, error_responses,
-        me_user_ids, logged_in_user_id, new_url_num, url_params,
-        sort_spec, group_by_spec)
+        me_user_ids, logged_in_user_id, new_url_num, can, sort_spec,
+        group_by_spec)
     rpc_tuples.append(retry_rpc_tuple)
 
 

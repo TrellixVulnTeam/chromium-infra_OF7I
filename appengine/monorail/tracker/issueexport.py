@@ -93,10 +93,9 @@ class IssueExportJSON(jsonfeed.JsonFeed):
     """
     if mr.query or mr.can != 1:
       with work_env.WorkEnv(mr, self.services) as we:
-        url_params = []
-        pipeline = we.ListIssues(mr.query, [mr.project.project_name],
-                                 mr.auth.user_id, mr.num, mr.start, url_params,
-                                 mr.can, mr.group_by_spec, mr.sort_spec, False)
+        pipeline = we.ListIssues(
+            mr.query, [mr.project.project_name], mr.auth.user_id, mr.num,
+            mr.start, mr.can, mr.group_by_spec, mr.sort_spec, False)
       issues = pipeline.allowed_results
     # no user query and mr.can == 1 (we want all issues)
     elif not mr.start and not mr.num:

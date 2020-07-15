@@ -50,8 +50,6 @@ class FrontendSearchPipelineTest(unittest.TestCase):
     self.mr = testing_helpers.MakeMonorailRequest(
       path='/p/proj/issues/list', project=self.project)
     self.mr.me_user_id = 111
-    self.url_params = [(name, self.mr.GetParam(name)) for name in
-                       framework_helpers.RECOGNIZED_PARAMS]
 
     self.issue_1 = fake.MakeTestIssue(
       789, 1, 'one', 'New', 111, labels=['Priority-High'])
@@ -72,8 +70,6 @@ class FrontendSearchPipelineTest(unittest.TestCase):
     self.query_project_names = self.mr.query_project_names
     self.items_per_page = self.mr.num # defaults to 100
     self.paginate_start = self.mr.start
-    self.url_params = [(name, self.mr.GetParam(name)) for name in
-                       framework_helpers.RECOGNIZED_PARAMS]
     self.paginate_end = self.paginate_start + self.items_per_page
     self.can = self.mr.can
     self.group_by_spec = self.mr.group_by_spec
@@ -103,17 +99,28 @@ class FrontendSearchPipelineTest(unittest.TestCase):
         self.cnxn, ['proj'], [789], mox.IsA(tracker_pb2.ProjectIssueConfig),
         unfiltered_iids, {}, nonviewable_iids, set(), self.services,
         self.me_user_id, self.auth.user_id or 0, self.paginate_end,
-        self.url_params, self.query.split(' OR '), self.can, self.group_by_spec,
-        self.sort_spec, self.warnings, self.use_cached_searches).AndReturn([])
+        self.query.split(' OR '), self.can, self.group_by_spec, self.sort_spec,
+        self.warnings, self.use_cached_searches).AndReturn([])
     self.mox.StubOutWithMock(frontendsearchpipeline, '_FinishBackendSearch')
     frontendsearchpipeline._FinishBackendSearch([])
     self.mox.ReplayAll()
 
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     pipeline.unfiltered_iids = unfiltered_iids
     pipeline.nonviewable_iids = nonviewable_iids
@@ -129,21 +136,32 @@ class FrontendSearchPipelineTest(unittest.TestCase):
     self.query_project_names = ['other']
     self.mox.StubOutWithMock(frontendsearchpipeline, '_StartBackendSearch')
     frontendsearchpipeline._StartBackendSearch(
-      self.cnxn, ['other', 'proj'], [789, 790],
-      mox.IsA(tracker_pb2.ProjectIssueConfig), unfiltered_iids, {},
-      nonviewable_iids, set(), self.services, self.me_user_id,
-      self.auth.user_id or 0, self.paginate_end, self.url_params,
-      self.query.split(' OR '), self.can, self.group_by_spec, self.sort_spec,
-      self.warnings, self.use_cached_searches).AndReturn([])
+        self.cnxn, ['other', 'proj'], [789, 790],
+        mox.IsA(tracker_pb2.ProjectIssueConfig), unfiltered_iids, {},
+        nonviewable_iids, set(), self.services,
+        self.me_user_id, self.auth.user_id or 0, self.paginate_end,
+        self.query.split(' OR '), self.can, self.group_by_spec, self.sort_spec,
+        self.warnings, self.use_cached_searches).AndReturn([])
     self.mox.StubOutWithMock(frontendsearchpipeline, '_FinishBackendSearch')
     frontendsearchpipeline._FinishBackendSearch([])
     self.mox.ReplayAll()
 
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
 
     pipeline.unfiltered_iids = unfiltered_iids
@@ -162,21 +180,31 @@ class FrontendSearchPipelineTest(unittest.TestCase):
     self.mr.query_project_names = ['other']
     self.mox.StubOutWithMock(frontendsearchpipeline, '_StartBackendSearch')
     frontendsearchpipeline._StartBackendSearch(
-      self.cnxn, ['proj'], [789],
-      mox.IsA(tracker_pb2.ProjectIssueConfig),
-      unfiltered_iids, {}, nonviewable_iids, set(), self.services,
-      self.me_user_id, self.auth.user_id or 0, self.paginate_end,
-      self.url_params, self.query.split(' OR '), self.can, self.group_by_spec,
-      self.sort_spec, self.warnings, self.use_cached_searches).AndReturn([])
+        self.cnxn, ['proj'], [789], mox.IsA(tracker_pb2.ProjectIssueConfig),
+        unfiltered_iids, {}, nonviewable_iids, set(), self.services,
+        self.me_user_id, self.auth.user_id or 0, self.paginate_end,
+        self.query.split(' OR '), self.can, self.group_by_spec, self.sort_spec,
+        self.warnings, self.use_cached_searches).AndReturn([])
     self.mox.StubOutWithMock(frontendsearchpipeline, '_FinishBackendSearch')
     frontendsearchpipeline._FinishBackendSearch([])
     self.mox.ReplayAll()
 
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     pipeline.unfiltered_iids = unfiltered_iids
     pipeline.nonviewable_iids = nonviewable_iids
@@ -187,10 +215,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testMergeAndSortIssues_EmptyResult(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     pipeline.filtered_iids = {0: [], 1: [], 2: []}
 
@@ -201,10 +240,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testMergeAndSortIssues_Normal(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     # In this unit test case we are not calling SearchForIIDs(), instead just
     # set pipeline.filtered_iids directly.
@@ -226,10 +276,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testDetermineIssuePosition_Normal(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-         self.query_project_names, self.items_per_page, self.paginate_start,
-         self.url_params, self.can, self.group_by_spec, self.sort_spec,
-         self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     # In this unit test case we are not calling SearchForIIDs(), instead just
     # set pipeline.filtered_iids directly.
@@ -248,10 +309,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testDetermineIssuePosition_NotInResults(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-         self.query_project_names, self.items_per_page, self.paginate_start,
-         self.url_params, self.can, self.group_by_spec, self.sort_spec,
-         self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     # In this unit test case we are not calling SearchForIIDs(), instead just
     # set pipeline.filtered_iids directly.
@@ -270,11 +342,22 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testDetermineIssuePositionInShard_IssueIsInShard(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-         self.query_project_names, self.items_per_page, self.paginate_start,
-         self.url_params, self.can, self.group_by_spec, self.sort_spec,
-         self.warnings, self.errors, self.use_cached_searches, self.profiler,
-         project=self.project)
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
+        project=self.project)
     # Let's assume issues 1, 2, and 3 are all in the same shard.
     pipeline.filtered_iids = {
       0: [self.issue_1.issue_id, self.issue_2.issue_id, self.issue_3.issue_id],
@@ -301,11 +384,22 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testDetermineIssuePositionInShard_IssueIsNotInShard(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-         self.query_project_names, self.items_per_page, self.paginate_start,
-         self.url_params, self.can, self.group_by_spec, self.sort_spec,
-         self.warnings, self.errors, self.use_cached_searches, self.profiler,
-         project=self.project)
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
+        project=self.project)
 
     # The total ordering is issue_1, issue_3, issue_2 for high, med, low.
     pipeline.filtered_iids = {
@@ -338,11 +432,22 @@ class FrontendSearchPipelineTest(unittest.TestCase):
   def testFetchAllSamples_Empty(self):
     filtered_iids = {}
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id,
-        self.query, self.query_project_names, self.items_per_page,
-        self.paginate_start, self.url_params, self.can, self.group_by_spec,
-        self.sort_spec, self.warnings, self.errors, self.use_cached_searches,
-        self.profiler, project=self.project)
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
+        project=self.project)
     samples_by_shard, sample_iids_to_shard = pipeline._FetchAllSamples(
         filtered_iids)
     self.assertEqual({}, samples_by_shard)
@@ -354,11 +459,22 @@ class FrontendSearchPipelineTest(unittest.TestCase):
         1: [101, 111, 121],
         }
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-         self.query_project_names, self.items_per_page, self.paginate_start,
-         self.url_params, self.can, self.group_by_spec, self.sort_spec,
-         self.warnings, self.errors, self.use_cached_searches, self.profiler,
-         project=self.project)
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
+        project=self.project)
 
     samples_by_shard, sample_iids_to_shard = pipeline._FetchAllSamples(
         filtered_iids)
@@ -367,11 +483,22 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testFetchAllSamples_Normal(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-         self.query_project_names, self.items_per_page, self.paginate_start,
-         self.url_params, self.can, self.group_by_spec, self.sort_spec,
-         self.warnings, self.errors, self.use_cached_searches, self.profiler,
-         project=self.project)
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
+        project=self.project)
     issues = self.MakeIssues(23)
     filtered_iids = {
         0: [issue.issue_id for issue in issues],
@@ -389,11 +516,22 @@ class FrontendSearchPipelineTest(unittest.TestCase):
   def testChooseSampleIssues_Empty(self):
     """When the search gave no results, there cannot be any samples."""
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-         self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-         self.query_project_names, self.items_per_page, self.paginate_start,
-         self.url_params, self.can, self.group_by_spec, self.sort_spec,
-         self.warnings, self.errors, self.use_cached_searches, self.profiler,
-         project=self.project)
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
+        project=self.project)
     issue_ids = []
     on_hand_issues, needed_iids = pipeline._ChooseSampleIssues(issue_ids)
     self.assertEqual({}, on_hand_issues)
@@ -402,10 +540,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
   def testChooseSampleIssues_Small(self):
     """When the search gave few results, don't bother with samples."""
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     issue_ids = [78901, 78902]
     on_hand_issues, needed_iids = pipeline._ChooseSampleIssues(issue_ids)
@@ -423,10 +572,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
   def testChooseSampleIssues_Normal(self):
     """We will choose at least one sample for every 10 results in a shard."""
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     issues = self.MakeIssues(23)
     issue_ids = [issue.issue_id for issue in issues]
@@ -438,10 +598,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testLookupNeededUsers(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
 
     pipeline._LookupNeededUsers([])
@@ -453,10 +624,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
   def testPaginate_Grid(self):
     self.mr.mode = 'grid'
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     pipeline.allowed_iids = [
       self.issue_1.issue_id, self.issue_2.issue_id, self.issue_3.issue_id]
@@ -469,10 +651,21 @@ class FrontendSearchPipelineTest(unittest.TestCase):
 
   def testPaginate_List(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn, self.services, self.auth, self.me_user_id, self.query,
-        self.query_project_names, self.items_per_page, self.paginate_start,
-        self.url_params, self.can, self.group_by_spec, self.sort_spec,
-        self.warnings, self.errors, self.use_cached_searches, self.profiler,
+        self.cnxn,
+        self.services,
+        self.auth,
+        self.me_user_id,
+        self.query,
+        self.query_project_names,
+        self.items_per_page,
+        self.paginate_start,
+        self.can,
+        self.group_by_spec,
+        self.sort_spec,
+        self.warnings,
+        self.errors,
+        self.use_cached_searches,
+        self.profiler,
         project=self.project)
     pipeline.allowed_iids = [
       self.issue_1.issue_id, self.issue_2.issue_id, self.issue_3.issue_id]
@@ -794,10 +987,13 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     me_user_ids = [555]
     logged_in_user_id = 777
     new_url_num = 201
-    url_params = [('num', '300'), ('groupby', 'cc')]
     frontendsearchpipeline._StartBackendSearchCall(
-        ['proj'], (2, 'priority=high'), processed_invalidations_up_to,
-        me_user_ids, logged_in_user_id, new_url_num, url_params)
+        ['proj'], (2, 'priority=high'),
+        processed_invalidations_up_to,
+        me_user_ids,
+        logged_in_user_id,
+        new_url_num,
+        group_by_spec='cc')
     self.mox.VerifyAll()
 
   def testStartBackendSearchCall_SortAndGroup(self):
@@ -809,26 +1005,30 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
       a_fake_rpc)
     modules.get_hostname(module='besearch')
     urlfetch.make_fetch_call(
-      a_fake_rpc, mox.StrContains(
-          urls.BACKEND_SEARCH + '?groupby=bar&sort=foo&'
-          +'invalidation_timestep=12345&'
-          +'logged_in_user_id=777&me_user_ids=555&'
-          +'num=201&projects=proj&q=priority%3Dhigh&shard_id=2&start=0'),
-          follow_redirects=False,
-      headers=mox.IsA(dict))
+        a_fake_rpc,
+        mox.StrContains(
+            urls.BACKEND_SEARCH + '?groupby=bar&' +
+            'invalidation_timestep=12345&' +
+            'logged_in_user_id=777&me_user_ids=555&num=201&projects=proj&' +
+            'q=priority%3Dhigh&shard_id=2&sort=foo&start=0'),
+        follow_redirects=False,
+        headers=mox.IsA(dict))
     self.mox.ReplayAll()
 
     processed_invalidations_up_to = 12345
     me_user_ids = [555]
     logged_in_user_id = 777
     new_url_num = 201
-    url_params = [('num', '300')]
     sort_spec = 'foo'
     group_by_spec = 'bar'
     frontendsearchpipeline._StartBackendSearchCall(
-        ['proj'], (2, 'priority=high'), processed_invalidations_up_to,
-        me_user_ids, logged_in_user_id, new_url_num, url_params,
-        sort_spec=sort_spec, group_by_spec=group_by_spec)
+        ['proj'], (2, 'priority=high'),
+        processed_invalidations_up_to,
+        me_user_ids,
+        logged_in_user_id,
+        new_url_num,
+        sort_spec=sort_spec,
+        group_by_spec=group_by_spec)
     self.mox.VerifyAll()
 
   def testStartBackendNonviewableCall(self):
@@ -863,14 +1063,13 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     me_user_ids = [111]
     logged_in_user_id = 0
     new_url_num = 100
-    url_params = None
     error_responses = set()
 
     self.mox.StubOutWithMock(frontendsearchpipeline, '_StartBackendSearchCall')
     frontendsearchpipeline._HandleBackendSearchResponse(
-        ['proj'], rpc_tuple, rpc_tuples, 0, filtered_iids,
-        search_limit_reached, processed_invalidations_up_to, error_responses,
-        me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
+        ['proj'], rpc_tuple, rpc_tuples, 0, filtered_iids, search_limit_reached,
+        processed_invalidations_up_to, error_responses, me_user_ids,
+        logged_in_user_id, new_url_num, 1, None, None)
     self.assertEqual([], rpc_tuples)
     self.assertIn(2, error_responses)
 
@@ -895,12 +1094,11 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     me_user_ids = [111]
     logged_in_user_id = 0
     new_url_num = 100
-    url_params = None
     error_responses = set()
     frontendsearchpipeline._HandleBackendSearchResponse(
-      ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids,
-      search_limit_reached, processed_invalidations_up_to, error_responses,
-      me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
+        ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids, search_limit_reached,
+        processed_invalidations_up_to, error_responses, me_user_ids,
+        logged_in_user_id, new_url_num, 1, None, None)
     self.assertEqual([], rpc_tuples)
     self.assertEqual({2: []}, filtered_iids)
     self.assertEqual({2: False}, search_limit_reached)
@@ -926,12 +1124,11 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     me_user_ids = [111]
     logged_in_user_id = 0
     new_url_num = 100
-    url_params = None
     error_responses = set()
     frontendsearchpipeline._HandleBackendSearchResponse(
-      ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids,
-      search_limit_reached, processed_invalidations_up_to, error_responses,
-      me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
+        ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids, search_limit_reached,
+        processed_invalidations_up_to, error_responses, me_user_ids,
+        logged_in_user_id, new_url_num, 1, None, None)
     self.assertEqual([], rpc_tuples)
     self.assertEqual({2: [10002, 10042]}, filtered_iids)
     self.assertEqual({2: False}, search_limit_reached)
@@ -950,21 +1147,26 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     me_user_ids = [111]
     logged_in_user_id = 0
     new_url_num = 100
-    url_params = None
 
     self.mox.StubOutWithMock(frontendsearchpipeline, '_StartBackendSearchCall')
     a_fake_rpc = testing_helpers.Blank(callback=None)
     rpc = frontendsearchpipeline._StartBackendSearchCall(
-        ['proj'], 2, processed_invalidations_up_to,
-        me_user_ids, logged_in_user_id, new_url_num, url_params,
-        group_by_spec=None, sort_spec=None, failfast=False
-      ).AndReturn(a_fake_rpc)
+        ['proj'],
+        2,
+        processed_invalidations_up_to,
+        me_user_ids,
+        logged_in_user_id,
+        new_url_num,
+        can=1,
+        group_by_spec=None,
+        sort_spec=None,
+        failfast=False).AndReturn(a_fake_rpc)
     self.mox.ReplayAll()
 
     frontendsearchpipeline._HandleBackendSearchResponse(
-        ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids,
-        search_limit_reached, processed_invalidations_up_to, error_responses,
-        me_user_ids, logged_in_user_id, new_url_num, url_params, None, None)
+        ['proj'], rpc_tuple, rpc_tuples, 2, filtered_iids, search_limit_reached,
+        processed_invalidations_up_to, error_responses, me_user_ids,
+        logged_in_user_id, new_url_num, 1, None, None)
     self.mox.VerifyAll()
     _, retry_shard_id, retry_rpc = rpc_tuples[0]
     self.assertEqual(2, retry_shard_id)

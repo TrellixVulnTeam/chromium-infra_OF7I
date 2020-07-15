@@ -253,8 +253,19 @@ def GetNeededDomain(project_name, current_domain):
   return desired_domain
 
 
-def FormatURL(recognized_params, servlet_path, **kwargs):
-  """Return a project relative URL to a servlet with old and new params."""
+def FormatURL(recognized_params, url, **kwargs):
+  # type: (Sequence[Tuple(str, str)], str, **Any) -> str
+  """Return a project relative URL to a servlet with old and new params.
+
+  Args:
+    recognized_params: Default query parameters to include.
+    url: Base URL. Could be a relative path for an EZT Servlet or an
+      absolute path for a separate service (ie: besearch).
+    **kwargs: Additional query parameters to add.
+
+  Returns:
+    A URL with the specified query parameters.
+  """
   # Standard params not overridden in **kwargs come first, followed by kwargs.
   # The exception is the 'id' param. If present then the 'id' param always comes
   # first. See bugs.chromium.org/p/monorail/issues/detail?id=374
@@ -270,11 +281,20 @@ def FormatURL(recognized_params, servlet_path, **kwargs):
   all_params.extend(
       # Ignore the 'id' param since we already added it above.
       sorted([kwarg for kwarg in kwargs.items() if kwarg[0] != 'id']))
-  return _FormatQueryString(servlet_path, all_params)
+  return _FormatQueryString(url, all_params)
 
 
 def _FormatQueryString(url, params):
-  """URLencode a list of parameters and attach them to the end of a URL."""
+  # type: (str, Sequence[Tuple(str, str)]) -> str
+  """URLencode a list of parameters and attach them to the end of a URL.
+
+  Args:
+    url: URL to append the querystring to.
+    params: List of query parameters to append.
+
+  Returns:
+    A URL with the specified query parameters.
+  """
   param_string = '&'.join(
       '%s=%s' % (name, urllib.quote(six.text_type(value).encode('utf-8')))
       for name, value in params if value is not None)

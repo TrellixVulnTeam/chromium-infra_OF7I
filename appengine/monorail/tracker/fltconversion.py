@@ -147,7 +147,7 @@ class FLTConvertTask(jsonfeed.InternalTask):
     with work_env.WorkEnv(mr, self.services) as we:
       pipeline = we.ListIssues(
           'Type=FLT-Launch FLT=Conversion', ['chromium'], mr.auth.user_id,
-          CONVERT_NUM, CONVERT_START, [], 2, GROUP_BY_SPEC, SORT_SPEC, False)
+          CONVERT_NUM, CONVERT_START, 2, GROUP_BY_SPEC, SORT_SPEC, False)
 
     project = self.services.project.GetProjectByName(mr.cnxn, 'chromium')
     config = self.services.config.GetProjectConfig(mr.cnxn, project.project_id)
@@ -180,8 +180,8 @@ class FLTConvertTask(jsonfeed.InternalTask):
     """Verify that all FLT-Conversion issues were converted correctly."""
     with work_env.WorkEnv(mr, self.services) as we:
       pipeline = we.ListIssues(
-          'FLT=Conversion', ['chromium'], mr.auth.user_id,
-          VERIFY_NUM, CONVERT_START, [], 2, GROUP_BY_SPEC, SORT_SPEC, False)
+          'FLT=Conversion', ['chromium'], mr.auth.user_id, VERIFY_NUM,
+          CONVERT_START, 2, GROUP_BY_SPEC, SORT_SPEC, False)
 
     project = self.services.project.GetProjectByName(mr.cnxn, 'chromium')
     config = self.services.config.GetProjectConfig(mr.cnxn, project.project_id)
@@ -327,7 +327,7 @@ class FLTConvertTask(jsonfeed.InternalTask):
     with work_env.WorkEnv(mr, self.services) as we:
       pipeline = we.ListIssues(
           project_info.q, ['chromium'], mr.auth.user_id, CONVERT_NUM,
-          CONVERT_START, [], 2, GROUP_BY_SPEC, SORT_SPEC, False)
+          CONVERT_START, 2, GROUP_BY_SPEC, SORT_SPEC, False)
 
     # Convert issues:
     for possible_stale_issue in pipeline.visible_results:

@@ -437,12 +437,11 @@ class MonorailApiTest(testing.EndpointsTestCase):
   def testIssuesList_SearchIssues(self):
     """Find issues of one project."""
 
-    self.mock(frontendsearchpipeline, 'FrontendSearchPipeline',
-              lambda cnxn, serv, auth, me, q, q_proj_names,
-              num, start, url_params, can, group_spec, sort_spec,
-              warnings, errors, use_cache, profiler,
-              display_mode, project:
-              FakeFrontendSearchPipeline())
+    self.mock(
+        frontendsearchpipeline,
+        'FrontendSearchPipeline', lambda cnxn, serv, auth, me, q, q_proj_names,
+        num, start, can, group_spec, sort_spec, warnings, errors, use_cache,
+        profiler, display_mode, project: FakeFrontendSearchPipeline())
 
     self.services.project.TestAddProject(
         'test-project', owner_ids=[111],  # requester
