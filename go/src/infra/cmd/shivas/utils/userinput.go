@@ -1625,6 +1625,59 @@ func getVirtualRequirements(scanner *bufio.Scanner, mlsep *fleet.MachineLSEProto
 	}
 }
 
+// GetChromePlatformInteractiveInput gets ChromePlatform input in interactive mode
+//
+// Name(string) -> Manufacturer(string)  -> Description(string)
+func GetChromePlatformInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, cp *fleet.ChromePlatform, update bool) {
+	input := &Input{
+		Key:      "Name",
+		Desc:     UfleetAPI.ValidName,
+		Required: true,
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Name":
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					break
+				}
+				if !update && ChromePlatformExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !ChromePlatformExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				cp.Name = value
+				input = &Input{
+					Key: "Manufacturer",
+				}
+			case "Manufacturer":
+				cp.Manufacturer = value
+				input = &Input{
+					Key: "Description",
+				}
+			case "Description":
+				cp.Description = value
+				input = nil
+			}
+			break
+		}
+	}
+}
+
 func createKeyValuePairs(m map[int32]string) string {
 	keys := make([]int32, 0, len(m))
 	for k := range m {
