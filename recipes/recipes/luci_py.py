@@ -30,8 +30,10 @@ def RunSteps(api):
     appeng_dir = luci_dir.join('appengine')
 
     with api.step.nest('check changes') as presentation:
-      changes = _check_changes(api).items()
-      presentation.logs['changes'] = ['%s: %s' % (p, j) for p, j in changes]
+      changes = _check_changes(api)
+      presentation.logs['changes'] = [
+          '%s: %s' % (p, j) for p, j in changes.items()
+      ]
 
     if api.platform.is_linux:
       with api.step.nest('auth_service'):
@@ -71,7 +73,7 @@ def RunSteps(api):
 
     # swarming ui
     if api.platform.is_linux:
-      _step_swarming_ui_tests(api)
+      _step_swarming_ui_tests(api, changes)
 
 
 def _check_changes(api):
@@ -135,7 +137,11 @@ def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
                timeout=timeout, ok_ret=ok_ret)
 
 
-def _step_swarming_ui_tests(api):
+def _step_swarming_ui_tests(api, changes):
+  deps = ['DEPS', 'swarming_ui']
+  if not any([changed for k, changed in changes.items() if k in deps]):
+    # skip tests when no changes on the dependencies.
+    return
   with api.step.nest('swarming-ui'):
     ui_dir = api.path['checkout'].join('luci', 'appengine', 'swarming', 'ui2')
     node_path = ui_dir.join('nodejs', 'bin')
@@ -178,16 +184,21 @@ def GenTests(api):
               'appengine/swarming/ui2/bar.js',
           ]),
           stream='stdout'),
+  ) + api.step_data(
+      'check changes.get change list on appengine/swarming/ui2',
+      api.raw_io.stream_output(
+          '\n'.join([
+              'appengine/swarming/ui2/bar.js',
+          ]), stream='stdout'),
   ))
 
-  yield (
-      api.test('try-mac') +
-      api.platform.name('mac') +
-      api.buildbucket.try_build(
-          'infra', 'try', 'Luci-py Mac',
-          git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-      )
-  )
+  yield (api.test('try-mac') + api.platform.name('mac') +
+         api.buildbucket.try_build(
+             'infra',
+             'try',
+             'Luci-py Mac',
+             git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
+         ))
 
   yield (
       api.test('try-win') +
@@ -199,11 +210,15 @@ def GenTests(api):
   )
 
   # test case for failures
-  yield (
-      api.test('try-failure') +
-      api.buildbucket.try_build(
-          'infra', 'try', 'Luci-py Presubmit',
-          git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-      ) +
-      api.step_data('swarming-ui.git diff', retcode=1)
-  )
+  yield (api.test('try-ui-diff-check-failure') + api.buildbucket.try_build(
+      'infra',
+      'try',
+      'Luci-py Presubmit',
+      git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
+  ) + api.step_data(
+      'check changes.get change list on appengine/swarming/ui2',
+      api.raw_io.stream_output(
+          '\n'.join([
+              'appengine/swarming/ui2/bar.js',
+          ]), stream='stdout'),
+  ) + api.step_data('swarming-ui.git diff', retcode=1))

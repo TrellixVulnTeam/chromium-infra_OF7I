@@ -447,60 +447,6 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "swarming-ui"
-  },
-  {
-    "cmd": [
-      "make",
-      "release"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/ui2",
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/ui2/nodejs/bin"
-      ]
-    },
-    "name": "swarming-ui.build assets",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "diff",
-      "--exit-code"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/ui2",
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/ui2/nodejs/bin"
-      ]
-    },
-    "infra_step": true,
-    "name": "swarming-ui.git diff",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "make",
-      "test"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/ui2",
-    "env_prefixes": {
-      "PATH": [
-        "[CACHE]/infra_gclient_with_go/infra/luci/appengine/swarming/ui2/nodejs/bin"
-      ]
-    },
-    "name": "swarming-ui.run tests",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
     "name": "$result"
   }
 ]
