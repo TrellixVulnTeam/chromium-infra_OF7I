@@ -25,8 +25,6 @@ var DefaultAuthOptions = auth.Options{
 	// Note that ClientSecret is not really a secret since it's hardcoded into
 	// the source code (and binaries). It's totally fine, as long as it's callback
 	// URI is configured to be 'localhost'.
-	//
-	// TODO(crbug.com/973883) stop copying other people's client ID and secret.
 	ClientID:     "446450136466-2hr92jrq8e6i4tnsa56b52vacp7t3936.apps.googleusercontent.com",
 	ClientSecret: "uBfbay2KCy9t4QveJ-dOqHtp",
 	SecretsDir:   secretsDir(),
