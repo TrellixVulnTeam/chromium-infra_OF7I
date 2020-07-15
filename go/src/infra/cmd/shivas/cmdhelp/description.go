@@ -29,19 +29,20 @@ shivas reregister switch -i
 Reregister/Update a switch by reading input through interactive mode.`
 
 	// ListSwitchLongDesc long description for ListSwitchCmd
-	ListSwitchLongDesc string = `list all Switches
+	ListSwitchLongDesc string = `List all switches
 
-./shivas switch ls
-Fetches 100 items and prints the output in table format
+Examples:
+shivas ls switch
+Fetches all switches and prints the output in table format
 
-./shivas switch ls -n 50
-Fetches 50 items and prints the output in table format
+shivas ls switch -n 50
+Fetches 50 switches and prints the output in table format
 
-./shivas switch ls -json
-Fetches 100 items and prints the output in JSON format
+shivas ls switch -json
+Fetches all switches and prints the output in JSON format
 
-./shivas switch ls -n 50 -json
-Fetches 50 items and prints the output in JSON format
+shivas ls switch -n 50 -json
+Fetches 50 switches and prints the output in JSON format
 `
 
 	// SwitchFileText description for switch file input

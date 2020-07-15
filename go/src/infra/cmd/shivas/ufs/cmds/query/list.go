@@ -10,6 +10,7 @@ import (
 
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
+	"infra/cmd/shivas/ufs/subcmds/switches"
 )
 
 type list struct {
@@ -42,8 +43,9 @@ func (c *list) Run(a subcommands.Application, args []string, env subcommands.Env
 func (c listApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
-		machineprototype.ListMachineLSEPrototypeCmd,
 		machine.ListMachineCmd,
+		switches.ListSwitchCmd,
+		machineprototype.ListMachineLSEPrototypeCmd,
 	}
 }
 

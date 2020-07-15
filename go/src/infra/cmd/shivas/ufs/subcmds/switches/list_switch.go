@@ -5,29 +5,30 @@
 package switches
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
 // ListSwitchCmd list all switches.
 var ListSwitchCmd = &subcommands.Command{
-	UsageLine: "ls",
-	ShortDesc: "list all Switches",
+	UsageLine: "switch",
+	ShortDesc: "List all switches",
 	LongDesc:  cmdhelp.ListSwitchLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &listSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.IntVar(&c.pageSize, "n", 100, cmdhelp.ListPageSizeDesc)
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
 		return c
 	},
@@ -50,9 +51,6 @@ func (c *listSwitch) Run(a subcommands.Application, args []string, env subcomman
 }
 
 func (c *listSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(); err != nil {
-		return err
-	}
 	ctx := cli.GetContext(a, c, env)
 	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
@@ -60,41 +58,30 @@ func (c *listSwitch) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	var pageToken string
-	for {
-		req := &UfleetAPI.ListSwitchesRequest{
-			PageSize:  int32(c.pageSize),
-			PageToken: pageToken,
-		}
-		res, err := ic.ListSwitches(ctx, req)
-		if err != nil {
-			return err
-		}
-		if c.json {
-			utils.PrintSwitchesJSON(res.Switches)
-		} else {
-			utils.PrintSwitches(res.Switches)
-		}
-		pageToken = res.GetNextPageToken()
-		nextPage, err := utils.GetNextPage(pageToken)
-		if err != nil {
-			return err
-		}
-		if !nextPage {
-			return nil
-		}
+	if c.json {
+		return utils.PrintListJSONFormat(ctx, ic, printSwitches, c.json, int32(c.pageSize), "")
 	}
+	return utils.PrintListTableFormat(ctx, ic, printSwitches, c.json, int32(c.pageSize), "")
 }
 
-func (c *listSwitch) validateArgs() error {
-	if c.Flags.NArg() == 0 {
-		return nil
+func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {
+	req := &ufsAPI.ListSwitchesRequest{
+		PageSize:  pageSize,
+		PageToken: pageToken,
 	}
-	return nil
+	res, err := ic.ListSwitches(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	if json {
+		utils.PrintSwitchesJSON(res.Switches)
+	} else {
+		utils.PrintSwitches(res.Switches)
+	}
+	return res.GetNextPageToken(), nil
 }

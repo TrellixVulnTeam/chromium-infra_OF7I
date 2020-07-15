@@ -11,20 +11,23 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
-	UfleetUtil "infra/unifiedfleet/app/util"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetSwitchCmd get Switch by given name.
 var GetSwitchCmd = &subcommands.Command{
-	UsageLine: "get",
-	ShortDesc: "get Switch by name",
-	LongDesc: `get Switch by name.
-	./shivas switch get {Switch Name}
-	Gets the Switch and prints the output in JSON format.`,
+	UsageLine: "switch {Switch Name}",
+	ShortDesc: "get switch details by name",
+	LongDesc: `get switch details by name.
+
+Example:
+shivas get switch {Switch Name}
+Gets the switch and prints the output in JSON format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -59,24 +62,25 @@ func (c *getSwitch) innerRun(a subcommands.Application, args []string, env subco
 	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
-	ic := UfleetAPI.NewFleetPRPCClient(&prpc.Client{
+	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetSwitch(ctx, &UfleetAPI.GetSwitchRequest{
-		Name: UfleetUtil.AddPrefix(UfleetUtil.SwitchCollection, args[0]),
+	res, err := ic.GetSwitch(ctx, &ufsAPI.GetSwitchRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, args[0]),
 	})
 	if err != nil {
 		return err
 	}
 	utils.PrintProtoJSON(res)
+	fmt.Println()
 	return nil
 }
 
 func (c *getSwitch) validateArgs() error {
 	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide a Switch Name")
+		return cmdlib.NewUsageError(c.Flags, "Please provide the switch name")
 	}
 	return nil
 }

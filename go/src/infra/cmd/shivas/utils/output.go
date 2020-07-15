@@ -152,16 +152,21 @@ func printSwitch(s *ufspb.Switch) {
 	if t, err := ptypes.Timestamp(s.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	//s.Name = ufsUtil.RemovePrefix(s.Name)
+	s.Name = ufsUtil.RemovePrefix(s.Name)
 	out := fmt.Sprintf("%s\t%d\t%s\t", s.GetName(), s.GetCapacityPort(), ts)
 	fmt.Fprintln(tw, out)
 }
 
 // PrintSwitchesJSON prints the switch details in json format.
 func PrintSwitchesJSON(switches []*ufspb.Switch) {
-	for _, s := range switches {
-		//s.Name = ufsUtil.RemovePrefix(s.Name)
+	len := len(switches) - 1
+	for i, s := range switches {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
 	}
 }
 
