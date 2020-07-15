@@ -8,6 +8,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
+	"infra/cmd/shivas/ufs/subcmds/drac"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
@@ -49,6 +50,7 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		kvm.GetKVMCmd,
 		rpm.GetRPMCmd,
 		switches.GetSwitchCmd,
+		drac.GetDracCmd,
 		machineprototype.GetMachineLSEPrototypeCmd,
 	}
 }

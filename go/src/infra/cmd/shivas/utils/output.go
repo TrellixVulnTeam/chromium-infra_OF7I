@@ -27,6 +27,8 @@ var (
 		"CapacityPort", "UpdateTime"}
 	rpmTitle = []string{"RPM Name", "MAC Address", "CapacityPort",
 		"UpdateTime"}
+	dracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
+		"Switch Port", "Password", "UpdateTime"}
 	machineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
 		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
 		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
@@ -234,6 +236,43 @@ func printRPM(rpm *ufspb.RPM) {
 func PrintRPMsJSON(rpms []*ufspb.RPM) {
 	len := len(rpms) - 1
 	for i, s := range rpms {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
+		PrintProtoJSON(s)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintDracs prints the all dracs in table form.
+func PrintDracs(dracs []*ufspb.Drac) {
+	defer tw.Flush()
+	printTitle(dracTitle)
+	for _, drac := range dracs {
+		printDrac(drac)
+	}
+}
+
+func printDrac(drac *ufspb.Drac) {
+	var ts string
+	if t, err := ptypes.Timestamp(drac.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(drac.Name))
+	out += fmt.Sprintf("%s\t", drac.GetDisplayName())
+	out += fmt.Sprintf("%s\t", drac.GetMacAddress())
+	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetSwitch())
+	out += fmt.Sprintf("%d\t", drac.GetSwitchInterface().GetPort())
+	out += fmt.Sprintf("%s\t", drac.GetPassword())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintDracsJSON prints the drac details in json format.
+func PrintDracsJSON(dracs []*ufspb.Drac) {
+	len := len(dracs) - 1
+	for i, s := range dracs {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s)
 		if i < len {

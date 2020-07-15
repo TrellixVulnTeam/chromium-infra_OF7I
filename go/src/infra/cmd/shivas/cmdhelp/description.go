@@ -92,6 +92,23 @@ shivas ls rpm -n 50 -json
 Fetches 50 rpms and prints the output in JSON format
 `
 
+	// ListDracLongDesc long description for ListDracCmd
+	ListDracLongDesc string = `List all dracs
+
+Examples:
+shivas ls drac
+Fetches all dracs and prints the output in table format
+
+shivas ls drac -n 50
+Fetches 50 dracs and prints the output in table format
+
+shivas ls drac -json
+Fetches all dracs and prints the output in JSON format
+
+shivas ls drac -n 50 -json
+Fetches 50 dracs and prints the output in JSON format
+`
+
 	// RegisterMachineLongDesc long description for RegisterMachineCmd
 	RegisterMachineLongDesc string = `Register a machine(ChromeBook, Bare metal server, Macbook.) by name.
 
