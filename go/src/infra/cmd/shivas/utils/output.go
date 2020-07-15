@@ -22,7 +22,9 @@ import (
 )
 
 var (
-	switchTitle  = []string{"Switch Name", "CapacityPort", "UpdateTime"}
+	switchTitle = []string{"Switch Name", "CapacityPort", "UpdateTime"}
+	kvmTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform",
+		"CapacityPort", "UpdateTime"}
 	machineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
 		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
 		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
@@ -161,6 +163,41 @@ func printSwitch(s *ufspb.Switch) {
 func PrintSwitchesJSON(switches []*ufspb.Switch) {
 	len := len(switches) - 1
 	for i, s := range switches {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
+		PrintProtoJSON(s)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintKVMs prints the all kvms in table form.
+func PrintKVMs(kvms []*ufspb.KVM) {
+	defer tw.Flush()
+	printTitle(kvmTitle)
+	for _, kvm := range kvms {
+		printKVM(kvm)
+	}
+}
+
+func printKVM(kvm *ufspb.KVM) {
+	var ts string
+	if t, err := ptypes.Timestamp(kvm.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(kvm.Name))
+	out += fmt.Sprintf("%s\t", kvm.GetMacAddress())
+	out += fmt.Sprintf("%s\t", kvm.GetChromePlatform())
+	out += fmt.Sprintf("%d\t", kvm.GetCapacityPort())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintKVMsJSON prints the kvm details in json format.
+func PrintKVMsJSON(kvms []*ufspb.KVM) {
+	len := len(kvms) - 1
+	for i, s := range kvms {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s)
 		if i < len {

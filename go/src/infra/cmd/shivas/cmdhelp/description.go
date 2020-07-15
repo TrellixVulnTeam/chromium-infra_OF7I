@@ -58,6 +58,23 @@ Example switch:
 The protobuf definition of switch is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto#71`
 
+	// ListKVMLongDesc long description for ListKVMCmd
+	ListKVMLongDesc string = `List all kvms
+
+Examples:
+shivas ls kvm
+Fetches all kvms and prints the output in table format
+
+shivas ls kvm -n 50
+Fetches 50 kvms and prints the output in table format
+
+shivas ls kvm -json
+Fetches all kvms and prints the output in JSON format
+
+shivas ls kvm -n 50 -json
+Fetches 50 kvms and prints the output in JSON format
+`
+
 	// RegisterMachineLongDesc long description for RegisterMachineCmd
 	RegisterMachineLongDesc string = `Register a machine(ChromeBook, Bare metal server, Macbook.) by name.
 
