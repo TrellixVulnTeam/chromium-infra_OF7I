@@ -108,6 +108,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 			s := &fleet.Switch{
 				Name:         crimsonSwitch.GetName(),
 				CapacityPort: crimsonSwitch.GetPorts(),
+				Description:  crimsonSwitch.GetDescription(),
 			}
 			switches = append(switches, s)
 			switchNames = append(switchNames, s.GetName())

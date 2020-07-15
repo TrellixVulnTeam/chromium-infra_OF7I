@@ -86,6 +86,8 @@ message Switch {
     // Record the last update timestamp of this Switch (In UTC timezone)
     google.protobuf.Timestamp update_time = 3 [
             (google.api.field_behavior) = OUTPUT_ONLY];
+    // Usually describe the model of the switch
+    string description = 4;
 }
 
 // Refer to one port of a given switch
