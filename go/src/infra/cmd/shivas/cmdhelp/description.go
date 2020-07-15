@@ -75,6 +75,23 @@ shivas ls kvm -n 50 -json
 Fetches 50 kvms and prints the output in JSON format
 `
 
+	// ListRPMLongDesc long description for ListRPMCmd
+	ListRPMLongDesc string = `List all rpms
+
+Examples:
+shivas ls rpm
+Fetches all rpms and prints the output in table format
+
+shivas ls rpm -n 50
+Fetches 50 rpms and prints the output in table format
+
+shivas ls rpm -json
+Fetches all rpms and prints the output in JSON format
+
+shivas ls rpm -n 50 -json
+Fetches 50 rpms and prints the output in JSON format
+`
+
 	// RegisterMachineLongDesc long description for RegisterMachineCmd
 	RegisterMachineLongDesc string = `Register a machine(ChromeBook, Bare metal server, Macbook.) by name.
 

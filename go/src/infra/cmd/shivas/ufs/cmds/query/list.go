@@ -11,6 +11,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/kvm"
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
+	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 )
 
@@ -46,6 +47,7 @@ func (c listApp) GetCommands() []*subcommands.Command {
 		subcommands.CmdHelp,
 		machine.ListMachineCmd,
 		kvm.ListKVMCmd,
+		rpm.ListRPMCmd,
 		switches.ListSwitchCmd,
 		machineprototype.ListMachineLSEPrototypeCmd,
 	}

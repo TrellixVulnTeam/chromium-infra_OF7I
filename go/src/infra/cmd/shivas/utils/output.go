@@ -25,6 +25,8 @@ var (
 	switchTitle = []string{"Switch Name", "CapacityPort", "UpdateTime"}
 	kvmTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform",
 		"CapacityPort", "UpdateTime"}
+	rpmTitle = []string{"RPM Name", "MAC Address", "CapacityPort",
+		"UpdateTime"}
 	machineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
 		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
 		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
@@ -198,6 +200,40 @@ func printKVM(kvm *ufspb.KVM) {
 func PrintKVMsJSON(kvms []*ufspb.KVM) {
 	len := len(kvms) - 1
 	for i, s := range kvms {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
+		PrintProtoJSON(s)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintRPMs prints the all rpms in table form.
+func PrintRPMs(rpms []*ufspb.RPM) {
+	defer tw.Flush()
+	printTitle(rpmTitle)
+	for _, rpm := range rpms {
+		printRPM(rpm)
+	}
+}
+
+func printRPM(rpm *ufspb.RPM) {
+	var ts string
+	if t, err := ptypes.Timestamp(rpm.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(rpm.Name))
+	out += fmt.Sprintf("%s\t", rpm.GetMacAddress())
+	out += fmt.Sprintf("%d\t", rpm.GetCapacityPort())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintRPMsJSON prints the rpm details in json format.
+func PrintRPMsJSON(rpms []*ufspb.RPM) {
+	len := len(rpms) - 1
+	for i, s := range rpms {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s)
 		if i < len {
