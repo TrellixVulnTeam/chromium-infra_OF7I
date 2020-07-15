@@ -227,53 +227,53 @@ func (s *DecoratedInventory) DeviceConfigsExists(ctx context.Context, req *Devic
 	return
 }
 
-func (s *DecoratedInventory) GetDeviceManualRepairRecords(ctx context.Context, req *GetDeviceManualRepairRecordsRequest) (rsp *GetDeviceManualRepairRecordsResponse, err error) {
+func (s *DecoratedInventory) GetDeviceManualRepairRecord(ctx context.Context, req *GetDeviceManualRepairRecordRequest) (rsp *GetDeviceManualRepairRecordResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "GetDeviceManualRepairRecords", req)
+		newCtx, err = s.Prelude(ctx, "GetDeviceManualRepairRecord", req)
 		if err == nil {
 			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.GetDeviceManualRepairRecords(ctx, req)
+		rsp, err = s.Service.GetDeviceManualRepairRecord(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(ctx, "GetDeviceManualRepairRecords", rsp, err)
+		err = s.Postlude(ctx, "GetDeviceManualRepairRecord", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) CreateDeviceManualRepairRecords(ctx context.Context, req *CreateDeviceManualRepairRecordsRequest) (rsp *CreateDeviceManualRepairRecordsResponse, err error) {
+func (s *DecoratedInventory) CreateDeviceManualRepairRecord(ctx context.Context, req *CreateDeviceManualRepairRecordRequest) (rsp *CreateDeviceManualRepairRecordResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "CreateDeviceManualRepairRecords", req)
+		newCtx, err = s.Prelude(ctx, "CreateDeviceManualRepairRecord", req)
 		if err == nil {
 			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.CreateDeviceManualRepairRecords(ctx, req)
+		rsp, err = s.Service.CreateDeviceManualRepairRecord(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(ctx, "CreateDeviceManualRepairRecords", rsp, err)
+		err = s.Postlude(ctx, "CreateDeviceManualRepairRecord", rsp, err)
 	}
 	return
 }
 
-func (s *DecoratedInventory) UpdateDeviceManualRepairRecords(ctx context.Context, req *UpdateDeviceManualRepairRecordsRequest) (rsp *UpdateDeviceManualRepairRecordsResponse, err error) {
+func (s *DecoratedInventory) UpdateDeviceManualRepairRecord(ctx context.Context, req *UpdateDeviceManualRepairRecordRequest) (rsp *UpdateDeviceManualRepairRecordResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "UpdateDeviceManualRepairRecords", req)
+		newCtx, err = s.Prelude(ctx, "UpdateDeviceManualRepairRecord", req)
 		if err == nil {
 			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.UpdateDeviceManualRepairRecords(ctx, req)
+		rsp, err = s.Service.UpdateDeviceManualRepairRecord(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(ctx, "UpdateDeviceManualRepairRecords", rsp, err)
+		err = s.Postlude(ctx, "UpdateDeviceManualRepairRecord", rsp, err)
 	}
 	return
 }

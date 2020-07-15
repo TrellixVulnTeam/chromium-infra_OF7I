@@ -59,14 +59,14 @@ service Inventory {
   // DeviceConfigsExists checks if the device_configs exists in the datastore
   rpc DeviceConfigsExists(DeviceConfigsExistsRequest) returns (DeviceConfigsExistsResponse);
 
-  // Get devices info and combine with repair information if exists in datastore
-  rpc GetDeviceManualRepairRecords(GetDeviceManualRepairRecordsRequest) returns (GetDeviceManualRepairRecordsResponse);
+  // Get a device manual repair record from datastore
+  rpc GetDeviceManualRepairRecord(GetDeviceManualRepairRecordRequest) returns (GetDeviceManualRepairRecordResponse);
 
-  // Add devices repair action and state in datastore
-  rpc CreateDeviceManualRepairRecords(CreateDeviceManualRepairRecordsRequest) returns (CreateDeviceManualRepairRecordsResponse);
+  // Create a device manual repair record in datastore
+  rpc CreateDeviceManualRepairRecord(CreateDeviceManualRepairRecordRequest) returns (CreateDeviceManualRepairRecordResponse);
 
-  // Update devices repair action and state in datastore
-  rpc UpdateDeviceManualRepairRecords(UpdateDeviceManualRepairRecordsRequest) returns (UpdateDeviceManualRepairRecordsResponse);
+  // Update a device manual repair record in datastore
+  rpc UpdateDeviceManualRepairRecord(UpdateDeviceManualRepairRecordRequest) returns (UpdateDeviceManualRepairRecordResponse);
 
   // ListCrosDevicesLabConfig lists the lab configs of all devices saved in Inventor v2.
   rpc ListCrosDevicesLabConfig(ListCrosDevicesLabConfigRequest) returns (ListCrosDevicesLabConfigResponse);
@@ -255,22 +255,22 @@ message AssetIDResponse {
   repeated AssetIDResult failed = 2;
 }
 
-message GetDeviceManualRepairRecordsRequest {
-  repeated string hostname = 1;
+message GetDeviceManualRepairRecordRequest {
+  string hostname = 1;
 }
 
-message GetDeviceManualRepairRecordsResponse {
-  repeated DeviceManualRepairRecord device_repair_record = 1;
+message GetDeviceManualRepairRecordResponse {
+  DeviceManualRepairRecord device_repair_record = 1;
 }
 
-message CreateDeviceManualRepairRecordsRequest {
-  repeated DeviceManualRepairRecord device_repair_record = 1;
+message CreateDeviceManualRepairRecordRequest {
+  DeviceManualRepairRecord device_repair_record = 1;
 }
 
-message CreateDeviceManualRepairRecordsResponse {}
+message CreateDeviceManualRepairRecordResponse {}
 
-message UpdateDeviceManualRepairRecordsRequest {
-  repeated DeviceManualRepairRecord device_repair_record = 1;
+message UpdateDeviceManualRepairRecordRequest {
+  DeviceManualRepairRecord device_repair_record = 1;
 }
 
-message UpdateDeviceManualRepairRecordsResponse {}
+message UpdateDeviceManualRepairRecordResponse {}
