@@ -298,54 +298,70 @@ def permitted_actions_async(bucket_id):
 def get_accessible_buckets_async():
   """Returns buckets accessible to the current identity.
 
-  A bucket is accessible if the requester has ACCESS_BUCKET permission.
+  A bucket is accessible if the requester has READER role or higher in
+  the bucket.
 
   Results are memcached for 10 minutes per identity.
 
   Returns:
-    A future of
-      a set of bucket ids strings
-      or None if all buckets are available.
+    A future of a set of bucket ids strings.
   """
-  # TODO(crbug.com/1091604): Implement in terms of has_perm_async.
-
   # TODO(vadimsh): This function doesn't understand 'project:...' identities.
+
+  identity = auth.get_current_identity()
+  identity_str = identity.to_bytes()
 
   @ndb.tasklet
   def impl():
-    if auth.is_admin():
-      raise ndb.Return(None)
-
-    identity = auth.get_current_identity().to_bytes()
-    cache_key = 'accessible_buckets_v2/%s' % identity
     ctx = ndb.get_context()
-    available_buckets = yield ctx.memcache_get(cache_key)
-    if available_buckets is not None:
-      raise ndb.Return(available_buckets)
-    logging.info('Computing a list of available buckets for %s' % identity)
-    group_buckets_map = collections.defaultdict(set)
-    available_buckets = set()
+    cache_key = 'accessible_buckets_v2/%s' % identity_str
+    accessible_buckets = yield ctx.memcache_get(cache_key)
+    if accessible_buckets is not None:
+      raise ndb.Return(accessible_buckets)
+
+    logging.info('Computing a list of available buckets for %s' % identity_str)
     all_buckets = yield config.get_buckets_async()
+    if auth.is_admin():
+      accessible_buckets = set(all_buckets)
+    else:
+      accessible_buckets = _only_accessible_buckets(all_buckets, identity)
 
-    for bucket_id, cfg in all_buckets.iteritems():
-      for rule in cfg.acls:
-        if rule.identity == identity:
-          available_buckets.add(bucket_id)
-        elif rule.group:  # pragma: no branch
-          group_buckets_map[rule.group].add(bucket_id)
-
-    for group, buckets in group_buckets_map.iteritems():
-      if available_buckets.issuperset(buckets):
-        continue
-      if auth.is_group_member(group):
-        available_buckets.update(buckets)
     # Cache for 10 min
-    yield ctx.memcache_set(cache_key, available_buckets, 10 * 60)
-    raise ndb.Return(available_buckets)
+    yield ctx.memcache_set(cache_key, accessible_buckets, 10 * 60)
+    raise ndb.Return(accessible_buckets)
 
-  return _get_or_create_cached_future(
-      auth.get_current_identity(), 'accessible_buckets', impl
-  )
+  return _get_or_create_cached_future(identity, 'accessible_buckets', impl)
+
+
+def _only_accessible_buckets(all_buckets, identity):
+  """Returns a set of bucket IDs visible to the given identity.
+
+  Args:
+    all_buckets: dict {bucket_id: project_config_pb2.Bucket}.
+    identity: auth.Identity object.
+
+  Returns:
+    Set of bucket IDs.
+  """
+  # TODO(crbug.com/1091604): Implement in terms of has_perm_async.
+
+  accessible_buckets = set()
+  group_buckets_map = collections.defaultdict(set)
+
+  for bucket_id, cfg in all_buckets.iteritems():
+    for rule in cfg.acls:
+      if rule.identity == identity.to_bytes():
+        accessible_buckets.add(bucket_id)
+      elif rule.group:  # pragma: no branch
+        group_buckets_map[rule.group].add(bucket_id)
+
+  for group, buckets in group_buckets_map.iteritems():
+    if accessible_buckets.issuperset(buckets):
+      continue
+    if auth.is_group_member(group, identity):
+      accessible_buckets.update(buckets)
+
+  return accessible_buckets
 
 
 @utils.cache

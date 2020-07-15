@@ -113,7 +113,6 @@ class SearchTest(testing.AppengineTestCase):
 
     # All buckets are available.
     self.mock_searchable_buckets('proj/try', 'proj/ci')
-    user.get_accessible_buckets_async.return_value = future(None)
     builds, _ = self.search()
     self.assertEqual(builds, [build2, build1])
     builds, _ = self.search(tags=[self.INDEXED_TAG])
@@ -197,16 +196,6 @@ class SearchTest(testing.AppengineTestCase):
 
     builds, _ = self.search(bucket_ids=['chromium/try'], builder='linux-rel')
     self.assertEqual(builds, [build1])
-
-  def test_filter_by_project_admin(self):
-    self.mock_searchable_buckets('proj1/bucket', 'proj2/bucket')
-    user.get_accessible_buckets_async.return_value = future(None)
-
-    build = self.put_build(builder=dict(project='proj1', bucket='bucket'))
-    self.put_build(builder=dict(project='proj2', bucket='bucket'))
-
-    builds, _ = self.search(project='proj1')
-    self.assertEqual(builds, [build])
 
   def test_filter_by_project_indexed(self):
     self.mock_searchable_buckets('proj1/bucket', 'proj2/bucket')

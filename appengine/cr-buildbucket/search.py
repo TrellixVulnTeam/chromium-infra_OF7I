@@ -357,32 +357,26 @@ def _query_search_async(q):
   """
   if not q.bucket_ids:
     q.bucket_ids = yield user.get_accessible_buckets_async()
-    if q.bucket_ids is None:
-      # User has access to all buckets.
-      pass
-    else:
-      if q.project:
+    if q.project:
 
-        def get_project_id(bucket_id):
-          project_id, _ = config.parse_bucket_id(bucket_id)
-          return project_id
+      def get_project_id(bucket_id):
+        project_id, _ = config.parse_bucket_id(bucket_id)
+        return project_id
 
-        # Note: get_accessible_buckets_async is memcached per user for 10m.
-        q.bucket_ids = {
-            bid for bid in q.bucket_ids if get_project_id(bid) == q.project
-        }
-      if not q.bucket_ids:
-        raise ndb.Return([], None)
-  # (q.bucket_ids is None) means the requester has access to all buckets.
-  assert q.bucket_ids is None or q.bucket_ids
+      # Note: get_accessible_buckets_async is memcached per user for 10m.
+      q.bucket_ids = {
+          bid for bid in q.bucket_ids if get_project_id(bid) == q.project
+      }
+    if not q.bucket_ids:
+      raise ndb.Return([], None)
+
+  # Always have a non-empty set at this point.
+  assert q.bucket_ids
 
   dq = model.Build.query()
   for t in q.tags:
     dq = dq.filter(model.Build.tags == t)
   filter_if = lambda p, v: dq if v is None else dq.filter(p == v)
-
-  if q.bucket_ids is None and q.project:
-    dq = dq.filter(model.Build.project == q.project)
 
   expected_statuses_v1 = None
   if not q.status_is_legacy:
@@ -404,7 +398,7 @@ def _query_search_async(q):
   dq = filter_if(model.Build.retry_of, q.retry_of)
   dq = filter_if(model.Build.canary, q.canary)
 
-  if q.bucket_ids and q.retry_of is None:
+  if q.retry_of is None:
     if q.builder:
       dq = dq.filter(model.Build.builder_id.IN(q.expand_builder_ids()))
     else:
@@ -425,7 +419,7 @@ def _query_search_async(q):
     elif (expected_statuses_v1 and
           build.status_legacy not in expected_statuses_v1):
       return False  # pragma: no cover
-    if q.bucket_ids and build.bucket_id not in q.bucket_ids:
+    if build.bucket_id not in q.bucket_ids:
       return False
     if q.builder and build.proto.builder.builder != q.builder:
       return False  # pragma: no cover

@@ -57,20 +57,20 @@ class UserTest(testing.AppengineTestCase):
             Acl(role=Acl.READER, identity='project:p1'),
         ]
     )
-    all_buckets = [('p1', bucket_a), ('p2', bucket_b), ('p3', bucket_c)]
+    all_buckets = {
+        'p1/a': bucket_a,
+        'p2/b': bucket_b,
+        'p3/c': bucket_c,
+    }
     self.patch(
         'config.get_buckets_async',
         autospec=True,
         return_value=future(all_buckets)
     )
-
-    bucket_map = {
-        config.format_bucket_id(pid, b.name): b for pid, b in all_buckets
-    }
     self.patch(
         'config.get_bucket_async',
         autospec=True,
-        side_effect=lambda bid: future(('deadbeef', bucket_map.get(bid)))
+        side_effect=lambda bid: future(('deadbeef', all_buckets.get(bid)))
     )
 
   def get_role(self, bucket_id):
@@ -157,20 +157,19 @@ class UserTest(testing.AppengineTestCase):
   def test_get_accessible_buckets_async_admin(self, is_admin):
     is_admin.return_value = True
 
-    config.get_buckets_async.return_value = future([
-        (
-            'p1',
+    config.get_buckets_async.return_value = future({
+        'p1/some-bucket':
             Bucket(
-                name='available_bucket1',
+                name='some-bucket',
                 acls=[
                     Acl(role=Acl.READER, group='xxx'),
                     Acl(role=Acl.WRITER, group='yyy')
                 ],
-            )
-        ),
-    ])
+            ),
+    })
 
-    self.assertIsNone(user.get_accessible_buckets_async().get_result())
+    availble_buckets = user.get_accessible_buckets_async().get_result()
+    self.assertEqual(availble_buckets, {'p1/some-bucket'})
 
   def mock_role(self, role):
     self.patch('user.get_role_async_deprecated', return_value=future(role))

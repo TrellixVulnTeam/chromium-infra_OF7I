@@ -137,12 +137,11 @@ class SwarmbucketApi(remote.Service):
       bucket_ids = [bid for bid in bucket_ids if bid]
       # Filter out inaccessible ones.
       visible = user.filter_buckets_by_perm(user.PERM_BUILDERS_LIST, bucket_ids)
-      bucket_ids = [bid for bid in bucket_ids if bid in visible]
+      bucket_ids = {bid for bid in bucket_ids if bid in visible}
     else:
       # Buckets were not specified explicitly.
       # Use the available ones.
       bucket_ids = user.get_accessible_buckets_async().get_result()
-      # bucket_ids is None => all buckets are available.
 
     res = GetBuildersResponseMessage()
     buckets = config.get_buckets_async(
