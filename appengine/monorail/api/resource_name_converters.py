@@ -71,6 +71,8 @@ ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
 STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
 LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
+COMPONENT_DEF_RE = re.compile(
+    r'%s\/componentDefs\/(?P<component_id>\d+)' % PROJECT_NAME_PATTERN)
 FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_name}'
 APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_name}'
 
@@ -623,7 +625,8 @@ def ConvertStatusDefNames(cnxn, statuses, project_id, services):
 
 
 def ConvertLabelDefNames(cnxn, labels, project_id, services):
-  # MonorailConnection, Collection[str], int, Service -> Mapping[str, str]
+  # type: (MonorailConnection, Collection[str], int, Service) ->
+  #     Mapping[str, str]
   """Takes a list of labels and returns LabelDef resource names
 
   Args:
@@ -650,7 +653,8 @@ def ConvertLabelDefNames(cnxn, labels, project_id, services):
 
 
 def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
-  # MonorailConnection, Collection[int], int, Service -> Mapping[int, str]
+  # type: (MonorailConnection, Collection[int], int, Service) ->
+  #     Mapping[int, str]
   """Takes Component IDs and returns ComponentDef resource names
 
   Args:
@@ -677,8 +681,67 @@ def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
   return id_dict
 
 
+def IngestComponentDefNames(cnxn, names, services):
+  # type: (MonorailConnection, Sequence[str], Service) -> Sequence[int]
+  """Takes a list of component resource names and returns their IDs.
+
+  Args:
+    cnxn: MonorailConnection object.
+    names: List of component resource names.
+    services: Service object.
+
+  Returns:
+    List of component IDs in the same order as names.
+
+  Raises:
+    InputException if a resource name does not have a valid format.
+    NoSuchProjectException if no project exists with given id.
+    NoSuchComponentException if a component is not found.
+  """
+  # Parse as many (component id, project name) pairs as possible.
+  parsed_compid_projectnames = []
+  with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+    for name in names:
+      try:
+        match = _GetResourceNameMatch(name, COMPONENT_DEF_RE)
+        component_id = int(match.group('component_id'))
+        project_name = match.group('project_name')
+        parsed_compid_projectnames.append((component_id, project_name))
+      except exceptions.InputException as e:
+        err_agg.AddErrorMessage(e.message)
+
+  # Validate as many projects as possible.
+  project_names = {
+      project_name for _, project_name in parsed_compid_projectnames
+  }
+  project_ids_by_name = services.project.LookupProjectIDs(cnxn, project_names)
+  with exceptions.ErrorAggregator(exceptions.NoSuchProjectException) as err_agg:
+    for _, project_name in parsed_compid_projectnames:
+      if project_name not in project_ids_by_name:
+        err_agg.AddErrorMessage('Project not found: %s.' % project_name)
+
+  configs_by_pid = services.config.GetProjectConfigs(
+      cnxn, project_ids_by_name.values())
+  compid_by_pid = {}
+  for pid, config in configs_by_pid.items():
+    compid_by_pid[pid] = {comp.component_id for comp in config.component_defs}
+
+  # Find as many components as possible
+  component_ids = []
+  with exceptions.ErrorAggregator(
+      exceptions.NoSuchComponentException) as err_agg:
+    for compid, pname in parsed_compid_projectnames:
+      pid = project_ids_by_name[pname]
+      if compid not in compid_by_pid[pid]:
+        err_agg.AddErrorMessage('Component not found: %d.' % compid)
+      component_ids.append(compid)
+
+  return component_ids
+
+
 def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
-  # MonorailConnection, Collection[int], int, Service -> Mapping[int, str]
+  # type: (MonorailConnection, Collection[int], int, Service) ->
+  #     Mapping[int, str]
   """Takes Field IDs and returns FieldDef resource names
 
   Args:

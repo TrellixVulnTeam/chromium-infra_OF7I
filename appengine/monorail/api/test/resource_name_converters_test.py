@@ -72,6 +72,19 @@ class ResourceNameConverterTest(unittest.TestCase):
         self.cnxn, self.project_1.project_id, self.approval_def_1_name,
         'APPROVAL_TYPE', None, None, None, None, None, None, None, None, None,
         None, None, None, None, None, [], [])
+    self.component_def_1_path = 'Foo'
+    self.component_def_1_id = self.services.config.CreateComponentDef(
+        self.cnxn, self.project_1.project_id, self.component_def_1_path, '',
+        False, [], [], None, 111, [])
+    self.component_def_2_path = 'Foo>Bar'
+    self.component_def_2_id = self.services.config.CreateComponentDef(
+        self.cnxn, self.project_1.project_id, self.component_def_2_path, '',
+        False, [], [], None, 111, [])
+    self.component_def_3_path = 'Fizz'
+    self.component_def_3_id = self.services.config.CreateComponentDef(
+        self.cnxn, self.project_2.project_id, self.component_def_3_path, '',
+        False, [], [], None, 111, [])
+    self.dne_component_def_id = 999
     self.dne_field_def_id = 999999
     self.psq_1 = tracker_pb2.SavedQuery(
         query_id=2, name='psq1 name', base_query_id=1, query='foo=bar')
@@ -522,6 +535,50 @@ class ResourceNameConverterTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.ConvertComponentDefNames(
           self.cnxn, [component_id], self.dne_project_id, self.services)
+
+  def testIngestComponentDefNames(self):
+    names = [
+        'projects/proj/componentDefs/%d' % self.component_def_1_id,
+        'projects/proj/componentDefs/%d' % self.component_def_2_id
+    ]
+    actual = rnc.IngestComponentDefNames(self.cnxn, names, self.services)
+    self.assertEqual(actual, [self.component_def_1_id, self.component_def_2_id])
+
+  def testIngestComponentDefNames_NoSuchProjectException(self):
+    names = ['projects/xyz/componentDefs/%d' % self.component_def_1_id]
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.IngestComponentDefNames(self.cnxn, names, self.services)
+
+    names = ['projects/xyz/componentDefs/1', 'projects/zyz/componentDefs/1']
+    expected_error = 'Project not found: xyz.\nProject not found: zyz.'
+    with self.assertRaisesRegexp(exceptions.NoSuchProjectException,
+                                 expected_error):
+      rnc.IngestComponentDefNames(self.cnxn, names, self.services)
+
+  def testIngestComponentDefNames_NoSuchComponentException(self):
+    names = ['projects/proj/componentDefs/%d' % self.dne_component_def_id]
+    with self.assertRaises(exceptions.NoSuchComponentException):
+      rnc.IngestComponentDefNames(self.cnxn, names, self.services)
+
+    names = [
+        'projects/proj/componentDefs/999', 'projects/proj/componentDefs/998'
+    ]
+    expected_error = 'Component not found: 999.\nComponent not found: 998.'
+    with self.assertRaisesRegexp(exceptions.NoSuchComponentException,
+                                 expected_error):
+      rnc.IngestComponentDefNames(self.cnxn, names, self.services)
+
+  def testIngestComponentDefNames_InvalidNames(self):
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestHotlistName('projects/proj/componentDefs/notdigits')
+
+  def testIngestComponentDefNames_CrossProject(self):
+    names = [
+        'projects/proj/componentDefs/%d' % self.component_def_1_id,
+        'projects/goose/componentDefs/%d' % self.component_def_3_id
+    ]
+    actual = rnc.IngestComponentDefNames(self.cnxn, names, self.services)
+    self.assertEqual(actual, [self.component_def_1_id, self.component_def_3_id])
 
   def testConvertFieldDefNames(self):
     expected_key = self.field_def_1
