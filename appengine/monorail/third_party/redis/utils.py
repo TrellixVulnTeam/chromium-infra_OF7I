@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 
+
 try:
   import hiredis  # noqa
   HIREDIS_AVAILABLE = True

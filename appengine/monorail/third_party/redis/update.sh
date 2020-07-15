@@ -18,4 +18,3 @@ find . | grep -F '/' | grep -F -v './update.sh' | grep -F -v 'README.monorail' |
     sort -r | xargs rm -r
 curl -sL https://files.pythonhosted.org/packages/b3/17/1e567ff78c83854e16b98694411fe6e08c3426af866ad11397cddceb80d3/redis-"${version}".tar.gz | \
     tar xvz --strip-components 2 redis-"${version}"/redis
-
