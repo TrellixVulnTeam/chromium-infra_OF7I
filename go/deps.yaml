@@ -570,3 +570,6 @@ import:
 - package: github.com/bazelbuild/remote-apis-sdks
   version: master
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
+- package: github.com/pborman/uuid
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/pborman/uuid.git
