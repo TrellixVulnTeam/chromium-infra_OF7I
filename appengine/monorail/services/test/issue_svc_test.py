@@ -751,12 +751,16 @@ class IssueServiceTest(unittest.TestCase):
     return issue_1, issue_2
 
   def testGetIssuesDict(self):
-    issue_ids = [78901, 78902]
+    issue_ids = [78901, 78902, 78903]
     issue_1, issue_2 = self.SetUpGetIssues()
-    issues_dict = self.services.issue.GetIssuesDict(self.cnxn, issue_ids)
+    self.services.issue.issue_2lc = TestableIssueTwoLevelCache(
+        [issue_1, issue_2])
+    issues_dict, missed_iids = self.services.issue.GetIssuesDict(
+        self.cnxn, issue_ids)
     self.assertEqual(
         {78901: issue_1, 78902: issue_2},
         issues_dict)
+    self.assertEqual([78903], missed_iids)
 
   def testGetIssues(self):
     issue_ids = [78901, 78902]

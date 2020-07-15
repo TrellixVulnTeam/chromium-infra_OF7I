@@ -1523,18 +1523,29 @@ class WorkEnvTest(unittest.TestCase):
     """We reject attempts to get issues the user cannot view."""
     issue_1 = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
     issue_1.labels = ['Restrict-View-CoreTeam']
+    issue_1.project_name = 'farm-proj'
     self.services.issue.TestAddIssue(issue_1)
     issue_2 = fake.MakeTestIssue(789, 2, 'sum', 'New', 111, issue_id=78902)
     self.services.issue.TestAddIssue(issue_2)
-    with self.assertRaises(permissions.PermissionException):
+    issue_3 = fake.MakeTestIssue(789, 3, 'sum', 'New', 111, issue_id=78903)
+    issue_3.labels = ['Restrict-View-CoreTeam']
+    issue_3.project_name = 'farm-proj'
+    self.services.issue.TestAddIssue(issue_3)
+    with self.assertRaisesRegexp(
+        permissions.PermissionException,
+        'User is not allowed to view issue: farm-proj:1.\n' +
+        'User is not allowed to view issue: farm-proj:3.'):
       with self.work_env as we:
-        we.GetIssuesDict([78901, 78902])
+        we.GetIssuesDict([78901, 78902, 78903])
 
   def testGetIssuesDict_NoSuchIssue(self):
     """We reject attempts to get a non-existent issue."""
-    with self.assertRaises(exceptions.NoSuchIssueException):
+    issue_1 = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    self.services.issue.TestAddIssue(issue_1)
+    with self.assertRaisesRegexp(exceptions.NoSuchIssueException,
+                                 'No such issue: 78902\nNo such issue: 78903'):
       with self.work_env as we:
-        _actual = we.GetIssuesDict([78901])
+        _actual = we.GetIssuesDict([78901, 78902, 78903])
 
   def testGetIssue_Normal(self):
     """We can get an existing issue by issue_id."""

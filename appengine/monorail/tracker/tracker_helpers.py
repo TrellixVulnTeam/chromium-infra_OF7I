@@ -1536,8 +1536,9 @@ class _IssueChangeImpactedIssues():
 
     # Merge ccs into impacted_issue from all merged issues.
     if merged_from_add:
-      merged_from_add_issues = issue_service.GetIssuesDict(
-          cnxn, merged_from_add).values()
+
+      issues_dict, _misses = issue_service.GetIssuesDict(cnxn, merged_from_add)
+      merged_from_add_issues = issues_dict.values()
       new_cc_ids = _ComputeNewCcsFromIssueMerge(
           impacted_issue, merged_from_add_issues)
       if new_cc_ids:

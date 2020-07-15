@@ -430,7 +430,7 @@ class FrontendSearchPipeline(object):
         sample_iids_to_shard[iid] = shard_key
       all_needed_iids.extend(shard_needed_iids)
 
-    retrieved_samples = self.services.issue.GetIssuesDict(
+    retrieved_samples, _misses = self.services.issue.GetIssuesDict(
         self.cnxn, all_needed_iids)
     for retrieved_iid, retrieved_issue in retrieved_samples.items():
       retr_shard_key = sample_iids_to_shard[retrieved_iid]

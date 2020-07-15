@@ -156,7 +156,8 @@ class WorkEnv(object):
         issue, allow_viewing_deleted)
     if not permit_view:
       raise permissions.PermissionException(
-          'User is not allowed to view this issue')
+          'User is not allowed to view issue: %s:%d.' %
+          (issue.project_name, issue.local_id))
     return issue_perms
 
   def _UserCanUsePermInIssue(self, issue, perm):
@@ -1356,7 +1357,7 @@ class WorkEnv(object):
   # TODO(crbug/monorail/6988): add boolean to ignore_private_issues
   def GetIssuesDict(self, issue_ids, use_cache=True,
                     allow_viewing_deleted=False):
-    # type: (Collection[int], Optional[Boolean], Optaional[Boolean]) ->
+    # type: (Collection[int], Optional[Boolean], Optional[Boolean]) ->
     #     Mapping[int, Issue]
     """Return a dict {iid: issue} with the specified issues, if allowed.
 
@@ -1374,15 +1375,23 @@ class WorkEnv(object):
       PermissionException if the user cannot view all issues.
     """
     with self.mc.profiler.Phase('getting issues %r' % issue_ids):
-      issues_by_id = self.services.issue.GetIssuesDict(
+      issues_by_id, missing_ids = self.services.issue.GetIssuesDict(
           self.mc.cnxn, issue_ids, use_cache=use_cache)
 
-    if len(issues_by_id) != len(set(issue_ids)):
-      raise exceptions.NoSuchIssueException()
+    if missing_ids:
+      with exceptions.ErrorAggregator(
+          exceptions.NoSuchIssueException) as missing_err_agg:
+        for missing_id in missing_ids:
+          missing_err_agg.AddErrorMessage('No such issue: %s' % missing_id)
 
-    for issue in issues_by_id.values():
-      self._AssertUserCanViewIssue(
-          issue, allow_viewing_deleted=allow_viewing_deleted)
+    with exceptions.ErrorAggregator(
+        permissions.PermissionException) as permission_err_agg:
+      for issue in issues_by_id.values():
+        try:
+          self._AssertUserCanViewIssue(
+              issue, allow_viewing_deleted=allow_viewing_deleted)
+        except permissions.PermissionException as e:
+          permission_err_agg.AddErrorMessage(e.message)
 
     return issues_by_id
 

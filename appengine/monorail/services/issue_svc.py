@@ -654,7 +654,7 @@ class IssueService(object):
 
   def LookupIssueRefs(self, cnxn, issue_ids):
     """Return {issue_id: (project_name, local_id)} for each issue_id."""
-    issue_dict = self.GetIssuesDict(cnxn, issue_ids)
+    issue_dict, _misses = self.GetIssuesDict(cnxn, issue_ids)
     return {
       issue_id: (issue.project_name, issue.local_id)
       for issue_id, issue in issue_dict.items()}
@@ -828,13 +828,20 @@ class IssueService(object):
     return self.issue_2lc.GetAnyOnHandItem(issue_ids, start=start, end=end)
 
   def GetIssuesDict(self, cnxn, issue_ids, use_cache=True, shard_id=None):
-    """Get a dict {iid: issue} from the DB or cache."""
-    issue_dict, _missed_iids = self.issue_2lc.GetAll(
+    # type: (MonorailConnection, Sequence[int], Optional[Boolean],
+    #     Optional[int]) -> (Dict[int, Issue], Sequence[int])
+    """Get a dict {iid: issue} from the DB or cache.
+
+    Returns:
+      A dict {iid: issue} from the DB or cache.
+      A sequence of iid that could not be found.
+    """
+    issue_dict, missed_iids = self.issue_2lc.GetAll(
         cnxn, issue_ids, use_cache=use_cache, shard_id=shard_id)
     if not use_cache:
       for issue in issue_dict.values():
         issue.assume_stale = False
-    return issue_dict
+    return issue_dict, missed_iids
 
   def GetIssues(self, cnxn, issue_ids, use_cache=True, shard_id=None):
     """Get a list of Issue PBs from the DB or cache.
@@ -848,7 +855,7 @@ class IssueService(object):
     Returns:
       A list of Issue PBs in the same order as the given issue_ids.
     """
-    issue_dict = self.GetIssuesDict(
+    issue_dict, _misses = self.GetIssuesDict(
         cnxn, issue_ids, use_cache=use_cache, shard_id=shard_id)
 
     # Return a list that is ordered the same as the given issue_ids.

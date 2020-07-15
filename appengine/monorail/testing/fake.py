@@ -1646,7 +1646,7 @@ class IssueService(object):
     return result, misses
 
   def LookupIssueRefs(self, cnxn, issue_ids):
-    issue_dict = self.GetIssuesDict(cnxn, issue_ids)
+    issue_dict, _misses = self.GetIssuesDict(cnxn, issue_ids)
     return {
       issue_id: (issue.project_name, issue.local_id)
       for issue_id, issue in issue_dict.items()}
@@ -2067,10 +2067,12 @@ class IssueService(object):
 
   def GetIssuesDict(
       self, _cnxn, issue_ids, use_cache=True, shard_id=None):
+    missing_ids = [iid for iid in issue_ids if iid not in self.issues_by_iid]
     return {
         iid: self.issues_by_iid[iid]
         for iid in issue_ids
-        if iid in self.issues_by_iid}
+        if iid in self.issues_by_iid
+    }, missing_ids
 
   def GetIssues(self, _cnxn, issue_ids, use_cache=True, shard_id=None):
     results = [self.issues_by_iid[issue_id] for issue_id in issue_ids
