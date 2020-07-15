@@ -38,6 +38,8 @@ var (
 	machinelseprototypeTitle = []string{"Machine Prototype Name",
 		"Occupied Capacity", "PeripheralTypes", "VirtualTypes",
 		"UpdateTime"}
+	racklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
+		"UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -409,6 +411,45 @@ func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype) {
 func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype) {
 	len := len(msleps) - 1
 	for i, m := range msleps {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintRackLSEPrototypes prints the all msleps in table form.
+func PrintRackLSEPrototypes(msleps []*ufspb.RackLSEPrototype) {
+	defer tw.Flush()
+	printTitle(racklseprototypeTitle)
+	for _, m := range msleps {
+		printRackLSEPrototype(m)
+	}
+}
+
+func printRackLSEPrototype(m *ufspb.RackLSEPrototype) {
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	m.Name = ufsUtil.RemovePrefix(m.Name)
+	out := fmt.Sprintf("%s\t", m.GetName())
+	prs := m.GetPeripheralRequirements()
+	var peripheralTypes string
+	for _, pr := range prs {
+		peripheralTypes += fmt.Sprintf("%s,", pr.GetPeripheralType())
+	}
+	out += fmt.Sprintf("%s\t", strings.TrimSuffix(peripheralTypes, ","))
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintRackLSEPrototypesJSON prints the mslep details in json format.
+func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype) {
+	len := len(rlseps) - 1
+	for i, m := range rlseps {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m)
 		if i < len {
