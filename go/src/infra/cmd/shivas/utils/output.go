@@ -40,6 +40,8 @@ var (
 		"UpdateTime"}
 	racklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
 		"UpdateTime"}
+	chromePlatformTitle = []string{"Chrome Platform Name", "Manufacturer",
+		"Description", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -450,6 +452,41 @@ func printRackLSEPrototype(m *ufspb.RackLSEPrototype) {
 func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype) {
 	len := len(rlseps) - 1
 	for i, m := range rlseps {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintChromePlatforms prints the all msleps in table form.
+func PrintChromePlatforms(msleps []*ufspb.ChromePlatform) {
+	defer tw.Flush()
+	printTitle(chromePlatformTitle)
+	for _, m := range msleps {
+		printChromePlatform(m)
+	}
+}
+
+func printChromePlatform(m *ufspb.ChromePlatform) {
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	m.Name = ufsUtil.RemovePrefix(m.Name)
+	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetManufacturer())
+	out += fmt.Sprintf("%s\t", m.GetDescription())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintChromePlatformsJSON prints the mslep details in json format.
+func PrintChromePlatformsJSON(msleps []*ufspb.ChromePlatform) {
+	len := len(msleps) - 1
+	for i, m := range msleps {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m)
 		if i < len {

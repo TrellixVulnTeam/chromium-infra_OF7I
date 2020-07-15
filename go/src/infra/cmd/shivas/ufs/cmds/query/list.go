@@ -8,6 +8,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
+	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
 	"infra/cmd/shivas/ufs/subcmds/kvm"
 	"infra/cmd/shivas/ufs/subcmds/machine"
@@ -56,6 +57,7 @@ func (c listApp) GetCommands() []*subcommands.Command {
 		nic.ListNicCmd,
 		machineprototype.ListMachineLSEPrototypeCmd,
 		rackprototype.ListRackLSEPrototypeCmd,
+		chromeplatform.ListChromePlatformCmd,
 	}
 }
 

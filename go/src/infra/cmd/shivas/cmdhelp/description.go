@@ -550,8 +550,8 @@ Fetches 50 chrome platforms and prints the output in table format
 shivas ls chrome-platform -json
 Fetches all chrome platforms and prints the output in json format
 
-shivas ls chrome-platform -n 5 -lab atl -json
-Fetches 5 chrome platforms for ATL lab and prints the output in JSON format
+shivas ls chrome-platform -n 5 -json
+Fetches 5 chrome platforms and prints the output in JSON format
 `
 
 	// ChromePlatformFileText description for ChromePlatform file input
