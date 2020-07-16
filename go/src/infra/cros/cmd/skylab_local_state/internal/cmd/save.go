@@ -91,6 +91,9 @@ func (c *saveRun) innerRun(a subcommands.Application, args []string, env subcomm
 
 	updateDutStateFromHostInfo(s, i)
 
+	// Write DUT state into two files: one by DUT name, one by DUT ID.
+	// TODO(crbug.com/994404): Stop saving the DUT ID-based state file.
+	writeDutState(request.Config.AutotestDir, request.DutName, s)
 	writeDutState(request.Config.AutotestDir, request.DutId, s)
 
 	if request.GetSealResultsDir() {
@@ -193,8 +196,8 @@ func updateDutStateFromHostInfo(s *lab_platform.DutState, i *skylab_local_state.
 
 // writeDutState writes a JSON-encoded DutState proto to the cache file inside
 // the autotest directory.
-func writeDutState(autotestDir string, dutID string, s *lab_platform.DutState) error {
-	p := location.CacheFilePath(autotestDir, dutID)
+func writeDutState(autotestDir string, fileID string, s *lab_platform.DutState) error {
+	p := location.CacheFilePath(autotestDir, fileID)
 
 	if err := writeJSONPb(p, s); err != nil {
 		return errors.Annotate(err, "write DUT state").Err()

@@ -59,6 +59,6 @@ func HostInfoFilePath(resultsDir string, dutName string) string {
 }
 
 // CacheFilePath constructs the path to the state cache file.
-func CacheFilePath(autotestDir string, dutID string) string {
-	return filepath.Join(autotestDir, dutStateSubDir, dutID+dutStateFileSuffix)
+func CacheFilePath(autotestDir string, fileID string) string {
+	return filepath.Join(autotestDir, dutStateSubDir, fileID+dutStateFileSuffix)
 }
