@@ -301,6 +301,9 @@ func backfillTags(tags []string, originalID int64) []string {
 		if isSkylabToolTag(t) {
 			continue
 		}
+		if isLogDogLocationTag(t) {
+			continue
+		}
 		ntags = append(ntags, t)
 	}
 	return append(ntags, "skylab-tool:backfill-request", fmt.Sprintf("backfill:%d", originalID))
@@ -308,4 +311,8 @@ func backfillTags(tags []string, originalID int64) []string {
 
 func isSkylabToolTag(t string) bool {
 	return strings.HasPrefix(t, "skylab-tool:")
+}
+
+func isLogDogLocationTag(t string) bool {
+	return strings.HasPrefix(t, "log_location:")
 }

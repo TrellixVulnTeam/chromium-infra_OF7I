@@ -278,7 +278,7 @@ func clipToInt32(n int) int32 {
 func splitTagPairs(tags []string) ([]*buildbucket_pb.StringPair, error) {
 	ret := make([]*buildbucket_pb.StringPair, 0, len(tags))
 	for _, t := range tags {
-		p := strings.Split(t, ":")
+		p := strings.SplitN(t, ":", 2)
 		if len(p) != 2 {
 			return nil, errors.Reason("malformed tag %s", t).Err()
 		}
