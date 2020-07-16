@@ -11,7 +11,7 @@ STAGEID= monorail-staging
 PRODID= monorail-prod
 
 GAE_PY?= python gae.py
-DEV_APPSERVER_FLAGS?=
+DEV_APPSERVER_FLAGS?= "--watcher_ignore_re=.*/node_modules/"
 
 WEBPACK_PATH := ./node_modules/webpack-cli/bin/cli.js
 
