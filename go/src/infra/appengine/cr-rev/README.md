@@ -2,6 +2,10 @@
 cr-rev is a service which provides short URLs that redirect to code reviews,
 individual commits and other useful items for the greater Chromium project.
 
+## Running tests
+Run:
+- `goconvey`
+
 ## Deployment on development
 To deploy the app onto development environment, run:
 - `eval \`../../../../env.py\``
