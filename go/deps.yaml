@@ -428,7 +428,7 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/go-warnings/warnings.git
 - package: go.skia.org/infra
-  version: caf8efa1cf16a87ff380943827fa29e85e20c2f1
+  version: 7cc820a90366ff31415813c0881503325b9ed553
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -571,5 +571,5 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - package: github.com/pborman/uuid
-  version: master
+  version: upstream/master
   repo: https://chromium.googlesource.com/external/github.com/pborman/uuid.git
