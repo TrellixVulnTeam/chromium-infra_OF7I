@@ -163,62 +163,50 @@ def _steps_check_diffs_on_ui_assets(api):
 
 
 def GenTests(api):
-  yield (
-      api.test('ci') +
-      api.buildbucket.ci_build(
-          'infra', 'ci', 'Luci-py linux-64',
-          git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-      )
-  )
 
-  yield (api.test('try') + api.buildbucket.try_build(
-      'infra',
-      'try',
-      'Luci-py Linux',
-      git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-  ) + api.step_data(
-      'check changes.get change list on appengine/swarming',
-      api.raw_io.stream_output(
-          '\n'.join([
-              'appengine/swarming/foo.py',
-              'appengine/swarming/ui2/bar.js',
-          ]),
-          stream='stdout'),
-  ) + api.step_data(
-      'check changes.get change list on appengine/swarming/ui2',
-      api.raw_io.stream_output(
-          '\n'.join([
-              'appengine/swarming/ui2/bar.js',
-          ]), stream='stdout'),
-  ))
+  def _ci_build():
+    return api.buildbucket.ci_build(
+        project='infra',
+        git_repo='https://chromium.googlesource.com/infra/luci/luci-py')
 
-  yield (api.test('try-mac') + api.platform.name('mac') +
-         api.buildbucket.try_build(
-             'infra',
-             'try',
-             'Luci-py Mac',
-             git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-         ))
+  def _try_build():
+    return api.buildbucket.try_build(
+        project='infra',
+        git_repo='https://chromium.googlesource.com/infra/luci/luci-py')
+
+  def _step_data_changed_files(directory, files):
+    return api.step_data(
+        'check changes.get change list on %s' % directory,
+        api.raw_io.stream_output('\n'.join(files)),
+        stream='stdout')
 
   yield (
-      api.test('try-win') +
-      api.platform.name('win') +
-      api.buildbucket.try_build(
-          'infra', 'try', 'Luci-py Windows',
-          git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-      )
-  )
+    api.test('ci') + _ci_build() +
+    _step_data_changed_files('appengine/swarming',
+        ['appengine/swarming/foo.py']) +
+    _step_data_changed_files('appengine/swarming/ui2',
+        ['appengine/swarming/ui2/foo.js']))
+
+  yield (
+    api.test('try') + _try_build() +
+    _step_data_changed_files(
+        'appengine/swarming',
+        ['appengine/swarming/foo.py', 'appengine/swarming/ui2/bar.js']) +
+    _step_data_changed_files(
+        'appengine/swarming/ui2',
+        ['appengine/swarming/ui2/bar.js']))
+
+  yield api.test('try-mac') + api.platform.name('mac') + _try_build()
+
+  yield api.test('try-win') + api.platform.name('win') + _try_build()
 
   # test case for failures
-  yield (api.test('try-ui-diff-check-failure') + api.buildbucket.try_build(
-      'infra',
-      'try',
-      'Luci-py Presubmit',
-      git_repo='https://chromium.googlesource.com/infra/luci/luci-py',
-  ) + api.step_data(
-      'check changes.get change list on appengine/swarming/ui2',
-      api.raw_io.stream_output(
-          '\n'.join([
-              'appengine/swarming/ui2/bar.js',
-          ]), stream='stdout'),
-  ) + api.step_data('swarming-ui.git diff', retcode=1))
+  yield (
+    api.test('try-ui-diff-check-failure') + _try_build() +
+    _step_data_changed_files(
+        'appengine/swarming/ui2',
+        ['appengine/swarming/ui2/bar.js']) +
+    api.step_data('swarming-ui.git diff', retcode=1))
+
+  # test case for skipping test steps.
+  yield api.test('try-skip') + _try_build()
