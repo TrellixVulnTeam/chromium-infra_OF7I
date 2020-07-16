@@ -12,6 +12,7 @@ from components import utils
 
 utils.fix_protobuf_package()
 
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.protobuf import text_format
 
@@ -244,6 +245,19 @@ class ConfigTest(testing.AppengineTestCase):
     bid = 'chromium/try'
     actual = config.get_buckets_async([bid]).get_result()
     self.assertEqual(actual, {bid: None})
+
+  def test_get_all_bucket_ids_cold_cache(self):
+    config.put_bucket(
+        'chromium', 'deadbeef', test_util.parse_bucket_cfg('name: "try"')
+    )
+    config.put_bucket(
+        'chromium', 'deadbeef', test_util.parse_bucket_cfg('name: "ci"')
+    )
+    config.put_bucket(
+        'v8', 'deadbeef', test_util.parse_bucket_cfg('name: "ci"')
+    )
+    ids = config.get_all_bucket_ids_async().get_result()
+    self.assertEqual(ids, ['chromium/ci', 'chromium/try', 'v8/ci'])
 
   def resolve_bucket(self, bucket_name):
     return config.resolve_bucket_name_async(bucket_name).get_result()
@@ -623,6 +637,21 @@ class ConfigTest(testing.AppengineTestCase):
             ).hexdigest(),
         ),
     ]
+    self.assertEqual(actual, expected)
+
+    # Updated get_all_bucket_ids_async cache.
+    actual = memcache.get(config._MEMCACHE_ALL_BUCKET_IDS_KEY)
+    expected = [
+        'chromium/master.tryserver.chromium.linux',
+        'chromium/master.tryserver.chromium.mac',
+        'chromium/try',
+        'dart/try',
+        'v8/master.tryserver.v8',
+    ]
+    self.assertEqual(actual, expected)
+
+    # Coverage for the warm cache case.
+    actual = config.get_all_bucket_ids_async().get_result()
     self.assertEqual(actual, expected)
 
   @mock.patch('components.config.get_project_configs', autospec=True)

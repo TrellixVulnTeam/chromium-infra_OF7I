@@ -15,6 +15,7 @@ import logging
 import re
 
 from google.appengine.api import app_identity
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
 from components import auth
@@ -39,6 +40,11 @@ EXPERIMENT_NON_PROD = 'luci.non_production'
 # This number is relatively high so we treat canary seriously and that we have
 # a strong signal if the canary is broken.
 _DEFAULT_CANARY_PERCENTAGE = 10
+
+# The memcache key for get_all_bucket_ids_async cache.
+_MEMCACHE_ALL_BUCKET_IDS_KEY = 'all_bucket_ids_v1'
+# Expiration time for get_all_bucket_ids_async cache.
+_MEMCACHE_ALL_BUCKET_IDS_EXP = 90
 
 
 @utils.cache
@@ -258,6 +264,10 @@ class Bucket(ndb.Model):
   def make_key(project_id, bucket_name):
     return ndb.Key(Project, project_id, Bucket, bucket_name)
 
+  @staticmethod
+  def key_to_bucket_id(key):
+    return format_bucket_id(key.parent().id(), key.id())
+
   @property
   def bucket_id(self):
     return format_bucket_id(self.project_id, self.bucket_name)
@@ -310,6 +320,21 @@ def short_bucket_name(bucket_name):
 def is_swarming_config(cfg):
   """Returns True if this is a Swarming bucket config."""
   return cfg and cfg.HasField('swarming')
+
+
+@ndb.non_transactional
+@ndb.tasklet
+def get_all_bucket_ids_async():
+  """Returns a sorted list of all defined bucket IDs."""
+  ctx = ndb.get_context()
+  ids = yield ctx.memcache_get(_MEMCACHE_ALL_BUCKET_IDS_KEY)
+  if ids is None:
+    keys = yield Bucket.query().fetch_async(keys_only=True)
+    ids = sorted(Bucket.key_to_bucket_id(key) for key in keys)
+    yield ctx.memcache_set(
+        _MEMCACHE_ALL_BUCKET_IDS_KEY, ids, _MEMCACHE_ALL_BUCKET_IDS_EXP
+    )
+  raise ndb.Return(ids)
 
 
 @ndb.non_transactional
@@ -477,8 +502,15 @@ def cron_update_buckets():
       cfg_path(), project_config_pb2.BuildbucketCfg
   )
 
+  # Initial set of ndb.Bucket keys present in the datastore. Will be updated
+  # alongside datastore mutations below to get the final set of keys. It will be
+  # use to refresh get_all_bucket_ids_async cache. Note that we can't just redo
+  # the query at the end, since it is eventually consistent and may miss
+  # recently added entities.
+  buckets_in_datastore = set(Bucket.query().fetch(keys_only=True))
+
   buckets_to_delete = collections.defaultdict(set)  # project_id -> ndb keys
-  for key in Bucket.query().fetch(keys_only=True):
+  for key in buckets_in_datastore:
     buckets_to_delete[key.parent().id()].add(key)
 
   for project_id, (revision, project_cfg, _) in config_map.iteritems():
@@ -575,6 +607,7 @@ def cron_update_buckets():
         logging.info('Updated bucket %s to revision %s', bucket_key, revision)
 
       update_entities()
+      buckets_in_datastore.add(bucket_key)
 
   # Delete non-existent buckets (and all associated builders).
   for buckets in buckets_to_delete.itervalues():
@@ -584,6 +617,16 @@ def cron_update_buckets():
     if to_delete:
       logging.warning('Deleting entities: %s', ' '.join(map(str, to_delete)))
       ndb.transaction(lambda: ndb.delete_multi(to_delete))
+    buckets_in_datastore -= set(buckets)
+
+  # Eagerly update get_all_bucket_ids_async cache. No big deal if this fails,
+  # the cache will expire naturally at some point. This is just an optimization
+  # to speed up bucket list updates.
+  memcache.set(
+      _MEMCACHE_ALL_BUCKET_IDS_KEY,
+      sorted(Bucket.key_to_bucket_id(key) for key in buckets_in_datastore),
+      _MEMCACHE_ALL_BUCKET_IDS_EXP
+  )
 
 
 def get_buildbucket_cfg_url(project_id):
