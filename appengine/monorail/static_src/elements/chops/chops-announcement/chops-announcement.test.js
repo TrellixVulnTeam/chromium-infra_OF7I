@@ -142,6 +142,21 @@ describe('chops-announcement', () => {
     assert.include(element.shadowRoot.textContent, 'test thing');
   });
 
+  it('renders empty on empty announcement', async () => {
+    sinon.stub(element, 'fetch');
+    element.fetch.returns({});
+    element.service = 'monorail';
+
+    await element.updateComplete;
+
+    // Fetch runs here.
+
+    await element.updateComplete;
+
+    assert.deepEqual(element._announcements, []);
+    assert.equal(0, element.shadowRoot.children.length);
+  });
+
   it('fetch returns response data', async () => {
     const json = {announcements: [{id: '1234', messageContent: 'test thing'}]};
     const fakeResponse = XSSI_PREFIX + JSON.stringify(json);

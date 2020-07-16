@@ -135,7 +135,7 @@ export class ChopsAnnouncement extends LitElement {
    */
   async refresh() {
     try {
-      const {announcements} = await this.fetch(this.service);
+      const {announcements = []} = await this.fetch(this.service);
       this._error = undefined;
       this._announcements = announcements;
     } catch (e) {
