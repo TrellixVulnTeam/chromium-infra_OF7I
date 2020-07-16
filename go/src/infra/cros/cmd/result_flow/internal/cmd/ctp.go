@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"time"
@@ -20,7 +21,6 @@ import (
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/logging"
 
-	"infra/cmdsupport/cmdlib"
 	"infra/cros/cmd/result_flow/internal/bb"
 	"infra/cros/cmd/result_flow/internal/bq"
 	"infra/cros/cmd/result_flow/internal/message"
@@ -63,7 +63,7 @@ type ctpFlowRun struct {
 
 func (c *ctpFlowRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a, err)
+		fmt.Fprintf(a.GetErr(), err.Error())
 		return 1
 	}
 	return 0

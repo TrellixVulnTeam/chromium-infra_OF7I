@@ -17,7 +17,6 @@ import (
 	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/api/option"
 
-	"infra/cmdsupport/cmdlib"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
 )
@@ -56,13 +55,9 @@ type publishRun struct {
 
 func (c *publishRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
-		cmdlib.PrintError(a, err)
+		fmt.Fprintf(a.GetErr(), err.Error())
 		return 1
 	}
-	fmt.Fprintf(
-		a.GetOut(),
-		"Pushed build ID %d to projects/%s/topics/%s.\n",
-		c.buildID, c.config.GetProject(), c.config.GetTopic())
 	return 0
 }
 
