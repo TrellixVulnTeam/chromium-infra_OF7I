@@ -30,6 +30,7 @@ func TestLegacy(t *testing.T) {
 				"",
 				"Manual edits of this file will be overwritten by an automated process."
 			],
+			"components-to-team":  {},
 			"dir-to-component": {
 				"subdir_with_owners": "Some\u003eComponent(Linux)",
 				"subdir_with_owners/empty_subdir": "Some\u003eComponent(Linux)"
@@ -38,7 +39,8 @@ func TestLegacy(t *testing.T) {
 				".": "chromium-review@chromium.org",
 				"subdir_with_owners": "team-email@chromium.org",
 				"subdir_with_owners/empty_subdir": "team-email@chromium.org"
-			}
+			},
+			"teams-per-component": {}
 		}`)))
 	})
 }

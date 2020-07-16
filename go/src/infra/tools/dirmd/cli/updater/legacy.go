@@ -35,8 +35,11 @@ func toLegacyFormat(m *dirmd.Mapping) []byte {
 		},
 		"dir-to-component": dirToComponent,
 		"dir-to-team":      dirToTeam,
-		// TODO(crbug.com/1104246): add "components-to-team" and "teams-per-component" if
-		// they are really needed.
+
+		// The existence of these keys is important to some legacy applications,
+		// but correctness is not.
+		"components-to-team":  map[string]interface{}{},
+		"teams-per-component": map[string]interface{}{},
 	}, "", "  ")
 	if err != nil {
 		panic(err)
