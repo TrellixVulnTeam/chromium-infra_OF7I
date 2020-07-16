@@ -49,11 +49,6 @@ class BaseTestCase(testing.AppengineTestCase):
         user.PERM_BUILDS_CANCEL,
         user.PERM_BUILDERS_LIST,
     ]
-    self.patch(
-        'user.get_accessible_buckets_async',
-        autospec=True,
-        return_value=future({'chromium/try'}),
-    )
 
     self.now = datetime.datetime(2015, 1, 1)
     self.patch('components.utils.utcnow', side_effect=lambda: self.now)

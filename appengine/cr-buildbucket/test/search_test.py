@@ -62,7 +62,7 @@ class SearchTest(testing.AppengineTestCase):
         'config.get_bucket_async',
         return_value=future({'deadbeef': project_config_pb2.Bucket(name='try')})
     )
-    self.patch('user.get_accessible_buckets_async', autospec=True)
+    self.patch('user.buckets_by_perm_async', autospec=True)
     self.patch('search.TagIndex.random_shard_index', return_value=0)
 
     self.perms = test_util.mock_permissions(self)
@@ -72,7 +72,7 @@ class SearchTest(testing.AppengineTestCase):
     self.perms.clear()
     for b in bucket_ids:
       self.perms[b] = [user.PERM_BUILDS_LIST]
-    user.get_accessible_buckets_async.return_value = future(set(bucket_ids))
+    user.buckets_by_perm_async.return_value = future(set(bucket_ids))
 
   def put_many_builds(self, count, **build_proto_fields):
     return [self.put_build(**build_proto_fields) for _ in xrange(count)]

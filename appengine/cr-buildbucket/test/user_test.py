@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 from components import auth
+from parameterized import parameterized
 from testing_utils import testing
 import mock
 
@@ -34,43 +35,37 @@ class UserTest(testing.AppengineTestCase):
 
     self.patch('components.auth.is_admin', autospec=True, return_value=False)
 
-    bucket_a = Bucket(
-        name='a',
-        acls=[
-            Acl(role=Acl.WRITER, group='a-writers'),
-            Acl(role=Acl.READER, group='a-readers'),
-        ]
+    config.put_bucket(
+        'p1', 'ignored-rev',
+        Bucket(
+            name='a',
+            acls=[
+                Acl(role=Acl.WRITER, group='a-writers'),
+                Acl(role=Acl.READER, group='a-readers'),
+            ]
+        )
     )
-    bucket_b = Bucket(
-        name='b',
-        acls=[
-            Acl(role=Acl.WRITER, group='b-writers'),
-            Acl(role=Acl.READER, group='b-readers'),
-        ]
+    config.put_bucket(
+        'p2', 'ignored-rev',
+        Bucket(
+            name='b',
+            acls=[
+                Acl(role=Acl.WRITER, group='b-writers'),
+                Acl(role=Acl.READER, group='b-readers'),
+            ]
+        )
     )
-    bucket_c = Bucket(
-        name='c',
-        acls=[
-            Acl(role=Acl.READER, group='c-readers'),
-            Acl(role=Acl.READER, identity='user:a@example.com'),
-            Acl(role=Acl.WRITER, group='c-writers'),
-            Acl(role=Acl.READER, identity='project:p1'),
-        ]
-    )
-    all_buckets = {
-        'p1/a': bucket_a,
-        'p2/b': bucket_b,
-        'p3/c': bucket_c,
-    }
-    self.patch(
-        'config.get_buckets_async',
-        autospec=True,
-        return_value=future(all_buckets)
-    )
-    self.patch(
-        'config.get_bucket_async',
-        autospec=True,
-        side_effect=lambda bid: future(('deadbeef', all_buckets.get(bid)))
+    config.put_bucket(
+        'p3', 'ignored-rev',
+        Bucket(
+            name='c',
+            acls=[
+                Acl(role=Acl.READER, group='c-readers'),
+                Acl(role=Acl.READER, identity='user:a@example.com'),
+                Acl(role=Acl.WRITER, group='c-writers'),
+                Acl(role=Acl.READER, identity='project:p1'),
+            ]
+        )
     )
 
   def get_role(self, bucket_id):
@@ -103,73 +98,40 @@ class UserTest(testing.AppengineTestCase):
     self.assertEqual(self.get_role('p2/b'), None)  # no roles at all
     self.assertEqual(self.get_role('p3/c'), Acl.READER)  # via explicit ACL
 
+  @parameterized.expand([
+      (user.PERM_BUILDS_GET, ['a-readers'], {'p1/a', 'p3/c'}),
+      (user.PERM_BUILDS_ADD, ['b-writers'], {'p2/b'}),
+  ])
   @mock.patch('components.auth.is_group_member', autospec=True)
-  def test_get_accessible_buckets_async(self, is_group_member):
-    is_group_member.side_effect = lambda g, _=None: g in ('xxx', 'yyy')
+  def test_buckets_by_perm_async(self, perm, groups, expected, is_group_member):
+    is_group_member.side_effect = lambda g, _=None: g in groups
 
-    config.get_buckets_async.return_value = future({
-        'p1/available_bucket1':
-            Bucket(
-                name='available_bucket1',
-                acls=[
-                    Acl(role=Acl.READER, group='xxx'),
-                    Acl(role=Acl.WRITER, group='yyy')
-                ],
-            ),
-        'p2/available_bucket2':
-            Bucket(
-                name='available_bucket2',
-                acls=[
-                    Acl(role=Acl.READER, group='xxx'),
-                    Acl(role=Acl.WRITER, group='zzz')
-                ],
-            ),
-        'p3/available_bucket3':
-            Bucket(
-                name='available_bucket3',
-                acls=[
-                    Acl(role=Acl.READER, identity='user:a@example.com'),
-                ],
-            ),
-        'p4/not_available_bucket':
-            Bucket(
-                name='not_available_bucket',
-                acls=[Acl(role=Acl.WRITER, group='zzz')],
-            ),
-    })
+    # Cold caches.
+    buckets = user.buckets_by_perm_async(perm).get_result()
+    self.assertEqual(buckets, expected)
 
-    # call twice for per-request caching of futures.
-    user.get_accessible_buckets_async()
-    availble_buckets = user.get_accessible_buckets_async().get_result()
-    expected = {
-        'p1/available_bucket1',
-        'p2/available_bucket2',
-        'p3/available_bucket3',
-    }
-    self.assertEqual(availble_buckets, expected)
+    # Test coverage of ndb.Future caching.
+    buckets = user.buckets_by_perm_async(perm).get_result()
+    self.assertEqual(buckets, expected)
 
-    # call again for memcache coverage.
+    # Memcache coverage.
     user.clear_request_cache()
-    availble_buckets = user.get_accessible_buckets_async().get_result()
-    self.assertEqual(availble_buckets, expected)
+    buckets = user.buckets_by_perm_async(perm).get_result()
+    self.assertEqual(buckets, expected)
 
-  @mock.patch('components.auth.is_admin', autospec=True)
-  def test_get_accessible_buckets_async_admin(self, is_admin):
-    is_admin.return_value = True
+  @mock.patch('components.auth.is_group_member', autospec=True)
+  def test_buckets_by_perm_async_for_project(self, is_group_member):
+    is_group_member.side_effect = lambda g, _=None: False
+    self.current_identity = auth.Identity.from_bytes('project:p1')
 
-    config.get_buckets_async.return_value = future({
-        'p1/some-bucket':
-            Bucket(
-                name='some-bucket',
-                acls=[
-                    Acl(role=Acl.READER, group='xxx'),
-                    Acl(role=Acl.WRITER, group='yyy')
-                ],
-            ),
-    })
-
-    availble_buckets = user.get_accessible_buckets_async().get_result()
-    self.assertEqual(availble_buckets, {'p1/some-bucket'})
+    buckets = user.buckets_by_perm_async(user.PERM_BUILDS_GET).get_result()
+    self.assertEqual(
+        buckets,
+        {
+            'p1/a',  # implicit by being in the same project
+            'p3/c',  # explicitly set in acls {...}, see setUp()
+        }
+    )
 
   def mock_role(self, role):
     self.patch('user.get_role_async_deprecated', return_value=future(role))

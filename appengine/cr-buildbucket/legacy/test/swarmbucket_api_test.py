@@ -43,19 +43,11 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     auth.bootstrap_group('all', [auth.Anonymous])
     user.clear_request_cache()
 
-    # TODO(crbug.com/1091604): Stop setting `acls` in fake configs.
-    # get_builds implementation uses get_accessible_buckets_async
-    # so we still need to keep `acls { ... }` stanzas in config, even though
-    # we mock user.has_perm_async.
     self.perms = mock_permissions(self)
 
     chromium_cfg = test_util.parse_bucket_cfg(
         '''
           name: "luci.chromium.try"
-          acls {
-            role: READER
-            group: "all"
-          }
           swarming {
             hostname: "swarming.example.com"
             builders {
@@ -108,15 +100,7 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
         user.PERM_BUILDERS_LIST,
     ]
 
-    v8_cfg = test_util.parse_bucket_cfg(
-        '''
-          name: "luci.v8.try"
-          acls {
-            role: READER
-            group: "all"
-          }
-    '''
-    )
+    v8_cfg = test_util.parse_bucket_cfg('''name: "luci.v8.try"''')
     config.put_bucket('v8', 'deadbeef', v8_cfg)
     self.perms['v8/try'] = [
         user.PERM_BUCKETS_GET,
@@ -193,10 +177,6 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     # Add a second bucket with a different name.
     other_bucket = '''
       name: "luci.other.try"
-      acls {
-        role: READER
-        group: "all"
-      }
       swarming {
         hostname: "swarming.example.com"
         builders {

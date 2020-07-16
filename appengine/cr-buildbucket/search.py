@@ -356,14 +356,14 @@ def _query_search_async(q):
   - if bool(bucket_ids), permissions are checked.
   """
   if not q.bucket_ids:
-    q.bucket_ids = yield user.get_accessible_buckets_async()
+    q.bucket_ids = yield user.buckets_by_perm_async(user.PERM_BUILDS_LIST)
     if q.project:
 
       def get_project_id(bucket_id):
         project_id, _ = config.parse_bucket_id(bucket_id)
         return project_id
 
-      # Note: get_accessible_buckets_async is memcached per user for 10m.
+      # Note: buckets_by_perm_async is memcached per user for 10m.
       q.bucket_ids = {
           bid for bid in q.bucket_ids if get_project_id(bid) == q.project
       }

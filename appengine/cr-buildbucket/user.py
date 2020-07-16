@@ -140,6 +140,45 @@ def filter_buckets_by_perm(perm, bucket_ids):
   return {bid for bid, has_perm in pairs if has_perm}
 
 
+def buckets_by_perm_async(perm):
+  """Returns buckets that the caller has the given permission in.
+
+  Results are memcached for 10 minutes per (identity, perm) pair.
+
+  Args:
+    perm: an instance of auth.Permission.
+
+  Returns:
+    A set of bucket IDs.
+  """
+  assert isinstance(perm, auth.Permission), perm
+  assert perm in ALL_PERMISSIONS, perm
+
+  identity = auth.get_current_identity()
+  identity_str = identity.to_bytes()
+
+  @ndb.tasklet
+  def impl():
+    ctx = ndb.get_context()
+    cache_key = 'buckets_by_perm/%s/%s' % (identity_str, perm)
+    matching_buckets = yield ctx.memcache_get(cache_key)
+    if matching_buckets is not None:
+      raise ndb.Return(matching_buckets)
+
+    logging.info('Computing a set of buckets %r has %r in', identity_str, perm)
+    all_buckets = yield config.get_all_bucket_ids_async()
+    per_bucket = yield [has_perm_async(perm, bid) for bid in all_buckets]
+    matching_buckets = {bid for bid, has in zip(all_buckets, per_bucket) if has}
+
+    # Cache for 10 min
+    yield ctx.memcache_set(cache_key, matching_buckets, 10 * 60)
+    raise ndb.Return(matching_buckets)
+
+  return _get_or_create_cached_future(
+      identity, 'buckets_by_perm/%s' % perm, impl
+  )
+
+
 ################################################################################
 ## Role definitions (DEPRECATED).
 
@@ -293,75 +332,6 @@ def permitted_actions_async(bucket_id):
   if role is None:
     raise ndb.Return(())
   raise ndb.Return(ROLE_TO_ACTIONS[role])
-
-
-def get_accessible_buckets_async():
-  """Returns buckets accessible to the current identity.
-
-  A bucket is accessible if the requester has READER role or higher in
-  the bucket.
-
-  Results are memcached for 10 minutes per identity.
-
-  Returns:
-    A future of a set of bucket ids strings.
-  """
-  # TODO(vadimsh): This function doesn't understand 'project:...' identities.
-
-  identity = auth.get_current_identity()
-  identity_str = identity.to_bytes()
-
-  @ndb.tasklet
-  def impl():
-    ctx = ndb.get_context()
-    cache_key = 'accessible_buckets_v2/%s' % identity_str
-    accessible_buckets = yield ctx.memcache_get(cache_key)
-    if accessible_buckets is not None:
-      raise ndb.Return(accessible_buckets)
-
-    logging.info('Computing a list of available buckets for %s' % identity_str)
-    all_buckets = yield config.get_buckets_async()
-    if auth.is_admin():
-      accessible_buckets = set(all_buckets)
-    else:
-      accessible_buckets = _only_accessible_buckets(all_buckets, identity)
-
-    # Cache for 10 min
-    yield ctx.memcache_set(cache_key, accessible_buckets, 10 * 60)
-    raise ndb.Return(accessible_buckets)
-
-  return _get_or_create_cached_future(identity, 'accessible_buckets', impl)
-
-
-def _only_accessible_buckets(all_buckets, identity):
-  """Returns a set of bucket IDs visible to the given identity.
-
-  Args:
-    all_buckets: dict {bucket_id: project_config_pb2.Bucket}.
-    identity: auth.Identity object.
-
-  Returns:
-    Set of bucket IDs.
-  """
-  # TODO(crbug.com/1091604): Implement in terms of has_perm_async.
-
-  accessible_buckets = set()
-  group_buckets_map = collections.defaultdict(set)
-
-  for bucket_id, cfg in all_buckets.iteritems():
-    for rule in cfg.acls:
-      if rule.identity == identity.to_bytes():
-        accessible_buckets.add(bucket_id)
-      elif rule.group:  # pragma: no branch
-        group_buckets_map[rule.group].add(bucket_id)
-
-  for group, buckets in group_buckets_map.iteritems():
-    if accessible_buckets.issuperset(buckets):
-      continue
-    if auth.is_group_member(group, identity):
-      accessible_buckets.update(buckets)
-
-  return accessible_buckets
 
 
 @utils.cache

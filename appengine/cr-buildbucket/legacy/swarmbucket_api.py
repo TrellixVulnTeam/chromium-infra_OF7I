@@ -141,7 +141,8 @@ class SwarmbucketApi(remote.Service):
     else:
       # Buckets were not specified explicitly.
       # Use the available ones.
-      bucket_ids = user.get_accessible_buckets_async().get_result()
+      bucket_ids = user.buckets_by_perm_async(user.PERM_BUILDERS_LIST
+                                             ).get_result()
 
     res = GetBuildersResponseMessage()
     buckets = config.get_buckets_async(
