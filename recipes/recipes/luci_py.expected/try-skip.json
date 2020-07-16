@@ -397,44 +397,6 @@
   },
   {
     "cmd": [],
-    "name": "client"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
-    "name": "client.run tests python2",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython3",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/client/unittest.cfg"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/client",
-    "name": "client.run tests python3",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "swarming bot"
   },
   {

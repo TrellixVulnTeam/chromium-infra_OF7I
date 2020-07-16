@@ -50,13 +50,7 @@ def RunSteps(api):
       with api.step.nest('isolate'):
         _step_run_py_tests(api, appeng_dir.join('isolate'))
 
-    # TODO(crbug.com/1017545): enable on Windows.
-    # clients tests run in python2/3, but it ignores failures on Windows.
-    with api.step.nest('client'):
-      ok_ret = 'any' if api.platform.is_win else (0,)
-      _step_run_py_tests(api, luci_dir.join('client'), ok_ret=ok_ret)
-      _step_run_py_tests(api, luci_dir.join('client'), ok_ret=ok_ret,
-                         python3=True)
+    _step_client_tests(api, changes)
 
     with api.step.nest('swarming bot'):
       bot_dir = appeng_dir.join('swarming', 'swarming_bot')
@@ -137,9 +131,25 @@ def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
                timeout=timeout, ok_ret=ok_ret)
 
 
+def _step_client_tests(api, changes):
+  deps = ['client', 'components']
+  if not any([changes[d] for d in deps]):
+    # skip tests when no changes on the dependencies.
+    return
+
+  luci_dir = api.path['checkout'].join('luci')
+  # TODO(crbug.com/1017545): enable on Windows.
+  # clients tests run in python2/3, but it ignores failures on Windows.
+  with api.step.nest('client'):
+    ok_ret = 'any' if api.platform.is_win else (0,)
+    _step_run_py_tests(api, luci_dir.join('client'), ok_ret=ok_ret)
+    _step_run_py_tests(
+        api, luci_dir.join('client'), ok_ret=ok_ret, python3=True)
+
+
 def _step_swarming_ui_tests(api, changes):
   deps = ['DEPS', 'swarming_ui']
-  if not any([changed for k, changed in changes.items() if k in deps]):
+  if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
   with api.step.nest('swarming-ui'):
@@ -182,6 +192,7 @@ def GenTests(api):
 
   yield (
     api.test('ci') + _ci_build() +
+    _step_data_changed_files('client', ['client/foo.py']) +
     _step_data_changed_files('appengine/swarming',
         ['appengine/swarming/foo.py']) +
     _step_data_changed_files('appengine/swarming/ui2',
@@ -189,6 +200,7 @@ def GenTests(api):
 
   yield (
     api.test('try') + _try_build() +
+    _step_data_changed_files('client', ['client/foo.py']) +
     _step_data_changed_files(
         'appengine/swarming',
         ['appengine/swarming/foo.py', 'appengine/swarming/ui2/bar.js']) +
@@ -196,9 +208,11 @@ def GenTests(api):
         'appengine/swarming/ui2',
         ['appengine/swarming/ui2/bar.js']))
 
-  yield api.test('try-mac') + api.platform.name('mac') + _try_build()
+  yield (api.test('try-mac') + api.platform.name('mac') + _try_build() +
+         _step_data_changed_files('client', ['client/foo.py']))
 
-  yield api.test('try-win') + api.platform.name('win') + _try_build()
+  yield (api.test('try-win') + api.platform.name('win') + _try_build() +
+         _step_data_changed_files('client', ['client/foo.py']))
 
   # test case for failures
   yield (

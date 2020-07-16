@@ -155,7 +155,7 @@
     "cmd": [],
     "name": "check changes",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@changes@client: False@@@",
+      "@@@STEP_LOG_LINE@changes@client: True@@@",
       "@@@STEP_LOG_LINE@changes@components: False@@@",
       "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
       "@@@STEP_LOG_LINE@changes@swarming_ui: False@@@",
@@ -195,6 +195,7 @@
     "name": "check changes.get change list on client",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@change list@client/foo.py@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },
