@@ -842,6 +842,14 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.Issue.UserValue(
                 derivation=RULE_DERIVATION, user='users/333')
         ],
+        components=[
+            issue_objects_pb2.Issue.ComponentValue(
+                component='projects/proj/componentDefs/%d' %
+                self.component_def_1_id),
+            issue_objects_pb2.Issue.ComponentValue(
+                component='projects/proj/componentDefs/%d' %
+                self.component_def_2_id),
+        ],
         merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'),
         blocked_on_issue_refs=[
             # Reversing natural ordering to ensure order is respected.
@@ -907,6 +915,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         status='new',
         owner_id=111,
         cc_ids=[expected_cc1_id, 333],
+        component_ids=[self.component_def_1_id, self.component_def_2_id],
         merged_into_external='b/1',
         blocked_on_iids=[blocked_on_2.issue_id, blocked_on_1.issue_id],
         blocking_iids=[blocking.issue_id],
@@ -945,6 +954,10 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.Issue.UserValue(
                 derivation=RULE_DERIVATION, user='invalidFormat2')
         ],
+        components=[
+            issue_objects_pb2.Issue.ComponentValue(
+                component='projects/proj/componentDefs/404')
+        ],
         merged_into_issue_ref=invalid_issue_ref,
         blocked_on_issue_refs=[
             issue_objects_pb2.IssueRef(),
@@ -958,6 +971,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         r'.+not found when ingesting owner',
         r'.+cc_users: Invalid resource name: invalidFormat1.',
         r'Status is required when creating an issue',
+        r'.+components: Component not found: 404.',
         r'.+merged_into_ref: IssueRefs MUST NOT have both.+',
         r'.+blocked_on_issue_refs: IssueRefs MUST have.+',
         r'.+blocked_on_issue_refs: Project 404 not found.',

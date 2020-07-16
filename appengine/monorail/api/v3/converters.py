@@ -448,7 +448,14 @@ class Converter(object):
       else:
         err_agg.AddErrorMessage('Status is required when creating an issue')
 
-      # TODO(jessan): Ingest component name.
+      # Extract components.
+      try:
+        ingestedDict['component_ids'] = rnc.IngestComponentDefNames(
+            self.cnxn, [cv.component for cv in issue.components], self.services)
+      except (exceptions.InputException, exceptions.NoSuchProjectException,
+              exceptions.NoSuchComponentException) as e:
+        err_agg.AddErrorMessage('Error ingesting components: {}', e)
+
       # TODO(jessan): Migrate & use _RedistributeEnumFieldsIntoLabels from v0.
 
       self._ExtractIssueRefs(issue, ingestedDict, err_agg)
