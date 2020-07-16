@@ -499,19 +499,13 @@ class ProjectCfgTest(testing.AppengineTestCase):
 
   @parameterized.expand([
       (['a:b'], ''),
+      (['a:b1', 'a:b2', '60:a:b3'], ''),
       ([''], 'dimension "": does not have ":"'),
       (
           ['caches:a'],
           (
               'dimension "caches:a": dimension key must not be "caches"; '
               'caches must be declared via caches field'
-          ),
-      ),
-      (
-          ['a:b', 'a:c'],
-          (
-              'dimension "a:c": '
-              'multiple values for dimension key "a" and expiration 0s'
           ),
       ),
       ([':'], 'dimension ":": no key'),
@@ -629,6 +623,21 @@ class ProjectCfgTest(testing.AppengineTestCase):
             name: "b"
             mixins: "a"
             dimensions: "a:b"
+          }
+        ''', []
+    )
+
+    test(
+        '''
+          builder_mixins {
+            name: "a"
+            dimensions: "a:b1"
+            dimensions: "a:b2"
+          }
+          builder_mixins {
+            name: "b"
+            mixins: "a"
+            dimensions: "a:b3"
           }
         ''', []
     )

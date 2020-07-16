@@ -645,6 +645,64 @@ class ConfigTest(testing.AppengineTestCase):
     self.assertEqual(actual.config, LUCI_DART_TRY.swarming.builders[0])
 
   @mock.patch('components.config.get_project_configs', autospec=True)
+  def flatten_builder_config(self, project_cfg, get_project_configs):
+    get_project_configs.return_value = {
+        'proj': ('deadbeef', parse_cfg(project_cfg), None),
+    }
+    config.cron_update_buckets()
+    builders = config.Builder.query().fetch()
+    self.assertEqual(len(builders), 1)
+    return builders[0].config
+
+  def test_builder_flattening(self):
+    # pylint: disable=no-value-for-parameter
+    actual = self.flatten_builder_config(
+        '''
+        builder_mixins {
+          name: "m"
+          dimensions: "a:b1"
+          dimensions: "a:b2"
+          dimensions: "60:a:b3"
+        }
+        buckets {
+          name: "bucket"
+          swarming {
+            builder_defaults {
+              dimensions: "a:b4"
+              dimensions: "a:b5"
+              dimensions: "120:a:b6"
+            }
+            builders {
+              name: "builder"
+              dimensions: "a:b7"
+              dimensions: "a:b8"
+              dimensions: "180:a:b9"
+              mixins: "m"
+            }
+          }
+        }
+        '''
+    )
+    expected = text_format.Parse(
+        '''
+        name: "builder"
+        dimensions: "180:a:b9"
+        dimensions: "a:b7"
+        dimensions: "a:b8"
+        dimensions: "pool:luci.proj.bucket"
+        experiments {
+          key: "luci.buildbucket.canary_software"
+          value: 10
+        }
+        experiments {
+          key: "luci.non_production"
+          value: 0
+        }
+        ''', project_config_pb2.Builder()
+    )
+    self.assertEqual(actual, expected)
+
+  @mock.patch('components.config.get_project_configs', autospec=True)
   def test_cron_update_buckets_backfill_experiments(self, get_project_configs):
     infra_experiments_cfg = parse_cfg(
         '''

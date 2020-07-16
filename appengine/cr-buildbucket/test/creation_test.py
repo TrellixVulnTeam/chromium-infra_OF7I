@@ -538,12 +538,24 @@ class CreationTest(testing.AppengineTestCase):
           '60:a:0',
           '0:a:1',
           'b:0',
+          'c:1',
+          'c:2',
+          '60:c:3',
           'tombstone:',
       ]
 
     dims = [
         common_pb2.RequestedDimension(
-            key='b', value='1', expiration=dict(seconds=60)
+            key='b',
+            value='1',
+            expiration=dict(seconds=60),
+        ),
+        common_pb2.RequestedDimension(key='c', value='4'),
+        common_pb2.RequestedDimension(key='c', value='5'),
+        common_pb2.RequestedDimension(
+            key='c',
+            value='6',
+            expiration=dict(seconds=60),
         ),
         common_pb2.RequestedDimension(key='d', value='1'),
     ]
@@ -566,6 +578,13 @@ class CreationTest(testing.AppengineTestCase):
             common_pb2.RequestedDimension(
                 key='b',
                 value='1',
+                expiration=dict(seconds=60),
+            ),
+            common_pb2.RequestedDimension(key='c', value='4'),
+            common_pb2.RequestedDimension(key='c', value='5'),
+            common_pb2.RequestedDimension(
+                key='c',
+                value='6',
                 expiration=dict(seconds=60),
             ),
             common_pb2.RequestedDimension(key='d', value='1'),

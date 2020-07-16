@@ -205,6 +205,7 @@ class TaskDefTest(BaseTest):
                 ],
                 task_dimensions=[
                     dict(key='a', value='1', expiration=dict(seconds=120)),
+                    dict(key='a', value='2', expiration=dict(seconds=120)),
                     dict(key='pool', value='Chrome'),
                 ]
             )
@@ -227,6 +228,7 @@ class TaskDefTest(BaseTest):
     self.assertEqual(
         slices[0]['properties']['dimensions'], [
             {u'key': u'a', u'value': u'1'},
+            {u'key': u'a', u'value': u'2'},
             {u'key': u'caches', u'value': u'second_cache'},
             {u'key': u'caches', u'value': u'shared_builder_cache'},
             {u'key': u'pool', u'value': u'Chrome'},
@@ -238,6 +240,7 @@ class TaskDefTest(BaseTest):
     self.assertEqual(
         slices[1]['properties']['dimensions'], [
             {u'key': u'a', u'value': u'1'},
+            {u'key': u'a', u'value': u'2'},
             {u'key': u'caches', u'value': u'second_cache'},
             {u'key': u'pool', u'value': u'Chrome'},
         ]
