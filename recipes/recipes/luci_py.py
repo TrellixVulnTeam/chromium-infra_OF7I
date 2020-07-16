@@ -52,18 +52,9 @@ def RunSteps(api):
 
     _step_client_tests(api, changes)
 
-    with api.step.nest('swarming bot'):
-      bot_dir = appeng_dir.join('swarming', 'swarming_bot')
-      _step_run_py_tests(api, bot_dir)
-      # TODO(crbug.com/1017545): enable python3 on Windows.
-      # swarming bot tests run in python3, but it ignores failures on Windows.
-      ok_ret = 'any' if api.platform.is_win else (0,)
-      _step_run_py_tests(api, bot_dir, ok_ret=ok_ret, python3=True)
+    _step_swarming_bot_tests(api, changes)
 
-    # swarming server
-    if api.platform.is_linux:
-      with api.step.nest('swarming'):
-        _step_run_py_tests(api, appeng_dir.join('swarming'))
+    _step_swarming_tests(api, changes)
 
     # swarming ui
     if api.platform.is_linux:
@@ -145,6 +136,36 @@ def _step_client_tests(api, changes):
     _step_run_py_tests(api, luci_dir.join('client'), ok_ret=ok_ret)
     _step_run_py_tests(
         api, luci_dir.join('client'), ok_ret=ok_ret, python3=True)
+
+
+def _step_swarming_tests(api, changes):
+  deps = ['swarming', 'client', 'components']
+  if not any([changes[d] for d in deps]):
+    # skip tests when no changes on the dependencies.
+    return
+  if not api.platform.is_linux:
+    # the server runs only on linux.
+    return
+
+  swarming_dir = api.path['checkout'].join('luci', 'appengine', 'swarming')
+  with api.step.nest('swarming'):
+    _step_run_py_tests(api, swarming_dir)
+
+
+def _step_swarming_bot_tests(api, changes):
+  deps = ['swarming', 'client', 'components']
+  if not any([changes[d] for d in deps]):
+    # skip tests when no changes on the dependencies.
+    return
+
+  bot_dir = api.path['checkout'].join('luci', 'appengine', 'swarming',
+                                      'swarming_bot')
+  with api.step.nest('swarming bot'):
+    _step_run_py_tests(api, bot_dir)
+    # TODO(crbug.com/1017545): enable python3 on Windows.
+    # swarming bot tests run in python3, but it ignores failures on Windows.
+    ok_ret = 'any' if api.platform.is_win else (0,)
+    _step_run_py_tests(api, bot_dir, ok_ret=ok_ret, python3=True)
 
 
 def _step_swarming_ui_tests(api, changes):
