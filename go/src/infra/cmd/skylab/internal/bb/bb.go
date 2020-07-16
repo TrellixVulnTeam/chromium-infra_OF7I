@@ -214,7 +214,17 @@ func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, tags ...stri
 	if err != nil {
 		return nil, errors.Annotate(err, "search builds by tags").Err()
 	}
-	rawBuilds, err := c.searchRawBuilds(ctx, limit, &buildbucket_pb.BuildPredicate{Tags: tps})
+	// TODO(crbug.com/1106461) Extract the Builder predicate from the original
+	// build. The name is hard-coded here only to get past a P0.
+	predicate := buildbucket_pb.BuildPredicate{
+		Builder: &buildbucket_pb.BuilderID{
+			Project: "chromeos",
+			Bucket:  "testplatform",
+			Builder: "cros_test_platform",
+		},
+		Tags: tps,
+	}
+	rawBuilds, err := c.searchRawBuilds(ctx, limit, &predicate)
 	if err != nil {
 		return nil, errors.Annotate(err, "search builds by tags").Err()
 	}
@@ -283,7 +293,8 @@ func splitTagPairs(tags []string) ([]*buildbucket_pb.StringPair, error) {
 // getBuildFields is the list of buildbucket fields that are needed.
 var getBuildFields = []string{
 	"id",
-	// Build details are parsed from the build's output properties.
+	// Build details are parsed from the build's properties.
+	"input.properties",
 	"output.properties",
 	// Build status is used to determine whether the build is complete.
 	"status",
@@ -309,12 +320,7 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 		build.Tags = append(build.Tags, fmt.Sprintf("%s:%s", t.Key, t.Value))
 	}
 
-	if op := from.GetOutput().GetProperties().GetFields(); op != nil {
-		var err error
-		build.Response, build.Responses, err = getBuildResponses(op)
-		if err != nil {
-			return nil, errors.Annotate(err, "extractBuildData").Err()
-		}
+	if op := from.GetInput().GetProperties().GetFields(); op != nil {
 		if reqValue, ok := op["request"]; ok {
 			request, err := structPBToRequest(reqValue)
 			if err != nil {
@@ -322,7 +328,6 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 			}
 			build.Request = request
 		}
-
 		if raw, ok := op["requests"]; ok {
 			r, err := structPBToRequests(raw)
 			if err != nil {
@@ -330,7 +335,14 @@ func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 			}
 			build.Requests = r
 		}
+	}
 
+	if op := from.GetOutput().GetProperties().GetFields(); op != nil {
+		var err error
+		build.Response, build.Responses, err = getBuildResponses(op)
+		if err != nil {
+			return nil, errors.Annotate(err, "extractBuildData").Err()
+		}
 		if raw, ok := op["backfills"]; ok {
 			r, err := structPBToRequests(raw)
 			if err != nil {
