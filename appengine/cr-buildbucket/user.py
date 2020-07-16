@@ -56,6 +56,8 @@ PERM_BUILDS_RESET = _permission('buildbucket.builds.reset')
 
 # Builders permissions.
 
+# See existence and metadata of a builder (but not its builds).
+PERM_BUILDERS_GET = _permission('buildbucket.builders.get')
 # List and search builders (but not builds).
 PERM_BUILDERS_LIST = _permission('buildbucket.builders.list')
 # Set the next build number.
@@ -78,6 +80,7 @@ PERM_TO_MIN_ROLE = {
     # Reader.
     PERM_BUILDS_GET: project_config_pb2.Acl.READER,
     PERM_BUILDS_LIST: project_config_pb2.Acl.READER,
+    PERM_BUILDERS_GET: project_config_pb2.Acl.READER,
     PERM_BUILDERS_LIST: project_config_pb2.Acl.READER,
     PERM_BUCKETS_GET: project_config_pb2.Acl.READER,
 
@@ -230,30 +233,34 @@ ACTION_DESCRIPTIONS = {
         'Set the number for the next build in a builder.',
 }
 
-# Maps an Action to a minimum project_config_pb2.Acl.Role required for the
-# action.
-ACTION_TO_MIN_ROLE = {
-    # Reader.
-    Action.ACCESS_BUCKET: project_config_pb2.Acl.READER,
-    Action.VIEW_BUILD: project_config_pb2.Acl.READER,
-    Action.SEARCH_BUILDS: project_config_pb2.Acl.READER,
-    # Scheduler.
-    Action.ADD_BUILD: project_config_pb2.Acl.SCHEDULER,
-    Action.CANCEL_BUILD: project_config_pb2.Acl.SCHEDULER,
-    # Writer.
-    Action.LEASE_BUILD: project_config_pb2.Acl.WRITER,
-    Action.RESET_BUILD: project_config_pb2.Acl.WRITER,
-    Action.DELETE_SCHEDULED_BUILDS: project_config_pb2.Acl.WRITER,
-    Action.PAUSE_BUCKET: project_config_pb2.Acl.WRITER,
-    Action.SET_NEXT_NUMBER: project_config_pb2.Acl.WRITER,
+# Maps an Action to a permission, assuming Access API is used only by Milo.
+ACTION_TO_PERM = {
+    Action.ADD_BUILD:
+        PERM_BUILDS_ADD,
+    Action.VIEW_BUILD:
+        PERM_BUILDS_GET,
+    Action.LEASE_BUILD:
+        PERM_BUILDS_LEASE,
+    Action.CANCEL_BUILD:
+        PERM_BUILDS_CANCEL,
+    Action.RESET_BUILD:
+        PERM_BUILDS_RESET,
+    Action.SEARCH_BUILDS:
+        PERM_BUILDS_LIST,
+    Action.DELETE_SCHEDULED_BUILDS:
+        PERM_BUCKETS_DELETE_BUILDS,
+    # Milo checks ACCESS_BUCKET exclusively to test visibility of builders.
+    Action.ACCESS_BUCKET:
+        PERM_BUILDERS_GET,
+    Action.PAUSE_BUCKET:
+        PERM_BUCKETS_PAUSE,
+    Action.SET_NEXT_NUMBER:
+        PERM_BUILDERS_SET_NUM,
 }
 
-# Maps a project_config_pb2.Acl.Role to a set of permitted Actions.
-ROLE_TO_ACTIONS = {
-    r:
-    tuple(sorted({a for a, mr in ACTION_TO_MIN_ROLE.iteritems() if r >= mr}))
-    for r in project_config_pb2.Acl.Role.values()
-}
+# Reverse, since it is more useful in the actual implementation.
+PERM_TO_ACTION = {perm: action for action, perm in ACTION_TO_PERM.items()}
+
 
 ################################################################################
 ## Granular actions. API uses these.
@@ -327,11 +334,11 @@ def get_role_async_deprecated(bucket_id):
 @ndb.tasklet
 def permitted_actions_async(bucket_id):
   """Returns a tuple of actions (as Action enums) permitted to the caller."""
-  # TODO(crbug.com/1091604): Implementing in terms of has_perm_async.
-  role = yield get_role_async_deprecated(bucket_id)
-  if role is None:
-    raise ndb.Return(())
-  raise ndb.Return(ROLE_TO_ACTIONS[role])
+  per_perm = yield [has_perm_async(perm, bucket_id) for perm in PERM_TO_ACTION]
+  actions = [
+      PERM_TO_ACTION[perm] for perm, has in zip(PERM_TO_ACTION, per_perm) if has
+  ]
+  raise ndb.Return(tuple(sorted(actions)))
 
 
 @utils.cache

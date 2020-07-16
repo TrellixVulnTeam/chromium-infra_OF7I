@@ -83,17 +83,26 @@ class AccessApiTest(testing.AppengineTestCase):
         {'luci.chromium.try', 'luci.chromium.ci'},
     )
 
+    # Got scheduler actions.
     try_perms = result.permitted['luci.chromium.try']
-    self.assertEqual(len(try_perms.actions), 5)  # Sanity check.
     self.assertEqual(
-        set(try_perms.actions),
-        {action.name for action in user.ROLE_TO_ACTIONS[Acl.SCHEDULER]},
+        try_perms.actions, [
+            u'ACCESS_BUCKET',
+            u'ADD_BUILD',
+            u'CANCEL_BUILD',
+            u'SEARCH_BUILDS',
+            u'VIEW_BUILD',
+        ]
     )
 
+    # Got reader actions.
     ci_perms = result.permitted['luci.chromium.ci']
     self.assertEqual(
-        set(ci_perms.actions),
-        {action.name for action in user.ROLE_TO_ACTIONS[Acl.READER]},
+        ci_perms.actions, [
+            u'ACCESS_BUCKET',
+            u'SEARCH_BUILDS',
+            u'VIEW_BUILD',
+        ]
     )
 
   def test_description(self):
