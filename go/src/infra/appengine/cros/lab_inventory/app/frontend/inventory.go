@@ -684,7 +684,37 @@ func (is *InventoryServerImpl) DeviceConfigsExists(ctx context.Context, req *api
 // GetDeviceManualRepairRecord checks and returns a manual repair record for
 // a given device hostname if it exists.
 func (is *InventoryServerImpl) GetDeviceManualRepairRecord(ctx context.Context, req *api.GetDeviceManualRepairRecordRequest) (rsp *api.GetDeviceManualRepairRecordResponse, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	propFilter := map[string]string{
+		"hostname":     req.Hostname,
+		"repair_state": "STATE_IN_PROGRESS",
+	}
+	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+	if err != nil {
+		return nil, errors.Annotate(err, "Error encountered for get request").Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	// There should only be one record in progress per hostname at a time. User
+	// should complete the record returned.
+	if len(getRes) == 0 {
+		return nil, errors.Reason("No record found").Tag(grpcutil.InvalidArgumentTag).Err()
+	} else if len(getRes) > 1 {
+		err = errors.Reason("More than one active record found; returning first record").Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	// Return first active record found.
+	r := getRes[0]
+	if e := r.Err; e != nil {
+		err = errors.Annotate(e, "Error encountered for record %s", r.Entity.ID).Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	rsp = &api.GetDeviceManualRepairRecordResponse{
+		DeviceRepairRecord: r.Record,
+	}
+	return rsp, err
 }
 
 // CreateDeviceManualRepairRecord adds a new submitted manual repair record for

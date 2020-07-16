@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
@@ -29,7 +30,7 @@ import (
 	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/hwid"
-	"infra/libs/fleet/protos"
+	fleet "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
 )
 
@@ -1121,6 +1122,91 @@ func TestDeviceConfigsExists(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.Exists[0], ShouldBeFalse)
 			So(resp.Exists[1], ShouldBeTrue)
+		})
+	})
+}
+
+func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime int64) *api.DeviceManualRepairRecord {
+	return &api.DeviceManualRepairRecord{
+		Hostname:                        hostname,
+		AssetTag:                        assetTag,
+		RepairTargetType:                api.DeviceManualRepairRecord_TYPE_DUT,
+		RepairState:                     api.DeviceManualRepairRecord_STATE_IN_PROGRESS,
+		BuganizerBugUrl:                 "https://b/12345678",
+		ChromiumBugUrl:                  "https://crbug.com/12345678",
+		DutRepairFailureDescription:     "Mock DUT repair failure description.",
+		DutVerifierFailureDescription:   "Mock DUT verifier failure description.",
+		ServoRepairFailureDescription:   "Mock Servo repair failure description.",
+		ServoVerifierFailureDescription: "Mock Servo verifier failure description.",
+		Diagnosis:                       "Mock diagnosis.",
+		RepairProcedure:                 "Mock repair procedure.",
+		ManualRepairActions: []api.DeviceManualRepairRecord_ManualRepairAction{
+			api.DeviceManualRepairRecord_ACTION_FIX_SERVO,
+			api.DeviceManualRepairRecord_ACTION_FIX_YOSHI_CABLE,
+			api.DeviceManualRepairRecord_ACTION_VISUAL_INSPECTION,
+			api.DeviceManualRepairRecord_ACTION_REIMAGE_DUT,
+		},
+		IssueFixed:    true,
+		UserLdap:      "testing-account",
+		TimeTaken:     15,
+		CreatedTime:   &timestamp.Timestamp{Seconds: createdTime, Nanos: 0},
+		UpdatedTime:   &timestamp.Timestamp{Seconds: 222, Nanos: 0},
+		CompletedTime: &timestamp.Timestamp{Seconds: 222, Nanos: 0},
+	}
+}
+
+func TestGetDeviceManualRepairRecord(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	ds.GetTestable(ctx).Consistent(true)
+
+	record1 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 1)
+	record2 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-222", 1)
+	record3 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-333", 1)
+	records := []*api.DeviceManualRepairRecord{record1, record2, record3}
+
+	// Set up records in datastore
+	datastore.AddDeviceManualRepairRecords(ctx, records)
+
+	Convey("Test get device manual repair records", t, func() {
+		Convey("Get record using single hostname", func() {
+			req := &api.GetDeviceManualRepairRecordRequest{
+				Hostname: "chromeos-getRecords-aa",
+			}
+			resp, err := tf.Inventory.GetDeviceManualRepairRecord(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.DeviceRepairRecord, ShouldNotBeNil)
+		})
+		Convey("Get first record when hostname has multiple active records", func() {
+			req := &api.GetDeviceManualRepairRecordRequest{
+				Hostname: "chromeos-getRecords-bb",
+			}
+			resp, err := tf.Inventory.GetDeviceManualRepairRecord(tf.C, req)
+			So(resp.DeviceRepairRecord, ShouldNotBeNil)
+			So(resp.DeviceRepairRecord.GetAssetTag(), ShouldEqual, "getRecords-222")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "More than one active record found")
+		})
+		Convey("Get record using non-existent hostname", func() {
+			req := &api.GetDeviceManualRepairRecordRequest{
+				Hostname: "chromeos-getRecords-cc",
+			}
+			resp, err := tf.Inventory.GetDeviceManualRepairRecord(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "No record found")
+		})
+		Convey("Get record using empty hostname", func() {
+			req := &api.GetDeviceManualRepairRecordRequest{
+				Hostname: "",
+			}
+			resp, err := tf.Inventory.GetDeviceManualRepairRecord(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "No record found")
 		})
 	})
 }
