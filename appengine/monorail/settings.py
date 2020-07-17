@@ -191,6 +191,7 @@ user_cache_max_size = 150 * 1000
 # sometimes useful to run a tainted version on staging that has a separate
 # memcache namespace.  E.g., os.environ.get('CURRENT_VERSION_ID')
 memcache_namespace = None  # Should be None when committed.
+redis_namespace = None
 
 # IP address for Redis instance
 redis_host = '10.150.170.251'

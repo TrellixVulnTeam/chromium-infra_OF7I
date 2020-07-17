@@ -21,7 +21,9 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import json
 import logging
+import redis
 
 from protorpc import protobuf
 
@@ -176,7 +178,7 @@ class ValueCentricRamCache(RamCache):
 
 
 class AbstractTwoLevelCache(object):
-  """A class to manage both RAM and memcache to retrieve objects.
+  """A class to manage both RAM and secondary-caching layer to retrieve objects.
 
   Subclasses must implement the FetchItems() method to get objects from
   the database when both caches miss.
@@ -185,21 +187,37 @@ class AbstractTwoLevelCache(object):
   # When loading a huge number of issues from the database, do it in chunks
   # so as to avoid timeouts.
   _FETCH_BATCH_SIZE = 10000
+  redis_cnxn_pool = None
 
   def __init__(
-      self, cache_manager, kind, memcache_prefix, pb_class, max_size=None):
+      self,
+      cache_manager,
+      kind,
+      prefix,
+      pb_class,
+      max_size=None,
+      use_redis=False,
+      redis_client=None):
+
     self.cache = self._MakeCache(cache_manager, kind, max_size=max_size)
-    self.memcache_prefix = memcache_prefix
+    self.prefix = prefix
     self.pb_class = pb_class
+
+    if use_redis:
+      self.redis_client = redis_client or self._CreateRedisClient()
+      self.use_redis = self._verifyRedisConnection()
+    else:
+      self.redis_client = None
+      self.use_redis = False
 
   def _MakeCache(self, cache_manager, kind, max_size=None):
     """Make the RAM cache and register it with the cache_manager."""
     return RamCache(cache_manager, kind, max_size=max_size)
 
   def CacheItem(self, key, value):
-    """Add the given key-value pair to RAM and memcache."""
+    """Add the given key-value pair to RAM and L2 cache."""
     self.cache.CacheItem(key, value)
-    self._WriteToMemcache({key: value})
+    self._WriteToCache({key: value})
 
   def HasItem(self, key):
     """Return True if the given key is in the RAM cache."""
@@ -216,14 +234,14 @@ class AbstractTwoLevelCache(object):
       if self.cache.HasItem(key):
         return self.cache.GetItem(key)
 
-    # Note: We could check memcache here too, but the round-trips to memcache
-    # are kind of slow.  And, getting too many hits from memcache actually
+    # Note: We could check L2 here too, but the round-trips to L2
+    # are kind of slow. And, getting too many hits from L2 actually
     # fills our RAM cache too quickly and could lead to thrashing.
 
     return None
 
   def GetAll(self, cnxn, keys, use_cache=True, **kwargs):
-    """Get values for the given keys from RAM, memcache, or the DB.
+    """Get values for the given keys from RAM, the L2 cache, or the DB.
 
     Args:
       cnxn: connection to the database.
@@ -242,9 +260,9 @@ class AbstractTwoLevelCache(object):
 
     if missed_keys:
       if use_cache:
-        memcache_hits, missed_keys = self._ReadFromMemcache(missed_keys)
-        result_dict.update(memcache_hits)
-        self.cache.CacheAll(memcache_hits)
+        cache_hits, missed_keys = self._ReadFromCache(missed_keys)
+        result_dict.update(cache_hits)
+        self.cache.CacheAll(cache_hits)
 
     while missed_keys:
       missed_batch = missed_keys[:self._FETCH_BATCH_SIZE]
@@ -253,85 +271,10 @@ class AbstractTwoLevelCache(object):
       result_dict.update(retrieved_dict)
       if use_cache:
         self.cache.CacheAll(retrieved_dict)
-        self._WriteToMemcache(retrieved_dict)
+        self._WriteToCache(retrieved_dict)
 
     still_missing_keys = [key for key in keys if key not in result_dict]
     return result_dict, still_missing_keys
-
-  def _ReadFromMemcache(self, keys):
-    """Read the given keys from memcache, return {key: value}, missing_keys."""
-    memcache_hits = {}
-    cached_dict = memcache.get_multi(
-        [self._KeyToStr(key) for key in keys], key_prefix=self.memcache_prefix,
-        namespace=settings.memcache_namespace)
-
-    for key_str, serialized_value in cached_dict.items():
-      value = self._StrToValue(serialized_value)
-      key = self._StrToKey(key_str)
-      if self._CheckCompatibility(value):
-        memcache_hits[key] = value
-        self.cache.CacheItem(key, value)
-
-    still_missing_keys = [key for key in keys if key not in memcache_hits]
-    logging.info(
-        'decoded %d values from memcache %s, missing %d',
-        len(memcache_hits), self.memcache_prefix, len(still_missing_keys))
-    return memcache_hits, still_missing_keys
-
-  # pylint: disable=unused-argument
-  def _CheckCompatibility(self, value):
-    """Subclasses can check if value is usable by the current app version."""
-    return True
-
-  def _WriteToMemcache(self, retrieved_dict):
-    """Write entries for each key-value pair to memcache.  Encode PBs."""
-    strs_to_cache = {
-        self._KeyToStr(key): self._ValueToStr(value)
-        for key, value in retrieved_dict.items()}
-
-    try:
-      memcache.add_multi(
-          strs_to_cache, key_prefix=self.memcache_prefix,
-          time=framework_constants.MEMCACHE_EXPIRATION,
-          namespace=settings.memcache_namespace)
-    except ValueError as e:
-      # If memcache does not accept the values, ensure that no stale
-      # values are left, then bail out.
-      logging.error('Got memcache error: %r', e)
-      memcache.delete_multi(
-          list(strs_to_cache.keys()), seconds=5,
-          key_prefix=self.memcache_prefix,
-          namespace=settings.memcache_namespace)
-      return
-
-    logging.info('cached batch of %d values in memcache %s',
-                 len(retrieved_dict), self.memcache_prefix)
-
-  def _KeyToStr(self, key):
-    """Convert our int IDs to strings for use as memcache keys."""
-    return str(key)
-
-  def _StrToKey(self, key_str):
-    """Convert memcache keys back to the ints that we use as IDs."""
-    return int(key_str)
-
-  def _ValueToStr(self, value):
-    """Serialize an application object so that it can be stored in memcache."""
-    if not self.pb_class:
-      return value
-    elif self.pb_class == int:
-      return str(value)
-    else:
-      return protobuf.encode_message(value)
-
-  def _StrToValue(self, serialized_value):
-    """Deserialize an application object that was stored in memcache."""
-    if not self.pb_class:
-      return serialized_value
-    elif self.pb_class == int:
-      return int(serialized_value)
-    else:
-      return protobuf.decode_message(self.pb_class, serialized_value)
 
   def LocalInvalidateAll(self):
     self.cache.LocalInvalidateAll()
@@ -340,24 +283,18 @@ class AbstractTwoLevelCache(object):
     self.cache.LocalInvalidate(key)
 
   def InvalidateKeys(self, cnxn, keys):
-    """Drop the given keys from both RAM and memcache."""
+    """Drop the given keys from both RAM and L2 cache."""
     self.cache.InvalidateKeys(cnxn, keys)
-    memcache.delete_multi(
-        [self._KeyToStr(key) for key in keys], seconds=5,
-        key_prefix=self.memcache_prefix,
-        namespace=settings.memcache_namespace)
+    self._DeleteFromCache(keys)
 
   def InvalidateAllKeys(self, cnxn, keys):
-    """Drop the given keys from memcache and invalidate all keys in RAM.
+    """Drop the given keys from L2 cache and invalidate all keys in RAM.
 
     Useful for avoiding inserting many rows into the Invalidate table when
     invalidating a large group of keys all at once. Only use when necessary.
     """
     self.cache.InvalidateAll(cnxn)
-    memcache.delete_multi(
-        [self._KeyToStr(key) for key in keys], seconds=5,
-        key_prefix=self.memcache_prefix,
-        namespace=settings.memcache_namespace)
+    self._DeleteFromCache(keys)
 
   def GetAllAlreadyInRam(self, keys):
     """Look only in RAM to return {key: values}, missed_keys."""
@@ -365,9 +302,281 @@ class AbstractTwoLevelCache(object):
     return result_dict, missed_keys
 
   def InvalidateAllRamEntries(self, cnxn):
-    """Drop all RAM cache entries. It will refill as needed from memcache."""
+    """Drop all RAM cache entries. It will refill as needed from L2 cache."""
     self.cache.InvalidateAll(cnxn)
 
   def FetchItems(self, cnxn, keys, **kwargs):
-    """On RAM and memcache miss, hit the database."""
+    """On RAM and L2 cache miss, hit the database."""
     raise NotImplementedError()
+
+  def _ReadFromCache(self, keys):
+    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[str]
+    """Reads a list of keys from secondary caching service.
+
+    Redis will be used if Redis is enabled and connection is valid;
+    otherwise, memcache will be used.
+
+    Args:
+      keys: List of integer keys to look up in L2 cache.
+
+    Returns:
+      A pair: hits, misses.  Where hits is {key: value} and misses is
+      a list of any keys that were not found anywhere.
+    """
+    if self.use_redis:
+      return self._ReadFromRedis(keys)
+    else:
+      return self._ReadFromMemcache(keys)
+
+  def _WriteToCache(self, retrieved_dict):
+    # type: (Mapping[int, Any]) -> None
+    """Writes a set of key-value pairs to secondary caching service.
+
+    Redis will be used if Redis is enabled and connection is valid;
+    otherwise, memcache will be used.
+
+    Args:
+      retrieved_dict: Dictionary contains pairs of key-values to write to cache.
+    """
+    if self.use_redis:
+      return self._WriteToRedis(retrieved_dict)
+    else:
+      return self._WriteToMemcache(retrieved_dict)
+
+  def _DeleteFromCache(self, keys):
+    # type: (Sequence[int]) -> None
+    """Selects which cache to delete from.
+
+    Redis will be used if Redis is enabled and connection is valid;
+    otherwise, memcache will be used.
+
+    Args:
+      keys: List of integer keys to delete from cache.
+    """
+    if self.use_redis:
+      return self._DeleteFromRedis(keys)
+    else:
+      return self._DeleteFromMemcache(keys)
+
+  def _ReadFromMemcache(self, keys):
+    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[str]
+    """Read the given keys from memcache, return {key: value}, missing_keys."""
+    cache_hits = {}
+    cached_dict = memcache.get_multi(
+        [self._KeyToStr(key) for key in keys],
+        key_prefix=self.prefix,
+        namespace=settings.memcache_namespace)
+
+    for key_str, serialized_value in cached_dict.items():
+      value = self._StrToValue(serialized_value)
+      key = self._StrToKey(key_str)
+      if self._CheckCompatibility(value):
+        cache_hits[key] = value
+        self.cache.CacheItem(key, value)
+
+    still_missing_keys = [key for key in keys if key not in cache_hits]
+    logging.info(
+        'decoded %d values from memcache %s, missing %d', len(cache_hits),
+        self.prefix, len(still_missing_keys))
+    return cache_hits, still_missing_keys
+
+  def _WriteToMemcache(self, retrieved_dict):
+    # type: (Mapping[int, int]) -> None
+    """Write entries for each key-value pair to memcache.  Encode PBs."""
+    strs_to_cache = {
+        self._KeyToStr(key): self._ValueToStr(value)
+        for key, value in retrieved_dict.items()}
+
+    try:
+      memcache.add_multi(
+          strs_to_cache,
+          key_prefix=self.prefix,
+          time=framework_constants.CACHE_EXPIRATION,
+          namespace=settings.memcache_namespace)
+    except ValueError as identifier:
+      # If memcache does not accept the values, ensure that no stale
+      # values are left, then bail out.
+      logging.error('Got memcache error: %r', identifier)
+      self._DeleteFromMemcache(list(strs_to_cache.keys()))
+      return
+    logging.info(
+        'cached batch of %d values in memcache %s', len(retrieved_dict),
+        self.prefix)
+
+  def _DeleteFromMemcache(self, keys):
+    # type: (Sequence[str]) -> None
+    """Delete key-values from memcache. """
+    memcache.delete_multi(
+        [self._KeyToStr(key) for key in keys],
+        seconds=5,
+        key_prefix=self.prefix,
+        namespace=settings.memcache_namespace)
+
+  # pylint: disable=unused-argument
+  def _CheckCompatibility(self, value):
+    """Subclasses can check if value is usable by the current app version."""
+    return True
+
+  def _CreateRedisClient(self):
+    # type: () -> redis.Redis
+    """Creates a Redis object which implements Redis protocol and connection.
+
+    Returns:
+      redis.Redis object initialized with a connection pool.
+      None on failure.
+    """
+    try:
+      if not settings.redis_host:
+        logging.error(
+            'redis_host is not assigned an IP address in settings.py. '
+            'Defaulting to memcache.')
+        return None
+      if not AbstractTwoLevelCache.redis_cnxn_pool:
+        AbstractTwoLevelCache.redis_cnxn_pool = redis.BlockingConnectionPool(
+            host=settings.redis_host,
+            port=settings.redis_port,
+            max_connections=1,
+            timeout=2)
+      return redis.Redis(connection_pool=AbstractTwoLevelCache.redis_cnxn_pool)
+    except redis.RedisError as identifier:
+      logging.error(
+          'Redis error occurred while connecting to server: %s', identifier)
+      return None
+
+  def _verifyRedisConnection(self):
+    # type: () -> Bool
+    """Checks the connection to Redis to ensure Redis-server can be accessed.
+
+    Returns:
+      True when connection to server is valid.
+      False when an error occurs or redis_client is None.
+    """
+    if not self.redis_client:
+      return False
+    try:
+      self.redis_client.ping()
+      return True
+    except redis.RedisError as identifier:
+      logging.error(
+          'Redis error occurred while connecting to server: %s', identifier)
+      return False
+
+  def _WriteToRedis(self, retrieved_dict):
+    # type: (Mapping[int, Any]) -> None
+    """Write entries for each key-value pair to Redis.  Encode PBs.
+
+    Args:
+      retrieved_dict: Dictionary of key-value pairs to write to Redis.
+    """
+    try:
+      for key, value in retrieved_dict.items():
+        redis_key = self._FormatRedisKey(key)
+        redis_value = self._ValueToStr(value)
+
+        self.redis_client.setex(
+            redis_key, framework_constants.CACHE_EXPIRATION, redis_value)
+    except redis.RedisError as identifier:
+      logging.error(
+          'Redis error occurred during write operation: %s', identifier)
+      self._DeleteFromRedis(list(retrieved_dict.keys()))
+      return
+    logging.info(
+        'cached batch of %d values in redis %s', len(retrieved_dict),
+        self.prefix)
+
+  def _ReadFromRedis(self, keys):
+    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[str]
+    """Read the given keys from Redis, return {key: value}, missing keys.
+
+    Args:
+      keys: List of integer keys to read from Redis.
+
+    Returns:
+      A pair: hits, misses.  Where hits is {key: value} and misses is
+      a list of any keys that were not found anywhere.
+    """
+    cache_hits = {}
+    missing_keys = []
+    try:
+      values_list = self.redis_client.mget(
+          [self._FormatRedisKey(key) for key in keys])
+    except redis.RedisError as identifier:
+      logging.error('Redis error occured during read operation: %s', identifier)
+      values_list = [None] * len(keys)
+
+    for key, serialized_value in zip(keys, values_list):
+      if serialized_value:
+        value = self._StrToValue(serialized_value)
+        cache_hits[key] = value
+        self.cache.CacheItem(key, value)
+      else:
+        missing_keys.append(key)
+    logging.info(
+        'decoded %d values from redis %s, missing %d', len(cache_hits),
+        self.prefix, len(missing_keys))
+    return cache_hits, missing_keys
+
+  def _DeleteFromRedis(self, keys):
+    # type: (Sequence[int]) -> None
+    """Delete key-values from redis.
+
+    Args:
+      keys: List of integer keys to delete.
+    """
+    try:
+      self.redis_client.delete(*[self._FormatRedisKey(key) for key in keys])
+    except redis.RedisError as identifier:
+      logging.error(
+          'Redis error occurred during delete operation %s', identifier)
+
+  def _FormatRedisKey(self, key, namespace=settings.redis_namespace):
+    # type: (int, str) -> str
+    """Converts key to string and prepends key with namespace and prefix.
+
+    Args:
+      key: Integer key.
+      namespace: Optional parameter to use a different namespace.
+
+    Returns:
+      Formatted key with the format: "namespace:prefix:key".
+    """
+    if not namespace:
+      return self.prefix + str(key)
+    else:
+      return namespace + self.prefix + str(key)
+
+  def _KeyToStr(self, key):
+    # type: (int) -> str
+    """Convert our int IDs to strings for use as memcache keys."""
+    return str(key)
+
+  def _StrToKey(self, key_str):
+    # type: (str) -> int
+    """Convert memcache keys back to the ints that we use as IDs."""
+    return int(key_str)
+
+  def _ValueToStr(self, value):
+    # type: (Any) -> str
+    """Serialize an application object so that it can be stored in L2 cache."""
+    if not self.pb_class:
+      if self.use_redis:
+        return json.dumps(value)
+      else:
+        return value
+    elif self.pb_class == int:
+      return str(value)
+    else:
+      return protobuf.encode_message(value)
+
+  def _StrToValue(self, serialized_value):
+    # type: (str) -> Any
+    """Deserialize L2 cache string into an application object."""
+    if not self.pb_class:
+      if self.use_redis:
+        return json.loads(serialized_value)
+      else:
+        return serialized_value
+    elif self.pb_class == int:
+      return int(serialized_value)
+    else:
+      return protobuf.decode_message(self.pb_class, serialized_value)

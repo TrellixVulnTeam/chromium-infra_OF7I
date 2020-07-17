@@ -55,8 +55,7 @@ class TemplateSetTwoLevelCache(caches.AbstractTwoLevelCache):
 
   def __init__(self, cache_manager, template_service):
     super(TemplateSetTwoLevelCache, self).__init__(
-        cache_manager, 'project', memcache_prefix='templateset:',
-        pb_class=None)
+        cache_manager, 'project', prefix='templateset:', pb_class=None)
     self.template_service = template_service
 
   def _MakeCache(self, cache_manager, kind, max_size=None):
@@ -88,7 +87,9 @@ class TemplateDefTwoLevelCache(caches.AbstractTwoLevelCache):
   """
   def __init__(self, cache_manager, template_service):
     super(TemplateDefTwoLevelCache, self).__init__(
-        cache_manager, 'template', memcache_prefix='templatedef:',
+        cache_manager,
+        'template',
+        prefix='templatedef:',
         pb_class=tracker_pb2.TemplateDef)
     self.template_service = template_service
 

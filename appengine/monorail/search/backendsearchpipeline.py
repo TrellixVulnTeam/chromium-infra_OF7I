@@ -269,7 +269,7 @@ def _GetQueryResultIIDs(
     query_ast.conjunctions and
     fulltext_helpers.BuildFTSQuery(
       query_ast.conjunctions[0], tracker_fulltext.ISSUE_FULLTEXT_FIELDS))
-  expiration = framework_constants.MEMCACHE_EXPIRATION
+  expiration = framework_constants.CACHE_EXPIRATION
   if is_fulltext_query:
     expiration = framework_constants.FULLTEXT_MEMCACHE_EXPIRATION
 
@@ -309,15 +309,17 @@ def _GetQueryResultIIDs(
       key = '%d;%d' % (pid, shard_id)
       if key not in timestamps_for_projects:
         memcache.set(
-            key, invalidation_timestep,
-            time=framework_constants.MEMCACHE_EXPIRATION,
+            key,
+            invalidation_timestep,
+            time=framework_constants.CACHE_EXPIRATION,
             namespace=settings.memcache_namespace)
   else:
     key = 'all;%d' % shard_id
     if key not in timestamps_for_projects:
       memcache.set(
-          key, invalidation_timestep,
-          time=framework_constants.MEMCACHE_EXPIRATION,
+          key,
+          invalidation_timestep,
+          time=framework_constants.CACHE_EXPIRATION,
           namespace=settings.memcache_namespace)
 
   return result_iids, search_limit_reached, error

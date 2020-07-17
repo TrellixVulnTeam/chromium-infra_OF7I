@@ -23,7 +23,7 @@ SECS_PER_YEAR = SECS_PER_DAY * 365
 # get any unexpected super-old values as we make code changes over the
 # years.   Also, searches can contain date terms like [opened<today-1]
 # that would become wrong if cached for a long time.
-MEMCACHE_EXPIRATION = 6 * SECS_PER_HOUR
+CACHE_EXPIRATION = 6 * SECS_PER_HOUR
 
 # Fulltext indexing happens asynchronously and we get no notification
 # when the indexing operation has completed.  So, when we cache searches

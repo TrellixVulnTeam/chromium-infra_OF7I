@@ -134,10 +134,13 @@ class LabelRowTwoLevelCache(caches.AbstractTwoLevelCache):
     """Drop the given keys from both RAM and memcache."""
     self.cache.InvalidateKeys(cnxn, project_ids)
     memcache.delete_multi(
-        [self._KeyToStr((project_id, shard_id))
-         for project_id in project_ids
-         for shard_id in range(0, LABEL_ROW_SHARDS)], seconds=5,
-        key_prefix=self.memcache_prefix,
+        [
+            self._KeyToStr((project_id, shard_id))
+            for project_id in project_ids
+            for shard_id in range(0, LABEL_ROW_SHARDS)
+        ],
+        seconds=5,
+        key_prefix=self.prefix,
         namespace=settings.memcache_namespace)
 
   def InvalidateAllKeys(self, cnxn, project_ids):
@@ -148,10 +151,13 @@ class LabelRowTwoLevelCache(caches.AbstractTwoLevelCache):
     """
     self.cache.InvalidateAll(cnxn)
     memcache.delete_multi(
-        [self._KeyToStr((project_id, shard_id))
-         for project_id in project_ids
-         for shard_id in range(0, LABEL_ROW_SHARDS)], seconds=5,
-        key_prefix=self.memcache_prefix,
+        [
+            self._KeyToStr((project_id, shard_id))
+            for project_id in project_ids
+            for shard_id in range(0, LABEL_ROW_SHARDS)
+        ],
+        seconds=5,
+        key_prefix=self.prefix,
         namespace=settings.memcache_namespace)
 
   def _KeyToStr(self, key):
