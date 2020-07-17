@@ -503,6 +503,7 @@ SPECS.update({
         UniversalSource('portpicker', '1.3.0'),
         UniversalSource('portpicker', '1.3.1'),
         UniversalSource('protobuf-to-dict', '0.1.0'),
+        UniversalSource('pybrctl', '0.1.3'),
         UniversalSource('pycparser', '2.17'),
         UniversalSource('pycparser', '2.19'),
         UniversalSource('pyftpdlib', '0.7.0'),
