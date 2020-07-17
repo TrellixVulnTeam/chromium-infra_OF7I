@@ -433,6 +433,44 @@ class FeaturesServicerTest(unittest.TestCase):
 
     self.assertEqual(0, len(response.hotlists))
 
+  def testListHotlistsByIssue_NonProjectHotlists(self):
+    hotlist = self.services.features.CreateHotlist(
+        self.cnxn,
+        'Fake-Hotlist',
+        'Summary',
+        'Description',
+        owner_ids=[111],
+        editor_ids=[222])
+    spam_hotlist = self.services.features.CreateHotlist(
+        self.cnxn,
+        'Spam-Hotlist',
+        'Summary',
+        'Description',
+        owner_ids=[444],
+        editor_ids=[])
+    another_hotlist = self.services.features.CreateHotlist(
+        self.cnxn,
+        'Another-Hotlist',
+        'Summary',
+        'Description',
+        owner_ids=[111],
+        editor_ids=[])
+    self.AddIssueToHotlist(hotlist.hotlist_id)
+    self.AddIssueToHotlist(spam_hotlist.hotlist_id)
+    self.AddIssueToHotlist(another_hotlist.hotlist_id)
+
+    issue_ref = common_pb2.IssueRef(project_name='proj', local_id=1)
+    request = features_pb2.ListHotlistsByIssueRequest(issue=issue_ref)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester='foo@example.com')
+    response = self.CallWrapped(
+        self.features_svcr.ListHotlistsByIssue, mc, request)
+
+    self.assertEqual(2, len(response.hotlists))
+    self.assertEqual('Fake-Hotlist', response.hotlists[0].name)
+    self.assertEqual('Another-Hotlist', response.hotlists[1].name)
+
   def testListRecentlyVisitedHotlists(self):
     hotlists = [
         self.services.features.CreateHotlist(

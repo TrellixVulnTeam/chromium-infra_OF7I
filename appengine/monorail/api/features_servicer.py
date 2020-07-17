@@ -63,6 +63,8 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
 
   @monorail_servicer.PRPCMethod
   def ListHotlistsByIssue(self, mc, request):
+    # type: (MonorailConnection, proto.features.ListHotlistsByIssueRequest) ->
+    #     proto.features.ListHotlistsByIssueResponse
     """Return the hotlists the given issue is part of."""
     issue_id = converters.IngestIssueRefs(
         mc.cnxn, [request.issue], self.services)[0]
@@ -72,15 +74,27 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       mc.LookupLoggedInUserPerms(project)
       hotlists = we.ListHotlistsByIssue(issue_id)
 
+    # Reduce spam by only showing hotlists that belong to a project member.
+    project_hotlists = [
+        hotlist for hotlist in hotlists if framework_bizobj.UserIsInProject(
+            project, set(hotlist.owner_ids + hotlist.editor_ids)) or
+        features_bizobj.UserIsInHotlist(hotlist, mc.auth.effective_ids)
+    ]
+    if project_hotlists and len(hotlists) / len(project_hotlists) > 10:
+      logging.warning(
+          'Unusual hotlist activity in %s:%s' % request.issue.project_name,
+          issue_id)
+
     with mc.profiler.Phase('making user views'):
-      users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
+      users_involved = features_bizobj.UsersInvolvedInHotlists(project_hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
       framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
 
     converted_hotlists = [
         converters.ConvertHotlist(hotlist, users_by_id)
-        for hotlist in hotlists]
+        for hotlist in project_hotlists
+    ]
 
     result = features_pb2.ListHotlistsByIssueResponse(
         hotlists=converted_hotlists)
