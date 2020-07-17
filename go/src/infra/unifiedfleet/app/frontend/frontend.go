@@ -32,12 +32,14 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 	switch rpcName {
 	case "ListMachines", "DeleteMachine":
 		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-privileged-access")
-	case "GetMachine":
+	case "GetMachine", "GetState":
 		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-readonly-access")
 	case "CreateMachineLSE", "UpdateMachineLSE":
 		group = append(group, "chromeos-inventory-setup-label-write-access")
 	case "DeleteMachineLSE":
 		group = append(group, "chromeos-inventory-privileged-access")
+	case "UpdateState":
+		group = append(group, "chromeos-inventory-status-label-write-access")
 	}
 	allow, err := auth.IsMember(ctx, group...)
 	if err != nil {
