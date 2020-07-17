@@ -164,8 +164,10 @@ func (c *Client) WaitForBuild(ctx context.Context, ID int64) (*Build, error) {
 
 // Build contains selected state information from a fetched buildbucket Build.
 type Build struct {
-	ID     int64
-	Status buildbucket_pb.Status
+	ID      int64
+	Builder *buildbucket_pb.BuilderID
+	Status  buildbucket_pb.Status
+
 	// Tags strings of the form "key:value"
 	Tags []string
 
@@ -206,7 +208,7 @@ func (c *Client) GetBuild(ctx context.Context, ID int64) (*Build, error) {
 // SearchBuildsByTags searches for all buildbucket builds with the given tags.
 //
 // SearchBuildsByTags returns at most limit results.
-func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, tags ...string) ([]*Build, error) {
+func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, builder *buildbucket_pb.BuilderID, tags ...string) ([]*Build, error) {
 	if len(tags) == 0 {
 		return nil, errors.Reason("must provide at least one tag").Err()
 	}
@@ -214,17 +216,10 @@ func (c *Client) SearchBuildsByTags(ctx context.Context, limit int, tags ...stri
 	if err != nil {
 		return nil, errors.Annotate(err, "search builds by tags").Err()
 	}
-	// TODO(crbug.com/1106461) Extract the Builder predicate from the original
-	// build. The name is hard-coded here only to get past a P0.
-	predicate := buildbucket_pb.BuildPredicate{
-		Builder: &buildbucket_pb.BuilderID{
-			Project: "chromeos",
-			Bucket:  "testplatform",
-			Builder: "cros_test_platform",
-		},
-		Tags: tps,
-	}
-	rawBuilds, err := c.searchRawBuilds(ctx, limit, &predicate)
+	rawBuilds, err := c.searchRawBuilds(ctx, limit, &buildbucket_pb.BuildPredicate{
+		Builder: builder,
+		Tags:    tps,
+	})
 	if err != nil {
 		return nil, errors.Annotate(err, "search builds by tags").Err()
 	}
@@ -291,8 +286,10 @@ func splitTagPairs(tags []string) ([]*buildbucket_pb.StringPair, error) {
 }
 
 // getBuildFields is the list of buildbucket fields that are needed.
+// See go/buildbucket-proto for the list of all fields.
 var getBuildFields = []string{
 	"id",
+	"builder",
 	// Build details are parsed from the build's properties.
 	"input.properties",
 	"output.properties",
@@ -311,8 +308,9 @@ func getSearchBuildsFields() []string {
 
 func extractBuildData(from *buildbucket_pb.Build) (*Build, error) {
 	build := Build{
-		ID:     from.Id,
-		Status: from.GetStatus(),
+		ID:      from.Id,
+		Builder: from.GetBuilder(),
+		Status:  from.GetStatus(),
 	}
 
 	build.Tags = make([]string, 0, len(from.GetTags()))
