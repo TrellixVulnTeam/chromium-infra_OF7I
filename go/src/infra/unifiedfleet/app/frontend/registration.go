@@ -425,43 +425,36 @@ func (fs *FleetServerImpl) ImportDatacenters(ctx context.Context, req *api.Impor
 		return nil, invalidConfigServiceName.Err()
 	}
 
-	logging.Debugf(ctx, "Importing datacenters from luci-config: %s", configSource.FileName)
+	logging.Debugf(ctx, "Importing the datacenter config file from luci-config: %s", configSource.FileName)
 	cfgInterface := fs.newCfgInterface(ctx)
-	fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
+	c, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), datacenterConfigFile, false)
 	if err != nil {
-		return nil, configServiceFailureStatus.Err()
+		return nil, err
 	}
-	dc := &crimsonconfig.Datacenter{}
-	if err := luciproto.UnmarshalTextML(fetchedConfigs.Content, dc); err != nil {
-		return nil, invalidConfigFileContentStatus.Err()
+	dcs := &crimsonconfig.Datacenters{}
+	if err := luciproto.UnmarshalTextML(c.Content, dcs); err != nil {
+		return nil, err
 	}
-	logging.Debugf(ctx, "processing datacenter: %s", dc.GetName())
+	datacenters := make([]*crimsonconfig.Datacenter, 0)
+	for _, dc := range dcs.GetDatacenter() {
+		logging.Debugf(ctx, "Importing datacenters from luci-config: %s", dc)
+		fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), dc, false)
+		if err != nil {
+			return nil, configServiceFailureStatus.Err()
+		}
+		cdc := &crimsonconfig.Datacenter{}
+		if err := luciproto.UnmarshalTextML(fetchedConfigs.Content, cdc); err != nil {
+			return nil, invalidConfigFileContentStatus.Err()
+		}
+		datacenters = append(datacenters, cdc)
+	}
 
-	pageSize := fs.getImportPageSize()
-	res, err := controller.ImportDatacenter(ctx, dc, pageSize)
+	res, err := controller.ImportDatacenter(ctx, datacenters, fs.getImportPageSize())
 	s := processImportDatastoreRes(res, err)
 	if s.Err() != nil {
 		return s.Proto(), s.Err()
 	}
 	return successStatus.Proto(), nil
-}
-
-// ImportDatacenterConfigs imports the datacenter configs
-//
-// It's not an exposed RPC.
-func (fs *FleetServerImpl) ImportDatacenterConfigs(ctx context.Context) ([]string, error) {
-	logging.Debugf(ctx, "Importing the default datacenter config file from luci-config: %s", datacenterConfigFile)
-	cfgInterface := fs.newCfgInterface(ctx)
-	c, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(DefaultMachineDBService), datacenterConfigFile, false)
-	if err != nil {
-		return nil, err
-	}
-	dcs := &crimsonconfig.Datacenters{}
-	logging.Debugf(ctx, "%#v", c)
-	if err := luciproto.UnmarshalTextML(c.Content, dcs); err != nil {
-		return nil, err
-	}
-	return dcs.GetDatacenter(), nil
 }
 
 // CreateKVM creates kvm entry in database.

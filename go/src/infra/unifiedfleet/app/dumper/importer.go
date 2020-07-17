@@ -7,10 +7,10 @@ package dumper
 import (
 	"context"
 
+	"go.chromium.org/luci/common/logging"
+
 	api "infra/unifiedfleet/api/v1/rpc"
 	frontend "infra/unifiedfleet/app/frontend"
-
-	"go.chromium.org/luci/common/logging"
 )
 
 const machineDBHost = "machine-db.appspot.com"
@@ -48,12 +48,18 @@ func importCrimson(ctx context.Context) error {
 	}
 	logging.Debugf(ctx, "Finish importing vlans: %#v", respVlan)
 
-	logging.Debugf(ctx, "Reading datacenter configs")
-	dcs, err := sv.ImportDatacenterConfigs(ctx)
-	for _, dc := range dcs {
-		if err := importDCHelper(ctx, sv, dc); err != nil {
-			return err
-		}
+	logging.Debugf(ctx, "Reading datacenters")
+	respDC, err := sv.ImportDatacenters(ctx, &api.ImportDatacentersRequest{
+		Source: &api.ImportDatacentersRequest_ConfigSource{
+			ConfigSource: &api.ConfigSource{
+				ConfigServiceName: frontend.DefaultMachineDBService,
+				FileName:          "datacenters.cfg",
+			},
+		},
+	})
+	if err != nil {
+		logging.Debugf(ctx, "Fail to importing datacenters: %s", string(respDC.GetDetails()[0].GetValue()))
+		return err
 	}
 
 	logging.Debugf(ctx, "Importing machines")
@@ -112,24 +118,6 @@ func importCrimson(ctx context.Context) error {
 	}
 	logging.Debugf(ctx, "Finish importing states: %#v", respStates)
 
-	return nil
-}
-
-func importDCHelper(ctx context.Context, sv *frontend.FleetServerImpl, cfg string) error {
-	logging.Debugf(ctx, "Importing datacenter %s", cfg)
-	resp, err := sv.ImportDatacenters(ctx, &api.ImportDatacentersRequest{
-		Source: &api.ImportDatacentersRequest_ConfigSource{
-			ConfigSource: &api.ConfigSource{
-				ConfigServiceName: frontend.DefaultMachineDBService,
-				FileName:          cfg,
-			},
-		},
-	})
-	if err != nil {
-		logging.Debugf(ctx, "Fail to importing datacenter: %s", string(resp.GetDetails()[0].GetValue()))
-		return err
-	}
-	logging.Debugf(ctx, "Finish importing datacenters: %#v", resp)
 	return nil
 }
 

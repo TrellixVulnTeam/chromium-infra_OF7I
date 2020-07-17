@@ -16,9 +16,7 @@ type LuciConfigClient struct {
 }
 
 const dcsContent = `
-datacenter: "dc1"
-datacenter: "dc2"
-datacenter: "dc3"
+datacenter: "fakeDatacenter.cfg"
 `
 
 const dcContent = `

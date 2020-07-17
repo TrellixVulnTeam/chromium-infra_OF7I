@@ -27,7 +27,7 @@ import (
 //      * the first error that it meets
 //
 // The function will stop at the very first error.
-func ImportDatacenter(ctx context.Context, dc *crimsonconfig.Datacenter, pageSize int) (*datastore.OpResults, error) {
+func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, pageSize int) (*datastore.OpResults, error) {
 	allRes := make(datastore.OpResults, 0)
 	logging.Debugf(ctx, "Importing the basic lse prototypes for browser lab")
 	lps := []*ufspb.RackLSEPrototype{
@@ -55,7 +55,20 @@ func ImportDatacenter(ctx context.Context, dc *crimsonconfig.Datacenter, pageSiz
 	}
 	allRes = append(allRes, *res...)
 
-	racks, rackLSEs, kvms, switches, dhcps := util.ProcessDatacenters(dc)
+	racks := make([]*ufspb.Rack, 0)
+	rackLSEs := make([]*ufspb.RackLSE, 0)
+	kvms := make([]*ufspb.KVM, 0)
+	switches := make([]*ufspb.Switch, 0)
+	dhcps := make([]*ufspb.DHCPConfig, 0)
+	for _, dc := range dcs {
+		rackRes, lseRes, kvmRes, switchRes, dhcpRes := util.ProcessDatacenters(dc)
+		racks = append(racks, rackRes...)
+		rackLSEs = append(rackLSEs, lseRes...)
+		kvms = append(kvms, kvmRes...)
+		switches = append(switches, switchRes...)
+		dhcps = append(dhcps, dhcpRes...)
+	}
+
 	logging.Debugf(ctx, "Got %d racks, %d fack LSEs, %d kvms, %d switches, %d dhcp configs", len(racks), len(rackLSEs), len(kvms), len(switches), len(dhcps))
 	if err := api.ValidateResourceKey(racks, "Name"); err != nil {
 		return nil, errors.Annotate(err, "racks has invalid chars").Err()
