@@ -1375,3 +1375,99 @@ func TestCreateDeviceManualRepairRecord(t *testing.T) {
 		})
 	})
 }
+
+func TestUpdateDeviceManualRepairRecord(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	ds.GetTestable(ctx).Consistent(true)
+
+	// Empty datastore
+	record1 := mockDeviceManualRepairRecord("chromeos-updateRecords-aa", "updateRec-111", 1, false)
+	record1Complete := mockDeviceManualRepairRecord("chromeos-updateRecords-aa", "updateRec-111", 1, true)
+	record2 := mockDeviceManualRepairRecord("chromeos-updateRecords-bb", "updateRec-222", 1, false)
+	record2Complete := mockDeviceManualRepairRecord("chromeos-updateRecords-bb", "updateRec-222", 1, true)
+	record3 := mockDeviceManualRepairRecord("chromeos-updateRecords-cc", "updateRec-333", 1, false)
+	record3Update := mockDeviceManualRepairRecord("chromeos-updateRecords-cc", "updateRec-333", 1, false)
+	record4 := mockDeviceManualRepairRecord("", "", 1, false)
+
+	// Set up records in datastore
+	records := []*api.DeviceManualRepairRecord{record1, record2, record3}
+	datastore.AddDeviceManualRepairRecords(ctx, records)
+
+	Convey("Test update devices using an non-empty datastore", t, func() {
+		Convey("Update single record with completed repair state", func() {
+			propFilter := map[string]string{"hostname": record1.Hostname}
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			req := &api.UpdateDeviceManualRepairRecordRequest{
+				Id:                 getRes[0].Entity.ID,
+				DeviceRepairRecord: record1Complete,
+			}
+			rsp, err := tf.Inventory.UpdateDeviceManualRepairRecord(tf.C, req)
+			So(rsp.String(), ShouldEqual, "")
+			So(err, ShouldBeNil)
+
+			// Check updated record
+			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-aa")
+			So(getRes[0].Record.GetRepairState(), ShouldEqual, api.DeviceManualRepairRecord_STATE_COMPLETED)
+			So(getRes[0].Record.GetUpdatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
+			So(getRes[0].Record.GetUpdatedTime(), ShouldResemble, getRes[0].Record.GetCompletedTime())
+		})
+		Convey("Update single record with no id", func() {
+			req := &api.UpdateDeviceManualRepairRecordRequest{
+				Id:                 "",
+				DeviceRepairRecord: record2Complete,
+			}
+			rsp, err := tf.Inventory.UpdateDeviceManualRepairRecord(tf.C, req)
+			So(rsp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "ID cannot be empty")
+
+			// Check updated record and make sure it is unchanged
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, map[string]string{"hostname": record2.Hostname})
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-bb")
+			So(getRes[0].Record.GetRepairState(), ShouldEqual, api.DeviceManualRepairRecord_STATE_IN_PROGRESS)
+			So(getRes[0].Record.GetUpdatedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
+		})
+		Convey("Update single record", func() {
+			propFilter := map[string]string{"hostname": record3.Hostname}
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			record3Update.TimeTaken = 20
+			req := &api.UpdateDeviceManualRepairRecordRequest{
+				Id:                 getRes[0].Entity.ID,
+				DeviceRepairRecord: record3Update,
+			}
+			rsp, err := tf.Inventory.UpdateDeviceManualRepairRecord(tf.C, req)
+			So(rsp.String(), ShouldEqual, "")
+			So(err, ShouldBeNil)
+
+			// Check updated record and make sure fields are changed properly
+			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-cc")
+			So(getRes[0].Record.GetRepairState(), ShouldEqual, api.DeviceManualRepairRecord_STATE_IN_PROGRESS)
+			So(getRes[0].Record.GetTimeTaken(), ShouldEqual, 20)
+			So(getRes[0].Record.GetUpdatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
+			So(getRes[0].Record.GetCompletedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
+		})
+		Convey("Update single non-existent record", func() {
+			propFilter := map[string]string{"hostname": record4.Hostname}
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 0)
+
+			req := &api.UpdateDeviceManualRepairRecordRequest{
+				Id:                 "test-id",
+				DeviceRepairRecord: record4,
+			}
+			rsp, err := tf.Inventory.UpdateDeviceManualRepairRecord(tf.C, req)
+			So(rsp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "datastore: no such entity")
+		})
+	})
+}

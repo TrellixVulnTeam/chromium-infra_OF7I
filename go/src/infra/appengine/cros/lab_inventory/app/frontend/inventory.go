@@ -768,5 +768,26 @@ func (is *InventoryServerImpl) CreateDeviceManualRepairRecord(ctx context.Contex
 // UpdateDeviceManualRepairRecord updates an existing manual repair record with
 // new submitted info for a given device.
 func (is *InventoryServerImpl) UpdateDeviceManualRepairRecord(ctx context.Context, req *api.UpdateDeviceManualRepairRecordRequest) (rsp *api.UpdateDeviceManualRepairRecordResponse, err error) {
-	return nil, nil
+	id := req.Id
+	record := req.DeviceRepairRecord
+
+	if id == "" {
+		return nil, errors.Reason("ID cannot be empty").Tag(grpcutil.InvalidArgumentTag).Err()
+	}
+
+	record.UpdatedTime = timestamppb.Now()
+	if record.RepairState == api.DeviceManualRepairRecord_STATE_COMPLETED {
+		record.CompletedTime = record.UpdatedTime
+	}
+
+	resp, err := datastore.UpdateDeviceManualRepairRecords(ctx, map[string]*api.DeviceManualRepairRecord{id: record})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp) > 0 && resp[0].Err != nil {
+		return nil, resp[0].Err
+	}
+
+	return &api.UpdateDeviceManualRepairRecordResponse{}, nil
 }
