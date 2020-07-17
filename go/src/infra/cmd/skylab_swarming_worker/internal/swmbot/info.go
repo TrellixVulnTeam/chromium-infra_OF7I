@@ -33,6 +33,7 @@ type Info struct {
 // Per-bot variables:
 //
 //   ADMIN_SERVICE: Admin service host, e.g. foo.appspot.com.
+//   INVENTORY_SERVICE: Inventory V2 service host, e.g. foo.appspot.com.
 //   AUTOTEST_DIR: Path to the autotest checkout on server.
 //   LUCIFER_TOOLS_DIR: Path to the lucifer installation.
 //   PARSER_PATH: Path to the autotest_status_parser installation.
@@ -44,11 +45,10 @@ type Info struct {
 //   SWARMING_TASK_ID: task id of the swarming task being serviced.
 func GetInfo() *Info {
 	return &Info{
-		AdminService: os.Getenv("ADMIN_SERVICE"),
-		AutotestPath: os.Getenv("AUTOTEST_DIR"),
-		DUTID:        os.Getenv("SKYLAB_DUT_ID"),
-		// TODO(xixuan): Replace it with env variables. For testing now.
-		InventoryService: "cros-lab-inventory.appspot.com",
+		AdminService:     os.Getenv("ADMIN_SERVICE"),
+		AutotestPath:     os.Getenv("AUTOTEST_DIR"),
+		DUTID:            os.Getenv("SKYLAB_DUT_ID"),
+		InventoryService: os.Getenv("INVENTORY_SERVICE"),
 		LuciferBinDir:    os.Getenv("LUCIFER_TOOLS_DIR"),
 		ParserPath:       os.Getenv("PARSER_PATH"),
 		SwarmingService:  os.Getenv("SWARMING_SERVICE"),
