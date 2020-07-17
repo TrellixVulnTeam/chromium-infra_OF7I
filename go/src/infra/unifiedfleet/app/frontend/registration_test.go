@@ -1115,65 +1115,6 @@ func TestDeleteNic(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("DeleteNic", t, func() {
-		Convey("Delete nic by existing ID with machine reference", func() {
-			nic := &proto.Nic{
-				Name: "nic-1",
-			}
-			_, err := registration.CreateNic(tf.C, nic)
-			So(err, ShouldBeNil)
-
-			chromeBrowserMachine1 := &proto.Machine{
-				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						Nics: []string{"nic-1"},
-					},
-				},
-			}
-			_, merr := registration.CreateMachine(tf.C, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-
-			dreq := &api.DeleteNicRequest{
-				Name: util.AddPrefix(util.NicCollection, "nic-1"),
-			}
-			_, err = tf.Fleet.DeleteNic(tf.C, dreq)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			res, err := registration.GetNic(tf.C, "nic-1")
-			So(res, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, nic)
-		})
-
-		Convey("Delete nic by existing ID without references", func() {
-			nic := &proto.Nic{
-				Name: "nic-2",
-			}
-			_, err := registration.CreateNic(tf.C, nic)
-			So(err, ShouldBeNil)
-
-			dreq := &api.DeleteNicRequest{
-				Name: util.AddPrefix(util.NicCollection, "nic-2"),
-			}
-			_, err = tf.Fleet.DeleteNic(tf.C, dreq)
-			So(err, ShouldBeNil)
-
-			res, err := registration.GetNic(tf.C, "nic-2")
-			So(res, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
-
-		Convey("Delete nic by non-existing ID", func() {
-			req := &api.DeleteNicRequest{
-				Name: util.AddPrefix(util.NicCollection, "nic-3"),
-			}
-			_, err := tf.Fleet.DeleteNic(tf.C, req)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
-
 		Convey("Delete nic - Invalid input empty name", func() {
 			req := &api.DeleteNicRequest{
 				Name: "",

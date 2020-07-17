@@ -7,7 +7,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -188,14 +187,38 @@ func ListNics(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.N
 // DeleteNic deletes the nic in datastore
 //
 // For referential data intergrity,
-// Delete if this Nic is not referenced by other resources in the datastore.
-// If there are any references, delete will be rejected and an error will be returned.
+// 1. Delete the nic
+// 2. Get the machine associated with this nic
+// 3. Update the machine by removing the association with this nic
 func DeleteNic(ctx context.Context, id string) error {
-	err := validateDeleteNic(ctx, id)
-	if err != nil {
+	f := func(ctx context.Context) error {
+		// 1. Delete the nic
+		if err := registration.DeleteNic(ctx, id); err != nil {
+			return errors.Annotate(err, "Unable to delete nic %s", id).Err()
+		}
+
+		// 2. Get the machine associated with nic
+		machines, err := registration.QueryMachineByPropertyName(ctx, "nic_ids", id, false)
+		if err != nil {
+			return errors.Annotate(err, "Unable to query machine for nic %s", id).Err()
+		}
+		if machines == nil || len(machines) == 0 {
+			logging.Warningf(ctx, "No machine associated with the nic %s. Data discrepancy error.\n", id)
+			return nil
+		}
+		if len(machines) > 1 {
+			logging.Warningf(ctx, "More than one machine associated with the nic %s. Data discrepancy error.\n", id)
+		}
+
+		// 3. Remove the association between the machine and this nic.
+		return removeNicFromBrowserMachines(ctx, machines, id)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete entity in datastore: %s", err)
 		return err
 	}
-	return registration.DeleteNic(ctx, id)
+	return nil
 }
 
 // ImportNics creates or updates a batch of nics in datastore
@@ -216,28 +239,6 @@ func ImportNics(ctx context.Context, nics []*ufspb.Nic) (*ufsds.OpResults, error
 func ReplaceNic(ctx context.Context, oldNic *ufspb.Nic, newNic *ufspb.Nic) (*ufspb.Nic, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
-}
-
-// validateDeleteNic validates if a Nic can be deleted
-//
-// Checks if this Nic(NicID) is not referenced by other resources in the datastore.
-// If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteNic(ctx context.Context, id string) error {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "nic_ids", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Nic %s cannot be deleted because there are other resources which are referring this Nic.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nMachine referring the Nic:\n"))
-		for _, machine := range machines {
-			errorMsg.WriteString(machine.Name + ", ")
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
-	return nil
 }
 
 // validateCreateNic validates if a nic can be created

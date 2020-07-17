@@ -256,13 +256,18 @@ func TestUpdateNic(t *testing.T) {
 func TestDeleteNic(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	nic1 := mockNic("nic-1")
-	nic2 := mockNic("nic-2")
 	Convey("DeleteNic", t, func() {
-		Convey("Delete nic by existing ID with machine reference", func() {
-			resp, cerr := registration.CreateNic(ctx, nic1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic1)
+		Convey("Delete nic error by non-existing ID", func() {
+			err := DeleteNic(ctx, "nic-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete nic successfully by existing ID with machine reference", func() {
+			nic := mockNic("nic-1")
+			resp, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic)
 
 			chromeBrowserMachine1 := &ufspb.Machine{
 				Name: "machine-1",
@@ -272,31 +277,35 @@ func TestDeleteNic(t *testing.T) {
 					},
 				},
 			}
-			mresp, merr := registration.CreateMachine(ctx, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
-
-			err := DeleteNic(ctx, "nic-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = registration.GetNic(ctx, "nic-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic1)
-		})
-		Convey("Delete nic successfully by existing ID without references", func() {
-			resp, cerr := registration.CreateNic(ctx, nic2)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic2)
-
-			err := DeleteNic(ctx, "nic-2")
+			_, err = registration.CreateMachine(ctx, chromeBrowserMachine1)
 			So(err, ShouldBeNil)
 
-			resp, cerr = registration.GetNic(ctx, "nic-2")
+			err = DeleteNic(ctx, "nic-1")
+			So(err, ShouldBeNil)
+
+			resp, err = registration.GetNic(ctx, "nic-1")
 			So(resp, ShouldBeNil)
-			So(cerr, ShouldNotBeNil)
-			So(cerr.Error(), ShouldContainSubstring, NotFound)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			mresp, err := registration.GetMachine(ctx, "machine-1")
+			So(mresp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldBeNil)
+		})
+
+		Convey("Delete nic successfully by existing ID without references", func() {
+			nic := mockNic("nic-2")
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			err = DeleteNic(ctx, "nic-2")
+			So(err, ShouldBeNil)
+
+			resp, err := registration.GetNic(ctx, "nic-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 	})
 }
