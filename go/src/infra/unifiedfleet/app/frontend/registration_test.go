@@ -812,29 +812,42 @@ func TestCreateNic(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	nic1 := mockNic("")
-	nic2 := mockNic("")
-	nic3 := mockNic("")
+	machine1 := &proto.Machine{
+		Name: "machine-1",
+		Device: &proto.Machine_ChromeBrowserMachine{
+			ChromeBrowserMachine: &proto.ChromeBrowserMachine{},
+		},
+	}
+	registration.CreateMachine(tf.C, machine1)
 	Convey("CreateNic", t, func() {
 		Convey("Create new nic with nic_id", func() {
+			nic := mockNic("")
 			req := &api.CreateNicRequest{
-				Nic:   nic1,
-				NicId: "Nic-1",
+				Nic:     nic,
+				NicId:   "nic-1",
+				Machine: "machine-1",
 			}
 			resp, err := tf.Fleet.CreateNic(tf.C, req)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic1)
+			So(resp, ShouldResembleProto, nic)
 		})
 
 		Convey("Create existing nic", func() {
+			nic := &proto.Nic{
+				Name: "nic-3",
+			}
+			_, err := registration.CreateNic(tf.C, nic)
+			So(err, ShouldBeNil)
+
 			req := &api.CreateNicRequest{
-				Nic:   nic3,
-				NicId: "Nic-1",
+				Nic:     &proto.Nic{},
+				NicId:   "nic-3",
+				Machine: "machine-1",
 			}
 			resp, err := tf.Fleet.CreateNic(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, AlreadyExists)
+			So(err.Error(), ShouldContainSubstring, "Nic nic-3 already exists in the system.")
 		})
 
 		Convey("Create new nic - Invalid input nil", func() {
@@ -848,9 +861,11 @@ func TestCreateNic(t *testing.T) {
 		})
 
 		Convey("Create new nic - Invalid input empty ID", func() {
+			nic := mockNic("")
 			req := &api.CreateNicRequest{
-				Nic:   nic2,
-				NicId: "",
+				Nic:     nic,
+				NicId:   "",
+				Machine: "machine-1",
 			}
 			resp, err := tf.Fleet.CreateNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -859,14 +874,28 @@ func TestCreateNic(t *testing.T) {
 		})
 
 		Convey("Create new nic - Invalid input invalid characters", func() {
+			nic := mockNic("")
 			req := &api.CreateNicRequest{
-				Nic:   nic2,
-				NicId: "a.b)7&",
+				Nic:     nic,
+				NicId:   "a.b)7&",
+				Machine: "machine-1",
 			}
 			resp, err := tf.Fleet.CreateNic(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+
+		Convey("Create new nic - Invalid input empty machine", func() {
+			nic := mockNic("")
+			req := &api.CreateNicRequest{
+				Nic:   nic,
+				NicId: "nic-5",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyMachineName)
 		})
 	})
 }
@@ -876,21 +905,27 @@ func TestUpdateNic(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	nic1 := mockNic("")
-	nic2 := mockNic("nic-1")
-	nic3 := mockNic("nic-3")
-	nic4 := mockNic("a.b)7&")
+	machine1 := &proto.Machine{
+		Name: "machine-1",
+		Device: &proto.Machine_ChromeBrowserMachine{
+			ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+				Nics: []string{"nic-1"},
+			},
+		},
+	}
+	registration.CreateMachine(tf.C, machine1)
 	Convey("UpdateNic", t, func() {
 		Convey("Update existing nic", func() {
-			req := &api.CreateNicRequest{
-				Nic:   nic1,
-				NicId: "nic-1",
+			nic1 := &proto.Nic{
+				Name: "nic-1",
 			}
-			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			resp, err := registration.CreateNic(tf.C, nic1)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic1)
+
+			nic2 := mockNic("nic-1")
 			ureq := &api.UpdateNicRequest{
-				Nic: nic2,
+				Nic:     nic2,
+				Machine: "machine-1",
 			}
 			resp, err = tf.Fleet.UpdateNic(tf.C, ureq)
 			So(err, ShouldBeNil)
@@ -898,13 +933,15 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Update non-existing nic", func() {
+			nic := mockNic("nic-3")
 			ureq := &api.UpdateNicRequest{
-				Nic: nic3,
+				Nic:     nic,
+				Machine: "machine-1",
 			}
 			resp, err := tf.Fleet.UpdateNic(tf.C, ureq)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
+			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-3 in the system")
 		})
 
 		Convey("Update nic - Invalid input nil", func() {
@@ -918,9 +955,11 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Update nic - Invalid input empty name", func() {
-			nic3.Name = ""
+			nic := mockNic("")
+			nic.Name = ""
 			req := &api.UpdateNicRequest{
-				Nic: nic3,
+				Nic:     nic,
+				Machine: "machine-1",
 			}
 			resp, err := tf.Fleet.UpdateNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -929,8 +968,10 @@ func TestUpdateNic(t *testing.T) {
 		})
 
 		Convey("Update nic - Invalid input invalid characters", func() {
+			nic := mockNic("a.b)7&")
 			req := &api.UpdateNicRequest{
-				Nic: nic4,
+				Nic:     nic,
+				Machine: "machine-1",
 			}
 			resp, err := tf.Fleet.UpdateNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -942,19 +983,18 @@ func TestUpdateNic(t *testing.T) {
 
 func TestGetNic(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
 	Convey("GetNic", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		nic1 := mockNic("nic-1")
-		req := &api.CreateNicRequest{
-			Nic:   nic1,
-			NicId: "nic-1",
-		}
-		resp, err := tf.Fleet.CreateNic(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, nic1)
 		Convey("Get nic by existing ID", func() {
+			nic1 := &proto.Nic{
+				Name: "nic-1",
+			}
+			registration.CreateNic(tf.C, nic1)
+			nic1.Name = util.AddPrefix(util.NicCollection, "nic-1")
+
 			req := &api.GetNicRequest{
 				Name: util.AddPrefix(util.NicCollection, "nic-1"),
 			}
@@ -994,23 +1034,19 @@ func TestGetNic(t *testing.T) {
 
 func TestListNics(t *testing.T) {
 	t.Parallel()
-	Convey("ListNics", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		nics := make([]*proto.Nic, 0, 4)
-		for i := 0; i < 4; i++ {
-			nic1 := mockNic("")
-			req := &api.CreateNicRequest{
-				Nic:   nic1,
-				NicId: fmt.Sprintf("nic-%d", i),
-			}
-			resp, err := tf.Fleet.CreateNic(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic1)
-			nics = append(nics, resp)
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	nics := make([]*proto.Nic, 0, 4)
+	for i := 0; i < 4; i++ {
+		nic := &proto.Nic{
+			Name: fmt.Sprintf("nic-%d", i),
 		}
-
+		resp, _ := registration.CreateNic(tf.C, nic)
+		nic.Name = util.AddPrefix(util.NicCollection, nic.Name)
+		nics = append(nics, resp)
+	}
+	Convey("ListNics", t, func() {
 		Convey("ListNics - page_size negative", func() {
 			req := &api.ListNicsRequest{
 				PageSize: -5,
@@ -1075,35 +1111,27 @@ func TestListNics(t *testing.T) {
 
 func TestDeleteNic(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("DeleteNic", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
 		Convey("Delete nic by existing ID with machine reference", func() {
-			nic1 := mockNic("")
-			req := &api.CreateNicRequest{
-				Nic:   nic1,
-				NicId: "nic-1",
+			nic := &proto.Nic{
+				Name: "nic-1",
 			}
-			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			_, err := registration.CreateNic(tf.C, nic)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic1)
 
 			chromeBrowserMachine1 := &proto.Machine{
-				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
+				Name: "machine-1",
 				Device: &proto.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
 						Nics: []string{"nic-1"},
 					},
 				},
 			}
-			mreq := &api.CreateMachineRequest{
-				Machine:   chromeBrowserMachine1,
-				MachineId: "machine-1",
-			}
-			mresp, merr := tf.Fleet.CreateMachine(tf.C, mreq)
+			_, merr := registration.CreateMachine(tf.C, chromeBrowserMachine1)
 			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
 
 			dreq := &api.DeleteNicRequest{
 				Name: util.AddPrefix(util.NicCollection, "nic-1"),
@@ -1112,24 +1140,18 @@ func TestDeleteNic(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
-			greq := &api.GetNicRequest{
-				Name: util.AddPrefix(util.NicCollection, "nic-1"),
-			}
-			res, err := tf.Fleet.GetNic(tf.C, greq)
+			res, err := registration.GetNic(tf.C, "nic-1")
 			So(res, ShouldNotBeNil)
 			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, nic1)
+			So(res, ShouldResembleProto, nic)
 		})
 
 		Convey("Delete nic by existing ID without references", func() {
-			nic2 := mockNic("")
-			req := &api.CreateNicRequest{
-				Nic:   nic2,
-				NicId: "nic-2",
+			nic := &proto.Nic{
+				Name: "nic-2",
 			}
-			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			_, err := registration.CreateNic(tf.C, nic)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic2)
 
 			dreq := &api.DeleteNicRequest{
 				Name: util.AddPrefix(util.NicCollection, "nic-2"),
@@ -1137,10 +1159,7 @@ func TestDeleteNic(t *testing.T) {
 			_, err = tf.Fleet.DeleteNic(tf.C, dreq)
 			So(err, ShouldBeNil)
 
-			greq := &api.GetNicRequest{
-				Name: util.AddPrefix(util.NicCollection, "nic-2"),
-			}
-			res, err := tf.Fleet.GetNic(tf.C, greq)
+			res, err := registration.GetNic(tf.C, "nic-2")
 			So(res, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
@@ -1148,7 +1167,7 @@ func TestDeleteNic(t *testing.T) {
 
 		Convey("Delete nic by non-existing ID", func() {
 			req := &api.DeleteNicRequest{
-				Name: util.AddPrefix(util.NicCollection, "nic-2"),
+				Name: util.AddPrefix(util.NicCollection, "nic-3"),
 			}
 			_, err := tf.Fleet.DeleteNic(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -2635,14 +2654,11 @@ func TestDeleteSwitch(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		Convey("Delete switch by existing ID with machine reference", func() {
-			switch1 := mockSwitch("")
-			req := &api.CreateSwitchRequest{
-				Switch:   switch1,
-				SwitchId: "switch-1",
+			switch1 := &proto.Switch{
+				Name: "switch-1",
 			}
-			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
+			_, err := registration.CreateSwitch(tf.C, switch1)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
 
 			nic := &proto.Nic{
 				Name: "machine1-eth0",
@@ -2650,13 +2666,8 @@ func TestDeleteSwitch(t *testing.T) {
 					Switch: "switch-1",
 				},
 			}
-			mreq := &api.CreateNicRequest{
-				Nic:   nic,
-				NicId: nic.Name,
-			}
-			mresp, merr := tf.Fleet.CreateNic(tf.C, mreq)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, nic)
+			_, err = registration.CreateNic(tf.C, nic)
+			So(err, ShouldBeNil)
 
 			dreq := &api.DeleteSwitchRequest{
 				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),
@@ -2665,10 +2676,7 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
-			greq := &api.GetSwitchRequest{
-				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),
-			}
-			res, err := tf.Fleet.GetSwitch(tf.C, greq)
+			res, err := registration.GetSwitch(tf.C, "switch-1")
 			So(res, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(res, ShouldResembleProto, switch1)

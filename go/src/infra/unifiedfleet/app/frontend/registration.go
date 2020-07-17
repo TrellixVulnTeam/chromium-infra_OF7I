@@ -261,7 +261,7 @@ func (fs *FleetServerImpl) CreateNic(ctx context.Context, req *api.CreateNicRequ
 		return nil, err
 	}
 	req.Nic.Name = req.NicId
-	nic, err := controller.CreateNic(ctx, req.Nic)
+	nic, err := controller.CreateNic(ctx, req.Nic, req.Machine)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +279,7 @@ func (fs *FleetServerImpl) UpdateNic(ctx context.Context, req *api.UpdateNicRequ
 		return nil, err
 	}
 	req.Nic.Name = util.RemovePrefix(req.Nic.Name)
-	nic, err := controller.UpdateNic(ctx, req.Nic)
+	nic, err := controller.UpdateNic(ctx, req.Nic, req.Machine)
 	if err != nil {
 		return nil, err
 	}

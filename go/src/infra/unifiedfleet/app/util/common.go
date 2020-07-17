@@ -87,3 +87,15 @@ func Min(a, b int) int {
 func Int64ToStr(v int64) string {
 	return strconv.Itoa(int(v))
 }
+
+// RemoveStringEntry removes string entry from the string slice
+func RemoveStringEntry(slice []string, entry string) []string {
+	for i, s := range slice {
+		if s == entry {
+			slice[i] = slice[len(slice)-1]
+			slice = slice[:len(slice)-1]
+			break
+		}
+	}
+	return slice
+}

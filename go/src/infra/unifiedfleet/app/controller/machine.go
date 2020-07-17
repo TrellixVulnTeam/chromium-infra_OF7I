@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -195,4 +196,17 @@ func validateDeleteMachine(ctx context.Context, id string) error {
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return nil
+}
+
+// getBrowserMachine gets the browser machine
+func getBrowserMachine(ctx context.Context, machineName string) (*fleet.Machine, error) {
+	machine, err := registration.GetMachine(ctx, machineName)
+	if err != nil {
+		return nil, errors.Annotate(err, "Unable to get browser machine %s", machineName).Err()
+	}
+	if machine.GetChromeBrowserMachine() == nil {
+		errorMsg := fmt.Sprintf("Machine %s is not a browser machine.", machineName)
+		return nil, status.Errorf(codes.FailedPrecondition, errorMsg)
+	}
+	return machine, nil
 }

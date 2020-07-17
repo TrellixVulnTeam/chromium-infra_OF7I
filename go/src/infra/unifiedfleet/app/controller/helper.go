@@ -20,9 +20,10 @@ import (
 	"infra/unifiedfleet/app/model/registration"
 )
 
+//Generalized error messages for resources in the system
 var (
-	// ErrorMessage - generalized error message for resources not found in the system
-	ErrorMessage string = "There is no %s with %sID %s in the system.\n"
+	NotFoundErrorMessage      string = "There is no %s with %sID %s in the system.\n"
+	AlreadyExistsErrorMessage string = "%s %s already exists in the system.\n"
 )
 
 // Resource contains the fleet entity to be checked and the ID and Kind
@@ -162,6 +163,9 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 	if len(resources) == 0 {
 		return nil
 	}
+	if errorMsg == nil {
+		errorMsg = &strings.Builder{}
+	}
 	var NotFound bool = false
 	checkEntities := make([]fleetds.FleetEntity, 0, len(resources))
 	for _, resource := range resources {
@@ -173,7 +177,7 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 		for i := range checkEntities {
 			if !exists[i] {
 				NotFound = true
-				errorMsg.WriteString(fmt.Sprintf(ErrorMessage, resources[i].Kind, resources[i].Kind, resources[i].ID))
+				errorMsg.WriteString(fmt.Sprintf(NotFoundErrorMessage, resources[i].Kind, resources[i].Kind, resources[i].ID))
 			}
 		}
 	} else {
@@ -181,6 +185,43 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 		return status.Errorf(codes.Internal, err.Error())
 	}
 	if NotFound {
+		logging.Errorf(ctx, errorMsg.String())
+		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+	}
+	return nil
+}
+
+// resourceAlreadyExists checks if the given resources already exists in the datastore
+//
+// Returns error if any of the resource already exists.
+// Appends error messages to the the given error message for resources
+// that already exist in the datastore.
+func resourceAlreadyExists(ctx context.Context, resources []*Resource, errorMsg *strings.Builder) error {
+	if len(resources) == 0 {
+		return nil
+	}
+	if errorMsg == nil {
+		errorMsg = &strings.Builder{}
+	}
+	var alreadyExists bool = false
+	checkEntities := make([]fleetds.FleetEntity, 0, len(resources))
+	for _, resource := range resources {
+		logging.Debugf(ctx, "checking resource existence: %#v", resource)
+		checkEntities = append(checkEntities, resource.Entity)
+	}
+	exists, err := fleetds.Exists(ctx, checkEntities)
+	if err == nil {
+		for i := range checkEntities {
+			if exists[i] {
+				alreadyExists = true
+				errorMsg.WriteString(fmt.Sprintf(AlreadyExistsErrorMessage, resources[i].Kind, resources[i].ID))
+			}
+		}
+	} else {
+		logging.Errorf(ctx, "Failed to check existence: %s", err)
+		return status.Errorf(codes.Internal, err.Error())
+	}
+	if alreadyExists {
 		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
