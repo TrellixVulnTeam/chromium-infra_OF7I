@@ -271,6 +271,7 @@ message CreateDeviceManualRepairRecordResponse {}
 
 message UpdateDeviceManualRepairRecordRequest {
   DeviceManualRepairRecord device_repair_record = 1;
+  string id = 2;
 }
 
 message UpdateDeviceManualRepairRecordResponse {}
