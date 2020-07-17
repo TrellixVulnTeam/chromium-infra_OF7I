@@ -10,7 +10,7 @@ option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 
 import "google/protobuf/timestamp.proto";
 
-// Next tag: 10
+// Next tag: 12
 enum State {
   STATE_UNSPECIFIED = 0;
   // Equlavant to the concept in ChromeOS lab: needs_deploy
@@ -22,8 +22,13 @@ enum State {
   STATE_DEPLOYED_TESTING = 2;
   // Deployed to the prod infrastructure, serving.
   STATE_SERVING = 3;
+  // Deployed to the prod infrastructure, but required cleanup and verify the machine.
+  STATE_NEEDS_RESET = 10;
   // Deployed to the prod infrastructure, but needs repair.
   STATE_NEEDS_REPAIR = 5;
+  // Deployed to the prod infrastructure, but failed to be repaired in previous step
+  // and required new attempt for repairing.
+  STATE_REPAIR_FAILED = 11;
   // Deployed to the prod infrastructure, but get disabled.
   STATE_DISABLED = 6;
   // Deployed to the prod infrastructure, but get reserved (e.g. locked).
