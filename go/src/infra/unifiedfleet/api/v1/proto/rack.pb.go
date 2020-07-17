@@ -160,16 +160,6 @@ func (*Rack_ChromeBrowserRack) isRack_Rack() {}
 func (*Rack_ChromeosRack) isRack_Rack() {}
 
 // ChromeBrowserRack refers to the rack in Chrome Browser lab
-//
-// TODO: the below rack info should be removed as they belong to rack LSE.
-// Changes needed:
-// validateRackLSE - controller/rack_lse.go
-// validateRack - controller/rack.go
-// validateDeleteSwitch - controller/switch.go
-// validateDeleteRPM - controller/rpm.go
-// validateDeleteKVM - controller/kvm.go
-// newRackEntity - model/registration/rack.go
-// newRackLSEEntity - model/inventory/rack_lse.go
 type ChromeBrowserRack struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -177,7 +167,7 @@ type ChromeBrowserRack struct {
 
 	// RPMs in the rack
 	Rpms []string `protobuf:"bytes,1,rep,name=rpms,proto3" json:"rpms,omitempty"`
-	// KVMs in the rack
+	// KVMs in the rack, they're also used as the hostnames in dhcp configs
 	Kvms []string `protobuf:"bytes,2,rep,name=kvms,proto3" json:"kvms,omitempty"`
 	// Switches in the rack
 	Switches []string `protobuf:"bytes,3,rep,name=switches,proto3" json:"switches,omitempty"`

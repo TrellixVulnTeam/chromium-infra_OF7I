@@ -1216,6 +1216,13 @@ func TestImportDatacenters(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(racks, ShouldHaveLength, 2)
 			So(api.ParseResources(racks, "Name"), ShouldResemble, []string{"cr20", "cr22"})
+			for _, r := range racks {
+				switch r.GetName() {
+				case "cr20":
+					So(r.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"cr20-kvm1"})
+					So(r.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"eq017.atl97"})
+				}
+			}
 			kvms, _, err := registration.ListKVMs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(kvms, ShouldHaveLength, 3)

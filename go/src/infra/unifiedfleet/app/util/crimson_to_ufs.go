@@ -116,12 +116,19 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 		r := &fleet.Rack{
 			Name:     rackName,
 			Location: toLocation(rackName, dcName),
+			Rack: &fleet.Rack_ChromeBrowserRack{
+				ChromeBrowserRack: &fleet.ChromeBrowserRack{
+					Kvms:     rackToKvms[rackName],
+					Switches: switchNames,
+				},
+			},
 		}
 		rlse := &fleet.RackLSE{
 			Name:             GetRackHostname(rackName),
 			RackLsePrototype: "browser-lab:normal",
 			Lse: &fleet.RackLSE_ChromeBrowserRackLse{
 				ChromeBrowserRackLse: &fleet.ChromeBrowserRackLSE{
+					// Still keep them as they are potential hostnames
 					Kvms:     rackToKvms[rackName],
 					Switches: switchNames,
 				},
@@ -224,6 +231,9 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.M
 				ChromeBrowserMachineLse: &fleet.ChromeBrowserMachineLSE{
 					Vms:        vms,
 					VmCapacity: h.GetVmSlots(),
+					OsVersion: &fleet.OSVersion{
+						Value: h.GetOs(),
+					},
 				},
 			},
 		}

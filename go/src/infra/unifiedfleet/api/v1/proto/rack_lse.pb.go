@@ -159,9 +159,9 @@ type ChromeBrowserRackLSE struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// RPMs in the rack
+	// KVMs in the rack, they're the attached kvms' names, which are the same as their hostnames
 	Kvms []string `protobuf:"bytes,1,rep,name=kvms,proto3" json:"kvms,omitempty"`
-	// KVMs in the rack
+	// Switches in the rack.
 	Switches []string `protobuf:"bytes,2,rep,name=switches,proto3" json:"switches,omitempty"`
 }
 

@@ -63,6 +63,8 @@ message ChromeBrowserMachineLSE {
    repeated VM vms = 1;
    // The allowed vm slots for this browser machine, usually it's manually set based on sysadmin's judgement.
    int32 vm_capacity = 2;
+   // Indicate the os version of the machine itself.
+   OSVersion os_version = 3;
 }
 
 message VM {
