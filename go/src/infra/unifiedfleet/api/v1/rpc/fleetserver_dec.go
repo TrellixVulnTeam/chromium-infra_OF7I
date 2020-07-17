@@ -27,6 +27,23 @@ type DecoratedFleet struct {
 	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
+func (s *DecoratedFleet) MachineRegistration(ctx context.Context, req *MachineRegistrationRequest) (rsp *MachineRegistrationResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "MachineRegistration", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.MachineRegistration(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "MachineRegistration", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) CreateChromePlatform(ctx context.Context, req *CreateChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

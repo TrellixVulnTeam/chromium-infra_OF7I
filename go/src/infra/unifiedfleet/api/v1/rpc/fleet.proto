@@ -24,6 +24,9 @@ import "infra/unifiedfleet/api/v1/proto/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 service Fleet {
+  // MachineRegistration creates a new machine, nic and drac.
+  rpc MachineRegistration(MachineRegistrationRequest) returns (MachineRegistrationResponse);
+
   // CreateChromePlatform creates a new chromePlatform.
   rpc CreateChromePlatform(CreateChromePlatformRequest) returns (proto.ChromePlatform);
 
@@ -1184,4 +1187,26 @@ message UpdateStateRequest {
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
+}
+
+message MachineRegistrationRequest {
+  // The machine to create.
+  proto.Machine machine = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The nics to create.
+  repeated proto.Nic nics = 2;
+
+  // The drac to create.
+  proto.Drac drac = 3;
+}
+
+message MachineRegistrationResponse {
+  // Create machine
+  proto.Machine machine = 1;
+
+  // Created nics
+  repeated proto.Nic nics = 2;
+
+  // Created drac
+  proto.Drac drac = 3;
 }

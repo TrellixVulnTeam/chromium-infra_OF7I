@@ -23,6 +23,14 @@ import (
 	"infra/unifiedfleet/app/util"
 )
 
+// MachineRegistration creates machine, nics and a drac in database.
+func (fs *FleetServerImpl) MachineRegistration(ctx context.Context, req *api.MachineRegistrationRequest) (rsp *api.MachineRegistrationResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	return nil, nil
+}
+
 // CreateMachine creates machine entry in database.
 func (fs *FleetServerImpl) CreateMachine(ctx context.Context, req *api.CreateMachineRequest) (rsp *proto.Machine, err error) {
 	defer func() {
