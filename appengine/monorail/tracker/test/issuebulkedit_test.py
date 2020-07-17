@@ -25,6 +25,7 @@ from testing import fake
 from testing import testing_helpers
 from tracker import issuebulkedit
 from tracker import tracker_bizobj
+from tracker import tracker_constants
 
 
 class Response(object):
@@ -858,3 +859,31 @@ class IssueBulkEditTest(unittest.TestCase):
 
     self.assertIsNone(mr.errors.blocked_on)
     self.assertIsNone(mr.errors.blocking)
+
+  def testProcessFormData_TooLongComment(self):
+    """Test PFD rejects comments that are too long."""
+    created_issue_1 = fake.MakeTestIssue(
+        789, 1, 'issue summary', 'New', 111, reporter_id=111)
+    self.services.issue.TestAddIssue(created_issue_1)
+    local_id_1 = created_issue_1.local_id
+
+    mr = testing_helpers.MakeMonorailRequest(
+        project=self.project,
+        perms=permissions.OWNER_ACTIVE_PERMISSIONSET,
+        user_info={'user_id': 111})
+    mr.local_id_list = [local_id_1]
+
+    post_data = fake.PostData(
+        owner=['owner@example.com'],
+        can=[1],
+        q=[''],
+        colspec=[''],
+        sort=[''],
+        groupby=[''],
+        start=[0],
+        num=[100],
+        comment=['   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '])
+    self._MockMethods()
+    self.servlet.ProcessFormData(mr, post_data)
+    self.assertTrue(mr.errors.AnyErrors())
+    self.assertEqual('Comment is too long.', mr.errors.comment)

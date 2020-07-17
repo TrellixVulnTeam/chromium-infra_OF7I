@@ -975,6 +975,7 @@ class WorkEnv(object):
 
     Raises:
       FilterRuleException if creation violates any filter rule that shows error.
+      InputException: The issue has invalid input, see validation below.
       PermissionException if user lacks sufficient permissions.
     """
     project = self.GetProject(project_id)
@@ -1533,12 +1534,24 @@ class WorkEnv(object):
   def UpdateIssueApproval(self, issue_id, approval_id, approval_delta,
                           comment_content, is_description, attachments=None,
                           send_email=True, kept_attachments=None):
-    """Update an issue's approval."""
+    # type: (int, int, proto.tracker_pb2.ApprovalValue, str, Boolean,
+    #     Optional[Sequence[proto.tracker_pb2.Attachment]], Optional[Boolean],
+    #     Optional[Sequence[int]]) -> (proto.tracker_pb2.ApprovalValue,
+    #     proto.tracker_pb2.IssueComment)
+    """Update an issue's approval.
+
+    Raises:
+      InputException: The comment content is too long.
+    """
 
     issue, approval_value = self.services.issue.GetIssueApproval(
         self.mc.cnxn, issue_id, approval_id, use_cache=False)
 
     self._AssertPermInIssue(issue, permissions.EDIT_ISSUE)
+
+    if len(comment_content) > tracker_constants.MAX_COMMENT_CHARS:
+      raise exceptions.InputException('Comment is too long')
+
     project = self.GetProject(issue.project_id)
     config = self.GetProjectConfig(issue.project_id)
 
@@ -1587,8 +1600,14 @@ class WorkEnv(object):
 
   def ConvertIssueApprovalsTemplate(
       self, config, issue, template_name, comment_content, send_email=True):
+    # type: (proto.tracker_pb2.ProjectIssueConfig, proto.tracker_pb2.Issue,
+    #     str, str, Optional[Boolean] )
     """Convert an issue's existing approvals structure to match the one of
-       the given template."""
+       the given template.
+
+    Raises:
+      InputException: The comment content is too long.
+    """
     self._AssertPermInIssue(issue, permissions.EDIT_ISSUE)
 
     template = self.services.template.GetTemplateByName(
@@ -1596,6 +1615,9 @@ class WorkEnv(object):
     if not template:
       raise exceptions.NoSuchTemplateException(
           'Template %s is not found' % template_name)
+
+    if len(comment_content) > tracker_constants.MAX_COMMENT_CHARS:
+      raise exceptions.InputException('Comment is too long')
 
     with self.mc.profiler.Phase('updating issue %r' % issue):
       comment_pb = self.services.issue.UpdateIssueStructure(
@@ -1609,6 +1631,7 @@ class WorkEnv(object):
   def UpdateIssue(
       self, issue, delta, comment_content, attachments=None, send_email=True,
       is_description=False, kept_attachments=None, inbound_message=None):
+    # type: (...) => None
     """Update an issue with a set of changes and add a comment.
 
     Args:
@@ -1626,6 +1649,9 @@ class WorkEnv(object):
 
     Returns:
       Nothing.
+
+    Raises:
+      InputException: The comment content is too long.
     """
     if not self._UserCanUsePermInIssue(issue, permissions.EDIT_ISSUE):
       # We're editing the issue description. Only users with EditIssue
@@ -1633,9 +1659,12 @@ class WorkEnv(object):
       if is_description:
         raise permissions.PermissionException(
             'Users lack permission EditIssue in issue')
-      # If we're adding a comment, we must have AddIssueComment permission.
+      # If we're adding a comment, we must have AddIssueComment permission and
+      # verify it's size.
       if comment_content:
         self._AssertPermInIssue(issue, permissions.ADD_ISSUE_COMMENT)
+      if len(comment_content) > tracker_constants.MAX_COMMENT_CHARS:
+        raise exceptions.InputException('Comment is too long')
       # If we're modifying the issue, check that we only modify the fields we're
       # allowed to edit.
       if delta != tracker_pb2.IssueDelta():
@@ -2663,7 +2692,7 @@ class WorkEnv(object):
   # TODO(crbug/monorail/7104): delete UpdateHotlistRoles.
 
   def GetHotlist(self, hotlist_id, use_cache=True):
-    # int, Optional[bool] -> Hotlist
+    # int, Optional[Boolean] -> Hotlist
     """Return the specified hotlist.
 
     Args:

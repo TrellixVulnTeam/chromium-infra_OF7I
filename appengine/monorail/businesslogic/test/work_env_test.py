@@ -43,6 +43,7 @@ from services import template_svc
 from testing import fake
 from testing import testing_helpers
 from tracker import tracker_bizobj
+from tracker import tracker_constants
 
 
 class WorkEnvTest(unittest.TestCase):
@@ -1367,6 +1368,18 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.MoveIssue(issue, target_project)
 
+  def testMoveIssue_TooLongIssue(self):
+    """We can't move issues if the comment is too long."""
+    issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111, issue_id=78901)
+    self.services.issue.TestAddIssue(issue)
+    target_project = self.services.project.TestAddProject(
+        'dest', project_id=988, committer_ids=[111])
+
+    self.SignIn(user_id=111)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.MoveIssue(issue, target_project)
+
   @mock.patch('services.tracker_fulltext.IndexIssues')
   def testCopyIssue_Normal(self, mock_index):
     """We can copy issues."""
@@ -1954,6 +1967,41 @@ class WorkEnvTest(unittest.TestCase):
         comment_content='Another Desc', is_description=True,
         attachments=None, kept_attachments=[1, 2])
 
+  def testUpdateIssueApproval_TooLongComment(self):
+    """We raise an exception if too long a comment is used when updating an
+        issue's approval value."""
+    self.services.issue.DeltaUpdateIssueApproval = mock.Mock()
+
+    self.SignIn()
+
+    config = fake.MakeTestConfig(789, [], [])
+    self.services.config.StoreConfig('cnxn', config)
+
+    av_24 = tracker_pb2.ApprovalValue(
+        approval_id=24,
+        approver_ids=[111],
+        status=tracker_pb2.ApprovalStatus.NOT_SET,
+        set_on=1234,
+        setter_id=999)
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'summary',
+        'Available',
+        111,
+        issue_id=78901,
+        approval_values=[av_24])
+    self.services.issue.TestAddIssue(issue)
+
+    delta = tracker_pb2.ApprovalDelta(
+        status=tracker_pb2.ApprovalStatus.REVIEW_REQUESTED,
+        set_on=2345,
+        approver_ids_add=[222])
+
+    with self.assertRaises(exceptions.InputException):
+      long_comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
+      self.work_env.UpdateIssueApproval(78901, 24, delta, long_comment, False)
+
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   def testConvertIssueApprovalsTemplate(self, fake_pasicn):
@@ -2065,6 +2113,15 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(exceptions.NoSuchTemplateException):
       self.work_env.ConvertIssueApprovalsTemplate(
           config, issue, 'template_name', 'comment')
+
+  def testConvertIssueApprovalsTemplate_TooLongComment(self):
+    self.SignIn()
+    issue = fake.MakeTestIssue(789, 1, 'sum', 'New', 111)
+    config = self.services.config.GetProjectConfig(self.cnxn, 789)
+    with self.assertRaises(exceptions.InputException):
+      long_comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
+      self.work_env.ConvertIssueApprovalsTemplate(
+          config, issue, 'template_name', long_comment)
 
   def testConvertIssueApprovalsTemplate_MissingEditPermissions(self):
     self.SignIn(self.user_2.user_id)
@@ -2214,6 +2271,25 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       with self.work_env as we:
         we.UpdateIssue(issue, delta, 'New description', is_description=True)
+
+    fake_pasicn.assert_not_called()
+    fake_pasibn.assert_not_called()
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testUpdateIssue_TooLongComment(self, fake_pasicn, fake_pasibn):
+    """We cannot edit an issue description with too long a comment."""
+    self.SignIn(222)
+    issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
+    self.services.issue.TestAddIssue(issue)
+    delta = tracker_pb2.IssueDelta()
+
+    with self.assertRaises(exceptions.InputException):
+      long_comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
+      with self.work_env as we:
+        we.UpdateIssue(issue, delta, long_comment)
 
     fake_pasicn.assert_not_called()
     fake_pasibn.assert_not_called()

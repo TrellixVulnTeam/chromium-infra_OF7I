@@ -18,6 +18,7 @@ from features import commitlogcommands
 from framework import framework_constants
 from framework import monorailcontext
 from framework import emailfmt
+from tracker import tracker_constants
 from tracker import tracker_helpers
 
 AlertEmailHeader = emailfmt.AlertEmailHeader
@@ -26,6 +27,12 @@ AlertEmailHeader = emailfmt.AlertEmailHeader
 def IsAllowlisted(email_addr):
   """Returns whether a given email is from one of the allowlisted domains."""
   return email_addr.endswith(settings.alert_allowlisted_suffixes)
+
+
+def IsCommentSizeReasonable(comment):
+  # type: str -> bool
+  """Returns whether a given comment string is a reasonable size."""
+  return len(comment) <= tracker_constants.MAX_COMMENT_CHARS
 
 
 def FindAlertIssue(services, cnxn, project_id, incident_label):
@@ -112,6 +119,7 @@ def GetAlertProperties(services, cnxn, project_id, incident_id, trooper_queue,
 def ProcessEmailNotification(
     services, cnxn, project, project_addr, from_addr, auth, subject, body,
     incident_id, msg, trooper_queue=None):
+  # type: (...) -> None
   """Process an alert notification email to create or update issues.""
 
   Args:
@@ -142,6 +150,11 @@ def ProcessEmailNotification(
 
   formatted_body = 'Filed by %s on behalf of %s\n\n%s' % (
       auth.email, from_addr, body)
+  if not IsCommentSizeReasonable(formatted_body):
+    logging.info(
+        '%s tried to send an alert comment that is too long in %s', from_addr,
+        project_addr)
+    return
 
   mc = monorailcontext.MonorailContext(services, auth=auth, cnxn=cnxn)
   mc.LookupLoggedInUserPerms(project)

@@ -41,6 +41,7 @@ from testing import fake
 from testing import testing_helpers
 from testing_utils import testing
 from tracker import tracker_bizobj
+from tracker import tracker_constants
 
 
 def MakeFakeServiceManager():
@@ -590,6 +591,19 @@ class MonorailApiTest(testing.EndpointsTestCase):
     self.assertEqual('requester@example.com', resp['author']['name'])
     self.assertEqual('This is just a comment', resp['content'])
 
+  def testIssuesCommentsInsert_TooLongComment(self):
+    """Too long of a comment to add."""
+    self.services.project.TestAddProject(
+        'test-project', owner_ids=[], project_id=12345)
+
+    issue1 = fake.MakeTestIssue(12345, 1, 'Issue 1', 'New', 222)
+    self.services.issue.TestAddIssue(issue1)
+
+    long_comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
+    self.request['content'] = long_comment
+    with self.call_should_fail(400):
+      self.call_api('issues_comments_insert', self.request)
+
   def testIssuesCommentsInsert_Amendments_Normal(self):
     """Insert comments with amendments."""
 
@@ -1088,6 +1102,19 @@ class MonorailApiTest(testing.EndpointsTestCase):
     request, _issue = self.approvalRequest(approval)
 
     with self.call_should_fail(403):
+      self.call_api('approvals_comments_insert', request)
+
+  def testApprovalsCommentsInsert_TooLongComment(self):
+    """Too long of a comment when comments on approvals."""
+    self.services.project.TestAddProject(
+        'test-project', owner_ids=[222], project_id=12345)
+
+    approval = tracker_pb2.ApprovalValue(approval_id=1)
+    request, _issue = self.approvalRequest(approval)
+
+    long_comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
+    request['content'] = long_comment
+    with self.call_should_fail(400):
       self.call_api('approvals_comments_insert', request)
 
   def testApprovalsCommentsInsert_NoApprovalDefFound(self):

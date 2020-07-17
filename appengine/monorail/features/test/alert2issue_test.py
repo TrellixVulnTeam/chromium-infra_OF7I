@@ -144,6 +144,25 @@ class ProcessEmailNotificationTests(unittest.TestCase, TestData):
         self.incident_label, self.msg, self.trooper_queue)
     self.mox.VerifyAll()
 
+  def testSkipNotification_TooLongComment(self):
+    self.mox.StubOutWithMock(alert2issue, 'IsAllowlisted')
+    alert2issue.IsAllowlisted(self.from_addr).AndReturn(True)
+    self.mox.StubOutWithMock(alert2issue, 'IsCommentSizeReasonable')
+    alert2issue.IsCommentSizeReasonable(
+        'Filed by %s on behalf of %s\n\n%s' %
+        (self.auth.email, self.from_addr, self.msg_body)).AndReturn(False)
+
+    # None of them should be called, if the comment is too long.
+    self.mox.StubOutWithMock(self.services.issue, 'CreateIssueComment')
+    self.mox.StubOutWithMock(self.services.issue, 'CreateIssue')
+    self.mox.ReplayAll()
+
+    alert2issue.ProcessEmailNotification(
+        self.services, self.cnxn, self.project, self.project_addr,
+        self.from_addr, self.auth, self.msg_subject, self.msg_body,
+        self.incident_label, self.msg, self.trooper_queue)
+    self.mox.VerifyAll()
+
   def testProcessNotification_IfFromAllowlistedSender(self):
     self.mox.StubOutWithMock(alert2issue, 'IsAllowlisted')
     alert2issue.IsAllowlisted(self.from_addr).AndReturn(True)

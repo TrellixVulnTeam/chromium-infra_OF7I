@@ -419,6 +419,7 @@ class MonorailApi(remote.Service):
       http_method='POST',
       name='issues.comments.insert')
   def issues_comments_insert(self, mar, request):
+    # type (...) -> proto.api_pb2_v1.IssuesCommentsInsertResponse
     """Add a comment."""
     # Because we will modify issues, load from DB rather than cache.
     issue = self._services.issue.GetIssueByLocalID(
@@ -442,6 +443,12 @@ class MonorailApi(remote.Service):
               'No API support for approval field changes: (approval %s owns %s)'
               % (fd.approval_id, fd.field_name))
         # if fd was None, that gets dealt with later.
+
+    if request.content and len(
+        request.content) > tracker_constants.MAX_COMMENT_CHARS:
+      raise endpoints.BadRequestException(
+          'Comment is too long on this issue (%s, %d' %
+          (request.projectId, request.issueId))
 
     updates_dict = {}
     move_to_project = None
@@ -728,6 +735,7 @@ class MonorailApi(remote.Service):
       http_method='POST',
       name='approvals.comments.insert')
   def approvals_comments_insert(self, mar, request):
+    # type (...) -> proto.api_pb2_v1.ApprovalsCommentsInsertResponse
     """Add an approval comment."""
     approval_fd = tracker_bizobj.FindFieldDef(
         request.approvalName, mar.config)
@@ -753,6 +761,12 @@ class MonorailApi(remote.Service):
         mar.granted_perms):
       raise permissions.PermissionException(
           'User is not allowed to comment on this issue (%s, %d)' %
+          (request.projectId, request.issueId))
+
+    if request.content and len(
+        request.content) > tracker_constants.MAX_COMMENT_CHARS:
+      raise endpoints.BadRequestException(
+          'Comment is too long on this issue (%s, %d' %
           (request.projectId, request.issueId))
 
     updates_dict = {}

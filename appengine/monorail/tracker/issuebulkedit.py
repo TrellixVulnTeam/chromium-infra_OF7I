@@ -32,6 +32,7 @@ from framework import template_helpers
 from services import tracker_fulltext
 from tracker import field_helpers
 from tracker import tracker_bizobj
+from tracker import tracker_constants
 from tracker import tracker_helpers
 from tracker import tracker_views
 
@@ -157,6 +158,7 @@ class IssueBulkEdit(servlet.Servlet):
         }
 
   def ProcessFormData(self, mr, post_data):
+    # (...) -> str
     """Process the posted issue update form.
 
     Args:
@@ -301,6 +303,9 @@ class IssueBulkEdit(servlet.Servlet):
     else:
       blocking_add = []
       blocking_remove = parsed.blocking.iids
+
+    if len(parsed.comment) > tracker_constants.MAX_COMMENT_CHARS:
+      mr.errors.comment = 'Comment is too long.'
 
     iids_actually_changed = []
     old_owner_ids = []
