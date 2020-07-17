@@ -1,6 +1,6 @@
 [define title]User Groups[end]
 [define category_css]css/ph_list.css[end]
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 [include "../framework/js-placeholders.ezt"]
 
 <form method="POST" action='/hosting/deleteGroup.do'>
@@ -92,4 +92,4 @@ runOnLoad(function() {
   </script>
 [end]
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

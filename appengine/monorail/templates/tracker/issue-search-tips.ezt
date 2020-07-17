@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 [# Note: No UI element permission checking needed on this page. ]
 
@@ -386,4 +386,4 @@ For example:</p>
 
 </div>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

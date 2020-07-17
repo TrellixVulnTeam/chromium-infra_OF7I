@@ -1,4 +1,4 @@
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 
  <form action="adminAdvanced.do" method="POST">
   <input type="hidden" name="token" value="[form_token]">
@@ -8,4 +8,4 @@
 
  </form>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

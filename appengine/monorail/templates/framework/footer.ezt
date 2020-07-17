@@ -1,6 +1,6 @@
-</div> [# End <div id="maincol"> from master-header.ezt]
+</div> [# End <div id="maincol"> from header.ezt]
 
-[include "master-footer-shared.ezt"]
+[include "footer-shared.ezt"]
 
 <script type="text/javascript" nonce="[nonce]">
 // Google Analytics

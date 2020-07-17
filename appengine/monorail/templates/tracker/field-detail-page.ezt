@@ -1,6 +1,6 @@
 [define title]Field [field_def.field_name][end]
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 
 <a href="/p/[projectname]/adminLabels">&lsaquo; Back to field list</a><br><br>
 
@@ -418,4 +418,4 @@ runOnLoad(function() {
 });
 </script>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

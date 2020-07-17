@@ -1,4 +1,4 @@
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 
 [# Note: No need for UI element permission checking here. ]
 
@@ -27,4 +27,4 @@ actually yourself.</p>
 
 </div>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

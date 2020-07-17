@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 
 <h3>Issue export</h3>
 
@@ -36,4 +36,4 @@
 
 
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

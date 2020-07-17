@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 
 [if-any read_only][include "../framework/read-only-rejection.ezt"]
 [else]
@@ -196,4 +196,4 @@ runOnLoad(function() {
 </script>
 
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

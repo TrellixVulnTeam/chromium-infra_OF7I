@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 [# Note: base permission for this page is EditIssue]
 
@@ -480,4 +480,4 @@ for (var i = 0; i < addRowLinks.length; ++i) {
 [end]
 
 [include "field-value-widgets-js.ezt"]
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

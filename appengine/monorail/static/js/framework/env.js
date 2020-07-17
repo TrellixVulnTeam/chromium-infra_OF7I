@@ -22,7 +22,7 @@ var CS = {};
  * This is defined as an interface so that we can use CS.env as a Closure
  * type name, but it will never be implemented; rather, it will be
  * made available on every page as the global object CS_env (see
- * codesite/templates/demetrius/master-header.ezt).
+ * codesite/templates/demetrius/header.ezt).
  *
  * The type of the CS_env global object will actually be one of
  * CS.env, CS.project_env, etc. depending on the page

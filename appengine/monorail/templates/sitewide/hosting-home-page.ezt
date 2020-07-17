@@ -2,7 +2,7 @@
 [define robots_no_index]true[end]
 [define category_css]css/ph_list.css[end]
 
-[include "../framework/master-header.ezt" "hidesearch"]
+[include "../framework/header.ezt" "hidesearch"]
 
 [define prod_hosting_base_url]/hosting/[end]
 
@@ -82,4 +82,4 @@ runOnLoad(function() {
 });
 </script>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

@@ -3,9 +3,9 @@
 [define page_css]css/ph_detail.css[end][# needed for infopeek]
 
 [if-any projectname]
-  [include "../framework/master-header.ezt" "showtabs"]
+  [include "../framework/header.ezt" "showtabs"]
 [else]
-  [include "../framework/master-header.ezt" "hidetabs"]
+  [include "../framework/header.ezt" "hidetabs"]
 [end]
 [include "../framework/js-placeholders.ezt" "showtabs"]
 
@@ -118,4 +118,4 @@ runOnLoad(function() {
 });
 </script>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

@@ -1,7 +1,7 @@
 [define title][if-any viewing_self]My[else][viewed_username][end] saved queries[end]
 [define category_css]css/ph_detail.css[end]
 
-[include "../framework/master-header.ezt" "showusertabs" "t4"]
+[include "../framework/header.ezt" "showusertabs" "t4"]
 
 
 <h3>Saved queries</h3>
@@ -41,4 +41,4 @@
 
 [end][# if not read-only]
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

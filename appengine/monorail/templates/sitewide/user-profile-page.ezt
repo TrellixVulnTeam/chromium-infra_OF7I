@@ -1,5 +1,5 @@
 [define category_css]css/ph_list.css[end]
-[include "../framework/master-header.ezt" "showusertabs" "t1"]
+[include "../framework/header.ezt" "showusertabs" "t1"]
 [include "../framework/js-placeholders.ezt"]
 <div id="colcontrol">
 
@@ -471,4 +471,4 @@ runOnLoad(function() {
 <script type="module" defer src="[version_base]/static/js/sitewide/linked-accounts.js" nonce="[nonce]"></script>
 
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

@@ -1,7 +1,7 @@
 [define title][if-any viewing_self]My[else][viewed_user_display_name][end] hotlists[end]
 [define category_css]css/ph_detail.css[end]
 
-[include "../framework/master-header.ezt" "showusertabs" "t5"]
+[include "../framework/header.ezt" "showusertabs" "t5"]
 
 
 <h3>Hotlists</h3>
@@ -127,4 +127,4 @@ runOnLoad(function() {
 });
 </script>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

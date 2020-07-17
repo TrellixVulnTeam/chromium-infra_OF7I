@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <title>Monorail: Polymer Profile Page</title>
 
-[include "master-header-shared.ezt"]
+[include "header-shared.ezt"]
 
 [include "../webpack-out/mr-profile-page.ezt"]
 

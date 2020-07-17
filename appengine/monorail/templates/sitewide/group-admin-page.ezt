@@ -1,6 +1,6 @@
 [define title]User Group: [groupname][end]
 [define category_css]css/ph_list.css[end]
-[include "../framework/master-header.ezt" "showusergrouptabs"]
+[include "../framework/header.ezt" "showusergrouptabs"]
 
 
 <form action="groupadmin.do" method="POST" autocomplete="off">
@@ -15,4 +15,4 @@
   <input type="submit" id="savechanges" name="btn" value="Save changes" class="submit">
 </form>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

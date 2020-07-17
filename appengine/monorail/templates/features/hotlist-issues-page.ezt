@@ -1,7 +1,7 @@
 [define title]Hotlist [hotlist.name][end]
 [define category_css]css/ph_list.css[end]
 [define category2_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 
 <table width="100%" cellpadding="0" cellspacing="0" border="0" class="hotlist-issues-page" id="meta-container"
        style="margin: 1em">
@@ -117,4 +117,4 @@ runOnLoad(function() {
 
 [#TODO(jojwang):make pretty]
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

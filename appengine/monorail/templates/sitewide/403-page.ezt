@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 <h3>Permission denied</h3>
 
@@ -9,4 +9,4 @@
 
 [if-any reason]<p>Reason: [reason].</p>[end]
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

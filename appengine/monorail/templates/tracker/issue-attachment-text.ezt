@@ -2,7 +2,7 @@
 [define page_css]css/d_sb.css[end]
 [# Use raw format because filename will be escaped when title variable is used.]
 [define title][format "raw"][filename][end] ([filesize])[end]
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 
 <link type="text/css" rel="stylesheet"
       href="[version_base]/static/css/prettify.css">
@@ -40,4 +40,4 @@ runOnLoad(function() {
 </script>
 [end]
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

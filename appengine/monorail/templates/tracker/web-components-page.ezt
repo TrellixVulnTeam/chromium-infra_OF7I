@@ -5,7 +5,7 @@
 [end]
 
 [define is_ezt][end]
-[include "../framework/master-header-shared.ezt"]
+[include "../framework/header-shared.ezt"]
 
 [include "../webpack-out/mr-app.ezt"]
 

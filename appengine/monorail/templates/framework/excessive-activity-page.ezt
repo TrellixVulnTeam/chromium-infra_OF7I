@@ -1,4 +1,4 @@
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 <h3>Action Limit Exceeded</h3>
 
@@ -28,4 +28,4 @@ the quality of this site for everyone.</p>
 </div>
 
 </div>
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

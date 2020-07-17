@@ -1,7 +1,7 @@
 [define page_css]css/d_updates_page.css[end]
 
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 [include "../features/updates-page.ezt"]
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

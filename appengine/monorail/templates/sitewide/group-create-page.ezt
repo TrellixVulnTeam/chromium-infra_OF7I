@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 <h2>Create a new user group</h2>
 
@@ -37,4 +37,4 @@ runOnLoad(function() {
 
 [end][# not read-only]
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

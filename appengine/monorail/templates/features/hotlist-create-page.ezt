@@ -1,6 +1,6 @@
 [define title]Create a new hotlist[end]
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 <h2>Create a hotlist</h2>
 
@@ -61,4 +61,4 @@
   <input type="submit" value="Create hotlist">
 </form>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

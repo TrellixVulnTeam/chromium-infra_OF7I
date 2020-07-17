@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 <form action="advsearch.do" method="POST" style="margin:6px;margin-top:12px;" autocomplete="false">
 
@@ -79,4 +79,4 @@ runOnLoad(function() {
 });
 </script>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

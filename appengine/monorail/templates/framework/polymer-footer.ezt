@@ -1,4 +1,4 @@
-[include "master-footer-shared.ezt"]
+[include "footer-shared.ezt"]
 
 <script type="text/javascript" nonce="[nonce]">
 // Google Analytics

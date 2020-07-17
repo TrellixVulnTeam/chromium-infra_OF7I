@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "showusertabs" "t1"]
+[include "../framework/header.ezt" "showusertabs" "t1"]
 
 <div style="max-width:50em">
 
@@ -14,4 +14,4 @@
 
 </div>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

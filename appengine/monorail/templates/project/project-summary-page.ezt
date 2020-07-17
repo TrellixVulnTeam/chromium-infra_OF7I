@@ -1,5 +1,5 @@
 [define category_css]css/ph_detail.css[end]
-[include "../framework/master-header.ezt" "showtabs"]
+[include "../framework/header.ezt" "showtabs"]
 [# TODO: add UI element permissions when I add editing elements to this page. ]
 [define show_star][if-any project_stars_enabled][if-any logged_in_user][if-any read_only][else]yes[end][end][end][end]
 
@@ -99,4 +99,4 @@ runOnLoad(function() {
 });
 </script>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

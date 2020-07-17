@@ -1,4 +1,4 @@
-[include "../framework/master-header.ezt" "showusertabs" "t1"]
+[include "../framework/header.ezt" "showusertabs" "t1"]
 
 <div id="colcontrol">
 <h2>Reset bouncing email</h2>
@@ -23,4 +23,4 @@
 </div>
 
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

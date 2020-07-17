@@ -1,6 +1,6 @@
 [define title]User Group: [groupname][end]
 [define category_css]css/ph_list.css[end]
-[include "../framework/master-header.ezt" "showusergrouptabs"]
+[include "../framework/header.ezt" "showusergrouptabs"]
 [include "../framework/js-placeholders.ezt"]
 
 <form method="POST" action="edit.do">
@@ -102,4 +102,4 @@ runOnLoad(function() {
 [end]
 
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]

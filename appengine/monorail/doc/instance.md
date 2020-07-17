@@ -16,8 +16,8 @@
 1.  Set up monitoring and alerts.
 1.  Set up attachment storage in GCS.
 1.  Set up spam data and train models.
-1.  Fork and customize some of HTML in templates/framework/master-header.ezt,
-    master-footer.ezt, and some CSS to give the instance a visually different
+1.  Fork and customize some of HTML in templates/framework/header.ezt,
+    footer.ezt, and some CSS to give the instance a visually different
     appearance.
 1.  Get From-address allowlisted so that the "View issue" link in Gmail/Inbox
     works.

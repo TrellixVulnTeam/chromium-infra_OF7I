@@ -1,4 +1,4 @@
-[include "../framework/master-header.ezt" "hidetabs"]
+[include "../framework/header.ezt" "hidetabs"]
 
 <h3>Access Not Allowed</h3>
 
@@ -28,4 +28,4 @@
   </ul>
 </div>
 
-[include "../framework/master-footer.ezt"]
+[include "../framework/footer.ezt"]
