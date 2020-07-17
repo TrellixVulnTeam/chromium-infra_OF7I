@@ -16,6 +16,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/appengine/cros/lab_inventory/app/config"
@@ -694,7 +695,7 @@ func (is *InventoryServerImpl) GetDeviceManualRepairRecord(ctx context.Context, 
 	}
 	getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
 	if err != nil {
-		return nil, errors.Annotate(err, "Error encountered for get request").Tag(grpcutil.InvalidArgumentTag).Err()
+		return nil, errors.Annotate(err, "Error encountered for get request %s", req.Hostname).Tag(grpcutil.InvalidArgumentTag).Err()
 	}
 
 	// There should only be one record in progress per hostname at a time. User
@@ -720,7 +721,48 @@ func (is *InventoryServerImpl) GetDeviceManualRepairRecord(ctx context.Context, 
 // CreateDeviceManualRepairRecord adds a new submitted manual repair record for
 // a given device.
 func (is *InventoryServerImpl) CreateDeviceManualRepairRecord(ctx context.Context, req *api.CreateDeviceManualRepairRecordRequest) (rsp *api.CreateDeviceManualRepairRecordResponse, err error) {
-	return nil, nil
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+
+	// Query asset info using hostname and create records
+	var assetTag string
+	record := req.DeviceRepairRecord
+
+	// Try to get asset tag from DeviceEntity id. In most cases (current coverage
+	// is ~71%), DeviceEntity will use asset tag as its ID. UUID is used if not
+	// asset tag. We will set its asset tag to "n/a" in the interim if the current
+	// id is the same as the hostname entered by the user.
+	//
+	// The ID should either be an asset tag or a uuid. Checking if it equals
+	// hostname is to prevent datastore errors.
+	devices := datastore.GetDevicesByHostnames(ctx, []string{record.Hostname})
+	if err := devices[0].Err; err != nil {
+		logging.Warningf(ctx, "DeviceEntity not queryable; setting asset tag to n/a")
+		assetTag = "n/a"
+	} else {
+		assetTag = string(devices[0].Entity.ID)
+	}
+
+	// Fill in the asset tag field for the records and write to datastore.
+	record.AssetTag = assetTag
+	record.CreatedTime = timestamppb.Now()
+	record.UpdatedTime = record.CreatedTime
+
+	if record.RepairState == api.DeviceManualRepairRecord_STATE_COMPLETED {
+		record.CompletedTime = record.CreatedTime
+	}
+
+	resp, err := datastore.AddDeviceManualRepairRecords(ctx, []*api.DeviceManualRepairRecord{record})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(resp) > 0 && resp[0].Err != nil {
+		return nil, resp[0].Err
+	}
+
+	return &api.CreateDeviceManualRepairRecordResponse{}, nil
 }
 
 // UpdateDeviceManualRepairRecord updates an existing manual repair record with

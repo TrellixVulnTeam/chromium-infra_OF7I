@@ -1126,12 +1126,19 @@ func TestDeviceConfigsExists(t *testing.T) {
 	})
 }
 
-func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime int64) *api.DeviceManualRepairRecord {
+func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime int64, completed bool) *api.DeviceManualRepairRecord {
+	var state api.DeviceManualRepairRecord_RepairState
+	if completed {
+		state = api.DeviceManualRepairRecord_STATE_COMPLETED
+	} else {
+		state = api.DeviceManualRepairRecord_STATE_IN_PROGRESS
+	}
+
 	return &api.DeviceManualRepairRecord{
 		Hostname:                        hostname,
 		AssetTag:                        assetTag,
 		RepairTargetType:                api.DeviceManualRepairRecord_TYPE_DUT,
-		RepairState:                     api.DeviceManualRepairRecord_STATE_IN_PROGRESS,
+		RepairState:                     state,
 		BuganizerBugUrl:                 "https://b/12345678",
 		ChromiumBugUrl:                  "https://crbug.com/12345678",
 		DutRepairFailureDescription:     "Mock DUT repair failure description.",
@@ -1155,6 +1162,45 @@ func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime 
 	}
 }
 
+func mockServo(servoHost string) *lab.Servo {
+	return &lab.Servo{
+		ServoHostname: servoHost,
+		ServoPort:     8888,
+		ServoSerial:   "SERVO1",
+		ServoType:     "v3",
+	}
+}
+
+func mockDut(hostname, id, servoHost string) *lab.ChromeOSDevice {
+	return &lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{
+			Value: id,
+		},
+		Device: &lab.ChromeOSDevice_Dut{
+			Dut: &lab.DeviceUnderTest{
+				Hostname: hostname,
+				Peripherals: &lab.Peripherals{
+					Servo:       mockServo(servoHost),
+					SmartUsbhub: false,
+				},
+			},
+		},
+	}
+}
+
+func mockLabstation(hostname, id string) *lab.ChromeOSDevice {
+	return &lab.ChromeOSDevice{
+		Id: &lab.ChromeOSDeviceID{
+			Value: id,
+		},
+		Device: &lab.ChromeOSDevice_Labstation{
+			Labstation: &lab.Labstation{
+				Hostname: hostname,
+			},
+		},
+	}
+}
+
 func TestGetDeviceManualRepairRecord(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -1163,9 +1209,9 @@ func TestGetDeviceManualRepairRecord(t *testing.T) {
 
 	ds.GetTestable(ctx).Consistent(true)
 
-	record1 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 1)
-	record2 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-222", 1)
-	record3 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-333", 1)
+	record1 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 1, false)
+	record2 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-222", 1, false)
+	record3 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-333", 1, false)
 	records := []*api.DeviceManualRepairRecord{record1, record2, record3}
 
 	// Set up records in datastore
@@ -1207,6 +1253,125 @@ func TestGetDeviceManualRepairRecord(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "No record found")
+		})
+	})
+}
+
+func TestCreateDeviceManualRepairRecord(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+
+	ds.GetTestable(ctx).Consistent(true)
+
+	// Empty datastore
+	record1 := mockDeviceManualRepairRecord("chromeos-createRecords-aa", "", 1, false)
+	record2 := mockDeviceManualRepairRecord("", "", 1, false)
+
+	// Set up records in datastore
+	// datastore.AddDeviceManualRepairRecords(ctx, records)
+	Convey("Test add devices using an empty datastore", t, func() {
+		Convey("Add single record", func() {
+			propFilter := map[string]string{"hostname": record1.Hostname}
+			req := &api.CreateDeviceManualRepairRecordRequest{DeviceRepairRecord: record1}
+			rsp, err := tf.Inventory.CreateDeviceManualRepairRecord(tf.C, req)
+			So(rsp.String(), ShouldEqual, "")
+			So(err, ShouldBeNil)
+
+			// Check added record
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-aa")
+			So(getRes[0].Record.GetAssetTag(), ShouldEqual, "n/a")
+			So(getRes[0].Record.GetCreatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 1, Nanos: 0})
+		})
+		Convey("Add single record without hostname", func() {
+			req := &api.CreateDeviceManualRepairRecordRequest{DeviceRepairRecord: record2}
+			rsp, err := tf.Inventory.CreateDeviceManualRepairRecord(tf.C, req)
+			So(rsp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Hostname cannot be empty")
+
+			// No record should be added
+			propFilter := map[string]string{"hostname": record2.Hostname}
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 0)
+		})
+	})
+
+	// Datastore with DeviceEntity
+	record3 := mockDeviceManualRepairRecord("chromeos-createRecords-bb", "", 1, false)
+	record4 := mockDeviceManualRepairRecord("chromeos-createRecords-cc", "", 1, false)
+	record5 := mockDeviceManualRepairRecord("", "", 1, false)
+	record6 := mockDeviceManualRepairRecord("chromeos-createRecords-ee", "", 1, true)
+
+	Convey("Test add devices using an non-empty datastore", t, func() {
+		dut1 := mockDut("chromeos-createRecords-bb", "mockDutAssetTag-111", "labstation1")
+		dut2 := mockDut("chromeos-createRecords-cc", "", "labstation1")
+		dut3 := mockDut("chromeos-createRecords-ee", "mockDutAssetTag-222", "labstation1")
+		labstation1 := mockLabstation("labstation1", "assetId-111")
+		dut1.DeviceConfigId = &device.ConfigId{ModelId: &device.ModelId{Value: "model1"}}
+		dut2.DeviceConfigId = &device.ConfigId{ModelId: &device.ModelId{Value: "model2"}}
+		dut3.DeviceConfigId = &device.ConfigId{ModelId: &device.ModelId{Value: "model3"}}
+		labstation1.DeviceConfigId = &device.ConfigId{
+			ModelId: &device.ModelId{Value: "model5"},
+		}
+		devsToAdd := []*lab.ChromeOSDevice{dut1, dut2, dut3, labstation1}
+		_, err := datastore.AddDevices(ctx, devsToAdd, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		Convey("Add single record", func() {
+			propFilter := map[string]string{"hostname": record3.Hostname}
+			req := &api.CreateDeviceManualRepairRecordRequest{DeviceRepairRecord: record3}
+			rsp, err := tf.Inventory.CreateDeviceManualRepairRecord(tf.C, req)
+			So(rsp.String(), ShouldEqual, "")
+			So(err, ShouldBeNil)
+
+			// Check added record
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-bb")
+			So(getRes[0].Record.GetAssetTag(), ShouldEqual, "mockDutAssetTag-111")
+			So(getRes[0].Record.GetCreatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 1, Nanos: 0})
+		})
+		Convey("Add single record using dut without asset tag", func() {
+			propFilter := map[string]string{"hostname": record4.Hostname}
+			req := &api.CreateDeviceManualRepairRecordRequest{DeviceRepairRecord: record4}
+			rsp, err := tf.Inventory.CreateDeviceManualRepairRecord(tf.C, req)
+			So(rsp.String(), ShouldEqual, "")
+			So(err, ShouldBeNil)
+
+			// Asset tag should be uuid generated for dut
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-cc")
+			So(getRes[0].Record.GetAssetTag(), ShouldNotEqual, "")
+			So(getRes[0].Record.GetAssetTag(), ShouldNotEqual, "n/a")
+			So(getRes[0].Record.GetCreatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 1, Nanos: 0})
+		})
+		Convey("Add single record with no hostname", func() {
+			req := &api.CreateDeviceManualRepairRecordRequest{DeviceRepairRecord: record5}
+			rsp, err := tf.Inventory.CreateDeviceManualRepairRecord(tf.C, req)
+			So(rsp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Hostname cannot be empty")
+		})
+		Convey("Add single record with completed repair state", func() {
+			propFilter := map[string]string{"hostname": record6.Hostname}
+			req := &api.CreateDeviceManualRepairRecordRequest{DeviceRepairRecord: record6}
+			rsp, err := tf.Inventory.CreateDeviceManualRepairRecord(tf.C, req)
+			So(rsp.String(), ShouldEqual, "")
+			So(err, ShouldBeNil)
+
+			// Completed time should be same as created
+			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, propFilter)
+			So(getRes, ShouldHaveLength, 1)
+			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-createRecords-ee")
+			So(getRes[0].Record.GetAssetTag(), ShouldEqual, "mockDutAssetTag-222")
+			So(getRes[0].Record.GetCreatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 1, Nanos: 0})
+			So(getRes[0].Record.GetCreatedTime(), ShouldResemble, getRes[0].Record.GetCompletedTime())
 		})
 	})
 }
