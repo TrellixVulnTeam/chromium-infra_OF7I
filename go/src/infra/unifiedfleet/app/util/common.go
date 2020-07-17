@@ -24,6 +24,9 @@ const (
 	CrOSLab                  string = "cros-lab"
 )
 
+// Key is a type for use in adding values to context. It is not recommended to use plain string as key.
+type Key string
+
 var validLabs = []string{ATLLab, ACSLab, BrowserLab, CrOSLab}
 
 // GetBrowserLabName return a resource name with browser lab prefix and a given user-specified raw name.

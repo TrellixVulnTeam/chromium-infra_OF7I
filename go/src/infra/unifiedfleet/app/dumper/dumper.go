@@ -15,6 +15,7 @@ import (
 
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	"infra/unifiedfleet/app/cron"
+	"infra/unifiedfleet/app/util"
 )
 
 // Options is the dumper server configuration.
@@ -33,7 +34,7 @@ func InitServer(srv *server.Server, opts Options) {
 		run(ctx, minInterval)
 	})
 	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, dumpCrosInvcentory)
+		cron.Run(ctx, 60*time.Minute, dumpCrosInventory)
 	})
 	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
 		cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
@@ -79,9 +80,9 @@ func dumpToBQ(ctx context.Context) (err error) {
 	return nil
 }
 
-func dumpCrosInvcentory(ctx context.Context) (err error) {
+func dumpCrosInventory(ctx context.Context) (err error) {
 	defer func() {
-		dumpCrosInvcentoryTick.Add(ctx, 1, err == nil)
+		dumpCrosInventoryTick.Add(ctx, 1, err == nil)
 	}()
 	return importCrosInventory(ctx)
 }
@@ -94,13 +95,13 @@ func dumpCrosNetwork(ctx context.Context) (err error) {
 }
 
 // unique key used to store and retrieve context.
-var contextKey = "ufs bigquery-client key"
+var contextKey = util.Key("ufs bigquery-client key")
 
 // Use installs bigquery client to context.
 func Use(ctx context.Context, bqClient *bigquery.Client) context.Context {
-	return context.WithValue(ctx, &contextKey, bqClient)
+	return context.WithValue(ctx, contextKey, bqClient)
 }
 
 func get(ctx context.Context) *bigquery.Client {
-	return ctx.Value(&contextKey).(*bigquery.Client)
+	return ctx.Value(contextKey).(*bigquery.Client)
 }
