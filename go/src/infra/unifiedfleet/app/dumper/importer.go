@@ -16,7 +16,10 @@ import (
 const machineDBHost = "machine-db.appspot.com"
 const crosInventoryHost = "cros-lab-inventory.appspot.com"
 
-func importCrimson(ctx context.Context) error {
+func importCrimson(ctx context.Context) (err error) {
+	defer func() {
+		dumpCrimsonTick.Add(ctx, 1, err == nil)
+	}()
 	sv := &frontend.FleetServerImpl{}
 	logging.Debugf(ctx, "Importing chrome platforms")
 	respCP, err := sv.ImportChromePlatforms(ctx, &api.ImportChromePlatformsRequest{

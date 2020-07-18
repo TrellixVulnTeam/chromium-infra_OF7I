@@ -16,6 +16,12 @@ var (
 		nil,
 		field.Bool("success"), // If the attempt succeed
 	)
+	dumpCrimsonTick = metric.NewCounter(
+		"chromeos/ufs/dumper/import_crimson",
+		"import crimson attempt",
+		nil,
+		field.Bool("success"),
+	)
 	dumpCrosInventoryTick = metric.NewCounter(
 		"chromeos/ufs/dumper/import_cros_inventory",
 		"import cros inventory attempt",
