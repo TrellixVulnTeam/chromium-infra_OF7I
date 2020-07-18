@@ -49,7 +49,7 @@ const (
 	// Deployed to the prod infrastructure, but needs repair.
 	State_STATE_NEEDS_REPAIR State = 5
 	// Deployed to the prod infrastructure, but failed to be repaired in previous step
-	// and required new attempt for reparing.
+	// and required new attempt for repairing.
 	State_STATE_REPAIR_FAILED State = 11
 	// Deployed to the prod infrastructure, but get disabled.
 	State_STATE_DISABLED State = 6

@@ -29,12 +29,16 @@ message Location {
     }];
     // The position of the rack in the row.
     string rack_number = 5;
-    // Each rack has many shelfs.
+    // Each rack has many shelves.
     // This field refers to the shelf number/name in the rack.
     string shelf = 6;
     // Each shelf has many positions where assets can be placed.
     // This field refers to the position number/name in the shelf
     string position = 7;
+
+    // A string descriptor representing location. This can be to
+    // store barcode values for location or user defined names.
+    string barcode_name = 8;
 }
 
 // Lab refers to the different Labs under chrome org
@@ -54,4 +58,3 @@ enum Lab {
     LAB_DATACENTER_MTV97 = 10;
     LAB_DATACENTER_FUCHSIA = 11;
 }
-

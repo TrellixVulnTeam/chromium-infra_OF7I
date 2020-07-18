@@ -42,10 +42,12 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 }
 
 func toLocation(rack, datacenter string) *fleet.Location {
+	dc := strings.ToLower(datacenter)
 	l := &fleet.Location{
-		Rack: rack,
+		Rack:        rack,
+		BarcodeName: dc + "-" + rack,
 	}
-	switch strings.ToLower(datacenter) {
+	switch dc {
 	case "atl97":
 		l.Lab = fleet.Lab_LAB_DATACENTER_ATL97
 	case "iad97":
