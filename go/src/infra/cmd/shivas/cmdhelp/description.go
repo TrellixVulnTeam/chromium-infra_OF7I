@@ -651,4 +651,45 @@ Example chrome platform configuration:
 
 The protobuf definition of chrome platform configuration for browser machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/chrome_platform.proto`
+
+	// AddNicLongDesc long description for AddNicCmd
+	AddNicLongDesc string = `Add a nic by name.
+
+Examples:
+shivas add-nic -f nic.json -m {Machine name}
+Add a nic by reading a JSON file input.
+-m option is a required parameter to associate the nic to the given machine.
+
+shivas add-nic -i
+Add a nic by reading input through interactive mode.`
+
+	// UpdateNicLongDesc long description for UpdateNicCmd
+	UpdateNicLongDesc string = `Update a nic by name.
+
+Examples:
+shivas update-nic -f nic.json
+Update a nic by reading a JSON file input.
+
+shivas update-nic -f nic.json -m {Machine name}
+Update a nic by reading a JSON file input and associate the nic with a different machine.
+
+shivas update-nic -i
+Update a nic by reading input through interactive mode.`
+
+	// NicFileText description for nic file input
+	NicFileText string = `Path to a file containing nic specification in JSON format.
+This file must contain one nic JSON message
+
+Example nic:
+{
+	"name": "nic-23",
+	"macAddress": "00:0d:5d:10:64:8d",
+	"switchInterface": {
+		"switch": "switch-12",
+		"port": 15
+	}
+}
+
+The protobuf definition of nic is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
 )

@@ -25,6 +25,7 @@ import (
 	q "infra/cmd/shivas/ufs/cmds/query"
 	"infra/cmd/shivas/ufs/cmds/registration"
 	"infra/cmd/shivas/ufs/cmds/registration/machine"
+	"infra/cmd/shivas/ufs/cmds/registration/nic"
 )
 
 func getApplication() *cli.Application {
@@ -50,6 +51,9 @@ func getApplication() *cli.Application {
 			machine.AddMachineCmd,
 			machine.UpdateMachineCmd,
 			machine.DeleteMachineCmd,
+			nic.AddNicCmd,
+			nic.UpdateNicCmd,
+			nic.DeleteNicCmd,
 			registration.RegisterCmd,
 			registration.ReregisterCmd,
 			registration.DecomCmd,
