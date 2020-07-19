@@ -23,7 +23,7 @@ import (
 // Checks if the resources referenced by the Drac input already exists
 // in the system before creating a new Drac
 func CreateDrac(ctx context.Context, drac *fleet.Drac) (*fleet.Drac, error) {
-	err := validateDrac(ctx, drac)
+	err := validateDracReferences(ctx, drac)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func CreateDrac(ctx context.Context, drac *fleet.Drac) (*fleet.Drac, error) {
 // Checks if the resources referenced by the Drac input already exists
 // in the system before updating a Drac
 func UpdateDrac(ctx context.Context, drac *fleet.Drac) (*fleet.Drac, error) {
-	err := validateDrac(ctx, drac)
+	err := validateDracReferences(ctx, drac)
 	if err != nil {
 		return nil, err
 	}
@@ -85,12 +85,13 @@ func ReplaceDrac(ctx context.Context, oldDrac *fleet.Drac, newDrac *fleet.Drac) 
 	return nil, nil
 }
 
-// validateDrac validates if a drac can be created/updated in the datastore.
+// validateDracReferences validates if the resources referenced by the drac
+// are in the system.
 //
 // Checks if the resources referenced by the given Drac input already exists
 // in the system. Returns an error if any resource referenced by the Drac input
 // does not exist in the system.
-func validateDrac(ctx context.Context, drac *fleet.Drac) error {
+func validateDracReferences(ctx context.Context, drac *fleet.Drac) error {
 	var resources []*Resource
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot create Drac %s:\n", drac.Name))

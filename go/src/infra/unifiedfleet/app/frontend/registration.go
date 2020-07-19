@@ -28,7 +28,18 @@ func (fs *FleetServerImpl) MachineRegistration(ctx context.Context, req *api.Mac
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	return nil, nil
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	machine, nics, drac, err := controller.MachineRegistration(ctx, req.Machine, req.Nics, req.Drac)
+	if err != nil {
+		return nil, err
+	}
+	return &api.MachineRegistrationResponse{
+		Machine: machine,
+		Nics:    nics,
+		Drac:    drac,
+	}, nil
 }
 
 // CreateMachine creates machine entry in database.

@@ -73,6 +73,44 @@ var resourceRegexs = []*regexp.Regexp{
 	vmRegex,
 }
 
+// Validate validates input requests of MachineRegistration.
+func (r *MachineRegistrationRequest) Validate() error {
+	if r.Machine == nil {
+		return status.Errorf(codes.InvalidArgument, "Machine "+NilEntity)
+	}
+	id := strings.TrimSpace(r.Machine.GetName())
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, "Machine "+EmptyName)
+	}
+	if !IDRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, "Machine "+InvalidCharacters)
+	}
+
+	if r.Nics != nil {
+		for _, nic := range r.Nics {
+			id = strings.TrimSpace(nic.GetName())
+			if id == "" {
+				return status.Errorf(codes.InvalidArgument, "Nic "+EmptyName)
+			}
+			if !IDRegex.MatchString(id) {
+				errorMsg := fmt.Sprintf("Nic %s has invalid characters in the name.", id)
+				return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
+			}
+		}
+	}
+
+	if r.Drac != nil {
+		id = strings.TrimSpace(r.Drac.GetName())
+		if id == "" {
+			return status.Errorf(codes.InvalidArgument, "Drac "+EmptyName)
+		}
+		if !IDRegex.MatchString(id) {
+			return status.Errorf(codes.InvalidArgument, "Drac "+InvalidCharacters)
+		}
+	}
+	return nil
+}
+
 // Validate validates input requests of CreateChromePlatform.
 func (r *CreateChromePlatformRequest) Validate() error {
 	if r.ChromePlatform == nil {

@@ -26,7 +26,7 @@ import (
 // Checks if the resources referenced by the Machine input already exists
 // in the system before creating a new Machine
 func CreateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine, error) {
-	err := validateMachine(ctx, machine)
+	err := validateMachineReferences(ctx, machine)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func CreateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine,
 // Checks if the resources referenced by the Machine input already exists
 // in the system before updating a Machine
 func UpdateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine, error) {
-	err := validateMachine(ctx, machine)
+	err := validateMachineReferences(ctx, machine)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *
 			return err
 		}
 
-		err = validateMachine(ctx, newMachine)
+		err = validateMachineReferences(ctx, newMachine)
 		if err != nil {
 			return err
 		}
@@ -147,12 +147,13 @@ func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *
 	return newMachine, nil
 }
 
-// validateMachine validates if a machine can be created/updated in the datastore.
+// validateMachineReferences validates if the resources referenced by the machine
+// are in the system.
 //
 // Checks if the resources referenced by the given Machine input already exists
 // in the system. Returns an error if any resource referenced by the Machine input
 // does not exist in the system.
-func validateMachine(ctx context.Context, machine *fleet.Machine) error {
+func validateMachineReferences(ctx context.Context, machine *fleet.Machine) error {
 	var resources []*Resource
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot create Machine %s:\n", machine.Name))
@@ -162,12 +163,6 @@ func validateMachine(ctx context.Context, machine *fleet.Machine) error {
 	}
 	if rpmID := machine.GetChromeBrowserMachine().GetRpmInterface().GetRpm(); rpmID != "" {
 		resources = append(resources, GetRPMResource(rpmID))
-	}
-	for _, nid := range machine.GetChromeBrowserMachine().GetNics() {
-		resources = append(resources, GetNicResource(nid))
-	}
-	if dracID := machine.GetChromeBrowserMachine().GetDrac(); dracID != "" {
-		resources = append(resources, GetDracResource(dracID))
 	}
 	if chromePlatformID := machine.GetChromeBrowserMachine().GetChromePlatform(); chromePlatformID != "" {
 		resources = append(resources, GetChromePlatformResource(chromePlatformID))

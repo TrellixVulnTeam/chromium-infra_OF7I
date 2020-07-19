@@ -92,6 +92,99 @@ func mockSwitch(id string) *proto.Switch {
 	}
 }
 
+func TestMachineRegistration(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Machine Registration", t, func() {
+		Convey("Register machine with nil machine", func() {
+			req := &api.MachineRegistrationRequest{}
+			_, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Machine "+api.NilEntity)
+		})
+
+		Convey("Register machine - Invalid input empty machine name", func() {
+			req := &api.MachineRegistrationRequest{
+				Machine: &proto.Machine{
+					Name: "",
+				},
+			}
+			_, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Machine "+api.EmptyName)
+		})
+
+		Convey("Create new machine - Invalid input invalid characters in machine name", func() {
+			req := &api.MachineRegistrationRequest{
+				Machine: &proto.Machine{
+					Name: "a.b)7&",
+				},
+			}
+			_, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Machine "+api.InvalidCharacters)
+		})
+
+		Convey("Register machine - Invalid input empty nic name", func() {
+			req := &api.MachineRegistrationRequest{
+				Machine: &proto.Machine{
+					Name: "machine-1",
+				},
+				Nics: []*proto.Nic{{
+					Name: "",
+				}},
+			}
+			_, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Nic "+api.EmptyName)
+		})
+
+		Convey("Register machine - Invalid input invalid characters in nic name", func() {
+			req := &api.MachineRegistrationRequest{
+				Machine: &proto.Machine{
+					Name: "machine-1",
+				},
+				Nics: []*proto.Nic{{
+					Name: "a.b)7&",
+				}},
+			}
+			_, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Nic a.b)7& has invalid characters in the name."+api.InvalidCharacters)
+		})
+
+		Convey("Register machine - Invalid input empty drac name", func() {
+			req := &api.MachineRegistrationRequest{
+				Machine: &proto.Machine{
+					Name: "machine-1",
+				},
+				Drac: &proto.Drac{
+					Name: "",
+				},
+			}
+			_, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Drac "+api.EmptyName)
+		})
+
+		Convey("Register machine - Invalid input invalid characters in drac name", func() {
+			req := &api.MachineRegistrationRequest{
+				Machine: &proto.Machine{
+					Name: "machine-1",
+				},
+				Drac: &proto.Drac{
+					Name: "a.b)7&",
+				},
+			}
+			_, err := tf.Fleet.MachineRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Drac "+api.InvalidCharacters)
+		})
+	})
+}
+
 func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
