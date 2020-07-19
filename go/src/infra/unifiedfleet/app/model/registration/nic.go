@@ -165,6 +165,18 @@ func BatchUpdateNics(ctx context.Context, nics []*fleet.Nic) ([]*fleet.Nic, erro
 	return putAllNic(ctx, nics, true)
 }
 
+// BatchDeleteNics deletes nics in datastore.
+//
+// This is a non-atomic operation. Must be used within a transaction.
+// Will lead to partial deletes if not used in a transaction.
+func BatchDeleteNics(ctx context.Context, ids []string) error {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &fleet.Nic{Name: id}
+	}
+	return fleetds.BatchDelete(ctx, protos, newNicEntity)
+}
+
 func putAllNic(ctx context.Context, nics []*fleet.Nic, update bool) ([]*fleet.Nic, error) {
 	protos := make([]proto.Message, len(nics))
 	updateTime := ptypes.TimestampNow()

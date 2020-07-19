@@ -6,6 +6,7 @@ package datastore
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
@@ -260,7 +261,7 @@ func GetAll(ctx context.Context, qf QueryAllFunc) (*OpResults, error) {
 
 // BatchGet returns all entities in table for given IDs.
 func BatchGet(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
-	// TODO: (eshwarn) Make it atomic and return array of Machines
+	// TODO: (eshwarn)return array of Machines
 	allRes := make(OpResults, len(es))
 	checkRes := make(OpResults, 0, len(es))
 	entities := make([]FleetEntity, 0, len(es))
@@ -294,8 +295,42 @@ func BatchGet(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 }
 
 // BatchDelete removes the entities from the datastore
-func BatchDelete(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
-	// TODO: (eshwarn) Make it atomic and return empty
+//
+// This is a non-atomic operation
+// Returns error even if partial delete succeeds.
+// Must be used within a Transaction so that partial deletes are rolled back.
+// Using it in a Transaction will rollback the partial deletes and propagate correct error message.
+func BatchDelete(ctx context.Context, es []proto.Message, nf NewFunc) error {
+	checkEntities := make([]FleetEntity, 0, len(es))
+	for _, e := range es {
+		entity, err := nf(ctx, e)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
+			return status.Errorf(codes.Internal, InternalError)
+		}
+		checkEntities = append(checkEntities, entity)
+	}
+	// Datastore doesn't throw an error if the record doesn't exist.
+	// Check and return err if there is no such entity in the datastore.
+	exists, err := Exists(ctx, checkEntities)
+	if err == nil {
+		for i, entity := range checkEntities {
+			if !exists[i] {
+				errorMsg := fmt.Sprintf("Entity not found: %+v", entity)
+				logging.Errorf(ctx, errorMsg)
+				return status.Errorf(codes.NotFound, errorMsg)
+			}
+		}
+	}
+	if err := datastore.Delete(ctx, checkEntities); err != nil {
+		logging.Errorf(ctx, "Failed to delete entities from datastore: %s", err)
+		return status.Errorf(codes.Internal, InternalError)
+	}
+	return nil
+}
+
+// DeleteAll removes the entities from the datastore
+func DeleteAll(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 	allRes := make(OpResults, len(es))
 	checkRes := make(OpResults, 0, len(es))
 	checkEntities := make([]FleetEntity, 0, len(es))

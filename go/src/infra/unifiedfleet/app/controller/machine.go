@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
@@ -25,56 +25,157 @@ import (
 //
 // Checks if the resources referenced by the Machine input already exists
 // in the system before creating a new Machine
-func CreateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine, error) {
-	err := validateMachineReferences(ctx, machine)
-	if err != nil {
+func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine, error) {
+	f := func(ctx context.Context) error {
+		// 1. Validate input
+		if err := validateCreateMachine(ctx, machine); err != nil {
+			return err
+		}
+
+		// 2. Make sure OUTPUT_ONLY fields are set to empty
+		if machine.GetChromeBrowserMachine() != nil {
+			// These are output only field. User is not allowed to set these value.
+			// Overwrite it with empty values.
+			machine.GetChromeBrowserMachine().Nics = nil
+			machine.GetChromeBrowserMachine().Drac = ""
+		}
+
+		// 3. Create the machine
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction to make it atomic. Datastore doesnt allow
+		// nested transactions.
+		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to create machine in datastore: %s", err)
 		return nil, err
 	}
-	return registration.CreateMachine(ctx, machine)
+	return machine, nil
 }
 
 // UpdateMachine updates machine in datastore.
 //
 // Checks if the resources referenced by the Machine input already exists
 // in the system before updating a Machine
-func UpdateMachine(ctx context.Context, machine *fleet.Machine) (*fleet.Machine, error) {
-	err := validateMachineReferences(ctx, machine)
-	if err != nil {
+func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine, error) {
+	f := func(ctx context.Context) error {
+		// 1. Validate input
+		if err := validateUpdateMachine(ctx, machine); err != nil {
+			return err
+		}
+
+		// 2. Make sure OUTPUT_ONLY fields are set to empty
+		if machine.GetChromeBrowserMachine() != nil {
+			// These are output only field. User is not allowed to set these value.
+			// Overwrite it with empty values.
+			machine.GetChromeBrowserMachine().Nics = nil
+			machine.GetChromeBrowserMachine().Drac = ""
+		}
+
+		// 3. Get the existing/old machine
+		oldMachine, err := registration.GetMachine(ctx, machine.GetName())
+		if err != nil {
+			return err
+		}
+
+		// 4. Make sure OUTPUT_ONLY fields are overwritten with old values
+		if machine.GetChromeBrowserMachine() != nil && oldMachine.GetChromeBrowserMachine() != nil {
+			// These are output only fields. Not allowed to update by the user.
+			// Overwrite the input values with existing values.
+			machine.GetChromeBrowserMachine().Nics = oldMachine.GetChromeBrowserMachine().Nics
+			machine.GetChromeBrowserMachine().Drac = oldMachine.GetChromeBrowserMachine().Drac
+		}
+
+		// 5. Create the machine
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction to make it atomic. Datastore doesnt allow
+		// nested transactions.
+		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to update machine in datastore: %s", err)
 		return nil, err
 	}
-	return registration.UpdateMachine(ctx, machine)
+	return machine, nil
 }
 
 // GetMachine returns machine for the given id from datastore.
-func GetMachine(ctx context.Context, id string) (*fleet.Machine, error) {
+func GetMachine(ctx context.Context, id string) (*ufspb.Machine, error) {
 	return registration.GetMachine(ctx, id)
 }
 
 // ListMachines lists the machines
-func ListMachines(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.Machine, string, error) {
+func ListMachines(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.Machine, string, error) {
 	return registration.ListMachines(ctx, pageSize, pageToken)
 }
 
 // GetAllMachines returns all machines in datastore.
-func GetAllMachines(ctx context.Context) (*fleetds.OpResults, error) {
+func GetAllMachines(ctx context.Context) (*ufsds.OpResults, error) {
 	return registration.GetAllMachines(ctx)
 }
 
-// DeleteMachine deletes the machine in datastore
+// DeleteMachine deletes the machine and its associated nics and drac in datastore
 //
 // For referential data intergrity,
 // Delete if this Machine is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteMachine(ctx context.Context, id string) error {
-	err := validateDeleteMachine(ctx, id)
-	if err != nil {
+	f := func(ctx context.Context) error {
+		// 1. Get the machine
+		machine, err := registration.GetMachine(ctx, id)
+		if status.Code(err) == codes.Internal {
+			return err
+		}
+		if machine == nil {
+			return status.Errorf(codes.NotFound, ufsds.NotFound)
+		}
+
+		// 2. Check if any other resource references this machine.
+		if err = validateDeleteMachine(ctx, id); err != nil {
+			return err
+		}
+
+		//Only for a browser machine
+		if machine.GetChromeBrowserMachine() != nil {
+			// 3. Delete the nics
+			if nicIDs := machine.GetChromeBrowserMachine().Nics; nicIDs != nil {
+				// we use this func as it is a non-atomic operation and can be used to
+				// run within a transaction to make it atomic. Datastore doesnt allow
+				// nested transactions.
+				if err = registration.BatchDeleteNics(ctx, nicIDs); err != nil {
+					return err
+				}
+			}
+
+			// 4. Delete the drac
+			if dracID := machine.GetChromeBrowserMachine().Drac; dracID != "" {
+				if err = registration.DeleteDrac(ctx, dracID); err != nil {
+					return err
+				}
+			}
+		}
+
+		// 5. Delete the machine
+		return registration.DeleteMachine(ctx, id)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete machine and its associated nics and drac in datastore: %s", err)
 		return err
 	}
-	return registration.DeleteMachine(ctx, id)
+	return nil
 }
 
 // ImportMachines creates or updates a batch of machines in datastore
-func ImportMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.OpResults, error) {
+func ImportMachines(ctx context.Context, machines []*ufspb.Machine) (*ufsds.OpResults, error) {
 	return registration.ImportMachines(ctx, machines)
 }
 
@@ -88,7 +189,7 @@ func ImportMachines(ctx context.Context, machines []*fleet.Machine) (*fleetds.Op
 // Deletes the old Machine.
 // Creates the new Machine.
 // This will preserve data integrity in the system.
-func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *fleet.Machine) (*fleet.Machine, error) {
+func ReplaceMachine(ctx context.Context, oldMachine *ufspb.Machine, newMachine *ufspb.Machine) (*ufspb.Machine, error) {
 	f := func(ctx context.Context) error {
 		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldMachine.Name, false)
 		if err != nil {
@@ -126,14 +227,14 @@ func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *
 		existsResults, err := datastore.Exists(ctx, entity)
 		if err == nil {
 			if existsResults.All() {
-				return status.Errorf(codes.AlreadyExists, fleetds.AlreadyExists)
+				return status.Errorf(codes.AlreadyExists, ufsds.AlreadyExists)
 			}
 		} else {
 			logging.Errorf(ctx, "Failed to check existence: %s", err)
-			return status.Errorf(codes.Internal, fleetds.InternalError)
+			return status.Errorf(codes.Internal, ufsds.InternalError)
 		}
 
-		_, err = registration.BatchUpdateMachines(ctx, []*fleet.Machine{newMachine})
+		_, err = registration.BatchUpdateMachines(ctx, []*ufspb.Machine{newMachine})
 		if err != nil {
 			return err
 		}
@@ -153,7 +254,7 @@ func ReplaceMachine(ctx context.Context, oldMachine *fleet.Machine, newMachine *
 // Checks if the resources referenced by the given Machine input already exists
 // in the system. Returns an error if any resource referenced by the Machine input
 // does not exist in the system.
-func validateMachineReferences(ctx context.Context, machine *fleet.Machine) error {
+func validateMachineReferences(ctx context.Context, machine *ufspb.Machine) error {
 	var resources []*Resource
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot create Machine %s:\n", machine.Name))
@@ -194,7 +295,7 @@ func validateDeleteMachine(ctx context.Context, id string) error {
 }
 
 // getBrowserMachine gets the browser machine
-func getBrowserMachine(ctx context.Context, machineName string) (*fleet.Machine, error) {
+func getBrowserMachine(ctx context.Context, machineName string) (*ufspb.Machine, error) {
 	machine, err := registration.GetMachine(ctx, machineName)
 	if err != nil {
 		return nil, errors.Annotate(err, "Unable to get browser machine %s", machineName).Err()
@@ -204,4 +305,51 @@ func getBrowserMachine(ctx context.Context, machineName string) (*fleet.Machine,
 		return nil, status.Errorf(codes.FailedPrecondition, errorMsg)
 	}
 	return machine, nil
+}
+
+// validateCreateMachine validates if a machine can be created
+func validateCreateMachine(ctx context.Context, machine *ufspb.Machine) error {
+	// 1. Check if machine already exists
+	if err := resourceAlreadyExists(ctx, []*Resource{GetMachineResource(machine.Name)}, nil); err != nil {
+		return err
+	}
+	// 2. Validate machine for referenced resources
+	var resourcesNotfound []*Resource
+	var errorMsg strings.Builder
+	errorMsg.WriteString(fmt.Sprintf("Cannot create machine %s:\n", machine.Name))
+	// Aggregate resources referenced by the machine to check if they do not exist
+	if kvmID := machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm(); kvmID != "" {
+		resourcesNotfound = append(resourcesNotfound, GetKVMResource(kvmID))
+	}
+	if rpmID := machine.GetChromeBrowserMachine().GetRpmInterface().GetRpm(); rpmID != "" {
+		resourcesNotfound = append(resourcesNotfound, GetRPMResource(rpmID))
+	}
+	if chromePlatformID := machine.GetChromeBrowserMachine().GetChromePlatform(); chromePlatformID != "" {
+		resourcesNotfound = append(resourcesNotfound, GetChromePlatformResource(chromePlatformID))
+	}
+	// check if resources does not exist
+	return ResourceExist(ctx, resourcesNotfound, &errorMsg)
+}
+
+// validateUpdateMachine validates if a machine can be updated
+//
+// checks if the machine and the resources referenced  by the machine
+// does not exist in the system.
+func validateUpdateMachine(ctx context.Context, machine *ufspb.Machine) error {
+	var errorMsg strings.Builder
+	errorMsg.WriteString(fmt.Sprintf("Cannot update machine %s:\n", machine.Name))
+	// Aggregate resource to check if machine does not exist
+	resourcesNotfound := []*Resource{GetMachineResource(machine.Name)}
+	// Aggregate resources referenced by the machine to check if they do not exist
+	if kvmID := machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm(); kvmID != "" {
+		resourcesNotfound = append(resourcesNotfound, GetKVMResource(kvmID))
+	}
+	if rpmID := machine.GetChromeBrowserMachine().GetRpmInterface().GetRpm(); rpmID != "" {
+		resourcesNotfound = append(resourcesNotfound, GetRPMResource(rpmID))
+	}
+	if chromePlatformID := machine.GetChromeBrowserMachine().GetChromePlatform(); chromePlatformID != "" {
+		resourcesNotfound = append(resourcesNotfound, GetChromePlatformResource(chromePlatformID))
+	}
+	// check if resources does not exist
+	return ResourceExist(ctx, resourcesNotfound, &errorMsg)
 }

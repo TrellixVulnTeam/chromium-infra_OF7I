@@ -7,7 +7,7 @@ package controller
 import (
 	"testing"
 
-	proto "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -21,101 +21,87 @@ func TestCreateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	Convey("CreateMachines", t, func() {
+		Convey("Create already existing machine", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-10",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			_, err = CreateMachine(ctx, machine)
+			So(err.Error(), ShouldContainSubstring, "Machine machine-10 already exists in the system.")
+		})
+
 		Convey("Create new machine with non existing ChromePlatform", func() {
-			machine1 := &proto.Machine{
+			machine1 := &ufspb.Machine{
 				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-1",
 					},
 				},
 			}
-			resp, err := CreateMachine(ctx, machine1)
-			So(resp, ShouldBeNil)
+			_, err := CreateMachine(ctx, machine1)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotCreate)
 		})
 
 		Convey("Create new machine with non existing resources", func() {
-			machine3 := &proto.Machine{
+			machine3 := &ufspb.Machine{
 				Name: "machine-3",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-3",
 						Nics:           []string{"nic-3"},
 						Drac:           "drac-3",
-						KvmInterface: &proto.KVMInterface{
+						KvmInterface: &ufspb.KVMInterface{
 							Kvm: "kvm-3",
 						},
-						RpmInterface: &proto.RPMInterface{
+						RpmInterface: &ufspb.RPMInterface{
 							Rpm: "rpm-3",
 						},
 					},
 				},
 			}
-			resp, err := CreateMachine(ctx, machine3)
-			So(resp, ShouldBeNil)
+			_, err := CreateMachine(ctx, machine3)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot create")
 		})
 
 		Convey("Create new machine with existing resources", func() {
-			chromePlatform2 := &proto.ChromePlatform{
+			chromePlatform2 := &ufspb.ChromePlatform{
 				Name: "chromePlatform-2",
 			}
-			presp, err := configuration.CreateChromePlatform(ctx, chromePlatform2)
+			_, err := configuration.CreateChromePlatform(ctx, chromePlatform2)
 			So(err, ShouldBeNil)
-			So(presp, ShouldResembleProto, chromePlatform2)
 
-			nic2 := &proto.Nic{
-				Name: "nic-2",
-				SwitchInterface: &proto.SwitchInterface{
-					Switch: "switch-2",
-				},
-			}
-			nresp, err := registration.CreateNic(ctx, nic2)
-			So(err, ShouldBeNil)
-			So(nresp, ShouldResembleProto, nic2)
-
-			drac2 := &proto.Drac{
-				Name: "drac-2",
-			}
-			dresp, err := registration.CreateDrac(ctx, drac2)
-			So(err, ShouldBeNil)
-			So(dresp, ShouldResembleProto, drac2)
-
-			switch2 := &proto.Switch{
+			switch2 := &ufspb.Switch{
 				Name: "switch-2",
 			}
-			sresp, err := registration.CreateSwitch(ctx, switch2)
+			_, err = registration.CreateSwitch(ctx, switch2)
 			So(err, ShouldBeNil)
-			So(sresp, ShouldResembleProto, switch2)
 
-			kvm2 := &proto.KVM{
+			kvm2 := &ufspb.KVM{
 				Name: "kvm-2",
 			}
-			kresp, err := registration.CreateKVM(ctx, kvm2)
+			_, err = registration.CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
-			So(kresp, ShouldResembleProto, kvm2)
 
-			rpm2 := &proto.RPM{
+			rpm2 := &ufspb.RPM{
 				Name: "rpm-2",
 			}
-			rresp, err := registration.CreateRPM(ctx, rpm2)
+			_, err = registration.CreateRPM(ctx, rpm2)
 			So(err, ShouldBeNil)
-			So(rresp, ShouldResembleProto, rpm2)
 
-			machine2 := &proto.Machine{
+			machine2 := &ufspb.Machine{
 				Name: "machine-2",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-2",
-						Nics:           []string{"nic-2"},
-						Drac:           "drac-2",
-						KvmInterface: &proto.KVMInterface{
+						KvmInterface: &ufspb.KVMInterface{
 							Kvm: "kvm-2",
 						},
-						RpmInterface: &proto.RPMInterface{
+						RpmInterface: &ufspb.RPMInterface{
 							Rpm: "rpm-2",
 						},
 					},
@@ -128,46 +114,143 @@ func TestCreateMachine(t *testing.T) {
 	})
 }
 
+func TestUpdateMachine(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("UpdateMachines", t, func() {
+		Convey("Update a non-existing machine", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-10",
+			}
+			_, err := UpdateMachine(ctx, machine)
+			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-10 in the system.")
+		})
+
+		Convey("Update new machine with non existing resource", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-1",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+
+			machine = &ufspb.Machine{
+				Name: "machine-1",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						ChromePlatform: "chromePlatform-1",
+					},
+				},
+			}
+			_, err = UpdateMachine(ctx, machine)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Cannot update machine machine-1")
+		})
+
+		Convey("Update machine with existing resources", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-2",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+
+			chromePlatform2 := &ufspb.ChromePlatform{
+				Name: "chromePlatform-2",
+			}
+			_, err = configuration.CreateChromePlatform(ctx, chromePlatform2)
+			So(err, ShouldBeNil)
+
+			machine = &ufspb.Machine{
+				Name: "machine-2",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						ChromePlatform: "chromePlatform-2",
+					},
+				},
+			}
+			resp, err := UpdateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machine)
+		})
+	})
+}
+
 func TestDeleteMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	Convey("DeleteMachine", t, func() {
 		Convey("Delete machine by existing ID with machineLSE reference", func() {
-			machine1 := &proto.Machine{
+			machine1 := &ufspb.Machine{
 				Name: "machine-3",
 			}
-			resp, cerr := registration.CreateMachine(ctx, machine1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, machine1)
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
 
-			machineLSE1 := &proto.MachineLSE{
+			machineLSE1 := &ufspb.MachineLSE{
 				Name:     "machinelse-1",
 				Machines: []string{"machine-3"},
 			}
-			mresp, merr := inventory.CreateMachineLSE(ctx, machineLSE1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, machineLSE1)
+			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
 
-			err := DeleteMachine(ctx, "machine-3")
+			err = DeleteMachine(ctx, "machine-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
-			resp, cerr = registration.GetMachine(ctx, "machine-3")
+			resp, _ := registration.GetMachine(ctx, "machine-3")
 			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, machine1)
 		})
+
 		Convey("Delete machine by existing ID without references", func() {
-			machine2 := &proto.Machine{
+			machine2 := &ufspb.Machine{
 				Name: "machine-4",
 			}
-			resp, cerr := registration.CreateMachine(ctx, machine2)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, machine2)
-			err := DeleteMachine(ctx, "machine-4")
+			_, err := registration.CreateMachine(ctx, machine2)
 			So(err, ShouldBeNil)
-			res, err := registration.GetMachine(ctx, "machine-4")
-			So(res, ShouldBeNil)
+
+			err = DeleteMachine(ctx, "machine-4")
+			So(err, ShouldBeNil)
+
+			_, err = registration.GetMachine(ctx, "machine-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete machine with nics and drac - happy path", func() {
+			nic := &ufspb.Nic{
+				Name: "nic-5",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			drac := &ufspb.Drac{
+				Name: "drac-5",
+			}
+			_, err = registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			machine := &ufspb.Machine{
+				Name: "machine-5",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Nics: []string{"nic-5"},
+						Drac: "drac-5",
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			err = DeleteMachine(ctx, "machine-5")
+			So(err, ShouldBeNil)
+
+			_, err = registration.GetMachine(ctx, "machine-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = registration.GetNic(ctx, "nic-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = registration.GetDrac(ctx, "drac-5")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
@@ -179,14 +262,14 @@ func TestReplaceMachine(t *testing.T) {
 	ctx := testingContext()
 	Convey("ReplaceMachines", t, func() {
 		Convey("Repalce an old Machine with new machine with MachineLSE reference", func() {
-			oldMachine1 := &proto.Machine{
+			oldMachine1 := &ufspb.Machine{
 				Name: "machine-4",
 			}
 			resp, cerr := CreateMachine(ctx, oldMachine1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, oldMachine1)
 
-			machineLSE1 := &proto.MachineLSE{
+			machineLSE1 := &ufspb.MachineLSE{
 				Name:     "machinelse-1",
 				Machines: []string{"machine-0", "machine-50", "machine-4", "machine-7"},
 			}
@@ -194,7 +277,7 @@ func TestReplaceMachine(t *testing.T) {
 			So(merr, ShouldBeNil)
 			So(mresp, ShouldResembleProto, machineLSE1)
 
-			newMachine2 := &proto.Machine{
+			newMachine2 := &ufspb.Machine{
 				Name: "machine-100",
 			}
 			rresp, rerr := ReplaceMachine(ctx, oldMachine1, newMachine2)
@@ -207,21 +290,21 @@ func TestReplaceMachine(t *testing.T) {
 		})
 
 		Convey("Repalce an old Machine with already existing machine", func() {
-			existingMachine1 := &proto.Machine{
+			existingMachine1 := &ufspb.Machine{
 				Name: "machine-105",
 			}
 			resp, cerr := CreateMachine(ctx, existingMachine1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, existingMachine1)
 
-			oldMachine1 := &proto.Machine{
+			oldMachine1 := &ufspb.Machine{
 				Name: "machine-5",
 			}
 			resp, cerr = CreateMachine(ctx, oldMachine1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, oldMachine1)
 
-			newMachine2 := &proto.Machine{
+			newMachine2 := &ufspb.Machine{
 				Name: "machine-105",
 			}
 			rresp, rerr := ReplaceMachine(ctx, oldMachine1, newMachine2)
