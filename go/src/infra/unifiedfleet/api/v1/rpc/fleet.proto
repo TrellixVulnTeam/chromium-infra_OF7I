@@ -979,6 +979,15 @@ message CreateDracRequest {
   // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string drac_id = 2;
+
+  // A drac cannot be added without being associated with a Machine.
+  // Refers to the machine to associate this drac.
+  string machine = 3 [
+      (google.api.resource_reference) = {
+          type: "unified-fleet-system.appspot.com/Machine"
+      },
+      (google.api.field_behavior) = REQUIRED
+  ];
 }
 
 message UpdateDracRequest {
@@ -987,6 +996,15 @@ message UpdateDracRequest {
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
+
+  // Refers to the machine to associate this drac.
+  // When it is empty, drac will associated with the same machine
+  // and we dont update association between machine and drac.
+  string machine = 3 [
+      (google.api.resource_reference) = {
+          type: "unified-fleet-system.appspot.com/Machine"
+      }
+  ];
 }
 
 message GetDracRequest {

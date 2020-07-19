@@ -529,6 +529,9 @@ func (r *CreateDracRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	if r.Machine == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
+	}
 	return nil
 }
 

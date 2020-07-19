@@ -7,16 +7,15 @@ package controller
 import (
 	"testing"
 
-	proto "infra/unifiedfleet/api/v1/proto"
-	. "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/registration"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 )
 
-func mockDrac(id string) *proto.Drac {
-	return &proto.Drac{
+func mockDrac(id string) *ufspb.Drac {
+	return &ufspb.Drac{
 		Name: id,
 	}
 }
@@ -24,87 +23,245 @@ func mockDrac(id string) *proto.Drac {
 func TestCreateDrac(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	Convey("CreateDracs", t, func() {
-		Convey("Create new drac with non existing switch", func() {
-			drac1 := &proto.Drac{
+	machine1 := &ufspb.Machine{
+		Name: "machine-1",
+		Device: &ufspb.Machine_ChromeBrowserMachine{
+			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+		},
+	}
+	registration.CreateMachine(ctx, machine1)
+	Convey("CreateDrac", t, func() {
+		Convey("Create new drac with non existing machine", func() {
+			drac1 := &ufspb.Drac{
 				Name: "drac-1",
-				SwitchInterface: &proto.SwitchInterface{
+			}
+			resp, err := CreateDrac(ctx, drac1, "machine-5")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-5 in the system.")
+		})
+
+		Convey("Create new drac with existing machine with drac", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-10",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Drac: "drac-5",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateDrac(ctx, &ufspb.Drac{
+				Name: "drac-5",
+			})
+			So(err, ShouldBeNil)
+
+			drac := &ufspb.Drac{
+				Name: "drac-20",
+			}
+			resp, err := CreateDrac(ctx, drac, "machine-10")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac)
+
+			mresp, err := registration.GetMachine(ctx, "machine-10")
+			So(err, ShouldBeNil)
+			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "drac-20")
+		})
+
+		Convey("Create new drac with existing machine without drac", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-15",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			drac := &ufspb.Drac{
+				Name: "drac-25",
+			}
+			resp, err := CreateDrac(ctx, drac, "machine-15")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac)
+
+			mresp, err := registration.GetMachine(ctx, "machine-15")
+			So(err, ShouldBeNil)
+			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "drac-25")
+		})
+
+		Convey("Create new drac with non existing switch", func() {
+			drac1 := &ufspb.Drac{
+				Name: "drac-1",
+				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-1",
 				},
 			}
-			resp, err := CreateDrac(ctx, drac1)
+			resp, err := CreateDrac(ctx, drac1, "machine-1")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotCreate)
+			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
 		})
 
-		Convey("Create new drac with existing resources", func() {
-			switch2 := &proto.Switch{
+		Convey("Create new drac with existing switch", func() {
+			switch2 := &ufspb.Switch{
 				Name: "switch-2",
 			}
-			sresp, err := registration.CreateSwitch(ctx, switch2)
+			_, err := registration.CreateSwitch(ctx, switch2)
 			So(err, ShouldBeNil)
-			So(sresp, ShouldResembleProto, switch2)
 
-			drac2 := &proto.Drac{
+			drac2 := &ufspb.Drac{
 				Name: "drac-2",
-				SwitchInterface: &proto.SwitchInterface{
+				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-2",
 				},
 			}
-			resp, err := CreateDrac(ctx, drac2)
+			resp, err := CreateDrac(ctx, drac2, "machine-1")
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac2)
 		})
 	})
 }
 
-func TestDeleteDrac(t *testing.T) {
+func TestUpdateDrac(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	//drac1 := mockDrac("drac-1")
-	drac2 := mockDrac("drac-2")
-	Convey("DeleteDrac", t, func() {
-		/* TODO: fix this test in next CL
-		Convey("Delete drac by existing ID with machine reference", func() {
-			resp, cerr := CreateDrac(ctx, drac1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, drac1)
-
-			chromeBrowserMachine1 := &proto.Machine{
+	Convey("UpdateDrac", t, func() {
+		Convey("Update drac with non-existing drac", func() {
+			machine1 := &ufspb.Machine{
 				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						Drac: "drac-1",
+			}
+			registration.CreateMachine(ctx, machine1)
+			drac := &ufspb.Drac{
+				Name: "drac-1",
+			}
+			resp, err := UpdateDrac(ctx, drac, "machine-1")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "There is no Drac with DracID drac-1 in the system.")
+		})
+
+		Convey("Update drac with non existing switch", func() {
+			drac := &ufspb.Drac{
+				Name: "drac-2",
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac2 := &ufspb.Drac{
+				Name: "drac-2",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch: "switch-1",
+				},
+			}
+			resp, err := UpdateDrac(ctx, drac2, "machine-1")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
+		})
+
+		Convey("Update drac with new machine", func() {
+			machine3 := &ufspb.Machine{
+				Name: "machine-3",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Drac: "drac-3",
 					},
 				},
 			}
-			mresp, merr := CreateMachine(ctx, chromeBrowserMachine1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
-
-			err := DeleteDrac(ctx, "drac-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetDrac(ctx, "drac-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, drac1)
-		})
-		*/
-		Convey("Delete drac successfully by existing ID without references", func() {
-			resp, cerr := CreateDrac(ctx, drac2)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, drac2)
-
-			err := DeleteDrac(ctx, "drac-2")
+			_, err := registration.CreateMachine(ctx, machine3)
 			So(err, ShouldBeNil)
 
-			resp, cerr = GetDrac(ctx, "drac-2")
-			So(resp, ShouldBeNil)
-			So(cerr, ShouldNotBeNil)
-			So(cerr.Error(), ShouldContainSubstring, NotFound)
+			machine4 := &ufspb.Machine{
+				Name: "machine-4",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Drac: "drac-4",
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine4)
+			So(err, ShouldBeNil)
+
+			drac := &ufspb.Drac{
+				Name: "drac-3",
+			}
+			_, err = registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			_, err = registration.CreateDrac(ctx, &ufspb.Drac{
+				Name: "drac-4",
+			})
+			So(err, ShouldBeNil)
+
+			drac = &ufspb.Drac{
+				Name: "drac-3",
+			}
+			resp, err := UpdateDrac(ctx, drac, "machine-4")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, drac)
+
+			mresp, err := registration.GetMachine(ctx, "machine-3")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "")
+
+			mresp, err = registration.GetMachine(ctx, "machine-4")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "drac-3")
+
+			_, err = registration.GetDrac(ctx, "drac-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Entity not found.")
 		})
+
+		Convey("Update drac with same machine", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-5",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Drac: "drac-5",
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			drac := &ufspb.Drac{
+				Name: "drac-5",
+			}
+			_, err = registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac = &ufspb.Drac{
+				Name:       "drac-5",
+				MacAddress: "ab:cd:ef",
+			}
+			resp, err := UpdateDrac(ctx, drac, "machine-5")
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, drac)
+		})
+
+		Convey("Update drac with non existing machine", func() {
+			drac := &ufspb.Drac{
+				Name: "drac-6",
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac = &ufspb.Drac{
+				Name: "drac-6",
+			}
+			resp, err := UpdateDrac(ctx, drac, "machine-6")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
+		})
+
 	})
 }

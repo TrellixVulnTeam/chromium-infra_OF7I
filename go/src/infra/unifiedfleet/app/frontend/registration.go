@@ -665,7 +665,7 @@ func (fs *FleetServerImpl) CreateDrac(ctx context.Context, req *api.CreateDracRe
 		return nil, err
 	}
 	req.Drac.Name = req.DracId
-	drac, err := controller.CreateDrac(ctx, req.Drac)
+	drac, err := controller.CreateDrac(ctx, req.Drac, req.Machine)
 	if err != nil {
 		return nil, err
 	}
@@ -683,7 +683,7 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *api.UpdateDracRe
 		return nil, err
 	}
 	req.Drac.Name = util.RemovePrefix(req.Drac.Name)
-	drac, err := controller.UpdateDrac(ctx, req.Drac)
+	drac, err := controller.UpdateDrac(ctx, req.Drac, req.Machine)
 	if err != nil {
 		return nil, err
 	}
