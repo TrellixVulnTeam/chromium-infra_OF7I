@@ -1756,6 +1756,110 @@ func GetNicInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, nic *
 	return machineName
 }
 
+// GetDracInteractiveInput get drac input in interactive mode
+//
+// Name(string) -> Display name(string) -> MAC Address(string) ->
+// -> SwitchInterface[Switch(string, resource) -> Switch Port(int)] ->
+// -> Password(string)
+func GetDracInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, drac *fleet.Drac, update bool) string {
+	var machineName string
+	input := &Input{
+		Key:      "Name",
+		Desc:     UfleetAPI.ValidName,
+		Required: true,
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Name":
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					break
+				}
+				if !update && DracExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !DracExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				drac.Name = value
+				input = &Input{
+					Key: "Display name",
+				}
+			case "Display name":
+				drac.DisplayName = value
+				input = &Input{
+					Key: "MAC Address",
+				}
+			case "MAC Address":
+				drac.MacAddress = value
+				input = &Input{
+					Key: "Switch",
+				}
+			// SwitchInterface
+			case "Switch":
+				if value != "" && !SwitchExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				drac.SwitchInterface = &fleet.SwitchInterface{
+					Switch: value,
+				}
+				if value != "" {
+					input = &Input{
+						Key: "Switch Port",
+					}
+				} else {
+					input = &Input{
+						Key: "Password",
+					}
+				}
+			case "Switch Port":
+				if value != "" {
+					port := getIntInput(value, input)
+					if port == -1 {
+						break
+					}
+					drac.GetSwitchInterface().Port = port
+				}
+				input = &Input{
+					Key: "Password",
+				}
+			case "Password":
+				drac.Password = value
+				input = &Input{
+					Key:  "Machine name",
+					Desc: "Name of the machine to associate this drac.",
+				}
+				if !update {
+					input.Required = true
+				}
+			case "Machine name":
+				if value != "" && !MachineExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				machineName = value
+				input = nil
+			}
+			break
+		}
+	}
+	return machineName
+}
+
 func createKeyValuePairs(m map[int32]string) string {
 	keys := make([]int32, 0, len(m))
 	for k := range m {

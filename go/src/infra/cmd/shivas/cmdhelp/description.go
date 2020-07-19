@@ -692,4 +692,47 @@ Example nic:
 
 The protobuf definition of nic is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+
+	// AddDracLongDesc long description for AddDracCmd
+	AddDracLongDesc string = `Add a drac by name.
+
+Examples:
+shivas add-drac -f drac.json -m {Machine name}
+Add a drac by reading a JSON file input.
+-m option is a required parameter to associate the drac to the given machine.
+
+shivas add-drac -i
+Add a drac by reading input through interactive mode.`
+
+	// UpdateDracLongDesc long description for UpdateDracCmd
+	UpdateDracLongDesc string = `Update a drac by name.
+
+Examples:
+shivas update-drac -f drac.json
+Update a drac by reading a JSON file input.
+
+shivas update-drac -f drac.json -m {Machine name}
+Update a drac by reading a JSON file input and associate the drac with a different machine.
+
+shivas update-drac -i
+Update a drac by reading input through interactive mode.`
+
+	// DracFileText description for drac file input
+	DracFileText string = `Path to a file containing drac specification in JSON format.
+This file must contain one drac JSON message
+
+Example drac:
+{
+	"name": "drac-23",
+	"displayName": "Cisco Drac",
+	"macAddress": "00:0d:5d:10:64:8d",
+	"switchInterface": {
+		"switch": "switch-12",
+		"port": 15
+	},
+	"password": "WelcomeDrac***"
+}
+
+The protobuf definition of drac is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
 )
