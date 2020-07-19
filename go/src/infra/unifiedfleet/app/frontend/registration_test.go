@@ -2339,6 +2339,34 @@ func TestListDracs(t *testing.T) {
 	})
 }
 
+func TestDeleteDrac(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("DeleteDrac", t, func() {
+		Convey("Delete drac - Invalid input empty name", func() {
+			req := &api.DeleteDracRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+		})
+
+		Convey("Delete drac - Invalid input invalid characters", func() {
+			req := &api.DeleteDracRequest{
+				Name: util.AddPrefix(util.DracCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+	})
+}
+
 func TestCreateSwitch(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()

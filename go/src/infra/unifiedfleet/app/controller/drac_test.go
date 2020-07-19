@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -263,5 +264,62 @@ func TestUpdateDrac(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
 		})
 
+	})
+}
+
+func TestDeleteDrac(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("DeleteDrac", t, func() {
+		Convey("Delete drac error by non-existing ID", func() {
+			err := DeleteDrac(ctx, "drac-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+
+		Convey("Delete drac successfully by existing ID with machine reference", func() {
+			drac := mockDrac("drac-1")
+			resp, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, drac)
+
+			chromeBrowserMachine1 := &ufspb.Machine{
+				Name: "machine-1",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Drac: "drac-1",
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, chromeBrowserMachine1)
+			So(err, ShouldBeNil)
+
+			err = DeleteDrac(ctx, "drac-1")
+			So(err, ShouldBeNil)
+
+			resp, err = registration.GetDrac(ctx, "drac-1")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			mresp, err := registration.GetMachine(ctx, "machine-1")
+			So(mresp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "")
+		})
+
+		Convey("Delete drac successfully by existing ID without references", func() {
+			drac := mockDrac("drac-2")
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			err = DeleteDrac(ctx, "drac-2")
+			So(err, ShouldBeNil)
+
+			resp, err := registration.GetDrac(ctx, "drac-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
 	})
 }

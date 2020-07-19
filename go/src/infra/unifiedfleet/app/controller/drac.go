@@ -7,7 +7,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -146,14 +145,38 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.
 // DeleteDrac deletes the drac in datastore
 //
 // For referential data intergrity,
-// Delete if this Drac is not referenced by other resources in the datastore.
-// If there are any references, delete will be rejected and an error will be returned.
+// 1. Delete the drac
+// 2. Get the machine associated with this drac
+// 3. Update the machine by removing the association with this drac
 func DeleteDrac(ctx context.Context, id string) error {
-	err := validateDeleteDrac(ctx, id)
-	if err != nil {
+	f := func(ctx context.Context) error {
+		// 1. Delete the drac
+		if err := registration.DeleteDrac(ctx, id); err != nil {
+			return err
+		}
+
+		// 2. Get the machine associated with drac
+		machines, err := registration.QueryMachineByPropertyName(ctx, "drac_id", id, false)
+		if err != nil {
+			return errors.Annotate(err, "Unable to query machine for drac %s", id).Err()
+		}
+		if machines == nil || len(machines) == 0 {
+			logging.Warningf(ctx, "No machine associated with the drac %s. Data discrepancy error.\n", id)
+			return nil
+		}
+		if len(machines) > 1 {
+			logging.Warningf(ctx, "More than one machine associated the drac %s. Data discrepancy error.\n", id)
+		}
+
+		// 3. Remove the association between the browser machines and this drac.
+		return removeDracFromBrowserMachines(ctx, machines)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete drac in datastore: %s", err)
 		return err
 	}
-	return registration.DeleteDrac(ctx, id)
+	return nil
 }
 
 // ImportDracs creates or updates a batch of dracs in datastore
@@ -174,28 +197,6 @@ func ImportDracs(ctx context.Context, dracs []*ufspb.Drac) (*ufsds.OpResults, er
 func ReplaceDrac(ctx context.Context, oldDrac *ufspb.Drac, newDrac *ufspb.Drac) (*ufspb.Drac, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
-}
-
-// validateDeleteDrac validates if a Drac can be deleted
-//
-// Checks if this Drac(DracID) is not referenced by other resources in the datastore.
-// If there are any other references, delete will be rejected and an error will be returned.
-func validateDeleteDrac(ctx context.Context, id string) error {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "drac_id", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Drac %s cannot be deleted because there are other resources which are referring this Drac.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nMachines referring the Drac:\n"))
-		for _, machine := range machines {
-			errorMsg.WriteString(machine.Name + ", ")
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
-	}
-	return nil
 }
 
 // getBrowserMachineForDrac return browser machine associated with the drac.
