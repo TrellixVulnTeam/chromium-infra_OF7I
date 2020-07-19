@@ -20,30 +20,30 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// DecomMachineCmd delete Machine by given name.
-var DecomMachineCmd = &subcommands.Command{
-	UsageLine: "machine {Machine Name}",
-	ShortDesc: "Decommission/Delete a machine by name",
-	LongDesc: `Decommission/Delete a machine by name.
+// DeleteMachineCmd delete Machine by given name.
+var DeleteMachineCmd = &subcommands.Command{
+	UsageLine: "delete-machine {Machine Name}",
+	ShortDesc: "Delete a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name",
+	LongDesc: `Delete a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name.
 
 Example:
-shivas decom machine {Machine Name}
-Deletes the given machine.`,
+shivas delete-machine {Machine Name}
+Deletes the given machine and deletes the nics and drac associated with this machine.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &decomMachine{}
+		c := &deleteMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type decomMachine struct {
+type deleteMachine struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
 }
 
-func (c *decomMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *deleteMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -51,7 +51,7 @@ func (c *decomMachine) Run(a subcommands.Application, args []string, env subcomm
 	return 0
 }
 
-func (c *decomMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *deleteMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -62,11 +62,11 @@ func (c *decomMachine) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine: %s", args[0])) {
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine: %s. "+
+		"This will also delete any nics and drac associated with the machine.", args[0])) {
 		return nil
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -82,7 +82,7 @@ func (c *decomMachine) innerRun(a subcommands.Application, args []string, env su
 	return err
 }
 
-func (c *decomMachine) validateArgs() error {
+func (c *deleteMachine) validateArgs() error {
 	if c.Flags.NArg() == 0 {
 		return cmdlib.NewUsageError(c.Flags, "Please provide the machine name to be deleted.")
 	}

@@ -126,25 +126,27 @@ shivas ls nic -n 50 -json
 Fetches 50 nics and prints the output in JSON format
 `
 
-	// RegisterMachineLongDesc long description for RegisterMachineCmd
-	RegisterMachineLongDesc string = `Register a machine(ChromeBook, Bare metal server, Macbook.) by name.
+	// AddMachineLongDesc long description for AddMachineCmd
+	AddMachineLongDesc string = `Create a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name.
+You can also provide the optional nics and drac information to create the nics and drac associated with this machine.
+You can also create the nic and drac separately after creating the machine using add-nic/add-drac commands.
 
 Examples:
-shivas register machine -f machine.json
-Registers a machine by reading a JSON file input.
+shivas add-machine -f machinerequest.json
+Creates a machine by reading a JSON file input.
 
-shivas register machine -i
-Registers a machine by reading input through interactive mode.`
+shivas add-machine -i
+Creates a machine by reading input through interactive mode.`
 
-	// ReregisterMachineLongDesc long description for ReregisterMachineCmd
-	ReregisterMachineLongDesc string = `Reregister/Update a machine(ChromeBook, Bare metal server, Macbook.) by name.
+	// UpdateMachineLongDesc long description for UpdateMachineCmd
+	UpdateMachineLongDesc string = `Update a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name.
 
 Examples:
-shivas reregister machine -f machine.json
-Reregister/Update a machine by reading a JSON file input.
+shivas update-machine -f machine.json
+Update a machine by reading a JSON file input.
 
-shivas reregister machine -i
-Reregister/Update a machine by reading input through interactive mode.`
+shivas update-machine -i
+Update a machine by reading input through interactive mode.`
 
 	// ListMachineLongDesc long description for ListMachineCmd
 	ListMachineLongDesc string = `List all Machines
@@ -163,6 +165,90 @@ shivas ls machine -n 5 -json
 Fetches 5 machines and prints the output in JSON format
 `
 
+	// MachineRegistrationFileText description for machine registration file input
+	MachineRegistrationFileText string = `Path to a file containing machine creation request specification in JSON format.
+This file must contain required machine field and optional nics/drac field.
+
+Example Browser machine creation request:
+{
+	"machine": {
+		"name": "machine-BROWSERLAB-example",
+		"location": {
+			"lab": "LAB_DATACENTER_MTV97",
+			"rack": "RackName"
+		},
+		"chromeBrowserMachine": {
+			"displayName": "ax105-34-230",
+			"chromePlatform": "Dell R230",
+			"kvmInterface": {
+				"kvm": "kvm.mtv97",
+				"port": 34
+			},
+			"rpmInterface": {
+				"rpm": "rpm.mtv97",
+				"port": 65
+			},
+			"deploymentTicket": "846026"
+		},
+		"realm": "Browserlab"
+	},
+	"nics": [{
+			"name": "nic-eth0",
+			"macAddress": "00:0d:5d:10:64:8d",
+			"switchInterface": {
+				"switch": "switch-12",
+				"port": 15
+			}
+		},
+		{
+			"name": "nic-eth1",
+			"macAddress": "22:0d:4f:10:65:9f",
+			"switchInterface": {
+				"switch": "switch-12",
+				"port": 16
+			}
+		}
+	],
+	"drac": {
+		"name": "drac-23",
+		"displayName": "Cisco Drac",
+		"macAddress": "10:03:3d:70:64:2d",
+		"switchInterface": {
+			"switch": "switch-12",
+			"port": 17
+		},
+		"password": "WelcomeDrac***"
+	}
+}
+
+Example OS machine creation request:
+{
+	"machine": {
+		"name": "machine-OSLAB-example",
+		"location": {
+			"lab": "LAB_CHROME_ATLANTA",
+			"aisle": "1",
+			"row": "2",
+			"rack": "Rack-42",
+			"rackNumber": "42",
+			"shelf": "3",
+			"position": "5"
+		},
+		"chromeosMachine": {},
+		"realm": "OSlab"
+	}
+}
+
+The protobuf definition can be found here: 
+Machine creation request: MachineRegistrationRequest
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/rpc/fleet.proto
+
+Machine:
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto
+
+Nic and Drac:
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+
 	// MachineFileText description for machine file input
 	MachineFileText string = `Path to a file containing machine specification in JSON format.
 This file must contain one machine JSON message
@@ -177,7 +263,6 @@ Example Browser machine:
 	"chromeBrowserMachine": {
 		"displayName": "ax105-34-230",
 		"chromePlatform": "Dell R230",
-		"nics": ["ax105-34-230-eth0"],
 		"kvmInterface": {
 			"kvm": "kvm.mtv97",
 			"port": 34
@@ -186,7 +271,6 @@ Example Browser machine:
 			"rpm": "rpm.mtv97",
 			"port": 65
 		},
-		"drac": "ax105-34-230-drac",
 		"deploymentTicket": "846026"
 	},
 	"realm": "Browserlab"
@@ -209,7 +293,7 @@ Example OS machine:
 }
 
 The protobuf definition of machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto#19`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto`
 
 	// DeployMachineLongDesc long description for DeployMachineCmd
 	DeployMachineLongDesc string = `Deploy a machine as a DUT, Labstation, DevServer, Caching Server or a VM Server.

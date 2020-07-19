@@ -21,13 +21,13 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// RegisterMachineCmd add Machine to the system.
-var RegisterMachineCmd = &subcommands.Command{
-	UsageLine: "machine [Options...]",
-	ShortDesc: "Register a machine(ChromeBook, Bare metal server, Macbook.) by name",
-	LongDesc:  cmdhelp.RegisterMachineLongDesc,
+// UpdateMachineCmd update Machine by given name.
+var UpdateMachineCmd = &subcommands.Command{
+	UsageLine: "update-machine [Options...]",
+	ShortDesc: "Update a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name",
+	LongDesc:  cmdhelp.UpdateMachineLongDesc,
 	CommandRun: func() subcommands.CommandRun {
-		c := &registerMachine{}
+		c := &updateMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineFileText)
@@ -36,7 +36,7 @@ var RegisterMachineCmd = &subcommands.Command{
 	},
 }
 
-type registerMachine struct {
+type updateMachine struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
@@ -44,7 +44,7 @@ type registerMachine struct {
 	interactive  bool
 }
 
-func (c *registerMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *updateMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -52,7 +52,7 @@ func (c *registerMachine) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
-func (c *registerMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *updateMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -63,7 +63,6 @@ func (c *registerMachine) innerRun(a subcommands.Application, args []string, env
 		return err
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -71,16 +70,15 @@ func (c *registerMachine) innerRun(a subcommands.Application, args []string, env
 	})
 	var machine ufspb.Machine
 	if c.interactive {
-		utils.GetMachineInteractiveInput(ctx, ic, &machine, false)
+		utils.GetMachineInteractiveInput(ctx, ic, &machine, true)
 	} else {
-		err = utils.ParseJSONFile(c.newSpecsFile, &machine)
-		if err != nil {
+		if err = utils.ParseJSONFile(c.newSpecsFile, &machine); err != nil {
 			return err
 		}
 	}
-	res, err := ic.CreateMachine(ctx, &ufsAPI.CreateMachineRequest{
-		Machine:   &machine,
-		MachineId: machine.GetName(),
+	machine.Name = ufsUtil.AddPrefix(ufsUtil.MachineCollection, machine.Name)
+	res, err := ic.UpdateMachine(ctx, &ufsAPI.UpdateMachineRequest{
+		Machine: &machine,
 	})
 	if err != nil {
 		return err
@@ -91,7 +89,7 @@ func (c *registerMachine) innerRun(a subcommands.Application, args []string, env
 	return nil
 }
 
-func (c *registerMachine) validateArgs() error {
+func (c *updateMachine) validateArgs() error {
 	if !c.interactive && c.newSpecsFile == "" {
 		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
 	}

@@ -306,10 +306,10 @@ func getOSMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.
 // getBrowserMachine get Browser Machine input in interactive mode
 //
 // Rack(string, resource) -> DisplayName(string) ->
-// -> ChromePlatform(string, resource) -> Nics(repeated string, resource) ->
-// -> KVM(string, resource) -> KVM Port(int) -> RPM(string, resource) ->
-// -> RPM Port(int) -> Switch(string, resource) -> Switch Port(int) ->
-// -> Drac(string, resource) -> DeploymentTicket(string) -> Description(string)
+// -> ChromePlatform(string, resource) -> KVM(string, resource) ->
+// -> KVM Port(int) -> RPM(string, resource) -> RPM Port(int) ->
+// -> Switch(string, resource) -> Switch Port(int) ->
+// -> DeploymentTicket(string) -> Description(string)
 func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufio.Scanner, machine *fleet.Machine) {
 	browserMachine := &fleet.ChromeBrowserMachine{}
 	machine.Device = &fleet.Machine_ChromeBrowserMachine{
@@ -357,18 +357,7 @@ func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *b
 					browserMachine.ChromePlatform = chromePlatforms[option]
 				}
 				input = &Input{
-					Key:      "Nics (y/n)",
-					Desc:     fmt.Sprintf("%s%s?", OptionToEnter, "Nic"),
-					Required: true,
-				}
-				// repeated Nic
-			case "Nics (y/n)":
-				vals, done := getRepeatedStringInput(ctx, ic, scanner, value, "Nic", input, true)
-				if done {
-					browserMachine.Nics = vals
-					input = &Input{
-						Key: "KVM",
-					}
+					Key: "KVM",
 				}
 			case "KVM":
 				if value != "" && !KVMExists(ctx, ic, value) {
@@ -412,7 +401,7 @@ func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *b
 					}
 				} else {
 					input = &Input{
-						Key: "Drac",
+						Key: "DeploymentTicket",
 					}
 				}
 			case "RPM Port":
@@ -424,16 +413,7 @@ func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *b
 					browserMachine.RpmInterface.Port = port
 				}
 				input = &Input{
-					Key: "Drac",
-				}
-			case "Drac":
-				if value != "" && !DracExists(ctx, ic, value) {
-					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
-				} else {
-					browserMachine.Drac = value
-					input = &Input{
-						Key: "DeploymentTicket",
-					}
+					Key: "DeploymentTicket",
 				}
 			case "DeploymentTicket":
 				browserMachine.DeploymentTicket = value
