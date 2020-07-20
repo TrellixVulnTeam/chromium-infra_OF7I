@@ -214,7 +214,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.M
 			OsVersion: &fleet.OSVersion{
 				Value: vm.GetOs(),
 			},
-			Hostname: getVMHostname(vm.GetHost(), vm.GetName()),
+			Hostname: name,
 		}
 		hostToVMs[vm.GetHost()] = append(hostToVMs[vm.GetHost()], v)
 		ip := FormatIP(vm.GetVlan(), vm.GetIpv4(), true)
@@ -287,9 +287,4 @@ func ToState(state crimsoncommon.State) fleet.State {
 
 func getNicName(nicName, machineName string) string {
 	return fmt.Sprintf("%s-%s", machineName, nicName)
-}
-
-// getVMHostname return a vm hostname
-func getVMHostname(phisicalHost, vmName string) string {
-	return fmt.Sprintf("%s:%s", phisicalHost, vmName)
 }
