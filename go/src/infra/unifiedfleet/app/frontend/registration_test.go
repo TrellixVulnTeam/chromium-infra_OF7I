@@ -537,7 +537,7 @@ func TestImportMachines(t *testing.T) {
 				switch m.GetName() {
 				case "machine1":
 					So(bm.GetNics(), ShouldResemble, []string{"machine1-eth0", "machine1-eth1"})
-					So(bm.GetDrac(), ShouldEqual, "machine1-drac")
+					So(bm.GetDrac(), ShouldEqual, "drac-hostname")
 					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform")
 				case "machine2":
 					So(bm.GetNics(), ShouldResemble, []string{"machine2-eth0"})
@@ -1274,7 +1274,8 @@ func TestImportNics(t *testing.T) {
 			})
 			dracs, _, err := registration.ListDracs(ctx, 100, "")
 			So(err, ShouldBeNil)
-			So(api.ParseResources(dracs, "Name"), ShouldResemble, []string{"machine1-drac"})
+			So(api.ParseResources(dracs, "Name"), ShouldResemble, []string{"drac-hostname"})
+			So(api.ParseResources(dracs, "DisplayName"), ShouldResemble, []string{"machine1-drac"})
 			dhcps, _, err := configuration.ListDHCPConfigs(ctx, 100, "")
 			So(err, ShouldBeNil)
 			So(api.ParseResources(dhcps, "Ip"), ShouldResemble, []string{"ip1.1", "ip1.2", "ip1.3", "ip2", "ip3"})

@@ -11,10 +11,12 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -221,9 +223,51 @@ func DeleteNic(ctx context.Context, id string) error {
 	return nil
 }
 
-// ImportNics creates or updates a batch of nics in datastore
-func ImportNics(ctx context.Context, nics []*ufspb.Nic) (*ufsds.OpResults, error) {
-	return registration.ImportNics(ctx, nics)
+// ImportNetworkInterfaces creates or updates a batch of nics, dracs, and dhcps in datastore
+func ImportNetworkInterfaces(ctx context.Context, nics []*crimson.NIC, dracs []*crimson.DRAC, pageSize int) (*ufsds.OpResults, error) {
+	var allRes ufsds.OpResults
+	newNics, newDracs, dhcps, _, _ := ufsUtil.ProcessNetworkInterfaces(nics, dracs)
+	// Please note that the importing here is not in one transaction, which
+	// actually may cause data incompleteness. But as the importing job
+	// will be triggered periodically, such incompleteness that's caused by
+	// potential failure will be ignored.
+	logging.Debugf(ctx, "Importing %d nics", len(newNics))
+	for i := 0; ; i += pageSize {
+		end := ufsUtil.Min(i+pageSize, len(newNics))
+		res, err := registration.ImportNics(ctx, newNics[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(newNics) {
+			break
+		}
+	}
+	logging.Debugf(ctx, "Importing %d dracs", len(newDracs))
+	for i := 0; ; i += pageSize {
+		end := ufsUtil.Min(i+pageSize, len(newDracs))
+		res, err := registration.ImportDracs(ctx, newDracs[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(newDracs) {
+			break
+		}
+	}
+	logging.Debugf(ctx, "Importing %d dhcps", len(dhcps))
+	for i := 0; ; i += pageSize {
+		end := ufsUtil.Min(i+pageSize, len(dhcps))
+		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(dhcps) {
+			break
+		}
+	}
+	return &allRes, nil
 }
 
 // ReplaceNic replaces an old Nic with new Nic in datastore

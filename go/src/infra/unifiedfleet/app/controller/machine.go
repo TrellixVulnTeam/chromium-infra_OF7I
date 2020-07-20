@@ -19,6 +19,7 @@ import (
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 // CreateMachine creates a new machine in datastore.
@@ -187,8 +188,20 @@ func DeleteMachine(ctx context.Context, id string) error {
 }
 
 // ImportMachines creates or updates a batch of machines in datastore
-func ImportMachines(ctx context.Context, machines []*ufspb.Machine) (*ufsds.OpResults, error) {
-	return registration.ImportMachines(ctx, machines)
+func ImportMachines(ctx context.Context, machines []*ufspb.Machine, pageSize int) (*ufsds.OpResults, error) {
+	allRes := make(ufsds.OpResults, 0)
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(machines))
+		res, err := registration.ImportMachines(ctx, machines[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(machines) {
+			break
+		}
+	}
+	return &allRes, nil
 }
 
 // ReplaceMachine replaces an old Machine with new Machine in datastore

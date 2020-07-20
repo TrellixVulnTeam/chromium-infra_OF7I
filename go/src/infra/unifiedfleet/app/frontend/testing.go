@@ -132,6 +132,16 @@ var testNics = []*crimson.NIC{
 		Ipv4:       "ip3",
 	},
 }
+var testDracs = []*crimson.DRAC{
+	{
+		Name:       "drac-hostname",
+		Machine:    "machine1",
+		MacAddress: "machine1-mac1",
+		Switch:     "eq017.atl97",
+		Switchport: 1,
+		Ipv4:       "ip1.1",
+	},
+}
 var testPhysicalHosts = []*crimson.PhysicalHost{
 	{
 		Name:       "esx-8",
@@ -172,6 +182,7 @@ func fakeMachineDBInterface(ctx context.Context, host string) (crimson.CrimsonCl
 		Nics:          testNics,
 		PhysicalHosts: testPhysicalHosts,
 		Vms:           testVMs,
+		Dracs:         testDracs,
 	}, nil
 }
 

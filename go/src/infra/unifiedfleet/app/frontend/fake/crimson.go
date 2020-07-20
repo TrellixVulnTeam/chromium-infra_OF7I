@@ -19,6 +19,7 @@ type CrimsonClient struct {
 	Nics          []*crimson.NIC
 	PhysicalHosts []*crimson.PhysicalHost
 	Vms           []*crimson.VM
+	Dracs         []*crimson.DRAC
 }
 
 // ListDatacenters mocks the ListDatacenters of crimsonClient
@@ -131,8 +132,9 @@ func (c *CrimsonClient) CreateDRAC(ctx context.Context, in *crimson.CreateDRACRe
 
 // ListDRACs mocks the ListDRACs of crimsonClient
 func (c *CrimsonClient) ListDRACs(ctx context.Context, in *crimson.ListDRACsRequest, opts ...grpc.CallOption) (*crimson.ListDRACsResponse, error) {
-	out := new(crimson.ListDRACsResponse)
-	return out, nil
+	return &crimson.ListDRACsResponse{
+		Dracs: c.Dracs,
+	}, nil
 }
 
 // UpdateDRAC mocks the UpdateDRAC of crimsonClient

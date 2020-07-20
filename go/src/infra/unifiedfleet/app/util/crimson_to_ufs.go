@@ -143,28 +143,19 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 	return racks, rackLSEs, kvms, switches, dhcps
 }
 
-// ProcessNics converts nics to several UFS formats for further importing
-func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHCPConfig, map[string][]string, map[string]string) {
+// ProcessNetworkInterfaces converts nics and dracs to several UFS formats for further importing
+func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHCPConfig, map[string][]string, map[string]string) {
 	machineToNics := make(map[string][]string, 0)
 	machineToDracs := make(map[string]string, 0)
 	newNics := make([]*fleet.Nic, 0)
 	newDracs := make([]*fleet.Drac, 0)
 	dhcps := make([]*fleet.DHCPConfig, 0)
 	for _, nic := range nics {
-		name := getNicName(nic)
+		name := getNicName(nic.GetName(), nic.GetMachine())
 		switch nic.GetName() {
 		case "drac":
-			d := &fleet.Drac{
-				Name:        name,
-				DisplayName: name,
-				MacAddress:  nic.GetMacAddress(),
-				SwitchInterface: &fleet.SwitchInterface{
-					Switch: nic.GetSwitch(),
-					Port:   nic.GetSwitchport(),
-				},
-			}
-			newDracs = append(newDracs, d)
-			machineToDracs[nic.GetMachine()] = name
+			// Use ListDrac() as the source of truth for drac
+			continue
 		default:
 			// Multiple nic names, e.g. eth0, eth1, bmc
 			newNic := &fleet.Nic{
@@ -183,6 +174,28 @@ func ProcessNics(nics []*crimson.NIC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHC
 				MacAddress: nic.GetMacAddress(),
 				Hostname:   name,
 				Ip:         nic.GetIpv4(),
+			})
+		}
+	}
+	for _, drac := range dracs {
+		hostname := FormatResourceName(drac.GetName())
+		d := &fleet.Drac{
+			Name: hostname,
+			// Inject machine name to display name
+			DisplayName: getNicName("drac", drac.GetMachine()),
+			MacAddress:  drac.GetMacAddress(),
+			SwitchInterface: &fleet.SwitchInterface{
+				Switch: drac.GetSwitch(),
+				Port:   drac.GetSwitchport(),
+			},
+		}
+		newDracs = append(newDracs, d)
+		machineToDracs[drac.GetMachine()] = hostname
+		if ip := drac.GetIpv4(); ip != "" {
+			dhcps = append(dhcps, &fleet.DHCPConfig{
+				MacAddress: drac.GetMacAddress(),
+				Hostname:   hostname,
+				Ip:         drac.GetIpv4(),
 			})
 		}
 	}
@@ -272,8 +285,8 @@ func ToState(state crimsoncommon.State) fleet.State {
 	return fleet.State_STATE_UNSPECIFIED
 }
 
-func getNicName(nic *crimson.NIC) string {
-	return fmt.Sprintf("%s-%s", nic.GetMachine(), nic.GetName())
+func getNicName(nicName, machineName string) string {
+	return fmt.Sprintf("%s-%s", machineName, nicName)
 }
 
 // getVMHostname return a vm hostname

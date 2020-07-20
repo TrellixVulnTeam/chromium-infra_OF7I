@@ -19,7 +19,6 @@ import (
 	proto "infra/unifiedfleet/api/v1/proto"
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
-	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -158,26 +157,25 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *api.ImportMa
 	if err := api.ValidateResourceKey(nics.Nics, "Name"); err != nil {
 		return nil, errors.Annotate(err, "nic has invalid chars").Err()
 	}
-	_, _, _, machineToNics, machineToDracs := util.ProcessNics(nics.Nics)
-	logging.Debugf(ctx, "Importing %d machines", len(resp.Machines))
-	pageSize := fs.getImportPageSize()
+	logging.Debugf(ctx, "Querying machine-db to get the list of dracs")
+	dracs, err := mdbClient.ListDRACs(ctx, &crimson.ListDRACsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListDRACs").Err()
+	}
+	if err := api.ValidateResourceKey(dracs.Dracs, "Name"); err != nil {
+		return nil, errors.Annotate(err, "drac has invalid chars").Err()
+	}
+	logging.Debugf(ctx, "Parsing nic and drac")
+	_, _, _, machineToNics, machineToDracs := util.ProcessNetworkInterfaces(nics.Nics, dracs.Dracs)
 	machines := util.ToChromeMachines(resp.GetMachines(), machineToNics, machineToDracs)
 	if err := api.ValidateResourceKey(machines, "Name"); err != nil {
 		return nil, errors.Annotate(err, "machines has invalid chars").Err()
 	}
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(machines))
-		logging.Debugf(ctx, "importing %dth - %dth", i, end-1)
-		res, err := controller.ImportMachines(ctx, machines[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(machines) {
-			break
-		}
+	res, err := controller.ImportMachines(ctx, machines, fs.getImportPageSize())
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
 	}
-
 	return successStatus.Proto(), nil
 }
 
@@ -375,58 +373,25 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *api.ImportNicsRe
 		return nil, machineDBConnectionFailureStatus.Err()
 	}
 	logging.Debugf(ctx, "Querying machine-db to get the list of nics")
-	resp, err := mdbClient.ListNICs(ctx, &crimson.ListNICsRequest{})
+	nics, err := mdbClient.ListNICs(ctx, &crimson.ListNICsRequest{})
 	if err != nil {
-		return nil, machineDBServiceFailureStatus("ListMachines").Err()
+		return nil, machineDBServiceFailureStatus("ListNICs").Err()
 	}
-	if err := api.ValidateResourceKey(resp.Nics, "Name"); err != nil {
+	if err := api.ValidateResourceKey(nics.Nics, "Name"); err != nil {
 		return nil, errors.Annotate(err, "nic has invalid chars").Err()
 	}
+	dracs, err := mdbClient.ListDRACs(ctx, &crimson.ListDRACsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListDRACs").Err()
+	}
+	if err := api.ValidateResourceKey(dracs.Dracs, "Name"); err != nil {
+		return nil, errors.Annotate(err, "drac has invalid chars").Err()
+	}
 
-	pageSize := fs.getImportPageSize()
-	newNics, newDracs, dhcps, _, _ := util.ProcessNics(resp.Nics)
-	// Please note that the importing here is not in one transaction, which
-	// actually may cause data incompleteness. But as the importing job
-	// will be triggered periodically, such incompleteness that's caused by
-	// potential failure will be ignored.
-	logging.Debugf(ctx, "Importing %d nics", len(newNics))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(newNics))
-		logging.Debugf(ctx, "importing nics %dth - %dth", i, end-1)
-		res, err := controller.ImportNics(ctx, newNics[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(newNics) {
-			break
-		}
-	}
-	logging.Debugf(ctx, "Importing %d dracs", len(newDracs))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(newDracs))
-		logging.Debugf(ctx, "importing dracs %dth - %dth", i, end-1)
-		res, err := controller.ImportDracs(ctx, newDracs[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(newDracs) {
-			break
-		}
-	}
-	logging.Debugf(ctx, "Importing %d dhcps", len(dhcps))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(dhcps))
-		logging.Debugf(ctx, "importing dhcps %dth - %dth", i, end-1)
-		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
-		s := processImportDatastoreRes(res, err)
-		if s.Err() != nil {
-			return s.Proto(), s.Err()
-		}
-		if i+pageSize >= len(dhcps) {
-			break
-		}
+	res, err := controller.ImportNetworkInterfaces(ctx, nics.Nics, dracs.Dracs, fs.getImportPageSize())
+	s := processImportDatastoreRes(res, err)
+	if s.Err() != nil {
+		return s.Proto(), s.Err()
 	}
 	return successStatus.Proto(), nil
 }
