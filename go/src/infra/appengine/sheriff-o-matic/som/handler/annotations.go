@@ -15,7 +15,6 @@ import (
 
 	"google.golang.org/appengine"
 
-	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
@@ -69,9 +68,6 @@ func convertAnnotationsToAnnotationsNonGrouping(annotations []*model.Annotation)
 }
 
 func datastoreGetAnnotation(c context.Context, annotation *model.Annotation) error {
-	if config.EnableAutoGrouping {
-		return datastore.Get(c, annotation)
-	}
 	annotationNonGrouping := model.AnnotationNonGrouping(*annotation)
 	err := datastore.Get(c, &annotationNonGrouping)
 	if err != nil {
@@ -87,24 +83,15 @@ func datastorePutAnnotation(c context.Context, annotation *model.Annotation) err
 }
 
 func datastorePutAnnotations(c context.Context, annotations []*model.Annotation) error {
-	if config.EnableAutoGrouping {
-		return datastore.Put(c, annotations)
-	}
 	annotationsNonGrouping := convertAnnotationsToAnnotationsNonGrouping(annotations)
 	return datastore.Put(c, annotationsNonGrouping)
 }
 
 func datastoreCreateAnnotationQuery() *datastore.Query {
-	if config.EnableAutoGrouping {
-		return datastore.NewQuery("Annotation")
-	}
 	return datastore.NewQuery("AnnotationNonGrouping")
 }
 
 func datastoreGetAnnotationsByQuery(c context.Context, annotations *[]*model.Annotation, q *datastore.Query) error {
-	if config.EnableAutoGrouping {
-		return datastore.GetAll(c, q, annotations)
-	}
 	annotationsNonGrouping := []*model.AnnotationNonGrouping{}
 	err := datastore.GetAll(c, q, &annotationsNonGrouping)
 	if err != nil {
@@ -115,9 +102,6 @@ func datastoreGetAnnotationsByQuery(c context.Context, annotations *[]*model.Ann
 }
 
 func datastoreDeleteAnnotations(c context.Context, annotations []*model.Annotation) error {
-	if config.EnableAutoGrouping {
-		return datastore.Delete(c, annotations)
-	}
 	annotationsNonGrouping := convertAnnotationsToAnnotationsNonGrouping(annotations)
 	return datastore.Delete(c, annotationsNonGrouping)
 }

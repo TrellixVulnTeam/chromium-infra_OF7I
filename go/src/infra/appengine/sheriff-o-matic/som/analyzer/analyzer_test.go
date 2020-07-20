@@ -5,19 +5,10 @@
 package analyzer
 
 import (
-	"net/url"
 	"testing"
 
 	"golang.org/x/net/context"
 )
-
-func urlParse(s string, t *testing.T) *url.URL {
-	p, err := url.Parse(s)
-	if err != nil {
-		t.Errorf("failed to parse %s: %s", s, err)
-	}
-	return p
-}
 
 func TestExcludeFailure(t *testing.T) {
 	tests := []struct {

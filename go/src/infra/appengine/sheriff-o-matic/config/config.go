@@ -6,7 +6,3 @@
 // It should be removed after we finish disabling automatic grouping.
 // We want to use this because the checking happen in multiple code paths.
 package config
-
-// EnableAutoGrouping is a flag to indicate whether failures should be automatically
-// grouped by step name.
-var EnableAutoGrouping = false

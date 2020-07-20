@@ -13,7 +13,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 
@@ -172,9 +171,6 @@ func convertAlertJSONsNonGroupingToAlertJSONs(alertJSONsNonGrouping []*model.Ale
 }
 
 func datastorePutAlertJSONs(c context.Context, alertJSONs []*model.AlertJSON) error {
-	if config.EnableAutoGrouping {
-		return datastore.Put(c, alertJSONs)
-	}
 	alertJSONsNonGrouping := []*model.AlertJSONNonGrouping{}
 	convertAlertJSONsToAlertJSONsNonGrouping(alertJSONs, &alertJSONsNonGrouping)
 	return datastore.Put(c, alertJSONsNonGrouping)
@@ -186,10 +182,6 @@ func datastorePutAlertJSON(c context.Context, alertJSON *model.AlertJSON) error 
 }
 
 func datastoreGetAlertJSONs(c context.Context, alertJSONs []*model.AlertJSON) {
-	if config.EnableAutoGrouping {
-		datastore.Get(c, alertJSONs)
-		return
-	}
 	alertJSONsNonGrouping := []*model.AlertJSONNonGrouping{}
 	convertAlertJSONsToAlertJSONsNonGrouping(alertJSONs, &alertJSONsNonGrouping)
 	datastore.Get(c, alertJSONsNonGrouping)
@@ -197,16 +189,10 @@ func datastoreGetAlertJSONs(c context.Context, alertJSONs []*model.AlertJSON) {
 }
 
 func datastoreCreateAlertQuery() *datastore.Query {
-	if config.EnableAutoGrouping {
-		return datastore.NewQuery("AlertJSON")
-	}
 	return datastore.NewQuery("AlertJSONNonGrouping")
 }
 
 func datastoreGetAlertsByQuery(c context.Context, alertJSONs *[]*model.AlertJSON, q *datastore.Query) error {
-	if config.EnableAutoGrouping {
-		return datastore.GetAll(c, q, alertJSONs)
-	}
 	alertJSONsNonGrouping := []*model.AlertJSONNonGrouping{}
 	err := datastore.GetAll(c, q, &alertJSONsNonGrouping)
 	if err != nil {

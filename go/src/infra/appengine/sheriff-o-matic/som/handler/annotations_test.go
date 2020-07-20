@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
@@ -162,24 +161,6 @@ func TestBreakToChunk(t *testing.T) {
 }
 
 func TestAnnotations(t *testing.T) {
-	prevConfig := config.EnableAutoGrouping
-	config.EnableAutoGrouping = true
-	defer func() {
-		config.EnableAutoGrouping = prevConfig
-	}()
-	testAnnotations(t)
-}
-
-func TestAnnotationsNonGrouping(t *testing.T) {
-	prevConfig := config.EnableAutoGrouping
-	config.EnableAutoGrouping = false
-	defer func() {
-		config.EnableAutoGrouping = prevConfig
-	}()
-	testAnnotations(t)
-}
-
-func testAnnotations(t *testing.T) {
 	newContext := func() (context.Context, testclock.TestClock) {
 		c := gaetesting.TestingContext()
 		c = authtest.MockAuthConfig(c)

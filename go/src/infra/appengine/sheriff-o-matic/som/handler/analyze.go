@@ -12,7 +12,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/appengine"
 
-	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/analyzer"
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
@@ -188,9 +187,6 @@ func generateBigQueryAlerts(c context.Context, a *analyzer.Analyzer, tree string
 }
 
 func getKeyForAlert(ctx context.Context, bf *messages.BuildFailure, tree string) string {
-	if config.EnableAutoGrouping {
-		return fmt.Sprintf("%s.%v", tree, bf.Reason.Signature())
-	}
 	step := bf.StepAtFault.Step.Name
 	project := bf.Builders[0].Project
 	bucket := bf.Builders[0].Bucket

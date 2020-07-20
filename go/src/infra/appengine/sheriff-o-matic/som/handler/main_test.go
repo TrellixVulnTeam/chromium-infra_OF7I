@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"infra/appengine/sheriff-o-matic/config"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monitoring/messages"
 
@@ -38,24 +37,6 @@ import (
 var _ = fmt.Printf
 
 func TestMain(t *testing.T) {
-	prevConfig := config.EnableAutoGrouping
-	config.EnableAutoGrouping = true
-	defer func() {
-		config.EnableAutoGrouping = prevConfig
-	}()
-	testMain(t, "AlertJSON")
-}
-
-func TestMainNonGrouping(t *testing.T) {
-	prevConfig := config.EnableAutoGrouping
-	config.EnableAutoGrouping = false
-	defer func() {
-		config.EnableAutoGrouping = prevConfig
-	}()
-	testMain(t, "AlertJSONNonGrouping")
-}
-
-func testMain(t *testing.T, alertTable string) {
 	Convey("main", t, func() {
 		c := gaetesting.TestingContext()
 		c = authtest.MockAuthConfig(c)
@@ -73,7 +54,7 @@ func testMain(t *testing.T, alertTable string) {
 		So(err, ShouldBeNil)
 		Convey("/api/v1", func() {
 			alertIdx := datastore.IndexDefinition{
-				Kind:     alertTable,
+				Kind:     "AlertJSONNonGrouping",
 				Ancestor: true,
 				SortBy: []datastore.IndexColumn{
 					{
