@@ -1316,6 +1316,8 @@ class IssueService(object):
   def _UpdateIssuesModified(
       self, cnxn, iids, modified_timestamp=None, invalidate=True):
     """Store a modified timestamp for each of the specified issues."""
+    if not iids:
+      return
     delta = {'modified': modified_timestamp or int(time.time())}
     self.issue_tbl.Update(cnxn, delta, id=iids, commit=False)
     if invalidate:

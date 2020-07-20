@@ -519,7 +519,6 @@ class IssueServiceTest(unittest.TestCase):
         self.classifierResult(0.0))
     self.services.spam.RecordClassifierIssueVerdict(self.cnxn,
        mox.IsA(tracker_pb2.Issue), False, 1.0, False)
-    self.SetUpUpdateIssuesModified(set())
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
@@ -566,7 +565,6 @@ class IssueServiceTest(unittest.TestCase):
         self.classifierResult(0.0))
     self.services.spam.RecordClassifierIssueVerdict(self.cnxn,
        mox.IsA(tracker_pb2.Issue), False, 1.0, False)
-    self.SetUpUpdateIssuesModified(set(), modified_timestamp=self.now)
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
@@ -600,7 +598,6 @@ class IssueServiceTest(unittest.TestCase):
         self.classifierResult(1.0, True))
     self.services.spam.RecordClassifierIssueVerdict(self.cnxn,
        mox.IsA(tracker_pb2.Issue), True, 1.0, True)
-    self.SetUpUpdateIssuesModified(set())
     self.SetUpUpdateIssuesApprovals([])
     self.SetUpEnqueueIssuesForIndexing([78901])
 
@@ -631,7 +628,6 @@ class IssueServiceTest(unittest.TestCase):
         self.classifierResult(1.0))
     self.services.spam.RecordClassifierIssueVerdict(self.cnxn,
        mox.IsA(tracker_pb2.Issue), True, 1.0, False)
-    self.SetUpUpdateIssuesModified(set())
     self.SetUpUpdateIssuesApprovals([])
     self.SetUpEnqueueIssuesForIndexing([78901])
 
@@ -665,7 +661,6 @@ class IssueServiceTest(unittest.TestCase):
     self.services.spam.RecordClassifierIssueVerdict(self.cnxn,
         mox.IsA(tracker_pb2.Issue), mox.IgnoreArg(), mox.IgnoreArg(),
         mox.IgnoreArg())
-    self.SetUpUpdateIssuesModified(set())
     self.SetUpEnqueueIssuesForIndexing([78901])
 
     self.mox.ReplayAll()
@@ -702,7 +697,6 @@ class IssueServiceTest(unittest.TestCase):
         self.classifierResult(0.0))
     self.services.spam.RecordClassifierIssueVerdict(self.cnxn,
        mox.IsA(tracker_pb2.Issue), False, 1.0, False)
-    self.SetUpUpdateIssuesModified(set(), modified_timestamp=self.now)
     self.SetUpEnqueueIssuesForIndexing([78901])
     self.mox.ReplayAll()
 
