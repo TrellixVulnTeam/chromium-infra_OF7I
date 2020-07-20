@@ -250,22 +250,6 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldBeNil)
 	})
 
-	Convey("Analyze XML file with no errors: good milestone expiry, but greater than 6 months out", t, func() {
-		results := analyzeHistogramTestFile(t, "expiry/milestone/over_6months_milestone.xml", patchPath, inputDir)
-		So(results, ShouldResemble, []*tricium.Data_Comment{
-			{
-				Category:             category + "/Expiry",
-				Message:              changeMilestoneExpiry,
-				StartLine:            3,
-				EndLine:              3,
-				StartChar:            56,
-				EndChar:              75,
-				Path:                 "expiry/milestone/over_6months_milestone.xml",
-				ShowOnUnchangedLines: true,
-			},
-		})
-	})
-
 	Convey("Simulate failure in fetching milestone data from server", t, func() {
 		results := analyzeHistogramTestFile(t, "expiry/milestone/milestone_fetch_failed.xml", patchPath, inputDir)
 		So(results, ShouldResemble, []*tricium.Data_Comment{
@@ -287,7 +271,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:             category + "/Expiry",
-				Message:              farExpiryWarning + changeMilestoneExpiry,
+				Message:              farExpiryWarning,
 				StartLine:            3,
 				EndLine:              3,
 				StartChar:            56,
@@ -303,7 +287,7 @@ func TestHistogramsCheck(t *testing.T) {
 		So(results, ShouldResemble, []*tricium.Data_Comment{
 			{
 				Category:             category + "/Expiry",
-				Message:              farExpiryWarning + changeMilestoneExpiry,
+				Message:              farExpiryWarning,
 				StartLine:            3,
 				EndLine:              3,
 				StartChar:            56,
