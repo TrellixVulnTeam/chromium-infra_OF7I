@@ -519,7 +519,7 @@ def _sync_build(build_id, generation):
       'url': '/internal/task/swarming/sync-build/%s' % build.key.id(),
       'payload': json.dumps(payload, sort_keys=True),
       'retry_options': {'task_age_limit': age_limit.total_seconds()},
-      'countdown': 60,  # Run the continuation task in 1m.
+      'countdown': 300,  # Run the continuation task in 5m.
   }
   try:
     tq.enqueue_async(

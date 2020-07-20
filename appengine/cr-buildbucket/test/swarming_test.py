@@ -733,7 +733,7 @@ class SyncBuildTest(BaseTest):
         'retry_options': {
             'task_age_limit': model.BUILD_TIMEOUT.total_seconds()
         },
-        'countdown': 60,
+        'countdown': 300,
     }
     tq.enqueue_async.assert_called_with(
         swarming.SYNC_QUEUE_NAME, [expected_continuation], transactional=False
@@ -986,7 +986,7 @@ class SyncBuildTest(BaseTest):
         'retry_options': {
             'task_age_limit': model.BUILD_TIMEOUT.total_seconds()
         },
-        'countdown': 60,
+        'countdown': 300,
     }
     tq.enqueue_async.assert_called_with(
         swarming.SYNC_QUEUE_NAME, [expected_continuation], transactional=False
