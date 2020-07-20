@@ -24,7 +24,8 @@ const MachineKind string = "Machine"
 
 // MachineEntity is a datastore entity that tracks Machine.
 type MachineEntity struct {
-	_kind            string   `gae:"$kind,Machine"`
+	_kind string `gae:"$kind,Machine"`
+	// fleet.Machine.Name
 	ID               string   `gae:"$id"`
 	KVMID            string   `gae:"kvm_id"`
 	RPMID            string   `gae:"rpm_id"`

@@ -11,6 +11,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
 )
 
@@ -46,6 +47,11 @@ func TestMachineRegistration(t *testing.T) {
 				"Machine machine-1 already exists in the system.\n"+
 					"Nic nic-1 already exists in the system.\n"+
 					"Drac drac-1 already exists in the system.\n")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Register machine with invalid machine(referencing non existing resources)", func() {
@@ -69,6 +75,11 @@ func TestMachineRegistration(t *testing.T) {
 				"There is no KVM with KVMID kvm-3 in the system.\n"+
 				"There is no RPM with RPMID rpm-3 in the system.\n"+
 				"There is no ChromePlatform with ChromePlatformID chromePlatform-3 in the system.")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Register browser machine with invalid nic(referencing non existing resources)", func() {
@@ -88,6 +99,11 @@ func TestMachineRegistration(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot create machine machine-3:\n"+
 				"There is no Switch with SwitchID switch-1 in the system.")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Register browser machine with invalid drac(referencing non existing resources)", func() {
@@ -107,6 +123,11 @@ func TestMachineRegistration(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot create machine machine-3:\n"+
 				"There is no Switch with SwitchID switch-1 in the system.")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Register browser machine happy path", func() {
@@ -128,6 +149,13 @@ func TestMachineRegistration(t *testing.T) {
 			So(m, ShouldResembleProto, machine)
 			So(n, ShouldResembleProto, []*ufspb.Nic{nic})
 			So(d, ShouldResembleProto, drac)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-browser-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 		})
 
 		Convey("Register OS machine with nics - error", func() {
@@ -144,6 +172,11 @@ func TestMachineRegistration(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Machine machine-os-3 is not a browser machine. "+
 				"Nics can only be added to a browser machine.")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Register OS machine happy path", func() {
@@ -157,6 +190,13 @@ func TestMachineRegistration(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(m, ShouldNotBeNil)
 			So(m, ShouldResembleProto, machine)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-os-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 		})
 	})
 }

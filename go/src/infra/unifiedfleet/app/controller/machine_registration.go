@@ -79,6 +79,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine, nics []*uf
 		logging.Errorf(ctx, "Failed to register machine: %s", err)
 		return nil, nil, nil, err
 	}
+	SaveChangeEvents(ctx, LogMachineChanges(nil, machine))
 	return machine, nics, drac, nil
 }
 

@@ -54,6 +54,7 @@ func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 		logging.Errorf(ctx, "Failed to create machine in datastore: %s", err)
 		return nil, err
 	}
+	SaveChangeEvents(ctx, LogMachineChanges(nil, machine))
 	return machine, nil
 }
 
@@ -62,6 +63,8 @@ func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 // Checks if the resources referenced by the Machine input already exists
 // in the system before updating a Machine
 func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine, error) {
+	var oldMachine *ufspb.Machine
+	var err error
 	f := func(ctx context.Context) error {
 		// 1. Validate input
 		if err := validateUpdateMachine(ctx, machine); err != nil {
@@ -77,7 +80,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 		}
 
 		// 3. Get the existing/old machine
-		oldMachine, err := registration.GetMachine(ctx, machine.GetName())
+		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
 		if err != nil {
 			return err
 		}
@@ -104,6 +107,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 		logging.Errorf(ctx, "Failed to update machine in datastore: %s", err)
 		return nil, err
 	}
+	SaveChangeEvents(ctx, LogMachineChanges(oldMachine, machine))
 	return machine, nil
 }
 
@@ -128,9 +132,11 @@ func GetAllMachines(ctx context.Context) (*ufsds.OpResults, error) {
 // Delete if this Machine is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteMachine(ctx context.Context, id string) error {
+	var machine *ufspb.Machine
+	var err error
 	f := func(ctx context.Context) error {
 		// 1. Get the machine
-		machine, err := registration.GetMachine(ctx, id)
+		machine, err = registration.GetMachine(ctx, id)
 		if status.Code(err) == codes.Internal {
 			return err
 		}
@@ -171,6 +177,7 @@ func DeleteMachine(ctx context.Context, id string) error {
 		logging.Errorf(ctx, "Failed to delete machine and its associated nics and drac in datastore: %s", err)
 		return err
 	}
+	SaveChangeEvents(ctx, LogMachineChanges(machine, nil))
 	return nil
 }
 
@@ -245,6 +252,10 @@ func ReplaceMachine(ctx context.Context, oldMachine *ufspb.Machine, newMachine *
 		logging.Errorf(ctx, "Failed to replace entity in datastore: %s", err)
 		return nil, err
 	}
+
+	changes := LogMachineChanges(oldMachine, nil)
+	changes = append(changes, LogMachineChanges(nil, newMachine)...)
+	SaveChangeEvents(ctx, changes)
 	return newMachine, nil
 }
 

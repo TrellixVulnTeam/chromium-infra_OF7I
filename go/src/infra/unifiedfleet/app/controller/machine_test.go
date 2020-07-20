@@ -7,14 +7,15 @@ package controller
 import (
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
+
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
 )
 
 func TestCreateMachine(t *testing.T) {
@@ -44,6 +45,11 @@ func TestCreateMachine(t *testing.T) {
 			_, err := CreateMachine(ctx, machine1)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotCreate)
+
+			// No changes are recorded as the creation fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new machine with non existing resources", func() {
@@ -66,6 +72,11 @@ func TestCreateMachine(t *testing.T) {
 			_, err := CreateMachine(ctx, machine3)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot create")
+
+			// No changes are recorded as the creation fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new machine with existing resources", func() {
@@ -110,6 +121,14 @@ func TestCreateMachine(t *testing.T) {
 			resp, err := CreateMachine(ctx, machine2)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machine2)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetName(), ShouldEqual, "machines/machine-2")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 		})
 	})
 }
@@ -197,6 +216,11 @@ func TestDeleteMachine(t *testing.T) {
 			resp, _ := registration.GetMachine(ctx, "machine-3")
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, machine1)
+
+			// No changes are recorded as the deletion fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Delete machine by existing ID without references", func() {
@@ -253,6 +277,14 @@ func TestDeleteMachine(t *testing.T) {
 			_, err = registration.GetDrac(ctx, "drac-5")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetName(), ShouldEqual, "machines/machine-4")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 		})
 	})
 }
@@ -265,9 +297,8 @@ func TestReplaceMachine(t *testing.T) {
 			oldMachine1 := &ufspb.Machine{
 				Name: "machine-4",
 			}
-			resp, cerr := CreateMachine(ctx, oldMachine1)
+			_, cerr := registration.CreateMachine(ctx, oldMachine1)
 			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, oldMachine1)
 
 			machineLSE1 := &ufspb.MachineLSE{
 				Name:     "machinelse-1",
@@ -287,22 +318,34 @@ func TestReplaceMachine(t *testing.T) {
 			mresp, merr = inventory.GetMachineLSE(ctx, "machinelse-1")
 			So(merr, ShouldBeNil)
 			So(mresp.GetMachines(), ShouldResemble, []string{"machine-0", "machine-50", "machine-100", "machine-7"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-100")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 		})
 
 		Convey("Repalce an old Machine with already existing machine", func() {
 			existingMachine1 := &ufspb.Machine{
 				Name: "machine-105",
 			}
-			resp, cerr := CreateMachine(ctx, existingMachine1)
+			_, cerr := registration.CreateMachine(ctx, existingMachine1)
 			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, existingMachine1)
 
 			oldMachine1 := &ufspb.Machine{
 				Name: "machine-5",
 			}
-			resp, cerr = CreateMachine(ctx, oldMachine1)
+			_, cerr = registration.CreateMachine(ctx, oldMachine1)
 			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, oldMachine1)
 
 			newMachine2 := &ufspb.Machine{
 				Name: "machine-105",
@@ -311,6 +354,14 @@ func TestReplaceMachine(t *testing.T) {
 			So(rerr, ShouldNotBeNil)
 			So(rresp, ShouldBeNil)
 			So(rerr.Error(), ShouldContainSubstring, AlreadyExists)
+
+			// No change are recorded as the replacement fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-5")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-105")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 	})
 }
