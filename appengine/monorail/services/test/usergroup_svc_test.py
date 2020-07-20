@@ -238,7 +238,6 @@ class UserGroupServiceTest(unittest.TestCase):
 
   def testExpandAnyUserGroups_NoneRequested(self):
     self.SetUpDetermineWhichUserIDsAreGroups([], [])
-    self.SetUpLookupMembers({})
     self.mox.ReplayAll()
     direct_ids, indirect_ids = self.usergroup_service.ExpandAnyUserGroups(
         self.cnxn, [])
@@ -248,7 +247,6 @@ class UserGroupServiceTest(unittest.TestCase):
 
   def testExpandAnyUserGroups_NoGroups(self):
     self.SetUpDetermineWhichUserIDsAreGroups([111, 222], [])
-    self.SetUpLookupMembers({})
     self.mox.ReplayAll()
     direct_ids, indirect_ids = self.usergroup_service.ExpandAnyUserGroups(
         self.cnxn, [111, 222])
@@ -301,7 +299,6 @@ class UserGroupServiceTest(unittest.TestCase):
         group_id=group_ids).AndReturn(mock_membership_rows)
 
   def testLookupMembers_NoneRequested(self):
-    self.SetUpLookupMembers({})
     self.mox.ReplayAll()
     member_ids, _ = self.usergroup_service.LookupMembers(self.cnxn, [])
     self.mox.VerifyAll()

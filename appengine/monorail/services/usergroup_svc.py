@@ -289,11 +289,13 @@ class UserGroupService(object):
   def LookupAllMembers(self, cnxn, group_ids):
     """Retrieve user IDs of members/owners of any of the given groups
     transitively."""
+    member_ids_dict = {}
+    owner_ids_dict = {}
+    if not group_ids:
+      return member_ids_dict, owner_ids_dict
     direct_member_rows = self.usergroup_tbl.Select(
         cnxn, cols=['user_id', 'group_id', 'role'], distinct=True,
         group_id=group_ids)
-    member_ids_dict = {}
-    owner_ids_dict = {}
     for gid in group_ids:
       all_descendants = self.group_dag.GetAllDescendants(cnxn, gid, True)
       indirect_member_rows = []
@@ -321,11 +323,13 @@ class UserGroupService(object):
     Returns:
       A dict of member IDs, and a dict of owner IDs keyed by group id.
     """
+    member_ids_dict = {}
+    owner_ids_dict = {}
+    if not group_ids:
+      return member_ids_dict, owner_ids_dict
     member_rows = self.usergroup_tbl.Select(
         cnxn, cols=['user_id', 'group_id', 'role'], distinct=True,
         group_id=group_ids)
-    member_ids_dict = {}
-    owner_ids_dict = {}
     for gid in group_ids:
       member_ids_dict[gid] = [row[0] for row in member_rows
                                if row[1] == gid and row[2] == 'member']
