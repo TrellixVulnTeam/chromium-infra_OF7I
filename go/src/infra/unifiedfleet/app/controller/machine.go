@@ -86,7 +86,12 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 		}
 
 		// 4. Make sure OUTPUT_ONLY fields are overwritten with old values
-		if machine.GetChromeBrowserMachine() != nil && oldMachine.GetChromeBrowserMachine() != nil {
+		if oldMachine.GetChromeBrowserMachine() != nil {
+			if machine.GetChromeBrowserMachine() == nil {
+				machine.Device = &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				}
+			}
 			// These are output only fields. Not allowed to update by the user.
 			// Overwrite the input values with existing values.
 			machine.GetChromeBrowserMachine().Nics = oldMachine.GetChromeBrowserMachine().Nics
