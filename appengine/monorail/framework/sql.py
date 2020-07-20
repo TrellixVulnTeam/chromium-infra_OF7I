@@ -735,8 +735,10 @@ class Statement(object):
         val = list(val)  # MySQL inteface cannot handle sets.
 
       if val is None or val == []:
-        if val == []:
-          logging.error('Empty array value for %r', col)
+        if val == [] and self.main_clause and self.main_clause.startswith(
+            'UPDATE'):
+          # TODO(https://crbug.com/monorail/6735): Handle empty array values.
+          logging.error('Update has empty array value for %r', col)
         op = 'IS' if eq else 'IS NOT'
         self.where_conds.append(col + ' ' + op + ' NULL')
       elif isinstance(val, list):
