@@ -12,6 +12,9 @@ option go_package = "infra/unifiedfleet/app/config";
 message Config {
   string luci_config_service = 1;
   OSNetworkConfig cros_network_config = 2;
+  string bucket_name = 3;
+  string machine_db_config_service = 4;
+  string cros_inventory_host = 5;
 }
 
 message OSNetworkConfig {

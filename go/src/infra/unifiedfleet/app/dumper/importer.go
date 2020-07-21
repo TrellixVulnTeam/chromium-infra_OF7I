@@ -6,26 +6,28 @@ package dumper
 
 import (
 	"context"
+	"fmt"
 
 	"go.chromium.org/luci/common/logging"
 
 	api "infra/unifiedfleet/api/v1/rpc"
+	"infra/unifiedfleet/app/config"
 	frontend "infra/unifiedfleet/app/frontend"
 )
 
-const machineDBHost = "machine-db.appspot.com"
-const crosInventoryHost = "cros-lab-inventory.appspot.com"
-
-func importCrimson(ctx context.Context) (err error) {
-	defer func() {
-		dumpCrimsonTick.Add(ctx, 1, err == nil)
-	}()
+func importCrimson(ctx context.Context) error {
+	machineDBConfigService := config.Get(ctx).MachineDbConfigService
+	if machineDBConfigService == "" {
+		machineDBConfigService = frontend.DefaultMachineDBService
+	}
+	machineDBHost := fmt.Sprintf("%s.appspot.com", machineDBConfigService)
+	logging.Debugf(ctx, "Querying host %s", machineDBHost)
 	sv := &frontend.FleetServerImpl{}
 	logging.Debugf(ctx, "Importing chrome platforms")
 	respCP, err := sv.ImportChromePlatforms(ctx, &api.ImportChromePlatformsRequest{
 		Source: &api.ImportChromePlatformsRequest_ConfigSource{
 			ConfigSource: &api.ConfigSource{
-				ConfigServiceName: frontend.DefaultMachineDBService,
+				ConfigServiceName: machineDBConfigService,
 				FileName:          "platforms.cfg",
 			},
 		},
@@ -40,7 +42,7 @@ func importCrimson(ctx context.Context) (err error) {
 	respVlan, err := sv.ImportVlans(ctx, &api.ImportVlansRequest{
 		Source: &api.ImportVlansRequest_ConfigSource{
 			ConfigSource: &api.ConfigSource{
-				ConfigServiceName: frontend.DefaultMachineDBService,
+				ConfigServiceName: machineDBConfigService,
 				FileName:          "vlans.cfg",
 			},
 		},
@@ -55,7 +57,7 @@ func importCrimson(ctx context.Context) (err error) {
 	respDC, err := sv.ImportDatacenters(ctx, &api.ImportDatacentersRequest{
 		Source: &api.ImportDatacentersRequest_ConfigSource{
 			ConfigSource: &api.ConfigSource{
-				ConfigServiceName: frontend.DefaultMachineDBService,
+				ConfigServiceName: machineDBConfigService,
 				FileName:          "datacenters.cfg",
 			},
 		},
@@ -125,6 +127,11 @@ func importCrimson(ctx context.Context) (err error) {
 }
 
 func importCrosInventory(ctx context.Context) error {
+	crosInventoryHost := config.Get(ctx).CrosInventoryHost
+	if crosInventoryHost == "" {
+		crosInventoryHost = "cros-lab-inventory.appspot.com"
+	}
+	logging.Debugf(ctx, "Querying host %s", crosInventoryHost)
 	sv := &frontend.FleetServerImpl{}
 	logging.Debugf(ctx, "Importing ChromeOS inventory")
 	_, err := sv.ImportOSMachineLSEs(ctx, &api.ImportOSMachineLSEsRequest{
@@ -143,7 +150,7 @@ func importCrosNetwork(ctx context.Context) error {
 	_, err := sv.ImportOSVlans(ctx, &api.ImportOSVlansRequest{
 		Source: &api.ImportOSVlansRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{
-				Host: crosInventoryHost,
+				Host: "",
 			},
 		},
 	})

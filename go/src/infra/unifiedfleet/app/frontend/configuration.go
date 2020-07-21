@@ -488,10 +488,6 @@ func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *api.ImportVlans
 
 // ImportOSVlans imports the ChromeOS vlans, ips and dhcp configs.
 func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *api.ImportOSVlansRequest) (response *status.Status, err error) {
-	source := req.GetMachineDbSource()
-	if err := api.ValidateMachineDBSource(source); err != nil {
-		return nil, err
-	}
 	sheetClient, err := fs.newSheetInterface(ctx)
 	if err != nil {
 		return nil, sheetConnectionFailureStatus.Err()
