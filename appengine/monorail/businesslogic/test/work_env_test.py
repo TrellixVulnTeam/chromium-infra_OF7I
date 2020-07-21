@@ -2279,9 +2279,28 @@ class WorkEnvTest(unittest.TestCase):
       'features.send_notifications.PrepareAndSendIssueBlockingNotification')
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testUpdateIssue_TooLongComment(self, fake_pasicn, fake_pasibn):
+  def testUpdateIssue_EditTooLongComment(self, fake_pasicn, fake_pasibn):
     """We cannot edit an issue description with too long a comment."""
     self.SignIn(222)
+    issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
+    self.services.issue.TestAddIssue(issue)
+    delta = tracker_pb2.IssueDelta()
+
+    with self.assertRaises(exceptions.InputException):
+      long_comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
+      with self.work_env as we:
+        we.UpdateIssue(issue, delta, long_comment)
+
+    fake_pasicn.assert_not_called()
+    fake_pasibn.assert_not_called()
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueBlockingNotification')
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testUpdateIssue_AddTooLongComment(self, fake_pasicn, fake_pasibn):
+    """We cannot add too long a comment."""
+    self.SignIn()
     issue = fake.MakeTestIssue(789, 1, 'summary', 'Available', 111)
     self.services.issue.TestAddIssue(issue)
     delta = tracker_pb2.IssueDelta()

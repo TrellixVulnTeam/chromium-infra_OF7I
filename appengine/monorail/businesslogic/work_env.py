@@ -1663,8 +1663,6 @@ class WorkEnv(object):
       # verify it's size.
       if comment_content:
         self._AssertPermInIssue(issue, permissions.ADD_ISSUE_COMMENT)
-      if len(comment_content) > tracker_constants.MAX_COMMENT_CHARS:
-        raise exceptions.InputException('Comment is too long')
       # If we're modifying the issue, check that we only modify the fields we're
       # allowed to edit.
       if delta != tracker_pb2.IssueDelta():
@@ -1691,6 +1689,11 @@ class WorkEnv(object):
       if issue.issue_id == delta.merged_into:
         raise exceptions.InputException(
           'Cannot merge an issue into itself.')
+
+    # Reject comments that are too long.
+    if comment_content and len(
+        comment_content) > tracker_constants.MAX_COMMENT_CHARS:
+      raise exceptions.InputException('Comment is too long')
 
     # Reject attempts to block on issue on itself.
     if (issue.issue_id in delta.blocked_on_add
