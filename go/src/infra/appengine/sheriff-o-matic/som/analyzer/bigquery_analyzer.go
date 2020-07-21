@@ -115,7 +115,6 @@ var chromiumFilterFunc = func(r failureRow) bool {
 		"chrome",
 		"chromium",
 		"chromium.chromiumos",
-		"chromium.gpu",
 		"chromium.linux",
 		"chromium.mac",
 		"chromium.memory",
@@ -125,7 +124,12 @@ var chromiumFilterFunc = func(r failureRow) bool {
 }
 
 var chromiumGPUFilterFunc = func(r failureRow) bool {
-	return r.MasterName.String() == "chromium.gpu.fyi"
+	validMasterNames := []string{
+		"chromium.gpu",
+		"chromium.gpu.fyi",
+		"chromium.swangle",
+	}
+	return sliceContains(validMasterNames, r.MasterName.String())
 }
 
 var chromiumPerfFilterFunc = func(r failureRow) bool {
@@ -273,7 +277,7 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 }
 
 func shouldUseCache(tree string) bool {
-	trees := []string{"android", "chromium", "chromium.gpu.fyi", "ios", "chromium.perf", "chrome_browser_release"}
+	trees := []string{"android", "chromium", "chromium.gpu", "ios", "chromium.perf", "chrome_browser_release"}
 	return sliceContains(trees, tree)
 }
 
@@ -283,7 +287,7 @@ func getFilterFuncForTree(tree string) (func(failureRow) bool, error) {
 		return androidFilterFunc, nil
 	case "chromium":
 		return chromiumFilterFunc, nil
-	case "chromium.gpu.fyi":
+	case "chromium.gpu":
 		return chromiumGPUFilterFunc, nil
 	case "chromium.perf":
 		return chromiumPerfFilterFunc, nil

@@ -1335,7 +1335,7 @@ func TestGetFilterFuncForTree(t *testing.T) {
 		So(err, ShouldBeNil)
 		_, err = getFilterFuncForTree("chromium")
 		So(err, ShouldBeNil)
-		_, err = getFilterFuncForTree("chromium.gpu.fyi")
+		_, err = getFilterFuncForTree("chromium.gpu")
 		So(err, ShouldBeNil)
 		_, err = getFilterFuncForTree("chromium.perf")
 		So(err, ShouldBeNil)

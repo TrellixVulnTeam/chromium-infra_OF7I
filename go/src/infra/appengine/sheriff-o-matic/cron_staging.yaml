@@ -60,8 +60,8 @@ cron:
   schedule: every 24 hours
   target: analyzer
 
-- description: Update Chromium GPU FYI alerts
-  url: /_cron/analyze/chromium.gpu.fyi
+- description: Update Chromium GPU alerts
+  url: /_cron/analyze/chromium.gpu
   schedule: every 24 hours
   target: analyzer
 
