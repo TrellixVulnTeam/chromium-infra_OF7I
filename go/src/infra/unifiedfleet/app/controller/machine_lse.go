@@ -45,7 +45,11 @@ func CreateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
 	}
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
-	return inventory.CreateMachineLSE(ctx, machinelse)
+	m, err := inventory.CreateMachineLSE(ctx, machinelse)
+	if err == nil {
+		SaveChangeEvents(ctx, LogMachineLSEChanges(nil, machinelse))
+	}
+	return m, err
 }
 
 // UpdateMachineLSE updates machinelse in datastore.
@@ -68,7 +72,12 @@ func UpdateMachineLSE(ctx context.Context, machinelse *fleet.MachineLSE) (*fleet
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
 	}
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
-	return inventory.UpdateMachineLSE(ctx, machinelse)
+	oldM, _ := inventory.GetMachineLSE(ctx, machinelse.GetName())
+	m, err := inventory.UpdateMachineLSE(ctx, machinelse)
+	if err == nil {
+		SaveChangeEvents(ctx, LogMachineLSEChanges(oldM, machinelse))
+	}
+	return m, err
 }
 
 // GetMachineLSE returns machinelse for the given id from datastore.
@@ -91,8 +100,9 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	existingMachinelse := &fleet.MachineLSE{}
 	f := func(ctx context.Context) error {
-		existingMachinelse, err := inventory.GetMachineLSE(ctx, id)
+		existingMachinelse, err = inventory.GetMachineLSE(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -122,6 +132,7 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		logging.Errorf(ctx, "Failed to delete MachineLSE in datastore: %s", err)
 		return err
 	}
+	SaveChangeEvents(ctx, LogMachineLSEChanges(existingMachinelse, nil))
 	return nil
 }
 

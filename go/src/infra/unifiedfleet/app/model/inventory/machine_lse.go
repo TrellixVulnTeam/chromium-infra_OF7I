@@ -169,10 +169,10 @@ func BatchUpdateMachineLSEs(ctx context.Context, machineLSEs []*fleet.MachineLSE
 func putMachineLSE(ctx context.Context, machineLSE *fleet.MachineLSE, update bool) (*fleet.MachineLSE, error) {
 	machineLSE.UpdateTime = ptypes.TimestampNow()
 	pm, err := fleetds.Put(ctx, machineLSE, newMachineLSEEntity, update)
-	if err == nil {
-		return pm.(*fleet.MachineLSE), errors.Annotate(err, "put machine LSE").Err()
+	if err != nil {
+		return nil, errors.Annotate(err, "put machine LSE").Err()
 	}
-	return nil, err
+	return pm.(*fleet.MachineLSE), err
 }
 
 func putAllMachineLSE(ctx context.Context, machineLSEs []*fleet.MachineLSE, update bool) ([]*fleet.MachineLSE, error) {
