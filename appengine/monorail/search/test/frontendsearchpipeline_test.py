@@ -621,34 +621,6 @@ class FrontendSearchPipelineTest(unittest.TestCase):
     pipeline._LookupNeededUsers([self.issue_1, self.issue_2, self.issue_3])
     self.assertEqual([0, 111], list(pipeline.users_by_id.keys()))
 
-  def testPaginate_Grid(self):
-    self.mr.mode = 'grid'
-    pipeline = frontendsearchpipeline.FrontendSearchPipeline(
-        self.cnxn,
-        self.services,
-        self.auth,
-        self.me_user_id,
-        self.query,
-        self.query_project_names,
-        self.items_per_page,
-        self.paginate_start,
-        self.can,
-        self.group_by_spec,
-        self.sort_spec,
-        self.warnings,
-        self.errors,
-        self.use_cached_searches,
-        self.profiler,
-        project=self.project)
-    pipeline.allowed_iids = [
-      self.issue_1.issue_id, self.issue_2.issue_id, self.issue_3.issue_id]
-    pipeline.allowed_results = [self.issue_1, self.issue_2, self.issue_3]
-    pipeline.total_count = len(pipeline.allowed_results)
-    pipeline.Paginate()
-    self.assertEqual(
-      [self.issue_1, self.issue_2, self.issue_3],
-      pipeline.visible_results)
-
   def testPaginate_List(self):
     pipeline = frontendsearchpipeline.FrontendSearchPipeline(
         self.cnxn,

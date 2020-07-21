@@ -442,7 +442,7 @@ class MonorailApiTest(testing.EndpointsTestCase):
         frontendsearchpipeline,
         'FrontendSearchPipeline', lambda cnxn, serv, auth, me, q, q_proj_names,
         num, start, can, group_spec, sort_spec, warnings, errors, use_cache,
-        profiler, display_mode, project: FakeFrontendSearchPipeline())
+        profiler, project: FakeFrontendSearchPipeline())
 
     self.services.project.TestAddProject(
         'test-project', owner_ids=[111],  # requester

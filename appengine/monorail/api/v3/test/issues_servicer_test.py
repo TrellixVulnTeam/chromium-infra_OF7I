@@ -214,7 +214,6 @@ class IssuesServicerTest(unittest.TestCase):
         mc.errors,
         True,
         mc.profiler,
-        display_mode=None,
         project=None)
     self.assertEqual(
         [issue.name for issue in actual_response.issues],
@@ -238,7 +237,6 @@ class IssuesServicerTest(unittest.TestCase):
         mc.errors,
         True,
         mc.profiler,
-        display_mode=None,
         project=None)
 
   # Note the 'empty' case doesn't make sense for ListComments, as one is created

@@ -91,7 +91,6 @@ class FrontendSearchPipeline(object):
       errors,
       use_cached_searches,
       profiler,
-      display_mode='list',
       project=None):
     self.cnxn = cnxn
     self.me_user_ids = me_user_ids
@@ -108,17 +107,12 @@ class FrontendSearchPipeline(object):
     self.profiler = profiler
 
     self.services = services
-    self.grid_mode = (display_mode == 'grid')
-    self.list_mode = (display_mode == 'list')
-    self.chart_mode = (display_mode == 'chart')
-    self.grid_limited = False
     self.pagination = None
     self.num_skipped_at_start = 0
     self.total_count = 0
     self.errors = errors
 
     self.project_name = ''
-    self.project = project
     if project:
       self.project_name = project.project_name
     self.query_projects = []
@@ -216,27 +210,18 @@ class FrontendSearchPipeline(object):
       for shard_key in self.filtered_iids:
         self.total_count += len(self.filtered_iids[shard_key])
 
-    if not self.grid_mode:
-      with self.profiler.Phase('Trimming results beyond pagination page'):
-        for shard_key in self.filtered_iids:
-          self.filtered_iids[shard_key] = self.filtered_iids[shard_key][
-              :self.paginate_start + self.items_per_page]
+    with self.profiler.Phase('Trimming results beyond pagination page'):
+      for shard_key in self.filtered_iids:
+        self.filtered_iids[shard_key] = self.filtered_iids[
+            shard_key][:self.paginate_start + self.items_per_page]
 
   def MergeAndSortIssues(self):
     """Merge and sort results from all shards into one combined list."""
     with self.profiler.Phase('selecting issues to merge and sort'):
-      if not self.grid_mode:
-        self._NarrowFilteredIIDs()
+      self._NarrowFilteredIIDs()
       self.allowed_iids = []
       for filtered_shard_iids in self.filtered_iids.values():
         self.allowed_iids.extend(filtered_shard_iids)
-
-    # The grid view is not paginated, so limit the results shown to avoid
-    # generating a HTML page that would be too large.
-    limit = settings.max_issues_in_grid
-    if self.grid_mode and len(self.allowed_iids) > limit:
-      self.grid_limited = True
-      self.allowed_iids = self.allowed_iids[:limit]
 
     with self.profiler.Phase('getting allowed results'):
       self.allowed_results = self.services.issue.GetIssues(
@@ -478,39 +463,23 @@ class FrontendSearchPipeline(object):
     These two actions are intertwined because we try to only
     retrieve the Issues on the current pagination page.
     """
-    if self.grid_mode:
-      # We don't paginate the grid view.  But, pagination object shows counts.
-      self.pagination = paginate.ArtifactPagination(
-          self.allowed_results,
-          self.items_per_page,
-          self.paginate_start,
-          self.project_name,
-          urls.ISSUE_LIST,
-          total_count=self.total_count)
-      # We limited the results, but still show the original total count.
-      self.visible_results = self.allowed_results
-
-    else:
-      # We already got the issues, just display a slice of the visible ones.
-      limit_reached = False
-      for shard_limit_reached in self.search_limit_reached.values():
-        limit_reached |= shard_limit_reached
-      self.pagination = paginate.ArtifactPagination(
-          self.allowed_results,
-          self.items_per_page,
-          self.paginate_start,
-          self.project_name,
-          urls.ISSUE_LIST,
-          total_count=self.total_count,
-          limit_reached=limit_reached,
-          skipped=self.num_skipped_at_start)
-      self.visible_results = self.pagination.visible_results
+    # We already got the issues, just display a slice of the visible ones.
+    limit_reached = False
+    for shard_limit_reached in self.search_limit_reached.values():
+      limit_reached |= shard_limit_reached
+    self.pagination = paginate.ArtifactPagination(
+        self.allowed_results,
+        self.items_per_page,
+        self.paginate_start,
+        self.project_name,
+        urls.ISSUE_LIST,
+        total_count=self.total_count,
+        limit_reached=limit_reached,
+        skipped=self.num_skipped_at_start)
+    self.visible_results = self.pagination.visible_results
 
     # If we were not forced to look up visible users already, do it now.
-    if self.grid_mode:
-      self._LookupNeededUsers(self.allowed_results)
-    else:
-      self._LookupNeededUsers(self.visible_results)
+    self._LookupNeededUsers(self.visible_results)
 
   def __repr__(self):
     """Return a string that shows the internal state of this pipeline."""
