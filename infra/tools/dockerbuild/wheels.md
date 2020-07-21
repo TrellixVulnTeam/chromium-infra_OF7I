@@ -2583,6 +2583,18 @@ wheel: <
 
 ## **paramiko**
 
+### 1.16.3
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/paramiko-py2_py3"
+  version: "version:1.16.3"
+>
+```
+
+
+* *universal*
+
 ### 2.4.1
 
 ```protobuf
