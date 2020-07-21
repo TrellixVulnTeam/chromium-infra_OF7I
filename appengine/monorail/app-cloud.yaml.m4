@@ -91,6 +91,8 @@ libraries:
   version: '2017.2'
 - name: pycrypto
   version: "2.6"
+- name: ssl  # needed for google.auth.transport
+  version: "2.7.11"
 
 includes:
 - gae_ts_mon
