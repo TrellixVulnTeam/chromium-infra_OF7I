@@ -1,3 +1,26 @@
+# Release Notes sheriff-o-matic 2020-07-21
+
+- 3 commits, 3 bugs affected since e75809a ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - orodley@chromium.org
+
+## Changes in this release
+
+- [SoM: Change chromium.gpu tree](https://chromium-review.googlesource.com/c/infra/infra/+/2308558) (nqmtuan@google.com)
+- [[SoM] Remove a bunch of code from alert migration](https://chromium-review.googlesource.com/c/infra/infra/+/2305532) (nqmtuan@google.com)
+- [Remove all Gatekeeper-related code from SOM.](https://chromium-review.googlesource.com/c/infra/infra/+/2296680) (orodley@chromium.org)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1043371](https://crbug.com/1043371)
+  -  [https://crbug.com/1102969](https://crbug.com/1102969)
+  
+- orodley@chromium.org:
+  -  [https://crbug.com/1102703](https://crbug.com/1102703)
+
+
 # Release Notes sheriff-o-matic 2020-07-08
 
 - 9 commits, 4 bugs affected since 5e77859 (2020-07-02T23:47:14Z)
