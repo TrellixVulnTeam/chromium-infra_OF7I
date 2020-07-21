@@ -736,7 +736,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			// Verify IPs
 			ipv4, err := util.IPv4StrToInt(dhcp.GetIp())
 			So(err, ShouldBeNil)
-			ips, err := configuration.QueryIPByPropertyName(ctx, "ipv4", strconv.FormatUint(uint64(ipv4), 10))
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4": strconv.FormatUint(uint64(ipv4), 10)})
 			So(err, ShouldBeNil)
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeTrue)

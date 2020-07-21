@@ -61,33 +61,35 @@ func newIPEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, er
 }
 
 // QueryIPByPropertyName query IP Entity by property in the datastore
-func QueryIPByPropertyName(ctx context.Context, propertyName, id string) ([]*fleet.IP, error) {
+func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) ([]*fleet.IP, error) {
 	q := datastore.NewQuery(IPKind).FirestoreMode(true)
 	var entities []*IPEntity
-	switch propertyName {
-	case "ipv4":
-		u64, err := strconv.ParseUint(id, 10, 32)
-		if err != nil {
-			logging.Errorf(ctx, "Failed to convert the property 'ipv4' %s to uint64", id)
-			return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", fleetds.InvalidArgument, propertyName, err.Error())
+	for propertyName, id := range propertyMap {
+		switch propertyName {
+		case "ipv4":
+			u64, err := strconv.ParseUint(id, 10, 32)
+			if err != nil {
+				logging.Errorf(ctx, "Failed to convert the property 'ipv4' %s to uint64", id)
+				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", fleetds.InvalidArgument, propertyName, err.Error())
+			}
+			q = q.Eq(propertyName, uint32(u64))
+		case "occupied":
+			b, err := strconv.ParseBool(id)
+			if err != nil {
+				logging.Errorf(ctx, "Failed to convert the property 'occupied' %s to bool", id)
+				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", fleetds.InvalidArgument, propertyName, err.Error())
+			}
+			q = q.Eq(propertyName, b)
+		default:
+			q = q.Eq(propertyName, id)
 		}
-		q = q.Eq(propertyName, uint32(u64))
-	case "occupied":
-		b, err := strconv.ParseBool(id)
-		if err != nil {
-			logging.Errorf(ctx, "Failed to convert the property 'occupied' %s to bool", id)
-			return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", fleetds.InvalidArgument, propertyName, err.Error())
-		}
-		q = q.Eq(propertyName, b)
-	default:
-		q = q.Eq(propertyName, id)
 	}
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
 		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No ips found for the query: %s", id)
+		logging.Infof(ctx, "No ips found for the query: %#v", propertyMap)
 		return nil, nil
 	}
 	ips := make([]*fleet.IP, 0, len(entities))

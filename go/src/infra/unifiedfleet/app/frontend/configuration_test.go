@@ -1568,7 +1568,7 @@ func TestImportVlans(t *testing.T) {
 			So(err, ShouldBeNil)
 			expectedCapacity := getCapacity(vlan.GetVlanAddress())
 			So(vlan.GetCapacityIp(), ShouldEqual, int32(expectedCapacity))
-			ips, err := configuration.QueryIPByPropertyName(ctx, "vlan", "browser-lab:40")
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": "browser-lab:40"})
 			So(err, ShouldBeNil)
 			So(len(ips), ShouldEqual, expectedCapacity)
 		})
