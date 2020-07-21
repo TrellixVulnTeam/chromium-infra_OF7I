@@ -82,8 +82,8 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
     ]
     if project_hotlists and len(hotlists) / len(project_hotlists) > 10:
       logging.warning(
-          'Unusual hotlist activity in %s:%s' % request.issue.project_name,
-          issue_id)
+          'Unusual hotlist activity in %s:%s' %
+          (request.issue.project_name, issue_id))
 
     with mc.profiler.Phase('making user views'):
       users_involved = features_bizobj.UsersInvolvedInHotlists(project_hotlists)
