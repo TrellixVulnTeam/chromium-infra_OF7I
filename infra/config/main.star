@@ -148,7 +148,6 @@ luci.list_view(name = "cron")
 
 exec("//subprojects/build.star")
 exec("//subprojects/codesearch.star")
-exec("//subprojects/cros_flash.star")
 exec("//subprojects/depot_tools.star")
 exec("//subprojects/expect_tests.star")
 exec("//subprojects/gatekeeper.star")

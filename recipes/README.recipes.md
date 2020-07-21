@@ -24,8 +24,6 @@
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll)
   * [cloudkms:examples/usage](#recipes-cloudkms_examples_usage)
-  * [cros_flash](#recipes-cros_flash) &mdash; This recipe is used to flash a CrOS DUT on a Chromium bot.
-  * [cros_flash_scheduler](#recipes-cros_flash_scheduler) &mdash; This recipe is used to keep Chrome's pools of CrOS DUTs up to date.
   * [depot_tools_builder](#recipes-depot_tools_builder) &mdash; Recipe to build windows depot_tools bootstrap zipfile.
   * [docker_image_builder](#recipes-docker_image_builder)
   * [gae_tarball_uploader](#recipes-gae_tarball_uploader)
@@ -814,70 +812,6 @@ To build a new package for all platforms:
 [DEPS](/recipes/recipe_modules/cloudkms/examples/usage.py#5): [cloudkms](#recipe_modules-cloudkms), [recipe\_engine/path][recipe_engine/recipe_modules/path]
 
 &mdash; **def [RunSteps](/recipes/recipe_modules/cloudkms/examples/usage.py#11)(api):**
-### *recipes* / [cros\_flash](/recipes/recipes/cros_flash.py)
-
-[DEPS](/recipes/recipes/cros_flash.py#28): [build/chromite][build/recipe_modules/chromite], [build/chromium][build/recipe_modules/chromium], [build/chromium\_checkout][build/recipe_modules/chromium_checkout], [build/repo][build/recipe_modules/repo], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-This recipe is used to flash a CrOS DUT on a Chromium bot.
-
-This essentially calls out to the cros-sdk's flash tool (located at
-https://codesearch.chromium.org/chromium/src/third_party/chromite/cli/flash.py).
-
-That tool however has a dependency on the cros SDK's chroot (see
-https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#Create-a-chroot
-for more info). Though it's often used in CrOS development, the chroot isn't
-found in Chromium development at all, and has very limited support on Chromium
-bots. Consequently, this recipe will take care of setting it up prior to
-flashing the DUT. The basic steps of this recipe are:
-
-- Fetch a full ChromiumOS checkout via repo. The checkout will be placed in a
-  named cache for subsequent re-use.
-- Build the chroot.
-- Enter the chroot and flash the device.
-
-&mdash; **def [RunSteps](/recipes/recipes/cros_flash.py#62)(api, properties):**
-### *recipes* / [cros\_flash\_scheduler](/recipes/recipes/cros_flash_scheduler.py)
-
-[DEPS](/recipes/recipes/cros_flash_scheduler.py#29): [build/swarming\_client][build/recipe_modules/swarming_client], [depot\_tools/gitiles][depot_tools/recipe_modules/gitiles], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
-
-This recipe is used to keep Chrome's pools of CrOS DUTs up to date.
-
-It does so by launching tasks into the DUT pools which flash the devices.
-When ran, this recipe aims to get a portion of a given pool on the latest
-CHROMEOS_LKGM version. It will never flash more than a third of the pool at a
-single time. This is to ensure the remainder of the pool is online for tests.
-Consequently, this recipe will need to be run multiple times to upgrade the
-entire pool.
-
-This recipe is intended to run several times during MTV's off-peak hours. Its
-builder should be backed by a single thin Ubuntu VM, while the tasks it launches
-run the cros_flash recipe and run on DUT swarming bots.
-
-&mdash; **def [RunSteps](/recipes/recipes/cros_flash_scheduler.py#213)(api, swarming_server, swarming_pool, device_type, bb_host, random_seed, flashing_builder, flashing_builder_bucket, image_type):**
-
-&mdash; **def [get\_bots\_in\_pool](/recipes/recipes/cros_flash_scheduler.py#89)(api, swarming_server, pool, device_type):**
-
-Returns the list of bots that belong to the given pool.
-
-This uses swarming.py's bot/list query, and returns the resulting bots.
-
-&mdash; **def [get\_closest\_available\_version](/recipes/recipes/cros_flash_scheduler.py#144)(api, board, image_type, lkgm_base):**
-
-Returns the GS path of the latest image for the given board and lkgm.
-
-This finds the first LATEST-$lkgm file in GS closest to the current lkgm.
-It'll decrement the lkgm until it finds one, up to 100 attempts. This logic
-is taken from:
-https://codesearch.chromium.org/chromium/src/third_party/chromite/cli/cros/cros_chrome_sdk.py?rcl=63924982b3fdaf3c313e0052fe0c07dae5e4628a&l=350
-
-Once it finds a valid LATEST-$lkgm file, it returns its contents appended
-to the xbuddy path for that board. (eg: xbuddy://remote/eve/R81-12750.0.0)
-
-Returns tuple of:
-  The 5-digit manifest for the latest image.
-  Xbuddy path for the latest image.
-
-&mdash; **def [trigger\_flash](/recipes/recipes/cros_flash_scheduler.py#183)(api, bot, device_type, xbuddy_path, flashing_builder, flashing_builder_bucket):**
 ### *recipes* / [depot\_tools\_builder](/recipes/recipes/depot_tools_builder.py)
 
 [DEPS](/recipes/recipes/depot_tools_builder.py#7): [build/zip][build/recipe_modules/zip], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/buildbucket][recipe_engine/recipe_modules/buildbucket], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
@@ -1173,13 +1107,10 @@ See: //docs/testing/web_platform_tests.md (https://goo.gl/rSRGmZ)
 
 Runs a step which adds a link to the current CL if there is one.
 
-[build/recipe_modules/chromite]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-chromite
 [build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-chromium
 [build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-chromium_checkout
 [build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-docker
 [build/recipe_modules/goma]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-goma
-[build/recipe_modules/repo]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-repo
-[build/recipe_modules/swarming_client]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-swarming_client
 [build/recipe_modules/zip]: https://chromium.googlesource.com/chromium/tools/build.git/+/73813b9a1c5fd7eee19e1746331e214df31ff5b0/scripts/slave/README.recipes.md#recipe_modules-zip
 [depot_tools/recipe_modules/bot_update]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/642be1d27d9796d0b49199b99deae60b35aeaaea/recipes/README.recipes.md#recipe_modules-bot_update
 [depot_tools/recipe_modules/depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/642be1d27d9796d0b49199b99deae60b35aeaaea/recipes/README.recipes.md#recipe_modules-depot_tools
