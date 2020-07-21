@@ -39,7 +39,7 @@ def _docker_image_exists(system, identifier):
 class Builder(object):
 
   # Tag used for pushed Docker images.
-  DOCKER_IMAGE_TAG = 'v1.4.6'
+  DOCKER_IMAGE_TAG = 'v1.4.7'
 
   # The Docker repository to use.
   DOCKER_REPOSITORY = 'https://gcr.io'
@@ -407,7 +407,7 @@ SOURCES = {
         version='3.2.1',
         url='ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz',
     ),
-    'cffi': source.pypi_sdist('cffi', '1.10.0'),
+    'cffi': source.pypi_sdist('cffi', '1.14.0'),
     'mysql': source.remote_archive(
         name='mysql',
         version='5.7.21',
