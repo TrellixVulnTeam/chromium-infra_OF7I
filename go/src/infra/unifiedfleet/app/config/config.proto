@@ -15,6 +15,7 @@ message Config {
   string bucket_name = 3;
   string machine_db_config_service = 4;
   string cros_inventory_host = 5;
+  string self_storage_bucket = 6;
 }
 
 message OSNetworkConfig {

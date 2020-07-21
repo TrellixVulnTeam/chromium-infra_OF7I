@@ -32,7 +32,7 @@ const (
 	importPageSize int = 500
 	// DefaultMachineDBService indicates the default machineDB host for importing
 	// TODO(xixuan): rename this variable in the following CL
-	DefaultMachineDBService string = "machine-db-dev"
+	DefaultMachineDBService string = "machine-db"
 	// ProdMachineDBService indicates the prod machine db service name
 	ProdMachineDBService string = "machine-db.appspot.com"
 	datacenterConfigFile string = "datacenters.cfg"

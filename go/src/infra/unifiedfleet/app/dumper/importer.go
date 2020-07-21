@@ -22,6 +22,10 @@ func importCrimson(ctx context.Context) error {
 	}
 	machineDBHost := fmt.Sprintf("%s.appspot.com", machineDBConfigService)
 	logging.Debugf(ctx, "Querying host %s", machineDBHost)
+	logging.Debugf(ctx, "Comparing crimson with UFS before importing")
+	compareCrimson(ctx, machineDBHost)
+	logging.Debugf(ctx, "Finish exporting diff from crimson to UFS to Google Storage")
+
 	sv := &frontend.FleetServerImpl{}
 	logging.Debugf(ctx, "Importing chrome platforms")
 	respCP, err := sv.ImportChromePlatforms(ctx, &api.ImportChromePlatformsRequest{

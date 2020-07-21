@@ -42,26 +42,10 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 }
 
 func toLocation(rack, datacenter string) *fleet.Location {
-	dc := strings.ToLower(datacenter)
-	l := &fleet.Location{
-		Rack:        rack,
-		BarcodeName: dc + "-" + rack,
+	return &fleet.Location{
+		Rack: rack,
+		Lab:  ToLab(strings.ToLower(datacenter)),
 	}
-	switch dc {
-	case "atl97":
-		l.Lab = fleet.Lab_LAB_DATACENTER_ATL97
-	case "iad97":
-		l.Lab = fleet.Lab_LAB_DATACENTER_IAD97
-	case "mtv96":
-		l.Lab = fleet.Lab_LAB_DATACENTER_MTV96
-	case "mtv97":
-		l.Lab = fleet.Lab_LAB_DATACENTER_MTV97
-	case "lab01":
-		l.Lab = fleet.Lab_LAB_DATACENTER_FUCHSIA
-	default:
-		l.Lab = fleet.Lab_LAB_UNSPECIFIED
-	}
-	return l
 }
 
 // ToChromePlatforms converts platforms in static file to UFS format.
@@ -151,7 +135,7 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fl
 	newDracs := make([]*fleet.Drac, 0)
 	dhcps := make([]*fleet.DHCPConfig, 0)
 	for _, nic := range nics {
-		name := getNicName(nic.GetName(), nic.GetMachine())
+		name := GetNicName(nic.GetName(), nic.GetMachine())
 		switch nic.GetName() {
 		case "drac":
 			// Use ListDrac() as the source of truth for drac
@@ -182,7 +166,7 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fl
 		d := &fleet.Drac{
 			Name: hostname,
 			// Inject machine name to display name
-			DisplayName: getNicName("drac", drac.GetMachine()),
+			DisplayName: GetNicName("drac", drac.GetMachine()),
 			MacAddress:  drac.GetMacAddress(),
 			SwitchInterface: &fleet.SwitchInterface{
 				Switch: drac.GetSwitch(),
@@ -285,6 +269,25 @@ func ToState(state crimsoncommon.State) fleet.State {
 	return fleet.State_STATE_UNSPECIFIED
 }
 
-func getNicName(nicName, machineName string) string {
+// ToLab converts the crimson lab string to UFS lab.
+func ToLab(datacenter string) fleet.Lab {
+	switch strings.ToLower(datacenter) {
+	case "atl97":
+		return fleet.Lab_LAB_DATACENTER_ATL97
+	case "iad97":
+		return fleet.Lab_LAB_DATACENTER_IAD97
+	case "mtv96":
+		return fleet.Lab_LAB_DATACENTER_MTV96
+	case "mtv97":
+		return fleet.Lab_LAB_DATACENTER_MTV97
+	case "lab01":
+		return fleet.Lab_LAB_DATACENTER_FUCHSIA
+	default:
+		return fleet.Lab_LAB_UNSPECIFIED
+	}
+}
+
+// GetNicName formats a nic name with its attached machine
+func GetNicName(nicName, machineName string) string {
 	return fmt.Sprintf("%s-%s", machineName, nicName)
 }

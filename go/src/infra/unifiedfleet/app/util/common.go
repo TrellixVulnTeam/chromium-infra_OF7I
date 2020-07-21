@@ -63,6 +63,15 @@ func FormatLabFilter(userFilter string) string {
 	return Lab + FilterConditionSeparator + userFilter
 }
 
+// IsInBrowserLab check if a given resource name indicates it's in browser lab.
+func IsInBrowserLab(name string) bool {
+	s := strings.Split(name, FilterConditionSeparator)
+	if len(s) >= 2 && s[0] == BrowserLab {
+		return true
+	}
+	return false
+}
+
 // GetIPName returns a formatted IP name
 func GetIPName(vlanName, ipv4Str string) string {
 	return fmt.Sprintf("%s/%s", vlanName, ipv4Str)
