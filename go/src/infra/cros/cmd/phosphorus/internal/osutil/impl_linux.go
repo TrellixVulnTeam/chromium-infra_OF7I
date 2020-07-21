@@ -20,6 +20,12 @@ import (
 func runWithAbortImpl(ctx context.Context, cmd *exec.Cmd) (RunResult, error) {
 	r := RunResult{}
 	name := filepath.Base(cmd.Path)
+	// Start the child process in its own process group.
+	// This allows us to clean up the entire process tree spawned by the child
+	// process by killing the process group, as long as none of the descendents
+	// explicitly reset their process group.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
 	if err := cmd.Start(); err != nil {
 		return r, err
 	}
@@ -59,12 +65,30 @@ func terminate(cmd *exec.Cmd, exited <-chan struct{}) {
 	}
 }
 
-// sigkill sends SIGKILL to a command.
+// sigkill sends SIGKILL to the process group of a command.
+//
+// Killing the process group ensures that the entire process tree for the
+// command is cleaned up.
+// The command must have been created in its own process group distinct from
+// that of the current process.
 func sigkill(cmd *exec.Cmd) {
 	name := filepath.Base(cmd.Path)
-	log.Printf("SIGKILLing %s", name)
-	if err := cmd.Process.Kill(); err != nil {
+	pgid, err := syscall.Getpgid(cmd.Process.Pid)
+	if err != nil {
+		log.Panicf("Failed to get pgid for child process: %s", err)
+	}
+
+	if selfPgid, err := syscall.Getpgid(syscall.Getpid()); err != nil {
+		log.Panicf("Failed to get self pgid: %s", err)
+		if selfPgid == pgid {
+			log.Panicf("Child process for %s has the same pgid as current process.", name)
+		}
+	}
+
+	log.Printf("SIGKILLing pgid %d for %s", pgid, name)
+	// NB: syscall.Kill() interprets process ID < 0 as process group ID.
+	if err := syscall.Kill(-pgid, syscall.SIGKILL); err != nil {
 		// Something has gone really wrong, blow up.
-		log.Panicf("Failed to SIGKILL ¯\\_(ツ)_/¯")
+		log.Panicf("Failed to SIGKILL ¯\\_(ツ)_/¯: %s", err)
 	}
 }
