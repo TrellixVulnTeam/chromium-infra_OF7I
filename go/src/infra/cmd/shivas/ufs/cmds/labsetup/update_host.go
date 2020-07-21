@@ -11,32 +11,32 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/grpc/prpc"
+
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// RedeployMachineCmd set MachineLSE by given name.
-var RedeployMachineCmd = &subcommands.Command{
-	UsageLine: "redeploy-machine [Options...]",
-	ShortDesc: "Redeploy a machine in the lab",
-	LongDesc:  cmdhelp.RedeployMachineLongDesc,
+// UpdateHostCmd update a host on a machine.
+var UpdateHostCmd = &subcommands.Command{
+	UsageLine: "update-host [Options...]",
+	ShortDesc: "Update a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine",
+	LongDesc:  cmdhelp.UpdateHostLongDesc,
 	CommandRun: func() subcommands.CommandRun {
-		c := &redeployMachine{}
+		c := &updateHost{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachinelseFileText)
+		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineLSEFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c
 	},
 }
 
-type redeployMachine struct {
+type updateHost struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
@@ -44,7 +44,7 @@ type redeployMachine struct {
 	interactive  bool
 }
 
-func (c *redeployMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *updateHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -52,18 +52,16 @@ func (c *redeployMachine) Run(a subcommands.Application, args []string, env subc
 	return 0
 }
 
-func (c *redeployMachine) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *updateHost) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -73,8 +71,7 @@ func (c *redeployMachine) innerRun(a subcommands.Application, args []string, env
 	if c.interactive {
 		utils.GetMachinelseInteractiveInput(ctx, ic, &machinelse, true)
 	} else {
-		err = utils.ParseJSONFile(c.newSpecsFile, &machinelse)
-		if err != nil {
+		if err = utils.ParseJSONFile(c.newSpecsFile, &machinelse); err != nil {
 			return err
 		}
 	}
@@ -87,10 +84,11 @@ func (c *redeployMachine) innerRun(a subcommands.Application, args []string, env
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
+	fmt.Println()
 	return nil
 }
 
-func (c *redeployMachine) validateArgs() error {
+func (c *updateHost) validateArgs() error {
 	if !c.interactive && c.newSpecsFile == "" {
 		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
 	}

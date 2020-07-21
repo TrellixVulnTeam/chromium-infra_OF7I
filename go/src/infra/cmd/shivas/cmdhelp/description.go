@@ -295,35 +295,35 @@ Example OS machine:
 The protobuf definition of machine is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto`
 
-	// DeployMachineLongDesc long description for DeployMachineCmd
-	DeployMachineLongDesc string = `Deploy a machine as a DUT, Labstation, DevServer, Caching Server or a VM Server.
+	// AddHostLongDesc long description for AddHostCmd
+	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
 
 Examples:
-shivas deploy-machine -f machinelse.json
-Deploys a machine by reading a JSON file input.
+shivas add-host -f host.json
+Adds a host by reading a JSON file input.
 
-shivas deploy-machine -i
-Deploys a machine by reading input through interactive mode.`
+shivas add-host -i
+Adds a host by reading input through interactive mode.`
 
-	// RedeployMachineLongDesc long description for RedeployMachineCmd
-	RedeployMachineLongDesc string = `Redeploy a machine as a DUT, Labstation, DevServer, Caching Server or a VM Server
+	// UpdateHostLongDesc long description for UpdateHostCmd
+	UpdateHostLongDesc string = `Update a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
 
 Examples:
-shivas redeploy-machine -f machinelse.json
-Redeploys a machine by reading a JSON file input.
+shivas update-host -f host.json
+Updates a host by reading a JSON file input.
 
-shivas redeploy-machine -i
-Redeploys a machine by reading input through interactive mode.`
+shivas update-host -i
+Updates a host by reading input through interactive mode.`
 
-	// MachinelseFileText description for machinelse file input
-	MachinelseFileText string = `Path to a file containing machine deployment specification in JSON format.
+	// MachineLSEFileText description for machinelse/host file input
+	MachineLSEFileText string = `Path to a file containing host specification in JSON format.
 This file must contain one machine deployment JSON message
 
-Example Browser machine deployment:
+Example host for a browser machine:
 {
-	"name": "A-Browser-MachineLSE-1",
+	"name": "A-Browser-Host-1",
 	"machineLsePrototype": "browser-lab:vm",
-	"hostname": "A-Browser-MachineLSE-1",
+	"hostname": "A-Browser-Host-1",
 	"chromeBrowserMachineLse": {
 		"vms": [
 			{
@@ -345,14 +345,18 @@ Example Browser machine deployment:
 				"hostname": "Ubuntu-lab2"
 			}
 		],
-		"vmCapacity": 3
+		"vmCapacity": 3,
+		"osVersion": {
+			"value": "3.4",
+			"description": "Ubuntu Server"
+		},
 	},
 	"machines": [
 		"machine-DellServer-123"
 	]
 }
 
-Example OS machine deployment for a DUT:
+Example host(DUT) for an OS machine:
 {
 	"name": "chromeos3-row2-rack3-host5",
 	"machineLsePrototype": "acs-lab:wifi",
@@ -435,7 +439,7 @@ Example OS machine deployment for a DUT:
 	]
 }
 
-Example OS machine deployment for a Labstation:
+Example host(Labstation) for an OS machine:
 {
 	"name": "chromeos3-row6-rack6-labstation6",
 	"hostname": "chromeos3-row6-rack6-labstation6",
@@ -468,7 +472,7 @@ Example OS machine deployment for a Labstation:
 	]
 }
 
-Example OS machine deployment for a Caching server/Dev server/VM server:
+Example host(Caching server/Dev server/VM server) for an OS machine:
 {
 	"name": "A-ChromeOS-Server",
 	"machineLsePrototype": "acs-lab:qwer",
@@ -485,12 +489,23 @@ Example OS machine deployment for a Caching server/Dev server/VM server:
 }
 
 The protobuf definition of a deployed machine is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto#24`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto`
+
+	// ListHostLongDesc long description for ListHostCmd
+	ListHostLongDesc string = `List all hosts
+
+Examples:
+shivas ls host
+Prints all the hosts in JSON format
+
+shivas ls machine -n 50
+Prints 50 hosts in JSON format
+`
 
 	// AddMachineLSEPrototypeLongDesc long description for AddMachineLSEPrototypeCmd
 	AddMachineLSEPrototypeLongDesc string = `Add prototype for machine deployment.
 
-Examples:	
+Examples:
 shivas add-machine-prototype -f machineprototype.json
 Adds a machine prototype by reading a JSON file input.
 
