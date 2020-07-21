@@ -20,6 +20,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
@@ -51,6 +52,7 @@ new specs for the DUT requested. Use -new-specs-file to run non-interactively.`,
 		c := &updateDutRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "new-specs-file", "",
 			`Path to a file containing updated DUT inventory specification.
 This file must contain one inventory.DeviceUnderTest JSON-encoded protobuf
@@ -75,6 +77,7 @@ type updateDutRun struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     skycmdlib.EnvFlags
+	commonFlags  skycmdlib.CommonFlags
 	newSpecsFile string
 	tail         bool
 
@@ -126,16 +129,19 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 		Host:    e.UFSService,
 		Options: site.DefaultPRPCOptions,
 	})
-	fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
-	if err := c.redeployToUFS(ctx, ufsClient, newSpecs); err != nil {
-		fmt.Fprintf(a.GetOut(), "%s\n", err.Error())
-		fmt.Fprintf(a.GetOut(), "####### The above error is NOT FATAL #######\n")
-	} else {
-		fmt.Fprintf(a.GetOut(), "Successfully redeploy the following duts to UFS:\n")
-		fmt.Fprintf(a.GetOut(), "\t%s\n", newSpecs.GetCommon().GetHostname())
-		fmt.Fprintf(a.GetOut(), "####### Finish TESTING #######\n")
+	err = c.redeployToUFS(ctx, ufsClient, newSpecs)
+	if c.commonFlags.Verbose() {
+		fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
+		if err != nil {
+			fmt.Fprintf(a.GetOut(), "%s\n", err.Error())
+			fmt.Fprintf(a.GetOut(), "####### The above error is NOT FATAL #######\n")
+		} else {
+			fmt.Fprintf(a.GetOut(), "Successfully redeploy the following duts to UFS:\n")
+			fmt.Fprintf(a.GetOut(), "\t%s\n", newSpecs.GetCommon().GetHostname())
+			fmt.Fprintf(a.GetOut(), "####### Finish TESTING #######\n")
+		}
+		fmt.Fprintf(a.GetOut(), "\n")
 	}
-	fmt.Fprintf(a.GetOut(), "\n")
 
 	creator, err := utils.NewTaskCreator(ctx, &c.authFlags, c.envFlags)
 	if err != nil {
@@ -154,13 +160,15 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 
 // redeployToUFS kicks off the inventory updates to UFS
 func (c *updateDutRun) redeployToUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, spec *inventory.DeviceUnderTest) error {
+	// Ignore other loggings from other packages, only expose error logging.
+	newCtx := skycmdlib.SetLogging(ctx, logging.Error)
 	devicesToAdd, _, _, err := invV2Api.ImportFromV1DutSpecs([]*inventory.CommonDeviceSpecs{spec.GetCommon()})
 	if len(devicesToAdd) != 1 {
 		return errors.Reason("Cannot parse lab config from the host %s's spec", spec.GetCommon().GetHostname()).Err()
 	}
 	mlse := ufsUtil.DUTToLSE(devicesToAdd[0].GetDut(), "", nil)
 	mlse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, mlse.Name)
-	_, err = ufsClient.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
+	_, err = ufsClient.UpdateMachineLSE(newCtx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE: mlse,
 	})
 	if err != nil {

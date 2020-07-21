@@ -5,10 +5,12 @@
 package cmdlib
 
 import (
+	"context"
 	"flag"
 	"strings"
 	"time"
 
+	"go.chromium.org/luci/common/logging"
 	"infra/cmd/skylab/internal/site"
 
 	lflag "go.chromium.org/luci/common/flag"
@@ -17,8 +19,24 @@ import (
 // DefaultTaskPriority is the default priority for a swarming task.
 var DefaultTaskPriority = 140
 
-type commonFlags struct {
-	debug bool
+// CommonFlags controls some commonly-used CLI flags.
+type CommonFlags struct {
+	verbose bool
+}
+
+// Register sets up the common flags.
+func (f *CommonFlags) Register(fl *flag.FlagSet) {
+	fl.BoolVar(&f.verbose, "verbose", false, "log more details")
+}
+
+// Verbose returns if the command is set to verbose mode.
+func (f *CommonFlags) Verbose() bool {
+	return f.verbose
+}
+
+// SetLogging is used to sets the level for the logger when needed
+func SetLogging(ctx context.Context, level logging.Level) context.Context {
+	return logging.SetLevel(ctx, level)
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.

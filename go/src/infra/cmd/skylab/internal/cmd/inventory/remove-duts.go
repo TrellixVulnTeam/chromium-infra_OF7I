@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
@@ -47,6 +48,7 @@ again.`,
 		c := &removeDutsRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		c.Flags.BoolVar(&c.delete, "delete", false, "Delete DUT from inventory (to-be-deprecated).")
 		c.removalReason.Register(&c.Flags)
 		return c
@@ -57,6 +59,7 @@ type removeDutsRun struct {
 	subcommands.CommandRunBase
 	authFlags     authcli.Flags
 	envFlags      skycmdlib.EnvFlags
+	commonFlags   skycmdlib.CommonFlags
 	delete        bool
 	removalReason skycmdlib.RemovalReason
 }
@@ -91,18 +94,21 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 		Host:    e.UFSService,
 		Options: site.DefaultPRPCOptions,
 	})
-	fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
-	if err := c.deleteFromUFS(ctx, ufsClient, hostnames); err != nil {
-		fmt.Fprintf(a.GetOut(), "%s\n", err.Error())
-		fmt.Fprintf(a.GetOut(), "####### The above error is NOT FATAL #######\n")
-	} else {
-		fmt.Fprintf(a.GetOut(), "Successfully undeploy the following machines from UFS:\n")
-		for _, h := range hostnames {
-			fmt.Fprintf(a.GetOut(), "\t%s\n", h)
+	err = c.deleteFromUFS(ctx, ufsClient, hostnames)
+	if c.commonFlags.Verbose() {
+		fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
+		if err != nil {
+			fmt.Fprintf(a.GetOut(), "%s\n", err.Error())
+			fmt.Fprintf(a.GetOut(), "####### The above error is NOT FATAL #######\n")
+		} else {
+			fmt.Fprintf(a.GetOut(), "Successfully undeploy the following machines from UFS:\n")
+			for _, h := range hostnames {
+				fmt.Fprintf(a.GetOut(), "\t%s\n", h)
+			}
+			fmt.Fprintf(a.GetOut(), "####### Finish TESTING #######\n")
 		}
-		fmt.Fprintf(a.GetOut(), "####### Finish TESTING #######\n")
+		fmt.Fprintf(a.GetOut(), "\n")
 	}
-	fmt.Fprintf(a.GetOut(), "\n")
 
 	ic := iv.NewInventoryClient(hc, e)
 	modified, err := ic.DeleteDUTs(ctx, c.Flags.Args(), &c.authFlags, c.removalReason, a.GetOut())
@@ -118,8 +124,10 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 
 // deleteFromUFS kicks off the inventory updates to UFS
 func (c *removeDutsRun) deleteFromUFS(ctx context.Context, ufsClient ufsAPI.FleetClient, hostnames []string) error {
+	// Ignore other loggings from other packages, only expose error logging.
+	newCtx := skycmdlib.SetLogging(ctx, logging.Error)
 	for _, hostname := range hostnames {
-		_, err := ufsClient.DeleteMachineLSE(ctx, &ufsAPI.DeleteMachineLSERequest{
+		_, err := ufsClient.DeleteMachineLSE(newCtx, &ufsAPI.DeleteMachineLSERequest{
 			Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, hostname),
 		})
 		if err != nil {
