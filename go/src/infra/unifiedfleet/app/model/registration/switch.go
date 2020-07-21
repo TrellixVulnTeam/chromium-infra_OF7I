@@ -131,3 +131,32 @@ func ImportSwitches(ctx context.Context, switches []*fleet.Switch) (*fleetds.OpR
 	}
 	return fleetds.Insert(ctx, protos, newSwitchEntity, true, true)
 }
+
+func queryAllSwitch(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*SwitchEntity
+	q := datastore.NewQuery(SwitchKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllSwitches returns all switches in datastore.
+func GetAllSwitches(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllSwitch)
+}
+
+// DeleteSwitches deletes a batch of switches
+func DeleteSwitches(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.Switch{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newSwitchEntity)
+}

@@ -193,3 +193,32 @@ func putAllRack(ctx context.Context, racks []*fleet.Rack, update bool) ([]*fleet
 	}
 	return nil, err
 }
+
+func queryAllRack(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*RackEntity
+	q := datastore.NewQuery(RackKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllRacks returns all racks in datastore.
+func GetAllRacks(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllRack)
+}
+
+// DeleteRacks deletes a batch of racks
+func DeleteRacks(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.Rack{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newRackEntity)
+}

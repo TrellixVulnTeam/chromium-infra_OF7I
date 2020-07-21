@@ -125,6 +125,17 @@ func DeleteChromePlatform(ctx context.Context, id string) error {
 	return fleetds.Delete(ctx, &fleet.ChromePlatform{Name: id}, newChromePlatformEntity)
 }
 
+// DeleteChromePlatforms deletes a batch of chrome platforms
+func DeleteChromePlatforms(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.ChromePlatform{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newChromePlatformEntity)
+}
+
 // ImportChromePlatforms inserts chrome platforms to datastore.
 func ImportChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*fleetds.OpResults, error) {
 	protos := make([]proto.Message, len(platforms))

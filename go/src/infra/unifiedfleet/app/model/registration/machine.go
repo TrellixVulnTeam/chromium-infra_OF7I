@@ -65,19 +65,6 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntit
 	}, nil
 }
 
-func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
-	var entities []*MachineEntity
-	q := datastore.NewQuery(MachineKind)
-	if err := datastore.GetAll(ctx, q, &entities); err != nil {
-		return nil, err
-	}
-	fe := make([]fleetds.FleetEntity, len(entities))
-	for i, e := range entities {
-		fe[i] = e
-	}
-	return fe, nil
-}
-
 // QueryMachineByPropertyName queries Machine Entity in the datastore
 // If keysOnly is true, then only key field is populated in returned machines
 func QueryMachineByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Machine, error) {
@@ -163,9 +150,33 @@ func ListMachines(ctx context.Context, pageSize int32, pageToken string) (res []
 	return
 }
 
+func queryAllMachine(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*MachineEntity
+	q := datastore.NewQuery(MachineKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
 // GetAllMachines returns all machines in datastore.
 func GetAllMachines(ctx context.Context) (*fleetds.OpResults, error) {
-	return fleetds.GetAll(ctx, queryAll)
+	return fleetds.GetAll(ctx, queryAllMachine)
+}
+
+// DeleteMachines deletes a batch of machines
+func DeleteMachines(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.Machine{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newMachineEntity)
 }
 
 // DeleteMachine deletes the machine in datastore

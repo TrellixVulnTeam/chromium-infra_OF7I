@@ -190,3 +190,32 @@ func ImportKVMs(ctx context.Context, kvms []*fleet.KVM) (*fleetds.OpResults, err
 	}
 	return fleetds.Insert(ctx, protos, newKVMEntity, true, true)
 }
+
+func queryAllKVM(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*KVMEntity
+	q := datastore.NewQuery(KVMKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllKVMs returns all kvms in datastore.
+func GetAllKVMs(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllKVM)
+}
+
+// DeleteKVMs deletes a batch of kvms
+func DeleteKVMs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.KVM{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newKVMEntity)
+}

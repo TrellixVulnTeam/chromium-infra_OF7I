@@ -131,3 +131,32 @@ func ImportVlans(ctx context.Context, vlans []*fleet.Vlan) (*fleetds.OpResults, 
 	}
 	return fleetds.Insert(ctx, protos, newVlanEntity, true, true)
 }
+
+func queryAllVlan(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*VlanEntity
+	q := datastore.NewQuery(VlanKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllVlans returns all vlans in datastore.
+func GetAllVlans(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllVlan)
+}
+
+// DeleteVlans deletes a batch of vlans
+func DeleteVlans(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.Vlan{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newVlanEntity)
+}

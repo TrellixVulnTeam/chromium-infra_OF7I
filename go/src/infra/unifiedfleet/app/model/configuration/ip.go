@@ -145,3 +145,14 @@ func ImportIPs(ctx context.Context, ips []*fleet.IP) (*fleetds.OpResults, error)
 	}
 	return fleetds.Insert(ctx, protos, newIPEntity, true, true)
 }
+
+// DeleteIPs deletes a batch of ips
+func DeleteIPs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.IP{
+			Id: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newIPEntity)
+}

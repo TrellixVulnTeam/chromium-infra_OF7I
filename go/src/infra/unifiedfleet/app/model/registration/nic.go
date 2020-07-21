@@ -201,3 +201,32 @@ func ImportNics(ctx context.Context, nics []*fleet.Nic) (*fleetds.OpResults, err
 	}
 	return fleetds.Insert(ctx, protos, newNicEntity, true, true)
 }
+
+func queryAllNic(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*NicEntity
+	q := datastore.NewQuery(NicKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllNics returns all nics in datastore.
+func GetAllNics(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllNic)
+}
+
+// DeleteNics deletes a batch of nics
+func DeleteNics(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.Nic{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newNicEntity)
+}

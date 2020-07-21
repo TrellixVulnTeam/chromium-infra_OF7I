@@ -118,3 +118,32 @@ func ImportStateRecords(ctx context.Context, states []*ufspb.StateRecord) (*flee
 	}
 	return fleetds.Insert(ctx, protos, newRecordEntity, true, true)
 }
+
+func queryAllState(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*RecordEntity
+	q := datastore.NewQuery(RecordKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllStates returns all states in datastore.
+func GetAllStates(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllState)
+}
+
+// DeleteStates deletes a batch of states
+func DeleteStates(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &ufspb.StateRecord{
+			ResourceName: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newRecordEntity)
+}

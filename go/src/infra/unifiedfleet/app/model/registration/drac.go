@@ -190,3 +190,32 @@ func ImportDracs(ctx context.Context, dracs []*fleet.Drac) (*fleetds.OpResults, 
 	}
 	return fleetds.Insert(ctx, protos, newDracEntity, true, true)
 }
+
+func queryAllDrac(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*DracEntity
+	q := datastore.NewQuery(DracKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllDracs returns all dracs in datastore.
+func GetAllDracs(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllDrac)
+}
+
+// DeleteDracs deletes a batch of dracs
+func DeleteDracs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.Drac{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newDracEntity)
+}

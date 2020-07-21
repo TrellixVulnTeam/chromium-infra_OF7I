@@ -201,3 +201,32 @@ func ImportMachineLSEs(ctx context.Context, lses []*fleet.MachineLSE) (*fleetds.
 	}
 	return fleetds.Insert(ctx, protos, newMachineLSEEntity, true, true)
 }
+
+func queryAllMachineLSE(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*MachineLSEEntity
+	q := datastore.NewQuery(MachineLSEKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllMachineLSEs returns all machine lses in datastore.
+func GetAllMachineLSEs(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllMachineLSE)
+}
+
+// DeleteMachineLSEs deletes a batch of machine LSEs
+func DeleteMachineLSEs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.MachineLSE{
+			Name: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newMachineLSEEntity)
+}

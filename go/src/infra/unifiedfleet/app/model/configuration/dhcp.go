@@ -134,3 +134,32 @@ func ImportDHCPConfigs(ctx context.Context, dhcpConfigs []*fleet.DHCPConfig) (*f
 	}
 	return fleetds.Insert(ctx, protos, newDHCPEntity, true, true)
 }
+
+func queryAllDHCP(ctx context.Context) ([]fleetds.FleetEntity, error) {
+	var entities []*DHCPEntity
+	q := datastore.NewQuery(DHCPKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]fleetds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllDHCPs returns all dhcps in datastore.
+func GetAllDHCPs(ctx context.Context) (*fleetds.OpResults, error) {
+	return fleetds.GetAll(ctx, queryAllDHCP)
+}
+
+// DeleteDHCPs deletes a batch of dhcps
+func DeleteDHCPs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+	protos := make([]proto.Message, len(resourceNames))
+	for i, m := range resourceNames {
+		protos[i] = &fleet.DHCPConfig{
+			Hostname: m,
+		}
+	}
+	return fleetds.DeleteAll(ctx, protos, newDHCPEntity)
+}
