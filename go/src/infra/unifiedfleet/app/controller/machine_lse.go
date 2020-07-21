@@ -142,10 +142,10 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 	allRes = append(allRes, *res...)
 
 	lses := util.ToOSMachineLSEs(labConfigs)
+	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "os-lab")
 	logging.Debugf(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(lses))
-		logging.Debugf(ctx, "importing lses %dth - %dth", i, end-1)
 		res, err := inventory.ImportMachineLSEs(ctx, lses[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -198,10 +198,10 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	allRes = append(allRes, *res...)
 
 	lses, ips, dhcps := util.ToMachineLSEs(hosts, vms)
+	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "browser-lab")
 	logging.Debugf(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(lses))
-		logging.Debugf(ctx, "importing lses %dth - %dth", i, end-1)
 		res, err := inventory.ImportMachineLSEs(ctx, lses[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -215,7 +215,6 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	logging.Debugf(ctx, "Importing %d ips", len(ips))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(ips))
-		logging.Debugf(ctx, "importing ips %dth - %dth", i, end-1)
 		res, err := configuration.ImportIPs(ctx, ips[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -229,7 +228,6 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	logging.Debugf(ctx, "Importing %d dhcps", len(dhcps))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(dhcps))
-		logging.Debugf(ctx, "importing dhcps %dth - %dth", i, end-1)
 		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -239,6 +237,42 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 			break
 		}
 	}
+	return &allRes, nil
+}
+
+func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*fleet.MachineLSE, pageSize int, lseType string) (*fleetds.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range machineLSEs {
+		resMap[r.GetName()] = true
+	}
+	resp, err := inventory.GetAllMachineLSEs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	var toDeleteDHCPHost []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*fleet.MachineLSE)
+		if lseType == "browser-lab" && s.GetChromeosMachineLse() != nil {
+			continue
+		}
+		if lseType == "os-lab" && s.GetChromeBrowserMachineLse() != nil {
+			continue
+		}
+		if _, ok := resMap[s.GetName()]; !ok {
+			toDelete = append(toDelete, s.GetName())
+			toDeleteDHCPHost = append(toDeleteDHCPHost, s.GetName())
+		}
+		if s.GetChromeBrowserMachineLse() != nil {
+			for _, vm := range s.GetChromeBrowserMachineLse().GetVms() {
+				toDeleteDHCPHost = append(toDeleteDHCPHost, vm.GetHostname())
+			}
+		}
+	}
+	logging.Debugf(ctx, "Deleting %d non-existing machine lses", len(toDelete))
+	allRes := *deleteByPage(ctx, toDelete, pageSize, inventory.DeleteMachineLSEs)
+	logging.Debugf(ctx, "Deleting %d non-existing host and vm-related dhcps", len(toDelete))
+	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
 	return &allRes, nil
 }
 

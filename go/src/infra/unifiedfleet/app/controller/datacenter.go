@@ -90,10 +90,10 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 	// actually may cause data incompleteness. But as the importing job
 	// will be triggered periodically, such incompleteness that's caused by
 	// potential failure will be ignored.
+	deleteNonExistingRacks(ctx, racks, pageSize)
 	logging.Debugf(ctx, "Importing %d racks", len(racks))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(racks))
-		logging.Debugf(ctx, "importing rack %dth - %dth", i, end-1)
 		res, err := registration.ImportRacks(ctx, racks[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -106,7 +106,6 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 	logging.Debugf(ctx, "Importing %d rack LSEs", len(rackLSEs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(rackLSEs))
-		logging.Debugf(ctx, "importing rack LSE %dth - %dth", i, end-1)
 		res, err := inventory.ImportRackLSEs(ctx, rackLSEs[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -116,10 +115,10 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 			break
 		}
 	}
+	deleteNonExistingKVMs(ctx, kvms, pageSize)
 	logging.Debugf(ctx, "Importing %d kvms", len(kvms))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(kvms))
-		logging.Debugf(ctx, "importing kvm %dth - %dth", i, end-1)
 		res, err := registration.ImportKVMs(ctx, kvms[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -129,10 +128,10 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 			break
 		}
 	}
+	deleteNonExistingSwitches(ctx, switches, pageSize)
 	logging.Debugf(ctx, "Importing %d switches", len(switches))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(switches))
-		logging.Debugf(ctx, "importing switch %dth - %dth", i, end-1)
 		res, err := registration.ImportSwitches(ctx, switches[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -145,7 +144,6 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 	logging.Debugf(ctx, "Importing %d DHCP configs", len(dhcps))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(dhcps))
-		logging.Debugf(ctx, "importing dhcp configs %dth - %dth", i, end-1)
 		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -156,4 +154,67 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 		}
 	}
 	return &allRes, nil
+}
+
+func deleteNonExistingRacks(ctx context.Context, racks []*ufspb.Rack, pageSize int) (*datastore.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range racks {
+		resMap[r.GetName()] = true
+	}
+	rackRes, err := registration.GetAllRacks(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	for _, sr := range rackRes.Passed() {
+		s := sr.Data.(*ufspb.Rack)
+		if _, ok := resMap[s.GetName()]; !ok {
+			toDelete = append(toDelete, s.GetName())
+		}
+	}
+	logging.Debugf(ctx, "Deleting %d non-existing racks", len(toDelete))
+	return deleteByPage(ctx, toDelete, pageSize, registration.DeleteRacks), nil
+}
+
+func deleteNonExistingKVMs(ctx context.Context, kvms []*ufspb.KVM, pageSize int) (*datastore.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range kvms {
+		resMap[r.GetName()] = true
+	}
+	resp, err := registration.GetAllKVMs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*ufspb.KVM)
+		if _, ok := resMap[s.GetName()]; !ok {
+			toDelete = append(toDelete, s.GetName())
+		}
+	}
+	logging.Debugf(ctx, "Deleting %d non-existing kvms", len(toDelete))
+	allRes := *deleteByPage(ctx, toDelete, pageSize, registration.DeleteKVMs)
+	logging.Debugf(ctx, "Deleting %d non-existing kvm-related dhcps", len(toDelete))
+	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
+	return &allRes, nil
+}
+
+func deleteNonExistingSwitches(ctx context.Context, switches []*ufspb.Switch, pageSize int) (*datastore.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range switches {
+		resMap[r.GetName()] = true
+	}
+	resp, err := registration.GetAllSwitches(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*ufspb.Switch)
+		if _, ok := resMap[s.GetName()]; !ok {
+			toDelete = append(toDelete, s.GetName())
+		}
+	}
+	logging.Debugf(ctx, "Deleting %d non-existing switches", len(toDelete))
+	return deleteByPage(ctx, toDelete, pageSize, registration.DeleteSwitches), nil
 }

@@ -168,7 +168,6 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 		if err != nil {
 			return nil, configServiceFailureStatus.Err()
 		}
-		logging.Debugf(ctx, "fetched configs: %#v", fetchedConfigs)
 		if err := luciproto.UnmarshalTextML(fetchedConfigs.Content, oldP); err != nil {
 			return nil, invalidConfigFileContentStatus.Err()
 		}
@@ -179,7 +178,7 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 	if err := api.ValidateResourceKey(platforms, "Name"); err != nil {
 		return nil, err
 	}
-	res, err := controller.ImportChromePlatforms(ctx, platforms)
+	res, err := controller.ImportChromePlatforms(ctx, platforms, fs.getImportPageSize())
 	s := processImportDatastoreRes(res, err)
 	return s.Proto(), s.Err()
 }

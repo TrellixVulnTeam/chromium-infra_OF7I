@@ -53,8 +53,29 @@ func DeleteChromePlatform(ctx context.Context, id string) error {
 }
 
 // ImportChromePlatforms inserts chrome platforms to datastore.
-func ImportChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*datastore.OpResults, error) {
+func ImportChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
+	deleteNonExistingPlatforms(ctx, platforms, pageSize)
 	return configuration.ImportChromePlatforms(ctx, platforms)
+}
+
+func deleteNonExistingPlatforms(ctx context.Context, platforms []*fleet.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range platforms {
+		resMap[r.GetName()] = true
+	}
+	resp, err := configuration.GetAllChromePlatforms(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*fleet.ChromePlatform)
+		if _, ok := resMap[s.GetName()]; !ok {
+			toDelete = append(toDelete, s.GetName())
+		}
+	}
+	logging.Debugf(ctx, "Deleting %d non-existing platforms", len(toDelete))
+	return deleteByPage(ctx, toDelete, pageSize, configuration.DeleteChromePlatforms), nil
 }
 
 // ReplaceChromePlatform replaces an old ChromePlatform with new ChromePlatform in datastore

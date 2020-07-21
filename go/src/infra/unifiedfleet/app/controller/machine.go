@@ -189,6 +189,7 @@ func DeleteMachine(ctx context.Context, id string) error {
 
 // ImportMachines creates or updates a batch of machines in datastore
 func ImportMachines(ctx context.Context, machines []*ufspb.Machine, pageSize int) (*ufsds.OpResults, error) {
+	deleteNonExistingMachines(ctx, machines, pageSize)
 	allRes := make(ufsds.OpResults, 0)
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(machines))
@@ -202,6 +203,26 @@ func ImportMachines(ctx context.Context, machines []*ufspb.Machine, pageSize int
 		}
 	}
 	return &allRes, nil
+}
+
+func deleteNonExistingMachines(ctx context.Context, machines []*ufspb.Machine, pageSize int) (*ufsds.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range machines {
+		resMap[r.GetName()] = true
+	}
+	resp, err := registration.GetAllMachines(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*ufspb.Machine)
+		if _, ok := resMap[s.GetName()]; !ok {
+			toDelete = append(toDelete, s.GetName())
+		}
+	}
+	logging.Debugf(ctx, "Deleting %d non-existing machines", len(toDelete))
+	return deleteByPage(ctx, toDelete, pageSize, registration.DeleteMachines), nil
 }
 
 // ReplaceMachine replaces an old Machine with new Machine in datastore

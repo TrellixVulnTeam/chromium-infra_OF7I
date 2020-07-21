@@ -18,6 +18,7 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 	fleetds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 //Generalized error messages for resources in the system
@@ -243,4 +244,17 @@ func testServoEq(a, b []*chromeosLab.Servo) bool {
 		}
 	}
 	return true
+}
+
+func deleteByPage(ctx context.Context, toDelete []string, pageSize int, deletFunc func(ctx context.Context, resourceNames []string) *fleetds.OpResults) *fleetds.OpResults {
+	var allRes fleetds.OpResults
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(toDelete))
+		res := deletFunc(ctx, toDelete[i:end])
+		allRes = append(allRes, *res...)
+		if i+pageSize >= len(toDelete) {
+			break
+		}
+	}
+	return &allRes
 }

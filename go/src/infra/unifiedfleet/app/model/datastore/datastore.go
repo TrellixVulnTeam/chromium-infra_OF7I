@@ -202,7 +202,6 @@ func Insert(ctx context.Context, es []proto.Message, nf NewFunc, update, upsert 
 		toAddEntities := make([]FleetEntity, 0, len(checkEntities))
 		toAddRes := make(OpResults, 0, len(checkEntities))
 		if upsert {
-			logging.Debugf(ctx, "Upserting all objects")
 			toAddEntities = checkEntities
 			toAddRes = checkRes
 		} else {
@@ -345,6 +344,9 @@ func DeleteAll(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
 		}
 		checkEntities = append(checkEntities, entity)
 		checkRes = append(checkRes, allRes[i])
+	}
+	if len(checkEntities) == 0 {
+		return &allRes
 	}
 	// Datastore doesn't throw an error if the record doesn't exist.
 	// Check and return err if there is no such entity in the datastore.

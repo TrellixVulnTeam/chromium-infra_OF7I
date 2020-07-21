@@ -89,7 +89,6 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	logging.Debugf(ctx, "Importing %d vlans", len(vs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(vs))
-		logging.Debugf(ctx, "importing vlan %dth - %dth", i, end-1)
 		res, err := configuration.ImportVlans(ctx, vs[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -103,7 +102,6 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	logging.Debugf(ctx, "Importing %d ips", len(IPs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(IPs))
-		logging.Debugf(ctx, "importing ip %dth - %dth", i, end-1)
 		res, err := configuration.ImportIPs(ctx, IPs[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -160,7 +158,6 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitCl
 	logging.Debugf(ctx, "Importing %d vlans", len(allVlans))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(allVlans))
-		logging.Debugf(ctx, "importing vlan %dth - %dth", i, end-1)
 		res, err := configuration.ImportVlans(ctx, allVlans[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -174,7 +171,6 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitCl
 	logging.Debugf(ctx, "Importing %d ips", len(allIPs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(allIPs))
-		logging.Debugf(ctx, "importing ip %dth - %dth", i, end-1)
 		res, err := configuration.ImportIPs(ctx, allIPs[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
@@ -188,7 +184,6 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitCl
 	logging.Debugf(ctx, "Importing %d ips", len(allDhcps))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(allDhcps))
-		logging.Debugf(ctx, "importing ip %dth - %dth", i, end-1)
 		res, err := configuration.ImportDHCPConfigs(ctx, allDhcps[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {

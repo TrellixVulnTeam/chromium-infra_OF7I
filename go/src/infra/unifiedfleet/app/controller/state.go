@@ -40,7 +40,6 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, vms []*crims
 	logging.Debugf(ctx, "Importing %d states", len(states))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(states))
-		logging.Debugf(ctx, "importing states %dth - %dth", i, end-1)
 		res, err := state.ImportStateRecords(ctx, states[i:end])
 		allRes = append(allRes, *res...)
 		if err != nil {
