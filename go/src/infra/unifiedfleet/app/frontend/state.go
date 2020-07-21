@@ -49,9 +49,46 @@ func (fs *FleetServerImpl) ImportStates(ctx context.Context, req *api.ImportStat
 	if err := api.ValidateResourceKey(vms.GetVms(), "Name"); err != nil {
 		return nil, errors.Annotate(err, "vms has invalid chars").Err()
 	}
+	logging.Debugf(ctx, "Querying machine-db to list the vlans")
+	vlans, err := mdbClient.ListVLANs(ctx, &crimson.ListVLANsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListVLANs").Err()
+	}
+	logging.Debugf(ctx, "Querying machine-db to list the kvms")
+	kvms, err := mdbClient.ListKVMs(ctx, &crimson.ListKVMsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListKVMs").Err()
+	}
+	if err := api.ValidateResourceKey(kvms.GetKvms(), "Name"); err != nil {
+		return nil, errors.Annotate(err, "kvms has invalid chars").Err()
+	}
+	logging.Debugf(ctx, "Querying machine-db to list the switches")
+	switches, err := mdbClient.ListSwitches(ctx, &crimson.ListSwitchesRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListSwitches").Err()
+	}
+	if err := api.ValidateResourceKey(switches.GetSwitches(), "Name"); err != nil {
+		return nil, errors.Annotate(err, "switches has invalid chars").Err()
+	}
+	logging.Debugf(ctx, "Querying machine-db to list the racks")
+	racks, err := mdbClient.ListRacks(ctx, &crimson.ListRacksRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListRacks").Err()
+	}
+	if err := api.ValidateResourceKey(racks.GetRacks(), "Name"); err != nil {
+		return nil, errors.Annotate(err, "racks has invalid chars").Err()
+	}
+	logging.Debugf(ctx, "Querying machine-db to list the hosts")
+	hosts, err := mdbClient.ListPhysicalHosts(ctx, &crimson.ListPhysicalHostsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListPhysicalHosts").Err()
+	}
+	if err := api.ValidateResourceKey(hosts.GetHosts(), "Name"); err != nil {
+		return nil, errors.Annotate(err, "hosts has invalid chars").Err()
+	}
 
 	pageSize := fs.getImportPageSize()
-	res, err := controller.ImportStates(ctx, machines.GetMachines(), vms.GetVms(), pageSize)
+	res, err := controller.ImportStates(ctx, machines.GetMachines(), racks.GetRacks(), hosts.GetHosts(), vms.GetVms(), vlans.GetVlans(), kvms.GetKvms(), switches.GetSwitches(), pageSize)
 	s := processImportDatastoreRes(res, err)
 	if s.Err() != nil {
 		return s.Proto(), s.Err()

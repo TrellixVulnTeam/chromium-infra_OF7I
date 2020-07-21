@@ -20,6 +20,8 @@ const (
 	ChromePlatformCollection string = "chromeplatforms"
 	// MachineLSECollection refers to the prefix of the corresponding resource.
 	MachineLSECollection string = "machineLSEs"
+	// HostCollection refers to the prefix of the corresponding resource.
+	HostCollection string = "hosts"
 	// RackLSECollection refers to the prefix of the corresponding resource.
 	RackLSECollection string = "rackLSEs"
 	// NicCollection refers to the prefix of the corresponding resource.
