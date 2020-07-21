@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import difflib
 import logging
 import unittest
 
@@ -102,9 +103,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.field_def_9_name = 'catanddog'
     self.field_def_9 = self._CreateFieldDef(
         self.project_1.project_id,
-        self.field_def_8_name,
+        self.field_def_9_name,
         'DATE_TYPE',
         date_action_str='ping_owner_only')
+    self.field_def_10_name = 'url'
+    self.field_def_10 = self._CreateFieldDef(
+        self.project_1.project_id, self.field_def_10_name, 'URL_TYPE')
     self.field_def_project2_name = 'lorem'
     self.field_def_project2 = self._CreateFieldDef(
         self.project_2.project_id, self.field_def_project2_name, 'ENUM_TYPE')
@@ -850,6 +854,100 @@ class ConverterFunctionsTest(unittest.TestCase):
                 component='projects/proj/componentDefs/%d' %
                 self.component_def_2_id),
         ],
+        labels=[
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=EXPLICIT_DERIVATION, label='a'),
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=EXPLICIT_DERIVATION, label='key-explicit'),
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=RULE_DERIVATION, label='derived1'),
+            issue_objects_pb2.Issue.LabelValue(
+                derivation=RULE_DERIVATION, label='key-derived')
+        ],
+        field_values=[
+            issue_objects_pb2.FieldValue(
+                derivation=EXPLICIT_DERIVATION,
+                field='projects/proj/fieldDefs/test_field_1',
+                value='multivalue1',
+            ),
+            issue_objects_pb2.FieldValue(
+                derivation=RULE_DERIVATION,
+                field='projects/proj/fieldDefs/test_field_1',
+                value='multivalue2',
+            ),
+            issue_objects_pb2.FieldValue(
+                derivation=EXPLICIT_DERIVATION,
+                field='projects/proj/fieldDefs/days',
+                value='1',
+            ),
+            issue_objects_pb2.FieldValue(
+                derivation=RULE_DERIVATION,
+                field='projects/proj/fieldDefs/OS',
+                value='mac',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/test_field_2',
+                value='38',  # Max value not checked.
+            ),
+            issue_objects_pb2.FieldValue(  # Multivalue not checked.
+                field='projects/proj/fieldDefs/test_field_2',
+                value='0'  # Confirm we ingest 0 rather than None.
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/dogandcat',
+                value='users/111',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/dogandcat',
+                value='users/404',  # User lookup not attempted.
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/dogandcat',
+                value='users/nobody@no.com',  # Parsed to '-1' for INVALID_USER.
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/catanddog',
+                value='2020-01-01',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/catanddog',
+                value='2100-01-01',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/catanddog',
+                value='1000-01-01',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/url',
+                value='garbage',
+            ),
+            # TODO(crbug/monorail/8050): FieldValue mistakes are ignored.
+            issue_objects_pb2.FieldValue(),
+            issue_objects_pb2.FieldValue(field='garbage'),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/test_field_2',
+                value='garbage',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/dogandcat',
+                value='garbage',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/dogandcat',
+            ),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj/fieldDefs/catanddog',
+                value='garbagedate',
+            ),
+            issue_objects_pb2.FieldValue(  # Project does not exist.
+                field='projects/noproject/fieldDefs/something',
+                value='something'
+            ),
+            issue_objects_pb2.FieldValue(  # Different project.
+                field='projects/goose/fieldDefs/lorem',
+                value='something'
+            ),
+        ],
         merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'),
         blocked_on_issue_refs=[
             # Reversing natural ordering to ensure order is respected.
@@ -906,28 +1004,78 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.services.issue.TestAddIssue(blocked_on_2)
     self.services.issue.TestAddIssue(blocking)
 
-    actual = self.converter.IngestIssue(ingest)
+    actual = self.converter.IngestIssue(ingest, self.project_1.project_id)
 
     expected_cc1_id = self.services.user.LookupUserID(
         self.cnxn, 'new@user.com', autocreate=False)
+    expected_field_values = [
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_1,
+            str_value=u'multivalue1',
+            derived=False,
+        ),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_1,
+            str_value=u'multivalue2',
+            derived=False,
+        ),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_2, int_value=38, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_2, int_value=0, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_8, user_id=111, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_8, user_id=404, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_8, user_id=-1, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_9, date_value=1577836800, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_9, date_value=4102444800, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_9, date_value=-30610224000, derived=False),
+        tracker_pb2.FieldValue(
+            field_id=self.field_def_10,
+            url_value=u'http://garbage',
+            derived=False),
+    ]
     expected = tracker_pb2.Issue(
-        summary='sum',
-        status='new',
+        summary=u'sum',
+        status=u'new',
         owner_id=111,
         cc_ids=[expected_cc1_id, 333],
         component_ids=[self.component_def_1_id, self.component_def_2_id],
-        merged_into_external='b/1',
+        merged_into_external=u'b/1',
+        labels=[
+            u'a', u'key-explicit', u'derived1', u'key-derived', u'days-1',
+            u'OS-mac'
+        ],
+        field_values=expected_field_values,
         blocked_on_iids=[blocked_on_2.issue_id, blocked_on_1.issue_id],
         blocking_iids=[blocking.issue_id],
         dangling_blocked_on_refs=[
-            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/555'),
-            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/2')
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier=u'b/555'),
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier=u'b/2')
         ],
         dangling_blocking_refs=[
-            tracker_pb2.DanglingIssueRef(ext_issue_identifier='b/3')
+            tracker_pb2.DanglingIssueRef(ext_issue_identifier=u'b/3')
         ],
     )
-    self.assertEqual(actual, expected)
+    self.AssertProtosEqual(actual, expected)
+
+  def AssertProtosEqual(self, actual, expected):
+    """Asserts equal, printing a diff if not."""
+    # TODO(jessan): If others find this useful, move to a shared testing lib.
+    try:
+      self.assertEqual(actual, expected)
+    except AssertionError as e:
+      # Append a diff to the normal error message.
+      expected_str = str(expected).splitlines(1)
+      actual_str = str(actual).splitlines(1)
+      diff = difflib.unified_diff(actual_str, expected_str)
+      err_msg = '%s\nProto actual vs expected diff:\n %s' % (e, ''.join(diff))
+      raise AssertionError(err_msg)
 
   def testIngestIssue_Minimal(self):
     """Test IngestIssue with as few fields set as possible."""
@@ -938,7 +1086,15 @@ class ConverterFunctionsTest(unittest.TestCase):
         summary='', # Summary gets set to empty str on conversion.
         status='new'
     )
-    self.assertEqual(self.converter.IngestIssue(minimal), expected)
+    actual = self.converter.IngestIssue(minimal, self.project_1.project_id)
+    self.assertEqual(actual, expected)
+
+  def testIngestIssue_NoSuchProject(self):
+    self.services.config.strict = True
+    ingest = issue_objects_pb2.Issue(
+        status=issue_objects_pb2.Issue.StatusValue(status='new'))
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      self.converter.IngestIssue(ingest, -1)
 
   def testIngestIssue_Errors(self):
     invalid_issue_ref = issue_objects_pb2.IssueRef(
@@ -979,7 +1135,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     ]
     error_messages_re = '\n'.join(error_messages)
     with self.assertRaisesRegexp(exceptions.InputException, error_messages_re):
-      self.converter.IngestIssue(ingest)
+      self.converter.IngestIssue(ingest, self.project_1.project_id)
 
   def testIngestIssuesListColumns(self):
     columns = [
@@ -1861,12 +2017,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     project_config = self.services.config.GetProjectConfig(
         self.cnxn, self.project_1.project_id)
     input_fds = project_config.field_defs
-    self.assertEqual(10, len(input_fds))
-    # project_1 is set up to have 6 non-approval fields and 1 approval field
-    # assert we skip approval fields
+    # project_1 is set up to have 11 non-approval fields and 1 approval field
+    self.assertEqual(11, len(input_fds))
     output = self.converter.ConvertFieldDefs(
         input_fds, self.project_1.project_id)
-    self.assertEqual(9, len(output))
+    # assert we skip approval fields
+    self.assertEqual(10, len(output))
 
   def testConvertFieldDefs_NonexistentID(self):
     """We skip over any field defs whose ID does not exist."""

@@ -24,8 +24,9 @@ from framework import framework_helpers
 from proto import tracker_pb2
 from project import project_helpers
 from tracker import attachment_helpers
-from tracker import tracker_helpers
+from tracker import field_helpers
 from tracker import tracker_bizobj as tbo
+from tracker import tracker_helpers
 
 Choice = project_objects_pb2.FieldDef.EnumTypeSettings.Choice
 
@@ -415,19 +416,23 @@ class Converter(object):
       converted_issues.append(result)
     return converted_issues
 
-  def IngestIssue(self, issue):
-    # type: (api_proto.issue_objects_pb2.Issue) -> proto.tracker_pb2.Issue
+  def IngestIssue(self, issue, project_id):
+    # type: (api_proto.issue_objects_pb2.Issue, int) -> proto.tracker_pb2.Issue
     """Ingest a protoc Issue into a protorpc Issue.
 
     Args:
       issue: the protoc issue to ingest.
+      project_id: The project into which we're ingesting `issue`.
 
     Returns:
-      protorpc version of `issue`, ignoring all OUTPUT_ONLY fields.
+      protorpc version of issue, ignoring all OUTPUT_ONLY fields.
 
     Raises:
-      InputException: if any provided fields were invalid.
+      InputException: if any fields in the 'issue' proto were invalid.
+      ProjectNotFound: if 'project_id' is not found.
     """
+    # Get config first. We can't ingest the issue if the project isn't found.
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
     ingestedDict = {
       'summary': issue.summary
     }
@@ -456,10 +461,98 @@ class Converter(object):
               exceptions.NoSuchComponentException) as e:
         err_agg.AddErrorMessage('Error ingesting components: {}', e)
 
-      # TODO(jessan): Migrate & use _RedistributeEnumFieldsIntoLabels from v0.
+      # Extract labels and field values.
+      ingestedDict['labels'] = [lv.label for lv in issue.labels]
+      ingestedDict['field_values'], enums = self._IngestFieldValues(
+          issue.field_values, config)
+      field_helpers.ShiftEnumFieldsIntoLabels(
+          ingestedDict['labels'], [], enums, [], config)
+      assert len(enums) == 0  # ShiftEnumFieldsIntoLabels must clear all enums.
 
+      # Ingest merged, blocking/blocked_on.
       self._ExtractIssueRefs(issue, ingestedDict, err_agg)
     return tracker_pb2.Issue(**ingestedDict)
+
+  def _IngestFieldValues(self, field_values, config):
+    # type: (Sequence[api_proto.issue_objects.FieldValue],
+    #     proto.tracker_pb2.ProjectIssueConfig) ->
+    #     Tuple[Sequence[proto.tracker_pb2.FieldValue],
+    #         Mapping[int, Sequence[str]]]
+    """Returns protorpc FieldValues for the given protoc FieldValues.
+
+    Omits any unsupported type fields or fields from different projects.
+
+    Args:
+      field_values: protoc FieldValues to ingest.
+      config: ProjectIssueConfig for the FieldValues we're ingesting.
+
+    Returns:
+      A pair 1) Ingested FieldValues. 2) A mapping of field ids to values
+      for ENUM_TYPE fields in 'field_values.'
+    """
+    # config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+    enums = {}
+    ingestedFieldValues = []
+    for fv in field_values:
+      try:
+        _project_id, fd_id = rnc.IngestFieldDefName(
+            self.cnxn, fv.field, self.services)
+        fd = fds_by_id[fd_id]
+        if fd.field_type == tracker_pb2.FieldTypes.ENUM_TYPE:
+          enums.setdefault(fd_id, []).append(fv.value)
+        else:
+          ingestedFieldValues.append(self._IngestFieldValue(fv, fd))
+      # TODO(crbug/monorail/8050): Aggregate and raise errors.
+      except (exceptions.InputException, exceptions.NoSuchProjectException,
+              exceptions.NoSuchFieldDefException, ValueError) as e:
+        logging.warning(
+            'Could not ingest value (%s) for FieldDef (%s): %s', fv.value,
+            fv.field, e)
+      except KeyError as e:
+        logging.info('Field %s is not in this project', fv.field)
+    return ingestedFieldValues, enums
+
+  def _IngestFieldValue(self, field_value, field_def):
+    # type: (api_proto.issue_objects.FieldValue, proto.tracker_pb2.FieldDef) ->
+    #     proto.tracker_pb2.FieldValue
+    """Ingest a protoc FieldValue into a protorpc FieldValue.
+
+    Args:
+      field_value: protoc FieldValue to ingest.
+      field_def: protorpc FieldDef associated with 'field_value'.
+          BOOL_TYPE and APPROVAL_TYPE are ignored.
+          Enum values are not allowed. They must be ingested as labels.
+
+    Returns:
+      Ingested protorpc FieldValue.
+
+    Raises:
+      InputException if 'field_def' is USER_TYPE and 'field_value' does not
+          have a valid formatted resource name.
+      ValueError if 'field_value' could not be parsed for 'field_def'.
+    """
+    assert field_def.field_type != tracker_pb2.FieldTypes.ENUM_TYPE
+    if field_def.field_type == tracker_pb2.FieldTypes.USER_TYPE:
+      return self._ParseOneUserFieldValue(field_value.value, field_def.field_id)
+    fv = field_helpers.ParseOneFieldValue(
+        self.cnxn, self.services.user, field_def, field_value.value)
+    # ParseOneFieldValue currently ignores parsing errors, although it has TODOs
+    # to raise them.
+    if not fv:
+      raise ValueError('Could not parse %s' % field_value.value)
+    return fv
+
+  def _ParseOneUserFieldValue(self, value, field_id):
+    # type: (str, int) -> proto.tracker_pb2.FieldValue
+    """Replacement for the obsolete user parsing in ParseOneFieldValue."""
+    try:
+      user_id = rnc.IngestUserName(self.cnxn, value, self.services)
+    except exceptions.NoSuchUserException:
+      # TODO(crbug/monorail/8050): This error handling taken from V0 API, do we
+      #    still want this validation to happen in this way?
+      user_id = field_helpers.INVALID_USER_ID
+    return tbo.MakeFieldValue(field_id, None, None, user_id, None, None, False)
 
   def _ExtractOwner(self, issue, ingestedDict, err_agg):
     # type: (api_proto.issue_objects_pb2.Issue, Dict[str, Any], ErrorAggregator)

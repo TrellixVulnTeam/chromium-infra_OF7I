@@ -138,7 +138,7 @@ def ShiftEnumFieldsIntoLabels(
 
   SIDE-EFFECT: the labels and labels_remove lists will be extended with
   key-value labels corresponding to the enum field values.  Those field
-  entries will be removed from field_vals and field_vals_remove.
+  entries will be removed from field_val_strs and field_val_strs_remove.
   """
   for fd in config.field_defs:
     if fd.field_type != tracker_pb2.FieldTypes.ENUM_TYPE:

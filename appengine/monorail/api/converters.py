@@ -1121,8 +1121,7 @@ def _RedistributeEnumFieldsIntoLabels(
       without enum_types.
 
   SIDE-EFFECT: the labels and labels_remove lists will be extended with
-  key-value labels corresponding to the enum field values.  Those field
-  entries will be removed from field_vals and field_vals_remove.
+  key-value labels corresponding to the enum field values.
   """
   field_val_strs_add = {}
   for field_val in field_vals_add:
