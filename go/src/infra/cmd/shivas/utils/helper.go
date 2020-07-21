@@ -350,3 +350,27 @@ func getMachineLSEPrototype(ctx context.Context, ic UfleetAPI.FleetClient, name 
 	})
 	return res
 }
+
+// CheckExistsVM checks if the given vm already exists in the slice
+func CheckExistsVM(existingVMs []*ufspb.VM, vmName string) bool {
+	if existingVMs == nil || len(existingVMs) == 0 || vmName == "" {
+		return false
+	}
+	for _, vm := range existingVMs {
+		if vm.Name == vmName {
+			return true
+		}
+	}
+	return false
+}
+
+// RemoveVM removes the given vm from the slice
+func RemoveVM(existingVMs []*ufspb.VM, vmName string) []*ufspb.VM {
+	for i, vm := range existingVMs {
+		if vm.Name == vmName {
+			existingVMs[i] = existingVMs[len(existingVMs)-1]
+			existingVMs = existingVMs[:len(existingVMs)-1]
+		}
+	}
+	return existingVMs
+}

@@ -42,6 +42,8 @@ var (
 		"UpdateTime"}
 	chromePlatformTitle = []string{"Chrome Platform Name", "Manufacturer",
 		"Description", "UpdateTime"}
+	vmTitle = []string{"VM Name", "OS Version", "OS Desc", "MAC Address",
+		"VM Hostname"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -507,4 +509,38 @@ func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE) {
 			fmt.Println()
 		}
 	}
+}
+
+// PrintVMs prints the all vms in table form.
+func PrintVMs(vms []*ufspb.VM) {
+	defer tw.Flush()
+	printTitle(vmTitle)
+	for _, vm := range vms {
+		printVM(vm)
+	}
+}
+
+func printVM(vm *ufspb.VM) {
+	out := fmt.Sprintf("%s\t", vm.Name)
+	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
+	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
+	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
+	out += fmt.Sprintf("%s\t", vm.GetHostname())
+	fmt.Fprintln(tw, out)
+}
+
+// PrintVMsJSON prints the vm details in json format.
+func PrintVMsJSON(vms []*ufspb.VM) {
+	fmt.Print("[")
+	len := len(vms) - 1
+	for i, s := range vms {
+		s.Name = ufsUtil.RemovePrefix(s.Name)
+		PrintProtoJSON(s)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+	fmt.Print("]")
+	fmt.Println()
 }

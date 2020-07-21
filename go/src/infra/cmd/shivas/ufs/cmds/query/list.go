@@ -18,6 +18,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
+	"infra/cmd/shivas/ufs/subcmds/vm"
 )
 
 type list struct {
@@ -57,6 +58,7 @@ func (c listApp) GetCommands() []*subcommands.Command {
 		switches.ListSwitchCmd,
 		drac.ListDracCmd,
 		nic.ListNicCmd,
+		vm.ListVMCmd,
 		machineprototype.ListMachineLSEPrototypeCmd,
 		rackprototype.ListRackLSEPrototypeCmd,
 		chromeplatform.ListChromePlatformCmd,

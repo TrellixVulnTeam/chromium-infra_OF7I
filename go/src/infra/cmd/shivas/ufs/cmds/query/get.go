@@ -18,6 +18,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
+	"infra/cmd/shivas/ufs/subcmds/vm"
 )
 
 type get struct {
@@ -57,6 +58,7 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		switches.GetSwitchCmd,
 		drac.GetDracCmd,
 		nic.GetNicCmd,
+		vm.GetVMCmd,
 		machineprototype.GetMachineLSEPrototypeCmd,
 		rackprototype.GetRackLSEPrototypeCmd,
 		chromeplatform.GetChromePlatformCmd,

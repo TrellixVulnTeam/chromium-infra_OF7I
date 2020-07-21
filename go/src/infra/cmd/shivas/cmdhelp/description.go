@@ -58,6 +58,35 @@ Example switch:
 The protobuf definition of switch is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto#71`
 
+	// VMFileText description for VM file input
+	VMFileText string = `Path to a file containing VM specification in JSON format.
+This file must contain one VM JSON message
+
+Example VM:
+{
+	"name": "Windows8.0",
+	"osVersion": {
+		"value": "8.0",
+		"description": "Windows Server"
+	},
+	"macAddress": "2.44.65.23",
+	"hostname": "Windows8.0"
+}
+
+The protobuf definition of VM is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine_lse.proto`
+
+	// ListVMLongDesc long description for ListVMCmd
+	ListVMLongDesc string = `List all vms for a host
+
+Examples:
+shivas ls vm -h {Hostname}
+Fetches all vms for the host and prints the output in table format
+
+shivas ls vm -h {Hostname} -json
+Fetches all vms for the host and prints the output in JSON format
+`
+
 	// ListKVMLongDesc long description for ListKVMCmd
 	ListKVMLongDesc string = `List all kvms
 
