@@ -36,9 +36,9 @@ const (
 	// ProdMachineDBService indicates the prod machine db service name
 	ProdMachineDBService string = "machine-db.appspot.com"
 	datacenterConfigFile string = "datacenters.cfg"
-
-	spreadSheetScope string = "https://www.googleapis.com/auth/spreadsheets.readonly"
 )
+
+var spreadSheetScope = []string{authclient.OAuthScopeEmail, "https://www.googleapis.com/auth/spreadsheets.readonly", "https://www.googleapis.com/auth/drive.readonly"}
 
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface
 // For potential unittest usage
@@ -105,7 +105,7 @@ func (cs *FleetServerImpl) newSheetInterface(ctx context.Context) (sheet.ClientI
 	if cs.sheetInterfaceFactory != nil {
 		return cs.sheetInterfaceFactory(ctx)
 	}
-	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(authclient.OAuthScopeEmail, spreadSheetScope))
+	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(spreadSheetScope...))
 	if err != nil {
 		return nil, err
 	}
