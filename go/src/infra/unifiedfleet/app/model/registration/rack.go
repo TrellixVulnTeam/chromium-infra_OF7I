@@ -64,7 +64,7 @@ func newRackEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, 
 //
 // If keysOnly is true, then only key field is populated in returned racks
 func QueryRackByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Rack, error) {
-	q := datastore.NewQuery(RackKind).KeysOnly(keysOnly)
+	q := datastore.NewQuery(RackKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*RackEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)

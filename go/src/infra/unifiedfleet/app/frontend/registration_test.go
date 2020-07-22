@@ -2326,34 +2326,30 @@ func TestCreateSwitch(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	switch1 := mockSwitch("")
-	switch2 := mockSwitch("")
-	switch3 := mockSwitch("")
+	rack1 := &proto.Rack{
+		Name: "rack-1",
+		Rack: &proto.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &proto.ChromeBrowserRack{},
+		},
+	}
+	registration.CreateRack(tf.C, rack1)
 	Convey("CreateSwitch", t, func() {
 		Convey("Create new switch with switch_id", func() {
+			switch1 := mockSwitch("")
 			req := &api.CreateSwitchRequest{
 				Switch:   switch1,
 				SwitchId: "Switch-1",
+				Rack:     "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch1)
 		})
 
-		Convey("Create existing switch", func() {
-			req := &api.CreateSwitchRequest{
-				Switch:   switch3,
-				SwitchId: "Switch-1",
-			}
-			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, AlreadyExists)
-		})
-
 		Convey("Create new switch - Invalid input nil", func() {
 			req := &api.CreateSwitchRequest{
 				Switch: nil,
+				Rack:   "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2363,8 +2359,9 @@ func TestCreateSwitch(t *testing.T) {
 
 		Convey("Create new switch - Invalid input empty ID", func() {
 			req := &api.CreateSwitchRequest{
-				Switch:   switch2,
+				Switch:   mockSwitch(""),
 				SwitchId: "",
+				Rack:     "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2374,13 +2371,25 @@ func TestCreateSwitch(t *testing.T) {
 
 		Convey("Create new switch - Invalid input invalid characters", func() {
 			req := &api.CreateSwitchRequest{
-				Switch:   switch2,
+				Switch:   mockSwitch(""),
 				SwitchId: "a.b)7&",
+				Rack:     "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+
+		Convey("Create new switch - Invalid input empty rack", func() {
+			req := &api.CreateSwitchRequest{
+				Switch:   mockSwitch("x"),
+				SwitchId: "switch-5",
+			}
+			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyRackName)
 		})
 	})
 }
@@ -2390,40 +2399,37 @@ func TestUpdateSwitch(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	switch1 := mockSwitch("")
-	switch2 := mockSwitch("switch-1")
-	switch3 := mockSwitch("switch-3")
-	switch4 := mockSwitch("a.b)7&")
+	rack1 := &proto.Rack{
+		Name: "rack-1",
+		Rack: &proto.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &proto.ChromeBrowserRack{
+				Switches: []string{"switch-1"},
+			},
+		},
+	}
+	registration.CreateRack(tf.C, rack1)
 	Convey("UpdateSwitch", t, func() {
 		Convey("Update existing switch", func() {
-			req := &api.CreateSwitchRequest{
-				Switch:   switch1,
-				SwitchId: "switch-1",
+			switch1 := &proto.Switch{
+				Name: "switch-1",
 			}
-			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
+			resp, err := registration.CreateSwitch(tf.C, switch1)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
+
+			switch2 := mockSwitch("switch-1")
 			ureq := &api.UpdateSwitchRequest{
 				Switch: switch2,
+				Rack:   "rack-1",
 			}
 			resp, err = tf.Fleet.UpdateSwitch(tf.C, ureq)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch2)
 		})
 
-		Convey("Update non-existing switch", func() {
-			ureq := &api.UpdateSwitchRequest{
-				Switch: switch3,
-			}
-			resp, err := tf.Fleet.UpdateSwitch(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
-
 		Convey("Update switch - Invalid input nil", func() {
 			req := &api.UpdateSwitchRequest{
 				Switch: nil,
+				Rack:   "rack-1",
 			}
 			resp, err := tf.Fleet.UpdateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2432,9 +2438,11 @@ func TestUpdateSwitch(t *testing.T) {
 		})
 
 		Convey("Update switch - Invalid input empty name", func() {
-			switch3.Name = ""
+			switch1 := mockSwitch("")
+			switch1.Name = ""
 			req := &api.UpdateSwitchRequest{
-				Switch: switch3,
+				Switch: switch1,
+				Rack:   "rack-1",
 			}
 			resp, err := tf.Fleet.UpdateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2444,7 +2452,7 @@ func TestUpdateSwitch(t *testing.T) {
 
 		Convey("Update switch - Invalid input invalid characters", func() {
 			req := &api.UpdateSwitchRequest{
-				Switch: switch4,
+				Switch: mockSwitch("a.b)7&"),
 			}
 			resp, err := tf.Fleet.UpdateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2456,19 +2464,18 @@ func TestUpdateSwitch(t *testing.T) {
 
 func TestGetSwitch(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("GetSwitch", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		switch1 := mockSwitch("switch-1")
-		req := &api.CreateSwitchRequest{
-			Switch:   switch1,
-			SwitchId: "switch-1",
-		}
-		resp, err := tf.Fleet.CreateSwitch(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, switch1)
 		Convey("Get switch by existing ID", func() {
+			switch1 := &proto.Switch{
+				Name: "switch-1",
+			}
+			_, err := registration.CreateSwitch(tf.C, switch1)
+			So(err, ShouldBeNil)
+			switch1.Name = util.AddPrefix(util.SwitchCollection, "switch-1")
+
 			req := &api.GetSwitchRequest{
 				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),
 			}
@@ -2508,23 +2515,19 @@ func TestGetSwitch(t *testing.T) {
 
 func TestListSwitches(t *testing.T) {
 	t.Parallel()
-	Convey("ListSwitches", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		switches := make([]*proto.Switch, 0, 4)
-		for i := 0; i < 4; i++ {
-			switch1 := mockSwitch("")
-			req := &api.CreateSwitchRequest{
-				Switch:   switch1,
-				SwitchId: fmt.Sprintf("switch-%d", i),
-			}
-			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
-			switches = append(switches, resp)
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	switches := make([]*proto.Switch, 0, 4)
+	for i := 0; i < 4; i++ {
+		s := &proto.Switch{
+			Name: fmt.Sprintf("switch-%d", i),
 		}
-
+		resp, _ := registration.CreateSwitch(tf.C, s)
+		s.Name = util.AddPrefix(util.SwitchCollection, s.Name)
+		switches = append(switches, resp)
+	}
+	Convey("ListSwitches", t, func() {
 		Convey("ListSwitches - page_size negative", func() {
 			req := &api.ListSwitchesRequest{
 				PageSize: -5,
@@ -2589,11 +2592,11 @@ func TestListSwitches(t *testing.T) {
 
 func TestDeleteSwitch(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("DeleteSwitch", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		Convey("Delete switch by existing ID with machine reference", func() {
+		Convey("Delete switch by existing ID with nic reference", func() {
 			switch1 := &proto.Switch{
 				Name: "switch-1",
 			}
@@ -2623,14 +2626,11 @@ func TestDeleteSwitch(t *testing.T) {
 		})
 
 		Convey("Delete switch by existing ID without references", func() {
-			switch2 := mockSwitch("")
-			req := &api.CreateSwitchRequest{
-				Switch:   switch2,
-				SwitchId: "switch-2",
+			switch2 := &proto.Switch{
+				Name: "switch-2",
 			}
-			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
+			_, err := registration.CreateSwitch(tf.C, switch2)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch2)
 
 			dreq := &api.DeleteSwitchRequest{
 				Name: util.AddPrefix(util.SwitchCollection, "switch-2"),
@@ -2638,11 +2638,7 @@ func TestDeleteSwitch(t *testing.T) {
 			_, err = tf.Fleet.DeleteSwitch(tf.C, dreq)
 			So(err, ShouldBeNil)
 
-			greq := &api.GetSwitchRequest{
-				Name: util.AddPrefix(util.SwitchCollection, "switch-2"),
-			}
-			res, err := tf.Fleet.GetSwitch(tf.C, greq)
-			So(res, ShouldBeNil)
+			_, err = registration.GetSwitch(tf.C, "switch-2")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})

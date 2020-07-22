@@ -39,6 +39,7 @@ var (
 	RackLSEPrototypeNameFormat    string = "Invalid input - Entity Name pattern should be rackLSEPrototypes/{rackLSEPrototype}."
 	ResourceFormat                string = "Invalid input - Entity Name pattern should be in a format of resource_names/XXX, resource_names includes machines/racks/vms/hosts/vlans."
 	EmptyMachineName              string = "Invalid input - Machine name cannot be empty."
+	EmptyRackName                 string = "Invalid input - Rack name cannot be empty."
 )
 
 var (
@@ -569,6 +570,9 @@ func (r *CreateSwitchRequest) Validate() error {
 	}
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	}
+	if r.Rack == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyRackName)
 	}
 	return nil
 }

@@ -1059,6 +1059,15 @@ message CreateSwitchRequest {
   // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string switch_id = 2;
+
+  // A switch cannot be added without being associated with a Rack.
+  // Refers to the rack to associate this switch.
+  string rack = 3 [
+      (google.api.resource_reference) = {
+          type: "unified-fleet-system.appspot.com/Rack"
+      },
+      (google.api.field_behavior) = REQUIRED
+  ];
 }
 
 message UpdateSwitchRequest {
@@ -1067,6 +1076,15 @@ message UpdateSwitchRequest {
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
+
+  // Refers to the rack to associate this switch.
+  // When it is empty, switch will be associated with the same rack
+  // and we dont update association between rack and switch.
+  string rack = 3 [
+      (google.api.resource_reference) = {
+          type: "unified-fleet-system.appspot.com/Rack"
+      }
+  ];
 }
 
 message GetSwitchRequest {

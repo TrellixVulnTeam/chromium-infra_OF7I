@@ -720,7 +720,7 @@ func (fs *FleetServerImpl) CreateSwitch(ctx context.Context, req *api.CreateSwit
 		return nil, err
 	}
 	req.Switch.Name = req.SwitchId
-	s, err := controller.CreateSwitch(ctx, req.Switch)
+	s, err := controller.CreateSwitch(ctx, req.Switch, req.Rack)
 	if err != nil {
 		return nil, err
 	}
@@ -738,7 +738,7 @@ func (fs *FleetServerImpl) UpdateSwitch(ctx context.Context, req *api.UpdateSwit
 		return nil, err
 	}
 	req.Switch.Name = util.RemovePrefix(req.Switch.Name)
-	s, err := controller.UpdateSwitch(ctx, req.Switch)
+	s, err := controller.UpdateSwitch(ctx, req.Switch, req.Rack)
 	if err != nil {
 		return nil, err
 	}
