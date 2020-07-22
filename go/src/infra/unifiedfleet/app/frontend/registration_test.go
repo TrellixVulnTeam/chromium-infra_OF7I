@@ -2581,35 +2581,6 @@ func TestDeleteSwitch(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("DeleteSwitch", t, func() {
-		Convey("Delete switch by existing ID with nic reference", func() {
-			switch1 := &proto.Switch{
-				Name: "switch-1",
-			}
-			_, err := registration.CreateSwitch(tf.C, switch1)
-			So(err, ShouldBeNil)
-
-			nic := &proto.Nic{
-				Name: "machine1-eth0",
-				SwitchInterface: &proto.SwitchInterface{
-					Switch: "switch-1",
-				},
-			}
-			_, err = registration.CreateNic(tf.C, nic)
-			So(err, ShouldBeNil)
-
-			dreq := &api.DeleteSwitchRequest{
-				Name: util.AddPrefix(util.SwitchCollection, "switch-1"),
-			}
-			_, err = tf.Fleet.DeleteSwitch(tf.C, dreq)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			res, err := registration.GetSwitch(tf.C, "switch-1")
-			So(res, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, switch1)
-		})
-
 		Convey("Delete switch by existing ID without references", func() {
 			switch2 := &proto.Switch{
 				Name: "switch-2",
@@ -2624,15 +2595,6 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			_, err = registration.GetSwitch(tf.C, "switch-2")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
-
-		Convey("Delete switch by non-existing ID", func() {
-			req := &api.DeleteSwitchRequest{
-				Name: util.AddPrefix(util.SwitchCollection, "switch-2"),
-			}
-			_, err := tf.Fleet.DeleteSwitch(tf.C, req)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})

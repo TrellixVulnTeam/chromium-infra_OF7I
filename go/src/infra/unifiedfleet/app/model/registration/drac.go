@@ -60,7 +60,7 @@ func newDracEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, 
 //
 // If keysOnly is true, then only key field is populated in returned dracs
 func QueryDracByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Drac, error) {
-	q := datastore.NewQuery(DracKind).KeysOnly(keysOnly)
+	q := datastore.NewQuery(DracKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*DracEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)

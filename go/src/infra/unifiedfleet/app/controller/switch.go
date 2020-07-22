@@ -123,14 +123,44 @@ func ListSwitches(ctx context.Context, pageSize int32, pageToken string) ([]*ufs
 // DeleteSwitch deletes the switch in datastore
 //
 // For referential data intergrity,
-// Delete if this Switch is not referenced by other resources in the datastore.
-// If there are any references, delete will be rejected and an error will be returned.
+// 1. Validate if this switch is not referenced by other resources in the datastore.
+// 2. Delete the switch
+// 3. Get the rack associated with this switch
+// 4. Update the rack by removing the association with this switch
 func DeleteSwitch(ctx context.Context, id string) error {
-	err := validateDeleteSwitch(ctx, id)
-	if err != nil {
+	f := func(ctx context.Context) error {
+		// 1. Validate input
+		if err := validateDeleteSwitch(ctx, id); err != nil {
+			return errors.Annotate(err, "validation failed - Unable to delete switch %s", id).Err()
+		}
+
+		// 2. Delete the switch
+		if err := registration.DeleteSwitch(ctx, id); err != nil {
+			return errors.Annotate(err, "delete failed - Unable to delete switch %s", id).Err()
+		}
+
+		// 3. Get the rack associated with switch
+		racks, err := registration.QueryRackByPropertyName(ctx, "switch_ids", id, false)
+		if err != nil {
+			return errors.Annotate(err, "Unable to query rack for switch %s", id).Err()
+		}
+		if racks == nil || len(racks) == 0 {
+			logging.Warningf(ctx, "No rack associated with the switch %s. Data discrepancy error.\n", id)
+			return nil
+		}
+		if len(racks) > 1 {
+			logging.Warningf(ctx, "More than one rack associated with the switch %s. Data discrepancy error.\n", id)
+		}
+
+		// 4. Remove the association between the rack and this switch.
+		return removeSwitchFromRacks(ctx, racks, id)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete switch in datastore: %s", err)
 		return err
 	}
-	return registration.DeleteSwitch(ctx, id)
+	return nil
 }
 
 // ReplaceSwitch replaces an old Switch with new Switch in datastore
@@ -157,10 +187,6 @@ func validateDeleteSwitch(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	racks, err := registration.QueryRackByPropertyName(ctx, "switch_ids", id, true)
-	if err != nil {
-		return err
-	}
 	dracs, err := registration.QueryDracByPropertyName(ctx, "switch_id", id, true)
 	if err != nil {
 		return err
@@ -169,19 +195,13 @@ func validateDeleteSwitch(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	if len(nics) > 0 || len(racks) > 0 || len(dracs) > 0 || len(machinelses) > 0 {
+	if len(nics) > 0 || len(dracs) > 0 || len(machinelses) > 0 {
 		var errorMsg strings.Builder
 		errorMsg.WriteString(fmt.Sprintf("Switch %s cannot be deleted because there are other resources which are referring to this Switch.", id))
 		if len(nics) > 0 {
 			errorMsg.WriteString(fmt.Sprintf("\nNics referring to the Switch:\n"))
 			for _, nic := range nics {
 				errorMsg.WriteString(nic.Name + ", ")
-			}
-		}
-		if len(racks) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRacks referring to the Switch:\n"))
-			for _, rack := range racks {
-				errorMsg.WriteString(rack.Name + ", ")
 			}
 		}
 		if len(dracs) > 0 {
@@ -191,7 +211,7 @@ func validateDeleteSwitch(ctx context.Context, id string) error {
 			}
 		}
 		if len(machinelses) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring to the Switch:\n"))
+			errorMsg.WriteString(fmt.Sprintf("\nChromeOS hosts referring to the Switch:\n"))
 			for _, machinelse := range machinelses {
 				errorMsg.WriteString(machinelse.Name + ", ")
 			}

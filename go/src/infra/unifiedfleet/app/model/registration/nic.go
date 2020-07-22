@@ -79,7 +79,7 @@ func GetNic(ctx context.Context, id string) (*fleet.Nic, error) {
 //
 // If keysOnly is true, then only key field is populated in returned nics
 func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Nic, error) {
-	q := datastore.NewQuery(NicKind).KeysOnly(keysOnly)
+	q := datastore.NewQuery(NicKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*NicEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)

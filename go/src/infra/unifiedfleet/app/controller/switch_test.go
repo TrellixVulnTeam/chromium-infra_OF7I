@@ -210,13 +210,28 @@ func TestUpdateSwitch(t *testing.T) {
 func TestDeleteSwitch(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	switch1 := mockSwitch("switch-1")
-	switch2 := mockSwitch("switch-2")
 	Convey("DeleteSwitch", t, func() {
-		Convey("Delete switch by existing ID with machine reference", func() {
-			resp, cerr := registration.CreateSwitch(ctx, switch1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
+		Convey("Delete switch by non-existing ID - error", func() {
+			err := DeleteSwitch(ctx, "switch-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Unable to delete switch switch-10")
+		})
+
+		Convey("Delete switch by existing ID with nic reference", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-5",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+						Switches: []string{"switch-1"},
+					},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch1 := mockSwitch("switch-1")
+			_, err = registration.CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
 
 			nic := &ufspb.Nic{
 				Name: "machine1-eth0",
@@ -224,31 +239,47 @@ func TestDeleteSwitch(t *testing.T) {
 					Switch: "switch-1",
 				},
 			}
-			mresp, merr := registration.CreateNic(ctx, nic)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, nic)
-
-			err := DeleteSwitch(ctx, "switch-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = registration.GetSwitch(ctx, "switch-1")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
-		})
-		Convey("Delete switch successfully by existing ID without references", func() {
-			resp, cerr := registration.CreateSwitch(ctx, switch2)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch2)
-
-			err := DeleteSwitch(ctx, "switch-2")
+			_, err = registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
-			resp, cerr = registration.GetSwitch(ctx, "switch-2")
+			err = DeleteSwitch(ctx, "switch-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Nics referring to the Switch:")
+
+			resp, err := registration.GetSwitch(ctx, "switch-1")
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, switch1)
+		})
+
+		Convey("Delete switch successfully", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-6",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+						Switches: []string{"switch-2"},
+					},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			switch2 := mockSwitch("switch-2")
+			_, err = registration.CreateSwitch(ctx, switch2)
+			So(err, ShouldBeNil)
+
+			err = DeleteSwitch(ctx, "switch-2")
+			So(err, ShouldBeNil)
+
+			resp, err := registration.GetSwitch(ctx, "switch-2")
 			So(resp, ShouldBeNil)
-			So(cerr, ShouldNotBeNil)
-			So(cerr.Error(), ShouldContainSubstring, NotFound)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			rresp, err := registration.GetRack(ctx, "rack-6")
+			So(rresp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(rresp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
 		})
 	})
 }
