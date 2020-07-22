@@ -582,11 +582,13 @@ func TestCreateRack(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	rack1 := mockRack("", 5)
 	rack2 := mockRack("", 4)
-	rack3 := mockRack("", 2)
 	Convey("CreateRack", t, func() {
-		Convey("Create new rack with rack_id", func() {
+		Convey("Create new rack with rack_id - Happy path", func() {
+			rack1 := mockRack("", 4)
+			rack1.Location = &proto.Location{
+				Lab: proto.Lab_LAB_CHROME_ATLANTA,
+			}
 			req := &api.CreateRackRequest{
 				Rack:   rack1,
 				RackId: "Rack-1",
@@ -594,17 +596,6 @@ func TestCreateRack(t *testing.T) {
 			resp, err := tf.Fleet.CreateRack(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rack1)
-		})
-
-		Convey("Create existing rack", func() {
-			req := &api.CreateRackRequest{
-				Rack:   rack3,
-				RackId: "Rack-1",
-			}
-			resp, err := tf.Fleet.CreateRack(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, AlreadyExists)
 		})
 
 		Convey("Create new rack - Invalid input nil", func() {
@@ -646,37 +637,9 @@ func TestUpdateRack(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	rack1 := mockRack("", 5)
-	rack2 := mockRack("rack-1", 10)
 	rack3 := mockRack("rack-3", 6)
 	rack4 := mockRack("a.b)7&", 6)
 	Convey("UpdateRack", t, func() {
-		Convey("Update existing rack", func() {
-			req := &api.CreateRackRequest{
-				Rack:   rack1,
-				RackId: "rack-1",
-			}
-			resp, err := tf.Fleet.CreateRack(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rack1)
-			ureq := &api.UpdateRackRequest{
-				Rack: rack2,
-			}
-			resp, err = tf.Fleet.UpdateRack(tf.C, ureq)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rack2)
-		})
-
-		Convey("Update non-existing rack", func() {
-			ureq := &api.UpdateRackRequest{
-				Rack: rack3,
-			}
-			resp, err := tf.Fleet.UpdateRack(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
-
 		Convey("Update rack - Invalid input nil", func() {
 			req := &api.UpdateRackRequest{
 				Rack: nil,
@@ -712,19 +675,18 @@ func TestUpdateRack(t *testing.T) {
 
 func TestGetRack(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("GetRack", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		rack1 := mockRack("rack-1", 10)
-		req := &api.CreateRackRequest{
-			Rack:   rack1,
-			RackId: "rack-1",
-		}
-		resp, err := tf.Fleet.CreateRack(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, rack1)
 		Convey("Get rack by existing ID", func() {
+			rack1 := &proto.Rack{
+				Name: "rack-1",
+			}
+			_, err := registration.CreateRack(tf.C, rack1)
+			So(err, ShouldBeNil)
+			rack1.Name = util.AddPrefix(util.RackCollection, "rack-1")
+
 			req := &api.GetRackRequest{
 				Name: util.AddPrefix(util.RackCollection, "rack-1"),
 			}
@@ -764,23 +726,19 @@ func TestGetRack(t *testing.T) {
 
 func TestListRacks(t *testing.T) {
 	t.Parallel()
-	Convey("ListRacks", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		racks := make([]*proto.Rack, 0, 4)
-		for i := 0; i < 4; i++ {
-			rack1 := mockRack("", 10)
-			req := &api.CreateRackRequest{
-				Rack:   rack1,
-				RackId: fmt.Sprintf("rack-%d", i),
-			}
-			resp, err := tf.Fleet.CreateRack(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rack1)
-			racks = append(racks, resp)
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	racks := make([]*proto.Rack, 0, 4)
+	for i := 0; i < 4; i++ {
+		rack1 := &proto.Rack{
+			Name: fmt.Sprintf("rack-%d", i),
 		}
-
+		resp, _ := registration.CreateRack(tf.C, rack1)
+		rack1.Name = util.AddPrefix(util.RackCollection, rack1.Name)
+		racks = append(racks, resp)
+	}
+	Convey("ListRacks", t, func() {
 		Convey("ListRacks - page_size negative", func() {
 			req := &api.ListRacksRequest{
 				PageSize: -5,
@@ -845,28 +803,23 @@ func TestListRacks(t *testing.T) {
 
 func TestDeleteRack(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("DeleteRack", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		rack1 := mockRack("", 10)
-		req := &api.CreateRackRequest{
-			Rack:   rack1,
-			RackId: "rack-1",
-		}
-		resp, err := tf.Fleet.CreateRack(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, rack1)
 		Convey("Delete rack by existing ID", func() {
+			_, err := registration.CreateRack(tf.C, &proto.Rack{
+				Name: "rack-1",
+			})
+			So(err, ShouldBeNil)
+
 			req := &api.DeleteRackRequest{
 				Name: util.AddPrefix(util.RackCollection, "rack-1"),
 			}
-			_, err := tf.Fleet.DeleteRack(tf.C, req)
+			_, err = tf.Fleet.DeleteRack(tf.C, req)
 			So(err, ShouldBeNil)
-			greq := &api.GetRackRequest{
-				Name: util.AddPrefix(util.RackCollection, "rack-1"),
-			}
-			res, err := tf.Fleet.GetRack(tf.C, greq)
+
+			res, err := registration.GetRack(tf.C, "rack-1")
 			So(res, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)

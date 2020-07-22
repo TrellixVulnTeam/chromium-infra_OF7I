@@ -9,26 +9,31 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
-
-	"go.chromium.org/gae/service/datastore"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // CreateRack creates a new rack in datastore.
-//
-// Checks if the resources referenced by the Rack input already exists
-// in the system before creating a new Rack
-func CreateRack(ctx context.Context, rack *fleet.Rack) (*fleet.Rack, error) {
-	err := validateRack(ctx, rack)
-	if err != nil {
+func CreateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
+	if err := validateCreateRack(ctx, rack); err != nil {
 		return nil, err
+	}
+	// Make sure OUTPUT_ONLY fields are set to empty
+	if rack.GetChromeBrowserRack() != nil {
+		// These are output only field. User is not allowed to set these value.
+		// Overwrite it with empty values.
+		rack.GetChromeBrowserRack().Rpms = nil
+		rack.GetChromeBrowserRack().Kvms = nil
+		rack.GetChromeBrowserRack().Switches = nil
 	}
 	r, err := registration.CreateRack(ctx, rack)
 	if err == nil {
@@ -38,29 +43,73 @@ func CreateRack(ctx context.Context, rack *fleet.Rack) (*fleet.Rack, error) {
 }
 
 // UpdateRack updates rack in datastore.
-//
-// Checks if the resources referenced by the Rack input already exists
-// in the system before updating a Rack
-func UpdateRack(ctx context.Context, rack *fleet.Rack) (*fleet.Rack, error) {
-	err := validateRack(ctx, rack)
-	if err != nil {
+func UpdateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
+	var oldRack *ufspb.Rack
+	var err error
+	f := func(ctx context.Context) error {
+		// 1. Check if rack does not exist
+		if err := ResourceExist(ctx, []*Resource{GetRackResource(rack.Name)}, nil); err != nil {
+			return err
+		}
+
+		// 2. Make sure OUTPUT_ONLY fields are set to empty
+		// for OS rack we dont do anything as of now.
+		if rack.GetChromeBrowserRack() != nil {
+			// These are output only field. User is not allowed to set these value.
+			// Overwrite it with empty values.
+			rack.GetChromeBrowserRack().Rpms = nil
+			rack.GetChromeBrowserRack().Kvms = nil
+			rack.GetChromeBrowserRack().Switches = nil
+		}
+
+		// 3. Get the existing/old rack
+		oldRack, err = registration.GetRack(ctx, rack.GetName())
+		if err != nil {
+			return err
+		}
+
+		// 4. Make sure OUTPUT_ONLY fields are overwritten with old values
+		// Check if the existing rack is a browser rack and not an OS rack.
+		// for OS rack we dont do anything as of now as the OS rack doesnt have any
+		// OUTPUT_ONLY fields. Switches/kvms/rpms for OS rack are in RackLSE as of now.
+		if oldRack.GetChromeBrowserRack() != nil {
+			if rack.GetChromeBrowserRack() == nil {
+				rack.Rack = &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				}
+			}
+			// These are output only fields. Not allowed to update by the user.
+			// Overwrite the input values with existing values.
+			rack.GetChromeBrowserRack().Rpms = oldRack.GetChromeBrowserRack().GetRpms()
+			rack.GetChromeBrowserRack().Kvms = oldRack.GetChromeBrowserRack().GetKvms()
+			rack.GetChromeBrowserRack().Switches = oldRack.GetChromeBrowserRack().GetSwitches()
+		}
+
+		// 5. Update the rack
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction to make it atomic. Datastore doesnt allow
+		// nested transactions.
+		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to update rack in datastore: %s", err)
 		return nil, err
 	}
-	oldR, _ := registration.GetRack(ctx, rack.GetName())
-	r, err := registration.UpdateRack(ctx, rack)
-	if err == nil {
-		SaveChangeEvents(ctx, LogRackChanges(oldR, rack))
-	}
-	return r, err
+	SaveChangeEvents(ctx, LogRackChanges(oldRack, rack))
+	return rack, err
 }
 
 // GetRack returns rack for the given id from datastore.
-func GetRack(ctx context.Context, id string) (*fleet.Rack, error) {
+func GetRack(ctx context.Context, id string) (*ufspb.Rack, error) {
 	return registration.GetRack(ctx, id)
 }
 
 // ListRacks lists the racks
-func ListRacks(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.Rack, string, error) {
+func ListRacks(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.Rack, string, error) {
 	return registration.ListRacks(ctx, pageSize, pageToken)
 }
 
@@ -92,7 +141,7 @@ func DeleteRack(ctx context.Context, id string) error {
 // Deletes the old Rack.
 // Creates the new Rack.
 // This will preserve data integrity in the system.
-func ReplaceRack(ctx context.Context, oldRack *fleet.Rack, newRack *fleet.Rack) (*fleet.Rack, error) {
+func ReplaceRack(ctx context.Context, oldRack *ufspb.Rack, newRack *ufspb.Rack) (*ufspb.Rack, error) {
 	f := func(ctx context.Context) error {
 		racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "rack_ids", oldRack.Name, false)
 		if err != nil {
@@ -120,24 +169,20 @@ func ReplaceRack(ctx context.Context, oldRack *fleet.Rack, newRack *fleet.Rack) 
 			return err
 		}
 
-		err = validateRack(ctx, newRack)
-		if err != nil {
-			return err
-		}
 		entity := &registration.RackEntity{
 			ID: newRack.Name,
 		}
 		existsResults, err := datastore.Exists(ctx, entity)
 		if err == nil {
 			if existsResults.All() {
-				return status.Errorf(codes.AlreadyExists, fleetds.AlreadyExists)
+				return status.Errorf(codes.AlreadyExists, ufsds.AlreadyExists)
 			}
 		} else {
 			logging.Errorf(ctx, "Failed to check existence: %s", err)
-			return status.Errorf(codes.Internal, fleetds.InternalError)
+			return status.Errorf(codes.Internal, ufsds.InternalError)
 		}
 
-		_, err = registration.BatchUpdateRacks(ctx, []*fleet.Rack{newRack})
+		_, err = registration.BatchUpdateRacks(ctx, []*ufspb.Rack{newRack})
 		if err != nil {
 			return err
 		}
@@ -152,38 +197,6 @@ func ReplaceRack(ctx context.Context, oldRack *fleet.Rack, newRack *fleet.Rack) 
 	changes = append(changes, LogRackChanges(nil, newRack)...)
 	SaveChangeEvents(ctx, changes)
 	return newRack, nil
-}
-
-// validateRack validates if a rack can be created/updated in the datastore.
-//
-// Checks if the resources referenced by the given Rack input already exists
-// in the system. Returns an error if any resource referenced by the Rack input
-// does not exist in the system.
-func validateRack(ctx context.Context, rack *fleet.Rack) error {
-	var resources []*Resource
-	var errorMsg strings.Builder
-	errorMsg.WriteString(fmt.Sprintf("Cannot create Rack %s:\n", rack.Name))
-
-	kvmIDs := rack.GetChromeBrowserRack().GetKvms()
-	rpmIDs := rack.GetChromeBrowserRack().GetRpms()
-	switchIDs := rack.GetChromeBrowserRack().GetSwitches()
-	if len(kvmIDs) != 0 {
-		for _, kvmID := range kvmIDs {
-			resources = append(resources, GetKVMResource(kvmID))
-		}
-	}
-	if len(rpmIDs) != 0 {
-		for _, rpmID := range rpmIDs {
-			resources = append(resources, GetRPMResource(rpmID))
-		}
-	}
-	if len(switchIDs) != 0 {
-		for _, switchID := range switchIDs {
-			resources = append(resources, GetSwitchResource(switchID))
-		}
-	}
-
-	return ResourceExist(ctx, resources, &errorMsg)
 }
 
 // validateDeleteRack validates if a Rack can be deleted
@@ -204,6 +217,29 @@ func validateDeleteRack(ctx context.Context, id string) error {
 		}
 		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+	}
+	return nil
+}
+
+// validateCreateRack validates if a Rack can be created
+//
+// A rack cannot exist in the system with both ChromeBrowserRack/ChromeOSRack as nil
+// checks if ChromeBrowserRack/ChromeOSRack is nil and initializes the object for rack
+// checks the lab in the location to decide between browser/chromeos rack
+func validateCreateRack(ctx context.Context, rack *ufspb.Rack) error {
+	if rack.GetChromeBrowserRack() == nil && rack.GetChromeosRack() == nil {
+		if rack.GetLocation() == nil || rack.GetLocation().GetLab() == ufspb.Lab_LAB_UNSPECIFIED {
+			return errors.New("lab information in the location object cannot be empty/unspecified for a rack")
+		}
+		if ufsUtil.IsInBrowserLab(rack.GetLocation().GetLab().String()) {
+			rack.Rack = &ufspb.Rack_ChromeBrowserRack{
+				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+			}
+		} else {
+			rack.Rack = &ufspb.Rack_ChromeosRack{
+				ChromeosRack: &ufspb.ChromeOSRack{},
+			}
+		}
 	}
 	return nil
 }
