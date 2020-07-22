@@ -18,6 +18,7 @@ from framework import framework_bizobj
 from framework import framework_views
 from framework import gcs_helpers
 from framework import permissions
+from project import project_constants
 from project import project_views
 from proto import project_pb2
 
@@ -38,7 +39,7 @@ def BuildProjectMembers(cnxn, project, user_service):
   """
   # First, get all needed info on all users in one batch of requests.
   users_by_id = framework_views.MakeAllUserViews(
-      cnxn, user_service, framework_bizobj.AllProjectMembers(project))
+      cnxn, user_service, AllProjectMembers(project))
 
   # Second, group the user proxies by role for display.
   owner_proxies = [users_by_id[owner_id]
@@ -219,3 +220,17 @@ def GetThumbnailUrl(gcs_id):
   """Derive the thumbnail url for a given GCS object ID."""
   bucket_name = app_identity.get_default_gcs_bucket_name()
   return gcs_helpers.SignUrl(bucket_name, gcs_id + '-thumbnail')
+
+
+def IsValidProjectName(s):
+  # type: (string) -> bool
+  """Return true if the given string is a valid project name."""
+  return (
+      project_constants.RE_PROJECT_NAME.match(s) and
+      len(s) <= project_constants.MAX_PROJECT_NAME_LENGTH)
+
+
+def AllProjectMembers(project):
+  # type: (proto.project_pb2.Project) -> Sequence[int]
+  """Return a list of user IDs of all members in the given project."""
+  return project.owner_ids + project.committer_ids + project.contributor_ids

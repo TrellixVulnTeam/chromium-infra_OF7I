@@ -14,10 +14,10 @@ from __future__ import absolute_import
 import logging
 
 from framework import exceptions
-from framework import framework_bizobj
 from framework import framework_helpers
 from framework import servlet
 from framework import urls
+from project import project_constants
 
 
 class ProjectMoved(servlet.Servlet):
@@ -46,7 +46,7 @@ class ProjectMoved(servlet.Servlet):
                    mr.specified_project)
       self.abort(400, 'This project has not been moved')
 
-    if framework_bizobj.RE_PROJECT_NAME.match(project.moved_to):
+    if project_constants.RE_PROJECT_NAME.match(project.moved_to):
       moved_to_url = framework_helpers.FormatAbsoluteURL(
           mr, urls.SUMMARY, include_project=True, project_name=project.moved_to)
     elif (project.moved_to.startswith('https://') or

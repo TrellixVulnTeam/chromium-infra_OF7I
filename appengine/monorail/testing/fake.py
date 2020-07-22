@@ -1061,11 +1061,6 @@ class ProjectService(object):
       raise exceptions.NoSuchProjectException()
     return project_id_dict[project_id]
 
-  @staticmethod
-  def IsValidProjectName(string):
-    """Return true if the given string is a valid project name."""
-    return project_svc.RE_PROJECT_NAME.match(string)
-
   def GetProjectCommitments(self, _cnxn, project_id):
     if project_id in self.project_commitments:
       return self.project_commitments[project_id]

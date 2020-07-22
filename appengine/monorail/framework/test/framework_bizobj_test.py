@@ -370,39 +370,6 @@ class CanonicalizeLabelTest(unittest.TestCase):
                      framework_bizobj.CanonicalizeLabel('Foo - Bar '))
 
 
-class IsValidProjectNameTest(unittest.TestCase):
-
-  def testBadChars(self):
-    self.assertFalse(framework_bizobj.IsValidProjectName('spa ce'))
-    self.assertFalse(framework_bizobj.IsValidProjectName('under_score'))
-    self.assertFalse(framework_bizobj.IsValidProjectName('name.dot'))
-    self.assertFalse(framework_bizobj.IsValidProjectName('pie#sign$'))
-    self.assertFalse(framework_bizobj.IsValidProjectName('(who?)'))
-
-  def testBadHyphen(self):
-    self.assertFalse(framework_bizobj.IsValidProjectName('name-'))
-    self.assertFalse(framework_bizobj.IsValidProjectName('-name'))
-    self.assertTrue(framework_bizobj.IsValidProjectName('project-name'))
-
-  def testMinimumLength(self):
-    self.assertFalse(framework_bizobj.IsValidProjectName('x'))
-    self.assertTrue(framework_bizobj.IsValidProjectName('xy'))
-
-  def testMaximumLength(self):
-    self.assertFalse(framework_bizobj.IsValidProjectName(
-        'x' * (framework_constants.MAX_PROJECT_NAME_LENGTH + 1)))
-    self.assertTrue(framework_bizobj.IsValidProjectName(
-        'x' * (framework_constants.MAX_PROJECT_NAME_LENGTH)))
-
-  def testInvalidName(self):
-    self.assertFalse(framework_bizobj.IsValidProjectName(''))
-    self.assertFalse(framework_bizobj.IsValidProjectName('000'))
-
-  def testValidName(self):
-    self.assertTrue(framework_bizobj.IsValidProjectName('098asd'))
-    self.assertTrue(framework_bizobj.IsValidProjectName('one-two-three'))
-
-
 class UserIsInProjectTest(unittest.TestCase):
 
   def testUserIsInProject(self):
@@ -426,19 +393,6 @@ class UserIsInProjectTest(unittest.TestCase):
 
     # Several irrelevant group memberships
     self.assertFalse(framework_bizobj.UserIsInProject(p, {10, 11, 12}))
-
-
-class AllProjectMembersTest(unittest.TestCase):
-
-  def testAllProjectMembers(self):
-    p = project_pb2.Project()
-    self.assertEqual(framework_bizobj.AllProjectMembers(p), [])
-
-    p.owner_ids.extend([1, 2, 3])
-    p.committer_ids.extend([4, 5, 6])
-    p.contributor_ids.extend([7, 8, 9])
-    self.assertEqual(framework_bizobj.AllProjectMembers(p),
-                     [1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 
 class IsValidColumnSpecTest(unittest.TestCase):

@@ -24,23 +24,6 @@ from proto import tracker_pb2
 from services import client_config_svc
 
 
-# Pattern to match a valid project name.  Users of this pattern MUST use
-# the re.VERBOSE flag or the whitespace and comments we be considered
-# significant and the pattern will not work.  See "re" module documentation.
-_RE_PROJECT_NAME_PATTERN_VERBOSE = r"""
-  (?=[-a-z0-9]*[a-z][-a-z0-9]*)   # Lookahead to make sure there is at least
-                                  # one letter in the whole name.
-  [a-z0-9]                        # Start with a letter or digit.
-  [-a-z0-9]*                      # Follow with any number of valid characters.
-  [a-z0-9]                        # End with a letter or digit.
-"""
-
-
-# Compiled regexp to match the project name and nothing more before or after.
-RE_PROJECT_NAME = re.compile(
-    '^%s$' % _RE_PROJECT_NAME_PATTERN_VERBOSE, re.VERBOSE)
-
-
 # Pattern to match a valid column header name.
 RE_COLUMN_NAME = r'\w+[\w+-.]*\w+'
 
@@ -141,12 +124,6 @@ def CreateUserDisplayNames(user_auth, users, project):
   return display_names
 
 
-def IsValidProjectName(s):
-  """Return true if the given string is a valid project name."""
-  return (RE_PROJECT_NAME.match(s) and
-          len(s) <= framework_constants.MAX_PROJECT_NAME_LENGTH)
-
-
 def UserOwnsProject(project, effective_ids):
   """Return True if any of the effective_ids is a project owner."""
   return not effective_ids.isdisjoint(project.owner_ids or set())
@@ -168,11 +145,6 @@ def UserIsInProject(project, effective_ids):
   return (UserOwnsProject(project, effective_ids) or
           not effective_ids.isdisjoint(project.committer_ids or set()) or
           not effective_ids.isdisjoint(project.contributor_ids or set()))
-
-
-def AllProjectMembers(project):
-  """Return a list of user IDs of all members in the given project."""
-  return project.owner_ids + project.committer_ids + project.contributor_ids
 
 
 def IsPriviledgedDomainUser(email):

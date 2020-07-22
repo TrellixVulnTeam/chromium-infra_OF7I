@@ -14,6 +14,7 @@ from mock import patch
 
 from framework import framework_views
 from framework import permissions
+from project import project_constants
 from project import project_helpers
 from proto import project_pb2
 from services import service_manager
@@ -134,3 +135,45 @@ class HelpersUnitTest(unittest.TestCase):
     self.assertEqual(expected_url, project_helpers.GetThumbnailUrl('xyz'))
     mock_get_default_gcs_bucket_name.assert_called_once()
     mock_SignUrl.assert_called_once_with(bucket_name, 'xyz' + '-thumbnail')
+
+  def testIsValidProjectName_BadChars(self):
+    self.assertFalse(project_helpers.IsValidProjectName('spa ce'))
+    self.assertFalse(project_helpers.IsValidProjectName('under_score'))
+    self.assertFalse(project_helpers.IsValidProjectName('name.dot'))
+    self.assertFalse(project_helpers.IsValidProjectName('pie#sign$'))
+    self.assertFalse(project_helpers.IsValidProjectName('(who?)'))
+
+  def testIsValidProjectName_BadHyphen(self):
+    self.assertFalse(project_helpers.IsValidProjectName('name-'))
+    self.assertFalse(project_helpers.IsValidProjectName('-name'))
+    self.assertTrue(project_helpers.IsValidProjectName('project-name'))
+
+  def testIsValidProjectName_MinimumLength(self):
+    self.assertFalse(project_helpers.IsValidProjectName('x'))
+    self.assertTrue(project_helpers.IsValidProjectName('xy'))
+
+  def testIsValidProjectName_MaximumLength(self):
+    self.assertFalse(
+        project_helpers.IsValidProjectName(
+            'x' * (project_constants.MAX_PROJECT_NAME_LENGTH + 1)))
+    self.assertTrue(
+        project_helpers.IsValidProjectName(
+            'x' * (project_constants.MAX_PROJECT_NAME_LENGTH)))
+
+  def testIsValidProjectName_InvalidName(self):
+    self.assertFalse(project_helpers.IsValidProjectName(''))
+    self.assertFalse(project_helpers.IsValidProjectName('000'))
+
+  def testIsValidProjectName_ValidName(self):
+    self.assertTrue(project_helpers.IsValidProjectName('098asd'))
+    self.assertTrue(project_helpers.IsValidProjectName('one-two-three'))
+
+  def testAllProjectMembers(self):
+    p = project_pb2.Project()
+    self.assertEqual(project_helpers.AllProjectMembers(p), [])
+
+    p.owner_ids.extend([1, 2, 3])
+    p.committer_ids.extend([4, 5, 6])
+    p.contributor_ids.extend([7, 8, 9])
+    self.assertEqual(
+        project_helpers.AllProjectMembers(p), [1, 2, 3, 4, 5, 6, 7, 8, 9])

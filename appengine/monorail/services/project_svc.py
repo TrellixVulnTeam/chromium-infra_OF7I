@@ -21,12 +21,12 @@ import time
 
 import settings
 from framework import exceptions
-from framework import framework_bizobj
 from framework import framework_constants
 from framework import framework_helpers
 from framework import permissions
 from framework import sql
 from services import caches
+from project import project_helpers
 from proto import project_pb2
 
 
@@ -205,7 +205,7 @@ class ProjectService(object):
     Raises:
       ProjectAlreadyExists: if a project with that name already exists.
     """
-    assert framework_bizobj.IsValidProjectName(project_name)
+    assert project_helpers.IsValidProjectName(project_name)
     if self.LookupProjectIDs(cnxn, [project_name]):
       raise exceptions.ProjectAlreadyExists()
 

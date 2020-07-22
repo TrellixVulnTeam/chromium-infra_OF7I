@@ -11,9 +11,9 @@ from __future__ import absolute_import
 import logging
 
 from businesslogic import work_env
-from framework import framework_bizobj
 from framework import permissions
 from framework import servlet
+from project import project_helpers
 from project import project_views
 
 from third_party import markdown
@@ -66,10 +66,10 @@ class ProjectSummary(servlet.Servlet):
 
     # Cue cards for project owners.
     if self.CheckPerm(mr, permissions.EDIT_PROJECT):
-      if ('document_team_duties' not in dismissed
-            and len(framework_bizobj.AllProjectMembers(project)) > 1
-            and not self.services.project.GetProjectCommitments(
-                mr.cnxn, mr.project_id).commitments):
+      if ('document_team_duties' not in dismissed and
+          len(project_helpers.AllProjectMembers(project)) > 1 and
+          not self.services.project.GetProjectCommitments(
+              mr.cnxn, mr.project_id).commitments):
         help_data['cue'] = 'document_team_duties'
 
     return help_data

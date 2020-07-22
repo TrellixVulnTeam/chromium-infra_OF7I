@@ -17,14 +17,13 @@ import settings
 from businesslogic import work_env
 from framework import exceptions
 from framework import filecontent
-from framework import framework_bizobj
-from framework import framework_constants
 from framework import framework_helpers
 from framework import gcs_helpers
 from framework import jsonfeed
 from framework import permissions
 from framework import servlet
 from framework import urls
+from project import project_constants
 from project import project_helpers
 from project import project_views
 from services import project_svc
@@ -72,11 +71,11 @@ class ProjectCreate(servlet.Servlet):
         'initial_logo_file_name': '',
         'logo_view': tracker_views.LogoView(None),
         'labels': [],
-        'max_project_name_length': framework_constants.MAX_PROJECT_NAME_LENGTH,
+        'max_project_name_length': project_constants.MAX_PROJECT_NAME_LENGTH,
         'offer_access_level': ezt.boolean(offer_access_level),
         'initial_access': access_view,
         'available_access_levels': available_access_levels,
-        }
+    }
 
   def ProcessFormData(self, mr, post_data):
     """Process the posted form."""
@@ -85,7 +84,7 @@ class ProjectCreate(servlet.Servlet):
     project_name = post_data.get('projectname')
     if not project_name:
       mr.errors.projectname = _MSG_MISSING_PROJECT_NAME
-    elif not framework_bizobj.IsValidProjectName(project_name):
+    elif not project_helpers.IsValidProjectName(project_name):
       mr.errors.projectname = _MSG_INVALID_PROJECT_NAME
 
     summary = post_data.get('summary')

@@ -46,7 +46,6 @@ from features import features_bizobj
 from features import hotlist_views
 from framework import alerts
 from framework import exceptions
-from framework import framework_bizobj
 from framework import framework_constants
 from framework import framework_helpers
 from framework import framework_views
@@ -57,6 +56,7 @@ from framework import servlet_helpers
 from framework import template_helpers
 from framework import urls
 from framework import xsrf
+from project import project_constants
 from proto import project_pb2
 from search import query2ast
 from tracker import tracker_views
@@ -506,7 +506,7 @@ class Servlet(webapp2.RequestHandler):
                  mr.project.moved_to)
 
     moved_to = mr.project.moved_to
-    if framework_bizobj.RE_PROJECT_NAME.match(moved_to):
+    if project_constants.RE_PROJECT_NAME.match(moved_to):
       # Use the redir query parameter to avoid redirect loops.
       if mr.redir is None:
         url = framework_helpers.FormatMovedProjectURL(mr, moved_to)

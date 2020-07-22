@@ -78,6 +78,7 @@ from tracker import field_helpers
 from tracker import tracker_bizobj
 from tracker import tracker_constants
 from tracker import tracker_helpers
+from project import project_helpers
 from proto import features_pb2
 from proto import project_pb2
 from proto import tracker_pb2
@@ -416,7 +417,7 @@ class WorkEnv(object):
           'User is not allowed to create a project')
 
     with self.mc.profiler.Phase('checking project name %s' % project_name):
-      if not framework_bizobj.IsValidProjectName(project_name):
+      if not project_helpers.IsValidProjectName(project_name):
         return '"%s" is not a valid project name.' % project_name
       if self.services.project.LookupProjectIDs(self.mc.cnxn, [project_name]):
         return 'There is already a project with that name.'

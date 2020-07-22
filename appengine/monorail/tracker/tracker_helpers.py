@@ -36,6 +36,7 @@ from framework import permissions
 from framework import sorting
 from framework import template_helpers
 from framework import urls
+from project import project_helpers
 from proto import tracker_pb2
 from services import client_config_svc
 from tracker import field_helpers
@@ -1029,7 +1030,7 @@ def IsMergeAllowed(merge_into_issue, mr, services):
 
 
 def GetVisibleMembers(mr, project, services):
-  all_member_ids = framework_bizobj.AllProjectMembers(project)
+  all_member_ids = project_helpers.AllProjectMembers(project)
 
   all_group_ids = services.usergroup.DetermineWhichUserIDsAreGroups(
       mr.cnxn, all_member_ids)

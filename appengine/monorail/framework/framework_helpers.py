@@ -225,7 +225,7 @@ def FormatMovedProjectURL(mr, moved_to):
   Args:
     mr: common information parsed from the HTTP request.
     moved_to: A string from a project's moved_to field that matches
-      framework_bizobj.RE_PROJECT_NAME.
+      project_constants.RE_PROJECT_NAME.
 
   Returns:
     The url transposed into the given destination project.
