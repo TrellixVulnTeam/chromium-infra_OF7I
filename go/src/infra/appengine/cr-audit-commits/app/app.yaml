@@ -1,29 +1,21 @@
 # Copyright 2017 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-runtime: go111
+service: default
+runtime: go113
+
+luci_gae_vars:
+  cr-audit-commits:
+    AUTH_SERVICE_HOST: chrome-infra-auth.appspot.com
+    TS_MON_ACCOUNT: app-engine-metric-publishers@prodx-mon-chrome-infra.google.com.iam.gserviceaccount.com
+
+entrypoint: >
+  main
+  -auth-service-host ${AUTH_SERVICE_HOST}
+  -ts-mon-account ${TS_MON_ACCOUNT}
 
 handlers:
-- url: /_cron/.*
-  script: auto
-  secure: always
-  login: admin
-
-- url: /admin/.*
-  script: auto
-  secure: always
-  login: admin
-
-- url: /internal/.*
-  script: auto
-  secure: always
-  login: admin
-
-- url: /view.*
-  script: auto
-  secure: always
-  login: admin
-
 - url: /.*
   script: auto
+  secure: always
 

@@ -1,8 +1,4 @@
 cron:
-- description: tsmon house keeping
-  url: /internal/cron/ts_mon/housekeeping
-  schedule: every 1 minutes
-
 - description: "Schedule async audits"
   url: /_cron/scheduler
   schedule: every 5 minutes

@@ -5,40 +5,53 @@
 package main
 
 import (
-	"net/http"
-
 	"go.chromium.org/luci/appengine/gaemiddleware"
-	"go.chromium.org/luci/appengine/gaemiddleware/standard"
+	"go.chromium.org/luci/server"
+	"go.chromium.org/luci/server/gaeemulation"
+	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
-	"google.golang.org/appengine"
 )
 
 func main() {
-	r := router.New()
+	modules := []module.Module{
+		gaeemulation.NewModuleFromFlags(),
+	}
 
-	// This does not require auth. Needed for index page.
-	basemw := standard.Base()
+	server.Main(nil, modules, func(srv *server.Server) error {
+		basemw := router.NewMiddlewareChain()
 
-	templatesmw := basemw.Extend(templates.WithTemplates(&templates.Bundle{
-		Loader:  templates.FileSystemLoader("templates"),
-		FuncMap: templateFuncs,
-	}))
+		templatesmw := basemw.Extend(templates.WithTemplates(&templates.Bundle{
+			Loader:  templates.FileSystemLoader("templates"),
+			FuncMap: templateFuncs,
+		}))
 
-	standard.InstallHandlers(r)
+		srv.Routes.GET("/", templatesmw, func(c *router.Context) {
+			index(c)
+		})
 
-	r.GET("/", templatesmw, index)
+		// TODO: Temporarily remove this route. Will move it back after adding
+		// user authentication support.
+		/*
+			srv.Routes.GET("/view/status", templatesmw, func(c *router.Context) {
+				Status(c)
+			})
+		*/
 
-	r.GET("/_task/auditor", basemw.Extend(gaemiddleware.RequireTaskQueue("default")), Auditor)
+		srv.Routes.GET("/_task/auditor", basemw.Extend(gaemiddleware.RequireTaskQueue("default")), func(c *router.Context) {
+			Auditor(c)
+		})
 
-	r.GET("/_cron/scheduler", basemw.Extend(gaemiddleware.RequireCron), Scheduler)
+		srv.Routes.GET("/_cron/scheduler", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
+			Scheduler(c)
+		})
 
-	r.GET("/admin/smoketest", basemw, SmokeTest)
+		srv.Routes.GET("/admin/smoketest", basemw, func(c *router.Context) {
+			SmokeTest(c)
+		})
 
-	r.GET("/view/status", templatesmw, Status)
-
-	http.DefaultServeMux.Handle("/", r)
-	appengine.Main()
+		return nil
+	})
 }
 
 // Handler for the index page.

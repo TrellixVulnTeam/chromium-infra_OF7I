@@ -5,9 +5,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
@@ -34,6 +36,10 @@ func Scheduler(rc *router.Context) {
 		logging.WithError(err).Errorf(ctx, "Could not create cloud task client due to %s", err.Error())
 	}
 	defer client.Close()
+
+	// CreateTask call will fail without this timeout
+	ctx, cancel := context.WithTimeout(ctx, time.Second*25)
+	defer cancel()
 
 	for configName, config := range config.GetRuleMap() {
 		var refConfigs []*rules.RefConfig
