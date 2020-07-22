@@ -48,13 +48,19 @@ message RackLSE {
 // kvms and rpms connected to it in Chrome Browser lab
 message ChromeBrowserRackLSE {
     // KVMs in the rack, they're the attached kvms' names, which are the same as their hostnames
-    repeated string kvms = 1 [(google.api.resource_reference) = {
-        type: "unified-fleet-system.appspot.com/KVM"
-    }];
+    repeated string kvms = 1 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/KVM"
+        },
+        deprecated = true
+    ];
     // Switches in the rack.
-    repeated string switches = 2 [(google.api.resource_reference) = {
-        type: "unified-fleet-system.appspot.com/Switch"
-    }];
+    repeated string switches = 2 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Switch"
+        },
+        deprecated = true
+    ];
 }
 
 // ChromeOSRackLSE refers to the entity which has
