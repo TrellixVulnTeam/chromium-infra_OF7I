@@ -135,10 +135,9 @@ func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) (*autoservRes
 			Name:        r.GetAutotest().GetDisplayName(),
 			ResultsDir:  dir,
 		},
-		Hosts:             r.DutHostnames,
-		OffloadDir:        r.Config.GetTask().GetSynchronousOffloadDir(),
-		LocalOnlyHostInfo: true,
-		RequireSSP:        !r.GetAutotest().GetIsClientTest(),
+		Hosts:      r.DutHostnames,
+		OffloadDir: r.Config.GetTask().GetSynchronousOffloadDir(),
+		RequireSSP: !r.GetAutotest().GetIsClientTest(),
 	}
 
 	ar, err := atutil.RunAutoserv(ctx, j, t, os.Stdout)

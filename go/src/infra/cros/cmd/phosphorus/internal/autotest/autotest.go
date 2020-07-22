@@ -35,7 +35,6 @@ type AutoservArgs struct {
 	JobName            string
 	JobOwner           string
 	Lab                bool
-	LocalOnlyHostInfo  bool
 	NoTee              bool
 	OffloadDir         string
 	ParentJobID        int
@@ -97,10 +96,6 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	if cmd.Lab {
 		args = append(args, "--lab", "True")
 	}
-	if cmd.LocalOnlyHostInfo {
-		// autoserv bool args require values.
-		args = append(args, "--local-only-host-info", "True")
-	}
 	if cmd.NoTee {
 		args = append(args, "-n")
 	}
@@ -145,6 +140,12 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	if cmd.WritePidfile {
 		args = append(args, "-p")
 	}
+
+	// autoserv bool args require values.
+	// This flag was added to autoserv for migration away from the Autotest
+	// Front End. This flag can be dropped after autoserv is updated to
+	// always default to the behaviour when this flag is set.
+	args = append(args, "--local-only-host-info", "True")
 
 	// The reason for the following behavior is due to autoserv argument parsing.
 	// autoserv will call shlex.split on the --args value and

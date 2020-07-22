@@ -12,9 +12,8 @@ import (
 // MainJob describes the overall job, which dictates certain job
 // global settings for running autoserv.
 type MainJob struct {
-	AutotestConfig   autotest.Config
-	ResultsDir       string
-	UseLocalHostInfo bool
+	AutotestConfig autotest.Config
+	ResultsDir     string
 }
 
 // AutoservJob describes the interface a job object needs to be passed
@@ -60,12 +59,11 @@ type AdminTask struct {
 // AutoservArgs represents the CLI args for `autoserv`.
 func (t *AdminTask) AutoservArgs() *autotest.AutoservArgs {
 	a := &autotest.AutoservArgs{
-		HostInfoSubDir:    hostInfoSubDir,
-		Hosts:             []string{t.Host},
-		Lab:               true,
-		LocalOnlyHostInfo: true,
-		ResultsDir:        t.ResultsDir,
-		WritePidfile:      true,
+		HostInfoSubDir: hostInfoSubDir,
+		Hosts:          []string{t.Host},
+		Lab:            true,
+		ResultsDir:     t.ResultsDir,
+		WritePidfile:   true,
 	}
 	switch t.Type {
 	case Verify:
@@ -85,23 +83,21 @@ var _ AutoservJob = &Provision{}
 // Provision represents a provision task to run.  Provision implements
 // AutoservJob.
 type Provision struct {
-	Host              string
-	Labels            []string
-	LocalOnlyHostInfo bool
-	ResultsDir        string
+	Host       string
+	Labels     []string
+	ResultsDir string
 }
 
 // AutoservArgs represents the CLI args for `autoserv`.
 func (p *Provision) AutoservArgs() *autotest.AutoservArgs {
 	return &autotest.AutoservArgs{
-		HostInfoSubDir:    hostInfoSubDir,
-		Hosts:             []string{p.Host},
-		JobLabels:         p.Labels,
-		Lab:               true,
-		LocalOnlyHostInfo: p.LocalOnlyHostInfo,
-		Provision:         true,
-		ResultsDir:        p.ResultsDir,
-		WritePidfile:      true,
+		HostInfoSubDir: hostInfoSubDir,
+		Hosts:          []string{p.Host},
+		JobLabels:      p.Labels,
+		Lab:            true,
+		Provision:      true,
+		ResultsDir:     p.ResultsDir,
+		WritePidfile:   true,
 	}
 }
 
@@ -151,12 +147,11 @@ var _ keyvalsJob = &HostTest{}
 // HostTest represents a host test to run.  HostTest implements AutoservJob.
 type HostTest struct {
 	HostlessTest
-	Hosts             []string
-	LocalOnlyHostInfo bool
-	OffloadDir        string
-	ParentJobID       int
-	RequireSSP        bool
-	TestSourceBuild   string
+	Hosts           []string
+	OffloadDir      string
+	ParentJobID     int
+	RequireSSP      bool
+	TestSourceBuild string
 }
 
 // AutoservArgs represents the CLI args for `autoserv`.
@@ -164,7 +159,6 @@ func (t *HostTest) AutoservArgs() *autotest.AutoservArgs {
 	args := t.HostlessTest.AutoservArgs()
 	args.HostInfoSubDir = hostInfoSubDir
 	args.Hosts = t.Hosts
-	args.LocalOnlyHostInfo = t.LocalOnlyHostInfo
 	args.OffloadDir = t.OffloadDir
 	args.ParentJobID = t.ParentJobID
 	args.RequireSSP = t.RequireSSP

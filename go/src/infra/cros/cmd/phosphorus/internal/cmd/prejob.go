@@ -137,10 +137,9 @@ func runProvision(ctx context.Context, r phosphorus.PrejobRequest) (*atutil.Resu
 	subDir := fmt.Sprintf("provision_%s", r.DutHostname)
 	fullPath := filepath.Join(r.Config.Task.ResultsDir, subDir)
 	p := &atutil.Provision{
-		Host:              r.DutHostname,
-		Labels:            labels,
-		LocalOnlyHostInfo: true,
-		ResultsDir:        fullPath,
+		Host:       r.DutHostname,
+		Labels:     labels,
+		ResultsDir: fullPath,
 	}
 	ar, err := atutil.RunAutoserv(ctx, j, p, os.Stdout)
 	if err != nil {

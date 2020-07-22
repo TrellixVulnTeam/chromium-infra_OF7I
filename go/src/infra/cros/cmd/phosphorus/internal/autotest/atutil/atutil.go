@@ -45,19 +45,17 @@ const (
 // Result.TestsFailed may not be set, depending on AutoservJob.  An
 // error is not returned for test failures.
 func RunAutoserv(ctx context.Context, m *MainJob, j AutoservJob, w io.Writer) (r *Result, err error) {
-	if m.UseLocalHostInfo {
-		if err2 := prepareHostInfo(m.ResultsDir, j); err2 != nil {
-			return nil, err2
-		}
-		defer func() {
-			if err2 := retrieveHostInfo(m.ResultsDir, j); err2 != nil {
-				log.Printf("Failed to retrieve host info for autoserv test: %s", err2)
-				if err == nil {
-					err = err2
-				}
-			}
-		}()
+	if err2 := prepareHostInfo(m.ResultsDir, j); err2 != nil {
+		return nil, err2
 	}
+	defer func() {
+		if err2 := retrieveHostInfo(m.ResultsDir, j); err2 != nil {
+			log.Printf("Failed to retrieve host info for autoserv test: %s", err2)
+			if err == nil {
+				err = err2
+			}
+		}
+	}()
 	a := j.AutoservArgs()
 	if j, ok := j.(keyvalsJob); ok {
 		if err := writeKeyvals(a.ResultsDir, j.JobKeyvals()); err != nil {

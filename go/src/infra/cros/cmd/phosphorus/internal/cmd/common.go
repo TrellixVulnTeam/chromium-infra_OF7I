@@ -96,8 +96,7 @@ func getMainJob(c *phosphorus.Config) *atutil.MainJob {
 		AutotestConfig: autotest.Config{
 			AutotestDir: c.GetBot().GetAutotestDir(),
 		},
-		ResultsDir:       c.GetTask().GetResultsDir(),
-		UseLocalHostInfo: true,
+		ResultsDir: c.GetTask().GetResultsDir(),
 	}
 
 }
