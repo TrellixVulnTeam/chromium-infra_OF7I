@@ -1,8 +1,6 @@
-# Copyright 2016 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style
-# license that can be found in the LICENSE file or at
-# https://developers.google.com/open-source/licenses/bsd
-
+# Copyright 2020 The Chromium Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 """Classes to manage cached values.
 
 Monorail makes full use of the RAM of GAE frontends to reduce latency
@@ -21,7 +19,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import json
 import logging
 import redis
 
@@ -31,6 +28,7 @@ from google.appengine.api import memcache
 
 import settings
 from framework import framework_constants
+from framework import redis_utils
 from proto import tracker_pb2
 
 
@@ -204,8 +202,9 @@ class AbstractTwoLevelCache(object):
     self.pb_class = pb_class
 
     if use_redis:
-      self.redis_client = redis_client or self._CreateRedisClient()
-      self.use_redis = self._verifyRedisConnection()
+      self.redis_client = redis_client or redis_utils.CreateRedisClient()
+      self.use_redis = redis_utils.VerifyRedisConnection(
+          self.redis_client, msg=kind)
     else:
       self.redis_client = None
       self.use_redis = False
@@ -310,7 +309,7 @@ class AbstractTwoLevelCache(object):
     raise NotImplementedError()
 
   def _ReadFromCache(self, keys):
-    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[str]
+    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[int]
     """Reads a list of keys from secondary caching service.
 
     Redis will be used if Redis is enabled and connection is valid;
@@ -359,7 +358,7 @@ class AbstractTwoLevelCache(object):
       return self._DeleteFromMemcache(keys)
 
   def _ReadFromMemcache(self, keys):
-    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[str]
+    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[int]
     """Read the given keys from memcache, return {key: value}, missing_keys."""
     cache_hits = {}
     cached_dict = memcache.get_multi(
@@ -417,50 +416,6 @@ class AbstractTwoLevelCache(object):
     """Subclasses can check if value is usable by the current app version."""
     return True
 
-  def _CreateRedisClient(self):
-    # type: () -> redis.Redis
-    """Creates a Redis object which implements Redis protocol and connection.
-
-    Returns:
-      redis.Redis object initialized with a connection pool.
-      None on failure.
-    """
-    try:
-      if not settings.redis_host:
-        logging.error(
-            'redis_host is not assigned an IP address in settings.py. '
-            'Defaulting to memcache.')
-        return None
-      if not AbstractTwoLevelCache.redis_cnxn_pool:
-        AbstractTwoLevelCache.redis_cnxn_pool = redis.BlockingConnectionPool(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            max_connections=1,
-            timeout=2)
-      return redis.Redis(connection_pool=AbstractTwoLevelCache.redis_cnxn_pool)
-    except redis.RedisError as identifier:
-      logging.error(
-          'Redis error occurred while connecting to server: %s', identifier)
-      return None
-
-  def _verifyRedisConnection(self):
-    # type: () -> Bool
-    """Checks the connection to Redis to ensure Redis-server can be accessed.
-
-    Returns:
-      True when connection to server is valid.
-      False when an error occurs or redis_client is None.
-    """
-    if not self.redis_client:
-      return False
-    try:
-      self.redis_client.ping()
-      return True
-    except redis.RedisError as identifier:
-      logging.error(
-          'Redis error occurred while connecting to server: %s', identifier)
-      return False
-
   def _WriteToRedis(self, retrieved_dict):
     # type: (Mapping[int, Any]) -> None
     """Write entries for each key-value pair to Redis.  Encode PBs.
@@ -470,7 +425,7 @@ class AbstractTwoLevelCache(object):
     """
     try:
       for key, value in retrieved_dict.items():
-        redis_key = self._FormatRedisKey(key)
+        redis_key = redis_utils.FormatRedisKey(key, prefix=self.prefix)
         redis_value = self._ValueToStr(value)
 
         self.redis_client.setex(
@@ -485,7 +440,7 @@ class AbstractTwoLevelCache(object):
         self.prefix)
 
   def _ReadFromRedis(self, keys):
-    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[str]
+    # type: (Sequence[int]) -> Mapping[str, Any], Sequence[int]
     """Read the given keys from Redis, return {key: value}, missing keys.
 
     Args:
@@ -499,9 +454,10 @@ class AbstractTwoLevelCache(object):
     missing_keys = []
     try:
       values_list = self.redis_client.mget(
-          [self._FormatRedisKey(key) for key in keys])
+          [redis_utils.FormatRedisKey(key, prefix=self.prefix) for key in keys])
     except redis.RedisError as identifier:
-      logging.error('Redis error occured during read operation: %s', identifier)
+      logging.error(
+          'Redis error occurred during read operation: %s', identifier)
       values_list = [None] * len(keys)
 
     for key, serialized_value in zip(keys, values_list):
@@ -524,26 +480,14 @@ class AbstractTwoLevelCache(object):
       keys: List of integer keys to delete.
     """
     try:
-      self.redis_client.delete(*[self._FormatRedisKey(key) for key in keys])
+      self.redis_client.delete(
+          *[
+              redis_utils.FormatRedisKey(key, prefix=self.prefix)
+              for key in keys
+          ])
     except redis.RedisError as identifier:
       logging.error(
           'Redis error occurred during delete operation %s', identifier)
-
-  def _FormatRedisKey(self, key, namespace=settings.redis_namespace):
-    # type: (int, str) -> str
-    """Converts key to string and prepends key with namespace and prefix.
-
-    Args:
-      key: Integer key.
-      namespace: Optional parameter to use a different namespace.
-
-    Returns:
-      Formatted key with the format: "namespace:prefix:key".
-    """
-    if not namespace:
-      return self.prefix + str(key)
-    else:
-      return namespace + self.prefix + str(key)
 
   def _KeyToStr(self, key):
     # type: (int) -> str
@@ -558,25 +502,26 @@ class AbstractTwoLevelCache(object):
   def _ValueToStr(self, value):
     # type: (Any) -> str
     """Serialize an application object so that it can be stored in L2 cache."""
-    if not self.pb_class:
-      if self.use_redis:
-        return json.dumps(value)
-      else:
-        return value
-    elif self.pb_class == int:
-      return str(value)
+    if self.use_redis:
+      return redis_utils.SerializeValue(value, pb_class=self.pb_class)
     else:
-      return protobuf.encode_message(value)
+      if not self.pb_class:
+        return value
+      elif self.pb_class == int:
+        return str(value)
+      else:
+        return protobuf.encode_message(value)
 
   def _StrToValue(self, serialized_value):
     # type: (str) -> Any
     """Deserialize L2 cache string into an application object."""
-    if not self.pb_class:
-      if self.use_redis:
-        return json.loads(serialized_value)
-      else:
-        return serialized_value
-    elif self.pb_class == int:
-      return int(serialized_value)
+    if self.use_redis:
+      return redis_utils.DeserializeValue(
+          serialized_value, pb_class=self.pb_class)
     else:
-      return protobuf.decode_message(self.pb_class, serialized_value)
+      if not self.pb_class:
+        return serialized_value
+      elif self.pb_class == int:
+        return int(serialized_value)
+      else:
+        return protobuf.decode_message(self.pb_class, serialized_value)

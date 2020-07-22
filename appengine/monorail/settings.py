@@ -193,9 +193,8 @@ user_cache_max_size = 150 * 1000
 memcache_namespace = None  # Should be None when committed.
 redis_namespace = None
 
-# IP address for Redis instance
-redis_host = '10.150.170.251'
-# Port for Redis instance
+# Default Redis host and port
+redis_host = 'localhost'
 redis_port = '6379'
 
 # Recompute derived issue fields via work items rather than while
@@ -319,6 +318,7 @@ else:
     db_cloud_project = app_id
     branded_domains = branded_domains_staging
     domain_to_default_project = domain_to_default_project_staging
+    redis_host = '10.238.120.43'
 
   elif app_id == 'monorail-dev':
     site_name = 'Monorail Dev'
@@ -327,6 +327,7 @@ else:
     db_cloud_project = app_id
     branded_domains = branded_domains_dev
     domain_to_default_project = domain_to_default_project_dev
+    redis_host = '10.150.170.251'
 
   elif app_id == 'monorail-prod':
     send_all_email_to = None  # Deliver it to the intended users.
@@ -337,10 +338,12 @@ else:
     domain_to_default_project = domain_to_default_project_prod
     # Use replicas created in response to replication failures 2019-11-04
     db_replica_names = ['%s-next' % name for name in db_replica_names]
+    redis_host = None  # None until server is setup
 
 if local_mode:
   site_name = 'Monorail Local'
   num_logical_shards = 10
+  redis_host = 'localhost'
 
 # Combine the customized info above to make the name of the primary DB instance.
 db_instance = db_cloud_project + ':' + db_region + ':' + db_primary_name

@@ -314,21 +314,6 @@ class AbstractTwoLevelCacheTest_Redis(unittest.TestCase):
   def tearDown(self):
     self.fake_redis_client.flushall()
 
-  def testConnectionVerification(self):
-    self.server.connected = False
-    self.assertFalse(self.testable_2lc._verifyRedisConnection())
-    self.server.connected = True
-    self.assertTrue(self.testable_2lc._verifyRedisConnection())
-
-  def testFormatRedisKey(self):
-    redis_key = self.testable_2lc._FormatRedisKey(123)
-    self.assertEqual('testable:123', redis_key)
-    redis_key = self.testable_2lc._FormatRedisKey(123, namespace='testing:')
-    self.assertEqual('testing:testable:123', redis_key)
-    self.testable_2lc.prefix = 'bar:'
-    redis_key = self.testable_2lc._FormatRedisKey(123, namespace='foo:')
-    self.assertEqual('foo:bar:123', redis_key)
-
   def testCacheItem(self):
     self.testable_2lc.CacheItem(123, 12300)
     self.assertEqual(12300, self.testable_2lc.cache.cache[123])
