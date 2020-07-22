@@ -142,11 +142,11 @@ func (c *Client) scheduleBuildRaw(ctx context.Context, props *structpb.Struct, t
 //
 // WaitForBuild regularly logs output to stdout to pacify the logdog silence
 // checker.
-func (c *Client) WaitForBuild(ctx context.Context, ID int64) (*Build, error) {
+func (c *Client) WaitForBuild(ctx context.Context, builder *buildbucket_pb.BuilderID, ID int64) (*Build, error) {
 	throttledLogger := logutils.NewThrottledInfoLogger(logging.Get(ctx), 10*time.Minute)
 	progressMessage := fmt.Sprintf("Still waiting for result from %s", c.BuildURL(ID))
 	for {
-		build, err := c.GetBuild(ctx, ID)
+		build, err := c.GetBuild(ctx, builder, ID)
 		if err != nil {
 			return nil, err
 		}
@@ -193,10 +193,11 @@ type Build struct {
 }
 
 // GetBuild gets a buildbucket build by ID.
-func (c *Client) GetBuild(ctx context.Context, ID int64) (*Build, error) {
+func (c *Client) GetBuild(ctx context.Context, builder *buildbucket_pb.BuilderID, ID int64) (*Build, error) {
 	req := &buildbucket_pb.GetBuildRequest{
-		Id:     ID,
-		Fields: &field_mask.FieldMask{Paths: getBuildFields},
+		Id:      ID,
+		Builder: builder,
+		Fields:  &field_mask.FieldMask{Paths: getBuildFields},
 	}
 	build, err := c.client.GetBuild(ctx, req)
 	if err != nil {
