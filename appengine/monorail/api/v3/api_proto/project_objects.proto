@@ -397,20 +397,20 @@ message ProjectSavedQuery {
 // Next available tag: 10
 message IssueTemplate {
   option (google.api.resource) = {
-    type: "api.crbug.com/Template"
-    pattern: "projects/{project}/templates/{template_name}"
+    type: "api.crbug.com/IssueTemplate"
+    pattern: "projects/{project}/templates/{template_id}"
   };
   // Resource name of the template.
   string name = 1;
   // Display name of this template.
   string display_name = 2 [(google.api.field_behavior) = IMMUTABLE];
-  // Canonical Issue for this template
+  // Canonical Issue for this template.
   Issue issue = 3;
   // ApprovalValues to be created with the issue when using this template.
   repeated ApprovalValue approval_values = 9;
-  // Boolean indicating subsequent issue creation must have delta in summary
+  // Boolean indicating subsequent issue creation must have delta in summary.
   bool summary_must_be_edited = 4;
-  // Visibility permission of template
+  // Visibility permission of template.
   // Next available tag: 3
   enum TemplatePrivacy {
     // This value is unused.

@@ -441,7 +441,7 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testConvertTemplateNames(self):
     """We can get IssueTemplate resource names."""
     expected_resource_name = 'projects/{}/templates/{}'.format(
-        self.project_1.project_name, self.template_1.name)
+        self.project_1.project_name, self.template_1.template_id)
     expected = {self.template_1.template_id: expected_resource_name}
 
     self.assertEqual(
@@ -466,7 +466,7 @@ class ResourceNameConverterTest(unittest.TestCase):
   def testConvertTemplateNames_TemplateInProject(self):
     """We only return templates in the project."""
     expected_resource_name = 'projects/{}/templates/{}'.format(
-        self.project_2.project_name, self.template_2.name)
+        self.project_2.project_name, self.template_2.template_id)
     expected = {self.template_2.template_id: expected_resource_name}
 
     self.assertEqual(
@@ -476,24 +476,28 @@ class ResourceNameConverterTest(unittest.TestCase):
             self.services), expected)
 
   def testIngestTemplateName(self):
-    """We can get IssueTemplate's resource match"""
-    self.assertEqual(
-        rnc.IngestTemplateName(
-            self.cnxn, 'projects/proj/templates/template_1_name',
-            self.services), ('template_1_name', 789))
+    name = 'projects/{}/templates/{}'.format(
+        self.project_1.project_name, self.template_1.template_id)
+    actual = rnc.IngestTemplateName(self.cnxn, name, self.services)
+    expected = (self.template_1.template_id, self.project_1.project_id)
+    self.assertEqual(actual, expected)
+
+  def testIngestTemplateName_DoesNotExist(self):
+    """We will ingest templates that don't exist."""
+    name = 'projects/{}/templates/{}'.format(
+        self.project_1.project_name, self.dne_template_id)
+    actual = rnc.IngestTemplateName(self.cnxn, name, self.services)
+    expected = (self.dne_template_id, self.project_1.project_id)
+    self.assertEqual(actual, expected)
 
   def testIngestTemplateName_InvalidName(self):
     with self.assertRaises(exceptions.InputException):
       rnc.IngestTemplateName(
-          self.cnxn, 'projects/asdf/misspelled_template/xyz', self.services)
+          self.cnxn, 'projects/asdf/misspelled_template/123', self.services)
 
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.IngestTemplateName(
-          self.cnxn, 'projects/asdf/templates/template_1_name', self.services)
-
-    with self.assertRaises(exceptions.NoSuchTemplateException):
-      rnc.IngestTemplateName(
-          self.cnxn, 'projects/proj/templates/template_dne_name', self.services)
+          self.cnxn, 'projects/asdf/templates/123', self.services)
 
   def testConvertStatusDefNames(self):
     """We can get Status resource name."""

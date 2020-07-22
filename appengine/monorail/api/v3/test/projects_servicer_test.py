@@ -54,7 +54,6 @@ class ProjectsServicerTest(unittest.TestCase):
     return wrapped_handler.wrapped(self.projects_svcr, mc, *args, **kwargs)
 
   def testListIssueTemplates(self):
-    """We can list a project's IssueTemplates."""
     request = projects_pb2.ListIssueTemplatesRequest(
         parent=self.project_1_resource_name)
     mc = monorailcontext.MonorailContext(
@@ -70,7 +69,7 @@ class ProjectsServicerTest(unittest.TestCase):
             derivation=issue_objects_pb2.Derivation.Value('EXPLICIT')))
     expected_template = project_objects_pb2.IssueTemplate(
         name='projects/{}/templates/{}'.format(
-            self.project_1.project_name, self.template_1.name),
+            self.project_1.project_name, self.template_1.template_id),
         display_name=self.template_1.name,
         issue=expected_issue,
         summary_must_be_edited=False,
@@ -86,7 +85,6 @@ class ProjectsServicerTest(unittest.TestCase):
 
   @patch('project.project_helpers.GetThumbnailUrl')
   def testListProjects(self, mock_GetThumbnailUrl):
-    """We can list Projects."""
     mock_GetThumbnailUrl.return_value = 'xyz'
 
     request = projects_pb2.ListProjectsRequest()

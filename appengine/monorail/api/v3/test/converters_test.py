@@ -1538,7 +1538,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     actual = result[0]
     self.assertEqual(
         actual.name, 'projects/{}/templates/{}'.format(
-            self.project_1.project_name, self.template_1.name))
+            self.project_1.project_name, self.template_1.template_id))
     self.assertEqual(actual.display_name, self.template_1.name)
     self.assertEqual(actual.summary_must_be_edited, False)
     self.assertEqual(

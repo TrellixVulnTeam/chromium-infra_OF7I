@@ -46,10 +46,8 @@ ISSUE_NAME_RE = re.compile(r'%s$' % ISSUE_PATTERN)
 
 USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
 
-# We currently do not place much limit on template names, see
-# https://monorail-dev.appspot.com/p/monorail/adminTemplates for examples
 ISSUE_TEMPLATE_RE = re.compile(
-    r'%s\/templates\/(?P<template_name>.*)$' % (PROJECT_NAME_PATTERN))
+    r'%s\/templates\/(?P<template_id>\d+)$' % (PROJECT_NAME_PATTERN))
 
 # Constants that hold the template patterns for creating resource names.
 PROJECT_NAME_TMPL = 'projects/{project_name}'
@@ -67,7 +65,7 @@ USER_NAME_TMPL = 'users/{user_id}'
 PROJECT_STAR_NAME_TMPL = 'users/{user_id}/projectStars/{project_name}'
 PROJECT_SQ_NAME_TMPL = 'projects/{project_name}/savedQueries/{query_name}'
 
-ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_name}'
+ISSUE_TEMPLATE_TMPL = 'projects/{project_name}/templates/{template_id}'
 STATUS_DEF_TMPL = 'projects/{project_name}/statusDefs/{status}'
 LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
@@ -78,7 +76,7 @@ APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_name}'
 
 
 def _GetResourceNameMatch(name, regex):
-  # (str, Pattern[str]) -> Match[str]
+  # type: (str, Pattern[str]) -> Match[str]
   """Takes a resource name and returns the regex match.
 
   Args:
@@ -158,7 +156,7 @@ def IngestFieldDefName(cnxn, name, services):
 # Hotlists
 
 def IngestHotlistName(name):
-  # str -> int
+  # type: (str) -> int
   """Takes a Hotlist resource name and returns the Hotlist ID.
 
   Args:
@@ -175,7 +173,7 @@ def IngestHotlistName(name):
 
 
 def IngestHotlistItemNames(cnxn, names, services):
-  # (MonorailConnection, Sequence[str], Services -> Sequence[int]
+  # type: (MonorailConnection, Sequence[str], Services -> Sequence[int]
   """Takes HotlistItem resource names and returns the associated Issues' IDs.
 
   Args:
@@ -201,7 +199,7 @@ def IngestHotlistItemNames(cnxn, names, services):
 
 
 def ConvertHotlistName(hotlist_id):
-  # int -> str
+  # type: (int) -> str
   """Takes a Hotlist and returns the Hotlist's resource name.
 
   Args:
@@ -214,7 +212,8 @@ def ConvertHotlistName(hotlist_id):
 
 
 def ConvertHotlistItemNames(cnxn, hotlist_id, issue_ids, services):
-  # MonorailConnection, int, Collection[int], Services -> Mapping[int, str]
+  # type: (MonorailConnection, int, Collection[int], Services) ->
+  #     Mapping[int, str]
   """Takes a Hotlist ID and HotlistItem's issue_ids and returns
      the Hotlist items' resource names.
 
@@ -267,7 +266,7 @@ def CreateCommentNames(issue_local_id, issue_project, comment_sequence_nums):
 
 
 def IngestIssueName(cnxn, name, services):
-  # MonorailConnection, str, Services -> int
+  # type: (MonorailConnection, str, Services) -> int
   """Takes an Issue resource name and returns its global ID.
 
   Args:
@@ -288,7 +287,7 @@ def IngestIssueName(cnxn, name, services):
 
 
 def IngestIssueNames(cnxn, names, services):
-  # MonorailConnection, Sequence[str], Services -> Sequence[int]
+  # type: (MonorailConnection, Sequence[str], Services) -> Sequence[int]
   """Returns global IDs for the given Issue resource names.
 
   Args:
@@ -340,7 +339,7 @@ def IngestProjectFromIssue(issue_name):
 
 
 def ConvertIssueName(cnxn, issue_id, services):
-  # MonorailConnection, int, Services -> str
+  # type: (MonorailConnection, int, Services) -> str
   """Takes an Issue ID and returns the corresponding Issue resource name.
 
   Args:
@@ -361,7 +360,7 @@ def ConvertIssueName(cnxn, issue_id, services):
 
 
 def ConvertIssueNames(cnxn, issue_ids, services):
-  # MonorailConnection, Collection[int], Services -> Mapping[int, str]
+  # type: (MonorailConnection, Collection[int], Services) -> Mapping[int, str]
   """Takes Issue IDs and returns the Issue resource names.
 
   Args:
@@ -390,7 +389,7 @@ def ConvertApprovalValueNames(cnxn, issue_id, services):
   Args:
     cnxn: MonorailConnection object.
     issue_id: ID of the Issue the approval_values belong to.
-    services: Services object for connections to backend services.
+    services: Services object.
 
   Returns:
     Dict of ApprovalDef IDs to ApprovalValue resource names for
@@ -454,14 +453,14 @@ def IngestUserName(cnxn, name, services, autocreate=False):
 
 
 def IngestUserNames(cnxn, names, services, autocreate=False):
-  # MonorailConnection, Sequence[str], Services, Optional[Boolean] ->
+  # Type: (MonorailConnection, Sequence[str], Services, Optional[bool]) ->
   #     Sequence[int]
   """Takes User resource names and returns the User IDs.
 
   Args:
     cnxn: MonorailConnection object.
     names: List of User resource names.
-    services: Service object.
+    services: Services object.
     autocreate: set to True if new Users should be created for
         emails in resource names that do not belong to existing
         Users.
@@ -482,13 +481,13 @@ def IngestUserNames(cnxn, names, services, autocreate=False):
 
 
 def ConvertUserName(user_id):
-  # int -> str
+  # type: (int) -> str
   """Takes a User ID and returns the User's resource name."""
   return ConvertUserNames([user_id])[user_id]
 
 
 def ConvertUserNames(user_ids):
-  # Collection[int] -> Mapping[int, str]
+  # type: (Collection[int]) -> Mapping[int, str]
   """Takes User IDs and returns the Users' resource names.
 
   Args:
@@ -528,7 +527,7 @@ def ConvertProjectStarName(cnxn, user_id, project_id, services):
 
 
 def IngestProjectName(cnxn, name, services):
-  # str -> int
+  # type: (str) -> int
   """Takes a Project resource name and returns the project id.
 
   Args:
@@ -550,17 +549,19 @@ def IngestProjectName(cnxn, name, services):
 
 
 def ConvertTemplateNames(cnxn, project_id, template_ids, services):
-  # MonorailConnection, int, Collection[int] Service -> Mapping[int, str]
+  # type: (MonorailConnection, int, Collection[int] Services) ->
+  #     Mapping[int, str]
   """Takes Template IDs and returns the Templates' resource names
 
   Args:
     cnxn: MonorailConnection object.
-    project_id: project id of project that templates belong to
-    template_ids: list of template ids
-    services: Service object.
+    project_id: Project ID of Project that Templates must belong to.
+    template_ids: Template IDs to convert.
+    services: Services object.
 
   Returns:
-    Dict of template ID to template resource names for all found template ids.
+    Dict of template ID to template resource names for all found template IDs
+    within the given project.
 
   Raises:
     NoSuchProjectException if no project exists with given id.
@@ -580,48 +581,41 @@ def ConvertTemplateNames(cnxn, project_id, template_ids, services):
       continue
     id_to_resource_names[template_id] = ISSUE_TEMPLATE_TMPL.format(
         project_name=project_name,
-        template_name=tmpl_by_id.get(template_id).name)
+        template_id=template_id)
 
   return id_to_resource_names
 
 
 def IngestTemplateName(cnxn, name, services):
-  # type: (MonorailConnection, str, Services) -> (str, int)
-  """Takes a IssueTemplate's resource name and returns the IssueTemplate's name
-     and the Project's ID that it belongs.
+  # type: (MonorailConnection, str, Services) -> Tuple[int, int]
+  """Ingests an IssueTemplate resource name.
 
   Args:
-    cnxn: MonorailConnection to the database.
-    name: Resource name of a IssueTemplate.
-    services: Services object for connections to backend services.
+    cnxn: MonorailConnection object.
+    name: Resource name of an IssueTemplate.
+    services: Services object.
 
   Returns:
-    The IssueTemplate's name and the Project's ID.
+    The IssueTemplate's ID and the Project's ID.
 
   Raises:
     InputException if the given name does not have a valid format.
-    NoSuchProjectException if the given project name does not exists.
-    NoSuchTemplateException if the given template name does not exists.
+    NoSuchProjectException if the given project name does not exist.
   """
   match = _GetResourceNameMatch(name, ISSUE_TEMPLATE_RE)
-  template_name = match.group('template_name')
+  template_id = int(match.group('template_id'))
   project_name = match.group('project_name')
+
   id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
   project_id = id_dict.get(project_name)
   if project_id is None:
     raise exceptions.NoSuchProjectException(
         'Project not found: %s.' % project_name)
-  template = services.template.GetTemplateByName(
-      cnxn, template_name, project_id)
-  if template is None:
-    raise exceptions.NoSuchTemplateException(
-        'Template not found: %s.' % template_name)
-
-  return template_name, project_id
+  return template_id, project_id
 
 
 def ConvertStatusDefNames(cnxn, statuses, project_id, services):
-  # type: (MonorailConnection, Collection[str], int, Service) ->
+  # type: (MonorailConnection, Collection[str], int, Services) ->
   #     Mapping[str, str]
   """Takes list of status strings and returns StatusDef resource names
 
@@ -629,7 +623,7 @@ def ConvertStatusDefNames(cnxn, statuses, project_id, services):
     cnxn: MonorailConnection object.
     statuses: List of status name strings
     project_id: project id of project this belongs to
-    services: Service object.
+    services: Services object.
 
   Returns:
     Mapping of string to resource name for all given `statuses`.
@@ -648,7 +642,7 @@ def ConvertStatusDefNames(cnxn, statuses, project_id, services):
 
 
 def ConvertLabelDefNames(cnxn, labels, project_id, services):
-  # type: (MonorailConnection, Collection[str], int, Service) ->
+  # type: (MonorailConnection, Collection[str], int, Services) ->
   #     Mapping[str, str]
   """Takes a list of labels and returns LabelDef resource names
 
@@ -656,7 +650,7 @@ def ConvertLabelDefNames(cnxn, labels, project_id, services):
     cnxn: MonorailConnection object.
     labels: List of labels as string
     project_id: project id of project this belongs to
-    services: Service object.
+    services: Services object.
 
   Returns:
     Dict of label string to label's resource name for all given `labels`.
@@ -676,7 +670,7 @@ def ConvertLabelDefNames(cnxn, labels, project_id, services):
 
 
 def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
-  # type: (MonorailConnection, Collection[int], int, Service) ->
+  # type: (MonorailConnection, Collection[int], int, Services) ->
   #     Mapping[int, str]
   """Takes Component IDs and returns ComponentDef resource names
 
@@ -684,7 +678,7 @@ def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
     cnxn: MonorailConnection object.
     component_ids: List of component ids
     project_id: project id of project this belongs to
-    services: Service object.
+    services: Services object.
 
   Returns:
     Dict of component ID to component's resource name for all given
@@ -705,13 +699,13 @@ def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
 
 
 def IngestComponentDefNames(cnxn, names, services):
-  # type: (MonorailConnection, Sequence[str], Service) -> Sequence[int]
+  # type: (MonorailConnection, Sequence[str], Services) -> Sequence[int]
   """Takes a list of component resource names and returns their IDs.
 
   Args:
     cnxn: MonorailConnection object.
     names: List of component resource names.
-    services: Service object.
+    services: Services object.
 
   Returns:
     List of component IDs in the same order as names.
@@ -763,7 +757,7 @@ def IngestComponentDefNames(cnxn, names, services):
 
 
 def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
-  # type: (MonorailConnection, Collection[int], int, Service) ->
+  # type: (MonorailConnection, Collection[int], int, Services) ->
   #     Mapping[int, str]
   """Takes Field IDs and returns FieldDef resource names
 
@@ -771,7 +765,7 @@ def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
     cnxn: MonorailConnection object.
     component_ids: List of field ids
     project_id: project id of project this belongs to
-    services: Service object.
+    services: Services object.
 
   Returns:
     Dict of field ID to FieldDef resource name for field defs that are found.
