@@ -47,8 +47,7 @@ def RunSteps(api):
         _step_run_py_tests(api, components_dir)
         _step_run_py_tests(api, components_dir, python3=True)
 
-      with api.step.nest('isolate'):
-        _step_run_py_tests(api, appeng_dir.join('isolate'))
+    _step_isolate_tests(api, changes)
 
     _step_client_tests(api, changes)
 
@@ -120,6 +119,20 @@ def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
 
     api.python('run tests %s' % py, 'test.py', args=testpy_args, venv=venv,
                timeout=timeout, ok_ret=ok_ret)
+
+
+def _step_isolate_tests(api, changes):
+  if not api.platform.is_linux:
+    return
+
+  deps = ['isolate', 'client', 'components']
+  if not any([changes[d] for d in deps]):
+    # skip tests when no changes on the dependencies.
+    return
+
+  isolate_dir = api.path['checkout'].join('luci', 'appengine', 'isolate')
+  with api.step.nest('isolate'):
+    _step_run_py_tests(api, isolate_dir)
 
 
 def _step_client_tests(api, changes):
@@ -211,23 +224,24 @@ def GenTests(api):
         api.raw_io.stream_output('\n'.join(files)),
         stream='stdout')
 
-  yield (
-    api.test('ci') + _ci_build() +
-    _step_data_changed_files('client', ['client/foo.py']) +
-    _step_data_changed_files('appengine/swarming',
-        ['appengine/swarming/foo.py']) +
-    _step_data_changed_files('appengine/swarming/ui2',
-        ['appengine/swarming/ui2/foo.js']))
+  yield (api.test('ci') + _ci_build() +
+         _step_data_changed_files('client', ['client/foo.py']) +
+         _step_data_changed_files('appengine/isolate',
+                                  ['appengine/isolate/foo.py']) +
+         _step_data_changed_files('appengine/swarming',
+                                  ['appengine/swarming/foo.py']) +
+         _step_data_changed_files('appengine/swarming/ui2',
+                                  ['appengine/swarming/ui2/foo.js']))
 
-  yield (
-    api.test('try') + _try_build() +
-    _step_data_changed_files('client', ['client/foo.py']) +
-    _step_data_changed_files(
-        'appengine/swarming',
-        ['appengine/swarming/foo.py', 'appengine/swarming/ui2/bar.js']) +
-    _step_data_changed_files(
-        'appengine/swarming/ui2',
-        ['appengine/swarming/ui2/bar.js']))
+  yield (api.test('try') + _try_build() +
+         _step_data_changed_files('client', ['client/foo.py']) +
+         _step_data_changed_files('appengine/isolate',
+                                  ['appengine/isolate/foo.py']) +
+         _step_data_changed_files(
+             'appengine/swarming',
+             ['appengine/swarming/foo.py', 'appengine/swarming/ui2/bar.js']) +
+         _step_data_changed_files('appengine/swarming/ui2',
+                                  ['appengine/swarming/ui2/bar.js']))
 
   yield (api.test('try-mac') + api.platform.name('mac') + _try_build() +
          _step_data_changed_files('client', ['client/foo.py']))

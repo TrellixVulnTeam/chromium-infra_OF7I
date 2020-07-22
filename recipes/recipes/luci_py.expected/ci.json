@@ -113,7 +113,7 @@
       "@@@STEP_LOG_LINE@changes@components: False@@@",
       "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
       "@@@STEP_LOG_LINE@changes@swarming_ui: True@@@",
-      "@@@STEP_LOG_LINE@changes@isolate: False@@@",
+      "@@@STEP_LOG_LINE@changes@isolate: True@@@",
       "@@@STEP_LOG_LINE@changes@config_service: False@@@",
       "@@@STEP_LOG_LINE@changes@swarming: True@@@",
       "@@@STEP_LOG_LINE@changes@auth_service: False@@@",
@@ -214,6 +214,7 @@
     "name": "check changes.get change list on appengine/isolate",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@change list@appengine/isolate/foo.py@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },

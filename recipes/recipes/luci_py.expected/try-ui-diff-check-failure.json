@@ -377,27 +377,6 @@
   },
   {
     "cmd": [],
-    "name": "isolate"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-vpython-spec",
-      "[CACHE]/infra_gclient_with_go/infra/luci/.vpython",
-      "-u",
-      "test.py",
-      "-v",
-      "--conf",
-      "[CACHE]/infra_gclient_with_go/infra/luci/appengine/isolate/unittest.cfg"
-    ],
-    "cwd": "[CACHE]/infra_gclient_with_go/infra/luci/appengine/isolate",
-    "name": "isolate.run tests python2",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [],
     "name": "swarming-ui",
     "~followup_annotations": [
       "@@@STEP_FAILURE@@@"
