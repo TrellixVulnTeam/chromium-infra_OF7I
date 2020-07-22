@@ -327,16 +327,19 @@ class UserServiceTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertEqual(recent_hotlist_rows, [123, 234])
 
-  def SetUpAddVisitedHotlist(self):
+  def SetUpAddVisitedHotlist(self, ts):
     self.user_service.hotlistvisithistory_tbl.Delete(
         self.cnxn, hotlist_id=123, user_id=111, commit=False)
     self.user_service.hotlistvisithistory_tbl.InsertRows(
         self.cnxn, user_svc.HOTLISTVISITHISTORY_COLS,
-        [(123, 111, int(time.time()))],
+        [(123, 111, ts)],
         commit=False)
 
-  def testAddVisitedHotlist(self):
-    self.SetUpAddVisitedHotlist()
+  @mock.patch('time.time')
+  def testAddVisitedHotlist(self, mockTime):
+    ts = 122333
+    mockTime.return_value = ts
+    self.SetUpAddVisitedHotlist(ts)
     self.mox.ReplayAll()
     self.user_service.AddVisitedHotlist(self.cnxn, 111, 123, commit=False)
     self.mox.VerifyAll()
@@ -357,12 +360,11 @@ class UserServiceTest(unittest.TestCase):
     self.user_service.hotlistvisithistory_tbl.Delete.assert_called_once_with(
         self.cnxn, user_id=user_ids, commit=False)
 
-  def SetUpTrimUserVisitedHotlists(self, user_ids):
+  def SetUpTrimUserVisitedHotlists(self, user_ids, ts):
     self.user_service.hotlistvisithistory_tbl.Select(
         self.cnxn, cols=['user_id'], group_by=['user_id'],
         having=[('COUNT(*) > %s', [10])], limit=1000).AndReturn((
             (111,), (222,), (333,)))
-    ts = int(time.time())
     for user_id in user_ids:
       self.user_service.hotlistvisithistory_tbl.Select(
           self.cnxn, cols=['viewed'], user_id=user_id,
@@ -373,8 +375,11 @@ class UserServiceTest(unittest.TestCase):
           self.cnxn, user_id=user_id, where=[('viewed < %s', [ts])],
           commit=False)
 
-  def testTrimUserVisitedHotlists(self):
-    self.SetUpTrimUserVisitedHotlists([111, 222, 333])
+  @mock.patch('time.time')
+  def testTrimUserVisitedHotlists(self, mockTime):
+    ts = 122333
+    mockTime.return_value = ts
+    self.SetUpTrimUserVisitedHotlists([111, 222, 333], ts)
     self.mox.ReplayAll()
     self.user_service.TrimUserVisitedHotlists(self.cnxn, commit=False)
     self.mox.VerifyAll()
