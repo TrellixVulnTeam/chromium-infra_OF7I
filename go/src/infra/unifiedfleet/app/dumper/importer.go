@@ -37,7 +37,11 @@ func importCrimson(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		logging.Debugf(ctx, "Fail to importing chrome platform: %s", string(respCP.GetDetails()[0].GetValue()))
+		if len(respCP.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing chrome platform: %s", string(respCP.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing chrome platform: %s", err.Error())
+		}
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing chrome platforms: %#v", respCP)
@@ -52,7 +56,11 @@ func importCrimson(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		logging.Debugf(ctx, "Fail to importing vlans: %s", string(respVlan.GetDetails()[0].GetValue()))
+		if len(respVlan.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing vlans: %s", string(respVlan.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing vlans: %s", err.Error())
+		}
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing vlans: %#v", respVlan)
@@ -67,7 +75,11 @@ func importCrimson(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		logging.Debugf(ctx, "Fail to importing datacenters: %s", string(respDC.GetDetails()[0].GetValue()))
+		if len(respDC.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing datacenters: %s", string(respDC.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing datacenters: %s", err.Error())
+		}
 		return err
 	}
 
@@ -80,7 +92,11 @@ func importCrimson(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		logging.Debugf(ctx, "Fail to importing machines: %s", string(respMachine.GetDetails()[0].GetValue()))
+		if len(respMachine.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing machines: %s", string(respMachine.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing machines: %s", err.Error())
+		}
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing machines: %#v", respMachine)
@@ -94,7 +110,11 @@ func importCrimson(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		logging.Debugf(ctx, "Fail to importing nics: %s", string(respNic.GetDetails()[0].GetValue()))
+		if len(respNic.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing nics: %s", string(respNic.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing nics: %s", err.Error())
+		}
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing nics: %#v", respNic)
@@ -108,7 +128,11 @@ func importCrimson(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		logging.Debugf(ctx, "Fail to importing machine LSEs: %s", string(respMLSE.GetDetails()[0].GetValue()))
+		if len(respMLSE.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing machine LSEs: %s", string(respMLSE.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing machine LSEs: %s", err.Error())
+		}
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing machine LSEs: %#v", respMLSE)
@@ -122,7 +146,11 @@ func importCrimson(ctx context.Context) error {
 		},
 	})
 	if err != nil {
-		logging.Debugf(ctx, "Fail to importing states: %s", string(respStates.GetDetails()[0].GetValue()))
+		if len(respStates.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing states: %s", string(respStates.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing states: %s", err.Error())
+		}
 		return err
 	}
 	logging.Debugf(ctx, "Finish importing states: %#v", respStates)
