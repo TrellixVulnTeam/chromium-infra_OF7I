@@ -38,7 +38,7 @@ func toLegacyFormat(m *dirmd.Mapping) []byte {
 
 		// The existence of these keys is important to some legacy applications,
 		// but correctness is not.
-		"components-to-team":  map[string]interface{}{},
+		"component-to-team":   map[string]interface{}{},
 		"teams-per-component": map[string]interface{}{},
 	}, "", "  ")
 	if err != nil {

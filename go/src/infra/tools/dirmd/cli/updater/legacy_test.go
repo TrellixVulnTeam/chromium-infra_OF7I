@@ -30,7 +30,7 @@ func TestLegacy(t *testing.T) {
 				"",
 				"Manual edits of this file will be overwritten by an automated process."
 			],
-			"components-to-team":  {},
+			"component-to-team":  {},
 			"dir-to-component": {
 				"subdir_with_owners": "Some\u003eComponent(Linux)",
 				"subdir_with_owners/empty_subdir": "Some\u003eComponent(Linux)"
