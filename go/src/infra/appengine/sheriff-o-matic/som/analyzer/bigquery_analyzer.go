@@ -55,16 +55,6 @@ const selectFromWhere = selectFrom + `
 WHERE
 `
 
-const failuresQuery = selectFromWhere + `
-	(Project = %q OR MasterName = %q)
-	AND Bucket NOT IN ("try", "cq", "staging", "general")
-    AND (Mastername IS NULL
-		OR Mastername NOT LIKE "%%.fyi")
-	AND Builder NOT LIKE "%%bisect%%"
-LIMIT
-	1000
-`
-
 // TODO (nqmtuan): Filter the critical for other projects
 // But firstly make sure it is working with chrome os first
 const crosFailuresQuery = selectFromWhere + `
@@ -163,6 +153,17 @@ var chromeBrowserReleaseFilterFunc = func(r failureRow) bool {
 	return r.Project == "chromium" && strings.HasPrefix(r.Bucket, "ci-m")
 }
 
+var chromiumClangFilterFunc = func(r failureRow) bool {
+	if strings.Contains(r.Builder, "bisect") {
+		return false
+	}
+	excludedBuckets := []string{"try", "cq", "staging", "general"}
+	if sliceContains(excludedBuckets, r.Bucket) {
+		return false
+	}
+	return (r.Project == "chromium.clang" || r.MasterName.String() == "chromium.clang") && (!r.MasterName.Valid || !strings.HasSuffix(r.MasterName.String(), ".fyi"))
+}
+
 type failureRow struct {
 	TestNamesFingerprint bigquery.NullInt64
 	TestNamesTrunc       bigquery.NullString
@@ -235,18 +236,15 @@ func (b *bqFailure) Title(bses []*messages.BuildStep) string {
 
 // Generates the BigQuery SQL for the specified tree against the app environment specified
 // in appID (ex: "sheriff-o-matic-staging" vs. "sheriff-o-matic").
-func generateSQLQuery(ctx context.Context, tree string, appID string) string {
-
+func generateSQLQuery(ctx context.Context, tree string, appID string) (string, error) {
 	bbProjectFilter := getBuildBucketProjectFilterFromTree(ctx, tree)
-
-	switch tree {
-	case "chromeos":
-		return fmt.Sprintf(crosFailuresQuery, appID, "chromeos")
-	case "fuchsia":
-		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter)
-	default:
-		return fmt.Sprintf(failuresQuery, appID, "chromium", tree, tree)
+	if tree == "chromeos" {
+		return fmt.Sprintf(crosFailuresQuery, appID, "chromeos"), nil
 	}
+	if tree == "fuchsia" {
+		return fmt.Sprintf(fuchsiaFailuresQuery, appID, "fuchsia", bbProjectFilter), nil
+	}
+	return "", fmt.Errorf("invalid tree %q", tree)
 }
 
 // GetBigQueryAlerts generates alerts for currently failing build steps, using
@@ -267,7 +265,10 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 		}
 	} else {
 		appID := getAppID(ctx)
-		queryStr := generateSQLQuery(ctx, tree, appID)
+		queryStr, err := generateSQLQuery(ctx, tree, appID)
+		if err != nil {
+			return nil, err
+		}
 		failureRows, err = getFailureRowsForQuery(ctx, queryStr)
 		if err != nil {
 			return nil, err
@@ -277,7 +278,7 @@ func GetBigQueryAlerts(ctx context.Context, tree string) ([]*messages.BuildFailu
 }
 
 func shouldUseCache(tree string) bool {
-	trees := []string{"android", "chromium", "chromium.gpu", "ios", "chromium.perf", "chrome_browser_release"}
+	trees := []string{"android", "chromium", "chromium.gpu", "ios", "chromium.perf", "chrome_browser_release", "chromium.clang"}
 	return sliceContains(trees, tree)
 }
 
@@ -295,6 +296,8 @@ func getFilterFuncForTree(tree string) (func(failureRow) bool, error) {
 		return iosFilterFunc, nil
 	case "chrome_browser_release":
 		return chromeBrowserReleaseFilterFunc, nil
+	case "chromium.clang":
+		return chromiumClangFilterFunc, nil
 	default:
 		return nil, fmt.Errorf("could not find filter function for tree %s", tree)
 	}

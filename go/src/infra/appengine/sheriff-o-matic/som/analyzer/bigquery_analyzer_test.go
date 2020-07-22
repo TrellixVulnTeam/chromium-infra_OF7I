@@ -178,8 +178,9 @@ func TestGenerateSQLQuery(t *testing.T) {
 				AND bucket IN ("postsubmit")
 				AND (critical != "NO" OR critical is NULL)
 		`
-		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
+		actual, err := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+		So(err, ShouldBeNil)
 	})
 
 	Convey("Test generate SQL query for fuchsia", t, func() {
@@ -221,45 +222,14 @@ func TestGenerateSQLQuery(t *testing.T) {
 			LIMIT
 				1000
 		`
-		actual := generateSQLQuery(c, treeName, "sheriff-o-matic")
+		actual, err := generateSQLQuery(c, treeName, "sheriff-o-matic")
 		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+		So(err, ShouldBeNil)
 	})
 
-	Convey("Test generate SQL query for default builders", t, func() {
-		expected := `
-			SELECT
-			  Project,
-			  Bucket,
-			  Builder,
-			  MasterName,
-			  StepName,
-			  TestNamesFingerprint,
-			  TestNamesTrunc,
-			  NumTests,
-			  BuildIdBegin,
-			  BuildIdEnd,
-			  BuildNumberBegin,
-			  BuildNumberEnd,
-			  CPRangeOutputBegin,
-			  CPRangeOutputEnd,
-			  CPRangeInputBegin,
-			  CPRangeInputEnd,
-			  CulpritIdRangeBegin,
-			  CulpritIdRangeEnd,
-			  StartTime,
-			  BuildStatus
-			FROM
-				` + "`sheriff-o-matic.chromium.sheriffable_failures`" + `
-			WHERE
-				(Project = "builder" OR MasterName = "builder")
-				AND Bucket NOT IN ("try", "cq", "staging", "general")
-				AND (Mastername IS NULL OR Mastername NOT LIKE "%.fyi")
-				AND Builder NOT LIKE "%bisect%"
-			LIMIT
-				1000
-		`
-		actual := generateSQLQuery(c, "builder", "sheriff-o-matic")
-		So(formatQuery(actual), ShouldEqual, formatQuery(expected))
+	Convey("Test generate SQL query for invalid tree", t, func() {
+		_, err := generateSQLQuery(c, "abc", "sheriff-o-matic")
+		So(err, ShouldNotBeNil)
 	})
 }
 
@@ -1342,6 +1312,8 @@ func TestGetFilterFuncForTree(t *testing.T) {
 		_, err = getFilterFuncForTree("ios")
 		So(err, ShouldBeNil)
 		_, err = getFilterFuncForTree("chrome_browser_release")
+		So(err, ShouldBeNil)
+		_, err = getFilterFuncForTree("chromium.clang")
 		So(err, ShouldBeNil)
 		_, err = getFilterFuncForTree("another")
 		So(err, ShouldNotBeNil)
