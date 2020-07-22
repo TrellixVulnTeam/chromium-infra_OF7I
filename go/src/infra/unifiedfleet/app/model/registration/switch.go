@@ -184,3 +184,15 @@ func DeleteSwitches(ctx context.Context, resourceNames []string) *ufsds.OpResult
 	}
 	return ufsds.DeleteAll(ctx, protos, newSwitchEntity)
 }
+
+// BatchDeleteSwitches deletes switches in datastore.
+//
+// This is a non-atomic operation. Must be used within a transaction.
+// Will lead to partial deletes if not used in a transaction.
+func BatchDeleteSwitches(ctx context.Context, ids []string) error {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &ufspb.Switch{Name: id}
+	}
+	return ufsds.BatchDelete(ctx, protos, newSwitchEntity)
+}

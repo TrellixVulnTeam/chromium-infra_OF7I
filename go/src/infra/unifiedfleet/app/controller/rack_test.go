@@ -167,25 +167,23 @@ func TestDeleteRack(t *testing.T) {
 			rack1 := &ufspb.Rack{
 				Name: "rack-3",
 			}
-			resp, cerr := registration.CreateRack(ctx, rack1)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, rack1)
+			_, err := registration.CreateRack(ctx, rack1)
+			So(err, ShouldBeNil)
 
 			rackLSE1 := &ufspb.RackLSE{
 				Name:  "racklse-1",
 				Racks: []string{"rack-3"},
 			}
-			mresp, merr := inventory.CreateRackLSE(ctx, rackLSE1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, rackLSE1)
+			_, err = inventory.CreateRackLSE(ctx, rackLSE1)
+			So(err, ShouldBeNil)
 
-			err := DeleteRack(ctx, "rack-3")
+			err = DeleteRack(ctx, "rack-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
-			resp, cerr = registration.GetRack(ctx, "rack-3")
+			resp, err := registration.GetRack(ctx, "rack-3")
 			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
+			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rack1)
 
 			// No changes are recorded as the deletion fails
@@ -193,21 +191,82 @@ func TestDeleteRack(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
+
 		Convey("Delete rack by existing ID without references", func() {
 			rack2 := &ufspb.Rack{
 				Name: "rack-4",
 			}
-			resp, cerr := registration.CreateRack(ctx, rack2)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, rack2)
-			err := DeleteRack(ctx, "rack-4")
+			_, err := registration.CreateRack(ctx, rack2)
 			So(err, ShouldBeNil)
-			res, err := registration.GetRack(ctx, "rack-4")
-			So(res, ShouldBeNil)
+
+			err = DeleteRack(ctx, "rack-4")
+			So(err, ShouldBeNil)
+
+			resp, err := registration.GetRack(ctx, "rack-4")
+			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
+		})
+
+		Convey("Delete rack with switches, kvms and rpms - happy path", func() {
+			kvm := &ufspb.KVM{
+				Name: "kvm-5",
+			}
+			_, err := registration.CreateKVM(ctx, kvm)
+			So(err, ShouldBeNil)
+
+			rpm := &ufspb.RPM{
+				Name: "rpm-5",
+			}
+			_, err = registration.CreateRPM(ctx, rpm)
+			So(err, ShouldBeNil)
+
+			switch5 := &ufspb.Switch{
+				Name: "switch-5",
+			}
+			_, err = registration.CreateSwitch(ctx, switch5)
+			So(err, ShouldBeNil)
+
+			rack := &ufspb.Rack{
+				Name: "rack-5",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+						Switches: []string{"switch-5"},
+						Kvms:     []string{"kvm-5"},
+						Rpms:     []string{"rpm-5"},
+					},
+				},
+			}
+			_, err = registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			err = DeleteRack(ctx, "rack-5")
+			So(err, ShouldBeNil)
+
+			_, err = registration.GetRack(ctx, "rack-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = registration.GetKVM(ctx, "kvm-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = registration.GetRPM(ctx, "rpm-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = registration.GetSwitch(ctx, "switch-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)

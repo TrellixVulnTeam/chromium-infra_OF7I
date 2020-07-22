@@ -119,16 +119,67 @@ func ListRacks(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.
 // Delete if this Rack is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteRack(ctx context.Context, id string) error {
-	err := validateDeleteRack(ctx, id)
-	if err != nil {
+	// [TODO]: Add logic for Chrome OS
+	var rack *ufspb.Rack
+	var err error
+	f := func(ctx context.Context) error {
+		// 1. Get the rack
+		rack, err = registration.GetRack(ctx, id)
+		if status.Code(err) == codes.Internal {
+			return err
+		}
+		if rack == nil {
+			return status.Errorf(codes.NotFound, ufsds.NotFound)
+		}
+
+		// 2. Check if any other resource references this rack.
+		if err = validateDeleteRack(ctx, id); err != nil {
+			return err
+		}
+
+		//Only for a browser rack
+		if rack.GetChromeBrowserRack() != nil {
+			// 3. Delete the switches
+			if switchIDs := rack.GetChromeBrowserRack().GetSwitches(); switchIDs != nil {
+				// we use this func as it is a non-atomic operation and can be used to
+				// run within a transaction to make it atomic. Datastore doesnt allow
+				// nested transactions.
+				if err = registration.BatchDeleteSwitches(ctx, switchIDs); err != nil {
+					return errors.Annotate(err, "Failed to delete associated switches %s", switchIDs).Err()
+				}
+			}
+
+			// 4. Delete the KVMs
+			if kvmIDs := rack.GetChromeBrowserRack().GetKvms(); kvmIDs != nil {
+				// we use this func as it is a non-atomic operation and can be used to
+				// run within a transaction to make it atomic. Datastore doesnt allow
+				// nested transactions.
+				if err = registration.BatchDeleteKVMs(ctx, kvmIDs); err != nil {
+					return errors.Annotate(err, "Failed to delete associated KVMs %s", kvmIDs).Err()
+				}
+			}
+
+			// 5. Delete the RPMs
+			if rpmIDs := rack.GetChromeBrowserRack().GetRpms(); rpmIDs != nil {
+				// we use this func as it is a non-atomic operation and can be used to
+				// run within a transaction to make it atomic. Datastore doesnt allow
+				// nested transactions.
+				if err = registration.BatchDeleteRPMs(ctx, rpmIDs); err != nil {
+					return errors.Annotate(err, "Failed to delete associated RPMs %s", rpmIDs).Err()
+				}
+			}
+		}
+
+		// 6. Delete the rack
+		return registration.DeleteRack(ctx, id)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete rack and its associated switches, rpms and kvms in datastore: %s", err)
 		return err
 	}
-	oldR, _ := registration.GetRack(ctx, id)
-	err = registration.DeleteRack(ctx, id)
-	if err == nil {
-		SaveChangeEvents(ctx, LogRackChanges(oldR, nil))
-	}
-	return err
+	SaveChangeEvents(ctx, LogRackChanges(rack, nil))
+	return nil
 }
 
 // ReplaceRack replaces an old Rack with new Rack in datastore

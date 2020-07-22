@@ -219,3 +219,15 @@ func DeleteKVMs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	}
 	return ufsds.DeleteAll(ctx, protos, newKVMEntity)
 }
+
+// BatchDeleteKVMs deletes kvms in datastore.
+//
+// This is a non-atomic operation. Must be used within a transaction.
+// Will lead to partial deletes if not used in a transaction.
+func BatchDeleteKVMs(ctx context.Context, ids []string) error {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &ufspb.KVM{Name: id}
+	}
+	return ufsds.BatchDelete(ctx, protos, newKVMEntity)
+}

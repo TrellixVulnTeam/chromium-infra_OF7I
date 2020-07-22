@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 )
 
 // RPMKind is the datastore entity kind RPM.
@@ -26,21 +26,21 @@ const RPMKind string = "RPM"
 type RPMEntity struct {
 	_kind string `gae:"$kind,RPM"`
 	ID    string `gae:"$id"`
-	// fleet.RPM cannot be directly used as it contains pointer.
+	// ufspb.RPM cannot be directly used as it contains pointer.
 	RPM []byte `gae:",noindex"`
 }
 
 // GetProto returns the unmarshaled RPM.
 func (e *RPMEntity) GetProto() (proto.Message, error) {
-	var p fleet.RPM
+	var p ufspb.RPM
 	if err := proto.Unmarshal(e.RPM, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newRPMEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.RPM)
+func newRPMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.RPM)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty RPM ID").Err()
 	}
@@ -55,20 +55,20 @@ func newRPMEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, e
 }
 
 // CreateRPM creates a new RPM in datastore.
-func CreateRPM(ctx context.Context, RPM *fleet.RPM) (*fleet.RPM, error) {
+func CreateRPM(ctx context.Context, RPM *ufspb.RPM) (*ufspb.RPM, error) {
 	return putRPM(ctx, RPM, false)
 }
 
 // UpdateRPM updates RPM in datastore.
-func UpdateRPM(ctx context.Context, RPM *fleet.RPM) (*fleet.RPM, error) {
+func UpdateRPM(ctx context.Context, RPM *ufspb.RPM) (*ufspb.RPM, error) {
 	return putRPM(ctx, RPM, true)
 }
 
 // GetRPM returns RPM for the given id from datastore.
-func GetRPM(ctx context.Context, id string) (*fleet.RPM, error) {
-	pm, err := fleetds.Get(ctx, &fleet.RPM{Name: id}, newRPMEntity)
+func GetRPM(ctx context.Context, id string) (*ufspb.RPM, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.RPM{Name: id}, newRPMEntity)
 	if err == nil {
-		return pm.(*fleet.RPM), err
+		return pm.(*ufspb.RPM), err
 	}
 	return nil, err
 }
@@ -77,8 +77,8 @@ func GetRPM(ctx context.Context, id string) (*fleet.RPM, error) {
 //
 // Does a query over RPM entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.RPM, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, RPMKind, pageSize, pageToken)
+func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.RPM, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, RPMKind, pageSize, pageToken)
 	if err != nil {
 		return nil, "", err
 	}
@@ -89,7 +89,7 @@ func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.RPM))
+		res = append(res, pm.(*ufspb.RPM))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
@@ -100,7 +100,7 @@ func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List RPMs %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -110,14 +110,26 @@ func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 
 // DeleteRPM deletes the RPM in datastore
 func DeleteRPM(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.RPM{Name: id}, newRPMEntity)
+	return ufsds.Delete(ctx, &ufspb.RPM{Name: id}, newRPMEntity)
 }
 
-func putRPM(ctx context.Context, RPM *fleet.RPM, update bool) (*fleet.RPM, error) {
+func putRPM(ctx context.Context, RPM *ufspb.RPM, update bool) (*ufspb.RPM, error) {
 	RPM.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, RPM, newRPMEntity, update)
+	pm, err := ufsds.Put(ctx, RPM, newRPMEntity, update)
 	if err == nil {
-		return pm.(*fleet.RPM), err
+		return pm.(*ufspb.RPM), err
 	}
 	return nil, err
+}
+
+// BatchDeleteRPMs deletes rpms in datastore.
+//
+// This is a non-atomic operation. Must be used within a transaction.
+// Will lead to partial deletes if not used in a transaction.
+func BatchDeleteRPMs(ctx context.Context, ids []string) error {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &ufspb.RPM{Name: id}
+	}
+	return ufsds.BatchDelete(ctx, protos, newRPMEntity)
 }
