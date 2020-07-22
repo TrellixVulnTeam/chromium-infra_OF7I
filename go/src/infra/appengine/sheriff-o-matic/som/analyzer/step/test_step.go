@@ -5,75 +5,11 @@
 package step
 
 import (
-	"fmt"
 	"strings"
 
 	te "infra/appengine/sheriff-o-matic/som/testexpectations"
 	"infra/monitoring/messages"
 )
-
-// TestFailure is a failure of a single test suite. May include multiple test cases.
-// Can also include information about failure causes, including findit information.
-type TestFailure struct {
-	// Could be more detailed about test failures. For instance, we could
-	// indicate expected vs. actual result.
-	//FIXME: Merge TestNames and Tests.
-	TestNames []string `json:"test_names"`
-	//FIXME: Rename to TestSuite (needs to be synchronized with SOM)
-	StepName string           `json:"step"`
-	Tests    []TestWithResult `json:"tests"`
-	// For test-results in SoM
-	AlertTestResults []messages.AlertTestResults `json:"alert_test_results"`
-}
-
-// Signature implements the ReasonRaw interface
-func (t *TestFailure) Signature() string {
-	if len(t.TestNames) == 0 {
-		return t.StepName
-	}
-	return strings.Join(t.TestNames, ",")
-}
-
-// testTrunc returns the test name, potentially truncated.
-func (t *TestFailure) testTrunc() string {
-	if len(t.TestNames) > 1 {
-		return fmt.Sprintf("%s and %d other(s)", t.TestNames[0], len(t.TestNames)-1)
-	}
-
-	split := strings.Split(t.TestNames[0], "/")
-	// If the test name has a URL in it with https:, don't split it up and truncate.
-	// If we did try that, the test name would be basically nonsense. Just show the full
-	// thing, even if it's a bit large.
-	if len(split) > 2 && !(contains(split, "https:") || contains(split, "http:")) {
-		split = []string{split[0], "...", split[len(split)-1]}
-	}
-	return strings.Join(split, "/")
-}
-
-// Kind implements the ReasonRaw interface
-func (t *TestFailure) Kind() string {
-	return "test"
-}
-
-// Severity implements the ReasonRaw interface
-func (t *TestFailure) Severity() messages.Severity {
-	return messages.NoSeverity
-}
-
-// Title implements the ReasonRaw interface
-func (t *TestFailure) Title(bses []*messages.BuildStep) string {
-	f := bses[0]
-	name := GetTestSuite(f)
-	if len(t.TestNames) > 0 {
-		name = t.testTrunc() + " in " + name
-	}
-
-	if len(bses) == 1 {
-		return fmt.Sprintf("%s failing on %s/%s", name, f.Master.Name(), f.Build.BuilderName)
-	}
-
-	return fmt.Sprintf("%s failing on multiple builders", name)
-}
 
 // ArtifactLink is a link to a test artifact left by perf tests.
 type ArtifactLink struct {

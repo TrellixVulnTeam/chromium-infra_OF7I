@@ -289,10 +289,6 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
   _hasSuspect(test) {
     return test && test.suspected_cls;
   }
-
-  _hasResultHistory(reason) {
-    return reason && reason.alert_test_results;
-  }
 }
 
 customElements.define(SomExtensionBuildFailure.is, SomExtensionBuildFailure);
