@@ -59,7 +59,7 @@ HOTLIST_ITEM_NAME_TMPL = '%s/items/{project_name}.{local_id}' % (
 
 ISSUE_NAME_TMPL = 'projects/{project}/issues/{local_id}'
 COMMENT_NAME_TMPL = '%s/comments/{comment_id}' % ISSUE_NAME_TMPL
-APPROVAL_VALUE_NAME_TMPL = '%s/approvalValues/{approval_name}' % ISSUE_NAME_TMPL
+APPROVAL_VALUE_NAME_TMPL = '%s/approvalValues/{approval_id}' % ISSUE_NAME_TMPL
 
 USER_NAME_TMPL = 'users/{user_id}'
 PROJECT_STAR_NAME_TMPL = 'users/{user_id}/projectStars/{project_name}'
@@ -72,7 +72,7 @@ COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
 COMPONENT_DEF_RE = re.compile(
     r'%s\/componentDefs\/(?P<component_id>\d+)' % PROJECT_NAME_PATTERN)
 FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_name}'
-APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_name}'
+APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_id}'
 
 
 def _GetResourceNameMatch(name, regex):
@@ -413,8 +413,9 @@ def ConvertApprovalValueNames(cnxn, issue_id, services):
       logging.info('Approval type field with id %d not found.', ad_id)
       continue
     approval_ids_to_names[ad_id] = APPROVAL_VALUE_NAME_TMPL.format(
-        project=project.project_name, local_id=issue.local_id,
-        approval_name=fd.field_name)
+        project=project.project_name,
+        local_id=issue.local_id,
+        approval_id=ad_id)
   return approval_ids_to_names
 
 # Users
@@ -796,20 +797,20 @@ def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
 def ConvertApprovalDefNames(cnxn, approval_ids, project_id, services):
   # type: (MonorailConnection, Collection[int], int, Services) ->
   #     Mapping[int, str]
-  """Takes Approval IDs and returns ApprovalDef resource names
+  """Takes Approval IDs and returns ApprovalDef resource names.
 
   Args:
     cnxn: MonorailConnection object.
-    component_ids: List of approval ids
-    project_id: project id of project this belongs to
+    approval_ids: List of Approval IDs.
+    project_id: Project ID these approvals must belong to.
     services: Services object.
 
   Returns:
-    Dict of approval ID to ApprovalDef resource name for approval defs
+    Dict of Approval ID to ApprovalDef resource name for ApprovalDefs
     that are found.
 
   Raises:
-    NoSuchProjectException if no project exists with given id.
+    NoSuchProjectException if no project exists with given ID.
   """
   project = services.project.GetProject(cnxn, project_id)
   config = services.config.GetProjectConfig(cnxn, project_id)
@@ -824,10 +825,8 @@ def ConvertApprovalDefNames(cnxn, approval_ids, project_id, services):
       logging.info(
           'Ignoring approval referencing a non-existent id: %s', approval_id)
       continue
-    approval_name = approval_def.field_name
-
     id_dict[approval_id] = APPROVAL_DEF_TMPL.format(
-        project_name=project.project_name, approval_name=approval_name)
+        project_name=project.project_name, approval_id=approval_id)
 
   return id_dict
 

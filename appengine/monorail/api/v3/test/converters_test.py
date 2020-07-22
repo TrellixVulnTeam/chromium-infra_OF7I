@@ -573,7 +573,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         content='some amendments',
         commenter='users/111',
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
-        approval='projects/proj/approvalDefs/approval_field_1',
+        approval='projects/proj/approvalDefs/%d' % self.approval_def_1_id,
         amendments=[
             issue_objects_pb2.Comment.Amendment(
                 field_name='Summary', new_or_delta_value='new',

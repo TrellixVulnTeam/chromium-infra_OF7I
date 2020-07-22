@@ -322,9 +322,11 @@ class ResourceNameConverterTest(unittest.TestCase):
     """We can create ApprovalValue resource names."""
     self.issue_1.approval_values = [tracker_pb2.ApprovalValue(
         approval_id=self.approval_def_1_id)]
+
+    expected_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
     self.assertEqual(
-        {self.approval_def_1_id:
-         'projects/proj/issues/1/approvalValues/approval_field_1'},
+        {self.approval_def_1_id: expected_name},
         rnc.ConvertApprovalValueNames(
             self.cnxn, self.issue_1.issue_id, self.services))
 
@@ -619,7 +621,7 @@ class ResourceNameConverterTest(unittest.TestCase):
 
     expected_key = self.approval_def_1_id
     expected_value = 'projects/{}/approvalDefs/{}'.format(
-        self.project_1.project_name, self.approval_def_1_name)
+        self.project_1.project_name, self.approval_def_1_id)
     self.assertEqual(outcome, {expected_key: expected_value})
 
   def testConvertApprovalDefNames_NoSuchProjectException(self):
