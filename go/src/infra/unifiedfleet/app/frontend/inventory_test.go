@@ -741,6 +741,8 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeTrue)
 			So(ips[0].GetVlan(), ShouldEqual, "browser-lab:40")
+			So(ips[0].GetId(), ShouldEqual, "browser-lab:40/3232245820")
+			So(ips[0].GetIpv4Str(), ShouldEqual, "192.168.40.60")
 		})
 	})
 }

@@ -69,4 +69,6 @@ message IP {
     uint32 ipv4 = 2;
     string vlan = 3;
     bool occupied = 4;
+    // store the string ip address
+    string ipv4_str = 5;
 }

@@ -32,8 +32,9 @@ func ParseVlan(vlan *crimsonconfig.VLAN) ([]*ufspb.IP, int, error) {
 	startIP := binary.BigEndian.Uint32(ipv4)
 	for i := 0; i < length; i++ {
 		ips[i] = &ufspb.IP{
-			Id:   getIPName(vlan.GetId(), startIP),
-			Ipv4: startIP,
+			Id:      GetIPName(GetBrowserLabName(Int64ToStr(vlan.GetId())), Int64ToStr(int64(startIP))),
+			Ipv4:    startIP,
+			Ipv4Str: IPv4IntToStr(startIP),
 		}
 		startIP++
 	}
@@ -47,15 +48,12 @@ func FormatIP(vlan int64, ipAddress string, occupied bool) *ufspb.IP {
 		return nil
 	}
 	return &ufspb.IP{
-		Id:       getIPName(vlan, ipv4),
+		Id:       GetIPName(GetBrowserLabName(Int64ToStr(vlan)), Int64ToStr(int64(ipv4))),
 		Ipv4:     ipv4,
+		Ipv4Str:  ipAddress,
 		Vlan:     GetBrowserLabName(Int64ToStr(vlan)),
 		Occupied: occupied,
 	}
-}
-
-func getIPName(vlan int64, ipv4 uint32) string {
-	return fmt.Sprintf("vlan-%d/%d", vlan, ipv4)
 }
 
 // IPv4StrToInt returns an uint32 address from the given ip address string.

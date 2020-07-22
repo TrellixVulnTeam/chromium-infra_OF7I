@@ -24,9 +24,10 @@ const IPKind string = "IP"
 // IPEntity is a datastore entity that tracks IP.
 type IPEntity struct {
 	_kind string `gae:"$kind,IP"`
-	// The internal reference ID for IP: vlan/IPv4
+	// To avoid duplication, the internal reference ID for IP: vlanName/IPv4, e.g. browser-lab:120/20123455612
 	ID       string `gae:"$id"`
 	IPv4     uint32 `gae:"ipv4"`
+	IPv4Str  string `gae:"ipv4_str"`
 	Vlan     string `gae:"vlan"`
 	Occupied bool   `gae:"occupied"`
 }
@@ -36,6 +37,7 @@ func (e *IPEntity) GetProto() (proto.Message, error) {
 	return &fleet.IP{
 		Id:       e.ID,
 		Ipv4:     e.IPv4,
+		Ipv4Str:  e.IPv4Str,
 		Vlan:     e.Vlan,
 		Occupied: e.Occupied,
 	}, nil
@@ -55,6 +57,7 @@ func newIPEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, er
 	return &IPEntity{
 		ID:       p.GetId(),
 		IPv4:     p.GetIpv4(),
+		IPv4Str:  p.GetIpv4Str(),
 		Vlan:     p.GetVlan(),
 		Occupied: p.GetOccupied(),
 	}, nil

@@ -99,6 +99,17 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 			switches = append(switches, s)
 			switchNames = append(switchNames, s.GetName())
 		}
+		// Also add the kvms which is attached to the rack in rack definitation
+		found := false
+		for _, rack := range rackToKvms[rackName] {
+			if rack == old.GetKvm() {
+				found = true
+				break
+			}
+		}
+		if !found {
+			rackToKvms[rackName] = append(rackToKvms[rackName], old.GetKvm())
+		}
 		r := &fleet.Rack{
 			Name:     rackName,
 			Location: toLocation(rackName, dcName),
