@@ -176,7 +176,7 @@ func (c *backfillRequestRun) getOriginalBuilds(ctx context.Context) ([]*bb.Build
 }
 
 func (c *backfillRequestRun) getOriginalBuildByID(ctx context.Context) (*bb.Build, error) {
-	b, err := c.bbClient.GetBuild(ctx, c.envFlags.Env().BuildbucketBuilderID(), c.buildID)
+	b, err := c.bbClient.GetBuild(ctx, c.buildID)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +198,13 @@ func isBackfillBuild(b *bb.Build) bool {
 const bbBuildSearchLimit = 100
 
 func (c *backfillRequestRun) getOriginalBuildsByTags(ctx context.Context) ([]*bb.Build, error) {
-	builds, err := c.bbClient.SearchBuildsByTags(ctx, bbBuildSearchLimit, c.envFlags.Env().BuildbucketBuilderID(), c.buildTags...)
+	env := c.envFlags.Env()
+	builder := buildbucketpb.BuilderID{
+		Project: env.BuildbucketProject,
+		Bucket:  env.BuildbucketBucket,
+		Builder: env.BuildbucketBuilder,
+	}
+	builds, err := c.bbClient.SearchBuildsByTags(ctx, bbBuildSearchLimit, &builder, c.buildTags...)
 	if err != nil {
 		return nil, err
 	}

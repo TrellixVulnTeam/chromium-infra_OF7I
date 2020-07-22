@@ -86,7 +86,7 @@ func (c *waitTaskRun) innerRunBuildbucket(a subcommands.Application, env subcomm
 		return nil, err
 	}
 
-	build, err := bClient.WaitForBuild(ctx, c.envFlags.Env().BuildbucketBuilderID(), taskID)
+	build, err := bClient.WaitForBuild(ctx, taskID)
 	if err != nil {
 		return nil, err
 	}

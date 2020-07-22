@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"go.chromium.org/luci/auth"
-	buildbucket_pb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/grpc/prpc"
 )
@@ -37,15 +36,6 @@ type Environment struct {
 
 	// UFS-specific values
 	UFSService string
-}
-
-// BuildbucketBuilderID returns a BuilderID for an environment.
-func (e Environment) BuildbucketBuilderID() *buildbucket_pb.BuilderID {
-	return &buildbucket_pb.BuilderID{
-		Project: e.BuildbucketProject,
-		Bucket:  e.BuildbucketBucket,
-		Builder: e.BuildbucketBuilder,
-	}
 }
 
 // Wrapped returns the environment wrapped in a helper type to satisfy
