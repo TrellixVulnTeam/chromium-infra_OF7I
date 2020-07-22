@@ -185,7 +185,6 @@ class AbstractTwoLevelCache(object):
   # When loading a huge number of issues from the database, do it in chunks
   # so as to avoid timeouts.
   _FETCH_BATCH_SIZE = 10000
-  redis_cnxn_pool = None
 
   def __init__(
       self,
@@ -250,7 +249,7 @@ class AbstractTwoLevelCache(object):
 
     Returns:
       A pair: hits, misses.  Where hits is {key: value} and misses is
-      a list of any keys that were not found anywhere.
+        a list of any keys that were not found anywhere.
     """
     if use_cache:
       result_dict, missed_keys = self.cache.GetAll(keys)
@@ -320,7 +319,7 @@ class AbstractTwoLevelCache(object):
 
     Returns:
       A pair: hits, misses.  Where hits is {key: value} and misses is
-      a list of any keys that were not found anywhere.
+        a list of any keys that were not found anywhere.
     """
     if self.use_redis:
       return self._ReadFromRedis(keys)
@@ -448,7 +447,7 @@ class AbstractTwoLevelCache(object):
 
     Returns:
       A pair: hits, misses.  Where hits is {key: value} and misses is
-      a list of any keys that were not found anywhere.
+        a list of any keys that were not found anywhere.
     """
     cache_hits = {}
     missing_keys = []

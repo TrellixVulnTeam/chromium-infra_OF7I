@@ -12,7 +12,6 @@ from protorpc import protobuf
 
 connection_pool = None
 
-
 def CreateRedisClient():
   # type: () -> redis.Redis
   """Creates a Redis object which implements Redis protocol and connection.
@@ -52,13 +51,12 @@ def FormatRedisKey(key, prefix=None):
 
 def VerifyRedisConnection(redis_client, msg=None):
   # type: (redis.Redis or FakeRedis, str) -> Bool
-  """Checks the connection to Redis to ensure Redis-server can be accessed.
+  """Checks the connection to Redis to ensure a connection can be established.
 
   Args:
     redis_client: client to connect and ping redis server. This can be a redis
-    or fakeRedis object.
-    msg: string for logging information about successful/unsuccessful
-    redis connections.
+      or fakeRedis object.
+    msg: string for used logging information.
 
   Returns:
     True when connection to server is valid.
