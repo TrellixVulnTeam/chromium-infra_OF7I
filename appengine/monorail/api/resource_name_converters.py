@@ -30,8 +30,7 @@ PROJECT_NAME_PATTERN = (
 PROJECT_NAME_RE = re.compile(r'%s$' % PROJECT_NAME_PATTERN)
 
 FIELD_DEF_NAME_RE = re.compile(
-    r'%s\/fieldDefs\/(?P<field_def>%s)$' %
-    (PROJECT_NAME_PATTERN, features_constants.FIELD_DEF_NAME_PATTERN))
+    r'%s\/fieldDefs\/(?P<field_def>\d+)$' % (PROJECT_NAME_PATTERN))
 
 HOTLIST_PATTERN = r'hotlists\/(?P<hotlist_id>\d+)'
 HOTLIST_NAME_RE = re.compile(r'%s$' % HOTLIST_PATTERN)
@@ -71,7 +70,7 @@ LABEL_DEF_TMPL = 'projects/{project_name}/labelDefs/{label}'
 COMPONENT_DEF_TMPL = 'projects/{project_name}/componentDefs/{component_id}'
 COMPONENT_DEF_RE = re.compile(
     r'%s\/componentDefs\/(?P<component_id>\d+)' % PROJECT_NAME_PATTERN)
-FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_name}'
+FIELD_DEF_TMPL = 'projects/{project_name}/fieldDefs/{field_id}'
 APPROVAL_DEF_TMPL = 'projects/{project_name}/approvalDefs/{approval_id}'
 
 
@@ -122,8 +121,7 @@ def _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services):
 
 def IngestFieldDefName(cnxn, name, services):
   # type: (MonorailConnection, str, Services) -> (int, int)
-  """Takes a FieldDef's resource name and returns the FieldDef's ID
-     and the Project's ID that it belongs.
+  """Ingests a FieldDef's resource name.
 
   Args:
     cnxn: MonorailConnection to the database.
@@ -131,25 +129,21 @@ def IngestFieldDefName(cnxn, name, services):
     services: Services object for connections to backend services.
 
   Returns:
-    The FieldDef's ID, and the Project's ID.
+    The Project's ID and the FieldDef's ID.
+    TODO(jessan): This order should be consistent throughout the file.
 
   Raises:
     InputException if the given name does not have a valid format.
-    NoSuchProjectException if the given project name does not exists.
-    NoSuchFieldDefException if the given field name does not exists.
+    NoSuchProjectException if the given project name does not exist.
   """
   match = _GetResourceNameMatch(name, FIELD_DEF_NAME_RE)
-  field_name = match.group('field_def')
+  field_id = int(match.group('field_def'))
   project_name = match.group('project_name')
   id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
   project_id = id_dict.get(project_name)
   if project_id is None:
     raise exceptions.NoSuchProjectException(
         'Project not found: %s.' % project_name)
-  field_id = services.config.LookupFieldID(cnxn, project_id, field_name)
-  if field_id is None:
-    raise exceptions.NoSuchFieldDefException(
-        'Field not found: %s.' % field_name)
 
   return project_id, field_id
 
@@ -195,7 +189,6 @@ def IngestHotlistItemNames(cnxn, names, services):
     project_local_id_pairs.append(
         (match.group('project_name'), int(match.group('local_id'))))
   return _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services)
-
 
 
 def ConvertHotlistName(hotlist_id):
@@ -760,19 +753,19 @@ def IngestComponentDefNames(cnxn, names, services):
 def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
   # type: (MonorailConnection, Collection[int], int, Services) ->
   #     Mapping[int, str]
-  """Takes Field IDs and returns FieldDef resource names
+  """Takes Field IDs and returns FieldDef resource names.
 
   Args:
     cnxn: MonorailConnection object.
-    component_ids: List of field ids
-    project_id: project id of project this belongs to
+    field_ids: List of Field IDs
+    project_id: project ID that each Field must belong to.
     services: Services object.
 
   Returns:
-    Dict of field ID to FieldDef resource name for field defs that are found.
+    Dict of Field ID to FieldDef resource name for FieldDefs that are found.
 
   Raises:
-    NoSuchProjectException if no project exists with given id.
+    NoSuchProjectException if no project exists with given ID.
   """
   project = services.project.GetProject(cnxn, project_id)
   config = services.config.GetProjectConfig(cnxn, project_id)
@@ -786,10 +779,8 @@ def ConvertFieldDefNames(cnxn, field_ids, project_id, services):
     if not field_def:
       logging.info('Ignoring field referencing a non-existent id: %s', field_id)
       continue
-    field_name = field_def.field_name
-
     id_dict[field_id] = FIELD_DEF_TMPL.format(
-        project_name=project.project_name, field_name=field_name)
+        project_name=project.project_name, field_id=field_id)
 
   return id_dict
 

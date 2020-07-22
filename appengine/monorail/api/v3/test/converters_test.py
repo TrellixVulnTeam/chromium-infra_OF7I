@@ -700,22 +700,22 @@ class ConverterFunctionsTest(unittest.TestCase):
         field_values=[
             issue_objects_pb2.FieldValue(
                 derivation=EXPLICIT_DERIVATION,
-                field='projects/proj/fieldDefs/test_field_1',
+                field='projects/proj/fieldDefs/%d' % self.field_def_1,
                 value=self.fv_1_value,
             ),
             issue_objects_pb2.FieldValue(
                 derivation=RULE_DERIVATION,
-                field='projects/proj/fieldDefs/test_field_1',
+                field='projects/proj/fieldDefs/%d' % self.field_def_1,
                 value=self.fv_1_value,
             ),
             issue_objects_pb2.FieldValue(
                 derivation=EXPLICIT_DERIVATION,
-                field='projects/proj/fieldDefs/days',
+                field='projects/proj/fieldDefs/%d' % self.field_def_3,
                 value='1',
             ),
             issue_objects_pb2.FieldValue(
                 derivation=RULE_DERIVATION,
-                field='projects/proj/fieldDefs/OS',
+                field='projects/proj/fieldDefs/%d' % self.field_def_4,
                 value='mac',
             )
         ],
@@ -867,58 +867,58 @@ class ConverterFunctionsTest(unittest.TestCase):
         field_values=[
             issue_objects_pb2.FieldValue(
                 derivation=EXPLICIT_DERIVATION,
-                field='projects/proj/fieldDefs/test_field_1',
+                field='projects/proj/fieldDefs/%d' % self.field_def_1,
                 value='multivalue1',
             ),
             issue_objects_pb2.FieldValue(
                 derivation=RULE_DERIVATION,
-                field='projects/proj/fieldDefs/test_field_1',
+                field='projects/proj/fieldDefs/%d' % self.field_def_1,
                 value='multivalue2',
             ),
             issue_objects_pb2.FieldValue(
                 derivation=EXPLICIT_DERIVATION,
-                field='projects/proj/fieldDefs/days',
+                field='projects/proj/fieldDefs/%d' % self.field_def_3,
                 value='1',
             ),
             issue_objects_pb2.FieldValue(
                 derivation=RULE_DERIVATION,
-                field='projects/proj/fieldDefs/OS',
+                field='projects/proj/fieldDefs/%d' % self.field_def_4,
                 value='mac',
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/test_field_2',
+                field='projects/proj/fieldDefs/%d' % self.field_def_2,
                 value='38',  # Max value not checked.
             ),
             issue_objects_pb2.FieldValue(  # Multivalue not checked.
-                field='projects/proj/fieldDefs/test_field_2',
+                field='projects/proj/fieldDefs/%d' % self.field_def_2,
                 value='0'  # Confirm we ingest 0 rather than None.
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/dogandcat',
+                field='projects/proj/fieldDefs/%d' % self.field_def_8,
                 value='users/111',
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/dogandcat',
+                field='projects/proj/fieldDefs/%d' % self.field_def_8,
                 value='users/404',  # User lookup not attempted.
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/dogandcat',
+                field='projects/proj/fieldDefs/%d' % self.field_def_8,
                 value='users/nobody@no.com',  # Parsed to '-1' for INVALID_USER.
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/catanddog',
+                field='projects/proj/fieldDefs/%d' % self.field_def_9,
                 value='2020-01-01',
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/catanddog',
+                field='projects/proj/fieldDefs/%d' % self.field_def_9,
                 value='2100-01-01',
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/catanddog',
+                field='projects/proj/fieldDefs/%d' % self.field_def_9,
                 value='1000-01-01',
             ),
             issue_objects_pb2.FieldValue(
-                field='projects/proj/fieldDefs/url',
+                field='projects/proj/fieldDefs/%d' % self.field_def_10,
                 value='garbage',
             ),
             # TODO(crbug/monorail/8050): FieldValue mistakes are ignored.
@@ -1501,7 +1501,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(len(result.field_values), 2)
     self.assertEqual(
         result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
-            self.project_1.project_name, self.field_def_1_name))
+            self.project_1.project_name, self.field_def_1))
     self.assertEqual(result.field_values[0].value, self.fv_1_value)
     self.assertEqual(result.field_values[0].derivation, EXPLICIT_DERIVATION)
     expected_name = rnc.ConvertFieldDefNames(
@@ -1526,7 +1526,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(len(result.field_values), 1)
     self.assertEqual(
         result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
-            self.project_1.project_name, self.field_def_1_name))
+            self.project_1.project_name, self.field_def_1))
     self.assertEqual(result.field_values[0].value, self.fv_1_value)
     self.assertEqual(result.field_values[0].derivation, EXPLICIT_DERIVATION)
     self.assertEqual(len(result.phases), 0)

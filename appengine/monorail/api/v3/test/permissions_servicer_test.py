@@ -76,7 +76,7 @@ class PermissionsServicerTest(unittest.TestCase):
     """We can batch get PermissionSets for fields."""
     field = self.config.field_defs[0]
     field_1_name = 'projects/%s/fieldDefs/%s' % (
-        self.project.project_name, field.field_name)
+        self.project.project_name, field.field_id)
     request = permissions_pb2.BatchGetPermissionSetsRequest(
         names=[field_1_name])
     mc = monorailcontext.MonorailContext(

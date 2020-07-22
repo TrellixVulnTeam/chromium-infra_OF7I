@@ -110,7 +110,7 @@ class ResourceNameConverterTest(unittest.TestCase):
     """We can get a FieldDef's resource name match."""
     self.assertEqual(
         rnc.IngestFieldDefName(
-            self.cnxn, 'projects/proj/fieldDefs/test_field', self.services),
+            self.cnxn, 'projects/proj/fieldDefs/123', self.services),
         (789, 123))
 
   def testIngestFieldDefName_InvalidName(self):
@@ -121,15 +121,11 @@ class ResourceNameConverterTest(unittest.TestCase):
 
     with self.assertRaises(exceptions.InputException):
       rnc.IngestFieldDefName(
-          self.cnxn, 'friend/proj/fieldDefs/test_field', self.services)
+          self.cnxn, 'garbage/proj/fieldDefs/123', self.services)
 
     with self.assertRaises(exceptions.NoSuchProjectException):
       rnc.IngestFieldDefName(
-          self.cnxn, 'projects/asdf/fieldDefs/test_field', self.services)
-
-    with self.assertRaises(exceptions.NoSuchFieldDefException):
-      rnc.IngestFieldDefName(
-          self.cnxn, 'projects/proj/fieldDefs/non-real-field', self.services)
+          self.cnxn, 'projects/garbage/fieldDefs/123', self.services)
 
   def testIngestHotlistName(self):
     """We can get a Hotlist's resource name match."""
@@ -598,9 +594,10 @@ class ResourceNameConverterTest(unittest.TestCase):
     self.assertEqual(actual, [self.component_def_1_id, self.component_def_3_id])
 
   def testConvertFieldDefNames(self):
+    """Returns resource names for fields that exist and ignores others."""
     expected_key = self.field_def_1
     expected_value = 'projects/{}/fieldDefs/{}'.format(
-        self.project_1.project_name, self.field_def_1_name)
+        self.project_1.project_name, self.field_def_1)
 
     field_ids = [self.field_def_1, self.dne_field_def_id]
     self.assertEqual(
