@@ -466,6 +466,7 @@ SPECS.update({
         UniversalSource('Django', '1.5.1'),
         UniversalSource('PeakUtils', '1.0.3'),
         UniversalSource('Phidgets', '2.1.8'),
+        UniversalSource('PyYAML', '5.3.1', pyversions=['py3']),
         UniversalSource('Pympler', '0.8'),
         UniversalSource('absl-py', '0.7.1'),
         UniversalSource('apache-beam', '2.0.0'),

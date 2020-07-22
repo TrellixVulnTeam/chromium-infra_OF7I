@@ -255,6 +255,20 @@ wheel: <
 * *windows-x64*
 * *windows-x86*
 
+## **PyYAML-py3**
+
+### 5.3.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyyaml-py3"
+  version: "version:5.3.1"
+>
+```
+
+
+* *universal*
+
 ## **Pympler**
 
 ### 0.8
