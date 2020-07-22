@@ -43,6 +43,7 @@ type AutoservArgs struct {
 	RequireSSP         bool
 	Reset              bool
 	ResultsDir         string
+	SSPBaseImageName   string
 	TestSourceBuild    string
 	UseExistingResults bool
 	Verbose            bool
@@ -121,6 +122,9 @@ func AutoservCommand(c Config, cmd *AutoservArgs) *exec.Cmd {
 	}
 	if cmd.ResultsDir != "" {
 		args = append(args, "-r", cmd.ResultsDir)
+	}
+	if cmd.SSPBaseImageName != "" {
+		args = append(args, "--ssp-base-image-name", cmd.SSPBaseImageName)
 	}
 	if cmd.TestSourceBuild != "" {
 		args = append(args, "--test_source_build", cmd.TestSourceBuild)
