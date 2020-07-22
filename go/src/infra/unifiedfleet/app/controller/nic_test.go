@@ -7,12 +7,13 @@ package controller
 import (
 	"testing"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
-	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/registration"
-
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/history"
+	"infra/unifiedfleet/app/model/registration"
 )
 
 func mockNic(id string) *ufspb.Nic {
@@ -40,6 +41,10 @@ func TestCreateNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-5 in the system.")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new nic with existing machine with nics", func() {
@@ -64,6 +69,19 @@ func TestCreateNic(t *testing.T) {
 			mresp, err := registration.GetMachine(ctx, "machine-10")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-5", "nic-20"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[nic-5]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[nic-5 nic-20]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
 		})
 
 		Convey("Create new nic with existing machine without nics", func() {
@@ -86,6 +104,19 @@ func TestCreateNic(t *testing.T) {
 			mresp, err := registration.GetMachine(ctx, "machine-15")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-25"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-25")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-15")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[nic-25]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
 		})
 
 		Convey("Create new nic with non existing switch", func() {
@@ -99,6 +130,10 @@ func TestCreateNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new nic with existing switch", func() {
@@ -117,6 +152,13 @@ func TestCreateNic(t *testing.T) {
 			resp, err := CreateNic(ctx, nic2, "machine-1")
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic2)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
 		})
 	})
 }
@@ -137,6 +179,10 @@ func TestUpdateNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-1 in the system")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update nic with non existing switch", func() {
@@ -156,6 +202,10 @@ func TestUpdateNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update nic with new machine", func() {
@@ -204,6 +254,24 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-4", "nic-3"})
+
+			// Verify the changes
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-3")
+			So(err, ShouldBeNil)
+			// No change for the updated nic
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[nic-3]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[nic-4]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[nic-4 nic-3]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
 		})
 
 		Convey("Update nic with same machine", func() {
@@ -232,6 +300,18 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, nic)
+
+			// Verify the changes
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-5")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "ab:cd:ef")
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic.mac_address")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-5")
+			So(err, ShouldBeNil)
+			// No changes in machine.nics
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update nic with non existing machine", func() {
@@ -248,6 +328,10 @@ func TestUpdateNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-6")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 	})
@@ -261,6 +345,10 @@ func TestDeleteNic(t *testing.T) {
 			err := DeleteNic(ctx, "nic-10")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Delete nic successfully by existing ID with machine reference", func() {
@@ -292,6 +380,19 @@ func TestDeleteNic(t *testing.T) {
 			So(mresp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldBeNil)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[nic-1]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
 		})
 
 		Convey("Delete nic successfully by existing ID without references", func() {
@@ -306,6 +407,13 @@ func TestDeleteNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
 		})
 	})
 }

@@ -52,6 +52,12 @@ func TestMachineRegistration(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Register machine with invalid machine(referencing non existing resources)", func() {
@@ -104,6 +110,9 @@ func TestMachineRegistration(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Register browser machine with invalid drac(referencing non existing resources)", func() {
@@ -126,6 +135,9 @@ func TestMachineRegistration(t *testing.T) {
 
 			// No changes are recorded as the registration fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-2")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -156,6 +168,18 @@ func TestMachineRegistration(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-browser-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-browser-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
 		})
 
 		Convey("Register OS machine with nics - error", func() {
@@ -175,6 +199,9 @@ func TestMachineRegistration(t *testing.T) {
 
 			// No changes are recorded as the registration fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})

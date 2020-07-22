@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server/auth"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/history"
@@ -17,6 +18,10 @@ import (
 
 // SaveChangeEvents saves change events to database
 func SaveChangeEvents(ctx context.Context, changes []*ufspb.ChangeEvent) {
+	user := auth.CurrentUser(ctx)
+	for _, c := range changes {
+		c.UserEmail = user.Email
+	}
 	_, err := history.CreateBatchChangeEvents(ctx, changes)
 	if err != nil {
 		logging.Debugf(ctx, "fail to log changes: %s", err.Error())
@@ -150,6 +155,51 @@ func LogRackChanges(oldData *ufspb.Rack, newData *ufspb.Rack) []*ufspb.ChangeEve
 	return changes
 }
 
+// LogNicChanges logs the change of the given nic.
+func LogNicChanges(oldData, newData *ufspb.Nic) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	if oldData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.NicCollection, newData.GetName()), "nic", LifeCycleRegistration)...)
+	}
+	if newData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.NicCollection, oldData.GetName()), "nic", LifeCycleRetire)...)
+	}
+	changes = append(changes, logCommon("", "nic.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logSwitchInterface(oldData.GetSwitchInterface(), newData.GetSwitchInterface())...)
+
+	// Set resource name for all changes.
+	for i := range changes {
+		changes[i].Name = util.AddPrefix(util.NicCollection, oldData.GetName())
+	}
+	return changes
+}
+
+// LogDracChanges logs the change of the given drac.
+func LogDracChanges(oldData, newData *ufspb.Drac) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	if oldData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.DracCollection, newData.GetName()), "drac", LifeCycleRegistration)...)
+	}
+	if newData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.DracCollection, oldData.GetName()), "drac", LifeCycleRetire)...)
+	}
+	changes = append(changes, logCommon("", "drac.display_name", oldData.GetDisplayName(), newData.GetDisplayName())...)
+	changes = append(changes, logCommon("", "drac.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logSwitchInterface(oldData.GetSwitchInterface(), newData.GetSwitchInterface())...)
+
+	// Set resource name for all changes.
+	for i := range changes {
+		changes[i].Name = util.AddPrefix(util.DracCollection, oldData.GetName())
+	}
+	return changes
+}
+
 func logChromeBrowserRack(oldData, newData *ufspb.ChromeBrowserRack) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon("", "rack.chrome_browser_rack.rpms", oldData.GetRpms(), newData.GetRpms())...)
@@ -213,6 +263,12 @@ func logRPMInterface(oldData, newData *ufspb.RPMInterface) []*ufspb.ChangeEvent 
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon("", "machine.chrome_browser_machine.rpm_interface.rpm", oldData.GetRpm(), newData.GetRpm())...)
 	return append(changes, logCommon("", "machine.chrome_browser_machine.rpm_interface.port", oldData.GetPort(), newData.GetPort())...)
+}
+
+func logSwitchInterface(oldData, newData *ufspb.SwitchInterface) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	changes = append(changes, logCommon("", "switch_interface.switch", oldData.GetSwitch(), newData.GetSwitch())...)
+	return append(changes, logCommon("", "switch_interface.port", oldData.GetPort(), newData.GetPort())...)
 }
 
 func logCommon(name, label string, oldValue interface{}, newValue interface{}) []*ufspb.ChangeEvent {

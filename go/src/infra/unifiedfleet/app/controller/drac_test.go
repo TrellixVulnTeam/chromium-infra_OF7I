@@ -7,12 +7,13 @@ package controller
 import (
 	"testing"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
-	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/registration"
-
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/history"
+	"infra/unifiedfleet/app/model/registration"
 )
 
 func mockDrac(id string) *ufspb.Drac {
@@ -40,6 +41,10 @@ func TestCreateDrac(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-5 in the system.")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new drac with existing machine with drac", func() {
@@ -69,6 +74,25 @@ func TestCreateDrac(t *testing.T) {
 			mresp, err := registration.GetMachine(ctx, "machine-10")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "drac-20")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-5")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "drac-5")
+			So(changes[0].GetNewValue(), ShouldEqual, "drac-20")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.drac")
 		})
 
 		Convey("Create new drac with existing machine without drac", func() {
@@ -91,6 +115,19 @@ func TestCreateDrac(t *testing.T) {
 			mresp, err := registration.GetMachine(ctx, "machine-15")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "drac-25")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-25")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-15")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "drac-25")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.drac")
 		})
 
 		Convey("Create new drac with non existing switch", func() {
@@ -104,6 +141,10 @@ func TestCreateDrac(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new drac with existing switch", func() {
@@ -142,6 +183,10 @@ func TestUpdateDrac(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Drac with DracID drac-1 in the system.")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update drac with non existing switch", func() {
@@ -161,6 +206,10 @@ func TestUpdateDrac(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update drac with new machine", func() {
@@ -197,9 +246,6 @@ func TestUpdateDrac(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			drac = &ufspb.Drac{
-				Name: "drac-3",
-			}
 			resp, err := UpdateDrac(ctx, drac, "machine-4")
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -218,6 +264,30 @@ func TestUpdateDrac(t *testing.T) {
 			_, err = registration.GetDrac(ctx, "drac-4")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Entity not found.")
+
+			// Verify the changes
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-3")
+			So(err, ShouldBeNil)
+			// No change for the updated drac
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "drac-3")
+			So(changes[0].GetNewValue(), ShouldEqual, "")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.drac")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "drac-4")
+			So(changes[0].GetNewValue(), ShouldEqual, "drac-3")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.drac")
 		})
 
 		Convey("Update drac with same machine", func() {
@@ -246,6 +316,18 @@ func TestUpdateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, drac)
+
+			// Verify the changes
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-5")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "ab:cd:ef")
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac.mac_address")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-5")
+			So(err, ShouldBeNil)
+			// No changes in machine.drac
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update drac with non existing machine", func() {
@@ -262,6 +344,10 @@ func TestUpdateDrac(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-6")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 	})
@@ -275,6 +361,10 @@ func TestDeleteDrac(t *testing.T) {
 			err := DeleteDrac(ctx, "drac-10")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Delete drac successfully by existing ID with machine reference", func() {
@@ -306,6 +396,19 @@ func TestDeleteDrac(t *testing.T) {
 			So(mresp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserMachine().GetDrac(), ShouldResemble, "")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "drac-1")
+			So(changes[0].GetNewValue(), ShouldEqual, "")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.drac")
 		})
 
 		Convey("Delete drac successfully by existing ID without references", func() {
@@ -320,6 +423,13 @@ func TestDeleteDrac(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
 		})
 	})
 }
