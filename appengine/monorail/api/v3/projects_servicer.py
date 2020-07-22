@@ -36,6 +36,9 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
     project_id = rnc.IngestProjectName(mc.cnxn, request.parent, self.services)
 
     with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProject(project_id)
+      mc.LookupLoggedInUserPerms(project)
       templates = we.ListProjectTemplates(project_id)
 
     return projects_pb2.ListIssueTemplatesResponse(
@@ -51,6 +54,10 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
           not match the previous request that provided the given page_token.
     """
     with work_env.WorkEnv(mc, self.services) as we:
+      # NOTE(crbug/monorail/7614): Until the referenced cleanup is complete,
+      # all servicer methods that are scoped to a single Project need to call
+      # mc.LookupLoggedInUserPerms.
+      #  This method does not because it may be scoped to multiple projects.
       allowed_project_ids = we.ListProjects()
       projects_dict = we.GetProjects(allowed_project_ids)
       projects = [projects_dict[proj_id] for proj_id in allowed_project_ids]

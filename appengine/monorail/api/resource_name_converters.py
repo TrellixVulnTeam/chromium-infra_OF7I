@@ -316,6 +316,29 @@ def IngestIssueNames(cnxn, names, services):
   return _IssueIdsFromLocalIds(cnxn, project_local_id_pairs, services)
 
 
+def IngestProjectFromIssue(issue_name):
+  # type: (str) -> str
+  """Takes an issue resource_name and returns its project name.
+
+  TODO(crbug/monorail/7614): This method should only be needed for the
+  workaround for the referenced issue. When the cleanup is completed, this
+  method should be able to be removed.
+
+  Args:
+    issue_name: A resource name for an issue.
+
+  Returns:
+    The project section of the resource name (e.g for 'projects/xyz/issue/1'),
+    the method would return 'xyz'. The associated project is not guaranteed to
+    exist.
+
+  Raises:
+    InputException if 'issue_name' does not have a valid format.
+  """
+  match = _GetResourceNameMatch(issue_name, ISSUE_NAME_RE)
+  return match.group('project')
+
+
 def ConvertIssueName(cnxn, issue_id, services):
   # MonorailConnection, int, Services -> str
   """Takes an Issue ID and returns the corresponding Issue resource name.

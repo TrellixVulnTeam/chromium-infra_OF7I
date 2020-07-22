@@ -277,6 +277,17 @@ class ResourceNameConverterTest(unittest.TestCase):
               'projects/proj/issues/1'
           ], self.services)
 
+  def testIngestProjectFromIssue(self):
+    self.assertEqual(rnc.IngestProjectFromIssue('projects/xyz/issues/1'), 'xyz')
+
+  def testIngestProjectFromIssue_InvalidName(self):
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestProjectFromIssue('projects/xyz')
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestProjectFromIssue('garbage')
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestProjectFromIssue('projects/xyz/issues/garbage')
+
   def testConvertCommentNames(self):
     """We can create comment names."""
     expected = {

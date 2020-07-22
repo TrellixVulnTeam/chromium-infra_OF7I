@@ -40,6 +40,9 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     """
     issue_id = rnc.IngestIssueName(mc.cnxn, request.name, self.services)
     with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProjectByName(rnc.IngestProjectFromIssue(request.name))
+      mc.LookupLoggedInUserPerms(project)
       issue = we.GetIssue(issue_id, allow_viewing_deleted=True)
     return self.converter.ConvertIssue(issue)
 
@@ -69,8 +72,11 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
                   '%s is not a child issue of %s.' % (name, request.parent))
           except exceptions.InputException as e:
             err_agg.AddErrorMessage(e.message)
-
     with work_env.WorkEnv(mc, self.services) as we:
+      # NOTE(crbug/monorail/7614): Until the referenced cleanup is complete,
+      # all servicer methods that are scoped to a single Project need to call
+      # mc.LookupLoggedInUserPerms.
+      #  This method does not because it may be scoped to multiple projects.
       issue_ids = rnc.IngestIssueNames(mc.cnxn, request.names, self.services)
       issues_by_iid = we.GetIssuesDict(issue_ids)
     return issues_pb2.BatchGetIssuesResponse(
@@ -102,6 +108,10 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     # now and after the python 3 migration.
     token = str(request.page_token)
     with work_env.WorkEnv(mc, self.services) as we:
+      # NOTE(crbug/monorail/7614): Until the referenced cleanup is complete,
+      # all servicer methods that are scoped to a single Project need to call
+      # mc.LookupLoggedInUserPerms.
+      #  This method does not because it may be scoped to multiple projects.
       list_result = we.SearchIssues(
           request.query, project_names, mc.auth.user_id, page_size,
           pager.GetStart(token), request.order_by)
@@ -126,6 +136,9 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     pager = paginator.Paginator(parent=request.parent, page_size=page_size)
 
     with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProjectByName(rnc.IngestProjectFromIssue(request.parent))
+      mc.LookupLoggedInUserPerms(project)
       list_result = we.SafeListIssueComments(
           issue_id, page_size, pager.GetStart(request.page_token))
     return issues_pb2.ListCommentsResponse(
@@ -147,6 +160,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     #   code with v3/ModifyIssue
 
     # with work_env.WorkEnv(mc, self.services) as we:
+    #   project = ... get project from template.
+    #   mc.LookupLoggedInUserPerms(project)
     #   created_issue = we.MakeIssueFromTemplate(template, description, delta)
 
     # Return newly created API issue.
@@ -155,11 +170,15 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     return issue_objects_pb2.Issue()
 
   @monorail_servicer.PRPCMethod
-  def MakeIssue(self, _mc, _request):
+  def MakeIssue(self, mc, request):
     # type: (MonorailContext, MakeIssueRequest) -> Issue
     """pRPC API method that implements MakeIssue.
 
     Raises:
       TODO(crbug/monorail/7919): Document errors when implemented
     """
+    with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProjectByName(request.parent)
+      mc.LookupLoggedInUserPerms(project)
     return issue_objects_pb2.Issue()

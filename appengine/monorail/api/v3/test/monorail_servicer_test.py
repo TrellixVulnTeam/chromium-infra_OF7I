@@ -392,22 +392,6 @@ class MonorailServicerTest(unittest.TestCase):
     finally:
       settings.read_only = orig_read_only
 
-  def testGetRequestProject(self):
-    """We get a project specified by request field project_name."""
-    # No project specified.
-    self.assertIsNone(self.svcr.GetRequestProject(self.cnxn, self.request))
-
-    # Existing project specified.
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'proj'
-    self.assertEqual(
-        self.project, self.svcr.GetRequestProject(self.cnxn, self.request))
-
-    # Bad project specified.
-    # pylint: disable=attribute-defined-outside-init
-    self.request.project_name = 'not-a-proj'
-    self.assertIsNone(self.svcr.GetRequestProject(self.cnxn, self.request))
-
   def CheckExceptionStatus(self, e, expected_code, details=None):
     mc = monorailcontext.MonorailContext(self.services)
     self.prpc_context.set_code(codes.StatusCode.OK)

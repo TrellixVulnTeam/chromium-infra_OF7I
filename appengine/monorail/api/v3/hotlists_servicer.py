@@ -26,6 +26,10 @@ class HotlistsServicer(monorail_servicer.MonorailServicer):
   .proto file. Each method does any request-specific validation, uses work_env
   to safely operate on business objects, and returns a response proto.
   """
+  # NOTE(crbug/monorail/7614): Until the referenced cleanup is complete,
+  # all servicer methods that are scoped to a single Project need to call
+  # mc.LookupLoggedInUserPerms.
+  # Methods in this file do not because hotlists can span projects.
 
   DESCRIPTION = hotlists_prpc_pb2.HotlistsServiceDescription
 

@@ -126,7 +126,9 @@ class MonorailServicer(object):
             client_id, requester_auth.email, start_time)
       mc.auth = requester_auth
       if not perms:
-        mc.LookupLoggedInUserPerms(self.GetRequestProject(mc.cnxn, request))
+        # NOTE(crbug/monorail/7614): We rely on servicer methods to call
+        # to call LookupLoggedInUserPerms() with a project when they need to.
+        mc.LookupLoggedInUserPerms(None)
 
       self.converter = converters.Converter(mc, self.services)
       response = handler(self, mc, request)
@@ -279,20 +281,6 @@ class MonorailServicer(object):
     if REQUEST_ID_HEADER in metadata:
       # TODO(jrobbins): Ignore requests with duplicate request_ids.
       logging.info('request_id: %r', metadata[REQUEST_ID_HEADER])
-
-  def GetRequestProject(self, cnxn, request):
-    """Return the Project business object that the user is viewing or None."""
-    if hasattr(request, 'project_name'):
-      project = self.services.project.GetProjectByName(
-          cnxn, request.project_name)
-      if not project:
-        logging.info(
-            'Request has project_name: %r but it does not exist.',
-            request.project_name)
-        return None
-      return project
-    else:
-      return None
 
   def ProcessException(self, e, prpc_context, mc):
     """Return True if we convert an exception to a pRPC status code."""
