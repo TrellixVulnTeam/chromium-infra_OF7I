@@ -110,13 +110,13 @@
     "name": "check changes",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@changes@client: True@@@",
-      "@@@STEP_LOG_LINE@changes@components: False@@@",
+      "@@@STEP_LOG_LINE@changes@components: True@@@",
       "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
       "@@@STEP_LOG_LINE@changes@swarming_ui: True@@@",
       "@@@STEP_LOG_LINE@changes@isolate: True@@@",
-      "@@@STEP_LOG_LINE@changes@config_service: False@@@",
+      "@@@STEP_LOG_LINE@changes@config_service: True@@@",
       "@@@STEP_LOG_LINE@changes@swarming: True@@@",
-      "@@@STEP_LOG_LINE@changes@auth_service: False@@@",
+      "@@@STEP_LOG_LINE@changes@auth_service: True@@@",
       "@@@STEP_LOG_END@changes@@@"
     ]
   },
@@ -166,6 +166,7 @@
     "name": "check changes.get change list on appengine/auth_service",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@change list@appengine/auth_service/foo.py@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },
@@ -182,6 +183,7 @@
     "name": "check changes.get change list on appengine/config_service",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@change list@appengine/config_service/foo.py@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },
@@ -198,6 +200,7 @@
     "name": "check changes.get change list on appengine/components",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@change list@appengine/components/foo.py@@@",
       "@@@STEP_LOG_END@change list@@@"
     ]
   },

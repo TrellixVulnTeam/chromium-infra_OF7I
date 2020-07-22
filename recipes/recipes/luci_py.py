@@ -27,7 +27,6 @@ def RunSteps(api):
 
   luci_dir = api.path['checkout'].join('luci')
   with api.context(cwd=luci_dir):
-    appeng_dir = luci_dir.join('appengine')
 
     with api.step.nest('check changes') as presentation:
       changes = _check_changes(api)
@@ -35,17 +34,11 @@ def RunSteps(api):
           '%s: %s' % (p, j) for p, j in changes.items()
       ]
 
-    if api.platform.is_linux:
-      with api.step.nest('auth_service'):
-        _step_run_py_tests(api, appeng_dir.join('auth_service'))
+    _step_auth_tests(api, changes)
 
-      with api.step.nest('config_service'):
-        _step_run_py_tests(api, appeng_dir.join('config_service'))
+    _step_config_tests(api, changes)
 
-      with api.step.nest('components'):
-        components_dir = appeng_dir.join('components')
-        _step_run_py_tests(api, components_dir)
-        _step_run_py_tests(api, components_dir, python3=True)
+    _step_components_tests(api, changes)
 
     _step_isolate_tests(api, changes)
 
@@ -55,9 +48,7 @@ def RunSteps(api):
 
     _step_swarming_tests(api, changes)
 
-    # swarming ui
-    if api.platform.is_linux:
-      _step_swarming_ui_tests(api, changes)
+    _step_swarming_ui_tests(api, changes)
 
 
 def _check_changes(api):
@@ -121,6 +112,49 @@ def _step_run_py_tests(api, cwd, python3=False, timeout=None, ok_ret=(0,)):
                timeout=timeout, ok_ret=ok_ret)
 
 
+def _step_auth_tests(api, changes):
+  if not api.platform.is_linux:
+    return
+
+  deps = ['auth_service', 'components']
+  if not any([changes[d] for d in deps]):
+    # skip tests when no changes on the dependencies.
+    return
+
+  auth_dir = api.path['checkout'].join('luci', 'appengine', 'auth_service')
+  with api.step.nest('auth_service'):
+    _step_run_py_tests(api, auth_dir)
+
+
+def _step_components_tests(api, changes):
+  if not api.platform.is_linux:
+    return
+
+  deps = ['components']
+  if not any([changes[d] for d in deps]):
+    # skip tests when no changes on the dependencies.
+    return
+
+  components_dir = api.path['checkout'].join('luci', 'appengine', 'components')
+  with api.step.nest('components'):
+    _step_run_py_tests(api, components_dir)
+    _step_run_py_tests(api, components_dir, python3=True)
+
+
+def _step_config_tests(api, changes):
+  if not api.platform.is_linux:
+    return
+
+  deps = ['config_service', 'components']
+  if not any([changes[d] for d in deps]):
+    # skip tests when no changes on the dependencies.
+    return
+
+  config_dir = api.path['checkout'].join('luci', 'appengine', 'config_service')
+  with api.step.nest('config_service'):
+    _step_run_py_tests(api, config_dir)
+
+
 def _step_isolate_tests(api, changes):
   if not api.platform.is_linux:
     return
@@ -182,6 +216,8 @@ def _step_swarming_bot_tests(api, changes):
 
 
 def _step_swarming_ui_tests(api, changes):
+  if not api.platform.is_linux:
+    return
   deps = ['DEPS', 'swarming_ui']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
@@ -226,6 +262,12 @@ def GenTests(api):
 
   yield (api.test('ci') + _ci_build() +
          _step_data_changed_files('client', ['client/foo.py']) +
+         _step_data_changed_files('appengine/auth_service',
+                                  ['appengine/auth_service/foo.py']) +
+         _step_data_changed_files('appengine/config_service',
+                                  ['appengine/config_service/foo.py']) +
+         _step_data_changed_files('appengine/components',
+                                  ['appengine/components/foo.py']) +
          _step_data_changed_files('appengine/isolate',
                                   ['appengine/isolate/foo.py']) +
          _step_data_changed_files('appengine/swarming',
@@ -235,6 +277,12 @@ def GenTests(api):
 
   yield (api.test('try') + _try_build() +
          _step_data_changed_files('client', ['client/foo.py']) +
+         _step_data_changed_files('appengine/auth_service',
+                                  ['appengine/auth_service/foo.py']) +
+         _step_data_changed_files('appengine/config_service',
+                                  ['appengine/config_service/foo.py']) +
+         _step_data_changed_files('appengine/components',
+                                  ['appengine/components/foo.py']) +
          _step_data_changed_files('appengine/isolate',
                                   ['appengine/isolate/foo.py']) +
          _step_data_changed_files(
