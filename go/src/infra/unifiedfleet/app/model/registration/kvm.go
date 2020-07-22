@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 )
 
 // KVMKind is the datastore entity kind KVM.
@@ -27,21 +27,21 @@ type KVMEntity struct {
 	_kind            string `gae:"$kind,KVM"`
 	ID               string `gae:"$id"`
 	ChromePlatformID string `gae:"chrome_platform_id"`
-	// fleet.KVM cannot be directly used as it contains pointer.
+	// ufspb.KVM cannot be directly used as it contains pointer.
 	KVM []byte `gae:",noindex"`
 }
 
 // GetProto returns the unmarshaled KVM.
 func (e *KVMEntity) GetProto() (proto.Message, error) {
-	var p fleet.KVM
+	var p ufspb.KVM
 	if err := proto.Unmarshal(e.KVM, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newKVMEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.KVM)
+func newKVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.KVM)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty KVM ID").Err()
 	}
@@ -59,21 +59,21 @@ func newKVMEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, e
 // QueryKVMByPropertyName query's KVM Entity in the datastore
 //
 // If keysOnly is true, then only key field is populated in returned kvms
-func QueryKVMByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.KVM, error) {
-	q := datastore.NewQuery(KVMKind).KeysOnly(keysOnly)
+func QueryKVMByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.KVM, error) {
+	q := datastore.NewQuery(KVMKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*KVMEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
-		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
 		logging.Infof(ctx, "No kvms found for the query: %s", id)
 		return nil, nil
 	}
-	kvms := make([]*fleet.KVM, 0, len(entities))
+	kvms := make([]*ufspb.KVM, 0, len(entities))
 	for _, entity := range entities {
 		if keysOnly {
-			kvm := &fleet.KVM{
+			kvm := &ufspb.KVM{
 				Name: entity.ID,
 			}
 			kvms = append(kvms, kvm)
@@ -83,27 +83,27 @@ func QueryKVMByPropertyName(ctx context.Context, propertyName, id string, keysOn
 				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
 				continue
 			}
-			kvms = append(kvms, pm.(*fleet.KVM))
+			kvms = append(kvms, pm.(*ufspb.KVM))
 		}
 	}
 	return kvms, nil
 }
 
 // CreateKVM creates a new KVM in datastore.
-func CreateKVM(ctx context.Context, KVM *fleet.KVM) (*fleet.KVM, error) {
+func CreateKVM(ctx context.Context, KVM *ufspb.KVM) (*ufspb.KVM, error) {
 	return putKVM(ctx, KVM, false)
 }
 
 // UpdateKVM updates KVM in datastore.
-func UpdateKVM(ctx context.Context, KVM *fleet.KVM) (*fleet.KVM, error) {
+func UpdateKVM(ctx context.Context, KVM *ufspb.KVM) (*ufspb.KVM, error) {
 	return putKVM(ctx, KVM, true)
 }
 
 // GetKVM returns KVM for the given id from datastore.
-func GetKVM(ctx context.Context, id string) (*fleet.KVM, error) {
-	pm, err := fleetds.Get(ctx, &fleet.KVM{Name: id}, newKVMEntity)
+func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.KVM{Name: id}, newKVMEntity)
 	if err == nil {
-		return pm.(*fleet.KVM), err
+		return pm.(*ufspb.KVM), err
 	}
 	return nil, err
 }
@@ -112,8 +112,8 @@ func GetKVM(ctx context.Context, id string) (*fleet.KVM, error) {
 //
 // Does a query over KVM entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.KVM, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, KVMKind, pageSize, pageToken)
+func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.KVM, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, KVMKind, pageSize, pageToken)
 	if err != nil {
 		return nil, "", err
 	}
@@ -124,7 +124,7 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.KVM))
+		res = append(res, pm.(*ufspb.KVM))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
@@ -135,7 +135,7 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to list KVMs %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -145,14 +145,14 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 
 // DeleteKVM deletes the KVM in datastore
 func DeleteKVM(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.KVM{Name: id}, newKVMEntity)
+	return ufsds.Delete(ctx, &ufspb.KVM{Name: id}, newKVMEntity)
 }
 
-func putKVM(ctx context.Context, KVM *fleet.KVM, update bool) (*fleet.KVM, error) {
+func putKVM(ctx context.Context, KVM *ufspb.KVM, update bool) (*ufspb.KVM, error) {
 	KVM.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, KVM, newKVMEntity, update)
+	pm, err := ufsds.Put(ctx, KVM, newKVMEntity, update)
 	if err == nil {
-		return pm.(*fleet.KVM), err
+		return pm.(*ufspb.KVM), err
 	}
 	return nil, err
 }
@@ -162,18 +162,18 @@ func putKVM(ctx context.Context, KVM *fleet.KVM, update bool) (*fleet.KVM, error
 // This is a non-atomic operation and doesnt check if the object already exists before
 // update. Must be used within a Transaction where objects are checked before update.
 // Will lead to partial updates if not used in a transaction.
-func BatchUpdateKVMs(ctx context.Context, kvms []*fleet.KVM) ([]*fleet.KVM, error) {
+func BatchUpdateKVMs(ctx context.Context, kvms []*ufspb.KVM) ([]*ufspb.KVM, error) {
 	return putAllKVM(ctx, kvms, true)
 }
 
-func putAllKVM(ctx context.Context, kvms []*fleet.KVM, update bool) ([]*fleet.KVM, error) {
+func putAllKVM(ctx context.Context, kvms []*ufspb.KVM, update bool) ([]*ufspb.KVM, error) {
 	protos := make([]proto.Message, len(kvms))
 	updateTime := ptypes.TimestampNow()
 	for i, kvm := range kvms {
 		kvm.UpdateTime = updateTime
 		protos[i] = kvm
 	}
-	_, err := fleetds.PutAll(ctx, protos, newKVMEntity, update)
+	_, err := ufsds.PutAll(ctx, protos, newKVMEntity, update)
 	if err == nil {
 		return kvms, err
 	}
@@ -181,23 +181,23 @@ func putAllKVM(ctx context.Context, kvms []*fleet.KVM, update bool) ([]*fleet.KV
 }
 
 // ImportKVMs creates or updates a batch of kvms in datastore.
-func ImportKVMs(ctx context.Context, kvms []*fleet.KVM) (*fleetds.OpResults, error) {
+func ImportKVMs(ctx context.Context, kvms []*ufspb.KVM) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(kvms))
 	utime := ptypes.TimestampNow()
 	for i, m := range kvms {
 		m.UpdateTime = utime
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newKVMEntity, true, true)
+	return ufsds.Insert(ctx, protos, newKVMEntity, true, true)
 }
 
-func queryAllKVM(ctx context.Context) ([]fleetds.FleetEntity, error) {
+func queryAllKVM(ctx context.Context) ([]ufsds.FleetEntity, error) {
 	var entities []*KVMEntity
 	q := datastore.NewQuery(KVMKind)
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
-	fe := make([]fleetds.FleetEntity, len(entities))
+	fe := make([]ufsds.FleetEntity, len(entities))
 	for i, e := range entities {
 		fe[i] = e
 	}
@@ -205,17 +205,17 @@ func queryAllKVM(ctx context.Context) ([]fleetds.FleetEntity, error) {
 }
 
 // GetAllKVMs returns all kvms in datastore.
-func GetAllKVMs(ctx context.Context) (*fleetds.OpResults, error) {
-	return fleetds.GetAll(ctx, queryAllKVM)
+func GetAllKVMs(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAllKVM)
 }
 
 // DeleteKVMs deletes a batch of kvms
-func DeleteKVMs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+func DeleteKVMs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {
-		protos[i] = &fleet.KVM{
+		protos[i] = &ufspb.KVM{
 			Name: m,
 		}
 	}
-	return fleetds.DeleteAll(ctx, protos, newKVMEntity)
+	return ufsds.DeleteAll(ctx, protos, newKVMEntity)
 }

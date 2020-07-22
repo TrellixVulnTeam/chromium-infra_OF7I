@@ -454,6 +454,9 @@ func (r *CreateKVMRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	if r.Rack == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyRackName)
+	}
 	return nil
 }
 

@@ -9,46 +9,114 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // CreateKVM creates a new kvm in datastore.
-//
-// Checks if the resources referenced by the KVM input already exists
-// in the system before creating a new KVM
-func CreateKVM(ctx context.Context, kvm *fleet.KVM) (*fleet.KVM, error) {
-	err := validateKVM(ctx, kvm)
-	if err != nil {
+func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM, error) {
+	// TODO(eshwarn): Add logic for Chrome OS
+	f := func(ctx context.Context) error {
+		// 1. Validate the input
+		if err := validateCreateKVM(ctx, kvm, rackName); err != nil {
+			return err
+		}
+
+		// 2. Get rack to associate the kvm
+		rack, err := GetRack(ctx, rackName)
+		if err != nil {
+			return err
+		}
+
+		// 3. Update the rack with new kvm information
+		if err = addKVMToRack(ctx, rack, kvm.Name); err != nil {
+			return err
+		}
+
+		// 4. Create a kvm entry
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction to make it atomic. Datastore doesnt allow
+		// nested transactions.
+		if _, err = registration.BatchUpdateKVMs(ctx, []*ufspb.KVM{kvm}); err != nil {
+			return errors.Annotate(err, "Unable to create kvm %s", kvm.Name).Err()
+		}
+		return nil
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to create kvm in datastore: %s", err)
 		return nil, err
 	}
-	return registration.CreateKVM(ctx, kvm)
+	return kvm, nil
 }
 
 // UpdateKVM updates kvm in datastore.
-//
-// Checks if the resources referenced by the KVM input already exists
-// in the system before updating a KVM
-func UpdateKVM(ctx context.Context, kvm *fleet.KVM) (*fleet.KVM, error) {
-	err := validateKVM(ctx, kvm)
-	if err != nil {
+func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM, error) {
+	// TODO(eshwarn): Add logic for Chrome OS
+	f := func(ctx context.Context) error {
+		// 1. Validate the input
+		if err := validateUpdateKVM(ctx, kvm, rackName); err != nil {
+			return err
+		}
+
+		if rackName != "" {
+			// 2. Get the old rack associated with kvm
+			oldRack, err := getRackForKVM(ctx, kvm.Name)
+			if err != nil {
+				return err
+			}
+
+			// User is trying to associate this kvm with a different rack.
+			if oldRack.Name != rackName {
+				// 3. Get rack to associate the kvm
+				rack, err := GetRack(ctx, rackName)
+				if err != nil {
+					return err
+				}
+
+				// 4. Remove the association between old rack and this kvm.
+				if err = removeKVMFromRacks(ctx, []*ufspb.Rack{oldRack}, kvm.Name); err != nil {
+					return err
+				}
+
+				// 5. Update the rack with new kvm information
+				if err = addKVMToRack(ctx, rack, kvm.Name); err != nil {
+					return err
+				}
+			}
+		}
+
+		// 6. Update kvm entry
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction. Datastore doesnt allow nested transactions.
+		if _, err := registration.BatchUpdateKVMs(ctx, []*ufspb.KVM{kvm}); err != nil {
+			return errors.Annotate(err, "Unable to update kvm %s", kvm.Name).Err()
+		}
+		return nil
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to update kvm in datastore: %s", err)
 		return nil, err
 	}
-	return registration.UpdateKVM(ctx, kvm)
+	return kvm, nil
 }
 
 // GetKVM returns kvm for the given id from datastore.
-func GetKVM(ctx context.Context, id string) (*fleet.KVM, error) {
+func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
 	return registration.GetKVM(ctx, id)
 }
 
 // ListKVMs lists the kvms
-func ListKVMs(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.KVM, string, error) {
+func ListKVMs(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.KVM, string, error) {
 	return registration.ListKVMs(ctx, pageSize, pageToken)
 }
 
@@ -75,27 +143,9 @@ func DeleteKVM(ctx context.Context, id string) error {
 // Deletes the old KVM.
 // Creates the new KVM.
 // This will preserve data integrity in the system.
-func ReplaceKVM(ctx context.Context, oldKVM *fleet.KVM, newKVM *fleet.KVM) (*fleet.KVM, error) {
+func ReplaceKVM(ctx context.Context, oldKVM *ufspb.KVM, newKVM *ufspb.KVM) (*ufspb.KVM, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
-}
-
-// validateKVM validates if a kvm can be created/updated in the datastore.
-//
-// Checks if the resources referenced by the given KVM input already exists
-// in the system. Returns an error if any resource referenced by the KVM input
-// does not exist in the system.
-func validateKVM(ctx context.Context, kvm *fleet.KVM) error {
-	var resources []*Resource
-	var errorMsg strings.Builder
-	errorMsg.WriteString(fmt.Sprintf("Cannot create KVM %s:\n", kvm.Name))
-
-	chromePlatformID := kvm.GetChromePlatform()
-	if chromePlatformID != "" {
-		resources = append(resources, GetChromePlatformResource(chromePlatformID))
-	}
-
-	return ResourceExist(ctx, resources, &errorMsg)
 }
 
 // validateDeleteKVM validates if a KVM can be deleted
@@ -138,6 +188,105 @@ func validateDeleteKVM(ctx context.Context, id string) error {
 		}
 		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+	}
+	return nil
+}
+
+// validateCreateKVM validates if a kvm can be created
+//
+// check if the kvm already exists
+// check if the rack and resources referenced by kvm does not exist
+func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) error {
+	// 1. Check if kvm already exists
+	if err := resourceAlreadyExists(ctx, []*Resource{GetKVMResource(kvm.Name)}, nil); err != nil {
+		return err
+	}
+
+	// Aggregate resource to check if rack does not exist
+	resourcesNotFound := []*Resource{GetRackResource(rackName)}
+	// Aggregate resource to check if resources referenced by the kvm does not exist
+	if chromePlatformID := kvm.GetChromePlatform(); chromePlatformID != "" {
+		resourcesNotFound = append(resourcesNotFound, GetChromePlatformResource(chromePlatformID))
+	}
+	// 2. Check if resources does not exist
+	return ResourceExist(ctx, resourcesNotFound, nil)
+}
+
+// validateUpdateKVM validates if a kvm can be updated
+//
+// check if kvm, rack and resources referenced kvm does not exist
+func validateUpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) error {
+	// Aggregate resource to check if kvm does not exist
+	resourcesNotFound := []*Resource{GetKVMResource(kvm.Name)}
+	// Aggregate resource to check if rack does not exist
+	if rackName != "" {
+		resourcesNotFound = append(resourcesNotFound, GetRackResource(rackName))
+	}
+	// Aggregate resource to check if resources referenced by the kvm does not exist
+	if chromePlatformID := kvm.GetChromePlatform(); chromePlatformID != "" {
+		resourcesNotFound = append(resourcesNotFound, GetChromePlatformResource(chromePlatformID))
+	}
+	// Check if resources does not exist
+	return ResourceExist(ctx, resourcesNotFound, nil)
+}
+
+// addKVMToRack adds the kvm info to the rack and updates
+// the rack in datastore.
+// Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
+func addKVMToRack(ctx context.Context, rack *ufspb.Rack, kvmName string) error {
+	if rack == nil {
+		return status.Errorf(codes.FailedPrecondition, "Rack is nil")
+	}
+	if rack.GetChromeBrowserRack() == nil {
+		errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
+		return status.Errorf(codes.FailedPrecondition, errorMsg)
+	}
+	kvms := []string{kvmName}
+	if rack.GetChromeBrowserRack().GetKvms() != nil {
+		kvms = rack.GetChromeBrowserRack().GetKvms()
+		kvms = append(kvms, kvmName)
+	}
+	rack.GetChromeBrowserRack().Kvms = kvms
+	_, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack})
+	if err != nil {
+		return errors.Annotate(err, "Unable to update rack %s with kvm %s information", rack.Name, kvmName).Err()
+	}
+	return nil
+}
+
+// getRackForKVM return rack associated with the kvm.
+func getRackForKVM(ctx context.Context, kvmName string) (*ufspb.Rack, error) {
+	racks, err := registration.QueryRackByPropertyName(ctx, "kvm_ids", kvmName, false)
+	if err != nil {
+		return nil, errors.Annotate(err, "Unable to query rack for kvm %s", kvmName).Err()
+	}
+	if racks == nil || len(racks) == 0 {
+		errorMsg := fmt.Sprintf("No rack associated with the kvm %s. Data discrepancy error.\n", kvmName)
+		return nil, status.Errorf(codes.Internal, errorMsg)
+	}
+	if len(racks) > 1 {
+		errorMsg := fmt.Sprintf("More than one rack associated the kvm %s. Data discrepancy error.\n", kvmName)
+		return nil, status.Errorf(codes.Internal, errorMsg)
+	}
+	return racks[0], nil
+}
+
+// removeKVMFromRacks removes the kvm info from racks and
+// updates the racks in datastore.
+// Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
+func removeKVMFromRacks(ctx context.Context, racks []*ufspb.Rack, id string) error {
+	for _, rack := range racks {
+		if rack.GetChromeBrowserRack() == nil {
+			errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
+			return status.Errorf(codes.FailedPrecondition, errorMsg)
+		}
+		kvms := rack.GetChromeBrowserRack().GetKvms()
+		kvms = ufsUtil.RemoveStringEntry(kvms, id)
+		rack.GetChromeBrowserRack().Kvms = kvms
+	}
+	_, err := registration.BatchUpdateRacks(ctx, racks)
+	if err != nil {
+		return errors.Annotate(err, "Unable to remove kvm information %s from rack", id).Err()
 	}
 	return nil
 }

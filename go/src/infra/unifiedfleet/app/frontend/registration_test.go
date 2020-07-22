@@ -1296,34 +1296,30 @@ func TestCreateKVM(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	KVM1 := mockKVM("")
-	KVM2 := mockKVM("")
-	KVM3 := mockKVM("")
+	rack1 := &proto.Rack{
+		Name: "rack-1",
+		Rack: &proto.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &proto.ChromeBrowserRack{},
+		},
+	}
+	registration.CreateRack(tf.C, rack1)
 	Convey("CreateKVM", t, func() {
 		Convey("Create new KVM with KVM_id", func() {
+			KVM1 := mockKVM("")
 			req := &api.CreateKVMRequest{
 				KVM:   KVM1,
 				KVMId: "KVM-1",
+				Rack:  "rack-1",
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, KVM1)
 		})
 
-		Convey("Create existing KVM", func() {
-			req := &api.CreateKVMRequest{
-				KVM:   KVM3,
-				KVMId: "KVM-1",
-			}
-			resp, err := tf.Fleet.CreateKVM(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, AlreadyExists)
-		})
-
 		Convey("Create new KVM - Invalid input nil", func() {
 			req := &api.CreateKVMRequest{
-				KVM: nil,
+				KVM:  nil,
+				Rack: "rack-1",
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1333,8 +1329,9 @@ func TestCreateKVM(t *testing.T) {
 
 		Convey("Create new KVM - Invalid input empty ID", func() {
 			req := &api.CreateKVMRequest{
-				KVM:   KVM2,
+				KVM:   mockKVM(""),
 				KVMId: "",
+				Rack:  "rack-1",
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1344,13 +1341,25 @@ func TestCreateKVM(t *testing.T) {
 
 		Convey("Create new KVM - Invalid input invalid characters", func() {
 			req := &api.CreateKVMRequest{
-				KVM:   KVM2,
+				KVM:   mockKVM(""),
 				KVMId: "a.b)7&",
+				Rack:  "rack-1",
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+
+		Convey("Create new kvm - Invalid input empty rack", func() {
+			req := &api.CreateKVMRequest{
+				KVM:   mockKVM("x"),
+				KVMId: "kvm-5",
+			}
+			resp, err := tf.Fleet.CreateKVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyRackName)
 		})
 	})
 }
@@ -1360,40 +1369,37 @@ func TestUpdateKVM(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	KVM1 := mockKVM("")
-	KVM2 := mockKVM("KVM-1")
-	KVM3 := mockKVM("KVM-3")
-	KVM4 := mockKVM("a.b)7&")
+	rack1 := &proto.Rack{
+		Name: "rack-1",
+		Rack: &proto.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &proto.ChromeBrowserRack{
+				Kvms: []string{"KVM-1"},
+			},
+		},
+	}
+	registration.CreateRack(tf.C, rack1)
 	Convey("UpdateKVM", t, func() {
 		Convey("Update existing KVM", func() {
-			req := &api.CreateKVMRequest{
-				KVM:   KVM1,
-				KVMId: "KVM-1",
+			KVM1 := &proto.KVM{
+				Name: "KVM-1",
 			}
-			resp, err := tf.Fleet.CreateKVM(tf.C, req)
+			resp, err := registration.CreateKVM(tf.C, KVM1)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, KVM1)
+
+			KVM2 := mockKVM("KVM-1")
 			ureq := &api.UpdateKVMRequest{
-				KVM: KVM2,
+				KVM:  KVM2,
+				Rack: "rack-1",
 			}
 			resp, err = tf.Fleet.UpdateKVM(tf.C, ureq)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, KVM2)
 		})
 
-		Convey("Update non-existing KVM", func() {
-			ureq := &api.UpdateKVMRequest{
-				KVM: KVM3,
-			}
-			resp, err := tf.Fleet.UpdateKVM(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
-
 		Convey("Update KVM - Invalid input nil", func() {
 			req := &api.UpdateKVMRequest{
-				KVM: nil,
+				KVM:  nil,
+				Rack: "rack-1",
 			}
 			resp, err := tf.Fleet.UpdateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1402,9 +1408,11 @@ func TestUpdateKVM(t *testing.T) {
 		})
 
 		Convey("Update KVM - Invalid input empty name", func() {
+			KVM3 := mockKVM("KVM-3")
 			KVM3.Name = ""
 			req := &api.UpdateKVMRequest{
-				KVM: KVM3,
+				KVM:  KVM3,
+				Rack: "rack-1",
 			}
 			resp, err := tf.Fleet.UpdateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1414,7 +1422,7 @@ func TestUpdateKVM(t *testing.T) {
 
 		Convey("Update KVM - Invalid input invalid characters", func() {
 			req := &api.UpdateKVMRequest{
-				KVM: KVM4,
+				KVM: mockKVM("a.b)7&"),
 			}
 			resp, err := tf.Fleet.UpdateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1430,15 +1438,14 @@ func TestGetKVM(t *testing.T) {
 		ctx := testingContext()
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
-		KVM1 := mockKVM("KVM-1")
-		req := &api.CreateKVMRequest{
-			KVM:   KVM1,
-			KVMId: "KVM-1",
-		}
-		resp, err := tf.Fleet.CreateKVM(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, KVM1)
 		Convey("Get KVM by existing ID", func() {
+			KVM1 := &proto.KVM{
+				Name: "KVM-1",
+			}
+			_, err := registration.CreateKVM(tf.C, KVM1)
+			So(err, ShouldBeNil)
+			KVM1.Name = util.AddPrefix(util.KVMCollection, "KVM-1")
+
 			req := &api.GetKVMRequest{
 				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
 			}
@@ -1478,23 +1485,19 @@ func TestGetKVM(t *testing.T) {
 
 func TestListKVMs(t *testing.T) {
 	t.Parallel()
-	Convey("ListKVMs", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		KVMs := make([]*proto.KVM, 0, 4)
-		for i := 0; i < 4; i++ {
-			KVM1 := mockKVM("")
-			req := &api.CreateKVMRequest{
-				KVM:   KVM1,
-				KVMId: fmt.Sprintf("KVM-%d", i),
-			}
-			resp, err := tf.Fleet.CreateKVM(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, KVM1)
-			KVMs = append(KVMs, resp)
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	KVMs := make([]*proto.KVM, 0, 4)
+	for i := 0; i < 4; i++ {
+		kvm := &proto.KVM{
+			Name: fmt.Sprintf("kvm-%d", i),
 		}
-
+		resp, _ := registration.CreateKVM(tf.C, kvm)
+		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
+		KVMs = append(KVMs, resp)
+	}
+	Convey("ListKVMs", t, func() {
 		Convey("ListKVMs - page_size negative", func() {
 			req := &api.ListKVMsRequest{
 				PageSize: -5,
@@ -1559,19 +1562,16 @@ func TestListKVMs(t *testing.T) {
 
 func TestDeleteKVM(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("DeleteKVM", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
 		Convey("Delete KVM by existing ID with machine reference", func() {
-			KVM1 := mockKVM("")
-			req := &api.CreateKVMRequest{
-				KVM:   KVM1,
-				KVMId: "KVM-1",
+			KVM1 := &proto.KVM{
+				Name: "KVM-1",
 			}
-			resp, err := tf.Fleet.CreateKVM(tf.C, req)
+			_, err := registration.CreateKVM(tf.C, KVM1)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, KVM1)
 
 			chromeBrowserMachine1 := &proto.Machine{
 				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
@@ -1583,13 +1583,8 @@ func TestDeleteKVM(t *testing.T) {
 					},
 				},
 			}
-			mreq := &api.CreateMachineRequest{
-				Machine:   chromeBrowserMachine1,
-				MachineId: "machine-1",
-			}
-			mresp, merr := tf.Fleet.CreateMachine(tf.C, mreq)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
+			_, err = registration.CreateMachine(tf.C, chromeBrowserMachine1)
+			So(err, ShouldBeNil)
 
 			dreq := &api.DeleteKVMRequest{
 				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
@@ -1598,24 +1593,18 @@ func TestDeleteKVM(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotDelete)
 
-			greq := &api.GetKVMRequest{
-				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
-			}
-			res, err := tf.Fleet.GetKVM(tf.C, greq)
+			res, err := registration.GetKVM(tf.C, "KVM-1")
 			So(res, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(res, ShouldResembleProto, KVM1)
 		})
 
 		Convey("Delete KVM by existing ID without references", func() {
-			KVM2 := mockKVM("")
-			req := &api.CreateKVMRequest{
-				KVM:   KVM2,
-				KVMId: "KVM-2",
+			KVM2 := &proto.KVM{
+				Name: "KVM-2",
 			}
-			resp, err := tf.Fleet.CreateKVM(tf.C, req)
+			_, err := registration.CreateKVM(tf.C, KVM2)
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, KVM2)
 
 			dreq := &api.DeleteKVMRequest{
 				Name: util.AddPrefix(util.KVMCollection, "KVM-2"),
@@ -1623,11 +1612,7 @@ func TestDeleteKVM(t *testing.T) {
 			_, err = tf.Fleet.DeleteKVM(tf.C, dreq)
 			So(err, ShouldBeNil)
 
-			greq := &api.GetKVMRequest{
-				Name: util.AddPrefix(util.KVMCollection, "KVM-2"),
-			}
-			res, err := tf.Fleet.GetKVM(tf.C, greq)
-			So(res, ShouldBeNil)
+			_, err = registration.GetKVM(tf.C, "KVM-2")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})

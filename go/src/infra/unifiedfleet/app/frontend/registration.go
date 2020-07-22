@@ -450,7 +450,7 @@ func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *api.CreateKVMRequ
 		return nil, err
 	}
 	req.KVM.Name = req.KVMId
-	kvm, err := controller.CreateKVM(ctx, req.KVM)
+	kvm, err := controller.CreateKVM(ctx, req.KVM, req.Rack)
 	if err != nil {
 		return nil, err
 	}
@@ -468,7 +468,7 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *api.UpdateKVMRequ
 		return nil, err
 	}
 	req.KVM.Name = util.RemovePrefix(req.KVM.Name)
-	kvm, err := controller.UpdateKVM(ctx, req.KVM)
+	kvm, err := controller.UpdateKVM(ctx, req.KVM, req.Rack)
 	if err != nil {
 		return nil, err
 	}
