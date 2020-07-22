@@ -124,6 +124,40 @@ func LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData *ufspb.MachineLSE) 
 	return append(changes, vmChanges...)
 }
 
+// LogRackChanges logs the change of the given rack.
+func LogRackChanges(oldData *ufspb.Rack, newData *ufspb.Rack) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	if oldData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.RackCollection, newData.GetName()), "rack", LifeCycleRegistration)...)
+	}
+	if newData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.RackCollection, oldData.GetName()), "rack", LifeCycleRetire)...)
+	}
+	changes = append(changes, logCommon("", "rack.location", oldData.GetLocation(), newData.GetLocation())...)
+	changes = append(changes, logCommon("", "rack.capacity_ru", oldData.GetCapacityRu(), newData.GetCapacityRu())...)
+	changes = append(changes, logCommon("", "rack.realm", oldData.GetRealm(), newData.GetRealm())...)
+	if newData.GetChromeBrowserRack() != nil {
+		changes = append(changes, logChromeBrowserRack(oldData.GetChromeBrowserRack(), newData.GetChromeBrowserRack())...)
+	}
+
+	// Set resource name for all changes.
+	for i := range changes {
+		changes[i].Name = util.AddPrefix(util.RackCollection, oldData.GetName())
+	}
+	return changes
+}
+
+func logChromeBrowserRack(oldData, newData *ufspb.ChromeBrowserRack) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	changes = append(changes, logCommon("", "rack.chrome_browser_rack.rpms", oldData.GetRpms(), newData.GetRpms())...)
+	changes = append(changes, logCommon("", "rack.chrome_browser_rack.kvms", oldData.GetKvms(), newData.GetKvms())...)
+	changes = append(changes, logCommon("", "rack.chrome_browser_rack.switches", oldData.GetSwitches(), newData.GetSwitches())...)
+	return changes
+}
+
 func logChromeBrowserMachineLse(oldData, newData *ufspb.ChromeBrowserMachineLSE) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon("", "machine_lse.chrome_browser_machine_lse.vm_capacity", oldData.GetVmCapacity(), newData.GetVmCapacity())...)

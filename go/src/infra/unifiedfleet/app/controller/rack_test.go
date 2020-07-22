@@ -14,6 +14,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"infra/unifiedfleet/app/model/history"
 )
 
 func TestCreateRack(t *testing.T) {
@@ -33,6 +34,11 @@ func TestCreateRack(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotCreate)
+
+			// No changes are recorded as the creation fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new rack with non existing resources", func() {
@@ -50,6 +56,11 @@ func TestCreateRack(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotCreate)
+
+			// No changes are recorded as the creation fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new rack with existing resources", func() {
@@ -87,6 +98,13 @@ func TestCreateRack(t *testing.T) {
 			resp, err := CreateRack(ctx, rack2)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rack2)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
 		})
 	})
 }
@@ -119,6 +137,11 @@ func TestDeleteRack(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, rack1)
+
+			// No changes are recorded as the deletion fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 		Convey("Delete rack by existing ID without references", func() {
 			rack2 := &proto.Rack{
@@ -133,6 +156,13 @@ func TestDeleteRack(t *testing.T) {
 			So(res, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
 		})
 	})
 }
@@ -145,7 +175,7 @@ func TestReplaceRack(t *testing.T) {
 			oldRack1 := &proto.Rack{
 				Name: "rack-4",
 			}
-			resp, cerr := CreateRack(ctx, oldRack1)
+			resp, cerr := registration.CreateRack(ctx, oldRack1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, oldRack1)
 
@@ -167,20 +197,34 @@ func TestReplaceRack(t *testing.T) {
 			mresp, merr = inventory.GetRackLSE(ctx, "racklse-1")
 			So(merr, ShouldBeNil)
 			So(mresp.GetRacks(), ShouldResemble, []string{"rack-0", "rack-50", "rack-100", "rack-7"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
+
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-100")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
 		})
 
 		Convey("Repalce an old Rack with already existing rack", func() {
 			existingRack1 := &proto.Rack{
 				Name: "rack-105",
 			}
-			resp, cerr := CreateRack(ctx, existingRack1)
+			resp, cerr := registration.CreateRack(ctx, existingRack1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, existingRack1)
 
 			oldRack1 := &proto.Rack{
 				Name: "rack-5",
 			}
-			resp, cerr = CreateRack(ctx, oldRack1)
+			resp, cerr = registration.CreateRack(ctx, oldRack1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, oldRack1)
 
@@ -191,6 +235,14 @@ func TestReplaceRack(t *testing.T) {
 			So(rerr, ShouldNotBeNil)
 			So(rresp, ShouldBeNil)
 			So(rerr.Error(), ShouldContainSubstring, AlreadyExists)
+
+			// No change are recorded as the replacement fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-105")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 	})
 }

@@ -30,7 +30,11 @@ func CreateRack(ctx context.Context, rack *fleet.Rack) (*fleet.Rack, error) {
 	if err != nil {
 		return nil, err
 	}
-	return registration.CreateRack(ctx, rack)
+	r, err := registration.CreateRack(ctx, rack)
+	if err == nil {
+		SaveChangeEvents(ctx, LogRackChanges(nil, rack))
+	}
+	return r, err
 }
 
 // UpdateRack updates rack in datastore.
@@ -42,7 +46,12 @@ func UpdateRack(ctx context.Context, rack *fleet.Rack) (*fleet.Rack, error) {
 	if err != nil {
 		return nil, err
 	}
-	return registration.UpdateRack(ctx, rack)
+	oldR, _ := registration.GetRack(ctx, rack.GetName())
+	r, err := registration.UpdateRack(ctx, rack)
+	if err == nil {
+		SaveChangeEvents(ctx, LogRackChanges(oldR, rack))
+	}
+	return r, err
 }
 
 // GetRack returns rack for the given id from datastore.
@@ -65,7 +74,12 @@ func DeleteRack(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	return registration.DeleteRack(ctx, id)
+	oldR, _ := registration.GetRack(ctx, id)
+	err = registration.DeleteRack(ctx, id)
+	if err == nil {
+		SaveChangeEvents(ctx, LogRackChanges(oldR, nil))
+	}
+	return err
 }
 
 // ReplaceRack replaces an old Rack with new Rack in datastore
@@ -134,6 +148,9 @@ func ReplaceRack(ctx context.Context, oldRack *fleet.Rack, newRack *fleet.Rack) 
 		logging.Errorf(ctx, "Failed to replace entity in datastore: %s", err)
 		return nil, err
 	}
+	changes := LogRackChanges(oldRack, nil)
+	changes = append(changes, LogRackChanges(nil, newRack)...)
+	SaveChangeEvents(ctx, changes)
 	return newRack, nil
 }
 
