@@ -126,18 +126,16 @@ func runTestStep(ctx context.Context, r phosphorus.RunTestRequest) (*autoservRes
 
 	dir := filepath.Join(r.Config.Task.ResultsDir, "autoserv_test")
 
-	t := &atutil.HostTest{
-		HostlessTest: atutil.HostlessTest{
-			Args:        r.GetAutotest().GetTestArgs(),
-			ClientTest:  r.GetAutotest().GetIsClientTest(),
-			ControlName: r.GetAutotest().GetName(),
-			Keyvals:     r.GetAutotest().GetKeyvals(),
-			Name:        r.GetAutotest().GetDisplayName(),
-			ResultsDir:  dir,
-		},
-		Hosts:      r.DutHostnames,
-		OffloadDir: r.Config.GetTask().GetSynchronousOffloadDir(),
-		RequireSSP: !r.GetAutotest().GetIsClientTest(),
+	t := &atutil.Test{
+		Args:        r.GetAutotest().GetTestArgs(),
+		ClientTest:  r.GetAutotest().GetIsClientTest(),
+		ControlName: r.GetAutotest().GetName(),
+		Hosts:       r.DutHostnames,
+		Keyvals:     r.GetAutotest().GetKeyvals(),
+		Name:        r.GetAutotest().GetDisplayName(),
+		OffloadDir:  r.Config.GetTask().GetSynchronousOffloadDir(),
+		RequireSSP:  !r.GetAutotest().GetIsClientTest(),
+		ResultsDir:  dir,
 	}
 
 	ar, err := atutil.RunAutoserv(ctx, j, t, os.Stdout)

@@ -101,70 +101,54 @@ func (p *Provision) AutoservArgs() *autotest.AutoservArgs {
 	}
 }
 
-var _ AutoservJob = &HostlessTest{}
-var _ keyvalsJob = &HostlessTest{}
+var _ AutoservJob = &Test{}
+var _ keyvalsJob = &Test{}
 
-// HostlessTest represents a hostless test to run.  HostlessTest
-// implements AutoservJob.
-type HostlessTest struct {
-	Args         string
-	ClientTest   bool
-	ControlFile  string
-	ControlName  string
-	ExecutionTag string
-	Keyvals      map[string]string
-	Name         string
-	Owner        string
-	ResultsDir   string
-}
-
-// AutoservArgs represents the CLI args for `autoserv`.
-func (t *HostlessTest) AutoservArgs() *autotest.AutoservArgs {
-	a := autotest.AutoservArgs{
-		Args:         t.Args,
-		ClientTest:   t.ClientTest,
-		ControlFile:  t.ControlFile,
-		ControlName:  t.ControlName,
-		ExecutionTag: t.ExecutionTag,
-		JobName:      t.Name,
-		JobOwner:     t.Owner,
-		Lab:          true,
-		NoTee:        true,
-		ResultsDir:   t.ResultsDir,
-		WritePidfile: true,
-	}
-	return &a
-}
-
-// JobKeyvals returns the autotest keyvals.
-func (t *HostlessTest) JobKeyvals() map[string]string {
-	return t.Keyvals
-}
-
-var _ AutoservJob = &HostTest{}
-var _ keyvalsJob = &HostTest{}
-
-// HostTest represents a host test to run.  HostTest implements AutoservJob.
-type HostTest struct {
-	HostlessTest
+// Test represents a test to run.  Test implements AutoservJob.
+type Test struct {
+	Args            string
+	ClientTest      bool
+	ControlFile     string
+	ControlName     string
+	ExecutionTag    string
 	Hosts           []string
+	Keyvals         map[string]string
+	Name            string
 	OffloadDir      string
+	Owner           string
 	ParentJobID     int
 	RequireSSP      bool
+	ResultsDir      string
 	TestSourceBuild string
 }
 
 // AutoservArgs represents the CLI args for `autoserv`.
-func (t *HostTest) AutoservArgs() *autotest.AutoservArgs {
-	args := t.HostlessTest.AutoservArgs()
-	args.HostInfoSubDir = hostInfoSubDir
-	args.Hosts = t.Hosts
-	args.OffloadDir = t.OffloadDir
-	args.ParentJobID = t.ParentJobID
-	args.RequireSSP = t.RequireSSP
-	args.TestSourceBuild = t.TestSourceBuild
-	args.VerifyJobRepoURL = true
-	return args
+func (t *Test) AutoservArgs() *autotest.AutoservArgs {
+	return &autotest.AutoservArgs{
+		Args:             t.Args,
+		ClientTest:       t.ClientTest,
+		ControlFile:      t.ControlFile,
+		ControlName:      t.ControlName,
+		ExecutionTag:     t.ExecutionTag,
+		Hosts:            t.Hosts,
+		HostInfoSubDir:   hostInfoSubDir,
+		JobName:          t.Name,
+		JobOwner:         t.Owner,
+		Lab:              true,
+		NoTee:            true,
+		OffloadDir:       t.OffloadDir,
+		ParentJobID:      t.ParentJobID,
+		RequireSSP:       t.RequireSSP,
+		ResultsDir:       t.ResultsDir,
+		TestSourceBuild:  t.TestSourceBuild,
+		VerifyJobRepoURL: true,
+		WritePidfile:     true,
+	}
+}
+
+// JobKeyvals returns the autotest keyvals.
+func (t *Test) JobKeyvals() map[string]string {
+	return t.Keyvals
 }
 
 // Result contains information about RunAutoserv results.
