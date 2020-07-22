@@ -1566,39 +1566,6 @@ func TestDeleteKVM(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("DeleteKVM", t, func() {
-		Convey("Delete KVM by existing ID with machine reference", func() {
-			KVM1 := &proto.KVM{
-				Name: "KVM-1",
-			}
-			_, err := registration.CreateKVM(tf.C, KVM1)
-			So(err, ShouldBeNil)
-
-			chromeBrowserMachine1 := &proto.Machine{
-				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						KvmInterface: &proto.KVMInterface{
-							Kvm: "KVM-1",
-						},
-					},
-				},
-			}
-			_, err = registration.CreateMachine(tf.C, chromeBrowserMachine1)
-			So(err, ShouldBeNil)
-
-			dreq := &api.DeleteKVMRequest{
-				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
-			}
-			_, err = tf.Fleet.DeleteKVM(tf.C, dreq)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			res, err := registration.GetKVM(tf.C, "KVM-1")
-			So(res, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(res, ShouldResembleProto, KVM1)
-		})
-
 		Convey("Delete KVM by existing ID without references", func() {
 			KVM2 := &proto.KVM{
 				Name: "KVM-2",
@@ -1613,15 +1580,6 @@ func TestDeleteKVM(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			_, err = registration.GetKVM(tf.C, "KVM-2")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
-
-		Convey("Delete KVM by non-existing ID", func() {
-			req := &api.DeleteKVMRequest{
-				Name: util.AddPrefix(util.KVMCollection, "KVM-2"),
-			}
-			_, err := tf.Fleet.DeleteKVM(tf.C, req)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})

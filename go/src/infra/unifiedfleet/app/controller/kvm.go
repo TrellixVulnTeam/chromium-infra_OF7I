@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
-	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -123,14 +122,44 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.K
 // DeleteKVM deletes the kvm in datastore
 //
 // For referential data intergrity,
-// Delete if this KVM is not referenced by other resources in the datastore.
-// If there are any references, delete will be rejected and an error will be returned.
+// 1. Validate if this kvm is not referenced by other resources in the datastore.
+// 2. Delete the kvm
+// 3. Get the rack associated with this kvm
+// 4. Update the rack by removing the association with this kvm
 func DeleteKVM(ctx context.Context, id string) error {
-	err := validateDeleteKVM(ctx, id)
-	if err != nil {
+	f := func(ctx context.Context) error {
+		// 1. Validate input
+		if err := validateDeleteKVM(ctx, id); err != nil {
+			return errors.Annotate(err, "Validation failed - unable to delete kvm %s", id).Err()
+		}
+
+		// 2. Delete the kvm
+		if err := registration.DeleteKVM(ctx, id); err != nil {
+			return errors.Annotate(err, "Delete failed - unable to delete kvm %s", id).Err()
+		}
+
+		// 3. Get the rack associated with kvm
+		racks, err := registration.QueryRackByPropertyName(ctx, "kvm_ids", id, false)
+		if err != nil {
+			return errors.Annotate(err, "Unable to query rack for kvm %s", id).Err()
+		}
+		if racks == nil || len(racks) == 0 {
+			logging.Warningf(ctx, "No rack associated with the kvm %s. Data discrepancy error.\n", id)
+			return nil
+		}
+		if len(racks) > 1 {
+			logging.Warningf(ctx, "More than one rack associated with the kvm %s. Data discrepancy error.\n", id)
+		}
+
+		// 4. Remove the association between the rack and this kvm.
+		return removeKVMFromRacks(ctx, racks, id)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete kvm in datastore: %s", err)
 		return err
 	}
-	return registration.DeleteKVM(ctx, id)
+	return nil
 }
 
 // ReplaceKVM replaces an old KVM with new KVM in datastore
@@ -157,33 +186,13 @@ func validateDeleteKVM(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	racks, err := registration.QueryRackByPropertyName(ctx, "kvm_ids", id, true)
-	if err != nil {
-		return err
-	}
-	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "kvm_ids", id, true)
-	if err != nil {
-		return err
-	}
-	if len(machines) > 0 || len(racks) > 0 || len(racklses) > 0 {
+	if len(machines) > 0 {
 		var errorMsg strings.Builder
 		errorMsg.WriteString(fmt.Sprintf("KVM %s cannot be deleted because there are other resources which are referring this KVM.", id))
 		if len(machines) > 0 {
 			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the KVM:\n"))
 			for _, machine := range machines {
 				errorMsg.WriteString(machine.Name + ", ")
-			}
-		}
-		if len(racks) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRacks referring the KVM:\n"))
-			for _, rack := range racks {
-				errorMsg.WriteString(rack.Name + ", ")
-			}
-		}
-		if len(racklses) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the KVM:\n"))
-			for _, racklse := range racklses {
-				errorMsg.WriteString(racklse.Name + ", ")
 			}
 		}
 		logging.Errorf(ctx, errorMsg.String())

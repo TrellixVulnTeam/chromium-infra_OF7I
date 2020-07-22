@@ -207,11 +207,28 @@ func TestDeleteKVM(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	Convey("DeleteKVM", t, func() {
+		Convey("Delete kvm by non-existing ID - error", func() {
+			err := DeleteKVM(ctx, "kvm-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Delete failed - unable to delete kvm kvm-10")
+		})
+
 		Convey("Delete KVM by existing ID with machine reference", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-5",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+						Kvms: []string{"kvm-1"},
+					},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
 			KVM1 := &ufspb.KVM{
 				Name: "KVM-1",
 			}
-			_, err := registration.CreateKVM(ctx, KVM1)
+			_, err = registration.CreateKVM(ctx, KVM1)
 			So(err, ShouldBeNil)
 
 			chromeBrowserMachine1 := &ufspb.Machine{
@@ -229,55 +246,42 @@ func TestDeleteKVM(t *testing.T) {
 
 			err = DeleteKVM(ctx, "KVM-1")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
+			So(err.Error(), ShouldContainSubstring, "Machines referring the KVM:")
 
 			resp, err := registration.GetKVM(ctx, "KVM-1")
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, KVM1)
 		})
-		Convey("Delete KVM by existing ID with rack reference", func() {
-			KVM2 := &ufspb.KVM{
-				Name: "KVM-2",
-			}
-			_, err := registration.CreateKVM(ctx, KVM2)
-			So(err, ShouldBeNil)
 
-			chromeBrowserRack1 := &ufspb.Rack{
-				Name: "rack-1",
+		Convey("Delete KVM successfully", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-6",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
 					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"KVM-2", "KVM-5"},
+						Kvms: []string{"kvm-2"},
 					},
 				},
 			}
-			_, err = registration.CreateRack(ctx, chromeBrowserRack1)
+			_, err := registration.CreateRack(ctx, rack)
 			So(err, ShouldBeNil)
 
-			err = DeleteKVM(ctx, "KVM-2")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, err := registration.GetKVM(ctx, "KVM-2")
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, KVM2)
-		})
-
-		Convey("Delete KVM successfully by existing ID without references", func() {
-			KVM4 := &ufspb.KVM{
-				Name: "KVM-4",
-			}
-			_, err := registration.CreateKVM(ctx, KVM4)
+			kvm2 := mockKVM("kvm-2")
+			_, err = registration.CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
 
-			err = DeleteKVM(ctx, "KVM-4")
+			err = DeleteKVM(ctx, "kvm-2")
 			So(err, ShouldBeNil)
 
-			resp, err := registration.GetKVM(ctx, "KVM-4")
+			resp, err := registration.GetKVM(ctx, "kvm-2")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			rresp, err := registration.GetRack(ctx, "rack-6")
+			So(rresp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(rresp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
 		})
 	})
 }
