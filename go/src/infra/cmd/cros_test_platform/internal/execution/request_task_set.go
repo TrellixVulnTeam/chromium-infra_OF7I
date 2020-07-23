@@ -99,14 +99,14 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 			continue
 		}
 
-		logging.Debugf(ctx, "Task %s (%s) completed with verdict %s", latestTask.URL(), testTaskSet.Name, latestTask.Verdict())
+		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", latestTask.URL(), testTaskSet.Name, latestTask.Verdict())
 
 		shouldRetry, err := r.shouldRetry(ctx, testTaskSet)
 		if err != nil {
 			return errors.Annotate(err, "tick for task %s", latestTask.URL()).Err()
 		}
 		if shouldRetry {
-			logging.Debugf(ctx, "Retrying %s", testTaskSet.Name)
+			logging.Infof(ctx, "Retrying %s", testTaskSet.Name)
 			if err := testTaskSet.LaunchTask(ctx, c); err != nil {
 				return errors.Annotate(err, "tick for task %s: retry test", latestTask.URL()).Err()
 			}
@@ -122,11 +122,11 @@ func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testTaskSet) (bool
 		return false, errors.Reason("shouldRetry: can't retry a never-tried test").Err()
 	}
 	if tr.AttemptsRemaining() <= 0 {
-		logging.Debugf(ctx, "Not retrying %s. Hit the test retry limit.", tr.Name)
+		logging.Infof(ctx, "Not retrying %s. Hit the test retry limit.", tr.Name)
 		return false, nil
 	}
 	if r.globalRetriesRemaining() <= 0 {
-		logging.Debugf(ctx, "Not retrying %s. Hit the task set retry limit.", tr.Name)
+		logging.Infof(ctx, "Not retrying %s. Hit the task set retry limit.", tr.Name)
 		return false, nil
 	}
 

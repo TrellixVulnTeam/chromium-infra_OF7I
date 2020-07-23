@@ -92,7 +92,7 @@ func writeResponse(outFile string, response proto.Message) error {
 var partialErrorTag = errors.BoolTag{Key: errors.NewTagKey("partial results are available despite this error")}
 
 func setupLogging(ctx context.Context) context.Context {
-	return logging.SetLevel(ctx, logging.Debug)
+	return logging.SetLevel(ctx, logging.Info)
 }
 
 // logApplicationError logs the error returned to the entry function of an

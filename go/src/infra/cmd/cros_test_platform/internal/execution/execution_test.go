@@ -609,10 +609,10 @@ func invocationsWithServerTests(names ...string) []*steps.EnumerationResponse_Au
 	return ret
 }
 
-func loggerDebug(ml memlogger.MemLogger) string {
+func loggerInfo(ml memlogger.MemLogger) string {
 	out := ""
 	for _, m := range ml.Messages() {
-		if m.Level == logging.Debug {
+		if m.Level == logging.Info {
 			out = out + m.Msg
 		}
 	}
@@ -972,10 +972,10 @@ func TestRetries(t *testing.T) {
 				})
 				Convey("then the log output should match the retry.", func() {
 					if len(c.expectedLogShouldContain) > 0 {
-						So(loggerDebug(ml), ShouldContainSubstring, c.expectedLogShouldContain)
+						So(loggerInfo(ml), ShouldContainSubstring, c.expectedLogShouldContain)
 					}
 					if len(c.expectedLogShouldNotContain) > 0 {
-						So(loggerDebug(ml), ShouldNotContainSubstring, c.expectedLogShouldNotContain)
+						So(loggerInfo(ml), ShouldNotContainSubstring, c.expectedLogShouldNotContain)
 					}
 				})
 			})

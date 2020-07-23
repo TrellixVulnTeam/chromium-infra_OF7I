@@ -85,7 +85,7 @@ func httpClient(ctx context.Context, authJSONPath string) (*http.Client, error) 
 
 // NewClient creates a new Client.
 func NewClient(ctx context.Context, c *config.Config_Swarming) (*swarming.Client, error) {
-	logging.Debugf(ctx, "Creating swarming client from config %v", c)
+	logging.Infof(ctx, "Creating swarming client from config %v", c)
 	hClient, err := httpClient(ctx, c.AuthJsonPath)
 	if err != nil {
 		return nil, err
@@ -161,7 +161,7 @@ func (c *rawSwarmingSkylabClient) FetchResults(ctx context.Context, t skylab.Tas
 
 	r, err := extractResult(ctx, result, c.isolateGetter)
 	if err != nil {
-		logging.Debugf(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", id, err.Error())
+		logging.Infof(ctx, "failed to fetch autotest results for task %s due to error '%s', treating its results as incomplete (failure)", id, err.Error())
 		return &skylab.FetchResultsResponse{LifeCycle: lc}, nil
 	}
 
@@ -212,7 +212,7 @@ func extractResult(ctx context.Context, sResult *swarming_api.SwarmingRpcsTaskRe
 		return nil, errors.Annotate(err, "get result").Err()
 	}
 
-	logging.Debugf(ctx, "fetching result for task %s from isolate ref %+v", taskID, outputRef)
+	logging.Infof(ctx, "fetching result for task %s from isolate ref %+v", taskID, outputRef)
 	content, err := getter.GetFile(ctx, isolated.HexDigest(outputRef.Isolated), resultsFileName)
 	if err != nil {
 		return nil, errors.Annotate(err, "get result for task %s", taskID).Err()
