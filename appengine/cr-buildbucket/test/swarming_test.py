@@ -946,11 +946,13 @@ class SyncBuildTest(BaseTest):
     bundle = test_util.build_bundle(id=1)
     bundle.put()
 
-    self.patch(
-        'swarming._load_task_result',
-        autospec=True,
-        return_value=case['task_result'],
-    )
+    def mock_call_api_async(impersonate, hostname, path):
+      self.assertFalse(impersonate)
+      self.assertEqual(hostname, 'swarming.example.com')
+      self.assertEqual(path, 'task/deadbeef/result')
+      return future(case['task_result'])
+
+    self.patch('swarming._call_api_async', side_effect=mock_call_api_async)
 
     swarming._sync_build(1, 1)
 

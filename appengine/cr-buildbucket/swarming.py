@@ -493,18 +493,13 @@ def _sync_build(build_id, generation):
   build.proto.infra.buildbucket.hostname = (
       app_identity.get_default_version_hostname()
   )
-  sw = build.proto.infra.swarming
 
-  if not sw.task_id:
+  if not build.proto.infra.swarming.task_id:
     _create_swarming_task(build)
   else:
-    result = _load_task_result(sw.hostname, sw.task_id)
-    if not result:
-      logging.error(
-          'Task %s/%s referenced by build %s is not found', sw.hostname,
-          sw.task_id, build.key.id()
-      )
-    _sync_build_with_task_result(build_id, result)
+    # Note: _load_task_result return value may end up being None here if there's
+    # no such task. It will result in the build ending with INFRA_FAILURE.
+    _sync_build_with_task_result(build_id, _load_task_result(build))
 
   # Enqueue a continuation task.
   next_gen = generation + 1
@@ -560,6 +555,10 @@ def _create_swarming_task(build):
   secret_bytes_b64 = base64.b64encode(secrets.SerializeToString())
   for ts in task_def['task_slices']:
     ts['properties']['secret_bytes'] = secret_bytes_b64
+
+  # TODO(crbug.com/1091604): When running in Realms mode use the project
+  # identity instead of the delegation token and pass `realm` field to the
+  # Swarming to switch the task in the realm mode as well.
 
   new_task_id = None
   try:
@@ -662,10 +661,15 @@ def _generate_build_url(milo_hostname, build):
 
 @ndb.tasklet
 def cancel_task_async(hostname, task_id):
-  """Cancels a swarming task.
+  """Cancels a swarming task."""
+  # TODO(crbug.com/1091604): Get access to build's realm and experiments here,
+  # e.g. by piping them through cancel_task_transactionally_async task queue
+  # task.
 
-  Noop if the task started running.
-  """
+  # TODO(crbug.com/1091604): When running in Realms mode use the project
+  # identity instead of the Buildbucket's own account. Swarming doesn't support
+  # it for "/cancel" yet.
+
   res = yield _call_api_async(
       impersonate=False,
       hostname=hostname,
@@ -709,12 +713,35 @@ def cancel_task_transactionally_async(hostname, task_id):  # pragma: no cover
 # Update builds.
 
 
-def _load_task_result(hostname, task_id):  # pragma: no cover
-  return _call_api_async(
+def _load_task_result(build):
+  """Fetches the result of a Swarming task associated with |build|.
+
+  Uses build.proto.infra.swarming to figure out where to fetch the result from.
+  This proto section must be populated prior to calling this function.
+
+  Logs an error and returns None if there's no such task.
+  """
+  assert build.proto.HasField('infra')
+
+  hostname = build.proto.infra.swarming.hostname
+  task_id = build.proto.infra.swarming.task_id
+
+  # TODO(crbug.com/1091604): When running in Realms mode use the project
+  # identity instead of the Buildbucket's own account. Swarming doesn't support
+  # it for "/result" yet.
+
+  result = _call_api_async(
       impersonate=False,
       hostname=hostname,
       path='task/%s/result' % task_id,
   ).get_result()
+
+  if not result:
+    logging.error(
+        'Task %s/%s referenced by build %s is not found', hostname, task_id,
+        build.key.id()
+    )
+  return result
 
 
 def _sync_build_with_task_result_in_memory(build, build_infra, task_result):
@@ -948,8 +975,12 @@ class SubNotify(webapp2.RequestHandler):
           task_url
       )
 
+    # Populate build.proto.infra section, it is used by _load_task_result.
+    build = bundle.build
+    build.proto.infra.ParseFromString(bundle.infra.infra)
+
     # Ensure the loaded build is associated with the task.
-    sw = bundle.infra.parse().swarming
+    sw = build.proto.infra.swarming
     if hostname != sw.hostname:
       self.stop(
           'swarming_hostname %s of build %s does not match %s', sw.hostname,
@@ -959,7 +990,7 @@ class SubNotify(webapp2.RequestHandler):
       # Do not re-deliver if the build is completed.
       self.stop(
           'build is not associated with a task',
-          redeliver=not bundle.build.is_ended,
+          redeliver=not build.is_ended,
       )
     if task_id != sw.task_id:
       self.stop(
@@ -968,8 +999,7 @@ class SubNotify(webapp2.RequestHandler):
       )
 
     # Update build.
-    result = _load_task_result(hostname, task_id)
-    _sync_build_with_task_result(build_id, result)
+    _sync_build_with_task_result(build_id, _load_task_result(build))
 
   def stop(self, msg, *args, **kwargs):
     """Logs error and stops request processing.
