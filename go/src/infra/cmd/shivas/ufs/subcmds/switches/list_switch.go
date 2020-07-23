@@ -65,7 +65,7 @@ func (c *listSwitch) innerRun(a subcommands.Application, args []string, env subc
 	if c.json {
 		return utils.PrintListJSONFormat(ctx, ic, printSwitches, c.json, int32(c.pageSize), "")
 	}
-	return utils.PrintListTableFormat(ctx, ic, printSwitches, c.json, int32(c.pageSize), "")
+	return utils.PrintListTableFormat(ctx, ic, printSwitches, c.json, int32(c.pageSize), "", utils.SwitchTitle)
 }
 
 func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {

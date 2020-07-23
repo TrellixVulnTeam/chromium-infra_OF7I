@@ -27,7 +27,7 @@ type list struct {
 
 // ListCmd contains list command specification
 var ListCmd = &subcommands.Command{
-	UsageLine: "ls <sub-command>",
+	UsageLine: "list <sub-command>",
 	ShortDesc: "List entries for hardware asset/deployed asset/configuration",
 	LongDesc: `List entries for hardware asset(machine/rack/kvm/rpm/switch/drac/nic)
 or deployed machine/rack or configuration(machine-prototype/rack-prototype/chromeplatform)`,

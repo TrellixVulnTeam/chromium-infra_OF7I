@@ -49,9 +49,9 @@ func (c *listKVM) Run(a subcommands.Application, args []string, env subcommands.
 	}
 	return 0
 }
+
 func (c *listKVM) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (c *listKVM) innerRun(a subcommands.Application, args []string, env subcomm
 	if c.json {
 		return utils.PrintListJSONFormat(ctx, ic, printKVMs, c.json, int32(c.pageSize), "")
 	}
-	return utils.PrintListTableFormat(ctx, ic, printKVMs, c.json, int32(c.pageSize), "")
+	return utils.PrintListTableFormat(ctx, ic, printKVMs, c.json, int32(c.pageSize), "", utils.KvmTitle)
 }
 
 func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {

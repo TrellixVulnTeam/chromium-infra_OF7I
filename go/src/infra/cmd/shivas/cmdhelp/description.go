@@ -36,16 +36,16 @@ Update a switch by reading input through interactive mode.`
 	ListSwitchLongDesc string = `List all switches
 
 Examples:
-shivas ls switch
+shivas list switch
 Fetches all switches and prints the output in table format
 
-shivas ls switch -n 50
+shivas list switch -n 50
 Fetches 50 switches and prints the output in table format
 
-shivas ls switch -json
+shivas list switch -json
 Fetches all switches and prints the output in JSON format
 
-shivas ls switch -n 50 -json
+shivas list switch -n 50 -json
 Fetches 50 switches and prints the output in JSON format
 `
 
@@ -84,10 +84,10 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	ListVMLongDesc string = `List all vms for a host
 
 Examples:
-shivas ls vm -h {Hostname}
+shivas list vm -h {Hostname}
 Fetches all vms for the host and prints the output in table format
 
-shivas ls vm -h {Hostname} -json
+shivas list vm -h {Hostname} -json
 Fetches all vms for the host and prints the output in JSON format
 `
 
@@ -95,16 +95,16 @@ Fetches all vms for the host and prints the output in JSON format
 	ListKVMLongDesc string = `List all kvms
 
 Examples:
-shivas ls kvm
+shivas list kvm
 Fetches all kvms and prints the output in table format
 
-shivas ls kvm -n 50
+shivas list kvm -n 50
 Fetches 50 kvms and prints the output in table format
 
-shivas ls kvm -json
+shivas list kvm -json
 Fetches all kvms and prints the output in JSON format
 
-shivas ls kvm -n 50 -json
+shivas list kvm -n 50 -json
 Fetches 50 kvms and prints the output in JSON format
 `
 
@@ -112,16 +112,16 @@ Fetches 50 kvms and prints the output in JSON format
 	ListRPMLongDesc string = `List all rpms
 
 Examples:
-shivas ls rpm
+shivas list rpm
 Fetches all rpms and prints the output in table format
 
-shivas ls rpm -n 50
+shivas list rpm -n 50
 Fetches 50 rpms and prints the output in table format
 
-shivas ls rpm -json
+shivas list rpm -json
 Fetches all rpms and prints the output in JSON format
 
-shivas ls rpm -n 50 -json
+shivas list rpm -n 50 -json
 Fetches 50 rpms and prints the output in JSON format
 `
 
@@ -129,16 +129,16 @@ Fetches 50 rpms and prints the output in JSON format
 	ListDracLongDesc string = `List all dracs
 
 Examples:
-shivas ls drac
+shivas list drac
 Fetches all dracs and prints the output in table format
 
-shivas ls drac -n 50
+shivas list drac -n 50
 Fetches 50 dracs and prints the output in table format
 
-shivas ls drac -json
+shivas list drac -json
 Fetches all dracs and prints the output in JSON format
 
-shivas ls drac -n 50 -json
+shivas list drac -n 50 -json
 Fetches 50 dracs and prints the output in JSON format
 `
 
@@ -146,16 +146,16 @@ Fetches 50 dracs and prints the output in JSON format
 	ListNicLongDesc string = `List all nics
 
 Examples:
-shivas ls nic
+shivas list nic
 Fetches all nics and prints the output in table format
 
-shivas ls nic -n 50
+shivas list nic -n 50
 Fetches 50 nics and prints the output in table format
 
-shivas ls nic -json
+shivas list nic -json
 Fetches all nics and prints the output in JSON format
 
-shivas ls nic -n 50 -json
+shivas list nic -n 50 -json
 Fetches 50 nics and prints the output in JSON format
 `
 
@@ -185,16 +185,16 @@ Update a machine by reading input through interactive mode.`
 	ListMachineLongDesc string = `List all Machines
 
 Examples:
-shivas ls machine
+shivas list machine
 Fetches all the machines in table format
 
-shivas ls machine -deployed
+shivas list machine -deployed
 Fetches all the deployed machines in table format
 
-shivas ls machine -n 50 -deployed -json
+shivas list machine -n 50 -deployed -json
 Fetches 50 deployed machines and prints the output in JSON format
 
-shivas ls machine -n 5 -json
+shivas list machine -n 5 -json
 Fetches 5 machines and prints the output in JSON format
 `
 
@@ -528,10 +528,10 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	ListHostLongDesc string = `List all hosts
 
 Examples:
-shivas ls host
+shivas list host
 Prints all the hosts in JSON format
 
-shivas ls machine -n 50
+shivas list machine -n 50
 Prints 50 hosts in JSON format
 `
 
@@ -559,16 +559,16 @@ Updates a machine prototype by reading input through interactive mode.`
 	ListMachineLSEPrototypeLongDesc string = `List all machine prototypes
 
 Examples:
-shivas ls machine-prototype
+shivas list machine-prototype
 Fetches all the machine prototypes in table format
 
-shivas ls machine-prototype -n 50
+shivas list machine-prototype -n 50
 Fetches 50 machine prototypes and prints the output in table format
 
-shivas ls machine-prototype -lab acs -json
+shivas list machine-prototype -lab acs -json
 Fetches only ACS lab machine prototypes and prints the output in json format
 
-shivas ls machine-prototype -n 5 -lab atl -json
+shivas list machine-prototype -n 5 -lab atl -json
 Fetches 5 machine prototypes for ATL lab and prints the output in JSON format
 `
 
@@ -619,16 +619,16 @@ Updates a rack prototype by reading input through interactive mode.`
 	ListRackLSEPrototypeLongDesc string = `List all rack prototypes
 
 Examples:
-shivas ls rack-prototype
+shivas list rack-prototype
 Fetches all the rack prototypes in table format
 
-shivas ls rack-prototype -n 50
+shivas list rack-prototype -n 50
 Fetches 50 rack prototypes and prints the output in table format
 
-shivas ls rack-prototype -lab acs -json
+shivas list rack-prototype -lab acs -json
 Fetches only ACS lab rack prototypes and prints the output in json format
 
-shivas ls rack-prototype -n 5 -lab atl -json
+shivas list rack-prototype -n 5 -lab atl -json
 Fetches 5 rack prototypes for ATL lab and prints the output in JSON format
 `
 
@@ -673,16 +673,16 @@ Updates a chrome platform by reading input through interactive mode.`
 	ListChromePlatformLongDesc string = `List all chrome platforms
 
 Examples:
-shivas ls chrome-platform
+shivas list chrome-platform
 Fetches all the chrome platforms in table format
 
-shivas ls chrome-platform -n 50
+shivas list chrome-platform -n 50
 Fetches 50 chrome platforms and prints the output in table format
 
-shivas ls chrome-platform -json
+shivas list chrome-platform -json
 Fetches all chrome platforms and prints the output in json format
 
-shivas ls chrome-platform -n 5 -json
+shivas list chrome-platform -n 5 -json
 Fetches 5 chrome platforms and prints the output in JSON format
 `
 

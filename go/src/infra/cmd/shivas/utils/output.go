@@ -21,26 +21,27 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
+// Titles for printing table format list
 var (
-	switchTitle = []string{"Switch Name", "CapacityPort", "UpdateTime"}
-	kvmTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform",
+	SwitchTitle = []string{"Switch Name", "CapacityPort", "UpdateTime"}
+	KvmTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform",
 		"CapacityPort", "UpdateTime"}
-	rpmTitle = []string{"RPM Name", "MAC Address", "CapacityPort",
+	RpmTitle = []string{"RPM Name", "MAC Address", "CapacityPort",
 		"UpdateTime"}
-	dracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
+	DracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
 		"Switch Port", "Password", "UpdateTime"}
-	nicTitle = []string{"Nic Name", "MAC Address", "Switch", "Switch Port",
+	NicTitle = []string{"Nic Name", "MAC Address", "Switch", "Switch Port",
 		"UpdateTime"}
-	machineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
+	MachineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
 		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
 		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
 		"Drac", "DeploymentTicket", "Description", "Realm", "UpdateTime"}
-	machinelseprototypeTitle = []string{"Machine Prototype Name",
+	MachinelseprototypeTitle = []string{"Machine Prototype Name",
 		"Occupied Capacity", "PeripheralTypes", "VirtualTypes",
 		"UpdateTime"}
-	racklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
+	RacklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
 		"UpdateTime"}
-	chromePlatformTitle = []string{"Chrome Platform Name", "Manufacturer",
+	ChromePlatformTitle = []string{"Chrome Platform Name", "Manufacturer",
 		"Description", "UpdateTime"}
 	vmTitle = []string{"VM Name", "OS Version", "OS Desc", "MAC Address",
 		"VM Hostname"}
@@ -98,7 +99,8 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 }
 
 // PrintListTableFormat prints list output in Table format
-func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string) error {
+func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, title []string) error {
+	printTitle(title)
 	var pageToken string
 	if pageSize == 0 {
 		for {
@@ -155,7 +157,6 @@ func printTitle(title []string) {
 // PrintSwitches prints the all switches in table form.
 func PrintSwitches(switches []*ufspb.Switch) {
 	defer tw.Flush()
-	printTitle(switchTitle)
 	for _, s := range switches {
 		printSwitch(s)
 	}
@@ -187,7 +188,6 @@ func PrintSwitchesJSON(switches []*ufspb.Switch) {
 // PrintKVMs prints the all kvms in table form.
 func PrintKVMs(kvms []*ufspb.KVM) {
 	defer tw.Flush()
-	printTitle(kvmTitle)
 	for _, kvm := range kvms {
 		printKVM(kvm)
 	}
@@ -222,7 +222,6 @@ func PrintKVMsJSON(kvms []*ufspb.KVM) {
 // PrintRPMs prints the all rpms in table form.
 func PrintRPMs(rpms []*ufspb.RPM) {
 	defer tw.Flush()
-	printTitle(rpmTitle)
 	for _, rpm := range rpms {
 		printRPM(rpm)
 	}
@@ -256,7 +255,6 @@ func PrintRPMsJSON(rpms []*ufspb.RPM) {
 // PrintDracs prints the all dracs in table form.
 func PrintDracs(dracs []*ufspb.Drac) {
 	defer tw.Flush()
-	printTitle(dracTitle)
 	for _, drac := range dracs {
 		printDrac(drac)
 	}
@@ -293,7 +291,6 @@ func PrintDracsJSON(dracs []*ufspb.Drac) {
 // PrintNics prints the all nics in table form.
 func PrintNics(nics []*ufspb.Nic) {
 	defer tw.Flush()
-	printTitle(nicTitle)
 	for _, nic := range nics {
 		printNic(nic)
 	}
@@ -328,7 +325,6 @@ func PrintNicsJSON(nics []*ufspb.Nic) {
 // PrintMachines prints the all machines in table form.
 func PrintMachines(machines []*ufspb.Machine) {
 	defer tw.Flush()
-	printTitle(machineTitle)
 	for _, m := range machines {
 		printMachine(m)
 	}
@@ -381,7 +377,6 @@ func PrintMachinesJSON(machines []*ufspb.Machine) {
 // PrintMachineLSEPrototypes prints the all msleps in table form.
 func PrintMachineLSEPrototypes(msleps []*ufspb.MachineLSEPrototype) {
 	defer tw.Flush()
-	printTitle(machinelseprototypeTitle)
 	for _, m := range msleps {
 		printMachineLSEPrototype(m)
 	}
@@ -427,7 +422,6 @@ func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype) {
 // PrintRackLSEPrototypes prints the all msleps in table form.
 func PrintRackLSEPrototypes(msleps []*ufspb.RackLSEPrototype) {
 	defer tw.Flush()
-	printTitle(racklseprototypeTitle)
 	for _, m := range msleps {
 		printRackLSEPrototype(m)
 	}
@@ -466,7 +460,6 @@ func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype) {
 // PrintChromePlatforms prints the all msleps in table form.
 func PrintChromePlatforms(msleps []*ufspb.ChromePlatform) {
 	defer tw.Flush()
-	printTitle(chromePlatformTitle)
 	for _, m := range msleps {
 		printChromePlatform(m)
 	}

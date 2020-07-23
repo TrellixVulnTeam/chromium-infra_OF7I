@@ -61,7 +61,6 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
@@ -75,7 +74,7 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 	if c.json {
 		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter))
 	}
-	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter))
+	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter), utils.MachinelseprototypeTitle)
 }
 
 func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {

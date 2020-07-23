@@ -49,9 +49,9 @@ func (c *listChromePlatform) Run(a subcommands.Application, args []string, env s
 	}
 	return 0
 }
+
 func (c *listChromePlatform) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (c *listChromePlatform) innerRun(a subcommands.Application, args []string, 
 	if c.json {
 		return utils.PrintListJSONFormat(ctx, ic, printChromePlatforms, c.json, int32(c.pageSize), "")
 	}
-	return utils.PrintListTableFormat(ctx, ic, printChromePlatforms, c.json, int32(c.pageSize), "")
+	return utils.PrintListTableFormat(ctx, ic, printChromePlatforms, c.json, int32(c.pageSize), "", utils.ChromePlatformTitle)
 }
 
 func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {
