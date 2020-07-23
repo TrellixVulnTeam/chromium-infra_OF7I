@@ -40,6 +40,21 @@ var Dev = Environment{
 	SwarmingService:     "https://chromium-swarm-dev.appspot.com/",
 }
 
+// CommonFlags controls some commonly-used CLI flags.
+type CommonFlags struct {
+	verbose bool
+}
+
+// Register sets up the common flags.
+func (f *CommonFlags) Register(fl *flag.FlagSet) {
+	fl.BoolVar(&f.verbose, "verbose", false, "log more details")
+}
+
+// Verbose returns if the command is set to verbose mode.
+func (f *CommonFlags) Verbose() bool {
+	return f.verbose
+}
+
 // EnvFlags controls selection of the environment: either prod (default) or dev.
 type EnvFlags struct {
 	dev bool

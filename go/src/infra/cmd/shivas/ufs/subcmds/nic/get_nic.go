@@ -33,14 +33,16 @@ Gets the nic and prints the output in JSON format.`,
 		c := &getNic{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		return c
 	},
 }
 
 type getNic struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 }
 
 func (c *getNic) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -62,7 +64,9 @@ func (c *getNic) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,

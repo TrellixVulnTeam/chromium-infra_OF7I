@@ -37,14 +37,16 @@ Gets the deployed machine and prints the output in JSON format.`,
 		c := &getMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		return c
 	},
 }
 
 type getMachine struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 }
 
 func (c *getMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -66,7 +68,9 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
