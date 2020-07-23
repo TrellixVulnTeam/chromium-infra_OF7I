@@ -9,6 +9,7 @@ package harness
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 
@@ -80,9 +81,9 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 	for _, o := range o {
 		o(i)
 	}
-	i.BotInfo = i.loadBotInfo(b)
 	d, sv := i.loadDUTInfo(ctx, b)
 	i.DUTName = d.GetCommon().GetHostname()
+	i.BotInfo = i.loadBotInfo(b)
 
 	hi := i.makeHostInfo(d, sv)
 	i.addBotInfoToHostInfo(hi, i.BotInfo)
@@ -107,7 +108,10 @@ func (i *Info) loadBotInfo(b *swmbot.Info) *swmbot.LocalState {
 	if i.err != nil {
 		return nil
 	}
-	bi, err := botinfo.Open(b)
+	if i.DUTName == "" {
+		i.err = fmt.Errorf("DUT Name cannot be blank")
+	}
+	bi, err := botinfo.Open(b, i.DUTName)
 	if err != nil {
 		i.err = err
 		return nil

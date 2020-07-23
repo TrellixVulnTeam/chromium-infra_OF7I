@@ -16,10 +16,15 @@ import (
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 )
 
-// Store holds a bot's botinfo and adds a Close method.
+// Store holds a bot's botinfo and dut name, and adds a Close method.
 type Store struct {
 	swmbot.LocalState
 	bot *swmbot.Info
+	// Ideally, dutName should be stored in swmbot.Info next to the DUTID
+	// field, but the swmbot.Info fields are populated from env variables,
+	// and dutName is fetched via an API call later on. So we store dutName
+	// here to avoid carrying an uninitialized field around in swmbot.Info.
+	dutName string
 }
 
 // Close writes the BotInfo back to disk.  This method does nothing on
@@ -35,7 +40,12 @@ func (s *Store) Close() error {
 	if err != nil {
 		return errors.Annotate(err, "close botinfo").Err()
 	}
-	if err := ioutil.WriteFile(botinfoFilePath(s.bot), data, 0666); err != nil {
+	// Write DUT state into two files: one by DUT name, one by DUT ID.
+	// TODO(crbug.com/994404): Stop saving the DUT ID-based state file.
+	if err := ioutil.WriteFile(botinfoFilePath(s.bot, s.bot.DUTID), data, 0666); err != nil {
+		return errors.Annotate(err, "close botinfo").Err()
+	}
+	if err := ioutil.WriteFile(botinfoFilePath(s.bot, s.dutName), data, 0666); err != nil {
 		return errors.Annotate(err, "close botinfo").Err()
 	}
 	s.bot = nil
@@ -44,9 +54,9 @@ func (s *Store) Close() error {
 
 // Open loads the BotInfo for the Bot.  The BotInfo should be closed
 // afterward to write it back.
-func Open(b *swmbot.Info) (*Store, error) {
-	s := Store{bot: b}
-	data, err := ioutil.ReadFile(botinfoFilePath(b))
+func Open(b *swmbot.Info, dutName string) (*Store, error) {
+	s := Store{bot: b, dutName: dutName}
+	data, err := ioutil.ReadFile(botinfoFilePath(b, b.DUTID))
 	if err != nil {
 		return nil, errors.Annotate(err, "open botinfo").Err()
 	}
@@ -57,8 +67,8 @@ func Open(b *swmbot.Info) (*Store, error) {
 }
 
 // botinfoFilePath returns the path for caching dimensions for the given bot.
-func botinfoFilePath(b *swmbot.Info) string {
-	return filepath.Join(botinfoDirPath(b), fmt.Sprintf("%s.json", b.DUTID))
+func botinfoFilePath(b *swmbot.Info, fileID string) string {
+	return filepath.Join(botinfoDirPath(b), fmt.Sprintf("%s.json", fileID))
 }
 
 // botinfoDir returns the path to the cache directory for the given bot.
