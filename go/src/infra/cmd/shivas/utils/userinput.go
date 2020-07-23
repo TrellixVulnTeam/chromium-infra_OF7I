@@ -1875,6 +1875,94 @@ func GetDracInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, drac
 	return machineName
 }
 
+// GetKVMInteractiveInput get kvm input in interactive mode
+//
+// Name(string) -> MAC Address(string) -> ChromePlatform(string, resource) ->
+// -> CapacityPort(int) -> Rack name(string)
+func GetKVMInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, kvm *fleet.KVM, update bool) string {
+	var rackName string
+	input := &Input{
+		Key:      "Name",
+		Desc:     UfleetAPI.ValidName,
+		Required: true,
+	}
+	chromePlatforms := getAllChromePlatforms(ctx, ic)
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println(InputDetails)
+	for input != nil {
+		if input.Desc != "" {
+			fmt.Println(input.Desc)
+		}
+		fmt.Print(input.Key, ": ")
+		for scanner.Scan() {
+			value := scanner.Text()
+			if value == "" && input.Required {
+				fmt.Println(input.Key, RequiredField)
+				fmt.Print(input.Key, ": ")
+				continue
+			}
+			switch input.Key {
+			case "Name":
+				if !UfleetAPI.IDRegex.MatchString(value) {
+					break
+				}
+				if !update && KVMExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, AlreadyExists)
+					break
+				} else if update && !KVMExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				kvm.Name = value
+				input = &Input{
+					Key: "MAC Address",
+				}
+			case "MAC Address":
+				kvm.MacAddress = value
+				input = &Input{
+					Key:  "ChromePlatform",
+					Desc: fmt.Sprintf("%s%s", ChooseChromePlatform, createKeyValuePairs(chromePlatforms)),
+				}
+			case "ChromePlatform":
+				if value != "" {
+					option := getSelectionInput(value, chromePlatforms, input)
+					if option == -1 {
+						break
+					}
+					kvm.ChromePlatform = chromePlatforms[option]
+				}
+				input = &Input{
+					Key: "CapacityPort",
+				}
+			case "CapacityPort":
+				if value != "" {
+					port := getIntInput(value, input)
+					if port == -1 {
+						break
+					}
+					kvm.CapacityPort = port
+				}
+				input = &Input{
+					Key:  "Rack name",
+					Desc: "Name of the rack to associate this kvm.",
+				}
+				if !update {
+					input.Required = true
+				}
+			case "Rack name":
+				if value != "" && !RackExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				rackName = value
+				input = nil
+			}
+			break
+		}
+	}
+	return rackName
+}
+
 func createKeyValuePairs(m map[int32]string) string {
 	keys := make([]int32, 0, len(m))
 	for k := range m {

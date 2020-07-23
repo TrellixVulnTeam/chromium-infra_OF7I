@@ -783,4 +783,43 @@ Example drac:
 
 The protobuf definition of drac is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+
+	// AddKVMLongDesc long description for AddKVMCmd
+	AddKVMLongDesc string = `Add a kvm by name.
+
+Examples:
+shivas add-kvm -f kvm.json -r {Rack name}
+Add a kvm by reading a JSON file input.
+-r option is a required parameter to associate the kvm to the given rack.
+
+shivas add-kvm -i
+Add a kvm by reading input through interactive mode.`
+
+	// UpdateKVMLongDesc long description for UpdateKVMCmd
+	UpdateKVMLongDesc string = `Update a kvm by name.
+
+Examples:
+shivas update-kvm -f kvm.json
+Update a kvm by reading a JSON file input.
+
+shivas update-kvm -f kvm.json -r {Rack name}
+Update a kvm by reading a JSON file input and associate the kvm with a different rack.
+
+shivas update-kvm -i
+Update a kvm by reading input through interactive mode.`
+
+	// KVMFileText description for kvm file input
+	KVMFileText string = `Path to a file containing kvm specification in JSON format.
+This file must contain one kvm JSON message
+
+Example kvm:
+{
+	"name": "kvm-23",
+	"macAddress": "00:0d:5d:10:64:8d",
+	"chromePlatform": "Gigabyte R181-T92",
+	"capacityPort": 48
+}
+
+The protobuf definition of kvm is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
 )

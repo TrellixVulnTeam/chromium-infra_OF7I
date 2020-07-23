@@ -24,6 +24,7 @@ import (
 	"infra/cmd/shivas/ufs/cmds/labsetup"
 	q "infra/cmd/shivas/ufs/cmds/query"
 	"infra/cmd/shivas/ufs/cmds/registration/drac"
+	"infra/cmd/shivas/ufs/cmds/registration/kvm"
 	"infra/cmd/shivas/ufs/cmds/registration/machine"
 	"infra/cmd/shivas/ufs/cmds/registration/nic"
 	"infra/cmd/shivas/ufs/cmds/registration/switches"
@@ -61,6 +62,9 @@ func getApplication() *cli.Application {
 			switches.AddSwitchCmd,
 			switches.UpdateSwitchCmd,
 			switches.DeleteSwitchCmd,
+			kvm.AddKVMCmd,
+			kvm.UpdateKVMCmd,
+			kvm.DeleteKVMCmd,
 			subcommands.Section("Lab Setup Management"),
 			labsetup.AddHostCmd,
 			labsetup.UpdateHostCmd,

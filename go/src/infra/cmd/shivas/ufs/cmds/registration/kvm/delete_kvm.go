@@ -6,6 +6,7 @@ package kvm
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -19,33 +20,30 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// GetKVMCmd get kvm by given name.
-var GetKVMCmd = &subcommands.Command{
-	UsageLine: "kvm {KVM Name}",
-	ShortDesc: "Get kvm details by name",
-	LongDesc: `Get kvm details by name.
+// DeleteKVMCmd delete KVM by given name.
+var DeleteKVMCmd = &subcommands.Command{
+	UsageLine: "delete-kvm {KVM Name}",
+	ShortDesc: "Delete a kvm by name",
+	LongDesc: `Delete a kvm by name.
 
 Example:
-
-shivas get kvm {KVM Name}
-Gets the kvm and prints the output in JSON format.`,
+shivas delete-kvm {KVM Name}
+Deletes the given kvm.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &getKVM{}
+		c := &deleteKVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.commonFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type getKVM struct {
+type deleteKVM struct {
 	subcommands.CommandRunBase
-	authFlags   authcli.Flags
-	envFlags    site.EnvFlags
-	commonFlags site.CommonFlags
+	authFlags authcli.Flags
+	envFlags  site.EnvFlags
 }
 
-func (c *getKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *deleteKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -53,7 +51,7 @@ func (c *getKVM) Run(a subcommands.Application, args []string, env subcommands.E
 	return 0
 }
 
-func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *deleteKVM) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -62,30 +60,29 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 	if err != nil {
 		return err
 	}
-	e := c.envFlags.Env()
-	if c.commonFlags.Verbose() {
-		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete KVM: %s", args[0])) {
+		return nil
 	}
+	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetKVM(ctx, &ufsAPI.GetKVMRequest{
+	_, err = ic.DeleteKVM(ctx, &ufsAPI.DeleteKVMRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, args[0]),
 	})
-	if err != nil {
-		return err
+	if err == nil {
+		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		return nil
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
-	fmt.Println()
-	return nil
+	return err
 }
 
-func (c *getKVM) validateArgs() error {
+func (c *deleteKVM) validateArgs() error {
 	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the kvm name.")
+		return cmdlib.NewUsageError(c.Flags, "Please provide the kvm name to be deleted.")
 	}
 	return nil
 }
