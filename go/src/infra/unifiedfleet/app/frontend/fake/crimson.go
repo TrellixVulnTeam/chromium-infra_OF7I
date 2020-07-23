@@ -40,8 +40,18 @@ func (c *CrimsonClient) ListKVMs(ctx context.Context, in *crimson.ListKVMsReques
 
 // ListOSes mocks the ListOSes of crimsonClient
 func (c *CrimsonClient) ListOSes(ctx context.Context, in *crimson.ListOSesRequest, opts ...grpc.CallOption) (*crimson.ListOSesResponse, error) {
-	out := new(crimson.ListOSesResponse)
-	return out, nil
+	return &crimson.ListOSesResponse{
+		Oses: []*crimson.OS{
+			{
+				Name:        "os1",
+				Description: "os1_description",
+			},
+			{
+				Name:        "os2",
+				Description: "os2_description",
+			},
+		},
+	}, nil
 }
 
 // ListPlatforms mocks the ListPlatforms of crimsonClient

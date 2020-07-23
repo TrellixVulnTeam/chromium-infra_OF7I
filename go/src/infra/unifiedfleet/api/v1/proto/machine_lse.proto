@@ -80,6 +80,7 @@ message VM {
 message OSVersion {
    string value = 1;
    string description = 2;
+   string image = 3;
 }
 
 // ChromeOSMachineLSE refers to the entity in Chrome OS lab

@@ -163,6 +163,40 @@ func (s *DecoratedFleet) ImportChromePlatforms(ctx context.Context, req *ImportC
 	return
 }
 
+func (s *DecoratedFleet) ListOSVersions(ctx context.Context, req *ListOSVersionsRequest) (rsp *ListOSVersionsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListOSVersions", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListOSVersions(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListOSVersions", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) ImportOSVersions(ctx context.Context, req *ImportOSVersionsRequest) (rsp *status.Status, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ImportOSVersions", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ImportOSVersions(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ImportOSVersions", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) CreateMachineLSEPrototype(ctx context.Context, req *CreateMachineLSEPrototypeRequest) (rsp *proto1.MachineLSEPrototype, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

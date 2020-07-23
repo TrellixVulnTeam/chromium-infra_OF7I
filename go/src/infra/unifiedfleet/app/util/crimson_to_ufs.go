@@ -62,6 +62,18 @@ func ToChromePlatforms(oldP *crimsonconfig.Platforms) []*fleet.ChromePlatform {
 	return newP
 }
 
+// ToOses converts the os versions to UFS format.
+func ToOses(old []*crimson.OS) []*fleet.OSVersion {
+	newOSes := make([]*fleet.OSVersion, len(old))
+	for i, p := range old {
+		newOSes[i] = &fleet.OSVersion{
+			Value:       FormatResourceName(p.GetName()),
+			Description: p.GetDescription(),
+		}
+	}
+	return newOSes
+}
+
 // ProcessDatacenters converts datacenters to several UFS objects
 func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.RackLSE, []*fleet.KVM, []*fleet.Switch, []*fleet.DHCPConfig) {
 	dcName := dc.GetName()
