@@ -334,10 +334,11 @@ func validateDeleteMachine(ctx context.Context, id string) error {
 	if len(machinelses) > 0 {
 		var errorMsg strings.Builder
 		errorMsg.WriteString(fmt.Sprintf("Machine %s cannot be deleted because there are other resources which are referring this Machine.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring the Machine:\n"))
+		errorMsg.WriteString(fmt.Sprintf("\nHosts referring the Machine:\n"))
 		for _, machinelse := range machinelses {
 			errorMsg.WriteString(machinelse.Name + ", ")
 		}
+		errorMsg.WriteString(fmt.Sprintf("\nPlease delete the hosts and then delete the machine.\n"))
 		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}

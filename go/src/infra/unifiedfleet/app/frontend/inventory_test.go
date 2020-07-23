@@ -14,6 +14,7 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -39,33 +40,29 @@ func TestCreateMachineLSE(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	machineLSE1 := mockMachineLSE("machineLSE-1")
-	machineLSE2 := mockMachineLSE("machineLSE-2")
 	Convey("CreateMachineLSEs", t, func() {
 		Convey("Create new machineLSE with machineLSE_id", func() {
+			machine := &proto.Machine{
+				Name: "machine-1",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			machineLSE1 := mockMachineLSE("machineLSE-1")
 			req := &api.CreateMachineLSERequest{
 				MachineLSE:   machineLSE1,
-				MachineLSEId: "machineLSE-1",
+				MachineLSEId: "machinelse-1",
+				Machines:     []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSE1)
 		})
 
-		Convey("Create existing machineLSEs", func() {
-			req := &api.CreateMachineLSERequest{
-				MachineLSE:   machineLSE1,
-				MachineLSEId: "machineLSE-1",
-			}
-			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, AlreadyExists)
-		})
-
 		Convey("Create new machineLSE - Invalid input nil", func() {
 			req := &api.CreateMachineLSERequest{
 				MachineLSE: nil,
+				Machines:   []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -75,8 +72,9 @@ func TestCreateMachineLSE(t *testing.T) {
 
 		Convey("Create new machineLSE - Invalid input empty ID", func() {
 			req := &api.CreateMachineLSERequest{
-				MachineLSE:   machineLSE2,
+				MachineLSE:   mockMachineLSE("machineLSE-3"),
 				MachineLSEId: "",
+				Machines:     []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -86,13 +84,37 @@ func TestCreateMachineLSE(t *testing.T) {
 
 		Convey("Create new machineLSE - Invalid input invalid characters", func() {
 			req := &api.CreateMachineLSERequest{
-				MachineLSE:   machineLSE2,
+				MachineLSE:   mockMachineLSE("machineLSE-4"),
 				MachineLSEId: "a.b)7&",
+				Machines:     []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+		})
+
+		Convey("Create new machineLSE - Invalid input nil machines", func() {
+			req := &api.CreateMachineLSERequest{
+				MachineLSE:   mockMachineLSE("machineLSE-4"),
+				MachineLSEId: "machineLSE-4",
+			}
+			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyMachineName)
+		})
+
+		Convey("Create new machineLSE - Invalid input empty machines", func() {
+			req := &api.CreateMachineLSERequest{
+				MachineLSE:   mockMachineLSE("machineLSE-4"),
+				MachineLSEId: "machineLSE-4",
+				Machines:     []string{""},
+			}
+			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, api.EmptyMachineName)
 		})
 	})
 }
@@ -102,36 +124,20 @@ func TestUpdateMachineLSE(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	machineLSE1 := mockMachineLSE("machineLSE-1")
-	machineLSE2 := mockMachineLSE("machineLSE-1")
-	machineLSE3 := mockMachineLSE("machineLSE-3")
-	machineLSE4 := mockMachineLSE("")
-	machineLSE5 := mockMachineLSE("a.b)7&")
 	Convey("UpdateMachineLSEs", t, func() {
 		Convey("Update existing machineLSEs", func() {
-			req := &api.CreateMachineLSERequest{
-				MachineLSE:   machineLSE1,
-				MachineLSEId: "machineLSE-1",
-			}
-			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
+			_, err := inventory.CreateMachineLSE(ctx, &proto.MachineLSE{
+				Name: "machineLSE-1",
+			})
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSE1)
-			ureq := &api.UpdateMachineLSERequest{
-				MachineLSE: machineLSE2,
-			}
-			resp, err = tf.Fleet.UpdateMachineLSE(tf.C, ureq)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSE2)
-		})
 
-		Convey("Update non-existing machineLSEs", func() {
-			ureq := &api.UpdateMachineLSERequest{
-				MachineLSE: machineLSE3,
+			machineLSE := mockMachineLSE("machineLSE-1")
+			req := &api.UpdateMachineLSERequest{
+				MachineLSE: machineLSE,
 			}
-			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
+			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE)
 		})
 
 		Convey("Update machineLSE - Invalid input nil", func() {
@@ -145,6 +151,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 		})
 
 		Convey("Update machineLSE - Invalid input empty name", func() {
+			machineLSE4 := mockMachineLSE("")
 			machineLSE4.Name = ""
 			req := &api.UpdateMachineLSERequest{
 				MachineLSE: machineLSE4,
@@ -156,6 +163,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 		})
 
 		Convey("Update machineLSE - Invalid input invalid characters", func() {
+			machineLSE5 := mockMachineLSE("a.b)7&")
 			req := &api.UpdateMachineLSERequest{
 				MachineLSE: machineLSE5,
 			}
@@ -169,19 +177,17 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 func TestGetMachineLSE(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("GetMachineLSE", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		machineLSE1 := mockMachineLSE("machineLSE-1")
-		req := &api.CreateMachineLSERequest{
-			MachineLSE:   machineLSE1,
-			MachineLSEId: "machineLSE-1",
-		}
-		resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, machineLSE1)
 		Convey("Get machineLSE by existing ID", func() {
+			machineLSE1, err := inventory.CreateMachineLSE(ctx, &proto.MachineLSE{
+				Name: "machineLSE-1",
+			})
+			So(err, ShouldBeNil)
+			machineLSE1.Name = util.AddPrefix(util.MachineLSECollection, machineLSE1.Name)
+
 			req := &api.GetMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
 			}
@@ -221,25 +227,18 @@ func TestGetMachineLSE(t *testing.T) {
 
 func TestListMachineLSEs(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	machineLSEs := make([]*proto.MachineLSE, 0, 4)
+	for i := 0; i < 4; i++ {
+		resp, _ := inventory.CreateMachineLSE(tf.C, &proto.MachineLSE{
+			Name: fmt.Sprintf("machineLSE-%d", i),
+		})
+		resp.Name = util.AddPrefix(util.MachineLSECollection, resp.Name)
+		machineLSEs = append(machineLSEs, resp)
+	}
 	Convey("ListMachineLSEs", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		machineLSEs := make([]*proto.MachineLSE, 0, 4)
-		for i := 0; i < 4; i++ {
-			machineLSE1 := mockMachineLSE("machineLSE-1")
-			hostname := fmt.Sprintf("machineLSE-%d", i)
-			machineLSE1.Hostname = hostname
-			req := &api.CreateMachineLSERequest{
-				MachineLSE:   machineLSE1,
-				MachineLSEId: hostname,
-			}
-			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSE1)
-			machineLSEs = append(machineLSEs, resp)
-		}
-
 		Convey("ListMachineLSEs - page_size negative", func() {
 			req := &api.ListMachineLSEsRequest{
 				PageSize: -5,
@@ -304,29 +303,23 @@ func TestListMachineLSEs(t *testing.T) {
 
 func TestDeleteMachineLSE(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
 	Convey("DeleteMachineLSE", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		machineLSE1 := mockMachineLSE("")
-		machineLSE1.Hostname = "machineLSE-1"
-		req := &api.CreateMachineLSERequest{
-			MachineLSE:   machineLSE1,
-			MachineLSEId: "machineLSE-1",
-		}
-		resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
-		So(err, ShouldBeNil)
-		So(resp, ShouldResembleProto, machineLSE1)
 		Convey("Delete machineLSE by existing ID", func() {
+			_, err := inventory.CreateMachineLSE(ctx, &proto.MachineLSE{
+				Name: "machineLSE-1",
+			})
+			So(err, ShouldBeNil)
+
 			req := &api.DeleteMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
 			}
-			_, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
+			_, err = tf.Fleet.DeleteMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
-			greq := &api.GetMachineLSERequest{
-				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
-			}
-			res, err := tf.Fleet.GetMachineLSE(tf.C, greq)
+
+			res, err := inventory.GetMachineLSE(tf.C, "machineLSE-1")
 			So(res, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)

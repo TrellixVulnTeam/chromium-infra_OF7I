@@ -368,6 +368,14 @@ func (r *CreateMachineLSERequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	if r.Machines == nil {
+		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
+	}
+	for _, machineName := range r.Machines {
+		if machineName == "" {
+			return status.Errorf(codes.InvalidArgument, EmptyMachineName)
+		}
+	}
 	return nil
 }
 

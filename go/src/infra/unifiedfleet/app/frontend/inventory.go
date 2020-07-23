@@ -29,7 +29,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *api.Create
 		return nil, err
 	}
 	req.MachineLSE.Name = req.MachineLSEId
-	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE)
+	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.Machines)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *api.Update
 		return nil, err
 	}
 	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
-	machineLSE, err := controller.UpdateMachineLSE(ctx, req.MachineLSE)
+	machineLSE, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines)
 	if err != nil {
 		return nil, err
 	}

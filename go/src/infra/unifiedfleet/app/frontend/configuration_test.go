@@ -17,6 +17,7 @@ import (
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
 
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
@@ -809,13 +810,8 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 				MachineLsePrototype: "machineLSEPrototype-1",
 				Hostname:            "machinelse-1",
 			}
-			mreq := &api.CreateMachineLSERequest{
-				MachineLSE:   machineLSE1,
-				MachineLSEId: "machinelse-1",
-			}
-			mresp, merr := tf.Fleet.CreateMachineLSE(tf.C, mreq)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, machineLSE1)
+			machineLSE1, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
 
 			dreq := &api.DeleteMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-1"),

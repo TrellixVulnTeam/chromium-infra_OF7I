@@ -16,7 +16,8 @@ import (
 
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
@@ -31,7 +32,7 @@ var (
 type Resource struct {
 	Kind   string
 	ID     string
-	Entity fleetds.FleetEntity
+	Entity ufsds.FleetEntity
 }
 
 // GetChromePlatformResource returns a Resource with ChromePlatformEntity
@@ -74,6 +75,17 @@ func GetMachineResource(machineID string) *Resource {
 		ID:   machineID,
 		Entity: &registration.MachineEntity{
 			ID: machineID,
+		},
+	}
+}
+
+//GetMachineLSEResource returns a Resource with MachineLSEEntity
+func GetMachineLSEResource(machinelseID string) *Resource {
+	return &Resource{
+		Kind: inventory.MachineLSEKind,
+		ID:   machinelseID,
+		Entity: &inventory.MachineLSEEntity{
+			ID: machinelseID,
 		},
 	}
 }
@@ -168,12 +180,12 @@ func ResourceExist(ctx context.Context, resources []*Resource, errorMsg *strings
 		errorMsg = &strings.Builder{}
 	}
 	var NotFound bool = false
-	checkEntities := make([]fleetds.FleetEntity, 0, len(resources))
+	checkEntities := make([]ufsds.FleetEntity, 0, len(resources))
 	for _, resource := range resources {
 		logging.Debugf(ctx, "checking resource existence: %#v", resource)
 		checkEntities = append(checkEntities, resource.Entity)
 	}
-	exists, err := fleetds.Exists(ctx, checkEntities)
+	exists, err := ufsds.Exists(ctx, checkEntities)
 	if err == nil {
 		for i := range checkEntities {
 			if !exists[i] {
@@ -205,12 +217,12 @@ func resourceAlreadyExists(ctx context.Context, resources []*Resource, errorMsg 
 		errorMsg = &strings.Builder{}
 	}
 	var alreadyExists bool = false
-	checkEntities := make([]fleetds.FleetEntity, 0, len(resources))
+	checkEntities := make([]ufsds.FleetEntity, 0, len(resources))
 	for _, resource := range resources {
 		logging.Debugf(ctx, "checking resource existence: %#v", resource)
 		checkEntities = append(checkEntities, resource.Entity)
 	}
-	exists, err := fleetds.Exists(ctx, checkEntities)
+	exists, err := ufsds.Exists(ctx, checkEntities)
 	if err == nil {
 		for i := range checkEntities {
 			if exists[i] {
@@ -246,8 +258,8 @@ func testServoEq(a, b []*chromeosLab.Servo) bool {
 	return true
 }
 
-func deleteByPage(ctx context.Context, toDelete []string, pageSize int, deletFunc func(ctx context.Context, resourceNames []string) *fleetds.OpResults) *fleetds.OpResults {
-	var allRes fleetds.OpResults
+func deleteByPage(ctx context.Context, toDelete []string, pageSize int, deletFunc func(ctx context.Context, resourceNames []string) *ufsds.OpResults) *ufsds.OpResults {
+	var allRes ufsds.OpResults
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(toDelete))
 		res := deletFunc(ctx, toDelete[i:end])

@@ -662,6 +662,15 @@ message CreateMachineLSERequest {
   // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string machineLSE_id = 2;
+
+  // A host/MachineLSE cannot be added without being associated with a Machine/s.
+  // Refers to the machines to associate this host/MachineLSE.
+  repeated string machines = 3 [
+      (google.api.resource_reference) = {
+          type: "unified-fleet-system.appspot.com/Machine"
+      },
+      (google.api.field_behavior) = REQUIRED
+  ];
 }
 
 message UpdateMachineLSERequest {
@@ -670,6 +679,15 @@ message UpdateMachineLSERequest {
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
+
+  // Refers to the machines to associate this host/MachineLSE.
+  // When it is empty, MachineLSE will associated with the same machines
+  // and we dont update association between machine and MachineLSE.
+  repeated string machines = 3 [
+      (google.api.resource_reference) = {
+          type: "unified-fleet-system.appspot.com/Machine"
+      }
+  ];
 }
 
 message GetMachineLSERequest {
