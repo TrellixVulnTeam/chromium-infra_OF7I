@@ -1,6 +1,11 @@
 [run]
 include = ./appengine/cr-buildbucket/*
 
+# See the comment in bq_test.py
+omit =
+    ./appengine/cr-buildbucket/bq.py
+    ./appengine/cr-buildbucket/test/bq_test.py
+
 [report]
 exclude_lines =
     # Have to re-enable the standard pragma
@@ -19,4 +24,4 @@ exclude_lines =
     if __name__ == ['"]__main__['"]:
 
 [expect_tests]
-expected_coverage_min = 99
+expected_coverage_min = 100
