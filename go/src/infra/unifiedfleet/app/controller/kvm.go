@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -23,6 +24,7 @@ import (
 // CreateKVM creates a new kvm in datastore.
 func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
+	changes := LogKVMChanges(nil, kvm)
 	f := func(ctx context.Context) error {
 		// 1. Validate the input
 		if err := validateCreateKVM(ctx, kvm, rackName); err != nil {
@@ -36,7 +38,9 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		}
 
 		// 3. Update the rack with new kvm information
-		if err = addKVMToRack(ctx, rack, kvm.Name); err != nil {
+		if cs, err := addKVMToRack(ctx, rack, kvm.Name); err == nil {
+			changes = append(changes, cs...)
+		} else {
 			return err
 		}
 
@@ -54,18 +58,22 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		logging.Errorf(ctx, "Failed to create kvm in datastore: %s", err)
 		return nil, err
 	}
+	SaveChangeEvents(ctx, changes)
 	return kvm, nil
 }
 
 // UpdateKVM updates kvm in datastore.
 func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
+	changes := make([]*ufspb.ChangeEvent, 0)
 	f := func(ctx context.Context) error {
 		// 1. Validate the input
 		if err := validateUpdateKVM(ctx, kvm, rackName); err != nil {
 			return err
 		}
 
+		oldKVM, _ := registration.GetKVM(ctx, kvm.GetName())
+		changes = append(changes, LogKVMChanges(oldKVM, kvm)...)
 		if rackName != "" {
 			// 2. Get the old rack associated with kvm
 			oldRack, err := getRackForKVM(ctx, kvm.Name)
@@ -82,12 +90,16 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 				}
 
 				// 4. Remove the association between old rack and this kvm.
-				if err = removeKVMFromRacks(ctx, []*ufspb.Rack{oldRack}, kvm.Name); err != nil {
+				if cs, err := removeKVMFromRacks(ctx, []*ufspb.Rack{oldRack}, kvm.Name); err == nil {
+					changes = append(changes, cs...)
+				} else {
 					return err
 				}
 
 				// 5. Update the rack with new kvm information
-				if err = addKVMToRack(ctx, rack, kvm.Name); err != nil {
+				if cs, err := addKVMToRack(ctx, rack, kvm.Name); err == nil {
+					changes = append(changes, cs...)
+				} else {
 					return err
 				}
 			}
@@ -106,6 +118,7 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		logging.Errorf(ctx, "Failed to update kvm in datastore: %s", err)
 		return nil, err
 	}
+	SaveChangeEvents(ctx, changes)
 	return kvm, nil
 }
 
@@ -127,6 +140,7 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.K
 // 3. Get the rack associated with this kvm
 // 4. Update the rack by removing the association with this kvm
 func DeleteKVM(ctx context.Context, id string) error {
+	changes := LogKVMChanges(&ufspb.KVM{Name: id}, nil)
 	f := func(ctx context.Context) error {
 		// 1. Validate input
 		if err := validateDeleteKVM(ctx, id); err != nil {
@@ -152,13 +166,19 @@ func DeleteKVM(ctx context.Context, id string) error {
 		}
 
 		// 4. Remove the association between the rack and this kvm.
-		return removeKVMFromRacks(ctx, racks, id)
+		cs, err := removeKVMFromRacks(ctx, racks, id)
+		if err != nil {
+			return err
+		}
+		changes = append(changes, cs...)
+		return nil
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete kvm in datastore: %s", err)
 		return err
 	}
+	SaveChangeEvents(ctx, changes)
 	return nil
 }
 
@@ -242,25 +262,26 @@ func validateUpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) err
 // addKVMToRack adds the kvm info to the rack and updates
 // the rack in datastore.
 // Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
-func addKVMToRack(ctx context.Context, rack *ufspb.Rack, kvmName string) error {
+func addKVMToRack(ctx context.Context, rack *ufspb.Rack, kvmName string) ([]*ufspb.ChangeEvent, error) {
 	if rack == nil {
-		return status.Errorf(codes.FailedPrecondition, "Rack is nil")
+		return nil, status.Errorf(codes.FailedPrecondition, "Rack is nil")
 	}
 	if rack.GetChromeBrowserRack() == nil {
 		errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
-		return status.Errorf(codes.FailedPrecondition, errorMsg)
+		return nil, status.Errorf(codes.FailedPrecondition, errorMsg)
 	}
 	kvms := []string{kvmName}
 	if rack.GetChromeBrowserRack().GetKvms() != nil {
 		kvms = rack.GetChromeBrowserRack().GetKvms()
 		kvms = append(kvms, kvmName)
 	}
+	old := proto.Clone(rack).(*ufspb.Rack)
 	rack.GetChromeBrowserRack().Kvms = kvms
 	_, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack})
 	if err != nil {
-		return errors.Annotate(err, "Unable to update rack %s with kvm %s information", rack.Name, kvmName).Err()
+		return nil, errors.Annotate(err, "Unable to update rack %s with kvm %s information", rack.Name, kvmName).Err()
 	}
-	return nil
+	return LogRackChanges(old, rack), nil
 }
 
 // getRackForKVM return rack associated with the kvm.
@@ -283,19 +304,22 @@ func getRackForKVM(ctx context.Context, kvmName string) (*ufspb.Rack, error) {
 // removeKVMFromRacks removes the kvm info from racks and
 // updates the racks in datastore.
 // Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
-func removeKVMFromRacks(ctx context.Context, racks []*ufspb.Rack, id string) error {
+func removeKVMFromRacks(ctx context.Context, racks []*ufspb.Rack, id string) ([]*ufspb.ChangeEvent, error) {
+	changes := make([]*ufspb.ChangeEvent, 0)
 	for _, rack := range racks {
 		if rack.GetChromeBrowserRack() == nil {
 			errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
-			return status.Errorf(codes.FailedPrecondition, errorMsg)
+			return nil, status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
 		kvms := rack.GetChromeBrowserRack().GetKvms()
 		kvms = ufsUtil.RemoveStringEntry(kvms, id)
+		old := proto.Clone(rack).(*ufspb.Rack)
 		rack.GetChromeBrowserRack().Kvms = kvms
+		changes = append(changes, LogRackChanges(old, rack)...)
 	}
 	_, err := registration.BatchUpdateRacks(ctx, racks)
 	if err != nil {
-		return errors.Annotate(err, "Unable to remove kvm information %s from rack", id).Err()
+		return nil, errors.Annotate(err, "Unable to remove kvm information %s from rack", id).Err()
 	}
-	return nil
+	return changes, nil
 }

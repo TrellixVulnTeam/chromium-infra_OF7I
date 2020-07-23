@@ -18,6 +18,7 @@ import (
 
 // SaveChangeEvents saves change events to database
 func SaveChangeEvents(ctx context.Context, changes []*ufspb.ChangeEvent) {
+	logging.Debugf(ctx, "Logging %d changes", len(changes))
 	user := auth.CurrentUser(ctx)
 	for _, c := range changes {
 		c.UserEmail = user.Email
@@ -196,6 +197,73 @@ func LogDracChanges(oldData, newData *ufspb.Drac) []*ufspb.ChangeEvent {
 	// Set resource name for all changes.
 	for i := range changes {
 		changes[i].Name = util.AddPrefix(util.DracCollection, oldData.GetName())
+	}
+	return changes
+}
+
+// LogKVMChanges logs the change of the given kvm.
+func LogKVMChanges(oldData, newData *ufspb.KVM) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	if oldData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.KVMCollection, newData.GetName()), "kvm", LifeCycleRegistration)...)
+	}
+	if newData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.KVMCollection, oldData.GetName()), "kvm", LifeCycleRetire)...)
+	}
+	changes = append(changes, logCommon("", "kvm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logCommon("", "kvm.chrome_platform", oldData.GetChromePlatform(), newData.GetChromePlatform())...)
+	changes = append(changes, logCommon("", "kvm.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
+
+	// Set resource name for all changes.
+	for i := range changes {
+		changes[i].Name = util.AddPrefix(util.KVMCollection, oldData.GetName())
+	}
+	return changes
+}
+
+// LogSwitchChanges logs the change of the given switch.
+func LogSwitchChanges(oldData, newData *ufspb.Switch) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	if oldData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.SwitchCollection, newData.GetName()), "switch", LifeCycleRegistration)...)
+	}
+	if newData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.SwitchCollection, oldData.GetName()), "switch", LifeCycleRetire)...)
+	}
+	changes = append(changes, logCommon("", "switch.description", oldData.GetDescription(), newData.GetDescription())...)
+	changes = append(changes, logCommon("", "switch.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
+
+	// Set resource name for all changes.
+	for i := range changes {
+		changes[i].Name = util.AddPrefix(util.SwitchCollection, oldData.GetName())
+	}
+	return changes
+}
+
+// LogRPMChanges logs the change of the given rpms.
+func LogRPMChanges(oldData, newData *ufspb.RPM) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	if oldData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.RPMCollection, newData.GetName()), "rpm", LifeCycleRegistration)...)
+	}
+	if newData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.RPMCollection, oldData.GetName()), "rpm", LifeCycleRetire)...)
+	}
+	changes = append(changes, logCommon("", "rpm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logCommon("", "switch.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
+
+	// Set resource name for all changes.
+	for i := range changes {
+		changes[i].Name = util.AddPrefix(util.RPMCollection, oldData.GetName())
 	}
 	return changes
 }

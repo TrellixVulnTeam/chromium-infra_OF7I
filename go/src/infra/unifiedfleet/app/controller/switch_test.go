@@ -12,6 +12,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
 )
 
@@ -42,6 +43,10 @@ func TestCreateSwitch(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Switch switch-1 already exists in the system")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new switch with non existing rack", func() {
@@ -52,6 +57,10 @@ func TestCreateSwitch(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-5 in the system.")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new switch with existing rack with switches", func() {
@@ -76,6 +85,19 @@ func TestCreateSwitch(t *testing.T) {
 			mresp, err := registration.GetRack(ctx, "rack-10")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-5", "switch-20"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[switch-5]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[switch-5 switch-20]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
 		})
 
 		Convey("Create new switch with existing rack without switches", func() {
@@ -98,6 +120,19 @@ func TestCreateSwitch(t *testing.T) {
 			mresp, err := registration.GetRack(ctx, "rack-15")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-25"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-25")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-15")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[switch-25]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
 		})
 	})
 }
@@ -120,6 +155,10 @@ func TestUpdateSwitch(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1 in the system")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update switch with new rack", func() {
@@ -165,6 +204,23 @@ func TestUpdateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-4", "switch-3"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-3")
+			So(err, ShouldBeNil)
+			// Nothing is changed for switch-3
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[switch-4]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[switch-4 switch-3]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[switch-3]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
 		})
 
 		Convey("Update switch with same rack", func() {
@@ -189,6 +245,15 @@ func TestUpdateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, switch1)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-3")
+			So(err, ShouldBeNil)
+			// Nothing is changed for switch-3
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")
+			So(err, ShouldBeNil)
+			// Nothing is changed for rack-5
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update switch with non existing rack", func() {
@@ -202,6 +267,10 @@ func TestUpdateSwitch(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-6 in the system.")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-6")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 	})
@@ -215,6 +284,10 @@ func TestDeleteSwitch(t *testing.T) {
 			err := DeleteSwitch(ctx, "switch-10")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Unable to delete switch switch-10")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Delete switch by existing ID with nic reference", func() {
@@ -250,6 +323,10 @@ func TestDeleteSwitch(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch1)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Delete switch successfully", func() {
@@ -280,6 +357,19 @@ func TestDeleteSwitch(t *testing.T) {
 			So(rresp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(rresp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-6")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[switch-2]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
 		})
 	})
 }

@@ -99,7 +99,17 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 		logging.Errorf(ctx, "Failed to register rack: %s", err)
 		return nil, nil, nil, nil, err
 	}
-	SaveChangeEvents(ctx, LogRackChanges(nil, rack))
+	changes := LogRackChanges(nil, rack)
+	for _, sw := range switches {
+		changes = append(changes, LogSwitchChanges(nil, sw)...)
+	}
+	for _, kvm := range kvms {
+		changes = append(changes, LogKVMChanges(nil, kvm)...)
+	}
+	for _, rpm := range rpms {
+		changes = append(changes, LogRPMChanges(nil, rpm)...)
+	}
+	SaveChangeEvents(ctx, changes)
 	return rack, switches, kvms, rpms, nil
 }
 
