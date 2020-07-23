@@ -21,7 +21,8 @@ import (
 	"infra/cmd/shivas/site"
 	sw_cmds "infra/cmd/shivas/swarming/cmds"
 	"infra/cmd/shivas/ufs/cmds/configuration"
-	"infra/cmd/shivas/ufs/cmds/labsetup"
+	"infra/cmd/shivas/ufs/cmds/labsetup/host"
+	"infra/cmd/shivas/ufs/cmds/labsetup/vm"
 	q "infra/cmd/shivas/ufs/cmds/query"
 	"infra/cmd/shivas/ufs/cmds/registration/drac"
 	"infra/cmd/shivas/ufs/cmds/registration/kvm"
@@ -70,12 +71,12 @@ func getApplication() *cli.Application {
 			kvm.UpdateKVMCmd,
 			kvm.DeleteKVMCmd,
 			subcommands.Section("Lab Setup Management"),
-			labsetup.AddHostCmd,
-			labsetup.UpdateHostCmd,
-			labsetup.DeleteHostCmd,
-			labsetup.AddVMCmd,
-			labsetup.UpdateVMCmd,
-			labsetup.DeleteVMCmd,
+			host.AddHostCmd,
+			host.UpdateHostCmd,
+			host.DeleteHostCmd,
+			vm.AddVMCmd,
+			vm.UpdateVMCmd,
+			vm.DeleteVMCmd,
 			subcommands.Section("Configuration Management"),
 			configuration.AddMachineLSEPrototypeCmd,
 			configuration.UpdateMachineLSEPrototypeCmd,

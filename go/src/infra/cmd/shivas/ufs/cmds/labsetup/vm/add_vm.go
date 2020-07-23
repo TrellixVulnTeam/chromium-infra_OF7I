@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package labsetup
+package vm
 
 import (
 	"fmt"
@@ -22,26 +22,26 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// UpdateVMCmd update VM on a host.
-var UpdateVMCmd = &subcommands.Command{
-	UsageLine: "update-vm [Options...]",
-	ShortDesc: "Update a VM on a host",
-	LongDesc: `Update a VM on a host
+// AddVMCmd add a vm on a host.
+var AddVMCmd = &subcommands.Command{
+	UsageLine: "add-vm [Options..]",
+	ShortDesc: "Add a VM on a host",
+	LongDesc: `Add a VM on a host
 
 Examples:
-shivas update-vm -f vm.json -h {Hostname}
-Update a VM on a host by reading a JSON file input.`,
+shivas add-vm -f vm.json -h {Hostname}
+Add a VM on a host by reading a JSON file input.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &updateVM{}
+		c := &addVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.VMFileText)
-		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to update the VM")
+		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to add the VM")
 		return c
 	},
 }
 
-type updateVM struct {
+type addVM struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
@@ -49,7 +49,7 @@ type updateVM struct {
 	newSpecsFile string
 }
 
-func (c *updateVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *addVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -57,7 +57,7 @@ func (c *updateVM) Run(a subcommands.Application, args []string, env subcommands
 	return 0
 }
 
-func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *addVM) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
@@ -73,13 +73,13 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		Options: site.DefaultPRPCOptions,
 	})
 
-	// Parse the josn input
+	// Parse input json
 	var vm ufspb.VM
 	if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
 		return err
 	}
 
-	// Get the host MachineLSE
+	// Get the host machineLSE
 	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostname),
 	})
@@ -88,34 +88,33 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	}
 	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
 
-	// Check if the VM does not exist on the host MachineLSE
+	// Check if VM already exists on the host MachineLSE
 	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
-	if !utils.CheckExistsVM(existingVMs, vm.Name) {
-		return errors.New(fmt.Sprintf("VM %s does not exist on the host %s", vm.Name, machinelse.Name))
+	if utils.CheckExistsVM(existingVMs, vm.Name) {
+		return errors.New(fmt.Sprintf("VM %s already exists on the host %s", vm.Name, machinelse.Name))
 	}
-	existingVMs = utils.RemoveVM(existingVMs, vm.Name)
 	existingVMs = append(existingVMs, &vm)
 	machinelse.GetChromeBrowserMachineLse().Vms = existingVMs
 
-	// Update the host MachineLSE with new VM info
+	// Update the host MachineLSE with new VM
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE: machinelse,
 	})
 	if err != nil {
-		return errors.Annotate(err, "Unable to update the VM on the host").Err()
+		return errors.Annotate(err, "Unable to add the VM on the host").Err()
 	}
 	utils.PrintProtoJSON(res)
 	fmt.Println()
 	return nil
 }
 
-func (c *updateVM) validateArgs() error {
+func (c *addVM) validateArgs() error {
 	if c.newSpecsFile == "" {
 		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo JSON input file specified")
 	}
 	if c.hostname == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nHostname parameter is required to update the VM on the host")
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nHostname parameter is required to add the VM on the host")
 	}
 	return nil
 }

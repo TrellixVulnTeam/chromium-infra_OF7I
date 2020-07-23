@@ -332,8 +332,9 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
 
 Examples:
-shivas add-host -f host.json
+shivas add-host -f host.json -m {Machine name}
 Adds a host by reading a JSON file input.
+-m option is a required parameter to associate the host to the given machine.
 
 shivas add-host -i
 Adds a host by reading input through interactive mode.`
@@ -344,6 +345,9 @@ Adds a host by reading input through interactive mode.`
 Examples:
 shivas update-host -f host.json
 Updates a host by reading a JSON file input.
+
+shivas update-host -f host.json -m {Machine name}
+Update a host by reading a JSON file input and associate the host with a different machine.
 
 shivas update-host -i
 Updates a host by reading input through interactive mode.`
@@ -383,10 +387,7 @@ Example host for a browser machine:
 			"value": "3.4",
 			"description": "Ubuntu Server"
 		},
-	},
-	"machines": [
-		"machine-DellServer-123"
-	]
+	}
 }
 
 Example host(DUT) for an OS machine:
@@ -466,10 +467,7 @@ Example host(DUT) for an OS machine:
 				"port": 23
 			}
 		}
-	},
-	"machines": [
-		"ChromeBook-samus"
-	]
+	}
 }
 
 Example host(Labstation) for an OS machine:
@@ -499,10 +497,7 @@ Example host(Labstation) for an OS machine:
 				"port": 23
 			}
 		}
-	},
-	"machines": [
-		"machine-Labstation-samus"
-	]
+	}
 }
 
 Example host(Caching server/Dev server/VM server) for an OS machine:
@@ -515,10 +510,7 @@ Example host(Caching server/Dev server/VM server) for an OS machine:
 			"supportedRestrictedVlan": "vlan-1",
 			"service_port": 23
 		}
-	},
-	"machines": [
-		"machine-DellLinux-Server"
-	]
+	}
 }
 
 The protobuf definition of a deployed machine is part of
