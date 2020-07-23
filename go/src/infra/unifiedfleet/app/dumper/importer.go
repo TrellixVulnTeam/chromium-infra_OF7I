@@ -46,6 +46,24 @@ func importCrimson(ctx context.Context) error {
 	}
 	logging.Debugf(ctx, "Finish importing chrome platforms: %#v", respCP)
 
+	logging.Debugf(ctx, "Importing os versions")
+	respOS, err := sv.ImportOSVersions(ctx, &api.ImportOSVersionsRequest{
+		Source: &api.ImportOSVersionsRequest_MachineDbSource{
+			MachineDbSource: &api.MachineDBSource{
+				Host: machineDBHost,
+			},
+		},
+	})
+	if err != nil {
+		if len(respOS.GetDetails()) > 0 {
+			logging.Debugf(ctx, "Fail to importing chrome platform: %s", string(respOS.GetDetails()[0].GetValue()))
+		} else {
+			logging.Debugf(ctx, "Fail to importing chrome platform: %s", err.Error())
+		}
+		return err
+	}
+	logging.Debugf(ctx, "Finish importing os: %#v", respOS)
+
 	logging.Debugf(ctx, "Importing vlans")
 	respVlan, err := sv.ImportVlans(ctx, &api.ImportVlansRequest{
 		Source: &api.ImportVlansRequest_ConfigSource{
