@@ -88,8 +88,9 @@ func GetInteractiveInput() []string {
 
 // GetSwitchInteractiveInput get switch input in interactive mode
 //
-// Name(string) -> CapacityPort(int)
-func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s *fleet.Switch, update bool) {
+// Name(string) -> CapacityPort(int) -> Rack name(string)
+func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s *fleet.Switch, update bool) string {
+	var rackName string
 	input := &Input{
 		Key:      "Name",
 		Desc:     UfleetAPI.ValidName,
@@ -133,11 +134,25 @@ func GetSwitchInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, s 
 					}
 					s.CapacityPort = port
 				}
+				input = &Input{
+					Key:  "Rack name",
+					Desc: "Name of the rack to associate this switch.",
+				}
+				if !update {
+					input.Required = true
+				}
+			case "Rack name":
+				if value != "" && !RackExists(ctx, ic, value) {
+					input.Desc = fmt.Sprintf("%s%s", value, DoesNotExist)
+					break
+				}
+				rackName = value
 				input = nil
 			}
 			break
 		}
 	}
+	return rackName
 }
 
 // GetMachineInteractiveInput get Machine input in interactive mode

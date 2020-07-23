@@ -57,7 +57,6 @@ func (c *getSwitch) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
@@ -77,6 +76,7 @@ func (c *getSwitch) innerRun(a subcommands.Application, args []string, env subco
 	if err != nil {
 		return err
 	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
 	fmt.Println()
 	return nil

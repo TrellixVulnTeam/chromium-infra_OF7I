@@ -23,10 +23,10 @@ import (
 	"infra/cmd/shivas/ufs/cmds/configuration"
 	"infra/cmd/shivas/ufs/cmds/labsetup"
 	q "infra/cmd/shivas/ufs/cmds/query"
-	"infra/cmd/shivas/ufs/cmds/registration"
 	"infra/cmd/shivas/ufs/cmds/registration/drac"
 	"infra/cmd/shivas/ufs/cmds/registration/machine"
 	"infra/cmd/shivas/ufs/cmds/registration/nic"
+	"infra/cmd/shivas/ufs/cmds/registration/switches"
 )
 
 func getApplication() *cli.Application {
@@ -58,9 +58,9 @@ func getApplication() *cli.Application {
 			drac.AddDracCmd,
 			drac.UpdateDracCmd,
 			drac.DeleteDracCmd,
-			registration.RegisterCmd,
-			registration.ReregisterCmd,
-			registration.DecomCmd,
+			switches.AddSwitchCmd,
+			switches.UpdateSwitchCmd,
+			switches.DeleteSwitchCmd,
 			subcommands.Section("Lab Setup Management"),
 			labsetup.AddHostCmd,
 			labsetup.UpdateHostCmd,

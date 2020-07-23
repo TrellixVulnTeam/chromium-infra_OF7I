@@ -20,30 +20,30 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// DecomSwitchCmd delete Switch by given name.
-var DecomSwitchCmd = &subcommands.Command{
-	UsageLine: "switch {Switch Name}",
-	ShortDesc: "Decommission/Delete a switch by name",
-	LongDesc: `Decommission/Delete a switch by name.
+// DeleteSwitchCmd delete Switch by given name.
+var DeleteSwitchCmd = &subcommands.Command{
+	UsageLine: "delete-switch {Switch Name}",
+	ShortDesc: "Delete a switch by name",
+	LongDesc: `Delete a switch by name.
 
 Example:
-shivas decom switch {Switch Name}
+shivas delete-switch {Switch Name}
 Deletes the given switch.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &decomSwitch{}
+		c := &deleteSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		return c
 	},
 }
 
-type decomSwitch struct {
+type deleteSwitch struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 	envFlags  site.EnvFlags
 }
 
-func (c *decomSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *deleteSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -51,12 +51,11 @@ func (c *decomSwitch) Run(a subcommands.Application, args []string, env subcomma
 	return 0
 }
 
-func (c *decomSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *deleteSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
@@ -66,7 +65,6 @@ func (c *decomSwitch) innerRun(a subcommands.Application, args []string, env sub
 		return nil
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -82,7 +80,7 @@ func (c *decomSwitch) innerRun(a subcommands.Application, args []string, env sub
 	return err
 }
 
-func (c *decomSwitch) validateArgs() error {
+func (c *deleteSwitch) validateArgs() error {
 	if c.Flags.NArg() == 0 {
 		return cmdlib.NewUsageError(c.Flags, "Please provide the switch name to be deleted.")
 	}

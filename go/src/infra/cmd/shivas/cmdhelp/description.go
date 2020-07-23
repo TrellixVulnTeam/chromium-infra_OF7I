@@ -8,25 +8,29 @@ var (
 	// ListPageSizeDesc description for List PageSize
 	ListPageSizeDesc string = `number of items to get. The service may return fewer than this value.`
 
-	// RegisterSwitchLongDesc long description for RegisterSwitchCmd
-	RegisterSwitchLongDesc string = `Register a switch by name.
+	//AddSwitchLongDesc long description for AddSwitchCmd
+	AddSwitchLongDesc string = `Create a switch by name.
 
 Examples:
-shivas register switch -f switch.json
-Register a switch by reading a JSON file input.
+shivas add-switch -f switch.json -r {Rack name}
+Creates a switch by reading a JSON file input.
+-r option is a required parameter to associate the switch to the given rack.
 
-shivas register switch -i
-Register a switch by reading input through interactive mode.`
+shivas add-switch -i
+Creates a switch by reading input through interactive mode.`
 
-	// ReregisterSwitchLongDesc long description for ReregisterSwitchCmd
-	ReregisterSwitchLongDesc string = `Reregister/Update a switch by name.
+	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
+	UpdateSwitchLongDesc string = `Update a switch by name.
 
 Examples:
-shivas reregister switch -f switch.json
-Reregister/Update a switch by reading a JSON file input.
+shivas update-switch -f switch.json
+Update a switch by reading a JSON file input.
 
-shivas reregister switch -i
-Reregister/Update a switch by reading input through interactive mode.`
+shivas update-switch -f drac.json -r {Rack name}
+Update a switch by reading a JSON file input and associate the switch with a different rack.
+
+shivas update-switch -i
+Update a switch by reading input through interactive mode.`
 
 	// ListSwitchLongDesc long description for ListSwitchCmd
 	ListSwitchLongDesc string = `List all switches
@@ -56,7 +60,7 @@ Example switch:
 }
 
 The protobuf definition of switch is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto#71`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
 
 	// VMFileText description for VM file input
 	VMFileText string = `Path to a file containing VM specification in JSON format.

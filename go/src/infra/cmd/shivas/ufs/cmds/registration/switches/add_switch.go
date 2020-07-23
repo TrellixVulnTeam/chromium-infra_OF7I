@@ -21,30 +21,32 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// ReregisterSwitchCmd Reregister/Update switch by given name.
-var ReregisterSwitchCmd = &subcommands.Command{
-	UsageLine: "switch [Options...]",
-	ShortDesc: "Reregister/Update a switch by name",
-	LongDesc:  cmdhelp.ReregisterSwitchLongDesc,
+// AddSwitchCmd add Switch in the lab.
+var AddSwitchCmd = &subcommands.Command{
+	UsageLine: "add-switch [Options...]",
+	ShortDesc: "Add a switch by name",
+	LongDesc:  cmdhelp.AddSwitchLongDesc,
 	CommandRun: func() subcommands.CommandRun {
-		c := &reregisterSwitch{}
+		c := &addSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.SwitchFileText)
+		c.Flags.StringVar(&c.rackName, "r", "", "name of the rack to associate the switch")
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 		return c
 	},
 }
 
-type reregisterSwitch struct {
+type addSwitch struct {
 	subcommands.CommandRunBase
 	authFlags    authcli.Flags
 	envFlags     site.EnvFlags
+	rackName     string
 	newSpecsFile string
 	interactive  bool
 }
 
-func (c *reregisterSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *addSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		cmdlib.PrintError(a, err)
 		return 1
@@ -52,18 +54,16 @@ func (c *reregisterSwitch) Run(a subcommands.Application, args []string, env sub
 	return 0
 }
 
-func (c *reregisterSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.validateArgs(); err != nil {
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -71,16 +71,16 @@ func (c *reregisterSwitch) innerRun(a subcommands.Application, args []string, en
 	})
 	var s ufspb.Switch
 	if c.interactive {
-		utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
+		c.rackName = utils.GetSwitchInteractiveInput(ctx, ic, &s, false)
 	} else {
-		err = utils.ParseJSONFile(c.newSpecsFile, &s)
-		if err != nil {
+		if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
 			return err
 		}
 	}
-	s.Name = ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name)
-	res, err := ic.UpdateSwitch(ctx, &ufsAPI.UpdateSwitchRequest{
-		Switch: &s,
+	res, err := ic.CreateSwitch(ctx, &ufsAPI.CreateSwitchRequest{
+		Switch:   &s,
+		SwitchId: s.GetName(),
+		Rack:     c.rackName,
 	})
 	if err != nil {
 		return err
@@ -91,9 +91,14 @@ func (c *reregisterSwitch) innerRun(a subcommands.Application, args []string, en
 	return nil
 }
 
-func (c *reregisterSwitch) validateArgs() error {
-	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+func (c *addSwitch) validateArgs() error {
+	if !c.interactive {
+		if c.newSpecsFile == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+		}
+		if c.rackName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name parameter is required to associate the switch with a rack.")
+		}
 	}
 	return nil
 }
