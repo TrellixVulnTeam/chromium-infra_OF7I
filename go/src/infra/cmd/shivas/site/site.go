@@ -29,7 +29,7 @@ type Environment struct {
 var Prod = Environment{
 	InventoryService: "cros-lab-inventory.appspot.com",
 	//TODO(eshwarn) : Change it to prod during release
-	UnifiedFleetService: "staging.ufs.api.cr.dev",
+	UnifiedFleetService: "ufs.api.cr.dev",
 	SwarmingService:     "https://chromeos-swarming.appspot.com/",
 }
 
