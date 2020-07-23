@@ -8,7 +8,7 @@ package unifiedfleet.api.v1.proto.chromeos.lab;
 
 option go_package = "infra/unifiedfleet/api/v1/proto/chromeos/lab;ufspb";
 
-// NEXT TAG: 6
+// NEXT TAG: 7
 message Servo {
   // Servo-specific configs
   string servo_hostname = 2;
@@ -17,4 +17,6 @@ message Servo {
   // Based on https://docs.google.com/document/d/1TPp7yp-uwFUh5xOnBLI4jPYtYD7IcdyQ1dgqFqtcJEU/edit?ts=5d8eafb7#heading=h.csdfk1i6g0l
   // servo_type will contain different setup of servos. So string is recommended than enum.
   string servo_type = 5;
+  // servo_dual_v4 is "supported" if the servo has dual v4 enabled and "" otherwise.
+  string servo_dual_v4 = 6;
 }
