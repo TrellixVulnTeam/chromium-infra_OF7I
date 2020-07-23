@@ -41,6 +41,8 @@ lucicfg.emit(
     data = io.read_file("tricium-dev.cfg"),
 )
 
+infra_led_users_group = "mdb/chrome-troopers"
+
 luci.project(
     name = "infra",
     dev = True,
@@ -68,42 +70,50 @@ luci.project(
             groups = "luci-logdog-chromium-dev-writers",
         ),
     ],
-)
-
-luci.logdog(gs_bucket = "chromium-luci-logdog")
-
-# ACLs for the Swarming pool used by builders in this config. See pools.cfg in
-# chromium-swarm-dev where 'chromium.tests' pool is associated with
-# 'infra:pool/chromium.tests' realm.
-#
-# These ACLs are here only temporarily to simplify working on Realms roll out.
-# Eventually they'll be moved to chromium/src.
-luci.realm(
-    name = "pool/chromium.tests",
     bindings = [
+        # Allow infra_led_users_group to launch tasks in any project realm.
         luci.binding(
-            roles = "role/swarming.poolUser",
+            roles = "role/swarming.realmUser",
             groups = [
-                "chromium-swarm-dev-users",
-                "chromium-swarm-dev-privileged-users",
-            ],
-            projects = [
-                "chromium",
-                "infra-experimental",
+                infra_led_users_group,
             ],
         ),
     ],
 )
 
-# TODO(crbug.com/1066839): remove or fix the bindings after integration testing.
-luci.bucket(name = "ci", bindings = [
-    luci.binding(
-        roles = "role/swarming.realmUser",
-        groups = [
-            "chromium-swarm-dev-users",
-        ],
-    ),
-])
+luci.logdog(gs_bucket = "chromium-luci-logdog")
+
+luci.bucket(name = "ci")
+
+# ACLs for the Swarming pools used by builders in this config. See pools.cfg in
+# chromium-swarm-dev where pools are associated with realms.
+#
+# These ACLs are here only temporarily to simplify working on Realms roll out.
+# Eventually they'll be moved to chromium/src.
+luci.realm(
+    name = "pool/luci.chromium.ci",
+    bindings = [
+        luci.binding(
+            roles = "role/swarming.poolUser",
+            groups = [
+                # Who can directly submit tasks into the pool.
+                infra_led_users_group,
+            ],
+            projects = [
+                # Projects that use the pool through Buildbucket.
+                "chromium",
+                "infra",  # this is also implicit
+                "infra-experimental",
+            ],
+        ),
+    ],
+)
+luci.realm(
+    name = "pool/chromium.tests",
+    bindings = [
+        # empty for now
+    ],
+)
 
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
 
@@ -147,7 +157,7 @@ def adhoc_builder(
         properties = None,
         schedule = None,
         triggered_by = None):
-    dims = {"os": os, "cpu": "x86-64", "pool": "chromium.tests"}
+    dims = {"os": os, "cpu": "x86-64", "pool": "luci.chromium.ci"}
     if extra_dims:
         dims.update(**extra_dims)
     luci.builder(
