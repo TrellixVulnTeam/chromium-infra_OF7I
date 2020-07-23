@@ -47,15 +47,16 @@ try_builder(
     os = "Ubuntu-16.04",
 )
 
-try_builder(
-    name = "luci-py-try-mac10.13-64",
-    os = "Mac-10.13",
-)
+# TODO(crbug.com/1108842): Uncomment mac tryjobs when ATL is online.
+#try_builder(
+#    name = "luci-py-try-mac10.13-64",
+#    os = "Mac-10.13",
+#)
 
-try_builder(
-    name = "luci-py-try-mac10.15-64",
-    os = "Mac-10.15",
-)
+#try_builder(
+#    name = "luci-py-try-mac10.15-64",
+#    os = "Mac-10.15",
+#)
 
 try_builder(
     name = "luci-py-try-win7-64",
