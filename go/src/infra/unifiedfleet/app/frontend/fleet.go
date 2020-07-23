@@ -38,7 +38,7 @@ const (
 	datacenterConfigFile string = "datacenters.cfg"
 )
 
-var spreadSheetScope = []string{authclient.OAuthScopeEmail, "https://www.googleapis.com/auth/spreadsheets.readonly", "https://www.googleapis.com/auth/drive.readonly"}
+var spreadSheetScope = []string{authclient.OAuthScopeEmail, "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.readonly"}
 
 // CfgInterfaceFactory is a contsructor for a luciconfig.Interface
 // For potential unittest usage
