@@ -133,3 +133,26 @@ func BatchDeleteRPMs(ctx context.Context, ids []string) error {
 	}
 	return ufsds.BatchDelete(ctx, protos, newRPMEntity)
 }
+
+// BatchUpdateRPMs updates rpms in datastore.
+//
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateRPMs(ctx context.Context, rpms []*ufspb.RPM) ([]*ufspb.RPM, error) {
+	return putAllRPM(ctx, rpms, true)
+}
+
+func putAllRPM(ctx context.Context, rpms []*ufspb.RPM, update bool) ([]*ufspb.RPM, error) {
+	protos := make([]proto.Message, len(rpms))
+	updateTime := ptypes.TimestampNow()
+	for i, rpm := range rpms {
+		rpm.UpdateTime = updateTime
+		protos[i] = rpm
+	}
+	_, err := ufsds.PutAll(ctx, protos, newRPMEntity, update)
+	if err == nil {
+		return rpms, err
+	}
+	return nil, err
+}

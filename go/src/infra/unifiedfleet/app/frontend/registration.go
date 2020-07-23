@@ -41,6 +41,26 @@ func (fs *FleetServerImpl) MachineRegistration(ctx context.Context, req *api.Mac
 	}, nil
 }
 
+// RackRegistration creates rack, switches, kvms, rpms in database.
+func (fs *FleetServerImpl) RackRegistration(ctx context.Context, req *api.RackRegistrationRequest) (rsp *api.RackRegistrationResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	rack, switches, kvms, rpms, err := controller.RackRegistration(ctx, req.Rack, req.Switches, req.Kvms, req.Rpms)
+	if err != nil {
+		return nil, err
+	}
+	return &api.RackRegistrationResponse{
+		Rack:     rack,
+		Switches: switches,
+		Kvms:     kvms,
+		Rpms:     rpms,
+	}, nil
+}
+
 // CreateMachine creates machine entry in database.
 func (fs *FleetServerImpl) CreateMachine(ctx context.Context, req *api.CreateMachineRequest) (rsp *proto.Machine, err error) {
 	defer func() {

@@ -27,6 +27,9 @@ service Fleet {
   // MachineRegistration creates a new machine, nic and drac.
   rpc MachineRegistration(MachineRegistrationRequest) returns (MachineRegistrationResponse);
 
+  // RackRegistration creates a new rack, switches, kvms and rpms.
+  rpc RackRegistration(RackRegistrationRequest) returns (RackRegistrationResponse);
+
   // CreateChromePlatform creates a new chromePlatform.
   rpc CreateChromePlatform(CreateChromePlatformRequest) returns (proto.ChromePlatform);
 
@@ -1263,4 +1266,32 @@ message MachineRegistrationResponse {
 
   // Created drac
   proto.Drac drac = 3;
+}
+
+message RackRegistrationRequest {
+  // The rack to create.
+  proto.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The switches to create.
+  repeated proto.Switch switches = 2;
+
+  // The kvms to create.
+  repeated proto.KVM kvms = 3;
+
+  // The rpms to create.
+  repeated proto.RPM rpms = 4;
+}
+
+message RackRegistrationResponse {
+  // Create rack
+  proto.Rack rack = 1;
+
+  // Created switches
+  repeated proto.Switch switches = 2;
+
+  // Created kvms
+  repeated proto.KVM kvms = 3;
+
+  // Created rpms
+  repeated proto.RPM rpms = 4;
 }

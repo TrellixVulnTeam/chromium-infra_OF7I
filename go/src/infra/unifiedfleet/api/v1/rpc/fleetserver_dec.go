@@ -44,6 +44,23 @@ func (s *DecoratedFleet) MachineRegistration(ctx context.Context, req *MachineRe
 	return
 }
 
+func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistrationRequest) (rsp *RackRegistrationResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "RackRegistration", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.RackRegistration(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "RackRegistration", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) CreateChromePlatform(ctx context.Context, req *CreateChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
