@@ -15,6 +15,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
 	"infra/cmd/shivas/ufs/subcmds/nic"
+	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
@@ -59,6 +60,7 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		drac.GetDracCmd,
 		nic.GetNicCmd,
 		vm.GetVMCmd,
+		rack.GetRackCmd,
 		machineprototype.GetMachineLSEPrototypeCmd,
 		rackprototype.GetRackLSEPrototypeCmd,
 		chromeplatform.GetChromePlatformCmd,

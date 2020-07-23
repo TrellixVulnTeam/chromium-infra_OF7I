@@ -816,10 +816,129 @@ Example kvm:
 {
 	"name": "kvm-23",
 	"macAddress": "00:0d:5d:10:64:8d",
-	"chromePlatform": "Gigabyte R181-T92",
+	"chromePlatform": "Gigabyte_R181-T92",
 	"capacityPort": 48
 }
 
 The protobuf definition of kvm is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+
+	// AddRackLongDesc long description for AddRackCmd
+	AddRackLongDesc string = `Create a rack by name.
+You can also provide the optional switches, kvms and rpms information to create the switches, kvms and rpms associated with this rack.
+You can also create the switch, kvm and rpm separately after creating the rack using add-switch/add-kvm/add-rpm commands.
+
+Examples:
+shivas add-rack -f rackrequest.json
+Creates a rack by reading a JSON file input.
+
+shivas add-rack -i
+Creates a rack by reading input through interactive mode.`
+
+	// UpdateRackLongDesc long description for UpdateRackCmd
+	UpdateRackLongDesc string = `Update a rack by name.
+
+Examples:
+shivas update-rack -f rack.json
+Update a rack by reading a JSON file input.
+
+shivas update-rack -i
+Update a rack by reading input through interactive mode.`
+
+	// ListRackLongDesc long description for ListRackCmd
+	ListRackLongDesc string = `List all Racks
+
+Examples:
+shivas ls rack
+Fetches all the racks and prints in table format
+
+shivas ls rack -n 5 -json
+Fetches 5 racks and prints the output in JSON format
+`
+
+	// RackRegistrationFileText description for rack registration file input
+	RackRegistrationFileText string = `Path to a file containing rack creation request specification in JSON format.
+This file must contain required rack field and optional switches/kvms/rpms field.
+
+Example rack creation request:
+{
+	"rack": {
+		"name": "rack-BROWSERLAB-example",
+		"location": {
+			"lab": "LAB_DATACENTER_MTV97"
+		},
+		"capacity_ru": 5,
+		"chromeBrowserRack": {},
+		"realm": "Browserlab"
+	},
+	"switches": [{
+			"name": "switch-23",
+			"capacityPort": 456
+		},
+		{
+			"name": "switch-25",
+			"capacityPort": 456
+		}
+	],
+	"kvms": [{
+			"name": "kvm-23",
+			"macAddress": "00:0d:5d:10:64:8d",
+			"chromePlatform": "Gigabyte_R181-T92",
+			"capacityPort": 48
+		},
+		{
+			"name": "kvm-25",
+			"macAddress": "00:0d:5d:20:64:8d",
+			"chromePlatform": "Gigabyte_R181-T92",
+			"capacityPort": 44
+		}
+	],
+	"rpms": [{
+		"name": "rpm-23",
+		"macAddress": "00:0d:5d:10:64:8d",
+		"capacityPort": 48
+	}, {
+		"name": "rpm-25",
+		"macAddress": "00:0d:5d:10:68:8d",
+		"capacityPort": 45
+	}]
+}
+
+The protobuf definition can be found here:
+Rack creation request: RackRegistrationRequest
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/rpc/fleet.proto
+
+Rack:
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto
+
+Switch, KVM and RPM:
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+
+	// RackFileText description for rack file input
+	RackFileText string = `Path to a file containing rack specification in JSON format.
+This file must contain one rack JSON message
+
+Example Browser rack:
+{
+	"name": "rack-BROWSERLAB-example",
+	"location": {
+		"lab": "LAB_DATACENTER_MTV97"
+	},
+	"capacity_ru": 5,
+	"chromeBrowserRack": {},
+	"realm": "Browserlab"
+}
+
+{
+	"name": "rack-OSLAB-example",
+	"location": {
+		"lab": "LAB_DATACENTER_SANTIAM"
+	},
+	"capacity_ru": 5,
+	"chromeosRack": {},
+	"realm": "Browserlab"
+}
+
+The protobuf definition of rack is part of
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto`
 )

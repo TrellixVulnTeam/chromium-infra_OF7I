@@ -27,6 +27,7 @@ import (
 	"infra/cmd/shivas/ufs/cmds/registration/kvm"
 	"infra/cmd/shivas/ufs/cmds/registration/machine"
 	"infra/cmd/shivas/ufs/cmds/registration/nic"
+	"infra/cmd/shivas/ufs/cmds/registration/rack"
 	"infra/cmd/shivas/ufs/cmds/registration/switches"
 )
 
@@ -59,6 +60,9 @@ func getApplication() *cli.Application {
 			drac.AddDracCmd,
 			drac.UpdateDracCmd,
 			drac.DeleteDracCmd,
+			rack.AddRackCmd,
+			rack.UpdateRackCmd,
+			rack.DeleteRackCmd,
 			switches.AddSwitchCmd,
 			switches.UpdateSwitchCmd,
 			switches.DeleteSwitchCmd,

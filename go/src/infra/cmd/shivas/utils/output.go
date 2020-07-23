@@ -45,6 +45,8 @@ var (
 		"Description", "UpdateTime"}
 	vmTitle = []string{"VM Name", "OS Version", "OS Desc", "MAC Address",
 		"VM Hostname"}
+	RackTitle = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs",
+		"Capacity", "Realm", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -536,4 +538,42 @@ func PrintVMsJSON(vms []*ufspb.VM) {
 	}
 	fmt.Print("]")
 	fmt.Println()
+}
+
+// PrintRacks prints the all racks in table form.
+func PrintRacks(racks []*ufspb.Rack) {
+	defer tw.Flush()
+	for _, m := range racks {
+		printRack(m)
+	}
+}
+
+func printRack(m *ufspb.Rack) {
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	m.Name = ufsUtil.RemovePrefix(m.Name)
+	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserRack().GetSwitches())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserRack().GetKvms())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserRack().GetRpms())
+	out += fmt.Sprintf("%d\t", m.GetCapacityRu())
+	out += fmt.Sprintf("%s\t", m.GetRealm())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+// PrintRacksJSON prints the rack details in json format.
+func PrintRacksJSON(racks []*ufspb.Rack) {
+	len := len(racks) - 1
+	for i, m := range racks {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
 }
