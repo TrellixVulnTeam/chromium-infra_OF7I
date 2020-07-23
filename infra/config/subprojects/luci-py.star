@@ -59,11 +59,6 @@ try_builder(
 #)
 
 try_builder(
-    name = "luci-py-try-win7-64",
-    os = "Windows-7",
-)
-
-try_builder(
     name = "luci-py-try-win10-64",
     os = "Windows-10",
 )

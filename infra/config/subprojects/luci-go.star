@@ -63,7 +63,6 @@ ci_builder(name = "luci-go-continuous-bionic-64", os = "Ubuntu-18.04", tree_clos
 ci_builder(name = "luci-go-continuous-mac-10.13-64", os = "Mac-10.13", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.14-64", os = "Mac-10.14", tree_closing = True)
 ci_builder(name = "luci-go-continuous-mac-10.15-64", os = "Mac-10.15", tree_closing = True)
-ci_builder(name = "luci-go-continuous-win7-64", os = "Windows", tree_closing = True)
 ci_builder(name = "luci-go-continuous-win10-64", os = "Windows-10", tree_closing = True)
 
 try_builder(name = "luci-go-try-trusty-64", os = "Ubuntu-14.04")
@@ -74,7 +73,7 @@ try_builder(name = "luci-go-try-xenial-64", os = "Ubuntu-16.04", properties = {
 # TODO(tandrii): bump to 10.15 once available.
 # TODO(crbug.com/1108842): Uncomment mac tryjob when ATL is online.
 #try_builder(name = "luci-go-try-mac", os = "Mac-10.13")
-try_builder(name = "luci-go-try-win", os = "Windows")
+try_builder(name = "luci-go-try-win", os = "Windows-10")
 
 try_builder(
     name = "luci-go-try-presubmit",

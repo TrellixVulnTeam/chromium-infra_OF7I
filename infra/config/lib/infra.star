@@ -176,9 +176,6 @@ def category_from_os(os, short = False):
     Returns:
       A console category name.
     """
-    if os == "Windows":
-        # Win7 seems to be special.
-        return "win" if short else "win|7"
     os, _, ver = os.partition("-")
     category = _OS_TO_CATEGORY.get(os, os.lower())
     if not short:

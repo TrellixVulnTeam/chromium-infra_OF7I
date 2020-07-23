@@ -76,7 +76,6 @@ ci_builder(name = "infra-continuous-mac-10.14-64", os = "Mac-10.14")
 ci_builder(name = "infra-continuous-mac-10.15-64", os = "Mac-10.15")
 
 # CI Win.
-ci_builder(name = "infra-continuous-win7-64", os = "Windows-7")
 ci_builder(name = "infra-continuous-win10-64", os = "Windows-10")
 
 # CI for building docker images.
@@ -122,7 +121,7 @@ try_builder(name = "infra-try-trusty-64", os = "Ubuntu-14.04")
 
 # TODO(crbug.com/1108842): Uncomment mac tryjob when ATL is online.
 #try_builder(name = "infra-try-mac", os = "Mac-10.13")
-try_builder(name = "infra-try-win", os = "Windows")
+try_builder(name = "infra-try-win", os = "Windows-10")
 try_builder(name = "infra-try-frontend", os = "Ubuntu-16.04", recipe = "infra_frontend_tester")
 
 # Experimental trybot for building docker images out of infra.git CLs.
