@@ -21,6 +21,7 @@ import errors
 import model
 import notifications
 import service
+import swarming
 import user
 
 
@@ -88,8 +89,6 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
         ),
     )
 
-    self.patch('swarming.cancel_task_async', return_value=future(None))
-
     self.patch(
         'google.appengine.api.app_identity.get_default_version_hostname',
         autospec=True,
@@ -149,8 +148,7 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
 
   ################################### CANCEL ###################################
 
-  @mock.patch('swarming.cancel_task_async', autospec=True)
-  def test_cancel(self, cancel_task_async):
+  def test_cancel(self):
     bundle = test_util.build_bundle(id=1)
     bundle.put()
     build = service.cancel_async(1, summary_markdown='nope').get_result()
@@ -158,8 +156,11 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     self.assertEqual(build.proto.end_time.ToDatetime(), utils.utcnow())
     self.assertEqual(build.proto.summary_markdown, 'nope')
     self.assertEqual(build.proto.canceled_by, self.current_identity.to_bytes())
-    cancel_task_async.assert_called_with('swarming.example.com', 'deadbeef')
     self.assertEqual(build.status_changed_time, utils.utcnow())
+
+    args, _ = swarming.cancel_task_transactionally_async.call_args
+    self.assertIsInstance(args[0], model.Build)
+    self.assertEqual(args[1], test_util.BUILD_DEFAULTS.infra.swarming)
 
   def test_cancel_is_idempotent(self):
     build = self.classic_build(id=1)

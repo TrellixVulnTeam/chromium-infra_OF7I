@@ -753,7 +753,7 @@ class SyncBuildTest(BaseTest):
     net.json_request_async.side_effect = json_request_async
 
     self._create_task()
-    cancel_task.assert_called_with('swarming.example.com', 'new task')
+    cancel_task.assert_called_with('swarming.example.com', 'new task', None)
 
   def test_http_400(self):
     net.json_request_async.return_value = future_exception(
@@ -1023,7 +1023,7 @@ class CancelTest(BaseTest):
 
   def test_cancel_task(self):
     self.json_response = {'ok': True}
-    swarming.cancel_task('swarming.example.com', 'deadbeef')
+    swarming.cancel_task('swarming.example.com', 'deadbeef', None)
     net.json_request_async.assert_called_with(
         (
             'https://swarming.example.com/'
@@ -1042,7 +1042,37 @@ class CancelTest(BaseTest):
         'was_running': True,
         'ok': False,
     }
-    swarming.cancel_task('swarming.example.com', 'deadbeef')
+    swarming.cancel_task('swarming.example.com', 'deadbeef', None)
+
+
+class CancelTQTaskTest(BaseTest):
+
+  @mock.patch('tq.enqueue_async')
+  def test_tq_task(self, enqueue_async):
+    enqueue_async.return_value = future(None)
+
+    build = test_util.build(id=1, for_creation=True)
+
+    @ndb.transactional
+    def txn():
+      swarming.cancel_task_transactionally_async(
+          build, build.proto.infra.swarming
+      ).get_result()
+
+    txn()
+
+    enqueue_async.assert_called_with(
+        'backend-default', [{
+            'url':
+                '/internal/task/buildbucket/cancel_swarming_task/' +
+                'swarming.example.com/deadbeef',
+            'payload': {
+                'hostname': 'swarming.example.com',
+                'task_id': 'deadbeef',
+                'realm': None,
+            },
+        }]
+    )
 
 
 class SubNotifyTest(BaseTest):

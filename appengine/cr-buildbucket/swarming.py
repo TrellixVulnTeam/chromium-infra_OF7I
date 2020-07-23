@@ -556,9 +556,12 @@ def _create_swarming_task(build):
   for ts in task_def['task_slices']:
     ts['properties']['secret_bytes'] = secret_bytes_b64
 
-  # TODO(crbug.com/1091604): When running in Realms mode use the project
-  # identity instead of the delegation token and pass `realm` field to the
-  # Swarming to switch the task in the realm mode as well.
+  # Grab the realm the build belongs to if it has opted-in into the experiment.
+  realm = _get_realm_if_enabled(build)  # pylint: disable=assignment-from-none
+
+  # TODO(crbug.com/1091604): When running in Realms mode (i.e. `realm` != None)
+  # use the project identity instead of the delegation token and pass `realm`
+  # field to the Swarming to switch the task into the realm mode as well.
 
   new_task_id = None
   try:
@@ -639,7 +642,7 @@ def _create_swarming_task(build):
           'canceling task %s, best effort',
           new_task_id,
       )
-      cancel_task(sw.hostname, new_task_id)
+      cancel_task(sw.hostname, new_task_id, realm)
 
 
 class TaskSyncBuild(webapp2.RequestHandler):  # pragma: no cover
@@ -660,15 +663,18 @@ def _generate_build_url(milo_hostname, build):
 
 
 @ndb.tasklet
-def cancel_task_async(hostname, task_id):
-  """Cancels a swarming task."""
-  # TODO(crbug.com/1091604): Get access to build's realm and experiments here,
-  # e.g. by piping them through cancel_task_transactionally_async task queue
-  # task.
+def cancel_task_async(hostname, task_id, realm):
+  """Cancels a swarming task.
 
+  Args:
+    hostname: Swarming service hostname.
+    task_id: ID of the Swarming task to cancel.
+    realm: if set, use the corresponding project identity when calling Swarming.
+  """
   # TODO(crbug.com/1091604): When running in Realms mode use the project
   # identity instead of the Buildbucket's own account. Swarming doesn't support
   # it for "/cancel" yet.
+  _ = realm
 
   res = yield _call_api_async(
       impersonate=False,
@@ -686,27 +692,46 @@ def cancel_task_async(hostname, task_id):
     logging.warning('response: %r', res)
 
 
-def cancel_task(hostname, task_id):
-  """Sync version of cancel_task_async.
-
-  Noop if the task started running.
-  """
-  cancel_task_async(hostname, task_id).get_result()
+def cancel_task(hostname, task_id, realm):
+  """Sync version of cancel_task_async."""
+  cancel_task_async(hostname, task_id, realm).get_result()
 
 
-@ndb.tasklet
-def cancel_task_transactionally_async(hostname, task_id):  # pragma: no cover
+def cancel_task_transactionally_async(build, swarming):
   """Transactionally schedules a push task to cancel a swarming task.
 
-  Swarming task cancelation is noop if the task started running.
+  Args:
+    build: a model.Build entity whose task we are canceling.
+    swarming: a build_pb2.BuildInfra.Swarming message with info about the task.
   """
-  url = (
-      '/internal/task/buildbucket/cancel_swarming_task/%s/%s' %
-      (hostname, task_id)
-  )
-  task = taskqueue.Task(url=url)
-  res = yield task.add_async(queue_name='backend-default', transactional=True)
-  raise ndb.Return(res)
+  assert ndb.in_transaction()
+  assert swarming.hostname and swarming.task_id
+  task_def = {
+      'url':
+          '/internal/task/buildbucket/cancel_swarming_task/%s/%s' % (
+              swarming.hostname,
+              swarming.task_id,
+          ),
+      'payload': {
+          'hostname': swarming.hostname,
+          'task_id': swarming.task_id,
+          'realm': _get_realm_if_enabled(build),
+      },
+  }
+  return tq.enqueue_async('backend-default', [task_def])
+
+
+class TaskCancelSwarmingTask(webapp2.RequestHandler):  # pragma: no cover
+  """Cancels a swarming task."""
+
+  @decorators.require_taskqueue('backend-default')
+  def post(self, host, task_id):
+    payload = json.loads(self.request.body or '{}')
+    if not payload:
+      # TODO(crbug.com/1091604): Remove this fallback once there are no more
+      # tasks without the payload.
+      payload = {'hostname': host, 'task_id': task_id, 'realm': None}
+    cancel_task(payload['hostname'], payload['task_id'], payload['realm'])
 
 
 ################################################################################
@@ -1034,6 +1059,10 @@ def get_backend_routes():  # pragma: no cover
       webapp2.Route(
           r'/internal/task/swarming/sync-build/<build_id:\d+>', TaskSyncBuild
       ),
+      webapp2.Route(
+          r'/internal/task/buildbucket/cancel_swarming_task/<host>/<task_id>',
+          TaskCancelSwarmingTask
+      ),
       webapp2.Route(r'/_ah/push-handlers/swarming/notify', SubNotify),
   ]
 
@@ -1115,3 +1144,13 @@ def _using_kitchen(build_proto):
   # buildbucket. After we're transitioned to exe.cmd, we shouldn't need this
   # function.
   return not build_proto.exe.cmd or build_proto.exe.cmd[0] == 'recipes'
+
+
+def _get_realm_if_enabled(build):
+  """Returns a realm name to use for the build's task.
+
+  Returns None if the build hasn't opt-in into using realms yet.
+  """
+  assert isinstance(build, model.Build)
+  # TODO(crbug.com/1091604): Check build.experiments.
+  return None

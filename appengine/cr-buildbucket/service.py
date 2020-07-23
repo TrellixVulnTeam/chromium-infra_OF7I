@@ -543,9 +543,7 @@ def cancel_async(build_id, summary_markdown='', result_details=None):
     sw = bundle.infra.parse().swarming
     # TODO(nodir): remove, in favor of swarming.TaskSyncBuild.
     if sw.hostname and sw.task_id:  # pragma: no branch
-      futs.append(
-          swarming.cancel_task_transactionally_async(sw.hostname, sw.task_id)
-      )
+      futs.append(swarming.cancel_task_transactionally_async(build, sw))
     yield futs
     raise ndb.Return(bundle, True)
 
@@ -594,9 +592,7 @@ def _task_delete_many_builds(bucket_id, status, tags=None, created_by=None):
 
     sw = bundle.infra.parse().swarming
     if sw.hostname and sw.task_id:  # pragma: no branch
-      futs.append(
-          swarming.cancel_task_transactionally_async(sw.hostname, sw.task_id)
-      )
+      futs.append(swarming.cancel_task_transactionally_async(bundle.build, sw))
     yield futs
     raise ndb.Return(True)
 

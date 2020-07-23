@@ -129,14 +129,6 @@ class ViewLogHandler(RedirectHandlerBase):  # pragma: no cover
     return self.redirect(str(log.view_url))
 
 
-class TaskCancelSwarmingTask(webapp2.RequestHandler):  # pragma: no cover
-  """Cancels a swarming task."""
-
-  @decorators.require_taskqueue('backend-default')
-  def post(self, host, task_id):
-    swarming.cancel_task(host, task_id)
-
-
 class UnregisterBuilders(webapp2.RequestHandler):  # pragma: no cover
   """Unregisters builders that didn't have builds for a long time."""
 
@@ -216,8 +208,5 @@ def get_backend_routes():  # pragma: no cover
                     notifications.TaskPublishNotification),
       webapp2.Route(r'/internal/task/resultdb/finalize/<build_id:\d+>',
                     resultdb.FinalizeInvocation),
-      webapp2.Route(
-          r'/internal/task/buildbucket/cancel_swarming_task/<host>/<task_id>',
-          TaskCancelSwarmingTask),
   ] + (bulkproc.get_routes() + prpc_server.get_routes()
        + prpc_server.get_routes(prefix='/python'))
