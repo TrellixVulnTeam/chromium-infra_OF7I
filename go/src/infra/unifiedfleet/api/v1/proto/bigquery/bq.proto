@@ -8,6 +8,7 @@ package unifiedfleet.api.v1.proto.bigquery;
 
 option go_package = "infra/unifiedfleet/api/v1/proto/bigquery;apibq";
 
+import "infra/unifiedfleet/api/v1/proto/change_event.proto";
 import "infra/unifiedfleet/api/v1/proto/chrome_platform.proto";
 import "infra/unifiedfleet/api/v1/proto/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/proto/machine.proto";
@@ -17,6 +18,10 @@ import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 import "infra/unifiedfleet/api/v1/proto/rack.proto";
 import "infra/unifiedfleet/api/v1/proto/rack_lse.proto";
 import "infra/unifiedfleet/api/v1/proto/state.proto";
+
+message ChangeEventRow {
+    proto.ChangeEvent change_event = 1;
+}
 
 message ChromePlatformRow {
     proto.ChromePlatform platform = 1;

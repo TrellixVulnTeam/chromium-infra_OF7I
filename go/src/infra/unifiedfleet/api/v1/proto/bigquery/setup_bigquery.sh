@@ -320,3 +320,20 @@ if ! (bqschemaupdater -force \
   echo "and run this script again."
   exit 1
 fi
+
+echo "- Populate the BigQuery schema:"
+echo ""
+echo "  Warning: On first 'bqschemaupdater' invocation, it'll request default"
+echo "    credentials which is stored independently than 'bq'."
+if ! (bqschemaupdater -force \
+    -message unifiedfleet.api.v1.proto.bigquery.ChangeEventRow  \
+    -table "${APPID}".ufs.change_events); then
+  echo ""
+  echo ""
+  echo "Oh no! You may need to restart from scratch. You can do so with:"
+  echo ""
+  echo "  bq rm ${APPID}:ufs.change_events"
+  echo ""
+  echo "and run this script again."
+  exit 1
+fi

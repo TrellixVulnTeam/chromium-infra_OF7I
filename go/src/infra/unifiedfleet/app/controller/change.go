@@ -30,6 +30,7 @@ func SaveChangeEvents(ctx context.Context, changes []*ufspb.ChangeEvent) {
 			logging.Debugf(ctx, "\t%#v", c)
 		}
 	}
+	logging.Debugf(ctx, "Finish logging changes successfully")
 }
 
 const (

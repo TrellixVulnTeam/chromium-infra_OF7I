@@ -36,6 +36,9 @@ func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
 		cron.Run(ctx, 60*time.Minute, dumpCrosInventory)
 	})
+	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
+		cron.Run(ctx, 10*time.Minute, dumpChangeEvent)
+	})
 	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
 		cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
 	})
@@ -78,6 +81,15 @@ func dumpToBQ(ctx context.Context) (err error) {
 	}
 	logging.Debugf(ctx, "Dump is successfully finished")
 	return nil
+}
+
+func dumpChangeEvent(ctx context.Context) (err error) {
+	defer func() {
+		dumpChangeEventTick.Add(ctx, 1, err == nil)
+	}()
+
+	logging.Debugf(ctx, "Dumping change event to BQ")
+	return dumpChangeEventHelper(ctx, get(ctx))
 }
 
 func dumpCrosInventory(ctx context.Context) (err error) {

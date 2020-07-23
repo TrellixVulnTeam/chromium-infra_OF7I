@@ -18,6 +18,7 @@ import (
 	apibq "infra/unifiedfleet/api/v1/proto/bigquery"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/configuration"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
@@ -25,6 +26,39 @@ import (
 
 const ufsDatasetName = "ufs"
 const pageSize = 500
+
+func dumpChangeEventHelper(ctx context.Context, bqClient *bigquery.Client) error {
+	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, "change_events")
+	changes, err := history.GetAllChangeEventEntities(ctx)
+	if err != nil {
+		return errors.Annotate(err, "get all change events' entities").Err()
+	}
+	msgs := make([]proto.Message, 0)
+	for _, p := range changes {
+		logging.Debugf(ctx, "%#v", p)
+		data, err := p.GetProto()
+		if err != nil {
+			continue
+		}
+		msg := &apibq.ChangeEventRow{
+			ChangeEvent: data.(*ufspb.ChangeEvent),
+		}
+		msgs = append(msgs, msg)
+	}
+	logging.Debugf(ctx, "Dumping %d change events to BigQuery", len(msgs))
+	if err := uploader.Put(ctx, msgs...); err != nil {
+		logging.Debugf(ctx, "fail to upload: %s", err.Error())
+		return err
+	}
+	logging.Debugf(ctx, "Finish dumping successfully")
+	logging.Debugf(ctx, "Deleting uploaded entities")
+	if err := history.DeleteChangeEventEntities(ctx, changes); err != nil {
+		logging.Debugf(ctx, "fail to delete entities: %s", err.Error())
+		return err
+	}
+	logging.Debugf(ctx, "Finish deleting successfully")
+	return nil
+}
 
 func dumpConfigurations(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
 	if err := dumpChromePlatforms(ctx, bqClient, curTimeStr); err != nil {

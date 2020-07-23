@@ -24,7 +24,9 @@ const ChangeEventKind string = "ChangeEvent"
 
 // ChangeEventEntity is a datastore entity that tracks a platform.
 type ChangeEventEntity struct {
-	_kind     string `gae:"$kind,ChangeEvent"`
+	_kind string `gae:"$kind,ChangeEvent"`
+	// Add an auto-increment ID as key for deleting
+	ID        int64  `gae:"$id"`
 	Name      string `gae:"name"`
 	UserEmail string `gae:"user_email"`
 	// ufspb.ChangeEvent cannot be directly used as it contains pointer.
@@ -93,4 +95,19 @@ func QueryChangesByPropertyName(ctx context.Context, propertyName, id string) ([
 		changes = append(changes, pm.(*ufspb.ChangeEvent))
 	}
 	return changes, nil
+}
+
+// GetAllChangeEventEntities returns all change events' entities in datastore.
+func GetAllChangeEventEntities(ctx context.Context) ([]*ChangeEventEntity, error) {
+	var entities []*ChangeEventEntity
+	q := datastore.NewQuery(ChangeEventKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+// DeleteChangeEventEntities deletes a batch of change events' entities
+func DeleteChangeEventEntities(ctx context.Context, entities []*ChangeEventEntity) error {
+	return datastore.Delete(ctx, entities)
 }
