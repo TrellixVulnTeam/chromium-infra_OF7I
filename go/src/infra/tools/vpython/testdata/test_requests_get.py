@@ -5,7 +5,7 @@
 import cryptography
 import requests
 
-SITE = 'https://www.google.com'
+SITE = 'https://extended-validation.badssl.com'
 
 print 'Using requests version:', requests.__version__
 print 'Using cryptography version:', cryptography.__version__
