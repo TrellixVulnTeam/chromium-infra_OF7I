@@ -346,7 +346,7 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 22
+// NEXT TAG: 23
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
@@ -401,6 +401,15 @@ message Peripherals {
     CAMERABOX_FACING_FRONT = 2;
   }
   optional CameraboxFacing camerabox_facing = 18;
+
+  // External light source in the camerabox, LED or NOLED.
+  // NEXT TAG: 3
+  enum CameraboxLight {
+    CAMERABOX_LIGHT_UNKNOWN = 0;
+    CAMERABOX_LIGHT_LED = 1;
+    CAMERABOX_LIGHT_NOLED = 2;
+  }
+  optional CameraboxLight camerabox_light = 22;
 
   optional HardwareState storage_state = 19;
   optional HardwareState servo_usb_state = 20;

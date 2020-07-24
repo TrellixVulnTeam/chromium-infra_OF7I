@@ -110,7 +110,7 @@ message Touch {
   bool mimo = 1;
 }
 
-// Next Tag: 2
+// Next Tag: 3
 message Camerabox {
   // Facing of DUT's camera to be tested whose FOV should cover chart tablet's screen.
   // Next Tag: 3
@@ -121,5 +121,15 @@ message Camerabox {
     // DUT's front camera is facing to chart tablet.
     FACING_FRONT = 2;
   }
+  // Light provision of camerabox, if LED is present or not.
+  // Next Tag: 3
+  enum Light {
+    LIGHT_UNKNOWN = 0;
+    // Camerabox has LED light provisioned.
+    LIGHT_LED = 1;
+    // Camerabox do not have LED light provision.
+    LIGHT_NOLED = 2;
+  }
   Facing facing = 1;
+  Light light = 2;
 }
