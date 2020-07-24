@@ -9,6 +9,9 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/maruel/subcommands"
@@ -282,5 +285,19 @@ func runWithDeadline(ctx context.Context, f func(context.Context) error, deadlin
 // reached then it is due to a timeout lower in the stack.
 func isGlobalTimeoutError(ctx context.Context, err error) bool {
 	d, ok := ctx.Deadline()
-	return ok && time.Now().After(d) && errors.Contains(err, context.DeadlineExceeded)
+	return ok && time.Now().After(d) && isDeadlineExceededError(err)
+}
+
+func isDeadlineExceededError(err error) bool {
+	// The original error raised is context.DeadlineExceeded but the prpc client
+	// library may transmute that into its own error type.
+	return errors.Any(err, func(err error) bool {
+		if err == context.DeadlineExceeded {
+			return true
+		}
+		if s, ok := status.FromError(err); ok {
+			return s.Code() == codes.DeadlineExceeded
+		}
+		return false
+	})
 }
