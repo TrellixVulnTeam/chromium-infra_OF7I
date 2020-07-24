@@ -32,6 +32,9 @@ BUILD_STORAGE_DURATION = datetime.timedelta(days=30 * 18)  # ~18mo
 # Builder entity is deleted.
 BUILDER_EXPIRATION_DURATION = datetime.timedelta(weeks=4)
 
+# Name of a builder experiment that enables LUCI Realms mode.
+EXPERIMENT_REALMS = 'luci.use_realms'
+
 
 class BuildStatus(messages.Enum):
   # A build is created, can be leased by someone and started.
@@ -209,6 +212,10 @@ class Build(ndb.Model):
 
   is_luci = ndb.BooleanProperty()
 
+  @property
+  def realm(self):  # pragma: no cover
+    return '%s:%s' % (self.proto.builder.project, self.proto.builder.bucket)
+
   # == Legacy properties =======================================================
 
   status_legacy = msgprop.EnumProperty(
@@ -350,6 +357,11 @@ class Build(ndb.Model):
       k, v = buildtags.parse(t)
       if k not in buildtags.HIDDEN_TAG_KEYS:
         dest.add(key=k, value=v)
+
+  @property
+  def uses_realms(self):  # pragma: no cover
+    """True if the build opted-in into using LUCI Realms."""
+    return '+%s' % (EXPERIMENT_REALMS,) in self.experiments
 
 
 class BuildDetailEntity(ndb.Model):

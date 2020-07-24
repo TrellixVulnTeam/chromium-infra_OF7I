@@ -685,24 +685,29 @@ class SyncBuildTest(BaseTest):
     )
     swarming._create_swarming_task(self.build_bundle.build)
 
-  def test_create_task(self):
+  def _expected_task_def(self, **extra):
     expected_task_def = self.task_def.copy()
     expected_secrets = launcher_pb2.BuildSecrets(build_token=self.build_token)
     expected_task_def[u'task_slices'][0][u'properties'][u'secret_bytes'] = (
         base64.b64encode(expected_secrets.SerializeToString())
     )
-    build_id = 1
-    expected_task_def['request_uuid'] = str(uuid.UUID(int=build_id))
+    expected_task_def['request_uuid'] = str(uuid.UUID(int=self.build.proto.id))
+    expected_task_def.update(**extra)
+    return expected_task_def
 
+  def test_create_task_no_realms(self):
     net.json_request_async.return_value = future({'task_id': 'x'})
-    swarming._sync_build(build_id, 0)
+    swarming._sync_build(self.build.proto.id, 0)
 
-    actual_task_def = net.json_request_async.call_args[1]['payload']
-    self.assertEqual(actual_task_def, expected_task_def)
-
-    self.assertEqual(
-        net.json_request_async.call_args[0][0],
-        'https://swarming.example.com/_ah/api/swarming/v1/tasks/new'
+    net.json_request_async.assert_called_with(
+        'https://swarming.example.com/_ah/api/swarming/v1/tasks/new',
+        method='POST',
+        scopes=net.EMAIL_SCOPE,
+        payload=self._expected_task_def(),
+        project_id=None,
+        delegation_token='blah',  # see delegate_async mock in setUp
+        deadline=30,
+        max_attempts=1,
     )
 
     # Test delegation token params.
@@ -737,6 +742,26 @@ class SyncBuildTest(BaseTest):
     }
     tq.enqueue_async.assert_called_with(
         swarming.SYNC_QUEUE_NAME, [expected_continuation], transactional=False
+    )
+
+  def test_create_task_with_realms(self):
+    self.build.experiments.append('+%s' % (model.EXPERIMENT_REALMS,))
+    self.build.put()
+
+    net.json_request_async.return_value = future({'task_id': 'x'})
+    swarming._sync_build(self.build.proto.id, 0)
+
+    # Check we made the correct Swarming call. The rest of the logic is
+    # identical to the no-realms case and covered in test_create_task_no_realms.
+    net.json_request_async.assert_called_with(
+        'https://swarming.example.com/_ah/api/swarming/v1/tasks/new',
+        method='POST',
+        scopes=net.EMAIL_SCOPE,
+        payload=self._expected_task_def(realm='chromium:try'),
+        project_id='chromium',
+        delegation_token=None,
+        deadline=30,
+        max_attempts=1,
     )
 
   @mock.patch('swarming.cancel_task', autospec=True)
@@ -946,15 +971,23 @@ class SyncBuildTest(BaseTest):
     bundle = test_util.build_bundle(id=1)
     bundle.put()
 
-    def mock_call_api_async(impersonate, hostname, path):
-      self.assertFalse(impersonate)
-      self.assertEqual(hostname, 'swarming.example.com')
-      self.assertEqual(path, 'task/deadbeef/result')
-      return future(case['task_result'])
-
-    self.patch('swarming._call_api_async', side_effect=mock_call_api_async)
+    net.json_request_async.return_value = future(case['task_result'])
 
     swarming._sync_build(1, 1)
+
+    net.json_request_async.assert_called_with(
+        (
+            'https://swarming.example.com/'
+            '_ah/api/swarming/v1/task/deadbeef/result'
+        ),
+        method='GET',
+        scopes=net.EMAIL_SCOPE,
+        payload=None,
+        project_id=None,
+        delegation_token=None,
+        deadline=None,
+        max_attempts=None,
+    )
 
     build = bundle.build.key.get()
     build_infra = bundle.infra.key.get()
@@ -1033,6 +1066,7 @@ class CancelTest(BaseTest):
         scopes=net.EMAIL_SCOPE,
         delegation_token=None,
         payload={'kill_running': True},
+        project_id=None,
         deadline=None,
         max_attempts=None,
     )

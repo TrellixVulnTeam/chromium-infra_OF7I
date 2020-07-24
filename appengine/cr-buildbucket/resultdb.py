@@ -70,7 +70,7 @@ def create_invocations_async(builds_and_configs):
       req.requests.add(
           invocation_id='build-%d' % build.proto.id,
           invocation=invocation_pb2.Invocation(
-              realm='%s:%s' % (project, build.proto.builder.bucket),
+              realm=build.realm,
               bigquery_exports=cfg.resultdb.bq_exports,
               producer_resource='//%s/builds/%s' % (bb_host, build.key.id()),
           ),

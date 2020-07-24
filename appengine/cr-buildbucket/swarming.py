@@ -556,29 +556,38 @@ def _create_swarming_task(build):
   for ts in task_def['task_slices']:
     ts['properties']['secret_bytes'] = secret_bytes_b64
 
-  # Grab the realm the build belongs to if it has opted-in into the experiment.
-  realm = _get_realm_if_enabled(build)  # pylint: disable=assignment-from-none
-
-  # TODO(crbug.com/1091604): When running in Realms mode (i.e. `realm` != None)
-  # use the project identity instead of the delegation token and pass `realm`
-  # field to the Swarming to switch the task into the realm mode as well.
+  auth_kwargs = {}
+  if build.uses_realms:
+    # If running in realms mode, use the project identity when calling Swarming.
+    # Swarming will check whether this project is allowed to use the requested
+    # pool. This replaces `delegation_tag` mechanism.
+    auth_kwargs.update(act_as_project=build.project)
+    # Associate the task with the build's realm. Swarming will use it to
+    # control who can access the Swarming task.
+    task_def['realm'] = build.realm
+  else:
+    # In non-realms mode use delegation tokens, this is deprecated.
+    auth_kwargs.update(
+        # "Pretend" to be the user who submitted the build.
+        impersonate=True,
+        delegation_identity=build.created_by,
+        # Tell Swarming what bucket the task belongs to. Swarming uses this to
+        # authorize access to pools assigned to specific buckets only.
+        delegation_tag='buildbucket:bucket:%s' % build.bucket_id,
+    )
 
   new_task_id = None
   try:
     res = _call_api_async(
-        impersonate=True,
         hostname=sw.hostname,
         path='tasks/new',
         method='POST',
         payload=task_def,
-        delegation_identity=build.created_by,
-        # Make Swarming know what bucket the task belong too. Swarming uses
-        # this to authorize access to pools assigned to specific buckets only.
-        delegation_tag='buildbucket:bucket:%s' % build.bucket_id,
         deadline=30,
         # Try only once so we don't have multiple swarming tasks with same
         # build_id and valid token, otherwise they will race.
         max_attempts=1,
+        **auth_kwargs
     ).get_result()
     new_task_id = res['task_id']
     assert new_task_id
@@ -642,7 +651,9 @@ def _create_swarming_task(build):
           'canceling task %s, best effort',
           new_task_id,
       )
-      cancel_task(sw.hostname, new_task_id, realm)
+      cancel_task(
+          sw.hostname, new_task_id, build.realm if build.uses_realms else None
+      )
 
 
 class TaskSyncBuild(webapp2.RequestHandler):  # pragma: no cover
@@ -677,7 +688,6 @@ def cancel_task_async(hostname, task_id, realm):
   _ = realm
 
   res = yield _call_api_async(
-      impersonate=False,
       hostname=hostname,
       path='task/%s/cancel' % task_id,
       method='POST',
@@ -716,7 +726,7 @@ def cancel_task_transactionally_async(build, swarming):
       'payload': {
           'hostname': swarming.hostname,
           'task_id': swarming.task_id,
-          'realm': _get_realm_if_enabled(build),
+          'realm': build.realm if build.uses_realms else None,
       },
   }
   return tq.enqueue_async('backend-default', [task_def])
@@ -753,7 +763,6 @@ def _load_task_result(build):
   # it for "/result" yet.
 
   result = _call_api_async(
-      impersonate=False,
       hostname=hostname,
       path='task/%s/result' % task_id,
   ).get_result()
@@ -1070,22 +1079,34 @@ def get_backend_routes():  # pragma: no cover
 
 @ndb.tasklet
 def _call_api_async(
-    impersonate,
     hostname,
     path,
     method='GET',
     payload=None,
+    act_as_project=None,
+    impersonate=False,
     delegation_tag=None,
     delegation_identity=None,
     deadline=None,
     max_attempts=None,
 ):
-  """Calls Swarming API."""
+  """Calls Swarming API.
+
+  Has three modes of authentication:
+    1. `not impersonate and not act_as_project`: act as Buildbucket.
+    2. `impersonate and not act_as_project`: act as `delegation_identity`.
+    3. `not impersonate and act_as_project`: act as `project:<act_as_project>`.
+
+  All other combinations are forbidden.
+  """
+  assert not (impersonate and act_as_project)
+
   delegation_token = None
   if impersonate:
     delegation_token = yield user.delegate_async(
         hostname, identity=delegation_identity, tag=delegation_tag
     )
+
   url = 'https://%s/_ah/api/swarming/v1/%s' % (hostname, path)
   res = yield net.json_request_async(
       url,
@@ -1095,6 +1116,7 @@ def _call_api_async(
       deadline=deadline,
       max_attempts=max_attempts,
       delegation_token=delegation_token,
+      project_id=act_as_project,
   )
   raise ndb.Return(res)
 
@@ -1141,13 +1163,3 @@ def _using_kitchen(build_proto):
   # buildbucket. After we're transitioned to exe.cmd, we shouldn't need this
   # function.
   return not build_proto.exe.cmd or build_proto.exe.cmd[0] == 'recipes'
-
-
-def _get_realm_if_enabled(build):
-  """Returns a realm name to use for the build's task.
-
-  Returns None if the build hasn't opt-in into using realms yet.
-  """
-  assert isinstance(build, model.Build)
-  # TODO(crbug.com/1091604): Check build.experiments.
-  return None
