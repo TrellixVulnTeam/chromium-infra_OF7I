@@ -115,7 +115,7 @@ func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 
 // Shell returns a new 'Shell' object for use in plugins.
 func (r *repo) Shell() migrator.Shell {
-	panic("IMPLEMENT SHELL()")
+	return &shell{repo: r, cwd: r.relConfigRoot}
 }
 
 type gitRunner struct {
