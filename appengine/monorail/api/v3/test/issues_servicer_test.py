@@ -36,6 +36,7 @@ class IssuesServicerTest(unittest.TestCase):
     self.services = service_manager.Services(
         config=fake.ConfigService(),
         issue=fake.IssueService(),
+        issue_star=fake.IssueStarService(),
         project=fake.ProjectService(),
         features=fake.FeaturesService(),
         spam=fake.SpamService(),
@@ -250,6 +251,26 @@ class IssuesServicerTest(unittest.TestCase):
         self.issues_svcr.ListComments, mc, request)
     self.assertEqual(1, len(actual_response.comments))
 
-  def testMakeIssue(self):
-    # TODO(crbug/monorail/7197): Implement
-    pass
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testMakeIssue(self, _fake_pasicn):
+    request_issue = issue_objects_pb2.Issue(
+        summary='sum',
+        status=issue_objects_pb2.Issue.StatusValue(status='New'),
+        cc_users=[issue_objects_pb2.Issue.UserValue(user='users/222')],
+        labels=[issue_objects_pb2.Issue.LabelValue(label='foo-bar')]
+    )
+    request = issues_pb2.MakeIssueRequest(
+        parent='projects/chicken',
+        issue=request_issue,
+        description='description'
+    )
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(
+        self.issues_svcr.MakeIssue, mc, request)
+    self.assertEqual(response.summary, 'sum')
+    self.assertEqual(response.status.status, 'New')
+    self.assertEqual(response.cc_users[0].user, 'users/222')
+    self.assertEqual(response.labels[0].label, 'foo-bar')
+    self.assertEqual(response.star_count, 1)

@@ -2088,6 +2088,7 @@ class WorkEnv(object):
             self.mc.auth.user_id, flag)
 
   def StarIssue(self, issue, starred):
+    # type: (Issue, bool) -> Issue
     """Set or clear a star on the given issue for the signed in user."""
     if not self.mc.auth.user_id:
       raise permissions.PermissionException('Anon cannot star issues')
@@ -2099,6 +2100,7 @@ class WorkEnv(object):
       self.services.issue_star.SetStar(
           self.mc.cnxn, self.services, config, issue.issue_id,
           self.mc.auth.user_id, starred)
+    return self.services.issue.GetIssue(self.mc.cnxn, issue.issue_id)
 
   def IsIssueStarred(self, issue, cnxn=None):
     """Return True if the given issue is starred by the signed in user."""

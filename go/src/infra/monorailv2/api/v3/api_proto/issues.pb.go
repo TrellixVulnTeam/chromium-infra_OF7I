@@ -1563,7 +1563,11 @@ type IssuesClient interface {
 	// required, but not included in the Issue proto.
 	//
 	// Raises:
-	//   TODO(crbug/monorail/7919): Document errors when implemented
+	//   INVALID_ARGUMENT if any given names does not have a valid format, if any
+	//     fields in the requested issue were invalid, or if proposed values
+	//     violates filter rules that should error.
+	//   NOT_FOUND if no project exists with the given name.
+	//   PERMISSION_DENIED if user lacks sufficient permissions.
 	MakeIssue(ctx context.Context, in *MakeIssueRequest, opts ...grpc.CallOption) (*Issue, error)
 }
 type issuesPRPCClient struct {
@@ -1760,7 +1764,11 @@ type IssuesServer interface {
 	// required, but not included in the Issue proto.
 	//
 	// Raises:
-	//   TODO(crbug/monorail/7919): Document errors when implemented
+	//   INVALID_ARGUMENT if any given names does not have a valid format, if any
+	//     fields in the requested issue were invalid, or if proposed values
+	//     violates filter rules that should error.
+	//   NOT_FOUND if no project exists with the given name.
+	//   PERMISSION_DENIED if user lacks sufficient permissions.
 	MakeIssue(context.Context, *MakeIssueRequest) (*Issue, error)
 }
 

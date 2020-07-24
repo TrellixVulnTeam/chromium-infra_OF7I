@@ -14,12 +14,14 @@ from google.protobuf import timestamp_pb2
 
 from api import resource_name_converters as rnc
 from api.v3.api_proto import feature_objects_pb2
+from api.v3.api_proto import issues_pb2
 from api.v3.api_proto import issue_objects_pb2
 from api.v3.api_proto import project_objects_pb2
 from api.v3.api_proto import user_objects_pb2
 
 from framework import exceptions
 from framework import framework_bizobj
+from framework import framework_constants
 from framework import framework_helpers
 from proto import tracker_pb2
 from project import project_helpers
@@ -434,6 +436,7 @@ class Converter(object):
     # Get config first. We can't ingest the issue if the project isn't found.
     config = self.services.config.GetProjectConfig(self.cnxn, project_id)
     ingestedDict = {
+      'project_id': project_id,
       'summary': issue.summary
     }
     with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
@@ -570,6 +573,8 @@ class Converter(object):
       except exceptions.NoSuchUserException as e:
         err_agg.AddErrorMessage(
             'User ({}) not found when ingesting owner', e)
+    else:
+      ingestedDict['owner_id'] = framework_constants.NO_USER_SPECIFIED
 
   def _ExtractIssueRefs(self, issue, ingestedDict, err_agg):
     # type: (api_proto.issue_objects_pb2.Issue, Dict[str, Any], ErrorAggregator)
@@ -637,6 +642,15 @@ class Converter(object):
         issue_objects_pb2.IssuesListColumn(column=col)
         for col in columns.split()
     ]
+
+  def IngestNotifyType(self, notify):
+    # type: (issue_pb.NotifyType) -> bool
+    """Ingest a NotifyType to boolean."""
+    if (notify == issues_pb2.NotifyType.Value('NOTIFY_TYPE_UNSPECIFIED') or
+        notify == issues_pb2.NotifyType.Value('EMAIL')):
+      return True
+    elif notify == issues_pb2.NotifyType.Value('NO_NOTIFICATION'):
+      return False
 
   # Users
 

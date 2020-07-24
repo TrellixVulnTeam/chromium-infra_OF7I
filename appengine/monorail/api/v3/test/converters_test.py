@@ -17,6 +17,7 @@ from google.protobuf import timestamp_pb2
 from api import resource_name_converters as rnc
 from api.v3 import converters
 from api.v3.api_proto import feature_objects_pb2
+from api.v3.api_proto import issues_pb2
 from api.v3.api_proto import issue_objects_pb2
 from api.v3.api_proto import user_objects_pb2
 from api.v3.api_proto import project_objects_pb2
@@ -1041,6 +1042,7 @@ class ConverterFunctionsTest(unittest.TestCase):
             derived=False),
     ]
     expected = tracker_pb2.Issue(
+        project_id=self.project_1.project_id,
         summary=u'sum',
         status=u'new',
         owner_id=111,
@@ -1083,8 +1085,10 @@ class ConverterFunctionsTest(unittest.TestCase):
         status=issue_objects_pb2.Issue.StatusValue(status='new')
     )
     expected = tracker_pb2.Issue(
+        project_id=self.project_1.project_id,
         summary='', # Summary gets set to empty str on conversion.
-        status='new'
+        status='new',
+        owner_id=0
     )
     actual = self.converter.IngestIssue(minimal, self.project_1.project_id)
     self.assertEqual(actual, expected)
@@ -1181,6 +1185,17 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         expected_columns,
         self.converter._ComputeIssuesListColumns(converted_columns))
+
+  def testIngestNotifyType(self):
+    notify = issues_pb2.NotifyType.Value('NOTIFY_TYPE_UNSPECIFIED')
+    actual = self.converter.IngestNotifyType(notify)
+    self.assertEqual(actual, True)
+    notify = issues_pb2.NotifyType.Value('EMAIL')
+    actual = self.converter.IngestNotifyType(notify)
+    self.assertEqual(actual, True)
+    notify = issues_pb2.NotifyType.Value('NO_NOTIFICATION')
+    actual = self.converter.IngestNotifyType(notify)
+    self.assertEqual(actual, False)
 
   def testConvertFieldValues(self):
     """It ignores field values referencing a non-existent field"""

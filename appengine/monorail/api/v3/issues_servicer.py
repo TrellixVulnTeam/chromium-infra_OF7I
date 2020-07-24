@@ -175,10 +175,26 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     """pRPC API method that implements MakeIssue.
 
     Raises:
-      TODO(crbug/monorail/7919): Document errors when implemented
+      InputException if any given names do not have a valid format or if any
+        fields in the requested issue were invalid.
+      NoSuchProjectException if no project exists with the given parent.
+      FilterRuleException if proposed issue values violate any filter rules
+        that shows error.
+      PermissionException if user lacks sufficient permissions.
     """
+    project_id = rnc.IngestProjectName(mc.cnxn, request.parent, self.services)
     with work_env.WorkEnv(mc, self.services) as we:
       # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
-      project = we.GetProjectByName(request.parent)
+      project = we.GetProject(project_id)
       mc.LookupLoggedInUserPerms(project)
-    return issue_objects_pb2.Issue()
+
+    ingested_issue = self.converter.IngestIssue(
+        request.issue, project_id)
+    send_email = self.converter.IngestNotifyType(request.notify_type)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      created_issue = we.MakeIssue(
+          ingested_issue, request.description, send_email)
+      starred_issue = we.StarIssue(created_issue, True)
+
+    return self.converter.ConvertIssue(starred_issue)

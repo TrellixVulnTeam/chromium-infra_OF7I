@@ -3486,10 +3486,10 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(user_id=111)
 
     with self.work_env as we:
-      we.StarIssue(issue, True)
-      self.assertEqual(1, issue.star_count)
-      we.StarIssue(issue, False)
-      self.assertEqual(0, issue.star_count)
+      updated_issue = we.StarIssue(issue, True)
+      self.assertEqual(1, updated_issue.star_count)
+      updated_issue = we.StarIssue(issue, False)
+      self.assertEqual(0, updated_issue.star_count)
 
   def testStarIssue_Anon(self):
     """A signed out user cannot star or unstar issues."""
