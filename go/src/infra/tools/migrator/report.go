@@ -6,6 +6,7 @@ package migrator
 
 import (
 	"fmt"
+	"sort"
 
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/config"
@@ -74,9 +75,16 @@ func (r *Report) Clone() *Report {
 // Where Metadata* is one key:value entry per value in Metadata.
 func (r *Report) ToCSVRow() []string {
 	ret := []string{r.Project, r.ConfigFile, r.Tag, r.Problem}
-	for key, values := range r.Metadata {
-		for _, value := range values.ToSortedSlice() {
-			ret = append(ret, fmt.Sprintf("%s:%s", key, value))
+	if len(r.Metadata) > 0 {
+		keys := make([]string, len(r.Metadata))
+		for key := range r.Metadata {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			for _, value := range r.Metadata[key].ToSortedSlice() {
+				ret = append(ret, fmt.Sprintf("%s:%s", key, value))
+			}
 		}
 	}
 	return ret
