@@ -36,9 +36,9 @@ func getApplication() *cli.Application {
 			authcli.SubcommandInfo(site.DefaultAuthOptions, "whoami", false),
 
 			subcommands.Section("Steps"),
-			// TODO(lxn): The subcommands will be added in following CLs.
 			cmd.Publish,
 			cmd.CTP,
+			cmd.PipeTestRunnerData,
 		},
 	}
 }

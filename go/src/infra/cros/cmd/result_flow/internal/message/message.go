@@ -6,7 +6,9 @@ package message
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"infra/libs/skylab/request"
 	"strconv"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
@@ -113,20 +115,60 @@ func (m *messageClient) Close() error {
 	return m.client.Close()
 }
 
-// ToBuildIDs parses build ID from the message.
+// ToBuildIDs parses build ID from the messages.
 func ToBuildIDs(ctx context.Context, msgs []*pubsubpb.ReceivedMessage) []int64 {
 	var bIDs []int64
 	for _, msg := range msgs {
-		bID, err := strconv.ParseInt(msg.Message.Attributes[BuildIDKeyName], 10, 64)
+		bID, err := extractBuildID(msg)
 		if err != nil {
-			logging.Errorf(ctx, "Failed to parse build ID from: %s", msg.Message.Attributes[BuildIDKeyName])
-			continue
-		}
-		if bID == 0 {
-			logging.Errorf(ctx, "Build ID can not be 0")
+			logging.Errorf(ctx, "Failed to extract build ID, err: %v", err)
 			continue
 		}
 		bIDs = append(bIDs, bID)
 	}
 	return bIDs
+}
+
+// ExtractBuildIDMap generates a map with key of Build ID and the value of parent UID.
+func ExtractBuildIDMap(ctx context.Context, msgs []*pubsubpb.ReceivedMessage) map[int64]string {
+	m := make(map[int64]string, len(msgs))
+	for _, msg := range msgs {
+		bID, err := extractBuildID(msg)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to extract build ID, err: %v", err)
+			continue
+		}
+		p, err := extractParentUID(msg)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to extract parent TestPlanRun UID, err: %v", err)
+			continue
+		}
+		m[bID] = p
+	}
+	return m
+}
+
+func extractBuildID(msg *pubsubpb.ReceivedMessage) (int64, error) {
+	bID, err := strconv.ParseInt(msg.Message.Attributes[BuildIDKeyName], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("Failed to parse build ID from: %s", msg.Message.Attributes[BuildIDKeyName])
+	}
+	if bID == 0 {
+		return 0, fmt.Errorf("Build ID can not be 0")
+	}
+	return bID, nil
+}
+
+func extractParentUID(msg *pubsubpb.ReceivedMessage) (string, error) {
+	msgBody := struct {
+		UserData string `json:"user_data"`
+	}{}
+	if err := json.Unmarshal(msg.GetMessage().GetData(), &msgBody); err != nil {
+		return "", errors.Annotate(err, "could not parse pubsub message data").Err()
+	}
+	msgPayload := request.MessagePayload{}
+	if err := json.Unmarshal([]byte(msgBody.UserData), &msgPayload); err != nil {
+		return "", errors.Annotate(err, "could not extract Parent UID").Err()
+	}
+	return msgPayload.ParentRequestUID, nil
 }
