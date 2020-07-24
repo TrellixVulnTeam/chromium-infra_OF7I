@@ -60,7 +60,7 @@ management purposes.
 		},
 
 		Commands: []*subcommands.Command{
-			//cmdInit(defaults),
+			cmdInit(defaults),
 			//cmdScan(defaults),
 
 			{}, // spacer
