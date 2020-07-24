@@ -159,6 +159,50 @@ func (r *cmdScanImpl) perProjectContext(ctx context.Context, projPB *configpb.Pr
 	}
 }
 
+func (r *cmdScanImpl) doRepoCreation(ctx context.Context, inst migrator.API, projPB *configpb.Project, reporter migrator.Reportable) (repo migrator.Repo, newCheckout bool) {
+	if r.squeaky && r.clean {
+		if err := os.RemoveAll(r.projectDir.ProjectRepo(projPB.Id)); err != nil && !os.IsNotExist(err) {
+			logging.Errorf(ctx, "Failed to clean repo, creation may fail: %s", err)
+		}
+	}
+	repo, newCheckout, err := plugsupport.CreateRepo(ctx, r.projectDir, projPB)
+	if err != nil {
+		logging.Errorf(ctx, "Failed to checkout repo: %s", err)
+		reporter.Report("REPO_CREATION_FAILURE", "Failed to checkout/update repo")
+		return
+	}
+	return
+}
+
+func (r *cmdScanImpl) doApplyFix(ctx context.Context, inst migrator.API, reporter migrator.Reportable, repo migrator.Repo) {
+	defer func() {
+		if rcov := recover(); rcov != nil {
+			// TODO(iannucci): report this better
+			logging.Errorf(ctx, "fatal error: %s", rcov)
+			logging.Errorf(ctx, string(debug.Stack()))
+			reporter.Report("APPLY_FIX_FAILURE", "Failed to run ApplyFix")
+		}
+	}()
+	inst.ApplyFix(ctx, repo)
+}
+
+func (r *cmdScanImpl) doRepoCleanup(ctx context.Context, projID string) {
+	checkoutDir := r.projectDir.ProjectRepo(projID)
+	if r.clean {
+		if _, err := os.Stat(checkoutDir); !os.IsNotExist(err) {
+			logging.Warningf(ctx, "Cleaning checkout.")
+			if err := os.RemoveAll(checkoutDir); err != nil {
+				logging.Errorf(ctx, "Failed to remove repo: %s", err)
+			}
+		}
+		return
+	}
+	if _, err := os.Stat(checkoutDir); err == nil {
+		logging.Warningf(ctx, "No reports found; This checkout can be removed.")
+		logging.Warningf(ctx, "Pass `-clean` to do this automatically.")
+	}
+}
+
 func (r *cmdScanImpl) execute(ctx context.Context) error {
 	return withPlugin(ctx, r.projectDir, func(factory migrator.InstantiateAPI) error {
 		// Note; we use this formulation because the GetProjects API excludes vital
@@ -191,11 +235,20 @@ func (r *cmdScanImpl) execute(ctx context.Context) error {
 
 						// No reports from scan? Clean up the repo if it exists.
 						if !plugsupport.HasReports(ctx) {
-							// "IMPLEMENT REPO CLEANUP"
+							r.doRepoCleanup(ctx, projPB.Id)
 							return true
 						}
 
-						panic("IMPLEMENT REPO CHECKOUT AND APPLYFIX")
+						// Otherwise create it, and maybe ApplyFix.
+						repo, newCheckout := r.doRepoCreation(ctx, inst, projPB, proj)
+						if repo != nil {
+							if newCheckout || r.reapply {
+								r.doApplyFix(ctx, inst, proj, repo)
+							} else if !newCheckout {
+								logging.Infof(ctx, "checkout already exists, skipping ApplyFix (pass -re-apply to run anyway).")
+							}
+						}
+						return false
 					})
 
 					return nil
