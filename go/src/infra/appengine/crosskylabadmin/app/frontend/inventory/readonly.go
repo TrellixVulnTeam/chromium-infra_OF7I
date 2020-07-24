@@ -361,7 +361,10 @@ func getStableVersionImplWithHostname(ctx context.Context, ic inventoryClient, h
 	}
 	servoHostHostname, err := getServoHostHostname(dut)
 	if err != nil {
-		return nil, errors.Annotate(err, "getting hostname of servohost %q", servoHostHostname).Err()
+		// Some DUTs, particularly High Touch Lab DUTs legitimately do not have servos.
+		// See b/162030132 for context.
+		logging.Infof(ctx, "failed to get servo host for %q", hostname)
+		return out, nil
 	}
 	if looksLikeFakeServo(servoHostHostname) {
 		logging.Infof(ctx, "concluded servo hostname is fake %q", servoHostHostname)
