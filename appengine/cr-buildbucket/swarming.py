@@ -707,6 +707,7 @@ def cancel_task_transactionally_async(build, swarming):
   assert ndb.in_transaction()
   assert swarming.hostname and swarming.task_id
   task_def = {
+      # Put hostname and task_id into the URL for more informative logging.
       'url':
           '/internal/task/buildbucket/cancel_swarming_task/%s/%s' % (
               swarming.hostname,
@@ -725,12 +726,8 @@ class TaskCancelSwarmingTask(webapp2.RequestHandler):  # pragma: no cover
   """Cancels a swarming task."""
 
   @decorators.require_taskqueue('backend-default')
-  def post(self, host, task_id):
-    payload = json.loads(self.request.body or '{}')
-    if not payload:
-      # TODO(crbug.com/1091604): Remove this fallback once there are no more
-      # tasks without the payload.
-      payload = {'hostname': host, 'task_id': task_id, 'realm': None}
+  def post(self, host, task_id):  # pylint: disable=unused-argument
+    payload = json.loads(self.request.body)
     cancel_task(payload['hostname'], payload['task_id'], payload['realm'])
 
 
