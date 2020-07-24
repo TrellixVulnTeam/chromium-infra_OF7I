@@ -154,6 +154,7 @@ def adhoc_builder(
         executable,
         extra_dims = None,
         properties = None,
+        experiments = None,
         schedule = None,
         triggered_by = None):
     dims = {"os": os, "cpu": "x86-64", "pool": "luci.chromium.ci"}
@@ -165,6 +166,7 @@ def adhoc_builder(
         executable = executable,
         dimensions = dims,
         properties = properties,
+        experiments = experiments,
         service_account = "adhoc-testing@luci-token-server-dev.iam.gserviceaccount.com",
         build_numbers = True,
         schedule = schedule,
@@ -187,6 +189,7 @@ adhoc_builder(
     name = "gsutil-hello-world-xenial-64",
     os = "Ubuntu-16.04",
     executable = infra.recipe("gsutil_hello_world"),
+    experiments = {"luci.use_realms": 100},
     schedule = "triggered",  # triggered manually via Scheduler UI
 )
 adhoc_builder(
