@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -35,7 +36,11 @@ type repo struct {
 }
 
 func (r *repo) Project() migrator.Project {
-	panic("IMPLEMENT PROJECT()")
+	return &localProject{
+		id:  migrator.ReportID{Project: r.projPB.Id},
+		dir: filepath.Join(r.root, r.relGeneratedConfigRoot),
+		ctx: r.ctx,
+	}
 }
 
 func (r *repo) ConfigRoot() string          { return "/" + r.relConfigRoot }
