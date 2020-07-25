@@ -134,7 +134,7 @@ func (r *ramBufferedBQInserter) send(ctx context.Context, batch *buffer.Batch) e
 		rows = append(rows, d.(*bqapi.TableDataInsertAllRequestRows)) // despite '...Rows', it's just 1 row.
 	}
 
-	logging.Infof(ctx, "Sending TestPlanRun %s", rows[0].InsertId)
+	logging.Infof(ctx, "Sending data: %s", rows[0].InsertId)
 	f := r.insertRPC
 	if r.insertRPCMock != nil {
 		f = r.insertRPCMock

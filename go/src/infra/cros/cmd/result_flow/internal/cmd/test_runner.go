@@ -21,6 +21,7 @@ import (
 
 	"infra/cros/cmd/result_flow/internal/bb"
 	"infra/cros/cmd/result_flow/internal/bq"
+	"infra/cros/cmd/result_flow/internal/inventory"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
 	"infra/cros/cmd/result_flow/internal/transform"
@@ -60,6 +61,7 @@ type pipeTestRunnerDataRun struct {
 	bbClient         bb.Client
 	bqTestRunClient  bq.Inserter
 	bqTestCaseClient bq.Inserter
+	invClient        inventory.Client
 }
 
 func (c *pipeTestRunnerDataRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -121,6 +123,9 @@ func (c *pipeTestRunnerDataRun) innerRun(a subcommands.Application, args []strin
 	}
 	defer c.bqTestRunClient.Close()
 
+	// Inventory client
+	c.invClient = inventory.NewInventoryClient(httpClient)
+
 	// Bigquery inserter for TestCaseResult.
 	c.bqTestCaseClient, err = bq.NewInserter(ctx,
 		bq.Options{
@@ -163,12 +168,18 @@ func (c *pipeTestRunnerDataRun) pipelineRun(ctx context.Context, ch chan state) 
 	}
 
 	for _, build := range builds {
-		runner, err := transform.LoadTestRunnerBuild(ctx, buildIDMap[build.Id], build, c.source.GetBb())
+		runner, err := transform.LoadTestRunnerBuild(
+			ctx,
+			buildIDMap[build.Id],
+			build,
+			c.source.GetBb(),
+			c.invClient,
+		)
 		if err != nil {
 			logging.Errorf(ctx, "failed to extract data from build: %v", err)
 			continue
 		}
-		if err = c.bqTestRunClient.Insert(ctx, toTestRunRow(runner)); err != nil {
+		if err = c.bqTestRunClient.Insert(ctx, toTestRunRow(ctx, runner)); err != nil {
 			logging.Errorf(ctx, "failed to upload TestRun data to Bigquery: %v", err)
 		}
 		if err = c.bqTestCaseClient.Insert(ctx, toTestCaseRows(runner)...); err != nil {
@@ -213,8 +224,8 @@ func getBuildIDs(m map[int64]string) []int64 {
 	return res
 }
 
-func toTestRunRow(b transform.TestRunnerBuild) bigquery.ValueSaver {
-	row := b.ToTestRun()
+func toTestRunRow(ctx context.Context, b transform.TestRunnerBuild) bigquery.ValueSaver {
+	row := b.ToTestRun(ctx)
 	return &lucibq.Row{Message: row, InsertID: fmt.Sprintf("%d", row.GetBuildId())}
 }
 

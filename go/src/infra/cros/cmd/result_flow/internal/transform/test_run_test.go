@@ -7,16 +7,17 @@ package transform_test
 import (
 	"context"
 	"fmt"
+	"infra/cros/cmd/result_flow/internal/inventory"
 	"infra/cros/cmd/result_flow/internal/transform"
+	libInv "infra/libs/skylab/inventory"
 	"sort"
 	"testing"
 
+	structpb "github.com/golang/protobuf/ptypes/struct"
+	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/analytics"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
 	runner "go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
-
-	structpb "github.com/golang/protobuf/ptypes/struct"
-	. "github.com/smartystreets/goconvey/convey"
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 )
 
@@ -30,45 +31,196 @@ var (
 	}
 )
 
+type fakeInvClient struct {
+	dutToModel map[string]*string
+}
+
+func newFakeInventoryClient(dut, model string) inventory.Client {
+	return &fakeInvClient{
+		dutToModel: map[string]*string{
+			dut: &model,
+		},
+	}
+}
+
+func (f *fakeInvClient) GetDutInfoFromHostname(ctx context.Context, h string) (*libInv.DeviceUnderTest, error) {
+	return &libInv.DeviceUnderTest{
+		Common: &libInv.CommonDeviceSpecs{
+			Labels: &libInv.SchedulableLabels{
+				Model: f.dutToModel[h],
+			},
+		},
+	}, nil
+}
+
+type in struct {
+	label         string
+	status        bbpb.Status
+	prejobVerdict runner.Result_Prejob_Step_Verdict
+	incomplete    bool
+	host          string
+	dut           string
+	model         string
+	testCases     []*runner.Result_Autotest_TestCase
+}
+
+type out struct {
+	label         string
+	prejobVerdict string
+	lifeCycle     string
+	verdict       string
+	model         string
+	testCases     []*analytics.TestCaseResult
+}
+
 func TestRunnerOutputToTestRun(t *testing.T) {
 	cases := []struct {
-		description   string
-		in            *bbpb.Build
-		wantTestRun   *analytics.TestRun
-		wantTestCases []*analytics.TestCaseResult
+		description string
+		in          *in
+		out         *out
 	}{
 		{
 			"Given an ongoing test runner build",
-			genFakeTestRunnerBuild("foo", bbpb.Status_STARTED, runner.Result_Prejob_Step_VERDICT_UNDEFINED, false),
-			genFakeTestRun("foo", "", "RUNNING", ""),
-			[]*analytics.TestCaseResult{},
+			&in{
+				label:         "foo",
+				status:        bbpb.Status_STARTED,
+				prejobVerdict: runner.Result_Prejob_Step_VERDICT_UNDEFINED,
+				incomplete:    false,
+				host:          "crossk-fake-dut",
+				dut:           "fake-dut",
+				model:         "fake-model",
+				testCases:     []*runner.Result_Autotest_TestCase{},
+			},
+			&out{
+				label:         "foo",
+				prejobVerdict: "",
+				lifeCycle:     "RUNNING",
+				verdict:       "",
+				model:         "",
+				testCases:     []*analytics.TestCaseResult{},
+			},
 		},
 		{
 			"Given a test runner build with failed prejob",
-			genFakeTestRunnerBuild("foo", bbpb.Status_FAILURE, runner.Result_Prejob_Step_VERDICT_FAIL, false),
-			genFakeTestRun("foo", "FAILED", "COMPLETED", "NO_VERDICT"),
-			[]*analytics.TestCaseResult{},
+			&in{
+				label:         "foo",
+				status:        bbpb.Status_FAILURE,
+				prejobVerdict: runner.Result_Prejob_Step_VERDICT_FAIL,
+				incomplete:    false,
+				host:          "crossk-fake-dut",
+				dut:           "fake-dut",
+				model:         "fake-model",
+				testCases:     []*runner.Result_Autotest_TestCase{},
+			},
+			&out{
+				label:         "foo",
+				prejobVerdict: "FAILED",
+				lifeCycle:     "COMPLETED",
+				verdict:       "NO_VERDICT",
+				model:         "fake-model",
+				testCases:     []*analytics.TestCaseResult{},
+			},
 		},
 		{
 			"Given a completed test runner build",
-			genFakeTestRunnerBuild("hoo", bbpb.Status_SUCCESS, runner.Result_Prejob_Step_VERDICT_PASS, false,
-				genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
-				genFakeAutotestTestCase("hoo", runner.Result_Autotest_TestCase_VERDICT_FAIL),
-			),
-			genFakeTestRun("hoo", "PASSED", "COMPLETED", "FAILED"),
-			[]*analytics.TestCaseResult{
-				genFakeTestCaseResult("foo", "VERDICT_PASS"),
-				genFakeTestCaseResult("hoo", "VERDICT_FAIL"),
+			&in{
+				label:         "hoo",
+				status:        bbpb.Status_SUCCESS,
+				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
+				incomplete:    false,
+				host:          "crossk-fake-dut",
+				dut:           "fake-dut",
+				model:         "fake-model",
+				testCases: []*runner.Result_Autotest_TestCase{
+					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
+					genFakeAutotestTestCase("hoo", runner.Result_Autotest_TestCase_VERDICT_FAIL),
+				},
+			},
+			&out{
+				label:         "hoo",
+				prejobVerdict: "PASSED",
+				lifeCycle:     "COMPLETED",
+				verdict:       "FAILED",
+				model:         "fake-model",
+				testCases: []*analytics.TestCaseResult{
+					genFakeTestCaseResult("foo", "VERDICT_PASS"),
+					genFakeTestCaseResult("hoo", "VERDICT_FAIL"),
+				},
 			},
 		},
 		{
 			"Given an incomplete test runner build",
-			genFakeTestRunnerBuild("hoo", bbpb.Status_SUCCESS, runner.Result_Prejob_Step_VERDICT_PASS, true,
-				genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
-			),
-			genFakeTestRun("hoo", "PASSED", "COMPLETED", "FAILED"),
-			[]*analytics.TestCaseResult{
-				genFakeTestCaseResult("foo", "VERDICT_PASS"),
+			&in{
+				label:         "hoo",
+				status:        bbpb.Status_SUCCESS,
+				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
+				incomplete:    true,
+				host:          "crossk-fake-dut",
+				dut:           "fake-dut",
+				model:         "fake-model",
+				testCases: []*runner.Result_Autotest_TestCase{
+					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
+				},
+			},
+			&out{
+				label:         "hoo",
+				prejobVerdict: "PASSED",
+				lifeCycle:     "COMPLETED",
+				verdict:       "FAILED",
+				model:         "fake-model",
+				testCases: []*analytics.TestCaseResult{
+					genFakeTestCaseResult("foo", "VERDICT_PASS"),
+				},
+			},
+		},
+		{
+			"Given an illegal bot name",
+			&in{
+				label:         "hoo",
+				status:        bbpb.Status_SUCCESS,
+				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
+				incomplete:    false,
+				host:          "fake-pool-fake-dut",
+				dut:           "fake-dut",
+				model:         "fake-model",
+				testCases: []*runner.Result_Autotest_TestCase{
+					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
+				},
+			},
+			&out{
+				label:         "hoo",
+				prejobVerdict: "PASSED",
+				lifeCycle:     "COMPLETED",
+				verdict:       "PASSED",
+				model:         "",
+				testCases: []*analytics.TestCaseResult{
+					genFakeTestCaseResult("foo", "VERDICT_PASS"),
+				},
+			},
+		},
+		{
+			"Given an empty response from inventory service",
+			&in{
+				label:         "hoo",
+				status:        bbpb.Status_SUCCESS,
+				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
+				incomplete:    false,
+				host:          "crossk-fake-dut",
+				dut:           "another-dut",
+				model:         "fake-dut",
+				testCases: []*runner.Result_Autotest_TestCase{
+					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
+				},
+			},
+			&out{
+				label:         "hoo",
+				prejobVerdict: "PASSED",
+				lifeCycle:     "COMPLETED",
+				verdict:       "PASSED",
+				model:         "",
+				testCases: []*analytics.TestCaseResult{
+					genFakeTestCaseResult("foo", "VERDICT_PASS"),
+				},
 			},
 		},
 	}
@@ -76,15 +228,21 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 	for _, c := range cases {
 		Convey(c.description, t, func() {
 			Convey("then test runner build is correctly converted to TestRun and TestCaseResult.", func() {
-				build, _ := transform.LoadTestRunnerBuild(ctx, "TestPlanRuns/fake-build-id/fake-test-run", c.in, fakeBuildbucketConfig)
-				got := build.ToTestRun()
+				build, _ := transform.LoadTestRunnerBuild(
+					ctx,
+					"TestPlanRuns/fake-build-id/fake-test-run",
+					genFakeTestRunnerBuild(c.in),
+					fakeBuildbucketConfig,
+					newFakeInventoryClient(c.in.dut, c.in.model),
+				)
+				got := build.ToTestRun(ctx)
 				So(got, ShouldNotBeNil)
-				checkTestRunEquality(got, c.wantTestRun)
-				if c.wantTestCases != nil {
+				checkTestRunEquality(got, genFakeTestRun(c.out))
+				if l := len(c.out.testCases); l > 0 {
 					cs := build.ToTestCaseResults()
 					sort.Slice(cs, func(i, j int) bool { return cs[i].Uid < cs[j].Uid })
-					for i := 0; i < len(cs); i++ {
-						checkTestCaseEquality(cs[i], c.wantTestCases[i])
+					for i := 0; i < l; i++ {
+						checkTestCaseEquality(cs[i], c.out.testCases[i])
 					}
 				}
 			})
@@ -92,10 +250,10 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 	}
 }
 
-func genFakeTestRun(label, prejobVerdict, lifeCycle, verdict string) *analytics.TestRun {
+func genFakeTestRun(out *out) *analytics.TestRun {
 	return &analytics.TestRun{
 		BuildId:     fakeTestRunnerBuildID,
-		DisplayName: fmt.Sprintf("fake-test-run-%s", label),
+		DisplayName: fmt.Sprintf("fake-test-run-%s", out.label),
 		ExecutionUrl: fmt.Sprintf(
 			"https://ci.chromium.org/p/%s/builders/%s/%s/b%d",
 			fakeBuildbucketConfig.Project,
@@ -103,19 +261,20 @@ func genFakeTestRun(label, prejobVerdict, lifeCycle, verdict string) *analytics.
 			fakeBuildbucketConfig.Builder,
 			fakeTestRunnerBuildID,
 		),
+		Model:      out.model,
 		ParentUid:  "TestPlanRuns/fake-build-id/fake-test-run",
 		Timeline:   genAnalyticTimeline(),
 		FullLogUrl: "gs://fakeLogURL",
 		Prejob: &analytics.TestRun_Prejob{
 			Verdict: &analytics.Verdict{
-				Value: prejobVerdict,
+				Value: out.prejobVerdict,
 			},
 		},
 		Status: &analytics.Status{
-			Value: lifeCycle,
+			Value: out.lifeCycle,
 		},
 		Verdict: &analytics.Verdict{
-			Value: verdict,
+			Value: out.verdict,
 		},
 	}
 }
@@ -142,22 +301,27 @@ func genFakeTestCaseResult(label, verdict string) *analytics.TestCaseResult {
 	}
 }
 
-func genFakeTestRunnerBuild(label string, status bbpb.Status, prejobVerdict runner.Result_Prejob_Step_Verdict, incomplete bool, cs ...*runner.Result_Autotest_TestCase) *bbpb.Build {
+func genFakeTestRunnerBuild(in *in) *bbpb.Build {
 	res := &bbpb.Build{
 		Id:         fakeTestRunnerBuildID,
 		CreateTime: fakeCreateTime,
 		StartTime:  fakeStartTime,
 		EndTime:    fakeEndTime,
-		Status:     status,
+		Status:     in.status,
 		Input: testRunnerRequestsToInputField(
-			genFakeTestRunnerRequest(label),
+			genFakeTestRunnerRequest(in.label),
 		),
 	}
-	if int(status)&int(bbpb.Status_ENDED_MASK) != 0 {
+	if int(in.status)&int(bbpb.Status_ENDED_MASK) != 0 {
 		res.Output = pbToOutputField(
-			genFakeTestRunnerResult(prejobVerdict, incomplete, cs...),
+			genFakeTestRunnerResult(in.prejobVerdict, in.incomplete, in.testCases...),
 			"compressed_result",
 		)
+		res.Output.Properties.Fields["bot_id"] = &structpb.Value{
+			Kind: &structpb.Value_StringValue{
+				StringValue: in.host,
+			},
+		}
 	}
 	return res
 }
@@ -216,6 +380,7 @@ func checkTestRunEquality(want, got *analytics.TestRun) {
 	So(got.DisplayName, ShouldEqual, want.DisplayName)
 	So(got.ExecutionUrl, ShouldEqual, want.ExecutionUrl)
 	So(got.ParentUid, ShouldEqual, want.ParentUid)
+	So(got.Model, ShouldEqual, want.Model)
 	So(got.GetVerdict().GetValue(), ShouldEqual, want.GetVerdict().GetValue())
 	So(got.GetStatus().GetValue(), ShouldEqual, want.GetStatus().GetValue())
 	So(got.GetPrejob().GetVerdict().GetValue(), ShouldEqual, want.GetPrejob().GetVerdict().GetValue())
