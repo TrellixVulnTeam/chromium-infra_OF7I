@@ -569,7 +569,7 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
 
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "the servo serial number: \"SN0001\" is already used in \"labstation1\"")
+			So(err.Error(), ShouldContainSubstring, "the servo with serial number: \"SN0001\" is already attached to \"labstation1\"")
 			So(resp, ShouldBeNil)
 		})
 

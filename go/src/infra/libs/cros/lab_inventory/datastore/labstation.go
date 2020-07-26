@@ -317,7 +317,7 @@ func checkDuplicateSerial(newServo, oldServo *lab.Servo, servos []*lab.Servo) er
 	}
 	for _, s := range servos {
 		if newSerial == s.GetServoSerial() {
-			return errors.Reason("the servo serial number: %q is already used in %q", newSerial, s.GetServoHostname()).Err()
+			return errors.Reason("the servo with serial number: %q is already attached to %q", newSerial, s.GetServoHostname()).Err()
 		}
 	}
 	return nil
