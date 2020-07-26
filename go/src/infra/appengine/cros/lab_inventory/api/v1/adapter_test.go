@@ -83,6 +83,7 @@ var devInV2 = lab.ChromeOSDevice{
 				Camerabox: true,
 				CameraboxInfo: &lab.Camerabox{
 					Facing: lab.Camerabox_FACING_BACK,
+					Light:  lab.Camerabox_LIGHT_LED,
 				},
 				Chaos: true,
 				Cable: []*lab.Cable{
@@ -296,6 +297,7 @@ common {
 			ptzpro2: true
 			camerabox: true
 			camerabox_facing: CAMERABOX_FACING_BACK
+			camerabox_light: CAMERABOX_LIGHT_LED
 			servo: true
 			servo_state: BROKEN
 			servo_type: "v3"

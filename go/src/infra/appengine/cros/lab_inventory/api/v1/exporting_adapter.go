@@ -168,6 +168,10 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 		v1Facing := inventory.Peripherals_CameraboxFacing(facing)
 		p.CameraboxFacing = &v1Facing
 	}
+	if light := d.GetCameraboxInfo().GetLight(); light != lab.Camerabox_LIGHT_UNKNOWN {
+		v1Light := inventory.Peripherals_CameraboxLight(light)
+		p.CameraboxLight = &v1Light
+	}
 
 	p.SmartUsbhub = &(d.SmartUsbhub)
 }
