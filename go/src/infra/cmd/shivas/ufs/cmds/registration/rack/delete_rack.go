@@ -33,14 +33,16 @@ Deletes the given rack and deletes the switches, kvms and rpms associated with t
 		c := &deleteRack{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		return c
 	},
 }
 
 type deleteRack struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 }
 
 func (c *deleteRack) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -60,12 +62,15 @@ func (c *deleteRack) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
+	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
 	if !prompt(fmt.Sprintf("Are you sure you want to delete the rack: %s. "+
 		"This will also delete switches, kvms and rpms associated with the rack.", args[0])) {
 		return nil
 	}
-	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -75,7 +80,7 @@ func (c *deleteRack) innerRun(a subcommands.Application, args []string, env subc
 		Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, args[0]),
 	})
 	if err == nil {
-		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		fmt.Fprintln(a.GetOut(), args[0], "is deleted successfully.")
 		return nil
 	}
 	return err

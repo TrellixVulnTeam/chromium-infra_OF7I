@@ -816,16 +816,17 @@ The protobuf definition of kvm is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
 
 	// AddRackLongDesc long description for AddRackCmd
-	AddRackLongDesc string = `Create a rack by name.
-You can also provide the optional switches, kvms and rpms information to create the switches, kvms and rpms associated with this rack.
-You can also create the switch, kvm and rpm separately after creating the rack using add-switch/add-kvm/add-rpm commands.
+	AddRackLongDesc string = `Create a rack to UFS.
+You can create a rack with name and lab to UFS, and later add kvm/switch/rpm separately by using add-switch/add-kvm/add-rpm commands.
+
+You can also provide the optional switches, kvms and rpms information to create the switches, kvms and rpms associated with this rack by specifying a json file as input.
 
 Examples:
-shivas add-rack -f rackrequest.json
+shivas add-rack -json-file rackrequest.json -lab lab01
 Creates a rack by reading a JSON file input.
 
-shivas add-rack -i
-Creates a rack by reading input through interactive mode.`
+shivas add-rack -name rack-123 -lab lab01 -capacity 10
+Creates a rack by parameters without adding kvm/switch/rpm.`
 
 	// UpdateRackLongDesc long description for UpdateRackCmd
 	UpdateRackLongDesc string = `Update a rack by name.
@@ -849,19 +850,14 @@ Fetches 5 racks and prints the output in JSON format
 `
 
 	// RackRegistrationFileText description for rack registration file input
-	RackRegistrationFileText string = `Path to a file containing rack creation request specification in JSON format.
-This file must contain required rack field and optional switches/kvms/rpms field.
+	RackRegistrationFileText string = `[JSON Mode] Path to a file containing rack creation request specification in JSON format.
+This file must contain required rack field and optional switches/kvms/rpms fields.
 
 Example rack creation request:
 {
 	"rack": {
 		"name": "rack-BROWSERLAB-example",
-		"location": {
-			"lab": "LAB_DATACENTER_MTV97"
-		},
-		"capacity_ru": 5,
-		"chromeBrowserRack": {},
-		"realm": "Browserlab"
+		"capacity_ru": 5
 	},
 	"switches": [{
 			"name": "switch-23",

@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 )
 
 func TestIsLocation(t *testing.T) {
@@ -32,5 +34,28 @@ func TestIsLocation(t *testing.T) {
 	Convey("test invalid chromeos location", t, func() {
 		location := "chromeos1-row2-rack3"
 		So(IsLocation(location), ShouldBeFalse)
+	})
+}
+
+func TestUFSLabCoverage(t *testing.T) {
+	Convey("test the ufs lab mapping covers all UFS lab enum", t, func() {
+		got := make(map[string]bool, len(StrToUFSLab))
+		for _, v := range StrToUFSLab {
+			got[v] = true
+		}
+		for l := range ufspb.Lab_value {
+			if l == ufspb.Lab_LAB_UNSPECIFIED.String() {
+				continue
+			}
+			_, ok := got[l]
+			So(ok, ShouldBeTrue)
+		}
+	})
+
+	Convey("test the ufs lab mapping doesn't cover any non-UFS lab enum", t, func() {
+		for _, v := range StrToUFSLab {
+			_, ok := ufspb.Lab_value[v]
+			So(ok, ShouldBeTrue)
+		}
 	})
 }

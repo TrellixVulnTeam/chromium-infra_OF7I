@@ -145,6 +145,8 @@ func PrintProtoJSON(pm proto.Message) {
 	}
 	if err := m.Marshal(bw, pm); err != nil {
 		fmt.Println("Failed to marshal JSON")
+	} else {
+		fmt.Fprintf(bw, "\n")
 	}
 }
 
