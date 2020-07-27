@@ -161,6 +161,8 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 	resp.ExitInfo.Started = true
 
 	switch err := err.(type) {
+	case nil:
+		resp.ExitInfo.Status = 0
 	case *ssh.ExitError:
 		clientOk = true
 		resp.ExitInfo.Status = int32(err.Waitmsg.ExitStatus())
@@ -172,12 +174,9 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		clientOk = true
 		resp.ExitInfo.ErrorMessage = err.Error()
 	default:
-		if err != nil {
-			resp.ExitInfo.ErrorMessage = err.Error()
-		}
+		resp.ExitInfo.ErrorMessage = err.Error()
 	}
 
-	resp.ExitInfo.Status = 0
 	_ = stream.Send(resp)
 
 	return nil
