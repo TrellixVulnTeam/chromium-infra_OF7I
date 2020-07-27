@@ -1,8 +1,8 @@
 hash: 2094fbbf1e2e076eca18998c7d4c0072fae3a5518917b0d0255733d471bf7f12
-updated: 2020-07-23T16:38:40.734367404-04:00
+updated: 2020-07-27T15:24:34.0368-07:00
 imports:
 - name: cloud.google.com/go
-  version: 188927f34b5d302716c6affbfd6c368b91b9585a
+  version: 29aebdf3f672ffe10ba0e6a477f94b8a2eb11a61
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -29,7 +29,7 @@ imports:
   version: 1edb62f3185db2bf621d84de5fcfbd12fdc8796f
   repo: https://chromium.googlesource.com/external/github.com/aws/aws-sdk-go.git
 - name: github.com/bazelbuild/buildtools
-  version: b1667ff58f714d13c2bba6823d6c52214705508f
+  version: f76b57a9805f2096426f8668a363ae6ccae473ec
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
   version: 1252343900d9a101c5180e2e31f76216e4b615c7
@@ -142,7 +142,7 @@ imports:
   subpackages:
   - redis
 - name: github.com/google/cel-go
-  version: dd5ae045b775573b5ee034ba3a2148c6bcb4b252
+  version: f617eaf93d7bbb8f3a3435c81d9da5b613000421
   repo: https://chromium.googlesource.com/external/github.com/google/cel-go.git
 - name: github.com/google/go-cmp
   version: 9680bfaf28748393e28e00238d94070fb9972fd8
@@ -265,7 +265,7 @@ imports:
   version: 35df89791e8f5560a1fa0c0e8b58709beda51722
   repo: https://chromium.googlesource.com/external/github.com/luci/gtreap.git
 - name: github.com/mailru/easyjson
-  version: 5c65c6fc0ee649970ae2aeff20dc0bb6a24aff6b
+  version: 0c6c960753ca7e8dd7d6512cbea01feb327f53ef
   repo: https://chromium.googlesource.com/external/github.com/mailru/easyjson.git
 - name: github.com/maruel/panicparse
   version: dbef8f1427b92b4b9eab050a5800fcdfbe161145
@@ -341,7 +341,7 @@ imports:
   version: de25ac347ef9305868b04dc42425c973b863b18c
   repo: https://chromium.googlesource.com/external/github.com/prometheus/procfs.git
 - name: github.com/protocolbuffers/txtpbfmt
-  version: 6ac270273b58418f6a9f18a92882b4807e703248
+  version: 52180c9bd5243d572cac252b05eec88347f37539
   repo: https://chromium.googlesource.com/external/github.com/protocolbuffers/txtpbfmt.git
 - name: github.com/sergi/go-diff
   version: 58c5cb1602ee9676b5d3590d782bedde80706fcc
@@ -423,10 +423,10 @@ imports:
   subpackages:
   - gold-client/cmd/goldctl
 - name: go.starlark.net
-  version: d7bb082fbf309d949e496a9af5e569a1a0faacdd
+  version: f21d2f77688f64bf3834da4e16dad4d7f316bf9c
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: 70303fc210d12d44fe394fc1914a6c29e60f3d31
+  version: b405858d836876f4a9391a8c61cb626a47a3fea1
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
@@ -470,7 +470,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 76b94024e4b621e672466e8db3d7f084e7ddcad2
+  version: 2d971f7391a4d28ed2c2fb0ed305ba994eedc255
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
@@ -482,7 +482,7 @@ imports:
   version: 3af7569d3a1e776fc2a3c1cec133b43105ea9c2e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: b3d141ddef4a8019b885aacb9d478ae21995c78f
+  version: 7b4c4ad3dc3976b90da9b653a7331b29646e283d
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -498,7 +498,7 @@ imports:
   version: 9bdfabe68543c54f90421aeb9a60ef8061b5b544
   repo: https://go.googlesource.com/xerrors.git
 - name: google.golang.org/api
-  version: b764bc9b84be56f764b92ab13ac0ebd3b8610fdd
+  version: 37c86fa7a290f27981906c70d6356eb894db4037
   repo: https://code.googlesource.com/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -528,7 +528,7 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: 88e341933a542e6f21b9ad041696148fee087ab1
+  version: da3ae01ef02dd0f1909d902122c432a450c6efb3
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
@@ -540,7 +540,7 @@ imports:
   - codes
   - metadata
 - name: google.golang.org/protobuf
-  version: b5523e32b357a3f44f320200c3336033c60599d2
+  version: 4194195e12daf3d3bf61191c5d92da72de18dc28
   repo: https://go.googlesource.com/protobuf.git
 - name: gopkg.in/fsnotify.v1
   version: 8611c35ab31c1c28aa903d33cf8b6e44a399b09e
