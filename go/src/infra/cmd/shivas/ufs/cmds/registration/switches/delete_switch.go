@@ -74,7 +74,7 @@ func (c *deleteSwitch) innerRun(a subcommands.Application, args []string, env su
 		Name: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, args[0]),
 	})
 	if err == nil {
-		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		fmt.Fprintln(a.GetOut(), args[0], "is deleted successfully.")
 		return nil
 	}
 	return err

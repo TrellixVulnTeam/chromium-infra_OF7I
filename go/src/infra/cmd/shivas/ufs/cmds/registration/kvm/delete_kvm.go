@@ -74,7 +74,7 @@ func (c *deleteKVM) innerRun(a subcommands.Application, args []string, env subco
 		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, args[0]),
 	})
 	if err == nil {
-		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		fmt.Fprintln(a.GetOut(), args[0], "is deleted successfully.")
 		return nil
 	}
 	return err

@@ -24,26 +24,37 @@ import (
 // AddKVMCmd add KVM in the lab.
 var AddKVMCmd = &subcommands.Command{
 	UsageLine: "add-kvm [Options...]",
-	ShortDesc: "Add a kvm by name",
+	ShortDesc: "Add a kvm to UFS",
 	LongDesc:  cmdhelp.AddKVMLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addKVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.KVMFileText)
-		c.Flags.StringVar(&c.rackName, "r", "", "name of the rack to associate the kvm")
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
+		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm")
+		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm to add")
+		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the name of the kvm to add")
+		c.Flags.StringVar(&c.platform, "platform", "", "the name of the kvm to add")
 		return c
 	},
 }
 
 type addKVM struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	rackName     string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+
 	newSpecsFile string
 	interactive  bool
+
+	rackName   string
+	kvmName    string
+	macAddress string
+	platform   string
 }
 
 func (c *addKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -64,17 +75,25 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+
 	var kvm ufspb.KVM
 	if c.interactive {
 		c.rackName = utils.GetKVMInteractiveInput(ctx, ic, &kvm, false)
 	} else {
-		if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
-			return err
+		if c.newSpecsFile != "" {
+			if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
+				return err
+			}
+		} else {
+			c.parseArgs(&kvm)
 		}
 	}
 	res, err := ic.CreateKVM(ctx, &ufsAPI.CreateKVMRequest{
@@ -87,17 +106,48 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	fmt.Printf("Successfully added the kvm %s to rack %s\n", res.Name, c.rackName)
 	return nil
 }
 
+func (c *addKVM) parseArgs(kvm *ufspb.KVM) {
+	kvm.Name = c.kvmName
+	kvm.ChromePlatform = c.platform
+	kvm.MacAddress = c.macAddress
+}
+
 func (c *addKVM) validateArgs() error {
-	if !c.interactive {
-		if c.newSpecsFile == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+	if c.newSpecsFile != "" || c.interactive {
+		if c.kvmName != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.platform != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-platform' cannot be specified at the same time.")
+		}
+		if c.macAddress != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+	}
+	if c.newSpecsFile != "" {
+		if c.interactive {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 		}
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name parameter is required to associate the kvm with a rack.")
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required for JSON mode.")
+		}
+	}
+	if c.newSpecsFile == "" && !c.interactive {
+		if c.kvmName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+		}
+		if c.platform == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-platform' is required.")
+		}
+		if c.macAddress == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-mac-address' is required.")
+		}
+		if c.rackName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required.")
 		}
 	}
 	return nil

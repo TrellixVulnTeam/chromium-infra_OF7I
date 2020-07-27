@@ -9,15 +9,17 @@ var (
 	ListPageSizeDesc string = `number of items to get. The service may return fewer than this value.`
 
 	//AddSwitchLongDesc long description for AddSwitchCmd
-	AddSwitchLongDesc string = `Create a switch by name.
+	AddSwitchLongDesc string = `Create a switch to UFS.
 
 Examples:
 shivas add-switch -f switch.json -r {Rack name}
-Creates a switch by reading a JSON file input.
--r option is a required parameter to associate the switch to the given rack.
+Adds a switch by reading a JSON file input.
+
+shivas add-switch -rack {Rack name} -name {switch name} -capacity {50} -description {description}
+Adds a switch by specifying several attributes directly.
 
 shivas add-switch -i
-Creates a switch by reading input through interactive mode.`
+Adds a switch by reading input through interactive mode.`
 
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
@@ -50,13 +52,14 @@ Fetches 50 switches and prints the output in JSON format
 `
 
 	// SwitchFileText description for switch file input
-	SwitchFileText string = `Path to a file containing switch specification in JSON format.
+	SwitchFileText string = `[JSON Mode] Path to a file containing switch specification in JSON format.
 This file must contain one switch JSON message
 
 Example switch:
 {
     "name": "switch-test-example",
-    "capacityPort": 456
+    "capacityPort": 456,
+    "description": "I am a switch"
 }
 
 The protobuf definition of switch is part of
@@ -777,12 +780,14 @@ The protobuf definition of drac is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
 
 	// AddKVMLongDesc long description for AddKVMCmd
-	AddKVMLongDesc string = `Add a kvm by name.
+	AddKVMLongDesc string = `Add a kvm to UFS.
 
 Examples:
-shivas add-kvm -f kvm.json -r {Rack name}
+shivas add-kvm -new-json-file kvm.json -rack {Rack name}
 Add a kvm by reading a JSON file input.
--r option is a required parameter to associate the kvm to the given rack.
+
+shivas add-kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
+Add a kvm by specifying several attributes directly.
 
 shivas add-kvm -i
 Add a kvm by reading input through interactive mode.`
@@ -801,7 +806,7 @@ shivas update-kvm -i
 Update a kvm by reading input through interactive mode.`
 
 	// KVMFileText description for kvm file input
-	KVMFileText string = `Path to a file containing kvm specification in JSON format.
+	KVMFileText string = `[JSON Mode] Path to a file containing kvm specification in JSON format.
 This file must contain one kvm JSON message
 
 Example kvm:

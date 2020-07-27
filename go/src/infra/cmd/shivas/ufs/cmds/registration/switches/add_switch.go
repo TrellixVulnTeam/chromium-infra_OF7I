@@ -24,26 +24,37 @@ import (
 // AddSwitchCmd add Switch in the lab.
 var AddSwitchCmd = &subcommands.Command{
 	UsageLine: "add-switch [Options...]",
-	ShortDesc: "Add a switch by name",
+	ShortDesc: "Add a switch to UFS",
 	LongDesc:  cmdhelp.AddSwitchLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.SwitchFileText)
-		c.Flags.StringVar(&c.rackName, "r", "", "name of the rack to associate the switch")
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
+		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the switch")
+		c.Flags.StringVar(&c.switchName, "name", "", "the name of the switch to add")
+		c.Flags.StringVar(&c.description, "description", "", "the description of the switch to add")
+		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this switch support")
 		return c
 	},
 }
 
 type addSwitch struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	rackName     string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+
 	newSpecsFile string
 	interactive  bool
+
+	rackName    string
+	switchName  string
+	description string
+	capacity    int
 }
 
 func (c *addSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -64,17 +75,25 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+
 	var s ufspb.Switch
 	if c.interactive {
 		c.rackName = utils.GetSwitchInteractiveInput(ctx, ic, &s, false)
 	} else {
-		if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
-			return err
+		if c.newSpecsFile != "" {
+			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
+				return err
+			}
+		} else {
+			c.parseArgs(&s)
 		}
 	}
 	res, err := ic.CreateSwitch(ctx, &ufsAPI.CreateSwitchRequest{
@@ -87,17 +106,42 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	fmt.Printf("Successfully added the switch %s to rack %s\n", res.Name, c.rackName)
 	return nil
 }
 
+func (c *addSwitch) parseArgs(s *ufspb.Switch) {
+	s.Name = c.switchName
+	s.Description = c.description
+	s.CapacityPort = int32(c.capacity)
+}
+
 func (c *addSwitch) validateArgs() error {
-	if !c.interactive {
-		if c.newSpecsFile == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+	if c.newSpecsFile != "" || c.interactive {
+		if c.switchName != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.capacity != 0 {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+		}
+	}
+	if c.newSpecsFile != "" {
+		if c.interactive {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 		}
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name parameter is required to associate the switch with a rack.")
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required for JSON mode.")
+		}
+	}
+	if c.newSpecsFile == "" && !c.interactive {
+		if c.switchName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+		}
+		if c.capacity == 0 {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-capacity' is required.")
+		}
+		if c.rackName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required.")
 		}
 	}
 	return nil
