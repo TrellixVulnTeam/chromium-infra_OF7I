@@ -7,12 +7,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"google.golang.org/api/option"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
@@ -28,16 +26,16 @@ import (
 	"infra/cros/cmd/result_flow/internal/transform"
 )
 
-// CTP subcommand pipelines CTP builds to analytics BQ table represented in the form
+// PipeCTPData subcommand pipelines CTP builds to analytics BQ table represented in the form
 // of test_platform/analytics/TestPlanRun.
-var CTP = &subcommands.Command{
-	UsageLine: `ctp [FLAGS...]`,
-	ShortDesc: "Upload CTP Build data to Bigquery",
-	LongDesc: `ctp command catches a set of CTP builds, and
-	uploads the build data to Bigquery in the format of
+var PipeCTPData = &subcommands.Command{
+	UsageLine: `pipe-ctp-data [FLAGS...]`,
+	ShortDesc: "Pipe CTP Build data to Bigquery",
+	LongDesc: `pipe-ctp-data command catches a set of CTP builds, and
+	pipes the build data to Bigquery in the format of
 	test_platform/analytics/TestPlanRun proto.`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &ctpFlowRun{}
+		c := &pipeCTPDataRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 
 		c.Flags.StringVar(&c.inputPath, "input_json", "", "Path that contains JSON encoded test_platform.result_fow.CTPRequest")
@@ -46,7 +44,7 @@ var CTP = &subcommands.Command{
 	},
 }
 
-type ctpFlowRun struct {
+type pipeCTPDataRun struct {
 	subcommands.CommandRunBase
 	authFlags authcli.Flags
 
@@ -57,11 +55,12 @@ type ctpFlowRun struct {
 	source   *result_flow.Source
 	target   *result_flow.Target
 
-	clientOpts option.ClientOption
-	httpClient *http.Client
+	mClient  message.Client
+	bbClient bb.Client
+	bqClient bq.Inserter
 }
 
-func (c *ctpFlowRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *pipeCTPDataRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	if err := c.innerRun(a, args, env); err != nil {
 		fmt.Fprintf(a.GetErr(), err.Error())
 		return 1
@@ -69,7 +68,7 @@ func (c *ctpFlowRun) Run(a subcommands.Application, args []string, env subcomman
 	return 0
 }
 
-func (c *ctpFlowRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
+func (c *pipeCTPDataRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
 	if err := c.loadCTPRequest(); err != nil {
 		return err
 	}
@@ -79,12 +78,44 @@ func (c *ctpFlowRun) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	if c.clientOpts, err = newGRPCClientOptions(ctx, authOpts); err != nil {
+	clientOpts, err := newGRPCClientOptions(ctx, authOpts)
+	if err != nil {
 		return err
 	}
-	if c.httpClient, err = newHTTPClient(ctx, authOpts); err != nil {
+	httpClient, err := newHTTPClient(ctx, authOpts)
+	if err != nil {
 		return err
 	}
+
+	// Pubsub client
+	c.mClient, err = message.NewClient(ctx, c.source.GetPubsub(), clientOpts)
+	if err != nil {
+		return err
+	}
+	defer c.mClient.Close()
+
+	// Buildbucket client
+	c.bbClient, err = bb.NewClient(
+		ctx,
+		c.source.GetBb(),
+		c.source.GetFields(),
+		httpClient,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Bigquery inserter for TestPlanRun.
+	c.bqClient, err = bq.NewInserter(ctx,
+		bq.Options{
+			Target:     c.target.GetBq(),
+			HTTPClient: httpClient,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	defer c.bqClient.Close()
 
 	var cf context.CancelFunc
 	logging.Infof(ctx, "Running with deadline %s (current time: %s)", c.deadline.UTC(), time.Now().UTC())
@@ -104,49 +135,21 @@ func (c *ctpFlowRun) innerRun(a subcommands.Application, args []string, env subc
 	return werr
 }
 
-func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
+func (c *pipeCTPDataRun) pipelineRun(ctx context.Context, ch chan state) {
 	defer close(ch)
 
-	mClient, err := message.NewClient(ctx, c.source.GetPubsub(), c.clientOpts)
-	if err != nil {
-		ch <- state{result_flow.State_FAILED, err}
-		return
-	}
-	defer mClient.Close()
-	msgs, err := mClient.PullMessages(ctx)
+	msgs, err := c.mClient.PullMessages(ctx)
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
 	bIDs := message.ToBuildIDs(ctx, msgs)
 
-	bc, err := bb.NewClient(
-		ctx,
-		c.source.GetBb(),
-		c.source.GetFields(),
-		c.httpClient,
-	)
+	builds, err := c.bbClient.GetTargetBuilds(ctx, bIDs)
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
-	builds, err := bc.GetTargetBuilds(ctx, bIDs)
-	if err != nil {
-		ch <- state{result_flow.State_FAILED, err}
-		return
-	}
-
-	bqClient, err := bq.NewInserter(ctx,
-		bq.Options{
-			Target:     c.target.GetBq(),
-			HTTPClient: c.httpClient,
-		},
-	)
-	if err != nil {
-		ch <- state{result_flow.State_FAILED, err}
-		return
-	}
-	defer bqClient.Close()
 
 	for _, build := range builds {
 		cBuild, err := transform.LoadCTPBuildBucketResp(ctx, build, c.source.GetBb())
@@ -154,19 +157,19 @@ func (c *ctpFlowRun) pipelineRun(ctx context.Context, ch chan state) {
 			logging.Errorf(ctx, "failed to extract data from build: %v", err)
 			continue
 		}
-		if err = bqClient.Insert(ctx, toRows(ctx, cBuild)...); err != nil {
+		if err = c.bqClient.Insert(ctx, toRows(ctx, cBuild)...); err != nil {
 			logging.Errorf(ctx, "failed to upload build data to Bigquery: %v", err)
 		}
 	}
-	bqClient.CloseAndDrain(ctx)
-	if err = mClient.AckMessages(ctx, msgs); err != nil {
+	c.bqClient.CloseAndDrain(ctx)
+	if err = c.mClient.AckMessages(ctx, msgs); err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
 	ch <- state{result_flow.State_SUCCEEDED, nil}
 }
 
-func (c *ctpFlowRun) loadCTPRequest() error {
+func (c *pipeCTPDataRun) loadCTPRequest() error {
 	var (
 		r   result_flow.CTPRequest
 		err error

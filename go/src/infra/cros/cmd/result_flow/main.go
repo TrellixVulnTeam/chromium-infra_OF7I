@@ -37,7 +37,7 @@ func getApplication() *cli.Application {
 
 			subcommands.Section("Steps"),
 			cmd.Publish,
-			cmd.CTP,
+			cmd.PipeCTPData,
 			cmd.PipeTestRunnerData,
 		},
 	}
