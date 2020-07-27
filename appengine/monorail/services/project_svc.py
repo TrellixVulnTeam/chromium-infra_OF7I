@@ -63,10 +63,6 @@ class ProjectTwoLevelCache(caches.AbstractTwoLevelCache):
         cachemanager, 'project', 'project:', project_pb2.Project)
     self.project_service = project_service
 
-  # TODO(ehmaldonado): Remove after next release.
-  def _CheckCompatibility(self, project):
-    return project.extra_perms_are_sorted
-
   def _DeserializeProjects(
       self, project_rows, role_rows, extraperm_rows):
     """Convert database rows into a dictionary of Project PB keyed by ID."""
@@ -124,7 +120,6 @@ class ProjectTwoLevelCache(caches.AbstractTwoLevelCache):
 
     for project_id, perms_by_user in perms.items():
       project = project_dict[project_id]
-      project.extra_perms_are_sorted = True
       for user_id, extra_perms in sorted(perms_by_user.items()):
         project.extra_perms.append(project_pb2.Project.ExtraPerms(
             member_id=user_id, perms=extra_perms))

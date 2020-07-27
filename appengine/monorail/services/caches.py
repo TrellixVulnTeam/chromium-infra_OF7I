@@ -368,9 +368,8 @@ class AbstractTwoLevelCache(object):
     for key_str, serialized_value in cached_dict.items():
       value = self._StrToValue(serialized_value)
       key = self._StrToKey(key_str)
-      if self._CheckCompatibility(value):
-        cache_hits[key] = value
-        self.cache.CacheItem(key, value)
+      cache_hits[key] = value
+      self.cache.CacheItem(key, value)
 
     still_missing_keys = [key for key in keys if key not in cache_hits]
     logging.info(
@@ -409,11 +408,6 @@ class AbstractTwoLevelCache(object):
         seconds=5,
         key_prefix=self.prefix,
         namespace=settings.memcache_namespace)
-
-  # pylint: disable=unused-argument
-  def _CheckCompatibility(self, value):
-    """Subclasses can check if value is usable by the current app version."""
-    return True
 
   def _WriteToRedis(self, retrieved_dict):
     # type: (Mapping[int, Any]) -> None
