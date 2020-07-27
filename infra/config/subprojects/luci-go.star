@@ -71,8 +71,7 @@ try_builder(name = "luci-go-try-xenial-64", os = "Ubuntu-16.04", properties = {
 })
 
 # TODO(tandrii): bump to 10.15 once available.
-# TODO(crbug.com/1108842): Uncomment mac tryjob when ATL is online.
-#try_builder(name = "luci-go-try-mac", os = "Mac-10.13")
+try_builder(name = "luci-go-try-mac", os = "Mac-10.13")
 try_builder(name = "luci-go-try-win", os = "Windows-10")
 
 try_builder(
