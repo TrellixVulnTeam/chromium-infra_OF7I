@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	configpb "go.chromium.org/luci/common/proto/config"
@@ -77,7 +78,6 @@ func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		git.run("config", "remote.origin.fetch", "+"+gitLoc.Ref+":"+magicUpstreamRef)
 		git.run("config", "remote.origin.partialclonefilter", "blob:none")
 		git.run("fetch", "--depth", "1", "origin")
-		git.run("sparse-checkout", "add", gitLoc.Path)
 		git.run("new-branch", "fix_config")
 		if err = git.err; err != nil {
 			return
@@ -97,22 +97,40 @@ func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		ctx:    ctx,
 	}
 	ret = realRet
+
+	// toAdd will have the list of file patterns we want from our sparse checkout;
+	// We do the `sparse-checkout` call at most once because it's pretty slow on
+	// each invocation (it updates some internal git state and may also do network
+	// fetches to pull down missing blobs; this is optimized if you feed it all
+	// the new patterns simultaneously).
+	toAdd := stringset.Set{}
+	toAdd.Add(gitLoc.Path)
+
+	// Run from gitLoc.Path all the way up to "."; We need to add all OWNERS files
+	// and will calculate relConfigRoot along the way.
+	//
 	// TODO(iannucci): have a deterministic way to find the relConfigRoot; maybe
 	// a generated metadata file?
-	realRet.relConfigRoot = realRet.relGeneratedConfigRoot
-
 	git := gitRunner{root: realRet.root, ctx: ctx}
 	for cur := gitLoc.Path; cur != "."; cur = path.Dir(cur) {
-		if git.check("cat-file", "-t", magicUpstreamRef+":"+cur+"/main.star") {
+		if realRet.relConfigRoot == "" && git.check("cat-file", "-t", magicUpstreamRef+":"+cur+"/main.star") {
 			realRet.relConfigRoot = cur
-			if newCheckout {
-				git.run("sparse-checkout", "add", cur)
-				if err = git.err; git.err != nil {
-					return
-				}
-			}
-			break
+			toAdd.Add(cur)
 		}
+		toAdd.Add(filepath.Join(cur, "DIR_METADATA"))
+		toAdd.Add(filepath.Join(cur, "OWNERS"))
+		toAdd.Add(filepath.Join(cur, "PRESUBMIT.py"))
+	}
+	if newCheckout {
+		git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
+		if err = git.err; err != nil {
+			return
+		}
+	}
+
+	if realRet.relConfigRoot == "" {
+		// We didn't find it heuristically.
+		realRet.relConfigRoot = realRet.relGeneratedConfigRoot
 	}
 
 	return
