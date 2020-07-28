@@ -12,9 +12,9 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	. "infra/unifiedfleet/app/model/datastore"
 
-	proto "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/model/datastore"
 )
 
 func TestCreateSwitch(t *testing.T) {
@@ -106,19 +106,17 @@ func TestGetSwitch(t *testing.T) {
 
 func TestListSwitches(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	switches := make([]*ufspb.Switch, 0, 4)
+	for i := 0; i < 4; i++ {
+		switch1 := mockSwitch(fmt.Sprintf("switch-%d", i))
+		resp, _ := CreateSwitch(ctx, switch1)
+		switches = append(switches, resp)
+	}
 	Convey("ListSwitches", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		switches := make([]*proto.Switch, 0, 4)
-		for i := 0; i < 4; i++ {
-			switch1 := mockSwitch(fmt.Sprintf("switch-%d", i))
-			resp, err := CreateSwitch(ctx, switch1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
-			switches = append(switches, resp)
-		}
 		Convey("List switches - page_token invalid", func() {
-			resp, nextPageToken, err := ListSwitches(ctx, 5, "abc")
+			resp, nextPageToken, err := ListSwitches(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -126,7 +124,7 @@ func TestListSwitches(t *testing.T) {
 		})
 
 		Convey("List switches - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListSwitches(ctx, 4, "")
+			resp, nextPageToken, err := ListSwitches(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -134,13 +132,13 @@ func TestListSwitches(t *testing.T) {
 		})
 
 		Convey("List switches - listing with pagination", func() {
-			resp, nextPageToken, err := ListSwitches(ctx, 3, "")
+			resp, nextPageToken, err := ListSwitches(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switches[:3])
 
-			resp, _, err = ListSwitches(ctx, 2, nextPageToken)
+			resp, _, err = ListSwitches(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switches[3:])
@@ -185,7 +183,7 @@ func TestImportSwitches(t *testing.T) {
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
 	Convey("import switches", t, func() {
-		switches := []*proto.Switch{
+		switches := []*ufspb.Switch{
 			mockSwitch("switch1"),
 			mockSwitch("switch2"),
 		}
@@ -193,12 +191,12 @@ func TestImportSwitches(t *testing.T) {
 			resp, err := ImportSwitches(ctx, switches)
 			So(err, ShouldBeNil)
 			So(resp.Passed(), ShouldHaveLength, len(switches))
-			getRes, _, err := ListSwitches(ctx, 100, "")
+			getRes, _, err := ListSwitches(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(getRes, ShouldResembleProto, switches)
 		})
 		Convey("happy path also for importing existing switches", func() {
-			switch1 := []*proto.Switch{
+			switch1 := []*ufspb.Switch{
 				mockSwitch("switch1"),
 			}
 			resp, err := ImportSwitches(ctx, switch1)
@@ -211,8 +209,8 @@ func TestImportSwitches(t *testing.T) {
 	})
 }
 
-func mockSwitch(id string) *proto.Switch {
-	return &proto.Switch{
+func mockSwitch(id string) *ufspb.Switch {
+	return &ufspb.Switch{
 		Name: id,
 	}
 }

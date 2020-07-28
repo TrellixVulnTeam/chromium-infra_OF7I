@@ -5,19 +5,20 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
-
-	proto "infra/unifiedfleet/api/v1/proto"
-	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
-	"infra/unifiedfleet/app/model/registration"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 )
 
-func mockRPM(id string) *proto.RPM {
-	return &proto.RPM{
+func mockRPM(id string) *ufspb.RPM {
+	return &ufspb.RPM{
 		Name: id,
 	}
 }
@@ -35,11 +36,11 @@ func TestDeleteRPM(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM1)
 
-			chromeBrowserMachine1 := &proto.Machine{
+			chromeBrowserMachine1 := &ufspb.Machine{
 				Name: "machine-1",
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
-						RpmInterface: &proto.RPMInterface{
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						RpmInterface: &ufspb.RPMInterface{
 							Rpm: "RPM-1",
 						},
 					},
@@ -63,10 +64,10 @@ func TestDeleteRPM(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM2)
 
-			chromeBrowserRack1 := &proto.Rack{
+			chromeBrowserRack1 := &ufspb.Rack{
 				Name: "rack-1",
-				Rack: &proto.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &proto.ChromeBrowserRack{
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
 						Rpms: []string{"RPM-2", "RPM-5"},
 					},
 				},
@@ -89,10 +90,10 @@ func TestDeleteRPM(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM3)
 
-			chromeOSRackLSE1 := &proto.RackLSE{
+			chromeOSRackLSE1 := &ufspb.RackLSE{
 				Name: "racklse-1",
-				Lse: &proto.RackLSE_ChromeosRackLse{
-					ChromeosRackLse: &proto.ChromeOSRackLSE{
+				Lse: &ufspb.RackLSE_ChromeosRackLse{
+					ChromeosRackLse: &ufspb.ChromeOSRackLSE{
 						Rpms: []string{"RPM-3", "RPM-5"},
 					},
 				},
@@ -122,6 +123,30 @@ func TestDeleteRPM(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(cerr, ShouldNotBeNil)
 			So(cerr.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestListRPMs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	rpms := make([]*ufspb.RPM, 0, 2)
+	for i := 0; i < 4; i++ {
+		rpm := mockRPM(fmt.Sprintf("rpm-%d", i))
+		resp, _ := registration.CreateRPM(ctx, rpm)
+		rpms = append(rpms, resp)
+	}
+	Convey("ListRPMs", t, func() {
+		Convey("List RPMs - filter invalid - error", func() {
+			_, _, err := ListRPMs(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("ListRPMs - Full listing - happy path", func() {
+			resp, _, _ := ListRPMs(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, rpms)
 		})
 	})
 }

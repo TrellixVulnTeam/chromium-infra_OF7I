@@ -9,33 +9,42 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
 
 // CreateRPM creates a new rpm in datastore.
-func CreateRPM(ctx context.Context, rpm *fleet.RPM) (*fleet.RPM, error) {
+func CreateRPM(ctx context.Context, rpm *ufspb.RPM) (*ufspb.RPM, error) {
 	return registration.CreateRPM(ctx, rpm)
 }
 
 // UpdateRPM updates rpm in datastore.
-func UpdateRPM(ctx context.Context, rpm *fleet.RPM) (*fleet.RPM, error) {
+func UpdateRPM(ctx context.Context, rpm *ufspb.RPM) (*ufspb.RPM, error) {
 	return registration.UpdateRPM(ctx, rpm)
 }
 
 // GetRPM returns rpm for the given id from datastore.
-func GetRPM(ctx context.Context, id string) (*fleet.RPM, error) {
+func GetRPM(ctx context.Context, id string) (*ufspb.RPM, error) {
 	return registration.GetRPM(ctx, id)
 }
 
 // ListRPMs lists the rpms
-func ListRPMs(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.RPM, string, error) {
-	return registration.ListRPMs(ctx, pageSize, pageToken)
+func ListRPMs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.RPM, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, registration.GetRPMIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing rpms").Err()
+		}
+	}
+	return registration.ListRPMs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteRPM deletes the rpm in datastore
@@ -61,7 +70,7 @@ func DeleteRPM(ctx context.Context, id string) error {
 // Deletes the old RPM.
 // Creates the new RPM.
 // This will preserve data integrity in the system.
-func ReplaceRPM(ctx context.Context, oldRPM *fleet.RPM, newRPM *fleet.RPM) (*fleet.RPM, error) {
+func ReplaceRPM(ctx context.Context, oldRPM *ufspb.RPM, newRPM *ufspb.RPM) (*ufspb.RPM, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
 }

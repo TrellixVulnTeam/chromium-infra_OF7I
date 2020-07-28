@@ -79,19 +79,26 @@ func GetSwitch(ctx context.Context, id string) (*ufspb.Switch, error) {
 //
 // Does a query over switch entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListSwitches(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Switch, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, SwitchKind, pageSize, pageToken, nil, false)
+func ListSwitches(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.Switch, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, SwitchKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *SwitchEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			s := &ufspb.Switch{
+				Name: ent.ID,
+			}
+			res = append(res, s)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.Switch))
 		}
-		res = append(res, pm.(*ufspb.Switch))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

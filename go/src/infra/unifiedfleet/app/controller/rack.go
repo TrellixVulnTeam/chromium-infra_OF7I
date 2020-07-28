@@ -109,8 +109,16 @@ func GetRack(ctx context.Context, id string) (*ufspb.Rack, error) {
 }
 
 // ListRacks lists the racks
-func ListRacks(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.Rack, string, error) {
-	return registration.ListRacks(ctx, pageSize, pageToken)
+func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Rack, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, registration.GetRackIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing Racks").Err()
+		}
+	}
+	return registration.ListRacks(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteRack deletes the rack in datastore

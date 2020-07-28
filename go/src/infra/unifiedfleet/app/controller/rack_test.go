@@ -5,16 +5,17 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
-
-	ufspb "infra/unifiedfleet/api/v1/proto"
-	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
-	"infra/unifiedfleet/app/model/registration"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
+	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 )
 
 func TestCreateRack(t *testing.T) {
@@ -348,6 +349,48 @@ func TestReplaceRack(t *testing.T) {
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-105")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+		})
+	})
+}
+
+func TestListRacks(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	racksWithSwitch := make([]*ufspb.Rack, 0, 2)
+	racks := make([]*ufspb.Rack, 0, 4)
+	for i := 0; i < 4; i++ {
+		rack := &ufspb.Rack{
+			Name: fmt.Sprintf("rack-%d", i),
+			Rack: &ufspb.Rack_ChromeBrowserRack{
+				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+			},
+		}
+		if i%2 == 0 {
+			rack.GetChromeBrowserRack().Switches = []string{"switch-12"}
+		}
+		resp, _ := registration.CreateRack(ctx, rack)
+		if i%2 == 0 {
+			racksWithSwitch = append(racksWithSwitch, resp)
+		}
+		racks = append(racks, resp)
+	}
+	Convey("ListRacks", t, func() {
+		Convey("List Racks - filter invalid - error", func() {
+			_, _, err := ListRacks(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List Racks - filter switch - happy path", func() {
+			resp, _, _ := ListRacks(ctx, 5, "", "switch=switch-12", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, racksWithSwitch)
+		})
+
+		Convey("ListRacks - Full listing - happy path", func() {
+			resp, _, _ := ListRacks(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, racks)
 		})
 	})
 }

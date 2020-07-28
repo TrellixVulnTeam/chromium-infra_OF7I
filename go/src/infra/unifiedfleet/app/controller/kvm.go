@@ -128,8 +128,16 @@ func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
 }
 
 // ListKVMs lists the kvms
-func ListKVMs(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.KVM, string, error) {
-	return registration.ListKVMs(ctx, pageSize, pageToken)
+func ListKVMs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.KVM, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, registration.GetKVMIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing kvms").Err()
+		}
+	}
+	return registration.ListKVMs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteKVM deletes the kvm in datastore

@@ -114,19 +114,26 @@ func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
 //
 // Does a query over KVM entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.KVM, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, KVMKind, pageSize, pageToken, nil, false)
+func ListKVMs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.KVM, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, KVMKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *KVMEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			kvm := &ufspb.KVM{
+				Name: ent.ID,
+			}
+			res = append(res, kvm)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.KVM))
 		}
-		res = append(res, pm.(*ufspb.KVM))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

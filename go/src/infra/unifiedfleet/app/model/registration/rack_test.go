@@ -13,12 +13,12 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 
-	proto "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockRack(id string, rackCapactiy int32) *proto.Rack {
-	return &proto.Rack{
+func mockRack(id string, rackCapactiy int32) *ufspb.Rack {
+	return &ufspb.Rack{
 		Name:       id,
 		CapacityRu: rackCapactiy,
 	}
@@ -113,19 +113,17 @@ func TestGetRack(t *testing.T) {
 
 func TestListRacks(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	racks := make([]*ufspb.Rack, 0, 4)
+	for i := 0; i < 4; i++ {
+		rack1 := mockRack(fmt.Sprintf("rack-%d", i), 5)
+		resp, _ := CreateRack(ctx, rack1)
+		racks = append(racks, resp)
+	}
 	Convey("ListRacks", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		racks := make([]*proto.Rack, 0, 4)
-		for i := 0; i < 4; i++ {
-			rack1 := mockRack(fmt.Sprintf("rack-%d", i), 5)
-			resp, err := CreateRack(ctx, rack1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rack1)
-			racks = append(racks, resp)
-		}
 		Convey("List racks - page_token invalid", func() {
-			resp, nextPageToken, err := ListRacks(ctx, 5, "abc")
+			resp, nextPageToken, err := ListRacks(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -133,7 +131,7 @@ func TestListRacks(t *testing.T) {
 		})
 
 		Convey("List racks - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListRacks(ctx, 4, "")
+			resp, nextPageToken, err := ListRacks(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -141,13 +139,13 @@ func TestListRacks(t *testing.T) {
 		})
 
 		Convey("List racks - listing with pagination", func() {
-			resp, nextPageToken, err := ListRacks(ctx, 3, "")
+			resp, nextPageToken, err := ListRacks(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, racks[:3])
 
-			resp, _, err = ListRacks(ctx, 2, nextPageToken)
+			resp, _, err = ListRacks(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, racks[3:])
@@ -189,7 +187,7 @@ func TestBatchUpdateRacks(t *testing.T) {
 	Convey("BatchUpdateRacks", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		Racks := make([]*proto.Rack, 0, 4)
+		Racks := make([]*ufspb.Rack, 0, 4)
 		for i := 0; i < 4; i++ {
 			Rack1 := mockRack(fmt.Sprintf("Rack-%d", i), 10)
 			resp, err := CreateRack(ctx, Rack1)
@@ -218,13 +216,13 @@ func TestQueryRackByPropertyName(t *testing.T) {
 	Convey("QueryRackByPropertyName", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dummyRack := &proto.Rack{
+		dummyRack := &ufspb.Rack{
 			Name: "Rack-1",
 		}
-		Rack1 := &proto.Rack{
+		Rack1 := &ufspb.Rack{
 			Name: "Rack-1",
-			Rack: &proto.Rack_ChromeBrowserRack{
-				ChromeBrowserRack: &proto.ChromeBrowserRack{
+			Rack: &ufspb.Rack_ChromeBrowserRack{
+				ChromeBrowserRack: &ufspb.ChromeBrowserRack{
 					Kvms: []string{"KVM-1", "KVM-2"},
 				},
 			},
@@ -233,10 +231,10 @@ func TestQueryRackByPropertyName(t *testing.T) {
 		So(cerr, ShouldBeNil)
 		So(resp, ShouldResembleProto, Rack1)
 
-		Racks := make([]*proto.Rack, 0, 1)
+		Racks := make([]*ufspb.Rack, 0, 1)
 		Racks = append(Racks, Rack1)
 
-		dummyRacks := make([]*proto.Rack, 0, 1)
+		dummyRacks := make([]*ufspb.Rack, 0, 1)
 		dummyRacks = append(dummyRacks, dummyRack)
 		Convey("Query By existing Rack", func() {
 			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-1", false)

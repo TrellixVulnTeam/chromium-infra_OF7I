@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockKVM(id string) *proto.KVM {
-	return &proto.KVM{
+func mockKVM(id string) *ufspb.KVM {
+	return &ufspb.KVM{
 		Name: id,
 	}
 }
@@ -111,19 +112,17 @@ func TestGetKVM(t *testing.T) {
 
 func TestListKVMs(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	KVMs := make([]*ufspb.KVM, 0, 4)
+	for i := 0; i < 4; i++ {
+		KVM1 := mockKVM(fmt.Sprintf("KVM-%d", i))
+		resp, _ := CreateKVM(ctx, KVM1)
+		KVMs = append(KVMs, resp)
+	}
 	Convey("ListKVMs", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		KVMs := make([]*proto.KVM, 0, 4)
-		for i := 0; i < 4; i++ {
-			KVM1 := mockKVM(fmt.Sprintf("KVM-%d", i))
-			resp, err := CreateKVM(ctx, KVM1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, KVM1)
-			KVMs = append(KVMs, resp)
-		}
 		Convey("List KVMs - page_token invalid", func() {
-			resp, nextPageToken, err := ListKVMs(ctx, 5, "abc")
+			resp, nextPageToken, err := ListKVMs(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +130,7 @@ func TestListKVMs(t *testing.T) {
 		})
 
 		Convey("List KVMs - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListKVMs(ctx, 4, "")
+			resp, nextPageToken, err := ListKVMs(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -139,13 +138,13 @@ func TestListKVMs(t *testing.T) {
 		})
 
 		Convey("List KVMs - listing with pagination", func() {
-			resp, nextPageToken, err := ListKVMs(ctx, 3, "")
+			resp, nextPageToken, err := ListKVMs(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, KVMs[:3])
 
-			resp, _, err = ListKVMs(ctx, 2, nextPageToken)
+			resp, _, err = ListKVMs(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, KVMs[3:])
@@ -190,7 +189,7 @@ func TestBatchUpdateKVMs(t *testing.T) {
 	Convey("BatchUpdateKVMs", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		kvms := make([]*proto.KVM, 0, 4)
+		kvms := make([]*ufspb.KVM, 0, 4)
 		for i := 0; i < 4; i++ {
 			kvm1 := mockKVM(fmt.Sprintf("kvm-%d", i))
 			kvm1.ChromePlatform = "chromePlatform-1"
@@ -220,7 +219,7 @@ func TestQueryKVMByPropertyName(t *testing.T) {
 	Convey("QueryKVMByPropertyName", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dummyKVM := &proto.KVM{
+		dummyKVM := &ufspb.KVM{
 			Name: "kvm-15",
 		}
 		kvm1 := mockKVM("kvm-15")
@@ -229,10 +228,10 @@ func TestQueryKVMByPropertyName(t *testing.T) {
 		So(cerr, ShouldBeNil)
 		So(resp, ShouldResembleProto, kvm1)
 
-		kvms := make([]*proto.KVM, 0, 1)
+		kvms := make([]*ufspb.KVM, 0, 1)
 		kvms = append(kvms, kvm1)
 
-		kvms1 := make([]*proto.KVM, 0, 1)
+		kvms1 := make([]*ufspb.KVM, 0, 1)
 		kvms1 = append(kvms1, dummyKVM)
 		Convey("Query By existing ChromePlatform keysonly", func() {
 			resp, err := QueryKVMByPropertyName(ctx, "chrome_platform_id", "chromePlatform-1", true)

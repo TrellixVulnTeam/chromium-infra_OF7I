@@ -262,7 +262,7 @@ func (fs *FleetServerImpl) ListRacks(ctx context.Context, req *ufsAPI.ListRacksR
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListRacks(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRacks(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +524,7 @@ func (fs *FleetServerImpl) ListKVMs(ctx context.Context, req *ufsAPI.ListKVMsReq
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListKVMs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListKVMs(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -614,7 +614,7 @@ func (fs *FleetServerImpl) ListRPMs(ctx context.Context, req *ufsAPI.ListRPMsReq
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListRPMs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRPMs(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -794,7 +794,7 @@ func (fs *FleetServerImpl) ListSwitches(ctx context.Context, req *ufsAPI.ListSwi
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListSwitches(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListSwitches(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}

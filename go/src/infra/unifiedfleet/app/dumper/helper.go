@@ -308,7 +308,7 @@ func dumpRacks(ctx context.Context, bqClient *bigquery.Client, curTimeStr string
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("racks$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListRacks(ctx, pageSize, startToken)
+		res, nextToken, err := registration.ListRacks(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all racks").Err()
 		}
@@ -334,7 +334,7 @@ func dumpKVMs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string)
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("kvms$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListKVMs(ctx, pageSize, startToken)
+		res, nextToken, err := registration.ListKVMs(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all kvms").Err()
 		}
@@ -360,7 +360,7 @@ func dumpSwitches(ctx context.Context, bqClient *bigquery.Client, curTimeStr str
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("switches$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListSwitches(ctx, pageSize, startToken)
+		res, nextToken, err := registration.ListSwitches(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all switches").Err()
 		}
@@ -386,7 +386,7 @@ func dumpRPMs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string)
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("rpms$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListRPMs(ctx, pageSize, startToken)
+		res, nextToken, err := registration.ListRPMs(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all rpms").Err()
 		}

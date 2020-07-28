@@ -117,19 +117,26 @@ func GetRack(ctx context.Context, id string) (*ufspb.Rack, error) {
 // ListRacks lists the racks
 // Does a query over Rack entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListRacks(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Rack, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, RackKind, pageSize, pageToken, nil, false)
+func ListRacks(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.Rack, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, RackKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *RackEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			rack := &ufspb.Rack{
+				Name: ent.ID,
+			}
+			res = append(res, rack)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.Rack))
 		}
-		res = append(res, pm.(*ufspb.Rack))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

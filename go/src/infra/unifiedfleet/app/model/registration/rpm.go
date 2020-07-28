@@ -79,19 +79,26 @@ func GetRPM(ctx context.Context, id string) (*ufspb.RPM, error) {
 //
 // Does a query over RPM entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.RPM, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, RPMKind, pageSize, pageToken, nil, false)
+func ListRPMs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.RPM, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, RPMKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *RPMEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			rpm := &ufspb.RPM{
+				Name: ent.ID,
+			}
+			res = append(res, rpm)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.RPM))
 		}
-		res = append(res, pm.(*ufspb.RPM))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

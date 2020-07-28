@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -372,6 +373,43 @@ func TestDeleteKVM(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[kvm-2]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
+		})
+	})
+}
+
+func TestListKVMs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	kvmsWithChromeplatform := make([]*ufspb.KVM, 0, 2)
+	kvms := make([]*ufspb.KVM, 0, 4)
+	for i := 0; i < 4; i++ {
+		kvm := mockKVM(fmt.Sprintf("kvm-%d", i))
+		if i%2 == 0 {
+			kvm.ChromePlatform = "chromeplatform-12"
+		}
+		resp, _ := registration.CreateKVM(ctx, kvm)
+		if i%2 == 0 {
+			kvmsWithChromeplatform = append(kvmsWithChromeplatform, resp)
+		}
+		kvms = append(kvms, resp)
+	}
+	Convey("ListKVMs", t, func() {
+		Convey("List KVMs - filter invalid - error", func() {
+			_, _, err := ListKVMs(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List KVMs - filter chromeplatform - happy path", func() {
+			resp, _, _ := ListKVMs(ctx, 5, "", "platform=chromeplatform-12", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, kvmsWithChromeplatform)
+		})
+
+		Convey("ListKVMs - Full listing - happy path", func() {
+			resp, _, _ := ListKVMs(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, kvms)
 		})
 	})
 }

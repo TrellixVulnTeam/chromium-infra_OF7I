@@ -129,8 +129,16 @@ func GetSwitch(ctx context.Context, id string) (*ufspb.Switch, error) {
 }
 
 // ListSwitches lists the switches
-func ListSwitches(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.Switch, string, error) {
-	return registration.ListSwitches(ctx, pageSize, pageToken)
+func ListSwitches(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Switch, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, registration.GetSwitchIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing switches").Err()
+		}
+	}
+	return registration.ListSwitches(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteSwitch deletes the switch in datastore

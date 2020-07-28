@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockRPM(id string) *proto.RPM {
-	return &proto.RPM{
+func mockRPM(id string) *ufspb.RPM {
+	return &ufspb.RPM{
 		Name: id,
 	}
 }
@@ -111,19 +112,17 @@ func TestGetRPM(t *testing.T) {
 
 func TestListRPMs(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	RPMs := make([]*ufspb.RPM, 0, 4)
+	for i := 0; i < 4; i++ {
+		RPM1 := mockRPM(fmt.Sprintf("RPM-%d", i))
+		resp, _ := CreateRPM(ctx, RPM1)
+		RPMs = append(RPMs, resp)
+	}
 	Convey("ListRPMs", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		RPMs := make([]*proto.RPM, 0, 4)
-		for i := 0; i < 4; i++ {
-			RPM1 := mockRPM(fmt.Sprintf("RPM-%d", i))
-			resp, err := CreateRPM(ctx, RPM1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM1)
-			RPMs = append(RPMs, resp)
-		}
 		Convey("List RPMs - page_token invalid", func() {
-			resp, nextPageToken, err := ListRPMs(ctx, 5, "abc")
+			resp, nextPageToken, err := ListRPMs(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +130,7 @@ func TestListRPMs(t *testing.T) {
 		})
 
 		Convey("List RPMs - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListRPMs(ctx, 4, "")
+			resp, nextPageToken, err := ListRPMs(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -139,13 +138,13 @@ func TestListRPMs(t *testing.T) {
 		})
 
 		Convey("List RPMs - listing with pagination", func() {
-			resp, nextPageToken, err := ListRPMs(ctx, 3, "")
+			resp, nextPageToken, err := ListRPMs(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPMs[:3])
 
-			resp, _, err = ListRPMs(ctx, 2, nextPageToken)
+			resp, _, err = ListRPMs(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPMs[3:])

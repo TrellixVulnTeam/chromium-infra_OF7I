@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -370,6 +371,30 @@ func TestDeleteSwitch(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[switch-2]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
+		})
+	})
+}
+
+func TestListSwitches(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	switches := make([]*ufspb.Switch, 0, 2)
+	for i := 0; i < 4; i++ {
+		Switch := mockSwitch(fmt.Sprintf("Switch-%d", i))
+		resp, _ := registration.CreateSwitch(ctx, Switch)
+		switches = append(switches, resp)
+	}
+	Convey("ListSwitches", t, func() {
+		Convey("List Switches - filter invalid - error", func() {
+			_, _, err := ListSwitches(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("ListSwitches - Full listing - happy path", func() {
+			resp, _, _ := ListSwitches(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, switches)
 		})
 	})
 }
