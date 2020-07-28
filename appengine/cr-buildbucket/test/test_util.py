@@ -144,6 +144,7 @@ def build_bundle(for_creation=False, **build_proto_fields):  # pragma: no cover
       status_changed_time=now,
       tags=sorted(tags),
       parameters={},
+      experiments=sorted('+%s' % exp for exp in proto.input.experiments),
       url='https://ci.example.com/%d' % proto.id,
       is_luci=True,
   )

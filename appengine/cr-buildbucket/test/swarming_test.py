@@ -845,6 +845,12 @@ class SyncBuildTest(BaseTest):
           'status': common_pb2.SCHEDULED,
       },),
       ({
+          'experiments': [model.EXPERIMENT_REALMS],
+          'task_result': {'state': 'PENDING'},
+          'status': common_pb2.SCHEDULED,
+          'project_id': test_util.BUILD_DEFAULTS.builder.project,
+      },),
+      ({
           'task_result': {
               'state': 'RUNNING',
               'started_ts': '2018-01-29T21:15:02.649750',
@@ -968,7 +974,9 @@ class SyncBuildTest(BaseTest):
   ])
   def test_sync_with_task_result(self, case):
     logging.info('test case: %s', case)
-    bundle = test_util.build_bundle(id=1)
+    bundle = test_util.build_bundle(
+        id=1, input={'experiments': case.get('experiments', [])}
+    )
     bundle.put()
 
     net.json_request_async.return_value = future(case['task_result'])
@@ -983,7 +991,7 @@ class SyncBuildTest(BaseTest):
         method='GET',
         scopes=net.EMAIL_SCOPE,
         payload=None,
-        project_id=None,
+        project_id=case.get('project_id'),
         delegation_token=None,
         deadline=None,
         max_attempts=None,
@@ -1054,9 +1062,13 @@ class CancelTest(BaseTest):
         side_effect=json_request_async
     )
 
-  def test_cancel_task(self):
+  @parameterized.expand([
+      (None, None),
+      ('chromium:try', 'chromium'),
+  ])
+  def test_cancel_task(self, realm, project_id):
     self.json_response = {'ok': True}
-    swarming.cancel_task('swarming.example.com', 'deadbeef', None)
+    swarming.cancel_task('swarming.example.com', 'deadbeef', realm)
     net.json_request_async.assert_called_with(
         (
             'https://swarming.example.com/'
@@ -1066,7 +1078,7 @@ class CancelTest(BaseTest):
         scopes=net.EMAIL_SCOPE,
         delegation_token=None,
         payload={'kill_running': True},
-        project_id=None,
+        project_id=project_id,
         deadline=None,
         max_attempts=None,
     )

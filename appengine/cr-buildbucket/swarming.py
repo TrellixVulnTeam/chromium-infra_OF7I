@@ -682,11 +682,9 @@ def cancel_task_async(hostname, task_id, realm):
     task_id: ID of the Swarming task to cancel.
     realm: if set, use the corresponding project identity when calling Swarming.
   """
-  # TODO(crbug.com/1091604): When running in Realms mode use the project
-  # identity instead of the Buildbucket's own account. Swarming doesn't support
-  # it for "/cancel" yet.
-  _ = realm
 
+  # When running in Realms mode use the project identity instead of the
+  # Buildbucket's own account.
   res = yield _call_api_async(
       hostname=hostname,
       path='task/%s/cancel' % task_id,
@@ -694,6 +692,7 @@ def cancel_task_async(hostname, task_id, realm):
       payload={
           'kill_running': True,
       },
+      act_as_project=realm.split(':')[0] if realm else None,
   )
 
   if res.get('ok'):
@@ -758,13 +757,12 @@ def _load_task_result(build):
   hostname = build.proto.infra.swarming.hostname
   task_id = build.proto.infra.swarming.task_id
 
-  # TODO(crbug.com/1091604): When running in Realms mode use the project
-  # identity instead of the Buildbucket's own account. Swarming doesn't support
-  # it for "/result" yet.
-
+  # When running in Realms mode use the project identity instead of the
+  # Buildbucket's own account.
   result = _call_api_async(
       hostname=hostname,
       path='task/%s/result' % task_id,
+      act_as_project=build.project if build.uses_realms else None,
   ).get_result()
 
   if not result:
