@@ -30,13 +30,9 @@ func main() {
 			index(c)
 		})
 
-		// TODO: Temporarily remove this route. Will move it back after adding
-		// user authentication support.
-		/*
-			srv.Routes.GET("/view/status", templatesmw, func(c *router.Context) {
-				Status(c)
-			})
-		*/
+		srv.Routes.GET("/view/status", templatesmw, func(c *router.Context) {
+			Status(c)
+		})
 
 		srv.Routes.GET("/_task/auditor", basemw.Extend(gaemiddleware.RequireTaskQueue("default")), func(c *router.Context) {
 			Auditor(c)
