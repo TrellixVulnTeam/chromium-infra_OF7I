@@ -50,7 +50,11 @@ func TestMessage(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		got := message.ToBuildIDs(ctx, msgs)
+		m := message.ExtractBuildIDMap(ctx, msgs)
+		var got []int64
+		for b := range m {
+			got = append(got, b)
+		}
 		So(len(want), ShouldEqual, len(got))
 		sort.Slice(want, func(i, j int) bool { return want[i] < want[j] })
 		sort.Slice(got, func(i, j int) bool { return got[i] < got[j] })

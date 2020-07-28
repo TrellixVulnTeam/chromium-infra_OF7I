@@ -7,23 +7,21 @@ package cmd
 import (
 	"context"
 	"fmt"
-
+	"infra/cros/cmd/result_flow/internal/bb"
+	"infra/cros/cmd/result_flow/internal/bq"
+	"infra/cros/cmd/result_flow/internal/message"
+	"infra/cros/cmd/result_flow/internal/site"
+	"infra/cros/cmd/result_flow/internal/transform"
 	"time"
 
 	"cloud.google.com/go/bigquery"
-
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
 	"go.chromium.org/luci/auth/client/authcli"
 	lucibq "go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/logging"
-
-	"infra/cros/cmd/result_flow/internal/bb"
-	"infra/cros/cmd/result_flow/internal/bq"
-	"infra/cros/cmd/result_flow/internal/message"
-	"infra/cros/cmd/result_flow/internal/site"
-	"infra/cros/cmd/result_flow/internal/transform"
+	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
 // PipeCTPData subcommand pipelines CTP builds to analytics BQ table represented in the form
@@ -143,14 +141,16 @@ func (c *pipeCTPDataRun) pipelineRun(ctx context.Context, ch chan state) {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
-	bIDs := message.ToBuildIDs(ctx, msgs)
+	msgsByBuildID := message.ExtractBuildIDMap(ctx, msgs)
 
-	builds, err := c.bbClient.GetTargetBuilds(ctx, bIDs)
+	builds, err := c.bbClient.GetTargetBuilds(ctx, toBuildIDs(msgsByBuildID))
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
+	logging.Infof(ctx, "fetched %d builds from Buildbucket", len(builds))
 
+	var processed []*pubsubpb.ReceivedMessage
 	for _, build := range builds {
 		cBuild, err := transform.LoadCTPBuildBucketResp(ctx, build, c.source.GetBb())
 		if err != nil {
@@ -160,9 +160,12 @@ func (c *pipeCTPDataRun) pipelineRun(ctx context.Context, ch chan state) {
 		if err = c.bqClient.Insert(ctx, toRows(ctx, cBuild)...); err != nil {
 			logging.Errorf(ctx, "failed to upload build data to Bigquery: %v", err)
 		}
+		processed = append(processed, msgsByBuildID[build.Id])
 	}
 	c.bqClient.CloseAndDrain(ctx)
-	if err = c.mClient.AckMessages(ctx, msgs); err != nil {
+
+	logging.Infof(ctx, "processed %d messages of %d total fetched", len(processed), len(msgs))
+	if err = c.mClient.AckMessages(ctx, processed); err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}

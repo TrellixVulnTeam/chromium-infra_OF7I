@@ -7,24 +7,22 @@ package cmd
 import (
 	"context"
 	"fmt"
-
-	"time"
-
-	"cloud.google.com/go/bigquery"
-
-	"github.com/maruel/subcommands"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
-	"go.chromium.org/luci/auth/client/authcli"
-	lucibq "go.chromium.org/luci/common/bq"
-	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/logging"
-
 	"infra/cros/cmd/result_flow/internal/bb"
 	"infra/cros/cmd/result_flow/internal/bq"
 	"infra/cros/cmd/result_flow/internal/inventory"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
 	"infra/cros/cmd/result_flow/internal/transform"
+	"time"
+
+	"cloud.google.com/go/bigquery"
+	"github.com/maruel/subcommands"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
+	"go.chromium.org/luci/auth/client/authcli"
+	lucibq "go.chromium.org/luci/common/bq"
+	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/logging"
+	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
 // PipeTestRunnerData subcommand pipes test runner build to test_platform/analytics/TestRun
@@ -159,22 +157,22 @@ func (c *pipeTestRunnerDataRun) pipelineRun(ctx context.Context, ch chan state) 
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
-	buildIDMap := message.ExtractBuildIDMap(ctx, msgs)
+	msgsByBuildID := message.ExtractBuildIDMap(ctx, msgs)
 
-	builds, err := c.bbClient.GetTargetBuilds(ctx, getBuildIDs(buildIDMap))
+	builds, err := c.bbClient.GetTargetBuilds(ctx, toBuildIDs(msgsByBuildID))
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
+	logging.Infof(ctx, "fetched %d builds from Buildbucket", len(builds))
 
+	var processed []*pubsubpb.ReceivedMessage
 	for _, build := range builds {
-		runner, err := transform.LoadTestRunnerBuild(
-			ctx,
-			buildIDMap[build.Id],
-			build,
-			c.source.GetBb(),
-			c.invClient,
-		)
+		p, err := message.ExtractParentUID(msgsByBuildID[build.Id])
+		if err != nil {
+			logging.Errorf(ctx, "Failed to extract parent TestPlanRun UID, err: %v", err)
+		}
+		runner, err := transform.LoadTestRunnerBuild(ctx, p, build, c.source.GetBb(), c.invClient)
 		if err != nil {
 			logging.Errorf(ctx, "failed to extract data from build: %v", err)
 			continue
@@ -185,10 +183,13 @@ func (c *pipeTestRunnerDataRun) pipelineRun(ctx context.Context, ch chan state) 
 		if err = c.bqTestCaseClient.Insert(ctx, toTestCaseRows(runner)...); err != nil {
 			logging.Errorf(ctx, "failed to upload TestCaseResult data to Bigquery: %v", err)
 		}
+		processed = append(processed, msgsByBuildID[build.Id])
 	}
 	c.bqTestRunClient.CloseAndDrain(ctx)
 	c.bqTestCaseClient.CloseAndDrain(ctx)
-	if err = c.mClient.AckMessages(ctx, msgs); err != nil {
+
+	logging.Infof(ctx, "processed %d messages of %d total fetched", len(processed), len(msgs))
+	if err = c.mClient.AckMessages(ctx, processed); err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
@@ -214,14 +215,6 @@ func (c *pipeTestRunnerDataRun) loadTestRunnerRequest() error {
 	}
 	c.deadline = getDeadline(r.GetDeadline(), site.DefaultDeadlineSeconds)
 	return nil
-}
-
-func getBuildIDs(m map[int64]string) []int64 {
-	var res []int64
-	for b := range m {
-		res = append(res, b)
-	}
-	return res
 }
 
 func toTestRunRow(ctx context.Context, b transform.TestRunnerBuild) bigquery.ValueSaver {

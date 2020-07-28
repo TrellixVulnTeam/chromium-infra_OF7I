@@ -21,6 +21,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/api/option"
+	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
 	"google.golang.org/grpc"
 )
 
@@ -166,4 +167,12 @@ func newGRPCClientOptions(ctx context.Context, a auth.Options) (option.ClientOpt
 		return nil, err
 	}
 	return option.WithGRPCDialOption(grpc.WithPerRPCCredentials(grpcCreds)), nil
+}
+
+func toBuildIDs(m map[int64]*pubsubpb.ReceivedMessage) []int64 {
+	res := make([]int64, 0, len(m))
+	for b := range m {
+		res = append(res, b)
+	}
+	return res
 }
