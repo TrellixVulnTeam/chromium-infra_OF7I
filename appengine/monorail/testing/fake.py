@@ -831,6 +831,10 @@ class AbstractStarService(object):
   def LookupItemStarrers(self, _cnxn, item_id):
     return self.stars_by_item_id.get(item_id, [])
 
+  def LookupItemsStarrers(self, cnxn, item_ids):
+    return {
+        item_id: self.LookupItemStarrers(cnxn, item_id) for item_id in item_ids}
+
   def LookupStarredItemIDs(self, _cnxn, starrer_user_id):
     return self.stars_by_starrer_id.get(starrer_user_id, [])
 

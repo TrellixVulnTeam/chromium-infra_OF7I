@@ -991,9 +991,14 @@ def ParseMergeFields(
   return merge_into_text, merge_into_issue
 
 
-def GetNewIssueStarrers(cnxn, services, issue_id, merge_into_iid):
+def GetNewIssueStarrers(cnxn, services, issue_ids, merge_into_iid):
+  # type: (MonorailConnection, Services, Sequence[int], int) ->
+  #     Collection[int]
   """Get starrers of current issue who have not starred the target issue."""
-  source_starrers = services.issue_star.LookupItemStarrers(cnxn, issue_id)
+  source_starrers_dict = services.issue_star.LookupItemsStarrers(
+      cnxn, issue_ids)
+  source_starrers = list(
+      itertools.chain.from_iterable(source_starrers_dict.values()))
   target_starrers = services.issue_star.LookupItemStarrers(
       cnxn, merge_into_iid)
   return set(source_starrers) - set(target_starrers)

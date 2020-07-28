@@ -604,7 +604,7 @@ class MonorailApi(remote.Service):
 
     if 'merged_into' in updates_dict:
       new_starrers = tracker_helpers.GetNewIssueStarrers(
-          mar.cnxn, self._services, issue.issue_id, merge_into_issue.issue_id)
+          mar.cnxn, self._services, [issue.issue_id], merge_into_issue.issue_id)
       tracker_helpers.AddIssueStarrers(
           mar.cnxn, self._services, mar,
           merge_into_issue.issue_id, merge_into_project, new_starrers)

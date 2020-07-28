@@ -1767,7 +1767,7 @@ class WorkEnv(object):
     with self.mc.profiler.Phase('Following up after issue update'):
       if delta.merged_into:
         new_starrers = tracker_helpers.GetNewIssueStarrers(
-            self.mc.cnxn, self.services, issue.issue_id,
+            self.mc.cnxn, self.services, [issue.issue_id],
             delta.merged_into)
         merged_into_project = self.GetProject(merged_into_issue.project_id)
         tracker_helpers.AddIssueStarrers(

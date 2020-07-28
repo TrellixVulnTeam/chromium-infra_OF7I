@@ -347,7 +347,7 @@ class IssueBulkEdit(servlet.Servlet):
 
             # Update the new_starrers set.
             new_starrers.update(tracker_helpers.GetNewIssueStarrers(
-                mr.cnxn, self.services, issue.issue_id,
+                mr.cnxn, self.services, [issue.issue_id],
                 merge_into_issue.issue_id))
 
       # Proceed with amendments only if there are no reported errors.

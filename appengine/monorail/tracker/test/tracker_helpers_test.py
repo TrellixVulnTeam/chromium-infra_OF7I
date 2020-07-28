@@ -1218,6 +1218,10 @@ class IssueMergeTest(unittest.TestCase):
     self.services.issue_star.SetStar(
         self.cnxn, self.services, config, 1, 3, True)
     self.services.issue_star.SetStar(
+        self.cnxn, self.services, config, 3, 3, True)
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, config, 3, 6, True)
+    self.services.issue_star.SetStar(
         self.cnxn, self.services, config, 2, 3, True)
     self.services.issue_star.SetStar(
         self.cnxn, self.services, config, 2, 4, True)
@@ -1225,14 +1229,14 @@ class IssueMergeTest(unittest.TestCase):
         self.cnxn, self.services, config, 2, 5, True)
 
     new_starrers = tracker_helpers.GetNewIssueStarrers(
-        self.cnxn, self.services, 1, 2)
-    self.assertItemsEqual(new_starrers, [1, 2])
+        self.cnxn, self.services, [1, 3], 2)
+    self.assertItemsEqual(new_starrers, [1, 2, 6])
     tracker_helpers.AddIssueStarrers(
         self.cnxn, self.services, mr, 2, self.project, new_starrers)
     issue_2_starrers = self.services.issue_star.LookupItemStarrers(
         self.cnxn, 2)
     # XXX(jrobbins): these tests incorrectly mix local IDs with IIDs.
-    self.assertItemsEqual([1, 2, 3, 4, 5], issue_2_starrers)
+    self.assertItemsEqual([1, 2, 3, 4, 5, 6], issue_2_starrers)
 
 
 class MergeLinkedMembersTest(unittest.TestCase):
