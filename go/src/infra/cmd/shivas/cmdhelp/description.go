@@ -193,12 +193,6 @@ Examples:
 shivas list machine
 Fetches all the machines in table format
 
-shivas list machine -deployed
-Fetches all the deployed machines in table format
-
-shivas list machine -n 50 -deployed -json
-Fetches 50 deployed machines and prints the output in JSON format
-
 shivas list machine -n 5 -json
 Fetches 5 machines and prints the output in JSON format
 `

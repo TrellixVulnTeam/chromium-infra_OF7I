@@ -6,6 +6,7 @@ package machine
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -29,19 +30,19 @@ var ListMachineCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
-		c.Flags.BoolVar(&c.deployed, "deployed", false, `list only deployed machines`)
 		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
+		c.commonFlags.Register(&c.Flags)
 		return c
 	},
 }
 
 type listMachine struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
-	pageSize  int
-	deployed  bool
-	json      bool
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+	pageSize    int
+	json        bool
 }
 
 func (c *listMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -59,15 +60,14 @@ func (c *listMachine) innerRun(a subcommands.Application, args []string, env sub
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	if c.deployed {
-		// MachineLSE has large number of fields. Print only JSON format always.
-		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEs, c.json, int32(c.pageSize), "")
-	}
 	if c.json {
 		return utils.PrintListJSONFormat(ctx, ic, printMachines, c.json, int32(c.pageSize), "")
 	}
@@ -88,18 +88,5 @@ func printMachines(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSi
 	} else {
 		utils.PrintMachines(res.Machines)
 	}
-	return res.GetNextPageToken(), nil
-}
-
-func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {
-	req := &ufsAPI.ListMachineLSEsRequest{
-		PageSize:  pageSize,
-		PageToken: pageToken,
-	}
-	res, err := ic.ListMachineLSEs(ctx, req)
-	if err != nil {
-		return "", err
-	}
-	utils.PrintMachineLSEsJSON(res.MachineLSEs)
 	return res.GetNextPageToken(), nil
 }
