@@ -57,6 +57,7 @@ peripherals: {
   chameleon: true
   camerabox: true
   camerabox_facing: 1
+  camerabox_light: 1
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
@@ -116,6 +117,7 @@ var fullDimensions = Dimensions{
 	"label-board":                 {"boardval"},
 	"label-camerabox":             {"True"},
 	"label-camerabox_facing":      {"CAMERABOX_FACING_BACK"},
+	"label-camerabox_light":       {"CAMERABOX_LIGHT_LED"},
 	"label-carrier":               {"CARRIER_TMOBILE"},
 	"label-cellular_modem":        {"fake_cellular"},
 	"label-chameleon":             {"True"},

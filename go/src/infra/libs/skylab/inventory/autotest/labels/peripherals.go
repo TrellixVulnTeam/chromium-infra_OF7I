@@ -112,6 +112,12 @@ func otherPeripheralsConverter(ls *inventory.SchedulableLabels) []string {
 		labels = append(labels, lv)
 	}
 
+	if light := p.GetCameraboxLight(); light != inventory.Peripherals_CAMERABOX_LIGHT_UNKNOWN {
+		const plen = 16 // len("CAMERABOX_LIGHT_")
+		lv := "camerabox_light:" + strings.ToLower(light.String()[plen:])
+		labels = append(labels, lv)
+	}
+
 	return labels
 }
 
@@ -205,6 +211,12 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, labels []string) 
 			if index, ok := inventory.Peripherals_CameraboxFacing_value[vn]; ok {
 				facing := inventory.Peripherals_CameraboxFacing(index)
 				p.CameraboxFacing = &facing
+			}
+		case "camerabox_light":
+			vn := "CAMERABOX_LIGHT_" + strings.ToUpper(v)
+			if index, ok := inventory.Peripherals_CameraboxLight_value[vn]; ok {
+				light := inventory.Peripherals_CameraboxLight(index)
+				p.CameraboxLight = &light
 			}
 		default:
 			continue

@@ -46,6 +46,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 			AudioLoopbackDongle:    new(bool),
 			Camerabox:              new(bool),
 			CameraboxFacing:        new(Peripherals_CameraboxFacing),
+			CameraboxLight:         new(Peripherals_CameraboxLight),
 			Chameleon:              new(bool),
 			Conductive:             new(bool),
 			Huddly:                 new(bool),

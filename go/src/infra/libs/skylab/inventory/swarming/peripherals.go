@@ -103,6 +103,10 @@ func otherPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels)
 	if facing := p.GetCameraboxFacing(); facing != inventory.Peripherals_CAMERABOX_FACING_UNKNOWN {
 		dims["label-camerabox_facing"] = []string{facing.String()}
 	}
+
+	if light := p.GetCameraboxLight(); light != inventory.Peripherals_CAMERABOX_LIGHT_UNKNOWN {
+		dims["label-camerabox_light"] = []string{light.String()}
+	}
 }
 
 func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dimensions {
@@ -141,6 +145,14 @@ func otherPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dim
 			p.CameraboxFacing = &facing
 		}
 		delete(d, "label-camerabox_facing")
+	}
+
+	if lightName, ok := getLastStringValue(d, "label-camerabox_light"); ok {
+		if index, ok := inventory.Peripherals_CameraboxLight_value[strings.ToUpper(lightName)]; ok {
+			light := inventory.Peripherals_CameraboxLight(index)
+			p.CameraboxLight = &light
+		}
+		delete(d, "label-camerabox_light")
 	}
 
 	return d

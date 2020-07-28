@@ -60,6 +60,7 @@ peripherals: {
   chameleon: true
   camerabox: true
   camerabox_facing: 1
+  camerabox_light: 1
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
@@ -120,6 +121,7 @@ var fullLabels = []string{
 	"brand-code:HOMH",
 	"camerabox",
 	"camerabox_facing:back",
+	"camerabox_light:led",
 	"carrier:tmobile",
 	"chameleon",
 	"chameleon:dp_hdmi",
@@ -477,6 +479,7 @@ peripherals: {
   chameleon: true
   camerabox: true
   camerabox_facing: 1
+  camerabox_light: 1
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
@@ -537,6 +540,7 @@ var fullLabelsSpecial = []string{
 	"brand-code:HOMH",
 	"camerabox",
 	"camerabox_facing:back",
+	"camerabox_light:led",
 	"carrier:tmobile",
 	"chameleon",
 	"chameleon:dp_hdmi",
