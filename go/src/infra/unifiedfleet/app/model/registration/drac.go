@@ -114,19 +114,26 @@ func GetDrac(ctx context.Context, id string) (*ufspb.Drac, error) {
 //
 // Does a query over Drac entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListDracs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Drac, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, DracKind, pageSize, pageToken, nil, false)
+func ListDracs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.Drac, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, DracKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *DracEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			drac := &ufspb.Drac{
+				Name: ent.ID,
+			}
+			res = append(res, drac)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.Drac))
 		}
-		res = append(res, pm.(*ufspb.Drac))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

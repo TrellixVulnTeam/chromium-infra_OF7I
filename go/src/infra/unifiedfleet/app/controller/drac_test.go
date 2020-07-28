@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -430,6 +431,43 @@ func TestDeleteDrac(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+		})
+	})
+}
+
+func TestListDracs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	dracsWithSwitch := make([]*ufspb.Drac, 0, 2)
+	dracs := make([]*ufspb.Drac, 0, 4)
+	for i := 0; i < 4; i++ {
+		drac := mockDrac(fmt.Sprintf("drac-%d", i))
+		if i%2 == 0 {
+			drac.SwitchInterface = &ufspb.SwitchInterface{Switch: "switch-12"}
+		}
+		resp, _ := registration.CreateDrac(ctx, drac)
+		if i%2 == 0 {
+			dracsWithSwitch = append(dracsWithSwitch, resp)
+		}
+		dracs = append(dracs, resp)
+	}
+	Convey("ListDracs", t, func() {
+		Convey("List Dracs - filter invalid - error", func() {
+			_, _, err := ListDracs(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List Dracs - filter switch - happy path", func() {
+			resp, _, _ := ListDracs(ctx, 5, "", "switch=switch-12", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, dracsWithSwitch)
+		})
+
+		Convey("ListDracs - Full listing - happy path", func() {
+			resp, _, _ := ListDracs(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, dracs)
 		})
 	})
 }

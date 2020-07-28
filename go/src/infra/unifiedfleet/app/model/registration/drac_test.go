@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockDrac(id string) *proto.Drac {
-	return &proto.Drac{
+func mockDrac(id string) *ufspb.Drac {
+	return &ufspb.Drac{
 		Name: id,
 	}
 }
@@ -111,19 +112,17 @@ func TestGetDrac(t *testing.T) {
 
 func TestListDracs(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	dracs := make([]*ufspb.Drac, 0, 4)
+	for i := 0; i < 4; i++ {
+		drac1 := mockDrac(fmt.Sprintf("drac-%d", i))
+		resp, _ := CreateDrac(ctx, drac1)
+		dracs = append(dracs, resp)
+	}
 	Convey("ListDracs", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		dracs := make([]*proto.Drac, 0, 4)
-		for i := 0; i < 4; i++ {
-			drac1 := mockDrac(fmt.Sprintf("drac-%d", i))
-			resp, err := CreateDrac(ctx, drac1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, drac1)
-			dracs = append(dracs, resp)
-		}
 		Convey("List dracs - page_token invalid", func() {
-			resp, nextPageToken, err := ListDracs(ctx, 5, "abc")
+			resp, nextPageToken, err := ListDracs(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +130,7 @@ func TestListDracs(t *testing.T) {
 		})
 
 		Convey("List dracs - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListDracs(ctx, 4, "")
+			resp, nextPageToken, err := ListDracs(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -139,13 +138,13 @@ func TestListDracs(t *testing.T) {
 		})
 
 		Convey("List dracs - listing with pagination", func() {
-			resp, nextPageToken, err := ListDracs(ctx, 3, "")
+			resp, nextPageToken, err := ListDracs(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dracs[:3])
 
-			resp, _, err = ListDracs(ctx, 2, nextPageToken)
+			resp, _, err = ListDracs(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dracs[3:])
@@ -190,7 +189,7 @@ func TestBatchUpdateDracs(t *testing.T) {
 	Convey("BatchUpdateDracs", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dracs := make([]*proto.Drac, 0, 4)
+		dracs := make([]*ufspb.Drac, 0, 4)
 		for i := 0; i < 4; i++ {
 			drac1 := mockDrac(fmt.Sprintf("drac-%d", i))
 			resp, err := CreateDrac(ctx, drac1)
@@ -219,12 +218,12 @@ func TestQueryDracByPropertyName(t *testing.T) {
 	Convey("QueryDracByPropertyName", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dummyDrac := &proto.Drac{
+		dummyDrac := &ufspb.Drac{
 			Name: "drac-15",
 		}
-		drac1 := &proto.Drac{
+		drac1 := &ufspb.Drac{
 			Name: "drac-15",
-			SwitchInterface: &proto.SwitchInterface{
+			SwitchInterface: &ufspb.SwitchInterface{
 				Switch: "switch-1",
 			},
 		}
@@ -232,10 +231,10 @@ func TestQueryDracByPropertyName(t *testing.T) {
 		So(cerr, ShouldBeNil)
 		So(resp, ShouldResembleProto, drac1)
 
-		dracs := make([]*proto.Drac, 0, 1)
+		dracs := make([]*ufspb.Drac, 0, 1)
 		dracs = append(dracs, drac1)
 
-		dracs1 := make([]*proto.Drac, 0, 1)
+		dracs1 := make([]*ufspb.Drac, 0, 1)
 		dracs1 = append(dracs1, dummyDrac)
 		Convey("Query By existing Switch keysonly", func() {
 			resp, err := QueryDracByPropertyName(ctx, "switch_id", "switch-1", true)

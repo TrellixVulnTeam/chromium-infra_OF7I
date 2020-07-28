@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -414,6 +415,43 @@ func TestDeleteNic(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+		})
+	})
+}
+
+func TestListNics(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	nicsWithSwitch := make([]*ufspb.Nic, 0, 2)
+	nics := make([]*ufspb.Nic, 0, 4)
+	for i := 0; i < 4; i++ {
+		nic := mockNic(fmt.Sprintf("nic-%d", i))
+		if i%2 == 0 {
+			nic.SwitchInterface = &ufspb.SwitchInterface{Switch: "switch-12"}
+		}
+		resp, _ := registration.CreateNic(ctx, nic)
+		if i%2 == 0 {
+			nicsWithSwitch = append(nicsWithSwitch, resp)
+		}
+		nics = append(nics, resp)
+	}
+	Convey("ListNics", t, func() {
+		Convey("List Nics - filter invalid - error", func() {
+			_, _, err := ListNics(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List Nics - filter switch - happy path", func() {
+			resp, _, _ := ListNics(ctx, 5, "", "switch=switch-12", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, nicsWithSwitch)
+		})
+
+		Convey("ListNics - Full listing - happy path", func() {
+			resp, _, _ := ListNics(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, nics)
 		})
 	})
 }

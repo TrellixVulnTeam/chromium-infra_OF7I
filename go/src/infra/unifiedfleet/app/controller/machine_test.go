@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -362,6 +363,61 @@ func TestReplaceMachine(t *testing.T) {
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-105")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+		})
+	})
+}
+
+func TestListMachines(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	machinesWithNic := make([]*ufspb.Machine, 0, 2)
+	machinesWithNicAndDrac := make([]*ufspb.Machine, 0, 1)
+	machines := make([]*ufspb.Machine, 0, 4)
+	for i := 0; i < 4; i++ {
+		machine := &ufspb.Machine{
+			Name: fmt.Sprintf("machinefilter-%d", i),
+			Device: &ufspb.Machine_ChromeBrowserMachine{
+				ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+			},
+		}
+		if i == 0 {
+			machine.GetChromeBrowserMachine().Drac = "drac-12"
+		}
+		if i%2 == 0 {
+			machine.GetChromeBrowserMachine().Nics = []string{"nic-12"}
+		}
+		resp, _ := registration.CreateMachine(ctx, machine)
+		if i == 0 {
+			machinesWithNicAndDrac = append(machinesWithNicAndDrac, resp)
+		}
+		if i%2 == 0 {
+			machinesWithNic = append(machinesWithNic, resp)
+		}
+		machines = append(machines, resp)
+	}
+	Convey("ListMachines", t, func() {
+		Convey("List Machines - filter invalid - error", func() {
+			_, _, err := ListMachines(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List Machines - filter nic - happy path", func() {
+			resp, _, _ := ListMachines(ctx, 5, "", "nic=nic-12", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, machinesWithNic)
+		})
+
+		Convey("List Machines - filter nic AND drac - happy path", func() {
+			resp, _, _ := ListMachines(ctx, 5, "", "nic=nic-12 & drac=drac-12", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, machinesWithNicAndDrac)
+		})
+
+		Convey("ListMachines - Full listing - happy path", func() {
+			resp, _, _ := ListMachines(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, machines)
 		})
 	})
 }

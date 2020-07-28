@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockNic(id string) *proto.Nic {
-	return &proto.Nic{
+func mockNic(id string) *ufspb.Nic {
+	return &ufspb.Nic{
 		Name: id,
 	}
 }
@@ -111,19 +112,17 @@ func TestGetNic(t *testing.T) {
 
 func TestListNics(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	nics := make([]*ufspb.Nic, 0, 4)
+	for i := 0; i < 4; i++ {
+		nic1 := mockNic(fmt.Sprintf("nic-%d", i))
+		resp, _ := CreateNic(ctx, nic1)
+		nics = append(nics, resp)
+	}
 	Convey("ListNics", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		nics := make([]*proto.Nic, 0, 4)
-		for i := 0; i < 4; i++ {
-			nic1 := mockNic(fmt.Sprintf("nic-%d", i))
-			resp, err := CreateNic(ctx, nic1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic1)
-			nics = append(nics, resp)
-		}
 		Convey("List nics - page_token invalid", func() {
-			resp, nextPageToken, err := ListNics(ctx, 5, "abc")
+			resp, nextPageToken, err := ListNics(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +130,7 @@ func TestListNics(t *testing.T) {
 		})
 
 		Convey("List nics - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListNics(ctx, 4, "")
+			resp, nextPageToken, err := ListNics(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -139,13 +138,13 @@ func TestListNics(t *testing.T) {
 		})
 
 		Convey("List nics - listing with pagination", func() {
-			resp, nextPageToken, err := ListNics(ctx, 3, "")
+			resp, nextPageToken, err := ListNics(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nics[:3])
 
-			resp, _, err = ListNics(ctx, 2, nextPageToken)
+			resp, _, err = ListNics(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nics[3:])
@@ -190,7 +189,7 @@ func TestBatchUpdateNics(t *testing.T) {
 	Convey("BatchUpdateNics", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		nics := make([]*proto.Nic, 0, 4)
+		nics := make([]*ufspb.Nic, 0, 4)
 		for i := 0; i < 4; i++ {
 			nic1 := mockNic(fmt.Sprintf("nic-%d", i))
 			resp, err := CreateNic(ctx, nic1)
@@ -219,12 +218,12 @@ func TestQueryNicByPropertyName(t *testing.T) {
 	Convey("QueryNicByPropertyName", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dummyNic := &proto.Nic{
+		dummyNic := &ufspb.Nic{
 			Name: "nic-15",
 		}
-		nic1 := &proto.Nic{
+		nic1 := &ufspb.Nic{
 			Name: "nic-15",
-			SwitchInterface: &proto.SwitchInterface{
+			SwitchInterface: &ufspb.SwitchInterface{
 				Switch: "switch-1",
 			},
 		}
@@ -232,10 +231,10 @@ func TestQueryNicByPropertyName(t *testing.T) {
 		So(cerr, ShouldBeNil)
 		So(resp, ShouldResembleProto, nic1)
 
-		nics := make([]*proto.Nic, 0, 1)
+		nics := make([]*ufspb.Nic, 0, 1)
 		nics = append(nics, nic1)
 
-		nics1 := make([]*proto.Nic, 0, 1)
+		nics1 := make([]*ufspb.Nic, 0, 1)
 		nics1 = append(nics1, dummyNic)
 		Convey("Query By existing Switch keysonly", func() {
 			resp, err := QueryNicByPropertyName(ctx, "switch_id", "switch-1", true)

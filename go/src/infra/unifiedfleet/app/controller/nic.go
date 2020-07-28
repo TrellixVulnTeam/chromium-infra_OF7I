@@ -202,8 +202,16 @@ func GetNic(ctx context.Context, id string) (*ufspb.Nic, error) {
 }
 
 // ListNics lists the nics
-func ListNics(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.Nic, string, error) {
-	return registration.ListNics(ctx, pageSize, pageToken)
+func ListNics(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Nic, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, registration.GetNicIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing nics").Err()
+		}
+	}
+	return registration.ListNics(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteNic deletes the nic in datastore

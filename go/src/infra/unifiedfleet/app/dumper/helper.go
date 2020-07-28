@@ -282,7 +282,7 @@ func dumpMachines(ctx context.Context, bqClient *bigquery.Client, curTimeStr str
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machines$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListMachines(ctx, pageSize, startToken)
+		res, nextToken, err := registration.ListMachines(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all machines").Err()
 		}
@@ -412,7 +412,7 @@ func dumpNics(ctx context.Context, bqClient *bigquery.Client, curTimeStr string)
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("nics$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListNics(ctx, pageSize, startToken)
+		res, nextToken, err := registration.ListNics(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all nics").Err()
 		}
@@ -438,7 +438,7 @@ func dumpDracs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("dracs$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := registration.ListDracs(ctx, pageSize, startToken)
+		res, nextToken, err := registration.ListDracs(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all dracs").Err()
 		}

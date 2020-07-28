@@ -154,8 +154,16 @@ func GetDrac(ctx context.Context, id string) (*ufspb.Drac, error) {
 }
 
 // ListDracs lists the dracs
-func ListDracs(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.Drac, string, error) {
-	return registration.ListDracs(ctx, pageSize, pageToken)
+func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Drac, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, registration.GetDracIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing dracs").Err()
+		}
+	}
+	return registration.ListDracs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteDrac deletes the drac in datastore

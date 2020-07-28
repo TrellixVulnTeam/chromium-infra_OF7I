@@ -123,8 +123,16 @@ func GetMachine(ctx context.Context, id string) (*ufspb.Machine, error) {
 }
 
 // ListMachines lists the machines
-func ListMachines(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.Machine, string, error) {
-	return registration.ListMachines(ctx, pageSize, pageToken)
+func ListMachines(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Machine, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, registration.GetMachineIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing machines").Err()
+		}
+	}
+	return registration.ListMachines(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // GetAllMachines returns all machines in datastore.

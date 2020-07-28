@@ -13,33 +13,33 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 
-	proto "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockChromeOSMachine(id, lab, board string) *proto.Machine {
-	return &proto.Machine{
+func mockChromeOSMachine(id, lab, board string) *ufspb.Machine {
+	return &ufspb.Machine{
 		Name: id,
-		Device: &proto.Machine_ChromeosMachine{
-			ChromeosMachine: &proto.ChromeOSMachine{
+		Device: &ufspb.Machine_ChromeosMachine{
+			ChromeosMachine: &ufspb.ChromeOSMachine{
 				ReferenceBoard: board,
 			},
 		},
 	}
 }
 
-func mockChromeBrowserMachine(id, lab, name string) *proto.Machine {
-	return &proto.Machine{
+func mockChromeBrowserMachine(id, lab, name string) *ufspb.Machine {
+	return &ufspb.Machine{
 		Name: id,
-		Device: &proto.Machine_ChromeBrowserMachine{
-			ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+		Device: &ufspb.Machine_ChromeBrowserMachine{
+			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 				Description: name,
 			},
 		},
 	}
 }
 
-func assertMachineEqual(a *proto.Machine, b *proto.Machine) {
+func assertMachineEqual(a *ufspb.Machine, b *ufspb.Machine) {
 	So(a.GetName(), ShouldEqual, b.GetName())
 	So(a.GetChromeBrowserMachine().GetDescription(), ShouldEqual,
 		b.GetChromeBrowserMachine().GetDescription())
@@ -47,7 +47,7 @@ func assertMachineEqual(a *proto.Machine, b *proto.Machine) {
 		b.GetChromeosMachine().GetReferenceBoard())
 }
 
-func getMachineNames(machines []*proto.Machine) []string {
+func getMachineNames(machines []*ufspb.Machine) []string {
 	names := make([]string, len(machines))
 	for i, p := range machines {
 		names[i] = p.GetName()
@@ -144,19 +144,17 @@ func TestGetMachine(t *testing.T) {
 
 func TestListMachines(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	machines := make([]*ufspb.Machine, 0, 4)
+	for i := 0; i < 4; i++ {
+		chromeOSMachine1 := mockChromeOSMachine(fmt.Sprintf("chromeos-%d", i), "chromeoslab", "samus")
+		resp, _ := CreateMachine(ctx, chromeOSMachine1)
+		machines = append(machines, resp)
+	}
 	Convey("ListMachines", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		machines := make([]*proto.Machine, 0, 4)
-		for i := 0; i < 4; i++ {
-			chromeOSMachine1 := mockChromeOSMachine(fmt.Sprintf("chromeos-%d", i), "chromeoslab", "samus")
-			resp, err := CreateMachine(ctx, chromeOSMachine1)
-			So(err, ShouldBeNil)
-			assertMachineEqual(resp, chromeOSMachine1)
-			machines = append(machines, resp)
-		}
 		Convey("List machines - page_token invalid", func() {
-			resp, nextPageToken, err := ListMachines(ctx, 5, "abc")
+			resp, nextPageToken, err := ListMachines(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -164,7 +162,7 @@ func TestListMachines(t *testing.T) {
 		})
 
 		Convey("List machines - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListMachines(ctx, 4, "")
+			resp, nextPageToken, err := ListMachines(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -172,13 +170,13 @@ func TestListMachines(t *testing.T) {
 		})
 
 		Convey("List machines - listing with pagination", func() {
-			resp, nextPageToken, err := ListMachines(ctx, 3, "")
+			resp, nextPageToken, err := ListMachines(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machines[:3])
 
-			resp, _, err = ListMachines(ctx, 2, nextPageToken)
+			resp, _, err = ListMachines(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machines[3:])
@@ -220,7 +218,7 @@ func TestBatchUpdateMachines(t *testing.T) {
 	Convey("BatchUpdateMachines", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		machines := make([]*proto.Machine, 0, 4)
+		machines := make([]*ufspb.Machine, 0, 4)
 		for i := 0; i < 4; i++ {
 			chromeOSMachine1 := mockChromeOSMachine(fmt.Sprintf("chromeos-%d", i), "chromeoslab", "samus")
 			resp, err := CreateMachine(ctx, chromeOSMachine1)
@@ -249,20 +247,20 @@ func TestQueryMachineByPropertyName(t *testing.T) {
 	Convey("QueryMachineByPropertyName", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dummyMachine := &proto.Machine{
+		dummyMachine := &ufspb.Machine{
 			Name: "machine-1",
 		}
-		machine1 := &proto.Machine{
+		machine1 := &ufspb.Machine{
 			Name: "machine-1",
-			Device: &proto.Machine_ChromeBrowserMachine{
-				ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+			Device: &ufspb.Machine_ChromeBrowserMachine{
+				ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 					ChromePlatform: "chromePlatform-1",
 					Nics:           []string{"nic-1"},
 					Drac:           "drac-1",
-					KvmInterface: &proto.KVMInterface{
+					KvmInterface: &ufspb.KVMInterface{
 						Kvm: "kvm-1",
 					},
-					RpmInterface: &proto.RPMInterface{
+					RpmInterface: &ufspb.RPMInterface{
 						Rpm: "rpm-1",
 					},
 				},
@@ -272,10 +270,10 @@ func TestQueryMachineByPropertyName(t *testing.T) {
 		So(cerr, ShouldBeNil)
 		So(resp, ShouldResembleProto, machine1)
 
-		machines := make([]*proto.Machine, 0, 1)
+		machines := make([]*ufspb.Machine, 0, 1)
 		machines = append(machines, dummyMachine)
 
-		machines1 := make([]*proto.Machine, 0, 1)
+		machines1 := make([]*ufspb.Machine, 0, 1)
 		machines1 = append(machines1, machine1)
 		Convey("Query By existing ChromePlatform", func() {
 			resp, err := QueryMachineByPropertyName(ctx, "chrome_platform_id", "chromePlatform-1", true)

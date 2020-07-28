@@ -113,19 +113,26 @@ func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOn
 //
 // Does a query over Nic entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListNics(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Nic, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, NicKind, pageSize, pageToken, nil, false)
+func ListNics(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.Nic, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, NicKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *NicEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			nic := &ufspb.Nic{
+				Name: ent.ID,
+			}
+			res = append(res, nic)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.Nic))
 		}
-		res = append(res, pm.(*ufspb.Nic))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
