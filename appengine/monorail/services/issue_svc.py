@@ -2782,16 +2782,14 @@ class IssueService(object):
         commenter_id=user_ids, shard_id=shard_id, limit=limit)
     comment_ids = [row[0] for row in comment_content_id_rows]
     commentcontent_ids = [row[2] for row in comment_content_id_rows]
-    self.commentcontent_tbl.Update(
-        cnxn,
-        {'inbound_message': None},
-        id=commentcontent_ids,
-        commit=commit)
-    self.comment_tbl.Update(
-        cnxn,
-        {'commenter_id': framework_constants.DELETED_USER_ID},
-        id=comment_ids,
-        commit=commit)
+    if commentcontent_ids:
+      self.commentcontent_tbl.Update(
+          cnxn, {'inbound_message': None}, id=commentcontent_ids, commit=commit)
+    if comment_ids:
+      self.comment_tbl.Update(
+          cnxn, {'commenter_id': framework_constants.DELETED_USER_ID},
+          id=comment_ids,
+          commit=commit)
     affected_issue_ids.extend([row[1] for row in comment_content_id_rows])
 
     # Reassign deleted_by comments deleted_by.
@@ -2830,31 +2828,29 @@ class IssueService(object):
     owner_issue_id_rows = self.issue_tbl.Select(
         cnxn, cols=['id'], owner_id=user_ids, limit=limit)
     owner_issue_ids = [row[0] for row in owner_issue_id_rows]
-    self.issue_tbl.Update(
-        cnxn,
-        {'owner_id': None},
-        id=owner_issue_ids,
-        commit=commit)
+    if owner_issue_ids:
+      self.issue_tbl.Update(
+          cnxn, {'owner_id': None}, id=owner_issue_ids, commit=commit)
     affected_issue_ids.extend(owner_issue_ids)
     derived_owner_issue_id_rows = self.issue_tbl.Select(
         cnxn, cols=['id'], derived_owner_id=user_ids, limit=limit)
     derived_owner_issue_ids = [row[0] for row in derived_owner_issue_id_rows]
-    self.issue_tbl.Update(
-        cnxn,
-        {'derived_owner_id': None},
-        id=derived_owner_issue_ids,
-        commit=commit)
+    if derived_owner_issue_ids:
+      self.issue_tbl.Update(
+          cnxn, {'derived_owner_id': None},
+          id=derived_owner_issue_ids,
+          commit=commit)
     affected_issue_ids.extend(derived_owner_issue_ids)
 
     # Remove users in issue reporters.
     reporter_issue_id_rows = self.issue_tbl.Select(
         cnxn, cols=['id'], reporter_id=user_ids, limit=limit)
     reporter_issue_ids = [row[0] for row in reporter_issue_id_rows]
-    self.issue_tbl.Update(
-        cnxn,
-        {'reporter_id': framework_constants.DELETED_USER_ID},
-        id=reporter_issue_ids,
-        commit=commit)
+    if reporter_issue_ids:
+      self.issue_tbl.Update(
+          cnxn, {'reporter_id': framework_constants.DELETED_USER_ID},
+          id=reporter_issue_ids,
+          commit=commit)
     affected_issue_ids.extend(reporter_issue_ids)
 
     # Note: issueupdate_tbl's and issue2notify's user_id columns do not
