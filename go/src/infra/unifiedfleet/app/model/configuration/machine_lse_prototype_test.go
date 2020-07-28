@@ -6,18 +6,19 @@ package configuration
 
 import (
 	"fmt"
-	fleet "infra/unifiedfleet/api/v1/proto"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockMachineLSEPrototype(id string) *fleet.MachineLSEPrototype {
-	return &fleet.MachineLSEPrototype{
+func mockMachineLSEPrototype(id string) *ufspb.MachineLSEPrototype {
+	return &ufspb.MachineLSEPrototype{
 		Name: id,
 	}
 }
@@ -111,53 +112,42 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 
 func TestListMachineLSEPrototypes(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	machineLSEPrototypes := make([]*ufspb.MachineLSEPrototype, 0, 4)
+	for i := 0; i < 4; i++ {
+		machineLSEPrototype1 := mockMachineLSEPrototype(fmt.Sprintf("machineLSEPrototype-%d", i))
+		resp, _ := CreateMachineLSEPrototype(ctx, machineLSEPrototype1)
+		machineLSEPrototypes = append(machineLSEPrototypes, resp)
+	}
 	Convey("ListMachineLSEPrototypes", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		machineLSEPrototypes := make([]*fleet.MachineLSEPrototype, 0, 4)
-		for i := 0; i < 4; i++ {
-			var machineLSEPrototype1 *fleet.MachineLSEPrototype
-			if i == 0 {
-				machineLSEPrototype1 = mockMachineLSEPrototype(fmt.Sprintf("browser-lab:machineLSEPrototype-%d", i))
-			} else {
-				machineLSEPrototype1 = mockMachineLSEPrototype(fmt.Sprintf("machineLSEPrototype-%d", i))
-			}
-			resp, err := CreateMachineLSEPrototype(ctx, machineLSEPrototype1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSEPrototype1)
-			machineLSEPrototypes = append(machineLSEPrototypes, resp)
-		}
 		Convey("List machineLSEPrototypes - page_token invalid", func() {
-			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 5, "abc", "")
+			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
 		})
+
 		Convey("List machineLSEPrototypes - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 4, "", "")
+			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototypes)
 		})
+
 		Convey("List machineLSEPrototypes - listing with pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 3, "", "")
+			resp, nextPageToken, err := ListMachineLSEPrototypes(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototypes[:3])
 
-			resp, _, err = ListMachineLSEPrototypes(ctx, 2, nextPageToken, "")
+			resp, _, err = ListMachineLSEPrototypes(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototypes[3:])
-		})
-		Convey("List machineLSEPrototypes - filter only browser lab prototypes", func() {
-			resp, _, err := ListMachineLSEPrototypes(ctx, 10, "", "lab:browser")
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSEPrototypes[:1])
 		})
 	})
 }

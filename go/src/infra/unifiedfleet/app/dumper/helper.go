@@ -152,7 +152,7 @@ func dumpVlans(ctx context.Context, bqClient *bigquery.Client, curTimeStr string
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("vlans$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := controller.ListVlans(ctx, pageSize, startToken)
+		res, nextToken, err := controller.ListVlans(ctx, pageSize, startToken, "", false)
 		if err != nil {
 			return errors.Annotate(err, "get all vlans").Err()
 		}
@@ -178,7 +178,7 @@ func dumpRackLSEPrototypes(ctx context.Context, bqClient *bigquery.Client, curTi
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("rack_lse_prototypes$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListRackLSEPrototypes(ctx, pageSize, startToken, "")
+		res, nextToken, err := configuration.ListRackLSEPrototypes(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all rack lse prototypes").Err()
 		}
@@ -204,7 +204,7 @@ func dumpMachineLSEPrototypes(ctx context.Context, bqClient *bigquery.Client, cu
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machine_lse_prototypes$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListMachineLSEPrototypes(ctx, pageSize, startToken, "")
+		res, nextToken, err := configuration.ListMachineLSEPrototypes(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all vlans").Err()
 		}
@@ -230,7 +230,7 @@ func dumpDHCPs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("dhcps$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListDHCPConfigs(ctx, pageSize, startToken)
+		res, nextToken, err := configuration.ListDHCPConfigs(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all dhcps").Err()
 		}
@@ -256,7 +256,7 @@ func dumpIPs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) 
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("ips$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListIPs(ctx, pageSize, startToken)
+		res, nextToken, err := configuration.ListIPs(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all dhcps").Err()
 		}

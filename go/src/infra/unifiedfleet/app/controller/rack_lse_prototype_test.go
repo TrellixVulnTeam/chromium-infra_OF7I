@@ -5,20 +5,47 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
-	fleet "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 )
 
-func mockRackLSEPrototype(id string) *fleet.RackLSEPrototype {
-	return &fleet.RackLSEPrototype{
+func mockRackLSEPrototype(id string) *ufspb.RackLSEPrototype {
+	return &ufspb.RackLSEPrototype{
 		Name: id,
 	}
+}
+
+func TestListRackLSEPrototypes(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	rackLSEPrototypes := make([]*ufspb.RackLSEPrototype, 0, 4)
+	for i := 0; i < 4; i++ {
+		rackLSEPrototype1 := mockRackLSEPrototype("")
+		rackLSEPrototype1.Name = fmt.Sprintf("rackLSEPrototype-%d", i)
+		resp, _ := configuration.CreateRackLSEPrototype(ctx, rackLSEPrototype1)
+		rackLSEPrototypes = append(rackLSEPrototypes, resp)
+	}
+	Convey("ListRackLSEPrototypes", t, func() {
+		Convey("List RackLSEPrototypes - filter invalid", func() {
+			_, _, err := ListRackLSEPrototypes(ctx, 5, "", "machine=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Failed to read filter for listing racklseprototypes")
+		})
+
+		Convey("ListRackLSEPrototypes - Full listing - happy path", func() {
+			resp, _, _ := ListRackLSEPrototypes(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, rackLSEPrototypes)
+		})
+	})
 }
 
 func TestDeleteRackLSEPrototype(t *testing.T) {
@@ -32,7 +59,7 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototype1)
 
-			rackLSE1 := &fleet.RackLSE{
+			rackLSE1 := &ufspb.RackLSE{
 				Name:             "racklse-1",
 				RackLsePrototype: "rackLSEPrototype-1",
 			}

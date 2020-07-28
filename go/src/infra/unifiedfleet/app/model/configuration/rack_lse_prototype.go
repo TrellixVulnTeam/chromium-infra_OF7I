@@ -6,7 +6,6 @@ package configuration
 
 import (
 	"context"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -18,7 +17,6 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/util"
 )
 
 // RackLSEPrototypeKind is the datastore entity kind for RackLSEPrototypes.
@@ -79,25 +77,25 @@ func GetRackLSEPrototype(ctx context.Context, id string) (*ufspb.RackLSEPrototyp
 //
 // Does a query over RackLSEPrototype entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*ufspb.RackLSEPrototype, nextPageToken string, err error) {
+func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.RackLSEPrototype, nextPageToken string, err error) {
 	// Passing -1 for query limit fetches all the entities from the datastore
-	q, err := ufsds.ListQuery(ctx, RackLSEPrototypeKind, -1, pageToken, nil, false)
+	q, err := ufsds.ListQuery(ctx, RackLSEPrototypeKind, -1, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
-	prefix := util.GetLabPrefix(filter)
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *RackLSEPrototypeEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
-		}
-		if prefix != "" {
-			if strings.Contains(pm.(*ufspb.RackLSEPrototype).GetName(), prefix) {
-				res = append(res, pm.(*ufspb.RackLSEPrototype))
+		if keysOnly {
+			rackLSEPrototype := &ufspb.RackLSEPrototype{
+				Name: ent.ID,
 			}
+			res = append(res, rackLSEPrototype)
 		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
 			res = append(res, pm.(*ufspb.RackLSEPrototype))
 		}
 		if len(res) >= int(pageSize) {
@@ -109,7 +107,7 @@ func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filte
 		return nil
 	})
 	if err != nil {
-		logging.Errorf(ctx, "Failed to List RackLSEPrototypes %s", err)
+		logging.Errorf(ctx, "Failed to List RackLSEPrototype %s", err)
 		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {

@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockVlan(id string) *proto.Vlan {
-	return &proto.Vlan{
+func mockVlan(id string) *ufspb.Vlan {
+	return &ufspb.Vlan{
 		Name: id,
 	}
 }
@@ -111,19 +112,17 @@ func TestGetVlan(t *testing.T) {
 
 func TestListVlans(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	vlans := make([]*ufspb.Vlan, 0, 4)
+	for i := 0; i < 4; i++ {
+		vlan1 := mockVlan(fmt.Sprintf("vlan-%d", i))
+		resp, _ := CreateVlan(ctx, vlan1)
+		vlans = append(vlans, resp)
+	}
 	Convey("ListVlans", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		vlans := make([]*proto.Vlan, 0, 4)
-		for i := 0; i < 4; i++ {
-			vlan1 := mockVlan(fmt.Sprintf("vlan-%d", i))
-			resp, err := CreateVlan(ctx, vlan1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, vlan1)
-			vlans = append(vlans, resp)
-		}
 		Convey("List vlans - page_token invalid", func() {
-			resp, nextPageToken, err := ListVlans(ctx, 5, "abc")
+			resp, nextPageToken, err := ListVlans(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +130,7 @@ func TestListVlans(t *testing.T) {
 		})
 
 		Convey("List vlans - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListVlans(ctx, 4, "")
+			resp, nextPageToken, err := ListVlans(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -139,13 +138,13 @@ func TestListVlans(t *testing.T) {
 		})
 
 		Convey("List vlans - listing with pagination", func() {
-			resp, nextPageToken, err := ListVlans(ctx, 3, "")
+			resp, nextPageToken, err := ListVlans(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlans[:3])
 
-			resp, _, err = ListVlans(ctx, 2, nextPageToken)
+			resp, _, err = ListVlans(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlans[3:])

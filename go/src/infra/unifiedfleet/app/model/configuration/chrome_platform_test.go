@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	fleet "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockChromePlatform(id, desc string) *fleet.ChromePlatform {
-	return &fleet.ChromePlatform{
+func mockChromePlatform(id, desc string) *ufspb.ChromePlatform {
+	return &ufspb.ChromePlatform{
 		Name:        id,
 		Description: desc,
 	}
@@ -112,19 +113,17 @@ func TestGetChromePlatform(t *testing.T) {
 
 func TestListChromePlatforms(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	chromePlatforms := make([]*ufspb.ChromePlatform, 0, 4)
+	for i := 0; i < 4; i++ {
+		chromePlatform1 := mockChromePlatform(fmt.Sprintf("chromePlatform-%d", i), "Camera")
+		resp, _ := CreateChromePlatform(ctx, chromePlatform1)
+		chromePlatforms = append(chromePlatforms, resp)
+	}
 	Convey("ListChromePlatforms", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		chromePlatforms := make([]*fleet.ChromePlatform, 0, 4)
-		for i := 0; i < 4; i++ {
-			chromePlatform1 := mockChromePlatform(fmt.Sprintf("chromePlatform-%d", i), "Camera")
-			resp, err := CreateChromePlatform(ctx, chromePlatform1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, chromePlatform1)
-			chromePlatforms = append(chromePlatforms, resp)
-		}
 		Convey("List chromePlatforms - page_token invalid", func() {
-			resp, nextPageToken, err := ListChromePlatforms(ctx, 5, "abc")
+			resp, nextPageToken, err := ListChromePlatforms(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -132,7 +131,7 @@ func TestListChromePlatforms(t *testing.T) {
 		})
 
 		Convey("List chromePlatforms - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListChromePlatforms(ctx, 4, "")
+			resp, nextPageToken, err := ListChromePlatforms(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -140,13 +139,13 @@ func TestListChromePlatforms(t *testing.T) {
 		})
 
 		Convey("List chromePlatforms - listing with pagination", func() {
-			resp, nextPageToken, err := ListChromePlatforms(ctx, 3, "")
+			resp, nextPageToken, err := ListChromePlatforms(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatforms[:3])
 
-			resp, _, err = ListChromePlatforms(ctx, 2, nextPageToken)
+			resp, _, err = ListChromePlatforms(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatforms[3:])
@@ -193,7 +192,7 @@ func TestImportChromePlatforms(t *testing.T) {
 
 	Convey("Add chrome platform to datastore", t, func() {
 		Convey("Add 2 new platforms", func() {
-			toAdd := []*fleet.ChromePlatform{
+			toAdd := []*ufspb.ChromePlatform{
 				mockChromePlatform("platform1", "Camera"),
 				mockChromePlatform("platform2", "Camera"),
 			}
@@ -210,21 +209,21 @@ func TestImportChromePlatforms(t *testing.T) {
 			So(gets, ShouldHaveLength, 2)
 			passed := gets.Passed()
 			got := []string{
-				passed[0].Data.(*fleet.ChromePlatform).Name,
-				passed[1].Data.(*fleet.ChromePlatform).Name,
+				passed[0].Data.(*ufspb.ChromePlatform).Name,
+				passed[1].Data.(*ufspb.ChromePlatform).Name,
 			}
 			So(got, ShouldResemble, want)
 		})
 
 		Convey("Add existing platforms", func() {
-			toAdd := []*fleet.ChromePlatform{
+			toAdd := []*ufspb.ChromePlatform{
 				mockChromePlatform("platform1", "Camera"),
 				mockChromePlatform("platform2", "Camera"),
 			}
 			_, err := ImportChromePlatforms(ctx, toAdd)
 			So(err, ShouldBeNil)
 
-			toAddDuplicated := []*fleet.ChromePlatform{
+			toAddDuplicated := []*ufspb.ChromePlatform{
 				mockChromePlatform("platform1", "Camera2"),
 				mockChromePlatform("platform3", "Camera"),
 			}

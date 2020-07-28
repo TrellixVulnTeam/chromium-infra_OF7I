@@ -9,20 +9,18 @@ import (
 
 	empty "github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/grpc/grpcutil"
-	"go.chromium.org/luci/server/auth"
-	"golang.org/x/net/context"
-
-	status "google.golang.org/genproto/googleapis/rpc/status"
-
 	luciproto "go.chromium.org/luci/common/proto"
 	luciconfig "go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/impl/remote"
+	"go.chromium.org/luci/grpc/grpcutil"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
+	"go.chromium.org/luci/server/auth"
+	"golang.org/x/net/context"
+	status "google.golang.org/genproto/googleapis/rpc/status"
 
-	proto "infra/unifiedfleet/api/v1/proto"
-	api "infra/unifiedfleet/api/v1/rpc"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/configuration"
@@ -53,7 +51,7 @@ func (fs *FleetServerImpl) newCfgInterface(ctx context.Context) luciconfig.Inter
 }
 
 // CreateChromePlatform creates chromeplatform entry in database.
-func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *api.CreateChromePlatformRequest) (rsp *proto.ChromePlatform, err error) {
+func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *ufsAPI.CreateChromePlatformRequest) (rsp *ufspb.ChromePlatform, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -71,7 +69,7 @@ func (fs *FleetServerImpl) CreateChromePlatform(ctx context.Context, req *api.Cr
 }
 
 // UpdateChromePlatform updates the chromeplatform information in database.
-func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *api.UpdateChromePlatformRequest) (rsp *proto.ChromePlatform, err error) {
+func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *ufsAPI.UpdateChromePlatformRequest) (rsp *ufspb.ChromePlatform, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -89,7 +87,7 @@ func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *api.Up
 }
 
 // GetChromePlatform gets the chromeplatform information from database.
-func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *api.GetChromePlatformRequest) (rsp *proto.ChromePlatform, err error) {
+func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *ufsAPI.GetChromePlatformRequest) (rsp *ufspb.ChromePlatform, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -107,7 +105,7 @@ func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *api.GetCh
 }
 
 // ListChromePlatforms list the chromeplatforms information from database.
-func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *api.ListChromePlatformsRequest) (rsp *api.ListChromePlatformsResponse, err error) {
+func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *ufsAPI.ListChromePlatformsRequest) (rsp *ufsAPI.ListChromePlatformsResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -115,7 +113,7 @@ func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *api.Lis
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListChromePlatforms(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListChromePlatforms(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -123,14 +121,14 @@ func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *api.Lis
 	for _, chromePlatform := range result {
 		chromePlatform.Name = util.AddPrefix(util.ChromePlatformCollection, chromePlatform.Name)
 	}
-	return &api.ListChromePlatformsResponse{
+	return &ufsAPI.ListChromePlatformsResponse{
 		ChromePlatforms: result,
 		NextPageToken:   nextPageToken,
 	}, nil
 }
 
 // DeleteChromePlatform deletes the chromeplatform from database.
-func (fs *FleetServerImpl) DeleteChromePlatform(ctx context.Context, req *api.DeleteChromePlatformRequest) (rsp *empty.Empty, err error) {
+func (fs *FleetServerImpl) DeleteChromePlatform(ctx context.Context, req *ufsAPI.DeleteChromePlatformRequest) (rsp *empty.Empty, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -143,12 +141,12 @@ func (fs *FleetServerImpl) DeleteChromePlatform(ctx context.Context, req *api.De
 }
 
 // ImportChromePlatforms imports the Chrome Platform in batch.
-func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.ImportChromePlatformsRequest) (response *status.Status, err error) {
+func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *ufsAPI.ImportChromePlatformsRequest) (response *status.Status, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 
-	var platforms []*proto.ChromePlatform
+	var platforms []*ufspb.ChromePlatform
 	oldP := &crimsonconfig.Platforms{}
 	configSource := req.GetConfigSource()
 	if configSource == nil {
@@ -176,7 +174,7 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 	platforms = util.ToChromePlatforms(oldP)
 
 	logging.Debugf(ctx, "Importing %d platforms", len(platforms))
-	if err := api.ValidateResourceKey(platforms, "Name"); err != nil {
+	if err := ufsAPI.ValidateResourceKey(platforms, "Name"); err != nil {
 		return nil, err
 	}
 	res, err := controller.ImportChromePlatforms(ctx, platforms, fs.getImportPageSize())
@@ -185,17 +183,17 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *api.I
 }
 
 // ListOSVersions lists the chrome os versions in batch.
-func (fs *FleetServerImpl) ListOSVersions(ctx context.Context, req *api.ListOSVersionsRequest) (response *api.ListOSVersionsResponse, err error) {
+func (fs *FleetServerImpl) ListOSVersions(ctx context.Context, req *ufsAPI.ListOSVersionsRequest) (response *ufsAPI.ListOSVersionsResponse, err error) {
 	return nil, nil
 }
 
 // ImportOSVersions imports the Chrome OSVersion in batch.
-func (fs *FleetServerImpl) ImportOSVersions(ctx context.Context, req *api.ImportOSVersionsRequest) (response *status.Status, err error) {
+func (fs *FleetServerImpl) ImportOSVersions(ctx context.Context, req *ufsAPI.ImportOSVersionsRequest) (response *status.Status, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	source := req.GetMachineDbSource()
-	if err := api.ValidateMachineDBSource(source); err != nil {
+	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
 	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
@@ -217,7 +215,7 @@ func (fs *FleetServerImpl) ImportOSVersions(ctx context.Context, req *api.Import
 }
 
 // CreateMachineLSEPrototype creates machinelseprototype entry in database.
-func (fs *FleetServerImpl) CreateMachineLSEPrototype(ctx context.Context, req *api.CreateMachineLSEPrototypeRequest) (rsp *proto.MachineLSEPrototype, err error) {
+func (fs *FleetServerImpl) CreateMachineLSEPrototype(ctx context.Context, req *ufsAPI.CreateMachineLSEPrototypeRequest) (rsp *ufspb.MachineLSEPrototype, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -235,7 +233,7 @@ func (fs *FleetServerImpl) CreateMachineLSEPrototype(ctx context.Context, req *a
 }
 
 // UpdateMachineLSEPrototype updates the machinelseprototype information in database.
-func (fs *FleetServerImpl) UpdateMachineLSEPrototype(ctx context.Context, req *api.UpdateMachineLSEPrototypeRequest) (rsp *proto.MachineLSEPrototype, err error) {
+func (fs *FleetServerImpl) UpdateMachineLSEPrototype(ctx context.Context, req *ufsAPI.UpdateMachineLSEPrototypeRequest) (rsp *ufspb.MachineLSEPrototype, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -253,7 +251,7 @@ func (fs *FleetServerImpl) UpdateMachineLSEPrototype(ctx context.Context, req *a
 }
 
 // GetMachineLSEPrototype gets the machinelseprototype information from database.
-func (fs *FleetServerImpl) GetMachineLSEPrototype(ctx context.Context, req *api.GetMachineLSEPrototypeRequest) (rsp *proto.MachineLSEPrototype, err error) {
+func (fs *FleetServerImpl) GetMachineLSEPrototype(ctx context.Context, req *ufsAPI.GetMachineLSEPrototypeRequest) (rsp *ufspb.MachineLSEPrototype, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -271,7 +269,7 @@ func (fs *FleetServerImpl) GetMachineLSEPrototype(ctx context.Context, req *api.
 }
 
 // ListMachineLSEPrototypes list the machinelseprototypes information from database.
-func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *api.ListMachineLSEPrototypesRequest) (rsp *api.ListMachineLSEPrototypesResponse, err error) {
+func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *ufsAPI.ListMachineLSEPrototypesRequest) (rsp *ufsAPI.ListMachineLSEPrototypesResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -279,7 +277,7 @@ func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *ap
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListMachineLSEPrototypes(ctx, pageSize, req.PageToken, req.Filter)
+	result, nextPageToken, err := controller.ListMachineLSEPrototypes(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -287,14 +285,14 @@ func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *ap
 	for _, machineLSEPrototype := range result {
 		machineLSEPrototype.Name = util.AddPrefix(util.MachineLSEPrototypeCollection, machineLSEPrototype.Name)
 	}
-	return &api.ListMachineLSEPrototypesResponse{
+	return &ufsAPI.ListMachineLSEPrototypesResponse{
 		MachineLSEPrototypes: result,
 		NextPageToken:        nextPageToken,
 	}, nil
 }
 
 // DeleteMachineLSEPrototype deletes the machinelseprototype from database.
-func (fs *FleetServerImpl) DeleteMachineLSEPrototype(ctx context.Context, req *api.DeleteMachineLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+func (fs *FleetServerImpl) DeleteMachineLSEPrototype(ctx context.Context, req *ufsAPI.DeleteMachineLSEPrototypeRequest) (rsp *empty.Empty, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -307,7 +305,7 @@ func (fs *FleetServerImpl) DeleteMachineLSEPrototype(ctx context.Context, req *a
 }
 
 // CreateRackLSEPrototype creates racklseprototype entry in database.
-func (fs *FleetServerImpl) CreateRackLSEPrototype(ctx context.Context, req *api.CreateRackLSEPrototypeRequest) (rsp *proto.RackLSEPrototype, err error) {
+func (fs *FleetServerImpl) CreateRackLSEPrototype(ctx context.Context, req *ufsAPI.CreateRackLSEPrototypeRequest) (rsp *ufspb.RackLSEPrototype, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -325,7 +323,7 @@ func (fs *FleetServerImpl) CreateRackLSEPrototype(ctx context.Context, req *api.
 }
 
 // UpdateRackLSEPrototype updates the racklseprototype information in database.
-func (fs *FleetServerImpl) UpdateRackLSEPrototype(ctx context.Context, req *api.UpdateRackLSEPrototypeRequest) (rsp *proto.RackLSEPrototype, err error) {
+func (fs *FleetServerImpl) UpdateRackLSEPrototype(ctx context.Context, req *ufsAPI.UpdateRackLSEPrototypeRequest) (rsp *ufspb.RackLSEPrototype, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -343,7 +341,7 @@ func (fs *FleetServerImpl) UpdateRackLSEPrototype(ctx context.Context, req *api.
 }
 
 // GetRackLSEPrototype gets the racklseprototype information from database.
-func (fs *FleetServerImpl) GetRackLSEPrototype(ctx context.Context, req *api.GetRackLSEPrototypeRequest) (rsp *proto.RackLSEPrototype, err error) {
+func (fs *FleetServerImpl) GetRackLSEPrototype(ctx context.Context, req *ufsAPI.GetRackLSEPrototypeRequest) (rsp *ufspb.RackLSEPrototype, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -361,7 +359,7 @@ func (fs *FleetServerImpl) GetRackLSEPrototype(ctx context.Context, req *api.Get
 }
 
 // ListRackLSEPrototypes list the racklseprototypes information from database.
-func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *api.ListRackLSEPrototypesRequest) (rsp *api.ListRackLSEPrototypesResponse, err error) {
+func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *ufsAPI.ListRackLSEPrototypesRequest) (rsp *ufsAPI.ListRackLSEPrototypesResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -369,7 +367,7 @@ func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *api.L
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListRackLSEPrototypes(ctx, pageSize, req.PageToken, req.Filter)
+	result, nextPageToken, err := controller.ListRackLSEPrototypes(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -377,14 +375,14 @@ func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *api.L
 	for _, rackLSEPrototype := range result {
 		rackLSEPrototype.Name = util.AddPrefix(util.RackLSEPrototypeCollection, rackLSEPrototype.Name)
 	}
-	return &api.ListRackLSEPrototypesResponse{
+	return &ufsAPI.ListRackLSEPrototypesResponse{
 		RackLSEPrototypes: result,
 		NextPageToken:     nextPageToken,
 	}, nil
 }
 
 // DeleteRackLSEPrototype deletes the racklseprototype from database.
-func (fs *FleetServerImpl) DeleteRackLSEPrototype(ctx context.Context, req *api.DeleteRackLSEPrototypeRequest) (rsp *empty.Empty, err error) {
+func (fs *FleetServerImpl) DeleteRackLSEPrototype(ctx context.Context, req *ufsAPI.DeleteRackLSEPrototypeRequest) (rsp *empty.Empty, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -397,7 +395,7 @@ func (fs *FleetServerImpl) DeleteRackLSEPrototype(ctx context.Context, req *api.
 }
 
 // CreateVlan creates vlan entry in database.
-func (fs *FleetServerImpl) CreateVlan(ctx context.Context, req *api.CreateVlanRequest) (rsp *proto.Vlan, err error) {
+func (fs *FleetServerImpl) CreateVlan(ctx context.Context, req *ufsAPI.CreateVlanRequest) (rsp *ufspb.Vlan, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -415,7 +413,7 @@ func (fs *FleetServerImpl) CreateVlan(ctx context.Context, req *api.CreateVlanRe
 }
 
 // UpdateVlan updates the vlan information in database.
-func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *api.UpdateVlanRequest) (rsp *proto.Vlan, err error) {
+func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *ufsAPI.UpdateVlanRequest) (rsp *ufspb.Vlan, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -433,7 +431,7 @@ func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *api.UpdateVlanRe
 }
 
 // GetVlan gets the vlan information from database.
-func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *api.GetVlanRequest) (rsp *proto.Vlan, err error) {
+func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *ufsAPI.GetVlanRequest) (rsp *ufspb.Vlan, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -451,7 +449,7 @@ func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *api.GetVlanRequest)
 }
 
 // ListVlans list the vlans information from database.
-func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *api.ListVlansRequest) (rsp *api.ListVlansResponse, err error) {
+func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *ufsAPI.ListVlansRequest) (rsp *ufsAPI.ListVlansResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -459,7 +457,7 @@ func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *api.ListVlansRequ
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListVlans(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListVlans(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -467,14 +465,14 @@ func (fs *FleetServerImpl) ListVlans(ctx context.Context, req *api.ListVlansRequ
 	for _, vlan := range result {
 		vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
 	}
-	return &api.ListVlansResponse{
+	return &ufsAPI.ListVlansResponse{
 		Vlans:         result,
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
 // DeleteVlan deletes the vlan from database.
-func (fs *FleetServerImpl) DeleteVlan(ctx context.Context, req *api.DeleteVlanRequest) (rsp *empty.Empty, err error) {
+func (fs *FleetServerImpl) DeleteVlan(ctx context.Context, req *ufsAPI.DeleteVlanRequest) (rsp *empty.Empty, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -487,7 +485,7 @@ func (fs *FleetServerImpl) DeleteVlan(ctx context.Context, req *api.DeleteVlanRe
 }
 
 // ImportVlans imports vlans & all IP-related infos.
-func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *api.ImportVlansRequest) (response *status.Status, err error) {
+func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *ufsAPI.ImportVlansRequest) (response *status.Status, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -520,7 +518,7 @@ func (fs *FleetServerImpl) ImportVlans(ctx context.Context, req *api.ImportVlans
 }
 
 // ImportOSVlans imports the ChromeOS vlans, ips and dhcp configs.
-func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *api.ImportOSVlansRequest) (response *status.Status, err error) {
+func (fs *FleetServerImpl) ImportOSVlans(ctx context.Context, req *ufsAPI.ImportOSVlansRequest) (response *status.Status, err error) {
 	sheetClient, err := fs.newSheetInterface(ctx)
 	if err != nil {
 		return nil, sheetConnectionFailureStatus.Err()

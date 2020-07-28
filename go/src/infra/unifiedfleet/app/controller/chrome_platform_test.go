@@ -5,21 +5,49 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
-	fleet "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
 )
 
-func mockChromePlatform(id, desc string) *fleet.ChromePlatform {
-	return &fleet.ChromePlatform{
+func mockChromePlatform(id, desc string) *ufspb.ChromePlatform {
+	return &ufspb.ChromePlatform{
 		Name:        id,
 		Description: desc,
 	}
+}
+
+func TestListChromePlatforms(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	chromePlatforms := make([]*ufspb.ChromePlatform, 0, 4)
+	for i := 0; i < 4; i++ {
+		chromePlatform1 := mockChromePlatform("", "Camera")
+		chromePlatform1.Name = fmt.Sprintf("chromePlatform-%d", i)
+		resp, _ := configuration.CreateChromePlatform(ctx, chromePlatform1)
+		chromePlatforms = append(chromePlatforms, resp)
+	}
+	Convey("ListChromePlatforms", t, func() {
+		Convey("List chromePlatforms - filter invalid", func() {
+			_, _, err := ListChromePlatforms(ctx, 5, "", "machine=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Failed to read filter for listing chromeplatforms")
+		})
+
+		Convey("ListChromePlatforms - Full listing - happy path", func() {
+			resp, _, _ := ListChromePlatforms(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, chromePlatforms)
+		})
+	})
+
 }
 
 func TestDeleteChromePlatform(t *testing.T) {
@@ -34,10 +62,10 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatform1)
 
-			chromeBrowserMachine1 := &fleet.Machine{
+			chromeBrowserMachine1 := &ufspb.Machine{
 				Name: "machine-1",
-				Device: &fleet.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &fleet.ChromeBrowserMachine{
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-1",
 					},
 				},
@@ -60,7 +88,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatform3)
 
-			kvm1 := &fleet.KVM{
+			kvm1 := &ufspb.KVM{
 				Name:           "kvm-1",
 				ChromePlatform: "chromePlatform-3",
 			}

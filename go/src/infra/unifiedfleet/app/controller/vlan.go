@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	"google.golang.org/grpc/codes"
@@ -16,7 +17,7 @@ import (
 
 	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
-	fleet "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
@@ -25,23 +26,31 @@ import (
 )
 
 // CreateVlan creates a new vlan in datastore.
-func CreateVlan(ctx context.Context, vlan *fleet.Vlan) (*fleet.Vlan, error) {
+func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 	return configuration.CreateVlan(ctx, vlan)
 }
 
 // UpdateVlan updates vlan in datastore.
-func UpdateVlan(ctx context.Context, vlan *fleet.Vlan) (*fleet.Vlan, error) {
+func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 	return configuration.UpdateVlan(ctx, vlan)
 }
 
 // GetVlan returns vlan for the given id from datastore.
-func GetVlan(ctx context.Context, id string) (*fleet.Vlan, error) {
+func GetVlan(ctx context.Context, id string) (*ufspb.Vlan, error) {
 	return configuration.GetVlan(ctx, id)
 }
 
 // ListVlans lists the vlans
-func ListVlans(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.Vlan, string, error) {
-	return configuration.ListVlans(ctx, pageSize, pageToken)
+func ListVlans(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Vlan, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, configuration.GetVlanIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing vlans").Err()
+		}
+	}
+	return configuration.ListVlans(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteVlan deletes the vlan in datastore
@@ -66,8 +75,8 @@ func DeleteVlan(ctx context.Context, id string) error {
 // The function will stop at the very first error.
 func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int) (*datastore.OpResults, error) {
 	logging.Debugf(ctx, "processing vlans")
-	IPs := make([]*fleet.IP, 0)
-	vs := make([]*fleet.Vlan, len(vlans))
+	IPs := make([]*ufspb.IP, 0)
+	vs := make([]*ufspb.Vlan, len(vlans))
 	for i, vlan := range vlans {
 		vlanName := util.GetBrowserLabName(util.Int64ToStr(vlan.GetId()))
 		ips, length, err := util.ParseVlan(vlan)
@@ -78,7 +87,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 			ip.Vlan = vlanName
 			IPs = append(IPs, ip)
 		}
-		vs[i] = &fleet.Vlan{
+		vs[i] = &ufspb.Vlan{
 			Name:        vlanName,
 			Description: vlan.GetAlias(),
 			CapacityIp:  int32(length),
@@ -115,7 +124,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	return &allRes, nil
 }
 
-func deleteNonExistingVlans(ctx context.Context, vlans []*fleet.Vlan, pageSize int) (*datastore.OpResults, error) {
+func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize int) (*datastore.OpResults, error) {
 	resMap := make(map[string]bool)
 	for _, r := range vlans {
 		resMap[r.GetName()] = true
@@ -127,7 +136,7 @@ func deleteNonExistingVlans(ctx context.Context, vlans []*fleet.Vlan, pageSize i
 	var toDelete []string
 	var toDeleteIP []string
 	for _, sr := range resp.Passed() {
-		s := sr.Data.(*fleet.Vlan)
+		s := sr.Data.(*ufspb.Vlan)
 		if util.IsInBrowserLab(s.GetName()) {
 			if _, ok := resMap[s.GetName()]; !ok {
 				toDelete = append(toDelete, s.GetName())
@@ -151,9 +160,9 @@ func deleteNonExistingVlans(ctx context.Context, vlans []*fleet.Vlan, pageSize i
 // ImportOSVlans imports the logic of parse and save network infos.
 func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitClient git.ClientInterface, pageSize int) (*datastore.OpResults, error) {
 	networkCfg := config.Get(ctx).GetCrosNetworkConfig()
-	allVlans := make([]*fleet.Vlan, 0)
-	allIPs := make([]*fleet.IP, 0)
-	allDhcps := make([]*fleet.DHCPConfig, 0)
+	allVlans := make([]*ufspb.Vlan, 0)
+	allIPs := make([]*ufspb.IP, 0)
+	allDhcps := make([]*ufspb.DHCPConfig, 0)
 
 	for _, cfg := range networkCfg.GetCrosNetworkTopology() {
 		logging.Debugf(ctx, "########### Parse %s ###########", cfg.GetName())
@@ -230,7 +239,7 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitCl
 	return &allRes, nil
 }
 
-func logVlans(ctx context.Context, vlans []*fleet.Vlan) {
+func logVlans(ctx context.Context, vlans []*ufspb.Vlan) {
 	if vlans != nil && len(vlans) > 0 {
 		for _, v := range vlans {
 			logging.Debugf(ctx, "\tVlan %s (%s)", v.GetName(), v.GetVlanAddress())
@@ -240,7 +249,7 @@ func logVlans(ctx context.Context, vlans []*fleet.Vlan) {
 	logging.Debugf(ctx, "\tNot found")
 }
 
-func logDHCPs(ctx context.Context, dhcps []*fleet.DHCPConfig) {
+func logDHCPs(ctx context.Context, dhcps []*ufspb.DHCPConfig) {
 	if dhcps != nil && len(dhcps) > 0 {
 		logging.Debugf(ctx, "enter")
 		for _, v := range dhcps {
@@ -252,7 +261,7 @@ func logDHCPs(ctx context.Context, dhcps []*fleet.DHCPConfig) {
 
 }
 
-func logIPs(ctx context.Context, ips []*fleet.IP) {
+func logIPs(ctx context.Context, ips []*ufspb.IP) {
 	if ips != nil && len(ips) > 0 {
 		for _, v := range ips {
 			logging.Debugf(ctx, "\tIP %s", v.GetId())
@@ -272,7 +281,7 @@ func logIPs(ctx context.Context, ips []*fleet.IP) {
 // Deletes the old Vlan.
 // Creates the new Vlan.
 // This will preserve data integrity in the system.
-func ReplaceVlan(ctx context.Context, oldVlan *fleet.Vlan, newVlan *fleet.Vlan) (*fleet.Vlan, error) {
+func ReplaceVlan(ctx context.Context, oldVlan *ufspb.Vlan, newVlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
 }

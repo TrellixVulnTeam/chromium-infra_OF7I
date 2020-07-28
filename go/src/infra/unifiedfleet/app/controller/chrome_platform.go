@@ -9,34 +9,43 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
 )
 
 // CreateChromePlatform creates a new chromeplatform in datastore.
-func CreateChromePlatform(ctx context.Context, chromeplatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
+func CreateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
 	return configuration.CreateChromePlatform(ctx, chromeplatform)
 }
 
 // UpdateChromePlatform updates chromeplatform in datastore.
-func UpdateChromePlatform(ctx context.Context, chromeplatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
+func UpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
 	return configuration.UpdateChromePlatform(ctx, chromeplatform)
 }
 
 // GetChromePlatform returns chromeplatform for the given id from datastore.
-func GetChromePlatform(ctx context.Context, id string) (*fleet.ChromePlatform, error) {
+func GetChromePlatform(ctx context.Context, id string) (*ufspb.ChromePlatform, error) {
 	return configuration.GetChromePlatform(ctx, id)
 }
 
 // ListChromePlatforms lists the chromeplatforms
-func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.ChromePlatform, string, error) {
-	return configuration.ListChromePlatforms(ctx, pageSize, pageToken)
+func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.ChromePlatform, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, configuration.GetChromePlatformIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing chromeplatforms").Err()
+		}
+	}
+	return configuration.ListChromePlatforms(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteChromePlatform deletes the chromeplatform in datastore
@@ -53,12 +62,12 @@ func DeleteChromePlatform(ctx context.Context, id string) error {
 }
 
 // ImportChromePlatforms inserts chrome platforms to datastore.
-func ImportChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
+func ImportChromePlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
 	deleteNonExistingPlatforms(ctx, platforms, pageSize)
 	return configuration.ImportChromePlatforms(ctx, platforms)
 }
 
-func deleteNonExistingPlatforms(ctx context.Context, platforms []*fleet.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
+func deleteNonExistingPlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
 	resMap := make(map[string]bool)
 	for _, r := range platforms {
 		resMap[r.GetName()] = true
@@ -69,7 +78,7 @@ func deleteNonExistingPlatforms(ctx context.Context, platforms []*fleet.ChromePl
 	}
 	var toDelete []string
 	for _, sr := range resp.Passed() {
-		s := sr.Data.(*fleet.ChromePlatform)
+		s := sr.Data.(*ufspb.ChromePlatform)
 		if _, ok := resMap[s.GetName()]; !ok {
 			toDelete = append(toDelete, s.GetName())
 		}
@@ -88,7 +97,7 @@ func deleteNonExistingPlatforms(ctx context.Context, platforms []*fleet.ChromePl
 // Deletes the old ChromePlatform.
 // Creates the new ChromePlatform.
 // This will preserve data integrity in the system.
-func ReplaceChromePlatform(ctx context.Context, oldChromePlatform *fleet.ChromePlatform, newChromePlatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
+func ReplaceChromePlatform(ctx context.Context, oldChromePlatform *ufspb.ChromePlatform, newChromePlatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
 }

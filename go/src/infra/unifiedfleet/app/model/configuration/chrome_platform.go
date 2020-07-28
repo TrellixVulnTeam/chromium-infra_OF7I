@@ -89,19 +89,26 @@ func GetChromePlatform(ctx context.Context, id string) (*ufspb.ChromePlatform, e
 // ListChromePlatforms lists the chromePlatforms
 // Does a query over ChromePlatform entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.ChromePlatform, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, ChromePlatformKind, pageSize, pageToken, nil, false)
+func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.ChromePlatform, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, ChromePlatformKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *ChromePlatformEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			chromePlatform := &ufspb.ChromePlatform{
+				Name: ent.ID,
+			}
+			res = append(res, chromePlatform)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.ChromePlatform))
 		}
-		res = append(res, pm.(*ufspb.ChromePlatform))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

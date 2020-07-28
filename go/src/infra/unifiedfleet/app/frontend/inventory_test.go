@@ -696,7 +696,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 
 			// Verify machine lse prototypes
-			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", "")
+			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(api.ParseResources(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
 
@@ -760,7 +760,7 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 
 			// Verify machine lse prototypes
-			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", "")
+			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(api.ParseResources(lps, "Name"), ShouldResemble, []string{"acs-lab:camera", "acs-lab:wificell", "atl-lab:labstation", "atl-lab:standard"})
 

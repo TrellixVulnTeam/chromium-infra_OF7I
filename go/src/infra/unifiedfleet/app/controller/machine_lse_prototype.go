@@ -9,33 +9,42 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/inventory"
 )
 
 // CreateMachineLSEPrototype creates a new machinelseprototype in datastore.
-func CreateMachineLSEPrototype(ctx context.Context, machinelseprototype *fleet.MachineLSEPrototype) (*fleet.MachineLSEPrototype, error) {
+func CreateMachineLSEPrototype(ctx context.Context, machinelseprototype *ufspb.MachineLSEPrototype) (*ufspb.MachineLSEPrototype, error) {
 	return configuration.CreateMachineLSEPrototype(ctx, machinelseprototype)
 }
 
 // UpdateMachineLSEPrototype updates machinelseprototype in datastore.
-func UpdateMachineLSEPrototype(ctx context.Context, machinelseprototype *fleet.MachineLSEPrototype) (*fleet.MachineLSEPrototype, error) {
+func UpdateMachineLSEPrototype(ctx context.Context, machinelseprototype *ufspb.MachineLSEPrototype) (*ufspb.MachineLSEPrototype, error) {
 	return configuration.UpdateMachineLSEPrototype(ctx, machinelseprototype)
 }
 
 // GetMachineLSEPrototype returns machinelseprototype for the given id from datastore.
-func GetMachineLSEPrototype(ctx context.Context, id string) (*fleet.MachineLSEPrototype, error) {
+func GetMachineLSEPrototype(ctx context.Context, id string) (*ufspb.MachineLSEPrototype, error) {
 	return configuration.GetMachineLSEPrototype(ctx, id)
 }
 
 // ListMachineLSEPrototypes lists the machinelseprototypes
-func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) ([]*fleet.MachineLSEPrototype, string, error) {
-	return configuration.ListMachineLSEPrototypes(ctx, pageSize, pageToken, filter)
+func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.MachineLSEPrototype, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, configuration.GetMachineLSEPrototypeIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing machinelseprototypes").Err()
+		}
+	}
+	return configuration.ListMachineLSEPrototypes(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteMachineLSEPrototype deletes the machinelseprototype in datastore
@@ -61,7 +70,7 @@ func DeleteMachineLSEPrototype(ctx context.Context, id string) error {
 // Deletes the old MachineLSEPrototype.
 // Creates the new MachineLSEPrototype.
 // This will preserve data integrity in the system.
-func ReplaceMachineLSEPrototype(ctx context.Context, oldMachineLSEPrototype *fleet.MachineLSEPrototype, newMachineLSEPrototype *fleet.MachineLSEPrototype) (*fleet.MachineLSEPrototype, error) {
+func ReplaceMachineLSEPrototype(ctx context.Context, oldMachineLSEPrototype *ufspb.MachineLSEPrototype, newMachineLSEPrototype *ufspb.MachineLSEPrototype) (*ufspb.MachineLSEPrototype, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
 }

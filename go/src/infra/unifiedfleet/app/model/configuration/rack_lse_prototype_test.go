@@ -6,18 +6,19 @@ package configuration
 
 import (
 	"fmt"
-	fleet "infra/unifiedfleet/api/v1/proto"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockRackLSEPrototype(id string) *fleet.RackLSEPrototype {
-	return &fleet.RackLSEPrototype{
+func mockRackLSEPrototype(id string) *ufspb.RackLSEPrototype {
+	return &ufspb.RackLSEPrototype{
 		Name: id,
 	}
 }
@@ -111,24 +112,17 @@ func TestGetRackLSEPrototype(t *testing.T) {
 
 func TestListRackLSEPrototypes(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	rackLSEPrototypes := make([]*ufspb.RackLSEPrototype, 0, 4)
+	for i := 0; i < 4; i++ {
+		rackLSEPrototype1 := mockRackLSEPrototype(fmt.Sprintf("rackLSEPrototype-%d", i))
+		resp, _ := CreateRackLSEPrototype(ctx, rackLSEPrototype1)
+		rackLSEPrototypes = append(rackLSEPrototypes, resp)
+	}
 	Convey("ListRackLSEPrototypes", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		rackLSEPrototypes := make([]*fleet.RackLSEPrototype, 0, 4)
-		for i := 0; i < 4; i++ {
-			var rackLSEPrototype1 *fleet.RackLSEPrototype
-			if i == 0 {
-				rackLSEPrototype1 = mockRackLSEPrototype(fmt.Sprintf("browser-lab:rackLSEPrototype-%d", i))
-			} else {
-				rackLSEPrototype1 = mockRackLSEPrototype(fmt.Sprintf("rackLSEPrototype-%d", i))
-			}
-			resp, err := CreateRackLSEPrototype(ctx, rackLSEPrototype1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rackLSEPrototype1)
-			rackLSEPrototypes = append(rackLSEPrototypes, resp)
-		}
 		Convey("List rackLSEPrototypes - page_token invalid", func() {
-			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 5, "abc", "")
+			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -136,7 +130,7 @@ func TestListRackLSEPrototypes(t *testing.T) {
 		})
 
 		Convey("List rackLSEPrototypes - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 4, "", "")
+			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -144,23 +138,16 @@ func TestListRackLSEPrototypes(t *testing.T) {
 		})
 
 		Convey("List rackLSEPrototypes - listing with pagination", func() {
-			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 3, "", "")
+			resp, nextPageToken, err := ListRackLSEPrototypes(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototypes[:3])
 
-			resp, _, err = ListRackLSEPrototypes(ctx, 2, nextPageToken, "")
+			resp, _, err = ListRackLSEPrototypes(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototypes[3:])
-		})
-
-		Convey("List rackLSEPrototypes - filter only browser lab prototypes", func() {
-			resp, _, err := ListRackLSEPrototypes(ctx, 10, "", "lab:browser")
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rackLSEPrototypes[:1])
 		})
 	})
 }

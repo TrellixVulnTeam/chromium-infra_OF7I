@@ -114,19 +114,26 @@ func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) (
 //
 // Does a query over ip entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListIPs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.IP, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, IPKind, pageSize, pageToken, nil, false)
+func ListIPs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.IP, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, IPKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *IPEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			ip := &ufspb.IP{
+				Id: ent.ID,
+			}
+			res = append(res, ip)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.IP))
 		}
-		res = append(res, pm.(*ufspb.IP))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

@@ -12,7 +12,7 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
 
-	proto "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 )
 
 func TestImportDHCPConfigs(t *testing.T) {
@@ -20,7 +20,7 @@ func TestImportDHCPConfigs(t *testing.T) {
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
 	Convey("import nics", t, func() {
-		dhcps := []*proto.DHCPConfig{
+		dhcps := []*ufspb.DHCPConfig{
 			mockDHCPConfig("hostname1", "ip1"),
 			mockDHCPConfig("hostname2", "ip2"),
 		}
@@ -28,12 +28,12 @@ func TestImportDHCPConfigs(t *testing.T) {
 			resp, err := ImportDHCPConfigs(ctx, dhcps)
 			So(err, ShouldBeNil)
 			So(resp.Passed(), ShouldHaveLength, len(dhcps))
-			getRes, _, err := ListDHCPConfigs(ctx, 100, "")
+			getRes, _, err := ListDHCPConfigs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(getRes, ShouldResembleProto, dhcps)
 		})
 		Convey("happy path also for importing existing dhcp configs", func() {
-			dhcps1 := []*proto.DHCPConfig{
+			dhcps1 := []*ufspb.DHCPConfig{
 				mockDHCPConfig("hostname1", "ip1-1"),
 			}
 			resp, err := ImportDHCPConfigs(ctx, dhcps1)
@@ -46,8 +46,8 @@ func TestImportDHCPConfigs(t *testing.T) {
 	})
 }
 
-func mockDHCPConfig(hostname, ipv4 string) *proto.DHCPConfig {
-	return &proto.DHCPConfig{
+func mockDHCPConfig(hostname, ipv4 string) *ufspb.DHCPConfig {
+	return &ufspb.DHCPConfig{
 		Hostname: hostname,
 		Ip:       ipv4,
 	}

@@ -211,6 +211,9 @@ func (r *GetChromePlatformRequest) Validate() error {
 
 // Validate validates input requests of ListChromePlatforms.
 func (r *ListChromePlatformsRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
 	return validatePageSize(r.PageSize)
 }
 
@@ -249,6 +252,9 @@ func (r *GetMachineLSEPrototypeRequest) Validate() error {
 
 // Validate validates input requests of ListMachineLSEPrototypes.
 func (r *ListMachineLSEPrototypesRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
 	return validatePageSize(r.PageSize)
 }
 
@@ -287,6 +293,9 @@ func (r *GetRackLSEPrototypeRequest) Validate() error {
 
 // Validate validates input requests of ListRackLSEPrototypes.
 func (r *ListRackLSEPrototypesRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
 	return validatePageSize(r.PageSize)
 }
 
@@ -734,6 +743,9 @@ func (r *GetVlanRequest) Validate() error {
 
 // Validate validates input requests of ListVlans.
 func (r *ListVlansRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
 	return validatePageSize(r.PageSize)
 }
 
@@ -782,6 +794,17 @@ func ValidateResourceKey(resources interface{}, k string) error {
 	for _, v := range vs {
 		if !IDRegex.MatchString(v) {
 			return status.Errorf(codes.InvalidArgument, fmt.Sprintf("%s ('%s')", InvalidCharacters, v))
+		}
+	}
+	return nil
+}
+
+// ValidateFilter validates if the filter fomrat is correct
+func ValidateFilter(filter string) error {
+	if filter != "" {
+		filter = fmt.Sprintf(strings.Replace(filter, " ", "", -1))
+		if !FilterRegex.MatchString(filter) {
+			return status.Errorf(codes.InvalidArgument, InvalidFilterFormat)
 		}
 	}
 	return nil

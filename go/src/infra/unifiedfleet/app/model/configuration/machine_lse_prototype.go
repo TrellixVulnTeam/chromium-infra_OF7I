@@ -6,7 +6,6 @@ package configuration
 
 import (
 	"context"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -18,7 +17,6 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/util"
 )
 
 // MachineLSEPrototypeKind is the datastore entity kind for MachineLSEPrototypes.
@@ -79,25 +77,25 @@ func GetMachineLSEPrototype(ctx context.Context, id string) (*ufspb.MachineLSEPr
 //
 // Does a query over MachineLSEPrototype entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*ufspb.MachineLSEPrototype, nextPageToken string, err error) {
+func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.MachineLSEPrototype, nextPageToken string, err error) {
 	// Passing -1 for query limit fetches all the entities from the datastore
-	q, err := ufsds.ListQuery(ctx, MachineLSEPrototypeKind, -1, pageToken, nil, false)
+	q, err := ufsds.ListQuery(ctx, MachineLSEPrototypeKind, -1, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
-	prefix := util.GetLabPrefix(filter)
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *MachineLSEPrototypeEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
-		}
-		if prefix != "" {
-			if strings.Contains(pm.(*ufspb.MachineLSEPrototype).GetName(), prefix) {
-				res = append(res, pm.(*ufspb.MachineLSEPrototype))
+		if keysOnly {
+			machineLSEPrototype := &ufspb.MachineLSEPrototype{
+				Name: ent.ID,
 			}
+			res = append(res, machineLSEPrototype)
 		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
 			res = append(res, pm.(*ufspb.MachineLSEPrototype))
 		}
 		if len(res) >= int(pageSize) {

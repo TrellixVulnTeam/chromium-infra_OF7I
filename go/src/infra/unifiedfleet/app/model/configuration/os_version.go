@@ -67,19 +67,26 @@ func queryAllOS(ctx context.Context) ([]ufsds.FleetEntity, error) {
 }
 
 // ListOSes lists the chrome os_versions
-func ListOSes(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.OSVersion, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, OSVersionKind, pageSize, pageToken, nil, false)
+func ListOSes(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.OSVersion, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, OSVersionKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *OSVersionEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			osVersion := &ufspb.OSVersion{
+				Value: ent.ID,
+			}
+			res = append(res, osVersion)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.OSVersion))
 		}
-		res = append(res, pm.(*ufspb.OSVersion))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

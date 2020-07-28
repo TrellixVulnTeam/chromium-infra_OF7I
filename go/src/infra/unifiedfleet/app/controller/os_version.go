@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
@@ -22,8 +23,16 @@ func ImportOSes(ctx context.Context, oses []*ufspb.OSVersion, pageSize int) (*uf
 }
 
 // ListOSes lists the chrome os_version
-func ListOSes(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.OSVersion, string, error) {
-	return configuration.ListOSes(ctx, pageSize, pageToken)
+func ListOSes(ctx context.Context, pageSize int32, pageToken string, filter string, keysOnly bool) ([]*ufspb.OSVersion, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, configuration.GetOSVersionIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing os versions").Err()
+		}
+	}
+	return configuration.ListOSes(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 func deleteNonExistingOSes(ctx context.Context, oses []*ufspb.OSVersion, pageSize int) (*ufsds.OpResults, error) {

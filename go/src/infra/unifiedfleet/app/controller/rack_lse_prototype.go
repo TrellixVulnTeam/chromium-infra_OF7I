@@ -9,33 +9,42 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/inventory"
 )
 
 // CreateRackLSEPrototype creates a new racklseprototype in datastore.
-func CreateRackLSEPrototype(ctx context.Context, racklseprototype *fleet.RackLSEPrototype) (*fleet.RackLSEPrototype, error) {
+func CreateRackLSEPrototype(ctx context.Context, racklseprototype *ufspb.RackLSEPrototype) (*ufspb.RackLSEPrototype, error) {
 	return configuration.CreateRackLSEPrototype(ctx, racklseprototype)
 }
 
 // UpdateRackLSEPrototype updates racklseprototype in datastore.
-func UpdateRackLSEPrototype(ctx context.Context, racklseprototype *fleet.RackLSEPrototype) (*fleet.RackLSEPrototype, error) {
+func UpdateRackLSEPrototype(ctx context.Context, racklseprototype *ufspb.RackLSEPrototype) (*ufspb.RackLSEPrototype, error) {
 	return configuration.UpdateRackLSEPrototype(ctx, racklseprototype)
 }
 
 // GetRackLSEPrototype returns racklseprototype for the given id from datastore.
-func GetRackLSEPrototype(ctx context.Context, id string) (*fleet.RackLSEPrototype, error) {
+func GetRackLSEPrototype(ctx context.Context, id string) (*ufspb.RackLSEPrototype, error) {
 	return configuration.GetRackLSEPrototype(ctx, id)
 }
 
 // ListRackLSEPrototypes lists the racklseprototypes
-func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string, filter string) ([]*fleet.RackLSEPrototype, string, error) {
-	return configuration.ListRackLSEPrototypes(ctx, pageSize, pageToken, filter)
+func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string, filter string, keysOnly bool) ([]*ufspb.RackLSEPrototype, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, configuration.GetRackLSEPrototypeIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing racklseprototypes").Err()
+		}
+	}
+	return configuration.ListRackLSEPrototypes(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteRackLSEPrototype deletes the racklseprototype in datastore
@@ -61,7 +70,7 @@ func DeleteRackLSEPrototype(ctx context.Context, id string) error {
 // Deletes the old RackLSEPrototype.
 // Creates the new RackLSEPrototype.
 // This will preserve data integrity in the system.
-func ReplaceRackLSEPrototype(ctx context.Context, oldRackLSEPrototype *fleet.RackLSEPrototype, newRackLSEPrototype *fleet.RackLSEPrototype) (*fleet.RackLSEPrototype, error) {
+func ReplaceRackLSEPrototype(ctx context.Context, oldRackLSEPrototype *ufspb.RackLSEPrototype, newRackLSEPrototype *ufspb.RackLSEPrototype) (*ufspb.RackLSEPrototype, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
 }

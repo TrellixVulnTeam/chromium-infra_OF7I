@@ -10,17 +10,16 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/status"
 
-	proto "infra/unifiedfleet/api/v1/proto"
-	api "infra/unifiedfleet/api/v1/rpc"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
-
-	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )
 
 var localPlatforms = []*crimsonconfig.Platform{
@@ -35,27 +34,27 @@ func mockParsePlatformsFunc(path string) (*crimsonconfig.Platforms, error) {
 	}, nil
 }
 
-func mockChromePlatform(id, desc string) *proto.ChromePlatform {
-	return &proto.ChromePlatform{
+func mockChromePlatform(id, desc string) *ufspb.ChromePlatform {
+	return &ufspb.ChromePlatform{
 		Name:        util.AddPrefix(util.ChromePlatformCollection, id),
 		Description: desc,
 	}
 }
 
-func mockMachineLSEPrototype(id string) *proto.MachineLSEPrototype {
-	return &proto.MachineLSEPrototype{
+func mockMachineLSEPrototype(id string) *ufspb.MachineLSEPrototype {
+	return &ufspb.MachineLSEPrototype{
 		Name: util.AddPrefix(util.MachineLSEPrototypeCollection, id),
 	}
 }
 
-func mockRackLSEPrototype(id string) *proto.RackLSEPrototype {
-	return &proto.RackLSEPrototype{
+func mockRackLSEPrototype(id string) *ufspb.RackLSEPrototype {
+	return &ufspb.RackLSEPrototype{
 		Name: util.AddPrefix(util.RackLSEPrototypeCollection, id),
 	}
 }
 
-func mockVlan(id string) *proto.Vlan {
-	return &proto.Vlan{
+func mockVlan(id string) *ufspb.Vlan {
+	return &ufspb.Vlan{
 		Name: util.AddPrefix(util.VlanCollection, id),
 	}
 }
@@ -70,7 +69,7 @@ func TestCreateChromePlatform(t *testing.T) {
 	chromePlatform3 := mockChromePlatform("", "Sensor")
 	Convey("CreateChromePlatform", t, func() {
 		Convey("Create new chromePlatform with chromePlatform_id", func() {
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform:   chromePlatform1,
 				ChromePlatformId: "ChromePlatform-1",
 			}
@@ -80,7 +79,7 @@ func TestCreateChromePlatform(t *testing.T) {
 		})
 
 		Convey("Create existing chromePlatform", func() {
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform:   chromePlatform3,
 				ChromePlatformId: "ChromePlatform-1",
 			}
@@ -91,35 +90,35 @@ func TestCreateChromePlatform(t *testing.T) {
 		})
 
 		Convey("Create new chromePlatform - Invalid input nil", func() {
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform: nil,
 			}
 			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Create new chromePlatform - Invalid input empty ID", func() {
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform:   chromePlatform2,
 				ChromePlatformId: "",
 			}
 			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 
 		Convey("Create new chromePlatform - Invalid input invalid characters", func() {
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform:   chromePlatform2,
 				ChromePlatformId: "a.b)7&",
 			}
 			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -135,14 +134,14 @@ func TestUpdateChromePlatform(t *testing.T) {
 	chromePlatform4 := mockChromePlatform("a.b)7&", "Printer")
 	Convey("UpdateChromePlatform", t, func() {
 		Convey("Update existing chromePlatform", func() {
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform:   chromePlatform1,
 				ChromePlatformId: "chromePlatform-1",
 			}
 			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatform1)
-			ureq := &api.UpdateChromePlatformRequest{
+			ureq := &ufsAPI.UpdateChromePlatformRequest{
 				ChromePlatform: chromePlatform2,
 			}
 			resp, err = tf.Fleet.UpdateChromePlatform(tf.C, ureq)
@@ -151,7 +150,7 @@ func TestUpdateChromePlatform(t *testing.T) {
 		})
 
 		Convey("Update non-existing chromePlatform", func() {
-			ureq := &api.UpdateChromePlatformRequest{
+			ureq := &ufsAPI.UpdateChromePlatformRequest{
 				ChromePlatform: chromePlatform3,
 			}
 			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, ureq)
@@ -161,34 +160,34 @@ func TestUpdateChromePlatform(t *testing.T) {
 		})
 
 		Convey("Update chromePlatform - Invalid input nil", func() {
-			req := &api.UpdateChromePlatformRequest{
+			req := &ufsAPI.UpdateChromePlatformRequest{
 				ChromePlatform: nil,
 			}
 			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Update chromePlatform - Invalid input empty name", func() {
 			chromePlatform3.Name = ""
-			req := &api.UpdateChromePlatformRequest{
+			req := &ufsAPI.UpdateChromePlatformRequest{
 				ChromePlatform: chromePlatform3,
 			}
 			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Update chromePlatform - Invalid input invalid characters", func() {
-			req := &api.UpdateChromePlatformRequest{
+			req := &ufsAPI.UpdateChromePlatformRequest{
 				ChromePlatform: chromePlatform4,
 			}
 			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -200,7 +199,7 @@ func TestGetChromePlatform(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		chromePlatform1 := mockChromePlatform("chromePlatform-1", "Camera")
-		req := &api.CreateChromePlatformRequest{
+		req := &ufsAPI.CreateChromePlatformRequest{
 			ChromePlatform:   chromePlatform1,
 			ChromePlatformId: "chromePlatform-1",
 		}
@@ -208,7 +207,7 @@ func TestGetChromePlatform(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(resp, ShouldResembleProto, chromePlatform1)
 		Convey("Get chromePlatform by existing ID", func() {
-			req := &api.GetChromePlatformRequest{
+			req := &ufsAPI.GetChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-1"),
 			}
 			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
@@ -216,7 +215,7 @@ func TestGetChromePlatform(t *testing.T) {
 			So(resp, ShouldResembleProto, chromePlatform1)
 		})
 		Convey("Get chromePlatform by non-existing ID", func() {
-			req := &api.GetChromePlatformRequest{
+			req := &ufsAPI.GetChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
@@ -225,103 +224,65 @@ func TestGetChromePlatform(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
 		})
 		Convey("Get chromePlatform - Invalid input empty name", func() {
-			req := &api.GetChromePlatformRequest{
+			req := &ufsAPI.GetChromePlatformRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Get chromePlatform - Invalid input invalid characters", func() {
-			req := &api.GetChromePlatformRequest{
+			req := &ufsAPI.GetChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
 
 func TestListChromePlatforms(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	chromePlatforms := make([]*ufspb.ChromePlatform, 0, 4)
+	for i := 0; i < 4; i++ {
+		chromePlatform1 := mockChromePlatform("", "Camera")
+		chromePlatform1.Name = fmt.Sprintf("chromePlatform-%d", i)
+		resp, _ := configuration.CreateChromePlatform(tf.C, chromePlatform1)
+		resp.Name = util.AddPrefix(util.ChromePlatformCollection, resp.Name)
+		chromePlatforms = append(chromePlatforms, resp)
+	}
 	Convey("ListChromePlatforms", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		chromePlatforms := make([]*proto.ChromePlatform, 0, 4)
-		for i := 0; i < 4; i++ {
-			chromePlatform1 := mockChromePlatform("", "Camera")
-			req := &api.CreateChromePlatformRequest{
-				ChromePlatform:   chromePlatform1,
-				ChromePlatformId: fmt.Sprintf("chromePlatform-%d", i),
-			}
-			resp, err := tf.Fleet.CreateChromePlatform(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, chromePlatform1)
-			chromePlatforms = append(chromePlatforms, resp)
-		}
-
-		Convey("ListChromePlatforms - page_size negative", func() {
-			req := &api.ListChromePlatformsRequest{
+		Convey("ListChromePlatforms - page_size negative - error", func() {
+			req := &ufsAPI.ListChromePlatformsRequest{
 				PageSize: -5,
 			}
 			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
 		})
 
-		Convey("ListChromePlatforms - page_token invalid", func() {
-			req := &api.ListChromePlatformsRequest{
-				PageSize:  5,
-				PageToken: "abc",
-			}
+		Convey("ListChromePlatforms - Full listing with no pagination - happy path", func() {
+			req := &ufsAPI.ListChromePlatformsRequest{}
 			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
-			So(resp, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms)
+		})
+
+		Convey("ListChromePlatforms - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListChromePlatformsRequest{
+				Filter: "machine=mac-1|kvm=kvm-2",
+			}
+			_, err := tf.Fleet.ListChromePlatforms(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, datastore.InvalidPageToken)
-		})
-
-		Convey("ListChromePlatforms - Full listing Max PageSize", func() {
-			req := &api.ListChromePlatformsRequest{
-				PageSize: 2000,
-			}
-			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms)
-		})
-
-		Convey("ListChromePlatforms - Full listing with no pagination", func() {
-			req := &api.ListChromePlatformsRequest{
-				PageSize: 0,
-			}
-			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms)
-		})
-
-		Convey("ListChromePlatforms - listing with pagination", func() {
-			req := &api.ListChromePlatformsRequest{
-				PageSize: 3,
-			}
-			resp, err := tf.Fleet.ListChromePlatforms(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms[:3])
-
-			req = &api.ListChromePlatformsRequest{
-				PageSize:  3,
-				PageToken: resp.NextPageToken,
-			}
-			resp, err = tf.Fleet.ListChromePlatforms(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.ChromePlatforms, ShouldResembleProto, chromePlatforms[3:])
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
 		})
 	})
 }
@@ -334,7 +295,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 		defer validate()
 		Convey("Delete chromePlatform by existing ID with references", func() {
 			chromePlatform1 := mockChromePlatform("", "Camera")
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform:   chromePlatform1,
 				ChromePlatformId: "chromePlatform-1",
 			}
@@ -342,15 +303,15 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatform1)
 
-			chromeBrowserMachine1 := &proto.Machine{
+			chromeBrowserMachine1 := &ufspb.Machine{
 				Name: util.AddPrefix(util.MachineCollection, "machine-1"),
-				Device: &proto.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &proto.ChromeBrowserMachine{
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-1",
 					},
 				},
 			}
-			mreq := &api.CreateMachineRequest{
+			mreq := &ufsAPI.CreateMachineRequest{
 				Machine:   chromeBrowserMachine1,
 				MachineId: "machine-1",
 			}
@@ -359,11 +320,11 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
 
 			/* TODO(eshwarn) : Remove comment when kvm create/get is added
-			kvm1 := &proto.KVM{
+			kvm1 := &ufspb.KVM{
 				Name: util.AddPrefix(kvmCollection, "kvm-1"),
 				ChromePlatform: "chromePlatform-1",
 			}
-			kreq := &api.CreateKVMMachineRequest{
+			kreq := &ufsAPI.CreateKVMMachineRequest{
 				Kvm:   kvm1,
 				KvmId: "kvm-1",
 			}
@@ -372,14 +333,14 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(kresp, ShouldResembleProto, kvm1)
 			*/
 
-			dreq := &api.DeleteChromePlatformRequest{
+			dreq := &ufsAPI.DeleteChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-1"),
 			}
 			_, err = tf.Fleet.DeleteChromePlatform(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
 
-			greq := &api.GetChromePlatformRequest{
+			greq := &ufsAPI.GetChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-1"),
 			}
 			res, err := tf.Fleet.GetChromePlatform(tf.C, greq)
@@ -390,7 +351,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 
 		Convey("Delete chromePlatform by existing ID without references", func() {
 			chromePlatform2 := mockChromePlatform("", "Camera")
-			req := &api.CreateChromePlatformRequest{
+			req := &ufsAPI.CreateChromePlatformRequest{
 				ChromePlatform:   chromePlatform2,
 				ChromePlatformId: "chromePlatform-2",
 			}
@@ -398,13 +359,13 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, chromePlatform2)
 
-			dreq := &api.DeleteChromePlatformRequest{
+			dreq := &ufsAPI.DeleteChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			_, err = tf.Fleet.DeleteChromePlatform(tf.C, dreq)
 			So(err, ShouldBeNil)
 
-			greq := &api.GetChromePlatformRequest{
+			greq := &ufsAPI.GetChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			res, err := tf.Fleet.GetChromePlatform(tf.C, greq)
@@ -414,7 +375,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 		})
 
 		Convey("Delete chromePlatform by non-existing ID", func() {
-			req := &api.DeleteChromePlatformRequest{
+			req := &ufsAPI.DeleteChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "chromePlatform-2"),
 			}
 			_, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
@@ -423,23 +384,23 @@ func TestDeleteChromePlatform(t *testing.T) {
 		})
 
 		Convey("Delete chromePlatform - Invalid input empty name", func() {
-			req := &api.DeleteChromePlatformRequest{
+			req := &ufsAPI.DeleteChromePlatformRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Delete chromePlatform - Invalid input invalid characters", func() {
-			req := &api.DeleteChromePlatformRequest{
+			req := &ufsAPI.DeleteChromePlatformRequest{
 				Name: util.AddPrefix(util.ChromePlatformCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteChromePlatform(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -451,9 +412,9 @@ func TestImportChromePlatforms(t *testing.T) {
 	defer validate()
 	Convey("Import chrome platforms", t, func() {
 		Convey("happy path", func() {
-			req := &api.ImportChromePlatformsRequest{
-				Source: &api.ImportChromePlatformsRequest_ConfigSource{
-					ConfigSource: &api.ConfigSource{
+			req := &ufsAPI.ImportChromePlatformsRequest{
+				Source: &ufsAPI.ImportChromePlatformsRequest_ConfigSource{
+					ConfigSource: &ufsAPI.ConfigSource{
 						ConfigServiceName: "",
 						FileName:          "test.config",
 					},
@@ -470,8 +431,8 @@ func TestImportChromePlatforms(t *testing.T) {
 			So(gets, ShouldResemble, []string{"fake_platform1", "fake_platform2", "fake_platform3"})
 		})
 		Convey("import platforms with invalid argument", func() {
-			req := &api.ImportChromePlatformsRequest{
-				Source: &api.ImportChromePlatformsRequest_ConfigSource{},
+			req := &ufsAPI.ImportChromePlatformsRequest{
+				Source: &ufsAPI.ImportChromePlatformsRequest_ConfigSource{},
 			}
 			_, err := tf.Fleet.ImportChromePlatforms(ctx, req)
 			So(err, ShouldNotBeNil)
@@ -489,9 +450,9 @@ func TestImportOSVersions(t *testing.T) {
 	defer validate()
 	Convey("Import os versions", t, func() {
 		Convey("happy path", func() {
-			req := &api.ImportOSVersionsRequest{
-				Source: &api.ImportOSVersionsRequest_MachineDbSource{
-					MachineDbSource: &api.MachineDBSource{
+			req := &ufsAPI.ImportOSVersionsRequest{
+				Source: &ufsAPI.ImportOSVersionsRequest_MachineDbSource{
+					MachineDbSource: &ufsAPI.MachineDBSource{
 						Host: "fake_host",
 					},
 				},
@@ -499,17 +460,17 @@ func TestImportOSVersions(t *testing.T) {
 			res, err := tf.Fleet.ImportOSVersions(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
-			resp, _, err := configuration.ListOSes(ctx, 100, "")
+			resp, _, err := configuration.ListOSes(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			// See ListOSes() in fake/crimson.go
 			So(resp, ShouldHaveLength, 2)
-			So(api.ParseResources(resp, "Value"), ShouldResemble, []string{"os1", "os2"})
-			So(api.ParseResources(resp, "Description"), ShouldResemble, []string{"os1_description", "os2_description"})
+			So(ufsAPI.ParseResources(resp, "Value"), ShouldResemble, []string{"os1", "os2"})
+			So(ufsAPI.ParseResources(resp, "Description"), ShouldResemble, []string{"os1_description", "os2_description"})
 		})
 		Convey("import oses with invalid argument", func() {
-			req := &api.ImportOSVersionsRequest{
-				Source: &api.ImportOSVersionsRequest_MachineDbSource{
-					MachineDbSource: &api.MachineDBSource{
+			req := &ufsAPI.ImportOSVersionsRequest{
+				Source: &ufsAPI.ImportOSVersionsRequest_MachineDbSource{
+					MachineDbSource: &ufsAPI.MachineDBSource{
 						Host: "",
 					},
 				},
@@ -533,7 +494,7 @@ func TestCreateMachineLSEPrototype(t *testing.T) {
 	machineLSEPrototype3 := mockMachineLSEPrototype("")
 	Convey("CreateMachineLSEPrototype", t, func() {
 		Convey("Create new machineLSEPrototype with machineLSEPrototype_id", func() {
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype:   machineLSEPrototype1,
 				MachineLSEPrototypeId: "MachineLSEPrototype-1",
 			}
@@ -543,7 +504,7 @@ func TestCreateMachineLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Create existing machineLSEPrototype", func() {
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype:   machineLSEPrototype3,
 				MachineLSEPrototypeId: "MachineLSEPrototype-1",
 			}
@@ -554,35 +515,35 @@ func TestCreateMachineLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Create new machineLSEPrototype - Invalid input nil", func() {
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype: nil,
 			}
 			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Create new machineLSEPrototype - Invalid input empty ID", func() {
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype:   machineLSEPrototype2,
 				MachineLSEPrototypeId: "",
 			}
 			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 
 		Convey("Create new machineLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype:   machineLSEPrototype2,
 				MachineLSEPrototypeId: "a.b)7&",
 			}
 			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -598,14 +559,14 @@ func TestUpdateMachineLSEPrototype(t *testing.T) {
 	machineLSEPrototype4 := mockMachineLSEPrototype("a.b)7&")
 	Convey("UpdateMachineLSEPrototype", t, func() {
 		Convey("Update existing machineLSEPrototype", func() {
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype:   machineLSEPrototype1,
 				MachineLSEPrototypeId: "machineLSEPrototype-1",
 			}
 			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototype1)
-			ureq := &api.UpdateMachineLSEPrototypeRequest{
+			ureq := &ufsAPI.UpdateMachineLSEPrototypeRequest{
 				MachineLSEPrototype: machineLSEPrototype2,
 			}
 			resp, err = tf.Fleet.UpdateMachineLSEPrototype(tf.C, ureq)
@@ -614,7 +575,7 @@ func TestUpdateMachineLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Update non-existing machineLSEPrototype", func() {
-			ureq := &api.UpdateMachineLSEPrototypeRequest{
+			ureq := &ufsAPI.UpdateMachineLSEPrototypeRequest{
 				MachineLSEPrototype: machineLSEPrototype3,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, ureq)
@@ -624,34 +585,34 @@ func TestUpdateMachineLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Update machineLSEPrototype - Invalid input nil", func() {
-			req := &api.UpdateMachineLSEPrototypeRequest{
+			req := &ufsAPI.UpdateMachineLSEPrototypeRequest{
 				MachineLSEPrototype: nil,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Update machineLSEPrototype - Invalid input empty name", func() {
 			machineLSEPrototype3.Name = ""
-			req := &api.UpdateMachineLSEPrototypeRequest{
+			req := &ufsAPI.UpdateMachineLSEPrototypeRequest{
 				MachineLSEPrototype: machineLSEPrototype3,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Update machineLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.UpdateMachineLSEPrototypeRequest{
+			req := &ufsAPI.UpdateMachineLSEPrototypeRequest{
 				MachineLSEPrototype: machineLSEPrototype4,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -663,7 +624,7 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		machineLSEPrototype1 := mockMachineLSEPrototype("machineLSEPrototype-1")
-		req := &api.CreateMachineLSEPrototypeRequest{
+		req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 			MachineLSEPrototype:   machineLSEPrototype1,
 			MachineLSEPrototypeId: "machineLSEPrototype-1",
 		}
@@ -671,7 +632,7 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(resp, ShouldResembleProto, machineLSEPrototype1)
 		Convey("Get machineLSEPrototype by existing ID", func() {
-			req := &api.GetMachineLSEPrototypeRequest{
+			req := &ufsAPI.GetMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-1"),
 			}
 			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
@@ -679,7 +640,7 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 			So(resp, ShouldResembleProto, machineLSEPrototype1)
 		})
 		Convey("Get machineLSEPrototype by non-existing ID", func() {
-			req := &api.GetMachineLSEPrototypeRequest{
+			req := &ufsAPI.GetMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
@@ -688,103 +649,65 @@ func TestGetMachineLSEPrototype(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
 		})
 		Convey("Get machineLSEPrototype - Invalid input empty name", func() {
-			req := &api.GetMachineLSEPrototypeRequest{
+			req := &ufsAPI.GetMachineLSEPrototypeRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Get machineLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.GetMachineLSEPrototypeRequest{
+			req := &ufsAPI.GetMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
 
 func TestListMachineLSEPrototypes(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	machineLSEPrototypes := make([]*ufspb.MachineLSEPrototype, 0, 4)
+	for i := 0; i < 4; i++ {
+		machineLSEPrototype1 := mockMachineLSEPrototype("")
+		machineLSEPrototype1.Name = fmt.Sprintf("machineLSEPrototype-%d", i)
+		resp, _ := configuration.CreateMachineLSEPrototype(tf.C, machineLSEPrototype1)
+		resp.Name = util.AddPrefix(util.MachineLSEPrototypeCollection, resp.Name)
+		machineLSEPrototypes = append(machineLSEPrototypes, resp)
+	}
 	Convey("ListMachineLSEPrototypes", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		machineLSEPrototypes := make([]*proto.MachineLSEPrototype, 0, 4)
-		for i := 0; i < 4; i++ {
-			machineLSEPrototype1 := mockMachineLSEPrototype("")
-			req := &api.CreateMachineLSEPrototypeRequest{
-				MachineLSEPrototype:   machineLSEPrototype1,
-				MachineLSEPrototypeId: fmt.Sprintf("machineLSEPrototype-%d", i),
-			}
-			resp, err := tf.Fleet.CreateMachineLSEPrototype(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSEPrototype1)
-			machineLSEPrototypes = append(machineLSEPrototypes, resp)
-		}
-
 		Convey("ListMachineLSEPrototypes - page_size negative", func() {
-			req := &api.ListMachineLSEPrototypesRequest{
+			req := &ufsAPI.ListMachineLSEPrototypesRequest{
 				PageSize: -5,
 			}
 			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
 		})
 
-		Convey("ListMachineLSEPrototypes - page_token invalid", func() {
-			req := &api.ListMachineLSEPrototypesRequest{
-				PageSize:  5,
-				PageToken: "abc",
-			}
+		Convey("ListMachineLSEPrototypes - Full listing", func() {
+			req := &ufsAPI.ListMachineLSEPrototypesRequest{}
 			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
-			So(resp, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes)
+		})
+
+		Convey("ListMachineLSEPrototypes - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListMachineLSEPrototypesRequest{
+				Filter: "machine=mac-1|kvm=kvm-2",
+			}
+			_, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, datastore.InvalidPageToken)
-		})
-
-		Convey("ListMachineLSEPrototypes - Full listing Max PageSize", func() {
-			req := &api.ListMachineLSEPrototypesRequest{
-				PageSize: 2000,
-			}
-			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes)
-		})
-
-		Convey("ListMachineLSEPrototypes - Full listing with no pagination", func() {
-			req := &api.ListMachineLSEPrototypesRequest{
-				PageSize: 0,
-			}
-			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes)
-		})
-
-		Convey("ListMachineLSEPrototypes - listing with pagination", func() {
-			req := &api.ListMachineLSEPrototypesRequest{
-				PageSize: 3,
-			}
-			resp, err := tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes[:3])
-
-			req = &api.ListMachineLSEPrototypesRequest{
-				PageSize:  3,
-				PageToken: resp.NextPageToken,
-			}
-			resp, err = tf.Fleet.ListMachineLSEPrototypes(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.MachineLSEPrototypes, ShouldResembleProto, machineLSEPrototypes[3:])
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
 		})
 	})
 }
@@ -797,7 +720,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 		defer validate()
 		Convey("Delete machineLSEPrototype by existing ID with references", func() {
 			machineLSEPrototype1 := mockMachineLSEPrototype("")
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype:   machineLSEPrototype1,
 				MachineLSEPrototypeId: "machineLSEPrototype-1",
 			}
@@ -805,7 +728,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototype1)
 
-			machineLSE1 := &proto.MachineLSE{
+			machineLSE1 := &ufspb.MachineLSE{
 				Name:                util.AddPrefix(util.MachineLSECollection, "machinelse-1"),
 				MachineLsePrototype: "machineLSEPrototype-1",
 				Hostname:            "machinelse-1",
@@ -813,14 +736,14 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 			machineLSE1, err = inventory.CreateMachineLSE(ctx, machineLSE1)
 			So(err, ShouldBeNil)
 
-			dreq := &api.DeleteMachineLSEPrototypeRequest{
+			dreq := &ufsAPI.DeleteMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-1"),
 			}
 			_, err = tf.Fleet.DeleteMachineLSEPrototype(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
 
-			greq := &api.GetMachineLSEPrototypeRequest{
+			greq := &ufsAPI.GetMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-1"),
 			}
 			res, err := tf.Fleet.GetMachineLSEPrototype(tf.C, greq)
@@ -831,7 +754,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 
 		Convey("Delete machineLSEPrototype by existing ID without references", func() {
 			machineLSEPrototype2 := mockMachineLSEPrototype("")
-			req := &api.CreateMachineLSEPrototypeRequest{
+			req := &ufsAPI.CreateMachineLSEPrototypeRequest{
 				MachineLSEPrototype:   machineLSEPrototype2,
 				MachineLSEPrototypeId: "machineLSEPrototype-2",
 			}
@@ -839,13 +762,13 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEPrototype2)
 
-			dreq := &api.DeleteMachineLSEPrototypeRequest{
+			dreq := &ufsAPI.DeleteMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			_, err = tf.Fleet.DeleteMachineLSEPrototype(tf.C, dreq)
 			So(err, ShouldBeNil)
 
-			greq := &api.GetMachineLSEPrototypeRequest{
+			greq := &ufsAPI.GetMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			res, err := tf.Fleet.GetMachineLSEPrototype(tf.C, greq)
@@ -855,7 +778,7 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Delete machineLSEPrototype by non-existing ID", func() {
-			req := &api.DeleteMachineLSEPrototypeRequest{
+			req := &ufsAPI.DeleteMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "machineLSEPrototype-2"),
 			}
 			_, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
@@ -864,23 +787,23 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Delete machineLSEPrototype - Invalid input empty name", func() {
-			req := &api.DeleteMachineLSEPrototypeRequest{
+			req := &ufsAPI.DeleteMachineLSEPrototypeRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Delete machineLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.DeleteMachineLSEPrototypeRequest{
+			req := &ufsAPI.DeleteMachineLSEPrototypeRequest{
 				Name: util.AddPrefix(util.MachineLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteMachineLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -895,7 +818,7 @@ func TestCreateRackLSEPrototype(t *testing.T) {
 	rackLSEPrototype3 := mockRackLSEPrototype("")
 	Convey("CreateRackLSEPrototype", t, func() {
 		Convey("Create new rackLSEPrototype with rackLSEPrototype_id", func() {
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype:   rackLSEPrototype1,
 				RackLSEPrototypeId: "RackLSEPrototype-1",
 			}
@@ -905,7 +828,7 @@ func TestCreateRackLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Create existing rackLSEPrototype", func() {
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype:   rackLSEPrototype3,
 				RackLSEPrototypeId: "RackLSEPrototype-1",
 			}
@@ -916,35 +839,35 @@ func TestCreateRackLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Create new rackLSEPrototype - Invalid input nil", func() {
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype: nil,
 			}
 			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Create new rackLSEPrototype - Invalid input empty ID", func() {
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype:   rackLSEPrototype2,
 				RackLSEPrototypeId: "",
 			}
 			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 
 		Convey("Create new rackLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype:   rackLSEPrototype2,
 				RackLSEPrototypeId: "a.b)7&",
 			}
 			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -960,14 +883,14 @@ func TestUpdateRackLSEPrototype(t *testing.T) {
 	rackLSEPrototype4 := mockRackLSEPrototype("a.b)7&")
 	Convey("UpdateRackLSEPrototype", t, func() {
 		Convey("Update existing rackLSEPrototype", func() {
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype:   rackLSEPrototype1,
 				RackLSEPrototypeId: "rackLSEPrototype-1",
 			}
 			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototype1)
-			ureq := &api.UpdateRackLSEPrototypeRequest{
+			ureq := &ufsAPI.UpdateRackLSEPrototypeRequest{
 				RackLSEPrototype: rackLSEPrototype2,
 			}
 			resp, err = tf.Fleet.UpdateRackLSEPrototype(tf.C, ureq)
@@ -976,7 +899,7 @@ func TestUpdateRackLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Update non-existing rackLSEPrototype", func() {
-			ureq := &api.UpdateRackLSEPrototypeRequest{
+			ureq := &ufsAPI.UpdateRackLSEPrototypeRequest{
 				RackLSEPrototype: rackLSEPrototype3,
 			}
 			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, ureq)
@@ -986,34 +909,34 @@ func TestUpdateRackLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Update rackLSEPrototype - Invalid input nil", func() {
-			req := &api.UpdateRackLSEPrototypeRequest{
+			req := &ufsAPI.UpdateRackLSEPrototypeRequest{
 				RackLSEPrototype: nil,
 			}
 			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Update rackLSEPrototype - Invalid input empty name", func() {
 			rackLSEPrototype3.Name = ""
-			req := &api.UpdateRackLSEPrototypeRequest{
+			req := &ufsAPI.UpdateRackLSEPrototypeRequest{
 				RackLSEPrototype: rackLSEPrototype3,
 			}
 			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Update rackLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.UpdateRackLSEPrototypeRequest{
+			req := &ufsAPI.UpdateRackLSEPrototypeRequest{
 				RackLSEPrototype: rackLSEPrototype4,
 			}
 			resp, err := tf.Fleet.UpdateRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -1025,7 +948,7 @@ func TestGetRackLSEPrototype(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		rackLSEPrototype1 := mockRackLSEPrototype("rackLSEPrototype-1")
-		req := &api.CreateRackLSEPrototypeRequest{
+		req := &ufsAPI.CreateRackLSEPrototypeRequest{
 			RackLSEPrototype:   rackLSEPrototype1,
 			RackLSEPrototypeId: "rackLSEPrototype-1",
 		}
@@ -1033,7 +956,7 @@ func TestGetRackLSEPrototype(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(resp, ShouldResembleProto, rackLSEPrototype1)
 		Convey("Get rackLSEPrototype by existing ID", func() {
-			req := &api.GetRackLSEPrototypeRequest{
+			req := &ufsAPI.GetRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-1"),
 			}
 			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
@@ -1041,7 +964,7 @@ func TestGetRackLSEPrototype(t *testing.T) {
 			So(resp, ShouldResembleProto, rackLSEPrototype1)
 		})
 		Convey("Get rackLSEPrototype by non-existing ID", func() {
-			req := &api.GetRackLSEPrototypeRequest{
+			req := &ufsAPI.GetRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
@@ -1050,68 +973,52 @@ func TestGetRackLSEPrototype(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
 		})
 		Convey("Get rackLSEPrototype - Invalid input empty name", func() {
-			req := &api.GetRackLSEPrototypeRequest{
+			req := &ufsAPI.GetRackLSEPrototypeRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Get rackLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.GetRackLSEPrototypeRequest{
+			req := &ufsAPI.GetRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
 
 func TestListRackLSEPrototypes(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rackLSEPrototypes := make([]*ufspb.RackLSEPrototype, 0, 4)
+	for i := 0; i < 4; i++ {
+		rackLSEPrototype1 := mockRackLSEPrototype("")
+		rackLSEPrototype1.Name = fmt.Sprintf("rackLSEPrototype-%d", i)
+		resp, _ := configuration.CreateRackLSEPrototype(tf.C, rackLSEPrototype1)
+		resp.Name = util.AddPrefix(util.RackLSEPrototypeCollection, resp.Name)
+		rackLSEPrototypes = append(rackLSEPrototypes, resp)
+	}
 	Convey("ListRackLSEPrototypes", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		rackLSEPrototypes := make([]*proto.RackLSEPrototype, 0, 4)
-		for i := 0; i < 4; i++ {
-			rackLSEPrototype1 := mockRackLSEPrototype("")
-			req := &api.CreateRackLSEPrototypeRequest{
-				RackLSEPrototype:   rackLSEPrototype1,
-				RackLSEPrototypeId: fmt.Sprintf("rackLSEPrototype-%d", i),
-			}
-			resp, err := tf.Fleet.CreateRackLSEPrototype(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rackLSEPrototype1)
-			rackLSEPrototypes = append(rackLSEPrototypes, resp)
-		}
-
-		Convey("ListRackLSEPrototypes - page_size negative", func() {
-			req := &api.ListRackLSEPrototypesRequest{
+		Convey("ListRackLSEPrototypes - page_size negative - error", func() {
+			req := &ufsAPI.ListRackLSEPrototypesRequest{
 				PageSize: -5,
 			}
 			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
 		})
 
-		Convey("ListRackLSEPrototypes - page_token invalid", func() {
-			req := &api.ListRackLSEPrototypesRequest{
-				PageSize:  5,
-				PageToken: "abc",
-			}
-			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, datastore.InvalidPageToken)
-		})
-
-		Convey("ListRackLSEPrototypes - Full listing Max PageSize", func() {
-			req := &api.ListRackLSEPrototypesRequest{
+		Convey("ListRackLSEPrototypes - Full listing - happy path", func() {
+			req := &ufsAPI.ListRackLSEPrototypesRequest{
 				PageSize: 2000,
 			}
 			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
@@ -1120,33 +1027,13 @@ func TestListRackLSEPrototypes(t *testing.T) {
 			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes)
 		})
 
-		Convey("ListRackLSEPrototypes - Full listing with no pagination", func() {
-			req := &api.ListRackLSEPrototypesRequest{
-				PageSize: 0,
+		Convey("ListRackLSEPrototypes - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListRackLSEPrototypesRequest{
+				Filter: "machine=mac-1|kvm=kvm-2",
 			}
-			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes)
-		})
-
-		Convey("ListRackLSEPrototypes - listing with pagination", func() {
-			req := &api.ListRackLSEPrototypesRequest{
-				PageSize: 3,
-			}
-			resp, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes[:3])
-
-			req = &api.ListRackLSEPrototypesRequest{
-				PageSize:  3,
-				PageToken: resp.NextPageToken,
-			}
-			resp, err = tf.Fleet.ListRackLSEPrototypes(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.RackLSEPrototypes, ShouldResembleProto, rackLSEPrototypes[3:])
+			_, err := tf.Fleet.ListRackLSEPrototypes(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
 		})
 	})
 }
@@ -1159,7 +1046,7 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 		defer validate()
 		Convey("Delete rackLSEPrototype by existing ID with references", func() {
 			rackLSEPrototype1 := mockRackLSEPrototype("")
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype:   rackLSEPrototype1,
 				RackLSEPrototypeId: "rackLSEPrototype-1",
 			}
@@ -1167,11 +1054,11 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototype1)
 
-			rackLSE1 := &proto.RackLSE{
+			rackLSE1 := &ufspb.RackLSE{
 				Name:             util.AddPrefix(util.RackLSECollection, "racklse-1"),
 				RackLsePrototype: "rackLSEPrototype-1",
 			}
-			mreq := &api.CreateRackLSERequest{
+			mreq := &ufsAPI.CreateRackLSERequest{
 				RackLSE:   rackLSE1,
 				RackLSEId: "racklse-1",
 			}
@@ -1179,14 +1066,14 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 			So(merr, ShouldBeNil)
 			So(mresp, ShouldResembleProto, rackLSE1)
 
-			dreq := &api.DeleteRackLSEPrototypeRequest{
+			dreq := &ufsAPI.DeleteRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-1"),
 			}
 			_, err = tf.Fleet.DeleteRackLSEPrototype(tf.C, dreq)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, datastore.CannotDelete)
 
-			greq := &api.GetRackLSEPrototypeRequest{
+			greq := &ufsAPI.GetRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-1"),
 			}
 			res, err := tf.Fleet.GetRackLSEPrototype(tf.C, greq)
@@ -1197,7 +1084,7 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 
 		Convey("Delete rackLSEPrototype by existing ID without references", func() {
 			rackLSEPrototype2 := mockRackLSEPrototype("")
-			req := &api.CreateRackLSEPrototypeRequest{
+			req := &ufsAPI.CreateRackLSEPrototypeRequest{
 				RackLSEPrototype:   rackLSEPrototype2,
 				RackLSEPrototypeId: "rackLSEPrototype-2",
 			}
@@ -1205,13 +1092,13 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEPrototype2)
 
-			dreq := &api.DeleteRackLSEPrototypeRequest{
+			dreq := &ufsAPI.DeleteRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			_, err = tf.Fleet.DeleteRackLSEPrototype(tf.C, dreq)
 			So(err, ShouldBeNil)
 
-			greq := &api.GetRackLSEPrototypeRequest{
+			greq := &ufsAPI.GetRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			res, err := tf.Fleet.GetRackLSEPrototype(tf.C, greq)
@@ -1221,7 +1108,7 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Delete rackLSEPrototype by non-existing ID", func() {
-			req := &api.DeleteRackLSEPrototypeRequest{
+			req := &ufsAPI.DeleteRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "rackLSEPrototype-2"),
 			}
 			_, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
@@ -1230,23 +1117,23 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 		})
 
 		Convey("Delete rackLSEPrototype - Invalid input empty name", func() {
-			req := &api.DeleteRackLSEPrototypeRequest{
+			req := &ufsAPI.DeleteRackLSEPrototypeRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Delete rackLSEPrototype - Invalid input invalid characters", func() {
-			req := &api.DeleteRackLSEPrototypeRequest{
+			req := &ufsAPI.DeleteRackLSEPrototypeRequest{
 				Name: util.AddPrefix(util.RackLSEPrototypeCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRackLSEPrototype(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -1261,7 +1148,7 @@ func TestCreateVlan(t *testing.T) {
 	vlan3 := mockVlan("")
 	Convey("CreateVlan", t, func() {
 		Convey("Create new vlan with vlan_id", func() {
-			req := &api.CreateVlanRequest{
+			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan1,
 				VlanId: "Vlan-1",
 			}
@@ -1271,7 +1158,7 @@ func TestCreateVlan(t *testing.T) {
 		})
 
 		Convey("Create existing vlan", func() {
-			req := &api.CreateVlanRequest{
+			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan3,
 				VlanId: "Vlan-1",
 			}
@@ -1282,35 +1169,35 @@ func TestCreateVlan(t *testing.T) {
 		})
 
 		Convey("Create new vlan - Invalid input nil", func() {
-			req := &api.CreateVlanRequest{
+			req := &ufsAPI.CreateVlanRequest{
 				Vlan: nil,
 			}
 			resp, err := tf.Fleet.CreateVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Create new vlan - Invalid input empty ID", func() {
-			req := &api.CreateVlanRequest{
+			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan2,
 				VlanId: "",
 			}
 			resp, err := tf.Fleet.CreateVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 
 		Convey("Create new vlan - Invalid input invalid characters", func() {
-			req := &api.CreateVlanRequest{
+			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan2,
 				VlanId: "a.b)7&",
 			}
 			resp, err := tf.Fleet.CreateVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -1326,14 +1213,14 @@ func TestUpdateVlan(t *testing.T) {
 	vlan4 := mockVlan("a.b)7&")
 	Convey("UpdateVlan", t, func() {
 		Convey("Update existing vlan", func() {
-			req := &api.CreateVlanRequest{
+			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan1,
 				VlanId: "vlan-1",
 			}
 			resp, err := tf.Fleet.CreateVlan(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlan1)
-			ureq := &api.UpdateVlanRequest{
+			ureq := &ufsAPI.UpdateVlanRequest{
 				Vlan: vlan2,
 			}
 			resp, err = tf.Fleet.UpdateVlan(tf.C, ureq)
@@ -1342,7 +1229,7 @@ func TestUpdateVlan(t *testing.T) {
 		})
 
 		Convey("Update non-existing vlan", func() {
-			ureq := &api.UpdateVlanRequest{
+			ureq := &ufsAPI.UpdateVlanRequest{
 				Vlan: vlan3,
 			}
 			resp, err := tf.Fleet.UpdateVlan(tf.C, ureq)
@@ -1352,34 +1239,34 @@ func TestUpdateVlan(t *testing.T) {
 		})
 
 		Convey("Update vlan - Invalid input nil", func() {
-			req := &api.UpdateVlanRequest{
+			req := &ufsAPI.UpdateVlanRequest{
 				Vlan: nil,
 			}
 			resp, err := tf.Fleet.UpdateVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Update vlan - Invalid input empty name", func() {
 			vlan3.Name = ""
-			req := &api.UpdateVlanRequest{
+			req := &ufsAPI.UpdateVlanRequest{
 				Vlan: vlan3,
 			}
 			resp, err := tf.Fleet.UpdateVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Update vlan - Invalid input invalid characters", func() {
-			req := &api.UpdateVlanRequest{
+			req := &ufsAPI.UpdateVlanRequest{
 				Vlan: vlan4,
 			}
 			resp, err := tf.Fleet.UpdateVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -1391,7 +1278,7 @@ func TestGetVlan(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		vlan1 := mockVlan("vlan-1")
-		req := &api.CreateVlanRequest{
+		req := &ufsAPI.CreateVlanRequest{
 			Vlan:   vlan1,
 			VlanId: "vlan-1",
 		}
@@ -1399,7 +1286,7 @@ func TestGetVlan(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(resp, ShouldResembleProto, vlan1)
 		Convey("Get vlan by existing ID", func() {
-			req := &api.GetVlanRequest{
+			req := &ufsAPI.GetVlanRequest{
 				Name: util.AddPrefix(util.VlanCollection, "vlan-1"),
 			}
 			resp, err := tf.Fleet.GetVlan(tf.C, req)
@@ -1407,7 +1294,7 @@ func TestGetVlan(t *testing.T) {
 			So(resp, ShouldResembleProto, vlan1)
 		})
 		Convey("Get vlan by non-existing ID", func() {
-			req := &api.GetVlanRequest{
+			req := &ufsAPI.GetVlanRequest{
 				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			resp, err := tf.Fleet.GetVlan(tf.C, req)
@@ -1416,103 +1303,65 @@ func TestGetVlan(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
 		})
 		Convey("Get vlan - Invalid input empty name", func() {
-			req := &api.GetVlanRequest{
+			req := &ufsAPI.GetVlanRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.GetVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Get vlan - Invalid input invalid characters", func() {
-			req := &api.GetVlanRequest{
+			req := &ufsAPI.GetVlanRequest{
 				Name: util.AddPrefix(util.VlanCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
 
 func TestListVlans(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	vlans := make([]*ufspb.Vlan, 0, 4)
+	for i := 0; i < 4; i++ {
+		vlan1 := mockVlan("")
+		vlan1.Name = fmt.Sprintf("vlan-%d", i)
+		resp, _ := configuration.CreateVlan(tf.C, vlan1)
+		resp.Name = util.AddPrefix(util.VlanCollection, resp.Name)
+		vlans = append(vlans, resp)
+	}
 	Convey("ListVlans", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		vlans := make([]*proto.Vlan, 0, 4)
-		for i := 0; i < 4; i++ {
-			vlan1 := mockVlan("")
-			req := &api.CreateVlanRequest{
-				Vlan:   vlan1,
-				VlanId: fmt.Sprintf("vlan-%d", i),
-			}
-			resp, err := tf.Fleet.CreateVlan(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, vlan1)
-			vlans = append(vlans, resp)
-		}
-
-		Convey("ListVlans - page_size negative", func() {
-			req := &api.ListVlansRequest{
+		Convey("ListVlans - page_size negative - error", func() {
+			req := &ufsAPI.ListVlansRequest{
 				PageSize: -5,
 			}
 			resp, err := tf.Fleet.ListVlans(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
 		})
 
-		Convey("ListVlans - page_token invalid", func() {
-			req := &api.ListVlansRequest{
-				PageSize:  5,
-				PageToken: "abc",
-			}
+		Convey("ListVlans - Full listing - happy path", func() {
+			req := &ufsAPI.ListVlansRequest{}
 			resp, err := tf.Fleet.ListVlans(tf.C, req)
-			So(resp, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.Vlans, ShouldResembleProto, vlans)
+		})
+
+		Convey("ListVlans - page_size negative - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListVlansRequest{
+				Filter: "machine=mac-1|kvm=kvm-2",
+			}
+			_, err := tf.Fleet.ListVlans(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, datastore.InvalidPageToken)
-		})
-
-		Convey("ListVlans - Full listing Max PageSize", func() {
-			req := &api.ListVlansRequest{
-				PageSize: 2000,
-			}
-			resp, err := tf.Fleet.ListVlans(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.Vlans, ShouldResembleProto, vlans)
-		})
-
-		Convey("ListVlans - Full listing with no pagination", func() {
-			req := &api.ListVlansRequest{
-				PageSize: 0,
-			}
-			resp, err := tf.Fleet.ListVlans(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.Vlans, ShouldResembleProto, vlans)
-		})
-
-		Convey("ListVlans - listing with pagination", func() {
-			req := &api.ListVlansRequest{
-				PageSize: 3,
-			}
-			resp, err := tf.Fleet.ListVlans(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.Vlans, ShouldResembleProto, vlans[:3])
-
-			req = &api.ListVlansRequest{
-				PageSize:  3,
-				PageToken: resp.NextPageToken,
-			}
-			resp, err = tf.Fleet.ListVlans(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.Vlans, ShouldResembleProto, vlans[3:])
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
 		})
 	})
 }
@@ -1525,7 +1374,7 @@ func TestDeleteVlan(t *testing.T) {
 		defer validate()
 		Convey("Delete vlan by existing ID without references", func() {
 			vlan2 := mockVlan("")
-			req := &api.CreateVlanRequest{
+			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan2,
 				VlanId: "vlan-2",
 			}
@@ -1533,13 +1382,13 @@ func TestDeleteVlan(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlan2)
 
-			dreq := &api.DeleteVlanRequest{
+			dreq := &ufsAPI.DeleteVlanRequest{
 				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			_, err = tf.Fleet.DeleteVlan(tf.C, dreq)
 			So(err, ShouldBeNil)
 
-			greq := &api.GetVlanRequest{
+			greq := &ufsAPI.GetVlanRequest{
 				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			res, err := tf.Fleet.GetVlan(tf.C, greq)
@@ -1549,7 +1398,7 @@ func TestDeleteVlan(t *testing.T) {
 		})
 
 		Convey("Delete vlan by non-existing ID", func() {
-			req := &api.DeleteVlanRequest{
+			req := &ufsAPI.DeleteVlanRequest{
 				Name: util.AddPrefix(util.VlanCollection, "vlan-2"),
 			}
 			_, err := tf.Fleet.DeleteVlan(tf.C, req)
@@ -1558,23 +1407,23 @@ func TestDeleteVlan(t *testing.T) {
 		})
 
 		Convey("Delete vlan - Invalid input empty name", func() {
-			req := &api.DeleteVlanRequest{
+			req := &ufsAPI.DeleteVlanRequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.DeleteVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Delete vlan - Invalid input invalid characters", func() {
-			req := &api.DeleteVlanRequest{
+			req := &ufsAPI.DeleteVlanRequest{
 				Name: util.AddPrefix(util.VlanCollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -1586,9 +1435,9 @@ func TestImportVlans(t *testing.T) {
 	defer validate()
 	Convey("Import vlans", t, func() {
 		Convey("happy path", func() {
-			req := &api.ImportVlansRequest{
-				Source: &api.ImportVlansRequest_ConfigSource{
-					ConfigSource: &api.ConfigSource{
+			req := &ufsAPI.ImportVlansRequest{
+				Source: &ufsAPI.ImportVlansRequest_ConfigSource{
+					ConfigSource: &ufsAPI.ConfigSource{
 						ConfigServiceName: "fake-service",
 						FileName:          "fakeVlans.cfg",
 					},
@@ -1598,9 +1447,9 @@ func TestImportVlans(t *testing.T) {
 			res, err := tf.Fleet.ImportVlans(ctx, req)
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
-			vlans, _, err := configuration.ListVlans(ctx, 100, "")
+			vlans, _, err := configuration.ListVlans(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(api.ParseResources(vlans, "Name"), ShouldResemble, []string{"browser-lab:144", "browser-lab:20", "browser-lab:40"})
+			So(ufsAPI.ParseResources(vlans, "Name"), ShouldResemble, []string{"browser-lab:144", "browser-lab:20", "browser-lab:40"})
 			vlan, err := configuration.GetVlan(ctx, "browser-lab:40")
 			So(err, ShouldBeNil)
 			expectedCapacity := getCapacity(vlan.GetVlanAddress())
@@ -1619,9 +1468,9 @@ func TestOSImportVlans(t *testing.T) {
 	defer validate()
 	Convey("Import OS vlan-related infos", t, func() {
 		Convey("happy path", func() {
-			req := &api.ImportOSVlansRequest{
-				Source: &api.ImportOSVlansRequest_MachineDbSource{
-					MachineDbSource: &api.MachineDBSource{
+			req := &ufsAPI.ImportOSVlansRequest{
+				Source: &ufsAPI.ImportOSVlansRequest_MachineDbSource{
+					MachineDbSource: &ufsAPI.MachineDBSource{
 						Host: "fake_host",
 					},
 				},
@@ -1637,7 +1486,7 @@ func TestOSImportVlans(t *testing.T) {
 func getReturnedPlatformNames(res datastore.OpResults) []string {
 	gets := make([]string, len(res))
 	for i, r := range res {
-		gets[i] = r.Data.(*proto.ChromePlatform).GetName()
+		gets[i] = r.Data.(*ufspb.ChromePlatform).GetName()
 	}
 	return gets
 }

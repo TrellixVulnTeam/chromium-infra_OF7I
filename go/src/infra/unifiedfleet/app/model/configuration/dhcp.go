@@ -96,19 +96,26 @@ func QueryDHCPConfigByPropertyName(ctx context.Context, propertyName, id string)
 //
 // Does a query over dhcp config entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListDHCPConfigs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.DHCPConfig, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, DHCPKind, pageSize, pageToken, nil, false)
+func ListDHCPConfigs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.DHCPConfig, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, DHCPKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *DHCPEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			dhcpConfig := &ufspb.DHCPConfig{
+				Hostname: ent.ID,
+			}
+			res = append(res, dhcpConfig)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.DHCPConfig))
 		}
-		res = append(res, pm.(*ufspb.DHCPConfig))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
