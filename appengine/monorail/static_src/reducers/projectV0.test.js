@@ -883,7 +883,7 @@ describe('helpers', () => {
 
       await store.dispatch(projectV0.fetchFieldPerms(projectName, fieldDefs));
 
-      const args = {names: ['projects/proj/fieldDefs/testField']};
+      const args = {names: ['projects/proj/fieldDefs/1']};
       sinon.assert.calledWith(
           prpcClient.call, 'monorail.v3.Permissions',
           'BatchGetPermissionSets', args);

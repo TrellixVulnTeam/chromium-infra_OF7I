@@ -200,9 +200,9 @@ describe('labelNameToLabelValue', () => {
 
 describe('fieldDefToName', () => {
   it('converts fieldDef', () => {
-    const fieldDef = {fieldRef: {fieldName: 'field-name'}};
+    const fieldDef = {fieldRef: {fieldId: '1'}};
     const actual = fieldDefToName('project-name', fieldDef);
-    assert.equal(actual, 'projects/project-name/fieldDefs/field-name');
+    assert.equal(actual, 'projects/project-name/fieldDefs/1');
   });
 });
 

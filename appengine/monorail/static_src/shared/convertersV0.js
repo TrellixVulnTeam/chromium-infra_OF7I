@@ -327,10 +327,10 @@ export function labelNameToLabelValue(label, fieldName) {
  * Converts a FieldDef to a v3 FieldDef resource name.
  * @param {string} projectName The name of the project.
  * @param {FieldDef} fieldDef A FieldDef Object from the pRPC API proto objects.
- * @return {string} The v3 FieldDef name, e.g. 'projects/proj/fieldDefs/field'
+ * @return {string} The v3 FieldDef name, e.g. 'projects/proj/fieldDefs/fieldId'
  */
 export function fieldDefToName(projectName, fieldDef) {
-  return `projects/${projectName}/fieldDefs/${fieldDef.fieldRef.fieldName}`;
+  return `projects/${projectName}/fieldDefs/${fieldDef.fieldRef.fieldId}`;
 }
 
 /**

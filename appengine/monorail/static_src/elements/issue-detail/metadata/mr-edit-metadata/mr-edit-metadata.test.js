@@ -500,8 +500,8 @@ describe('mr-edit-metadata', () => {
 
   it('custom fields the user cannot edit should be hidden', async () => {
     element.projectName = 'proj';
-    const fieldName = 'projects/proj/fieldDefs/normalFd';
-    const restrictedFieldName = 'projects/proj/fieldDefs/cantEditFd';
+    const fieldName = 'projects/proj/fieldDefs/1';
+    const restrictedFieldName = 'projects/proj/fieldDefs/2';
     element._permissions = {
       [fieldName]: {permissions: [FIELD_DEF_VALUE_EDIT]},
       [restrictedFieldName]: {permissions: []}};
