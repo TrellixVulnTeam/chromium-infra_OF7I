@@ -62,7 +62,7 @@ func (p *remoteProject) ConfigFiles() map[string]migrator.ConfigFile {
 }
 
 func (p *remoteProject) Report(tag, description string, opts ...migrator.ReportOption) {
-	addReport(p.ctx, p.id.GenerateReport(tag, description, opts...))
+	getReportSink(p.ctx).add(p.id, tag, description, opts...)
 }
 
 // remoteConfigFile holds a single configuration file and its metadata.
@@ -97,5 +97,5 @@ func (c *remoteConfigFile) TextPb(out proto.Message) {
 }
 
 func (c *remoteConfigFile) Report(tag, description string, opts ...migrator.ReportOption) {
-	addReport(c.ctx, c.id.GenerateReport(tag, description, opts...))
+	getReportSink(c.ctx).add(c.id, tag, description, opts...)
 }

@@ -63,7 +63,7 @@ func (l *localProject) ConfigFiles() map[string]migrator.ConfigFile {
 }
 
 func (l *localProject) Report(tag, description string, opts ...migrator.ReportOption) {
-	addReport(l.ctx, l.id.GenerateReport(tag, description, opts...))
+	getReportSink(l.ctx).add(l.id, tag, description, opts...)
 }
 
 type localConfigFile struct {
@@ -99,5 +99,5 @@ func (l *localConfigFile) TextPb(out proto.Message) {
 }
 
 func (l *localConfigFile) Report(tag, description string, opts ...migrator.ReportOption) {
-	addReport(l.ctx, l.id.GenerateReport(tag, description, opts...))
+	getReportSink(l.ctx).add(l.id, tag, description, opts...)
 }

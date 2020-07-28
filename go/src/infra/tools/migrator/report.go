@@ -26,19 +26,6 @@ func (r ReportID) ConfigSet() config.Set {
 	return config.ProjectSet(r.Project)
 }
 
-// GenerateReport creates a new *Report from this ReportID.
-func (r ReportID) GenerateReport(tag, problem string, opts ...ReportOption) *Report {
-	ret := &Report{
-		ReportID: r,
-		Tag:      tag,
-		Problem:  problem,
-	}
-	for _, o := range opts {
-		o(ret)
-	}
-	return ret
-}
-
 func (r ReportID) String() string {
 	if r.ConfigFile != "" {
 		return r.Project

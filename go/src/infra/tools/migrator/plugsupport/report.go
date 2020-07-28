@@ -19,9 +19,18 @@ type reportSink struct {
 	dat map[migrator.ReportID][]*migrator.Report
 }
 
-func (s *reportSink) add(r *migrator.Report) {
+func (s *reportSink) add(id migrator.ReportID, tag, problem string, opts ...migrator.ReportOption) {
+	report := &migrator.Report{
+		ReportID: id,
+		Tag:      tag,
+		Problem:  problem,
+	}
+	for _, o := range opts {
+		o(report)
+	}
+
 	s.mu.Lock()
-	s.dat[r.ReportID] = append(s.dat[r.ReportID], r)
+	s.dat[id] = append(s.dat[id], report)
 	s.mu.Unlock()
 }
 
@@ -52,10 +61,6 @@ var reportSinkKey = "holds a *reportSink"
 
 func getReportSink(ctx context.Context) *reportSink {
 	return ctx.Value(&reportSinkKey).(*reportSink)
-}
-
-func addReport(ctx context.Context, report *migrator.Report) {
-	getReportSink(ctx).add(report)
 }
 
 // InitReportSink adds a new empty ReportSink to context and returns the new
