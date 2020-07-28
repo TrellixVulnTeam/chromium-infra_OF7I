@@ -73,7 +73,7 @@ luci.project(
     bindings = [
         # Allow infra_led_users_group to launch tasks in any project realm.
         luci.binding(
-            roles = "role/swarming.realmUser",
+            roles = "role/swarming.taskTriggerer",
             groups = [
                 infra_led_users_group,
             ],
