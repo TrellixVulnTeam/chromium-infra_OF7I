@@ -64,7 +64,12 @@ func mockRack(id string, rackCapactiy int32) *proto.Rack {
 
 func mockNic(id string) *proto.Nic {
 	return &proto.Nic{
-		Name: util.AddPrefix(util.NicCollection, id),
+		Name:       util.AddPrefix(util.NicCollection, id),
+		MacAddress: "12:ab",
+		SwitchInterface: &proto.SwitchInterface{
+			Switch: "test-switch",
+			Port:   1,
+		},
 	}
 }
 
@@ -82,7 +87,12 @@ func mockRPM(id string) *proto.RPM {
 
 func mockDrac(id string) *proto.Drac {
 	return &proto.Drac{
-		Name: util.AddPrefix(util.DracCollection, id),
+		Name:       util.AddPrefix(util.DracCollection, id),
+		MacAddress: "12:ab",
+		SwitchInterface: &proto.SwitchInterface{
+			Switch: "test-switch",
+			Port:   1,
+		},
 	}
 }
 
@@ -865,6 +875,10 @@ func TestCreateNic(t *testing.T) {
 		},
 	}
 	registration.CreateMachine(tf.C, machine1)
+	registration.CreateSwitch(tf.C, &proto.Switch{
+		Name:         "test-switch",
+		CapacityPort: 100,
+	})
 	Convey("CreateNic", t, func() {
 		Convey("Create new nic with nic_id", func() {
 			nic := mockNic("")
@@ -885,8 +899,9 @@ func TestCreateNic(t *testing.T) {
 			_, err := registration.CreateNic(tf.C, nic)
 			So(err, ShouldBeNil)
 
+			nic2 := mockNic("nic-3")
 			req := &api.CreateNicRequest{
-				Nic:     &proto.Nic{},
+				Nic:     nic2,
 				NicId:   "nic-3",
 				Machine: "machine-1",
 			}
@@ -969,6 +984,7 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic2 := mockNic("nic-1")
+			nic2.SwitchInterface = nil
 			ureq := &api.UpdateNicRequest{
 				Nic:     nic2,
 				Machine: "machine-1",
@@ -1946,6 +1962,10 @@ func TestCreateDrac(t *testing.T) {
 		},
 	}
 	registration.CreateMachine(tf.C, machine1)
+	registration.CreateSwitch(tf.C, &proto.Switch{
+		Name:         "test-switch",
+		CapacityPort: 100,
+	})
 	Convey("CreateDrac", t, func() {
 		Convey("Create new drac with drac_id", func() {
 			drac := mockDrac("")
@@ -1967,7 +1987,7 @@ func TestCreateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			req := &api.CreateDracRequest{
-				Drac:    &proto.Drac{},
+				Drac:    mockDrac("Drac-3"),
 				DracId:  "Drac-3",
 				Machine: "machine-1",
 			}
@@ -2050,6 +2070,7 @@ func TestUpdateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			drac2 := mockDrac("drac-1")
+			drac2.SwitchInterface = nil
 			ureq := &api.UpdateDracRequest{
 				Drac:    drac2,
 				Machine: "machine-1",

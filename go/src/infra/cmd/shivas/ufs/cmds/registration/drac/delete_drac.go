@@ -75,7 +75,7 @@ func (c *deleteDrac) innerRun(a subcommands.Application, args []string, env subc
 		Name: ufsUtil.AddPrefix(ufsUtil.DracCollection, args[0]),
 	})
 	if err == nil {
-		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		fmt.Fprintln(a.GetOut(), args[0], "is deleted successfully.")
 		return nil
 	}
 	return err

@@ -693,12 +693,14 @@ The protobuf definition of chrome platform configuration for browser machine is 
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/chrome_platform.proto`
 
 	// AddNicLongDesc long description for AddNicCmd
-	AddNicLongDesc string = `Add a nic by name.
+	AddNicLongDesc string = `Add a nic to UFS.
 
 Examples:
-shivas add-nic -f nic.json -m {Machine name}
+shivas add-nic -f nic.json -m machine0
 Add a nic by reading a JSON file input.
--m option is a required parameter to associate the nic to the given machine.
+
+shivas add-nic -name machine0:eth0 -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
+Add a nic by specifying several attributes directly.
 
 shivas add-nic -i
 Add a nic by reading input through interactive mode.`
@@ -734,15 +736,18 @@ The protobuf definition of nic is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
 
 	// AddDracLongDesc long description for AddDracCmd
-	AddDracLongDesc string = `Add a drac by name.
+	AddDracLongDesc string = `Add a drac to UFS.
 
 Examples:
-shivas add-drac -f drac.json -m {Machine name}
+shivas add-drac -f drac.json -m machine0
 Add a drac by reading a JSON file input.
--m option is a required parameter to associate the drac to the given machine.
+
+shivas add-drac -name machine0:drac -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
+Add a drac by specifying several attributes directly.
 
 shivas add-drac -i
-Add a drac by reading input through interactive mode.`
+Add a drac by reading input through interactive mode.
+`
 
 	// UpdateDracLongDesc long description for UpdateDracCmd
 	UpdateDracLongDesc string = `Update a drac by name.
