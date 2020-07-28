@@ -1295,7 +1295,7 @@ func TestImportDatacenters(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(switches, ShouldHaveLength, 4)
 			So(api.ParseResources(switches, "Name"), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
-			rackLSEs, _, err := inventory.ListRackLSEs(ctx, 100, "")
+			rackLSEs, _, err := inventory.ListRackLSEs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(rackLSEs, ShouldHaveLength, 2)
 			rlse, err := inventory.QueryRackLSEByPropertyName(ctx, "rack_ids", "cr20", false)

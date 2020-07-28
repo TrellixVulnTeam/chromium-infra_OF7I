@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"strings"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
+	"go.chromium.org/luci/common/errors"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/inventory"
 )
 
@@ -17,7 +19,7 @@ import (
 //
 // Checks if the resources referenced by the RackLSE input already exists
 // in the system before creating a new RackLSE
-func CreateRackLSE(ctx context.Context, racklse *fleet.RackLSE) (*fleet.RackLSE, error) {
+func CreateRackLSE(ctx context.Context, racklse *ufspb.RackLSE) (*ufspb.RackLSE, error) {
 	err := validateRackLSE(ctx, racklse)
 	if err != nil {
 		return nil, err
@@ -29,7 +31,7 @@ func CreateRackLSE(ctx context.Context, racklse *fleet.RackLSE) (*fleet.RackLSE,
 //
 // Checks if the resources referenced by the RackLSE input already exists
 // in the system before updating a RackLSE
-func UpdateRackLSE(ctx context.Context, racklse *fleet.RackLSE) (*fleet.RackLSE, error) {
+func UpdateRackLSE(ctx context.Context, racklse *ufspb.RackLSE) (*ufspb.RackLSE, error) {
 	err := validateRackLSE(ctx, racklse)
 	if err != nil {
 		return nil, err
@@ -38,13 +40,21 @@ func UpdateRackLSE(ctx context.Context, racklse *fleet.RackLSE) (*fleet.RackLSE,
 }
 
 // GetRackLSE returns racklse for the given id from datastore.
-func GetRackLSE(ctx context.Context, id string) (*fleet.RackLSE, error) {
+func GetRackLSE(ctx context.Context, id string) (*ufspb.RackLSE, error) {
 	return inventory.GetRackLSE(ctx, id)
 }
 
 // ListRackLSEs lists the racklses
-func ListRackLSEs(ctx context.Context, pageSize int32, pageToken string) ([]*fleet.RackLSE, string, error) {
-	return inventory.ListRackLSEs(ctx, pageSize, pageToken)
+func ListRackLSEs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.RackLSE, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, inventory.GetRackLSEIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing racklses").Err()
+		}
+	}
+	return inventory.ListRackLSEs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteRackLSE deletes the racklse in datastore
@@ -61,7 +71,7 @@ func DeleteRackLSE(ctx context.Context, id string) error {
 // Checks if the resources referenced by the given RackLSE input already exists
 // in the system. Returns an error if any resource referenced by the RackLSE input
 // does not exist in the system.
-func validateRackLSE(ctx context.Context, racklse *fleet.RackLSE) error {
+func validateRackLSE(ctx context.Context, racklse *ufspb.RackLSE) error {
 	var resources []*Resource
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot create RackLSE %s:\n", racklse.Name))

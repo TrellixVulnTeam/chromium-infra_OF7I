@@ -418,6 +418,9 @@ func (r *GetMachineLSERequest) Validate() error {
 
 // Validate validates input requests of ListMachineLSEs.
 func (r *ListMachineLSEsRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
 	return validatePageSize(r.PageSize)
 }
 
@@ -456,6 +459,9 @@ func (r *GetRackLSERequest) Validate() error {
 
 // Validate validates input requests of ListRackLSEs.
 func (r *ListRackLSEsRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
 	return validatePageSize(r.PageSize)
 }
 

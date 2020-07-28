@@ -9,7 +9,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/registration"
 )
 
@@ -18,7 +19,7 @@ func TestCreateRackLSE(t *testing.T) {
 	ctx := testingContext()
 	Convey("CreateRackLSE", t, func() {
 		Convey("Create new rackLSE with non existing racks", func() {
-			rackLSE1 := &proto.RackLSE{
+			rackLSE1 := &ufspb.RackLSE{
 				Name:  "racklse-1",
 				Racks: []string{"rack-1", "rack-2"},
 			}
@@ -28,14 +29,14 @@ func TestCreateRackLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, CannotCreate)
 		})
 		Convey("Create new rackLSE with existing racks", func() {
-			rack1 := &proto.Rack{
+			rack1 := &ufspb.Rack{
 				Name: "rack-1",
 			}
 			mresp, merr := registration.CreateRack(ctx, rack1)
 			So(merr, ShouldBeNil)
 			So(mresp, ShouldResembleProto, rack1)
 
-			rackLSE2 := &proto.RackLSE{
+			rackLSE2 := &ufspb.RackLSE{
 				Name:  "racklse-2",
 				Racks: []string{"rack-1"},
 			}

@@ -464,7 +464,7 @@ func dumpMachineLSEs(ctx context.Context, bqClient *bigquery.Client, curTimeStr 
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machine_lses$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, startToken)
+		res, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all machine lses").Err()
 		}
@@ -490,7 +490,7 @@ func dumpRackLSEs(ctx context.Context, bqClient *bigquery.Client, curTimeStr str
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("rack_lses$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := inventory.ListRackLSEs(ctx, pageSize, startToken)
+		res, nextToken, err := inventory.ListRackLSEs(ctx, pageSize, startToken, nil, false)
 		if err != nil {
 			return errors.Annotate(err, "get all rack lses").Err()
 		}

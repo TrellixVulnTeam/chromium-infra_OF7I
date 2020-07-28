@@ -5,6 +5,7 @@
 package controller
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -708,6 +709,43 @@ func TestDeleteMachineLSELabstation(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse")
+		})
+	})
+}
+
+func TestListMachineLSEs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	machineLSEsWithSwitch := make([]*ufspb.MachineLSE, 0, 2)
+	machineLSEs := make([]*ufspb.MachineLSE, 0, 4)
+	for i := 0; i < 4; i++ {
+		machineLSE := mockDutMachineLSE(fmt.Sprintf("machineLSE-%d", i))
+		if i%2 == 0 {
+			machineLSE.GetChromeosMachineLse().GetDeviceLse().NetworkDeviceInterface = &ufspb.SwitchInterface{Switch: "switch-1"}
+		}
+		resp, _ := inventory.CreateMachineLSE(ctx, machineLSE)
+		if i%2 == 0 {
+			machineLSEsWithSwitch = append(machineLSEsWithSwitch, resp)
+		}
+		machineLSEs = append(machineLSEs, resp)
+	}
+	Convey("ListMachineLSEs", t, func() {
+		Convey("List MachineLSEs - filter invalid - error", func() {
+			_, _, err := ListMachineLSEs(ctx, 5, "", "invalid=mx-1", false)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
+		})
+
+		Convey("List MachineLSEs - filter switch - happy path with filter", func() {
+			resp, _, _ := ListMachineLSEs(ctx, 5, "", "switch=switch-1", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, machineLSEsWithSwitch)
+		})
+
+		Convey("ListMachineLSEs - Full listing - happy path", func() {
+			resp, _, _ := ListMachineLSEs(ctx, 5, "", "", false)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, machineLSEs)
 		})
 	})
 }

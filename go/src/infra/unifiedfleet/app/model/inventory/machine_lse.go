@@ -124,19 +124,26 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 // ListMachineLSEs lists the machines
 // Does a query over MachineLSE entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, MachineLSEKind, pageSize, pageToken, nil, false)
+func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, MachineLSEKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *MachineLSEEntity, cb datastore.CursorCB) error {
-		pm, err := ent.GetProto()
-		if err != nil {
-			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
-			return nil
+		if keysOnly {
+			machineLSE := &ufspb.MachineLSE{
+				Name: ent.ID,
+			}
+			res = append(res, machineLSE)
+		} else {
+			pm, err := ent.GetProto()
+			if err != nil {
+				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+				return nil
+			}
+			res = append(res, pm.(*ufspb.MachineLSE))
 		}
-		res = append(res, pm.(*ufspb.MachineLSE))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err

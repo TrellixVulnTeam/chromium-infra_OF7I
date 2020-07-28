@@ -144,8 +144,16 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 }
 
 // ListMachineLSEs lists the machinelses
-func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string) ([]*ufspb.MachineLSE, string, error) {
-	return inventory.ListMachineLSEs(ctx, pageSize, pageToken)
+func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.MachineLSE, string, error) {
+	var filterMap map[string][]interface{}
+	var err error
+	if filter != "" {
+		filterMap, err = getFilterMap(filter, inventory.GetMachineLSEIndexedFieldName)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to read filter for listing hosts").Err()
+		}
+	}
+	return inventory.ListMachineLSEs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
 // DeleteMachineLSE deletes the machinelse in datastore

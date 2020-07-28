@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockMachineLSE(id string) *proto.MachineLSE {
-	return &proto.MachineLSE{
+func mockMachineLSE(id string) *ufspb.MachineLSE {
+	return &ufspb.MachineLSE{
 		Name: id,
 	}
 }
@@ -112,19 +113,17 @@ func TestGetMachineLSE(t *testing.T) {
 
 func TestListMachineLSEs(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	machineLSEs := make([]*ufspb.MachineLSE, 0, 4)
+	for i := 0; i < 4; i++ {
+		machineLSE1 := mockMachineLSE(fmt.Sprintf("machineLSE-%d", i))
+		resp, _ := CreateMachineLSE(ctx, machineLSE1)
+		machineLSEs = append(machineLSEs, resp)
+	}
 	Convey("ListMachineLSEs", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		machineLSEs := make([]*proto.MachineLSE, 0, 4)
-		for i := 0; i < 4; i++ {
-			machineLSE1 := mockMachineLSE(fmt.Sprintf("machineLSE-%d", i))
-			resp, err := CreateMachineLSE(ctx, machineLSE1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machineLSE1)
-			machineLSEs = append(machineLSEs, resp)
-		}
 		Convey("List machineLSEs - page_token invalid", func() {
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 5, "abc")
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -132,7 +131,7 @@ func TestListMachineLSEs(t *testing.T) {
 		})
 
 		Convey("List machineLSEs - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "")
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -140,13 +139,13 @@ func TestListMachineLSEs(t *testing.T) {
 		})
 
 		Convey("List machineLSEs - listing with pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 3, "")
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEs[:3])
 
-			resp, _, err = ListMachineLSEs(ctx, 2, nextPageToken)
+			resp, _, err = ListMachineLSEs(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEs[3:])
@@ -188,7 +187,7 @@ func TestBatchUpdateMachineLSEs(t *testing.T) {
 	Convey("BatchUpdateMachineLSEs", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		machineLSEs := make([]*proto.MachineLSE, 0, 4)
+		machineLSEs := make([]*ufspb.MachineLSE, 0, 4)
 		for i := 0; i < 4; i++ {
 			machineLSE1 := mockMachineLSE(fmt.Sprintf("machineLSE-%d", i))
 			resp, err := CreateMachineLSE(ctx, machineLSE1)
@@ -217,10 +216,10 @@ func TestQueryMachineLSEByPropertyName(t *testing.T) {
 	Convey("QueryMachineLSEByPropertyName", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dummymachineLSE := &proto.MachineLSE{
+		dummymachineLSE := &ufspb.MachineLSE{
 			Name: "machineLSE-1",
 		}
-		machineLSE1 := &proto.MachineLSE{
+		machineLSE1 := &ufspb.MachineLSE{
 			Name:                "machineLSE-1",
 			Machines:            []string{"machine-1", "machine-2"},
 			MachineLsePrototype: "machineLsePrototype-1",
@@ -229,10 +228,10 @@ func TestQueryMachineLSEByPropertyName(t *testing.T) {
 		So(cerr, ShouldBeNil)
 		So(resp, ShouldResembleProto, machineLSE1)
 
-		machineLSEs := make([]*proto.MachineLSE, 0, 1)
+		machineLSEs := make([]*ufspb.MachineLSE, 0, 1)
 		machineLSEs = append(machineLSEs, machineLSE1)
 
-		dummymachineLSEs := make([]*proto.MachineLSE, 0, 1)
+		dummymachineLSEs := make([]*ufspb.MachineLSE, 0, 1)
 		dummymachineLSEs = append(dummymachineLSEs, dummymachineLSE)
 		Convey("Query By existing Machine", func() {
 			resp, err := QueryMachineLSEByPropertyName(ctx, "machine_ids", "machine-1", false)

@@ -12,12 +12,13 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	. "go.chromium.org/luci/common/testing/assertions"
-	proto "infra/unifiedfleet/api/v1/proto"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 )
 
-func mockRackLSE(id string) *proto.RackLSE {
-	return &proto.RackLSE{
+func mockRackLSE(id string) *ufspb.RackLSE {
+	return &ufspb.RackLSE{
 		Name: id,
 	}
 }
@@ -111,19 +112,17 @@ func TestGetRackLSE(t *testing.T) {
 
 func TestListRackLSEs(t *testing.T) {
 	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	rackLSEs := make([]*ufspb.RackLSE, 0, 4)
+	for i := 0; i < 4; i++ {
+		rackLSE1 := mockRackLSE(fmt.Sprintf("rackLSE-%d", i))
+		resp, _ := CreateRackLSE(ctx, rackLSE1)
+		rackLSEs = append(rackLSEs, resp)
+	}
 	Convey("ListRackLSEs", t, func() {
-		ctx := gaetesting.TestingContextWithAppID("go-test")
-		datastore.GetTestable(ctx).Consistent(true)
-		rackLSEs := make([]*proto.RackLSE, 0, 4)
-		for i := 0; i < 4; i++ {
-			rackLSE1 := mockRackLSE(fmt.Sprintf("rackLSE-%d", i))
-			resp, err := CreateRackLSE(ctx, rackLSE1)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rackLSE1)
-			rackLSEs = append(rackLSEs, resp)
-		}
 		Convey("List rackLSEs - page_token invalid", func() {
-			resp, nextPageToken, err := ListRackLSEs(ctx, 5, "abc")
+			resp, nextPageToken, err := ListRackLSEs(ctx, 5, "abc", nil, false)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +130,7 @@ func TestListRackLSEs(t *testing.T) {
 		})
 
 		Convey("List rackLSEs - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListRackLSEs(ctx, 4, "")
+			resp, nextPageToken, err := ListRackLSEs(ctx, 4, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
@@ -139,13 +138,13 @@ func TestListRackLSEs(t *testing.T) {
 		})
 
 		Convey("List rackLSEs - listing with pagination", func() {
-			resp, nextPageToken, err := ListRackLSEs(ctx, 3, "")
+			resp, nextPageToken, err := ListRackLSEs(ctx, 3, "", nil, false)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEs[:3])
 
-			resp, _, err = ListRackLSEs(ctx, 2, nextPageToken)
+			resp, _, err = ListRackLSEs(ctx, 2, nextPageToken, nil, false)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSEs[3:])
@@ -187,7 +186,7 @@ func TestBatchUpdateRackLSEs(t *testing.T) {
 	Convey("BatchUpdateRackLSEs", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		rackLSEs := make([]*proto.RackLSE, 0, 4)
+		rackLSEs := make([]*ufspb.RackLSE, 0, 4)
 		for i := 0; i < 4; i++ {
 			rackLSE1 := mockRackLSE(fmt.Sprintf("rackLSE-%d", i))
 			resp, err := CreateRackLSE(ctx, rackLSE1)
@@ -216,10 +215,10 @@ func TestQueryRackLSEByPropertyName(t *testing.T) {
 	Convey("QueryRackLSEByPropertyName", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
 		datastore.GetTestable(ctx).Consistent(true)
-		dummyrackLSE := &proto.RackLSE{
+		dummyrackLSE := &ufspb.RackLSE{
 			Name: "rackLSE-1",
 		}
-		rackLSE1 := &proto.RackLSE{
+		rackLSE1 := &ufspb.RackLSE{
 			Name:             "rackLSE-1",
 			Racks:            []string{"rack-1", "rack-2"},
 			RackLsePrototype: "rackLsePrototype-1",
@@ -228,10 +227,10 @@ func TestQueryRackLSEByPropertyName(t *testing.T) {
 		So(cerr, ShouldBeNil)
 		So(resp, ShouldResembleProto, rackLSE1)
 
-		rackLSEs := make([]*proto.RackLSE, 0, 1)
+		rackLSEs := make([]*ufspb.RackLSE, 0, 1)
 		rackLSEs = append(rackLSEs, rackLSE1)
 
-		dummyrackLSEs := make([]*proto.RackLSE, 0, 1)
+		dummyrackLSEs := make([]*ufspb.RackLSE, 0, 1)
 		dummyrackLSEs = append(dummyrackLSEs, dummyrackLSE)
 		Convey("Query By existing Rack", func() {
 			resp, err := QueryRackLSEByPropertyName(ctx, "rack_ids", "rack-1", false)

@@ -16,13 +16,13 @@ import (
 	grpcStatus "google.golang.org/grpc/status"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
-	proto "infra/unifiedfleet/api/v1/proto"
-	api "infra/unifiedfleet/api/v1/rpc"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/util"
 )
 
-func verifyLSEPrototype(ctx context.Context, lse *proto.MachineLSE) error {
+func verifyLSEPrototype(ctx context.Context, lse *ufspb.MachineLSE) error {
 	if lse.GetChromeBrowserMachineLse() != nil {
 		if !util.IsInBrowserLab(lse.GetMachineLsePrototype()) {
 			return grpcStatus.Errorf(codes.InvalidArgument, "Prototype %s doesn't belong to browser lab", lse.GetMachineLsePrototype())
@@ -32,7 +32,7 @@ func verifyLSEPrototype(ctx context.Context, lse *proto.MachineLSE) error {
 			return err
 		}
 		for _, v := range resp.GetVirtualRequirements() {
-			if v.GetVirtualType() == proto.VirtualType_VIRTUAL_TYPE_VM {
+			if v.GetVirtualType() == ufspb.VirtualType_VIRTUAL_TYPE_VM {
 				c := lse.GetChromeBrowserMachineLse().GetVmCapacity()
 				if c < v.GetMin() || c > v.GetMax() {
 					return grpcStatus.Errorf(codes.InvalidArgument, "Prototype %s is not matched to the vm capacity %d", lse.GetMachineLsePrototype(), c)
@@ -44,7 +44,7 @@ func verifyLSEPrototype(ctx context.Context, lse *proto.MachineLSE) error {
 }
 
 // CreateMachineLSE creates machineLSE entry in database.
-func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *api.CreateMachineLSERequest) (rsp *proto.MachineLSE, err error) {
+func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *ufsAPI.CreateMachineLSERequest) (rsp *ufspb.MachineLSE, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -65,7 +65,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *api.Create
 }
 
 // UpdateMachineLSE updates the machineLSE information in database.
-func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *api.UpdateMachineLSERequest) (rsp *proto.MachineLSE, err error) {
+func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.UpdateMachineLSERequest) (rsp *ufspb.MachineLSE, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -83,7 +83,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *api.Update
 }
 
 // GetMachineLSE gets the machineLSE information from database.
-func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *api.GetMachineLSERequest) (rsp *proto.MachineLSE, err error) {
+func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *ufsAPI.GetMachineLSERequest) (rsp *ufspb.MachineLSE, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -101,7 +101,7 @@ func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *api.GetMachin
 }
 
 // ListMachineLSEs list the machineLSEs information from database.
-func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *api.ListMachineLSEsRequest) (rsp *api.ListMachineLSEsResponse, err error) {
+func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *ufsAPI.ListMachineLSEsRequest) (rsp *ufsAPI.ListMachineLSEsResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -109,7 +109,7 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *api.ListMac
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListMachineLSEs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListMachineLSEs(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -117,14 +117,14 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *api.ListMac
 	for _, machineLSE := range result {
 		machineLSE.Name = util.AddPrefix(util.MachineLSECollection, machineLSE.Name)
 	}
-	return &api.ListMachineLSEsResponse{
+	return &ufsAPI.ListMachineLSEsResponse{
 		MachineLSEs:   result,
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
 // DeleteMachineLSE deletes the machineLSE from database.
-func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *api.DeleteMachineLSERequest) (rsp *empty.Empty, err error) {
+func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *ufsAPI.DeleteMachineLSERequest) (rsp *empty.Empty, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -137,7 +137,7 @@ func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *api.Delete
 }
 
 // CreateRackLSE creates rackLSE entry in database.
-func (fs *FleetServerImpl) CreateRackLSE(ctx context.Context, req *api.CreateRackLSERequest) (rsp *proto.RackLSE, err error) {
+func (fs *FleetServerImpl) CreateRackLSE(ctx context.Context, req *ufsAPI.CreateRackLSERequest) (rsp *ufspb.RackLSE, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -155,7 +155,7 @@ func (fs *FleetServerImpl) CreateRackLSE(ctx context.Context, req *api.CreateRac
 }
 
 // UpdateRackLSE updates the rackLSE information in database.
-func (fs *FleetServerImpl) UpdateRackLSE(ctx context.Context, req *api.UpdateRackLSERequest) (rsp *proto.RackLSE, err error) {
+func (fs *FleetServerImpl) UpdateRackLSE(ctx context.Context, req *ufsAPI.UpdateRackLSERequest) (rsp *ufspb.RackLSE, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -173,7 +173,7 @@ func (fs *FleetServerImpl) UpdateRackLSE(ctx context.Context, req *api.UpdateRac
 }
 
 // GetRackLSE gets the rackLSE information from database.
-func (fs *FleetServerImpl) GetRackLSE(ctx context.Context, req *api.GetRackLSERequest) (rsp *proto.RackLSE, err error) {
+func (fs *FleetServerImpl) GetRackLSE(ctx context.Context, req *ufsAPI.GetRackLSERequest) (rsp *ufspb.RackLSE, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -191,7 +191,7 @@ func (fs *FleetServerImpl) GetRackLSE(ctx context.Context, req *api.GetRackLSERe
 }
 
 // ListRackLSEs list the rackLSEs information from database.
-func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *api.ListRackLSEsRequest) (rsp *api.ListRackLSEsResponse, err error) {
+func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *ufsAPI.ListRackLSEsRequest) (rsp *ufsAPI.ListRackLSEsResponse, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -199,7 +199,7 @@ func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *api.ListRackLS
 		return nil, err
 	}
 	pageSize := util.GetPageSize(req.PageSize)
-	result, nextPageToken, err := controller.ListRackLSEs(ctx, pageSize, req.PageToken)
+	result, nextPageToken, err := controller.ListRackLSEs(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -207,14 +207,14 @@ func (fs *FleetServerImpl) ListRackLSEs(ctx context.Context, req *api.ListRackLS
 	for _, rackLSE := range result {
 		rackLSE.Name = util.AddPrefix(util.RackLSECollection, rackLSE.Name)
 	}
-	return &api.ListRackLSEsResponse{
+	return &ufsAPI.ListRackLSEsResponse{
 		RackLSEs:      result,
 		NextPageToken: nextPageToken,
 	}, nil
 }
 
 // DeleteRackLSE deletes the rackLSE from database.
-func (fs *FleetServerImpl) DeleteRackLSE(ctx context.Context, req *api.DeleteRackLSERequest) (rsp *empty.Empty, err error) {
+func (fs *FleetServerImpl) DeleteRackLSE(ctx context.Context, req *ufsAPI.DeleteRackLSERequest) (rsp *empty.Empty, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
@@ -227,12 +227,12 @@ func (fs *FleetServerImpl) DeleteRackLSE(ctx context.Context, req *api.DeleteRac
 }
 
 // ImportMachineLSEs imports browser machines' LSE & related infos (e.g. IP)
-func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *api.ImportMachineLSEsRequest) (response *status.Status, err error) {
+func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *ufsAPI.ImportMachineLSEsRequest) (response *status.Status, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	source := req.GetMachineDbSource()
-	if err := api.ValidateMachineDBSource(source); err != nil {
+	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
 	mdbClient, err := fs.newMachineDBInterfaceFactory(ctx, source.GetHost())
@@ -244,14 +244,14 @@ func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *api.Impor
 	if err != nil {
 		return nil, machineDBServiceFailureStatus("ListPhysicalHosts").Err()
 	}
-	if err := api.ValidateResourceKey(hosts.GetHosts(), "Name"); err != nil {
+	if err := ufsAPI.ValidateResourceKey(hosts.GetHosts(), "Name"); err != nil {
 		return nil, errors.Annotate(err, "hosts has invalid chars").Err()
 	}
 	vms, err := mdbClient.ListVMs(ctx, &crimson.ListVMsRequest{})
 	if err != nil {
 		return nil, machineDBServiceFailureStatus("ListVMs").Err()
 	}
-	if err := api.ValidateResourceKey(vms.GetVms(), "Name"); err != nil {
+	if err := ufsAPI.ValidateResourceKey(vms.GetVms(), "Name"); err != nil {
 		return nil, errors.Annotate(err, "vms has invalid chars").Err()
 	}
 
@@ -265,9 +265,9 @@ func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *api.Impor
 }
 
 // ImportOSMachineLSEs imports chromeos devices machine lses
-func (fs *FleetServerImpl) ImportOSMachineLSEs(ctx context.Context, req *api.ImportOSMachineLSEsRequest) (response *status.Status, err error) {
+func (fs *FleetServerImpl) ImportOSMachineLSEs(ctx context.Context, req *ufsAPI.ImportOSMachineLSEsRequest) (response *status.Status, err error) {
 	source := req.GetMachineDbSource()
-	if err := api.ValidateMachineDBSource(source); err != nil {
+	if err := ufsAPI.ValidateMachineDBSource(source); err != nil {
 		return nil, err
 	}
 	client, err := fs.newCrosInventoryInterfaceFactory(ctx, source.GetHost())

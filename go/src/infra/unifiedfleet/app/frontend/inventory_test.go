@@ -9,28 +9,28 @@ import (
 	"strconv"
 	"testing"
 
-	proto "infra/unifiedfleet/api/v1/proto"
-	api "infra/unifiedfleet/api/v1/rpc"
+	. "github.com/smartystreets/goconvey/convey"
+	. "go.chromium.org/luci/common/testing/assertions"
+	code "google.golang.org/genproto/googleapis/rpc/code"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
-
-	. "github.com/smartystreets/goconvey/convey"
-	. "go.chromium.org/luci/common/testing/assertions"
-	code "google.golang.org/genproto/googleapis/rpc/code"
 )
 
-func mockMachineLSE(id string) *proto.MachineLSE {
-	return &proto.MachineLSE{
+func mockMachineLSE(id string) *ufspb.MachineLSE {
+	return &ufspb.MachineLSE{
 		Name:     util.AddPrefix(util.MachineLSECollection, id),
 		Hostname: id,
 	}
 }
 
-func mockRackLSE(id string) *proto.RackLSE {
-	return &proto.RackLSE{
+func mockRackLSE(id string) *ufspb.RackLSE {
+	return &ufspb.RackLSE{
 		Name: util.AddPrefix(util.RackLSECollection, id),
 	}
 }
@@ -42,14 +42,14 @@ func TestCreateMachineLSE(t *testing.T) {
 	defer validate()
 	Convey("CreateMachineLSEs", t, func() {
 		Convey("Create new machineLSE with machineLSE_id", func() {
-			machine := &proto.Machine{
+			machine := &ufspb.Machine{
 				Name: "machine-1",
 			}
 			_, err := registration.CreateMachine(ctx, machine)
 			So(err, ShouldBeNil)
 
 			machineLSE1 := mockMachineLSE("machineLSE-1")
-			req := &api.CreateMachineLSERequest{
+			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   machineLSE1,
 				MachineLSEId: "machinelse-1",
 				Machines:     []string{"machine-1"},
@@ -60,18 +60,18 @@ func TestCreateMachineLSE(t *testing.T) {
 		})
 
 		Convey("Create new machineLSE - Invalid input nil", func() {
-			req := &api.CreateMachineLSERequest{
+			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE: nil,
 				Machines:   []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Create new machineLSE - Invalid input empty ID", func() {
-			req := &api.CreateMachineLSERequest{
+			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   mockMachineLSE("machineLSE-3"),
 				MachineLSEId: "",
 				Machines:     []string{"machine-1"},
@@ -79,11 +79,11 @@ func TestCreateMachineLSE(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 
 		Convey("Create new machineLSE - Invalid input invalid characters", func() {
-			req := &api.CreateMachineLSERequest{
+			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   mockMachineLSE("machineLSE-4"),
 				MachineLSEId: "a.b)7&",
 				Machines:     []string{"machine-1"},
@@ -91,22 +91,22 @@ func TestCreateMachineLSE(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 
 		Convey("Create new machineLSE - Invalid input nil machines", func() {
-			req := &api.CreateMachineLSERequest{
+			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   mockMachineLSE("machineLSE-4"),
 				MachineLSEId: "machineLSE-4",
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyMachineName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyMachineName)
 		})
 
 		Convey("Create new machineLSE - Invalid input empty machines", func() {
-			req := &api.CreateMachineLSERequest{
+			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   mockMachineLSE("machineLSE-4"),
 				MachineLSEId: "machineLSE-4",
 				Machines:     []string{""},
@@ -114,7 +114,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyMachineName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyMachineName)
 		})
 	})
 }
@@ -126,13 +126,13 @@ func TestUpdateMachineLSE(t *testing.T) {
 	defer validate()
 	Convey("UpdateMachineLSEs", t, func() {
 		Convey("Update existing machineLSEs", func() {
-			_, err := inventory.CreateMachineLSE(ctx, &proto.MachineLSE{
+			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 				Name: "machineLSE-1",
 			})
 			So(err, ShouldBeNil)
 
 			machineLSE := mockMachineLSE("machineLSE-1")
-			req := &api.UpdateMachineLSERequest{
+			req := &ufsAPI.UpdateMachineLSERequest{
 				MachineLSE: machineLSE,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
@@ -141,36 +141,36 @@ func TestUpdateMachineLSE(t *testing.T) {
 		})
 
 		Convey("Update machineLSE - Invalid input nil", func() {
-			req := &api.UpdateMachineLSERequest{
+			req := &ufsAPI.UpdateMachineLSERequest{
 				MachineLSE: nil,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Update machineLSE - Invalid input empty name", func() {
 			machineLSE4 := mockMachineLSE("")
 			machineLSE4.Name = ""
-			req := &api.UpdateMachineLSERequest{
+			req := &ufsAPI.UpdateMachineLSERequest{
 				MachineLSE: machineLSE4,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Update machineLSE - Invalid input invalid characters", func() {
 			machineLSE5 := mockMachineLSE("a.b)7&")
-			req := &api.UpdateMachineLSERequest{
+			req := &ufsAPI.UpdateMachineLSERequest{
 				MachineLSE: machineLSE5,
 			}
 			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -182,13 +182,13 @@ func TestGetMachineLSE(t *testing.T) {
 	defer validate()
 	Convey("GetMachineLSE", t, func() {
 		Convey("Get machineLSE by existing ID", func() {
-			machineLSE1, err := inventory.CreateMachineLSE(ctx, &proto.MachineLSE{
+			machineLSE1, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 				Name: "machineLSE-1",
 			})
 			So(err, ShouldBeNil)
 			machineLSE1.Name = util.AddPrefix(util.MachineLSECollection, machineLSE1.Name)
 
-			req := &api.GetMachineLSERequest{
+			req := &ufsAPI.GetMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
@@ -196,7 +196,7 @@ func TestGetMachineLSE(t *testing.T) {
 			So(resp, ShouldResembleProto, machineLSE1)
 		})
 		Convey("Get machineLSE by non-existing ID", func() {
-			req := &api.GetMachineLSERequest{
+			req := &ufsAPI.GetMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-2"),
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
@@ -205,22 +205,22 @@ func TestGetMachineLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Get machineLSE - Invalid input empty name", func() {
-			req := &api.GetMachineLSERequest{
+			req := &ufsAPI.GetMachineLSERequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Get machineLSE - Invalid input invalid characters", func() {
-			req := &api.GetMachineLSERequest{
+			req := &ufsAPI.GetMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -230,73 +230,59 @@ func TestListMachineLSEs(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	machineLSEs := make([]*proto.MachineLSE, 0, 4)
+	machineLSEs := make([]*ufspb.MachineLSE, 0, 4)
 	for i := 0; i < 4; i++ {
-		resp, _ := inventory.CreateMachineLSE(tf.C, &proto.MachineLSE{
-			Name: fmt.Sprintf("machineLSE-%d", i),
+		resp, _ := inventory.CreateMachineLSE(tf.C, &ufspb.MachineLSE{
+			Name:     fmt.Sprintf("machineLSEFilter-%d", i),
+			Machines: []string{"mac-1"},
 		})
 		resp.Name = util.AddPrefix(util.MachineLSECollection, resp.Name)
 		machineLSEs = append(machineLSEs, resp)
 	}
 	Convey("ListMachineLSEs", t, func() {
-		Convey("ListMachineLSEs - page_size negative", func() {
-			req := &api.ListMachineLSEsRequest{
+		Convey("ListMachineLSEs - page_size negative - error", func() {
+			req := &ufsAPI.ListMachineLSEsRequest{
 				PageSize: -5,
 			}
 			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
 		})
 
-		Convey("ListMachineLSEs - page_token invalid", func() {
-			req := &api.ListMachineLSEsRequest{
-				PageSize:  5,
-				PageToken: "abc",
-			}
+		Convey("ListMachineLSEs - Full listing - happy path", func() {
+			req := &ufsAPI.ListMachineLSEsRequest{}
 			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
-			So(resp, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs)
+		})
+
+		Convey("ListMachineLSEs - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListMachineLSEsRequest{
+				Filter: "machine=mac-1|rpm=rpm-2",
+			}
+			_, err := tf.Fleet.ListMachineLSEs(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
 		})
 
-		Convey("ListMachineLSEs - Full listing Max PageSize", func() {
-			req := &api.ListMachineLSEsRequest{
-				PageSize: 2000,
+		Convey("ListMachineLSEs - filter format valid AND", func() {
+			req := &ufsAPI.ListMachineLSEsRequest{
+				Filter: "machine=mac-1 & machineprototype=mlsep-1",
 			}
 			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.MachineLSEs, ShouldBeNil)
+		})
+
+		Convey("ListMachineLSEs - filter format valid", func() {
+			req := &ufsAPI.ListMachineLSEsRequest{
+				Filter: "machine=mac-1",
+			}
+			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs)
-		})
-
-		Convey("ListMachineLSEs - Full listing with no pagination", func() {
-			req := &api.ListMachineLSEsRequest{
-				PageSize: 0,
-			}
-			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs)
-		})
-
-		Convey("ListMachineLSEs - listing with pagination", func() {
-			req := &api.ListMachineLSEsRequest{
-				PageSize: 3,
-			}
-			resp, err := tf.Fleet.ListMachineLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs[:3])
-
-			req = &api.ListMachineLSEsRequest{
-				PageSize:  3,
-				PageToken: resp.NextPageToken,
-			}
-			resp, err = tf.Fleet.ListMachineLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs[3:])
 		})
 	})
 }
@@ -308,12 +294,12 @@ func TestDeleteMachineLSE(t *testing.T) {
 	defer validate()
 	Convey("DeleteMachineLSE", t, func() {
 		Convey("Delete machineLSE by existing ID", func() {
-			_, err := inventory.CreateMachineLSE(ctx, &proto.MachineLSE{
+			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 				Name: "machineLSE-1",
 			})
 			So(err, ShouldBeNil)
 
-			req := &api.DeleteMachineLSERequest{
+			req := &ufsAPI.DeleteMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
 			}
 			_, err = tf.Fleet.DeleteMachineLSE(tf.C, req)
@@ -325,7 +311,7 @@ func TestDeleteMachineLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete machineLSE by non-existing ID", func() {
-			req := &api.DeleteMachineLSERequest{
+			req := &ufsAPI.DeleteMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-2"),
 			}
 			_, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
@@ -333,22 +319,22 @@ func TestDeleteMachineLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete machineLSE - Invalid input empty name", func() {
-			req := &api.DeleteMachineLSERequest{
+			req := &ufsAPI.DeleteMachineLSERequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Delete machineLSE - Invalid input invalid characters", func() {
-			req := &api.DeleteMachineLSERequest{
+			req := &ufsAPI.DeleteMachineLSERequest{
 				Name: util.AddPrefix(util.MachineLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -362,7 +348,7 @@ func TestCreateRackLSE(t *testing.T) {
 	rackLSE2 := mockRackLSE("rackLSE-2")
 	Convey("CreateRackLSEs", t, func() {
 		Convey("Create new rackLSE with rackLSE_id", func() {
-			req := &api.CreateRackLSERequest{
+			req := &ufsAPI.CreateRackLSERequest{
 				RackLSE:   rackLSE1,
 				RackLSEId: "rackLSE-1",
 			}
@@ -372,7 +358,7 @@ func TestCreateRackLSE(t *testing.T) {
 		})
 
 		Convey("Create existing rackLSEs", func() {
-			req := &api.CreateRackLSERequest{
+			req := &ufsAPI.CreateRackLSERequest{
 				RackLSE:   rackLSE1,
 				RackLSEId: "rackLSE-1",
 			}
@@ -383,35 +369,35 @@ func TestCreateRackLSE(t *testing.T) {
 		})
 
 		Convey("Create new rackLSE - Invalid input nil", func() {
-			req := &api.CreateRackLSERequest{
+			req := &ufsAPI.CreateRackLSERequest{
 				RackLSE: nil,
 			}
 			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Create new rackLSE - Invalid input empty ID", func() {
-			req := &api.CreateRackLSERequest{
+			req := &ufsAPI.CreateRackLSERequest{
 				RackLSE:   rackLSE2,
 				RackLSEId: "",
 			}
 			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyID)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
 		})
 
 		Convey("Create new rackLSE - Invalid input invalid characters", func() {
-			req := &api.CreateRackLSERequest{
+			req := &ufsAPI.CreateRackLSERequest{
 				RackLSE:   rackLSE2,
 				RackLSEId: "a.b)7&",
 			}
 			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -428,14 +414,14 @@ func TestUpdateRackLSE(t *testing.T) {
 	rackLSE5 := mockRackLSE("a.b)7&")
 	Convey("UpdateRackLSEs", t, func() {
 		Convey("Update existing rackLSEs", func() {
-			req := &api.CreateRackLSERequest{
+			req := &ufsAPI.CreateRackLSERequest{
 				RackLSE:   rackLSE1,
 				RackLSEId: "rackLSE-1",
 			}
 			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, rackLSE1)
-			ureq := &api.UpdateRackLSERequest{
+			ureq := &ufsAPI.UpdateRackLSERequest{
 				RackLSE: rackLSE2,
 			}
 			resp, err = tf.Fleet.UpdateRackLSE(tf.C, ureq)
@@ -444,7 +430,7 @@ func TestUpdateRackLSE(t *testing.T) {
 		})
 
 		Convey("Update non-existing rackLSEs", func() {
-			ureq := &api.UpdateRackLSERequest{
+			ureq := &ufsAPI.UpdateRackLSERequest{
 				RackLSE: rackLSE3,
 			}
 			resp, err := tf.Fleet.UpdateRackLSE(tf.C, ureq)
@@ -454,34 +440,34 @@ func TestUpdateRackLSE(t *testing.T) {
 		})
 
 		Convey("Update rackLSE - Invalid input nil", func() {
-			req := &api.UpdateRackLSERequest{
+			req := &ufsAPI.UpdateRackLSERequest{
 				RackLSE: nil,
 			}
 			resp, err := tf.Fleet.UpdateRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.NilEntity)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
 		Convey("Update rackLSE - Invalid input empty name", func() {
 			rackLSE4.Name = ""
-			req := &api.UpdateRackLSERequest{
+			req := &ufsAPI.UpdateRackLSERequest{
 				RackLSE: rackLSE4,
 			}
 			resp, err := tf.Fleet.UpdateRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 
 		Convey("Update rackLSE - Invalid input invalid characters", func() {
-			req := &api.UpdateRackLSERequest{
+			req := &ufsAPI.UpdateRackLSERequest{
 				RackLSE: rackLSE5,
 			}
 			resp, err := tf.Fleet.UpdateRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -493,7 +479,7 @@ func TestGetRackLSE(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		rackLSE1 := mockRackLSE("rackLSE-1")
-		req := &api.CreateRackLSERequest{
+		req := &ufsAPI.CreateRackLSERequest{
 			RackLSE:   rackLSE1,
 			RackLSEId: "rackLSE-1",
 		}
@@ -501,7 +487,7 @@ func TestGetRackLSE(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(resp, ShouldResembleProto, rackLSE1)
 		Convey("Get rackLSE by existing ID", func() {
-			req := &api.GetRackLSERequest{
+			req := &ufsAPI.GetRackLSERequest{
 				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-1"),
 			}
 			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
@@ -509,7 +495,7 @@ func TestGetRackLSE(t *testing.T) {
 			So(resp, ShouldResembleProto, rackLSE1)
 		})
 		Convey("Get rackLSE by non-existing ID", func() {
-			req := &api.GetRackLSERequest{
+			req := &ufsAPI.GetRackLSERequest{
 				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-2"),
 			}
 			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
@@ -518,103 +504,84 @@ func TestGetRackLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Get rackLSE - Invalid input empty name", func() {
-			req := &api.GetRackLSERequest{
+			req := &ufsAPI.GetRackLSERequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Get rackLSE - Invalid input invalid characters", func() {
-			req := &api.GetRackLSERequest{
+			req := &ufsAPI.GetRackLSERequest{
 				Name: util.AddPrefix(util.RackLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.GetRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
 
 func TestListRackLSEs(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	rackLSEs := make([]*ufspb.RackLSE, 0, 4)
+	for i := 0; i < 4; i++ {
+		resp, _ := inventory.CreateRackLSE(tf.C, &ufspb.RackLSE{
+			Name:  fmt.Sprintf("rackLSE-%d", i),
+			Racks: []string{"rack-1"},
+		})
+		resp.Name = util.AddPrefix(util.RackLSECollection, resp.Name)
+		rackLSEs = append(rackLSEs, resp)
+	}
 	Convey("ListRackLSEs", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		rackLSEs := make([]*proto.RackLSE, 0, 4)
-		for i := 0; i < 4; i++ {
-			rackLSE1 := mockRackLSE("rackLSE-1")
-			req := &api.CreateRackLSERequest{
-				RackLSE:   rackLSE1,
-				RackLSEId: fmt.Sprintf("rackLSE-%d", i),
-			}
-			resp, err := tf.Fleet.CreateRackLSE(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rackLSE1)
-			rackLSEs = append(rackLSEs, resp)
-		}
-
-		Convey("ListRackLSEs - page_size negative", func() {
-			req := &api.ListRackLSEsRequest{
+		Convey("ListRackLSEs - page_size negative - error", func() {
+			req := &ufsAPI.ListRackLSEsRequest{
 				PageSize: -5,
 			}
 			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidPageSize)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
 		})
 
-		Convey("ListRackLSEs - page_token invalid", func() {
-			req := &api.ListRackLSEsRequest{
-				PageSize:  5,
-				PageToken: "abc",
-			}
+		Convey("ListRackLSEs - Full listing - happy path", func() {
+			req := &ufsAPI.ListRackLSEsRequest{}
 			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
-			So(resp, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEs, ShouldResembleProto, rackLSEs)
+		})
+
+		Convey("ListRackLSEs - filter format invalid format OR - error", func() {
+			req := &ufsAPI.ListRackLSEsRequest{
+				Filter: "rack=mac-1|rpm=rpm-2",
+			}
+			_, err := tf.Fleet.ListRackLSEs(tf.C, req)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, InvalidPageToken)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
 		})
 
-		Convey("ListRackLSEs - Full listing Max PageSize", func() {
-			req := &api.ListRackLSEsRequest{
-				PageSize: 2000,
+		Convey("ListRackLSEs - filter format valid AND", func() {
+			req := &ufsAPI.ListRackLSEsRequest{
+				Filter: "rack=rack-1 & rackprototype=mlsep-1",
 			}
 			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(resp.RackLSEs, ShouldBeNil)
+		})
+
+		Convey("ListRackLSEs - filter format valid", func() {
+			req := &ufsAPI.ListRackLSEsRequest{
+				Filter: "rack=rack-1",
+			}
+			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp.RackLSEs, ShouldResembleProto, rackLSEs)
-		})
-
-		Convey("ListRackLSEs - Full listing with no pagination", func() {
-			req := &api.ListRackLSEsRequest{
-				PageSize: 0,
-			}
-			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.RackLSEs, ShouldResembleProto, rackLSEs)
-		})
-
-		Convey("ListRackLSEs - listing with pagination", func() {
-			req := &api.ListRackLSEsRequest{
-				PageSize: 3,
-			}
-			resp, err := tf.Fleet.ListRackLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.RackLSEs, ShouldResembleProto, rackLSEs[:3])
-
-			req = &api.ListRackLSEsRequest{
-				PageSize:  3,
-				PageToken: resp.NextPageToken,
-			}
-			resp, err = tf.Fleet.ListRackLSEs(tf.C, req)
-			So(resp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(resp.RackLSEs, ShouldResembleProto, rackLSEs[3:])
 		})
 	})
 }
@@ -626,7 +593,7 @@ func TestDeleteRackLSE(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		rackLSE1 := mockRackLSE("")
-		req := &api.CreateRackLSERequest{
+		req := &ufsAPI.CreateRackLSERequest{
 			RackLSE:   rackLSE1,
 			RackLSEId: "rackLSE-1",
 		}
@@ -634,12 +601,12 @@ func TestDeleteRackLSE(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(resp, ShouldResembleProto, rackLSE1)
 		Convey("Delete rackLSE by existing ID", func() {
-			req := &api.DeleteRackLSERequest{
+			req := &ufsAPI.DeleteRackLSERequest{
 				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-1"),
 			}
 			_, err := tf.Fleet.DeleteRackLSE(tf.C, req)
 			So(err, ShouldBeNil)
-			greq := &api.GetRackLSERequest{
+			greq := &ufsAPI.GetRackLSERequest{
 				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-1"),
 			}
 			res, err := tf.Fleet.GetRackLSE(tf.C, greq)
@@ -648,7 +615,7 @@ func TestDeleteRackLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete rackLSE by non-existing ID", func() {
-			req := &api.DeleteRackLSERequest{
+			req := &ufsAPI.DeleteRackLSERequest{
 				Name: util.AddPrefix(util.RackLSECollection, "rackLSE-2"),
 			}
 			_, err := tf.Fleet.DeleteRackLSE(tf.C, req)
@@ -656,22 +623,22 @@ func TestDeleteRackLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 		Convey("Delete rackLSE - Invalid input empty name", func() {
-			req := &api.DeleteRackLSERequest{
+			req := &ufsAPI.DeleteRackLSERequest{
 				Name: "",
 			}
 			resp, err := tf.Fleet.DeleteRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.EmptyName)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
 		Convey("Delete rackLSE - Invalid input invalid characters", func() {
-			req := &api.DeleteRackLSERequest{
+			req := &ufsAPI.DeleteRackLSERequest{
 				Name: util.AddPrefix(util.RackLSECollection, "a.b)7&"),
 			}
 			resp, err := tf.Fleet.DeleteRackLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, api.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
 }
@@ -683,9 +650,9 @@ func TestImportMachineLSEs(t *testing.T) {
 	defer validate()
 	Convey("Import machine lses", t, func() {
 		Convey("happy path", func() {
-			req := &api.ImportMachineLSEsRequest{
-				Source: &api.ImportMachineLSEsRequest_MachineDbSource{
-					MachineDbSource: &api.MachineDBSource{
+			req := &ufsAPI.ImportMachineLSEsRequest{
+				Source: &ufsAPI.ImportMachineLSEsRequest_MachineDbSource{
+					MachineDbSource: &ufsAPI.MachineDBSource{
 						Host: "fake_host",
 					},
 				},
@@ -698,12 +665,12 @@ func TestImportMachineLSEs(t *testing.T) {
 			// Verify machine lse prototypes
 			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(api.ParseResources(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
+			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
 
 			// Verify machine lses
-			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "")
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(api.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
+			So(ufsAPI.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
 			for _, r := range machineLSEs {
 				switch r.GetName() {
 				case "esx-8":
@@ -747,9 +714,9 @@ func TestImportOSMachineLSEs(t *testing.T) {
 	defer validate()
 	Convey("Import ChromeOS machine lses", t, func() {
 		Convey("happy path", func() {
-			req := &api.ImportOSMachineLSEsRequest{
-				Source: &api.ImportOSMachineLSEsRequest_MachineDbSource{
-					MachineDbSource: &api.MachineDBSource{
+			req := &ufsAPI.ImportOSMachineLSEsRequest{
+				Source: &ufsAPI.ImportOSMachineLSEsRequest_MachineDbSource{
+					MachineDbSource: &ufsAPI.MachineDBSource{
 						Host: "fake_host",
 					},
 				},
@@ -762,12 +729,12 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			// Verify machine lse prototypes
 			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(api.ParseResources(lps, "Name"), ShouldResemble, []string{"acs-lab:camera", "acs-lab:wificell", "atl-lab:labstation", "atl-lab:standard"})
+			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"acs-lab:camera", "acs-lab:wificell", "atl-lab:labstation", "atl-lab:standard"})
 
 			// Verify machine lses
-			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "")
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(api.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"chromeos2-test_host", "chromeos3-test_host", "chromeos5-test_host", "test_servo"})
+			So(ufsAPI.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"chromeos2-test_host", "chromeos3-test_host", "chromeos5-test_host", "test_servo"})
 			// Spot check some fields
 			for _, r := range machineLSEs {
 				switch r.GetName() {
