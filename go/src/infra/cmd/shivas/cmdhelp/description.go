@@ -163,16 +163,18 @@ Fetches 50 nics and prints the output in JSON format
 `
 
 	// AddMachineLongDesc long description for AddMachineCmd
-	AddMachineLongDesc string = `Create a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name.
-You can also provide the optional nics and drac information to create the nics and drac associated with this machine.
-You can also create the nic and drac separately after creating the machine using add-nic/add-drac commands.
+	AddMachineLongDesc string = `Create a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) to UFS.
+
+You can create a machine with required parameters to UFS, and later add nic/drac separately by using add-nic/add-drac commands.
+
+You can also provide the optional nics and drac information to create the nics and drac associated with this machine by specifying a json file as input.
 
 Examples:
-shivas add-machine -f machinerequest.json
+shivas add-machine -f machinerequest.json -lab mtv97
 Creates a machine by reading a JSON file input.
 
-shivas add-machine -i
-Creates a machine by reading input through interactive mode.`
+shivas add-machine -name machine1 -lab mtv97 -rack rack1 -ticket b/1234 -platform platform1 -kvm kvm1
+Creates a rack by parameters without adding nic/drac.`
 
 	// UpdateMachineLongDesc long description for UpdateMachineCmd
 	UpdateMachineLongDesc string = `Update a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name.
@@ -202,7 +204,7 @@ Fetches 5 machines and prints the output in JSON format
 `
 
 	// MachineRegistrationFileText description for machine registration file input
-	MachineRegistrationFileText string = `Path to a file containing machine creation request specification in JSON format.
+	MachineRegistrationFileText string = `[JSON Mode] Path to a file containing machine creation request specification in JSON format.
 This file must contain required machine field and optional nics/drac field.
 
 Example Browser machine creation request:
@@ -210,7 +212,6 @@ Example Browser machine creation request:
 	"machine": {
 		"name": "machine-BROWSERLAB-example",
 		"location": {
-			"lab": "LAB_DATACENTER_MTV97",
 			"rack": "RackName"
 		},
 		"chromeBrowserMachine": {
@@ -219,10 +220,6 @@ Example Browser machine creation request:
 			"kvmInterface": {
 				"kvm": "kvm.mtv97",
 				"port": 34
-			},
-			"rpmInterface": {
-				"rpm": "rpm.mtv97",
-				"port": 65
 			},
 			"deploymentTicket": "846026"
 		},
@@ -827,7 +824,7 @@ You can create a rack with name and lab to UFS, and later add kvm/switch/rpm sep
 You can also provide the optional switches, kvms and rpms information to create the switches, kvms and rpms associated with this rack by specifying a json file as input.
 
 Examples:
-shivas add-rack -json-file rackrequest.json -lab lab01
+shivas add-rack -f rackrequest.json -lab lab01
 Creates a rack by reading a JSON file input.
 
 shivas add-rack -name rack-123 -lab lab01 -capacity 10

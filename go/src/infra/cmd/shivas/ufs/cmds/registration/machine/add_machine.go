@@ -6,41 +6,58 @@ package machine
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // AddMachineCmd add Machine to the system.
 var AddMachineCmd = &subcommands.Command{
 	UsageLine: "add-machine [Options...]",
-	ShortDesc: "Create a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name",
+	ShortDesc: "Create a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) to UFS",
 	LongDesc:  cmdhelp.AddMachineLongDesc,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineRegistrationFileText)
-		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
+		c.Flags.StringVar(&c.machineName, "name", "", "the name of the machine to add")
+		c.Flags.StringVar(&c.labName, "lab", "", fmt.Sprintf("the name of the lab to add the machine to. Valid lab strings: [%s]", strings.Join(utils.ValidLabStr(), ", ")))
+		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to")
+		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine")
+		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses")
+		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine")
 		return c
 	},
 }
 
 type addMachine struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+
 	newSpecsFile string
-	interactive  bool
+
+	machineName      string
+	labName          string
+	rackName         string
+	platform         string
+	kvm              string
+	deploymentTicket string
 }
 
 func (c *addMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -61,31 +78,80 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+
 	var machineRegistrationReq ufsAPI.MachineRegistrationRequest
-	if c.interactive {
-		return errors.New("Interactive mode for this " +
-			"command is not yet implemented yet. Use JSON input mode.")
+	if c.newSpecsFile != "" {
+		if err = utils.ParseJSONFile(c.newSpecsFile, &machineRegistrationReq); err != nil {
+			return err
+		}
+		ufsLab := utils.ToUFSLab(c.labName)
+		machineRegistrationReq.GetMachine().GetLocation().Lab = ufsLab
+		machineRegistrationReq.GetMachine().Realm = utils.ToUFSRealm(ufsLab.String())
+	} else {
+		c.parseArgs(&machineRegistrationReq)
 	}
-	if err = utils.ParseJSONFile(c.newSpecsFile, &machineRegistrationReq); err != nil {
-		return err
-	}
+
 	res, err := ic.MachineRegistration(ctx, &machineRegistrationReq)
 	if err != nil {
 		return err
 	}
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	fmt.Println("Successfully added the machine: ", machineRegistrationReq.GetMachine().GetName())
 	return nil
 }
 
+func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
+	ufsLab := utils.ToUFSLab(c.labName)
+	req.Machine = &ufspb.Machine{
+		Name: c.machineName,
+		Location: &ufspb.Location{
+			Lab:  ufsLab,
+			Rack: c.rackName,
+		},
+		Realm: utils.ToUFSRealm(c.labName),
+	}
+	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
+		req.Machine.Device = &ufspb.Machine_ChromeBrowserMachine{
+			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+				DisplayName:      c.machineName,
+				ChromePlatform:   c.platform,
+				DeploymentTicket: c.deploymentTicket,
+				KvmInterface: &ufspb.KVMInterface{
+					Kvm: c.kvm,
+				},
+			},
+		}
+	} else {
+		req.Machine.Device = &ufspb.Machine_ChromeosMachine{
+			ChromeosMachine: &ufspb.ChromeOSMachine{},
+		}
+	}
+}
+
 func (c *addMachine) validateArgs() error {
-	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+	if c.labName == "" {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n'-lab' is required.")
+	}
+	if !utils.IsUFSLab(c.labName) {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n%s is not a valid lab name, please check help info for '-lab'.", c.labName)
+	}
+	if c.newSpecsFile != "" {
+		if c.machineName != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
+		}
+
+	} else {
+		if c.machineName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is setup, so '-name' is required.")
+		}
 	}
 	return nil
 }

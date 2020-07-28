@@ -33,14 +33,16 @@ Deletes the given machine and deletes the nics and drac associated with this mac
 		c := &deleteMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		return c
 	},
 }
 
 type deleteMachine struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 }
 
 func (c *deleteMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -67,6 +69,9 @@ func (c *deleteMachine) innerRun(a subcommands.Application, args []string, env s
 		return nil
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -76,7 +81,7 @@ func (c *deleteMachine) innerRun(a subcommands.Application, args []string, env s
 		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, args[0]),
 	})
 	if err == nil {
-		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		fmt.Fprintln(a.GetOut(), args[0], "is deleted successfully.")
 		return nil
 	}
 	return err
