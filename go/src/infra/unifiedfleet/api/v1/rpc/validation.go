@@ -40,6 +40,8 @@ var (
 	ResourceFormat                string = "Invalid input - Entity Name pattern should be in a format of resource_names/XXX, resource_names includes machines/racks/vms/hosts/vlans."
 	EmptyMachineName              string = "Invalid input - Machine name cannot be empty."
 	EmptyRackName                 string = "Invalid input - Rack name cannot be empty."
+	FilterFormat                  string = "Filter format Egs:\n" + "machine=mac-1\n" + "machine=mac-1,mac-2\n" + "machine=mac-1 & nic=nic-1\n" + "machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2"
+	InvalidFilterFormat           string = fmt.Sprintf("%s,%s", "Invalid input -", FilterFormat)
 )
 
 var (
@@ -62,6 +64,19 @@ var switchRegex = regexp.MustCompile(`switches\.*`)
 var vlanRegex = regexp.MustCompile(`vlans\.*`)
 var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
+
+// FilterRegex is the regex for filter string for all List requests
+//
+// resource1=resourcename1
+// resource1=resourcename1,resourcename2
+// resource1=resourcename1 & resource2=resourcename21
+// resource1=resourcename1,resourcename2 & resource2=resourcename21,resourcename22
+// resource1=resourcename1 & resource2=resourcename21 & resource3=resourcename31
+// machine=mac-1
+// machine=mac-1,mac-2
+// machine=mac-1 & nic=nic-1
+// machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2
+var FilterRegex = regexp.MustCompile(`^([a-z]*\=[a-zA-Z0-9-)(_:.]{3,63})(\,[a-zA-Z0-9-)(_:.]{3,63})*(\&([a-z]*\=[a-zA-Z0-9-)(_:.]{3,63})(\,[a-zA-Z0-9-)(_:.]{3,63})*)*$`)
 
 // It's used to validate a host or vm in resource_name
 var hostRegex = regexp.MustCompile(`hosts\.*`)

@@ -6,6 +6,7 @@ package registration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // RPMKind is the datastore entity kind RPM.
@@ -78,7 +80,7 @@ func GetRPM(ctx context.Context, id string) (*ufspb.RPM, error) {
 // Does a query over RPM entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
 func ListRPMs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.RPM, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, RPMKind, pageSize, pageToken)
+	q, err := ufsds.ListQuery(ctx, RPMKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -155,4 +157,17 @@ func putAllRPM(ctx context.Context, rpms []*ufspb.RPM, update bool) ([]*ufspb.RP
 		return rpms, err
 	}
 	return nil, err
+}
+
+// GetRPMIndexedFieldName returns the index name
+func GetRPMIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.LabFilterName:
+		field = "lab"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are lab", input)
+	}
+	return field, nil
 }

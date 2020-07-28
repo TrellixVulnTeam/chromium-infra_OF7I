@@ -6,6 +6,7 @@ package registration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // KVMKind is the datastore entity kind KVM.
@@ -113,7 +115,7 @@ func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
 // Does a query over KVM entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
 func ListKVMs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.KVM, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, KVMKind, pageSize, pageToken)
+	q, err := ufsds.ListQuery(ctx, KVMKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -230,4 +232,19 @@ func BatchDeleteKVMs(ctx context.Context, ids []string) error {
 		protos[i] = &ufspb.KVM{Name: id}
 	}
 	return ufsds.BatchDelete(ctx, protos, newKVMEntity)
+}
+
+// GetKVMIndexedFieldName returns the index name
+func GetKVMIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.ChromePlatformFilterName:
+		field = "chrome_platform_id"
+	case util.LabFilterName:
+		field = "lab"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/platform", input)
+	}
+	return field, nil
 }

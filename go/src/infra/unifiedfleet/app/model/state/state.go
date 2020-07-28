@@ -6,6 +6,7 @@ package state
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -16,7 +17,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // RecordKind is the datastore entity kind of state.
@@ -41,14 +43,14 @@ func (e *RecordEntity) GetProto() (proto.Message, error) {
 	return &p, nil
 }
 
-func newRecordEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
+func newRecordEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
 	p := pm.(*ufspb.StateRecord)
 	if p.GetResourceName() == "" {
 		return nil, errors.Reason("Empty resource name in state record").Err()
 	}
 	s, err := proto.Marshal(p)
 	if err != nil {
-		return nil, errors.Annotate(err, "fail to marshal DHCPConfig %s", p).Err()
+		return nil, errors.Annotate(err, "fail to marshal state record %s", p).Err()
 	}
 	return &RecordEntity{
 		ResourceName: p.GetResourceName(),
@@ -59,7 +61,7 @@ func newRecordEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity
 
 // GetStateRecord returns the state for a given resource name.
 func GetStateRecord(ctx context.Context, id string) (*ufspb.StateRecord, error) {
-	pm, err := fleetds.Get(ctx, &ufspb.StateRecord{ResourceName: id}, newRecordEntity)
+	pm, err := ufsds.Get(ctx, &ufspb.StateRecord{ResourceName: id}, newRecordEntity)
 	if err == nil {
 		return pm.(*ufspb.StateRecord), err
 	}
@@ -69,7 +71,7 @@ func GetStateRecord(ctx context.Context, id string) (*ufspb.StateRecord, error) 
 // UpdateStateRecord updates a state record in datastore.
 func UpdateStateRecord(ctx context.Context, stateRecord *ufspb.StateRecord) (*ufspb.StateRecord, error) {
 	stateRecord.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.PutSingle(ctx, stateRecord, newRecordEntity)
+	pm, err := ufsds.PutSingle(ctx, stateRecord, newRecordEntity)
 	if err == nil {
 		return pm.(*ufspb.StateRecord), err
 	}
@@ -78,7 +80,7 @@ func UpdateStateRecord(ctx context.Context, stateRecord *ufspb.StateRecord) (*uf
 
 // ListStateRecords lists all the states
 func ListStateRecords(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.StateRecord, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, RecordKind, pageSize, pageToken)
+	q, err := ufsds.ListQuery(ctx, RecordKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -100,7 +102,7 @@ func ListStateRecords(ctx context.Context, pageSize int32, pageToken string) (re
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List state records %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -109,23 +111,23 @@ func ListStateRecords(ctx context.Context, pageSize int32, pageToken string) (re
 }
 
 // ImportStateRecords creates or updates a batch of state records in datastore
-func ImportStateRecords(ctx context.Context, states []*ufspb.StateRecord) (*fleetds.OpResults, error) {
+func ImportStateRecords(ctx context.Context, states []*ufspb.StateRecord) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(states))
 	utime := ptypes.TimestampNow()
 	for i, m := range states {
 		m.UpdateTime = utime
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newRecordEntity, true, true)
+	return ufsds.Insert(ctx, protos, newRecordEntity, true, true)
 }
 
-func queryAllState(ctx context.Context) ([]fleetds.FleetEntity, error) {
+func queryAllState(ctx context.Context) ([]ufsds.FleetEntity, error) {
 	var entities []*RecordEntity
 	q := datastore.NewQuery(RecordKind)
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
-	fe := make([]fleetds.FleetEntity, len(entities))
+	fe := make([]ufsds.FleetEntity, len(entities))
 	for i, e := range entities {
 		fe[i] = e
 	}
@@ -133,17 +135,30 @@ func queryAllState(ctx context.Context) ([]fleetds.FleetEntity, error) {
 }
 
 // GetAllStates returns all states in datastore.
-func GetAllStates(ctx context.Context) (*fleetds.OpResults, error) {
-	return fleetds.GetAll(ctx, queryAllState)
+func GetAllStates(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAllState)
 }
 
 // DeleteStates deletes a batch of states
-func DeleteStates(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+func DeleteStates(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {
 		protos[i] = &ufspb.StateRecord{
 			ResourceName: m,
 		}
 	}
-	return fleetds.DeleteAll(ctx, protos, newRecordEntity)
+	return ufsds.DeleteAll(ctx, protos, newRecordEntity)
+}
+
+// GetStateIndexedFieldName returns the index name
+func GetStateIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.StateFilterName:
+		field = "state"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for state record are state", input)
+	}
+	return field, nil
 }

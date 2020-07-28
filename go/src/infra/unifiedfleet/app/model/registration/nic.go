@@ -6,6 +6,7 @@ package registration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -15,8 +16,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // NicKind is the datastore entity kind Nic.
@@ -27,21 +29,21 @@ type NicEntity struct {
 	_kind    string `gae:"$kind,Nic"`
 	ID       string `gae:"$id"`
 	SwitchID string `gae:"switch_id"`
-	// fleet.Nic cannot be directly used as it contains pointer.
+	// ufspb.Nic cannot be directly used as it contains pointer.
 	Nic []byte `gae:",noindex"`
 }
 
 // GetProto returns the unmarshaled Nic.
 func (e *NicEntity) GetProto() (proto.Message, error) {
-	var p fleet.Nic
+	var p ufspb.Nic
 	if err := proto.Unmarshal(e.Nic, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newNicEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.Nic)
+func newNicEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.Nic)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Nic ID").Err()
 	}
@@ -57,20 +59,20 @@ func newNicEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, e
 }
 
 // CreateNic creates a new nic in datastore.
-func CreateNic(ctx context.Context, nic *fleet.Nic) (*fleet.Nic, error) {
+func CreateNic(ctx context.Context, nic *ufspb.Nic) (*ufspb.Nic, error) {
 	return putNic(ctx, nic, false)
 }
 
 // UpdateNic updates nic in datastore.
-func UpdateNic(ctx context.Context, nic *fleet.Nic) (*fleet.Nic, error) {
+func UpdateNic(ctx context.Context, nic *ufspb.Nic) (*ufspb.Nic, error) {
 	return putNic(ctx, nic, true)
 }
 
 // GetNic returns nic for the given id from datastore.
-func GetNic(ctx context.Context, id string) (*fleet.Nic, error) {
-	pm, err := fleetds.Get(ctx, &fleet.Nic{Name: id}, newNicEntity)
+func GetNic(ctx context.Context, id string) (*ufspb.Nic, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.Nic{Name: id}, newNicEntity)
 	if err == nil {
-		return pm.(*fleet.Nic), err
+		return pm.(*ufspb.Nic), err
 	}
 	return nil, err
 }
@@ -78,21 +80,21 @@ func GetNic(ctx context.Context, id string) (*fleet.Nic, error) {
 // QueryNicByPropertyName query's Nic Entity in the datastore
 //
 // If keysOnly is true, then only key field is populated in returned nics
-func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Nic, error) {
+func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.Nic, error) {
 	q := datastore.NewQuery(NicKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*NicEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
-		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
 		logging.Infof(ctx, "No nics found for the query: %s", id)
 		return nil, nil
 	}
-	nics := make([]*fleet.Nic, 0, len(entities))
+	nics := make([]*ufspb.Nic, 0, len(entities))
 	for _, entity := range entities {
 		if keysOnly {
-			nics = append(nics, &fleet.Nic{
+			nics = append(nics, &ufspb.Nic{
 				Name: entity.ID,
 			})
 		} else {
@@ -101,7 +103,7 @@ func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOn
 				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
 				continue
 			}
-			nics = append(nics, pm.(*fleet.Nic))
+			nics = append(nics, pm.(*ufspb.Nic))
 		}
 	}
 	return nics, nil
@@ -111,8 +113,8 @@ func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOn
 //
 // Does a query over Nic entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListNics(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.Nic, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, NicKind, pageSize, pageToken)
+func ListNics(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Nic, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, NicKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -123,7 +125,7 @@ func ListNics(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.Nic))
+		res = append(res, pm.(*ufspb.Nic))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
@@ -134,7 +136,7 @@ func ListNics(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List Nics %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -144,14 +146,14 @@ func ListNics(ctx context.Context, pageSize int32, pageToken string) (res []*fle
 
 // DeleteNic deletes the nic in datastore
 func DeleteNic(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.Nic{Name: id}, newNicEntity)
+	return ufsds.Delete(ctx, &ufspb.Nic{Name: id}, newNicEntity)
 }
 
-func putNic(ctx context.Context, nic *fleet.Nic, update bool) (*fleet.Nic, error) {
+func putNic(ctx context.Context, nic *ufspb.Nic, update bool) (*ufspb.Nic, error) {
 	nic.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, nic, newNicEntity, update)
+	pm, err := ufsds.Put(ctx, nic, newNicEntity, update)
 	if err == nil {
-		return pm.(*fleet.Nic), err
+		return pm.(*ufspb.Nic), err
 	}
 	return nil, err
 }
@@ -161,7 +163,7 @@ func putNic(ctx context.Context, nic *fleet.Nic, update bool) (*fleet.Nic, error
 // This is a non-atomic operation and doesnt check if the object already exists before
 // update. Must be used within a Transaction where objects are checked before update.
 // Will lead to partial updates if not used in a transaction.
-func BatchUpdateNics(ctx context.Context, nics []*fleet.Nic) ([]*fleet.Nic, error) {
+func BatchUpdateNics(ctx context.Context, nics []*ufspb.Nic) ([]*ufspb.Nic, error) {
 	return putAllNic(ctx, nics, true)
 }
 
@@ -172,19 +174,19 @@ func BatchUpdateNics(ctx context.Context, nics []*fleet.Nic) ([]*fleet.Nic, erro
 func BatchDeleteNics(ctx context.Context, ids []string) error {
 	protos := make([]proto.Message, len(ids))
 	for i, id := range ids {
-		protos[i] = &fleet.Nic{Name: id}
+		protos[i] = &ufspb.Nic{Name: id}
 	}
-	return fleetds.BatchDelete(ctx, protos, newNicEntity)
+	return ufsds.BatchDelete(ctx, protos, newNicEntity)
 }
 
-func putAllNic(ctx context.Context, nics []*fleet.Nic, update bool) ([]*fleet.Nic, error) {
+func putAllNic(ctx context.Context, nics []*ufspb.Nic, update bool) ([]*ufspb.Nic, error) {
 	protos := make([]proto.Message, len(nics))
 	updateTime := ptypes.TimestampNow()
 	for i, nic := range nics {
 		nic.UpdateTime = updateTime
 		protos[i] = nic
 	}
-	_, err := fleetds.PutAll(ctx, protos, newNicEntity, update)
+	_, err := ufsds.PutAll(ctx, protos, newNicEntity, update)
 	if err == nil {
 		return nics, err
 	}
@@ -192,23 +194,23 @@ func putAllNic(ctx context.Context, nics []*fleet.Nic, update bool) ([]*fleet.Ni
 }
 
 // ImportNics creates or updates a batch of nics in datastore.
-func ImportNics(ctx context.Context, nics []*fleet.Nic) (*fleetds.OpResults, error) {
+func ImportNics(ctx context.Context, nics []*ufspb.Nic) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(nics))
 	utime := ptypes.TimestampNow()
 	for i, m := range nics {
 		m.UpdateTime = utime
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newNicEntity, true, true)
+	return ufsds.Insert(ctx, protos, newNicEntity, true, true)
 }
 
-func queryAllNic(ctx context.Context) ([]fleetds.FleetEntity, error) {
+func queryAllNic(ctx context.Context) ([]ufsds.FleetEntity, error) {
 	var entities []*NicEntity
 	q := datastore.NewQuery(NicKind)
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
-	fe := make([]fleetds.FleetEntity, len(entities))
+	fe := make([]ufsds.FleetEntity, len(entities))
 	for i, e := range entities {
 		fe[i] = e
 	}
@@ -216,17 +218,34 @@ func queryAllNic(ctx context.Context) ([]fleetds.FleetEntity, error) {
 }
 
 // GetAllNics returns all nics in datastore.
-func GetAllNics(ctx context.Context) (*fleetds.OpResults, error) {
-	return fleetds.GetAll(ctx, queryAllNic)
+func GetAllNics(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAllNic)
 }
 
 // DeleteNics deletes a batch of nics
-func DeleteNics(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+func DeleteNics(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {
-		protos[i] = &fleet.Nic{
+		protos[i] = &ufspb.Nic{
 			Name: m,
 		}
 	}
-	return fleetds.DeleteAll(ctx, protos, newNicEntity)
+	return ufsds.DeleteAll(ctx, protos, newNicEntity)
+}
+
+// GetNicIndexedFieldName returns the index name
+func GetNicIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.SwitchFilterName:
+		field = "switch_id"
+	case util.LabFilterName:
+		field = "lab"
+	case util.RackFilterName:
+		field = "rack"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch", input)
+	}
+	return field, nil
 }

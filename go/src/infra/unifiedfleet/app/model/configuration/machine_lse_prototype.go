@@ -16,35 +16,35 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/util"
 )
 
-// MachineLSEPrototypeKind is the datastore entity kind for chrome platforms.
+// MachineLSEPrototypeKind is the datastore entity kind for MachineLSEPrototypes.
 const MachineLSEPrototypeKind string = "MachineLSEPrototype"
 
 // MachineLSEPrototypeEntity is a datastore entity that tracks a platform.
 type MachineLSEPrototypeEntity struct {
 	_kind string `gae:"$kind,MachineLSEPrototype"`
 	ID    string `gae:"$id"`
-	// fleet.MachineLSEPrototype cannot be directly used as it contains pointer.
+	// ufspb.MachineLSEPrototype cannot be directly used as it contains pointer.
 	MachineLSEPrototype []byte `gae:",noindex"`
 }
 
-// GetProto returns the unmarshaled Chrome platform.
+// GetProto returns the unmarshaled MachineLSEPrototype.
 func (e *MachineLSEPrototypeEntity) GetProto() (proto.Message, error) {
-	var p fleet.MachineLSEPrototype
+	var p ufspb.MachineLSEPrototype
 	if err := proto.Unmarshal(e.MachineLSEPrototype, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newMachineLSEPrototypeEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.MachineLSEPrototype)
+func newMachineLSEPrototypeEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.MachineLSEPrototype)
 	if p.GetName() == "" {
-		return nil, errors.Reason("Empty Chrome Platform ID").Err()
+		return nil, errors.Reason("Empty MachineLSEPrototype ID").Err()
 	}
 	machineLSEPrototype, err := proto.Marshal(p)
 	if err != nil {
@@ -57,20 +57,20 @@ func newMachineLSEPrototypeEntity(ctx context.Context, pm proto.Message) (fleetd
 }
 
 // CreateMachineLSEPrototype creates a new machineLSEPrototype in datastore.
-func CreateMachineLSEPrototype(ctx context.Context, machineLSEPrototype *fleet.MachineLSEPrototype) (*fleet.MachineLSEPrototype, error) {
+func CreateMachineLSEPrototype(ctx context.Context, machineLSEPrototype *ufspb.MachineLSEPrototype) (*ufspb.MachineLSEPrototype, error) {
 	return putMachineLSEPrototype(ctx, machineLSEPrototype, false)
 }
 
 // UpdateMachineLSEPrototype updates machineLSEPrototype in datastore.
-func UpdateMachineLSEPrototype(ctx context.Context, machineLSEPrototype *fleet.MachineLSEPrototype) (*fleet.MachineLSEPrototype, error) {
+func UpdateMachineLSEPrototype(ctx context.Context, machineLSEPrototype *ufspb.MachineLSEPrototype) (*ufspb.MachineLSEPrototype, error) {
 	return putMachineLSEPrototype(ctx, machineLSEPrototype, true)
 }
 
 // GetMachineLSEPrototype returns machineLSEPrototype for the given id from datastore.
-func GetMachineLSEPrototype(ctx context.Context, id string) (*fleet.MachineLSEPrototype, error) {
-	pm, err := fleetds.Get(ctx, &fleet.MachineLSEPrototype{Name: id}, newMachineLSEPrototypeEntity)
+func GetMachineLSEPrototype(ctx context.Context, id string) (*ufspb.MachineLSEPrototype, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.MachineLSEPrototype{Name: id}, newMachineLSEPrototypeEntity)
 	if err == nil {
-		return pm.(*fleet.MachineLSEPrototype), err
+		return pm.(*ufspb.MachineLSEPrototype), err
 	}
 	return nil, err
 }
@@ -79,9 +79,9 @@ func GetMachineLSEPrototype(ctx context.Context, id string) (*fleet.MachineLSEPr
 //
 // Does a query over MachineLSEPrototype entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*fleet.MachineLSEPrototype, nextPageToken string, err error) {
+func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*ufspb.MachineLSEPrototype, nextPageToken string, err error) {
 	// Passing -1 for query limit fetches all the entities from the datastore
-	q, err := fleetds.ListQuery(ctx, MachineLSEPrototypeKind, -1, pageToken)
+	q, err := ufsds.ListQuery(ctx, MachineLSEPrototypeKind, -1, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -94,11 +94,11 @@ func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, fi
 			return nil
 		}
 		if prefix != "" {
-			if strings.Contains(pm.(*fleet.MachineLSEPrototype).GetName(), prefix) {
-				res = append(res, pm.(*fleet.MachineLSEPrototype))
+			if strings.Contains(pm.(*ufspb.MachineLSEPrototype).GetName(), prefix) {
+				res = append(res, pm.(*ufspb.MachineLSEPrototype))
 			}
 		} else {
-			res = append(res, pm.(*fleet.MachineLSEPrototype))
+			res = append(res, pm.(*ufspb.MachineLSEPrototype))
 		}
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
@@ -110,7 +110,7 @@ func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, fi
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List MachineLSEPrototypes %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -120,25 +120,30 @@ func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, fi
 
 // DeleteMachineLSEPrototype deletes the machineLSEPrototype in datastore
 func DeleteMachineLSEPrototype(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.MachineLSEPrototype{Name: id}, newMachineLSEPrototypeEntity)
+	return ufsds.Delete(ctx, &ufspb.MachineLSEPrototype{Name: id}, newMachineLSEPrototypeEntity)
 }
 
-func putMachineLSEPrototype(ctx context.Context, machineLSEPrototype *fleet.MachineLSEPrototype, update bool) (*fleet.MachineLSEPrototype, error) {
+func putMachineLSEPrototype(ctx context.Context, machineLSEPrototype *ufspb.MachineLSEPrototype, update bool) (*ufspb.MachineLSEPrototype, error) {
 	machineLSEPrototype.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, machineLSEPrototype, newMachineLSEPrototypeEntity, update)
+	pm, err := ufsds.Put(ctx, machineLSEPrototype, newMachineLSEPrototypeEntity, update)
 	if err == nil {
-		return pm.(*fleet.MachineLSEPrototype), err
+		return pm.(*ufspb.MachineLSEPrototype), err
 	}
 	return nil, err
 }
 
 // ImportMachineLSEPrototypes creates or updates a batch of machine lse prototypes in datastore
-func ImportMachineLSEPrototypes(ctx context.Context, lps []*fleet.MachineLSEPrototype) (*fleetds.OpResults, error) {
+func ImportMachineLSEPrototypes(ctx context.Context, lps []*ufspb.MachineLSEPrototype) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(lps))
 	utime := ptypes.TimestampNow()
 	for i, m := range lps {
 		m.UpdateTime = utime
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newMachineLSEPrototypeEntity, true, true)
+	return ufsds.Insert(ctx, protos, newMachineLSEPrototypeEntity, true, true)
+}
+
+// GetMachineLSEPrototypeIndexedFieldName returns the index name
+func GetMachineLSEPrototypeIndexedFieldName(input string) (string, error) {
+	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for MachineLSEPrototype", input)
 }

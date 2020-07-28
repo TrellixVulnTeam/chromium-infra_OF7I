@@ -140,7 +140,7 @@ func Get(ctx context.Context, pm proto.Message, nf NewFunc) (proto.Message, erro
 }
 
 // ListQuery constructs a query to list entities with pagination
-func ListQuery(ctx context.Context, entityKind string, pageSize int32, pageToken string) (q *datastore.Query, err error) {
+func ListQuery(ctx context.Context, entityKind string, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (q *datastore.Query, err error) {
 	var cursor datastore.Cursor
 	if pageToken != "" {
 		cursor, err = datastore.DecodeCursor(ctx, pageToken)
@@ -149,7 +149,12 @@ func ListQuery(ctx context.Context, entityKind string, pageSize int32, pageToken
 			return nil, status.Errorf(codes.InvalidArgument, "%s: %s", InvalidPageToken, err.Error())
 		}
 	}
-	q = datastore.NewQuery(entityKind).Limit(pageSize)
+	q = datastore.NewQuery(entityKind).Limit(pageSize).KeysOnly(keysOnly).FirestoreMode(true)
+	for field, values := range filterMap {
+		for _, id := range values {
+			q = q.Eq(field, id)
+		}
+	}
 	if cursor != nil {
 		q = q.Start(cursor)
 	}

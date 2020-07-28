@@ -312,6 +312,13 @@ message ListChromePlatformsRequest {
   // When paginating, all other parameters provided to `ListChromePlatforms` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListChromePlatformsResponse {
@@ -368,6 +375,13 @@ message ListOSVersionsRequest {
   // When paginating, all other parameters provided to `ListOSVersion` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListOSVersionsResponse {
@@ -423,8 +437,12 @@ message ListMachineLSEPrototypesRequest {
   // the call that provided the page token.
   string page_token = 2;
 
-  // filter
+  // filter takes the filtering condition
   string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListMachineLSEPrototypesResponse {
@@ -488,8 +506,12 @@ message ListRackLSEPrototypesRequest {
   // the call that provided the page token.
   string page_token = 2;
 
-  // filter
+  // filter takes the filtering condition
   string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListRackLSEPrototypesResponse {
@@ -552,6 +574,13 @@ message ListMachinesRequest {
   // When paginating, all other parameters provided to `ListMachines` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListMachinesResponse {
@@ -631,6 +660,13 @@ message ListRacksRequest {
   // When paginating, all other parameters provided to `ListRacks` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListRacksResponse {
@@ -711,6 +747,13 @@ message ListMachineLSEsRequest {
   // When paginating, all other parameters provided to `ListMachineLSEs` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListMachineLSEsResponse {
@@ -788,6 +831,13 @@ message ListRackLSEsRequest {
   // When paginating, all other parameters provided to `ListRackLSEs` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListRackLSEsResponse {
@@ -868,6 +918,13 @@ message ListNicsRequest {
   // When paginating, all other parameters provided to `ListNics` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListNicsResponse {
@@ -962,6 +1019,13 @@ message ListKVMsRequest {
   // When paginating, all other parameters provided to `ListKVMs` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListKVMsResponse {
@@ -1024,6 +1088,13 @@ message ListRPMsRequest {
   // When paginating, all other parameters provided to `ListRPMs` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListRPMsResponse {
@@ -1104,6 +1175,13 @@ message ListDracsRequest {
   // When paginating, all other parameters provided to `ListDracs` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListDracsResponse {
@@ -1184,6 +1262,13 @@ message ListSwitchesRequest {
   // When paginating, all other parameters provided to `ListSwitches` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListSwitchesResponse {
@@ -1246,6 +1331,13 @@ message ListVlansRequest {
   // When paginating, all other parameters provided to `ListVlans` must match
   // the call that provided the page token.
   string page_token = 2;
+
+  // filter takes the filtering condition
+  string filter = 3;
+
+  // if this is true, only keys will be returned else the entire object
+  // will be returned. By setting this to true, the list call be will faster.
+  bool keysOnly = 4;
 }
 
 message ListVlansResponse {

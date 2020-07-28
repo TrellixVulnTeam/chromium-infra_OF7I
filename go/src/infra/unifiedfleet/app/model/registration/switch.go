@@ -6,6 +6,7 @@ package registration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // SwitchKind is the datastore entity kind Switch.
@@ -78,7 +80,7 @@ func GetSwitch(ctx context.Context, id string) (*ufspb.Switch, error) {
 // Does a query over switch entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
 func ListSwitches(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Switch, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, SwitchKind, pageSize, pageToken)
+	q, err := ufsds.ListQuery(ctx, SwitchKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -195,4 +197,17 @@ func BatchDeleteSwitches(ctx context.Context, ids []string) error {
 		protos[i] = &ufspb.Switch{Name: id}
 	}
 	return ufsds.BatchDelete(ctx, protos, newSwitchEntity)
+}
+
+// GetSwitchIndexedFieldName returns the index name
+func GetSwitchIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.LabFilterName:
+		field = "lab"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab", input)
+	}
+	return field, nil
 }

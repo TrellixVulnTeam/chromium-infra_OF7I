@@ -68,7 +68,7 @@ func queryAllOS(ctx context.Context) ([]ufsds.FleetEntity, error) {
 
 // ListOSes lists the chrome os_versions
 func ListOSes(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.OSVersion, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, OSVersionKind, pageSize, pageToken)
+	q, err := ufsds.ListQuery(ctx, OSVersionKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -121,4 +121,9 @@ func DeleteOSes(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 		}
 	}
 	return ufsds.DeleteAll(ctx, protos, newOSVersionEntity)
+}
+
+// GetOSVersionIndexedFieldName returns the index name
+func GetOSVersionIndexedFieldName(input string) (string, error) {
+	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for OSVersion", input)
 }

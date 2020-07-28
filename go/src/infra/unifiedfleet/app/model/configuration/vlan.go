@@ -14,8 +14,9 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 )
 
 // VlanKind is the datastore entity kind Vlan.
@@ -25,21 +26,21 @@ const VlanKind string = "Vlan"
 type VlanEntity struct {
 	_kind string `gae:"$kind,Vlan"`
 	ID    string `gae:"$id"`
-	// fleet.Vlan cannot be directly used as it contains pointer.
+	// ufspb.Vlan cannot be directly used as it contains pointer.
 	Vlan []byte `gae:",noindex"`
 }
 
 // GetProto returns the unmarshaled Vlan.
 func (e *VlanEntity) GetProto() (proto.Message, error) {
-	var p fleet.Vlan
+	var p ufspb.Vlan
 	if err := proto.Unmarshal(e.Vlan, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newVlanEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.Vlan)
+func newVlanEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.Vlan)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Vlan ID").Err()
 	}
@@ -54,20 +55,20 @@ func newVlanEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, 
 }
 
 // CreateVlan creates a new vlan in datastore.
-func CreateVlan(ctx context.Context, vlan *fleet.Vlan) (*fleet.Vlan, error) {
+func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 	return putVlan(ctx, vlan, false)
 }
 
 // UpdateVlan updates vlan in datastore.
-func UpdateVlan(ctx context.Context, vlan *fleet.Vlan) (*fleet.Vlan, error) {
+func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 	return putVlan(ctx, vlan, true)
 }
 
 // GetVlan returns vlan for the given id from datastore.
-func GetVlan(ctx context.Context, id string) (*fleet.Vlan, error) {
-	pm, err := fleetds.Get(ctx, &fleet.Vlan{Name: id}, newVlanEntity)
+func GetVlan(ctx context.Context, id string) (*ufspb.Vlan, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.Vlan{Name: id}, newVlanEntity)
 	if err == nil {
-		return pm.(*fleet.Vlan), err
+		return pm.(*ufspb.Vlan), err
 	}
 	return nil, err
 }
@@ -76,8 +77,8 @@ func GetVlan(ctx context.Context, id string) (*fleet.Vlan, error) {
 //
 // Does a query over Vlan entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListVlans(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.Vlan, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, VlanKind, pageSize, pageToken)
+func ListVlans(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Vlan, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, VlanKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -88,7 +89,7 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.Vlan))
+		res = append(res, pm.(*ufspb.Vlan))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
@@ -99,7 +100,7 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List Vlans %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -109,36 +110,36 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 
 // DeleteVlan deletes the vlan in datastore
 func DeleteVlan(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.Vlan{Name: id}, newVlanEntity)
+	return ufsds.Delete(ctx, &ufspb.Vlan{Name: id}, newVlanEntity)
 }
 
-func putVlan(ctx context.Context, vlan *fleet.Vlan, update bool) (*fleet.Vlan, error) {
+func putVlan(ctx context.Context, vlan *ufspb.Vlan, update bool) (*ufspb.Vlan, error) {
 	vlan.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, vlan, newVlanEntity, update)
+	pm, err := ufsds.Put(ctx, vlan, newVlanEntity, update)
 	if err == nil {
-		return pm.(*fleet.Vlan), err
+		return pm.(*ufspb.Vlan), err
 	}
 	return nil, err
 }
 
 // ImportVlans creates or updates a batch of vlan in datastore
-func ImportVlans(ctx context.Context, vlans []*fleet.Vlan) (*fleetds.OpResults, error) {
+func ImportVlans(ctx context.Context, vlans []*ufspb.Vlan) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(vlans))
 	utime := ptypes.TimestampNow()
 	for i, m := range vlans {
 		m.UpdateTime = utime
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newVlanEntity, true, true)
+	return ufsds.Insert(ctx, protos, newVlanEntity, true, true)
 }
 
-func queryAllVlan(ctx context.Context) ([]fleetds.FleetEntity, error) {
+func queryAllVlan(ctx context.Context) ([]ufsds.FleetEntity, error) {
 	var entities []*VlanEntity
 	q := datastore.NewQuery(VlanKind)
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
-	fe := make([]fleetds.FleetEntity, len(entities))
+	fe := make([]ufsds.FleetEntity, len(entities))
 	for i, e := range entities {
 		fe[i] = e
 	}
@@ -146,17 +147,22 @@ func queryAllVlan(ctx context.Context) ([]fleetds.FleetEntity, error) {
 }
 
 // GetAllVlans returns all vlans in datastore.
-func GetAllVlans(ctx context.Context) (*fleetds.OpResults, error) {
-	return fleetds.GetAll(ctx, queryAllVlan)
+func GetAllVlans(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAllVlan)
 }
 
 // DeleteVlans deletes a batch of vlans
-func DeleteVlans(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+func DeleteVlans(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {
-		protos[i] = &fleet.Vlan{
+		protos[i] = &ufspb.Vlan{
 			Name: m,
 		}
 	}
-	return fleetds.DeleteAll(ctx, protos, newVlanEntity)
+	return ufsds.DeleteAll(ctx, protos, newVlanEntity)
+}
+
+// GetVlanIndexedFieldName returns the index name
+func GetVlanIndexedFieldName(input string) (string, error) {
+	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for Vlan", input)
 }

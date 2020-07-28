@@ -16,35 +16,35 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/util"
 )
 
-// RackLSEPrototypeKind is the datastore entity kind for chrome platforms.
+// RackLSEPrototypeKind is the datastore entity kind for RackLSEPrototypes.
 const RackLSEPrototypeKind string = "RackLSEPrototype"
 
 // RackLSEPrototypeEntity is a datastore entity that tracks a platform.
 type RackLSEPrototypeEntity struct {
 	_kind string `gae:"$kind,RackLSEPrototype"`
 	ID    string `gae:"$id"`
-	// fleet.RackLSEPrototype cannot be directly used as it contains pointer.
+	// ufspb.RackLSEPrototype cannot be directly used as it contains pointer.
 	RackLSEPrototype []byte `gae:",noindex"`
 }
 
-// GetProto returns the unmarshaled Chrome platform.
+// GetProto returns the unmarshaled RackLSEPrototype.
 func (e *RackLSEPrototypeEntity) GetProto() (proto.Message, error) {
-	var p fleet.RackLSEPrototype
+	var p ufspb.RackLSEPrototype
 	if err := proto.Unmarshal(e.RackLSEPrototype, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newRackLSEPrototypeEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.RackLSEPrototype)
+func newRackLSEPrototypeEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.RackLSEPrototype)
 	if p.GetName() == "" {
-		return nil, errors.Reason("Empty Chrome Platform ID").Err()
+		return nil, errors.Reason("Empty RackLSEPrototype ID").Err()
 	}
 	rackLSEPrototype, err := proto.Marshal(p)
 	if err != nil {
@@ -57,20 +57,20 @@ func newRackLSEPrototypeEntity(ctx context.Context, pm proto.Message) (fleetds.F
 }
 
 // CreateRackLSEPrototype creates a new rackLSEPrototype in datastore.
-func CreateRackLSEPrototype(ctx context.Context, rackLSEPrototype *fleet.RackLSEPrototype) (*fleet.RackLSEPrototype, error) {
+func CreateRackLSEPrototype(ctx context.Context, rackLSEPrototype *ufspb.RackLSEPrototype) (*ufspb.RackLSEPrototype, error) {
 	return putRackLSEPrototype(ctx, rackLSEPrototype, false)
 }
 
 // UpdateRackLSEPrototype updates rackLSEPrototype in datastore.
-func UpdateRackLSEPrototype(ctx context.Context, rackLSEPrototype *fleet.RackLSEPrototype) (*fleet.RackLSEPrototype, error) {
+func UpdateRackLSEPrototype(ctx context.Context, rackLSEPrototype *ufspb.RackLSEPrototype) (*ufspb.RackLSEPrototype, error) {
 	return putRackLSEPrototype(ctx, rackLSEPrototype, true)
 }
 
 // GetRackLSEPrototype returns rackLSEPrototype for the given id from datastore.
-func GetRackLSEPrototype(ctx context.Context, id string) (*fleet.RackLSEPrototype, error) {
-	pm, err := fleetds.Get(ctx, &fleet.RackLSEPrototype{Name: id}, newRackLSEPrototypeEntity)
+func GetRackLSEPrototype(ctx context.Context, id string) (*ufspb.RackLSEPrototype, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.RackLSEPrototype{Name: id}, newRackLSEPrototypeEntity)
 	if err == nil {
-		return pm.(*fleet.RackLSEPrototype), err
+		return pm.(*ufspb.RackLSEPrototype), err
 	}
 	return nil, err
 }
@@ -79,9 +79,9 @@ func GetRackLSEPrototype(ctx context.Context, id string) (*fleet.RackLSEPrototyp
 //
 // Does a query over RackLSEPrototype entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*fleet.RackLSEPrototype, nextPageToken string, err error) {
+func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string) (res []*ufspb.RackLSEPrototype, nextPageToken string, err error) {
 	// Passing -1 for query limit fetches all the entities from the datastore
-	q, err := fleetds.ListQuery(ctx, RackLSEPrototypeKind, -1, pageToken)
+	q, err := ufsds.ListQuery(ctx, RackLSEPrototypeKind, -1, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -94,11 +94,11 @@ func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filte
 			return nil
 		}
 		if prefix != "" {
-			if strings.Contains(pm.(*fleet.RackLSEPrototype).GetName(), prefix) {
-				res = append(res, pm.(*fleet.RackLSEPrototype))
+			if strings.Contains(pm.(*ufspb.RackLSEPrototype).GetName(), prefix) {
+				res = append(res, pm.(*ufspb.RackLSEPrototype))
 			}
 		} else {
-			res = append(res, pm.(*fleet.RackLSEPrototype))
+			res = append(res, pm.(*ufspb.RackLSEPrototype))
 		}
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
@@ -110,7 +110,7 @@ func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filte
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List RackLSEPrototypes %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -120,25 +120,30 @@ func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filte
 
 // DeleteRackLSEPrototype deletes the rackLSEPrototype in datastore
 func DeleteRackLSEPrototype(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.RackLSEPrototype{Name: id}, newRackLSEPrototypeEntity)
+	return ufsds.Delete(ctx, &ufspb.RackLSEPrototype{Name: id}, newRackLSEPrototypeEntity)
 }
 
-func putRackLSEPrototype(ctx context.Context, rackLSEPrototype *fleet.RackLSEPrototype, update bool) (*fleet.RackLSEPrototype, error) {
+func putRackLSEPrototype(ctx context.Context, rackLSEPrototype *ufspb.RackLSEPrototype, update bool) (*ufspb.RackLSEPrototype, error) {
 	rackLSEPrototype.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, rackLSEPrototype, newRackLSEPrototypeEntity, update)
+	pm, err := ufsds.Put(ctx, rackLSEPrototype, newRackLSEPrototypeEntity, update)
 	if err == nil {
-		return pm.(*fleet.RackLSEPrototype), err
+		return pm.(*ufspb.RackLSEPrototype), err
 	}
 	return nil, err
 }
 
 // ImportRackLSEPrototypes creates or updates a batch of rack lse prototypes in datastore
-func ImportRackLSEPrototypes(ctx context.Context, lps []*fleet.RackLSEPrototype) (*fleetds.OpResults, error) {
+func ImportRackLSEPrototypes(ctx context.Context, lps []*ufspb.RackLSEPrototype) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(lps))
 	utime := ptypes.TimestampNow()
 	for i, m := range lps {
 		m.UpdateTime = utime
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newRackLSEPrototypeEntity, true, true)
+	return ufsds.Insert(ctx, protos, newRackLSEPrototypeEntity, true, true)
+}
+
+// GetRackLSEPrototypeIndexedFieldName returns the index name
+func GetRackLSEPrototypeIndexedFieldName(input string) (string, error) {
+	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for RackLSEPrototype", input)
 }

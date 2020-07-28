@@ -6,6 +6,7 @@ package registration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -15,8 +16,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // DracKind is the datastore entity kind Drac.
@@ -27,21 +29,21 @@ type DracEntity struct {
 	_kind    string `gae:"$kind,Drac"`
 	ID       string `gae:"$id"`
 	SwitchID string `gae:"switch_id"`
-	// fleet.Drac cannot be directly used as it contains pointer.
+	// ufspb.Drac cannot be directly used as it contains pointer.
 	Drac []byte `gae:",noindex"`
 }
 
 // GetProto returns the unmarshaled Drac.
 func (e *DracEntity) GetProto() (proto.Message, error) {
-	var p fleet.Drac
+	var p ufspb.Drac
 	if err := proto.Unmarshal(e.Drac, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newDracEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.Drac)
+func newDracEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.Drac)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Drac ID").Err()
 	}
@@ -59,21 +61,21 @@ func newDracEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, 
 // QueryDracByPropertyName query's Drac Entity in the datastore
 //
 // If keysOnly is true, then only key field is populated in returned dracs
-func QueryDracByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*fleet.Drac, error) {
+func QueryDracByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.Drac, error) {
 	q := datastore.NewQuery(DracKind).KeysOnly(keysOnly).FirestoreMode(true)
 	var entities []*DracEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
-		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
 		logging.Infof(ctx, "No dracs found for the query: %s", id)
 		return nil, nil
 	}
-	dracs := make([]*fleet.Drac, 0, len(entities))
+	dracs := make([]*ufspb.Drac, 0, len(entities))
 	for _, entity := range entities {
 		if keysOnly {
-			drac := &fleet.Drac{
+			drac := &ufspb.Drac{
 				Name: entity.ID,
 			}
 			dracs = append(dracs, drac)
@@ -83,27 +85,27 @@ func QueryDracByPropertyName(ctx context.Context, propertyName, id string, keysO
 				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
 				continue
 			}
-			dracs = append(dracs, pm.(*fleet.Drac))
+			dracs = append(dracs, pm.(*ufspb.Drac))
 		}
 	}
 	return dracs, nil
 }
 
 // CreateDrac creates a new drac in datastore.
-func CreateDrac(ctx context.Context, drac *fleet.Drac) (*fleet.Drac, error) {
+func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 	return putDrac(ctx, drac, false)
 }
 
 // UpdateDrac updates drac in datastore.
-func UpdateDrac(ctx context.Context, drac *fleet.Drac) (*fleet.Drac, error) {
+func UpdateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 	return putDrac(ctx, drac, true)
 }
 
 // GetDrac returns drac for the given id from datastore.
-func GetDrac(ctx context.Context, id string) (*fleet.Drac, error) {
-	pm, err := fleetds.Get(ctx, &fleet.Drac{Name: id}, newDracEntity)
+func GetDrac(ctx context.Context, id string) (*ufspb.Drac, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.Drac{Name: id}, newDracEntity)
 	if err == nil {
-		return pm.(*fleet.Drac), err
+		return pm.(*ufspb.Drac), err
 	}
 	return nil, err
 }
@@ -112,8 +114,8 @@ func GetDrac(ctx context.Context, id string) (*fleet.Drac, error) {
 //
 // Does a query over Drac entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListDracs(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.Drac, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, DracKind, pageSize, pageToken)
+func ListDracs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.Drac, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, DracKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -124,7 +126,7 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.Drac))
+		res = append(res, pm.(*ufspb.Drac))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
@@ -135,7 +137,7 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List Dracs %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -145,14 +147,14 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken string) (res []*fl
 
 // DeleteDrac deletes the drac in datastore
 func DeleteDrac(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.Drac{Name: id}, newDracEntity)
+	return ufsds.Delete(ctx, &ufspb.Drac{Name: id}, newDracEntity)
 }
 
-func putDrac(ctx context.Context, drac *fleet.Drac, update bool) (*fleet.Drac, error) {
+func putDrac(ctx context.Context, drac *ufspb.Drac, update bool) (*ufspb.Drac, error) {
 	drac.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, drac, newDracEntity, update)
+	pm, err := ufsds.Put(ctx, drac, newDracEntity, update)
 	if err == nil {
-		return pm.(*fleet.Drac), err
+		return pm.(*ufspb.Drac), err
 	}
 	return nil, err
 }
@@ -162,18 +164,18 @@ func putDrac(ctx context.Context, drac *fleet.Drac, update bool) (*fleet.Drac, e
 // This is a non-atomic operation and doesnt check if the object already exists before
 // update. Must be used within a Transaction where objects are checked before update.
 // Will lead to partial updates if not used in a transaction.
-func BatchUpdateDracs(ctx context.Context, dracs []*fleet.Drac) ([]*fleet.Drac, error) {
+func BatchUpdateDracs(ctx context.Context, dracs []*ufspb.Drac) ([]*ufspb.Drac, error) {
 	return putAllDrac(ctx, dracs, true)
 }
 
-func putAllDrac(ctx context.Context, dracs []*fleet.Drac, update bool) ([]*fleet.Drac, error) {
+func putAllDrac(ctx context.Context, dracs []*ufspb.Drac, update bool) ([]*ufspb.Drac, error) {
 	protos := make([]proto.Message, len(dracs))
 	updateTime := ptypes.TimestampNow()
 	for i, drac := range dracs {
 		drac.UpdateTime = updateTime
 		protos[i] = drac
 	}
-	_, err := fleetds.PutAll(ctx, protos, newDracEntity, update)
+	_, err := ufsds.PutAll(ctx, protos, newDracEntity, update)
 	if err == nil {
 		return dracs, err
 	}
@@ -181,23 +183,23 @@ func putAllDrac(ctx context.Context, dracs []*fleet.Drac, update bool) ([]*fleet
 }
 
 // ImportDracs creates or updates a batch of dracs in datastore.
-func ImportDracs(ctx context.Context, dracs []*fleet.Drac) (*fleetds.OpResults, error) {
+func ImportDracs(ctx context.Context, dracs []*ufspb.Drac) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(dracs))
 	utime := ptypes.TimestampNow()
 	for i, m := range dracs {
 		m.UpdateTime = utime
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newDracEntity, true, true)
+	return ufsds.Insert(ctx, protos, newDracEntity, true, true)
 }
 
-func queryAllDrac(ctx context.Context) ([]fleetds.FleetEntity, error) {
+func queryAllDrac(ctx context.Context) ([]ufsds.FleetEntity, error) {
 	var entities []*DracEntity
 	q := datastore.NewQuery(DracKind)
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
-	fe := make([]fleetds.FleetEntity, len(entities))
+	fe := make([]ufsds.FleetEntity, len(entities))
 	for i, e := range entities {
 		fe[i] = e
 	}
@@ -205,17 +207,34 @@ func queryAllDrac(ctx context.Context) ([]fleetds.FleetEntity, error) {
 }
 
 // GetAllDracs returns all dracs in datastore.
-func GetAllDracs(ctx context.Context) (*fleetds.OpResults, error) {
-	return fleetds.GetAll(ctx, queryAllDrac)
+func GetAllDracs(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAllDrac)
 }
 
 // DeleteDracs deletes a batch of dracs
-func DeleteDracs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+func DeleteDracs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {
-		protos[i] = &fleet.Drac{
+		protos[i] = &ufspb.Drac{
 			Name: m,
 		}
 	}
-	return fleetds.DeleteAll(ctx, protos, newDracEntity)
+	return ufsds.DeleteAll(ctx, protos, newDracEntity)
+}
+
+// GetDracIndexedFieldName returns the index name
+func GetDracIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.SwitchFilterName:
+		field = "switch_id"
+	case util.LabFilterName:
+		field = "lab"
+	case util.RackFilterName:
+		field = "rack"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for drac are lab/rack/switch", input)
+	}
+	return field, nil
 }

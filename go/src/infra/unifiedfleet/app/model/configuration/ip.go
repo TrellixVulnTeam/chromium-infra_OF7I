@@ -6,9 +6,8 @@ package configuration
 
 import (
 	"context"
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
 	"strconv"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
@@ -16,6 +15,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // IPKind is the datastore entity kind for IP record
@@ -34,7 +37,7 @@ type IPEntity struct {
 
 // GetProto returns the unmarshaled IP.
 func (e *IPEntity) GetProto() (proto.Message, error) {
-	return &fleet.IP{
+	return &ufspb.IP{
 		Id:       e.ID,
 		Ipv4:     e.IPv4,
 		Ipv4Str:  e.IPv4Str,
@@ -43,8 +46,8 @@ func (e *IPEntity) GetProto() (proto.Message, error) {
 	}, nil
 }
 
-func newIPEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.IP)
+func newIPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.IP)
 	if p.GetId() == "" {
 		return nil, errors.Reason("Empty hostname in IP").Err()
 	}
@@ -64,7 +67,7 @@ func newIPEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, er
 }
 
 // QueryIPByPropertyName query IP Entity by property in the datastore
-func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) ([]*fleet.IP, error) {
+func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) ([]*ufspb.IP, error) {
 	q := datastore.NewQuery(IPKind).FirestoreMode(true)
 	var entities []*IPEntity
 	for propertyName, id := range propertyMap {
@@ -73,14 +76,14 @@ func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) (
 			u64, err := strconv.ParseUint(id, 10, 32)
 			if err != nil {
 				logging.Errorf(ctx, "Failed to convert the property 'ipv4' %s to uint64", id)
-				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", fleetds.InvalidArgument, propertyName, err.Error())
+				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", ufsds.InvalidArgument, propertyName, err.Error())
 			}
 			q = q.Eq(propertyName, uint32(u64))
 		case "occupied":
 			b, err := strconv.ParseBool(id)
 			if err != nil {
 				logging.Errorf(ctx, "Failed to convert the property 'occupied' %s to bool", id)
-				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", fleetds.InvalidArgument, propertyName, err.Error())
+				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", ufsds.InvalidArgument, propertyName, err.Error())
 			}
 			q = q.Eq(propertyName, b)
 		default:
@@ -89,20 +92,20 @@ func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) (
 	}
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
-		return nil, status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
 		logging.Infof(ctx, "No ips found for the query: %#v", propertyMap)
 		return nil, nil
 	}
-	ips := make([]*fleet.IP, 0, len(entities))
+	ips := make([]*ufspb.IP, 0, len(entities))
 	for _, entity := range entities {
 		pm, perr := entity.GetProto()
 		if perr != nil {
 			logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
 			continue
 		}
-		ips = append(ips, pm.(*fleet.IP))
+		ips = append(ips, pm.(*ufspb.IP))
 	}
 	return ips, nil
 }
@@ -111,8 +114,8 @@ func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) (
 //
 // Does a query over ip entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListIPs(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.IP, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, IPKind, pageSize, pageToken)
+func ListIPs(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.IP, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, IPKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -123,7 +126,7 @@ func ListIPs(ctx context.Context, pageSize int32, pageToken string) (res []*flee
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.IP))
+		res = append(res, pm.(*ufspb.IP))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
@@ -134,7 +137,7 @@ func ListIPs(ctx context.Context, pageSize int32, pageToken string) (res []*flee
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to list ips %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -143,21 +146,40 @@ func ListIPs(ctx context.Context, pageSize int32, pageToken string) (res []*flee
 }
 
 // ImportIPs creates or updates a batch of ips in datastore
-func ImportIPs(ctx context.Context, ips []*fleet.IP) (*fleetds.OpResults, error) {
+func ImportIPs(ctx context.Context, ips []*ufspb.IP) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(ips))
 	for i, m := range ips {
 		protos[i] = m
 	}
-	return fleetds.Insert(ctx, protos, newIPEntity, true, true)
+	return ufsds.Insert(ctx, protos, newIPEntity, true, true)
 }
 
 // DeleteIPs deletes a batch of ips
-func DeleteIPs(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+func DeleteIPs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {
-		protos[i] = &fleet.IP{
+		protos[i] = &ufspb.IP{
 			Id: m,
 		}
 	}
-	return fleetds.DeleteAll(ctx, protos, newIPEntity)
+	return ufsds.DeleteAll(ctx, protos, newIPEntity)
+}
+
+// GetIPIndexedFieldName returns the index name
+func GetIPIndexedFieldName(input string) (string, error) {
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.IPV4FilterName:
+		field = "ipv4"
+	case util.IPV4StringFilterName:
+		field = "ipv4_str"
+	case util.VlanFilterName:
+		field = "vlan"
+	case util.OccupiedFilterName:
+		field = "occupied"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for IP are ipv4/ipv4str/vlan/occupied", input)
+	}
+	return field, nil
 }

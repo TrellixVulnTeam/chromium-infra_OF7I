@@ -35,6 +35,8 @@ type Resource struct {
 	Entity ufsds.FleetEntity
 }
 
+type getFieldFunc func(string) (string, error)
+
 // GetChromePlatformResource returns a Resource with ChromePlatformEntity
 func GetChromePlatformResource(chromePlatformID string) *Resource {
 	return &Resource{
@@ -269,4 +271,35 @@ func deleteByPage(ctx context.Context, toDelete []string, pageSize int, deletFun
 		}
 	}
 	return &allRes
+}
+
+// TODO(eshwarn) : Use pattern matching instead of strings.split and add unit test
+func getFilterMap(filter string, f getFieldFunc) (map[string][]interface{}, error) {
+	filterMap := make(map[string][]interface{})
+	filter = strings.TrimSpace(filter)
+	conditions := strings.Split(filter, "&")
+	if len(conditions) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid filter format %s - Filter Egs: \"machine=cx-1,cx-2 & machinelseprototype=mx-1\"", filter)
+	}
+	for _, condition := range conditions {
+		condition = strings.TrimSpace(condition)
+		keyValue := strings.Split(condition, "=")
+		if len(keyValue) < 2 {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid filter name format %s - Filter Egs: \"machine=cx-1,cx-2\"", condition)
+		}
+		field, err := f(keyValue[0])
+		if err != nil {
+			return nil, err
+		}
+		s := strings.Split(keyValue[1], ",")
+		if len(s) == 0 {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid filter value format %s- Filter Egs: \"machine=cx-1,cx-2\"", keyValue[1])
+		}
+		values := make([]interface{}, len(s))
+		for i, v := range s {
+			values[i] = strings.TrimSpace(v)
+		}
+		filterMap[field] = values
+	}
+	return filterMap, nil
 }

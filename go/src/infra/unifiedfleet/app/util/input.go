@@ -49,6 +49,29 @@ const (
 	MaxPageSize int32 = 1000
 )
 
+// Filter names for indexed properties in datastore for different entities
+var (
+	LabFilterName              string = "lab"
+	RackFilterName             string = "rack"
+	MachineFilterName          string = "machine"
+	HostFilterName             string = "host"
+	NicFilterName              string = "nic"
+	DracFilterName             string = "drac"
+	KVMFilterName              string = "kvm"
+	RPMFilterName              string = "rpm"
+	SwitchFilterName           string = "switch"
+	ServoFilterName            string = "servo"
+	TagFilterName              string = "tag"
+	ChromePlatformFilterName   string = "platform"
+	MachinePrototypeFilterName string = "machineprototype"
+	RackPrototypeFilterName    string = "rackprototype"
+	VlanFilterName             string = "vlan"
+	StateFilterName            string = "state"
+	IPV4FilterName             string = "ipv4"
+	IPV4StringFilterName       string = "ipv4str"
+	OccupiedFilterName         string = "occupied"
+)
+
 const separator string = "/"
 
 // GetPageSize gets the correct page size for List pagination

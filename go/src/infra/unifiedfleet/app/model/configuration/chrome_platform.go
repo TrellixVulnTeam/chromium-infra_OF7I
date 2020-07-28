@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	fleet "infra/unifiedfleet/api/v1/proto"
-	fleetds "infra/unifiedfleet/app/model/datastore"
+	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 )
 
 // ChromePlatformKind is the datastore entity kind for chrome platforms.
@@ -26,21 +26,21 @@ const ChromePlatformKind string = "ChromePlatform"
 type ChromePlatformEntity struct {
 	_kind string `gae:"$kind,ChromePlatform"`
 	ID    string `gae:"$id"`
-	// fleet.ChromePlatform cannot be directly used as it contains pointer.
+	// ufspb.ChromePlatform cannot be directly used as it contains pointer.
 	Platform []byte `gae:",noindex"`
 }
 
 // GetProto returns the unmarshaled Chrome platform.
 func (e *ChromePlatformEntity) GetProto() (proto.Message, error) {
-	var p fleet.ChromePlatform
+	var p ufspb.ChromePlatform
 	if err := proto.Unmarshal(e.Platform, &p); err != nil {
 		return nil, err
 	}
 	return &p, nil
 }
 
-func newChromePlatformEntity(ctx context.Context, pm proto.Message) (fleetds.FleetEntity, error) {
-	p := pm.(*fleet.ChromePlatform)
+func newChromePlatformEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.ChromePlatform)
 	if p.GetName() == "" {
 		return nil, errors.Reason("Empty Chrome Platform ID").Err()
 	}
@@ -54,13 +54,13 @@ func newChromePlatformEntity(ctx context.Context, pm proto.Message) (fleetds.Fle
 	}, nil
 }
 
-func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
+func queryAll(ctx context.Context) ([]ufsds.FleetEntity, error) {
 	var entities []*ChromePlatformEntity
 	q := datastore.NewQuery(ChromePlatformKind)
 	if err := datastore.GetAll(ctx, q, &entities); err != nil {
 		return nil, err
 	}
-	fe := make([]fleetds.FleetEntity, len(entities))
+	fe := make([]ufsds.FleetEntity, len(entities))
 	for i, e := range entities {
 		fe[i] = e
 	}
@@ -68,20 +68,20 @@ func queryAll(ctx context.Context) ([]fleetds.FleetEntity, error) {
 }
 
 // CreateChromePlatform creates a new chromePlatform in datastore.
-func CreateChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
+func CreateChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
 	return putChromePlatform(ctx, chromePlatform, false)
 }
 
 // UpdateChromePlatform updates chromePlatform in datastore.
-func UpdateChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatform) (*fleet.ChromePlatform, error) {
+func UpdateChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
 	return putChromePlatform(ctx, chromePlatform, true)
 }
 
 // GetChromePlatform returns chromePlatform for the given id from datastore.
-func GetChromePlatform(ctx context.Context, id string) (*fleet.ChromePlatform, error) {
-	pm, err := fleetds.Get(ctx, &fleet.ChromePlatform{Name: id}, newChromePlatformEntity)
+func GetChromePlatform(ctx context.Context, id string) (*ufspb.ChromePlatform, error) {
+	pm, err := ufsds.Get(ctx, &ufspb.ChromePlatform{Name: id}, newChromePlatformEntity)
 	if err == nil {
-		return pm.(*fleet.ChromePlatform), err
+		return pm.(*ufspb.ChromePlatform), err
 	}
 	return nil, err
 }
@@ -89,8 +89,8 @@ func GetChromePlatform(ctx context.Context, id string) (*fleet.ChromePlatform, e
 // ListChromePlatforms lists the chromePlatforms
 // Does a query over ChromePlatform entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) (res []*fleet.ChromePlatform, nextPageToken string, err error) {
-	q, err := fleetds.ListQuery(ctx, ChromePlatformKind, pageSize, pageToken)
+func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.ChromePlatform, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, ChromePlatformKind, pageSize, pageToken, nil, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -101,7 +101,7 @@ func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) 
 			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 			return nil
 		}
-		res = append(res, pm.(*fleet.ChromePlatform))
+		res = append(res, pm.(*ufspb.ChromePlatform))
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
@@ -112,7 +112,7 @@ func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) 
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List ChromePlatforms %s", err)
-		return nil, "", status.Errorf(codes.Internal, fleetds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
@@ -122,41 +122,46 @@ func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken string) 
 
 // DeleteChromePlatform deletes the chromePlatform in datastore
 func DeleteChromePlatform(ctx context.Context, id string) error {
-	return fleetds.Delete(ctx, &fleet.ChromePlatform{Name: id}, newChromePlatformEntity)
+	return ufsds.Delete(ctx, &ufspb.ChromePlatform{Name: id}, newChromePlatformEntity)
 }
 
 // DeleteChromePlatforms deletes a batch of chrome platforms
-func DeleteChromePlatforms(ctx context.Context, resourceNames []string) *fleetds.OpResults {
+func DeleteChromePlatforms(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {
-		protos[i] = &fleet.ChromePlatform{
+		protos[i] = &ufspb.ChromePlatform{
 			Name: m,
 		}
 	}
-	return fleetds.DeleteAll(ctx, protos, newChromePlatformEntity)
+	return ufsds.DeleteAll(ctx, protos, newChromePlatformEntity)
 }
 
 // ImportChromePlatforms inserts chrome platforms to datastore.
-func ImportChromePlatforms(ctx context.Context, platforms []*fleet.ChromePlatform) (*fleetds.OpResults, error) {
+func ImportChromePlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(platforms))
 	utime := ptypes.TimestampNow()
 	for i, p := range platforms {
 		p.UpdateTime = utime
 		protos[i] = p
 	}
-	return fleetds.Insert(ctx, protos, newChromePlatformEntity, true, true)
+	return ufsds.Insert(ctx, protos, newChromePlatformEntity, true, true)
 }
 
 // GetAllChromePlatforms returns all platforms in record.
-func GetAllChromePlatforms(ctx context.Context) (*fleetds.OpResults, error) {
-	return fleetds.GetAll(ctx, queryAll)
+func GetAllChromePlatforms(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAll)
 }
 
-func putChromePlatform(ctx context.Context, chromePlatform *fleet.ChromePlatform, update bool) (*fleet.ChromePlatform, error) {
+func putChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatform, update bool) (*ufspb.ChromePlatform, error) {
 	chromePlatform.UpdateTime = ptypes.TimestampNow()
-	pm, err := fleetds.Put(ctx, chromePlatform, newChromePlatformEntity, update)
+	pm, err := ufsds.Put(ctx, chromePlatform, newChromePlatformEntity, update)
 	if err == nil {
-		return pm.(*fleet.ChromePlatform), err
+		return pm.(*ufspb.ChromePlatform), err
 	}
 	return nil, err
+}
+
+// GetChromePlatformIndexedFieldName returns the index name
+func GetChromePlatformIndexedFieldName(input string) (string, error) {
+	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for ChromePlatform", input)
 }
