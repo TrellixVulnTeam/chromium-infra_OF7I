@@ -22,7 +22,7 @@ import (
 	"go.chromium.org/luci/config/cfgclient"
 
 	"infra/tools/migrator"
-	"infra/tools/migrator/plugsupport"
+	"infra/tools/migrator/internal/plugsupport"
 )
 
 func cmdScan(opts cmdBaseOptions) *subcommands.Command {
