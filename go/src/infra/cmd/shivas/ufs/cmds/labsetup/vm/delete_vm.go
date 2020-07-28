@@ -23,18 +23,18 @@ import (
 
 // DeleteVMCmd deletes vm on a host.
 var DeleteVMCmd = &subcommands.Command{
-	UsageLine: "delete-vm -h {Hostname} {VM name}",
+	UsageLine: "delete-vm -host {Hostname} {VM name}",
 	ShortDesc: "Delete a VM on a host",
 	LongDesc: `Delete a VM on a host.
 
 Example:
-shivas delete-vm -h {Hostname} {VM name}
+shivas delete-vm -host {Hostname} {VM name}
 Deletes the VM on a host.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &deleteVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to delete the VM")
+		c.Flags.StringVar(&c.hostname, "host", "", "hostname of the host to delete the VM")
 		return c
 	},
 }
@@ -97,9 +97,9 @@ func (c *deleteVM) innerRun(a subcommands.Application, args []string, env subcom
 		MachineLSE: machinelse,
 	})
 	if err == nil {
-		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		fmt.Fprintf(a.GetOut(), "Updated host after deleting vm %s:\n", args[0])
 		utils.PrintProtoJSON(res)
-		fmt.Println()
+		fmt.Fprintln(a.GetOut(), args[0], "is deleted successfully.")
 		return nil
 	}
 	return errors.Annotate(err, "Unable to delete the VM on the host").Err()
@@ -110,7 +110,7 @@ func (c *deleteVM) validateArgs() error {
 		return cmdlib.NewUsageError(c.Flags, "Please provide the name of the VM to delete.")
 	}
 	if c.hostname == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nHostname parameter is required to delete the VM on the host")
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n'-host' is required to delete the VM on the host")
 	}
 	return nil
 }

@@ -12,6 +12,8 @@ import (
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"golang.org/x/net/context"
 	status "google.golang.org/genproto/googleapis/rpc/status"
+	"google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	proto "infra/unifiedfleet/api/v1/proto"
@@ -20,12 +22,36 @@ import (
 	"infra/unifiedfleet/app/util"
 )
 
+func verifyLSEPrototype(ctx context.Context, lse *proto.MachineLSE) error {
+	if lse.GetChromeBrowserMachineLse() != nil {
+		if !util.IsInBrowserLab(lse.GetMachineLsePrototype()) {
+			return grpcStatus.Errorf(codes.InvalidArgument, "Prototype %s doesn't belong to browser lab", lse.GetMachineLsePrototype())
+		}
+		resp, err := controller.GetMachineLSEPrototype(ctx, lse.GetMachineLsePrototype())
+		if err != nil {
+			return err
+		}
+		for _, v := range resp.GetVirtualRequirements() {
+			if v.GetVirtualType() == proto.VirtualType_VIRTUAL_TYPE_VM {
+				c := lse.GetChromeBrowserMachineLse().GetVmCapacity()
+				if c < v.GetMin() || c > v.GetMax() {
+					return grpcStatus.Errorf(codes.InvalidArgument, "Prototype %s is not matched to the vm capacity %d", lse.GetMachineLsePrototype(), c)
+				}
+			}
+		}
+	}
+	return nil
+}
+
 // CreateMachineLSE creates machineLSE entry in database.
 func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *api.CreateMachineLSERequest) (rsp *proto.MachineLSE, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	if err := verifyLSEPrototype(ctx, req.GetMachineLSE()); err != nil {
 		return nil, err
 	}
 	req.MachineLSE.Name = req.MachineLSEId

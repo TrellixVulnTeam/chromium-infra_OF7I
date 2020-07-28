@@ -29,24 +29,38 @@ var AddVMCmd = &subcommands.Command{
 	LongDesc: `Add a VM on a host
 
 Examples:
-shivas add-vm -f vm.json -h {Hostname}
-Add a VM on a host by reading a JSON file input.`,
+shivas add-vm -new-json-file vm.json -host host1
+Add a VM on a host by reading a JSON file input.
+
+shivas add-vm -name vm1 -host host1 -mac-address 12:34:56 -os-version chrome-version-1
+Add a VM by parameters.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.VMFileText)
-		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to add the VM")
+
+		c.Flags.StringVar(&c.hostName, "host", "", "hostname of the host to add the VM")
+		c.Flags.StringVar(&c.vmName, "name", "", "hostname of the VM")
+		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM")
+		c.Flags.StringVar(&c.osVersion, "os-version", "", "os version of the VM")
 		return c
 	},
 }
 
 type addVM struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	hostname     string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+
 	newSpecsFile string
+
+	hostName   string
+	vmName     string
+	macAddress string
+	osVersion  string
 }
 
 func (c *addVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -67,6 +81,9 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -75,16 +92,20 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 
 	// Parse input json
 	var vm ufspb.VM
-	if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
-		return err
+	if c.newSpecsFile != "" {
+		if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
+			return err
+		}
+	} else {
+		c.parseArgs(&vm)
 	}
 
 	// Get the host machineLSE
 	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostname),
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostName),
 	})
 	if err != nil {
-		return errors.Annotate(err, "No host with hostname %s found", c.hostname).Err()
+		return errors.Annotate(err, "No host with hostname %s found", c.hostName).Err()
 	}
 	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
 
@@ -105,16 +126,39 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 		return errors.Annotate(err, "Unable to add the VM on the host").Err()
 	}
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	fmt.Printf("Successfully added the vm %s to host %s\n", vm.GetName(), machinelse.GetHostname())
 	return nil
 }
 
-func (c *addVM) validateArgs() error {
-	if c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo JSON input file specified")
+func (c *addVM) parseArgs(vm *ufspb.VM) {
+	vm.Name = c.vmName
+	vm.MacAddress = c.macAddress
+	vm.OsVersion = &ufspb.OSVersion{
+		Value: c.osVersion,
 	}
-	if c.hostname == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nHostname parameter is required to add the VM on the host")
+}
+
+func (c *addVM) validateArgs() error {
+	if c.hostName == "" {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n'-host' is required.")
+	}
+	if c.newSpecsFile != "" {
+		if c.vmName != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.macAddress != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+	} else {
+		if c.vmName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f) is specified, so '-name' is required.")
+		}
+		if c.macAddress == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-mac-address' is required.")
+		}
+		if c.osVersion == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-os-version' is required.")
+		}
 	}
 	return nil
 }

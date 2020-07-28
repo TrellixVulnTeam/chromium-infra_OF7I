@@ -332,9 +332,11 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
 
 Examples:
-shivas add-host -f host.json -m {Machine name}
+shivas add-host -f host.json -machine machine0
 Adds a host by reading a JSON file input.
--m option is a required parameter to associate the host to the given machine.
+
+shivas add-host -machine machine0 -name host0 -prototype browser-lab:no-vm  -osversion chrome-version-0 -vm-capacity 3
+Adds a host by parameters without adding vms.
 
 shivas add-host -i
 Adds a host by reading input through interactive mode.`
@@ -353,7 +355,7 @@ shivas update-host -i
 Updates a host by reading input through interactive mode.`
 
 	// MachineLSEFileText description for machinelse/host file input
-	MachineLSEFileText string = `Path to a file containing host specification in JSON format.
+	MachineLSEFileText string = `[JSON mode] Path to a file containing host specification in JSON format.
 This file must contain one machine deployment JSON message
 
 Example host for a browser machine:
@@ -367,7 +369,6 @@ Example host for a browser machine:
 				"name": "Windows8.0",
 				"osVersion": {
 					"value": "8.0",
-					"description": "Windows Server"
 				},
 				"macAddress": "2.44.65.23",
 				"hostname": "Windows8-lab1"
@@ -376,7 +377,6 @@ Example host for a browser machine:
 				"name": "Linux3.4",
 				"osVersion": {
 					"value": "3.4",
-					"description": "Ubuntu Server"
 				},
 				"macAddress": "32.45.12.32",
 				"hostname": "Ubuntu-lab2"
@@ -385,7 +385,6 @@ Example host for a browser machine:
 		"vmCapacity": 3,
 		"osVersion": {
 			"value": "3.4",
-			"description": "Ubuntu Server"
 		},
 	}
 }
@@ -590,7 +589,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	// AddRackLSEPrototypeLongDesc long description for AddRackLSEPrototypeCmd
 	AddRackLSEPrototypeLongDesc string = `Add prototype for rack deployment.
 
-Examples:	
+Examples:
 shivas add-rack-prototype -f rackprototype.json
 Adds a rack prototype by reading a JSON file input.
 
@@ -644,7 +643,7 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	// AddChromePlatformLongDesc long description for AddChromePlatformCmd
 	AddChromePlatformLongDesc string = `Add chrome platform configuration for browser machine.
 
-Examples:	
+Examples:
 shivas add-chrome-platform -f chromeplatform.json
 Adds a chrome platform by reading a JSON file input.
 
