@@ -179,7 +179,11 @@ func redirectIOAndWait(cmd *exec.Cmd, log func(fromStdout bool, line string)) er
 			scanner := bufio.NewReader(reader)
 			for {
 				line, err := scanner.ReadBytes('\n')
-				log(stdout, fmt.Sprintf("%s: %s", cmd.Args[0], bytes.TrimRight(line, "\r\n")))
+				line = bytes.TrimRight(line, "\r\n")
+				if err == io.EOF && len(line) == 0 {
+					break
+				}
+				log(stdout, fmt.Sprintf("%s: %s", cmd.Args[0], line))
 				if err != nil {
 					if err != io.EOF {
 						panic(err)
