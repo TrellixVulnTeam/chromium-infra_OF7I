@@ -136,16 +136,18 @@ func (c *pipeCTPDataRun) innerRun(a subcommands.Application, args []string, env 
 func (c *pipeCTPDataRun) pipelineRun(ctx context.Context, ch chan state) {
 	defer close(ch)
 
-	msgs, err := c.mClient.PullMessages(ctx)
+	builds, msgsByBuildID, err := fetchBuilds(
+		ctx,
+		int(c.source.GetPubsub().GetMaxReceivingMessages()),
+		c.mClient,
+		c.bbClient,
+	)
 	if err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return
 	}
-	msgsByBuildID := message.ExtractBuildIDMap(ctx, msgs)
-
-	builds, err := c.bbClient.GetTargetBuilds(ctx, toBuildIDs(msgsByBuildID))
-	if err != nil {
-		ch <- state{result_flow.State_FAILED, err}
+	if len(builds) == 0 {
+		ch <- state{result_flow.State_SUCCEEDED, nil}
 		return
 	}
 	logging.Infof(ctx, "fetched %d builds from Buildbucket", len(builds))
@@ -164,7 +166,7 @@ func (c *pipeCTPDataRun) pipelineRun(ctx context.Context, ch chan state) {
 	}
 	c.bqClient.CloseAndDrain(ctx)
 
-	logging.Infof(ctx, "processed %d messages of %d total fetched", len(processed), len(msgs))
+	logging.Infof(ctx, "processed %d builds of %d total fetched", len(processed), len(builds))
 	if err = c.mClient.AckMessages(ctx, processed); err != nil {
 		ch <- state{result_flow.State_FAILED, err}
 		return

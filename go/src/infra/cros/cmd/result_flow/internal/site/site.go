@@ -14,7 +14,7 @@ import (
 )
 
 // DefaultDeadlineSeconds is the default command deadline in seconds.
-const DefaultDeadlineSeconds = 60
+const DefaultDeadlineSeconds = 600
 
 const (
 	authScopeBigquery = "https://www.googleapis.com/auth/bigquery"

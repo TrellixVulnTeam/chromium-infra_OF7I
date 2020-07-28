@@ -7,6 +7,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"infra/cros/cmd/result_flow/internal/bb"
+	"infra/cros/cmd/result_flow/internal/message"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,7 +20,9 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
 	"go.chromium.org/luci/auth"
+	pb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/google"
 	"google.golang.org/api/option"
 	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
@@ -169,10 +173,39 @@ func newGRPCClientOptions(ctx context.Context, a auth.Options) (option.ClientOpt
 	return option.WithGRPCDialOption(grpc.WithPerRPCCredentials(grpcCreds)), nil
 }
 
-func toBuildIDs(m map[int64]*pubsubpb.ReceivedMessage) []int64 {
-	res := make([]int64, 0, len(m))
-	for b := range m {
-		res = append(res, b)
+func fetchBuilds(ctx context.Context, expectedSize int, mClient message.Client, bbClient bb.Client) ([]*pb.Build, map[int64]*pubsubpb.ReceivedMessage, error) {
+	var (
+		builds        = make([]*pb.Build, 0, expectedSize)
+		msgs          = make([]*pubsubpb.ReceivedMessage, 0, expectedSize)
+		msgsByBuildID = make(map[int64]*pubsubpb.ReceivedMessage, expectedSize)
+	)
+	// Cloud PubSub does NOT guarantee to return the max receiving messages specified in the pull
+	// request. Loop the pull operation to ensure we have more messages than expected.
+	for {
+		ms, err := mClient.PullMessages(ctx)
+		if len(ms) == 0 {
+			break
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+
+		buildIDs := []int64{}
+		for k, v := range message.ExtractBuildIDMap(ctx, ms) {
+			msgsByBuildID[k] = v
+			buildIDs = append(buildIDs, k)
+		}
+		bs, err := bbClient.GetTargetBuilds(ctx, buildIDs)
+		if err != nil {
+			return nil, nil, err
+		}
+		builds = append(builds, bs...)
+
+		msgs = append(msgs, ms...)
+		if len(msgs) >= expectedSize {
+			break
+		}
 	}
-	return res
+	logging.Infof(ctx, "pulled %d messages from PubSub and %d builds from Buildbucket", len(msgs), len(builds))
+	return builds, msgsByBuildID, nil
 }

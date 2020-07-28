@@ -23,8 +23,8 @@ import (
 const (
 	// BuildIDKeyName is the key name to store Build ID in message attributes.
 	BuildIDKeyName = "build_id"
-	// DefaultMaxReceivingMessage is default max message a single flow could handle.
-	DefaultMaxReceivingMessage = 15
+	// SingleBatch is the size of messages we pull for a single attempt.
+	SingleBatch int32 = 50
 )
 
 // PublishBuildID publishes a Build ID to PubSub.
@@ -71,14 +71,10 @@ func NewClient(c context.Context, conf *result_flow.PubSubConfig, opts ...option
 	if err != nil {
 		return nil, err
 	}
-	maxMessages := conf.GetMaxReceivingMessages()
-	if maxMessages == 0 {
-		maxMessages = int32(DefaultMaxReceivingMessage)
-	}
 	return &messageClient{
 		client:       client,
 		subscription: fmt.Sprintf("projects/%s/subscriptions/%s", conf.Project, conf.Subscription),
-		maxMessages:  maxMessages,
+		maxMessages:  SingleBatch,
 	}, nil
 }
 
