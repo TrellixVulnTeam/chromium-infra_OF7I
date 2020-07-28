@@ -197,6 +197,20 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 	}
 	servos := servoHost.GetServos()
 
+	if oldServo != nil {
+		logging.Infof(ctx, "delete the old servo: %v", oldServo)
+		if servoHostname == oldServo.GetServoHostname() {
+			servos = deleteServo(servos, oldServo)
+		} else {
+			oldServoHost, err := r.getServoHost(ctx, oldServo.GetServoHostname())
+			if err != nil {
+				logging.Infof(ctx, "Fail to find labstation: %v for old servo: %v", oldServo.GetServoHostname(), err)
+			} else {
+				oldServoHost.Servos = deleteServo(oldServoHost.GetServos(), oldServo)
+			}
+		}
+	}
+
 	if assignServoPort && servo.GetServoPort() == 0 {
 		p, err := firstFreePort(servos)
 		if err != nil {
@@ -204,10 +218,10 @@ func (r servoHostRegistry) amendServoToLabstation(ctx context.Context, d *lab.De
 		}
 		servo.ServoPort = int32(p)
 	} else {
-		if err := checkDuplicatePort(servo, oldServo, servos); err != nil {
+		if err := checkDuplicatePort(servo, servos); err != nil {
 			return err
 		}
-		if err := checkDuplicateSerial(servo, oldServo, servos); err != nil {
+		if err := checkDuplicateSerial(servo, servos); err != nil {
 			return err
 		}
 	}
@@ -296,11 +310,8 @@ func firstFreePort(servos []*lab.Servo) (int, error) {
 }
 
 // checkDuplicatePort verify that labstation does not have servo with the same port
-func checkDuplicatePort(newServo, oldServo *lab.Servo, servos []*lab.Servo) error {
+func checkDuplicatePort(newServo *lab.Servo, servos []*lab.Servo) error {
 	newPort := newServo.GetServoPort()
-	if newServo.GetServoHostname() == oldServo.GetServoHostname() && newPort == oldServo.GetServoPort() {
-		return nil
-	}
 	for _, s := range servos {
 		if newPort == s.GetServoPort() {
 			return errors.Reason("the servo port: '%d' is already used in %q", newPort, s.GetServoHostname()).Err()
@@ -310,11 +321,8 @@ func checkDuplicatePort(newServo, oldServo *lab.Servo, servos []*lab.Servo) erro
 }
 
 // checkDuplicateSerial verify that labstation does not have servo with the same serial number
-func checkDuplicateSerial(newServo, oldServo *lab.Servo, servos []*lab.Servo) error {
+func checkDuplicateSerial(newServo *lab.Servo, servos []*lab.Servo) error {
 	newSerial := newServo.GetServoSerial()
-	if newServo.GetServoHostname() == oldServo.GetServoHostname() && newSerial == oldServo.GetServoSerial() {
-		return nil
-	}
 	for _, s := range servos {
 		if newSerial == s.GetServoSerial() {
 			return errors.Reason("the servo with serial number: %q is already attached to %q", newSerial, s.GetServoHostname()).Err()

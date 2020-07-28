@@ -5,6 +5,7 @@
 package frontend
 
 import (
+	"sort"
 	"testing"
 	"time"
 
@@ -518,6 +519,37 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			},
 		}
 	}
+	getLab2 := func() *lab.ChromeOSDevice {
+		return &lab.ChromeOSDevice{
+			Id: &lab.ChromeOSDeviceID{Value: "UUID:03"},
+			Device: &lab.ChromeOSDevice_Labstation{
+				Labstation: &lab.Labstation{Hostname: "labstation2"},
+			},
+		}
+	}
+	checkLabstationServos := func(tf testFixture, labID string, expectedSerials []string, expectedPorts []int) {
+		reqGet := &api.GetCrosDevicesRequest{
+			Ids: []*api.DeviceID{{
+				Id: &api.DeviceID_ChromeosDeviceId{ChromeosDeviceId: labID},
+			}},
+		}
+		rsp, err := tf.Inventory.GetCrosDevices(tf.C, reqGet)
+		So(err, ShouldBeNil)
+		So(rsp.Data, ShouldHaveLength, 1)
+		var servoSerials []string
+		var servoPorts []int
+		for _, servo := range rsp.Data[0].GetLabConfig().GetLabstation().GetServos() {
+			servoSerials = append(servoSerials, servo.GetServoSerial())
+			servoPorts = append(servoPorts, int(servo.GetServoPort()))
+		}
+		sort.Strings(servoSerials)
+		So(servoSerials, ShouldHaveLength, len(expectedSerials))
+		So(servoSerials, ShouldResemble, expectedSerials)
+
+		sort.Ints(servoPorts)
+		So(servoPorts, ShouldHaveLength, len(expectedPorts))
+		So(servoPorts, ShouldResemble, expectedPorts)
+	}
 	Convey("Update Chrome OS devices setup", t, func() {
 		ctx := testingContext()
 		tf, validate := newTestFixtureWithContext(ctx, t)
@@ -552,13 +584,13 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			dutServo := &lab.Servo{
 				ServoHostname: "labstation1",
 				ServoPort:     1230,
-				ServoSerial:   "SN0001",
+				ServoSerial:   "SN0099",
 				ServoType:     "v3",
 			}
 			labServo := &lab.Servo{
 				ServoHostname: "labstation1",
 				ServoPort:     1231,
-				ServoSerial:   "SN0001",
+				ServoSerial:   "SN0099",
 				ServoType:     "v3",
 			}
 			dut1 := getDut(dutServo)
@@ -569,7 +601,7 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
 
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "the servo with serial number: \"SN0001\" is already attached to \"labstation1\"")
+			So(err.Error(), ShouldContainSubstring, "the servo with serial number: \"SN0099\" is already attached to \"labstation1\"")
 			So(resp, ShouldBeNil)
 		})
 
@@ -577,18 +609,20 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			dutServo := &lab.Servo{
 				ServoHostname: "labstation1",
 				ServoPort:     1230,
-				ServoSerial:   "SN0001",
+				ServoSerial:   "SN0091",
 				ServoType:     "v3",
 			}
-			labServo := &lab.Servo{
-				ServoHostname: "labstation1",
-				ServoPort:     1230,
-				ServoSerial:   "SN0002",
-				ServoType:     "v3",
+			labServos := []*lab.Servo{
+				{
+					ServoHostname: "labstation1",
+					ServoPort:     1230,
+					ServoSerial:   "SN0092",
+					ServoType:     "v3",
+				},
 			}
 			dut1 := getDut(dutServo)
 			labstation1 := getLab()
-			labstation1.GetLabstation().Servos = []*lab.Servo{labServo}
+			labstation1.GetLabstation().Servos = labServos
 
 			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
 			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
@@ -596,6 +630,92 @@ func TestUpdateCrosDevicesSetup(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "the servo port: '1230' is already used in \"labstation1\"")
 			So(resp, ShouldBeNil)
+		})
+		Convey("Delete old servo from labstation when update the DUT when servo serial changed", func() {
+			dutServo := &lab.Servo{
+				ServoHostname: "labstation1",
+				ServoPort:     8887,
+				ServoSerial:   "SN0091",
+				ServoType:     "v3",
+			}
+			labServos := []*lab.Servo{
+				{
+					ServoHostname: "labstation1",
+					ServoPort:     1232,
+					ServoSerial:   "SN0092",
+					ServoType:     "v3",
+				},
+				{ //original servo on servo
+					ServoHostname: "labstation1",
+					ServoPort:     8887,
+					ServoSerial:   "SN0002",
+					ServoType:     "v4",
+				},
+			}
+			dut1 := getDut(dutServo)
+			labstation1 := getLab()
+			labstation1.GetLabstation().Servos = labServos
+
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1}}
+			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 2)
+
+			//labstation1 has contains only 2 servos - SN0091 and SN0092
+			// the servo with SN0002 has to be deleted or replaced by SN0091
+			checkLabstationServos(tf, "UUID:02", []string{"SN0091", "SN0092"}, []int{1232, 8887})
+		})
+
+		Convey("Delete old servo from old labstation when update the DUT when servo serial changed", func() {
+			dutServo := &lab.Servo{
+				ServoHostname: "labstation2",
+				ServoPort:     8889,
+				ServoSerial:   "SN0091",
+				ServoType:     "v3",
+			}
+			labServos1 := []*lab.Servo{
+				{ //original servo on servo
+					ServoHostname: "labstation1",
+					ServoPort:     8887,
+					ServoSerial:   "SN0002",
+					ServoType:     "v4",
+				},
+			}
+			labServos2 := []*lab.Servo{
+				{
+					ServoHostname: "labstation2",
+					ServoPort:     1232,
+					ServoSerial:   "SN0092",
+					ServoType:     "v3",
+				},
+				{ //original servo on servo for test purpose
+					ServoHostname: "labstation2",
+					ServoPort:     8887,
+					ServoSerial:   "SN0002",
+					ServoType:     "v4",
+				},
+			}
+			dut1 := getDut(dutServo)
+			labstation1 := getLab()
+			labstation1.GetLabstation().Servos = labServos1
+			labstation2 := getLab2()
+			labstation2.GetLabstation().Servos = labServos2
+
+			req := &api.UpdateCrosDevicesSetupRequest{Devices: []*lab.ChromeOSDevice{dut1, labstation1, labstation2}}
+			resp, err := tf.Inventory.UpdateCrosDevicesSetup(tf.C, req)
+
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.UpdatedDevices, ShouldHaveLength, 2)
+
+			//labstation1 has contains only 0 servos
+			// the servo with SN0002 has to be deleted because DUt was migrated to another labstation2
+			checkLabstationServos(tf, "UUID:02", nil, nil)
+
+			//labstation2 has contains 3 servos - SN0002, SN0091, SN0092
+			checkLabstationServos(tf, "UUID:03", []string{"SN0002", "SN0091", "SN0092"}, []int{1232, 8887, 8889})
 		})
 
 		Convey("Update non-existing devices", func() {
