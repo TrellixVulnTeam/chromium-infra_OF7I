@@ -8,7 +8,7 @@ from . import util
 
 from .builder import Builder, BuildPackageFromPyPiWheel, BuildPackageFromSource
 
-from .build_types import Spec, UniversalSpec
+from .build_types import Spec
 
 
 class SourceOrPrebuilt(Builder):
@@ -36,8 +36,12 @@ class SourceOrPrebuilt(Builder):
     self._env = kwargs.pop('env', None)
 
     super(SourceOrPrebuilt, self).__init__(
-      Spec(name, self._pypi_src.version, universal=None, default=True),
-      **kwargs)
+        Spec(
+            name,
+            self._pypi_src.version,
+            universal=False,
+            pyversions=[],
+            default=True), **kwargs)
 
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:
@@ -59,8 +63,8 @@ class MultiWheel(Builder):
     """
     self._wheels = wheels
     super(MultiWheel, self).__init__(
-      Spec(name, version, universal=None, default=default),
-      only_plat=only_plat)
+        Spec(name, version, universal=False, pyversions=[], default=default),
+        only_plat=only_plat)
 
   def build_fn(self, system, wheel):
     sub_wheels = []
@@ -83,8 +87,8 @@ class Prebuilt(Builder):
   def __init__(self, name, version, only_plat, **kwargs):
     kwargs['only_plat'] = only_plat
     super(Prebuilt, self).__init__(
-      Spec(name, version, universal=None, default=True),
-      **kwargs)
+        Spec(name, version, universal=False, pyversions=[], default=True),
+        **kwargs)
 
   def build_fn(self, system, wheel):
     return BuildPackageFromPyPiWheel(system, wheel)
@@ -102,11 +106,14 @@ class Universal(Builder):
           used.
       kwargs: Keyword arguments forwarded to Builder.
     """
-    super(Universal, self).__init__(Spec(
-        name, version,
-        universal=UniversalSpec(pyversions=pyversions),
-        default=True,
-    ), **kwargs)
+    super(Universal, self).__init__(
+        Spec(
+            name,
+            version,
+            universal=True,
+            pyversions=pyversions,
+            default=True,
+        ), **kwargs)
 
   def build_fn(self, system, wheel):
     return BuildPackageFromPyPiWheel(system, wheel)
@@ -136,11 +143,14 @@ class UniversalSource(Builder):
         name=pypi_name or name,
         version=pypi_version,
         patches=patches)
-    super(UniversalSource, self).__init__(Spec(
-        name, self._pypi_src.version,
-        universal=UniversalSpec(pyversions=pyversions),
-        default=True,
-    ), **kwargs)
+    super(UniversalSource, self).__init__(
+        Spec(
+            name,
+            self._pypi_src.version,
+            universal=True,
+            pyversions=pyversions,
+            default=True,
+        ), **kwargs)
 
   def build_fn(self, system, wheel):
     return BuildPackageFromSource(system, wheel, self._pypi_src)

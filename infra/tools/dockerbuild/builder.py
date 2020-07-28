@@ -19,7 +19,7 @@ class PlatformNotSupported(Exception):
 
 def _IsPy3OnlyUniversalWheel(spec):
   """Returns true if the wheel is a universal py3-only wheel."""
-  return spec.universal and spec.universal.pyversions == ['py3']
+  return spec.universal and spec.pyversions == ['py3']
 
 
 class Builder(object):

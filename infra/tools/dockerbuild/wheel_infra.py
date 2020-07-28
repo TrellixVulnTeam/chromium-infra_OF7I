@@ -8,7 +8,7 @@ from . import source
 from . import builder
 from . import util
 
-from .build_types import Spec, UniversalSpec
+from .build_types import Spec
 from .builder import Builder
 
 
@@ -18,11 +18,14 @@ class InfraPackage(Builder):
        packages folder.
     """
     self._resolved_version = None
-    super(InfraPackage, self).__init__(Spec(
-        name, None,
-        universal=UniversalSpec(pyversions=['py2']),
-        default=True,
-    ))
+    super(InfraPackage, self).__init__(
+        Spec(
+            name,
+            None,
+            universal=True,
+            pyversions=['py2'],
+            default=True,
+        ))
 
   def version_fn(self, system):
     if self._resolved_version is None:

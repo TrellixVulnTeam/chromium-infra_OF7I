@@ -16,14 +16,13 @@ from . import cipd
 # new suffix.
 BINARY_VERSION_SUFFIX = None
 
-UniversalSpec = collections.namedtuple('UniversalSpec', ('pyversions'))
-
 _Spec = collections.namedtuple(
     '_Spec',
     (
         'name',
         'version',
         'universal',
+        'pyversions',
         # default is true if this Spec should be built by default (i.e., when a
         # user doesn't manually specify Specs to build).
         'default'))
@@ -41,12 +40,12 @@ class Spec(_Spec):
       ret = '%s-%s' % (self.name, self.version)
     else:
       ret = self.name
-    if self.universal and self.universal.pyversions:
-      ret += '-%s' % '.'.join(sorted(self.universal.pyversions))
+    if self.universal and self.pyversions:
+      ret += '-%s' % '.'.join(sorted(self.pyversions))
     return ret
 
   def to_universal(self):
-    return self._replace(universal=UniversalSpec(pyversions=None))
+    return self._replace(universal=True)
 
 
 _Wheel = collections.namedtuple(
@@ -64,7 +63,7 @@ class Wheel(_Wheel):
     if self.spec.universal:
       # We support py2-only, py3-only, or py2+py3.  Wait for other requests
       # to show up before adding more.
-      pyv = sorted(self.spec.universal.pyversions or ['py2', 'py3'])
+      pyv = sorted(self.spec.pyversions or ['py2', 'py3'])
       if pyv == ['py2', 'py3']:
         return 'py2.py3'
       elif pyv == ['py2'] or pyv == ['py3']:
