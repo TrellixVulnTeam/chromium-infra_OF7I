@@ -573,3 +573,9 @@ import:
 - package: github.com/pborman/uuid
   version: upstream/master
   repo: https://chromium.googlesource.com/external/github.com/pborman/uuid.git
+- package: github.com/chris-ramon/douceur
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/chris-ramon/douceur.git
+- package: github.com/gorilla/css
+  version: upstream/master
+  repo: https://chromium.googlesource.com/external/github.com/gorilla/css.git
