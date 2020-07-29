@@ -1654,6 +1654,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         project=fake.ProjectService(),
         config=fake.ConfigService(),
         issue=fake.IssueService(),
+        issue_star=fake.IssueStarService(),
         user=fake.UserService(),
         usergroup=fake.UserGroupService())
     self.cnxn = 'fake cnxn'
@@ -1683,6 +1684,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     expected_imp_amendments = {}
     expected_old_owners = {}
     expected_merged_from_add = {}
+    expected_new_starrers = {}
 
     issue_main = _Issue('proj', 100)
     issue_main_ref = ('proj', issue_main.local_id)
@@ -1791,12 +1793,23 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     expected_merged_from_add[expected_merge_add.issue_id] = [
         issue_main.issue_id
     ]
-    expected_issues_to_update[expected_merge_add.issue_id] = expected_merge_add
+
     expected_imp_amendments[merge_add.issue_id] = [
         tracker_bizobj.MakeCcAmendment(expected_merge_add.cc_ids, []),
         tracker_bizobj.MakeMergedIntoAmendment(
             [issue_main_ref], [], default_project_name='proj')
     ]
+    # We are merging issue_main into merge_add, so issue_main's starrers
+    # should be merged into merge_add's starrers.
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, issue_main.issue_id, 111, True)
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, issue_main.issue_id, 222, True)
+    expected_merge_add.star_count = 2
+    expected_new_starrers[merge_add.issue_id] = [222, 111]
+
+    expected_issues_to_update[expected_merge_add.issue_id] = expected_merge_add
+
 
     issue_main.merged_into = merge_remove.issue_id
     expected_main.merged_into = merge_add.issue_id
@@ -1833,11 +1846,9 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         self.cnxn, issue_delta_pairs, self.services)
 
     expected_tuple = tracker_helpers._IssueChangesTuple(
-        expected_issues_to_update,
-        expected_merged_from_add,
-        expected_amendments,
-        expected_imp_amendments,
-        expected_old_owners)
+        expected_issues_to_update, expected_merged_from_add,
+        expected_amendments, expected_imp_amendments, expected_old_owners,
+        expected_new_starrers)
     self.assertEqual(actual_tuple, expected_tuple)
 
     self.assertEqual(missing_1, expected_missing_1)
@@ -1867,7 +1878,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     actual_tuple = tracker_helpers.ApplyAllIssueChanges(
         self.cnxn, issue_delta_pairs, self.services)
-    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {})
+    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {}, {})
     self.assertEqual(actual_tuple, expected_tuple)
 
     self.assertEqual(noop_issue, expected_noop_issue)
@@ -1876,7 +1887,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_delta_pairs = []
     actual_tuple = tracker_helpers.ApplyAllIssueChanges(
         self.cnxn, issue_delta_pairs, self.services)
-    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {})
+    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {}, {})
     self.assertEqual(actual_tuple, expected_tuple)
 
   def testGroupUniqueDeltaIssues(self):
@@ -2035,7 +2046,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
 
   def setUp(self):
     self.services = service_manager.Services(
-        issue=fake.IssueService())
+        issue=fake.IssueService(), issue_star=fake.IssueStarService())
     self.cnxn = 'fake connection'
 
   def testComputeAllImpactedIDs(self):
@@ -2123,6 +2134,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
   def testApplyImpactedIssueChanges(self):
     impacted_tracker = tracker_helpers._IssueChangeImpactedIssues()
     impacted_issue = _Issue('proj', 1)
+    self.services.issue.TestAddIssue(impacted_issue)
     impacted_iid = impacted_issue.issue_id
 
     # Setup.
@@ -2152,6 +2164,17 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
     self.services.issue.TestAddIssue(m_add_no_ccs)
     impacted_tracker.merged_from_add[impacted_iid].extend(
         [m_add.issue_id, m_add_no_ccs.issue_id])
+    # Set up starrers.
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, impacted_iid, 111, True)
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, impacted_iid, 222, True)
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, m_add.issue_id, 222, True)
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, m_add.issue_id, 333, True)
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, m_add.issue_id, 444, True)
 
     m_remove = _Issue('proj', 8)
     m_remove.cc_ids = [888]
@@ -2166,8 +2189,9 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
     expected_issue = copy.deepcopy(impacted_issue)
 
     # Verify.
-    actual_amendments = impacted_tracker.ApplyImpactedIssueChanges(
-        self.cnxn, impacted_issue, self.services.issue)
+    (actual_amendments,
+     actual_new_starrers) = impacted_tracker.ApplyImpactedIssueChanges(
+         self.cnxn, impacted_issue, self.services)
     expected_amendments = [
         tracker_bizobj.MakeBlockedOnAmendment(
             [('proj', bo_add.local_id)],
@@ -2181,6 +2205,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
             [('proj', m_remove.local_id)], default_project_name='proj')
         ]
     self.assertEqual(actual_amendments, expected_amendments)
+    self.assertItemsEqual(actual_new_starrers, [333, 444])
 
     expected_issue.cc_ids.append(777)
     expected_issue.blocked_on_iids = [78404, bo_add.issue_id]
@@ -2189,6 +2214,7 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
     # See SortBlockedOn in issue_svc.py.
     expected_issue.blocked_on_ranks = [0, 0]
     expected_issue.blocking_iids = [78405, b_add.issue_id]
+    expected_issue.star_count = 4
     self.assertEqual(impacted_issue, expected_issue)
 
   def testApplyImpactedIssueChanges_Empty(self):
@@ -2196,11 +2222,14 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
     impacted_issue = _Issue('proj', 1)
     expected_issue = copy.deepcopy(impacted_issue)
 
-    actual_amendments = impacted_tracker.ApplyImpactedIssueChanges(
-        self.cnxn, impacted_issue, self.services.issue)
+    (actual_amendments,
+     actual_new_starrers) = impacted_tracker.ApplyImpactedIssueChanges(
+         self.cnxn, impacted_issue, self.services)
 
     expected_amendments = []
     self.assertEqual(actual_amendments, expected_amendments)
+    expected_new_starrers = []
+    self.assertEqual(actual_new_starrers, expected_new_starrers)
     self.assertEqual(impacted_issue, expected_issue)
 
   def testApplyImpactedIssueChanges_PartiallyEmptyMergedFrom(self):
@@ -2216,10 +2245,13 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
         m_add.issue_id)
     # We're leaving impacted_tracker.merged_from_remove empty.
 
-    actual_amendments = impacted_tracker.ApplyImpactedIssueChanges(
-        self.cnxn, impacted_issue, self.services.issue)
+    (actual_amendments,
+     actual_new_starrers) = impacted_tracker.ApplyImpactedIssueChanges(
+         self.cnxn, impacted_issue, self.services)
 
     expected_amendments = [tracker_bizobj.MakeMergedIntoAmendment(
             [('proj', m_add.local_id)], [], default_project_name='proj')]
     self.assertEqual(actual_amendments, expected_amendments)
+    expected_new_starrers = []
+    self.assertEqual(actual_new_starrers, expected_new_starrers)
     self.assertEqual(impacted_issue, expected_issue)

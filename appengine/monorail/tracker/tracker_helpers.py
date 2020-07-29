@@ -1255,11 +1255,11 @@ def _GetEnumFieldValuesAndDocstrings(field_def, config):
 _IssueChangesTuple = collections.namedtuple(
     '_IssueChangesTuple', [
         'issues_to_update_dict', 'merged_from_add_by_iid', 'amendments_by_iid',
-        'imp_amendments_by_iid', 'old_owners_by_iid'
+        'imp_amendments_by_iid', 'old_owners_by_iid', 'new_starrers_by_iid'
     ])
-# type: (Mapping[int, Issue], DefaultDict[int, Sequence],
-#     Mapping[int, Amendment], Mapping[int, Amendment], Mapping[int, int])
-#     -> None
+# type: (Mapping[int, Issue], DefaultDict[int, Sequence[int]],
+#     Mapping[int, Amendment], Mapping[int, Amendment], Mapping[int, int],
+#     Mapping[int, Sequence[int]])-> None
 
 
 def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
@@ -1304,8 +1304,10 @@ def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
       amendments_by_iid[issue.issue_id] = amendments
 
   # PHASE 4: Update impacted issues in RAM.
+  logging.info('Applying impacted issue changes: %r', impacted_tracker.__dict__)
   imp_amendments_by_iid = {}
   impacted_iids = impacted_tracker.ComputeAllImpactedIIDs()
+  new_starrers_by_iid = {}
   for issue_id in impacted_iids:
     # Changes made to an impacted issue should be on top of changes
     # made to it in PHASE 3 where it might have been a 'main' issue.
@@ -1313,15 +1315,18 @@ def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
         issue_id, services.issue.GetIssue(cnxn, issue_id))
 
     # Apply impacted changes.
-    amendments = impacted_tracker.ApplyImpactedIssueChanges(
-        cnxn, issue, services.issue)
+    amendments, new_starrers = impacted_tracker.ApplyImpactedIssueChanges(
+        cnxn, issue, services)
     if amendments:
       imp_amendments_by_iid[issue.issue_id] = amendments
       issues_to_update_dict[issue.issue_id] = issue
+      if new_starrers:
+        new_starrers_by_iid[issue.issue_id] = new_starrers
 
   return _IssueChangesTuple(
       issues_to_update_dict, impacted_tracker.merged_from_add,
-      amendments_by_iid, imp_amendments_by_iid, old_owners_by_iid)
+      amendments_by_iid, imp_amendments_by_iid, old_owners_by_iid,
+      new_starrers_by_iid)
 
 
 def GroupUniqueDeltaIssues(issue_delta_pairs):
@@ -1509,17 +1514,19 @@ class _IssueChangeImpactedIssues():
       if issue.merged_into:
         self.merged_from_remove[issue.merged_into].append(issue.issue_id)
 
-  def ApplyImpactedIssueChanges(self, cnxn, impacted_issue, issue_service):
-    # type: (MonorailConnection, Issue, IssueService) -> Collection[Amendment]
+  def ApplyImpactedIssueChanges(self, cnxn, impacted_issue, services):
+    # type: (MonorailConnection, Issue, Services) ->
+    #     Tuple[Collection[Amendment], Sequence[int]]
     """Apply the tracked changes in RAM for the given impacted issue.
 
     Args:
       cnxn: connection to SQL database.
       impacted_issue: Issue PB that we are applying the changes to.
-      issue_service: IssueService used to fetch info from DB or cache.
+      services: Services used to fetch info from DB or cache.
 
     Returns:
-      All the amendments that represent the changes applied to the issue.
+      All the amendments that represent the changes applied to the issue
+      and a list of the new issue starrers.
 
     Side-effect:
       The given impacted_issue will be updated in RAM.
@@ -1528,22 +1535,19 @@ class _IssueChangeImpactedIssues():
 
     # Process changes for blocking/blocked_on issue changes.
     amendments, _impacted_iids = tracker_bizobj.ApplyIssueBlockRelationChanges(
-        cnxn,
-        impacted_issue,
-        self.blocked_on_add[issue_id],
-        self.blocked_on_remove[issue_id],
-        self.blocking_add[issue_id],
-        self.blocking_remove[issue_id],
-        issue_service)
+        cnxn, impacted_issue, self.blocked_on_add[issue_id],
+        self.blocked_on_remove[issue_id], self.blocking_add[issue_id],
+        self.blocking_remove[issue_id], services.issue)
 
     # Process changes in merged issues.
     merged_from_add = self.merged_from_add.get(issue_id, [])
     merged_from_remove = self.merged_from_remove.get(issue_id, [])
 
-    # Merge ccs into impacted_issue from all merged issues.
+    # Merge ccs into impacted_issue from all merged issues,
+    # compute new starrers, and set star_count.
+    new_starrers = []
     if merged_from_add:
-
-      issues_dict, _misses = issue_service.GetIssuesDict(cnxn, merged_from_add)
+      issues_dict, _misses = services.issue.GetIssuesDict(cnxn, merged_from_add)
       merged_from_add_issues = issues_dict.values()
       new_cc_ids = _ComputeNewCcsFromIssueMerge(
           impacted_issue, merged_from_add_issues)
@@ -1551,14 +1555,18 @@ class _IssueChangeImpactedIssues():
         impacted_issue.cc_ids.extend(new_cc_ids)
         amendments.append(
             tracker_bizobj.MakeCcAmendment(new_cc_ids, []))
+      new_starrers = list(
+          GetNewIssueStarrers(cnxn, services, merged_from_add, issue_id))
+      if new_starrers:
+        impacted_issue.star_count += len(new_starrers)
 
     if merged_from_add or merged_from_remove:
-      merged_from_add_refs = issue_service.LookupIssueRefs(
+      merged_from_add_refs = services.issue.LookupIssueRefs(
           cnxn, merged_from_add).values()
-      merged_from_remove_refs = issue_service.LookupIssueRefs(
+      merged_from_remove_refs = services.issue.LookupIssueRefs(
           cnxn, merged_from_remove).values()
       amendments.append(
           tracker_bizobj.MakeMergedIntoAmendment(
               merged_from_add_refs, merged_from_remove_refs,
               default_project_name=impacted_issue.project_name))
-    return amendments
+    return amendments, new_starrers
