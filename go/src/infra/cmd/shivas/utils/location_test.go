@@ -59,3 +59,19 @@ func TestUFSLabCoverage(t *testing.T) {
 		}
 	})
 }
+
+func TestReplaceLabNames(t *testing.T) {
+	Convey("TestReplaceLabNames labname error", t, func() {
+		filter := "machine=mac-1,mac-2 & lab=XXX & nic=nic-1"
+		_, err := ReplaceLabNames(filter)
+		So(err, ShouldNotBeNil)
+		So(err.Error(), ShouldContainSubstring, "Invalid lab name XXX for filtering.")
+	})
+
+	Convey("TestReplaceLabNames labname - happy path", t, func() {
+		filter := "machine=mac-1,mac-2 & lab=atl97,mtv96 & nic=nic-1"
+		filter, _ = ReplaceLabNames(filter)
+		So(filter, ShouldNotBeNil)
+		So(filter, ShouldContainSubstring, "machine=mac-1,mac-2&lab=LAB_DATACENTER_ATL97,LAB_DATACENTER_MTV96&nic=nic-1")
+	})
+}

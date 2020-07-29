@@ -22,7 +22,7 @@ var (
 	EmptyID                       string = "Invalid input - Entity ID is empty."
 	EmptyName                     string = "Invalid input - Entity Name is empty."
 	ValidName                     string = "Name must contain only 3-63 characters, ASCII letters, numbers and special characters )(,_:."
-	InvalidCharacters             string = fmt.Sprintf("%s,%s", "Invalid input -", ValidName)
+	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
@@ -40,8 +40,8 @@ var (
 	ResourceFormat                string = "Invalid input - Entity Name pattern should be in a format of resource_names/XXX, resource_names includes machines/racks/vms/hosts/vlans."
 	EmptyMachineName              string = "Invalid input - Machine name cannot be empty."
 	EmptyRackName                 string = "Invalid input - Rack name cannot be empty."
-	FilterFormat                  string = "Filter format Egs:\n" + "machine=mac-1\n" + "machine=mac-1,mac-2\n" + "machine=mac-1 & nic=nic-1\n" + "machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2"
-	InvalidFilterFormat           string = fmt.Sprintf("%s,%s", "Invalid input -", FilterFormat)
+	FilterFormat                  string = "Filter format Egs:\n" + "'machine=mac-1'\n" + "'machine=mac-1,mac-2'\n" + "'machine=mac-1 & nic=nic-1'\n" + "'machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2'"
+	InvalidFilterFormat           string = fmt.Sprintf("%s%s", "Invalid input - ", FilterFormat)
 )
 
 var (
@@ -76,7 +76,7 @@ var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
 // machine=mac-1,mac-2
 // machine=mac-1 & nic=nic-1
 // machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2
-var FilterRegex = regexp.MustCompile(`^([a-z]*\=[a-zA-Z0-9-)(_:.]{3,63})(\,[a-zA-Z0-9-)(_:.]{3,63})*(\&([a-z]*\=[a-zA-Z0-9-)(_:.]{3,63})(\,[a-zA-Z0-9-)(_:.]{3,63})*)*$`)
+var FilterRegex = regexp.MustCompile(`^([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*(\&([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*)*$`)
 
 // It's used to validate a host or vm in resource_name
 var hostRegex = regexp.MustCompile(`hosts\.*`)

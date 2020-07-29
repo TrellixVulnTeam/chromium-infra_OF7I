@@ -136,6 +136,93 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 	return nil
 }
 
+// TODO(eshwarn) : Rename this method to printAll when all list cmds are migrated to use this func
+type printAllDup func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool) (string, error)
+
+// PrintListJSONFormatDup prints the list output in JSON format
+//
+// TODO(eshwarn) : Rename this method to PrintListJSONFormat when all list cmds are migrated to use this func
+func PrintListJSONFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printAllDup, json bool, pageSize int32, filter string, keysOnly bool) error {
+	var pageToken string
+	fmt.Print("[")
+	if pageSize == 0 {
+		for {
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly)
+			if err != nil {
+				return err
+			}
+			if token == "" {
+				break
+			}
+			fmt.Print(",")
+			pageToken = token
+		}
+	} else {
+		for i := int32(0); i < pageSize; i = i + ufsUtil.MaxPageSize {
+			var size int32
+			if pageSize-i < ufsUtil.MaxPageSize {
+				size = pageSize % ufsUtil.MaxPageSize
+			} else {
+				size = ufsUtil.MaxPageSize
+			}
+			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly)
+			if err != nil {
+				return err
+			}
+			if token == "" {
+				break
+			} else if i+ufsUtil.MaxPageSize < pageSize {
+				fmt.Print(",")
+			}
+			pageToken = token
+		}
+	}
+	fmt.Println("]")
+	return nil
+}
+
+// PrintListTableFormatDup prints list output in Table format
+//
+// TODO(eshwarn) : Rename this method to PrintListTableFormat when all list cmds are migrated to use this func
+func PrintListTableFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printAllDup, json bool, pageSize int32, filter string, keysOnly bool, title []string) error {
+	if keysOnly {
+		printTitle(title[0:1])
+	} else {
+		printTitle(title)
+	}
+	var pageToken string
+	if pageSize == 0 {
+		for {
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly)
+			if err != nil {
+				return err
+			}
+			if token == "" {
+				break
+			}
+			pageToken = token
+		}
+	} else {
+		for i := int32(0); i < pageSize; i = i + ufsUtil.MaxPageSize {
+			var size int32
+			if pageSize-i < ufsUtil.MaxPageSize {
+				size = pageSize % ufsUtil.MaxPageSize
+			} else {
+				size = ufsUtil.MaxPageSize
+			}
+			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly)
+			if err != nil {
+				return err
+			}
+			if token == "" {
+				break
+			}
+			pageToken = token
+		}
+	}
+	return nil
+}
+
 // PrintProtoJSON prints the output as json
 func PrintProtoJSON(pm proto.Message) {
 	defer bw.Flush()
@@ -327,19 +414,23 @@ func PrintNicsJSON(nics []*ufspb.Nic) {
 }
 
 // PrintMachines prints the all machines in table form.
-func PrintMachines(machines []*ufspb.Machine) {
+func PrintMachines(machines []*ufspb.Machine, keysOnly bool) {
 	defer tw.Flush()
 	for _, m := range machines {
-		printMachine(m)
+		printMachine(m, keysOnly)
 	}
 }
 
-func printMachine(m *ufspb.Machine) {
+func printMachine(m *ufspb.Machine, keysOnly bool) {
+	m.Name = ufsUtil.RemovePrefix(m.Name)
+	if keysOnly {
+		fmt.Fprintln(tw, m.GetName())
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	m.Name = ufsUtil.RemovePrefix(m.Name)
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())

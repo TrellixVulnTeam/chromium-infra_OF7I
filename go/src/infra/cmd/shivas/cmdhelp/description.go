@@ -4,6 +4,13 @@
 
 package cmdhelp
 
+import (
+	"fmt"
+	"strings"
+
+	"infra/cmd/shivas/utils"
+)
+
 var (
 	// ListPageSizeDesc description for List PageSize
 	ListPageSizeDesc string = `number of items to get. The service may return fewer than this value.`
@@ -929,4 +936,25 @@ Example Browser rack:
 
 The protobuf definition of rack is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto`
+
+	// LabFilterHelpText help text for lab filters for list command
+	LabFilterHelpText string = fmt.Sprintf("\nValid lab filters: [%s]\n", strings.Join(utils.ValidLabStr(), ", "))
+
+	// KeysOnlyText help text for keysOnly option
+	KeysOnlyText string = `get only the keys and not the entire object.
+Operation will be faster as only primary keys/ids will be retrieved from the service.`
+
+	// FilterText Common filter text for all list filter option
+	FilterText string = "filtering option to filter the results.\n"
+
+	// FilterCondition Common filter condition for all list filter option
+	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
+
+	// MachineFiterHelp help text for list machine filtering
+	MachineFiterHelp string = FilterText + `You can filter machines by kvm/rpm/drac/nic/lab/rack/platform` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'nic=nic-1,nic-2'
+'lab=atl97 & nic=nic-1'
+'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 )

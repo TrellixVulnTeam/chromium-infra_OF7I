@@ -34,6 +34,8 @@ type MachineEntity struct {
 	NicIDs           []string `gae:"nic_ids"`
 	DracID           string   `gae:"drac_id"`
 	ChromePlatformID string   `gae:"chrome_platform_id"`
+	Rack             string   `gae:"rack"`
+	Lab              string   `gae:"lab"`
 	// ufspb.Machine cannot be directly used as it contains pointer.
 	Machine []byte `gae:",noindex"`
 }
@@ -63,6 +65,8 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 		NicIDs:           p.GetChromeBrowserMachine().GetNics(),
 		DracID:           p.GetChromeBrowserMachine().GetDrac(),
 		ChromePlatformID: p.GetChromeBrowserMachine().GetChromePlatform(),
+		Rack:             p.GetLocation().GetRack(),
+		Lab:              p.GetLocation().GetLab().String(),
 		Machine:          machine,
 	}, nil
 }
