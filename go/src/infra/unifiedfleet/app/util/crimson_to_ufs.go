@@ -151,12 +151,16 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 }
 
 // ProcessNetworkInterfaces converts nics and dracs to several UFS formats for further importing
-func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHCPConfig, map[string][]string, map[string]string) {
+func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machines []*crimson.Machine) ([]*fleet.Nic, []*fleet.Drac, []*fleet.DHCPConfig, map[string][]string, map[string]string) {
 	machineToNics := make(map[string][]string, 0)
 	machineToDracs := make(map[string]string, 0)
+	machineMap := make(map[string]*crimson.Machine, len(machines))
 	newNics := make([]*fleet.Nic, 0)
 	newDracs := make([]*fleet.Drac, 0)
 	dhcps := make([]*fleet.DHCPConfig, 0)
+	for _, machine := range machines {
+		machineMap[machine.GetName()] = machine
+	}
 	for _, nic := range nics {
 		name := GetNicName(nic.GetName(), nic.GetMachine())
 		switch nic.GetName() {
@@ -164,6 +168,14 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fl
 			// Use ListDrac() as the source of truth for drac
 			continue
 		default:
+			// lab and rack are for indexing nic table
+			var rack string
+			var lab string
+			machine, ok := machineMap[nic.GetMachine()]
+			if ok {
+				rack = machine.GetRack()
+				lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+			}
 			// Multiple nic names, e.g. eth0, eth1, bmc
 			newNic := &fleet.Nic{
 				Name:       name,
@@ -172,6 +184,8 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fl
 					Switch: nic.GetSwitch(),
 					Port:   nic.GetSwitchport(),
 				},
+				Rack: rack,
+				Lab:  lab,
 			}
 			newNics = append(newNics, newNic)
 			machineToNics[nic.GetMachine()] = append(machineToNics[nic.GetMachine()], name)
@@ -185,6 +199,14 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fl
 		}
 	}
 	for _, drac := range dracs {
+		// lab and rack are for indexing drac table
+		var rack string
+		var lab string
+		machine, ok := machineMap[drac.GetMachine()]
+		if ok {
+			rack = machine.GetRack()
+			lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+		}
 		hostname := FormatResourceName(drac.GetName())
 		d := &fleet.Drac{
 			Name: hostname,
@@ -195,6 +217,8 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC) ([]*fl
 				Switch: drac.GetSwitch(),
 				Port:   drac.GetSwitchport(),
 			},
+			Rack: rack,
+			Lab:  lab,
 		}
 		newDracs = append(newDracs, d)
 		machineToDracs[drac.GetMachine()] = hostname

@@ -29,6 +29,9 @@ type NicEntity struct {
 	_kind    string `gae:"$kind,Nic"`
 	ID       string `gae:"$id"`
 	SwitchID string `gae:"switch_id"`
+	Lab      string `gae:"lab"`
+	Machine  string `gae:"machine"`
+	Rack     string `gae:"rack"`
 	// ufspb.Nic cannot be directly used as it contains pointer.
 	Nic []byte `gae:",noindex"`
 }
@@ -54,6 +57,9 @@ func newNicEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 	return &NicEntity{
 		ID:       p.GetName(),
 		SwitchID: p.GetSwitchInterface().GetSwitch(),
+		Rack:     p.GetRack(),
+		Lab:      p.GetLab(),
+		Machine:  p.GetMachine(),
 		Nic:      nic,
 	}, nil
 }
@@ -251,8 +257,10 @@ func GetNicIndexedFieldName(input string) (string, error) {
 		field = "lab"
 	case util.RackFilterName:
 		field = "rack"
+	case util.MachineFilterName:
+		field = "machine"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch/machine", input)
 	}
 	return field, nil
 }

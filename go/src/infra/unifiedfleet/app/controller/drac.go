@@ -38,6 +38,11 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 			return err
 		}
 
+		// Fill the machine/rack/lab to drac OUTPUT only fields
+		drac.Machine = machine.GetName()
+		drac.Rack = machine.GetLocation().GetRack()
+		drac.Lab = machine.GetLocation().GetLab().String()
+
 		// 3. Remove the drac associated with browser machine from the system.
 		// The existing old drac in the browser machine will be replaced with this new drac,
 		// A drac cannot exist in the system without being associated to a machine,
@@ -88,6 +93,10 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 		}
 
 		oldDracToUpdate, _ := registration.GetDrac(ctx, drac.GetName())
+		// Copy the machine/rack/lab to drac OUTPUT only fields from already existing drac
+		drac.Machine = oldDracToUpdate.GetName()
+		drac.Rack = oldDracToUpdate.GetRack()
+		drac.Lab = oldDracToUpdate.GetLab()
 		changes = append(changes, LogDracChanges(oldDracToUpdate, drac)...)
 		if machineName != "" {
 			// 2. Get the old browser machine associated with drac
@@ -110,6 +119,11 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 				if err != nil {
 					return err
 				}
+
+				// Fill the machine/rack/lab to drac OUTPUT only fields
+				drac.Machine = machine.GetName()
+				drac.Rack = machine.GetLocation().GetRack()
+				drac.Lab = machine.GetLocation().GetLab().String()
 
 				// 5. Remove the drac associated with new browser machine from the system.
 				// The existing old drac in the new browser machine will be replaced with this new drac,

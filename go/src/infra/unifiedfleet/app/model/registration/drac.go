@@ -29,6 +29,9 @@ type DracEntity struct {
 	_kind    string `gae:"$kind,Drac"`
 	ID       string `gae:"$id"`
 	SwitchID string `gae:"switch_id"`
+	Lab      string `gae:"lab"`
+	Machine  string `gae:"machine"`
+	Rack     string `gae:"rack"`
 	// ufspb.Drac cannot be directly used as it contains pointer.
 	Drac []byte `gae:",noindex"`
 }
@@ -54,6 +57,9 @@ func newDracEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 	return &DracEntity{
 		ID:       p.GetName(),
 		SwitchID: p.GetSwitchInterface().GetSwitch(),
+		Rack:     p.GetRack(),
+		Lab:      p.GetLab(),
+		Machine:  p.GetMachine(),
 		Drac:     drac,
 	}, nil
 }
@@ -240,8 +246,10 @@ func GetDracIndexedFieldName(input string) (string, error) {
 		field = "lab"
 	case util.RackFilterName:
 		field = "rack"
+	case util.MachineFilterName:
+		field = "machine"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for drac are lab/rack/switch", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for drac are lab/rack/switch/machine", input)
 	}
 	return field, nil
 }

@@ -40,6 +40,10 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine, nics []*uf
 			var n []string = make([]string, 0, len(nics))
 			for _, nic := range nics {
 				n = append(n, nic.Name)
+				// Fill the machine/rack/lab to nic OUTPUT only fields
+				nic.Machine = machine.GetName()
+				nic.Rack = machine.GetLocation().GetRack()
+				nic.Lab = machine.GetLocation().GetLab().String()
 			}
 			// This is output only field. Assign new value.
 			machine.GetChromeBrowserMachine().Nics = n
@@ -56,6 +60,10 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine, nics []*uf
 		if drac != nil {
 			// This is output only field. Assign new value.
 			machine.GetChromeBrowserMachine().Drac = drac.Name
+			// Fill the machine/rack/lab to drac OUTPUT only fields
+			drac.Machine = machine.GetName()
+			drac.Rack = machine.GetLocation().GetRack()
+			drac.Lab = machine.GetLocation().GetLab().String()
 
 			// we use this func as it is a non-atomic operation and can be used to
 			// run within a transaction to make it atomic. Datastore doesnt allow

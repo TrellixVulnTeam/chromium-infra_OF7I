@@ -186,7 +186,7 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *ufsAPI.Impor
 		return nil, errors.Annotate(err, "drac has invalid chars").Err()
 	}
 	logging.Debugf(ctx, "Parsing nic and drac")
-	_, _, _, machineToNics, machineToDracs := util.ProcessNetworkInterfaces(nics.Nics, dracs.Dracs)
+	_, _, _, machineToNics, machineToDracs := util.ProcessNetworkInterfaces(nics.Nics, dracs.Dracs, nil)
 	machines := util.ToChromeMachines(resp.GetMachines(), machineToNics, machineToDracs)
 	if err := ufsAPI.ValidateResourceKey(machines, "Name"); err != nil {
 		return nil, errors.Annotate(err, "machines has invalid chars").Err()
@@ -407,8 +407,11 @@ func (fs *FleetServerImpl) ImportNics(ctx context.Context, req *ufsAPI.ImportNic
 	if err := ufsAPI.ValidateResourceKey(dracs.Dracs, "Name"); err != nil {
 		return nil, errors.Annotate(err, "drac has invalid chars").Err()
 	}
-
-	res, err := controller.ImportNetworkInterfaces(ctx, nics.Nics, dracs.Dracs, fs.getImportPageSize())
+	resp, err := mdbClient.ListMachines(ctx, &crimson.ListMachinesRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListMachines").Err()
+	}
+	res, err := controller.ImportNetworkInterfaces(ctx, nics.Nics, dracs.Dracs, resp.GetMachines(), fs.getImportPageSize())
 	s := processImportDatastoreRes(res, err)
 	if s.Err() != nil {
 		return s.Proto(), s.Err()

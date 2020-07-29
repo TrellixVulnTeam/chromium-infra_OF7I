@@ -41,6 +41,11 @@ func CreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 			return err
 		}
 
+		// Fill the machine/rack/lab to nic OUTPUT only fields
+		nic.Machine = machine.GetName()
+		nic.Rack = machine.GetLocation().GetRack()
+		nic.Lab = machine.GetLocation().GetLab().String()
+
 		// 3. Update the browser machine with new nic information
 		if cs, err := addNicToBrowserMachine(ctx, machine, nic.Name); err == nil {
 			changes = append(changes, cs...)
@@ -81,6 +86,10 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 		}
 
 		oldNic, _ := registration.GetNic(ctx, nic.GetName())
+		// Copy the machine/rack/lab to nic OUTPUT only fields from already existing nic
+		nic.Machine = oldNic.GetName()
+		nic.Rack = oldNic.GetRack()
+		nic.Lab = oldNic.GetLab()
 		changes = append(changes, LogNicChanges(oldNic, nic)...)
 		if machineName != "" {
 			// 2. Get the old browser machine associated with nic
@@ -96,6 +105,11 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 				if err != nil {
 					return err
 				}
+
+				// Fill the machine/rack/lab to nic OUTPUT only fields
+				nic.Machine = machine.GetName()
+				nic.Rack = machine.GetLocation().GetRack()
+				nic.Lab = machine.GetLocation().GetLab().String()
 
 				// 4. Remove the association between old browser machine and this nic.
 				if cs, err := removeNicFromBrowserMachines(ctx, []*ufspb.Machine{oldMachine}, nic.Name); err == nil {
@@ -259,9 +273,9 @@ func DeleteNic(ctx context.Context, id string) error {
 }
 
 // ImportNetworkInterfaces creates or updates a batch of nics, dracs, and dhcps in datastore
-func ImportNetworkInterfaces(ctx context.Context, nics []*crimson.NIC, dracs []*crimson.DRAC, pageSize int) (*ufsds.OpResults, error) {
+func ImportNetworkInterfaces(ctx context.Context, nics []*crimson.NIC, dracs []*crimson.DRAC, machines []*crimson.Machine, pageSize int) (*ufsds.OpResults, error) {
 	var allRes ufsds.OpResults
-	newNics, newDracs, dhcps, _, _ := ufsUtil.ProcessNetworkInterfaces(nics, dracs)
+	newNics, newDracs, dhcps, _, _ := ufsUtil.ProcessNetworkInterfaces(nics, dracs, machines)
 	// Please note that the importing here is not in one transaction, which
 	// actually may cause data incompleteness. But as the importing job
 	// will be triggered periodically, such incompleteness that's caused by

@@ -27,7 +27,6 @@ func TestDeleteRPM(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	RPM1 := mockRPM("RPM-1")
-	RPM2 := mockRPM("RPM-2")
 	RPM3 := mockRPM("RPM-3")
 	RPM4 := mockRPM("RPM-4")
 	Convey("DeleteRPM", t, func() {
@@ -59,32 +58,7 @@ func TestDeleteRPM(t *testing.T) {
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, RPM1)
 		})
-		Convey("Delete RPM by existing ID with rack reference", func() {
-			resp, cerr := CreateRPM(ctx, RPM2)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM2)
 
-			chromeBrowserRack1 := &ufspb.Rack{
-				Name: "rack-1",
-				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Rpms: []string{"RPM-2", "RPM-5"},
-					},
-				},
-			}
-			mresp, merr := registration.CreateRack(ctx, chromeBrowserRack1)
-			So(merr, ShouldBeNil)
-			So(mresp, ShouldResembleProto, chromeBrowserRack1)
-
-			err := DeleteRPM(ctx, "RPM-2")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotDelete)
-
-			resp, cerr = GetRPM(ctx, "RPM-2")
-			So(resp, ShouldNotBeNil)
-			So(cerr, ShouldBeNil)
-			So(resp, ShouldResembleProto, RPM2)
-		})
 		Convey("Delete RPM by existing ID with racklse reference", func() {
 			resp, cerr := CreateRPM(ctx, RPM3)
 			So(cerr, ShouldBeNil)

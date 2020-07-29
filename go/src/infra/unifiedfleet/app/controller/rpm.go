@@ -84,10 +84,6 @@ func validateDeleteRPM(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	racks, err := registration.QueryRackByPropertyName(ctx, "rpm_ids", id, true)
-	if err != nil {
-		return err
-	}
 	racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "rpm_ids", id, true)
 	if err != nil {
 		return err
@@ -96,19 +92,13 @@ func validateDeleteRPM(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	if len(machines) > 0 || len(racks) > 0 || len(racklses) > 0 || len(machinelses) > 0 {
+	if len(machines) > 0 || len(racklses) > 0 || len(machinelses) > 0 {
 		var errorMsg strings.Builder
 		errorMsg.WriteString(fmt.Sprintf("RPM %s cannot be deleted because there are other resources which are referring this RPM.", id))
 		if len(machines) > 0 {
 			errorMsg.WriteString(fmt.Sprintf("\nMachines referring the RPM:\n"))
 			for _, machine := range machines {
 				errorMsg.WriteString(machine.Name + ", ")
-			}
-		}
-		if len(racks) > 0 {
-			errorMsg.WriteString(fmt.Sprintf("\nRacks referring the RPM:\n"))
-			for _, rack := range racks {
-				errorMsg.WriteString(rack.Name + ", ")
 			}
 		}
 		if len(racklses) > 0 {

@@ -149,6 +149,11 @@ func DeleteRack(ctx context.Context, id string) error {
 		if rack.GetChromeBrowserRack() != nil {
 			// 3. Delete the switches
 			if switchIDs := rack.GetChromeBrowserRack().GetSwitches(); switchIDs != nil {
+				for _, switchID := range switchIDs {
+					if err := validateDeleteSwitch(ctx, switchID); err != nil {
+						return errors.Annotate(err, "validation failed - Unable to delete switch %s", switchID).Err()
+					}
+				}
 				// we use this func as it is a non-atomic operation and can be used to
 				// run within a transaction to make it atomic. Datastore doesnt allow
 				// nested transactions.
@@ -159,6 +164,11 @@ func DeleteRack(ctx context.Context, id string) error {
 
 			// 4. Delete the KVMs
 			if kvmIDs := rack.GetChromeBrowserRack().GetKvms(); kvmIDs != nil {
+				for _, kvmID := range kvmIDs {
+					if err := validateDeleteKVM(ctx, kvmID); err != nil {
+						return errors.Annotate(err, "validation failed - unable to delete kvm %s", kvmID).Err()
+					}
+				}
 				// we use this func as it is a non-atomic operation and can be used to
 				// run within a transaction to make it atomic. Datastore doesnt allow
 				// nested transactions.
@@ -169,6 +179,11 @@ func DeleteRack(ctx context.Context, id string) error {
 
 			// 5. Delete the RPMs
 			if rpmIDs := rack.GetChromeBrowserRack().GetRpms(); rpmIDs != nil {
+				for _, rpmID := range rpmIDs {
+					if err := validateDeleteRPM(ctx, rpmID); err != nil {
+						return errors.Annotate(err, "validation failed - unable to delete rpm %s", rpmID).Err()
+					}
+				}
 				// we use this func as it is a non-atomic operation and can be used to
 				// run within a transaction to make it atomic. Datastore doesnt allow
 				// nested transactions.
@@ -267,12 +282,24 @@ func validateDeleteRack(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	if len(racklses) > 0 {
+	machines, err := registration.QueryMachineByPropertyName(ctx, "rack", id, true)
+	if err != nil {
+		return err
+	}
+	if len(racklses) > 0 || len(machines) > 0 {
 		var errorMsg strings.Builder
 		errorMsg.WriteString(fmt.Sprintf("Rack %s cannot be deleted because there are other resources which are referring this Rack.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the Rack:\n"))
-		for _, racklse := range racklses {
-			errorMsg.WriteString(racklse.Name + ", ")
+		if len(racklses) > 0 {
+			errorMsg.WriteString(fmt.Sprintf("\nRackLSEs referring the Rack:\n"))
+			for _, racklse := range racklses {
+				errorMsg.WriteString(racklse.Name + ", ")
+			}
+		}
+		if len(machines) > 0 {
+			errorMsg.WriteString(fmt.Sprintf("\nMachines referring to the Rack:\n"))
+			for _, machine := range machines {
+				errorMsg.WriteString(machine.Name + ", ")
+			}
 		}
 		logging.Errorf(ctx, errorMsg.String())
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())

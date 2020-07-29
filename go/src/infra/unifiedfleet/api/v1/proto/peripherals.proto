@@ -115,4 +115,25 @@ message Drac {
     // Record the last update timestamp of this Drac (In UTC timezone)
     google.protobuf.Timestamp update_time = 6 [
             (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // Refers to Machine name
+    string machine = 7 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Machine"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Lab
+    string lab = 8 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Rack name
+    string rack = 9 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Rack"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }

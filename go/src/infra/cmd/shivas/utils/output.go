@@ -344,14 +344,18 @@ func PrintRPMsJSON(rpms []*ufspb.RPM) {
 }
 
 // PrintDracs prints the all dracs in table form.
-func PrintDracs(dracs []*ufspb.Drac) {
+func PrintDracs(dracs []*ufspb.Drac, keysOnly bool) {
 	defer tw.Flush()
 	for _, drac := range dracs {
-		printDrac(drac)
+		printDrac(drac, keysOnly)
 	}
 }
 
-func printDrac(drac *ufspb.Drac) {
+func printDrac(drac *ufspb.Drac, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(drac.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(drac.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
@@ -380,14 +384,18 @@ func PrintDracsJSON(dracs []*ufspb.Drac) {
 }
 
 // PrintNics prints the all nics in table form.
-func PrintNics(nics []*ufspb.Nic) {
+func PrintNics(nics []*ufspb.Nic, keysOnly bool) {
 	defer tw.Flush()
 	for _, nic := range nics {
-		printNic(nic)
+		printNic(nic, keysOnly)
 	}
 }
 
-func printNic(nic *ufspb.Nic) {
+func printNic(nic *ufspb.Nic, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(nic.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(nic.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
