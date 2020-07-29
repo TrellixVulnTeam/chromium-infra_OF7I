@@ -31,6 +31,7 @@ type RackEntity struct {
 	SwitchIDs []string `gae:"switch_ids"`
 	KVMIDs    []string `gae:"kvm_ids"`
 	RPMIDs    []string `gae:"rpm_ids"`
+	Lab       string   `gae:"lab"`
 	// ufspb.Rack cannot be directly used as it contains pointer.
 	Rack []byte `gae:",noindex"`
 }
@@ -58,6 +59,7 @@ func newRackEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		SwitchIDs: p.GetChromeBrowserRack().GetSwitches(),
 		KVMIDs:    p.GetChromeBrowserRack().GetKvms(),
 		RPMIDs:    p.GetChromeBrowserRack().GetRpms(),
+		Lab:       p.GetLocation().GetLab().String(),
 		Rack:      rack,
 	}, nil
 }

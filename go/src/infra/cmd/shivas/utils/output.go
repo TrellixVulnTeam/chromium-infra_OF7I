@@ -634,19 +634,23 @@ func PrintVMsJSON(vms []*ufspb.VM) {
 }
 
 // PrintRacks prints the all racks in table form.
-func PrintRacks(racks []*ufspb.Rack) {
+func PrintRacks(racks []*ufspb.Rack, keysOnly bool) {
 	defer tw.Flush()
 	for _, m := range racks {
-		printRack(m)
+		printRack(m, keysOnly)
 	}
 }
 
-func printRack(m *ufspb.Rack) {
+func printRack(m *ufspb.Rack, keysOnly bool) {
+	m.Name = ufsUtil.RemovePrefix(m.Name)
+	if keysOnly {
+		fmt.Fprintln(tw, m.GetName())
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	m.Name = ufsUtil.RemovePrefix(m.Name)
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserRack().GetSwitches())

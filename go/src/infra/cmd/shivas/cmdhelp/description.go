@@ -957,4 +957,11 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'nic=nic-1,nic-2'
 'lab=atl97 & nic=nic-1'
 'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
+
+	// RackFiterHelp help text for list rack filtering
+	RackFiterHelp string = FilterText + `You can filter racks by switch/kvm/rpm/lab` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'kvm=kvm-1,kvm-2'
+'lab=atl97 & kvm=kvm-1'` + FilterCondition
 )
