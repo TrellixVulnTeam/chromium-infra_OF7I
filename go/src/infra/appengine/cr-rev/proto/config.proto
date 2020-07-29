@@ -1,0 +1,62 @@
+// Copyright 2020 The Chromium Authors. All Rights Reserved.
+// Use of this source code is governed by the Apache v2.0 license that can be
+// found in the LICENSE file.
+
+// Configuration for cr-rev.
+
+syntax = "proto3";
+
+package crrev;
+
+option go_package = "infra/appengine/cr-rev/proto";
+
+message Repository {
+  // The name of the repository, for example "chromium/src" or "v8/v8".
+  string name = 1;
+
+  // Indexing configuration for this repository.
+  oneof indexing {
+    // Ignore commits for this repository.
+    bool do_not_index = 2;
+
+    // Whether git hashes that are also part of other repositories should refer
+    // to this repository.
+    //
+    // For example, we set `priority = true` for "chromium/src", since all git
+    // commit hashes in "chromium/src" will also exist in
+    // "chromium/src/codesearch", but we want crrev to redirect to
+    // "chromium/src" instead of "chromium/src/codesearch".
+    bool priority = 3;
+  }
+
+  // A list of refs to be indexed, specified as a list of regular expressions.
+  // Each regex is automatically wrapped in ^ and $.
+  //
+  // Examples:
+  //   # All heads
+  //   "refs/heads/.*"
+  //   # All branch-heads
+  //   "refs/branch-heads/.*"
+  //
+  // Defaults to ["refs/heads/.*"]
+  repeated string refs = 6;
+
+  // A list of git refs to ignore even when they match a ref included above.
+  // It is also specified as a list of regular expressions automatically wrapped
+  // in ^ and $.
+  repeated string exclude_refs = 7;
+}
+
+message Host {
+  // The name of the host, for example "chromium" or "chrome-internal".
+  string name = 1;
+
+  // Should be specified only for repositories that need to override default
+  // attributes.
+  repeated Repository repository_configs = 2;
+}
+
+message HostsConfig {
+  // A list of hosts to index.
+  repeated Host hosts = 1;
+}
