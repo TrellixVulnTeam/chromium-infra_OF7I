@@ -29,7 +29,7 @@ github.com/pkg/errors
 github.com/protocolbuffers/txtpbfmt/
 
 # Microsoft related github packages
-github.com/microsoft/go-winio
+github.com/Microsoft/go-winio
 
 # gopkg.in
 gopkg.in/fsnotify.v1
