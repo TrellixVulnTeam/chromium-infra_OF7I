@@ -12,7 +12,8 @@ from .build_types import Spec
 
 
 class SourceOrPrebuilt(Builder):
-  def __init__(self, name, version, **kwargs):
+
+  def __init__(self, name, version, pyversions=None, **kwargs):
     """General-purpose wheel builder.
 
     If the wheel is "packaged" (see arg for description), it is expected that it
@@ -22,6 +23,9 @@ class SourceOrPrebuilt(Builder):
     Args:
       name (str): The wheel name.
       version (str): The wheel version.
+      pyversions (iterable or None): The list of "python" wheel fields (see
+          "Wheel.pyversion_str"). If None, a default Python version will be
+          used.
       packaged (iterable or None): The names of platforms that have this wheel
           available via PyPi. If None, a default set of packaged wheels will be
           generated based on standard PyPi expectations, encoded with each
@@ -40,7 +44,7 @@ class SourceOrPrebuilt(Builder):
             name,
             self._pypi_src.version,
             universal=False,
-            pyversions=[],
+            pyversions=pyversions,
             default=True), **kwargs)
 
   def build_fn(self, system, wheel):
@@ -50,7 +54,14 @@ class SourceOrPrebuilt(Builder):
 
 
 class MultiWheel(Builder):
-  def __init__(self, name, version, wheels, only_plat=None, default=True):
+
+  def __init__(self,
+               name,
+               version,
+               wheels,
+               pyversions=None,
+               only_plat=None,
+               default=True):
     """Builds a wheel consisting of multiple other wheels.
 
     Bundles can be useful when a user always wants a common set of packages.
@@ -59,11 +70,19 @@ class MultiWheel(Builder):
       name (str): The name of the bundle wheel.
       version (str): The bundle wheel version.
       wheels (iterable): A set of embedded wheel rules to add to the bundle.
+      pyversions (iterable or None): The list of "python" wheel fields (see
+          "Wheel.pyversion_str"). If None, a default Python version will be
+          used.
       only_plat: (See Builder's "only_plat" argument.)
     """
     self._wheels = wheels
     super(MultiWheel, self).__init__(
-        Spec(name, version, universal=False, pyversions=[], default=default),
+        Spec(
+            name,
+            version,
+            universal=False,
+            pyversions=pyversions,
+            default=default),
         only_plat=only_plat)
 
   def build_fn(self, system, wheel):
@@ -82,13 +101,18 @@ class Prebuilt(Builder):
     name (str): The wheel name.
     version (str): The wheel version.
     only_plat: (See Builder's "only_plat" argument.)
+    pyversions (iterable or None): The list of "python" wheel fields (see
+        "Wheel.pyversion_str"). If None, a default Python version will be
+        used.
     kwargs: Keyword arguments forwarded to Builder.
   """
-  def __init__(self, name, version, only_plat, **kwargs):
+
+  def __init__(self, name, version, only_plat, pyversions=None, **kwargs):
     kwargs['only_plat'] = only_plat
     super(Prebuilt, self).__init__(
-        Spec(name, version, universal=False, pyversions=[], default=True),
-        **kwargs)
+        Spec(
+            name, version, universal=False, pyversions=pyversions,
+            default=True), **kwargs)
 
   def build_fn(self, system, wheel):
     return BuildPackageFromPyPiWheel(system, wheel)

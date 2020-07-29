@@ -21,7 +21,10 @@ _Spec = collections.namedtuple(
     (
         'name',
         'version',
+        # True if the wheel is universal, that is, pure Python.
         'universal',
+        # An iterable containing the major Python versions the wheel is
+        # expected to be compatible with. Valid values are ["py2", "py3"].
         'pyversions',
         # default is true if this Spec should be built by default (i.e., when a
         # user doesn't manually specify Specs to build).
@@ -40,7 +43,7 @@ class Spec(_Spec):
       ret = '%s-%s' % (self.name, self.version)
     else:
       ret = self.name
-    if self.universal and self.pyversions:
+    if self.pyversions:
       ret += '-%s' % '.'.join(sorted(self.pyversions))
     return ret
 
@@ -71,7 +74,8 @@ class Wheel(_Wheel):
       else:
         raise ValueError('Unsupported versions: %r' % (pyv,))
 
-    # We only generate wheels for "cpython" at the moment.
+    # We only generate wheels for "cpython" at the moment, and only
+    # for the specific wheel ABI the platform is configured for.
     return 'cp%s' % (self.pyversion,)
 
   @property
