@@ -47,8 +47,6 @@ func (r *repo) Project() migrator.Project {
 func (r *repo) ConfigRoot() string          { return "/" + r.relConfigRoot }
 func (r *repo) GeneratedConfigRoot() string { return "/" + r.relGeneratedConfigRoot }
 
-const magicUpstreamRef = "refs/CONFIG_UPSTREAM"
-
 // CreateRepo generates a new repo, checking it out if it's unavailable.
 //
 // Returns `true` if this did a new checkout.
@@ -56,28 +54,91 @@ func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 	realPath := project.ProjectRepo(projPB.Id)
 	gitLoc := projPB.GetGitilesLocation()
 
+	// We do this because `git cl` makes very broad assumptions about ref names.
+	var originRef string
+	if prefix := "refs/heads/"; strings.HasPrefix(gitLoc.Ref, prefix) {
+		originRef = strings.Replace(gitLoc.Ref, prefix, "refs/remotes/origin/", 1)
+	} else if prefix := "refs/branch-heads/"; strings.HasPrefix(gitLoc.Ref, prefix) {
+		originRef = strings.Replace(gitLoc.Ref, prefix, "refs/remotes/branch-heads/", 1)
+	} else {
+		err = errors.Reason("malformed GitilesLocation.Ref, must be `refs/heads/` or `refs/branch-heads/`: %q", gitLoc.Ref).Err()
+		return
+	}
+
+	var tempPath string
+	git := gitRunner{ctx: ctx}
+
 	if _, err = os.Stat(realPath); err != nil && !os.IsNotExist(err) {
 		err = errors.Annotate(err, "statting checkout").Err()
 		return
 	} else if os.IsNotExist(err) {
 		newCheckout = true
 
-		tempPath := project.ProjectRepoTemp(projPB.Id)
+		tempPath = project.ProjectRepoTemp(projPB.Id)
 
 		if err = os.Mkdir(tempPath, 0777); err != nil {
 			err = errors.Annotate(err, "creating repo checkout").Err()
 			return
 		}
 
-		git := gitRunner{root: tempPath, ctx: ctx}
+		git.root = tempPath
 		git.run("init")
 		git.run("config", "extensions.PartialClone", "origin")
-		git.run("config", "depot-tools.upstream", magicUpstreamRef)
-		git.run("sparse-checkout", "init")
+		git.run("config", "depot-tools.upstream", originRef)
 		git.run("remote", "add", "origin", gitLoc.Repo)
-		git.run("config", "remote.origin.fetch", "+"+gitLoc.Ref+":"+magicUpstreamRef)
+		git.run("config", "remote.origin.fetch", "+"+gitLoc.Ref+":"+originRef)
 		git.run("config", "remote.origin.partialclonefilter", "blob:none")
 		git.run("fetch", "--depth", "1", "origin")
+	} else {
+		git.root = realPath
+	}
+
+	// toAdd will have the list of file patterns we want from our sparse checkout;
+	// We do the `sparse-checkout add` call at most once because it's pretty slow
+	// on each invocation (it updates some internal git state and may also do
+	// network fetches to pull down missing blobs; this is optimized if you feed
+	// it all the new patterns simultaneously).
+	toAdd := stringset.Set{}
+	toAdd.Add(gitLoc.Path)
+
+	var foundRelConfigRoot bool
+	relConfigRoot := ""
+
+	// Run from gitLoc.Path all the way up to "."; We need to add all OWNERS files
+	// and will calculate relConfigRoot along the way.
+	//
+	// TODO(iannucci): have a deterministic way to find the relConfigRoot; maybe
+	// a generated metadata file?
+	for cur := gitLoc.Path; cur != "."; cur = path.Dir(cur) {
+		if !foundRelConfigRoot && git.check("cat-file", "-t", originRef+":"+cur+"/main.star") {
+			foundRelConfigRoot = true
+			relConfigRoot = cur
+			toAdd.Add(cur)
+		}
+		toAdd.Add(filepath.Join(cur, "DIR_METADATA"))
+		toAdd.Add(filepath.Join(cur, "OWNERS"))
+		toAdd.Add(filepath.Join(cur, "PRESUBMIT.py"))
+	}
+
+	if relConfigRoot == "" {
+		// We didn't find it heuristically.
+		relConfigRoot = gitLoc.Path
+	}
+
+	if newCheckout {
+		// Finalize the checkout.
+
+		// We do a sparse checkout iff the relConfigRoot is somewhere deeper than
+		// the root of the repo. Otherwise the whole checkout is the config
+		// directory.
+		if !(relConfigRoot == "" || relConfigRoot == ".") {
+			git.run("sparse-checkout", "init")
+			git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
+			if err = git.err; err != nil {
+				return
+			}
+		}
+
 		git.run("new-branch", "fix_config")
 		if err = git.err; err != nil {
 			return
@@ -88,51 +149,15 @@ func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		}
 	}
 
-	realRet := &repo{
+	ret = &repo{
 		root: realPath,
 
+		relConfigRoot:          relConfigRoot,
 		relGeneratedConfigRoot: gitLoc.Path,
 
 		projPB: projPB,
 		ctx:    ctx,
 	}
-	ret = realRet
-
-	// toAdd will have the list of file patterns we want from our sparse checkout;
-	// We do the `sparse-checkout` call at most once because it's pretty slow on
-	// each invocation (it updates some internal git state and may also do network
-	// fetches to pull down missing blobs; this is optimized if you feed it all
-	// the new patterns simultaneously).
-	toAdd := stringset.Set{}
-	toAdd.Add(gitLoc.Path)
-
-	// Run from gitLoc.Path all the way up to "."; We need to add all OWNERS files
-	// and will calculate relConfigRoot along the way.
-	//
-	// TODO(iannucci): have a deterministic way to find the relConfigRoot; maybe
-	// a generated metadata file?
-	git := gitRunner{root: realRet.root, ctx: ctx}
-	for cur := gitLoc.Path; cur != "."; cur = path.Dir(cur) {
-		if realRet.relConfigRoot == "" && git.check("cat-file", "-t", magicUpstreamRef+":"+cur+"/main.star") {
-			realRet.relConfigRoot = cur
-			toAdd.Add(cur)
-		}
-		toAdd.Add(filepath.Join(cur, "DIR_METADATA"))
-		toAdd.Add(filepath.Join(cur, "OWNERS"))
-		toAdd.Add(filepath.Join(cur, "PRESUBMIT.py"))
-	}
-	if newCheckout {
-		git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
-		if err = git.err; err != nil {
-			return
-		}
-	}
-
-	if realRet.relConfigRoot == "" {
-		// We didn't find it heuristically.
-		realRet.relConfigRoot = realRet.relGeneratedConfigRoot
-	}
-
 	return
 }
 
