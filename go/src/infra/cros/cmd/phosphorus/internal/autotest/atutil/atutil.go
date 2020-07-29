@@ -101,7 +101,7 @@ func createOutputDir(a *autotest.AutoservArgs) error {
 	if a.OffloadDir == "" {
 		return nil
 	}
-	return os.MkdirAll(a.OffloadDir, 0666)
+	return os.MkdirAll(a.OffloadDir, 0777)
 }
 
 // runTask runs an autoserv task.
