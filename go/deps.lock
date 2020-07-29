@@ -302,9 +302,6 @@ imports:
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
   repo: https://chromium.googlesource.com/external/github.com/mgutz/ansi.git
-- name: github.com/microcosm-cc/bluemonday
-  version: 0a75d7616912ab9beb9cc6f7283ec1917c61b135
-  repo: https://chromium.googlesource.com/external/github.com/microcosm-cc/bluemonday.git
 - name: github.com/microsoft/go-winio
   version: 3fe6c526287328ec859e2c1258458b685198f204
   repo: https://chromium.googlesource.com/external/github.com/microsoft/go-winio.git
