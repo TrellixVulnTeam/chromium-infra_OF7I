@@ -3,8 +3,10 @@ package dumper
 import (
 	"context"
 
+	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/datastore"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/api/iterator"
 
 	iv2ds "infra/libs/cros/lab_inventory/datastore"
 	iv2pr "infra/libs/fleet/protos"
@@ -50,4 +52,40 @@ func GetAllAssetInfo(ctx context.Context, client *datastore.Client) (map[string]
 		assetInfos[a.Info.GetAssetTag()] = &a.Info
 	}
 	return assetInfos, nil
+}
+
+// GetAssetToHostnameMap gets the asset tag to hostname mapping from
+// assets_in_swarming BQ table
+func GetAssetToHostnameMap(ctx context.Context, client *bigquery.Client) (map[string]string, error) {
+	type mapping struct {
+		AssetTag string
+		HostName string
+	}
+	//TODO(anushruth): Get table name, dataset and project from config
+	q := client.Query(`
+		SELECT a_asset_tag AS AssetTag, s_host_name AS HostName FROM ` +
+		"`cros-lab-inventory.inventory.assets_in_swarming`")
+	it, err := q.Read(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// Read the first mapping as TotalRows is not populated until first
+	// call to Next()
+	var d mapping
+	err = it.Next(&d)
+	assetsToHostname := make(map[string]string, int(it.TotalRows))
+	assetsToHostname[d.AssetTag] = d.HostName
+
+	for {
+		err := it.Next(&d)
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			logging.Warningf(ctx, "Failed to read a row from BQ: %v", err)
+		}
+		assetsToHostname[d.AssetTag] = d.HostName
+	}
+	logging.Debugf(ctx, "Found hostnames for %v devices", len(assetsToHostname))
+	return assetsToHostname, nil
 }
