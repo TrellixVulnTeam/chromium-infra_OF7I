@@ -102,9 +102,8 @@ func (tsi *TrackerServerImpl) PushBotsForAdminAuditTasks(ctx context.Context, re
 		return nil, errors.Annotate(err, "failed to obtain Swarming client").Err()
 	}
 
-	// Schedule audit tasks to ready DUTs.
+	// Schedule audit tasks to ready|needs_repair|needs_reset|repair_failed DUTs.
 	dims := make(strpair.Map)
-	dims[clients.DutStateDimensionKey] = []string{"ready"}
 	bots, err := sc.ListAliveBotsInPool(ctx, cfg.Swarming.BotPool, dims)
 	if err != nil {
 		return nil, errors.Annotate(err, "failed to list alive cros bots").Err()
@@ -291,12 +290,21 @@ func identifyBotsForAudit(ctx context.Context, bots []*swarming.SwarmingRpcsBotI
 		if err != nil || os == "OS_TYPE_LABSTATION" {
 			continue
 		}
+
 		id, err := swarming_utils.ExtractSingleValuedDimension(dims, clients.BotIDDimensionKey)
 		if err != nil {
 			logging.Warningf(ctx, "failed to obtain BOT id for bot %q", b.BotId)
 			continue
 		}
-		botIDs = append(botIDs, id)
+
+		s := clients.GetStateDimension(b.Dimensions)
+		// Allow only ready|needs_repair|needs_reset|repair_failed states
+		switch s {
+		case fleet.DutState_Ready, fleet.DutState_NeedsRepair, fleet.DutState_NeedsReset, fleet.DutState_RepairFailed:
+			botIDs = append(botIDs, id)
+		default:
+			logging.Infof(ctx, "Skipping BOT with id: %q", b.BotId)
+		}
 	}
 	return botIDs
 }

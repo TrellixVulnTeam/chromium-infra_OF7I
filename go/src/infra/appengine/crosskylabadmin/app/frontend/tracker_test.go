@@ -177,6 +177,7 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 func TestPushBotsForAdminAuditTasks(t *testing.T) {
 	Convey("Handling types of cros bots", t, func() {
+		bot3 := test.BotForDUT("dut_3", "need_replacement", "label-os_type:OS_TYPE_MOBLAB;id:id4")
 		bot4 := test.BotForDUT("dut_4", "ready", "label-os_type:OS_TYPE_MOBLAB;id:id4")
 		bot2LabStation := test.BotForDUT("dut_2l", "ready", "label-os_type:OS_TYPE_LABSTATION;id:lab_id2")
 		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
@@ -201,12 +202,12 @@ func TestPushBotsForAdminAuditTasks(t *testing.T) {
 		tqt := taskqueue.GetTestable(tf.C)
 		tqt.CreateQueue(auditQ)
 
-		Convey("run only for ready DUTs", func() {
+		Convey("run only for ready|needs_repair|needs_reset|repair_failed DUTs", func() {
 			tqt.ResetTasks()
 			tf.MockSwarming.EXPECT().ListAliveBotsInPool(
 				gomock.Any(), gomock.Eq(config.Get(tf.C).Swarming.BotPool),
-				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"ready"}}),
-			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot4, bot2LabStation}, nil)
+				gomock.Eq(strpair.Map{}),
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot3, bot4, bot2LabStation}, nil)
 			expectDefaultPerBotRefresh(tf)
 
 			request := fleet.PushBotsForAdminAuditTasksRequest{}
