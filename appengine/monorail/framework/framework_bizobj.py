@@ -31,14 +31,50 @@ RE_COLUMN_NAME = r'\w+[\w+-.]*\w+'
 RE_COLUMN_SPEC = re.compile('(%s(\s%s)*)*$' % (RE_COLUMN_NAME, RE_COLUMN_NAME))
 
 
-def ShouldRevealEmail(user_auth, project, viewed_email):
-  # type: AuthData, Project, str -> bool
+def DoUsersShareAProject(cnxn, services, user_effective_ids, other_user_id):
+  # type: (MonorailConnection, Services, Sequence[int], int) -> bool
+  """Determine whether two users share at least one Project.
+
+  The user_effective_ids may include group ids or the other_user_id may be a
+  member of a group that results in transitive Project ownership.
+
+  Args:
+    cnxn: MonorailConnection to the database.
+    services: Services object for connections to backend services.
+    user_effective_ids: The effective ids of the authorized User.
+    other_user_id: The other user's user_id to compare against.
+
+  Returns:
+    True if one or more Projects are shared between the Users.
+  """
+  (
+      authed_owned_project_ids, authed_membered_project_ids,
+      authed_contrib_project_ids) = services.project.GetUserRolesInAllProjects(
+          cnxn, user_effective_ids)
+  authed_user_projects = authed_owned_project_ids.union(
+      authed_membered_project_ids).union(authed_contrib_project_ids)
+
+  # Get effective ids for other user to handle transitive Project membership.
+  other_user_effective_ids = GetEffectiveIds(cnxn, services, other_user_id)
+  (
+      other_owned_project_ids, other_membered_project_ids,
+      other_contrib_project_ids) = services.project.GetUserRolesInAllProjects(
+          cnxn, other_user_effective_ids)
+  other_user_projects = other_owned_project_ids.union(
+      other_membered_project_ids).union(other_contrib_project_ids)
+
+  return not authed_user_projects.isdisjoint(other_user_projects)
+
+
+def ShouldRevealEmail(cnxn, services, user_auth, other_user):
+  # type: (MonorailConnection, Services, AuthData, user_pb2.User) -> bool
   """Decide whether to publish a user's email address.
 
   Args:
-   auth: The AuthData of the user viewing the email addresses.
-   project: The Project PB to which the viewed user belongs.
-   viewed_email: The email of the viewed user.
+    cnxn: MonorailConnection to the database.
+    services: Services object for connections to backend services.
+    user_auth: The AuthData of the user viewing the email addresses.
+    other_user: The User PB of the viewed user.
 
   Returns:
     True if email addresses should be published to the logged-in user.
@@ -51,12 +87,14 @@ def ShouldRevealEmail(user_auth, project, viewed_email):
   if user_auth.user_pb.is_site_admin:
     return True
 
-  # Case 3: Project members see the unobscured email of everyone in a project.
-  if project and UserIsInProject(project, user_auth.effective_ids):
+  # Case 3: Do not obscure your own email.
+  if user_auth.user_pb.email == other_user.email:
     return True
 
-  # Case 4: Do not obscure your own email.
-  if viewed_email and user_auth.user_pb.email == viewed_email:
+  user_effective_ids = user_auth.effective_ids
+  other_user_id = other_user.user_id
+  # Case 4: Users see unobscured emails as long as they share a common Project.
+  if DoUsersShareAProject(cnxn, services, user_effective_ids, other_user_id):
     return True
 
   return False
@@ -88,17 +126,17 @@ def ParseAndObscureAddress(email):
   return username, user_domain, obscured_username, obscured_email
 
 
-# TODO(crbug/monorail/7238): allow checking for multiple projects for Hotlists.
-def CreateUserDisplayNames(user_auth, users, project):
-  # type: AuthData, Collections[user_pb2.User], project_pb2.Project ->
-  #   Mapping[int, str]
+def CreateUserDisplayNames(cnxn, services, user_auth, users):
+  # type: (MonorailConnection, Services, AuthData,
+  #     Collection[user_pb2.User]) -> Mapping[int, str]
   """Create the display names of the given users based on the current user and
       project.
 
   Args:
+    cnxn: MonorailConnection to the database.
+    services: Services object for connections to backend services.
     user_auth: AuthData object that identifies the logged in user.
     users: Collection of User PB objects.
-    project: Project PB that the logged in user is viewing the users in.
 
   Returns:
     A Dict of user_ids to display names. If a given User does not have an email,
@@ -113,8 +151,8 @@ def CreateUserDisplayNames(user_auth, users, project):
     elif user.email in client_config_svc.GetServiceAccountMap():
       display_names[user.user_id] = client_config_svc.GetServiceAccountMap()[
           user.email]
-    elif ShouldRevealEmail(
-        user_auth, project, user.email) or not user.obscure_email:
+    elif ShouldRevealEmail(cnxn, services, user_auth,
+                           user) or not user.obscure_email:
       display_names[user.user_id] = user.email
     else:
       (_username, _domain, _obs_username,
