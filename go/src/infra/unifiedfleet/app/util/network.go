@@ -12,19 +12,19 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
-
-	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 )
 
 // ParseVlan parses vlan to a list of IPs
-func ParseVlan(vlan *crimsonconfig.VLAN) ([]*ufspb.IP, int, error) {
-	ip, subnet, err := net.ParseCIDR(vlan.CidrBlock)
+//
+// vlanName here is a full vlan name, e.g. browser-lab:123
+func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, error) {
+	ip, subnet, err := net.ParseCIDR(cidr)
 	if err != nil {
-		return nil, 0, errors.Reason("invalid CIDR block %q for vlan %d", vlan.CidrBlock, vlan.GetId()).Err()
+		return nil, 0, errors.Reason("invalid CIDR block %q for vlan %s", cidr, vlanName).Err()
 	}
 	ipv4 := ip.Mask(subnet.Mask).To4()
 	if ipv4 == nil {
-		return nil, 0, errors.Reason("invalid IPv4 CIDR block %q for vlan %d", vlan.CidrBlock, vlan.GetId()).Err()
+		return nil, 0, errors.Reason("invalid IPv4 CIDR block %q for vlan %s", cidr, vlanName).Err()
 	}
 	ones, _ := subnet.Mask.Size()
 	length := 1 << uint32(32-ones)
@@ -32,9 +32,10 @@ func ParseVlan(vlan *crimsonconfig.VLAN) ([]*ufspb.IP, int, error) {
 	startIP := binary.BigEndian.Uint32(ipv4)
 	for i := 0; i < length; i++ {
 		ips[i] = &ufspb.IP{
-			Id:      GetIPName(GetBrowserLabName(Int64ToStr(vlan.GetId())), Int64ToStr(int64(startIP))),
+			Id:      GetIPName(vlanName, Int64ToStr(int64(startIP))),
 			Ipv4:    startIP,
 			Ipv4Str: IPv4IntToStr(startIP),
+			Vlan:    vlanName,
 		}
 		startIP++
 	}

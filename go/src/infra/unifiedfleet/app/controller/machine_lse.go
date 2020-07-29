@@ -22,11 +22,12 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
 
 // CreateMachineLSE creates a new machinelse in datastore.
-func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
+func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, vlanName, nicName string) (*ufspb.MachineLSE, error) {
 	// 1. MachineLSE name and hostname must always be the same
 	// Overwrite the name with hostname
 	machinelse.Name = machinelse.GetHostname()
@@ -52,12 +53,71 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	f := func(ctx context.Context) error {
 		// 1. Validate input
-		err := validateCreateMachineLSE(ctx, machinelse, machineNames)
+		err := validateCreateMachineLSE(ctx, machinelse, machineNames, vlanName, nicName)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
 
-		// 2. Create the machinelse
+		if vlanName != "" && nicName != "" {
+			// Assigning IP to this host.
+			// 2. Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
+			machine, err := getBrowserMachineForNic(ctx, nicName)
+			if err != nil {
+				return errors.Annotate(err, fmt.Sprintf("Fail to get machine by nic name %s", nicName)).Err()
+			}
+			nic, err := registration.GetNic(ctx, nicName)
+			if err != nil {
+				return errors.Annotate(err, fmt.Sprintf("Fail to get nic by name %s", nicName)).Err()
+			}
+			found := false
+			for _, m := range machineNames {
+				if m == machine.GetName() {
+					found = true
+				}
+			}
+			if !found {
+				return status.Errorf(codes.InvalidArgument, "Nic %s doesn't belong to any of the machines assocated with this host: %#v", nicName, machineNames)
+			}
+
+			// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
+			dhcp, err := configuration.GetDHCPConfig(ctx, machinelse.GetHostname())
+			s, ok := status.FromError(err)
+			if ok && s.Code() == codes.Internal {
+				return errors.Annotate(err, "Fail to query dhcpHost").Err()
+			}
+			if err == nil && dhcp != nil {
+				if err := deleteHostHelper(ctx, dhcp); err != nil {
+					return err
+				}
+			}
+
+			// 4. Get free ip, update the dhcp config and ip.occupied to true
+			ips, err := getFreeIP(ctx, vlanName, 1)
+			if err != nil {
+				return errors.Annotate(err, "Failed to find new IP to for nic %s", nicName).Err()
+			}
+			if ips[0].GetIpv4Str() == "" {
+				return errors.New(fmt.Sprintf("No empty ip is found. Found ip: %q, vlan %q", ips[0].GetId(), ips[0].GetVlan()))
+			}
+			logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
+			ips[0].Occupied = true
+			if _, err := configuration.BatchUpdateIPs(ctx, ips); err != nil {
+				return errors.Annotate(err, "Failed to update IP %s (%s)", ips[0].GetId(), ips[0].GetIpv4Str()).Err()
+			}
+			if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname:   machinelse.GetHostname(),
+					Ip:         ips[0].GetIpv4Str(),
+					MacAddress: nic.GetMacAddress(),
+				},
+			}); err != nil {
+				return errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", machinelse.GetHostname(), nic.GetMacAddress()).Err()
+			}
+
+			// 5. Update lse to contain the nic which is used to map to the ip.
+			machinelse.Nic = nic.Name
+		}
+		// 6. Create the machinelse
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
@@ -190,6 +250,20 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 					logging.Errorf(ctx, "Failed to BatchUpdate Labstation MachineLSE %s", err)
 					return err
 				}
+			}
+		}
+		dhcp, err := configuration.GetDHCPConfig(ctx, existingMachinelse.GetHostname())
+		s, ok := status.FromError(err)
+		if ok && s.Code() == codes.NotFound {
+			logging.Debugf(ctx, "no associated dhcp with host %s", existingMachinelse.GetHostname())
+			return inventory.DeleteMachineLSE(ctx, id)
+		}
+		if err != nil {
+			return errors.Annotate(err, "Fail to query dhcpHost").Err()
+		}
+		if dhcp != nil {
+			if err := deleteHostHelper(ctx, dhcp); err != nil {
+				return err
 			}
 		}
 		return inventory.DeleteMachineLSE(ctx, id)
@@ -361,7 +435,7 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineL
 	f := func(ctx context.Context) error {
 		machinelses := []*ufspb.MachineLSE{machinelse}
 		// A. Validate input
-		err := validateCreateMachineLSE(ctx, machinelse, machineNames)
+		err := validateCreateMachineLSE(ctx, machinelse, machineNames, "", "")
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
 		}
@@ -556,7 +630,7 @@ func removeServoEntryFromLabstation(servo *chromeosLab.Servo, labstationMachinel
 }
 
 // validateCreateMachineLSE validates if a machinelse can be created in the datastore.
-func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) error {
+func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, vlanName, nicName string) error {
 	//1. Check for servos for Labstation deployment
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		newServos := machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
@@ -576,6 +650,10 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	// Aggregate resource to check if machines does not exist
 	for _, machineName := range machineNames {
 		resourcesNotfound = append(resourcesNotfound, GetMachineResource(machineName))
+	}
+	if vlanName != "" && nicName != "" {
+		resourcesNotfound = append(resourcesNotfound, GetVlanResource(vlanName))
+		resourcesNotfound = append(resourcesNotfound, GetNicResource(nicName))
 	}
 	// Aggregate resources referenced by the machinelse to check if they do not exist
 	if machineLSEPrototypeID := machinelse.GetMachineLsePrototype(); machineLSEPrototypeID != "" {

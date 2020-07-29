@@ -697,7 +697,7 @@ message CreateMachineLSERequest {
   //
   // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
-   string machineLSE_id = 2;
+  string machineLSE_id = 2;
 
   // A host/MachineLSE cannot be added without being associated with a Machine/s.
   // Refers to the machines to associate this host/MachineLSE.
@@ -707,6 +707,8 @@ message CreateMachineLSERequest {
       },
       (google.api.field_behavior) = REQUIRED
   ];
+
+  NetworkOption network_option = 4;
 }
 
 message UpdateMachineLSERequest {
@@ -996,6 +998,8 @@ message UpdateKVMRequest {
           type: "unified-fleet-system.appspot.com/Rack"
       }
   ];
+
+  NetworkOption network_option = 4;
 }
 
 message GetKVMRequest {
@@ -1152,6 +1156,8 @@ message UpdateDracRequest {
           type: "unified-fleet-system.appspot.com/Machine"
       }
   ];
+
+  NetworkOption network_option = 4;
 }
 
 message GetDracRequest {
@@ -1441,4 +1447,21 @@ message RackRegistrationResponse {
 
   // Created rpms
   repeated proto.RPM rpms = 4;
+}
+
+message NetworkOption {
+  // The vlan to setup the network configurations
+  string vlan = 1 [
+      (google.api.resource_reference) = {
+          type: "unified-fleet-system.appspot.com/Vlan"
+      }
+  ];
+  // Specifying nic name for automatically assign IP
+  string nic = 2 [
+    (google.api.resource_reference) = {
+        type: "unified-fleet-system.appspot.com/Nic"
+    }
+  ];
+  // Delete the existing network configurations if existing
+  bool delete = 3;
 }

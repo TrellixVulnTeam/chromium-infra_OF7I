@@ -10,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
@@ -302,4 +304,28 @@ func getFilterMap(filter string, f getFieldFunc) (map[string][]interface{}, erro
 		filterMap[field] = values
 	}
 	return filterMap, nil
+}
+
+// Delete all ip-related configs
+//
+// Can be used in a transaction
+func deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCPConfig) error {
+	logging.Debugf(ctx, "Found existing dhcp configs for host %s", dhcp.GetHostname())
+	logging.Debugf(ctx, "Deleting dhcp %s (%s)", dhcp.GetHostname(), dhcp.GetIp())
+	if err := configuration.DeleteDHCP(ctx, dhcp.GetHostname()); err != nil {
+		return errors.Annotate(err, fmt.Sprintf("Fail to delete dhcp: hostname %q, ip %q", dhcp.GetHostname(), dhcp.GetIp())).Err()
+	}
+	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
+	if err != nil {
+		return errors.Annotate(err, fmt.Sprintf("Fail to query ip by ipv4 str: %q", dhcp.GetIp())).Err()
+	}
+	if ips == nil {
+		return nil
+	}
+	ips[0].Occupied = false
+	logging.Debugf(ctx, "Update ip %s to non-occupied", ips[0].GetIpv4Str())
+	if _, err := configuration.BatchUpdateIPs(ctx, ips); err != nil {
+		return errors.Annotate(err, fmt.Sprintf("Fail to update ip: %q (ipv4: %q, vlan %q)", ips[0].GetId(), ips[0].GetIpv4Str(), ips[0].GetVlan())).Err()
+	}
+	return nil
 }

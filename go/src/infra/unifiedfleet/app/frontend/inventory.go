@@ -55,7 +55,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *ufsAPI.Cre
 		return nil, err
 	}
 	req.MachineLSE.Name = req.MachineLSEId
-	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.Machines)
+	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetNetworkOption().GetVlan(), req.GetNetworkOption().GetNic())
 	if err != nil {
 		return nil, err
 	}

@@ -57,6 +57,9 @@ func newIPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 	if p.GetIpv4() == 0 {
 		return nil, errors.Reason("Empty ipv4 in IP").Err()
 	}
+	if p.GetIpv4Str() == "" {
+		return nil, errors.Reason("Empty ipv4 str in IP").Err()
+	}
 	return &IPEntity{
 		ID:       p.GetId(),
 		IPv4:     p.GetIpv4(),
@@ -189,4 +192,19 @@ func GetIPIndexedFieldName(input string) (string, error) {
 		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for IP are ipv4/ipv4str/vlan/occupied", input)
 	}
 	return field, nil
+}
+
+// BatchUpdateIPs updates the ip entity to UFS.
+//
+// This can be used inside a transaction
+func BatchUpdateIPs(ctx context.Context, ips []*ufspb.IP) ([]*ufspb.IP, error) {
+	protos := make([]proto.Message, len(ips))
+	for i, ip := range ips {
+		protos[i] = ip
+	}
+	_, err := ufsds.PutAll(ctx, protos, newIPEntity, true)
+	if err == nil {
+		return ips, err
+	}
+	return nil, err
 }

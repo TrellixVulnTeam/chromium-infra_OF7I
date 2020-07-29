@@ -70,7 +70,7 @@ func GetDHCPConfig(ctx context.Context, id string) (*ufspb.DHCPConfig, error) {
 
 // QueryDHCPConfigByPropertyName query dhcp entity in the datastore.
 func QueryDHCPConfigByPropertyName(ctx context.Context, propertyName, id string) ([]*ufspb.DHCPConfig, error) {
-	q := datastore.NewQuery(DHCPKind)
+	q := datastore.NewQuery(DHCPKind).FirestoreMode(true)
 	var entities []DHCPEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
@@ -163,6 +163,13 @@ func GetAllDHCPs(ctx context.Context) (*ufsds.OpResults, error) {
 	return ufsds.GetAll(ctx, queryAllDHCP)
 }
 
+// DeleteDHCP deletes a dhcp in datastore
+//
+// This can be used inside a transaction
+func DeleteDHCP(ctx context.Context, id string) error {
+	return ufsds.Delete(ctx, &ufspb.DHCPConfig{Hostname: id}, newDHCPEntity)
+}
+
 // DeleteDHCPs deletes a batch of dhcps
 func DeleteDHCPs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
@@ -185,4 +192,19 @@ func GetDHCPIndexedFieldName(input string) (string, error) {
 		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for DHCP are ipv4", input)
 	}
 	return field, nil
+}
+
+// BatchUpdateDHCPs updates the dhcp entity to UFS.
+//
+// This can be used inside a transaction
+func BatchUpdateDHCPs(ctx context.Context, dhcps []*ufspb.DHCPConfig) ([]*ufspb.DHCPConfig, error) {
+	protos := make([]proto.Message, len(dhcps))
+	for i, dhcp := range dhcps {
+		protos[i] = dhcp
+	}
+	_, err := ufsds.PutAll(ctx, protos, newDHCPEntity, true)
+	if err == nil {
+		return dhcps, err
+	}
+	return nil, err
 }

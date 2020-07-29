@@ -6,12 +6,14 @@ package frontend
 
 import (
 	"fmt"
+	"google.golang.org/grpc/codes"
 	"strconv"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
 	code "google.golang.org/genproto/googleapis/rpc/code"
+	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
@@ -295,7 +297,8 @@ func TestDeleteMachineLSE(t *testing.T) {
 	Convey("DeleteMachineLSE", t, func() {
 		Convey("Delete machineLSE by existing ID", func() {
 			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name: "machineLSE-1",
+				Name:     "machineLSE-1",
+				Hostname: "machineLSE-1",
 			})
 			So(err, ShouldBeNil)
 
@@ -309,6 +312,51 @@ func TestDeleteMachineLSE(t *testing.T) {
 			So(res, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete machineLSE by existing ID with assigned ip", func() {
+			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machineLSE-with-ip",
+				Hostname: "machineLSE-with-ip",
+				Nic:      "eth0",
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname: "machineLSE-with-ip",
+					Ip:       "1.2.3.4",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateIPs(ctx, []*ufspb.IP{
+				{
+					Id:       "vlan:1234",
+					Ipv4:     1234,
+					Ipv4Str:  "1.2.3.4",
+					Vlan:     "vlan",
+					Occupied: true,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			req := &ufsAPI.DeleteMachineLSERequest{
+				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-with-ip"),
+			}
+			_, err = tf.Fleet.DeleteMachineLSE(tf.C, req)
+			So(err, ShouldBeNil)
+
+			res, err := inventory.GetMachineLSE(tf.C, "machineLSE-1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			dhcp, err := configuration.GetDHCPConfig(ctx, "machineLSE-with-ip")
+			So(err, ShouldNotBeNil)
+			So(dhcp, ShouldBeNil)
+			s, _ := status.FromError(err)
+			So(s.Code(), ShouldEqual, codes.NotFound)
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "1.2.3.4"})
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeFalse)
 		})
 		Convey("Delete machineLSE by non-existing ID", func() {
 			req := &ufsAPI.DeleteMachineLSERequest{

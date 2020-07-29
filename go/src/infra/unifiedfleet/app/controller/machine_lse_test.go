@@ -13,9 +13,11 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
+	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 func mockDutMachineLSE(name string) *ufspb.MachineLSE {
@@ -89,7 +91,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			machineLSE1 := &ufspb.MachineLSE{
 				Hostname: "machinelse-1",
 			}
-			resp, err := CreateMachineLSE(ctx, machineLSE1, []string{"machine-10"})
+			resp, err := CreateMachineLSE(ctx, machineLSE1, []string{"machine-10"}, "", "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "MachineLSE machinelse-1 already exists in the system.")
@@ -104,7 +106,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			machineLSE1 := &ufspb.MachineLSE{
 				Hostname: "machinelse-2",
 			}
-			resp, err := CreateMachineLSE(ctx, machineLSE1, []string{"machine-1", "machine-2"})
+			resp, err := CreateMachineLSE(ctx, machineLSE1, []string{"machine-1", "machine-2"}, "", "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-1 in the system.\n"+
@@ -114,6 +116,81 @@ func TestCreateMachineLSE(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-2")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Create new machineLSE with existing machines, specify ip with wrong vlan name", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name: "eth1",
+			})
+			So(err, ShouldBeNil)
+			machine1 := &ufspb.Machine{
+				Name: "machine-wrong-nic",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Nics: []string{"eth1"},
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+
+			machineLSE2 := &ufspb.MachineLSE{
+				Hostname: "machinelse-wrong-nic",
+			}
+			resp, err := CreateMachineLSE(ctx, machineLSE2, []string{"machine-wrong-nic"}, "vlan-1", "eth1")
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "There is no Vlan with VlanID vlan-1")
+		})
+
+		Convey("Create new machineLSE with existing machines and specify ip", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name: "eth0",
+			})
+			So(err, ShouldBeNil)
+			machine1 := &ufspb.Machine{
+				Name: "machine-with-ip",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Nics: []string{"eth0"},
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			vlan := &ufspb.Vlan{
+				Name:        "vlan-1",
+				VlanAddress: "192.168.40.0/22",
+			}
+			_, err = configuration.CreateVlan(ctx, vlan)
+			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			So(err, ShouldBeNil)
+			// Only import the first 20 as one single transaction cannot import all.
+			_, err = configuration.ImportIPs(ctx, ips[0:20])
+			So(err, ShouldBeNil)
+
+			machineLSE2 := &ufspb.MachineLSE{
+				Hostname: "machinelse-with-ip",
+			}
+			resp, err := CreateMachineLSE(ctx, machineLSE2, []string{"machine-with-ip"}, "vlan-1", "eth0")
+			So(err, ShouldBeNil)
+			machineLSE2.Nic = "eth0"
+			So(resp, ShouldResembleProto, machineLSE2)
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.0"})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeTrue)
+			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-with-ip")
+			So(err, ShouldBeNil)
+			So(dhcp.GetIp(), ShouldEqual, "192.168.40.0")
+
+			// No changes are recorded as the creation fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-with-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse")
 		})
 
 		Convey("Create new machineLSE with existing machines", func() {
@@ -126,7 +203,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			machineLSE2 := &ufspb.MachineLSE{
 				Hostname: "machinelse-3",
 			}
-			resp, err := CreateMachineLSE(ctx, machineLSE2, []string{"machine-3"})
+			resp, err := CreateMachineLSE(ctx, machineLSE2, []string{"machine-3"}, "", "")
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSE2)
 
@@ -155,7 +232,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			machineLSE := &ufspb.MachineLSE{
 				Hostname: "machinelse-5",
 			}
-			resp, err := CreateMachineLSE(ctx, machineLSE, []string{"machine-4"})
+			resp, err := CreateMachineLSE(ctx, machineLSE, []string{"machine-4"}, "", "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Hosts referring the machine machine-4:\nmachinelse-4")
@@ -209,7 +286,7 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-10")
-			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-32"})
+			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-32"}, "", "")
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse)
@@ -226,7 +303,7 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			_, err = registration.CreateMachine(ctx, machine)
 			So(err, ShouldBeNil)
 
-			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-33"})
+			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-33"}, "", "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "MachineLSE DUTMachineLSE-11 already exists in the system.")
@@ -248,7 +325,7 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-12")
 			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
-			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-34"})
+			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-34"}, "", "")
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse)
@@ -275,7 +352,7 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse := mockDutMachineLSE("DUTmachinelse-13")
 			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
-			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-35"})
+			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-35"}, "", "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "not found in the system")
@@ -290,7 +367,7 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 
 			dutMachinelse := mockDutMachineLSE("DUTmachinelse-13")
 			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
-			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-36"})
+			resp, err := CreateMachineLSE(ctx, dutMachinelse, []string{"machine-36"}, "", "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "already in use")
@@ -313,7 +390,7 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 				ServoPort:     22,
 			}
 			labstationMachinelse1.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
-			resp, err := CreateMachineLSE(ctx, labstationMachinelse1, []string{"machine-4"})
+			resp, err := CreateMachineLSE(ctx, labstationMachinelse1, []string{"machine-4"}, "", "")
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Servos are not allowed to be added")
@@ -325,7 +402,7 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 		})
 		Convey("Create machineLSE Labstation without Servo Info", func() {
 			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-1")
-			resp, err := CreateMachineLSE(ctx, labstationMachinelse1, []string{"machine-4"})
+			resp, err := CreateMachineLSE(ctx, labstationMachinelse1, []string{"machine-4"}, "", "")
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse1)

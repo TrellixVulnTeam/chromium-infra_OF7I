@@ -267,9 +267,10 @@ func ParseOSDhcpdConf(conf string, topology map[string]*ufspb.Vlan) (*DHCPConf, 
 			for i := 0; i < int(vlan.CapacityIp); i++ {
 				ipV4Str := IPv4IntToStr(startIP)
 				ip := &ufspb.IP{
-					Id:   GetIPName(vlan.GetName(), ipV4Str),
-					Ipv4: startIP,
-					Vlan: vlan.GetName(),
+					Id:      GetIPName(vlan.GetName(), ipV4Str),
+					Ipv4:    startIP,
+					Ipv4Str: ipV4Str,
+					Vlan:    vlan.GetName(),
 				}
 				respIPs = append(respIPs, ip)
 				ipMaps[ipV4Str] = ip

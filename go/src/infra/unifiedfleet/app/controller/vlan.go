@@ -79,12 +79,11 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	vs := make([]*ufspb.Vlan, len(vlans))
 	for i, vlan := range vlans {
 		vlanName := util.GetBrowserLabName(util.Int64ToStr(vlan.GetId()))
-		ips, length, err := util.ParseVlan(vlan)
+		ips, length, err := util.ParseVlan(vlanName, vlan.GetCidrBlock())
 		if err != nil {
 			return nil, err
 		}
 		for _, ip := range ips {
-			ip.Vlan = vlanName
 			IPs = append(IPs, ip)
 		}
 		vs[i] = &ufspb.Vlan{

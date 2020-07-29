@@ -21,6 +21,8 @@ import "infra/unifiedfleet/api/v1/proto/chromeos/lab/device.proto";
 // MachineLSE is the Machine Lab Setup Environment.
 // It refers to the entity in the lab which has Machine(s) associated
 // with it. It also has other components associated with it.
+//
+// Next tag: 9
 message MachineLSE {
     option (google.api.resource) = {
         type: "unified-fleet-system.appspot.com/MachineLSE"
@@ -41,6 +43,8 @@ message MachineLSE {
     string hostname = 3 [
         (google.api.field_behavior) = REQUIRED
     ];
+    // The nic used to associate with the hostname, as one machine/host may contain multiple nics.
+    string nic = 8;
     oneof lse {
         ChromeBrowserMachineLSE chrome_browser_machine_lse = 4;
         ChromeOSMachineLSE chromeos_machine_lse = 5;

@@ -122,7 +122,7 @@ func Get(ctx context.Context, pm proto.Message, nf NewFunc) (proto.Message, erro
 	entity, err := nf(ctx, pm)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
-		return nil, status.Errorf(codes.Internal, InternalError)
+		return nil, status.Errorf(codes.Internal, "%s Failed to marshal new entity: %s", InternalError, err)
 	}
 	if err = datastore.Get(ctx, entity); err != nil {
 		if datastore.IsErrNoSuchEntity(err) {
