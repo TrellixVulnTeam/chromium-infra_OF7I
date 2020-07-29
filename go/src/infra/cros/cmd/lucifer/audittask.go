@@ -16,6 +16,7 @@ import (
 
 	"infra/cros/cmd/lucifer/internal/api"
 	"infra/cros/cmd/lucifer/internal/autotest"
+	"infra/cros/cmd/lucifer/internal/dutstate"
 	"infra/cros/cmd/lucifer/internal/event"
 	"infra/cros/cmd/lucifer/internal/flagx"
 	"infra/cros/cmd/lucifer/internal/osutil"
@@ -77,20 +78,30 @@ func (c *auditTaskCmd) innerExecute(ctx context.Context, f *flag.FlagSet, _ ...i
 
 	ac := res.apiClient()
 	var errors []error
+	var dutState event.Event
 	for _, a := range c.actions {
-		if err := c.runAction(ctx, ac, a); err != nil {
+		ds, err := c.runAction(ctx, ac, a)
+		if err != nil {
 			// Allows to run all actions and collect errors.
 			errors = append(errors, err)
 		}
+		if ds != "" {
+			dutState = ds
+		}
+	}
+	if len(errors) > 0 && dutState == "" {
+		dutState = event.HostNeedsReset
+	}
+	if dutState != "" {
+		sendHostStatus(ctx, ac, []string{c.host}, dutState)
 	}
 	if len(errors) > 0 {
-		sendHostStatus(ctx, ac, []string{c.host}, event.HostNeedsReset)
 		return fmt.Errorf("errors %s", errors)
 	}
 	return nil
 }
 
-func (c *auditTaskCmd) runAction(ctx context.Context, ac *api.Client, a string) error {
+func (c *auditTaskCmd) runAction(ctx context.Context, ac *api.Client, a string) (ds event.Event, err error) {
 	s := ac.Logger().Step(a)
 	defer s.Close()
 
@@ -98,7 +109,7 @@ func (c *auditTaskCmd) runAction(ctx context.Context, ac *api.Client, a string) 
 	if err := os.MkdirAll(resultsDir, 0777); err != nil {
 		s.Printf("Run action %s: %s", a, err)
 		s.Exception()
-		return errors.Errorf("audit run action %s: %s", a, err)
+		return ds, errors.Errorf("audit run action %s: %s", a, err)
 	}
 
 	args := autotest.AuditTaskArgs{
@@ -111,12 +122,15 @@ func (c *auditTaskCmd) runAction(ctx context.Context, ac *api.Client, a string) 
 	cmd.Stdout = ac.Logger().RawWriter()
 	cmd.Stderr = ac.Logger().RawWriter()
 
-	if err := wrapRunError(osutil.RunWithAbort(ctx, cmd)); err != nil {
+	err = wrapRunError(osutil.RunWithAbort(ctx, cmd))
+	// The dut_state file can be created during executing of the action.
+	ds = dutstate.ReadFile(resultsDir)
+	if err != nil {
 		s.Printf("Error running %#v command: %s", a, err)
 		s.Exception()
-		return errors.Errorf("audit run action %s: %s", a, err)
+		return ds, errors.Errorf("audit run action %s: %s", a, err)
 	}
-	return nil
+	return ds, nil
 }
 
 func (c *auditTaskCmd) validateFlags() error {
