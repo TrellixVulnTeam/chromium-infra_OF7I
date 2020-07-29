@@ -314,3 +314,37 @@ def IsCorpUser(cnxn, services, user_id):
   corp_mode_group_ids = set(corp_mode_groups_dict.values())
   corp_mode = any(gid in corp_mode_group_ids for gid in user_group_ids)
   return corp_mode
+
+
+def _AddEffectiveIDsOfLinkedAccounts(
+    cnxn, services, effective_ids, linked_account_id):
+  # type: (MonorailConnection, Services, Collection[int], int) -> None
+  """Add any linked account IDs to the current user's effective_ids."""
+  effective_ids.add(linked_account_id)
+  linked_memberships = services.usergroup.LookupMemberships(
+      cnxn, linked_account_id)
+  effective_ids.update(linked_memberships)
+
+
+def GetEffectiveIds(cnxn, services, user_id):
+  # type: (MonorailConnection, Services, int) -> Collection[int]
+  """
+  Returns a set of effective IDs that include the user's ID and the user IDs of
+  all of their user groups. This will be empty for anonymous users.
+  """
+  direct_memberships = services.usergroup.LookupMemberships(cnxn, user_id)
+  effective_ids = direct_memberships.copy()
+  effective_ids.add(user_id)
+  user_pb = services.user.GetUser(cnxn, user_id)
+  if user_pb and user_pb.email:
+    (_username, user_email_domain, _obs_username,
+     _obs_email) = ParseAndObscureAddress(user_pb.email)
+    computed_memberships = services.usergroup.LookupComputedMemberships(
+        cnxn, user_email_domain)
+    effective_ids.update(computed_memberships)
+    if user_pb.linked_parent_id:
+      _AddEffectiveIDsOfLinkedAccounts(
+          cnxn, services, effective_ids, user_pb.linked_parent_id)
+    for child_id in user_pb.linked_child_ids:
+      _AddEffectiveIDsOfLinkedAccounts(cnxn, services, effective_ids, child_id)
+  return effective_ids

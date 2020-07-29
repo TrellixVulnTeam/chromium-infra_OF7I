@@ -472,3 +472,68 @@ class IsCorpUserTest(unittest.TestCase):
     self.services.usergroup.TestAddMembers(888, [111, 222])
     self.assertTrue(
         framework_bizobj.IsCorpUser(self.cnxn, self.services, 111))
+
+
+class GetEffectiveIdsTest(unittest.TestCase):
+
+  def setUp(self):
+    self.cnxn = fake.MonorailConnection()
+    self.services = service_manager.Services(
+        user=fake.UserService(), usergroup=fake.UserGroupService())
+    self.services.user.TestAddUser('test@example.com', 111)
+
+  def testNoMemberships(self):
+    """No user groups means effective_ids == {user_id}."""
+    effective_ids = framework_bizobj.GetEffectiveIds(
+        self.cnxn, self.services, 111)
+    self.assertEqual(effective_ids, {111})
+
+  def testNormalMemberships(self):
+    """effective_ids should be {user_id, group_id...}."""
+    self.services.usergroup.TestAddMembers(888, [111])
+    self.services.usergroup.TestAddMembers(999, [111])
+    effective_ids = framework_bizobj.GetEffectiveIds(
+        self.cnxn, self.services, 111)
+    self.assertEqual(effective_ids, {111, 888, 999})
+
+  def testComputedUserGroup(self):
+    """effective_ids should be {user_id, group_id...}."""
+    self.services.usergroup.TestAddGroupSettings(888, 'everyone@example.com')
+    effective_ids = framework_bizobj.GetEffectiveIds(
+        self.cnxn, self.services, 111)
+    self.assertEqual(effective_ids, {111, 888})
+
+  def testAccountHasParent(self):
+    """The parent's effective_ids are added to child's."""
+    child = self.services.user.TestAddUser('child@example.com', 111)
+    child.linked_parent_id = 222
+    parent = self.services.user.TestAddUser('parent@example.com', 222)
+    parent.linked_child_ids = [111]
+    effective_ids = framework_bizobj.GetEffectiveIds(
+        self.cnxn, self.services, 111)
+    self.assertEqual(effective_ids, {111, 222})
+
+    self.services.usergroup.TestAddMembers(888, [111])
+    self.services.usergroup.TestAddMembers(999, [222])
+    effective_ids = framework_bizobj.GetEffectiveIds(
+        self.cnxn, self.services, 111)
+    self.assertEqual(effective_ids, {111, 222, 888, 999})
+
+  def testAccountHasChildren(self):
+    """All linked child effective_ids are added to parent's."""
+    child1 = self.services.user.TestAddUser('child1@example.com', 111)
+    child1.linked_parent_id = 333
+    child2 = self.services.user.TestAddUser('child3@example.com', 222)
+    child2.linked_parent_id = 333
+    parent = self.services.user.TestAddUser('parent@example.com', 333)
+    parent.linked_child_ids = [111, 222]
+
+    effective_ids = framework_bizobj.GetEffectiveIds(
+        self.cnxn, self.services, 333)
+    self.assertEqual(effective_ids, {111, 222, 333})
+
+    self.services.usergroup.TestAddMembers(888, [111])
+    self.services.usergroup.TestAddMembers(999, [222])
+    effective_ids = framework_bizobj.GetEffectiveIds(
+        self.cnxn, self.services, 333)
+    self.assertEqual(effective_ids, {111, 222, 333, 888, 999})
