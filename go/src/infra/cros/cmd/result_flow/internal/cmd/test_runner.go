@@ -92,7 +92,7 @@ func (c *pipeTestRunnerDataRun) innerRun(a subcommands.Application, args []strin
 	}
 
 	// Pubsub client
-	c.mClient, err = message.NewClient(ctx, c.source.GetPubsub(), clientOpts)
+	c.mClient, err = message.NewClient(ctx, c.source.GetPubsub(), site.TestRunnerBatchSize, clientOpts)
 	if err != nil {
 		return err
 	}

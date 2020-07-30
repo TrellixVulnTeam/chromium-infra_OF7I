@@ -86,7 +86,7 @@ func (c *pipeCTPDataRun) innerRun(a subcommands.Application, args []string, env 
 	}
 
 	// Pubsub client
-	c.mClient, err = message.NewClient(ctx, c.source.GetPubsub(), clientOpts)
+	c.mClient, err = message.NewClient(ctx, c.source.GetPubsub(), site.CTPBatchSize, clientOpts)
 	if err != nil {
 		return err
 	}

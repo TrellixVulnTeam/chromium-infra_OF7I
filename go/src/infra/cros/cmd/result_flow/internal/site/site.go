@@ -17,6 +17,16 @@ import (
 const DefaultDeadlineSeconds = 600
 
 const (
+	// CTPBatchSize is the size of one single Buildbucket batch request to fetch
+	// CTP builds. Increase the batch size below with caution. It may cause
+	// Buildbucket to return 500 errors, due to the response size.
+	CTPBatchSize int32 = 3
+	// TestRunnerBatchSize is the size of one single Buildbucket batch request
+	// to fetch test runner builds.
+	TestRunnerBatchSize int32 = 50
+)
+
+const (
 	authScopeBigquery = "https://www.googleapis.com/auth/bigquery"
 	authScopePubsub   = "https://www.googleapis.com/auth/pubsub"
 )

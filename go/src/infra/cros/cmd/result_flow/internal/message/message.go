@@ -20,12 +20,8 @@ import (
 	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
-const (
-	// BuildIDKeyName is the key name to store Build ID in message attributes.
-	BuildIDKeyName = "build_id"
-	// SingleBatch is the size of messages we pull for a single attempt.
-	SingleBatch int32 = 50
-)
+// BuildIDKeyName is the key name to store Build ID in message attributes.
+const BuildIDKeyName = "build_id"
 
 // PublishBuildID publishes a Build ID to PubSub.
 func PublishBuildID(ctx context.Context, bID int64, conf *result_flow.PubSubConfig, opts ...option.ClientOption) error {
@@ -66,7 +62,7 @@ type messageClient struct {
 }
 
 // NewClient creates a messageClient for PubSub subscriber.
-func NewClient(c context.Context, conf *result_flow.PubSubConfig, opts ...option.ClientOption) (Client, error) {
+func NewClient(c context.Context, conf *result_flow.PubSubConfig, batchSize int32, opts ...option.ClientOption) (Client, error) {
 	client, err := pubsub.NewSubscriberClient(c, opts...)
 	if err != nil {
 		return nil, err
@@ -74,7 +70,7 @@ func NewClient(c context.Context, conf *result_flow.PubSubConfig, opts ...option
 	return &messageClient{
 		client:       client,
 		subscription: fmt.Sprintf("projects/%s/subscriptions/%s", conf.Project, conf.Subscription),
-		maxMessages:  SingleBatch,
+		maxMessages:  batchSize,
 	}, nil
 }
 

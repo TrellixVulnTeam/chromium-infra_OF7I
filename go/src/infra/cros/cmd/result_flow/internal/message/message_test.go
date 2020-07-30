@@ -42,7 +42,7 @@ func TestMessage(t *testing.T) {
 				panic(err)
 			}
 		}
-		mClient, err := message.NewClient(ctx, fakeConfig, option.WithGRPCConn(newConnection(srv.Addr)))
+		mClient, err := message.NewClient(ctx, fakeConfig, 2, option.WithGRPCConn(newConnection(srv.Addr)))
 		if err != nil {
 			panic(err)
 		}
