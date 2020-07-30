@@ -204,6 +204,14 @@ func (r *UpdateChromePlatformRequest) Validate() error {
 	return validateResourceName(chromePlatformRegex, ChromePlatformNameFormat, r.ChromePlatform.GetName())
 }
 
+// Validate validates input requests of GetDHCPConfig.
+func (r *GetDHCPConfigRequest) Validate() error {
+	if r.GetHostname() == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyName)
+	}
+	return nil
+}
+
 // Validate validates input requests of GetChromePlatform.
 func (r *GetChromePlatformRequest) Validate() error {
 	return validateResourceName(chromePlatformRegex, ChromePlatformNameFormat, r.Name)

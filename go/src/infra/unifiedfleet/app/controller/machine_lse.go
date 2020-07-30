@@ -69,64 +69,11 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		machinelse.Rack = machine.GetLocation().GetRack()
 		machinelse.Lab = machine.GetLocation().GetLab().String()
 
+		// Assign ip configs
 		if vlanName != "" && nicName != "" {
-			// Assigning IP to this host.
-			// Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
-			machine, err := getBrowserMachineForNic(ctx, nicName)
-			if err != nil {
-				return errors.Annotate(err, fmt.Sprintf("Fail to get machine by nic name %s", nicName)).Err()
+			if err := addLseHostHelper(ctx, vlanName, nicName, machinelse); err != nil {
+				return errors.Annotate(err, "Fail to assign ip to host %s", machinelse.GetName()).Err()
 			}
-			nic, err := registration.GetNic(ctx, nicName)
-			if err != nil {
-				return errors.Annotate(err, fmt.Sprintf("Fail to get nic by name %s", nicName)).Err()
-			}
-			found := false
-			for _, m := range machineNames {
-				if m == machine.GetName() {
-					found = true
-				}
-			}
-			if !found {
-				return status.Errorf(codes.InvalidArgument, "Nic %s doesn't belong to any of the machines assocated with this host: %#v", nicName, machineNames)
-			}
-
-			// Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
-			dhcp, err := configuration.GetDHCPConfig(ctx, machinelse.GetHostname())
-			s, ok := status.FromError(err)
-			if ok && s.Code() == codes.Internal {
-				return errors.Annotate(err, "Fail to query dhcpHost").Err()
-			}
-			if err == nil && dhcp != nil {
-				if err := deleteHostHelper(ctx, dhcp); err != nil {
-					return err
-				}
-			}
-
-			// Get free ip, update the dhcp config and ip.occupied to true
-			ips, err := getFreeIP(ctx, vlanName, 1)
-			if err != nil {
-				return errors.Annotate(err, "Failed to find new IP to for nic %s", nicName).Err()
-			}
-			if ips[0].GetIpv4Str() == "" {
-				return errors.New(fmt.Sprintf("No empty ip is found. Found ip: %q, vlan %q", ips[0].GetId(), ips[0].GetVlan()))
-			}
-			logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
-			ips[0].Occupied = true
-			if _, err := configuration.BatchUpdateIPs(ctx, ips); err != nil {
-				return errors.Annotate(err, "Failed to update IP %s (%s)", ips[0].GetId(), ips[0].GetIpv4Str()).Err()
-			}
-			if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
-				{
-					Hostname:   machinelse.GetHostname(),
-					Ip:         ips[0].GetIpv4Str(),
-					MacAddress: nic.GetMacAddress(),
-				},
-			}); err != nil {
-				return errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", machinelse.GetHostname(), nic.GetMacAddress()).Err()
-			}
-
-			// Update lse to contain the nic which is used to map to the ip.
-			machinelse.Nic = nic.Name
 		}
 
 		// Create the machinelse
@@ -345,11 +292,8 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		state.DeleteStates(ctx, toDeleteResources)
 
 		dhcp, err := configuration.GetDHCPConfig(ctx, existingMachinelse.GetHostname())
-		if err != nil {
-			s, ok := status.FromError(err)
-			if ok && s.Code() != codes.NotFound {
-				return errors.Annotate(err, "Fail to query dhcpHost").Err()
-			}
+		if err != nil && !util.IsNotFoundError(err) {
+			return errors.Annotate(err, "Fail to query dhcpHost").Err()
 		}
 		if dhcp != nil {
 			if err := deleteHostHelper(ctx, dhcp); err != nil {
@@ -949,5 +893,50 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 			return status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
 	}
+	return nil
+}
+
+func addLseHostHelper(ctx context.Context, vlanName, nicName string, lse *ufspb.MachineLSE) error {
+	if vlanName == "" || nicName == "" {
+		return status.Errorf(codes.InvalidArgument, "nic and vlan are required for adding a host for a machine")
+	}
+	// Assigning IP to this host.
+	// 1. Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
+	machine, err := getBrowserMachineForNic(ctx, nicName)
+	if err != nil {
+		return errors.Annotate(err, fmt.Sprintf("Fail to get machine by nic name %s", nicName)).Err()
+	}
+	nic, err := registration.GetNic(ctx, nicName)
+	if err != nil {
+		return errors.Annotate(err, fmt.Sprintf("Fail to get nic by name %s", nicName)).Err()
+	}
+	found := false
+	for _, m := range lse.GetMachines() {
+		if m == machine.GetName() {
+			found = true
+		}
+	}
+	if !found {
+		return status.Errorf(codes.InvalidArgument, "Nic %s doesn't belong to any of the machines assocated with this host: %#v", nicName, lse.GetMachines())
+	}
+
+	// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
+	dhcp, err := configuration.GetDHCPConfig(ctx, lse.GetHostname())
+	if util.IsInternalError(err) {
+		return errors.Annotate(err, "Fail to query dhcpHost").Err()
+	}
+	if err == nil && dhcp != nil {
+		if err := deleteHostHelper(ctx, dhcp); err != nil {
+			return err
+		}
+	}
+
+	// 4. Get free ip, update the dhcp config and ip.occupied to true
+	if err := addHostHelper(ctx, vlanName, lse.GetHostname(), nic.GetMacAddress()); err != nil {
+		return err
+	}
+
+	// 5. Update lse to contain the nic which is used to map to the ip.
+	lse.Nic = nic.Name
 	return nil
 }

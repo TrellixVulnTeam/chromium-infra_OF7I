@@ -1386,3 +1386,20 @@ func (s *DecoratedFleet) GetState(ctx context.Context, req *GetStateRequest) (rs
 	}
 	return
 }
+
+func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRequest) (rsp *proto1.DHCPConfig, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetDHCPConfig", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetDHCPConfig(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetDHCPConfig", rsp, err)
+	}
+	return
+}

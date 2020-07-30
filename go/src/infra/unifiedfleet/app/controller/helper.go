@@ -329,3 +329,31 @@ func deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCPConfig) error {
 	}
 	return nil
 }
+
+// Find free ip and update ip-related configs
+//
+// Can be used in a transaction
+func addHostHelper(ctx context.Context, vlanName, hostName, macAddress string) error {
+	ips, err := getFreeIP(ctx, vlanName, 1)
+	if err != nil {
+		return errors.Annotate(err, "Failed to find new IP to for host %s", hostName).Err()
+	}
+	if ips[0].GetIpv4Str() == "" {
+		return errors.New(fmt.Sprintf("No empty ip is found. Found ip: %q, vlan %q", ips[0].GetId(), ips[0].GetVlan()))
+	}
+	logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
+	ips[0].Occupied = true
+	if _, err := configuration.BatchUpdateIPs(ctx, ips); err != nil {
+		return errors.Annotate(err, "Failed to update IP %s (%s)", ips[0].GetId(), ips[0].GetIpv4Str()).Err()
+	}
+	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+		{
+			Hostname:   hostName,
+			Ip:         ips[0].GetIpv4Str(),
+			MacAddress: macAddress,
+		},
+	}); err != nil {
+		return errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", hostName, macAddress).Err()
+	}
+	return nil
+}

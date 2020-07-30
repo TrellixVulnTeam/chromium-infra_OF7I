@@ -104,6 +104,21 @@ func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *ufsAPI.Ge
 	return chromePlatform, err
 }
 
+// GetDHCPConfig gets a dhcp record from database.
+func (fs *FleetServerImpl) GetDHCPConfig(ctx context.Context, req *ufsAPI.GetDHCPConfigRequest) (rsp *ufspb.DHCPConfig, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	dhcp, err := controller.GetDHCPConfig(ctx, req.GetHostname())
+	if err != nil {
+		return nil, err
+	}
+	return dhcp, err
+}
+
 // ListChromePlatforms list the chromeplatforms information from database.
 func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *ufsAPI.ListChromePlatformsRequest) (rsp *ufsAPI.ListChromePlatformsResponse, err error) {
 	defer func() {

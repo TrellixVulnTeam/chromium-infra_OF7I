@@ -36,6 +36,9 @@ var AddHostCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to associate the host")
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this host to")
+		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
+
 		c.Flags.StringVar(&c.hostName, "name", "", "name of the host")
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host")
 		c.Flags.StringVar(&c.osVersion, "os-version", "", "name of the os version of the machine (browser lab only)")
@@ -54,6 +57,8 @@ type addHost struct {
 	interactive  bool
 
 	machineName string
+	vlanName    string
+	nicName     string
 	hostName    string
 	prototype   string
 	osVersion   string
@@ -106,17 +111,34 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 		c.parseArgs(&machinelse, machine.GetLocation().GetLab())
 	}
 
-	res, err := ic.CreateMachineLSE(ctx, &ufsAPI.CreateMachineLSERequest{
+	req := &ufsAPI.CreateMachineLSERequest{
 		MachineLSE:   &machinelse,
 		MachineLSEId: machinelse.GetName(),
 		Machines:     []string{c.machineName},
-	})
+	}
+	if c.vlanName != "" && c.nicName != "" {
+		req.NetworkOption = &ufsAPI.NetworkOption{
+			Vlan: c.vlanName,
+			Nic:  c.nicName,
+		}
+	}
+
+	res, err := ic.CreateMachineLSE(ctx, req)
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
 	fmt.Println("Successfully added the host: ", machinelse.GetName())
+	if c.vlanName != "" && c.nicName != "" {
+		// Log the assigned IP
+		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+			Hostname: res.GetHostname(),
+		}); err == nil {
+			utils.PrintProtoJSON(dhcp)
+			fmt.Println("Successfully added dhcp config to host: ", machinelse.GetName())
+		}
+	}
 	return nil
 }
 

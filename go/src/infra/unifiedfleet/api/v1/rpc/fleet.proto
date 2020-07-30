@@ -267,6 +267,16 @@ service Fleet {
 
   // GetState retrieves the state of a resource.
   rpc GetState(GetStateRequest) returns (proto.StateRecord);
+
+  // GetDHCPConfig retrieves a dhcp record.
+  rpc GetDHCPConfig(GetDHCPConfigRequest) returns (proto.DHCPConfig);
+}
+
+message GetDHCPConfigRequest {
+  // The hostname to retrieve the dhcp config.
+  string hostname = 1 [
+    (google.api.field_behavior) = REQUIRED
+  ];
 }
 
 // Contains the required information for creating a ChromePlatform represented in
