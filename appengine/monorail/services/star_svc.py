@@ -131,23 +131,28 @@ class AbstractStarService(object):
 
     return item_count_dict
 
-  def _SetStarsBatch(self, cnxn, item_id, starrer_user_ids, starred):
+  def _SetStarsBatch(
+      self, cnxn, item_id, starrer_user_ids, starred, commit=True):
     """Sets or unsets stars for the specified item and users."""
     if starred:
       rows = [(item_id, user_id) for user_id in starrer_user_ids]
       self.tbl.InsertRows(
-          cnxn, [self.item_col, self.user_col], rows, ignore=True)
+          cnxn, [self.item_col, self.user_col], rows, ignore=True,
+          commit=commit)
     else:
       self.tbl.Delete(
-          cnxn, **{self.item_col: item_id, self.user_col: starrer_user_ids})
+          cnxn, commit=commit,
+          **{self.item_col: item_id, self.user_col: starrer_user_ids})
 
     self.star_cache.InvalidateKeys(cnxn, starrer_user_ids)
     self.starrer_cache.Invalidate(cnxn, item_id)
     self.star_count_cache.Invalidate(cnxn, item_id)
 
-  def SetStarsBatch(self, cnxn, item_id, starrer_user_ids, starred):
+  def SetStarsBatch(
+      self, cnxn, item_id, starrer_user_ids, starred, commit=True):
     """Sets or unsets stars for the specified item and users."""
-    self._SetStarsBatch(cnxn, item_id, starrer_user_ids, starred)
+    self._SetStarsBatch(
+        cnxn, item_id, starrer_user_ids, starred, commit=commit)
 
   def SetStar(self, cnxn, item_id, starrer_user_id, starred):
     """Sets or unsets a star for the specified item and user."""
@@ -209,7 +214,7 @@ class IssueStarService(AbstractStarService):
   # pylint: disable=arguments-differ
   def SetStarsBatch(
       self, cnxn, services, config, issue_id, starrer_user_ids, starred):
-    """Add or remove a star on the given issue for the given user.
+    """Add or remove a star on the given issue for the given users.
 
     Args:
       cnxn: connection to SQL database.
@@ -231,6 +236,29 @@ class IssueStarService(AbstractStarService):
     # Note: only star_count could change due to the starring, but any
     # field could have changed as a result of filter rules.
     services.issue.UpdateIssue(cnxn, issue)
+
+    self.star_cache.InvalidateKeys(cnxn, starrer_user_ids)
+    self.starrer_cache.Invalidate(cnxn, issue_id)
+
+  # TODO(crbug.com/monorail/8098): This method should replace SetStarsBatch.
+  # New code should be calling SetStarsBatch_SkipIssueUpdate.
+  # SetStarsBatch, does issue.star_count updating that should be done
+  # in the business logic layer instead. E.g. We can create a
+  # WorkEnv.BatchSetStars() that includes the star_count updating work.
+  def SetStarsBatch_SkipIssueUpdate(
+      self, cnxn, issue_id, starrer_user_ids, starred, commit=True):
+    # type: (MonorailConnection, int, Sequence[int], bool, Optional[bool])
+    #   -> None
+    """Add or remove a star on the given issue for the given users.
+
+    Note: unlike SetStarsBatch above, does not make any updates to the
+      the issue itself e.g. updating issue.star_count.
+
+    """
+    logging.info(
+        'SetStarsBatch:%r, %r, %r', issue_id, starrer_user_ids, starred)
+    super(IssueStarService, self).SetStarsBatch(
+        cnxn, issue_id, starrer_user_ids, starred, commit=commit)
 
     self.star_cache.InvalidateKeys(cnxn, starrer_user_ids)
     self.starrer_cache.Invalidate(cnxn, issue_id)

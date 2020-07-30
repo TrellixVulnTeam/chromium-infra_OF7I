@@ -11,6 +11,7 @@ from __future__ import absolute_import
 import unittest
 
 import mox
+import mock
 
 from google.appengine.ext import testbed
 
@@ -131,7 +132,8 @@ class AbstractStarServiceTest(unittest.TestCase):
 
   def SetUpSetStar_Add(self):
     self.mock_tbl.InsertRows(
-        self.cnxn, ['item_id', 'user_id'], [(123, 111)], ignore=True)
+        self.cnxn, ['item_id', 'user_id'], [(123, 111)], ignore=True,
+        commit=True)
 
   def testSetStar_Add(self):
     self.SetUpSetStar_Add()
@@ -157,7 +159,7 @@ class AbstractStarServiceTest(unittest.TestCase):
   def SetUpSetStarsBatch_Add(self):
     self.mock_tbl.InsertRows(
         self.cnxn, ['item_id', 'user_id'], [(123, 111), (123, 222)],
-        ignore=True)
+        ignore=True, commit=True)
 
   def testSetStarsBatch_Add(self):
     self.SetUpSetStarsBatch_Add()
@@ -179,3 +181,45 @@ class AbstractStarServiceTest(unittest.TestCase):
     self.assertFalse(self.star_service.star_cache.HasItem(123))
     self.assertFalse(self.star_service.starrer_cache.HasItem(123))
     self.assertFalse(self.star_service.star_count_cache.HasItem(123))
+
+
+class IssueStarServiceTest(unittest.TestCase):
+
+  def setUp(self):
+    self.mock_tbl = mock.Mock()
+    self.mock_tbl.Delete = mock.Mock()
+    self.mock_tbl.InsertRows = mock.Mock()
+
+    self.cache_manager = fake.CacheManager()
+    with mock.patch(
+        'framework.sql.SQLTableManager', return_value=self.mock_tbl):
+      self.issue_star = star_svc.IssueStarService(
+          self.cache_manager)
+
+    self.cnxn = 'fake connection'
+
+  def testSetStarsBatch_SkipIssueUpdate_Remove(self):
+    self.issue_star.SetStarsBatch_SkipIssueUpdate(
+        self.cnxn, 78901, [111, 222], False)
+    self.mock_tbl.Delete.assert_called_once_with(
+        self.cnxn, issue_id=78901, user_id=[111, 222], commit=True)
+
+  def testSetStarsBatch_SkipIssueUpdate_Remove_NoCommit(self):
+    self.issue_star.SetStarsBatch_SkipIssueUpdate(
+        self.cnxn, 78901, [111, 222], False, commit=False)
+    self.mock_tbl.Delete.assert_called_once_with(
+        self.cnxn, issue_id=78901, user_id=[111, 222], commit=False)
+
+  def testSetStarsBatch_SkipIssueUpdate_Add(self):
+    self.issue_star.SetStarsBatch_SkipIssueUpdate(
+        self.cnxn, 78901, [111, 222], True)
+    self.mock_tbl.InsertRows.assert_called_once_with(
+        self.cnxn, ['issue_id', 'user_id'], [(78901, 111), (78901, 222)],
+        ignore=True, commit=True)
+
+  def testSetStarsBatch_SkipIssueUpdate_Add_NoCommit(self):
+    self.issue_star.SetStarsBatch_SkipIssueUpdate(
+        self.cnxn, 78901, [111, 222], True, commit=False)
+    self.mock_tbl.InsertRows.assert_called_once_with(
+        self.cnxn, ['issue_id', 'user_id'], [(78901, 111), (78901, 222)],
+        ignore=True, commit=False)

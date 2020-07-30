@@ -862,7 +862,8 @@ class AbstractStarService(object):
   def SetStar(self, cnxn, item_id, starrer_user_id, starred):
     self._SetStar(cnxn, item_id, starrer_user_id, starred)
 
-  def SetStarsBatch(self, cnxn, item_id, starrer_user_ids, starred):
+  def SetStarsBatch(
+      self, cnxn, item_id, starrer_user_ids, starred, commit=True):
     for starrer_user_id in starrer_user_ids:
       self._SetStar(cnxn, item_id, starrer_user_id, starred)
 
@@ -899,6 +900,11 @@ class IssueStarService(AbstractStarService):
       starred):
     super(IssueStarService, self).SetStarsBatch(
         cnxn, issue_id, starrer_user_ids, starred)
+
+  def SetStarsBatch_SkipIssueUpdate(
+      self, cnxn, issue_id, starrer_user_ids, starred, commit=True):
+      super(IssueStarService, self).SetStarsBatch(
+          cnxn, issue_id, starrer_user_ids, starred)
 
 
 class ProjectService(object):
