@@ -7,6 +7,8 @@
 package main
 
 import (
+	"net/http"
+
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
@@ -20,6 +22,20 @@ func handleIndex(c *router.Context) {
 		c.Context, c.Writer, "pages/index.html", templates.Args{})
 }
 
+func handleRedirect(redirect *redirectRules, c *router.Context) {
+	url, err := redirect.findRedirectURL(c.Request.RequestURI)
+	switch err {
+	case nil:
+		http.Redirect(
+			c.Writer, c.Request, url, http.StatusPermanentRedirect)
+	case errNoMatch:
+		http.NotFound(c.Writer, c.Request)
+	default:
+		http.Error(
+			c.Writer, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func main() {
 	mw := router.MiddlewareChain{}
 	mw = mw.Extend(templates.WithTemplates(&templates.Bundle{
@@ -28,7 +44,13 @@ func main() {
 	}))
 
 	server.Main(nil, []module.Module{}, func(srv *server.Server) error {
+		redirect := newRedirectRules()
+
 		srv.Routes.GET("/", mw, handleIndex)
+		// NotFound is used as catch-all.
+		srv.Routes.NotFound(mw, func(c *router.Context) {
+			handleRedirect(redirect, c)
+		})
 		return nil
 	})
 }
