@@ -306,6 +306,22 @@ func getFilterMap(filter string, f getFieldFunc) (map[string][]interface{}, erro
 	return filterMap, nil
 }
 
+// deleteDHCPHelper deletes ip configs for a given hostname
+//
+// Can be used in a transaction
+func deleteDHCPHelper(ctx context.Context, hostname string) error {
+	dhcp, err := configuration.GetDHCPConfig(ctx, hostname)
+	if util.IsInternalError(err) {
+		return errors.Annotate(err, "Fail to query dhcpHost").Err()
+	}
+	if err == nil && dhcp != nil {
+		if err := deleteHostHelper(ctx, dhcp); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Delete all ip-related configs
 //
 // Can be used in a transaction

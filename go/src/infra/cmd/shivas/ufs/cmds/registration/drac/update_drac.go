@@ -33,19 +33,28 @@ var UpdateDracCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DracFileText)
-		c.Flags.StringVar(&c.machineName, "m", "", "name of the machine to update the association of the drac to a different machine")
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
+		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to update the association of the drac to a different machine")
+		c.Flags.StringVar(&c.dracName, "name", "", "name of the drac to update")
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the drac to")
+		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the drac")
 		return c
 	},
 }
 
 type updateDrac struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	machineName  string
+	authFlags authcli.Flags
+	envFlags  site.EnvFlags
+
 	newSpecsFile string
 	interactive  bool
+
+	machineName string
+	vlanName    string
+	dracName    string
+	deleteVlan  bool
 }
 
 func (c *updateDrac) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -76,9 +85,13 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 	if c.interactive {
 		c.machineName = utils.GetDracInteractiveInput(ctx, ic, &drac, true)
 	} else {
-		err = utils.ParseJSONFile(c.newSpecsFile, &drac)
-		if err != nil {
-			return err
+		if c.newSpecsFile != "" {
+			err = utils.ParseJSONFile(c.newSpecsFile, &drac)
+			if err != nil {
+				return err
+			}
+		} else {
+			c.parseArgs(&drac)
 		}
 	}
 	if c.machineName != "" {
@@ -105,19 +118,48 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 	res, err := ic.UpdateDrac(ctx, &ufsAPI.UpdateDracRequest{
 		Drac:    &drac,
 		Machine: c.machineName,
+		NetworkOption: &ufsAPI.NetworkOption{
+			Vlan:   c.vlanName,
+			Delete: c.deleteVlan,
+		},
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	if c.deleteVlan {
+		fmt.Printf("Successfully deleted vlan of drac %s\n", res.Name)
+	}
+	if c.vlanName != "" {
+		// Log the assigned IP
+		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+			Hostname: res.Name,
+		}); err == nil {
+			utils.PrintProtoJSON(dhcp)
+			fmt.Println("Successfully added dhcp config to drac: ", res.Name)
+		}
+	}
 	return nil
 }
 
+func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
+	drac.Name = c.dracName
+}
+
 func (c *updateDrac) validateArgs() error {
-	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+	if c.newSpecsFile != "" {
+		if c.interactive {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+		}
+	}
+	if c.newSpecsFile == "" && !c.interactive {
+		if c.dracName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+		}
+		if c.vlanName == "" && !c.deleteVlan {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan'] is required.")
+		}
 	}
 	return nil
 }

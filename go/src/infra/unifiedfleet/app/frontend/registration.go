@@ -671,11 +671,35 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *ufsAPI.UpdateDra
 		return nil, err
 	}
 	req.Drac.Name = util.RemovePrefix(req.Drac.Name)
-	drac, err := controller.UpdateDrac(ctx, req.Drac, req.Machine)
+	// Before partial update is implemented, only update dhcp if network_option is specified,
+	// So that the easy mode to update drac won't overwrite the whole drac info in database.
+	if req.GetNetworkOption() == nil {
+		drac, err := controller.UpdateDrac(ctx, req.Drac, req.Machine)
+		if err != nil {
+			return nil, err
+		}
+		// https://aip.dev/122 - as per AIP guideline
+		drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
+		return drac, err
+	}
+
+	drac, err := controller.GetDrac(ctx, req.Drac.Name)
 	if err != nil {
 		return nil, err
 	}
-	// https://aip.dev/122 - as per AIP guideline
+	// If network_option.delete is enabled, ignore network_option.vlan and return directly
+	if req.GetNetworkOption().GetDelete() {
+		if err = controller.DeleteDracHost(ctx, req.Drac.Name); err != nil {
+			return nil, err
+		}
+		drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
+		return drac, nil
+	}
+	if req.GetNetworkOption().GetVlan() != "" {
+		if err = controller.UpdateDracHost(ctx, drac, req.GetNetworkOption().GetVlan()); err != nil {
+			return nil, err
+		}
+	}
 	drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 	return drac, err
 }

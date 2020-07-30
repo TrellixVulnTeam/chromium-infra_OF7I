@@ -759,6 +759,12 @@ Update a drac by reading a JSON file input.
 shivas update-drac -f drac.json -m {Machine name}
 Update a drac by reading a JSON file input and associate the drac with a different machine.
 
+shivas update-drac -name drac0 -delete-vlan
+Remove the ip for drac0
+
+shivas update-drac -name drac0 -vlan browser-lab:11
+Assign ip to the drac
+
 shivas update-drac -i
 Update a drac by reading input through interactive mode.`
 

@@ -12,6 +12,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
@@ -426,6 +427,51 @@ func TestDeleteDrac(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+		})
+
+		Convey("Delete drac successfully together with deleting ip", func() {
+			drac := mockDrac("drac-ip")
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname: "drac-ip",
+					Ip:       "1.2.3.4",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.ImportIPs(ctx, []*ufspb.IP{
+				{
+					Id:       "vlan-1:123",
+					Ipv4Str:  "1.2.3.4",
+					Vlan:     "vlan-1",
+					Occupied: true,
+					Ipv4:     123,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			err = DeleteDrac(ctx, "drac-ip")
+			So(err, ShouldBeNil)
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "1.2.3.4"})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeFalse)
+			_, err = configuration.GetDHCPConfig(ctx, "drac-ip")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			resp, err := registration.GetDrac(ctx, "drac-ip")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-ip")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)

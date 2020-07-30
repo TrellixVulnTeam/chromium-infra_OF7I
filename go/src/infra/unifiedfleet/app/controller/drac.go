@@ -16,8 +16,10 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 // CreateDrac creates a new drac in datastore.
@@ -162,6 +164,60 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 	return drac, nil
 }
 
+// DeleteDracHost deletes the host of a drac in datastore.
+func DeleteDracHost(ctx context.Context, dracName string) error {
+	f := func(ctx context.Context) error {
+		// 1. Verify if the hostname is already set with IP. if yes, remove the current binding.
+		dhcp, err := configuration.GetDHCPConfig(ctx, dracName)
+		if util.IsNotFoundError(err) {
+			logging.Debugf(ctx, "no associated dhcp with the given drac %s", dracName)
+			return nil
+		}
+		if err != nil {
+			return errors.Annotate(err, "Fail to query dhcpHost").Err()
+		}
+
+		// 2. Update dhcp and ip.
+		return deleteHostHelper(ctx, dhcp)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete the drac host: %s", err)
+		return err
+	}
+	return nil
+}
+
+// UpdateDracHost updates the drac host in datastore.
+func UpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName string) error {
+	f := func(ctx context.Context) error {
+		// 1. Validate the input
+		if err := validateUpdateDracHost(ctx, drac, vlanName); err != nil {
+			return err
+		}
+
+		// 2. Verify if the hostname is already set with IP. if yes, remove the current dhcp.
+		dhcp, err := configuration.GetDHCPConfig(ctx, drac.GetName())
+		if util.IsInternalError(err) {
+			return errors.Annotate(err, "Fail to query dhcpHost").Err()
+		}
+		if err == nil && dhcp != nil {
+			if err := deleteHostHelper(ctx, dhcp); err != nil {
+				return err
+			}
+		}
+
+		// 3. Find free ip, set IP and DHCP config
+		return addHostHelper(ctx, vlanName, drac.GetName(), drac.GetMacAddress())
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to assign IP to the drac: %s", err)
+		return err
+	}
+	return nil
+}
+
 // GetDrac returns drac for the given id from datastore.
 func GetDrac(ctx context.Context, id string) (*ufspb.Drac, error) {
 	return registration.GetDrac(ctx, id)
@@ -194,7 +250,12 @@ func DeleteDrac(ctx context.Context, id string) error {
 			return err
 		}
 
-		// 2. Get the machine associated with drac
+		// 2. Delete its ip configs
+		if err := deleteDHCPHelper(ctx, id); err != nil {
+			return err
+		}
+
+		// 3. Get the machine associated with drac
 		machines, err := registration.QueryMachineByPropertyName(ctx, "drac_id", id, false)
 		if err != nil {
 			return errors.Annotate(err, "Unable to query machine for drac %s", id).Err()
@@ -207,7 +268,7 @@ func DeleteDrac(ctx context.Context, id string) error {
 			logging.Warningf(ctx, "More than one machine associated the drac %s. Data discrepancy error.\n", id)
 		}
 
-		// 3. Remove the association between the browser machines and this drac.
+		// 4. Remove the association between the browser machines and this drac.
 		cs, err := removeDracFromBrowserMachines(ctx, machines)
 		if err != nil {
 			return err
@@ -339,4 +400,13 @@ func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 
 	// Check if resources does not exist
 	return ResourceExist(ctx, resourcesNotFound, nil)
+}
+
+// validateUpdateDracHost validates if a host can be added to a drac
+func validateUpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName string) error {
+	if drac.GetMacAddress() == "" {
+		return errors.New("mac address of drac hasn't been specified")
+	}
+	// Check if resources does not exist
+	return ResourceExist(ctx, []*Resource{GetDracResource(drac.Name), GetVlanResource(vlanName)}, nil)
 }
