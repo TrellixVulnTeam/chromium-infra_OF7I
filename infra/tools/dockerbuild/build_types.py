@@ -47,6 +47,10 @@ class Spec(_Spec):
       ret += '-%s' % '.'.join(sorted(self.pyversions))
     return ret
 
+  @property
+  def is_py3_only(self):
+    return self.pyversions == ['py3']
+
   def to_universal(self):
     return self._replace(universal=True)
 

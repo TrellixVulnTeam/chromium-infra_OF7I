@@ -17,11 +17,6 @@ class PlatformNotSupported(Exception):
   not support."""
 
 
-def _IsPy3OnlyUniversalWheel(spec):
-  """Returns true if the wheel is a universal py3-only wheel."""
-  return spec.universal and spec.pyversions == ['py3']
-
-
 class Builder(object):
 
   def __init__(self, spec, arch_map=None, abi_map=None,
@@ -91,7 +86,7 @@ class Builder(object):
 
   def wheel(self, system, plat):
     # If the wheel is only for python3, make sure to use newer version.
-    if _IsPy3OnlyUniversalWheel(self._spec):
+    if self._spec.is_py3_only:
       # "3.8.0" is the oldest version of python supported by chromium.
       #
       # The value here a filter for pip; it will only find wheels which support
@@ -195,7 +190,7 @@ def StageWheelForPackage(system, wheel_dir, wheel):
 
 def _InterpreterForWheel(wheel):
   """Returns the Python interpreter to use for building a wheel."""
-  return 'python3' if _IsPy3OnlyUniversalWheel(wheel.spec) else 'python'
+  return 'python3' if wheel.spec.is_py3_only else 'python'
 
 
 def _EnvForWheel(wheel):
@@ -203,7 +198,7 @@ def _EnvForWheel(wheel):
   # If the wheel is python3, clear PYTHONPATH to avoid picking up
   # the default Python (2) modules.
   wheel_env = dict()
-  if _IsPy3OnlyUniversalWheel(wheel.spec):
+  if wheel.spec.is_py3_only:
     wheel_env['PYTHONPATH'] = ''
   return wheel_env
 
