@@ -83,16 +83,16 @@ func LoadCTPBuildBucketResp(ctx context.Context, b *bbpb.Build, bb *result_flow.
 func (c *ctpBuild) ToTestPlanRuns(ctx context.Context) []*analytics.TestPlanRun {
 	var res []*analytics.TestPlanRun
 	for k := range c.reqs {
-		res = append(res, c.genTestPlanRun(k))
+		res = append(res, c.genTestPlanRun(ctx, k))
 	}
 	return res
 }
 
-func (c *ctpBuild) genTestPlanRun(key string) *analytics.TestPlanRun {
+func (c *ctpBuild) genTestPlanRun(ctx context.Context, key string) *analytics.TestPlanRun {
 	return &analytics.TestPlanRun{
 		Uid:           c.createTestPlanRunUID(key),
 		BuildId:       c.id,
-		Suite:         c.getSuiteName(key),
+		Suite:         c.getSuiteName(ctx, key),
 		ExecutionUrl:  inferExecutionURL(c.bb, c.id),
 		DutPool:       c.getDutPool(key),
 		BuildTarget:   c.getBuildTarget(key),
@@ -106,9 +106,17 @@ func (c *ctpBuild) createTestPlanRunUID(key string) string {
 	return fmt.Sprintf("TestPlanRuns/%d/%s", c.id, key)
 }
 
-func (c *ctpBuild) getSuiteName(key string) string {
-	suites := c.reqs[key].GetTestPlan().Suite
-	return suites[0].GetName()
+func (c *ctpBuild) getSuiteName(ctx context.Context, key string) string {
+	suites := c.reqs[key].GetTestPlan().GetSuite()
+	if len(suites) > 0 {
+		return suites[0].GetName()
+	}
+	logging.Infof(
+		ctx,
+		"CTP request %s has no suite name attached, try Autotest suite name",
+		c.createTestPlanRunUID(key),
+	)
+	return c.reqs[key].GetParams().GetLegacy().GetAutotestSuite()
 }
 
 func (c *ctpBuild) getDutPool(key string) string {
@@ -140,8 +148,17 @@ func (c *ctpBuild) inferTestPlanStatus(key string) *analytics.Status {
 	if resp == nil || !ok {
 		return nil
 	}
+	m := map[test_platform.TaskState_LifeCycle]string{
+		test_platform.TaskState_LIFE_CYCLE_UNSPECIFIED: "UNKNOWN",
+		test_platform.TaskState_LIFE_CYCLE_PENDING:     "PENDING",
+		test_platform.TaskState_LIFE_CYCLE_RUNNING:     "RUNNING",
+		test_platform.TaskState_LIFE_CYCLE_COMPLETED:   "COMPLETED",
+		test_platform.TaskState_LIFE_CYCLE_CANCELLED:   "CANCELLED",
+		test_platform.TaskState_LIFE_CYCLE_REJECTED:    "REJECTED",
+		test_platform.TaskState_LIFE_CYCLE_ABORTED:     "ABORTED",
+	}
 	return &analytics.Status{
-		Value: resp.GetState().GetLifeCycle().String(),
+		Value: m[resp.GetState().GetLifeCycle()],
 	}
 }
 

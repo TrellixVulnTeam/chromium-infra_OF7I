@@ -43,36 +43,157 @@ var (
 			Builder: "cros_test_platform",
 		},
 	}
-	fakeCrosBuild = "release/R83-13020.67.0"
 )
+
+type ctp struct {
+	tag                 string
+	suite               string
+	legacyAutotestSuite string
+	pool                string
+	buildTarget         string
+	crosBuild           string
+	status              test_platform.TaskState_LifeCycle
+}
+
+type testPlanRun struct {
+	tag         string
+	suite       string
+	pool        string
+	buildTarget string
+	crosBuild   string
+	status      string
+}
 
 func TestBuildToTestPlanRuns(t *testing.T) {
 	cases := []struct {
 		description string
-		in          *bbpb.Build
-		want        []*analytics.TestPlanRun
+		in          []*ctp
+		out         []*testPlanRun
 	}{
 		{
 			"Transform an ongoing CTP build to analytics.TestPlanRun",
-			genFakeBuild("foo", false),
-			genFakeTestPlanRuns("foo", false),
+			[]*ctp{
+				{
+					tag:                 "foo-1",
+					suite:               "fake-suite",
+					legacyAutotestSuite: "",
+					pool:                "fake-pool",
+					buildTarget:         "foo",
+					crosBuild:           "fake-release",
+					status:              test_platform.TaskState_LIFE_CYCLE_RUNNING,
+				},
+			},
+			[]*testPlanRun{
+				{
+					tag:         "foo-1",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "foo",
+					crosBuild:   "fake-release",
+					status:      "",
+				},
+			},
 		},
 		{
 			"Transform a completed CTP build to analytics.TestPlanRun",
-			genFakeBuild("hoo", true),
-			genFakeTestPlanRuns("hoo", true),
+			[]*ctp{
+				{
+					tag:                 "hoo-1",
+					suite:               "fake-suite",
+					legacyAutotestSuite: "",
+					pool:                "fake-pool",
+					buildTarget:         "hoo",
+					crosBuild:           "fake-release",
+					status:              test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+				},
+			},
+			[]*testPlanRun{
+				{
+					tag:         "hoo-1",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "hoo",
+					crosBuild:   "fake-release",
+					status:      "COMPLETED",
+				},
+			},
+		},
+		{
+			"Transform a completed CTP build with legacy autotest suite",
+			[]*ctp{
+				{
+					tag:                 "hoo-1",
+					suite:               "",
+					legacyAutotestSuite: "legacy-autotest-suite",
+					pool:                "fake-pool",
+					buildTarget:         "hoo",
+					crosBuild:           "fake-release",
+					status:              test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+				},
+			},
+			[]*testPlanRun{
+				{
+					tag:         "hoo-1",
+					suite:       "legacy-autotest-suite",
+					pool:        "fake-pool",
+					buildTarget: "hoo",
+					crosBuild:   "fake-release",
+					status:      "COMPLETED",
+				},
+			},
+		},
+		{
+			"Transform a completed CTP build with multiple requests",
+			[]*ctp{
+				{
+					tag:                 "foo",
+					suite:               "fake-suite",
+					legacyAutotestSuite: "",
+					pool:                "fake-pool",
+					buildTarget:         "foo",
+					crosBuild:           "fake-release-1",
+					status:              test_platform.TaskState_LIFE_CYCLE_COMPLETED,
+				},
+				{
+					tag:                 "hoo",
+					suite:               "fake-suite",
+					legacyAutotestSuite: "",
+					pool:                "fake-pool",
+					buildTarget:         "hoo",
+					crosBuild:           "fake-release-2",
+					status:              test_platform.TaskState_LIFE_CYCLE_CANCELLED,
+				},
+			},
+			[]*testPlanRun{
+				{
+					tag:         "foo",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "foo",
+					crosBuild:   "fake-release-1",
+					status:      "COMPLETED",
+				},
+				{
+					tag:         "hoo",
+					suite:       "fake-suite",
+					pool:        "fake-pool",
+					buildTarget: "hoo",
+					crosBuild:   "fake-release-2",
+					status:      "CANCELLED",
+				},
+			},
 		},
 	}
 	ctx := context.Background()
 	for _, c := range cases {
 		Convey(c.description, t, func() {
 			Convey("then CTP build is correctly converted to TestPlanRun.", func() {
-				build, _ := transform.LoadCTPBuildBucketResp(ctx, c.in, fakeSource.Bb)
+				build, _ := transform.LoadCTPBuildBucketResp(ctx, genFakeBuild(c.in), fakeSource.Bb)
 				got := build.ToTestPlanRuns(ctx)
 				sort.Slice(got, func(i, j int) bool { return got[i].Uid < got[j].Uid })
 				So(got, ShouldNotBeNil)
 				for i := 0; i < len(got); i++ {
-					checkTestPlanRunEquality(c.want[i], got[i])
+					checkTestPlanRunEquality(genFakeTestPlanRun(c.out[i]), got[i])
 				}
 
 			})
@@ -80,49 +201,71 @@ func TestBuildToTestPlanRuns(t *testing.T) {
 	}
 }
 
-func genFakeTestPlanRuns(label string, finished bool) []*analytics.TestPlanRun {
-	runs := []*analytics.TestPlanRun{
-		{
-			Uid:           genFakeUID(label),
-			BuildId:       fakeBuildID,
-			Suite:         genFakeSuite(label),
-			ExecutionUrl:  genFakeExecutionURL(),
-			DutPool:       genFakePool(label),
-			BuildTarget:   label,
-			ChromeosBuild: genFakeCrOSBuild(label),
-			Timeline:      genAnalyticTimeline(),
+func genFakeTestPlanRun(out *testPlanRun) *analytics.TestPlanRun {
+	return &analytics.TestPlanRun{
+		Uid:           genFakeUID(out.tag),
+		BuildId:       fakeBuildID,
+		Suite:         out.suite,
+		ExecutionUrl:  genFakeExecutionURL(fakeBuildID),
+		DutPool:       out.pool,
+		BuildTarget:   out.buildTarget,
+		ChromeosBuild: out.crosBuild,
+		Timeline:      genAnalyticTimeline(),
+		Status: &analytics.Status{
+			Value: out.status,
 		},
 	}
-	if finished {
-		runs[0].Status = &analytics.Status{
-			Value: "LIFE_CYCLE_COMPLETED",
-		}
-	}
-	return runs
 }
 
-func genFakeBuild(label string, finished bool) *bbpb.Build {
-	res := &bbpb.Build{
+func genFakeBuild(inputs []*ctp) *bbpb.Build {
+	requests := make(map[string]*test_platform.Request, len(inputs))
+	responses := make(map[string]*steps.ExecuteResponse, len(inputs))
+	for _, in := range inputs {
+		ctpReq := genFakeTestPlatformRequest(in.buildTarget, in.pool, in.crosBuild)
+		if in.suite != "" {
+			setSuite(ctpReq, in.suite)
+		}
+		if in.legacyAutotestSuite != "" {
+			setLegacySuite(ctpReq, in.legacyAutotestSuite)
+		}
+		requests[in.tag] = ctpReq
+		if int(in.status)&int(test_platform.TaskState_LIFE_CYCLE_MASK_FINAL) != 0 {
+			responses[in.tag] = &steps.ExecuteResponse{
+				State: &test_platform.TaskState{
+					LifeCycle: in.status,
+				},
+			}
+		}
+	}
+	return &bbpb.Build{
 		Id:         fakeBuildID,
 		CreateTime: fakeCreateTime,
 		StartTime:  fakeStartTime,
 		EndTime:    fakeEndTime,
-		Input: ctpRequestsToInputField(
-			map[string]*test_platform.Request{
-				label: genFakeTestPlatformRequest(label),
+		Input:      ctpRequestsToInputField(requests),
+		Output: pbToOutputField(
+			&steps.ExecuteResponses{
+				TaggedResponses: responses,
 			},
+			"compressed_responses",
 		),
 	}
-	if finished {
-		res.Output = pbToOutputField(
-			genFakeTestPlatformResponses(
-				label,
-				test_platform.TaskState_LIFE_CYCLE_COMPLETED,
-			),
-			"compressed_responses",
-		)
+}
+
+func setSuite(req *test_platform.Request, suite string) {
+	req.TestPlan = &test_platform.Request_TestPlan{
+		Suite: []*test_platform.Request_Suite{
+			{
+				Name: suite,
+			},
+		},
 	}
-	return res
+}
+
+func setLegacySuite(req *test_platform.Request, suite string) {
+	req.Params.Legacy = &test_platform.Request_Params_Legacy{
+		AutotestSuite: suite,
+	}
 }
 
 func genAnalyticTimeline() *analytics.Timeline {
@@ -137,23 +280,11 @@ func genFakeUID(b string) string {
 	return fmt.Sprintf("TestPlanRuns/%d/%s", fakeBuildID, b)
 }
 
-func genFakeExecutionURL() string {
-	return fmt.Sprintf("https://ci.chromium.org/p/chromeos/builders/testplatform/cros_test_platform/b%d", fakeBuildID)
+func genFakeExecutionURL(id int64) string {
+	return fmt.Sprintf("https://ci.chromium.org/p/chromeos/builders/testplatform/cros_test_platform/b%d", id)
 }
 
-func genFakePool(b string) string {
-	return b + "-pool"
-}
-
-func genFakeCrOSBuild(b string) string {
-	return fmt.Sprintf("%s-%s", b, fakeCrosBuild)
-}
-
-func genFakeSuite(b string) string {
-	return b + "-suite"
-}
-
-func genFakeTestPlatformRequest(board string) *test_platform.Request {
+func genFakeTestPlatformRequest(board, pool, crosBuild string) *test_platform.Request {
 	return &test_platform.Request{
 		Params: &test_platform.Request_Params{
 			SoftwareAttributes: &test_platform.Request_Params_SoftwareAttributes{
@@ -163,22 +294,14 @@ func genFakeTestPlatformRequest(board string) *test_platform.Request {
 			},
 			Scheduling: &test_platform.Request_Params_Scheduling{
 				Pool: &test_platform.Request_Params_Scheduling_UnmanagedPool{
-					UnmanagedPool: genFakePool(board),
+					UnmanagedPool: pool,
 				},
 			},
 			SoftwareDependencies: []*test_platform.Request_Params_SoftwareDependency{
 				{
 					Dep: &test_platform.Request_Params_SoftwareDependency_ChromeosBuild{
-						ChromeosBuild: genFakeCrOSBuild(board),
+						ChromeosBuild: crosBuild,
 					},
-				},
-			},
-		},
-		TestPlan: &test_platform.Request_TestPlan{
-
-			Suite: []*test_platform.Request_Suite{
-				{
-					Name: genFakeSuite(board),
 				},
 			},
 		},
@@ -193,7 +316,7 @@ func checkTestPlanRunEquality(want, got *analytics.TestPlanRun) {
 	So(want.DutPool, ShouldEqual, got.DutPool)
 	So(want.BuildTarget, ShouldEqual, got.BuildTarget)
 	So(want.ChromeosBuild, ShouldEqual, got.ChromeosBuild)
-	So(want.Status, ShouldResemble, got.Status)
+	So(want.GetStatus().GetValue(), ShouldEqual, got.GetStatus().GetValue())
 	So(want.Timeline, ShouldResemble, got.Timeline)
 }
 
@@ -224,18 +347,6 @@ func ctpRequestsToStructPB(from map[string]*test_platform.Request) (*structpb.Va
 			},
 		},
 	}, nil
-}
-
-func genFakeTestPlatformResponses(key string, lifeCycle test_platform.TaskState_LifeCycle) *steps.ExecuteResponses {
-	return &steps.ExecuteResponses{
-		TaggedResponses: map[string]*steps.ExecuteResponse{
-			key: {
-				State: &test_platform.TaskState{
-					LifeCycle: lifeCycle,
-				},
-			},
-		},
-	}
 }
 
 func pbToOutputField(from proto.Message, field string) *bbpb.Build_Output {
