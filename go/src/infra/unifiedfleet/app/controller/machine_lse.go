@@ -23,6 +23,7 @@ import (
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -135,6 +136,25 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{machinelse}); err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs %s", machinelse.Name).Err()
 		}
+
+		// 7. Update states
+		stateRecords := make([]*ufspb.StateRecord, 0)
+		for _, m := range machinelse.Machines {
+			stateRecords = append(stateRecords, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: util.AddPrefix(util.MachineCollection, m),
+				User:         util.CurrentUser(ctx),
+			})
+		}
+		stateRecords = append(stateRecords, &ufspb.StateRecord{
+			State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+			ResourceName: util.AddPrefix(util.HostCollection, machinelse.GetName()),
+			User:         util.CurrentUser(ctx),
+		})
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
+			return err
+		}
+
 		return nil
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -211,6 +231,35 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{machinelse}); err != nil {
 			return errors.Annotate(err, "Unable to create MachineLSE %s", machinelse.Name).Err()
 		}
+
+		// 5. Update states
+		stateRecords := make([]*ufspb.StateRecord, 0)
+		if browserLSE := machinelse.GetChromeBrowserMachineLse(); browserLSE != nil {
+			for _, vm := range browserLSE.GetVms() {
+				resourceName := util.AddPrefix(util.VMCollection, vm.GetName())
+				_, err := state.GetStateRecord(ctx, resourceName)
+				if err != nil {
+					stateRecords = append(stateRecords, &ufspb.StateRecord{
+						State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+						ResourceName: resourceName,
+						User:         util.CurrentUser(ctx),
+					})
+				}
+			}
+		}
+		if osLSE := machinelse.GetChromeosMachineLse(); osLSE != nil {
+			// Update labstation state to needs_deploy
+			if osLSE.GetDeviceLse().GetLabstation() != nil {
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+					ResourceName: util.AddPrefix(util.HostCollection, machinelse.GetName()),
+					User:         util.CurrentUser(ctx),
+				})
+			}
+		}
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
+			return err
+		}
 		return nil
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -275,21 +324,42 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 				}
 			}
 		}
-		dhcp, err := configuration.GetDHCPConfig(ctx, existingMachinelse.GetHostname())
-		s, ok := status.FromError(err)
-		if ok && s.Code() == codes.NotFound {
-			logging.Debugf(ctx, "no associated dhcp with host %s", existingMachinelse.GetHostname())
-			return inventory.DeleteMachineLSE(ctx, id)
+
+		// Update states
+		stateRecords := make([]*ufspb.StateRecord, 0)
+		for _, m := range existingMachinelse.Machines {
+			stateRecords = append(stateRecords, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_REGISTERED,
+				ResourceName: util.AddPrefix(util.MachineCollection, m),
+				User:         util.CurrentUser(ctx),
+			})
 		}
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
+			return err
+		}
+		toDeleteResources := make([]string, 0)
+		for _, m := range existingMachinelse.GetChromeBrowserMachineLse().GetVms() {
+			toDeleteResources = append(toDeleteResources, util.AddPrefix(util.VMCollection, m.GetName()))
+		}
+		toDeleteResources = append(toDeleteResources, util.AddPrefix(util.HostCollection, id))
+		state.DeleteStates(ctx, toDeleteResources)
+
+		dhcp, err := configuration.GetDHCPConfig(ctx, existingMachinelse.GetHostname())
 		if err != nil {
-			return errors.Annotate(err, "Fail to query dhcpHost").Err()
+			s, ok := status.FromError(err)
+			if ok && s.Code() != codes.NotFound {
+				return errors.Annotate(err, "Fail to query dhcpHost").Err()
+			}
 		}
 		if dhcp != nil {
 			if err := deleteHostHelper(ctx, dhcp); err != nil {
 				return err
 			}
 		}
-		return inventory.DeleteMachineLSE(ctx, id)
+		if err := inventory.DeleteMachineLSE(ctx, id); err != nil {
+			return err
+		}
+		return nil
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete MachineLSE in datastore: %s", err)
@@ -497,6 +567,24 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineL
 		if err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs").Err()
 		}
+
+		// Update states
+		stateRecords := make([]*ufspb.StateRecord, 0)
+		stateRecords = append(stateRecords, &ufspb.StateRecord{
+			State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+			ResourceName: util.AddPrefix(util.HostCollection, machinelse.GetName()),
+			User:         util.CurrentUser(ctx),
+		})
+		for _, m := range machinelse.Machines {
+			stateRecords = append(stateRecords, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: util.AddPrefix(util.MachineCollection, m),
+				User:         util.CurrentUser(ctx),
+			})
+		}
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
+			return err
+		}
 		return nil
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -589,6 +677,26 @@ func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineL
 		_, err = inventory.BatchUpdateMachineLSEs(ctx, machinelses)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to BatchUpdate ChromeOSMachineLSEDUTs %s", err)
+			return err
+		}
+
+		// Update states
+		stateRecords := make([]*ufspb.StateRecord, 0)
+		// Reset DUT host to needs_deploy after updating.
+		stateRecords = append(stateRecords, &ufspb.StateRecord{
+			State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+			ResourceName: util.AddPrefix(util.HostCollection, machinelse.GetName()),
+			User:         util.CurrentUser(ctx),
+		})
+		// Reset all machines to ready.
+		for _, m := range machinelse.Machines {
+			stateRecords = append(stateRecords, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: util.AddPrefix(util.MachineCollection, m),
+				User:         util.CurrentUser(ctx),
+			})
+		}
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
 			return err
 		}
 		return nil

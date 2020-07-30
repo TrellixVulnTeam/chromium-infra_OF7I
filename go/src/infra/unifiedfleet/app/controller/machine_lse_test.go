@@ -14,9 +14,11 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
+	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -183,8 +185,14 @@ func TestCreateMachineLSE(t *testing.T) {
 			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-with-ip")
 			So(err, ShouldBeNil)
 			So(dhcp.GetIp(), ShouldEqual, "192.168.40.0")
+			s, err := state.GetStateRecord(ctx, "hosts/machinelse-with-ip")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			s, err = state.GetStateRecord(ctx, "machines/machine-with-ip")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
-			// No changes are recorded as the creation fails
+			// verify changes
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-with-ip")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
@@ -206,6 +214,12 @@ func TestCreateMachineLSE(t *testing.T) {
 			resp, err := CreateMachineLSE(ctx, machineLSE2, []string{"machine-3"}, "", "")
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSE2)
+			s, err := state.GetStateRecord(ctx, "hosts/machinelse-3")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			s, err = state.GetStateRecord(ctx, "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			// No changes are recorded as the creation fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-3")
@@ -290,6 +304,12 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse)
+			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-10")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			s, err = state.GetStateRecord(ctx, "machines/machine-32")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 		})
 
 		Convey("Create existing machineLSE DUT", func() {
@@ -307,6 +327,9 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "MachineLSE DUTMachineLSE-11 already exists in the system.")
+
+			_, err = state.GetStateRecord(ctx, "hosts/DUTMachineLSE-11")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Create machineLSE DUT with distinct Servo Info and existing Labstation", func() {
@@ -332,8 +355,17 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 
 			servos = append(servos, servo)
 			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-0")
-			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos,
-				ShouldResembleProto, servos)
+			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos, ShouldResembleProto, servos)
+
+			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-12")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			// labstation host's state is not updated.
+			s, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-0")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			s, err = state.GetStateRecord(ctx, "machines/machine-34")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 		})
 
 		Convey("Create machineLSE DUT with non-existing Labstation", func() {
@@ -356,6 +388,9 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "not found in the system")
+
+			_, err = state.GetStateRecord(ctx, "hosts/DUTMachineLSE-13")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Create machineLSE with already assigned ServoHostname and ServoPort", func() {
@@ -371,6 +406,9 @@ func TestCreateMachineLSEDUT(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "already in use")
+
+			_, err = state.GetStateRecord(ctx, "hosts/DUTMachineLSE-13")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 	})
 }
@@ -394,6 +432,8 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Servos are not allowed to be added")
+			_, err = state.GetStateRecord(ctx, "hosts/RedLabstation-0")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			// No changes are recorded as the creation fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-0")
@@ -406,6 +446,12 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse1)
+			s, err := state.GetStateRecord(ctx, "hosts/RedLabstation-1")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			s, err = state.GetStateRecord(ctx, "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-1")
 			So(err, ShouldBeNil)
@@ -474,8 +520,14 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			So(resp, ShouldResembleProto, dutMachinelse3)
 
 			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
-			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos,
-				ShouldResembleProto, servos)
+			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos, ShouldResembleProto, servos)
+			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-21")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			// Labstation host is not updated
+			_, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update machineLSE DUT with different ServerPort and same ServoHostname", func() {
@@ -496,8 +548,15 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			dummyServos := []*chromeosLab.Servo{servo1, servo3}
 
 			resp, _ = inventory.GetMachineLSE(ctx, "BlueLabstation-10")
-			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos,
-				ShouldResembleProto, dummyServos)
+			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos, ShouldResembleProto, dummyServos)
+
+			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-22")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			// Labstation host is not updated
+			_, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 
 		Convey("Update machineLSE DUT with different ServoHostname", func() {
@@ -546,6 +605,17 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			servos = resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
 			So(servo2, ShouldResembleProto, servos[0])
+
+			s, err := state.GetStateRecord(ctx, "hosts/DUTMachineLSE-17")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			// Labstation host is not updated
+			_, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-17")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = state.GetStateRecord(ctx, "hosts/BlueLabstation-18")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 	})
 }
@@ -568,6 +638,9 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Servos are not allowed to be updated")
+			_, err = state.GetStateRecord(ctx, "hosts/RedLabstation-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			// No changes are recorded as the updating fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-10")
@@ -584,6 +657,10 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse2)
+
+			s, err := state.GetStateRecord(ctx, "hosts/RedLabstation-11")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 
 			// No changes happened in this update
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-11")
@@ -620,6 +697,11 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
 			So(err, ShouldBeNil)
+			_, err = state.UpdateStateRecord(ctx, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: "vms/vm1",
+			})
+			So(err, ShouldBeNil)
 			machineLSE1.GetChromeBrowserMachineLse().Vms = []*ufspb.VM{
 				{
 					Name:       "vm1",
@@ -636,6 +718,13 @@ func TestUpdateMachineLSE(t *testing.T) {
 			m, err := UpdateMachineLSE(ctx, machineLSE1, nil)
 			So(err, ShouldBeNil)
 			So(m.GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 2)
+			s, err := state.GetStateRecord(ctx, "vms/vm1")
+			So(err, ShouldBeNil)
+			// State remains unchanged as vm1 is not updated
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			s, err = state.GetStateRecord(ctx, "vms/vm2")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-update1")
 			So(err, ShouldBeNil)
@@ -669,6 +758,11 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse2)
+
+			s, err := state.GetStateRecord(ctx, "hosts/RedLabstation-11")
+			So(err, ShouldBeNil)
+			// Sets it back to needs_deloy
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 
 			// No changes happened in this update
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-11")
@@ -708,6 +802,10 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "there is another host machinelse-5 which is referring this machine machine-5")
+
+			_, err = state.GetStateRecord(ctx, "hosts/machinelse-4")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
 	})
 }
@@ -732,9 +830,18 @@ func TestDeleteMachineLSEDUT(t *testing.T) {
 			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
 			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse)
 			So(err, ShouldBeNil)
+			_, err = state.UpdateStateRecord(ctx, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: "hosts/DUTMachineLse-92",
+			})
+			So(err, ShouldBeNil)
 
 			err = DeleteMachineLSE(ctx, "DUTMachineLse-92")
 			So(err, ShouldBeNil)
+
+			_, err = state.GetStateRecord(ctx, "hosts/DUTMachineLse-92")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			resp, _ := inventory.GetMachineLSE(ctx, "RedLabstation-92")
 			So(resp.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos(), ShouldBeEmpty)
@@ -763,10 +870,18 @@ func TestDeleteMachineLSELabstation(t *testing.T) {
 			dutMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals
 			_, err = inventory.CreateMachineLSE(ctx, dutMachinelse)
 			So(err, ShouldBeNil)
+			_, err = state.UpdateStateRecord(ctx, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: "hosts/RedLabstation-90",
+			})
+			So(err, ShouldBeNil)
 
 			err = DeleteMachineLSE(ctx, "RedLabstation-90")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "cannot be deleted")
+			s, err := state.GetStateRecord(ctx, "hosts/RedLabstation-90")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			// No changes are recorded as the deletion fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-90")
@@ -776,9 +891,17 @@ func TestDeleteMachineLSELabstation(t *testing.T) {
 		Convey("Delete machineLSE Labstation without Servo Info", func() {
 			labstationMachinelse := mockLabstationMachineLSE("RedLabstation-100")
 			inventory.CreateMachineLSE(ctx, labstationMachinelse)
-
-			err := DeleteMachineLSE(ctx, "RedLabstation-100")
+			_, err := state.UpdateStateRecord(ctx, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: "hosts/RedLabstation-100",
+			})
 			So(err, ShouldBeNil)
+
+			err = DeleteMachineLSE(ctx, "RedLabstation-100")
+			So(err, ShouldBeNil)
+			_, err = state.GetStateRecord(ctx, "hosts/RedLabstation-100")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-100")
 			So(err, ShouldBeNil)

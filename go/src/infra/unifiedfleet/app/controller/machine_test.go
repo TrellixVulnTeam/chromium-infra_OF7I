@@ -17,6 +17,7 @@ import (
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 )
 
 func TestCreateMachine(t *testing.T) {
@@ -46,6 +47,9 @@ func TestCreateMachine(t *testing.T) {
 			_, err := CreateMachine(ctx, machine1)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, CannotCreate)
+			_, err = state.GetStateRecord(ctx, "machines/machine-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			// No changes are recorded as the creation fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
@@ -73,6 +77,9 @@ func TestCreateMachine(t *testing.T) {
 			_, err := CreateMachine(ctx, machine3)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot create")
+			_, err = state.GetStateRecord(ctx, "machines/machine-3")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			// No changes are recorded as the creation fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
@@ -122,6 +129,9 @@ func TestCreateMachine(t *testing.T) {
 			resp, err := CreateMachine(ctx, machine2)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machine2)
+			s, err := state.GetStateRecord(ctx, "machines/machine-2")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-2")
 			So(err, ShouldBeNil)

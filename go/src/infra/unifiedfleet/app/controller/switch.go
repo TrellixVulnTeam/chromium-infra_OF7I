@@ -19,6 +19,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -51,6 +52,17 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 		// nested transactions.
 		if _, err = registration.BatchUpdateSwitches(ctx, []*ufspb.Switch{s}); err != nil {
 			return errors.Annotate(err, "Unable to create switch %s", s.Name).Err()
+		}
+
+		// 5. Update state
+		if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+			{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name),
+				User:         ufsUtil.CurrentUser(ctx),
+			},
+		}); err != nil {
+			return err
 		}
 		return nil
 	}
@@ -180,6 +192,9 @@ func DeleteSwitch(ctx context.Context, id string) error {
 			return err
 		}
 		changes = append(changes, cs...)
+
+		// 5. Update state
+		state.DeleteStates(ctx, []string{ufsUtil.AddPrefix(ufsUtil.SwitchCollection, id)})
 		return nil
 	}
 

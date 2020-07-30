@@ -15,6 +15,7 @@ import (
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 )
 
 func mockSwitch(id string) *ufspb.Switch {
@@ -87,6 +88,10 @@ func TestCreateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-5", "switch-20"})
 
+			s, err := state.GetStateRecord(ctx, "switches/switch-20")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-20")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
@@ -121,6 +126,10 @@ func TestCreateSwitch(t *testing.T) {
 			mresp, err := registration.GetRack(ctx, "rack-15")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-25"})
+
+			s, err := state.GetStateRecord(ctx, "switches/switch-25")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-25")
 			So(err, ShouldBeNil)
@@ -345,6 +354,13 @@ func TestDeleteSwitch(t *testing.T) {
 			switch2 := mockSwitch("switch-2")
 			_, err = registration.CreateSwitch(ctx, switch2)
 			So(err, ShouldBeNil)
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "switches/switch-2",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
 
 			err = DeleteSwitch(ctx, "switch-2")
 			So(err, ShouldBeNil)
@@ -358,6 +374,9 @@ func TestDeleteSwitch(t *testing.T) {
 			So(rresp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(rresp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
+
+			_, err = state.GetStateRecord(ctx, "switches/switch-2")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-2")
 			So(err, ShouldBeNil)

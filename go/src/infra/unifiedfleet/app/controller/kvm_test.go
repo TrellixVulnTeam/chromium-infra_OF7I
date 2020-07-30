@@ -16,6 +16,7 @@ import (
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 )
 
 func mockKVM(id string) *ufspb.KVM {
@@ -80,6 +81,9 @@ func TestCreateKVM(t *testing.T) {
 			resp, err := CreateKVM(ctx, kvm2, "rack-1")
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, kvm2)
+			s, err := state.GetStateRecord(ctx, "kvms/kvm-2")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-2")
 			So(err, ShouldBeNil)
@@ -117,6 +121,9 @@ func TestCreateKVM(t *testing.T) {
 			mresp, err := registration.GetRack(ctx, "rack-10")
 			So(err, ShouldBeNil)
 			So(mresp.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"kvm-5", "kvm-20"})
+			s, err := state.GetStateRecord(ctx, "kvms/kvm-20")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-20")
 			So(err, ShouldBeNil)
@@ -347,6 +354,13 @@ func TestDeleteKVM(t *testing.T) {
 			kvm2 := mockKVM("kvm-2")
 			_, err = registration.CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "kvms/kvm-2",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
 
 			err = DeleteKVM(ctx, "kvm-2")
 			So(err, ShouldBeNil)
@@ -360,6 +374,9 @@ func TestDeleteKVM(t *testing.T) {
 			So(rresp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(rresp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
+
+			_, err = state.GetStateRecord(ctx, "kvms/kvm-2")
+			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-2")
 			So(err, ShouldBeNil)

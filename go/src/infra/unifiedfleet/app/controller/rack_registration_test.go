@@ -13,6 +13,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 )
 
 func TestRackRegistration(t *testing.T) {
@@ -124,6 +125,18 @@ func TestRackRegistration(t *testing.T) {
 			So(s, ShouldResembleProto, []*ufspb.Switch{switch3})
 			So(k, ShouldResembleProto, []*ufspb.KVM{kvm})
 			So(rp, ShouldResembleProto, []*ufspb.RPM{rpm})
+			st, err := state.GetStateRecord(ctx, "racks/rack-3")
+			So(err, ShouldBeNil)
+			So(st.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			st, err = state.GetStateRecord(ctx, "switches/switch-3")
+			So(err, ShouldBeNil)
+			So(st.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			st, err = state.GetStateRecord(ctx, "rpms/rpm-3")
+			So(err, ShouldBeNil)
+			So(st.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			st, err = state.GetStateRecord(ctx, "kvms/kvm-3")
+			So(err, ShouldBeNil)
+			So(st.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-3")
 			So(err, ShouldBeNil)

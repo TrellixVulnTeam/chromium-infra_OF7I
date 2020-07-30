@@ -15,11 +15,15 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 // RackRegistration creates a new rack, switches, kvms and rpms in datastore.
 func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.Switch, kvms []*ufspb.KVM, rpms []*ufspb.RPM) (*ufspb.Rack, []*ufspb.Switch, []*ufspb.KVM, []*ufspb.RPM, error) {
 	f := func(ctx context.Context) error {
+		stateRecords := make([]*ufspb.StateRecord, 0)
+
 		// 1. Validate the input
 		if err := validateRackRegistration(ctx, rack, switches, kvms, rpms); err != nil {
 			return err
@@ -39,6 +43,11 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 			var n []string = make([]string, 0, len(switches))
 			for _, s := range switches {
 				n = append(n, s.Name)
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        ufspb.State_STATE_SERVING,
+					ResourceName: util.AddPrefix(util.SwitchCollection, s.Name),
+					User:         util.CurrentUser(ctx),
+				})
 			}
 			// This is output only field. Assign new value.
 			rack.GetChromeBrowserRack().Switches = n
@@ -56,6 +65,11 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 			var n []string = make([]string, 0, len(kvms))
 			for _, kvm := range kvms {
 				n = append(n, kvm.Name)
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        ufspb.State_STATE_SERVING,
+					ResourceName: util.AddPrefix(util.KVMCollection, kvm.Name),
+					User:         util.CurrentUser(ctx),
+				})
 			}
 			// This is output only field. Assign new value.
 			rack.GetChromeBrowserRack().Kvms = n
@@ -73,6 +87,11 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 			var n []string = make([]string, 0, len(rpms))
 			for _, rpm := range rpms {
 				n = append(n, rpm.Name)
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        ufspb.State_STATE_SERVING,
+					ResourceName: util.AddPrefix(util.RPMCollection, rpm.Name),
+					User:         util.CurrentUser(ctx),
+				})
 			}
 			// This is output only field. Assign new value.
 			rack.GetChromeBrowserRack().Rpms = n
@@ -89,8 +108,18 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
+		stateRecords = append(stateRecords, &ufspb.StateRecord{
+			State:        ufspb.State_STATE_SERVING,
+			ResourceName: util.AddPrefix(util.RackCollection, rack.Name),
+			User:         util.CurrentUser(ctx),
+		})
 		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
 			return errors.Annotate(err, "Failed to create rack %s", rack.Name).Err()
+		}
+
+		// 7. Update states
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
+			return err
 		}
 		return nil
 	}

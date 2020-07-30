@@ -162,3 +162,18 @@ func GetStateIndexedFieldName(input string) (string, error) {
 	}
 	return field, nil
 }
+
+// BatchUpdateStates updates the states to UFS.
+//
+// This can be used inside a transaction
+func BatchUpdateStates(ctx context.Context, states []*ufspb.StateRecord) ([]*ufspb.StateRecord, error) {
+	protos := make([]proto.Message, len(states))
+	for i, s := range states {
+		protos[i] = s
+	}
+	_, err := ufsds.PutAll(ctx, protos, newRecordEntity, true)
+	if err == nil {
+		return states, err
+	}
+	return nil, err
+}

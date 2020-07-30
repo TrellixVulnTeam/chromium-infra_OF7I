@@ -13,6 +13,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 )
 
 func TestMachineRegistration(t *testing.T) {
@@ -161,6 +162,9 @@ func TestMachineRegistration(t *testing.T) {
 			So(m, ShouldResembleProto, machine)
 			So(n, ShouldResembleProto, []*ufspb.Nic{nic})
 			So(d, ShouldResembleProto, drac)
+			s, err := state.GetStateRecord(ctx, "machines/machine-browser-3")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-browser-3")
 			So(err, ShouldBeNil)

@@ -12,11 +12,14 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/server/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 // MachineRegistration creates a new machine, new nic and a new drac in datastore.
@@ -78,6 +81,17 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine, nics []*uf
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return err
+		}
+
+		// 6. Update machine state
+		if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+			{
+				State:        ufspb.State_STATE_REGISTERED,
+				ResourceName: util.AddPrefix(util.MachineCollection, machine.GetName()),
+				User:         auth.CurrentUser(ctx).Email,
+			},
+		}); err != nil {
 			return err
 		}
 		return nil

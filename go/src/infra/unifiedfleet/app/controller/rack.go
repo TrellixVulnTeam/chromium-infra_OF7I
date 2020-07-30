@@ -19,6 +19,7 @@ import (
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -37,6 +38,13 @@ func CreateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
 	}
 	r, err := registration.CreateRack(ctx, rack)
 	if err == nil {
+		state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+			{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: ufsUtil.AddPrefix(ufsUtil.RackCollection, rack.Name),
+				User:         ufsUtil.CurrentUser(ctx),
+			},
+		})
 		SaveChangeEvents(ctx, LogRackChanges(nil, rack))
 	}
 	return r, err
@@ -131,6 +139,8 @@ func DeleteRack(ctx context.Context, id string) error {
 	var rack *ufspb.Rack
 	var err error
 	f := func(ctx context.Context) error {
+		resourceNames := make([]string, 0)
+
 		// 1. Get the rack
 		rack, err = registration.GetRack(ctx, id)
 		if status.Code(err) == codes.Internal {
@@ -150,6 +160,7 @@ func DeleteRack(ctx context.Context, id string) error {
 			// 3. Delete the switches
 			if switchIDs := rack.GetChromeBrowserRack().GetSwitches(); switchIDs != nil {
 				for _, switchID := range switchIDs {
+					resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.SwitchCollection, switchID))
 					if err := validateDeleteSwitch(ctx, switchID); err != nil {
 						return errors.Annotate(err, "validation failed - Unable to delete switch %s", switchID).Err()
 					}
@@ -165,6 +176,7 @@ func DeleteRack(ctx context.Context, id string) error {
 			// 4. Delete the KVMs
 			if kvmIDs := rack.GetChromeBrowserRack().GetKvms(); kvmIDs != nil {
 				for _, kvmID := range kvmIDs {
+					resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvmID))
 					if err := validateDeleteKVM(ctx, kvmID); err != nil {
 						return errors.Annotate(err, "validation failed - unable to delete kvm %s", kvmID).Err()
 					}
@@ -180,6 +192,7 @@ func DeleteRack(ctx context.Context, id string) error {
 			// 5. Delete the RPMs
 			if rpmIDs := rack.GetChromeBrowserRack().GetRpms(); rpmIDs != nil {
 				for _, rpmID := range rpmIDs {
+					resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.RPMCollection, rpmID))
 					if err := validateDeleteRPM(ctx, rpmID); err != nil {
 						return errors.Annotate(err, "validation failed - unable to delete rpm %s", rpmID).Err()
 					}
@@ -194,7 +207,13 @@ func DeleteRack(ctx context.Context, id string) error {
 		}
 
 		// 6. Delete the rack
-		return registration.DeleteRack(ctx, id)
+		if err := registration.DeleteRack(ctx, id); err != nil {
+			return err
+		}
+
+		resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.RackCollection, id))
+		state.DeleteStates(ctx, resourceNames)
+		return nil
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {

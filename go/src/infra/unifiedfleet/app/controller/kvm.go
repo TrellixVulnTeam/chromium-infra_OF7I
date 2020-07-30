@@ -18,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
@@ -50,6 +51,17 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		// nested transactions.
 		if _, err = registration.BatchUpdateKVMs(ctx, []*ufspb.KVM{kvm}); err != nil {
 			return errors.Annotate(err, "Unable to create kvm %s", kvm.Name).Err()
+		}
+
+		// 5. Update state
+		if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+			{
+				State:        ufspb.State_STATE_SERVING,
+				ResourceName: ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name),
+				User:         ufsUtil.CurrentUser(ctx),
+			},
+		}); err != nil {
+			return err
 		}
 		return nil
 	}
@@ -179,6 +191,9 @@ func DeleteKVM(ctx context.Context, id string) error {
 			return err
 		}
 		changes = append(changes, cs...)
+
+		// 5. Update state
+		state.DeleteStates(ctx, []string{ufsUtil.AddPrefix(ufsUtil.KVMCollection, id)})
 		return nil
 	}
 

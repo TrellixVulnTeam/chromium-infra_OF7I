@@ -19,6 +19,7 @@ import (
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -46,6 +47,17 @@ func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return err
+		}
+
+		// 4. Update machine state
+		if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+			{
+				State:        ufspb.State_STATE_REGISTERED,
+				ResourceName: util.AddPrefix(util.MachineCollection, machine.GetName()),
+				User:         util.CurrentUser(ctx),
+			},
+		}); err != nil {
 			return err
 		}
 		return nil
@@ -238,7 +250,10 @@ func DeleteMachine(ctx context.Context, id string) error {
 			}
 		}
 
-		// 5. Delete the machine
+		// 5. Delete the state
+		state.DeleteStates(ctx, []string{util.AddPrefix(util.MachineCollection, id)})
+
+		// 6. Delete the machine
 		return registration.DeleteMachine(ctx, id)
 	}
 

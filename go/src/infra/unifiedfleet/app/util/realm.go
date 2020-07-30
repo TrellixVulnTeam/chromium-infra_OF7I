@@ -4,6 +4,12 @@
 
 package util
 
+import (
+	"context"
+
+	"go.chromium.org/luci/server/auth"
+)
+
 // BrowserLabAdminRealm is the admin realm for browser lab.
 const BrowserLabAdminRealm = "chromium:ufs/browser-lab-admin"
 
@@ -12,3 +18,8 @@ const AtlLabAdminRealm = "chromium:ufs/atl-lab-admin"
 
 // AcsLabAdminRealm is the admin realm for atl lab.
 const AcsLabAdminRealm = "chromium:ufs/atl-lab-admin"
+
+// CurrentUser returns the current user
+func CurrentUser(ctx context.Context) string {
+	return auth.CurrentUser(ctx).Email
+}

@@ -16,6 +16,7 @@ import (
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 )
 
 func TestCreateRack(t *testing.T) {
@@ -39,6 +40,9 @@ func TestCreateRack(t *testing.T) {
 			So(resp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
 			So(resp.GetChromeBrowserRack().GetRpms(), ShouldBeNil)
 			So(resp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
+			s, err := state.GetStateRecord(ctx, "racks/rack-1")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-1")
 			So(err, ShouldBeNil)
@@ -62,6 +66,9 @@ func TestCreateRack(t *testing.T) {
 
 			resp, _ = registration.GetRack(ctx, "rack-2")
 			So(resp.GetChromeBrowserRack(), ShouldNotBeNil)
+			s, err := state.GetStateRecord(ctx, "racks/rack-1")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-2")
 			So(err, ShouldBeNil)
@@ -248,6 +255,26 @@ func TestDeleteRack(t *testing.T) {
 			_, err = registration.CreateRack(ctx, rack)
 			So(err, ShouldBeNil)
 
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "racks/rack-5",
+					State:        ufspb.State_STATE_SERVING,
+				},
+				{
+					ResourceName: "switches/switch-5",
+					State:        ufspb.State_STATE_SERVING,
+				},
+				{
+					ResourceName: "kvms/kvm-5",
+					State:        ufspb.State_STATE_SERVING,
+				},
+				{
+					ResourceName: "rpms/rpm-5",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
+
 			err = DeleteRack(ctx, "rack-5")
 			So(err, ShouldBeNil)
 
@@ -265,6 +292,15 @@ func TestDeleteRack(t *testing.T) {
 
 			_, err = registration.GetSwitch(ctx, "switch-5")
 			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = state.GetStateRecord(ctx, "racks/rack-5")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = state.GetStateRecord(ctx, "switches/switch-5")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = state.GetStateRecord(ctx, "kvms/kvm-5")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = state.GetStateRecord(ctx, "rpms/rpm-5")
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")
