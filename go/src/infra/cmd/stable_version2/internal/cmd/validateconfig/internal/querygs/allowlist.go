@@ -9,6 +9,7 @@
 package querygs
 
 var missingBoardAllowList map[string]bool = stringSliceToStringSet([]string{
+	"atlas_arm64",
 	"atlas_kvm",
 	"buddy_cfm",
 	"caroline_arcnext",
@@ -32,6 +33,7 @@ var missingBoardAllowList map[string]bool = stringSliceToStringSet([]string{
 	"kalista_cfm",
 	"kefka_kernelnext",
 	"nami_kvm",
+	"nocturne_arm64",
 	"nyan",
 	"oak",
 	"rambi",
