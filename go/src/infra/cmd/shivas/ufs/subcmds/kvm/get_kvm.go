@@ -5,6 +5,7 @@
 package kvm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -15,6 +16,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -34,6 +36,8 @@ Gets the kvm and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
+		c.Flags.BoolVar(&c.full, "full", false, "get the full information of a kvm")
 		return c
 	},
 }
@@ -43,6 +47,8 @@ type getKVM struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+
+	full bool
 }
 
 func (c *getKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -71,6 +77,19 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+
+	if c.full {
+		kvm, dracDHCP, err := c.getFull(ctx, ic, args[0])
+		if err != nil {
+			return err
+		}
+		utils.PrintProtoJSON(kvm)
+		if dracDHCP != nil {
+			utils.PrintProtoJSON(dracDHCP)
+		}
+		return nil
+	}
+
 	res, err := ic.GetKVM(ctx, &ufsAPI.GetKVMRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, args[0]),
 	})
@@ -81,6 +100,26 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 	utils.PrintProtoJSON(res)
 	fmt.Println()
 	return nil
+}
+
+func (c *getKVM) getFull(ctx context.Context, ic ufsAPI.FleetClient, name string) (*ufspb.KVM, *ufspb.DHCPConfig, error) {
+	res, err := ic.GetKVM(ctx, &ufsAPI.GetKVMRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, name),
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
+	dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+		Hostname: res.Name,
+	})
+	if ufsUtil.IsNotFoundError(err) || dhcp == nil {
+		return res, nil, nil
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	return res, dhcp, nil
 }
 
 func (c *getKVM) validateArgs() error {

@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -134,6 +135,60 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 	return kvm, nil
 }
 
+// DeleteKVMHost deletes the host of a kvm in datastore.
+func DeleteKVMHost(ctx context.Context, kvmName string) error {
+	f := func(ctx context.Context) error {
+		// 1. Verify if the hostname is already set with IP. if yes, remove the current binding.
+		dhcp, err := configuration.GetDHCPConfig(ctx, kvmName)
+		if ufsUtil.IsNotFoundError(err) {
+			logging.Debugf(ctx, "no associated dhcp with the given kvm %s", kvmName)
+			return nil
+		}
+		if err != nil {
+			return errors.Annotate(err, "Fail to query dhcpHost").Err()
+		}
+
+		// 2. Update dhcp and ip.
+		return deleteHostHelper(ctx, dhcp)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete the kvm host: %s", err)
+		return err
+	}
+	return nil
+}
+
+// UpdateKVMHost updates the kvm host in datastore.
+func UpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, vlanName string) error {
+	f := func(ctx context.Context) error {
+		// 1. Validate the input
+		if err := validateUpdateKVMHost(ctx, kvm, vlanName); err != nil {
+			return err
+		}
+
+		// 2. Verify if the hostname is already set with IP. if yes, remove the current dhcp.
+		dhcp, err := configuration.GetDHCPConfig(ctx, kvm.GetName())
+		if ufsUtil.IsInternalError(err) {
+			return errors.Annotate(err, "Fail to query dhcpHost").Err()
+		}
+		if err == nil && dhcp != nil {
+			if err := deleteHostHelper(ctx, dhcp); err != nil {
+				return err
+			}
+		}
+
+		// 3. Find free ip, set IP and DHCP config
+		return addHostHelper(ctx, vlanName, kvm.GetName(), kvm.GetMacAddress())
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to assign IP to the kvm: %s", err)
+		return err
+	}
+	return nil
+}
+
 // GetKVM returns kvm for the given id from datastore.
 func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
 	return registration.GetKVM(ctx, id)
@@ -194,6 +249,11 @@ func DeleteKVM(ctx context.Context, id string) error {
 
 		// 5. Update state
 		state.DeleteStates(ctx, []string{ufsUtil.AddPrefix(ufsUtil.KVMCollection, id)})
+
+		// 6. Delete ip configs
+		if err := deleteDHCPHelper(ctx, id); err != nil {
+			return err
+		}
 		return nil
 	}
 
@@ -345,4 +405,13 @@ func removeKVMFromRacks(ctx context.Context, racks []*ufspb.Rack, id string) ([]
 		return nil, errors.Annotate(err, "Unable to remove kvm information %s from rack", id).Err()
 	}
 	return changes, nil
+}
+
+// validateUpdateKVMHost validates if a host can be added to a kvm
+func validateUpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, vlanName string) error {
+	if kvm.GetMacAddress() == "" {
+		return errors.New("mac address of kvm hasn't been specified")
+	}
+	// Check if resources does not exist
+	return ResourceExist(ctx, []*Resource{GetKVMResource(kvm.Name), GetVlanResource(vlanName)}, nil)
 }

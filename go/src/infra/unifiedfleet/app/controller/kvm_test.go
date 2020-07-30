@@ -391,6 +391,83 @@ func TestDeleteKVM(t *testing.T) {
 			So(changes[0].GetNewValue(), ShouldEqual, "[]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
 		})
+
+		Convey("Delete KVM successfully together with deleting ip", func() {
+			rack := &ufspb.Rack{
+				Name: "rack-ip6",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+						Kvms: []string{"kvm-ip2"},
+					},
+				},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			kvm2 := mockKVM("kvm-ip2")
+			_, err = registration.CreateKVM(ctx, kvm2)
+			So(err, ShouldBeNil)
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "kvms/kvm-ip2",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname: "kvm-ip2",
+					Ip:       "1.2.3.4",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.ImportIPs(ctx, []*ufspb.IP{
+				{
+					Id:       "vlan-1:123",
+					Ipv4Str:  "1.2.3.4",
+					Vlan:     "vlan-1",
+					Occupied: true,
+					Ipv4:     123,
+				},
+			})
+			So(err, ShouldBeNil)
+
+			err = DeleteKVM(ctx, "kvm-ip2")
+			So(err, ShouldBeNil)
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "1.2.3.4"})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeFalse)
+			_, err = configuration.GetDHCPConfig(ctx, "kvm-ip2")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			resp, err := registration.GetKVM(ctx, "kvm-2")
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			rresp, err := registration.GetRack(ctx, "rack-6")
+			So(rresp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+			So(rresp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
+
+			_, err = state.GetStateRecord(ctx, "kvms/kvm-2")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "kvm")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-6")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "[kvm-2]")
+			So(changes[0].GetNewValue(), ShouldEqual, "[]")
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
+		})
 	})
 }
 

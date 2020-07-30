@@ -491,11 +491,35 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *ufsAPI.UpdateKVMR
 		return nil, err
 	}
 	req.KVM.Name = util.RemovePrefix(req.KVM.Name)
-	kvm, err := controller.UpdateKVM(ctx, req.KVM, req.Rack)
+	// Before partial update is implemented, only update dhcp if network_option is specified,
+	// So that the easy mode to update kvm won't overwrite the whole kvm info in database.
+	if req.GetNetworkOption() == nil {
+		kvm, err := controller.UpdateKVM(ctx, req.KVM, req.Rack)
+		if err != nil {
+			return nil, err
+		}
+		// https://aip.dev/122 - as per AIP guideline
+		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
+		return kvm, err
+	}
+
+	kvm, err := controller.GetKVM(ctx, req.KVM.Name)
 	if err != nil {
 		return nil, err
 	}
-	// https://aip.dev/122 - as per AIP guideline
+	// If network_option.delete is enabled, ignore network_option.vlan and return directly
+	if req.GetNetworkOption().GetDelete() {
+		if err = controller.DeleteKVMHost(ctx, req.KVM.Name); err != nil {
+			return nil, err
+		}
+		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
+		return kvm, nil
+	}
+	if req.GetNetworkOption().GetVlan() != "" {
+		if err = controller.UpdateKVMHost(ctx, kvm, req.GetNetworkOption().GetVlan()); err != nil {
+			return nil, err
+		}
+	}
 	kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 	return kvm, err
 }

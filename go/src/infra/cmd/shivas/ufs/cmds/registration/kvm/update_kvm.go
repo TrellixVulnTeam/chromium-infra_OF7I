@@ -31,19 +31,28 @@ var UpdateKVMCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.KVMFileText)
-		c.Flags.StringVar(&c.rackName, "r", "", "name of the rack to associate the kvm")
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
+		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm")
+		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm")
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the kvm to")
+		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the kvm")
 		return c
 	},
 }
 
 type updateKVM struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	rackName     string
+	authFlags authcli.Flags
+	envFlags  site.EnvFlags
+
 	newSpecsFile string
 	interactive  bool
+
+	rackName   string
+	vlanName   string
+	kvmName    string
+	deleteVlan bool
 }
 
 func (c *updateKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -73,27 +82,58 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 	if c.interactive {
 		c.rackName = utils.GetKVMInteractiveInput(ctx, ic, &kvm, true)
 	} else {
-		if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
-			return err
+		if c.newSpecsFile != "" {
+			if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
+				return err
+			}
+		} else {
+			c.parseArgs(&kvm)
 		}
 	}
 	kvm.Name = ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name)
 	res, err := ic.UpdateKVM(ctx, &ufsAPI.UpdateKVMRequest{
 		KVM:  &kvm,
 		Rack: c.rackName,
+		NetworkOption: &ufsAPI.NetworkOption{
+			Vlan:   c.vlanName,
+			Delete: c.deleteVlan,
+		},
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	if c.deleteVlan {
+		fmt.Printf("Successfully deleted vlan of kvm %s\n", res.Name)
+	}
+	if c.vlanName != "" {
+		// Log the assigned IP
+		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+			Hostname: res.Name,
+		}); err == nil {
+			utils.PrintProtoJSON(dhcp)
+			fmt.Println("Successfully added dhcp config to kvm: ", res.Name)
+		}
+	}
 	return nil
 }
 
+func (c *updateKVM) parseArgs(kvm *ufspb.KVM) {
+	kvm.Name = c.kvmName
+}
+
 func (c *updateKVM) validateArgs() error {
-	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
+	if c.newSpecsFile == "" && !c.interactive {
+		if c.kvmName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+		}
+		if c.vlanName == "" && !c.deleteVlan {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan'] is required.")
+		}
 	}
 	return nil
 }
