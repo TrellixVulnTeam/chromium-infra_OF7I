@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -314,7 +317,7 @@ func checkDuplicatePort(newServo *lab.Servo, servos []*lab.Servo) error {
 	newPort := newServo.GetServoPort()
 	for _, s := range servos {
 		if newPort == s.GetServoPort() {
-			return errors.Reason("the servo port: '%d' is already used in %q", newPort, s.GetServoHostname()).Err()
+			return status.Errorf(codes.FailedPrecondition, "the servo port: '%d' is already used in %q", newPort, s.GetServoHostname())
 		}
 	}
 	return nil
@@ -325,7 +328,7 @@ func checkDuplicateSerial(newServo *lab.Servo, servos []*lab.Servo) error {
 	newSerial := newServo.GetServoSerial()
 	for _, s := range servos {
 		if newSerial == s.GetServoSerial() {
-			return errors.Reason("the servo with serial number: %q is already attached to %q", newSerial, s.GetServoHostname()).Err()
+			return status.Errorf(codes.FailedPrecondition, "the servo with serial number: %q is already attached to %q", newSerial, s.GetServoHostname())
 		}
 	}
 	return nil
