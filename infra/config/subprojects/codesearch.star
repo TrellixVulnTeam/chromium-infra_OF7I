@@ -36,6 +36,7 @@ def builder(
 
         # Builder props.
         os = None,
+        cpu_cores = None,
         properties = None,
         caches = None,
         execution_timeout = None,
@@ -53,6 +54,7 @@ def builder(
       name: name of the builder.
       executable: a recipe to run.
       os: the target OS dimension.
+      cpu_cores: the CPU cores count dimension (as string).
       properties: a dict with properties to pass to the recipe.
       caches: a list of swarming.cache(...).
       execution_timeout: how long it is allowed to run.
@@ -81,7 +83,7 @@ def builder(
         dimensions = {
             "os": os or "Ubuntu-16.04",
             "cpu": "x86-64",
-            "cores": "8",
+            "cores": cpu_cores or "8",
             "pool": "luci.infra.codesearch",
         },
         caches = caches,
@@ -99,11 +101,12 @@ def builder(
         short_name = short_name,
     )
 
-def chromium_genfiles(short_name, name, os = None):
+def chromium_genfiles(short_name, name, os = None, cpu_cores = None):
     builder(
         name = name,
         executable = build.recipe("chromium_codesearch"),
         os = os,
+        cpu_cores = cpu_cores,
         caches = [swarming.cache(
             path = "generated",
             name = "codesearch_git_genfiles_repo",
@@ -175,7 +178,12 @@ chromium_genfiles("cro", "codesearch-gen-chromium-chromiumos")
 chromium_genfiles("fch", "codesearch-gen-chromium-fuchsia")
 chromium_genfiles("lcr", "codesearch-gen-chromium-lacros")
 chromium_genfiles("lnx", "codesearch-gen-chromium-linux")
-chromium_genfiles("win", "codesearch-gen-chromium-win", os = "Windows-10")
+chromium_genfiles(
+    "win",
+    "codesearch-gen-chromium-win",
+    os = "Windows-10",
+    cpu_cores = "16",
+)
 
 sync_submodules(
     name = "codesearch-submodules-build",
