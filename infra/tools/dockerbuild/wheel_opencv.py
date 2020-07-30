@@ -32,8 +32,15 @@ class OpenCV(Builder):
     self._numpy_version = numpy_version
 
     super(OpenCV, self).__init__(
-      Spec(name=name, version=version, universal=None, default=True),
-      arch_map=arch_map, only_plat=only_plat, skip_plat=skip_plat)
+        Spec(
+            name=name,
+            version=version,
+            universal=None,
+            pyversions=None,
+            default=True),
+        arch_map=arch_map,
+        only_plat=only_plat,
+        skip_plat=skip_plat)
 
 
   def build_fn(self, system, wheel):

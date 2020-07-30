@@ -30,8 +30,13 @@ class Cryptography(Builder):
     self._crypt_src = crypt_src
     self._openssl_src = openssl_src
     super(Cryptography, self).__init__(
-      Spec(name, crypt_src.version, universal=None, default=True),
-      arch_map=arch_map)
+        Spec(
+            name,
+            crypt_src.version,
+            universal=None,
+            pyversions=None,
+            default=True),
+        arch_map=arch_map)
 
   def build_fn(self, system, wheel):
     if wheel.plat.name in self._packaged:

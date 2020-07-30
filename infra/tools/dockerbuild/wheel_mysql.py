@@ -25,8 +25,12 @@ class MySQLPython(Builder):
     name = 'MySQL-python'
     self._pypi_src = source.pypi_sdist(name, version)
     super(MySQLPython, self).__init__(
-      Spec(name, self._pypi_src.version, universal=None, default=True),
-      **kwargs)
+        Spec(
+            name,
+            self._pypi_src.version,
+            universal=None,
+            pyversions=None,
+            default=True), **kwargs)
 
   def build_fn(self, system, wheel):
     dx = system.dockcross_image(wheel.plat)
