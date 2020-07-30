@@ -43,8 +43,7 @@ message MachineLSE {
     string hostname = 3 [
         (google.api.field_behavior) = REQUIRED
     ];
-    // The nic used to associate with the hostname, as one machine/host may contain multiple nics.
-    string nic = 8;
+
     oneof lse {
         ChromeBrowserMachineLSE chrome_browser_machine_lse = 4;
         ChromeOSMachineLSE chromeos_machine_lse = 5;
@@ -60,6 +59,22 @@ message MachineLSE {
     // Record the last update timestamp of this MachineLSE (In UTC timezone)
     google.protobuf.Timestamp update_time = 7 [
         (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // The nic used to associate with the hostname, as one machine/host may contain multiple nics.
+    string nic = 8;
+
+    // Refers to Lab
+    string lab = 9 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Rack name
+    string rack = 10 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Rack"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 // ChromeBrowserMachineLSE refers to the entity

@@ -234,10 +234,14 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 }
 
 // ToMachineLSEs converts crimson data to UFS LSEs.
-func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.MachineLSE, []*fleet.IP, []*fleet.DHCPConfig) {
+func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine) ([]*fleet.MachineLSE, []*fleet.IP, []*fleet.DHCPConfig) {
 	hostToVMs := make(map[string][]*fleet.VM, 0)
 	ips := make([]*fleet.IP, 0)
 	dhcps := make([]*fleet.DHCPConfig, 0)
+	machineMap := make(map[string]*crimson.Machine, len(machines))
+	for _, machine := range machines {
+		machineMap[machine.GetName()] = machine
+	}
 	for _, vm := range vms {
 		name := vm.GetName()
 		v := &fleet.VM{
@@ -261,6 +265,13 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.M
 	lses := make([]*fleet.MachineLSE, 0)
 	var lsePrototype string
 	for _, h := range hosts {
+		var rack string
+		var lab string
+		machine, ok := machineMap[h.GetMachine()]
+		if ok {
+			rack = machine.GetRack()
+			lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+		}
 		name := h.GetName()
 		vms := hostToVMs[name]
 		if len(vms) > 0 {
@@ -282,6 +293,8 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM) ([]*fleet.M
 					},
 				},
 			},
+			Rack: rack,
+			Lab:  lab,
 		}
 		lses = append(lses, lse)
 		ip := FormatIP(h.GetVlan(), h.GetIpv4(), true)

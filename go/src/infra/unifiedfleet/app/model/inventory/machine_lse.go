@@ -34,6 +34,8 @@ type MachineLSEEntity struct {
 	RPMID                 string   `gae:"rpm_id"`
 	VlanID                string   `gae:"vlan_id"`
 	ServoID               string   `gae:"servo_id"`
+	Rack                  string   `gae:"rack"`
+	Lab                   string   `gae:"lab"`
 	// ufspb.MachineLSE cannot be directly used as it contains pointer.
 	MachineLSE []byte `gae:",noindex"`
 }
@@ -66,6 +68,8 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		RPMID:                 p.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
 		VlanID:                p.GetChromeosMachineLse().GetServerLse().GetSupportedRestrictedVlan(),
 		ServoID:               servoID,
+		Rack:                  p.GetRack(),
+		Lab:                   p.GetLab(),
 		MachineLSE:            machineLSE,
 	}, nil
 }

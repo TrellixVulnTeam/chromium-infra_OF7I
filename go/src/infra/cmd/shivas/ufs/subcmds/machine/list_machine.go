@@ -32,7 +32,7 @@ var ListMachineCmd = &subcommands.Command{
 		c.envFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
-		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.MachineFiterHelp)
+		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.MachineFilterHelp)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 		c.commonFlags.Register(&c.Flags)
 		return c

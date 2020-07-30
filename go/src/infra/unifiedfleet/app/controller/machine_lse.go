@@ -28,18 +28,19 @@ import (
 
 // CreateMachineLSE creates a new machinelse in datastore.
 func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, vlanName, nicName string) (*ufspb.MachineLSE, error) {
-	// 1. MachineLSE name and hostname must always be the same
+	// MachineLSE name and hostname must always be the same
 	// Overwrite the name with hostname
 	machinelse.Name = machinelse.GetHostname()
 
-	// 2. If its a labstation, make the Hostname of the Labstation same as the machinelse name
+	// If its a labstation, make the Hostname of the Labstation same as the machinelse name
 	// Labstation hostname must be same as the machinelse hostname
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
 	}
 
-	// 3. Overwrite the OUTPUT_ONLY fields
+	// Overwrite the OUTPUT_ONLY fields
 	// This is output only field. User is not allowed to set its value.
+	// machine association to machinelse and machine indexing for machinelse table
 	machinelse.Machines = machineNames
 
 	// If its a DUT
@@ -52,15 +53,24 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	// If its a Chrome browser host, ChromeOS server or a ChormeOS labstation
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	f := func(ctx context.Context) error {
-		// 1. Validate input
+		// Validate input
 		err := validateCreateMachineLSE(ctx, machinelse, machineNames, vlanName, nicName)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
 
+		// Get machine to get lab and rack info for machinelse table indexing
+		machine, err := GetMachine(ctx, machineNames[0])
+		if err != nil {
+			return errors.Annotate(err, "unable to get machine %s", machineNames[0]).Err()
+		}
+		// Fill the rack/lab OUTPUT only fields for indexing machinelse table
+		machinelse.Rack = machine.GetLocation().GetRack()
+		machinelse.Lab = machine.GetLocation().GetLab().String()
+
 		if vlanName != "" && nicName != "" {
 			// Assigning IP to this host.
-			// 2. Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
+			// Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
 			machine, err := getBrowserMachineForNic(ctx, nicName)
 			if err != nil {
 				return errors.Annotate(err, fmt.Sprintf("Fail to get machine by nic name %s", nicName)).Err()
@@ -79,7 +89,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 				return status.Errorf(codes.InvalidArgument, "Nic %s doesn't belong to any of the machines assocated with this host: %#v", nicName, machineNames)
 			}
 
-			// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
+			// Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
 			dhcp, err := configuration.GetDHCPConfig(ctx, machinelse.GetHostname())
 			s, ok := status.FromError(err)
 			if ok && s.Code() == codes.Internal {
@@ -91,7 +101,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 				}
 			}
 
-			// 4. Get free ip, update the dhcp config and ip.occupied to true
+			// Get free ip, update the dhcp config and ip.occupied to true
 			ips, err := getFreeIP(ctx, vlanName, 1)
 			if err != nil {
 				return errors.Annotate(err, "Failed to find new IP to for nic %s", nicName).Err()
@@ -114,10 +124,11 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 				return errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", machinelse.GetHostname(), nic.GetMacAddress()).Err()
 			}
 
-			// 5. Update lse to contain the nic which is used to map to the ip.
+			// Update lse to contain the nic which is used to map to the ip.
 			machinelse.Nic = nic.Name
 		}
-		// 6. Create the machinelse
+
+		// Create the machinelse
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
@@ -136,17 +147,17 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 
 // UpdateMachineLSE updates machinelse in datastore.
 func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
-	// 1. MachineLSEs name and hostname must always be the same
+	// MachineLSEs name and hostname must always be the same
 	// Overwrite the name with hostname
 	machinelse.Name = machinelse.GetHostname()
 
-	// 2. If its a labstation, make the Hostname of the Labstation same as the machinelse name
+	// If its a labstation, make the Hostname of the Labstation same as the machinelse name
 	// Labstation hostname must be same as the machinelse hostname
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
 	}
 
-	// 3. Overwrite the OUTPUT_ONLY fields
+	// Overwrite the OUTPUT_ONLY fields
 	// This is output only field. User is not allowed to set its value.
 	if machineNames != nil {
 		machinelse.Machines = machineNames
@@ -163,26 +174,38 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	var oldMachinelse *ufspb.MachineLSE
 	f := func(ctx context.Context) error {
-		// 1. Validate the input
+		// Validate the input
 		err := validateUpdateMachineLSE(ctx, machinelse, machineNames)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update MachineLSE").Err()
 		}
 
-		// 2. Get the old machinelse
+		// Get the old machinelse
 		// getting oldmachinelse for change history logging
 		oldMachinelse, err = inventory.GetMachineLSE(ctx, machinelse.GetName())
 		if err != nil {
 			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
 		}
 
-		if machineNames == nil {
-			// 3. Overwrite the OUTPUT_ONLY fields
+		if machineNames == nil || len(machineNames) == 0 {
+			// Overwrite the OUTPUT_ONLY fields
 			// This is output only field. Assign already existing values.
 			machinelse.Machines = oldMachinelse.GetMachines()
 		}
 
-		// 4. Update machinelse entry
+		if len(machinelse.GetMachines()) > 0 {
+			// Get machine to get lab and rack info for machinelse table indexing
+			machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
+			if err != nil {
+				return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
+			}
+			// Assign already existing values.
+			// Fill the rack/lab OUTPUT only fields for indexing machinelse table
+			machinelse.Rack = machine.GetLocation().GetRack()
+			machinelse.Lab = machine.GetLocation().GetLab().String()
+		}
+
+		// Update machinelse entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{machinelse}); err != nil {
@@ -316,7 +339,7 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 //      * the first error that it meets
 //
 // The function will stop at the very first error.
-func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, pageSize int) (*ufsds.OpResults, error) {
+func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine, pageSize int) (*ufsds.OpResults, error) {
 	allRes := make(ufsds.OpResults, 0)
 	logging.Debugf(ctx, "Importing the basic lse prototypes for browser lab")
 	lps := []*ufspb.MachineLSEPrototype{
@@ -348,7 +371,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	}
 	allRes = append(allRes, *res...)
 
-	lses, ips, dhcps := util.ToMachineLSEs(hosts, vms)
+	lses, ips, dhcps := util.ToMachineLSEs(hosts, vms, machines)
 	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "browser-lab")
 	logging.Debugf(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
@@ -434,33 +457,42 @@ func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.Mach
 func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
 	f := func(ctx context.Context) error {
 		machinelses := []*ufspb.MachineLSE{machinelse}
-		// A. Validate input
+		// Validate input
 		err := validateCreateMachineLSE(ctx, machinelse, machineNames, "", "")
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
 		}
 
-		// B. Check if the DUT has Servo information.
+		// Get machine to get lab and rack info for machinelse table indexing
+		machine, err := GetMachine(ctx, machineNames[0])
+		if err != nil {
+			return errors.Annotate(err, "Unable to get machine %s", machineNames[0]).Err()
+		}
+		// Fill the rack/lab OUTPUT only fields for indexing machinelse table
+		machinelse.Rack = machine.GetLocation().GetRack()
+		machinelse.Lab = machine.GetLocation().GetLab().String()
+
+		// Check if the DUT has Servo information.
 		// Update Labstation MachineLSE with new Servo info.
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 		if newServo != nil {
-			// 1. Check if the Labstation MachineLSE exists in the system.
+			// Check if the Labstation MachineLSE exists in the system.
 			labstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
 				return err
 			}
-			// 2. Check if the ServoHostName and ServoPort are already in use
+			// Check if the ServoHostName and ServoPort are already in use
 			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
-			// 3. Update the Labstation MachineLSE with new Servo information.
+			// Update the Labstation MachineLSE with new Servo information.
 			// Append the new Servo entry to the Labstation
 			appendServoEntryToLabstation(newServo, labstationMachinelse)
 			machinelses = append(machinelses, labstationMachinelse)
 		}
 
-		// C. BatchUpdate both DUT and Labstation
+		// BatchUpdate both DUT and Labstation
 		_, err = inventory.BatchUpdateMachineLSEs(ctx, machinelses)
 		if err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs").Err()
@@ -485,64 +517,75 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineL
 // to the new labstation.
 func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
 	f := func(ctx context.Context) error {
-		// A. Validate the input
+		// Validate the input
 		err := validateUpdateMachineLSE(ctx, machinelse, machineNames)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update ChromeOSMachineLSEDUT").Err()
 		}
 
-		// B. Get the existing MachineLSE(DUT)
+		// Get the existing MachineLSE(DUT)
 		oldMachinelse, err := inventory.GetMachineLSE(ctx, machinelse.GetName())
 		if err != nil {
 			return errors.Annotate(err, "Failed to get existing MachineLSE").Err()
 		}
 
-		if machineNames == nil {
-			// C. Overwrite the OUTPUT_ONLY fields
+		if machineNames == nil || len(machineNames) == 0 {
+			// Overwrite the OUTPUT_ONLY fields
 			// This is output only field. Assign already existing values.
 			machinelse.Machines = oldMachinelse.GetMachines()
+		}
+		if len(machinelse.GetMachines()) > 0 {
+			// Get machine to get lab and rack info for machinelse table indexing
+			machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
+			if err != nil {
+				return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
+			}
+			// Assign already existing values.
+			// Fill the rack/lab OUTPUT only fields for indexing machinelse table
+			machinelse.Rack = machine.GetLocation().GetRack()
+			machinelse.Lab = machine.GetLocation().GetLab().String()
 		}
 
 		machinelses := []*ufspb.MachineLSE{machinelse}
 
-		// D. Check if the DUT has Servo information.
+		// Check if the DUT has Servo information.
 		// Update Labstation MachineLSE with new Servo info.
 		newServo := machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 		if newServo != nil {
-			// 1. Check if the Labstation MachineLSE exists in the system.
+			// Check if the Labstation MachineLSE exists in the system.
 			newLabstationMachinelse, err := getLabstationMachineLSE(ctx, newServo.GetServoHostname())
 			if err != nil {
 				return err
 			}
-			// 2. Check if the ServoHostName and ServoPort are already in use
+			// Check if the ServoHostName and ServoPort are already in use
 			_, err = validateServoInfoForDUT(ctx, newServo, machinelse.GetName())
 			if err != nil {
 				return err
 			}
-			// 3. Update the Labstation MachineLSE with new Servo information.
+			// Update the Labstation MachineLSE with new Servo information.
 			oldServo := oldMachinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().GetPeripherals().GetServo()
 			// check if the DUT is connected to the same Labstation or different Labstation
 			if newServo.GetServoHostname() == oldServo.GetServoHostname() {
 				// DUT is connected to the same Labstation,
-				// 1. replace the oldServo entry from the Labstation with the newServo entry
+				// replace the oldServo entry from the Labstation with the newServo entry
 				replaceServoEntryInLabstation(oldServo, newServo, newLabstationMachinelse)
 				machinelses = append(machinelses, newLabstationMachinelse)
 			} else {
 				// DUT is connected to a different Labstation,
-				// 1. remove the oldServo entry of DUT form oldLabstationMachinelse
+				// remove the oldServo entry of DUT form oldLabstationMachinelse
 				oldLabstationMachinelse, err := inventory.GetMachineLSE(ctx, oldServo.GetServoHostname())
 				if err != nil {
 					return err
 				}
 				removeServoEntryFromLabstation(oldServo, oldLabstationMachinelse)
 				machinelses = append(machinelses, oldLabstationMachinelse)
-				// 2. Append the newServo entry of DUT to the newLabstationMachinelse
+				// Append the newServo entry of DUT to the newLabstationMachinelse
 				appendServoEntryToLabstation(newServo, newLabstationMachinelse)
 				machinelses = append(machinelses, newLabstationMachinelse)
 			}
 		}
 
-		// E. BatchUpdate both DUT and Labstation/s
+		// BatchUpdate both DUT and Labstation/s
 		_, err = inventory.BatchUpdateMachineLSEs(ctx, machinelses)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to BatchUpdate ChromeOSMachineLSEDUTs %s", err)

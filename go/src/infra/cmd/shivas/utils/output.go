@@ -47,6 +47,7 @@ var (
 		"VM Hostname"}
 	RackTitle = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs",
 		"Capacity", "Realm", "UpdateTime"}
+	MachineLSETitle = []string{"Host Name"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -604,6 +605,20 @@ func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE) {
 			fmt.Print(",")
 			fmt.Println()
 		}
+	}
+}
+
+// PrintMachineLSEs prints the all machinelses in table form.
+func PrintMachineLSEs(machinelses []*ufspb.MachineLSE, keysOnly bool) {
+	defer tw.Flush()
+	for _, m := range machinelses {
+		printMachineLSE(m, keysOnly)
+	}
+}
+
+func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
 	}
 }
 

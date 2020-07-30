@@ -62,6 +62,7 @@ func DUTToLSE(dut *lab.DeviceUnderTest, deviceID string, updatedTime *timestamp.
 		Machines:            []string{deviceID},
 		UpdateTime:          updatedTime,
 		Lse:                 lse,
+		Lab:                 getLabByHostname(hostname).String(),
 	}
 }
 
@@ -86,6 +87,7 @@ func LabstationToLSE(l *lab.Labstation, deviceID string, updatedTime *timestamp.
 		Machines:            []string{deviceID},
 		UpdateTime:          updatedTime,
 		Lse:                 lse,
+		Lab:                 getLabByHostname(hostname).String(),
 	}
 }
 
@@ -110,14 +112,27 @@ func copyLabstation(l *lab.Labstation) *ufsCros.Labstation {
 }
 
 func getLabByHostname(hostname string) ufspb.Lab {
-	if strings.HasPrefix(hostname, "chromeos2") || strings.HasPrefix(hostname, "chromeos4") || strings.HasPrefix(hostname, "chromeos6") {
-		return ufspb.Lab_LAB_CHROMEOS_ATLANTIS
-	}
 	if strings.HasPrefix(hostname, "chromeos1") {
 		return ufspb.Lab_LAB_CHROMEOS_SANTIAM
 	}
-	// It's probably wrong as it doesn't consider other ChromeOS lab. Temporarily set all other labs to lindavista
-	return ufspb.Lab_LAB_CHROMEOS_LINDAVISTA
+	if strings.HasPrefix(hostname, "chromeos2") {
+		return ufspb.Lab_LAB_CHROMEOS_ATLANTIS
+	}
+	if strings.HasPrefix(hostname, "chromeos4") {
+		return ufspb.Lab_LAB_CHROMEOS_DESTINY
+	}
+	if strings.HasPrefix(hostname, "chromeos6") {
+		return ufspb.Lab_LAB_CHROMEOS_PROMETHEUS
+	}
+	if strings.HasPrefix(hostname, "chromeos3") ||
+		strings.HasPrefix(hostname, "chromeos5") ||
+		strings.HasPrefix(hostname, "chromeos7") ||
+		strings.HasPrefix(hostname, "chromeos9") ||
+		strings.HasPrefix(hostname, "chromeos15") {
+		return ufspb.Lab_LAB_CHROMEOS_LINDAVISTA
+	}
+	// Temporarily set all other OS labs to Unspecified
+	return ufspb.Lab_LAB_UNSPECIFIED
 }
 
 func getLSEPrototypeByLabConfig(dut *lab.DeviceUnderTest) string {

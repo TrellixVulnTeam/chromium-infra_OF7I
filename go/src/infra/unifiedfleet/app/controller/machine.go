@@ -67,12 +67,12 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 	var oldMachine *ufspb.Machine
 	var err error
 	f := func(ctx context.Context) error {
-		// 1. Validate input
+		// Validate input
 		if err := validateUpdateMachine(ctx, machine); err != nil {
 			return err
 		}
 
-		// 2. Make sure OUTPUT_ONLY fields are set to empty
+		// Make sure OUTPUT_ONLY fields are set to empty
 		if machine.GetChromeBrowserMachine() != nil {
 			// These are output only field. User is not allowed to set these value.
 			// Overwrite it with empty values.
@@ -80,13 +80,68 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 			machine.GetChromeBrowserMachine().Drac = ""
 		}
 
-		// 3. Get the existing/old machine
+		// Get the existing/old machine
 		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
 		if err != nil {
 			return err
 		}
 
-		// 4. Make sure OUTPUT_ONLY fields are overwritten with old values
+		// Check if machine lab/rack information is changed/updated
+		if machine.GetLocation().GetRack() != oldMachine.GetLocation().GetRack() ||
+			machine.GetLocation().GetLab() != oldMachine.GetLocation().GetLab() {
+			// Update MachineLSE table for lab and rack indexing
+			machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machine.GetName(), false)
+			if err != nil {
+				return errors.Annotate(err, "UpdateMachine - Failed to query machinelses/hosts for machine %s", machine.GetName()).Err()
+			}
+			for _, machinelse := range machinelses {
+				// This is a output only field used for indexing machinelse table
+				// Assign new lab index and rack for machinelse
+				machinelse.Rack = machine.GetLocation().GetRack()
+				machinelse.Lab = machine.GetLocation().GetLab().String()
+			}
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction. Datastore doesnt allow nested transactions.
+			if _, err := inventory.BatchUpdateMachineLSEs(ctx, machinelses); err != nil {
+				return errors.Annotate(err, "UpdateMachine - Unable to update machinelses %s", machinelses).Err()
+			}
+
+			// Update Nic table indexing for rack and lab
+			nics, err := registration.QueryNicByPropertyName(ctx, "machine", machine.GetName(), false)
+			if err != nil {
+				return errors.Annotate(err, "UpdateMachine - Failed to query nics for machine %s", machine.GetName()).Err()
+			}
+			for _, nic := range nics {
+				// This is a output only field used for indexing nic table
+				// Assign new lab index and rack for nic
+				nic.Rack = machine.GetLocation().GetRack()
+				nic.Lab = machine.GetLocation().GetLab().String()
+			}
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction. Datastore doesnt allow nested transactions.
+			if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
+				return errors.Annotate(err, "UpdateMachine - Unable to update nic %s", nics).Err()
+			}
+
+			// Update Drac table indexing for rack and lab
+			dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machine.GetName(), false)
+			if err != nil {
+				return errors.Annotate(err, "UpdateMachine - Failed to query dracs for machine %s", machine.GetName()).Err()
+			}
+			for _, drac := range dracs {
+				// This is a output only field used for indexing drac table
+				// Assign new lab index and rack for drac
+				drac.Rack = machine.GetLocation().GetRack()
+				drac.Lab = machine.GetLocation().GetLab().String()
+			}
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction. Datastore doesnt allow nested transactions.
+			if _, err := registration.BatchUpdateDracs(ctx, dracs); err != nil {
+				return errors.Annotate(err, "UpdateMachine - Unable to update drac %s", dracs).Err()
+			}
+		}
+
+		// Make sure OUTPUT_ONLY fields are overwritten with old values
 		if oldMachine.GetChromeBrowserMachine() != nil {
 			if machine.GetChromeBrowserMachine() == nil {
 				machine.Device = &ufspb.Machine_ChromeBrowserMachine{
@@ -99,7 +154,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 			machine.GetChromeBrowserMachine().Drac = oldMachine.GetChromeBrowserMachine().Drac
 		}
 
-		// 5. Create the machine
+		// Create the machine
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
@@ -110,7 +165,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to update machine in datastore: %s", err)
+		logging.Errorf(ctx, "UpdateMachine - Failed to update machine in datastore: %s", err)
 		return nil, err
 	}
 	SaveChangeEvents(ctx, LogMachineChanges(oldMachine, machine))

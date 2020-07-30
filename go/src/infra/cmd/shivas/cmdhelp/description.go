@@ -950,29 +950,35 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 	// FilterCondition Common filter condition for all list filter option
 	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
 
-	// MachineFiterHelp help text for list machine filtering
-	MachineFiterHelp string = FilterText + `You can filter machines by kvm/rpm/drac/nic/lab/rack/platform` + LabFilterHelpText +
+	// MachineFilterHelp help text for list machine filtering
+	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/drac/nic/lab/rack/platform` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'nic=nic-1,nic-2'
 'lab=atl97 & nic=nic-1'
 'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
-	// RackFiterHelp help text for list rack filtering
-	RackFiterHelp string = FilterText + `You can filter racks by switch/kvm/rpm/lab` + LabFilterHelpText +
+	// RackFilterHelp help text for list rack filtering
+	RackFilterHelp string = FilterText + `You can filter racks by switch/kvm/rpm/lab` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'kvm=kvm-1,kvm-2'
 'lab=atl97 & kvm=kvm-1'` + FilterCondition
 
-	// NicFiterHelp help text for list rack filtering
-	NicFiterHelp string = FilterText + `You can filter nics by switch/rack/lab/machine` + LabFilterHelpText +
+	// NicFilterHelp help text for list rack filtering
+	NicFilterHelp string = FilterText + `You can filter nics by switch/rack/lab/machine` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
-	// DracFiterHelp help text for list rack filtering
-	DracFiterHelp string = FilterText + `You can filter dracs by switch/rack/lab/machine` + LabFilterHelpText +
+	// DracFilterHelp help text for list rack filtering
+	DracFilterHelp string = FilterText + `You can filter dracs by switch/rack/lab/machine` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'lab=atl97 & rack=rack-1'` + FilterCondition
+
+	// MachineLSEFilterHelp help text for list machinelse filtering
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
