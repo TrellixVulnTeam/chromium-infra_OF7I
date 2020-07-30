@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	ds "go.chromium.org/gae/service/datastore"
@@ -75,9 +76,11 @@ func Scheduler(rc *router.Context) {
 				return
 			}
 
+			logging.Infof(ctx, "projects/"+os.Getenv("GOOGLE_CLOUD_PROJECT")+"/locations/us-central1/queues/default")
+
 			// Build the Task payload.
 			req := &taskspb.CreateTaskRequest{
-				Parent: "projects/cr-audit-commits/locations/us-central1/queues/default",
+				Parent: "projects/" + os.Getenv("GOOGLE_CLOUD_PROJECT") + "/locations/us-central1/queues/default",
 				Task: &taskspb.Task{
 					MessageType: &taskspb.Task_AppEngineHttpRequest{
 						AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
