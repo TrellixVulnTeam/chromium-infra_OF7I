@@ -194,13 +194,6 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 			newNics = append(newNics, newNic)
 			machineToNics[nic.GetMachine()] = append(machineToNics[nic.GetMachine()], name)
 		}
-		if ip := nic.GetIpv4(); ip != "" {
-			dhcps = append(dhcps, &fleet.DHCPConfig{
-				MacAddress: nic.GetMacAddress(),
-				Hostname:   name,
-				Ip:         nic.GetIpv4(),
-			})
-		}
 	}
 	for _, drac := range dracs {
 		// lab and rack are for indexing drac table
@@ -231,6 +224,7 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 				MacAddress: drac.GetMacAddress(),
 				Hostname:   hostname,
 				Ip:         drac.GetIpv4(),
+				Vlan:       GetBrowserLabName(Int64ToStr(drac.GetVlan())),
 			})
 		}
 	}
@@ -263,6 +257,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		dhcps = append(dhcps, &fleet.DHCPConfig{
 			Hostname: v.GetHostname(),
 			Ip:       vm.GetIpv4(),
+			Vlan:     GetBrowserLabName(Int64ToStr(vm.GetHostVlan())),
 			// No mac address found
 		})
 	}
@@ -309,6 +304,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Hostname:   h.GetName(),
 			Ip:         h.GetIpv4(),
 			MacAddress: h.GetMacAddress(),
+			Vlan:       GetBrowserLabName(Int64ToStr(h.GetVlan())),
 		})
 	}
 	return lses, ips, dhcps

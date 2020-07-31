@@ -1188,7 +1188,7 @@ func TestImportNics(t *testing.T) {
 			So(ufsAPI.ParseResources(dracs, "DisplayName"), ShouldResemble, []string{"machine1-drac"})
 			dhcps, _, err := configuration.ListDHCPConfigs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(ufsAPI.ParseResources(dhcps, "Ip"), ShouldResemble, []string{"ip1.1", "ip1.2", "ip1.3", "ip2", "ip3"})
+			So(ufsAPI.ParseResources(dhcps, "Ip"), ShouldResemble, []string{"ip1.1"})
 		})
 		// Invalid & Empty machines DB hosts are tested in TestImportMachines
 		// Skip testing here

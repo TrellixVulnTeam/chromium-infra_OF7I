@@ -366,6 +366,7 @@ func addHostHelper(ctx context.Context, vlanName, hostName, macAddress string) e
 		{
 			Hostname:   hostName,
 			Ip:         ips[0].GetIpv4Str(),
+			Vlan:       ips[0].GetVlan(),
 			MacAddress: macAddress,
 		},
 	}); err != nil {

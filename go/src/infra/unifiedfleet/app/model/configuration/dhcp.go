@@ -30,6 +30,7 @@ type DHCPEntity struct {
 	// refer to the hostname
 	ID   string `gae:"$id"`
 	IPv4 string `gae:"ipv4"`
+	Vlan string `gae:"vlan"`
 	// ufspb.DHCPConfig cannot be directly used as it contains pointer (timestamp).
 	Dhcp []byte `gae:",noindex"`
 }
@@ -55,6 +56,7 @@ func newDHCPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 	return &DHCPEntity{
 		ID:   p.GetHostname(),
 		IPv4: p.GetIp(),
+		Vlan: p.GetVlan(),
 		Dhcp: s,
 	}, nil
 }
