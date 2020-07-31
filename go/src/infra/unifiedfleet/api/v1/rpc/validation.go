@@ -409,6 +409,11 @@ func (r *CreateMachineLSERequest) Validate() error {
 	if r.Machines == nil {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 	}
+	if opt := r.GetNetworkOption(); opt != nil {
+		if !opt.GetDelete() && opt.GetVlan() == "" {
+			return status.Errorf(codes.InvalidArgument, "Network option for host %s doesn't set delete or vlan.", r.GetMachineLSE().GetName())
+		}
+	}
 	for _, machineName := range r.Machines {
 		if machineName == "" {
 			return status.Errorf(codes.InvalidArgument, EmptyMachineName)
@@ -421,6 +426,16 @@ func (r *CreateMachineLSERequest) Validate() error {
 func (r *UpdateMachineLSERequest) Validate() error {
 	if r.MachineLSE == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	for k, v := range r.GetNetworkOptions() {
+		if !v.Delete && v.Vlan == "" {
+			return status.Errorf(codes.InvalidArgument, "Network option for host %s doesn't set delete or vlan.", k)
+		}
+	}
+	for _, m := range r.GetMachines() {
+		if m == "" {
+			return status.Errorf(codes.InvalidArgument, "Cannot attach the host to a machine with empty machine name ''")
+		}
 	}
 	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.MachineLSE.GetName())
 }

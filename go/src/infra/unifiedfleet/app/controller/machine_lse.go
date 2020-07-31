@@ -19,6 +19,7 @@ import (
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
@@ -113,7 +114,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 }
 
 // UpdateMachineLSE updates machinelse in datastore.
-func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
+func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpts map[string]*ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
 	// MachineLSEs name and hostname must always be the same
 	// Overwrite the name with hostname
 	machinelse.Name = machinelse.GetHostname()
@@ -142,7 +143,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	var oldMachinelse *ufspb.MachineLSE
 	f := func(ctx context.Context) error {
 		// Validate the input
-		err := validateUpdateMachineLSE(ctx, machinelse, machineNames)
+		err := validateUpdateMachineLSE(ctx, machinelse, machineNames, nwOpts)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update MachineLSE").Err()
 		}
@@ -173,6 +174,38 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		}
 
 		// Update machinelse entry
+		// 4. Update ip configs
+		for k, v := range nwOpts {
+			// Update vlan/ip for the host itself
+			fmt.Println(k, machinelse.GetHostname())
+			if k == machinelse.GetHostname() {
+				if v.Delete {
+					if err := deleteDHCPHelper(ctx, k); err != nil {
+						return err
+					}
+				} else {
+					if err := addLseHostHelper(ctx, v.GetVlan(), v.GetNic(), machinelse); err != nil {
+						return err
+					}
+				}
+			}
+			for _, vm := range machinelse.GetChromeBrowserMachineLse().GetVms() {
+				if k == vm.GetName() {
+					if v.Delete {
+						if err := deleteDHCPHelper(ctx, k); err != nil {
+							return err
+						}
+					} else {
+						if err := addVMHostHelper(ctx, v.GetVlan(), vm, machinelse); err != nil {
+							return err
+						}
+					}
+
+				}
+			}
+		}
+
+		// 5. Update machinelse entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{machinelse}); err != nil {
@@ -215,6 +248,73 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	}
 	SaveChangeEvents(ctx, LogMachineLSEChanges(oldMachinelse, machinelse))
 	return machinelse, nil
+}
+
+func addVMHostHelper(ctx context.Context, vlanName string, vm *ufspb.VM, lse *ufspb.MachineLSE) error {
+	if vlanName == "" {
+		return status.Errorf(codes.InvalidArgument, "vlan are required for adding a host for a vm")
+	}
+	// 1. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
+	dhcp, err := configuration.GetDHCPConfig(ctx, vm.GetName())
+	if util.IsInternalError(err) {
+		return errors.Annotate(err, "Fail to query dhcpHost").Err()
+	}
+	if err == nil && dhcp != nil {
+		if err := deleteHostHelper(ctx, dhcp); err != nil {
+			return err
+		}
+	}
+
+	// 2. Get free ip, update the dhcp config and ip.occupied to true
+	if err := addHostHelper(ctx, vlanName, vm.GetName(), vm.GetMacAddress()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func addLseHostHelper(ctx context.Context, vlanName, nicName string, lse *ufspb.MachineLSE) error {
+	if vlanName == "" || nicName == "" {
+		return status.Errorf(codes.InvalidArgument, "nic and vlan are required for adding a host for a machine")
+	}
+	// Assigning IP to this host.
+	// 1. Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
+	machine, err := getBrowserMachineForNic(ctx, nicName)
+	if err != nil {
+		return errors.Annotate(err, fmt.Sprintf("Fail to get machine by nic name %s", nicName)).Err()
+	}
+	nic, err := registration.GetNic(ctx, nicName)
+	if err != nil {
+		return errors.Annotate(err, fmt.Sprintf("Fail to get nic by name %s", nicName)).Err()
+	}
+	found := false
+	for _, m := range lse.GetMachines() {
+		if m == machine.GetName() {
+			found = true
+		}
+	}
+	if !found {
+		return status.Errorf(codes.InvalidArgument, "Nic %s doesn't belong to any of the machines assocated with this host: %#v", nicName, lse.GetMachines())
+	}
+
+	// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
+	dhcp, err := configuration.GetDHCPConfig(ctx, lse.GetHostname())
+	if util.IsInternalError(err) {
+		return errors.Annotate(err, "Fail to query dhcpHost").Err()
+	}
+	if err == nil && dhcp != nil {
+		if err := deleteHostHelper(ctx, dhcp); err != nil {
+			return err
+		}
+	}
+
+	// 4. Get free ip, update the dhcp config and ip.occupied to true
+	if err := addHostHelper(ctx, vlanName, lse.GetHostname(), nic.GetMacAddress()); err != nil {
+		return err
+	}
+
+	// 5. Update lse to contain the nic which is used to map to the ip.
+	lse.Nic = nic.Name
+	return nil
 }
 
 // GetMachineLSE returns machinelse for the given id from datastore.
@@ -550,7 +650,7 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineL
 func updateChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
 	f := func(ctx context.Context) error {
 		// Validate the input
-		err := validateUpdateMachineLSE(ctx, machinelse, machineNames)
+		err := validateUpdateMachineLSE(ctx, machinelse, machineNames, nil)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update ChromeOSMachineLSEDUT").Err()
 		}
@@ -795,7 +895,7 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 }
 
 // validateUpdateMachineLSE validates if a machinelse can be updated in the datastore.
-func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) error {
+func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpts map[string]*ufsAPI.NetworkOption) error {
 	// 1. This check is only for a Labstation
 	// Check if labstation MachineLSE is updating any servo information
 	// It is also not allowed to update the servo Hostname and servo Port of any servo.
@@ -821,6 +921,15 @@ func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	for _, machineName := range machineNames {
 		resourcesNotfound = append(resourcesNotfound, GetMachineResource(machineName))
 	}
+	for _, v := range nwOpts {
+		if v.GetVlan() != "" {
+			resourcesNotfound = append(resourcesNotfound, GetVlanResource(v.GetVlan()))
+		}
+		if v.GetNic() != "" {
+			resourcesNotfound = append(resourcesNotfound, GetNicResource(v.GetNic()))
+		}
+	}
+
 	// Aggregate resources referenced by the machinelse to check if they do not exist
 	if machineLSEPrototypeID := machinelse.GetMachineLsePrototype(); machineLSEPrototypeID != "" {
 		resourcesNotfound = append(resourcesNotfound, GetMachineLSEProtoTypeResource(machineLSEPrototypeID))
@@ -893,50 +1002,5 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 			return status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
 	}
-	return nil
-}
-
-func addLseHostHelper(ctx context.Context, vlanName, nicName string, lse *ufspb.MachineLSE) error {
-	if vlanName == "" || nicName == "" {
-		return status.Errorf(codes.InvalidArgument, "nic and vlan are required for adding a host for a machine")
-	}
-	// Assigning IP to this host.
-	// 1. Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
-	machine, err := getBrowserMachineForNic(ctx, nicName)
-	if err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to get machine by nic name %s", nicName)).Err()
-	}
-	nic, err := registration.GetNic(ctx, nicName)
-	if err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to get nic by name %s", nicName)).Err()
-	}
-	found := false
-	for _, m := range lse.GetMachines() {
-		if m == machine.GetName() {
-			found = true
-		}
-	}
-	if !found {
-		return status.Errorf(codes.InvalidArgument, "Nic %s doesn't belong to any of the machines assocated with this host: %#v", nicName, lse.GetMachines())
-	}
-
-	// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
-	dhcp, err := configuration.GetDHCPConfig(ctx, lse.GetHostname())
-	if util.IsInternalError(err) {
-		return errors.Annotate(err, "Fail to query dhcpHost").Err()
-	}
-	if err == nil && dhcp != nil {
-		if err := deleteHostHelper(ctx, dhcp); err != nil {
-			return err
-		}
-	}
-
-	// 4. Get free ip, update the dhcp config and ip.occupied to true
-	if err := addHostHelper(ctx, vlanName, lse.GetHostname(), nic.GetMacAddress()); err != nil {
-		return err
-	}
-
-	// 5. Update lse to contain the nic which is used to map to the ip.
-	lse.Nic = nic.Name
 	return nil
 }

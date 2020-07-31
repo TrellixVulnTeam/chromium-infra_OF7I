@@ -19,6 +19,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -243,20 +244,22 @@ func DeleteNic(ctx context.Context, id string) error {
 		}
 
 		// 2. Get the machine associated with nic
-		machines, err := registration.QueryMachineByPropertyName(ctx, "nic_ids", id, false)
+		machine, err := getBrowserMachineForNic(ctx, id)
 		if err != nil {
-			return errors.Annotate(err, "Unable to query machine for nic %s", id).Err()
-		}
-		if machines == nil || len(machines) == 0 {
-			logging.Warningf(ctx, "No machine associated with the nic %s. Data discrepancy error.\n", id)
 			return nil
 		}
-		if len(machines) > 1 {
-			logging.Warningf(ctx, "More than one machine associated with the nic %s. Data discrepancy error.\n", id)
+		lses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machine.GetName(), false)
+		if err != nil {
+			return errors.Annotate(err, "Fail to query host by machine %s", machine.GetName()).Err()
+		}
+		for _, lse := range lses {
+			if lse.GetNic() == id {
+				return status.Errorf(codes.InvalidArgument, "nic %s is used by host %s", id, lse.GetName())
+			}
 		}
 
 		// 3. Remove the association between the machine and this nic.
-		cs, err := removeNicFromBrowserMachines(ctx, machines, id)
+		cs, err := removeNicFromBrowserMachines(ctx, []*ufspb.Machine{machine}, id)
 		if err != nil {
 			return err
 		}

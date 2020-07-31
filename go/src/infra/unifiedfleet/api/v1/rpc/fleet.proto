@@ -736,6 +736,9 @@ message UpdateMachineLSERequest {
           type: "unified-fleet-system.appspot.com/Machine"
       }
   ];
+
+  // mapping of the name to the corresponding network options.
+  map<string, NetworkOption> network_options = 4;
 }
 
 message GetMachineLSERequest {

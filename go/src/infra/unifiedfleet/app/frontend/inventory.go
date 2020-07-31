@@ -73,7 +73,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 		return nil, err
 	}
 	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
-	machineLSE, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines)
+	machineLSE, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetNetworkOptions())
 	if err != nil {
 		return nil, err
 	}

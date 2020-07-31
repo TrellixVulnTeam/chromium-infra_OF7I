@@ -13,6 +13,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
@@ -498,7 +499,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 	Convey("UpdateMachineLSE for a DUT", t, func() {
 		Convey("Update non-existing machineLSE DUT", func() {
 			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-23")
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse, nil, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no MachineLSE with MachineLSEID DUTMachineLSE-23 in the system.")
@@ -514,7 +515,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-21")
 			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse3)
@@ -540,7 +541,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-22")
 			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse3)
@@ -591,7 +592,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse2 := mockDutMachineLSE("DUTMachineLSE-17")
 			dutMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse2, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse2, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse2)
@@ -634,7 +635,7 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 				ServoPort:     22,
 			}
 			labstationMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
-			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil)
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Servos are not allowed to be updated")
@@ -653,7 +654,7 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			inventory.CreateMachineLSE(ctx, labstationMachinelse1)
 
 			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-11")
-			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil)
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse2)
@@ -715,7 +716,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			machineLSE1.GetChromeBrowserMachineLse().OsVersion = &ufspb.OSVersion{
 				Value: "new_os",
 			}
-			m, err := UpdateMachineLSE(ctx, machineLSE1, nil)
+			m, err := UpdateMachineLSE(ctx, machineLSE1, nil, nil)
 			So(err, ShouldBeNil)
 			So(m.GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 2)
 			s, err := state.GetStateRecord(ctx, "vms/vm1")
@@ -748,13 +749,147 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[0].GetNewValue(), ShouldEqual, "new_mac_address")
 		})
 
+		Convey("Update machineLSE by setting ip for host", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name: "eth0",
+			})
+			So(err, ShouldBeNil)
+			machine1 := &ufspb.Machine{
+				Name: "machine-update-host",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Nics: []string{"eth0"},
+					},
+				},
+			}
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-update-host",
+				Hostname: "machinelse-update-host",
+				Machines: []string{"machine-update-host"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+						Vms: []*ufspb.VM{
+							{
+								Name:       "vm1",
+								MacAddress: "old_mac_address",
+							},
+						},
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			vlan := &ufspb.Vlan{
+				Name:        "vlan-1",
+				VlanAddress: "192.168.40.0/22",
+			}
+			_, err = configuration.CreateVlan(ctx, vlan)
+			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			So(err, ShouldBeNil)
+			// Only import the first 20 as one single transaction cannot import all.
+			_, err = configuration.ImportIPs(ctx, ips[0:20])
+			So(err, ShouldBeNil)
+
+			_, err = UpdateMachineLSE(ctx, machineLSE1, nil, map[string]*ufsAPI.NetworkOption{
+				"machinelse-update-host": {
+					Vlan: "vlan-1",
+					Nic:  "eth0",
+				},
+			})
+			So(err, ShouldBeNil)
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-update-host")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-update-host")
+			So(err, ShouldBeNil)
+			fmt.Println(dhcp)
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeTrue)
+		})
+
+		Convey("Update machineLSE by setting & removing ip for vms", func() {
+			machine1 := &ufspb.Machine{
+				Name: "machine-update-vm",
+			}
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-update-vm",
+				Hostname: "machinelse-update-vm",
+				Machines: []string{"machine-update-vm"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+						Vms: []*ufspb.VM{
+							{
+								Name:       "vm-host1",
+								MacAddress: "vm1_mac_address",
+							},
+							{
+								Name:       "vm-host2",
+								MacAddress: "vm2_mac_address",
+							},
+						},
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			vlan := &ufspb.Vlan{
+				Name:        "vlan-1",
+				VlanAddress: "192.168.40.0/22",
+			}
+			_, err = configuration.CreateVlan(ctx, vlan)
+			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			So(err, ShouldBeNil)
+			// Only import the first 20 as one single transaction cannot import all.
+			_, err = configuration.ImportIPs(ctx, ips[0:20])
+			So(err, ShouldBeNil)
+
+			oldMachinelse, err := inventory.GetMachineLSE(ctx, machineLSE1.GetName())
+			fmt.Println("############### old ", oldMachinelse.GetChromeBrowserMachineLse().GetVms())
+			m, err := UpdateMachineLSE(ctx, machineLSE1, nil, map[string]*ufsAPI.NetworkOption{
+				"vm-host1": {
+					Vlan: "vlan-1",
+				},
+				"vm-host2": {
+					Delete: true,
+				},
+			})
+			So(err, ShouldBeNil)
+			So(m.GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 2)
+			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-update-vm")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			dhcp, err = configuration.GetDHCPConfig(ctx, "vm-host1")
+			So(err, ShouldBeNil)
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeTrue)
+			dhcp, err = configuration.GetDHCPConfig(ctx, "vm-host2")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-update-vm")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm-host2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm-host1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+		})
+
 		Convey("Update machineLSE Labstation without Servo Info", func() {
 			labstationMachinelse1 := mockLabstationMachineLSE("RedLabstation-11")
 			_, err := inventory.CreateMachineLSE(ctx, labstationMachinelse1)
 			So(err, ShouldBeNil)
 
 			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-11")
-			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil)
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse2)
@@ -798,7 +933,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			machineLSE := &ufspb.MachineLSE{
 				Hostname: "machinelse-4",
 			}
-			resp, err := UpdateMachineLSE(ctx, machineLSE, []string{"machine-5"})
+			resp, err := UpdateMachineLSE(ctx, machineLSE, []string{"machine-5"}, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "there is another host machinelse-5 which is referring this machine machine-5")

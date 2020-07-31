@@ -14,6 +14,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
 
@@ -415,6 +416,36 @@ func TestDeleteNic(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+		})
+
+		Convey("Delete nic error as it's used by a host", func() {
+			nic := mockNic("nic-ip")
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+			chromeBrowserMachine1 := &ufspb.Machine{
+				Name: "machine-ip",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Nics: []string{"nic-ip"},
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, chromeBrowserMachine1)
+			So(err, ShouldBeNil)
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "lse-ip",
+				Hostname: "lse-ip",
+				Machines: []string{"machine-ip"},
+				Nic:      "nic-ip",
+			})
+
+			err = DeleteNic(ctx, "nic-ip")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "nic nic-ip is used by host lse-ip")
+
+			resp, err := registration.GetNic(ctx, "nic-ip")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic)
 		})
 	})
 }

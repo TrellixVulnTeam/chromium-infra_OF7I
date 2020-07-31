@@ -352,6 +352,12 @@ Updates a host by reading a JSON file input.
 shivas update-host -f host.json -m {Machine name}
 Update a host by reading a JSON file input and associate the host with a different machine.
 
+shivas update-host -name host0 -delete-vlan
+Remove the ip for host
+
+shivas update-host -name host0 -vlan browser-lab:11 -nic eth0
+Assign ip to the host
+
 shivas update-host -i
 Updates a host by reading input through interactive mode.`
 
