@@ -2404,7 +2404,7 @@ class IssueServiceTest(unittest.TestCase):
   def SetUpEnqueueIssuesForIndexing(self, issue_ids):
     reindex_rows = [(issue_id,) for issue_id in issue_ids]
     self.services.issue.reindexqueue_tbl.InsertRows(
-        self.cnxn, ['issue_id'], reindex_rows, ignore=True)
+        self.cnxn, ['issue_id'], reindex_rows, ignore=True, commit=True)
 
   def testEnqueueIssuesForIndexing(self):
     self.SetUpEnqueueIssuesForIndexing([78901])

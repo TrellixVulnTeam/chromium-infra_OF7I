@@ -2590,11 +2590,12 @@ class IssueService(object):
 
   ### Reindex queue
 
-  def EnqueueIssuesForIndexing(self, cnxn, issue_ids):
+  def EnqueueIssuesForIndexing(self, cnxn, issue_ids, commit=True):
+    # type: (MonorailConnection, Sequence[int], Optional[bool]) -> None
     """Add the given issue IDs to the ReindexQueue table."""
     reindex_rows = [(issue_id,) for issue_id in issue_ids]
     self.reindexqueue_tbl.InsertRows(
-        cnxn, ['issue_id'], reindex_rows, ignore=True)
+        cnxn, ['issue_id'], reindex_rows, ignore=True, commit=commit)
 
   def ReindexIssues(self, cnxn, num_to_reindex, user_service):
     """Reindex some issues specified in the IndexQueue table."""

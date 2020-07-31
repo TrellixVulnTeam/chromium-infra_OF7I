@@ -1536,7 +1536,7 @@ class IssueService(object):
         comments.append(value)
     return comments
 
-  def EnqueueIssuesForIndexing(self, _cnxn, issue_ids):
+  def EnqueueIssuesForIndexing(self, _cnxn, issue_ids, commit=True):
     self.enqueue_issues_called = True
     for i in issue_ids:
       if i not in self.enqueued_issues:
