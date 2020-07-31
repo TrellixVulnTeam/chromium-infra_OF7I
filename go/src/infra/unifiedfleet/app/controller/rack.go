@@ -76,6 +76,57 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
 			return err
 		}
 
+		// Check if rack lab information is changed/updated
+		if rack.GetLocation().GetLab() != oldRack.GetLocation().GetLab() {
+			// Update KVM table indexing for lab
+			kvms, err := registration.QueryKVMByPropertyName(ctx, "rack", rack.GetName(), false)
+			if err != nil {
+				return errors.Annotate(err, "UpdateRack - Failed to query kvms for rack %s", rack.GetName()).Err()
+			}
+			for _, kvm := range kvms {
+				// This is a output only field used for indexing kvm table
+				// Assign new lab index for kvm
+				kvm.Lab = rack.GetLocation().GetLab().String()
+			}
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction. Datastore doesnt allow nested transactions.
+			if _, err := registration.BatchUpdateKVMs(ctx, kvms); err != nil {
+				return errors.Annotate(err, "UpdateRack - Unable to update kvm %s", kvms).Err()
+			}
+
+			// Update RPM table indexing for lab
+			rpms, err := registration.QueryRPMByPropertyName(ctx, "rack", rack.GetName(), false)
+			if err != nil {
+				return errors.Annotate(err, "UpdateRack - Failed to query rpms for rack %s", rack.GetName()).Err()
+			}
+			for _, rpm := range rpms {
+				// This is a output only field used for indexing rpm table
+				// Assign new lab index for rpm
+				rpm.Lab = rack.GetLocation().GetLab().String()
+			}
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction. Datastore doesnt allow nested transactions.
+			if _, err := registration.BatchUpdateRPMs(ctx, rpms); err != nil {
+				return errors.Annotate(err, "UpdateRack - Unable to update rpm %s", rpms).Err()
+			}
+
+			// Update Switch table indexing for lab
+			switches, err := registration.QuerySwitchByPropertyName(ctx, "rack", rack.GetName(), false)
+			if err != nil {
+				return errors.Annotate(err, "UpdateRack - Failed to query switches for rack %s", rack.GetName()).Err()
+			}
+			for _, s := range switches {
+				// This is a output only field used for indexing switch table
+				// Assign new lab index for s
+				s.Lab = rack.GetLocation().GetLab().String()
+			}
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction. Datastore doesnt allow nested transactions.
+			if _, err := registration.BatchUpdateSwitches(ctx, switches); err != nil {
+				return errors.Annotate(err, "UpdateRack - Unable to update switch %s", switches).Err()
+			}
+		}
+
 		// 4. Make sure OUTPUT_ONLY fields are overwritten with old values
 		// Check if the existing rack is a browser rack and not an OS rack.
 		// for OS rack we dont do anything as of now as the OS rack doesnt have any
@@ -104,7 +155,7 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to update rack in datastore: %s", err)
+		logging.Errorf(ctx, "UpdateRack - Failed to update rack in datastore: %s", err)
 		return nil, err
 	}
 	SaveChangeEvents(ctx, LogRackChanges(oldRack, rack))

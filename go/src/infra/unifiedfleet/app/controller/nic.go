@@ -87,7 +87,7 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 
 		oldNic, _ := registration.GetNic(ctx, nic.GetName())
 		// Copy the machine/rack/lab to nic OUTPUT only fields from already existing nic
-		nic.Machine = oldNic.GetName()
+		nic.Machine = oldNic.GetMachine()
 		nic.Rack = oldNic.GetRack()
 		nic.Lab = oldNic.GetLab()
 		changes = append(changes, LogNicChanges(oldNic, nic)...)

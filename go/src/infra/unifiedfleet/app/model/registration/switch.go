@@ -28,6 +28,8 @@ const SwitchKind string = "Switch"
 type SwitchEntity struct {
 	_kind string `gae:"$kind,Switch"`
 	ID    string `gae:"$id"`
+	Lab   string `gae:"lab"`
+	Rack  string `gae:"rack"`
 	// ufspb.Switch cannot be directly used as it contains pointer (timestamp).
 	Switch []byte `gae:",noindex"`
 }
@@ -53,6 +55,8 @@ func newSwitchEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, 
 	return &SwitchEntity{
 		ID:     p.GetName(),
 		Switch: s,
+		Lab:    p.GetLab(),
+		Rack:   p.GetRack(),
 	}, nil
 }
 
@@ -73,6 +77,39 @@ func GetSwitch(ctx context.Context, id string) (*ufspb.Switch, error) {
 		return pm.(*ufspb.Switch), err
 	}
 	return nil, err
+}
+
+// QuerySwitchByPropertyName query's Switch Entity in the datastore
+//
+// If keysOnly is true, then only key field is populated in returned switches
+func QuerySwitchByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.Switch, error) {
+	q := datastore.NewQuery(SwitchKind).KeysOnly(keysOnly).FirestoreMode(true)
+	var entities []*SwitchEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No switches found for the query: %s", id)
+		return nil, nil
+	}
+	switches := make([]*ufspb.Switch, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			s := &ufspb.Switch{
+				Name: entity.ID,
+			}
+			switches = append(switches, s)
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			switches = append(switches, pm.(*ufspb.Switch))
+		}
+	}
+	return switches, nil
 }
 
 // ListSwitches lists the switches
@@ -213,8 +250,10 @@ func GetSwitchIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.LabFilterName:
 		field = "lab"
+	case util.RackFilterName:
+		field = "rack"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab/rack", input)
 	}
 	return field, nil
 }

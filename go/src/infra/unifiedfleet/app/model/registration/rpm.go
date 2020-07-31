@@ -28,6 +28,8 @@ const RPMKind string = "RPM"
 type RPMEntity struct {
 	_kind string `gae:"$kind,RPM"`
 	ID    string `gae:"$id"`
+	Lab   string `gae:"lab"`
+	Rack  string `gae:"rack"`
 	// ufspb.RPM cannot be directly used as it contains pointer.
 	RPM []byte `gae:",noindex"`
 }
@@ -51,8 +53,10 @@ func newRPMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		return nil, errors.Annotate(err, "fail to marshal RPM %s", p).Err()
 	}
 	return &RPMEntity{
-		ID:  p.GetName(),
-		RPM: rpm,
+		ID:   p.GetName(),
+		RPM:  rpm,
+		Lab:  p.GetLab(),
+		Rack: p.GetRack(),
 	}, nil
 }
 
@@ -73,6 +77,39 @@ func GetRPM(ctx context.Context, id string) (*ufspb.RPM, error) {
 		return pm.(*ufspb.RPM), err
 	}
 	return nil, err
+}
+
+// QueryRPMByPropertyName query's RPM Entity in the datastore
+//
+// If keysOnly is true, then only key field is populated in returned rpms
+func QueryRPMByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.RPM, error) {
+	q := datastore.NewQuery(RPMKind).KeysOnly(keysOnly).FirestoreMode(true)
+	var entities []*RPMEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Infof(ctx, "No rpms found for the query: %s", id)
+		return nil, nil
+	}
+	rpms := make([]*ufspb.RPM, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			rpm := &ufspb.RPM{
+				Name: entity.ID,
+			}
+			rpms = append(rpms, rpm)
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			rpms = append(rpms, pm.(*ufspb.RPM))
+		}
+	}
+	return rpms, nil
 }
 
 // ListRPMs lists the RPMs
@@ -173,8 +210,10 @@ func GetRPMIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.LabFilterName:
 		field = "lab"
+	case util.RackFilterName:
+		field = "rack"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are lab", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are lab/rack", input)
 	}
 	return field, nil
 }

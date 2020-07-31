@@ -988,4 +988,22 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
+
+	// KVMFilterHelp help text for list rack filtering
+	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'lab=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
+
+	// RPMFilterHelp help text for list rack filtering
+	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'lab=atl97 & rack=rack-1'` + FilterCondition
+
+	// SwitchFilterHelp help text for list rack filtering
+	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'lab=atl97 & rack=rack-1'` + FilterCondition
 )

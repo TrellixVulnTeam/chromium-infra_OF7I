@@ -96,7 +96,7 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 
 		oldDracToUpdate, _ := registration.GetDrac(ctx, drac.GetName())
 		// Copy the machine/rack/lab to drac OUTPUT only fields from already existing drac
-		drac.Machine = oldDracToUpdate.GetName()
+		drac.Machine = oldDracToUpdate.GetMachine()
 		drac.Rack = oldDracToUpdate.GetRack()
 		drac.Lab = oldDracToUpdate.GetLab()
 		changes = append(changes, LogDracChanges(oldDracToUpdate, drac)...)

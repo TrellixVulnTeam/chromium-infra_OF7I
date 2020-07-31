@@ -247,14 +247,18 @@ func printTitle(title []string) {
 }
 
 // PrintSwitches prints the all switches in table form.
-func PrintSwitches(switches []*ufspb.Switch) {
+func PrintSwitches(switches []*ufspb.Switch, keysOnly bool) {
 	defer tw.Flush()
 	for _, s := range switches {
-		printSwitch(s)
+		printSwitch(s, keysOnly)
 	}
 }
 
-func printSwitch(s *ufspb.Switch) {
+func printSwitch(s *ufspb.Switch, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(s.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(s.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
@@ -278,14 +282,18 @@ func PrintSwitchesJSON(switches []*ufspb.Switch) {
 }
 
 // PrintKVMs prints the all kvms in table form.
-func PrintKVMs(kvms []*ufspb.KVM) {
+func PrintKVMs(kvms []*ufspb.KVM, keysOnly bool) {
 	defer tw.Flush()
 	for _, kvm := range kvms {
-		printKVM(kvm)
+		printKVM(kvm, keysOnly)
 	}
 }
 
-func printKVM(kvm *ufspb.KVM) {
+func printKVM(kvm *ufspb.KVM, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(kvm.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(kvm.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
@@ -312,14 +320,18 @@ func PrintKVMsJSON(kvms []*ufspb.KVM) {
 }
 
 // PrintRPMs prints the all rpms in table form.
-func PrintRPMs(rpms []*ufspb.RPM) {
+func PrintRPMs(rpms []*ufspb.RPM, keysOnly bool) {
 	defer tw.Flush()
 	for _, rpm := range rpms {
-		printRPM(rpm)
+		printRPM(rpm, keysOnly)
 	}
 }
 
-func printRPM(rpm *ufspb.RPM) {
+func printRPM(rpm *ufspb.RPM, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(rpm.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(rpm.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)

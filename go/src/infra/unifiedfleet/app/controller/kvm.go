@@ -39,6 +39,10 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 			return err
 		}
 
+		// Fill the rack/lab to kvm OUTPUT only fields for indexing
+		kvm.Rack = rack.GetName()
+		kvm.Lab = rack.GetLocation().GetLab().String()
+
 		// 3. Update the rack with new kvm information
 		if cs, err := addKVMToRack(ctx, rack, kvm.Name); err == nil {
 			changes = append(changes, cs...)
@@ -86,6 +90,9 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		}
 
 		oldKVM, _ := registration.GetKVM(ctx, kvm.GetName())
+		// Fill the rack/lab to kvm OUTPUT only fields
+		kvm.Rack = oldKVM.GetRack()
+		kvm.Lab = oldKVM.GetLab()
 		changes = append(changes, LogKVMChanges(oldKVM, kvm)...)
 		if rackName != "" {
 			// 2. Get the old rack associated with kvm
@@ -101,6 +108,10 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 				if err != nil {
 					return err
 				}
+
+				// Fill the rack/lab to kvm OUTPUT only fields
+				kvm.Rack = rack.GetName()
+				kvm.Lab = rack.GetLocation().GetLab().String()
 
 				// 4. Remove the association between old rack and this kvm.
 				if cs, err := removeKVMFromRacks(ctx, []*ufspb.Rack{oldRack}, kvm.Name); err == nil {

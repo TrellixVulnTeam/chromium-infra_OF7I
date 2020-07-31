@@ -48,6 +48,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 					ResourceName: util.AddPrefix(util.SwitchCollection, s.Name),
 					User:         util.CurrentUser(ctx),
 				})
+				// Fill the rack/lab to switch OUTPUT only fields for indexing
+				s.Rack = rack.GetName()
+				s.Lab = rack.GetLocation().GetLab().String()
 			}
 			// This is output only field. Assign new value.
 			rack.GetChromeBrowserRack().Switches = n
@@ -70,6 +73,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 					ResourceName: util.AddPrefix(util.KVMCollection, kvm.Name),
 					User:         util.CurrentUser(ctx),
 				})
+				// Fill the rack/lab to kvm OUTPUT only fields for indexing
+				kvm.Rack = rack.GetName()
+				kvm.Lab = rack.GetLocation().GetLab().String()
 			}
 			// This is output only field. Assign new value.
 			rack.GetChromeBrowserRack().Kvms = n
@@ -92,6 +98,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 					ResourceName: util.AddPrefix(util.RPMCollection, rpm.Name),
 					User:         util.CurrentUser(ctx),
 				})
+				// Fill the rack/lab to rpm OUTPUT only fields for indexing
+				rpm.Rack = rack.GetName()
+				rpm.Lab = rack.GetLocation().GetLab().String()
 			}
 			// This is output only field. Assign new value.
 			rack.GetChromeBrowserRack().Rpms = n

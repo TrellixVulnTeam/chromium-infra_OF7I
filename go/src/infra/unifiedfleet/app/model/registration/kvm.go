@@ -29,6 +29,8 @@ type KVMEntity struct {
 	_kind            string `gae:"$kind,KVM"`
 	ID               string `gae:"$id"`
 	ChromePlatformID string `gae:"chrome_platform_id"`
+	Lab              string `gae:"lab"`
+	Rack             string `gae:"rack"`
 	// ufspb.KVM cannot be directly used as it contains pointer.
 	KVM []byte `gae:",noindex"`
 }
@@ -55,6 +57,8 @@ func newKVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		ID:               p.GetName(),
 		ChromePlatformID: p.GetChromePlatform(),
 		KVM:              kvm,
+		Lab:              p.GetLab(),
+		Rack:             p.GetRack(),
 	}, nil
 }
 
@@ -250,8 +254,10 @@ func GetKVMIndexedFieldName(input string) (string, error) {
 		field = "chrome_platform_id"
 	case util.LabFilterName:
 		field = "lab"
+	case util.RackFilterName:
+		field = "rack"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/platform", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform", input)
 	}
 	return field, nil
 }

@@ -39,6 +39,10 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 			return err
 		}
 
+		// Fill the rack/lab to switch OUTPUT only fields for indexing
+		s.Rack = rack.GetName()
+		s.Lab = rack.GetLocation().GetLab().String()
+
 		// 3. Update the rack with new switch information
 		if cs, err := addSwitchToRack(ctx, rack, s.Name); err == nil {
 			changes = append(changes, cs...)
@@ -86,6 +90,9 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 		}
 
 		oldS, _ := registration.GetSwitch(ctx, s.GetName())
+		// Fill the rack/lab to switch OUTPUT only fields
+		s.Rack = oldS.GetRack()
+		s.Lab = oldS.GetLab()
 		changes = append(changes, LogSwitchChanges(oldS, s)...)
 		if rackName != "" {
 			// 2. Get the old rack associated with switch
@@ -101,6 +108,10 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 				if err != nil {
 					return err
 				}
+
+				// Fill the rack/lab to switch OUTPUT only fields for indexing
+				s.Rack = rack.GetName()
+				s.Lab = rack.GetLocation().GetLab().String()
 
 				// 4. Remove the association between old rack and this switch.
 				if cs, err := removeSwitchFromRacks(ctx, []*ufspb.Rack{oldRack}, s.Name); err == nil {

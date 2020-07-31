@@ -30,6 +30,19 @@ message KVM {
     // Record the last update timestamp of this KVM (In UTC timezone)
     google.protobuf.Timestamp update_time = 5 [
             (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // Refers to Lab
+    string lab = 6 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Rack name
+    string rack = 7 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Rack"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 // Refer to one port of a given KVM
@@ -56,6 +69,19 @@ message RPM {
         // Record the last update timestamp of this RPM (In UTC timezone)
     google.protobuf.Timestamp update_time = 4 [
             (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // Refers to Lab
+    string lab = 5 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Rack name
+    string rack = 6 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Rack"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 // Refer to one port of a given RPM
@@ -88,6 +114,19 @@ message Switch {
             (google.api.field_behavior) = OUTPUT_ONLY];
     // Usually describe the model of the switch
     string description = 4;
+
+    // Refers to Lab
+    string lab = 5 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Rack name
+    string rack = 6 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Rack"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 // Refer to one port of a given switch

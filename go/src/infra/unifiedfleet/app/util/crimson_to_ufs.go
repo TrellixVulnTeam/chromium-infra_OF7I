@@ -89,6 +89,8 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 			Name:           name,
 			MacAddress:     oldKVM.GetMacAddress(),
 			ChromePlatform: FormatResourceName(oldKVM.GetPlatform()),
+			Rack:           oldKVM.GetRack(),
+			Lab:            ToLab(strings.ToLower(dcName)).String(),
 		}
 		kvms = append(kvms, k)
 		rackName := oldKVM.GetRack()
@@ -107,6 +109,8 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*fleet.Rack, []*fleet.R
 				Name:         crimsonSwitch.GetName(),
 				CapacityPort: crimsonSwitch.GetPorts(),
 				Description:  crimsonSwitch.GetDescription(),
+				Rack:         rackName,
+				Lab:          ToLab(strings.ToLower(dcName)).String(),
 			}
 			switches = append(switches, s)
 			switchNames = append(switchNames, s.GetName())
