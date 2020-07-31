@@ -7,6 +7,7 @@ package vm
 import (
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -36,17 +37,26 @@ Update a VM on a host by reading a JSON file input.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.VMFileText)
-		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to update the VM")
+
+		c.Flags.StringVar(&c.hostName, "host", "", "name of the vm")
+		c.Flags.StringVar(&c.vmName, "name", "", "name of the host that this VM is running on")
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
+		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
 		return c
 	},
 }
 
 type updateVM struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	hostname     string
+	authFlags authcli.Flags
+	envFlags  site.EnvFlags
+
 	newSpecsFile string
+
+	hostName   string
+	vmName     string
+	vlanName   string
+	deleteVlan bool
 }
 
 func (c *updateVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -75,18 +85,23 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 
 	// Parse the josn input
 	var vm ufspb.VM
-	if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
-		return err
+	if c.newSpecsFile != "" {
+		if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
+			return err
+		}
+	} else {
+		c.parseArgs(&vm)
 	}
 
 	// Get the host MachineLSE
 	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostname),
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostName),
 	})
 	if err != nil {
-		return errors.Annotate(err, "No host with hostname %s found", c.hostname).Err()
+		return errors.Annotate(err, "No host with hostname %s found", c.hostName).Err()
 	}
 	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
+	oldMachinelse := proto.Clone(machinelse).(*ufspb.MachineLSE)
 
 	// Check if the VM does not exist on the host MachineLSE
 	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
@@ -97,25 +112,58 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	existingVMs = append(existingVMs, &vm)
 	machinelse.GetChromeBrowserMachineLse().Vms = existingVMs
 
+	var networkOptions map[string]*ufsAPI.NetworkOption
+	if c.deleteVlan || c.vlanName != "" {
+		networkOptions = map[string]*ufsAPI.NetworkOption{
+			vm.Name: {
+				Delete: c.deleteVlan,
+				Vlan:   c.vlanName,
+			},
+		}
+		machinelse = oldMachinelse
+	}
+
 	// Update the host MachineLSE with new VM info
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
-		MachineLSE: machinelse,
+		MachineLSE:     machinelse,
+		NetworkOptions: networkOptions,
 	})
 	if err != nil {
 		return errors.Annotate(err, "Unable to update the VM on the host").Err()
 	}
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	if c.deleteVlan {
+		fmt.Printf("Successfully deleted vlan of vm %s\n", vm.Name)
+	}
+	if c.vlanName != "" {
+		// Log the assigned IP
+		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+			Hostname: vm.Name,
+		}); err == nil {
+			utils.PrintProtoJSON(dhcp)
+			fmt.Println("Successfully added dhcp config to vm: ", vm.Name)
+		}
+	}
 	return nil
 }
 
+func (c *updateVM) parseArgs(vm *ufspb.VM) {
+	vm.Name = c.vmName
+	vm.Hostname = c.vmName
+}
+
 func (c *updateVM) validateArgs() error {
-	if c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo JSON input file specified")
+	if c.hostName == "" {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n'-host' is required to update the VM on a host")
 	}
-	if c.hostname == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nHostname parameter is required to update the VM on the host")
+	if c.newSpecsFile == "" {
+		if c.vmName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-name' is required.")
+		}
+		if c.vlanName == "" && !c.deleteVlan {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so one of ['-delete-vlan', '-vlan'] is required.")
+		}
 	}
 	return nil
 }

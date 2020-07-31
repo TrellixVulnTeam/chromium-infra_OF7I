@@ -205,6 +205,12 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			}
 		}
 
+		if nwOpts != nil {
+			// Before partial updating is enabled, skip updating lse if the network option is specified.
+			logging.Debugf(ctx, "Stop updating machine lse as network option is specified")
+			return nil
+		}
+
 		// 5. Update machinelse entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
