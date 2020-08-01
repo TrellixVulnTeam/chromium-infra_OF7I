@@ -29,6 +29,7 @@ type RecordEntity struct {
 	_kind string `gae:"$kind,State"`
 	// refer to the hostname
 	ResourceName string `gae:"$id"`
+	ResourceType string `gae:"resource_type"`
 	State        string `gae:"state"`
 	// ufspb.StateRecord cannot be directly used as it contains pointer (timestamp).
 	StateRecord []byte `gae:",noindex"`
@@ -54,6 +55,7 @@ func newRecordEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, 
 	}
 	return &RecordEntity{
 		ResourceName: p.GetResourceName(),
+		ResourceType: util.GetPrefix(p.GetResourceName()),
 		State:        p.GetState().String(),
 		StateRecord:  s,
 	}, nil
@@ -79,8 +81,8 @@ func UpdateStateRecord(ctx context.Context, stateRecord *ufspb.StateRecord) (*uf
 }
 
 // ListStateRecords lists all the states
-func ListStateRecords(ctx context.Context, pageSize int32, pageToken string) (res []*ufspb.StateRecord, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, RecordKind, pageSize, pageToken, nil, false)
+func ListStateRecords(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}) (res []*ufspb.StateRecord, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, RecordKind, pageSize, pageToken, filterMap, false)
 	if err != nil {
 		return nil, "", err
 	}
@@ -157,8 +159,10 @@ func GetStateIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.StateFilterName:
 		field = "state"
+	case util.ResourceTypeFilterName:
+		field = "resource_type"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for state record are state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for state record are state/resourcetype", input)
 	}
 	return field, nil
 }

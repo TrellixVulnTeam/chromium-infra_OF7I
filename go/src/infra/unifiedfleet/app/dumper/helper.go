@@ -516,7 +516,7 @@ func dumpStateRecord(ctx context.Context, bqClient *bigquery.Client, curTimeStr 
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("state_records$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := state.ListStateRecords(ctx, pageSize, startToken)
+		res, nextToken, err := state.ListStateRecords(ctx, pageSize, startToken, nil)
 		if err != nil {
 			return errors.Annotate(err, "get all state records").Err()
 		}

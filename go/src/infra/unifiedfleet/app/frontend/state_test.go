@@ -35,7 +35,7 @@ func TestImportStates(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(res.Code, ShouldEqual, code.Code_OK)
 
-			states, _, err := state.ListStateRecords(ctx, 100, "")
+			states, _, err := state.ListStateRecords(ctx, 100, "", nil)
 			So(err, ShouldBeNil)
 			So(api.ParseResources(states, "ResourceName"), ShouldResemble, []string{"hosts/esx-8", "hosts/web", "machines/machine1", "machines/machine2", "machines/machine3", "vms/vm578-m4"})
 			s, err := state.GetStateRecord(ctx, "machines/machine1")

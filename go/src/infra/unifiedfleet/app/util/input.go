@@ -72,6 +72,7 @@ var (
 	OccupiedFilterName         string = "occupied"
 	ManufacturerFilterName     string = "man"
 	FreeVMFilterName           string = "free"
+	ResourceTypeFilterName     string = "resourcetype"
 )
 
 const separator string = "/"
@@ -106,6 +107,15 @@ func RemovePrefix(name string) string {
 // AddPrefix adds the prefix for a given resource name
 func AddPrefix(collection, entity string) string {
 	return fmt.Sprintf("%s%s%s", collection, separator, entity)
+}
+
+// GetPrefix returns the prefix for a resource name
+func GetPrefix(resourceName string) string {
+	s := strings.Split(strings.TrimSpace(resourceName), separator)
+	if len(s) < 1 {
+		return ""
+	}
+	return s[0]
 }
 
 // GetRackHostname returns a rack host name.
