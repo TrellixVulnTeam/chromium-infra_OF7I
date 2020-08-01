@@ -75,6 +75,11 @@ message MachineLSE {
         },
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // Refer to the manufacturer name of the attached machine for the host
+    string manufacturer = 11 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 // ChromeBrowserMachineLSE refers to the entity

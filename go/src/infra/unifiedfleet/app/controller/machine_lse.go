@@ -69,6 +69,9 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		// Fill the rack/lab OUTPUT only fields for indexing machinelse table
 		machinelse.Rack = machine.GetLocation().GetRack()
 		machinelse.Lab = machine.GetLocation().GetLab().String()
+		if err := setManufacturer(ctx, machine, machinelse); err != nil {
+			return errors.Annotate(err, "fail to set manufacturer").Err()
+		}
 
 		// Assign ip configs
 		if vlanName != "" && nicName != "" {
@@ -171,6 +174,11 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			// Fill the rack/lab OUTPUT only fields for indexing machinelse table
 			machinelse.Rack = machine.GetLocation().GetRack()
 			machinelse.Lab = machine.GetLocation().GetLab().String()
+			if err := setManufacturer(ctx, machine, machinelse); err != nil {
+				return errors.Annotate(err, "fail to set manufacturer").Err()
+			}
+		} else {
+			machinelse.Manufacturer = ""
 		}
 
 		// Update machinelse entry
@@ -1009,6 +1017,17 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 			logging.Errorf(ctx, errorMsg)
 			return status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
+	}
+	return nil
+}
+
+func setManufacturer(ctx context.Context, machine *ufspb.Machine, lse *ufspb.MachineLSE) error {
+	if pName := machine.GetChromeBrowserMachine().GetChromePlatform(); pName != "" {
+		platform, err := configuration.GetChromePlatform(ctx, pName)
+		if err != nil {
+			return errors.Annotate(err, "invalid chrome platform name attached to machine %s", machine.GetName()).Err()
+		}
+		lse.Manufacturer = strings.ToLower(platform.GetManufacturer())
 	}
 	return nil
 }

@@ -14,6 +14,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
 
@@ -47,7 +48,6 @@ func TestListChromePlatforms(t *testing.T) {
 			So(resp, ShouldResembleProto, chromePlatforms)
 		})
 	})
-
 }
 
 func TestDeleteChromePlatform(t *testing.T) {
@@ -117,6 +117,51 @@ func TestDeleteChromePlatform(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(cerr, ShouldNotBeNil)
 			So(cerr.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestUpdateChromePlatforms(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	chromePlatform1 := mockChromePlatform("chromePlatform-update", "Camera")
+	chromePlatform1.Manufacturer = "fake"
+	chromePlatform2 := mockChromePlatform("chromePlatform-update-2", "Camera")
+	chromePlatform2.Manufacturer = "apple"
+	configuration.BatchUpdateChromePlatforms(ctx, []*ufspb.ChromePlatform{chromePlatform1, chromePlatform2})
+	Convey("UpdateChromePlatforms", t, func() {
+		Convey("happy path", func() {
+			p2 := mockChromePlatform("chromePlatform-update", "Camera")
+			p2.Manufacturer = "non-fake"
+			newP, err := UpdateChromePlatform(ctx, p2)
+			So(err, ShouldBeNil)
+			So(newP, ShouldResembleProto, p2)
+		})
+
+		Convey("happy path with updating manufacturer", func() {
+			inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:         "platform-host",
+				Hostname:     "platform-host",
+				Manufacturer: "apple",
+				Machines:     []string{"platform-machine"},
+			})
+			registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "platform-machine",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						ChromePlatform: "chromePlatform-update-2",
+					},
+				},
+			})
+			p2 := mockChromePlatform("chromePlatform-update-2", "Camera")
+			p2.Manufacturer = "dell"
+			newP, err := UpdateChromePlatform(ctx, p2)
+			So(err, ShouldBeNil)
+			So(newP, ShouldResembleProto, p2)
+
+			lse, err := inventory.GetMachineLSE(ctx, "platform-host")
+			So(err, ShouldBeNil)
+			So(lse.GetManufacturer(), ShouldEqual, "dell")
 		})
 	})
 }

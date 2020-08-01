@@ -156,7 +156,7 @@ func TestUpdateChromePlatform(t *testing.T) {
 			resp, err := tf.Fleet.UpdateChromePlatform(tf.C, ureq)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+			So(err.Error(), ShouldContainSubstring, "no ChromePlatform with ChromePlatformID")
 		})
 
 		Convey("Update chromePlatform - Invalid input nil", func() {

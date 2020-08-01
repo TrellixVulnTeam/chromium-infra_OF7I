@@ -26,9 +26,10 @@ const ChromePlatformKind string = "ChromePlatform"
 
 // ChromePlatformEntity is a datastore entity that tracks a platform.
 type ChromePlatformEntity struct {
-	_kind string   `gae:"$kind,ChromePlatform"`
-	ID    string   `gae:"$id"`
-	Tags  []string `gae:"tags"`
+	_kind        string   `gae:"$kind,ChromePlatform"`
+	ID           string   `gae:"$id"`
+	Tags         []string `gae:"tags"`
+	Manufacturer string   `gae:"manufacturer"`
 	// ufspb.ChromePlatform cannot be directly used as it contains pointer.
 	Platform []byte `gae:",noindex"`
 }
@@ -52,9 +53,10 @@ func newChromePlatformEntity(ctx context.Context, pm proto.Message) (ufsds.Fleet
 		return nil, errors.Annotate(err, "fail to marshal ChromePlatform %s", p).Err()
 	}
 	return &ChromePlatformEntity{
-		ID:       p.GetName(),
-		Platform: platform,
-		Tags:     p.GetTags(),
+		ID:           p.GetName(),
+		Manufacturer: p.GetManufacturer(),
+		Platform:     platform,
+		Tags:         p.GetTags(),
 	}, nil
 }
 
@@ -77,8 +79,25 @@ func CreateChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatf
 }
 
 // UpdateChromePlatform updates chromePlatform in datastore.
+//
+// Cannot be used in a transaction
 func UpdateChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
 	return putChromePlatform(ctx, chromePlatform, true)
+}
+
+// BatchUpdateChromePlatforms batch updates platforms to datastore
+//
+// Can be used in a transaction
+func BatchUpdateChromePlatforms(ctx context.Context, chromePlatforms []*ufspb.ChromePlatform) ([]*ufspb.ChromePlatform, error) {
+	protos := make([]proto.Message, len(chromePlatforms))
+	for i, machineLSE := range chromePlatforms {
+		protos[i] = machineLSE
+	}
+	_, err := ufsds.PutAll(ctx, protos, newChromePlatformEntity, true)
+	if err == nil {
+		return chromePlatforms, err
+	}
+	return nil, err
 }
 
 // GetChromePlatform returns chromePlatform for the given id from datastore.
@@ -179,8 +198,10 @@ func GetChromePlatformIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.TagFilterName:
 		field = "tags"
+	case util.ManufacturerFilterName:
+		field = "manufacturer"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for platforms are tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for platform are tag/manufacturer", input)
 	}
 	return field, nil
 }

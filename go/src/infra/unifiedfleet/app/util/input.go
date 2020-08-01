@@ -70,6 +70,7 @@ var (
 	IPV4FilterName             string = "ipv4"
 	IPV4StringFilterName       string = "ipv4str"
 	OccupiedFilterName         string = "occupied"
+	ManufacturerFilterName     string = "man"
 )
 
 const separator string = "/"

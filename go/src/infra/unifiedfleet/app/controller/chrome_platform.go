@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
@@ -16,7 +17,8 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
-	"infra/unifiedfleet/app/model/datastore"
+	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 )
 
@@ -27,7 +29,51 @@ func CreateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatf
 
 // UpdateChromePlatform updates chromeplatform in datastore.
 func UpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
-	return configuration.UpdateChromePlatform(ctx, chromeplatform)
+	var old *ufspb.ChromePlatform
+	var err error
+	f := func(ctx context.Context) error {
+		// Verify request
+		if err := validateUpdateChromePlatform(ctx, chromeplatform); err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+
+		// Get the existing/old platform
+		old, err = configuration.GetChromePlatform(ctx, chromeplatform.GetName())
+		if err != nil {
+			return err
+		}
+
+		if old.GetManufacturer() != chromeplatform.GetManufacturer() {
+			// Update machines
+			machines, err := registration.QueryMachineByPropertyName(ctx, "chrome_platform_id", chromeplatform.GetName(), false)
+			if err != nil {
+				return errors.Annotate(err, "UpdateChromePlatform - Failed to query machines by platform id %s", chromeplatform.GetName()).Err()
+			}
+			lses := make([]*ufspb.MachineLSE, 0)
+			for _, m := range machines {
+				machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", m.GetName(), false)
+				if err != nil {
+					return errors.Annotate(err, "UpdateChromePlatform - Failed to query machinelse/hosts for machine %s", m.GetName()).Err()
+				}
+				for _, lse := range machinelses {
+					lse.Manufacturer = chromeplatform.GetManufacturer()
+					lses = append(lses, lse)
+				}
+			}
+			if _, err := inventory.BatchUpdateMachineLSEs(ctx, lses); err != nil {
+				return errors.Annotate(err, "UpdateChromePlatform - Unable to update machinelses").Err()
+			}
+		}
+		if _, err := configuration.BatchUpdateChromePlatforms(ctx, []*ufspb.ChromePlatform{chromeplatform}); err != nil {
+			return errors.Annotate(err, "UpdateChromePlatform - Unable to update platforms").Err()
+		}
+		return nil
+	}
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "UpdateMachine - Failed to update machine in datastore: %s", err)
+		return nil, err
+	}
+	return chromeplatform, nil
 }
 
 // GetChromePlatform returns chromeplatform for the given id from datastore.
@@ -62,12 +108,12 @@ func DeleteChromePlatform(ctx context.Context, id string) error {
 }
 
 // ImportChromePlatforms inserts chrome platforms to datastore.
-func ImportChromePlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
+func ImportChromePlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform, pageSize int) (*ufsds.OpResults, error) {
 	deleteNonExistingPlatforms(ctx, platforms, pageSize)
 	return configuration.ImportChromePlatforms(ctx, platforms)
 }
 
-func deleteNonExistingPlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform, pageSize int) (*datastore.OpResults, error) {
+func deleteNonExistingPlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform, pageSize int) (*ufsds.OpResults, error) {
 	resMap := make(map[string]bool)
 	for _, r := range platforms {
 		resMap[r.GetName()] = true
@@ -134,4 +180,15 @@ func validateDeleteChromePlatform(ctx context.Context, id string) error {
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return nil
+}
+
+// validateUpdateChromePlatform validates if a ChromePlatform can be updated
+//
+// Checks if this ChromePlatform(ChromePlatformID) is not referenced by other resources in the datastore.
+// If there are any other references, delete will be rejected and an error will be returned.
+func validateUpdateChromePlatform(ctx context.Context, platform *ufspb.ChromePlatform) error {
+	var errorMsg strings.Builder
+	errorMsg.WriteString(fmt.Sprintf("Cannot update chrome platform %s:\n", platform.GetName()))
+	// check if resources does not exist
+	return ResourceExist(ctx, []*Resource{GetChromePlatformResource(platform.GetName())}, &errorMsg)
 }
