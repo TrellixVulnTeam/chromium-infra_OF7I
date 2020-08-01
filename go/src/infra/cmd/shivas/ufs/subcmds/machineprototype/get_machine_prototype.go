@@ -21,12 +21,12 @@ import (
 
 // GetMachineLSEPrototypeCmd get MachineLSEPrototype by given name.
 var GetMachineLSEPrototypeCmd = &subcommands.Command{
-	UsageLine: "machine-prototype {Machine Prototype Name}",
+	UsageLine: "machineprototype {Machine Prototype Name}",
 	ShortDesc: "Get machine prototype details by name",
 	LongDesc: `Get machine prototype details by name.
 
 Example:
-shivas get machine-prototype {Machine Prototype Name}
+shivas get machineprototype {Machine Prototype Name}
 Gets the machine prototype and prints the output in JSON format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getMachineLSEPrototype{}

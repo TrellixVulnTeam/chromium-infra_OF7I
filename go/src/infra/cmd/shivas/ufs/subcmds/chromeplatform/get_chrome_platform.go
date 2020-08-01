@@ -21,14 +21,14 @@ import (
 
 // GetChromePlatformCmd get chrome platform by given name.
 var GetChromePlatformCmd = &subcommands.Command{
-	UsageLine: "chrome-platform {Chrome Platform Name}",
-	ShortDesc: "Get chrome platform details by name",
-	LongDesc: `Get chrome platform details by name.
+	UsageLine: "platform {Platform Name}",
+	ShortDesc: "Get platform details by name",
+	LongDesc: `Get platform details by name.
 
 Example:
 
-shivas get chrome-platform {Chrome Platform Name}
-Gets the chrome platform and prints the output in JSON format.`,
+shivas get platform {Platform Name}
+Gets the platform and prints the output in JSON format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getChromePlatform{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -87,7 +87,7 @@ func (c *getChromePlatform) innerRun(a subcommands.Application, args []string, e
 
 func (c *getChromePlatform) validateArgs() error {
 	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the chrome platform name.")
+		return cmdlib.NewUsageError(c.Flags, "Please provide the platform name.")
 	}
 	return nil
 }

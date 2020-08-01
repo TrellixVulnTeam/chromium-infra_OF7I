@@ -472,6 +472,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 					Max:         0,
 				},
 			},
+			Tags: []string{"browser", "no-vm"},
 		},
 		{
 			Name: "browser-lab:vm",
@@ -483,6 +484,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 					Max: 100,
 				},
 			},
+			Tags: []string{"browser", "vm"},
 		},
 	}
 	res, err := configuration.ImportMachineLSEPrototypes(ctx, lps)

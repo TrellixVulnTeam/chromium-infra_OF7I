@@ -21,12 +21,12 @@ import (
 
 // GetRackLSEPrototypeCmd get RackLSEPrototype by given name.
 var GetRackLSEPrototypeCmd = &subcommands.Command{
-	UsageLine: "rack-prototype {Rack Prototype Name}",
+	UsageLine: "rackprototype {Rack Prototype Name}",
 	ShortDesc: "Get rack prototype details by name",
 	LongDesc: `Get rack prototype details by name.
 
 Example:
-shivas get rack-prototype {Rack Prototype Name}
+shivas get rackprototype {Rack Prototype Name}
 Gets the rack prototype and prints the output in JSON format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getRackLSEPrototype{}

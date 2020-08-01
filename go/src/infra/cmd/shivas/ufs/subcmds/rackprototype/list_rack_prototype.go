@@ -6,6 +6,8 @@ package rackprototype
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -17,12 +19,11 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // ListRackLSEPrototypeCmd list all RackLSEPrototypes.
 var ListRackLSEPrototypeCmd = &subcommands.Command{
-	UsageLine: "rack-prototype [Filters...]",
+	UsageLine: "rackprototype [Filters...]",
 	ShortDesc: "List all rack prototypes",
 	LongDesc:  cmdhelp.ListRackLSEPrototypeLongDesc,
 	CommandRun: func() subcommands.CommandRun {
@@ -31,21 +32,21 @@ var ListRackLSEPrototypeCmd = &subcommands.Command{
 		c.envFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
-		c.Flags.StringVar(&c.labFilter, "lab", "", "lab name to filter the results.\n"+
-			"acs - ACS lab rack prototypes\n"+
-			"atl - ATL lab rack prototypes\n"+
-			"browser - Browser lab rack prototypes")
+		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.RackLSEPrototypeFilterHelp)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 		return c
 	},
 }
 
 type listRackLSEPrototype struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
-	pageSize  int
-	json      bool
-	labFilter string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+	pageSize    int
+	json        bool
+	filter      string
+	keysOnly    bool
 }
 
 func (c *listRackLSEPrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -66,22 +67,26 @@ func (c *listRackLSEPrototype) innerRun(a subcommands.Application, args []string
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.json {
-		return utils.PrintListJSONFormat(ctx, ic, printRackLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter))
+		return utils.PrintListJSONFormatDup(ctx, ic, printRackLSEPrototypes, c.json, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormat(ctx, ic, printRackLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter), utils.RacklseprototypeTitle)
+	return utils.PrintListTableFormatDup(ctx, ic, printRackLSEPrototypes, c.json, int32(c.pageSize), c.filter, c.keysOnly, utils.RacklseprototypeTitle)
 }
 
-func printRackLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {
+func printRackLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
 	req := &ufsAPI.ListRackLSEPrototypesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
 		Filter:    filter,
+		KeysOnly:  keysOnly,
 	}
 	res, err := ic.ListRackLSEPrototypes(ctx, req)
 	if err != nil {
@@ -90,18 +95,22 @@ func printRackLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json boo
 	if json {
 		utils.PrintRackLSEPrototypesJSON(res.RackLSEPrototypes)
 	} else {
-		utils.PrintRackLSEPrototypes(res.RackLSEPrototypes)
+		utils.PrintRackLSEPrototypes(res.RackLSEPrototypes, keysOnly)
 	}
 	return res.GetNextPageToken(), nil
 }
 
 func (c *listRackLSEPrototype) validateArgs() error {
-	if c.labFilter != "" && !ufsUtil.IsValidFilter(c.labFilter) {
-		return cmdlib.NewUsageError(c.Flags, "Please provide a correct filter\n"+
-			"acs - ACS lab rack prototypes\n"+
-			"atl - ATL lab rack prototypes\n"+
-			"browser - Browser lab rack prototytpes")
-
+	if c.filter != "" {
+		filter := fmt.Sprintf(strings.Replace(c.filter, " ", "", -1))
+		if !ufsAPI.FilterRegex.MatchString(filter) {
+			return cmdlib.NewUsageError(c.Flags, ufsAPI.InvalidFilterFormat)
+		}
+		var err error
+		c.filter, err = utils.ReplaceLabNames(filter)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -24,6 +24,9 @@ message RackLSEPrototype {
     // Record the last update timestamp of this RackLSEPrototype (In UTC timezone)
     google.protobuf.Timestamp update_time = 3 [
         (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // tags user can attach for easy querying/search
+    repeated string tags = 4;
 }
 
 message MachineLSEPrototype {
@@ -44,6 +47,9 @@ message MachineLSEPrototype {
         (google.api.field_behavior) = OUTPUT_ONLY];
 
     repeated VirtualRequirement virtual_requirements = 5;
+
+    // tags user can attach for easy querying/search
+    repeated string tags = 6;
 }
 
 // The requirement for peripherals of a LSE. Usually it’s predefined

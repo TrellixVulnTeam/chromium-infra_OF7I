@@ -47,6 +47,7 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 					Max: 5,
 				},
 			},
+			Tags: []string{"browser", "normal"},
 		},
 	}
 	res, err := configuration.ImportRackLSEPrototypes(ctx, lps)

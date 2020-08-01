@@ -28,4 +28,7 @@ message ChromePlatform {
         (google.api.field_behavior) = OUTPUT_ONLY];
     // Get source of truth from crimson
     int32 vm_capacity = 5 [deprecated = true];
+
+    // tags user can attach for easy querying/search
+    repeated string tags = 6;
 }

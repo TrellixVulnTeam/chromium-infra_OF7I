@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // MachineLSEPrototypeKind is the datastore entity kind for MachineLSEPrototypes.
@@ -24,8 +26,9 @@ const MachineLSEPrototypeKind string = "MachineLSEPrototype"
 
 // MachineLSEPrototypeEntity is a datastore entity that tracks a platform.
 type MachineLSEPrototypeEntity struct {
-	_kind string `gae:"$kind,MachineLSEPrototype"`
-	ID    string `gae:"$id"`
+	_kind string   `gae:"$kind,MachineLSEPrototype"`
+	ID    string   `gae:"$id"`
+	Tags  []string `gae:"tags"`
 	// ufspb.MachineLSEPrototype cannot be directly used as it contains pointer.
 	MachineLSEPrototype []byte `gae:",noindex"`
 }
@@ -51,6 +54,7 @@ func newMachineLSEPrototypeEntity(ctx context.Context, pm proto.Message) (ufsds.
 	return &MachineLSEPrototypeEntity{
 		ID:                  p.GetName(),
 		MachineLSEPrototype: machineLSEPrototype,
+		Tags:                p.GetTags(),
 	}, nil
 }
 
@@ -143,5 +147,13 @@ func ImportMachineLSEPrototypes(ctx context.Context, lps []*ufspb.MachineLSEProt
 
 // GetMachineLSEPrototypeIndexedFieldName returns the index name
 func GetMachineLSEPrototypeIndexedFieldName(input string) (string, error) {
-	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for MachineLSEPrototype", input)
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.TagFilterName:
+		field = "tags"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machineprototype are tag", input)
+	}
+	return field, nil
 }

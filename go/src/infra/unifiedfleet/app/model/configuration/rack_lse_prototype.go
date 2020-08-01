@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // RackLSEPrototypeKind is the datastore entity kind for RackLSEPrototypes.
@@ -24,8 +26,9 @@ const RackLSEPrototypeKind string = "RackLSEPrototype"
 
 // RackLSEPrototypeEntity is a datastore entity that tracks a platform.
 type RackLSEPrototypeEntity struct {
-	_kind string `gae:"$kind,RackLSEPrototype"`
-	ID    string `gae:"$id"`
+	_kind string   `gae:"$kind,RackLSEPrototype"`
+	ID    string   `gae:"$id"`
+	Tags  []string `gae:"tags"`
 	// ufspb.RackLSEPrototype cannot be directly used as it contains pointer.
 	RackLSEPrototype []byte `gae:",noindex"`
 }
@@ -51,6 +54,7 @@ func newRackLSEPrototypeEntity(ctx context.Context, pm proto.Message) (ufsds.Fle
 	return &RackLSEPrototypeEntity{
 		ID:               p.GetName(),
 		RackLSEPrototype: rackLSEPrototype,
+		Tags:             p.GetTags(),
 	}, nil
 }
 
@@ -143,5 +147,13 @@ func ImportRackLSEPrototypes(ctx context.Context, lps []*ufspb.RackLSEPrototype)
 
 // GetRackLSEPrototypeIndexedFieldName returns the index name
 func GetRackLSEPrototypeIndexedFieldName(input string) (string, error) {
-	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for RackLSEPrototype", input)
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.TagFilterName:
+		field = "tags"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rackprototype are tag", input)
+	}
+	return field, nil
 }

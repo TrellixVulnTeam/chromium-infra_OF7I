@@ -557,17 +557,14 @@ Updates a machine prototype by reading input through interactive mode.`
 	ListMachineLSEPrototypeLongDesc string = `List all machine prototypes
 
 Examples:
-shivas list machine-prototype
+shivas list machineprototype
 Fetches all the machine prototypes in table format
 
-shivas list machine-prototype -n 50
+shivas list machineprototype -n 50
 Fetches 50 machine prototypes and prints the output in table format
 
-shivas list machine-prototype -lab acs -json
-Fetches only ACS lab machine prototypes and prints the output in json format
-
-shivas list machine-prototype -n 5 -lab atl -json
-Fetches 5 machine prototypes for ATL lab and prints the output in JSON format
+shivas list machineprototype -filter 'tag=acs,camera' -json
+Fetches only acs and camera tagged machine prototypes and prints the output in json format
 `
 
 	// MachineLSEPrototypeFileText description for MachineLSEPrototype file input
@@ -617,17 +614,14 @@ Updates a rack prototype by reading input through interactive mode.`
 	ListRackLSEPrototypeLongDesc string = `List all rack prototypes
 
 Examples:
-shivas list rack-prototype
+shivas list rackprototype
 Fetches all the rack prototypes in table format
 
-shivas list rack-prototype -n 50
+shivas list rackprototype -n 50
 Fetches 50 rack prototypes and prints the output in table format
 
-shivas list rack-prototype -lab acs -json
-Fetches only ACS lab rack prototypes and prints the output in json format
-
-shivas list rack-prototype -n 5 -lab atl -json
-Fetches 5 rack prototypes for ATL lab and prints the output in JSON format
+shivas list rackprototype -filter 'tag=browser' -json
+Fetches only browser tagged rack prototypes and prints the output in json format
 `
 
 	// RackLSEPrototypeFileText description for RackLSEPrototype file input
@@ -668,20 +662,20 @@ shivas update-chrome-platform -i
 Updates a chrome platform by reading input through interactive mode.`
 
 	// ListChromePlatformLongDesc long description for ListChromePlatformCmd
-	ListChromePlatformLongDesc string = `List all chrome platforms
+	ListChromePlatformLongDesc string = `List all platforms
 
 Examples:
-shivas list chrome-platform
-Fetches all the chrome platforms in table format
+shivas list platform
+Fetches all the platforms in table format
 
-shivas list chrome-platform -n 50
-Fetches 50 chrome platforms and prints the output in table format
+shivas list platform -n 50
+Fetches 50 platforms and prints the output in table format
 
-shivas list chrome-platform -json
-Fetches all chrome platforms and prints the output in json format
+shivas list platform -json
+Fetches all platforms and prints the output in json format
 
-shivas list chrome-platform -n 5 -json
-Fetches 5 chrome platforms and prints the output in JSON format
+shivas list platform -n 5 -json
+Fetches 5 platforms and prints the output in JSON format
 `
 
 	// ChromePlatformFileText description for ChromePlatform file input
@@ -1012,4 +1006,22 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
+
+	// MachineLSEPrototypeFilterHelp help text for list MachineLSEPrototype filtering
+	MachineLSEPrototypeFilterHelp string = FilterText + `You can filter machineprototypes by tag` +
+		`Filter format Egs:
+'tag=acs,wificell'
+'tag=browser` + FilterCondition
+
+	// RackLSEPrototypeFilterHelp help text for list RackLSEPrototype filtering
+	RackLSEPrototypeFilterHelp string = FilterText + `You can filter rackprototypes by tag` +
+		`Filter format Egs:
+'tag=acs'
+'tag=browser` + FilterCondition
+
+	// ChromePlatformFilterHelp help text for list ChromePlatform filtering
+	ChromePlatformFilterHelp string = FilterText + `You can filter platforms by manufacturer(man)/tag` +
+		`Filter format Egs:
+'tag=dell, 8g'
+'tag=iphone & man=Apple` + FilterCondition
 )

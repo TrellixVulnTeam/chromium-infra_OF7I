@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // ChromePlatformKind is the datastore entity kind for chrome platforms.
@@ -24,8 +26,9 @@ const ChromePlatformKind string = "ChromePlatform"
 
 // ChromePlatformEntity is a datastore entity that tracks a platform.
 type ChromePlatformEntity struct {
-	_kind string `gae:"$kind,ChromePlatform"`
-	ID    string `gae:"$id"`
+	_kind string   `gae:"$kind,ChromePlatform"`
+	ID    string   `gae:"$id"`
+	Tags  []string `gae:"tags"`
 	// ufspb.ChromePlatform cannot be directly used as it contains pointer.
 	Platform []byte `gae:",noindex"`
 }
@@ -51,6 +54,7 @@ func newChromePlatformEntity(ctx context.Context, pm proto.Message) (ufsds.Fleet
 	return &ChromePlatformEntity{
 		ID:       p.GetName(),
 		Platform: platform,
+		Tags:     p.GetTags(),
 	}, nil
 }
 
@@ -170,5 +174,13 @@ func putChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatform
 
 // GetChromePlatformIndexedFieldName returns the index name
 func GetChromePlatformIndexedFieldName(input string) (string, error) {
-	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for ChromePlatform", input)
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.TagFilterName:
+		field = "tags"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for platforms are tag", input)
+	}
+	return field, nil
 }

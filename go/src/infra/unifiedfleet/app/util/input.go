@@ -113,5 +113,6 @@ func GetRackHostname(rackName string) string {
 
 // FormatResourceName formats the resource name
 func FormatResourceName(old string) string {
-	return strings.Replace(old, " ", "_", -1)
+	str := strings.Replace(old, " ", "_", -1)
+	return strings.Replace(str, ",", "_", -1)
 }

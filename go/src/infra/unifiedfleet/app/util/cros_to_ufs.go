@@ -168,6 +168,7 @@ func GetOSMachineLSEPrototypes() []*ufspb.MachineLSEPrototype {
 					Max:            1,
 				},
 			},
+			Tags: []string{"atl", "standard"},
 		},
 		{
 			Name: labstationLSEPrototype,
@@ -178,6 +179,7 @@ func GetOSMachineLSEPrototypes() []*ufspb.MachineLSEPrototype {
 					Max:            1,
 				},
 			},
+			Tags: []string{"atl", "labstation"},
 		},
 		{
 			Name: cameraLSEPrototype,
@@ -193,6 +195,7 @@ func GetOSMachineLSEPrototypes() []*ufspb.MachineLSEPrototype {
 					Max:            1,
 				},
 			},
+			Tags: []string{"acs", "camera"},
 		},
 		{
 			Name: wifiLSEPrototype,
@@ -208,6 +211,7 @@ func GetOSMachineLSEPrototypes() []*ufspb.MachineLSEPrototype {
 					Max:            1,
 				},
 			},
+			Tags: []string{"acs", "wificell"},
 		},
 	}
 }

@@ -38,10 +38,10 @@ var (
 		"Drac", "DeploymentTicket", "Description", "Realm", "UpdateTime"}
 	MachinelseprototypeTitle = []string{"Machine Prototype Name",
 		"Occupied Capacity", "PeripheralTypes", "VirtualTypes",
-		"UpdateTime"}
+		"Tags", "UpdateTime"}
 	RacklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
-		"UpdateTime"}
-	ChromePlatformTitle = []string{"Chrome Platform Name", "Manufacturer",
+		"Tags", "UpdateTime"}
+	ChromePlatformTitle = []string{"Platform Name", "Manufacturer",
 		"Description", "UpdateTime"}
 	vmTitle = []string{"VM Name", "OS Version", "OS Desc", "MAC Address",
 		"VM Hostname"}
@@ -491,14 +491,18 @@ func PrintMachinesJSON(machines []*ufspb.Machine) {
 }
 
 // PrintMachineLSEPrototypes prints the all msleps in table form.
-func PrintMachineLSEPrototypes(msleps []*ufspb.MachineLSEPrototype) {
+func PrintMachineLSEPrototypes(msleps []*ufspb.MachineLSEPrototype, keysOnly bool) {
 	defer tw.Flush()
 	for _, m := range msleps {
-		printMachineLSEPrototype(m)
+		printMachineLSEPrototype(m, keysOnly)
 	}
 }
 
-func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype) {
+func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
@@ -518,6 +522,7 @@ func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype) {
 		virtualTypes += fmt.Sprintf("%s,", vm.GetVirtualType())
 	}
 	out += fmt.Sprintf("%s\t", strings.TrimSuffix(virtualTypes, ","))
+	out += fmt.Sprintf("%s\t", m.GetTags())
 	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
@@ -536,14 +541,18 @@ func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype) {
 }
 
 // PrintRackLSEPrototypes prints the all msleps in table form.
-func PrintRackLSEPrototypes(msleps []*ufspb.RackLSEPrototype) {
+func PrintRackLSEPrototypes(msleps []*ufspb.RackLSEPrototype, keysOnly bool) {
 	defer tw.Flush()
 	for _, m := range msleps {
-		printRackLSEPrototype(m)
+		printRackLSEPrototype(m, keysOnly)
 	}
 }
 
-func printRackLSEPrototype(m *ufspb.RackLSEPrototype) {
+func printRackLSEPrototype(m *ufspb.RackLSEPrototype, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
@@ -556,6 +565,7 @@ func printRackLSEPrototype(m *ufspb.RackLSEPrototype) {
 		peripheralTypes += fmt.Sprintf("%s,", pr.GetPeripheralType())
 	}
 	out += fmt.Sprintf("%s\t", strings.TrimSuffix(peripheralTypes, ","))
+	out += fmt.Sprintf("%s\t", m.GetTags())
 	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
@@ -574,14 +584,18 @@ func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype) {
 }
 
 // PrintChromePlatforms prints the all msleps in table form.
-func PrintChromePlatforms(msleps []*ufspb.ChromePlatform) {
+func PrintChromePlatforms(msleps []*ufspb.ChromePlatform, keysOnly bool) {
 	defer tw.Flush()
 	for _, m := range msleps {
-		printChromePlatform(m)
+		printChromePlatform(m, keysOnly)
 	}
 }
 
-func printChromePlatform(m *ufspb.ChromePlatform) {
+func printChromePlatform(m *ufspb.ChromePlatform, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)

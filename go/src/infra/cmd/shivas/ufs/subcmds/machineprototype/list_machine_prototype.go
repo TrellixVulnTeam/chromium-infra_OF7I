@@ -6,6 +6,8 @@ package machineprototype
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -17,12 +19,11 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // ListMachineLSEPrototypeCmd list all MachineLSEPrototypes.
 var ListMachineLSEPrototypeCmd = &subcommands.Command{
-	UsageLine: "machine-prototype [Filters...]",
+	UsageLine: "machineprototype [Filters...]",
 	ShortDesc: "List all machine prototypes",
 	LongDesc:  cmdhelp.ListMachineLSEPrototypeLongDesc,
 	CommandRun: func() subcommands.CommandRun {
@@ -31,21 +32,21 @@ var ListMachineLSEPrototypeCmd = &subcommands.Command{
 		c.envFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
-		c.Flags.StringVar(&c.labFilter, "lab", "", "lab name to filter the results.\n"+
-			"acs - ACS lab machine prototypes\n"+
-			"atl - ATL lab machine prototypes\n"+
-			"browser - Browser lab machine prototypes")
+		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.MachineLSEPrototypeFilterHelp)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 		return c
 	},
 }
 
 type listMachineLSEPrototype struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
-	pageSize  int
-	json      bool
-	labFilter string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+	pageSize    int
+	json        bool
+	filter      string
+	keysOnly    bool
 }
 
 func (c *listMachineLSEPrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -66,22 +67,26 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.json {
-		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter))
+		return utils.PrintListJSONFormatDup(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), ufsUtil.FormatLabFilter(c.labFilter), utils.MachinelseprototypeTitle)
+	return utils.PrintListTableFormatDup(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), c.filter, c.keysOnly, utils.MachinelseprototypeTitle)
 }
 
-func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string) (string, error) {
+func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
 	req := &ufsAPI.ListMachineLSEPrototypesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
 		Filter:    filter,
+		KeysOnly:  keysOnly,
 	}
 	res, err := ic.ListMachineLSEPrototypes(ctx, req)
 	if err != nil {
@@ -90,17 +95,22 @@ func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json 
 	if json {
 		utils.PrintMachineLSEPrototypesJSON(res.MachineLSEPrototypes)
 	} else {
-		utils.PrintMachineLSEPrototypes(res.MachineLSEPrototypes)
+		utils.PrintMachineLSEPrototypes(res.MachineLSEPrototypes, keysOnly)
 	}
 	return res.GetNextPageToken(), nil
 }
 
 func (c *listMachineLSEPrototype) validateArgs() error {
-	if c.labFilter != "" && !ufsUtil.IsValidFilter(c.labFilter) {
-		return cmdlib.NewUsageError(c.Flags, "Please provide a correct filter\n"+
-			"acs - ACS lab machine prototypes\n"+
-			"atl - ATL lab machine prototypes\n"+
-			"browser - Browser lab machine prototytpes")
+	if c.filter != "" {
+		filter := fmt.Sprintf(strings.Replace(c.filter, " ", "", -1))
+		if !ufsAPI.FilterRegex.MatchString(filter) {
+			return cmdlib.NewUsageError(c.Flags, ufsAPI.InvalidFilterFormat)
+		}
+		var err error
+		c.filter, err = utils.ReplaceLabNames(filter)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
