@@ -286,6 +286,78 @@ func TestListMachineLSEs(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.MachineLSEs, ShouldResembleProto, machineLSEs)
 		})
+		Convey("ListMachineLSEs get free vm slots", func() {
+			_, err := inventory.ImportMachineLSEs(tf.C, []*ufspb.MachineLSE{
+				{
+					Name:         "lse-vm-1",
+					Hostname:     "lse-vm-1",
+					Manufacturer: "apple",
+					Lab:          "mtv97",
+					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+							VmCapacity: 2,
+						},
+					},
+				},
+				{
+					Name:         "lse-vm-2",
+					Hostname:     "lse-vm-2",
+					Manufacturer: "apple",
+					Lab:          "mtv97",
+					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+							VmCapacity: 3,
+						},
+					},
+				},
+				{
+					Name:         "lse-vm-3",
+					Hostname:     "lse-vm-3",
+					Manufacturer: "apple",
+					Lab:          "mtv1234",
+					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+							VmCapacity: 2,
+						},
+					},
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname: "lse-vm-1",
+					Vlan:     "vlan-vm",
+				},
+				{
+					Hostname: "lse-vm-2",
+					Vlan:     "vlan-vm2",
+				},
+			})
+			So(err, ShouldBeNil)
+
+			resp, err := tf.Fleet.ListMachineLSEs(tf.C, &ufsAPI.ListMachineLSEsRequest{
+				PageSize: 3,
+				Filter:   "man=apple & lab=mtv97 & free=true",
+			})
+			So(err, ShouldBeNil)
+			So(resp.GetMachineLSEs(), ShouldHaveLength, 2)
+			for _, r := range resp.GetMachineLSEs() {
+				switch r.GetName() {
+				case "lse-vm-1":
+					So(r.GetLab(), ShouldEqual, "mtv97")
+				case "lse-vm-2":
+					So(r.GetLab(), ShouldEqual, "mtv97")
+				}
+			}
+
+			resp, err = tf.Fleet.ListMachineLSEs(tf.C, &ufsAPI.ListMachineLSEsRequest{
+				PageSize: 2,
+				Filter:   "man=apple & lab=mtv97 & free=true",
+			})
+			So(err, ShouldBeNil)
+			// 1 host is enough for 2 slots
+			So(resp.GetMachineLSEs(), ShouldHaveLength, 1)
+		})
 	})
 }
 
@@ -716,7 +788,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
 
 			// Verify machine lses
-			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false)
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false, nil)
 			So(err, ShouldBeNil)
 			So(ufsAPI.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
 			for _, r := range machineLSEs {
@@ -780,7 +852,7 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"acs-lab:camera", "acs-lab:wificell", "atl-lab:labstation", "atl-lab:standard"})
 
 			// Verify machine lses
-			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false)
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false, nil)
 			So(err, ShouldBeNil)
 			So(ufsAPI.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"chromeos2-test_host", "chromeos3-test_host", "chromeos5-test_host", "test_servo"})
 			// Spot check some fields

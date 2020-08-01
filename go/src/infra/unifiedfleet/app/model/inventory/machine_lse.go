@@ -127,28 +127,26 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 	return nil, err
 }
 
-// ListMachineLSEs lists the machines
-// Does a query over MachineLSE entities. Returns up to pageSize entities, plus non-nil cursor (if
-// there are more results). pageSize must be positive.
-func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
-	q, err := ufsds.ListQuery(ctx, MachineLSEKind, pageSize, pageToken, filterMap, keysOnly)
-	if err != nil {
-		return nil, "", err
-	}
+func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize int32, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *MachineLSEEntity, cb datastore.CursorCB) error {
 		if keysOnly {
 			machineLSE := &ufspb.MachineLSE{
 				Name: ent.ID,
 			}
-			res = append(res, machineLSE)
+			if validFunc == nil || (validFunc != nil && validFunc(machineLSE)) {
+				res = append(res, machineLSE)
+			}
 		} else {
 			pm, err := ent.GetProto()
 			if err != nil {
 				logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
 				return nil
 			}
-			res = append(res, pm.(*ufspb.MachineLSE))
+			machineLSE := pm.(*ufspb.MachineLSE)
+			if validFunc == nil || (validFunc != nil && validFunc(machineLSE)) {
+				res = append(res, machineLSE)
+			}
 		}
 		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
@@ -160,12 +158,23 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string, filt
 	})
 	if err != nil {
 		logging.Errorf(ctx, "Failed to List MachineLSEs %s", err)
-		return nil, "", status.Errorf(codes.Internal, ufsds.InternalError)
+		return nil, "", status.Errorf(codes.Internal, err.Error())
 	}
 	if nextCur != nil {
 		nextPageToken = nextCur.String()
 	}
 	return
+}
+
+// ListMachineLSEs lists the machine lses
+// Does a query over MachineLSE entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) ([]*ufspb.MachineLSE, string, error) {
+	q, err := ufsds.ListQuery(ctx, MachineLSEKind, pageSize, pageToken, filterMap, keysOnly)
+	if err != nil {
+		return nil, "", err
+	}
+	return listMachineLSEHelper(ctx, q, pageSize, keysOnly, validFunc)
 }
 
 // DeleteMachineLSE deletes the machineLSE in datastore
@@ -269,8 +278,10 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "machinelse_prototype_id"
 	case util.ManufacturerFilterName:
 		field = "manufacturer"
+	case util.FreeVMFilterName:
+		field = "free"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/lab/rack/switch/man", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/lab/rack/switch/man/free", input)
 	}
 	return field, nil
 }
