@@ -60,6 +60,7 @@ func (c listApp) GetCommands() []*subcommands.Command {
 		drac.ListDracCmd,
 		nic.ListNicCmd,
 		vm.ListVMCmd,
+		vm.ListVMSlotCmd,
 		rack.ListRackCmd,
 		machineprototype.ListMachineLSEPrototypeCmd,
 		rackprototype.ListRackLSEPrototypeCmd,

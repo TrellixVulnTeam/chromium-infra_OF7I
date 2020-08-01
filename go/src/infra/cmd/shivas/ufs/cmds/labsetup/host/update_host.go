@@ -81,7 +81,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	var machinelse ufspb.MachineLSE
+	machinelse := &ufspb.MachineLSE{}
 	if c.interactive {
 		return errors.New("Interactive mode for this " +
 			"command is not yet implemented yet. Use JSON input mode.")
@@ -89,27 +89,41 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		//utils.GetMachinelseInteractiveInput(ctx, ic, &machinelse, true)
 	}
 	if c.newSpecsFile != "" {
-		if err = utils.ParseJSONFile(c.newSpecsFile, &machinelse); err != nil {
+		if err = utils.ParseJSONFile(c.newSpecsFile, machinelse); err != nil {
 			return err
 		}
 	} else {
-		c.parseArgs(&machinelse)
+		c.parseArgs(machinelse)
 	}
 
 	var machineNames []string
 	if c.machineName != "" {
 		machineNames = append(machineNames, c.machineName)
 	}
-	networkOptions := map[string]*ufsAPI.NetworkOption{
-		machinelse.Name: {
-			Delete: c.deleteVlan,
-			Vlan:   c.vlanName,
-			Nic:    c.nicName,
-		},
+
+	// Get the host MachineLSE
+	oldMachinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostName),
+	})
+	if err != nil {
+		return errors.Annotate(err, "No host with hostname %s found", c.hostName).Err()
 	}
+	oldMachinelse.Name = ufsUtil.RemovePrefix(oldMachinelse.Name)
+	var networkOptions map[string]*ufsAPI.NetworkOption
+	if c.deleteVlan || c.vlanName != "" {
+		networkOptions = map[string]*ufsAPI.NetworkOption{
+			machinelse.Name: {
+				Delete: c.deleteVlan,
+				Vlan:   c.vlanName,
+				Nic:    c.nicName,
+			},
+		}
+		machinelse = oldMachinelse
+	}
+
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
-		MachineLSE:     &machinelse,
+		MachineLSE:     machinelse,
 		Machines:       machineNames,
 		NetworkOptions: networkOptions,
 	})

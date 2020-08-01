@@ -648,6 +648,27 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 	}
 }
 
+// PrintFreeVMs prints the all free slots in table form.
+func PrintFreeVMs(ctx context.Context, ic ufsAPI.FleetClient, hosts []*ufspb.MachineLSE) {
+	defer tw.Flush()
+	printTitle([]string{"Host", "Vlan", "Lab", "Slots"})
+	for _, h := range hosts {
+		h.Name = ufsUtil.RemovePrefix(h.Name)
+		printFreeVM(ctx, ic, h)
+	}
+}
+
+func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.MachineLSE) {
+	res, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+		Hostname: host.GetName(),
+	})
+	out := fmt.Sprintf("%s\t", host.GetName())
+	out += fmt.Sprintf("%s\t", res.GetVlan())
+	out += fmt.Sprintf("%s\t", host.GetLab())
+	out += fmt.Sprintf("%d\t", int(host.GetChromeBrowserMachineLse().GetVmCapacity())-len(host.GetChromeBrowserMachineLse().GetVms()))
+	fmt.Fprintln(tw, out)
+}
+
 // PrintVMs prints the all vms in table form.
 func PrintVMs(vms []*ufspb.VM) {
 	defer tw.Flush()

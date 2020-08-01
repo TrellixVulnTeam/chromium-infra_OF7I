@@ -964,6 +964,13 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & nic=nic-1'
 'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
+	// VMSlotFilterHelp help text for list free vm slots filtering
+	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by lab/manufacturer` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'man=apple'
+'lab=atl97 & man=apple'` + FilterCondition
+
 	// RackFilterHelp help text for list rack filtering
 	RackFilterHelp string = FilterText + `You can filter racks by switch/kvm/rpm/lab` + LabFilterHelpText +
 		`Filter format Egs:
