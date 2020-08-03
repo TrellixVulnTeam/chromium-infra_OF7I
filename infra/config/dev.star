@@ -111,7 +111,14 @@ luci.realm(
 luci.realm(
     name = "pool/chromium.tests",
     bindings = [
-        # empty for now
+        luci.binding(
+            roles = "role/swarming.poolUser",
+            groups = [
+                # Who can directly submit tasks into the pool.
+                # TODO(crbug.com/1066839): remove after completed tests on dev.
+                "chromium-swarm-dev-users",
+            ],
+        ),
     ],
 )
 
