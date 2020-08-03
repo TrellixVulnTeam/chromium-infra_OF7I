@@ -189,12 +189,15 @@ class ResolvedSpec(object):
     """
     return self._all_deps_and_tools
 
-  def cipd_spec(self, version):
+  def cipd_spec(self, version, infra_3pp_hash=None):
     """Returns a CIPDSpec object for the result of building this ResolvedSpec's
     package/platform/version.
 
     Args:
       * version (str) - The symver of this package to get the CIPDSpec for.
+      * infra_3pp_hash(str|None) - The infra ecosystem hash. This will be used
+      to set an extra_tag for built package before uploading. It will not be
+      passed when fetching sources in source stage.
     """
     pkg_name = '%s%s/%s' % (self._package_prefix, self.upload_pb.pkg_prefix,
                             self.name)
@@ -203,6 +206,7 @@ class ResolvedSpec(object):
     patch_ver = self.create_pb.source.patch_version
 
     extra_tags = {}
+    extra_tags['3pp_ecosystem_hash'] = infra_3pp_hash
     if self.create_pb.package.alter_version_re:
       extra_tags['real_version'] = version
       version = re.sub(

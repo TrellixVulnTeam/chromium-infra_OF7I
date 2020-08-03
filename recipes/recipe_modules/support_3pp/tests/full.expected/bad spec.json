@@ -1,6 +1,25 @@
 [
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "RECIPE_REPO[infra]",
+      "recipes/recipe_modules/support_3pp",
+      "recipes/recipes/3pp.py",
+      "infra/tools/dockerbuild"
+    ],
+    "infra_step": true,
+    "name": "compute recipe file hash",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
       "echo",
       "3pp/"
     ],
@@ -35,6 +54,27 @@
     "name": "load package specs",
     "~followup_annotations": [
       "@@@STEP_EXCEPTION@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "../[CACHE]/builder/package_repo"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "infra_step": true,
+    "name": "load package specs.Compute package hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
     ]
   },
   {
@@ -79,7 +119,7 @@
       "    builder.join('package_repo'))",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/recipe_api.py\", in _inner",
       "    return func(*a, **kw)",
-      "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/api.py\", line 569, in load_packages_from_path",
+      "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/api.py\", line 582, in load_packages_from_path",
       "    raise BadParse('While adding %r: %r' % (pkg, str(ex)))",
       "BadParse: While adding 'bad': '1:1 : Message type \"recipe_modules.infra.support_3pp.Spec\" has no field named \"narwhal\".'"
     ]

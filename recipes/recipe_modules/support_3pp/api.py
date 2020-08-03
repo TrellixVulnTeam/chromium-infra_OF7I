@@ -294,6 +294,7 @@ This module uses the following named caches:
   * `windows_sdk` - Cache for `depot_tools/windows_sdk`. Only on Windows.
 """
 
+import hashlib
 import re
 
 from google.protobuf import json_format as jsonpb
@@ -389,6 +390,11 @@ class Support3ppApi(recipe_api.RecipeApi):
     # accidentally between recipe tests.
     self._cipd_spec_pool = None
 
+    # hashlib.sha256 object storing hash of support_3pp related files/modules.
+    # This hash is initialized with support_3pp's self_hash, and will be updated
+    # each time when a new package is loaded by load_packages_from_path method.
+    self._infra_3pp_hash = hashlib.sha256()
+
     # (required) The package prefix to use for built packages (not for package
     # sources).
     #
@@ -398,6 +404,7 @@ class Support3ppApi(recipe_api.RecipeApi):
 
   def initialize(self):
     self._cipd_spec_pool = cipd_spec.CIPDSpecPool(self.m)
+    self._infra_3pp_hash.update(self._self_hash())
 
   def package_prefix(self, experimental=False):
     """Returns the CIPD package name prefix (str), if any is set.
@@ -513,13 +520,14 @@ class Support3ppApi(recipe_api.RecipeApi):
     Args:
       * spec (ResolvedSpec) - The spec to build.
       * version (str) - The symver of the package that we want to build.
+        of support_3pp module and packages loaded by the recipe.
       * force_build (bool) - If True, ignore remote server checks.
 
     Returns CIPDSpec for the built package.
     """
     return create.build_resolved_spec(
       self.m, self._resolve_for, self._built_packages, force_build,
-      spec, version)
+      spec, version, self._infra_3pp_hash.hexdigest())
 
   def load_packages_from_path(self, path):
     """Loads all package definitions from the given path.
@@ -553,6 +561,11 @@ class Support3ppApi(recipe_api.RecipeApi):
     discovered = set()
 
     with self.m.step.nest('load package specs'):
+      # Add package hash each time recipe loads a package from path
+      self._infra_3pp_hash.update(self.m.file.compute_hash(
+                                            'Compute package hash',
+                                            [path], self.m.path['start_dir'],
+                                            'deadbeef'))
       for spec in known_package_specs:
         pkg = spec.pieces[-2]  # ../../<name>/3pp.pb
         if pkg in self._loaded_specs:
@@ -570,6 +583,40 @@ class Support3ppApi(recipe_api.RecipeApi):
         discovered.add(pkg)
 
     return discovered
+
+  def _self_hash(self):
+    """Calculates SHA256 hash for support_3pp module and recipe.
+
+    This includes:
+      * The hash of this file (3pp.py)
+      * The hash of the support_3pp recipe module
+      * The hash of the dockerbuild script directory
+
+    Returns:
+      A list[str] of 3 hashes computed.
+
+    Raises a BadDirectoryPermission exception if cannot access a file in given
+    directory. This in turn might stop further recipe execution.
+    """
+    # Base path for calculating hash.
+    base_path = self.repo_resource()
+
+    # File path of support_3pp recipe module.
+    recipe_module_path = self.repo_resource('recipes', 'recipe_modules',
+                                            'support_3pp')
+
+    # File path of 3pp.py file.
+    recipe_file_path = self.repo_resource('recipes', 'recipes', '3pp.py')
+
+    # File path of infra/tools/dockerbuild.
+    dockerbuild_path = self.repo_resource('infra', 'tools', 'dockerbuild')
+
+    paths = [recipe_module_path, recipe_file_path, dockerbuild_path]
+
+    return self.m.file.compute_hash(name='compute recipe file hash',
+                                    paths=paths,
+                                    base_path=base_path,
+                                    test_data='deadbeef')
 
   def ensure_uploaded(self, packages=(), platform='', force_build=False):
     """Executes entire {fetch,build,package,verify,upload} pipeline for all the

@@ -1,6 +1,25 @@
 [
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "RECIPE_REPO[infra]",
+      "recipes/recipe_modules/support_3pp",
+      "recipes/recipes/3pp.py",
+      "infra/tools/dockerbuild"
+    ],
+    "infra_step": true,
+    "name": "compute recipe file hash",
+    "~followup_annotations": [
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
+  },
+  {
+    "cmd": [
       "echo",
       "3pp/"
     ],
@@ -42,6 +61,27 @@
   {
     "cmd": [],
     "name": "load package specs"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "compute_hash",
+      "[START_DIR]",
+      "../[CACHE]/builder/package_repo"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1"
+    },
+    "infra_step": true,
+    "name": "load package specs.Compute package hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@Hash calculated: deadbeef@@@"
+    ]
   },
   {
     "cmd": [
@@ -987,6 +1027,8 @@
       "-ref",
       "latest",
       "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
+      "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:1.0",
@@ -1287,6 +1329,8 @@
       "-ref",
       "latest",
       "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
+      "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:1.0.0",
@@ -1583,6 +1627,8 @@
       "[CACHE]/3pp_cipd/3pp/tools/fetch_and_package/40-chars-fake-of-the-package-instance_id",
       "-ref",
       "latest",
+      "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -2264,6 +2310,8 @@
       "-ref",
       "latest",
       "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
+      "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:1.2.0",
@@ -2801,6 +2849,8 @@
       "[CACHE]/3pp_cipd/3pp/tools/windows_experiment/mac-amd64/40-chars-fake-of-the-package-instance_id",
       "-ref",
       "latest",
+      "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -3921,6 +3971,8 @@
       "pkg-register",
       "[CACHE]/3pp_cipd/3pp/build_tools/tool/mac-amd64/40-chars-fake-of-the-package-instance_id",
       "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
+      "-tag",
       "build_id:8945511751514863184",
       "-tag",
       "version:1.5.0-rc1.chops.1",
@@ -4560,6 +4612,8 @@
       "[CACHE]/3pp_cipd/3pp/deps/dep/mac-amd64/40-chars-fake-of-the-package-instance_id",
       "-ref",
       "latest",
+      "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",
@@ -5208,6 +5262,8 @@
       "[CACHE]/3pp_cipd/3pp/tools/pkg/mac-amd64/40-chars-fake-of-the-package-instance_id",
       "-ref",
       "latest",
+      "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
       "-tag",
       "build_id:8945511751514863184",
       "-tag",

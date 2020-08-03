@@ -17,7 +17,8 @@ from .workdir import Workdir
 from PB.recipe_modules.infra.support_3pp.spec import Spec
 
 
-def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version):
+def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
+                        infra_3pp_hash):
   """Builds a resolved spec at a specific version, then uploads it.
 
   Args:
@@ -33,6 +34,7 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version):
       avoid attempting to upload a duplicately-tagged package.
     * spec (ResolvedSpec) - The resolved spec to build.
     * version (str) - The symver (or 'latest') version of the package to build.
+    * infra_3pp_hash(str) - If specified, tells 3pp hash used for this build.
 
   Returns the CIPDSpec of the built package; If the package already existed on
   the remote server, it will return the CIPDSpec immediately (without attempting
@@ -73,14 +75,15 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version):
         if keys[-1] in cache:
           return set_cache(cache[keys[-1]])
 
-      cipd_spec = spec.cipd_spec(version)
+      cipd_spec = spec.cipd_spec(version, infra_3pp_hash)
       # See if the specific version is uploaded
       if force_build or not cipd_spec.check():
         # Otherwise, build it
         _build_impl(
           api, cipd_spec, is_latest, spec_lookup, force_build,
           (lambda spec, version: build_resolved_spec(
-            api, spec_lookup, cache, force_build, spec, version)),
+            api, spec_lookup, cache, force_build, spec, version,
+            infra_3pp_hash)),
           spec, version)
 
       return set_cache(cipd_spec)
