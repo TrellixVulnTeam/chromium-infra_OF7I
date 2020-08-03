@@ -36,8 +36,7 @@ Gets the drac and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
-
-		c.Flags.BoolVar(&c.full, "full", false, "get the full information of a drac")
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
@@ -47,8 +46,7 @@ type getDrac struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
-
-	full bool
+	outputFlags site.OutputFlags
 }
 
 func (c *getDrac) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -78,19 +76,6 @@ func (c *getDrac) innerRun(a subcommands.Application, args []string, env subcomm
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
-	if c.full {
-		drac, dracDHCP, err := c.getFull(ctx, ic, args[0])
-		if err != nil {
-			return err
-		}
-		utils.PrintProtoJSON(drac)
-		if dracDHCP != nil {
-			utils.PrintProtoJSON(dracDHCP)
-		}
-		return nil
-	}
-
 	res, err := ic.GetDrac(ctx, &ufsAPI.GetDracRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.DracCollection, args[0]),
 	})
@@ -98,8 +83,39 @@ func (c *getDrac) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
-	fmt.Println()
+	if c.outputFlags.Full() {
+		return c.printFull(ctx, ic, res)
+	}
+	return c.print(res)
+}
+
+func (c *getDrac) printFull(ctx context.Context, ic ufsAPI.FleetClient, drac *ufspb.Drac) error {
+	machine, _ := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, drac.GetMachine()),
+	})
+	if machine != nil {
+		machine.Name = ufsUtil.RemovePrefix(machine.Name)
+	}
+	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+		Hostname: drac.Name,
+	})
+	// JSON mode is disabled for full mode for now
+	if !c.outputFlags.Tsv() {
+		utils.PrintTitle(utils.DracFullTitle)
+	}
+	utils.PrintDracFull(drac, machine, dhcp)
+	return nil
+}
+
+func (c *getDrac) print(drac *ufspb.Drac) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(drac)
+	} else {
+		if !c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.DracTitle)
+		}
+		utils.PrintDracs([]*ufspb.Drac{drac}, false)
+	}
 	return nil
 }
 

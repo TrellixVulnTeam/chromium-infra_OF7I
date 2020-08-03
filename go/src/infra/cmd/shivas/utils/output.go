@@ -30,12 +30,18 @@ var (
 		"UpdateTime"}
 	DracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
 		"Switch Port", "Password", "UpdateTime"}
-	NicTitle = []string{"Nic Name", "MAC Address", "Switch", "Switch Port",
-		"UpdateTime"}
-	MachineTitle = []string{"Machine Name", "Lab", "Rack", "Aisle", "Row",
-		"Rack Number", "Shelf", "Position", "DisplayName", "ChromePlatform",
-		"Nics", "KVM", "KVM Port", "RPM", "RPM Port", "Switch", "Switch Port",
-		"Drac", "DeploymentTicket", "Description", "Realm", "UpdateTime"}
+	DracFullTitle = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Machine", "Rack", "Attached Host", "IP", "Vlan", "UpdateTime"}
+	NicTitle      = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "UpdateTime"}
+	NicFullTitle  = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Machine", "Rack", "Attached Host", "IP", "Vlan", "UpdateTime"}
+	MachineTitle  = []string{"Machine Name", "Lab", "Rack", "Barcode", "ChromePlatform",
+		"Nics", "Drac", "DeploymentTicket", "Description", "Realm", "UpdateTime"}
+	BrowserMachineFullTitle = []string{
+		"Machine Name", "Host", "Lab", "Rack", "ChromePlatform",
+		"Nics", "Drac", "kvms", "switches", "DeploymentTicket", "Description", "Realm", "UpdateTime",
+	}
+	OSMachineFullTitle = []string{
+		"Machine Name", "Lab", "Rack", "Barcode", "UpdateTime",
+	}
 	MachinelseprototypeTitle = []string{"Machine Prototype Name",
 		"Occupied Capacity", "PeripheralTypes", "VirtualTypes",
 		"Tags", "UpdateTime"}
@@ -360,6 +366,26 @@ func PrintRPMsJSON(rpms []*ufspb.RPM) {
 	}
 }
 
+// PrintDracFull prints the full related msg for drac
+func PrintDracFull(drac *ufspb.Drac, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
+	defer tw.Flush()
+	var ts string
+	if t, err := ptypes.Timestamp(drac.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(drac.Name))
+	out += fmt.Sprintf("%s\t", drac.GetMacAddress())
+	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetSwitch())
+	out += fmt.Sprintf("%d\t", drac.GetSwitchInterface().GetPort())
+	out += fmt.Sprintf("%s\t", machine.GetName())
+	out += fmt.Sprintf("%s\t", machine.GetLocation().GetRack())
+	out += fmt.Sprintf("%s\t", dhcp.GetHostname())
+	out += fmt.Sprintf("%s\t", dhcp.GetIp())
+	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
 // PrintDracs prints the all dracs in table form.
 func PrintDracs(dracs []*ufspb.Drac, keysOnly bool) {
 	defer tw.Flush()
@@ -400,6 +426,26 @@ func PrintDracsJSON(dracs []*ufspb.Drac) {
 	}
 }
 
+// PrintNicFull prints the full related msg for nic
+func PrintNicFull(nic *ufspb.Nic, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
+	defer tw.Flush()
+	var ts string
+	if t, err := ptypes.Timestamp(nic.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(nic.Name))
+	out += fmt.Sprintf("%s\t", nic.GetMacAddress())
+	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetSwitch())
+	out += fmt.Sprintf("%d\t", nic.GetSwitchInterface().GetPort())
+	out += fmt.Sprintf("%s\t", machine.GetName())
+	out += fmt.Sprintf("%s\t", machine.GetLocation().GetRack())
+	out += fmt.Sprintf("%s\t", dhcp.GetHostname())
+	out += fmt.Sprintf("%s\t", dhcp.GetIp())
+	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
 // PrintNics prints the all nics in table form.
 func PrintNics(nics []*ufspb.Nic, keysOnly bool) {
 	defer tw.Flush()
@@ -438,6 +484,51 @@ func PrintNicsJSON(nics []*ufspb.Nic) {
 	}
 }
 
+// PrintMachineFull prints the full machine info.
+func PrintMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) {
+	defer tw.Flush()
+	if m.GetChromeBrowserMachine() != nil {
+		printBrowserMachineFull(m, lse, rack)
+	}
+	if m.GetChromeosMachine() != nil {
+		printOSMachineFull(m)
+	}
+}
+
+func printBrowserMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) {
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", lse.GetName())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetNics())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDrac())
+	out += fmt.Sprintf("%s\t", rack.GetChromeBrowserRack().GetKvms())
+	out += fmt.Sprintf("%s\t", rack.GetChromeBrowserRack().GetSwitches())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDeploymentTicket())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDescription())
+	out += fmt.Sprintf("%s\t", m.GetRealm())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
+func printOSMachineFull(m *ufspb.Machine) {
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetBarcodeName())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
 // PrintMachines prints the all machines in table form.
 func PrintMachines(machines []*ufspb.Machine, keysOnly bool) {
 	defer tw.Flush()
@@ -459,20 +550,9 @@ func printMachine(m *ufspb.Machine, keysOnly bool) {
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetAisle())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetRow())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetRackNumber())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetShelf())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetPosition())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDisplayName())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetBarcodeName())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetNics())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetKvmInterface().GetKvm())
-	out += fmt.Sprintf("%d\t", m.GetChromeBrowserMachine().GetKvmInterface().GetPort())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetRpmInterface().GetRpm())
-	out += fmt.Sprintf("%d\t", m.GetChromeBrowserMachine().GetRpmInterface().GetPort())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetNetworkDeviceInterface().GetSwitch())
-	out += fmt.Sprintf("%d\t", m.GetChromeBrowserMachine().GetNetworkDeviceInterface().GetPort())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDrac())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDeploymentTicket())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDescription())

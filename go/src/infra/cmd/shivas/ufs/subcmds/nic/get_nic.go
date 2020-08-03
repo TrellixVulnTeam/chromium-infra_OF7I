@@ -5,6 +5,7 @@
 package nic
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -15,6 +16,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -34,6 +36,7 @@ Gets the nic and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
@@ -43,6 +46,7 @@ type getNic struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 }
 
 func (c *getNic) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -79,8 +83,52 @@ func (c *getNic) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
-	fmt.Println()
+	if c.outputFlags.Full() {
+		return c.printFull(ctx, ic, res)
+	}
+	return c.print(res)
+}
+
+func (c *getNic) printFull(ctx context.Context, ic ufsAPI.FleetClient, nic *ufspb.Nic) error {
+	machine, _ := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, nic.GetMachine()),
+	})
+	if machine != nil {
+		machine.Name = ufsUtil.RemovePrefix(machine.Name)
+	}
+	res2, _ := ic.ListMachineLSEs(ctx, &ufsAPI.ListMachineLSEsRequest{
+		Filter: ufsUtil.MachineFilterName + "=" + machine.Name,
+	})
+	var lse *ufspb.MachineLSE
+	if res2 != nil && len(res2.GetMachineLSEs()) > 0 {
+		if res2.GetMachineLSEs()[0].GetNic() == nic.GetName() {
+			lse = res2.GetMachineLSEs()[0]
+			lse.Name = ufsUtil.RemovePrefix(lse.Name)
+		}
+	}
+	var dhcp *ufspb.DHCPConfig
+	if lse != nil {
+		dhcp, _ = ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+			Hostname: lse.GetName(),
+		})
+	}
+	// JSON mode is disabled for full mode for now
+	if !c.outputFlags.Tsv() {
+		utils.PrintTitle(utils.NicFullTitle)
+	}
+	utils.PrintNicFull(nic, machine, dhcp)
+	return nil
+}
+
+func (c *getNic) print(nic *ufspb.Nic) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(nic)
+	} else {
+		if !c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.NicTitle)
+		}
+		utils.PrintNics([]*ufspb.Nic{nic}, false)
+	}
 	return nil
 }
 

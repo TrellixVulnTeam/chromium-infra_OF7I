@@ -5,6 +5,7 @@
 package machine
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -38,6 +39,7 @@ Gets the machine and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
@@ -47,6 +49,7 @@ type getMachine struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 }
 
 func (c *getMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -82,28 +85,10 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 		return errors.Annotate(err, "Failed to get machine").Err()
 	}
 	machine.Name = ufsUtil.RemovePrefix(machine.Name)
-	req := &ufsAPI.ListMachineLSEsRequest{
-		Filter: ufsUtil.MachineFilterName + "=" + machine.Name,
+	if c.outputFlags.Full() {
+		return c.printFull(ctx, ic, machine)
 	}
-	res, err := ic.ListMachineLSEs(ctx, req)
-	if err != nil {
-		if c.commonFlags.Verbose() {
-			fmt.Printf("Failed to get host for the machine: %s", err)
-		}
-	} else {
-		if c.commonFlags.Verbose() {
-			if len(res.MachineLSEs) > 1 {
-				fmt.Printf("More than one host associated with this machine. Data discrepancy warning.\n%s\n", res.MachineLSEs)
-			}
-		}
-		if len(res.MachineLSEs) > 0 {
-			res.MachineLSEs[0].Name = ufsUtil.RemovePrefix(res.MachineLSEs[0].Name)
-			return printMachineFull(machine, res.MachineLSEs[0])
-		}
-	}
-	utils.PrintProtoJSON(machine)
-	fmt.Println()
-	return nil
+	return c.print(machine)
 }
 
 func (c *getMachine) validateArgs() error {
@@ -113,7 +98,59 @@ func (c *getMachine) validateArgs() error {
 	return nil
 }
 
-func printMachineFull(machine *ufspb.Machine, machinelse *ufspb.MachineLSE) error {
+func (c *getMachine) printFull(ctx context.Context, ic ufsAPI.FleetClient, machine *ufspb.Machine) error {
+	req := &ufsAPI.ListMachineLSEsRequest{
+		Filter: ufsUtil.MachineFilterName + "=" + machine.Name,
+	}
+	var lse *ufspb.MachineLSE
+	res, err := ic.ListMachineLSEs(ctx, req)
+	if err != nil {
+		if c.commonFlags.Verbose() {
+			fmt.Printf("Failed to get host for the machine: %s", err)
+		}
+	} else {
+		if c.commonFlags.Verbose() && len(res.MachineLSEs) > 1 {
+			fmt.Printf("More than one host associated with this machine. Data discrepancy warning.\n%s\n", res.MachineLSEs)
+		}
+		if len(res.GetMachineLSEs()) > 0 {
+			lse = res.GetMachineLSEs()[0]
+			lse.Name = ufsUtil.RemovePrefix(lse.Name)
+		}
+	}
+	rack, err := ic.GetRack(ctx, &ufsAPI.GetRackRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, machine.GetLocation().GetRack()),
+	})
+	if c.outputFlags.JSON() {
+		return printMachineJSONFull(machine, lse, rack)
+	}
+	if !c.outputFlags.Tsv() {
+		if machine.GetChromeBrowserMachine() != nil {
+			utils.PrintTitle(utils.BrowserMachineFullTitle)
+		} else if machine.GetChromeosMachine() != nil {
+			utils.PrintTitle(utils.OSMachineFullTitle)
+		}
+	}
+	utils.PrintMachineFull(machine, lse, rack)
+	return nil
+}
+
+func (c *getMachine) print(machine *ufspb.Machine) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(machine)
+	} else {
+		if !c.outputFlags.Tsv() {
+			if machine.GetChromeBrowserMachine() != nil {
+				utils.PrintTitle(utils.MachineTitle)
+			} else if machine.GetChromeosMachine() != nil {
+				utils.PrintTitle(utils.OSMachineFullTitle)
+			}
+		}
+		utils.PrintMachines([]*ufspb.Machine{machine}, false)
+	}
+	return nil
+}
+
+func printMachineJSONFull(machine *ufspb.Machine, machinelse *ufspb.MachineLSE, rack *ufspb.Rack) error {
 	jm := jsonpb.Marshaler{
 		EnumsAsInts: false,
 		Indent:      "\t",
@@ -135,6 +172,17 @@ func printMachineFull(machine *ufspb.Machine, machinelse *ufspb.MachineLSE) erro
 		return errors.Annotate(err, "Failed to unmarshal machinelseJSON").Err()
 	}
 	machineout["host"] = machinelseout
+
+	rackJSON, err := jm.MarshalToString(rack)
+	if err != nil {
+		return errors.Annotate(err, "Failed to marshal rackJSON").Err()
+	}
+	rackout := map[string]interface{}{}
+	if err := json.Unmarshal([]byte(rackJSON), &rackout); err != nil {
+		return errors.Annotate(err, "Failed to unmarshal rackJSON").Err()
+	}
+	machineout["rack"] = rackout
+
 	outputJSON, err := json.MarshalIndent(machineout, "", "\t")
 	if err != nil {
 		return errors.Annotate(err, "Failed to marshal final machine output").Err()
