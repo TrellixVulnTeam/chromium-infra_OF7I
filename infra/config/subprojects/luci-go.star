@@ -67,8 +67,7 @@ ci_builder(name = "luci-go-continuous-win10-64", os = "Windows-10", tree_closing
 
 try_builder(name = "luci-go-try-trusty-64", os = "Ubuntu-14.04")
 try_builder(name = "luci-go-try-xenial-64", os = "Ubuntu-16.04", properties = {
-    # TODO(crbug.com/1112202): enable this again.
-    "run_integration_tests": False,
+    "run_integration_tests": True,
 })
 
 # TODO(tandrii): bump to 10.15 once available.
