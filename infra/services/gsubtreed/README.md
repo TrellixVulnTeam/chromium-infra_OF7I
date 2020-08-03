@@ -1,3 +1,5 @@
+Note: For googler only: Gsubtreed is deprecated.
+Please use [copybara](https://go/copybara-chrome#copybara-gsubtreed).
 # Gsubtreed
 
 #### (git subtree daemon)
