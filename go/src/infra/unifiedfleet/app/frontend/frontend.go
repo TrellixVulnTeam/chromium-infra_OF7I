@@ -6,6 +6,7 @@ package frontend
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/logging"
@@ -28,18 +29,23 @@ func InstallServices(apiServer *prpc.Server) {
 // checkAccess verifies that the request is from an authorized user.
 func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.Context, error) {
 	logging.Debugf(ctx, "Check access for %s", rpcName)
-	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs"}
+	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs", "mdb/hwops-nsi"}
 	switch rpcName {
+	case "CreateMachineLSE", "UpdateMachineLSE":
+		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-setup-label-write-access"}
+	case "DeleteMachineLSE", "CreateVlan", "UpdateVlan", "GetVlan", "ListVlans", "DeleteVlan":
+		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-privileged-access"}
+	case "ListMachineLSEs", "GetMachineLSE":
+		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team"}
 	case "ListMachines", "DeleteMachine":
 		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-privileged-access")
 	case "GetMachine", "GetState":
-		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-readonly-access")
-	case "CreateMachineLSE", "UpdateMachineLSE":
-		group = append(group, "chromeos-inventory-setup-label-write-access")
-	case "DeleteMachineLSE":
-		group = append(group, "chromeos-inventory-privileged-access")
+		group = append(group, "chromeos-inventory-readonly-access")
 	case "UpdateState":
 		group = append(group, "chromeos-inventory-status-label-write-access")
+	}
+	if strings.HasPrefix(rpcName, "Import") {
+		group = []string{"mdb/chrome-fleet-software-team"}
 	}
 	allow, err := auth.IsMember(ctx, group...)
 	if err != nil {
