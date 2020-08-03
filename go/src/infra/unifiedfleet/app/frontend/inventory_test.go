@@ -21,6 +21,7 @@ import (
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -140,6 +141,27 @@ func TestUpdateMachineLSE(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSE)
+		})
+
+		Convey("Update existing machineLSEs with states", func() {
+			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name: "machineLSE-state",
+			})
+			So(err, ShouldBeNil)
+
+			machineLSE := mockMachineLSE("machineLSE-state")
+			req := &ufsAPI.UpdateMachineLSERequest{
+				MachineLSE: machineLSE,
+				States: map[string]ufspb.State{
+					"machineLSE-state": ufspb.State_STATE_DEPLOYED_TESTING,
+				},
+			}
+			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machineLSE)
+			s, err := state.GetStateRecord(ctx, "hosts/machineLSE-state")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING)
 		})
 
 		Convey("Update machineLSE - Invalid input nil", func() {

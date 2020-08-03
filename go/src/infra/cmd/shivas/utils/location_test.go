@@ -60,6 +60,29 @@ func TestUFSLabCoverage(t *testing.T) {
 	})
 }
 
+func TestUFSStateCoverage(t *testing.T) {
+	Convey("test the ufs state mapping covers all UFS state enum", t, func() {
+		got := make(map[string]bool, len(StrToUFSState))
+		for _, v := range StrToUFSState {
+			got[v] = true
+		}
+		for l := range ufspb.State_value {
+			if l == ufspb.State_STATE_UNSPECIFIED.String() {
+				continue
+			}
+			_, ok := got[l]
+			So(ok, ShouldBeTrue)
+		}
+	})
+
+	Convey("test the ufs state mapping doesn't cover any non-UFS state enum", t, func() {
+		for _, v := range StrToUFSState {
+			_, ok := ufspb.State_value[v]
+			So(ok, ShouldBeTrue)
+		}
+	})
+}
+
 func TestReplaceLabNames(t *testing.T) {
 	Convey("TestReplaceLabNames labname error", t, func() {
 		filter := "machine=mac-1,mac-2 & lab=XXX & nic=nic-1"

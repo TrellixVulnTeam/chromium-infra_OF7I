@@ -5,6 +5,7 @@
 package vm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -16,6 +17,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -34,16 +36,18 @@ Gets the vm and prints the output in JSON format.`,
 		c := &getVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to get the VM")
+		c.outputFlags.Register(&c.Flags)
+		c.Flags.StringVar(&c.hostname, "host", "", "hostname of the host to get the VM")
 		return c
 	},
 }
 
 type getVM struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
-	hostname  string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	outputFlags site.OutputFlags
+	hostname    string
 }
 
 func (c *getVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -80,15 +84,46 @@ func (c *getVM) innerRun(a subcommands.Application, args []string, env subcomman
 	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
 
 	// Check if VM exists on the host MachineLSE and print
+	var vm *ufspb.VM
 	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
-	for _, vm := range existingVMs {
-		if vm.Name == args[0] {
-			utils.PrintProtoJSON(vm)
-			fmt.Println()
-			return nil
+	for _, v := range existingVMs {
+		if v.Name == args[0] {
+			vm = v
 		}
 	}
-	return errors.New(fmt.Sprintf("VM %s does not exist on the host %s", args[0], machinelse.Name))
+	if vm == nil {
+		return errors.New(fmt.Sprintf("VM %s does not exist on the host %s", args[0], machinelse.Name))
+	}
+	if c.outputFlags.Full() {
+		return c.printFull(ctx, ic, vm)
+	}
+	return c.print(vm)
+}
+
+func (c *getVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, vm *ufspb.VM) error {
+	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+		Hostname: vm.GetName(),
+	})
+	s, _ := ic.GetState(ctx, &ufsAPI.GetStateRequest{
+		ResourceName: ufsUtil.AddPrefix(ufsUtil.VMCollection, vm.GetName()),
+	})
+	if !c.outputFlags.Tsv() {
+		utils.PrintTitle(utils.VMFullTitle)
+	}
+	utils.PrintVMFull(vm, dhcp, s)
+	return nil
+}
+
+func (c *getVM) print(vm *ufspb.VM) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(vm)
+	} else {
+		if !c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.VMTitle)
+		}
+		utils.PrintVMs([]*ufspb.VM{vm})
+	}
+	return nil
 }
 
 func (c *getVM) validateArgs() error {

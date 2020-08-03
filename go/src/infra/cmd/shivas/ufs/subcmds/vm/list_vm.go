@@ -79,6 +79,9 @@ func (c *listVM) innerRun(a subcommands.Application, args []string, env subcomma
 	if c.outputFlags.JSON() {
 		utils.PrintVMsJSON(existingVMs)
 	} else {
+		if c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.VMTitle)
+		}
 		utils.PrintVMs(existingVMs)
 	}
 	return nil

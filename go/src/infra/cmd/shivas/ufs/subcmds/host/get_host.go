@@ -6,7 +6,6 @@ package host
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -35,18 +34,16 @@ Gets the host and prints the output in JSON format.`,
 		c := &getHost{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-
-		c.Flags.BoolVar(&c.full, "full", false, "get the full information of a host")
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
 
 type getHost struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
-
-	full bool
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	outputFlags site.OutputFlags
 }
 
 func (c *getHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -73,24 +70,6 @@ func (c *getHost) innerRun(a subcommands.Application, args []string, env subcomm
 		Options: site.DefaultPRPCOptions,
 	})
 
-	if c.full {
-		lse, machine, nic, nicDhcp, err := getFull(ctx, ic, args[0])
-		if err != nil {
-			return err
-		}
-		utils.PrintProtoJSON(lse)
-		if machine != nil {
-			utils.PrintProtoJSON(machine)
-		}
-		if nic != nil {
-			utils.PrintProtoJSON(nic)
-		}
-		if nicDhcp != nil {
-			utils.PrintProtoJSON(nicDhcp)
-		}
-		return nil
-	}
-
 	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, args[0]),
 	})
@@ -98,47 +77,53 @@ func (c *getHost) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
-	utils.PrintProtoJSON(machinelse)
-	return nil
+	if c.outputFlags.Full() {
+		return c.printFull(ctx, ic, machinelse)
+	}
+	return c.print(machinelse)
 }
 
-func getFull(ctx context.Context, ic ufsAPI.FleetClient, lseName string) (*ufspb.MachineLSE, *ufspb.Machine, *ufspb.Nic, *ufspb.DHCPConfig, error) {
-	lse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, lseName),
-	})
-	if err != nil {
-		return nil, nil, nil, nil, err
-	}
-	lse.Name = ufsUtil.RemovePrefix(lse.Name)
+func (c *getHost) printFull(ctx context.Context, ic ufsAPI.FleetClient, lse *ufspb.MachineLSE) error {
 	var nic *ufspb.Nic
 	if lse.GetNic() != "" {
-		nic, err = ic.GetNic(ctx, &ufsAPI.GetNicRequest{
+		if nic, _ = ic.GetNic(ctx, &ufsAPI.GetNicRequest{
 			Name: ufsUtil.AddPrefix(ufsUtil.NicCollection, lse.GetNic()),
-		})
-		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("Fail to get this host's nic by name %s", lse.GetNic())
+		}); nic != nil {
+			nic.Name = ufsUtil.RemovePrefix(nic.Name)
 		}
-		nic.Name = ufsUtil.RemovePrefix(nic.Name)
 	}
 	var machine *ufspb.Machine
 	if len(lse.GetMachines()) >= 1 {
-		machine, err = ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
+		if machine, _ = ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
 			Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, lse.GetMachines()[0]),
-		})
-		if err != nil {
-			return nil, nil, nil, nil, fmt.Errorf("Fail to get this host's machine by name %s", lse.GetMachines()[0])
+		}); machine != nil {
+			machine.Name = ufsUtil.RemovePrefix(machine.Name)
 		}
 	}
-	dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 		Hostname: lse.GetHostname(),
 	})
-	if ufsUtil.IsNotFoundError(err) {
-		return lse, machine, nic, nil, nil
+	s, _ := ic.GetState(ctx, &ufsAPI.GetStateRequest{
+		ResourceName: ufsUtil.AddPrefix(ufsUtil.HostCollection, lse.GetName()),
+	})
+
+	if !c.outputFlags.Tsv() {
+		utils.PrintTitle(utils.MachineLSETFullitle)
 	}
-	if err != nil {
-		return nil, nil, nil, nil, err
+	utils.PrintMachineLSEFull(lse, machine, dhcp, s)
+	return nil
+}
+
+func (c *getHost) print(lse *ufspb.MachineLSE) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(lse)
+	} else {
+		if !c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.MachineLSETitle)
+		}
+		utils.PrintMachineLSEs([]*ufspb.MachineLSE{lse}, false)
 	}
-	return lse, machine, nic, dhcp, nil
+	return nil
 }
 
 func (c *getHost) validateArgs() error {

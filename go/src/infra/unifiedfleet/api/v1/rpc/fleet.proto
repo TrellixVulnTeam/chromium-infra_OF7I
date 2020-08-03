@@ -739,6 +739,9 @@ message UpdateMachineLSERequest {
 
   // mapping of the name to the corresponding network options.
   map<string, NetworkOption> network_options = 4;
+
+  // The state to update to host/vm
+  map<string, proto.State> states = 5;
 }
 
 message GetMachineLSERequest {

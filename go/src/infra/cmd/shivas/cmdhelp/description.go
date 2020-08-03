@@ -1031,4 +1031,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 		`Filter format Egs:
 'tag=dell, 8g'
 'tag=iphone & man=Apple` + FilterCondition
+
+	// StateHelp help text for filter '-state'
+	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(utils.ValidStateStr(), ", ") + "]"
 )

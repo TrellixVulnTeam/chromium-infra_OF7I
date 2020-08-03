@@ -39,6 +39,7 @@ var UpdateHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
 		c.Flags.StringVar(&c.hostName, "name", "", "name of the host")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the host")
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -56,6 +57,7 @@ type updateHost struct {
 	vlanName    string
 	nicName     string
 	deleteVlan  bool
+	state       string
 }
 
 func (c *updateHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -110,6 +112,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 	}
 	oldMachinelse.Name = ufsUtil.RemovePrefix(oldMachinelse.Name)
 	var networkOptions map[string]*ufsAPI.NetworkOption
+	var states map[string]ufspb.State
 	if c.deleteVlan || c.vlanName != "" {
 		networkOptions = map[string]*ufsAPI.NetworkOption{
 			machinelse.Name: {
@@ -118,6 +121,14 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 				Nic:    c.nicName,
 			},
 		}
+		// Can be removed after partial update is enabled.
+	}
+	if c.state != "" {
+		states = map[string]ufspb.State{
+			machinelse.Name: utils.ToUFSState(c.state),
+		}
+	}
+	if c.newSpecsFile == "" {
 		machinelse = oldMachinelse
 	}
 
@@ -126,6 +137,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		MachineLSE:     machinelse,
 		Machines:       machineNames,
 		NetworkOptions: networkOptions,
+		States:         states,
 	})
 	if err != nil {
 		return err
@@ -162,9 +174,12 @@ func (c *updateHost) validateArgs() error {
 		if c.hostName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
 		}
-		if c.vlanName == "" && !c.deleteVlan {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan'] is required.")
+		if c.vlanName == "" && !c.deleteVlan && c.state == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan', '-state'] is required.")
 		}
+	}
+	if c.state != "" && !utils.IsUFSState(c.state) {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 	}
 	return nil
 }

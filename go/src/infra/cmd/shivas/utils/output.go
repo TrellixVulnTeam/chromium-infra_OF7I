@@ -49,11 +49,12 @@ var (
 		"Tags", "UpdateTime"}
 	ChromePlatformTitle = []string{"Platform Name", "Manufacturer",
 		"Description", "UpdateTime"}
-	vmTitle = []string{"VM Name", "OS Version", "OS Desc", "MAC Address",
-		"VM Hostname"}
-	RackTitle = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs",
+	VMTitle     = []string{"VM Name", "OS Version", "OS Desc", "MAC Address"}
+	VMFullTitle = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "IP", "Vlan", "State"}
+	RackTitle   = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs",
 		"Capacity", "Realm", "UpdateTime"}
-	MachineLSETitle = []string{"Host Name"}
+	MachineLSETitle     = []string{"Host", "Lab", "Rack", "Nic", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETFullitle = []string{"Host", "Machine", "Lab", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -718,6 +719,27 @@ func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE) {
 	}
 }
 
+// PrintMachineLSEFull prints the full info for a host
+func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
+	defer tw.Flush()
+	var ts string
+	if t, err := ptypes.Timestamp(lse.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", lse.GetName())
+	out += fmt.Sprintf("%s\t", machine.GetName())
+	out += fmt.Sprintf("%s\t", lse.GetLab())
+	out += fmt.Sprintf("%s\t", lse.GetRack())
+	out += fmt.Sprintf("%s\t", lse.GetNic())
+	out += fmt.Sprintf("%s\t", dhcp.GetIp())
+	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
+	out += fmt.Sprintf("%s\t", s.GetState())
+	out += fmt.Sprintf("%d\t", lse.GetChromeBrowserMachineLse().GetVmCapacity())
+	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(lse.GetChromeBrowserMachineLse().GetVms(), "Name")))
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
+}
+
 // PrintMachineLSEs prints the all machinelses in table form.
 func PrintMachineLSEs(machinelses []*ufspb.MachineLSE, keysOnly bool) {
 	defer tw.Flush()
@@ -729,7 +751,20 @@ func PrintMachineLSEs(machinelses []*ufspb.MachineLSE, keysOnly bool) {
 func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
 	}
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetLab())
+	out += fmt.Sprintf("%s\t", m.GetRack())
+	out += fmt.Sprintf("%s\t", m.GetNic())
+	out += fmt.Sprintf("%d\t", m.GetChromeBrowserMachineLse().GetVmCapacity())
+	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachineLse().GetVms(), "Name")))
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
 }
 
 // PrintFreeVMs prints the all free slots in table form.
@@ -753,21 +788,32 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 	fmt.Fprintln(tw, out)
 }
 
+// PrintVMFull prints the full info for vm
+func PrintVMFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
+	defer tw.Flush()
+	out := fmt.Sprintf("%s\t", vm.GetName())
+	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
+	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
+	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
+	out += fmt.Sprintf("%s\t", dhcp.GetIp())
+	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
+	out += fmt.Sprintf("%s\t", s.GetState())
+	fmt.Fprintln(tw, out)
+}
+
 // PrintVMs prints the all vms in table form.
 func PrintVMs(vms []*ufspb.VM) {
 	defer tw.Flush()
-	PrintTitle(vmTitle)
 	for _, vm := range vms {
 		printVM(vm)
 	}
 }
 
 func printVM(vm *ufspb.VM) {
-	out := fmt.Sprintf("%s\t", vm.Name)
+	out := fmt.Sprintf("%s\t", vm.GetName())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
 	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", vm.GetHostname())
 	fmt.Fprintln(tw, out)
 }
 
@@ -827,4 +873,8 @@ func PrintRacksJSON(racks []*ufspb.Rack) {
 			fmt.Println()
 		}
 	}
+}
+
+func strSlicesToStr(slices []string) string {
+	return strings.Join(slices, ",")
 }

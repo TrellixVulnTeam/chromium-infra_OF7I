@@ -42,6 +42,7 @@ Update a VM on a host by reading a JSON file input.`,
 		c.Flags.StringVar(&c.vmName, "name", "", "name of the host that this VM is running on")
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -57,6 +58,7 @@ type updateVM struct {
 	vmName     string
 	vlanName   string
 	deleteVlan bool
+	state      string
 }
 
 func (c *updateVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -113,6 +115,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	machinelse.GetChromeBrowserMachineLse().Vms = existingVMs
 
 	var networkOptions map[string]*ufsAPI.NetworkOption
+	var states map[string]ufspb.State
 	if c.deleteVlan || c.vlanName != "" {
 		networkOptions = map[string]*ufsAPI.NetworkOption{
 			vm.Name: {
@@ -122,12 +125,21 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		}
 		machinelse = oldMachinelse
 	}
+	if c.state != "" {
+		states = map[string]ufspb.State{
+			vm.Name: utils.ToUFSState(c.state),
+		}
+	}
+	if c.newSpecsFile == "" {
+		machinelse = oldMachinelse
+	}
 
 	// Update the host MachineLSE with new VM info
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE:     machinelse,
 		NetworkOptions: networkOptions,
+		States:         states,
 	})
 	if err != nil {
 		return errors.Annotate(err, "Unable to update the VM on the host").Err()
@@ -161,9 +173,12 @@ func (c *updateVM) validateArgs() error {
 		if c.vmName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-name' is required.")
 		}
-		if c.vlanName == "" && !c.deleteVlan {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so one of ['-delete-vlan', '-vlan'] is required.")
+		if c.vlanName == "" && !c.deleteVlan && c.state == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so one of ['-delete-vlan', '-vlan', '-state'] is required.")
 		}
+	}
+	if c.state != "" && !utils.IsUFSState(c.state) {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 	}
 	return nil
 }

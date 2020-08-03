@@ -117,7 +117,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 }
 
 // UpdateMachineLSE updates machinelse in datastore.
-func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpts map[string]*ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
+func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpts map[string]*ufsAPI.NetworkOption, states map[string]ufspb.State) (*ufspb.MachineLSE, error) {
 	// MachineLSEs name and hostname must always be the same
 	// Overwrite the name with hostname
 	machinelse.Name = machinelse.GetHostname()
@@ -145,6 +145,8 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	var oldMachinelse *ufspb.MachineLSE
 	f := func(ctx context.Context) error {
+		stateRecords := make([]*ufspb.StateRecord, 0)
+
 		// Validate the input
 		err := validateUpdateMachineLSE(ctx, machinelse, machineNames, nwOpts)
 		if err != nil {
@@ -181,11 +183,9 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			machinelse.Manufacturer = ""
 		}
 
-		// Update machinelse entry
 		// 4. Update ip configs
 		for k, v := range nwOpts {
 			// Update vlan/ip for the host itself
-			fmt.Println(k, machinelse.GetHostname())
 			if k == machinelse.GetHostname() {
 				if v.Delete {
 					if err := deleteDHCPHelper(ctx, k); err != nil {
@@ -197,6 +197,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 					}
 				}
 			}
+			// Update vlan/ip for the vms
 			for _, vm := range machinelse.GetChromeBrowserMachineLse().GetVms() {
 				if k == vm.GetName() {
 					if v.Delete {
@@ -213,12 +214,6 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			}
 		}
 
-		if nwOpts != nil {
-			// Before partial updating is enabled, skip updating lse if the network option is specified.
-			logging.Debugf(ctx, "Stop updating machine lse as network option is specified")
-			return nil
-		}
-
 		// 5. Update machinelse entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
@@ -226,8 +221,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			return errors.Annotate(err, "Unable to create MachineLSE %s", machinelse.Name).Err()
 		}
 
-		// 5. Update states
-		stateRecords := make([]*ufspb.StateRecord, 0)
+		// 6. Update states
 		if browserLSE := machinelse.GetChromeBrowserMachineLse(); browserLSE != nil {
 			for _, vm := range browserLSE.GetVms() {
 				resourceName := util.AddPrefix(util.VMCollection, vm.GetName())
@@ -249,6 +243,27 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 					ResourceName: util.AddPrefix(util.HostCollection, machinelse.GetName()),
 					User:         util.CurrentUser(ctx),
 				})
+			}
+		}
+
+		// 7. Update states if specified by users
+		for k, v := range states {
+			// Update state for the host itself
+			if k == machinelse.GetName() {
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        v,
+					ResourceName: util.AddPrefix(util.HostCollection, machinelse.GetName()),
+					User:         util.CurrentUser(ctx),
+				})
+			}
+			for _, vm := range machinelse.GetChromeBrowserMachineLse().GetVms() {
+				if k == vm.GetName() {
+					stateRecords = append(stateRecords, &ufspb.StateRecord{
+						State:        v,
+						ResourceName: util.AddPrefix(util.VMCollection, vm.GetName()),
+						User:         util.CurrentUser(ctx),
+					})
+				}
 			}
 		}
 		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
