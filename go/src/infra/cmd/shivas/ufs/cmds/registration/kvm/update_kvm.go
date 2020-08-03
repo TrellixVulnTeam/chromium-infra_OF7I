@@ -37,6 +37,7 @@ var UpdateKVMCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm")
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the kvm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the kvm")
+		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the kvm to")
 		return c
 	},
 }
@@ -53,6 +54,7 @@ type updateKVM struct {
 	vlanName   string
 	kvmName    string
 	deleteVlan bool
+	ip         string
 }
 
 func (c *updateKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -97,6 +99,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		NetworkOption: &ufsAPI.NetworkOption{
 			Vlan:   c.vlanName,
 			Delete: c.deleteVlan,
+			Ip:     c.ip,
 		},
 	})
 	if err != nil {
@@ -131,8 +134,8 @@ func (c *updateKVM) validateArgs() error {
 		if c.kvmName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
 		}
-		if c.vlanName == "" && !c.deleteVlan {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan'] is required.")
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan', '-ip'] is required.")
 		}
 	}
 	return nil

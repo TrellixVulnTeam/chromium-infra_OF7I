@@ -23,10 +23,10 @@ import (
 
 // Titles for printing table format list
 var (
-	SwitchTitle = []string{"Switch Name", "CapacityPort", "UpdateTime"}
-	KvmTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform",
-		"CapacityPort", "UpdateTime"}
-	RpmTitle = []string{"RPM Name", "MAC Address", "CapacityPort",
+	SwitchTitle  = []string{"Switch Name", "CapacityPort", "UpdateTime"}
+	KvmTitle     = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "UpdateTime"}
+	KvmFullTitle = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "UpdateTime", "IP", "Vlan", "State"}
+	RpmTitle     = []string{"RPM Name", "MAC Address", "CapacityPort",
 		"UpdateTime"}
 	DracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
 		"Switch Port", "Password", "UpdateTime"}
@@ -290,6 +290,24 @@ func PrintSwitchesJSON(switches []*ufspb.Switch) {
 			fmt.Println()
 		}
 	}
+}
+
+// PrintKVMFull prints the full info for kvm
+func PrintKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
+	defer tw.Flush()
+	var ts string
+	if t, err := ptypes.Timestamp(kvm.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(kvm.Name))
+	out += fmt.Sprintf("%s\t", kvm.GetMacAddress())
+	out += fmt.Sprintf("%s\t", kvm.GetChromePlatform())
+	out += fmt.Sprintf("%d\t", kvm.GetCapacityPort())
+	out += fmt.Sprintf("%s\t", dhcp.GetIp())
+	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
+	out += fmt.Sprintf("%s\t", s.GetState())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
 }
 
 // PrintKVMs prints the all kvms in table form.

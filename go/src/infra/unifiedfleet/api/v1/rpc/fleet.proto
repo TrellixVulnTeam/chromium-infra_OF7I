@@ -1480,4 +1480,7 @@ message NetworkOption {
   ];
   // Delete the existing network configurations if existing
   bool delete = 3;
+
+  // The user-specified ip, if it's setup, other options will be ignored.
+  string ip = 4;
 }

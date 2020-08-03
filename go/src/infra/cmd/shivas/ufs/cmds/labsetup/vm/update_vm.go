@@ -42,6 +42,7 @@ Update a VM on a host by reading a JSON file input.`,
 		c.Flags.StringVar(&c.vmName, "name", "", "name of the host that this VM is running on")
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
+		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the vm to")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
@@ -58,6 +59,7 @@ type updateVM struct {
 	vmName     string
 	vlanName   string
 	deleteVlan bool
+	ip         string
 	state      string
 }
 
@@ -116,11 +118,12 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 
 	var networkOptions map[string]*ufsAPI.NetworkOption
 	var states map[string]ufspb.State
-	if c.deleteVlan || c.vlanName != "" {
+	if c.deleteVlan || c.vlanName != "" || c.ip != "" {
 		networkOptions = map[string]*ufsAPI.NetworkOption{
 			vm.Name: {
 				Delete: c.deleteVlan,
 				Vlan:   c.vlanName,
+				Ip:     c.ip,
 			},
 		}
 		machinelse = oldMachinelse
@@ -148,7 +151,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of vm %s\n", vm.Name)
 	}
-	if c.vlanName != "" {
+	if c.vlanName != "" || c.ip != "" {
 		// Log the assigned IP
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 			Hostname: vm.Name,
@@ -173,8 +176,8 @@ func (c *updateVM) validateArgs() error {
 		if c.vmName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-name' is required.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.state == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so one of ['-delete-vlan', '-vlan', '-state'] is required.")
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so one of ['-delete-vlan', '-vlan', '-ip', '-state'] is required.")
 		}
 	}
 	if c.state != "" && !utils.IsUFSState(c.state) {

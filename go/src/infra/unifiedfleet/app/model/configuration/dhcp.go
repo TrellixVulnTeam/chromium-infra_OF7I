@@ -76,7 +76,7 @@ func QueryDHCPConfigByPropertyName(ctx context.Context, propertyName, id string)
 	var entities []DHCPEntity
 	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
 		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
-		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 	if len(entities) == 0 {
 		logging.Infof(ctx, "No dhcp configs found for the query: %s=%s", propertyName, id)

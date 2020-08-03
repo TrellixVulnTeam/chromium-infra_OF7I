@@ -29,7 +29,7 @@ import (
 )
 
 // CreateMachineLSE creates a new machinelse in datastore.
-func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, vlanName, nicName string) (*ufspb.MachineLSE, error) {
+func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpt *ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
 	// MachineLSE name and hostname must always be the same
 	// Overwrite the name with hostname
 	machinelse.Name = machinelse.GetHostname()
@@ -56,7 +56,7 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	f := func(ctx context.Context) error {
 		// Validate input
-		err := validateCreateMachineLSE(ctx, machinelse, machineNames, vlanName, nicName)
+		err := validateCreateMachineLSE(ctx, machinelse, machineNames, nwOpt)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
@@ -74,8 +74,8 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		}
 
 		// Assign ip configs
-		if vlanName != "" && nicName != "" {
-			if err := addLseHostHelper(ctx, vlanName, nicName, machinelse); err != nil {
+		if (nwOpt.GetVlan() != "" || nwOpt.GetIp() != "") && nwOpt.GetNic() != "" {
+			if err := addLseHostHelper(ctx, nwOpt, machinelse); err != nil {
 				return errors.Annotate(err, "Fail to assign ip to host %s", machinelse.GetName()).Err()
 			}
 		}
@@ -192,7 +192,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 						return err
 					}
 				} else {
-					if err := addLseHostHelper(ctx, v.GetVlan(), v.GetNic(), machinelse); err != nil {
+					if err := addLseHostHelper(ctx, v, machinelse); err != nil {
 						return err
 					}
 				}
@@ -205,7 +205,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 							return err
 						}
 					} else {
-						if err := addVMHostHelper(ctx, v.GetVlan(), vm, machinelse); err != nil {
+						if err := addVMHostHelper(ctx, v, vm, machinelse); err != nil {
 							return err
 						}
 					}
@@ -279,32 +279,30 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	return machinelse, nil
 }
 
-func addVMHostHelper(ctx context.Context, vlanName string, vm *ufspb.VM, lse *ufspb.MachineLSE) error {
-	if vlanName == "" {
+func addVMHostHelper(ctx context.Context, nwOpt *ufsAPI.NetworkOption, vm *ufspb.VM, lse *ufspb.MachineLSE) error {
+	if nwOpt.GetVlan() == "" && nwOpt.GetIp() == "" {
 		return status.Errorf(codes.InvalidArgument, "vlan are required for adding a host for a vm")
 	}
 	// 1. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
-	dhcp, err := configuration.GetDHCPConfig(ctx, vm.GetName())
-	if util.IsInternalError(err) {
-		return errors.Annotate(err, "Fail to query dhcpHost").Err()
-	}
-	if err == nil && dhcp != nil {
-		if err := deleteHostHelper(ctx, dhcp); err != nil {
-			return err
-		}
+	if err := deleteDHCPHelper(ctx, vm.GetName()); err != nil {
+		return err
 	}
 
 	// 2. Get free ip, update the dhcp config and ip.occupied to true
-	if err := addHostHelper(ctx, vlanName, vm.GetName(), vm.GetMacAddress()); err != nil {
+	if err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), vm.GetName(), vm.GetMacAddress()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func addLseHostHelper(ctx context.Context, vlanName, nicName string, lse *ufspb.MachineLSE) error {
-	if vlanName == "" || nicName == "" {
-		return status.Errorf(codes.InvalidArgument, "nic and vlan are required for adding a host for a machine")
+func addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.NetworkOption, lse *ufspb.MachineLSE) error {
+	if nwOpt.GetNic() == "" {
+		return status.Errorf(codes.InvalidArgument, "nic is required for adding a host for a machine")
 	}
+	if nwOpt.GetVlan() == "" && nwOpt.GetIp() == "" {
+		return status.Errorf(codes.InvalidArgument, "one of vlan and ip is required for adding a host for a machine")
+	}
+	nicName := nwOpt.GetNic()
 	// Assigning IP to this host.
 	// 1. Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
 	machine, err := getBrowserMachineForNic(ctx, nicName)
@@ -326,18 +324,12 @@ func addLseHostHelper(ctx context.Context, vlanName, nicName string, lse *ufspb.
 	}
 
 	// 3. Verify if the hostname is already set with IP. if yes, remove the current dhcp configs, update ip.occupied to false
-	dhcp, err := configuration.GetDHCPConfig(ctx, lse.GetHostname())
-	if util.IsInternalError(err) {
-		return errors.Annotate(err, "Fail to query dhcpHost").Err()
-	}
-	if err == nil && dhcp != nil {
-		if err := deleteHostHelper(ctx, dhcp); err != nil {
-			return err
-		}
+	if err := deleteDHCPHelper(ctx, lse.GetHostname()); err != nil {
+		return err
 	}
 
 	// 4. Get free ip, update the dhcp config and ip.occupied to true
-	if err := addHostHelper(ctx, vlanName, lse.GetHostname(), nic.GetMacAddress()); err != nil {
+	if err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), lse.GetHostname(), nic.GetMacAddress()); err != nil {
 		return err
 	}
 
@@ -626,7 +618,7 @@ func createChromeOSMachineLSEDUT(ctx context.Context, machinelse *ufspb.MachineL
 	f := func(ctx context.Context) error {
 		machinelses := []*ufspb.MachineLSE{machinelse}
 		// Validate input
-		err := validateCreateMachineLSE(ctx, machinelse, machineNames, "", "")
+		err := validateCreateMachineLSE(ctx, machinelse, machineNames, nil)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
 		}
@@ -879,7 +871,7 @@ func removeServoEntryFromLabstation(servo *chromeosLab.Servo, labstationMachinel
 }
 
 // validateCreateMachineLSE validates if a machinelse can be created in the datastore.
-func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, vlanName, nicName string) error {
+func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpt *ufsAPI.NetworkOption) error {
 	//1. Check for servos for Labstation deployment
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		newServos := machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
@@ -900,9 +892,11 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	for _, machineName := range machineNames {
 		resourcesNotfound = append(resourcesNotfound, GetMachineResource(machineName))
 	}
-	if vlanName != "" && nicName != "" {
-		resourcesNotfound = append(resourcesNotfound, GetVlanResource(vlanName))
-		resourcesNotfound = append(resourcesNotfound, GetNicResource(nicName))
+	if (nwOpt.GetVlan() != "" || nwOpt.GetIp() != "") && nwOpt.GetNic() != "" {
+		if nwOpt.GetVlan() != "" {
+			resourcesNotfound = append(resourcesNotfound, GetVlanResource(nwOpt.GetVlan()))
+		}
+		resourcesNotfound = append(resourcesNotfound, GetNicResource(nwOpt.GetNic()))
 	}
 	// Aggregate resources referenced by the machinelse to check if they do not exist
 	if machineLSEPrototypeID := machinelse.GetMachineLsePrototype(); machineLSEPrototypeID != "" {

@@ -16,10 +16,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
-	"infra/unifiedfleet/app/model/configuration"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/registration"
-	"infra/unifiedfleet/app/util"
 )
 
 // CreateDrac creates a new drac in datastore.
@@ -167,18 +166,7 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 // DeleteDracHost deletes the host of a drac in datastore.
 func DeleteDracHost(ctx context.Context, dracName string) error {
 	f := func(ctx context.Context) error {
-		// 1. Verify if the hostname is already set with IP. if yes, remove the current binding.
-		dhcp, err := configuration.GetDHCPConfig(ctx, dracName)
-		if util.IsNotFoundError(err) {
-			logging.Debugf(ctx, "no associated dhcp with the given drac %s", dracName)
-			return nil
-		}
-		if err != nil {
-			return errors.Annotate(err, "Fail to query dhcpHost").Err()
-		}
-
-		// 2. Update dhcp and ip.
-		return deleteHostHelper(ctx, dhcp)
+		return deleteDHCPHelper(ctx, dracName)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -189,26 +177,20 @@ func DeleteDracHost(ctx context.Context, dracName string) error {
 }
 
 // UpdateDracHost updates the drac host in datastore.
-func UpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName string) error {
+func UpdateDracHost(ctx context.Context, drac *ufspb.Drac, nwOpt *ufsAPI.NetworkOption) error {
 	f := func(ctx context.Context) error {
 		// 1. Validate the input
-		if err := validateUpdateDracHost(ctx, drac, vlanName); err != nil {
+		if err := validateUpdateDracHost(ctx, drac, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
 			return err
 		}
 
 		// 2. Verify if the hostname is already set with IP. if yes, remove the current dhcp.
-		dhcp, err := configuration.GetDHCPConfig(ctx, drac.GetName())
-		if util.IsInternalError(err) {
-			return errors.Annotate(err, "Fail to query dhcpHost").Err()
-		}
-		if err == nil && dhcp != nil {
-			if err := deleteHostHelper(ctx, dhcp); err != nil {
-				return err
-			}
+		if err := deleteDHCPHelper(ctx, drac.GetName()); err != nil {
+			return err
 		}
 
 		// 3. Find free ip, set IP and DHCP config
-		return addHostHelper(ctx, vlanName, drac.GetName(), drac.GetMacAddress())
+		return addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), drac.GetName(), drac.GetMacAddress())
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -403,9 +385,12 @@ func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 }
 
 // validateUpdateDracHost validates if a host can be added to a drac
-func validateUpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName string) error {
+func validateUpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName, ipv4Str string) error {
 	if drac.GetMacAddress() == "" {
 		return errors.New("mac address of drac hasn't been specified")
+	}
+	if ipv4Str != "" {
+		return nil
 	}
 	// Check if resources does not exist
 	return ResourceExist(ctx, []*Resource{GetDracResource(drac.Name), GetVlanResource(vlanName)}, nil)

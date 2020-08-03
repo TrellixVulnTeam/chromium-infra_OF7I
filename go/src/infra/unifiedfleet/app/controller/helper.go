@@ -346,27 +346,62 @@ func deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCPConfig) error {
 	return nil
 }
 
+func getFreeIPHelper(ctx context.Context, vlanName string) (*ufspb.IP, error) {
+	ips, err := getFreeIP(ctx, vlanName, 1)
+	if err != nil {
+		return nil, errors.Annotate(err, "Failed to find new IP").Err()
+	}
+	if ips[0].GetIpv4Str() == "" {
+		return nil, errors.New(fmt.Sprintf("No empty ip is found. Found ip: %q, vlan %q", ips[0].GetId(), ips[0].GetVlan()))
+	}
+	logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
+	return ips[0], nil
+}
+
+func getSpecifiedIP(ctx context.Context, ipv4Str string) (*ufspb.IP, error) {
+	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{
+		"ipv4_str": ipv4Str,
+	})
+	if err != nil {
+		return nil, errors.Annotate(err, "Fail to query ip entity by %s", ipv4Str).Err()
+	}
+	if ips[0].GetOccupied() {
+		dhcps, err := configuration.QueryDHCPConfigByPropertyName(ctx, "ipv4", ipv4Str)
+		if err != nil {
+			return nil, errors.Annotate(err, "ip %s is occupied, but fail to query the corresponding dhcp", ipv4Str).Err()
+		}
+		if dhcps != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Ip %s is occupied by host %s", ipv4Str, dhcps[0].GetHostname())
+		}
+	}
+	return ips[0], nil
+}
+
 // Find free ip and update ip-related configs
 //
 // Can be used in a transaction
-func addHostHelper(ctx context.Context, vlanName, hostName, macAddress string) error {
-	ips, err := getFreeIP(ctx, vlanName, 1)
-	if err != nil {
-		return errors.Annotate(err, "Failed to find new IP to for host %s", hostName).Err()
+func addHostHelper(ctx context.Context, vlanName, ipv4Str, hostName, macAddress string) error {
+	var ip *ufspb.IP
+	var err error
+	if ipv4Str != "" {
+		if ip, err = getSpecifiedIP(ctx, ipv4Str); err != nil {
+			return err
+		}
+	} else {
+		if ip, err = getFreeIPHelper(ctx, vlanName); err != nil {
+			return err
+		}
 	}
-	if ips[0].GetIpv4Str() == "" {
-		return errors.New(fmt.Sprintf("No empty ip is found. Found ip: %q, vlan %q", ips[0].GetId(), ips[0].GetVlan()))
-	}
-	logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
-	ips[0].Occupied = true
-	if _, err := configuration.BatchUpdateIPs(ctx, ips); err != nil {
-		return errors.Annotate(err, "Failed to update IP %s (%s)", ips[0].GetId(), ips[0].GetIpv4Str()).Err()
+
+	ip.Occupied = true
+	if _, err := configuration.BatchUpdateIPs(ctx, []*ufspb.IP{ip}); err != nil {
+		return errors.Annotate(err, "Failed to update IP %s (%s)", ip.GetId(), ip.GetIpv4Str()).Err()
 	}
 	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
 		{
 			Hostname:   hostName,
-			Ip:         ips[0].GetIpv4Str(),
-			Vlan:       ips[0].GetVlan(),
+			Ip:         ip.GetIpv4Str(),
+			Vlan:       ip.GetVlan(),
 			MacAddress: macAddress,
 		},
 	}); err != nil {

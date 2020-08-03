@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
-	"infra/unifiedfleet/app/model/configuration"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/model/state"
 	ufsUtil "infra/unifiedfleet/app/util"
@@ -149,18 +149,7 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 // DeleteKVMHost deletes the host of a kvm in datastore.
 func DeleteKVMHost(ctx context.Context, kvmName string) error {
 	f := func(ctx context.Context) error {
-		// 1. Verify if the hostname is already set with IP. if yes, remove the current binding.
-		dhcp, err := configuration.GetDHCPConfig(ctx, kvmName)
-		if ufsUtil.IsNotFoundError(err) {
-			logging.Debugf(ctx, "no associated dhcp with the given kvm %s", kvmName)
-			return nil
-		}
-		if err != nil {
-			return errors.Annotate(err, "Fail to query dhcpHost").Err()
-		}
-
-		// 2. Update dhcp and ip.
-		return deleteHostHelper(ctx, dhcp)
+		return deleteDHCPHelper(ctx, kvmName)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -171,26 +160,20 @@ func DeleteKVMHost(ctx context.Context, kvmName string) error {
 }
 
 // UpdateKVMHost updates the kvm host in datastore.
-func UpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, vlanName string) error {
+func UpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, nwOpt *ufsAPI.NetworkOption) error {
 	f := func(ctx context.Context) error {
 		// 1. Validate the input
-		if err := validateUpdateKVMHost(ctx, kvm, vlanName); err != nil {
+		if err := validateUpdateKVMHost(ctx, kvm, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
 			return err
 		}
 
 		// 2. Verify if the hostname is already set with IP. if yes, remove the current dhcp.
-		dhcp, err := configuration.GetDHCPConfig(ctx, kvm.GetName())
-		if ufsUtil.IsInternalError(err) {
-			return errors.Annotate(err, "Fail to query dhcpHost").Err()
-		}
-		if err == nil && dhcp != nil {
-			if err := deleteHostHelper(ctx, dhcp); err != nil {
-				return err
-			}
+		if err := deleteDHCPHelper(ctx, kvm.GetName()); err != nil {
+			return err
 		}
 
 		// 3. Find free ip, set IP and DHCP config
-		return addHostHelper(ctx, vlanName, kvm.GetName(), kvm.GetMacAddress())
+		return addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetName(), kvm.GetMacAddress())
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -419,9 +402,12 @@ func removeKVMFromRacks(ctx context.Context, racks []*ufspb.Rack, id string) ([]
 }
 
 // validateUpdateKVMHost validates if a host can be added to a kvm
-func validateUpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, vlanName string) error {
+func validateUpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, vlanName, ipv4Str string) error {
 	if kvm.GetMacAddress() == "" {
 		return errors.New("mac address of kvm hasn't been specified")
+	}
+	if ipv4Str != "" {
+		return nil
 	}
 	// Check if resources does not exist
 	return ResourceExist(ctx, []*Resource{GetKVMResource(kvm.Name), GetVlanResource(vlanName)}, nil)

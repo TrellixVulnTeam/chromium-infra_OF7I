@@ -36,8 +36,7 @@ Gets the kvm and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
-
-		c.Flags.BoolVar(&c.full, "full", false, "get the full information of a kvm")
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
@@ -47,8 +46,7 @@ type getKVM struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
-
-	full bool
+	outputFlags site.OutputFlags
 }
 
 func (c *getKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -78,18 +76,6 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 		Options: site.DefaultPRPCOptions,
 	})
 
-	if c.full {
-		kvm, dracDHCP, err := c.getFull(ctx, ic, args[0])
-		if err != nil {
-			return err
-		}
-		utils.PrintProtoJSON(kvm)
-		if dracDHCP != nil {
-			utils.PrintProtoJSON(dracDHCP)
-		}
-		return nil
-	}
-
 	res, err := ic.GetKVM(ctx, &ufsAPI.GetKVMRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, args[0]),
 	})
@@ -97,29 +83,36 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
-	fmt.Println()
+	if c.outputFlags.Full() {
+		return c.printFull(ctx, ic, res)
+	}
+	return c.print(res)
+}
+
+func (c *getKVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, kvm *ufspb.KVM) error {
+	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+		Hostname: kvm.GetName(),
+	})
+	s, _ := ic.GetState(ctx, &ufsAPI.GetStateRequest{
+		ResourceName: ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.GetName()),
+	})
+	if !c.outputFlags.Tsv() {
+		utils.PrintTitle(utils.KvmFullTitle)
+	}
+	utils.PrintKVMFull(kvm, dhcp, s)
 	return nil
 }
 
-func (c *getKVM) getFull(ctx context.Context, ic ufsAPI.FleetClient, name string) (*ufspb.KVM, *ufspb.DHCPConfig, error) {
-	res, err := ic.GetKVM(ctx, &ufsAPI.GetKVMRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, name),
-	})
-	if err != nil {
-		return nil, nil, err
+func (c *getKVM) print(kvm *ufspb.KVM) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(kvm)
+	} else {
+		if !c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.KvmTitle)
+		}
+		utils.PrintKVMs([]*ufspb.KVM{kvm}, false)
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
-		Hostname: res.Name,
-	})
-	if ufsUtil.IsNotFoundError(err) || dhcp == nil {
-		return res, nil, nil
-	}
-	if err != nil {
-		return nil, nil, err
-	}
-	return res, dhcp, nil
+	return nil
 }
 
 func (c *getKVM) validateArgs() error {

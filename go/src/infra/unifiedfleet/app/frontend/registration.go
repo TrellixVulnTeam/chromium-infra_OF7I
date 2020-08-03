@@ -515,8 +515,8 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *ufsAPI.UpdateKVMR
 		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 		return kvm, nil
 	}
-	if req.GetNetworkOption().GetVlan() != "" {
-		if err = controller.UpdateKVMHost(ctx, kvm, req.GetNetworkOption().GetVlan()); err != nil {
+	if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
+		if err = controller.UpdateKVMHost(ctx, kvm, req.GetNetworkOption()); err != nil {
 			return nil, err
 		}
 	}
@@ -719,8 +719,8 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *ufsAPI.UpdateDra
 		drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 		return drac, nil
 	}
-	if req.GetNetworkOption().GetVlan() != "" {
-		if err = controller.UpdateDracHost(ctx, drac, req.GetNetworkOption().GetVlan()); err != nil {
+	if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
+		if err = controller.UpdateDracHost(ctx, drac, req.GetNetworkOption()); err != nil {
 			return nil, err
 		}
 	}

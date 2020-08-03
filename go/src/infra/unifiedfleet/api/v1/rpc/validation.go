@@ -428,8 +428,8 @@ func (r *UpdateMachineLSERequest) Validate() error {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
 	for k, v := range r.GetNetworkOptions() {
-		if !v.Delete && v.Vlan == "" {
-			return status.Errorf(codes.InvalidArgument, "Network option for host %s doesn't set delete or vlan.", k)
+		if !v.Delete && v.Vlan == "" && v.GetIp() == "" {
+			return status.Errorf(codes.InvalidArgument, "Network option for host %s doesn't set delete OR vlan OR ip.", k)
 		}
 	}
 	for _, m := range r.GetMachines() {
