@@ -1,3 +1,22 @@
+# Release Notes sheriff-o-matic 2020-08-03
+
+- 3 commits, 2 bugs affected since 6ca57b5 ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [SoM: Let the chromium.clang tree also use memcache](https://chromium-review.googlesource.com/c/infra/infra/+/2310057) (nqmtuan@google.com)
+- [SoM code inclusion: Remove unused code (and remove bunch of master references)](https://chromium-review.googlesource.com/c/infra/infra/+/2308562) (nqmtuan@google.com)
+- [[SoM] Release note 21 July](https://chromium-review.googlesource.com/c/infra/infra/+/2308560) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1092710](https://crbug.com/1092710)
+  -  [https://crbug.com/1107749](https://crbug.com/1107749)
+
+
 # Release Notes sheriff-o-matic 2020-07-21
 
 - 3 commits, 3 bugs affected since e75809a ()
