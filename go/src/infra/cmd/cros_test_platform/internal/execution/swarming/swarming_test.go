@@ -136,10 +136,15 @@ func TestNonExistentBot(t *testing.T) {
 				Board: &board,
 			},
 		}
+		expectedRejectedTaskDims := map[string]string{
+			"label-board": "foo-board",
+			"pool":        "ChromeOSSkylab",
+		}
 		Convey("the validation fails.", func() {
-			exists, err := skylab.ValidateArgs(ctx, args)
+			botExists, rejectedTaskDims, err := skylab.ValidateArgs(ctx, args)
 			So(err, ShouldBeNil)
-			So(exists, ShouldBeFalse)
+			So(rejectedTaskDims, ShouldResemble, expectedRejectedTaskDims)
+			So(botExists, ShouldBeFalse)
 			So(loggerOutput(ml, logging.Warning), ShouldContainSubstring, "foo-board")
 		})
 	})
@@ -169,9 +174,10 @@ func TestExistingBot(t *testing.T) {
 			swarmingClient: swarming,
 		}
 		Convey("the validation passes.", func() {
-			exists, err := skylab.ValidateArgs(context.Background(), &request.Args{})
+			botExists, rejectedTaskDims, err := skylab.ValidateArgs(context.Background(), &request.Args{})
 			So(err, ShouldBeNil)
-			So(exists, ShouldBeTrue)
+			So(rejectedTaskDims, ShouldBeNil)
+			So(botExists, ShouldBeTrue)
 		})
 	})
 }

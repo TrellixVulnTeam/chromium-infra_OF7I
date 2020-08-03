@@ -48,6 +48,7 @@ var (
 type fakeSkylab struct {
 	autotestResultGenerator autotestResultGenerator
 	botExists               bool
+	rejectedTaskDims        map[string]string
 	callback                func()
 	launchCalls             []*request.Args
 	nextError               error
@@ -89,8 +90,8 @@ func (s *fakeSkylab) setAutotestResultGenerator(f autotestResultGenerator) {
 	s.autotestResultGenerator = f
 }
 
-func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, error) {
-	return s.botExists, nil
+func (s *fakeSkylab) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
+	return s.botExists, s.rejectedTaskDims, nil
 }
 
 func (s *fakeSkylab) LaunchTask(_ context.Context, req *request.Args) (skylab.TaskReference, error) {
@@ -207,6 +208,11 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 
 		skylab := newFakeSkylab()
 		skylab.botExists = false
+		rejectedTaskDims := map[string]string{
+			"foo-key": "foo-rejected-value",
+			"bar-key": "bar-rejected-value",
+		}
+		skylab.rejectedTaskDims = rejectedTaskDims
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{
 			clientTestInvocation("", ""),
@@ -227,6 +233,7 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 				tr := resp.TaskResults[0]
 				So(tr.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_REJECTED)
 				So(tr.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
+				So(tr.RejectedTaskDimensions, ShouldResemble, rejectedTaskDims)
 
 			})
 			Convey("and overall result is complete with failed verdict.", func() {

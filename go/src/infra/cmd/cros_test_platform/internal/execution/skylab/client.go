@@ -32,7 +32,7 @@ type FetchResultsResponse struct {
 // Client defines an interface used to interact with the Skylab
 // infrastructure.
 type Client interface {
-	ValidateArgs(context.Context, *request.Args) (bool, error)
+	ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error)
 	LaunchTask(context.Context, *request.Args) (TaskReference, error)
 	FetchResults(context.Context, TaskReference) (*FetchResultsResponse, error)
 	SwarmingTaskID(TaskReference) string

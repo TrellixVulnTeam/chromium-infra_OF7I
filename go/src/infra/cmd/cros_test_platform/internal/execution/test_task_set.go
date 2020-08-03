@@ -19,11 +19,12 @@ import (
 
 // testTaskSet encapsulates the running state of the set of tasks for one test.
 type testTaskSet struct {
-	argsGenerator *args.Generator
-	Name          string
-	maxAttempts   int
-	runnable      bool
-	tasks         []*skylab.Task
+	argsGenerator    *args.Generator
+	Name             string
+	maxAttempts      int
+	runnable         bool
+	rejectedTaskDims map[string]string
+	tasks            []*skylab.Task
 }
 
 func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*testTaskSet, error) {
@@ -60,16 +61,17 @@ func (t *testTaskSet) AttemptedAtLeastOnce() bool {
 }
 
 // ValidateDependencies checks whether this test has dependencies satisfied by
-// at least one Skylab bot.
-func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client) (bool, error) {
+// at least one Skylab bot, and returns the list of rejected Swarming
+// dimensions if the check fails.
+func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client) (bool, map[string]string, error) {
 	if err := t.argsGenerator.CheckConsistency(); err != nil {
 		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
-		return false, nil
+		return false, nil, nil
 	}
 
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
-		return false, errors.Annotate(err, "validate dependencies").Err()
+		return false, nil, errors.Annotate(err, "validate dependencies").Err()
 	}
 	return c.ValidateArgs(ctx, &args)
 }
@@ -90,8 +92,9 @@ func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
 // MarkNotRunnable marks this test run as being unable to run.
 //
 // In particular, this means that this test run is Completed().
-func (t *testTaskSet) MarkNotRunnable() {
+func (t *testTaskSet) MarkNotRunnable(rejectedTaskDims map[string]string) {
 	t.runnable = false
+	t.rejectedTaskDims = rejectedTaskDims
 }
 
 // Completed determines whether we have completed a task for this test.
@@ -112,6 +115,7 @@ func (t *testTaskSet) TaskResult() []*steps.ExecuteResponse_TaskResult {
 					LifeCycle: test_platform.TaskState_LIFE_CYCLE_REJECTED,
 					Verdict:   test_platform.TaskState_VERDICT_UNSPECIFIED,
 				},
+				RejectedTaskDimensions: t.rejectedTaskDims,
 			},
 		}
 	}

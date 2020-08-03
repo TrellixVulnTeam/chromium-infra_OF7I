@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
@@ -96,23 +95,25 @@ func httpClient(ctx context.Context) (*http.Client, error) {
 // Any changes to this implementation should be also reflected in
 // rawSwarmingSkylabClient.ValidateArgs
 // TODO(crbug.com/1033287): Remove the rawSwarmingSkylabClient implementation.
-func (c *bbSkylabClient) ValidateArgs(ctx context.Context, args *request.Args) (bool, error) {
+func (c *bbSkylabClient) ValidateArgs(ctx context.Context, args *request.Args) (botExists bool, rejectedTaskDims map[string]string, err error) {
 	dims, err := args.StaticDimensions()
 	if err != nil {
-		return false, errors.Annotate(err, "validate dependencies").Err()
+		err = errors.Annotate(err, "validate dependencies").Err()
+		return
 	}
-	exists, err := c.swarmingClient.BotExists(ctx, dims)
+	botExists, err = c.swarmingClient.BotExists(ctx, dims)
 	if err != nil {
-		return false, errors.Annotate(err, "validate dependencies").Err()
+		err = errors.Annotate(err, "validate dependencies").Err()
+		return
 	}
-	if !exists {
-		var ds []string
+	if !botExists {
+		rejectedTaskDims = map[string]string{}
 		for _, dim := range dims {
-			ds = append(ds, fmt.Sprintf("%+v", dim))
+			rejectedTaskDims[dim.Key] = dim.Value
 		}
-		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions: %s", args.TestRunnerRequest.GetTest().GetAutotest().GetName(), strings.Join(ds, ", "))
+		logging.Warningf(ctx, "Dependency validation failed for %s: no bot exists with dimensions: %v", args.TestRunnerRequest.GetTest().GetAutotest().GetName(), rejectedTaskDims)
 	}
-	return exists, nil
+	return
 }
 
 // LaunchTask sends an RPC request to start the task.

@@ -67,12 +67,12 @@ func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
 // LaunchTasks launches initial tasks for all the tests in this request.
 func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
 	for _, testTaskSet := range r.testTaskSets {
-		runnable, err := testTaskSet.ValidateDependencies(ctx, c)
+		runnable, rejectedTaskDims, err := testTaskSet.ValidateDependencies(ctx, c)
 		if err != nil {
 			return err
 		}
 		if !runnable {
-			testTaskSet.MarkNotRunnable()
+			testTaskSet.MarkNotRunnable(rejectedTaskDims)
 			continue
 		}
 		if err := testTaskSet.LaunchTask(ctx, c); err != nil {

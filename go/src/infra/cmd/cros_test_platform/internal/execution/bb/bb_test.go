@@ -77,10 +77,15 @@ func TestNonExistentBot(t *testing.T) {
 		var args request.Args
 		args.SchedulableLabels = &inventory.SchedulableLabels{}
 		addBoard(&args, "nonexistent-board")
+		expectedRejectedTaskDims := map[string]string{
+			"label-board": "nonexistent-board",
+			"pool":        "ChromeOSSkylab",
+		}
 		Convey("the validation fails.", func() {
-			exists, err := skylab.ValidateArgs(ctx, &args)
+			botExists, rejectedTaskDims, err := skylab.ValidateArgs(ctx, &args)
 			So(err, ShouldBeNil)
-			So(exists, ShouldBeFalse)
+			So(rejectedTaskDims, ShouldResemble, expectedRejectedTaskDims)
+			So(botExists, ShouldBeFalse)
 			So(loggerOutput(ml, logging.Warning), ShouldContainSubstring, "nonexistent-board")
 		})
 	})
@@ -113,9 +118,10 @@ func TestExistingBot(t *testing.T) {
 		args.SchedulableLabels = &inventory.SchedulableLabels{}
 		addBoard(&args, "existing-board")
 		Convey("the validation passes.", func() {
-			exists, err := skylab.ValidateArgs(context.Background(), &args)
+			botExists, rejectedTaskDims, err := skylab.ValidateArgs(context.Background(), &args)
 			So(err, ShouldBeNil)
-			So(exists, ShouldBeTrue)
+			So(rejectedTaskDims, ShouldBeNil)
+			So(botExists, ShouldBeTrue)
 		})
 	})
 }
