@@ -30,8 +30,8 @@ var ListKVMCmd = &subcommands.Command{
 		c := &listKVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
-		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
 		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.KVMFilterHelp)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 		return c
@@ -43,8 +43,8 @@ type listKVM struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 	pageSize    int
-	json        bool
 	filter      string
 	keysOnly    bool
 }
@@ -75,10 +75,10 @@ func (c *listKVM) innerRun(a subcommands.Application, args []string, env subcomm
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	if c.json {
-		return utils.PrintListJSONFormatDup(ctx, ic, printKVMs, c.json, int32(c.pageSize), c.filter, c.keysOnly)
+	if c.outputFlags.JSON() {
+		return utils.PrintListJSONFormatDup(ctx, ic, printKVMs, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printKVMs, c.json, int32(c.pageSize), c.filter, c.keysOnly, utils.KvmTitle)
+	return utils.PrintListTableFormatDup(ctx, ic, printKVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.KvmTitle, c.outputFlags.Tsv())
 }
 
 func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

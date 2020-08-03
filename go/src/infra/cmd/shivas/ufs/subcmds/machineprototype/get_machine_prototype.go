@@ -15,6 +15,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -33,6 +34,7 @@ Gets the machine prototype and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
@@ -42,6 +44,7 @@ type getMachineLSEPrototype struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 }
 
 func (c *getMachineLSEPrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -78,8 +81,14 @@ func (c *getMachineLSEPrototype) innerRun(a subcommands.Application, args []stri
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
-	fmt.Println()
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(res)
+	} else {
+		if !c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.MachinelseprototypeTitle)
+		}
+		utils.PrintMachineLSEPrototypes([]*ufspb.MachineLSEPrototype{res}, false)
+	}
 	return nil
 }
 

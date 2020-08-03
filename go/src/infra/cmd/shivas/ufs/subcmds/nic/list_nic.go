@@ -30,8 +30,8 @@ var ListNicCmd = &subcommands.Command{
 		c := &listNic{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
-		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
 		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.NicFilterHelp)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 		c.commonFlags.Register(&c.Flags)
@@ -44,8 +44,8 @@ type listNic struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 	pageSize    int
-	json        bool
 	filter      string
 	keysOnly    bool
 }
@@ -76,10 +76,10 @@ func (c *listNic) innerRun(a subcommands.Application, args []string, env subcomm
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	if c.json {
-		return utils.PrintListJSONFormatDup(ctx, ic, printNics, c.json, int32(c.pageSize), c.filter, c.keysOnly)
+	if c.outputFlags.JSON() {
+		return utils.PrintListJSONFormatDup(ctx, ic, printNics, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printNics, c.json, int32(c.pageSize), c.filter, c.keysOnly, utils.NicTitle)
+	return utils.PrintListTableFormatDup(ctx, ic, printNics, false, int32(c.pageSize), c.filter, c.keysOnly, utils.NicTitle, c.outputFlags.Tsv())
 }
 
 func printNics(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

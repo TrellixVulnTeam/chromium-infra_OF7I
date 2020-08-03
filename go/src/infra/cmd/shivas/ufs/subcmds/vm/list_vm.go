@@ -28,7 +28,7 @@ var ListVMCmd = &subcommands.Command{
 		c := &listVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
+		c.outputFlags.Register(&c.Flags)
 		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to list the VMs")
 		return c
 	},
@@ -36,10 +36,10 @@ var ListVMCmd = &subcommands.Command{
 
 type listVM struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
-	json      bool
-	hostname  string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	outputFlags site.OutputFlags
+	hostname    string
 }
 
 func (c *listVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -76,7 +76,7 @@ func (c *listVM) innerRun(a subcommands.Application, args []string, env subcomma
 
 	// Print the VMs
 	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
-	if c.json {
+	if c.outputFlags.JSON() {
 		utils.PrintVMsJSON(existingVMs)
 	} else {
 		utils.PrintVMs(existingVMs)

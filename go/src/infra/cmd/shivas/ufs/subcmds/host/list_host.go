@@ -30,8 +30,8 @@ var ListHostCmd = &subcommands.Command{
 		c := &listHost{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
-		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
 		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.MachineLSEFilterHelp)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 		return c
@@ -43,6 +43,7 @@ type listHost struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 	pageSize    int
 	json        bool
 	filter      string
@@ -75,8 +76,8 @@ func (c *listHost) innerRun(a subcommands.Application, args []string, env subcom
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	if !c.json && c.keysOnly {
-		return utils.PrintListTableFormatDup(ctx, ic, printMachineLSEs, c.json, int32(c.pageSize), c.filter, c.keysOnly, utils.MachineLSETitle)
+	if !c.outputFlags.JSON() && c.keysOnly {
+		return utils.PrintListTableFormatDup(ctx, ic, printMachineLSEs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachineLSETitle, c.outputFlags.Tsv())
 	}
 	// MachineLSE has large number of fields. Print only JSON format always.
 	return utils.PrintListJSONFormatDup(ctx, ic, printMachineLSEs, true, int32(c.pageSize), c.filter, c.keysOnly)

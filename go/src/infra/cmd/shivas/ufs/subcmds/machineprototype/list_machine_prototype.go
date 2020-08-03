@@ -30,8 +30,8 @@ var ListMachineLSEPrototypeCmd = &subcommands.Command{
 		c := &listMachineLSEPrototype{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
-		c.Flags.BoolVar(&c.json, "json", false, `print output in JSON format`)
 		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.MachineLSEPrototypeFilterHelp)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 		return c
@@ -43,8 +43,8 @@ type listMachineLSEPrototype struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 	pageSize    int
-	json        bool
 	filter      string
 	keysOnly    bool
 }
@@ -75,10 +75,10 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	if c.json {
-		return utils.PrintListJSONFormatDup(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), c.filter, c.keysOnly)
+	if c.outputFlags.JSON() {
+		return utils.PrintListJSONFormatDup(ctx, ic, printMachineLSEPrototypes, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printMachineLSEPrototypes, c.json, int32(c.pageSize), c.filter, c.keysOnly, utils.MachinelseprototypeTitle)
+	return utils.PrintListTableFormatDup(ctx, ic, printMachineLSEPrototypes, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachinelseprototypeTitle, c.outputFlags.Tsv())
 }
 
 func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

@@ -102,8 +102,10 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 }
 
 // PrintListTableFormat prints list output in Table format
-func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, title []string) error {
-	printTitle(title)
+func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, title []string, tsv bool) error {
+	if !tsv {
+		PrintTitle(title)
+	}
 	var pageToken string
 	if pageSize == 0 {
 		for {
@@ -185,11 +187,13 @@ func PrintListJSONFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printA
 // PrintListTableFormatDup prints list output in Table format
 //
 // TODO(eshwarn) : Rename this method to PrintListTableFormat when all list cmds are migrated to use this func
-func PrintListTableFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printAllDup, json bool, pageSize int32, filter string, keysOnly bool, title []string) error {
-	if keysOnly {
-		printTitle(title[0:1])
-	} else {
-		printTitle(title)
+func PrintListTableFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printAllDup, json bool, pageSize int32, filter string, keysOnly bool, title []string, tsv bool) error {
+	if !tsv {
+		if keysOnly {
+			PrintTitle(title[0:1])
+		} else {
+			PrintTitle(title)
+		}
 	}
 	var pageToken string
 	if pageSize == 0 {
@@ -238,8 +242,8 @@ func PrintProtoJSON(pm proto.Message) {
 	}
 }
 
-// printTitle prints the title fields in table form.
-func printTitle(title []string) {
+// PrintTitle prints the title fields in table form.
+func PrintTitle(title []string) {
 	for _, s := range title {
 		fmt.Fprint(tw, fmt.Sprintf("%s\t", s))
 	}
@@ -651,7 +655,7 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 // PrintFreeVMs prints the all free slots in table form.
 func PrintFreeVMs(ctx context.Context, ic ufsAPI.FleetClient, hosts []*ufspb.MachineLSE) {
 	defer tw.Flush()
-	printTitle([]string{"Host", "Vlan", "Lab", "Slots"})
+	PrintTitle([]string{"Host", "Vlan", "Lab", "Slots"})
 	for _, h := range hosts {
 		h.Name = ufsUtil.RemovePrefix(h.Name)
 		printFreeVM(ctx, ic, h)
@@ -672,7 +676,7 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 // PrintVMs prints the all vms in table form.
 func PrintVMs(vms []*ufspb.VM) {
 	defer tw.Flush()
-	printTitle(vmTitle)
+	PrintTitle(vmTitle)
 	for _, vm := range vms {
 		printVM(vm)
 	}
