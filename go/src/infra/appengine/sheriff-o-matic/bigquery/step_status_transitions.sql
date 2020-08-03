@@ -9,12 +9,11 @@ output that it did in the previous run (on that builder etc).
 WITH
   step_lag AS (
   SELECT
-   b.end_time AS end_time,
+    b.end_time AS end_time,
     b.builder.project AS project,
     b.builder.bucket AS bucket,
     b.builder.builder AS builder,
-    JSON_EXTRACT_SCALAR(b.input.properties,
-      "$.mastername") AS mastername,
+    IFNULL(JSON_EXTRACT_SCALAR(b.input.properties, "$.mastername"), JSON_EXTRACT_SCALAR(b.input.properties, "$.builder_group")) as mastername,
     b.id,
     b.number,
     b.critical as critical,
