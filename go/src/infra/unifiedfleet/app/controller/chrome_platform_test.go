@@ -133,7 +133,7 @@ func TestUpdateChromePlatforms(t *testing.T) {
 		Convey("happy path", func() {
 			p2 := mockChromePlatform("chromePlatform-update", "Camera")
 			p2.Manufacturer = "non-fake"
-			newP, err := UpdateChromePlatform(ctx, p2)
+			newP, err := UpdateChromePlatform(ctx, p2, nil)
 			So(err, ShouldBeNil)
 			So(newP, ShouldResembleProto, p2)
 		})
@@ -155,7 +155,7 @@ func TestUpdateChromePlatforms(t *testing.T) {
 			})
 			p2 := mockChromePlatform("chromePlatform-update-2", "Camera")
 			p2.Manufacturer = "dell"
-			newP, err := UpdateChromePlatform(ctx, p2)
+			newP, err := UpdateChromePlatform(ctx, p2, nil)
 			So(err, ShouldBeNil)
 			So(newP, ShouldResembleProto, p2)
 

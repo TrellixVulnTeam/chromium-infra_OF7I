@@ -77,7 +77,7 @@ func (fs *FleetServerImpl) UpdateChromePlatform(ctx context.Context, req *ufsAPI
 		return nil, err
 	}
 	req.ChromePlatform.Name = util.RemovePrefix(req.ChromePlatform.Name)
-	chromeplatform, err := controller.UpdateChromePlatform(ctx, req.ChromePlatform)
+	chromeplatform, err := controller.UpdateChromePlatform(ctx, req.ChromePlatform, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

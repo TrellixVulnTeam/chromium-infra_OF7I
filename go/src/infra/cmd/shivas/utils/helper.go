@@ -7,15 +7,18 @@ package utils
 import (
 	"context"
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"text/tabwriter"
 	"time"
 
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	"infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
@@ -23,6 +26,10 @@ import (
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
 	UfleetUtil "infra/unifiedfleet/app/util"
 )
+
+// ClearFieldValue specifying this value in update command will send empty value
+// while doing partial updates using update field mask.
+var ClearFieldValue string = "-"
 
 // The formatter for log and result file names
 var logFileExp = regexp.MustCompile(`[\d]{4}(-[\d]{1,2}){3}(:[\d]{1,2}){2}-log$`)
@@ -373,4 +380,18 @@ func RemoveVM(existingVMs []*ufspb.VM, vmName string) []*ufspb.VM {
 		}
 	}
 	return existingVMs
+}
+
+// GetUpdateMask returns a *field_mask.FieldMask containing paths based on which flags have been set.
+//
+// paths is a map of cmd line option flags to field names of the object.
+func GetUpdateMask(set *flag.FlagSet, paths map[string]string) *field_mask.FieldMask {
+	m := &field_mask.FieldMask{}
+	set.Visit(func(f *flag.Flag) {
+		if path, ok := paths[f.Name]; ok {
+			m.Paths = append(m.Paths, path)
+		}
+	})
+	sort.Strings(m.Paths)
+	return m
 }

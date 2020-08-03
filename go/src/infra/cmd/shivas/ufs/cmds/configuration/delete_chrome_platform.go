@@ -22,13 +22,13 @@ import (
 
 // DeleteChromePlatformCmd delete ChromePlatform by given name.
 var DeleteChromePlatformCmd = &subcommands.Command{
-	UsageLine: "delete-chrome-platform",
-	ShortDesc: "Delete chrome platform configuration for browser machine",
-	LongDesc: `Delete chrome platform configuration for browser machine.
+	UsageLine: "delete-platform",
+	ShortDesc: "Delete platform configuration for browser machine",
+	LongDesc: `Delete platform configuration for browser machine.
 
 Example:
-shivas delete-chrome-platform {Chrome Platform Name}
-Deletes the given chrome platform configuration.`,
+shivas delete-platform {Platform Name}
+Deletes the given platform configuration.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &deleteChromePlatform{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -39,8 +39,9 @@ Deletes the given chrome platform configuration.`,
 
 type deleteChromePlatform struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 }
 
 func (c *deleteChromePlatform) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -56,17 +57,18 @@ func (c *deleteChromePlatform) innerRun(a subcommands.Application, args []string
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the chrome platform: %s", args[0])) {
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the platform: %s", args[0])) {
 		return nil
 	}
 	e := c.envFlags.Env()
-	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -76,7 +78,7 @@ func (c *deleteChromePlatform) innerRun(a subcommands.Application, args []string
 		Name: ufsUtil.AddPrefix(ufsUtil.ChromePlatformCollection, args[0]),
 	})
 	if err == nil {
-		fmt.Fprintln(a.GetOut(), args[0], "deleted successfully.")
+		fmt.Fprintln(a.GetOut(), args[0], "is deleted successfully.")
 		return nil
 	}
 	return err
@@ -84,7 +86,7 @@ func (c *deleteChromePlatform) innerRun(a subcommands.Application, args []string
 
 func (c *deleteChromePlatform) validateArgs() error {
 	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the chrome platform name to be deleted.")
+		return cmdlib.NewUsageError(c.Flags, "Please provide the platform name to be deleted.")
 	}
 	return nil
 }

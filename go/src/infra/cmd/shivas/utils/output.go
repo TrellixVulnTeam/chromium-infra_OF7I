@@ -47,12 +47,10 @@ var (
 		"Tags", "UpdateTime"}
 	RacklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
 		"Tags", "UpdateTime"}
-	ChromePlatformTitle = []string{"Platform Name", "Manufacturer",
-		"Description", "UpdateTime"}
-	VMTitle     = []string{"VM Name", "OS Version", "OS Desc", "MAC Address"}
-	VMFullTitle = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "IP", "Vlan", "State"}
-	RackTitle   = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs",
-		"Capacity", "Realm", "UpdateTime"}
+	ChromePlatformTitle = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
+	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address"}
+	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "IP", "Vlan", "State"}
+	RackTitle           = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs", "Capacity", "Realm", "UpdateTime"}
 	MachineLSETitle     = []string{"Host", "Lab", "Rack", "Nic", "VM capacity", "VMs", "UpdateTime"}
 	MachineLSETFullitle = []string{"Host", "Machine", "Lab", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )
@@ -707,6 +705,7 @@ func printChromePlatform(m *ufspb.ChromePlatform, keysOnly bool) {
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetManufacturer())
 	out += fmt.Sprintf("%s\t", m.GetDescription())
+	out += fmt.Sprintf("%s\t", m.GetTags())
 	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }

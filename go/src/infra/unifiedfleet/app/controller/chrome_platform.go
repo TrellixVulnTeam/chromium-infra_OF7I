@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -28,19 +29,19 @@ func CreateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatf
 }
 
 // UpdateChromePlatform updates chromeplatform in datastore.
-func UpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatform) (*ufspb.ChromePlatform, error) {
+func UpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatform, mask *field_mask.FieldMask) (*ufspb.ChromePlatform, error) {
 	var old *ufspb.ChromePlatform
 	var err error
 	f := func(ctx context.Context) error {
 		// Verify request
-		if err := validateUpdateChromePlatform(ctx, chromeplatform); err != nil {
-			return status.Errorf(codes.InvalidArgument, err.Error())
+		if err := validateUpdateChromePlatform(ctx, chromeplatform, mask); err != nil {
+			return errors.Annotate(err, "UpdateChromePlatform - validation failed").Err()
 		}
 
 		// Get the existing/old platform
 		old, err = configuration.GetChromePlatform(ctx, chromeplatform.GetName())
 		if err != nil {
-			return err
+			return errors.Annotate(err, "UpdateChromePlatform - get chrome platform %s failed", chromeplatform.GetName()).Err()
 		}
 
 		if old.GetManufacturer() != chromeplatform.GetManufacturer() {
@@ -64,14 +65,44 @@ func UpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatf
 				return errors.Annotate(err, "UpdateChromePlatform - Unable to update machinelses").Err()
 			}
 		}
+
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			// update the fields in the existing chrome platform
+			for _, path := range mask.Paths {
+				switch path {
+				case "manufacturer":
+					old.Manufacturer = chromeplatform.GetManufacturer()
+				case "description":
+					old.Description = chromeplatform.GetDescription()
+				case "tags":
+					oldTags := old.GetTags()
+					newTags := chromeplatform.GetTags()
+					if newTags == nil || len(newTags) == 0 {
+						oldTags = nil
+					} else {
+						for _, tag := range newTags {
+							oldTags = append(oldTags, tag)
+						}
+					}
+					old.Tags = oldTags
+				}
+			}
+			// copy existing chrome platform to new chrome platform
+			chromeplatform = old
+		}
+
+		// Update the chrome platform
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction to make it atomic. Datastore doesnt allow
+		// nested transactions.
 		if _, err := configuration.BatchUpdateChromePlatforms(ctx, []*ufspb.ChromePlatform{chromeplatform}); err != nil {
-			return errors.Annotate(err, "UpdateChromePlatform - Unable to update platforms").Err()
+			return errors.Annotate(err, "UpdateChromePlatform - failed to batch update chrome platforms in datastore: %s", chromeplatform.GetName()).Err()
 		}
 		return nil
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "UpdateMachine - Failed to update machine in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "UpdateChromePlatform - failed to update chrome platform in datastore: %s", chromeplatform.GetName()).Err()
 	}
 	return chromeplatform, nil
 }
@@ -182,13 +213,29 @@ func validateDeleteChromePlatform(ctx context.Context, id string) error {
 	return nil
 }
 
-// validateUpdateChromePlatform validates if a ChromePlatform can be updated
-//
-// Checks if this ChromePlatform(ChromePlatformID) is not referenced by other resources in the datastore.
-// If there are any other references, delete will be rejected and an error will be returned.
-func validateUpdateChromePlatform(ctx context.Context, platform *ufspb.ChromePlatform) error {
-	var errorMsg strings.Builder
-	errorMsg.WriteString(fmt.Sprintf("Cannot update chrome platform %s:\n", platform.GetName()))
-	// check if resources does not exist
-	return ResourceExist(ctx, []*Resource{GetChromePlatformResource(platform.GetName())}, &errorMsg)
+func validateUpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatform, mask *field_mask.FieldMask) error {
+	// Check if resource does not exist
+	if err := ResourceExist(ctx, []*Resource{GetChromePlatformResource(chromeplatform.GetName())}, nil); err != nil {
+		return err
+	}
+
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "name cannot be updated, delete and create a new platform instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "update_time cannot be updated, it is a Output only field")
+			case "manufacturer":
+			case "description":
+			case "tags":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "unsupported update mask path %q", path)
+			}
+		}
+	}
+
+	return nil
 }

@@ -85,21 +85,6 @@ func UpdateChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatf
 	return putChromePlatform(ctx, chromePlatform, true)
 }
 
-// BatchUpdateChromePlatforms batch updates platforms to datastore
-//
-// Can be used in a transaction
-func BatchUpdateChromePlatforms(ctx context.Context, chromePlatforms []*ufspb.ChromePlatform) ([]*ufspb.ChromePlatform, error) {
-	protos := make([]proto.Message, len(chromePlatforms))
-	for i, machineLSE := range chromePlatforms {
-		protos[i] = machineLSE
-	}
-	_, err := ufsds.PutAll(ctx, protos, newChromePlatformEntity, true)
-	if err == nil {
-		return chromePlatforms, err
-	}
-	return nil, err
-}
-
 // GetChromePlatform returns chromePlatform for the given id from datastore.
 func GetChromePlatform(ctx context.Context, id string) (*ufspb.ChromePlatform, error) {
 	pm, err := ufsds.Get(ctx, &ufspb.ChromePlatform{Name: id}, newChromePlatformEntity)
@@ -180,6 +165,29 @@ func ImportChromePlatforms(ctx context.Context, platforms []*ufspb.ChromePlatfor
 // GetAllChromePlatforms returns all platforms in record.
 func GetAllChromePlatforms(ctx context.Context) (*ufsds.OpResults, error) {
 	return ufsds.GetAll(ctx, queryAll)
+}
+
+// BatchUpdateChromePlatforms updates ChromePlatforms in datastore.
+//
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateChromePlatforms(ctx context.Context, platforms []*ufspb.ChromePlatform) ([]*ufspb.ChromePlatform, error) {
+	return putAllChromePlatform(ctx, platforms, true)
+}
+
+func putAllChromePlatform(ctx context.Context, platforms []*ufspb.ChromePlatform, update bool) ([]*ufspb.ChromePlatform, error) {
+	protos := make([]proto.Message, len(platforms))
+	updateTime := ptypes.TimestampNow()
+	for i, chromeplatform := range platforms {
+		chromeplatform.UpdateTime = updateTime
+		protos[i] = chromeplatform
+	}
+	_, err := ufsds.PutAll(ctx, protos, newChromePlatformEntity, update)
+	if err == nil {
+		return platforms, err
+	}
+	return nil, err
 }
 
 func putChromePlatform(ctx context.Context, chromePlatform *ufspb.ChromePlatform, update bool) (*ufspb.ChromePlatform, error) {
