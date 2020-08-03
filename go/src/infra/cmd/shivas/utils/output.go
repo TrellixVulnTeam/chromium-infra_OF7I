@@ -64,93 +64,10 @@ var tw = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 // The io writer for json output
 var bw = bufio.NewWriter(os.Stdout)
 
-type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string) (string, error)
+type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool) (string, error)
 
 // PrintListJSONFormat prints the list output in JSON format
-func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string) error {
-	var pageToken string
-	fmt.Print("[")
-	if pageSize == 0 {
-		for {
-			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter)
-			if err != nil {
-				return err
-			}
-			if token == "" {
-				break
-			}
-			fmt.Print(",")
-			pageToken = token
-		}
-	} else {
-		for i := int32(0); i < pageSize; i = i + ufsUtil.MaxPageSize {
-			var size int32
-			if pageSize-i < ufsUtil.MaxPageSize {
-				size = pageSize % ufsUtil.MaxPageSize
-			} else {
-				size = ufsUtil.MaxPageSize
-			}
-			token, err := f(ctx, ic, json, size, pageToken, filter)
-			if err != nil {
-				return err
-			}
-			if token == "" {
-				break
-			} else if i+ufsUtil.MaxPageSize < pageSize {
-				fmt.Print(",")
-			}
-			pageToken = token
-		}
-	}
-	fmt.Println("]")
-	return nil
-}
-
-// PrintListTableFormat prints list output in Table format
-func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, title []string, tsv bool) error {
-	if !tsv {
-		PrintTitle(title)
-	}
-	var pageToken string
-	if pageSize == 0 {
-		for {
-			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter)
-			if err != nil {
-				return err
-			}
-			if token == "" {
-				break
-			}
-			pageToken = token
-		}
-	} else {
-		for i := int32(0); i < pageSize; i = i + ufsUtil.MaxPageSize {
-			var size int32
-			if pageSize-i < ufsUtil.MaxPageSize {
-				size = pageSize % ufsUtil.MaxPageSize
-			} else {
-				size = ufsUtil.MaxPageSize
-			}
-			token, err := f(ctx, ic, json, size, pageToken, filter)
-			if err != nil {
-				return err
-			}
-			if token == "" {
-				break
-			}
-			pageToken = token
-		}
-	}
-	return nil
-}
-
-// TODO(eshwarn) : Rename this method to printAll when all list cmds are migrated to use this func
-type printAllDup func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool) (string, error)
-
-// PrintListJSONFormatDup prints the list output in JSON format
-//
-// TODO(eshwarn) : Rename this method to PrintListJSONFormat when all list cmds are migrated to use this func
-func PrintListJSONFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printAllDup, json bool, pageSize int32, filter string, keysOnly bool) error {
+func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, keysOnly bool) error {
 	var pageToken string
 	fmt.Print("[")
 	if pageSize == 0 {
@@ -189,10 +106,8 @@ func PrintListJSONFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printA
 	return nil
 }
 
-// PrintListTableFormatDup prints list output in Table format
-//
-// TODO(eshwarn) : Rename this method to PrintListTableFormat when all list cmds are migrated to use this func
-func PrintListTableFormatDup(ctx context.Context, ic ufsAPI.FleetClient, f printAllDup, json bool, pageSize int32, filter string, keysOnly bool, title []string, tsv bool) error {
+// PrintListTableFormat prints list output in Table format
+func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, keysOnly bool, title []string, tsv bool) error {
 	if !tsv {
 		if keysOnly {
 			PrintTitle(title[0:1])

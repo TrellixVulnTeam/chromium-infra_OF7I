@@ -76,9 +76,9 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormatDup(ctx, ic, printMachineLSEPrototypes, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printMachineLSEPrototypes, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachinelseprototypeTitle, c.outputFlags.Tsv())
+	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachinelseprototypeTitle, c.outputFlags.Tsv())
 }
 
 func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

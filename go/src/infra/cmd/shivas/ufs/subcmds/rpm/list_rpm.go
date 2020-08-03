@@ -76,9 +76,9 @@ func (c *listRPM) innerRun(a subcommands.Application, args []string, env subcomm
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormatDup(ctx, ic, printRPMs, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printRPMs, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printRPMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RpmTitle, c.outputFlags.Tsv())
+	return utils.PrintListTableFormat(ctx, ic, printRPMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RpmTitle, c.outputFlags.Tsv())
 }
 
 func printRPMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

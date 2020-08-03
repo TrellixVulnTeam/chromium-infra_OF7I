@@ -77,9 +77,9 @@ func (c *listRack) innerRun(a subcommands.Application, args []string, env subcom
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormatDup(ctx, ic, printRacks, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printRacks, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printRacks, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RackTitle, c.outputFlags.Tsv())
+	return utils.PrintListTableFormat(ctx, ic, printRacks, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RackTitle, c.outputFlags.Tsv())
 }
 
 func printRacks(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

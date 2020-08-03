@@ -76,9 +76,9 @@ func (c *listKVM) innerRun(a subcommands.Application, args []string, env subcomm
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormatDup(ctx, ic, printKVMs, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printKVMs, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printKVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.KvmTitle, c.outputFlags.Tsv())
+	return utils.PrintListTableFormat(ctx, ic, printKVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.KvmTitle, c.outputFlags.Tsv())
 }
 
 func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

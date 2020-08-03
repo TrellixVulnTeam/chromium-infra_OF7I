@@ -78,9 +78,9 @@ func (c *listDrac) innerRun(a subcommands.Application, args []string, env subcom
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormatDup(ctx, ic, printDracs, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printDracs, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printDracs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.DracTitle, c.outputFlags.Tsv())
+	return utils.PrintListTableFormat(ctx, ic, printDracs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.DracTitle, c.outputFlags.Tsv())
 }
 
 func printDracs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {

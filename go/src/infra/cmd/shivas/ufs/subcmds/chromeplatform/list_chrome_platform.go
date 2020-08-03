@@ -76,9 +76,9 @@ func (c *listChromePlatform) innerRun(a subcommands.Application, args []string, 
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormatDup(ctx, ic, printChromePlatforms, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printChromePlatforms, true, int32(c.pageSize), c.filter, c.keysOnly)
 	}
-	return utils.PrintListTableFormatDup(ctx, ic, printChromePlatforms, false, int32(c.pageSize), c.filter, c.keysOnly, utils.ChromePlatformTitle, c.outputFlags.Tsv())
+	return utils.PrintListTableFormat(ctx, ic, printChromePlatforms, false, int32(c.pageSize), c.filter, c.keysOnly, utils.ChromePlatformTitle, c.outputFlags.Tsv())
 }
 
 func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
