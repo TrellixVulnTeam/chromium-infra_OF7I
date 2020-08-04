@@ -34,3 +34,7 @@ full_results.json
 
 # Python 3 virtual environment. Created with `python3 -m venv venv`.
 venv/
+
+# Python third-party libraries for GAE.
+# https://cloud.google.com/appengine/docs/standard/python/taskqueue/push/migrating-push-queues#importing-the-client-library
+lib
