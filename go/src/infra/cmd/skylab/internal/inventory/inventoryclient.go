@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/grpc/prpc"
+	"google.golang.org/grpc/status"
 
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
@@ -80,6 +81,9 @@ func (client *inventoryClientV2) UpdateDUT(ctx context.Context, newSpecs *invent
 	}
 	err = retry.Retry(ctx, transientErrorRetries(), f, retry.LogCallback(ctx, "UpdateDUT (v2)"))
 	if err != nil {
+		if er, ok := status.FromError(err); ok {
+			return errors.Reason("update setup configs: " + er.Message()).Err()
+		}
 		return errors.Annotate(err, "update setup configs").Err()
 	}
 
