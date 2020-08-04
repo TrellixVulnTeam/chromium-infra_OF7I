@@ -1312,7 +1312,7 @@ def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
     # Changes made to an impacted issue should be on top of changes
     # made to it in PHASE 3 where it might have been a 'main' issue.
     issue = issues_to_update_dict.get(
-        issue_id, services.issue.GetIssue(cnxn, issue_id))
+        issue_id, services.issue.GetIssue(cnxn, issue_id, use_cache=False))
 
     # Apply impacted changes.
     amendments, new_starrers = impacted_tracker.ApplyImpactedIssueChanges(

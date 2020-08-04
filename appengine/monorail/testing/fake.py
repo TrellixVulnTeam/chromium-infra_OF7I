@@ -903,8 +903,8 @@ class IssueStarService(AbstractStarService):
 
   def SetStarsBatch_SkipIssueUpdate(
       self, cnxn, issue_id, starrer_user_ids, starred, commit=True):
-      super(IssueStarService, self).SetStarsBatch(
-          cnxn, issue_id, starrer_user_ids, starred)
+    super(IssueStarService, self).SetStarsBatch(
+        cnxn, issue_id, starrer_user_ids, starred)
 
 
 class ProjectService(object):
@@ -1685,10 +1685,11 @@ class IssueService(object):
   def GetAnyOnHandIssue(self, issue_ids, start=None, end=None):
     return None  # Treat them all like misses.
 
-  def GetIssue(self, _cnxn, issue_id, use_cache=True):
-    if issue_id in self.issues_by_iid:
-      return self.issues_by_iid[issue_id]
-    else:
+  def GetIssue(self, cnxn, issue_id, use_cache=True):
+    issues = self.GetIssues(cnxn, [issue_id], use_cache=use_cache)
+    try:
+      return issues[0]
+    except IndexError:
       raise exceptions.NoSuchIssueException()
 
   def GetCurrentLocationOfMovedIssue(self, cnxn, project_id, local_id):
@@ -2075,15 +2076,24 @@ class IssueService(object):
   def GetIssuesDict(
       self, _cnxn, issue_ids, use_cache=True, shard_id=None):
     missing_ids = [iid for iid in issue_ids if iid not in self.issues_by_iid]
-    return {
-        iid: self.issues_by_iid[iid]
-        for iid in issue_ids
-        if iid in self.issues_by_iid
-    }, missing_ids
+    issues_by_id = {}
+    for iid in issue_ids:
+      if iid in self.issues_by_iid:
+        issue = self.issues_by_iid[iid]
+        if not use_cache:
+          issue.assume_stale = False
+        issues_by_id[iid] = issue
 
-  def GetIssues(self, _cnxn, issue_ids, use_cache=True, shard_id=None):
-    results = [self.issues_by_iid[issue_id] for issue_id in issue_ids
-               if issue_id in self.issues_by_iid]
+    return issues_by_id, missing_ids
+
+  def GetIssues(self, cnxn, issue_ids, use_cache=True, shard_id=None):
+    issues_by_iid, _misses = self.GetIssuesDict(
+        cnxn, issue_ids, use_cache=use_cache, shard_id=shard_id)
+    results = [
+        issues_by_iid[issue_id]
+        for issue_id in issue_ids
+        if issue_id in issues_by_iid
+    ]
 
     return results
 

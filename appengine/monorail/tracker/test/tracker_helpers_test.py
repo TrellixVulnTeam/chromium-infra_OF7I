@@ -1707,6 +1707,10 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     bo_add = _Issue('proj', 1)
     self.services.issue.TestAddIssue(bo_add)
     expected_bo_add = copy.deepcopy(bo_add)
+    # All impacted issues should be fetched within ApplyAllIssueChanges
+    # directly from the DB, skipping cache with `use_cache=False` in GetIssue().
+    # So we expect these issues to have assume_stale=False.
+    expected_bo_add.assume_stale = False
     expected_bo_add.blocking_iids = [issue_main.issue_id]
     expected_issues_to_update[expected_bo_add.issue_id] = expected_bo_add
     expected_imp_amendments[bo_add.issue_id] = [
@@ -1718,6 +1722,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     bo_remove.blocking_iids = [issue_main.issue_id]
     self.services.issue.TestAddIssue(bo_remove)
     expected_bo_remove = copy.deepcopy(bo_remove)
+    expected_bo_remove.assume_stale = False
     expected_bo_remove.blocking_iids = []
     expected_issues_to_update[expected_bo_remove.issue_id] = expected_bo_remove
     expected_imp_amendments[bo_remove.issue_id] = [
@@ -1741,6 +1746,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     b_add = _Issue('proj', 3)
     self.services.issue.TestAddIssue(b_add)
     expected_b_add = copy.deepcopy(b_add)
+    expected_b_add.assume_stale = False
     expected_b_add.blocked_on_iids = [issue_main.issue_id]
     expected_b_add.blocked_on_ranks = [0]
     expected_issues_to_update[expected_b_add.issue_id] = expected_b_add
@@ -1753,6 +1759,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     b_remove.blocked_on_iids = [issue_main.issue_id]
     self.services.issue.TestAddIssue(b_remove)
     expected_b_remove = copy.deepcopy(b_remove)
+    expected_b_remove.assume_stale = False
     expected_b_remove.blocked_on_iids = []
     # Test we can process delta changes and impact changes.
     delta_b_remove = tracker_pb2.IssueDelta(labels_add=['more_chickens'])
@@ -1778,6 +1785,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     merge_remove = _Issue('proj', 5)
     self.services.issue.TestAddIssue(merge_remove)
     expected_merge_remove = copy.deepcopy(merge_remove)
+    expected_merge_remove.assume_stale = False
     expected_issues_to_update[
         expected_merge_remove.issue_id] = expected_merge_remove
     expected_imp_amendments[merge_remove.issue_id] = [
@@ -1788,6 +1796,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     merge_add = _Issue('proj', 6)
     self.services.issue.TestAddIssue(merge_add)
     expected_merge_add = copy.deepcopy(merge_add)
+    expected_merge_add.assume_stale = False
     # We are adding 333 and removing 222 in issue_main with delta_main.
     expected_merge_add.cc_ids = [expected_main.owner_id, 333, 111]
     expected_merged_from_add[expected_merge_add.issue_id] = [
@@ -1826,10 +1835,12 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     # These issues should not show up in issues_to_update.
     missing_1 = _Issue('proj', 404)
     expected_missing_1 = copy.deepcopy(missing_1)
+    expected_missing_1.assume_stale = False
     self.services.issue.TestAddIssue(missing_1)
     missing_2 = _Issue('proj', 405)
     self.services.issue.TestAddIssue(missing_2)
     expected_missing_2 = copy.deepcopy(missing_2)
+    expected_missing_2.assume_stale = False
 
     delta_main = tracker_pb2.IssueDelta(
         owner_id=888,
@@ -1901,7 +1912,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_3 = _Issue('proj', 3)
     delta_3 = tracker_pb2.IssueDelta(cc_ids_add=[111])
 
-    issue_4 = _Issue('proj', 5)
+    issue_4 = _Issue('proj', 4)
     delta_4 = tracker_pb2.IssueDelta()
 
     issue_5 = _Issue('proj', 5)
