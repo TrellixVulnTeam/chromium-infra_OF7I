@@ -120,6 +120,7 @@ func (c *getMachine) printFull(ctx context.Context, ic ufsAPI.FleetClient, machi
 	rack, err := ic.GetRack(ctx, &ufsAPI.GetRackRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, machine.GetLocation().GetRack()),
 	})
+	rack.Name = ufsUtil.RemovePrefix(rack.Name)
 	if c.outputFlags.JSON() {
 		return printMachineJSONFull(machine, lse, rack)
 	}
