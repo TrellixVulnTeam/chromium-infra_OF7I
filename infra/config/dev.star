@@ -131,6 +131,14 @@ luci.realm(
                 "chromium-swarm-dev-users",
             ],
         ),
+        luci.binding(
+            roles = "role/swarming.poolViewer",
+            groups = [
+                # Who can list tasks of the pool in the task list page.
+                # TODO(crbug.com/1066839): remove after completed tests on dev.
+                "chromium-swarm-dev-users",
+            ],
+        ),
     ],
 )
 
