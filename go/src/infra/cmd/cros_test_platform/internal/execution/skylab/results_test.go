@@ -5,6 +5,8 @@
 package skylab
 
 import (
+	"context"
+	"errors"
 	"infra/libs/skylab/request"
 	"infra/libs/skylab/worker"
 	"sort"
@@ -18,18 +20,52 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 )
 
+type fakeArgsGenerator struct {
+	cannedArgs request.Args
+}
+
+func (g *fakeArgsGenerator) GenerateArgs(ctx context.Context) (request.Args, error) {
+	return g.cannedArgs, nil
+}
+
+func (g *fakeArgsGenerator) CheckConsistency() error {
+	return nil
+}
+
+type fakeClient struct{}
+
+func (c *fakeClient) ValidateArgs(context.Context, *request.Args) (bool, map[string]string, error) {
+	return true, nil, nil
+}
+func (c *fakeClient) LaunchTask(context.Context, *request.Args) (TaskReference, error) {
+	return "fake-task-reference", nil
+}
+func (c *fakeClient) FetchResults(context.Context, TaskReference) (*FetchResultsResponse, error) {
+	return nil, errors.New("not implemented in fake")
+}
+func (c *fakeClient) SwarmingTaskID(TaskReference) string {
+	return ""
+}
+func (c *fakeClient) URL(TaskReference) string {
+	return ""
+}
+
 func TestResultBeforeRefresh(t *testing.T) {
 	Convey("Give a single task that has not be Refresh()ed", t, func() {
-		t := NewTask(request.Args{
-			Cmd: worker.Command{
-				TaskName: "foo-task",
+		t := NewTask(&fakeArgsGenerator{
+			cannedArgs: request.Args{
+				Cmd: worker.Command{
+					TaskName: "foo-task",
+				},
 			},
 		})
+		err := t.Launch(context.Background(), &fakeClient{})
+		So(err, ShouldBeNil)
 		Convey("Result() returns known values and reasonable defaults", func() {
 			r := t.Result()
 			So(r.Name, ShouldEqual, "foo-task")
 			So(r.State, ShouldNotBeNil)
-			So(r.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_UNSPECIFIED)
+			So(r.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_PENDING)
 			So(r.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
 			So(r.LogUrl, ShouldNotBeEmpty)
 			So(r.LogData, ShouldNotBeNil)

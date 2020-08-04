@@ -18,9 +18,18 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
+// ArgsGenerator is used to generate arguments to buildbucket / swarming.
+type ArgsGenerator interface {
+	// Generate arguments for swarming task or buildbucket build.
+	GenerateArgs(ctx context.Context) (request.Args, error)
+	// Check the internal consistency of of the generator arguments.
+	CheckConsistency() error
+}
+
 // Task represents an individual test task.
 type Task struct {
-	args request.Args
+	argsGenerator ArgsGenerator
+	args          request.Args
 	// Note: If we ever begin supporting other harnesses's result formats
 	// then this field will change to a *skylab_test_runner.Result.
 	// For now, the autotest-specific variant is more convenient.
@@ -32,8 +41,8 @@ type Task struct {
 }
 
 // NewTask initializes a Task object.
-func NewTask(args request.Args) *Task {
-	return &Task{args: args}
+func NewTask(argsGenerator ArgsGenerator) *Task {
+	return &Task{argsGenerator: argsGenerator}
 }
 
 // name is the task name as it is displayed in the UI.
@@ -43,10 +52,15 @@ func (t *Task) name() string {
 
 // Launch sends an RPC request to start the task.
 func (t *Task) Launch(ctx context.Context, c Client) error {
-	ref, err := c.LaunchTask(ctx, &t.args)
+	args, err := t.argsGenerator.GenerateArgs(ctx)
+	if err != nil {
+		return err
+	}
+	ref, err := c.LaunchTask(ctx, &args)
 	if err != nil {
 		return errors.Annotate(err, "launch attempt for %s", t.name()).Err()
 	}
+	t.args = args
 	t.taskReference = ref
 	t.lifeCycle = test_platform.TaskState_LIFE_CYCLE_PENDING
 	t.url = c.URL(ref)

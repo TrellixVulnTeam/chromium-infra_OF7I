@@ -77,11 +77,7 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client)
 }
 
 func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
-	args, err := t.argsGenerator.GenerateArgs(ctx)
-	if err != nil {
-		return err
-	}
-	a := skylab.NewTask(args)
+	a := skylab.NewTask(t.argsGenerator)
 	if err := a.Launch(ctx, c); err != nil {
 		return err
 	}
