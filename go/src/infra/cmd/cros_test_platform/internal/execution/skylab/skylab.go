@@ -40,32 +40,29 @@ type Task struct {
 	url            string
 }
 
-// NewTask initializes a Task object.
-func NewTask(argsGenerator ArgsGenerator) *Task {
-	return &Task{argsGenerator: argsGenerator}
-}
-
-// name is the task name as it is displayed in the UI.
-func (t *Task) name() string {
-	return t.args.Cmd.TaskName
-}
-
-// Launch sends an RPC request to start the task.
-func (t *Task) Launch(ctx context.Context, c Client) error {
+// NewTask creates a new buildbucket or swarming task for a test with the given
+// arguments.
+func NewTask(ctx context.Context, c Client, argsGenerator ArgsGenerator) (*Task, error) {
+	t := &Task{argsGenerator: argsGenerator}
 	args, err := t.argsGenerator.GenerateArgs(ctx)
 	if err != nil {
-		return err
+		return nil, errors.Annotate(err, "new task for %s", t.name()).Err()
 	}
 	ref, err := c.LaunchTask(ctx, &args)
 	if err != nil {
-		return errors.Annotate(err, "launch attempt for %s", t.name()).Err()
+		return nil, errors.Annotate(err, "new task for %s", t.name()).Err()
 	}
 	t.args = args
 	t.taskReference = ref
 	t.lifeCycle = test_platform.TaskState_LIFE_CYCLE_PENDING
 	t.url = c.URL(ref)
 	logging.Infof(ctx, "Launched attempt for %s as task %s", t.name(), t.url)
-	return nil
+	return t, nil
+}
+
+// name is the task name as it is displayed in the UI.
+func (t *Task) name() string {
+	return t.args.Cmd.TaskName
 }
 
 // LifeCyclesWithResults lists all task states which have a chance of producing

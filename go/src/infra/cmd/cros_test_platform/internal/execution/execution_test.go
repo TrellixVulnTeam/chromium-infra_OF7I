@@ -351,7 +351,7 @@ func TestServiceError(t *testing.T) {
 			skylab.setError(fmt.Errorf("foo error"))
 			err = run.LaunchAndWait(ctx, skylab)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "launch attempt")
+			So(err.Error(), ShouldContainSubstring, "new task")
 			So(err.Error(), ShouldContainSubstring, "foo error")
 		})
 

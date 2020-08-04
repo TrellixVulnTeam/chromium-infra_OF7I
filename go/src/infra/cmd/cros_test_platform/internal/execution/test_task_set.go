@@ -77,8 +77,8 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client)
 }
 
 func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
-	a := skylab.NewTask(t.argsGenerator)
-	if err := a.Launch(ctx, c); err != nil {
+	a, err := skylab.NewTask(ctx, c, t.argsGenerator)
+	if err != nil {
 		return err
 	}
 	t.tasks = append(t.tasks, a)

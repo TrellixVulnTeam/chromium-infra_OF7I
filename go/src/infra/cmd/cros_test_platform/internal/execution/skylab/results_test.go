@@ -52,14 +52,17 @@ func (c *fakeClient) URL(TaskReference) string {
 
 func TestResultBeforeRefresh(t *testing.T) {
 	Convey("Give a single task that has not be Refresh()ed", t, func() {
-		t := NewTask(&fakeArgsGenerator{
-			cannedArgs: request.Args{
-				Cmd: worker.Command{
-					TaskName: "foo-task",
+		t, err := NewTask(
+			context.Background(),
+			&fakeClient{},
+			&fakeArgsGenerator{
+				cannedArgs: request.Args{
+					Cmd: worker.Command{
+						TaskName: "foo-task",
+					},
 				},
 			},
-		})
-		err := t.Launch(context.Background(), &fakeClient{})
+		)
 		So(err, ShouldBeNil)
 		Convey("Result() returns known values and reasonable defaults", func() {
 			r := t.Result()
