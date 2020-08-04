@@ -797,12 +797,14 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.user_1.vacation_message = 'non-empty-string'
     self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
+    project = None
 
     expected_user = user_objects_pb2.User(
         name='users/111',
         display_name='one@example.com',
         availability_message='non-empty-string')
-    self.assertEqual(self.converter.ConvertUser(self.user_1), expected_user)
+    self.assertEqual(
+        self.converter.ConvertUser(self.user_1, project), expected_user)
 
 
   def testConvertUsers(self):
@@ -810,6 +812,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     user_ids = [self.user_1.user_id]
     self.converter.user_auth = authdata.AuthData.FromUser(
         self.cnxn, self.user_1, self.services)
+    project = None
 
     expected_user_dict = {
         self.user_1.user_id:
@@ -818,7 +821,8 @@ class ConverterFunctionsTest(unittest.TestCase):
                 display_name='one@example.com',
                 availability_message='non-empty-string')
     }
-    self.assertEqual(self.converter.ConvertUsers(user_ids), expected_user_dict)
+    self.assertEqual(
+        self.converter.ConvertUsers(user_ids, project), expected_user_dict)
 
   def testConvertProjectStars(self):
     expected_stars = [

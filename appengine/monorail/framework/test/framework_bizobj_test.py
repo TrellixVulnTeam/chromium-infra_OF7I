@@ -28,27 +28,20 @@ from tracker import tracker_bizobj
 class CreateUserDisplayNamesTest(unittest.TestCase):
 
   def setUp(self):
-    self.cnxn = fake.MonorailConnection()
-    self.services = service_manager.Services(
-        project=fake.ProjectService(),
-        user=fake.UserService(),
-        usergroup=fake.UserGroupService())
-
-    self.user_1 = self.services.user.TestAddUser(
-        'user_1@test.com', 111, obscure_email=True)
-    self.user_2 = self.services.user.TestAddUser(
-        'user_2@test.com', 222, obscure_email=False)
-    self.user_3 = self.services.user.TestAddUser(
-        'user_3@test.com', 333, obscure_email=True)
-    self.user_4 = self.services.user.TestAddUser(
-        'user_4@test.com', 444, obscure_email=False)
-    self.service_account = self.services.user.TestAddUser(
-        'service@account.com', 999, obscure_email=False)
-    self.requester = self.services.user.TestAddUser('user_5@test.com', 555)
+    self.user_1 = user_pb2.MakeUser(
+        111, email='user_1@test.com', obscure_email=True)
+    self.user_2 = user_pb2.MakeUser(
+        222, email='user_2@test.com', obscure_email=False)
+    self.user_3 = user_pb2.MakeUser(
+        333, email='user_3@test.com', obscure_email=True)
+    self.user_4 = user_pb2.MakeUser(
+        444, email='user_4@test.com', obscure_email=False)
+    self.service_account = user_pb2.MakeUser(
+        999, email='service@account.com', obscure_email=False)
+    self.requester = user_pb2.MakeUser(555, email='user_5@test.com')
     self.user_auth = authdata.AuthData(
         user_id=self.requester.user_id, email=self.requester.email)
-    self.project = self.services.project.TestAddProject(
-        'proj', project_id=789, owner_ids=[111], committer_ids=[222])
+    self.project = fake.Project('proj', owner_ids=[111], committer_ids=[222])
 
   @mock.patch('services.client_config_svc.GetServiceAccountMap')
   def testUserCreateDisplayNames_NonProjectMembers(self, fake_account_map):
@@ -56,7 +49,7 @@ class CreateUserDisplayNamesTest(unittest.TestCase):
     users = [self.user_1, self.user_2, self.user_3, self.user_4,
              self.service_account]
     display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users)
+        self.user_auth, users, self.project)
     expected_display_names = {
         self.user_1.user_id: testing_helpers.ObscuredEmail(self.user_1.email),
         self.user_2.user_id: self.user_2.email,
@@ -72,14 +65,13 @@ class CreateUserDisplayNamesTest(unittest.TestCase):
              self.service_account]
     self.project.committer_ids.append(self.requester.user_id)
     display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users)
+        self.user_auth, users, self.project)
     expected_display_names = {
-        self.user_1.user_id: self.user_1.email,  # Project member
-        self.user_2.user_id: self.user_2.email,  # Project member and unobscured
-        self.user_3.user_id: testing_helpers.ObscuredEmail(self.user_3.email),
-        self.user_4.user_id: self.user_4.email,  # Unobscured email
-        self.service_account.user_id: 'Service'
-    }
+        self.user_1.user_id: self.user_1.email,
+        self.user_2.user_id: self.user_2.email,
+        self.user_3.user_id: self.user_3.email,
+        self.user_4.user_id: self.user_4.email,
+        self.service_account.user_id: 'Service'}
     self.assertEqual(display_names_by_id, expected_display_names)
 
   @mock.patch('services.client_config_svc.GetServiceAccountMap')
@@ -89,7 +81,7 @@ class CreateUserDisplayNamesTest(unittest.TestCase):
              self.service_account]
     self.user_auth.user_pb.is_site_admin = True
     display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.cnxn, self.services, self.user_auth, users)
+        self.user_auth, users, self.project)
     expected_display_names = {
         self.user_1.user_id: self.user_1.email,
         self.user_2.user_id: self.user_2.email,
@@ -114,62 +106,47 @@ class ParseAndObscureAddressTest(unittest.TestCase):
 class ShoulRevealEmailTest(unittest.TestCase):
 
   def setUp(self):
-    self.cnxn = fake.MonorailConnection()
-    self.services = service_manager.Services(
-        project=fake.ProjectService(),
-        user=fake.UserService(),
-        usergroup=fake.UserGroupService())
-    self.user_1 = self.services.user.TestAddUser(
-        'user_1@test.com', 111, obscure_email=True)
-    self.user_2 = self.services.user.TestAddUser(
-        'user_2@test.com', 222, obscure_email=False)
-    self.requester = self.services.user.TestAddUser(
-        'user_5@test.com', 555, obscure_email=True)
+    self.user_1 = user_pb2.MakeUser(
+        111, email='user_1@test.com', obscure_email=True)
+    self.user_2 = user_pb2.MakeUser(
+        222, email='user_2@test.com', obscure_email=False)
+    self.requester = user_pb2.MakeUser(
+        555, email='user_5@test.com', obscure_email=True)
     self.user_auth = authdata.AuthData(
         user_id=self.requester.user_id, email=self.requester.email)
     self.user_auth.user_pb.email = self.user_auth.email
-    self.project = self.services.project.TestAddProject(
-        'proj', project_id=789, owner_ids=[111], committer_ids=[222])
+    self.project = fake.Project('proj', owner_ids=[111], committer_ids=[222])
 
   def testShouldRevealEmail_Anon(self):
     anon = authdata.AuthData()
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, anon, self.user_1))
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, anon, self.user_2))
+    self.assertFalse(framework_bizobj.ShouldRevealEmail(
+        anon, self.project, self.user_1.email))
+    self.assertFalse(framework_bizobj.ShouldRevealEmail(
+        anon, self.project, self.user_2.email))
 
   def testShouldRevealEmail_Self(self):
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.requester))
+    self.assertTrue(framework_bizobj.ShouldRevealEmail(
+        self.user_auth, self.project, self.user_auth.user_pb.email))
 
   def testShouldRevealEmail_SiteAdmin(self):
     self.user_auth.user_pb.is_site_admin = True
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_1))
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_2))
+    self.assertTrue(framework_bizobj.ShouldRevealEmail(
+        self.user_auth, self.project, self.user_1.email))
+    self.assertTrue(framework_bizobj.ShouldRevealEmail(
+        self.user_auth, self.project, self.user_2.email))
 
   def testShouldRevealEmail_ProjectMember(self):
     self.project.committer_ids.append(self.requester.user_id)
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_1))
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_2))
+    self.assertTrue(framework_bizobj.ShouldRevealEmail(
+        self.user_auth, self.project, self.user_1.email))
+    self.assertTrue(framework_bizobj.ShouldRevealEmail(
+        self.user_auth, self.project, self.user_2.email))
 
   def testShouldRevealEmail_NonMember(self):
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_1))
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_2))
+    self.assertFalse(framework_bizobj.ShouldRevealEmail(
+        self.user_auth, self.project, self.user_1.email))
+    self.assertFalse(framework_bizobj.ShouldRevealEmail(
+        self.user_auth, self.project, self.user_2.email))
 
 
 class ArtifactTest(unittest.TestCase):

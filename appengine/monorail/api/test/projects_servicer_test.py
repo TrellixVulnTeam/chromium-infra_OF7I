@@ -74,11 +74,10 @@ class ProjectsServicerTest(unittest.TestCase):
     self.services.usergroup.TestAddMembers(777, [666, 999])
 
     self.project = self.services.project.TestAddProject(
-        'proj',
-        project_id=789,
-        owner_ids=[111],
-        committer_ids=[222],
-        contrib_ids=[333])
+        'proj', project_id=789)
+    self.project.owner_ids.extend([111])
+    self.project.committer_ids.extend([222])
+    self.project.contributor_ids.extend([333])
     self.projects_svcr = projects_servicer.ProjectsServicer(
         self.services, make_rate_limiter=False)
     self.prpc_context = context.ServicerContext()
@@ -701,7 +700,6 @@ class ProjectsServicerTest(unittest.TestCase):
   def testListFields_TwiceIndirectPermission(self):
     """Test that only direct memberships are considered."""
     self.AddField('Foo Field', needs_perm='FooPerm')
-    # User group 777 has members: user_666 and group 999.
     self.project.contributor_ids.extend([777])
     self.project.contributor_ids.extend([999])
     self.project.extra_perms = [

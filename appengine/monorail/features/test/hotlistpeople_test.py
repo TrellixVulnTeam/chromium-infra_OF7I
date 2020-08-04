@@ -24,10 +24,7 @@ class HotlistPeopleListTest(unittest.TestCase):
 
   def setUp(self):
     self.services = service_manager.Services(
-        features=fake.FeaturesService(),
-        project=fake.ProjectService(),
-        user=fake.UserService(),
-        usergroup=fake.UserGroupService())
+        user=fake.UserService(), features=fake.FeaturesService())
     self.owner_user = self.services.user.TestAddUser('buzbuz@gmail.com', 111)
     self.editor_user = self.services.user.TestAddUser('monica@gmail.com', 222)
     self.non_member_user = self.services.user.TestAddUser(

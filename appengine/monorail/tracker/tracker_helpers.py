@@ -1069,7 +1069,7 @@ def GetVisibleMembers(mr, project, services):
   visible_member_views = framework_views.MakeAllUserViews(
       mr.cnxn, services.user, visible_member_ids, group_ids=all_group_ids)
   framework_views.RevealAllEmailsToMembers(
-      mr.cnxn, services, mr.auth, visible_member_views)
+      mr.auth, project, visible_member_views)
 
   # Filter out service accounts
   service_acct_emails = set(

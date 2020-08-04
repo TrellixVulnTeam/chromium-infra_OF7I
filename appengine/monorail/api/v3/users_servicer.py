@@ -40,7 +40,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
     with work_env.WorkEnv(mc, self.services) as we:
       user = we.GetUser(user_id)
 
-    return self.converter.ConvertUser(user)
+    return self.converter.ConvertUser(user, None)
 
   @monorail_servicer.PRPCMethod
   def BatchGetUsers(self, mc, request):
@@ -58,7 +58,7 @@ class UsersServicer(monorail_servicer.MonorailServicer):
       users = we.BatchGetUsers(user_ids)
 
     api_users_by_id = self.converter.ConvertUsers(
-        [user.user_id for user in users])
+        [user.user_id for user in users], None)
     api_users = [api_users_by_id[user_id] for user_id in user_ids]
 
     return users_pb2.BatchGetUsersResponse(users=api_users)

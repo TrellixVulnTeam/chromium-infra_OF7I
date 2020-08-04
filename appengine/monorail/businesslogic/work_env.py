@@ -896,7 +896,7 @@ class WorkEnv(object):
   # FUTURE: All other field methods.
 
   def GetFieldDef(self, field_id, project):
-    # type: (int, Project) -> FieldDef
+    # type (int, Project) -> FieldDef
     """Return the specified hotlist.
 
     Args:

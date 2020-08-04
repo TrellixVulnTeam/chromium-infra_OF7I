@@ -29,7 +29,6 @@ class ActivitiesTest(unittest.TestCase):
         config=fake.ConfigService(),
         issue=fake.IssueService(),
         user=fake.UserService(),
-        usergroup=fake.UserGroupService(),
         project=fake.ProjectService(),
     )
 
@@ -49,8 +48,7 @@ class ActivitiesTest(unittest.TestCase):
 
     self.comment_id = 123
     self.comment_timestamp = 120
-    self.user = self.services.user.TestAddUser('testuser@example.com', 2)
-    self.user_id = self.user.user_id
+    self.user_id = 2
     self.mr_after = 1234
 
     self.mox = mox.Mox()
@@ -74,6 +72,7 @@ class ActivitiesTest(unittest.TestCase):
 
   def createAndAssertUpdates(self, project_ids=None, user_ids=None,
                              ascending=True):
+    user = user_pb2.MakeUser(self.user_id)
     comment_1 = tracker_pb2.IssueComment(
         id=self.comment_id, issue_id=self.issue_id,
         project_id=self.project_id, user_id=self.user_id,
@@ -87,6 +86,11 @@ class ActivitiesTest(unittest.TestCase):
     self.services.issue.GetIssueActivity(
         mox.IgnoreArg(), num=50, before=0, after=after, project_ids=project_ids,
         user_ids=user_ids, ascending=ascending).AndReturn([comment_1])
+
+    self.mox.StubOutWithMock(framework_views, 'MakeAllUserViews')
+    framework_views.MakeAllUserViews(
+        mox.IgnoreArg(), self.services.user, [self.user_id], []).AndReturn(
+            {self.user_id: user})
 
     self.mox.ReplayAll()
 

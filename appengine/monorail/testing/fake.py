@@ -533,8 +533,7 @@ class UserService(object):
     self.linked_account_rows = []  # (parent_id, child_id)
     self.prefs_dict = {}  # {user_id: UserPrefs}
 
-  def TestAddUser(
-      self, email, user_id, add_user=True, banned=False, obscure_email=True):
+  def TestAddUser(self, email, user_id, add_user=True, banned=False):
     """Add a user to the fake UserService instance.
 
     Args:
@@ -543,7 +542,6 @@ class UserService(object):
       add_user: Flag whether user pb should be created, i.e. whether a
           Monorail account should be created
       banned: Boolean to set the user as banned
-      obscure_email: Boolean to determine whether to obscure the user's email.
 
     Returns:
       The User PB that was added, or None.
@@ -556,7 +554,7 @@ class UserService(object):
       user = user_pb2.MakeUser(user_id)
       user.is_site_admin = False
       user.email = email
-      user.obscure_email = obscure_email
+      user.obscure_email = True
       if banned:
         user.banned = 'is banned'
       self.test_users[user_id] = user

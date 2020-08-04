@@ -18,8 +18,6 @@ from proto import project_pb2
 from proto import tracker_pb2
 from proto import user_pb2
 import settings
-from services import service_manager
-from testing import fake
 
 
 LONG_STR = 'VeryLongStringThatCertainlyWillNotFit'
@@ -176,21 +174,15 @@ class UserViewTest(unittest.TestCase):
 class RevealEmailsToMembersTest(unittest.TestCase):
 
   def setUp(self):
-    self.cnxn = fake.MonorailConnection()
-    self.services = service_manager.Services(
-        project=fake.ProjectService(),
-        user=fake.UserService(),
-        usergroup=fake.UserGroupService())
-    self.mr = monorailrequest.MonorailRequest(None)
-    self.mr.project = self.services.project.TestAddProject(
-        'proj',
-        project_id=789,
-        owner_ids=[111],
-        committer_ids=[222],
-        contrib_ids=[333, 888])
-
+    project = project_pb2.Project()
+    project.owner_ids.append(111)
+    project.committer_ids.append(222)
+    project.contributor_ids.append(333)
+    project.contributor_ids.append(888)
     user = user_pb2.User()
     user.is_site_admin = False
+    self.mr = monorailrequest.MonorailRequest(None)
+    self.mr.project = project
     self.mr.auth.user_pb = user
 
   def CheckRevealAllToMember(
@@ -209,7 +201,7 @@ class RevealEmailsToMembersTest(unittest.TestCase):
     # Assert profile url contains user ID before the reveal.
     self.assertEqual('/u/%s/' % viewed_user_id, user_view.profile_url)
     framework_views.RevealAllEmailsToMembers(
-        self.cnxn, self.services, self.mr.auth, users_by_id)
+        self.mr.auth, self.mr.project, users_by_id)
     self.assertEqual(expected, not user_view.obscure_email)
     if expected:
       # Assert display name is now revealed.
