@@ -118,7 +118,7 @@ func validRepo(r *Repo) bool {
 }
 
 func parseConfigBundle(configBundle payload.ConfigBundle) []*device.Config {
-	designs := configBundle.GetDesigns().GetValue()
+	designs := configBundle.GetDesignList()
 	dcs := make(map[string]*device.Config, 0)
 	for _, d := range designs {
 		board := d.GetProgramId().GetValue()

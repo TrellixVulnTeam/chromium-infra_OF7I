@@ -49,6 +49,8 @@ func TestParseConfigBundle(t *testing.T) {
 					So(dc.GetStorage(), ShouldEqual, device.Config_STORAGE_MMC)
 					So(dc.GetSoc(), ShouldEqual, device.Config_SOC_UNSPECIFIED)
 					So(dc.GetCpu(), ShouldEqual, device.Config_ARCHITECTURE_UNDEFINED)
+				case "FAKE-REF-DESIGN:0":
+					fallthrough
 				case "FAKE-REF-DESIGN:2":
 					So(dc.GetFormFactor(), ShouldEqual, device.Config_FORM_FACTOR_CLAMSHELL)
 					So(dc.GetHardwareFeatures(), ShouldResemble, []device.Config_HardwareFeature{
