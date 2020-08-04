@@ -22,6 +22,11 @@ DATE = query2ast.DATE
 NUM = query2ast.NUM
 TXT = query2ast.TXT
 
+SUBQUERY = query2ast.SUBQUERY
+LEFT_PAREN = query2ast.LEFT_PAREN
+RIGHT_PAREN = query2ast.RIGHT_PAREN
+OR = query2ast.OR
+
 BUILTIN_ISSUE_FIELDS = query2ast.BUILTIN_ISSUE_FIELDS
 ANY_FIELD = query2ast.BUILTIN_ISSUE_FIELDS['any_field']
 
@@ -740,22 +745,289 @@ class QueryParsingUnitTest(unittest.TestCase):
             self.default_config)
       self.assertEqual('Could not parse date: ' + val, cm.exception.message)
 
-  def testParseUserQuery_SyntaxErrors(self):
-    """Bad queries should report warnings."""
-    warnings = []
-    ast = query2ast.ParseUserQuery(
-        'one two (three four)', '',
-        BUILTIN_ISSUE_FIELDS, self.default_config, warnings)
-    self.assertEqual(4, len(ast.conjunctions[0].conds))
-    self.assertEqual(
-        ['Parentheses are ignored in user queries.'],
-        warnings)
+  def testQueryToSubqueries_BasicQuery(self):
+    self.assertEqual(['owner:me'], query2ast.QueryToSubqueries('owner:me'))
 
-    warnings = []
-    ast = query2ast.ParseUserQuery(
-        '', 'one two (three four)',
-        BUILTIN_ISSUE_FIELDS, self.default_config, warnings)
-    self.assertEqual(4, len(ast.conjunctions[0].conds))
+  def testQueryToSubqueries_EmptyQuery(self):
+    self.assertEqual([''], query2ast.QueryToSubqueries(''))
+
+  def testQueryToSubqueries_UnmatchedParenthesesThrowsError(self):
+    with self.assertRaises(query2ast.InvalidQueryError):
+      self.assertEqual(['Pri=1'], query2ast.QueryToSubqueries('Pri=1))'))
+    with self.assertRaises(query2ast.InvalidQueryError):
+      self.assertEqual(
+          ['label:Hello'], query2ast.QueryToSubqueries('((label:Hello'))
+
+    with self.assertRaises(query2ast.InvalidQueryError):
+      self.assertEqual(
+          ['owner:me'], query2ast.QueryToSubqueries('((((owner:me)))'))
+
+    with self.assertRaises(query2ast.InvalidQueryError):
+      self.assertEqual(
+          ['test=What'], query2ast.QueryToSubqueries('(((test=What))))'))
+
+  def testQueryToSubqueries_IgnoresEmptyGroups(self):
+    self.assertEqual([''], query2ast.QueryToSubqueries('()(()(()))()()'))
+
     self.assertEqual(
-        ['Parentheses are ignored in saved queries.'],
-        warnings)
+        ['owner:me'], query2ast.QueryToSubqueries('()(()owner:me)()()'))
+
+  def testQueryToSubqueries_BasicOr(self):
+    self.assertEqual(
+        ['owner:me', 'status:New', 'Pri=1'],
+        query2ast.QueryToSubqueries('owner:me OR status:New OR Pri=1'))
+
+  def testQueryToSubqueries_OrAtStartOrEnd(self):
+    self.assertEqual(
+        ['owner:me OR'], query2ast.QueryToSubqueries('owner:me OR'))
+
+    self.assertEqual(
+        ['OR owner:me'], query2ast.QueryToSubqueries('OR owner:me'))
+
+  def testQueryToSubqueries_BasicParentheses(self):
+    self.assertEqual(
+        ['owner:me status:New'],
+        query2ast.QueryToSubqueries('owner:me (status:New)'))
+
+    self.assertEqual(
+        ['owner:me status:New'],
+        query2ast.QueryToSubqueries('(owner:me) status:New'))
+
+    self.assertEqual(
+        ['owner:me status:New'],
+        query2ast.QueryToSubqueries('((owner:me) (status:New))'))
+
+  def testQueryToSubqueries_ParenthesesWithOr(self):
+    self.assertEqual(
+        ['Pri=1 owner:me', 'Pri=1 status:New'],
+        query2ast.QueryToSubqueries('Pri=1 (owner:me OR status:New)'))
+
+    self.assertEqual(
+        ['owner:me component:OhNo', 'status:New component:OhNo'],
+        query2ast.QueryToSubqueries('(owner:me OR status:New) component:OhNo'))
+
+  def testQueryToSubqueries_ParenthesesWithOr_Multiple(self):
+    self.assertEqual(
+        [
+            'Pri=1 test owner:me', 'Pri=1 test status:New',
+            'Pri=2 test owner:me', 'Pri=2 test status:New'
+        ],
+        query2ast.QueryToSubqueries(
+            '(Pri=1 OR Pri=2)(test (owner:me OR status:New))'))
+
+  def testQueryToSubqueries_OrNextToParentheses(self):
+    self.assertEqual(['A', 'B'], query2ast.QueryToSubqueries('(A) OR (B)'))
+
+    self.assertEqual(
+        ['A B', 'A C E', 'A D E'],
+        query2ast.QueryToSubqueries('A (B OR (C OR D) E)'))
+
+    self.assertEqual(
+        ['A B C', 'A B D', 'A E'],
+        query2ast.QueryToSubqueries('A (B (C OR D) OR E)'))
+
+  def testQueryToSubqueries_ExtraSpaces(self):
+    self.assertEqual(
+        ['A', 'B'], query2ast.QueryToSubqueries(' ( A )   OR  ( B ) '))
+
+    self.assertEqual(
+        ['A B', 'A C E', 'A D E'],
+        query2ast.QueryToSubqueries(' A  ( B   OR   ( C  OR  D )  E )'))
+
+  def testQueryToSubqueries_OrAtEndOfParentheses(self):
+    self.assertEqual(['A B'], query2ast.QueryToSubqueries('(A OR )(B)'))
+    self.assertEqual(
+        ['A B', 'A C'], query2ast.QueryToSubqueries('( OR A)(B OR C)'))
+    self.assertEqual(
+        ['A B', 'A C'], query2ast.QueryToSubqueries(' OR A (B OR C)'))
+
+  def testQueryToSubqueries_EmptyOrGroup(self):
+    self.assertEqual(
+        ['A C', 'C', 'B C'], query2ast.QueryToSubqueries('(A OR  OR B)(C)'))
+
+  def testParseQuery_Basic(self):
+    self.assertEqual(
+        [
+            'owner:me',
+        ],
+        query2ast._ParseQuery(
+            query2ast.PeekIterator(
+                [ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me')])))
+
+  def testParseQuery_Complex(self):
+    self.assertEqual(
+        [
+            'owner:me',
+            'Pri=1',
+            'label=test',
+        ],
+        query2ast._ParseQuery(
+            query2ast.PeekIterator(
+                [
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me'),
+                    ast_pb2.QueryToken(token_type=OR),
+                    ast_pb2.QueryToken(token_type=LEFT_PAREN),
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='Pri=1'),
+                    ast_pb2.QueryToken(token_type=RIGHT_PAREN),
+                    ast_pb2.QueryToken(token_type=OR),
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='label=test'),
+                ])))
+
+  def testParseOrGroup_Basic(self):
+    self.assertEqual(
+        [
+            'owner:me',
+        ],
+        query2ast._ParseOrGroup(
+            query2ast.PeekIterator(
+                [ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me')])))
+
+  def testParseOrGroup_TwoAdjacentAndGroups(self):
+    self.assertEqual(
+        [
+            'owner:me Pri=1',
+            'owner:me label=test',
+        ],
+        query2ast._ParseOrGroup(
+            query2ast.PeekIterator(
+                [
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me'),
+                    ast_pb2.QueryToken(token_type=LEFT_PAREN),
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='Pri=1'),
+                    ast_pb2.QueryToken(token_type=OR),
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='label=test'),
+                    ast_pb2.QueryToken(token_type=RIGHT_PAREN),
+                ])))
+
+  def testParseAndGroup_Subquery(self):
+    self.assertEqual(
+        [
+            'owner:me',
+        ],
+        query2ast._ParseAndGroup(
+            query2ast.PeekIterator(
+                [ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me')])))
+
+  def testParseAndGroup_ParenthesesGroup(self):
+    self.assertEqual(
+        [
+            'owner:me',
+            'Pri=1',
+        ],
+        query2ast._ParseAndGroup(
+            query2ast.PeekIterator(
+                [
+                    ast_pb2.QueryToken(token_type=LEFT_PAREN),
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me'),
+                    ast_pb2.QueryToken(token_type=OR),
+                    ast_pb2.QueryToken(token_type=SUBQUERY, value='Pri=1'),
+                    ast_pb2.QueryToken(token_type=RIGHT_PAREN),
+                ])))
+
+  def testParseAndGroup_Empty(self):
+    self.assertEqual([], query2ast._ParseAndGroup(query2ast.PeekIterator([])))
+
+  def testParseAndGroup_InvalidTokens(self):
+    with self.assertRaises(query2ast.InvalidQueryError):
+      query2ast._ParseAndGroup(
+          query2ast.PeekIterator(
+              [
+                  ast_pb2.QueryToken(token_type=OR),
+                  ast_pb2.QueryToken(token_type=SUBQUERY, value='Pri=1'),
+                  ast_pb2.QueryToken(token_type=RIGHT_PAREN),
+              ]))
+
+    with self.assertRaises(query2ast.InvalidQueryError):
+      query2ast._ParseAndGroup(
+          query2ast.PeekIterator(
+              [
+                  ast_pb2.QueryToken(token_type=RIGHT_PAREN),
+                  ast_pb2.QueryToken(token_type=OR),
+                  ast_pb2.QueryToken(token_type=SUBQUERY, value='Pri=1'),
+              ]))
+
+  def testValidateAndTokenizeQuery_Basic(self):
+    self.assertEqual(
+        [
+            ast_pb2.QueryToken(token_type=LEFT_PAREN),
+            ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me'),
+            ast_pb2.QueryToken(token_type=OR),
+            ast_pb2.QueryToken(token_type=SUBQUERY, value='Pri=1'),
+            ast_pb2.QueryToken(token_type=RIGHT_PAREN),
+        ], query2ast._ValidateAndTokenizeQuery('(owner:me OR Pri=1)'))
+
+  def testValidateAndTokenizeQuery_UnmatchedParentheses(self):
+    with self.assertRaises(query2ast.InvalidQueryError):
+      query2ast._ValidateAndTokenizeQuery('(owner:me')
+
+    with self.assertRaises(query2ast.InvalidQueryError):
+      query2ast._ValidateAndTokenizeQuery('owner:me)')
+
+    with self.assertRaises(query2ast.InvalidQueryError):
+      query2ast._ValidateAndTokenizeQuery('(()owner:me))')
+
+    with self.assertRaises(query2ast.InvalidQueryError):
+      query2ast._ValidateAndTokenizeQuery('(()owner:me)())')
+
+  def testTokenizeSubqueryOnOr_NoOrOperator(self):
+    self.assertEqual(
+        [ast_pb2.QueryToken(token_type=SUBQUERY, value='owner:me')],
+        query2ast._TokenizeSubqueryOnOr('owner:me'))
+
+  def testTokenizeSubqueryOnOr_BasicOrOperator(self):
+    self.assertEqual(
+        [
+            ast_pb2.QueryToken(token_type=SUBQUERY, value='A'),
+            ast_pb2.QueryToken(token_type=OR),
+            ast_pb2.QueryToken(token_type=SUBQUERY, value='B'),
+            ast_pb2.QueryToken(token_type=OR),
+            ast_pb2.QueryToken(token_type=SUBQUERY, value='C'),
+        ], query2ast._TokenizeSubqueryOnOr('A OR B OR C'))
+
+  def testTokenizeSubqueryOnOr_EmptyOrOperator(self):
+    self.assertEqual(
+        [ast_pb2.QueryToken(token_type=OR)],
+        query2ast._TokenizeSubqueryOnOr(' OR '))
+
+    self.assertEqual(
+        [
+            ast_pb2.QueryToken(token_type=SUBQUERY, value='A'),
+            ast_pb2.QueryToken(token_type=OR),
+        ], query2ast._TokenizeSubqueryOnOr('A OR '))
+
+  def testMultiplySubqueries_Basic(self):
+    self.assertEqual(
+        ['owner:me Pri=1', 'owner:me Pri=2', 'test Pri=1', 'test Pri=2'],
+        query2ast._MultiplySubqueries(['owner:me', 'test'], ['Pri=1', 'Pri=2']))
+
+  def testMultiplySubqueries_OneEmpty(self):
+    self.assertEqual(
+        ['Pri=1', 'Pri=2'],
+        query2ast._MultiplySubqueries([], ['Pri=1', 'Pri=2']))
+    self.assertEqual(
+        ['Pri=1', 'Pri=2'],
+        query2ast._MultiplySubqueries([''], ['Pri=1', 'Pri=2']))
+
+    self.assertEqual(
+        ['Pri=1', 'Pri=2'],
+        query2ast._MultiplySubqueries(['Pri=1', 'Pri=2'], []))
+    self.assertEqual(
+        ['Pri=1', 'Pri=2'],
+        query2ast._MultiplySubqueries(['Pri=1', 'Pri=2'], ['']))
+
+  def testPeekIterator_Basic(self):
+    iterator = query2ast.PeekIterator([1, 2, 3])
+
+    self.assertEqual(1, iterator.peek())
+    self.assertEqual(1, iterator.next())
+
+    self.assertEqual(2, iterator.next())
+
+    self.assertEqual(3, iterator.peek())
+    self.assertEqual(3, iterator.next())
+
+    with self.assertRaises(StopIteration):
+      iterator.peek()
+
+    with self.assertRaises(StopIteration):
+      iterator.next()

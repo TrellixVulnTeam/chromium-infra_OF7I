@@ -25,6 +25,7 @@ from proto import project_pb2
 from proto import tracker_pb2
 from search import frontendsearchpipeline
 from search import searchpipeline
+from search import query2ast
 from services import service_manager
 from testing import fake
 from testing import testing_helpers
@@ -697,15 +698,6 @@ class FrontendSearchPipelineMethodsTest(unittest.TestCase):
     self.assertEqual(
         'Could not parse date: 0-0-0',
         msg)
-
-    warnings = []
-    msg = frontendsearchpipeline._CheckQuery(
-        'cnxn', self.services, 'foo (bar)', self.default_config,
-        [self.project_id], True, warnings=warnings)
-    self.assertIsNone(msg)
-    self.assertEqual(
-        ['Parentheses are ignored in user queries.'],
-        warnings)
 
     warnings = []
     msg = frontendsearchpipeline._CheckQuery(

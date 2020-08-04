@@ -17,9 +17,12 @@ Monorail supports a top-level "OR" keyword that can
 be used to logically OR a series of conjunctions.  For example:
 [Type=Defect stars>10 OR Type=Enhancement stars>50].
 
-There are no parenthesis and no "AND" keyword.  So, the AST is always exactly
-two levels:  the overall tree consistes of a list of conjunctions, and each
-conjunction consists of a list of conditions.
+Parentheses groups and "OR" statements are preprocessed before the final
+QueryAST is constructed.
+
+So, QueryAST is always exactly two levels:  the overall tree
+consists of a list of conjunctions, and each conjunction consists of a list
+of conditions.
 
 A condition can look like [stars>10] or [summary:memory] or
 [Type=Defect,Enhancement].  Each condition has a single comparison operator.
@@ -61,6 +64,20 @@ class QueryOp(messages.Enum):
   IS_DEFINED = 11
   IS_NOT_DEFINED = 12
   KEY_HAS = 13
+
+
+class TokenType(messages.Enum):
+  """Enumeration of query tokens used for parentheses parsing."""
+  SUBQUERY = 1
+  LEFT_PAREN = 2
+  RIGHT_PAREN = 3
+  OR = 4
+
+
+class QueryToken(messages.Message):
+  """Data structure to represent a single token for parentheses parsing."""
+  token_type = messages.EnumField(TokenType, 1, required=True)
+  value = messages.StringField(2)
 
 
 class Condition(messages.Message):

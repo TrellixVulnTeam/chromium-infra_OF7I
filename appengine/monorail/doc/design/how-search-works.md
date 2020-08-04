@@ -117,11 +117,21 @@ The parts of Monorail's architecture relevant to search consists of:
 
 ### Query parsing
 
-To convert the user's query string into an SQL statement, we first
-parse it into query terms using regular expressions.  Then, we build
-an abstract syntax tree (AST).  Then, we simplify that AST by doing
-cacheable lookups in python.  Then, we convert the simplified AST into
-a set of LEFT JOIN, WHERE, and ORDER BY clauses.
+To convert the user's query string into an SQL statement,
+FrontendSearchPipeline first parses parentheses and OR statemeents, splitting
+up a query into separate subqueries that can be retrieved from the cache or
+sent to different backend shards.
+
+The generated subqueries should collectively output the same set of search
+results as the initial query, but without using ORs or parentheses in their
+syntax. An example is that the query `'A (B OR C)'` would be split into the
+subqueries `['A B', 'A C']`.
+
+Then, each besearch shard parses the subquery it was assigned using the helpers
+in search/query2ast.  We first parse the into query terms using regular
+expressions.  Then, we build an abstract syntax tree (AST).  Then, we simplify
+that AST by doing cacheable lookups in python.  Then, we convert the simplified
+AST into a set of LEFT JOIN, WHERE, and ORDER BY clauses.
 
 It is possible for a query to fail to parse and raise an exception
 before the query is executed.
@@ -336,14 +346,13 @@ MAX_INT.
 *  `framework/sorting.py`: Sorting of issues in RAM.  See sorting
    design doc.
 
-*  `search/frontendsearchpipeline.py`: Algorithm for determining issue
-   position in flipper.  Sequences events for hitting sharded
-   backends.  Does set logic to remove nonviewable IIDs from the
-   current user's search results.  MergeAndSortIssues() combines
-   search results from each shard into a unified result.  Also,
-   DetermineIssuePosition() function calculates the position of the
-   current issue in a search result without merging the entire search
-   result..
+*  `search/frontendsearchpipeline.py`: Where searches are processed first.
+   Sequences events for hitting sharded backends.  Does set logic to remove
+   nonviewable IIDs from the current user's search results.
+   MergeAndSortIssues() combines search results from each shard into a unified
+   result.  Also, DetermineIssuePosition() function calculates the position
+   of the current issue in a search result without merging the entire search
+   result.
 
 *  `search/backendsearchpipeline.py`: Sequence of events to search for
    matching issues and at-risk issues, caching of unfiltered results,

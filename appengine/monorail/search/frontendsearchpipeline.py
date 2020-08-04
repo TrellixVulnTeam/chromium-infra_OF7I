@@ -99,7 +99,6 @@ class FrontendSearchPipeline(object):
     self.can = can
     self.items_per_page = items_per_page
     self.paginate_start = paginate_start
-    self.subqueries = query.split(' OR ')
     self.group_by_spec = group_by_spec
     self.sort_spec = sort_spec
     self.warnings = warnings
@@ -157,6 +156,18 @@ class FrontendSearchPipeline(object):
         warnings=self.warnings)
     if error_msg:
       self.errors.query = error_msg
+
+    # Split up query into smaller subqueries that would get the same results
+    # to improve performance. Smaller queries are more likely to get cache
+    # hits and subqueries can be parallelized by querying for them across
+    # multiple shards.
+    self.subqueries = []
+    try:
+      self.subqueries = query2ast.QueryToSubqueries(query)
+    except query2ast.InvalidQueryError:
+      # Ignore errors because they've already been recorded in
+      # self.errors.query.
+      pass
 
   def SearchForIIDs(self):
     """Use backends to search each shard and store their results."""
