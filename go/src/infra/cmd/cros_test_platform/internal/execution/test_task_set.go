@@ -60,10 +60,9 @@ func (t *testTaskSet) AttemptedAtLeastOnce() bool {
 	return len(t.tasks) > 0
 }
 
-// ValidateDependencies checks whether this test has dependencies satisfied by
-// at least one Skylab bot, and returns the list of rejected Swarming
-// dimensions if the check fails.
-func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client) (bool, map[string]string, error) {
+// validateDependencies checks whether this test has dependencies satisfied by
+// at least one Skylab bot.
+func (t *testTaskSet) validateDependencies(ctx context.Context, c skylab.Client) (bool, map[string]string, error) {
 	if err := t.argsGenerator.CheckConsistency(); err != nil {
 		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
 		return false, nil, nil
@@ -77,6 +76,14 @@ func (t *testTaskSet) ValidateDependencies(ctx context.Context, c skylab.Client)
 }
 
 func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
+	runnable, rejected, err := t.validateDependencies(ctx, c)
+	if err != nil {
+		return err
+	}
+	if !runnable {
+		t.markNotRunnable(rejected)
+		return nil
+	}
 	a, err := skylab.NewTask(ctx, c, t.argsGenerator)
 	if err != nil {
 		return err
@@ -85,10 +92,10 @@ func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
 	return nil
 }
 
-// MarkNotRunnable marks this test run as being unable to run.
+// markNotRunnable marks this test run as being unable to run.
 //
 // In particular, this means that this test run is Completed().
-func (t *testTaskSet) MarkNotRunnable(rejectedTaskDims map[string]string) {
+func (t *testTaskSet) markNotRunnable(rejectedTaskDims map[string]string) {
 	t.runnable = false
 	t.rejectedTaskDims = rejectedTaskDims
 }
