@@ -36,8 +36,8 @@ func NewTask(args request.Args) *Task {
 	return &Task{args: args}
 }
 
-// Name is the task name as it is displayed in the UI.
-func (t *Task) Name() string {
+// name is the task name as it is displayed in the UI.
+func (t *Task) name() string {
 	return t.args.Cmd.TaskName
 }
 
@@ -45,12 +45,12 @@ func (t *Task) Name() string {
 func (t *Task) Launch(ctx context.Context, c Client) error {
 	ref, err := c.LaunchTask(ctx, &t.args)
 	if err != nil {
-		return errors.Annotate(err, "launch attempt for %s", t.Name()).Err()
+		return errors.Annotate(err, "launch attempt for %s", t.name()).Err()
 	}
 	t.taskReference = ref
 	t.lifeCycle = test_platform.TaskState_LIFE_CYCLE_PENDING
 	t.url = c.URL(ref)
-	logging.Infof(ctx, "Launched attempt for %s as task %s", t.Name(), t.URL())
+	logging.Infof(ctx, "Launched attempt for %s as task %s", t.name(), t.URL())
 	return nil
 }
 
@@ -133,8 +133,8 @@ var liftTestCaseRunnerVerdict = map[skylab_test_runner.Result_Autotest_TestCase_
 	skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL: test_platform.TaskState_VERDICT_FAILED,
 }
 
-// TestCases unpacks test cases contained in the results of a task.
-func (t *Task) TestCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
+// testCases unpacks test cases contained in the results of a task.
+func (t *Task) testCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
 	tcs := t.autotestResult.GetTestCases()
 	if len(tcs) == 0 {
 		// Prefer a nil over an empty slice since it's the proto default.
@@ -170,7 +170,7 @@ func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 	)
 
 	return &steps.ExecuteResponse_TaskResult{
-		Name: t.Name(),
+		Name: t.name(),
 		State: &test_platform.TaskState{
 			LifeCycle: t.lifeCycle,
 			Verdict:   t.Verdict(),
@@ -181,6 +181,6 @@ func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 			GsUrl: gsURL,
 		},
 		Attempt:   int32(attemptNum),
-		TestCases: t.TestCases(),
+		TestCases: t.testCases(),
 	}
 }
