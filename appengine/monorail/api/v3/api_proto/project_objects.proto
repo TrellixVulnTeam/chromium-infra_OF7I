@@ -178,9 +178,8 @@ message FieldDef {
     DEFAULT_HIDDEN = 2;
     // This field can have multiple values.
     MULTIVALUED = 3;
-    // This is a phase field meaning it can only belong to gates.
-    // TODO(monorail:7799): Change PHASE to GATE considering that users are more
-    // familiar with that term.
+    // This is a phase field, meaning it is repeated for each phase of an
+    // approval process. It cannot be the child of a particular approval.
     PHASE = 4;
     // Values of this field can only be edited in issues/templates by editors.
     // Project owners and field admins are not subject of this restriction.
@@ -189,6 +188,7 @@ message FieldDef {
   repeated Traits traits = 7;
 
   // ApprovalDef that this field belongs to, if applicable.
+  // A field may not both have `approval_parent` set and have the PHASE trait.
   string approval_parent = 8 [
       (google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" },
       (google.api.field_behavior) = IMMUTABLE
@@ -345,8 +345,8 @@ message ComponentDef {
 }
 
 // Defines approvals that issues within the project may need.
-//
-// TODO(monorail:7193): Add documentation for approvals.
+// See monorail/doc/userguide/concepts.md#issue-approvals-and-gates and
+// monorail/doc/userguide/project-owners.md#How-to-configure-approvals
 // Next available tag: 7
 message ApprovalDef {
   option (google.api.resource) = {

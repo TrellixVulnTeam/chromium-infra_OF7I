@@ -44,9 +44,9 @@ service Issues {
   rpc ListComments (ListCommentsRequest) returns (ListCommentsResponse) {}
   // Modifies Issues and creates a new Comment for each.
   // We do not offer a standard UpdateIssue because every issue change
-  // must result in the side-effect of creating a new issue. We also want
-  // to allow for any combination of issue changes to be made at once in
-  // a monolithic method.
+  // must result in the side-effect of creating a new Comment, and may result in
+  // the side effect of sending a notification. We also want to allow for any
+  // combination of issue changes to be made at once in a monolithic method.
   //
   // Raises:
   //   INVALID_ARGUMENT required fields are missing or fields are formatted
@@ -55,6 +55,20 @@ service Issues {
   //   PERMISSION_DENIED if the requester is not allowed to make the
   //     requested change.
   rpc ModifyIssues (ModifyIssuesRequest) returns (ModifyIssuesResponse) {}
+  // Modifies ApprovalValues and creates a new Comment for each delta.
+  // We do not offer a standard UpdateApprovalValue because changes result
+  // in creating Comments on the parent Issue, and may have the side effect of
+  // sending notifications. We also want to allow for any combination of
+  // approval changes to be made at once in a monolithic method.
+  //
+  // Raises:
+  //   INVALID_ARGUMENT required fields are missing or fields are formatted
+  //     incorrectly.
+  //   NOT_FOUND if any specified ApprovalValues are not found.
+  //   PERMISSION_DENIED if the requester is not allowed to make any of the
+  //     requested changes.
+  rpc ModifyIssueApprovalValues (ModifyIssueApprovalValuesRequest) returns
+      (ModifyIssueApprovalValuesResponse) {}
   // Makes an issue from an IssueTemplate and deltas.
   //
   // Raises:
@@ -208,10 +222,11 @@ message IssueDelta {
   // FieldValues to remove.
   repeated FieldValue field_vals_remove = 8;
 
-  // TODO(crbug.com/monorail/7657): add Attachment uploading and removing.
+  // TODO(crbug.com/monorail/8019): add Attachment uploading and removing.
 }
 
-// The differences to an approval field. Used to update or make issue.
+// Changes to make to an ApprovalValue. Used to ModifyIssueApprovalValues or
+// to MakeIssueFromTemplate.
 // Next available tag: 6
 message ApprovalDelta {
   // The ApprovalValue we want to update.
@@ -223,10 +238,8 @@ message ApprovalDelta {
       (google.api.resource_reference) = { type: "api.crbug.com/User" }
   ];
   // FieldValues that do not belong to `approval_value` will be ignored.
-  repeated FieldValue field_vals_add = 4;
-  // FieldValues that do not belong to `approval_value` will be ignored.
   repeated FieldValue field_vals_remove = 5;
-  // TODO(crbug.com/monorail/7657): add Attachment uploading and removing.
+  // TODO(crbug.com/monorail/8019): add Attachment uploading and removing.
 }
 
 
@@ -252,6 +265,7 @@ message ModifyIssuesRequest {
   // The type of notification the modifications should trigger.
   NotifyType notify_type = 2;
   // The comment text that should be added to each issue in delta.
+  // Max length is 51200 characters.
   string comment_content = 3;
 }
 
@@ -261,6 +275,26 @@ message ModifyIssuesRequest {
 message ModifyIssuesResponse {
   // The updated issues.
   repeated Issue issues = 1;
+}
+
+// The request message for Issues.ModifyIssueApprovalValuesRequest.
+// Next available tag: 4
+message ModifyIssueApprovalValuesRequest {
+  // The ApprovalValue changes to make.
+  repeated ApprovalDelta deltas = 1 [
+      (google.api.field_behavior) = REQUIRED ];
+  // The type of notification the modifications should trigger.
+  NotifyType notify_type = 2;
+  // The `content` of the Comment created for each change in `deltas`.
+  // Max length is 51200 characters.
+  string comment_content = 3;
+}
+
+// The response message for Issues.ModifyIssueApprovalValuesRequest.
+// Next available tag: 2
+message ModifyIssueApprovalValuesResponse {
+  // The updated ApprovalValues.
+  repeated ApprovalValues approval_values = 1;
 }
 
 // The request message for MakeIssueFromTemplate.

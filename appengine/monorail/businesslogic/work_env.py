@@ -1547,7 +1547,7 @@ class WorkEnv(object):
         logging.info('Skipping issue %s, no approval: %s', issue_id, e)
       except permissions.PermissionException as e:
         logging.info('Skipping issue %s, update not allowed: %s', issue_id, e)
-    # TODO(jojwang): send bulk approval update email if send_email
+    # TODO(crbug/monorail/8122): send bulk approval update email if send_email.
     if send_email:
       pass
     return updated_issue_ids
@@ -1563,6 +1563,8 @@ class WorkEnv(object):
 
     Raises:
       InputException: The comment content is too long.
+      PermissionException: The user is lacking one of the permissions needed
+      for the given delta.
     """
 
     issue, approval_value = self.services.issue.GetIssueApproval(

@@ -296,42 +296,51 @@ message IssueRef {
 message ApprovalValue {
   option (google.api.resource) = {
      type: "api.crbug.com/ApprovalValue"
-     pattern: "project/{project}/issues/{issue}/approvalValue/{approval}"
+     pattern: "project/{project}/issues/{issue}/approvalValues/{approval}"
    };
 
-  // Potential states for an approval.
+  // Potential states for an approval. Note that these statuses cause different
+  // sets of notifications. See monorail/doc/userguide/email.md
   // Next available tag: 8
   enum ApprovalStatus {
     // The default approval status. This value is used if the status is omitted.
     APPROVAL_STATUS_UNSPECIFIED = 0;
+    // This issue needs review from the approvers for this phase.
     NEEDS_REVIEW = 1;
+    // This approval is not needed for this issue for this phase.
     NA = 2;
+    // The issue is ready for the approvers to review.
     REVIEW_REQUESTED = 3;
+    // The approvers have started reviewing this issue.
     REVIEW_STARTED = 4;
+    // The approvers need more information.
     NEED_INFO = 5;
+    // The approvers have approved this issue for this phase.
     APPROVED = 6;
+    // The approvers have indicated this issue is not approved for this phase.
     NOT_APPROVED = 7;
   }
 
   // The resource name.
   string name = 1;
-  // The resource name of the approvalDef.
+  // The resource name of the ApprovalDef.
   string approval_def = 2 [
       (google.api.resource_reference) = { type: "api.crbug.com/ApprovalDef" },
       (google.api.field_behavior) = OUTPUT_ONLY];
-  // The users able to approve the issue.
+  // The users able to grant this approval.
   repeated string approvers = 3 [
       (google.api.resource_reference) = { type: "api.crbug.com/User" }];
   // The current status of the approval.
   ApprovalStatus status = 4;
-  // The time the approval value was last set.
+  // The time `status` was last set.
   google.protobuf.Timestamp set_time = 5 [
       (google.api.field_behavior) = OUTPUT_ONLY];
-  // The user who most recently set the issue
+  // The user who most recently set `status`.
   string setter = 6 [
       (google.api.resource_reference) = { type: "api.crbug.com/User" }];
   // The phase the approval is associated with (if applicable).
   string phase = 7 [
       (google.api.field_behavior) = OUTPUT_ONLY];
+  // FieldValues with `approval_def` as their parent.
   repeated FieldValue field_values = 8;
 }
