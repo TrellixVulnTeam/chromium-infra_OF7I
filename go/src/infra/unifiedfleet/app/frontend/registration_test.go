@@ -526,15 +526,15 @@ func TestImportMachines(t *testing.T) {
 				bm := m.GetChromeBrowserMachine()
 				switch m.GetName() {
 				case "machine1":
-					So(bm.GetNics(), ShouldResemble, []string{"machine1-eth0", "machine1-eth1"})
+					So(bm.GetNics(), ShouldResemble, []string{"machine1:eth0", "machine1:eth1"})
 					So(bm.GetDrac(), ShouldEqual, "drac-hostname")
 					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform")
 				case "machine2":
-					So(bm.GetNics(), ShouldResemble, []string{"machine2-eth0"})
+					So(bm.GetNics(), ShouldResemble, []string{"machine2:eth0"})
 					So(bm.GetDrac(), ShouldEqual, "")
 					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform")
 				case "machine3":
-					So(bm.GetNics(), ShouldResemble, []string{"machine3-eth0"})
+					So(bm.GetNics(), ShouldResemble, []string{"machine3:eth0"})
 					So(bm.GetDrac(), ShouldEqual, "")
 					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform2")
 				}
@@ -1159,7 +1159,7 @@ func TestImportNics(t *testing.T) {
 			So(res.Code, ShouldEqual, code.Code_OK)
 			nics, _, err := registration.ListNics(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(ufsAPI.ParseResources(nics, "Name"), ShouldResemble, []string{"machine1-eth0", "machine1-eth1", "machine2-eth0", "machine3-eth0"})
+			So(ufsAPI.ParseResources(nics, "Name"), ShouldResemble, []string{"machine1:eth0", "machine1:eth1", "machine2:eth0", "machine3:eth0"})
 			switches := make([]*ufspb.SwitchInterface, len(nics))
 			for i, nic := range nics {
 				switches[i] = nic.GetSwitchInterface()
@@ -1185,7 +1185,7 @@ func TestImportNics(t *testing.T) {
 			dracs, _, err := registration.ListDracs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(ufsAPI.ParseResources(dracs, "Name"), ShouldResemble, []string{"drac-hostname"})
-			So(ufsAPI.ParseResources(dracs, "DisplayName"), ShouldResemble, []string{"machine1-drac"})
+			So(ufsAPI.ParseResources(dracs, "DisplayName"), ShouldResemble, []string{"machine1:drac"})
 			dhcps, _, err := configuration.ListDHCPConfigs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(ufsAPI.ParseResources(dhcps, "Ip"), ShouldResemble, []string{"ip1.1"})
