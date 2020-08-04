@@ -464,7 +464,7 @@ func dumpMachineLSEs(ctx context.Context, bqClient *bigquery.Client, curTimeStr 
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machine_lses$%s", curTimeStr))
 	msgs := make([]proto.Message, 0)
 	for startToken := ""; ; {
-		res, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, startToken, nil, false, nil)
+		res, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, pageSize, startToken, nil, false, nil)
 		if err != nil {
 			return errors.Annotate(err, "get all machine lses").Err()
 		}

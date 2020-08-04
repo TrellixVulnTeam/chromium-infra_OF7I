@@ -1185,5 +1185,33 @@ func TestListMachineLSEs(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, machineLSEs)
 		})
+		Convey("List machineLSEs - list machine lses with free slots", func() {
+			for i := 0; i < 8; i++ {
+				machineLSE1 := &ufspb.MachineLSE{
+					Name: fmt.Sprintf("machineLSE-free-%d", i),
+				}
+				machineLSE1.Manufacturer = "apple"
+				var vmCapacity int32
+				if i > 4 && i <= 6 {
+					vmCapacity = int32(i - 4)
+				}
+				machineLSE1.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+						VmCapacity: vmCapacity,
+					},
+				}
+				inventory.CreateMachineLSE(ctx, machineLSE1)
+			}
+			fields := make([]interface{}, 1)
+			fields[0] = "apple"
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "", "man=apple & free=true", false)
+			So(resp, ShouldNotBeNil)
+			So(nextPageToken, ShouldBeEmpty)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 2)
+			for _, r := range resp {
+				So(r.GetName(), ShouldBeIn, []string{"machineLSE-free-5", "machineLSE-free-6"})
+			}
+		})
 	})
 }

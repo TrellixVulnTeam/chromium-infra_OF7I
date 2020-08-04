@@ -810,7 +810,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
 
 			// Verify machine lses
-			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false, nil)
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, 100, "", nil, false, nil)
 			So(err, ShouldBeNil)
 			So(ufsAPI.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"esx-8", "web"})
 			for _, r := range machineLSEs {
@@ -874,7 +874,7 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"acs-lab:camera", "acs-lab:wificell", "atl-lab:labstation", "atl-lab:standard"})
 
 			// Verify machine lses
-			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false, nil)
+			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, 100, "", nil, false, nil)
 			So(err, ShouldBeNil)
 			So(ufsAPI.ParseResources(machineLSEs, "Name"), ShouldResemble, []string{"chromeos2-test_host", "chromeos3-test_host", "chromeos5-test_host", "test_servo"})
 			// Spot check some fields

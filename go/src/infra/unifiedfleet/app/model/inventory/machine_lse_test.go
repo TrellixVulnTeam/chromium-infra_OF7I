@@ -123,7 +123,7 @@ func TestListMachineLSEs(t *testing.T) {
 	}
 	Convey("ListMachineLSEs", t, func() {
 		Convey("List machineLSEs - page_token invalid", func() {
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 5, "abc", nil, false, nil)
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 5, 5, "abc", nil, false, nil)
 			So(resp, ShouldBeNil)
 			So(nextPageToken, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -131,7 +131,7 @@ func TestListMachineLSEs(t *testing.T) {
 		})
 
 		Convey("List machineLSEs - Full listing with no pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "", nil, false, nil)
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, 4, "", nil, false, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
@@ -139,47 +139,16 @@ func TestListMachineLSEs(t *testing.T) {
 		})
 
 		Convey("List machineLSEs - listing with pagination", func() {
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 3, "", nil, false, nil)
+			resp, nextPageToken, err := ListMachineLSEs(ctx, 3, 3, "", nil, false, nil)
 			So(resp, ShouldNotBeNil)
 			So(nextPageToken, ShouldNotBeEmpty)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEs[:3])
 
-			resp, _, err = ListMachineLSEs(ctx, 2, nextPageToken, nil, false, nil)
+			resp, _, err = ListMachineLSEs(ctx, 2, 2, nextPageToken, nil, false, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSEs[3:])
-		})
-		Convey("List machineLSEs - list machine lses with free slots", func() {
-			machineLSEs := make([]*ufspb.MachineLSE, 0, 4)
-			for i := 0; i < 4; i++ {
-				machineLSE1 := mockMachineLSE(fmt.Sprintf("machineLSE-free-%d", i))
-				machineLSE1.Manufacturer = "apple"
-				machineLSE1.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
-					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
-						VmCapacity: int32(i),
-					},
-				}
-				resp, _ := CreateMachineLSE(ctx, machineLSE1)
-				machineLSEs = append(machineLSEs, resp)
-			}
-			fields := make([]interface{}, 1)
-			fields[0] = "apple"
-			resp, nextPageToken, err := ListMachineLSEs(ctx, 4, "", map[string][]interface{}{
-				"manufacturer": fields,
-			}, false, func(lse *ufspb.MachineLSE) bool {
-				if lse.GetChromeBrowserMachineLse().GetVmCapacity() > int32(len(lse.GetChromeBrowserMachineLse().GetVms())) {
-					return true
-				}
-				return false
-			})
-			So(resp, ShouldNotBeNil)
-			So(nextPageToken, ShouldBeEmpty)
-			So(err, ShouldBeNil)
-			So(resp, ShouldHaveLength, 3)
-			for _, r := range resp {
-				So(r.GetName(), ShouldBeIn, []string{"machineLSE-free-1", "machineLSE-free-2", "machineLSE-free-3"})
-			}
 		})
 	})
 }

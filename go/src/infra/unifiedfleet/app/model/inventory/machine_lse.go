@@ -127,7 +127,7 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 	return nil, err
 }
 
-func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize int32, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
+func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize, requiredSize int32, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *MachineLSEEntity, cb datastore.CursorCB) error {
 		if keysOnly {
@@ -148,7 +148,7 @@ func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize int3
 				res = append(res, machineLSE)
 			}
 		}
-		if len(res) >= int(pageSize) {
+		if len(res) >= int(requiredSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
 			}
@@ -169,12 +169,12 @@ func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize int3
 // ListMachineLSEs lists the machine lses
 // Does a query over MachineLSE entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.
-func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) ([]*ufspb.MachineLSE, string, error) {
+func ListMachineLSEs(ctx context.Context, pageSize int32, requiredSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) ([]*ufspb.MachineLSE, string, error) {
 	q, err := ufsds.ListQuery(ctx, MachineLSEKind, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}
-	return listMachineLSEHelper(ctx, q, pageSize, keysOnly, validFunc)
+	return listMachineLSEHelper(ctx, q, pageSize, requiredSize, keysOnly, validFunc)
 }
 
 // DeleteMachineLSE deletes the machineLSE in datastore
