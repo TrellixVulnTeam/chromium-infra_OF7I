@@ -91,24 +91,26 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		}
 
 		latestTask := testTaskSet.GetLatestTask()
-		if err := latestTask.Refresh(ctx, c); err != nil {
-			return errors.Annotate(err, "tick for task %s", latestTask.URL()).Err()
+		rerr := latestTask.Refresh(ctx, c)
+		tr := latestTask.Result()
+		if rerr != nil {
+			return errors.Annotate(rerr, "tick for task %s", tr.LogUrl).Err()
 		}
 
 		if !testTaskSet.Completed() {
 			continue
 		}
 
-		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", latestTask.URL(), testTaskSet.Name, latestTask.Verdict())
+		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", tr.LogUrl, testTaskSet.Name, tr.GetState().GetVerdict())
 
 		shouldRetry, err := r.shouldRetry(ctx, testTaskSet)
 		if err != nil {
-			return errors.Annotate(err, "tick for task %s", latestTask.URL()).Err()
+			return errors.Annotate(err, "tick for task %s", tr.LogUrl).Err()
 		}
 		if shouldRetry {
 			logging.Infof(ctx, "Retrying %s", testTaskSet.Name)
 			if err := testTaskSet.LaunchTask(ctx, c); err != nil {
-				return errors.Annotate(err, "tick for task %s: retry test", latestTask.URL()).Err()
+				return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
 			}
 			r.retries++
 		}
@@ -131,7 +133,7 @@ func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testTaskSet) (bool
 	}
 
 	latestTask := tr.GetLatestTask()
-	switch verdict := latestTask.Verdict(); verdict {
+	switch verdict := latestTask.Result().GetState().GetVerdict(); verdict {
 	case test_platform.TaskState_VERDICT_UNSPECIFIED:
 		fallthrough
 	case test_platform.TaskState_VERDICT_FAILED:

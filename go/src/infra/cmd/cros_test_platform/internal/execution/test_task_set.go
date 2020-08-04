@@ -134,7 +134,7 @@ func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	}
 	failedEarlierTask := false
 	for _, a := range t.tasks {
-		switch a.Verdict() {
+		switch a.Result().GetState().GetVerdict() {
 		case test_platform.TaskState_VERDICT_NO_VERDICT:
 			return test_platform.TaskState_VERDICT_NO_VERDICT
 		case test_platform.TaskState_VERDICT_PASSED:

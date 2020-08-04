@@ -50,7 +50,7 @@ func (t *Task) Launch(ctx context.Context, c Client) error {
 	t.taskReference = ref
 	t.lifeCycle = test_platform.TaskState_LIFE_CYCLE_PENDING
 	t.url = c.URL(ref)
-	logging.Infof(ctx, "Launched attempt for %s as task %s", t.name(), t.URL())
+	logging.Infof(ctx, "Launched attempt for %s as task %s", t.name(), t.url)
 	return nil
 }
 
@@ -71,9 +71,9 @@ func (t *Task) Completed() bool {
 	return !transientLifeCycles[t.lifeCycle]
 }
 
-// Verdict aggregates the information about test cases contained in a task into
+// verdict aggregates the information about test cases contained in a task into
 // a single verdict.
-func (t *Task) Verdict() test_platform.TaskState_Verdict {
+func (t *Task) verdict() test_platform.TaskState_Verdict {
 	if !t.Completed() {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
@@ -151,11 +151,6 @@ func (t *Task) testCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
 	return ret
 }
 
-// URL return the URL of the task page.
-func (t *Task) URL() string {
-	return t.url
-}
-
 // Result constructs a TaskResults out of the data already contained in the
 // Task object. In order to get the latest result, FetchResult needs to be
 // called first.
@@ -173,9 +168,9 @@ func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
 		Name: t.name(),
 		State: &test_platform.TaskState{
 			LifeCycle: t.lifeCycle,
-			Verdict:   t.Verdict(),
+			Verdict:   t.verdict(),
 		},
-		TaskUrl: t.URL(),
+		TaskUrl: t.url,
 		LogUrl:  logURL,
 		LogData: &common.TaskLogData{
 			GsUrl: gsURL,

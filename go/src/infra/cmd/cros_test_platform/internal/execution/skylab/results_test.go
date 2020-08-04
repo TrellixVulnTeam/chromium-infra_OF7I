@@ -5,6 +5,8 @@
 package skylab
 
 import (
+	"infra/libs/skylab/request"
+	"infra/libs/skylab/worker"
 	"sort"
 	"testing"
 
@@ -15,6 +17,27 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 )
+
+func TestResultBeforeRefresh(t *testing.T) {
+	Convey("Give a single task that has not be Refresh()ed", t, func() {
+		t := NewTask(request.Args{
+			Cmd: worker.Command{
+				TaskName: "foo-task",
+			},
+		})
+		Convey("Result() returns known values and reasonable defaults", func() {
+			r := t.Result()
+			So(r.Name, ShouldEqual, "foo-task")
+			So(r.State, ShouldNotBeNil)
+			So(r.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_UNSPECIFIED)
+			So(r.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
+			So(r.LogUrl, ShouldNotBeEmpty)
+			So(r.LogData, ShouldNotBeNil)
+			So(r.LogData.GsUrl, ShouldNotBeEmpty)
+			So(r.TestCases, ShouldHaveLength, 0)
+		})
+	})
+}
 
 // Test that autotest results for a single completed task map correctly.
 func TestSingleAutotestTaskResults(t *testing.T) {
