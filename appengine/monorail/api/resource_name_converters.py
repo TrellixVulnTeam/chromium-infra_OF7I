@@ -44,6 +44,8 @@ ISSUE_PATTERN = (r'projects\/(?P<project>%s)\/issues\/(?P<local_id>\d+)' %
 ISSUE_NAME_RE = re.compile(r'%s$' % ISSUE_PATTERN)
 
 USER_NAME_RE = re.compile(r'users\/((?P<user_id>\d+)|(?P<potential_email>.+))$')
+APPROVAL_VALUE_RE = re.compile(
+    r'%s\/approvalValues\/(?P<approval_id>\d+)$' % ISSUE_PATTERN)
 
 ISSUE_TEMPLATE_RE = re.compile(
     r'%s\/templates\/(?P<template_id>\d+)$' % (PROJECT_NAME_PATTERN))
@@ -256,6 +258,44 @@ def CreateCommentNames(issue_local_id, issue_project, comment_sequence_nums):
         local_id=issue_local_id,
         comment_id=comment_sequence_num)
   return sequence_nums_to_names
+
+
+def IngestApprovalValueName(cnxn, name, services):
+  # type: (MonorailConnection, str, Services) -> Tuple[int, int, int]
+  """Ingests the three components of an ApprovalValue resource name.
+
+  Args:
+    cnxn: MonorailConnection object.
+    name: Resource name of an ApprovalValue.
+    services: Services object for connections to backend services.
+
+  Returns:
+    Tuple containing three items
+        1. Global ID of the parent project.
+        2. Global Issue ID of the parent issue.
+        3. The approval_id portion of the resource name. This is not checked
+           for existence.
+
+   Raises:
+    InputException if the given name does not have a valid format.
+    NoSuchIssueException if the parent Issue does not exist.
+    NoSuchProjectException if the parent Project does not exist.
+  """
+  match = _GetResourceNameMatch(name, APPROVAL_VALUE_RE)
+
+  # Project
+  project_name = match.group('project')
+  id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
+  project_id = id_dict.get(project_name)
+  if project_id is None:
+    raise exceptions.NoSuchProjectException(
+        'Project not found: %s.' % project_name)
+  # Issue
+  local_id = int(match.group('local_id'))
+  issue_pair = [(project_name, local_id)]
+  issue_id = _IssueIdsFromLocalIds(cnxn, issue_pair, services)[0]
+
+  return project_id, issue_id, int(match.group('approval_id'))
 
 
 def IngestIssueName(cnxn, name, services):

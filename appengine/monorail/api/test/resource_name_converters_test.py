@@ -187,6 +187,38 @@ class ResourceNameConverterTest(unittest.TestCase):
             self.cnxn, self.hotlist_1.hotlist_id, expected_dict.keys(),
             self.services), expected_dict)
 
+  def testIngestApprovalValueName(self):
+    project_id, issue_id, approval_def_id = rnc.IngestApprovalValueName(
+        self.cnxn, 'projects/proj/issues/1/approvalValues/404', self.services)
+    self.assertEqual(project_id, self.project_1.project_id)
+    self.assertEqual(issue_id, self.issue_1.issue_id)
+    self.assertEqual(404, approval_def_id)  # We don't verify it exists.
+
+  def testIngestApprovalValueName_ProjectDoesNotExist(self):
+    with self.assertRaises(exceptions.NoSuchProjectException):
+      rnc.IngestApprovalValueName(
+          self.cnxn, 'projects/noproj/issues/1/approvalValues/1', self.services)
+
+  def testIngestApprovalValueName_IssueDoesNotExist(self):
+    with self.assertRaises(exceptions.NoSuchIssueException):
+      rnc.IngestApprovalValueName(
+          self.cnxn, 'projects/proj/issues/404/approvalValues/1', self.services)
+
+  def testIngestApprovalValueName_InvalidStart(self):
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestApprovalValueName(
+          self.cnxn, 'zprojects/proj/issues/1/approvalValues/1', self.services)
+
+  def testIngestApprovalValueName_InvalidEnd(self):
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestApprovalValueName(
+          self.cnxn, 'projects/proj/issues/1/approvalValues/1z', self.services)
+
+  def testIngestApprovalValueName_InvalidCollection(self):
+    with self.assertRaises(exceptions.InputException):
+      rnc.IngestApprovalValueName(
+          self.cnxn, 'projects/proj/issues/1/approvalValue/1', self.services)
+
   def testIngestIssueName(self):
     """We can get an Issue global id from its resource name."""
     self.assertEqual(
