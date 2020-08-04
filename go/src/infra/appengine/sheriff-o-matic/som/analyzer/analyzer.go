@@ -43,15 +43,6 @@ type Analyzer struct {
 	// while in the "idle" state before triggering an "idle builder" alert.
 	IdleBuilderCountThresh int64
 
-	// StaleMasterThreshold is the maximum age that master data from CBE can be before
-	// triggering a "stale master" alert.
-	StaleMasterThreshold time.Duration
-
-	// These limit the scope analysis, useful for debugging.
-	MasterOnly  string
-	BuilderOnly string
-	BuildOnly   int64
-
 	// rslck protects revisionSummaries from concurrent access.
 	rslck             *sync.Mutex
 	revisionSummaries map[string]messages.RevisionSummary
@@ -74,7 +65,6 @@ func New(minBuilds, maxBuilds int) *Analyzer {
 		HungBuilderThresh:      3 * time.Hour,
 		OfflineBuilderThresh:   90 * time.Minute,
 		IdleBuilderCountThresh: 50,
-		StaleMasterThreshold:   10 * time.Minute,
 		rslck:                  &sync.Mutex{},
 		revisionSummaries:      map[string]messages.RevisionSummary{},
 		Now: func() time.Time {

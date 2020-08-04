@@ -63,7 +63,7 @@ class SomTestExpectations extends Polymer.Element {
       return '297387252952-io4k56a9uagle7rq4o8b7sclfih6136c.apps.googleusercontent.com';
     }
 
-    // Staging is whitelisted for localhost/dev.
+    // Staging is allowed for localhost/dev.
     return '408214842030-n7qkqet08nqmsvoap6qkik6euga4v41v.apps.googleusercontent.com';
   }
 

@@ -173,7 +173,7 @@ If you modify the SQL files for bigquery views (sheriffable_failures.sql, failin
 - Verify that everything works as expected in prod
 - Revert the change in create_views.sh by setting `APP_ID=sheriff-o-matic-staging`
 
-If you want to revert your deployment, simply checkout master and run `./create_view.sh` again for staging and prod
+If you want to revert your deployment, simply checkout the main git branch and run `./create_view.sh` again for staging and prod
 
 
 ## Configuring and populating devserver SoM with alerts
