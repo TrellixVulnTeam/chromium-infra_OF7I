@@ -159,7 +159,7 @@ func (t *Task) URL() string {
 // Result constructs a TaskResults out of the data already contained in the
 // Task object. In order to get the latest result, FetchResult needs to be
 // called first.
-func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
+func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
 	logURL := fmt.Sprintf(
 		"https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-%s/",
 		t.swarmingTaskID,
@@ -180,7 +180,6 @@ func (t *Task) Result(attemptNum int) *steps.ExecuteResponse_TaskResult {
 		LogData: &common.TaskLogData{
 			GsUrl: gsURL,
 		},
-		Attempt:   int32(attemptNum),
 		TestCases: t.testCases(),
 	}
 }

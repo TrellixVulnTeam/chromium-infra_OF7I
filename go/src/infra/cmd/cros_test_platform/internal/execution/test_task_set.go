@@ -122,7 +122,8 @@ func (t *testTaskSet) TaskResult() []*steps.ExecuteResponse_TaskResult {
 
 	ret := make([]*steps.ExecuteResponse_TaskResult, len(t.tasks))
 	for i, a := range t.tasks {
-		ret[i] = a.Result(i)
+		ret[i] = a.Result()
+		ret[i].Attempt = int32(i)
 	}
 	return ret
 }

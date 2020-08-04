@@ -136,7 +136,6 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 					So(result, ShouldNotBeNil)
 					So(result.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 					So(result.State.Verdict, ShouldEqual, c.expectVerdict)
-					So(result.Attempt, ShouldEqual, 5)
 					So(result.LogData.GsUrl, ShouldEqual, "gs://chromeos-autotest-results/swarming-foo-task-ID/")
 					So(result.LogUrl, ShouldEqual, "https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-foo-task-ID/")
 				})
@@ -233,5 +232,5 @@ func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.E
 		lifeCycle:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
 		swarmingTaskID: "foo-task-ID",
 	}
-	return t.Result(5)
+	return t.Result()
 }
