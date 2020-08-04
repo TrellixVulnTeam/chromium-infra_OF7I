@@ -8,16 +8,90 @@ import (
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/google/go-cmp/cmp"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/api/iterator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	iv2ds "infra/libs/cros/lab_inventory/datastore"
 	iv2pr "infra/libs/fleet/protos"
 	iv2pr2 "infra/libs/fleet/protos/go"
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/config"
+	"infra/unifiedfleet/app/controller"
 )
 
 var macAddress = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$`)
+
+// List of fields to be ignored when comparing a machine object to another.
+// Field names here should reflect *.proto not generated *.pb.go
+var machineCmpIgnoreFields = []protoreflect.Name{
+	protoreflect.Name("update_time"),
+}
+
+// SyncMachinesFromIV2 update machines table in UFS with data from IV2.
+//
+// Gathering data from Asset and AssetInfo entities in inventory DB to get
+// location and ChromeOSMachine data. Also uses assets_in_swarming BQ table
+// to estimate barcode_name.
+func SyncMachinesFromIV2(ctx context.Context) error {
+	logging.Infof(ctx, "SyncMachinesFromIV2")
+
+	host := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
+	client, err := datastore.NewClient(ctx, host)
+	if err != nil {
+		return err
+	}
+	// BQ Client to get asset tag to hostname mapping
+	bqClient := ctx.Value(contextKey).(*bigquery.Client)
+
+	assets, err := GetAllAssets(ctx, client)
+	if err != nil {
+		return err
+	}
+	assetInfos, err := GetAllAssetInfo(ctx, client)
+	if err != nil {
+		return err
+	}
+	assetsToHostname, err := GetAssetToHostnameMap(ctx, bqClient)
+	if err != nil {
+		logging.Warningf(ctx, "Unable to get hostnames [%v], will"+
+			"continue sync ignoring hostnames", err)
+	}
+
+	for _, asset := range assets {
+		if assetInfos[asset.GetId()] != nil {
+			iv2Machine := GetMachineFromAssets(asset,
+				assetInfos[asset.GetId()], assetsToHostname[asset.GetId()])
+			ufsMachine, err := controller.GetMachine(ctx, asset.GetId())
+			if err == nil && assetsToHostname == nil && ufsMachine.Location != nil {
+				// If we failed to read from BQ, machine hostname/barcode name is not known.
+				// Copy the hostname from existing ufsMachine to avoid updating it.
+				iv2Machine.Location.BarcodeName = ufsMachine.GetLocation().GetBarcodeName()
+			}
+			if err != nil && status.Code(err) == codes.NotFound && ufsMachine == nil {
+				// Machine doesn't exist, create a new one
+				logging.Debugf(ctx, "Adding %v [%v] to machines data",
+					iv2Machine.Name, iv2Machine.Location.BarcodeName)
+				controller.CreateMachine(ctx, iv2Machine)
+				continue
+			}
+			if err == nil && !Compare(iv2Machine, ufsMachine) {
+				// Machine exists, but was updated in IV2
+				controller.UpdateMachine(ctx, iv2Machine)
+				continue
+			}
+			if err != nil {
+				logging.Warningf(ctx, "Error retriving machine: %v", err)
+			}
+		}
+	}
+
+	return nil
+}
 
 // GetAllAssets retrieves all the asset data from inventory-V2
 func GetAllAssets(ctx context.Context, client *datastore.Client) ([]*iv2pr.ChopsAsset, error) {
@@ -94,6 +168,15 @@ func GetAssetToHostnameMap(ctx context.Context, client *bigquery.Client) (map[st
 	}
 	logging.Debugf(ctx, "Found hostnames for %v devices", len(assetsToHostname))
 	return assetsToHostname, nil
+}
+
+// Compare does protobuf comparison between both inputs
+func Compare(iv2Machine, ufsMachine *ufspb.Machine) bool {
+	// Ignoring fields not required for comparison
+	opts1 := protocmp.IgnoreFields(iv2Machine, machineCmpIgnoreFields...)
+	// See: https://developers.google.com/protocol-buffers/docs/reference/go/faq#deepequal
+	opts2 := protocmp.Transform()
+	return cmp.Equal(iv2Machine, ufsMachine, opts1, opts2)
 }
 
 // GetMachineFromAssets returns Machine proto constructed from ChopsAsset

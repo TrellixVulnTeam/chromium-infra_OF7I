@@ -42,6 +42,9 @@ func InitServer(srv *server.Server, opts Options) {
 	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
 		cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
 	})
+	srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, SyncMachinesFromIV2)
+	})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
