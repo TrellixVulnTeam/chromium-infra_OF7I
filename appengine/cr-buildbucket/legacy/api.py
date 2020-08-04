@@ -691,6 +691,13 @@ class BuildBucketApi(remote.Service):
   def search(self, request):
     """Searches for builds."""
     assert isinstance(request.tag, list)
+    if (request.status is not None or request.result is not None or
+        request.failure_reason is not None or
+        request.cancelation_reason is not None):  # pragma: no cover
+      logging.warning(
+          '%s is searching by legacy property: %s',
+          auth.get_peer_identity().to_bytes(), request
+      )
     builds, next_cursor = search.search_async(
         search.Query(
             bucket_ids=convert_bucket_list(request.bucket),
