@@ -83,7 +83,19 @@ luci.project(
 
 luci.logdog(gs_bucket = "chromium-luci-logdog")
 
-luci.bucket(name = "ci")
+luci.bucket(
+    name = "ci",
+    bindings = [
+        # TODO(crbug.com/1066839): remove after completed tests on dev.
+        # Allow chromium-swarm-dev-users to see the tasks in the realm.
+        luci.binding(
+            roles = "role/swarming.taskViewer",
+            groups = [
+                "chromium-swarm-dev-users",
+            ],
+        ),
+    ],
+)
 
 # ACLs for the Swarming pools used by builders in this config. See pools.cfg in
 # chromium-swarm-dev where pools are associated with realms.
