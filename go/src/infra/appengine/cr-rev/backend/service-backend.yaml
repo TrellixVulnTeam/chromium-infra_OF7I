@@ -4,3 +4,7 @@
 runtime: go113
 
 service: backend
+
+entrypoint: >
+  main
+  -config-service-host luci-config.appspot.com

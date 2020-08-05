@@ -8,9 +8,9 @@
 // versions:
 // 	protoc-gen-go v1.25.0-devel
 // 	protoc        v3.12.1
-// source: infra/appengine/cr-rev/proto/config.proto
+// source: infra/appengine/cr-rev/config/config.proto
 
-package proto
+package config
 
 import (
 	proto "github.com/golang/protobuf/proto"
@@ -53,7 +53,7 @@ type Repository struct {
 	//   # All branch-heads
 	//   "refs/branch-heads/.*"
 	//
-	// Defaults to [".*"]
+	// Defaults to ["refs/heads/.*"]
 	Refs []string `protobuf:"bytes,6,rep,name=refs,proto3" json:"refs,omitempty"`
 	// A list of git refs to ignore even when they match a ref included above.
 	// It is also specified as a list of regular expressions automatically wrapped
@@ -64,7 +64,7 @@ type Repository struct {
 func (x *Repository) Reset() {
 	*x = Repository{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cr_rev_proto_config_proto_msgTypes[0]
+		mi := &file_infra_appengine_cr_rev_config_config_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -77,7 +77,7 @@ func (x *Repository) String() string {
 func (*Repository) ProtoMessage() {}
 
 func (x *Repository) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cr_rev_proto_config_proto_msgTypes[0]
+	mi := &file_infra_appengine_cr_rev_config_config_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -90,7 +90,7 @@ func (x *Repository) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Repository.ProtoReflect.Descriptor instead.
 func (*Repository) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cr_rev_proto_config_proto_rawDescGZIP(), []int{0}
+	return file_infra_appengine_cr_rev_config_config_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Repository) GetName() string {
@@ -168,13 +168,13 @@ type Host struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Should be specified only for repositories that need to override default
 	// attributes.
-	RepositoryConfigs []*Repository `protobuf:"bytes,2,rep,name=repository_configs,json=repositoryConfigs,proto3" json:"repository_configs,omitempty"`
+	Repos []*Repository `protobuf:"bytes,2,rep,name=repos,proto3" json:"repos,omitempty"`
 }
 
 func (x *Host) Reset() {
 	*x = Host{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cr_rev_proto_config_proto_msgTypes[1]
+		mi := &file_infra_appengine_cr_rev_config_config_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -187,7 +187,7 @@ func (x *Host) String() string {
 func (*Host) ProtoMessage() {}
 
 func (x *Host) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cr_rev_proto_config_proto_msgTypes[1]
+	mi := &file_infra_appengine_cr_rev_config_config_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -200,7 +200,7 @@ func (x *Host) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Host.ProtoReflect.Descriptor instead.
 func (*Host) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cr_rev_proto_config_proto_rawDescGZIP(), []int{1}
+	return file_infra_appengine_cr_rev_config_config_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Host) GetName() string {
@@ -210,14 +210,14 @@ func (x *Host) GetName() string {
 	return ""
 }
 
-func (x *Host) GetRepositoryConfigs() []*Repository {
+func (x *Host) GetRepos() []*Repository {
 	if x != nil {
-		return x.RepositoryConfigs
+		return x.Repos
 	}
 	return nil
 }
 
-type HostsConfig struct {
+type Config struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -226,23 +226,23 @@ type HostsConfig struct {
 	Hosts []*Host `protobuf:"bytes,1,rep,name=hosts,proto3" json:"hosts,omitempty"`
 }
 
-func (x *HostsConfig) Reset() {
-	*x = HostsConfig{}
+func (x *Config) Reset() {
+	*x = Config{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_infra_appengine_cr_rev_proto_config_proto_msgTypes[2]
+		mi := &file_infra_appengine_cr_rev_config_config_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *HostsConfig) String() string {
+func (x *Config) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*HostsConfig) ProtoMessage() {}
+func (*Config) ProtoMessage() {}
 
-func (x *HostsConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_infra_appengine_cr_rev_proto_config_proto_msgTypes[2]
+func (x *Config) ProtoReflect() protoreflect.Message {
+	mi := &file_infra_appengine_cr_rev_config_config_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -253,70 +253,68 @@ func (x *HostsConfig) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use HostsConfig.ProtoReflect.Descriptor instead.
-func (*HostsConfig) Descriptor() ([]byte, []int) {
-	return file_infra_appengine_cr_rev_proto_config_proto_rawDescGZIP(), []int{2}
+// Deprecated: Use Config.ProtoReflect.Descriptor instead.
+func (*Config) Descriptor() ([]byte, []int) {
+	return file_infra_appengine_cr_rev_config_config_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *HostsConfig) GetHosts() []*Host {
+func (x *Config) GetHosts() []*Host {
 	if x != nil {
 		return x.Hosts
 	}
 	return nil
 }
 
-var File_infra_appengine_cr_rev_proto_config_proto protoreflect.FileDescriptor
+var File_infra_appengine_cr_rev_config_config_proto protoreflect.FileDescriptor
 
-var file_infra_appengine_cr_rev_proto_config_proto_rawDesc = []byte{
-	0x0a, 0x29, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e,
-	0x65, 0x2f, 0x63, 0x72, 0x2d, 0x72, 0x65, 0x76, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63,
-	0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x05, 0x63, 0x72, 0x72,
-	0x65, 0x76, 0x22, 0xa5, 0x01, 0x0a, 0x0a, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x79, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x22, 0x0a, 0x0c, 0x64, 0x6f, 0x5f, 0x6e, 0x6f, 0x74, 0x5f,
-	0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52, 0x0a, 0x64,
-	0x6f, 0x4e, 0x6f, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x1c, 0x0a, 0x08, 0x70, 0x72, 0x69,
-	0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52, 0x08, 0x70,
-	0x72, 0x69, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x66, 0x73, 0x18,
-	0x06, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x66, 0x73, 0x12, 0x21, 0x0a, 0x0c, 0x65,
-	0x78, 0x63, 0x6c, 0x75, 0x64, 0x65, 0x5f, 0x72, 0x65, 0x66, 0x73, 0x18, 0x07, 0x20, 0x03, 0x28,
-	0x09, 0x52, 0x0b, 0x65, 0x78, 0x63, 0x6c, 0x75, 0x64, 0x65, 0x52, 0x65, 0x66, 0x73, 0x42, 0x0a,
-	0x0a, 0x08, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x69, 0x6e, 0x67, 0x22, 0x5c, 0x0a, 0x04, 0x48, 0x6f,
-	0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x40, 0x0a, 0x12, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69,
-	0x74, 0x6f, 0x72, 0x79, 0x5f, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x73, 0x18, 0x02, 0x20, 0x03,
-	0x28, 0x0b, 0x32, 0x11, 0x2e, 0x63, 0x72, 0x72, 0x65, 0x76, 0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73,
-	0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x11, 0x72, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72,
-	0x79, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x73, 0x22, 0x30, 0x0a, 0x0b, 0x48, 0x6f, 0x73, 0x74,
-	0x73, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x21, 0x0a, 0x05, 0x68, 0x6f, 0x73, 0x74, 0x73,
-	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x63, 0x72, 0x72, 0x65, 0x76, 0x2e, 0x48,
-	0x6f, 0x73, 0x74, 0x52, 0x05, 0x68, 0x6f, 0x73, 0x74, 0x73, 0x42, 0x1e, 0x5a, 0x1c, 0x69, 0x6e,
-	0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e, 0x65, 0x2f, 0x63, 0x72,
-	0x2d, 0x72, 0x65, 0x76, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+var file_infra_appengine_cr_rev_config_config_proto_rawDesc = []byte{
+	0x0a, 0x2a, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67, 0x69, 0x6e,
+	0x65, 0x2f, 0x63, 0x72, 0x2d, 0x72, 0x65, 0x76, 0x2f, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2f,
+	0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x63, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x22, 0xa5, 0x01, 0x0a, 0x0a, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74,
+	0x6f, 0x72, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x22, 0x0a, 0x0c, 0x64, 0x6f, 0x5f, 0x6e, 0x6f,
+	0x74, 0x5f, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52,
+	0x0a, 0x64, 0x6f, 0x4e, 0x6f, 0x74, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x1c, 0x0a, 0x08, 0x70,
+	0x72, 0x69, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x48, 0x00, 0x52,
+	0x08, 0x70, 0x72, 0x69, 0x6f, 0x72, 0x69, 0x74, 0x79, 0x12, 0x12, 0x0a, 0x04, 0x72, 0x65, 0x66,
+	0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x72, 0x65, 0x66, 0x73, 0x12, 0x21, 0x0a,
+	0x0c, 0x65, 0x78, 0x63, 0x6c, 0x75, 0x64, 0x65, 0x5f, 0x72, 0x65, 0x66, 0x73, 0x18, 0x07, 0x20,
+	0x03, 0x28, 0x09, 0x52, 0x0b, 0x65, 0x78, 0x63, 0x6c, 0x75, 0x64, 0x65, 0x52, 0x65, 0x66, 0x73,
+	0x42, 0x0a, 0x0a, 0x08, 0x69, 0x6e, 0x64, 0x65, 0x78, 0x69, 0x6e, 0x67, 0x22, 0x44, 0x0a, 0x04,
+	0x48, 0x6f, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x28, 0x0a, 0x05, 0x72, 0x65, 0x70, 0x6f,
+	0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67,
+	0x2e, 0x52, 0x65, 0x70, 0x6f, 0x73, 0x69, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x05, 0x72, 0x65, 0x70,
+	0x6f, 0x73, 0x22, 0x2c, 0x0a, 0x06, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x12, 0x22, 0x0a, 0x05,
+	0x68, 0x6f, 0x73, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x0c, 0x2e, 0x63, 0x6f,
+	0x6e, 0x66, 0x69, 0x67, 0x2e, 0x48, 0x6f, 0x73, 0x74, 0x52, 0x05, 0x68, 0x6f, 0x73, 0x74, 0x73,
+	0x42, 0x1f, 0x5a, 0x1d, 0x69, 0x6e, 0x66, 0x72, 0x61, 0x2f, 0x61, 0x70, 0x70, 0x65, 0x6e, 0x67,
+	0x69, 0x6e, 0x65, 0x2f, 0x63, 0x72, 0x2d, 0x72, 0x65, 0x76, 0x2f, 0x63, 0x6f, 0x6e, 0x66, 0x69,
+	0x67, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_infra_appengine_cr_rev_proto_config_proto_rawDescOnce sync.Once
-	file_infra_appengine_cr_rev_proto_config_proto_rawDescData = file_infra_appengine_cr_rev_proto_config_proto_rawDesc
+	file_infra_appengine_cr_rev_config_config_proto_rawDescOnce sync.Once
+	file_infra_appengine_cr_rev_config_config_proto_rawDescData = file_infra_appengine_cr_rev_config_config_proto_rawDesc
 )
 
-func file_infra_appengine_cr_rev_proto_config_proto_rawDescGZIP() []byte {
-	file_infra_appengine_cr_rev_proto_config_proto_rawDescOnce.Do(func() {
-		file_infra_appengine_cr_rev_proto_config_proto_rawDescData = protoimpl.X.CompressGZIP(file_infra_appengine_cr_rev_proto_config_proto_rawDescData)
+func file_infra_appengine_cr_rev_config_config_proto_rawDescGZIP() []byte {
+	file_infra_appengine_cr_rev_config_config_proto_rawDescOnce.Do(func() {
+		file_infra_appengine_cr_rev_config_config_proto_rawDescData = protoimpl.X.CompressGZIP(file_infra_appengine_cr_rev_config_config_proto_rawDescData)
 	})
-	return file_infra_appengine_cr_rev_proto_config_proto_rawDescData
+	return file_infra_appengine_cr_rev_config_config_proto_rawDescData
 }
 
-var file_infra_appengine_cr_rev_proto_config_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_infra_appengine_cr_rev_proto_config_proto_goTypes = []interface{}{
-	(*Repository)(nil),  // 0: crrev.Repository
-	(*Host)(nil),        // 1: crrev.Host
-	(*HostsConfig)(nil), // 2: crrev.HostsConfig
+var file_infra_appengine_cr_rev_config_config_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_infra_appengine_cr_rev_config_config_proto_goTypes = []interface{}{
+	(*Repository)(nil), // 0: config.Repository
+	(*Host)(nil),       // 1: config.Host
+	(*Config)(nil),     // 2: config.Config
 }
-var file_infra_appengine_cr_rev_proto_config_proto_depIdxs = []int32{
-	0, // 0: crrev.Host.repository_configs:type_name -> crrev.Repository
-	1, // 1: crrev.HostsConfig.hosts:type_name -> crrev.Host
+var file_infra_appengine_cr_rev_config_config_proto_depIdxs = []int32{
+	0, // 0: config.Host.repos:type_name -> config.Repository
+	1, // 1: config.Config.hosts:type_name -> config.Host
 	2, // [2:2] is the sub-list for method output_type
 	2, // [2:2] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
@@ -324,13 +322,13 @@ var file_infra_appengine_cr_rev_proto_config_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_infra_appengine_cr_rev_proto_config_proto_init() }
-func file_infra_appengine_cr_rev_proto_config_proto_init() {
-	if File_infra_appengine_cr_rev_proto_config_proto != nil {
+func init() { file_infra_appengine_cr_rev_config_config_proto_init() }
+func file_infra_appengine_cr_rev_config_config_proto_init() {
+	if File_infra_appengine_cr_rev_config_config_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_infra_appengine_cr_rev_proto_config_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_infra_appengine_cr_rev_config_config_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Repository); i {
 			case 0:
 				return &v.state
@@ -342,7 +340,7 @@ func file_infra_appengine_cr_rev_proto_config_proto_init() {
 				return nil
 			}
 		}
-		file_infra_appengine_cr_rev_proto_config_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_infra_appengine_cr_rev_config_config_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Host); i {
 			case 0:
 				return &v.state
@@ -354,8 +352,8 @@ func file_infra_appengine_cr_rev_proto_config_proto_init() {
 				return nil
 			}
 		}
-		file_infra_appengine_cr_rev_proto_config_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*HostsConfig); i {
+		file_infra_appengine_cr_rev_config_config_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Config); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -367,7 +365,7 @@ func file_infra_appengine_cr_rev_proto_config_proto_init() {
 			}
 		}
 	}
-	file_infra_appengine_cr_rev_proto_config_proto_msgTypes[0].OneofWrappers = []interface{}{
+	file_infra_appengine_cr_rev_config_config_proto_msgTypes[0].OneofWrappers = []interface{}{
 		(*Repository_DoNotIndex)(nil),
 		(*Repository_Priority)(nil),
 	}
@@ -375,18 +373,18 @@ func file_infra_appengine_cr_rev_proto_config_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_infra_appengine_cr_rev_proto_config_proto_rawDesc,
+			RawDescriptor: file_infra_appengine_cr_rev_config_config_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_infra_appengine_cr_rev_proto_config_proto_goTypes,
-		DependencyIndexes: file_infra_appengine_cr_rev_proto_config_proto_depIdxs,
-		MessageInfos:      file_infra_appengine_cr_rev_proto_config_proto_msgTypes,
+		GoTypes:           file_infra_appengine_cr_rev_config_config_proto_goTypes,
+		DependencyIndexes: file_infra_appengine_cr_rev_config_config_proto_depIdxs,
+		MessageInfos:      file_infra_appengine_cr_rev_config_config_proto_msgTypes,
 	}.Build()
-	File_infra_appengine_cr_rev_proto_config_proto = out.File
-	file_infra_appengine_cr_rev_proto_config_proto_rawDesc = nil
-	file_infra_appengine_cr_rev_proto_config_proto_goTypes = nil
-	file_infra_appengine_cr_rev_proto_config_proto_depIdxs = nil
+	File_infra_appengine_cr_rev_config_config_proto = out.File
+	file_infra_appengine_cr_rev_config_config_proto_rawDesc = nil
+	file_infra_appengine_cr_rev_config_config_proto_goTypes = nil
+	file_infra_appengine_cr_rev_config_config_proto_depIdxs = nil
 }

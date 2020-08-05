@@ -1,0 +1,4 @@
+cron:
+- description: Import config.cfg from LUCI Config
+  url: /internal/cron/import-config
+  schedule: every 10 minutes

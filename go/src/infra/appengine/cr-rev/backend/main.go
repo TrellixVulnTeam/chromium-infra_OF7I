@@ -7,9 +7,16 @@
 package main
 
 import (
+	"net/http"
+
+	"go.chromium.org/luci/appengine/gaemiddleware"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
+
+	"infra/appengine/cr-rev/config"
 )
 
 func handleStartup(c *router.Context) {
@@ -18,9 +25,17 @@ func handleStartup(c *router.Context) {
 
 func main() {
 	mw := router.MiddlewareChain{}
+	cron := router.NewMiddlewareChain(gaemiddleware.RequireCron)
+	modules := []module.Module{cfgmodule.NewModuleFromFlags()}
 
-	server.Main(nil, []module.Module{}, func(srv *server.Server) error {
+	server.Main(nil, modules, func(srv *server.Server) error {
 		srv.Routes.GET("/_ah/start", mw, handleStartup)
+		srv.Routes.GET("/internal/cron/import-config", cron, func(c *router.Context) {
+			if err := config.Set(c.Context); err != nil {
+				errors.Log(c.Context, err)
+			}
+			c.Writer.WriteHeader(http.StatusOK)
+		})
 		return nil
 	})
 }

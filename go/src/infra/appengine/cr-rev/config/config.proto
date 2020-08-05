@@ -6,9 +6,9 @@
 
 syntax = "proto3";
 
-package crrev;
+package config;
 
-option go_package = "infra/appengine/cr-rev/proto";
+option go_package = "infra/appengine/cr-rev/config";
 
 message Repository {
   // The name of the repository, for example "chromium/src" or "v8/v8".
@@ -53,10 +53,10 @@ message Host {
 
   // Should be specified only for repositories that need to override default
   // attributes.
-  repeated Repository repository_configs = 2;
+  repeated Repository repos = 2;
 }
 
-message HostsConfig {
+message Config {
   // A list of hosts to index.
   repeated Host hosts = 1;
 }
