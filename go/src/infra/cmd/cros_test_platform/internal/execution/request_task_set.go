@@ -112,11 +112,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 
 		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", tr.LogUrl, ts.Name, tr.GetState().GetVerdict())
 
-		shouldRetry, err := r.shouldRetry(ctx, key, latestTask)
-		if err != nil {
-			return errors.Annotate(err, "tick for task %s", tr.LogUrl).Err()
-		}
-		if shouldRetry {
+		if needsRetry(latestTask.Result()) && r.retryCounter.CanRetry(ctx, key) {
 			logging.Infof(ctx, "Retrying %s", ts.Name)
 			if err := ts.LaunchTask(ctx, c); err != nil {
 				return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
@@ -125,28 +121,6 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		}
 	}
 	return nil
-}
-
-// shouldRetry computes if the given test should be retried.
-func (r *RequestTaskSet) shouldRetry(ctx context.Context, key string, task *skylab.Task) (bool, error) {
-	if !r.retryCounter.CanRetry(ctx, key) {
-		return false, nil
-	}
-
-	switch v := task.Result().GetState().GetVerdict(); v {
-	case test_platform.TaskState_VERDICT_UNSPECIFIED:
-		fallthrough
-	case test_platform.TaskState_VERDICT_FAILED:
-		return true, nil
-	case test_platform.TaskState_VERDICT_NO_VERDICT:
-		fallthrough
-	case test_platform.TaskState_VERDICT_PASSED:
-		fallthrough
-	case test_platform.TaskState_VERDICT_PASSED_ON_RETRY:
-		return false, nil
-	default:
-		return false, errors.Reason("shouldRetry: unknown verdict %s", v.String()).Err()
-	}
 }
 
 func (r *RequestTaskSet) response(running bool) *steps.ExecuteResponse {

@@ -14,6 +14,24 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
+// needsRetry determines if a task result indicates that the test needs to be
+// retried.
+//
+// Panics on unknown verdicts.
+func needsRetry(result *steps.ExecuteResponse_TaskResult) bool {
+	switch v := result.GetState().GetVerdict(); v {
+	case test_platform.TaskState_VERDICT_UNSPECIFIED,
+		test_platform.TaskState_VERDICT_FAILED:
+		return true
+	case test_platform.TaskState_VERDICT_NO_VERDICT,
+		test_platform.TaskState_VERDICT_PASSED,
+		test_platform.TaskState_VERDICT_PASSED_ON_RETRY:
+		return false
+	default:
+		panic(fmt.Sprintf("shouldRetry: unknown verdict %s", v.String()))
+	}
+}
+
 // newRetryCounter initializes a new retryCounter.
 //
 // The tests are keyed by arbitrary string names used to refer to tests in
