@@ -1806,30 +1806,91 @@ class WorkEnv(object):
         send_notifications.PrepareAndSendIssueBlockingNotification(
             issue.issue_id, hostport, delta_blocked_on_iids,
             reporter_id, send_email=send_email)
-
   def ModifyIssues(
-      self, issue_id_delta_pairs, is_description, comment_content=None):
-    # type: (Tuple[int, IssueDelta], Boolean, Optional[str]) -> None
+      self, issue_id_delta_pairs, is_description, comment_content=None,
+      _send_email=True):
+    # type: (Tuple[int, IssueDelta], Boolean, Optional[str], Optional[bool])
+    #     -> None
     """Modify issues by the given deltas."""
 
-    # PHASE 1: Assert requester has permission to make changes.
-    # Assert that changes are valid. Assert we do not update more than 100
+    main_issue_ids = {issue_id for issue_id, _delta in issue_id_delta_pairs}
+    issues_by_id = self.GetIssuesDict(main_issue_ids, use_cache=False)
+    issue_delta_pairs = [
+        (issues_by_id[issue_id], delta)
+        for (issue_id, delta) in issue_id_delta_pairs
+    ]
+
+    # PHASE 1: Assert these changes can be made.
+    self._AssertUserCanModifyIssues(
+        issue_delta_pairs, is_description, comment_content=comment_content)
+    tracker_helpers.AssertIssueChangesValid(
+        self.mc.cnxn, issue_delta_pairs, self.services,
+        comment_content=comment_content)
+    # TODO(crbug.com/monorail/7657): Assert we do not update more than 100
     # issues at once.
-    # Assert attachments do not exceed project quota limits.
-    # AssertUserCanModifyIssues(), AssertIssueChangesValid(),
 
     # PHASE 2: Organize data. tracker_helpers.GroupUniqueDeltaIssues()
+    (_unique_deltas, _issues_for_unique_deltas
+    ) = tracker_helpers.GroupUniqueDeltaIssues(issue_delta_pairs)
 
-    # PHASE 3-4: implemented in tracker_helpers.ApplyAllIssueChanges.
+    # PHASE 3-4: Modify issues in RAM.
+    changes = tracker_helpers.ApplyAllIssueChanges(
+        self.mc.cnxn, issue_delta_pairs, self.services)
+    # TODO(crbug.com/monorail/8111): Update *_timestamp fields.
 
     # PHASE 5: Apply filter rules.
+    self._ApplyFilterRules(
+        changes.issues_to_update_dict.values(), raise_filter_errors=True)
 
-    # PHASE 6: Check and update attachments quota
-    # UpdateIssues, CreateIssueComments, combine merged_into starrers
+    # PHASE 6: Apply changes to DB: update issues, combine starrers
+    # for merged issues, create issue comments, enqueue issues for
+    # re-indexing.
+    if changes.issues_to_update_dict:
+      self.services.issue.UpdateIssues(
+          self.mc.cnxn, changes.issues_to_update_dict.values(), commit=False)
+    comments_by_iid = {}
+    impacted_comments_by_iid = {}
+    # changes.issues_to_update includes all main issues or impacted
+    # issues with updated fields. However, it does not contain main issues
+    # where there were no field value changes, but should still have
+    # new comments with `comment_content` added. So we combine iids
+    # in issues_to_update and main_issue_ids.
+    all_involved_iids = main_issue_ids.union(
+        changes.issues_to_update_dict.keys())
+    for iid in all_involved_iids:
+      issue = changes.issues_to_update_dict.get(iid, issues_by_id.get(iid))
+
+      # Update starrers for merged issues.
+      new_starrers = changes.new_starrers_by_iid.get(iid)
+      if new_starrers:
+        self.services.issue_star.SetStarsBatch_SkipIssueUpdate(
+            self.mc.cnxn, iid, new_starrers, True, commit=False)
+
+      # Create new issue comment for main issue changes.
+      amendments = changes.amendments_by_iid.get(iid)
+      if (amendments or comment_content) and iid in main_issue_ids:
+        comments_by_iid[iid] = self.services.issue.CreateIssueComment(
+            self.mc.cnxn, issue, self.mc.auth.user_id, comment_content,
+            amendments=amendments, is_description=is_description,
+            commit=False)
+
+      # Create new issue comment for impacted issue changes.
+      imp_amendments = changes.imp_amendments_by_iid.get(iid)
+      if imp_amendments:
+        impacted_comments_by_iid[iid] = self.services.issue.CreateIssueComment(
+            self.mc.cnxn, issue, self.mc.auth.user_id, '',
+            amendments=imp_amendments, commit=False)
+    issues_to_reindex = set(
+        comments_by_iid.keys() + impacted_comments_by_iid.keys())
+    if issues_to_reindex:
+      self.services.issue.EnqueueIssuesForIndexing(
+          self.mc.cnxn, issues_to_reindex, commit=False)
+      # We only commit if there are issues to reindex. No issues to reindex
+      # means there were no updates that need a commit.
+      self.mc.cnxn.Commit()
 
     # PHASE 7: Send notifications for each group of issues from Phase 2.
-
-    # PHASE 8: Create new issue indexing task.
+    # TODO(crbug.com/monorail/7657): Send notifications.
 
   def DeleteIssue(self, issue, delete):
     """Mark or unmark the given issue as deleted."""

@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import copy
 import logging
 import sys
 import unittest
@@ -44,6 +45,20 @@ from testing import fake
 from testing import testing_helpers
 from tracker import tracker_bizobj
 from tracker import tracker_constants
+
+
+def _Issue(project_id, local_id):
+  # TODO(crbug.com/monorail/8124): Many parts of monorail's codebase
+  # assumes issue.owner_id could never be None and that issues without
+  # owners have owner_id = 0.
+  issue = tracker_pb2.Issue(owner_id=0)
+  issue.derived_status = ''
+  issue.derived_owner_id = 0
+  issue.project_name = 'proj-%d' % project_id
+  issue.project_id = project_id
+  issue.local_id = local_id
+  issue.issue_id = 100000 + local_id
+  return issue
 
 
 class WorkEnvTest(unittest.TestCase):
@@ -2780,6 +2795,400 @@ class WorkEnvTest(unittest.TestCase):
     fake_pasicn.assert_called_with(
         issue.issue_id, hostport, 111, send_email=True,
         old_owner_id=0, comment_id=comment_pb.id)
+
+  def testModifyIssues_WeirdDeltas(self):
+    """Test that ModifyIssues does not panic with weird deltas."""
+    # Issues merge into each other.
+    issue_merge_a = _Issue(789, 1)
+    issue_merge_b = _Issue(789, 2)
+
+    delta_merge_a = tracker_pb2.IssueDelta(
+        merged_into=issue_merge_b.issue_id)
+    delta_merge_b = tracker_pb2.IssueDelta(
+        merged_into=issue_merge_a.issue_id)
+
+    exp_merge_a = copy.deepcopy(issue_merge_a)
+    exp_merge_a.merged_into = issue_merge_b.issue_id
+    exp_amendments_merge_a = [tracker_bizobj.MakeMergedIntoAmendment(
+        [(issue_merge_b.project_name, issue_merge_b.local_id)], [],
+        default_project_name=issue_merge_a.project_name)]
+    exp_merge_b = copy.deepcopy(issue_merge_b)
+    exp_merge_b.merged_into = exp_merge_a.issue_id
+    exp_amendments_merge_b = [tracker_bizobj.MakeMergedIntoAmendment(
+        [(issue_merge_a.project_name, issue_merge_a.local_id)], [],
+        default_project_name=issue_merge_b.project_name)]
+
+    # Issues that block each other.
+    issue_block_a = _Issue(789, 5)
+    issue_block_b = _Issue(789, 6)
+
+    delta_block_a = tracker_pb2.IssueDelta(
+        blocking_add=[issue_block_b.issue_id])
+    delta_block_b = tracker_pb2.IssueDelta(
+        blocking_add=[issue_block_a.issue_id])
+
+    exp_block_a = copy.deepcopy(issue_block_a)
+    exp_block_a.blocking_iids = [issue_block_b.issue_id]
+    exp_block_a.blocked_on_iids = [issue_block_b.issue_id]
+    exp_amendments_block_a = [tracker_bizobj.MakeBlockingAmendment(
+        [(issue_block_b.project_name, issue_block_b.local_id)], [],
+        default_project_name=issue_block_a.project_name)]
+    exp_amendments_block_a_imp = [tracker_bizobj.MakeBlockedOnAmendment(
+        [(issue_block_b.project_name, issue_block_b.local_id)], [],
+        default_project_name=issue_block_a.project_name)]
+
+    exp_block_b = copy.deepcopy(issue_block_b)
+    exp_block_b.blocking_iids = [issue_block_a.issue_id]
+    exp_block_b.blocked_on_iids = [issue_block_a.issue_id]
+    exp_amendments_block_b = [tracker_bizobj.MakeBlockingAmendment(
+        [(issue_block_a.project_name, issue_block_a.local_id)], [],
+        default_project_name=issue_block_b.project_name)]
+    exp_amendments_block_b_imp = [tracker_bizobj.MakeBlockedOnAmendment(
+        [(issue_block_a.project_name, issue_block_a.local_id)], [],
+        default_project_name=issue_block_b.project_name)]
+
+    # By default new blocked_on issues that appear in blocked_on_iids
+    # with no prior rank associated with it are un-ranked and assigned rank 0.
+    # See SortBlockedOn in issue_svc.py.
+    exp_block_a.blocked_on_ranks = [0]
+    exp_block_b.blocked_on_ranks = [0]
+
+    self.services.issue.TestAddIssue(issue_merge_a)
+    self.services.issue.TestAddIssue(issue_merge_b)
+    self.services.issue.TestAddIssue(issue_block_a)
+    self.services.issue.TestAddIssue(issue_block_b)
+
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    issue_delta_pairs = [(issue_merge_a.issue_id, delta_merge_a),
+                         (issue_merge_b.issue_id, delta_merge_b),
+                         (issue_block_a.issue_id, delta_block_a),
+                         (issue_block_b.issue_id, delta_block_b)]
+
+    content = 'Je suis un ananas.'
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      we.ModifyIssues(issue_delta_pairs, False, comment_content=content)
+
+    # We expect all issues to have a description comment and the comment(s)
+    # added from the ModifyIssues() changes.
+    def CheckComment(issue_id, exp_amendments, exp_amendments_imp):
+      (_desc, comment, comment_imp
+      ) = self.services.issue.comments_by_iid[issue_id]
+      self.assertEqual(comment.amendments, exp_amendments)
+      self.assertEqual(comment.content, content)
+      self.assertEqual(comment_imp.amendments, exp_amendments_imp)
+      self.assertEqual(comment_imp.content, '')
+
+    # Merge changes result in the same Amendment shape for merging into and
+    # from.
+    CheckComment(
+        issue_merge_a.issue_id, exp_amendments_merge_a, exp_amendments_merge_a)
+    CheckComment(
+        issue_merge_b.issue_id, exp_amendments_merge_b, exp_amendments_merge_b)
+    CheckComment(
+        issue_block_a.issue_id, exp_amendments_block_a,
+        exp_amendments_block_a_imp)
+    CheckComment(
+        issue_block_b.issue_id, exp_amendments_block_b,
+        exp_amendments_block_b_imp)
+
+    exp_issues = [exp_merge_a, exp_merge_b, exp_block_a, exp_block_b]
+    for issue in exp_issues:
+      issue.assume_stale = False
+    self.assertEqual(exp_merge_a, self.services.issue.GetIssue(
+        self.cnxn, issue_merge_a.issue_id))
+
+    self.assertEqual(exp_merge_b, self.services.issue.GetIssue(
+        self.cnxn, issue_merge_b.issue_id))
+
+    self.assertEqual(exp_block_a, self.services.issue.GetIssue(
+        self.cnxn, issue_block_a.issue_id))
+
+    self.assertEqual(exp_block_b, self.services.issue.GetIssue(
+        self.cnxn, issue_block_b.issue_id))
+
+    # Check issues enqueued for indexing.
+    reindex_iids = {issue.issue_id for issue in exp_issues}
+    self.services.issue.EnqueueIssuesForIndexing.assert_called_once_with(
+        self.mr.cnxn, reindex_iids, commit=False)
+    self.mr.cnxn.Commit.assert_called_once()
+
+  def testModifyIssues(self):
+    # A main issue with noop delta.
+    issue_noop = _Issue(789, 1)
+    issue_noop.labels = ['chicken']
+    delta_noop = tracker_pb2.IssueDelta(labels_add=issue_noop.labels)
+
+    exp_issue_noop = copy.deepcopy(issue_noop)
+    exp_amendments_noop = []
+
+    # A main issue with an empty delta and impacts from
+    # issue_shared_a and issue_shared_b.
+    issue_empty = _Issue(789, 2)
+    delta_empty = tracker_pb2.IssueDelta()
+
+    exp_issue_empty = copy.deepcopy(issue_empty)
+    exp_amendments_empty = []
+    exp_amendments_empty_imp = []
+
+    # A main issue with a shared delta_shared.
+    issue_shared_a = _Issue(789, 3)
+    delta_shared = tracker_pb2.IssueDelta(
+        owner_id=self.user_1.user_id, blocked_on_add=[issue_empty.issue_id])
+
+    exp_issue_shared_a = copy.deepcopy(issue_shared_a)
+    exp_issue_shared_a.owner_id = self.user_1.user_id
+    exp_issue_shared_a.blocked_on_iids.append(issue_empty.issue_id)
+    # By default new blocked_on issues that appear in blocked_on_iids
+    # with no prior rank associated with it are un-ranked and assigned rank 0.
+    # See SortBlockedOn in issue_svc.py.
+    exp_issue_shared_a.blocked_on_ranks = [0]
+    exp_amendments_shared_a = [
+        tracker_bizobj.MakeOwnerAmendment(
+            self.user_1.user_id, issue_shared_a.owner_id),
+        tracker_bizobj.MakeBlockedOnAmendment(
+            [(issue_empty.project_name, issue_empty.local_id)], [],
+            default_project_name=issue_shared_a.project_name)]
+    exp_issue_empty.blocking_iids.append(issue_shared_a.issue_id)
+
+    # A main issue with a shared delta_shared.
+    issue_shared_b = _Issue(789, 4)
+
+    exp_issue_shared_b = copy.deepcopy(issue_shared_b)
+    exp_issue_shared_b.owner_id = delta_shared.owner_id
+    exp_issue_shared_b.blocked_on_iids.append(issue_empty.issue_id)
+    exp_issue_shared_b.blocked_on_ranks = [0]
+
+    exp_amendments_shared_b = [
+        tracker_bizobj.MakeOwnerAmendment(
+            delta_shared.owner_id, issue_shared_b.owner_id),
+        tracker_bizobj.MakeBlockedOnAmendment(
+            [(issue_empty.project_name, issue_empty.local_id)], [],
+            default_project_name=issue_shared_b.project_name)]
+    exp_issue_empty.blocking_iids.append(issue_shared_b.issue_id)
+
+    added_refs = [(issue_shared_a.project_name, issue_shared_a.local_id),
+                  (issue_shared_b.project_name, issue_shared_b.local_id)]
+    exp_amendments_empty_imp.append(tracker_bizobj.MakeBlockingAmendment(
+        added_refs, [], default_project_name=issue_empty.project_name))
+
+    # An issue impacted by issue_unique.
+    imp_issue = _Issue(789, 11)
+    imp_issue.owner_id = self.user_1.user_id
+
+    exp_imp_issue = copy.deepcopy(imp_issue)
+
+    # A main issue with a unique delta and impact on imp_issue.
+    issue_unique = _Issue(789, 5)
+    delta_unique = tracker_pb2.IssueDelta(merged_into=imp_issue.issue_id)
+
+    exp_issue_unique = copy.deepcopy(issue_unique)
+    exp_issue_unique.merged_into = imp_issue.issue_id
+    exp_amendments_unique = [tracker_bizobj.MakeMergedIntoAmendment(
+        [(imp_issue.project_name, imp_issue.local_id)], [],
+        default_project_name=issue_unique.project_name)]
+    # We star issue_5 and expect this star to be merged into imp_issue.
+    exp_imp_starrer = 444
+    self.services.issue_star.SetStar(
+        self.cnxn, self.services, None, issue_unique.issue_id,
+        exp_imp_starrer, True)
+    exp_amendments_imp = [tracker_bizobj.MakeMergedIntoAmendment(
+        [(issue_unique.project_name, issue_unique.local_id)], [],
+        default_project_name=imp_issue.project_name)]
+    exp_imp_issue.star_count = 1
+
+    # Add a FilterRule for star_count to check filter rules are applied.
+    starred_label = 'starry-night'
+    self.services.features.TestAddFilterRule(
+        789, 'stars=1', add_labels=[starred_label])
+    exp_imp_issue.derived_labels.append(starred_label)
+
+    self.services.issue.TestAddIssue(imp_issue)
+    self.services.issue.TestAddIssue(issue_noop)
+    self.services.issue.TestAddIssue(issue_empty)
+    self.services.issue.TestAddIssue(issue_shared_a)
+    self.services.issue.TestAddIssue(issue_shared_b)
+    self.services.issue.TestAddIssue(issue_unique)
+
+    issue_delta_pairs = [
+        (issue_noop.issue_id, delta_noop),
+        (issue_empty.issue_id, delta_empty),
+        (issue_shared_a.issue_id, delta_shared),
+        (issue_shared_b.issue_id, delta_shared),
+        (issue_unique.issue_id, delta_unique)
+    ]
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    content = 'Je suis un ananas.'
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      we.ModifyIssues(issue_delta_pairs, False, comment_content=content)
+
+    # Check comments correct.
+    # We expect all issues to have a description comment and the comment(s)
+    # added from the ModifyIssues() changes.
+    (_desc, comment_noop
+    ) = self.services.issue.comments_by_iid[issue_noop.issue_id]
+    self.assertEqual(comment_noop.amendments, exp_amendments_noop)
+    self.assertEqual(comment_noop.content, content)
+
+    # Modified issues that are also impacted, get two comments:
+    # One with the comment content and, direct issue changes defined in a
+    # paired delta.
+    # One with the impacted changes with no comment content.
+    (_desc, comment_empty, comment_empty_imp
+    ) = self.services.issue.comments_by_iid[issue_empty.issue_id]
+    self.assertEqual(comment_empty.amendments, exp_amendments_empty)
+    self.assertEqual(comment_empty.content, content)
+    self.assertEqual(comment_empty_imp.amendments, exp_amendments_empty_imp)
+    self.assertEqual(comment_empty_imp.content, '')
+
+    [_desc, shared_a_comment] = self.services.issue.comments_by_iid[
+        issue_shared_a.issue_id]
+    self.assertEqual(shared_a_comment.amendments, exp_amendments_shared_a)
+    self.assertEqual(shared_a_comment.content, content)
+
+    (_desc, shared_b_comment) = self.services.issue.comments_by_iid[
+        issue_shared_b.issue_id]
+    self.assertEqual(shared_b_comment.amendments, exp_amendments_shared_b)
+    self.assertEqual(shared_b_comment.content, content)
+
+    (_desc, unique_comment) = self.services.issue.comments_by_iid[
+        issue_unique.issue_id]
+    self.assertEqual(unique_comment.amendments, exp_amendments_unique)
+    self.assertEqual(unique_comment.content, content)
+
+    # imp_issue was only an impacted issue and never a main issue with
+    # IssueDelta changes. Only one comment with impacted changes should
+    # have been added.
+    (_desc, imp_comment
+    ) = self.services.issue.comments_by_iid[imp_issue.issue_id]
+    self.assertEqual(imp_comment.amendments, exp_amendments_imp)
+    self.assertEqual(imp_comment.content, '')
+
+    # Check stars correct.
+    self.assertEqual(
+        [exp_imp_starrer],
+        self.services.issue_star.stars_by_item_id[imp_issue.issue_id])
+
+    # Check issues correct.
+    expected_issues = [
+        exp_issue_noop, exp_issue_empty, exp_issue_shared_a,
+        exp_issue_shared_b, exp_issue_unique, exp_imp_issue]
+    for issue in expected_issues:
+      # All updated issues should have been fetched from DB, skipping cache.
+      # So we expect assume_stale=False was applied to all issues during the
+      # the fetch.
+      issue.assume_stale = False
+      # These derived values get set to the following when an issue goes through
+      # the ApplyFilterRules path. (see filter_helpers._ComputeDerivedFields)
+      issue.derived_status = ''
+      issue.derived_owner_id = 0
+    self.assertEqual(
+        exp_issue_empty, self.services.issue.GetIssue(
+            self.cnxn, issue_empty.issue_id))
+    self.assertEqual(
+        exp_issue_shared_a, self.services.issue.GetIssue(
+            self.cnxn, issue_shared_a.issue_id))
+    self.assertEqual(
+        exp_issue_shared_b, self.services.issue.GetIssue(
+            self.cnxn, issue_shared_b.issue_id))
+    self.assertEqual(
+        exp_issue_unique, self.services.issue.GetIssue(
+            self.cnxn, issue_unique.issue_id))
+    self.assertEqual(
+        exp_imp_issue, self.services.issue.GetIssue(
+            self.cnxn, imp_issue.issue_id))
+
+    # Check issues enqueued for indexing.
+    reindex_iids = {issue.issue_id for issue in expected_issues}
+    self.services.issue.EnqueueIssuesForIndexing.assert_called_once_with(
+        self.mr.cnxn, reindex_iids, commit=False)
+    self.mr.cnxn.Commit.assert_called_once()
+
+  def testModifyIssues_PermDenied(self):
+    """Test that AssertUsercanModifyIssues is called."""
+    issue = _Issue(789, 1)
+    delta = tracker_pb2.IssueDelta(labels_add=['some-label'])
+    non_member = self.services.user.TestAddUser('non_member@example.com', 666)
+    self.services.issue.TestAddIssue(issue)
+    self.SignIn(non_member.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.ModifyIssues(
+            [(issue.issue_id, delta)], False, comment_content='bad chicken')
+
+  # Detailed change validation testing happens in tracker_helpers_test.
+  def testModifyIssues_InvalidChange(self):
+    """Test that we check issue change validity."""
+    non_member = self.services.user.TestAddUser('non_member@example.com', 666)
+    issue = _Issue(789, 1)
+    delta = tracker_pb2.IssueDelta(owner_id=non_member.user_id)
+    self.services.issue.TestAddIssue(issue)
+    self.SignIn(self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.ModifyIssues(
+            [(issue.issue_id, delta)], False, comment_content='bad chicken')
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
+  def testModifyIssues_Noop(self, fake_bulk_notify, fake_notify):
+    issue_empty = _Issue(789, 1)
+    delta_empty = tracker_pb2.IssueDelta()
+
+    issue_noop = _Issue(789, 2)
+    issue_noop.owner_id = self.user_2.user_id
+    delta_noop = tracker_pb2.IssueDelta(owner_id=issue_noop.owner_id)
+
+    self.services.issue.TestAddIssue(issue_empty)
+    self.services.issue.TestAddIssue(issue_noop)
+
+    issue_delta_pairs = [(issue_empty.issue_id, delta_empty),
+                         (issue_noop.issue_id, delta_noop)]
+
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.UpdateIssue = mock.Mock()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate = mock.Mock()
+    self.services.issue.CreateIssueComment = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+        we.ModifyIssues(issue_delta_pairs, False, _send_email=True)
+
+    self.services.issue.UpdateIssue.assert_not_called()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
+    self.services.issue.CreateIssueComment.assert_not_called()
+    self.services.issue.EnqueueIssuesForIndexing.assert_not_called()
+    fake_bulk_notify.assert_not_called()
+    fake_notify.assert_not_called()
+    self.mr.cnxn.Commit.assert_not_called()
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
+  def testModifyIssues_Empty(self, fake_bulk_notify, fake_notify):
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.UpdateIssue = mock.Mock()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate = mock.Mock()
+    self.services.issue.CreateIssueComment = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    with self.work_env as we:
+        we.ModifyIssues([], False, comment_content='invisible chickens')
+
+    self.services.issue.UpdateIssue.assert_not_called()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
+    self.services.issue.CreateIssueComment.assert_not_called()
+    self.services.issue.EnqueueIssuesForIndexing.assert_not_called()
+    fake_bulk_notify.assert_not_called()
+    fake_notify.assert_not_called()
+    self.mr.cnxn.Commit.assert_not_called()
 
   def testDeleteIssue(self):
     """We can mark and unmark an issue as deleted."""
