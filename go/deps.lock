@@ -1,8 +1,8 @@
-hash: 2094fbbf1e2e076eca18998c7d4c0072fae3a5518917b0d0255733d471bf7f12
-updated: 2020-07-27T15:24:34.0368-07:00
+hash: c1c38cf8f15d7b768b32c68829227c2ac7b668f273ac46875834dab02f3f8596
+updated: 2020-08-05T07:44:13.897775509+09:00
 imports:
 - name: cloud.google.com/go
-  version: 29aebdf3f672ffe10ba0e6a477f94b8a2eb11a61
+  version: 1adfd0aed6b2c0e1dd0c575a5ec0f49388fa5601
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -32,10 +32,10 @@ imports:
   version: f76b57a9805f2096426f8668a363ae6ccae473ec
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
-  version: 1252343900d9a101c5180e2e31f76216e4b615c7
+  version: 006a399149dd2dad4eedff247578e94bd957da9c
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: 6f048255943e502b14630709f22412f23a7395c3
+  version: 82c61013f5f34fda70eefcd92113399799654f4c
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -222,7 +222,7 @@ imports:
   version: 6cfae18c12b8934b1afba3ce8159476fdef666ba
   repo: https://chromium.googlesource.com/external/github.com/kevinburke/ssh_config.git
 - name: github.com/kisielk/errcheck
-  version: c49113036843dcb5439b725d11801fad2d5012dc
+  version: 3b58ac754354c494e43402e77b682a6a7c86ed18
   repo: https://chromium.googlesource.com/external/github.com/kisielk/errcheck.git
 - name: github.com/kisielk/gotool
   version: 80517062f582ea3340cd4baf70e86d539ae7d84d
@@ -338,7 +338,7 @@ imports:
   version: de25ac347ef9305868b04dc42425c973b863b18c
   repo: https://chromium.googlesource.com/external/github.com/prometheus/procfs.git
 - name: github.com/protocolbuffers/txtpbfmt
-  version: 52180c9bd5243d572cac252b05eec88347f37539
+  version: ebd45c707ce7e392204ede07e14ebe3d12f1a8ea
   repo: https://chromium.googlesource.com/external/github.com/protocolbuffers/txtpbfmt.git
 - name: github.com/sergi/go-diff
   version: 58c5cb1602ee9676b5d3590d782bedde80706fcc
@@ -420,20 +420,20 @@ imports:
   subpackages:
   - gold-client/cmd/goldctl
 - name: go.starlark.net
-  version: f21d2f77688f64bf3834da4e16dad4d7f316bf9c
+  version: 4379bb3f9ac0b7f6e21b1441663122a26f96be31
   repo: https://chromium.googlesource.com/external/github.com/google/starlark-go.git
 - name: golang.org/x/build
-  version: b405858d836876f4a9391a8c61cb626a47a3fea1
+  version: 07688121578aa1fc4c04b19a840ea5ef375350a7
   repo: https://go.googlesource.com/build.git
   subpackages:
   - gerrit
 - name: golang.org/x/crypto
-  version: 948cd5f35899cbf089c620b3caeac9b60fa08704
+  version: 123391ffb6de907695e1066dc40c1ff09322aeb6
   repo: https://go.googlesource.com/crypto.git
   subpackages:
   - ssh/terminal
 - name: golang.org/x/image
-  version: c13761719519258ff9c1a8b224f63d6e29b63d27
+  version: 972c09e46d762a13c1a3c48b1fa9b87e2c537805
   repo: https://chromium.googlesource.com/external/github.com/golang/image.git
   subpackages:
   - bmp
@@ -467,7 +467,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 2d971f7391a4d28ed2c2fb0ed305ba994eedc255
+  version: 64077c9b5642ac67ce07bc05738eb432a9029f93
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
@@ -479,7 +479,7 @@ imports:
   version: 3af7569d3a1e776fc2a3c1cec133b43105ea9c2e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: 7b4c4ad3dc3976b90da9b653a7331b29646e283d
+  version: 25c5b132c91ae199b4c1a796094ae2318b311a7f
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -492,10 +492,10 @@ imports:
   - cmd/oracle
   - cmd/stringer
 - name: golang.org/x/xerrors
-  version: 9bdfabe68543c54f90421aeb9a60ef8061b5b544
+  version: 5ec99f83aff198f5fbd629d6c8d8eb38a04218ca
   repo: https://go.googlesource.com/xerrors.git
 - name: google.golang.org/api
-  version: 37c86fa7a290f27981906c70d6356eb894db4037
+  version: dcbe36d62163edc6a7dca06c1d9f34881a2283b7
   repo: https://code.googlesource.com/google-api-go-client.git
   subpackages:
   - bigquery/v2
@@ -525,19 +525,19 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: da3ae01ef02dd0f1909d902122c432a450c6efb3
+  version: 45615f50871cd89705bf975cb0161fcdfa7ce4a6
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 9106c3fff5236fd664a8de183f1c27682c66b823
+  version: 8bec2f5d898fdbcbc4dbfc486df8a7d4a7219a39
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes
   - metadata
 - name: google.golang.org/protobuf
-  version: 4194195e12daf3d3bf61191c5d92da72de18dc28
+  version: 5d63473da8fbf1e1008e1e636b097f581f825f0d
   repo: https://go.googlesource.com/protobuf.git
 - name: gopkg.in/fsnotify.v1
   version: 8611c35ab31c1c28aa903d33cf8b6e44a399b09e
