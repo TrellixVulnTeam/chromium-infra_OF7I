@@ -344,9 +344,33 @@ def _override_builder_cfg_func(parameters):
   if not overrides_dict:
     return None
 
-  overrides = project_config_pb2.Builder()
-  protoutil.merge_dict(overrides_dict, overrides)
-  return lambda cfg: flatten_swarmingcfg.merge_builder(cfg, overrides)
+  base_overrides = project_config_pb2.Builder()
+  protoutil.merge_dict(overrides_dict, base_overrides)
+
+  def _merge(cfg):
+    over = project_config_pb2.Builder()
+    over.CopyFrom(base_overrides)
+
+    # handle the case where the caller is updating the old recipe message but
+    # the `cfg` uses the new `exe` field.
+    if cfg.HasField('exe') and over.HasField('recipe'):
+      exe, recipe = over.exe, over.recipe
+
+      new_props = json.loads(over.properties or '{}')
+      new_props.update(flatten_swarmingcfg.read_properties(recipe))
+
+      if recipe.name:
+        new_props['recipe'] = recipe.name
+
+      exe.cipd_package = recipe.cipd_package
+      exe.cipd_version = recipe.cipd_version
+
+      over.ClearField('recipe')
+      over.properties = json.dumps(new_props)
+
+    return flatten_swarmingcfg.merge_builder(cfg, over)
+
+  return _merge
 
 
 def builds_to_messages(builds, include_lease_key=False):

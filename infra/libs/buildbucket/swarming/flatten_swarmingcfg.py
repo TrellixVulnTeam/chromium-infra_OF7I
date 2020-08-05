@@ -24,8 +24,6 @@ def read_properties(recipe):
   """Parses build properties from the recipe message.
 
   Expects the message to be valid.
-
-  Uses NO_PROPERTY for empty values.
   """
   result = dict(p.split(':', 1) for p in recipe.properties)
   for p in recipe.properties_j:

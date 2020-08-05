@@ -1204,3 +1204,78 @@ class SwarmingTestCases(testing.AppengineTestCase):
     builder_cfg = project_config_pb2.Builder()
     build_req.override_builder_cfg(builder_cfg)
     self.assertEqual(list(builder_cfg.dimensions), ['a:b'])
+
+  def test_override_builder_cfg_recipe(self):
+    put_req = api.PutRequestMessage(
+        bucket='chromium/try',
+        parameters_json=json.dumps({
+            'swarming': {
+                'override_builder_cfg': {
+                    'recipe': {
+                        'name': 'bob',
+                        'properties': ['different:property'],
+                        'properties_j': ['number:123'],
+                    }
+                }
+            }
+        })
+    )
+    build_req = api.put_request_message_to_build_request(put_req)
+
+    builder_cfg = project_config_pb2.Builder()
+    builder_cfg.properties = json.dumps({
+        'recipe': 'default_recipe',
+        'other_prop': True,
+    })
+    builder_cfg.exe.cipd_package = 'cipd/pkg'
+    builder_cfg.exe.cipd_version = 'cipd/version'
+    builder_cfg.exe.cmd.append('luciexe')
+
+    build_req.override_builder_cfg(builder_cfg)
+    props = json.loads(builder_cfg.properties)
+    self.assertDictEqual(
+        props, {
+            'recipe': 'bob',
+            'other_prop': True,
+            'different': 'property',
+            'number': 123,
+        }
+    )
+    self.assertFalse(builder_cfg.HasField('recipe'))
+
+  def test_override_builder_cfg_recipe_props_only(self):
+    put_req = api.PutRequestMessage(
+        bucket='chromium/try',
+        parameters_json=json.dumps({
+            'swarming': {
+                'override_builder_cfg': {
+                    'recipe': {
+                        'properties': ['different:property'],
+                        'properties_j': ['number:123'],
+                    }
+                }
+            }
+        })
+    )
+    build_req = api.put_request_message_to_build_request(put_req)
+
+    builder_cfg = project_config_pb2.Builder()
+    builder_cfg.properties = json.dumps({
+        'recipe': 'default_recipe',
+        'other_prop': True,
+    })
+    builder_cfg.exe.cipd_package = 'cipd/pkg'
+    builder_cfg.exe.cipd_version = 'cipd/version'
+    builder_cfg.exe.cmd.append('luciexe')
+
+    build_req.override_builder_cfg(builder_cfg)
+    props = json.loads(builder_cfg.properties)
+    self.assertDictEqual(
+        props, {
+            'recipe': 'default_recipe',
+            'other_prop': True,
+            'different': 'property',
+            'number': 123,
+        }
+    )
+    self.assertFalse(builder_cfg.HasField('recipe'))
