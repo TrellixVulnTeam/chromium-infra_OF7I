@@ -55,6 +55,8 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	// If its a Chrome browser host, ChromeOS server or a ChormeOS labstation
 	// ChromeBrowserMachineLSE, ChromeOSMachineLSE for a Server and Labstation
 	f := func(ctx context.Context) error {
+		stateRecords := make([]*ufspb.StateRecord, 0)
+
 		// Validate input
 		err := validateCreateMachineLSE(ctx, machinelse, machineNames, nwOpt)
 		if err != nil {
@@ -66,9 +68,20 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", machineNames[0]).Err()
 		}
-		// Fill the rack/lab OUTPUT only fields for indexing machinelse table
+		// Fill the rack/lab OUTPUT only fields for indexing machinelse table/vm table
 		machinelse.Rack = machine.GetLocation().GetRack()
 		machinelse.Lab = machine.GetLocation().GetLab().String()
+		for _, vm := range machinelse.GetChromeBrowserMachineLse().GetVms() {
+			vm.Lab = machine.GetLocation().GetLab().String()
+			vm.MachineLseId = machinelse.GetName()
+			vm.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+			stateRecords = append(stateRecords, &ufspb.StateRecord{
+				State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+				ResourceName: util.AddPrefix(util.VMCollection, vm.GetName()),
+				User:         util.CurrentUser(ctx),
+			})
+		}
+
 		if err := setManufacturer(ctx, machine, machinelse); err != nil {
 			return errors.Annotate(err, "fail to set manufacturer").Err()
 		}
@@ -84,12 +97,17 @@ func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
+		if vms := machinelse.GetChromeBrowserMachineLse().GetVms(); vms != nil {
+			if _, err := inventory.BatchUpdateVMs(ctx, vms); err != nil {
+				return errors.Annotate(err, "Failed to BatchUpdate vms for host %s", machinelse.Name).Err()
+			}
+			machinelse.GetChromeBrowserMachineLse().Vms = nil
+		}
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{machinelse}); err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs %s", machinelse.Name).Err()
 		}
 
 		// 7. Update states
-		stateRecords := make([]*ufspb.StateRecord, 0)
 		for _, m := range machinelse.Machines {
 			stateRecords = append(stateRecords, &ufspb.StateRecord{
 				State:        ufspb.State_STATE_SERVING,
@@ -205,7 +223,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 							return err
 						}
 					} else {
-						if err := addVMHostHelper(ctx, v, vm, machinelse); err != nil {
+						if err := addVMHostHelper(ctx, v, vm); err != nil {
 							return err
 						}
 					}
@@ -235,6 +253,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 				}
 			}
 		}
+
 		if osLSE := machinelse.GetChromeosMachineLse(); osLSE != nil {
 			// Update labstation state to needs_deploy
 			if osLSE.GetDeviceLse().GetLabstation() != nil {
@@ -279,7 +298,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 	return machinelse, nil
 }
 
-func addVMHostHelper(ctx context.Context, nwOpt *ufsAPI.NetworkOption, vm *ufspb.VM, lse *ufspb.MachineLSE) error {
+func addVMHostHelper(ctx context.Context, nwOpt *ufsAPI.NetworkOption, vm *ufspb.VM) error {
 	if nwOpt.GetVlan() == "" && nwOpt.GetIp() == "" {
 		return status.Errorf(codes.InvalidArgument, "vlan are required for adding a host for a vm")
 	}
@@ -289,9 +308,11 @@ func addVMHostHelper(ctx context.Context, nwOpt *ufsAPI.NetworkOption, vm *ufspb
 	}
 
 	// 2. Get free ip, update the dhcp config and ip.occupied to true
-	if err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), vm.GetName(), vm.GetMacAddress()); err != nil {
+	dhcp, err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), vm.GetName(), vm.GetMacAddress())
+	if err != nil {
 		return err
 	}
+	vm.Vlan = dhcp.GetVlan()
 	return nil
 }
 
@@ -329,7 +350,7 @@ func addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.NetworkOption, lse *ufs
 	}
 
 	// 4. Get free ip, update the dhcp config and ip.occupied to true
-	if err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), lse.GetHostname(), nic.GetMacAddress()); err != nil {
+	if _, err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), lse.GetHostname(), nic.GetMacAddress()); err != nil {
 		return err
 	}
 
@@ -340,7 +361,16 @@ func addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.NetworkOption, lse *ufs
 
 // GetMachineLSE returns machinelse for the given id from datastore.
 func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
-	return inventory.GetMachineLSE(ctx, id)
+	lse, err := inventory.GetMachineLSE(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	vms, err := inventory.QueryVMByPropertyName(ctx, "host_id", lse.GetName(), false)
+	if err != nil {
+		return nil, err
+	}
+	setVMsToLSE(lse, vms)
+	return lse, nil
 }
 
 // ListMachineLSEs lists the machinelses
@@ -376,7 +406,18 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 		}
 		return res, "", nil
 	}
-	return inventory.ListMachineLSEs(ctx, pageSize, pageSize, pageToken, filterMap, keysOnly, nil)
+	lses, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, pageSize, pageToken, filterMap, keysOnly, nil)
+	if err != nil {
+		return nil, "", err
+	}
+	for _, lse := range lses {
+		vms, err := inventory.QueryVMByPropertyName(ctx, "host_id", lse.GetName(), false)
+		if err != nil {
+			return nil, "", err
+		}
+		setVMsToLSE(lse, vms)
+	}
+	return lses, nextToken, err
 }
 
 // DeleteMachineLSE deletes the machinelse in datastore
@@ -429,20 +470,20 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 			return err
 		}
 		toDeleteResources := make([]string, 0)
+		toDeleteVMs := make([]string, 0)
 		for _, m := range existingMachinelse.GetChromeBrowserMachineLse().GetVms() {
 			toDeleteResources = append(toDeleteResources, util.AddPrefix(util.VMCollection, m.GetName()))
+			toDeleteVMs = append(toDeleteVMs, m.GetName())
+			if err := deleteDHCPHelper(ctx, m.GetName()); err != nil {
+				return err
+			}
 		}
 		toDeleteResources = append(toDeleteResources, util.AddPrefix(util.HostCollection, id))
 		state.DeleteStates(ctx, toDeleteResources)
+		inventory.DeleteVMs(ctx, toDeleteVMs)
 
-		dhcp, err := configuration.GetDHCPConfig(ctx, existingMachinelse.GetHostname())
-		if err != nil && !util.IsNotFoundError(err) {
-			return errors.Annotate(err, "Fail to query dhcpHost").Err()
-		}
-		if dhcp != nil {
-			if err := deleteHostHelper(ctx, dhcp); err != nil {
-				return err
-			}
+		if err := deleteDHCPHelper(ctx, existingMachinelse.GetHostname()); err != nil {
+			return err
 		}
 		if err := inventory.DeleteMachineLSE(ctx, id); err != nil {
 			return err
@@ -531,7 +572,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	}
 	allRes = append(allRes, *res...)
 
-	lses, ips, dhcps := util.ToMachineLSEs(hosts, vms, machines)
+	lses, ufsVMs, ips, dhcps := util.ToMachineLSEs(hosts, vms, machines)
 	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "browser-lab")
 	logging.Debugf(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
@@ -542,6 +583,20 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 			return &allRes, err
 		}
 		if i+pageSize >= len(lses) {
+			break
+		}
+	}
+
+	deleteNonExistingVMs(ctx, ufsVMs, pageSize)
+	logging.Debugf(ctx, "Importing %d vms", len(ufsVMs))
+	for i := 0; ; i += pageSize {
+		end := util.Min(i+pageSize, len(ufsVMs))
+		res, err := inventory.ImportVMs(ctx, ufsVMs[i:end])
+		allRes = append(allRes, *res...)
+		if err != nil {
+			return &allRes, err
+		}
+		if i+pageSize >= len(ufsVMs) {
 			break
 		}
 	}
@@ -606,6 +661,31 @@ func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.Mach
 	logging.Debugf(ctx, "Deleting %d non-existing machine lses", len(toDelete))
 	allRes := *deleteByPage(ctx, toDelete, pageSize, inventory.DeleteMachineLSEs)
 	logging.Debugf(ctx, "Deleting %d non-existing host and vm-related dhcps", len(toDelete))
+	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
+	return &allRes, nil
+}
+
+func deleteNonExistingVMs(ctx context.Context, vms []*ufspb.VM, pageSize int) (*ufsds.OpResults, error) {
+	resMap := make(map[string]bool)
+	for _, r := range vms {
+		resMap[r.GetName()] = true
+	}
+	resp, err := inventory.GetAllVMs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var toDelete []string
+	var toDeleteDHCPHost []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*ufspb.VM)
+		if _, ok := resMap[s.GetName()]; !ok {
+			toDelete = append(toDelete, s.GetName())
+			toDeleteDHCPHost = append(toDeleteDHCPHost, s.GetName())
+		}
+	}
+	logging.Debugf(ctx, "Deleting %d non-existing vms", len(toDelete))
+	allRes := *deleteByPage(ctx, toDelete, pageSize, inventory.DeleteVMs)
+	logging.Debugf(ctx, "Deleting %d vm-related dhcps", len(toDelete))
 	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
 	return &allRes, nil
 }
@@ -1062,4 +1142,19 @@ func setManufacturer(ctx context.Context, machine *ufspb.Machine, lse *ufspb.Mac
 		lse.Manufacturer = strings.ToLower(platform.GetManufacturer())
 	}
 	return nil
+}
+
+func setVMsToLSE(lse *ufspb.MachineLSE, vms []*ufspb.VM) {
+	if len(vms) <= 0 {
+		return
+	}
+	if lse.GetChromeBrowserMachineLse() == nil {
+		lse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
+			ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+				Vms: vms,
+			},
+		}
+	} else {
+		lse.GetChromeBrowserMachineLse().Vms = vms
+	}
 }

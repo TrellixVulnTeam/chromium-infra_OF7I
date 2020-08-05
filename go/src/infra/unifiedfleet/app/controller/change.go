@@ -109,26 +109,32 @@ func LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData *ufspb.MachineLSE) 
 		changes[i].Name = util.AddPrefix(util.MachineLSECollection, oldData.GetName())
 	}
 
-	// Log VM differences
-	vmChanges := make([]*ufspb.ChangeEvent, 0)
-	if newData.GetChromeBrowserMachineLse() != nil {
-		newVMs := newData.GetChromeBrowserMachineLse().GetVms()
-		if oldData.GetChromeBrowserMachineLse() == nil {
-			for _, vm := range newVMs {
-				vmChanges = append(vmChanges, logLifeCycle(util.AddPrefix(util.VMCollection, vm.GetName()), "vm", LifeCycleRegistration)...)
-			}
-		} else {
-			oldVMs := oldData.GetChromeBrowserMachineLse().GetVms()
-			vmChanges = append(vmChanges, logVMs(oldVMs, newVMs)...)
-		}
-	} else {
-		if oldData.GetChromeBrowserMachineLse() != nil {
-			for _, vm := range oldData.GetChromeBrowserMachineLse().GetVms() {
-				vmChanges = append(vmChanges, logLifeCycle(util.AddPrefix(util.VMCollection, vm.GetName()), "vm", LifeCycleRetire)...)
-			}
-		}
+	return changes
+}
+
+// LogVMChanges logs the change of the given vms.
+func LogVMChanges(oldData *ufspb.VM, newData *ufspb.VM) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
 	}
-	return append(changes, vmChanges...)
+	if oldData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.VMCollection, newData.GetName()), "vm", LifeCycleRegistration)...)
+	}
+	if newData == nil {
+		return append(changes, logLifeCycle(util.AddPrefix(util.VMCollection, oldData.GetName()), "vm", LifeCycleRetire)...)
+	}
+	if oldData.GetName() != newData.GetName() {
+		return nil
+	}
+	resourceName := util.AddPrefix(util.VMCollection, oldData.GetName())
+	changes = append(changes, logCommon(resourceName, "vm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logCommon(resourceName, "vm.os_version", oldData.GetOsVersion(), newData.GetOsVersion())...)
+	changes = append(changes, logCommon(resourceName, "vm.vlan", oldData.GetVlan(), newData.GetVlan())...)
+	changes = append(changes, logCommon(resourceName, "vm.lab", oldData.GetLab(), newData.GetLab())...)
+	changes = append(changes, logCommon(resourceName, "vm.machine_lse_id", oldData.GetMachineLseId(), newData.GetMachineLseId())...)
+	changes = append(changes, logCommon(resourceName, "vm.state", oldData.GetState(), newData.GetState())...)
+	return changes
 }
 
 // LogRackChanges logs the change of the given rack.
@@ -281,32 +287,6 @@ func logChromeBrowserMachineLse(oldData, newData *ufspb.ChromeBrowserMachineLSE)
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon("", "machine_lse.chrome_browser_machine_lse.vm_capacity", oldData.GetVmCapacity(), newData.GetVmCapacity())...)
 	changes = append(changes, logCommon("", "machine_lse.chrome_browser_machine_lse.os_version", oldData.GetOsVersion(), newData.GetOsVersion())...)
-	return changes
-}
-
-func logVMs(oldData, newData []*ufspb.VM) []*ufspb.ChangeEvent {
-	changes := make([]*ufspb.ChangeEvent, 0)
-	vmMap := make(map[string]*ufspb.VM, len(oldData))
-	for _, vm := range oldData {
-		vmMap[vm.GetName()] = vm
-	}
-	newVMMap := make(map[string]*ufspb.VM, len(newData))
-	for _, vm := range newData {
-		newVMMap[vm.GetName()] = vm
-		resourceName := util.AddPrefix(util.VMCollection, vm.GetName())
-		if old, ok := vmMap[vm.GetName()]; ok {
-			changes = append(changes, logCommon(resourceName, "vm.mac_address", old.GetMacAddress(), vm.GetMacAddress())...)
-			changes = append(changes, logCommon(resourceName, "vm.os_version", old.GetOsVersion(), vm.GetOsVersion())...)
-		} else {
-			changes = append(changes, logLifeCycle(resourceName, "vm", LifeCycleRegistration)...)
-		}
-	}
-	for _, vm := range oldData {
-		resourceName := util.AddPrefix(util.VMCollection, vm.GetName())
-		if _, ok := newVMMap[vm.GetName()]; !ok {
-			changes = append(changes, logLifeCycle(resourceName, "vm", LifeCycleRetire)...)
-		}
-	}
 	return changes
 }
 

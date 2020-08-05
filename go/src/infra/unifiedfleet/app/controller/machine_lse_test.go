@@ -175,8 +175,22 @@ func TestCreateMachineLSE(t *testing.T) {
 			_, err = configuration.ImportIPs(ctx, ips[0:20])
 			So(err, ShouldBeNil)
 
+			vm1 := &ufspb.VM{
+				Name:       "vm1-ip",
+				MacAddress: "old_mac_address",
+			}
+			vm2 := &ufspb.VM{
+				Name:       "vm2-ip",
+				MacAddress: "old_mac_address",
+			}
 			machineLSE2 := &ufspb.MachineLSE{
+				Name:     "machinelse-with-ip",
 				Hostname: "machinelse-with-ip",
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+						Vms: []*ufspb.VM{vm1, vm2},
+					},
+				},
 			}
 			resp, err := CreateMachineLSE(ctx, machineLSE2, []string{"machine-with-ip"}, &ufsAPI.NetworkOption{
 				Vlan: "vlan-1",
@@ -198,6 +212,12 @@ func TestCreateMachineLSE(t *testing.T) {
 			s, err = state.GetStateRecord(ctx, "machines/machine-with-ip")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			vm, err := inventory.GetVM(ctx, "vm1-ip")
+			So(err, ShouldBeNil)
+			So(vm, ShouldResembleProto, vm1)
+			vm, err = inventory.GetVM(ctx, "vm2-ip")
+			So(err, ShouldBeNil)
+			So(vm, ShouldResembleProto, vm2)
 
 			// verify changes
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-with-ip")
@@ -681,10 +701,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	Convey("UpdateMachineLSE for a browser machine", t, func() {
-		Convey("Update machineLSE with vms", func() {
-			machine1 := &ufspb.Machine{
-				Name: "machine-update1",
-			}
+		Convey("Update machineLSE with setting state", func() {
 			machineLSE1 := &ufspb.MachineLSE{
 				Name:     "machinelse-update1",
 				Hostname: "machinelse-update1",
@@ -704,52 +721,22 @@ func TestUpdateMachineLSE(t *testing.T) {
 					},
 				},
 			}
-			_, err := registration.CreateMachine(ctx, machine1)
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-update1",
+			})
 			So(err, ShouldBeNil)
 			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
 			So(err, ShouldBeNil)
-			_, err = state.UpdateStateRecord(ctx, &ufspb.StateRecord{
-				State:        ufspb.State_STATE_SERVING,
-				ResourceName: "vms/vm1",
-			})
-			So(err, ShouldBeNil)
-			_, err = state.UpdateStateRecord(ctx, &ufspb.StateRecord{
-				State:        ufspb.State_STATE_SERVING,
-				ResourceName: "vms/vm-update",
-			})
-			So(err, ShouldBeNil)
-			machineLSE1.GetChromeBrowserMachineLse().Vms = []*ufspb.VM{
-				{
-					Name:       "vm1",
-					MacAddress: "new_mac_address",
-				},
-				{
-					Name:       "vm-update",
-					MacAddress: "old_mac_address",
-				},
-				{
-					Name:       "vm2",
-					MacAddress: "vm2_mac_address",
-				},
-			}
 			machineLSE1.GetChromeBrowserMachineLse().OsVersion = &ufspb.OSVersion{
 				Value: "new_os",
 			}
 			m, err := UpdateMachineLSE(ctx, machineLSE1, nil, nil, map[string]ufspb.State{
-				"vm-update": ufspb.State_STATE_DEPLOYED_TESTING,
+				"machinelse-update1": ufspb.State_STATE_DEPLOYED_TESTING,
 			})
 			So(err, ShouldBeNil)
-			So(m.GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 3)
+			So(m.GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 2)
 			// State remains unchanged as vm1 is not updated
-			s, err := state.GetStateRecord(ctx, "vms/vm1")
-			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
-			// State is set to pre_serving as vm2 is newly added
-			s, err = state.GetStateRecord(ctx, "vms/vm2")
-			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
-			// State is set to deployed_testing as user specified.
-			s, err = state.GetStateRecord(ctx, "vms/vm-update")
+			s, err := state.GetStateRecord(ctx, "hosts/machinelse-update1")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING)
 
@@ -759,20 +746,6 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.chrome_browser_machine_lse.os_version")
 			So(changes[0].OldValue, ShouldEqual, "<nil>")
 			So(changes[0].NewValue, ShouldEqual, "value:\"new_os\"")
-
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm2")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
-
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm1")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetEventLabel(), ShouldEqual, "vm.mac_address")
-			So(changes[0].GetOldValue(), ShouldEqual, "old_mac_address")
-			So(changes[0].GetNewValue(), ShouldEqual, "new_mac_address")
 		})
 
 		Convey("Update machineLSE by setting ip by vlan for host", func() {
@@ -898,92 +871,6 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ip, ShouldHaveLength, 1)
 			So(ip[0].GetOccupied(), ShouldBeTrue)
-		})
-
-		Convey("Update machineLSE by setting & removing ip for vms", func() {
-			machine1 := &ufspb.Machine{
-				Name: "machine-update-vm",
-			}
-			machineLSE1 := &ufspb.MachineLSE{
-				Name:     "machinelse-update-vm",
-				Hostname: "machinelse-update-vm",
-				Machines: []string{"machine-update-vm"},
-				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
-					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
-						Vms: []*ufspb.VM{
-							{
-								Name:       "vm-host1",
-								MacAddress: "vm1_mac_address",
-							},
-							{
-								Name:       "vm-host2",
-								MacAddress: "vm2_mac_address",
-							},
-							{
-								Name:       "vm-host3",
-								MacAddress: "vm3_mac_address",
-							},
-						},
-					},
-				},
-			}
-			_, err := registration.CreateMachine(ctx, machine1)
-			So(err, ShouldBeNil)
-			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
-			So(err, ShouldBeNil)
-			vlan := &ufspb.Vlan{
-				Name:        "vlan-1",
-				VlanAddress: "192.168.40.0/22",
-			}
-			_, err = configuration.CreateVlan(ctx, vlan)
-			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
-			So(err, ShouldBeNil)
-			// Only import the first 20 as one single transaction cannot import all.
-			_, err = configuration.ImportIPs(ctx, ips[0:20])
-			So(err, ShouldBeNil)
-
-			oldMachinelse, err := inventory.GetMachineLSE(ctx, machineLSE1.GetName())
-			fmt.Println("############### old ", oldMachinelse.GetChromeBrowserMachineLse().GetVms())
-			m, err := UpdateMachineLSE(ctx, machineLSE1, nil, map[string]*ufsAPI.NetworkOption{
-				"vm-host1": {
-					Vlan: "vlan-1",
-				},
-				"vm-host2": {
-					Delete: true,
-				},
-				"vm-host3": {
-					Ip: "192.168.40.9",
-				},
-			}, nil)
-			So(err, ShouldBeNil)
-			So(m.GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 3)
-			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-update-vm")
-			So(err.Error(), ShouldContainSubstring, NotFound)
-			dhcp, err = configuration.GetDHCPConfig(ctx, "vm-host1")
-			So(err, ShouldBeNil)
-			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
-			So(err, ShouldBeNil)
-			So(ip, ShouldHaveLength, 1)
-			So(ip[0].GetOccupied(), ShouldBeTrue)
-			dhcp, err = configuration.GetDHCPConfig(ctx, "vm-host2")
-			So(err.Error(), ShouldContainSubstring, NotFound)
-			dhcp, err = configuration.GetDHCPConfig(ctx, "vm-host3")
-			So(err, ShouldBeNil)
-			So(dhcp.GetIp(), ShouldEqual, "192.168.40.9")
-			ip, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
-			So(err, ShouldBeNil)
-			So(ip, ShouldHaveLength, 1)
-			So(ip[0].GetOccupied(), ShouldBeTrue)
-
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-update-vm")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 0)
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm-host2")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 0)
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm-host1")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update machineLSE Labstation without Servo Info", func() {

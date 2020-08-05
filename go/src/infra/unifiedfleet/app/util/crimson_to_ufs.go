@@ -234,24 +234,39 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 }
 
 // ToMachineLSEs converts crimson data to UFS LSEs.
-func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine) ([]*ufspb.MachineLSE, []*ufspb.IP, []*ufspb.DHCPConfig) {
+func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine) ([]*ufspb.MachineLSE, []*ufspb.VM, []*ufspb.IP, []*ufspb.DHCPConfig) {
 	hostToVMs := make(map[string][]*ufspb.VM, 0)
+	ufsVMs := make([]*ufspb.VM, 0)
 	ips := make([]*ufspb.IP, 0)
 	dhcps := make([]*ufspb.DHCPConfig, 0)
 	machineMap := make(map[string]*crimson.Machine, len(machines))
+	hostToMachine := make(map[string]*crimson.Machine, len(hosts))
 	for _, machine := range machines {
 		machineMap[machine.GetName()] = machine
 	}
+	for _, h := range hosts {
+		hostToMachine[h.GetName()] = machineMap[h.GetMachine()]
+	}
 	for _, vm := range vms {
 		name := vm.GetName()
+
+		var lab string
+		if machine, ok := hostToMachine[vm.GetHost()]; ok {
+			lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+		}
 		v := &ufspb.VM{
 			Name: name,
 			OsVersion: &ufspb.OSVersion{
 				Value: vm.GetOs(),
 			},
-			Hostname: name,
+			Hostname:     name,
+			Vlan:         GetBrowserLabName(Int64ToStr(vm.GetVlan())),
+			Lab:          lab,
+			MachineLseId: vm.GetHost(),
+			State:        ToState(vm.GetState()).String(),
 		}
 		hostToVMs[vm.GetHost()] = append(hostToVMs[vm.GetHost()], v)
+		ufsVMs = append(ufsVMs, v)
 		ip := FormatIP(vm.GetVlan(), vm.GetIpv4(), true)
 		if ip != nil {
 			ips = append(ips, ip)
@@ -259,7 +274,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		dhcps = append(dhcps, &ufspb.DHCPConfig{
 			Hostname: v.GetHostname(),
 			Ip:       vm.GetIpv4(),
-			Vlan:     GetBrowserLabName(Int64ToStr(vm.GetHostVlan())),
+			Vlan:     GetBrowserLabName(Int64ToStr(vm.GetVlan())),
 			// No mac address found
 		})
 	}
@@ -310,7 +325,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Vlan:       GetBrowserLabName(Int64ToStr(h.GetVlan())),
 		})
 	}
-	return lses, ips, dhcps
+	return lses, ufsVMs, ips, dhcps
 }
 
 // ToState converts crimson state to UFS state.

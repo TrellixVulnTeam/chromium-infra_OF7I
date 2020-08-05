@@ -190,7 +190,8 @@ func UpdateDracHost(ctx context.Context, drac *ufspb.Drac, nwOpt *ufsAPI.Network
 		}
 
 		// 3. Find free ip, set IP and DHCP config
-		return addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), drac.GetName(), drac.GetMacAddress())
+		_, err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), drac.GetName(), drac.GetMacAddress())
+		return err
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {

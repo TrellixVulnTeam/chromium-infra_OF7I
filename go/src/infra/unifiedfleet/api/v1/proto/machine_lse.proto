@@ -100,6 +100,30 @@ message VM {
     OSVersion os_version = 2;
     string mac_address = 3;
     string hostname = 4;
+    string vlan = 5 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/Vlan"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+    string lab = 6 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+    string machine_lse_id = 7 [
+        (google.api.resource_reference) = {
+            type: "unified-fleet-system.appspot.com/MachineLSE"
+        },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+    string state = 8 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+    // Record the last update timestamp of this VM (In UTC timezone)
+    google.protobuf.Timestamp update_time = 9 [
+        (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // tags user can attach for easy querying/searching
+    repeated string tags = 10;
 }
 
 // OSVersion refers to the version of Operating System

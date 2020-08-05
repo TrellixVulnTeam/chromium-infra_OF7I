@@ -380,32 +380,31 @@ func getSpecifiedIP(ctx context.Context, ipv4Str string) (*ufspb.IP, error) {
 // Find free ip and update ip-related configs
 //
 // Can be used in a transaction
-func addHostHelper(ctx context.Context, vlanName, ipv4Str, hostName, macAddress string) error {
+func addHostHelper(ctx context.Context, vlanName, ipv4Str, hostName, macAddress string) (*ufspb.DHCPConfig, error) {
 	var ip *ufspb.IP
 	var err error
 	if ipv4Str != "" {
 		if ip, err = getSpecifiedIP(ctx, ipv4Str); err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 		if ip, err = getFreeIPHelper(ctx, vlanName); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	ip.Occupied = true
 	if _, err := configuration.BatchUpdateIPs(ctx, []*ufspb.IP{ip}); err != nil {
-		return errors.Annotate(err, "Failed to update IP %s (%s)", ip.GetId(), ip.GetIpv4Str()).Err()
+		return nil, errors.Annotate(err, "Failed to update IP %s (%s)", ip.GetId(), ip.GetIpv4Str()).Err()
 	}
-	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
-		{
-			Hostname:   hostName,
-			Ip:         ip.GetIpv4Str(),
-			Vlan:       ip.GetVlan(),
-			MacAddress: macAddress,
-		},
-	}); err != nil {
-		return errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", hostName, macAddress).Err()
+	dhcp := &ufspb.DHCPConfig{
+		Hostname:   hostName,
+		Ip:         ip.GetIpv4Str(),
+		Vlan:       ip.GetVlan(),
+		MacAddress: macAddress,
 	}
-	return nil
+	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp}); err != nil {
+		return nil, errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", hostName, macAddress).Err()
+	}
+	return dhcp, nil
 }

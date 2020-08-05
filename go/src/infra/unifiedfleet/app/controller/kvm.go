@@ -173,7 +173,8 @@ func UpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, nwOpt *ufsAPI.NetworkOpt
 		}
 
 		// 3. Find free ip, set IP and DHCP config
-		return addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetName(), kvm.GetMacAddress())
+		_, err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetName(), kvm.GetMacAddress())
+		return err
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
