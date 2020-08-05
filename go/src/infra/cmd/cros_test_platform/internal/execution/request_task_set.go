@@ -24,9 +24,8 @@ type RequestTaskSet struct {
 	// This is used to preserve the order in the response.
 	testKeys []string
 
-	testTaskSets     map[string]*testTaskSet
-	globalMaxRetries int32
-	retries          int32
+	testTaskSets map[string]*testTaskSet
+	retryCounter retryCounter
 }
 
 // TaskSetConfig is a wrapper for the parameters common to the testTaskSets.
@@ -40,6 +39,7 @@ type TaskSetConfig struct {
 func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*RequestTaskSet, error) {
 	testKeys := make([]string, len(tests))
 	testTaskSets := make(map[string]*testTaskSet)
+	tm := make(map[string]*steps.EnumerationResponse_AutotestInvocation)
 	for i, test := range tests {
 		k := testKey(i, test)
 		testKeys[i] = k
@@ -48,11 +48,12 @@ func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, pa
 			return nil, errors.Annotate(err, "new task set").Err()
 		}
 		testTaskSets[k] = t
+		tm[k] = test
 	}
 	return &RequestTaskSet{
-		testKeys:         testKeys,
-		testTaskSets:     testTaskSets,
-		globalMaxRetries: inferGlobalMaxRetries(params),
+		testKeys:     testKeys,
+		testTaskSets: testTaskSets,
+		retryCounter: newRetryCounter(params, tm),
 	}, nil
 }
 
@@ -69,13 +70,6 @@ func (r *RequestTaskSet) Completed() bool {
 		}
 	}
 	return true
-}
-
-func inferGlobalMaxRetries(params *test_platform.Request_Params) int32 {
-	if !params.GetRetry().GetAllow() {
-		return 0
-	}
-	return maxInt32IfZero(params.GetRetry().GetMax())
 }
 
 // LaunchTasks launches initial tasks for all the tests in this request.
@@ -118,7 +112,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 
 		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", tr.LogUrl, ts.Name, tr.GetState().GetVerdict())
 
-		shouldRetry, err := r.shouldRetry(ctx, ts)
+		shouldRetry, err := r.shouldRetry(ctx, key, ts)
 		if err != nil {
 			return errors.Annotate(err, "tick for task %s", tr.LogUrl).Err()
 		}
@@ -127,23 +121,15 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 			if err := ts.LaunchTask(ctx, c); err != nil {
 				return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
 			}
-			r.retries++
+			r.retryCounter.NotifyRetry(key)
 		}
 	}
 	return nil
 }
 
 // shouldRetry computes if the given test should be retried.
-func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testTaskSet) (bool, error) {
-	if !tr.AttemptedAtLeastOnce() {
-		return false, errors.Reason("shouldRetry: can't retry a never-tried test").Err()
-	}
-	if tr.AttemptsRemaining() <= 0 {
-		logging.Infof(ctx, "Not retrying %s. Hit the test retry limit.", tr.Name)
-		return false, nil
-	}
-	if r.globalRetriesRemaining() <= 0 {
-		logging.Infof(ctx, "Not retrying %s. Hit the task set retry limit.", tr.Name)
+func (r *RequestTaskSet) shouldRetry(ctx context.Context, key string, tr *testTaskSet) (bool, error) {
+	if !r.retryCounter.CanRetry(ctx, key) {
 		return false, nil
 	}
 
@@ -162,10 +148,6 @@ func (r *RequestTaskSet) shouldRetry(ctx context.Context, tr *testTaskSet) (bool
 	default:
 		return false, errors.Reason("shouldRetry: unknown verdict %s", verdict.String()).Err()
 	}
-}
-
-func (r *RequestTaskSet) globalRetriesRemaining() int32 {
-	return r.globalMaxRetries - r.retries
 }
 
 func (r *RequestTaskSet) response(running bool) *steps.ExecuteResponse {

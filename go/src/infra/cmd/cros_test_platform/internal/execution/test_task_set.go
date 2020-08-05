@@ -8,7 +8,6 @@ import (
 	"context"
 	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
-	"math"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
@@ -20,7 +19,6 @@ import (
 type testTaskSet struct {
 	argsGenerator    *args.Generator
 	Name             string
-	maxAttempts      int
 	runnable         bool
 	rejectedTaskDims map[string]string
 	tasks            []*skylab.Task
@@ -29,34 +27,7 @@ type testTaskSet struct {
 func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*testTaskSet, error) {
 	t := testTaskSet{runnable: true, Name: invocation.GetTest().GetName()}
 	t.argsGenerator = args.NewGenerator(invocation, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
-	t.maxAttempts = 1 + int(inferTestMaxRetries(invocation))
 	return &t, nil
-}
-
-func inferTestMaxRetries(inv *steps.EnumerationResponse_AutotestInvocation) int32 {
-	if !inv.GetTest().GetAllowRetries() {
-		return 0
-	}
-	return maxInt32IfZero(inv.GetTest().GetMaxRetries())
-}
-
-func maxInt32IfZero(v int32) int32 {
-	if v == 0 {
-		return int32(math.MaxInt32)
-	}
-	return v
-}
-
-func (t *testTaskSet) AttemptsRemaining() int {
-	r := t.maxAttempts - len(t.tasks)
-	if r > 0 {
-		return r
-	}
-	return 0
-}
-
-func (t *testTaskSet) AttemptedAtLeastOnce() bool {
-	return len(t.tasks) > 0
 }
 
 func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
