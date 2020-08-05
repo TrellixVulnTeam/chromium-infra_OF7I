@@ -1365,12 +1365,12 @@ def GroupUniqueDeltaIssues(issue_delta_pairs):
 def _AssertNoConflictingDeltas(issue_delta_pairs, refs_dict, err_agg):
   # type: (Sequence[Tuple[Issue, IssueDelta]], Mapping[int, str],
   #     exceptions.ErrorAggregator) -> None
-  """Checks if any issue deltas conflict with each other."""
-  err_message = 'Changes for {} conflict with changes for {}'
+  """Checks if any issue deltas conflict with each other or themselves."""
+  err_message = 'Changes for {} conflict for {}'
 
   # Track all delta blocked_on_add and blocking_add in terms of
   # 'blocking_add' so we can track when a {blocked_on|blocking}_remove
-  # is in conflict with another delta's {blocked_on|blocking}_add.
+  # is in conflict with some {blocked_on|blocking}_add.
   blocking_add = collections.defaultdict(list)
   for issue, delta in issue_delta_pairs:
     blocking_add[issue.issue_id].extend(delta.blocking_add)

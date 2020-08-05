@@ -2046,6 +2046,8 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_5_ref = getRef(issue_5)
     issue_6 = _Issue('chicken', 6)
     issue_6_ref = getRef(issue_6)
+    issue_7 = _Issue('chicken', 7)
+    issue_7_ref = getRef(issue_7)
 
     delta_3 = tracker_pb2.IssueDelta(
         blocking_add=[issue_4.issue_id],
@@ -2054,24 +2056,31 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     delta_4 = tracker_pb2.IssueDelta(
         blocked_on_remove=[issue_3.issue_id], blocking_add=[issue_5.issue_id])
     expected_err_msgs.append(
-        'Changes for %s conflict with changes for %s' %
-        (issue_4_ref, issue_3_ref))
+        'Changes for %s conflict for %s' % (issue_4_ref, issue_3_ref))
 
     delta_5 = tracker_pb2.IssueDelta(
         blocking_remove=[issue_3.issue_id],
         blocked_on_remove=[issue_4.issue_id])
     expected_err_msgs.append(
-        'Changes for %s conflict with changes for %s, %s' %
+        'Changes for %s conflict for %s, %s' %
         (issue_5_ref, issue_3_ref, issue_4_ref))
 
     delta_6 = tracker_pb2.IssueDelta(blocking_remove=[issue_3.issue_id])
     expected_err_msgs.append(
-        'Changes for %s conflict with changes for %s' %
-        (issue_6_ref, issue_3_ref))
+        'Changes for %s conflict for %s' % (issue_6_ref, issue_3_ref))
+
+    delta_7 = tracker_pb2.IssueDelta(
+        blocking_remove=[issue_3.issue_id],
+        blocking_add=[issue_3.issue_id],
+        blocked_on_remove=[issue_4.issue_id],
+        blocked_on_add=[issue_4.issue_id])
+    expected_err_msgs.append(
+        'Changes for %s conflict for %s, %s' %
+        (issue_7_ref, issue_3_ref, issue_4_ref))
 
     issue_delta_pairs = [
         (issue_3, delta_3), (issue_4, delta_4), (issue_5, delta_5),
-        (issue_6, delta_6)
+        (issue_6, delta_6), (issue_7, delta_7)
     ]
 
     with self.assertRaisesRegexp(exceptions.InputException,
