@@ -294,7 +294,7 @@ message ModifyIssueApprovalValuesRequest {
 // Next available tag: 2
 message ModifyIssueApprovalValuesResponse {
   // The updated ApprovalValues.
-  repeated ApprovalValues approval_values = 1;
+  repeated ApprovalValue approval_values = 1;
 }
 
 // The request message for MakeIssueFromTemplate.

@@ -283,9 +283,8 @@ const (
 	FieldDef_DEFAULT_HIDDEN FieldDef_Traits = 2
 	// This field can have multiple values.
 	FieldDef_MULTIVALUED FieldDef_Traits = 3
-	// This is a phase field meaning it can only belong to gates.
-	// TODO(monorail:7799): Change PHASE to GATE considering that users are more
-	// familiar with that term.
+	// This is a phase field, meaning it is repeated for each phase of an
+	// approval process. It cannot be the child of a particular approval.
 	FieldDef_PHASE FieldDef_Traits = 4
 	// Values of this field can only be edited in issues/templates by editors.
 	// Project owners and field admins are not subject of this restriction.
@@ -1063,6 +1062,7 @@ type FieldDef struct {
 	Admins []string          `protobuf:"bytes,6,rep,name=admins,proto3" json:"admins,omitempty"`
 	Traits []FieldDef_Traits `protobuf:"varint,7,rep,packed,name=traits,proto3,enum=monorail.v3.FieldDef_Traits" json:"traits,omitempty"`
 	// ApprovalDef that this field belongs to, if applicable.
+	// A field may not both have `approval_parent` set and have the PHASE trait.
 	ApprovalParent string                     `protobuf:"bytes,8,opt,name=approval_parent,json=approvalParent,proto3" json:"approval_parent,omitempty"`
 	EnumSettings   *FieldDef_EnumTypeSettings `protobuf:"bytes,9,opt,name=enum_settings,json=enumSettings,proto3" json:"enum_settings,omitempty"`
 	IntSettings    *FieldDef_IntTypeSettings  `protobuf:"bytes,10,opt,name=int_settings,json=intSettings,proto3" json:"int_settings,omitempty"`
@@ -1346,8 +1346,8 @@ func (x *ComponentDef) GetLabels() []string {
 }
 
 // Defines approvals that issues within the project may need.
-//
-// TODO(monorail:7193): Add documentation for approvals.
+// See monorail/doc/userguide/concepts.md#issue-approvals-and-gates and
+// monorail/doc/userguide/project-owners.md#How-to-configure-approvals
 // Next available tag: 7
 type ApprovalDef struct {
 	state         protoimpl.MessageState
