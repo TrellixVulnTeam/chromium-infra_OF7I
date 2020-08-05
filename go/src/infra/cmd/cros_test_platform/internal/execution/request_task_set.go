@@ -35,6 +35,8 @@ type RequestTaskSet struct {
 	testTaskSets   map[invocationID]*testTaskSet
 	activeTasks    map[invocationID]*skylab.Task
 	retryCounter   retryCounter
+
+	launched bool
 }
 
 // TaskSetConfig is a wrapper for the parameters common to the testTaskSets.
@@ -72,11 +74,12 @@ func newInvocationID(i int, test *steps.EnumerationResponse_AutotestInvocation) 
 
 // completed returns true if all tasks for this request have completed.
 func (r *RequestTaskSet) completed() bool {
-	return len(r.activeTasks) == 0
+	return r.launched && len(r.activeTasks) == 0
 }
 
 // LaunchTasks launches initial tasks for all the tests in this request.
 func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
+	r.launched = true
 	for _, iid := range r.invocationIDs {
 		ts := r.getTestTaskSet(iid)
 		ag := r.getArgsGenerator(iid)
@@ -165,30 +168,24 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 	return r.completed(), nil
 }
 
-func (r *RequestTaskSet) response(running bool) *steps.ExecuteResponse {
+// Response returns the current response for this test.
+func (r *RequestTaskSet) Response() *steps.ExecuteResponse {
 	resp := &steps.ExecuteResponse{
 		TaskResults:         r.taskResults(),
 		ConsolidatedResults: r.results(),
 		State: &test_platform.TaskState{
 			Verdict:   r.verdict(),
-			LifeCycle: r.lifecycle(running),
+			LifeCycle: r.lifecycle(),
 		},
 	}
 	return resp
 }
 
-func (r *RequestTaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
-	switch {
-	case r.completed():
+func (r *RequestTaskSet) lifecycle() test_platform.TaskState_LifeCycle {
+	if r.completed() {
 		return test_platform.TaskState_LIFE_CYCLE_COMPLETED
-	case running:
-		return test_platform.TaskState_LIFE_CYCLE_RUNNING
-	default:
-		// TODO(akeshet): The task set is neither running nor complete, so it
-		// was cancelled due to an error while in flight. It's not clear yet
-		// if this is the right lifecycle mapping for this state.
-		return test_platform.TaskState_LIFE_CYCLE_ABORTED
 	}
+	return test_platform.TaskState_LIFE_CYCLE_RUNNING
 }
 
 func (r *RequestTaskSet) verdict() test_platform.TaskState_Verdict {

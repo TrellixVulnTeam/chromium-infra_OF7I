@@ -10,6 +10,8 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"time"
 
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 	"go.chromium.org/luci/common/clock"
@@ -23,7 +25,7 @@ const ctpRequestUIDTemplate = "TestPlanRuns/%d/%s"
 // Runner manages task sets for multiple cros_test_platform requests.
 type Runner struct {
 	requestTaskSets map[string]*RequestTaskSet
-	running         bool
+	waiting         bool
 }
 
 // NewRunnerWithRequestTaskSets returns a new Runner to manage the provided
@@ -72,7 +74,7 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, de
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
 func (r *Runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
-	defer func() { r.running = false }()
+	defer func() { r.waiting = false }()
 
 	if err := r.launchTasks(ctx, c); err != nil {
 		return err
@@ -122,10 +124,14 @@ func (r *Runner) checkTasksAndRetry(ctx context.Context, c skylab.Client) (bool,
 
 // Responses constructs responses for each request managed by the Runner.
 func (r *Runner) Responses() map[string]*steps.ExecuteResponse {
-	running := r.running
 	resps := make(map[string]*steps.ExecuteResponse)
 	for t, ts := range r.requestTaskSets {
-		resps[t] = ts.response(running)
+		resps[t] = ts.Response()
+		// The test hasn't completed, but we're not waiting for it to complete
+		// anymore.
+		if !r.waiting && resps[t].GetState().LifeCycle == test_platform.TaskState_LIFE_CYCLE_RUNNING {
+			resps[t].State.LifeCycle = test_platform.TaskState_LIFE_CYCLE_ABORTED
+		}
 	}
 	return resps
 }
