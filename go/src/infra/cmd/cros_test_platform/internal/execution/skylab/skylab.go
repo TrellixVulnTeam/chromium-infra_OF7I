@@ -26,6 +26,39 @@ type ArgsGenerator interface {
 	CheckConsistency() error
 }
 
+// InvalidDependencies tag indicates that an error was caused because
+// swarming dependencies for a task were invalid.
+var InvalidDependencies = errors.BoolTag{Key: errors.NewTagKey("invalid test dependencies")}
+
+// ValidateDependencies checks whether this test has dependencies satisfied by
+// at least one Skylab bot.
+//
+// Returns nil if the dependencies are valid and satisfiable.
+// Returns an error tagged with InvalidDependencies tag if provided dependencies
+// are invalid.
+// Optionally returns a map of the unsatisfiable dependencies.
+//
+// Errors encountered in dependency validation are returned as generic errors.
+func ValidateDependencies(ctx context.Context, c Client, argsGenerator ArgsGenerator) (map[string]string, error) {
+	if err := argsGenerator.CheckConsistency(); err != nil {
+		logging.Warningf(ctx, "Dependency validation failed: %s.", err)
+		return nil, InvalidDependencies.Apply(err)
+	}
+
+	args, err := argsGenerator.GenerateArgs(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "validate dependencies").Err()
+	}
+	ok, rejected, err := c.ValidateArgs(ctx, &args)
+	if err != nil {
+		return nil, errors.Annotate(err, "validate dependencies").Err()
+	}
+	if !ok {
+		return rejected, errors.Reason("no swarming bots with requested dimensions").Tag(InvalidDependencies).Err()
+	}
+	return nil, nil
+}
+
 // Task represents an individual test task.
 type Task struct {
 	argsGenerator ArgsGenerator

@@ -13,7 +13,6 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 )
 
@@ -60,30 +59,16 @@ func (t *testTaskSet) AttemptedAtLeastOnce() bool {
 	return len(t.tasks) > 0
 }
 
-// validateDependencies checks whether this test has dependencies satisfied by
-// at least one Skylab bot.
-func (t *testTaskSet) validateDependencies(ctx context.Context, c skylab.Client) (bool, map[string]string, error) {
-	if err := t.argsGenerator.CheckConsistency(); err != nil {
-		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
-		return false, nil, nil
-	}
-
-	args, err := t.argsGenerator.GenerateArgs(ctx)
-	if err != nil {
-		return false, nil, errors.Annotate(err, "validate dependencies").Err()
-	}
-	return c.ValidateArgs(ctx, &args)
-}
-
 func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
-	runnable, rejected, err := t.validateDependencies(ctx, c)
-	if err != nil {
-		return err
-	}
-	if !runnable {
+	if rejected, err := skylab.ValidateDependencies(ctx, c, t.argsGenerator); err != nil {
+		if !skylab.InvalidDependencies.In(err) {
+			return err
+		}
+		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
 		t.markNotRunnable(rejected)
 		return nil
 	}
+
 	a, err := skylab.NewTask(ctx, c, t.argsGenerator)
 	if err != nil {
 		return err
