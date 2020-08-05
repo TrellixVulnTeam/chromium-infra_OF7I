@@ -114,15 +114,10 @@ class MonorailServicerTest(unittest.TestCase):
         cache_manager=fake.CacheManager())
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, owner_ids=[111])
-    # allowlisted_client_id_user's client_id is allowlisted in
-    # testing/api_clients.cfg
-    self.allowlisted_client_id_user = self.services.user.TestAddUser(
-        'allowlisted-with-client-id@developer.gserviceaccount.com', 888)
+    # Allowlisted in testing/api_clients.cfg
     self.allowlisted_client_id = '98723764876'
     self.non_member = self.services.user.TestAddUser(
         'nonmember@example.com', 222)
-    self.allowed_domain_user = self.services.user.TestAddUser(
-        'chickenchicken@google.com', 333)
     self.test_user = self.services.user.TestAddUser('test@example.com', 420)
     self.svcr = TestableServicer(self.services)
     self.nonmember_token = xsrf.GenerateToken(222, xsrf.XHR_SERVLET_PATH)
@@ -131,6 +126,9 @@ class MonorailServicerTest(unittest.TestCase):
     self.prpc_context.set_code(codes.StatusCode.OK)
     self.prpc_context._invocation_metadata = [
         (monorail_servicer.XSRF_TOKEN_HEADER, self.nonmember_token)]
+    # This string is returned by app_identity.get_application_id() when
+    # called in the test env.
+    self.app_id = 'testing-app'
 
   def tearDown(self):
     self.mox.UnsetStubs()
@@ -256,37 +254,24 @@ class MonorailServicerTest(unittest.TestCase):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
   @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
-  def testGetAndAssertRequesterAuth_Oauth_Allowlisted(self, mock_verifier):
-    """We allow requests from allowlisted clients."""
-    metadata = {'authorization': 'Bearer allowlisted-user-id-token'}
-
-    # Signed in with oauth.
-    mock_verifier.return_value = {
-        'aud': self.allowlisted_client_id,
-        'email': self.allowlisted_client_id_user.email,
-    }
-
-    bot_auth = self.svcr.GetAndAssertRequesterAuth(
-        self.cnxn, metadata, self.services)
-    self.assertEqual(bot_auth.email, self.allowlisted_client_id_user.email)
-
-  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
-  def testGetAndAssertRequesterAuth_Oauth_CaseInsensitiveBearer(
+  def testGetAndAssertRequesterAuth_IDToken_CaseInsensitiveBearer(
       self, mock_verifier):
     """We are case-insensitive when looking for the 'bearer' string."""
     metadata = {'authorization': 'beaReR allowlisted-user-id-token'}
+    some_other_site_user = self.services.user.TestAddUser(
+        'some-human-user@human.test', 888)
 
     # Signed in with oauth.
     mock_verifier.return_value = {
         'aud': self.allowlisted_client_id,
-        'email': self.allowlisted_client_id_user.email,
+        'email': some_other_site_user.email,
     }
 
     self.svcr.GetAndAssertRequesterAuth(
         self.cnxn, metadata, self.services)
     mock_verifier.assert_called_once_with('allowlisted-user-id-token', mock.ANY)
 
-  def testGetAndAssertRequesterAuth_Oauth_InvalidAuthToken(self):
+  def testGetAndAssertRequesterAuth_IDToken_InvalidAuthToken(self):
     """We raise an exception if 'bearer' is missing from headers."""
     metadata = {'authorization': 'allowlisted-user-id-token'}
 
@@ -295,21 +280,61 @@ class MonorailServicerTest(unittest.TestCase):
 
 
   @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
-  def testGetAndAssertRequesterAuth_Oauth_NotAllowlisted(self, mock_verifier):
-    """We raise an exception if ID token is valid but user is not allowlisted"""
+  def testGetAndAssertRequesterAuth_IDToken_ServiceAccountNotAllowed(
+      self, mock_verifier):
+    """We raise an exception if the service account is not allowlisted"""
     metadata = {'authorization': 'Bearer non-allowlisted-user-id-token'}
 
     # Signed in with oauth.
     mock_verifier.return_value = {
-        'aud': 'not-allowlisted-client-id.apps.googleusercontent.com',
-        'email': 'bigbadwolf@grandmashouse.com',
+        'aud': 'https://%s.appspot.com' % self.app_id,
+        # A random service account, not allow-listed.
+        'email': 'bigbadwolf@gserviceaccount.com',
     }
 
-    with self.assertRaises(permissions.PermissionException):
+    with self.assertRaisesRegexp(
+        permissions.PermissionException, r'Account .+ is not allowlisted'):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
   @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
-  def testGetAndAssertRequesterAuth_Oauth_NoEmail(self, mock_verifier):
+  def testGetAndAssertRequesterAuth_IDToken_ServiceAccountBadAud(
+      self, mock_verifier):
+    """We raise an exception when a service account token['aud'] is invalid."""
+    metadata = {'authorization': 'Bearer non-allowlisted-user-id-token'}
+    # Allowlisted in testing/api_clients.cfg
+    allowlisted_service_account_email = self.services.user.TestAddUser(
+        '123456789@developer.gserviceaccount.com', 889)
+
+    # Signed in with oauth.
+    mock_verifier.return_value = {
+        'aud': 'id-token-inteded-for-some-other-site',
+        'email': allowlisted_service_account_email.email,
+    }
+
+    with self.assertRaisesRegexp(
+        permissions.PermissionException, r'Invalid token audience: .+'):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_IDToken_ClientNotAllowed(
+      self, mock_verifier):
+    """We raise an exception if the client ID is not allowlisted."""
+    metadata = {'authorization': 'Bearer non-allowlisted-client-id-token'}
+
+    # Signed in with oauth.
+    mock_verifier.return_value = {
+        # A client ID not allow-listed.
+        'aud': 'some-other-site-client-id',
+        # Some human user that the client is impersonating for the request.
+        'email': 'some-other-site-user@test.com',
+    }
+
+    with self.assertRaisesRegexp(
+        permissions.PermissionException, r'Client .+ is not allowlisted'):
+      self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
+
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_IDToken_NoEmail(self, mock_verifier):
     """We raise an exception if ID token has no email information."""
     metadata = {'authorization': 'Bearer allowlisted-user-id-token'}
 
@@ -320,7 +345,7 @@ class MonorailServicerTest(unittest.TestCase):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
   @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
-  def testGetAndAssertRequesterAuth_Oauth_InvalidIDToken(self, mock_verifier):
+  def testGetAndAssertRequesterAuth_IDToken_InvalidIDToken(self, mock_verifier):
     """We raise an exception if the ID token is invalid."""
     metadata = {'authorization': 'Bearer bad-token'}
 

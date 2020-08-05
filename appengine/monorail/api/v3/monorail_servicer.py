@@ -20,6 +20,7 @@ from third_party.google.auth.transport import requests as google_requests
 
 from google.appengine.api import oauth
 from google.appengine.api import users
+from google.appengine.api import app_identity
 from google.protobuf import json_format
 from components.prpc import codes
 from components.prpc import server
@@ -48,6 +49,8 @@ TEST_ACCOUNT_HEADER = 'x-test-account'
 REASON_HEADER = 'x-reason'
 # Optional header to help prevent double updates.
 REQUEST_ID_HEADER = 'x-request-id'
+# Domain for service account emails.
+SERVICE_ACCOUNT_DOMAIN = 'gserviceaccount.com'
 
 
 def ConvertPRPCStatusToHTTPStatus(context):
@@ -181,16 +184,38 @@ class MonorailServicer(object):
       raise permissions.PermissionException(
           'Invalid bearer token.')
 
-    auth_client_ids, _auth_email = (
-        client_config_svc.GetClientConfigSvc().GetClientIDEmails())
-    if id_info['aud']  not in auth_client_ids:
-      raise permissions.PermissionException(
-          'client ID %s not allowlisted' % id_info['aud'])
+    audience = id_info['aud']
     email = id_info.get('email')
     if not email:
       raise permissions.PermissionException(
           'No email found in token info. '
           'Make sure requests are made with scopes `openid` and `email`')
+
+    auth_client_ids, service_account_emails = (
+        client_config_svc.GetClientConfigSvc().GetClientIDEmails())
+
+    if email.endswith(SERVICE_ACCOUNT_DOMAIN):
+      # For service accounts, the email must be allowlisted to call the
+      # API and we must confirm that the ID token was meant for
+      # Monorail by checking the audience.
+
+      # An API call to any <version>-dot-<service>-dot-<app_id>.appspot.com
+      # must have token audience of `https://<app_id>.appspot.com`
+      app_id = app_identity.get_application_id()  # e.g. 'monorail-prod'
+      host = 'https://%s.appspot.com' % app_id
+      if audience != host:
+        raise permissions.PermissionException(
+            'Invalid token audience: %s.' % audience)
+      if email not in service_account_emails:
+        raise permissions.PermissionException(
+            'Account %s is not allowlisted' % email)
+    else:
+      # For users, the audience is the client_id of the site used to make
+      # the call to Monorail's API. The client_id must be allow-listed.
+      if audience not in auth_client_ids:
+        raise permissions.PermissionException(
+            'Client %s is not allowlisted' % audience)
+
     return authdata.AuthData.FromEmail(cnxn, email, self.services)
 
   def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
