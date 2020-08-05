@@ -222,3 +222,10 @@ func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
 		TestCases: t.testCases(),
 	}
 }
+
+// Retry creates a new task to retry the current task.
+//
+// Retry does not check whether the current task is complete.
+func (t *Task) Retry(ctx context.Context, c Client) (*Task, error) {
+	return NewTask(ctx, c, t.argsGenerator)
+}

@@ -114,9 +114,11 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 
 		if needsRetry(latestTask.Result()) && r.retryCounter.CanRetry(ctx, key) {
 			logging.Infof(ctx, "Retrying %s", ts.Name)
-			if err := ts.LaunchTask(ctx, c); err != nil {
+			task, err := latestTask.Retry(ctx, c)
+			if err != nil {
 				return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
 			}
+			ts.NotifyTask(task)
 			r.retryCounter.NotifyRetry(key)
 		}
 	}

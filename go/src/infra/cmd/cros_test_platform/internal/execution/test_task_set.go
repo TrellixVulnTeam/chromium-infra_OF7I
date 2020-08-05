@@ -44,8 +44,13 @@ func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
 	if err != nil {
 		return err
 	}
-	t.tasks = append(t.tasks, a)
+	t.NotifyTask(a)
 	return nil
+}
+
+// NotifyTask notifies the test task set of a new task for the test.
+func (t *testTaskSet) NotifyTask(task *skylab.Task) {
+	t.tasks = append(t.tasks, task)
 }
 
 // markNotRunnable marks this test run as being unable to run.
