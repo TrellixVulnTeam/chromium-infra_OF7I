@@ -90,7 +90,8 @@ class MultiWheel(Builder):
     for w in self._wheels:
       sub_wheel = w.wheel(system, wheel.plat)
       util.LOGGER.info('Building sub-wheel: %s', sub_wheel)
-      sub_wheels += w.build_wheel(sub_wheel, system)
+      # Any time the MultiWheel is built, rebuild all the subwheels.
+      sub_wheels += w.build_wheel(sub_wheel, system, rebuild=True)
     return sub_wheels
 
 
