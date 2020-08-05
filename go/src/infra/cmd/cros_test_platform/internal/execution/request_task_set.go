@@ -7,6 +7,7 @@ package execution
 import (
 	"context"
 	"fmt"
+	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"time"
 
@@ -24,7 +25,8 @@ type RequestTaskSet struct {
 	// This is used to preserve the order in the response.
 	testKeys []string
 
-	testTaskSets map[string]*testTaskSet
+	argsGenerators map[string]*args.Generator
+	testTaskSets   map[string]*testTaskSet
 	// Stores currently active tasks, keyed by the test each task is running.
 	activeTasks  map[string]*skylab.Task
 	retryCounter retryCounter
@@ -41,22 +43,21 @@ type TaskSetConfig struct {
 func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*RequestTaskSet, error) {
 	testKeys := make([]string, len(tests))
 	testTaskSets := make(map[string]*testTaskSet)
+	argsGenerators := make(map[string]*args.Generator)
 	tm := make(map[string]*steps.EnumerationResponse_AutotestInvocation)
 	for i, test := range tests {
 		k := testKey(i, test)
 		testKeys[i] = k
-		t, err := newTestTaskSet(test, params, workerConfig, tc)
-		if err != nil {
-			return nil, errors.Annotate(err, "new task set").Err()
-		}
-		testTaskSets[k] = t
+		argsGenerators[k] = args.NewGenerator(test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
+		testTaskSets[k] = newTestTaskSet(test.GetTest().GetName())
 		tm[k] = test
 	}
 	return &RequestTaskSet{
-		testKeys:     testKeys,
-		testTaskSets: testTaskSets,
-		activeTasks:  make(map[string]*skylab.Task),
-		retryCounter: newRetryCounter(params, tm),
+		argsGenerators: argsGenerators,
+		testKeys:       testKeys,
+		testTaskSets:   testTaskSets,
+		activeTasks:    make(map[string]*skylab.Task),
+		retryCounter:   newRetryCounter(params, tm),
 	}, nil
 }
 
@@ -79,14 +80,23 @@ func (r *RequestTaskSet) Completed() bool {
 func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
 	for _, key := range r.testKeys {
 		ts := r.getTestTaskSet(key)
-		task, err := ts.LaunchTask(ctx, c)
+		ag := r.getArgsGenerator(key)
+
+		if rejected, err := skylab.ValidateDependencies(ctx, c, ag); err != nil {
+			if !skylab.InvalidDependencies.In(err) {
+				return err
+			}
+			logging.Warningf(ctx, "Dependency validation failed for %s: %s.", ts.Name, err)
+			ts.MarkNotRunnable(rejected)
+			continue
+		}
+
+		task, err := skylab.NewTask(ctx, c, ag)
 		if err != nil {
 			return err
 		}
-		if task != nil {
-			ts.NotifyTask(task)
-			r.activeTasks[key] = task
-		}
+		ts.NotifyTask(task)
+		r.activeTasks[key] = task
 	}
 	return nil
 }
@@ -97,6 +107,14 @@ func (r *RequestTaskSet) getTestTaskSet(key string) *testTaskSet {
 		panic(fmt.Sprintf("No test task set for key %s", key))
 	}
 	return ts
+}
+
+func (r *RequestTaskSet) getArgsGenerator(key string) *args.Generator {
+	ag, ok := r.argsGenerators[key]
+	if !ok {
+		panic(fmt.Sprintf("No args.Generator for key %s", key))
+	}
+	return ag
 }
 
 // CheckTasksAndRetry checks the status of currently running tasks for this

@@ -5,50 +5,22 @@
 package execution
 
 import (
-	"context"
-	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
-	"go.chromium.org/luci/common/logging"
 )
 
 // testTaskSet encapsulates the running state of the set of tasks for one test.
 type testTaskSet struct {
-	argsGenerator    *args.Generator
 	Name             string
 	runnable         bool
 	rejectedTaskDims map[string]string
 	tasks            []*skylab.Task
 }
 
-func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*testTaskSet, error) {
-	t := testTaskSet{runnable: true, Name: invocation.GetTest().GetName()}
-	t.argsGenerator = args.NewGenerator(invocation, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
-	return &t, nil
-}
-
-// LaunchTask returns the newly created task, if any.
-//
-// The returned task may be nil, even on success, if LaunchTask determines that
-// the test is not runnable.
-func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) (*skylab.Task, error) {
-	if rejected, err := skylab.ValidateDependencies(ctx, c, t.argsGenerator); err != nil {
-		if !skylab.InvalidDependencies.In(err) {
-			return nil, err
-		}
-		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
-		t.markNotRunnable(rejected)
-		return nil, nil
-	}
-
-	a, err := skylab.NewTask(ctx, c, t.argsGenerator)
-	if err != nil {
-		return nil, err
-	}
-	return a, nil
+func newTestTaskSet(name string) *testTaskSet {
+	return &testTaskSet{runnable: true, Name: name}
 }
 
 // NotifyTask notifies the test task set of a new task for the test.
@@ -56,10 +28,10 @@ func (t *testTaskSet) NotifyTask(task *skylab.Task) {
 	t.tasks = append(t.tasks, task)
 }
 
-// markNotRunnable marks this test run as being unable to run.
+// MarkNotRunnable marks this test run as being unable to run.
 //
 // In particular, this means that this test run is Completed().
-func (t *testTaskSet) markNotRunnable(rejectedTaskDims map[string]string) {
+func (t *testTaskSet) MarkNotRunnable(rejectedTaskDims map[string]string) {
 	t.runnable = false
 	t.rejectedTaskDims = rejectedTaskDims
 }
