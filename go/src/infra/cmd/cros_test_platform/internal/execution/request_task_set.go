@@ -70,14 +70,9 @@ func newInvocationID(i int, test *steps.EnumerationResponse_AutotestInvocation) 
 	return invocationID(fmt.Sprintf("%d_%s", i, test.GetTest().GetName()))
 }
 
-// Completed returns true if all tasks for this request have completed.
-func (r *RequestTaskSet) Completed() bool {
-	for _, t := range r.testTaskSets {
-		if !t.Completed() {
-			return false
-		}
-	}
-	return true
+// completed returns true if all tasks for this request have completed.
+func (r *RequestTaskSet) completed() bool {
+	return len(r.activeTasks) == 0
 }
 
 // LaunchTasks launches initial tasks for all the tests in this request.
@@ -123,14 +118,17 @@ func (r *RequestTaskSet) getArgsGenerator(iid invocationID) *args.Generator {
 
 // CheckTasksAndRetry checks the status of currently running tasks for this
 // request and retries failed tasks when allowed.
-func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client) error {
+//
+// Returns whether all tasks are complete (so future calls to this function are
+// unnecessary)
+func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client) (bool, error) {
 	completedTests := make([]invocationID, len(r.activeTasks))
 	newTasks := make(map[invocationID]*skylab.Task)
 	for iid, task := range r.activeTasks {
 		rerr := task.Refresh(ctx, c)
 		tr := task.Result()
 		if rerr != nil {
-			return errors.Annotate(rerr, "tick for task %s", tr.LogUrl).Err()
+			return false, errors.Annotate(rerr, "tick for task %s", tr.LogUrl).Err()
 		}
 		if !task.Completed() {
 			continue
@@ -151,7 +149,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		logging.Infof(ctx, "Retrying %s", ts.Name)
 		nt, err := task.Retry(ctx, c)
 		if err != nil {
-			return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
+			return false, errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
 		}
 		newTasks[iid] = nt
 		ts.NotifyTask(nt)
@@ -164,7 +162,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 	for iid, task := range newTasks {
 		r.activeTasks[iid] = task
 	}
-	return nil
+	return r.completed(), nil
 }
 
 func (r *RequestTaskSet) response(running bool) *steps.ExecuteResponse {
@@ -181,7 +179,7 @@ func (r *RequestTaskSet) response(running bool) *steps.ExecuteResponse {
 
 func (r *RequestTaskSet) lifecycle(running bool) test_platform.TaskState_LifeCycle {
 	switch {
-	case r.Completed():
+	case r.completed():
 		return test_platform.TaskState_LIFE_CYCLE_COMPLETED
 	case running:
 		return test_platform.TaskState_LIFE_CYCLE_RUNNING
@@ -195,7 +193,7 @@ func (r *RequestTaskSet) lifecycle(running bool) test_platform.TaskState_LifeCyc
 
 func (r *RequestTaskSet) verdict() test_platform.TaskState_Verdict {
 	v := test_platform.TaskState_VERDICT_PASSED
-	if !r.Completed() {
+	if !r.completed() {
 		v = test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
 	for _, t := range r.testTaskSets {

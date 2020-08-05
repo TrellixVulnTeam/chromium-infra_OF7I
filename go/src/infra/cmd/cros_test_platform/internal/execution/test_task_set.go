@@ -36,15 +36,6 @@ func (t *testTaskSet) MarkNotRunnable(rejectedTaskDims map[string]string) {
 	t.rejectedTaskDims = rejectedTaskDims
 }
 
-// Completed determines whether we have completed a task for this test.
-func (t *testTaskSet) Completed() bool {
-	if !t.runnable {
-		return true
-	}
-	a := t.getLatestTask()
-	return a != nil && a.Completed()
-}
-
 func (t *testTaskSet) TaskResult() []*steps.ExecuteResponse_TaskResult {
 	if !t.runnable {
 		return []*steps.ExecuteResponse_TaskResult{

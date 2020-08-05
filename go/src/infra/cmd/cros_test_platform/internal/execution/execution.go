@@ -78,10 +78,11 @@ func (r *Runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
 		return err
 	}
 	for {
-		if err := r.checkTasksAndRetry(ctx, c); err != nil {
+		allDone, err := r.checkTasksAndRetry(ctx, c)
+		if err != nil {
 			return err
 		}
-		if r.completed() {
+		if allDone {
 			return nil
 		}
 
@@ -105,22 +106,18 @@ func (r *Runner) launchTasks(ctx context.Context, c skylab.Client) error {
 	return nil
 }
 
-func (r *Runner) checkTasksAndRetry(ctx context.Context, c skylab.Client) error {
+// Returns whether all tasks are complete (so future calls to this function are
+// unnecessary)
+func (r *Runner) checkTasksAndRetry(ctx context.Context, c skylab.Client) (bool, error) {
+	allDone := true
 	for t, ts := range r.requestTaskSets {
-		if err := ts.CheckTasksAndRetry(ctx, c); err != nil {
-			return errors.Annotate(err, "check tasks and retry for %s", t).Err()
+		c, err := ts.CheckTasksAndRetry(ctx, c)
+		if err != nil {
+			return false, errors.Annotate(err, "check tasks and retry for %s", t).Err()
 		}
+		allDone = allDone && c
 	}
-	return nil
-}
-
-func (r *Runner) completed() bool {
-	for _, ts := range r.requestTaskSets {
-		if !ts.Completed() {
-			return false
-		}
-	}
-	return true
+	return allDone, nil
 }
 
 // Responses constructs responses for each request managed by the Runner.
