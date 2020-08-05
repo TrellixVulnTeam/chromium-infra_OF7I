@@ -82,6 +82,21 @@ func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	return test_platform.TaskState_VERDICT_FAILED
 }
 
+func (t *testTaskSet) LifeCycle() test_platform.TaskState_LifeCycle {
+	as := t.TaskResult()
+	// A test result can have 0 attempts only if the test hasn't run *yet*.
+	// This is not possible in practice because the first attempt for each test
+	// is created at the beginning.
+	if len(as) == 0 {
+		return test_platform.TaskState_LIFE_CYCLE_ABORTED
+	}
+	a := as[len(as)-1]
+	if int(a.GetState().LifeCycle)&int(test_platform.TaskState_LIFE_CYCLE_MASK_FINAL) == 0 {
+		return test_platform.TaskState_LIFE_CYCLE_RUNNING
+	}
+	return test_platform.TaskState_LIFE_CYCLE_COMPLETED
+}
+
 func (t *testTaskSet) getLatestTask() *skylab.Task {
 	if len(t.tasks) == 0 {
 		return nil

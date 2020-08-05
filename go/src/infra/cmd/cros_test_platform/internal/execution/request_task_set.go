@@ -182,17 +182,29 @@ func (r *RequestTaskSet) Response() *steps.ExecuteResponse {
 }
 
 func (r *RequestTaskSet) lifecycle() test_platform.TaskState_LifeCycle {
-	if r.completed() {
-		return test_platform.TaskState_LIFE_CYCLE_COMPLETED
+	aborted := false
+	running := false
+	for _, ts := range r.testTaskSets {
+		if ts.LifeCycle() == test_platform.TaskState_LIFE_CYCLE_ABORTED {
+			aborted = true
+		}
+		if ts.LifeCycle() == test_platform.TaskState_LIFE_CYCLE_RUNNING {
+			running = true
+		}
 	}
-	return test_platform.TaskState_LIFE_CYCLE_RUNNING
+
+	// Order matters here. We return the "worst" lifecycle found.
+	if aborted {
+		return test_platform.TaskState_LIFE_CYCLE_ABORTED
+	}
+	if running {
+		return test_platform.TaskState_LIFE_CYCLE_RUNNING
+	}
+	return test_platform.TaskState_LIFE_CYCLE_COMPLETED
 }
 
 func (r *RequestTaskSet) verdict() test_platform.TaskState_Verdict {
 	v := test_platform.TaskState_VERDICT_PASSED
-	if !r.completed() {
-		v = test_platform.TaskState_VERDICT_UNSPECIFIED
-	}
 	for _, t := range r.testTaskSets {
 		if !successfulVerdict(t.Verdict()) {
 			v = test_platform.TaskState_VERDICT_FAILED
