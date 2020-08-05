@@ -4079,19 +4079,19 @@ class WorkEnvTest(unittest.TestCase):
 
   def testExpungeUsers_NoUsers(self):
     self.mr.cnxn = mock.Mock()
-    self.mr.cnxn.commit = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
     self.services.usergroup.group_dag = mock.Mock()
 
     self.mr.perms = permissions.ADMIN_PERMISSIONSET
     with self.work_env as we:
       we.ExpungeUsers(['unknown@user.test'])
 
-    self.mr.cnxn.commit.assert_not_called()
+    self.mr.cnxn.Commit.assert_not_called()
     self.services.usergroup.group_dag.MarkObsolete.assert_not_called()
 
   def testExpungeUsers_ReservedUserID(self):
     self.mr.cnxn = mock.Mock()
-    self.mr.cnxn.commit = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
     self.services.usergroup.group_dag = mock.Mock()
 
     user_1 = self.services.user.TestAddUser(
