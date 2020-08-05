@@ -178,6 +178,17 @@ ALL = {
             cipd_platform='mac-amd64',
         ),
         Platform(
+            name='mac-x64-cp38',
+            manylinux_name=None,
+            cross_triple='',
+            wheel_abi='cp38',
+            wheel_plat=('macosx_10_15_intel',),
+            dockcross_base=None,
+            openssl_target='darwin64-x86_64-cc',
+            packaged=True,
+            cipd_platform='mac-amd64',
+        ),
+        Platform(
             name='windows-x86',
             manylinux_name=None,
             cross_triple='',
@@ -206,10 +217,10 @@ PACKAGED = [p for p in ALL.itervalues() if p.packaged]
 ALL_LINUX = [p.name for p in ALL.itervalues() if 'linux' in p.name]
 
 
-def NativePlatform():
-  # Identify our native platform.
+def NativePlatforms():
+  # Identify our native platforms.
   if sys.platform == 'darwin':
-    return ALL['mac-x64']
+    return [ALL['mac-x64'], ALL['mac-x64-cp38']]
   else:
     raise ValueError('Cannot identify native image for %r.' % (sys.platform,))
 

@@ -130,6 +130,9 @@ class Builder(object):
       return False
     if plat.name in self._skip_plat:
       return False
+    # Python3 build platforms are currently only building py3-only wheels.
+    if plat.wheel_abi.startswith('cp3') and not self._spec.is_py3_only:
+      return False
     return True
 
   def build(self, wheel, system, rebuild=False):

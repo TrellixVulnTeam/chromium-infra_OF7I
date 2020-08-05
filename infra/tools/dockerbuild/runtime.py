@@ -127,8 +127,8 @@ class System(object):
     else:
       # No "dockcross" image associated with this platform. We can return a
       # native image if the target platform is the current platform.
-      native_platform = build_platform.NativePlatform()
-      if plat == native_platform:
+      native_platforms = build_platform.NativePlatforms()
+      if plat in native_platforms:
         util.LOGGER.info('Using native platform for [%s].', plat.name)
         dx = dockcross.NativeImage(self, plat)
 
