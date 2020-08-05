@@ -828,7 +828,7 @@ class IssueService(object):
     return self.issue_2lc.GetAnyOnHandItem(issue_ids, start=start, end=end)
 
   def GetIssuesDict(self, cnxn, issue_ids, use_cache=True, shard_id=None):
-    # type: (MonorailConnection, Sequence[int], Optional[Boolean],
+    # type: (MonorailConnection, Collection[int], Optional[Boolean],
     #     Optional[int]) -> (Dict[int, Issue], Sequence[int])
     """Get a dict {iid: issue} from the DB or cache.
 
@@ -844,6 +844,8 @@ class IssueService(object):
     return issue_dict, missed_iids
 
   def GetIssues(self, cnxn, issue_ids, use_cache=True, shard_id=None):
+    # type: (MonorailConnection, Sequence[int], Optional[Boolean],
+    #     Optional[int]) -> (Sequence[int])
     """Get a list of Issue PBs from the DB or cache.
 
     Args:
@@ -2591,7 +2593,7 @@ class IssueService(object):
   ### Reindex queue
 
   def EnqueueIssuesForIndexing(self, cnxn, issue_ids, commit=True):
-    # type: (MonorailConnection, Sequence[int], Optional[bool]) -> None
+    # type: (MonorailConnection, Collection[int], Optional[bool]) -> None
     """Add the given issue IDs to the ReindexQueue table."""
     reindex_rows = [(issue_id,) for issue_id in issue_ids]
     self.reindexqueue_tbl.InsertRows(
