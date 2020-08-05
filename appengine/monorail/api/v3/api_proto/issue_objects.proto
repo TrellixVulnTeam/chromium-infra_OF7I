@@ -337,7 +337,8 @@ message ApprovalValue {
       (google.api.field_behavior) = OUTPUT_ONLY];
   // The user who most recently set `status`.
   string setter = 6 [
-      (google.api.resource_reference) = { type: "api.crbug.com/User" }];
+      (google.api.resource_reference) = { type: "api.crbug.com/User" },
+      (google.api.field_behavior) = OUTPUT_ONLY];
   // The phase the approval is associated with (if applicable).
   string phase = 7 [
       (google.api.field_behavior) = OUTPUT_ONLY];

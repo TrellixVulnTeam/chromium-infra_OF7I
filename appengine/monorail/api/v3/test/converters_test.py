@@ -834,6 +834,66 @@ class ConverterFunctionsTest(unittest.TestCase):
             self.user_1.user_id, [self.project_1, self.project_2]),
         expected_stars)
 
+  def testIngestApprovalDeltas(self):
+    # TODO(jessan): Add tests for multiple deltas, for field values, and for
+    # attempting to add an approver that does not exist.
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name='projects/proj/issues/1/approvalValues/1',
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA'),
+            approvers=['users/222', 'users/333'],
+            approval_def='ignored',
+            set_time=timestamp_pb2.Timestamp(),  # Ignored.
+            setter='ignored',
+            phase='ignored'),
+        approvers_remove=['users/222'])
+    actual = self.converter.IngestApprovalDeltas(
+        [approval_delta], self.user_1.user_id)
+    expected = tracker_pb2.ApprovalDelta(
+        # TODO(jessan): Handle update masks.
+        # status=tracker_pb2.ApprovalStatus.NA,
+        # setter_id=self.user_1.user_id,
+        # approver_ids_add=[222, 333],
+        approver_ids_remove=[222],
+    )
+    self.assertEqual(actual, [expected])
+
+  def testIngestApprovalDeltas_EmptyDelta(self):
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name='projects/proj/issues/1/approvalValues/1'))
+    actual = self.converter.IngestApprovalDeltas(
+        [approval_delta], self.user_1.user_id)
+    self.assertEqual(actual, [tracker_pb2.ApprovalDelta()])
+
+  def testIngestApprovalDeltas_InvalidName(self):
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name='x'))
+    with self.assertRaises(exceptions.InputException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_NoName(self):
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA')))
+    with self.assertRaises(exceptions.InputException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_NoStatus(self):
+    """Setter ID isn't set when status isn't set."""
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name='projects/proj/issues/1/approvalValues/1',
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA')),
+        # Status left out of update mask.
+        approvers_remove=['users/222'])
+    actual = self.converter.IngestApprovalDeltas(
+        [approval_delta], self.user_1.user_id)
+    expected = tracker_pb2.ApprovalDelta(
+        approver_ids_remove=[222],
+    )
+    self.assertEqual(actual, [expected])
+
   def testIngestIssue(self):
     ingest = issue_objects_pb2.Issue(
         summary='sum',

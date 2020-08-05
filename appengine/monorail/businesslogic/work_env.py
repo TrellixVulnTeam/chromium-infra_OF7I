@@ -1555,7 +1555,7 @@ class WorkEnv(object):
   def UpdateIssueApproval(self, issue_id, approval_id, approval_delta,
                           comment_content, is_description, attachments=None,
                           send_email=True, kept_attachments=None):
-    # type: (int, int, proto.tracker_pb2.ApprovalValue, str, Boolean,
+    # type: (int, int, proto.tracker_pb2.ApprovalDelta, str, Boolean,
     #     Optional[Sequence[proto.tracker_pb2.Attachment]], Optional[Boolean],
     #     Optional[Sequence[int]]) -> (proto.tracker_pb2.ApprovalValue,
     #     proto.tracker_pb2.IssueComment)

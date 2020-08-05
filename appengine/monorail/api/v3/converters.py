@@ -418,6 +418,79 @@ class Converter(object):
       converted_issues.append(result)
     return converted_issues
 
+  def IngestApprovalDeltas(self, approval_deltas, setter_id):
+    # type: (Sequence[api_proto.issues_pb2.ApprovalDelta], int) ->
+    #     Sequence[proto.tracker_pb2.ApprovalDelta]
+    """Ingests protoc ApprovalDeltas into a protorpc ApprovalDeltas.
+
+    Args:
+      approval_deltas: the protoc ApprovalDeltas to ingest.
+      setter_id: The ID for the user setting the deltas.
+
+    Returns:
+      protorpc versions of approval_deltas, ignoring all OUTPUT_ONLY and masked
+      fields.
+
+    Raises:
+      InputException: if any fields in the approval_delta protos were invalid.
+      ProjectNotFound: if the parent project of any ApprovalValue isn't found.
+    """
+    ingested = []
+    for approval_delta in approval_deltas:
+      # TODO(jessan): Aggregate errors.
+      project_id, _issue_id, approval_id = rnc.IngestApprovalValueName(
+          self.cnxn, approval_delta.approval_value.name, self.services)
+
+      # TODO(jessan): Use update_mask.paths to replace the Falses below.
+      # Status
+      status = None
+      if False:
+        status = approval_delta.approval_value.status
+      # Approvers
+      approver_ids_add = []
+      if False:
+        # No autocreate.
+        # A user may try to remove all existing approvers [a, b] and add another
+        # approver [c]. If they mis-type `c` and we auto-create `c` instead of
+        # raising error, this would cause the ApprovalValue to be editable by no
+        # one but site admins.
+        approver_ids_add = rnc.IngestUserNames(
+            self.cnxn,
+            approval_delta.approval_value.approvers,
+            self.services,
+            autocreate=False)
+      approver_ids_remove = rnc.IngestUserNames(
+          self.cnxn,
+          approval_delta.approvers_remove,
+          self.services,
+          autocreate=False)
+
+      # Field Values.
+      config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+      fds_by_id = {fd.field_id: fd for fd in config.field_defs}
+      if approval_id not in fds_by_id:
+        pass  # TODO(jessan): Raise error - approval not in project
+
+      # TODO(jessan): Ignore updating fvs that don't belong to approval
+      sub_fvs_add = []
+      add_enums = []
+      if False:
+        sub_fvs_add, add_enums = self._IngestFieldValues(
+            approval_delta.approval_value.field_values, config)
+      sub_fvs_remove, remove_enums = self._IngestFieldValues(
+          approval_delta.field_vals_remove, config)
+      labels_add = []
+      labels_remove = []
+      field_helpers.ShiftEnumFieldsIntoLabels(
+          labels_add, labels_remove, add_enums, remove_enums, config)
+      assert len(add_enums) == 0  # ShiftEnumFieldsIntoLabels clears all enums.
+      assert len(remove_enums) == 0
+
+      ingested.append(tbo.MakeApprovalDelta(
+          status, setter_id, approver_ids_add, approver_ids_remove, sub_fvs_add,
+          sub_fvs_remove, [], labels_add, labels_remove))
+    return ingested
+
   def IngestIssue(self, issue, project_id):
     # type: (api_proto.issue_objects_pb2.Issue, int) -> proto.tracker_pb2.Issue
     """Ingest a protoc Issue into a protorpc Issue.
