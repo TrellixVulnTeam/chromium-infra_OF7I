@@ -30,22 +30,25 @@ func newTestTaskSet(invocation *steps.EnumerationResponse_AutotestInvocation, pa
 	return &t, nil
 }
 
-func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) error {
+// LaunchTask returns the newly created task, if any.
+//
+// The returned task may be nil, even on success, if LaunchTask determines that
+// the test is not runnable.
+func (t *testTaskSet) LaunchTask(ctx context.Context, c skylab.Client) (*skylab.Task, error) {
 	if rejected, err := skylab.ValidateDependencies(ctx, c, t.argsGenerator); err != nil {
 		if !skylab.InvalidDependencies.In(err) {
-			return err
+			return nil, err
 		}
 		logging.Warningf(ctx, "Dependency validation failed for %s: %s.", t.Name, err)
 		t.markNotRunnable(rejected)
-		return nil
+		return nil, nil
 	}
 
 	a, err := skylab.NewTask(ctx, c, t.argsGenerator)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	t.NotifyTask(a)
-	return nil
+	return a, nil
 }
 
 // NotifyTask notifies the test task set of a new task for the test.
@@ -66,7 +69,7 @@ func (t *testTaskSet) Completed() bool {
 	if !t.runnable {
 		return true
 	}
-	a := t.GetLatestTask()
+	a := t.getLatestTask()
 	return a != nil && a.Completed()
 }
 
@@ -116,7 +119,7 @@ func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	return test_platform.TaskState_VERDICT_FAILED
 }
 
-func (t *testTaskSet) GetLatestTask() *skylab.Task {
+func (t *testTaskSet) getLatestTask() *skylab.Task {
 	if len(t.tasks) == 0 {
 		return nil
 	}

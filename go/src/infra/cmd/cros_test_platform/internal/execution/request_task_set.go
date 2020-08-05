@@ -25,6 +25,8 @@ type RequestTaskSet struct {
 	testKeys []string
 
 	testTaskSets map[string]*testTaskSet
+	// Stores currently active tasks, keyed by the test each task is running.
+	activeTasks  map[string]*skylab.Task
 	retryCounter retryCounter
 }
 
@@ -53,6 +55,7 @@ func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, pa
 	return &RequestTaskSet{
 		testKeys:     testKeys,
 		testTaskSets: testTaskSets,
+		activeTasks:  make(map[string]*skylab.Task),
 		retryCounter: newRetryCounter(params, tm),
 	}, nil
 }
@@ -75,8 +78,14 @@ func (r *RequestTaskSet) Completed() bool {
 // LaunchTasks launches initial tasks for all the tests in this request.
 func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
 	for _, key := range r.testKeys {
-		if err := r.getTestTaskSet(key).LaunchTask(ctx, c); err != nil {
+		ts := r.getTestTaskSet(key)
+		task, err := ts.LaunchTask(ctx, c)
+		if err != nil {
 			return err
+		}
+		if task != nil {
+			ts.NotifyTask(task)
+			r.activeTasks[key] = task
 		}
 	}
 	return nil
@@ -93,34 +102,45 @@ func (r *RequestTaskSet) getTestTaskSet(key string) *testTaskSet {
 // CheckTasksAndRetry checks the status of currently running tasks for this
 // request and retries failed tasks when allowed.
 func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client) error {
-	for _, key := range r.testKeys {
-		ts := r.getTestTaskSet(key)
-		if ts.Completed() {
-			continue
-		}
-
-		latestTask := ts.GetLatestTask()
-		rerr := latestTask.Refresh(ctx, c)
-		tr := latestTask.Result()
+	completedTests := make([]string, len(r.activeTasks))
+	newTasks := make(map[string]*skylab.Task)
+	for key, task := range r.activeTasks {
+		rerr := task.Refresh(ctx, c)
+		tr := task.Result()
 		if rerr != nil {
 			return errors.Annotate(rerr, "tick for task %s", tr.LogUrl).Err()
 		}
-
-		if !ts.Completed() {
+		if !task.Completed() {
 			continue
 		}
 
+		ts := r.getTestTaskSet(key)
 		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", tr.LogUrl, ts.Name, tr.GetState().GetVerdict())
 
-		if needsRetry(latestTask.Result()) && r.retryCounter.CanRetry(ctx, key) {
-			logging.Infof(ctx, "Retrying %s", ts.Name)
-			task, err := latestTask.Retry(ctx, c)
-			if err != nil {
-				return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
-			}
-			ts.NotifyTask(task)
-			r.retryCounter.NotifyRetry(key)
+		// At this point, we've determined that latestTask finished, and we've
+		// updated the testTaskSet with its result. We can remove it from our
+		// attention set... as long as we don't have to retry.
+		shouldRetry := needsRetry(task.Result()) && r.retryCounter.CanRetry(ctx, key)
+		if !shouldRetry {
+			completedTests = append(completedTests, key)
+			continue
 		}
+
+		logging.Infof(ctx, "Retrying %s", ts.Name)
+		nt, err := task.Retry(ctx, c)
+		if err != nil {
+			return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
+		}
+		newTasks[key] = nt
+		ts.NotifyTask(nt)
+		r.retryCounter.NotifyRetry(key)
+	}
+
+	for _, key := range completedTests {
+		delete(r.activeTasks, key)
+	}
+	for key, task := range newTasks {
+		r.activeTasks[key] = task
 	}
 	return nil
 }
