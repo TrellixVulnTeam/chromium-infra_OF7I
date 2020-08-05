@@ -1955,9 +1955,24 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     delta_6 = tracker_pb2.IssueDelta(
         summary='  ' + 's' * tracker_constants.MAX_SUMMARY_CHARS + '  ')
 
+    issue_7 = _Issue('chicken', 7)
+    issue_8 = _Issue('chicken', 8)
+
+    # We are fine with duplicate/consistent deltas.
+    delta_7 = tracker_pb2.IssueDelta(blocked_on_add=[issue_8.issue_id])
+    delta_8 = tracker_pb2.IssueDelta(blocking_add=[issue_7.issue_id])
+
+    issue_9 = _Issue('chicken', 9)
+    issue_10 = _Issue('chicken', 10)
+
+    delta_9 = tracker_pb2.IssueDelta(blocked_on_remove=[issue_10.issue_id])
+    delta_10 = tracker_pb2.IssueDelta(blocking_remove=[issue_9.issue_id])
+
     issue_delta_pairs = [
         (issue_1, delta_1), (issue_2, delta_2), (issue_3, delta_3),
-        (issue_4, delta_4), (issue_5, delta_5), (issue_6, delta_6)
+        (issue_4, delta_4), (issue_5, delta_5), (issue_6, delta_6),
+        (issue_7, delta_7), (issue_8, delta_8), (issue_9, delta_9),
+        (issue_10, delta_10)
     ]
     comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
     tracker_helpers.AssertIssueChangesValid(
@@ -1969,6 +1984,10 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
   def testAssertIssueChangesValid_Invalid(self):
     """We can raise exceptions when deltas are not valid for issues. """
+
+    def getRef(issue):
+      return '%s:%d' % (issue.project_name, issue.local_id)
+
     issue_delta_pairs = []
     expected_err_msgs = []
 
@@ -1976,7 +1995,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     expected_err_msgs.append('Comment is too long.')
 
     issue_1 = _Issue('chicken', 1)
-    issue_1_ref = '%s:%d' % (issue_1.project_name, issue_1.local_id)
+    issue_1_ref = getRef(issue_1)
 
     delta_1 = tracker_pb2.IssueDelta(
         merged_into=issue_1.issue_id, blocked_on_add=[issue_1.issue_id])
@@ -1989,7 +2008,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         ])
 
     issue_2 = _Issue('chicken', 2)
-    issue_2_ref = '%s:%d' % (issue_2.project_name, issue_2.local_id)
+    issue_2_ref = getRef(issue_2)
 
     fv = tracker_bizobj.MakeFieldValue(
         self.int_fd.field_id, 1000, None, None, None, None, False)
@@ -1999,6 +2018,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         owner_id=self.no_project_user.user_id,
         field_vals_add=[fv])
     issue_delta_pairs.append((issue_2, delta_2))
+
     expected_err_msgs.extend(
         [
             '%s: Cannot block an issue on itself.' % issue_2_ref,
@@ -2011,6 +2031,53 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
                                  '\n'.join(expected_err_msgs)):
       tracker_helpers.AssertIssueChangesValid(
           self.cnxn, issue_delta_pairs, self.services, comment_content=comment)
+
+  def testAssertIssueChangesValid_ConflictingDeltas(self):
+
+    def getRef(issue):
+      return '%s:%d' % (issue.project_name, issue.local_id)
+
+    expected_err_msgs = []
+    issue_3 = _Issue('chicken', 3)
+    issue_3_ref = getRef(issue_3)
+    issue_4 = _Issue('chicken', 4)
+    issue_4_ref = getRef(issue_4)
+    issue_5 = _Issue('chicken', 5)
+    issue_5_ref = getRef(issue_5)
+    issue_6 = _Issue('chicken', 6)
+    issue_6_ref = getRef(issue_6)
+
+    delta_3 = tracker_pb2.IssueDelta(
+        blocking_add=[issue_4.issue_id],
+        blocked_on_add=[issue_5.issue_id, issue_6.issue_id])
+
+    delta_4 = tracker_pb2.IssueDelta(
+        blocked_on_remove=[issue_3.issue_id], blocking_add=[issue_5.issue_id])
+    expected_err_msgs.append(
+        'Changes for %s conflict with changes for %s' %
+        (issue_4_ref, issue_3_ref))
+
+    delta_5 = tracker_pb2.IssueDelta(
+        blocking_remove=[issue_3.issue_id],
+        blocked_on_remove=[issue_4.issue_id])
+    expected_err_msgs.append(
+        'Changes for %s conflict with changes for %s, %s' %
+        (issue_5_ref, issue_3_ref, issue_4_ref))
+
+    delta_6 = tracker_pb2.IssueDelta(blocking_remove=[issue_3.issue_id])
+    expected_err_msgs.append(
+        'Changes for %s conflict with changes for %s' %
+        (issue_6_ref, issue_3_ref))
+
+    issue_delta_pairs = [
+        (issue_3, delta_3), (issue_4, delta_4), (issue_5, delta_5),
+        (issue_6, delta_6)
+    ]
+
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 '\n'.join(expected_err_msgs)):
+      tracker_helpers.AssertIssueChangesValid(
+          self.cnxn, issue_delta_pairs, self.services)
 
   def testComputeNewCcsFromIssueMerge(self):
     """We can compute the new ccs to add to a merge-into issue."""

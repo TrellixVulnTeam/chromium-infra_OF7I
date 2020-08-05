@@ -1362,6 +1362,40 @@ def GroupUniqueDeltaIssues(issue_delta_pairs):
   return unique_deltas, issues_for_unique_deltas
 
 
+def _AssertNoConflictingDeltas(issue_delta_pairs, refs_dict, err_agg):
+  # type: (Sequence[Tuple[Issue, IssueDelta]], Mapping[int, str],
+  #     exceptions.ErrorAggregator) -> None
+  """Checks if any issue deltas conflict with each other."""
+  err_message = 'Changes for {} conflict with changes for {}'
+
+  # Track all delta blocked_on_add and blocking_add in terms of
+  # 'blocking_add' so we can track when a {blocked_on|blocking}_remove
+  # is in conflict with another delta's {blocked_on|blocking}_add.
+  blocking_add = collections.defaultdict(list)
+  for issue, delta in issue_delta_pairs:
+    blocking_add[issue.issue_id].extend(delta.blocking_add)
+
+    for imp_iid in delta.blocked_on_add:
+      blocking_add[imp_iid].append(issue.issue_id)
+
+  # Check *_remove for conflicts with tracking blocking_add.
+  for issue, delta in issue_delta_pairs:
+    added_iids = blocking_add[issue.issue_id]
+    # Get intersection of iids that are in `blocking_remove` and
+    # the tracked `blocking_add`.
+    conflict_iids = set(delta.blocking_remove) & set(added_iids)
+
+    # Get iids of `blocked_on_remove` that conflict with the
+    # tracked `blocking_add`.
+    for possible_conflict_iid in delta.blocked_on_remove:
+      if issue.issue_id in blocking_add[possible_conflict_iid]:
+        conflict_iids.add(possible_conflict_iid)
+
+    if conflict_iids:
+      refs_str = ', '.join([refs_dict[iid] for iid in conflict_iids])
+      err_agg.AddErrorMessage(err_message, refs_dict[issue.issue_id], refs_str)
+
+
 def AssertIssueChangesValid(
     cnxn, issue_delta_pairs, services, comment_content=None):
   # type: (MonorailConnection, Sequence[Tuple[Issue, IssueDelta]], Services,
@@ -1375,36 +1409,42 @@ def AssertIssueChangesValid(
       {issue.project_id for (issue, _delta) in issue_delta_pairs})
   projects_by_id = services.project.GetProjects(cnxn, project_ids)
   configs_by_id = services.config.GetProjectConfigs(cnxn, project_ids)
+  refs_dict = {
+      iss.issue_id: '%s:%d' % (iss.project_name, iss.local_id)
+      for iss, _delta in issue_delta_pairs
+  }
 
   with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
     if (comment_content and
         len(comment_content.strip()) > tracker_constants.MAX_COMMENT_CHARS):
       err_agg.AddErrorMessage('Comment is too long.')
 
+    _AssertNoConflictingDeltas(issue_delta_pairs, refs_dict, err_agg)
+
     for issue, delta in issue_delta_pairs:
       project = projects_by_id.get(issue.project_id)
       config = configs_by_id.get(issue.project_id)
-      issue_ref = '%s:%d' % (issue.project_name, issue.local_id)
+      issue_ref = refs_dict[issue.issue_id]
 
       if delta.merged_into and issue.issue_id == delta.merged_into:
         err_agg.AddErrorMessage(
-            '%s: Cannot merge an issue into itself.' % issue_ref)
+            '{}: Cannot merge an issue into itself.', issue_ref)
       if (issue.issue_id in set(
           delta.blocked_on_add)) or (issue.issue_id in set(delta.blocking_add)):
         err_agg.AddErrorMessage(
-            '%s: Cannot block an issue on itself.' % issue_ref)
+            '{}: Cannot block an issue on itself.', issue_ref)
       if (delta.owner_id is not None) and (delta.owner_id != issue.owner_id):
         parsed_owner_valid, msg = IsValidIssueOwner(
             cnxn, project, delta.owner_id, services)
         if not parsed_owner_valid:
-          err_agg.AddErrorMessage('%s: %s' % (issue_ref, msg))
+          err_agg.AddErrorMessage('{}: {}', issue_ref, msg)
       if (delta.summary and
           len(delta.summary.strip()) > tracker_constants.MAX_SUMMARY_CHARS):
-        err_agg.AddErrorMessage('%s: Summary is too long.' % issue_ref)
+        err_agg.AddErrorMessage('{}: Summary is too long.', issue_ref)
       fvs_err_msgs = field_helpers.ValidateCustomFields(
           cnxn, services, delta.field_vals_add, config, project)
       if fvs_err_msgs:
-        err_agg.AddErrorMessage('%s: %s' % (issue_ref, '\n'.join(fvs_err_msgs)))
+        err_agg.AddErrorMessage('{}: {}', issue_ref, '\n'.join(fvs_err_msgs))
 
 
 def AssertValidIssueForCreate(cnxn, services, issue, description):
