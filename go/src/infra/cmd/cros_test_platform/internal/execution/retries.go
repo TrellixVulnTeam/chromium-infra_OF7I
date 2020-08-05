@@ -14,8 +14,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-// needsRetry determines if a task result indicates that the test needs to be
-// retried.
+// needsRetry determines if a task result indicates that the invocation needs to
+// be retried.
 //
 // Panics on unknown verdicts.
 func needsRetry(result *steps.ExecuteResponse_TaskResult) bool {
@@ -33,15 +33,12 @@ func needsRetry(result *steps.ExecuteResponse_TaskResult) bool {
 }
 
 // newRetryCounter initializes a new retryCounter.
-//
-// The tests are keyed by arbitrary string names used to refer to tests in
-// retryCounter methods.
-func newRetryCounter(params *test_platform.Request_Params, tests map[string]*steps.EnumerationResponse_AutotestInvocation) retryCounter {
+func newRetryCounter(params *test_platform.Request_Params, iids map[invocationID]*steps.EnumerationResponse_AutotestInvocation) retryCounter {
 	rc := retryCounter{
 		globalMaxRetries: inferGlobalMaxRetries(params),
-		testRetryCounter: make(map[string]*testRetryCounter),
+		testRetryCounter: make(map[invocationID]*testRetryCounter),
 	}
-	for name, inv := range tests {
+	for name, inv := range iids {
 		rc.testRetryCounter[name] = &testRetryCounter{
 			Max: int(inferTestMaxRetries(inv)),
 		}
@@ -54,39 +51,39 @@ func newRetryCounter(params *test_platform.Request_Params, tests map[string]*ste
 type retryCounter struct {
 	globalMaxRetries int32
 	retries          int32
-	testRetryCounter map[string]*testRetryCounter
+	testRetryCounter map[invocationID]*testRetryCounter
 }
 
 // NotifyRetry notifies retryCounter of a retry attempt for a test.
 //
-// NotifyRetry panics for an unknown test.
-func (c *retryCounter) NotifyRetry(test string) {
+// NotifyRetry panics for an unknown invocationID.
+func (c *retryCounter) NotifyRetry(iid invocationID) {
 	c.retries++
-	c.getTestRetryCounter(test).Count++
+	c.getTestRetryCounter(iid).Count++
 }
 
 // CanRetry determines if a retry is allowed for a test based on the count of
 // retries so far.
 //
-// CanRetry panics for an unknown test.
-func (c *retryCounter) CanRetry(ctx context.Context, test string) bool {
-	tc := c.getTestRetryCounter(test)
+// CanRetry panics for an unknown invocationID.
+func (c *retryCounter) CanRetry(ctx context.Context, iid invocationID) bool {
+	tc := c.getTestRetryCounter(iid)
 
 	if tc.Remaining() <= 0 {
-		logging.Infof(ctx, "Not retrying %s. Hit the test retry limit.", test)
+		logging.Infof(ctx, "Not retrying %s. Hit the test retry limit.", iid)
 		return false
 	}
 	if c.globalRetriesRemaining() <= 0 {
-		logging.Infof(ctx, "Not retrying %s. Hit the task set retry limit.", test)
+		logging.Infof(ctx, "Not retrying %s. Hit the task set retry limit.", iid)
 		return false
 	}
 	return true
 }
 
-func (c *retryCounter) getTestRetryCounter(test string) *testRetryCounter {
-	tc, ok := c.testRetryCounter[test]
+func (c *retryCounter) getTestRetryCounter(iid invocationID) *testRetryCounter {
+	tc, ok := c.testRetryCounter[iid]
 	if !ok {
-		panic(fmt.Sprintf("unknown test %s", test))
+		panic(fmt.Sprintf("unknown test %s", iid))
 	}
 	return tc
 }

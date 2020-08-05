@@ -18,18 +18,23 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
+// invocationID is a unique identifier used to refer to the input invocations.
+//
+// invocationID is required because there is no natural unique name for
+// invocations.
+type invocationID string
+
 // RequestTaskSet encapsulates the running state of the set of tasks for one
 // cros_test_platform request.
 type RequestTaskSet struct {
-	// Unique names for tests preserving the order of incoming arguments.
+	// Unique names for invocations preserving the order of incoming arguments.
 	// This is used to preserve the order in the response.
-	testKeys []string
+	invocationIDs []invocationID
 
-	argsGenerators map[string]*args.Generator
-	testTaskSets   map[string]*testTaskSet
-	// Stores currently active tasks, keyed by the test each task is running.
-	activeTasks  map[string]*skylab.Task
-	retryCounter retryCounter
+	argsGenerators map[invocationID]*args.Generator
+	testTaskSets   map[invocationID]*testTaskSet
+	activeTasks    map[invocationID]*skylab.Task
+	retryCounter   retryCounter
 }
 
 // TaskSetConfig is a wrapper for the parameters common to the testTaskSets.
@@ -41,29 +46,28 @@ type TaskSetConfig struct {
 
 // NewRequestTaskSet creates a new RequestTaskSet.
 func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*RequestTaskSet, error) {
-	testKeys := make([]string, len(tests))
-	testTaskSets := make(map[string]*testTaskSet)
-	argsGenerators := make(map[string]*args.Generator)
-	tm := make(map[string]*steps.EnumerationResponse_AutotestInvocation)
+	invocationIDs := make([]invocationID, len(tests))
+	testTaskSets := make(map[invocationID]*testTaskSet)
+	argsGenerators := make(map[invocationID]*args.Generator)
+	tm := make(map[invocationID]*steps.EnumerationResponse_AutotestInvocation)
 	for i, test := range tests {
-		k := testKey(i, test)
-		testKeys[i] = k
-		argsGenerators[k] = args.NewGenerator(test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
-		testTaskSets[k] = newTestTaskSet(test.GetTest().GetName())
-		tm[k] = test
+		iid := newInvocationID(i, test)
+		invocationIDs[i] = iid
+		argsGenerators[iid] = args.NewGenerator(test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
+		testTaskSets[iid] = newTestTaskSet(test.GetTest().GetName())
+		tm[iid] = test
 	}
 	return &RequestTaskSet{
 		argsGenerators: argsGenerators,
-		testKeys:       testKeys,
+		invocationIDs:  invocationIDs,
 		testTaskSets:   testTaskSets,
-		activeTasks:    make(map[string]*skylab.Task),
+		activeTasks:    make(map[invocationID]*skylab.Task),
 		retryCounter:   newRetryCounter(params, tm),
 	}, nil
 }
 
-// testName returns a unique string used as a key for a test.
-func testKey(i int, test *steps.EnumerationResponse_AutotestInvocation) string {
-	return fmt.Sprintf("%d_%s", i, test.GetTest().GetName())
+func newInvocationID(i int, test *steps.EnumerationResponse_AutotestInvocation) invocationID {
+	return invocationID(fmt.Sprintf("%d_%s", i, test.GetTest().GetName()))
 }
 
 // Completed returns true if all tasks for this request have completed.
@@ -78,9 +82,9 @@ func (r *RequestTaskSet) Completed() bool {
 
 // LaunchTasks launches initial tasks for all the tests in this request.
 func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
-	for _, key := range r.testKeys {
-		ts := r.getTestTaskSet(key)
-		ag := r.getArgsGenerator(key)
+	for _, iid := range r.invocationIDs {
+		ts := r.getTestTaskSet(iid)
+		ag := r.getArgsGenerator(iid)
 
 		if rejected, err := skylab.ValidateDependencies(ctx, c, ag); err != nil {
 			if !skylab.InvalidDependencies.In(err) {
@@ -96,23 +100,23 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error
 			return err
 		}
 		ts.NotifyTask(task)
-		r.activeTasks[key] = task
+		r.activeTasks[iid] = task
 	}
 	return nil
 }
 
-func (r *RequestTaskSet) getTestTaskSet(key string) *testTaskSet {
-	ts, ok := r.testTaskSets[key]
+func (r *RequestTaskSet) getTestTaskSet(iid invocationID) *testTaskSet {
+	ts, ok := r.testTaskSets[iid]
 	if !ok {
-		panic(fmt.Sprintf("No test task set for key %s", key))
+		panic(fmt.Sprintf("No test task set for invocation %s", iid))
 	}
 	return ts
 }
 
-func (r *RequestTaskSet) getArgsGenerator(key string) *args.Generator {
-	ag, ok := r.argsGenerators[key]
+func (r *RequestTaskSet) getArgsGenerator(iid invocationID) *args.Generator {
+	ag, ok := r.argsGenerators[iid]
 	if !ok {
-		panic(fmt.Sprintf("No args.Generator for key %s", key))
+		panic(fmt.Sprintf("No args.Generator for invocation %s", iid))
 	}
 	return ag
 }
@@ -120,9 +124,9 @@ func (r *RequestTaskSet) getArgsGenerator(key string) *args.Generator {
 // CheckTasksAndRetry checks the status of currently running tasks for this
 // request and retries failed tasks when allowed.
 func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client) error {
-	completedTests := make([]string, len(r.activeTasks))
-	newTasks := make(map[string]*skylab.Task)
-	for key, task := range r.activeTasks {
+	completedTests := make([]invocationID, len(r.activeTasks))
+	newTasks := make(map[invocationID]*skylab.Task)
+	for iid, task := range r.activeTasks {
 		rerr := task.Refresh(ctx, c)
 		tr := task.Result()
 		if rerr != nil {
@@ -132,15 +136,15 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 			continue
 		}
 
-		ts := r.getTestTaskSet(key)
+		ts := r.getTestTaskSet(iid)
 		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", tr.LogUrl, ts.Name, tr.GetState().GetVerdict())
 
 		// At this point, we've determined that latestTask finished, and we've
 		// updated the testTaskSet with its result. We can remove it from our
 		// attention set... as long as we don't have to retry.
-		shouldRetry := needsRetry(task.Result()) && r.retryCounter.CanRetry(ctx, key)
+		shouldRetry := needsRetry(task.Result()) && r.retryCounter.CanRetry(ctx, iid)
 		if !shouldRetry {
-			completedTests = append(completedTests, key)
+			completedTests = append(completedTests, iid)
 			continue
 		}
 
@@ -149,16 +153,16 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		if err != nil {
 			return errors.Annotate(err, "tick for task %s: retry test", tr.LogUrl).Err()
 		}
-		newTasks[key] = nt
+		newTasks[iid] = nt
 		ts.NotifyTask(nt)
-		r.retryCounter.NotifyRetry(key)
+		r.retryCounter.NotifyRetry(iid)
 	}
 
-	for _, key := range completedTests {
-		delete(r.activeTasks, key)
+	for _, iid := range completedTests {
+		delete(r.activeTasks, iid)
 	}
-	for key, task := range newTasks {
-		r.activeTasks[key] = task
+	for iid, task := range newTasks {
+		r.activeTasks[iid] = task
 	}
 	return nil
 }
@@ -215,10 +219,10 @@ func successfulVerdict(v test_platform.TaskState_Verdict) bool {
 }
 
 func (r *RequestTaskSet) results() []*steps.ExecuteResponse_ConsolidatedResult {
-	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.testKeys))
-	for i, key := range r.testKeys {
+	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.invocationIDs))
+	for i, iid := range r.invocationIDs {
 		rs[i] = &steps.ExecuteResponse_ConsolidatedResult{
-			Attempts: r.getTestTaskSet(key).TaskResult(),
+			Attempts: r.getTestTaskSet(iid).TaskResult(),
 		}
 	}
 	return rs
