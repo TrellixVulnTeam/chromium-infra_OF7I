@@ -1,8 +1,8 @@
-// Copyright 2019 The Chromium Authors. All rights reserved.
+// Copyright 2020 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execution
+package response
 
 import (
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
@@ -11,32 +11,34 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 )
 
-// testTaskSet encapsulates the running state of the set of tasks for one test.
-type testTaskSet struct {
+// Invocation accumulates the response for a single invocation
+type Invocation struct {
 	Name             string
 	runnable         bool
 	rejectedTaskDims map[string]string
 	tasks            []*skylab.Task
 }
 
-func newTestTaskSet(name string) *testTaskSet {
-	return &testTaskSet{runnable: true, Name: name}
+// NewInvocation returns a new Invocation with the given name.
+func NewInvocation(name string) *Invocation {
+	return &Invocation{runnable: true, Name: name}
 }
 
 // NotifyTask notifies the test task set of a new task for the test.
-func (t *testTaskSet) NotifyTask(task *skylab.Task) {
+func (t *Invocation) NotifyTask(task *skylab.Task) {
 	t.tasks = append(t.tasks, task)
 }
 
-// MarkNotRunnable marks this test run as being unable to run.
+// MarkNotRunnable marks this invocation as being unable to run.
 //
-// In particular, this means that this test run is Completed().
-func (t *testTaskSet) MarkNotRunnable(rejectedTaskDims map[string]string) {
+// When the invocation is not runnable because of unsatisfiable dependencies,
+// the rejected dimensions should be supplied as the rejectedTaskDims argument.
+func (t *Invocation) MarkNotRunnable(rejectedTaskDims map[string]string) {
 	t.runnable = false
 	t.rejectedTaskDims = rejectedTaskDims
 }
 
-func (t *testTaskSet) TaskResult() []*steps.ExecuteResponse_TaskResult {
+func (t *Invocation) taskResult() []*steps.ExecuteResponse_TaskResult {
 	if !t.runnable {
 		return []*steps.ExecuteResponse_TaskResult{
 			{
@@ -58,7 +60,7 @@ func (t *testTaskSet) TaskResult() []*steps.ExecuteResponse_TaskResult {
 	return ret
 }
 
-func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
+func (t *Invocation) verdict() test_platform.TaskState_Verdict {
 	if !t.runnable {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
@@ -82,8 +84,8 @@ func (t *testTaskSet) Verdict() test_platform.TaskState_Verdict {
 	return test_platform.TaskState_VERDICT_FAILED
 }
 
-func (t *testTaskSet) LifeCycle() test_platform.TaskState_LifeCycle {
-	as := t.TaskResult()
+func (t *Invocation) lifeCycle() test_platform.TaskState_LifeCycle {
+	as := t.taskResult()
 	// A test result can have 0 attempts only if the test hasn't run *yet*.
 	// This is not possible in practice because the first attempt for each test
 	// is created at the beginning.
@@ -97,7 +99,7 @@ func (t *testTaskSet) LifeCycle() test_platform.TaskState_LifeCycle {
 	return test_platform.TaskState_LIFE_CYCLE_COMPLETED
 }
 
-func (t *testTaskSet) getLatestTask() *skylab.Task {
+func (t *Invocation) getLatestTask() *skylab.Task {
 	if len(t.tasks) == 0 {
 		return nil
 	}

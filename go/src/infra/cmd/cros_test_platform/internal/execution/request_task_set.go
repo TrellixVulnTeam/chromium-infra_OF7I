@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"infra/cmd/cros_test_platform/internal/execution/args"
+	"infra/cmd/cros_test_platform/internal/execution/response"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"time"
 
@@ -31,10 +32,10 @@ type RequestTaskSet struct {
 	// This is used to preserve the order in the response.
 	invocationIDs []invocationID
 
-	argsGenerators map[invocationID]*args.Generator
-	testTaskSets   map[invocationID]*testTaskSet
-	activeTasks    map[invocationID]*skylab.Task
-	retryCounter   retryCounter
+	argsGenerators      map[invocationID]*args.Generator
+	invocationResponses map[invocationID]*response.Invocation
+	activeTasks         map[invocationID]*skylab.Task
+	retryCounter        retryCounter
 
 	launched bool
 }
@@ -49,22 +50,22 @@ type TaskSetConfig struct {
 // NewRequestTaskSet creates a new RequestTaskSet.
 func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*RequestTaskSet, error) {
 	invocationIDs := make([]invocationID, len(tests))
-	testTaskSets := make(map[invocationID]*testTaskSet)
+	invocationResponses := make(map[invocationID]*response.Invocation)
 	argsGenerators := make(map[invocationID]*args.Generator)
 	tm := make(map[invocationID]*steps.EnumerationResponse_AutotestInvocation)
 	for i, test := range tests {
 		iid := newInvocationID(i, test)
 		invocationIDs[i] = iid
 		argsGenerators[iid] = args.NewGenerator(test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
-		testTaskSets[iid] = newTestTaskSet(test.GetTest().GetName())
+		invocationResponses[iid] = response.NewInvocation(test.GetTest().GetName())
 		tm[iid] = test
 	}
 	return &RequestTaskSet{
-		argsGenerators: argsGenerators,
-		invocationIDs:  invocationIDs,
-		testTaskSets:   testTaskSets,
-		activeTasks:    make(map[invocationID]*skylab.Task),
-		retryCounter:   newRetryCounter(params, tm),
+		argsGenerators:      argsGenerators,
+		invocationIDs:       invocationIDs,
+		invocationResponses: invocationResponses,
+		activeTasks:         make(map[invocationID]*skylab.Task),
+		retryCounter:        newRetryCounter(params, tm),
 	}, nil
 }
 
@@ -81,7 +82,7 @@ func (r *RequestTaskSet) completed() bool {
 func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error {
 	r.launched = true
 	for _, iid := range r.invocationIDs {
-		ts := r.getTestTaskSet(iid)
+		ts := r.getInvocationResponse(iid)
 		ag := r.getArgsGenerator(iid)
 
 		if rejected, err := skylab.ValidateDependencies(ctx, c, ag); err != nil {
@@ -103,12 +104,12 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error
 	return nil
 }
 
-func (r *RequestTaskSet) getTestTaskSet(iid invocationID) *testTaskSet {
-	ts, ok := r.testTaskSets[iid]
+func (r *RequestTaskSet) getInvocationResponse(iid invocationID) *response.Invocation {
+	ir, ok := r.invocationResponses[iid]
 	if !ok {
 		panic(fmt.Sprintf("No test task set for invocation %s", iid))
 	}
-	return ts
+	return ir
 }
 
 func (r *RequestTaskSet) getArgsGenerator(iid invocationID) *args.Generator {
@@ -137,7 +138,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 			continue
 		}
 
-		ts := r.getTestTaskSet(iid)
+		ts := r.getInvocationResponse(iid)
 		logging.Infof(ctx, "Task %s (%s) completed with verdict %s", tr.LogUrl, ts.Name, tr.GetState().GetVerdict())
 
 		// At this point, we've determined that latestTask finished, and we've
@@ -170,84 +171,9 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 
 // Response returns the current response for this request.
 func (r *RequestTaskSet) Response() *steps.ExecuteResponse {
-	tss := make([]*testTaskSet, len(r.invocationIDs))
+	tss := make([]*response.Invocation, len(r.invocationIDs))
 	for i, iid := range r.invocationIDs {
-		tss[i] = r.testTaskSets[iid]
+		tss[i] = r.invocationResponses[iid]
 	}
-	return response(tss)
-}
-
-func response(tss []*testTaskSet) *steps.ExecuteResponse {
-	resp := &steps.ExecuteResponse{
-		TaskResults:         taskResults(tss),
-		ConsolidatedResults: results(tss),
-		State: &test_platform.TaskState{
-			Verdict:   verdict(tss),
-			LifeCycle: lifecycle(tss),
-		},
-	}
-	return resp
-}
-
-func lifecycle(tss []*testTaskSet) test_platform.TaskState_LifeCycle {
-	aborted := false
-	running := false
-	for _, ts := range tss {
-		if ts.LifeCycle() == test_platform.TaskState_LIFE_CYCLE_ABORTED {
-			aborted = true
-		}
-		if ts.LifeCycle() == test_platform.TaskState_LIFE_CYCLE_RUNNING {
-			running = true
-		}
-	}
-
-	// Order matters here. We return the "worst" lifecycle found.
-	if aborted {
-		return test_platform.TaskState_LIFE_CYCLE_ABORTED
-	}
-	if running {
-		return test_platform.TaskState_LIFE_CYCLE_RUNNING
-	}
-	return test_platform.TaskState_LIFE_CYCLE_COMPLETED
-}
-
-func verdict(tss []*testTaskSet) test_platform.TaskState_Verdict {
-	v := test_platform.TaskState_VERDICT_PASSED
-	for _, t := range tss {
-		if !successfulVerdict(t.Verdict()) {
-			v = test_platform.TaskState_VERDICT_FAILED
-			break
-		}
-	}
-	return v
-}
-
-func successfulVerdict(v test_platform.TaskState_Verdict) bool {
-	switch v {
-	case test_platform.TaskState_VERDICT_PASSED,
-		test_platform.TaskState_VERDICT_PASSED_ON_RETRY,
-		test_platform.TaskState_VERDICT_NO_VERDICT:
-		return true
-	default:
-		return false
-	}
-}
-
-func results(tss []*testTaskSet) []*steps.ExecuteResponse_ConsolidatedResult {
-	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(tss))
-	for i, ts := range tss {
-		rs[i] = &steps.ExecuteResponse_ConsolidatedResult{
-			Attempts: ts.TaskResult(),
-		}
-	}
-	return rs
-}
-
-func taskResults(tss []*testTaskSet) []*steps.ExecuteResponse_TaskResult {
-	results := results(tss)
-	var trs []*steps.ExecuteResponse_TaskResult
-	for _, result := range results {
-		trs = append(trs, result.Attempts...)
-	}
-	return trs
+	return response.Summarize(tss)
 }
