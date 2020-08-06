@@ -19,11 +19,18 @@ class TestEvaluator:
     task_graph = evaluator.TaskGraph(
         vertices=[
             evaluator.TaskVertex(
-                id='input0', vertex_type='constant', payload={'value': 0}),
+                id='input0',
+                vertex_type='constant',
+                state='pending',
+                payload={'value': 0}),
             evaluator.TaskVertex(
-                id='input1', vertex_type='constant', payload={'value': 1}),
+                id='input1',
+                vertex_type='constant',
+                state='pending',
+                payload={'value': 1}),
             evaluator.TaskVertex(
-                id='plus', vertex_type='operator+', payload={}),
+                id='plus', vertex_type='operator+', state='pending',
+                payload={}),
         ],
         edges=[
             evaluator.Dependency(from_='plus', to='input0'),
@@ -49,9 +56,12 @@ class TestEvaluator:
     def _load_graph():
       return evaluator.TaskGraph(
           vertices=[
-              evaluator.TaskVertex(id='leaf_0', vertex_type='node', payload={}),
-              evaluator.TaskVertex(id='leaf_1', vertex_type='node', payload={}),
-              evaluator.TaskVertex(id='parent', vertex_type='node', payload={}),
+              evaluator.TaskVertex(
+                  id='leaf_0', vertex_type='node', state='pending', payload={}),
+              evaluator.TaskVertex(
+                  id='leaf_1', vertex_type='node', state='pending', payload={}),
+              evaluator.TaskVertex(
+                  id='parent', vertex_type='node', state='pending', payload={}),
           ],
           edges=[
               evaluator.Dependency(from_='parent', to='leaf_0'),

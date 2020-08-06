@@ -15,7 +15,8 @@ _NOT_EVALUATED, _CHILDREN_PENDING, _EVALUATION_DONE = (0, 1, 2)
 
 
 class TaskVertex(
-    collections.namedtuple('TaskVertex', ('id', 'vertex_type', 'payload'))):
+    collections.namedtuple('TaskVertex',
+                           ('id', 'vertex_type', 'state', 'payload'))):
   __slots__ = ()
 
 
@@ -33,8 +34,9 @@ class _AdjacencyPair(
 
 
 class NormalizedTask(
-    collections.namedtuple('NormalizedTask',
-                           ('id', 'task_type', 'payload', 'dependencies'))):
+    collections.namedtuple(
+        'NormalizedTask',
+        ('id', 'task_type', 'payload', 'state', 'dependencies'))):
   __slots__ = ()
 
 
@@ -152,8 +154,8 @@ def evaluate_graph(event, evaluator, load_graph):
         result_actions = evaluator(
             NormalizedTask(
                 copy.copy(task.id), copy.copy(task.vertex_type),
-                copy.deepcopy(task.payload), copy.deepcopy(deps)), event,
-            context)
+                copy.deepcopy(task.payload), copy.copy(task.state),
+                copy.deepcopy(deps)), event, context)
         if result_actions:
           collected_actions.extend(result_actions)
         vertex_states[task.id] = _EVALUATION_DONE
