@@ -127,16 +127,20 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 	return nil, err
 }
 
-func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize, requiredSize int32, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
+// ListMachineLSEs lists the machine lses
+// Does a query over MachineLSE entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, MachineLSEKind, pageSize, pageToken, filterMap, keysOnly)
+	if err != nil {
+		return nil, "", err
+	}
 	var nextCur datastore.Cursor
 	err = datastore.Run(ctx, q, func(ent *MachineLSEEntity, cb datastore.CursorCB) error {
 		if keysOnly {
-			machineLSE := &ufspb.MachineLSE{
+			res = append(res, &ufspb.MachineLSE{
 				Name: ent.ID,
-			}
-			if validFunc == nil || (validFunc != nil && validFunc(machineLSE)) {
-				res = append(res, machineLSE)
-			}
+			})
 		} else {
 			pm, err := ent.GetProto()
 			if err != nil {
@@ -144,11 +148,9 @@ func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize, req
 				return nil
 			}
 			machineLSE := pm.(*ufspb.MachineLSE)
-			if validFunc == nil || (validFunc != nil && validFunc(machineLSE)) {
-				res = append(res, machineLSE)
-			}
+			res = append(res, machineLSE)
 		}
-		if len(res) >= int(requiredSize) {
+		if len(res) >= int(pageSize) {
 			if nextCur, err = cb(); err != nil {
 				return err
 			}
@@ -166,15 +168,39 @@ func listMachineLSEHelper(ctx context.Context, q *datastore.Query, pageSize, req
 	return
 }
 
-// ListMachineLSEs lists the machine lses
-// Does a query over MachineLSE entities. Returns up to pageSize entities, plus non-nil cursor (if
-// there are more results). pageSize must be positive.
-func ListMachineLSEs(ctx context.Context, pageSize int32, requiredSize int32, pageToken string, filterMap map[string][]interface{}, keysOnly bool, validFunc func(*ufspb.MachineLSE) bool) ([]*ufspb.MachineLSE, string, error) {
-	q, err := ufsds.ListQuery(ctx, MachineLSEKind, pageSize, pageToken, filterMap, keysOnly)
+// ListFreeMachineLSEs lists the machine lses with vm capacity
+func ListFreeMachineLSEs(ctx context.Context, requiredSize int32, filterMap map[string][]interface{}, capacityMap map[string]int) (res []*ufspb.MachineLSE, nextPageToken string, err error) {
+	q, err := ufsds.ListQuery(ctx, MachineLSEKind, -1, "", filterMap, false)
 	if err != nil {
 		return nil, "", err
 	}
-	return listMachineLSEHelper(ctx, q, pageSize, requiredSize, keysOnly, validFunc)
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *MachineLSEEntity, cb datastore.CursorCB) error {
+		pm, err := ent.GetProto()
+		if err != nil {
+			logging.Errorf(ctx, "Failed to UnMarshal: %s", err)
+			return nil
+		}
+		machineLSE := pm.(*ufspb.MachineLSE)
+		if machineLSE.GetChromeBrowserMachineLse().GetVmCapacity() > int32(capacityMap[machineLSE.GetName()]) {
+			res = append(res, machineLSE)
+		}
+		if len(res) >= int(requiredSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to List MachineLSEs %s", err)
+		return nil, "", status.Errorf(codes.Internal, err.Error())
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
 }
 
 // DeleteMachineLSE deletes the machineLSE in datastore

@@ -385,13 +385,18 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 	}
 	if _, ok := filterMap[util.FreeVMFilterName]; ok {
 		delete(filterMap, util.FreeVMFilterName)
-		validFunc := func(lse *ufspb.MachineLSE) bool {
-			if lse.GetChromeBrowserMachineLse().GetVmCapacity() > int32(len(lse.GetChromeBrowserMachineLse().GetVms())) {
-				return true
-			}
-			return false
+		allVMs, err := inventory.GetAllVMs(ctx)
+		if err != nil {
+			return nil, "", errors.Annotate(err, "Failed to get all vms").Err()
 		}
-		lses, _, err := inventory.ListMachineLSEs(ctx, -1, pageSize, "", filterMap, false, validFunc)
+		capacityMap := make(map[string]int, 0)
+		for _, r := range allVMs.Passed() {
+			vm := r.Data.(*ufspb.VM)
+			if vm.GetMachineLseId() != "" {
+				capacityMap[vm.GetMachineLseId()]++
+			}
+		}
+		lses, _, err := inventory.ListFreeMachineLSEs(ctx, pageSize, filterMap, capacityMap)
 		if err != nil {
 			return nil, "", err
 		}
@@ -399,14 +404,18 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 		var total int32
 		for _, lse := range lses {
 			res = append(res, lse)
-			total += lse.GetChromeBrowserMachineLse().GetVmCapacity() - int32(len(lse.GetChromeBrowserMachineLse().GetVms()))
+			freeSlots := lse.GetChromeBrowserMachineLse().GetVmCapacity() - int32(capacityMap[lse.GetName()])
+			logging.Debugf(ctx, "Found %d free slots on host %s", freeSlots, lse.GetName())
+			lse.GetChromeBrowserMachineLse().VmCapacity = freeSlots
+			total += freeSlots
+			logging.Debugf(ctx, "Already get %d (require %d)", total, pageSize)
 			if total >= pageSize {
 				break
 			}
 		}
 		return res, "", nil
 	}
-	lses, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, pageSize, pageToken, filterMap, keysOnly, nil)
+	lses, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, pageToken, filterMap, keysOnly)
 	if err != nil {
 		return nil, "", err
 	}

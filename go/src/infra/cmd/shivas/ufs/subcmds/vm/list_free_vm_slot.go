@@ -78,6 +78,8 @@ func (c *listVMSlot) innerRun(a subcommands.Application, args []string, env subc
 	})
 
 	// Get the host machineLSE
+	//
+	// IMPORTANT: the vm capacity for returned hosts are reset to the number of free slots
 	resp, err := ic.ListMachineLSEs(ctx, &ufsAPI.ListMachineLSEsRequest{
 		PageSize: int32(c.number),
 		Filter:   c.filter + "& free=true",
