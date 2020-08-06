@@ -7,6 +7,7 @@ package execution
 import (
 	"context"
 	"fmt"
+	"infra/cmd/cros_test_platform/internal/execution/types"
 	"math"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -33,10 +34,10 @@ func needsRetry(result *steps.ExecuteResponse_TaskResult) bool {
 }
 
 // newRetryCounter initializes a new retryCounter.
-func newRetryCounter(params *test_platform.Request_Params, iids map[invocationID]*steps.EnumerationResponse_AutotestInvocation) retryCounter {
+func newRetryCounter(params *test_platform.Request_Params, iids map[types.InvocationID]*steps.EnumerationResponse_AutotestInvocation) retryCounter {
 	rc := retryCounter{
 		globalMaxRetries: inferGlobalMaxRetries(params),
-		testRetryCounter: make(map[invocationID]*testRetryCounter),
+		testRetryCounter: make(map[types.InvocationID]*testRetryCounter),
 	}
 	for name, inv := range iids {
 		rc.testRetryCounter[name] = &testRetryCounter{
@@ -51,13 +52,13 @@ func newRetryCounter(params *test_platform.Request_Params, iids map[invocationID
 type retryCounter struct {
 	globalMaxRetries int32
 	retries          int32
-	testRetryCounter map[invocationID]*testRetryCounter
+	testRetryCounter map[types.InvocationID]*testRetryCounter
 }
 
 // NotifyRetry notifies retryCounter of a retry attempt for a test.
 //
-// NotifyRetry panics for an unknown invocationID.
-func (c *retryCounter) NotifyRetry(iid invocationID) {
+// NotifyRetry panics for an unknown types.InvocationID.
+func (c *retryCounter) NotifyRetry(iid types.InvocationID) {
 	c.retries++
 	c.getTestRetryCounter(iid).Count++
 }
@@ -65,8 +66,8 @@ func (c *retryCounter) NotifyRetry(iid invocationID) {
 // CanRetry determines if a retry is allowed for a test based on the count of
 // retries so far.
 //
-// CanRetry panics for an unknown invocationID.
-func (c *retryCounter) CanRetry(ctx context.Context, iid invocationID) bool {
+// CanRetry panics for an unknown types.InvocationID.
+func (c *retryCounter) CanRetry(ctx context.Context, iid types.InvocationID) bool {
 	tc := c.getTestRetryCounter(iid)
 
 	if tc.Remaining() <= 0 {
@@ -80,7 +81,7 @@ func (c *retryCounter) CanRetry(ctx context.Context, iid invocationID) bool {
 	return true
 }
 
-func (c *retryCounter) getTestRetryCounter(iid invocationID) *testRetryCounter {
+func (c *retryCounter) getTestRetryCounter(iid types.InvocationID) *testRetryCounter {
 	tc, ok := c.testRetryCounter[iid]
 	if !ok {
 		panic(fmt.Sprintf("unknown test %s", iid))
