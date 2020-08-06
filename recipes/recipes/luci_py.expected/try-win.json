@@ -170,9 +170,11 @@
       "@@@STEP_LOG_LINE@changes@DEPS: False@@@",
       "@@@STEP_LOG_LINE@changes@swarming_ui: False@@@",
       "@@@STEP_LOG_LINE@changes@isolate: False@@@",
+      "@@@STEP_LOG_LINE@changes@vpython: False@@@",
       "@@@STEP_LOG_LINE@changes@config_service: False@@@",
       "@@@STEP_LOG_LINE@changes@swarming: False@@@",
       "@@@STEP_LOG_LINE@changes@auth_service: False@@@",
+      "@@@STEP_LOG_LINE@changes@vpython3: False@@@",
       "@@@STEP_LOG_END@changes@@@"
     ]
   },
@@ -187,6 +189,38 @@
     "cwd": "[CACHE]\\infra_gclient_with_go\\infra\\luci",
     "infra_step": true,
     "name": "check changes.get change list on DEPS",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      ".vpython"
+    ],
+    "cwd": "[CACHE]\\infra_gclient_with_go\\infra\\luci",
+    "infra_step": true,
+    "name": "check changes.get change list on .vpython",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_END@change list@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "git",
+      "diff",
+      "--name-only",
+      "--cached",
+      ".vpython3"
+    ],
+    "cwd": "[CACHE]\\infra_gclient_with_go\\infra\\luci",
+    "infra_step": true,
+    "name": "check changes.get change list on .vpython3",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_END@change list@@@"

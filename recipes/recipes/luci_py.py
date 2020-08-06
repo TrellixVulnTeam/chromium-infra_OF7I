@@ -55,6 +55,10 @@ def _check_changes(api):
   return {
       'DEPS':
           _has_changed_files(api, 'DEPS'),
+      'vpython':
+          _has_changed_files(api, '.vpython'),
+      'vpython3':
+          _has_changed_files(api, '.vpython3'),
       'client':
           _has_changed_files(api, 'client'),
       'auth_service':
@@ -73,13 +77,13 @@ def _check_changes(api):
   }
 
 
-def _has_changed_files(api, subdir, exclude_dir=None):
+def _has_changed_files(api, path, exclude_dir=None):
   result = api.m.git(
       'diff',
       '--name-only',
       '--cached',
-      subdir,
-      name='get change list on %s' % subdir,
+      path,
+      name='get change list on %s' % path,
       stdout=api.m.raw_io.output())
   files = result.stdout.splitlines()
 
@@ -116,7 +120,7 @@ def _step_auth_tests(api, changes):
   if not api.platform.is_linux:
     return
 
-  deps = ['auth_service', 'components']
+  deps = ['auth_service', 'components', 'vpython']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -130,7 +134,7 @@ def _step_components_tests(api, changes):
   if not api.platform.is_linux:
     return
 
-  deps = ['components']
+  deps = ['components', 'vpython']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -145,7 +149,7 @@ def _step_config_tests(api, changes):
   if not api.platform.is_linux:
     return
 
-  deps = ['config_service', 'components']
+  deps = ['config_service', 'components', 'vpython']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -170,7 +174,7 @@ def _step_isolate_tests(api, changes):
 
 
 def _step_client_tests(api, changes):
-  deps = ['client', 'components']
+  deps = ['client', 'components', 'vpython3', 'vpython']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -186,7 +190,7 @@ def _step_client_tests(api, changes):
 
 
 def _step_swarming_tests(api, changes):
-  deps = ['swarming', 'client', 'components']
+  deps = ['swarming', 'client', 'components', 'vpython3', 'vpython']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
@@ -200,7 +204,7 @@ def _step_swarming_tests(api, changes):
 
 
 def _step_swarming_bot_tests(api, changes):
-  deps = ['swarming', 'client', 'components']
+  deps = ['swarming', 'client', 'components', 'vpython3', 'vpython']
   if not any([changes[d] for d in deps]):
     # skip tests when no changes on the dependencies.
     return
