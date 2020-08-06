@@ -28,20 +28,6 @@ type Runner struct {
 	waiting         bool
 }
 
-// NewRunnerWithRequestTaskSets returns a new Runner to manage the provided
-// RequestTaskSets.
-//
-// This constructor is only used by unittests.
-func NewRunnerWithRequestTaskSets(requestTaskSets ...*RequestTaskSet) *Runner {
-	r := &Runner{
-		requestTaskSets: make(map[string]*RequestTaskSet),
-	}
-	for i, ts := range requestTaskSets {
-		r.requestTaskSets[fmt.Sprintf("task%d", i)] = ts
-	}
-	return r
-}
-
 // NewRunner returns a Runner that will execute the given requests.
 func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, request steps.ExecuteRequests) (*Runner, error) {
 	ts := make(map[string]*RequestTaskSet)
