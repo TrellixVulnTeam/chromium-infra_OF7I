@@ -515,6 +515,7 @@ SPECS.update({
         UniversalSource('pylint', '1.9.5', patches=('disable-log-spam',)),
         UniversalSource('pylint-quotes', '0.1.8'),
         UniversalSource('pyperclip', '1.8.0'),
+        UniversalSource('pyrsistent', '0.16.0', pyversions=['py3']),
         UniversalSource('requests-unixsocket', '0.1.5'),
         UniversalSource('retrying', '1.3.3'),
         UniversalSource('tlslite', '0.4.9'),
@@ -615,6 +616,7 @@ SPECS.update({
         Universal('isort', '4.3.4'),
         Universal('json5', '0.6.0'),
         Universal('jsonlines', '1.2.0'),
+        Universal('jsonschema', '3.2.0'),  # py2 + py3
         Universal('keyring', '18.0.1'),
         Universal('macholib', '1.11'),
         Universal('mccabe', '0.6.1'),

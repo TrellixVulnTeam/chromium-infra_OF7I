@@ -2021,6 +2021,20 @@ wheel: <
 
 * *universal*
 
+## **jsonschema**
+
+### 3.2.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/jsonschema-py2_py3"
+  version: "version:3.2.0"
+>
+```
+
+
+* *universal*
+
 ## **keyring**
 
 ### 18.0.1
@@ -3478,6 +3492,20 @@ wheel: <
 
 * *windows-x64*
 * *windows-x86*
+
+## **pyrsistent-py3**
+
+### 0.16.0
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/pyrsistent-py3"
+  version: "version:0.16.0"
+>
+```
+
+
+* *universal*
 
 ## **pyserial**
 
