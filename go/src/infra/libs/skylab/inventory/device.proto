@@ -346,12 +346,14 @@ message HardwareCapabilities {
 //
 // Keep sorted by field names.
 //
-// NEXT TAG: 23
+// NEXT TAG: 24
 message Peripherals {
   optional bool audio_board = 6;
   // The DUT is housed in an audio box to record / replay audio for audio
   // testing.
   optional bool audio_box = 7;
+  // Is the DUT connected with a static 3.5mm audio cable.
+  optional bool audio_cable = 23;
   optional bool audio_loopback_dongle = 1;
   // Is this device connected to a chameleon (GVC head).
   optional bool chameleon = 5;

@@ -43,6 +43,7 @@ func NewSchedulableLabels() *SchedulableLabels {
 		Peripherals: &Peripherals{
 			AudioBoard:             new(bool),
 			AudioBox:               new(bool),
+			AudioCable:             new(bool),
 			AudioLoopbackDongle:    new(bool),
 			Camerabox:              new(bool),
 			CameraboxFacing:        new(Peripherals_CameraboxFacing),

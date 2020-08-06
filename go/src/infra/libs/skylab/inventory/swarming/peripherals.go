@@ -29,6 +29,9 @@ func boolPeripheralsConverter(dims Dimensions, ls *inventory.SchedulableLabels) 
 	if p.GetAudioBox() {
 		dims["label-audio_box"] = []string{"True"}
 	}
+	if p.GetAudioCable() {
+		dims["label-audio_cable"] = []string{"True"}
+	}
 	if p.GetAudioLoopbackDongle() {
 		dims["label-audio_loopback_dongle"] = []string{"True"}
 	}
@@ -65,6 +68,7 @@ func boolPeripheralsReverter(ls *inventory.SchedulableLabels, d Dimensions) Dime
 	p := ls.Peripherals
 	d = assignLastBoolValueAndDropKey(d, p.AudioBoard, "label-audio_board")
 	d = assignLastBoolValueAndDropKey(d, p.AudioBox, "label-audio_box")
+	d = assignLastBoolValueAndDropKey(d, p.AudioCable, "label-audio_cable")
 	d = assignLastBoolValueAndDropKey(d, p.AudioLoopbackDongle, "label-audio_loopback_dongle")
 	d = assignLastBoolValueAndDropKey(d, p.Camerabox, "label-camerabox")
 	d = assignLastBoolValueAndDropKey(d, p.Chameleon, "label-chameleon")

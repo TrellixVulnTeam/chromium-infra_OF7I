@@ -64,6 +64,7 @@ peripherals: {
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
+  audio_cable: true
   router_802_11ax: true
   working_bluetooth_btpeer: 3
 }
@@ -115,6 +116,7 @@ var fullLabels = []string{
 	"atrus",
 	"audio_board",
 	"audio_box",
+	"audio_cable",
 	"audio_loopback_dongle",
 	"bluetooth",
 	"board:boardval",
@@ -483,6 +485,7 @@ peripherals: {
   audio_loopback_dongle: true
   audio_box: true
   audio_board: true
+  audio_cable: true
   router_802_11ax: true
   working_bluetooth_btpeer: 3
 }
@@ -534,6 +537,7 @@ var fullLabelsSpecial = []string{
 	"atrus",
 	"audio_board",
 	"audio_box",
+	"audio_cable",
 	"audio_loopback_dongle",
 	"bluetooth",
 	"board:boardval",

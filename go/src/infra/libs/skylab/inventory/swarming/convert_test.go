@@ -59,6 +59,7 @@ peripherals: {
   camerabox_facing: 1
   camerabox_light: 1
   audio_loopback_dongle: true
+  audio_cable: true
   audio_box: true
   audio_board: true
   router_802_11ax: true
@@ -112,6 +113,7 @@ var fullDimensions = Dimensions{
 	"label-atrus":                 {"True"},
 	"label-audio_board":           {"True"},
 	"label-audio_box":             {"True"},
+	"label-audio_cable":           {"True"},
 	"label-audio_loopback_dongle": {"True"},
 	"label-bluetooth":             {"True"},
 	"label-board":                 {"boardval"},
