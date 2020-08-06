@@ -75,6 +75,10 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 		if err != nil {
 			return errors.Annotate(err, "Fail to get host by %s", host).Err()
 		}
+		// Before partial update is enabled, not overwrite VM if nwOpt or s is specified
+		if nwOpt != nil || s != ufspb.State_STATE_UNSPECIFIED {
+			vm = oldVM
+		}
 		vm.MachineLseId = host
 		vm.Lab = lse.Lab
 		vm.State = oldVM.State

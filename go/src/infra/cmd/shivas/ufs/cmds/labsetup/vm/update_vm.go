@@ -7,7 +7,6 @@ package vm
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -97,56 +96,29 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		c.parseArgs(&vm)
 	}
 
-	// Get the host MachineLSE
-	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostName),
-	})
-	if err != nil {
-		return errors.Annotate(err, "No host with hostname %s found", c.hostName).Err()
-	}
-	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
-	oldMachinelse := proto.Clone(machinelse).(*ufspb.MachineLSE)
-
-	// Check if the VM does not exist on the host MachineLSE
-	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
-	if !utils.CheckExistsVM(existingVMs, vm.Name) {
-		return errors.New(fmt.Sprintf("VM %s does not exist on the host %s", vm.Name, machinelse.Name))
-	}
-	existingVMs = utils.RemoveVM(existingVMs, vm.Name)
-	existingVMs = append(existingVMs, &vm)
-	machinelse.GetChromeBrowserMachineLse().Vms = existingVMs
-
-	var networkOptions map[string]*ufsAPI.NetworkOption
-	var states map[string]ufspb.State
+	var nwOpt *ufsAPI.NetworkOption
 	if c.deleteVlan || c.vlanName != "" || c.ip != "" {
-		networkOptions = map[string]*ufsAPI.NetworkOption{
-			vm.Name: {
-				Delete: c.deleteVlan,
-				Vlan:   c.vlanName,
-				Ip:     c.ip,
-			},
+		nwOpt = &ufsAPI.NetworkOption{
+			Delete: c.deleteVlan,
+			Vlan:   c.vlanName,
+			Ip:     c.ip,
 		}
-		machinelse = oldMachinelse
 	}
+	var s ufspb.State
 	if c.state != "" {
-		states = map[string]ufspb.State{
-			vm.Name: ufsUtil.ToUFSState(c.state),
-		}
+		s = ufsUtil.ToUFSState(c.state)
 	}
-	if c.newSpecsFile == "" {
-		machinelse = oldMachinelse
-	}
-
-	// Update the host MachineLSE with new VM info
-	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
-	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
-		MachineLSE:     machinelse,
-		NetworkOptions: networkOptions,
-		States:         states,
+	vm.Name = ufsUtil.AddPrefix(ufsUtil.VMCollection, vm.Name)
+	res, err := ic.UpdateVM(ctx, &ufsAPI.UpdateVMRequest{
+		Vm:            &vm,
+		MachineLSEId:  c.hostName,
+		NetworkOption: nwOpt,
+		State:         s,
 	})
 	if err != nil {
 		return errors.Annotate(err, "Unable to update the VM on the host").Err()
 	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of vm %s\n", vm.Name)

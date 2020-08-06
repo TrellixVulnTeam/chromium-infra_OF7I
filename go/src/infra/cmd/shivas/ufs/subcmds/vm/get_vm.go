@@ -6,7 +6,6 @@ package vm
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -37,7 +36,6 @@ Gets the vm and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.hostname, "host", "", "hostname of the host to get the VM")
 		return c
 	},
 }
@@ -47,7 +45,6 @@ type getVM struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	outputFlags site.OutputFlags
-	hostname    string
 }
 
 func (c *getVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -74,26 +71,14 @@ func (c *getVM) innerRun(a subcommands.Application, args []string, env subcomman
 		Options: site.DefaultPRPCOptions,
 	})
 
-	// Get the host machineLSE
-	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostname),
+	vm, err := ic.GetVM(ctx, &ufsAPI.GetVMRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.VMCollection, args[0]),
 	})
 	if err != nil {
-		return errors.Annotate(err, "No host with hostname %s found", c.hostname).Err()
+		return errors.Annotate(err, "Fail to get vm by name %s", args[0]).Err()
 	}
-	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
+	vm.Name = ufsUtil.RemovePrefix(vm.Name)
 
-	// Check if VM exists on the host MachineLSE and print
-	var vm *ufspb.VM
-	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
-	for _, v := range existingVMs {
-		if v.Name == args[0] {
-			vm = v
-		}
-	}
-	if vm == nil {
-		return errors.New(fmt.Sprintf("VM %s does not exist on the host %s", args[0], machinelse.Name))
-	}
 	if c.outputFlags.Full() {
 		return c.printFull(ctx, ic, vm)
 	}
@@ -129,9 +114,6 @@ func (c *getVM) print(vm *ufspb.VM) error {
 func (c *getVM) validateArgs() error {
 	if c.Flags.NArg() == 0 {
 		return cmdlib.NewUsageError(c.Flags, "Please provide the VM name.")
-	}
-	if c.hostname == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nHostname parameter is required to get the VM on the host")
 	}
 	return nil
 }

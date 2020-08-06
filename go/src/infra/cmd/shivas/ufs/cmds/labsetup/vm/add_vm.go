@@ -19,7 +19,6 @@ import (
 	"infra/cmdsupport/cmdlib"
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // AddVMCmd add a vm on a host.
@@ -100,33 +99,15 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 		c.parseArgs(&vm)
 	}
 
-	// Get the host machineLSE
-	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostName),
+	res, err := ic.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+		Vm:           &vm,
+		MachineLSEId: c.hostName,
 	})
 	if err != nil {
-		return errors.Annotate(err, "No host with hostname %s found", c.hostName).Err()
-	}
-	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
-
-	// Check if VM already exists on the host MachineLSE
-	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
-	if utils.CheckExistsVM(existingVMs, vm.Name) {
-		return errors.New(fmt.Sprintf("VM %s already exists on the host %s", vm.Name, machinelse.Name))
-	}
-	existingVMs = append(existingVMs, &vm)
-	machinelse.GetChromeBrowserMachineLse().Vms = existingVMs
-
-	// Update the host MachineLSE with new VM
-	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
-	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
-		MachineLSE: machinelse,
-	})
-	if err != nil {
-		return errors.Annotate(err, "Unable to add the VM on the host").Err()
+		return errors.Annotate(err, "Unable to add the VM to the host").Err()
 	}
 	utils.PrintProtoJSON(res)
-	fmt.Printf("Successfully added the vm %s to host %s\n", vm.GetName(), machinelse.GetHostname())
+	fmt.Printf("Successfully added the vm %s to host %s\n", vm.GetName(), c.hostName)
 	return nil
 }
 

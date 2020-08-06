@@ -107,16 +107,12 @@ func TestUpdateVM(t *testing.T) {
 				Name: "vm-update-2",
 			}
 			_, err := CreateVM(ctx, vm1, "update-host", nil)
-			vm1.OsVersion = &ufspb.OSVersion{
-				Value: "os-1",
-			}
 			resp, err := UpdateVM(ctx, vm1, "update-host", &ufsAPI.NetworkOption{
 				Vlan: "vlan-1",
 			}, ufspb.State_STATE_UNSPECIFIED)
 			So(err, ShouldBeNil)
 			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
 			So(resp.GetMachineLseId(), ShouldEqual, "update-host")
-			So(resp.GetOsVersion().GetValue(), ShouldEqual, "os-1")
 			s, err := state.GetStateRecord(ctx, "vms/vm-update-2")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)

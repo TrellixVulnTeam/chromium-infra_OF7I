@@ -61,7 +61,7 @@ func (c *deleteHost) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the host: %s", args[0])) {
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the host: %s\n!!! All attached vms will be deleted automatically", args[0])) {
 		return nil
 	}
 	e := c.envFlags.Env()
