@@ -197,15 +197,30 @@ message ListCommentsResponse {
 message IssueDelta {
   // The issue's `name` field is used to identify the issue to be
   // updated. `issue.name` must always be filled.
+  //
+  // Values with rule-based Derivation within `issue` and in `field_vals_remove`
+  // will be ignored.
   Issue issue = 1 [
       (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
       (google.api.field_behavior) = REQUIRED ];
   // The list of fields in `issue` to be updated.
-  // Repeated fields will be appended to.
-  google.protobuf.FieldMask update_mask = 2;
+  //
+  // Repeated fields set on `issue` will be appended to.
+  //
+  // Its `field_values`, however, are a special case. Fields can be specified as
+  // single-value or multi-value in their FieldDef.
+  //
+  // Single-value Field: if there is preexisting FieldValue with the same
+  // `field` and `phase`, it will be REPLACED.
+  //
+  // Multi-value Field: a new value will be appended, unless the same `field`,
+  // `phase`, `value` combination already exists. In that case, the FieldValue
+  // will be ignored. In other words, duplicate values are ignored.
+  // (With the exception of crbug.com/monorail/8137 until it is fixed).
+  google.protobuf.FieldMask update_mask = 2 [
+      (google.api.field_behavior) = REQUIRED ];
 
   // Values to remove from the repeated fields of the issue.
-  // Values with rule-based Derivation will be ignored.
 
   // Cc's to remove.
   repeated string ccs_remove = 3 [
@@ -219,7 +234,9 @@ message IssueDelta {
       (google.api.resource_reference) = {type: "api.crbug.com/ComponentDef"}];
   // Labels to remove.
   repeated string labels_remove = 7;
-  // FieldValues to remove.
+  // FieldValues to remove. Any values that did not already exist will be
+  // ignored e.g. if you append a FieldValue in issue and remove it here, it
+  // will still be added.
   repeated FieldValue field_vals_remove = 8;
 
   // TODO(crbug.com/monorail/8019): add Attachment uploading and removing.
@@ -227,12 +244,16 @@ message IssueDelta {
 
 // Changes to make to an ApprovalValue. Used to ModifyIssueApprovalValues or
 // to MakeIssueFromTemplate.
+//
+// NOTE: The same handling of FieldValues discussed in IssueDelta applies here.
 // Next available tag: 6
 message ApprovalDelta {
-  // The ApprovalValue we want to update.
+  // The ApprovalValue we want to update. `approval_value.name` must always be
+  // set.
   ApprovalValue approval_value = 1;
   // Repeated fields found in `update_mask` will be appended to.
-  google.protobuf.FieldMask update_mask = 2;
+  google.protobuf.FieldMask update_mask = 2 [
+      (google.api.field_behavior) = REQUIRED ];
   // Resource names of the approvers we want to remove.
   repeated string approvers_remove = 3 [
       (google.api.resource_reference) = { type: "api.crbug.com/User" }
