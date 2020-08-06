@@ -168,23 +168,31 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 	return r.completed(), nil
 }
 
-// Response returns the current response for this test.
+// Response returns the current response for this request.
 func (r *RequestTaskSet) Response() *steps.ExecuteResponse {
+	tss := make([]*testTaskSet, len(r.invocationIDs))
+	for i, iid := range r.invocationIDs {
+		tss[i] = r.testTaskSets[iid]
+	}
+	return response(tss)
+}
+
+func response(tss []*testTaskSet) *steps.ExecuteResponse {
 	resp := &steps.ExecuteResponse{
-		TaskResults:         r.taskResults(),
-		ConsolidatedResults: r.results(),
+		TaskResults:         taskResults(tss),
+		ConsolidatedResults: results(tss),
 		State: &test_platform.TaskState{
-			Verdict:   r.verdict(),
-			LifeCycle: r.lifecycle(),
+			Verdict:   verdict(tss),
+			LifeCycle: lifecycle(tss),
 		},
 	}
 	return resp
 }
 
-func (r *RequestTaskSet) lifecycle() test_platform.TaskState_LifeCycle {
+func lifecycle(tss []*testTaskSet) test_platform.TaskState_LifeCycle {
 	aborted := false
 	running := false
-	for _, ts := range r.testTaskSets {
+	for _, ts := range tss {
 		if ts.LifeCycle() == test_platform.TaskState_LIFE_CYCLE_ABORTED {
 			aborted = true
 		}
@@ -203,9 +211,9 @@ func (r *RequestTaskSet) lifecycle() test_platform.TaskState_LifeCycle {
 	return test_platform.TaskState_LIFE_CYCLE_COMPLETED
 }
 
-func (r *RequestTaskSet) verdict() test_platform.TaskState_Verdict {
+func verdict(tss []*testTaskSet) test_platform.TaskState_Verdict {
 	v := test_platform.TaskState_VERDICT_PASSED
-	for _, t := range r.testTaskSets {
+	for _, t := range tss {
 		if !successfulVerdict(t.Verdict()) {
 			v = test_platform.TaskState_VERDICT_FAILED
 			break
@@ -225,18 +233,18 @@ func successfulVerdict(v test_platform.TaskState_Verdict) bool {
 	}
 }
 
-func (r *RequestTaskSet) results() []*steps.ExecuteResponse_ConsolidatedResult {
-	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(r.invocationIDs))
-	for i, iid := range r.invocationIDs {
+func results(tss []*testTaskSet) []*steps.ExecuteResponse_ConsolidatedResult {
+	rs := make([]*steps.ExecuteResponse_ConsolidatedResult, len(tss))
+	for i, ts := range tss {
 		rs[i] = &steps.ExecuteResponse_ConsolidatedResult{
-			Attempts: r.getTestTaskSet(iid).TaskResult(),
+			Attempts: ts.TaskResult(),
 		}
 	}
 	return rs
 }
 
-func (r *RequestTaskSet) taskResults() []*steps.ExecuteResponse_TaskResult {
-	results := r.results()
+func taskResults(tss []*testTaskSet) []*steps.ExecuteResponse_TaskResult {
+	results := results(tss)
 	var trs []*steps.ExecuteResponse_TaskResult
 	for _, result := range results {
 		trs = append(trs, result.Attempts...)
