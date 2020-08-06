@@ -13,7 +13,7 @@ import (
 
 // Cached service config.
 var cachedCfg = cfgcache.Register(&cfgcache.Entry{
-	Path: "cr-rev.cfg",
+	Path: "config.cfg",
 	Type: (*Config)(nil),
 })
 
