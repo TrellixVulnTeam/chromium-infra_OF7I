@@ -119,6 +119,7 @@ func setDutPeripherals(labels *inventory.SchedulableLabels, d *lab.Peripherals) 
 
 	if audio := d.GetAudio(); audio != nil {
 		p.AudioBox = &(audio.AudioBox)
+		p.AudioCable = &(audio.AudioCable)
 		c.Atrus = &(audio.Atrus)
 	}
 

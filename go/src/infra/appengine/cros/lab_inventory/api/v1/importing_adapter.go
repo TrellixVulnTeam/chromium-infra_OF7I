@@ -206,8 +206,9 @@ func getPeripherals(l *inventory.SchedulableLabels) *lab.Peripherals {
 			ChameleonPeripherals: getChameleonType(peripherals),
 		},
 		Audio: &lab.Audio{
-			AudioBox: peripherals.GetAudioBox(),
-			Atrus:    capabilities.GetAtrus(),
+			AudioBox:   peripherals.GetAudioBox(),
+			AudioCable: peripherals.GetAudioCable(),
+			Atrus:      capabilities.GetAtrus(),
 		},
 		Wifi: &lab.Wifi{
 			Wificell:    peripherals.GetWificell(),

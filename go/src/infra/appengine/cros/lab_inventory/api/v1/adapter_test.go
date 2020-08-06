@@ -68,8 +68,9 @@ var devInV2 = lab.ChromeOSDevice{
 					},
 				},
 				Audio: &lab.Audio{
-					AudioBox: true,
-					Atrus:    true,
+					AudioBox:   true,
+					AudioCable: true,
+					Atrus:      true,
 				},
 				Wifi: &lab.Wifi{
 					Wificell:    true,
@@ -287,6 +288,7 @@ common {
 		peripherals {
 			audio_board: true
 			audio_box: true
+			audio_cable: true
 			audio_loopback_dongle: false
 			chameleon: true
 			chameleon_type: CHAMELEON_TYPE_BT_BLE_HID
