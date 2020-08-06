@@ -35,7 +35,7 @@ imports:
   version: 006a399149dd2dad4eedff247578e94bd957da9c
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: 82c61013f5f34fda70eefcd92113399799654f4c
+  version: 75100dc5a2638da1746998410d162f42401fb5cf
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
