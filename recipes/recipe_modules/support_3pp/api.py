@@ -520,7 +520,6 @@ class Support3ppApi(recipe_api.RecipeApi):
     Args:
       * spec (ResolvedSpec) - The spec to build.
       * version (str) - The symver of the package that we want to build.
-        of support_3pp module and packages loaded by the recipe.
       * force_build (bool) - If True, ignore remote server checks.
 
     Returns CIPDSpec for the built package.

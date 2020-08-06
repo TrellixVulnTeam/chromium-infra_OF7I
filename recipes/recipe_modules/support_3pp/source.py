@@ -17,11 +17,13 @@ from PB.recipe_modules.infra.support_3pp.spec import LT, LE, GT, GE, EQ, NE
 
 def _to_versions(raw_ls_remote_lines, version_join, tag_re):
   """Converts raw ls-remote output lines to a sorted (descending)
-  list of (Version, v_str) objects.
+  list of (Version, v_str, git_hash) objects.
+
+  This is used for source:git method to find latest version and git hash.
   """
   ret = []
   for line in raw_ls_remote_lines:
-    _hash, ref = line.split('\t')
+    git_hash, ref = line.split('\t')
     if ref.startswith('refs/tags/'):
       tag = ref[len('refs/tags/'):]
       m = tag_re.match(tag)
@@ -32,7 +34,7 @@ def _to_versions(raw_ls_remote_lines, version_join, tag_re):
       if version_join:
         v_str = '.'.join(v_str.split(version_join))
 
-      ret.append((parse_version(v_str), v_str))
+      ret.append((parse_version(v_str), v_str, git_hash))
   return sorted(ret, reverse=True)
 
 
@@ -71,8 +73,8 @@ def _filter_versions(version_strs, filters):
     return version_strs
   filt_fn = _filters_to_func(filters)
   return [
-    (vers, vers_s)
-    for vers, vers_s in version_strs
+    (vers, vers_s, git_hash)
+    for vers, vers_s, git_hash in version_strs
     if filt_fn(vers)
   ]
 
@@ -87,13 +89,15 @@ def resolve_latest(api, spec):
     * api - The ThirdPartyPackagesNGApi's `self.m` module collection.
     * spec (ResolvedSpec) - The spec to resolve.
 
-  Returns (str) the symver for the latest version of this package, e.g.
-  '1.2.3'. This should always use '.' as the digit separator.
+  Returns (str, str) the symver for the latest version of this package, e.g.
+  '1.2.3'. This should always use '.' as the digit separator. And checksum for
+  resolved source, e.g. git_hash for source:git method.
   """
   # TODO(iannucci): when we can put annotations on nest steps, put the 'resolved
   # version' there.
 
   method_name, source_method_pb = spec.source_method
+  source_hash = ''
   if method_name == 'git':
     # We need to transform the tag_pattern (which is a python format-string
     # lookalike with `%s` in it) into a regex which we can use to scan over the
@@ -124,16 +128,21 @@ def resolve_latest(api, spec):
 
     highest_cmp = parse_version('0')
     highest_str = ''
-    for vers, v_str in versions:
+    git_tree_hash = ''
+    for vers, v_str, git_hash in versions:
       if vers > highest_cmp:
         highest_cmp = vers
         highest_str = v_str
+        git_tree_hash = git_hash
 
     assert highest_str
     version = highest_str
+
+    source_hash = git_tree_hash
     api.step.active_result.presentation.step_text = (
       'resolved version: %s' % (version,))
 
+  # TODO(akashmukherjee): Get/compute hash for script method.
   elif method_name == 'script':
     script = spec.host_dir.join(source_method_pb.name[0])
     args = map(str, source_method_pb.name[1:]) + ['latest']
@@ -153,10 +162,11 @@ def resolve_latest(api, spec):
   else: # pragma: no cover
     assert False, '"latest" version resolution not defined for %r' % method_name
 
-  return version
+  return version, source_hash
 
 
-def fetch_source(api, workdir, spec, version, spec_lookup, ensure_built):
+def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
+                 ensure_built):
   """Prepares a checkout in `workdir` to build `spec` at `version`.
 
   Args:
@@ -165,6 +175,8 @@ def fetch_source(api, workdir, spec, version, spec_lookup, ensure_built):
       spec in. This function will create the checkout in `workdir.checkout`.
     * spec (ResolvedSpec) - The package we want to build.
     * version (str) - The symver of the package we want to build (e.g. '1.2.0').
+    * source_hash (str) - source_hash returned from resolved version. This is
+      external hash of the source.
     * spec_lookup ((package_name, platform) -> ResolvedSpec) - A function to
       lookup (possibly cached) ResolvedSpec's for things like dependencies and
       tools.
@@ -197,12 +209,46 @@ def fetch_source(api, workdir, spec, version, spec_lookup, ensure_built):
         for dep in spec.all_possible_deps
       ])
 
-  _do_checkout(api, workdir, spec, version)
+  if source_hash:
+    pkg_name = spec.source_cache
+    try:
+      # Looking for source file in source cache before anything
+      test_tags = ['version:1.5.0-rc1',
+                  'external_hash:abcdef0123456789abcdef0123456789abcdef01']
+      source_cache = api.cipd.describe(pkg_name,
+                                      'version:%s' % version,
+                                      test_data_tags=test_tags,
+                                      test_data_refs=())
+    except api.step.StepFailure:  # pragma: no cover
+      api.step.active_result.presentation.status = api.step.SUCCESS
+    else:
+      if source_cache:
+        tags = source_cache.tags
+        # Add step failure if hashes don't match.
+        step_hash = api.step('Verify External Hash', None)
+        if tags:
+          external_hash = ''
+          for tag in tags:
+            tag_instance = tag.tag
+            if tag_instance.strip().startswith('external_hash:'):
+              external_hash = tag_instance.split(':')[-1]
+              break
+        # TODO(akashmukherjee): Raise an error instead after verifying.
+        if external_hash != source_hash:
+          step_hash.presentation.status = 'FAILURE'
+          step_hash.presentation.step_text = (
+            'resolved version: %s has moved, current hash:%s, source tags: %r, '
+            'please verify.' % (version, source_hash, tags))
+        else:  # pragma: no cover
+          step_hash.presentation.step_text = (
+            'external source verification successful.')
+
+  _do_checkout(api, workdir, spec, version, source_hash)
 
   # Iff we are going to do the 'build' operation, copy all the package
-  # definition scripts into the checkout. If no build message is provided, then
-  # we're planning to directly package the result of the checkout, and we don't
-  # want to include these scripts.
+  # definition scripts into the checkout. If no build message is provided,
+  # then we're planning to directly package the result of the checkout, and
+  # we don't want to include these scripts.
   if spec.create_pb.HasField("build"):
     # Copy all package definition stuff into the checkout
     api.file.copytree(
@@ -214,7 +260,7 @@ def fetch_source(api, workdir, spec, version, spec_lookup, ensure_built):
 #### Private stuff
 
 
-def _do_checkout(api, workdir, spec, version):
+def _do_checkout(api, workdir, spec, version, source_hash=''):
   method_name, source_method_pb = spec.source_method
   source_pb = spec.create_pb.source
 
@@ -226,11 +272,8 @@ def _do_checkout(api, workdir, spec, version):
     'mkdir -p [workdir]/checkout/%s' % (str(source_pb.subdir),), checkout_dir)
 
   if method_name == 'git':
-    tag_pattern = source_method_pb.tag_pattern or '%s'
-    version_join = (source_method_pb.version_join or '.')
-    tag_name = tag_pattern % (version_join.join(version.split('.')),)
-    tag = 'refs/tags/%s' % (tag_name,)
-    api.git.checkout(source_method_pb.repo, tag, checkout_dir)
+    # We already computed git hash for resolved tag, we will checkout git SHA.
+    api.git.checkout(source_method_pb.repo, source_hash, checkout_dir)
 
   elif method_name == 'cipd':
     api.cipd.ensure(
@@ -247,6 +290,10 @@ def _do_checkout(api, workdir, spec, version):
   else: # pragma: no cover
     assert False, 'Unknown source type %r' % (method_name,)
 
+  # TODO: Split checkout into fetch_raw and unpack
+  with api.step.nest('upload source to cipd'):
+    _source_upload(api, spec.source_cache, checkout_dir, method_name,
+                   source_hash, version)
   if source_pb.unpack_archive:
     with api.step.nest('unpack_archive'):
       paths = api.file.glob_paths(
@@ -289,3 +336,38 @@ def _do_checkout(api, workdir, spec, version):
         spec.host_dir.join(*(patch_dir.split('/'))), '*'))
     with api.context(cwd=checkout_dir):
       api.git('apply', '-v', *patches)
+
+
+def _source_upload(api, pkg_name, checkout_dir, method_name, external_hash,
+                   version):
+  """Uploads, registers and tags the copy of the source package we have on the
+  local machine to the CIPD server.
+
+  This method will upload source files into CIPD with `infra/3pp/sources`
+  prefix for provided version. Essentially, uploading the source only for the
+  first time. In later builds, 3pp recipe will use these uploaded artifacts
+  when building the same version of a package.
+
+  Args:
+    * api: The ThirdPartyPackagesNGApi's `self.m` module collection.
+    * pkg_name: Current 3pp package source cache to use,
+      e.g. infra/3pp/sources/git/repo_url.
+    * checkout_dir - The checkout directory we're going to checkout the
+      source in.
+    * method_name: Source method in spec protobuf.
+    * external_hash: External source hash, eg. git hash of fetched revision.
+    * version (str) - The symver of the package we want to build (e.g. '1.2.3').
+  """
+  # TODO(akashmukherjee): Update enabling source cache for script and url.
+  if method_name != 'git':
+    return
+  tags = {'version': version}
+  if external_hash:
+    tags['external_hash'] = external_hash
+  try:
+    # Double check to see that we didn't get scooped by a concurrent recipe.
+    v_str = 'version:%s' % version
+    api.cipd.describe(pkg_name, v_str, test_data_tags=(), test_data_refs=())
+  except api.step.StepFailure:
+    api.step.active_result.presentation.status = api.step.SUCCESS
+    api.cipd.register(pkg_name, checkout_dir, tags=tags, refs=[])

@@ -69,8 +69,9 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
       # Resolve 'latest' versions. Done inside the env because 'script' based
       # sources need the $_3PP* envvars.
       is_latest = version == 'latest'
+      git_hash = ''
       if is_latest:
-        version = source.resolve_latest(api, spec)
+        version, git_hash = source.resolve_latest(api, spec)
         keys.append((spec.name, version, spec.platform))
         if keys[-1] in cache:
           return set_cache(cache[keys[-1]])
@@ -84,20 +85,20 @@ def build_resolved_spec(api, spec_lookup, cache, force_build, spec, version,
           (lambda spec, version: build_resolved_spec(
             api, spec_lookup, cache, force_build, spec, version,
             infra_3pp_hash)),
-          spec, version)
+          spec, version, git_hash)
 
       return set_cache(cipd_spec)
 
 
 def _build_impl(api, cipd_spec, is_latest, spec_lookup, force_build, recurse_fn,
-                spec, version):
+                spec, version, git_hash):
   workdir = Workdir(api, spec, version)
   with api.context(env={'_3PP_VERSION': version}):
     api.file.ensure_directory('mkdir -p [workdir]', workdir.base)
 
     with api.step.nest('fetch sources'):
       source.fetch_source(
-        api, workdir, spec, version, spec_lookup, recurse_fn)
+        api, workdir, spec, version, git_hash, spec_lookup, recurse_fn)
 
     if spec.create_pb.HasField("build"):
       with api.step.nest('run installation'):

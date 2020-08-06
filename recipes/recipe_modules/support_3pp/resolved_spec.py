@@ -86,6 +86,29 @@ class ResolvedSpec(object):
     return self._name
 
   @property
+  def source_cache(self):
+    """Source cache location to fetch/upload in CIPD server.
+
+    For git method, source cache will be independent of platform, however due to
+    fine grained fetch method for script method, cache will be platform
+    dependent. e.g. infra/3pp/sources/git/repo_url or
+    infra/3pp/sources/script/pkg/platform.
+    """
+    pkg_prefix = self._package_prefix.strip('/')
+    method, source_method_pb = self.source_method
+    if method == 'git':
+      repo_url = source_method_pb.repo
+      if repo_url.startswith('https://chromium.googlesource.com/external/'):
+        repo_url = repo_url[len('https://chromium.googlesource.com/external/'):]
+      _source_cache = '%s/sources/%s/%s' % (pkg_prefix, method, repo_url)
+    elif method == 'script':
+      _source_cache = '%s/sources/%s/%s/%s' % (pkg_prefix, method, self._name,
+                                               self._platform)
+    else:
+      _source_cache = None
+    return _source_cache
+
+  @property
   def base_path(self):
     """Path to the directory containing the package folders.
 

@@ -147,6 +147,81 @@ def GenTests(api):
     upload { pkg_prefix: "build_tools" }
     ''',
 
+    git_tool='''
+    create {
+      source {
+        git {
+          repo: "https://chromium.googlesource.com/external/go.repo/git_tool"
+          tag_pattern: "v%s"
+          version_join: "."
+        }
+        subdir: "src/go.repo/tool"
+        patch_dir: "patches"
+        patch_version: "chops.1"
+      }
+      build {
+        # We use an older version of the tool to bootstrap new versions.
+        tool: "tool@0.9.0"
+        dep: "bottom_dep"
+
+        install: "install.sh"
+        install: "intel"
+      }
+      package {
+        version_file: ".versions/tool.cipd_version"
+      }
+    }
+
+    create {
+      platform_re: "mac-.*"
+      build {
+        install: "install-mac.sh"
+      }
+      package {
+        install_mode: symlink
+      }
+      verify {
+        test: "test.py"
+        test: "mac"
+      }
+    }
+
+    create {
+      platform_re: "windows-.*"
+      verify {
+        test: "test.py"
+        test: "windows"
+      }
+    }
+
+    create {
+      platform_re: "linux-.*"
+      verify {
+        test: "test.py"
+        test: "linux"
+      }
+    }
+
+    create {
+      platform_re: "linux-arm.*"
+      build {
+        install: "install.sh"
+        install: "arm"
+      }
+    }
+
+    create {
+      platform_re: "linux-amd64"
+      build {
+        # on linux-amd64 we self-bootstrap the tool
+        tool: ""  # clears tool@0.9.0
+        install: "install_bootstrap.sh"
+      }
+    }
+
+    upload { pkg_prefix: "build_tools" }
+    ''',
+
     deep_dep='''
     create {
       source { cipd {
