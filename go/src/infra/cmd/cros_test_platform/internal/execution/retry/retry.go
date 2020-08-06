@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package execution
+// Package retry provides a way to determine when a task should be retried.
+package retry
 
 import (
 	"context"
@@ -15,11 +16,11 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-// needsRetry determines if a task result indicates that the invocation needs to
+// IsNeeded determines if a task result indicates that the invocation needs to
 // be retried.
 //
 // Panics on unknown verdicts.
-func needsRetry(result *steps.ExecuteResponse_TaskResult) bool {
+func IsNeeded(result *steps.ExecuteResponse_TaskResult) bool {
 	switch v := result.GetState().GetVerdict(); v {
 	case test_platform.TaskState_VERDICT_UNSPECIFIED,
 		test_platform.TaskState_VERDICT_FAILED:
@@ -33,32 +34,32 @@ func needsRetry(result *steps.ExecuteResponse_TaskResult) bool {
 	}
 }
 
-// newRetryCounter initializes a new retryCounter.
-func newRetryCounter(params *test_platform.Request_Params, iids map[types.InvocationID]*steps.EnumerationResponse_AutotestInvocation) retryCounter {
-	rc := retryCounter{
+// NewCounter initializes a new Counter.
+func NewCounter(params *test_platform.Request_Params, iids map[types.InvocationID]*steps.EnumerationResponse_AutotestInvocation) Counter {
+	rc := Counter{
 		globalMaxRetries: inferGlobalMaxRetries(params),
-		testRetryCounter: make(map[types.InvocationID]*testRetryCounter),
+		testRetryCounter: make(map[types.InvocationID]*invocationCounter),
 	}
 	for name, inv := range iids {
-		rc.testRetryCounter[name] = &testRetryCounter{
+		rc.testRetryCounter[name] = &invocationCounter{
 			Max: int(inferTestMaxRetries(inv)),
 		}
 	}
 	return rc
 }
 
-// retryCounter tracks retries across tests and exposes a method to decide if a
+// Counter tracks retries across tests and exposes a method to decide if a
 // particular test can be retried any further.
-type retryCounter struct {
+type Counter struct {
 	globalMaxRetries int32
 	retries          int32
-	testRetryCounter map[types.InvocationID]*testRetryCounter
+	testRetryCounter map[types.InvocationID]*invocationCounter
 }
 
 // NotifyRetry notifies retryCounter of a retry attempt for a test.
 //
 // NotifyRetry panics for an unknown types.InvocationID.
-func (c *retryCounter) NotifyRetry(iid types.InvocationID) {
+func (c *Counter) NotifyRetry(iid types.InvocationID) {
 	c.retries++
 	c.getTestRetryCounter(iid).Count++
 }
@@ -67,7 +68,7 @@ func (c *retryCounter) NotifyRetry(iid types.InvocationID) {
 // retries so far.
 //
 // CanRetry panics for an unknown types.InvocationID.
-func (c *retryCounter) CanRetry(ctx context.Context, iid types.InvocationID) bool {
+func (c *Counter) CanRetry(ctx context.Context, iid types.InvocationID) bool {
 	tc := c.getTestRetryCounter(iid)
 
 	if tc.Remaining() <= 0 {
@@ -81,7 +82,7 @@ func (c *retryCounter) CanRetry(ctx context.Context, iid types.InvocationID) boo
 	return true
 }
 
-func (c *retryCounter) getTestRetryCounter(iid types.InvocationID) *testRetryCounter {
+func (c *Counter) getTestRetryCounter(iid types.InvocationID) *invocationCounter {
 	tc, ok := c.testRetryCounter[iid]
 	if !ok {
 		panic(fmt.Sprintf("unknown test %s", iid))
@@ -89,17 +90,17 @@ func (c *retryCounter) getTestRetryCounter(iid types.InvocationID) *testRetryCou
 	return tc
 }
 
-func (c *retryCounter) globalRetriesRemaining() int32 {
+func (c *Counter) globalRetriesRemaining() int32 {
 	return c.globalMaxRetries - c.retries
 }
 
-// testRetryCounter tracks the number of retries of a single test.
-type testRetryCounter struct {
+// invocationCounter tracks the number of retries of a single invocation.
+type invocationCounter struct {
 	Max   int
 	Count int
 }
 
-func (t *testRetryCounter) Remaining() int {
+func (t *invocationCounter) Remaining() int {
 	r := t.Max - t.Count
 	if r > 0 {
 		return r

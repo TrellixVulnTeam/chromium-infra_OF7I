@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"infra/cmd/cros_test_platform/internal/execution/args"
 	"infra/cmd/cros_test_platform/internal/execution/response"
+	"infra/cmd/cros_test_platform/internal/execution/retry"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"infra/cmd/cros_test_platform/internal/execution/types"
 	"time"
@@ -30,7 +31,7 @@ type RequestTaskSet struct {
 	argsGenerators      map[types.InvocationID]*args.Generator
 	invocationResponses map[types.InvocationID]*response.Invocation
 	activeTasks         map[types.InvocationID]*skylab.Task
-	retryCounter        retryCounter
+	retryCounter        retry.Counter
 
 	launched bool
 }
@@ -60,7 +61,7 @@ func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, pa
 		invocationIDs:       invocationIDs,
 		invocationResponses: invocationResponses,
 		activeTasks:         make(map[types.InvocationID]*skylab.Task),
-		retryCounter:        newRetryCounter(params, tm),
+		retryCounter:        retry.NewCounter(params, tm),
 	}, nil
 }
 
@@ -135,7 +136,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		// At this point, we've determined that latestTask finished, and we've
 		// updated the testTaskSet with its result. We can remove it from our
 		// attention set... as long as we don't have to retry.
-		shouldRetry := needsRetry(task.Result()) && r.retryCounter.CanRetry(ctx, iid)
+		shouldRetry := retry.IsNeeded(task.Result()) && r.retryCounter.CanRetry(ctx, iid)
 		if !shouldRetry {
 			completedTests = append(completedTests, iid)
 			continue
