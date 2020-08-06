@@ -9,7 +9,9 @@ package main
 import (
 	"net/http"
 
+	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/server"
+	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
@@ -43,7 +45,12 @@ func main() {
 		DefaultTemplate: "base",
 	}))
 
-	server.Main(nil, []module.Module{}, func(srv *server.Server) error {
+	modules := []module.Module{
+		cfgmodule.NewModuleFromFlags(),
+		gaeemulation.NewModuleFromFlags(),
+	}
+
+	server.Main(nil, modules, func(srv *server.Server) error {
 		redirect := newRedirectRules()
 
 		srv.Routes.GET("/", mw, handleIndex)

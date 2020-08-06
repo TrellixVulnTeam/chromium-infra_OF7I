@@ -7,3 +7,7 @@ handlers:
 - url: /static
   static_dir: static
   secure: always
+
+entrypoint: >
+  main
+  -config-service-host luci-config.appspot.com
