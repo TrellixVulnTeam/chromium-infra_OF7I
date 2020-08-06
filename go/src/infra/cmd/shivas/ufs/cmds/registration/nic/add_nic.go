@@ -31,6 +31,7 @@ var AddNicCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.NicFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
@@ -38,7 +39,8 @@ var AddNicCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.nicName, "name", "", "the name of the nic to add")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the nic to add")
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this nic is connected to")
-		c.Flags.IntVar(&c.port, "switch-port", 0, "the port of the switch that this nic is connected to")
+		c.Flags.IntVar(&c.switchPort, "switch-port", 0, "the port of the switch that this nic is connected to")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
@@ -56,7 +58,8 @@ type addNic struct {
 	nicName     string
 	macAddress  string
 	switchName  string
-	port        int
+	switchPort  int
+	tags        string
 }
 
 func (c *addNic) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -117,8 +120,9 @@ func (c *addNic) parseArgs(nic *ufspb.Nic) {
 	nic.MacAddress = c.macAddress
 	nic.SwitchInterface = &ufspb.SwitchInterface{
 		Switch: c.switchName,
-		Port:   int32(c.port),
+		Port:   int32(c.switchPort),
 	}
+	nic.Tags = utils.GetStringSlice(c.tags)
 }
 
 func (c *addNic) validateArgs() error {
@@ -129,8 +133,14 @@ func (c *addNic) validateArgs() error {
 		if c.switchName != "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch' cannot be specified at the same time.")
 		}
+		if c.switchPort != 0 {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
+		}
 		if c.macAddress != "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {
@@ -154,7 +164,7 @@ func (c *addNic) validateArgs() error {
 		if c.machineName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required.")
 		}
-		if c.port == 0 {
+		if c.switchPort == 0 {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i'), so '-switch-port' is required.")
 		}
 	}

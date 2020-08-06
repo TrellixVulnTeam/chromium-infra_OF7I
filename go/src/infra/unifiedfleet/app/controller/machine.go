@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -75,13 +76,13 @@ func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 //
 // Checks if the resources referenced by the Machine input already exists
 // in the system before updating a Machine
-func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine, error) {
+func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask.FieldMask) (*ufspb.Machine, error) {
 	var oldMachine *ufspb.Machine
 	var err error
 	f := func(ctx context.Context) error {
 		// Validate input
-		if err := validateUpdateMachine(ctx, machine); err != nil {
-			return err
+		if err := validateUpdateMachine(ctx, machine, mask); err != nil {
+			return errors.Annotate(err, "UpdateMachine - validation failed").Err()
 		}
 
 		// Make sure OUTPUT_ONLY fields are set to empty
@@ -95,62 +96,15 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 		// Get the existing/old machine
 		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
 		if err != nil {
-			return err
+			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
 		}
 
-		// Check if machine lab/rack information is changed/updated
-		if machine.GetLocation().GetRack() != oldMachine.GetLocation().GetRack() ||
-			machine.GetLocation().GetLab() != oldMachine.GetLocation().GetLab() {
-			// Update MachineLSE table for lab and rack indexing
-			machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machine.GetName(), false)
-			if err != nil {
-				return errors.Annotate(err, "UpdateMachine - Failed to query machinelses/hosts for machine %s", machine.GetName()).Err()
-			}
-			for _, machinelse := range machinelses {
-				// This is a output only field used for indexing machinelse table
-				// Assign new lab index and rack for machinelse
-				machinelse.Rack = machine.GetLocation().GetRack()
-				machinelse.Lab = machine.GetLocation().GetLab().String()
-			}
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction. Datastore doesnt allow nested transactions.
-			if _, err := inventory.BatchUpdateMachineLSEs(ctx, machinelses); err != nil {
-				return errors.Annotate(err, "UpdateMachine - Unable to update machinelses %s", machinelses).Err()
-			}
-
-			// Update Nic table indexing for rack and lab
-			nics, err := registration.QueryNicByPropertyName(ctx, "machine", machine.GetName(), false)
-			if err != nil {
-				return errors.Annotate(err, "UpdateMachine - Failed to query nics for machine %s", machine.GetName()).Err()
-			}
-			for _, nic := range nics {
-				// This is a output only field used for indexing nic table
-				// Assign new lab index and rack for nic
-				nic.Rack = machine.GetLocation().GetRack()
-				nic.Lab = machine.GetLocation().GetLab().String()
-			}
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction. Datastore doesnt allow nested transactions.
-			if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
-				return errors.Annotate(err, "UpdateMachine - Unable to update nic %s", nics).Err()
-			}
-
-			// Update Drac table indexing for rack and lab
-			dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machine.GetName(), false)
-			if err != nil {
-				return errors.Annotate(err, "UpdateMachine - Failed to query dracs for machine %s", machine.GetName()).Err()
-			}
-			for _, drac := range dracs {
-				// This is a output only field used for indexing drac table
-				// Assign new lab index and rack for drac
-				drac.Rack = machine.GetLocation().GetRack()
-				drac.Lab = machine.GetLocation().GetLab().String()
-			}
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction. Datastore doesnt allow nested transactions.
-			if _, err := registration.BatchUpdateDracs(ctx, dracs); err != nil {
-				return errors.Annotate(err, "UpdateMachine - Unable to update drac %s", dracs).Err()
-			}
+		// Do not let updating from browser to os or vice versa change for machine.
+		if oldMachine.GetChromeBrowserMachine() != nil && machine.GetChromeosMachine() != nil {
+			return status.Error(codes.InvalidArgument, "UpdateMachine - cannot update a browser machine to os machine. Please delete the browser machine and create a new os machine")
+		}
+		if oldMachine.GetChromeosMachine() != nil && machine.GetChromeBrowserMachine() != nil {
+			return status.Error(codes.InvalidArgument, "UpdateMachine - cannot update an os machine to browser machine. Please delete the os machine and create a new browser machine")
 		}
 
 		// Make sure OUTPUT_ONLY fields are overwritten with old values
@@ -166,22 +120,156 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 			machine.GetChromeBrowserMachine().Drac = oldMachine.GetChromeBrowserMachine().Drac
 		}
 
-		// Create the machine
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			machine, err = processMachineUpdateMask(ctx, oldMachine, machine, mask)
+			if err != nil {
+				return errors.Annotate(err, "UpdateMachine - processing update mask failed").Err()
+			}
+		} else if machine.GetLocation().GetRack() != oldMachine.GetLocation().GetRack() ||
+			machine.GetLocation().GetLab() != oldMachine.GetLocation().GetLab() {
+			// this check is for json input with complete update machine
+			// Check if machine lab/rack information is changed/updated
+			indexMap := map[string]string{
+				"lab": machine.GetLocation().GetLab().String(), "rack": machine.GetLocation().GetRack()}
+			if err = updateIndexingForMachineResources(ctx, machine.GetName(), indexMap); err != nil {
+				return errors.Annotate(err, "UpdateMachine - update lab and rack indexing failed").Err()
+			}
+		}
+
+		// update the machine
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
-			return err
+			return errors.Annotate(err, "UpdateMachine - unable to batch update machine %s", machine.Name).Err()
 		}
 		return nil
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "UpdateMachine - Failed to update machine in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "UpdateMachine - failed to update machine %s in datastore", machine.Name).Err()
 	}
 	SaveChangeEvents(ctx, LogMachineChanges(oldMachine, machine))
 	return machine, nil
+}
+
+// processMachineUpdateMask process update field mask to get only specific update
+// fields and return a complete machine object with updated and existing fields
+func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, machine *ufspb.Machine, mask *field_mask.FieldMask) (*ufspb.Machine, error) {
+	// update the fields in the existing nic
+	for _, path := range mask.Paths {
+		switch path {
+		case "lab":
+			if err := updateIndexingForMachineResources(ctx, machine.GetName(), map[string]string{"lab": machine.GetLocation().GetLab().String()}); err != nil {
+				return oldMachine, errors.Annotate(err, "processMachineUpdateMask - failed to update lab indexing").Err()
+			}
+			if oldMachine.GetLocation() == nil {
+				oldMachine.Location = &ufspb.Location{}
+			}
+			oldMachine.GetLocation().Lab = machine.GetLocation().GetLab()
+		case "rack":
+			if err := updateIndexingForMachineResources(ctx, machine.GetName(), map[string]string{"rack": machine.GetLocation().GetRack()}); err != nil {
+				return oldMachine, errors.Annotate(err, "processMachineUpdateMask - failed to update rack indexing").Err()
+			}
+			if oldMachine.GetLocation() == nil {
+				oldMachine.Location = &ufspb.Location{}
+			}
+			oldMachine.GetLocation().Rack = machine.GetLocation().GetRack()
+		case "platform":
+			if oldMachine.GetChromeBrowserMachine() == nil {
+				oldMachine.Device = &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				}
+			}
+			oldMachine.GetChromeBrowserMachine().ChromePlatform = machine.GetChromeBrowserMachine().GetChromePlatform()
+		case "kvm":
+			if oldMachine.GetChromeBrowserMachine() == nil {
+				oldMachine.Device = &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				}
+			}
+			if oldMachine.GetChromeBrowserMachine().GetKvmInterface() == nil {
+				oldMachine.GetChromeBrowserMachine().KvmInterface = &ufspb.KVMInterface{}
+			}
+			oldMachine.GetChromeBrowserMachine().GetKvmInterface().Kvm = machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm()
+		case "ticket":
+			if oldMachine.GetChromeBrowserMachine() == nil {
+				oldMachine.Device = &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				}
+			}
+			oldMachine.GetChromeBrowserMachine().DeploymentTicket = machine.GetChromeBrowserMachine().GetDeploymentTicket()
+		case "tags":
+			oldTags := oldMachine.GetTags()
+			newTags := machine.GetTags()
+			if newTags == nil || len(newTags) == 0 {
+				oldTags = nil
+			} else {
+				for _, tag := range newTags {
+					oldTags = append(oldTags, tag)
+				}
+			}
+			oldMachine.Tags = oldTags
+		}
+	}
+	// return existing/old machine with new updated values
+	return oldMachine, nil
+}
+
+// updateIndexingForMachineResources updates indexing for machinelse/nic/drac tables
+// can be used inside a transaction
+func updateIndexingForMachineResources(ctx context.Context, machineName string, indexMap map[string]string) error {
+	// get MachineLSEs for indexing
+	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machineName, false)
+	if err != nil {
+		return errors.Annotate(err, "updateIndexing - failed to query machinelses/hosts for machine %s", machineName).Err()
+	}
+	// get Nics for indexing
+	nics, err := registration.QueryNicByPropertyName(ctx, "machine", machineName, false)
+	if err != nil {
+		return errors.Annotate(err, "updateIndexing - failed to query nics for machine %s", machineName).Err()
+	}
+	// get Dracs for indexing
+	dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machineName, false)
+	if err != nil {
+		return errors.Annotate(err, "updateIndexing - failed to query dracs for machine %s", machineName).Err()
+	}
+	for k, v := range indexMap {
+		// These are output only fields used for indexing machinelse/drac/nic table
+		switch k {
+		case "rack":
+			for _, machinelse := range machinelses {
+				machinelse.Rack = v
+			}
+			for _, nic := range nics {
+				nic.Rack = v
+			}
+			for _, drac := range dracs {
+				drac.Rack = v
+			}
+		case "lab":
+			for _, machinelse := range machinelses {
+				machinelse.Lab = v
+			}
+			for _, nic := range nics {
+				nic.Lab = v
+			}
+			for _, drac := range dracs {
+				drac.Lab = v
+			}
+		}
+	}
+	if _, err := inventory.BatchUpdateMachineLSEs(ctx, machinelses); err != nil {
+		return errors.Annotate(err, "updateIndexing - unable to batch update machinelses").Err()
+	}
+	if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
+		return errors.Annotate(err, "updateIndexing - unable to batch update nics").Err()
+	}
+	if _, err := registration.BatchUpdateDracs(ctx, dracs); err != nil {
+		return errors.Annotate(err, "updateIndexing - unable to batch update dracs").Err()
+	}
+	return nil
 }
 
 // GetMachine returns machine for the given id from datastore.
@@ -464,7 +552,7 @@ func validateCreateMachine(ctx context.Context, machine *ufspb.Machine) error {
 //
 // checks if the machine and the resources referenced  by the machine
 // does not exist in the system.
-func validateUpdateMachine(ctx context.Context, machine *ufspb.Machine) error {
+func validateUpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask.FieldMask) error {
 	var errorMsg strings.Builder
 	errorMsg.WriteString(fmt.Sprintf("Cannot update machine %s:\n", machine.Name))
 	// Aggregate resource to check if machine does not exist
@@ -479,6 +567,54 @@ func validateUpdateMachine(ctx context.Context, machine *ufspb.Machine) error {
 	if chromePlatformID := machine.GetChromeBrowserMachine().GetChromePlatform(); chromePlatformID != "" {
 		resourcesNotfound = append(resourcesNotfound, GetChromePlatformResource(chromePlatformID))
 	}
+
 	// check if resources does not exist
-	return ResourceExist(ctx, resourcesNotfound, &errorMsg)
+	if err := ResourceExist(ctx, resourcesNotfound, &errorMsg); err != nil {
+		return err
+	}
+
+	return validateMachineUpdateMask(machine, mask)
+}
+
+// validateMachineUpdateMask validates the update mask for machine update
+func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateUpdateMachine - name cannot be updated, delete and create a new machine instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateUpdateMachine - update_time cannot be updated, it is a output only field")
+			case "lab":
+				if machine.GetLocation() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateMachine - location cannot be empty/nil.")
+				}
+			case "rack":
+				if machine.GetLocation() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateMachine - location cannot be empty/nil.")
+				}
+			case "platform":
+				if machine.GetChromeBrowserMachine() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateMachine - browser machine cannot be empty/nil.")
+				}
+			case "kvm":
+				if machine.GetChromeBrowserMachine() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateMachine - browser machine cannot be empty/nil.")
+				}
+				if machine.GetChromeBrowserMachine().GetKvmInterface() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateMachine - kvm interface cannot be empty/nil.")
+				}
+			case "ticket":
+				if machine.GetChromeBrowserMachine() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateMachine - browser machine cannot be empty/nil.")
+				}
+			case "tags":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateUpdateMachine - unsupported update mask path %q", path)
+			}
+		}
+	}
+	return nil
 }

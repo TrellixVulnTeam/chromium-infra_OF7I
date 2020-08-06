@@ -81,7 +81,7 @@ func SyncMachinesFromIV2(ctx context.Context) error {
 			}
 			if err == nil && !Compare(iv2Machine, ufsMachine) {
 				// Machine exists, but was updated in IV2
-				controller.UpdateMachine(ctx, iv2Machine)
+				controller.UpdateMachine(ctx, iv2Machine, nil)
 				continue
 			}
 			if err != nil {

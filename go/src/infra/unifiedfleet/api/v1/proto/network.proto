@@ -48,6 +48,9 @@ message Nic {
         },
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // tags user can attach for easy querying/searching
+    repeated string tags = 8;
 }
 
 message Vlan {

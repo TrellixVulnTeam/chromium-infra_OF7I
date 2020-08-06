@@ -68,28 +68,7 @@ func UpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatf
 
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
-			// update the fields in the existing chrome platform
-			for _, path := range mask.Paths {
-				switch path {
-				case "manufacturer":
-					old.Manufacturer = chromeplatform.GetManufacturer()
-				case "description":
-					old.Description = chromeplatform.GetDescription()
-				case "tags":
-					oldTags := old.GetTags()
-					newTags := chromeplatform.GetTags()
-					if newTags == nil || len(newTags) == 0 {
-						oldTags = nil
-					} else {
-						for _, tag := range newTags {
-							oldTags = append(oldTags, tag)
-						}
-					}
-					old.Tags = oldTags
-				}
-			}
-			// copy existing chrome platform to new chrome platform
-			chromeplatform = old
+			chromeplatform = processChromePlatformUpdateMask(old, chromeplatform, mask)
 		}
 
 		// Update the chrome platform
@@ -105,6 +84,33 @@ func UpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.ChromePlatf
 		return nil, errors.Annotate(err, "UpdateChromePlatform - failed to update chrome platform in datastore: %s", chromeplatform.GetName()).Err()
 	}
 	return chromeplatform, nil
+}
+
+// processChromePlatformUpdateMask process update field mask to get only specific update
+// fields and return a complete platform object with updated and existing fields
+func processChromePlatformUpdateMask(oldPlatform *ufspb.ChromePlatform, platform *ufspb.ChromePlatform, mask *field_mask.FieldMask) *ufspb.ChromePlatform {
+	// update the fields in the existing chrome platform
+	for _, path := range mask.Paths {
+		switch path {
+		case "manufacturer":
+			oldPlatform.Manufacturer = platform.GetManufacturer()
+		case "description":
+			oldPlatform.Description = platform.GetDescription()
+		case "tags":
+			oldTags := oldPlatform.GetTags()
+			newTags := platform.GetTags()
+			if newTags == nil || len(newTags) == 0 {
+				oldTags = nil
+			} else {
+				for _, tag := range newTags {
+					oldTags = append(oldTags, tag)
+				}
+			}
+			oldPlatform.Tags = oldTags
+		}
+	}
+	// return existing/old platform with new updated values
+	return oldPlatform
 }
 
 // GetChromePlatform returns chromeplatform for the given id from datastore.
@@ -219,23 +225,28 @@ func validateUpdateChromePlatform(ctx context.Context, chromeplatform *ufspb.Chr
 		return err
 	}
 
+	// validate update mask
+	return validateChromePlatformUpdateMask(mask)
+}
+
+// validateChromePlatformUpdateMask validates the update mask for ChromePlatform update
+func validateChromePlatformUpdateMask(mask *field_mask.FieldMask) error {
 	if mask != nil {
 		// validate the give field mask
 		for _, path := range mask.Paths {
 			switch path {
 			case "name":
-				return status.Error(codes.InvalidArgument, "name cannot be updated, delete and create a new platform instead")
+				return status.Error(codes.InvalidArgument, "validateChromePlatformUpdateMask - name cannot be updated, delete and create a new platform instead")
 			case "update_time":
-				return status.Error(codes.InvalidArgument, "update_time cannot be updated, it is a Output only field")
+				return status.Error(codes.InvalidArgument, "validateChromePlatformUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "manufacturer":
 			case "description":
 			case "tags":
 				// valid fields, nothing to validate.
 			default:
-				return status.Errorf(codes.InvalidArgument, "unsupported update mask path %q", path)
+				return status.Errorf(codes.InvalidArgument, "validateChromePlatformUpdateMask - unsupported update mask path %q", path)
 			}
 		}
 	}
-
 	return nil
 }

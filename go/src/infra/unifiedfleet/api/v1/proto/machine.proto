@@ -44,6 +44,9 @@ message Machine {
         (google.api.field_behavior) = OUTPUT_ONLY];
     // Record the ACL info of the machine
     string realm = 7;
+
+    // tags user can attach for easy querying/searching
+    repeated string tags = 8;
 }
 
 // ChromeBrowserMachine refers to bare metal servers in Chrome Browser lab

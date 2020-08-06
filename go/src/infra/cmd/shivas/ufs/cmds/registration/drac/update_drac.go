@@ -32,11 +32,17 @@ var UpdateDracCmd = &subcommands.Command{
 		c := &updateDrac{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DracFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to update the association of the drac to a different machine")
 		c.Flags.StringVar(&c.dracName, "name", "", "name of the drac to update")
+		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the drac to add.")
+		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.IntVar(&c.switchPort, "switch-port", 0, "the port of the switch that this drac is connected to. "+"To clear this field set it to -1.")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the drac to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the drac")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the drac to")
@@ -51,10 +57,15 @@ type updateDrac struct {
 
 	newSpecsFile string
 	interactive  bool
+	commonFlags  site.CommonFlags
 
 	machineName string
-	vlanName    string
 	dracName    string
+	macAddress  string
+	switchName  string
+	switchPort  int
+	tags        string
+	vlanName    string
 	deleteVlan  bool
 	ip          string
 }
@@ -72,12 +83,14 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -88,8 +101,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 		c.machineName = utils.GetDracInteractiveInput(ctx, ic, &drac, true)
 	} else {
 		if c.newSpecsFile != "" {
-			err = utils.ParseJSONFile(c.newSpecsFile, &drac)
-			if err != nil {
+			if err = utils.ParseJSONFile(c.newSpecsFile, &drac); err != nil {
 				return err
 			}
 		} else {
@@ -125,6 +137,13 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 			Delete: c.deleteVlan,
 			Ip:     c.ip,
 		},
+		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
+			"machine":     "machine",
+			"mac-address": "macAddress",
+			"switch":      "switch",
+			"switch-port": "port",
+			"tags":        "tags",
+		}),
 	})
 	if err != nil {
 		return err
@@ -148,20 +167,37 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 
 func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
 	drac.Name = c.dracName
+	drac.MacAddress = c.macAddress
+	drac.SwitchInterface = &ufspb.SwitchInterface{}
+	if c.switchName == utils.ClearFieldValue {
+		drac.GetSwitchInterface().Switch = ""
+	} else {
+		drac.GetSwitchInterface().Switch = c.switchName
+	}
+	if c.switchPort == -1 {
+		drac.GetSwitchInterface().Port = 0
+	} else {
+		drac.GetSwitchInterface().Port = int32(c.switchPort)
+	}
+	if c.tags == utils.ClearFieldValue {
+		drac.Tags = nil
+	} else {
+		drac.Tags = utils.GetStringSlice(c.tags)
+	}
 }
 
 func (c *updateDrac) validateArgs() error {
-	if c.newSpecsFile != "" {
-		if c.interactive {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
-		}
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.dracName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.ip == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan', '-ip'] is required.")
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
+			c.machineName == "" && c.switchName == "" && c.switchPort == 0 &&
+			c.macAddress == "" && c.tags == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}
 	return nil

@@ -26,12 +26,13 @@ const DracKind string = "Drac"
 
 // DracEntity is a datastore entity that tdracs Drac.
 type DracEntity struct {
-	_kind    string `gae:"$kind,Drac"`
-	ID       string `gae:"$id"`
-	SwitchID string `gae:"switch_id"`
-	Lab      string `gae:"lab"`
-	Machine  string `gae:"machine"`
-	Rack     string `gae:"rack"`
+	_kind    string   `gae:"$kind,Drac"`
+	ID       string   `gae:"$id"`
+	SwitchID string   `gae:"switch_id"`
+	Lab      string   `gae:"lab"`
+	Machine  string   `gae:"machine"`
+	Rack     string   `gae:"rack"`
+	Tags     []string `gae:"tags"`
 	// ufspb.Drac cannot be directly used as it contains pointer.
 	Drac []byte `gae:",noindex"`
 }
@@ -60,6 +61,7 @@ func newDracEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		Rack:     p.GetRack(),
 		Lab:      p.GetLab(),
 		Machine:  p.GetMachine(),
+		Tags:     p.GetTags(),
 		Drac:     drac,
 	}, nil
 }
@@ -248,8 +250,10 @@ func GetDracIndexedFieldName(input string) (string, error) {
 		field = "rack"
 	case util.MachineFilterName:
 		field = "machine"
+	case util.TagFilterName:
+		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for drac are lab/rack/switch/machine", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for drac are lab/rack/switch/machine/tag", input)
 	}
 	return field, nil
 }

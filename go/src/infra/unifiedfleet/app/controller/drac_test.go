@@ -10,6 +10,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
@@ -181,7 +182,7 @@ func TestUpdateDrac(t *testing.T) {
 			drac := &ufspb.Drac{
 				Name: "drac-1",
 			}
-			resp, err := UpdateDrac(ctx, drac, "machine-1")
+			resp, err := UpdateDrac(ctx, drac, "machine-1", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Drac with DracID drac-1 in the system.")
@@ -204,7 +205,7 @@ func TestUpdateDrac(t *testing.T) {
 					Switch: "switch-1",
 				},
 			}
-			resp, err := UpdateDrac(ctx, drac2, "machine-1")
+			resp, err := UpdateDrac(ctx, drac2, "machine-1", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
@@ -248,7 +249,7 @@ func TestUpdateDrac(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateDrac(ctx, drac, "machine-4")
+			resp, err := UpdateDrac(ctx, drac, "machine-4", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, drac)
@@ -314,7 +315,7 @@ func TestUpdateDrac(t *testing.T) {
 				Name:       "drac-5",
 				MacAddress: "ab:cd:ef",
 			}
-			resp, err := UpdateDrac(ctx, drac, "machine-5")
+			resp, err := UpdateDrac(ctx, drac, "machine-5", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, drac)
@@ -342,7 +343,7 @@ func TestUpdateDrac(t *testing.T) {
 			drac = &ufspb.Drac{
 				Name: "drac-6",
 			}
-			resp, err := UpdateDrac(ctx, drac, "machine-6")
+			resp, err := UpdateDrac(ctx, drac, "machine-6", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
@@ -350,6 +351,86 @@ func TestUpdateDrac(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-6")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Partial Update drac", func() {
+			drac := &ufspb.Drac{
+				Name: "drac-7",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch: "switch-7",
+					Port:   25,
+				},
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac1 := &ufspb.Drac{
+				Name:       "drac-7",
+				MacAddress: "efgh",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Port: 75,
+				},
+			}
+			resp, err := UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"port", "macAddress"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
+			So(resp.GetMacAddress(), ShouldResemble, "efgh")
+			So(resp.GetSwitchInterface().GetPort(), ShouldEqual, 75)
+		})
+
+		Convey("Partial Update drac mac address - error", func() {
+			drac := &ufspb.Drac{
+				Name:       "drac-8",
+				MacAddress: "abcd",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch: "switch-8",
+					Port:   25,
+				},
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac1 := &ufspb.Drac{
+				Name:       "drac-8",
+				MacAddress: "efgh",
+			}
+			_, err = UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "This drac's mac address is already set.")
+		})
+
+		Convey("Update drac mac address - error", func() {
+			drac := &ufspb.Drac{
+				Name:       "drac-9",
+				MacAddress: "abcd",
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac1 := &ufspb.Drac{
+				Name:       "drac-9",
+				MacAddress: "efgh",
+			}
+			_, err = UpdateDrac(ctx, drac1, "", nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "This drac's mac address is already set.")
+		})
+
+		Convey("Update drac mac address - happy path", func() {
+			drac := &ufspb.Drac{
+				Name: "drac-10",
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+
+			drac1 := &ufspb.Drac{
+				Name:       "drac-10",
+				MacAddress: "efgh",
+			}
+			res, _ := UpdateDrac(ctx, drac1, "", nil)
+			So(res, ShouldNotBeNil)
+			So(res, ShouldResembleProto, drac1)
 		})
 
 	})

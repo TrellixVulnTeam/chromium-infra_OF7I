@@ -10,6 +10,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
@@ -177,7 +178,7 @@ func TestUpdateNic(t *testing.T) {
 			nic := &ufspb.Nic{
 				Name: "nic-1",
 			}
-			resp, err := UpdateNic(ctx, nic, "machine-1")
+			resp, err := UpdateNic(ctx, nic, "machine-1", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-1 in the system")
@@ -200,7 +201,7 @@ func TestUpdateNic(t *testing.T) {
 					Switch: "switch-1",
 				},
 			}
-			resp, err := UpdateNic(ctx, nic2, "machine-1")
+			resp, err := UpdateNic(ctx, nic2, "machine-1", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
@@ -242,7 +243,7 @@ func TestUpdateNic(t *testing.T) {
 			nic = &ufspb.Nic{
 				Name: "nic-3",
 			}
-			resp, err := UpdateNic(ctx, nic, "machine-4")
+			resp, err := UpdateNic(ctx, nic, "machine-4", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, nic)
@@ -298,7 +299,7 @@ func TestUpdateNic(t *testing.T) {
 				Name:       "nic-5",
 				MacAddress: "ab:cd:ef",
 			}
-			resp, err := UpdateNic(ctx, nic, "machine-5")
+			resp, err := UpdateNic(ctx, nic, "machine-5", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, nic)
@@ -326,7 +327,7 @@ func TestUpdateNic(t *testing.T) {
 			nic = &ufspb.Nic{
 				Name: "nic-6",
 			}
-			resp, err := UpdateNic(ctx, nic, "machine-6")
+			resp, err := UpdateNic(ctx, nic, "machine-6", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
@@ -336,6 +337,85 @@ func TestUpdateNic(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
+		Convey("Partial Update nic", func() {
+			nic := &ufspb.Nic{
+				Name: "nic-7",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch: "switch-7",
+					Port:   25,
+				},
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic1 := &ufspb.Nic{
+				Name:       "nic-7",
+				MacAddress: "efgh",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Port: 75,
+				},
+			}
+			resp, err := UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"port", "macAddress"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
+			So(resp.GetSwitchInterface().GetPort(), ShouldEqual, 75)
+			So(resp.GetMacAddress(), ShouldResemble, "efgh")
+		})
+
+		Convey("Partial Update nic mac address - error", func() {
+			nic := &ufspb.Nic{
+				Name:       "nic-8",
+				MacAddress: "abcd",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch: "switch-8",
+					Port:   25,
+				},
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic1 := &ufspb.Nic{
+				Name:       "nic-8",
+				MacAddress: "efgh",
+			}
+			_, err = UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "This nic's mac address is already set.")
+		})
+
+		Convey("Update nic mac address - error", func() {
+			nic := &ufspb.Nic{
+				Name:       "nic-9",
+				MacAddress: "abcd",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic1 := &ufspb.Nic{
+				Name:       "nic-9",
+				MacAddress: "efgh",
+			}
+			_, err = UpdateNic(ctx, nic1, "", nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "This nic's mac address is already set.")
+		})
+
+		Convey("Update nic mac address - happy path", func() {
+			nic := &ufspb.Nic{
+				Name: "nic-10",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+
+			nic1 := &ufspb.Nic{
+				Name:       "nic-10",
+				MacAddress: "efgh",
+			}
+			res, _ := UpdateNic(ctx, nic1, "", nil)
+			So(res, ShouldNotBeNil)
+			So(res, ShouldResembleProto, nic1)
+		})
 	})
 }
 

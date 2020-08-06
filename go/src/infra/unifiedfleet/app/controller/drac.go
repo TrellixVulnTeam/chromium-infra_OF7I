@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -85,25 +86,28 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 //
 // Checks if the resources referenced by the Drac input already exists
 // in the system before updating a Drac
-func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufspb.Drac, error) {
+func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	f := func(ctx context.Context) error {
 		// 1. Validate the input
-		if err := validateUpdateDrac(ctx, drac, machineName); err != nil {
-			return err
+		if err := validateUpdateDrac(ctx, drac, machineName, mask); err != nil {
+			return errors.Annotate(err, "UpdateDrac - validation failed").Err()
 		}
 
-		oldDracToUpdate, _ := registration.GetDrac(ctx, drac.GetName())
+		oldDrac, err := registration.GetDrac(ctx, drac.GetName())
+		if err != nil {
+			return errors.Annotate(err, "UpdateDrac - get drac %s failed", drac.GetName()).Err()
+		}
 		// Copy the machine/rack/lab to drac OUTPUT only fields from already existing drac
-		drac.Machine = oldDracToUpdate.GetMachine()
-		drac.Rack = oldDracToUpdate.GetRack()
-		drac.Lab = oldDracToUpdate.GetLab()
-		changes = append(changes, LogDracChanges(oldDracToUpdate, drac)...)
+		drac.Machine = oldDrac.GetMachine()
+		drac.Rack = oldDrac.GetRack()
+		drac.Lab = oldDrac.GetLab()
+		changes = append(changes, LogDracChanges(oldDrac, drac)...)
 		if machineName != "" {
 			// 2. Get the old browser machine associated with drac
 			oldMachine, err := getBrowserMachineForDrac(ctx, drac.Name)
 			if err != nil {
-				return err
+				return errors.Annotate(err, "UpdateDrac - query machine for drac %s failed", drac.GetName()).Err()
 			}
 
 			// User is trying to associate this drac with a different browser machine.
@@ -112,13 +116,13 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 				if cs, err := removeDracFromBrowserMachines(ctx, []*ufspb.Machine{oldMachine}); err == nil {
 					changes = append(changes, cs...)
 				} else {
-					return err
+					return errors.Annotate(err, "UpdateDrac - remove drac %s from browser machine %s failed", drac.Name, oldMachine.GetName()).Err()
 				}
 
 				// 4. Get new browser machine to associate the drac
 				machine, err := getBrowserMachine(ctx, machineName)
 				if err != nil {
-					return err
+					return errors.Annotate(err, "UpdateDrac - get browser machine %s failed", machineName).Err()
 				}
 
 				// Fill the machine/rack/lab to drac OUTPUT only fields
@@ -132,7 +136,7 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 				// so we delete the old drac from the system.
 				if oldDracName := machine.GetChromeBrowserMachine().GetDrac(); oldDracName != "" {
 					if err := registration.DeleteDrac(ctx, oldDracName); err != nil {
-						return errors.Annotate(err, "%s drac not dound in the system. Deletion for drac %s failed.", oldDracName, oldDracName).Err()
+						return errors.Annotate(err, "UpdateDrac - drac %s not dound in the system. Deletion for drac %s failed.", oldDracName, oldDracName).Err()
 					}
 					changes = append(changes, LogDracChanges(&ufspb.Drac{Name: oldDracName}, nil)...)
 				}
@@ -141,8 +145,25 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 				if cs, err := addDracToBrowserMachine(ctx, machine, drac.Name); err == nil {
 					changes = append(changes, cs...)
 				} else {
-					return err
+					return errors.Annotate(err, "UpdateDrac - add drac %s from browser machine %s failed", drac.Name, machine.GetName()).Err()
 				}
+			}
+		}
+
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			drac, err = processDracUpdateMask(oldDrac, drac, mask)
+			if err != nil {
+				return errors.Annotate(err, "UpdateDrac - processing update mask failed").Err()
+			}
+		} else {
+			// This check is for json file input
+			// User is not allowed to update mac address of a drac
+			// instead user has to delete the old drac and add new drac with new mac address
+			// macaddress is associated with DHCP config, so we dont allow mac address update for a drac
+			if oldDrac.GetMacAddress() != "" && oldDrac.GetMacAddress() != drac.GetMacAddress() {
+				return status.Error(codes.InvalidArgument, "UpdateDrac - This drac's mac address is already set. "+
+					"Updating mac address for the drac is not allowed.\nInstead delete the drac and add a new drac with updated mac address.")
 			}
 		}
 
@@ -150,17 +171,68 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err := registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
-			return errors.Annotate(err, "Unable to create drac %s", drac.Name).Err()
+			return errors.Annotate(err, "UpdateDrac - unable to batch update drac %s", drac.Name).Err()
 		}
 		return nil
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to create drac in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "UpdateDrac - failed to update drac %s in datastore", drac.Name).Err()
 	}
 	SaveChangeEvents(ctx, changes)
 	return drac, nil
+}
+
+// processDracUpdateMask process update field mask to get only specific update
+// fields and return a complete drac object with updated and existing fields
+func processDracUpdateMask(oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
+	// update the fields in the existing drac
+	for _, path := range mask.Paths {
+		switch path {
+		case "machine":
+			// In the previous step we have already checked for machineName != ""
+			// and got the new values for OUTPUT only fields in new drac object,
+			// assign them to oldDrac.
+			oldDrac.Machine = drac.GetMachine()
+			oldDrac.Rack = drac.GetRack()
+			oldDrac.Lab = drac.GetLab()
+		case "macAddress":
+			if oldDrac.GetMacAddress() != "" {
+				return oldDrac, status.Error(codes.InvalidArgument, "processDracUpdateMask - This drac's mac address is already set. "+
+					"Updating mac address for the drac is not allowed.\nInstead delete the drac and add a new drac with updated mac address.")
+			}
+			oldDrac.MacAddress = drac.GetMacAddress()
+		case "switch":
+			if oldDrac.GetSwitchInterface() == nil {
+				oldDrac.SwitchInterface = &ufspb.SwitchInterface{
+					Switch: drac.GetSwitchInterface().GetSwitch(),
+				}
+			} else {
+				oldDrac.GetSwitchInterface().Switch = drac.GetSwitchInterface().GetSwitch()
+			}
+		case "port":
+			if oldDrac.GetSwitchInterface() == nil {
+				oldDrac.SwitchInterface = &ufspb.SwitchInterface{
+					Port: drac.GetSwitchInterface().GetPort(),
+				}
+			} else {
+				oldDrac.GetSwitchInterface().Port = drac.GetSwitchInterface().GetPort()
+			}
+		case "tags":
+			oldTags := oldDrac.GetTags()
+			newTags := drac.GetTags()
+			if newTags == nil || len(newTags) == 0 {
+				oldTags = nil
+			} else {
+				for _, tag := range newTags {
+					oldTags = append(oldTags, tag)
+				}
+			}
+			oldDrac.Tags = oldTags
+		}
+	}
+	// return existing/old drac with new updated values
+	return oldDrac, nil
 }
 
 // DeleteDracHost deletes the host of a drac in datastore.
@@ -369,7 +441,7 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 // validateUpdateDrac validates if a drac can be updated
 //
 // checks if drac, machine and resources referecned by the drac does not exist
-func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) error {
+func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if drac does not exist
 	resourcesNotFound := []*Resource{GetDracResource(drac.Name)}
 	// Aggregate resource to check if machine does not exist
@@ -381,8 +453,12 @@ func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 		resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
 	}
 
-	// Check if resources does not exist
-	return ResourceExist(ctx, resourcesNotFound, nil)
+	// check if resources does not exist
+	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
+		return err
+	}
+
+	return validateDracUpdateMask(mask)
 }
 
 // validateUpdateDracHost validates if a host can be added to a drac
@@ -395,4 +471,28 @@ func validateUpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName, ipv
 	}
 	// Check if resources does not exist
 	return ResourceExist(ctx, []*Resource{GetDracResource(drac.Name), GetVlanResource(vlanName)}, nil)
+}
+
+// validateDracUpdateMask validates the update mask for drac update
+func validateDracUpdateMask(mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateUpdateDrac - name cannot be updated, delete and create a new drac instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateUpdateDrac - update_time cannot be updated, it is a Output only field")
+			case "switch":
+			case "port":
+			case "machine":
+			case "macAddress":
+			case "tags":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateUpdateDrac - unsupported update mask path %q", path)
+			}
+		}
+	}
+	return nil
 }

@@ -6,7 +6,6 @@ package configuration
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -31,6 +30,8 @@ var AddChromePlatformCmd = &subcommands.Command{
 		c := &addChromePlatform{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.ChromePlatformFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
@@ -111,7 +112,7 @@ func (c *addChromePlatform) innerRun(a subcommands.Application, args []string, e
 func (c *addChromePlatform) parseArgs(chromePlatform *ufspb.ChromePlatform) {
 	chromePlatform.Name = c.name
 	chromePlatform.Manufacturer = c.manufacturer
-	chromePlatform.Tags = strings.Split(strings.Replace(c.tags, " ", "", -1), ",")
+	chromePlatform.Tags = utils.GetStringSlice(c.tags)
 	chromePlatform.Description = c.description
 }
 

@@ -181,7 +181,7 @@ shivas add-machine -f machinerequest.json -lab mtv97
 Creates a machine by reading a JSON file input.
 
 shivas add-machine -name machine1 -lab mtv97 -rack rack1 -ticket b/1234 -platform platform1 -kvm kvm1
-Creates a rack by parameters without adding nic/drac.`
+Creates a machine by parameters without adding nic/drac.`
 
 	// UpdateMachineLongDesc long description for UpdateMachineCmd
 	UpdateMachineLongDesc string = `Update a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name.
@@ -191,7 +191,10 @@ shivas update-machine -f machine.json
 Update a machine by reading a JSON file input.
 
 shivas update-machine -i
-Update a machine by reading input through interactive mode.`
+Update a machine by reading input through interactive mode.
+
+shivas update-machine -name machine1 -lab mtv97 -rack rack1
+Partial updates a machine by parameters. Only specified parameters will be udpated in the machine.`
 
 	// ListMachineLongDesc long description for ListMachineCmd
 	ListMachineLongDesc string = `List all Machines
@@ -529,7 +532,7 @@ Examples:
 shivas list host
 Prints all the hosts in JSON format
 
-shivas list machine -n 50
+shivas list host -n 50
 Prints 50 hosts in JSON format
 `
 
@@ -724,7 +727,10 @@ shivas update-nic -f nic.json -m {Machine name}
 Update a nic by reading a JSON file input and associate the nic with a different machine.
 
 shivas update-nic -i
-Update a nic by reading input through interactive mode.`
+Update a nic by reading input through interactive mode.
+
+shivas update-nic -name machine0:eth0 -switch switch0 -mac-address 12345
+Partial update a nic by parameters. Only specified parameters will be updated in the nic.`
 
 	// NicFileText description for nic file input
 	NicFileText string = `Path to a file containing nic specification in JSON format.
@@ -766,6 +772,9 @@ Update a drac by reading a JSON file input.
 
 shivas update-drac -f drac.json -m {Machine name}
 Update a drac by reading a JSON file input and associate the drac with a different machine.
+
+shivas update-drac -name machine0:drac -switch switch0 -mac-address 123456
+Partial update a drac by parameters. Only specified parameters will be updated in the drac.
 
 shivas update-drac -name drac0 -delete-vlan
 Remove the ip for drac0

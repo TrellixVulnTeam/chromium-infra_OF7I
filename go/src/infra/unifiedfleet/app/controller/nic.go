@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -78,15 +79,18 @@ func CreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 //
 // Checks if the resources referenced by the Nic input already exists
 // in the system before updating a Nic
-func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.Nic, error) {
+func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	f := func(ctx context.Context) error {
 		// 1. Validate the input
-		if err := validateUpdateNic(ctx, nic, machineName); err != nil {
-			return err
+		if err := validateUpdateNic(ctx, nic, machineName, mask); err != nil {
+			return errors.Annotate(err, "UpdateNic - validation failed").Err()
 		}
 
-		oldNic, _ := registration.GetNic(ctx, nic.GetName())
+		oldNic, err := registration.GetNic(ctx, nic.GetName())
+		if err != nil {
+			return errors.Annotate(err, "UpdateNic - get nic %s failed", nic.GetName()).Err()
+		}
 		// Copy the machine/rack/lab to nic OUTPUT only fields from already existing nic
 		nic.Machine = oldNic.GetMachine()
 		nic.Rack = oldNic.GetRack()
@@ -96,7 +100,7 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 			// 2. Get the old browser machine associated with nic
 			oldMachine, err := getBrowserMachineForNic(ctx, nic.Name)
 			if err != nil {
-				return err
+				return errors.Annotate(err, "UpdateNic - query machine for nic %s failed", nic.GetName()).Err()
 			}
 
 			// User is trying to associate this nic with a different browser machine.
@@ -104,7 +108,7 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 				// 3. Get browser machine to associate the nic
 				machine, err := getBrowserMachine(ctx, machineName)
 				if err != nil {
-					return err
+					return errors.Annotate(err, "UpdateNic - get browser machine %s failed", machineName).Err()
 				}
 
 				// Fill the machine/rack/lab to nic OUTPUT only fields
@@ -116,15 +120,32 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 				if cs, err := removeNicFromBrowserMachines(ctx, []*ufspb.Machine{oldMachine}, nic.Name); err == nil {
 					changes = append(changes, cs...)
 				} else {
-					return err
+					return errors.Annotate(err, "UpdateNic - remove nic %s from browser machine %s failed", nic.Name, oldMachine.GetName()).Err()
 				}
 
 				// 5. Update the browser machine with new nic information
 				if cs, err := addNicToBrowserMachine(ctx, machine, nic.Name); err == nil {
 					changes = append(changes, cs...)
 				} else {
-					return err
+					return errors.Annotate(err, "UpdateNic - add nic %s from browser machine %s failed", nic.Name, machine.GetName()).Err()
 				}
+			}
+		}
+
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			nic, err = processNicUpdateMask(oldNic, nic, mask)
+			if err != nil {
+				return errors.Annotate(err, "UpdateNic - processing update mask failed").Err()
+			}
+		} else {
+			// This check is for json file input
+			// User is not allowed to update mac address of a nic
+			// instead user has to delete the old nic and add new nic with new mac address
+			// macaddress is associated with DHCP config, so we dont allow mac address update for a nic
+			if oldNic.GetMacAddress() != "" && oldNic.GetMacAddress() != nic.GetMacAddress() {
+				return status.Error(codes.InvalidArgument, "UpdateNic - This nic's mac address is already set. "+
+					"Updating mac address for the nic is not allowed.\nInstead delete the nic and add a new nic with updated mac address.")
 			}
 		}
 
@@ -132,18 +153,69 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err := registration.BatchUpdateNics(ctx, []*ufspb.Nic{nic}); err != nil {
-			return errors.Annotate(err, "Unable to create nic %s", nic.Name).Err()
+			return errors.Annotate(err, "UpdateNic - unable to batch update nic %s", nic.Name).Err()
 		}
 		return nil
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to create entity in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "UpdateNic - failed to update nic %s in datastore", nic.Name).Err()
 	}
 	// Log the changes
 	SaveChangeEvents(ctx, changes)
 	return nic, nil
+}
+
+// processNicUpdateMask process update field mask to get only specific update
+// fields and return a complete nic object with updated and existing fields
+func processNicUpdateMask(oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
+	// update the fields in the existing/old nic
+	for _, path := range mask.Paths {
+		switch path {
+		case "machine":
+			// In the previous step we have already checked for machineName != ""
+			// and got the new values for OUTPUT only fields in new nic object,
+			// assign them to oldnic.
+			oldNic.Machine = nic.GetMachine()
+			oldNic.Rack = nic.GetRack()
+			oldNic.Lab = nic.GetLab()
+		case "macAddress":
+			if oldNic.GetMacAddress() != "" {
+				return oldNic, status.Error(codes.InvalidArgument, "processNicUpdateMask - This nic's mac address is already set. "+
+					"Updating mac address for the nic is not allowed.\nInstead delete the nic and add a new nic with updated mac address.")
+			}
+			oldNic.MacAddress = nic.GetMacAddress()
+		case "switch":
+			if oldNic.GetSwitchInterface() == nil {
+				oldNic.SwitchInterface = &ufspb.SwitchInterface{
+					Switch: nic.GetSwitchInterface().GetSwitch(),
+				}
+			} else {
+				oldNic.GetSwitchInterface().Switch = nic.GetSwitchInterface().GetSwitch()
+			}
+		case "port":
+			if oldNic.GetSwitchInterface() == nil {
+				oldNic.SwitchInterface = &ufspb.SwitchInterface{
+					Port: nic.GetSwitchInterface().GetPort(),
+				}
+			} else {
+				oldNic.GetSwitchInterface().Port = nic.GetSwitchInterface().GetPort()
+			}
+		case "tags":
+			oldTags := oldNic.GetTags()
+			newTags := nic.GetTags()
+			if newTags == nil || len(newTags) == 0 {
+				oldTags = nil
+			} else {
+				for _, tag := range newTags {
+					oldTags = append(oldTags, tag)
+				}
+			}
+			oldNic.Tags = oldTags
+		}
+	}
+	// return existing/old nic with new updated values
+	return oldNic, nil
 }
 
 // getBrowserMachineForNic return browser machine associated with the nic.
@@ -405,7 +477,7 @@ func validateCreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) 
 // validateUpdateNic validates if a nic can be updated
 //
 // checks if nic, machine and resources referecned by the nic does not exist
-func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) error {
+func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if nic does not exist
 	resourcesNotFound := []*Resource{GetNicResource(nic.Name)}
 	// Aggregate resource to check if machine does not exist
@@ -417,6 +489,34 @@ func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string) 
 		resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
 	}
 
-	// Check if resources does not exist
-	return ResourceExist(ctx, resourcesNotFound, nil)
+	// check if resources does not exist
+	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
+		return err
+	}
+
+	return validateNicUpdateMask(mask)
+}
+
+// validateNicUpdateMask validates the update mask for nic update
+func validateNicUpdateMask(mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateUpdateNic - name cannot be updated, delete and create a new nic instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateUpdateNic - update_time cannot be updated, it is a Output only field")
+			case "switch":
+			case "port":
+			case "machine":
+			case "macAddress":
+			case "tags":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateUpdateNic - unsupported update mask path %q", path)
+			}
+		}
+	}
+	return nil
 }

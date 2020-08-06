@@ -30,20 +30,36 @@ var UpdateNicCmd = &subcommands.Command{
 		c := &updateNic{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.NicFileText)
-		c.Flags.StringVar(&c.machineName, "m", "", "name of the machine to associate the nic")
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
+		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to associate the nic")
+		c.Flags.StringVar(&c.nicName, "name", "", "the name of the nic to update")
+		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the nic to add.")
+		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this nic is connected to. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.IntVar(&c.switchPort, "switch-port", 0, "the port of the switch that this nic is connected to. "+"To clear this field set it to -1.")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
 }
 
 type updateNic struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	machineName  string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+
 	newSpecsFile string
 	interactive  bool
+
+	machineName string
+	nicName     string
+	macAddress  string
+	switchName  string
+	switchPort  int
+	tags        string
 }
 
 func (c *updateNic) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -59,12 +75,14 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	ctx := cli.GetContext(a, c, env)
-	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -74,27 +92,84 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 	if c.interactive {
 		c.machineName = utils.GetNicInteractiveInput(ctx, ic, &nic, true)
 	} else {
-		if err = utils.ParseJSONFile(c.newSpecsFile, &nic); err != nil {
-			return err
+		if c.newSpecsFile != "" {
+			if err = utils.ParseJSONFile(c.newSpecsFile, &nic); err != nil {
+				return err
+			}
+		} else {
+			c.parseArgs(&nic)
 		}
 	}
 	nic.Name = ufsUtil.AddPrefix(ufsUtil.NicCollection, nic.Name)
 	res, err := ic.UpdateNic(ctx, &ufsAPI.UpdateNicRequest{
 		Nic:     &nic,
 		Machine: c.machineName,
+		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
+			"machine":     "machine",
+			"mac-address": "macAddress",
+			"switch":      "switch",
+			"switch-port": "port",
+			"tags":        "tags",
+		}),
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	fmt.Printf("Successfully updated the nic %s\n", res.Name)
 	return nil
 }
 
+func (c *updateNic) parseArgs(nic *ufspb.Nic) {
+	nic.Name = c.nicName
+	nic.MacAddress = c.macAddress
+	nic.SwitchInterface = &ufspb.SwitchInterface{}
+	if c.switchName == utils.ClearFieldValue {
+		nic.GetSwitchInterface().Switch = ""
+	} else {
+		nic.GetSwitchInterface().Switch = c.switchName
+	}
+	if c.switchPort == -1 {
+		nic.GetSwitchInterface().Port = 0
+	} else {
+		nic.GetSwitchInterface().Port = int32(c.switchPort)
+	}
+	if c.tags == utils.ClearFieldValue {
+		nic.Tags = nil
+	} else {
+		nic.Tags = utils.GetStringSlice(c.tags)
+	}
+}
+
 func (c *updateNic) validateArgs() error {
-	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
+	if c.newSpecsFile != "" || c.interactive {
+		if c.nicName != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.switchName != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switchName' cannot be specified at the same time.")
+		}
+		if c.switchPort != 0 {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
+		}
+		if c.macAddress != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
+	}
+	if c.newSpecsFile == "" && !c.interactive {
+		if c.nicName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+		}
+		if c.machineName == "" && c.switchName == "" && c.switchPort == 0 && c.macAddress == "" && c.tags == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+		}
 	}
 	return nil
 }

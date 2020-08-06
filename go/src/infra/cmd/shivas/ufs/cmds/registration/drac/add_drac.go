@@ -33,6 +33,7 @@ var AddDracCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.DracFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
@@ -40,7 +41,8 @@ var AddDracCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.dracName, "name", "", "the name of the drac to add")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the drac to add")
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to")
-		c.Flags.IntVar(&c.port, "switch-port", 0, "the port of the switch that this drac is connected to")
+		c.Flags.IntVar(&c.switchPort, "switch-port", 0, "the port of the switch that this drac is connected to")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
@@ -58,7 +60,8 @@ type addDrac struct {
 	dracName    string
 	macAddress  string
 	switchName  string
-	port        int
+	switchPort  int
+	tags        string
 }
 
 func (c *addDrac) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -139,8 +142,9 @@ func (c *addDrac) parseArgs(drac *ufspb.Drac) {
 	drac.MacAddress = c.macAddress
 	drac.SwitchInterface = &ufspb.SwitchInterface{
 		Switch: c.switchName,
-		Port:   int32(c.port),
+		Port:   int32(c.switchPort),
 	}
+	drac.Tags = utils.GetStringSlice(c.tags)
 }
 
 func (c *addDrac) validateArgs() error {
@@ -151,8 +155,14 @@ func (c *addDrac) validateArgs() error {
 		if c.switchName != "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch' cannot be specified at the same time.")
 		}
+		if c.switchPort != 0 {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
+		}
 		if c.macAddress != "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {
@@ -176,7 +186,7 @@ func (c *addDrac) validateArgs() error {
 		if c.machineName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required.")
 		}
-		if c.port == 0 {
+		if c.switchPort == 0 {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i'), so '-switch-port' is required.")
 		}
 	}

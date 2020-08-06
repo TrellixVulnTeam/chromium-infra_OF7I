@@ -88,7 +88,7 @@ func (fs *FleetServerImpl) UpdateMachine(ctx context.Context, req *ufsAPI.Update
 		return nil, err
 	}
 	req.Machine.Name = util.RemovePrefix(req.Machine.Name)
-	machine, err := controller.UpdateMachine(ctx, req.Machine)
+	machine, err := controller.UpdateMachine(ctx, req.Machine, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +316,7 @@ func (fs *FleetServerImpl) UpdateNic(ctx context.Context, req *ufsAPI.UpdateNicR
 		return nil, err
 	}
 	req.Nic.Name = util.RemovePrefix(req.Nic.Name)
-	nic, err := controller.UpdateNic(ctx, req.Nic, req.Machine)
+	nic, err := controller.UpdateNic(ctx, req.Nic, req.Machine, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
@@ -695,35 +695,45 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *ufsAPI.UpdateDra
 		return nil, err
 	}
 	req.Drac.Name = util.RemovePrefix(req.Drac.Name)
-	// Before partial update is implemented, only update dhcp if network_option is specified,
-	// So that the easy mode to update drac won't overwrite the whole drac info in database.
-	if req.GetNetworkOption() == nil {
-		drac, err := controller.UpdateDrac(ctx, req.Drac, req.Machine)
-		if err != nil {
-			return nil, err
-		}
-		// https://aip.dev/122 - as per AIP guideline
-		drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
-		return drac, err
-	}
 
-	drac, err := controller.GetDrac(ctx, req.Drac.Name)
-	if err != nil {
-		return nil, err
-	}
-	// If network_option.delete is enabled, ignore network_option.vlan and return directly
-	if req.GetNetworkOption().GetDelete() {
-		if err = controller.DeleteDracHost(ctx, req.Drac.Name); err != nil {
-			return nil, err
+	if req.GetNetworkOption() != nil {
+		var drac *ufspb.Drac
+		var err error
+		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
+			drac, err = controller.UpdateDrac(ctx, req.Drac, req.Machine, req.UpdateMask)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			drac, err = controller.GetDrac(ctx, req.Drac.Name)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		// If network_option.delete is enabled, ignore network_option.vlan and return directly
+		if req.GetNetworkOption().GetDelete() {
+			if err = controller.DeleteDracHost(ctx, drac.Name); err != nil {
+				return nil, err
+			}
+		}
+
+		if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
+			if err = controller.UpdateDracHost(ctx, drac, req.GetNetworkOption()); err != nil {
+				return nil, err
+			}
+		}
+
+		// https://aip.dev/122 - as per AIP guideline
 		drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 		return drac, nil
 	}
-	if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
-		if err = controller.UpdateDracHost(ctx, drac, req.GetNetworkOption()); err != nil {
-			return nil, err
-		}
+
+	drac, err := controller.UpdateDrac(ctx, req.Drac, req.Machine, req.UpdateMask)
+	if err != nil {
+		return nil, err
 	}
+	// https://aip.dev/122 - as per AIP guideline
 	drac.Name = util.AddPrefix(util.DracCollection, drac.Name)
 	return drac, err
 }

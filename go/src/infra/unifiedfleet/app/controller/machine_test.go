@@ -10,6 +10,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
@@ -152,7 +153,7 @@ func TestUpdateMachine(t *testing.T) {
 			machine := &ufspb.Machine{
 				Name: "machine-10",
 			}
-			_, err := UpdateMachine(ctx, machine)
+			_, err := UpdateMachine(ctx, machine, nil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-10 in the system.")
 		})
 
@@ -170,7 +171,7 @@ func TestUpdateMachine(t *testing.T) {
 					},
 				},
 			}
-			_, err = UpdateMachine(ctx, machine)
+			_, err = UpdateMachine(ctx, machine, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Cannot update machine machine-1")
 		})
@@ -195,9 +196,45 @@ func TestUpdateMachine(t *testing.T) {
 					},
 				},
 			}
-			resp, err := UpdateMachine(ctx, machine)
+			resp, err := UpdateMachine(ctx, machine, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machine)
+		})
+
+		Convey("Partial Update machine", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-3",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						ChromePlatform: "chromePlatform-3",
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm: "kvm-3",
+						},
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			chromePlatform := &ufspb.ChromePlatform{
+				Name: "chromePlatform-4",
+			}
+			_, err = configuration.CreateChromePlatform(ctx, chromePlatform)
+			So(err, ShouldBeNil)
+
+			machine1 := &ufspb.Machine{
+				Name: "machine-3",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						ChromePlatform: "chromePlatform-4",
+					},
+				},
+			}
+			resp, err := UpdateMachine(ctx, machine1, &field_mask.FieldMask{Paths: []string{"platform"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetChromeBrowserMachine().GetChromePlatform(), ShouldResemble, "chromePlatform-4")
+			So(resp.GetChromeBrowserMachine().GetKvmInterface().GetKvm(), ShouldResemble, "kvm-3")
 		})
 	})
 }
