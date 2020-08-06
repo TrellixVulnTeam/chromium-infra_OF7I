@@ -236,7 +236,7 @@ func TestListVMs(t *testing.T) {
 				Value: "os-1",
 			},
 			Vlan:  "vlan-1",
-			State: "serving",
+			State: ufspb.State_STATE_SERVING.String(),
 		},
 		{
 			Name: "vm-list-2",
@@ -244,7 +244,7 @@ func TestListVMs(t *testing.T) {
 				Value: "os-1",
 			},
 			Vlan:  "vlan-2",
-			State: "serving",
+			State: ufspb.State_STATE_SERVING.String(),
 		},
 		{
 			Name: "vm-list-3",
@@ -252,7 +252,7 @@ func TestListVMs(t *testing.T) {
 				Value: "os-2",
 			},
 			Vlan:  "vlan-1",
-			State: "serving",
+			State: ufspb.State_STATE_SERVING.String(),
 		},
 		{
 			Name: "vm-list-4",
@@ -261,7 +261,7 @@ func TestListVMs(t *testing.T) {
 			},
 			Lab:   "fake_lab",
 			Vlan:  "vlan-2",
-			State: "testing",
+			State: ufspb.State_STATE_DEPLOYED_TESTING.String(),
 		},
 	}
 	Convey("ListVMs", t, func() {

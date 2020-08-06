@@ -249,6 +249,79 @@ func TestGetMachineLSE(t *testing.T) {
 	})
 }
 
+func TestListVMs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	vms := []*ufspb.VM{
+		{
+			Name: "vm-list-1",
+			OsVersion: &ufspb.OSVersion{
+				Value: "os-1",
+			},
+			Vlan:  "vlan-1",
+			State: ufspb.State_STATE_SERVING.String(),
+		},
+		{
+			Name: "vm-list-2",
+			OsVersion: &ufspb.OSVersion{
+				Value: "os-1",
+			},
+			Vlan:  "vlan-2",
+			State: ufspb.State_STATE_SERVING.String(),
+		},
+		{
+			Name: "vm-list-3",
+			OsVersion: &ufspb.OSVersion{
+				Value: "os-2",
+			},
+			Vlan:  "vlan-1",
+			State: ufspb.State_STATE_SERVING.String(),
+		},
+		{
+			Name: "vm-list-4",
+			OsVersion: &ufspb.OSVersion{
+				Value: "os-2",
+			},
+			Lab:   "fake_lab",
+			Vlan:  "vlan-2",
+			State: ufspb.State_STATE_DEPLOYED_TESTING.String(),
+		},
+	}
+	Convey("ListVMs", t, func() {
+		_, err := inventory.BatchUpdateVMs(ctx, vms)
+		So(err, ShouldBeNil)
+		Convey("ListVMs - page_size negative - error", func() {
+			resp, err := tf.Fleet.ListVMs(tf.C, &ufsAPI.ListVMsRequest{
+				PageSize: -5,
+			})
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidPageSize)
+		})
+
+		Convey("ListVMs - invalid filter - error", func() {
+			resp, err := tf.Fleet.ListVMs(tf.C, &ufsAPI.ListVMsRequest{
+				Filter: "osversion=os-1 | state=serving",
+			})
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
+		})
+
+		Convey("List VMs - happy path", func() {
+			resp, err := tf.Fleet.ListVMs(tf.C, &ufsAPI.ListVMsRequest{
+				Filter:   "osversion=os-1 & state=serving",
+				PageSize: 5,
+			})
+			So(err, ShouldBeNil)
+			So(resp.GetVms(), ShouldHaveLength, 2)
+			So(ufsAPI.ParseResources(resp.GetVms(), "Name"), ShouldResemble, []string{"vm-list-1", "vm-list-2"})
+		})
+	})
+}
+
 func TestListMachineLSEs(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()

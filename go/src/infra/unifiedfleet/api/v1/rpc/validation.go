@@ -453,6 +453,14 @@ func (r *ListMachineLSEsRequest) Validate() error {
 	return validatePageSize(r.PageSize)
 }
 
+// Validate validates input requests of ListVMs.
+func (r *ListVMsRequest) Validate() error {
+	if err := ValidateFilter(r.Filter); err != nil {
+		return err
+	}
+	return validatePageSize(r.PageSize)
+}
+
 // Validate validates input requests of DeleteMachineLSE.
 func (r *DeleteMachineLSERequest) Validate() error {
 	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.Name)

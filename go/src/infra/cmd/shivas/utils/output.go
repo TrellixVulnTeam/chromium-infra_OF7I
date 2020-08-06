@@ -48,8 +48,8 @@ var (
 	RacklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
 		"Tags", "UpdateTime"}
 	ChromePlatformTitle = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
-	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address"}
-	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "IP", "Vlan", "State"}
+	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "State", "UpdateTime"}
+	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "IP", "State", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs", "Capacity", "Realm", "UpdateTime"}
 	MachineLSETitle     = []string{"Host", "Lab", "Rack", "Nic", "VM capacity", "VMs", "UpdateTime"}
 	MachineLSETFullitle = []string{"Host", "Machine", "Lab", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
@@ -739,46 +739,63 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 // PrintVMFull prints the full info for vm
 func PrintVMFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
 	defer tw.Flush()
+	var ts string
+	if t, err := ptypes.Timestamp(vm.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
 	out := fmt.Sprintf("%s\t", vm.GetName())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
 	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", dhcp.GetIp())
+	out += fmt.Sprintf("%s\t", vm.GetLab())
+	out += fmt.Sprintf("%s\t", vm.GetMachineLseId())
 	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
+	out += fmt.Sprintf("%s\t", dhcp.GetIp())
 	out += fmt.Sprintf("%s\t", s.GetState())
+	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
 // PrintVMs prints the all vms in table form.
-func PrintVMs(vms []*ufspb.VM) {
+func PrintVMs(vms []*ufspb.VM, keysOnly bool) {
 	defer tw.Flush()
 	for _, vm := range vms {
-		printVM(vm)
+		printVM(vm, keysOnly)
 	}
 }
 
-func printVM(vm *ufspb.VM) {
+func printVM(vm *ufspb.VM, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(vm.Name))
+		return
+	}
+	var ts string
+	if t, err := ptypes.Timestamp(vm.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
 	out := fmt.Sprintf("%s\t", vm.GetName())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
 	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
+	out += fmt.Sprintf("%s\t", vm.GetLab())
+	out += fmt.Sprintf("%s\t", vm.GetMachineLseId())
+	out += fmt.Sprintf("%s\t", vm.GetVlan())
+	out += fmt.Sprintf("%s\t", vm.GetState())
+	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
 // PrintVMsJSON prints the vm details in json format.
 func PrintVMsJSON(vms []*ufspb.VM) {
-	fmt.Print("[")
 	len := len(vms) - 1
-	for i, s := range vms {
-		s.Name = ufsUtil.RemovePrefix(s.Name)
-		PrintProtoJSON(s)
+	for i, m := range vms {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
-	fmt.Print("]")
-	fmt.Println()
 }
 
 // PrintRacks prints the all racks in table form.

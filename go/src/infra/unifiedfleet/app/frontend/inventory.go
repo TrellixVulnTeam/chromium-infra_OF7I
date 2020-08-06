@@ -123,6 +123,25 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *ufsAPI.List
 	}, nil
 }
 
+// ListVMs list the vms information from database.
+func (fs *FleetServerImpl) ListVMs(ctx context.Context, req *ufsAPI.ListVMsRequest) (rsp *ufsAPI.ListVMsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	pageSize := util.GetPageSize(req.PageSize)
+	result, nextPageToken, err := controller.ListVMs(ctx, pageSize, req.PageToken, req.Filter, req.KeysOnly)
+	if err != nil {
+		return nil, err
+	}
+	return &ufsAPI.ListVMsResponse{
+		Vms:           result,
+		NextPageToken: nextPageToken,
+	}, nil
+}
+
 // DeleteMachineLSE deletes the machineLSE from database.
 func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *ufsAPI.DeleteMachineLSERequest) (rsp *empty.Empty, err error) {
 	defer func() {

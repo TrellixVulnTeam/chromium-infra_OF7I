@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
@@ -147,6 +148,10 @@ func ListVMs(ctx context.Context, pageSize int32, pageToken, filter string, keys
 		if err != nil {
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing vms").Err()
 		}
+	}
+	if v, ok := filterMap["state"]; ok {
+		s := util.ToUFSState(fmt.Sprintf("%s", v[0]))
+		filterMap["state"] = []interface{}{s.String()}
 	}
 	return inventory.ListVMs(ctx, pageSize, pageSize, pageToken, filterMap, keysOnly, nil)
 }

@@ -121,7 +121,7 @@ func (c *getVM) print(vm *ufspb.VM) error {
 		if !c.outputFlags.Tsv() {
 			utils.PrintTitle(utils.VMTitle)
 		}
-		utils.PrintVMs([]*ufspb.VM{vm})
+		utils.PrintVMs([]*ufspb.VM{vm}, false)
 	}
 	return nil
 }

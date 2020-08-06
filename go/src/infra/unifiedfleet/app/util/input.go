@@ -7,6 +7,8 @@ package util
 import (
 	"fmt"
 	"strings"
+
+	ufspb "infra/unifiedfleet/api/v1/proto"
 )
 
 const (
@@ -128,4 +130,42 @@ func GetRackHostname(rackName string) string {
 func FormatResourceName(old string) string {
 	str := strings.Replace(old, " ", "_", -1)
 	return strings.Replace(str, ",", "_", -1)
+}
+
+// StrToUFSState refers a map between a string to a UFS defined state map.
+var StrToUFSState = map[string]string{
+	"registered":     "STATE_REGISTERED",
+	"pre_serving":    "STATE_DEPLOYED_PRE_SERVING",
+	"testing":        "STATE_DEPLOYED_TESTING",
+	"serving":        "STATE_SERVING",
+	"needs_reset":    "STATE_NEEDS_RESET",
+	"needs_repair":   "STATE_NEEDS_REPAIR",
+	"repair_failed":  "STATE_REPAIR_FAILED",
+	"disabled":       "STATE_DISABLED",
+	"reserved":       "STATE_RESERVED",
+	"decommissioned": "STATE_DECOMMISSIONED",
+}
+
+// IsUFSState checks if a string refers to a valid UFS state.
+func IsUFSState(state string) bool {
+	_, ok := StrToUFSState[state]
+	return ok
+}
+
+// ValidStateStr returns a valid str list for state strings.
+func ValidStateStr() []string {
+	ks := make([]string, 0, len(StrToUFSState))
+	for k := range StrToUFSState {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// ToUFSState converts state string to a UFS state enum.
+func ToUFSState(state string) ufspb.State {
+	v, ok := StrToUFSState[state]
+	if !ok {
+		return ufspb.State_STATE_UNSPECIFIED
+	}
+	return ufspb.State(ufspb.State_value[v])
 }

@@ -128,7 +128,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 	}
 	if c.state != "" {
 		states = map[string]ufspb.State{
-			machinelse.Name: utils.ToUFSState(c.state),
+			machinelse.Name: ufsUtil.ToUFSState(c.state),
 		}
 	}
 	if c.newSpecsFile == "" {
@@ -181,7 +181,7 @@ func (c *updateHost) validateArgs() error {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan', '-state', '-ip'] is required.")
 		}
 	}
-	if c.state != "" && !utils.IsUFSState(c.state) {
+	if c.state != "" && !ufsUtil.IsUFSState(c.state) {
 		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 	}
 	return nil

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"infra/cmd/shivas/utils"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 var (
@@ -1013,6 +1014,12 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
+	// VMFilterHelp help text for list vm filtering
+	VMFilterHelp string = FilterText + `You can filter hosts by vlan/osversion/state/host_id/lab/tags` + LabFilterHelpText +
+		`Filter format Egs:
+'lab=atl97'
+'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
+
 	// KVMFilterHelp help text for list rack filtering
 	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform` + LabFilterHelpText +
 		`Filter format Egs:
@@ -1050,7 +1057,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'tag=iphone & man=Apple` + FilterCondition
 
 	// StateHelp help text for filter '-state'
-	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(utils.ValidStateStr(), ", ") + "]"
+	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"
 
 	//ClearFieldHelpText hep text to clear field using field mask in update cmds
 	ClearFieldHelpText string = "To clear this field and set it to empty, assign '" + utils.ClearFieldValue + "'"

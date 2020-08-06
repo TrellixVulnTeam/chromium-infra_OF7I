@@ -1403,3 +1403,20 @@ func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRe
 	}
 	return
 }
+
+func (s *DecoratedFleet) ListVMs(ctx context.Context, req *ListVMsRequest) (rsp *ListVMsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "ListVMs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.ListVMs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "ListVMs", rsp, err)
+	}
+	return
+}

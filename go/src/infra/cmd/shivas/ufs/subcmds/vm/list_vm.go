@@ -5,10 +5,13 @@
 package vm
 
 import (
+	"context"
+	"fmt"
+	"strings"
+
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -16,7 +19,6 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // ListVMCmd list all VMs on a host.
@@ -29,7 +31,9 @@ var ListVMCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
-		c.Flags.StringVar(&c.hostname, "h", "", "hostname of the host to list the VMs")
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
+		c.Flags.StringVar(&c.filter, "filter", "", cmdhelp.VMFilterHelp)
 		return c
 	},
 }
@@ -39,7 +43,10 @@ type listVM struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	outputFlags site.OutputFlags
-	hostname    string
+
+	pageSize int
+	filter   string
+	keysOnly bool
 }
 
 func (c *listVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -66,30 +73,42 @@ func (c *listVM) innerRun(a subcommands.Application, args []string, env subcomma
 		Options: site.DefaultPRPCOptions,
 	})
 
-	// Get the host machineLSE
-	machinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostname),
-	})
-	if err != nil {
-		return errors.Annotate(err, "No host with hostname %s found", c.hostname).Err()
+	if !c.outputFlags.JSON() {
+		return utils.PrintListTableFormat(ctx, ic, printVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.VMTitle, c.outputFlags.Tsv())
 	}
+	return utils.PrintListJSONFormat(ctx, ic, printVMs, true, int32(c.pageSize), c.filter, c.keysOnly)
+}
 
-	// Print the VMs
-	existingVMs := machinelse.GetChromeBrowserMachineLse().GetVms()
-	if c.outputFlags.JSON() {
-		utils.PrintVMsJSON(existingVMs)
-	} else {
-		if c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.VMTitle)
-		}
-		utils.PrintVMs(existingVMs)
+func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+	req := &ufsAPI.ListVMsRequest{
+		PageSize:  pageSize,
+		PageToken: pageToken,
+		Filter:    filter,
+		KeysOnly:  keysOnly,
 	}
-	return nil
+	res, err := ic.ListVMs(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	if !json {
+		utils.PrintVMs(res.GetVms(), keysOnly)
+	} else {
+		utils.PrintVMsJSON(res.GetVms())
+	}
+	return res.GetNextPageToken(), nil
 }
 
 func (c *listVM) validateArgs() error {
-	if c.hostname == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nHostname parameter is required to list the VMs on the host")
+	if c.filter != "" {
+		filter := fmt.Sprintf(strings.Replace(c.filter, " ", "", -1))
+		if !ufsAPI.FilterRegex.MatchString(filter) {
+			return cmdlib.NewUsageError(c.Flags, ufsAPI.InvalidFilterFormat)
+		}
+		var err error
+		c.filter, err = utils.ReplaceLabNames(filter)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -249,7 +249,6 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 	}
 	for _, vm := range vms {
 		name := vm.GetName()
-
 		var lab string
 		if machine, ok := hostToMachine[vm.GetHost()]; ok {
 			lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
