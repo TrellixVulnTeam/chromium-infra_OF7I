@@ -271,7 +271,70 @@ service Fleet {
   // GetDHCPConfig retrieves a dhcp record.
   rpc GetDHCPConfig(GetDHCPConfigRequest) returns (proto.DHCPConfig);
 
+  // CreateVM creates a new VM
+  rpc CreateVM(CreateVMRequest) returns (proto.VM);
+
+  // UpdateVM updates a VM
+  rpc UpdateVM(UpdateVMRequest) returns (proto.VM);
+
+  // DeleteVM delete a VM
+  rpc DeleteVM(DeleteVMRequest) returns (google.protobuf.Empty);
+
+  // GetVM retrieves the details of the VM
+  rpc GetVM(GetVMRequest) returns (proto.VM);
+
+  // List gets all the machineLSEs
   rpc ListVMs(ListVMsRequest) returns (ListVMsResponse);
+}
+
+message CreateVMRequest {
+  // The vm to create.
+  proto.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The host id to add this VM to.
+  //
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+  string machineLSE_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  NetworkOption network_option = 3;
+}
+
+message UpdateVMRequest {
+  // The VM to update.
+  proto.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The host id to update this VM to.
+  //
+  // TODO: We need to change this regex pattern as it changes over time.
+  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // contains only ASCII letters, numbers, dash and underscore.
+  string machineLSE_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The list of fields to be updated.
+  google.protobuf.FieldMask update_mask = 3;
+
+  // The network option to set the VM
+  NetworkOption network_option = 4;
+
+  // The state to update to
+  proto.State state = 5;
+}
+
+message GetVMRequest {
+  // The name of the VM to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/VM" }
+  ];
+}
+
+message DeleteVMRequest {
+  // The name of the VM to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/VM" }
+  ];
 }
 
 message ListVMsRequest {

@@ -28,6 +28,7 @@ var (
 	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
 	ChromePlatformNameFormat      string = "Invalid input - Entity Name pattern should be chromeplatforms/{chromeplatform}."
 	MachineLSENameFormat          string = "Invalid input - Entity Name pattern should be machineLSEs/{machineLSE}."
+	VMNameFormat                  string = "Invalid input - Entity Name pattern should be vms/{vm}."
 	RackLSENameFormat             string = "Invalid input - Entity Name pattern should be rackLSEs/{rackLSE}."
 	NicNameFormat                 string = "Invalid input - Entity Name pattern should be nics/{nic}."
 	KVMNameFormat                 string = "Invalid input - Entity Name pattern should be kvms/{kvm}."
@@ -39,6 +40,7 @@ var (
 	RackLSEPrototypeNameFormat    string = "Invalid input - Entity Name pattern should be rackLSEPrototypes/{rackLSEPrototype}."
 	ResourceFormat                string = "Invalid input - Entity Name pattern should be in a format of resource_names/XXX, resource_names includes machines/racks/vms/hosts/vlans."
 	EmptyMachineName              string = "Invalid input - Machine name cannot be empty."
+	EmptyHostName                 string = "Invalid input - Host name cannot be empty."
 	EmptyRackName                 string = "Invalid input - Rack name cannot be empty."
 	FilterFormat                  string = "Filter format Egs:\n" + "'machine=mac-1'\n" + "'machine=mac-1,mac-2'\n" + "'machine=mac-1 & nic=nic-1'\n" + "'machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2'"
 	InvalidFilterFormat           string = fmt.Sprintf("%s%s", "Invalid input - ", FilterFormat)
@@ -65,6 +67,17 @@ var vlanRegex = regexp.MustCompile(`vlans\.*`)
 var machineLSEPrototypeRegex = regexp.MustCompile(`machineLSEPrototypes\.*`)
 var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
 
+// It's used to validate a host or vm in resource_name
+var hostRegex = regexp.MustCompile(`hosts\.*`)
+var vmRegex = regexp.MustCompile(`vms\.*`)
+var resourceRegexs = []*regexp.Regexp{
+	machineRegex,
+	rackRegex,
+	vlanRegex,
+	hostRegex,
+	vmRegex,
+}
+
 // FilterRegex is the regex for filter string for all List requests
 //
 // resource1=resourcename1
@@ -77,17 +90,6 @@ var rackLSEPrototypeRegex = regexp.MustCompile(`rackLSEPrototypes\.*`)
 // machine=mac-1 & nic=nic-1
 // machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2
 var FilterRegex = regexp.MustCompile(`^([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*(\&([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*)*$`)
-
-// It's used to validate a host or vm in resource_name
-var hostRegex = regexp.MustCompile(`hosts\.*`)
-var vmRegex = regexp.MustCompile(`vms\.*`)
-var resourceRegexs = []*regexp.Regexp{
-	machineRegex,
-	rackRegex,
-	vlanRegex,
-	hostRegex,
-	vmRegex,
-}
 
 // Validate validates input requests of MachineRegistration.
 func (r *MachineRegistrationRequest) Validate() error {
@@ -453,17 +455,76 @@ func (r *ListMachineLSEsRequest) Validate() error {
 	return validatePageSize(r.PageSize)
 }
 
+// Validate validates input requests of DeleteMachineLSE.
+func (r *DeleteMachineLSERequest) Validate() error {
+	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.Name)
+}
+
+// Validate validates input requests of CreateVM.
+func (r *CreateVMRequest) Validate() error {
+	if r.GetVm() == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if !IDRegex.MatchString(r.GetVm().GetName()) {
+		return status.Errorf(codes.InvalidArgument, "VM name is invalid: %s", InvalidCharacters)
+	}
+	if r.GetVm().GetLab() != "" {
+		return status.Errorf(codes.InvalidArgument, "Lab for vm is output-only")
+	}
+	if r.GetVm().GetState() != "" {
+		return status.Errorf(codes.InvalidArgument, "Cannot set state when adding vm")
+	}
+	if r.GetVm().GetVlan() != "" {
+		return status.Errorf(codes.InvalidArgument, "Cannot set vlan when adding vm")
+	}
+	id := strings.TrimSpace(r.MachineLSEId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyHostName)
+	}
+	if !IDRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, "Host name is invalid: %s", InvalidCharacters)
+	}
+	if opt := r.GetNetworkOption(); opt != nil {
+		if !opt.GetDelete() && opt.GetVlan() == "" && opt.GetIp() == "" {
+			return status.Errorf(codes.InvalidArgument, "Network option for the vm %s doesn't set delete or vlan or ip.", r.GetVm().GetName())
+		}
+	}
+	return nil
+}
+
+// Validate validates input requests of UpdateVM.
+func (r *UpdateVMRequest) Validate() error {
+	if r.GetVm() == nil {
+		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	id := strings.TrimSpace(r.MachineLSEId)
+	if id == "" {
+		return status.Errorf(codes.InvalidArgument, EmptyHostName)
+	}
+	if opt := r.GetNetworkOption(); opt != nil {
+		if !opt.GetDelete() && opt.GetVlan() == "" && opt.GetIp() == "" {
+			return status.Errorf(codes.InvalidArgument, "Network option for the vm %s doesn't set delete or vlan or ip.", r.GetVm().GetName())
+		}
+	}
+	return validateResourceName(vmRegex, VMNameFormat, r.Vm.GetName())
+}
+
+// Validate validates input requests of DeleteVM.
+func (r *DeleteVMRequest) Validate() error {
+	return validateResourceName(vmRegex, VMNameFormat, r.Name)
+}
+
+// Validate validates input requests of GetVM.
+func (r *GetVMRequest) Validate() error {
+	return validateResourceName(vmRegex, VMNameFormat, r.Name)
+}
+
 // Validate validates input requests of ListVMs.
 func (r *ListVMsRequest) Validate() error {
 	if err := ValidateFilter(r.Filter); err != nil {
 		return err
 	}
 	return validatePageSize(r.PageSize)
-}
-
-// Validate validates input requests of DeleteMachineLSE.
-func (r *DeleteMachineLSERequest) Validate() error {
-	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.Name)
 }
 
 // Validate validates input requests of CreateRackLSE.

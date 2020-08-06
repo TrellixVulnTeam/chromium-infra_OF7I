@@ -1404,6 +1404,74 @@ func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRe
 	return
 }
 
+func (s *DecoratedFleet) CreateVM(ctx context.Context, req *CreateVMRequest) (rsp *proto1.VM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "CreateVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.CreateVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "CreateVM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) UpdateVM(ctx context.Context, req *UpdateVMRequest) (rsp *proto1.VM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "UpdateVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.UpdateVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "UpdateVM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) DeleteVM(ctx context.Context, req *DeleteVMRequest) (rsp *empty.Empty, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "DeleteVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.DeleteVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "DeleteVM", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) GetVM(ctx context.Context, req *GetVMRequest) (rsp *proto1.VM, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "GetVM", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.GetVM(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "GetVM", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) ListVMs(ctx context.Context, req *ListVMsRequest) (rsp *ListVMsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

@@ -19,8 +19,11 @@ import (
 
 	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/frontend/fake"
+	"infra/unifiedfleet/app/model/configuration"
+	"infra/unifiedfleet/app/util"
 )
 
 type testFixture struct {
@@ -200,4 +203,15 @@ func fakeSheetInterfaceFactory(ctx context.Context) (sheet.ClientInterface, erro
 
 func fakeGitInterfaceFactory(ctx context.Context) (git.ClientInterface, error) {
 	return &fake.GitClient{}, nil
+}
+
+func setupTestVlan(ctx context.Context) {
+	vlan := &ufspb.Vlan{
+		Name:        "vlan-1",
+		VlanAddress: "192.168.40.0/22",
+	}
+	configuration.CreateVlan(ctx, vlan)
+	ips, _, _ := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+	// Only import the first 20 as one single transaction cannot import all.
+	configuration.ImportIPs(ctx, ips[0:20])
 }

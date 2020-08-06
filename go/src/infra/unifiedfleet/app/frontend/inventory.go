@@ -123,6 +123,73 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *ufsAPI.List
 	}, nil
 }
 
+// CreateVM creates a vm entry in database.
+func (fs *FleetServerImpl) CreateVM(ctx context.Context, req *ufsAPI.CreateVMRequest) (rsp *ufspb.VM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
+	vm, err := controller.CreateVM(ctx, req.GetVm(), req.GetMachineLSEId(), req.GetNetworkOption())
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vm.Name = util.AddPrefix(util.VMCollection, vm.Name)
+	return vm, err
+}
+
+// UpdateVM updates the VM information in database.
+func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMRequest) (rsp *ufspb.VM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
+	vm, err := controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.GetNetworkOption(), req.GetState())
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vm.Name = util.AddPrefix(util.VMCollection, vm.Name)
+	return vm, err
+}
+
+// DeleteVM deletes a VM from database.
+func (fs *FleetServerImpl) DeleteVM(ctx context.Context, req *ufsAPI.DeleteVMRequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	err = controller.DeleteVM(ctx, name)
+	return &empty.Empty{}, err
+}
+
+// GetVM gets the VM information from database.
+func (fs *FleetServerImpl) GetVM(ctx context.Context, req *ufsAPI.GetVMRequest) (rsp *ufspb.VM, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.RemovePrefix(req.Name)
+	vm, err := controller.GetVM(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	vm.Name = util.AddPrefix(util.VMCollection, vm.Name)
+	return vm, err
+}
+
 // ListVMs list the vms information from database.
 func (fs *FleetServerImpl) ListVMs(ctx context.Context, req *ufsAPI.ListVMsRequest) (rsp *ufsAPI.ListVMsResponse, err error) {
 	defer func() {

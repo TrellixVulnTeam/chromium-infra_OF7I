@@ -249,6 +249,273 @@ func TestGetMachineLSE(t *testing.T) {
 	})
 }
 
+func TestCreateVM(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("CreateVM", t, func() {
+		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+			Name: "inventory-create-host",
+			Lab:  "fake_lab",
+		})
+		Convey("Create new VM - happy path", func() {
+			vm1 := &ufspb.VM{
+				Name: "inventory-create-vm1",
+			}
+			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-create-host",
+			})
+			So(err, ShouldBeNil)
+
+			resp, err := tf.Fleet.GetVM(ctx, &ufsAPI.GetVMRequest{
+				Name: util.AddPrefix(util.VMCollection, "inventory-create-vm1"),
+			})
+			So(err, ShouldBeNil)
+			So(resp.GetName(), ShouldEqual, "vms/inventory-create-vm1")
+			So(resp.GetLab(), ShouldEqual, "fake_lab")
+			So(resp.GetMachineLseId(), ShouldEqual, "inventory-create-host")
+			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+
+			s, err := state.GetStateRecord(ctx, "vms/inventory-create-vm1")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+		})
+
+		Convey("Create new VM - missing host ", func() {
+			vm1 := &ufspb.VM{
+				Name: "missing",
+			}
+			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm: vm1,
+			})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyHostName)
+		})
+
+		Convey("Create new VM - assign ip", func() {
+			setupTestVlan(ctx)
+			vm1 := &ufspb.VM{
+				Name: "inventory-create-vm2",
+			}
+			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-create-host",
+				NetworkOption: &ufsAPI.NetworkOption{
+					Vlan: "vlan-1",
+				},
+			})
+			So(err, ShouldBeNil)
+
+			resp, err := tf.Fleet.GetVM(ctx, &ufsAPI.GetVMRequest{
+				Name: util.AddPrefix(util.VMCollection, "inventory-create-vm2"),
+			})
+			So(err, ShouldBeNil)
+			So(resp.GetVlan(), ShouldEqual, "vlan-1")
+			dhcp, err := configuration.GetDHCPConfig(ctx, "inventory-create-vm2")
+			So(err, ShouldBeNil)
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
+			So(err, ShouldBeNil)
+			So(ip, ShouldHaveLength, 1)
+			So(ip[0].GetOccupied(), ShouldBeTrue)
+		})
+	})
+}
+
+func TestUpdateVM(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("UpdateVM", t, func() {
+		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+			Name: "inventory-update-host",
+			Lab:  "fake_lab",
+		})
+		Convey("Update existing VM", func() {
+			vm1 := &ufspb.VM{
+				Name: "inventory-update-vm1",
+			}
+			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-update-host",
+			})
+			So(err, ShouldBeNil)
+			vm, err := tf.Fleet.GetVM(ctx, &ufsAPI.GetVMRequest{
+				Name: util.AddPrefix(util.VMCollection, "inventory-update-vm1"),
+			})
+			So(err, ShouldBeNil)
+			vm.UpdateTime = nil
+
+			req := &ufsAPI.UpdateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-update-host",
+			}
+			resp, err := tf.Fleet.UpdateVM(tf.C, req)
+			So(err, ShouldBeNil)
+			resp.UpdateTime = nil
+			So(resp, ShouldResembleProto, vm)
+		})
+
+		Convey("Update existing VMs with states", func() {
+			vm1 := &ufspb.VM{
+				Name: "inventory-update-vm2",
+			}
+			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-update-host",
+			})
+			So(err, ShouldBeNil)
+
+			req := &ufsAPI.UpdateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-update-host",
+				State:        ufspb.State_STATE_DEPLOYED_TESTING,
+			}
+			resp, err := tf.Fleet.UpdateVM(tf.C, req)
+			So(err, ShouldBeNil)
+			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING.String())
+			s, err := state.GetStateRecord(ctx, "vms/inventory-update-vm2")
+			So(err, ShouldBeNil)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING)
+		})
+
+		Convey("Update VM - Invalid input nil", func() {
+			req := &ufsAPI.UpdateVMRequest{
+				Vm: nil,
+			}
+			resp, err := tf.Fleet.UpdateVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
+		})
+
+		Convey("Update VM - Invalid input empty name", func() {
+			req := &ufsAPI.UpdateVMRequest{
+				Vm: &ufspb.VM{
+					Name: "",
+				},
+				MachineLSEId: "inventory-update-host",
+			}
+			resp, err := tf.Fleet.UpdateVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+
+		Convey("Update VM - Invalid input invalid characters", func() {
+			req := &ufsAPI.UpdateVMRequest{
+				Vm: &ufspb.VM{
+					Name: util.AddPrefix(util.VMCollection, "a.b)7&"),
+				},
+				MachineLSEId: "inventory-update-host",
+			}
+			resp, err := tf.Fleet.UpdateVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
+		})
+	})
+}
+
+func TestDeleteVM(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("DeleteVM", t, func() {
+		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+			Name: "inventory-delete-host",
+			Lab:  "fake_lab",
+		})
+		Convey("Delete vm by existing ID", func() {
+			vm1 := &ufspb.VM{
+				Name: "inventory-delete-vm1",
+			}
+			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-delete-host",
+			})
+			So(err, ShouldBeNil)
+
+			req := &ufsAPI.DeleteVMRequest{
+				Name: util.AddPrefix(util.VMCollection, "inventory-delete-vm1"),
+			}
+			_, err = tf.Fleet.DeleteVM(tf.C, req)
+			So(err, ShouldBeNil)
+
+			res, err := inventory.GetVM(tf.C, "inventory-delete-vm1")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			s, err := state.GetStateRecord(ctx, "vms/inventory-delete-vm1")
+			So(s, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete vm by existing ID with assigned ip", func() {
+			setupTestVlan(ctx)
+			vm1 := &ufspb.VM{
+				Name: "inventory-delete-vm2",
+			}
+			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm:           vm1,
+				MachineLSEId: "inventory-delete-host",
+				NetworkOption: &ufsAPI.NetworkOption{
+					Ip: "192.168.40.18",
+				},
+			})
+			So(err, ShouldBeNil)
+
+			req := &ufsAPI.DeleteVMRequest{
+				Name: util.AddPrefix(util.VMCollection, "inventory-delete-vm2"),
+			}
+			_, err = tf.Fleet.DeleteVM(tf.C, req)
+			So(err, ShouldBeNil)
+
+			res, err := inventory.GetVM(tf.C, "inventory-delete-vm2")
+			So(res, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			dhcp, err := configuration.GetDHCPConfig(ctx, "inventory-delete-vm2")
+			So(dhcp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.18"})
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeFalse)
+		})
+		Convey("Delete vm by non-existing ID", func() {
+			req := &ufsAPI.DeleteVMRequest{
+				Name: util.AddPrefix(util.VMCollection, "inventory-delete-vm3"),
+			}
+			_, err := tf.Fleet.DeleteVM(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+		Convey("Delete vm - Invalid input empty name", func() {
+			req := &ufsAPI.DeleteVMRequest{
+				Name: "",
+			}
+			resp, err := tf.Fleet.DeleteVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
+		})
+		Convey("Delete vm - Invalid input invalid characters", func() {
+			req := &ufsAPI.DeleteVMRequest{
+				Name: util.AddPrefix(util.VMCollection, "a.b)7&"),
+			}
+			resp, err := tf.Fleet.DeleteVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
+		})
+	})
+}
+
 func TestListVMs(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()

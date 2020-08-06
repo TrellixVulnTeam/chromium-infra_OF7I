@@ -155,3 +155,8 @@ func ListVMs(ctx context.Context, pageSize int32, pageToken, filter string, keys
 	}
 	return inventory.ListVMs(ctx, pageSize, pageSize, pageToken, filterMap, keysOnly, nil)
 }
+
+// GetVM returns vm for the given id from datastore.
+func GetVM(ctx context.Context, id string) (*ufspb.VM, error) {
+	return inventory.GetVM(ctx, id)
+}
