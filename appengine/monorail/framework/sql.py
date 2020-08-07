@@ -737,8 +737,8 @@ class Statement(object):
       if val is None or val == []:
         if val == [] and self.main_clause and self.main_clause.startswith(
             'UPDATE'):
-          # TODO(https://crbug.com/monorail/6735): Handle empty array values.
-          logging.error('Update has empty array value for %r', col)
+          # https://crbug.com/monorail/6735: Avoid empty arrays for UPDATE.
+          raise exceptions.InputException('Invalid update DB value %r' % col)
         op = 'IS' if eq else 'IS NOT'
         self.where_conds.append(col + ' ' + op + ' NULL')
       elif isinstance(val, list):
