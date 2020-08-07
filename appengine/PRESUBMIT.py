@@ -25,7 +25,7 @@ DISABLED_PROJECTS = [
 
 
 # Forked from depot_tools/presubmit_canned_checks._FetchAllFiles
-def FetchAllFiles(input_api, white_list, black_list):
+def FetchAllFiles(input_api, files_to_check, files_to_skip):
   import datetime
   start_time = datetime.datetime.now()
   def Find(filepath, filters):
@@ -46,11 +46,11 @@ def FetchAllFiles(input_api, white_list, black_list):
     dirs_walked.append(dirpath)
     for item in dirnames[:]:
       filepath = MakeRootRelative(dirpath, item)
-      if Find(filepath, black_list):
+      if Find(filepath, files_to_skip):
         dirnames.remove(item)
     for item in filenames:
       filepath = MakeRootRelative(dirpath, item)
-      if Find(filepath, white_list) and not Find(filepath, black_list):
+      if Find(filepath, files_to_check) and not Find(filepath, files_to_skip):
         files.append(filepath)
   duration = datetime.datetime.now() - start_time
   input_api.logging.info('FetchAllFiles found %s files, searching '
@@ -193,17 +193,17 @@ def PylintChecks(input_api, output_api, only_changed):  # pragma: no cover
   input_api.python_executable = (
     input_api.os_path.join(infra_root, 'ENV', 'bin', 'python'))
 
-  white_list = ['.*\.py$']
-  black_list = list(input_api.DEFAULT_BLACK_LIST)
-  black_list += DISABLED_PROJECTS
-  black_list += ['.*\.pyc$']
-  black_list += IgnoredPaths(input_api)
+  files_to_check = ['.*\.py$']
+  files_to_skip = list(input_api.DEFAULT_FILES_TO_SKIP)
+  files_to_skip += DISABLED_PROJECTS
+  files_to_skip += ['.*\.pyc$']
+  files_to_skip += IgnoredPaths(input_api)
 
   appengine_lib_paths = GetAppEngineLibraryPaths(input_api, appengine_env_path)
   extra_syspaths = [appengine_env_path, venv_path] + appengine_lib_paths
 
-  source_filter = lambda path: input_api.FilterSourceFile(path,
-      white_list=white_list, black_list=black_list)
+  source_filter = lambda path: input_api.FilterSourceFile(
+      path, files_to_check=files_to_check, files_to_skip=files_to_skip)
 
   # Compute paths of changed files relative to the present file. Ignore files
   # outside of PresubmitLocalPath().
@@ -222,7 +222,7 @@ def PylintChecks(input_api, output_api, only_changed):  # pragma: no cover
                           DISABLED_PYLINT_WARNINGS, extra_syspaths)]
     return []
 
-  all_python_files = FetchAllFiles(input_api, white_list, black_list)
+  all_python_files = FetchAllFiles(input_api, files_to_check, files_to_skip)
   root_to_paths = GroupPythonFilesByRoot(input_api, all_python_files)
   dirty_roots = DirtyRootsFromAffectedFiles(changed_py_files, root_to_paths)
 
@@ -249,8 +249,8 @@ def ESLintChecks(input_api, output_api):  # pragma: no cover
         infra_root, 'appengine', 'js_checker.py')
     js_checker = imp.load_source('JSChecker', wrapper_util_path)
     # TODO(prasadv): Determine which files to exclude.
-    blacklist = []
-    file_filter = lambda f: f.LocalPath() not in blacklist
+    files_to_skip = []
+    file_filter = lambda f: f.LocalPath() not in files_to_skip
     results = js_checker.JSChecker(
         input_api, output_api, file_filter).RunChecks()
   finally:

@@ -135,7 +135,7 @@ def GoPackageImportsCheck(input_api, output_api):
 
 
 # Forked from depot_tools/presubmit_canned_checks._FetchAllFiles
-def FetchAllFiles(input_api, white_list, black_list):
+def FetchAllFiles(input_api, files_to_check, files_to_skip):
   import datetime
   start_time = datetime.datetime.now()
   def Find(filepath, filters):
@@ -156,11 +156,11 @@ def FetchAllFiles(input_api, white_list, black_list):
     dirs_walked.append(dirpath)
     for item in dirnames[:]:
       filepath = MakeRootRelative(dirpath, item)
-      if Find(filepath, black_list):
+      if Find(filepath, files_to_skip):
         dirnames.remove(item)
     for item in filenames:
       filepath = MakeRootRelative(dirpath, item)
-      if Find(filepath, white_list) and not Find(filepath, black_list):
+      if Find(filepath, files_to_check) and not Find(filepath, files_to_skip):
         files.append(filepath)
   duration = datetime.datetime.now() - start_time
   input_api.logging.info('FetchAllFiles found %s files, searching '
@@ -327,18 +327,18 @@ def PylintChecks(input_api, output_api, only_changed):  # pragma: no cover
   input_api.python_executable = (
     input_api.os_path.join(infra_root, 'ENV', 'bin', 'python'))
 
-  white_list = ['.*\.py$']
-  black_list = list(input_api.DEFAULT_BLACK_LIST)
-  black_list += DISABLED_PROJECTS
-  black_list += ['.*\.pyc$', '.*_pb2\.py']
+  files_to_check = ['.*\.py$']
+  files_to_skip = list(input_api.DEFAULT_FILES_TO_SKIP)
+  files_to_skip += DISABLED_PROJECTS
+  files_to_skip += ['.*\.pyc$', '.*_pb2\.py']
   # TODO(phajdan.jr): pylint recipes-py code (http://crbug.com/617939).
-  black_list += [r'^recipes/recipes\.py$']
-  black_list += IgnoredPaths(input_api)
+  files_to_skip += [r'^recipes/recipes\.py$']
+  files_to_skip += IgnoredPaths(input_api)
 
   extra_syspaths = [venv_path]
 
-  source_filter = lambda path: input_api.FilterSourceFile(path,
-      white_list=white_list, black_list=black_list)
+  source_filter = lambda path: input_api.FilterSourceFile(
+      path, files_to_check=files_to_check, files_to_skip=files_to_skip)
   changed_py_files = [f.LocalPath()
       for f in input_api.AffectedSourceFiles(source_filter)]
 
@@ -351,7 +351,7 @@ def PylintChecks(input_api, output_api, only_changed):  # pragma: no cover
 
     return []
 
-  all_python_files = FetchAllFiles(input_api, white_list, black_list)
+  all_python_files = FetchAllFiles(input_api, files_to_check, files_to_skip)
   root_to_paths = GroupPythonFilesByRoot(input_api, all_python_files)
   dirty_roots = DirtyRootsFromAffectedFiles(changed_py_files, root_to_paths)
 
@@ -448,7 +448,7 @@ def CommonChecks(input_api, output_api):  # pragma: no cover
   output.extend(BrokenLinksChecks(input_api, output_api))
 
   third_party_filter = lambda path: input_api.FilterSourceFile(
-      path, black_list=THIRD_PARTY_DIRS)
+      path, files_to_skip=THIRD_PARTY_DIRS)
   output.extend(input_api.canned_checks.CheckGenderNeutral(
       input_api, output_api, source_file_filter=third_party_filter))
   output.extend(
