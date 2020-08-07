@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -101,32 +100,6 @@ func (r *cmdScanImpl) scanProject(ctx context.Context, inst migrator.API, proj m
 	}()
 
 	inst.FindProblems(ctx, proj)
-}
-
-func (r *cmdScanImpl) dumpReport(ctx context.Context, reports *migrator.ReportDump) error {
-	outFile, err := os.Create(r.projectDir.ReportPath())
-	if err != nil {
-		return err
-	}
-	defer outFile.Close()
-
-	cw := csv.NewWriter(outFile)
-	defer cw.Flush()
-
-	// Header
-	cw.Write([]string{
-		"Project", "ConfigFile", "Tag", "Problem", "Metadata",
-	})
-
-	reports.Iterate(func(key migrator.ReportID, reports []*migrator.Report) bool {
-		for _, report := range reports {
-			cw.Write(report.ToCSVRow())
-		}
-		return false
-	})
-
-	cw.Flush()
-	return cw.Error()
 }
 
 // Callback should return true to delete the project's log file.
@@ -260,7 +233,12 @@ func (r *cmdScanImpl) execute(ctx context.Context) error {
 			panic(err)
 		}
 
-		return r.dumpReport(ctx, allReports)
+		scanOut, err := os.Create(r.projectDir.ReportPath())
+		if err != nil {
+			return err
+		}
+		defer scanOut.Close()
+		return allReports.WriteToCSV(scanOut)
 	})
 }
 
