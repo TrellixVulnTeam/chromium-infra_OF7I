@@ -471,11 +471,6 @@ class BuildSteps(BuildDetailEntity):
       if not is_terminal_status(s.status):
         s.status = common_pb2.CANCELED
         s.end_time.CopyFrom(end_ts)
-        if s.summary_markdown:  # pragma: no branch
-          s.summary_markdown += '\n'
-        s.summary_markdown += (
-            'step was canceled because it did not end before build ended'
-        )
         changed = True
 
     if changed:  # pragma: no branch

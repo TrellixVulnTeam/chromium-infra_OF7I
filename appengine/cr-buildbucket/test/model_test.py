@@ -273,10 +273,6 @@ class BuildStepsTest(testing.AppengineTestCase):
     self.assertEqual(step_container.steps[0].status, common_pb2.SUCCESS)
     self.assertEqual(step_container.steps[1].status, common_pb2.CANCELED)
     self.assertEqual(step_container.steps[1].end_time, end_ts)
-    self.assertEqual(
-        step_container.steps[1].summary_markdown,
-        'running\nstep was canceled because it did not end before build ended'
-    )
 
   def test_cancel_incomplete_no_entity(self):
     end_ts = timestamp_pb2.Timestamp(seconds=12345)
