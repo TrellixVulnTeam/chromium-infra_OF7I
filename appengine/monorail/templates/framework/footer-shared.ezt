@@ -28,10 +28,6 @@
 window.prpcClient = new AutoRefreshPrpcClient(
   CS_env.token, CS_env.tokenExpiresSec);
 </script>
-<script type="text/javascript"
-  src="[version_base]/deployed_node_modules/@webcomponents/webcomponentsjs/webcomponents-bundle.js"
-  nonce="[nonce]"
-></script>
 
 [if-any is_ezt]
   <script type="text/javascript" defer src="[version_base]/static/js/framework/externs.js" nonce="[nonce]"></script>

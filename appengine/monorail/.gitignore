@@ -17,7 +17,6 @@ workspace.xml
 static_src/**/*\.min.js*
 static/dist
 node_modules
-deployed_node_modules
 elements/mock-data/*\.json
 !elements/mock-data/gates-mock.json
 app.yaml

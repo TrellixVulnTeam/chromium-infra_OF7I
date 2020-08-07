@@ -45,7 +45,6 @@
     "@chopsui/tsmon-client": "1.0.1",
     "@types/gapi": "0.0.39",
     "@types/gapi.auth2": "0.0.52",
-    "@webcomponents/webcomponentsjs": "^2.4.4",
     "chart.js": "2.8.0",
     "debounce": "^1.2.0",
     "diff": "^4.0.2",

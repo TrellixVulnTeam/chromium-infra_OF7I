@@ -42,11 +42,6 @@ handlers:
   static_files: static/database-maintenance.html
   upload: static/database-maintenance.html
 
-- url: /deployed_node_modules
-  static_dir: deployed_node_modules
-  secure: always
-  mime_type: application/javascript
-
 - url: /static/dist
   static_dir: static/dist
   mime_type: application/javascript
