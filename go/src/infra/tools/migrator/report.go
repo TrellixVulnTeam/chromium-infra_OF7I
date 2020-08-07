@@ -7,8 +7,10 @@ package migrator
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"go.chromium.org/luci/common/data/stringset"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/config"
 )
 
@@ -27,7 +29,7 @@ func (r ReportID) ConfigSet() config.Set {
 }
 
 func (r ReportID) String() string {
-	if r.ConfigFile != "" {
+	if r.ConfigFile == "" {
 		return r.Project
 	}
 	return fmt.Sprintf("%s|%s", r.Project, r.ConfigFile)
@@ -75,6 +77,48 @@ func (r *Report) ToCSVRow() []string {
 		}
 	}
 	return ret
+}
+
+// NewReportFromCSVRow creates a new Report from a CSVRow written with ToCSVRow.
+func NewReportFromCSVRow(row []string) (ret *Report, err error) {
+	shift := func() (string, bool) {
+		if len(row) == 0 {
+			return "", false
+		}
+		ret := row[0]
+		row = row[1:]
+		return ret, true
+	}
+
+	ret = &Report{}
+	var ok bool
+	if ret.Project, ok = shift(); !ok || ret.Project == "" {
+		err = errors.New("Project field required")
+		return
+	}
+	if ret.ConfigFile, ok = shift(); !ok {
+		err = errors.New("ConfigFile field required (may be empty)")
+		return
+	}
+	if ret.Tag, ok = shift(); !ok || ret.Tag == "" {
+		err = errors.New("Tag field required")
+		return
+	}
+	if ret.Problem, ok = shift(); !ok {
+		err = errors.New("Problem field required (may be empty)")
+		return
+	}
+	for i, mdata := range row {
+		toks := strings.SplitN(mdata, ":", 2)
+		if len(toks) != 2 {
+			err = errors.Reason("Malformed metadata item %d, expected colon: %q",
+				i, mdata).Err()
+			return
+		}
+		MetadataOption(toks[0], toks[1])(ret)
+	}
+
+	return
 }
 
 // ReportOption allows attaching additional optional data to reports.

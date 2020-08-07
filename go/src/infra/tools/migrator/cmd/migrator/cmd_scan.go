@@ -103,7 +103,7 @@ func (r *cmdScanImpl) scanProject(ctx context.Context, inst migrator.API, proj m
 	inst.FindProblems(ctx, proj)
 }
 
-func (r *cmdScanImpl) dumpReport(ctx context.Context, reports *plugsupport.ReportDump) error {
+func (r *cmdScanImpl) dumpReport(ctx context.Context, reports *migrator.ReportDump) error {
 	outFile, err := os.Create(r.projectDir.ReportPath())
 	if err != nil {
 		return err
@@ -214,7 +214,7 @@ func (r *cmdScanImpl) execute(ctx context.Context) error {
 			panic(errors.Annotate(err, "loading luci-config projects.cfg").Err())
 		}
 
-		allReports := &plugsupport.ReportDump{}
+		allReports := &migrator.ReportDump{}
 
 		err = parallel.WorkPool(8, func(ch chan<- func() error) {
 			for _, projPB := range projectPB.Projects {
@@ -224,7 +224,7 @@ func (r *cmdScanImpl) execute(ctx context.Context) error {
 
 					r.perProjectContext(ctx, projPB, func(ctx context.Context) bool {
 						defer func() {
-							numReports := allReports.Update(plugsupport.DumpReports(ctx))
+							numReports := allReports.UpdateFrom(plugsupport.DumpReports(ctx))
 							if numReports > 0 {
 								logging.Warningf(ctx, "%d reports", numReports)
 							}
