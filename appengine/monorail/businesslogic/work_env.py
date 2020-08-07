@@ -1808,7 +1808,7 @@ class WorkEnv(object):
             reporter_id, send_email=send_email)
   def ModifyIssues(
       self, issue_id_delta_pairs, is_description, comment_content=None,
-      _send_email=True):
+      send_email=True):
     # type: (Tuple[int, IssueDelta], Boolean, Optional[str], Optional[bool])
     #     -> None
     """Modify issues by the given deltas."""
@@ -1830,7 +1830,7 @@ class WorkEnv(object):
     # issues at once.
 
     # PHASE 2: Organize data. tracker_helpers.GroupUniqueDeltaIssues()
-    (_unique_deltas, _issues_for_unique_deltas
+    (_unique_deltas, issues_for_unique_deltas
     ) = tracker_helpers.GroupUniqueDeltaIssues(issue_delta_pairs)
 
     # PHASE 3-4: Modify issues in RAM.
@@ -1890,7 +1890,90 @@ class WorkEnv(object):
       self.mc.cnxn.Commit()
 
     # PHASE 7: Send notifications for each group of issues from Phase 2.
-    # TODO(crbug.com/monorail/7657): Send notifications.
+    # Fetch hostports.
+    hostports_by_pid = {}
+    for iid in all_involved_iids:
+      # Note: issues_to_update only include issues with changes in metadata.
+      # If iid is not in issues_to_update, the issue may still have a new
+      # comment that we want to send notifications for.
+      issue = changes.issues_to_update_dict.get(iid, issues_by_id.get(iid))
+      if issue.project_id not in hostports_by_pid:
+        hostports_by_pid[issue.project_id] = framework_helpers.GetHostPort(
+            project_name=issue.project_name)
+    # Send emails for main changes in issues by unique delta.
+    for issues in issues_for_unique_deltas:
+      # Group issues for each unique delta by project because
+      # SendIssueBulkChangeNotification cannot handle cross-project
+      # notifications and hostports are specific to each project.
+      issues_by_pid = collections.defaultdict(set)
+      for issue in issues:
+        issues_by_pid[issue.project_id].add(issue)
+      for pid, project_issues in issues_by_pid.items():
+        hostport = hostports_by_pid[pid]
+        # Send one email to involved users for the issue.
+        if len(project_issues) == 1:
+          (project_issue,) = project_issues
+          self._ModifyIssuesNotifyForDelta(
+              project_issue, changes, comments_by_iid, hostport, send_email)
+        # Send one bulk email for users involved in all updated issues.
+        else:
+          self._ModifyIssuesBulkNotifyForDelta(
+              project_issues, changes, hostport, send_email,
+              comment_content=comment_content)
+
+    # Send emails for changes to impacted issues.
+    for issue_id, comment_pb in impacted_comments_by_iid.items():
+      issue = changes.issues_to_update_dict[issue_id]
+      hostport = hostports_by_pid[issue.project_id]
+      # We do not need to track old owners because the only owner change
+      # that could have happened for impacted issues' changes is a change from
+      # no owner to a derived owner.
+      send_notifications.PrepareAndSendIssueChangeNotification(
+          issue_id, hostport, self.mc.auth.user_id, comment_id=comment_pb.id,
+          send_email=send_email)
+
+  def _ModifyIssuesNotifyForDelta(
+      self, issue, changes, comments_by_iid, hostport, send_email):
+    # type: (Issue, tracker_helpers._IssueChangesTuple,
+    #     Mapping[int, IssueComment], str, bool) -> None
+    comment_pb = comments_by_iid.get(issue.issue_id)
+    # Existence of a comment_pb means there were updates to the issue or
+    # comment_content added to the issue that should trigger
+    # notifications.
+    if comment_pb:
+        old_owner_id = changes.old_owners_by_iid.get(issue.issue_id)
+        send_notifications.PrepareAndSendIssueChangeNotification(
+            issue.issue_id, hostport, self.mc.auth.user_id,
+            old_owner_id=old_owner_id, comment_id=comment_pb.id,
+            send_email=send_email)
+
+  def _ModifyIssuesBulkNotifyForDelta(
+      self, issues, changes, hostport, send_email, comment_content=None):
+    # type: (Collection[Issue], _IssueChangesTuple, str, bool,
+    #     Optional[str]) -> None
+    iids = {issue.issue_id for issue in issues}
+    old_owner_ids = [
+        changes.old_owners_by_iid.get(iid)
+        for iid in iids
+        if changes.old_owners_by_iid.get(iid)
+    ]
+    amendments = []
+    for iid in iids:
+        ams = changes.amendments_by_iid.get(iid, [])
+        amendments.extend(ams)
+    # Calling SendBulkChangeNotification does not require the comment_pb
+    # objects only the amendments. Checking for existence of amendments
+    # and comment_content is equivalent to checking for existence of new
+    # comments created for these issues.
+    if amendments or comment_content:
+      # TODO(crbug.com/monorail/8125): Stop using UserViews for bulk
+      # notifications.
+      users_by_id = framework_views.MakeAllUserViews(
+          self.mc.cnxn, self.services.user, old_owner_ids,
+          tracker_bizobj.UsersInvolvedInAmendments(amendments))
+      send_notifications.SendIssueBulkChangeNotification(
+          iids, hostport, old_owner_ids, comment_content,
+          self.mc.auth.user_id, amendments, send_email, users_by_id)
 
   def DeleteIssue(self, issue, delete):
     """Mark or unmark the given issue as deleted."""
