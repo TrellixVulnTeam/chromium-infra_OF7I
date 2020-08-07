@@ -17,7 +17,7 @@ import (
 )
 
 // SaveChangeEvents saves change events to database
-func SaveChangeEvents(ctx context.Context, changes []*ufspb.ChangeEvent) {
+func SaveChangeEvents(ctx context.Context, changes []*ufspb.ChangeEvent) error {
 	logging.Debugf(ctx, "Logging %d changes", len(changes))
 	user := auth.CurrentUser(ctx)
 	for _, c := range changes {
@@ -26,11 +26,10 @@ func SaveChangeEvents(ctx context.Context, changes []*ufspb.ChangeEvent) {
 	_, err := history.CreateBatchChangeEvents(ctx, changes)
 	if err != nil {
 		logging.Debugf(ctx, "fail to log changes: %s", err.Error())
-		for _, c := range changes {
-			logging.Debugf(ctx, "\t%#v", c)
-		}
+		return err
 	}
 	logging.Debugf(ctx, "Finish logging changes successfully")
+	return nil
 }
 
 const (
@@ -92,24 +91,42 @@ func LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData *ufspb.MachineLSE) 
 		return changes
 	}
 	if oldData == nil {
-		return append(changes, logLifeCycle(util.AddPrefix(util.MachineLSECollection, newData.GetName()), "machine_lse", LifeCycleRegistration)...)
+		return append(changes, logLifeCycle(util.AddPrefix(util.HostCollection, newData.GetName()), "machine_lse", LifeCycleRegistration)...)
 	}
 	if newData == nil {
-		return append(changes, logLifeCycle(util.AddPrefix(util.MachineLSECollection, oldData.GetName()), "machine_lse", LifeCycleRetire)...)
+		return append(changes, logLifeCycle(util.AddPrefix(util.HostCollection, oldData.GetName()), "machine_lse", LifeCycleRetire)...)
 	}
 	changes = append(changes, logCommon("", "machine_lse.machine_lse_prototype", oldData.GetMachineLsePrototype(), newData.GetMachineLsePrototype())...)
 	changes = append(changes, logCommon("", "machine_lse.hostname", oldData.GetHostname(), newData.GetHostname())...)
 	changes = append(changes, logCommon("", "machine_lse.machines", oldData.GetMachines(), newData.GetMachines())...)
+	changes = append(changes, logCommon("", "machine_lse.nic", oldData.GetNic(), newData.GetNic())...)
+	changes = append(changes, logCommon("", "machine_lse.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	changes = append(changes, logCommon("", "machine_lse.rack", oldData.GetRack(), newData.GetRack())...)
+	changes = append(changes, logCommon("", "machine_lse.manufacturer", oldData.GetManufacturer(), newData.GetManufacturer())...)
 	if newData.GetChromeBrowserMachineLse() != nil {
 		changes = append(changes, logChromeBrowserMachineLse(oldData.GetChromeBrowserMachineLse(), newData.GetChromeBrowserMachineLse())...)
 	}
 
 	// Set resource name for all changes.
 	for i := range changes {
-		changes[i].Name = util.AddPrefix(util.MachineLSECollection, oldData.GetName())
+		changes[i].Name = util.AddPrefix(util.HostCollection, oldData.GetName())
 	}
 
 	return changes
+}
+
+func approxLab(lab string) string {
+	if lab == "" {
+		return ufspb.Lab_LAB_UNSPECIFIED.String()
+	}
+	return lab
+}
+
+func approxState(s string) string {
+	if s == "" {
+		return ufspb.State_STATE_UNSPECIFIED.String()
+	}
+	return s
 }
 
 // LogVMChanges logs the change of the given vms.
@@ -131,9 +148,9 @@ func LogVMChanges(oldData *ufspb.VM, newData *ufspb.VM) []*ufspb.ChangeEvent {
 	changes = append(changes, logCommon(resourceName, "vm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	changes = append(changes, logCommon(resourceName, "vm.os_version", oldData.GetOsVersion(), newData.GetOsVersion())...)
 	changes = append(changes, logCommon(resourceName, "vm.vlan", oldData.GetVlan(), newData.GetVlan())...)
-	changes = append(changes, logCommon(resourceName, "vm.lab", oldData.GetLab(), newData.GetLab())...)
+	changes = append(changes, logCommon(resourceName, "vm.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
 	changes = append(changes, logCommon(resourceName, "vm.machine_lse_id", oldData.GetMachineLseId(), newData.GetMachineLseId())...)
-	changes = append(changes, logCommon(resourceName, "vm.state", oldData.GetState(), newData.GetState())...)
+	changes = append(changes, logCommon(resourceName, "vm.state", approxState(oldData.GetState()), approxState(newData.GetState()))...)
 	return changes
 }
 
@@ -176,6 +193,9 @@ func LogNicChanges(oldData, newData *ufspb.Nic) []*ufspb.ChangeEvent {
 		return append(changes, logLifeCycle(util.AddPrefix(util.NicCollection, oldData.GetName()), "nic", LifeCycleRetire)...)
 	}
 	changes = append(changes, logCommon("", "nic.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logCommon("", "nic.machine", oldData.GetMachine(), newData.GetMachine())...)
+	changes = append(changes, logCommon("", "nic.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	changes = append(changes, logCommon("", "nic.rack", oldData.GetRack(), newData.GetRack())...)
 	changes = append(changes, logSwitchInterface(oldData.GetSwitchInterface(), newData.GetSwitchInterface())...)
 
 	// Set resource name for all changes.
@@ -199,6 +219,9 @@ func LogDracChanges(oldData, newData *ufspb.Drac) []*ufspb.ChangeEvent {
 	}
 	changes = append(changes, logCommon("", "drac.display_name", oldData.GetDisplayName(), newData.GetDisplayName())...)
 	changes = append(changes, logCommon("", "drac.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logCommon("", "drac.machine", oldData.GetMachine(), newData.GetMachine())...)
+	changes = append(changes, logCommon("", "drac.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	changes = append(changes, logCommon("", "drac.rack", oldData.GetRack(), newData.GetRack())...)
 	changes = append(changes, logSwitchInterface(oldData.GetSwitchInterface(), newData.GetSwitchInterface())...)
 
 	// Set resource name for all changes.
@@ -223,6 +246,8 @@ func LogKVMChanges(oldData, newData *ufspb.KVM) []*ufspb.ChangeEvent {
 	changes = append(changes, logCommon("", "kvm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	changes = append(changes, logCommon("", "kvm.chrome_platform", oldData.GetChromePlatform(), newData.GetChromePlatform())...)
 	changes = append(changes, logCommon("", "kvm.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
+	changes = append(changes, logCommon("", "kvm.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	changes = append(changes, logCommon("", "kvm.rack", oldData.GetRack(), newData.GetRack())...)
 
 	// Set resource name for all changes.
 	for i := range changes {
@@ -245,6 +270,8 @@ func LogSwitchChanges(oldData, newData *ufspb.Switch) []*ufspb.ChangeEvent {
 	}
 	changes = append(changes, logCommon("", "switch.description", oldData.GetDescription(), newData.GetDescription())...)
 	changes = append(changes, logCommon("", "switch.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
+	changes = append(changes, logCommon("", "switch.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	changes = append(changes, logCommon("", "switch.rack", oldData.GetRack(), newData.GetRack())...)
 
 	// Set resource name for all changes.
 	for i := range changes {
@@ -266,12 +293,68 @@ func LogRPMChanges(oldData, newData *ufspb.RPM) []*ufspb.ChangeEvent {
 		return append(changes, logLifeCycle(util.AddPrefix(util.RPMCollection, oldData.GetName()), "rpm", LifeCycleRetire)...)
 	}
 	changes = append(changes, logCommon("", "rpm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
-	changes = append(changes, logCommon("", "switch.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
+	changes = append(changes, logCommon("", "rpm.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
+	changes = append(changes, logCommon("", "rpm.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	changes = append(changes, logCommon("", "rpm.rack", oldData.GetRack(), newData.GetRack())...)
 
 	// Set resource name for all changes.
 	for i := range changes {
 		changes[i].Name = util.AddPrefix(util.RPMCollection, oldData.GetName())
 	}
+	return changes
+}
+
+// LogDHCPChanges logs the change of the given dhcp.
+func LogDHCPChanges(oldData, newData *ufspb.DHCPConfig) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	if oldData == nil {
+		return append(changes, logCommon(util.AddPrefix(util.DHCPCollection, newData.GetHostname()), "dhcp_config.ip", "", newData.GetIp())...)
+	}
+	if newData == nil {
+		return append(changes, logCommon(util.AddPrefix(util.DHCPCollection, oldData.GetHostname()), "dhcp_config.ip", oldData.GetIp(), "")...)
+	}
+	resourceName := util.AddPrefix(util.DHCPCollection, oldData.GetHostname())
+	changes = append(changes, logCommon(resourceName, "dhcp_config.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
+	changes = append(changes, logCommon(resourceName, "dhcp_config.ip", oldData.GetIp(), newData.GetIp())...)
+	changes = append(changes, logCommon(resourceName, "dhcp_config.vlan", oldData.GetVlan(), newData.GetVlan())...)
+
+	return changes
+}
+
+// LogIPChanges logs the change of the given ip.
+func LogIPChanges(oldData, newData *ufspb.IP) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	var resourceName string
+	if oldData != nil {
+		resourceName = util.AddPrefix(util.IPCollection, oldData.GetId())
+	} else {
+		resourceName = util.AddPrefix(util.IPCollection, newData.GetId())
+	}
+	changes = append(changes, logCommon(resourceName, "ip.occupied", oldData.GetOccupied(), newData.GetOccupied())...)
+
+	return changes
+}
+
+// LogStateChanges logs the change of the given state record.
+func LogStateChanges(oldData, newData *ufspb.StateRecord) []*ufspb.ChangeEvent {
+	changes := make([]*ufspb.ChangeEvent, 0)
+	if oldData == nil && newData == nil {
+		return changes
+	}
+	var resourceName string
+	if oldData != nil {
+		resourceName = util.AddPrefix(util.StateCollection, oldData.GetResourceName())
+	} else {
+		resourceName = util.AddPrefix(util.StateCollection, newData.GetResourceName())
+	}
+	changes = append(changes, logCommon(resourceName, "state_record.state", oldData.GetState().String(), newData.GetState().String())...)
+
 	return changes
 }
 

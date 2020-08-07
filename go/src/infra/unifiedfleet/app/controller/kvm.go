@@ -149,7 +149,13 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 // DeleteKVMHost deletes the host of a kvm in datastore.
 func DeleteKVMHost(ctx context.Context, kvmName string) error {
 	f := func(ctx context.Context) error {
-		return deleteDHCPHelper(ctx, kvmName)
+		nu := &networkUpdater{
+			Hostname: kvmName,
+		}
+		if err := nu.deleteDHCPHelper(ctx); err != nil {
+			return err
+		}
+		return SaveChangeEvents(ctx, nu.Changes)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -166,15 +172,19 @@ func UpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, nwOpt *ufsAPI.NetworkOpt
 		if err := validateUpdateKVMHost(ctx, kvm, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
 			return err
 		}
-
+		nu := &networkUpdater{
+			Hostname: kvm.GetName(),
+		}
 		// 2. Verify if the hostname is already set with IP. if yes, remove the current dhcp.
-		if err := deleteDHCPHelper(ctx, kvm.GetName()); err != nil {
+		if err := nu.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
 
 		// 3. Find free ip, set IP and DHCP config
-		_, err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetName(), kvm.GetMacAddress())
-		return err
+		if _, err := nu.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetMacAddress()); err != nil {
+			return err
+		}
+		return SaveChangeEvents(ctx, nu.Changes)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -246,17 +256,20 @@ func DeleteKVM(ctx context.Context, id string) error {
 		state.DeleteStates(ctx, []string{ufsUtil.AddPrefix(ufsUtil.KVMCollection, id)})
 
 		// 6. Delete ip configs
-		if err := deleteDHCPHelper(ctx, id); err != nil {
+		nu := &networkUpdater{
+			Hostname: id,
+		}
+		if err := nu.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
-		return nil
+		changes = append(changes, nu.Changes...)
+		return SaveChangeEvents(ctx, changes)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete kvm in datastore: %s", err)
 		return err
 	}
-	SaveChangeEvents(ctx, changes)
 	return nil
 }
 

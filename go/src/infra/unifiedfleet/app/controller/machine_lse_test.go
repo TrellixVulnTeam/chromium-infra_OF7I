@@ -100,7 +100,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "MachineLSE machinelse-1 already exists in the system.")
 
 			// No changes are recorded as the creation fails
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-1")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -116,7 +116,7 @@ func TestCreateMachineLSE(t *testing.T) {
 				"There is no Machine with MachineID machine-2 in the system.")
 
 			// No changes are recorded as the creation fails
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-2")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-2")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -147,6 +147,11 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Vlan with VlanID vlan-1")
+
+			// No changes are recorded as the creation fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-wrong-nic")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new machineLSE with existing machines and specify ip", func() {
@@ -179,16 +184,12 @@ func TestCreateMachineLSE(t *testing.T) {
 				Name:       "vm1-ip",
 				MacAddress: "old_mac_address",
 			}
-			vm2 := &ufspb.VM{
-				Name:       "vm2-ip",
-				MacAddress: "old_mac_address",
-			}
 			machineLSE2 := &ufspb.MachineLSE{
 				Name:     "machinelse-with-ip",
 				Hostname: "machinelse-with-ip",
 				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
-						Vms: []*ufspb.VM{vm1, vm2},
+						Vms: []*ufspb.VM{vm1},
 					},
 				},
 			}
@@ -215,17 +216,44 @@ func TestCreateMachineLSE(t *testing.T) {
 			vm, err := inventory.GetVM(ctx, "vm1-ip")
 			So(err, ShouldBeNil)
 			So(vm, ShouldResembleProto, vm1)
-			vm, err = inventory.GetVM(ctx, "vm2-ip")
-			So(err, ShouldBeNil)
-			So(vm, ShouldResembleProto, vm2)
 
 			// verify changes
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-with-ip")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-with-ip")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm1-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm1-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-with-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/machines/machine-with-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_SERVING.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/machinelse-with-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, dhcp.GetIp())
 		})
 
 		Convey("Create new machineLSE with existing machines", func() {
@@ -249,7 +277,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			// No changes are recorded as the creation fails
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-3")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
@@ -279,7 +307,10 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "Hosts referring the machine machine-4:\nmachinelse-4")
 
 			// No changes are recorded as the creation fails
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-5")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-5")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-4")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -463,7 +494,7 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			// No changes are recorded as the creation fails
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-0")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-0")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -480,7 +511,7 @@ func TestCreateMachineLSELabstation(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-1")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
@@ -670,7 +701,7 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			// No changes are recorded as the updating fails
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-10")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-10")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -690,7 +721,7 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 
 			// No changes happened in this update
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-11")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-11")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -740,12 +771,24 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING)
 
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-update1")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.chrome_browser_machine_lse.os_version")
 			So(changes[0].OldValue, ShouldEqual, "<nil>")
 			So(changes[0].NewValue, ShouldEqual, "value:\"new_os\"")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/machines/machine-update1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/machinelse-update1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update machineLSE by setting ip by vlan for host", func() {
@@ -798,15 +841,35 @@ func TestUpdateMachineLSE(t *testing.T) {
 				},
 			}, nil)
 			So(err, ShouldBeNil)
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-update-host")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 0)
 			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-update-host")
 			So(err, ShouldBeNil)
 			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
 			So(err, ShouldBeNil)
 			So(ip, ShouldHaveLength, 1)
 			So(ip[0].GetOccupied(), ShouldBeTrue)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			// nic info is changed
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "eth0")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/machinelse-update-host")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, dhcp.GetIp())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[0].GetOldValue(), ShouldEqual, "false")
+			So(changes[0].GetNewValue(), ShouldEqual, "true")
 		})
 
 		Convey("Update machineLSE by setting ip by user for host", func() {
@@ -860,17 +923,36 @@ func TestUpdateMachineLSE(t *testing.T) {
 				},
 			}, nil)
 			So(err, ShouldBeNil)
-
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/machinelse-update-host-user")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 0)
 			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-update-host-user")
 			So(err, ShouldBeNil)
 			So(dhcp.GetIp(), ShouldEqual, "192.168.40.9")
-			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
+			ips, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
 			So(err, ShouldBeNil)
-			So(ip, ShouldHaveLength, 1)
-			So(ip[0].GetOccupied(), ShouldBeTrue)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeTrue)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host-user")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			// nic info is changed
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "eth0-user")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host-user")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/machinelse-update-host-user")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, dhcp.GetIp())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[0].GetOldValue(), ShouldEqual, "false")
+			So(changes[0].GetNewValue(), ShouldEqual, "true")
 		})
 
 		Convey("Update machineLSE Labstation without Servo Info", func() {
@@ -890,7 +972,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 
 			// No changes happened in this update
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-11")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-11")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -931,6 +1013,73 @@ func TestUpdateMachineLSE(t *testing.T) {
 			_, err = state.GetStateRecord(ctx, "hosts/machinelse-4")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+		})
+	})
+}
+
+func TestDeleteMachineLSE(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("DeleteMachineLSE", t, func() {
+		Convey("Delete machineLSE - happy path", func() {
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-delete-1",
+				Hostname: "machinelse-delete-1",
+				Machines: []string{"machine-delete-1"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+						Vms: []*ufspb.VM{
+							{
+								Name:       "vm-delete-1",
+								MacAddress: "old_mac_address",
+							},
+						},
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, &ufspb.Machine{
+				Name: "machine-delete-1",
+			})
+			So(err, ShouldBeNil)
+			_, err = CreateMachineLSE(ctx, machineLSE1, []string{"machine-delete-1"}, nil)
+			So(err, ShouldBeNil)
+
+			err = DeleteMachineLSE(ctx, "machinelse-delete-1")
+			So(err, ShouldBeNil)
+			// verify changes
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "vms/vm-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetEventLabel(), ShouldEqual, "vm")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[1].GetOldValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			So(changes[1].GetNewValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[1].GetOldValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			So(changes[1].GetNewValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/machines/machine-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[1].GetOldValue(), ShouldEqual, ufspb.State_STATE_SERVING.String())
+			So(changes[1].GetNewValue(), ShouldEqual, ufspb.State_STATE_REGISTERED.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/machinelse-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 	})
 }
@@ -1009,7 +1158,7 @@ func TestDeleteMachineLSELabstation(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			// No changes are recorded as the deletion fails
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-90")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-90")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
@@ -1028,12 +1177,19 @@ func TestDeleteMachineLSELabstation(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machineLSEs/RedLabstation-100")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/RedLabstation-100")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse")
+			// Both states for old & new are unspecified.
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/RedLabstation-100")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_SERVING.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
 		})
 	})
 }

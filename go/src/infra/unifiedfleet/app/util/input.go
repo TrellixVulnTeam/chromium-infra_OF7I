@@ -42,6 +42,12 @@ const (
 	MachineLSEPrototypeCollection string = "machineLSEPrototypes"
 	// RackLSEPrototypeCollection refers to the prefix of the corresponding resource.
 	RackLSEPrototypeCollection string = "rackLSEPrototypes"
+	// DHCPCollection refers to the prefix of the dhcp config id in change history
+	DHCPCollection string = "dhcps"
+	// IPCollection refers to the prefix of the ip id in change history
+	IPCollection string = "ips"
+	// StateCollection refers to the prefix of the states id in change history
+	StateCollection string = "states"
 
 	// DefaultImporter refers to the user of the cron job importer
 	DefaultImporter string = "crimson-importer"

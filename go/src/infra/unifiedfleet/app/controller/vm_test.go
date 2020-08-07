@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -15,6 +16,7 @@ import (
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
@@ -37,6 +39,19 @@ func TestCreateVM(t *testing.T) {
 			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
 			So(resp.GetLab(), ShouldEqual, "fake_lab")
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-create-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-create-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
 		})
 
 		Convey("Create new VM with specifying vlan", func() {
@@ -57,6 +72,31 @@ func TestCreateVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ip, ShouldHaveLength, 1)
 			So(ip[0].GetOccupied(), ShouldBeTrue)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-create-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-create-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-create-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, dhcp.GetIp())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ip[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[0].GetOldValue(), ShouldEqual, "false")
+			So(changes[0].GetNewValue(), ShouldEqual, "true")
 		})
 
 		Convey("Create new VM with specifying ip", func() {
@@ -78,6 +118,31 @@ func TestCreateVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(ip, ShouldHaveLength, 1)
 			So(ip[0].GetOccupied(), ShouldBeTrue)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-create-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-create-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-create-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.9")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ip[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[0].GetOldValue(), ShouldEqual, "false")
+			So(changes[0].GetNewValue(), ShouldEqual, "true")
 		})
 	})
 }
@@ -98,6 +163,10 @@ func TestUpdateVM(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-update-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 
 		Convey("Update VM - happy path with vlan", func() {
@@ -118,10 +187,37 @@ func TestUpdateVM(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 			dhcp, err := configuration.GetDHCPConfig(ctx, "vm-update-2")
 			So(err, ShouldBeNil)
-			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
 			So(err, ShouldBeNil)
-			So(ip, ShouldHaveLength, 1)
-			So(ip[0].GetOccupied(), ShouldBeTrue)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeTrue)
+
+			// Come from CreateVM
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-update-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-update-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			// Come from UpdateVM
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-update-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, dhcp.GetIp())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[0].GetOldValue(), ShouldEqual, "false")
+			So(changes[0].GetNewValue(), ShouldEqual, "true")
 		})
 
 		Convey("Update VM - happy path with ip deletion", func() {
@@ -146,10 +242,30 @@ func TestUpdateVM(t *testing.T) {
 			_, err = configuration.GetDHCPConfig(ctx, "vm-update-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
-			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
 			So(err, ShouldBeNil)
-			So(ip, ShouldHaveLength, 1)
-			So(ip[0].GetOccupied(), ShouldBeFalse)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeFalse)
+
+			// Come from UpdateVM
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-update-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.9")
+			So(changes[1].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.9")
+			So(changes[1].GetNewValue(), ShouldEqual, "")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[0].GetOldValue(), ShouldEqual, "false")
+			So(changes[0].GetNewValue(), ShouldEqual, "true")
+			So(changes[1].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[1].GetOldValue(), ShouldEqual, "true")
+			So(changes[1].GetNewValue(), ShouldEqual, "false")
 		})
 
 		Convey("Update VM - happy path with state updating", func() {
@@ -166,6 +282,21 @@ func TestUpdateVM(t *testing.T) {
 			s, err := state.GetStateRecord(ctx, "vms/vm-update-4")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR)
+
+			// Come from CreateVM
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-update-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			// Come from UpdateVM
+			So(changes[1].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[1].GetOldValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			So(changes[1].GetNewValue(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-update-4")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 	})
 }
@@ -182,6 +313,10 @@ func TestDeleteVM(t *testing.T) {
 			err := DeleteVM(ctx, "vm-delete-1")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
 		})
 		Convey("Delete VM - happy path", func() {
 			setupTestVlan(ctx)
@@ -214,10 +349,35 @@ func TestDeleteVM(t *testing.T) {
 			_, err = configuration.GetDHCPConfig(ctx, "vm-delete-1")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
-			ip, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.7"})
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.7"})
 			So(err, ShouldBeNil)
-			So(ip, ShouldHaveLength, 1)
-			So(ip[0].GetOccupied(), ShouldBeFalse)
+			So(ips, ShouldHaveLength, 1)
+			So(ips[0].GetOccupied(), ShouldBeFalse)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[1].GetEventLabel(), ShouldEqual, "vm")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[1].GetOldValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			So(changes[1].GetNewValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-delete-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.7")
+			So(changes[1].GetNewValue(), ShouldEqual, "")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[1].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[1].GetOldValue(), ShouldEqual, "true")
+			So(changes[1].GetNewValue(), ShouldEqual, "false")
 		})
 	})
 }

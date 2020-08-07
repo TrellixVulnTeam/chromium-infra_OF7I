@@ -238,7 +238,13 @@ func processDracUpdateMask(oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_ma
 // DeleteDracHost deletes the host of a drac in datastore.
 func DeleteDracHost(ctx context.Context, dracName string) error {
 	f := func(ctx context.Context) error {
-		return deleteDHCPHelper(ctx, dracName)
+		nu := &networkUpdater{
+			Hostname: dracName,
+		}
+		if err := nu.deleteDHCPHelper(ctx); err != nil {
+			return err
+		}
+		return SaveChangeEvents(ctx, nu.Changes)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -256,14 +262,19 @@ func UpdateDracHost(ctx context.Context, drac *ufspb.Drac, nwOpt *ufsAPI.Network
 			return err
 		}
 
+		nu := &networkUpdater{
+			Hostname: drac.GetName(),
+		}
 		// 2. Verify if the hostname is already set with IP. if yes, remove the current dhcp.
-		if err := deleteDHCPHelper(ctx, drac.GetName()); err != nil {
+		if err := nu.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
 
 		// 3. Find free ip, set IP and DHCP config
-		_, err := addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), drac.GetName(), drac.GetMacAddress())
-		return err
+		if _, err := nu.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), drac.GetMacAddress()); err != nil {
+			return err
+		}
+		return SaveChangeEvents(ctx, nu.Changes)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -298,17 +309,21 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, ke
 // 2. Get the machine associated with this drac
 // 3. Update the machine by removing the association with this drac
 func DeleteDrac(ctx context.Context, id string) error {
-	changes := LogDracChanges(&ufspb.Drac{Name: id}, nil)
 	f := func(ctx context.Context) error {
+		changes := LogDracChanges(&ufspb.Drac{Name: id}, nil)
 		// 1. Delete the drac
 		if err := registration.DeleteDrac(ctx, id); err != nil {
 			return err
 		}
 
+		nu := &networkUpdater{
+			Hostname: id,
+		}
 		// 2. Delete its ip configs
-		if err := deleteDHCPHelper(ctx, id); err != nil {
+		if err := nu.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
+		changes = append(changes, nu.Changes...)
 
 		// 3. Get the machine associated with drac
 		machines, err := registration.QueryMachineByPropertyName(ctx, "drac_id", id, false)
@@ -317,26 +332,23 @@ func DeleteDrac(ctx context.Context, id string) error {
 		}
 		if machines == nil || len(machines) == 0 {
 			logging.Warningf(ctx, "No machine associated with the drac %s. Data discrepancy error.\n", id)
-			return nil
 		}
 		if len(machines) > 1 {
 			logging.Warningf(ctx, "More than one machine associated the drac %s. Data discrepancy error.\n", id)
 		}
-
 		// 4. Remove the association between the browser machines and this drac.
 		cs, err := removeDracFromBrowserMachines(ctx, machines)
 		if err != nil {
 			return err
 		}
 		changes = append(changes, cs...)
-		return nil
+		return SaveChangeEvents(ctx, changes)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete drac in datastore: %s", err)
 		return err
 	}
-	SaveChangeEvents(ctx, changes)
 	return nil
 }
 
@@ -382,6 +394,9 @@ func getBrowserMachineForDrac(ctx context.Context, dracName string) (*ufspb.Mach
 // Must be called within a transaction as BatchUpdateMachines is a non-atomic operation
 func removeDracFromBrowserMachines(ctx context.Context, machines []*ufspb.Machine) ([]*ufspb.ChangeEvent, error) {
 	changes := make([]*ufspb.ChangeEvent, 0)
+	if machines == nil || len(machines) == 0 {
+		return changes, nil
+	}
 	for _, machine := range machines {
 		oldMachine := proto.Clone(machine).(*ufspb.Machine)
 		if machine.GetChromeBrowserMachine() == nil {

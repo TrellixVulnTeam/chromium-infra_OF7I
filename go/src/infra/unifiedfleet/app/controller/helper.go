@@ -10,12 +10,10 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	ufspb "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
@@ -304,107 +302,4 @@ func getFilterMap(filter string, f getFieldFunc) (map[string][]interface{}, erro
 		filterMap[field] = values
 	}
 	return filterMap, nil
-}
-
-// deleteDHCPHelper deletes ip configs for a given hostname
-//
-// Can be used in a transaction
-func deleteDHCPHelper(ctx context.Context, hostname string) error {
-	dhcp, err := configuration.GetDHCPConfig(ctx, hostname)
-	if util.IsInternalError(err) {
-		return errors.Annotate(err, "Fail to query dhcpHost").Err()
-	}
-	if err == nil && dhcp != nil {
-		if err := deleteHostHelper(ctx, dhcp); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Delete all ip-related configs
-//
-// Can be used in a transaction
-func deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCPConfig) error {
-	logging.Debugf(ctx, "Found existing dhcp configs for host %s", dhcp.GetHostname())
-	logging.Debugf(ctx, "Deleting dhcp %s (%s)", dhcp.GetHostname(), dhcp.GetIp())
-	if err := configuration.DeleteDHCP(ctx, dhcp.GetHostname()); err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to delete dhcp: hostname %q, ip %q", dhcp.GetHostname(), dhcp.GetIp())).Err()
-	}
-	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
-	if err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to query ip by ipv4 str: %q", dhcp.GetIp())).Err()
-	}
-	if ips == nil {
-		return nil
-	}
-	ips[0].Occupied = false
-	logging.Debugf(ctx, "Update ip %s to non-occupied", ips[0].GetIpv4Str())
-	if _, err := configuration.BatchUpdateIPs(ctx, ips); err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to update ip: %q (ipv4: %q, vlan %q)", ips[0].GetId(), ips[0].GetIpv4Str(), ips[0].GetVlan())).Err()
-	}
-	return nil
-}
-
-func getFreeIPHelper(ctx context.Context, vlanName string) (*ufspb.IP, error) {
-	ips, err := getFreeIP(ctx, vlanName, 1)
-	if err != nil {
-		return nil, errors.Annotate(err, "Failed to find new IP").Err()
-	}
-	if ips[0].GetIpv4Str() == "" {
-		return nil, errors.New(fmt.Sprintf("No empty ip is found. Found ip: %q, vlan %q", ips[0].GetId(), ips[0].GetVlan()))
-	}
-	logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
-	return ips[0], nil
-}
-
-func getSpecifiedIP(ctx context.Context, ipv4Str string) (*ufspb.IP, error) {
-	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{
-		"ipv4_str": ipv4Str,
-	})
-	if err != nil {
-		return nil, errors.Annotate(err, "Fail to query ip entity by %s", ipv4Str).Err()
-	}
-	if ips[0].GetOccupied() {
-		dhcps, err := configuration.QueryDHCPConfigByPropertyName(ctx, "ipv4", ipv4Str)
-		if err != nil {
-			return nil, errors.Annotate(err, "ip %s is occupied, but fail to query the corresponding dhcp", ipv4Str).Err()
-		}
-		if dhcps != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Ip %s is occupied by host %s", ipv4Str, dhcps[0].GetHostname())
-		}
-	}
-	return ips[0], nil
-}
-
-// Find free ip and update ip-related configs
-//
-// Can be used in a transaction
-func addHostHelper(ctx context.Context, vlanName, ipv4Str, hostName, macAddress string) (*ufspb.DHCPConfig, error) {
-	var ip *ufspb.IP
-	var err error
-	if ipv4Str != "" {
-		if ip, err = getSpecifiedIP(ctx, ipv4Str); err != nil {
-			return nil, err
-		}
-	} else {
-		if ip, err = getFreeIPHelper(ctx, vlanName); err != nil {
-			return nil, err
-		}
-	}
-
-	ip.Occupied = true
-	if _, err := configuration.BatchUpdateIPs(ctx, []*ufspb.IP{ip}); err != nil {
-		return nil, errors.Annotate(err, "Failed to update IP %s (%s)", ip.GetId(), ip.GetIpv4Str()).Err()
-	}
-	dhcp := &ufspb.DHCPConfig{
-		Hostname:   hostName,
-		Ip:         ip.GetIpv4Str(),
-		Vlan:       ip.GetVlan(),
-		MacAddress: macAddress,
-	}
-	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp}); err != nil {
-		return nil, errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", hostName, macAddress).Err()
-	}
-	return dhcp, nil
 }
