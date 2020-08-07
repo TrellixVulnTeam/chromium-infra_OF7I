@@ -43,6 +43,9 @@ message KVM {
         },
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // tags user can attach for easy querying/searching
+    repeated string tags = 8;
 }
 
 // Refer to one port of a given KVM
@@ -82,6 +85,9 @@ message RPM {
         },
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // tags user can attach for easy querying/searching
+    repeated string tags = 7;
 }
 
 // Refer to one port of a given RPM
@@ -127,6 +133,9 @@ message Switch {
         },
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // tags user can attach for easy querying/searching
+    repeated string tags = 7;
 }
 
 // Refer to one port of a given switch

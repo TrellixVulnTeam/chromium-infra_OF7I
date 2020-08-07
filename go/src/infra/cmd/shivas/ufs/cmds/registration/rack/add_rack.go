@@ -32,24 +32,29 @@ var AddRackCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.RackRegistrationFileText)
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to add")
 		c.Flags.StringVar(&c.labName, "lab", "", fmt.Sprintf("the name of the lab to add the rack to. Valid lab strings: [%s]", strings.Join(utils.ValidLabStr(), ", ")))
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many machines can be added to this rack")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
 
 type addRack struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	commonFlags  site.CommonFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+
 	newSpecsFile string
-	rackName     string
-	labName      string
-	capacity     int
+
+	rackName string
+	labName  string
+	capacity int
+	tags     string
 }
 
 func (c *addRack) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -112,6 +117,7 @@ func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
 		},
 		CapacityRu: int32(c.capacity),
 		Realm:      utils.ToUFSRealm(c.labName),
+		Tags:       utils.GetStringSlice(c.tags),
 	}
 	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
 		req.Rack.Rack = &ufspb.Rack_ChromeBrowserRack{

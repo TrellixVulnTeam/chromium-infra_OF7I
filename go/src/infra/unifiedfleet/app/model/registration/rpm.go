@@ -26,10 +26,11 @@ const RPMKind string = "RPM"
 
 // RPMEntity is a datastore entity that tracks RPM.
 type RPMEntity struct {
-	_kind string `gae:"$kind,RPM"`
-	ID    string `gae:"$id"`
-	Lab   string `gae:"lab"`
-	Rack  string `gae:"rack"`
+	_kind string   `gae:"$kind,RPM"`
+	ID    string   `gae:"$id"`
+	Lab   string   `gae:"lab"`
+	Rack  string   `gae:"rack"`
+	Tags  []string `gae:"tags"`
 	// ufspb.RPM cannot be directly used as it contains pointer.
 	RPM []byte `gae:",noindex"`
 }
@@ -57,6 +58,7 @@ func newRPMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		RPM:  rpm,
 		Lab:  p.GetLab(),
 		Rack: p.GetRack(),
+		Tags: p.GetTags(),
 	}, nil
 }
 
@@ -212,8 +214,10 @@ func GetRPMIndexedFieldName(input string) (string, error) {
 		field = "lab"
 	case util.RackFilterName:
 		field = "rack"
+	case util.TagFilterName:
+		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are lab/rack", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are lab/rack/tag", input)
 	}
 	return field, nil
 }

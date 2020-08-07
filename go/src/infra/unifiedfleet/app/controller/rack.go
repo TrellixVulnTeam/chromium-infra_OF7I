@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -51,16 +52,16 @@ func CreateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
 }
 
 // UpdateRack updates rack in datastore.
-func UpdateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
+func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) (*ufspb.Rack, error) {
 	var oldRack *ufspb.Rack
 	var err error
 	f := func(ctx context.Context) error {
-		// 1. Check if rack does not exist
-		if err := ResourceExist(ctx, []*Resource{GetRackResource(rack.Name)}, nil); err != nil {
-			return err
+		// Validate input
+		if err := validateUpdateRack(ctx, rack, mask); err != nil {
+			return errors.Annotate(err, "UpdateRack - validation failed").Err()
 		}
 
-		// 2. Make sure OUTPUT_ONLY fields are set to empty
+		// Make sure OUTPUT_ONLY fields are set to empty
 		// for OS rack we dont do anything as of now.
 		if rack.GetChromeBrowserRack() != nil {
 			// These are output only field. User is not allowed to set these value.
@@ -70,64 +71,21 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
 			rack.GetChromeBrowserRack().Switches = nil
 		}
 
-		// 3. Get the existing/old rack
+		// Get the existing/old rack
 		oldRack, err = registration.GetRack(ctx, rack.GetName())
 		if err != nil {
-			return err
+			return errors.Annotate(err, "UpdateRack - get rack %s failed", rack.GetName()).Err()
 		}
 
-		// Check if rack lab information is changed/updated
-		if rack.GetLocation().GetLab() != oldRack.GetLocation().GetLab() {
-			// Update KVM table indexing for lab
-			kvms, err := registration.QueryKVMByPropertyName(ctx, "rack", rack.GetName(), false)
-			if err != nil {
-				return errors.Annotate(err, "UpdateRack - Failed to query kvms for rack %s", rack.GetName()).Err()
-			}
-			for _, kvm := range kvms {
-				// This is a output only field used for indexing kvm table
-				// Assign new lab index for kvm
-				kvm.Lab = rack.GetLocation().GetLab().String()
-			}
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction. Datastore doesnt allow nested transactions.
-			if _, err := registration.BatchUpdateKVMs(ctx, kvms); err != nil {
-				return errors.Annotate(err, "UpdateRack - Unable to update kvm %s", kvms).Err()
-			}
-
-			// Update RPM table indexing for lab
-			rpms, err := registration.QueryRPMByPropertyName(ctx, "rack", rack.GetName(), false)
-			if err != nil {
-				return errors.Annotate(err, "UpdateRack - Failed to query rpms for rack %s", rack.GetName()).Err()
-			}
-			for _, rpm := range rpms {
-				// This is a output only field used for indexing rpm table
-				// Assign new lab index for rpm
-				rpm.Lab = rack.GetLocation().GetLab().String()
-			}
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction. Datastore doesnt allow nested transactions.
-			if _, err := registration.BatchUpdateRPMs(ctx, rpms); err != nil {
-				return errors.Annotate(err, "UpdateRack - Unable to update rpm %s", rpms).Err()
-			}
-
-			// Update Switch table indexing for lab
-			switches, err := registration.QuerySwitchByPropertyName(ctx, "rack", rack.GetName(), false)
-			if err != nil {
-				return errors.Annotate(err, "UpdateRack - Failed to query switches for rack %s", rack.GetName()).Err()
-			}
-			for _, s := range switches {
-				// This is a output only field used for indexing switch table
-				// Assign new lab index for s
-				s.Lab = rack.GetLocation().GetLab().String()
-			}
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction. Datastore doesnt allow nested transactions.
-			if _, err := registration.BatchUpdateSwitches(ctx, switches); err != nil {
-				return errors.Annotate(err, "UpdateRack - Unable to update switch %s", switches).Err()
-			}
+		// Do not let updating from browser to os or vice versa change for rack.
+		if oldRack.GetChromeBrowserRack() != nil && rack.GetChromeosRack() != nil {
+			return status.Error(codes.InvalidArgument, "UpdateRack - cannot update a browser rack to os rack. Please delete the browser rack and create a new os rack")
+		}
+		if oldRack.GetChromeosRack() != nil && rack.GetChromeBrowserRack() != nil {
+			return status.Error(codes.InvalidArgument, "UpdateRack - cannot update an os rack to browser rack. Please delete the os rack and create a new browser rack")
 		}
 
-		// 4. Make sure OUTPUT_ONLY fields are overwritten with old values
+		// Make sure OUTPUT_ONLY fields are overwritten with old values
 		// Check if the existing rack is a browser rack and not an OS rack.
 		// for OS rack we dont do anything as of now as the OS rack doesnt have any
 		// OUTPUT_ONLY fields. Switches/kvms/rpms for OS rack are in RackLSE as of now.
@@ -144,22 +102,113 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
 			rack.GetChromeBrowserRack().Switches = oldRack.GetChromeBrowserRack().GetSwitches()
 		}
 
-		// 5. Update the rack
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			rack, err = processRackUpdateMask(ctx, oldRack, rack, mask)
+			if err != nil {
+				return errors.Annotate(err, "UpdateRack - processing update mask failed").Err()
+			}
+		} else if rack.GetLocation().GetLab() != oldRack.GetLocation().GetLab() {
+			// this check is for json input with complete update rack
+			// Check if rack lab information is changed/updated
+			if err = updateIndexingForRackResources(ctx, rack.GetName(), map[string]string{"lab": rack.GetLocation().GetLab().String()}); err != nil {
+				return errors.Annotate(err, "UpdateRack - update lab indexing failed").Err()
+			}
+		}
+
+		// Update the rack
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
 		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
-			return err
+			return errors.Annotate(err, "UpdateRack - unable to batch update rack %s", rack.Name).Err()
 		}
 		return nil
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "UpdateRack - Failed to update rack in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "UpdateRack - failed to update rack %s in datastore", rack.Name).Err()
 	}
 	SaveChangeEvents(ctx, LogRackChanges(oldRack, rack))
 	return rack, err
+}
+
+// processRackUpdateMask process update field mask to get only specific update
+// fields and return a complete rack object with updated and existing fields
+func processRackUpdateMask(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb.Rack, mask *field_mask.FieldMask) (*ufspb.Rack, error) {
+	// update the fields in the existing nic
+	for _, path := range mask.Paths {
+		switch path {
+		case "lab":
+			if err := updateIndexingForRackResources(ctx, rack.GetName(), map[string]string{"lab": rack.GetLocation().GetLab().String()}); err != nil {
+				return nil, errors.Annotate(err, "processRackUpdateMask - failed to update lab indexing").Err()
+			}
+			if oldRack.GetLocation() == nil {
+				oldRack.Location = &ufspb.Location{}
+			}
+			oldRack.GetLocation().Lab = rack.GetLocation().GetLab()
+		case "capacity":
+			oldRack.CapacityRu = rack.GetCapacityRu()
+		case "tags":
+			oldTags := oldRack.GetTags()
+			newTags := rack.GetTags()
+			if newTags == nil || len(newTags) == 0 {
+				oldTags = nil
+			} else {
+				for _, tag := range newTags {
+					oldTags = append(oldTags, tag)
+				}
+			}
+			oldRack.Tags = oldTags
+		}
+	}
+	// return existing/old rack with new updated values
+	return oldRack, nil
+}
+
+// updateIndexingForRackResources updates indexing for kvm/rpm/switch tables
+// can be used inside a transaction
+func updateIndexingForRackResources(ctx context.Context, rackName string, indexMap map[string]string) error {
+	// get KVMs for indexing
+	kvms, err := registration.QueryKVMByPropertyName(ctx, "rack", rackName, false)
+	if err != nil {
+		return errors.Annotate(err, "updateIndexingForRackResources - Failed to query kvms for rack %s", rackName).Err()
+	}
+	// get RPMs for indexing
+	rpms, err := registration.QueryRPMByPropertyName(ctx, "rack", rackName, false)
+	if err != nil {
+		return errors.Annotate(err, "updateIndexingForRackResources - Failed to query rpms for rack %s", rackName).Err()
+	}
+	// get Switches for indexing
+	switches, err := registration.QuerySwitchByPropertyName(ctx, "rack", rackName, false)
+	if err != nil {
+		return errors.Annotate(err, "updateIndexingForRackResources - Failed to query switches for rack %s", rackName).Err()
+	}
+	for k, v := range indexMap {
+		// These are output only fields used for indexing kvm/rpm/switch table
+		switch k {
+		case "lab":
+			for _, kvm := range kvms {
+				kvm.Lab = v
+			}
+			for _, rpm := range rpms {
+				rpm.Lab = v
+			}
+			for _, s := range switches {
+				s.Lab = v
+			}
+		}
+	}
+	if _, err := registration.BatchUpdateKVMs(ctx, kvms); err != nil {
+		return errors.Annotate(err, "updateIndexingForRackResources - Unable to update kvms").Err()
+	}
+	if _, err := registration.BatchUpdateRPMs(ctx, rpms); err != nil {
+		return errors.Annotate(err, "updateIndexingForRackResources - Unable to update rpms").Err()
+	}
+	if _, err := registration.BatchUpdateSwitches(ctx, switches); err != nil {
+		return errors.Annotate(err, "updateIndexingForRackResources - Unable to update switches").Err()
+	}
+	return nil
 }
 
 // GetRack returns rack for the given id from datastore.
@@ -394,6 +443,41 @@ func validateCreateRack(ctx context.Context, rack *ufspb.Rack) error {
 		} else {
 			rack.Rack = &ufspb.Rack_ChromeosRack{
 				ChromeosRack: &ufspb.ChromeOSRack{},
+			}
+		}
+	}
+	return nil
+}
+
+// validateUpdateRack validates if a rack can be updated
+func validateUpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) error {
+	// check if resources does not exist
+	if err := ResourceExist(ctx, []*Resource{GetRackResource(rack.Name)}, nil); err != nil {
+		return err
+	}
+
+	return validateRackUpdateMask(rack, mask)
+}
+
+// validateRackUpdateMask validates the update mask for Rack update
+func validateRackUpdateMask(rack *ufspb.Rack, mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateUpdateRack - name cannot be updated, delete and create a new rack instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateUpdateRack - update_time cannot be updated, it is a output only field")
+			case "lab":
+				if rack.GetLocation() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateRack - location cannot be empty/nil.")
+				}
+			case "capacity":
+			case "tags":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateUpdateRack - unsupported update mask path %q", path)
 			}
 		}
 	}

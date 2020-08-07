@@ -26,10 +26,11 @@ const SwitchKind string = "Switch"
 
 // SwitchEntity is a datastore entity that tracks switch.
 type SwitchEntity struct {
-	_kind string `gae:"$kind,Switch"`
-	ID    string `gae:"$id"`
-	Lab   string `gae:"lab"`
-	Rack  string `gae:"rack"`
+	_kind string   `gae:"$kind,Switch"`
+	ID    string   `gae:"$id"`
+	Lab   string   `gae:"lab"`
+	Rack  string   `gae:"rack"`
+	Tags  []string `gae:"tags"`
 	// ufspb.Switch cannot be directly used as it contains pointer (timestamp).
 	Switch []byte `gae:",noindex"`
 }
@@ -57,6 +58,7 @@ func newSwitchEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, 
 		Switch: s,
 		Lab:    p.GetLab(),
 		Rack:   p.GetRack(),
+		Tags:   p.GetTags(),
 	}, nil
 }
 
@@ -252,8 +254,10 @@ func GetSwitchIndexedFieldName(input string) (string, error) {
 		field = "lab"
 	case util.RackFilterName:
 		field = "rack"
+	case util.TagFilterName:
+		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab/rack", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab/rack/tag", input)
 	}
 	return field, nil
 }

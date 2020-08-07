@@ -30,20 +30,34 @@ var UpdateSwitchCmd = &subcommands.Command{
 		c := &updateSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.SwitchFileText)
-		c.Flags.StringVar(&c.rackName, "r", "", "name of the rack to associate the switch")
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
+		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the switch")
+		c.Flags.StringVar(&c.switchName, "name", "", "the name of the switch to update")
+		c.Flags.StringVar(&c.description, "desc", "", "the description of the switch to update ."+cmdhelp.ClearFieldHelpText)
+		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this switch support. "+"To clear this field set it to -1.")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
 }
 
 type updateSwitch struct {
 	subcommands.CommandRunBase
-	authFlags    authcli.Flags
-	envFlags     site.EnvFlags
-	rackName     string
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
+
 	newSpecsFile string
 	interactive  bool
+
+	rackName    string
+	switchName  string
+	description string
+	capacity    int
+	tags        string
 }
 
 func (c *updateSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -64,6 +78,9 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -73,27 +90,78 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 	if c.interactive {
 		c.rackName = utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
 	} else {
-		if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
-			return err
+		if c.newSpecsFile != "" {
+			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
+				return err
+			}
+		} else {
+			c.parseArgs(&s)
 		}
 	}
 	s.Name = ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name)
 	res, err := ic.UpdateSwitch(ctx, &ufsAPI.UpdateSwitchRequest{
 		Switch: &s,
 		Rack:   c.rackName,
+		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
+			"rack":     "rack",
+			"capacity": "capacity",
+			"tags":     "tags",
+			"desc":     "description",
+		}),
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res)
-	fmt.Println()
+	fmt.Printf("Successfully updated the switch %s\n", res.Name)
 	return nil
 }
 
+func (c *updateSwitch) parseArgs(s *ufspb.Switch) {
+	s.Name = c.switchName
+	if c.description == utils.ClearFieldValue {
+		s.Description = ""
+	} else {
+		s.Description = c.description
+	}
+	if c.capacity == -1 {
+		s.CapacityPort = 0
+	} else {
+		s.CapacityPort = int32(c.capacity)
+	}
+	if c.tags == utils.ClearFieldValue {
+		s.Tags = nil
+	} else {
+		s.Tags = utils.GetStringSlice(c.tags)
+	}
+}
+
 func (c *updateSwitch) validateArgs() error {
-	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
+	if c.newSpecsFile != "" || c.interactive {
+		if c.switchName != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.capacity != 0 {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+		}
+		if c.description != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
+	}
+	if c.newSpecsFile == "" && !c.interactive {
+		if c.switchName == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+		}
+		if c.rackName == "" && c.capacity == 0 && c.description == "" && c.tags == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+		}
 	}
 	return nil
 }

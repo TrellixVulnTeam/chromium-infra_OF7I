@@ -10,6 +10,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
@@ -161,7 +162,7 @@ func TestUpdateSwitch(t *testing.T) {
 			switch1 := &ufspb.Switch{
 				Name: "switch-1",
 			}
-			resp, err := UpdateSwitch(ctx, switch1, "rack-1")
+			resp, err := UpdateSwitch(ctx, switch1, "rack-1", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1 in the system")
@@ -200,7 +201,7 @@ func TestUpdateSwitch(t *testing.T) {
 			_, err = registration.CreateSwitch(ctx, switch3)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateSwitch(ctx, switch3, "rack-4")
+			resp, err := UpdateSwitch(ctx, switch3, "rack-4", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, switch3)
@@ -251,7 +252,7 @@ func TestUpdateSwitch(t *testing.T) {
 			_, err = registration.CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateSwitch(ctx, switch1, "rack-5")
+			resp, err := UpdateSwitch(ctx, switch1, "rack-5", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, switch1)
@@ -273,7 +274,7 @@ func TestUpdateSwitch(t *testing.T) {
 			_, err := registration.CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateSwitch(ctx, switch1, "rack-6")
+			resp, err := UpdateSwitch(ctx, switch1, "rack-6", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-6 in the system.")
@@ -283,6 +284,25 @@ func TestUpdateSwitch(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
+		Convey("Partial Update switch", func() {
+			s := &ufspb.Switch{
+				Name:         "switch-7",
+				CapacityPort: 10,
+				Description:  "Hello Switch",
+			}
+			_, err := registration.CreateSwitch(ctx, s)
+			So(err, ShouldBeNil)
+
+			switch1 := &ufspb.Switch{
+				Name:         "switch-7",
+				CapacityPort: 44,
+			}
+			resp, err := UpdateSwitch(ctx, switch1, "", &field_mask.FieldMask{Paths: []string{"capacity"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetDescription(), ShouldResemble, "Hello Switch")
+			So(resp.GetCapacityPort(), ShouldEqual, 44)
+		})
 	})
 }
 

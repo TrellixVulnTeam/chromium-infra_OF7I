@@ -36,6 +36,9 @@ message Rack {
             (google.api.field_behavior) = OUTPUT_ONLY];
    // Record the ACL info of the rack
    string realm = 7;
+
+    // tags user can attach for easy querying/searching
+    repeated string tags = 8;
 }
 
 // ChromeBrowserRack refers to the rack in Chrome Browser lab

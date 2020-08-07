@@ -26,11 +26,12 @@ const KVMKind string = "KVM"
 
 // KVMEntity is a datastore entity that tracks KVM.
 type KVMEntity struct {
-	_kind            string `gae:"$kind,KVM"`
-	ID               string `gae:"$id"`
-	ChromePlatformID string `gae:"chrome_platform_id"`
-	Lab              string `gae:"lab"`
-	Rack             string `gae:"rack"`
+	_kind            string   `gae:"$kind,KVM"`
+	ID               string   `gae:"$id"`
+	ChromePlatformID string   `gae:"chrome_platform_id"`
+	Lab              string   `gae:"lab"`
+	Rack             string   `gae:"rack"`
+	Tags             []string `gae:"tags"`
 	// ufspb.KVM cannot be directly used as it contains pointer.
 	KVM []byte `gae:",noindex"`
 }
@@ -59,6 +60,7 @@ func newKVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		KVM:              kvm,
 		Lab:              p.GetLab(),
 		Rack:             p.GetRack(),
+		Tags:             p.GetTags(),
 	}, nil
 }
 
@@ -256,8 +258,10 @@ func GetKVMIndexedFieldName(input string) (string, error) {
 		field = "lab"
 	case util.RackFilterName:
 		field = "rack"
+	case util.TagFilterName:
+		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform/tag", input)
 	}
 	return field, nil
 }

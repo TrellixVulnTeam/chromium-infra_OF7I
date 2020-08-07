@@ -31,13 +31,15 @@ var AddKVMCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.KVMFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm")
 		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm to add")
-		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the name of the kvm to add")
-		c.Flags.StringVar(&c.platform, "platform", "", "the name of the kvm to add")
+		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the kvm to add")
+		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to add")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
@@ -55,6 +57,7 @@ type addKVM struct {
 	kvmName    string
 	macAddress string
 	platform   string
+	tags       string
 }
 
 func (c *addKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -114,6 +117,7 @@ func (c *addKVM) parseArgs(kvm *ufspb.KVM) {
 	kvm.Name = c.kvmName
 	kvm.ChromePlatform = c.platform
 	kvm.MacAddress = c.macAddress
+	kvm.Tags = utils.GetStringSlice(c.tags)
 }
 
 func (c *addKVM) validateArgs() error {
@@ -126,6 +130,9 @@ func (c *addKVM) validateArgs() error {
 		}
 		if c.macAddress != "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {

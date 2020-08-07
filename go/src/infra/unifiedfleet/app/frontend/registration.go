@@ -226,7 +226,7 @@ func (fs *FleetServerImpl) UpdateRack(ctx context.Context, req *ufsAPI.UpdateRac
 		return nil, err
 	}
 	req.Rack.Name = util.RemovePrefix(req.Rack.Name)
-	rack, err := controller.UpdateRack(ctx, req.Rack)
+	rack, err := controller.UpdateRack(ctx, req.Rack, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
@@ -491,35 +491,45 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *ufsAPI.UpdateKVMR
 		return nil, err
 	}
 	req.KVM.Name = util.RemovePrefix(req.KVM.Name)
-	// Before partial update is implemented, only update dhcp if network_option is specified,
-	// So that the easy mode to update kvm won't overwrite the whole kvm info in database.
-	if req.GetNetworkOption() == nil {
-		kvm, err := controller.UpdateKVM(ctx, req.KVM, req.Rack)
-		if err != nil {
-			return nil, err
+
+	if req.GetNetworkOption() != nil {
+		var kvm *ufspb.KVM
+		var err error
+		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
+			kvm, err = controller.UpdateKVM(ctx, req.KVM, req.Rack, req.UpdateMask)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			kvm, err = controller.GetKVM(ctx, req.KVM.Name)
+			if err != nil {
+				return nil, err
+			}
 		}
+
+		// If network_option.delete is enabled, ignore network_option.vlan and return directly
+		if req.GetNetworkOption().GetDelete() {
+			if err = controller.DeleteKVMHost(ctx, req.KVM.Name); err != nil {
+				return nil, err
+			}
+		}
+
+		if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
+			if err = controller.UpdateKVMHost(ctx, kvm, req.GetNetworkOption()); err != nil {
+				return nil, err
+			}
+		}
+
 		// https://aip.dev/122 - as per AIP guideline
-		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
-		return kvm, err
+		kvm.Name = util.AddPrefix(util.DracCollection, kvm.Name)
+		return kvm, nil
 	}
 
-	kvm, err := controller.GetKVM(ctx, req.KVM.Name)
+	kvm, err := controller.UpdateKVM(ctx, req.KVM, req.Rack, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
-	// If network_option.delete is enabled, ignore network_option.vlan and return directly
-	if req.GetNetworkOption().GetDelete() {
-		if err = controller.DeleteKVMHost(ctx, req.KVM.Name); err != nil {
-			return nil, err
-		}
-		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
-		return kvm, nil
-	}
-	if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
-		if err = controller.UpdateKVMHost(ctx, kvm, req.GetNetworkOption()); err != nil {
-			return nil, err
-		}
-	}
+	// https://aip.dev/122 - as per AIP guideline
 	kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
 	return kvm, err
 }
@@ -819,7 +829,7 @@ func (fs *FleetServerImpl) UpdateSwitch(ctx context.Context, req *ufsAPI.UpdateS
 		return nil, err
 	}
 	req.Switch.Name = util.RemovePrefix(req.Switch.Name)
-	s, err := controller.UpdateSwitch(ctx, req.Switch, req.Rack)
+	s, err := controller.UpdateSwitch(ctx, req.Switch, req.Rack, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

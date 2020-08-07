@@ -31,13 +31,15 @@ var AddSwitchCmd = &subcommands.Command{
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.SwitchFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the switch")
 		c.Flags.StringVar(&c.switchName, "name", "", "the name of the switch to add")
-		c.Flags.StringVar(&c.description, "description", "", "the description of the switch to add")
+		c.Flags.StringVar(&c.description, "desc", "", "the description of the switch to add")
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this switch support")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
@@ -55,6 +57,7 @@ type addSwitch struct {
 	switchName  string
 	description string
 	capacity    int
+	tags        string
 }
 
 func (c *addSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -114,6 +117,7 @@ func (c *addSwitch) parseArgs(s *ufspb.Switch) {
 	s.Name = c.switchName
 	s.Description = c.description
 	s.CapacityPort = int32(c.capacity)
+	s.Tags = utils.GetStringSlice(c.tags)
 }
 
 func (c *addSwitch) validateArgs() error {
@@ -123,6 +127,12 @@ func (c *addSwitch) validateArgs() error {
 		}
 		if c.capacity != 0 {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+		}
+		if c.description != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {

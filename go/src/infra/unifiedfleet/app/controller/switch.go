@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -80,16 +81,19 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 }
 
 // UpdateSwitch updates switch in datastore.
-func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb.Switch, error) {
+func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *field_mask.FieldMask) (*ufspb.Switch, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
 	changes := make([]*ufspb.ChangeEvent, 0)
 	f := func(ctx context.Context) error {
 		// 1. Validate the input
-		if err := validateUpdateSwitch(ctx, s, rackName); err != nil {
-			return err
+		if err := validateUpdateSwitch(ctx, s, rackName, mask); err != nil {
+			return errors.Annotate(err, "UpdateSwitch - validation failed").Err()
 		}
 
-		oldS, _ := registration.GetSwitch(ctx, s.GetName())
+		oldS, err := registration.GetSwitch(ctx, s.GetName())
+		if err != nil {
+			return errors.Annotate(err, "UpdateSwitch - get switch %s failed", s.GetName()).Err()
+		}
 		// Fill the rack/lab to switch OUTPUT only fields
 		s.Rack = oldS.GetRack()
 		s.Lab = oldS.GetLab()
@@ -98,7 +102,7 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 			// 2. Get the old rack associated with switch
 			oldRack, err := getRackForSwitch(ctx, s.Name)
 			if err != nil {
-				return err
+				return errors.Annotate(err, "UpdateSwitch - query rack for switch %s failed", s.GetName()).Err()
 			}
 
 			// User is trying to associate this switch with a different rack.
@@ -106,7 +110,7 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 				// 3. Get rack to associate the switch
 				rack, err := GetRack(ctx, rackName)
 				if err != nil {
-					return err
+					return errors.Annotate(err, "UpdateSwitch - get rack %s failed", rackName).Err()
 				}
 
 				// Fill the rack/lab to switch OUTPUT only fields for indexing
@@ -117,33 +121,70 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 				if cs, err := removeSwitchFromRacks(ctx, []*ufspb.Rack{oldRack}, s.Name); err == nil {
 					changes = append(changes, cs...)
 				} else {
-					return err
+					return errors.Annotate(err, "UpdateSwitch - remove switch %s from rack %s failed", s.Name, oldRack.GetName()).Err()
 				}
 
 				// 5. Update the rack with new switch information
 				if cs, err := addSwitchToRack(ctx, rack, s.Name); err == nil {
 					changes = append(changes, cs...)
 				} else {
-					return err
+					return errors.Annotate(err, "UpdateSwitch - add switch %s to rack %s failed", s.Name, rack.GetName()).Err()
 				}
 			}
+		}
+
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			s = processSwitchUpdateMask(oldS, s, mask)
 		}
 
 		// 6. Update switch entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err := registration.BatchUpdateSwitches(ctx, []*ufspb.Switch{s}); err != nil {
-			return errors.Annotate(err, "Unable to update switch %s", s.Name).Err()
+			return errors.Annotate(err, "UpdateSwitch - unable to batch update switch %s", s.Name).Err()
 		}
 		return nil
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to update switch in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "UpdateSwitch - failed to update switch %s in datastore", s.Name).Err()
 	}
 	SaveChangeEvents(ctx, changes)
 	return s, nil
+}
+
+// processSwitchUpdateMask process update field mask to get only specific update
+// fields and return a complete switch object with updated and existing fields
+func processSwitchUpdateMask(oldSwitch *ufspb.Switch, s *ufspb.Switch, mask *field_mask.FieldMask) *ufspb.Switch {
+	// update the fields in the existing/old switch
+	for _, path := range mask.Paths {
+		switch path {
+		case "rack":
+			// In the previous step we have already checked for rackName != ""
+			// and got the new values for OUTPUT only fields in new switch object,
+			// assign them to oldswitch.
+			oldSwitch.Rack = s.GetRack()
+			oldSwitch.Lab = s.GetLab()
+		case "description":
+			oldSwitch.Description = s.GetDescription()
+		case "capacity":
+			oldSwitch.CapacityPort = s.GetCapacityPort()
+		case "tags":
+			oldTags := oldSwitch.GetTags()
+			newTags := s.GetTags()
+			if newTags == nil || len(newTags) == 0 {
+				oldTags = nil
+			} else {
+				for _, tag := range newTags {
+					oldTags = append(oldTags, tag)
+				}
+			}
+			oldSwitch.Tags = oldTags
+		}
+	}
+	// return existing/old switch with new updated values
+	return oldSwitch
 }
 
 // GetSwitch returns switch for the given id from datastore.
@@ -292,15 +333,42 @@ func validateCreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string)
 // validateUpdateSwitch validates if a switch can be updated
 //
 // check if switch and rack does not exist
-func validateUpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) error {
+func validateUpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if switch does not exist
 	resourcesNotFound := []*Resource{GetSwitchResource(s.Name)}
 	// Aggregate resource to check if rack does not exist
 	if rackName != "" {
 		resourcesNotFound = append(resourcesNotFound, GetRackResource(rackName))
 	}
-	// Check if resources does not exist
-	return ResourceExist(ctx, resourcesNotFound, nil)
+	// check if resources does not exist
+	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
+		return err
+	}
+
+	return validateSwitchUpdateMask(mask)
+}
+
+// validateSwitchUpdateMask validates the update mask for switch update
+func validateSwitchUpdateMask(mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateUpdateSwitch - name cannot be updated, delete and create a new switch instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateUpdateSwitch - update_time cannot be updated, it is a Output only field")
+			case "rack":
+			case "capacity":
+			case "description":
+			case "tags":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateUpdateSwitch - unsupported update mask path %q", path)
+			}
+		}
+	}
+	return nil
 }
 
 // addSwitchToRack adds the switch info to the rack and updates

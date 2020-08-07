@@ -30,11 +30,16 @@ var UpdateKVMCmd = &subcommands.Command{
 		c := &updateKVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.KVMFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
-		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm")
-		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm")
+		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm.")
+		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm to update")
+		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the kvm to update")
+		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to update. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the kvm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the kvm")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the kvm to")
@@ -44,8 +49,9 @@ var UpdateKVMCmd = &subcommands.Command{
 
 type updateKVM struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 
 	newSpecsFile string
 	interactive  bool
@@ -55,6 +61,9 @@ type updateKVM struct {
 	kvmName    string
 	deleteVlan bool
 	ip         string
+	macAddress string
+	platform   string
+	tags       string
 }
 
 func (c *updateKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -75,6 +84,9 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -101,6 +113,12 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 			Delete: c.deleteVlan,
 			Ip:     c.ip,
 		},
+		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
+			"rack":        "rack",
+			"platform":    "platform",
+			"mac-address": "macAddress",
+			"tags":        "tags",
+		}),
 	})
 	if err != nil {
 		return err
@@ -124,6 +142,17 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 
 func (c *updateKVM) parseArgs(kvm *ufspb.KVM) {
 	kvm.Name = c.kvmName
+	kvm.MacAddress = c.macAddress
+	if c.platform == utils.ClearFieldValue {
+		kvm.ChromePlatform = ""
+	} else {
+		kvm.ChromePlatform = c.platform
+	}
+	if c.tags == utils.ClearFieldValue {
+		kvm.Tags = nil
+	} else {
+		kvm.Tags = utils.GetStringSlice(c.tags)
+	}
 }
 
 func (c *updateKVM) validateArgs() error {
@@ -134,8 +163,10 @@ func (c *updateKVM) validateArgs() error {
 		if c.kvmName == "" {
 			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.ip == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan', '-ip'] is required.")
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
+			c.rackName == "" && c.platform == "" &&
+			c.macAddress == "" && c.tags == "" {
+			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}
 	return nil

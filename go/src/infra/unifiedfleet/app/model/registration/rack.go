@@ -32,6 +32,7 @@ type RackEntity struct {
 	KVMIDs    []string `gae:"kvm_ids"`
 	RPMIDs    []string `gae:"rpm_ids"`
 	Lab       string   `gae:"lab"`
+	Tags      []string `gae:"tags"`
 	// ufspb.Rack cannot be directly used as it contains pointer.
 	Rack []byte `gae:",noindex"`
 }
@@ -60,6 +61,7 @@ func newRackEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		KVMIDs:    p.GetChromeBrowserRack().GetKvms(),
 		RPMIDs:    p.GetChromeBrowserRack().GetRpms(),
 		Lab:       p.GetLocation().GetLab().String(),
+		Tags:      p.GetTags(),
 		Rack:      rack,
 	}, nil
 }
@@ -247,8 +249,10 @@ func GetRackIndexedFieldName(input string) (string, error) {
 		field = "kvm_ids"
 	case util.LabFilterName:
 		field = "lab"
+	case util.TagFilterName:
+		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are switch/kvm/rpm/lab", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are switch/kvm/rpm/lab/tag", input)
 	}
 	return field, nil
 }

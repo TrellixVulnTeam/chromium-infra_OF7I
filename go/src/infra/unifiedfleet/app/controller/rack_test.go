@@ -10,6 +10,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	. "infra/unifiedfleet/app/model/datastore"
@@ -102,7 +103,7 @@ func TestUpdateRack(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-1",
 			}
-			_, err := UpdateRack(ctx, rack)
+			_, err := UpdateRack(ctx, rack, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-1 in the system.")
 		})
@@ -131,7 +132,7 @@ func TestUpdateRack(t *testing.T) {
 					},
 				},
 			}
-			resp, err := UpdateRack(ctx, rack)
+			resp, err := UpdateRack(ctx, rack, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, rack)
@@ -157,12 +158,32 @@ func TestUpdateRack(t *testing.T) {
 			rack = &ufspb.Rack{
 				Name: "rack-3",
 			}
-			resp, err := UpdateRack(ctx, rack)
+			resp, err := UpdateRack(ctx, rack, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"kvm-3"})
 			So(resp.GetChromeBrowserRack().GetRpms(), ShouldResemble, []string{"rpm-3"})
 			So(resp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-3"})
+		})
+
+		Convey("Partial Update rack", func() {
+			rack := &ufspb.Rack{
+				Name:       "rack-4",
+				CapacityRu: 55,
+				Tags:       []string{"atl", "megarack"},
+			}
+			_, err := registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			rack1 := &ufspb.Rack{
+				Name:       "rack-4",
+				CapacityRu: 100,
+			}
+			resp, err := UpdateRack(ctx, rack1, &field_mask.FieldMask{Paths: []string{"capacity"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetCapacityRu(), ShouldEqual, 100)
+			So(resp.GetTags(), ShouldResemble, []string{"atl", "megarack"})
 		})
 	})
 }

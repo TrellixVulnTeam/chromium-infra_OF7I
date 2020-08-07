@@ -10,6 +10,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
@@ -155,7 +156,7 @@ func TestUpdateKVM(t *testing.T) {
 			kvm1 := &ufspb.KVM{
 				Name: "kvm-1",
 			}
-			resp, err := UpdateKVM(ctx, kvm1, "rack-1")
+			resp, err := UpdateKVM(ctx, kvm1, "rack-1", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no KVM with KVMID kvm-1 in the system")
@@ -194,7 +195,7 @@ func TestUpdateKVM(t *testing.T) {
 			_, err = registration.CreateKVM(ctx, kvm3)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateKVM(ctx, kvm3, "rack-4")
+			resp, err := UpdateKVM(ctx, kvm3, "rack-4", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, kvm3)
@@ -245,7 +246,7 @@ func TestUpdateKVM(t *testing.T) {
 			_, err = registration.CreateKVM(ctx, kvm1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateKVM(ctx, kvm1, "rack-5")
+			resp, err := UpdateKVM(ctx, kvm1, "rack-5", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, kvm1)
@@ -267,7 +268,7 @@ func TestUpdateKVM(t *testing.T) {
 			_, err := registration.CreateKVM(ctx, kvm1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateKVM(ctx, kvm1, "rack-6")
+			resp, err := UpdateKVM(ctx, kvm1, "rack-6", nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-6 in the system.")
@@ -275,6 +276,85 @@ func TestUpdateKVM(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-6")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Partial Update kvm", func() {
+			kvm := &ufspb.KVM{
+				Name:           "kvm-7",
+				ChromePlatform: "chromePlatform-7",
+				Tags:           []string{"testkvm"},
+			}
+			_, err := registration.CreateKVM(ctx, kvm)
+			So(err, ShouldBeNil)
+
+			chromePlatform := &ufspb.ChromePlatform{
+				Name: "chromePlatform-8",
+			}
+			_, err = configuration.CreateChromePlatform(ctx, chromePlatform)
+			So(err, ShouldBeNil)
+
+			kvm1 := &ufspb.KVM{
+				Name:           "kvm-7",
+				MacAddress:     "efgh",
+				ChromePlatform: "chromePlatform-8",
+			}
+			resp, err := UpdateKVM(ctx, kvm1, "", &field_mask.FieldMask{Paths: []string{"platform", "macAddress"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetChromePlatform(), ShouldResemble, "chromePlatform-8")
+			So(resp.GetMacAddress(), ShouldResemble, "efgh")
+			So(resp.GetTags(), ShouldResemble, []string{"testkvm"})
+		})
+
+		Convey("Partial Update kvm mac address - error", func() {
+			kvm := &ufspb.KVM{
+				Name:           "kvm-8",
+				MacAddress:     "abcd",
+				ChromePlatform: "chromePlatform-8",
+			}
+			_, err := registration.CreateKVM(ctx, kvm)
+			So(err, ShouldBeNil)
+
+			kvm1 := &ufspb.KVM{
+				Name:       "kvm-8",
+				MacAddress: "efgh",
+			}
+			_, err = UpdateKVM(ctx, kvm1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "This kvm's mac address is already set.")
+		})
+
+		Convey("Update kvm mac address - error", func() {
+			kvm := &ufspb.KVM{
+				Name:       "kvm-9",
+				MacAddress: "abcd",
+			}
+			_, err := registration.CreateKVM(ctx, kvm)
+			So(err, ShouldBeNil)
+
+			kvm1 := &ufspb.KVM{
+				Name:       "kvm-9",
+				MacAddress: "efgh",
+			}
+			_, err = UpdateKVM(ctx, kvm1, "", nil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "This kvm's mac address is already set.")
+		})
+
+		Convey("Update kvm mac address - happy path", func() {
+			kvm := &ufspb.KVM{
+				Name: "kvm-10",
+			}
+			_, err := registration.CreateKVM(ctx, kvm)
+			So(err, ShouldBeNil)
+
+			kvm1 := &ufspb.KVM{
+				Name:       "kvm-10",
+				MacAddress: "efgh",
+			}
+			res, _ := UpdateKVM(ctx, kvm1, "", nil)
+			So(res, ShouldNotBeNil)
+			So(res, ShouldResembleProto, kvm1)
 		})
 
 	})

@@ -40,7 +40,10 @@ shivas update-switch -f drac.json -r {Rack name}
 Update a switch by reading a JSON file input and associate the switch with a different rack.
 
 shivas update-switch -i
-Update a switch by reading input through interactive mode.`
+Update a switch by reading input through interactive mode.
+
+shivas update-switch -rack {Rack name} -name {switch name} -capacity {50} -description {description}
+Partial updates a switch by parameters. Only specified parameters will be udpated in the switch.`
 
 	// ListSwitchLongDesc long description for ListSwitchCmd
 	ListSwitchLongDesc string = `List all switches
@@ -829,7 +832,10 @@ shivas update-kvm -f kvm.json -r {Rack name}
 Update a kvm by reading a JSON file input and associate the kvm with a different rack.
 
 shivas update-kvm -i
-Update a kvm by reading input through interactive mode.`
+Update a kvm by reading input through interactive mode.
+
+shivas update-kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
+Partial updates a kvm by parameters. Only specified parameters will be udpated in the kvm.`
 
 	// KVMFileText description for kvm file input
 	KVMFileText string = `[JSON Mode] Path to a file containing kvm specification in JSON format.
@@ -867,7 +873,10 @@ shivas update-rack -f rack.json
 Update a rack by reading a JSON file input.
 
 shivas update-rack -i
-Update a rack by reading input through interactive mode.`
+Update a rack by reading input through interactive mode.
+
+shivas update-rack -name rack-123 -lab lab01 -capacity 10
+Partial updates a rack by parameters. Only specified parameters will be udpated in the rack.`
 
 	// ListRackLongDesc long description for ListRackCmd
 	ListRackLongDesc string = `List all Racks
