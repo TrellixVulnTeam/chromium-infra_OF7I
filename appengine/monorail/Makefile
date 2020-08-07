@@ -88,23 +88,26 @@ test_coverage:
 	../../test.py test appengine/monorail --html-report ~/monorail-test-coverage --coveragerc appengine/monorail/.testcoveragerc
 
 # Commands for running locally using dev_appserver.
+# devserver requires an application ID (-A) to be specified.
+# We are using `-A monorail-staging` because ml spam code is set up
+# to impersonate monorail-staging in the local environment.
 serve: config_local
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
+	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
 
 serve_email: config_local
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
+	$(GAE_PY) devserver -A monorail-staging -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
 
 # The _remote commands expose the app on 0.0.0.0, so that it is externally
 # accessible by hostname:port, rather than just localhost:port.
 serve_remote: config_local
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -o -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
+	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS)& $(WEBPACK_PATH) --watch
 
 serve_remote_email: config_local
 	@echo "---[Starting SDK AppEngine Server]---"
-	$(GAE_PY) devserver -o -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
+	$(GAE_PY) devserver -A monorail-staging -o -- $(DEV_APPSERVER_FLAGS) --enable_sendmail=True& $(WEBPACK_PATH) --watch
 
 run: serve
 
@@ -138,25 +141,23 @@ pylint:
 py3lint:
 	pylint --py3k *py {$(PY_DIRS)}{/,/test/}*py
 
-config: config_prod_cloud config_non_prod
+config: config_prod_cloud config_dev_cloud
 
+# Service yaml files used by gae.py are expected to be named module-<service-name>.yaml
 config_prod:
 	m4 -DPROD < app.yaml.m4 > app.yaml
 	m4 -DPROD < module-besearch.yaml.m4 > module-besearch.yaml
 	m4 -DPROD < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
 	m4 -DPROD < module-api.yaml.m4 > module-api.yaml
 
+# Generate yaml files used by spinnaker. Spinnaker uses *.prod.yaml to differentiate
+# the yaml files for monorail-prod/monorail-staging and the *.yaml files for deploying
+# monorail-dev.
 config_prod_cloud:
-	m4 -DPROD < app-cloud.yaml.m4 > app.prod.yaml
-	m4 -DPROD < module-besearch-cloud.yaml.m4 > besearch.prod.yaml
-	m4 -DPROD < module-latency-insensitive-cloud.yaml.m4 > latency-insensitive.prod.yaml
-	m4 -DPROD < module-api-cloud.yaml.m4 > api.prod.yaml
-
-config_non_prod:
-	m4 < app-cloud.yaml.m4 > app.yaml
-	m4 < module-besearch-cloud.yaml.m4 > besearch.yaml
-	m4 < module-latency-insensitive-cloud.yaml.m4 > latency-insensitive.yaml
-	m4 < module-api-cloud.yaml.m4 > api.yaml
+	m4 -DPROD < app.yaml.m4 > app.prod.yaml
+	m4 -DPROD < module-besearch.yaml.m4 > besearch.prod.yaml
+	m4 -DPROD < module-latency-insensitive.yaml.m4 > latency-insensitive.prod.yaml
+	m4 -DPROD < module-api.yaml.m4 > api.prod.yaml
 
 config_staging:
 	m4 -DSTAGING < app.yaml.m4 > app.yaml
@@ -169,6 +170,12 @@ config_dev:
 	m4 -DDEV < module-besearch.yaml.m4 > module-besearch.yaml
 	m4 -DDEV < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
 	m4 -DDEV < module-api.yaml.m4 > module-api.yaml
+
+config_dev_cloud:
+	m4 -DDEV < app.yaml.m4 > app.yaml
+	m4 -DDEV < module-besearch.yaml.m4 > besearch.yaml
+	m4 -DDEV < module-latency-insensitive.yaml.m4 > latency-insensitive.yaml
+	m4 -DDEV < module-api.yaml.m4 > api.yaml
 
 config_local:
 	m4 app.yaml.m4 > app.yaml

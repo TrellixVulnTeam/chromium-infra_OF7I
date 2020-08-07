@@ -1,11 +1,11 @@
 # Copyright 2018 The Chromium Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style
+# Use of this source code is govered by a BSD-style
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-application: monorail-staging
+define(`_VERSION', `syscmd(`echo $_VERSION')')
+
 service: latency-insensitive
-version: 2018-05-31
 runtime: python27
 api_version: 1
 threadsafe: no
@@ -26,7 +26,7 @@ automatic_scaling:
   max_pending_latency: 0.2s
 ')
 
-ifdef(`DEMO', `
+ifdef(`DEV', `
 instance_class: F4
 ')
 
@@ -72,6 +72,9 @@ libraries:
 
 includes:
 - gae_ts_mon
+
+env_variables:
+  VERSION_ID: '_VERSION'
 
 skip_files:
 - ^(.*/)?#.*#$

@@ -4,10 +4,11 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 service: api
-version: 2019-10-22
 runtime: python27
 api_version: 1
 threadsafe: no
+
+define(`_VERSION', `syscmd(`echo $_VERSION')')
 
 ifdef(`PROD', `
 instance_class: F4
@@ -23,7 +24,7 @@ automatic_scaling:
   max_pending_latency: 0.2s
 ')
 
-ifdef(`DEMO', `
+ifdef(`DEV', `
 instance_class: F4
 ')
 
@@ -55,6 +56,9 @@ libraries:
 
 includes:
 - gae_ts_mon
+
+env_variables:
+  VERSION_ID: '_VERSION'
 
 skip_files:
 - ^(.*/)?#.*#$
