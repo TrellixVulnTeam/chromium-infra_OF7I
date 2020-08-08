@@ -194,16 +194,7 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 			}
 			oldMachine.GetChromeBrowserMachine().DeploymentTicket = machine.GetChromeBrowserMachine().GetDeploymentTicket()
 		case "tags":
-			oldTags := oldMachine.GetTags()
-			newTags := machine.GetTags()
-			if newTags == nil || len(newTags) == 0 {
-				oldTags = nil
-			} else {
-				for _, tag := range newTags {
-					oldTags = append(oldTags, tag)
-				}
-			}
-			oldMachine.Tags = oldTags
+			oldMachine.Tags = mergeTags(oldMachine.GetTags(), machine.GetTags())
 		}
 	}
 	// return existing/old machine with new updated values

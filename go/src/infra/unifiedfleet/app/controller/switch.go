@@ -157,16 +157,7 @@ func processSwitchUpdateMask(oldSwitch *ufspb.Switch, s *ufspb.Switch, mask *fie
 		case "capacity":
 			oldSwitch.CapacityPort = s.GetCapacityPort()
 		case "tags":
-			oldTags := oldSwitch.GetTags()
-			newTags := s.GetTags()
-			if newTags == nil || len(newTags) == 0 {
-				oldTags = nil
-			} else {
-				for _, tag := range newTags {
-					oldTags = append(oldTags, tag)
-				}
-			}
-			oldSwitch.Tags = oldTags
+			oldSwitch.Tags = mergeTags(oldSwitch.GetTags(), s.GetTags())
 		}
 	}
 	// return existing/old switch with new updated values

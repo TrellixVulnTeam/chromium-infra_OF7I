@@ -97,16 +97,7 @@ func processChromePlatformUpdateMask(oldPlatform *ufspb.ChromePlatform, platform
 		case "description":
 			oldPlatform.Description = platform.GetDescription()
 		case "tags":
-			oldTags := oldPlatform.GetTags()
-			newTags := platform.GetTags()
-			if newTags == nil || len(newTags) == 0 {
-				oldTags = nil
-			} else {
-				for _, tag := range newTags {
-					oldTags = append(oldTags, tag)
-				}
-			}
-			oldPlatform.Tags = oldTags
+			oldPlatform.Tags = mergeTags(oldPlatform.GetTags(), platform.GetTags())
 		}
 	}
 	// return existing/old platform with new updated values

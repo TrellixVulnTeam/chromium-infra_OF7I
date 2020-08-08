@@ -303,3 +303,16 @@ func getFilterMap(filter string, f getFieldFunc) (map[string][]interface{}, erro
 	}
 	return filterMap, nil
 }
+
+func mergeTags(oldTags, newTags []string) []string {
+	// Clean up all tags if new input tags are empty
+	if newTags == nil || len(newTags) == 0 {
+		return nil
+	}
+	for _, tag := range newTags {
+		if tag != "" {
+			oldTags = append(oldTags, tag)
+		}
+	}
+	return oldTags
+}

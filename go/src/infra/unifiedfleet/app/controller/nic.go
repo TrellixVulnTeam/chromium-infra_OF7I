@@ -193,16 +193,7 @@ func processNicUpdateMask(oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.Fi
 				oldNic.GetSwitchInterface().Port = nic.GetSwitchInterface().GetPort()
 			}
 		case "tags":
-			oldTags := oldNic.GetTags()
-			newTags := nic.GetTags()
-			if newTags == nil || len(newTags) == 0 {
-				oldTags = nil
-			} else {
-				for _, tag := range newTags {
-					oldTags = append(oldTags, tag)
-				}
-			}
-			oldNic.Tags = oldTags
+			oldNic.Tags = mergeTags(oldNic.GetTags(), nic.GetTags())
 		}
 	}
 	// return existing/old nic with new updated values

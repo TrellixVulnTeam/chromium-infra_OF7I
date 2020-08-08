@@ -154,16 +154,7 @@ func processRackUpdateMask(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb
 		case "capacity":
 			oldRack.CapacityRu = rack.GetCapacityRu()
 		case "tags":
-			oldTags := oldRack.GetTags()
-			newTags := rack.GetTags()
-			if newTags == nil || len(newTags) == 0 {
-				oldTags = nil
-			} else {
-				for _, tag := range newTags {
-					oldTags = append(oldTags, tag)
-				}
-			}
-			oldRack.Tags = oldTags
+			oldRack.Tags = mergeTags(oldRack.GetTags(), rack.GetTags())
 		}
 	}
 	// return existing/old rack with new updated values

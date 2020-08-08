@@ -175,16 +175,7 @@ func processKVMUpdateMask(oldKVM *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.Fi
 			}
 			oldKVM.MacAddress = kvm.GetMacAddress()
 		case "tags":
-			oldTags := oldKVM.GetTags()
-			newTags := kvm.GetTags()
-			if newTags == nil || len(newTags) == 0 {
-				oldTags = nil
-			} else {
-				for _, tag := range newTags {
-					oldTags = append(oldTags, tag)
-				}
-			}
-			oldKVM.Tags = oldTags
+			oldKVM.Tags = mergeTags(oldKVM.GetTags(), kvm.GetTags())
 		}
 	}
 	// return existing/old kvm with new updated values

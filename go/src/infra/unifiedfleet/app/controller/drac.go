@@ -211,16 +211,7 @@ func processDracUpdateMask(oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_ma
 				oldDrac.GetSwitchInterface().Port = drac.GetSwitchInterface().GetPort()
 			}
 		case "tags":
-			oldTags := oldDrac.GetTags()
-			newTags := drac.GetTags()
-			if newTags == nil || len(newTags) == 0 {
-				oldTags = nil
-			} else {
-				for _, tag := range newTags {
-					oldTags = append(oldTags, tag)
-				}
-			}
-			oldDrac.Tags = oldTags
+			oldDrac.Tags = mergeTags(oldDrac.GetTags(), drac.GetTags())
 		}
 	}
 	// return existing/old drac with new updated values
