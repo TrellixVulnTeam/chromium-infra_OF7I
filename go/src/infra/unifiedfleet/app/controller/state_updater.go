@@ -8,6 +8,7 @@ import (
 	"context"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
@@ -15,6 +16,14 @@ import (
 type stateUpdater struct {
 	ResourceName string
 	Changes      []*ufspb.ChangeEvent
+	Msgs         []*history.SnapshotMsgEntity
+}
+
+func (su *stateUpdater) logChanges(changes []*ufspb.ChangeEvent, msg *history.SnapshotMsgEntity) {
+	su.Changes = append(su.Changes, changes...)
+	if msg != nil {
+		su.Msgs = append(su.Msgs, msg)
+	}
 }
 
 // Delete a state record
@@ -23,7 +32,7 @@ type stateUpdater struct {
 func (su *stateUpdater) deleteStateHelper(ctx context.Context) error {
 	old, _ := state.GetStateRecord(ctx, su.ResourceName)
 	state.DeleteStates(ctx, []string{su.ResourceName})
-	su.Changes = append(su.Changes, LogStateChanges(old, nil)...)
+	su.logChanges(LogStateChanges(old, nil))
 	return nil
 }
 
@@ -38,7 +47,7 @@ func (su *stateUpdater) updateStateHelper(ctx context.Context, newS ufspb.State)
 	if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{newRecord}); err != nil {
 		return err
 	}
-	su.Changes = append(su.Changes, LogStateChanges(old, newRecord)...)
+	su.logChanges(LogStateChanges(old, newRecord))
 	return nil
 }
 
@@ -53,8 +62,8 @@ func (su *stateUpdater) replaceStateHelper(ctx context.Context, oldR string) err
 	if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{newRecord}); err != nil {
 		return err
 	}
-	su.Changes = append(su.Changes, LogStateChanges(old, nil)...)
-	su.Changes = append(su.Changes, LogStateChanges(nil, newRecord)...)
+	su.logChanges(LogStateChanges(old, nil))
+	su.logChanges(LogStateChanges(nil, newRecord))
 	return nil
 }
 
@@ -68,7 +77,7 @@ func (su *stateUpdater) addLseStateHelper(ctx context.Context, lse *ufspb.Machin
 		}
 		oldS, _ := state.GetStateRecord(ctx, s.GetResourceName())
 		stateRecords = append(stateRecords, s)
-		su.Changes = append(su.Changes, LogStateChanges(oldS, s)...)
+		su.logChanges(LogStateChanges(oldS, s))
 	}
 	for _, vm := range lse.GetChromeBrowserMachineLse().GetVms() {
 		s := &ufspb.StateRecord{
@@ -78,7 +87,7 @@ func (su *stateUpdater) addLseStateHelper(ctx context.Context, lse *ufspb.Machin
 		}
 		oldS, _ := state.GetStateRecord(ctx, s.GetResourceName())
 		stateRecords = append(stateRecords, s)
-		su.Changes = append(su.Changes, LogStateChanges(oldS, s)...)
+		su.logChanges(LogStateChanges(oldS, s))
 	}
 	newS := &ufspb.StateRecord{
 		State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
@@ -86,7 +95,7 @@ func (su *stateUpdater) addLseStateHelper(ctx context.Context, lse *ufspb.Machin
 		User:         util.CurrentUser(ctx),
 	}
 	stateRecords = append(stateRecords, newS)
-	su.Changes = append(su.Changes, LogStateChanges(nil, newS)...)
+	su.logChanges(LogStateChanges(nil, newS))
 	if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
 		return err
 	}
@@ -105,7 +114,7 @@ func (su *stateUpdater) deleteLseStateHelper(ctx context.Context, lse *ufspb.Mac
 		}
 		oldS, _ := state.GetStateRecord(ctx, s.GetResourceName())
 		stateRecords = append(stateRecords, s)
-		su.Changes = append(su.Changes, LogStateChanges(oldS, s)...)
+		su.logChanges(LogStateChanges(oldS, s))
 	}
 	if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
 		return err
@@ -117,11 +126,11 @@ func (su *stateUpdater) deleteLseStateHelper(ctx context.Context, lse *ufspb.Mac
 		r := util.AddPrefix(util.VMCollection, m.GetName())
 		toDeleteResources = append(toDeleteResources, r)
 		oldS, _ := state.GetStateRecord(ctx, r)
-		su.Changes = append(su.Changes, LogStateChanges(oldS, nil)...)
+		su.logChanges(LogStateChanges(oldS, nil))
 	}
 	toDeleteResources = append(toDeleteResources, su.ResourceName)
 	oldS, _ := state.GetStateRecord(ctx, su.ResourceName)
-	su.Changes = append(su.Changes, LogStateChanges(oldS, nil)...)
+	su.logChanges(LogStateChanges(oldS, nil))
 	state.DeleteStates(ctx, toDeleteResources)
 	return nil
 }

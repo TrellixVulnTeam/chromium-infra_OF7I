@@ -141,6 +141,9 @@ func TestCreateMachine(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 	})
 }
@@ -333,6 +336,10 @@ func TestDeleteMachine(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
 		})
 	})
 }
@@ -373,13 +380,20 @@ func TestReplaceMachine(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
-
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-100")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-100")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Repalce an old Machine with already existing machine", func() {

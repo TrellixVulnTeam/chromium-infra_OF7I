@@ -51,6 +51,10 @@ func TestCreateRack(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Create new rack with nil browser/chromeos rack", func() {
@@ -139,6 +143,10 @@ func TestUpdateRack(t *testing.T) {
 			So(resp.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"kvm-2"})
 			So(resp.GetChromeBrowserRack().GetRpms(), ShouldResemble, []string{"rpm-2"})
 			So(resp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-2"})
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Update existing rack with nil rack/browser machine", func() {
@@ -242,6 +250,10 @@ func TestDeleteRack(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-4")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
 		})
 
 		Convey("Delete rack with switches, kvms and rpms - happy path", func() {

@@ -17,6 +17,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
+	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
@@ -24,6 +25,14 @@ import (
 type networkUpdater struct {
 	Hostname string
 	Changes  []*ufspb.ChangeEvent
+	Msgs     []*history.SnapshotMsgEntity
+}
+
+func (nu *networkUpdater) logChanges(changes []*ufspb.ChangeEvent, msg *history.SnapshotMsgEntity) {
+	nu.Changes = append(nu.Changes, changes...)
+	if msg != nil {
+		nu.Msgs = append(nu.Msgs, msg)
+	}
 }
 
 // deleteDHCPHelper deletes ip configs for a given hostname
@@ -51,7 +60,7 @@ func (nu *networkUpdater) deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCP
 	if err := configuration.DeleteDHCP(ctx, dhcp.GetHostname()); err != nil {
 		return errors.Annotate(err, fmt.Sprintf("Fail to delete dhcp: hostname %q, ip %q", dhcp.GetHostname(), dhcp.GetIp())).Err()
 	}
-	nu.Changes = append(nu.Changes, LogDHCPChanges(dhcp, nil)...)
+	nu.logChanges(LogDHCPChanges(dhcp, nil))
 	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
 	if err != nil {
 		return errors.Annotate(err, fmt.Sprintf("Fail to query ip by ipv4 str: %q", dhcp.GetIp())).Err()
@@ -132,7 +141,7 @@ func (nu *networkUpdater) addHostHelper(ctx context.Context, vlanName, ipv4Str, 
 	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp}); err != nil {
 		return nil, errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", nu.Hostname, macAddress).Err()
 	}
-	nu.Changes = append(nu.Changes, LogDHCPChanges(oldDhcp, dhcp)...)
+	nu.logChanges(LogDHCPChanges(oldDhcp, dhcp))
 	return dhcp, nil
 }
 

@@ -96,6 +96,18 @@ func TestCreateDrac(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "drac-5")
 			So(changes[0].GetNewValue(), ShouldEqual, "drac-20")
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.drac")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dracs/drac-5")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dracs/drac-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Create new drac with existing machine without drac", func() {
@@ -333,6 +345,12 @@ func TestUpdateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 			// No changes in machine.drac
 			So(changes, ShouldHaveLength, 0)
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dracs/drac-5")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-5")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 0)
 		})
 
 		Convey("Update drac with non existing machine", func() {
@@ -560,6 +578,14 @@ func TestDeleteDrac(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dracs/drac-ip")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/drac-ip")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
 		})
 	})
 }

@@ -201,7 +201,9 @@ func GetDHCPIndexedFieldName(input string) (string, error) {
 // This can be used inside a transaction
 func BatchUpdateDHCPs(ctx context.Context, dhcps []*ufspb.DHCPConfig) ([]*ufspb.DHCPConfig, error) {
 	protos := make([]proto.Message, len(dhcps))
+	utime := ptypes.TimestampNow()
 	for i, dhcp := range dhcps {
+		dhcp.UpdateTime = utime
 		protos[i] = dhcp
 	}
 	_, err := ufsds.PutAll(ctx, protos, newDHCPEntity, true)

@@ -85,6 +85,14 @@ func TestCreateNic(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[nic-5]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[nic-5 nic-20]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Create new nic with existing machine without nics", func() {
@@ -120,6 +128,12 @@ func TestCreateNic(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[nic-25]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-25")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-15")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 
 		Convey("Create new nic with non existing switch", func() {
@@ -137,6 +151,9 @@ func TestCreateNic(t *testing.T) {
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 0)
 		})
 
 		Convey("Create new nic with existing switch", func() {
@@ -276,6 +293,15 @@ func TestUpdateNic(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[nic-4]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[nic-4 nic-3]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-4")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 
 		Convey("Update nic with same machine", func() {
@@ -316,6 +342,12 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 			// No changes in machine.nics
 			So(changes, ShouldHaveLength, 0)
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-5")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-5")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 0)
 		})
 
 		Convey("Update nic with non existing machine", func() {
@@ -476,6 +508,13 @@ func TestDeleteNic(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[nic-1]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-1")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 
 		Convey("Delete nic successfully by existing ID without references", func() {
@@ -497,6 +536,10 @@ func TestDeleteNic(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
 		})
 
 		Convey("Delete nic error as it's used by a host", func() {

@@ -105,6 +105,14 @@ func TestCreateSwitch(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[switch-5]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[switch-5 switch-20]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Create new switch with existing rack without switches", func() {
@@ -233,6 +241,18 @@ func TestUpdateSwitch(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[switch-3]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-4")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
 		Convey("Update switch with same rack", func() {
@@ -266,6 +286,13 @@ func TestUpdateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Nothing is changed for rack-5
 			So(changes, ShouldHaveLength, 0)
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-5")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-5")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 0)
 		})
 
 		Convey("Update switch with non existing rack", func() {
@@ -411,6 +438,14 @@ func TestDeleteSwitch(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, "[switch-2]")
 			So(changes[0].GetNewValue(), ShouldEqual, "[]")
 			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-6")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
 		})
 	})
 }

@@ -97,6 +97,15 @@ func TestCreateVM(t *testing.T) {
 			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
 			So(changes[0].GetOldValue(), ShouldEqual, "false")
 			So(changes[0].GetNewValue(), ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-create-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-create-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-create-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 
 		Convey("Create new VM with specifying ip", func() {
@@ -143,6 +152,15 @@ func TestCreateVM(t *testing.T) {
 			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
 			So(changes[0].GetOldValue(), ShouldEqual, "false")
 			So(changes[0].GetNewValue(), ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-create-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-create-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-create-3")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 	})
 }
@@ -218,6 +236,16 @@ func TestUpdateVM(t *testing.T) {
 			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
 			So(changes[0].GetOldValue(), ShouldEqual, "false")
 			So(changes[0].GetNewValue(), ShouldEqual, "true")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-update-2")
+			So(err, ShouldBeNil)
+			// 1 come from CreateVM
+			So(msgs, ShouldHaveLength, 2)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-update-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-update-2")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
 		})
 
 		Convey("Update VM - happy path with ip deletion", func() {
@@ -266,6 +294,20 @@ func TestUpdateVM(t *testing.T) {
 			So(changes[1].GetEventLabel(), ShouldEqual, "ip.occupied")
 			So(changes[1].GetOldValue(), ShouldEqual, "true")
 			So(changes[1].GetNewValue(), ShouldEqual, "false")
+			// snapshots
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-update-3")
+			So(err, ShouldBeNil)
+			// 1 create, 2 updates
+			So(msgs, ShouldHaveLength, 3)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-update-3")
+			So(err, ShouldBeNil)
+			// 1 create
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-update-3")
+			So(err, ShouldBeNil)
+			// 2 updates
+			So(msgs, ShouldHaveLength, 2)
+			So(msgs[1].Delete, ShouldBeTrue)
 		})
 
 		Convey("Update VM - happy path with state updating", func() {
@@ -297,6 +339,18 @@ func TestUpdateVM(t *testing.T) {
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-update-4")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
+			// snapshots
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-update-4")
+			So(err, ShouldBeNil)
+			// 1 create, 1 update
+			So(msgs, ShouldHaveLength, 2)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-update-4")
+			So(err, ShouldBeNil)
+			// 1 create, 1 update
+			So(msgs, ShouldHaveLength, 2)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-update-4")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 0)
 		})
 	})
 }
@@ -378,6 +432,22 @@ func TestDeleteVM(t *testing.T) {
 			So(changes[1].GetEventLabel(), ShouldEqual, "ip.occupied")
 			So(changes[1].GetOldValue(), ShouldEqual, "true")
 			So(changes[1].GetNewValue(), ShouldEqual, "false")
+			// snapshots
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-delete-1")
+			So(err, ShouldBeNil)
+			// 1 create, 1 deletion
+			So(msgs, ShouldHaveLength, 2)
+			So(msgs[1].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-delete-1")
+			So(err, ShouldBeNil)
+			// 1 create, 1 deletion
+			So(msgs, ShouldHaveLength, 2)
+			So(msgs[1].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-delete-1")
+			So(err, ShouldBeNil)
+			// 1 create, 1 deletion
+			So(msgs, ShouldHaveLength, 2)
+			So(msgs[1].Delete, ShouldBeTrue)
 		})
 	})
 }
