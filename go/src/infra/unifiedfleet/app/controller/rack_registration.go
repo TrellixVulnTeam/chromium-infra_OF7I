@@ -22,6 +22,7 @@ import (
 // RackRegistration creates a new rack, switches, kvms and rpms in datastore.
 func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.Switch, kvms []*ufspb.KVM, rpms []*ufspb.RPM) (*ufspb.Rack, []*ufspb.Switch, []*ufspb.KVM, []*ufspb.RPM, error) {
 	f := func(ctx context.Context) error {
+		hc := getRackClientHistory(rack)
 		stateRecords := make([]*ufspb.StateRecord, 0)
 
 		// 1. Validate the input
@@ -130,24 +131,23 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack, switches []*ufspb.S
 		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
 			return err
 		}
-		return nil
+		hc.LogRackChanges(nil, rack)
+		for _, sw := range switches {
+			hc.LogSwitchChanges(nil, sw)
+		}
+		for _, kvm := range kvms {
+			hc.LogKVMChanges(nil, kvm)
+		}
+		for _, rpm := range rpms {
+			hc.LogRPMChanges(nil, rpm)
+		}
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to register rack: %s", err)
 		return nil, nil, nil, nil, err
 	}
-	changes := LogRackChanges(nil, rack)
-	for _, sw := range switches {
-		changes = append(changes, LogSwitchChanges(nil, sw)...)
-	}
-	for _, kvm := range kvms {
-		changes = append(changes, LogKVMChanges(nil, kvm)...)
-	}
-	for _, rpm := range rpms {
-		changes = append(changes, LogRPMChanges(nil, rpm)...)
-	}
-	SaveChangeEvents(ctx, changes)
 	return rack, switches, kvms, rpms, nil
 }
 

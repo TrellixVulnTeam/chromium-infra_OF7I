@@ -20,15 +20,15 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/registration"
-	"infra/unifiedfleet/app/model/state"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // CreateKVM creates a new kvm in datastore.
 func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
-	changes := LogKVMChanges(nil, kvm)
 	f := func(ctx context.Context) error {
+		hc := getKVMHistoryClient(kvm)
+		hc.LogKVMChanges(nil, kvm)
 		// 1. Validate the input
 		if err := validateCreateKVM(ctx, kvm, rackName); err != nil {
 			return err
@@ -45,9 +45,7 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		kvm.Lab = rack.GetLocation().GetLab().String()
 
 		// 3. Update the rack with new kvm information
-		if cs, err := addKVMToRack(ctx, rack, kvm.Name); err == nil {
-			changes = append(changes, cs...)
-		} else {
+		if err := addKVMToRack(ctx, rack, kvm.Name, hc); err != nil {
 			return err
 		}
 
@@ -60,31 +58,25 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		}
 
 		// 5. Update state
-		if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
-			{
-				State:        ufspb.State_STATE_SERVING,
-				ResourceName: ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name),
-				User:         ufsUtil.CurrentUser(ctx),
-			},
-		}); err != nil {
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_SERVING); err != nil {
 			return err
 		}
-		return nil
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to create kvm in datastore: %s", err)
 		return nil, err
 	}
-	SaveChangeEvents(ctx, changes)
 	return kvm, nil
 }
 
 // UpdateKVM updates kvm in datastore.
 func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field_mask.FieldMask) (*ufspb.KVM, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
-	changes := make([]*ufspb.ChangeEvent, 0)
 	f := func(ctx context.Context) error {
+		hc := getKVMHistoryClient(kvm)
+
 		// 1. Validate the input
 		if err := validateUpdateKVM(ctx, kvm, rackName, mask); err != nil {
 			return errors.Annotate(err, "UpdateKVM - validation failed").Err()
@@ -97,7 +89,6 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 		// Fill the rack/lab to kvm OUTPUT only fields
 		kvm.Rack = oldKVM.GetRack()
 		kvm.Lab = oldKVM.GetLab()
-		changes = append(changes, LogKVMChanges(oldKVM, kvm)...)
 
 		if rackName != "" {
 			// 2. Get the old rack associated with kvm
@@ -119,17 +110,13 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 				kvm.Lab = rack.GetLocation().GetLab().String()
 
 				// 4. Remove the association between old rack and this kvm.
-				if cs, err := removeKVMFromRacks(ctx, []*ufspb.Rack{oldRack}, kvm.Name); err == nil {
-					changes = append(changes, cs...)
-				} else {
-					return errors.Annotate(err, "UpdateKVM - remove kvm %s from rack %s failed", kvm.Name, oldRack.GetName()).Err()
+				if err := removeKVMFromRacks(ctx, []*ufspb.Rack{oldRack}, kvm.Name, hc); err != nil {
+					return err
 				}
 
 				// 5. Update the rack with new kvm information
-				if cs, err := addKVMToRack(ctx, rack, kvm.Name); err == nil {
-					changes = append(changes, cs...)
-				} else {
-					return errors.Annotate(err, "UpdateKVM - add kvm %s to rack %s failed", kvm.Name, rack.GetName()).Err()
+				if err := addKVMToRack(ctx, rack, kvm.Name, hc); err != nil {
+					return err
 				}
 			}
 		}
@@ -157,13 +144,13 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 		if _, err := registration.BatchUpdateKVMs(ctx, []*ufspb.KVM{kvm}); err != nil {
 			return errors.Annotate(err, "UpdateKVM - unable to batch update kvm %s", kvm.Name).Err()
 		}
-		return nil
+		hc.LogKVMChanges(oldKVM, kvm)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "UpdateKVM - failed to update kvm %s in datastore", kvm.Name).Err()
 	}
-	SaveChangeEvents(ctx, changes)
 	return kvm, nil
 }
 
@@ -207,13 +194,11 @@ func processKVMUpdateMask(oldKVM *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.Fi
 // DeleteKVMHost deletes the host of a kvm in datastore.
 func DeleteKVMHost(ctx context.Context, kvmName string) error {
 	f := func(ctx context.Context) error {
-		nu := &networkUpdater{
-			Hostname: kvmName,
-		}
-		if err := nu.deleteDHCPHelper(ctx); err != nil {
+		hc := getKVMHistoryClient(&ufspb.KVM{Name: kvmName})
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
-		return SaveChangeEvents(ctx, nu.Changes)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -226,23 +211,21 @@ func DeleteKVMHost(ctx context.Context, kvmName string) error {
 // UpdateKVMHost updates the kvm host in datastore.
 func UpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, nwOpt *ufsAPI.NetworkOption) error {
 	f := func(ctx context.Context) error {
+		hc := getKVMHistoryClient(kvm)
 		// 1. Validate the input
 		if err := validateUpdateKVMHost(ctx, kvm, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
 			return err
 		}
-		nu := &networkUpdater{
-			Hostname: kvm.GetName(),
-		}
 		// 2. Verify if the hostname is already set with IP. if yes, remove the current dhcp.
-		if err := nu.deleteDHCPHelper(ctx); err != nil {
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
 
 		// 3. Find free ip, set IP and DHCP config
-		if _, err := nu.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetMacAddress()); err != nil {
+		if _, err := hc.netUdt.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetMacAddress()); err != nil {
 			return err
 		}
-		return SaveChangeEvents(ctx, nu.Changes)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -278,8 +261,10 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 // 3. Get the rack associated with this kvm
 // 4. Update the rack by removing the association with this kvm
 func DeleteKVM(ctx context.Context, id string) error {
-	changes := LogKVMChanges(&ufspb.KVM{Name: id}, nil)
 	f := func(ctx context.Context) error {
+		kvm := &ufspb.KVM{Name: id}
+		hc := getKVMHistoryClient(kvm)
+		hc.LogKVMChanges(kvm, nil)
 		// 1. Validate input
 		if err := validateDeleteKVM(ctx, id); err != nil {
 			return errors.Annotate(err, "Validation failed - unable to delete kvm %s", id).Err()
@@ -304,24 +289,18 @@ func DeleteKVM(ctx context.Context, id string) error {
 		}
 
 		// 4. Remove the association between the rack and this kvm.
-		cs, err := removeKVMFromRacks(ctx, racks, id)
-		if err != nil {
+		if err := removeKVMFromRacks(ctx, racks, id, hc); err != nil {
 			return err
 		}
-		changes = append(changes, cs...)
 
 		// 5. Update state
-		state.DeleteStates(ctx, []string{ufsUtil.AddPrefix(ufsUtil.KVMCollection, id)})
+		hc.stUdt.deleteStateHelper(ctx)
 
 		// 6. Delete ip configs
-		nu := &networkUpdater{
-			Hostname: id,
-		}
-		if err := nu.deleteDHCPHelper(ctx); err != nil {
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
-		changes = append(changes, nu.Changes...)
-		return SaveChangeEvents(ctx, changes)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -344,6 +323,17 @@ func DeleteKVM(ctx context.Context, id string) error {
 func ReplaceKVM(ctx context.Context, oldKVM *ufspb.KVM, newKVM *ufspb.KVM) (*ufspb.KVM, error) {
 	// TODO(eshwarn) : implement replace after user testing the tool
 	return nil, nil
+}
+
+func getKVMHistoryClient(kvm *ufspb.KVM) *HistoryClient {
+	return &HistoryClient{
+		stUdt: &stateUpdater{
+			ResourceName: ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name),
+		},
+		netUdt: &networkUpdater{
+			Hostname: kvm.Name,
+		},
+	}
 }
 
 // validateDeleteKVM validates if a KVM can be deleted
@@ -438,13 +428,13 @@ func validateKVMUpdateMask(mask *field_mask.FieldMask) error {
 // addKVMToRack adds the kvm info to the rack and updates
 // the rack in datastore.
 // Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
-func addKVMToRack(ctx context.Context, rack *ufspb.Rack, kvmName string) ([]*ufspb.ChangeEvent, error) {
+func addKVMToRack(ctx context.Context, rack *ufspb.Rack, kvmName string, hc *HistoryClient) error {
 	if rack == nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "Rack is nil")
+		return status.Errorf(codes.FailedPrecondition, "Rack is nil")
 	}
 	if rack.GetChromeBrowserRack() == nil {
 		errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
-		return nil, status.Errorf(codes.FailedPrecondition, errorMsg)
+		return status.Errorf(codes.FailedPrecondition, errorMsg)
 	}
 	kvms := []string{kvmName}
 	if rack.GetChromeBrowserRack().GetKvms() != nil {
@@ -455,9 +445,10 @@ func addKVMToRack(ctx context.Context, rack *ufspb.Rack, kvmName string) ([]*ufs
 	rack.GetChromeBrowserRack().Kvms = kvms
 	_, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack})
 	if err != nil {
-		return nil, errors.Annotate(err, "Unable to update rack %s with kvm %s information", rack.Name, kvmName).Err()
+		return errors.Annotate(err, "Unable to update rack %s with kvm %s information", rack.Name, kvmName).Err()
 	}
-	return LogRackChanges(old, rack), nil
+	hc.LogRackChanges(old, rack)
+	return nil
 }
 
 // getRackForKVM return rack associated with the kvm.
@@ -480,24 +471,23 @@ func getRackForKVM(ctx context.Context, kvmName string) (*ufspb.Rack, error) {
 // removeKVMFromRacks removes the kvm info from racks and
 // updates the racks in datastore.
 // Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
-func removeKVMFromRacks(ctx context.Context, racks []*ufspb.Rack, id string) ([]*ufspb.ChangeEvent, error) {
-	changes := make([]*ufspb.ChangeEvent, 0)
+func removeKVMFromRacks(ctx context.Context, racks []*ufspb.Rack, id string, hc *HistoryClient) error {
 	for _, rack := range racks {
 		if rack.GetChromeBrowserRack() == nil {
 			errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
-			return nil, status.Errorf(codes.FailedPrecondition, errorMsg)
+			return status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
 		kvms := rack.GetChromeBrowserRack().GetKvms()
 		kvms = ufsUtil.RemoveStringEntry(kvms, id)
 		old := proto.Clone(rack).(*ufspb.Rack)
 		rack.GetChromeBrowserRack().Kvms = kvms
-		changes = append(changes, LogRackChanges(old, rack)...)
+		hc.LogRackChanges(old, rack)
 	}
 	_, err := registration.BatchUpdateRacks(ctx, racks)
 	if err != nil {
-		return nil, errors.Annotate(err, "Unable to remove kvm information %s from rack", id).Err()
+		return errors.Annotate(err, "Unable to remove kvm information %s from rack", id).Err()
 	}
-	return changes, nil
+	return nil
 }
 
 // validateUpdateKVMHost validates if a host can be added to a kvm

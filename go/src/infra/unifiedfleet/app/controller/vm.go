@@ -21,13 +21,7 @@ import (
 // CreateVM creates a new vm in datastore.
 func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.NetworkOption) (*ufspb.VM, error) {
 	f := func(ctx context.Context) error {
-		var changes []*ufspb.ChangeEvent
-		nu := &networkUpdater{
-			Hostname: vm.GetName(),
-		}
-		su := &stateUpdater{
-			ResourceName: util.AddPrefix(util.VMCollection, vm.GetName()),
-		}
+		hc := getVMHistoryClient(vm)
 
 		lse, err := inventory.GetMachineLSE(ctx, host)
 		if err != nil {
@@ -37,13 +31,13 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 		vm.Lab = lse.Lab
 		vm.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
 		// Update states
-		if err := su.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING); err != nil {
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING); err != nil {
 			return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
 		}
 
 		// Update ip configs
 		if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
-			if err := nu.addVMHostHelper(ctx, nwOpt, vm); err != nil {
+			if err := hc.netUdt.addVMHostHelper(ctx, nwOpt, vm); err != nil {
 				return errors.Annotate(err, "Fail to assign ip to vm %s", vm.GetName()).Err()
 			}
 		}
@@ -51,11 +45,8 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm}); err != nil {
 			return errors.Annotate(err, "Failed to create vm %q", vm.GetName()).Err()
 		}
-		changes = append(changes, nu.Changes...)
-		changes = append(changes, su.Changes...)
-		changes = append(changes, LogVMChanges(nil, vm)...)
-
-		return SaveChangeEvents(ctx, changes)
+		hc.LogVMChanges(nil, vm)
+		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to create vm in datastore: %s", err)
@@ -67,13 +58,7 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 // UpdateVM updates an existing vm in datastore.
 func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.NetworkOption, s ufspb.State) (*ufspb.VM, error) {
 	f := func(ctx context.Context) error {
-		var changes []*ufspb.ChangeEvent
-		nu := &networkUpdater{
-			Hostname: vm.GetName(),
-		}
-		su := &stateUpdater{
-			ResourceName: util.AddPrefix(util.VMCollection, vm.GetName()),
-		}
+		hc := getVMHistoryClient(vm)
 
 		oldVM, err := inventory.GetVM(ctx, vm.GetName())
 		if err != nil {
@@ -101,18 +86,18 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 			}
 		}
 		if newState != ufspb.State_STATE_UNSPECIFIED {
-			if err := su.updateStateHelper(ctx, newState); err != nil {
+			if err := hc.stUdt.updateStateHelper(ctx, newState); err != nil {
 				return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
 			}
 		}
 
 		if nwOpt.GetDelete() {
-			if err := nu.deleteDHCPHelper(ctx); err != nil {
+			if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 				return err
 			}
 			vm.Vlan = ""
 		} else if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
-			if err := nu.addVMHostHelper(ctx, nwOpt, vm); err != nil {
+			if err := hc.netUdt.addVMHostHelper(ctx, nwOpt, vm); err != nil {
 				return errors.Annotate(err, "Fail to assign ip to host %s", host).Err()
 			}
 		}
@@ -120,10 +105,8 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm}); err != nil {
 			return errors.Annotate(err, "Failed to create vm %q", vm.GetName()).Err()
 		}
-		changes = append(changes, nu.Changes...)
-		changes = append(changes, su.Changes...)
-		changes = append(changes, LogVMChanges(oldVM, vm)...)
-		return SaveChangeEvents(ctx, changes)
+		hc.LogVMChanges(oldVM, vm)
+		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to create vm in datastore: %s", err)
@@ -135,30 +118,22 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 // DeleteVM deletes a vm in datastore.
 func DeleteVM(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
-		var changes []*ufspb.ChangeEvent
-		nu := &networkUpdater{
-			Hostname: id,
-		}
-		su := &stateUpdater{
-			ResourceName: util.AddPrefix(util.VMCollection, id),
-		}
+		hc := getVMHistoryClient(&ufspb.VM{Name: id})
 
 		if err := inventory.DeleteVM(ctx, id); err != nil {
 			return errors.Annotate(err, "Unable to delete vm %s", id).Err()
 		}
-		changes = append(changes, LogVMChanges(&ufspb.VM{Name: id}, nil)...)
+		hc.LogVMChanges(&ufspb.VM{Name: id}, nil)
 
-		if err := su.deleteStateHelper(ctx); err != nil {
+		if err := hc.stUdt.deleteStateHelper(ctx); err != nil {
 			return err
 		}
-		changes = append(changes, su.Changes...)
 
-		if err := nu.deleteDHCPHelper(ctx); err != nil {
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
-		changes = append(changes, nu.Changes...)
 
-		return SaveChangeEvents(ctx, changes)
+		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete vm in datastore: %s", err)
@@ -187,4 +162,15 @@ func ListVMs(ctx context.Context, pageSize int32, pageToken, filter string, keys
 // GetVM returns vm for the given id from datastore.
 func GetVM(ctx context.Context, id string) (*ufspb.VM, error) {
 	return inventory.GetVM(ctx, id)
+}
+
+func getVMHistoryClient(m *ufspb.VM) *HistoryClient {
+	return &HistoryClient{
+		stUdt: &stateUpdater{
+			ResourceName: util.AddPrefix(util.VMCollection, m.Name),
+		},
+		netUdt: &networkUpdater{
+			Hostname: m.Name,
+		},
+	}
 }

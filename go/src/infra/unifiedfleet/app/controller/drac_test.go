@@ -271,8 +271,10 @@ func TestUpdateDrac(t *testing.T) {
 			// Verify the changes
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-3")
 			So(err, ShouldBeNil)
-			// No change for the updated drac
-			So(changes, ShouldHaveLength, 0)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac.machine")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "machine-4")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-4")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)

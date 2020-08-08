@@ -26,36 +26,40 @@ import (
 
 // CreateRack creates a new rack in datastore.
 func CreateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
-	if err := validateCreateRack(ctx, rack); err != nil {
+	f := func(ctx context.Context) error {
+		hc := getRackClientHistory(rack)
+		if err := validateCreateRack(ctx, rack); err != nil {
+			return err
+		}
+		// Make sure OUTPUT_ONLY fields are set to empty
+		if rack.GetChromeBrowserRack() != nil {
+			// These are output only field. User is not allowed to set these value.
+			// Overwrite it with empty values.
+			rack.GetChromeBrowserRack().Rpms = nil
+			rack.GetChromeBrowserRack().Kvms = nil
+			rack.GetChromeBrowserRack().Switches = nil
+		}
+		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
+			return err
+		}
+		hc.LogRackChanges(nil, rack)
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_SERVING); err != nil {
+			return err
+		}
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to create entity in datastore: %s", err)
 		return nil, err
 	}
-	// Make sure OUTPUT_ONLY fields are set to empty
-	if rack.GetChromeBrowserRack() != nil {
-		// These are output only field. User is not allowed to set these value.
-		// Overwrite it with empty values.
-		rack.GetChromeBrowserRack().Rpms = nil
-		rack.GetChromeBrowserRack().Kvms = nil
-		rack.GetChromeBrowserRack().Switches = nil
-	}
-	r, err := registration.CreateRack(ctx, rack)
-	if err == nil {
-		state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
-			{
-				State:        ufspb.State_STATE_SERVING,
-				ResourceName: ufsUtil.AddPrefix(ufsUtil.RackCollection, rack.Name),
-				User:         ufsUtil.CurrentUser(ctx),
-			},
-		})
-		SaveChangeEvents(ctx, LogRackChanges(nil, rack))
-	}
-	return r, err
+	return rack, nil
 }
 
 // UpdateRack updates rack in datastore.
 func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) (*ufspb.Rack, error) {
-	var oldRack *ufspb.Rack
-	var err error
 	f := func(ctx context.Context) error {
+		hc := getRackClientHistory(rack)
 		// Validate input
 		if err := validateUpdateRack(ctx, rack, mask); err != nil {
 			return errors.Annotate(err, "UpdateRack - validation failed").Err()
@@ -72,7 +76,7 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 		}
 
 		// Get the existing/old rack
-		oldRack, err = registration.GetRack(ctx, rack.GetName())
+		oldRack, err := registration.GetRack(ctx, rack.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateRack - get rack %s failed", rack.GetName()).Err()
 		}
@@ -123,14 +127,14 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
 			return errors.Annotate(err, "UpdateRack - unable to batch update rack %s", rack.Name).Err()
 		}
-		return nil
+		hc.LogRackChanges(oldRack, rack)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "UpdateRack - failed to update rack %s in datastore", rack.Name).Err()
 	}
-	SaveChangeEvents(ctx, LogRackChanges(oldRack, rack))
-	return rack, err
+	return rack, nil
 }
 
 // processRackUpdateMask process update field mask to get only specific update
@@ -236,13 +240,12 @@ func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, ke
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteRack(ctx context.Context, id string) error {
 	// [TODO]: Add logic for Chrome OS
-	var rack *ufspb.Rack
-	var err error
 	f := func(ctx context.Context) error {
+		hc := getRackClientHistory(&ufspb.Rack{Name: id})
 		resourceNames := make([]string, 0)
 
 		// 1. Get the rack
-		rack, err = registration.GetRack(ctx, id)
+		rack, err := registration.GetRack(ctx, id)
 		if status.Code(err) == codes.Internal {
 			return err
 		}
@@ -305,22 +308,22 @@ func DeleteRack(ctx context.Context, id string) error {
 				}
 			}
 		}
+		resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.RackCollection, id))
+		state.DeleteStates(ctx, resourceNames)
 
 		// 6. Delete the rack
 		if err := registration.DeleteRack(ctx, id); err != nil {
 			return err
 		}
-
-		resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.RackCollection, id))
-		state.DeleteStates(ctx, resourceNames)
-		return nil
+		hc.LogRackChanges(rack, nil)
+		hc.stUdt.deleteStateHelper(ctx)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete rack and its associated switches, rpms and kvms in datastore: %s", err)
 		return err
 	}
-	SaveChangeEvents(ctx, LogRackChanges(rack, nil))
 	return nil
 }
 
@@ -336,6 +339,7 @@ func DeleteRack(ctx context.Context, id string) error {
 // This will preserve data integrity in the system.
 func ReplaceRack(ctx context.Context, oldRack *ufspb.Rack, newRack *ufspb.Rack) (*ufspb.Rack, error) {
 	f := func(ctx context.Context) error {
+		hc := getRackClientHistory(newRack)
 		racklses, err := inventory.QueryRackLSEByPropertyName(ctx, "rack_ids", oldRack.Name, false)
 		if err != nil {
 			return err
@@ -379,16 +383,15 @@ func ReplaceRack(ctx context.Context, oldRack *ufspb.Rack, newRack *ufspb.Rack) 
 		if err != nil {
 			return err
 		}
-		return nil
+		hc.LogRackChanges(oldRack, nil)
+		hc.LogRackChanges(nil, newRack)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to replace entity in datastore: %s", err)
 		return nil, err
 	}
-	changes := LogRackChanges(oldRack, nil)
-	changes = append(changes, LogRackChanges(nil, newRack)...)
-	SaveChangeEvents(ctx, changes)
 	return newRack, nil
 }
 
@@ -482,4 +485,15 @@ func validateRackUpdateMask(rack *ufspb.Rack, mask *field_mask.FieldMask) error 
 		}
 	}
 	return nil
+}
+
+func getRackClientHistory(m *ufspb.Rack) *HistoryClient {
+	return &HistoryClient{
+		stUdt: &stateUpdater{
+			ResourceName: ufsUtil.AddPrefix(ufsUtil.RackCollection, m.Name),
+		},
+		netUdt: &networkUpdater{
+			Hostname: m.Name,
+		},
+	}
 }

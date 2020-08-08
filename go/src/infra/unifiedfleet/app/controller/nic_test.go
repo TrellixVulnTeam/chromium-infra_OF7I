@@ -252,7 +252,6 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldBeNil)
-
 			mresp, err = registration.GetMachine(ctx, "machine-4")
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -261,8 +260,10 @@ func TestUpdateNic(t *testing.T) {
 			// Verify the changes
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-3")
 			So(err, ShouldBeNil)
-			// No change for the updated nic
-			So(changes, ShouldHaveLength, 0)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic.machine")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "machine-4")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)

@@ -20,7 +20,6 @@ import (
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
-	"infra/unifiedfleet/app/model/state"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -30,6 +29,7 @@ import (
 // in the system before creating a new Machine
 func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine, error) {
 	f := func(ctx context.Context) error {
+		hc := getMachineHistoryClient(machine)
 		// 1. Validate input
 		if err := validateCreateMachine(ctx, machine); err != nil {
 			return err
@@ -50,25 +50,19 @@ func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 			return err
 		}
+		hc.LogMachineChanges(nil, machine)
 
 		// 4. Update machine state
-		if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
-			{
-				State:        ufspb.State_STATE_REGISTERED,
-				ResourceName: util.AddPrefix(util.MachineCollection, machine.GetName()),
-				User:         util.CurrentUser(ctx),
-			},
-		}); err != nil {
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
 			return err
 		}
-		return nil
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to create machine in datastore: %s", err)
 		return nil, err
 	}
-	SaveChangeEvents(ctx, LogMachineChanges(nil, machine))
 	return machine, nil
 }
 
@@ -77,9 +71,8 @@ func CreateMachine(ctx context.Context, machine *ufspb.Machine) (*ufspb.Machine,
 // Checks if the resources referenced by the Machine input already exists
 // in the system before updating a Machine
 func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask.FieldMask) (*ufspb.Machine, error) {
-	var oldMachine *ufspb.Machine
-	var err error
 	f := func(ctx context.Context) error {
+		hc := getMachineHistoryClient(machine)
 		// Validate input
 		if err := validateUpdateMachine(ctx, machine, mask); err != nil {
 			return errors.Annotate(err, "UpdateMachine - validation failed").Err()
@@ -94,7 +87,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		}
 
 		// Get the existing/old machine
-		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
+		oldMachine, err := registration.GetMachine(ctx, machine.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
 		}
@@ -144,13 +137,13 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 			return errors.Annotate(err, "UpdateMachine - unable to batch update machine %s", machine.Name).Err()
 		}
-		return nil
+		hc.LogMachineChanges(oldMachine, machine)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "UpdateMachine - failed to update machine %s in datastore", machine.Name).Err()
 	}
-	SaveChangeEvents(ctx, LogMachineChanges(oldMachine, machine))
 	return machine, nil
 }
 
@@ -301,11 +294,10 @@ func GetAllMachines(ctx context.Context) (*ufsds.OpResults, error) {
 // Delete if this Machine is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteMachine(ctx context.Context, id string) error {
-	var machine *ufspb.Machine
-	var err error
 	f := func(ctx context.Context) error {
+		hc := getMachineHistoryClient(&ufspb.Machine{Name: id})
 		// 1. Get the machine
-		machine, err = registration.GetMachine(ctx, id)
+		machine, err := registration.GetMachine(ctx, id)
 		if status.Code(err) == codes.Internal {
 			return err
 		}
@@ -339,17 +331,19 @@ func DeleteMachine(ctx context.Context, id string) error {
 		}
 
 		// 5. Delete the state
-		state.DeleteStates(ctx, []string{util.AddPrefix(util.MachineCollection, id)})
-
+		hc.stUdt.deleteStateHelper(ctx)
+		if err := registration.DeleteMachine(ctx, id); err != nil {
+			return err
+		}
+		hc.LogMachineChanges(machine, nil)
 		// 6. Delete the machine
-		return registration.DeleteMachine(ctx, id)
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete machine and its associated nics and drac in datastore: %s", err)
 		return err
 	}
-	SaveChangeEvents(ctx, LogMachineChanges(machine, nil))
 	return nil
 }
 
@@ -403,6 +397,7 @@ func deleteNonExistingMachines(ctx context.Context, machines []*ufspb.Machine, p
 // This will preserve data integrity in the system.
 func ReplaceMachine(ctx context.Context, oldMachine *ufspb.Machine, newMachine *ufspb.Machine) (*ufspb.Machine, error) {
 	f := func(ctx context.Context) error {
+		hc := getMachineHistoryClient(newMachine)
 		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldMachine.Name, false)
 		if err != nil {
 			return err
@@ -450,17 +445,16 @@ func ReplaceMachine(ctx context.Context, oldMachine *ufspb.Machine, newMachine *
 		if err != nil {
 			return err
 		}
-		return nil
+		hc.LogMachineChanges(oldMachine, nil)
+		hc.LogMachineChanges(nil, newMachine)
+		hc.stUdt.replaceStateHelper(ctx, util.AddPrefix(util.MachineCollection, oldMachine.GetName()))
+		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to replace entity in datastore: %s", err)
 		return nil, err
 	}
-
-	changes := LogMachineChanges(oldMachine, nil)
-	changes = append(changes, LogMachineChanges(nil, newMachine)...)
-	SaveChangeEvents(ctx, changes)
 	return newMachine, nil
 }
 
@@ -617,4 +611,15 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 		}
 	}
 	return nil
+}
+
+func getMachineHistoryClient(m *ufspb.Machine) *HistoryClient {
+	return &HistoryClient{
+		stUdt: &stateUpdater{
+			ResourceName: util.AddPrefix(util.MachineCollection, m.Name),
+		},
+		netUdt: &networkUpdater{
+			Hostname: m.Name,
+		},
+	}
 }

@@ -6,7 +6,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/state"
@@ -39,8 +38,23 @@ func (su *stateUpdater) updateStateHelper(ctx context.Context, newS ufspb.State)
 	if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{newRecord}); err != nil {
 		return err
 	}
-	fmt.Println("old ", old, "new: ", newRecord)
 	su.Changes = append(su.Changes, LogStateChanges(old, newRecord)...)
+	return nil
+}
+
+func (su *stateUpdater) replaceStateHelper(ctx context.Context, oldR string) error {
+	old, _ := state.GetStateRecord(ctx, oldR)
+	state.DeleteStates(ctx, []string{oldR})
+	newRecord := &ufspb.StateRecord{
+		State:        old.GetState(),
+		ResourceName: su.ResourceName,
+		User:         util.CurrentUser(ctx),
+	}
+	if _, err := state.BatchUpdateStates(ctx, []*ufspb.StateRecord{newRecord}); err != nil {
+		return err
+	}
+	su.Changes = append(su.Changes, LogStateChanges(old, nil)...)
+	su.Changes = append(su.Changes, LogStateChanges(nil, newRecord)...)
 	return nil
 }
 

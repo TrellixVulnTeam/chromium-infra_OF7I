@@ -204,7 +204,6 @@ func TestUpdateKVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(mresp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
-
 			mresp, err = registration.GetRack(ctx, "rack-4")
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -212,8 +211,10 @@ func TestUpdateKVM(t *testing.T) {
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-3")
 			So(err, ShouldBeNil)
-			// Nothing is changed for kvm-3
-			So(changes, ShouldHaveLength, 0)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "kvm.rack")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "rack-4")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)

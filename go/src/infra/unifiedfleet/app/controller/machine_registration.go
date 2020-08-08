@@ -25,6 +25,7 @@ import (
 // MachineRegistration creates a new machine, new nic and a new drac in datastore.
 func MachineRegistration(ctx context.Context, machine *ufspb.Machine, nics []*ufspb.Nic, drac *ufspb.Drac) (*ufspb.Machine, []*ufspb.Nic, *ufspb.Drac, error) {
 	f := func(ctx context.Context) error {
+		hc := getMachineHistoryClient(machine)
 		// 1. Validate the input
 		if err := validateMachineRegistration(ctx, machine, nics, drac); err != nil {
 			return err
@@ -94,6 +95,13 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine, nics []*uf
 		}); err != nil {
 			return err
 		}
+
+		hc.LogMachineChanges(nil, machine)
+		for _, nic := range nics {
+			hc.LogNicChanges(nil, nic)
+		}
+		hc.LogDracChanges(nil, drac)
+		hc.SaveChangeEvents(ctx)
 		return nil
 	}
 
@@ -101,13 +109,6 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine, nics []*uf
 		logging.Errorf(ctx, "Failed to register machine: %s", err)
 		return nil, nil, nil, err
 	}
-	// Log the changes
-	changes := LogMachineChanges(nil, machine)
-	for _, nic := range nics {
-		changes = append(changes, LogNicChanges(nil, nic)...)
-	}
-	changes = append(changes, LogDracChanges(nil, drac)...)
-	SaveChangeEvents(ctx, changes)
 	return machine, nics, drac, nil
 }
 

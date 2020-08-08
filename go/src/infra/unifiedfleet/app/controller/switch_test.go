@@ -210,7 +210,6 @@ func TestUpdateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
-
 			mresp, err = registration.GetRack(ctx, "rack-4")
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
@@ -218,8 +217,10 @@ func TestUpdateSwitch(t *testing.T) {
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-3")
 			So(err, ShouldBeNil)
-			// Nothing is changed for switch-3
-			So(changes, ShouldHaveLength, 0)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "switch.rack")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "rack-4")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
@@ -257,9 +258,9 @@ func TestUpdateSwitch(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, switch1)
 
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-3")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-5")
 			So(err, ShouldBeNil)
-			// Nothing is changed for switch-3
+			// Nothing is changed for switch-5
 			So(changes, ShouldHaveLength, 0)
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")
 			So(err, ShouldBeNil)
