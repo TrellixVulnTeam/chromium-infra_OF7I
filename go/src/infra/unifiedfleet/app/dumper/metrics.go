@@ -22,6 +22,12 @@ var (
 		nil,
 		field.Bool("success"),
 	)
+	dumpChangeSnapshotTick = metric.NewCounter(
+		"chromeos/ufs/dumper/dump_change_snapshot",
+		"dumpChangeSnapshot attempt",
+		nil,
+		field.Bool("success"),
+	)
 	dumpCrimsonTick = metric.NewCounter(
 		"chromeos/ufs/dumper/import_crimson",
 		"import crimson attempt",

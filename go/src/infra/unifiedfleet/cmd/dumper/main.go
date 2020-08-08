@@ -40,6 +40,7 @@ func main() {
 			return err
 		}
 		srv.Context = dumper.Use(srv.Context, client)
+		srv.Context = dumper.UseProject(srv.Context, srv.Options.CloudProject)
 		dumper.InitServer(srv, dumper.Options{})
 		return nil
 	})

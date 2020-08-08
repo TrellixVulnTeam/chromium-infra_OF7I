@@ -25,62 +25,83 @@ message ChangeEventRow {
 
 message ChromePlatformRow {
     proto.ChromePlatform platform = 1;
+    bool delete = 2;
 }
 
 message VlanRow {
     proto.Vlan vlan = 1;
+    bool delete = 2;
 }
 
 message MachineRow {
     proto.Machine machine = 1;
+    bool delete = 2;
 }
 
 message RackRow {
     proto.Rack rack = 1;
+    bool delete = 2;
 }
 
 message RackLSEPrototypeRow {
     proto.RackLSEPrototype rack_lse_prototype = 1;
+    bool delete = 2;
 }
 
 message MachineLSEPrototypeRow {
     proto.MachineLSEPrototype machine_lse_prototype = 1;
+    bool delete = 2;
 }
 
 message MachineLSERow {
     proto.MachineLSE machine_lse = 1;
+    bool delete = 2;
 }
+
+message VMRow {
+    proto.VM vm = 1;
+    bool delete = 2;
+}
+
 
 message RackLSERow {
     proto.RackLSE rack_lse = 1;
+    bool delete = 2;
 }
 
 message StateRecordRow {
     proto.StateRecord state_record = 1;
+    bool delete = 2;
 }
 
 message KVMRow {
     proto.KVM kvm = 1;
+    bool delete = 2;
 }
 
 message RPMRow {
     proto.RPM rpm = 1;
+    bool delete = 2;
 }
 
 message SwitchRow {
     proto.Switch switch = 1;
+    bool delete = 2;
 }
 
 message DracRow {
     proto.Drac drac = 1;
+    bool delete = 2;
 }
 
 message NicRow {
     proto.Nic nic = 1;
+    bool delete = 2;
 }
 
 message DHCPConfigRow {
     proto.DHCPConfig dhcp_config = 1;
+    bool delete = 2;
 }
 
 message IPRow {

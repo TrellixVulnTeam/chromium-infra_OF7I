@@ -15,6 +15,7 @@ import (
 
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	"infra/unifiedfleet/app/cron"
+	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -26,25 +27,28 @@ type Options struct {
 
 // InitServer initializes a purger server.
 func InitServer(srv *server.Server, opts Options) {
-	srv.RunInBackground("ufs.dumper", func(ctx context.Context) {
-		minInterval := 24 * 60 * time.Minute
-		if opts.CronInterval > 0 {
-			minInterval = opts.CronInterval
-		}
-		run(ctx, minInterval)
-	})
-	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, dumpCrosInventory)
-	})
+	//srv.RunInBackground("ufs.dumper", func(ctx context.Context) {
+	//	minInterval := 24 * 60 * time.Minute
+	//	if opts.CronInterval > 0 {
+	//		minInterval = opts.CronInterval
+	//	}
+	//	run(ctx, minInterval)
+	//})
+	//srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
+	//	cron.Run(ctx, 60*time.Minute, dumpCrosInventory)
+	//})
 	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
 		cron.Run(ctx, 10*time.Minute, dumpChangeEvent)
 	})
-	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
+	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
+		cron.Run(ctx, 10*time.Minute, dumpChangeSnapshots)
 	})
-	srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
-		cron.Run(ctx, 60*time.Minute, SyncMachinesFromIV2)
-	})
+	//srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
+	//	cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
+	//})
+	//srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
+	//	cron.Run(ctx, 60*time.Minute, SyncMachinesFromIV2)
+	//})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
@@ -69,6 +73,12 @@ func dumpToBQ(ctx context.Context) (err error) {
 	logging.Debugf(ctx, "Dumping to BQ")
 	curTime := time.Now()
 	curTimeStr := bqlib.GetPSTTimeStamp(curTime)
+	if err := configuration.SaveProjectConfig(ctx, &configuration.ProjectConfigEntity{
+		Name:             getProject(ctx),
+		DailyDumpTimeStr: curTimeStr,
+	}); err != nil {
+		return err
+	}
 	bqClient := get(ctx)
 	if err := dumpConfigurations(ctx, bqClient, curTimeStr); err != nil {
 		return errors.Annotate(err, "dump configurations").Err()
@@ -95,6 +105,15 @@ func dumpChangeEvent(ctx context.Context) (err error) {
 	return dumpChangeEventHelper(ctx, get(ctx))
 }
 
+func dumpChangeSnapshots(ctx context.Context) (err error) {
+	defer func() {
+		dumpChangeSnapshotTick.Add(ctx, 1, err == nil)
+	}()
+
+	logging.Debugf(ctx, "Dumping change snapshots to BQ")
+	return dumpChangeSnapshotHelper(ctx, get(ctx))
+}
+
 func dumpCrosInventory(ctx context.Context) (err error) {
 	defer func() {
 		dumpCrosInventoryTick.Add(ctx, 1, err == nil)
@@ -111,6 +130,7 @@ func dumpCrosNetwork(ctx context.Context) (err error) {
 
 // unique key used to store and retrieve context.
 var contextKey = util.Key("ufs bigquery-client key")
+var projectKey = util.Key("ufs project key")
 
 // Use installs bigquery client to context.
 func Use(ctx context.Context, bqClient *bigquery.Client) context.Context {
@@ -119,4 +139,13 @@ func Use(ctx context.Context, bqClient *bigquery.Client) context.Context {
 
 func get(ctx context.Context) *bigquery.Client {
 	return ctx.Value(contextKey).(*bigquery.Client)
+}
+
+// UseProject installs project name to context.
+func UseProject(ctx context.Context, project string) context.Context {
+	return context.WithValue(ctx, projectKey, project)
+}
+
+func getProject(ctx context.Context) string {
+	return ctx.Value(projectKey).(string)
 }

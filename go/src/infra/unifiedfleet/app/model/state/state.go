@@ -172,7 +172,9 @@ func GetStateIndexedFieldName(input string) (string, error) {
 // This can be used inside a transaction
 func BatchUpdateStates(ctx context.Context, states []*ufspb.StateRecord) ([]*ufspb.StateRecord, error) {
 	protos := make([]proto.Message, len(states))
+	utime := ptypes.TimestampNow()
 	for i, s := range states {
+		s.UpdateTime = utime
 		protos[i] = s
 	}
 	_, err := ufsds.PutAll(ctx, protos, newRecordEntity, true)

@@ -6,22 +6,20 @@ package dumper
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 
 	bqlib "infra/libs/cros/lab_inventory/bq"
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	apibq "infra/unifiedfleet/api/v1/proto/bigquery"
-	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/history"
-	"infra/unifiedfleet/app/model/inventory"
-	"infra/unifiedfleet/app/model/registration"
-	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 const ufsDatasetName = "ufs"
@@ -35,7 +33,6 @@ func dumpChangeEventHelper(ctx context.Context, bqClient *bigquery.Client) error
 	}
 	msgs := make([]proto.Message, 0)
 	for _, p := range changes {
-		logging.Debugf(ctx, "%#v", p)
 		data, err := p.GetProto()
 		if err != nil {
 			continue
@@ -50,7 +47,7 @@ func dumpChangeEventHelper(ctx context.Context, bqClient *bigquery.Client) error
 		logging.Debugf(ctx, "fail to upload: %s", err.Error())
 		return err
 	}
-	logging.Debugf(ctx, "Finish dumping successfully")
+	logging.Debugf(ctx, "Finish uploading change events successfully")
 	logging.Debugf(ctx, "Deleting uploaded entities")
 	if err := history.DeleteChangeEventEntities(ctx, changes); err != nil {
 		logging.Debugf(ctx, "fail to delete entities: %s", err.Error())
@@ -60,480 +57,196 @@ func dumpChangeEventHelper(ctx context.Context, bqClient *bigquery.Client) error
 	return nil
 }
 
+func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) error {
+	snapshots, err := history.GetAllSnapshotMsg(ctx)
+	if err != nil {
+		return errors.Annotate(err, "get all snapshot msg entities").Err()
+	}
+
+	var curTimeStr string
+	proConfig, err := configuration.GetProjectConfig(ctx, getProject(ctx))
+	if err != nil {
+		curTimeStr = bqlib.GetPSTTimeStamp(time.Now())
+	} else {
+		curTimeStr = proConfig.DailyDumpTimeStr
+	}
+
+	msgs := make(map[string][]proto.Message, 0)
+	updateUTime := ptypes.TimestampNow()
+	for _, s := range snapshots {
+		resourceType := util.GetPrefix(s.ResourceName)
+		logging.Debugf(ctx, "handling %s", s.ResourceName)
+		switch resourceType {
+		case util.MachineCollection:
+			var data ufspb.Machine
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["machines"] = append(msgs["machines"], &apibq.MachineRow{
+				Machine: &data,
+				Delete:  s.Delete,
+			})
+		case util.NicCollection:
+			var data ufspb.Nic
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["nics"] = append(msgs["nics"], &apibq.NicRow{
+				Nic:    &data,
+				Delete: s.Delete,
+			})
+		case util.DracCollection:
+			var data ufspb.Drac
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["dracs"] = append(msgs["dracs"], &apibq.DracRow{
+				Drac:   &data,
+				Delete: s.Delete,
+			})
+		case util.RackCollection:
+			var data ufspb.Rack
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["racks"] = append(msgs["racks"], &apibq.RackRow{
+				Rack:   &data,
+				Delete: s.Delete,
+			})
+		case util.KVMCollection:
+			var data ufspb.KVM
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["kvms"] = append(msgs["kvms"], &apibq.KVMRow{
+				Kvm:    &data,
+				Delete: s.Delete,
+			})
+		case util.SwitchCollection:
+			var data ufspb.Switch
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["switches"] = append(msgs["switches"], &apibq.SwitchRow{
+				Switch: &data,
+				Delete: s.Delete,
+			})
+		case util.HostCollection:
+			var data ufspb.MachineLSE
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["machine_lses"] = append(msgs["machine_lses"], &apibq.MachineLSERow{
+				MachineLse: &data,
+				Delete:     s.Delete,
+			})
+		case util.VMCollection:
+			var data ufspb.VM
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["vms"] = append(msgs["vms"], &apibq.VMRow{
+				Vm:     &data,
+				Delete: s.Delete,
+			})
+		case util.DHCPCollection:
+			var data ufspb.DHCPConfig
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["dhcps"] = append(msgs["dhcps"], &apibq.DHCPConfigRow{
+				DhcpConfig: &data,
+				Delete:     s.Delete,
+			})
+		case util.StateCollection:
+			var data ufspb.StateRecord
+			if err := s.GetProto(&data); err != nil {
+				continue
+			}
+			data.UpdateTime = updateUTime
+			msgs["state_records"] = append(msgs["state_records"], &apibq.StateRecordRow{
+				StateRecord: &data,
+				Delete:      s.Delete,
+			})
+		}
+	}
+	logging.Debugf(ctx, "Uploading all %d snapshots...", len(snapshots))
+	for tableName, ms := range msgs {
+		if err := dumpHelper(ctx, bqClient, ms, tableName, curTimeStr); err != nil {
+			return err
+		}
+	}
+	logging.Debugf(ctx, "Finish uploading the snapshots successfully")
+	logging.Debugf(ctx, "Deleting the uploaded snapshots")
+	if err := history.DeleteSnapshotMsgEntities(ctx, snapshots); err != nil {
+		logging.Debugf(ctx, "fail to delete snapshot msg entities: %s", err.Error())
+		return err
+	}
+	logging.Debugf(ctx, "Finish deleting the snapshots successfully")
+	return nil
+}
+
 func dumpConfigurations(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
-	if err := dumpChromePlatforms(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpVlans(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpRackLSEPrototypes(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpMachineLSEPrototypes(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpDHCPs(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpIPs(ctx, bqClient, curTimeStr); err != nil {
-		return err
+	for k, f := range configurationDumpToolkit {
+		logging.Debugf(ctx, "dumping %s", k)
+		msgs, err := f(ctx)
+		if err != nil {
+			return err
+		}
+		if err := dumpHelper(ctx, bqClient, msgs, k, curTimeStr); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func dumpRegistration(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
-	if err := dumpMachines(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpRacks(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpKVMs(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpSwitches(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpRPMs(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpNics(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpDracs(ctx, bqClient, curTimeStr); err != nil {
-		return err
+	for k, f := range registrationDumpToolkit {
+		logging.Debugf(ctx, "dumping %s", k)
+		msgs, err := f(ctx)
+		if err != nil {
+			return err
+		}
+		if err := dumpHelper(ctx, bqClient, msgs, k, curTimeStr); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func dumpInventory(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
-	if err := dumpMachineLSEs(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	if err := dumpRackLSEs(ctx, bqClient, curTimeStr); err != nil {
-		return err
+	for k, f := range inventoryDumpToolkit {
+		logging.Debugf(ctx, "dumping %s", k)
+		msgs, err := f(ctx)
+		if err != nil {
+			return err
+		}
+		if err := dumpHelper(ctx, bqClient, msgs, k, curTimeStr); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func dumpState(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
-	if err := dumpStateRecord(ctx, bqClient, curTimeStr); err != nil {
-		return err
-	}
-	return nil
-}
-
-func dumpChromePlatforms(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("chrome_platforms$%s", curTimeStr))
-	platforms, err := configuration.GetAllChromePlatforms(ctx)
-	if err != nil {
-		return errors.Annotate(err, "get all chrome platforms").Err()
-	}
-	msgs := make([]proto.Message, 0)
-	for _, p := range *platforms {
-		if p.Err != nil {
-			continue
-		}
-		msg := &apibq.ChromePlatformRow{
-			Platform: p.Data.(*ufspb.ChromePlatform),
-		}
-		msgs = append(msgs, msg)
-	}
-	logging.Debugf(ctx, "Dumping %d chrome_platform records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpVlans(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("vlans$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := controller.ListVlans(ctx, pageSize, startToken, "", false)
+	for k, f := range stateDumpToolkit {
+		logging.Debugf(ctx, "dumping %s", k)
+		msgs, err := f(ctx)
 		if err != nil {
-			return errors.Annotate(err, "get all vlans").Err()
+			return err
 		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.VlanRow{
-				Vlan: r,
-			})
+		if err := dumpHelper(ctx, bqClient, msgs, k, curTimeStr); err != nil {
+			return err
 		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
 	}
-	logging.Debugf(ctx, "Dumping %d vlan records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpRackLSEPrototypes(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("rack_lse_prototypes$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListRackLSEPrototypes(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all rack lse prototypes").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.RackLSEPrototypeRow{
-				RackLsePrototype: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d rack lse prototypes records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpMachineLSEPrototypes(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machine_lse_prototypes$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListMachineLSEPrototypes(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all vlans").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.MachineLSEPrototypeRow{
-				MachineLsePrototype: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d machine lse prototypes records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpDHCPs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("dhcps$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListDHCPConfigs(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all dhcps").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.DHCPConfigRow{
-				DhcpConfig: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d dhcp records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpIPs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("ips$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := configuration.ListIPs(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all dhcps").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.IPRow{
-				Ip: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d ip records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpMachines(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machines$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := registration.ListMachines(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all machines").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.MachineRow{
-				Machine: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d machine records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpRacks(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("racks$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := registration.ListRacks(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all racks").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.RackRow{
-				Rack: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d rack records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpKVMs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("kvms$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := registration.ListKVMs(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all kvms").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.KVMRow{
-				Kvm: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d kvm records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpSwitches(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("switches$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := registration.ListSwitches(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all switches").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.SwitchRow{
-				Switch: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d switch records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpRPMs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("rpms$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := registration.ListRPMs(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all rpms").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.RPMRow{
-				Rpm: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d rpm records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpNics(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("nics$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := registration.ListNics(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all nics").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.NicRow{
-				Nic: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d nic records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpDracs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("dracs$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := registration.ListDracs(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all dracs").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.DracRow{
-				Drac: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d drac records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpMachineLSEs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("machine_lses$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := inventory.ListMachineLSEs(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all machine lses").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.MachineLSERow{
-				MachineLse: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d machine lse records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpRackLSEs(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("rack_lses$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := inventory.ListRackLSEs(ctx, pageSize, startToken, nil, false)
-		if err != nil {
-			return errors.Annotate(err, "get all rack lses").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.RackLSERow{
-				RackLse: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d rack lse records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
-	return nil
-}
-
-func dumpStateRecord(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) error {
-	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("state_records$%s", curTimeStr))
-	msgs := make([]proto.Message, 0)
-	for startToken := ""; ; {
-		res, nextToken, err := state.ListStateRecords(ctx, pageSize, startToken, nil)
-		if err != nil {
-			return errors.Annotate(err, "get all state records").Err()
-		}
-		for _, r := range res {
-			msgs = append(msgs, &apibq.StateRecordRow{
-				StateRecord: r,
-			})
-		}
-		if nextToken == "" {
-			break
-		}
-		startToken = nextToken
-	}
-	logging.Debugf(ctx, "Dumping %d state records to BigQuery", len(msgs))
-	if err := uploader.Put(ctx, msgs...); err != nil {
-		return err
-	}
-	logging.Debugf(ctx, "Finish dumping successfully")
 	return nil
 }

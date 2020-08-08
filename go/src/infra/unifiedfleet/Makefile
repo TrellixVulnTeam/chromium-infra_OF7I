@@ -53,7 +53,7 @@ dev: build
 
 .PHONY: dev-dumper
 dev-dumper: build-dumper
-	./dumper --cloud-project="unified-fleet-system-dev"
+	./dumper --cloud-project="unified-fleet-system-dev" -http-addr="127.0.0.1:8888" -admin-addr="127.0.0.1:8889"
 
 # Uploading & Switching
 .PHONY: up-dev

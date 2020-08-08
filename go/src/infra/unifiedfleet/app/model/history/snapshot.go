@@ -27,6 +27,14 @@ type SnapshotMsgEntity struct {
 	Msg          []byte `gae:",noindex"`
 }
 
+// GetProto returns the unmarshaled Chrome platform.
+func (e *SnapshotMsgEntity) GetProto(t proto.Message) error {
+	if err := proto.Unmarshal(e.Msg, t); err != nil {
+		return err
+	}
+	return nil
+}
+
 // NewSnapshotMsgEntity creates a new SnapshotMsgEntity
 func NewSnapshotMsgEntity(resourceName string, delete bool, pm proto.Message) (*SnapshotMsgEntity, error) {
 	msg, err := proto.Marshal(pm)
