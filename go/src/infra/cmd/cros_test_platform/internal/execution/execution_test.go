@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/duration"
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -204,7 +205,7 @@ func runWithDefaults(ctx context.Context, skylab skylab.Client, invs []*steps.En
 func runWithParams(ctx context.Context, skylab skylab.Client, params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
 	args := execution.Args{
 		Build: &bbpb.Build{},
-		Send:  exe.BuildSender(noopBuildSender),
+		Send:  exe.BuildSender(func() {}),
 		Request: steps.ExecuteRequests{
 			TaggedRequests: map[string]*steps.ExecuteRequest{
 				"12345678/foo": {
@@ -224,8 +225,6 @@ func runWithParams(ctx context.Context, skylab skylab.Client, params *test_platf
 	}
 	return execution.Run(ctx, skylab, args)
 }
-
-func noopBuildSender() {}
 
 func TestLaunchForNonExistentBot(t *testing.T) {
 	Convey("Given one test invocation but non existent bots", t, func() {
@@ -1303,4 +1302,324 @@ func extractSingleResponse(resps map[string]*steps.ExecuteResponse) *steps.Execu
 		return resp
 	}
 	panic("unreachable")
+}
+
+func TestFinalBuildForSingleInvocation(t *testing.T) {
+	Convey("For a run with one request with one invocation", t, func() {
+		skylab := newFakeSkylab()
+		skylab.setURL(exampleTestRunnerURL)
+		ba := newBuildAccumulator()
+		_, err := runWithBuildAccumulator(
+			context.Background(),
+			skylab,
+			ba,
+			steps.ExecuteRequests{
+				TaggedRequests: map[string]*steps.ExecuteRequest{
+					"request-with-single-invocation": {
+						RequestParams: basicParams(),
+						Enumeration: &steps.EnumerationResponse{
+							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
+								clientTestInvocation("first-invocation", ""),
+							},
+						},
+					},
+				},
+			},
+		)
+		So(err, ShouldBeNil)
+
+		b := ba.GetLatestBuild()
+		So(b, ShouldNotBeNil)
+		So(b.GetSteps(), ShouldHaveLength, 2)
+
+		rs := stepForRequest(b, "request-with-single-invocation")
+		So(rs, ShouldNotBeNil)
+
+		is := stepForInvocation(b, "first-invocation")
+		So(is, ShouldNotBeNil)
+		So(is.Name, ShouldContainSubstring, "request-with-single-invocation")
+		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
+	})
+}
+
+const exampleTestRunnerURL = "https://ci.chromium.org/p/chromeos/builders/test_runner/test_runner/b8872341436802087200"
+
+func TestFinalBuildForTwoInvocations(t *testing.T) {
+	Convey("For a run with one request with two invocations", t, func() {
+		skylab := newFakeSkylab()
+		skylab.setURL(exampleTestRunnerURL)
+		ba := newBuildAccumulator()
+		_, err := runWithBuildAccumulator(
+			context.Background(),
+			skylab,
+			ba,
+			steps.ExecuteRequests{
+				TaggedRequests: map[string]*steps.ExecuteRequest{
+					"request-with-two-invocations": {
+						RequestParams: basicParams(),
+						Enumeration: &steps.EnumerationResponse{
+							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
+								clientTestInvocation("first-invocation", ""),
+								clientTestInvocation("second-invocation", ""),
+							},
+						},
+					},
+				},
+			},
+		)
+		So(err, ShouldBeNil)
+
+		b := ba.GetLatestBuild()
+		So(b, ShouldNotBeNil)
+		So(b.GetSteps(), ShouldHaveLength, 3)
+
+		rs := stepForRequest(b, "request-with-two-invocations")
+		So(rs, ShouldNotBeNil)
+
+		is := stepForInvocation(b, "first-invocation")
+		So(is, ShouldNotBeNil)
+		So(is.Name, ShouldContainSubstring, "request-with-two-invocations")
+		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
+
+		is = stepForInvocation(b, "second-invocation")
+		So(is, ShouldNotBeNil)
+		So(is.Name, ShouldContainSubstring, "request-with-two-invocations")
+		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
+	})
+}
+
+func TestFinalBuildForTwoRequests(t *testing.T) {
+	Convey("For a run with two requests with one invocation each", t, func() {
+		skylab := newFakeSkylab()
+		skylab.setURL(exampleTestRunnerURL)
+		ba := newBuildAccumulator()
+		_, err := runWithBuildAccumulator(
+			context.Background(),
+			skylab,
+			ba,
+			steps.ExecuteRequests{
+				TaggedRequests: map[string]*steps.ExecuteRequest{
+					"first-request": {
+						RequestParams: basicParams(),
+						Enumeration: &steps.EnumerationResponse{
+							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
+								clientTestInvocation("first-request-invocation", ""),
+							},
+						},
+					},
+					"second-request": {
+						RequestParams: basicParams(),
+						Enumeration: &steps.EnumerationResponse{
+							AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{
+								clientTestInvocation("second-request-invocation", ""),
+							},
+						},
+					},
+				},
+			},
+		)
+		So(err, ShouldBeNil)
+
+		b := ba.GetLatestBuild()
+		So(b, ShouldNotBeNil)
+		So(b.GetSteps(), ShouldHaveLength, 4)
+
+		rs := stepForRequest(b, "first-request")
+		So(rs, ShouldNotBeNil)
+		is := stepForInvocation(b, "first-request-invocation")
+		So(is, ShouldNotBeNil)
+		So(is.Name, ShouldContainSubstring, "first-request")
+		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
+
+		rs = stepForRequest(b, "second-request")
+		So(rs, ShouldNotBeNil)
+		is = stepForInvocation(b, "second-request-invocation")
+		So(is, ShouldNotBeNil)
+		So(is.Name, ShouldContainSubstring, "second-request")
+		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
+	})
+}
+
+func TestFinalBuildForSingleInvocationWithRetries(t *testing.T) {
+	Convey("For a run with one request with one invocation that needs 1 retry", t, func() {
+		params := basicParams()
+		params.Retry = &test_platform.Request_Params_Retry{
+			Allow: true,
+			Max:   1,
+		}
+		inv := clientTestInvocation("failing-invocation", "")
+		inv.Test.AllowRetries = true
+		req := steps.ExecuteRequests{
+			TaggedRequests: map[string]*steps.ExecuteRequest{
+				"request-with-one-retry-allowed": {
+					RequestParams: params,
+					Enumeration: &steps.EnumerationResponse{
+						AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{inv},
+					},
+				},
+			},
+		}
+
+		skylab := newFakeSkylab()
+		skylab.setURL(exampleTestRunnerURL)
+		skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
+
+		ba := newBuildAccumulator()
+		ctx := setFakeTimeWithImmediateTimeout(context.Background())
+		_, err := runWithBuildAccumulator(ctx, skylab, ba, req)
+		So(err, ShouldBeNil)
+
+		b := ba.GetLatestBuild()
+		So(b, ShouldNotBeNil)
+		So(b.GetSteps(), ShouldHaveLength, 2)
+
+		is := stepForInvocation(b, "failing-invocation")
+		So(is, ShouldNotBeNil)
+
+		markdownContainsURL(is.GetSummaryMarkdown(), "latest attempt", exampleTestRunnerURL)
+		markdownContainsURL(is.GetSummaryMarkdown(), "1", exampleTestRunnerURL)
+	})
+}
+
+func TestBuildUpdatesWithRetries(t *testing.T) {
+	Convey("Compared to a run without retries", t, func() {
+		ctx := setFakeTimeWithImmediateTimeout(context.Background())
+
+		skylab := newFakeSkylab()
+		skylab.setURL(exampleTestRunnerURL)
+		skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
+
+		inv := clientTestInvocation("failing-invocation", "")
+		inv.Test.AllowRetries = true
+		e := &steps.EnumerationResponse{
+			AutotestInvocations: []*steps.EnumerationResponse_AutotestInvocation{inv},
+		}
+		req := steps.ExecuteRequests{
+			TaggedRequests: map[string]*steps.ExecuteRequest{
+				"no-retry": {
+					RequestParams: basicParams(),
+					Enumeration:   e,
+				},
+			},
+		}
+
+		ba := newBuildAccumulator()
+		_, err := runWithBuildAccumulator(ctx, skylab, ba, req)
+		So(err, ShouldBeNil)
+		noRetryUpdateCount := len(ba.Sent)
+		_ = noRetryUpdateCount
+
+		Convey("a run with a retry should send more updates", func() {
+			params := basicParams()
+			params.Retry = &test_platform.Request_Params_Retry{
+				Allow: true,
+				Max:   1,
+			}
+			req := steps.ExecuteRequests{
+				TaggedRequests: map[string]*steps.ExecuteRequest{
+					"one-retry": {
+						RequestParams: params,
+						Enumeration:   e,
+					},
+				},
+			}
+
+			ba := newBuildAccumulator()
+			_, err := runWithBuildAccumulator(ctx, skylab, ba, req)
+			So(err, ShouldBeNil)
+			oneRetryUpdateCount := len(ba.Sent)
+
+			So(oneRetryUpdateCount, ShouldBeGreaterThan, noRetryUpdateCount)
+		})
+	})
+}
+
+// buildAccumulator supports a Send method to accumulate the bbpb.Build sent
+// to the host application.
+//
+// Typical usage:
+//
+//   ba := newBuildAccumulator()
+//   err := runWithBuildAccumulator(..., ba, ...)
+//   So(err, ShouldBeNil)
+//   So(ba.GetLatestBuild(), ShouldNotBeNil)
+//   ...
+type buildAccumulator struct {
+	Input *bbpb.Build
+	Sent  []*bbpb.Build
+}
+
+func newBuildAccumulator() *buildAccumulator {
+	return &buildAccumulator{
+		Input: &bbpb.Build{},
+		Sent:  []*bbpb.Build{},
+	}
+}
+
+func (s *buildAccumulator) Send() {
+	s.Sent = append(s.Sent, proto.Clone(s.Input).(*bbpb.Build))
+}
+
+func (s *buildAccumulator) GetLatestBuild() *bbpb.Build {
+	if len(s.Sent) == 0 {
+		return nil
+	}
+	return s.Sent[len(s.Sent)-1]
+}
+
+func runWithBuildAccumulator(ctx context.Context, skylab skylab.Client, ba *buildAccumulator, request steps.ExecuteRequests) (map[string]*steps.ExecuteResponse, error) {
+	args := execution.Args{
+		Build:   ba.Input,
+		Send:    exe.BuildSender(ba.Send),
+		Request: request,
+		WorkerConfig: &config.Config_SkylabWorker{
+			LuciProject: "foo-luci-project",
+			LogDogHost:  "foo-logdog-host",
+		},
+		ParentTaskID: "foo-parent-task-id",
+		Deadline:     time.Now().Add(time.Hour),
+	}
+	return execution.Run(ctx, skylab, args)
+}
+
+// stepForRequest returns the first step for a request with the given name.
+//
+// Returns nil if no such step is found.
+func stepForRequest(build *bbpb.Build, name string) *bbpb.Step {
+	for _, s := range build.Steps {
+		if isRequestStep(s.GetName()) && strings.Contains(s.GetName(), name) {
+			return s
+		}
+	}
+	return nil
+}
+
+// stepForInvocation returns the first step for an invocation with the given
+// name.
+//
+// Returns nil if no such step is found.
+func stepForInvocation(build *bbpb.Build, name string) *bbpb.Step {
+	for _, s := range build.Steps {
+		if isInvocationStep(s.GetName()) && strings.Contains(s.GetName(), name) {
+			return s
+		}
+	}
+	return nil
+}
+
+var (
+	requestStepRe    = regexp.MustCompile(`\s*request.*\|\s*invocation.*`)
+	invocationStepRe = regexp.MustCompile(`.*|\s*invocation.*`)
+)
+
+func isRequestStep(name string) bool {
+	return requestStepRe.Match([]byte(name))
+}
+
+func isInvocationStep(name string) bool {
+	return invocationStepRe.Match([]byte(name))
+}
+
+func markdownContainsURL(md string, target string, url string) {
+	So(md, ShouldContainSubstring, fmt.Sprintf("[%s](%s)", target, url))
 }
