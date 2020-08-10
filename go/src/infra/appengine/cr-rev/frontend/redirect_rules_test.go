@@ -8,37 +8,25 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestRedirects(t *testing.T) {
 	r := newRedirectRules()
-	convey.Convey("number redirect", t, func() {
+	Convey("number redirect", t, func() {
 		_, err := r.findRedirectURL("/42")
-		convey.So(
-			err,
-			convey.ShouldResemble,
-			errors.New("number redirect not implemented"),
-		)
+		So(err, ShouldResemble, errors.New("number redirect not implemented"))
 	})
 
-	convey.Convey("full hash redirect", t, func() {
+	Convey("full hash redirect", t, func() {
 		_, err := r.findRedirectURL(
 			"/0000000000000000000000000000000000000000")
-		convey.So(
-			err,
-			convey.ShouldResemble,
-			errors.New("full commit hash redirect not implemented"),
-		)
+		So(err, ShouldResemble, errors.New("full commit hash redirect not implemented"))
 	})
 
-	convey.Convey("default not found", t, func() {
+	Convey("default not found", t, func() {
 		_, err := r.findRedirectURL(
 			"/foo")
-		convey.So(
-			err,
-			convey.ShouldEqual,
-			errNoMatch,
-		)
+		So(err, ShouldEqual, errNoMatch)
 	})
 }

@@ -13,7 +13,7 @@ import (
 	"unsafe"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/smartystreets/goconvey/convey"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type mockPubsubReceiver struct {
@@ -56,7 +56,7 @@ func (m *mockProcessMessage) processPubsubMessage(ctx context.Context,
 }
 
 func TestPubsubSubscribe(t *testing.T) {
-	convey.Convey("no messages", t, func() {
+	Convey("no messages", t, func() {
 		ctx := context.Background()
 		mReceiver := &mockPubsubReceiver{
 			messages: make([]*pubsub.Message, 0),
@@ -64,28 +64,13 @@ func TestPubsubSubscribe(t *testing.T) {
 		mProcess := &mockProcessMessage{}
 
 		err := Subscribe(ctx, mReceiver, mProcess.processPubsubMessage)
-		convey.So(
-			err,
-			convey.ShouldBeNil,
-		)
-		convey.So(
-			mReceiver.calls,
-			convey.ShouldEqual,
-			0,
-		)
-		convey.So(
-			mReceiver.acked,
-			convey.ShouldEqual,
-			0,
-		)
-		convey.So(
-			mProcess.calls,
-			convey.ShouldEqual,
-			0,
-		)
+		So(err, ShouldBeNil)
+		So(mReceiver.calls, ShouldEqual, 0)
+		So(mReceiver.acked, ShouldEqual, 0)
+		So(mProcess.calls, ShouldEqual, 0)
 	})
 
-	convey.Convey("invalid message", t, func() {
+	Convey("invalid message", t, func() {
 		ctx := context.Background()
 		mReceiver := &mockPubsubReceiver{
 			messages: []*pubsub.Message{
@@ -97,28 +82,13 @@ func TestPubsubSubscribe(t *testing.T) {
 		mProcess := &mockProcessMessage{}
 
 		err := Subscribe(ctx, mReceiver, mProcess.processPubsubMessage)
-		convey.So(
-			err,
-			convey.ShouldBeNil,
-		)
-		convey.So(
-			mReceiver.calls,
-			convey.ShouldEqual,
-			1,
-		)
-		convey.So(
-			mReceiver.acked,
-			convey.ShouldEqual,
-			0,
-		)
-		convey.So(
-			mProcess.calls,
-			convey.ShouldEqual,
-			0,
-		)
+		So(err, ShouldBeNil)
+		So(mReceiver.calls, ShouldEqual, 1)
+		So(mReceiver.acked, ShouldEqual, 0)
+		So(mProcess.calls, ShouldEqual, 0)
 	})
 
-	convey.Convey("valid message", t, func() {
+	Convey("valid message", t, func() {
 		ctx := context.Background()
 		mReceiver := &mockPubsubReceiver{
 			messages: []*pubsub.Message{
@@ -145,24 +115,9 @@ func TestPubsubSubscribe(t *testing.T) {
 		mProcess := &mockProcessMessage{}
 
 		err := Subscribe(ctx, mReceiver, mProcess.processPubsubMessage)
-		convey.So(
-			err,
-			convey.ShouldBeNil,
-		)
-		convey.So(
-			mReceiver.calls,
-			convey.ShouldEqual,
-			1,
-		)
-		convey.So(
-			mReceiver.acked,
-			convey.ShouldEqual,
-			1,
-		)
-		convey.So(
-			mProcess.calls,
-			convey.ShouldEqual,
-			1,
-		)
+		So(err, ShouldBeNil)
+		So(mReceiver.calls, ShouldEqual, 1)
+		So(mReceiver.acked, ShouldEqual, 1)
+		So(mProcess.calls, ShouldEqual, 1)
 	})
 }
