@@ -24,11 +24,13 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/memlogger"
+	"go.chromium.org/luci/luciexe/exe"
 
 	"infra/cmd/cros_test_platform/internal/execution"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
@@ -201,6 +203,8 @@ func newRunnerWithDefaults(invs []*steps.EnumerationResponse_AutotestInvocation)
 
 func newRunnerWithParams(params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (*execution.Runner, error) {
 	return execution.NewRunner(
+		&bbpb.Build{},
+		exe.BuildSender(noopBuildSender),
 		&config.Config_SkylabWorker{
 			LuciProject: "foo-luci-project",
 			LogDogHost:  "foo-logdog-host",
@@ -219,6 +223,8 @@ func newRunnerWithParams(params *test_platform.Request_Params, invs []*steps.Enu
 		},
 	)
 }
+
+func noopBuildSender() {}
 
 func TestLaunchForNonExistentBot(t *testing.T) {
 	Convey("Given one test invocation but non existent bots", t, func() {

@@ -229,3 +229,8 @@ func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
 func (t *Task) Retry(ctx context.Context, c Client) (*Task, error) {
 	return NewTask(ctx, c, t.argsGenerator)
 }
+
+// TaskURL returns the URL to the buildbucket build for this task.
+func (t *Task) TaskURL() string {
+	return t.url
+}

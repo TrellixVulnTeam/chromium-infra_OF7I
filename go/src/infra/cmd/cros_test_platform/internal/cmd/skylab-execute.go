@@ -19,6 +19,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -98,7 +99,9 @@ func (c *skylabExecuteRun) innerRun(ctx context.Context, args []string, env subc
 		return err
 	}
 
-	runner, err := execution.NewRunner(cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, d, request)
+	// TODO: Convert to luciexe & plumb through actual build input and send
+	// function.
+	runner, err := execution.NewRunner(&bbpb.Build{}, func() {}, cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, d, request)
 	if err != nil {
 		return err
 	}

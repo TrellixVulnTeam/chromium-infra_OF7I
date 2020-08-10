@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"infra/cmd/cros_test_platform/internal/execution/args"
+	"infra/cmd/cros_test_platform/internal/execution/build"
 	"infra/cmd/cros_test_platform/internal/execution/response"
 	"infra/cmd/cros_test_platform/internal/execution/retry"
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
@@ -17,6 +18,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 )
@@ -33,6 +35,9 @@ type RequestTaskSet struct {
 	activeTasks         map[types.InvocationID]*skylab.Task
 	retryCounter        retry.Counter
 
+	step            *build.RequestStepUpdater
+	invocationSteps map[types.InvocationID]*build.InvocationStepUpdater
+
 	launched bool
 }
 
@@ -44,16 +49,27 @@ type TaskSetConfig struct {
 }
 
 // NewRequestTaskSet creates a new RequestTaskSet.
-func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, tc *TaskSetConfig) (*RequestTaskSet, error) {
+func NewRequestTaskSet(
+	name string,
+	buildInstance *bbpb.Build,
+	workerConfig *config.Config_SkylabWorker,
+	tc *TaskSetConfig,
+	params *test_platform.Request_Params,
+	tests []*steps.EnumerationResponse_AutotestInvocation) (*RequestTaskSet, error) {
+
+	step := build.NewRequestStep(name, buildInstance)
+
 	invocationIDs := make([]types.InvocationID, len(tests))
 	invocationResponses := make(map[types.InvocationID]*response.Invocation)
 	argsGenerators := make(map[types.InvocationID]*args.Generator)
+	invocationSteps := make(map[types.InvocationID]*build.InvocationStepUpdater)
 	tm := make(map[types.InvocationID]*steps.EnumerationResponse_AutotestInvocation)
 	for i, test := range tests {
 		iid := types.NewInvocationID(i, test)
 		invocationIDs[i] = iid
 		argsGenerators[iid] = args.NewGenerator(test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
 		invocationResponses[iid] = response.NewInvocation(test.GetTest().GetName())
+		invocationSteps[iid] = step.NewInvocationStep(test.GetTest().GetName())
 		tm[iid] = test
 	}
 	return &RequestTaskSet{
@@ -62,6 +78,8 @@ func NewRequestTaskSet(tests []*steps.EnumerationResponse_AutotestInvocation, pa
 		invocationResponses: invocationResponses,
 		activeTasks:         make(map[types.InvocationID]*skylab.Task),
 		retryCounter:        retry.NewCounter(params, tm),
+		invocationSteps:     invocationSteps,
+		step:                step,
 	}, nil
 }
 
@@ -91,6 +109,7 @@ func (r *RequestTaskSet) LaunchTasks(ctx context.Context, c skylab.Client) error
 			return err
 		}
 		ts.NotifyTask(task)
+		r.getInvocationStep(iid).NotifyNewTask(task)
 		r.activeTasks[iid] = task
 	}
 	return nil
@@ -110,6 +129,14 @@ func (r *RequestTaskSet) getArgsGenerator(iid types.InvocationID) *args.Generato
 		panic(fmt.Sprintf("No args.Generator for invocation %s", iid))
 	}
 	return ag
+}
+
+func (r *RequestTaskSet) getInvocationStep(iid types.InvocationID) *build.InvocationStepUpdater {
+	s, ok := r.invocationSteps[iid]
+	if !ok {
+		panic(fmt.Sprintf("No step for invocation %s", iid))
+	}
+	return s
 }
 
 // CheckTasksAndRetry checks the status of currently running tasks for this
@@ -149,6 +176,7 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		}
 		newTasks[iid] = nt
 		ts.NotifyTask(nt)
+		r.getInvocationStep(iid).NotifyNewTask(task)
 		r.retryCounter.NotifyRetry(iid)
 	}
 
@@ -159,6 +187,14 @@ func (r *RequestTaskSet) CheckTasksAndRetry(ctx context.Context, c skylab.Client
 		r.activeTasks[iid] = task
 	}
 	return r.completed(), nil
+}
+
+// Close notifies that all execution for this request has completed.
+//
+// Finalize must be called exactly once to clean up state.
+// It is an error to call any methods except Response() on a Close()ed instance.
+func (r *RequestTaskSet) Close() {
+	r.step.Close()
 }
 
 // Response returns the current response for this request.

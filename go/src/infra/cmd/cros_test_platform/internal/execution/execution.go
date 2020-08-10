@@ -10,10 +10,12 @@ import (
 	"infra/cmd/cros_test_platform/internal/execution/skylab"
 	"time"
 
-	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/luci/luciexe/exe"
 
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 )
@@ -25,23 +27,26 @@ const ctpRequestUIDTemplate = "TestPlanRuns/%d/%s"
 // Runner manages task sets for multiple cros_test_platform requests.
 type Runner struct {
 	requestTaskSets map[string]*RequestTaskSet
+	send            exe.BuildSender
 	waiting         bool
 }
 
 // NewRunner returns a Runner that will execute the given requests.
-func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, request steps.ExecuteRequests) (*Runner, error) {
+func NewRunner(buildInstance *bbpb.Build, send exe.BuildSender, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, request steps.ExecuteRequests) (*Runner, error) {
 	ts := make(map[string]*RequestTaskSet)
 	for t, r := range request.GetTaggedRequests() {
 		var err error
 		ts[t], err = NewRequestTaskSet(
-			r.Enumeration.AutotestInvocations,
-			r.RequestParams,
+			t,
+			buildInstance,
 			workerConfig,
 			&TaskSetConfig{
 				parentTaskID,
 				constructRequestUID(request.GetBuild().GetId(), t),
 				deadline,
 			},
+			r.RequestParams,
+			r.Enumeration.AutotestInvocations,
 		)
 		if err != nil {
 			return nil, errors.Annotate(err, "new skylab runner").Err()
@@ -49,6 +54,7 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, de
 	}
 	return &Runner{
 		requestTaskSets: ts,
+		send:            send,
 	}, nil
 }
 
@@ -62,11 +68,27 @@ func NewRunner(workerConfig *config.Config_SkylabWorker, parentTaskID string, de
 func (r *Runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
 	defer func() { r.waiting = false }()
 
+	// TODO(pprabhu): We may fail to Close() the individual requests if we fail
+	// between a call to NewRunner() and this function.
+	// To fix this, merge NewRunner() and LaunchAndWait() into a single method.
+	for _, ts := range r.requestTaskSets {
+		defer ts.Close()
+	}
+
 	if err := r.launchTasks(ctx, c); err != nil {
+		r.send()
 		return err
 	}
 	for {
 		allDone, err := r.checkTasksAndRetry(ctx, c)
+
+		// Each call to checkTasksAndRetry() potentially updates the Build.
+		// We unconditionally send() the updated build so that we reflect the
+		// update irrespective of abnormal exits.
+		// Since this loop sleeps between iterations, the load generated on
+		// the buildbucket service is bounded.
+		r.send()
+
 		if err != nil {
 			return err
 		}
