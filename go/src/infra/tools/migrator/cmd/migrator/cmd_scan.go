@@ -138,7 +138,7 @@ func (r *cmdScanImpl) doRepoCreation(ctx context.Context, inst migrator.API, pro
 			logging.Errorf(ctx, "Failed to clean repo, creation may fail: %s", err)
 		}
 	}
-	repo, newCheckout, err := plugsupport.CreateRepo(ctx, r.projectDir, projPB)
+	repo, newCheckout, err := plugsupport.CreateOrLoadRepo(ctx, r.projectDir, projPB.Id, projPB)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to checkout repo: %s", err)
 		reporter.Report("REPO_CREATION_FAILURE", "Failed to checkout/update repo")

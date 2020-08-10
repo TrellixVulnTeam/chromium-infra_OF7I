@@ -31,26 +31,45 @@ type repo struct {
 	relConfigRoot          string
 	relGeneratedConfigRoot string
 
-	projPB *configpb.Project
+	projID string
 
 	ctx context.Context
 }
 
 func (r *repo) Project() migrator.Project {
 	return &localProject{
-		id:  migrator.ReportID{Project: r.projPB.Id},
+		id:  migrator.ReportID{Project: r.projID},
 		dir: filepath.Join(r.root, r.relGeneratedConfigRoot),
 		ctx: r.ctx,
 	}
 }
 
+const (
+	generatedConfigRootKey = "migrator.generatedConfigRoot"
+	relConfigRootKey       = "migrator.relConfigRoot"
+)
+
 func (r *repo) ConfigRoot() string          { return "/" + r.relConfigRoot }
 func (r *repo) GeneratedConfigRoot() string { return "/" + r.relGeneratedConfigRoot }
 
-// CreateRepo generates a new repo, checking it out if it's unavailable.
-//
-// Returns `true` if this did a new checkout.
-func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Project) (ret migrator.Repo, newCheckout bool, err error) {
+func loadRepo(ctx context.Context, project ProjectDir, projID string) (ret migrator.Repo, err error) {
+	git := gitRunner{ctx: ctx, root: project.ProjectRepo(projID)}
+
+	ret = &repo{
+		root: git.root,
+
+		relConfigRoot:          git.read("config", relConfigRootKey),
+		relGeneratedConfigRoot: git.read("config", generatedConfigRootKey),
+
+		projID: projID,
+
+		ctx: ctx,
+	}
+
+	return ret, git.err
+}
+
+func createRepo(ctx context.Context, project ProjectDir, projPB *configpb.Project) (err error) {
 	realPath := project.ProjectRepo(projPB.Id)
 	gitLoc := projPB.GetGitilesLocation()
 
@@ -65,33 +84,20 @@ func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		return
 	}
 
-	var tempPath string
-	git := gitRunner{ctx: ctx}
+	git := gitRunner{ctx: ctx, root: project.ProjectRepoTemp(projPB.Id)}
 
-	if _, err = os.Stat(realPath); err != nil && !os.IsNotExist(err) {
-		err = errors.Annotate(err, "statting checkout").Err()
+	if err = os.Mkdir(git.root, 0777); err != nil {
+		err = errors.Annotate(err, "creating repo checkout").Err()
 		return
-	} else if os.IsNotExist(err) {
-		newCheckout = true
-
-		tempPath = project.ProjectRepoTemp(projPB.Id)
-
-		if err = os.Mkdir(tempPath, 0777); err != nil {
-			err = errors.Annotate(err, "creating repo checkout").Err()
-			return
-		}
-
-		git.root = tempPath
-		git.run("init")
-		git.run("config", "extensions.PartialClone", "origin")
-		git.run("config", "depot-tools.upstream", originRef)
-		git.run("remote", "add", "origin", gitLoc.Repo)
-		git.run("config", "remote.origin.fetch", "+"+gitLoc.Ref+":"+originRef)
-		git.run("config", "remote.origin.partialclonefilter", "blob:none")
-		git.run("fetch", "--depth", "1", "origin")
-	} else {
-		git.root = realPath
 	}
+
+	git.run("init")
+	git.run("config", "extensions.PartialClone", "origin")
+	git.run("config", "depot-tools.upstream", originRef)
+	git.run("remote", "add", "origin", gitLoc.Repo)
+	git.run("config", "remote.origin.fetch", "+"+gitLoc.Ref+":"+originRef)
+	git.run("config", "remote.origin.partialclonefilter", "blob:none")
+	git.run("fetch", "--depth", "1", "origin")
 
 	// toAdd will have the list of file patterns we want from our sparse checkout;
 	// We do the `sparse-checkout add` call at most once because it's pretty slow
@@ -125,39 +131,55 @@ func CreateRepo(ctx context.Context, project ProjectDir, projPB *configpb.Projec
 		relConfigRoot = gitLoc.Path
 	}
 
-	if newCheckout {
-		// Finalize the checkout.
+	// Finalize the checkout.
 
-		// We do a sparse checkout iff the relConfigRoot is somewhere deeper than
-		// the root of the repo. Otherwise the whole checkout is the config
-		// directory.
-		if !(relConfigRoot == "" || relConfigRoot == ".") {
-			git.run("sparse-checkout", "init")
-			git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
-			if err = git.err; err != nil {
-				return
-			}
-		}
-
-		git.run("new-branch", "fix_config")
+	// We do a sparse checkout iff the relConfigRoot is somewhere deeper than
+	// the root of the repo. Otherwise the whole checkout is the config
+	// directory.
+	if !(relConfigRoot == "" || relConfigRoot == ".") {
+		git.run("sparse-checkout", "init")
+		git.run(append([]string{"sparse-checkout", "add"}, toAdd.ToSortedSlice()...)...)
 		if err = git.err; err != nil {
 			return
 		}
+	}
 
-		if err = os.Rename(tempPath, realPath); err != nil {
+	git.run("new-branch", "fix_config")
+
+	git.run("config", generatedConfigRootKey, gitLoc.Path)
+	git.run("config", relConfigRootKey, relConfigRoot)
+
+	if err = git.err; err != nil {
+		return
+	}
+
+	return os.Rename(git.root, realPath)
+}
+
+// CreateOrLoadRepo loads a new repo, checking it out if it's not available
+// locally.
+//
+// If `projPB` is nil, the repo MUST exist locally, or this returns an error.
+//
+// Returns `true` if this did a new checkout.
+func CreateOrLoadRepo(ctx context.Context, project ProjectDir, projID string, projPB *configpb.Project) (ret migrator.Repo, newCheckout bool, err error) {
+	realPath := project.ProjectRepo(projID)
+
+	if _, err = os.Stat(realPath); err != nil && !os.IsNotExist(err) {
+		err = errors.Annotate(err, "statting checkout").Err()
+		return
+	} else if os.IsNotExist(err) {
+		if projPB == nil {
+			err = errors.Reason("projPB==nil and project %q is not already checked out", projID).Err()
+			return
+		}
+		newCheckout = true
+		if err = createRepo(ctx, project, projPB); err != nil {
 			return
 		}
 	}
 
-	ret = &repo{
-		root: realPath,
-
-		relConfigRoot:          relConfigRoot,
-		relGeneratedConfigRoot: gitLoc.Path,
-
-		projPB: projPB,
-		ctx:    ctx,
-	}
+	ret, err = loadRepo(ctx, project, projID)
 	return
 }
 
@@ -284,4 +306,23 @@ func (r *gitRunner) run(args ...string) {
 		}
 	})
 	r.err = errors.Annotate(err, "running git %q", args).Err()
+}
+
+func (r *gitRunner) read(args ...string) string {
+	if r.err != nil {
+		return ""
+	}
+
+	logging.Infof(r.ctx, "running git %q", args)
+
+	buf := &bytes.Buffer{}
+
+	cmd := exec.CommandContext(r.ctx, "git", args...)
+	cmd.Stdout = buf
+	cmd.Dir = r.root
+	err := redirectIOAndWait(cmd, func(fromStdout bool, line string) {
+		logging.Errorf(r.ctx, "%s", line)
+	})
+	r.err = errors.Annotate(err, "running git %q", args).Err()
+	return buf.String()
 }
