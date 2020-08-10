@@ -38,6 +38,10 @@ type Args struct {
 //
 // Run may be aborted by cancelling the supplied context.
 func Run(ctx context.Context, c skylab.Client, args Args) (map[string]*steps.ExecuteResponse, error) {
+	// Build may be updated as each of the task sets is Close()ed by a deferred
+	// function. Send() one last time to capture those changes.
+	defer args.Send()
+
 	ts := make(map[string]*RequestTaskSet)
 	for t, r := range args.Request.GetTaggedRequests() {
 		var err error
@@ -56,7 +60,15 @@ func Run(ctx context.Context, c skylab.Client, args Args) (map[string]*steps.Exe
 		if err != nil {
 			return nil, err
 		}
+		defer ts[t].Close()
+
+		// A large number of tasks is created in the beginning as a new task is
+		// created for each invocation in the request.
+		// We update the build more frequently in the beginning to reflect these
+		// tasks on the UI sooner.
+		args.Send()
 	}
+
 	r := runner{
 		requestTaskSets: ts,
 		send:            args.Send,
@@ -85,15 +97,7 @@ type runner struct {
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
 func (r *runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
-	// TODO(pprabhu): We may fail to Close() the individual requests if we fail
-	// between a call to NewRunner() and this function.
-	// To fix this, merge NewRunner() and LaunchAndWait() into a single method.
-	for _, ts := range r.requestTaskSets {
-		defer ts.Close()
-	}
-
 	if err := r.launchTasks(ctx, c); err != nil {
-		r.send()
 		return err
 	}
 	for {
