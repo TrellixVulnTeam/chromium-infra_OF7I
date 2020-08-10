@@ -89,27 +89,42 @@ func (c *skylabExecuteRun) innerRun(ctx context.Context, args []string, env subc
 	}
 
 	cfg := extractOneConfig(request.TaggedRequests)
-	client, err := newSkylabClient(ctx, cfg, request.TaggedRequests)
+	skylab, err := newSkylabClient(ctx, cfg, request.TaggedRequests)
 	if err != nil {
 		return err
 	}
 
-	d, err := inferDeadline(&request)
+	deadline, err := inferDeadline(&request)
 	if err != nil {
 		return err
 	}
 
 	// TODO: Convert to luciexe & plumb through actual build input and send
 	// function.
-	runner, err := execution.NewRunner(&bbpb.Build{}, func() {}, cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, d, request)
+	runner, err := execution.NewRunner(&bbpb.Build{}, func() {}, cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, deadline, request)
 	if err != nil {
 		return err
 	}
 
-	resps, err := c.handleRequests(ctx, d, runner, client)
+	tErr, err := runWithDeadline(
+		ctx,
+		func(ctx context.Context) error {
+			return runner.LaunchAndWait(ctx, skylab)
+		},
+		deadline,
+	)
 	if err != nil {
 		return err
 	}
+	if tErr != nil {
+		// Timeout while waiting for tasks is not considered an Test Platform
+		// infrastructure error because root cause is mostly related to fleet
+		// capacity or long test runtimes.
+		logging.Warningf(ctx, "Exited wait dut to timeout: %s", tErr)
+		logging.Warningf(ctx, "Execution responses will contain test failures as a consequence of the timeout.")
+	}
+
+	resps := runner.Responses()
 	c.updateWithEnumerationErrors(ctx, resps, request.TaggedRequests)
 	return writeResponse(
 		c.outputPath,
@@ -229,24 +244,6 @@ func (c *skylabExecuteRun) validateRequestConfig(cfg *config.Config) error {
 		return fmt.Errorf("nil request.config.skylab_worker")
 	}
 	return nil
-}
-
-func (c *skylabExecuteRun) handleRequests(ctx context.Context, deadline time.Time, runner *execution.Runner, skylab skylab.Client) (map[string]*steps.ExecuteResponse, error) {
-	tErr, fErr := runWithDeadline(
-		ctx,
-		func(ctx context.Context) error {
-			return runner.LaunchAndWait(ctx, skylab)
-		},
-		deadline,
-	)
-	if tErr != nil {
-		// Timeout while waiting for tasks is not considered an Test Platform
-		// infrastructure error because root cause is mostly related to fleet
-		// capacity or long test runtimes.
-		logging.Warningf(ctx, "Exited wait dut to timeout: %s", tErr)
-		logging.Warningf(ctx, "Execution responses will contain test failures as a consequence of the timeout.")
-	}
-	return runner.Responses(), fErr
 }
 
 func (c *skylabExecuteRun) updateWithEnumerationErrors(ctx context.Context, resps map[string]*steps.ExecuteResponse, reqs map[string]*steps.ExecuteRequest) {
