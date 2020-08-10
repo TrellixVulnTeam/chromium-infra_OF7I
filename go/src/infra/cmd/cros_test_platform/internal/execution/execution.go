@@ -20,19 +20,54 @@ import (
 	"go.chromium.org/luci/common/errors"
 )
 
+// Args bundles together the arguments for an execution.
+type Args struct {
+	// Used to get inputs from and send updates to a buildbucket Build.
+	// See https://godoc.org/go.chromium.org/luci/luciexe
+	Build *bbpb.Build
+	Send  exe.BuildSender
+
+	Request steps.ExecuteRequests
+
+	WorkerConfig *config.Config_SkylabWorker
+	ParentTaskID string
+	Deadline     time.Time
+}
+
+// Run runs an execution until success.
+//
+// Run may be aborted by cancelling the supplied context.
+func Run(ctx context.Context, c skylab.Client, args Args) (map[string]*steps.ExecuteResponse, error) {
+	r, err := newRunner(
+		args.Build,
+		args.Send,
+		args.WorkerConfig,
+		args.ParentTaskID,
+		args.Deadline,
+		args.Request,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := r.LaunchAndWait(ctx, c); err != nil {
+		return nil, err
+	}
+	return r.Responses(), nil
+}
+
 // ctpRequestUIDTemplate is the template to generate the UID of
 // a test plan run, a.k.a. CTP request.
 const ctpRequestUIDTemplate = "TestPlanRuns/%d/%s"
 
-// Runner manages task sets for multiple cros_test_platform requests.
-type Runner struct {
+// runner manages task sets for multiple cros_test_platform requests.
+type runner struct {
 	requestTaskSets map[string]*RequestTaskSet
 	send            exe.BuildSender
 	waiting         bool
 }
 
-// NewRunner returns a Runner that will execute the given requests.
-func NewRunner(buildInstance *bbpb.Build, send exe.BuildSender, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, request steps.ExecuteRequests) (*Runner, error) {
+// newRunner returns a runner that will execute the given requests.
+func newRunner(buildInstance *bbpb.Build, send exe.BuildSender, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, request steps.ExecuteRequests) (*runner, error) {
 	ts := make(map[string]*RequestTaskSet)
 	for t, r := range request.GetTaggedRequests() {
 		var err error
@@ -52,7 +87,7 @@ func NewRunner(buildInstance *bbpb.Build, send exe.BuildSender, workerConfig *co
 			return nil, errors.Annotate(err, "new skylab runner").Err()
 		}
 	}
-	return &Runner{
+	return &runner{
 		requestTaskSets: ts,
 		send:            send,
 	}, nil
@@ -65,7 +100,7 @@ func NewRunner(buildInstance *bbpb.Build, send exe.BuildSender, workerConfig *co
 // If the supplied context is cancelled prior to completion, or some other error
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
-func (r *Runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
+func (r *runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
 	defer func() { r.waiting = false }()
 
 	// TODO(pprabhu): We may fail to Close() the individual requests if we fail
@@ -107,7 +142,7 @@ func (r *Runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
 	}
 }
 
-func (r *Runner) launchTasks(ctx context.Context, c skylab.Client) error {
+func (r *runner) launchTasks(ctx context.Context, c skylab.Client) error {
 	for t, ts := range r.requestTaskSets {
 		if err := ts.LaunchTasks(ctx, c); err != nil {
 			return errors.Annotate(err, "launch tasks for %s", t).Err()
@@ -118,7 +153,7 @@ func (r *Runner) launchTasks(ctx context.Context, c skylab.Client) error {
 
 // Returns whether all tasks are complete (so future calls to this function are
 // unnecessary)
-func (r *Runner) checkTasksAndRetry(ctx context.Context, c skylab.Client) (bool, error) {
+func (r *runner) checkTasksAndRetry(ctx context.Context, c skylab.Client) (bool, error) {
 	allDone := true
 	for t, ts := range r.requestTaskSets {
 		c, err := ts.CheckTasksAndRetry(ctx, c)
@@ -130,8 +165,8 @@ func (r *Runner) checkTasksAndRetry(ctx context.Context, c skylab.Client) (bool,
 	return allDone, nil
 }
 
-// Responses constructs responses for each request managed by the Runner.
-func (r *Runner) Responses() map[string]*steps.ExecuteResponse {
+// Responses constructs responses for each request managed by the runner.
+func (r *runner) Responses() map[string]*steps.ExecuteResponse {
 	resps := make(map[string]*steps.ExecuteResponse)
 	for t, ts := range r.requestTaskSets {
 		resps[t] = ts.Response()

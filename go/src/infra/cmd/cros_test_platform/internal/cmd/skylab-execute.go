@@ -99,18 +99,25 @@ func (c *skylabExecuteRun) innerRun(ctx context.Context, args []string, env subc
 		return err
 	}
 
-	var runner *execution.Runner
+	ea := execution.Args{
+		// TODO: Convert to luciexe & plumb through actual build input and send
+		// function.
+		Build: &bbpb.Build{},
+		Send:  func() {},
+
+		Request:      request,
+		WorkerConfig: cfg.SkylabWorker,
+		ParentTaskID: env["SWARMING_TASK_ID"].Value,
+		Deadline:     deadline,
+	}
+	var resps map[string]*steps.ExecuteResponse
 	tErr, err := runWithDeadline(
 		ctx,
 		func(ctx context.Context) error {
 			var err error
-			// TODO: Convert to luciexe & plumb through actual build input and send
-			// function.
-			runner, err = execution.NewRunner(&bbpb.Build{}, func() {}, cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, deadline, request)
-			if err != nil {
-				return err
-			}
-			return runner.LaunchAndWait(ctx, skylab)
+			// Captured: resps
+			resps, err = execution.Run(ctx, skylab, ea)
+			return err
 		},
 		deadline,
 	)
@@ -125,7 +132,6 @@ func (c *skylabExecuteRun) innerRun(ctx context.Context, args []string, env subc
 		logging.Warningf(ctx, "Execution responses will contain test failures as a consequence of the timeout.")
 	}
 
-	resps := runner.Responses()
 	c.updateWithEnumerationErrors(ctx, resps, request.TaggedRequests)
 	return writeResponse(
 		c.outputPath,

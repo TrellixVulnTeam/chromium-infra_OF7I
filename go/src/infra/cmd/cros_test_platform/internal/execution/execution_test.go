@@ -197,21 +197,15 @@ func basicParams() *test_platform.Request_Params {
 	}
 }
 
-func newRunnerWithDefaults(invs []*steps.EnumerationResponse_AutotestInvocation) (*execution.Runner, error) {
-	return newRunnerWithParams(basicParams(), invs)
+func runWithDefaults(ctx context.Context, skylab skylab.Client, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
+	return runWithParams(ctx, skylab, basicParams(), invs)
 }
 
-func newRunnerWithParams(params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (*execution.Runner, error) {
-	return execution.NewRunner(
-		&bbpb.Build{},
-		exe.BuildSender(noopBuildSender),
-		&config.Config_SkylabWorker{
-			LuciProject: "foo-luci-project",
-			LogDogHost:  "foo-logdog-host",
-		},
-		"foo-parent-task-id",
-		time.Now().Add(time.Hour),
-		steps.ExecuteRequests{
+func runWithParams(ctx context.Context, skylab skylab.Client, params *test_platform.Request_Params, invs []*steps.EnumerationResponse_AutotestInvocation) (map[string]*steps.ExecuteResponse, error) {
+	args := execution.Args{
+		Build: &bbpb.Build{},
+		Send:  exe.BuildSender(noopBuildSender),
+		Request: steps.ExecuteRequests{
 			TaggedRequests: map[string]*steps.ExecuteRequest{
 				"12345678/foo": {
 					RequestParams: params,
@@ -221,7 +215,14 @@ func newRunnerWithParams(params *test_platform.Request_Params, invs []*steps.Enu
 				},
 			},
 		},
-	)
+		WorkerConfig: &config.Config_SkylabWorker{
+			LuciProject: "foo-luci-project",
+			LogDogHost:  "foo-logdog-host",
+		},
+		ParentTaskID: "foo-parent-task-id",
+		Deadline:     time.Now().Add(time.Hour),
+	}
+	return execution.Run(ctx, skylab, args)
 }
 
 func noopBuildSender() {}
@@ -243,13 +244,9 @@ func TestLaunchForNonExistentBot(t *testing.T) {
 		}
 
 		Convey("when running a skylab execution", func() {
-			run, err := newRunnerWithDefaults(invs)
+			resps, err := runWithDefaults(ctx, skylab, invs)
 			So(err, ShouldBeNil)
-			err = run.LaunchAndWait(ctx, skylab)
-			So(err, ShouldBeNil)
-
-			resp := getSingleResponse(run)
-			So(resp, ShouldNotBeNil)
+			resp := extractSingleResponse(resps)
 
 			Convey("then task result is complete with unspecified verdict.", func() {
 				So(resp.TaskResults, ShouldHaveLength, 1)
@@ -280,14 +277,9 @@ func TestLaunchAndWaitTest(t *testing.T) {
 		invs = append(invs, clientTestInvocation("", ""), clientTestInvocation("", ""))
 
 		Convey("when running a skylab execution", func() {
-			run, err := newRunnerWithDefaults(invs)
+			resps, err := runWithDefaults(ctx, skylab, invs)
 			So(err, ShouldBeNil)
-
-			err = run.LaunchAndWait(ctx, skylab)
-			So(err, ShouldBeNil)
-
-			resp := getSingleResponse(run)
-			So(resp, ShouldNotBeNil)
+			resp := extractSingleResponse(resps)
 
 			Convey("then results for all tests are reflected.", func() {
 				So(resp.TaskResults, ShouldHaveLength, 2)
@@ -338,16 +330,15 @@ func TestTaskStates(t *testing.T) {
 		}
 		for _, c := range cases {
 			Convey(c.description, func() {
-				run, err := newRunnerWithDefaults(invs)
-				So(err, ShouldBeNil)
 				skylab := newFakeSkylab()
 				skylab.setLifeCycle(c.lifeCycle)
 				skylab.setAutotestResultGenerator(autotestResultAlwaysEmpty)
-				err = run.LaunchAndWait(ctx, skylab)
+
+				resps, err := runWithDefaults(ctx, skylab, invs)
 				So(err, ShouldBeNil)
+				resp := extractSingleResponse(resps)
 
 				Convey("then the task state is correct.", func() {
-					resp := getSingleResponse(run)
 					So(resp.TaskResults, ShouldHaveLength, 1)
 					So(resp.TaskResults[0].State.LifeCycle, ShouldEqual, c.lifeCycle)
 					So(resp.TaskResults[0].State.Verdict, ShouldResemble, c.expectVerdict)
@@ -361,14 +352,11 @@ func TestServiceError(t *testing.T) {
 	Convey("Given a single enumerated test", t, func() {
 		ctx := context.Background()
 		skylab := newFakeSkylab()
-
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		run, err := newRunnerWithDefaults(invs)
-		So(err, ShouldBeNil)
 
 		Convey("when the skylab service immediately returns errors, that error is surfaced as a launch error.", func() {
 			skylab.setError(fmt.Errorf("foo error"))
-			err = run.LaunchAndWait(ctx, skylab)
+			_, err := runWithDefaults(ctx, skylab, invs)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "new task")
 			So(err.Error(), ShouldContainSubstring, "foo error")
@@ -378,7 +366,7 @@ func TestServiceError(t *testing.T) {
 			skylab.setCallback(func() {
 				skylab.setError(fmt.Errorf("foo error"))
 			})
-			err = run.LaunchAndWait(ctx, skylab)
+			_, err := runWithDefaults(ctx, skylab, invs)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "tick for task")
 			So(err.Error(), ShouldContainSubstring, "foo error")
@@ -393,12 +381,9 @@ func TestTaskURL(t *testing.T) {
 		skylab.setURL("foo-url")
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		run, err := newRunnerWithDefaults(invs)
+		resps, err := runWithDefaults(ctx, skylab, invs)
 		So(err, ShouldBeNil)
-		err = run.LaunchAndWait(ctx, skylab)
-		So(err, ShouldBeNil)
-
-		resp := getSingleResponse(run)
+		resp := extractSingleResponse(resps)
 		So(resp.TaskResults, ShouldHaveLength, 1)
 		So(resp.TaskResults[0].TaskUrl, ShouldEqual, "foo-url")
 	})
@@ -412,21 +397,21 @@ func TestIncompleteWait(t *testing.T) {
 		skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("", "")}
-		run, err := newRunnerWithDefaults(invs)
-		So(err, ShouldBeNil)
 
+		var gresps map[string]*steps.ExecuteResponse
+		var gerr error
 		wg := sync.WaitGroup{}
 		wg.Add(1)
 		go func() {
-			err = run.LaunchAndWait(ctx, skylab)
+			gresps, gerr = runWithDefaults(ctx, skylab, invs)
 			wg.Done()
 		}()
 
 		cancel()
 		wg.Wait()
-		So(err, ShouldBeNil)
+		So(gerr, ShouldBeNil)
 
-		resp := getSingleResponse(run)
+		resp := extractSingleResponse(gresps)
 		So(resp, ShouldNotBeNil)
 		So(resp.TaskResults, ShouldHaveLength, 1)
 		So(resp.TaskResults[0].State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_RUNNING)
@@ -444,10 +429,7 @@ func TestRequestArguments(t *testing.T) {
 		inv.DisplayName = "given_name"
 		invs := []*steps.EnumerationResponse_AutotestInvocation{inv}
 
-		run, err := newRunnerWithDefaults(invs)
-		So(err, ShouldBeNil)
-
-		err = run.LaunchAndWait(ctx, skylab)
+		_, err := runWithDefaults(ctx, skylab, invs)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
@@ -582,9 +564,7 @@ func TestInvocationKeyvals(t *testing.T) {
 		Convey("and a request without keyvals", func() {
 			p := basicParams()
 			p.Decorations = nil
-			run, err := newRunnerWithDefaults(invs)
-			So(err, ShouldBeNil)
-			err = run.LaunchAndWait(ctx, skylab)
+			_, err := runWithDefaults(ctx, skylab, invs)
 			So(err, ShouldBeNil)
 
 			Convey("created command includes invocation suite keyval", func() {
@@ -604,9 +584,8 @@ func TestInvocationKeyvals(t *testing.T) {
 					"suite": "someOtherSuite",
 				},
 			}
-			run, err := newRunnerWithParams(p, invs)
-			So(err, ShouldBeNil)
-			err = run.LaunchAndWait(ctx, skylab)
+
+			_, err := runWithParams(ctx, skylab, p, invs)
 			So(err, ShouldBeNil)
 
 			Convey("created command includes request suite keyval", func() {
@@ -668,8 +647,7 @@ func TestKeyvalsAcrossTestRuns(t *testing.T) {
 			}
 
 			Convey("created commands include common suite keyval and different label keyvals", func() {
-				run, err := newRunnerWithParams(p, invs)
-				err = run.LaunchAndWait(ctx, skylab)
+				_, err := runWithParams(ctx, skylab, p, invs)
 				So(err, ShouldBeNil)
 
 				So(skylab.launchCalls, ShouldHaveLength, 2)
@@ -705,11 +683,9 @@ func TestEnumerationResponseWithRetries(t *testing.T) {
 				inv.Test.MaxRetries = 2
 			}
 			Convey("for skylab execution", func() {
-				run, err := newRunnerWithParams(params, invs)
+				resps, err := runWithParams(ctx, skylab, params, invs)
 				So(err, ShouldBeNil)
-				err = run.LaunchAndWait(ctx, skylab)
-				So(err, ShouldBeNil)
-				resp := getSingleResponse(run)
+				resp := extractSingleResponse(resps)
 				Convey("response should contain two enumerated results", func() {
 					So(resp.ConsolidatedResults, ShouldHaveLength, 2)
 				})
@@ -946,11 +922,9 @@ func TestRetries(t *testing.T) {
 				}
 				var ml memlogger.MemLogger
 				ctx = logging.SetFactory(ctx, func(context.Context) logging.Logger { return &ml })
-				run, err := newRunnerWithParams(params, c.invocations)
+				resps, err := runWithParams(ctx, skylab, params, c.invocations)
 				So(err, ShouldBeNil)
-				err = run.LaunchAndWait(ctx, skylab)
-				So(err, ShouldBeNil)
-				resp := getSingleResponse(run)
+				resp := extractSingleResponse(resps)
 
 				Convey("each attempt request should have a unique logdog url in the.", func() {
 					s := map[string]bool{}
@@ -1024,9 +998,7 @@ func TestClientTestArg(t *testing.T) {
 
 		invs := []*steps.EnumerationResponse_AutotestInvocation{clientTestInvocation("name1", "")}
 
-		run, err := newRunnerWithDefaults(invs)
-		So(err, ShouldBeNil)
-		err = run.LaunchAndWait(ctx, skylab)
+		_, err := runWithDefaults(ctx, skylab, invs)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have correct parameters.", func() {
@@ -1051,10 +1023,7 @@ func TestQuotaSchedulerAccount(t *testing.T) {
 			// the legacy user will not be interrupted.
 			QsAccount: "",
 		}
-		run, err := newRunnerWithParams(params, invs)
-		So(err, ShouldBeNil)
-
-		err = run.LaunchAndWait(ctx, skylab)
+		_, err := runWithParams(ctx, skylab, params, invs)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have a tag specifying the correct quota account and run in the quota pool.", func() {
@@ -1080,11 +1049,10 @@ func TestQuotaSchedulerAccountOnQSAccount(t *testing.T) {
 			},
 			QsAccount: "foo-account",
 		}
-		run, err := newRunnerWithParams(params, invs)
+
+		_, err := runWithParams(ctx, skylab, params, invs)
 		So(err, ShouldBeNil)
 
-		err = run.LaunchAndWait(ctx, skylab)
-		So(err, ShouldBeNil)
 		Convey("the launched task request should have a tag specifying the correct quota account and run in foo-pool.", func() {
 			So(skylab.launchCalls, ShouldHaveLength, 1)
 			launchArgs := skylab.launchCalls[0]
@@ -1111,10 +1079,8 @@ func TestReservedTagShouldNotBeSetByUsers(t *testing.T) {
 		params.Decorations = &test_platform.Request_Params_Decorations{
 			Tags: []string{"qs_account:fake-account"},
 		}
-		run, err := newRunnerWithParams(params, invs)
-		So(err, ShouldBeNil)
 
-		err = run.LaunchAndWait(ctx, skylab)
+		_, err := runWithParams(ctx, skylab, params, invs)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request should have a tag specifying the correct quota account and run in the quota pool.", func() {
@@ -1140,10 +1106,8 @@ func TestRequestShouldNotSetBothQSAccountAndQuotaAccount(t *testing.T) {
 			},
 			QsAccount: "foo-account",
 		}
-		run, err := newRunnerWithParams(params, invs)
-		So(err, ShouldBeNil)
 		Convey("The test should end up with a panic.", func() {
-			So(func() { run.LaunchAndWait(ctx, skylab) }, ShouldPanic)
+			So(func() { runWithParams(ctx, skylab, params, invs) }, ShouldPanic)
 		})
 	})
 }
@@ -1161,10 +1125,8 @@ func TestRequestShouldNotSetBothQSAccountAndPriority(t *testing.T) {
 			QsAccount: "foo-account",
 			Priority:  50,
 		}
-		run, err := newRunnerWithParams(params, invs)
-		So(err, ShouldBeNil)
 		Convey("The test should end up with a panic.", func() {
-			So(func() { run.LaunchAndWait(ctx, skylab) }, ShouldPanic)
+			So(func() { runWithParams(ctx, skylab, params, invs) }, ShouldPanic)
 		})
 	})
 }
@@ -1179,10 +1141,7 @@ func TestUnmanagedPool(t *testing.T) {
 			UnmanagedPool: "foo-pool",
 		}
 
-		run, err := newRunnerWithParams(params, invs)
-		So(err, ShouldBeNil)
-
-		err = run.LaunchAndWait(ctx, skylab)
+		_, err := runWithParams(ctx, skylab, params, invs)
 		So(err, ShouldBeNil)
 
 		Convey("the launched task request run in the unmanaged pool.", func() {
@@ -1211,43 +1170,20 @@ func TestResponseVerdict(t *testing.T) {
 		skylab := newFakeSkylab()
 		invs := []*steps.EnumerationResponse_AutotestInvocation{serverTestInvocation("name1", "")}
 
-		run, err := newRunnerWithDefaults(invs)
-		So(err, ShouldBeNil)
-
-		// TODO(crbug.com/1001746, akeshet) Fix this test.
-		// This test is broken even after adding locks around testRun.attempts because it is possible that the
-		// assertions at the end are run before LaunchAndWait() does anything. That is not the intent of this test.
-		SkipConvey("when tests are still running, response verdict is correct.", func() {
-			skylab.setLifeCycle(test_platform.TaskState_LIFE_CYCLE_RUNNING)
-
-			wg := sync.WaitGroup{}
-			defer wg.Wait()
-			defer cancel()
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				// Can't verify error returned is nil because Convey() doesn't
-				// like assertions in goroutines.
-				_ = run.LaunchAndWait(ctx, skylab)
-			}()
-
-			resp := getSingleResponse(run)
-			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_RUNNING)
-			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
-		})
-
 		Convey("when the test passed, response verdict is correct.", func() {
 			skylab.setAutotestResultGenerator(autotestResultAlwaysPass)
-			run.LaunchAndWait(ctx, skylab)
-			resp := getSingleResponse(run)
+			resps, err := runWithDefaults(ctx, skylab, invs)
+			So(err, ShouldBeNil)
+			resp := extractSingleResponse(resps)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_PASSED)
 		})
 
 		Convey("when the test failed, response verdict is correct.", func() {
 			skylab.setAutotestResultGenerator(autotestResultAlwaysFail)
-			run.LaunchAndWait(ctx, skylab)
-			resp := getSingleResponse(run)
+			resps, err := runWithDefaults(ctx, skylab, invs)
+			So(err, ShouldBeNil)
+			resp := extractSingleResponse(resps)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
@@ -1257,17 +1193,17 @@ func TestResponseVerdict(t *testing.T) {
 
 			wg := sync.WaitGroup{}
 			wg.Add(1)
+			var resps map[string]*steps.ExecuteResponse
 			var err error
 			go func() {
-				err = run.LaunchAndWait(ctx, skylab)
+				resps, err = runWithDefaults(ctx, skylab, invs)
 				wg.Done()
 			}()
 
 			cancel()
 			wg.Wait()
 			So(err, ShouldBeNil)
-
-			resp := getSingleResponse(run)
+			resp := extractSingleResponse(resps)
 			So(resp.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_ABORTED)
 			So(resp.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_FAILED)
 		})
@@ -1323,13 +1259,9 @@ func TestIncompatibleDependencies(t *testing.T) {
 		skylab := newFakeSkylab()
 		for _, c := range cases {
 			Convey(fmt.Sprintf("with %s", c.Tag), func() {
-				run, err := newRunnerWithParams(c.Params, c.Invs)
+				resps, err := runWithParams(ctx, skylab, c.Params, c.Invs)
 				So(err, ShouldBeNil)
-				err = run.LaunchAndWait(ctx, skylab)
-				So(err, ShouldBeNil)
-
-				resp := getSingleResponse(run)
-				So(resp, ShouldNotBeNil)
+				resp := extractSingleResponse(resps)
 
 				Convey("then task result is rejected with unspecified verdict.", func() {
 					So(resp.TaskResults, ShouldHaveLength, 1)
@@ -1364,11 +1296,11 @@ func testInvocationWithDependency(name string, deps ...string) *steps.Enumeratio
 	return &inv
 }
 
-func getSingleResponse(r *execution.Runner) *steps.ExecuteResponse {
-	resps := make([]*steps.ExecuteResponse, 0, 1)
-	for _, resp := range r.Responses() {
-		resps = append(resps, resp)
-	}
+func extractSingleResponse(resps map[string]*steps.ExecuteResponse) *steps.ExecuteResponse {
 	So(resps, ShouldHaveLength, 1)
-	return resps[0]
+	for _, resp := range resps {
+		So(resp, ShouldNotBeNil)
+		return resp
+	}
+	panic("unreachable")
 }
