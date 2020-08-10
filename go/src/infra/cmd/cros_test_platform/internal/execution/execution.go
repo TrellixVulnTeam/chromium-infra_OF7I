@@ -63,7 +63,6 @@ const ctpRequestUIDTemplate = "TestPlanRuns/%d/%s"
 type runner struct {
 	requestTaskSets map[string]*RequestTaskSet
 	send            exe.BuildSender
-	waiting         bool
 }
 
 // newRunner returns a runner that will execute the given requests.
@@ -101,8 +100,6 @@ func newRunner(buildInstance *bbpb.Build, send exe.BuildSender, workerConfig *co
 // is encountered, this method returns whatever partial execution response
 // was visible to it prior to that error.
 func (r *runner) LaunchAndWait(ctx context.Context, c skylab.Client) error {
-	defer func() { r.waiting = false }()
-
 	// TODO(pprabhu): We may fail to Close() the individual requests if we fail
 	// between a call to NewRunner() and this function.
 	// To fix this, merge NewRunner() and LaunchAndWait() into a single method.
@@ -172,7 +169,7 @@ func (r *runner) Responses() map[string]*steps.ExecuteResponse {
 		resps[t] = ts.Response()
 		// The test hasn't completed, but we're not waiting for it to complete
 		// anymore.
-		if !r.waiting && resps[t].GetState().LifeCycle == test_platform.TaskState_LIFE_CYCLE_RUNNING {
+		if resps[t].GetState().LifeCycle == test_platform.TaskState_LIFE_CYCLE_RUNNING {
 			resps[t].State.LifeCycle = test_platform.TaskState_LIFE_CYCLE_ABORTED
 		}
 	}
