@@ -87,7 +87,7 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-src-master": {
 		BaseRepoURL: "https://chromium.googlesource.com/chromium/src.git",
 		GerritURL:   "https://chromium-review.googlesource.com",
-		BranchName:  "master",
+		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "bafa682dc0ce1dde367ba44f31f8ec1ad07e569e",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
@@ -151,7 +151,7 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra": {
 		BaseRepoURL: "https://chromium.googlesource.com/infra/infra",
 		GerritURL:   "https://chromium-review.googlesource.com",
-		BranchName:  "master",
+		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "19683d4800167eb7a1223719d54725808c61b31b",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
@@ -175,7 +175,7 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra-luci-go": {
 		BaseRepoURL: "https://chromium.googlesource.com/infra/luci/luci-go",
 		GerritURL:   "https://chromium-review.googlesource.com",
-		BranchName:  "master",
+		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "fd8c22ff66975b12558be71b8850dee9e02479bd",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
@@ -194,7 +194,7 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra-config": {
 		BaseRepoURL: "https://chrome-internal.googlesource.com/infradata/config.git",
 		GerritURL:   "https://chrome-internal-review.googlesource.com",
-		BranchName:  "master",
+		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "62923d0bcfeca4683bb28f5ecbfa34eb840e791e",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
@@ -221,7 +221,7 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra-internal": {
 		BaseRepoURL: "https://chrome-internal.googlesource.com/infra/infra_internal.git",
 		GerritURL:   "https://chrome-internal-review.googlesource.com",
-		BranchName:  "master",
+		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "b7ef8a811e812d564a6167be6f8866f496919912",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",

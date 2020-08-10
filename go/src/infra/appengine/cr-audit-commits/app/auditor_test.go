@@ -13,6 +13,9 @@ import (
 
 	"context"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/impl/memory"
@@ -50,6 +53,8 @@ type dummyNotifier struct{}
 func (d dummyNotifier) Notify(ctx context.Context, cfg *rules.RefConfig, rc *rules.RelevantCommit, cs *rules.Clients, state string) (string, error) {
 	return "NotificationSent", nil
 }
+
+type strmap map[string]string
 
 func TestAuditor(t *testing.T) {
 
@@ -112,9 +117,15 @@ func TestAuditor(t *testing.T) {
 				})
 
 				Convey("No revisions", func() {
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+						Project:  "dummy",
+						RefsPath: "refs/heads/master",
+					}).Return(&gitilespb.RefsResponse{
+						Revisions: strmap{"refs/heads/master/refs/heads/master": "123456"},
+					}, nil)
 					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
 						Project:            "dummy",
-						Committish:         "refs/heads/master",
+						Committish:         "123456",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
 					}).Return(&gitilespb.LogResponse{
@@ -130,9 +141,15 @@ func TestAuditor(t *testing.T) {
 					So(rs.LastRelevantCommit, ShouldEqual, "999999")
 				})
 				Convey("No interesting revisions", func() {
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+						Project:  "dummy",
+						RefsPath: "refs/heads/master",
+					}).Return(&gitilespb.RefsResponse{
+						Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
+					}, nil)
 					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
 						Project:            "dummy",
-						Committish:         "refs/heads/master",
+						Committish:         "abcdef000123123",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
 					}).Return(&gitilespb.LogResponse{
@@ -148,9 +165,15 @@ func TestAuditor(t *testing.T) {
 					So(rs.LastRelevantCommit, ShouldEqual, "999999")
 				})
 				Convey("Interesting revisions", func() {
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+						Project:  "dummy",
+						RefsPath: "refs/heads/master",
+					}).Return(&gitilespb.RefsResponse{
+						Revisions: strmap{"refs/heads/master/refs/heads/master": "deadbeef"},
+					}, nil)
 					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
 						Project:            "dummy",
-						Committish:         "refs/heads/master",
+						Committish:         "deadbeef",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
 					}).Return(&gitilespb.LogResponse{
@@ -185,6 +208,65 @@ func TestAuditor(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(rc.PreviousRelevantCommit, ShouldEqual, "999999")
 				})
+				Convey("Force push", func() {
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+						Project:  "dummy",
+						RefsPath: "refs/heads/master",
+					}).Return(&gitilespb.RefsResponse{
+						Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
+					}, nil)
+					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+						Project:            "dummy",
+						Committish:         "abcdef000123123",
+						ExcludeAncestorsOf: "123456",
+						PageSize:           6000,
+					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+						Project:    "dummy",
+						Committish: "abcdef000123123",
+						PageSize:   1,
+					}).Return(&gitilespb.LogResponse{
+						Log: []*git.Commit{{Id: "abcdef000123123"}},
+					}, nil)
+					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+						Project:    "dummy",
+						Committish: "123456",
+						PageSize:   1,
+					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
+					So(err, ShouldBeNil)
+					So(resp.StatusCode, ShouldEqual, 200)
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					err = ds.Get(ctx, rs)
+					So(err, ShouldBeNil)
+					So(rs.LastKnownCommit, ShouldEqual, "abcdef000123123")
+				})
+				Convey("Temporary new head not found error", func() {
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+						Project:  "dummy",
+						RefsPath: "refs/heads/master",
+					}).Return(&gitilespb.RefsResponse{
+						Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
+					}, nil)
+					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+						Project:            "dummy",
+						Committish:         "abcdef000123123",
+						ExcludeAncestorsOf: "123456",
+						PageSize:           6000,
+					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+						Project:    "dummy",
+						Committish: "abcdef000123123",
+						PageSize:   1,
+					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
+					So(err, ShouldBeNil)
+					So(resp.StatusCode, ShouldEqual, 502)
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					err = ds.Get(ctx, rs)
+					So(err, ShouldBeNil)
+					So(rs.LastKnownCommit, ShouldEqual, "123456")
+				})
 			})
 			Convey("Test auditing", func() {
 				repoState := &rules.RepoState{
@@ -197,9 +279,15 @@ func TestAuditor(t *testing.T) {
 				rsk := ds.KeyForObj(ctx, repoState)
 
 				So(err, ShouldBeNil)
+				gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+					Project:  "dummy",
+					RefsPath: "refs/heads/master",
+				}).Return(&gitilespb.RefsResponse{
+					Revisions: strmap{"refs/heads/master/refs/heads/master": "222222"},
+				}, nil)
 				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
 					Project:            "dummy",
-					Committish:         "refs/heads/master",
+					Committish:         "222222",
 					ExcludeAncestorsOf: "222222",
 					PageSize:           6000,
 				}).Return(&gitilespb.LogResponse{

@@ -5,11 +5,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
-	"context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/ptypes"
 	ds "go.chromium.org/gae/service/datastore"
@@ -124,40 +126,97 @@ func Auditor(rc *router.Context) {
 
 }
 
-// getCommitLog gets from gitiles a list from the last known commit to the tip
-// of the ref in chronological (as per git parentage) order.
+// getCommitLog gets from gitiles a list from the tip to the last known commit
+// of the ref in reverse chronological (as per git parentage) order.
 func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) ([]*git.Commit, error) {
 
 	host, project, err := gitiles.ParseRepoURL(cfg.BaseRepoURL)
 	if err != nil {
 		return []*git.Commit{}, err
 	}
-	logReq := gitilespb.LogRequest{
-		Project:            project,
-		ExcludeAncestorsOf: repoState.LastKnownCommit,
-		Committish:         cfg.BranchName,
-	}
 
 	gc, err := cs.NewGitilesClient(host)
 	if err != nil {
-		logging.WithError(err).Errorf(ctx, "Could not create new gitiles client")
+		logging.WithError(err).Errorf(ctx, "Could not create new gitiles client for %s", host)
 		return []*git.Commit{}, err
-	}
-	fl, err := gitiles.PagingLog(ctx, gc, logReq, 6000)
-	if err != nil {
-		logging.WithError(err).Errorf(ctx, "Could not get gitiles log from revision %s", repoState.LastKnownCommit)
-		return []*git.Commit{}, err
-	}
-	// Reverse the log to get revisions after `rev` time-ascending order.
-	for i, j := 0, len(fl)-1; i < j; i, j = i+1, j-1 {
-		fl[i], fl[j] = fl[j], fl[i]
 	}
 
-	// Make sure the log reaches the last known commit.
-	if len(fl) > 0 && repoState.LastKnownCommit != "" && len(fl[0].Parents) > 0 && fl[0].Parents[0] != repoState.LastKnownCommit {
-		panic("There is a gap between the last known commit and the beginning of the forward log")
+	// Get the tip of the repo
+	resp, err := gc.Refs(ctx, &gitilespb.RefsRequest{Project: project, RefsPath: cfg.BranchName})
+	if err != nil {
+		logging.WithError(err).Errorf(ctx, "Could not get the tip of the ref %s", project)
+		return []*git.Commit{}, err
 	}
-	return fl, nil
+	newHead, ok := resp.Revisions[fmt.Sprintf("%s/%s", cfg.BranchName, cfg.BranchName)]
+	if !ok {
+		return []*git.Commit{},
+			fmt.Errorf("Could not get the branch %s in ref %s", cfg.BranchName, project)
+	}
+	oldHead := repoState.LastKnownCommit
+
+	logReq := gitilespb.LogRequest{
+		Project:            project,
+		ExcludeAncestorsOf: oldHead,
+		Committish:         newHead,
+	}
+
+	fl, err := gitiles.PagingLog(ctx, gc, logReq, 6000)
+	switch status.Code(err) {
+	case codes.OK:
+		return fl, nil
+	case codes.NotFound:
+		// Handled below
+		break
+	default:
+		// Gitiles accidental error
+		logging.WithError(err).Errorf(ctx, "Could not get children of revision %s from gitiles",
+			oldHead)
+		return []*git.Commit{}, err
+	}
+
+	// Either:
+	//  (1) oldHead is no longer known in gitiles (force push),
+	//  (2) newHead is no longer known in gitiles (eventual consistency,
+	//     or concurrent force push executed just now, or ACLs change)
+	//  (3) gitiles accidental 404, aka fluke.
+	// We can assume that case (1) should be an extreme case. When it appears,
+	// it is acceptable for Audit App to ignore some commits and start further
+	// auditing directly from newHead.
+	// In cases (2) and (3), retries should clear the problem, while (1) we
+	// should handle now.
+	// Reference: https://source.chromium.org/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/scheduler/appengine/task/gitiles/gitiles.go;drc=d4602d5e3619fed71b1a22ae426580d7ffb7fc87;l=425?originalUrl=https:%2F%2Fcs.chromium.org%2F
+
+	// Fetch log of newHead only
+	var newErr error
+	fl, newErr = gitiles.PagingLog(ctx, gc, gitilespb.LogRequest{
+		Project:    project,
+		Committish: newHead,
+	}, 1)
+	if newErr != nil {
+		// case (2) or (3)
+		logging.WithError(newErr).Errorf(ctx, "Could not get gitiles log from revision %s", newHead)
+		return []*git.Commit{}, newErr
+	}
+
+	// Fetch log of oldHead only
+	_, oldErr := gitiles.PagingLog(ctx, gc, gitilespb.LogRequest{
+		Project:    project,
+		Committish: oldHead,
+	}, 1)
+	switch status.Code(oldErr) {
+	case codes.NotFound:
+		// case (1)
+		logging.Infof(ctx, "Force push detected; start auditing from new head %s", newHead)
+		return fl, nil
+	case codes.OK:
+		return []*git.Commit{},
+			fmt.Errorf("Weirdly, log(%s) and log(%s) work, but not log(%s..%s)",
+				oldHead, newHead, oldHead, newHead)
+	default:
+		// case (3)
+		logging.WithError(oldErr).Errorf(ctx, "Could not get gitiles log from revision %s", oldHead)
+		return []*git.Commit{}, oldErr
+	}
 }
 
 // scanCommits iterates over the list of commits in the given log, decides if
@@ -167,7 +226,14 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 // to the handler in case the context given to this function expires before
 // reaching the end of the log.
 func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, repoState *rules.RepoState) error {
-	for _, commit := range fl {
+	// Iterate the commit list in a chronological order.
+	// TODO(crbug/1112597): Time out problem. Suppose we have multiple branches
+	// and the context reaches the deadline before all the commits are scanned
+	// and saved in database, the LastKnownCommit could be a commit on one of
+	// the branch. In the next round, it is possible that some commits are
+	// scanned again.
+	for i := len(fl) - 1; i >= 0; i-- {
+		commit := fl[i]
 		relevant := false
 		for _, ruleSet := range cfg.Rules {
 			if ruleSet.MatchesCommit(commit) {

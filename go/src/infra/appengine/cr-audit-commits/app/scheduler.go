@@ -76,8 +76,6 @@ func Scheduler(rc *router.Context) {
 				return
 			}
 
-			logging.Infof(ctx, "projects/"+os.Getenv("GOOGLE_CLOUD_PROJECT")+"/locations/us-central1/queues/default")
-
 			// Build the Task payload.
 			req := &taskspb.CreateTaskRequest{
 				Parent: "projects/" + os.Getenv("GOOGLE_CLOUD_PROJECT") + "/locations/us-central1/queues/default",
