@@ -99,16 +99,17 @@ func (c *skylabExecuteRun) innerRun(ctx context.Context, args []string, env subc
 		return err
 	}
 
-	// TODO: Convert to luciexe & plumb through actual build input and send
-	// function.
-	runner, err := execution.NewRunner(&bbpb.Build{}, func() {}, cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, deadline, request)
-	if err != nil {
-		return err
-	}
-
+	var runner *execution.Runner
 	tErr, err := runWithDeadline(
 		ctx,
 		func(ctx context.Context) error {
+			var err error
+			// TODO: Convert to luciexe & plumb through actual build input and send
+			// function.
+			runner, err = execution.NewRunner(&bbpb.Build{}, func() {}, cfg.SkylabWorker, env["SWARMING_TASK_ID"].Value, deadline, request)
+			if err != nil {
+				return err
+			}
 			return runner.LaunchAndWait(ctx, skylab)
 		},
 		deadline,
