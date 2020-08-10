@@ -103,18 +103,17 @@ func JoinBuildTargetModel(buildTarget string, model string) (string, error) {
 	return fmt.Sprintf("%s%s%s", b, separator, m), nil
 }
 
-// BuildTargetKey creates the key based on the given build target
-func BuildTargetKey(buildTarget string) string {
+// FallbackBuildTargetKey creates the key based on the given build target
+// This kind of key should only ever be used as a fallback when looking up a stable version.
+func FallbackBuildTargetKey(buildTarget string) string {
 	return strings.ToLower(buildTarget)
 }
 
 // ValidateJoinBuildTargetModel -- checks that a buildTarget and model are valid
+// The model is explicitly allowed to be empty.
 func ValidateJoinBuildTargetModel(buildTarget string, model string) error {
 	if buildTarget == "" {
 		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot be \"\"")
-	}
-	if model == "" {
-		return fmt.Errorf("ValidateJoinBuildTargetModel: model cannot be \"\"")
 	}
 	if strings.Contains(buildTarget, separator) {
 		return fmt.Errorf("ValidateJoinBuildTargetModel: buildTarget cannot contain separator")

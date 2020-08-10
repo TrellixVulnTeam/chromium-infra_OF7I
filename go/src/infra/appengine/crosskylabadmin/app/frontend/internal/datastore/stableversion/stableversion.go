@@ -51,11 +51,32 @@ type firmwareStableVersionEntity struct {
 }
 
 // GetCrosStableVersion gets a stable version for ChromeOS from datastore
-func GetCrosStableVersion(ctx context.Context, buildTarget string) (string, error) {
+func GetCrosStableVersion(ctx context.Context, buildTarget string, model string) (string, error) {
+	key, err := libsv.JoinBuildTargetModel(buildTarget, model)
 	if buildTarget == "" {
 		return "", fmt.Errorf("GetCrosStableVersion: buildTarget cannot be empty")
 	}
-	entity := &crosStableVersionEntity{ID: libsv.BuildTargetKey(buildTarget)}
+	justBoard, err := libsv.JoinBuildTargetModel(buildTarget, "")
+
+	// look up stable version by combined key
+	entity := &crosStableVersionEntity{ID: key}
+	err = datastore.Get(ctx, entity)
+	if err == nil {
+		return entity.Cros, nil
+	}
+	logging.Infof(ctx, "failed to find per-model stable version %q", err.Error())
+
+	// look up stable version by combined key with empty model.
+	// This will look like xxx-board;
+	entity = &crosStableVersionEntity{ID: justBoard}
+	err = datastore.Get(ctx, entity)
+	if err == nil {
+		return entity.Cros, nil
+	}
+	logging.Infof(ctx, "failed to find per-board stable version in new format %q", err.Error())
+
+	// fall back to looking up stable version by build target alone.
+	entity = &crosStableVersionEntity{ID: libsv.FallbackBuildTargetKey(buildTarget)}
 	if err := datastore.Get(ctx, entity); err != nil {
 		return "", errors.Annotate(err, "GetCrosStableVersion").Err()
 	}
@@ -63,16 +84,21 @@ func GetCrosStableVersion(ctx context.Context, buildTarget string) (string, erro
 }
 
 // PutSingleCrosStableVersion is a convenience wrapper around PutManyCrosStableVersion
-func PutSingleCrosStableVersion(ctx context.Context, buildTarget string, cros string) error {
-	return PutManyCrosStableVersion(ctx, map[string]string{buildTarget: cros})
+func PutSingleCrosStableVersion(ctx context.Context, buildTarget string, model string, cros string) error {
+	key, err := libsv.JoinBuildTargetModel(buildTarget, model)
+	if err != nil {
+		logging.Infof(ctx, "falling back to buildTarget key!")
+		key = buildTarget
+	}
+	return PutManyCrosStableVersion(ctx, map[string]string{key: cros})
 }
 
 // PutManyCrosStableVersion writes many stable versions for ChromeOS to datastore
-func PutManyCrosStableVersion(ctx context.Context, crosOfBuildTarget map[string]string) error {
-	removeEmptyKeyOrValue(ctx, crosOfBuildTarget)
+func PutManyCrosStableVersion(ctx context.Context, crosOfKey map[string]string) error {
+	removeEmptyKeyOrValue(ctx, crosOfKey)
 	var entities []*crosStableVersionEntity
-	for buildTarget, cros := range crosOfBuildTarget {
-		entities = append(entities, &crosStableVersionEntity{ID: libsv.BuildTargetKey(buildTarget), Cros: cros})
+	for key, cros := range crosOfKey {
+		entities = append(entities, &crosStableVersionEntity{ID: key, Cros: cros})
 	}
 	if err := datastore.Put(ctx, entities); err != nil {
 		return errors.Annotate(err, "PutManyCrosStableVersion").Err()

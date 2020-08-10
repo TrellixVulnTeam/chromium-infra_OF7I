@@ -36,23 +36,23 @@ func TestUpdateAndGet(t *testing.T) {
 	Convey("StableVersion datastore", t, func() {
 		Convey("Cros", func() {
 			Convey("Cros not present initially", func() {
-				item, err := GetCrosStableVersion(ctx, buildTarget)
+				item, err := GetCrosStableVersion(ctx, buildTarget, model)
 				So(err, ShouldNotBeNil)
 				So(item, ShouldEqual, "")
 			})
 			Convey("Cros write should succeed", func() {
-				err := PutSingleCrosStableVersion(ctx, buildTarget, crosVersion)
+				err := PutSingleCrosStableVersion(ctx, buildTarget, model, crosVersion)
 				So(err, ShouldBeNil)
 			})
 			Convey("Cros present after write", func() {
-				item, err := GetCrosStableVersion(ctx, buildTarget)
+				item, err := GetCrosStableVersion(ctx, buildTarget, model)
 				So(err, ShouldBeNil)
 				So(item, ShouldEqual, crosVersion)
 			})
 			Convey("Cros is not case-sensitive", func() {
-				err := PutSingleCrosStableVersion(ctx, "AAA", crosVersion)
+				err := PutSingleCrosStableVersion(ctx, "AAA", "model", crosVersion)
 				So(err, ShouldBeNil)
-				item, err := GetCrosStableVersion(ctx, "Aaa")
+				item, err := GetCrosStableVersion(ctx, "Aaa", "model")
 				So(err, ShouldBeNil)
 				So(item, ShouldEqual, crosVersion)
 			})

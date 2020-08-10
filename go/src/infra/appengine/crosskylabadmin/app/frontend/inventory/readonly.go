@@ -308,7 +308,7 @@ func getStableVersionImplNoHostname(ctx context.Context, buildTarget string, mod
 	merr := errors.NewMultiError()
 	out := &fleet.GetStableVersionResponse{}
 
-	out.CrosVersion, err = dssv.GetCrosStableVersion(ctx, buildTarget)
+	out.CrosVersion, err = dssv.GetCrosStableVersion(ctx, buildTarget, model)
 	if err != nil {
 		merr = append(merr, err)
 	}
@@ -448,17 +448,20 @@ func getCrosVersionFromServoHost(ctx context.Context, ic inventoryClient, hostna
 			return "", errors.Annotate(err, "get labstation dut info").Err()
 		}
 		buildTarget := dut.GetCommon().GetLabels().GetBoard()
+		model := dut.GetCommon().GetLabels().GetModel()
 		if buildTarget == "" {
 			return "", errors.Reason("no buildTarget for hostname %q", hostname).Err()
 		}
-		out, err := dssv.GetCrosStableVersion(ctx, buildTarget)
+		out, err := dssv.GetCrosStableVersion(ctx, buildTarget, model)
 		if err != nil {
 			return "", errors.Annotate(err, "getting labstation stable version").Err()
 		}
 		return out, nil
 	}
 	if looksLikeServo(hostname) {
-		out, err := dssv.GetCrosStableVersion(ctx, beagleboneServo)
+		// TODO(gregorynisbet): getting the stable version of a beaglebone servo is dependent on the fallback
+		// behavior
+		out, err := dssv.GetCrosStableVersion(ctx, beagleboneServo, beagleboneServo)
 		if err != nil {
 			return "", errors.Annotate(err, "getting beaglebone servo stable version").Err()
 		}

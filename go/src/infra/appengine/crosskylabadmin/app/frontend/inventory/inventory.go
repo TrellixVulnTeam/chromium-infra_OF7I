@@ -562,8 +562,14 @@ func getStableVersionRecords(ctx context.Context, stableVersions *lab_platform.S
 	firmware := make(map[string]string)
 	for _, item := range stableVersions.GetCros() {
 		buildTarget := item.GetKey().GetBuildTarget().GetName()
+		model := item.GetKey().GetModelId().GetValue()
 		version := item.GetVersion()
-		cros[sv.BuildTargetKey(buildTarget)] = version
+		key, err := sv.JoinBuildTargetModel(buildTarget, model)
+		if err != nil {
+			logging.Infof(ctx, "buildTarget and/or model contains invalid sequence: %s", err)
+			continue
+		}
+		cros[key] = version
 	}
 	for _, item := range stableVersions.GetFirmware() {
 		buildTarget := item.GetKey().GetBuildTarget().GetName()
