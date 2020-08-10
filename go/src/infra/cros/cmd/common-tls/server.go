@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
+	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -24,6 +25,7 @@ type server struct {
 	wiringConn *grpc.ClientConn
 	clientPool *sshClientPool
 	sshConfig  *ssh.ClientConfig
+	lroMgr     *lroManager
 }
 
 func newServer(c *grpc.ClientConn, sshConfig *ssh.ClientConfig) server {
@@ -36,9 +38,11 @@ func newServer(c *grpc.ClientConn, sshConfig *ssh.ClientConfig) server {
 func (s *server) Serve(l net.Listener) error {
 	s.clientPool = newSSHClientPool(s.sshConfig)
 	defer s.clientPool.Close()
+	s.lroMgr = newLROManager()
 
 	server := grpc.NewServer()
 	tls.RegisterCommonServer(server, s)
+	longrunning.RegisterOperationsServer(server, s.lroMgr)
 	return server.Serve(l)
 }
 
