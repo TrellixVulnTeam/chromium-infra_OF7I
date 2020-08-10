@@ -38,16 +38,28 @@ type Args struct {
 //
 // Run may be aborted by cancelling the supplied context.
 func Run(ctx context.Context, c skylab.Client, args Args) (map[string]*steps.ExecuteResponse, error) {
-	r, err := newRunner(
-		args.Build,
-		args.Send,
-		args.WorkerConfig,
-		args.ParentTaskID,
-		args.Deadline,
-		args.Request,
-	)
-	if err != nil {
-		return nil, err
+	ts := make(map[string]*RequestTaskSet)
+	for t, r := range args.Request.GetTaggedRequests() {
+		var err error
+		ts[t], err = NewRequestTaskSet(
+			t,
+			args.Build,
+			args.WorkerConfig,
+			&TaskSetConfig{
+				args.ParentTaskID,
+				constructRequestUID(args.Request.GetBuild().GetId(), t),
+				args.Deadline,
+			},
+			r.RequestParams,
+			r.Enumeration.AutotestInvocations,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+	r := runner{
+		requestTaskSets: ts,
+		send:            args.Send,
 	}
 	if err := r.LaunchAndWait(ctx, c); err != nil {
 		return nil, err
@@ -63,33 +75,6 @@ const ctpRequestUIDTemplate = "TestPlanRuns/%d/%s"
 type runner struct {
 	requestTaskSets map[string]*RequestTaskSet
 	send            exe.BuildSender
-}
-
-// newRunner returns a runner that will execute the given requests.
-func newRunner(buildInstance *bbpb.Build, send exe.BuildSender, workerConfig *config.Config_SkylabWorker, parentTaskID string, deadline time.Time, request steps.ExecuteRequests) (*runner, error) {
-	ts := make(map[string]*RequestTaskSet)
-	for t, r := range request.GetTaggedRequests() {
-		var err error
-		ts[t], err = NewRequestTaskSet(
-			t,
-			buildInstance,
-			workerConfig,
-			&TaskSetConfig{
-				parentTaskID,
-				constructRequestUID(request.GetBuild().GetId(), t),
-				deadline,
-			},
-			r.RequestParams,
-			r.Enumeration.AutotestInvocations,
-		)
-		if err != nil {
-			return nil, errors.Annotate(err, "new skylab runner").Err()
-		}
-	}
-	return &runner{
-		requestTaskSets: ts,
-		send:            send,
-	}, nil
 }
 
 // LaunchAndWait launches a skylab execution and waits for it to complete,
