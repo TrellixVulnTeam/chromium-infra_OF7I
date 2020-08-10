@@ -462,21 +462,6 @@ class ProjectCfgTest(unittest.TestCase):
     flatten_swarmingcfg.merge_builder(b, no)
     self.assertEqual(b.experimental, project_config_pb2.NO)
 
-  def test_merge_luci_migration_host(self):
-    unset = project_config_pb2.Builder()
-    yes = project_config_pb2.Builder(luci_migration_host='example.com')
-    no = project_config_pb2.Builder(luci_migration_host='-')
-
-    b = project_config_pb2.Builder()
-    flatten_swarmingcfg.merge_builder(b, unset)
-    flatten_swarmingcfg.merge_builder(b, yes)
-    self.assertEqual(b.luci_migration_host, 'example.com')
-
-    flatten_swarmingcfg.merge_builder(b, unset)
-    self.assertEqual(b.luci_migration_host, 'example.com')
-
-    flatten_swarmingcfg.merge_builder(b, no)
-    self.assertEqual(b.luci_migration_host, '-')
 
 if __name__ == '__main__':
   unittest.main()

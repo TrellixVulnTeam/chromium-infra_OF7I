@@ -482,21 +482,6 @@ class ProjectCfgTest(testing.AppengineTestCase):
         ],
     )
 
-    self.cfg_test(
-        '''
-          builders {
-            name: "bad"
-            luci_migration_host: "hi"
-            recipe:  {
-              name: "fake"
-              cipd_package: "also/fake"
-            }
-          }
-        ''',
-        '',
-        ['builder bad: deprecated luci_migration_host field must be removed.'],
-    )
-
   @parameterized.expand([
       (['a:b'], ''),
       (['a:b1', 'a:b2', '60:a:b3'], ''),
