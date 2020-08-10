@@ -115,7 +115,7 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 		return err
 	}
 	kvmRes, err := registration.GetAllKVMs(ctx)
-	if err := compareKVMs(ctx, writer, kvmResp.Kvms, kvmRes, stateMap, dhcpMap); err != nil {
+	if err := compareKVMs(ctx, writer, kvmResp.Kvms, kvmRes, stateMap); err != nil {
 		return err
 	}
 
@@ -301,24 +301,24 @@ func formatSwitch(name, rack, description string, state ufspb.State, port int32)
 	return fmt.Sprintf("%s\t%s\t%s\t%s\t%d", name, rack, description, strings.ToLower(state.String()), port)
 }
 
-func compareKVMs(ctx context.Context, writer *storage.Writer, kvms []*crimson.KVM, kvmRes *fleetds.OpResults, stateMap map[string]ufspb.State, dhcpMap map[string]*ufspb.DHCPConfig) error {
+func compareKVMs(ctx context.Context, writer *storage.Writer, kvms []*crimson.KVM, kvmRes *fleetds.OpResults, stateMap map[string]ufspb.State) error {
 	logs := []string{"\n\n######## get-kvm diff ############"}
 	crimsonKVMs := make(map[string]string)
 	for _, r := range kvms {
-		crimsonKVMs[r.GetName()] = formatKVM(r.GetName(), r.GetPlatform(), r.GetMacAddress(), util.ToState(r.GetState()), r.GetIpv4())
+		crimsonKVMs[r.GetName()] = formatKVM(r.GetName(), r.GetPlatform(), r.GetMacAddress(), util.ToState(r.GetState()))
 	}
 	ufsKVMs := make(map[string]string)
 	for _, r := range kvmRes.Passed() {
 		m := r.Data.(*ufspb.KVM)
 		name := m.GetName()
 		cState := stateMap[util.AddPrefix(util.KVMCollection, m.GetName())]
-		ufsKVMs[name] = formatKVM(name, m.GetChromePlatform(), m.GetMacAddress(), cState, dhcpMap[m.GetMacAddress()].GetIp())
+		ufsKVMs[name] = formatKVM(name, m.GetChromePlatform(), m.GetMacAddress(), cState)
 	}
 	return logDiff(crimsonKVMs, ufsKVMs, writer, logs)
 }
 
-func formatKVM(name, platform, macAddr string, state ufspb.State, ipv4 string) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", name, util.FormatResourceName(platform), macAddr, strings.ToLower(state.String()), ipv4)
+func formatKVM(name, platform, macAddr string, state ufspb.State) string {
+	return fmt.Sprintf("%s\t%s\t%s\t%s", name, util.FormatResourceName(platform), macAddr, strings.ToLower(state.String()))
 }
 
 func compareMachines(ctx context.Context, writer *storage.Writer, machines []*crimson.Machine, machineRes *fleetds.OpResults, stateMap map[string]ufspb.State) error {

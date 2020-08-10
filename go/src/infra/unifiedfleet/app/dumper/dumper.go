@@ -27,28 +27,28 @@ type Options struct {
 
 // InitServer initializes a purger server.
 func InitServer(srv *server.Server, opts Options) {
-	//srv.RunInBackground("ufs.dumper", func(ctx context.Context) {
-	//	minInterval := 24 * 60 * time.Minute
-	//	if opts.CronInterval > 0 {
-	//		minInterval = opts.CronInterval
-	//	}
-	//	run(ctx, minInterval)
-	//})
-	//srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
-	//	cron.Run(ctx, 60*time.Minute, dumpCrosInventory)
-	//})
+	srv.RunInBackground("ufs.dumper", func(ctx context.Context) {
+		minInterval := 24 * 60 * time.Minute
+		if opts.CronInterval > 0 {
+			minInterval = opts.CronInterval
+		}
+		run(ctx, minInterval)
+	})
+	srv.RunInBackground("ufs.cros_inventory.dump", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, dumpCrosInventory)
+	})
 	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
 		cron.Run(ctx, 10*time.Minute, dumpChangeEvent)
 	})
 	srv.RunInBackground("ufs.change_event.BqDump", func(ctx context.Context) {
 		cron.Run(ctx, 10*time.Minute, dumpChangeSnapshots)
 	})
-	//srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
-	//	cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
-	//})
-	//srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
-	//	cron.Run(ctx, 60*time.Minute, SyncMachinesFromIV2)
-	//})
+	srv.RunInBackground("ufs.cros_network.dump", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, dumpCrosNetwork)
+	})
+	srv.RunInBackground("ufs.sync_machines.sync", func(ctx context.Context) {
+		cron.Run(ctx, 60*time.Minute, SyncMachinesFromIV2)
+	})
 }
 
 func run(ctx context.Context, minInterval time.Duration) {
