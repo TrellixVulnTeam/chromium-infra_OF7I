@@ -6,9 +6,7 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -34,39 +32,33 @@ func CreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 		hc := getNicHistoryClient(nic)
 		// 1. Validate the input
 		if err := validateCreateNic(ctx, nic, machineName); err != nil {
-			return err
+			return errors.Annotate(err, "CreateNic - validation failed").Err()
 		}
 
-		// 2. Get browser machine to associate the nic
+		// Get browser machine to associate the nic
 		machine, err := getBrowserMachine(ctx, machineName)
 		if err != nil {
-			return err
+			return errors.Annotate(err, "CreateNic - failed to get machine %s", machineName).Err()
 		}
 
-		// Fill the machine/rack/lab to nic OUTPUT only fields
+		// Fill the machine/rack/lab to nic OUTPUT only fields for indexing nic table
 		nic.Machine = machine.GetName()
 		nic.Rack = machine.GetLocation().GetRack()
 		nic.Lab = machine.GetLocation().GetLab().String()
 
-		// 3. Update the browser machine with new nic information
-		if err := addNicToBrowserMachine(ctx, machine, nic.Name, hc); err != nil {
-			return err
-		}
-
-		// 4. Create a nic entry
+		// Create a nic entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
 		if _, err = registration.BatchUpdateNics(ctx, []*ufspb.Nic{nic}); err != nil {
-			return errors.Annotate(err, "Unable to create nic %s", nic.Name).Err()
+			return errors.Annotate(err, "CreateNic - unable to batch update nic %s", nic.Name).Err()
 		}
 		hc.LogNicChanges(nil, nic)
 		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to create entity in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "CreateNic - unable to create nic %s", nic.Name).Err()
 	}
 	return nic, nil
 }
@@ -83,6 +75,7 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 			return errors.Annotate(err, "UpdateNic - validation failed").Err()
 		}
 
+		// Get old/existing nic
 		oldNic, err := registration.GetNic(ctx, nic.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateNic - get nic %s failed", nic.GetName()).Err()
@@ -93,34 +86,24 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 		nic.Lab = oldNic.GetLab()
 
 		if machineName != "" {
-			// 2. Get the old browser machine associated with nic
-			oldMachine, err := getBrowserMachineForNic(ctx, nic.Name)
+			// Get the old browser machine associated with nic
+			oldMachine, err := getBrowserMachine(ctx, oldNic.GetMachine())
 			if err != nil {
-				return errors.Annotate(err, "UpdateNic - query machine for nic %s failed", nic.GetName()).Err()
+				return errors.Annotate(err, "UpdateNic - failed to get machine %s", machineName).Err()
 			}
 
 			// User is trying to associate this nic with a different browser machine.
 			if oldMachine.Name != machineName {
-				// 3. Get browser machine to associate the nic
+				// Get browser machine to associate the nic
 				machine, err := getBrowserMachine(ctx, machineName)
 				if err != nil {
-					return errors.Annotate(err, "UpdateNic - get browser machine %s failed", machineName).Err()
+					return errors.Annotate(err, "UpdateNic - failed to get browser machine %s", machineName).Err()
 				}
 
 				// Fill the machine/rack/lab to nic OUTPUT only fields
 				nic.Machine = machine.GetName()
 				nic.Rack = machine.GetLocation().GetRack()
 				nic.Lab = machine.GetLocation().GetLab().String()
-
-				// 4. Remove the association between old browser machine and this nic.
-				if err := removeNicFromBrowserMachines(ctx, []*ufspb.Machine{oldMachine}, nic.Name, hc); err != nil {
-					return err
-				}
-
-				// 5. Update the browser machine with new nic information
-				if err := addNicToBrowserMachine(ctx, machine, nic.Name, hc); err != nil {
-					return err
-				}
 			}
 		}
 
@@ -200,71 +183,6 @@ func processNicUpdateMask(oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.Fi
 	return oldNic, nil
 }
 
-// getBrowserMachineForNic return browser machine associated with the nic.
-func getBrowserMachineForNic(ctx context.Context, nicName string) (*ufspb.Machine, error) {
-	machines, err := registration.QueryMachineByPropertyName(ctx, "nic_ids", nicName, false)
-	if err != nil {
-		return nil, errors.Annotate(err, "Unable to query machine for nic %s", nicName).Err()
-	}
-	if machines == nil || len(machines) == 0 {
-		errorMsg := fmt.Sprintf("No machine associated with the nic %s. Data discrepancy error.\n", nicName)
-		return nil, status.Errorf(codes.Internal, errorMsg)
-	}
-	if len(machines) > 1 {
-		errorMsg := fmt.Sprintf("More than one machine associated the nic %s. Data discrepancy error.\n", nicName)
-		return nil, status.Errorf(codes.Internal, errorMsg)
-	}
-	return machines[0], nil
-}
-
-// removeNicFromBrowserMachines removes the nic info from browser machines and
-// updates the machines in datastore.
-// Must be called within a transaction as BatchUpdateMachines is a non-atomic operation
-func removeNicFromBrowserMachines(ctx context.Context, machines []*ufspb.Machine, id string, hc *HistoryClient) error {
-	for _, machine := range machines {
-		oldMachine := proto.Clone(machine).(*ufspb.Machine)
-		if machine.GetChromeBrowserMachine() == nil {
-			errorMsg := fmt.Sprintf("Machine %s is not a browser machine", machine.Name)
-			return status.Errorf(codes.FailedPrecondition, errorMsg)
-		}
-		nics := machine.GetChromeBrowserMachine().GetNics()
-		nics = ufsUtil.RemoveStringEntry(nics, id)
-		machine.GetChromeBrowserMachine().Nics = nics
-		hc.LogMachineChanges(oldMachine, machine)
-	}
-	_, err := registration.BatchUpdateMachines(ctx, machines)
-	if err != nil {
-		return errors.Annotate(err, "Unable to remove nic information %s from machine", id).Err()
-	}
-	return nil
-}
-
-// addNicToBrowserMachine adds the nic info to the browser machine and updates
-// the machine in datastore.
-// Must be called within a transaction as BatchUpdateMachines is a non-atomic operation
-func addNicToBrowserMachine(ctx context.Context, machine *ufspb.Machine, nicName string, hc *HistoryClient) error {
-	if machine == nil {
-		return status.Errorf(codes.FailedPrecondition, "Machine is nil")
-	}
-	if machine.GetChromeBrowserMachine() == nil {
-		errorMsg := fmt.Sprintf("Machine %s is not a browser machine", machine.Name)
-		return status.Errorf(codes.FailedPrecondition, errorMsg)
-	}
-	nics := []string{nicName}
-	if machine.GetChromeBrowserMachine().GetNics() != nil {
-		nics = machine.GetChromeBrowserMachine().GetNics()
-		nics = append(nics, nicName)
-	}
-	oldMachine := proto.Clone(machine).(*ufspb.Machine)
-	machine.GetChromeBrowserMachine().Nics = nics
-	_, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine})
-	if err != nil {
-		return errors.Annotate(err, "Unable to update machine %s with nic %s information", machine.Name, nicName).Err()
-	}
-	hc.LogMachineChanges(oldMachine, machine)
-	return nil
-}
-
 // GetNic returns nic for the given id from datastore.
 func GetNic(ctx context.Context, id string) (*ufspb.Nic, error) {
 	return registration.GetNic(ctx, id)
@@ -284,48 +202,24 @@ func ListNics(ctx context.Context, pageSize int32, pageToken, filter string, key
 }
 
 // DeleteNic deletes the nic in datastore
-//
-// For referential data intergrity,
-// 1. Delete the nic
-// 2. Get the machine associated with this nic
-// 3. Update the machine by removing the association with this nic
 func DeleteNic(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
 		hc := getNicHistoryClient(&ufspb.Nic{Name: id})
+		// Validate the input
+		if err := validateDeleteNic(ctx, id); err != nil {
+			return errors.Annotate(err, "DeleteNic - validation failed").Err()
+		}
+
 		// Delete the nic
 		if err := registration.DeleteNic(ctx, id); err != nil {
-			return errors.Annotate(err, "Unable to delete nic %s", id).Err()
+			return errors.Annotate(err, "DeleteNic - unable to delete nic %s", id).Err()
 		}
 		hc.LogNicChanges(&ufspb.Nic{Name: id}, nil)
-
-		// Get the machine associated with nic
-		machine, err := getBrowserMachineForNic(ctx, id)
-		if err != nil {
-			logging.Debugf(ctx, "Failed to query machine for nic %s", err.Error())
-		}
-		if machine != nil {
-			lses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machine.GetName(), false)
-			if err != nil {
-				return errors.Annotate(err, "Fail to query host by machine %s", machine.GetName()).Err()
-			}
-			for _, lse := range lses {
-				if lse.GetNic() == id {
-					return status.Errorf(codes.InvalidArgument, "nic %s is used by host %s", id, lse.GetName())
-				}
-			}
-
-			// Remove the association between the machine and this nic.
-			if err := removeNicFromBrowserMachines(ctx, []*ufspb.Machine{machine}, id, hc); err != nil {
-				return err
-			}
-		}
-
 		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to delete entity in datastore: %s", err)
-		return err
+		return errors.Annotate(err, "DeleteNic - failed to delete nic in datastore: %s", id).Err()
 	}
 	return nil
 }
@@ -437,6 +331,31 @@ func ReplaceNic(ctx context.Context, oldNic *ufspb.Nic, newNic *ufspb.Nic) (*ufs
 	return nil, nil
 }
 
+// validateDeleteNic validates if a nic can be deleted
+func validateDeleteNic(ctx context.Context, nicName string) error {
+	// check if resources does not exist
+	if err := ResourceExist(ctx, []*Resource{GetNicResource(nicName)}, nil); err != nil {
+		return errors.Annotate(err, "validateDeleteNic - nic %s does not exist", nicName).Err()
+	}
+	// Get the nic
+	nic, err := GetNic(ctx, nicName)
+	if err != nil {
+		return errors.Annotate(err, "validateDeleteNic - failed to get nic %s", nicName).Err()
+	}
+
+	// Get the machinelse associated with the nic
+	lses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", nic.GetMachine(), false)
+	if err != nil {
+		return errors.Annotate(err, "validateDeleteNic - failed to query host by machine %s", nic.GetMachine()).Err()
+	}
+	for _, lse := range lses {
+		if lse.GetNic() == nicName {
+			return status.Errorf(codes.InvalidArgument, "validateDeleteNic - nic %s is used by host %s", nicName, lse.GetName())
+		}
+	}
+	return nil
+}
+
 // validateCreateNic validates if a nic can be created
 //
 // check if the nic already exists
@@ -487,9 +406,9 @@ func validateNicUpdateMask(mask *field_mask.FieldMask) error {
 		for _, path := range mask.Paths {
 			switch path {
 			case "name":
-				return status.Error(codes.InvalidArgument, "validateUpdateNic - name cannot be updated, delete and create a new nic instead")
+				return status.Error(codes.InvalidArgument, "validateNicUpdateMask - name cannot be updated, delete and create a new nic instead")
 			case "update_time":
-				return status.Error(codes.InvalidArgument, "validateUpdateNic - update_time cannot be updated, it is a Output only field")
+				return status.Error(codes.InvalidArgument, "validateNicUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "switch":
 			case "port":
 			case "machine":
@@ -497,7 +416,7 @@ func validateNicUpdateMask(mask *field_mask.FieldMask) error {
 			case "tags":
 				// valid fields, nothing to validate.
 			default:
-				return status.Errorf(codes.InvalidArgument, "validateUpdateNic - unsupported update mask path %q", path)
+				return status.Errorf(codes.InvalidArgument, "validateNicUpdateMask - unsupported update mask path %q", path)
 			}
 		}
 	}

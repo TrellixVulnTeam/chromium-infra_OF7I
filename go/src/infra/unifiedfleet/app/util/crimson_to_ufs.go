@@ -30,8 +30,6 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 					// NetworkDeviceInterface is attached to the nics.
 					DisplayName:      o.Name,
 					ChromePlatform:   FormatResourceName(o.Platform),
-					Nics:             machineToNics[o.Name],
-					Drac:             machineToDracs[o.Name],
 					DeploymentTicket: o.DeploymentTicket,
 				},
 			},

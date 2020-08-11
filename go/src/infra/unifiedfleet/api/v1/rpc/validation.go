@@ -91,44 +91,6 @@ var resourceRegexs = []*regexp.Regexp{
 // machine=mac-1 & nic=nic-1 & kvm=kvm-1,kvm-2
 var FilterRegex = regexp.MustCompile(`^([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*(\&([a-z]*\=[a-zA-Z0-9-)(_:.]*)(\,[a-zA-Z0-9-)(_:.]*)*)*$`)
 
-// Validate validates input requests of MachineRegistration.
-func (r *MachineRegistrationRequest) Validate() error {
-	if r.Machine == nil {
-		return status.Errorf(codes.InvalidArgument, "Machine "+NilEntity)
-	}
-	id := strings.TrimSpace(r.Machine.GetName())
-	if id == "" {
-		return status.Errorf(codes.InvalidArgument, "Machine "+EmptyName)
-	}
-	if !IDRegex.MatchString(id) {
-		return status.Errorf(codes.InvalidArgument, "Machine "+InvalidCharacters)
-	}
-
-	if r.Nics != nil {
-		for _, nic := range r.Nics {
-			id = strings.TrimSpace(nic.GetName())
-			if id == "" {
-				return status.Errorf(codes.InvalidArgument, "Nic "+EmptyName)
-			}
-			if !IDRegex.MatchString(id) {
-				errorMsg := fmt.Sprintf("Nic %s has invalid characters in the name.", id)
-				return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
-			}
-		}
-	}
-
-	if r.Drac != nil {
-		id = strings.TrimSpace(r.Drac.GetName())
-		if id == "" {
-			return status.Errorf(codes.InvalidArgument, "Drac "+EmptyName)
-		}
-		if !IDRegex.MatchString(id) {
-			return status.Errorf(codes.InvalidArgument, "Drac "+InvalidCharacters)
-		}
-	}
-	return nil
-}
-
 // Validate validates input requests of RackRegistration.
 func (r *RackRegistrationRequest) Validate() error {
 	if r.Rack == nil {
@@ -314,18 +276,48 @@ func (r *DeleteRackLSEPrototypeRequest) Validate() error {
 	return validateResourceName(rackLSEPrototypeRegex, RackLSEPrototypeNameFormat, r.Name)
 }
 
-// Validate validates input requests of CreateMachine.
-func (r *CreateMachineRequest) Validate() error {
+// Validate validates input requests of MachineRegistrationRequest.
+func (r *MachineRegistrationRequest) Validate() error {
 	if r.Machine == nil {
-		return status.Errorf(codes.InvalidArgument, NilEntity)
+		return status.Errorf(codes.InvalidArgument, "Machine "+NilEntity)
 	}
-	id := strings.TrimSpace(r.MachineId)
+	id := strings.TrimSpace(r.Machine.GetName())
 	if id == "" {
-		return status.Errorf(codes.InvalidArgument, EmptyID)
+		return status.Errorf(codes.InvalidArgument, "Machine "+EmptyName)
 	}
 	if !IDRegex.MatchString(id) {
-		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+		return status.Errorf(codes.InvalidArgument, "Machine "+InvalidCharacters)
 	}
+
+	if r.GetMachine().GetChromeBrowserMachine() != nil {
+		if r.GetMachine().GetChromeBrowserMachine().GetNicObjects() != nil {
+			nics := r.GetMachine().GetChromeBrowserMachine().GetNicObjects()
+			for _, nic := range nics {
+				id = strings.TrimSpace(nic.GetName())
+				if id == "" {
+					return status.Errorf(codes.InvalidArgument, "Nic "+EmptyName)
+				}
+				if !IDRegex.MatchString(id) {
+					errorMsg := fmt.Sprintf("Nic %s has invalid characters in the name.", id)
+					return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
+				}
+			}
+		}
+
+		if r.GetMachine().GetChromeBrowserMachine().GetDracObject() != nil {
+			drac := r.GetMachine().GetChromeBrowserMachine().GetDracObject()
+			if drac != nil {
+				id = strings.TrimSpace(drac.GetName())
+				if id == "" {
+					return status.Errorf(codes.InvalidArgument, "Drac "+EmptyName)
+				}
+				if !IDRegex.MatchString(id) {
+					return status.Errorf(codes.InvalidArgument, "Drac "+InvalidCharacters)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

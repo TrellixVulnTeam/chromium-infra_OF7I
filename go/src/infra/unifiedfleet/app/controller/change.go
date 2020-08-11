@@ -447,8 +447,6 @@ func logChromeBrowserMachine(resourceName string, oldData, newData *ufspb.Chrome
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.display_name", oldData.GetDisplayName(), newData.GetDisplayName())...)
 	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.chrome_platform", oldData.GetChromePlatform(), newData.GetChromePlatform())...)
-	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.nics", oldData.GetNics(), newData.GetNics())...)
-	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.drac", oldData.GetDrac(), newData.GetDrac())...)
 	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.deployment_ticket", oldData.GetDeploymentTicket(), newData.GetDeploymentTicket())...)
 	changes = append(changes, logKVMInterface(resourceName, oldData.GetKvmInterface(), newData.GetKvmInterface())...)
 	changes = append(changes, logRPMInterface(resourceName, oldData.GetRpmInterface(), newData.GetRpmInterface())...)

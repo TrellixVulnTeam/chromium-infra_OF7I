@@ -176,7 +176,7 @@ Fetches 50 nics and prints the output in JSON format
 	// AddMachineLongDesc long description for AddMachineCmd
 	AddMachineLongDesc string = `Create a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) to UFS.
 
-You can create a machine with required parameters to UFS, and later add nic/drac separately by using add-nic/add-drac commands.
+You can create a machine with required parameters to UFS, and later add nics/drac separately by using add-nic/add-drac commands.
 
 You can also provide the optional nics and drac information to create the nics and drac associated with this machine by specifying a json file as input.
 
@@ -212,53 +212,58 @@ Fetches 5 machines and prints the output in JSON format
 `
 
 	// MachineRegistrationFileText description for machine registration file input
-	MachineRegistrationFileText string = `[JSON Mode] Path to a file containing machine creation request specification in JSON format.
+	MachineRegistrationFileText string = `[JSON Mode] Path to a file containing machine request specification in JSON format.
 This file must contain required machine field and optional nics/drac field.
 
 Example Browser machine creation request:
 {
 	"machine": {
-		"name": "machine-BROWSERLAB-example",
+		"name": "machineBROWSERLABexample",
 		"location": {
+			"lab": "LAB_DATACENTER_MTV97",
 			"rack": "RackName"
 		},
 		"chromeBrowserMachine": {
 			"displayName": "ax105-34-230",
-			"chromePlatform": "Dell R230",
+			"chromePlatform": "Supermicro",
 			"kvmInterface": {
-				"kvm": "kvm.mtv97",
+				"kvm": "ax101-kvm1",
 				"port": 34
 			},
-			"deploymentTicket": "846026"
+			"rpmInterface": {
+				"rpm": "",
+				"port": 65
+			},
+			"deploymentTicket": "846026",
+			"nics": [{
+					"name": "nic-eth0",
+					"macAddress": "00:0d:5d:10:64:8d",
+					"switchInterface": {
+						"switch": "",
+						"port": 15
+					}
+				},
+				{
+					"name": "nic-eth1",
+					"macAddress": "22:0d:4f:10:65:9f",
+					"switchInterface": {
+						"switch": "",
+						"port": 16
+					}
+				}
+			],
+			"drac": {
+				"name": "drac-23",
+				"displayName": "Cisco Drac",
+				"macAddress": "10:03:3d:70:64:2d",
+				"switchInterface": {
+					"switch": "",
+					"port": 17
+				},
+				"password": "WelcomeDrac***"
+			}
 		},
 		"realm": "Browserlab"
-	},
-	"nics": [{
-			"name": "nic-eth0",
-			"macAddress": "00:0d:5d:10:64:8d",
-			"switchInterface": {
-				"switch": "switch-12",
-				"port": 15
-			}
-		},
-		{
-			"name": "nic-eth1",
-			"macAddress": "22:0d:4f:10:65:9f",
-			"switchInterface": {
-				"switch": "switch-12",
-				"port": 16
-			}
-		}
-	],
-	"drac": {
-		"name": "drac-23",
-		"displayName": "Cisco Drac",
-		"macAddress": "10:03:3d:70:64:2d",
-		"switchInterface": {
-			"switch": "switch-12",
-			"port": 17
-		},
-		"password": "WelcomeDrac***"
 	}
 }
 
@@ -280,10 +285,7 @@ Example OS machine creation request:
 	}
 }
 
-The protobuf definition can be found here: 
-Machine creation request: MachineRegistrationRequest
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/rpc/fleet.proto
-
+The protobuf definition can be found here:
 Machine:
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto
 
@@ -984,7 +986,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
 
 	// MachineFilterHelp help text for list machine filtering
-	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/drac/nic/lab/rack/platform` + LabFilterHelpText +
+	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'nic=nic-1,nic-2'

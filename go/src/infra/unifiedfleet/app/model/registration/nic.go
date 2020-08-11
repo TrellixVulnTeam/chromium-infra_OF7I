@@ -96,7 +96,7 @@ func QueryNicByPropertyName(ctx context.Context, propertyName, id string, keysOn
 		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No nics found for the query: %s", id)
+		logging.Debugf(ctx, "No nics found for the query: %s", id)
 		return nil, nil
 	}
 	nics := make([]*ufspb.Nic, 0, len(entities))

@@ -13,6 +13,7 @@ import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/proto/location.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
+import "infra/unifiedfleet/api/v1/proto/network.proto";
 
 // Machine refers to the devices or bare metal servers
 // which serves the tests directly.
@@ -71,7 +72,8 @@ message ChromeBrowserMachine {
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Nic"
         },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
     // Interface of its connected devices.
     KVMInterface kvm_interface = 4;
@@ -82,12 +84,15 @@ message ChromeBrowserMachine {
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Drac"
         },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
     // Usually it's a buganizer bug.
     string deployment_ticket = 8;
     // Can be covered by deployment_ticket
     string description = 9;
+    repeated Nic nic_objects = 11;
+    Drac drac_object = 12;
 }
 
 // ChromeOSMachine refers duts and servers in Chrome OS lab

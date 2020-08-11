@@ -31,8 +31,8 @@ type MachineEntity struct {
 	ID               string   `gae:"$id"`
 	KVMID            string   `gae:"kvm_id"`
 	RPMID            string   `gae:"rpm_id"`
-	NicIDs           []string `gae:"nic_ids"`
-	DracID           string   `gae:"drac_id"`
+	NicIDs           []string `gae:"nic_ids"` // deprecated. Do not use.
+	DracID           string   `gae:"drac_id"` // deprecated. Do not use.
 	ChromePlatformID string   `gae:"chrome_platform_id"`
 	Rack             string   `gae:"rack"`
 	Lab              string   `gae:"lab"`
@@ -63,8 +63,6 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 		ID:               p.GetName(),
 		KVMID:            p.GetChromeBrowserMachine().GetKvmInterface().GetKvm(),
 		RPMID:            p.GetChromeBrowserMachine().GetRpmInterface().GetRpm(),
-		NicIDs:           p.GetChromeBrowserMachine().GetNics(),
-		DracID:           p.GetChromeBrowserMachine().GetDrac(),
 		ChromePlatformID: p.GetChromeBrowserMachine().GetChromePlatform(),
 		Rack:             p.GetLocation().GetRack(),
 		Lab:              p.GetLocation().GetLab().String(),
@@ -83,7 +81,7 @@ func QueryMachineByPropertyName(ctx context.Context, propertyName, id string, ke
 		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No machines found for the query: %s", id)
+		logging.Debugf(ctx, "No machines found for the query: %s", id)
 		return nil, nil
 	}
 	machines := make([]*ufspb.Machine, 0, len(entities))
@@ -251,10 +249,6 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 		field = "kvm_id"
 	case util.RPMFilterName:
 		field = "rpm_id"
-	case util.NicFilterName:
-		field = "nic_ids"
-	case util.DracFilterName:
-		field = "drac_id"
 	case util.LabFilterName:
 		field = "lab"
 	case util.RackFilterName:
@@ -264,7 +258,7 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 	case util.TagFilterName:
 		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/rpm/drac/nic/lab/rack/platform/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/rpm/lab/rack/platform/tag", input)
 	}
 	return field, nil
 }

@@ -22,25 +22,6 @@ import (
 	"infra/unifiedfleet/app/util"
 )
 
-// MachineRegistration creates machine, nics and a drac in database.
-func (fs *FleetServerImpl) MachineRegistration(ctx context.Context, req *ufsAPI.MachineRegistrationRequest) (rsp *ufsAPI.MachineRegistrationResponse, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
-	machine, nics, drac, err := controller.MachineRegistration(ctx, req.Machine, req.Nics, req.Drac)
-	if err != nil {
-		return nil, err
-	}
-	return &ufsAPI.MachineRegistrationResponse{
-		Machine: machine,
-		Nics:    nics,
-		Drac:    drac,
-	}, nil
-}
-
 // RackRegistration creates rack, switches, kvms, rpms in database.
 func (fs *FleetServerImpl) RackRegistration(ctx context.Context, req *ufsAPI.RackRegistrationRequest) (rsp *ufsAPI.RackRegistrationResponse, err error) {
 	defer func() {
@@ -61,21 +42,18 @@ func (fs *FleetServerImpl) RackRegistration(ctx context.Context, req *ufsAPI.Rac
 	}, nil
 }
 
-// CreateMachine creates machine entry in database.
-func (fs *FleetServerImpl) CreateMachine(ctx context.Context, req *ufsAPI.CreateMachineRequest) (rsp *ufspb.Machine, err error) {
+// MachineRegistration creates machine/nics/drac entry in database.
+func (fs *FleetServerImpl) MachineRegistration(ctx context.Context, req *ufsAPI.MachineRegistrationRequest) (rsp *ufspb.Machine, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.Machine.Name = req.MachineId
-	machine, err := controller.CreateMachine(ctx, req.Machine)
+	machine, err := controller.MachineRegistration(ctx, req.Machine)
 	if err != nil {
 		return nil, err
 	}
-	// https://aip.dev/122 - as per AIP guideline
-	machine.Name = util.AddPrefix(util.MachineCollection, machine.Name)
 	return machine, err
 }
 

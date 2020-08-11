@@ -173,18 +173,13 @@ func (nu *networkUpdater) addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.Ne
 	}
 	nicName := nwOpt.GetNic()
 	// Assigning IP to this host.
-	// 1. Get the corresponding machine for the nic, verify it's aligned to the host's associated machines.
-	machine, err := getBrowserMachineForNic(ctx, nicName)
-	if err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to get machine by nic name %s", nicName)).Err()
-	}
 	nic, err := registration.GetNic(ctx, nicName)
 	if err != nil {
 		return errors.Annotate(err, fmt.Sprintf("Fail to get nic by name %s", nicName)).Err()
 	}
 	found := false
 	for _, m := range lse.GetMachines() {
-		if m == machine.GetName() {
+		if m == nic.GetMachine() {
 			found = true
 		}
 	}

@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -32,49 +31,32 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 		hc.LogDracChanges(nil, drac)
 		// 1. Validate input
 		if err := validateCreateDrac(ctx, drac, machineName); err != nil {
-			return err
+			return errors.Annotate(err, "CreateDrac - validation failed").Err()
 		}
 
-		// 2. Get browser machine to associate the drac
+		// Get browser machine to associate the drac
 		machine, err := getBrowserMachine(ctx, machineName)
 		if err != nil {
-			return err
+			return errors.Annotate(err, "CreateDrac - failed to get machine %s", machineName).Err()
 		}
 
-		// Fill the machine/rack/lab to drac OUTPUT only fields
+		// Fill the machine/rack/lab to drac OUTPUT only fields for drac table indexing
 		drac.Machine = machine.GetName()
 		drac.Rack = machine.GetLocation().GetRack()
 		drac.Lab = machine.GetLocation().GetLab().String()
 
-		// 3. Remove the drac associated with browser machine from the system.
-		// The existing old drac in the browser machine will be replaced with this new drac,
-		// A drac cannot exist in the system without being associated to a machine,
-		// so we delete the old drac from the system.
-		if oldDracName := machine.GetChromeBrowserMachine().GetDrac(); oldDracName != "" {
-			if err := registration.DeleteDrac(ctx, oldDracName); err != nil {
-				return errors.Annotate(err, "%s drac not dound in the system. Deletion for drac %s failed.", oldDracName, oldDracName).Err()
-			}
-			hc.LogDracChanges(&ufspb.Drac{Name: oldDracName}, nil)
-		}
-
-		// 4. Update the browser machine with new drac information
-		if err := addDracToBrowserMachine(ctx, machine, drac.Name, hc); err != nil {
-			return err
-		}
-
-		// 5. Create a drac entry
+		// Create a drac entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
 		if _, err = registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
-			return errors.Annotate(err, "Unable to create drac %s", drac.Name).Err()
+			return errors.Annotate(err, "CreateDrac - unable to batch update drac %s", drac.Name).Err()
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to create drac in datastore: %s", err)
-		return nil, err
+		return nil, errors.Annotate(err, "CreateDrac - unable to create drac %s", drac.Name).Err()
 	}
 	return drac, nil
 }
@@ -91,6 +73,7 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 			return errors.Annotate(err, "UpdateDrac - validation failed").Err()
 		}
 
+		// Get old/existing drac
 		oldDrac, err := registration.GetDrac(ctx, drac.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateDrac - get drac %s failed", drac.GetName()).Err()
@@ -100,20 +83,26 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 		drac.Rack = oldDrac.GetRack()
 		drac.Lab = oldDrac.GetLab()
 		if machineName != "" {
-			// 2. Get the old browser machine associated with drac
-			oldMachine, err := getBrowserMachineForDrac(ctx, drac.Name)
+			// Get the old browser machine associated with drac
+			oldMachine, err := getBrowserMachine(ctx, oldDrac.GetMachine())
 			if err != nil {
-				return errors.Annotate(err, "UpdateDrac - query machine for drac %s failed", drac.GetName()).Err()
+				return errors.Annotate(err, "UpdateDrac - failed to get machine %s", machineName).Err()
 			}
 
 			// User is trying to associate this drac with a different browser machine.
 			if oldMachine.Name != machineName {
-				// 3. Remove the association between old browser machine and this drac.
-				if err := removeDracFromBrowserMachines(ctx, []*ufspb.Machine{oldMachine}, hc); err != nil {
-					return err
+				// A machine can have only one drac. If there is a old drac associated with this machine already, error out.
+				// A drac cannot exist in the system without being associated to a machine.
+				dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machineName, true)
+				if err != nil {
+					return errors.Annotate(err, "UpdateDrac - failed to query old drac for machine %s", machineName).Err()
+				}
+				if dracs != nil && len(dracs) > 0 {
+					return status.Error(codes.InvalidArgument, fmt.Sprintf("validateUpdateDrac - There is already a drac %s associated with machine %s.\n"+
+						"Please delete that drac and then associate this drac to the machine.", dracs[0].GetName(), machineName))
 				}
 
-				// 4. Get new browser machine to associate the drac
+				// Get new browser machine to associate the drac
 				machine, err := getBrowserMachine(ctx, machineName)
 				if err != nil {
 					return errors.Annotate(err, "UpdateDrac - get browser machine %s failed", machineName).Err()
@@ -123,22 +112,6 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 				drac.Machine = machine.GetName()
 				drac.Rack = machine.GetLocation().GetRack()
 				drac.Lab = machine.GetLocation().GetLab().String()
-
-				// 5. Remove the drac associated with new browser machine from the system.
-				// The existing old drac in the new browser machine will be replaced with this new drac,
-				// A drac cannot exist in the system without being associated to a machine,
-				// so we delete the old drac from the system.
-				if oldDracName := machine.GetChromeBrowserMachine().GetDrac(); oldDracName != "" {
-					if err := registration.DeleteDrac(ctx, oldDracName); err != nil {
-						return errors.Annotate(err, "UpdateDrac - drac %s not dound in the system. Deletion for drac %s failed.", oldDracName, oldDracName).Err()
-					}
-					hc.LogDracChanges(&ufspb.Drac{Name: oldDracName}, nil)
-				}
-
-				// 6. Update the new browser machine with new drac information
-				if err := addDracToBrowserMachine(ctx, machine, drac.Name, hc); err != nil {
-					return err
-				}
 			}
 		}
 
@@ -159,7 +132,7 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 			}
 		}
 
-		// 7. Update drac entry
+		// Update drac entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err := registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
@@ -290,11 +263,6 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, ke
 }
 
 // DeleteDrac deletes the drac in datastore
-//
-// For referential data intergrity,
-// 1. Delete the drac
-// 2. Get the machine associated with this drac
-// 3. Update the machine by removing the association with this drac
 func DeleteDrac(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
 		hc := &HistoryClient{
@@ -305,35 +273,19 @@ func DeleteDrac(ctx context.Context, id string) error {
 		hc.LogDracChanges(&ufspb.Drac{Name: id}, nil)
 		// 1. Delete the drac
 		if err := registration.DeleteDrac(ctx, id); err != nil {
-			return err
+			return errors.Annotate(err, "DeleteDrac - unable to delete drac %s", id).Err()
 		}
 
 		// 2. Delete its ip configs
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
-			return err
+			return errors.Annotate(err, "DeleteDrac - unable to delete ip configs for drac %s", id).Err()
 		}
 
-		// 3. Get the machine associated with drac
-		machines, err := registration.QueryMachineByPropertyName(ctx, "drac_id", id, false)
-		if err != nil {
-			return errors.Annotate(err, "Unable to query machine for drac %s", id).Err()
-		}
-		if machines == nil || len(machines) == 0 {
-			logging.Warningf(ctx, "No machine associated with the drac %s. Data discrepancy error.\n", id)
-		}
-		if len(machines) > 1 {
-			logging.Warningf(ctx, "More than one machine associated the drac %s. Data discrepancy error.\n", id)
-		}
-		// 4. Remove the association between the browser machines and this drac.
-		if err := removeDracFromBrowserMachines(ctx, machines, hc); err != nil {
-			return err
-		}
 		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to delete drac in datastore: %s", err)
-		return err
+		return errors.Annotate(err, "DeleteDrac - failed to delete drac in datastore: %s", id).Err()
 	}
 	return nil
 }
@@ -375,58 +327,25 @@ func getBrowserMachineForDrac(ctx context.Context, dracName string) (*ufspb.Mach
 	return machines[0], nil
 }
 
-// removeDracFromBrowserMachines removes the drac info from browser machines and
-// updates the machines in datastore.
-// Must be called within a transaction as BatchUpdateMachines is a non-atomic operation
-func removeDracFromBrowserMachines(ctx context.Context, machines []*ufspb.Machine, hc *HistoryClient) error {
-	if machines == nil || len(machines) == 0 {
-		return nil
-	}
-	for _, machine := range machines {
-		oldMachine := proto.Clone(machine).(*ufspb.Machine)
-		if machine.GetChromeBrowserMachine() == nil {
-			errorMsg := fmt.Sprintf("Machine %s is not a browser machine", machine.Name)
-			return status.Errorf(codes.FailedPrecondition, errorMsg)
-		}
-		machine.GetChromeBrowserMachine().Drac = ""
-		hc.LogMachineChanges(oldMachine, machine)
-	}
-	_, err := registration.BatchUpdateMachines(ctx, machines)
-	if err != nil {
-		return errors.Annotate(err, "Unable to remove drac information from machine").Err()
-	}
-	return nil
-}
-
-// addDracToBrowserMachine adds the drac info to the browser machine an
-// updates the machine in datastore.
-// Must be called within a transaction as BatchUpdateMachines is a non-atomic operation
-func addDracToBrowserMachine(ctx context.Context, machine *ufspb.Machine, dracName string, hc *HistoryClient) error {
-	if machine == nil {
-		return status.Errorf(codes.FailedPrecondition, "Machine is nil")
-	}
-	if machine.GetChromeBrowserMachine() == nil {
-		errorMsg := fmt.Sprintf("Machine %s is not a browser machine", machine.Name)
-		return status.Errorf(codes.FailedPrecondition, errorMsg)
-	}
-	oldMachine := proto.Clone(machine).(*ufspb.Machine)
-	machine.GetChromeBrowserMachine().Drac = dracName
-	_, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine})
-	if err != nil {
-		return errors.Annotate(err, "Unable to update machine %s with drac %s information", machine.Name, dracName).Err()
-	}
-	hc.LogMachineChanges(oldMachine, machine)
-	return nil
-}
-
 // validateCreateDrac validates if a drac can be created
 //
 // check if the drac already exists
 // checks if the machine and resources referenced by the drac does not exist
 func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) error {
-	// 1. Check if Drac already exists
+	// Check if Drac already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetDracResource(drac.Name)}, nil); err != nil {
 		return err
+	}
+
+	// A machine can have only one drac. If there is a old drac associated with this machine already, error out.
+	// A drac cannot exist in the system without being associated to a machine.
+	dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machineName, true)
+	if err != nil {
+		return errors.Annotate(err, "validateCreateDrac - failed to query old drac for machine %s", machineName).Err()
+	}
+	if dracs != nil && len(dracs) > 0 {
+		return status.Error(codes.InvalidArgument, fmt.Sprintf("validateCreateDrac - There is already a drac %s associated with machine %s.\n"+
+			"Please delete that drac and then add the new drac to the machine.", dracs[0].GetName(), machineName))
 	}
 
 	// Aggregate resource to check if machine does not exist
@@ -435,7 +354,7 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 	if switchID := drac.GetSwitchInterface().GetSwitch(); switchID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
 	}
-	// 2. Check if resources does not exist
+	// Check if resources does not exist
 	return ResourceExist(ctx, resourcesNotFound, nil)
 }
 
@@ -481,9 +400,9 @@ func validateDracUpdateMask(mask *field_mask.FieldMask) error {
 		for _, path := range mask.Paths {
 			switch path {
 			case "name":
-				return status.Error(codes.InvalidArgument, "validateUpdateDrac - name cannot be updated, delete and create a new drac instead")
+				return status.Error(codes.InvalidArgument, "validateDracUpdateMask - name cannot be updated, delete and create a new drac instead")
 			case "update_time":
-				return status.Error(codes.InvalidArgument, "validateUpdateDrac - update_time cannot be updated, it is a Output only field")
+				return status.Error(codes.InvalidArgument, "validateDracUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "switch":
 			case "port":
 			case "machine":
@@ -491,9 +410,17 @@ func validateDracUpdateMask(mask *field_mask.FieldMask) error {
 			case "tags":
 				// valid fields, nothing to validate.
 			default:
-				return status.Errorf(codes.InvalidArgument, "validateUpdateDrac - unsupported update mask path %q", path)
+				return status.Errorf(codes.InvalidArgument, "validateDracUpdateMask - unsupported update mask path %q", path)
 			}
 		}
 	}
 	return nil
+}
+
+func getDracHistoryClient(m *ufspb.Drac) *HistoryClient {
+	return &HistoryClient{
+		netUdt: &networkUpdater{
+			Hostname: m.Name,
+		},
+	}
 }

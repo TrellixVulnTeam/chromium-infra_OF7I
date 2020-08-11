@@ -77,7 +77,7 @@ func QueryDracByPropertyName(ctx context.Context, propertyName, id string, keysO
 		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No dracs found for the query: %s", id)
+		logging.Debugf(ctx, "No dracs found for the query: %s", id)
 		return nil, nil
 	}
 	dracs := make([]*ufspb.Drac, 0, len(entities))

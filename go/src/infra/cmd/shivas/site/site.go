@@ -128,7 +128,7 @@ func SecretsDir() string {
 var VersionNumber = fmt.Sprintf("%d.%d.%d", Major, Minor, Patch)
 
 // Major is the Major version number
-const Major = 2
+const Major = 3
 
 // Minor is the Minor version number
 const Minor = 0

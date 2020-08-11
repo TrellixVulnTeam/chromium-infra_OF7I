@@ -19,6 +19,7 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -311,11 +312,7 @@ func TestDeleteChromePlatform(t *testing.T) {
 					},
 				},
 			}
-			mreq := &ufsAPI.CreateMachineRequest{
-				Machine:   chromeBrowserMachine1,
-				MachineId: "machine-1",
-			}
-			mresp, merr := tf.Fleet.CreateMachine(tf.C, mreq)
+			mresp, merr := registration.CreateMachine(tf.C, chromeBrowserMachine1)
 			So(merr, ShouldBeNil)
 			So(mresp, ShouldResembleProto, chromeBrowserMachine1)
 

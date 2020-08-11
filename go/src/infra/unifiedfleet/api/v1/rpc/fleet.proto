@@ -24,9 +24,6 @@ import "infra/unifiedfleet/api/v1/proto/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 service Fleet {
-  // MachineRegistration creates a new machine, nic and drac.
-  rpc MachineRegistration(MachineRegistrationRequest) returns (MachineRegistrationResponse);
-
   // RackRegistration creates a new rack, switches, kvms and rpms.
   rpc RackRegistration(RackRegistrationRequest) returns (RackRegistrationResponse);
 
@@ -84,8 +81,8 @@ service Fleet {
   // Delete delete the RackLSEPrototype
   rpc DeleteRackLSEPrototype(DeleteRackLSEPrototypeRequest) returns (google.protobuf.Empty);
 
-  // CreateMachine creates a new machine.
-  rpc CreateMachine(CreateMachineRequest) returns (proto.Machine);
+  // MachineRegistration creates a new machine/nics/drac.
+  rpc MachineRegistration(MachineRegistrationRequest) returns (proto.Machine);
 
   // Update updates the machine
   rpc UpdateMachine(UpdateMachineRequest) returns (proto.Machine);
@@ -637,18 +634,11 @@ message DeleteRackLSEPrototypeRequest {
   ];
 }
 
-// Contains the required information for creating a Machine represented in
+// Contains the required information for creating machine/nics/drac represented in
 // the database.
-message CreateMachineRequest {
+message MachineRegistrationRequest {
   // The machine to create.
   proto.Machine machine = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // The ID to use for the Machine, which will become the final component of
-  // the Machine's resource name.
-  //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
-  // contains only ASCII letters, numbers, dash and underscore.
-   string machine_id = 2;
 }
 
 message UpdateMachineRequest {
@@ -1509,28 +1499,6 @@ message UpdateStateRequest {
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
-}
-
-message MachineRegistrationRequest {
-  // The machine to create.
-  proto.Machine machine = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // The nics to create.
-  repeated proto.Nic nics = 2;
-
-  // The drac to create.
-  proto.Drac drac = 3;
-}
-
-message MachineRegistrationResponse {
-  // Create machine
-  proto.Machine machine = 1;
-
-  // Created nics
-  repeated proto.Nic nics = 2;
-
-  // Created drac
-  proto.Drac drac = 3;
 }
 
 message RackRegistrationRequest {

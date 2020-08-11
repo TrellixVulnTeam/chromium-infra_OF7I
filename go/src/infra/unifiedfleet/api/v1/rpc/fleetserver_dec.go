@@ -27,23 +27,6 @@ type DecoratedFleet struct {
 	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedFleet) MachineRegistration(ctx context.Context, req *MachineRegistrationRequest) (rsp *MachineRegistrationResponse, err error) {
-	if s.Prelude != nil {
-		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "MachineRegistration", req)
-		if err == nil {
-			ctx = newCtx
-		}
-	}
-	if err == nil {
-		rsp, err = s.Service.MachineRegistration(ctx, req)
-	}
-	if s.Postlude != nil {
-		err = s.Postlude(ctx, "MachineRegistration", rsp, err)
-	}
-	return
-}
-
 func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistrationRequest) (rsp *RackRegistrationResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
@@ -367,19 +350,19 @@ func (s *DecoratedFleet) DeleteRackLSEPrototype(ctx context.Context, req *Delete
 	return
 }
 
-func (s *DecoratedFleet) CreateMachine(ctx context.Context, req *CreateMachineRequest) (rsp *proto1.Machine, err error) {
+func (s *DecoratedFleet) MachineRegistration(ctx context.Context, req *MachineRegistrationRequest) (rsp *proto1.Machine, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "CreateMachine", req)
+		newCtx, err = s.Prelude(ctx, "MachineRegistration", req)
 		if err == nil {
 			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.CreateMachine(ctx, req)
+		rsp, err = s.Service.MachineRegistration(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(ctx, "CreateMachine", rsp, err)
+		err = s.Postlude(ctx, "MachineRegistration", rsp, err)
 	}
 	return
 }

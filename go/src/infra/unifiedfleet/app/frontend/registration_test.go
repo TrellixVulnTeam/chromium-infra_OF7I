@@ -108,6 +108,30 @@ func TestMachineRegistration(t *testing.T) {
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
 	Convey("Machine Registration", t, func() {
+		Convey("Register machine - happy path", func() {
+			nics := []*ufspb.Nic{{
+				Name: "nic-X",
+			}}
+			drac := &ufspb.Drac{
+				Name: "drac-X",
+			}
+			machine := &ufspb.Machine{
+				Name: "machine-X",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						NicObjects: nics,
+						DracObject: drac,
+					},
+				},
+			}
+			req := &ufsAPI.MachineRegistrationRequest{
+				Machine: machine,
+			}
+			resp, _ := tf.Fleet.MachineRegistration(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, machine)
+		})
+
 		Convey("Register machine with nil machine", func() {
 			req := &ufsAPI.MachineRegistrationRequest{}
 			_, err := tf.Fleet.MachineRegistration(tf.C, req)
@@ -141,10 +165,14 @@ func TestMachineRegistration(t *testing.T) {
 			req := &ufsAPI.MachineRegistrationRequest{
 				Machine: &ufspb.Machine{
 					Name: "machine-1",
+					Device: &ufspb.Machine_ChromeBrowserMachine{
+						ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+							NicObjects: []*ufspb.Nic{{
+								Name: "",
+							}},
+						},
+					},
 				},
-				Nics: []*ufspb.Nic{{
-					Name: "",
-				}},
 			}
 			_, err := tf.Fleet.MachineRegistration(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -155,10 +183,14 @@ func TestMachineRegistration(t *testing.T) {
 			req := &ufsAPI.MachineRegistrationRequest{
 				Machine: &ufspb.Machine{
 					Name: "machine-1",
+					Device: &ufspb.Machine_ChromeBrowserMachine{
+						ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+							NicObjects: []*ufspb.Nic{{
+								Name: "a.b)7&",
+							}},
+						},
+					},
 				},
-				Nics: []*ufspb.Nic{{
-					Name: "a.b)7&",
-				}},
 			}
 			_, err := tf.Fleet.MachineRegistration(tf.C, req)
 			So(err, ShouldNotBeNil)
@@ -169,9 +201,13 @@ func TestMachineRegistration(t *testing.T) {
 			req := &ufsAPI.MachineRegistrationRequest{
 				Machine: &ufspb.Machine{
 					Name: "machine-1",
-				},
-				Drac: &ufspb.Drac{
-					Name: "",
+					Device: &ufspb.Machine_ChromeBrowserMachine{
+						ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+							DracObject: &ufspb.Drac{
+								Name: "",
+							},
+						},
+					},
 				},
 			}
 			_, err := tf.Fleet.MachineRegistration(tf.C, req)
@@ -183,9 +219,13 @@ func TestMachineRegistration(t *testing.T) {
 			req := &ufsAPI.MachineRegistrationRequest{
 				Machine: &ufspb.Machine{
 					Name: "machine-1",
-				},
-				Drac: &ufspb.Drac{
-					Name: "a.b)7&",
+					Device: &ufspb.Machine_ChromeBrowserMachine{
+						ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+							DracObject: &ufspb.Drac{
+								Name: "a.b)7&",
+							},
+						},
+					},
 				},
 			}
 			_, err := tf.Fleet.MachineRegistration(tf.C, req)
@@ -195,106 +235,27 @@ func TestMachineRegistration(t *testing.T) {
 	})
 }
 
-func TestCreateMachine(t *testing.T) {
-	t.Parallel()
-	ctx := testingContext()
-	tf, validate := newTestFixtureWithContext(ctx, t)
-	defer validate()
-	chromeOSMachine1 := mockChromeOSMachine("", "chromeoslab1", "samus1")
-	chromeOSMachine2 := mockChromeOSMachine("", "chromeoslab2", "samus2")
-	chromeOSMachine3 := mockChromeOSMachine("", "chromeoslab3", "samus3")
-	chromeOSMachine4 := mockChromeOSMachine("", "chromeoslab1", "samus1")
-	Convey("CreateMachines", t, func() {
-		Convey("Create new machine with machine_id - happy path", func() {
-			req := &ufsAPI.CreateMachineRequest{
-				Machine:   chromeOSMachine1,
-				MachineId: "Chromeos-asset-1",
-			}
-			resp, err := tf.Fleet.CreateMachine(tf.C, req)
-			So(err, ShouldBeNil)
-			assertMachineEqual(resp, chromeOSMachine1)
-		})
-
-		Convey("Create existing machines", func() {
-			req := &ufsAPI.CreateMachineRequest{
-				Machine:   chromeOSMachine4,
-				MachineId: "Chromeos-asset-1",
-			}
-			resp, err := tf.Fleet.CreateMachine(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Machine Chromeos-asset-1 already exists in the system.")
-		})
-
-		Convey("Create new machine - Invalid input nil", func() {
-			req := &ufsAPI.CreateMachineRequest{
-				Machine: nil,
-			}
-			resp, err := tf.Fleet.CreateMachine(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
-		})
-
-		Convey("Create new machine - Invalid input empty ID", func() {
-			req := &ufsAPI.CreateMachineRequest{
-				Machine:   chromeOSMachine2,
-				MachineId: "",
-			}
-			resp, err := tf.Fleet.CreateMachine(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
-		})
-
-		Convey("Create new machine - Invalid input invalid characters", func() {
-			req := &ufsAPI.CreateMachineRequest{
-				Machine:   chromeOSMachine3,
-				MachineId: "a.b)7&",
-			}
-			resp, err := tf.Fleet.CreateMachine(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
-		})
-	})
-}
-
 func TestUpdateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-	chromeOSMachine1 := mockChromeOSMachine("", "chromeoslab1", "samus1")
 	chromeOSMachine2 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "veyron")
-	chromeBrowserMachine1 := mockChromeBrowserMachine("chrome-asset-1", "chromelab", "machine-1")
 	chromeOSMachine3 := mockChromeOSMachine("", "chromeoslab", "samus")
 	chromeOSMachine4 := mockChromeOSMachine("a.b)7&", "chromeoslab", "samus")
 	Convey("UpdateMachines", t, func() {
 		Convey("Update existing machines - happy path", func() {
-			req := &ufsAPI.CreateMachineRequest{
-				Machine:   chromeOSMachine1,
-				MachineId: "chromeos-asset-1",
-			}
-			resp, err := tf.Fleet.CreateMachine(tf.C, req)
+			_, err := registration.CreateMachine(tf.C, &ufspb.Machine{
+				Name: "chromeos-asset-1",
+			})
 			So(err, ShouldBeNil)
-			assertMachineEqual(resp, chromeOSMachine1)
+
 			ureq := &ufsAPI.UpdateMachineRequest{
 				Machine: chromeOSMachine2,
 			}
-			resp, err = tf.Fleet.UpdateMachine(tf.C, ureq)
+			resp, err := tf.Fleet.UpdateMachine(tf.C, ureq)
 			So(err, ShouldBeNil)
 			assertMachineEqual(resp, chromeOSMachine2)
-		})
-
-		Convey("Update non-existing machines", func() {
-			ureq := &ufsAPI.UpdateMachineRequest{
-				Machine: chromeBrowserMachine1,
-			}
-			resp, err := tf.Fleet.UpdateMachine(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID chrome-asset-1 in the system.")
 		})
 
 		Convey("Update machine - Invalid input nil", func() {
@@ -332,35 +293,23 @@ func TestUpdateMachine(t *testing.T) {
 
 func TestGetMachine(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	chromeOSMachine1, _ := registration.CreateMachine(tf.C, &ufspb.Machine{
+		Name: "chromeos-asset-1",
+	})
 	Convey("GetMachine", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
-		req := &ufsAPI.CreateMachineRequest{
-			Machine:   chromeOSMachine1,
-			MachineId: "chromeos-asset-1",
-		}
-		resp, err := tf.Fleet.CreateMachine(tf.C, req)
-		So(err, ShouldBeNil)
-		assertMachineEqual(resp, chromeOSMachine1)
 		Convey("Get machine by existing ID", func() {
 			req := &ufsAPI.GetMachineRequest{
 				Name: util.AddPrefix(util.MachineCollection, "chromeos-asset-1"),
 			}
 			resp, err := tf.Fleet.GetMachine(tf.C, req)
 			So(err, ShouldBeNil)
-			assertMachineEqual(resp, chromeOSMachine1)
+			resp.Name = util.RemovePrefix(resp.Name)
+			So(resp, ShouldResembleProto, chromeOSMachine1)
 		})
-		Convey("Get machine by non-existing ID", func() {
-			req := &ufsAPI.GetMachineRequest{
-				Name: util.AddPrefix(util.MachineCollection, "chrome-asset-1"),
-			}
-			resp, err := tf.Fleet.GetMachine(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
+
 		Convey("Get machine - Invalid input empty name", func() {
 			req := &ufsAPI.GetMachineRequest{
 				Name: "",
@@ -370,6 +319,7 @@ func TestGetMachine(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
+
 		Convey("Get machine - Invalid input invalid characters", func() {
 			req := &ufsAPI.GetMachineRequest{
 				Name: util.AddPrefix(util.MachineCollection, "a.b)7&"),
@@ -445,40 +395,25 @@ func TestListMachines(t *testing.T) {
 
 func TestDeleteMachine(t *testing.T) {
 	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	registration.CreateMachine(tf.C, &ufspb.Machine{
+		Name: "chromeos-asset-1",
+	})
 	Convey("DeleteMachine", t, func() {
-		ctx := testingContext()
-		tf, validate := newTestFixtureWithContext(ctx, t)
-		defer validate()
-		chromeOSMachine1 := mockChromeOSMachine("chromeos-asset-1", "chromeoslab", "samus")
-		req := &ufsAPI.CreateMachineRequest{
-			Machine:   chromeOSMachine1,
-			MachineId: "chromeos-asset-1",
-		}
-		resp, err := tf.Fleet.CreateMachine(tf.C, req)
-		So(err, ShouldBeNil)
-		assertMachineEqual(resp, chromeOSMachine1)
 		Convey("Delete machine by existing ID", func() {
 			req := &ufsAPI.DeleteMachineRequest{
 				Name: util.AddPrefix(util.MachineCollection, "chromeos-asset-1"),
 			}
 			_, err := tf.Fleet.DeleteMachine(tf.C, req)
 			So(err, ShouldBeNil)
-			greq := &ufsAPI.GetMachineRequest{
-				Name: util.AddPrefix(util.MachineCollection, "chromeos-asset-1"),
-			}
-			res, err := tf.Fleet.GetMachine(tf.C, greq)
-			So(res, ShouldBeNil)
+
+			_, err = registration.GetMachine(tf.C, "chromeos-asset-1")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 		})
-		Convey("Delete machine by non-existing ID", func() {
-			req := &ufsAPI.DeleteMachineRequest{
-				Name: util.AddPrefix(util.MachineCollection, "chrome-asset-1"),
-			}
-			_, err := tf.Fleet.DeleteMachine(tf.C, req)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
+
 		Convey("Delete machine - Invalid input empty name", func() {
 			req := &ufsAPI.DeleteMachineRequest{
 				Name: "",
@@ -488,6 +423,7 @@ func TestDeleteMachine(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
+
 		Convey("Delete machine - Invalid input invalid characters", func() {
 			req := &ufsAPI.DeleteMachineRequest{
 				Name: util.AddPrefix(util.MachineCollection, "a.b)7&"),
@@ -526,16 +462,10 @@ func TestImportMachines(t *testing.T) {
 				bm := m.GetChromeBrowserMachine()
 				switch m.GetName() {
 				case "machine1":
-					So(bm.GetNics(), ShouldResemble, []string{"machine1:eth0", "machine1:eth1"})
-					So(bm.GetDrac(), ShouldEqual, "drac-hostname")
 					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform")
 				case "machine2":
-					So(bm.GetNics(), ShouldResemble, []string{"machine2:eth0"})
-					So(bm.GetDrac(), ShouldEqual, "")
 					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform")
 				case "machine3":
-					So(bm.GetNics(), ShouldResemble, []string{"machine3:eth0"})
-					So(bm.GetDrac(), ShouldEqual, "")
 					So(bm.GetChromePlatform(), ShouldEqual, "fake_platform2")
 				}
 			}
@@ -857,25 +787,6 @@ func TestCreateNic(t *testing.T) {
 			So(resp, ShouldResembleProto, nic)
 		})
 
-		Convey("Create existing nic", func() {
-			nic := &ufspb.Nic{
-				Name: "nic-3",
-			}
-			_, err := registration.CreateNic(tf.C, nic)
-			So(err, ShouldBeNil)
-
-			nic2 := mockNic("nic-3")
-			req := &ufsAPI.CreateNicRequest{
-				Nic:     nic2,
-				NicId:   "nic-3",
-				Machine: "machine-1",
-			}
-			resp, err := tf.Fleet.CreateNic(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Nic nic-3 already exists in the system.")
-		})
-
 		Convey("Create new nic - Invalid input nil", func() {
 			req := &ufsAPI.CreateNicRequest{
 				Nic: nil,
@@ -934,18 +845,17 @@ func TestUpdateNic(t *testing.T) {
 	machine1 := &ufspb.Machine{
 		Name: "machine-1",
 		Device: &ufspb.Machine_ChromeBrowserMachine{
-			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-				Nics: []string{"nic-1"},
-			},
+			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 		},
 	}
 	registration.CreateMachine(tf.C, machine1)
 	Convey("UpdateNic", t, func() {
 		Convey("Update existing nic", func() {
 			nic1 := &ufspb.Nic{
-				Name: "nic-1",
+				Name:    "nic-1",
+				Machine: "machine-1",
 			}
-			resp, err := registration.CreateNic(tf.C, nic1)
+			_, err := registration.CreateNic(tf.C, nic1)
 			So(err, ShouldBeNil)
 
 			nic2 := mockNic("nic-1")
@@ -954,21 +864,9 @@ func TestUpdateNic(t *testing.T) {
 				Nic:     nic2,
 				Machine: "machine-1",
 			}
-			resp, err = tf.Fleet.UpdateNic(tf.C, ureq)
+			resp, err := tf.Fleet.UpdateNic(tf.C, ureq)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic2)
-		})
-
-		Convey("Update non-existing nic", func() {
-			nic := mockNic("nic-3")
-			ureq := &ufsAPI.UpdateNicRequest{
-				Nic:     nic,
-				Machine: "machine-1",
-			}
-			resp, err := tf.Fleet.UpdateNic(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-3 in the system")
 		})
 
 		Convey("Update nic - Invalid input nil", func() {
@@ -1013,7 +911,6 @@ func TestGetNic(t *testing.T) {
 	ctx := testingContext()
 	tf, validate := newTestFixtureWithContext(ctx, t)
 	defer validate()
-
 	Convey("GetNic", t, func() {
 		Convey("Get nic by existing ID", func() {
 			nic1 := &ufspb.Nic{
@@ -1029,15 +926,7 @@ func TestGetNic(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic1)
 		})
-		Convey("Get nic by non-existing ID", func() {
-			req := &ufsAPI.GetNicRequest{
-				Name: util.AddPrefix(util.NicCollection, "nic-2"),
-			}
-			resp, err := tf.Fleet.GetNic(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
+
 		Convey("Get nic - Invalid input empty name", func() {
 			req := &ufsAPI.GetNicRequest{
 				Name: "",
@@ -1047,6 +936,7 @@ func TestGetNic(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
+
 		Convey("Get nic - Invalid input invalid characters", func() {
 			req := &ufsAPI.GetNicRequest{
 				Name: util.AddPrefix(util.NicCollection, "a.b)7&"),
@@ -1861,24 +1751,6 @@ func TestCreateDrac(t *testing.T) {
 			So(resp, ShouldResembleProto, drac)
 		})
 
-		Convey("Create existing drac", func() {
-			drac := &ufspb.Drac{
-				Name: "Drac-3",
-			}
-			_, err := registration.CreateDrac(tf.C, drac)
-			So(err, ShouldBeNil)
-
-			req := &ufsAPI.CreateDracRequest{
-				Drac:    mockDrac("Drac-3"),
-				DracId:  "Drac-3",
-				Machine: "machine-1",
-			}
-			resp, err := tf.Fleet.CreateDrac(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Drac Drac-3 already exists in the system.")
-		})
-
 		Convey("Create new drac - Invalid input nil", func() {
 			req := &ufsAPI.CreateDracRequest{
 				Drac: nil,
@@ -1937,16 +1809,15 @@ func TestUpdateDrac(t *testing.T) {
 	machine1 := &ufspb.Machine{
 		Name: "machine-1",
 		Device: &ufspb.Machine_ChromeBrowserMachine{
-			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-				Drac: "drac-1",
-			},
+			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 		},
 	}
 	registration.CreateMachine(tf.C, machine1)
 	Convey("UpdateDrac", t, func() {
 		Convey("Update existing drac", func() {
 			drac1 := &ufspb.Drac{
-				Name: "drac-1",
+				Name:    "drac-1",
+				Machine: "machine-1",
 			}
 			resp, err := registration.CreateDrac(tf.C, drac1)
 			So(err, ShouldBeNil)
@@ -1960,18 +1831,6 @@ func TestUpdateDrac(t *testing.T) {
 			resp, err = tf.Fleet.UpdateDrac(tf.C, ureq)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac2)
-		})
-
-		Convey("Update non-existing drac", func() {
-			drac := mockDrac("drac-3")
-			ureq := &ufsAPI.UpdateDracRequest{
-				Drac:    drac,
-				Machine: "machine-1",
-			}
-			resp, err := tf.Fleet.UpdateDrac(tf.C, ureq)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "There is no Drac with DracID drac-3 in the system")
 		})
 
 		Convey("Update drac - Invalid input nil", func() {
@@ -2032,15 +1891,7 @@ func TestGetDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac1)
 		})
-		Convey("Get drac by non-existing ID", func() {
-			req := &ufsAPI.GetDracRequest{
-				Name: util.AddPrefix(util.DracCollection, "drac-2"),
-			}
-			resp, err := tf.Fleet.GetDrac(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-		})
+
 		Convey("Get drac - Invalid input empty name", func() {
 			req := &ufsAPI.GetDracRequest{
 				Name: "",
@@ -2050,6 +1901,7 @@ func TestGetDrac(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyName)
 		})
+
 		Convey("Get drac - Invalid input invalid characters", func() {
 			req := &ufsAPI.GetDracRequest{
 				Name: util.AddPrefix(util.DracCollection, "a.b)7&"),

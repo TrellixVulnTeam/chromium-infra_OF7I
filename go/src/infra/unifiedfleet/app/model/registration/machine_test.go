@@ -255,8 +255,6 @@ func TestQueryMachineByPropertyName(t *testing.T) {
 			Device: &ufspb.Machine_ChromeBrowserMachine{
 				ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 					ChromePlatform: "chromePlatform-1",
-					Nics:           []string{"nic-1"},
-					Drac:           "drac-1",
 					KvmInterface: &ufspb.KVMInterface{
 						Kvm: "kvm-1",
 					},
@@ -292,26 +290,6 @@ func TestQueryMachineByPropertyName(t *testing.T) {
 		})
 		Convey("Query By non-existing rpm", func() {
 			resp, err := QueryMachineByPropertyName(ctx, "rpm_id", "rpm-2", false)
-			So(err, ShouldBeNil)
-			So(resp, ShouldBeNil)
-		})
-		Convey("Query By existing Nic", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "nic_ids", "nic-1", true)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machines)
-		})
-		Convey("Query By non-existing Nic", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "nic_ids", "nic-2", true)
-			So(err, ShouldBeNil)
-			So(resp, ShouldBeNil)
-		})
-		Convey("Query By existing Drac", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "drac_id", "drac-1", true)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machines)
-		})
-		Convey("Query By non-existing Drac", func() {
-			resp, err := QueryMachineByPropertyName(ctx, "drac_id", "drac-2", true)
 			So(err, ShouldBeNil)
 			So(resp, ShouldBeNil)
 		})

@@ -123,15 +123,14 @@ func TestCreateMachineLSE(t *testing.T) {
 
 		Convey("Create new machineLSE with existing machines, specify ip with wrong vlan name", func() {
 			_, err := registration.CreateNic(ctx, &ufspb.Nic{
-				Name: "eth1",
+				Name:    "eth1",
+				Machine: "machine-wrong-nic",
 			})
 			So(err, ShouldBeNil)
 			machine1 := &ufspb.Machine{
 				Name: "machine-wrong-nic",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"eth1"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			_, err = registration.CreateMachine(ctx, machine1)
@@ -156,15 +155,14 @@ func TestCreateMachineLSE(t *testing.T) {
 
 		Convey("Create new machineLSE with existing machines and specify ip", func() {
 			_, err := registration.CreateNic(ctx, &ufspb.Nic{
-				Name: "eth0",
+				Name:    "eth0",
+				Machine: "machine-with-ip",
 			})
 			So(err, ShouldBeNil)
 			machine1 := &ufspb.Machine{
 				Name: "machine-with-ip",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"eth0"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			_, err = registration.CreateMachine(ctx, machine1)
@@ -824,15 +822,14 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 		Convey("Update machineLSE by setting ip by vlan for host", func() {
 			_, err := registration.CreateNic(ctx, &ufspb.Nic{
-				Name: "eth0",
+				Name:    "eth0",
+				Machine: "machine-update-host",
 			})
 			So(err, ShouldBeNil)
 			machine1 := &ufspb.Machine{
 				Name: "machine-update-host",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"eth0"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			machineLSE1 := &ufspb.MachineLSE{
@@ -912,15 +909,14 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 		Convey("Update machineLSE by setting ip by user for host", func() {
 			_, err := registration.CreateNic(ctx, &ufspb.Nic{
-				Name: "eth0-user",
+				Name:    "eth0-user",
+				Machine: "machine-update-host-user",
 			})
 			So(err, ShouldBeNil)
 			machine1 := &ufspb.Machine{
 				Name: "machine-update-host-user",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"eth0-user"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			machineLSE1 := &ufspb.MachineLSE{

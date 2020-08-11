@@ -50,52 +50,7 @@ func TestCreateNic(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Create new nic with existing machine with nics", func() {
-			machine := &ufspb.Machine{
-				Name: "machine-10",
-				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-5"},
-					},
-				},
-			}
-			_, err := registration.CreateMachine(ctx, machine)
-			So(err, ShouldBeNil)
-
-			nic := &ufspb.Nic{
-				Name: "nic-20",
-			}
-			resp, err := CreateNic(ctx, nic, "machine-10")
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, nic)
-
-			mresp, err := registration.GetMachine(ctx, "machine-10")
-			So(err, ShouldBeNil)
-			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-5", "nic-20"})
-
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-20")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-10")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[nic-5]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[nic-5 nic-20]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-20")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-10")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-		})
-
-		Convey("Create new nic with existing machine without nics", func() {
+		Convey("Create new nic with existing machine", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-15",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
@@ -112,28 +67,12 @@ func TestCreateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
 
-			mresp, err := registration.GetMachine(ctx, "machine-15")
-			So(err, ShouldBeNil)
-			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-25"})
-
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-25")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-15")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[nic-25]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-25")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-15")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
 		})
 
 		Convey("Create new nic with non existing switch", func() {
@@ -192,6 +131,7 @@ func TestUpdateNic(t *testing.T) {
 				Name: "machine-1",
 			}
 			registration.CreateMachine(ctx, machine1)
+
 			nic := &ufspb.Nic{
 				Name: "nic-1",
 			}
@@ -232,9 +172,7 @@ func TestUpdateNic(t *testing.T) {
 			machine3 := &ufspb.Machine{
 				Name: "machine-3",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-3"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			_, err := registration.CreateMachine(ctx, machine3)
@@ -243,111 +181,32 @@ func TestUpdateNic(t *testing.T) {
 			machine4 := &ufspb.Machine{
 				Name: "machine-4",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-4"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			_, err = registration.CreateMachine(ctx, machine4)
 			So(err, ShouldBeNil)
 
 			nic := &ufspb.Nic{
-				Name: "nic-3",
+				Name:    "nic-3",
+				Machine: "machine-3",
 			}
 			_, err = registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
 			nic = &ufspb.Nic{
-				Name: "nic-3",
+				Name:    "nic-3",
+				Machine: "machine-4",
 			}
 			resp, err := UpdateNic(ctx, nic, "machine-4", nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, nic)
 
-			mresp, err := registration.GetMachine(ctx, "machine-3")
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldBeNil)
-			mresp, err = registration.GetMachine(ctx, "machine-4")
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-4", "nic-3"})
-
 			// Verify the changes
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetEventLabel(), ShouldEqual, "nic.machine")
-			So(changes[0].GetOldValue(), ShouldEqual, "")
-			So(changes[0].GetNewValue(), ShouldEqual, "machine-4")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[nic-3]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-4")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[nic-4]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[nic-4 nic-3]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-3")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-3")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-4")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-		})
-
-		Convey("Update nic with same machine", func() {
-			machine := &ufspb.Machine{
-				Name: "machine-5",
-				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-5"},
-					},
-				},
-			}
-			_, err := registration.CreateMachine(ctx, machine)
-			So(err, ShouldBeNil)
-
-			nic := &ufspb.Nic{
-				Name: "nic-5",
-			}
-			_, err = registration.CreateNic(ctx, nic)
-			So(err, ShouldBeNil)
-
-			nic = &ufspb.Nic{
-				Name:       "nic-5",
-				MacAddress: "ab:cd:ef",
-			}
-			resp, err := UpdateNic(ctx, nic, "machine-5", nil)
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(resp, ShouldResembleProto, nic)
-
-			// Verify the changes
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-5")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "")
-			So(changes[0].GetNewValue(), ShouldEqual, "ab:cd:ef")
-			So(changes[0].GetEventLabel(), ShouldEqual, "nic.mac_address")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-5")
-			So(err, ShouldBeNil)
-			// No changes in machine.nics
-			So(changes, ShouldHaveLength, 0)
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-5")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-5")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 0)
 		})
 
 		Convey("Update nic with non existing machine", func() {
@@ -459,29 +318,18 @@ func TestDeleteNic(t *testing.T) {
 		Convey("Delete nic error by non-existing ID", func() {
 			err := DeleteNic(ctx, "nic-10")
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
+			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-10 in the system")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-10")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Delete nic successfully by existing ID with machine reference", func() {
+		Convey("Delete nic successfully by existing ID", func() {
 			nic := mockNic("nic-1")
 			resp, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
-
-			chromeBrowserMachine1 := &ufspb.Machine{
-				Name: "machine-1",
-				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-1"},
-					},
-				},
-			}
-			_, err = registration.CreateMachine(ctx, chromeBrowserMachine1)
-			So(err, ShouldBeNil)
 
 			err = DeleteNic(ctx, "nic-1")
 			So(err, ShouldBeNil)
@@ -491,71 +339,29 @@ func TestDeleteNic(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
-			mresp, err := registration.GetMachine(ctx, "machine-1")
-			So(mresp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldBeNil)
-
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[nic-1]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "machine.chrome_browser_machine.nics")
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-1")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeTrue)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-1")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-		})
-
-		Convey("Delete nic successfully by existing ID without references", func() {
-			nic := mockNic("nic-2")
-			_, err := registration.CreateNic(ctx, nic)
-			So(err, ShouldBeNil)
-
-			err = DeleteNic(ctx, "nic-2")
-			So(err, ShouldBeNil)
-
-			resp, err := registration.GetNic(ctx, "nic-2")
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
-
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
-			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
-			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-2")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeTrue)
 		})
 
 		Convey("Delete nic error as it's used by a host", func() {
 			nic := mockNic("nic-ip")
+			nic.Machine = "machine-ip"
 			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
+
 			chromeBrowserMachine1 := &ufspb.Machine{
 				Name: "machine-ip",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-ip"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			_, err = registration.CreateMachine(ctx, chromeBrowserMachine1)
 			So(err, ShouldBeNil)
+
 			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 				Name:     "lse-ip",
 				Hostname: "lse-ip",

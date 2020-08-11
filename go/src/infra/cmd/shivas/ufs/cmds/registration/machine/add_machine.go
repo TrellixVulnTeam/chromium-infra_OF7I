@@ -107,7 +107,7 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	utils.PrintProtoJSON(res)
-	fmt.Println("Successfully added the machine: ", machineRegistrationReq.GetMachine().GetName())
+	fmt.Println("Successfully added the machine: ", res.GetName())
 	return nil
 }
 

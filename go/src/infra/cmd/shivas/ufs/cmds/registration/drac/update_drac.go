@@ -6,12 +6,10 @@ package drac
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -106,26 +104,6 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 			}
 		} else {
 			c.parseArgs(&drac)
-		}
-	}
-	if c.machineName != "" {
-		machine, err := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
-			Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, c.machineName),
-		})
-		if err != nil {
-			return errors.Annotate(err, "Machine %s not found", c.machineName).Err()
-		}
-		machine.Name = ufsUtil.RemovePrefix(machine.Name)
-		if oldDracName := machine.GetChromeBrowserMachine().GetDrac(); oldDracName != "" && oldDracName != drac.Name {
-			prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-			if !prompt(fmt.Sprintf("Machine %s is already associated with drac %s. "+
-				"If you associate this drac %s with the machine %s, "+
-				"the old drac %s will be deleted from the system. "+
-				"A drac cannot exist in the system without being associated to a machine.\n"+
-				"Are you sure you want to update the drac to a different machine?",
-				c.machineName, oldDracName, drac.Name, c.machineName, oldDracName)) {
-				return nil
-			}
 		}
 	}
 	drac.Name = ufsUtil.AddPrefix(ufsUtil.DracCollection, drac.Name)

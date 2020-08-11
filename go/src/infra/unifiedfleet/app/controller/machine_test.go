@@ -21,51 +21,68 @@ import (
 	"infra/unifiedfleet/app/model/state"
 )
 
-func TestCreateMachine(t *testing.T) {
+func TestMachineRegistration(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	Convey("CreateMachines", t, func() {
-		Convey("Create already existing machine", func() {
-			machine := &ufspb.Machine{
-				Name: "machine-10",
+	Convey("TestMachineRegistration", t, func() {
+		Convey("Register machine with already existing machine, nic and drac", func() {
+			nic := &ufspb.Nic{
+				Name:    "nic-1",
+				Machine: "machine-1",
 			}
-			_, err := registration.CreateMachine(ctx, machine)
+			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
-			_, err = CreateMachine(ctx, machine)
-			So(err.Error(), ShouldContainSubstring, "Machine machine-10 already exists in the system.")
-		})
+			drac := &ufspb.Drac{
+				Name:    "drac-1",
+				Machine: "machine-1",
+			}
+			_, err = registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
 
-		Convey("Create new machine with non existing ChromePlatform", func() {
-			machine1 := &ufspb.Machine{
+			machine := &ufspb.Machine{
 				Name: "machine-1",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						ChromePlatform: "chromePlatform-1",
+						NicObjects: []*ufspb.Nic{{
+							Name:    "nic-1",
+							Machine: "machine-1",
+						}},
+						DracObject: &ufspb.Drac{
+							Name:    "drac-1",
+							Machine: "machine-1",
+						},
 					},
 				},
 			}
-			_, err := CreateMachine(ctx, machine1)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, CannotCreate)
-			_, err = state.GetStateRecord(ctx, "machines/machine-1")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
 
-			// No changes are recorded as the creation fails
+			_, err = MachineRegistration(ctx, machine)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring,
+				"Machine machine-1 already exists in the system.\n"+
+					"Nic nic-1 already exists in the system.\n"+
+					"Drac drac-1 already exists in the system.\n")
+
+			// No changes are recorded as the registration fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-1")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-1")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Create new machine with non existing resources", func() {
-			machine3 := &ufspb.Machine{
+		Convey("Register machine with invalid machine(referencing non existing resources)", func() {
+			machine := &ufspb.Machine{
 				Name: "machine-3",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-3",
-						Nics:           []string{"nic-3"},
-						Drac:           "drac-3",
 						KvmInterface: &ufspb.KVMInterface{
 							Kvm: "kvm-3",
 						},
@@ -75,75 +92,137 @@ func TestCreateMachine(t *testing.T) {
 					},
 				},
 			}
-			_, err := CreateMachine(ctx, machine3)
+			_, err := MachineRegistration(ctx, machine)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "Cannot create")
-			_, err = state.GetStateRecord(ctx, "machines/machine-3")
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
+			So(err.Error(), ShouldContainSubstring, "Cannot create machine machine-3:\n"+
+				"There is no KVM with KVMID kvm-3 in the system.\n"+
+				"There is no RPM with RPMID rpm-3 in the system.\n"+
+				"There is no ChromePlatform with ChromePlatformID chromePlatform-3 in the system.")
 
-			// No changes are recorded as the creation fails
+			// No changes are recorded as the registration fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Create new machine with existing resources", func() {
-			chromePlatform2 := &ufspb.ChromePlatform{
-				Name: "chromePlatform-2",
-			}
-			_, err := configuration.CreateChromePlatform(ctx, chromePlatform2)
-			So(err, ShouldBeNil)
-
-			switch2 := &ufspb.Switch{
-				Name: "switch-2",
-			}
-			_, err = registration.CreateSwitch(ctx, switch2)
-			So(err, ShouldBeNil)
-
-			kvm2 := &ufspb.KVM{
-				Name: "kvm-2",
-			}
-			_, err = registration.CreateKVM(ctx, kvm2)
-			So(err, ShouldBeNil)
-
-			rpm2 := &ufspb.RPM{
-				Name: "rpm-2",
-			}
-			_, err = registration.CreateRPM(ctx, rpm2)
-			So(err, ShouldBeNil)
-
-			machine2 := &ufspb.Machine{
-				Name: "machine-2",
+		Convey("Register browser machine with invalid nic(referencing non existing resources)", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-3",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						ChromePlatform: "chromePlatform-2",
-						KvmInterface: &ufspb.KVMInterface{
-							Kvm: "kvm-2",
-						},
-						RpmInterface: &ufspb.RPMInterface{
-							Rpm: "rpm-2",
+						NicObjects: []*ufspb.Nic{{
+							Name: "nic-2",
+							SwitchInterface: &ufspb.SwitchInterface{
+								Switch: "switch-1",
+							},
+						}},
+					},
+				},
+			}
+			_, err := MachineRegistration(ctx, machine)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Cannot create machine machine-3:\n"+
+				"There is no Switch with SwitchID switch-1 in the system.")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Register browser machine with invalid drac(referencing non existing resources)", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-3",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						DracObject: &ufspb.Drac{
+							Name: "drac-2",
+							SwitchInterface: &ufspb.SwitchInterface{
+								Switch: "switch-1",
+							},
 						},
 					},
 				},
 			}
-			resp, err := CreateMachine(ctx, machine2)
+			_, err := MachineRegistration(ctx, machine)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Cannot create machine machine-3:\n"+
+				"There is no Switch with SwitchID switch-1 in the system.")
+
+			// No changes are recorded as the registration fails
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-3")
 			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, machine2)
-			s, err := state.GetStateRecord(ctx, "machines/machine-2")
+			So(changes, ShouldHaveLength, 0)
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-2")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+		})
+
+		Convey("Register browser machine happy path", func() {
+			nics := []*ufspb.Nic{{
+				Name: "nic-browser-3",
+			}}
+			drac := &ufspb.Drac{
+				Name: "drac-browser-3",
+			}
+			machine := &ufspb.Machine{
+				Name: "machine-browser-3",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						NicObjects: nics,
+						DracObject: drac,
+					},
+				},
+			}
+			m, err := MachineRegistration(ctx, machine)
+			//nic.Name = "machine-browser-3" + "nic-browser-3"
+			So(err, ShouldBeNil)
+			So(m, ShouldResembleProto, machine)
+			s, err := state.GetStateRecord(ctx, "machines/machine-browser-3")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-2")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-browser-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetName(), ShouldEqual, "machines/machine-2")
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-2")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nics/nic-browser-3")
 			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dracs/drac-browser-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac")
+		})
+
+		Convey("Register OS machine happy path", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-os-3",
+				Device: &ufspb.Machine_ChromeosMachine{
+					ChromeosMachine: &ufspb.ChromeOSMachine{},
+				},
+			}
+			m, err := MachineRegistration(ctx, machine)
+			So(err, ShouldBeNil)
+			So(m, ShouldNotBeNil)
+			So(m, ShouldResembleProto, machine)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-os-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
 		})
 	})
 }
@@ -291,13 +370,15 @@ func TestDeleteMachine(t *testing.T) {
 
 		Convey("Delete machine with nics and drac - happy path", func() {
 			nic := &ufspb.Nic{
-				Name: "nic-5",
+				Name:    "nic-5",
+				Machine: "machine-5",
 			}
 			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
 			drac := &ufspb.Drac{
-				Name: "drac-5",
+				Name:    "drac-5",
+				Machine: "machine-5",
 			}
 			_, err = registration.CreateDrac(ctx, drac)
 			So(err, ShouldBeNil)
@@ -305,10 +386,7 @@ func TestDeleteMachine(t *testing.T) {
 			machine := &ufspb.Machine{
 				Name: "machine-5",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-5"},
-						Drac: "drac-5",
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			_, err = registration.CreateMachine(ctx, machine)
@@ -431,8 +509,7 @@ func TestReplaceMachine(t *testing.T) {
 func TestListMachines(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	machinesWithNic := make([]*ufspb.Machine, 0, 2)
-	machinesWithNicAndDrac := make([]*ufspb.Machine, 0, 1)
+	machinesWithChromeplatform := make([]*ufspb.Machine, 0, 2)
 	machines := make([]*ufspb.Machine, 0, 4)
 	for i := 0; i < 4; i++ {
 		machine := &ufspb.Machine{
@@ -441,18 +518,12 @@ func TestListMachines(t *testing.T) {
 				ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 			},
 		}
-		if i == 0 {
-			machine.GetChromeBrowserMachine().Drac = "drac-12"
-		}
 		if i%2 == 0 {
-			machine.GetChromeBrowserMachine().Nics = []string{"nic-12"}
+			machine.GetChromeBrowserMachine().ChromePlatform = "cp-12"
 		}
 		resp, _ := registration.CreateMachine(ctx, machine)
-		if i == 0 {
-			machinesWithNicAndDrac = append(machinesWithNicAndDrac, resp)
-		}
 		if i%2 == 0 {
-			machinesWithNic = append(machinesWithNic, resp)
+			machinesWithChromeplatform = append(machinesWithChromeplatform, resp)
 		}
 		machines = append(machines, resp)
 	}
@@ -463,16 +534,10 @@ func TestListMachines(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "Invalid field name invalid")
 		})
 
-		Convey("List Machines - filter nic - happy path", func() {
-			resp, _, _ := ListMachines(ctx, 5, "", "nic=nic-12", false)
+		Convey("List Machines - filter chromeplatform - happy path", func() {
+			resp, _, _ := ListMachines(ctx, 5, "", "platform=cp-12", false)
 			So(resp, ShouldNotBeNil)
-			So(resp, ShouldResembleProto, machinesWithNic)
-		})
-
-		Convey("List Machines - filter nic AND drac - happy path", func() {
-			resp, _, _ := ListMachines(ctx, 5, "", "nic=nic-12 & drac=drac-12", false)
-			So(resp, ShouldNotBeNil)
-			So(resp, ShouldResembleProto, machinesWithNicAndDrac)
+			So(resp, ShouldResembleProto, machinesWithChromeplatform)
 		})
 
 		Convey("ListMachines - Full listing - happy path", func() {

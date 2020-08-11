@@ -76,7 +76,7 @@ func SyncMachinesFromIV2(ctx context.Context) error {
 				// Machine doesn't exist, create a new one
 				logging.Debugf(ctx, "Adding %v [%v] to machines data",
 					iv2Machine.Name, iv2Machine.Location.BarcodeName)
-				controller.CreateMachine(ctx, iv2Machine)
+				controller.MachineRegistration(ctx, iv2Machine)
 				continue
 			}
 			if err == nil && !Compare(iv2Machine, ufsMachine) {
