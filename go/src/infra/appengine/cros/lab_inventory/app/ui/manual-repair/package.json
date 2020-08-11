@@ -1,0 +1,40 @@
+{
+  "name": "manual-repair",
+  "version": "0.0.0",
+  "description": "Manual repair records web UI",
+  "scripts": {
+    "webpack": "webpack",
+    "webpack-dev-server": "webpack-dev-server --history-api-fallback --disable-host-check",
+    "dev": "npm run webpack-dev-server -- --host 0.0.0.0 --port 5000"
+  },
+  "dependencies": {
+    "@doubletrade/lit-datatable": "^0.4.0",
+    "@types/navigo": "^7.0.1",
+    "@webcomponents/webcomponentsjs": "^2.4.3",
+    "lit-element": "^2.0.1",
+    "lit-html": "^1.0.0",
+    "navigo": "^7.1.2",
+    "paper-collapse-item": "^4.0.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.10.5",
+    "@babel/preset-env": "^7.10.4",
+    "@types/lodash": "^4.14.157",
+    "@types/node": "13.11.1",
+    "babel-loader": "^8.1.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "concurrently": "^5.1.0",
+    "copy-webpack-plugin": "^6.0.3",
+    "css-loader": "^3.6.0",
+    "es-dev-server": "^1.5.0",
+    "html-webpack-plugin": "^4.3.0",
+    "style-loader": "^1.2.1",
+    "ts-loader": "^8.0.1",
+    "tslib": "^1.11.0",
+    "typescript": "^3.9.7",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.11.0",
+    "webpack-merge": "^5.0.9"
+  }
+}
