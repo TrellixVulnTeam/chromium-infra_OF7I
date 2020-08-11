@@ -87,9 +87,9 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-src-master": {
 		BaseRepoURL: "https://chromium.googlesource.com/chromium/src.git",
 		GerritURL:   "https://chromium-review.googlesource.com",
-		BranchName:  "refs/heads/master",
+		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "bafa682dc0ce1dde367ba44f31f8ec1ad07e569e",
+		StartingCommit:  "294151f22f1d8516abc4fb34c3d8e7e40972c60a",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -151,9 +151,9 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra": {
 		BaseRepoURL: "https://chromium.googlesource.com/infra/infra",
 		GerritURL:   "https://chromium-review.googlesource.com",
-		BranchName:  "refs/heads/master",
+		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "19683d4800167eb7a1223719d54725808c61b31b",
+		StartingCommit:  "5c5cd4c06f35cd650c0ce8dc769b9c2286428aaf",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -175,9 +175,9 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra-luci-go": {
 		BaseRepoURL: "https://chromium.googlesource.com/infra/luci/luci-go",
 		GerritURL:   "https://chromium-review.googlesource.com",
-		BranchName:  "refs/heads/master",
+		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "fd8c22ff66975b12558be71b8850dee9e02479bd",
+		StartingCommit:  "48eb0a6f8f6a455b101e4e0e64ef5c8cbf21cbac",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -194,9 +194,9 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra-config": {
 		BaseRepoURL: "https://chrome-internal.googlesource.com/infradata/config.git",
 		GerritURL:   "https://chrome-internal-review.googlesource.com",
-		BranchName:  "refs/heads/master",
+		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "62923d0bcfeca4683bb28f5ecbfa34eb840e791e",
+		StartingCommit:  "174a9e06ba831b3dca2bedb57c5a67fea7ec7995",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -221,9 +221,9 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-infra-internal": {
 		BaseRepoURL: "https://chrome-internal.googlesource.com/infra/infra_internal.git",
 		GerritURL:   "https://chrome-internal-review.googlesource.com",
-		BranchName:  "refs/heads/master",
+		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "b7ef8a811e812d564a6167be6f8866f496919912",
+		StartingCommit:  "a4beb2be3d337aa260602e4a990101cb8d9b5930",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -275,7 +275,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		GerritURL:   "https://fuchsia-review.googlesource.com",
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "bd088ea214e2da0b4b3df13388d4c02d97fe0a56",
+		StartingCommit:  "b96a63a0d469c1d240e16be85e0c086a5d61e11e",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -294,7 +294,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		GerritURL:   "https://fuchsia-review.googlesource.com",
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "3b321ef9895192d07bb043c64cdcb7aab16be595",
+		StartingCommit:  "363cc579c331cd99385dcb538280395a20dc8524",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -313,7 +313,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		GerritURL:   "https://fuchsia-review.googlesource.com",
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "54c641caf04e0247cb15718553239bd00dced4eb",
+		StartingCommit:  "674d79765c372ef9b9389dc2e0d027732165f441",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -332,7 +332,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		GerritURL:   "https://fuchsia-review.googlesource.com",
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "ec7b9088a64bb6a71d8e327a0d04ee9a2f6bb9ec",
+		StartingCommit:  "e49be669d88e7ba848ec60c194265280e4005bb6",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -348,7 +348,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		GerritURL:   "https://skia-review.googlesource.com",
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "82a33425166aacd0726bdd283c6de749420819a8",
+		StartingCommit:  "2cc126fc74270d5ebd3e477be422ba407b887ceb",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
@@ -366,7 +366,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		GerritURL:   "https://skia-review.googlesource.com",
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
-		StartingCommit:  "6844651ced137fd86d73a11cd0c4d74e71c6fb98",
+		StartingCommit:  "50f3badef1e2a2b123517f8991ebe4f8086e9654",
 		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",

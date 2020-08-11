@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -142,15 +143,20 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 	}
 
 	// Get the tip of the repo
-	resp, err := gc.Refs(ctx, &gitilespb.RefsRequest{Project: project, RefsPath: cfg.BranchName})
+	branchName := cfg.BranchName
+	if !strings.HasPrefix(branchName, "refs/heads") {
+		branchName = "refs/heads/" + branchName
+	}
+	logging.Debugf(ctx, "branchName: %s", branchName)
+	resp, err := gc.Refs(ctx, &gitilespb.RefsRequest{Project: project, RefsPath: branchName})
 	if err != nil {
 		logging.WithError(err).Errorf(ctx, "Could not get the tip of the ref %s", project)
 		return []*git.Commit{}, err
 	}
-	newHead, ok := resp.Revisions[fmt.Sprintf("%s/%s", cfg.BranchName, cfg.BranchName)]
+	newHead, ok := resp.Revisions[fmt.Sprintf("%s/%s", branchName, branchName)]
 	if !ok {
 		return []*git.Commit{},
-			fmt.Errorf("Could not get the branch %s in ref %s", cfg.BranchName, project)
+			fmt.Errorf("Could not get the branch %s in ref %s", branchName, project)
 	}
 	oldHead := repoState.LastKnownCommit
 
