@@ -39,6 +39,7 @@ from framework import exceptions
 from framework import framework_constants
 from framework import framework_helpers
 from framework import framework_views
+from framework import monitoring
 from framework import monorailrequest
 from framework import permissions
 from framework import ratelimiter
@@ -79,9 +80,6 @@ def monorail_api_method(
     @endpoints.method(request_message, response_message, **kwargs)
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-      method_identifier = (ENDPOINTS_API_NAME + '.' +
-                           (method_name or func.__name__)
-                           + '/' + (method_path or func.__name__))
       start_time = time_fn()
       approximate_http_status = 200
       request = args[0]
@@ -109,7 +107,8 @@ def monorail_api_method(
             auth_client_ids, auth_emails)
         mar = self.mar_factory(request, cnxn)
         self.ratelimiter.CheckStart(c_id, c_email, start_time)
-        self.increment_request_limit(request, c_id, c_email)
+        monitoring.IncrementAPIRequestsCount(
+            'endpoints', c_id, client_email=c_email)
         ret = func(self, mar, *args, **kwargs)
       except exceptions.NoSuchUserException as e:
         approximate_http_status = 404
@@ -154,6 +153,9 @@ def monorail_api_method(
         if c_id and c_email:
           self.ratelimiter.CheckEnd(c_id, c_email, now, start_time)
 
+        method_identifier = (ENDPOINTS_API_NAME + '.endpoints.' +
+                           (method_name or func.__name__)
+                           + '/' + (method_path or func.__name__))
         fields = {
             # Endpoints APIs don't return the full set of http status values.
             'status': approximate_http_status,
@@ -313,11 +315,6 @@ class MonorailApi(remote.Service):
   _services = None
   _mar = None
 
-  api_requests = ts_mon.CounterMetric(
-     'monorail/api_requests',
-     'Number of requests to Monorail api',
-     [ts_mon.StringField('client_id'), ts_mon.StringField('client_email')])
-
   ratelimiter = ratelimiter.ApiRateLimiter()
 
   @classmethod
@@ -358,16 +355,6 @@ class MonorailApi(remote.Service):
 
       we.DeleteComment(issue, issue_comment, delete=delete)
     return api_pb2_v1.IssuesCommentsDeleteResponse()
-
-  def increment_request_limit(self, _request, client_id, client_email):
-    """Check whether the requester has exceeded API quotas limit,
-    and increment request count in DB and ts_mon.
-    """
-    # Avoid value explosision and protect PII info
-    if not framework_helpers.IsServiceAccount(client_email):
-      client_email = 'user@email.com'
-    self.api_requests.increment_by(
-        1, {'client_id': client_id, 'client_email': client_email})
 
   @monorail_api_method(
       api_pb2_v1.ISSUES_COMMENTS_DELETE_REQUEST_RESOURCE_CONTAINER,

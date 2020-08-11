@@ -381,7 +381,7 @@ class MonorailServicer(object):
     method_name = request.__class__.__name__
     if method_name.endswith('Request'):
       method_name = method_name[:-len('Request')]
-    method_identifier = 'monorail.' + method_name
+    method_identifier = 'monorail.v3.' + method_name
     fields = {
         # pRPC uses its own statuses, but we report HTTP status codes.
         'status': ConvertPRPCStatusToHTTPStatus(prpc_context),
