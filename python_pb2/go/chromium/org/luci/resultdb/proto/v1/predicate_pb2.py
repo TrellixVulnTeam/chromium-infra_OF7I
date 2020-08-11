@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z/go.chromium.org/luci/resultdb/proto/v1;resultpb',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n6go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x12\x10luci.resultdb.v1\x1a\x33go.chromium.org/luci/resultdb/proto/v1/common.proto\"\xe5\x01\n\x13TestResultPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\x12\x44\n\nexpectancy\x18\x03 \x01(\x0e\x32\x30.luci.resultdb.v1.TestResultPredicate.Expectancy\";\n\nExpectancy\x12\x07\n\x03\x41LL\x10\x00\x12$\n VARIANTS_WITH_UNEXPECTED_RESULTS\x10\x01\"g\n\x18TestExonerationPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\"{\n\x10VariantPredicate\x12+\n\x06\x65quals\x18\x01 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x12-\n\x08\x63ontains\x18\x02 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x42\x0b\n\tpredicateB1Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
+  serialized_pb=b'\n6go.chromium.org/luci/resultdb/proto/v1/predicate.proto\x12\x10luci.resultdb.v1\x1a\x33go.chromium.org/luci/resultdb/proto/v1/common.proto\"\xac\x02\n\x13TestResultPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\x12\x44\n\nexpectancy\x18\x03 \x01(\x0e\x32\x30.luci.resultdb.v1.TestResultPredicate.Expectancy\x12\x1a\n\x12\x65xclude_exonerated\x18\x04 \x01(\x08\"f\n\nExpectancy\x12\x07\n\x03\x41LL\x10\x00\x12$\n VARIANTS_WITH_UNEXPECTED_RESULTS\x10\x01\x12)\n%VARIANTS_WITH_ONLY_UNEXPECTED_RESULTS\x10\x02\"g\n\x18TestExonerationPredicate\x12\x16\n\x0etest_id_regexp\x18\x01 \x01(\t\x12\x33\n\x07variant\x18\x02 \x01(\x0b\x32\".luci.resultdb.v1.VariantPredicate\"{\n\x10VariantPredicate\x12+\n\x06\x65quals\x18\x01 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x12-\n\x08\x63ontains\x18\x02 \x01(\x0b\x32\x19.luci.resultdb.v1.VariantH\x00\x42\x0b\n\tpredicateB1Z/go.chromium.org/luci/resultdb/proto/v1;resultpbb\x06proto3'
   ,
   dependencies=[go_dot_chromium_dot_org_dot_luci_dot_resultdb_dot_proto_dot_v1_dot_common__pb2.DESCRIPTOR,])
 
@@ -43,11 +43,16 @@ _TESTRESULTPREDICATE_EXPECTANCY = _descriptor.EnumDescriptor(
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='VARIANTS_WITH_ONLY_UNEXPECTED_RESULTS', index=2, number=2,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=300,
-  serialized_end=359,
+  serialized_start=328,
+  serialized_end=430,
 )
 _sym_db.RegisterEnumDescriptor(_TESTRESULTPREDICATE_EXPECTANCY)
 
@@ -81,6 +86,13 @@ _TESTRESULTPREDICATE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='exclude_exonerated', full_name='luci.resultdb.v1.TestResultPredicate.exclude_exonerated', index=3,
+      number=4, type=8, cpp_type=7, label=1,
+      has_default_value=False, default_value=False,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -95,7 +107,7 @@ _TESTRESULTPREDICATE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=130,
-  serialized_end=359,
+  serialized_end=430,
 )
 
 
@@ -133,8 +145,8 @@ _TESTEXONERATIONPREDICATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=361,
-  serialized_end=464,
+  serialized_start=432,
+  serialized_end=535,
 )
 
 
@@ -177,8 +189,8 @@ _VARIANTPREDICATE = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=466,
-  serialized_end=589,
+  serialized_start=537,
+  serialized_end=660,
 )
 
 _TESTRESULTPREDICATE.fields_by_name['variant'].message_type = _VARIANTPREDICATE
