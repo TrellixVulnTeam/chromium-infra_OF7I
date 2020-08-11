@@ -32,6 +32,24 @@ from tracker import tracker_helpers
 
 Choice = project_objects_pb2.FieldDef.EnumTypeSettings.Choice
 
+# Ingest/convert dicts for ApprovalStatus.
+_V3_APPROVAL_STATUS = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value
+_APPROVAL_STATUS_INGEST = {
+  _V3_APPROVAL_STATUS('APPROVAL_STATUS_UNSPECIFIED'): None,
+  _V3_APPROVAL_STATUS('NOT_SET'): tracker_pb2.ApprovalStatus.NOT_SET,
+  _V3_APPROVAL_STATUS('NEEDS_REVIEW'): tracker_pb2.ApprovalStatus.NEEDS_REVIEW,
+  _V3_APPROVAL_STATUS('NA'): tracker_pb2.ApprovalStatus.NA,
+  _V3_APPROVAL_STATUS('REVIEW_REQUESTED'):
+      tracker_pb2.ApprovalStatus.REVIEW_REQUESTED,
+  _V3_APPROVAL_STATUS('REVIEW_STARTED'):
+      tracker_pb2.ApprovalStatus.REVIEW_STARTED,
+  _V3_APPROVAL_STATUS('NEED_INFO'): tracker_pb2.ApprovalStatus.NEED_INFO,
+  _V3_APPROVAL_STATUS('APPROVED'): tracker_pb2.ApprovalStatus.APPROVED,
+  _V3_APPROVAL_STATUS('NOT_APPROVED'): tracker_pb2.ApprovalStatus.NOT_APPROVED,
+}
+_APPROVAL_STATUS_CONVERT = {
+  val: key for key, val in _APPROVAL_STATUS_INGEST.items()}
+
 
 class Converter(object):
   """Class to manage converting objects between the API and backend layer."""
@@ -443,9 +461,13 @@ class Converter(object):
 
       # TODO(jessan): Use update_mask.paths to replace the Falses below.
       # Status
-      status = None
-      if False:
-        status = approval_delta.approval_value.status
+      filtered_value = issue_objects_pb2.ApprovalValue()
+      approval_delta.update_mask.MergeMessage(
+          approval_delta.approval_value,
+          filtered_value,
+          replace_message_field=True,
+          replace_repeated_field=True)
+      status = _APPROVAL_STATUS_INGEST[filtered_value.status]
       # Approvers
       approver_ids_add = []
       if False:
@@ -1241,28 +1263,9 @@ class Converter(object):
     # type: (proto.tracker_pb2.ApprovalStatus) ->
     #     api_proto.issue_objects_pb2.Issue.ApprovalStatus
     """Convert a protorpc ApprovalStatus to a protoc Issue.ApprovalStatus."""
-    if status == tracker_pb2.ApprovalStatus.NOT_SET:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-          'APPROVAL_STATUS_UNSPECIFIED')
-    elif status == tracker_pb2.ApprovalStatus.NEEDS_REVIEW:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-          'NEEDS_REVIEW')
-    elif status == tracker_pb2.ApprovalStatus.NA:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA')
-    elif status == tracker_pb2.ApprovalStatus.REVIEW_REQUESTED:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-          'REVIEW_REQUESTED')
-    elif status == tracker_pb2.ApprovalStatus.REVIEW_STARTED:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-          'REVIEW_STARTED')
-    elif status == tracker_pb2.ApprovalStatus.NEED_INFO:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NEED_INFO')
-    elif status == tracker_pb2.ApprovalStatus.APPROVED:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('APPROVED')
-    elif status == tracker_pb2.ApprovalStatus.NOT_APPROVED:
-      return issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-          'NOT_APPROVED')
-    else:
+    try:
+      return _APPROVAL_STATUS_CONVERT[status]
+    except KeyError:
       raise ValueError('Unrecognized tracker_pb2.ApprovalStatus enum')
 
   # Projects

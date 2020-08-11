@@ -301,24 +301,26 @@ message ApprovalValue {
 
   // Potential states for an approval. Note that these statuses cause different
   // sets of notifications. See monorail/doc/userguide/email.md
-  // Next available tag: 8
+  // Next available tag: 9
   enum ApprovalStatus {
     // The default approval status. This value is used if the status is omitted.
     APPROVAL_STATUS_UNSPECIFIED = 0;
+    // No status has yet been set on this value.
+    NOT_SET = 1;
     // This issue needs review from the approvers for this phase.
-    NEEDS_REVIEW = 1;
+    NEEDS_REVIEW = 2;
     // This approval is not needed for this issue for this phase.
-    NA = 2;
+    NA = 3;
     // The issue is ready for the approvers to review.
-    REVIEW_REQUESTED = 3;
+    REVIEW_REQUESTED = 4;
     // The approvers have started reviewing this issue.
-    REVIEW_STARTED = 4;
+    REVIEW_STARTED = 5;
     // The approvers need more information.
-    NEED_INFO = 5;
+    NEED_INFO = 6;
     // The approvers have approved this issue for this phase.
-    APPROVED = 6;
+    APPROVED = 7;
     // The approvers have indicated this issue is not approved for this phase.
-    NOT_APPROVED = 7;
+    NOT_APPROVED = 8;
   }
 
   // The resource name.

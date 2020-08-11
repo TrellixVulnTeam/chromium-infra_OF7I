@@ -11,7 +11,8 @@ import difflib
 import logging
 import unittest
 
-from mock import patch
+import mock
+from google.protobuf import field_mask_pb2
 from google.protobuf import timestamp_pb2
 
 from api import resource_name_converters as rnc
@@ -34,7 +35,7 @@ EXPLICIT_DERIVATION = issue_objects_pb2.Derivation.Value('EXPLICIT')
 RULE_DERIVATION = issue_objects_pb2.Derivation.Value('RULE')
 Choice = project_objects_pb2.FieldDef.EnumTypeSettings.Choice
 
-
+CURRENT_TIME = 12346
 class ConverterFunctionsTest(unittest.TestCase):
 
   def setUp(self):
@@ -49,7 +50,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.cnxn = fake.MonorailConnection()
     self.mc = monorailcontext.MonorailContext(self.services, cnxn=self.cnxn)
     self.converter = converters.Converter(self.mc, self.services)
-    self.PAST_TIME = 12345
+    self.PAST_TIME = CURRENT_TIME - 1
     self.project_1 = self.services.project.TestAddProject(
         'proj', project_id=789)
     self.project_2 = self.services.project.TestAddProject(
@@ -480,7 +481,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         hotlist.hotlist_id, hotlist.items)
     self.assertEqual(api_items, [])
 
-  @patch('tracker.attachment_helpers.SignAttachmentID')
+  @mock.patch('tracker.attachment_helpers.SignAttachmentID')
   def testConvertComments(self, mock_SignAttachmentID):
     """We can convert comments."""
     mock_SignAttachmentID.return_value = 2
@@ -834,9 +835,12 @@ class ConverterFunctionsTest(unittest.TestCase):
             self.user_1.user_id, [self.project_1, self.project_2]),
         expected_stars)
 
+  @mock.patch('time.time', mock.MagicMock(return_value=CURRENT_TIME))
   def testIngestApprovalDeltas(self):
     # TODO(jessan): Add tests for multiple deltas, for field values, and for
     # attempting to add an approver that does not exist.
+    mask = field_mask_pb2.FieldMask(
+        paths=['status', 'setter', 'phase', 'set_time'])
     approval_delta = issues_pb2.ApprovalDelta(
         approval_value=issue_objects_pb2.ApprovalValue(
             name='projects/proj/issues/1/approvalValues/1',
@@ -846,13 +850,15 @@ class ConverterFunctionsTest(unittest.TestCase):
             set_time=timestamp_pb2.Timestamp(),  # Ignored.
             setter='ignored',
             phase='ignored'),
+        update_mask=mask,
         approvers_remove=['users/222'])
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
     expected = tracker_pb2.ApprovalDelta(
-        # TODO(jessan): Handle update masks.
-        # status=tracker_pb2.ApprovalStatus.NA,
-        # setter_id=self.user_1.user_id,
+        status=tracker_pb2.ApprovalStatus.NA,
+        setter_id=self.user_1.user_id,
+        set_on=CURRENT_TIME,
+        # TODO(jessan): Handle update masks for remaining fields
         # approver_ids_add=[222, 333],
         approver_ids_remove=[222],
     )
@@ -1387,7 +1393,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.services)[self.approval_def_1_id]
     approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-        'APPROVAL_STATUS_UNSPECIFIED')
+        'NOT_SET')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserName(self.user_1.user_id)
@@ -1415,7 +1421,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.services)[self.approval_def_1_id]
     approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-        'APPROVAL_STATUS_UNSPECIFIED')
+        'NOT_SET')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserName(self.user_1.user_id)
@@ -1441,7 +1447,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.services)[self.approval_def_1_id]
     approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-        'APPROVAL_STATUS_UNSPECIFIED')
+        'NOT_SET')
     set_time = timestamp_pb2.Timestamp()
     set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserName(self.user_1.user_id)
@@ -1474,7 +1480,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.converter._ComputeApprovalValueStatus(
             tracker_pb2.ApprovalStatus.NOT_SET),
         issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
-            'APPROVAL_STATUS_UNSPECIFIED'))
+            'NOT_SET'))
 
   def test_ComputeApprovalValueStatus_NEEDS_REVIEW(self):
     self.assertEqual(
@@ -1767,7 +1773,7 @@ class ConverterFunctionsTest(unittest.TestCase):
         derivation=RULE_DERIVATION)
     self.assertEqual(result[1], expected_1)
 
-  @patch('project.project_helpers.GetThumbnailUrl')
+  @mock.patch('project.project_helpers.GetThumbnailUrl')
   def testConvertProject(self, mock_GetThumbnailUrl):
     """We can convert a Project."""
     mock_GetThumbnailUrl.return_value = 'xyz'
@@ -1779,7 +1785,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         expected_api_project, self.converter.ConvertProject(self.project_1))
 
-  @patch('project.project_helpers.GetThumbnailUrl')
+  @mock.patch('project.project_helpers.GetThumbnailUrl')
   def testConvertProjects(self, mock_GetThumbnailUrl):
     """We can convert a Sequence of Projects."""
     mock_GetThumbnailUrl.return_value = 'xyz'
