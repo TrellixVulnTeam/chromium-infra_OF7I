@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.chromium.org/luci/luciexe/exe"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -36,6 +38,9 @@ type Args struct {
 	InputPath      string
 	OutputPath     string
 	SwarmingTaskID string
+
+	Build *bbpb.Build
+	Send  exe.BuildSender
 }
 
 // Run is the entry point for an execute step.
@@ -61,15 +66,21 @@ func Run(ctx context.Context, args Args) error {
 	}
 
 	ea := execution.Args{
-		// TODO: Plumb through actual build input and send function.
-		Build: &bbpb.Build{},
-		Send:  func() {},
-
 		Request:      request,
 		WorkerConfig: cfg.SkylabWorker,
 		ParentTaskID: args.SwarmingTaskID,
 		Deadline:     deadline,
 	}
+	// crbug.com/1112514 These arguments optional during the transition to
+	// luciexe.
+	if args.Build != nil {
+		ea.Build = args.Build
+		ea.Send = args.Send
+	} else {
+		ea.Build = &bbpb.Build{}
+		ea.Send = func() {}
+	}
+
 	var resps map[string]*steps.ExecuteResponse
 	tErr, err := runWithDeadline(
 		ctx,

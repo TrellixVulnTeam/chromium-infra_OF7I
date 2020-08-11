@@ -57,6 +57,9 @@ func luciEXEMain(ctx context.Context, input *bbpb.Build, userArgs []string, send
 		InputPath:      ca.InputPath,
 		OutputPath:     ca.OutputPath,
 		SwarmingTaskID: os.Getenv("SWARMING_TASK_ID"),
+
+		Build: input,
+		Send:  send,
 	}); err != nil {
 		logApplicationError(ctx, err)
 	}
