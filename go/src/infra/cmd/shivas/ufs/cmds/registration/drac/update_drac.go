@@ -188,16 +188,16 @@ func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
 
 func (c *updateDrac) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.dracName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
 			c.machineName == "" && c.switchName == "" && c.switchPort == 0 &&
 			c.macAddress == "" && c.tags == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}
 	return nil

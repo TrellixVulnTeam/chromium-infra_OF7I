@@ -142,18 +142,18 @@ func (c *updateVM) parseArgs(vm *ufspb.VM) {
 
 func (c *updateVM) validateArgs() error {
 	if c.hostName == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n'-host' is required to update the VM on a host")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-host' is required to update the VM on a host")
 	}
 	if c.newSpecsFile == "" {
 		if c.vmName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so one of ['-delete-vlan', '-vlan', '-ip', '-state'] is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\none of ['-delete-vlan', '-vlan', '-ip', '-state'] is required, no mode ('-f') is specified.")
 		}
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(c.state) {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 	}
 	return nil
 }

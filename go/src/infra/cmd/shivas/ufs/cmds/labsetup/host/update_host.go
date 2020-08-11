@@ -170,19 +170,19 @@ func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 func (c *updateHost) validateArgs() error {
 	if c.newSpecsFile != "" {
 		if c.interactive {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.hostName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so one of ['-delete-vlan', '-vlan', '-state', '-ip'] is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\none of ['-delete-vlan', '-vlan', '-state', '-ip'] is required, no mode ('-f' or '-i') is specified")
 		}
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(c.state) {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 	}
 	return nil
 }

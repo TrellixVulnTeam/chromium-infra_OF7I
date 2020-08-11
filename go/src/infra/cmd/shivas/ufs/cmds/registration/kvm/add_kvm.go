@@ -123,38 +123,38 @@ func (c *addKVM) parseArgs(kvm *ufspb.KVM) {
 func (c *addKVM) validateArgs() error {
 	if c.newSpecsFile != "" || c.interactive {
 		if c.kvmName != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.platform != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-platform' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-platform' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {
 		if c.interactive {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 		}
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required for JSON mode.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required for JSON mode.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.kvmName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.platform == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-platform' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-platform' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.macAddress == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-mac-address' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac-address' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required.")
 		}
 	}
 	return nil

@@ -150,44 +150,44 @@ func (c *addDrac) parseArgs(drac *ufspb.Drac) {
 func (c *addDrac) validateArgs() error {
 	if c.newSpecsFile != "" || c.interactive {
 		if c.dracName != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.switchName != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch' cannot be specified at the same time.")
 		}
 		if c.switchPort != 0 {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {
 		if c.interactive {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 		}
 		if c.machineName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required for JSON mode.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required for JSON mode.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.dracName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.switchName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-switch' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-switch' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.macAddress == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-mac-address' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac-address' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.machineName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required.")
 		}
 		if c.switchPort == 0 {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i'), so '-switch-port' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-switch-port' is required, no mode ('-f' or '-i') is specified.")
 		}
 	}
 	return nil

@@ -93,7 +93,7 @@ func (c *addMachineLSEPrototype) innerRun(a subcommands.Application, args []stri
 
 func (c *addMachineLSEPrototype) validateArgs() error {
 	if !c.interactive && c.newSpecsFile == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNeither JSON input file specified nor in interactive mode to accept input.")
 	}
 	return nil
 }

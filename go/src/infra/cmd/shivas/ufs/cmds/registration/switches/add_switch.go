@@ -123,35 +123,35 @@ func (c *addSwitch) parseArgs(s *ufspb.Switch) {
 func (c *addSwitch) validateArgs() error {
 	if c.newSpecsFile != "" || c.interactive {
 		if c.switchName != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.capacity != 0 {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-capacity' cannot be specified at the same time.")
 		}
 		if c.description != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {
 		if c.interactive {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 		}
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required for JSON mode.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required for JSON mode.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.switchName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.capacity == 0 {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-capacity' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-capacity' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required.")
 		}
 	}
 	return nil

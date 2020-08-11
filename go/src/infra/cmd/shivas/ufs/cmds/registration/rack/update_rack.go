@@ -138,14 +138,14 @@ func (c *updateRack) parseArgs(rack *ufspb.Rack) {
 
 func (c *updateRack) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.labName == "" && c.capacity == 0 && c.tags == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}
 	return nil

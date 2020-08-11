@@ -132,18 +132,18 @@ func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
 
 func (c *addRack) validateArgs() error {
 	if c.labName == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n'-lab' is required.")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-lab' is required.")
 	}
 	if !utils.IsUFSLab(c.labName) {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n%s is not a valid lab name, please check help info for '-lab'.", c.labName)
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid lab name, please check help info for '-lab'.", c.labName)
 	}
 	if c.newSpecsFile != "" {
 		if c.rackName != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
 		}
 	} else {
 		if c.rackName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is setup, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is setup.")
 		}
 	}
 	return nil

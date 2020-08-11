@@ -114,11 +114,25 @@ func NewUsageError(flags flag.FlagSet, format string, a ...interface{}) error {
 type usageError struct {
 	error
 	flags flag.FlagSet
+	quiet bool
 }
 
 func (e *usageError) ReportUserError(w io.Writer) {
 	fmt.Fprintf(w, "%s\n\nUsage:\n\n", e.error)
-	e.flags.Usage()
+	if !e.quiet {
+		e.flags.Usage()
+	} else {
+		fmt.Fprintf(w, "please run `$command -help` to check the usage\n")
+	}
+}
+
+// NewQuietUsageError creates a new error that only reports flags usage error details
+func NewQuietUsageError(flags flag.FlagSet, format string, a ...interface{}) error {
+	return &usageError{
+		error: fmt.Errorf(format, a...),
+		flags: flags,
+		quiet: true,
+	}
 }
 
 // MaybeWithTimeout creates a new context that has a timeout if the provided timeout is positive.

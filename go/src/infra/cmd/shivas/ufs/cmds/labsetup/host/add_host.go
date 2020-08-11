@@ -165,29 +165,29 @@ func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsLab ufspb.Lab) {
 func (c *addHost) validateArgs() error {
 	if c.newSpecsFile != "" || c.interactive {
 		if c.hostName != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.prototype != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-prototype' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-prototype' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {
 		if c.interactive {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 		}
 		if c.machineName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required for JSON mode.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required for JSON mode.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.hostName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.machineName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-machine' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-machine' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.prototype == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f' or '-i') is specified, so '-prototype' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-prototype' is required, no mode ('-f' or '-i') is specified.")
 		}
 	}
 	return nil

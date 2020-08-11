@@ -121,24 +121,24 @@ func (c *addVM) parseArgs(vm *ufspb.VM) {
 
 func (c *addVM) validateArgs() error {
 	if c.hostName == "" {
-		return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\n'-host' is required.")
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-host' is required.")
 	}
 	if c.newSpecsFile != "" {
 		if c.vmName != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
 		}
 	} else {
 		if c.vmName == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f) is specified, so '-name' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
 		if c.macAddress == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-mac-address' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac-address' is required, no mode ('-f') is specified.")
 		}
 		if c.osVersion == "" {
-			return cmdlib.NewUsageError(c.Flags, "Wrong usage!!\nNo mode ('-f') is specified, so '-os-version' is required.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-os-version' is required, no mode ('-f') is specified.")
 		}
 	}
 	return nil
