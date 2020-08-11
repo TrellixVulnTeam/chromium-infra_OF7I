@@ -67,8 +67,8 @@ func mockNic(id string) *ufspb.Nic {
 		Name:       util.AddPrefix(util.NicCollection, id),
 		MacAddress: "12:ab",
 		SwitchInterface: &ufspb.SwitchInterface{
-			Switch: "test-switch",
-			Port:   1,
+			Switch:   "test-switch",
+			PortName: "1",
 		},
 	}
 }
@@ -90,8 +90,8 @@ func mockDrac(id string) *ufspb.Drac {
 		Name:       util.AddPrefix(util.DracCollection, id),
 		MacAddress: "12:ab",
 		SwitchInterface: &ufspb.SwitchInterface{
-			Switch: "test-switch",
-			Port:   1,
+			Switch:   "test-switch",
+			PortName: "1",
 		},
 	}
 }
@@ -1056,20 +1056,20 @@ func TestImportNics(t *testing.T) {
 			}
 			So(switches, ShouldResembleProto, []*ufspb.SwitchInterface{
 				{
-					Switch: "eq017.atl97",
-					Port:   2,
+					Switch:   "eq017.atl97",
+					PortName: "2",
 				},
 				{
-					Switch: "eq017.atl97",
-					Port:   3,
+					Switch:   "eq017.atl97",
+					PortName: "3",
 				},
 				{
-					Switch: "eq017.atl97",
-					Port:   4,
+					Switch:   "eq017.atl97",
+					PortName: "4",
 				},
 				{
-					Switch: "eq041.atl97",
-					Port:   1,
+					Switch:   "eq041.atl97",
+					PortName: "1",
 				},
 			})
 			dracs, _, err := registration.ListDracs(ctx, 100, "", nil, false)

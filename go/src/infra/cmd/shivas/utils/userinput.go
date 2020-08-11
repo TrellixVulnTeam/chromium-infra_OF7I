@@ -393,11 +393,7 @@ func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *b
 				}
 			case "KVM Port":
 				if value != "" {
-					port := getIntInput(value, input)
-					if port == -1 {
-						break
-					}
-					browserMachine.KvmInterface.Port = port
+					browserMachine.KvmInterface.PortName = value
 				}
 				input = &Input{
 					Key: "RPM",
@@ -421,11 +417,7 @@ func getBrowserMachine(ctx context.Context, ic UfleetAPI.FleetClient, scanner *b
 				}
 			case "RPM Port":
 				if value != "" {
-					port := getIntInput(value, input)
-					if port == -1 {
-						break
-					}
-					browserMachine.RpmInterface.Port = port
+					browserMachine.RpmInterface.PortName = value
 				}
 				input = &Input{
 					Key: "DeploymentTicket",
@@ -663,11 +655,7 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 				}
 			case "RPM Port":
 				if value != "" {
-					port := getIntInput(value, input)
-					if port == -1 {
-						break
-					}
-					deviceLse.GetRpmInterface().Port = port
+					deviceLse.GetRpmInterface().PortName = value
 				}
 				input = &Input{
 					Key: "Switch",
@@ -697,11 +685,7 @@ func getOSDeviceLse(ctx context.Context, ic UfleetAPI.FleetClient, scanner *bufi
 				}
 			case "Switch Port":
 				if value != "" {
-					port := getIntInput(value, input)
-					if port == -1 {
-						break
-					}
-					deviceLse.GetNetworkDeviceInterface().Port = port
+					deviceLse.GetNetworkDeviceInterface().PortName = value
 				}
 				if dut {
 					// DUT
@@ -1744,11 +1728,7 @@ func GetNicInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, nic *
 				}
 			case "Switch Port":
 				if value != "" {
-					port := getIntInput(value, input)
-					if port == -1 {
-						break
-					}
-					nic.GetSwitchInterface().Port = port
+					nic.GetSwitchInterface().PortName = value
 				}
 				input = &Input{
 					Key:  "Machine name",
@@ -1843,11 +1823,7 @@ func GetDracInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, drac
 				}
 			case "Switch Port":
 				if value != "" {
-					port := getIntInput(value, input)
-					if port == -1 {
-						break
-					}
-					drac.GetSwitchInterface().Port = port
+					drac.GetSwitchInterface().PortName = value
 				}
 				input = &Input{
 					Key: "Password",

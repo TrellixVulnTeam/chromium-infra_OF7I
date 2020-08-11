@@ -183,8 +183,8 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 				Name:       name,
 				MacAddress: nic.GetMacAddress(),
 				SwitchInterface: &ufspb.SwitchInterface{
-					Switch: nic.GetSwitch(),
-					Port:   nic.GetSwitchport(),
+					Switch:   nic.GetSwitch(),
+					PortName: Int32ToStr(nic.GetSwitchport()),
 				},
 				Rack:    rack,
 				Lab:     lab,
@@ -210,8 +210,8 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 			DisplayName: GetNicName("drac", drac.GetMachine()),
 			MacAddress:  drac.GetMacAddress(),
 			SwitchInterface: &ufspb.SwitchInterface{
-				Switch: drac.GetSwitch(),
-				Port:   drac.GetSwitchport(),
+				Switch:   drac.GetSwitch(),
+				PortName: Int32ToStr(drac.GetSwitchport()),
 			},
 			Rack:    rack,
 			Lab:     lab,

@@ -175,13 +175,13 @@ func processDracUpdateMask(oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_ma
 			} else {
 				oldDrac.GetSwitchInterface().Switch = drac.GetSwitchInterface().GetSwitch()
 			}
-		case "port":
+		case "portName":
 			if oldDrac.GetSwitchInterface() == nil {
 				oldDrac.SwitchInterface = &ufspb.SwitchInterface{
-					Port: drac.GetSwitchInterface().GetPort(),
+					PortName: drac.GetSwitchInterface().GetPortName(),
 				}
 			} else {
-				oldDrac.GetSwitchInterface().Port = drac.GetSwitchInterface().GetPort()
+				oldDrac.GetSwitchInterface().PortName = drac.GetSwitchInterface().GetPortName()
 			}
 		case "tags":
 			oldDrac.Tags = mergeTags(oldDrac.GetTags(), drac.GetTags())
@@ -404,7 +404,7 @@ func validateDracUpdateMask(mask *field_mask.FieldMask) error {
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateDracUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "switch":
-			case "port":
+			case "portName":
 			case "machine":
 			case "macAddress":
 			case "tags":

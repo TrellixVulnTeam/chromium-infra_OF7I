@@ -167,13 +167,13 @@ func processNicUpdateMask(oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.Fi
 			} else {
 				oldNic.GetSwitchInterface().Switch = nic.GetSwitchInterface().GetSwitch()
 			}
-		case "port":
+		case "portName":
 			if oldNic.GetSwitchInterface() == nil {
 				oldNic.SwitchInterface = &ufspb.SwitchInterface{
-					Port: nic.GetSwitchInterface().GetPort(),
+					PortName: nic.GetSwitchInterface().GetPortName(),
 				}
 			} else {
-				oldNic.GetSwitchInterface().Port = nic.GetSwitchInterface().GetPort()
+				oldNic.GetSwitchInterface().PortName = nic.GetSwitchInterface().GetPortName()
 			}
 		case "tags":
 			oldNic.Tags = mergeTags(oldNic.GetTags(), nic.GetTags())
@@ -410,7 +410,7 @@ func validateNicUpdateMask(mask *field_mask.FieldMask) error {
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateNicUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "switch":
-			case "port":
+			case "portName":
 			case "machine":
 			case "macAddress":
 			case "tags":

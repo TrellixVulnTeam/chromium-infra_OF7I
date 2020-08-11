@@ -113,6 +113,11 @@ func Int64ToStr(v int64) string {
 	return strconv.Itoa(int(v))
 }
 
+// Int32ToStr converts the int32 to string
+func Int32ToStr(v int32) string {
+	return strconv.Itoa(int(v))
+}
+
 // RemoveStringEntry removes string entry from the string slice
 func RemoveStringEntry(slice []string, entry string) []string {
 	for i, s := range slice {

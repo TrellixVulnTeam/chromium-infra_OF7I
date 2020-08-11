@@ -54,7 +54,9 @@ message KVMInterface {
     string kvm = 1 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/KVM"
     }];
-    int32 port = 2;
+    reserved 2;
+    reserved "port";
+    string port_name = 3;
 }
 
 message RPM {
@@ -96,7 +98,9 @@ message RPMInterface {
     string rpm = 1 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/RPM"
     }];
-    int32 port = 2;
+    reserved 2;
+    reserved "port";
+    string port_name = 3;
 }
 
 message Switch {
@@ -144,7 +148,9 @@ message SwitchInterface {
     string switch = 1 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/Switch"
     }];
-    int32 port = 2;
+    reserved 2;
+    reserved "port";
+    string port_name = 3;
 }
 
 message Drac {

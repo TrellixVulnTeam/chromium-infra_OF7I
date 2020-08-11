@@ -39,7 +39,7 @@ var UpdateDracCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.dracName, "name", "", "name of the drac to update")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the drac to add.")
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.IntVar(&c.switchPort, "switch-port", 0, "the port of the switch that this drac is connected to. "+"To clear this field set it to -1.")
+		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the drac to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the drac")
@@ -61,7 +61,7 @@ type updateDrac struct {
 	dracName    string
 	macAddress  string
 	switchName  string
-	switchPort  int
+	switchPort  string
 	tags        string
 	vlanName    string
 	deleteVlan  bool
@@ -119,7 +119,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 			"machine":     "machine",
 			"mac-address": "macAddress",
 			"switch":      "switch",
-			"switch-port": "port",
+			"switch-port": "portName",
 			"tags":        "tags",
 		}),
 	})
@@ -152,10 +152,10 @@ func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
 	} else {
 		drac.GetSwitchInterface().Switch = c.switchName
 	}
-	if c.switchPort == -1 {
-		drac.GetSwitchInterface().Port = 0
+	if c.switchPort == utils.ClearFieldValue {
+		drac.GetSwitchInterface().PortName = ""
 	} else {
-		drac.GetSwitchInterface().Port = int32(c.switchPort)
+		drac.GetSwitchInterface().PortName = c.switchPort
 	}
 	if c.tags == utils.ClearFieldValue {
 		drac.Tags = nil
@@ -173,7 +173,7 @@ func (c *updateDrac) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
-			c.machineName == "" && c.switchName == "" && c.switchPort == 0 &&
+			c.machineName == "" && c.switchName == "" && c.switchPort == "" &&
 			c.macAddress == "" && c.tags == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}

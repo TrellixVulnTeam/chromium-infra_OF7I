@@ -581,8 +581,8 @@ func (r *CreateNicRequest) Validate() error {
 	if r.GetNic().GetSwitchInterface().GetSwitch() == "" {
 		return status.Errorf(codes.InvalidArgument, "the attached switch name for the nic cannot be empty")
 	}
-	if r.GetNic().GetSwitchInterface().GetPort() == 0 {
-		return status.Errorf(codes.InvalidArgument, "the attached switch port for the nic cannot be 0")
+	if r.GetNic().GetSwitchInterface().GetPortName() == "" {
+		return status.Errorf(codes.InvalidArgument, "the attached switch port for the nic cannot be empty")
 	}
 	if r.Machine == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
@@ -745,8 +745,8 @@ func (r *CreateDracRequest) Validate() error {
 	if r.GetDrac().GetSwitchInterface().GetSwitch() == "" {
 		return status.Errorf(codes.InvalidArgument, "the attached switch name for the drac cannot be empty")
 	}
-	if r.GetDrac().GetSwitchInterface().GetPort() == 0 {
-		return status.Errorf(codes.InvalidArgument, "the attached switch port for the drac cannot be 0")
+	if r.GetDrac().GetSwitchInterface().GetPortName() == "" {
+		return status.Errorf(codes.InvalidArgument, "the attached switch port for the drac cannot be empty")
 	}
 	if r.Machine == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)

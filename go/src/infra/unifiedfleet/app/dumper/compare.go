@@ -219,20 +219,20 @@ func compareDracs(ctx context.Context, writer *storage.Writer, dracs []*crimson.
 	logs := []string{"\n\n######## get-drac diff ############"}
 	crimsonDracs := make(map[string]string)
 	for _, r := range dracs {
-		crimsonDracs[r.GetName()] = formatDrac(r.GetName(), r.GetMacAddress(), r.GetSwitch(), r.GetSwitchport(), r.GetIpv4())
+		crimsonDracs[r.GetName()] = formatDrac(r.GetName(), r.GetMacAddress(), r.GetSwitch(), util.Int32ToStr(r.GetSwitchport()), r.GetIpv4())
 	}
 	ufsDracs := make(map[string]string)
 	for _, r := range dracRes.Passed() {
 		m := r.Data.(*ufspb.Drac)
 		name := m.GetName()
 		si := m.GetSwitchInterface()
-		ufsDracs[name] = formatDrac(name, m.GetMacAddress(), si.GetSwitch(), si.GetPort(), dhcpMap[m.GetMacAddress()].GetIp())
+		ufsDracs[name] = formatDrac(name, m.GetMacAddress(), si.GetSwitch(), si.GetPortName(), dhcpMap[m.GetMacAddress()].GetIp())
 	}
 	return logDiff(crimsonDracs, ufsDracs, writer, logs)
 }
 
-func formatDrac(name, macAddr, sw string, port int32, ip string) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%d\t%s", name, macAddr, sw, port, ip)
+func formatDrac(name, macAddr, sw, port string, ip string) string {
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", name, macAddr, sw, port, ip)
 }
 
 func compareNics(ctx context.Context, writer *storage.Writer, nics []*crimson.NIC, nicRes *fleetds.OpResults) error {
@@ -243,20 +243,20 @@ func compareNics(ctx context.Context, writer *storage.Writer, nics []*crimson.NI
 			continue
 		}
 		name := util.GetNicName(r.GetName(), r.GetMachine())
-		crimsonNics[name] = formatNic(name, r.GetMacAddress(), r.GetSwitch(), r.GetSwitchport())
+		crimsonNics[name] = formatNic(name, r.GetMacAddress(), r.GetSwitch(), util.Int32ToStr(r.GetSwitchport()))
 	}
 	ufsNics := make(map[string]string)
 	for _, r := range nicRes.Passed() {
 		m := r.Data.(*ufspb.Nic)
 		name := m.GetName()
 		si := m.GetSwitchInterface()
-		ufsNics[name] = formatNic(name, m.GetMacAddress(), si.GetSwitch(), si.GetPort())
+		ufsNics[name] = formatNic(name, m.GetMacAddress(), si.GetSwitch(), si.GetPortName())
 	}
 	return logDiff(crimsonNics, ufsNics, writer, logs)
 }
 
-func formatNic(name, macAddr, sw string, port int32) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%d", name, macAddr, sw, port)
+func formatNic(name, macAddr, sw, port string) string {
+	return fmt.Sprintf("%s\t%s\t%s\t%s", name, macAddr, sw, port)
 }
 
 func compareVlans(ctx context.Context, writer *storage.Writer, vlans []*crimson.VLAN, vlanRes *fleetds.OpResults, stateMap map[string]ufspb.State) error {

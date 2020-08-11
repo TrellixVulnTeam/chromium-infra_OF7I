@@ -39,7 +39,7 @@ var UpdateNicCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.nicName, "name", "", "the name of the nic to update")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the nic to add.")
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this nic is connected to. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.IntVar(&c.switchPort, "switch-port", 0, "the port of the switch that this nic is connected to. "+"To clear this field set it to -1.")
+		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this nic is connected to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
@@ -58,7 +58,7 @@ type updateNic struct {
 	nicName     string
 	macAddress  string
 	switchName  string
-	switchPort  int
+	switchPort  string
 	tags        string
 }
 
@@ -108,7 +108,7 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 			"machine":     "machine",
 			"mac-address": "macAddress",
 			"switch":      "switch",
-			"switch-port": "port",
+			"switch-port": "portName",
 			"tags":        "tags",
 		}),
 	})
@@ -130,10 +130,10 @@ func (c *updateNic) parseArgs(nic *ufspb.Nic) {
 	} else {
 		nic.GetSwitchInterface().Switch = c.switchName
 	}
-	if c.switchPort == -1 {
-		nic.GetSwitchInterface().Port = 0
+	if c.switchPort == utils.ClearFieldValue {
+		nic.GetSwitchInterface().PortName = ""
 	} else {
-		nic.GetSwitchInterface().Port = int32(c.switchPort)
+		nic.GetSwitchInterface().PortName = c.switchPort
 	}
 	if c.tags == utils.ClearFieldValue {
 		nic.Tags = nil
@@ -153,7 +153,7 @@ func (c *updateNic) validateArgs() error {
 		if c.switchName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switchName' cannot be specified at the same time.")
 		}
-		if c.switchPort != 0 {
+		if c.switchPort != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
@@ -167,7 +167,7 @@ func (c *updateNic) validateArgs() error {
 		if c.nicName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.machineName == "" && c.switchName == "" && c.switchPort == 0 && c.macAddress == "" && c.tags == "" {
+		if c.machineName == "" && c.switchName == "" && c.switchPort == "" && c.macAddress == "" && c.tags == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}

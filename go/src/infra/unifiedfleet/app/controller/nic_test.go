@@ -233,8 +233,8 @@ func TestUpdateNic(t *testing.T) {
 			nic := &ufspb.Nic{
 				Name: "nic-7",
 				SwitchInterface: &ufspb.SwitchInterface{
-					Switch: "switch-7",
-					Port:   25,
+					Switch:   "switch-7",
+					PortName: "25",
 				},
 			}
 			_, err := registration.CreateNic(ctx, nic)
@@ -244,14 +244,14 @@ func TestUpdateNic(t *testing.T) {
 				Name:       "nic-7",
 				MacAddress: "efgh",
 				SwitchInterface: &ufspb.SwitchInterface{
-					Port: 75,
+					PortName: "75",
 				},
 			}
-			resp, err := UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"port", "macAddress"}})
+			resp, err := UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"portName", "macAddress"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
-			So(resp.GetSwitchInterface().GetPort(), ShouldEqual, 75)
+			So(resp.GetSwitchInterface().GetPortName(), ShouldEqual, "75")
 			So(resp.GetMacAddress(), ShouldResemble, "efgh")
 		})
 
@@ -260,8 +260,8 @@ func TestUpdateNic(t *testing.T) {
 				Name:       "nic-8",
 				MacAddress: "abcd",
 				SwitchInterface: &ufspb.SwitchInterface{
-					Switch: "switch-8",
-					Port:   25,
+					Switch:   "switch-8",
+					PortName: "25",
 				},
 			}
 			_, err := registration.CreateNic(ctx, nic)

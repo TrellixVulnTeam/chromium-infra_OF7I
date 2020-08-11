@@ -286,8 +286,8 @@ func TestUpdateDrac(t *testing.T) {
 			drac := &ufspb.Drac{
 				Name: "drac-7",
 				SwitchInterface: &ufspb.SwitchInterface{
-					Switch: "switch-7",
-					Port:   25,
+					Switch:   "switch-7",
+					PortName: "25",
 				},
 			}
 			_, err := registration.CreateDrac(ctx, drac)
@@ -297,15 +297,15 @@ func TestUpdateDrac(t *testing.T) {
 				Name:       "drac-7",
 				MacAddress: "efgh",
 				SwitchInterface: &ufspb.SwitchInterface{
-					Port: 75,
+					PortName: "75",
 				},
 			}
-			resp, err := UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"port", "macAddress"}})
+			resp, err := UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"portName", "macAddress"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
 			So(resp.GetMacAddress(), ShouldResemble, "efgh")
-			So(resp.GetSwitchInterface().GetPort(), ShouldEqual, 75)
+			So(resp.GetSwitchInterface().GetPortName(), ShouldEqual, "75")
 		})
 
 		Convey("Partial Update drac mac address - error", func() {
@@ -313,8 +313,8 @@ func TestUpdateDrac(t *testing.T) {
 				Name:       "drac-8",
 				MacAddress: "abcd",
 				SwitchInterface: &ufspb.SwitchInterface{
-					Switch: "switch-8",
-					Port:   25,
+					Switch:   "switch-8",
+					PortName: "25",
 				},
 			}
 			_, err := registration.CreateDrac(ctx, drac)

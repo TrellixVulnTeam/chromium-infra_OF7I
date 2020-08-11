@@ -39,7 +39,7 @@ var AddNicCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.nicName, "name", "", "the name of the nic to add")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the nic to add")
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this nic is connected to")
-		c.Flags.IntVar(&c.switchPort, "switch-port", 0, "the port of the switch that this nic is connected to")
+		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this nic is connected to")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
@@ -58,7 +58,7 @@ type addNic struct {
 	nicName     string
 	macAddress  string
 	switchName  string
-	switchPort  int
+	switchPort  string
 	tags        string
 }
 
@@ -119,8 +119,8 @@ func (c *addNic) parseArgs(nic *ufspb.Nic) {
 	nic.Name = c.nicName
 	nic.MacAddress = c.macAddress
 	nic.SwitchInterface = &ufspb.SwitchInterface{
-		Switch: c.switchName,
-		Port:   int32(c.switchPort),
+		Switch:   c.switchName,
+		PortName: c.switchPort,
 	}
 	nic.Tags = utils.GetStringSlice(c.tags)
 }
@@ -133,7 +133,7 @@ func (c *addNic) validateArgs() error {
 		if c.switchName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch' cannot be specified at the same time.")
 		}
-		if c.switchPort != 0 {
+		if c.switchPort != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
@@ -164,7 +164,7 @@ func (c *addNic) validateArgs() error {
 		if c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required.")
 		}
-		if c.switchPort == 0 {
+		if c.switchPort == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-switch-port' is required, no mode ('-f' or '-i') is specified.")
 		}
 	}

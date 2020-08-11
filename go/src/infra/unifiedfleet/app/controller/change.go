@@ -456,19 +456,19 @@ func logChromeBrowserMachine(resourceName string, oldData, newData *ufspb.Chrome
 func logKVMInterface(resourceName string, oldData, newData *ufspb.KVMInterface) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.kvm_interface.kvm", oldData.GetKvm(), newData.GetKvm())...)
-	return append(changes, logCommon(resourceName, "machine.chrome_browser_machine.kvm_interface.port", oldData.GetPort(), newData.GetPort())...)
+	return append(changes, logCommon(resourceName, "machine.chrome_browser_machine.kvm_interface.port", oldData.GetPortName(), newData.GetPortName())...)
 }
 
 func logRPMInterface(resourceName string, oldData, newData *ufspb.RPMInterface) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon(resourceName, "machine.chrome_browser_machine.rpm_interface.rpm", oldData.GetRpm(), newData.GetRpm())...)
-	return append(changes, logCommon(resourceName, "machine.chrome_browser_machine.rpm_interface.port", oldData.GetPort(), newData.GetPort())...)
+	return append(changes, logCommon(resourceName, "machine.chrome_browser_machine.rpm_interface.port", oldData.GetPortName(), newData.GetPortName())...)
 }
 
 func logSwitchInterface(resourceName string, oldData, newData *ufspb.SwitchInterface) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon(resourceName, "switch_interface.switch", oldData.GetSwitch(), newData.GetSwitch())...)
-	return append(changes, logCommon(resourceName, "switch_interface.port", oldData.GetPort(), newData.GetPort())...)
+	return append(changes, logCommon(resourceName, "switch_interface.port", oldData.GetPortName(), newData.GetPortName())...)
 }
 
 func logCommon(resourceName, label string, oldValue interface{}, newValue interface{}) []*ufspb.ChangeEvent {
