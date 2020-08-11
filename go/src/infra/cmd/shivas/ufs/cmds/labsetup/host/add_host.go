@@ -187,7 +187,7 @@ func (c *addHost) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-machine' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.prototype == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-prototype' is required, no mode ('-f' or '-i') is specified.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-prototype' is required, no mode ('-f' or '-i') is specified. Please run `shivas list machine-prototype` to check valid prototypes for your host")
 		}
 	}
 	return nil
