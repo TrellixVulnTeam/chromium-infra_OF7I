@@ -73,6 +73,18 @@
         </li>
       </ul>
 
+      <h3>FAQs</h3>
+      <ul>
+        <li><strong>Q:</strong> Why does Sheriff-o-matic show multiple alerts for one build failure?</li>
+        <ul><li><strong>A:</strong> Sheriff-o-matic does not know which step failure causes a build to fail.
+          Instead, when a build fails, it creates an alert for each step that failed in the failed build, even if
+          a step is not the "direct" reason for the failure.</li></ul>
+        <li><strong>Q:</strong> Why does Sheriff-o-matic show that a builder has failed for the last thousand builds
+          while actually it only failed the last 3 times?</li>
+        <ul><li><strong>A:</strong> Similarly to the previous question. SoM creates step-based alerts, so it is likely that
+          the step in the alert did fail the last thousand build, although it did not cause the build to fail.</li></ul>
+      </ul>
+
       <h2>Useful Links</h2>
       <ul>
         <li>
