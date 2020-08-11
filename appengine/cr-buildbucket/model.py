@@ -37,6 +37,8 @@ EXPERIMENT_REALMS = 'luci.use_realms'
 
 
 class BuildStatus(messages.Enum):
+  # Status is not set.
+  UNSET = 0
   # A build is created, can be leased by someone and started.
   SCHEDULED = 1
   # Someone has leased the build and marked it as started.
@@ -46,6 +48,8 @@ class BuildStatus(messages.Enum):
 
 
 class BuildResult(messages.Enum):
+  # Result is not set.
+  UNSET = 0
   # A build has completed successfully.
   SUCCESS = 1
   # A build has completed unsuccessfully.
@@ -55,6 +59,8 @@ class BuildResult(messages.Enum):
 
 
 class FailureReason(messages.Enum):
+  # Reason is not set.
+  UNSET = 0
   # Build failed
   BUILD_FAILURE = 1
   # Something happened within buildbucket.
@@ -66,6 +72,8 @@ class FailureReason(messages.Enum):
 
 
 class CancelationReason(messages.Enum):
+  # Reason is not set.
+  UNSET = 0
   # A build was canceled explicitly, probably by an API call.
   CANCELED_EXPLICITLY = 1
   # A build was canceled by buildbucket due to timeout.
@@ -237,7 +245,8 @@ class Build(ndb.Model):
   # a URL to a build-system-specific build, viewable by a human.
   url = ndb.StringProperty(indexed=False)
 
-  # V1 status properties. Computed by _pre_put_hook.
+  # V1 status properties. Computed by _pre_put_hook and _post_get_hook.
+  # TODO(crbug/1090540): Remove _pre_put_hook computation of legacy properties.
   result = msgprop.EnumProperty(BuildResult)
   result_details = datastore_utils.DeterministicJsonProperty(json_type=dict)
   cancelation_reason = msgprop.EnumProperty(CancelationReason)
@@ -303,8 +312,20 @@ class Build(ndb.Model):
     self.tags = sorted(set(self.tags))
     self.experiments = sorted(set(self.experiments))
 
+  @classmethod
+  def _post_get_hook(cls, key, future):
+    """Computes v1 legacy fields."""
+    build = future.get_result()
+    if build:
+      build.update_v1_status_fields()
+    else:  # pragma: no cover
+      pass
+
   def update_v1_status_fields(self):
     """Updates V1 status fields."""
+    # Reset these to None instead of UNSET for backwards compatibility.
+    # UNSET is only required to load values written by the Go service,
+    # the Python service expects these to be None when they aren't set.
     self.status_legacy = None
     self.result = None
     self.failure_reason = None
