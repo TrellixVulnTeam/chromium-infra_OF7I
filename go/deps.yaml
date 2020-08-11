@@ -570,3 +570,9 @@ import:
 - package: github.com/pborman/uuid
   version: upstream/master
   repo: https://chromium.googlesource.com/external/github.com/pborman/uuid.git
+- package: github.com/pkg/sftp
+  version: master
+  repo: https://chromium.googlesource.com/external/github.com/pkg/sftp.git
+- package: github.com/kr/fs
+  version: master
+  repo: https://fuchsia.googlesource.com/third_party/github.com/kr/fs.git
