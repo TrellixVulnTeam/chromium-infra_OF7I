@@ -627,6 +627,9 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 	if chromePlatformID := machine.GetChromeBrowserMachine().GetChromePlatform(); chromePlatformID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetChromePlatformResource(chromePlatformID))
 	}
+	if rackID := machine.GetLocation().GetRack(); rackID != "" {
+		resourcesNotFound = append(resourcesNotFound, GetRackResource(rackID))
+	}
 	// Check if machine/nics/drac already exists
 	if err := resourceAlreadyExists(ctx, resourcesAlreadyExists, nil); err != nil {
 		return err
