@@ -242,7 +242,7 @@ func GetVMIndexedFieldName(input string) (string, error) {
 	case util.TagFilterName:
 		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are vlan/osversion/state/host_id/lab/tags", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are vlan/osversion/state/host_id/lab/tag", input)
 	}
 	return field, nil
 }

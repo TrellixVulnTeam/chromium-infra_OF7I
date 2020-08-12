@@ -11,6 +11,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
+	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
@@ -177,10 +178,10 @@ func TestUpdateVM(t *testing.T) {
 			vm1 := &ufspb.VM{
 				Name: "vm-update-1",
 			}
-			resp, err := UpdateVM(ctx, vm1, "create-host", nil, ufspb.State_STATE_UNSPECIFIED)
+			resp, err := UpdateVM(ctx, vm1, "create-host", ufspb.State_STATE_UNSPECIFIED, nil)
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
-			So(err.Error(), ShouldContainSubstring, NotFound)
+			So(err.Error(), ShouldContainSubstring, "There is no ChromeVM with ChromeVMID vm-update-1 in the system")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-update-1")
 			So(err, ShouldBeNil)
@@ -194,12 +195,11 @@ func TestUpdateVM(t *testing.T) {
 				Name: "vm-update-2",
 			}
 			_, err := CreateVM(ctx, vm1, "update-host", nil)
-			resp, err := UpdateVM(ctx, vm1, "update-host", &ufsAPI.NetworkOption{
+			resp, err := UpdateVMHost(ctx, vm1.Name, &ufsAPI.NetworkOption{
 				Vlan: "vlan-1",
-			}, ufspb.State_STATE_UNSPECIFIED)
+			})
 			So(err, ShouldBeNil)
 			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
-			So(resp.GetMachineLseId(), ShouldEqual, "update-host")
 			s, err := state.GetStateRecord(ctx, "vms/vm-update-2")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
@@ -210,10 +210,10 @@ func TestUpdateVM(t *testing.T) {
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeTrue)
 
-			// Come from CreateVM
+			// Come from CreateVM+UpdateVMHost
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-update-2")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
+			So(changes, ShouldHaveLength, 2)
 			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
@@ -256,17 +256,13 @@ func TestUpdateVM(t *testing.T) {
 			_, err := CreateVM(ctx, vm1, "update-host", nil)
 			So(err, ShouldBeNil)
 
-			_, err = UpdateVM(ctx, vm1, "update-host", &ufsAPI.NetworkOption{
+			_, err = UpdateVMHost(ctx, vm1.Name, &ufsAPI.NetworkOption{
 				Ip: "192.168.40.9",
-			}, ufspb.State_STATE_UNSPECIFIED)
+			})
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateVM(ctx, vm1, "update-host", &ufsAPI.NetworkOption{
-				Delete: true,
-			}, ufspb.State_STATE_UNSPECIFIED)
+			err = DeleteVMHost(ctx, vm1.Name)
 			So(err, ShouldBeNil)
-			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
-			So(resp.GetMachineLseId(), ShouldEqual, "update-host")
 			_, err = configuration.GetDHCPConfig(ctx, "vm-update-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
@@ -298,10 +294,10 @@ func TestUpdateVM(t *testing.T) {
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-update-3")
 			So(err, ShouldBeNil)
 			// 1 create, 2 updates
-			So(msgs, ShouldHaveLength, 3)
+			So(msgs, ShouldHaveLength, 2)
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-update-3")
 			So(err, ShouldBeNil)
-			// 1 create
+			// 1 create, 1 update
 			So(msgs, ShouldHaveLength, 1)
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-update-3")
 			So(err, ShouldBeNil)
@@ -317,7 +313,7 @@ func TestUpdateVM(t *testing.T) {
 				Name: "vm-update-4",
 			}
 			_, err := CreateVM(ctx, vm1, "update-host", nil)
-			resp, err := UpdateVM(ctx, vm1, "update-host", nil, ufspb.State_STATE_NEEDS_REPAIR)
+			resp, err := UpdateVM(ctx, vm1, "update-host", ufspb.State_STATE_NEEDS_REPAIR, nil)
 			So(err, ShouldBeNil)
 			So(resp.GetState(), ShouldEqual, "STATE_NEEDS_REPAIR")
 			So(resp.GetMachineLseId(), ShouldEqual, "update-host")
@@ -351,6 +347,28 @@ func TestUpdateVM(t *testing.T) {
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-update-4")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 0)
+		})
+
+		Convey("Partial Update vm", func() {
+			vm := &ufspb.VM{
+				Name: "vm-7",
+				OsVersion: &ufspb.OSVersion{
+					Value: "windows",
+				},
+				Tags: []string{"tag-1"},
+			}
+			_, err := CreateVM(ctx, vm, "update-host", nil)
+			So(err, ShouldBeNil)
+
+			vm1 := &ufspb.VM{
+				Name: "vm-7",
+				Tags: []string{"tag-2"},
+			}
+			resp, err := UpdateVM(ctx, vm1, "", ufspb.State_STATE_UNSPECIFIED, &field_mask.FieldMask{Paths: []string{"tags"}})
+			So(err, ShouldBeNil)
+			So(resp, ShouldNotBeNil)
+			So(resp.GetTags(), ShouldResemble, []string{"tag-1", "tag-2"})
+			So(resp.GetOsVersion().GetValue(), ShouldEqual, "windows")
 		})
 	})
 }

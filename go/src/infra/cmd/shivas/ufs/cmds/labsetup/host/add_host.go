@@ -43,6 +43,7 @@ var AddHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host")
 		c.Flags.StringVar(&c.osVersion, "os-version", "", "name of the os version of the machine (browser lab only)")
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only)")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
@@ -63,6 +64,7 @@ type addHost struct {
 	prototype   string
 	osVersion   string
 	vmCapacity  int
+	tags        string
 }
 
 func (c *addHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -146,6 +148,7 @@ func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsLab ufspb.Lab) {
 	lse.Hostname = c.hostName
 	lse.Name = c.hostName
 	lse.MachineLsePrototype = c.prototype
+	lse.Tags = utils.GetStringSlice(c.tags)
 	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
 		lse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
 			ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
@@ -169,6 +172,9 @@ func (c *addHost) validateArgs() error {
 		}
 		if c.prototype != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-prototype' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile != "" {

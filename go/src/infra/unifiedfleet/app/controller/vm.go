@@ -7,9 +7,13 @@ package controller
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
@@ -55,49 +59,46 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 }
 
 // UpdateVM updates an existing vm in datastore.
-func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.NetworkOption, s ufspb.State) (*ufspb.VM, error) {
+func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mask *field_mask.FieldMask) (*ufspb.VM, error) {
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(vm)
 
+		// Validate input
+		if err := validateUpdateVM(ctx, vm, host, mask); err != nil {
+			return errors.Annotate(err, "UpdateVM - validation failed").Err()
+		}
+
+		// Get old/existing VM
 		oldVM, err := inventory.GetVM(ctx, vm.GetName())
 		if err != nil {
 			return errors.Annotate(err, "Fail to get existing vm by %s", vm.GetName()).Err()
 		}
-		lse, err := inventory.GetMachineLSE(ctx, host)
-		if err != nil {
-			return errors.Annotate(err, "Fail to get host by %s", host).Err()
-		}
-		// Before partial update is enabled, not overwrite VM if nwOpt or s is specified
-		if nwOpt != nil || s != ufspb.State_STATE_UNSPECIFIED {
-			vm = oldVM
-		}
-		vm.MachineLseId = host
-		vm.Lab = lse.Lab
-		vm.State = oldVM.State
-		newState := ufspb.State_STATE_UNSPECIFIED
-		if s != ufspb.State_STATE_UNSPECIFIED {
-			newState = s
-			vm.State = s.String()
-		} else {
-			if oldVM.State == "" {
-				newState = s
-				vm.State = s.String()
+
+		// Check if user provided new host to associate the vm
+		if host != "" && oldVM.MachineLseId != host {
+			lse, err := inventory.GetMachineLSE(ctx, host)
+			if err != nil {
+				return errors.Annotate(err, "UpdateVM - fail to get host by %s", host).Err()
 			}
+			// update the host associated with the vm
+			vm.MachineLseId = host
+			// update the lab info for vm for vm table indexing
+			vm.Lab = lse.Lab
 		}
-		if newState != ufspb.State_STATE_UNSPECIFIED {
-			if err := hc.stUdt.updateStateHelper(ctx, newState); err != nil {
+
+		// check if user provided a new state for the vm
+		if s != ufspb.State_STATE_UNSPECIFIED && vm.State != s.String() {
+			vm.State = s.String()
+			if err := hc.stUdt.updateStateHelper(ctx, s); err != nil {
 				return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
 			}
 		}
 
-		if nwOpt.GetDelete() {
-			if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
-				return err
-			}
-			vm.Vlan = ""
-		} else if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
-			if err := hc.netUdt.addVMHostHelper(ctx, nwOpt, vm); err != nil {
-				return errors.Annotate(err, "Fail to assign ip to host %s", host).Err()
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			vm, err = processVMUpdateMask(oldVM, vm, mask)
+			if err != nil {
+				return errors.Annotate(err, "UpdateVM - processing update mask failed").Err()
 			}
 		}
 
@@ -112,6 +113,106 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 		return nil, err
 	}
 	return vm, nil
+}
+
+// UpdateVMHost updates the vm host(update ip assignment).
+func UpdateVMHost(ctx context.Context, vmName string, nwOpt *ufsAPI.NetworkOption) (*ufspb.VM, error) {
+	var vm *ufspb.VM
+	var err error
+	f := func(ctx context.Context) error {
+		hc := getVMHistoryClient(&ufspb.VM{Name: vmName})
+		// Validate the input
+		if err := validateUpdateVMHost(ctx, vmName, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
+			return err
+		}
+
+		vm, err = GetVM(ctx, vmName)
+		if err != nil {
+			return err
+		}
+		// this is for logging changes
+		oldVM := proto.Clone(vm).(*ufspb.VM)
+
+		// Find free ip, set IP and DHCP config
+		if err := hc.netUdt.addVMHostHelper(ctx, nwOpt, vm); err != nil {
+			return errors.Annotate(err, "Fail to assign ip to vm %s", vm.Name).Err()
+		}
+
+		// update vm with new vlan info set in prev step by addVMHostHelper
+		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm}); err != nil {
+			return errors.Annotate(err, "Failed to update vm %q", vm.GetName()).Err()
+		}
+		hc.LogVMChanges(oldVM, vm)
+
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to assign IP to the VM: %s", err)
+		return nil, err
+	}
+	return vm, nil
+}
+
+// validateUpdateVMHost validates if an ip can be assigned to the VM
+func validateUpdateVMHost(ctx context.Context, vmName string, vlanName, ipv4Str string) error {
+	if ipv4Str != "" {
+		return nil
+	}
+	// Check if resources does not exist
+	return ResourceExist(ctx, []*Resource{GetVMResource(vmName), GetVlanResource(vlanName)}, nil)
+}
+
+// DeleteVMHost deletes the dhcp/ip of a vm in datastore.
+func DeleteVMHost(ctx context.Context, vmName string) error {
+	f := func(ctx context.Context) error {
+		hc := getVMHistoryClient(&ufspb.VM{Name: vmName})
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
+			return err
+		}
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		logging.Errorf(ctx, "Failed to delete the vm dhcp: %s", err)
+		return err
+	}
+	return nil
+}
+
+// processVMUpdateMask process update field mask to get only specific update
+// fields and return a complete vm object with updated and existing fields
+func processVMUpdateMask(oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMask) (*ufspb.VM, error) {
+	// update the fields in the existing vm
+	for _, path := range mask.Paths {
+		switch path {
+		case "host":
+			// In the previous step we have already checked for host != ""
+			// and got the new values for OUTPUT only fields in new vm object,
+			// assign them to oldVM.
+			oldVM.MachineLseId = vm.GetMachineLseId()
+			oldVM.Lab = vm.GetLab()
+		case "macAddress":
+			oldVM.MacAddress = vm.GetMacAddress()
+		case "state":
+			// In the previous step we have already checked for state != ufspb.State_STATE_UNSPECIFIED
+			// and got the new values for OUTPUT only fields in new vm object,
+			// assign them to oldVM.
+			oldVM.State = vm.GetState()
+		case "osVersion":
+			if oldVM.GetOsVersion() == nil {
+				oldVM.OsVersion = &ufspb.OSVersion{
+					Value: vm.GetOsVersion().GetValue(),
+				}
+			} else {
+				oldVM.GetOsVersion().Value = vm.GetOsVersion().GetValue()
+			}
+		case "tags":
+			oldVM.Tags = mergeTags(oldVM.GetTags(), vm.GetTags())
+		}
+	}
+	// return existing/old vm with new updated values
+	return oldVM, nil
 }
 
 // DeleteVM deletes a vm in datastore.
@@ -169,4 +270,50 @@ func getVMHistoryClient(m *ufspb.VM) *HistoryClient {
 			Hostname: m.Name,
 		},
 	}
+}
+
+// validateUpdateVM validates if a vm can be updated
+//
+// checks if vm, machine and resources referecned by the vm does not exist
+func validateUpdateVM(ctx context.Context, vm *ufspb.VM, machinelseName string, mask *field_mask.FieldMask) error {
+	// Aggregate resource to check if vm does not exist
+	resourcesNotFound := []*Resource{GetVMResource(vm.Name)}
+	// Aggregate resource to check if machinelseName does not exist
+	if machinelseName != "" {
+		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(machinelseName))
+	}
+
+	// check if resources does not exist
+	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
+		return err
+	}
+
+	return validateVMUpdateMask(vm, mask)
+}
+
+// validateVMUpdateMask validates the update mask for VM update
+func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateVMUpdateMask - name cannot be updated, delete and create a new vm instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateVMUpdateMask - update_time cannot be updated, it is a output only field")
+			case "machinelseName":
+			case "macAddress":
+			case "osVersion":
+				if vm.GetOsVersion() == nil {
+					return status.Error(codes.InvalidArgument, "validateUpdateVM - Osversion cannot be empty/nil.")
+				}
+			case "tags":
+			case "state":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateUpdateVM - unsupported update mask path %q", path)
+			}
+		}
+	}
+	return nil
 }

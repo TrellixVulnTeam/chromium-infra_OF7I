@@ -87,6 +87,7 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames [
 // is removed from old Labstation and new servo info from the DUT is added
 // to the new labstation.
 func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
+	// TODO(eshwarn) : provide partial update for dut.
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
 		// Validate the input

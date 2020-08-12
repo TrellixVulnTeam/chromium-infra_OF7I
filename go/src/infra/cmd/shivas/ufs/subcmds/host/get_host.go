@@ -103,14 +103,11 @@ func (c *getHost) printFull(ctx context.Context, ic ufsAPI.FleetClient, lse *ufs
 	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 		Hostname: lse.GetHostname(),
 	})
-	s, _ := ic.GetState(ctx, &ufsAPI.GetStateRequest{
-		ResourceName: ufsUtil.AddPrefix(ufsUtil.HostCollection, lse.GetName()),
-	})
 
 	if !c.outputFlags.Tsv() {
 		utils.PrintTitle(utils.MachineLSETFullitle)
 	}
-	utils.PrintMachineLSEFull(lse, machine, dhcp, s)
+	utils.PrintMachineLSEFull(lse, machine, dhcp)
 	return nil
 }
 

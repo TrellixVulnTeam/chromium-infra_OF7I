@@ -73,13 +73,45 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 		return nil, err
 	}
 	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
-	machineLSE, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetNetworkOptions()[req.MachineLSE.Name], req.GetStates()[req.MachineLSE.Name])
+	nwOpt := req.GetNetworkOptions()[req.MachineLSE.Name]
+	if nwOpt != nil {
+		var machinelse *ufspb.MachineLSE
+		var err error
+		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
+			machinelse, err = controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetStates()[req.MachineLSE.Name], req.UpdateMask)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// If network_option.delete is enabled, ignore network_option.vlan and return directly
+		if nwOpt.GetDelete() {
+			if err = controller.DeleteMachineLSEHost(ctx, machinelse.Name); err != nil {
+				return nil, err
+			}
+			machinelse, err = controller.GetMachineLSE(ctx, req.MachineLSE.Name)
+			if err != nil {
+				return nil, err
+			}
+		} else if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
+			machinelse, err = controller.UpdateMachineLSEHost(ctx, machinelse.Name, nwOpt)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// https://aip.dev/122 - as per AIP guideline
+		machinelse.Name = util.AddPrefix(util.MachineLSECollection, machinelse.Name)
+		return machinelse, nil
+	}
+
+	machinelse, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetStates()[req.MachineLSE.Name], req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
 	// https://aip.dev/122 - as per AIP guideline
-	machineLSE.Name = util.AddPrefix(util.MachineLSECollection, machineLSE.Name)
-	return machineLSE, err
+	machinelse.Name = util.AddPrefix(util.MachineLSECollection, machinelse.Name)
+	return machinelse, err
 }
 
 // GetMachineLSE gets the machineLSE information from database.
@@ -141,7 +173,7 @@ func (fs *FleetServerImpl) CreateVM(ctx context.Context, req *ufsAPI.CreateVMReq
 	return vm, err
 }
 
-// UpdateVM updates the VM information in database.
+// UpdateVM updates the vm information in database.
 func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMRequest) (rsp *ufspb.VM, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
@@ -150,7 +182,39 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 		return nil, err
 	}
 	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
-	vm, err := controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.GetNetworkOption(), req.GetState())
+
+	if req.GetNetworkOption() != nil {
+		var vm *ufspb.VM
+		var err error
+		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
+			vm, err = controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.GetState(), req.UpdateMask)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// If network_option.delete is enabled, ignore network_option.vlan and return directly
+		if req.GetNetworkOption().GetDelete() {
+			if err = controller.DeleteVMHost(ctx, vm.Name); err != nil {
+				return nil, err
+			}
+			vm, err = controller.GetVM(ctx, req.Vm.Name)
+			if err != nil {
+				return nil, err
+			}
+		} else if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
+			vm, err = controller.UpdateVMHost(ctx, vm.Name, req.GetNetworkOption())
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// https://aip.dev/122 - as per AIP guideline
+		vm.Name = util.AddPrefix(util.VMCollection, vm.Name)
+		return vm, nil
+	}
+
+	vm, err := controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.GetState(), req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

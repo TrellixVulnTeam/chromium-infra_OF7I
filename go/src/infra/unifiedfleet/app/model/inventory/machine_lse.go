@@ -37,6 +37,8 @@ type MachineLSEEntity struct {
 	Rack                  string   `gae:"rack"`
 	Lab                   string   `gae:"lab"`
 	Manufacturer          string   `gae:"manufacturer"`
+	Tags                  []string `gae:"tags"`
+	State                 string   `gae:"state"`
 	// ufspb.MachineLSE cannot be directly used as it contains pointer.
 	MachineLSE []byte `gae:",noindex"`
 }
@@ -72,6 +74,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		Rack:                  p.GetRack(),
 		Lab:                   p.GetLab(),
 		Manufacturer:          p.GetManufacturer(),
+		State:                 p.GetState(),
 		MachineLSE:            machineLSE,
 	}, nil
 }
@@ -306,8 +309,12 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "manufacturer"
 	case util.FreeVMFilterName:
 		field = "free"
+	case util.TagFilterName:
+		field = "tags"
+	case util.StateFilterName:
+		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/lab/rack/switch/man/free", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/lab/rack/switch/man/free/tag/state", input)
 	}
 	return field, nil
 }

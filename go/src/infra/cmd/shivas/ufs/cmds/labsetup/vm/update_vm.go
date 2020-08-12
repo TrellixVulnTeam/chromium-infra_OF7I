@@ -30,15 +30,23 @@ var UpdateVMCmd = &subcommands.Command{
 
 Examples:
 shivas update-vm -f vm.json -h {Hostname}
-Update a VM on a host by reading a JSON file input.`,
+Update a VM on a host by reading a JSON file input.
+
+shivas update-vm -name cr22 -os-version windows
+Partial update a vm by parameters. Only specified parameters will be updated in the vm.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.VMFileText)
 
-		c.Flags.StringVar(&c.hostName, "host", "", "name of the vm")
-		c.Flags.StringVar(&c.vmName, "name", "", "name of the host that this VM is running on")
+		c.Flags.StringVar(&c.hostName, "host", "", "hostname of the host to add the VM")
+		c.Flags.StringVar(&c.vmName, "name", "", "hostname/name of the VM")
+		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.osVersion, "os-version", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the vm to")
@@ -49,8 +57,9 @@ Update a VM on a host by reading a JSON file input.`,
 
 type updateVM struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 
 	newSpecsFile string
 
@@ -60,6 +69,9 @@ type updateVM struct {
 	deleteVlan bool
 	ip         string
 	state      string
+	macAddress string
+	osVersion  string
+	tags       string
 }
 
 func (c *updateVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -80,6 +92,9 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -114,6 +129,13 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		MachineLSEId:  c.hostName,
 		NetworkOption: nwOpt,
 		State:         s,
+		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
+			"host":        "machinelseName",
+			"state":       "state",
+			"mac-address": "macAddress",
+			"os-version":  "osVersion",
+			"tags":        "tags",
+		}),
 	})
 	if err != nil {
 		return errors.Annotate(err, "Unable to update the VM on the host").Err()
@@ -137,19 +159,28 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 
 func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	vm.Name = c.vmName
-	vm.Hostname = c.vmName
+	vm.MacAddress = c.macAddress
+	vm.OsVersion = &ufspb.OSVersion{}
+	if c.osVersion == utils.ClearFieldValue {
+		vm.GetOsVersion().Value = ""
+	} else {
+		vm.GetOsVersion().Value = c.osVersion
+	}
+	if c.tags == utils.ClearFieldValue {
+		vm.Tags = nil
+	} else {
+		vm.Tags = utils.GetStringSlice(c.tags)
+	}
 }
 
 func (c *updateVM) validateArgs() error {
-	if c.hostName == "" {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-host' is required to update the VM on a host")
-	}
 	if c.newSpecsFile == "" {
 		if c.vmName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\none of ['-delete-vlan', '-vlan', '-ip', '-state'] is required, no mode ('-f') is specified.")
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" &&
+			c.hostName == "" && c.osVersion == "" && c.macAddress == "" && c.tags == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(c.state) {

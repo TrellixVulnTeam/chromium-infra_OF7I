@@ -31,6 +31,8 @@ var UpdateHostCmd = &subcommands.Command{
 		c := &updateHost{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
+		c.commonFlags.Register(&c.Flags)
+
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineLSEFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
@@ -41,14 +43,19 @@ var UpdateHostCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the host")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the host to")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
+		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host.")
+		c.Flags.StringVar(&c.osVersion, "os-version", "", "name of the os version of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
+		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only). "+"To clear this field set it to -1.")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
 }
 
 type updateHost struct {
 	subcommands.CommandRunBase
-	authFlags authcli.Flags
-	envFlags  site.EnvFlags
+	authFlags   authcli.Flags
+	envFlags    site.EnvFlags
+	commonFlags site.CommonFlags
 
 	newSpecsFile string
 	interactive  bool
@@ -60,6 +67,10 @@ type updateHost struct {
 	deleteVlan  bool
 	ip          string
 	state       string
+	prototype   string
+	osVersion   string
+	vmCapacity  int
+	tags        string
 }
 
 func (c *updateHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -80,6 +91,9 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	e := c.envFlags.Env()
+	if c.commonFlags.Verbose() {
+		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
+	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
@@ -100,19 +114,6 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		c.parseArgs(machinelse)
 	}
 
-	var machineNames []string
-	if c.machineName != "" {
-		machineNames = append(machineNames, c.machineName)
-	}
-
-	// Get the host MachineLSE
-	oldMachinelse, err := ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, c.hostName),
-	})
-	if err != nil {
-		return errors.Annotate(err, "No host with hostname %s found", c.hostName).Err()
-	}
-	oldMachinelse.Name = ufsUtil.RemovePrefix(oldMachinelse.Name)
 	var networkOptions map[string]*ufsAPI.NetworkOption
 	var states map[string]ufspb.State
 	if c.deleteVlan || c.vlanName != "" || c.ip != "" {
@@ -124,23 +125,31 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 				Ip:     c.ip,
 			},
 		}
-		// Can be removed after partial update is enabled.
 	}
 	if c.state != "" {
 		states = map[string]ufspb.State{
 			machinelse.Name: ufsUtil.ToUFSState(c.state),
 		}
 	}
-	if c.newSpecsFile == "" {
-		machinelse = oldMachinelse
-	}
 
+	var machineNames []string
+	if c.machineName != "" {
+		machineNames = append(machineNames, c.machineName)
+	}
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE:     machinelse,
 		Machines:       machineNames,
 		NetworkOptions: networkOptions,
 		States:         states,
+		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
+			"machine":     "machine",
+			"prototype":   "mlseprototype",
+			"os-version":  "osVersion",
+			"vm-capacity": "vmCapacity",
+			"tags":        "tags",
+			"state":       "state",
+		}),
 	})
 	if err != nil {
 		return err
@@ -165,20 +174,42 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 	lse.Name = c.hostName
 	lse.Hostname = c.hostName
+	lse.MachineLsePrototype = c.prototype
+	if c.tags == utils.ClearFieldValue {
+		lse.Tags = nil
+	} else {
+		lse.Tags = utils.GetStringSlice(c.tags)
+	}
+	if c.osVersion != "" || c.vmCapacity != 0 {
+		lse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
+			ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+				OsVersion: &ufspb.OSVersion{},
+			},
+		}
+		if c.vmCapacity == -1 {
+			lse.GetChromeBrowserMachineLse().VmCapacity = 0
+		} else {
+			lse.GetChromeBrowserMachineLse().VmCapacity = int32(c.vmCapacity)
+		}
+		if c.osVersion == utils.ClearFieldValue {
+			lse.GetChromeBrowserMachineLse().GetOsVersion().Value = ""
+		} else {
+			lse.GetChromeBrowserMachineLse().GetOsVersion().Value = c.osVersion
+		}
+	}
 }
 
 func (c *updateHost) validateArgs() error {
-	if c.newSpecsFile != "" {
-		if c.interactive {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
-		}
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.hostName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\none of ['-delete-vlan', '-vlan', '-state', '-ip'] is required, no mode ('-f' or '-i') is specified")
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" &&
+			c.osVersion == "" && c.prototype == "" && c.tags == "" && c.vmCapacity == 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(c.state) {

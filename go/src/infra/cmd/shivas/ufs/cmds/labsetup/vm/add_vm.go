@@ -41,9 +41,10 @@ Add a VM by parameters.`,
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.VMFileText)
 
 		c.Flags.StringVar(&c.hostName, "host", "", "hostname of the host to add the VM")
-		c.Flags.StringVar(&c.vmName, "name", "", "hostname of the VM")
+		c.Flags.StringVar(&c.vmName, "name", "", "hostname/name of the VM")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM")
 		c.Flags.StringVar(&c.osVersion, "os-version", "", "os version of the VM")
+		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
 }
@@ -60,6 +61,7 @@ type addVM struct {
 	vmName     string
 	macAddress string
 	osVersion  string
+	tags       string
 }
 
 func (c *addVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -113,10 +115,12 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 
 func (c *addVM) parseArgs(vm *ufspb.VM) {
 	vm.Name = c.vmName
+	vm.Hostname = c.vmName
 	vm.MacAddress = c.macAddress
 	vm.OsVersion = &ufspb.OSVersion{
 		Value: c.osVersion,
 	}
+	vm.Tags = utils.GetStringSlice(c.tags)
 }
 
 func (c *addVM) validateArgs() error {
@@ -129,6 +133,9 @@ func (c *addVM) validateArgs() error {
 		}
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
 	} else {
 		if c.vmName == "" {

@@ -307,9 +307,10 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 					},
 				},
 			},
-			Rack: rack,
-			Lab:  lab,
-			Nic:  GetNicName(h.GetNic(), h.GetMachine()),
+			Rack:  rack,
+			Lab:   lab,
+			Nic:   GetNicName(h.GetNic(), h.GetMachine()),
+			State: ToState(h.GetState()).String(),
 		}
 		lses = append(lses, lse)
 		ip := FormatIP(h.GetVlan(), h.GetIpv4(), true)

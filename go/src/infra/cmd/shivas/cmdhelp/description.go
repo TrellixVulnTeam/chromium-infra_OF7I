@@ -361,6 +361,9 @@ Updates a host by reading a JSON file input.
 shivas update-host -f host.json -m {Machine name}
 Update a host by reading a JSON file input and associate the host with a different machine.
 
+shivas update-host -name cr22 -os-version windows
+Partial update a host by parameters. Only specified parameters will be updated in the host.
+
 shivas update-host -name host0 -delete-vlan
 Remove the ip for host
 
@@ -1016,7 +1019,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/man(manufacturer)` + LabFilterHelpText +
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/state/man(manufacturer)` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition

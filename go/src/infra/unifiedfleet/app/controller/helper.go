@@ -82,6 +82,17 @@ func GetMachineResource(machineID string) *Resource {
 	}
 }
 
+//GetVMResource returns a Resource with VMEntity
+func GetVMResource(vmID string) *Resource {
+	return &Resource{
+		Kind: inventory.VMKind,
+		ID:   vmID,
+		Entity: &inventory.VMEntity{
+			ID: vmID,
+		},
+	}
+}
+
 //GetMachineLSEResource returns a Resource with MachineLSEEntity
 func GetMachineLSEResource(machinelseID string) *Resource {
 	return &Resource{

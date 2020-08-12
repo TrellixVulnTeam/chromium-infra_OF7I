@@ -52,7 +52,7 @@ var (
 	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "State", "UpdateTime"}
 	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "IP", "State", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle     = []string{"Host", "Lab", "Rack", "Nic", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETitle     = []string{"Host", "Lab", "Rack", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
 	MachineLSETFullitle = []string{"Host", "Machine", "Lab", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )
 
@@ -690,7 +690,7 @@ func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE) {
 }
 
 // PrintMachineLSEFull prints the full info for a host
-func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
+func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
 	defer tw.Flush()
 	var ts string
 	if t, err := ptypes.Timestamp(lse.GetUpdateTime()); err == nil {
@@ -703,7 +703,7 @@ func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *uf
 	out += fmt.Sprintf("%s\t", lse.GetNic())
 	out += fmt.Sprintf("%s\t", dhcp.GetIp())
 	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", s.GetState())
+	out += fmt.Sprintf("%s\t", lse.GetState())
 	out += fmt.Sprintf("%d\t", lse.GetChromeBrowserMachineLse().GetVmCapacity())
 	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(lse.GetChromeBrowserMachineLse().GetVms(), "Name")))
 	out += fmt.Sprintf("%s\t", ts)
@@ -714,6 +714,7 @@ func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *uf
 func PrintMachineLSEs(machinelses []*ufspb.MachineLSE, keysOnly bool) {
 	defer tw.Flush()
 	for _, m := range machinelses {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
 		printMachineLSE(m, keysOnly)
 	}
 }
@@ -731,6 +732,7 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 	out += fmt.Sprintf("%s\t", m.GetLab())
 	out += fmt.Sprintf("%s\t", m.GetRack())
 	out += fmt.Sprintf("%s\t", m.GetNic())
+	out += fmt.Sprintf("%s\t", m.GetState())
 	out += fmt.Sprintf("%d\t", m.GetChromeBrowserMachineLse().GetVmCapacity())
 	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachineLse().GetVms(), "Name")))
 	out += fmt.Sprintf("%s\t", ts)
