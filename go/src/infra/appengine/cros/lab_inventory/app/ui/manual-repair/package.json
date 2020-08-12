@@ -8,13 +8,20 @@
     "dev": "npm run webpack-dev-server -- --host 0.0.0.0 --port 5000"
   },
   "dependencies": {
+    "@chopsui/prpc-client": "^1.1.0",
     "@doubletrade/lit-datatable": "^0.4.0",
+    "@material/mwc-textarea": "^0.17.2",
+    "@material/mwc-textfield": "^0.17.2",
+    "@material/mwc-top-app-bar-fixed": "^0.17.2",
     "@types/navigo": "^7.0.1",
     "@webcomponents/webcomponentsjs": "^2.4.3",
     "lit-element": "^2.0.1",
     "lit-html": "^1.0.0",
     "navigo": "^7.1.2",
-    "paper-collapse-item": "^4.0.5"
+    "paper-collapse-item": "^4.0.5",
+    "pwa-helpers": "^0.9.1",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.10.5",
@@ -28,6 +35,8 @@
     "css-loader": "^3.6.0",
     "es-dev-server": "^1.5.0",
     "html-webpack-plugin": "^4.3.0",
+    "node-sass": "^4.14.1",
+    "sass-loader": "^9.0.2",
     "style-loader": "^1.2.1",
     "ts-loader": "^8.0.1",
     "tslib": "^1.11.0",
