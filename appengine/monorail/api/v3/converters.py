@@ -359,9 +359,10 @@ class Converter(object):
       labels = self.ConvertLabels(
           issue.labels, issue.derived_labels, issue.project_id)
       components = self._ConvertComponentValues(issue)
-      # TODO(crbug/monorail/7634): filter out approval fields
+      non_approval_fvs = self._GetNonApprovalFieldValues(
+          issue.field_values, issue.project_id)
       field_values = self.ConvertFieldValues(
-          issue.field_values, issue.project_id, issue.phases)
+          non_approval_fvs, issue.project_id, issue.phases)
       field_values.extend(
           self.ConvertEnumFieldValues(
               issue.labels, issue.derived_labels, issue.project_id))
@@ -1035,13 +1036,23 @@ class Converter(object):
 
   # Field Values
 
+  def _GetNonApprovalFieldValues(self, field_values, project_id):
+    # type: (Sequence[proto.tracker_pb2.FieldValue], int) ->
+    #     Sequence[proto.tracker_pb2.FieldValue]
+    """Filter out field values that belong to an approval field."""
+    config = self.services.config.GetProjectConfig(self.cnxn, project_id)
+    approval_fd_ids = set(
+        [fd.field_id for fd in config.field_defs if fd.approval_id])
+
+    return [fv for fv in field_values if fv.field_id not in approval_fd_ids]
+
   def ConvertFieldValues(self, field_values, project_id, phases):
     # type: (Sequence[proto.tracker_pb2.FieldValue], int,
     #     Sequence[proto.tracker_pb2.Phase]) ->
     #     Sequence[api_proto.issue_objects_pb2.FieldValue]
     """Convert sequence of field_values to protoc FieldValues.
 
-    This method does not handle enum_type fields
+    This method does not handle enum_type fields.
 
     Args:
       field_values: List of FieldValues
@@ -1362,9 +1373,10 @@ class Converter(object):
           issue_objects_pb2.Issue.ComponentValue(
               component=component_resource_name,
               derivation=issue_objects_pb2.Derivation.Value('EXPLICIT')))
-    # TODO(crbug/monorail/7634): filter out approval fields.
+    non_approval_fvs = self._GetNonApprovalFieldValues(
+        template.field_values, project_id)
     field_values = self.ConvertFieldValues(
-        template.field_values, project_id, template.phases)
+        non_approval_fvs, project_id, template.phases)
     field_values.extend(
         self.ConvertEnumFieldValues(template.labels, [], project_id))
     phases = self._ComputePhases(template.phases)

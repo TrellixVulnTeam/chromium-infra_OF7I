@@ -793,6 +793,30 @@ class ConverterFunctionsTest(unittest.TestCase):
     )
     self.assertEqual(self.converter.ConvertIssues([issue]), [expected_issue])
 
+  def testConvertIssues_FilterApprovalFV(self):
+    issue = fake.MakeTestIssue(
+        self.project_1.project_id,
+        3,
+        'sum',
+        'New',
+        owner_id=None,
+        reporter_id=111,
+        attachment_count=-10,
+        project_name=self.project_1.project_name,
+        opened_timestamp=self.PAST_TIME,
+        modified_timestamp=self.PAST_TIME,
+        field_values=[self.fv_1, self.fv_6])
+    self.services.issue.TestAddIssue(issue)
+    actual = self.converter.ConvertIssues([issue])[0]
+
+    expected_fv = issue_objects_pb2.FieldValue(
+        derivation=EXPLICIT_DERIVATION,
+        field='projects/proj/fieldDefs/%d' % self.field_def_1,
+        value=self.fv_1_value,
+    )
+    self.assertEqual(len(actual.field_values), 1)
+    self.assertEqual(actual.field_values[0], expected_fv)
+
   def testConvertUser(self):
     """We can convert a single User."""
     self.user_1.vacation_message = 'non-empty-string'
@@ -1263,6 +1287,21 @@ class ConverterFunctionsTest(unittest.TestCase):
     actual = self.converter.IngestNotifyType(notify)
     self.assertEqual(actual, False)
 
+  def test_GetNonApprovalFieldValues(self):
+    """It filters out field values that belong to approvals"""
+    expected_str = 'some_string_field_value'
+    fv_expected = fake.MakeFieldValue(
+        field_id=self.field_def_1, str_value=expected_str, derived=False)
+    actual = self.converter._GetNonApprovalFieldValues(
+        [fv_expected, self.fv_6], self.project_1.project_id)
+    self.assertEqual(len(actual), 1)
+    self.assertEqual(actual[0], fv_expected)
+
+  def test_GetNonApprovalFieldValues_Empty(self):
+    actual = self.converter._GetNonApprovalFieldValues(
+        [], self.project_1.project_id)
+    self.assertEqual(actual, [])
+
   def testConvertFieldValues(self):
     """It ignores field values referencing a non-existent field"""
     expected_str = 'some_string_field_value'
@@ -1611,6 +1650,23 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(result.field_values[0].value, self.fv_1_value)
     self.assertEqual(result.field_values[0].derivation, EXPLICIT_DERIVATION)
     self.assertEqual(len(result.phases), 0)
+
+  def test_FillIssueFromTemplate_FilterApprovalFV(self):
+    template = self.services.template.TestAddIssueTemplateDef(
+        11114,
+        self.project_1.project_id,
+        'template3',
+        field_values=[self.fv_1, self.fv_6],
+        approval_values=[self.av_2],
+    )
+    result = self.converter._FillIssueFromTemplate(
+        template, self.project_1.project_id)
+    self.assertEqual(len(result.field_values), 1)
+    self.assertEqual(
+        result.field_values[0].field, 'projects/{}/fieldDefs/{}'.format(
+            self.project_1.project_name, self.field_def_1))
+    self.assertEqual(result.field_values[0].value, self.fv_1_value)
+    self.assertEqual(result.field_values[0].derivation, EXPLICIT_DERIVATION)
 
   def testConvertIssueTemplates(self):
     result = self.converter.ConvertIssueTemplates(
