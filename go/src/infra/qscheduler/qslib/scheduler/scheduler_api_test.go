@@ -17,6 +17,7 @@ package scheduler_test
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -138,7 +139,7 @@ func TestMatchThrottledAccountJobs(t *testing.T) {
 		s.AddRequest(ctx, scheduler.NewTaskRequest(differentRequest, aid, sharedProvisionableLabels, differentBaseLabels, tm), tm, nil, scheduler.NullEventSink)
 
 		for w := 0; w < 3; w++ {
-			s.MarkIdle(ctx, scheduler.WorkerID(string(w)), allLabels, tm, scheduler.NullEventSink)
+			s.MarkIdle(ctx, scheduler.WorkerID(strconv.Itoa(w)), allLabels, tm, scheduler.NullEventSink)
 		}
 
 		Convey("when running a round of scheduling", func() {

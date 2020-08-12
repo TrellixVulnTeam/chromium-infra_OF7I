@@ -8,6 +8,7 @@ package bb
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
@@ -104,7 +105,7 @@ func batchRequest(f []string, bIDs []int64) *pb.BatchRequest {
 func toString(bIDs []int64) []string {
 	var s []string
 	for bID := range bIDs {
-		s = append(s, string(bID))
+		s = append(s, strconv.Itoa(bID))
 	}
 	return s
 }

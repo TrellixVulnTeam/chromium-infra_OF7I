@@ -10,6 +10,7 @@ package flagx
 import (
 	"encoding/json"
 	"flag"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -104,7 +105,7 @@ func (t taskType) String() string {
 	if t.task == nil {
 		return ""
 	}
-	return string(*t.task)
+	return strconv.Itoa(int(*t.task))
 }
 
 func (t taskType) Set(s string) error {
