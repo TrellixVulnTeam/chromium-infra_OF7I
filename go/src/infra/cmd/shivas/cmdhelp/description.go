@@ -223,6 +223,7 @@ Example Browser machine creation request:
 			"lab": "LAB_DATACENTER_MTV97",
 			"rack": "RackName"
 		},
+		"serialNumber" : "XXX",
 		"chromeBrowserMachine": {
 			"displayName": "ax105-34-230",
 			"chromePlatform": "Supermicro",
@@ -280,6 +281,7 @@ Example OS machine creation request:
 			"shelf": "3",
 			"position": "5"
 		},
+		"serialNumber" : "XXX",
 		"chromeosMachine": {},
 		"realm": "OSlab"
 	}
@@ -303,6 +305,7 @@ Example Browser machine:
 		"lab": "LAB_DATACENTER_MTV97",
 		"rack": "RackName"
 	},
+	"serialNumber" : "XXX",
 	"chromeBrowserMachine": {
 		"displayName": "ax105-34-230",
 		"chromePlatform": "Dell R230",
@@ -331,6 +334,7 @@ Example OS machine:
 		"shelf": "3",
 		"position": "5"
 	},
+	"serialNumber" : "XXX",
 	"chromeosMachine": {},
 	"realm": "OSlab"
 }

@@ -34,10 +34,10 @@ var (
 	DracFullTitle = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Lab", "Rack", "Machine", "UpdateTime"}
 	NicTitle      = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Lab", "Rack", "Machine", "UpdateTime"}
 	NicFullTitle  = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Lab", "Rack", "Machine", "UpdateTime"}
-	MachineTitle  = []string{"Machine Name", "Lab", "Rack", "ChromePlatform",
+	MachineTitle  = []string{"Machine Name", "Serial Number", "Lab", "Rack", "ChromePlatform",
 		"Nics", "Drac", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
 	BrowserMachineFullTitle = []string{
-		"Machine Name", "Host", "Lab", "Rack", "ChromePlatform",
+		"Machine Name", "Serial Number", "Host", "Lab", "Rack", "ChromePlatform",
 		"Nics", "Drac", "kvms", "switches", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime",
 	}
 	OSMachineFullTitle = []string{
@@ -470,6 +470,7 @@ func printBrowserMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufsp
 		ts = t.Format(timeFormat)
 	}
 	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetSerialNumber())
 	out += fmt.Sprintf("%s\t", lse.GetName())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
@@ -518,6 +519,7 @@ func printMachine(m *ufspb.Machine, keysOnly bool) {
 		ts = t.Format(timeFormat)
 	}
 	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetSerialNumber())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())

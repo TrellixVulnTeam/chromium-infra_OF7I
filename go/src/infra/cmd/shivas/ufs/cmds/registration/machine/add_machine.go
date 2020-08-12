@@ -41,6 +41,7 @@ var AddMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine")
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine")
+		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
@@ -61,6 +62,7 @@ type addMachine struct {
 	kvm              string
 	deploymentTicket string
 	tags             string
+	serialNumber     string
 }
 
 func (c *addMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -119,8 +121,9 @@ func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
 			Lab:  ufsLab,
 			Rack: c.rackName,
 		},
-		Realm: utils.ToUFSRealm(c.labName),
-		Tags:  utils.GetStringSlice(c.tags),
+		Realm:        utils.ToUFSRealm(c.labName),
+		Tags:         utils.GetStringSlice(c.tags),
+		SerialNumber: c.serialNumber,
 	}
 	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
 		req.Machine.Device = &ufspb.Machine_ChromeBrowserMachine{

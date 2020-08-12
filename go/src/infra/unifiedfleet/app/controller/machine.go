@@ -230,6 +230,8 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 			oldMachine.GetChromeBrowserMachine().DeploymentTicket = machine.GetChromeBrowserMachine().GetDeploymentTicket()
 		case "tags":
 			oldMachine.Tags = mergeTags(oldMachine.GetTags(), machine.GetTags())
+		case "serialNumber":
+			oldMachine.SerialNumber = machine.GetSerialNumber()
 		}
 	}
 	// return existing/old machine with new updated values
@@ -701,6 +703,7 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - browser machine cannot be empty/nil.")
 				}
 			case "tags":
+			case "serialNumber":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateMachineUpdateMask - unsupported update mask path %q", path)

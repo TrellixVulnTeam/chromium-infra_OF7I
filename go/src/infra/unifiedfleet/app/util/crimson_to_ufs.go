@@ -21,8 +21,9 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 	for i, o := range old {
 		newObjects[i] = &ufspb.Machine{
 			// Temporarily use existing display name as browser machine's name instead of serial number/assettag
-			Name:     o.Name,
-			Location: toLocation(o.Rack, o.Datacenter),
+			Name:         o.Name,
+			Location:     toLocation(o.Rack, o.Datacenter),
+			SerialNumber: o.GetServiceTag(),
 			Device: &ufspb.Machine_ChromeBrowserMachine{
 				ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 					// RpmInterface is not available for browser machine.

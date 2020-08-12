@@ -42,6 +42,7 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
@@ -63,6 +64,7 @@ type updateMachine struct {
 	kvm              string
 	deploymentTicket string
 	tags             string
+	serialNumber     string
 }
 
 func (c *updateMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -113,6 +115,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			"kvm":      "kvm",
 			"ticket":   "ticket",
 			"tags":     "tags",
+			"serial":   "serialNumber",
 		}),
 	})
 	if err != nil {
@@ -141,6 +144,11 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 		machine.Tags = nil
 	} else {
 		machine.Tags = utils.GetStringSlice(c.tags)
+	}
+	if c.serialNumber == utils.ClearFieldValue {
+		machine.SerialNumber = ""
+	} else {
+		machine.SerialNumber = c.serialNumber
 	}
 	if c.platform != "" || c.deploymentTicket != "" || c.kvm != "" {
 		machine.Device = &ufspb.Machine_ChromeBrowserMachine{
@@ -175,7 +183,7 @@ func (c *updateMachine) validateArgs() error {
 		if c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.labName == "" && c.rackName == "" && c.tags == "" && c.platform == "" && c.deploymentTicket == "" && c.kvm == "" {
+		if c.labName == "" && c.rackName == "" && c.tags == "" && c.platform == "" && c.deploymentTicket == "" && c.kvm == "" && c.serialNumber == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}
