@@ -1552,19 +1552,72 @@ class WorkEnv(object):
       pass
     return updated_issue_ids
 
-  def UpdateIssueApproval(self, issue_id, approval_id, approval_delta,
-                          comment_content, is_description, attachments=None,
-                          send_email=True, kept_attachments=None):
+  def BulkUpdateIssueApprovalsV3(
+      self, delta_specifications, comment_content, send_email):
+    # type: (Sequence[Tuple[int, int, tracker_pb2.ApprovalDelta]]], str,
+    #     Boolean -> Sequence[int]
+    """Executes the ApprovalDeltas.
+
+    Args:
+      delta_specifications: List of (issue_id, approval_id, ApprovalDelta).
+      comment_content: The content of the comment to be posted with each delta.
+      send_email: Whether to send an email on each change.
+          TODO(crbug/monorail/8122): send bulk approval update email instead.
+
+    TODO(crbug/monorail/8174): Return ApprovalValues.
+    Returns:
+      A list of issue_ids that were changed. Issue/approval combos in
+        `delta_specifications` that did not exist will be ignored.
+
+    Raises:
+      InputException: If a comment is too long.
+      PermissionException: Anon users and users will get permission denied.
+        Missing permissions to update individual issues will not throw
+        exceptions. Issues will just not be updated.
+    """
+    if not self.mc.auth.user_id:
+      raise permissions.PermissionException('Anon cannot make changes')
+
+    updated_issue_ids = []
+    for (issue_id, approval_id, approval_delta) in delta_specifications:
+      try:
+        self.UpdateIssueApproval(
+            issue_id,
+            approval_id,
+            approval_delta,
+            comment_content,
+            False,
+            send_email=send_email,
+            update_perms=True)
+        updated_issue_ids.append(issue_id)
+      except exceptions.NoSuchIssueApprovalException as e:
+        logging.info('Skipping issue %s, no approval: %s', issue_id, e)
+      except permissions.PermissionException as e:
+        logging.info('Skipping issue %s, update not allowed: %s', issue_id, e)
+    return updated_issue_ids
+
+  def UpdateIssueApproval(
+      self,
+      issue_id,
+      approval_id,
+      approval_delta,
+      comment_content,
+      is_description,
+      attachments=None,
+      send_email=True,
+      kept_attachments=None,
+      update_perms=False):
     # type: (int, int, proto.tracker_pb2.ApprovalDelta, str, Boolean,
     #     Optional[Sequence[proto.tracker_pb2.Attachment]], Optional[Boolean],
-    #     Optional[Sequence[int]]) -> (proto.tracker_pb2.ApprovalValue,
-    #     proto.tracker_pb2.IssueComment)
+    #     Optional[Sequence[int]], Optional[Boolean]) ->
+    #     (proto.tracker_pb2.ApprovalValue, proto.tracker_pb2.IssueComment)
     """Update an issue's approval.
 
     Raises:
       InputException: The comment content is too long.
       PermissionException: The user is lacking one of the permissions needed
       for the given delta.
+      NoSuchIssueApprovalException: The issue/approval combo does not exist.
     """
 
     issue, approval_value = self.services.issue.GetIssueApproval(
@@ -1577,6 +1630,9 @@ class WorkEnv(object):
 
     project = self.GetProject(issue.project_id)
     config = self.GetProjectConfig(issue.project_id)
+    # TODO(crbug/monorail/7614): Remove the need for this hack to update perms.
+    if update_perms:
+      mc.LookupLoggedInUserPerms(project)
 
     if attachments:
       with self.mc.profiler.Phase('Accounting for quota'):
@@ -1941,11 +1997,14 @@ class WorkEnv(object):
     # comment_content added to the issue that should trigger
     # notifications.
     if comment_pb:
-        old_owner_id = changes.old_owners_by_iid.get(issue.issue_id)
-        send_notifications.PrepareAndSendIssueChangeNotification(
-            issue.issue_id, hostport, self.mc.auth.user_id,
-            old_owner_id=old_owner_id, comment_id=comment_pb.id,
-            send_email=send_email)
+      old_owner_id = changes.old_owners_by_iid.get(issue.issue_id)
+      send_notifications.PrepareAndSendIssueChangeNotification(
+          issue.issue_id,
+          hostport,
+          self.mc.auth.user_id,
+          old_owner_id=old_owner_id,
+          comment_id=comment_pb.id,
+          send_email=send_email)
 
   def _ModifyIssuesBulkNotifyForDelta(
       self, issues, changes, hostport, send_email, comment_content=None):
@@ -1959,8 +2018,8 @@ class WorkEnv(object):
     ]
     amendments = []
     for iid in iids:
-        ams = changes.amendments_by_iid.get(iid, [])
-        amendments.extend(ams)
+      ams = changes.amendments_by_iid.get(iid, [])
+      amendments.extend(ams)
     # Calling SendBulkChangeNotification does not require the comment_pb
     # objects only the amendments. Checking for existence of amendments
     # and comment_content is equivalent to checking for existence of new

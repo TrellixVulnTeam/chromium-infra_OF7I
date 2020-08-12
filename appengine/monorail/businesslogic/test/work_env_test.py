@@ -1814,7 +1814,7 @@ class WorkEnvTest(unittest.TestCase):
         actual)
 
   @mock.patch('businesslogic.work_env.WorkEnv.UpdateIssueApproval')
-  def testBulkUpdateIssueApproval(self, mockUpdateIssueApproval):
+  def testBulkUpdateIssueApprovals(self, mockUpdateIssueApproval):
     updated_issues = [78901, 78902]
     def side_effect(issue_id, *_args, **_kwargs):
       if issue_id in [78903]:
@@ -1842,16 +1842,18 @@ class WorkEnvTest(unittest.TestCase):
         mock.call(
             78905, 24, approval_delta, 'comment', False, send_email=False),
     ]
+    self.assertEqual(
+        mockUpdateIssueApproval.call_count, len(updateIssueApprovalCalls))
     mockUpdateIssueApproval.assert_has_calls(updateIssueApprovalCalls)
 
-  def testBulkUpdateIssueApproval_AnonUser(self):
+  def testBulkUpdateIssueApprovals_AnonUser(self):
     approval_delta = tracker_pb2.ApprovalDelta()
     with self.assertRaises(permissions.PermissionException):
       self.work_env.BulkUpdateIssueApprovals(
           [], 24, self.project, approval_delta,
           'comment', send_email=True)
 
-  def testBulkUpdateIssueApproval_UserLacksViewPerms(self):
+  def testBulkUpdateIssueApprovals_UserLacksViewPerms(self):
     approval_delta = tracker_pb2.ApprovalDelta()
     self.SignIn(222)
     self.project.access = project_pb2.ProjectAccess.MEMBERS_ONLY
@@ -1859,6 +1861,53 @@ class WorkEnvTest(unittest.TestCase):
       self.work_env.BulkUpdateIssueApprovals(
           [], 24, self.project, approval_delta,
           'comment', send_email=True)
+
+  @mock.patch('businesslogic.work_env.WorkEnv.UpdateIssueApproval')
+  def testBulkUpdateIssueApprovalsV3(self, mockUpdateIssueApproval):
+    updated_issues = [78901, 78901, 78901, 78901, 78902]
+
+    def side_effect(issue_id, *_args, **_kwargs):
+      if issue_id in [78903]:
+        raise permissions.PermissionException
+      if issue_id in [78904, 78905]:
+        raise exceptions.NoSuchIssueApprovalException
+
+    mockUpdateIssueApproval.side_effect = side_effect
+
+    self.SignIn()
+
+    approval_delta = tracker_pb2.ApprovalDelta()
+    approval_delta_2 = tracker_pb2.ApprovalDelta(approver_ids_add=[111])
+    deltas_by_issue = [
+        (78901, 1, approval_delta),
+        (78901, 1, approval_delta),
+        (78901, 2, approval_delta),
+        (78901, 2, approval_delta_2),
+        (78902, 24, approval_delta),
+        (78903, 24, approval_delta),
+        (78904, 24, approval_delta),
+        (78905, 24, approval_delta),
+    ]
+    issue_ids = self.work_env.BulkUpdateIssueApprovalsV3(
+        deltas_by_issue, 'xyz', send_email=True)
+    self.assertEqual(issue_ids, updated_issues)
+    updateIssueApprovalCalls = []
+    for iid, aid, delta in deltas_by_issue:
+      mock_call = mock.call(
+          iid, aid, delta, 'xyz', False, send_email=True, update_perms=True)
+      updateIssueApprovalCalls.append(mock_call)
+    self.assertEqual(mockUpdateIssueApproval.call_count, len(deltas_by_issue))
+    mockUpdateIssueApproval.assert_has_calls(updateIssueApprovalCalls)
+
+  def testBulkUpdateIssueApprovalsV3_AnonUser(self):
+    with self.assertRaises(permissions.PermissionException):
+      self.work_env.BulkUpdateIssueApprovalsV3([], 'comment', send_email=True)
+
+  def testBulkUpdateIssueApprovalsV3_UserLacksViewPerms(self):
+    self.SignIn(222)
+    self.project.access = project_pb2.ProjectAccess.MEMBERS_ONLY
+    # No exception raised in v3. Permissions checked in UpdateIssueApprovals.
+    self.work_env.BulkUpdateIssueApprovalsV3([], 'comment', send_email=True)
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendApprovalChangeNotification')
