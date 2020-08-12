@@ -51,6 +51,11 @@ message Nic {
 
     // tags user can attach for easy querying/searching
     repeated string tags = 8;
+
+    // State of the nic
+    string state = 9 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 message Vlan {
@@ -71,6 +76,11 @@ message Vlan {
 
     // The description of the vlan.
     string description = 5;
+
+    // State of the vlan
+    string state = 6 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 message DHCPConfig {
