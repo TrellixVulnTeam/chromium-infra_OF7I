@@ -983,7 +983,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
 	// VMSlotFilterHelp help text for list free vm slots filtering
-	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by lab/manufacturer` + LabFilterHelpText +
+	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by vlan/osversion/state/host_id/lab/tags` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'man=apple'
@@ -997,19 +997,19 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & kvm=kvm-1'` + FilterCondition
 
 	// NicFilterHelp help text for list rack filtering
-	NicFilterHelp string = FilterText + `You can filter nics by switch/rack/lab/machine/tag` + LabFilterHelpText +
+	NicFilterHelp string = FilterText + `You can filter nics by lab/rack/switch/switch_port/macaddress/machine/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// DracFilterHelp help text for list rack filtering
-	DracFilterHelp string = FilterText + `You can filter dracs by switch/rack/lab/machine/tag` + LabFilterHelpText +
+	DracFilterHelp string = FilterText + `You can filter dracs by lab/rack/switch/switch_port/macaddress/machine/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag` + LabFilterHelpText +
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/man(manufacturer)` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
@@ -1021,7 +1021,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
 
 	// KVMFilterHelp help text for list rack filtering
-	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag` + LabFilterHelpText +
+	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/macaddress` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
@@ -1051,7 +1051,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'tag=browser` + FilterCondition
 
 	// ChromePlatformFilterHelp help text for list ChromePlatform filtering
-	ChromePlatformFilterHelp string = FilterText + `You can filter platforms by manufacturer(man)/tag` +
+	ChromePlatformFilterHelp string = FilterText + `You can filter platforms by man(manufacturer)/tag` +
 		`Filter format Egs:
 'tag=dell, 8g'
 'tag=iphone & man=Apple` + FilterCondition

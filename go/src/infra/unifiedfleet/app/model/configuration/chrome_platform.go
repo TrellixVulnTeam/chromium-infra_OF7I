@@ -209,7 +209,7 @@ func GetChromePlatformIndexedFieldName(input string) (string, error) {
 	case util.ManufacturerFilterName:
 		field = "manufacturer"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for platform are tag/manufacturer", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for platform are tag/man", input)
 	}
 	return field, nil
 }
