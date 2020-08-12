@@ -234,17 +234,20 @@ class MonorailServicerTest(unittest.TestCase):
         monorail_servicer.XSRF_TOKEN_HEADER: xsrf.GenerateToken(
             0, xsrf.XHR_SERVLET_PATH)}
     # Signed out.
-    self.assertIsNone(self.svcr.GetAndAssertRequesterAuth(
-        self.cnxn, metadata, self.services).email)
+    client_id, user_auth = self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services)
+    self.assertIsNone(user_auth.email)
+    self.assertEqual(client_id, 'https://%s.appspot.com' % self.app_id)
 
   def testGetAndAssertRequesterAuth_Cookie_SignedIn(self):
     """We get and allow requests from signed in users using cookie auth."""
     metadata = dict(self.prpc_context.invocation_metadata())
     # Signed in with cookie auth.
     self.testbed.setup_env(user_email=self.non_member.email, overwrite=True)
-    user_auth = self.svcr.GetAndAssertRequesterAuth(
+    client_id, user_auth = self.svcr.GetAndAssertRequesterAuth(
         self.cnxn, metadata, self.services)
     self.assertEqual(self.non_member.email, user_auth.email)
+    self.assertEqual(client_id, 'https://%s.appspot.com' % self.app_id)
 
   def testGetAndAssertRequester_Anon_BadToken(self):
     """We get the email address of the signed in user using oauth."""
@@ -267,8 +270,10 @@ class MonorailServicerTest(unittest.TestCase):
         'email': some_other_site_user.email,
     }
 
-    self.svcr.GetAndAssertRequesterAuth(
+    client_id, user_auth = self.svcr.GetAndAssertRequesterAuth(
         self.cnxn, metadata, self.services)
+    self.assertEqual(client_id, self.allowlisted_client_id)
+    self.assertEqual(user_auth.email, some_other_site_user.email)
     mock_verifier.assert_called_once_with('allowlisted-user-id-token', mock.ANY)
 
   def testGetAndAssertRequesterAuth_IDToken_InvalidAuthToken(self):
@@ -278,6 +283,27 @@ class MonorailServicerTest(unittest.TestCase):
     with self.assertRaises(permissions.PermissionException):
       self.svcr.GetAndAssertRequesterAuth(self.cnxn, metadata, self.services)
 
+  @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
+  def testGetAndAssertRequesterAuth_IDToken_ServiceAccountAllowed(
+      self, mock_verifier):
+    """We allow requests from allowlisted service accounts with correct aud."""
+    metadata = {'authorization': 'Bearer allowlisted-user-id-token'}
+    # Allowlisted in testing/api_clients.cfg
+    allowlisted_service_account_email = self.services.user.TestAddUser(
+        '123456789@developer.gserviceaccount.com', 889)
+
+    aud = 'https://%s.appspot.com' % self.app_id
+    # Signed in with oauth.
+    mock_verifier.return_value = {
+        'aud': aud,
+        'email': allowlisted_service_account_email.email,
+    }
+
+    client_id, user_auth = self.svcr.GetAndAssertRequesterAuth(
+        self.cnxn, metadata, self.services)
+    self.assertEqual(client_id, aud)
+    self.assertEqual(user_auth.email, allowlisted_service_account_email.email)
+    mock_verifier.assert_called_once_with('allowlisted-user-id-token', mock.ANY)
 
   @mock.patch('third_party.google.oauth2.id_token.verify_oauth2_token')
   def testGetAndAssertRequesterAuth_IDToken_ServiceAccountNotAllowed(
@@ -377,9 +403,10 @@ class MonorailServicerTest(unittest.TestCase):
 
       # pylint: disable=attribute-defined-outside-init
       metadata = {'x-test-account': 'test@example.com'}
-      test_auth = self.svcr.GetAndAssertRequesterAuth(
+      client_id, test_auth = self.svcr.GetAndAssertRequesterAuth(
           self.cnxn, metadata, self.services)
       self.assertEqual('test@example.com', test_auth.email)
+      self.assertEqual('https://%s.appspot.com' % self.app_id, client_id)
 
       # pylint: disable=attribute-defined-outside-init
       metadata = {'x-test-account': 'test@anythingelse.com'}

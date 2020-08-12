@@ -32,6 +32,7 @@ from api.v3 import converters
 from framework import authdata
 from framework import exceptions
 from framework import framework_constants
+from framework import monitoring
 from framework import monorailcontext
 from framework import ratelimiter
 from framework import permissions
@@ -113,20 +114,25 @@ class MonorailServicer(object):
       self.services.cache_manager.DoDistributedInvalidation(cnxn)
 
     response = None
-    client_id = None  # TODO(jrobbins): consider using client ID.
     requester_auth = None
     metadata = dict(prpc_context.invocation_metadata())
     mc = monorailcontext.MonorailContext(self.services, cnxn=cnxn, perms=perms)
     try:
       self.AssertBaseChecks(request, metadata)
-      requester_auth = self.GetAndAssertRequesterAuth(
+      client_id, requester_auth = self.GetAndAssertRequesterAuth(
           cnxn, metadata, self.services)
       logging.info('request proto is:\n%r\n', request)
       logging.info('requester is %r', requester_auth.email)
+      monitoring.IncrementAPIRequestsCount(
+          'v3', client_id, client_email=requester_auth.email)
 
+      # TODO(crbug.com/monorail/8161)We pass in a None client_id for rate
+      # limiting because CheckStart and CheckEnd will track and limit requests
+      # per email and client_id separately.
+      # So if there are many site users one day, we may end up rate limiting our
+      # own site. With a None client_id we are only rate limiting by emails.
       if self.rate_limiter:
-        self.rate_limiter.CheckStart(
-            client_id, requester_auth.email, start_time)
+        self.rate_limiter.CheckStart(None, requester_auth.email, start_time)
       mc.auth = requester_auth
       if not perms:
         # NOTE(crbug/monorail/7614): We rely on servicer methods to call
@@ -145,13 +151,14 @@ class MonorailServicer(object):
       if self.rate_limiter and requester_auth and requester_auth.email:
         end_time = end_time or time.time()
         self.rate_limiter.CheckEnd(
-            client_id, requester_auth.email, end_time, start_time)
+            None, requester_auth.email, end_time, start_time)
       self.RecordMonitoringStats(start_time, request, response, prpc_context)
 
     return response
 
   def CheckIDToken(self, cnxn, metadata):
-    # type: (MonorailConnection, Mapping[str, str]) -> Optional[AuthData]
+    # type: (MonorailConnection, Mapping[str, str])
+    #     -> Tuple[Optional[str], Optional[authdata.AuthData]]
     """Authenticate user from an ID token.
 
     Args:
@@ -159,8 +166,8 @@ class MonorailServicer(object):
       metadata: metadata sent by the client.
 
     Returns:
-      A new AuthData object representing the user making the request or
-      None if no bearer token was found in the headers.
+      The audience (AKA client_id) and a new AuthData object representing
+      the user making the request or (None, None) if no ID token was found.
 
     Raises:
       permissions.PermissionException: If the token is invalid, the client ID
@@ -168,7 +175,7 @@ class MonorailServicer(object):
     """
     bearer = metadata.get('authorization')
     if not bearer:
-      return None
+      return None, None
     if bearer.lower().startswith('bearer '):
       token = bearer[7:]
     else:
@@ -216,9 +223,11 @@ class MonorailServicer(object):
         raise permissions.PermissionException(
             'Client %s is not allowlisted' % audience)
 
-    return authdata.AuthData.FromEmail(cnxn, email, self.services)
+    return audience, authdata.AuthData.FromEmail(cnxn, email, self.services)
 
   def GetAndAssertRequesterAuth(self, cnxn, metadata, services):
+    # type: (MonorailConnection, Mapping[str, str], Services ->
+    #    Tuple[str, authdata.AuthData]
     """Gets the requester identity and checks if the user has permission
        to make the request.
        Any users successfully authenticated with oauth must be allowlisted or
@@ -233,7 +242,8 @@ class MonorailServicer(object):
       services: connections to backend services.
 
     Returns:
-      A new AuthData object representing a signed in or anonymous user.
+      The client ID and a new AuthData object representing a signed in or
+      anonymous user.
 
     Raises:
       exceptions.NoSuchUserException: If the requester does not exist
@@ -244,6 +254,7 @@ class MonorailServicer(object):
     # TODO(monorail:6538): Move different authentication methods into separate
     # functions.
     requester_auth = None
+    client_id = None
     # When running on localhost, allow request to specify test account.
     if TEST_ACCOUNT_HEADER in metadata:
       if not settings.local_mode:
@@ -260,7 +271,14 @@ class MonorailServicer(object):
 
     # Oauth2 ID token auth.
     if not requester_auth:
-      requester_auth = self.CheckIDToken(cnxn, metadata)
+      client_id, requester_auth = self.CheckIDToken(cnxn, metadata)
+
+    if client_id is None:
+      # TODO(crbug.com/monorail/8160): For site users, we temporarily use
+      # the host as the client_id, until we implement auth in the frontend
+      # to make API requests with ID tokens that include client_ids.
+      client_id = 'https://%s.appspot.com' % app_identity.get_application_id()
+
 
     # Cookie-based auth for signed in and anonymous users.
     if not requester_auth:
@@ -291,7 +309,7 @@ class MonorailServicer(object):
           'The user %s has been banned from using this site' %
           requester_auth.email)
 
-    return requester_auth
+    return (client_id, requester_auth)
 
   def AssertBaseChecks(self, request, metadata):
     """Reject requests that we refuse to serve."""

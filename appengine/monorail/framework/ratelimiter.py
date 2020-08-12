@@ -47,7 +47,7 @@ COUNTRY_LIMITS = {
 
 # Modules not in this list will not have rate limiting applied by this
 # class.
-MODULE_ALLOWLIST = ['default']
+MODULE_ALLOWLIST = ['default', 'api']
 
 
 def _CacheKeys(request, now_sec):
