@@ -72,14 +72,6 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err != nil {
 		return err
 	}
-	switchToRack := make(map[string]string)
-	for _, r := range rackRes.Passed() {
-		rack := r.Data.(*ufspb.Rack)
-		for _, sw := range rack.GetChromeBrowserRack().GetSwitches() {
-			switchToRack[sw] = rack.GetName()
-		}
-	}
-
 	vlanResp, err := crimsonClient.ListVLANs(ctx, &crimson.ListVLANsRequest{})
 	if err != nil {
 		return err
@@ -124,7 +116,7 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 		return err
 	}
 	switchRes, err := registration.GetAllSwitches(ctx)
-	if err := compareSwitches(ctx, writer, switchResp.Switches, switchRes, stateMap, switchToRack); err != nil {
+	if err := compareSwitches(ctx, writer, switchResp.Switches, switchRes, stateMap); err != nil {
 		return err
 	}
 
@@ -281,7 +273,7 @@ func formatVlan(id, cidr, alias string, state ufspb.State) string {
 	return fmt.Sprintf("%s\t%s\t%s\t%s", id, cidr, alias, strings.ToLower(state.String()))
 }
 
-func compareSwitches(ctx context.Context, writer *storage.Writer, switches []*crimson.Switch, switchRes *fleetds.OpResults, stateMap map[string]ufspb.State, switchToRack map[string]string) error {
+func compareSwitches(ctx context.Context, writer *storage.Writer, switches []*crimson.Switch, switchRes *fleetds.OpResults, stateMap map[string]ufspb.State) error {
 	logs := []string{"\n\n######## get-switch diff ############"}
 	crimsonSwitches := make(map[string]string)
 	for _, r := range switches {
@@ -292,7 +284,7 @@ func compareSwitches(ctx context.Context, writer *storage.Writer, switches []*cr
 		m := r.Data.(*ufspb.Switch)
 		name := m.GetName()
 		cState := stateMap[util.AddPrefix(util.SwitchCollection, m.GetName())]
-		ufsSwitches[name] = formatSwitch(name, switchToRack[name], m.GetDescription(), cState, m.GetCapacityPort())
+		ufsSwitches[name] = formatSwitch(name, m.GetRack(), m.GetDescription(), cState, m.GetCapacityPort())
 	}
 	return logDiff(crimsonSwitches, ufsSwitches, writer, logs)
 }
@@ -354,9 +346,10 @@ func compareRacks(ctx context.Context, writer *storage.Writer, racks []*crimson.
 		rack := r.Data.(*ufspb.Rack)
 		if rack.GetChromeBrowserRack() != nil {
 			resourceName := util.AddPrefix(util.RackCollection, rack.GetName())
+			kvms, _ := registration.QueryKVMByPropertyName(ctx, "rack", rack.GetName(), true)
 			kvm := ""
-			if len(rack.GetChromeBrowserRack().GetKvms()) > 0 {
-				kvm = rack.GetChromeBrowserRack().GetKvms()[0]
+			if len(kvms) > 0 {
+				kvm = kvms[0].GetName()
 			}
 			ufsRacks[rack.GetName()] = formatRack(rack.GetName(), rack.GetLocation().GetLab(), stateMap[resourceName], kvm)
 		}

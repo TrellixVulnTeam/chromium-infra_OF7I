@@ -24,33 +24,121 @@ import (
 	ufsUtil "infra/unifiedfleet/app/util"
 )
 
-// CreateRack creates a new rack in datastore.
-func CreateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
+// RackRegistration creates a new rack, switches, kvms and rpms in datastore.
+func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
+	switches := rack.GetChromeBrowserRack().GetSwitchObjects()
+	kvms := rack.GetChromeBrowserRack().GetKvmObjects()
+	rpms := rack.GetChromeBrowserRack().GetRpmObjects()
 	f := func(ctx context.Context) error {
 		hc := getRackClientHistory(rack)
-		if err := validateCreateRack(ctx, rack); err != nil {
+		stateRecords := make([]*ufspb.StateRecord, 0)
+
+		// Validate the input
+		if err := validateRackRegistration(ctx, rack); err != nil {
 			return err
 		}
-		// Make sure OUTPUT_ONLY fields are set to empty
-		if rack.GetChromeBrowserRack() != nil {
-			// These are output only field. User is not allowed to set these value.
-			// Overwrite it with empty values.
-			rack.GetChromeBrowserRack().Rpms = nil
-			rack.GetChromeBrowserRack().Kvms = nil
-			rack.GetChromeBrowserRack().Switches = nil
+
+		// Create switches
+		if switches != nil {
+			for _, s := range switches {
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        ufspb.State_STATE_SERVING,
+					ResourceName: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name),
+					User:         ufsUtil.CurrentUser(ctx),
+				})
+				// Fill the rack/lab to switch OUTPUT only fields for indexing
+				s.Rack = rack.GetName()
+				s.Lab = rack.GetLocation().GetLab().String()
+			}
+
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction to make it atomic. Datastore doesnt allow
+			// nested transactions.
+			if _, err := registration.BatchUpdateSwitches(ctx, switches); err != nil {
+				return errors.Annotate(err, "Failed to create switches").Err()
+			}
+			for _, sw := range switches {
+				hc.LogSwitchChanges(nil, sw)
+			}
 		}
+
+		// Create kvms
+		if kvms != nil {
+			for _, kvm := range kvms {
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        ufspb.State_STATE_SERVING,
+					ResourceName: ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name),
+					User:         ufsUtil.CurrentUser(ctx),
+				})
+				// Fill the rack/lab to kvm OUTPUT only fields for indexing
+				kvm.Rack = rack.GetName()
+				kvm.Lab = rack.GetLocation().GetLab().String()
+			}
+
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction to make it atomic. Datastore doesnt allow
+			// nested transactions.
+			if _, err := registration.BatchUpdateKVMs(ctx, kvms); err != nil {
+				return errors.Annotate(err, "Failed to create KVMs").Err()
+			}
+			for _, kvm := range kvms {
+				hc.LogKVMChanges(nil, kvm)
+			}
+		}
+
+		// Create rpms
+		if rpms != nil {
+			for _, rpm := range rpms {
+				stateRecords = append(stateRecords, &ufspb.StateRecord{
+					State:        ufspb.State_STATE_SERVING,
+					ResourceName: ufsUtil.AddPrefix(ufsUtil.RPMCollection, rpm.Name),
+					User:         ufsUtil.CurrentUser(ctx),
+				})
+				// Fill the rack/lab to rpm OUTPUT only fields for indexing
+				rpm.Rack = rack.GetName()
+				rpm.Lab = rack.GetLocation().GetLab().String()
+			}
+
+			// we use this func as it is a non-atomic operation and can be used to
+			// run within a transaction to make it atomic. Datastore doesnt allow
+			// nested transactions.
+			if _, err := registration.BatchUpdateRPMs(ctx, rpms); err != nil {
+				return errors.Annotate(err, "Failed to create RPMs").Err()
+			}
+			for _, rpm := range rpms {
+				hc.LogRPMChanges(nil, rpm)
+			}
+		}
+
+		// Create rack
+		// we use this func as it is a non-atomic operation and can be used to
+		// run within a transaction to make it atomic. Datastore doesnt allow
+		// nested transactions.
+		stateRecords = append(stateRecords, &ufspb.StateRecord{
+			State:        ufspb.State_STATE_SERVING,
+			ResourceName: ufsUtil.AddPrefix(ufsUtil.RackCollection, rack.Name),
+			User:         ufsUtil.CurrentUser(ctx),
+		})
 		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
-			return err
+			return errors.Annotate(err, "Failed to create rack %s", rack.Name).Err()
 		}
 		hc.LogRackChanges(nil, rack)
-		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_SERVING); err != nil {
+
+		if rack.GetChromeBrowserRack() != nil {
+			rack.GetChromeBrowserRack().SwitchObjects = switches
+			rack.GetChromeBrowserRack().KvmObjects = kvms
+			rack.GetChromeBrowserRack().RpmObjects = rpms
+		}
+
+		// Update states
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
 			return err
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to create entity in datastore: %s", err)
+		logging.Errorf(ctx, "Failed to register rack: %s", err)
 		return nil, err
 	}
 	return rack, nil
@@ -58,6 +146,8 @@ func CreateRack(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error) {
 
 // UpdateRack updates rack in datastore.
 func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) (*ufspb.Rack, error) {
+	var oldRack *ufspb.Rack
+	var err error
 	f := func(ctx context.Context) error {
 		hc := getRackClientHistory(rack)
 		// Validate input
@@ -68,15 +158,17 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 		// Make sure OUTPUT_ONLY fields are set to empty
 		// for OS rack we dont do anything as of now.
 		if rack.GetChromeBrowserRack() != nil {
-			// These are output only field. User is not allowed to set these value.
-			// Overwrite it with empty values.
-			rack.GetChromeBrowserRack().Rpms = nil
-			rack.GetChromeBrowserRack().Kvms = nil
-			rack.GetChromeBrowserRack().Switches = nil
+			// We dont update the switches/kvms/rpms in UpdateRack call.
+			// We dont store switches/kvms/rpms object inside Rack object in Rack table.
+			// switches/kvms/rpms objects are stored in their separate tables
+			// user has to use switch/kvm/rpm CRUD apis to update switch/kvm/rpm
+			rack.GetChromeBrowserRack().RpmObjects = nil
+			rack.GetChromeBrowserRack().KvmObjects = nil
+			rack.GetChromeBrowserRack().SwitchObjects = nil
 		}
 
 		// Get the existing/old rack
-		oldRack, err := registration.GetRack(ctx, rack.GetName())
+		oldRack, err = registration.GetRack(ctx, rack.GetName())
 		if err != nil {
 			return errors.Annotate(err, "UpdateRack - get rack %s failed", rack.GetName()).Err()
 		}
@@ -87,23 +179,6 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 		}
 		if oldRack.GetChromeosRack() != nil && rack.GetChromeBrowserRack() != nil {
 			return status.Error(codes.InvalidArgument, "UpdateRack - cannot update an os rack to browser rack. Please delete the os rack and create a new browser rack")
-		}
-
-		// Make sure OUTPUT_ONLY fields are overwritten with old values
-		// Check if the existing rack is a browser rack and not an OS rack.
-		// for OS rack we dont do anything as of now as the OS rack doesnt have any
-		// OUTPUT_ONLY fields. Switches/kvms/rpms for OS rack are in RackLSE as of now.
-		if oldRack.GetChromeBrowserRack() != nil {
-			if rack.GetChromeBrowserRack() == nil {
-				rack.Rack = &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
-				}
-			}
-			// These are output only fields. Not allowed to update by the user.
-			// Overwrite the input values with existing values.
-			rack.GetChromeBrowserRack().Rpms = oldRack.GetChromeBrowserRack().GetRpms()
-			rack.GetChromeBrowserRack().Kvms = oldRack.GetChromeBrowserRack().GetKvms()
-			rack.GetChromeBrowserRack().Switches = oldRack.GetChromeBrowserRack().GetSwitches()
 		}
 
 		// Partial update by field mask
@@ -134,13 +209,17 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		return nil, errors.Annotate(err, "UpdateRack - failed to update rack %s in datastore", rack.Name).Err()
 	}
+	if oldRack.GetChromeBrowserRack() != nil {
+		// We fill the rack object with its switches/kvms/rpms from switch/kvm/rpm table
+		setRack(ctx, rack)
+	}
 	return rack, nil
 }
 
 // processRackUpdateMask process update field mask to get only specific update
 // fields and return a complete rack object with updated and existing fields
 func processRackUpdateMask(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb.Rack, mask *field_mask.FieldMask) (*ufspb.Rack, error) {
-	// update the fields in the existing nic
+	// update the fields in the existing rack
 	for _, path := range mask.Paths {
 		switch path {
 		case "lab":
@@ -208,7 +287,12 @@ func updateIndexingForRackResources(ctx context.Context, rackName string, indexM
 
 // GetRack returns rack for the given id from datastore.
 func GetRack(ctx context.Context, id string) (*ufspb.Rack, error) {
-	return registration.GetRack(ctx, id)
+	rack, err := registration.GetRack(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	setRack(ctx, rack)
+	return rack, nil
 }
 
 // ListRacks lists the racks
@@ -235,7 +319,7 @@ func DeleteRack(ctx context.Context, id string) error {
 		hc := getRackClientHistory(&ufspb.Rack{Name: id})
 		resourceNames := make([]string, 0)
 
-		// 1. Get the rack
+		// Get the rack
 		rack, err := registration.GetRack(ctx, id)
 		if status.Code(err) == codes.Internal {
 			return err
@@ -244,59 +328,26 @@ func DeleteRack(ctx context.Context, id string) error {
 			return status.Errorf(codes.NotFound, ufsds.NotFound)
 		}
 
-		// 2. Check if any other resource references this rack.
+		// Check if any other resource references this rack.
 		if err = validateDeleteRack(ctx, id); err != nil {
 			return err
 		}
 
 		//Only for a browser rack
 		if rack.GetChromeBrowserRack() != nil {
-			// 3. Delete the switches
-			if switchIDs := rack.GetChromeBrowserRack().GetSwitches(); switchIDs != nil {
-				for _, switchID := range switchIDs {
-					resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.SwitchCollection, switchID))
-					if err := validateDeleteSwitch(ctx, switchID); err != nil {
-						return errors.Annotate(err, "validation failed - Unable to delete switch %s", switchID).Err()
-					}
-				}
-				// we use this func as it is a non-atomic operation and can be used to
-				// run within a transaction to make it atomic. Datastore doesnt allow
-				// nested transactions.
-				if err = registration.BatchDeleteSwitches(ctx, switchIDs); err != nil {
-					return errors.Annotate(err, "Failed to delete associated switches %s", switchIDs).Err()
-				}
+			// Delete the switches
+			if err := deleteSwitchesInRack(ctx, rack.GetName()); err != nil {
+				return err
 			}
 
-			// 4. Delete the KVMs
-			if kvmIDs := rack.GetChromeBrowserRack().GetKvms(); kvmIDs != nil {
-				for _, kvmID := range kvmIDs {
-					resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvmID))
-					if err := validateDeleteKVM(ctx, kvmID); err != nil {
-						return errors.Annotate(err, "validation failed - unable to delete kvm %s", kvmID).Err()
-					}
-				}
-				// we use this func as it is a non-atomic operation and can be used to
-				// run within a transaction to make it atomic. Datastore doesnt allow
-				// nested transactions.
-				if err = registration.BatchDeleteKVMs(ctx, kvmIDs); err != nil {
-					return errors.Annotate(err, "Failed to delete associated KVMs %s", kvmIDs).Err()
-				}
+			// Delete the KVMs
+			if err := deleteKVMsInRack(ctx, rack.GetName()); err != nil {
+				return err
 			}
 
-			// 5. Delete the RPMs
-			if rpmIDs := rack.GetChromeBrowserRack().GetRpms(); rpmIDs != nil {
-				for _, rpmID := range rpmIDs {
-					resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.RPMCollection, rpmID))
-					if err := validateDeleteRPM(ctx, rpmID); err != nil {
-						return errors.Annotate(err, "validation failed - unable to delete rpm %s", rpmID).Err()
-					}
-				}
-				// we use this func as it is a non-atomic operation and can be used to
-				// run within a transaction to make it atomic. Datastore doesnt allow
-				// nested transactions.
-				if err = registration.BatchDeleteRPMs(ctx, rpmIDs); err != nil {
-					return errors.Annotate(err, "Failed to delete associated RPMs %s", rpmIDs).Err()
-				}
+			// Delete the RPMs
+			if err := deleteRPMsInRack(ctx, rack.GetName()); err != nil {
+				return err
 			}
 		}
 		resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.RackCollection, id))
@@ -314,6 +365,95 @@ func DeleteRack(ctx context.Context, id string) error {
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
 		logging.Errorf(ctx, "Failed to delete rack and its associated switches, rpms and kvms in datastore: %s", err)
 		return err
+	}
+	return nil
+}
+
+// can be called inside a transaction
+func deleteSwitchesInRack(ctx context.Context, rackName string) error {
+	resourceNames := make([]string, 0)
+	// get switches for rack - only keys are sufficient
+	switches, err := registration.QuerySwitchByPropertyName(ctx, "rack", rackName, true)
+	if err != nil {
+		return errors.Annotate(err, "DeleteRack - failed to query switches for rack %s", rackName).Err()
+	}
+	if switches != nil {
+		var switchIDs []string
+		for _, s := range switches {
+			if err := validateDeleteSwitch(ctx, s.GetName()); err != nil {
+				return errors.Annotate(err, "validation failed - Unable to delete switch %s", s.GetName()).Err()
+			}
+			switchIDs = append(switchIDs, s.GetName())
+			resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.GetName()))
+			switchHc := getSwitchHistoryClient(s)
+			switchHc.LogSwitchChanges(s, nil)
+			if err = switchHc.SaveChangeEvents(ctx); err != nil {
+				return err
+			}
+		}
+		if err = registration.BatchDeleteSwitches(ctx, switchIDs); err != nil {
+			return errors.Annotate(err, "Failed to delete associated switches %s", switchIDs).Err()
+		}
+		state.DeleteStates(ctx, resourceNames)
+	}
+	return nil
+}
+
+// can be called inside a transaction
+func deleteKVMsInRack(ctx context.Context, rackName string) error {
+	resourceNames := make([]string, 0)
+	// get kvms for rack - only keys are sufficient
+	kvms, err := registration.QueryKVMByPropertyName(ctx, "rack", rackName, true)
+	if err != nil {
+		return errors.Annotate(err, "DeleteRack - failed to query switches for rack %s", rackName).Err()
+	}
+	if kvms != nil {
+		var kvmIDs []string
+		for _, kvm := range kvms {
+			if err := validateDeleteKVM(ctx, kvm.GetName()); err != nil {
+				return errors.Annotate(err, "validation failed - Unable to delete kvm %s", kvm.GetName()).Err()
+			}
+			kvmIDs = append(kvmIDs, kvm.GetName())
+			resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.GetName()))
+			kvmHc := getKVMHistoryClient(kvm)
+			// Delete ip configs
+			if err := kvmHc.netUdt.deleteDHCPHelper(ctx); err != nil {
+				return err
+			}
+			kvmHc.LogKVMChanges(kvm, nil)
+			if err = kvmHc.SaveChangeEvents(ctx); err != nil {
+				return err
+			}
+		}
+		if err = registration.BatchDeleteKVMs(ctx, kvmIDs); err != nil {
+			return errors.Annotate(err, "Failed to delete associated KVMs %s", kvmIDs).Err()
+		}
+		state.DeleteStates(ctx, resourceNames)
+	}
+	return nil
+}
+
+// can be called inside a transaction
+func deleteRPMsInRack(ctx context.Context, rackName string) error {
+	resourceNames := make([]string, 0)
+	// get rpms for rack - only keys are sufficient
+	rpms, err := registration.QueryRPMByPropertyName(ctx, "rack", rackName, true)
+	if err != nil {
+		return errors.Annotate(err, "DeleteRack - failed to query switches for rack %s", rackName).Err()
+	}
+	if rpms != nil {
+		var rpmIDs []string
+		for _, rpm := range rpms {
+			if err := validateDeleteRPM(ctx, rpm.GetName()); err != nil {
+				return errors.Annotate(err, "validation failed - Unable to delete rpm %s", rpm.GetName()).Err()
+			}
+			rpmIDs = append(rpmIDs, rpm.GetName())
+			resourceNames = append(resourceNames, ufsUtil.AddPrefix(ufsUtil.RPMCollection, rpm.GetName()))
+		}
+		if err = registration.BatchDeleteRPMs(ctx, rpmIDs); err != nil {
+			return errors.Annotate(err, "Failed to delete associated RPMs %s", rpmIDs).Err()
+		}
+		state.DeleteStates(ctx, resourceNames)
 	}
 	return nil
 }
@@ -443,6 +583,78 @@ func validateCreateRack(ctx context.Context, rack *ufspb.Rack) error {
 	return nil
 }
 
+// validateRackRegistration validates if a rack, switches, kvms and rpms can be created in the datastore.
+//
+// checks if the resources rack/switches/kvms/rpms already exists in the system.
+// checks if resources referenced by rack/switches/kvms/rpms does not exist in the system.
+func validateRackRegistration(ctx context.Context, rack *ufspb.Rack) error {
+	if rack == nil {
+		return errors.New("rack cannot be empty")
+	}
+
+	if rack.GetChromeBrowserRack() == nil && rack.GetChromeosRack() == nil {
+		if rack.GetLocation() == nil || rack.GetLocation().GetLab() == ufspb.Lab_LAB_UNSPECIFIED {
+			return errors.New("lab information in the location object cannot be empty/unspecified for a rack")
+		}
+		if ufsUtil.IsInBrowserLab(rack.GetLocation().GetLab().String()) {
+			rack.Rack = &ufspb.Rack_ChromeBrowserRack{
+				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+			}
+		} else {
+			rack.Rack = &ufspb.Rack_ChromeosRack{
+				ChromeosRack: &ufspb.ChromeOSRack{},
+			}
+		}
+	}
+
+	var resourcesAlreadyExists []*Resource
+	var resourcesNotFound []*Resource
+	var switches []*ufspb.Switch
+	var kvms []*ufspb.KVM
+	var rpms []*ufspb.RPM
+	if rack.GetChromeBrowserRack() != nil {
+		switches = rack.GetChromeBrowserRack().GetSwitchObjects()
+		kvms = rack.GetChromeBrowserRack().GetKvmObjects()
+		rpms = rack.GetChromeBrowserRack().GetRpmObjects()
+	}
+	// Aggregate resources to check if rack already exists
+	resourcesAlreadyExists = append(resourcesAlreadyExists, GetRackResource(rack.Name))
+
+	if switches != nil {
+		for _, s := range switches {
+			// Aggregate resources to check if switch already exists
+			resourcesAlreadyExists = append(resourcesAlreadyExists, GetSwitchResource(s.Name))
+		}
+	}
+
+	if kvms != nil {
+		for _, kvm := range kvms {
+			// Aggregate resources to check if kvm already exists
+			resourcesAlreadyExists = append(resourcesAlreadyExists, GetKVMResource(kvm.Name))
+
+			// Aggregate resource to check if resources referenced by the kvm does not exist
+			if chromePlatformID := kvm.GetChromePlatform(); chromePlatformID != "" {
+				resourcesNotFound = append(resourcesNotFound, GetChromePlatformResource(chromePlatformID))
+			}
+		}
+	}
+
+	if rpms != nil {
+		for _, rpm := range rpms {
+			// Aggregate resources to check if rpm already exists
+			resourcesAlreadyExists = append(resourcesAlreadyExists, GetRPMResource(rpm.Name))
+		}
+	}
+
+	// Check if rack/switches/kvms/rpms already exists
+	if err := resourceAlreadyExists(ctx, resourcesAlreadyExists, nil); err != nil {
+		return err
+	}
+
+	// Check if resources referenced by rack/switches/kvms/rpms does not exist
+	return ResourceExist(ctx, resourcesNotFound, nil)
+}
+
 // validateUpdateRack validates if a rack can be updated
 func validateUpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMask) error {
 	// check if resources does not exist
@@ -486,5 +698,77 @@ func getRackClientHistory(m *ufspb.Rack) *HistoryClient {
 		netUdt: &networkUpdater{
 			Hostname: m.Name,
 		},
+	}
+}
+
+//setRack populates the rack object with switches and drac
+func setRack(ctx context.Context, rack *ufspb.Rack) {
+	// get switches for rack
+	switches, err := registration.QuerySwitchByPropertyName(ctx, "rack", rack.GetName(), false)
+	if err != nil {
+		// Just log a warning message and dont fail operation
+		logging.Warningf(ctx, "GetRack - failed to query switches for rack %s: %s", rack.GetName(), err)
+	}
+	setSwitchesToRack(rack, switches)
+
+	// get kvms for rack
+	kvms, err := registration.QueryKVMByPropertyName(ctx, "rack", rack.GetName(), false)
+	if err != nil {
+		// Just log a warning message and dont fail operation
+		logging.Warningf(ctx, "GetRack - failed to query kvms for rack %s: %s", rack.GetName(), err)
+	}
+	setKVMsToRack(rack, kvms)
+
+	// get rpms for rack
+	rpms, err := registration.QueryRPMByPropertyName(ctx, "rack", rack.GetName(), false)
+	if err != nil {
+		// Just log a warning message and dont fail operation
+		logging.Warningf(ctx, "GetRack - failed to query rpms for rack %s: %s", rack.GetName(), err)
+	}
+	setRPMsToRack(rack, rpms)
+}
+
+func setSwitchesToRack(rack *ufspb.Rack, switches []*ufspb.Switch) {
+	if len(switches) <= 0 {
+		return
+	}
+	if rack.GetChromeBrowserRack() == nil {
+		rack.Rack = &ufspb.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+				SwitchObjects: switches,
+			},
+		}
+	} else {
+		rack.GetChromeBrowserRack().SwitchObjects = switches
+	}
+}
+
+func setKVMsToRack(rack *ufspb.Rack, kvms []*ufspb.KVM) {
+	if len(kvms) <= 0 {
+		return
+	}
+	if rack.GetChromeBrowserRack() == nil {
+		rack.Rack = &ufspb.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+				KvmObjects: kvms,
+			},
+		}
+	} else {
+		rack.GetChromeBrowserRack().KvmObjects = kvms
+	}
+}
+
+func setRPMsToRack(rack *ufspb.Rack, rpms []*ufspb.RPM) {
+	if len(rpms) <= 0 {
+		return
+	}
+	if rack.GetChromeBrowserRack() == nil {
+		rack.Rack = &ufspb.Rack_ChromeBrowserRack{
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+				RpmObjects: rpms,
+			},
+		}
+	} else {
+		rack.GetChromeBrowserRack().RpmObjects = rpms
 	}
 }

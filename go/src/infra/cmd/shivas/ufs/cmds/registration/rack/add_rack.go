@@ -104,7 +104,7 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	utils.PrintProtoJSON(res)
-	fmt.Println("Successfully added the rack: ", rackRegistrationReq.GetRack().GetName())
+	fmt.Println("Successfully added the rack: ", res.GetName())
 	return nil
 }
 

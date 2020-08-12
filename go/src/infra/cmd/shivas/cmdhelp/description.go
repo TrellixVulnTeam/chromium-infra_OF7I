@@ -235,7 +235,7 @@ Example Browser machine creation request:
 				"port": 65
 			},
 			"deploymentTicket": "846026",
-			"nics": [{
+			"nicObjects": [{
 					"name": "nic-eth0",
 					"macAddress": "00:0d:5d:10:64:8d",
 					"switchInterface": {
@@ -252,7 +252,7 @@ Example Browser machine creation request:
 					}
 				}
 			],
-			"drac": {
+			"dracObject": {
 				"name": "drac-23",
 				"displayName": "Cisco Drac",
 				"macAddress": "10:03:3d:70:64:2d",
@@ -898,46 +898,35 @@ This file must contain required rack field and optional switches/kvms/rpms field
 Example rack creation request:
 {
 	"rack": {
-		"name": "rack-BROWSERLAB-example",
-		"capacity_ru": 5
-	},
-	"switches": [{
-			"name": "switch-23",
-			"capacityPort": 456
+		"name": "rack-23",
+		"location": {
+			"lab": "LAB_DATACENTER_MTV97"
 		},
-		{
-			"name": "switch-25",
-			"capacityPort": 456
-		}
-	],
-	"kvms": [{
-			"name": "kvm-23",
-			"macAddress": "00:0d:5d:10:64:8d",
-			"chromePlatform": "Gigabyte_R181-T92",
-			"capacityPort": 48
+		"capacity_ru": 5,
+		"chromeBrowserRack": {
+			"switchObjects": [{
+					"name": "switch-23",
+					"capacityPort": 456
+				}
+			],
+			"kvmObjects": [{
+					"name": "kvm-23",
+					"macAddress": "00:0d:5d:10:64:8d",
+					"chromePlatform": "Gigabyte_R181-T92",
+					"capacityPort": 48
+				}
+			],
+			"rpmObjects": [{
+				"name": "rpm-23",
+				"macAddress": "00:0d:5d:10:64:8d",
+				"capacityPort": 48
+			}]
 		},
-		{
-			"name": "kvm-25",
-			"macAddress": "00:0d:5d:20:64:8d",
-			"chromePlatform": "Gigabyte_R181-T92",
-			"capacityPort": 44
-		}
-	],
-	"rpms": [{
-		"name": "rpm-23",
-		"macAddress": "00:0d:5d:10:64:8d",
-		"capacityPort": 48
-	}, {
-		"name": "rpm-25",
-		"macAddress": "00:0d:5d:10:68:8d",
-		"capacityPort": 45
-	}]
+		"realm": "Browserlab"
+	}
 }
 
 The protobuf definition can be found here:
-Rack creation request: RackRegistrationRequest
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/rpc/fleet.proto
-
 Rack:
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto
 
@@ -966,7 +955,7 @@ Example Browser rack:
 	},
 	"capacity_ru": 5,
 	"chromeosRack": {},
-	"realm": "Browserlab"
+	"realm": "OSlab"
 }
 
 The protobuf definition of rack is part of
@@ -986,7 +975,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
 
 	// MachineFilterHelp help text for list machine filtering
-	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform` + LabFilterHelpText +
+	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'nic=nic-1,nic-2'
@@ -1001,50 +990,50 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & man=apple'` + FilterCondition
 
 	// RackFilterHelp help text for list rack filtering
-	RackFilterHelp string = FilterText + `You can filter racks by switch/kvm/rpm/lab` + LabFilterHelpText +
+	RackFilterHelp string = FilterText + `You can filter racks by tag/lab` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'kvm=kvm-1,kvm-2'
 'lab=atl97 & kvm=kvm-1'` + FilterCondition
 
 	// NicFilterHelp help text for list rack filtering
-	NicFilterHelp string = FilterText + `You can filter nics by switch/rack/lab/machine` + LabFilterHelpText +
+	NicFilterHelp string = FilterText + `You can filter nics by switch/rack/lab/machine/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// DracFilterHelp help text for list rack filtering
-	DracFilterHelp string = FilterText + `You can filter dracs by switch/rack/lab/machine` + LabFilterHelpText +
+	DracFilterHelp string = FilterText + `You can filter dracs by switch/rack/lab/machine/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch` + LabFilterHelpText +
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// VMFilterHelp help text for list vm filtering
-	VMFilterHelp string = FilterText + `You can filter hosts by vlan/osversion/state/host_id/lab/tags` + LabFilterHelpText +
+	VMFilterHelp string = FilterText + `You can filter hosts by vlan/osversion/state/host_id/lab/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
 
 	// KVMFilterHelp help text for list rack filtering
-	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform` + LabFilterHelpText +
+	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
 
 	// RPMFilterHelp help text for list rack filtering
-	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack` + LabFilterHelpText +
+	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// SwitchFilterHelp help text for list rack filtering
-	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack` + LabFilterHelpText +
+	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition

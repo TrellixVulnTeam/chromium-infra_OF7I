@@ -40,6 +40,7 @@ func TestCreateKVM(t *testing.T) {
 		Convey("Create new kvm with already existing kvm - error", func() {
 			kvm1 := &ufspb.KVM{
 				Name: "kvm-1",
+				Rack: "rack-5",
 			}
 			_, err := registration.CreateKVM(ctx, kvm1)
 
@@ -92,29 +93,17 @@ func TestCreateKVM(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "kvm")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-1")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[kvm-2]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "kvms/kvm-2")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-1")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
-		Convey("Create new kvm with existing rack with kvms", func() {
+		Convey("Create new kvm with existing rack", func() {
 			rack := &ufspb.Rack{
 				Name: "rack-10",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"kvm-5"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack)
@@ -127,9 +116,6 @@ func TestCreateKVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, kvm1)
 
-			mresp, err := registration.GetRack(ctx, "rack-10")
-			So(err, ShouldBeNil)
-			So(mresp.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"kvm-5", "kvm-20"})
 			s, err := state.GetStateRecord(ctx, "kvms/kvm-20")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
@@ -140,17 +126,7 @@ func TestCreateKVM(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "kvm")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-10")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[kvm-5]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[kvm-5 kvm-20]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "kvms/kvm-20")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-10")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
@@ -186,9 +162,7 @@ func TestUpdateKVM(t *testing.T) {
 			rack3 := &ufspb.Rack{
 				Name: "rack-3",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"kvm-3"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack3)
@@ -197,9 +171,7 @@ func TestUpdateKVM(t *testing.T) {
 			rack4 := &ufspb.Rack{
 				Name: "rack-4",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"kvm-4"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err = registration.CreateRack(ctx, rack4)
@@ -207,6 +179,7 @@ func TestUpdateKVM(t *testing.T) {
 
 			kvm3 := &ufspb.KVM{
 				Name: "kvm-3",
+				Rack: "rack-3",
 			}
 			_, err = registration.CreateKVM(ctx, kvm3)
 			So(err, ShouldBeNil)
@@ -216,42 +189,13 @@ func TestUpdateKVM(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, kvm3)
 
-			mresp, err := registration.GetRack(ctx, "rack-3")
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(mresp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
-			mresp, err = registration.GetRack(ctx, "rack-4")
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(mresp.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"kvm-4", "kvm-3"})
-
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetEventLabel(), ShouldEqual, "kvm.rack")
-			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetOldValue(), ShouldEqual, "rack-3")
 			So(changes[0].GetNewValue(), ShouldEqual, "rack-4")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[kvm-4]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[kvm-4 kvm-3]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-3")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[kvm-3]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "kvms/kvm-3")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-4")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-3")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
@@ -261,9 +205,7 @@ func TestUpdateKVM(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-5",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"kvm-5"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack)
@@ -271,6 +213,7 @@ func TestUpdateKVM(t *testing.T) {
 
 			kvm1 := &ufspb.KVM{
 				Name: "kvm-5",
+				Rack: "rack-5",
 			}
 			_, err = registration.CreateKVM(ctx, kvm1)
 			So(err, ShouldBeNil)
@@ -284,17 +227,10 @@ func TestUpdateKVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Nothing is changed for kvm-5
 			So(changes, ShouldHaveLength, 0)
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")
-			So(err, ShouldBeNil)
-			// Nothing is changed for rack-5
-			So(changes, ShouldHaveLength, 0)
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "kvms/kvm-5")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-5")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 0)
 		})
 
 		Convey("Update kvm with non existing rack", func() {
@@ -411,21 +347,10 @@ func TestDeleteKVM(t *testing.T) {
 		})
 
 		Convey("Delete KVM by existing ID with machine reference", func() {
-			rack := &ufspb.Rack{
-				Name: "rack-5",
-				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"kvm-1"},
-					},
-				},
-			}
-			_, err := registration.CreateRack(ctx, rack)
-			So(err, ShouldBeNil)
-
 			KVM1 := &ufspb.KVM{
 				Name: "KVM-1",
 			}
-			_, err = registration.CreateKVM(ctx, KVM1)
+			_, err := registration.CreateKVM(ctx, KVM1)
 			So(err, ShouldBeNil)
 
 			chromeBrowserMachine1 := &ufspb.Machine{
@@ -456,19 +381,8 @@ func TestDeleteKVM(t *testing.T) {
 		})
 
 		Convey("Delete KVM successfully", func() {
-			rack := &ufspb.Rack{
-				Name: "rack-6",
-				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"kvm-2"},
-					},
-				},
-			}
-			_, err := registration.CreateRack(ctx, rack)
-			So(err, ShouldBeNil)
-
 			kvm2 := mockKVM("kvm-2")
-			_, err = registration.CreateKVM(ctx, kvm2)
+			_, err := registration.CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
 			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
 				{
@@ -486,11 +400,6 @@ func TestDeleteKVM(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
-			rresp, err := registration.GetRack(ctx, "rack-6")
-			So(rresp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(rresp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
-
 			_, err = state.GetStateRecord(ctx, "kvms/kvm-2")
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
@@ -500,28 +409,11 @@ func TestDeleteKVM(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "kvm")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-6")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[kvm-2]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
 		})
 
 		Convey("Delete KVM successfully together with deleting ip", func() {
-			rack := &ufspb.Rack{
-				Name: "rack-ip6",
-				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Kvms: []string{"kvm-ip2"},
-					},
-				},
-			}
-			_, err := registration.CreateRack(ctx, rack)
-			So(err, ShouldBeNil)
-
 			kvm2 := mockKVM("kvm-ip2")
-			_, err = registration.CreateKVM(ctx, kvm2)
+			_, err := registration.CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
 			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
 				{
@@ -563,11 +455,6 @@ func TestDeleteKVM(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
-			rresp, err := registration.GetRack(ctx, "rack-6")
-			So(rresp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(rresp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
-
 			_, err = state.GetStateRecord(ctx, "kvms/kvm-2")
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
@@ -577,20 +464,10 @@ func TestDeleteKVM(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "kvm")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-6")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[kvm-2]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.kvms")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "kvms/kvm-ip2")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeTrue)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-6")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/kvm-ip2")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)

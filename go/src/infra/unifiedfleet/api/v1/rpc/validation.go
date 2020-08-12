@@ -104,41 +104,46 @@ func (r *RackRegistrationRequest) Validate() error {
 		return status.Errorf(codes.InvalidArgument, "Rack "+InvalidCharacters)
 	}
 
-	if r.Switches != nil {
-		for _, s := range r.Switches {
-			id = strings.TrimSpace(s.GetName())
-			if id == "" {
-				return status.Errorf(codes.InvalidArgument, "Switch "+EmptyName)
-			}
-			if !IDRegex.MatchString(id) {
-				errorMsg := fmt.Sprintf("Switch %s has invalid characters in the name.", id)
-				return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
-			}
-		}
-	}
-
-	if r.Kvms != nil {
-		for _, kvm := range r.Kvms {
-			id = strings.TrimSpace(kvm.GetName())
-			if id == "" {
-				return status.Errorf(codes.InvalidArgument, "KVM "+EmptyName)
-			}
-			if !IDRegex.MatchString(id) {
-				errorMsg := fmt.Sprintf("KVM %s has invalid characters in the name.", id)
-				return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
+	if r.GetRack().GetChromeBrowserRack() != nil {
+		if r.GetRack().GetChromeBrowserRack().GetSwitchObjects() != nil {
+			switches := r.GetRack().GetChromeBrowserRack().GetSwitchObjects()
+			for _, s := range switches {
+				id = strings.TrimSpace(s.GetName())
+				if id == "" {
+					return status.Errorf(codes.InvalidArgument, "Switch "+EmptyName)
+				}
+				if !IDRegex.MatchString(id) {
+					errorMsg := fmt.Sprintf("Switch %s has invalid characters in the name.", id)
+					return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
+				}
 			}
 		}
-	}
 
-	if r.Rpms != nil {
-		for _, rpm := range r.Rpms {
-			id = strings.TrimSpace(rpm.GetName())
-			if id == "" {
-				return status.Errorf(codes.InvalidArgument, "RPM "+EmptyName)
+		if r.GetRack().GetChromeBrowserRack().GetKvmObjects() != nil {
+			kvms := r.GetRack().GetChromeBrowserRack().GetKvmObjects()
+			for _, kvm := range kvms {
+				id = strings.TrimSpace(kvm.GetName())
+				if id == "" {
+					return status.Errorf(codes.InvalidArgument, "KVM "+EmptyName)
+				}
+				if !IDRegex.MatchString(id) {
+					errorMsg := fmt.Sprintf("KVM %s has invalid characters in the name.", id)
+					return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
+				}
 			}
-			if !IDRegex.MatchString(id) {
-				errorMsg := fmt.Sprintf("RPM %s has invalid characters in the name.", id)
-				return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
+		}
+
+		if r.GetRack().GetChromeBrowserRack().GetRpmObjects() != nil {
+			rpms := r.GetRack().GetChromeBrowserRack().GetRpmObjects()
+			for _, rpm := range rpms {
+				id = strings.TrimSpace(rpm.GetName())
+				if id == "" {
+					return status.Errorf(codes.InvalidArgument, "RPM "+EmptyName)
+				}
+				if !IDRegex.MatchString(id) {
+					errorMsg := fmt.Sprintf("RPM %s has invalid characters in the name.", id)
+					return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
+				}
 			}
 		}
 	}
@@ -345,21 +350,6 @@ func (r *ListMachinesRequest) Validate() error {
 // Validate validates input requests of DeleteMachine.
 func (r *DeleteMachineRequest) Validate() error {
 	return validateResourceName(machineRegex, MachineNameFormat, r.Name)
-}
-
-// Validate validates input requests of CreateRack.
-func (r *CreateRackRequest) Validate() error {
-	if r.Rack == nil {
-		return status.Errorf(codes.InvalidArgument, NilEntity)
-	}
-	id := strings.TrimSpace(r.RackId)
-	if id == "" {
-		return status.Errorf(codes.InvalidArgument, EmptyID)
-	}
-	if !IDRegex.MatchString(id) {
-		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
-	}
-	return nil
 }
 
 // Validate validates input requests of UpdateRack.

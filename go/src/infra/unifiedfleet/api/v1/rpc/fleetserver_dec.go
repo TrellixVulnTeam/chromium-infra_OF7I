@@ -27,23 +27,6 @@ type DecoratedFleet struct {
 	Postlude func(ctx context.Context, methodName string, rsp proto.Message, err error) error
 }
 
-func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistrationRequest) (rsp *RackRegistrationResponse, err error) {
-	if s.Prelude != nil {
-		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "RackRegistration", req)
-		if err == nil {
-			ctx = newCtx
-		}
-	}
-	if err == nil {
-		rsp, err = s.Service.RackRegistration(ctx, req)
-	}
-	if s.Postlude != nil {
-		err = s.Postlude(ctx, "RackRegistration", rsp, err)
-	}
-	return
-}
-
 func (s *DecoratedFleet) CreateChromePlatform(ctx context.Context, req *CreateChromePlatformRequest) (rsp *proto1.ChromePlatform, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
@@ -452,19 +435,19 @@ func (s *DecoratedFleet) ImportMachines(ctx context.Context, req *ImportMachines
 	return
 }
 
-func (s *DecoratedFleet) CreateRack(ctx context.Context, req *CreateRackRequest) (rsp *proto1.Rack, err error) {
+func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistrationRequest) (rsp *proto1.Rack, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "CreateRack", req)
+		newCtx, err = s.Prelude(ctx, "RackRegistration", req)
 		if err == nil {
 			ctx = newCtx
 		}
 	}
 	if err == nil {
-		rsp, err = s.Service.CreateRack(ctx, req)
+		rsp, err = s.Service.RackRegistration(ctx, req)
 	}
 	if s.Postlude != nil {
-		err = s.Postlude(ctx, "CreateRack", rsp, err)
+		err = s.Postlude(ctx, "RackRegistration", rsp, err)
 	}
 	return
 }

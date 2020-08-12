@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -28,12 +27,12 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(s)
-		// 1. Validate the input
+		// Validate the input
 		if err := validateCreateSwitch(ctx, s, rackName); err != nil {
 			return err
 		}
 
-		// 2. Get rack to associate the switch
+		// Get rack to associate the switch
 		rack, err := GetRack(ctx, rackName)
 		if err != nil {
 			return err
@@ -43,12 +42,7 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 		s.Rack = rack.GetName()
 		s.Lab = rack.GetLocation().GetLab().String()
 
-		// 3. Update the rack with new switch information
-		if err := addSwitchToRack(ctx, rack, s.Name, hc); err != nil {
-			return err
-		}
-
-		// 4. Create a switch entry
+		// Create a switch entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
@@ -57,7 +51,7 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 		}
 		hc.LogSwitchChanges(nil, s)
 
-		// 5. Update state
+		// Update state
 		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_SERVING); err != nil {
 			return err
 		}
@@ -76,7 +70,7 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(s)
-		// 1. Validate the input
+		// Validate the input
 		if err := validateUpdateSwitch(ctx, s, rackName, mask); err != nil {
 			return errors.Annotate(err, "UpdateSwitch - validation failed").Err()
 		}
@@ -88,35 +82,17 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 		// Fill the rack/lab to switch OUTPUT only fields
 		s.Rack = oldS.GetRack()
 		s.Lab = oldS.GetLab()
-		if rackName != "" {
-			// 2. Get the old rack associated with switch
-			oldRack, err := getRackForSwitch(ctx, s.Name)
-			if err != nil {
-				return errors.Annotate(err, "UpdateSwitch - query rack for switch %s failed", s.GetName()).Err()
-			}
-
+		if rackName != "" && oldS.GetRack() != rackName {
 			// User is trying to associate this switch with a different rack.
-			if oldRack.Name != rackName {
-				// 3. Get rack to associate the switch
-				rack, err := GetRack(ctx, rackName)
-				if err != nil {
-					return errors.Annotate(err, "UpdateSwitch - get rack %s failed", rackName).Err()
-				}
-
-				// Fill the rack/lab to switch OUTPUT only fields for indexing
-				s.Rack = rack.GetName()
-				s.Lab = rack.GetLocation().GetLab().String()
-
-				// 4. Remove the association between old rack and this switch.
-				if err := removeSwitchFromRacks(ctx, []*ufspb.Rack{oldRack}, s.Name, hc); err != nil {
-					return err
-				}
-
-				// 5. Update the rack with new switch information
-				if err := addSwitchToRack(ctx, rack, s.Name, hc); err != nil {
-					return err
-				}
+			// Get rack to associate the switch
+			rack, err := GetRack(ctx, rackName)
+			if err != nil {
+				return errors.Annotate(err, "UpdateSwitch - get rack %s failed", rackName).Err()
 			}
+
+			// Fill the rack/lab to switch OUTPUT only fields for indexing
+			s.Rack = rack.GetName()
+			s.Lab = rack.GetLocation().GetLab().String()
 		}
 
 		// Partial update by field mask
@@ -124,7 +100,7 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 			s = processSwitchUpdateMask(oldS, s, mask)
 		}
 
-		// 6. Update switch entry
+		// Update switch entry
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err := registration.BatchUpdateSwitches(ctx, []*ufspb.Switch{s}); err != nil {
@@ -193,35 +169,17 @@ func DeleteSwitch(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(&ufspb.Switch{Name: id})
 		hc.LogSwitchChanges(&ufspb.Switch{Name: id}, nil)
-		// 1. Validate input
+		// Validate input
 		if err := validateDeleteSwitch(ctx, id); err != nil {
 			return errors.Annotate(err, "validation failed - Unable to delete switch %s", id).Err()
 		}
 
-		// 2. Delete the switch
+		// Delete the switch
 		if err := registration.DeleteSwitch(ctx, id); err != nil {
 			return errors.Annotate(err, "delete failed - Unable to delete switch %s", id).Err()
 		}
 
-		// 3. Get the rack associated with switch
-		racks, err := registration.QueryRackByPropertyName(ctx, "switch_ids", id, false)
-		if err != nil {
-			return errors.Annotate(err, "Unable to query rack for switch %s", id).Err()
-		}
-		if racks == nil || len(racks) == 0 {
-			logging.Warningf(ctx, "No rack associated with the switch %s. Data discrepancy error.\n", id)
-			return nil
-		}
-		if len(racks) > 1 {
-			logging.Warningf(ctx, "More than one rack associated with the switch %s. Data discrepancy error.\n", id)
-		}
-
-		// 4. Remove the association between the rack and this switch.
-		if err := removeSwitchFromRacks(ctx, racks, id, hc); err != nil {
-			return err
-		}
-
-		// 5. Update state
+		// Update state
 		hc.stUdt.deleteStateHelper(ctx)
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -342,72 +300,6 @@ func validateSwitchUpdateMask(mask *field_mask.FieldMask) error {
 				return status.Errorf(codes.InvalidArgument, "validateUpdateSwitch - unsupported update mask path %q", path)
 			}
 		}
-	}
-	return nil
-}
-
-// addSwitchToRack adds the switch info to the rack and updates
-// the rack in datastore.
-// Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
-func addSwitchToRack(ctx context.Context, rack *ufspb.Rack, switchName string, hc *HistoryClient) error {
-	if rack == nil {
-		return status.Errorf(codes.FailedPrecondition, "Rack is nil")
-	}
-	if rack.GetChromeBrowserRack() == nil {
-		errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
-		return status.Errorf(codes.FailedPrecondition, errorMsg)
-	}
-	switches := []string{switchName}
-	if rack.GetChromeBrowserRack().GetSwitches() != nil {
-		switches = rack.GetChromeBrowserRack().GetSwitches()
-		switches = append(switches, switchName)
-	}
-	old := proto.Clone(rack).(*ufspb.Rack)
-	rack.GetChromeBrowserRack().Switches = switches
-	fmt.Println("Add switch to rack ", switches, rack.GetName())
-	_, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack})
-	if err != nil {
-		return errors.Annotate(err, "Unable to update rack %s with switch %s information", rack.Name, switchName).Err()
-	}
-	hc.LogRackChanges(old, rack)
-	return nil
-}
-
-// getRackForSwitch return rack associated with the switch.
-func getRackForSwitch(ctx context.Context, switchName string) (*ufspb.Rack, error) {
-	racks, err := registration.QueryRackByPropertyName(ctx, "switch_ids", switchName, false)
-	if err != nil {
-		return nil, errors.Annotate(err, "Unable to query rack for switch %s", switchName).Err()
-	}
-	if racks == nil || len(racks) == 0 {
-		errorMsg := fmt.Sprintf("No rack associated with the switch %s. Data discrepancy error.\n", switchName)
-		return nil, status.Errorf(codes.Internal, errorMsg)
-	}
-	if len(racks) > 1 {
-		errorMsg := fmt.Sprintf("More than one rack associated the switch %s. Data discrepancy error.\n", switchName)
-		return nil, status.Errorf(codes.Internal, errorMsg)
-	}
-	return racks[0], nil
-}
-
-// removeSwitchFromRacks removes the switch info from racks and
-// updates the racks in datastore.
-// Must be called within a transaction as BatchUpdateRacks is a non-atomic operation
-func removeSwitchFromRacks(ctx context.Context, racks []*ufspb.Rack, id string, hc *HistoryClient) error {
-	for _, rack := range racks {
-		if rack.GetChromeBrowserRack() == nil {
-			errorMsg := fmt.Sprintf("Rack %s is not a browser rack", rack.Name)
-			return status.Errorf(codes.FailedPrecondition, errorMsg)
-		}
-		switches := rack.GetChromeBrowserRack().GetSwitches()
-		switches = ufsUtil.RemoveStringEntry(switches, id)
-		old := proto.Clone(rack).(*ufspb.Rack)
-		rack.GetChromeBrowserRack().Switches = switches
-		hc.LogRackChanges(old, rack)
-	}
-	_, err := registration.BatchUpdateRacks(ctx, racks)
-	if err != nil {
-		return errors.Annotate(err, "Unable to remove switch information %s from rack", id).Err()
 	}
 	return nil
 }

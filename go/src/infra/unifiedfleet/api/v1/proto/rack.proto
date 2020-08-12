@@ -12,6 +12,7 @@ import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/proto/location.proto";
+import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 
 // Rack refers to the racks which are placed in
 // Chrome Browser lab and Chrome OS lab. Machines and Pheripherals
@@ -48,22 +49,28 @@ message ChromeBrowserRack {
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/RPM"
         },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
     // KVMs in the rack, they're also used as the hostnames in dhcp configs
     repeated string kvms = 2 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/KVM"
         },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
     // Switches in the rack
     repeated string switches = 3 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Switch"
         },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
+    repeated RPM rpm_objects = 4;
+    repeated KVM kvm_objects = 5;
+    repeated Switch switch_objects = 6;
 }
 
 // ChromeOSRack refers to the rack in Chrome Browser lab

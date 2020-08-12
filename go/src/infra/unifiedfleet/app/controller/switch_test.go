@@ -66,56 +66,7 @@ func TestCreateSwitch(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Create new switch with existing rack with switches", func() {
-			rack := &ufspb.Rack{
-				Name: "rack-10",
-				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-5"},
-					},
-				},
-			}
-			_, err := registration.CreateRack(ctx, rack)
-			So(err, ShouldBeNil)
-
-			switch1 := &ufspb.Switch{
-				Name: "switch-20",
-			}
-			resp, err := CreateSwitch(ctx, switch1, "rack-10")
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, switch1)
-
-			mresp, err := registration.GetRack(ctx, "rack-10")
-			So(err, ShouldBeNil)
-			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-5", "switch-20"})
-
-			s, err := state.GetStateRecord(ctx, "switches/switch-20")
-			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
-
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-20")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
-			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-10")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[switch-5]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[switch-5 switch-20]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
-			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-20")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-10")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-		})
-
-		Convey("Create new switch with existing rack without switches", func() {
+		Convey("Create new switch with existing rack", func() {
 			rack := &ufspb.Rack{
 				Name: "rack-15",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
@@ -132,10 +83,6 @@ func TestCreateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch1)
 
-			mresp, err := registration.GetRack(ctx, "rack-15")
-			So(err, ShouldBeNil)
-			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-25"})
-
 			s, err := state.GetStateRecord(ctx, "switches/switch-25")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
@@ -146,12 +93,6 @@ func TestCreateSwitch(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-15")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[switch-25]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
 		})
 	})
 }
@@ -184,9 +125,7 @@ func TestUpdateSwitch(t *testing.T) {
 			rack3 := &ufspb.Rack{
 				Name: "rack-3",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-3"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack3)
@@ -195,9 +134,7 @@ func TestUpdateSwitch(t *testing.T) {
 			rack4 := &ufspb.Rack{
 				Name: "rack-4",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-4"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err = registration.CreateRack(ctx, rack4)
@@ -205,6 +142,7 @@ func TestUpdateSwitch(t *testing.T) {
 
 			switch3 := &ufspb.Switch{
 				Name: "switch-3",
+				Rack: "rack-3",
 			}
 			_, err = registration.CreateSwitch(ctx, switch3)
 			So(err, ShouldBeNil)
@@ -214,42 +152,13 @@ func TestUpdateSwitch(t *testing.T) {
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, switch3)
 
-			mresp, err := registration.GetRack(ctx, "rack-3")
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
-			mresp, err = registration.GetRack(ctx, "rack-4")
-			So(err, ShouldBeNil)
-			So(resp, ShouldNotBeNil)
-			So(mresp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-4", "switch-3"})
-
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "switches/switch-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetEventLabel(), ShouldEqual, "switch.rack")
-			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetOldValue(), ShouldEqual, "rack-3")
 			So(changes[0].GetNewValue(), ShouldEqual, "rack-4")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-4")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[switch-4]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[switch-4 switch-3]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-3")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[switch-3]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-3")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-4")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-3")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
@@ -259,9 +168,7 @@ func TestUpdateSwitch(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-5",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-5"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack)
@@ -269,6 +176,7 @@ func TestUpdateSwitch(t *testing.T) {
 
 			switch1 := &ufspb.Switch{
 				Name: "switch-5",
+				Rack: "rack-5",
 			}
 			_, err = registration.CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
@@ -282,17 +190,10 @@ func TestUpdateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 			// Nothing is changed for switch-5
 			So(changes, ShouldHaveLength, 0)
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")
-			So(err, ShouldBeNil)
-			// Nothing is changed for rack-5
-			So(changes, ShouldHaveLength, 0)
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-5")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeFalse)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-5")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 0)
 		})
 
 		Convey("Update switch with non existing rack", func() {
@@ -352,9 +253,7 @@ func TestDeleteSwitch(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-5",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-1"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack)
@@ -388,19 +287,8 @@ func TestDeleteSwitch(t *testing.T) {
 		})
 
 		Convey("Delete switch successfully", func() {
-			rack := &ufspb.Rack{
-				Name: "rack-6",
-				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-2"},
-					},
-				},
-			}
-			_, err := registration.CreateRack(ctx, rack)
-			So(err, ShouldBeNil)
-
 			switch2 := mockSwitch("switch-2")
-			_, err = registration.CreateSwitch(ctx, switch2)
+			_, err := registration.CreateSwitch(ctx, switch2)
 			So(err, ShouldBeNil)
 			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
 				{
@@ -418,11 +306,6 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
-			rresp, err := registration.GetRack(ctx, "rack-6")
-			So(rresp, ShouldNotBeNil)
-			So(err, ShouldBeNil)
-			So(rresp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
-
 			_, err = state.GetStateRecord(ctx, "switches/switch-2")
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
@@ -432,20 +315,10 @@ func TestDeleteSwitch(t *testing.T) {
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
 			So(changes[0].GetEventLabel(), ShouldEqual, "switch")
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", "racks/rack-6")
-			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			So(changes[0].GetOldValue(), ShouldEqual, "[switch-2]")
-			So(changes[0].GetNewValue(), ShouldEqual, "[]")
-			So(changes[0].GetEventLabel(), ShouldEqual, "rack.chrome_browser_rack.switches")
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "switches/switch-2")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
 			So(msgs[0].Delete, ShouldBeTrue)
-			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-6")
-			So(err, ShouldBeNil)
-			So(msgs, ShouldHaveLength, 1)
-			So(msgs[0].Delete, ShouldBeFalse)
 		})
 	})
 }

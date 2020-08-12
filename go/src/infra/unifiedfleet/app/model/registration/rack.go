@@ -28,9 +28,9 @@ const RackKind string = "Rack"
 type RackEntity struct {
 	_kind     string   `gae:"$kind,Rack"`
 	ID        string   `gae:"$id"`
-	SwitchIDs []string `gae:"switch_ids"`
-	KVMIDs    []string `gae:"kvm_ids"`
-	RPMIDs    []string `gae:"rpm_ids"`
+	SwitchIDs []string `gae:"switch_ids"` // deprecated. Do not use.
+	KVMIDs    []string `gae:"kvm_ids"`    // deprecated. Do not use.
+	RPMIDs    []string `gae:"rpm_ids"`    // deprecated. Do not use.
 	Lab       string   `gae:"lab"`
 	Tags      []string `gae:"tags"`
 	// ufspb.Rack cannot be directly used as it contains pointer.
@@ -56,13 +56,10 @@ func newRackEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		return nil, errors.Annotate(err, "fail to marshal Rack %s", p).Err()
 	}
 	return &RackEntity{
-		ID:        p.GetName(),
-		SwitchIDs: p.GetChromeBrowserRack().GetSwitches(),
-		KVMIDs:    p.GetChromeBrowserRack().GetKvms(),
-		RPMIDs:    p.GetChromeBrowserRack().GetRpms(),
-		Lab:       p.GetLocation().GetLab().String(),
-		Tags:      p.GetTags(),
-		Rack:      rack,
+		ID:   p.GetName(),
+		Lab:  p.GetLocation().GetLab().String(),
+		Tags: p.GetTags(),
+		Rack: rack,
 	}, nil
 }
 
@@ -241,18 +238,12 @@ func GetRackIndexedFieldName(input string) (string, error) {
 	var field string
 	input = strings.TrimSpace(input)
 	switch strings.ToLower(input) {
-	case util.SwitchFilterName:
-		field = "switch_ids"
-	case util.RPMFilterName:
-		field = "rpm_ids"
-	case util.KVMFilterName:
-		field = "kvm_ids"
 	case util.LabFilterName:
 		field = "lab"
 	case util.TagFilterName:
 		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are switch/kvm/rpm/lab/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are lab/tag", input)
 	}
 	return field, nil
 }

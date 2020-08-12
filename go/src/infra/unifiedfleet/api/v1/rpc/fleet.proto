@@ -24,9 +24,6 @@ import "infra/unifiedfleet/api/v1/proto/lse_prototype.proto";
 import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 service Fleet {
-  // RackRegistration creates a new rack, switches, kvms and rpms.
-  rpc RackRegistration(RackRegistrationRequest) returns (RackRegistrationResponse);
-
   // CreateChromePlatform creates a new chromePlatform.
   rpc CreateChromePlatform(CreateChromePlatformRequest) returns (proto.ChromePlatform);
 
@@ -102,8 +99,8 @@ service Fleet {
   // package is not imported into chops go package.
   rpc ImportMachines(ImportMachinesRequest) returns (google.rpc.Status);
 
-  // CreateRack creates a new rack
-  rpc CreateRack(CreateRackRequest) returns (proto.Rack);
+  // RackRegistration creates a new rack/kvms/rpms/switches
+  rpc RackRegistration(RackRegistrationRequest) returns (proto.Rack);
 
   // Update updates the rack
   rpc UpdateRack(UpdateRackRequest) returns (proto.Rack);
@@ -1504,29 +1501,6 @@ message UpdateStateRequest {
 message RackRegistrationRequest {
   // The rack to create.
   proto.Rack rack = 1 [(google.api.field_behavior) = REQUIRED];
-
-  // The switches to create.
-  repeated proto.Switch switches = 2;
-
-  // The kvms to create.
-  repeated proto.KVM kvms = 3;
-
-  // The rpms to create.
-  repeated proto.RPM rpms = 4;
-}
-
-message RackRegistrationResponse {
-  // Create rack
-  proto.Rack rack = 1;
-
-  // Created switches
-  repeated proto.Switch switches = 2;
-
-  // Created kvms
-  repeated proto.KVM kvms = 3;
-
-  // Created rpms
-  repeated proto.RPM rpms = 4;
 }
 
 message NetworkOption {

@@ -222,10 +222,9 @@ func TestQueryRackByPropertyName(t *testing.T) {
 		Rack1 := &ufspb.Rack{
 			Name: "Rack-1",
 			Rack: &ufspb.Rack_ChromeBrowserRack{
-				ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-					Kvms: []string{"KVM-1", "KVM-2"},
-				},
+				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 			},
+			Tags: []string{"tag-1"},
 		}
 		resp, cerr := CreateRack(ctx, Rack1)
 		So(cerr, ShouldBeNil)
@@ -237,22 +236,22 @@ func TestQueryRackByPropertyName(t *testing.T) {
 		dummyRacks := make([]*ufspb.Rack, 0, 1)
 		dummyRacks = append(dummyRacks, dummyRack)
 		Convey("Query By existing Rack", func() {
-			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-1", false)
+			resp, err := QueryRackByPropertyName(ctx, "tags", "tag-1", false)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, Racks)
 		})
 		Convey("Query By non-existing Rack", func() {
-			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-5", false)
+			resp, err := QueryRackByPropertyName(ctx, "tags", "tag-5", false)
 			So(err, ShouldBeNil)
 			So(resp, ShouldBeNil)
 		})
 		Convey("Query By existing RackPrototype keysonly", func() {
-			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-1", true)
+			resp, err := QueryRackByPropertyName(ctx, "tags", "tag-1", true)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dummyRacks)
 		})
 		Convey("Query By non-existing RackPrototype", func() {
-			resp, err := QueryRackByPropertyName(ctx, "kvm_ids", "KVM-5", true)
+			resp, err := QueryRackByPropertyName(ctx, "tags", "tag-5", true)
 			So(err, ShouldBeNil)
 			So(resp, ShouldBeNil)
 		})

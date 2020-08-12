@@ -23,23 +23,18 @@ import (
 )
 
 // RackRegistration creates rack, switches, kvms, rpms in database.
-func (fs *FleetServerImpl) RackRegistration(ctx context.Context, req *ufsAPI.RackRegistrationRequest) (rsp *ufsAPI.RackRegistrationResponse, err error) {
+func (fs *FleetServerImpl) RackRegistration(ctx context.Context, req *ufsAPI.RackRegistrationRequest) (rsp *ufspb.Rack, err error) {
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	rack, switches, kvms, rpms, err := controller.RackRegistration(ctx, req.Rack, req.Switches, req.Kvms, req.Rpms)
+	rack, err := controller.RackRegistration(ctx, req.Rack)
 	if err != nil {
 		return nil, err
 	}
-	return &ufsAPI.RackRegistrationResponse{
-		Rack:     rack,
-		Switches: switches,
-		Kvms:     kvms,
-		Rpms:     rpms,
-	}, nil
+	return rack, err
 }
 
 // MachineRegistration creates machine/nics/drac entry in database.
@@ -175,24 +170,6 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *ufsAPI.Impor
 		return s.Proto(), s.Err()
 	}
 	return successStatus.Proto(), nil
-}
-
-// CreateRack creates rack entry in database.
-func (fs *FleetServerImpl) CreateRack(ctx context.Context, req *ufsAPI.CreateRackRequest) (rsp *ufspb.Rack, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
-	req.Rack.Name = req.RackId
-	rack, err := controller.CreateRack(ctx, req.Rack)
-	if err != nil {
-		return nil, err
-	}
-	// https://aip.dev/122 - as per AIP guideline
-	rack.Name = util.AddPrefix(util.RackCollection, rack.Name)
-	return rack, err
 }
 
 // UpdateRack updates the rack information in database.

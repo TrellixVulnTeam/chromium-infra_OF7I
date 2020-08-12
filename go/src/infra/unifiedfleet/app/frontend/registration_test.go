@@ -235,6 +235,139 @@ func TestMachineRegistration(t *testing.T) {
 	})
 }
 
+func TestRackRegistration(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	tf, validate := newTestFixtureWithContext(ctx, t)
+	defer validate()
+	Convey("Rack Registration", t, func() {
+		Convey("Register Rack - happy path", func() {
+			switches := []*ufspb.Switch{{
+				Name: "switch-X",
+			}}
+			kvms := []*ufspb.KVM{{
+				Name: "kvm-X",
+			}}
+			rack := &ufspb.Rack{
+				Name: "rack-X",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+						SwitchObjects: switches,
+						KvmObjects:    kvms,
+					},
+				},
+			}
+			req := &ufsAPI.RackRegistrationRequest{
+				Rack: rack,
+			}
+			resp, _ := tf.Fleet.RackRegistration(tf.C, req)
+			So(resp, ShouldNotBeNil)
+			So(resp, ShouldResembleProto, rack)
+		})
+
+		Convey("Register rack with nil rack", func() {
+			req := &ufsAPI.RackRegistrationRequest{}
+			_, err := tf.Fleet.RackRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Rack "+ufsAPI.NilEntity)
+		})
+
+		Convey("Register rack - Invalid input empty rack name", func() {
+			req := &ufsAPI.RackRegistrationRequest{
+				Rack: &ufspb.Rack{
+					Name: "",
+				},
+			}
+			_, err := tf.Fleet.RackRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Rack "+ufsAPI.EmptyName)
+		})
+
+		Convey("Create new rack - Invalid input invalid characters in rack name", func() {
+			req := &ufsAPI.RackRegistrationRequest{
+				Rack: &ufspb.Rack{
+					Name: "a.b)7&",
+				},
+			}
+			_, err := tf.Fleet.RackRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Rack "+ufsAPI.InvalidCharacters)
+		})
+
+		Convey("Register rack - Invalid input empty switch name", func() {
+			req := &ufsAPI.RackRegistrationRequest{
+				Rack: &ufspb.Rack{
+					Name: "rack-1",
+					Rack: &ufspb.Rack_ChromeBrowserRack{
+						ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+							SwitchObjects: []*ufspb.Switch{{
+								Name: "",
+							}},
+						},
+					},
+				},
+			}
+			_, err := tf.Fleet.RackRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Switch "+ufsAPI.EmptyName)
+		})
+
+		Convey("Register rack - Invalid input invalid characters in switch name", func() {
+			req := &ufsAPI.RackRegistrationRequest{
+				Rack: &ufspb.Rack{
+					Name: "rack-1",
+					Rack: &ufspb.Rack_ChromeBrowserRack{
+						ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+							SwitchObjects: []*ufspb.Switch{{
+								Name: "a.b)7&",
+							}},
+						},
+					},
+				},
+			}
+			_, err := tf.Fleet.RackRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Switch a.b)7& has invalid characters in the name."+ufsAPI.InvalidCharacters)
+		})
+
+		Convey("Register rack - Invalid input empty kvm name", func() {
+			req := &ufsAPI.RackRegistrationRequest{
+				Rack: &ufspb.Rack{
+					Name: "rack-1",
+					Rack: &ufspb.Rack_ChromeBrowserRack{
+						ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+							KvmObjects: []*ufspb.KVM{{
+								Name: "",
+							}},
+						},
+					},
+				},
+			}
+			_, err := tf.Fleet.RackRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "KVM "+ufsAPI.EmptyName)
+		})
+
+		Convey("Register rack - Invalid input invalid characters in kvm name", func() {
+			req := &ufsAPI.RackRegistrationRequest{
+				Rack: &ufspb.Rack{
+					Name: "rack-1",
+					Rack: &ufspb.Rack_ChromeBrowserRack{
+						ChromeBrowserRack: &ufspb.ChromeBrowserRack{
+							KvmObjects: []*ufspb.KVM{{
+								Name: "a.b)7&",
+							}},
+						},
+					},
+				},
+			}
+			_, err := tf.Fleet.RackRegistration(tf.C, req)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "KVM a.b)7& has invalid characters in the name."+ufsAPI.InvalidCharacters)
+		})
+	})
+}
+
 func TestUpdateMachine(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -497,61 +630,6 @@ func TestImportMachines(t *testing.T) {
 	})
 }
 
-func TestCreateRack(t *testing.T) {
-	t.Parallel()
-	ctx := testingContext()
-	tf, validate := newTestFixtureWithContext(ctx, t)
-	defer validate()
-	rack2 := mockRack("", 4)
-	Convey("CreateRack", t, func() {
-		Convey("Create new rack with rack_id - Happy path", func() {
-			rack1 := mockRack("", 4)
-			rack1.Location = &ufspb.Location{
-				Lab: ufspb.Lab_LAB_CHROME_ATLANTA,
-			}
-			req := &ufsAPI.CreateRackRequest{
-				Rack:   rack1,
-				RackId: "Rack-1",
-			}
-			resp, err := tf.Fleet.CreateRack(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp, ShouldResembleProto, rack1)
-		})
-
-		Convey("Create new rack - Invalid input nil", func() {
-			req := &ufsAPI.CreateRackRequest{
-				Rack: nil,
-			}
-			resp, err := tf.Fleet.CreateRack(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
-		})
-
-		Convey("Create new rack - Invalid input empty ID", func() {
-			req := &ufsAPI.CreateRackRequest{
-				Rack:   rack2,
-				RackId: "",
-			}
-			resp, err := tf.Fleet.CreateRack(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyID)
-		})
-
-		Convey("Create new rack - Invalid input invalid characters", func() {
-			req := &ufsAPI.CreateRackRequest{
-				Rack:   rack2,
-				RackId: "a.b)7&",
-			}
-			resp, err := tf.Fleet.CreateRack(tf.C, req)
-			So(resp, ShouldBeNil)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
-		})
-	})
-}
-
 func TestUpdateRack(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
@@ -677,27 +755,9 @@ func TestListRacks(t *testing.T) {
 			So(resp.Racks, ShouldResembleProto, racks)
 		})
 
-		Convey("ListRacks - filter format invalid format OR - error", func() {
-			req := &ufsAPI.ListRacksRequest{
-				Filter: "kvm=kvm-1 | rpm=rpm-2",
-			}
-			_, err := tf.Fleet.ListRacks(tf.C, req)
-			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidFilterFormat)
-		})
-
-		Convey("ListRacks - filter format valid AND", func() {
-			req := &ufsAPI.ListRacksRequest{
-				Filter: "kvm=kvm-1 & rpm=rpm-1",
-			}
-			resp, err := tf.Fleet.ListRacks(tf.C, req)
-			So(err, ShouldBeNil)
-			So(resp.Racks, ShouldBeNil)
-		})
-
 		Convey("ListRacks - filter format valid", func() {
 			req := &ufsAPI.ListRacksRequest{
-				Filter: "kvm=kvm-1",
+				Filter: "tag=tag-1",
 			}
 			resp, err := tf.Fleet.ListRacks(tf.C, req)
 			So(err, ShouldBeNil)
@@ -1110,13 +1170,6 @@ func TestImportDatacenters(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(racks, ShouldHaveLength, 2)
 			So(ufsAPI.ParseResources(racks, "Name"), ShouldResemble, []string{"cr20", "cr22"})
-			for _, r := range racks {
-				switch r.GetName() {
-				case "cr20":
-					So(r.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"cr20-kvm1"})
-					So(r.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"eq017.atl97"})
-				}
-			}
 			kvms, _, err := registration.ListKVMs(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
 			So(kvms, ShouldHaveLength, 3)
@@ -1219,9 +1272,7 @@ func TestUpdateKVM(t *testing.T) {
 	rack1 := &ufspb.Rack{
 		Name: "rack-1",
 		Rack: &ufspb.Rack_ChromeBrowserRack{
-			ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-				Kvms: []string{"KVM-1"},
-			},
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 		},
 	}
 	registration.CreateRack(tf.C, rack1)
@@ -2076,9 +2127,7 @@ func TestUpdateSwitch(t *testing.T) {
 	rack1 := &ufspb.Rack{
 		Name: "rack-1",
 		Rack: &ufspb.Rack_ChromeBrowserRack{
-			ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-				Switches: []string{"switch-1"},
-			},
+			ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 		},
 	}
 	registration.CreateRack(tf.C, rack1)

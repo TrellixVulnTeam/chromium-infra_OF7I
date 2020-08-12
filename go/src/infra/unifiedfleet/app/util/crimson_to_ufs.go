@@ -128,10 +128,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			Name:     rackName,
 			Location: toLocation(rackName, dcName),
 			Rack: &ufspb.Rack_ChromeBrowserRack{
-				ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-					Kvms:     rackToKvms[rackName],
-					Switches: switchNames,
-				},
+				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 			},
 		}
 		rlse := &ufspb.RackLSE{

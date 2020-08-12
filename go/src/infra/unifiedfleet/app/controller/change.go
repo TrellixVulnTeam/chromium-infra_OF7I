@@ -430,9 +430,7 @@ func LogStateChanges(oldData, newData *ufspb.StateRecord) ([]*ufspb.ChangeEvent,
 
 func logChromeBrowserRack(resourceName string, oldData, newData *ufspb.ChromeBrowserRack) []*ufspb.ChangeEvent {
 	changes := make([]*ufspb.ChangeEvent, 0)
-	changes = append(changes, logCommon(resourceName, "rack.chrome_browser_rack.rpms", oldData.GetRpms(), newData.GetRpms())...)
-	changes = append(changes, logCommon(resourceName, "rack.chrome_browser_rack.kvms", oldData.GetKvms(), newData.GetKvms())...)
-	changes = append(changes, logCommon(resourceName, "rack.chrome_browser_rack.switches", oldData.GetSwitches(), newData.GetSwitches())...)
+	// Keep this func for future logging
 	return changes
 }
 

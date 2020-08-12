@@ -20,27 +20,23 @@ import (
 	"infra/unifiedfleet/app/model/state"
 )
 
-func TestCreateRack(t *testing.T) {
+func TestRackRegistration(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	Convey("CreateRack", t, func() {
-		Convey("Create new rack with output only fields", func() {
+	Convey("RackRegistration", t, func() {
+		Convey("Create new rack", func() {
 			rack := &ufspb.Rack{
 				Name: "rack-1",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-3"},
-						Kvms:     []string{"kvm-3"},
-						Rpms:     []string{"rpm-3"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
-			resp, err := CreateRack(ctx, rack)
+			resp, err := RackRegistration(ctx, rack)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
-			So(resp.GetChromeBrowserRack().GetKvms(), ShouldBeNil)
-			So(resp.GetChromeBrowserRack().GetRpms(), ShouldBeNil)
-			So(resp.GetChromeBrowserRack().GetSwitches(), ShouldBeNil)
+			So(resp.GetChromeBrowserRack().GetKvmObjects(), ShouldBeNil)
+			So(resp.GetChromeBrowserRack().GetRpmObjects(), ShouldBeNil)
+			So(resp.GetChromeBrowserRack().GetSwitchObjects(), ShouldBeNil)
 			s, err := state.GetStateRecord(ctx, "racks/rack-1")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
@@ -64,7 +60,7 @@ func TestCreateRack(t *testing.T) {
 					Lab: ufspb.Lab_LAB_CHROME_ATLANTA,
 				},
 			}
-			resp, err := CreateRack(ctx, rack)
+			resp, err := RackRegistration(ctx, rack)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeBrowserRack(), ShouldNotBeNil)
@@ -87,7 +83,7 @@ func TestCreateRack(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-3",
 			}
-			_, err := CreateRack(ctx, rack)
+			_, err := RackRegistration(ctx, rack)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "lab information in the location object cannot be empty/unspecified for a rack")
 
@@ -112,15 +108,11 @@ func TestUpdateRack(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-1 in the system.")
 		})
 
-		Convey("Update existing rack with output only fields", func() {
+		Convey("Update existing rack", func() {
 			rack := &ufspb.Rack{
 				Name: "rack-2",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-2"},
-						Kvms:     []string{"kvm-2"},
-						Rpms:     []string{"rpm-2"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack)
@@ -128,21 +120,15 @@ func TestUpdateRack(t *testing.T) {
 
 			rack = &ufspb.Rack{
 				Name: "rack-2",
+				Tags: []string{"tag-1"},
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-5"},
-						Kvms:     []string{"kvm-5"},
-						Rpms:     []string{"rpm-5"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			resp, err := UpdateRack(ctx, rack, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, rack)
-			So(resp.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"kvm-2"})
-			So(resp.GetChromeBrowserRack().GetRpms(), ShouldResemble, []string{"rpm-2"})
-			So(resp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-2"})
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "racks/rack-2")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
@@ -153,11 +139,7 @@ func TestUpdateRack(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-3",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-3"},
-						Kvms:     []string{"kvm-3"},
-						Rpms:     []string{"rpm-3"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err := registration.CreateRack(ctx, rack)
@@ -169,9 +151,6 @@ func TestUpdateRack(t *testing.T) {
 			resp, err := UpdateRack(ctx, rack, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
-			So(resp.GetChromeBrowserRack().GetKvms(), ShouldResemble, []string{"kvm-3"})
-			So(resp.GetChromeBrowserRack().GetRpms(), ShouldResemble, []string{"rpm-3"})
-			So(resp.GetChromeBrowserRack().GetSwitches(), ShouldResemble, []string{"switch-3"})
 		})
 
 		Convey("Partial Update rack", func() {
@@ -259,18 +238,21 @@ func TestDeleteRack(t *testing.T) {
 		Convey("Delete rack with switches, kvms and rpms - happy path", func() {
 			kvm := &ufspb.KVM{
 				Name: "kvm-5",
+				Rack: "rack-5",
 			}
 			_, err := registration.CreateKVM(ctx, kvm)
 			So(err, ShouldBeNil)
 
 			rpm := &ufspb.RPM{
 				Name: "rpm-5",
+				Rack: "rack-5",
 			}
 			_, err = registration.CreateRPM(ctx, rpm)
 			So(err, ShouldBeNil)
 
 			switch5 := &ufspb.Switch{
 				Name: "switch-5",
+				Rack: "rack-5",
 			}
 			_, err = registration.CreateSwitch(ctx, switch5)
 			So(err, ShouldBeNil)
@@ -278,11 +260,7 @@ func TestDeleteRack(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-5",
 				Rack: &ufspb.Rack_ChromeBrowserRack{
-					ChromeBrowserRack: &ufspb.ChromeBrowserRack{
-						Switches: []string{"switch-5"},
-						Kvms:     []string{"kvm-5"},
-						Rpms:     []string{"rpm-5"},
-					},
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 				},
 			}
 			_, err = registration.CreateRack(ctx, rack)
@@ -435,7 +413,7 @@ func TestListRacks(t *testing.T) {
 			},
 		}
 		if i%2 == 0 {
-			rack.GetChromeBrowserRack().Switches = []string{"switch-12"}
+			rack.Tags = []string{"tag-12"}
 		}
 		resp, _ := registration.CreateRack(ctx, rack)
 		if i%2 == 0 {
@@ -451,7 +429,7 @@ func TestListRacks(t *testing.T) {
 		})
 
 		Convey("List Racks - filter switch - happy path", func() {
-			resp, _, _ := ListRacks(ctx, 5, "", "switch=switch-12", false)
+			resp, _, _ := ListRacks(ctx, 5, "", "tag=tag-12", false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, racksWithSwitch)
 		})
