@@ -1,8 +1,8 @@
-hash: 75fcfc774d9d0ab4f485b9d3374757a5c9fb385a9727c3c8895a0337c760fbeb
-updated: 2020-08-11T14:48:26.575555157-07:00
+hash: 592d095bad64df3ab1767b13dccfb87e4a0f607a947b396c89ea40bb238407eb
+updated: 2020-08-12T15:10:02.668586227-04:00
 imports:
 - name: cloud.google.com/go
-  version: 6b447de855721ed3d415cbdb8beba19a8fffb579
+  version: 92575e840722eced3080d664f20029c76a92a9d0
   repo: https://code.googlesource.com/gocloud.git
   subpackages:
   - bigtable
@@ -32,10 +32,10 @@ imports:
   version: 8a6c6c3b7d39bc3bad605b2e8ec5b80616eeb6fd
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/buildtools.git
 - name: github.com/bazelbuild/remote-apis
-  version: e44c723f4d98a64e80e7bba3b8f4993db4d318a5
+  version: 5a7b1a472165a0ea47b9060089855385fe351193
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis.git
 - name: github.com/bazelbuild/remote-apis-sdks
-  version: 75100dc5a2638da1746998410d162f42401fb5cf
+  version: 5f248db1974d96bf0179a5053e6ea259b9e22685
   repo: https://chromium.googlesource.com/external/github.com/bazelbuild/remote-apis-sdks.git
 - name: github.com/beorn7/perks
   version: 37c8de3658fcb183f997c4e13e8337516ab753e6
@@ -228,12 +228,12 @@ imports:
   version: 80517062f582ea3340cd4baf70e86d539ae7d84d
   repo: https://chromium.googlesource.com/external/github.com/kisielk/gotool.git
 - name: github.com/klauspost/compress
-  version: 3fdfbd5997ecc87b72e85952e1bc37ddaacbbbfe
+  version: fb1e79eeee865f08539e288f5fc1fe248fc8ac4a
   repo: https://chromium.googlesource.com/external/github.com/klauspost/compress.git
   subpackages:
   - zlib
 - name: github.com/klauspost/cpuid
-  version: fc8eb62d0b3172de22845604984aa48abe034d4e
+  version: c8c1820075900becfd4ebb05ea010608bbbfc393
   repo: https://chromium.googlesource.com/external/github.com/klauspost/cpuid.git
 - name: github.com/knq/sysutil
   version: 77e6e1a45b470981b497228e6c71b2d0bc68fc18
@@ -268,7 +268,7 @@ imports:
   version: 35df89791e8f5560a1fa0c0e8b58709beda51722
   repo: https://chromium.googlesource.com/external/github.com/luci/gtreap.git
 - name: github.com/mailru/easyjson
-  version: 0c6c960753ca7e8dd7d6512cbea01feb327f53ef
+  version: 8ab5ff9cd8e4e432e8b79f6c47d324a31dd803cf
   repo: https://chromium.googlesource.com/external/github.com/mailru/easyjson.git
 - name: github.com/maruel/panicparse
   version: dbef8f1427b92b4b9eab050a5800fcdfbe161145
@@ -421,7 +421,7 @@ imports:
   version: d7677d6af5953e0506ac4c08f349c62b917a443a
   repo: https://chromium.googlesource.com/external/github.com/census-instrumentation/opencensus-go.git
 - name: go.skia.org/infra
-  version: f83a97e6561036bb21a5501f213c3046cdf08baf
+  version: e22c48db547a6e53d33f1390ac5c999a3282e7bb
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
@@ -473,7 +473,7 @@ imports:
   subpackages:
   - errgroup
 - name: golang.org/x/sys
-  version: 1b9f1253b3ed7b65abba1a5ee3f58da72dae0ab7
+  version: 6a926be9bd1de9da2007a5071f42528afca90858
   repo: https://go.googlesource.com/sys.git
   subpackages:
   - unix
@@ -485,7 +485,7 @@ imports:
   version: 3af7569d3a1e776fc2a3c1cec133b43105ea9c2e
   repo: https://go.googlesource.com/time.git
 - name: golang.org/x/tools
-  version: d77521d074112594fedb032eedc3d49d352a33e9
+  version: 8586c7bd521caef4881102be2666a9b738b13b00
   repo: https://go.googlesource.com/tools.git
   subpackages:
   - cmd/callgraph
@@ -531,13 +531,13 @@ imports:
   - urlfetch
   - user
 - name: google.golang.org/genproto
-  version: a062522353410256bd306d0ef7514b1777c4d8c0
+  version: 2e714abc8b5016377660c376b64cd66e6de21ce6
   repo: https://chromium.googlesource.com/external/github.com/googleapis/go-genproto.git
   subpackages:
   - googleapis/...
   - protobuf/...
 - name: google.golang.org/grpc
-  version: 6aaac03d175ae0dc2eeae3b147d620d57cfd239a
+  version: 7d8921505e1b4d41da1c1bbb4ae20a4625aa5476
   repo: https://chromium.googlesource.com/external/github.com/grpc/grpc-go.git
   subpackages:
   - codes

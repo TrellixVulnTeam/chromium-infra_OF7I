@@ -428,7 +428,7 @@ import:
   version: master
   repo: https://chromium.googlesource.com/external/github.com/go-warnings/warnings.git
 - package: go.skia.org/infra
-  version: f83a97e6561036bb21a5501f213c3046cdf08baf
+  version: e22c48db547a6e53d33f1390ac5c999a3282e7bb
   repo: https://skia.googlesource.com/buildbot.git
   subpackages:
   - gold-client/cmd/goldctl
