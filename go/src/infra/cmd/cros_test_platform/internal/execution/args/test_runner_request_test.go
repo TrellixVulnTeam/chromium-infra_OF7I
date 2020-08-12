@@ -344,3 +344,19 @@ func TestEnableSynchronousOffload(t *testing.T) {
 		}
 	})
 }
+
+func TestParentUID(t *testing.T) {
+	Convey("Given a parent UID", t, func() {
+		ctx := context.Background()
+		inv := basicInvocation()
+		var params test_platform.Request_Params
+		Convey("when generating a test runner request", func() {
+			g := NewGenerator(inv, &params, nil, "foo-id", "foo-uid", noDeadline)
+			got, err := g.testRunnerRequest(ctx)
+			So(err, ShouldBeNil)
+			Convey("the parent UID is propagated correctly.", func() {
+				So(got.ParentRequestUid, ShouldEqual, "foo-uid")
+			})
+		})
+	})
+}
