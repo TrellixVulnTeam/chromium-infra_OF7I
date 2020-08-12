@@ -28,8 +28,6 @@ import (
 
 	"infra/cmd/cros_test_platform/internal/execution"
 	"infra/cmd/cros_test_platform/internal/execution/bb"
-	"infra/cmd/cros_test_platform/internal/execution/skylab"
-	"infra/cmd/cros_test_platform/internal/execution/swarming"
 	"infra/cmd/cros_test_platform/luciexe/common"
 )
 
@@ -55,7 +53,7 @@ func Run(ctx context.Context, args Args) error {
 	}
 
 	cfg := extractOneConfig(request.TaggedRequests)
-	skylab, err := newSkylabClient(ctx, cfg, request.TaggedRequests)
+	skylab, err := bb.NewSkylabClient(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -117,20 +115,6 @@ func extractOneConfig(trs map[string]*steps.ExecuteRequest) *config.Config {
 		return r.Config
 	}
 	return nil
-}
-
-func newSkylabClient(ctx context.Context, cfg *config.Config, trs map[string]*steps.ExecuteRequest) (skylab.Client, error) {
-	if useTestRunner(trs) {
-		return bb.NewSkylabClient(ctx, cfg)
-	}
-	return swarming.NewSkylabClient(ctx, cfg)
-}
-
-func useTestRunner(trs map[string]*steps.ExecuteRequest) bool {
-	for _, r := range trs {
-		return r.GetRequestParams().GetMigrations().GetUseTestRunner()
-	}
-	return false
 }
 
 func inferDeadline(r *steps.ExecuteRequests) (time.Time, error) {
