@@ -201,7 +201,6 @@ message IssueDelta {
   // Values with rule-based Derivation within `issue` and in `field_vals_remove`
   // will be ignored.
   Issue issue = 1 [
-      (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
       (google.api.field_behavior) = REQUIRED ];
   // The list of fields in `issue` to be updated.
   //
