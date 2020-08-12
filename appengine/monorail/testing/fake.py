@@ -199,6 +199,11 @@ def MakeTestIssue(
   return issue
 
 
+def MakeTestComponentDef(project_id, comp_id, path=''):
+  return tracker_bizobj.MakeComponentDef(
+      comp_id, project_id, path, '', False, [], [], None, None)
+
+
 def MakeTestConfig(project_id, labels, statuses):
   """Convenient function to make a ProjectIssueConfig object."""
   config = tracker_bizobj.MakeDefaultProjectIssueConfig(project_id)

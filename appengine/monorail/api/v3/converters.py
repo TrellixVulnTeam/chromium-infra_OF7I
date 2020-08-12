@@ -437,10 +437,97 @@ class Converter(object):
       converted_issues.append(result)
     return converted_issues
 
+  def IngestIssueDeltas(self, issue_deltas):
+    # type: (Sequence[api_proto.issues_pb2.IssueDelta]) ->
+    #     Sequence[Tuple[int, proto.tracker_pb2.IssueDelta]]
+    """Ingests protoc IssueDeltas, into protorpc IssueDeltas.
+
+    Args:
+      issue_deltas: the protoc IssueDeltas to ingest.
+
+    Returns:
+      A list of (issue_id, tracker_pb2.IssueDelta) tuples that contain
+      values found in issue_deltas, ignoring all OUTPUT_ONLY and masked
+      fields.
+
+    Raises:
+      InputException: if any fields in the approval_deltas were invalid.
+      NoSuchProjectException: if any parent projects are not found.
+      NoSuchIssueException: if any issues are not found.
+      NoSuchComponentException: if any components are not found.
+    """
+    issue_names = [delta.issue.name for delta in issue_deltas]
+    issue_ids = rnc.IngestIssueNames(self.cnxn, issue_names, self.services)
+
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      for api_delta in issue_deltas:
+        if not api_delta.HasField('update_mask'):
+          err_agg.AddErrorMessage(
+              '`update_mask` must be set for {} delta.', api_delta.issue.name)
+
+    ingested = []
+    for iid, api_delta in zip(issue_ids, issue_deltas):
+      delta = tracker_pb2.IssueDelta()
+
+      # Check non-repeated fields before MergeMessage because in an object
+      # where fields are not set and with a FieldMask applied, there is no
+      # way to tell if empty fields were explicitly listed or not listed
+      # in the FieldMask.
+      if 'status' in api_delta.update_mask.paths:
+        if api_delta.issue.status.status:
+          delta.status = api_delta.issue.status.status
+        else:
+          delta.status = ''
+
+      if 'owner' in api_delta.update_mask.paths:
+        if api_delta.issue.owner.user:
+          delta.owner_id = rnc.IngestUserName(
+              self.cnxn, api_delta.issue.owner.user, self.services)
+        else:
+          delta.owner_id = framework_constants.NO_USER_SPECIFIED
+
+      if 'summary' in api_delta.update_mask.paths:
+        if api_delta.issue.summary:
+          delta.summary = api_delta.issue.summary
+        else:
+          delta.summary = ''
+
+      filtered_api_issue = issue_objects_pb2.Issue()
+      api_delta.update_mask.MergeMessage(
+          api_delta.issue,
+          filtered_api_issue,
+          replace_message_field=True,
+          replace_repeated_field=True)
+
+      cc_names = [name for name in api_delta.ccs_remove] + [
+          user_value.user for user_value in filtered_api_issue.cc_users
+      ]
+      cc_ids = rnc.IngestUserNames(self.cnxn, cc_names, self.services)
+      delta.cc_ids_remove = cc_ids[:len(api_delta.ccs_remove)]
+      delta.cc_ids_add = cc_ids[len(api_delta.ccs_remove):]
+
+      comp_names = [component for component in api_delta.components_remove] + [
+          c_value.component for c_value in filtered_api_issue.components
+      ]
+      comp_ids = rnc.IngestComponentDefNames(
+          self.cnxn, comp_names, self.services)
+      delta.comp_ids_remove = comp_ids[:len(api_delta.components_remove)]
+      delta.comp_ids_add = comp_ids[len(api_delta.components_remove):]
+
+      delta.labels_add = [value.label for value in filtered_api_issue.labels]
+      delta.labels_remove = [label for label in api_delta.labels_remove]
+
+      # TODO(crbug.com/monorail/7657): Ingest remaining:
+      # field values, {ext_}blocked_on, {ext_}blocking, merged.
+
+      ingested.append((iid, delta))
+
+    return ingested
+
   def IngestApprovalDeltas(self, approval_deltas, setter_id):
     # type: (Sequence[api_proto.issues_pb2.ApprovalDelta], int) ->
     #     Sequence[proto.tracker_pb2.ApprovalDelta]
-    """Ingests protoc ApprovalDeltas into a protorpc ApprovalDeltas.
+    """Ingests protoc ApprovalDeltas into protorpc ApprovalDeltas.
 
     Args:
       approval_deltas: the protoc ApprovalDeltas to ingest.

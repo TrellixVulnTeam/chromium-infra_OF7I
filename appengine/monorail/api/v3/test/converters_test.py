@@ -24,6 +24,7 @@ from api.v3.api_proto import user_objects_pb2
 from api.v3.api_proto import project_objects_pb2
 from framework import authdata
 from framework import exceptions
+from framework import framework_constants
 from framework import monorailcontext
 from testing import fake
 from testing import testing_helpers
@@ -858,6 +859,209 @@ class ConverterFunctionsTest(unittest.TestCase):
         self.converter.ConvertProjectStars(
             self.user_1.user_id, [self.project_1, self.project_2]),
         expected_stars)
+
+  def _Issue(self, project_id, local_id):
+    issue = tracker_pb2.Issue(owner_id=0)
+    issue.project_name = 'proj-%d' % project_id
+    issue.project_id = project_id
+    issue.local_id = local_id
+    issue.issue_id = project_id * 100 + local_id
+    return issue
+
+  def testIngestIssueDeltas(self):
+    # Set up.
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    config = fake.MakeTestConfig(780, [], [])
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    issue_1 = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue_1)
+    issue_2 = self._Issue(780, 2)
+    self.services.issue.TestAddIssue(issue_2)
+    comp_1 = fake.MakeTestComponentDef(780, 1)
+    comp_2 = fake.MakeTestComponentDef(780, 2)
+    config = fake.MakeTestConfig(780, [], [])
+    config.component_defs = [comp_1, comp_2]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    # Issue and delta that changes all things.
+    api_issue_all = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/1',
+        status=issue_objects_pb2.Issue.StatusValue(status='Fixed'),
+        owner=issue_objects_pb2.Issue.UserValue(user='users/111'),
+        summary='honk honk.',
+        cc_users=[issue_objects_pb2.Issue.UserValue(user='users/222')],
+        components=[
+            issue_objects_pb2.Issue.ComponentValue(
+                component='projects/proj-780/componentDefs/1')
+        ],
+        labels=[issue_objects_pb2.Issue.LabelValue(label='ready')])
+    mask_all = field_mask_pb2.FieldMask(
+        paths=[
+            'status', 'owner', 'summary', 'cc_users', 'labels', 'components'
+        ])
+    api_delta_all = issues_pb2.IssueDelta(
+        issue=api_issue_all,
+        update_mask=mask_all,
+        ccs_remove=['users/333'],
+        components_remove=['projects/proj-780/componentDefs/2'],
+        labels_remove=['not-ready'])
+    expected_delta_all = tracker_pb2.IssueDelta(
+        status='Fixed', owner_id=111, summary='honk honk.',
+        cc_ids_add=[222], cc_ids_remove=[333],
+        comp_ids_add=[1], comp_ids_remove=[2],
+        labels_add=['ready'], labels_remove=['not-ready'])
+
+    api_deltas = [api_delta_all]
+
+    # Issue with all fields, but an empty mask.
+    api_issue_all_masked = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/2',
+        status=issue_objects_pb2.Issue.StatusValue(status='Fixed'),
+        owner=issue_objects_pb2.Issue.UserValue(user='users/111'),
+        summary='honk honk.',
+        cc_users=[issue_objects_pb2.Issue.UserValue(user='users/222')],
+        components=[
+            issue_objects_pb2.Issue.ComponentValue(
+                component='projects/proj-780/componentDefs/1')
+        ],
+        labels=[issue_objects_pb2.Issue.LabelValue(label='ready')])
+    api_delta_all_masked = issues_pb2.IssueDelta(
+        issue=api_issue_all_masked,
+        update_mask=field_mask_pb2.FieldMask(paths=[]),
+        ccs_remove=['users/333'],
+        components_remove=['projects/proj-780/componentDefs/2'],
+        labels_remove=['not-ready'])
+    expected_delta_all_masked = tracker_pb2.IssueDelta(
+        cc_ids_remove=[333], comp_ids_remove=[2], labels_remove=['not-ready'])
+
+    api_deltas.append(api_delta_all_masked)
+
+    actual = self.converter.IngestIssueDeltas(api_deltas)
+    expected = [(78001, expected_delta_all), (78002, expected_delta_all_masked)]
+    self.assertEqual(actual, expected)
+
+  def testIngestIssueDeltas_RemoveNonRepeated(self):
+    # Set up.
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    issue_1 = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue_1)
+    issue_2 = self._Issue(780, 2)
+    self.services.issue.TestAddIssue(issue_2)
+
+    # Check we can remove fields without specifying them in the
+    # issue, as long as they're specified in the FieldMask.
+    api_issue = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/1')
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(
+            paths=['owner', 'status', 'summary']))
+
+    # Check thet setting fields to '' result in same behavior as not
+    # explicitly setting the values at all.
+    api_issue_set = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/2',
+        summary='', status=issue_objects_pb2.Issue.StatusValue(status=''),
+        owner=issue_objects_pb2.Issue.UserValue(user=''))
+    api_delta_set = issues_pb2.IssueDelta(
+        issue=api_issue_set,
+        update_mask=field_mask_pb2.FieldMask(
+            paths=['owner', 'status', 'summary']))
+
+    expected_delta = tracker_pb2.IssueDelta(
+        owner_id=framework_constants.NO_USER_SPECIFIED, status='', summary='')
+
+    actual = self.converter.IngestIssueDeltas([api_delta, api_delta_set])
+    expected = [(78001, expected_delta), (78002, expected_delta)]
+    self.assertEqual(actual, expected)
+
+  def testIngestIssueDeltas_UpdateMaskNotSet(self):
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    issue_1 = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue_1)
+    issue_2 = self._Issue(780, 2)
+    self.services.issue.TestAddIssue(issue_2)
+    api_deltas = []
+
+    api_issue_1 = issue_objects_pb2.Issue(name='projects/proj-780/issues/1')
+    api_delta_1 = issues_pb2.IssueDelta(issue=api_issue_1)
+    api_deltas.append(api_delta_1)
+    exp_err = '`update_mask` must be set for projects/proj-780/issues/1 delta.'
+
+    api_issue_2 = issue_objects_pb2.Issue(name='projects/proj-780/issues/2')
+    api_delta_2 = issues_pb2.IssueDelta(
+        issue=api_issue_2,
+        update_mask=field_mask_pb2.FieldMask())  # Empty but set is fine.
+    api_deltas.append(api_delta_2)
+
+    with self.assertRaisesRegexp(exceptions.InputException, exp_err):
+      self.converter.IngestIssueDeltas(api_deltas)
+
+  def testIngestIssueDeltas_OutputOnlyIgnored(self):
+    # Set up.
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    issue_1 = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue_1)
+    comp_1 = fake.MakeTestComponentDef(780, 1)
+    config = fake.MakeTestConfig(780, [], [])
+    config.component_defs = [comp_1]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    api_issue = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/1',
+        owner=issue_objects_pb2.Issue.UserValue(
+            user='users/111',
+            derivation=issue_objects_pb2.Derivation.Value('RULE')),
+        status=issue_objects_pb2.Issue.StatusValue(
+            status='KingdomCome',
+            derivation=issue_objects_pb2.Derivation.Value('RULE')),
+        state=issue_objects_pb2.IssueContentState.Value('DELETED'),
+        reporter='users/222',
+        cc_users=[issue_objects_pb2.Issue.UserValue(
+            user='users/333',
+            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
+        labels=[issue_objects_pb2.Issue.LabelValue(
+            label='wikipedia-sections',
+            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
+        components=[issue_objects_pb2.Issue.ComponentValue(
+            component='projects/proj-780/componentDefs/1',
+            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
+        field_values=[issue_objects_pb2.FieldValue(
+            value='chicken',
+            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
+        create_time=timestamp_pb2.Timestamp(seconds=4044242),
+        close_time=timestamp_pb2.Timestamp(seconds=4044242),
+        modify_time=timestamp_pb2.Timestamp(seconds=4044242),
+        component_modify_time=timestamp_pb2.Timestamp(seconds=4044242),
+        status_modify_time=timestamp_pb2.Timestamp(seconds=4044242),
+        owner_modify_time=timestamp_pb2.Timestamp(seconds=4044242),
+        attachment_count=4,
+        star_count=2,
+        phases=['EarlyLife', 'CrimesBegin', 'CrimesContinue'])
+    paths_with_output_only = [
+        'owner', 'status', 'state', 'reporter', 'cc_users', 'labels',
+        'components', 'field_values', 'create_time', 'close_time',
+        'modify_time', 'component_modify_time', 'status_modify_time',
+        'owner_modify_time', 'attachment_count', 'star_count', 'phases']
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(paths=paths_with_output_only))
+
+    expected_delta = tracker_pb2.IssueDelta(
+        # We ignore all Issue.*Value.derivation OUTPUT_ONLY fields.
+        owner_id=111, status='KingdomCome', cc_ids_add=[333],
+        labels_add=['wikipedia-sections'], comp_ids_add=[1],
+        field_vals_add=[])  # TODO(crbug.com/monorail/7657): Process fvs.
+
+    actual = self.converter.IngestIssueDeltas([api_delta])
+    expected = [(78001, expected_delta)]
+    self.assertEqual(actual, expected)
+
+
+  def testIngestIssueDeltas_Empty(self):
+    actual = self.converter.IngestIssueDeltas([])
+    self.assertEqual(actual, [])
 
   @mock.patch('time.time', mock.MagicMock(return_value=CURRENT_TIME))
   def testIngestApprovalDeltas(self):
