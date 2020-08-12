@@ -1998,13 +1998,15 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_1_ref = getRef(issue_1)
 
     delta_1 = tracker_pb2.IssueDelta(
-        merged_into=issue_1.issue_id, blocked_on_add=[issue_1.issue_id])
+        merged_into=issue_1.issue_id, blocked_on_add=[issue_1.issue_id],
+        summary='')
 
     issue_delta_pairs.append((issue_1, delta_1))
     expected_err_msgs.extend(
         [
             '%s: Cannot merge an issue into itself.' % issue_1_ref,
-            '%s: Cannot block an issue on itself.' % issue_1_ref
+            '%s: Cannot block an issue on itself.' % issue_1_ref,
+            '%s: Summary required.' % issue_1_ref
         ])
 
     issue_2 = _Issue('chicken', 2)

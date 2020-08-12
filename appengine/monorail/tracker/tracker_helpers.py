@@ -1441,6 +1441,8 @@ def AssertIssueChangesValid(
       if (delta.summary and
           len(delta.summary.strip()) > tracker_constants.MAX_SUMMARY_CHARS):
         err_agg.AddErrorMessage('{}: Summary is too long.', issue_ref)
+      if delta.summary == '':
+        err_agg.AddErrorMessage('{}: Summary required.', issue_ref)
       fvs_err_msgs = field_helpers.ValidateCustomFields(
           cnxn, services, delta.field_vals_add, config, project)
       if fvs_err_msgs:
