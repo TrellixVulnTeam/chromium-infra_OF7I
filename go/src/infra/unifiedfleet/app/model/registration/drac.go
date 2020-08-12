@@ -26,13 +26,15 @@ const DracKind string = "Drac"
 
 // DracEntity is a datastore entity that tdracs Drac.
 type DracEntity struct {
-	_kind    string   `gae:"$kind,Drac"`
-	ID       string   `gae:"$id"`
-	SwitchID string   `gae:"switch_id"`
-	Lab      string   `gae:"lab"`
-	Machine  string   `gae:"machine"`
-	Rack     string   `gae:"rack"`
-	Tags     []string `gae:"tags"`
+	_kind      string   `gae:"$kind,Drac"`
+	ID         string   `gae:"$id"`
+	SwitchID   string   `gae:"switch_id"`
+	Lab        string   `gae:"lab"`
+	Machine    string   `gae:"machine"`
+	Rack       string   `gae:"rack"`
+	Tags       []string `gae:"tags"`
+	MacAddress string   `gae:"mac_address"`
+	SwitchPort string   `gae:"switch_port"`
 	// ufspb.Drac cannot be directly used as it contains pointer.
 	Drac []byte `gae:",noindex"`
 }
@@ -56,13 +58,15 @@ func newDracEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		return nil, errors.Annotate(err, "fail to marshal Drac %s", p).Err()
 	}
 	return &DracEntity{
-		ID:       p.GetName(),
-		SwitchID: p.GetSwitchInterface().GetSwitch(),
-		Rack:     p.GetRack(),
-		Lab:      p.GetLab(),
-		Machine:  p.GetMachine(),
-		Tags:     p.GetTags(),
-		Drac:     drac,
+		ID:         p.GetName(),
+		SwitchID:   p.GetSwitchInterface().GetSwitch(),
+		Rack:       p.GetRack(),
+		Lab:        p.GetLab(),
+		Machine:    p.GetMachine(),
+		Tags:       p.GetTags(),
+		MacAddress: p.GetMacAddress(),
+		SwitchPort: p.GetSwitchInterface().GetPortName(),
+		Drac:       drac,
 	}, nil
 }
 
@@ -244,6 +248,8 @@ func GetDracIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.SwitchFilterName:
 		field = "switch_id"
+	case util.SwitchPortFilterName:
+		field = "switch_port"
 	case util.LabFilterName:
 		field = "lab"
 	case util.RackFilterName:
@@ -252,8 +258,10 @@ func GetDracIndexedFieldName(input string) (string, error) {
 		field = "machine"
 	case util.TagFilterName:
 		field = "tags"
+	case util.MacAddressFilterName:
+		field = "mac_address"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for drac are lab/rack/switch/machine/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for drac are lab/rack/switch/switch_port/macaddress/machine/tag", input)
 	}
 	return field, nil
 }

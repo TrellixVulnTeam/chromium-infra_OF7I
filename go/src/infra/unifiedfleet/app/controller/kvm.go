@@ -103,15 +103,6 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 			if err != nil {
 				return errors.Annotate(err, "UpdateKVM - processing update mask failed").Err()
 			}
-		} else {
-			// This check is for json file input
-			// User is not allowed to update mac address of a kvm
-			// instead user has to delete the old kvm and add new kvm with new mac address
-			// macaddress is associated with DHCP config, so we dont allow mac address update for a kvm
-			if oldKVM.GetMacAddress() != "" && oldKVM.GetMacAddress() != kvm.GetMacAddress() {
-				return status.Error(codes.InvalidArgument, "UpdateKVM - This kvm's mac address is already set. "+
-					"Updating mac address for the kvm is not allowed.\nInstead delete the kvm and add a new kvm with updated mac address.")
-			}
 		}
 
 		// Update kvm entry
@@ -145,10 +136,6 @@ func processKVMUpdateMask(oldKVM *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.Fi
 		case "platform":
 			oldKVM.ChromePlatform = kvm.GetChromePlatform()
 		case "macAddress":
-			if oldKVM.GetMacAddress() != "" {
-				return oldKVM, status.Error(codes.InvalidArgument, "processKVMUpdateMask - This kvm's mac address is already set. "+
-					"Updating mac address for the kvm is not allowed.\nInstead delete the kvm and add a new kvm with updated mac address.")
-			}
 			oldKVM.MacAddress = kvm.GetMacAddress()
 		case "tags":
 			oldKVM.Tags = mergeTags(oldKVM.GetTags(), kvm.GetTags())
@@ -318,6 +305,9 @@ func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) err
 	if err := resourceAlreadyExists(ctx, []*Resource{GetKVMResource(kvm.Name)}, nil); err != nil {
 		return err
 	}
+	if err := validateMacAddress(ctx, kvm.GetName(), kvm.GetMacAddress()); err != nil {
+		return err
+	}
 
 	// Aggregate resource to check if rack does not exist
 	resourcesNotFound := []*Resource{GetRackResource(rackName)}
@@ -348,11 +338,11 @@ func validateUpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mas
 		return err
 	}
 
-	return validateKVMUpdateMask(mask)
+	return validateKVMUpdateMask(ctx, kvm, mask)
 }
 
 // validateKVMUpdateMask validates the update mask for kvm update
-func validateKVMUpdateMask(mask *field_mask.FieldMask) error {
+func validateKVMUpdateMask(ctx context.Context, kvm *ufspb.KVM, mask *field_mask.FieldMask) error {
 	if mask != nil {
 		// validate the give field mask
 		for _, path := range mask.Paths {
@@ -362,6 +352,9 @@ func validateKVMUpdateMask(mask *field_mask.FieldMask) error {
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateUpdateKVM - update_time cannot be updated, it is a Output only field")
 			case "macAddress":
+				if err := validateMacAddress(ctx, kvm.GetName(), kvm.GetMacAddress()); err != nil {
+					return err
+				}
 			case "rack":
 			case "platform":
 			case "tags":
@@ -370,6 +363,9 @@ func validateKVMUpdateMask(mask *field_mask.FieldMask) error {
 				return status.Errorf(codes.InvalidArgument, "validateUpdateKVM - unsupported update mask path %q", path)
 			}
 		}
+	}
+	if err := validateMacAddress(ctx, kvm.GetName(), kvm.GetMacAddress()); err != nil {
+		return err
 	}
 	return nil
 }

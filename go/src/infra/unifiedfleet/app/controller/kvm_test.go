@@ -99,6 +99,21 @@ func TestCreateKVM(t *testing.T) {
 			So(msgs[0].Delete, ShouldBeFalse)
 		})
 
+		Convey("Create KVM - duplicated mac address", func() {
+			kvm := &ufspb.KVM{
+				Name:       "kvm-2-mac",
+				MacAddress: "kvm-2-address",
+			}
+			_, err := registration.CreateKVM(ctx, kvm)
+			kvm2 := &ufspb.KVM{
+				Name:       "kvm-2-mac2",
+				MacAddress: "kvm-2-address",
+			}
+			_, err = CreateKVM(ctx, kvm2, "rack-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "mac_address kvm-2-address is already occupied")
+		})
+
 		Convey("Create new kvm with existing rack", func() {
 			rack := &ufspb.Rack{
 				Name: "rack-10",
@@ -278,39 +293,50 @@ func TestUpdateKVM(t *testing.T) {
 			So(resp.GetTags(), ShouldResemble, []string{"testkvm"})
 		})
 
-		Convey("Partial Update kvm mac address - error", func() {
+		Convey("Partial Update kvm mac address - duplicated mac address", func() {
 			kvm := &ufspb.KVM{
-				Name:           "kvm-8",
-				MacAddress:     "abcd",
-				ChromePlatform: "chromePlatform-8",
+				Name:       "kvm-8",
+				MacAddress: "kvm-8-address",
 			}
 			_, err := registration.CreateKVM(ctx, kvm)
+			So(err, ShouldBeNil)
+			kvm2 := &ufspb.KVM{
+				Name:       "kvm-8.2",
+				MacAddress: "kvm-8.2-address",
+			}
+			_, err = registration.CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
 
 			kvm1 := &ufspb.KVM{
 				Name:       "kvm-8",
-				MacAddress: "efgh",
+				MacAddress: "kvm-8.2-address",
 			}
 			_, err = UpdateKVM(ctx, kvm1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "This kvm's mac address is already set.")
+			So(err.Error(), ShouldContainSubstring, "mac_address kvm-8.2-address is already occupied")
 		})
 
-		Convey("Update kvm mac address - error", func() {
+		Convey("Update kvm mac address - duplicated mac address", func() {
 			kvm := &ufspb.KVM{
 				Name:       "kvm-9",
-				MacAddress: "abcd",
+				MacAddress: "kvm-9-address",
 			}
 			_, err := registration.CreateKVM(ctx, kvm)
+			So(err, ShouldBeNil)
+			kvm2 := &ufspb.KVM{
+				Name:       "kvm-9.2",
+				MacAddress: "kvm-9.2-address",
+			}
+			_, err = registration.CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
 
 			kvm1 := &ufspb.KVM{
 				Name:       "kvm-9",
-				MacAddress: "efgh",
+				MacAddress: "kvm-9.2-address",
 			}
 			_, err = UpdateKVM(ctx, kvm1, "", nil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "This kvm's mac address is already set.")
+			So(err.Error(), ShouldContainSubstring, "mac_address kvm-9.2-address is already occupied")
 		})
 
 		Convey("Update kvm mac address - happy path", func() {
@@ -322,7 +348,7 @@ func TestUpdateKVM(t *testing.T) {
 
 			kvm1 := &ufspb.KVM{
 				Name:       "kvm-10",
-				MacAddress: "efgh",
+				MacAddress: "kvm-10-address",
 			}
 			res, _ := UpdateKVM(ctx, kvm1, "", nil)
 			So(res, ShouldNotBeNil)

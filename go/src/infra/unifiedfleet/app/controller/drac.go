@@ -121,15 +121,6 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 			if err != nil {
 				return errors.Annotate(err, "UpdateDrac - processing update mask failed").Err()
 			}
-		} else {
-			// This check is for json file input
-			// User is not allowed to update mac address of a drac
-			// instead user has to delete the old drac and add new drac with new mac address
-			// macaddress is associated with DHCP config, so we dont allow mac address update for a drac
-			if oldDrac.GetMacAddress() != "" && oldDrac.GetMacAddress() != drac.GetMacAddress() {
-				return status.Error(codes.InvalidArgument, "UpdateDrac - This drac's mac address is already set. "+
-					"Updating mac address for the drac is not allowed.\nInstead delete the drac and add a new drac with updated mac address.")
-			}
 		}
 
 		// Update drac entry
@@ -162,10 +153,6 @@ func processDracUpdateMask(oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_ma
 			oldDrac.Rack = drac.GetRack()
 			oldDrac.Lab = drac.GetLab()
 		case "macAddress":
-			if oldDrac.GetMacAddress() != "" {
-				return oldDrac, status.Error(codes.InvalidArgument, "processDracUpdateMask - This drac's mac address is already set. "+
-					"Updating mac address for the drac is not allowed.\nInstead delete the drac and add a new drac with updated mac address.")
-			}
 			oldDrac.MacAddress = drac.GetMacAddress()
 		case "switch":
 			if oldDrac.GetSwitchInterface() == nil {
@@ -348,6 +335,12 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 			"Please delete that drac and then add the new drac to the machine.", dracs[0].GetName(), machineName))
 	}
 
+	if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
+		return err
+	}
+	if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+		return err
+	}
 	// Aggregate resource to check if machine does not exist
 	resourcesNotFound := []*Resource{GetMachineResource(machineName)}
 	// Aggregate resource to check if resources referenced by the drac does not exist
@@ -378,7 +371,7 @@ func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 		return err
 	}
 
-	return validateDracUpdateMask(mask)
+	return validateDracUpdateMask(ctx, drac, mask)
 }
 
 // validateUpdateDracHost validates if a host can be added to a drac
@@ -394,7 +387,7 @@ func validateUpdateDracHost(ctx context.Context, drac *ufspb.Drac, vlanName, ipv
 }
 
 // validateDracUpdateMask validates the update mask for drac update
-func validateDracUpdateMask(mask *field_mask.FieldMask) error {
+func validateDracUpdateMask(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMask) error {
 	if mask != nil {
 		// validate the give field mask
 		for _, path := range mask.Paths {
@@ -404,15 +397,28 @@ func validateDracUpdateMask(mask *field_mask.FieldMask) error {
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateDracUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "switch":
+				fallthrough
 			case "portName":
+				if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+					return err
+				}
 			case "machine":
 			case "macAddress":
+				if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
+					return err
+				}
 			case "tags":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateDracUpdateMask - unsupported update mask path %q", path)
 			}
 		}
+	}
+	if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+		return err
+	}
+	if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
+		return err
 	}
 	return nil
 }

@@ -50,6 +50,34 @@ func TestCreateDrac(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
+		Convey("Create drac - duplicated switch ports", func() {
+			drac := &ufspb.Drac{
+				Name: "drac-create-1",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "drac-create-switch-1",
+					PortName: "25",
+				},
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+			switch1 := &ufspb.Switch{
+				Name: "drac-create-switch-1",
+			}
+			_, err = registration.CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+
+			drac2 := &ufspb.Drac{
+				Name: "drac-create-2",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "drac-create-switch-1",
+					PortName: "25",
+				},
+			}
+			_, err = CreateDrac(ctx, drac2, "machine-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "switch port 25 of drac-create-switch-1 is already occupied")
+		})
+
 		Convey("Create new drac with existing machine with drac", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-10",
@@ -295,7 +323,7 @@ func TestUpdateDrac(t *testing.T) {
 
 			drac1 := &ufspb.Drac{
 				Name:       "drac-7",
-				MacAddress: "efgh",
+				MacAddress: "drac-7-macaddress",
 				SwitchInterface: &ufspb.SwitchInterface{
 					PortName: "75",
 				},
@@ -304,14 +332,14 @@ func TestUpdateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
-			So(resp.GetMacAddress(), ShouldResemble, "efgh")
+			So(resp.GetMacAddress(), ShouldResemble, "drac-7-macaddress")
 			So(resp.GetSwitchInterface().GetPortName(), ShouldEqual, "75")
 		})
 
-		Convey("Partial Update drac mac address - error", func() {
+		Convey("Partial Update drac mac address - succeed", func() {
 			drac := &ufspb.Drac{
 				Name:       "drac-8",
-				MacAddress: "abcd",
+				MacAddress: "drac-8-address",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "switch-8",
 					PortName: "25",
@@ -322,28 +350,91 @@ func TestUpdateDrac(t *testing.T) {
 
 			drac1 := &ufspb.Drac{
 				Name:       "drac-8",
-				MacAddress: "efgh",
+				MacAddress: "drac-8-address",
+			}
+			drac, err = UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			So(err, ShouldBeNil)
+			So(drac.GetMacAddress(), ShouldEqual, "drac-8-address")
+		})
+
+		Convey("Partial Update drac mac address - duplicated mac address", func() {
+			drac := &ufspb.Drac{
+				Name:       "drac-8.1",
+				MacAddress: "drac-8.1-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-8.1",
+					PortName: "25",
+				},
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			drac2 := &ufspb.Drac{
+				Name:       "drac-8.2",
+				MacAddress: "drac-8.2-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-8.1",
+					PortName: "26",
+				},
+			}
+			_, err = registration.CreateDrac(ctx, drac2)
+			So(err, ShouldBeNil)
+
+			drac1 := &ufspb.Drac{
+				Name:       "drac-8.1",
+				MacAddress: "drac-8.2-address",
 			}
 			_, err = UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "This drac's mac address is already set.")
+			So(err.Error(), ShouldContainSubstring, "mac_address drac-8.2-address is already occupied")
 		})
 
-		Convey("Update drac mac address - error", func() {
+		Convey("Partial Update drac mac address - no update at all", func() {
 			drac := &ufspb.Drac{
 				Name:       "drac-9",
-				MacAddress: "abcd",
+				MacAddress: "drac-9-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-9",
+					PortName: "25",
+				},
 			}
 			_, err := registration.CreateDrac(ctx, drac)
 			So(err, ShouldBeNil)
 
 			drac1 := &ufspb.Drac{
 				Name:       "drac-9",
-				MacAddress: "efgh",
+				MacAddress: "drac-9-address",
+			}
+			_, err = UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Fully Update drac mac address - duplicated mac address", func() {
+			drac := &ufspb.Drac{
+				Name:       "drac-full",
+				MacAddress: "drac-full-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-drac-full",
+					PortName: "25",
+				},
+			}
+			_, err := registration.CreateDrac(ctx, drac)
+			drac2 := &ufspb.Drac{
+				Name:       "drac-full-2",
+				MacAddress: "drac-full-address-2",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-drac-full",
+					PortName: "26",
+				},
+			}
+			_, err = registration.CreateDrac(ctx, drac2)
+			So(err, ShouldBeNil)
+
+			drac1 := &ufspb.Drac{
+				Name:       "drac-full",
+				MacAddress: "drac-full-address-2",
 			}
 			_, err = UpdateDrac(ctx, drac1, "", nil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "This drac's mac address is already set.")
+			So(err.Error(), ShouldContainSubstring, "mac_address drac-full-address-2 is already occupied")
 		})
 
 		Convey("Update drac mac address - happy path", func() {

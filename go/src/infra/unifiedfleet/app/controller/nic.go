@@ -113,15 +113,6 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 			if err != nil {
 				return errors.Annotate(err, "UpdateNic - processing update mask failed").Err()
 			}
-		} else {
-			// This check is for json file input
-			// User is not allowed to update mac address of a nic
-			// instead user has to delete the old nic and add new nic with new mac address
-			// macaddress is associated with DHCP config, so we dont allow mac address update for a nic
-			if oldNic.GetMacAddress() != "" && oldNic.GetMacAddress() != nic.GetMacAddress() {
-				return status.Error(codes.InvalidArgument, "UpdateNic - This nic's mac address is already set. "+
-					"Updating mac address for the nic is not allowed.\nInstead delete the nic and add a new nic with updated mac address.")
-			}
 		}
 
 		// 6. Update nic entry
@@ -154,10 +145,6 @@ func processNicUpdateMask(oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.Fi
 			oldNic.Rack = nic.GetRack()
 			oldNic.Lab = nic.GetLab()
 		case "macAddress":
-			if oldNic.GetMacAddress() != "" {
-				return oldNic, status.Error(codes.InvalidArgument, "processNicUpdateMask - This nic's mac address is already set. "+
-					"Updating mac address for the nic is not allowed.\nInstead delete the nic and add a new nic with updated mac address.")
-			}
 			oldNic.MacAddress = nic.GetMacAddress()
 		case "switch":
 			if oldNic.GetSwitchInterface() == nil {
@@ -365,7 +352,12 @@ func validateCreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) 
 	if err := resourceAlreadyExists(ctx, []*Resource{GetNicResource(nic.Name)}, nil); err != nil {
 		return err
 	}
-
+	if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
+		return err
+	}
+	if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+		return err
+	}
 	// Aggregate resource to check if machine does not exist
 	resourcesNotFound := []*Resource{GetMachineResource(machineName)}
 	// Aggregate resource to check if resources referenced by the nic does not exist
@@ -395,12 +387,11 @@ func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, 
 	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
 		return err
 	}
-
-	return validateNicUpdateMask(mask)
+	return validateNicUpdateMask(ctx, nic, mask)
 }
 
 // validateNicUpdateMask validates the update mask for nic update
-func validateNicUpdateMask(mask *field_mask.FieldMask) error {
+func validateNicUpdateMask(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) error {
 	if mask != nil {
 		// validate the give field mask
 		for _, path := range mask.Paths {
@@ -410,15 +401,28 @@ func validateNicUpdateMask(mask *field_mask.FieldMask) error {
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateNicUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "switch":
+				fallthrough
 			case "portName":
+				if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+					return err
+				}
 			case "machine":
 			case "macAddress":
+				if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
+					return err
+				}
 			case "tags":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateNicUpdateMask - unsupported update mask path %q", path)
 			}
 		}
+	}
+	if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
+		return err
+	}
+	if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+		return err
 	}
 	return nil
 }

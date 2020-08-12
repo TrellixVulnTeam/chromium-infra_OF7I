@@ -26,13 +26,15 @@ const NicKind string = "Nic"
 
 // NicEntity is a datastore entity that tnics Nic.
 type NicEntity struct {
-	_kind    string   `gae:"$kind,Nic"`
-	ID       string   `gae:"$id"`
-	SwitchID string   `gae:"switch_id"`
-	Lab      string   `gae:"lab"`
-	Machine  string   `gae:"machine"`
-	Rack     string   `gae:"rack"`
-	Tags     []string `gae:"tags"`
+	_kind      string   `gae:"$kind,Nic"`
+	ID         string   `gae:"$id"`
+	SwitchID   string   `gae:"switch_id"`
+	Lab        string   `gae:"lab"`
+	Machine    string   `gae:"machine"`
+	Rack       string   `gae:"rack"`
+	Tags       []string `gae:"tags"`
+	MacAddress string   `gae:"mac_address"`
+	SwitchPort string   `gae:"switch_port"`
 	// ufspb.Nic cannot be directly used as it contains pointer.
 	Nic []byte `gae:",noindex"`
 }
@@ -56,13 +58,15 @@ func newNicEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		return nil, errors.Annotate(err, "fail to marshal Nic %s", p).Err()
 	}
 	return &NicEntity{
-		ID:       p.GetName(),
-		SwitchID: p.GetSwitchInterface().GetSwitch(),
-		Rack:     p.GetRack(),
-		Lab:      p.GetLab(),
-		Machine:  p.GetMachine(),
-		Tags:     p.GetTags(),
-		Nic:      nic,
+		ID:         p.GetName(),
+		SwitchID:   p.GetSwitchInterface().GetSwitch(),
+		Rack:       p.GetRack(),
+		Lab:        p.GetLab(),
+		Machine:    p.GetMachine(),
+		Tags:       p.GetTags(),
+		MacAddress: p.GetMacAddress(),
+		SwitchPort: p.GetSwitchInterface().GetPortName(),
+		Nic:        nic,
 	}, nil
 }
 
@@ -255,6 +259,8 @@ func GetNicIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.SwitchFilterName:
 		field = "switch_id"
+	case util.SwitchPortFilterName:
+		field = "switch_port"
 	case util.LabFilterName:
 		field = "lab"
 	case util.RackFilterName:
@@ -263,8 +269,10 @@ func GetNicIndexedFieldName(input string) (string, error) {
 		field = "machine"
 	case util.TagFilterName:
 		field = "tags"
+	case util.MacAddressFilterName:
+		field = "mac_address"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch/machine/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch/switch_port/macaddress/machine/tag", input)
 	}
 	return field, nil
 }

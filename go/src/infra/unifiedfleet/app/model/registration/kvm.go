@@ -32,6 +32,7 @@ type KVMEntity struct {
 	Lab              string   `gae:"lab"`
 	Rack             string   `gae:"rack"`
 	Tags             []string `gae:"tags"`
+	MacAddress       string   `gae:"mac_address"`
 	// ufspb.KVM cannot be directly used as it contains pointer.
 	KVM []byte `gae:",noindex"`
 }
@@ -61,6 +62,7 @@ func newKVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		Lab:              p.GetLab(),
 		Rack:             p.GetRack(),
 		Tags:             p.GetTags(),
+		MacAddress:       p.GetMacAddress(),
 	}, nil
 }
 
@@ -260,8 +262,10 @@ func GetKVMIndexedFieldName(input string) (string, error) {
 		field = "rack"
 	case util.TagFilterName:
 		field = "tags"
+	case util.MacAddressFilterName:
+		field = "mac_address"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform/tag/macaddress", input)
 	}
 	return field, nil
 }

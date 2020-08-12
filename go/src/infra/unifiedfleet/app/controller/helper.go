@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
@@ -315,4 +316,70 @@ func mergeTags(oldTags, newTags []string) []string {
 		}
 	}
 	return oldTags
+}
+
+func validateMacAddress(ctx context.Context, assetName, macAddr string) error {
+	if macAddr == "" {
+		return nil
+	}
+	nics, err := registration.QueryNicByPropertyName(ctx, "mac_address", macAddr, true)
+	if err != nil {
+		return err
+	}
+	for _, nic := range nics {
+		if nic.GetName() == assetName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "mac_address %s is already occupied by nic %s", macAddr, nic.GetName())
+	}
+	dracs, err := registration.QueryDracByPropertyName(ctx, "mac_address", macAddr, true)
+	if err != nil {
+		return err
+	}
+	for _, drac := range dracs {
+		if drac.GetName() == assetName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "mac_address %s is already occupied by drac %s", macAddr, drac.GetName())
+	}
+	kvms, err := registration.QueryKVMByPropertyName(ctx, "mac_address", macAddr, true)
+	if err != nil {
+		return err
+	}
+	for _, kvm := range kvms {
+		if kvm.GetName() == assetName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "mac_address %s is already occupied by drac %s", macAddr, kvm.GetName())
+	}
+	return nil
+}
+
+func validateSwitchPort(ctx context.Context, assetName string, switchInterface *ufspb.SwitchInterface) error {
+	if switchInterface.GetSwitch() == "" || switchInterface.GetPortName() == "" {
+		return nil
+	}
+	switchID := switchInterface.GetSwitch()
+	switchPort := switchInterface.GetPortName()
+	nics, _, err := ListNics(ctx, -1, "", fmt.Sprintf("switch=%s & switchPort=%s", switchID, switchPort), false)
+	if err != nil {
+		return err
+	}
+	for _, nic := range nics {
+		if nic.GetName() == assetName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "switch port %s of %s is already occupied by nic %s", switchPort, switchID, nic.GetName())
+	}
+	dracs, _, err := ListDracs(ctx, -1, "", fmt.Sprintf("switch=%s & switchPort=%s", switchID, switchPort), false)
+	if err != nil {
+		return err
+	}
+	for _, drac := range dracs {
+		if drac.GetName() == assetName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "switch port %s of %s is already occupied by drac %s", switchPort, switchID, drac.GetName())
+	}
+	return nil
 }

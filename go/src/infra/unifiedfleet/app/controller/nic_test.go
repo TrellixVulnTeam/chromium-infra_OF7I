@@ -50,7 +50,76 @@ func TestCreateNic(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
-		Convey("Create new nic with existing machine", func() {
+		Convey("Create nic - duplicated switch ports", func() {
+			nic := &ufspb.Nic{
+				Name: "nic-create-1",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "nic-create-switch-1",
+					PortName: "25",
+				},
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+			switch1 := &ufspb.Switch{
+				Name: "nic-create-switch-1",
+			}
+			_, err = registration.CreateSwitch(ctx, switch1)
+			So(err, ShouldBeNil)
+
+			nic2 := &ufspb.Nic{
+				Name: "nic-create-2",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "nic-create-switch-1",
+					PortName: "25",
+				},
+			}
+			_, err = CreateNic(ctx, nic2, "machine-1")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "switch port 25 of nic-create-switch-1 is already occupied")
+		})
+
+		Convey("Create new nic with existing machine with nics", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-10",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						Nics: []string{"nic-5"},
+					},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			nic := &ufspb.Nic{
+				Name: "nic-20",
+			}
+			resp, err := CreateNic(ctx, nic, "machine-10")
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, nic)
+
+			mresp, err := registration.GetMachine(ctx, "machine-10")
+			So(err, ShouldBeNil)
+			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-5"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-20")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 0)
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-20")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 0)
+		})
+
+		Convey("Create new nic with existing machine without nics", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-15",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
@@ -255,7 +324,7 @@ func TestUpdateNic(t *testing.T) {
 			So(resp.GetMacAddress(), ShouldResemble, "efgh")
 		})
 
-		Convey("Partial Update nic mac address - error", func() {
+		Convey("Partial Update nic mac address - succeed", func() {
 			nic := &ufspb.Nic{
 				Name:       "nic-8",
 				MacAddress: "abcd",
@@ -269,28 +338,91 @@ func TestUpdateNic(t *testing.T) {
 
 			nic1 := &ufspb.Nic{
 				Name:       "nic-8",
-				MacAddress: "efgh",
+				MacAddress: "nic-8-address",
+			}
+			nic, err = UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			So(err, ShouldBeNil)
+			So(nic.GetMacAddress(), ShouldEqual, "nic-8-address")
+		})
+
+		Convey("Partial Update nic mac address - duplicated mac address", func() {
+			nic := &ufspb.Nic{
+				Name:       "nic-8.1",
+				MacAddress: "nic-8.1-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-nic-8.1",
+					PortName: "25",
+				},
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			nic2 := &ufspb.Nic{
+				Name:       "nic-8.2",
+				MacAddress: "nic-8.2-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-nic-8.1",
+					PortName: "26",
+				},
+			}
+			_, err = registration.CreateNic(ctx, nic2)
+			So(err, ShouldBeNil)
+
+			nic1 := &ufspb.Nic{
+				Name:       "nic-8.1",
+				MacAddress: "nic-8.2-address",
 			}
 			_, err = UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "This nic's mac address is already set.")
+			So(err.Error(), ShouldContainSubstring, "mac_address nic-8.2-address is already occupied")
 		})
 
-		Convey("Update nic mac address - error", func() {
+		Convey("Partial Update nic mac address - no update at all", func() {
 			nic := &ufspb.Nic{
 				Name:       "nic-9",
-				MacAddress: "abcd",
+				MacAddress: "nic-9-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "nic-switch-9",
+					PortName: "25",
+				},
 			}
 			_, err := registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
 			nic1 := &ufspb.Nic{
 				Name:       "nic-9",
-				MacAddress: "efgh",
+				MacAddress: "nic-9-address",
+			}
+			_, err = UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Update nic mac address - duplicated mac address", func() {
+			nic := &ufspb.Nic{
+				Name:       "nic-full-update",
+				MacAddress: "nic-full-update-address",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-nic-full",
+					PortName: "25",
+				},
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			nic2 := &ufspb.Nic{
+				Name:       "nic-full-update2",
+				MacAddress: "nic-full-update-address2",
+				SwitchInterface: &ufspb.SwitchInterface{
+					Switch:   "switch-nic-full",
+					PortName: "26",
+				},
+			}
+			_, err = registration.CreateNic(ctx, nic2)
+			So(err, ShouldBeNil)
+
+			nic1 := &ufspb.Nic{
+				Name:       "nic-full-update",
+				MacAddress: "nic-full-update-address2",
 			}
 			_, err = UpdateNic(ctx, nic1, "", nil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "This nic's mac address is already set.")
+			So(err.Error(), ShouldContainSubstring, "mac_address nic-full-update-address2 is already occupied")
 		})
 
 		Convey("Update nic mac address - happy path", func() {
@@ -302,7 +434,7 @@ func TestUpdateNic(t *testing.T) {
 
 			nic1 := &ufspb.Nic{
 				Name:       "nic-10",
-				MacAddress: "efgh",
+				MacAddress: "nic-10-address",
 			}
 			res, _ := UpdateNic(ctx, nic1, "", nil)
 			So(res, ShouldNotBeNil)
