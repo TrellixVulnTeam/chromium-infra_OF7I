@@ -171,6 +171,11 @@ func ValidStateStr() []string {
 
 // ToUFSState converts state string to a UFS state enum.
 func ToUFSState(state string) ufspb.State {
+	for _, v := range StrToUFSState {
+		if state == v {
+			return ufspb.State(ufspb.State_value[v])
+		}
+	}
 	v, ok := StrToUFSState[state]
 	if !ok {
 		return ufspb.State_STATE_UNSPECIFIED

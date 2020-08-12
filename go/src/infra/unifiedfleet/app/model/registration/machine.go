@@ -37,6 +37,7 @@ type MachineEntity struct {
 	Rack             string   `gae:"rack"`
 	Lab              string   `gae:"lab"`
 	Tags             []string `gae:"tags"`
+	State            string   `gae:"state"`
 	// ufspb.Machine cannot be directly used as it contains pointer.
 	Machine []byte `gae:",noindex"`
 }
@@ -68,6 +69,7 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 		Lab:              p.GetLocation().GetLab().String(),
 		Tags:             p.GetTags(),
 		Machine:          machine,
+		State:            p.GetState(),
 	}, nil
 }
 
@@ -257,8 +259,10 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 		field = "chrome_platform_id"
 	case util.TagFilterName:
 		field = "tags"
+	case util.StateFilterName:
+		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/rpm/lab/rack/platform/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/rpm/lab/rack/platform/tag/state", input)
 	}
 	return field, nil
 }

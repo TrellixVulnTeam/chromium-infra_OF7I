@@ -383,3 +383,11 @@ func validateSwitchPort(ctx context.Context, assetName string, switchInterface *
 	}
 	return nil
 }
+
+func resetStateFilter(filterMap map[string][]interface{}) map[string][]interface{} {
+	if v, ok := filterMap["state"]; ok {
+		s := util.ToUFSState(fmt.Sprintf("%s", v[0]))
+		filterMap["state"] = []interface{}{s.String()}
+	}
+	return filterMap
+}

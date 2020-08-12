@@ -34,6 +34,7 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 				},
 			},
 			Realm: BrowserLabAdminRealm,
+			State: ToState(o.GetState()).String(),
 		}
 	}
 	return newObjects
@@ -89,6 +90,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			ChromePlatform: FormatResourceName(oldKVM.GetPlatform()),
 			Rack:           oldKVM.GetRack(),
 			Lab:            ToLab(strings.ToLower(dcName)).String(),
+			State:          ToState(oldKVM.GetState()).String(),
 		}
 		kvms = append(kvms, k)
 		rackName := oldKVM.GetRack()
@@ -109,6 +111,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 				Description:  crimsonSwitch.GetDescription(),
 				Rack:         rackName,
 				Lab:          ToLab(strings.ToLower(dcName)).String(),
+				State:        ToState(crimsonSwitch.GetState()).String(),
 			}
 			switches = append(switches, s)
 			switchNames = append(switchNames, s.GetName())
@@ -130,6 +133,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			Rack: &ufspb.Rack_ChromeBrowserRack{
 				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 			},
+			State: ToState(old.GetState()).String(),
 		}
 		rlse := &ufspb.RackLSE{
 			Name:             GetRackHostname(rackName),

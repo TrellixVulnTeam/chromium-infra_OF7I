@@ -42,6 +42,7 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 		// Fill the rack/lab to kvm OUTPUT only fields for indexing
 		kvm.Rack = rack.GetName()
 		kvm.Lab = rack.GetLocation().GetLab().String()
+		kvm.State = ufspb.State_STATE_REGISTERED.String()
 
 		// Create a kvm entry
 		// we use this func as it is a non-atomic operation and can be used to
@@ -51,8 +52,8 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 			return errors.Annotate(err, "Unable to create kvm %s", kvm.Name).Err()
 		}
 
-		// Update state
-		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_SERVING); err != nil {
+		// 5. Update state
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
 			return err
 		}
 		return hc.SaveChangeEvents(ctx)
@@ -83,6 +84,7 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 		// Fill the rack/lab to kvm OUTPUT only fields
 		kvm.Rack = oldKVM.GetRack()
 		kvm.Lab = oldKVM.GetLab()
+		kvm.State = oldKVM.GetState()
 
 		if rackName != "" && oldKVM.GetRack() != rackName {
 			// User is trying to associate this kvm with a different rack.
@@ -204,6 +206,7 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing kvms").Err()
 		}
 	}
+	filterMap = resetStateFilter(filterMap)
 	return registration.ListKVMs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

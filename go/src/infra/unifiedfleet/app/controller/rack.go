@@ -49,6 +49,7 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 				// Fill the rack/lab to switch OUTPUT only fields for indexing
 				s.Rack = rack.GetName()
 				s.Lab = rack.GetLocation().GetLab().String()
+				s.State = ufspb.State_STATE_SERVING.String()
 			}
 
 			// we use this func as it is a non-atomic operation and can be used to
@@ -73,6 +74,7 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 				// Fill the rack/lab to kvm OUTPUT only fields for indexing
 				kvm.Rack = rack.GetName()
 				kvm.Lab = rack.GetLocation().GetLab().String()
+				kvm.State = ufspb.State_STATE_SERVING.String()
 			}
 
 			// we use this func as it is a non-atomic operation and can be used to
@@ -97,6 +99,7 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 				// Fill the rack/lab to rpm OUTPUT only fields for indexing
 				rpm.Rack = rack.GetName()
 				rpm.Lab = rack.GetLocation().GetLab().String()
+				rpm.State = ufspb.State_STATE_SERVING.String()
 			}
 
 			// we use this func as it is a non-atomic operation and can be used to
@@ -119,6 +122,7 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 			ResourceName: ufsUtil.AddPrefix(ufsUtil.RackCollection, rack.Name),
 			User:         ufsUtil.CurrentUser(ctx),
 		})
+		rack.State = ufspb.State_STATE_SERVING.String()
 		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
 			return errors.Annotate(err, "Failed to create rack %s", rack.Name).Err()
 		}
@@ -305,6 +309,7 @@ func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, ke
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing Racks").Err()
 		}
 	}
+	filterMap = resetStateFilter(filterMap)
 	return registration.ListRacks(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

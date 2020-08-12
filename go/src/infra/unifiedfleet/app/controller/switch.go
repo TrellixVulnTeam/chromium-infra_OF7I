@@ -41,6 +41,7 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 		// Fill the rack/lab to switch OUTPUT only fields for indexing
 		s.Rack = rack.GetName()
 		s.Lab = rack.GetLocation().GetLab().String()
+		s.State = ufspb.State_STATE_SERVING.String()
 
 		// Create a switch entry
 		// we use this func as it is a non-atomic operation and can be used to
@@ -155,6 +156,7 @@ func ListSwitches(ctx context.Context, pageSize int32, pageToken, filter string,
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing switches").Err()
 		}
 	}
+	filterMap = resetStateFilter(filterMap)
 	return registration.ListSwitches(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

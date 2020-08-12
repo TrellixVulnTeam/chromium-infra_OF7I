@@ -6,6 +6,7 @@ package configuration
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -17,6 +18,7 @@ import (
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsds "infra/unifiedfleet/app/model/datastore"
+	"infra/unifiedfleet/app/util"
 )
 
 // VlanKind is the datastore entity kind Vlan.
@@ -26,6 +28,7 @@ const VlanKind string = "Vlan"
 type VlanEntity struct {
 	_kind string `gae:"$kind,Vlan"`
 	ID    string `gae:"$id"`
+	State string `gae:"state"`
 	// ufspb.Vlan cannot be directly used as it contains pointer.
 	Vlan []byte `gae:",noindex"`
 }
@@ -49,8 +52,9 @@ func newVlanEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		return nil, errors.Annotate(err, "fail to marshal Vlan %s", p).Err()
 	}
 	return &VlanEntity{
-		ID:   p.GetName(),
-		Vlan: vlan,
+		ID:    p.GetName(),
+		State: p.GetState(),
+		Vlan:  vlan,
 	}, nil
 }
 
@@ -171,5 +175,13 @@ func DeleteVlans(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 
 // GetVlanIndexedFieldName returns the index name
 func GetVlanIndexedFieldName(input string) (string, error) {
-	return "", status.Errorf(codes.InvalidArgument, "Invalid field %s - No fields available for Vlan", input)
+	var field string
+	input = strings.TrimSpace(input)
+	switch strings.ToLower(input) {
+	case util.StateFilterName:
+		field = "state"
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for vlan are state", input)
+	}
+	return field, nil
 }

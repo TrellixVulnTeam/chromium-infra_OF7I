@@ -50,6 +50,7 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken, filter string, ke
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing vlans").Err()
 		}
 	}
+	filterMap = resetStateFilter(filterMap)
 	return configuration.ListVlans(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
@@ -91,6 +92,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 			Description: vlan.GetAlias(),
 			CapacityIp:  int32(length),
 			VlanAddress: vlan.GetCidrBlock(),
+			State:       util.ToState(vlan.GetState()).String(),
 		}
 	}
 	deleteNonExistingVlans(ctx, vs, pageSize)

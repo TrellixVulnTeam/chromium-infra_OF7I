@@ -85,7 +85,7 @@ func TestCreateKVM(t *testing.T) {
 			So(resp, ShouldResembleProto, kvm2)
 			s, err := state.GetStateRecord(ctx, "kvms/kvm-2")
 			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-2")
 			So(err, ShouldBeNil)
@@ -133,7 +133,7 @@ func TestCreateKVM(t *testing.T) {
 
 			s, err := state.GetStateRecord(ctx, "kvms/kvm-20")
 			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "kvms/kvm-20")
 			So(err, ShouldBeNil)

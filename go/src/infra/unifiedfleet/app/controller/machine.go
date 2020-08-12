@@ -82,6 +82,11 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
+		machine.State = ufspb.State_STATE_REGISTERED.String()
+		// Update machine state
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
+			return err
+		}
 		if _, err = registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 			return errors.Annotate(err, "MachineRegistration - unable to batch update machine").Err()
 		}
@@ -92,11 +97,6 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 			// This will have all the extra information for nics/drac(machine name, updated time.. etc)
 			machine.GetChromeBrowserMachine().NicObjects = nics
 			machine.GetChromeBrowserMachine().DracObject = drac
-		}
-
-		// Update machine state
-		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
-			return err
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -321,6 +321,7 @@ func ListMachines(ctx context.Context, pageSize int32, pageToken, filter string,
 			return nil, "", errors.Annotate(err, "ListMachines - failed to read filter for listing machines").Err()
 		}
 	}
+	filterMap = resetStateFilter(filterMap)
 	return registration.ListMachines(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

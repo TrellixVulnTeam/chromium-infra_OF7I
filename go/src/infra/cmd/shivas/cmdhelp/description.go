@@ -663,6 +663,13 @@ Adds a platform by reading input through interactive mode.
 shivas add-platform -name DELL_R320 -manufacturer Dell -tags 'dell,8g' -desc 'Dell platform'
 Adds a platform by specifying several attributes directly`
 
+	// AddVlanLongDesc long description for AddVlanCmd
+	AddVlanLongDesc string = `Add vlans.
+
+Examples:
+shivas add-vlan -name browser-lab:100 -cidr-block A.B.C.D/24 -desc "atl97-vlan"
+Adds a vlan by specifying several attributes directly`
+
 	// UpdateChromePlatformLongDesc long description for UpdateChromePlatformCmd
 	UpdateChromePlatformLongDesc string = `Update platform configuration for browser machine.
 
@@ -975,7 +982,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
 
 	// MachineFilterHelp help text for list machine filtering
-	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform/tag` + LabFilterHelpText +
+	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform/tag/state` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'nic=nic-1,nic-2'
@@ -983,14 +990,14 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
 	// VMSlotFilterHelp help text for list free vm slots filtering
-	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by vlan/osversion/state/host_id/lab/tags` + LabFilterHelpText +
+	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/lab/rack/state/machine` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'man=apple'
 'lab=atl97 & man=apple'` + FilterCondition
 
 	// RackFilterHelp help text for list rack filtering
-	RackFilterHelp string = FilterText + `You can filter racks by tag/lab` + LabFilterHelpText +
+	RackFilterHelp string = FilterText + `You can filter racks by tag/lab/state` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'kvm=kvm-1,kvm-2'
@@ -1021,19 +1028,19 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
 
 	// KVMFilterHelp help text for list rack filtering
-	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/macaddress` + LabFilterHelpText +
+	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/macaddress/state` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
 
 	// RPMFilterHelp help text for list rack filtering
-	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack/tag` + LabFilterHelpText +
+	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack/tag/state` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// SwitchFilterHelp help text for list rack filtering
-	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack/tag` + LabFilterHelpText +
+	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack/tag/state` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition

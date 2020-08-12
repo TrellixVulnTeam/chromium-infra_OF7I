@@ -15,6 +15,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -37,6 +38,7 @@ Gets the rack and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
@@ -46,6 +48,7 @@ type getRack struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 }
 
 func (c *getRack) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -81,8 +84,18 @@ func (c *getRack) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	rackRes.Name = ufsUtil.RemovePrefix(rackRes.Name)
-	utils.PrintProtoJSON(rackRes)
-	fmt.Println()
+	return c.print(rackRes)
+}
+
+func (c *getRack) print(rack *ufspb.Rack) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(rack)
+	} else {
+		if !c.outputFlags.Tsv() {
+			utils.PrintTitle(utils.RackTitle)
+		}
+		utils.PrintRacks([]*ufspb.Rack{rack}, false)
+	}
 	return nil
 }
 

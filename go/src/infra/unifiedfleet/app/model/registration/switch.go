@@ -31,6 +31,7 @@ type SwitchEntity struct {
 	Lab   string   `gae:"lab"`
 	Rack  string   `gae:"rack"`
 	Tags  []string `gae:"tags"`
+	State string   `gae:"state"`
 	// ufspb.Switch cannot be directly used as it contains pointer (timestamp).
 	Switch []byte `gae:",noindex"`
 }
@@ -59,6 +60,7 @@ func newSwitchEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, 
 		Lab:    p.GetLab(),
 		Rack:   p.GetRack(),
 		Tags:   p.GetTags(),
+		State:  p.GetState(),
 	}, nil
 }
 
@@ -256,8 +258,10 @@ func GetSwitchIndexedFieldName(input string) (string, error) {
 		field = "rack"
 	case util.TagFilterName:
 		field = "tags"
+	case util.StateFilterName:
+		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab/rack/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab/rack/tag/state", input)
 	}
 	return field, nil
 }
