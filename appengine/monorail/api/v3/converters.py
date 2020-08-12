@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import collections
 import itertools
 import logging
+import time
 
 from google.protobuf import timestamp_pb2
 
@@ -540,15 +541,21 @@ class Converter(object):
     Raises:
       InputException: if any fields in the approval_delta protos were invalid.
       ProjectNotFound: if the parent project of any ApprovalValue isn't found.
+      NoSuchIssueException: if the issue of any ApprovalValue isn't found.
+      NoSuchUserException: if any user value was provided with an invalid email.
+          Note that users specified by ID are not checked for existence.
     """
     ingested = []
+    set_on = int(time.time())  # Use the same timestamp for all deltas.
     for approval_delta in approval_deltas:
-      # TODO(jessan): Aggregate errors.
+      approval_name = approval_delta.approval_value.name
+      # TODO(crbug/monorail/8173): Aggregate errors.
       project_id, _issue_id, approval_id = rnc.IngestApprovalValueName(
-          self.cnxn, approval_delta.approval_value.name, self.services)
+          self.cnxn, approval_name, self.services)
 
-      # TODO(jessan): Use update_mask.paths to replace the Falses below.
-      # Status
+      if not approval_delta.HasField('update_mask'):
+        raise exceptions.InputException(
+            '`update_mask` must be set for %s delta.' % approval_name)
       filtered_value = issue_objects_pb2.ApprovalValue()
       approval_delta.update_mask.MergeMessage(
           approval_delta.approval_value,
@@ -557,18 +564,13 @@ class Converter(object):
           replace_repeated_field=True)
       status = _APPROVAL_STATUS_INGEST[filtered_value.status]
       # Approvers
-      approver_ids_add = []
-      if False:
-        # No autocreate.
-        # A user may try to remove all existing approvers [a, b] and add another
-        # approver [c]. If they mis-type `c` and we auto-create `c` instead of
-        # raising error, this would cause the ApprovalValue to be editable by no
-        # one but site admins.
-        approver_ids_add = rnc.IngestUserNames(
-            self.cnxn,
-            approval_delta.approval_value.approvers,
-            self.services,
-            autocreate=False)
+      # No autocreate.
+      # A user may try to remove all existing approvers [a, b] and add another
+      # approver [c]. If they mis-type `c` and we auto-create `c` instead of
+      # raising error, this would cause the ApprovalValue to be editable by no
+      # one but site admins.
+      approver_ids_add = rnc.IngestUserNames(
+          self.cnxn, filtered_value.approvers, self.services, autocreate=False)
       approver_ids_remove = rnc.IngestUserNames(
           self.cnxn,
           approval_delta.approvers_remove,
@@ -577,18 +579,21 @@ class Converter(object):
 
       # Field Values.
       config = self.services.config.GetProjectConfig(self.cnxn, project_id)
-      fds_by_id = {fd.field_id: fd for fd in config.field_defs}
-      if approval_id not in fds_by_id:
-        pass  # TODO(jessan): Raise error - approval not in project
+      approval_fds_by_id = {
+          fd.field_id: fd
+          for fd in config.field_defs
+          if fd.field_type is tracker_pb2.FieldTypes.APPROVAL_TYPE
+      }
+      if approval_id not in approval_fds_by_id:
+        raise exceptions.InputException(
+            'Approval not found in project for %s' % approval_name)
 
-      # TODO(jessan): Ignore updating fvs that don't belong to approval
-      sub_fvs_add = []
-      add_enums = []
-      if False:
-        sub_fvs_add, add_enums = self._IngestFieldValues(
-            approval_delta.approval_value.field_values, config)
+      sub_fvs_add, add_enums = self._IngestFieldValues(
+          filtered_value.field_values, config, approval_id_filter=approval_id)
       sub_fvs_remove, remove_enums = self._IngestFieldValues(
-          approval_delta.field_vals_remove, config)
+          approval_delta.field_vals_remove,
+          config,
+          approval_id_filter=approval_id)
       labels_add = []
       labels_remove = []
       field_helpers.ShiftEnumFieldsIntoLabels(
@@ -596,9 +601,17 @@ class Converter(object):
       assert len(add_enums) == 0  # ShiftEnumFieldsIntoLabels clears all enums.
       assert len(remove_enums) == 0
 
-      ingested.append(tbo.MakeApprovalDelta(
-          status, setter_id, approver_ids_add, approver_ids_remove, sub_fvs_add,
-          sub_fvs_remove, [], labels_add, labels_remove))
+      ingested.append(
+          tbo.MakeApprovalDelta(
+              status,
+              setter_id,
+              approver_ids_add,
+              approver_ids_remove,
+              sub_fvs_add,
+              sub_fvs_remove, [],
+              labels_add,
+              labels_remove,
+              set_on=set_on))
     return ingested
 
   def IngestIssue(self, issue, project_id):
@@ -659,9 +672,9 @@ class Converter(object):
       self._ExtractIssueRefs(issue, ingestedDict, err_agg)
     return tracker_pb2.Issue(**ingestedDict)
 
-  def _IngestFieldValues(self, field_values, config):
+  def _IngestFieldValues(self, field_values, config, approval_id_filter=None):
     # type: (Sequence[api_proto.issue_objects.FieldValue],
-    #     proto.tracker_pb2.ProjectIssueConfig) ->
+    #     proto.tracker_pb2.ProjectIssueConfig, Optional[int]) ->
     #     Tuple[Sequence[proto.tracker_pb2.FieldValue],
     #         Mapping[int, Sequence[str]]]
     """Returns protorpc FieldValues for the given protoc FieldValues.
@@ -671,6 +684,8 @@ class Converter(object):
     Args:
       field_values: protoc FieldValues to ingest.
       config: ProjectIssueConfig for the FieldValues we're ingesting.
+      approval_id_filter: an approval_id, any FieldValues that do not have this
+          approval as a parent will be filtered out of the results.
 
     Returns:
       A pair 1) Ingested FieldValues. 2) A mapping of field ids to values
@@ -685,6 +700,10 @@ class Converter(object):
         _project_id, fd_id = rnc.IngestFieldDefName(
             self.cnxn, fv.field, self.services)
         fd = fds_by_id[fd_id]
+        # Ignore fields not belonging to the approval_id_filter (if provided).
+        if (approval_id_filter is not None and
+            fd.approval_id != approval_id_filter):
+          continue
         if fd.field_type == tracker_pb2.FieldTypes.ENUM_TYPE:
           enums.setdefault(fd_id, []).append(fv.value)
         else:

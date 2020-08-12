@@ -36,7 +36,9 @@ EXPLICIT_DERIVATION = issue_objects_pb2.Derivation.Value('EXPLICIT')
 RULE_DERIVATION = issue_objects_pb2.Derivation.Value('RULE')
 Choice = project_objects_pb2.FieldDef.EnumTypeSettings.Choice
 
-CURRENT_TIME = 12346
+CURRENT_TIME = 12346.78
+
+
 class ConverterFunctionsTest(unittest.TestCase):
 
   def setUp(self):
@@ -51,7 +53,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.cnxn = fake.MonorailConnection()
     self.mc = monorailcontext.MonorailContext(self.services, cnxn=self.cnxn)
     self.converter = converters.Converter(self.mc, self.services)
-    self.PAST_TIME = CURRENT_TIME - 1
+    self.PAST_TIME = int(CURRENT_TIME - 1)
     self.project_1 = self.services.project.TestAddProject(
         'proj', project_id=789)
     self.project_2 = self.services.project.TestAddProject(
@@ -126,7 +128,18 @@ class ConverterFunctionsTest(unittest.TestCase):
         approval_id=self.approval_def_1_id,
         approver_ids=[self.user_2.user_id],
         survey='approval_def_1 survey')
-    approval_defs = [self.approval_def_1]
+    self.approval_def_2_name = 'approval_field_1'
+    self.approval_def_2_id = self._CreateFieldDef(
+        self.project_1.project_id,
+        self.approval_def_2_name,
+        'APPROVAL_TYPE',
+        docstring='ad_2_docstring',
+        admin_ids=[self.user_1.user_id])
+    self.approval_def_2 = tracker_pb2.ApprovalDef(
+        approval_id=self.approval_def_2_id,
+        approver_ids=[self.user_2.user_id],
+        survey='approval_def_2 survey')
+    approval_defs = [self.approval_def_1, self.approval_def_2]
     self.field_def_6_name = 'simonsays'
     self.field_def_6 = self._CreateFieldDef(
         self.project_1.project_id,
@@ -134,13 +147,13 @@ class ConverterFunctionsTest(unittest.TestCase):
         'STR_TYPE',
         approval_id=self.approval_def_1_id)
     self.dne_field_def_id = 999999
-    self.fv_1_value = 'some_string_field_value'
+    self.fv_1_value = u'some_string_field_value'
     self.fv_1 = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value=self.fv_1_value, derived=False)
     self.fv_1_derived = fake.MakeFieldValue(
         field_id=self.field_def_1, str_value=self.fv_1_value, derived=True)
     self.fv_6 = fake.MakeFieldValue(
-        field_id=self.field_def_6, str_value='touch-nose')
+        field_id=self.field_def_6, str_value=u'touch-nose', derived=False)
     self.phase_1_id = 123123
     self.phase_1 = fake.MakePhase(self.phase_1_id, name='some phase name')
     self.av_1 = fake.MakeApprovalValue(
@@ -1065,13 +1078,13 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   @mock.patch('time.time', mock.MagicMock(return_value=CURRENT_TIME))
   def testIngestApprovalDeltas(self):
-    # TODO(jessan): Add tests for multiple deltas, for field values, and for
-    # attempting to add an approver that does not exist.
     mask = field_mask_pb2.FieldMask(
-        paths=['status', 'setter', 'phase', 'set_time'])
+        paths=['approvers', 'status', 'setter', 'phase', 'set_time'])
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
     approval_delta = issues_pb2.ApprovalDelta(
         approval_value=issue_objects_pb2.ApprovalValue(
-            name='projects/proj/issues/1/approvalValues/1',
+            name=av_name,
             status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA'),
             approvers=['users/222', 'users/333'],
             approval_def='ignored',
@@ -1085,17 +1098,147 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected = tracker_pb2.ApprovalDelta(
         status=tracker_pb2.ApprovalStatus.NA,
         setter_id=self.user_1.user_id,
-        set_on=CURRENT_TIME,
-        # TODO(jessan): Handle update masks for remaining fields
-        # approver_ids_add=[222, 333],
+        set_on=int(CURRENT_TIME),
+        approver_ids_add=[222, 333],
         approver_ids_remove=[222],
     )
     self.assertEqual(actual, [expected])
 
-  def testIngestApprovalDeltas_EmptyDelta(self):
+  def testIngestApprovalDeltas_EmptyMask(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    # field_def_6 belongs to approval_def_1.
+    approval_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % self.field_def_6, value=u'x')
     approval_delta = issues_pb2.ApprovalDelta(
         approval_value=issue_objects_pb2.ApprovalValue(
-            name='projects/proj/issues/1/approvalValues/1'))
+            name=av_name,
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA'),
+            approvers=['users/222', 'users/333'],
+            approval_def='ignored',
+            field_values=[approval_fv],
+            set_time=timestamp_pb2.Timestamp(),  # Ignored.
+            setter='ignored',
+            phase='ignored'),
+        update_mask=field_mask_pb2.FieldMask(),
+        approvers_remove=['users/222'])
+    actual = self.converter.IngestApprovalDeltas(
+        [approval_delta], self.user_1.user_id)
+    expected = tracker_pb2.ApprovalDelta(approver_ids_remove=[222])
+    self.assertEqual(actual, [expected])
+
+  def testIngestApprovalDeltas_FilterFieldValues(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+
+    # field_def_6 belongs to approval_def_1, and should be included.
+    approval_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % self.field_def_6,
+        value=u'touch-nose',
+        derivation=RULE_DERIVATION,  # Ignored.
+    )
+    # An enum field belonging to approval_def_1, which should be included.
+    approval_enum_field_id = self._CreateFieldDef(
+        self.project_1.project_id,
+        'approval2field',
+        'ENUM_TYPE',
+        approval_id=self.approval_def_1_id)
+    approval_enum_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % approval_enum_field_id,
+        value=u'enumval')
+    # field_def_1 does not belong to any approval, and should be ignored.
+    other_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % self.field_def_1,
+        value=u'something',
+    )
+    # This does not exist, and should be ignored.
+    dne_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/404',
+        value=u'DoesNotExist',
+    )
+    # Define a field belonging to approval_2, which should be ignored.
+    approval_2_field_id = self._CreateFieldDef(
+        self.project_1.project_id,
+        'approval2field',
+        'STR_TYPE',
+        approval_id=self.approval_def_2_id)
+    approval_2_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % approval_2_field_id,
+        value=u'ignored')
+    av = issue_objects_pb2.ApprovalValue(
+        name=av_name, field_values=[other_fv, approval_fv, dne_fv])
+    approval_delta = issues_pb2.ApprovalDelta(
+        update_mask=field_mask_pb2.FieldMask(paths=['field_values']),
+        approval_value=av,
+        field_vals_remove=[approval_enum_fv, approval_2_fv],
+        approvers_remove=['users/222'],
+    )
+    actual = self.converter.IngestApprovalDeltas(
+        [approval_delta], self.user_1.user_id)
+    expected = tracker_pb2.ApprovalDelta(
+        subfield_vals_add=[self.fv_6],
+        subfield_vals_remove=[],
+        labels_remove=[u'approval2field-enumval'],
+        approver_ids_remove=[222],
+    )
+    self.assertEqual(actual, [expected])
+
+  def testIngestApprovalDeltas_WrongProject(self):
+    approval_def_project2_name = 'project2_approval'
+    approval_def_project2_id = self._CreateFieldDef(
+        self.project_2.project_id,
+        approval_def_project2_name,
+        'APPROVAL_TYPE',
+        docstring='project2_ad_docstring',
+        admin_ids=[self.user_1.user_id])
+    self.services.config.UpdateConfig(
+        self.cnxn,
+        self.project_2,
+        approval_defs=[
+            (approval_def_project2_id, [self.user_1.user_id], 'survey')
+        ])
+    wrong_project_av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % approval_def_project2_id)
+    approval_delta = issues_pb2.ApprovalDelta(
+        update_mask=field_mask_pb2.FieldMask(),
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=wrong_project_av_name))
+    with self.assertRaises(exceptions.InputException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_DoesNotExist(self):
+    dne_av_name = ('projects/proj/issues/1/approvalValues/404')
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name=dne_av_name),
+        update_mask=field_mask_pb2.FieldMask())
+    with self.assertRaises(exceptions.InputException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_NonApproval(self):
+    """We fail if provided a non-approval Field ID in the resource name."""
+    dne_av_name = (
+        'projects/proj/issues/1/approvalValues/%s' % self.field_def_1)
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name=dne_av_name),
+        update_mask=field_mask_pb2.FieldMask())
+    with self.assertRaises(exceptions.InputException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_IssueDoesNotExist(self):
+    dne_av_name = (
+        'projects/proj/issues/404/approvalValues/%d' % self.approval_def_1_id)
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name=dne_av_name),
+        update_mask=field_mask_pb2.FieldMask())
+    with self.assertRaises(exceptions.NoSuchIssueException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_EmptyDelta(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name=av_name),
+        update_mask=field_mask_pb2.FieldMask())
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
     self.assertEqual(actual, [tracker_pb2.ApprovalDelta()])
@@ -1115,18 +1258,145 @@ class ConverterFunctionsTest(unittest.TestCase):
 
   def testIngestApprovalDeltas_NoStatus(self):
     """Setter ID isn't set when status isn't set."""
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
     approval_delta = issues_pb2.ApprovalDelta(
         approval_value=issue_objects_pb2.ApprovalValue(
-            name='projects/proj/issues/1/approvalValues/1',
-            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA')),
+            name=av_name,
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA'),
+            approvers=['users/333']),
         # Status left out of update mask.
+        update_mask=field_mask_pb2.FieldMask(paths=['approvers']),
         approvers_remove=['users/222'])
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
     expected = tracker_pb2.ApprovalDelta(
-        approver_ids_remove=[222],
-    )
+        approver_ids_add=[333], approver_ids_remove=[222])
     self.assertEqual(actual, [expected])
+
+  def testIngestApprovalDeltas_ApproverRemoveDoesNotExist(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name=av_name),
+        update_mask=field_mask_pb2.FieldMask(),
+        approvers_remove=['users/nobody@404.com'])
+    with self.assertRaises(exceptions.NoSuchUserException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_ApproverAddDoesNotExist(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=av_name, approvers=['users/nobody@404.com']),
+        update_mask=field_mask_pb2.FieldMask(paths=['approvers']))
+    with self.assertRaises(exceptions.NoSuchUserException):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_FirstErrorRaised(self):
+    """Until we have error aggregation, we raise the first found error."""
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    user_dne_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=av_name, approvers=['users/nobody@404.com']),
+        update_mask=field_mask_pb2.FieldMask(paths=['approvers']))
+    invalid_name_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name='garbage'))
+    with self.assertRaises(exceptions.NoSuchUserException):
+      self.converter.IngestApprovalDeltas(
+          [user_dne_delta, invalid_name_delta], self.user_1.user_id)
+
+  def testIngestApprovalDeltas_MultipleDeltasSameSetOn(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    delta_1 = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=av_name,
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA'),
+            approvers=['users/222']),
+        update_mask=field_mask_pb2.FieldMask(paths=['approvers', 'status']))
+    # Change status, and also ensure we don't reuse the same mask across deltas
+    # Approvers should be ignored for delta_2 because it is not included in the
+    # mask.
+    delta_2 = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=av_name,
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
+                'NOT_SET'),
+            approvers=['users/222']),
+        update_mask=field_mask_pb2.FieldMask(paths=['status']))
+    actual = self.converter.IngestApprovalDeltas(
+        [delta_1, delta_2], self.user_1.user_id)
+    self.assertEqual(actual[0].status, tracker_pb2.ApprovalStatus.NA)
+    self.assertEqual(actual[1].status, tracker_pb2.ApprovalStatus.NOT_SET)
+    self.assertEqual(actual[0].setter_id, self.user_1.user_id)
+    self.assertEqual(actual[1].setter_id, self.user_1.user_id)
+    self.assertEqual(actual[0].approver_ids_add, [222])
+    self.assertEqual(actual[1].approver_ids_add, [])
+    # We don't patch time.time, so these would be different if the set_on wasn't
+    # passed in.
+    # Note: More ideal/correct unit test would create a mock that forces
+    # time.time to return an incremented value on its subsequent calls.
+    self.assertEqual(actual[0].set_on, actual[1].set_on)
+
+  def testIngestApprovalDeltas_DifferentProjects(self):
+    # Create an ApprovalDef for project2
+    approval_def_project2_name = 'project2_approval'
+    approval_def_project2_id = self._CreateFieldDef(
+        self.project_2.project_id,
+        approval_def_project2_name,
+        'APPROVAL_TYPE',
+        docstring='project2_ad_docstring',
+        admin_ids=[self.user_1.user_id])
+    self.services.config.UpdateConfig(
+        self.cnxn,
+        self.project_2,
+        approval_defs=[
+            (approval_def_project2_id, [self.user_1.user_id], 'survey')
+        ])
+
+    # Define a field belonging to project_2's ApprovalDef.
+    project2_field_id = self._CreateFieldDef(
+        self.project_2.project_id,
+        'approval2field',
+        'STR_TYPE',
+        approval_id=approval_def_project2_id)
+    project2_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % project2_field_id, value=u'p2')
+
+    # field_def_6 belongs to approval_def_1.
+    project1_fv = issue_objects_pb2.FieldValue(
+        field='projects/proj/fieldDefs/%d' % self.field_def_6,
+        value=u'touch-nose',
+    )
+
+    # Both ApprovalValues are provided both FieldValues, and we expect them
+    # to only include the FieldValues appropriate to their respective approvals.
+    project2_av_name = (
+        'projects/%s/issues/2/approvalValues/%d' %
+        (self.project_2.project_name, approval_def_project2_id))
+    project2_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=project2_av_name, field_values=[project1_fv, project2_fv]),
+        update_mask=field_mask_pb2.FieldMask(paths=['field_values']))
+
+    project1_av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    project1_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=project1_av_name, field_values=[project1_fv, project2_fv]),
+        update_mask=field_mask_pb2.FieldMask(paths=['field_values']))
+
+    actual = self.converter.IngestApprovalDeltas(
+        [project2_delta, project1_delta], self.user_1.user_id)
+
+    expected_p2_fv = fake.MakeFieldValue(
+        field_id=project2_field_id, str_value=u'p2', derived=False)
+    expected_p2 = tracker_pb2.ApprovalDelta(subfield_vals_add=[expected_p2_fv])
+    expected_p1 = tracker_pb2.ApprovalDelta(subfield_vals_add=[self.fv_6])
+    self.assertEqual(actual, [expected_p2, expected_p1])
 
   def testIngestIssue(self):
     ingest = issue_objects_pb2.Issue(
@@ -2358,8 +2628,8 @@ class ConverterFunctionsTest(unittest.TestCase):
     project_config = self.services.config.GetProjectConfig(
         self.cnxn, self.project_1.project_id)
     input_fds = project_config.field_defs
-    # project_1 is set up to have 11 non-approval fields and 1 approval field
-    self.assertEqual(11, len(input_fds))
+    # project_1 is set up to have 10 non-approval fields and 2 approval fields.
+    self.assertEqual(12, len(input_fds))
     output = self.converter.ConvertFieldDefs(
         input_fds, self.project_1.project_id)
     # assert we skip approval fields
