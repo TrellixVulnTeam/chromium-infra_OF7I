@@ -183,6 +183,18 @@ func DeleteDHCPs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	return ufsds.DeleteAll(ctx, protos, newDHCPEntity)
 }
 
+// BatchDeleteDHCPs deletes dhcps in datastore.
+//
+// This is a non-atomic operation. Must be used within a transaction.
+// Will lead to partial deletes if not used in a transaction.
+func BatchDeleteDHCPs(ctx context.Context, ids []string) error {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &ufspb.DHCPConfig{Hostname: id}
+	}
+	return ufsds.BatchDelete(ctx, protos, newDHCPEntity)
+}
+
 // GetDHCPIndexedFieldName returns the index name
 func GetDHCPIndexedFieldName(input string) (string, error) {
 	var field string

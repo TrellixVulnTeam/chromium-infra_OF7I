@@ -38,6 +38,9 @@ func (su *stateUpdater) deleteStateHelper(ctx context.Context) error {
 
 func (su *stateUpdater) updateStateHelper(ctx context.Context, newS ufspb.State) error {
 	old, _ := state.GetStateRecord(ctx, su.ResourceName)
+	if old.GetState() == newS {
+		return nil
+	}
 	state.DeleteStates(ctx, []string{su.ResourceName})
 	newRecord := &ufspb.StateRecord{
 		State:        newS,

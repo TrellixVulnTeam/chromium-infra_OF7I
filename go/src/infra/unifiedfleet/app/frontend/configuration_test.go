@@ -1145,6 +1145,7 @@ func TestCreateVlan(t *testing.T) {
 	vlan3 := mockVlan("")
 	Convey("CreateVlan", t, func() {
 		Convey("Create new vlan with vlan_id", func() {
+			vlan1.VlanAddress = "192.168.255.248/29"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan1,
 				VlanId: "Vlan-1",
@@ -1155,6 +1156,7 @@ func TestCreateVlan(t *testing.T) {
 		})
 
 		Convey("Create existing vlan", func() {
+			vlan3.VlanAddress = "192.168.255.248/29"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan3,
 				VlanId: "Vlan-1",
@@ -1162,7 +1164,7 @@ func TestCreateVlan(t *testing.T) {
 			resp, err := tf.Fleet.CreateVlan(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, datastore.AlreadyExists)
+			So(err.Error(), ShouldContainSubstring, "already exists")
 		})
 
 		Convey("Create new vlan - Invalid input nil", func() {
@@ -1210,6 +1212,7 @@ func TestUpdateVlan(t *testing.T) {
 	vlan4 := mockVlan("a.b)7&")
 	Convey("UpdateVlan", t, func() {
 		Convey("Update existing vlan", func() {
+			vlan1.VlanAddress = "3.3.3.3/30"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan1,
 				VlanId: "vlan-1",
@@ -1232,7 +1235,7 @@ func TestUpdateVlan(t *testing.T) {
 			resp, err := tf.Fleet.UpdateVlan(tf.C, ureq)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, datastore.NotFound)
+			So(err.Error(), ShouldContainSubstring, "no Vlan with VlanID vlan-3")
 		})
 
 		Convey("Update vlan - Invalid input nil", func() {
@@ -1275,6 +1278,7 @@ func TestGetVlan(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		vlan1 := mockVlan("vlan-1")
+		vlan1.VlanAddress = "3.3.3.4/30"
 		req := &ufsAPI.CreateVlanRequest{
 			Vlan:   vlan1,
 			VlanId: "vlan-1",
@@ -1371,6 +1375,7 @@ func TestDeleteVlan(t *testing.T) {
 		defer validate()
 		Convey("Delete vlan by existing ID without references", func() {
 			vlan2 := mockVlan("")
+			vlan2.VlanAddress = "192.168.110.0/30"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan2,
 				VlanId: "vlan-2",

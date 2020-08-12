@@ -365,6 +365,31 @@ func (hc *HistoryClient) LogRPMChanges(oldData, newData *ufspb.RPM) {
 	hc.logMsgEntity(resourceName, false, newData)
 }
 
+// LogVLANChanges logs the change of the given vlan.
+func (hc *HistoryClient) LogVLANChanges(oldData, newData *ufspb.Vlan) {
+	if oldData == nil && newData == nil {
+		return
+	}
+	resourceName := util.AddPrefix(util.VlanCollection, newData.GetName())
+	if newData == nil {
+		resourceName = util.AddPrefix(util.VlanCollection, oldData.GetName())
+	}
+	if oldData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "vlan", LifeCycleRegistration)...)
+		hc.logMsgEntity(resourceName, false, newData)
+		return
+	}
+	if newData == nil {
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "vlan", LifeCycleRetire)...)
+		oldData.UpdateTime = ptypes.TimestampNow()
+		hc.logMsgEntity(resourceName, true, oldData)
+		return
+	}
+	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.vlan_address", oldData.GetVlanAddress(), newData.GetVlanAddress())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.description", oldData.GetDescription(), newData.GetDescription())...)
+	hc.logMsgEntity(resourceName, false, newData)
+}
+
 // LogDHCPChanges logs the change of the given dhcp.
 func LogDHCPChanges(oldData, newData *ufspb.DHCPConfig) ([]*ufspb.ChangeEvent, *history.SnapshotMsgEntity) {
 	changes := make([]*ufspb.ChangeEvent, 0)

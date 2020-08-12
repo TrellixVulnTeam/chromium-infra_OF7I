@@ -820,6 +820,9 @@ func (r *CreateVlanRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
+	if r.Vlan.GetVlanAddress() == "" {
+		return status.Errorf(codes.InvalidArgument, "Empty cidr block for vlan")
+	}
 	return nil
 }
 

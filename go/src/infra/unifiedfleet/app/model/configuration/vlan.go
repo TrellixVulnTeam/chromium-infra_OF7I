@@ -26,9 +26,10 @@ const VlanKind string = "Vlan"
 
 // VlanEntity is a datastore entity that tvlans Vlan.
 type VlanEntity struct {
-	_kind string `gae:"$kind,Vlan"`
-	ID    string `gae:"$id"`
-	State string `gae:"state"`
+	_kind     string `gae:"$kind,Vlan"`
+	ID        string `gae:"$id"`
+	State     string `gae:"state"`
+	CidrBlock string `gae:"cidr_block"`
 	// ufspb.Vlan cannot be directly used as it contains pointer.
 	Vlan []byte `gae:",noindex"`
 }
@@ -52,9 +53,10 @@ func newVlanEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		return nil, errors.Annotate(err, "fail to marshal Vlan %s", p).Err()
 	}
 	return &VlanEntity{
-		ID:    p.GetName(),
-		State: p.GetState(),
-		Vlan:  vlan,
+		ID:        p.GetName(),
+		State:     p.GetState(),
+		CidrBlock: p.GetVlanAddress(),
+		Vlan:      vlan,
 	}, nil
 }
 
@@ -66,6 +68,23 @@ func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 // UpdateVlan updates vlan in datastore.
 func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 	return putVlan(ctx, vlan, true)
+}
+
+// BatchUpdateVlans updates a batch of vlans to datastore
+//
+// Can be used in a transaction
+func BatchUpdateVlans(ctx context.Context, vlans []*ufspb.Vlan) ([]*ufspb.Vlan, error) {
+	protos := make([]proto.Message, len(vlans))
+	updateTime := ptypes.TimestampNow()
+	for i, vlan := range vlans {
+		vlan.UpdateTime = updateTime
+		protos[i] = vlan
+	}
+	_, err := ufsds.PutAll(ctx, protos, newVlanEntity, true)
+	if err == nil {
+		return vlans, err
+	}
+	return nil, err
 }
 
 // GetVlan returns vlan for the given id from datastore.
@@ -160,6 +179,36 @@ func queryAllVlan(ctx context.Context) ([]ufsds.FleetEntity, error) {
 // GetAllVlans returns all vlans in datastore.
 func GetAllVlans(ctx context.Context) (*ufsds.OpResults, error) {
 	return ufsds.GetAll(ctx, queryAllVlan)
+}
+
+// QueryVlanByPropertyName query's vlanb Entity in the datastore
+func QueryVlanByPropertyName(ctx context.Context, propertyName, id string, keysOnly bool) ([]*ufspb.Vlan, error) {
+	q := datastore.NewQuery(VlanKind).KeysOnly(keysOnly).FirestoreMode(true)
+	var entities []*VlanEntity
+	if err := datastore.GetAll(ctx, q.Eq(propertyName, id), &entities); err != nil {
+		logging.Errorf(ctx, "Failed to query from datastore: %s", err)
+		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
+	}
+	if len(entities) == 0 {
+		logging.Debugf(ctx, "No vlans found for the query: %s", id)
+		return nil, nil
+	}
+	vlans := make([]*ufspb.Vlan, 0, len(entities))
+	for _, entity := range entities {
+		if keysOnly {
+			vlans = append(vlans, &ufspb.Vlan{
+				Name: entity.ID,
+			})
+		} else {
+			pm, perr := entity.GetProto()
+			if perr != nil {
+				logging.Errorf(ctx, "Failed to unmarshal proto: %s", perr)
+				continue
+			}
+			vlans = append(vlans, pm.(*ufspb.Vlan))
+		}
+	}
+	return vlans, nil
 }
 
 // DeleteVlans deletes a batch of vlans

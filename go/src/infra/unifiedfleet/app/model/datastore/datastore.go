@@ -106,13 +106,13 @@ func PutAll(ctx context.Context, pms []proto.Message, nf NewFunc, update bool) (
 		entity, err := nf(ctx, pm)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
-			return nil, status.Errorf(codes.Internal, InternalError)
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("%s: %s", InternalError, err.Error()))
 		}
 		entities = append(entities, entity)
 	}
 	if err := datastore.Put(ctx, entities); err != nil {
 		logging.Errorf(ctx, "Failed to put in datastore: %s", err)
-		return nil, status.Errorf(codes.Internal, InternalError)
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("%s: %s", InternalError, err.Error()))
 	}
 	return pms, nil
 }
@@ -166,7 +166,7 @@ func Delete(ctx context.Context, pm proto.Message, nf NewFunc) error {
 	entity, err := nf(ctx, pm)
 	if err != nil {
 		logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
-		return status.Errorf(codes.Internal, InternalError)
+		return status.Errorf(codes.Internal, fmt.Sprintf("%s: %s", InternalError, err.Error()))
 	}
 	// Datastore doesn't throw an error if the record doesn't exist.
 	// Check and return err if there is no such entity in the datastore.
@@ -180,7 +180,7 @@ func Delete(ctx context.Context, pm proto.Message, nf NewFunc) error {
 	}
 	if err = datastore.Delete(ctx, entity); err != nil {
 		logging.Errorf(ctx, "Failed to delete entity from datastore: %s", err)
-		return status.Errorf(codes.Internal, InternalError)
+		return status.Errorf(codes.Internal, fmt.Sprintf("%s: %s", InternalError, err.Error()))
 	}
 	return nil
 }
@@ -310,7 +310,7 @@ func BatchDelete(ctx context.Context, es []proto.Message, nf NewFunc) error {
 		entity, err := nf(ctx, e)
 		if err != nil {
 			logging.Errorf(ctx, "Failed to marshal new entity: %s", err)
-			return status.Errorf(codes.Internal, InternalError)
+			return status.Errorf(codes.Internal, fmt.Sprintf("%s: %s", InternalError, err.Error()))
 		}
 		checkEntities = append(checkEntities, entity)
 	}
@@ -328,7 +328,7 @@ func BatchDelete(ctx context.Context, es []proto.Message, nf NewFunc) error {
 	}
 	if err := datastore.Delete(ctx, checkEntities); err != nil {
 		logging.Errorf(ctx, "Failed to delete entities from datastore: %s", err)
-		return status.Errorf(codes.Internal, InternalError)
+		return status.Errorf(codes.Internal, fmt.Sprintf("%s: %s", InternalError, err.Error()))
 	}
 	return nil
 }

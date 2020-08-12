@@ -22,6 +22,8 @@ const (
 	ACSLab                   string = "acs-lab"
 	BrowserLab               string = "browser-lab"
 	CrOSLab                  string = "cros-lab"
+	// https://cloud.google.com/datastore/docs/concepts/limits
+	OperationPageSize int = 500
 )
 
 // Key is a type for use in adding values to context. It is not recommended to use plain string as key.

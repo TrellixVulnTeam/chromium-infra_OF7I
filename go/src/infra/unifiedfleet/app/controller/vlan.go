@@ -6,33 +6,107 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
+	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
+	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/configuration"
-	"infra/unifiedfleet/app/model/datastore"
+	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/util"
 )
 
 // CreateVlan creates a new vlan in datastore.
 func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
-	return configuration.CreateVlan(ctx, vlan)
+	var ips []*ufspb.IP
+	var length int
+	var err error
+	f := func(ctx context.Context) error {
+		hc := getVlanHistoryClient(vlan)
+		if err := validateCreateVlan(ctx, vlan); err != nil {
+			return errors.Annotate(err, "CreateVlan - validation failed").Err()
+		}
+
+		ips, length, err = util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+		if err != nil {
+			return errors.Annotate(err, "CreateVlan").Err()
+		}
+		vlan.CapacityIp = int32(length)
+		vlan.State = ufspb.State_STATE_SERVING.String()
+
+		if _, err = configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan}); err != nil {
+			return err
+		}
+		hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_SERVING)
+		hc.LogVLANChanges(nil, vlan)
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "CreateVlan - unable to create vlan %s", vlan.Name).Err()
+	}
+	// Cannot update more than 500 entities in one transaction
+	logging.Debugf(ctx, "Updating %d ips", len(ips))
+	for i := 0; ; i += util.OperationPageSize {
+		end := util.Min(i+util.OperationPageSize, len(ips))
+		configuration.BatchUpdateIPs(ctx, ips[i:end])
+		if i+util.OperationPageSize >= len(ips) {
+			break
+		}
+	}
+	return vlan, nil
 }
 
 // UpdateVlan updates vlan in datastore.
-func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
-	return configuration.UpdateVlan(ctx, vlan)
+func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMask, s ufspb.State) (*ufspb.Vlan, error) {
+	f := func(ctx context.Context) error {
+		hc := getVlanHistoryClient(vlan)
+		if err := validateUpdateVlan(ctx, vlan, mask); err != nil {
+			return errors.Annotate(err, "UpdateVlan - validation failed").Err()
+		}
+
+		oldVlan, err := configuration.GetVlan(ctx, vlan.GetName())
+		if err != nil {
+			return errors.Annotate(err, "UpdateVlan - fail to get old vlan").Err()
+		}
+
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			vlan, err = processVlanUpdateMask(oldVlan, vlan, mask)
+			if err != nil {
+				return errors.Annotate(err, "UpdateVlan - processing update mask failed").Err()
+			}
+		} else {
+			// Copy the not-allowed change fields
+			vlan.VlanAddress = oldVlan.GetVlanAddress()
+			vlan.State = oldVlan.GetState()
+		}
+		if s != ufspb.State_STATE_UNSPECIFIED {
+			vlan.State = s.String()
+		}
+		hc.stUdt.updateStateHelper(ctx, ufspb.State(ufspb.State_value[vlan.GetState()]))
+
+		if _, err := configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan}); err != nil {
+			return errors.Annotate(err, "UpdateVlan - unable to batch update vlan %s", vlan.Name).Err()
+		}
+		hc.LogVLANChanges(oldVlan, vlan)
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "UpdateVlan - unable to create vlan %s", vlan.Name).Err()
+	}
+	return vlan, nil
 }
 
 // GetVlan returns vlan for the given id from datastore.
@@ -60,11 +134,39 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken, filter string, ke
 // Delete if this Vlan is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteVlan(ctx context.Context, id string) error {
-	err := validateDeleteVlan(ctx, id)
-	if err != nil {
-		return err
+	f := func(ctx context.Context) error {
+		hc := getVlanHistoryClient(&ufspb.Vlan{Name: id})
+		hc.LogVLANChanges(nil, &ufspb.Vlan{Name: id})
+		err := validateDeleteVlan(ctx, id)
+		if err != nil {
+			return errors.Annotate(err, "DeleteVlan - validation failed").Err()
+		}
+
+		if err := configuration.DeleteVlan(ctx, id); err != nil {
+			return err
+		}
+		return hc.SaveChangeEvents(ctx)
 	}
-	return configuration.DeleteVlan(ctx, id)
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return errors.Annotate(err, "DeleteVlan - unable to delete vlan %s", id).Err()
+	}
+	ips, _ := configuration.QueryIPByPropertyName(ctx, map[string]string{
+		"vlan": id,
+	})
+	// Cannot update more than 500 entities in one transaction
+	if len(ips) > 0 {
+		logging.Debugf(ctx, "deleting %d ips for vlan %s", len(ips), id)
+		ipIDs := ufsAPI.ParseResources(ips, "Id")
+		for i := 0; ; i += util.OperationPageSize {
+			end := util.Min(i+util.OperationPageSize, len(ipIDs))
+			configuration.BatchDeleteIPs(ctx, ipIDs[i:end])
+			if i+util.OperationPageSize >= len(ipIDs) {
+				break
+			}
+		}
+	}
+	return nil
 }
 
 // ImportVlans implements the logic of importing vlans and related info to backend storage.
@@ -74,7 +176,7 @@ func DeleteVlan(ctx context.Context, id string) error {
 //      * the first error that it meets
 //
 // The function will stop at the very first error.
-func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int) (*datastore.OpResults, error) {
+func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int) (*ufsds.OpResults, error) {
 	logging.Debugf(ctx, "processing vlans")
 	IPs := make([]*ufspb.IP, 0)
 	vs := make([]*ufspb.Vlan, len(vlans))
@@ -96,7 +198,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 		}
 	}
 	deleteNonExistingVlans(ctx, vs, pageSize)
-	allRes := make(datastore.OpResults, 0)
+	allRes := make(ufsds.OpResults, 0)
 	logging.Debugf(ctx, "Importing %d vlans", len(vs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(vs))
@@ -125,7 +227,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	return &allRes, nil
 }
 
-func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize int) (*datastore.OpResults, error) {
+func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize int) (*ufsds.OpResults, error) {
 	resMap := make(map[string]bool)
 	for _, r := range vlans {
 		resMap[r.GetName()] = true
@@ -159,7 +261,7 @@ func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize i
 }
 
 // ImportOSVlans imports the logic of parse and save network infos.
-func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitClient git.ClientInterface, pageSize int) (*datastore.OpResults, error) {
+func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitClient git.ClientInterface, pageSize int) (*ufsds.OpResults, error) {
 	networkCfg := config.Get(ctx).GetCrosNetworkConfig()
 	allVlans := make([]*ufspb.Vlan, 0)
 	allIPs := make([]*ufspb.IP, 0)
@@ -198,7 +300,7 @@ func ImportOSVlans(ctx context.Context, sheetClient sheet.ClientInterface, gitCl
 		allDhcps = append(allDhcps, parsed.ValidDHCPs...)
 	}
 
-	allRes := make(datastore.OpResults, 0)
+	allRes := make(ufsds.OpResults, 0)
 	logging.Debugf(ctx, "Importing %d vlans", len(allVlans))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(allVlans))
@@ -287,6 +389,24 @@ func ReplaceVlan(ctx context.Context, oldVlan *ufspb.Vlan, newVlan *ufspb.Vlan) 
 	return nil, nil
 }
 
+// validateCreateVlan validates if a vlan can be created
+func validateCreateVlan(ctx context.Context, vlan *ufspb.Vlan) error {
+	if err := resourceAlreadyExists(ctx, []*Resource{GetVlanResource(vlan.Name)}, nil); err != nil {
+		return err
+	}
+	cidrBlock := vlan.GetVlanAddress()
+	if cidrBlock != "" {
+		vlans, err := configuration.QueryVlanByPropertyName(ctx, "cidr_block", cidrBlock, true)
+		if err != nil {
+			return err
+		}
+		if len(vlans) > 0 {
+			return status.Errorf(codes.InvalidArgument, "cidr block %s is already occupied by %s", cidrBlock, vlans[0].GetName())
+		}
+	}
+	return nil
+}
+
 // validateDeleteVlan validates if a Vlan can be deleted
 //
 // Checks if this Vlan(VlanID) is not referenced by other resources in the datastore.
@@ -297,14 +417,70 @@ func validateDeleteVlan(ctx context.Context, id string) error {
 		return err
 	}
 	if len(machinelses) > 0 {
-		var errorMsg strings.Builder
-		errorMsg.WriteString(fmt.Sprintf("Vlan %s cannot be deleted because there are other resources which are referring this Vlan.", id))
-		errorMsg.WriteString(fmt.Sprintf("\nMachineLSEs referring the Vlan:\n"))
-		for _, machinelse := range machinelses {
-			errorMsg.WriteString(machinelse.Name + ", ")
-		}
-		logging.Errorf(ctx, errorMsg.String())
-		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
+		return status.Errorf(codes.FailedPrecondition, "vlan %s is occupied by %d hosts, e.g. %#v", id, len(machinelses), ufsAPI.ParseResources(machinelses, "Name"))
+	}
+	vms, err := inventory.QueryVMByPropertyName(ctx, "vlan_id", id, true)
+	if err != nil {
+		return err
+	}
+	if len(vms) > 0 {
+		return status.Errorf(codes.FailedPrecondition, "vlan %s is occupied by %d vms, e.g. %#v", id, len(vms), ufsAPI.ParseResources(vms, "Name"))
 	}
 	return nil
+}
+
+// validateUpdateVlan validates if a vlan can be updated
+func validateUpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMask) error {
+	if err := ResourceExist(ctx, []*Resource{GetVlanResource(vlan.Name)}, nil); err != nil {
+		return err
+	}
+	return validateVlanUpdateMask(vlan, mask)
+}
+
+// validateVlanUpdateMask validates the update mask for vlan update
+func validateVlanUpdateMask(vlan *ufspb.Vlan, mask *field_mask.FieldMask) error {
+	if mask != nil {
+		// validate the give field mask
+		for _, path := range mask.Paths {
+			switch path {
+			case "name":
+				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - name cannot be updated, delete and create a new vlan instead")
+			case "update_time":
+				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - update_time cannot be updated, it is a Output only field")
+			case "description":
+			case "cidr_block":
+				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - cidr_block cannot be updated, delete and create a new vlan instead")
+			case "tags":
+				// valid fields, nothing to validate.
+			default:
+				return status.Errorf(codes.InvalidArgument, "validateVlanUpdateMask - unsupported update mask path %q", path)
+			}
+		}
+	}
+	return nil
+}
+
+// processVlanUpdateMask process the update field masks to do partial update
+//
+// Return a complete vlan object with updated and existing fields
+func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_mask.FieldMask) (*ufspb.Vlan, error) {
+	// update the fields in the existing/old vlan
+	for _, path := range mask.Paths {
+		switch path {
+		case "description":
+			oldVlan.Description = vlan.GetDescription()
+		}
+	}
+	return oldVlan, nil
+}
+
+func getVlanHistoryClient(m *ufspb.Vlan) *HistoryClient {
+	return &HistoryClient{
+		stUdt: &stateUpdater{
+			ResourceName: util.AddPrefix(util.VlanCollection, m.Name),
+		},
+		netUdt: &networkUpdater{
+			Hostname: m.Name,
+		},
+	}
 }

@@ -1413,6 +1413,9 @@ message UpdateVlanRequest {
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
+
+  // The state to update to
+  proto.State state = 3;
 }
 
 message GetVlanRequest {

@@ -69,6 +69,20 @@ func newIPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 	}, nil
 }
 
+func newDeleteIPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
+	p := pm.(*ufspb.IP)
+	if p.GetId() == "" {
+		return nil, errors.Reason("Empty IP id").Err()
+	}
+	return &IPEntity{
+		ID:       p.GetId(),
+		IPv4:     p.GetIpv4(),
+		IPv4Str:  p.GetIpv4Str(),
+		Vlan:     p.GetVlan(),
+		Occupied: p.GetOccupied(),
+	}, nil
+}
+
 // QueryIPByPropertyName query IP Entity by property in the datastore
 func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) ([]*ufspb.IP, error) {
 	q := datastore.NewQuery(IPKind).FirestoreMode(true)
@@ -172,7 +186,19 @@ func DeleteIPs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 			Id: m,
 		}
 	}
-	return ufsds.DeleteAll(ctx, protos, newIPEntity)
+	return ufsds.DeleteAll(ctx, protos, newDeleteIPEntity)
+}
+
+// BatchDeleteIPs deletes ips in datastore.
+//
+// This is a non-atomic operation. Must be used within a transaction.
+// Will lead to partial deletes if not used in a transaction.
+func BatchDeleteIPs(ctx context.Context, ids []string) error {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &ufspb.IP{Id: id}
+	}
+	return ufsds.BatchDelete(ctx, protos, newDeleteIPEntity)
 }
 
 // GetIPIndexedFieldName returns the index name
