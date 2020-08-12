@@ -11,7 +11,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
+from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior__pb2
 from api.v3.api_proto import permission_objects_pb2 as api_dot_v3_dot_api__proto_dot_permission__objects__pb2
 
 
@@ -21,9 +21,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\"api/v3/api_proto/permissions.proto\x12\x0bmonorail.v3\x1a,google_proto/google/api/field_behavior.proto\x1a)api/v3/api_proto/permission_objects.proto\",\n\x17GetPermissionSetRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"3\n\x1d\x42\x61tchGetPermissionSetsRequest\x12\x12\n\x05names\x18\x01 \x03(\tB\x03\xe0\x41\x02\"U\n\x1e\x42\x61tchGetPermissionSetsResponse\x12\x33\n\x0fpermission_sets\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.PermissionSet2\xda\x01\n\x0bPermissions\x12V\n\x10GetPermissionSet\x12$.monorail.v3.GetPermissionSetRequest\x1a\x1a.monorail.v3.PermissionSet\"\x00\x12s\n\x16\x42\x61tchGetPermissionSets\x12*.monorail.v3.BatchGetPermissionSetsRequest\x1a+.monorail.v3.BatchGetPermissionSetsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+  serialized_pb=b'\n\"api/v3/api_proto/permissions.proto\x12\x0bmonorail.v3\x1a\x1fgoogle/api/field_behavior.proto\x1a)api/v3/api_proto/permission_objects.proto\",\n\x17GetPermissionSetRequest\x12\x11\n\x04name\x18\x01 \x01(\tB\x03\xe0\x41\x02\"3\n\x1d\x42\x61tchGetPermissionSetsRequest\x12\x12\n\x05names\x18\x01 \x03(\tB\x03\xe0\x41\x02\"U\n\x1e\x42\x61tchGetPermissionSetsResponse\x12\x33\n\x0fpermission_sets\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.PermissionSet2\xda\x01\n\x0bPermissions\x12V\n\x10GetPermissionSet\x12$.monorail.v3.GetPermissionSetRequest\x1a\x1a.monorail.v3.PermissionSet\"\x00\x12s\n\x16\x42\x61tchGetPermissionSets\x12*.monorail.v3.BatchGetPermissionSetsRequest\x1a+.monorail.v3.BatchGetPermissionSetsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
-  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_permission__objects__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_permission__objects__pb2.DESCRIPTOR,])
 
 
 
@@ -55,8 +55,8 @@ _GETPERMISSIONSETREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=140,
-  serialized_end=184,
+  serialized_start=127,
+  serialized_end=171,
 )
 
 
@@ -87,8 +87,8 @@ _BATCHGETPERMISSIONSETSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=186,
-  serialized_end=237,
+  serialized_start=173,
+  serialized_end=224,
 )
 
 
@@ -119,8 +119,8 @@ _BATCHGETPERMISSIONSETSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=239,
-  serialized_end=324,
+  serialized_start=226,
+  serialized_end=311,
 )
 
 _BATCHGETPERMISSIONSETSRESPONSE.fields_by_name['permission_sets'].message_type = api_dot_v3_dot_api__proto_dot_permission__objects__pb2._PERMISSIONSET
@@ -162,8 +162,8 @@ _PERMISSIONS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=327,
-  serialized_end=545,
+  serialized_start=314,
+  serialized_end=532,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetPermissionSet',

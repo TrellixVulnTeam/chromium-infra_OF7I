@@ -11,8 +11,8 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
-from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
+from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior__pb2
+from google.api import resource_pb2 as google_dot_api_dot_resource__pb2
 from api.v3.api_proto import project_objects_pb2 as api_dot_v3_dot_api__proto_dot_project__objects__pb2
 
 
@@ -22,9 +22,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1f\x61pi/v3/api_proto/frontend.proto\x12\x0bmonorail.v3\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a&api/v3/api_proto/project_objects.proto\"P\n\x1fGatherProjectEnvironmentRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"\x99\x03\n GatherProjectEnvironmentResponse\x12%\n\x07project\x18\x01 \x01(\x0b\x32\x14.monorail.v3.Project\x12\x32\n\x0eproject_config\x18\x02 \x01(\x0b\x32\x1a.monorail.v3.ProjectConfig\x12(\n\x08statuses\x18\x03 \x03(\x0b\x32\x16.monorail.v3.StatusDef\x12\x30\n\x11well_known_labels\x18\x04 \x03(\x0b\x32\x15.monorail.v3.LabelDef\x12-\n\ncomponents\x18\x05 \x03(\x0b\x32\x19.monorail.v3.ComponentDef\x12%\n\x06\x66ields\x18\x06 \x03(\x0b\x32\x15.monorail.v3.FieldDef\x12\x31\n\x0f\x61pproval_fields\x18\x07 \x03(\x0b\x32\x18.monorail.v3.ApprovalDef\x12\x35\n\rsaved_queries\x18\x08 \x03(\x0b\x32\x1e.monorail.v3.ProjectSavedQuery\"O\n&GatherProjectMembershipsForUserRequest\x12%\n\x04user\x18\x01 \x01(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\"b\n\'GatherProjectMembershipsForUserResponse\x12\x37\n\x13project_memberships\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.ProjectMember2\x96\x02\n\x08\x46rontend\x12y\n\x18GatherProjectEnvironment\x12,.monorail.v3.GatherProjectEnvironmentRequest\x1a-.monorail.v3.GatherProjectEnvironmentResponse\"\x00\x12\x8e\x01\n\x1fGatherProjectMembershipsForUser\x12\x33.monorail.v3.GatherProjectMembershipsForUserRequest\x1a\x34.monorail.v3.GatherProjectMembershipsForUserResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+  serialized_pb=b'\n\x1f\x61pi/v3/api_proto/frontend.proto\x12\x0bmonorail.v3\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a&api/v3/api_proto/project_objects.proto\"P\n\x1fGatherProjectEnvironmentRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"\x99\x03\n GatherProjectEnvironmentResponse\x12%\n\x07project\x18\x01 \x01(\x0b\x32\x14.monorail.v3.Project\x12\x32\n\x0eproject_config\x18\x02 \x01(\x0b\x32\x1a.monorail.v3.ProjectConfig\x12(\n\x08statuses\x18\x03 \x03(\x0b\x32\x16.monorail.v3.StatusDef\x12\x30\n\x11well_known_labels\x18\x04 \x03(\x0b\x32\x15.monorail.v3.LabelDef\x12-\n\ncomponents\x18\x05 \x03(\x0b\x32\x19.monorail.v3.ComponentDef\x12%\n\x06\x66ields\x18\x06 \x03(\x0b\x32\x15.monorail.v3.FieldDef\x12\x31\n\x0f\x61pproval_fields\x18\x07 \x03(\x0b\x32\x18.monorail.v3.ApprovalDef\x12\x35\n\rsaved_queries\x18\x08 \x03(\x0b\x32\x1e.monorail.v3.ProjectSavedQuery\"O\n&GatherProjectMembershipsForUserRequest\x12%\n\x04user\x18\x01 \x01(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\"b\n\'GatherProjectMembershipsForUserResponse\x12\x37\n\x13project_memberships\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.ProjectMember2\x96\x02\n\x08\x46rontend\x12y\n\x18GatherProjectEnvironment\x12,.monorail.v3.GatherProjectEnvironmentRequest\x1a-.monorail.v3.GatherProjectEnvironmentResponse\"\x00\x12\x8e\x01\n\x1fGatherProjectMembershipsForUser\x12\x33.monorail.v3.GatherProjectMembershipsForUserRequest\x1a\x34.monorail.v3.GatherProjectMembershipsForUserResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
-  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_project__objects__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_project__objects__pb2.DESCRIPTOR,])
 
 
 
@@ -56,8 +56,8 @@ _GATHERPROJECTENVIRONMENTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=174,
-  serialized_end=254,
+  serialized_start=148,
+  serialized_end=228,
 )
 
 
@@ -137,8 +137,8 @@ _GATHERPROJECTENVIRONMENTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=257,
-  serialized_end=666,
+  serialized_start=231,
+  serialized_end=640,
 )
 
 
@@ -169,8 +169,8 @@ _GATHERPROJECTMEMBERSHIPSFORUSERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=668,
-  serialized_end=747,
+  serialized_start=642,
+  serialized_end=721,
 )
 
 
@@ -201,8 +201,8 @@ _GATHERPROJECTMEMBERSHIPSFORUSERRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=749,
-  serialized_end=847,
+  serialized_start=723,
+  serialized_end=821,
 )
 
 _GATHERPROJECTENVIRONMENTRESPONSE.fields_by_name['project'].message_type = api_dot_v3_dot_api__proto_dot_project__objects__pb2._PROJECT
@@ -260,8 +260,8 @@ _FRONTEND = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=850,
-  serialized_end=1128,
+  serialized_start=824,
+  serialized_end=1102,
   methods=[
   _descriptor.MethodDescriptor(
     name='GatherProjectEnvironment',

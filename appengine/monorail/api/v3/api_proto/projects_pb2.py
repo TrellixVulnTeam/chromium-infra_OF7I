@@ -11,8 +11,8 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
-from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
+from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior__pb2
+from google.api import resource_pb2 as google_dot_api_dot_resource__pb2
 from api.v3.api_proto import project_objects_pb2 as api_dot_v3_dot_api__proto_dot_project__objects__pb2
 
 
@@ -22,9 +22,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1f\x61pi/v3/api_proto/projects.proto\x12\x0bmonorail.v3\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a&api/v3/api_proto/project_objects.proto\"t\n\x15\x43reateFieldDefRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12,\n\x08\x66ielddef\x18\x02 \x01(\x0b\x32\x15.monorail.v3.FieldDefB\x03\xe0\x41\x02\"q\n\x19ListIssueTemplatesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"d\n\x1aListIssueTemplatesResponse\x12-\n\ttemplates\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.IssueTemplate\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"<\n\x13ListProjectsRequest\x12\x11\n\tpage_size\x18\x01 \x01(\x05\x12\x12\n\npage_token\x18\x02 \x01(\t\"W\n\x14ListProjectsResponse\x12&\n\x08projects\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Project\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\x99\x02\n\x08Projects\x12M\n\x0e\x43reateFieldDef\x12\".monorail.v3.CreateFieldDefRequest\x1a\x15.monorail.v3.FieldDef\"\x00\x12g\n\x12ListIssueTemplates\x12&.monorail.v3.ListIssueTemplatesRequest\x1a\'.monorail.v3.ListIssueTemplatesResponse\"\x00\x12U\n\x0cListProjects\x12 .monorail.v3.ListProjectsRequest\x1a!.monorail.v3.ListProjectsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+  serialized_pb=b'\n\x1f\x61pi/v3/api_proto/projects.proto\x12\x0bmonorail.v3\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a&api/v3/api_proto/project_objects.proto\"t\n\x15\x43reateFieldDefRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12,\n\x08\x66ielddef\x18\x02 \x01(\x0b\x32\x15.monorail.v3.FieldDefB\x03\xe0\x41\x02\"q\n\x19ListIssueTemplatesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"d\n\x1aListIssueTemplatesResponse\x12-\n\ttemplates\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.IssueTemplate\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"<\n\x13ListProjectsRequest\x12\x11\n\tpage_size\x18\x01 \x01(\x05\x12\x12\n\npage_token\x18\x02 \x01(\t\"W\n\x14ListProjectsResponse\x12&\n\x08projects\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Project\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\x99\x02\n\x08Projects\x12M\n\x0e\x43reateFieldDef\x12\".monorail.v3.CreateFieldDefRequest\x1a\x15.monorail.v3.FieldDef\"\x00\x12g\n\x12ListIssueTemplates\x12&.monorail.v3.ListIssueTemplatesRequest\x1a\'.monorail.v3.ListIssueTemplatesResponse\"\x00\x12U\n\x0cListProjects\x12 .monorail.v3.ListProjectsRequest\x1a!.monorail.v3.ListProjectsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
-  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_project__objects__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_project__objects__pb2.DESCRIPTOR,])
 
 
 
@@ -63,8 +63,8 @@ _CREATEFIELDDEFREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=174,
-  serialized_end=290,
+  serialized_start=148,
+  serialized_end=264,
 )
 
 
@@ -109,8 +109,8 @@ _LISTISSUETEMPLATESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=292,
-  serialized_end=405,
+  serialized_start=266,
+  serialized_end=379,
 )
 
 
@@ -148,8 +148,8 @@ _LISTISSUETEMPLATESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=407,
-  serialized_end=507,
+  serialized_start=381,
+  serialized_end=481,
 )
 
 
@@ -187,8 +187,8 @@ _LISTPROJECTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=509,
-  serialized_end=569,
+  serialized_start=483,
+  serialized_end=543,
 )
 
 
@@ -226,8 +226,8 @@ _LISTPROJECTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=571,
-  serialized_end=658,
+  serialized_start=545,
+  serialized_end=632,
 )
 
 _CREATEFIELDDEFREQUEST.fields_by_name['fielddef'].message_type = api_dot_v3_dot_api__proto_dot_project__objects__pb2._FIELDDEF
@@ -288,8 +288,8 @@ _PROJECTS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=661,
-  serialized_end=942,
+  serialized_start=635,
+  serialized_end=916,
   methods=[
   _descriptor.MethodDescriptor(
     name='CreateFieldDef',

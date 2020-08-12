@@ -11,8 +11,8 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from google_proto.google.api import field_behavior_pb2 as google__proto_dot_google_dot_api_dot_field__behavior__pb2
-from google_proto.google.api import resource_pb2 as google__proto_dot_google_dot_api_dot_resource__pb2
+from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior__pb2
+from google.api import resource_pb2 as google_dot_api_dot_resource__pb2
 from api.v3.api_proto import user_objects_pb2 as api_dot_v3_dot_api__proto_dot_user__objects__pb2
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from google.protobuf import field_mask_pb2 as google_dot_protobuf_dot_field__mask__pb2
@@ -24,9 +24,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1c\x61pi/v3/api_proto/users.proto\x12\x0bmonorail.v3\x1a,google_proto/google/api/field_behavior.proto\x1a&google_proto/google/api/resource.proto\x1a#api/v3/api_proto/user_objects.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\":\n\x0eGetUserRequest\x12(\n\x04name\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"A\n\x14\x42\x61tchGetUsersRequest\x12)\n\x05names\x18\x01 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"9\n\x15\x42\x61tchGetUsersResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.monorail.v3.User\"\x86\x01\n\x11UpdateUserRequest\x12;\n\x04user\x18\x01 \x01(\x0b\x32\x11.monorail.v3.UserB\x1a\xe0\x41\x02\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\"D\n\x12StarProjectRequest\x12.\n\x07project\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"F\n\x14UnStarProjectRequest\x12.\n\x07project\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"l\n\x17ListProjectStarsRequest\x12*\n\x06parent\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"d\n\x18ListProjectStarsResponse\x12/\n\rproject_stars\x18\x01 \x03(\x0b\x32\x18.monorail.v3.ProjectStar\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xde\x03\n\x05Users\x12;\n\x07GetUser\x12\x1b.monorail.v3.GetUserRequest\x1a\x11.monorail.v3.User\"\x00\x12X\n\rBatchGetUsers\x12!.monorail.v3.BatchGetUsersRequest\x1a\".monorail.v3.BatchGetUsersResponse\"\x00\x12\x41\n\nUpdateUser\x12\x1e.monorail.v3.UpdateUserRequest\x1a\x11.monorail.v3.User\"\x00\x12J\n\x0bStarProject\x12\x1f.monorail.v3.StarProjectRequest\x1a\x18.monorail.v3.ProjectStar\"\x00\x12L\n\rUnStarProject\x12!.monorail.v3.UnStarProjectRequest\x1a\x16.google.protobuf.Empty\"\x00\x12\x61\n\x10ListProjectStars\x12$.monorail.v3.ListProjectStarsRequest\x1a%.monorail.v3.ListProjectStarsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+  serialized_pb=b'\n\x1c\x61pi/v3/api_proto/users.proto\x12\x0bmonorail.v3\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a#api/v3/api_proto/user_objects.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\":\n\x0eGetUserRequest\x12(\n\x04name\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"A\n\x14\x42\x61tchGetUsersRequest\x12)\n\x05names\x18\x01 \x03(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\"9\n\x15\x42\x61tchGetUsersResponse\x12 \n\x05users\x18\x01 \x03(\x0b\x32\x11.monorail.v3.User\"\x86\x01\n\x11UpdateUserRequest\x12;\n\x04user\x18\x01 \x01(\x0b\x32\x11.monorail.v3.UserB\x1a\xe0\x41\x02\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\"D\n\x12StarProjectRequest\x12.\n\x07project\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"F\n\x14UnStarProjectRequest\x12.\n\x07project\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\"l\n\x17ListProjectStarsRequest\x12*\n\x06parent\x18\x01 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"d\n\x18ListProjectStarsResponse\x12/\n\rproject_stars\x18\x01 \x03(\x0b\x32\x18.monorail.v3.ProjectStar\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xde\x03\n\x05Users\x12;\n\x07GetUser\x12\x1b.monorail.v3.GetUserRequest\x1a\x11.monorail.v3.User\"\x00\x12X\n\rBatchGetUsers\x12!.monorail.v3.BatchGetUsersRequest\x1a\".monorail.v3.BatchGetUsersResponse\"\x00\x12\x41\n\nUpdateUser\x12\x1e.monorail.v3.UpdateUserRequest\x1a\x11.monorail.v3.User\"\x00\x12J\n\x0bStarProject\x12\x1f.monorail.v3.StarProjectRequest\x1a\x18.monorail.v3.ProjectStar\"\x00\x12L\n\rUnStarProject\x12!.monorail.v3.UnStarProjectRequest\x1a\x16.google.protobuf.Empty\"\x00\x12\x61\n\x10ListProjectStars\x12$.monorail.v3.ListProjectStarsRequest\x1a%.monorail.v3.ListProjectStarsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
-  dependencies=[google__proto_dot_google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google__proto_dot_google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_user__objects__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_user__objects__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,])
 
 
 
@@ -58,8 +58,8 @@ _GETUSERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=231,
-  serialized_end=289,
+  serialized_start=205,
+  serialized_end=263,
 )
 
 
@@ -90,8 +90,8 @@ _BATCHGETUSERSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=291,
-  serialized_end=356,
+  serialized_start=265,
+  serialized_end=330,
 )
 
 
@@ -122,8 +122,8 @@ _BATCHGETUSERSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=358,
-  serialized_end=415,
+  serialized_start=332,
+  serialized_end=389,
 )
 
 
@@ -161,8 +161,8 @@ _UPDATEUSERREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=418,
-  serialized_end=552,
+  serialized_start=392,
+  serialized_end=526,
 )
 
 
@@ -193,8 +193,8 @@ _STARPROJECTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=554,
-  serialized_end=622,
+  serialized_start=528,
+  serialized_end=596,
 )
 
 
@@ -225,8 +225,8 @@ _UNSTARPROJECTREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=624,
-  serialized_end=694,
+  serialized_start=598,
+  serialized_end=668,
 )
 
 
@@ -271,8 +271,8 @@ _LISTPROJECTSTARSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=696,
-  serialized_end=804,
+  serialized_start=670,
+  serialized_end=778,
 )
 
 
@@ -310,8 +310,8 @@ _LISTPROJECTSTARSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=806,
-  serialized_end=906,
+  serialized_start=780,
+  serialized_end=880,
 )
 
 _BATCHGETUSERSRESPONSE.fields_by_name['users'].message_type = api_dot_v3_dot_api__proto_dot_user__objects__pb2._USER
@@ -401,8 +401,8 @@ _USERS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=909,
-  serialized_end=1387,
+  serialized_start=883,
+  serialized_end=1361,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetUser',
