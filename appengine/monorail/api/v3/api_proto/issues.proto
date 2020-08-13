@@ -69,6 +69,11 @@ service Issues {
   //     requested changes.
   rpc ModifyIssueApprovalValues (ModifyIssueApprovalValuesRequest) returns
       (ModifyIssueApprovalValuesResponse) {}
+  // Lists approval values for an issue.
+  //
+  // Raises: TODO(crbug/monorail/7923): Document errors when implemented
+  rpc ListApprovalValues (ListApprovalValuesRequest) returns
+      (ListApprovalValuesResponse) {}
   // Makes an issue from an IssueTemplate and deltas.
   //
   // Raises:
@@ -297,7 +302,7 @@ message ModifyIssuesResponse {
   repeated Issue issues = 1;
 }
 
-// The request message for Issues.ModifyIssueApprovalValuesRequest.
+// The request message for Issues.ModifyIssueApprovalValues.
 // Next available tag: 4
 message ModifyIssueApprovalValuesRequest {
   // The ApprovalValue changes to make.
@@ -314,6 +319,22 @@ message ModifyIssueApprovalValuesRequest {
 // Next available tag: 2
 message ModifyIssueApprovalValuesResponse {
   // The updated ApprovalValues.
+  repeated ApprovalValue approval_values = 1;
+}
+
+// The request message for Issue.ListApprovalValues.
+// Next available tag: 2
+message ListApprovalValuesRequest {
+  // The name of the issue for which to list approval values.
+  string parent = 1 [
+    (google.api.resource_reference) = {type: "api.crbug.com/Issue"},
+    (google.api.field_behavior) = REQUIRED ];
+}
+
+// The response message for Issues.ListApprovalValues.
+// Next available tag: 2
+message ListApprovalValuesResponse {
+  // The approval values from the specified issue.
   repeated ApprovalValue approval_values = 1;
 }
 

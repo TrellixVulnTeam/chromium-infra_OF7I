@@ -24,7 +24,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1d\x61pi/v3/api_proto/issues.proto\x12\x0bmonorail.v3\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a$api/v3/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"l\n\x15\x42\x61tchGetIssuesRequest\x12*\n\x06parent\x18\x01 \x01(\tB\x1a\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12\'\n\x05names\x18\x02 \x03(\tB\x18\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\"<\n\x16\x42\x61tchGetIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\"\x8e\x01\n\x13SearchIssuesRequest\x12/\n\x08projects\x18\x01 \x03(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n\x13ListCommentsRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"W\n\x14ListCommentsResponse\x12&\n\x08\x63omments\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Comment\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\x8e\x03\n\nIssueDelta\x12&\n\x05issue\x18\x01 \x01(\x0b\x32\x12.monorail.v3.IssueB\x03\xe0\x41\x02\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\x12+\n\nccs_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x37\n\x18\x62locked_on_issues_remove\x18\x04 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12\x35\n\x16\x62locking_issues_remove\x18\x05 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12:\n\x11\x63omponents_remove\x18\x06 \x03(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/ComponentDef\x12\x15\n\rlabels_remove\x18\x07 \x03(\t\x12\x32\n\x11\x66ield_vals_remove\x18\x08 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\xe0\x01\n\rApprovalDelta\x12\x32\n\x0e\x61pproval_value\x18\x01 \x01(\x0b\x32\x1a.monorail.v3.ApprovalValue\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\x12\x31\n\x10\x61pprovers_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x32\n\x11\x66ield_vals_remove\x18\x05 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\x8a\x01\n\x13ModifyIssuesRequest\x12,\n\x06\x64\x65ltas\x18\x01 \x03(\x0b\x32\x17.monorail.v3.IssueDeltaB\x03\xe0\x41\x02\x12,\n\x0bnotify_type\x18\x02 \x01(\x0e\x32\x17.monorail.v3.NotifyType\x12\x17\n\x0f\x63omment_content\x18\x03 \x01(\t\":\n\x14ModifyIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\"\x9a\x01\n ModifyIssueApprovalValuesRequest\x12/\n\x06\x64\x65ltas\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.ApprovalDeltaB\x03\xe0\x41\x02\x12,\n\x0bnotify_type\x18\x02 \x01(\x0e\x32\x17.monorail.v3.NotifyType\x12\x17\n\x0f\x63omment_content\x18\x03 \x01(\t\"X\n!ModifyIssueApprovalValuesResponse\x12\x33\n\x0f\x61pproval_values\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.ApprovalValue\"\xd7\x01\n\x1cMakeIssueFromTemplateRequest\x12-\n\x08template\x18\x01 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x35\n\x14template_issue_delta\x18\x02 \x01(\x0b\x32\x17.monorail.v3.IssueDelta\x12<\n\x18template_approval_deltas\x18\x03 \x03(\x0b\x32\x1a.monorail.v3.ApprovalDelta\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\"\xa7\x01\n\x10MakeIssueRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.v3.Issue\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12,\n\x0bnotify_type\x18\x04 \x01(\x0e\x32\x17.monorail.v3.NotifyType*I\n\nNotifyType\x12\x1b\n\x17NOTIFY_TYPE_UNSPECIFIED\x10\x00\x12\t\n\x05\x45MAIL\x10\x01\x12\x13\n\x0fNO_NOTIFICATION\x10\x02\x32\xc4\x05\n\x06Issues\x12>\n\x08GetIssue\x12\x1c.monorail.v3.GetIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x12[\n\x0e\x42\x61tchGetIssues\x12\".monorail.v3.BatchGetIssuesRequest\x1a#.monorail.v3.BatchGetIssuesResponse\"\x00\x12U\n\x0cSearchIssues\x12 .monorail.v3.SearchIssuesRequest\x1a!.monorail.v3.SearchIssuesResponse\"\x00\x12U\n\x0cListComments\x12 .monorail.v3.ListCommentsRequest\x1a!.monorail.v3.ListCommentsResponse\"\x00\x12U\n\x0cModifyIssues\x12 .monorail.v3.ModifyIssuesRequest\x1a!.monorail.v3.ModifyIssuesResponse\"\x00\x12|\n\x19ModifyIssueApprovalValues\x12-.monorail.v3.ModifyIssueApprovalValuesRequest\x1a..monorail.v3.ModifyIssueApprovalValuesResponse\"\x00\x12X\n\x15MakeIssueFromTemplate\x12).monorail.v3.MakeIssueFromTemplateRequest\x1a\x12.monorail.v3.Issue\"\x00\x12@\n\tMakeIssue\x12\x1d.monorail.v3.MakeIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+  serialized_pb=b'\n\x1d\x61pi/v3/api_proto/issues.proto\x12\x0bmonorail.v3\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a$api/v3/api_proto/issue_objects.proto\"<\n\x0fGetIssueRequest\x12)\n\x04name\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"l\n\x15\x42\x61tchGetIssuesRequest\x12*\n\x06parent\x18\x01 \x01(\tB\x1a\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12\'\n\x05names\x18\x02 \x03(\tB\x18\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\"<\n\x16\x42\x61tchGetIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\"\x8e\x01\n\x13SearchIssuesRequest\x12/\n\x08projects\x18\x01 \x03(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\r\n\x05query\x18\x02 \x01(\t\x12\x11\n\tpage_size\x18\x03 \x01(\x05\x12\x12\n\npage_token\x18\x04 \x01(\t\x12\x10\n\x08order_by\x18\x05 \x01(\t\"S\n\x14SearchIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"i\n\x13ListCommentsRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"W\n\x14ListCommentsResponse\x12&\n\x08\x63omments\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Comment\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"\x8e\x03\n\nIssueDelta\x12&\n\x05issue\x18\x01 \x01(\x0b\x32\x12.monorail.v3.IssueB\x03\xe0\x41\x02\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\x12+\n\nccs_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x37\n\x18\x62locked_on_issues_remove\x18\x04 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12\x35\n\x16\x62locking_issues_remove\x18\x05 \x03(\x0b\x32\x15.monorail.v3.IssueRef\x12:\n\x11\x63omponents_remove\x18\x06 \x03(\tB\x1f\xfa\x41\x1c\n\x1a\x61pi.crbug.com/ComponentDef\x12\x15\n\rlabels_remove\x18\x07 \x03(\t\x12\x32\n\x11\x66ield_vals_remove\x18\x08 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\xe0\x01\n\rApprovalDelta\x12\x32\n\x0e\x61pproval_value\x18\x01 \x01(\x0b\x32\x1a.monorail.v3.ApprovalValue\x12\x34\n\x0bupdate_mask\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.FieldMaskB\x03\xe0\x41\x02\x12\x31\n\x10\x61pprovers_remove\x18\x03 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\x32\n\x11\x66ield_vals_remove\x18\x05 \x03(\x0b\x32\x17.monorail.v3.FieldValue\"\x8a\x01\n\x13ModifyIssuesRequest\x12,\n\x06\x64\x65ltas\x18\x01 \x03(\x0b\x32\x17.monorail.v3.IssueDeltaB\x03\xe0\x41\x02\x12,\n\x0bnotify_type\x18\x02 \x01(\x0e\x32\x17.monorail.v3.NotifyType\x12\x17\n\x0f\x63omment_content\x18\x03 \x01(\t\":\n\x14ModifyIssuesResponse\x12\"\n\x06issues\x18\x01 \x03(\x0b\x32\x12.monorail.v3.Issue\"\x9a\x01\n ModifyIssueApprovalValuesRequest\x12/\n\x06\x64\x65ltas\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.ApprovalDeltaB\x03\xe0\x41\x02\x12,\n\x0bnotify_type\x18\x02 \x01(\x0e\x32\x17.monorail.v3.NotifyType\x12\x17\n\x0f\x63omment_content\x18\x03 \x01(\t\"X\n!ModifyIssueApprovalValuesResponse\x12\x33\n\x0f\x61pproval_values\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.ApprovalValue\"H\n\x19ListApprovalValuesRequest\x12+\n\x06parent\x18\x01 \x01(\tB\x1b\xfa\x41\x15\n\x13\x61pi.crbug.com/Issue\xe0\x41\x02\"Q\n\x1aListApprovalValuesResponse\x12\x33\n\x0f\x61pproval_values\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.ApprovalValue\"\xd7\x01\n\x1cMakeIssueFromTemplateRequest\x12-\n\x08template\x18\x01 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x35\n\x14template_issue_delta\x18\x02 \x01(\x0b\x32\x17.monorail.v3.IssueDelta\x12<\n\x18template_approval_deltas\x18\x03 \x03(\x0b\x32\x1a.monorail.v3.ApprovalDelta\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\"\xa7\x01\n\x10MakeIssueRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12!\n\x05issue\x18\x02 \x01(\x0b\x32\x12.monorail.v3.Issue\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12,\n\x0bnotify_type\x18\x04 \x01(\x0e\x32\x17.monorail.v3.NotifyType*I\n\nNotifyType\x12\x1b\n\x17NOTIFY_TYPE_UNSPECIFIED\x10\x00\x12\t\n\x05\x45MAIL\x10\x01\x12\x13\n\x0fNO_NOTIFICATION\x10\x02\x32\xad\x06\n\x06Issues\x12>\n\x08GetIssue\x12\x1c.monorail.v3.GetIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x12[\n\x0e\x42\x61tchGetIssues\x12\".monorail.v3.BatchGetIssuesRequest\x1a#.monorail.v3.BatchGetIssuesResponse\"\x00\x12U\n\x0cSearchIssues\x12 .monorail.v3.SearchIssuesRequest\x1a!.monorail.v3.SearchIssuesResponse\"\x00\x12U\n\x0cListComments\x12 .monorail.v3.ListCommentsRequest\x1a!.monorail.v3.ListCommentsResponse\"\x00\x12U\n\x0cModifyIssues\x12 .monorail.v3.ModifyIssuesRequest\x1a!.monorail.v3.ModifyIssuesResponse\"\x00\x12|\n\x19ModifyIssueApprovalValues\x12-.monorail.v3.ModifyIssueApprovalValuesRequest\x1a..monorail.v3.ModifyIssueApprovalValuesResponse\"\x00\x12g\n\x12ListApprovalValues\x12&.monorail.v3.ListApprovalValuesRequest\x1a\'.monorail.v3.ListApprovalValuesResponse\"\x00\x12X\n\x15MakeIssueFromTemplate\x12).monorail.v3.MakeIssueFromTemplateRequest\x1a\x12.monorail.v3.Issue\"\x00\x12@\n\tMakeIssue\x12\x1d.monorail.v3.MakeIssueRequest\x1a\x12.monorail.v3.Issue\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_field__mask__pb2.DESCRIPTOR,google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,])
 
@@ -53,8 +53,8 @@ _NOTIFYTYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2302,
-  serialized_end=2375,
+  serialized_start=2459,
+  serialized_end=2532,
 )
 _sym_db.RegisterEnumDescriptor(_NOTIFYTYPE)
 
@@ -642,6 +642,70 @@ _MODIFYISSUEAPPROVALVALUESRESPONSE = _descriptor.Descriptor(
 )
 
 
+_LISTAPPROVALVALUESREQUEST = _descriptor.Descriptor(
+  name='ListApprovalValuesRequest',
+  full_name='monorail.v3.ListApprovalValuesRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='parent', full_name='monorail.v3.ListApprovalValuesRequest.parent', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=b'\372A\025\n\023api.crbug.com/Issue\340A\002', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1914,
+  serialized_end=1986,
+)
+
+
+_LISTAPPROVALVALUESRESPONSE = _descriptor.Descriptor(
+  name='ListApprovalValuesResponse',
+  full_name='monorail.v3.ListApprovalValuesResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='approval_values', full_name='monorail.v3.ListApprovalValuesResponse.approval_values', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1988,
+  serialized_end=2069,
+)
+
+
 _MAKEISSUEFROMTEMPLATEREQUEST = _descriptor.Descriptor(
   name='MakeIssueFromTemplateRequest',
   full_name='monorail.v3.MakeIssueFromTemplateRequest',
@@ -690,8 +754,8 @@ _MAKEISSUEFROMTEMPLATEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1915,
-  serialized_end=2130,
+  serialized_start=2072,
+  serialized_end=2287,
 )
 
 
@@ -743,8 +807,8 @@ _MAKEISSUEREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2133,
-  serialized_end=2300,
+  serialized_start=2290,
+  serialized_end=2457,
 )
 
 _BATCHGETISSUESRESPONSE.fields_by_name['issues'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE
@@ -764,6 +828,7 @@ _MODIFYISSUESRESPONSE.fields_by_name['issues'].message_type = api_dot_v3_dot_api
 _MODIFYISSUEAPPROVALVALUESREQUEST.fields_by_name['deltas'].message_type = _APPROVALDELTA
 _MODIFYISSUEAPPROVALVALUESREQUEST.fields_by_name['notify_type'].enum_type = _NOTIFYTYPE
 _MODIFYISSUEAPPROVALVALUESRESPONSE.fields_by_name['approval_values'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._APPROVALVALUE
+_LISTAPPROVALVALUESRESPONSE.fields_by_name['approval_values'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._APPROVALVALUE
 _MAKEISSUEFROMTEMPLATEREQUEST.fields_by_name['template_issue_delta'].message_type = _ISSUEDELTA
 _MAKEISSUEFROMTEMPLATEREQUEST.fields_by_name['template_approval_deltas'].message_type = _APPROVALDELTA
 _MAKEISSUEREQUEST.fields_by_name['issue'].message_type = api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE
@@ -781,6 +846,8 @@ DESCRIPTOR.message_types_by_name['ModifyIssuesRequest'] = _MODIFYISSUESREQUEST
 DESCRIPTOR.message_types_by_name['ModifyIssuesResponse'] = _MODIFYISSUESRESPONSE
 DESCRIPTOR.message_types_by_name['ModifyIssueApprovalValuesRequest'] = _MODIFYISSUEAPPROVALVALUESREQUEST
 DESCRIPTOR.message_types_by_name['ModifyIssueApprovalValuesResponse'] = _MODIFYISSUEAPPROVALVALUESRESPONSE
+DESCRIPTOR.message_types_by_name['ListApprovalValuesRequest'] = _LISTAPPROVALVALUESREQUEST
+DESCRIPTOR.message_types_by_name['ListApprovalValuesResponse'] = _LISTAPPROVALVALUESRESPONSE
 DESCRIPTOR.message_types_by_name['MakeIssueFromTemplateRequest'] = _MAKEISSUEFROMTEMPLATEREQUEST
 DESCRIPTOR.message_types_by_name['MakeIssueRequest'] = _MAKEISSUEREQUEST
 DESCRIPTOR.enum_types_by_name['NotifyType'] = _NOTIFYTYPE
@@ -877,6 +944,20 @@ ModifyIssueApprovalValuesResponse = _reflection.GeneratedProtocolMessageType('Mo
   })
 _sym_db.RegisterMessage(ModifyIssueApprovalValuesResponse)
 
+ListApprovalValuesRequest = _reflection.GeneratedProtocolMessageType('ListApprovalValuesRequest', (_message.Message,), {
+  'DESCRIPTOR' : _LISTAPPROVALVALUESREQUEST,
+  '__module__' : 'api.v3.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v3.ListApprovalValuesRequest)
+  })
+_sym_db.RegisterMessage(ListApprovalValuesRequest)
+
+ListApprovalValuesResponse = _reflection.GeneratedProtocolMessageType('ListApprovalValuesResponse', (_message.Message,), {
+  'DESCRIPTOR' : _LISTAPPROVALVALUESRESPONSE,
+  '__module__' : 'api.v3.api_proto.issues_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v3.ListApprovalValuesResponse)
+  })
+_sym_db.RegisterMessage(ListApprovalValuesResponse)
+
 MakeIssueFromTemplateRequest = _reflection.GeneratedProtocolMessageType('MakeIssueFromTemplateRequest', (_message.Message,), {
   'DESCRIPTOR' : _MAKEISSUEFROMTEMPLATEREQUEST,
   '__module__' : 'api.v3.api_proto.issues_pb2'
@@ -906,6 +987,7 @@ _APPROVALDELTA.fields_by_name['update_mask']._options = None
 _APPROVALDELTA.fields_by_name['approvers_remove']._options = None
 _MODIFYISSUESREQUEST.fields_by_name['deltas']._options = None
 _MODIFYISSUEAPPROVALVALUESREQUEST.fields_by_name['deltas']._options = None
+_LISTAPPROVALVALUESREQUEST.fields_by_name['parent']._options = None
 _MAKEISSUEFROMTEMPLATEREQUEST.fields_by_name['template']._options = None
 _MAKEISSUEREQUEST.fields_by_name['parent']._options = None
 
@@ -916,8 +998,8 @@ _ISSUES = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=2378,
-  serialized_end=3086,
+  serialized_start=2535,
+  serialized_end=3348,
   methods=[
   _descriptor.MethodDescriptor(
     name='GetIssue',
@@ -980,9 +1062,19 @@ _ISSUES = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
+    name='ListApprovalValues',
+    full_name='monorail.v3.Issues.ListApprovalValues',
+    index=6,
+    containing_service=None,
+    input_type=_LISTAPPROVALVALUESREQUEST,
+    output_type=_LISTAPPROVALVALUESRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
     name='MakeIssueFromTemplate',
     full_name='monorail.v3.Issues.MakeIssueFromTemplate',
-    index=6,
+    index=7,
     containing_service=None,
     input_type=_MAKEISSUEFROMTEMPLATEREQUEST,
     output_type=api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE,
@@ -992,7 +1084,7 @@ _ISSUES = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='MakeIssue',
     full_name='monorail.v3.Issues.MakeIssue',
-    index=7,
+    index=8,
     containing_service=None,
     input_type=_MAKEISSUEREQUEST,
     output_type=api_dot_v3_dot_api__proto_dot_issue__objects__pb2._ISSUE,
