@@ -73,7 +73,6 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 	i = &Info{
 		Info: b,
 		labelUpdater: labelUpdater{
-			ctx:     ctx,
 			botInfo: b,
 		},
 	}
@@ -183,7 +182,6 @@ func (i *Info) exposeHostInfo(hi *hostinfo.HostInfo, resultsDir string, dutName 
 
 // labelUpdater implements an update method that is used as a dutinfo.UpdateFunc.
 type labelUpdater struct {
-	ctx          context.Context
 	botInfo      *swmbot.Info
 	taskName     string
 	updateLabels bool
@@ -191,7 +189,7 @@ type labelUpdater struct {
 
 // update is a dutinfo.UpdateFunc for updating DUT inventory labels.
 // If adminServiceURL is empty, this method does nothing.
-func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error {
+func (u labelUpdater) update(ctx context.Context, dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error {
 	// WARNING: This is an indirect check of if the job is a repair job.
 	// By design, only repair job is allowed to update labels and has updateLabels set.
 	// https://chromium.git.corp.google.com/infra/infra/+/7ae58795dd4badcfe9eadf4e109e27a498bed04c/go/src/infra/cmd/skylab_swarming_worker/main.go#207
@@ -202,7 +200,7 @@ func (u labelUpdater) update(dutID string, old *inventory.DeviceUnderTest, new *
 		return nil
 	}
 
-	ctx, err := swmbot.WithTaskAccount(u.ctx)
+	ctx, err := swmbot.WithTaskAccount(ctx)
 	if err != nil {
 		return errors.Annotate(err, "update inventory labels").Err()
 	}

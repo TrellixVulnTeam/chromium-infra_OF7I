@@ -48,7 +48,7 @@ func (s *Store) Close(ctx context.Context) error {
 	}
 
 	log.Printf("Calling label update function")
-	if err := s.updateFunc(c.GetId(), s.oldDUT, s.DUT); err != nil {
+	if err := s.updateFunc(ctx, c.GetId(), s.oldDUT, s.DUT); err != nil {
 		return errors.Annotate(err, "close DUT inventory").Err()
 	}
 	s.updateFunc = nil
@@ -57,7 +57,7 @@ func (s *Store) Close(ctx context.Context) error {
 
 // UpdateFunc is used to implement inventory updating for any changes
 // to the loaded DUT info.
-type UpdateFunc func(dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error
+type UpdateFunc func(ctx context.Context, dutID string, old *inventory.DeviceUnderTest, new *inventory.DeviceUnderTest) error
 
 // Load loads the bot's DUT's info from the inventory V2.
 //
