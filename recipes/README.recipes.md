@@ -20,6 +20,7 @@
   * [build_conda_cipd_pkg](#recipes-build_conda_cipd_pkg) &mdash; Recipe to build CIPD package with sealed Conda environment.
   * [build_from_tarball](#recipes-build_from_tarball)
   * [build_gsutil_cipd_pkg](#recipes-build_gsutil_cipd_pkg)
+  * [build_wheels](#recipes-build_wheels)
   * [cloudbuildhelper:examples/discover](#recipes-cloudbuildhelper_examples_discover)
   * [cloudbuildhelper:examples/full](#recipes-cloudbuildhelper_examples_full)
   * [cloudbuildhelper:examples/roll](#recipes-cloudbuildhelper_examples_roll)
@@ -788,6 +789,11 @@ To build a new package for all platforms:
 [DEPS](/recipes/recipes/build_gsutil_cipd_pkg.py#5): [build/zip][build/recipe_modules/zip], [depot\_tools/gsutil][depot_tools/recipe_modules/gsutil], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/platform][recipe_engine/recipe_modules/platform], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step]
 
 &mdash; **def [RunSteps](/recipes/recipes/build_gsutil_cipd_pkg.py#52)(api):**
+### *recipes* / [build\_wheels](/recipes/recipes/build_wheels.py)
+
+[DEPS](/recipes/recipes/build_wheels.py#5): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python]
+
+&mdash; **def [RunSteps](/recipes/recipes/build_wheels.py#14)(api):**
 ### *recipes* / [cloudbuildhelper:examples/discover](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py)
 
 [DEPS](/recipes/recipe_modules/cloudbuildhelper/examples/discover.py#5): [cloudbuildhelper](#recipe_modules-cloudbuildhelper), [recipe\_engine/path][recipe_engine/recipe_modules/path]
