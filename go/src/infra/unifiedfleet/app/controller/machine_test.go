@@ -328,7 +328,7 @@ func TestUpdateMachine(t *testing.T) {
 			So(drac.GetZone(), ShouldEqual, ufspb.Zone_ZONE_CHROMEOS2.String())
 			vm, err := inventory.GetVM(ctx, "vm-update-zone")
 			So(err, ShouldBeNil)
-			So(vm.GetZone(), ShouldEqual, ufspb.Zone_ZONE_CHROMEOS3.String())
+			So(vm.GetZone(), ShouldEqual, ufspb.Zone_ZONE_CHROMEOS2.String())
 		})
 
 		Convey("Partial Update machine", func() {

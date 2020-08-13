@@ -29,7 +29,7 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames [
 			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
 		}
 
-		// Get machine to get lab and rack info for machinelse table indexing
+		// Get machine to get zone and rack info for machinelse table indexing
 		machine, err := GetMachine(ctx, machineNames[0])
 		if err != nil {
 			return errors.Annotate(err, "Unable to get machine %s", machineNames[0]).Err()

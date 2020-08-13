@@ -448,8 +448,8 @@ func (r *CreateVMRequest) Validate() error {
 	if !IDRegex.MatchString(r.GetVm().GetName()) {
 		return status.Errorf(codes.InvalidArgument, "VM name is invalid: %s", InvalidCharacters)
 	}
-	if r.GetVm().GetLab() != "" {
-		return status.Errorf(codes.InvalidArgument, "Lab for vm is output-only")
+	if r.GetVm().GetZone() != "" {
+		return status.Errorf(codes.InvalidArgument, "Zone for vm is output-only")
 	}
 	if r.GetVm().GetState() != "" {
 		return status.Errorf(codes.InvalidArgument, "Cannot set state when adding vm")

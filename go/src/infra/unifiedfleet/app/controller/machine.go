@@ -297,7 +297,7 @@ func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Ma
 				drac.Zone = v
 			}
 			for _, vm := range vms {
-				vm.Lab = v
+				vm.Zone = v
 			}
 		}
 	}

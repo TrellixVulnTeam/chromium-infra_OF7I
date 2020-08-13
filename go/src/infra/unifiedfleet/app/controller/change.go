@@ -156,7 +156,7 @@ func (hc *HistoryClient) LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.hostname", oldData.GetHostname(), newData.GetHostname())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.machines", oldData.GetMachines(), newData.GetMachines())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.nic", oldData.GetNic(), newData.GetNic())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.rack", oldData.GetRack(), newData.GetRack())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.manufacturer", oldData.GetManufacturer(), newData.GetManufacturer())...)
 	if newData.GetChromeBrowserMachineLse() != nil {
@@ -191,7 +191,7 @@ func (hc *HistoryClient) LogVMChanges(oldData *ufspb.VM, newData *ufspb.VM) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.os_version", oldData.GetOsVersion(), newData.GetOsVersion())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.vlan", oldData.GetVlan(), newData.GetVlan())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "vm.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vm.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.machine_lse_id", oldData.GetMachineLseId(), newData.GetMachineLseId())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.state", approxState(oldData.GetState()), approxState(newData.GetState()))...)
 	hc.logMsgEntity(resourceName, false, newData)
@@ -248,7 +248,7 @@ func (hc *HistoryClient) LogNicChanges(oldData, newData *ufspb.Nic) {
 	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "nic.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "nic.machine", oldData.GetMachine(), newData.GetMachine())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "nic.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "nic.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "nic.rack", oldData.GetRack(), newData.GetRack())...)
 	hc.changes = append(hc.changes, logSwitchInterface(resourceName, oldData.GetSwitchInterface(), newData.GetSwitchInterface())...)
 	hc.logMsgEntity(resourceName, false, newData)
@@ -277,7 +277,7 @@ func (hc *HistoryClient) LogDracChanges(oldData, newData *ufspb.Drac) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "drac.display_name", oldData.GetDisplayName(), newData.GetDisplayName())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "drac.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "drac.machine", oldData.GetMachine(), newData.GetMachine())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "drac.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "drac.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "drac.rack", oldData.GetRack(), newData.GetRack())...)
 	hc.changes = append(hc.changes, logSwitchInterface(resourceName, oldData.GetSwitchInterface(), newData.GetSwitchInterface())...)
 	hc.logMsgEntity(resourceName, false, newData)
@@ -306,7 +306,7 @@ func (hc *HistoryClient) LogKVMChanges(oldData, newData *ufspb.KVM) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.chrome_platform", oldData.GetChromePlatform(), newData.GetChromePlatform())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.rack", oldData.GetRack(), newData.GetRack())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
@@ -333,7 +333,7 @@ func (hc *HistoryClient) LogSwitchChanges(oldData, newData *ufspb.Switch) {
 	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "switch.description", oldData.GetDescription(), newData.GetDescription())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "switch.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "switch.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "switch.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "switch.rack", oldData.GetRack(), newData.GetRack())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
@@ -360,7 +360,7 @@ func (hc *HistoryClient) LogRPMChanges(oldData, newData *ufspb.RPM) {
 	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.mac_address", oldData.GetMacAddress(), newData.GetMacAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.lab", approxLab(oldData.GetLab()), approxLab(newData.GetLab()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "rpm.rack", oldData.GetRack(), newData.GetRack())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
@@ -510,11 +510,11 @@ func logCommon(resourceName, label string, oldValue interface{}, newValue interf
 	}
 }
 
-func approxLab(lab string) string {
-	if lab == "" {
-		return ufspb.Lab_LAB_UNSPECIFIED.String()
+func approxZone(zone string) string {
+	if zone == "" {
+		return ufspb.Zone_ZONE_UNSPECIFIED.String()
 	}
-	return lab
+	return zone
 }
 
 func approxState(s string) string {
