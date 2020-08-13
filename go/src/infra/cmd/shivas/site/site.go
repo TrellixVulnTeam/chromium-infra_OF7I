@@ -145,4 +145,4 @@ var DefaultPRPCOptions = &prpc.Options{
 }
 
 // CipdInstalledPath is the installed path for shivas package.
-var CipdInstalledPath = "chromiumos/infra/shivas/"
+var CipdInstalledPath = "infra/shivas/"
