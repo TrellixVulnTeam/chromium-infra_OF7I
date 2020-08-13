@@ -20,7 +20,11 @@ func importCrimson(ctx context.Context) error {
 	if machineDBConfigService == "" {
 		machineDBConfigService = frontend.DefaultMachineDBService
 	}
-	machineDBHost := fmt.Sprintf("%s.appspot.com", machineDBConfigService)
+	logging.Infof(ctx, "Querying config source %s", machineDBConfigService)
+	machineDBHost := config.Get(ctx).GetMachineDbHost()
+	if machineDBHost == "" {
+		machineDBHost = fmt.Sprintf("%s.appspot.com", machineDBConfigService)
+	}
 	logging.Infof(ctx, "Querying host %s", machineDBHost)
 	logging.Infof(ctx, "Comparing crimson with UFS before importing")
 	if err := compareCrimson(ctx, machineDBHost); err != nil {
