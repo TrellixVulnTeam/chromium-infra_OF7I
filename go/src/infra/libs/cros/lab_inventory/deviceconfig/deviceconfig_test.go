@@ -15,8 +15,6 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
-
-	"infra/appengine/cros/lab_inventory/app/config"
 )
 
 var deviceConfigJSON = `
@@ -294,17 +292,10 @@ func (gsClient *fakeGSClient) GetFile(ctx context.Context, path string) ([]byte,
 func TestUpdateDatastoreFromBoxter(t *testing.T) {
 	Convey("Test update device config from boxster", t, func() {
 		ctx := gaetesting.TestingContextWithAppID("go-test")
-		ctx = config.Use(ctx, &config.Config{
-			ProjectConfigSource: &config.ProjectConfigLocation{
-				ProgramConfigsGsPath: "gs://fake-path/config.json",
-				GitilesHost:          "https://fake-host.appspot.com",
-			},
-		})
-
 		gitilesMock := &fakeGitClient{}
 		gsClientMock := &fakeGSClient{}
 		Convey("Happy path", func() {
-			err := UpdateDatastoreFromBoxster(ctx, gitilesMock, gsClientMock)
+			err := UpdateDatastoreFromBoxster(ctx, gitilesMock, gsClientMock, "gs://fake-path/config.json")
 			So(err, ShouldBeNil)
 			// There should be 6 entities created in datastore as
 			// test_device_config_v2.jsonproto contains 6 device configs.

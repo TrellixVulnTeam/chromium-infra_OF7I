@@ -16,7 +16,6 @@ import (
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
 
-	"infra/appengine/cros/lab_inventory/app/config"
 	"infra/libs/cros/git"
 	"infra/libs/cros/gs"
 	"infra/libs/cros/lab_inventory/cfg2datastore"
@@ -89,10 +88,9 @@ func UpdateDatastore(ctx context.Context, client gitiles.GitilesClient, project,
 }
 
 // UpdateDatastoreFromBoxster updates datastore from boxster (go/boxster)
-func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsClient gs.ClientInterface) error {
+func UpdateDatastoreFromBoxster(ctx context.Context, gc git.ClientInterface, gsClient gs.ClientInterface, configGSPath string) error {
 	// gc is used in later CLs to download device project configs.
-	cfg := config.Get(ctx).GetProjectConfigSource()
-	programs, err := getProgramConfigs(ctx, gsClient, cfg.GetProgramConfigsGsPath())
+	programs, err := getProgramConfigs(ctx, gsClient, configGSPath)
 	if err != nil {
 		return err
 	}

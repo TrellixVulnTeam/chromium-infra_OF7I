@@ -106,7 +106,7 @@ func syncDevConfigHandler(c *router.Context) error {
 		if err != nil {
 			return err
 		}
-		return deviceconfig.UpdateDatastoreFromBoxster(c.Context, gitClient, gsClient)
+		return deviceconfig.UpdateDatastoreFromBoxster(c.Context, gitClient, gsClient, bsCfg.GetProgramConfigsGsPath())
 	}
 	dCcfg := cfg.GetDeviceConfigSource()
 	cli, err := cfg2datastore.NewGitilesClient(c.Context, dCcfg.GetHost())
