@@ -325,7 +325,10 @@ func GetMachine(ctx context.Context, id string) (*ufspb.Machine, error) {
 	if err != nil {
 		return nil, err
 	}
-	setMachine(ctx, machine)
+	// Nics or Drac info not associated with CrOS machines, yet.
+	if machine.GetChromeBrowserMachine() != nil {
+		setMachine(ctx, machine)
+	}
 	return machine, nil
 }
 
