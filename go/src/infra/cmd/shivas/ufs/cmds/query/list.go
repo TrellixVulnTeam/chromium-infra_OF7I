@@ -19,6 +19,7 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
 	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
+	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
 )
 
@@ -61,6 +62,7 @@ func (c listApp) GetCommands() []*subcommands.Command {
 		nic.ListNicCmd,
 		vm.ListVMCmd,
 		vm.ListVMSlotCmd,
+		vlan.ListVlanCmd,
 		rack.ListRackCmd,
 		machineprototype.ListMachineLSEPrototypeCmd,
 		rackprototype.ListRackLSEPrototypeCmd,

@@ -547,6 +547,8 @@ Prints all the hosts in JSON format
 
 shivas list host -n 50
 Prints 50 hosts in JSON format
+
+Valid states[" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"
 `
 
 	// AddMachineLSEPrototypeLongDesc long description for AddMachineLSEPrototypeCmd
@@ -706,6 +708,31 @@ Fetches all platforms and prints the output in json format
 
 shivas list platform -n 5 -json
 Fetches 5 platforms and prints the output in JSON format
+`
+
+	// UpdateVlanLongDesc long description for UpdateVlanCmd
+	UpdateVlanLongDesc string = `Update vlan configuration.
+
+only description and state are allowed to update. cidr_block is not allowed to be updated to avoid any potential huge amount dhcp/ip changes of hosts.
+
+Examples:
+
+shivas update-vlan -name vlan_name -desc test -state serving'
+Updates a vlan partially, only specified field values will be updated, with other values remaining the same.
+You can clear/empty a field value by providing a "-"`
+
+	// ListVlanLongDesc long description for ListVlanCmd
+	ListVlanLongDesc string = `List all vlans by some filters
+
+Examples:
+shivas list vlan
+Fetches all the vlans in table format
+
+shivas list vlan -n 50
+Fetches 50 vlans and prints the output in table format
+
+shivas list vlan -filter "state=serving"
+Fetches all vlans and prints the output in json format
 `
 
 	// ChromePlatformFileText description for ChromePlatform file input
@@ -976,7 +1003,10 @@ The protobuf definition of rack is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto`
 
 	// LabFilterHelpText help text for lab filters for list command
-	LabFilterHelpText string = fmt.Sprintf("\nValid lab filters: [%s]\n", strings.Join(utils.ValidLabStr(), ", "))
+	LabFilterHelpText string = fmt.Sprintf("Valid lab filters: [%s]\n", strings.Join(utils.ValidLabStr(), ", "))
+
+	// StateFilterHelpText help text for state filters for list command
+	StateFilterHelpText string = fmt.Sprintf("Valid state filters: [%s]\n", strings.Join(ufsUtil.ValidStateStr(), ", "))
 
 	// KeysOnlyText help text for keysOnly option
 	KeysOnlyText string = `get only the keys and not the entire object.
@@ -989,7 +1019,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
 
 	// MachineFilterHelp help text for list machine filtering
-	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform/tag/state` + LabFilterHelpText +
+	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform/tag/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'nic=nic-1,nic-2'
@@ -997,57 +1027,57 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
 	// VMSlotFilterHelp help text for list free vm slots filtering
-	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/lab/rack/state/machine` + LabFilterHelpText +
+	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/lab/rack/state/machine` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'man=apple'
 'lab=atl97 & man=apple'` + FilterCondition
 
 	// RackFilterHelp help text for list rack filtering
-	RackFilterHelp string = FilterText + `You can filter racks by tag/lab/state` + LabFilterHelpText +
+	RackFilterHelp string = FilterText + `You can filter racks by tag/lab/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'kvm=kvm-1,kvm-2'
 'lab=atl97 & kvm=kvm-1'` + FilterCondition
 
 	// NicFilterHelp help text for list rack filtering
-	NicFilterHelp string = FilterText + `You can filter nics by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + LabFilterHelpText +
+	NicFilterHelp string = FilterText + `You can filter nics by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// DracFilterHelp help text for list rack filtering
-	DracFilterHelp string = FilterText + `You can filter dracs by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + LabFilterHelpText +
+	DracFilterHelp string = FilterText + `You can filter dracs by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/state/man(manufacturer)` + LabFilterHelpText +
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/state/man(manufacturer)` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// VMFilterHelp help text for list vm filtering
-	VMFilterHelp string = FilterText + `You can filter hosts by vlan/osversion/state/host_id/lab/tag` + LabFilterHelpText +
+	VMFilterHelp string = FilterText + `You can filter hosts by vlan/osversion/state/host_id/lab/tag` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
 
 	// KVMFilterHelp help text for list rack filtering
-	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/mac(macaddress)/state` + LabFilterHelpText +
+	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/mac(macaddress)/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
 
 	// RPMFilterHelp help text for list rack filtering
-	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack/tag/state` + LabFilterHelpText +
+	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack/tag/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// SwitchFilterHelp help text for list rack filtering
-	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack/tag/state` + LabFilterHelpText +
+	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack/tag/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
@@ -1069,6 +1099,11 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 		`Filter format Egs:
 'tag=dell, 8g'
 'tag=iphone & man=Apple` + FilterCondition
+
+	// VlanFilterHelp help text for list vlan filtering
+	VlanFilterHelp string = FilterText + `You can filter vlans by state` + StateFilterHelpText +
+		`Filter format Egs:
+'state=serving'` + FilterCondition
 
 	// StateHelp help text for filter '-state'
 	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"

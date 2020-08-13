@@ -49,6 +49,7 @@ var (
 	RacklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
 		"Tags", "UpdateTime"}
 	ChromePlatformTitle = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
+	VlanTitle           = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
 	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "State", "UpdateTime"}
 	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "IP", "State", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
@@ -637,6 +638,46 @@ func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype) {
 			fmt.Println()
 		}
 	}
+}
+
+// PrintVlansJSON prints the vlan details in json format.
+func PrintVlansJSON(vlans []*ufspb.Vlan) {
+	len := len(vlans) - 1
+	for i, m := range vlans {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
+		PrintProtoJSON(m)
+		if i < len {
+			fmt.Print(",")
+			fmt.Println()
+		}
+	}
+}
+
+// PrintVlans prints the all vlans in table form.
+func PrintVlans(vs []*ufspb.Vlan, keysOnly bool) {
+	defer tw.Flush()
+	for _, v := range vs {
+		printVlan(v, keysOnly)
+	}
+}
+
+func printVlan(m *ufspb.Vlan, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	m.Name = ufsUtil.RemovePrefix(m.Name)
+	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetVlanAddress())
+	out += fmt.Sprintf("%d\t", m.GetCapacityIp())
+	out += fmt.Sprintf("%s\t", m.GetDescription())
+	out += fmt.Sprintf("%s\t", m.GetState())
+	out += fmt.Sprintf("%s\t", ts)
+	fmt.Fprintln(tw, out)
 }
 
 // PrintChromePlatforms prints the all msleps in table form.

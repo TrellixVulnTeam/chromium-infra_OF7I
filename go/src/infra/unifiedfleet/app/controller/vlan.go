@@ -80,21 +80,25 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 			return errors.Annotate(err, "UpdateVlan - fail to get old vlan").Err()
 		}
 
+		// Copy the not-allowed change fields
+		vlan.VlanAddress = oldVlan.GetVlanAddress()
+		vlan.CapacityIp = oldVlan.GetCapacityIp()
+		vlan.State = oldVlan.GetState()
+
+		// Update new vlan's state if user specifically set the state
+		if s != ufspb.State_STATE_UNSPECIFIED && vlan.State != s.String() {
+			vlan.State = s.String()
+			if err := hc.stUdt.updateStateHelper(ctx, ufspb.State(ufspb.State_value[vlan.GetState()])); err != nil {
+				return err
+			}
+		}
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
 			vlan, err = processVlanUpdateMask(oldVlan, vlan, mask)
 			if err != nil {
 				return errors.Annotate(err, "UpdateVlan - processing update mask failed").Err()
 			}
-		} else {
-			// Copy the not-allowed change fields
-			vlan.VlanAddress = oldVlan.GetVlanAddress()
-			vlan.State = oldVlan.GetState()
 		}
-		if s != ufspb.State_STATE_UNSPECIFIED {
-			vlan.State = s.String()
-		}
-		hc.stUdt.updateStateHelper(ctx, ufspb.State(ufspb.State_value[vlan.GetState()]))
 
 		if _, err := configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan}); err != nil {
 			return errors.Annotate(err, "UpdateVlan - unable to batch update vlan %s", vlan.Name).Err()
@@ -448,6 +452,7 @@ func validateVlanUpdateMask(vlan *ufspb.Vlan, mask *field_mask.FieldMask) error 
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "description":
+			case "state":
 			case "cidr_block":
 				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - cidr_block cannot be updated, delete and create a new vlan instead")
 			case "tags":
@@ -469,6 +474,8 @@ func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_ma
 		switch path {
 		case "description":
 			oldVlan.Description = vlan.GetDescription()
+		case "state":
+			oldVlan.State = vlan.GetState()
 		}
 	}
 	return oldVlan, nil

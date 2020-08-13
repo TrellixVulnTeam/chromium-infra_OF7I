@@ -26,6 +26,7 @@ func mockVlan(id, cidr string) *ufspb.Vlan {
 	return &ufspb.Vlan{
 		Name:        id,
 		VlanAddress: cidr,
+		State:       ufspb.State_STATE_UNSPECIFIED.String(),
 	}
 }
 
@@ -125,23 +126,42 @@ func TestUpdateVlan(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 		})
 
-		Convey("Update vlan - partial update description & state", func() {
+		Convey("Update vlan - partial update description", func() {
 			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{mockVlan("update-vlan-1", "5.5.5.5/30")})
 			vlan2 := mockVlan("update-vlan-1", "2.2.2.2/30")
 			vlan2.Description = "test partial update"
-			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"description"}}, ufspb.State_STATE_SERVING)
+			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"description"}}, ufspb.State_STATE_UNSPECIFIED)
 			So(err, ShouldBeNil)
 			So(resp.GetDescription(), ShouldEqual, "test partial update")
 			So(resp.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
-			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
+			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
 
 			vlan, err := configuration.GetVlan(ctx, "update-vlan-1")
 			So(err, ShouldBeNil)
 			So(vlan.GetDescription(), ShouldEqual, "test partial update")
 			So(vlan.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
+			So(vlan.GetState(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+		})
+
+		Convey("Update vlan - partial update state", func() {
+			vlan1 := mockVlan("update-vlan-2", "5.5.5.5/30")
+			vlan1.Description = "before update"
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
+			vlan2 := mockVlan("update-vlan-2", "2.2.2.2/30")
+			vlan2.Description = "after update"
+			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"state"}}, ufspb.State_STATE_SERVING)
+			So(err, ShouldBeNil)
+			So(resp.GetDescription(), ShouldEqual, "before update")
+			So(resp.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
+			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
+
+			vlan, err := configuration.GetVlan(ctx, "update-vlan-2")
+			So(err, ShouldBeNil)
+			So(vlan.GetDescription(), ShouldEqual, "before update")
+			So(vlan.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
 			So(vlan.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
 
-			s, err := state.GetStateRecord(ctx, "vlans/update-vlan-1")
+			s, err := state.GetStateRecord(ctx, "vlans/update-vlan-2")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
 		})
