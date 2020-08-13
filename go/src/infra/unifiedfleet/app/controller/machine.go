@@ -461,8 +461,10 @@ func deleteNonExistingMachines(ctx context.Context, machines []*ufspb.Machine, p
 	var toDelete []string
 	for _, sr := range resp.Passed() {
 		s := sr.Data.(*ufspb.Machine)
-		if _, ok := resMap[s.GetName()]; !ok {
-			toDelete = append(toDelete, s.GetName())
+		if s.GetChromeBrowserMachine() != nil {
+			if _, ok := resMap[s.GetName()]; !ok {
+				toDelete = append(toDelete, s.GetName())
+			}
 		}
 	}
 	logging.Debugf(ctx, "Deleting %d non-existing machines", len(toDelete))

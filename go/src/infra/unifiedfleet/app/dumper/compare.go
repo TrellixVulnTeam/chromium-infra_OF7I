@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
@@ -52,14 +53,21 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err != nil {
 		return err
 	}
+	if stateRes == nil {
+		return errors.New("state entity corrupted")
+	}
 	stateMap := make(map[string]ufspb.State)
 	for _, sr := range stateRes.Passed() {
 		s := sr.Data.(*ufspb.StateRecord)
 		stateMap[s.GetResourceName()] = s.GetState()
 	}
+
 	dhcpRes, err := configuration.GetAllDHCPs(ctx)
 	if err != nil {
 		return err
+	}
+	if dhcpRes == nil {
+		return errors.New("dhcp entity corrupted")
 	}
 	dhcpMap := make(map[string]*ufspb.DHCPConfig)
 	dhcpHostMap := make(map[string]*ufspb.DHCPConfig)
@@ -68,15 +76,23 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 		dhcpMap[d.GetMacAddress()] = d
 		dhcpHostMap[d.GetHostname()] = d
 	}
+
 	rackRes, err := registration.GetAllRacks(ctx)
 	if err != nil {
 		return err
 	}
+	if rackRes == nil {
+		return errors.New("rack entity corrupted")
+	}
+
 	vlanResp, err := crimsonClient.ListVLANs(ctx, &crimson.ListVLANsRequest{})
 	if err != nil {
 		return err
 	}
 	vlanRes, err := configuration.GetAllVlans(ctx)
+	if vlanRes == nil {
+		return errors.New("vlan entity corrupted")
+	}
 	if err := compareVlans(ctx, writer, vlanResp.Vlans, vlanRes, stateMap); err != nil {
 		return err
 	}
@@ -98,6 +114,9 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err != nil {
 		return err
 	}
+	if machineRes == nil {
+		return errors.New("machine entity corrupted")
+	}
 	if err := compareMachines(ctx, writer, machineResp.Machines, machineRes, stateMap); err != nil {
 		return err
 	}
@@ -110,6 +129,9 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err := compareKVMs(ctx, writer, kvmResp.Kvms, kvmRes, stateMap); err != nil {
 		return err
 	}
+	if kvmRes == nil {
+		return errors.New("kvm entity corrupted")
+	}
 
 	switchResp, err := crimsonClient.ListSwitches(ctx, &crimson.ListSwitchesRequest{})
 	if err != nil {
@@ -118,6 +140,9 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	switchRes, err := registration.GetAllSwitches(ctx)
 	if err := compareSwitches(ctx, writer, switchResp.Switches, switchRes, stateMap); err != nil {
 		return err
+	}
+	if switchRes == nil {
+		return errors.New("switch entity corrupted")
 	}
 
 	nicResp, err := crimsonClient.ListNICs(ctx, &crimson.ListNICsRequest{})
@@ -128,6 +153,9 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err := compareNics(ctx, writer, nicResp.Nics, nicRes); err != nil {
 		return err
 	}
+	if nicRes == nil {
+		return errors.New("nic entity corrupted")
+	}
 
 	dracResp, err := crimsonClient.ListDRACs(ctx, &crimson.ListDRACsRequest{})
 	if err != nil {
@@ -137,12 +165,18 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err := compareDracs(ctx, writer, dracResp.Dracs, dracRes, dhcpMap); err != nil {
 		return err
 	}
+	if dracRes == nil {
+		return errors.New("drac entity corrupted")
+	}
 
 	hostResp, err := crimsonClient.ListPhysicalHosts(ctx, &crimson.ListPhysicalHostsRequest{})
 	if err != nil {
 		return err
 	}
 	hostRes, err := inventory.GetAllMachineLSEs(ctx)
+	if hostRes == nil {
+		return errors.New("host entity corrupted")
+	}
 	if err := compareHosts(ctx, writer, hostResp.Hosts, hostRes, stateMap, dhcpHostMap); err != nil {
 		return err
 	}
@@ -154,7 +188,6 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err := compareVMs(ctx, writer, vmResp.Vms, hostRes, stateMap, dhcpHostMap); err != nil {
 		return err
 	}
-
 	return nil
 }
 
