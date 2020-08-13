@@ -20,7 +20,7 @@ import (
 // ImportStates imports states of UFS resources.
 func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*crimson.Rack, hosts []*crimson.PhysicalHost, vms []*crimson.VM, vlans []*crimson.VLAN, kvms []*crimson.KVM, switches []*crimson.Switch, pageSize int) (*datastore.OpResults, error) {
 	states := make([]*ufspb.StateRecord, 0)
-	logging.Debugf(ctx, "collecting states of machines")
+	logging.Infof(ctx, "collecting states of machines")
 	for _, m := range machines {
 		resourceName := util.AddPrefix(util.MachineCollection, m.GetName())
 		states = append(states, &ufspb.StateRecord{
@@ -29,7 +29,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 			User:         util.DefaultImporter,
 		})
 	}
-	logging.Debugf(ctx, "collecting states of racks")
+	logging.Infof(ctx, "collecting states of racks")
 	for _, m := range racks {
 		resourceName := util.AddPrefix(util.RackCollection, m.GetName())
 		states = append(states, &ufspb.StateRecord{
@@ -38,7 +38,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 			User:         util.DefaultImporter,
 		})
 	}
-	logging.Debugf(ctx, "collecting states of hosts")
+	logging.Infof(ctx, "collecting states of hosts")
 	for _, m := range hosts {
 		resourceName := util.AddPrefix(util.HostCollection, m.GetName())
 		states = append(states, &ufspb.StateRecord{
@@ -47,7 +47,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 			User:         util.DefaultImporter,
 		})
 	}
-	logging.Debugf(ctx, "collecting states of vms")
+	logging.Infof(ctx, "collecting states of vms")
 	for _, vm := range vms {
 		resourceName := util.AddPrefix(util.VMCollection, vm.GetName())
 		states = append(states, &ufspb.StateRecord{
@@ -56,7 +56,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 			User:         util.DefaultImporter,
 		})
 	}
-	logging.Debugf(ctx, "collecting states of vlans")
+	logging.Infof(ctx, "collecting states of vlans")
 	for _, vlan := range vlans {
 		resourceName := util.GetBrowserLabName(util.Int64ToStr(vlan.GetId()))
 		states = append(states, &ufspb.StateRecord{
@@ -65,7 +65,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 			User:         util.DefaultImporter,
 		})
 	}
-	logging.Debugf(ctx, "collecting states of kvms")
+	logging.Infof(ctx, "collecting states of kvms")
 	for _, kvm := range kvms {
 		resourceName := util.AddPrefix(util.KVMCollection, kvm.GetName())
 		states = append(states, &ufspb.StateRecord{
@@ -74,7 +74,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 			User:         util.DefaultImporter,
 		})
 	}
-	logging.Debugf(ctx, "collecting states of switches")
+	logging.Infof(ctx, "collecting states of switches")
 	for _, sw := range switches {
 		resourceName := util.AddPrefix(util.SwitchCollection, sw.GetName())
 		states = append(states, &ufspb.StateRecord{
@@ -86,7 +86,7 @@ func ImportStates(ctx context.Context, machines []*crimson.Machine, racks []*cri
 
 	deleteNonExistingStates(ctx, states, pageSize)
 	allRes := make(datastore.OpResults, 0)
-	logging.Debugf(ctx, "Importing %d states", len(states))
+	logging.Infof(ctx, "Importing %d states", len(states))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(states))
 		res, err := state.ImportStateRecords(ctx, states[i:end])
@@ -121,7 +121,7 @@ func deleteNonExistingStates(ctx context.Context, states []*ufspb.StateRecord, p
 			toDelete = append(toDelete, s.GetResourceName())
 		}
 	}
-	logging.Debugf(ctx, "Deleting %d non-existing states", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing states", len(toDelete))
 	return deleteByPage(ctx, toDelete, pageSize, state.DeleteStates), nil
 }
 

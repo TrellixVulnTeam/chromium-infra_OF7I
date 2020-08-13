@@ -39,17 +39,17 @@ func (hc *HistoryClient) SaveChangeEvents(ctx context.Context) error {
 	if hc.stUdt != nil {
 		changes = append(changes, hc.stUdt.Changes...)
 	}
-	logging.Debugf(ctx, "Logging %d changes", len(changes))
+	logging.Infof(ctx, "Logging %d changes", len(changes))
 	user := auth.CurrentUser(ctx)
 	for _, c := range changes {
 		c.UserEmail = user.Email
 	}
 	_, err := history.CreateBatchChangeEvents(ctx, changes)
 	if err != nil {
-		logging.Debugf(ctx, "fail to log changes: %s", err.Error())
+		logging.Warningf(ctx, "fail to log changes: %s", err.Error())
 		return err
 	}
-	logging.Debugf(ctx, "Finish logging change events successfully")
+	logging.Infof(ctx, "Finish logging change events successfully")
 	return nil
 }
 

@@ -94,7 +94,7 @@ func QuerySwitchByPropertyName(ctx context.Context, propertyName, id string, key
 		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No switches found for the query: %s", id)
+		logging.Debugf(ctx, "No switches found for the query: %s", id)
 		return nil, nil
 	}
 	switches := make([]*ufspb.Switch, 0, len(entities))

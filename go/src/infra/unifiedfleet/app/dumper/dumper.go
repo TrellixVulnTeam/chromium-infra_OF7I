@@ -59,6 +59,7 @@ func run(ctx context.Context, minInterval time.Duration) {
 }
 
 func dump(ctx context.Context) error {
+	ctx = logging.SetLevel(ctx, logging.Info)
 	// Execute importing before dumping
 	err1 := importCrimson(ctx)
 	err2 := dumpToBQ(ctx)
@@ -72,8 +73,7 @@ func dumpToBQ(ctx context.Context) (err error) {
 	defer func() {
 		dumpToBQTick.Add(ctx, 1, err == nil)
 	}()
-
-	logging.Debugf(ctx, "Dumping to BQ")
+	logging.Infof(ctx, "Dumping to BQ")
 	curTime := time.Now()
 	curTimeStr := bqlib.GetPSTTimeStamp(curTime)
 	if err := configuration.SaveProjectConfig(ctx, &configuration.ProjectConfigEntity{
@@ -103,7 +103,7 @@ func dumpChangeEvent(ctx context.Context) (err error) {
 	defer func() {
 		dumpChangeEventTick.Add(ctx, 1, err == nil)
 	}()
-
+	ctx = logging.SetLevel(ctx, logging.Info)
 	logging.Debugf(ctx, "Dumping change event to BQ")
 	return dumpChangeEventHelper(ctx, get(ctx))
 }
@@ -112,7 +112,7 @@ func dumpChangeSnapshots(ctx context.Context) (err error) {
 	defer func() {
 		dumpChangeSnapshotTick.Add(ctx, 1, err == nil)
 	}()
-
+	ctx = logging.SetLevel(ctx, logging.Info)
 	logging.Debugf(ctx, "Dumping change snapshots to BQ")
 	return dumpChangeSnapshotHelper(ctx, get(ctx))
 }
@@ -121,6 +121,7 @@ func dumpCrosInventory(ctx context.Context) (err error) {
 	defer func() {
 		dumpCrosInventoryTick.Add(ctx, 1, err == nil)
 	}()
+	ctx = logging.SetLevel(ctx, logging.Info)
 	return importCrosInventory(ctx)
 }
 

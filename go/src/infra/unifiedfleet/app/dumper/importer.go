@@ -21,15 +21,15 @@ func importCrimson(ctx context.Context) error {
 		machineDBConfigService = frontend.DefaultMachineDBService
 	}
 	machineDBHost := fmt.Sprintf("%s.appspot.com", machineDBConfigService)
-	logging.Debugf(ctx, "Querying host %s", machineDBHost)
-	logging.Debugf(ctx, "Comparing crimson with UFS before importing")
+	logging.Infof(ctx, "Querying host %s", machineDBHost)
+	logging.Infof(ctx, "Comparing crimson with UFS before importing")
 	if err := compareCrimson(ctx, machineDBHost); err != nil {
-		logging.Debugf(ctx, "Fail to generate sync diff: %s", err.Error())
+		logging.Warningf(ctx, "Fail to generate sync diff: %s", err.Error())
 	}
-	logging.Debugf(ctx, "Finish exporting diff from crimson to UFS to Google Storage")
+	logging.Infof(ctx, "Finish exporting diff from crimson to UFS to Google Storage")
 
 	sv := &frontend.FleetServerImpl{}
-	logging.Debugf(ctx, "Importing chrome platforms")
+	logging.Infof(ctx, "Importing chrome platforms")
 	respCP, err := sv.ImportChromePlatforms(ctx, &api.ImportChromePlatformsRequest{
 		Source: &api.ImportChromePlatformsRequest_ConfigSource{
 			ConfigSource: &api.ConfigSource{
@@ -40,15 +40,15 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respCP.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing chrome platform: %s", string(respCP.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing chrome platform: %s", string(respCP.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing chrome platform: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing chrome platform: %s", err.Error())
 		}
 		return err
 	}
-	logging.Debugf(ctx, "Finish importing chrome platforms: %#v", respCP)
+	logging.Infof(ctx, "Finish importing chrome platforms: %#v", respCP)
 
-	logging.Debugf(ctx, "Importing os versions")
+	logging.Infof(ctx, "Importing os versions")
 	respOS, err := sv.ImportOSVersions(ctx, &api.ImportOSVersionsRequest{
 		Source: &api.ImportOSVersionsRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{
@@ -58,15 +58,15 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respOS.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing chrome platform: %s", string(respOS.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing chrome platform: %s", string(respOS.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing chrome platform: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing chrome platform: %s", err.Error())
 		}
 		return err
 	}
-	logging.Debugf(ctx, "Finish importing os: %#v", respOS)
+	logging.Infof(ctx, "Finish importing os: %#v", respOS)
 
-	logging.Debugf(ctx, "Importing vlans")
+	logging.Infof(ctx, "Importing vlans")
 	respVlan, err := sv.ImportVlans(ctx, &api.ImportVlansRequest{
 		Source: &api.ImportVlansRequest_ConfigSource{
 			ConfigSource: &api.ConfigSource{
@@ -77,15 +77,15 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respVlan.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing vlans: %s", string(respVlan.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing vlans: %s", string(respVlan.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing vlans: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing vlans: %s", err.Error())
 		}
 		return err
 	}
-	logging.Debugf(ctx, "Finish importing vlans: %#v", respVlan)
+	logging.Infof(ctx, "Finish importing vlans: %#v", respVlan)
 
-	logging.Debugf(ctx, "Reading datacenters")
+	logging.Infof(ctx, "Reading datacenters")
 	respDC, err := sv.ImportDatacenters(ctx, &api.ImportDatacentersRequest{
 		Source: &api.ImportDatacentersRequest_ConfigSource{
 			ConfigSource: &api.ConfigSource{
@@ -96,14 +96,14 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respDC.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing datacenters: %s", string(respDC.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing datacenters: %s", string(respDC.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing datacenters: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing datacenters: %s", err.Error())
 		}
 		return err
 	}
 
-	logging.Debugf(ctx, "Importing machines")
+	logging.Infof(ctx, "Importing machines")
 	respMachine, err := sv.ImportMachines(ctx, &api.ImportMachinesRequest{
 		Source: &api.ImportMachinesRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{
@@ -113,15 +113,15 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respMachine.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing machines: %s", string(respMachine.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing machines: %s", string(respMachine.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing machines: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing machines: %s", err.Error())
 		}
 		return err
 	}
-	logging.Debugf(ctx, "Finish importing machines: %#v", respMachine)
+	logging.Infof(ctx, "Finish importing machines: %#v", respMachine)
 
-	logging.Debugf(ctx, "Importing nics")
+	logging.Infof(ctx, "Importing nics")
 	respNic, err := sv.ImportNics(ctx, &api.ImportNicsRequest{
 		Source: &api.ImportNicsRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{
@@ -131,15 +131,15 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respNic.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing nics: %s", string(respNic.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing nics: %s", string(respNic.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing nics: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing nics: %s", err.Error())
 		}
 		return err
 	}
-	logging.Debugf(ctx, "Finish importing nics: %#v", respNic)
+	logging.Infof(ctx, "Finish importing nics: %#v", respNic)
 
-	logging.Debugf(ctx, "Importing machine LSEs")
+	logging.Infof(ctx, "Importing machine LSEs")
 	respMLSE, err := sv.ImportMachineLSEs(ctx, &api.ImportMachineLSEsRequest{
 		Source: &api.ImportMachineLSEsRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{
@@ -149,15 +149,15 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respMLSE.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing machine LSEs: %s", string(respMLSE.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing machine LSEs: %s", string(respMLSE.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing machine LSEs: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing machine LSEs: %s", err.Error())
 		}
 		return err
 	}
-	logging.Debugf(ctx, "Finish importing machine LSEs: %#v", respMLSE)
+	logging.Infof(ctx, "Finish importing machine LSEs: %#v", respMLSE)
 
-	logging.Debugf(ctx, "Importing states")
+	logging.Infof(ctx, "Importing states")
 	respStates, err := sv.ImportStates(ctx, &api.ImportStatesRequest{
 		Source: &api.ImportStatesRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{
@@ -167,13 +167,13 @@ func importCrimson(ctx context.Context) error {
 	})
 	if err != nil {
 		if len(respStates.GetDetails()) > 0 {
-			logging.Debugf(ctx, "Fail to importing states: %s", string(respStates.GetDetails()[0].GetValue()))
+			logging.Warningf(ctx, "Fail to importing states: %s", string(respStates.GetDetails()[0].GetValue()))
 		} else {
-			logging.Debugf(ctx, "Fail to importing states: %s", err.Error())
+			logging.Warningf(ctx, "Fail to importing states: %s", err.Error())
 		}
 		return err
 	}
-	logging.Debugf(ctx, "Finish importing states: %#v", respStates)
+	logging.Infof(ctx, "Finish importing states: %#v", respStates)
 
 	return nil
 }
@@ -183,9 +183,9 @@ func importCrosInventory(ctx context.Context) error {
 	if crosInventoryHost == "" {
 		crosInventoryHost = "cros-lab-inventory.appspot.com"
 	}
-	logging.Debugf(ctx, "Querying host %s", crosInventoryHost)
+	logging.Infof(ctx, "Querying host %s", crosInventoryHost)
 	sv := &frontend.FleetServerImpl{}
-	logging.Debugf(ctx, "Importing ChromeOS inventory")
+	logging.Infof(ctx, "Importing ChromeOS inventory")
 	_, err := sv.ImportOSMachineLSEs(ctx, &api.ImportOSMachineLSEsRequest{
 		Source: &api.ImportOSMachineLSEsRequest_MachineDbSource{
 			MachineDbSource: &api.MachineDBSource{

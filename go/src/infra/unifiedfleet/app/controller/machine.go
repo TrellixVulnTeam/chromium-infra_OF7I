@@ -467,7 +467,7 @@ func deleteNonExistingMachines(ctx context.Context, machines []*ufspb.Machine, p
 			}
 		}
 	}
-	logging.Debugf(ctx, "Deleting %d non-existing machines", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing machines", len(toDelete))
 	return deleteByPage(ctx, toDelete, pageSize, registration.DeleteMachines), nil
 }
 

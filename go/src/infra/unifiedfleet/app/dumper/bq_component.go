@@ -56,11 +56,11 @@ var configurationDumpToolkit = map[string]getAllFunc{
 
 func dumpHelper(ctx context.Context, bqClient *bigquery.Client, msgs []proto.Message, table, curTimeStr string) error {
 	uploader := bqlib.InitBQUploaderWithClient(ctx, bqClient, ufsDatasetName, fmt.Sprintf("%s$%s", table, curTimeStr))
-	logging.Debugf(ctx, "Dumping %d %s records to BigQuery", len(msgs), table)
+	logging.Infof(ctx, "Dumping %d %s records to BigQuery", len(msgs), table)
 	if err := uploader.Put(ctx, msgs...); err != nil {
 		return err
 	}
-	logging.Debugf(ctx, "Finish dumping successfully")
+	logging.Infof(ctx, "Finish dumping successfully")
 	return nil
 }
 

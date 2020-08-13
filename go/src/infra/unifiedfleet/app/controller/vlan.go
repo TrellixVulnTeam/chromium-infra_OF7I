@@ -181,7 +181,6 @@ func DeleteVlan(ctx context.Context, id string) error {
 //
 // The function will stop at the very first error.
 func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int) (*ufsds.OpResults, error) {
-	logging.Debugf(ctx, "processing vlans")
 	IPs := make([]*ufspb.IP, 0)
 	vs := make([]*ufspb.Vlan, len(vlans))
 	for i, vlan := range vlans {
@@ -203,7 +202,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	}
 	deleteNonExistingVlans(ctx, vs, pageSize)
 	allRes := make(ufsds.OpResults, 0)
-	logging.Debugf(ctx, "Importing %d vlans", len(vs))
+	logging.Infof(ctx, "Importing %d vlans", len(vs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(vs))
 		res, err := configuration.ImportVlans(ctx, vs[i:end])
@@ -216,7 +215,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 		}
 	}
 
-	logging.Debugf(ctx, "Importing %d ips", len(IPs))
+	logging.Infof(ctx, "Importing %d ips", len(IPs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(IPs))
 		res, err := configuration.ImportIPs(ctx, IPs[i:end])
@@ -258,9 +257,9 @@ func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize i
 		}
 	}
 
-	logging.Debugf(ctx, "Deleting %d non-existing ips ", len(toDeleteIP))
+	logging.Infof(ctx, "Deleting %d non-existing ips ", len(toDeleteIP))
 	deleteByPage(ctx, toDeleteIP, pageSize, configuration.DeleteIPs)
-	logging.Debugf(ctx, "Deleting %d non-existing vlans ", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing vlans ", len(toDelete))
 	return deleteByPage(ctx, toDelete, pageSize, configuration.DeleteVlans), nil
 }
 
@@ -358,7 +357,6 @@ func logVlans(ctx context.Context, vlans []*ufspb.Vlan) {
 
 func logDHCPs(ctx context.Context, dhcps []*ufspb.DHCPConfig) {
 	if dhcps != nil && len(dhcps) > 0 {
-		logging.Debugf(ctx, "enter")
 		for _, v := range dhcps {
 			logging.Debugf(ctx, "\tHost %s (%s)", v.GetHostname(), v.GetIp())
 		}

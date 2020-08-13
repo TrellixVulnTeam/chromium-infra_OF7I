@@ -79,7 +79,7 @@ func QueryKVMByPropertyName(ctx context.Context, propertyName, id string, keysOn
 		return nil, status.Errorf(codes.Internal, ufsds.InternalError)
 	}
 	if len(entities) == 0 {
-		logging.Infof(ctx, "No kvms found for the query: %s", id)
+		logging.Debugf(ctx, "No kvms found for the query: %s", id)
 		return nil, nil
 	}
 	kvms := make([]*ufspb.KVM, 0, len(entities))

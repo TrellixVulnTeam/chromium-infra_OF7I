@@ -157,7 +157,7 @@ func deleteNonExistingPlatforms(ctx context.Context, platforms []*ufspb.ChromePl
 			toDelete = append(toDelete, s.GetName())
 		}
 	}
-	logging.Debugf(ctx, "Deleting %d non-existing platforms", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing platforms", len(toDelete))
 	return deleteByPage(ctx, toDelete, pageSize, configuration.DeleteChromePlatforms), nil
 }
 

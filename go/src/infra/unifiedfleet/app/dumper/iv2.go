@@ -38,8 +38,8 @@ var machineCmpIgnoreFields = []protoreflect.Name{
 // location and ChromeOSMachine data. Also uses assets_in_swarming BQ table
 // to estimate barcode_name.
 func SyncMachinesFromIV2(ctx context.Context) error {
+	ctx = logging.SetLevel(ctx, logging.Info)
 	logging.Infof(ctx, "SyncMachinesFromIV2")
-
 	host := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
 	client, err := datastore.NewClient(ctx, host)
 	if err != nil {

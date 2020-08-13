@@ -220,7 +220,7 @@ func ImportNetworkInterfaces(ctx context.Context, nics []*crimson.NIC, dracs []*
 	// will be triggered periodically, such incompleteness that's caused by
 	// potential failure will be ignored.
 	deleteNonExistingNics(ctx, newNics, pageSize)
-	logging.Debugf(ctx, "Importing %d nics", len(newNics))
+	logging.Infof(ctx, "Importing %d nics", len(newNics))
 	for i := 0; ; i += pageSize {
 		end := ufsUtil.Min(i+pageSize, len(newNics))
 		res, err := registration.ImportNics(ctx, newNics[i:end])
@@ -233,7 +233,7 @@ func ImportNetworkInterfaces(ctx context.Context, nics []*crimson.NIC, dracs []*
 		}
 	}
 	deleteNonExistingDracs(ctx, newDracs, pageSize)
-	logging.Debugf(ctx, "Importing %d dracs", len(newDracs))
+	logging.Infof(ctx, "Importing %d dracs", len(newDracs))
 	for i := 0; ; i += pageSize {
 		end := ufsUtil.Min(i+pageSize, len(newDracs))
 		res, err := registration.ImportDracs(ctx, newDracs[i:end])
@@ -245,7 +245,7 @@ func ImportNetworkInterfaces(ctx context.Context, nics []*crimson.NIC, dracs []*
 			break
 		}
 	}
-	logging.Debugf(ctx, "Importing %d dhcps", len(dhcps))
+	logging.Infof(ctx, "Importing %d dhcps", len(dhcps))
 	for i := 0; ; i += pageSize {
 		end := ufsUtil.Min(i+pageSize, len(dhcps))
 		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
@@ -276,7 +276,7 @@ func deleteNonExistingNics(ctx context.Context, nics []*ufspb.Nic, pageSize int)
 			toDelete = append(toDelete, s.GetName())
 		}
 	}
-	logging.Debugf(ctx, "Deleting %d non-existing nics", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing nics", len(toDelete))
 	return deleteByPage(ctx, toDelete, pageSize, registration.DeleteNics), nil
 }
 
@@ -296,8 +296,8 @@ func deleteNonExistingDracs(ctx context.Context, dracs []*ufspb.Drac, pageSize i
 			toDelete = append(toDelete, s.GetName())
 		}
 	}
-	logging.Debugf(ctx, "Deleting %d non-existing dracs", len(toDelete))
-	logging.Debugf(ctx, "Deleting %d non-existing drac-related dhcps", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing dracs", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing drac-related dhcps", len(toDelete))
 	allRes := *deleteByPage(ctx, toDelete, pageSize, registration.DeleteDracs)
 	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
 	return &allRes, nil

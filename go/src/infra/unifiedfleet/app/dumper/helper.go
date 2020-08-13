@@ -197,7 +197,7 @@ func dumpChangeSnapshotHelper(ctx context.Context, bqClient *bigquery.Client) er
 
 func dumpConfigurations(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
 	for k, f := range configurationDumpToolkit {
-		logging.Debugf(ctx, "dumping %s", k)
+		logging.Infof(ctx, "dumping %s", k)
 		msgs, err := f(ctx)
 		if err != nil {
 			return err
@@ -211,7 +211,7 @@ func dumpConfigurations(ctx context.Context, bqClient *bigquery.Client, curTimeS
 
 func dumpRegistration(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
 	for k, f := range registrationDumpToolkit {
-		logging.Debugf(ctx, "dumping %s", k)
+		logging.Infof(ctx, "dumping %s", k)
 		msgs, err := f(ctx)
 		if err != nil {
 			return err
@@ -225,7 +225,7 @@ func dumpRegistration(ctx context.Context, bqClient *bigquery.Client, curTimeStr
 
 func dumpInventory(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
 	for k, f := range inventoryDumpToolkit {
-		logging.Debugf(ctx, "dumping %s", k)
+		logging.Infof(ctx, "dumping %s", k)
 		msgs, err := f(ctx)
 		if err != nil {
 			return err
@@ -239,7 +239,7 @@ func dumpInventory(ctx context.Context, bqClient *bigquery.Client, curTimeStr st
 
 func dumpState(ctx context.Context, bqClient *bigquery.Client, curTimeStr string) (err error) {
 	for k, f := range stateDumpToolkit {
-		logging.Debugf(ctx, "dumping %s", k)
+		logging.Infof(ctx, "dumping %s", k)
 		msgs, err := f(ctx)
 		if err != nil {
 			return err

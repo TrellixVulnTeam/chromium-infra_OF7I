@@ -387,10 +387,10 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 		for _, lse := range lses {
 			res = append(res, lse)
 			freeSlots := lse.GetChromeBrowserMachineLse().GetVmCapacity() - int32(capacityMap[lse.GetName()])
-			logging.Debugf(ctx, "Found %d free slots on host %s", freeSlots, lse.GetName())
+			logging.Infof(ctx, "Found %d free slots on host %s", freeSlots, lse.GetName())
 			lse.GetChromeBrowserMachineLse().VmCapacity = freeSlots
 			total += freeSlots
-			logging.Debugf(ctx, "Already get %d (require %d)", total, pageSize)
+			logging.Infof(ctx, "Already get %d (require %d)", total, pageSize)
 			if total >= pageSize {
 				break
 			}
@@ -486,7 +486,7 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 // The function will stop at the very first error.
 func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDevicesLabConfigResponse_LabConfig, pageSize int) (*ufsds.OpResults, error) {
 	allRes := make(ufsds.OpResults, 0)
-	logging.Debugf(ctx, "Importing the machine lse prototypes for OS lab")
+	logging.Infof(ctx, "Importing the machine lse prototypes for OS lab")
 	res, err := configuration.ImportMachineLSEPrototypes(ctx, util.GetOSMachineLSEPrototypes())
 	if err != nil {
 		return res, err
@@ -495,7 +495,7 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 
 	lses := util.ToOSMachineLSEs(labConfigs)
 	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "os-lab")
-	logging.Debugf(ctx, "Importing %d lses", len(lses))
+	logging.Infof(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(lses))
 		res, err := inventory.ImportMachineLSEs(ctx, lses[i:end])
@@ -519,7 +519,7 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 // The function will stop at the very first error.
 func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine, pageSize int) (*ufsds.OpResults, error) {
 	allRes := make(ufsds.OpResults, 0)
-	logging.Debugf(ctx, "Importing the basic lse prototypes for browser lab")
+	logging.Infof(ctx, "Importing the basic lse prototypes for browser lab")
 	lps := []*ufspb.MachineLSEPrototype{
 		{
 			Name: "browser-lab:no-vm",
@@ -553,7 +553,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 
 	lses, ufsVMs, ips, dhcps := util.ToMachineLSEs(hosts, vms, machines)
 	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "browser-lab")
-	logging.Debugf(ctx, "Importing %d lses", len(lses))
+	logging.Infof(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(lses))
 		res, err := inventory.ImportMachineLSEs(ctx, lses[i:end])
@@ -567,7 +567,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	}
 
 	deleteNonExistingVMs(ctx, ufsVMs, pageSize)
-	logging.Debugf(ctx, "Importing %d vms", len(ufsVMs))
+	logging.Infof(ctx, "Importing %d vms", len(ufsVMs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(ufsVMs))
 		res, err := inventory.ImportVMs(ctx, ufsVMs[i:end])
@@ -580,7 +580,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 		}
 	}
 
-	logging.Debugf(ctx, "Importing %d ips", len(ips))
+	logging.Infof(ctx, "Importing %d ips", len(ips))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(ips))
 		res, err := configuration.ImportIPs(ctx, ips[i:end])
@@ -593,7 +593,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 		}
 	}
 
-	logging.Debugf(ctx, "Importing %d dhcps", len(dhcps))
+	logging.Infof(ctx, "Importing %d dhcps", len(dhcps))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(dhcps))
 		res, err := configuration.ImportDHCPConfigs(ctx, dhcps[i:end])
@@ -637,9 +637,9 @@ func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.Mach
 			}
 		}
 	}
-	logging.Debugf(ctx, "Deleting %d non-existing machine lses", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing machine lses", len(toDelete))
 	allRes := *deleteByPage(ctx, toDelete, pageSize, inventory.DeleteMachineLSEs)
-	logging.Debugf(ctx, "Deleting %d non-existing host and vm-related dhcps", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing host and vm-related dhcps", len(toDelete))
 	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
 	return &allRes, nil
 }
@@ -662,9 +662,9 @@ func deleteNonExistingVMs(ctx context.Context, vms []*ufspb.VM, pageSize int) (*
 			toDeleteDHCPHost = append(toDeleteDHCPHost, s.GetName())
 		}
 	}
-	logging.Debugf(ctx, "Deleting %d non-existing vms", len(toDelete))
+	logging.Infof(ctx, "Deleting %d non-existing vms", len(toDelete))
 	allRes := *deleteByPage(ctx, toDelete, pageSize, inventory.DeleteVMs)
-	logging.Debugf(ctx, "Deleting %d vm-related dhcps", len(toDelete))
+	logging.Infof(ctx, "Deleting %d vm-related dhcps", len(toDelete))
 	allRes = append(allRes, *deleteByPage(ctx, toDelete, pageSize, configuration.DeleteDHCPs)...)
 	return &allRes, nil
 }

@@ -18,7 +18,7 @@ import (
 // ImportOSes inserts chrome os_version to datastore.
 func ImportOSes(ctx context.Context, oses []*ufspb.OSVersion, pageSize int) (*ufsds.OpResults, error) {
 	deleteNonExistingOSes(ctx, oses, pageSize)
-	logging.Debugf(ctx, "Importing %d os versions", len(oses))
+	logging.Infof(ctx, "Importing %d os versions", len(oses))
 	return configuration.ImportOses(ctx, oses)
 }
 
