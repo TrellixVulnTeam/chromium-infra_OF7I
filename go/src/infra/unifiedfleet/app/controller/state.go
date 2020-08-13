@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"strings"
 
 	"go.chromium.org/luci/common/logging"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
@@ -112,6 +113,10 @@ func deleteNonExistingStates(ctx context.Context, states []*ufspb.StateRecord, p
 	var toDelete []string
 	for _, sr := range resp.Passed() {
 		s := sr.Data.(*ufspb.StateRecord)
+		// Skip deleting os hosts' state
+		if strings.HasPrefix(s.GetResourceName(), "hosts/chromeos") {
+			continue
+		}
 		if _, ok := resMap[s.GetResourceName()]; !ok {
 			toDelete = append(toDelete, s.GetResourceName())
 		}
