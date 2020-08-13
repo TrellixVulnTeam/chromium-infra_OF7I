@@ -1404,6 +1404,18 @@ wheel: <
 
 * *universal*
 
+### 1.20.1
+
+```protobuf
+wheel: <
+  name: "infra/python/wheels/google-auth-py2_py3"
+  version: "version:1.20.1"
+>
+```
+
+
+* *universal*
+
 ## **google-auth-httplib2**
 
 ### 0.0.3
