@@ -14,8 +14,8 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 
-	inv "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/libs/cros/lab_inventory/changehistory"
+	inv "infra/libs/cros/lab_inventory/protos"
 	"infra/libs/cros/lab_inventory/utils"
 	fleet "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"

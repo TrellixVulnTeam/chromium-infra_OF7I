@@ -31,6 +31,7 @@ import (
 	"infra/libs/cros/lab_inventory/datastore"
 	"infra/libs/cros/lab_inventory/deviceconfig"
 	"infra/libs/cros/lab_inventory/hwid"
+	invlibs "infra/libs/cros/lab_inventory/protos"
 	fleet "infra/libs/fleet/protos"
 	ufs "infra/libs/fleet/protos/go"
 )
@@ -1246,18 +1247,18 @@ func TestDeviceConfigsExists(t *testing.T) {
 	})
 }
 
-func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime int64, completed bool) *api.DeviceManualRepairRecord {
-	var state api.DeviceManualRepairRecord_RepairState
+func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime int64, completed bool) *invlibs.DeviceManualRepairRecord {
+	var state invlibs.DeviceManualRepairRecord_RepairState
 	if completed {
-		state = api.DeviceManualRepairRecord_STATE_COMPLETED
+		state = invlibs.DeviceManualRepairRecord_STATE_COMPLETED
 	} else {
-		state = api.DeviceManualRepairRecord_STATE_IN_PROGRESS
+		state = invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS
 	}
 
-	return &api.DeviceManualRepairRecord{
+	return &invlibs.DeviceManualRepairRecord{
 		Hostname:                        hostname,
 		AssetTag:                        assetTag,
-		RepairTargetType:                api.DeviceManualRepairRecord_TYPE_DUT,
+		RepairTargetType:                invlibs.DeviceManualRepairRecord_TYPE_DUT,
 		RepairState:                     state,
 		BuganizerBugUrl:                 "https://b/12345678",
 		ChromiumBugUrl:                  "https://crbug.com/12345678",
@@ -1267,11 +1268,11 @@ func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime 
 		ServoVerifierFailureDescription: "Mock Servo verifier failure description.",
 		Diagnosis:                       "Mock diagnosis.",
 		RepairProcedure:                 "Mock repair procedure.",
-		ManualRepairActions: []api.DeviceManualRepairRecord_ManualRepairAction{
-			api.DeviceManualRepairRecord_ACTION_FIX_SERVO,
-			api.DeviceManualRepairRecord_ACTION_FIX_YOSHI_CABLE,
-			api.DeviceManualRepairRecord_ACTION_VISUAL_INSPECTION,
-			api.DeviceManualRepairRecord_ACTION_REIMAGE_DUT,
+		ManualRepairActions: []invlibs.DeviceManualRepairRecord_ManualRepairAction{
+			invlibs.DeviceManualRepairRecord_ACTION_FIX_SERVO,
+			invlibs.DeviceManualRepairRecord_ACTION_FIX_YOSHI_CABLE,
+			invlibs.DeviceManualRepairRecord_ACTION_VISUAL_INSPECTION,
+			invlibs.DeviceManualRepairRecord_ACTION_REIMAGE_DUT,
 		},
 		IssueFixed:    true,
 		UserLdap:      "testing-account",
@@ -1332,7 +1333,7 @@ func TestGetDeviceManualRepairRecord(t *testing.T) {
 	record1 := mockDeviceManualRepairRecord("chromeos-getRecords-aa", "getRecords-111", 1, false)
 	record2 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-222", 1, false)
 	record3 := mockDeviceManualRepairRecord("chromeos-getRecords-bb", "getRecords-333", 1, false)
-	records := []*api.DeviceManualRepairRecord{record1, record2, record3}
+	records := []*invlibs.DeviceManualRepairRecord{record1, record2, record3}
 
 	// Set up records in datastore
 	datastore.AddDeviceManualRepairRecords(ctx, records)
@@ -1514,7 +1515,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 	record4 := mockDeviceManualRepairRecord("", "", 1, false)
 
 	// Set up records in datastore
-	records := []*api.DeviceManualRepairRecord{record1, record2, record3}
+	records := []*invlibs.DeviceManualRepairRecord{record1, record2, record3}
 	datastore.AddDeviceManualRepairRecords(ctx, records)
 
 	Convey("Test update devices using an non-empty datastore", t, func() {
@@ -1533,7 +1534,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter)
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-aa")
-			So(getRes[0].Record.GetRepairState(), ShouldEqual, api.DeviceManualRepairRecord_STATE_COMPLETED)
+			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_COMPLETED)
 			So(getRes[0].Record.GetUpdatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
 			So(getRes[0].Record.GetUpdatedTime(), ShouldResemble, getRes[0].Record.GetCompletedTime())
 		})
@@ -1551,7 +1552,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			getRes, err := datastore.GetRepairRecordByPropertyName(ctx, map[string]string{"hostname": record2.Hostname})
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-bb")
-			So(getRes[0].Record.GetRepairState(), ShouldEqual, api.DeviceManualRepairRecord_STATE_IN_PROGRESS)
+			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 			So(getRes[0].Record.GetUpdatedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
 		})
 		Convey("Update single record", func() {
@@ -1570,7 +1571,7 @@ func TestUpdateDeviceManualRepairRecord(t *testing.T) {
 			getRes, err = datastore.GetRepairRecordByPropertyName(ctx, propFilter)
 			So(getRes, ShouldHaveLength, 1)
 			So(getRes[0].Record.GetHostname(), ShouldEqual, "chromeos-updateRecords-cc")
-			So(getRes[0].Record.GetRepairState(), ShouldEqual, api.DeviceManualRepairRecord_STATE_IN_PROGRESS)
+			So(getRes[0].Record.GetRepairState(), ShouldEqual, invlibs.DeviceManualRepairRecord_STATE_IN_PROGRESS)
 			So(getRes[0].Record.GetTimeTaken(), ShouldEqual, 20)
 			So(getRes[0].Record.GetUpdatedTime(), ShouldNotResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})
 			So(getRes[0].Record.GetCompletedTime(), ShouldResemble, &timestamp.Timestamp{Seconds: 222, Nanos: 0})

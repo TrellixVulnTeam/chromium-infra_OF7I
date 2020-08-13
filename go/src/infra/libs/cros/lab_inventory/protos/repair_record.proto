@@ -4,9 +4,9 @@
 
 syntax = "proto3";
 
-package inventory;
+package inventory.libs.protos;
 
-option go_package = "infra/appengine/cros/lab_inventory/api/v1;api";
+option go_package = "infra/libs/cros/lab_inventory/protos;invlibs";
 
 import "google/protobuf/timestamp.proto";
 

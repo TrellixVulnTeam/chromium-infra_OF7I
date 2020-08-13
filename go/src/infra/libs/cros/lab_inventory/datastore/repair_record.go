@@ -2,18 +2,17 @@ package datastore
 
 import (
 	"context"
+	invlibs "infra/libs/cros/lab_inventory/protos"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-
-	inv "infra/appengine/cros/lab_inventory/api/v1"
 )
 
 // DeviceManualRepairRecordsOpRes is for use in Datastore to RPC conversions
 type DeviceManualRepairRecordsOpRes struct {
-	Record *inv.DeviceManualRepairRecord
+	Record *invlibs.DeviceManualRepairRecord
 	Entity *DeviceManualRepairRecordEntity
 	Err    error
 }
@@ -71,7 +70,7 @@ func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]strin
 
 	repairRecords := make([]*DeviceManualRepairRecordsOpRes, len(entities))
 	for i, e := range entities {
-		var r inv.DeviceManualRepairRecord
+		var r invlibs.DeviceManualRepairRecord
 		opRes := &DeviceManualRepairRecordsOpRes{
 			Entity: e,
 		}
@@ -87,7 +86,7 @@ func GetRepairRecordByPropertyName(ctx context.Context, propMap map[string]strin
 
 // AddDeviceManualRepairRecords creates a DeviceManualRepairRecord with the
 // device hostname and adds it to the datastore.
-func AddDeviceManualRepairRecords(ctx context.Context, records []*inv.DeviceManualRepairRecord) ([]*DeviceManualRepairRecordsOpRes, error) {
+func AddDeviceManualRepairRecords(ctx context.Context, records []*invlibs.DeviceManualRepairRecord) ([]*DeviceManualRepairRecordsOpRes, error) {
 	recLength := len(records)
 	allResponses := make([]*DeviceManualRepairRecordsOpRes, recLength)
 	putEntities := make([]*DeviceManualRepairRecordEntity, 0, recLength)
@@ -146,7 +145,7 @@ func AddDeviceManualRepairRecords(ctx context.Context, records []*inv.DeviceManu
 // the device hostname in the datastore. Given a map of ids and records, it gets
 // entities from the datastore first and updates the entities with the new
 // record values.
-func UpdateDeviceManualRepairRecords(ctx context.Context, records map[string]*inv.DeviceManualRepairRecord) ([]*DeviceManualRepairRecordsOpRes, error) {
+func UpdateDeviceManualRepairRecords(ctx context.Context, records map[string]*invlibs.DeviceManualRepairRecord) ([]*DeviceManualRepairRecordsOpRes, error) {
 	recLength := len(records)
 	ids := make([]string, 0, recLength)
 	for id := range records {

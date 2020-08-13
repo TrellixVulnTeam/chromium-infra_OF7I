@@ -26,6 +26,7 @@ import (
 	"infra/libs/cros/lab_inventory/dronecfg"
 	"infra/libs/cros/lab_inventory/hwid"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
+	invlibs "infra/libs/cros/lab_inventory/protos"
 	"infra/libs/cros/lab_inventory/utils"
 )
 
@@ -749,11 +750,11 @@ func (is *InventoryServerImpl) CreateDeviceManualRepairRecord(ctx context.Contex
 	record.CreatedTime = timestamppb.Now()
 	record.UpdatedTime = record.CreatedTime
 
-	if record.RepairState == api.DeviceManualRepairRecord_STATE_COMPLETED {
+	if record.RepairState == invlibs.DeviceManualRepairRecord_STATE_COMPLETED {
 		record.CompletedTime = record.CreatedTime
 	}
 
-	resp, err := datastore.AddDeviceManualRepairRecords(ctx, []*api.DeviceManualRepairRecord{record})
+	resp, err := datastore.AddDeviceManualRepairRecords(ctx, []*invlibs.DeviceManualRepairRecord{record})
 	if err != nil {
 		return nil, err
 	}
@@ -776,11 +777,11 @@ func (is *InventoryServerImpl) UpdateDeviceManualRepairRecord(ctx context.Contex
 	}
 
 	record.UpdatedTime = timestamppb.Now()
-	if record.RepairState == api.DeviceManualRepairRecord_STATE_COMPLETED {
+	if record.RepairState == invlibs.DeviceManualRepairRecord_STATE_COMPLETED {
 		record.CompletedTime = record.UpdatedTime
 	}
 
-	resp, err := datastore.UpdateDeviceManualRepairRecords(ctx, map[string]*api.DeviceManualRepairRecord{id: record})
+	resp, err := datastore.UpdateDeviceManualRepairRecords(ctx, map[string]*invlibs.DeviceManualRepairRecord{id: record})
 	if err != nil {
 		return nil, err
 	}
