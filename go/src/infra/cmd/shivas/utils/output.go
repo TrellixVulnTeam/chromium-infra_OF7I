@@ -53,8 +53,8 @@ var (
 	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "State", "UpdateTime"}
 	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "IP", "State", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle     = []string{"Host", "Lab", "Rack", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
-	MachineLSETFullitle = []string{"Host", "Machine", "Lab", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETitle     = []string{"Host", "OS Version", "Lab", "Rack", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETFullitle = []string{"Host", "OS Version", "Machine", "Lab", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -739,6 +739,7 @@ func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *uf
 		ts = t.Format(timeFormat)
 	}
 	out := fmt.Sprintf("%s\t", lse.GetName())
+	out += fmt.Sprintf("%s\t", lse.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", machine.GetName())
 	out += fmt.Sprintf("%s\t", lse.GetLab())
 	out += fmt.Sprintf("%s\t", lse.GetRack())
@@ -771,6 +772,7 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 		ts = t.Format(timeFormat)
 	}
 	out := fmt.Sprintf("%s\t", m.GetName())
+	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", m.GetLab())
 	out += fmt.Sprintf("%s\t", m.GetRack())
 	out += fmt.Sprintf("%s\t", m.GetNic())
@@ -784,7 +786,7 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 // PrintFreeVMs prints the all free slots in table form.
 func PrintFreeVMs(ctx context.Context, ic ufsAPI.FleetClient, hosts []*ufspb.MachineLSE) {
 	defer tw.Flush()
-	PrintTitle([]string{"Host", "Vlan", "Lab", "Free slots"})
+	PrintTitle([]string{"Host", "Os Version", "Vlan", "Lab", "Free slots"})
 	for _, h := range hosts {
 		h.Name = ufsUtil.RemovePrefix(h.Name)
 		printFreeVM(ctx, ic, h)
@@ -796,6 +798,7 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 		Hostname: host.GetName(),
 	})
 	out := fmt.Sprintf("%s\t", host.GetName())
+	out += fmt.Sprintf("%s\t", host.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", res.GetVlan())
 	out += fmt.Sprintf("%s\t", host.GetLab())
 	out += fmt.Sprintf("%d\t", host.GetChromeBrowserMachineLse().GetVmCapacity())

@@ -402,3 +402,13 @@ func resetStateFilter(filterMap map[string][]interface{}) map[string][]interface
 	}
 	return filterMap
 }
+
+func resetOSFilter(filterMap map[string][]interface{}) map[string][]interface{} {
+	if v, ok := filterMap["os"]; ok {
+		for i, id := range v {
+			v[i] = strings.ToLower(id.(string))
+		}
+		filterMap["os"] = v
+	}
+	return filterMap
+}

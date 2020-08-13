@@ -1027,10 +1027,11 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
 	// VMSlotFilterHelp help text for list free vm slots filtering
-	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/lab/rack/state/machine` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/lab/rack/state/machine/os` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'man=apple'
+'os=macos,10.13.6'
 'lab=atl97 & man=apple'` + FilterCondition
 
 	// RackFilterHelp help text for list rack filtering
@@ -1053,15 +1054,17 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/state/man(manufacturer)` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/state/man(manufacturer)/os` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
+'os=esxi,6.7.0'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// VMFilterHelp help text for list vm filtering
-	VMFilterHelp string = FilterText + `You can filter hosts by vlan/osversion/state/host_id/lab/tag` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	VMFilterHelp string = FilterText + `You can filter hosts by vlan/state/host/lab/tag/os` + "\n" + LabFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
+'os=esxi,6.7.0'
 'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
 
 	// KVMFilterHelp help text for list rack filtering

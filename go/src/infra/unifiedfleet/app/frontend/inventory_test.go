@@ -570,7 +570,7 @@ func TestListVMs(t *testing.T) {
 
 		Convey("ListVMs - invalid filter - error", func() {
 			resp, err := tf.Fleet.ListVMs(tf.C, &ufsAPI.ListVMsRequest{
-				Filter: "osversion=os-1 | state=serving",
+				Filter: "os=os-1 | state=serving",
 			})
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
@@ -579,7 +579,7 @@ func TestListVMs(t *testing.T) {
 
 		Convey("List VMs - happy path", func() {
 			resp, err := tf.Fleet.ListVMs(tf.C, &ufsAPI.ListVMsRequest{
-				Filter:   "osversion=os-1 & state=serving",
+				Filter:   "os=os-1 & state=serving",
 				PageSize: 5,
 			})
 			So(err, ShouldBeNil)

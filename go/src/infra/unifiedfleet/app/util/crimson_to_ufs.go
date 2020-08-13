@@ -256,7 +256,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		v := &ufspb.VM{
 			Name: name,
 			OsVersion: &ufspb.OSVersion{
-				Value: vm.GetOs(),
+				Value: FormatResourceName(vm.GetOs()),
 			},
 			Hostname:     name,
 			Vlan:         GetBrowserLabName(Int64ToStr(vm.GetVlan())),
@@ -304,7 +304,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 					Vms:        vms,
 					VmCapacity: h.GetVmSlots(),
 					OsVersion: &ufspb.OSVersion{
-						Value: h.GetOs(),
+						Value: FormatResourceName(h.GetOs()),
 					},
 				},
 			},

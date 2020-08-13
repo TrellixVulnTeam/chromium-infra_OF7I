@@ -6,6 +6,7 @@ package datastore
 
 import (
 	"fmt"
+	"strings"
 )
 
 // GetServoID returns the servo_id for searching
@@ -14,4 +15,13 @@ func GetServoID(servoHostname string, servoPort int32) string {
 		return fmt.Sprintf("%s%d", servoHostname, servoPort)
 	}
 	return ""
+}
+
+// GetOSIndex returns a slics of strings for a given string
+func GetOSIndex(osversion string) []string {
+	str := strings.TrimSpace(osversion)
+	str = strings.ToLower(str)
+	str = strings.Replace(str, " ", "_", -1)
+	str = strings.Replace(str, ",", "_", -1)
+	return strings.Split(str, "_")
 }

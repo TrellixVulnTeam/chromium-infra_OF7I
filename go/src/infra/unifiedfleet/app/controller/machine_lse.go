@@ -93,6 +93,7 @@ func createLabstation(ctx context.Context, lse *ufspb.MachineLSE, machineNames [
 }
 
 func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineNames []string, nwOpt *ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
+	vms := lse.GetChromeBrowserMachineLse().GetVms()
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(lse)
 
@@ -123,7 +124,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 		}
 
 		// Create the machinelse
-		if vms := lse.GetChromeBrowserMachineLse().GetVms(); vms != nil {
+		if vms != nil {
 			if _, err := inventory.BatchUpdateVMs(ctx, vms); err != nil {
 				return errors.Annotate(err, "Failed to BatchUpdate vms for host %s", lse.Name).Err()
 			}
@@ -136,6 +137,10 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs %s", lse.Name).Err()
 		}
 		hc.LogMachineLSEChanges(nil, lse)
+		if machine.GetChromeBrowserMachine() != nil {
+			// We fill the machinelse object with newly created vms
+			lse.GetChromeBrowserMachineLse().Vms = vms
+		}
 		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -365,6 +370,8 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing hosts").Err()
 		}
 	}
+	filterMap = resetStateFilter(filterMap)
+	filterMap = resetOSFilter(filterMap)
 	if _, ok := filterMap[util.FreeVMFilterName]; ok {
 		delete(filterMap, util.FreeVMFilterName)
 		allVMs, err := inventory.GetAllVMs(ctx)

@@ -84,6 +84,7 @@ var (
 	FreeVMFilterName           string = "free"
 	ResourceTypeFilterName     string = "resourcetype"
 	OSVersionFilterName        string = "osversion"
+	OSFilterName               string = "os"
 )
 
 const separator string = "/"
