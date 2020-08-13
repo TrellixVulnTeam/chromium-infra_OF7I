@@ -73,6 +73,11 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 		if err != nil {
 			return errors.Annotate(err, "Fail to get existing vm by %s", vm.GetName()).Err()
 		}
+		// Copy the machinelseid/state/lab to vm OUTPUT only fields from already existing vm
+		vm.MachineLseId = oldVM.GetMachineLseId()
+		vm.Lab = oldVM.GetLab()
+		vm.State = oldVM.GetState()
+		vm.Vlan = oldVM.GetVlan()
 
 		// Check if user provided new host to associate the vm
 		if host != "" && oldVM.MachineLseId != host {

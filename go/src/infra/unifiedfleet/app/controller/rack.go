@@ -176,6 +176,8 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 		if err != nil {
 			return errors.Annotate(err, "UpdateRack - get rack %s failed", rack.GetName()).Err()
 		}
+		// Fill the OUTPUT only fields with existing values
+		rack.State = oldRack.GetState()
 
 		// Do not let updating from browser to os or vice versa change for rack.
 		if oldRack.GetChromeBrowserRack() != nil && rack.GetChromeosRack() != nil {

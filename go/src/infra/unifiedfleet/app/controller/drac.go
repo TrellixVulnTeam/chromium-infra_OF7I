@@ -82,6 +82,8 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 		drac.Machine = oldDrac.GetMachine()
 		drac.Rack = oldDrac.GetRack()
 		drac.Lab = oldDrac.GetLab()
+		drac.State = oldDrac.GetState()
+
 		if machineName != "" {
 			// Get the old browser machine associated with drac
 			oldMachine, err := getBrowserMachine(ctx, oldDrac.GetMachine())

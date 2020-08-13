@@ -84,6 +84,7 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 		nic.Machine = oldNic.GetMachine()
 		nic.Rack = oldNic.GetRack()
 		nic.Lab = oldNic.GetLab()
+		nic.State = oldNic.GetState()
 
 		if machineName != "" {
 			// Get the old browser machine associated with nic

@@ -135,6 +135,8 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		if err != nil {
 			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
 		}
+		// Fill the OUTPUT only fields with existing values
+		machine.State = oldMachine.GetState()
 
 		// Do not let updating from browser to os or vice versa change for machine.
 		if oldMachine.GetChromeBrowserMachine() != nil && machine.GetChromeosMachine() != nil {

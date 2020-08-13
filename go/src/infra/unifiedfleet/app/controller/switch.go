@@ -83,6 +83,8 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 		// Fill the rack/lab to switch OUTPUT only fields
 		s.Rack = oldS.GetRack()
 		s.Lab = oldS.GetLab()
+		s.State = oldS.GetState()
+
 		if rackName != "" && oldS.GetRack() != rackName {
 			// User is trying to associate this switch with a different rack.
 			// Get rack to associate the switch

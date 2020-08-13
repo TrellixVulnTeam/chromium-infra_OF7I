@@ -201,6 +201,13 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		if err != nil {
 			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
 		}
+		// Copy the rack/state/lab/manufacturer/machines to machinelse OUTPUT only fields from already existing machinelse
+		machinelse.Rack = oldMachinelse.GetRack()
+		machinelse.Lab = oldMachinelse.GetLab()
+		machinelse.Machines = oldMachinelse.GetMachines()
+		machinelse.Manufacturer = oldMachinelse.GetManufacturer()
+		machinelse.State = oldMachinelse.GetState()
+		machinelse.Nic = oldMachinelse.GetNic()
 
 		// Do not let updating from browser to os or vice versa change for MachineLSE.
 		if oldMachinelse.GetChromeBrowserMachineLse() != nil && machinelse.GetChromeosMachineLse() != nil {
@@ -210,12 +217,8 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			return status.Error(codes.InvalidArgument, "UpdateMachine - cannot update an os host to browser host. Please delete the os host and create a new browser host")
 		}
 
-		// overwrite the OUTPUT_ONLY fields
-		// This is output only field. Assign already existing values.
-		machinelse.Machines = oldMachinelse.GetMachines()
-
 		// check if user is trying to associate this host with a different browser machine.
-		if len(machineNames) > 0 && machineNames[0] != "" && len(oldMachinelse.GetMachines()) > 0 && machineNames[0] != oldMachinelse.GetMachines()[0] {
+		if len(machineNames) > 0 && machineNames[0] != "" && len(machinelse.GetMachines()) > 0 && machineNames[0] != machinelse.GetMachines()[0] {
 			// Get machine to get lab and rack info for machinelse table indexing
 			machine, err := GetMachine(ctx, machineNames[0])
 			if err != nil {
@@ -1038,6 +1041,7 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 func setOutputField(ctx context.Context, machine *ufspb.Machine, lse *ufspb.MachineLSE) error {
 	lse.Rack = machine.GetLocation().GetRack()
 	lse.Lab = machine.GetLocation().GetLab().String()
+	lse.Machines = []string{machine.GetName()}
 	for _, vm := range lse.GetChromeBrowserMachineLse().GetVms() {
 		vm.Lab = machine.GetLocation().GetLab().String()
 		vm.MachineLseId = lse.GetName()
