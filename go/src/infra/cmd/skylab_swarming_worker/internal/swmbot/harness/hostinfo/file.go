@@ -5,6 +5,7 @@
 package hostinfo
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -64,7 +65,7 @@ func Expose(hi *hostinfo.HostInfo, resultsDir string, dutName string) (*File, er
 // Close marks that Autotest is finished using the exposed HostInfo
 // file and loads any changes back into the original HostInfo.
 // Subsequent calls do nothing.  This is safe to call on a nil pointer.
-func (f *File) Close() error {
+func (f *File) Close(ctx context.Context) error {
 	if f == nil {
 		return nil
 	}

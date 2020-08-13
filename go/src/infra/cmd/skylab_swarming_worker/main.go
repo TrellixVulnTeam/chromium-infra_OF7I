@@ -133,7 +133,7 @@ func mainInner(a *args) error {
 	if err != nil {
 		return err
 	}
-	defer i.Close()
+	defer i.Close(ctx)
 
 	var luciferErr error
 
@@ -148,7 +148,7 @@ func mainInner(a *args) error {
 		luciferErr = luciferFlow(ctx, a, i, annotWriter)
 	}
 
-	if err := i.Close(); err != nil {
+	if err := i.Close(ctx); err != nil {
 		return err
 	}
 

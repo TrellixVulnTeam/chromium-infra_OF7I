@@ -5,6 +5,7 @@
 package hostinfo
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -37,7 +38,7 @@ func BorrowBotInfo(hi *hostinfo.HostInfo, bi *swmbot.LocalState) *Borrower {
 
 // Close returns any relevant Hostinfo changes back to the BotInfo.
 // Subsequent calls do nothing.  This is safe to call on a nil pointer.
-func (b *Borrower) Close() error {
+func (b *Borrower) Close(ctx context.Context) error {
 	if b == nil {
 		return nil
 	}

@@ -7,6 +7,7 @@
 package botinfo
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -29,7 +30,7 @@ type Store struct {
 
 // Close writes the BotInfo back to disk.  This method does nothing on
 // subsequent calls.  This method is safe to call on a nil pointer.
-func (s *Store) Close() error {
+func (s *Store) Close(ctx context.Context) error {
 	if s == nil {
 		return nil
 	}

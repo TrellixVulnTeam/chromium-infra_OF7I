@@ -5,6 +5,7 @@
 package hostinfo
 
 import (
+	"context"
 	"log"
 
 	"infra/cmd/skylab_swarming_worker/internal/autotest/hostinfo"
@@ -21,7 +22,7 @@ type Proxy struct {
 // Close updates the original DUT with any hostinfo changes.  This
 // method does nothing on subsequent calls.  This method is safe to
 // call on a nil pointer.
-func (p *Proxy) Close() error {
+func (p *Proxy) Close(ctx context.Context) error {
 	if p == nil {
 		return nil
 	}

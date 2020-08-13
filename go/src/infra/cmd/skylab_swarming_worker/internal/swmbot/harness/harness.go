@@ -10,7 +10,6 @@ package harness
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 
 	"github.com/golang/protobuf/proto"
@@ -30,6 +29,11 @@ import (
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness/resultsdir"
 )
 
+// closer interface to wrap Close method with providing context.
+type closer interface {
+	Close(ctx context.Context) error
+}
+
 // Info holds information about the Swarming harness.
 type Info struct {
 	*swmbot.Info
@@ -44,15 +48,15 @@ type Info struct {
 	// logic.
 	err error
 
-	closers []io.Closer
+	closers []closer
 }
 
 // Close closes and flushes out the harness resources.  This is safe
 // to call multiple times.
-func (i *Info) Close() error {
+func (i *Info) Close(ctx context.Context) error {
 	var errs []error
 	for n := len(i.closers) - 1; n >= 0; n-- {
-		if err := i.closers[n].Close(); err != nil {
+		if err := i.closers[n].Close(ctx); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -75,7 +79,7 @@ func Open(ctx context.Context, b *swmbot.Info, o ...Option) (i *Info, err error)
 	}
 	defer func(i *Info) {
 		if err != nil {
-			_ = i.Close()
+			_ = i.Close(ctx)
 		}
 	}(i)
 	for _, o := range o {

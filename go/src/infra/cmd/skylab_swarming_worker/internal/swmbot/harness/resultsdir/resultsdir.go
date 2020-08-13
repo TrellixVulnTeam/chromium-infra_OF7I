@@ -7,6 +7,7 @@
 package resultsdir
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -23,7 +24,7 @@ type Closer struct {
 
 // Close seals the results directory.  This is safe to call multiple
 // times.  This is safe to call on a nil pointer.
-func (c *Closer) Close() error {
+func (c *Closer) Close(ctx context.Context) error {
 	if c == nil {
 		return nil
 	}
