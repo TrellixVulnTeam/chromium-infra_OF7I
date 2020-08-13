@@ -17,10 +17,12 @@ from api.v3.api_proto import issues_pb2
 from api.v3.api_proto import issue_objects_pb2
 from framework import exceptions
 from framework import monorailcontext
+from proto import tracker_pb2
 from testing import fake
 from services import service_manager
 
 from google.appengine.ext import testbed
+from google.protobuf import timestamp_pb2
 
 
 class IssuesServicerTest(unittest.TestCase):
@@ -250,6 +252,80 @@ class IssuesServicerTest(unittest.TestCase):
     actual_response = self.CallWrapped(
         self.issues_svcr.ListComments, mc, request)
     self.assertEqual(1, len(actual_response.comments))
+
+  def testListApprovalValues(self):
+    config = fake.MakeTestConfig(self.project_2.project_id, [], [])
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    # Make regular field def and value
+    fd_1 = fake.MakeTestFieldDef(
+        1, self.project_2.project_id, tracker_pb2.FieldTypes.STR_TYPE,
+        field_name='field1')
+    self.services.config.TestAddFieldDef(fd_1)
+    fv_1 = fake.MakeFieldValue(
+        field_id=fd_1.field_id, str_value='value1', derived=False)
+
+    # Make testing approval def and its associated field def
+    approval_gate = fake.MakeTestFieldDef(
+        2, self.project_2.project_id, tracker_pb2.FieldTypes.APPROVAL_TYPE,
+        field_name='approval-gate-1')
+    self.services.config.TestAddFieldDef(approval_gate)
+    ad = fake.MakeTestApprovalDef(2, approver_ids=[self.user_2.user_id])
+    self.services.config.TestAddApprovalDef(ad, self.project_2.project_id)
+
+    # Make approval value
+    av = fake.MakeApprovalValue(2, set_on=self.PAST_TIME,
+          approver_ids=[self.user_2.user_id], setter_id=self.user_2.user_id)
+
+    # Make field def that belongs to above approval_def
+    fd_2 = fake.MakeTestFieldDef(
+        3, self.project_2.project_id, tracker_pb2.FieldTypes.STR_TYPE,
+        field_name='field2', approval_id=2)
+    self.services.config.TestAddFieldDef(fd_2)
+    fv_2 = fake.MakeFieldValue(
+        field_id=fd_2.field_id, str_value='value2', derived=False)
+
+    issue_resource_name = 'projects/cow/issues/1237'
+    issue = fake.MakeTestIssue(
+        self.project_2.project_id,
+        1237,
+        'sum',
+        'New',
+        self.user_2.user_id,
+        project_name=self.project_2.project_name,
+        field_values=[fv_1, fv_2],
+        approval_values=[av])
+    self.services.issue.TestAddIssue(issue)
+
+    request = issues_pb2.ListApprovalValuesRequest(parent=issue_resource_name)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    actual_response = self.CallWrapped(
+        self.issues_svcr.ListApprovalValues, mc, request)
+
+    self.assertEqual(len(actual_response.approval_values), 1)
+    expected_fv = issue_objects_pb2.FieldValue(
+        field='projects/cow/fieldDefs/3',
+        value='value2',
+        derivation=issue_objects_pb2.Derivation.Value('EXPLICIT'))
+    expected = issue_objects_pb2.ApprovalValue(
+        name='projects/cow/issues/1237/approvalValues/2',
+        status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NOT_SET'),
+        approvers=['users/222'],
+        approval_def='projects/cow/approvalDefs/2',
+        set_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
+        setter='users/222',
+        field_values=[expected_fv])
+    self.assertEqual(actual_response.approval_values[0], expected)
+
+  def testListApprovalValues_Empty(self):
+    request = issues_pb2.ListApprovalValuesRequest(
+        parent=self.issue_1_resource_name)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    actual_response = self.CallWrapped(
+        self.issues_svcr.ListApprovalValues, mc, request)
+    self.assertEqual(len(actual_response.approval_values), 0)
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')

@@ -71,7 +71,10 @@ service Issues {
       (ModifyIssueApprovalValuesResponse) {}
   // Lists approval values for an issue.
   //
-  // Raises: TODO(crbug/monorail/7923): Document errors when implemented
+  // Raises:
+  //   INVALID_ARGUMENT if request `parent` is formatted incorrectly.
+  //   NOT_FOUND if the parent issue does not exist.
+  //   PERMISSION_DENIED if the requester is not allowed to view parent issue.
   rpc ListApprovalValues (ListApprovalValuesRequest) returns
       (ListApprovalValuesResponse) {}
   // Makes an issue from an IssueTemplate and deltas.

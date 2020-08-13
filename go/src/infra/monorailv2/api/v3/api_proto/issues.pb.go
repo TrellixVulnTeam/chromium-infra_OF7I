@@ -1896,7 +1896,10 @@ type IssuesClient interface {
 	ModifyIssueApprovalValues(ctx context.Context, in *ModifyIssueApprovalValuesRequest, opts ...grpc.CallOption) (*ModifyIssueApprovalValuesResponse, error)
 	// Lists approval values for an issue.
 	//
-	// Raises: TODO(crbug/monorail/7923): Document errors when implemented
+	// Raises:
+	//   INVALID_ARGUMENT if request `parent` is formatted incorrectly.
+	//   NOT_FOUND if the parent issue does not exist.
+	//   PERMISSION_DENIED if the requester is not allowed to view parent issue.
 	ListApprovalValues(ctx context.Context, in *ListApprovalValuesRequest, opts ...grpc.CallOption) (*ListApprovalValuesResponse, error)
 	// Makes an issue from an IssueTemplate and deltas.
 	//
@@ -2150,7 +2153,10 @@ type IssuesServer interface {
 	ModifyIssueApprovalValues(context.Context, *ModifyIssueApprovalValuesRequest) (*ModifyIssueApprovalValuesResponse, error)
 	// Lists approval values for an issue.
 	//
-	// Raises: TODO(crbug/monorail/7923): Document errors when implemented
+	// Raises:
+	//   INVALID_ARGUMENT if request `parent` is formatted incorrectly.
+	//   NOT_FOUND if the parent issue does not exist.
+	//   PERMISSION_DENIED if the requester is not allowed to view parent issue.
 	ListApprovalValues(context.Context, *ListApprovalValuesRequest) (*ListApprovalValuesResponse, error)
 	// Makes an issue from an IssueTemplate and deltas.
 	//

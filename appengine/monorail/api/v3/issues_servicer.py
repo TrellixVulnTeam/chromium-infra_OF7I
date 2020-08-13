@@ -146,6 +146,29 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
         next_page_token=pager.GenerateNextPageToken(list_result.next_start))
 
   @monorail_servicer.PRPCMethod
+  def ListApprovalValues(self, mc, request):
+    # type: (MonorailContext, ListApprovalValuesRequest) ->
+    #     ListApprovalValuesResponse
+    """pRPC API method that implements ListApprovalValues.
+
+    Raises:
+      InputException: the given parent does not have a valid format.
+      NoSuchIssueException: the parent issue is not found.
+      PermissionException the user is not allowed to view the parent issue.
+    """
+    issue_id = rnc.IngestIssueName(mc.cnxn, request.parent, self.services)
+    with work_env.WorkEnv(mc, self.services) as we:
+      # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
+      project = we.GetProjectByName(rnc.IngestProjectFromIssue(request.parent))
+      mc.LookupLoggedInUserPerms(project)
+      issue = we.GetIssue(issue_id)
+
+    api_avs = self.converter.ConvertApprovalValues(issue.approval_values,
+        issue.field_values, issue.phases, issue_id=issue_id)
+
+    return issues_pb2.ListApprovalValuesResponse(approval_values=api_avs)
+
+  @monorail_servicer.PRPCMethod
   def MakeIssueFromTemplate(self, _mc, _request):
     # type: (MonorailContext, MakeIssueFromTemplateRequest) -> Issue
     """pRPC API method that implements MakeIssueFromTemplate.

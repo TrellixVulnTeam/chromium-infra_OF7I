@@ -95,6 +95,11 @@ def MakeTestFieldDef(
         is_restricted_field=is_restricted_field, admin_ids=admin_ids,
         editor_ids=editor_ids)
 
+def MakeTestApprovalDef(approval_id, approver_ids=None, survey=None):
+  return tracker_pb2.ApprovalDef(
+      approval_id=approval_id,
+      approver_ids = approver_ids,
+      survey = survey)
 
 def MakePhase(phase_id, name='', rank=0):
   return tracker_pb2.Phase(phase_id=phase_id, name=name, rank=rank)
@@ -1200,6 +1205,9 @@ class ConfigService(object):
 
   def TestAddFieldDef(self, fd):
     self.project_configs[fd.project_id].field_defs.append(fd)
+
+  def TestAddApprovalDef(self, ad, project_id):
+    self.project_configs[project_id].approval_defs.append(ad)
 
   def ExpungeConfig(self, _cnxn, project_id):
     self.expunged_configs.append(project_id)
