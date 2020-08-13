@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -78,6 +79,7 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 		if err != nil {
 			return errors.Annotate(err, "UpdateDrac - get drac %s failed", drac.GetName()).Err()
 		}
+		oldDracCopy := proto.Clone(oldDrac).(*ufspb.Drac)
 		// Copy the machine/rack/zone to drac OUTPUT only fields from already existing drac
 		drac.Machine = oldDrac.GetMachine()
 		drac.Rack = oldDrac.GetRack()
@@ -131,7 +133,7 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 		if _, err := registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
 			return errors.Annotate(err, "UpdateDrac - unable to batch update drac %s", drac.Name).Err()
 		}
-		hc.LogDracChanges(oldDrac, drac)
+		hc.LogDracChanges(oldDracCopy, drac)
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -204,11 +206,7 @@ func DeleteDracHost(ctx context.Context, dracName string) error {
 // UpdateDracHost updates the drac host in datastore.
 func UpdateDracHost(ctx context.Context, drac *ufspb.Drac, nwOpt *ufsAPI.NetworkOption) error {
 	f := func(ctx context.Context) error {
-		hc := &HistoryClient{
-			netUdt: &networkUpdater{
-				Hostname: drac.GetName(),
-			},
-		}
+		hc := getDracHistoryClient(drac)
 		// 1. Validate the input
 		if err := validateUpdateDracHost(ctx, drac, nwOpt.GetVlan(), nwOpt.GetIp()); err != nil {
 			return err
@@ -254,12 +252,9 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, ke
 // DeleteDrac deletes the drac in datastore
 func DeleteDrac(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
-		hc := &HistoryClient{
-			netUdt: &networkUpdater{
-				Hostname: id,
-			},
-		}
-		hc.LogDracChanges(&ufspb.Drac{Name: id}, nil)
+		drac := &ufspb.Drac{Name: id}
+		hc := getDracHistoryClient(drac)
+		hc.LogDracChanges(drac, nil)
 		// 1. Delete the drac
 		if err := registration.DeleteDrac(ctx, id); err != nil {
 			return errors.Annotate(err, "DeleteDrac - unable to delete drac %s", id).Err()

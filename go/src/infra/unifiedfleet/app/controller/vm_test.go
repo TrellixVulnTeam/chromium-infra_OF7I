@@ -293,15 +293,15 @@ func TestUpdateVM(t *testing.T) {
 			// snapshots
 			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "vms/vm-update-3")
 			So(err, ShouldBeNil)
-			// 1 create, 2 updates
-			So(msgs, ShouldHaveLength, 2)
+			// 1 create, 1 UpdateVMHost, 1 DeleteVMHost
+			So(msgs, ShouldHaveLength, 3)
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/vms/vm-update-3")
 			So(err, ShouldBeNil)
-			// 1 create, 1 update
+			// 1 create
 			So(msgs, ShouldHaveLength, 1)
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/vm-update-3")
 			So(err, ShouldBeNil)
-			// 2 updates
+			// 2 host update
 			So(msgs, ShouldHaveLength, 2)
 			So(msgs[1].Delete, ShouldBeTrue)
 		})

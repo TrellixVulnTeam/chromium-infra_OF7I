@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -80,6 +81,7 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 		if err != nil {
 			return errors.Annotate(err, "UpdateSwitch - get switch %s failed", s.GetName()).Err()
 		}
+		oldSwitchCopy := proto.Clone(oldS).(*ufspb.Switch)
 		// Fill the rack/zone to switch OUTPUT only fields
 		s.Rack = oldS.GetRack()
 		s.Zone = oldS.GetZone()
@@ -109,7 +111,7 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 		if _, err := registration.BatchUpdateSwitches(ctx, []*ufspb.Switch{s}); err != nil {
 			return errors.Annotate(err, "UpdateSwitch - unable to batch update switch %s", s.Name).Err()
 		}
-		hc.LogSwitchChanges(oldS, s)
+		hc.LogSwitchChanges(oldSwitchCopy, s)
 		return hc.SaveChangeEvents(ctx)
 	}
 

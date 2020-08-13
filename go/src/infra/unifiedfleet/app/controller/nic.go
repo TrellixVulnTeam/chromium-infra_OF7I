@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -80,6 +81,7 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 		if err != nil {
 			return errors.Annotate(err, "UpdateNic - get nic %s failed", nic.GetName()).Err()
 		}
+		oldNicCopy := proto.Clone(oldNic).(*ufspb.Nic)
 		// Copy the machine/rack/zone to nic OUTPUT only fields from already existing nic
 		nic.Machine = oldNic.GetMachine()
 		nic.Rack = oldNic.GetRack()
@@ -117,12 +119,10 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 		}
 
 		// 6. Update nic entry
-		// we use this func as it is a non-atomic operation and can be used to
-		// run within a transaction. Datastore doesnt allow nested transactions.
 		if _, err := registration.BatchUpdateNics(ctx, []*ufspb.Nic{nic}); err != nil {
 			return errors.Annotate(err, "UpdateNic - unable to batch update nic %s", nic.Name).Err()
 		}
-		hc.LogNicChanges(oldNic, nic)
+		hc.LogNicChanges(oldNicCopy, nic)
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -192,7 +192,9 @@ func ListNics(ctx context.Context, pageSize int32, pageToken, filter string, key
 // DeleteNic deletes the nic in datastore
 func DeleteNic(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
-		hc := getNicHistoryClient(&ufspb.Nic{Name: id})
+		nic := &ufspb.Nic{Name: id}
+		hc := getNicHistoryClient(nic)
+		hc.LogNicChanges(nic, nil)
 		// Validate the input
 		if err := validateDeleteNic(ctx, id); err != nil {
 			return errors.Annotate(err, "DeleteNic - validation failed").Err()
@@ -202,7 +204,6 @@ func DeleteNic(ctx context.Context, id string) error {
 		if err := registration.DeleteNic(ctx, id); err != nil {
 			return errors.Annotate(err, "DeleteNic - unable to delete nic %s", id).Err()
 		}
-		hc.LogNicChanges(&ufspb.Nic{Name: id}, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 

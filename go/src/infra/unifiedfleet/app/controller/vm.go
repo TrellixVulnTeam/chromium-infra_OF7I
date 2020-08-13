@@ -73,6 +73,7 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 		if err != nil {
 			return errors.Annotate(err, "Fail to get existing vm by %s", vm.GetName()).Err()
 		}
+		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
 		// Copy the machinelseid/state/zone to vm OUTPUT only fields from already existing vm
 		vm.MachineLseId = oldVM.GetMachineLseId()
 		vm.Zone = oldVM.GetZone()
@@ -110,7 +111,7 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm}); err != nil {
 			return errors.Annotate(err, "Failed to create vm %q", vm.GetName()).Err()
 		}
-		hc.LogVMChanges(oldVM, vm)
+		hc.LogVMChanges(oldVMCopy, vm)
 		return hc.SaveChangeEvents(ctx)
 	}
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
@@ -175,6 +176,19 @@ func DeleteVMHost(ctx context.Context, vmName string) error {
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
+
+		oldVM, err := inventory.GetVM(ctx, vmName)
+		if err != nil {
+			return err
+		}
+		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
+		oldVM.Vlan = ""
+		oldVM.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{oldVM}); err != nil {
+			return errors.Annotate(err, "Failed to update vm %q", vmName).Err()
+		}
+		hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+		hc.LogVMChanges(oldVMCopy, oldVM)
 		return hc.SaveChangeEvents(ctx)
 	}
 

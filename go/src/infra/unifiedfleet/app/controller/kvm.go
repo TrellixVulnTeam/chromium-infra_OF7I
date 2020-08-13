@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -81,6 +82,7 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 		if err != nil {
 			return errors.Annotate(err, "UpdateKVM - get kvm %s failed", kvm.GetName()).Err()
 		}
+		oldKVMCopy := proto.Clone(oldKVM).(*ufspb.KVM)
 		// Fill the rack/zone to kvm OUTPUT only fields
 		kvm.Rack = oldKVM.GetRack()
 		kvm.Zone = oldKVM.GetZone()
@@ -113,7 +115,7 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 		if _, err := registration.BatchUpdateKVMs(ctx, []*ufspb.KVM{kvm}); err != nil {
 			return errors.Annotate(err, "UpdateKVM - unable to batch update kvm %s", kvm.Name).Err()
 		}
-		hc.LogKVMChanges(oldKVM, kvm)
+		hc.LogKVMChanges(oldKVMCopy, kvm)
 		return hc.SaveChangeEvents(ctx)
 	}
 

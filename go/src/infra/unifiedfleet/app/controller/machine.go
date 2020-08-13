@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -29,9 +30,8 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 	drac := machine.GetChromeBrowserMachine().GetDracObject()
 	f := func(ctx context.Context) error {
 		hc := getMachineHistoryClient(machine)
-		var err error
 		// Validate input
-		if err = validateMachineRegistration(ctx, machine); err != nil {
+		if err := validateMachineRegistration(ctx, machine); err != nil {
 			return errors.Annotate(err, "MachineRegistration - validation failed").Err()
 		}
 
@@ -43,20 +43,9 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 				nic.Rack = machine.GetLocation().GetRack()
 				nic.Zone = machine.GetLocation().GetZone().String()
 			}
-
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction to make it atomic. Datastore doesnt allow
-			// nested transactions.
-			if _, err = registration.BatchUpdateNics(ctx, nics); err != nil {
+			if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
 				return errors.Annotate(err, "MachineRegistration - unable to batch update nics").Err()
 			}
-			for _, nic := range nics {
-				hc.LogNicChanges(nil, nic)
-			}
-
-			// we dont store nic details inside a machine object
-			// we have a separate nic table indexed by machine name
-			machine.GetChromeBrowserMachine().NicObjects = nil
 		}
 
 		// Create drac
@@ -65,32 +54,16 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 			drac.Machine = machine.GetName()
 			drac.Rack = machine.GetLocation().GetRack()
 			drac.Zone = machine.GetLocation().GetZone().String()
-
-			// we use this func as it is a non-atomic operation and can be used to
-			// run within a transaction to make it atomic. Datastore doesnt allow
-			// nested transactions.
-			if _, err = registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
+			if _, err := registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
 				return errors.Annotate(err, "MachineRegistration - unable to batch update drac").Err()
 			}
-			hc.LogDracChanges(nil, drac)
-			// we dont store drac details inside a machine object
-			// We have a separate drac table indexed by machine name
-			machine.GetChromeBrowserMachine().DracObject = nil
 		}
 
 		// Create the machine
-		// we use this func as it is a non-atomic operation and can be used to
-		// run within a transaction to make it atomic. Datastore doesnt allow
-		// nested transactions.
 		machine.State = ufspb.State_STATE_REGISTERED.String()
-		// Update machine state
-		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
-			return err
-		}
-		if _, err = registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 			return errors.Annotate(err, "MachineRegistration - unable to batch update machine").Err()
 		}
-		hc.LogMachineChanges(nil, machine)
 
 		if machine.GetChromeBrowserMachine() != nil {
 			// We fill the machine object with newly created nics/drac from nic/drac table
@@ -98,6 +71,8 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 			machine.GetChromeBrowserMachine().NicObjects = nics
 			machine.GetChromeBrowserMachine().DracObject = drac
 		}
+		hc.LogAddMachineChanges(machine, nics, drac)
+		hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED)
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -122,7 +97,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		}
 
 		if machine.GetChromeBrowserMachine() != nil {
-			// We dont update the nics and dracs in UpdateMachine call.
+			// nics and dracs are not allowed to update in UpdateMachine call.
 			// We dont store nics/drac object inside Machine object in Machine table.
 			// nics/drac objects are stored in their separate tables
 			// user has to use nic/drac CRUD apis to update nic/drac
@@ -132,6 +107,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 
 		// Get the existing/old machine
 		oldMachine, err = registration.GetMachine(ctx, machine.GetName())
+		oldMachineCopy := proto.Clone(oldMachine).(*ufspb.Machine)
 		if err != nil {
 			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
 		}
@@ -148,7 +124,7 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
-			machine, err = processMachineUpdateMask(ctx, oldMachine, machine, mask)
+			machine, err = processMachineUpdateMask(ctx, oldMachine, machine, mask, hc)
 			if err != nil {
 				return errors.Annotate(err, "UpdateMachine - processing update mask failed").Err()
 			}
@@ -158,19 +134,18 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			// Check if machine zone/rack information is changed/updated
 			indexMap := map[string]string{
 				"zone": machine.GetLocation().GetZone().String(), "rack": machine.GetLocation().GetRack()}
-			if err = updateIndexingForMachineResources(ctx, oldMachine, indexMap); err != nil {
+			oldIndexMap := map[string]string{
+				"zone": oldMachine.GetLocation().GetZone().String(), "rack": oldMachine.GetLocation().GetRack()}
+			if err = updateIndexingForMachineResources(ctx, oldMachine, indexMap, oldIndexMap, hc); err != nil {
 				return errors.Annotate(err, "UpdateMachine - update zone and rack indexing failed").Err()
 			}
 		}
 
 		// update the machine
-		// we use this func as it is a non-atomic operation and can be used to
-		// run within a transaction to make it atomic. Datastore doesnt allow
-		// nested transactions.
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 			return errors.Annotate(err, "UpdateMachine - unable to batch update machine %s", machine.Name).Err()
 		}
-		hc.LogMachineChanges(oldMachine, machine)
+		hc.LogMachineChanges(oldMachineCopy, machine)
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -186,12 +161,17 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 
 // processMachineUpdateMask process update field mask to get only specific update
 // fields and return a complete machine object with updated and existing fields
-func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, machine *ufspb.Machine, mask *field_mask.FieldMask) (*ufspb.Machine, error) {
+func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, machine *ufspb.Machine, mask *field_mask.FieldMask, hc *HistoryClient) (*ufspb.Machine, error) {
 	// update the fields in the existing nic
 	for _, path := range mask.Paths {
 		switch path {
 		case "zone":
-			if err := updateIndexingForMachineResources(ctx, oldMachine, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
+			if machine.GetLocation().GetZone().String() == oldMachine.GetLocation().GetZone().String() {
+				continue
+			}
+			indexMap := map[string]string{"zone": machine.GetLocation().GetZone().String()}
+			oldIndexMap := map[string]string{"zone": oldMachine.GetLocation().GetZone().String()}
+			if err := updateIndexingForMachineResources(ctx, oldMachine, indexMap, oldIndexMap, hc); err != nil {
 				return oldMachine, errors.Annotate(err, "processMachineUpdateMask - failed to update zone indexing").Err()
 			}
 			if oldMachine.GetLocation() == nil {
@@ -199,7 +179,12 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 			}
 			oldMachine.GetLocation().Zone = machine.GetLocation().GetZone()
 		case "rack":
-			if err := updateIndexingForMachineResources(ctx, oldMachine, map[string]string{"rack": machine.GetLocation().GetRack()}); err != nil {
+			if machine.GetLocation().GetRack() == oldMachine.GetLocation().GetRack() {
+				continue
+			}
+			indexMap := map[string]string{"rack": machine.GetLocation().GetRack()}
+			oldIndexMap := map[string]string{"rack": oldMachine.GetLocation().GetRack()}
+			if err := updateIndexingForMachineResources(ctx, oldMachine, indexMap, oldIndexMap, hc); err != nil {
 				return oldMachine, errors.Annotate(err, "processMachineUpdateMask - failed to update rack indexing").Err()
 			}
 			if oldMachine.GetLocation() == nil {
@@ -242,7 +227,7 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 
 // updateIndexingForMachineResources updates indexing for machinelse/nic/drac tables
 // can be used inside a transaction
-func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Machine, indexMap map[string]string) error {
+func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Machine, indexMap map[string]string, oldIndexMap map[string]string, hc *HistoryClient) error {
 	// get MachineLSEs for indexing
 	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldMachine.GetName(), false)
 	if err != nil {
@@ -301,6 +286,7 @@ func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Ma
 			}
 		}
 	}
+
 	if _, err := inventory.BatchUpdateMachineLSEs(ctx, machinelses); err != nil {
 		return errors.Annotate(err, "updateIndexing - unable to batch update machinelses").Err()
 	}
@@ -316,6 +302,7 @@ func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Ma
 	if _, err := inventory.BatchUpdateVMs(ctx, vms); err != nil {
 		return errors.Annotate(err, "updateIndexing - unable to batch update vms").Err()
 	}
+	hc.LogMachineLocationChanges(machinelses, nics, dracs, vms, indexMap, oldIndexMap)
 	return nil
 }
 
@@ -374,59 +361,32 @@ func DeleteMachine(ctx context.Context, id string) error {
 		}
 
 		//Only for a browser machine
+		var nicIDs []string
+		var dracID string
 		if machine.GetChromeBrowserMachine() != nil {
-			// 3. Delete the nics
-			// get Nics for machine - only keys are sufficient
-			nics, err := registration.QueryNicByPropertyName(ctx, "machine", machine.GetName(), true)
+			nicIDs, err = getDeleteNicIDs(ctx, machine.GetName())
 			if err != nil {
-				return errors.Annotate(err, "DeleteMachine - failed to query nics for machine %s", machine.GetName()).Err()
+				return err
 			}
-			if nics != nil {
-				var nicIDs []string
-				for _, nic := range nics {
-					nicIDs = append(nicIDs, nic.GetName())
-					nicHc := getNicHistoryClient(nic)
-					nicHc.LogNicChanges(nic, nil)
-					if err = nicHc.SaveChangeEvents(ctx); err != nil {
-						return err
-					}
-				}
-				// we use this func as it is a non-atomic operation and can be used to
-				// run within a transaction to make it atomic. Datastore doesnt allow
-				// nested transactions.
-				if err = registration.BatchDeleteNics(ctx, nicIDs); err != nil {
-					return errors.Annotate(err, "DeleteMachine - failed to batch delete nics for machine %s", machine.GetName()).Err()
-				}
-			}
-
-			// 4. Delete the drac
-			// get Dracs for machine - only keys are sufficient
-			dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machine.GetName(), true)
+			dracID, err = getDeleteDracID(ctx, machine.GetName())
 			if err != nil {
-				return errors.Annotate(err, "DeleteMachine - failed to query dracs for machine %s", machine.GetName()).Err()
+				return err
 			}
-			if dracs != nil && len(dracs) > 0 {
-				dracHc := getDracHistoryClient(dracs[0])
-				if err = registration.DeleteDrac(ctx, dracs[0].GetName()); err != nil {
-					return errors.Annotate(err, "DeleteMachine - failed to delete drac %s for machine %s", dracs[0].GetName(), machine.GetName()).Err()
-				}
-				if err := dracHc.netUdt.deleteDHCPHelper(ctx); err != nil {
-					return errors.Annotate(err, "DeleteMachine - unable to delete ip configs for drac %s", dracs[0].GetName()).Err()
-				}
-				dracHc.LogDracChanges(dracs[0], nil)
-				if err = dracHc.SaveChangeEvents(ctx); err != nil {
-					return err
+			if err = registration.BatchDeleteNics(ctx, nicIDs); err != nil {
+				return errors.Annotate(err, "DeleteMachine - failed to batch delete nics for machine %s", machine.GetName()).Err()
+			}
+			if dracID != "" {
+				if err = registration.DeleteDrac(ctx, dracID); err != nil {
+					return errors.Annotate(err, "DeleteMachine - failed to delete drac %s for machine %s", dracID, machine.GetName()).Err()
 				}
 			}
 		}
 
-		// 5. Delete the state
-		hc.stUdt.deleteStateHelper(ctx)
 		if err := registration.DeleteMachine(ctx, id); err != nil {
 			return err
 		}
-		hc.LogMachineChanges(machine, nil)
-		// 6. Delete the machine
+		hc.stUdt.deleteStateHelper(ctx)
+		hc.LogDeleteMachineChanges(id, nicIDs, dracID)
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -794,4 +754,29 @@ func setDracToMachine(machine *ufspb.Machine, drac *ufspb.Drac) {
 	} else {
 		machine.GetChromeBrowserMachine().DracObject = drac
 	}
+}
+
+// can be called inside a transaction
+func getDeleteNicIDs(ctx context.Context, machineName string) ([]string, error) {
+	nics, err := registration.QueryNicByPropertyName(ctx, "machine", machineName, true)
+	if err != nil {
+		return nil, errors.Annotate(err, "DeleteMachine - failed to query nics for machine %s", machineName).Err()
+	}
+	nicIDs := make([]string, 0, len(nics))
+	for _, nic := range nics {
+		nicIDs = append(nicIDs, nic.GetName())
+	}
+	return nicIDs, nil
+}
+
+// can be called inside a transaction
+func getDeleteDracID(ctx context.Context, machineName string) (string, error) {
+	dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machineName, true)
+	if err != nil {
+		return "", errors.Annotate(err, "DeleteMachine - failed to query dracs for machine %s", machineName).Err()
+	}
+	if len(dracs) > 0 {
+		return dracs[0].GetName(), nil
+	}
+	return "", nil
 }

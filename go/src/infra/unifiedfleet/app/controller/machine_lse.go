@@ -201,6 +201,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		if err != nil {
 			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
 		}
+		oldMachinelseCopy := proto.Clone(oldMachinelse).(*ufspb.MachineLSE)
 		// Copy the rack/state/zone/manufacturer/machines to machinelse OUTPUT only fields from already existing machinelse
 		machinelse.Rack = oldMachinelse.GetRack()
 		machinelse.Zone = oldMachinelse.GetZone()
@@ -252,7 +253,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{machinelse}); err != nil {
 			return errors.Annotate(err, "Unable to batch update MachineLSE %s", machinelse.Name).Err()
 		}
-		hc.LogMachineLSEChanges(oldMachinelse, machinelse)
+		hc.LogMachineLSEChanges(oldMachinelseCopy, machinelse)
 
 		/* Comment this part for now
 		// TODO(eshwarn): Add support for labstation state in the future, have a separate updatelabstation func.
@@ -886,6 +887,18 @@ func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
+		lse, err := inventory.GetMachineLSE(ctx, machinelseName)
+		if err != nil {
+			return err
+		}
+		lseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
+		lse.Nic = ""
+		lse.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
+			return errors.Annotate(err, "Failed to update host %q", machinelseName).Err()
+		}
+		hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+		hc.LogMachineLSEChanges(lseCopy, lse)
 		return hc.SaveChangeEvents(ctx)
 	}
 
