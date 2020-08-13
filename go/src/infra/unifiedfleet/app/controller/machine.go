@@ -240,26 +240,34 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 
 // updateIndexingForMachineResources updates indexing for machinelse/nic/drac tables
 // can be used inside a transaction
-func updateIndexingForMachineResources(ctx context.Context, machine *ufspb.Machine, indexMap map[string]string) error {
+func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Machine, indexMap map[string]string) error {
 	// get MachineLSEs for indexing
-	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machine.GetName(), false)
+	machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", oldMachine.GetName(), false)
 	if err != nil {
-		return errors.Annotate(err, "updateIndexing - failed to query machinelses/hosts for machine %s", machine.GetName()).Err()
+		return errors.Annotate(err, "updateIndexing - failed to query machinelses/hosts for machine %s", oldMachine.GetName()).Err()
 	}
 	var nics []*ufspb.Nic
 	var dracs []*ufspb.Drac
 	// update indexing for nic/drac table only for chrome browser machines.
-	if machine.GetChromeBrowserMachine() != nil {
+	if oldMachine.GetChromeBrowserMachine() != nil {
 		var err error
 		// get Nics for indexing
-		nics, err = registration.QueryNicByPropertyName(ctx, "machine", machine.GetName(), false)
+		nics, err = registration.QueryNicByPropertyName(ctx, "machine", oldMachine.GetName(), false)
 		if err != nil {
-			return errors.Annotate(err, "updateIndexing - failed to query nics for machine %s", machine.GetName()).Err()
+			return errors.Annotate(err, "updateIndexing - failed to query nics for machine %s", oldMachine.GetName()).Err()
 		}
 		// get Dracs for indexing
-		dracs, err = registration.QueryDracByPropertyName(ctx, "machine", machine.GetName(), false)
+		dracs, err = registration.QueryDracByPropertyName(ctx, "machine", oldMachine.GetName(), false)
 		if err != nil {
-			return errors.Annotate(err, "updateIndexing - failed to query dracs for machine %s", machine.GetName()).Err()
+			return errors.Annotate(err, "updateIndexing - failed to query dracs for machine %s", oldMachine.GetName()).Err()
+		}
+	}
+	var vms []*ufspb.VM
+	if len(machinelses) > 0 {
+		// get VMs for indexing
+		vms, err = inventory.QueryVMByPropertyName(ctx, "host_id", machinelses[0].GetName(), false)
+		if err != nil {
+			return errors.Annotate(err, "updateIndexing - failed to query vms for host %s", machinelses[0].GetName()).Err()
 		}
 	}
 
@@ -286,19 +294,25 @@ func updateIndexingForMachineResources(ctx context.Context, machine *ufspb.Machi
 			for _, drac := range dracs {
 				drac.Lab = v
 			}
+			for _, vm := range vms {
+				vm.Lab = v
+			}
 		}
 	}
 	if _, err := inventory.BatchUpdateMachineLSEs(ctx, machinelses); err != nil {
 		return errors.Annotate(err, "updateIndexing - unable to batch update machinelses").Err()
 	}
 	// update indexing for nic/drac table only for chrome browser machines.
-	if machine.GetChromeBrowserMachine() != nil {
+	if oldMachine.GetChromeBrowserMachine() != nil {
 		if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
 			return errors.Annotate(err, "updateIndexing - unable to batch update nics").Err()
 		}
 		if _, err := registration.BatchUpdateDracs(ctx, dracs); err != nil {
 			return errors.Annotate(err, "updateIndexing - unable to batch update dracs").Err()
 		}
+	}
+	if _, err := inventory.BatchUpdateVMs(ctx, vms); err != nil {
+		return errors.Annotate(err, "updateIndexing - unable to batch update vms").Err()
 	}
 	return nil
 }

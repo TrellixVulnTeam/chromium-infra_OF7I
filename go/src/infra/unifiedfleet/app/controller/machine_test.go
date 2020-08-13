@@ -261,8 +261,41 @@ func TestUpdateMachine(t *testing.T) {
 		Convey("Update machine with existing resources", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-2",
+				Location: &ufspb.Location{
+					Lab: ufspb.Lab_LAB_CHROMEOS_ATLANTIS,
+				},
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
 			}
 			_, err := registration.CreateMachine(ctx, machine)
+			registration.CreateNic(ctx, &ufspb.Nic{
+				Name:    "nic-update-lab",
+				Lab:     ufspb.Lab_LAB_CHROMEOS_ATLANTIS.String(),
+				Machine: "machine-2",
+			})
+			registration.CreateDrac(ctx, &ufspb.Drac{
+				Name:    "drac-update-lab",
+				Lab:     ufspb.Lab_LAB_CHROMEOS_ATLANTIS.String(),
+				Machine: "machine-2",
+			})
+			inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name: "lse-update-lab",
+				Lab:  ufspb.Lab_LAB_CHROMEOS_ATLANTIS.String(),
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
+						VmCapacity: 12,
+					},
+				},
+				Machines: []string{"machine-2"},
+			})
+			inventory.BatchUpdateVMs(ctx, []*ufspb.VM{
+				{
+					Name:         "vm-update-lab",
+					Lab:          ufspb.Lab_LAB_CHROMEOS_ATLANTIS.String(),
+					MachineLseId: "lse-update-lab",
+				},
+			})
 
 			chromePlatform2 := &ufspb.ChromePlatform{
 				Name: "chromePlatform-2",
@@ -272,6 +305,9 @@ func TestUpdateMachine(t *testing.T) {
 
 			machine = &ufspb.Machine{
 				Name: "machine-2",
+				Location: &ufspb.Location{
+					Lab: ufspb.Lab_LAB_CHROMEOS_SANTIAM,
+				},
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-2",
@@ -281,6 +317,18 @@ func TestUpdateMachine(t *testing.T) {
 			resp, err := UpdateMachine(ctx, machine, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machine)
+			lse, err := inventory.GetMachineLSE(ctx, "lse-update-lab")
+			So(err, ShouldBeNil)
+			So(lse.GetLab(), ShouldEqual, ufspb.Lab_LAB_CHROMEOS_SANTIAM.String())
+			nic, err := registration.GetNic(ctx, "nic-update-lab")
+			So(err, ShouldBeNil)
+			So(nic.GetLab(), ShouldEqual, ufspb.Lab_LAB_CHROMEOS_SANTIAM.String())
+			drac, err := registration.GetDrac(ctx, "drac-update-lab")
+			So(err, ShouldBeNil)
+			So(drac.GetLab(), ShouldEqual, ufspb.Lab_LAB_CHROMEOS_SANTIAM.String())
+			vm, err := inventory.GetVM(ctx, "vm-update-lab")
+			So(err, ShouldBeNil)
+			So(vm.GetLab(), ShouldEqual, ufspb.Lab_LAB_CHROMEOS_SANTIAM.String())
 		})
 
 		Convey("Partial Update machine", func() {
