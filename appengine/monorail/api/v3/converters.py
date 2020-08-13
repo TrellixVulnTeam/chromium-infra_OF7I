@@ -459,6 +459,14 @@ class Converter(object):
     """
     issue_names = [delta.issue.name for delta in issue_deltas]
     issue_ids = rnc.IngestIssueNames(self.cnxn, issue_names, self.services)
+    issues_dict, misses = self.services.issue.GetIssuesDict(
+        self.cnxn, issue_ids)
+    if misses:
+      logging.info(
+          'Issues not found for supposedly valid issue_ids: %r' % misses)
+      raise ValueError('Could not fetch some issues.')
+    configs_by_pid = self.services.config.GetProjectConfigs(
+        self.cnxn, {issue.project_id for issue in issues_dict.values()})
 
     with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
       for api_delta in issue_deltas:
@@ -515,11 +523,26 @@ class Converter(object):
       delta.comp_ids_remove = comp_ids[:len(api_delta.components_remove)]
       delta.comp_ids_add = comp_ids[len(api_delta.components_remove):]
 
-      delta.labels_add = [value.label for value in filtered_api_issue.labels]
-      delta.labels_remove = [label for label in api_delta.labels_remove]
+      # Added to delta below, after ShiftEnumFieldsIntoLabels.
+      labels_add = [value.label for value in filtered_api_issue.labels]
+      labels_remove = [label for label in api_delta.labels_remove]
+
+      config = configs_by_pid[issues_dict[iid].project_id]
+      fvs_add, add_enums = self._IngestFieldValues(
+          filtered_api_issue.field_values, config)
+      fvs_remove, remove_enums = self._IngestFieldValues(
+          api_delta.field_vals_remove, config)
+      field_helpers.ShiftEnumFieldsIntoLabels(
+          labels_add, labels_remove, add_enums, remove_enums, config)
+      delta.field_vals_add = fvs_add
+      delta.field_vals_remove = fvs_remove
+      delta.labels_add = labels_add
+      delta.labels_remove = labels_remove
+      assert len(add_enums) == 0  # ShiftEnumFieldsIntoLabels clears all enums.
+      assert len(remove_enums) == 0
 
       # TODO(crbug.com/monorail/7657): Ingest remaining:
-      # field values, {ext_}blocked_on, {ext_}blocking, merged.
+      # {ext_}blocked_on, {ext_}blocking, merged.
 
       ingested.append((iid, delta))
 

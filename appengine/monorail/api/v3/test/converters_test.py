@@ -28,6 +28,7 @@ from framework import framework_constants
 from framework import monorailcontext
 from testing import fake
 from testing import testing_helpers
+from tracker import field_helpers
 from services import service_manager
 from proto import tracker_pb2
 from tracker import tracker_bizobj as tbo
@@ -893,8 +894,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.services.issue.TestAddIssue(issue_2)
     comp_1 = fake.MakeTestComponentDef(780, 1)
     comp_2 = fake.MakeTestComponentDef(780, 2)
+    fd_str = fake.MakeTestFieldDef(1, 780, tracker_pb2.FieldTypes.STR_TYPE)
+    fd_enum = fake.MakeTestFieldDef(
+        2, 780, tracker_pb2.FieldTypes.ENUM_TYPE, field_name='Kingdom')
     config = fake.MakeTestConfig(780, [], [])
     config.component_defs = [comp_1, comp_2]
+    config.field_defs = [fd_str, fd_enum]
     self.services.config.StoreConfig(self.cnxn, config)
 
     # Issue and delta that changes all things.
@@ -908,22 +913,50 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.Issue.ComponentValue(
                 component='projects/proj-780/componentDefs/1')
         ],
+        field_values=[
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/1', value='chicken'),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/2', value='come')
+        ],
         labels=[issue_objects_pb2.Issue.LabelValue(label='ready')])
     mask_all = field_mask_pb2.FieldMask(
         paths=[
-            'status', 'owner', 'summary', 'cc_users', 'labels', 'components'
+            'status', 'owner', 'summary', 'cc_users', 'labels', 'components',
+            'field_values'
         ])
     api_delta_all = issues_pb2.IssueDelta(
         issue=api_issue_all,
         update_mask=mask_all,
         ccs_remove=['users/333'],
         components_remove=['projects/proj-780/componentDefs/2'],
+        field_vals_remove=[
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/1', value='rooster'),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/2', value='leave')
+        ],
         labels_remove=['not-ready'])
+    exp_fvs_add = [
+        field_helpers.ParseOneFieldValue(
+            self.cnxn, self.services.user, fd_str, 'chicken')
+    ]
+    exp_fvs_remove = [
+        field_helpers.ParseOneFieldValue(
+            self.cnxn, self.services.user, fd_str, 'rooster')
+    ]
     expected_delta_all = tracker_pb2.IssueDelta(
-        status='Fixed', owner_id=111, summary='honk honk.',
-        cc_ids_add=[222], cc_ids_remove=[333],
-        comp_ids_add=[1], comp_ids_remove=[2],
-        labels_add=['ready'], labels_remove=['not-ready'])
+        status='Fixed',
+        owner_id=111,
+        summary='honk honk.',
+        cc_ids_add=[222],
+        cc_ids_remove=[333],
+        comp_ids_add=[1],
+        comp_ids_remove=[2],
+        field_vals_add=exp_fvs_add,
+        field_vals_remove=exp_fvs_remove,
+        labels_add=['ready', 'Kingdom-come'],
+        labels_remove=['not-ready', 'Kingdom-leave'])
 
     api_deltas = [api_delta_all]
 
@@ -938,15 +971,30 @@ class ConverterFunctionsTest(unittest.TestCase):
             issue_objects_pb2.Issue.ComponentValue(
                 component='projects/proj-780/componentDefs/1')
         ],
+        field_values=[
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/1', value='chicken'),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/2', value='come')
+        ],
         labels=[issue_objects_pb2.Issue.LabelValue(label='ready')])
     api_delta_all_masked = issues_pb2.IssueDelta(
         issue=api_issue_all_masked,
         update_mask=field_mask_pb2.FieldMask(paths=[]),
         ccs_remove=['users/333'],
         components_remove=['projects/proj-780/componentDefs/2'],
+        field_vals_remove=[
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/1', value='rooster'),
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/2', value='leave')
+        ],
         labels_remove=['not-ready'])
     expected_delta_all_masked = tracker_pb2.IssueDelta(
-        cc_ids_remove=[333], comp_ids_remove=[2], labels_remove=['not-ready'])
+        cc_ids_remove=[333],
+        comp_ids_remove=[2],
+        labels_remove=['not-ready', 'Kingdom-leave'],
+        field_vals_remove=exp_fvs_remove)
 
     api_deltas.append(api_delta_all_masked)
 
@@ -1017,8 +1065,10 @@ class ConverterFunctionsTest(unittest.TestCase):
     issue_1 = self._Issue(780, 1)
     self.services.issue.TestAddIssue(issue_1)
     comp_1 = fake.MakeTestComponentDef(780, 1)
+    fd_str = fake.MakeTestFieldDef(1, 780, tracker_pb2.FieldTypes.STR_TYPE)
     config = fake.MakeTestConfig(780, [], [])
     config.component_defs = [comp_1]
+    config.field_defs = [fd_str]
     self.services.config.StoreConfig(self.cnxn, config)
 
     api_issue = issue_objects_pb2.Issue(
@@ -1031,18 +1081,27 @@ class ConverterFunctionsTest(unittest.TestCase):
             derivation=issue_objects_pb2.Derivation.Value('RULE')),
         state=issue_objects_pb2.IssueContentState.Value('DELETED'),
         reporter='users/222',
-        cc_users=[issue_objects_pb2.Issue.UserValue(
-            user='users/333',
-            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
-        labels=[issue_objects_pb2.Issue.LabelValue(
-            label='wikipedia-sections',
-            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
-        components=[issue_objects_pb2.Issue.ComponentValue(
-            component='projects/proj-780/componentDefs/1',
-            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
-        field_values=[issue_objects_pb2.FieldValue(
-            value='chicken',
-            derivation=issue_objects_pb2.Derivation.Value('RULE'))],
+        cc_users=[
+            issue_objects_pb2.Issue.UserValue(
+                user='users/333',
+                derivation=issue_objects_pb2.Derivation.Value('RULE'))
+        ],
+        labels=[
+            issue_objects_pb2.Issue.LabelValue(
+                label='wikipedia-sections',
+                derivation=issue_objects_pb2.Derivation.Value('RULE'))
+        ],
+        components=[
+            issue_objects_pb2.Issue.ComponentValue(
+                component='projects/proj-780/componentDefs/1',
+                derivation=issue_objects_pb2.Derivation.Value('RULE'))
+        ],
+        field_values=[
+            issue_objects_pb2.FieldValue(
+                field='projects/proj-780/fieldDefs/1',
+                value='bugs',
+                derivation=issue_objects_pb2.Derivation.Value('RULE'))
+        ],
         create_time=timestamp_pb2.Timestamp(seconds=4044242),
         close_time=timestamp_pb2.Timestamp(seconds=4044242),
         modify_time=timestamp_pb2.Timestamp(seconds=4044242),
@@ -1063,9 +1122,15 @@ class ConverterFunctionsTest(unittest.TestCase):
 
     expected_delta = tracker_pb2.IssueDelta(
         # We ignore all Issue.*Value.derivation OUTPUT_ONLY fields.
-        owner_id=111, status='KingdomCome', cc_ids_add=[333],
-        labels_add=['wikipedia-sections'], comp_ids_add=[1],
-        field_vals_add=[])  # TODO(crbug.com/monorail/7657): Process fvs.
+        owner_id=111,
+        status='KingdomCome',
+        cc_ids_add=[333],
+        labels_add=['wikipedia-sections'],
+        comp_ids_add=[1],
+        field_vals_add=[
+            field_helpers.ParseOneFieldValue(
+                self.cnxn, self.services.user, fd_str, 'bugs')
+        ])
 
     actual = self.converter.IngestIssueDeltas([api_delta])
     expected = [(78001, expected_delta)]

@@ -800,6 +800,8 @@ class ConfigService(object):
   ### Issue tracker configuration objects
 
   def GetProjectConfigs(self, cnxn, project_ids, use_cache=True):
+    # type: (MonorailConnection, Collection[int], Optional[bool])
+    #     -> Mapping[int, ProjectConfig]
     """Get several project issue config objects."""
     config_dict, missed_ids = self.config_2lc.GetAll(
         cnxn, project_ids, use_cache=use_cache)
