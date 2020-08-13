@@ -4,7 +4,9 @@ platforms:
   - linux-amd64
 go_packages:
   - infra/cmd/cros_test_platform
+  - infra/cmd/cros_test_platform/luciexe
 root: ../../go/bin
 data:
   - file: cros_test_platform${exe_suffix}
+  - file: luciexe${exe_suffix}
   - version_file: .versions/cros_test_platform${exe_suffix}.cipd_version
