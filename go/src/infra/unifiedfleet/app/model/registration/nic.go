@@ -272,7 +272,7 @@ func GetNicIndexedFieldName(input string) (string, error) {
 	case util.MacAddressFilterName:
 		field = "mac_address"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch/switch_port/macaddress/machine/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch/switchport/mac(macaddress)/machine/tag", input)
 	}
 	return field, nil
 }

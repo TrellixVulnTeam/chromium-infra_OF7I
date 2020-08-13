@@ -660,7 +660,6 @@ func printChromePlatform(m *ufspb.ChromePlatform, keysOnly bool) {
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetManufacturer())
 	out += fmt.Sprintf("%s\t", m.GetDescription())
-	out += fmt.Sprintf("%s\t", m.GetTags())
 	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }

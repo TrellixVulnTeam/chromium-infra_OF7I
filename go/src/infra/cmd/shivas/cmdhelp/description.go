@@ -1011,13 +1011,13 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & kvm=kvm-1'` + FilterCondition
 
 	// NicFilterHelp help text for list rack filtering
-	NicFilterHelp string = FilterText + `You can filter nics by lab/rack/switch/switch_port/macaddress/machine/tag` + LabFilterHelpText +
+	NicFilterHelp string = FilterText + `You can filter nics by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
 
 	// DracFilterHelp help text for list rack filtering
-	DracFilterHelp string = FilterText + `You can filter dracs by lab/rack/switch/switch_port/macaddress/machine/tag` + LabFilterHelpText +
+	DracFilterHelp string = FilterText + `You can filter dracs by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1'` + FilterCondition
@@ -1035,7 +1035,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
 
 	// KVMFilterHelp help text for list rack filtering
-	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/macaddress/state` + LabFilterHelpText +
+	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/mac(macaddress)/state` + LabFilterHelpText +
 		`Filter format Egs:
 'lab=atl97'
 'lab=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition

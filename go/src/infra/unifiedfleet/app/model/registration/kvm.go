@@ -269,7 +269,7 @@ func GetKVMIndexedFieldName(input string) (string, error) {
 	case util.StateFilterName:
 		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform/tag/macaddress/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform/tag/mac(macaddress)/state", input)
 	}
 	return field, nil
 }
