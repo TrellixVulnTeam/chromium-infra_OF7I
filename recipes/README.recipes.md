@@ -1113,11 +1113,11 @@ See: //docs/testing/web_platform_tests.md (https://goo.gl/rSRGmZ)
 
 Runs a step which adds a link to the current CL if there is one.
 
-[build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/744a4e250b959d2bc0d06fded5d42fb68801ca04/scripts/slave/README.recipes.md#recipe_modules-chromium
-[build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/744a4e250b959d2bc0d06fded5d42fb68801ca04/scripts/slave/README.recipes.md#recipe_modules-chromium_checkout
-[build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/744a4e250b959d2bc0d06fded5d42fb68801ca04/scripts/slave/README.recipes.md#recipe_modules-docker
-[build/recipe_modules/goma]: https://chromium.googlesource.com/chromium/tools/build.git/+/744a4e250b959d2bc0d06fded5d42fb68801ca04/scripts/slave/README.recipes.md#recipe_modules-goma
-[build/recipe_modules/zip]: https://chromium.googlesource.com/chromium/tools/build.git/+/744a4e250b959d2bc0d06fded5d42fb68801ca04/scripts/slave/README.recipes.md#recipe_modules-zip
+[build/recipe_modules/chromium]: https://chromium.googlesource.com/chromium/tools/build.git/+/8b480e23c41a2cc94d04f7f56de62014c623772c/scripts/slave/README.recipes.md#recipe_modules-chromium
+[build/recipe_modules/chromium_checkout]: https://chromium.googlesource.com/chromium/tools/build.git/+/8b480e23c41a2cc94d04f7f56de62014c623772c/scripts/slave/README.recipes.md#recipe_modules-chromium_checkout
+[build/recipe_modules/docker]: https://chromium.googlesource.com/chromium/tools/build.git/+/8b480e23c41a2cc94d04f7f56de62014c623772c/scripts/slave/README.recipes.md#recipe_modules-docker
+[build/recipe_modules/goma]: https://chromium.googlesource.com/chromium/tools/build.git/+/8b480e23c41a2cc94d04f7f56de62014c623772c/scripts/slave/README.recipes.md#recipe_modules-goma
+[build/recipe_modules/zip]: https://chromium.googlesource.com/chromium/tools/build.git/+/8b480e23c41a2cc94d04f7f56de62014c623772c/scripts/slave/README.recipes.md#recipe_modules-zip
 [depot_tools/recipe_modules/bot_update]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/409802afddc89795132b49743c2660f18f91b8df/recipes/README.recipes.md#recipe_modules-bot_update
 [depot_tools/recipe_modules/depot_tools]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/409802afddc89795132b49743c2660f18f91b8df/recipes/README.recipes.md#recipe_modules-depot_tools
 [depot_tools/recipe_modules/gclient]: https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/409802afddc89795132b49743c2660f18f91b8df/recipes/README.recipes.md#recipe_modules-gclient
