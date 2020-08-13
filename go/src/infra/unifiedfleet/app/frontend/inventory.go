@@ -24,7 +24,7 @@ import (
 
 func verifyLSEPrototype(ctx context.Context, lse *ufspb.MachineLSE) error {
 	if lse.GetChromeBrowserMachineLse() != nil {
-		if !util.IsInBrowserLab(lse.GetMachineLsePrototype()) {
+		if !util.IsInBrowserZone(lse.GetMachineLsePrototype()) {
 			return grpcStatus.Errorf(codes.InvalidArgument, "Prototype %s doesn't belong to browser lab", lse.GetMachineLsePrototype())
 		}
 		resp, err := controller.GetMachineLSEPrototype(ctx, lse.GetMachineLsePrototype())

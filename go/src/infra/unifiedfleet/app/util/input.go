@@ -59,7 +59,7 @@ const (
 
 // Filter names for indexed properties in datastore for different entities
 var (
-	LabFilterName              string = "lab"
+	ZoneFilterName             string = "zone"
 	RackFilterName             string = "rack"
 	MachineFilterName          string = "machine"
 	HostFilterName             string = "host"

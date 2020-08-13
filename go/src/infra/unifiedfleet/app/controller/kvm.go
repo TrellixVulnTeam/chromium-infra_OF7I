@@ -39,9 +39,9 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 			return err
 		}
 
-		// Fill the rack/lab to kvm OUTPUT only fields for indexing
+		// Fill the rack/zone to kvm OUTPUT only fields for indexing
 		kvm.Rack = rack.GetName()
-		kvm.Lab = rack.GetLocation().GetLab().String()
+		kvm.Zone = rack.GetLocation().GetZone().String()
 		kvm.State = ufspb.State_STATE_REGISTERED.String()
 
 		// Create a kvm entry
@@ -81,9 +81,9 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 		if err != nil {
 			return errors.Annotate(err, "UpdateKVM - get kvm %s failed", kvm.GetName()).Err()
 		}
-		// Fill the rack/lab to kvm OUTPUT only fields
+		// Fill the rack/zone to kvm OUTPUT only fields
 		kvm.Rack = oldKVM.GetRack()
-		kvm.Lab = oldKVM.GetLab()
+		kvm.Zone = oldKVM.GetZone()
 		kvm.State = oldKVM.GetState()
 
 		if rackName != "" && oldKVM.GetRack() != rackName {
@@ -94,9 +94,9 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 				return errors.Annotate(err, "UpdateKVM - get rack %s failed", rackName).Err()
 			}
 
-			// Fill the rack/lab to kvm OUTPUT only fields
+			// Fill the rack/zone to kvm OUTPUT only fields
 			kvm.Rack = rack.GetName()
-			kvm.Lab = rack.GetLocation().GetLab().String()
+			kvm.Zone = rack.GetLocation().GetZone().String()
 		}
 
 		// Partial update by field mask
@@ -134,7 +134,7 @@ func processKVMUpdateMask(oldKVM *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.Fi
 			// and got the new values for OUTPUT only fields in new kvm object,
 			// assign them to oldkvm.
 			oldKVM.Rack = kvm.GetRack()
-			oldKVM.Lab = kvm.GetLab()
+			oldKVM.Zone = kvm.GetZone()
 		case "platform":
 			oldKVM.ChromePlatform = kvm.GetChromePlatform()
 		case "macAddress":

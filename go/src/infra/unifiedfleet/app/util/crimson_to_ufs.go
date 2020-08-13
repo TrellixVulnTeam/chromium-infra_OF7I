@@ -44,7 +44,7 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 func toLocation(rack, datacenter string) *ufspb.Location {
 	return &ufspb.Location{
 		Rack: rack,
-		Lab:  ToLab(strings.ToLower(datacenter)),
+		Zone: ToZone(strings.ToLower(datacenter)),
 	}
 }
 
@@ -90,7 +90,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			MacAddress:     oldKVM.GetMacAddress(),
 			ChromePlatform: FormatResourceName(oldKVM.GetPlatform()),
 			Rack:           oldKVM.GetRack(),
-			Lab:            ToLab(strings.ToLower(dcName)).String(),
+			Zone:           ToZone(strings.ToLower(dcName)).String(),
 			State:          ToState(oldKVM.GetState()).String(),
 		}
 		kvms = append(kvms, k)
@@ -111,7 +111,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 				CapacityPort: crimsonSwitch.GetPorts(),
 				Description:  crimsonSwitch.GetDescription(),
 				Rack:         rackName,
-				Lab:          ToLab(strings.ToLower(dcName)).String(),
+				Zone:         ToZone(strings.ToLower(dcName)).String(),
 				State:        ToState(crimsonSwitch.GetState()).String(),
 			}
 			switches = append(switches, s)
@@ -172,13 +172,13 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 			// Use ListDrac() as the source of truth for drac
 			continue
 		default:
-			// lab and rack are for indexing nic table
+			// zone and rack are for indexing nic table
 			var rack string
-			var lab string
+			var zone string
 			machine, ok := machineMap[nic.GetMachine()]
 			if ok {
 				rack = machine.GetRack()
-				lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+				zone = ToZone(strings.ToLower(machine.GetDatacenter())).String()
 			}
 			// Multiple nic names, e.g. eth0, eth1, bmc
 			newNic := &ufspb.Nic{
@@ -189,7 +189,7 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 					PortName: Int32ToStr(nic.GetSwitchport()),
 				},
 				Rack:    rack,
-				Lab:     lab,
+				Zone:    zone,
 				Machine: nic.GetMachine(),
 			}
 			newNics = append(newNics, newNic)
@@ -197,13 +197,13 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 		}
 	}
 	for _, drac := range dracs {
-		// lab and rack are for indexing drac table
+		// zone and rack are for indexing drac table
 		var rack string
-		var lab string
+		var zone string
 		machine, ok := machineMap[drac.GetMachine()]
 		if ok {
 			rack = machine.GetRack()
-			lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+			zone = ToZone(strings.ToLower(machine.GetDatacenter())).String()
 		}
 		hostname := FormatResourceName(drac.GetName())
 		d := &ufspb.Drac{
@@ -216,7 +216,7 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 				PortName: Int32ToStr(drac.GetSwitchport()),
 			},
 			Rack:    rack,
-			Lab:     lab,
+			Zone:    zone,
 			Machine: drac.GetMachine(),
 		}
 		newDracs = append(newDracs, d)
@@ -249,9 +249,9 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 	}
 	for _, vm := range vms {
 		name := vm.GetName()
-		var lab string
+		var zone string
 		if machine, ok := hostToMachine[vm.GetHost()]; ok {
-			lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+			zone = ToZone(strings.ToLower(machine.GetDatacenter())).String()
 		}
 		v := &ufspb.VM{
 			Name: name,
@@ -260,7 +260,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			},
 			Hostname:     name,
 			Vlan:         GetBrowserLabName(Int64ToStr(vm.GetVlan())),
-			Lab:          lab,
+			Zone:         zone,
 			MachineLseId: vm.GetHost(),
 			State:        ToState(vm.GetState()).String(),
 		}
@@ -281,11 +281,11 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 	var lsePrototype string
 	for _, h := range hosts {
 		var rack string
-		var lab string
+		var zone string
 		machine, ok := machineMap[h.GetMachine()]
 		if ok {
 			rack = machine.GetRack()
-			lab = ToLab(strings.ToLower(machine.GetDatacenter())).String()
+			zone = ToZone(strings.ToLower(machine.GetDatacenter())).String()
 		}
 		name := h.GetName()
 		vms := hostToVMs[name]
@@ -309,7 +309,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 				},
 			},
 			Rack:  rack,
-			Lab:   lab,
+			Zone:  zone,
 			Nic:   GetNicName(h.GetNic(), h.GetMachine()),
 			State: ToState(h.GetState()).String(),
 		}
@@ -362,6 +362,26 @@ func ToLab(datacenter string) ufspb.Lab {
 		return ufspb.Lab_LAB_DATACENTER_FUCHSIA
 	default:
 		return ufspb.Lab_LAB_UNSPECIFIED
+	}
+}
+
+// ToZone converts the crimson lab string to UFS zone.
+func ToZone(datacenter string) ufspb.Zone {
+	switch strings.ToLower(datacenter) {
+	case "atl97":
+		return ufspb.Zone_ZONE_ATL97
+	case "iad97":
+		return ufspb.Zone_ZONE_IAD97
+	case "mtv96":
+		return ufspb.Zone_ZONE_MTV96
+	case "mtv97":
+		return ufspb.Zone_ZONE_MTV97
+	case "lab01":
+		return ufspb.Zone_ZONE_FUCHSIA
+	case "atl":
+		return ufspb.Zone_ZONE_ATLANTA
+	default:
+		return ufspb.Zone_ZONE_UNSPECIFIED
 	}
 }
 

@@ -26,7 +26,7 @@ var locations = []*regexp.Regexp{
 	regexp.MustCompile(`[\w]*[\d]*-desk-[\w]*`),
 }
 
-var labFilterRegex = regexp.MustCompile(`lab=[a-zA-Z0-9-,_]*`)
+var zoneFilterRegex = regexp.MustCompile(`zone=[a-zA-Z0-9-,_]*`)
 
 // IsLocation determines if a string describes a ChromeOS lab location
 func IsLocation(iput string) bool {
@@ -38,94 +38,94 @@ func IsLocation(iput string) bool {
 	return false
 }
 
-// StrToUFSLab refers a map between a string to a UFS defined map.
-var StrToUFSLab = map[string]string{
-	"atl":        "LAB_CHROME_ATLANTA",
-	"chromeos1":  "LAB_CHROMEOS_SANTIAM",
-	"chromeos4":  "LAB_CHROMEOS_DESTINY",
-	"chromeos6":  "LAB_CHROMEOS_PROMETHEUS",
-	"chromeos2":  "LAB_CHROMEOS_ATLANTIS",
-	"chromeos3":  "LAB_CHROMEOS_LINDAVISTA",
-	"chromeos5":  "LAB_CHROMEOS_LINDAVISTA",
-	"chromeos7":  "LAB_CHROMEOS_LINDAVISTA",
-	"chromeos9":  "LAB_CHROMEOS_LINDAVISTA",
-	"chromeos15": "LAB_CHROMEOS_LINDAVISTA",
-	"atl97":      "LAB_DATACENTER_ATL97",
-	"iad97":      "LAB_DATACENTER_IAD97",
-	"mtv96":      "LAB_DATACENTER_MTV96",
-	"mtv97":      "LAB_DATACENTER_MTV97",
-	"lab01":      "LAB_DATACENTER_FUCHSIA",
-	"unknown":    "LAB_UNSPECIFIED",
+// StrToUFSZone refers a map between a string to a UFS defined map.
+var StrToUFSZone = map[string]string{
+	"atl":        "ZONE_ATLANTA",
+	"chromeos1":  "ZONE_CHROMEOS1",
+	"chromeos4":  "ZONE_CHROMEOS4",
+	"chromeos6":  "ZONE_CHROMEOS6",
+	"chromeos2":  "ZONE_CHROMEOS2",
+	"chromeos3":  "ZONE_CHROMEOS3",
+	"chromeos5":  "ZONE_CHROMEOS5",
+	"chromeos7":  "ZONE_CHROMEOS7",
+	"chromeos15": "ZONE_CHROMEOS15",
+	"atl97":      "ZONE_ATL97",
+	"iad97":      "ZONE_IAD97",
+	"mtv96":      "ZONE_MTV96",
+	"mtv97":      "ZONE_MTV97",
+	"lab01":      "ZONE_FUCHSIA",
+	"unknown":    "ZONE_UNSPECIFIED",
 }
 
-// IsUFSLab checks if a string refers to a valid UFS lab.
-func IsUFSLab(lab string) bool {
-	_, ok := StrToUFSLab[lab]
+// IsUFSZone checks if a string refers to a valid UFS zone.
+func IsUFSZone(zone string) bool {
+	_, ok := StrToUFSZone[zone]
 	return ok
 }
 
-// ValidLabStr returns a valid str list for lab strings.
-func ValidLabStr() []string {
-	ks := make([]string, 0, len(StrToUFSLab))
-	for k := range StrToUFSLab {
+// ValidZoneStr returns a valid str list for zone strings.
+func ValidZoneStr() []string {
+	ks := make([]string, 0, len(StrToUFSZone))
+	for k := range StrToUFSZone {
 		ks = append(ks, k)
 	}
 	return ks
 }
 
-// ToUFSLab converts lab string to a UFS lab enum.
-func ToUFSLab(lab string) ufspb.Lab {
-	v, ok := StrToUFSLab[lab]
+// ToUFSZone converts zone string to a UFS zone enum.
+func ToUFSZone(zone string) ufspb.Zone {
+	v, ok := StrToUFSZone[zone]
 	if !ok {
-		return ufspb.Lab_LAB_UNSPECIFIED
+		return ufspb.Zone_ZONE_UNSPECIFIED
 	}
-	return ufspb.Lab(ufspb.Lab_value[v])
+	return ufspb.Zone(ufspb.Zone_value[v])
 }
 
-// ToUFSRealm returns the realm name based on lab string.
-func ToUFSRealm(lab string) string {
-	ufsLab := ToUFSLab(lab)
-	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
+// ToUFSRealm returns the realm name based on zone string.
+func ToUFSRealm(zone string) string {
+	ufsZone := ToUFSZone(zone)
+	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
 		return ufsUtil.BrowserLabAdminRealm
 	}
-	if ufsLab == ufspb.Lab_LAB_CHROMEOS_LINDAVISTA {
+	if ufsZone == ufspb.Zone_ZONE_CHROMEOS3 || ufsZone == ufspb.Zone_ZONE_CHROMEOS5 ||
+		ufsZone == ufspb.Zone_ZONE_CHROMEOS7 || ufsZone == ufspb.Zone_ZONE_CHROMEOS15 {
 		return ufsUtil.AcsLabAdminRealm
 	}
 	return ufsUtil.AtlLabAdminRealm
 }
 
-// ReplaceLabNames replace lab names with Ufs lab names in the filter string
+// ReplaceZoneNames replace zone names with Ufs zone names in the filter string
 //
 // TODO(eshwarn) : Repalce regex and string matching with yacc (https://godoc.org/golang.org/x/tools/cmd/goyacc)
-func ReplaceLabNames(filter string) (string, error) {
+func ReplaceZoneNames(filter string) (string, error) {
 	if filter != "" {
 		// Remove all the spaces
 		filter = fmt.Sprintf(strings.Replace(filter, " ", "", -1))
-		// Find the lab filtering condition
-		labfilters := labFilterRegex.FindAllString(filter, -1)
-		if len(labfilters) == 0 {
+		// Find the zone filtering condition
+		zonefilters := zoneFilterRegex.FindAllString(filter, -1)
+		if len(zonefilters) == 0 {
 			return filter, nil
 		}
-		// Aggregate all the lab names
-		var labNames []string
-		for _, lf := range labfilters {
+		// Aggregate all the zone names
+		var zoneNames []string
+		for _, lf := range zonefilters {
 			keyValue := strings.Split(lf, "=")
 			if len(keyValue) < 2 {
 				return filter, nil
 			}
-			labNames = append(labNames, strings.Split(keyValue[1], ",")...)
+			zoneNames = append(zoneNames, strings.Split(keyValue[1], ",")...)
 		}
-		if len(labNames) == 0 {
+		if len(zoneNames) == 0 {
 			return filter, nil
 		}
-		// Repalce all the lab names with UFS lab names matching the enum
-		for _, labName := range labNames {
-			ufsLabName, ok := StrToUFSLab[labName]
+		// Repalce all the zone names with UFS zone names matching the enum
+		for _, zoneName := range zoneNames {
+			ufsZoneName, ok := StrToUFSZone[zoneName]
 			if !ok {
-				errorMsg := fmt.Sprintf("Invalid lab name %s for filtering.\nValid lab filters: [%s]", labName, strings.Join(ValidLabStr(), ", "))
+				errorMsg := fmt.Sprintf("Invalid zone name %s for filtering.\nValid zone filters: [%s]", zoneName, strings.Join(ValidZoneStr(), ", "))
 				return filter, errors.New(errorMsg)
 			}
-			filter = fmt.Sprintf(strings.Replace(filter, labName, ufsLabName, -1))
+			filter = fmt.Sprintf(strings.Replace(filter, zoneName, ufsZoneName, -1))
 		}
 	}
 	return filter, nil

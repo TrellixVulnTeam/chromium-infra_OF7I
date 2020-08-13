@@ -35,7 +35,8 @@ type MachineLSEEntity struct {
 	VlanID                string   `gae:"vlan_id"`
 	ServoID               string   `gae:"servo_id"`
 	Rack                  string   `gae:"rack"`
-	Lab                   string   `gae:"lab"`
+	Lab                   string   `gae:"lab"` // deprecated
+	Zone                  string   `gae:"zone"`
 	Manufacturer          string   `gae:"manufacturer"`
 	Tags                  []string `gae:"tags"`
 	State                 string   `gae:"state"`
@@ -73,7 +74,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		VlanID:                p.GetChromeosMachineLse().GetServerLse().GetSupportedRestrictedVlan(),
 		ServoID:               servoID,
 		Rack:                  p.GetRack(),
-		Lab:                   p.GetLab(),
+		Zone:                  p.GetZone(),
 		Manufacturer:          p.GetManufacturer(),
 		State:                 p.GetState(),
 		OS:                    ufsds.GetOSIndex(p.GetChromeBrowserMachineLse().GetOsVersion().GetValue()),
@@ -299,8 +300,8 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "vlan_id"
 	case util.ServoFilterName:
 		field = "servo_id"
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.RackFilterName:
 		field = "rack"
 	case util.MachineFilterName:
@@ -318,7 +319,7 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 	case util.OSFilterName:
 		field = "os"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/lab/rack/switch/man/free/tag/state/os", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/zone/rack/switch/man/free/tag/state/os", input)
 	}
 	return field, nil
 }

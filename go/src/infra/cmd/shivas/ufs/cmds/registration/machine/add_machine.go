@@ -36,7 +36,7 @@ var AddMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineRegistrationFileText)
 
 		c.Flags.StringVar(&c.machineName, "name", "", "the name of the machine to add")
-		c.Flags.StringVar(&c.labName, "lab", "", fmt.Sprintf("the name of the lab to add the machine to. Valid lab strings: [%s]", strings.Join(utils.ValidLabStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]", strings.Join(utils.ValidZoneStr(), ", ")))
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine")
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses")
@@ -56,7 +56,7 @@ type addMachine struct {
 	newSpecsFile string
 
 	machineName      string
-	labName          string
+	zoneName         string
 	rackName         string
 	platform         string
 	kvm              string
@@ -97,9 +97,9 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 		if err = utils.ParseJSONFile(c.newSpecsFile, &machineRegistrationReq); err != nil {
 			return err
 		}
-		ufsLab := utils.ToUFSLab(c.labName)
-		machineRegistrationReq.GetMachine().GetLocation().Lab = ufsLab
-		machineRegistrationReq.GetMachine().Realm = utils.ToUFSRealm(ufsLab.String())
+		ufsZone := utils.ToUFSZone(c.zoneName)
+		machineRegistrationReq.GetMachine().GetLocation().Zone = ufsZone
+		machineRegistrationReq.GetMachine().Realm = utils.ToUFSRealm(ufsZone.String())
 	} else {
 		c.parseArgs(&machineRegistrationReq)
 	}
@@ -114,18 +114,18 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 }
 
 func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
-	ufsLab := utils.ToUFSLab(c.labName)
+	ufsZone := utils.ToUFSZone(c.zoneName)
 	req.Machine = &ufspb.Machine{
 		Name: c.machineName,
 		Location: &ufspb.Location{
-			Lab:  ufsLab,
+			Zone: ufsZone,
 			Rack: c.rackName,
 		},
-		Realm:        utils.ToUFSRealm(c.labName),
+		Realm:        utils.ToUFSRealm(c.zoneName),
 		Tags:         utils.GetStringSlice(c.tags),
 		SerialNumber: c.serialNumber,
 	}
-	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
+	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
 		req.Machine.Device = &ufspb.Machine_ChromeBrowserMachine{
 			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 				DisplayName:      c.machineName,
@@ -144,11 +144,11 @@ func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
 }
 
 func (c *addMachine) validateArgs() error {
-	if c.labName == "" {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-lab' is required.")
+	if c.zoneName == "" {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required.")
 	}
-	if !utils.IsUFSLab(c.labName) {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid lab name, please check help info for '-lab'.", c.labName)
+	if !utils.IsUFSZone(c.zoneName) {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 	}
 	if c.newSpecsFile != "" {
 		if c.machineName != "" {

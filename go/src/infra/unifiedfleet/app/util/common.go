@@ -87,6 +87,28 @@ func IsInBrowserLab(name string) bool {
 	}
 }
 
+// IsInBrowserZone check if a given name(resource or zone name) indicates it's in browser zone.
+func IsInBrowserZone(name string) bool {
+	// check if it has a browser zone prefix
+	s := strings.Split(name, FilterConditionSeparator)
+	if len(s) >= 2 && s[0] == BrowserLab {
+		return true
+	}
+
+	// check the actual zone name
+	switch name {
+	case "ZONE_ATLANTA",
+		"ZONE_ATL97",
+		"ZONE_IAD97",
+		"ZONE_MTV96",
+		"ZONE_MTV97",
+		"ZONE_FUCHSIA":
+		return true
+	default:
+		return false
+	}
+}
+
 // GetIPName returns a formatted IP name
 func GetIPName(vlanName, ipv4Str string) string {
 	return fmt.Sprintf("%s/%s", vlanName, ipv4Str)

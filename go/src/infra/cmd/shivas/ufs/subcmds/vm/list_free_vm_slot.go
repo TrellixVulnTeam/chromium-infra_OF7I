@@ -31,7 +31,7 @@ Examples:
 shivas list vm-slots -n 5 -filter man=apple
 Fetches 5 vm slots by manufacturer of chrome platform.
 
-shivas list vm-slots -n 5 -filter 'man=apple & lab=mtv97'
+shivas list vm-slots -n 5 -filter 'man=apple & zone=mtv97'
 Fetches 5 vm slots by location & manufacturer.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &listVMSlot{}
@@ -105,7 +105,7 @@ func (c *listVMSlot) validateArgs() error {
 			return cmdlib.NewUsageError(c.Flags, ufsAPI.InvalidFilterFormat)
 		}
 		var err error
-		c.filter, err = utils.ReplaceLabNames(filter)
+		c.filter, err = utils.ReplaceZoneNames(filter)
 		if err != nil {
 			return err
 		}

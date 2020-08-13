@@ -32,7 +32,8 @@ type VMEntity struct {
 	Vlan      string   `gae:"vlan_id"`
 	HostID    string   `gae:"host_id"`
 	State     string   `gae:"state"`
-	Lab       string   `gae:"lab"`
+	Lab       string   `gae:"lab"` // deprecated
+	Zone      string   `gae:"zone"`
 	Tags      []string `gae:"tags"`
 	OS        []string `gae:"os"`
 	// Follow others entities, store ufspb.VM bytes.
@@ -63,7 +64,7 @@ func newVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 		Vlan:      p.GetVlan(),
 		HostID:    p.GetMachineLseId(),
 		State:     p.GetState(),
-		Lab:       p.GetLab(),
+		Zone:      p.GetZone(),
 		Tags:      p.GetTags(),
 		OS:        ufsds.GetOSIndex(p.GetOsVersion().GetValue()),
 		VM:        vm,
@@ -237,14 +238,14 @@ func GetVMIndexedFieldName(input string) (string, error) {
 		field = "state"
 	case util.HostFilterName:
 		field = "host_id"
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.TagFilterName:
 		field = "tags"
 	case util.OSFilterName:
 		field = "os"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are vlan/state/host/lab/tag/os", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are vlan/state/host/zone/tag/os", input)
 	}
 	return field, nil
 }

@@ -107,7 +107,7 @@ func (c *listRPM) validateArgs() error {
 			return cmdlib.NewUsageError(c.Flags, ufsAPI.InvalidFilterFormat)
 		}
 		var err error
-		c.filter, err = utils.ReplaceLabNames(filter)
+		c.filter, err = utils.ReplaceZoneNames(filter)
 		if err != nil {
 			return err
 		}

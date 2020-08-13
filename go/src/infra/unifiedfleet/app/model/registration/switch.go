@@ -28,7 +28,8 @@ const SwitchKind string = "Switch"
 type SwitchEntity struct {
 	_kind string   `gae:"$kind,Switch"`
 	ID    string   `gae:"$id"`
-	Lab   string   `gae:"lab"`
+	Lab   string   `gae:"lab"` // deprecated
+	Zone  string   `gae:"zone"`
 	Rack  string   `gae:"rack"`
 	Tags  []string `gae:"tags"`
 	State string   `gae:"state"`
@@ -57,7 +58,7 @@ func newSwitchEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, 
 	return &SwitchEntity{
 		ID:     p.GetName(),
 		Switch: s,
-		Lab:    p.GetLab(),
+		Zone:   p.GetZone(),
 		Rack:   p.GetRack(),
 		Tags:   p.GetTags(),
 		State:  p.GetState(),
@@ -252,8 +253,8 @@ func GetSwitchIndexedFieldName(input string) (string, error) {
 	var field string
 	input = strings.TrimSpace(input)
 	switch strings.ToLower(input) {
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.RackFilterName:
 		field = "rack"
 	case util.TagFilterName:
@@ -261,7 +262,7 @@ func GetSwitchIndexedFieldName(input string) (string, error) {
 	case util.StateFilterName:
 		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are lab/rack/tag/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Switch are zone/rack/tag/state", input)
 	}
 	return field, nil
 }

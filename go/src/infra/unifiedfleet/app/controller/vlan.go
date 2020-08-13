@@ -243,7 +243,7 @@ func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize i
 	var toDeleteIP []string
 	for _, sr := range resp.Passed() {
 		s := sr.Data.(*ufspb.Vlan)
-		if util.IsInBrowserLab(s.GetName()) {
+		if util.IsInBrowserZone(s.GetName()) {
 			if _, ok := resMap[s.GetName()]; !ok {
 				toDelete = append(toDelete, s.GetName())
 				ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": s.GetName()})

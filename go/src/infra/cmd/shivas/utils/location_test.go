@@ -37,14 +37,14 @@ func TestIsLocation(t *testing.T) {
 	})
 }
 
-func TestUFSLabCoverage(t *testing.T) {
-	Convey("test the ufs lab mapping covers all UFS lab enum", t, func() {
-		got := make(map[string]bool, len(StrToUFSLab))
-		for _, v := range StrToUFSLab {
+func TestUFSZoneCoverage(t *testing.T) {
+	Convey("test the ufs zone mapping covers all UFS zone enum", t, func() {
+		got := make(map[string]bool, len(StrToUFSZone))
+		for _, v := range StrToUFSZone {
 			got[v] = true
 		}
-		for l := range ufspb.Lab_value {
-			if l == ufspb.Lab_LAB_UNSPECIFIED.String() {
+		for l := range ufspb.Zone_value {
+			if l == ufspb.Zone_ZONE_UNSPECIFIED.String() {
 				continue
 			}
 			_, ok := got[l]
@@ -52,26 +52,26 @@ func TestUFSLabCoverage(t *testing.T) {
 		}
 	})
 
-	Convey("test the ufs lab mapping doesn't cover any non-UFS lab enum", t, func() {
-		for _, v := range StrToUFSLab {
-			_, ok := ufspb.Lab_value[v]
+	Convey("test the ufs zone mapping doesn't cover any non-UFS zone enum", t, func() {
+		for _, v := range StrToUFSZone {
+			_, ok := ufspb.Zone_value[v]
 			So(ok, ShouldBeTrue)
 		}
 	})
 }
 
-func TestReplaceLabNames(t *testing.T) {
-	Convey("TestReplaceLabNames labname error", t, func() {
-		filter := "machine=mac-1,mac-2 & lab=XXX & nic=nic-1"
-		_, err := ReplaceLabNames(filter)
+func TestReplaceZoneNames(t *testing.T) {
+	Convey("TestReplaceZoneNames zonename error", t, func() {
+		filter := "machine=mac-1,mac-2 & zone=XXX & nic=nic-1"
+		_, err := ReplaceZoneNames(filter)
 		So(err, ShouldNotBeNil)
-		So(err.Error(), ShouldContainSubstring, "Invalid lab name XXX for filtering.")
+		So(err.Error(), ShouldContainSubstring, "Invalid zone name XXX for filtering.")
 	})
 
-	Convey("TestReplaceLabNames labname - happy path", t, func() {
-		filter := "machine=mac-1,mac-2 & lab=atl97,mtv96 & nic=nic-1"
-		filter, _ = ReplaceLabNames(filter)
+	Convey("TestReplaceZoneNames zonename - happy path", t, func() {
+		filter := "machine=mac-1,mac-2 & zone=atl97,mtv96 & nic=nic-1"
+		filter, _ = ReplaceZoneNames(filter)
 		So(filter, ShouldNotBeNil)
-		So(filter, ShouldContainSubstring, "machine=mac-1,mac-2&lab=LAB_DATACENTER_ATL97,LAB_DATACENTER_MTV96&nic=nic-1")
+		So(filter, ShouldContainSubstring, "machine=mac-1,mac-2&zone=ZONE_ATL97,ZONE_MTV96&nic=nic-1")
 	})
 }

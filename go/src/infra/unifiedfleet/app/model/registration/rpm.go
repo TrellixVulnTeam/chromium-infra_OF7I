@@ -28,7 +28,8 @@ const RPMKind string = "RPM"
 type RPMEntity struct {
 	_kind string   `gae:"$kind,RPM"`
 	ID    string   `gae:"$id"`
-	Lab   string   `gae:"lab"`
+	Lab   string   `gae:"lab"` // deprecated
+	Zone  string   `gae:"zone"`
 	Rack  string   `gae:"rack"`
 	Tags  []string `gae:"tags"`
 	// ufspb.RPM cannot be directly used as it contains pointer.
@@ -56,7 +57,7 @@ func newRPMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 	return &RPMEntity{
 		ID:   p.GetName(),
 		RPM:  rpm,
-		Lab:  p.GetLab(),
+		Zone: p.GetZone(),
 		Rack: p.GetRack(),
 		Tags: p.GetTags(),
 	}, nil
@@ -210,14 +211,14 @@ func GetRPMIndexedFieldName(input string) (string, error) {
 	var field string
 	input = strings.TrimSpace(input)
 	switch strings.ToLower(input) {
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.RackFilterName:
 		field = "rack"
 	case util.TagFilterName:
 		field = "tags"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are lab/rack/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for RPM are zone/rack/tag", input)
 	}
 	return field, nil
 }

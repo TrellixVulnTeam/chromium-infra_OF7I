@@ -232,25 +232,23 @@ func GetMachineFromAssets(asset *iv2pr.ChopsAsset, assetInfo *iv2pr2.AssetInfo, 
 	// chromeos{3,5,7,9,15} => Linda Vista
 	switch asset.GetLocation().GetLab() {
 	case "chromeos1":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_SANTIAM
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS1
 	case "chromeos2":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_ATLANTIS
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS2
 	case "chromeos3":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_LINDAVISTA
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS3
 	case "chromeos4":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_DESTINY
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS4
 	case "chromeos5":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_LINDAVISTA
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS5
 	case "chromeos6":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_PROMETHEUS
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS6
 	case "chromeos7":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_LINDAVISTA
-	case "chromeos9":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_LINDAVISTA
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS7
 	case "chromeos15":
-		machine.Location.Lab = ufspb.Lab_LAB_CHROMEOS_LINDAVISTA
+		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS15
 	default:
-		machine.Location.Lab = ufspb.Lab_LAB_UNSPECIFIED
+		machine.Location.Zone = ufspb.Zone_ZONE_UNSPECIFIED
 	}
 
 	return machine

@@ -31,7 +31,7 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 			return errors.Annotate(err, "Fail to get host by %s", host).Err()
 		}
 		vm.MachineLseId = host
-		vm.Lab = lse.Lab
+		vm.Zone = lse.Zone
 		vm.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
 		// Update states
 		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING); err != nil {
@@ -73,9 +73,9 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 		if err != nil {
 			return errors.Annotate(err, "Fail to get existing vm by %s", vm.GetName()).Err()
 		}
-		// Copy the machinelseid/state/lab to vm OUTPUT only fields from already existing vm
+		// Copy the machinelseid/state/zone to vm OUTPUT only fields from already existing vm
 		vm.MachineLseId = oldVM.GetMachineLseId()
-		vm.Lab = oldVM.GetLab()
+		vm.Zone = oldVM.GetZone()
 		vm.State = oldVM.GetState()
 		vm.Vlan = oldVM.GetVlan()
 
@@ -87,8 +87,8 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 			}
 			// update the host associated with the vm
 			vm.MachineLseId = host
-			// update the lab info for vm for vm table indexing
-			vm.Lab = lse.Lab
+			// update the zone info for vm for vm table indexing
+			vm.Zone = lse.Zone
 		}
 
 		// check if user provided a new state for the vm
@@ -196,7 +196,7 @@ func processVMUpdateMask(oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMa
 			// and got the new values for OUTPUT only fields in new vm object,
 			// assign them to oldVM.
 			oldVM.MachineLseId = vm.GetMachineLseId()
-			oldVM.Lab = vm.GetLab()
+			oldVM.Zone = vm.GetZone()
 		case "macAddress":
 			oldVM.MacAddress = vm.GetMacAddress()
 		case "state":

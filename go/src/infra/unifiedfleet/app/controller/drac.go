@@ -40,10 +40,10 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 			return errors.Annotate(err, "CreateDrac - failed to get machine %s", machineName).Err()
 		}
 
-		// Fill the machine/rack/lab to drac OUTPUT only fields for drac table indexing
+		// Fill the machine/rack/zone to drac OUTPUT only fields for drac table indexing
 		drac.Machine = machine.GetName()
 		drac.Rack = machine.GetLocation().GetRack()
-		drac.Lab = machine.GetLocation().GetLab().String()
+		drac.Zone = machine.GetLocation().GetZone().String()
 
 		// Create a drac entry
 		// we use this func as it is a non-atomic operation and can be used to
@@ -78,10 +78,10 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 		if err != nil {
 			return errors.Annotate(err, "UpdateDrac - get drac %s failed", drac.GetName()).Err()
 		}
-		// Copy the machine/rack/lab to drac OUTPUT only fields from already existing drac
+		// Copy the machine/rack/zone to drac OUTPUT only fields from already existing drac
 		drac.Machine = oldDrac.GetMachine()
 		drac.Rack = oldDrac.GetRack()
-		drac.Lab = oldDrac.GetLab()
+		drac.Zone = oldDrac.GetZone()
 		drac.State = oldDrac.GetState()
 
 		if machineName != "" {
@@ -110,10 +110,10 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 					return errors.Annotate(err, "UpdateDrac - get browser machine %s failed", machineName).Err()
 				}
 
-				// Fill the machine/rack/lab to drac OUTPUT only fields
+				// Fill the machine/rack/zone to drac OUTPUT only fields
 				drac.Machine = machine.GetName()
 				drac.Rack = machine.GetLocation().GetRack()
-				drac.Lab = machine.GetLocation().GetLab().String()
+				drac.Zone = machine.GetLocation().GetZone().String()
 			}
 		}
 
@@ -153,7 +153,7 @@ func processDracUpdateMask(oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_ma
 			// assign them to oldDrac.
 			oldDrac.Machine = drac.GetMachine()
 			oldDrac.Rack = drac.GetRack()
-			oldDrac.Lab = drac.GetLab()
+			oldDrac.Zone = drac.GetZone()
 		case "macAddress":
 			oldDrac.MacAddress = drac.GetMacAddress()
 		case "switch":

@@ -33,7 +33,8 @@ message KVM {
 
     // Refers to Lab
     string lab = 6 [
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
 
     // Refers to Rack name
@@ -49,6 +50,11 @@ message KVM {
 
     // State of the kvm
     string state = 9 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Zone
+    string zone = 10 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 }
@@ -82,7 +88,8 @@ message RPM {
 
     // Refers to Lab
     string lab = 5 [
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
 
     // Refers to Rack name
@@ -98,6 +105,11 @@ message RPM {
 
     // State of the rpm
     string state = 9 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Zone
+    string zone = 10 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 }
@@ -137,7 +149,8 @@ message Switch {
 
     // Refers to Lab
     string lab = 5 [
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
 
     // Refers to Rack name
@@ -153,6 +166,11 @@ message Switch {
 
     // State of the switch
     string state = 8 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Zone
+    string zone = 9 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 }
@@ -195,7 +213,8 @@ message Drac {
 
     // Refers to Lab
     string lab = 8 [
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
 
     // Refers to Rack name
@@ -211,6 +230,11 @@ message Drac {
 
     // State of the drac
     string state = 11 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Zone
+    string zone = 12 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 }

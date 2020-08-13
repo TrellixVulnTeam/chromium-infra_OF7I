@@ -37,7 +37,7 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.machineName, "name", "", "the name of the machine to update")
-		c.Flags.StringVar(&c.labName, "lab", "", fmt.Sprintf("the name of the lab to add the machine to. Valid lab strings: [%s]. ", strings.Join(utils.ValidLabStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]. ", strings.Join(utils.ValidZoneStr(), ", ")))
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses. "+cmdhelp.ClearFieldHelpText)
@@ -58,7 +58,7 @@ type updateMachine struct {
 	interactive  bool
 
 	machineName      string
-	labName          string
+	zoneName         string
 	rackName         string
 	platform         string
 	kvm              string
@@ -109,7 +109,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 	res, err := ic.UpdateMachine(ctx, &ufsAPI.UpdateMachineRequest{
 		Machine: &machine,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"lab":      "lab",
+			"zone":     "zone",
 			"rack":     "rack",
 			"platform": "platform",
 			"kvm":      "kvm",
@@ -130,10 +130,10 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 	machine.Name = c.machineName
 	machine.Location = &ufspb.Location{}
-	if c.labName == utils.ClearFieldValue {
-		machine.GetLocation().Lab = utils.ToUFSLab("")
+	if c.zoneName == utils.ClearFieldValue {
+		machine.GetLocation().Zone = utils.ToUFSZone("")
 	} else {
-		machine.GetLocation().Lab = utils.ToUFSLab(c.labName)
+		machine.GetLocation().Zone = utils.ToUFSZone(c.zoneName)
 	}
 	if c.rackName == utils.ClearFieldValue {
 		machine.GetLocation().Rack = ""
@@ -183,7 +183,7 @@ func (c *updateMachine) validateArgs() error {
 		if c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.labName == "" && c.rackName == "" && c.tags == "" && c.platform == "" && c.deploymentTicket == "" && c.kvm == "" && c.serialNumber == "" {
+		if c.zoneName == "" && c.rackName == "" && c.tags == "" && c.platform == "" && c.deploymentTicket == "" && c.kvm == "" && c.serialNumber == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}

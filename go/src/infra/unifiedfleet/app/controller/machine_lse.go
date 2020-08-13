@@ -66,12 +66,12 @@ func createLabstation(ctx context.Context, lse *ufspb.MachineLSE, machineNames [
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
 
-		// Get machine to get lab and rack info for machinelse table indexing
+		// Get machine to get zone and rack info for machinelse table indexing
 		machine, err := GetMachine(ctx, machineNames[0])
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", machineNames[0]).Err()
 		}
-		// Fill the rack/lab OUTPUT only fields for indexing machinelse table/vm table
+		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
 
 		if err := hc.stUdt.addLseStateHelper(ctx, lse); err != nil {
@@ -103,12 +103,12 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
 
-		// Get machine to get lab and rack info for machinelse table indexing
+		// Get machine to get zone and rack info for machinelse table indexing
 		machine, err := GetMachine(ctx, machineNames[0])
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", machineNames[0]).Err()
 		}
-		// Fill the rack/lab OUTPUT only fields for indexing machinelse table/vm table
+		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
 
 		// Assign ip configs
@@ -201,9 +201,9 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		if err != nil {
 			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
 		}
-		// Copy the rack/state/lab/manufacturer/machines to machinelse OUTPUT only fields from already existing machinelse
+		// Copy the rack/state/zone/manufacturer/machines to machinelse OUTPUT only fields from already existing machinelse
 		machinelse.Rack = oldMachinelse.GetRack()
-		machinelse.Lab = oldMachinelse.GetLab()
+		machinelse.Zone = oldMachinelse.GetZone()
 		machinelse.Machines = oldMachinelse.GetMachines()
 		machinelse.Manufacturer = oldMachinelse.GetManufacturer()
 		machinelse.State = oldMachinelse.GetState()
@@ -219,14 +219,14 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 
 		// check if user is trying to associate this host with a different browser machine.
 		if len(machineNames) > 0 && machineNames[0] != "" && len(machinelse.GetMachines()) > 0 && machineNames[0] != machinelse.GetMachines()[0] {
-			// Get machine to get lab and rack info for machinelse table indexing
+			// Get machine to get zone and rack info for machinelse table indexing
 			machine, err := GetMachine(ctx, machineNames[0])
 			if err != nil {
 				return errors.Annotate(err, "Unable to get machine %s", machineNames[0]).Err()
 			}
 			setOutputField(ctx, machine, machinelse)
-			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"lab": machine.GetLocation().GetLab().String()}); err != nil {
-				return errors.Annotate(err, "failed to update lab indexing").Err()
+			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
+				return errors.Annotate(err, "failed to update zone indexing").Err()
 			}
 		}
 
@@ -289,9 +289,9 @@ func updateIndexingForMachineLSEResources(ctx context.Context, oldlse *ufspb.Mac
 		for k, v := range indexMap {
 			// These are output only fields used for indexing vm table
 			switch k {
-			case "lab":
+			case "zone":
 				for _, vm := range vms {
-					vm.Lab = v
+					vm.Zone = v
 				}
 			}
 		}
@@ -313,10 +313,10 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 			// and got the new values for OUTPUT only fields in new machinelse object,
 			// assign them to oldMachinelse.
 			oldMachinelse.Machines = machinelse.GetMachines()
-			oldMachinelse.Lab = machinelse.GetLab()
+			oldMachinelse.Zone = machinelse.GetZone()
 			oldMachinelse.Rack = machinelse.GetRack()
-			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"lab": machinelse.GetLab()}); err != nil {
-				return oldMachinelse, errors.Annotate(err, "failed to update lab indexing").Err()
+			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machinelse.GetZone()}); err != nil {
+				return oldMachinelse, errors.Annotate(err, "failed to update zone indexing").Err()
 			}
 		case "mlseprototype":
 			oldMachinelse.MachineLsePrototype = machinelse.GetMachineLsePrototype()
@@ -1040,10 +1040,10 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 
 func setOutputField(ctx context.Context, machine *ufspb.Machine, lse *ufspb.MachineLSE) error {
 	lse.Rack = machine.GetLocation().GetRack()
-	lse.Lab = machine.GetLocation().GetLab().String()
+	lse.Zone = machine.GetLocation().GetZone().String()
 	lse.Machines = []string{machine.GetName()}
 	for _, vm := range lse.GetChromeBrowserMachineLse().GetVms() {
-		vm.Lab = machine.GetLocation().GetLab().String()
+		vm.Zone = machine.GetLocation().GetZone().String()
 		vm.MachineLseId = lse.GetName()
 		vm.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
 	}

@@ -29,7 +29,7 @@ func TestCreateVM(t *testing.T) {
 	Convey("CreateVM", t, func() {
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 			Name: "create-host",
-			Lab:  "fake_lab",
+			Zone: "fake_zone",
 		})
 		Convey("Create new VM", func() {
 			vm1 := &ufspb.VM{
@@ -39,7 +39,7 @@ func TestCreateVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
-			So(resp.GetLab(), ShouldEqual, "fake_lab")
+			So(resp.GetZone(), ShouldEqual, "fake_zone")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-create-1")
 			So(err, ShouldBeNil)
@@ -172,7 +172,7 @@ func TestUpdateVM(t *testing.T) {
 	Convey("UpdateVM", t, func() {
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 			Name: "update-host",
-			Lab:  "fake_lab",
+			Zone: "fake_zone",
 		})
 		Convey("Update non-existing VM", func() {
 			vm1 := &ufspb.VM{
@@ -379,7 +379,7 @@ func TestDeleteVM(t *testing.T) {
 	Convey("DeleteVM", t, func() {
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 			Name: "delete-host",
-			Lab:  "fake_lab",
+			Zone: "fake_zone",
 		})
 		Convey("Delete non-existing VM", func() {
 			err := DeleteVM(ctx, "vm-delete-1")
@@ -503,7 +503,7 @@ func TestListVMs(t *testing.T) {
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Lab:   "fake_lab",
+			Zone:  "fake_zone",
 			Vlan:  "vlan-2",
 			State: ufspb.State_STATE_DEPLOYED_TESTING.String(),
 		},
@@ -530,7 +530,7 @@ func TestListVMs(t *testing.T) {
 			So(resp, ShouldResembleProto, vms)
 		})
 		Convey("List VMs - multiple filters", func() {
-			resp, _, err := ListVMs(ctx, 5, "", "vlan=vlan-2 & state=testing & lab=fake_lab", false)
+			resp, _, err := ListVMs(ctx, 5, "", "vlan=vlan-2 & state=testing & zone=fake_zone", false)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldHaveLength, 1)

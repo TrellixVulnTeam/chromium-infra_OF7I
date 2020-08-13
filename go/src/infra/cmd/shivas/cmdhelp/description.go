@@ -181,10 +181,10 @@ You can create a machine with required parameters to UFS, and later add nics/dra
 You can also provide the optional nics and drac information to create the nics and drac associated with this machine by specifying a json file as input.
 
 Examples:
-shivas add-machine -f machinerequest.json -lab mtv97
+shivas add-machine -f machinerequest.json -zone mtv97
 Creates a machine by reading a JSON file input.
 
-shivas add-machine -name machine1 -lab mtv97 -rack rack1 -ticket b/1234 -platform platform1 -kvm kvm1
+shivas add-machine -name machine1 -zone mtv97 -rack rack1 -ticket b/1234 -platform platform1 -kvm kvm1
 Creates a machine by parameters without adding nic/drac.`
 
 	// UpdateMachineLongDesc long description for UpdateMachineCmd
@@ -197,7 +197,7 @@ Update a machine by reading a JSON file input.
 shivas update-machine -i
 Update a machine by reading input through interactive mode.
 
-shivas update-machine -name machine1 -lab mtv97 -rack rack1
+shivas update-machine -name machine1 -zone mtv97 -rack rack1
 Partial updates a machine by parameters. Only specified parameters will be udpated in the machine.`
 
 	// ListMachineLongDesc long description for ListMachineCmd
@@ -218,9 +218,9 @@ This file must contain required machine field and optional nics/drac field.
 Example Browser machine creation request:
 {
 	"machine": {
-		"name": "machineBROWSERLABexample",
+		"name": "machineBROWSERZONEexample",
 		"location": {
-			"lab": "LAB_DATACENTER_MTV97",
+			"zone": "ZONE_MTV97",
 			"rack": "RackName"
 		},
 		"serialNumber" : "XXX",
@@ -273,7 +273,7 @@ Example OS machine creation request:
 	"machine": {
 		"name": "machine-OSLAB-example",
 		"location": {
-			"lab": "LAB_CHROME_ATLANTA",
+			"zone": "ZONE_ATLANTA",
 			"aisle": "1",
 			"row": "2",
 			"rack": "Rack-42",
@@ -302,7 +302,7 @@ Example Browser machine:
 {
 	"name": "machine-BROWSERLAB-example",
 	"location": {
-		"lab": "LAB_DATACENTER_MTV97",
+		"zone": "ZONE_MTV97",
 		"rack": "RackName"
 	},
 	"serialNumber" : "XXX",
@@ -326,7 +326,7 @@ Example OS machine:
 {
 	"name": "machine-OSLAB-example",
 	"location": {
-		"lab": "LAB_CHROME_ATLANTA",
+		"zone": "ZONE_ATLANTA",
 		"aisle": "1",
 		"row": "2",
 		"rack": "Rack-42",
@@ -897,15 +897,15 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 
 	// AddRackLongDesc long description for AddRackCmd
 	AddRackLongDesc string = `Create a rack to UFS.
-You can create a rack with name and lab to UFS, and later add kvm/switch/rpm separately by using add-switch/add-kvm/add-rpm commands.
+You can create a rack with name and zone to UFS, and later add kvm/switch/rpm separately by using add-switch/add-kvm/add-rpm commands.
 
 You can also provide the optional switches, kvms and rpms information to create the switches, kvms and rpms associated with this rack by specifying a json file as input.
 
 Examples:
-shivas add-rack -f rackrequest.json -lab lab01
+shivas add-rack -f rackrequest.json -zone lab01
 Creates a rack by reading a JSON file input.
 
-shivas add-rack -name rack-123 -lab lab01 -capacity 10
+shivas add-rack -name rack-123 -zone lab01 -capacity 10
 Creates a rack by parameters without adding kvm/switch/rpm.`
 
 	// UpdateRackLongDesc long description for UpdateRackCmd
@@ -918,7 +918,7 @@ Update a rack by reading a JSON file input.
 shivas update-rack -i
 Update a rack by reading input through interactive mode.
 
-shivas update-rack -name rack-123 -lab lab01 -capacity 10
+shivas update-rack -name rack-123 -zone lab01 -capacity 10
 Partial updates a rack by parameters. Only specified parameters will be udpated in the rack.`
 
 	// ListRackLongDesc long description for ListRackCmd
@@ -941,7 +941,7 @@ Example rack creation request:
 	"rack": {
 		"name": "rack-23",
 		"location": {
-			"lab": "LAB_DATACENTER_MTV97"
+			"zone": "ZONE_MTV97"
 		},
 		"capacity_ru": 5,
 		"chromeBrowserRack": {
@@ -982,7 +982,7 @@ Example Browser rack:
 {
 	"name": "rack-BROWSERLAB-example",
 	"location": {
-		"lab": "LAB_DATACENTER_MTV97"
+		"zone": "ZONE_MTV97"
 	},
 	"capacity_ru": 5,
 	"chromeBrowserRack": {},
@@ -992,7 +992,7 @@ Example Browser rack:
 {
 	"name": "rack-OSLAB-example",
 	"location": {
-		"lab": "LAB_DATACENTER_SANTIAM"
+		"zone": "ZONE_CHROMEOS1"
 	},
 	"capacity_ru": 5,
 	"chromeosRack": {},
@@ -1002,8 +1002,8 @@ Example Browser rack:
 The protobuf definition of rack is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto`
 
-	// LabFilterHelpText help text for lab filters for list command
-	LabFilterHelpText string = fmt.Sprintf("Valid lab filters: [%s]\n", strings.Join(utils.ValidLabStr(), ", "))
+	// ZoneFilterHelpText help text for zone filters for list command
+	ZoneFilterHelpText string = fmt.Sprintf("\nValid zone filters: [%s]\n", strings.Join(utils.ValidZoneStr(), ", "))
 
 	// StateFilterHelpText help text for state filters for list command
 	StateFilterHelpText string = fmt.Sprintf("Valid state filters: [%s]\n", strings.Join(ufsUtil.ValidStateStr(), ", "))
@@ -1019,71 +1019,71 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
 
 	// MachineFilterHelp help text for list machine filtering
-	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/lab/rack/platform/tag/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/zone/rack/platform/tag/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
+'zone=atl97'
 'nic=nic-1,nic-2'
-'lab=atl97 & nic=nic-1'
-'lab=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
+'zone=atl97 & nic=nic-1'
+'zone=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
 	// VMSlotFilterHelp help text for list free vm slots filtering
-	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/lab/rack/state/machine/os` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/zone/rack/state/machine/os` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
+'zone=atl97'
 'man=apple'
 'os=macos,10.13.6'
-'lab=atl97 & man=apple'` + FilterCondition
+'zone=atl97 & man=apple'` + FilterCondition
 
 	// RackFilterHelp help text for list rack filtering
-	RackFilterHelp string = FilterText + `You can filter racks by tag/lab/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	RackFilterHelp string = FilterText + `You can filter racks by tag/zone/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
+'zone=atl97'
 'kvm=kvm-1,kvm-2'
-'lab=atl97 & kvm=kvm-1'` + FilterCondition
+'zone=atl97 & kvm=kvm-1'` + FilterCondition
 
 	// NicFilterHelp help text for list rack filtering
-	NicFilterHelp string = FilterText + `You can filter nics by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + LabFilterHelpText +
+	NicFilterHelp string = FilterText + `You can filter nics by zone/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + ZoneFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
-'lab=atl97 & rack=rack-1'` + FilterCondition
+'zone=atl97'
+'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// DracFilterHelp help text for list rack filtering
-	DracFilterHelp string = FilterText + `You can filter dracs by lab/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + LabFilterHelpText +
+	DracFilterHelp string = FilterText + `You can filter dracs by zone/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + ZoneFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
-'lab=atl97 & rack=rack-1'` + FilterCondition
+'zone=atl97'
+'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/lab/rack/switch/tag/state/man(manufacturer)/os` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/zone/rack/switch/tag/state/man(manufacturer)/os` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
+'zone=atl97'
 'os=esxi,6.7.0'
-'lab=atl97 & rack=rack-1'` + FilterCondition
+'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// VMFilterHelp help text for list vm filtering
-	VMFilterHelp string = FilterText + `You can filter hosts by vlan/state/host/lab/tag/os` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	VMFilterHelp string = FilterText + `You can filter hosts by vlan/state/host/zone/tag/os` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
+'zone=atl97'
 'os=esxi,6.7.0'
-'lab=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
+'zone=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
 
 	// KVMFilterHelp help text for list rack filtering
-	KVMFilterHelp string = FilterText + `You can filter kvms by lab/rack/platform/tag/mac(macaddress)/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	KVMFilterHelp string = FilterText + `You can filter kvms by zone/rack/platform/tag/mac(macaddress)/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
-'lab=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
+'zone=atl97'
+'zone=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
 
 	// RPMFilterHelp help text for list rack filtering
-	RPMFilterHelp string = FilterText + `You can filter rpms by lab/rack/tag/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	RPMFilterHelp string = FilterText + `You can filter rpms by zone/rack/tag/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
-'lab=atl97 & rack=rack-1'` + FilterCondition
+'zone=atl97'
+'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// SwitchFilterHelp help text for list rack filtering
-	SwitchFilterHelp string = FilterText + `You can filter switches by lab/rack/tag/state` + "\n" + LabFilterHelpText + StateFilterHelpText +
+	SwitchFilterHelp string = FilterText + `You can filter switches by zone/rack/tag/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
-'lab=atl97'
-'lab=atl97 & rack=rack-1'` + FilterCondition
+'zone=atl97'
+'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEPrototypeFilterHelp help text for list MachineLSEPrototype filtering
 	MachineLSEPrototypeFilterHelp string = FilterText + `You can filter machineprototypes by tag` +

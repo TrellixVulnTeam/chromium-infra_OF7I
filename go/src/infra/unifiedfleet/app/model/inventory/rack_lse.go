@@ -219,14 +219,12 @@ func GetRackLSEIndexedFieldName(input string) (string, error) {
 		field = "rpm_ids"
 	case util.KVMFilterName:
 		field = "kvm_ids"
-	case util.LabFilterName:
-		field = "lab"
 	case util.RackFilterName:
 		field = "rack_ids"
 	case util.RackPrototypeFilterName:
 		field = "racklse_prototype_id"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for racklse are rack/rackprototype/kvm/rpm/switch/lab", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for racklse are rack/rackprototype/kvm/rpm/switch", input)
 	}
 	return field, nil
 }

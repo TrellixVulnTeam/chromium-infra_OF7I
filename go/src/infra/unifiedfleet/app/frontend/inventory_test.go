@@ -257,7 +257,7 @@ func TestCreateVM(t *testing.T) {
 	Convey("CreateVM", t, func() {
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 			Name: "inventory-create-host",
-			Lab:  "fake_lab",
+			Zone: "fake_zone",
 		})
 		Convey("Create new VM - happy path", func() {
 			vm1 := &ufspb.VM{
@@ -274,7 +274,7 @@ func TestCreateVM(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "vms/inventory-create-vm1")
-			So(resp.GetLab(), ShouldEqual, "fake_lab")
+			So(resp.GetZone(), ShouldEqual, "fake_zone")
 			So(resp.GetMachineLseId(), ShouldEqual, "inventory-create-host")
 			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
 
@@ -331,7 +331,7 @@ func TestUpdateVM(t *testing.T) {
 	Convey("UpdateVM", t, func() {
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 			Name: "inventory-update-host",
-			Lab:  "fake_lab",
+			Zone: "fake_zone",
 		})
 		Convey("Update existing VM", func() {
 			vm1 := &ufspb.VM{
@@ -427,7 +427,7 @@ func TestDeleteVM(t *testing.T) {
 	Convey("DeleteVM", t, func() {
 		inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
 			Name: "inventory-delete-host",
-			Lab:  "fake_lab",
+			Zone: "fake_zone",
 		})
 		Convey("Delete vm by existing ID", func() {
 			vm1 := &ufspb.VM{
@@ -551,7 +551,7 @@ func TestListVMs(t *testing.T) {
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Lab:   "fake_lab",
+			Zone:  "fake_zone",
 			Vlan:  "vlan-2",
 			State: ufspb.State_STATE_DEPLOYED_TESTING.String(),
 		},
@@ -654,7 +654,7 @@ func TestListMachineLSEs(t *testing.T) {
 					Name:         "lse-vm-1",
 					Hostname:     "lse-vm-1",
 					Manufacturer: "apple",
-					Lab:          "mtv97",
+					Zone:         "mtv97",
 					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
 							VmCapacity: 2,
@@ -665,7 +665,7 @@ func TestListMachineLSEs(t *testing.T) {
 					Name:         "lse-vm-2",
 					Hostname:     "lse-vm-2",
 					Manufacturer: "apple",
-					Lab:          "mtv97",
+					Zone:         "mtv97",
 					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
 							VmCapacity: 3,
@@ -676,7 +676,7 @@ func TestListMachineLSEs(t *testing.T) {
 					Name:         "lse-vm-3",
 					Hostname:     "lse-vm-3",
 					Manufacturer: "apple",
-					Lab:          "mtv1234",
+					Zone:         "mtv1234",
 					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
 							VmCapacity: 2,
@@ -699,22 +699,22 @@ func TestListMachineLSEs(t *testing.T) {
 
 			resp, err := tf.Fleet.ListMachineLSEs(tf.C, &ufsAPI.ListMachineLSEsRequest{
 				PageSize: 3,
-				Filter:   "man=apple & lab=mtv97 & free=true",
+				Filter:   "man=apple & zone=mtv97 & free=true",
 			})
 			So(err, ShouldBeNil)
 			So(resp.GetMachineLSEs(), ShouldHaveLength, 2)
 			for _, r := range resp.GetMachineLSEs() {
 				switch r.GetName() {
 				case "lse-vm-1":
-					So(r.GetLab(), ShouldEqual, "mtv97")
+					So(r.GetZone(), ShouldEqual, "mtv97")
 				case "lse-vm-2":
-					So(r.GetLab(), ShouldEqual, "mtv97")
+					So(r.GetZone(), ShouldEqual, "mtv97")
 				}
 			}
 
 			resp, err = tf.Fleet.ListMachineLSEs(tf.C, &ufsAPI.ListMachineLSEsRequest{
 				PageSize: 2,
-				Filter:   "man=apple & lab=mtv97 & free=true",
+				Filter:   "man=apple & zone=mtv97 & free=true",
 			})
 			So(err, ShouldBeNil)
 			// 1 host is enough for 2 slots

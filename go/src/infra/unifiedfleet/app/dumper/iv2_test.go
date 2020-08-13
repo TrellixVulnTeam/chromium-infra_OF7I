@@ -24,7 +24,7 @@ func TestCompare(t *testing.T) {
 		Name:         "Machine-1",
 		SerialNumber: "299-792-458",
 		Location: &ufspb.Location{
-			Lab:         ufspb.Lab_LAB_CHROMEOS_SANTIAM,
+			Zone:        ufspb.Zone_ZONE_CHROMEOS1,
 			Aisle:       "70",
 			Row:         "117",
 			Rack:        "99",
@@ -53,7 +53,7 @@ func TestCompare(t *testing.T) {
 		Name:         "Machine-1",
 		SerialNumber: "299-792-458",
 		Location: &ufspb.Location{
-			Lab:         ufspb.Lab_LAB_CHROMEOS_SANTIAM,
+			Zone:        ufspb.Zone_ZONE_CHROMEOS1,
 			Aisle:       "70",
 			Row:         "117",
 			Rack:        "99",
@@ -82,7 +82,7 @@ func TestCompare(t *testing.T) {
 		Name:         "Machine-2",
 		SerialNumber: "299-792-458",
 		Location: &ufspb.Location{
-			Lab:         ufspb.Lab_LAB_CHROMEOS_SANTIAM,
+			Zone:        ufspb.Zone_ZONE_CHROMEOS1,
 			Aisle:       "78",
 			Row:         "119",
 			Rack:        "98",

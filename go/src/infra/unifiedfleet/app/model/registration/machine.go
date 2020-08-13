@@ -35,7 +35,8 @@ type MachineEntity struct {
 	DracID           string   `gae:"drac_id"` // deprecated. Do not use.
 	ChromePlatformID string   `gae:"chrome_platform_id"`
 	Rack             string   `gae:"rack"`
-	Lab              string   `gae:"lab"`
+	Lab              string   `gae:"lab"` // deprecated
+	Zone             string   `gae:"zone"`
 	Tags             []string `gae:"tags"`
 	State            string   `gae:"state"`
 	// ufspb.Machine cannot be directly used as it contains pointer.
@@ -66,7 +67,7 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 		RPMID:            p.GetChromeBrowserMachine().GetRpmInterface().GetRpm(),
 		ChromePlatformID: p.GetChromeBrowserMachine().GetChromePlatform(),
 		Rack:             p.GetLocation().GetRack(),
-		Lab:              p.GetLocation().GetLab().String(),
+		Zone:             p.GetLocation().GetZone().String(),
 		Tags:             p.GetTags(),
 		Machine:          machine,
 		State:            p.GetState(),
@@ -251,8 +252,8 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 		field = "kvm_id"
 	case util.RPMFilterName:
 		field = "rpm_id"
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.RackFilterName:
 		field = "rack"
 	case util.ChromePlatformFilterName:
@@ -262,7 +263,7 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 	case util.StateFilterName:
 		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/rpm/lab/rack/platform/tag/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/rpm/zone/rack/platform/tag/state", input)
 	}
 	return field, nil
 }

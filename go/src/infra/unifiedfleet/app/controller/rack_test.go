@@ -57,7 +57,7 @@ func TestRackRegistration(t *testing.T) {
 			rack := &ufspb.Rack{
 				Name: "rack-2",
 				Location: &ufspb.Location{
-					Lab: ufspb.Lab_LAB_CHROME_ATLANTA,
+					Zone: ufspb.Zone_ZONE_ATLANTA,
 				},
 			}
 			resp, err := RackRegistration(ctx, rack)
@@ -85,7 +85,7 @@ func TestRackRegistration(t *testing.T) {
 			}
 			_, err := RackRegistration(ctx, rack)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "lab information in the location object cannot be empty/unspecified for a rack")
+			So(err.Error(), ShouldContainSubstring, "zone information in the location object cannot be empty/unspecified for a rack")
 
 			// No changes are recorded as the creation fails
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-3")

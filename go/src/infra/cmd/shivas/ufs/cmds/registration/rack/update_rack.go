@@ -38,7 +38,7 @@ var UpdateRackCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to update")
-		c.Flags.StringVar(&c.labName, "lab", "", fmt.Sprintf("the name of the lab to add the rack to. Valid lab strings: [%s]", strings.Join(utils.ValidLabStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the rack to. Valid zone strings: [%s]", strings.Join(utils.ValidZoneStr(), ", ")))
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many machines can be added to this rack. "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		return c
@@ -55,7 +55,7 @@ type updateRack struct {
 	interactive  bool
 
 	rackName string
-	labName  string
+	zoneName string
 	capacity int
 	tags     string
 }
@@ -102,7 +102,7 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 	res, err := ic.UpdateRack(ctx, &ufsAPI.UpdateRackRequest{
 		Rack: &rack,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"lab":      "lab",
+			"zone":     "zone",
 			"capacity": "capacity",
 			"tags":     "tags",
 		}),
@@ -119,10 +119,10 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 func (c *updateRack) parseArgs(rack *ufspb.Rack) {
 	rack.Name = c.rackName
 	rack.Location = &ufspb.Location{}
-	if c.labName == utils.ClearFieldValue {
-		rack.GetLocation().Lab = utils.ToUFSLab("")
+	if c.zoneName == utils.ClearFieldValue {
+		rack.GetLocation().Zone = utils.ToUFSZone("")
 	} else {
-		rack.GetLocation().Lab = utils.ToUFSLab(c.labName)
+		rack.GetLocation().Zone = utils.ToUFSZone(c.zoneName)
 	}
 	if c.tags == utils.ClearFieldValue {
 		rack.Tags = nil
@@ -144,7 +144,7 @@ func (c *updateRack) validateArgs() error {
 		if c.rackName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.labName == "" && c.capacity == 0 && c.tags == "" {
+		if c.zoneName == "" && c.capacity == 0 && c.tags == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}

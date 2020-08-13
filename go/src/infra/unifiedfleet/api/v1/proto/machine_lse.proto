@@ -65,7 +65,8 @@ message MachineLSE {
 
     // Refers to Lab
     string lab = 9 [
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
 
     // Refers to Rack name
@@ -85,6 +86,11 @@ message MachineLSE {
     repeated string tags = 12;
 
     string state = 13 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
+    // Refers to Zone
+    string zone = 14 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 }
@@ -114,7 +120,8 @@ message VM {
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
     string lab = 6 [
-        (google.api.field_behavior) = OUTPUT_ONLY
+        (google.api.field_behavior) = OUTPUT_ONLY,
+        deprecated = true
     ];
     string machine_lse_id = 7 [
         (google.api.resource_reference) = {
@@ -131,6 +138,11 @@ message VM {
 
     // tags user can attach for easy querying/searching
     repeated string tags = 10;
+
+    // Refers to Zone
+    string zone = 11 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 // OSVersion refers to the version of Operating System

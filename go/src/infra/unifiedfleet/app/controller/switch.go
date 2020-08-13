@@ -38,9 +38,9 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 			return err
 		}
 
-		// Fill the rack/lab to switch OUTPUT only fields for indexing
+		// Fill the rack/zone to switch OUTPUT only fields for indexing
 		s.Rack = rack.GetName()
-		s.Lab = rack.GetLocation().GetLab().String()
+		s.Zone = rack.GetLocation().GetZone().String()
 		s.State = ufspb.State_STATE_SERVING.String()
 
 		// Create a switch entry
@@ -80,9 +80,9 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 		if err != nil {
 			return errors.Annotate(err, "UpdateSwitch - get switch %s failed", s.GetName()).Err()
 		}
-		// Fill the rack/lab to switch OUTPUT only fields
+		// Fill the rack/zone to switch OUTPUT only fields
 		s.Rack = oldS.GetRack()
-		s.Lab = oldS.GetLab()
+		s.Zone = oldS.GetZone()
 		s.State = oldS.GetState()
 
 		if rackName != "" && oldS.GetRack() != rackName {
@@ -93,9 +93,9 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 				return errors.Annotate(err, "UpdateSwitch - get rack %s failed", rackName).Err()
 			}
 
-			// Fill the rack/lab to switch OUTPUT only fields for indexing
+			// Fill the rack/zone to switch OUTPUT only fields for indexing
 			s.Rack = rack.GetName()
-			s.Lab = rack.GetLocation().GetLab().String()
+			s.Zone = rack.GetLocation().GetZone().String()
 		}
 
 		// Partial update by field mask
@@ -130,7 +130,7 @@ func processSwitchUpdateMask(oldSwitch *ufspb.Switch, s *ufspb.Switch, mask *fie
 			// and got the new values for OUTPUT only fields in new switch object,
 			// assign them to oldswitch.
 			oldSwitch.Rack = s.GetRack()
-			oldSwitch.Lab = s.GetLab()
+			oldSwitch.Zone = s.GetZone()
 		case "description":
 			oldSwitch.Description = s.GetDescription()
 		case "capacity":

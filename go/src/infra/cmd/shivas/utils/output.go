@@ -23,25 +23,25 @@ import (
 
 // Titles for printing table format list
 var (
-	SwitchTitle     = []string{"Switch Name", "CapacityPort", "Lab", "Rack", "State", "UpdateTime"}
-	SwitchFullTitle = []string{"Switch Name", "CapacityPort", "Lab", "Rack", "State", "nics", "dracs", "UpdateTime"}
-	KvmTitle        = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Lab", "Rack", "State", "UpdateTime"}
-	KvmFullTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Lab", "Rack", "UpdateTime"}
+	SwitchTitle     = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
+	SwitchFullTitle = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "nics", "dracs", "UpdateTime"}
+	KvmTitle        = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
+	KvmFullTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Zone", "Rack", "UpdateTime"}
 	RpmTitle        = []string{"RPM Name", "MAC Address", "CapacityPort",
 		"UpdateTime"}
 	DracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
-		"Switch Port", "Password", "Lab", "Rack", "Machine", "UpdateTime"}
-	DracFullTitle = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Lab", "Rack", "Machine", "UpdateTime"}
-	NicTitle      = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Lab", "Rack", "Machine", "UpdateTime"}
-	NicFullTitle  = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Lab", "Rack", "Machine", "UpdateTime"}
-	MachineTitle  = []string{"Machine Name", "Serial Number", "Lab", "Rack", "ChromePlatform",
+		"Switch Port", "Password", "Zone", "Rack", "Machine", "UpdateTime"}
+	DracFullTitle = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
+	NicTitle      = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
+	NicFullTitle  = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
+	MachineTitle  = []string{"Machine Name", "Serial Number", "Zone", "Rack", "ChromePlatform",
 		"Nics", "Drac", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
 	BrowserMachineFullTitle = []string{
-		"Machine Name", "Serial Number", "Host", "Lab", "Rack", "ChromePlatform",
+		"Machine Name", "Serial Number", "Host", "Zone", "Rack", "ChromePlatform",
 		"Nics", "Drac", "kvms", "switches", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime",
 	}
 	OSMachineFullTitle = []string{
-		"Machine Name", "Lab", "Rack", "Barcode", "UpdateTime",
+		"Machine Name", "Zone", "Rack", "Barcode", "UpdateTime",
 	}
 	MachinelseprototypeTitle = []string{"Machine Prototype Name",
 		"Occupied Capacity", "PeripheralTypes", "VirtualTypes",
@@ -50,11 +50,11 @@ var (
 		"Tags", "UpdateTime"}
 	ChromePlatformTitle = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
 	VlanTitle           = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
-	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "State", "UpdateTime"}
-	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Lab", "Host", "Vlan", "IP", "State", "UpdateTime"}
-	RackTitle           = []string{"Rack Name", "Lab", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle     = []string{"Host", "OS Version", "Lab", "Rack", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
-	MachineLSETFullitle = []string{"Host", "OS Version", "Machine", "Lab", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
+	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "State", "UpdateTime"}
+	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "UpdateTime"}
+	RackTitle           = []string{"Rack Name", "Zone", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
+	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Rack", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETFullitle = []string{"Host", "OS Version", "Machine", "Zone", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -189,7 +189,7 @@ func PrintSwitchFull(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) {
 	}
 	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(sw.GetName()))
 	out += fmt.Sprintf("%d\t", sw.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", sw.GetLab())
+	out += fmt.Sprintf("%s\t", sw.GetZone())
 	out += fmt.Sprintf("%s\t", sw.GetRack())
 	out += fmt.Sprintf("%s\t", sw.GetState())
 	out += fmt.Sprintf("%s\t", ufsAPI.ParseResources(nics, "Name"))
@@ -210,7 +210,7 @@ func printSwitch(s *ufspb.Switch, keysOnly bool) {
 	s.Name = ufsUtil.RemovePrefix(s.Name)
 	out := fmt.Sprintf("%s\t", s.GetName())
 	out += fmt.Sprintf("%d\t", s.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", s.GetLab())
+	out += fmt.Sprintf("%s\t", s.GetZone())
 	out += fmt.Sprintf("%s\t", s.GetRack())
 	out += fmt.Sprintf("%s\t", s.GetState())
 	out += fmt.Sprintf("%s\t", ts)
@@ -244,7 +244,7 @@ func PrintKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) 
 	out += fmt.Sprintf("%s\t", dhcp.GetIp())
 	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
 	out += fmt.Sprintf("%s\t", s.GetState())
-	out += fmt.Sprintf("%s\t", kvm.GetLab())
+	out += fmt.Sprintf("%s\t", kvm.GetZone())
 	out += fmt.Sprintf("%s\t", kvm.GetRack())
 	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
@@ -271,7 +271,7 @@ func printKVM(kvm *ufspb.KVM, keysOnly bool) {
 	out += fmt.Sprintf("%s\t", kvm.GetMacAddress())
 	out += fmt.Sprintf("%s\t", kvm.GetChromePlatform())
 	out += fmt.Sprintf("%d\t", kvm.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", kvm.GetLab())
+	out += fmt.Sprintf("%s\t", kvm.GetZone())
 	out += fmt.Sprintf("%s\t", kvm.GetRack())
 	out += fmt.Sprintf("%s\t", kvm.GetState())
 	out += fmt.Sprintf("%s\t", ts)
@@ -342,7 +342,7 @@ func PrintDracFull(drac *ufspb.Drac, machine *ufspb.Machine, dhcp *ufspb.DHCPCon
 	out += fmt.Sprintf("%s\t", dhcp.GetHostname())
 	out += fmt.Sprintf("%s\t", dhcp.GetIp())
 	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", drac.GetLab())
+	out += fmt.Sprintf("%s\t", drac.GetZone())
 	out += fmt.Sprintf("%s\t", drac.GetRack())
 	out += fmt.Sprintf("%s\t", drac.GetMachine())
 	out += fmt.Sprintf("%s\t", ts)
@@ -372,7 +372,7 @@ func printDrac(drac *ufspb.Drac, keysOnly bool) {
 	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetSwitch())
 	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetPortName())
 	out += fmt.Sprintf("%s\t", drac.GetPassword())
-	out += fmt.Sprintf("%s\t", drac.GetLab())
+	out += fmt.Sprintf("%s\t", drac.GetZone())
 	out += fmt.Sprintf("%s\t", drac.GetRack())
 	out += fmt.Sprintf("%s\t", drac.GetMachine())
 	out += fmt.Sprintf("%s\t", ts)
@@ -406,7 +406,7 @@ func PrintNicFull(nic *ufspb.Nic, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig
 	out += fmt.Sprintf("%s\t", dhcp.GetHostname())
 	out += fmt.Sprintf("%s\t", dhcp.GetIp())
 	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", nic.GetLab())
+	out += fmt.Sprintf("%s\t", nic.GetZone())
 	out += fmt.Sprintf("%s\t", nic.GetRack())
 	out += fmt.Sprintf("%s\t", nic.GetMachine())
 	out += fmt.Sprintf("%s\t", ts)
@@ -434,7 +434,7 @@ func printNic(nic *ufspb.Nic, keysOnly bool) {
 	out += fmt.Sprintf("%s\t", nic.GetMacAddress())
 	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetSwitch())
 	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetPortName())
-	out += fmt.Sprintf("%s\t", nic.GetLab())
+	out += fmt.Sprintf("%s\t", nic.GetZone())
 	out += fmt.Sprintf("%s\t", nic.GetRack())
 	out += fmt.Sprintf("%s\t", nic.GetMachine())
 	out += fmt.Sprintf("%s\t", ts)
@@ -473,7 +473,7 @@ func printBrowserMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufsp
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetSerialNumber())
 	out += fmt.Sprintf("%s\t", lse.GetName())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())
 	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")))
@@ -494,7 +494,7 @@ func printOSMachineFull(m *ufspb.Machine) {
 		ts = t.Format(timeFormat)
 	}
 	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetBarcodeName())
 	out += fmt.Sprintf("%s\t", ts)
@@ -521,7 +521,7 @@ func printMachine(m *ufspb.Machine, keysOnly bool) {
 	}
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetSerialNumber())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
 	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())
 	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")))
@@ -741,7 +741,7 @@ func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *uf
 	out := fmt.Sprintf("%s\t", lse.GetName())
 	out += fmt.Sprintf("%s\t", lse.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", machine.GetName())
-	out += fmt.Sprintf("%s\t", lse.GetLab())
+	out += fmt.Sprintf("%s\t", lse.GetZone())
 	out += fmt.Sprintf("%s\t", lse.GetRack())
 	out += fmt.Sprintf("%s\t", lse.GetNic())
 	out += fmt.Sprintf("%s\t", dhcp.GetIp())
@@ -773,7 +773,7 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 	}
 	out := fmt.Sprintf("%s\t", m.GetName())
 	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
-	out += fmt.Sprintf("%s\t", m.GetLab())
+	out += fmt.Sprintf("%s\t", m.GetZone())
 	out += fmt.Sprintf("%s\t", m.GetRack())
 	out += fmt.Sprintf("%s\t", m.GetNic())
 	out += fmt.Sprintf("%s\t", m.GetState())
@@ -786,7 +786,7 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 // PrintFreeVMs prints the all free slots in table form.
 func PrintFreeVMs(ctx context.Context, ic ufsAPI.FleetClient, hosts []*ufspb.MachineLSE) {
 	defer tw.Flush()
-	PrintTitle([]string{"Host", "Os Version", "Vlan", "Lab", "Free slots"})
+	PrintTitle([]string{"Host", "Os Version", "Vlan", "Zone", "Free slots"})
 	for _, h := range hosts {
 		h.Name = ufsUtil.RemovePrefix(h.Name)
 		printFreeVM(ctx, ic, h)
@@ -800,7 +800,7 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 	out := fmt.Sprintf("%s\t", host.GetName())
 	out += fmt.Sprintf("%s\t", host.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", res.GetVlan())
-	out += fmt.Sprintf("%s\t", host.GetLab())
+	out += fmt.Sprintf("%s\t", host.GetZone())
 	out += fmt.Sprintf("%d\t", host.GetChromeBrowserMachineLse().GetVmCapacity())
 	fmt.Fprintln(tw, out)
 }
@@ -816,7 +816,7 @@ func PrintVMFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
 	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", vm.GetLab())
+	out += fmt.Sprintf("%s\t", vm.GetZone())
 	out += fmt.Sprintf("%s\t", vm.GetMachineLseId())
 	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
 	out += fmt.Sprintf("%s\t", dhcp.GetIp())
@@ -846,7 +846,7 @@ func printVM(vm *ufspb.VM, keysOnly bool) {
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
 	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", vm.GetLab())
+	out += fmt.Sprintf("%s\t", vm.GetZone())
 	out += fmt.Sprintf("%s\t", vm.GetMachineLseId())
 	out += fmt.Sprintf("%s\t", vm.GetVlan())
 	out += fmt.Sprintf("%s\t", vm.GetState())
@@ -886,7 +886,7 @@ func printRack(m *ufspb.Rack, keysOnly bool) {
 		ts = t.Format(timeFormat)
 	}
 	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetLab())
+	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
 	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetKvmObjects(), "Name")))
 	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetSwitchObjects(), "Name")))
 	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetRpmObjects(), "Name")))

@@ -36,7 +36,7 @@ var AddRackCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.RackRegistrationFileText)
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to add")
-		c.Flags.StringVar(&c.labName, "lab", "", fmt.Sprintf("the name of the lab to add the rack to. Valid lab strings: [%s]", strings.Join(utils.ValidLabStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the rack to. Valid zone strings: [%s]", strings.Join(utils.ValidZoneStr(), ", ")))
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many machines can be added to this rack")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
@@ -52,7 +52,7 @@ type addRack struct {
 	newSpecsFile string
 
 	rackName string
-	labName  string
+	zoneName string
 	capacity int
 	tags     string
 }
@@ -74,12 +74,12 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 		if err := utils.ParseJSONFile(c.newSpecsFile, &rackRegistrationReq); err != nil {
 			return err
 		}
-		ufsLab := utils.ToUFSLab(c.labName)
+		ufsZone := utils.ToUFSZone(c.zoneName)
 		if rackRegistrationReq.GetRack().Location == nil {
 			rackRegistrationReq.GetRack().Location = &ufspb.Location{}
 		}
-		rackRegistrationReq.GetRack().GetLocation().Lab = ufsLab
-		rackRegistrationReq.GetRack().Realm = utils.ToUFSRealm(ufsLab.String())
+		rackRegistrationReq.GetRack().GetLocation().Zone = ufsZone
+		rackRegistrationReq.GetRack().Realm = utils.ToUFSRealm(ufsZone.String())
 	} else {
 		c.parseArgs(&rackRegistrationReq)
 	}
@@ -109,17 +109,17 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 }
 
 func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
-	ufsLab := utils.ToUFSLab(c.labName)
+	ufsZone := utils.ToUFSZone(c.zoneName)
 	req.Rack = &ufspb.Rack{
 		Name: c.rackName,
 		Location: &ufspb.Location{
-			Lab: ufsLab,
+			Zone: ufsZone,
 		},
 		CapacityRu: int32(c.capacity),
-		Realm:      utils.ToUFSRealm(c.labName),
+		Realm:      utils.ToUFSRealm(c.zoneName),
 		Tags:       utils.GetStringSlice(c.tags),
 	}
-	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
+	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
 		req.Rack.Rack = &ufspb.Rack_ChromeBrowserRack{
 			ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 		}
@@ -131,11 +131,11 @@ func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
 }
 
 func (c *addRack) validateArgs() error {
-	if c.labName == "" {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-lab' is required.")
+	if c.zoneName == "" {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required.")
 	}
-	if !utils.IsUFSLab(c.labName) {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid lab name, please check help info for '-lab'.", c.labName)
+	if !utils.IsUFSZone(c.zoneName) {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 	}
 	if c.newSpecsFile != "" {
 		if c.rackName != "" {

@@ -15,7 +15,7 @@ import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 // The fine-grained location is mainly for OS machine as we care about rack, row, shelf.
 message Location {
     // Different labs in the chrome org. Required.
-    Lab lab = 1;
+    Lab lab = 1 [deprecated = true];
     // Each lab has many aisles.
     // This field refers to the aisle number/name in the lab.
     string aisle = 2;
@@ -39,6 +39,9 @@ message Location {
     // A string descriptor representing location. This can be to
     // store barcode values for location or user defined names.
     string barcode_name = 8;
+
+    // Different zones in the chrome org. Required.
+    Zone zone = 9;
 }
 
 // Lab refers to the different Labs under chrome org
@@ -57,4 +60,23 @@ enum Lab {
     LAB_DATACENTER_MTV96 = 9;
     LAB_DATACENTER_MTV97 = 10;
     LAB_DATACENTER_FUCHSIA = 11;
+}
+
+// Zone refers to the different network zones under chrome org
+enum Zone {
+    ZONE_UNSPECIFIED = 0;
+    ZONE_ATLANTA = 1; // "atl" Building ? Room ?
+    ZONE_CHROMEOS1 = 2; // "chromeos1" // US-MTV-1600 // Santiam
+    ZONE_CHROMEOS2 = 3; // "chromeos2" // US-MTV-2081 // Atlantis
+    ZONE_CHROMEOS3 = 4; // "chromeos3" // US-MTV-946 // Lindavista
+    ZONE_CHROMEOS4 = 5; // "chromeos4" // US-MTV-2081 // Destiny
+    ZONE_CHROMEOS5 = 6; // "chromeos5" // US-MTV-946 // Lindavista
+    ZONE_CHROMEOS6 = 7; // "chromeos6" // US-MTV-2081 // Prometheus
+    ZONE_CHROMEOS7 = 8; // "chromeos7" // US-MTV-946 // Lindavista
+    ZONE_CHROMEOS15 = 10; // "chromeos15" // US-MTV-946 // Lindavista
+    ZONE_ATL97 = 11; // "atl97" //  US-ATL-MET1 // Room ?
+    ZONE_IAD97 = 12; // "iad97" // Building ? Room ?
+    ZONE_MTV96 = 13; // "mtv96" // US-MTV-41 // 1-1M0
+    ZONE_MTV97 = 14; // "mtv97" // US-MTV-1950 // 1-144
+    ZONE_FUCHSIA = 15; // "lab01" // Building ? Room ?
 }

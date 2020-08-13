@@ -38,10 +38,10 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 		// Create nics
 		if nics != nil {
 			for _, nic := range nics {
-				// Fill the machine/rack/lab to nic OUTPUT only fields
+				// Fill the machine/rack/zone to nic OUTPUT only fields
 				nic.Machine = machine.GetName()
 				nic.Rack = machine.GetLocation().GetRack()
-				nic.Lab = machine.GetLocation().GetLab().String()
+				nic.Zone = machine.GetLocation().GetZone().String()
 			}
 
 			// we use this func as it is a non-atomic operation and can be used to
@@ -61,10 +61,10 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 
 		// Create drac
 		if drac != nil {
-			// Fill the machine/rack/lab to drac OUTPUT only fields
+			// Fill the machine/rack/zone to drac OUTPUT only fields
 			drac.Machine = machine.GetName()
 			drac.Rack = machine.GetLocation().GetRack()
-			drac.Lab = machine.GetLocation().GetLab().String()
+			drac.Zone = machine.GetLocation().GetZone().String()
 
 			// we use this func as it is a non-atomic operation and can be used to
 			// run within a transaction to make it atomic. Datastore doesnt allow
@@ -153,13 +153,13 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 				return errors.Annotate(err, "UpdateMachine - processing update mask failed").Err()
 			}
 		} else if machine.GetLocation().GetRack() != oldMachine.GetLocation().GetRack() ||
-			machine.GetLocation().GetLab() != oldMachine.GetLocation().GetLab() {
+			machine.GetLocation().GetZone() != oldMachine.GetLocation().GetZone() {
 			// this check is for json input with complete update machine
-			// Check if machine lab/rack information is changed/updated
+			// Check if machine zone/rack information is changed/updated
 			indexMap := map[string]string{
-				"lab": machine.GetLocation().GetLab().String(), "rack": machine.GetLocation().GetRack()}
+				"zone": machine.GetLocation().GetZone().String(), "rack": machine.GetLocation().GetRack()}
 			if err = updateIndexingForMachineResources(ctx, oldMachine, indexMap); err != nil {
-				return errors.Annotate(err, "UpdateMachine - update lab and rack indexing failed").Err()
+				return errors.Annotate(err, "UpdateMachine - update zone and rack indexing failed").Err()
 			}
 		}
 
@@ -190,14 +190,14 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 	// update the fields in the existing nic
 	for _, path := range mask.Paths {
 		switch path {
-		case "lab":
-			if err := updateIndexingForMachineResources(ctx, oldMachine, map[string]string{"lab": machine.GetLocation().GetLab().String()}); err != nil {
-				return oldMachine, errors.Annotate(err, "processMachineUpdateMask - failed to update lab indexing").Err()
+		case "zone":
+			if err := updateIndexingForMachineResources(ctx, oldMachine, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
+				return oldMachine, errors.Annotate(err, "processMachineUpdateMask - failed to update zone indexing").Err()
 			}
 			if oldMachine.GetLocation() == nil {
 				oldMachine.Location = &ufspb.Location{}
 			}
-			oldMachine.GetLocation().Lab = machine.GetLocation().GetLab()
+			oldMachine.GetLocation().Zone = machine.GetLocation().GetZone()
 		case "rack":
 			if err := updateIndexingForMachineResources(ctx, oldMachine, map[string]string{"rack": machine.GetLocation().GetRack()}); err != nil {
 				return oldMachine, errors.Annotate(err, "processMachineUpdateMask - failed to update rack indexing").Err()
@@ -286,15 +286,15 @@ func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Ma
 			for _, drac := range dracs {
 				drac.Rack = v
 			}
-		case "lab":
+		case "zone":
 			for _, machinelse := range machinelses {
-				machinelse.Lab = v
+				machinelse.Zone = v
 			}
 			for _, nic := range nics {
-				nic.Lab = v
+				nic.Zone = v
 			}
 			for _, drac := range dracs {
-				drac.Lab = v
+				drac.Zone = v
 			}
 			for _, vm := range vms {
 				vm.Lab = v
@@ -697,7 +697,7 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 				return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - name cannot be updated, delete and create a new machine instead")
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - update_time cannot be updated, it is a output only field")
-			case "lab":
+			case "zone":
 				if machine.GetLocation() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - location cannot be empty/nil.")
 				}

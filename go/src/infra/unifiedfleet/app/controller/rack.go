@@ -46,9 +46,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 					ResourceName: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name),
 					User:         ufsUtil.CurrentUser(ctx),
 				})
-				// Fill the rack/lab to switch OUTPUT only fields for indexing
+				// Fill the rack/zone to switch OUTPUT only fields for indexing
 				s.Rack = rack.GetName()
-				s.Lab = rack.GetLocation().GetLab().String()
+				s.Zone = rack.GetLocation().GetZone().String()
 				s.State = ufspb.State_STATE_SERVING.String()
 			}
 
@@ -71,9 +71,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 					ResourceName: ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name),
 					User:         ufsUtil.CurrentUser(ctx),
 				})
-				// Fill the rack/lab to kvm OUTPUT only fields for indexing
+				// Fill the rack/zone to kvm OUTPUT only fields for indexing
 				kvm.Rack = rack.GetName()
-				kvm.Lab = rack.GetLocation().GetLab().String()
+				kvm.Zone = rack.GetLocation().GetZone().String()
 				kvm.State = ufspb.State_STATE_SERVING.String()
 			}
 
@@ -96,9 +96,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 					ResourceName: ufsUtil.AddPrefix(ufsUtil.RPMCollection, rpm.Name),
 					User:         ufsUtil.CurrentUser(ctx),
 				})
-				// Fill the rack/lab to rpm OUTPUT only fields for indexing
+				// Fill the rack/zone to rpm OUTPUT only fields for indexing
 				rpm.Rack = rack.GetName()
-				rpm.Lab = rack.GetLocation().GetLab().String()
+				rpm.Zone = rack.GetLocation().GetZone().String()
 				rpm.State = ufspb.State_STATE_SERVING.String()
 			}
 
@@ -193,11 +193,11 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 			if err != nil {
 				return errors.Annotate(err, "UpdateRack - processing update mask failed").Err()
 			}
-		} else if rack.GetLocation().GetLab() != oldRack.GetLocation().GetLab() {
+		} else if rack.GetLocation().GetZone() != oldRack.GetLocation().GetZone() {
 			// this check is for json input with complete update rack
-			// Check if rack lab information is changed/updated
-			if err = updateIndexingForRackResources(ctx, rack.GetName(), map[string]string{"lab": rack.GetLocation().GetLab().String()}); err != nil {
-				return errors.Annotate(err, "UpdateRack - update lab indexing failed").Err()
+			// Check if rack zone information is changed/updated
+			if err = updateIndexingForRackResources(ctx, rack.GetName(), map[string]string{"zone": rack.GetLocation().GetZone().String()}); err != nil {
+				return errors.Annotate(err, "UpdateRack - update zone indexing failed").Err()
 			}
 		}
 
@@ -228,14 +228,14 @@ func processRackUpdateMask(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb
 	// update the fields in the existing rack
 	for _, path := range mask.Paths {
 		switch path {
-		case "lab":
-			if err := updateIndexingForRackResources(ctx, rack.GetName(), map[string]string{"lab": rack.GetLocation().GetLab().String()}); err != nil {
-				return nil, errors.Annotate(err, "processRackUpdateMask - failed to update lab indexing").Err()
+		case "zone":
+			if err := updateIndexingForRackResources(ctx, rack.GetName(), map[string]string{"zone": rack.GetLocation().GetZone().String()}); err != nil {
+				return nil, errors.Annotate(err, "processRackUpdateMask - failed to update zone indexing").Err()
 			}
 			if oldRack.GetLocation() == nil {
 				oldRack.Location = &ufspb.Location{}
 			}
-			oldRack.GetLocation().Lab = rack.GetLocation().GetLab()
+			oldRack.GetLocation().Zone = rack.GetLocation().GetZone()
 		case "capacity":
 			oldRack.CapacityRu = rack.GetCapacityRu()
 		case "tags":
@@ -267,15 +267,15 @@ func updateIndexingForRackResources(ctx context.Context, rackName string, indexM
 	for k, v := range indexMap {
 		// These are output only fields used for indexing kvm/rpm/switch table
 		switch k {
-		case "lab":
+		case "zone":
 			for _, kvm := range kvms {
-				kvm.Lab = v
+				kvm.Zone = v
 			}
 			for _, rpm := range rpms {
-				rpm.Lab = v
+				rpm.Zone = v
 			}
 			for _, s := range switches {
-				s.Lab = v
+				s.Zone = v
 			}
 		}
 	}
@@ -571,13 +571,13 @@ func validateDeleteRack(ctx context.Context, id string) error {
 //
 // A rack cannot exist in the system with both ChromeBrowserRack/ChromeOSRack as nil
 // checks if ChromeBrowserRack/ChromeOSRack is nil and initializes the object for rack
-// checks the lab in the location to decide between browser/chromeos rack
+// checks the zone in the location to decide between browser/chromeos rack
 func validateCreateRack(ctx context.Context, rack *ufspb.Rack) error {
 	if rack.GetChromeBrowserRack() == nil && rack.GetChromeosRack() == nil {
-		if rack.GetLocation() == nil || rack.GetLocation().GetLab() == ufspb.Lab_LAB_UNSPECIFIED {
-			return errors.New("lab information in the location object cannot be empty/unspecified for a rack")
+		if rack.GetLocation() == nil || rack.GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
+			return errors.New("zone information in the location object cannot be empty/unspecified for a rack")
 		}
-		if ufsUtil.IsInBrowserLab(rack.GetLocation().GetLab().String()) {
+		if ufsUtil.IsInBrowserZone(rack.GetLocation().GetZone().String()) {
 			rack.Rack = &ufspb.Rack_ChromeBrowserRack{
 				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 			}
@@ -600,10 +600,10 @@ func validateRackRegistration(ctx context.Context, rack *ufspb.Rack) error {
 	}
 
 	if rack.GetChromeBrowserRack() == nil && rack.GetChromeosRack() == nil {
-		if rack.GetLocation() == nil || rack.GetLocation().GetLab() == ufspb.Lab_LAB_UNSPECIFIED {
-			return errors.New("lab information in the location object cannot be empty/unspecified for a rack")
+		if rack.GetLocation() == nil || rack.GetLocation().GetZone() == ufspb.Zone_ZONE_UNSPECIFIED {
+			return errors.New("zone information in the location object cannot be empty/unspecified for a rack")
 		}
-		if ufsUtil.IsInBrowserLab(rack.GetLocation().GetLab().String()) {
+		if ufsUtil.IsInBrowserZone(rack.GetLocation().GetZone().String()) {
 			rack.Rack = &ufspb.Rack_ChromeBrowserRack{
 				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 			}
@@ -682,7 +682,7 @@ func validateRackUpdateMask(rack *ufspb.Rack, mask *field_mask.FieldMask) error 
 				return status.Error(codes.InvalidArgument, "validateUpdateRack - name cannot be updated, delete and create a new rack instead")
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateUpdateRack - update_time cannot be updated, it is a output only field")
-			case "lab":
+			case "zone":
 				if rack.GetLocation() == nil {
 					return status.Error(codes.InvalidArgument, "validateUpdateRack - location cannot be empty/nil.")
 				}

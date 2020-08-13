@@ -29,7 +29,8 @@ type KVMEntity struct {
 	_kind            string   `gae:"$kind,KVM"`
 	ID               string   `gae:"$id"`
 	ChromePlatformID string   `gae:"chrome_platform_id"`
-	Lab              string   `gae:"lab"`
+	Lab              string   `gae:"lab"` // deprecated
+	Zone             string   `gae:"zone"`
 	Rack             string   `gae:"rack"`
 	Tags             []string `gae:"tags"`
 	MacAddress       string   `gae:"mac_address"`
@@ -60,7 +61,7 @@ func newKVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		ID:               p.GetName(),
 		ChromePlatformID: p.GetChromePlatform(),
 		KVM:              kvm,
-		Lab:              p.GetLab(),
+		Zone:             p.GetZone(),
 		Rack:             p.GetRack(),
 		Tags:             p.GetTags(),
 		MacAddress:       p.GetMacAddress(),
@@ -258,8 +259,8 @@ func GetKVMIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.ChromePlatformFilterName:
 		field = "chrome_platform_id"
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.RackFilterName:
 		field = "rack"
 	case util.TagFilterName:
@@ -269,7 +270,7 @@ func GetKVMIndexedFieldName(input string) (string, error) {
 	case util.StateFilterName:
 		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are lab/rack/platform/tag/mac(macaddress)/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for KVM are zone/rack/platform/tag/mac(macaddress)/state", input)
 	}
 	return field, nil
 }

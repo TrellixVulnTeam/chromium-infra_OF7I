@@ -110,7 +110,7 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 		if err != nil {
 			return errors.New(fmt.Sprintf("Fail to find machine %s", c.machineName))
 		}
-		c.parseArgs(&machinelse, machine.GetLocation().GetLab())
+		c.parseArgs(&machinelse, machine.GetLocation().GetZone())
 	}
 
 	req := &ufsAPI.CreateMachineLSERequest{
@@ -144,12 +144,12 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 	return nil
 }
 
-func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsLab ufspb.Lab) {
+func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsZone ufspb.Zone) {
 	lse.Hostname = c.hostName
 	lse.Name = c.hostName
 	lse.MachineLsePrototype = c.prototype
 	lse.Tags = utils.GetStringSlice(c.tags)
-	if ufsUtil.IsInBrowserLab(ufsLab.String()) {
+	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
 		lse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
 			ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
 				OsVersion: &ufspb.OSVersion{

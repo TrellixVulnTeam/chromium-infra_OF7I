@@ -62,7 +62,7 @@ func DUTToLSE(dut *lab.DeviceUnderTest, deviceID string, updatedTime *timestamp.
 		Machines:            []string{deviceID},
 		UpdateTime:          updatedTime,
 		Lse:                 lse,
-		Lab:                 getLabByHostname(hostname).String(),
+		Zone:                getZoneByHostname(hostname).String(),
 	}
 }
 
@@ -87,7 +87,7 @@ func LabstationToLSE(l *lab.Labstation, deviceID string, updatedTime *timestamp.
 		Machines:            []string{deviceID},
 		UpdateTime:          updatedTime,
 		Lse:                 lse,
-		Lab:                 getLabByHostname(hostname).String(),
+		Zone:                getZoneByHostname(hostname).String(),
 	}
 }
 
@@ -133,6 +133,35 @@ func getLabByHostname(hostname string) ufspb.Lab {
 	}
 	// Temporarily set all other OS labs to Unspecified
 	return ufspb.Lab_LAB_UNSPECIFIED
+}
+
+func getZoneByHostname(hostname string) ufspb.Zone {
+	if strings.HasPrefix(hostname, "chromeos1") {
+		return ufspb.Zone_ZONE_CHROMEOS1
+	}
+	if strings.HasPrefix(hostname, "chromeos2") {
+		return ufspb.Zone_ZONE_CHROMEOS2
+	}
+	if strings.HasPrefix(hostname, "chromeos3") {
+		return ufspb.Zone_ZONE_CHROMEOS3
+	}
+	if strings.HasPrefix(hostname, "chromeos4") {
+		return ufspb.Zone_ZONE_CHROMEOS4
+	}
+	if strings.HasPrefix(hostname, "chromeos5") {
+		return ufspb.Zone_ZONE_CHROMEOS5
+	}
+	if strings.HasPrefix(hostname, "chromeos6") {
+		return ufspb.Zone_ZONE_CHROMEOS6
+	}
+	if strings.HasPrefix(hostname, "chromeos7") {
+		return ufspb.Zone_ZONE_CHROMEOS7
+	}
+	if strings.HasPrefix(hostname, "chromeos15") {
+		return ufspb.Zone_ZONE_CHROMEOS15
+	}
+	// Temporarily set all other OS labs to Unspecified
+	return ufspb.Zone_ZONE_UNSPECIFIED
 }
 
 func getLSEPrototypeByLabConfig(dut *lab.DeviceUnderTest) string {

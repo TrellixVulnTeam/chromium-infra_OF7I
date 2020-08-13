@@ -41,10 +41,10 @@ func CreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 			return errors.Annotate(err, "CreateNic - failed to get machine %s", machineName).Err()
 		}
 
-		// Fill the machine/rack/lab to nic OUTPUT only fields for indexing nic table
+		// Fill the machine/rack/zone to nic OUTPUT only fields for indexing nic table
 		nic.Machine = machine.GetName()
 		nic.Rack = machine.GetLocation().GetRack()
-		nic.Lab = machine.GetLocation().GetLab().String()
+		nic.Zone = machine.GetLocation().GetZone().String()
 
 		// Create a nic entry
 		// we use this func as it is a non-atomic operation and can be used to
@@ -80,10 +80,10 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 		if err != nil {
 			return errors.Annotate(err, "UpdateNic - get nic %s failed", nic.GetName()).Err()
 		}
-		// Copy the machine/rack/lab to nic OUTPUT only fields from already existing nic
+		// Copy the machine/rack/zone to nic OUTPUT only fields from already existing nic
 		nic.Machine = oldNic.GetMachine()
 		nic.Rack = oldNic.GetRack()
-		nic.Lab = oldNic.GetLab()
+		nic.Zone = oldNic.GetZone()
 		nic.State = oldNic.GetState()
 
 		if machineName != "" {
@@ -101,10 +101,10 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 					return errors.Annotate(err, "UpdateNic - failed to get browser machine %s", machineName).Err()
 				}
 
-				// Fill the machine/rack/lab to nic OUTPUT only fields
+				// Fill the machine/rack/zone to nic OUTPUT only fields
 				nic.Machine = machine.GetName()
 				nic.Rack = machine.GetLocation().GetRack()
-				nic.Lab = machine.GetLocation().GetLab().String()
+				nic.Zone = machine.GetLocation().GetZone().String()
 			}
 		}
 
@@ -144,7 +144,7 @@ func processNicUpdateMask(oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.Fi
 			// assign them to oldnic.
 			oldNic.Machine = nic.GetMachine()
 			oldNic.Rack = nic.GetRack()
-			oldNic.Lab = nic.GetLab()
+			oldNic.Zone = nic.GetZone()
 		case "macAddress":
 			oldNic.MacAddress = nic.GetMacAddress()
 		case "switch":

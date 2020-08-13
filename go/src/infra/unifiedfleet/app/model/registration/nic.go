@@ -29,7 +29,8 @@ type NicEntity struct {
 	_kind      string   `gae:"$kind,Nic"`
 	ID         string   `gae:"$id"`
 	SwitchID   string   `gae:"switch_id"`
-	Lab        string   `gae:"lab"`
+	Lab        string   `gae:"lab"` // deprecated
+	Zone       string   `gae:"zone"`
 	Machine    string   `gae:"machine"`
 	Rack       string   `gae:"rack"`
 	Tags       []string `gae:"tags"`
@@ -61,7 +62,7 @@ func newNicEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		ID:         p.GetName(),
 		SwitchID:   p.GetSwitchInterface().GetSwitch(),
 		Rack:       p.GetRack(),
-		Lab:        p.GetLab(),
+		Zone:       p.GetZone(),
 		Machine:    p.GetMachine(),
 		Tags:       p.GetTags(),
 		MacAddress: p.GetMacAddress(),
@@ -261,8 +262,8 @@ func GetNicIndexedFieldName(input string) (string, error) {
 		field = "switch_id"
 	case util.SwitchPortFilterName:
 		field = "switch_port"
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.RackFilterName:
 		field = "rack"
 	case util.MachineFilterName:
@@ -272,7 +273,7 @@ func GetNicIndexedFieldName(input string) (string, error) {
 	case util.MacAddressFilterName:
 		field = "mac_address"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are lab/rack/switch/switchport/mac(macaddress)/machine/tag", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for Nic are zone/rack/switch/switchport/mac(macaddress)/machine/tag", input)
 	}
 	return field, nil
 }

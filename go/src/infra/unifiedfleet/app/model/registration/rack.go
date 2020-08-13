@@ -31,7 +31,8 @@ type RackEntity struct {
 	SwitchIDs []string `gae:"switch_ids"` // deprecated. Do not use.
 	KVMIDs    []string `gae:"kvm_ids"`    // deprecated. Do not use.
 	RPMIDs    []string `gae:"rpm_ids"`    // deprecated. Do not use.
-	Lab       string   `gae:"lab"`
+	Lab       string   `gae:"lab"`        // deprecated
+	Zone      string   `gae:"zone"`
 	Tags      []string `gae:"tags"`
 	State     string   `gae:"state"`
 	// ufspb.Rack cannot be directly used as it contains pointer.
@@ -58,7 +59,7 @@ func newRackEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 	}
 	return &RackEntity{
 		ID:    p.GetName(),
-		Lab:   p.GetLocation().GetLab().String(),
+		Zone:  p.GetLocation().GetZone().String(),
 		Tags:  p.GetTags(),
 		Rack:  rack,
 		State: p.GetState(),
@@ -240,14 +241,14 @@ func GetRackIndexedFieldName(input string) (string, error) {
 	var field string
 	input = strings.TrimSpace(input)
 	switch strings.ToLower(input) {
-	case util.LabFilterName:
-		field = "lab"
+	case util.ZoneFilterName:
+		field = "zone"
 	case util.TagFilterName:
 		field = "tags"
 	case util.StateFilterName:
 		field = "state"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are lab/tag/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for rack are zone/tag/state", input)
 	}
 	return field, nil
 }

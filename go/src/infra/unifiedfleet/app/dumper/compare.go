@@ -295,7 +295,7 @@ func compareVlans(ctx context.Context, writer *storage.Writer, vlans []*crimson.
 	for _, r := range vlanRes.Passed() {
 		m := r.Data.(*ufspb.Vlan)
 		name := m.GetName()
-		if util.IsInBrowserLab(name) {
+		if util.IsInBrowserZone(name) {
 			ufsVlans[name] = formatVlan(name, m.GetVlanAddress(), m.GetDescription(), stateMap[name])
 		}
 	}
@@ -350,7 +350,7 @@ func compareMachines(ctx context.Context, writer *storage.Writer, machines []*cr
 	logs := []string{"\n\n######## get-machine diff ############"}
 	crimsonMachines := make(map[string]string)
 	for _, r := range machines {
-		crimsonMachines[r.GetName()] = formatMachine(r.GetName(), r.GetRack(), util.ToLab(r.GetDatacenter()), util.ToState(r.GetState()))
+		crimsonMachines[r.GetName()] = formatMachine(r.GetName(), r.GetRack(), util.ToZone(r.GetDatacenter()), util.ToState(r.GetState()))
 	}
 	ufsMachines := make(map[string]string)
 	for _, r := range machineRes.Passed() {
@@ -358,21 +358,21 @@ func compareMachines(ctx context.Context, writer *storage.Writer, machines []*cr
 		if m.GetChromeBrowserMachine() != nil {
 			rack := m.GetLocation().GetRack()
 			resourceName := util.AddPrefix(util.MachineCollection, m.GetName())
-			ufsMachines[m.GetName()] = formatMachine(m.GetName(), rack, m.GetLocation().GetLab(), stateMap[resourceName])
+			ufsMachines[m.GetName()] = formatMachine(m.GetName(), rack, m.GetLocation().GetZone(), stateMap[resourceName])
 		}
 	}
 	return logDiff(crimsonMachines, ufsMachines, writer, logs)
 }
 
-func formatMachine(name, rack string, lab ufspb.Lab, state ufspb.State) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s", name, rack, lab.String(), strings.ToLower(state.String()))
+func formatMachine(name, rack string, zone ufspb.Zone, state ufspb.State) string {
+	return fmt.Sprintf("%s\t%s\t%s\t%s", name, rack, zone.String(), strings.ToLower(state.String()))
 }
 
 func compareRacks(ctx context.Context, writer *storage.Writer, racks []*crimson.Rack, rackRes *fleetds.OpResults, stateMap map[string]ufspb.State) error {
 	logs := []string{"\n\n######## get-rack diff ############"}
 	crimsonRacks := make(map[string]string)
 	for _, r := range racks {
-		crimsonRacks[r.GetName()] = formatRack(r.GetName(), util.ToLab(r.GetDatacenter()), util.ToState(r.GetState()), r.GetKvm())
+		crimsonRacks[r.GetName()] = formatRack(r.GetName(), util.ToZone(r.GetDatacenter()), util.ToState(r.GetState()), r.GetKvm())
 	}
 	ufsRacks := make(map[string]string)
 	for _, r := range rackRes.Passed() {
@@ -384,14 +384,14 @@ func compareRacks(ctx context.Context, writer *storage.Writer, racks []*crimson.
 			if len(kvms) > 0 {
 				kvm = kvms[0].GetName()
 			}
-			ufsRacks[rack.GetName()] = formatRack(rack.GetName(), rack.GetLocation().GetLab(), stateMap[resourceName], kvm)
+			ufsRacks[rack.GetName()] = formatRack(rack.GetName(), rack.GetLocation().GetZone(), stateMap[resourceName], kvm)
 		}
 	}
 	return logDiff(crimsonRacks, ufsRacks, writer, logs)
 }
 
-func formatRack(rackName string, lab ufspb.Lab, state ufspb.State, kvm string) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s", rackName, lab.String(), strings.ToLower(state.String()), kvm)
+func formatRack(rackName string, zone ufspb.Zone, state ufspb.State, kvm string) string {
+	return fmt.Sprintf("%s\t%s\t%s\t%s", rackName, zone.String(), strings.ToLower(state.String()), kvm)
 }
 
 func logDiff(crimsonData, ufsData map[string]string, writer *storage.Writer, logs []string) error {
