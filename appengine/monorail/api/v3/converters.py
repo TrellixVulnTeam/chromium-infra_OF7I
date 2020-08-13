@@ -501,6 +501,21 @@ class Converter(object):
         else:
           delta.summary = ''
 
+      if 'merged_into_issue_ref' in api_delta.update_mask.paths:
+        merge_ref = api_delta.issue.merged_into_issue_ref
+        try:
+          ingested_ref = self._IngestIssueRef(merge_ref)
+          if isinstance(ingested_ref, tracker_pb2.DanglingIssueRef):
+            delta.merged_into_external = ingested_ref.ext_issue_identifier
+          else:
+            delta.merged_into = ingested_ref
+        except exceptions.InputException as e:
+          if not (merge_ref.issue or merge_ref.ext_identifier):
+            delta.merged_into = 0
+            delta.merged_into_external = ''
+          else:
+            raise e
+
       filtered_api_issue = issue_objects_pb2.Issue()
       api_delta.update_mask.MergeMessage(
           api_delta.issue,
@@ -541,8 +556,33 @@ class Converter(object):
       assert len(add_enums) == 0  # ShiftEnumFieldsIntoLabels clears all enums.
       assert len(remove_enums) == 0
 
-      # TODO(crbug.com/monorail/7657): Ingest remaining:
-      # {ext_}blocked_on, {ext_}blocking, merged.
+      blocked_on_iids_rm, blocked_on_dangling_rm = self._IngestIssueRefs(
+          api_delta.blocked_on_issues_remove)
+      delta.blocked_on_remove = blocked_on_iids_rm
+      delta.ext_blocked_on_remove = [
+          ref.ext_issue_identifier for ref in blocked_on_dangling_rm
+      ]
+
+      blocked_on_iids_add, blocked_on_dangling_add = self._IngestIssueRefs(
+          filtered_api_issue.blocked_on_issue_refs)
+      delta.blocked_on_add = blocked_on_iids_add
+      delta.ext_blocked_on_add = [
+          ref.ext_issue_identifier for ref in blocked_on_dangling_add
+      ]
+
+      blocking_iids_rm, blocking_dangling_rm = self._IngestIssueRefs(
+          api_delta.blocking_issues_remove)
+      delta.blocking_remove = blocking_iids_rm
+      delta.ext_blocking_remove = [
+          ref.ext_issue_identifier for ref in blocking_dangling_rm
+      ]
+
+      blocking_iids_add, blocking_dangling_add = self._IngestIssueRefs(
+          filtered_api_issue.blocking_issue_refs)
+      delta.blocking_add = blocking_iids_add
+      delta.ext_blocking_add = [
+          ref.ext_issue_identifier for ref in blocking_dangling_add
+      ]
 
       ingested.append((iid, delta))
 
@@ -813,29 +853,41 @@ class Converter(object):
               merged_into_ref.ext_issue_identifier)
         else:
           ingestedDict['merged_into'] = merged_into_ref
-      except (exceptions.InputException, exceptions.NoSuchIssueException,
-          exceptions.NoSuchProjectException) as e:
-        err_agg.AddErrorMessage('Error ingesting merged_into_ref: {}', e)
-    for blocked_on in issue.blocked_on_issue_refs:
-      try:
-        ref = self._IngestIssueRef(blocked_on)
-        if isinstance(ref, tracker_pb2.DanglingIssueRef):
-          ingestedDict.setdefault('dangling_blocked_on_refs', []).append(ref)
-        else:
-          ingestedDict.setdefault('blocked_on_iids', []).append(ref)
-      except (exceptions.InputException, exceptions.NoSuchIssueException,
-          exceptions.NoSuchProjectException) as e:
-        err_agg.AddErrorMessage('Error ingesting blocked_on_issue_refs: {}', e)
-    for blocking in issue.blocking_issue_refs:
-      try:
-        ref = self._IngestIssueRef(blocking)
-        if isinstance(ref, tracker_pb2.DanglingIssueRef):
-          ingestedDict.setdefault('dangling_blocking_refs', []).append(ref)
-        else:
-          ingestedDict.setdefault('blocking_iids', []).append(ref)
-      except (exceptions.InputException, exceptions.NoSuchIssueException,
-          exceptions.NoSuchProjectException) as e:
-        err_agg.AddErrorMessage('Error ingesting blocking_issue_refs: {}', e)
+      except exceptions.InputException as e:
+        err_agg.AddErrorMessage(
+            'Error ingesting ref {}: {}', issue.merged_into_issue_ref, e)
+    try:
+      iids, dangling_refs = self._IngestIssueRefs(issue.blocked_on_issue_refs)
+      ingestedDict['blocked_on_iids'] = iids
+      ingestedDict['dangling_blocked_on_refs'] = dangling_refs
+    except exceptions.InputException as e:
+      err_agg.AddErrorMessage(e.message)
+    try:
+      iids, dangling_refs = self._IngestIssueRefs(issue.blocking_issue_refs)
+      ingestedDict['blocking_iids'] = iids
+      ingestedDict['dangling_blocking_refs'] = dangling_refs
+    except exceptions.InputException as e:
+      err_agg.AddErrorMessage(e.message)
+
+  def _IngestIssueRefs(self, issue_refs):
+    # type: (api_proto.issue_objects.IssueRf) ->
+    #     Tuple[Sequence[int], Sequence[tracker_pb2.DanglingIssueRef]]
+    """Given protoc IssueRefs, returns issue_ids and DanglingIssueRefs."""
+    issue_ids = []
+    external_refs = []
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      for ref in issue_refs:
+        try:
+          ingested_ref = self._IngestIssueRef(ref)
+          if isinstance(ingested_ref, tracker_pb2.DanglingIssueRef):
+            external_refs.append(ingested_ref)
+          else:
+            issue_ids.append(ingested_ref)
+        except (exceptions.InputException, exceptions.NoSuchIssueException,
+                exceptions.NoSuchProjectException) as e:
+          err_agg.AddErrorMessage('Error ingesting ref {}: {}', ref, e)
+
+    return issue_ids, external_refs
 
   def _IngestIssueRef(self, issue_ref):
     # type: (api_proto.issue_objects.IssueRef) ->
@@ -853,7 +905,7 @@ class Converter(object):
           ext_issue_identifier=issue_ref.ext_identifier
         )
     raise exceptions.InputException(
-        'IssueRefs MUST have least one of `issue` and `ext_identifier`')
+        'IssueRefs MUST have one of `issue` and `ext_identifier`')
 
   def IngestIssuesListColumns(self, issues_list_columns):
     # type: (Sequence[proto.issue_objects_pb2.IssuesListColumn] -> str

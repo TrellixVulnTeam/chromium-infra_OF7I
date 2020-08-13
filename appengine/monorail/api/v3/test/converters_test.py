@@ -7,6 +7,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import copy
 import difflib
 import logging
 import unittest
@@ -1002,6 +1003,98 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected = [(78001, expected_delta_all), (78002, expected_delta_all_masked)]
     self.assertEqual(actual, expected)
 
+  def testIngestIssueDeltas_IssueRefs(self):
+    # Set up.
+    self.services.project.TestAddProject('proj-780', project_id=780)
+    issue = self._Issue(780, 1)
+    self.services.issue.TestAddIssue(issue)
+
+    bo_add = self._Issue(780, 2)
+    self.services.issue.TestAddIssue(bo_add)
+
+    b_add = self._Issue(780, 3)
+    self.services.issue.TestAddIssue(b_add)
+
+    bo_remove = self._Issue(780, 4)
+    self.services.issue.TestAddIssue(bo_remove)
+
+    b_remove = self._Issue(780, 5)
+    self.services.issue.TestAddIssue(b_remove)
+
+    # merge_remove tested in testIngestIssueDeltas_RemoveNonRepeated
+    merge_add = self._Issue(780, 6)
+    self.services.issue.TestAddIssue(merge_add)
+
+    api_issue = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/1',
+        blocked_on_issue_refs=[
+            issue_objects_pb2.IssueRef(issue='projects/proj-780/issues/2'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/1')
+        ],
+        blocking_issue_refs=[
+            issue_objects_pb2.IssueRef(issue='projects/proj-780/issues/3'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/2')
+        ],
+        merged_into_issue_ref=issue_objects_pb2.IssueRef(
+            issue='projects/proj-780/issues/6'))
+
+    api_delta = issues_pb2.IssueDelta(
+        issue=api_issue,
+        update_mask=field_mask_pb2.FieldMask(
+            paths=[
+                'blocked_on_issue_refs', 'blocking_issue_refs',
+                'merged_into_issue_ref'
+            ]),
+        blocked_on_issues_remove=[
+            issue_objects_pb2.IssueRef(issue='projects/proj-780/issues/4'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/3')
+        ],
+        blocking_issues_remove=[
+            issue_objects_pb2.IssueRef(issue='projects/proj-780/issues/5'),
+            issue_objects_pb2.IssueRef(ext_identifier='b/4')
+        ])
+
+    expected_delta = tracker_pb2.IssueDelta(
+        blocked_on_add=[bo_add.issue_id],
+        blocked_on_remove=[bo_remove.issue_id],
+        blocking_add=[b_add.issue_id],
+        blocking_remove=[b_remove.issue_id],
+        ext_blocked_on_add=['b/1'],
+        ext_blocked_on_remove=['b/3'],
+        ext_blocking_add=['b/2'],
+        ext_blocking_remove=['b/4'],
+        merged_into=merge_add.issue_id)
+
+    # Test adding an external merged_into_issue.
+    api_issue_ext_merged = issue_objects_pb2.Issue(
+        name='projects/proj-780/issues/2',
+        merged_into_issue_ref=issue_objects_pb2.IssueRef(ext_identifier='b/1'))
+    api_delta_ext_merged = issues_pb2.IssueDelta(
+        issue=api_issue_ext_merged,
+        update_mask=field_mask_pb2.FieldMask(paths=['merged_into_issue_ref']))
+    expected_delta_ext_merged = tracker_pb2.IssueDelta(
+        merged_into_external='b/1')
+
+    # Test issue with empty mask.
+    issue_all_masked = self._Issue(780, 11)
+    self.services.issue.TestAddIssue(issue_all_masked)
+
+    api_issue_all_masked = copy.deepcopy(api_issue)
+    api_issue_all_masked.name = 'projects/proj-780/issues/11'
+    api_delta_all_masked = issues_pb2.IssueDelta(
+        issue=api_issue_all_masked, update_mask=field_mask_pb2.FieldMask())
+    expected_all_masked_delta = tracker_pb2.IssueDelta()
+
+    # Check results.
+    actual = self.converter.IngestIssueDeltas(
+        [api_delta, api_delta_ext_merged, api_delta_all_masked])
+
+    expected = [
+        (78001, expected_delta), (78002, expected_delta_ext_merged),
+        (78011, expected_all_masked_delta)
+    ]
+    self.assertEqual(actual, expected)
+
   def testIngestIssueDeltas_RemoveNonRepeated(self):
     # Set up.
     self.services.project.TestAddProject('proj-780', project_id=780)
@@ -1017,21 +1110,27 @@ class ConverterFunctionsTest(unittest.TestCase):
     api_delta = issues_pb2.IssueDelta(
         issue=api_issue,
         update_mask=field_mask_pb2.FieldMask(
-            paths=['owner', 'status', 'summary']))
+            paths=['owner', 'status', 'summary', 'merged_into_issue_ref']))
 
     # Check thet setting fields to '' result in same behavior as not
     # explicitly setting the values at all.
     api_issue_set = issue_objects_pb2.Issue(
         name='projects/proj-780/issues/2',
-        summary='', status=issue_objects_pb2.Issue.StatusValue(status=''),
-        owner=issue_objects_pb2.Issue.UserValue(user=''))
+        summary='',
+        status=issue_objects_pb2.Issue.StatusValue(status=''),
+        owner=issue_objects_pb2.Issue.UserValue(user=''),
+        merged_into_issue_ref=issue_objects_pb2.IssueRef(issue=''))
     api_delta_set = issues_pb2.IssueDelta(
         issue=api_issue_set,
         update_mask=field_mask_pb2.FieldMask(
-            paths=['owner', 'status', 'summary']))
+            paths=['owner', 'status', 'summary', 'merged_into_issue_ref']))
 
     expected_delta = tracker_pb2.IssueDelta(
-        owner_id=framework_constants.NO_USER_SPECIFIED, status='', summary='')
+        owner_id=framework_constants.NO_USER_SPECIFIED,
+        status='',
+        summary='',
+        merged_into=0,
+        merged_into_external='')
 
     actual = self.converter.IngestIssueDeltas([api_delta, api_delta_set])
     expected = [(78001, expected_delta), (78002, expected_delta)]
@@ -1761,12 +1860,14 @@ class ConverterFunctionsTest(unittest.TestCase):
         r'.+cc_users: Invalid resource name: invalidFormat1.',
         r'Status is required when creating an issue',
         r'.+components: Component not found: 404.',
-        r'.+merged_into_ref: IssueRefs MUST NOT have both.+',
-        r'.+blocked_on_issue_refs: IssueRefs MUST have.+',
-        r'.+blocked_on_issue_refs: Project 404 not found.',
-        r'.+blocking_issue_refs: Issue.+404.+not found'
+        r'.+issue:.+[\n\r]+ext_identifier:.+[\n\r]+: IssueRefs MUST NOT have.+',
+        r'.+: IssueRefs MUST have one of.+',
+        r'.+issue:.+[\n\r]+: Project 404 not found.',
+        r'.+issue:.+[\n\r]+: Issue.+404.+not found'
     ]
     error_messages_re = '\n'.join(error_messages)
+    logging.info('chicken')
+    print('chicken')
     with self.assertRaisesRegexp(exceptions.InputException, error_messages_re):
       self.converter.IngestIssue(ingest, self.project_1.project_id)
 
