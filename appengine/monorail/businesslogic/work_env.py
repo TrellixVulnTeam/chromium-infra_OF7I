@@ -1037,8 +1037,19 @@ class WorkEnv(object):
       tracker_helpers.AssertValidIssueForCreate(
           self.mc.cnxn, self.services, issue, marked_description)
 
-      # Apply filter rules
-      self._ApplyFilterRules([issue], raise_filter_errors)
+      # Apply filter rules.
+      # Set the closed_timestamp both before and after filter rules.
+      config = self.GetProjectConfig(issue.project_id)
+      if not tracker_helpers.MeansOpenInProject(
+          tracker_bizobj.GetStatus(issue), config):
+        issue.closed_timestamp = issue.opened_timestamp
+      filterrules_helpers.ApplyFilterRules(
+          self.mc.cnxn, self.services, issue, config)
+      if issue.derived_errors and raise_filter_errors:
+        raise exceptions.FilterRuleException(issue.derived_errors)
+      if not tracker_helpers.MeansOpenInProject(
+          tracker_bizobj.GetStatus(issue), config):
+        issue.closed_timestamp = issue.opened_timestamp
 
       new_issue, comment = self.services.issue.CreateIssue(
           self.mc.cnxn,
@@ -1065,29 +1076,6 @@ class WorkEnv(object):
             reporter_id)
 
     return new_issue, comment
-
-  def _ApplyFilterRules(self, issues, raise_filter_errors):
-    # type: (Sequence[tracker_pb2.Issue], bool) -> None
-    """Applies project filter rules to the given issues as side effect."""
-    project_ids = list(
-        {issue.project_id for issue in issues})
-    configs_by_id = self.services.config.GetProjectConfigs(
-        self.mc.cnxn, project_ids)
-
-    with exceptions.ErrorAggregator(exceptions.FilterRuleException) as err_agg:
-      for issue in issues:
-        # Set the closed_timestamp both before and after filter rules.
-        config = configs_by_id[issue.project_id]
-        if not tracker_helpers.MeansOpenInProject(
-            tracker_bizobj.GetStatus(issue), config):
-          issue.closed_timestamp = issue.opened_timestamp
-        filterrules_helpers.ApplyFilterRules(
-            self.mc.cnxn, self.services, issue, config)
-        if issue.derived_errors and raise_filter_errors:
-          err_agg.AddErrorMessage('/n'.join(issue.derived_errors))
-        if not tracker_helpers.MeansOpenInProject(
-            tracker_bizobj.GetStatus(issue), config):
-          issue.closed_timestamp = issue.opened_timestamp
 
   def MakeIssueFromTemplate(self, _template, _description, _issue_delta):
     # type: (tracker_pb2.TemplateDef, str, tracker_pb2.IssueDelta) ->
@@ -1895,8 +1883,20 @@ class WorkEnv(object):
     # TODO(crbug.com/monorail/8111): Update *_timestamp fields.
 
     # PHASE 5: Apply filter rules.
-    self._ApplyFilterRules(
-        changes.issues_to_update_dict.values(), raise_filter_errors=True)
+    inflight_issues = changes.issues_to_update_dict.values()
+    project_ids = list(
+        {issue.project_id for issue in inflight_issues})
+    configs_by_id = self.services.config.GetProjectConfigs(
+        self.mc.cnxn, project_ids)
+    with exceptions.ErrorAggregator(exceptions.FilterRuleException) as err_agg:
+      for issue in inflight_issues:
+        config = configs_by_id[issue.project_id]
+        # TODO(crbug.com/monorail/8182): Update closed_timestamp.
+        filterrules_helpers.ApplyFilterRules(
+              self.mc.cnxn, self.services, issue, config)
+        if issue.derived_errors:
+          err_agg.AddErrorMessage('/n'.join(issue.derived_errors))
+        # TODO(crbug.com/monorail/8182): Update closed_timestamp.
 
     # PHASE 6: Apply changes to DB: update issues, combine starrers
     # for merged issues, create issue comments, enqueue issues for
