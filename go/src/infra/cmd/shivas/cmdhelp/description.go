@@ -68,9 +68,10 @@ This file must contain one switch JSON message
 
 Example switch:
 {
-    "name": "switch-test-example",
-    "capacityPort": 456,
-    "description": "I am a switch"
+    "name": "eq079.atl97",
+    "capacityPort": 48,
+    "description": "Arista Networks DCS-7050T-52",
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of switch is part of
@@ -82,13 +83,14 @@ This file must contain one VM JSON message
 
 Example VM:
 {
-	"name": "Windows8.0",
-	"osVersion": {
-		"value": "8.0",
-		"description": "Windows Server"
-	},
-	"macAddress": "2.44.65.23",
-	"hostname": "Windows8.0"
+    "name": "Windows8.0",
+    "osVersion": {
+        "value": "8.0",
+        "description": "Windows Server"
+    },
+    "macAddress": "2.44.65.23",
+    "hostname": "Windows8.0",
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of VM is part of
@@ -217,82 +219,75 @@ This file must contain required machine field and optional nics/drac field.
 
 Example Browser machine creation request:
 {
-	"machine": {
-		"name": "machineBROWSERZONEexample",
-		"location": {
-			"zone": "ZONE_MTV97",
-			"rack": "RackName"
-		},
-		"serialNumber" : "XXX",
-		"chromeBrowserMachine": {
-			"displayName": "ax105-34-230",
-			"chromePlatform": "Supermicro",
-			"kvmInterface": {
-				"kvm": "ax101-kvm1",
-				"port": 34
-			},
-			"rpmInterface": {
-				"rpm": "",
-				"port": 65
-			},
-			"deploymentTicket": "846026",
-			"nicObjects": [{
-					"name": "nic-eth0",
-					"macAddress": "00:0d:5d:10:64:8d",
-					"switchInterface": {
-						"switch": "",
-						"port": 15
-					}
-				},
-				{
-					"name": "nic-eth1",
-					"macAddress": "22:0d:4f:10:65:9f",
-					"switchInterface": {
-						"switch": "",
-						"port": 16
-					}
-				}
-			],
-			"dracObject": {
-				"name": "drac-23",
-				"displayName": "Cisco Drac",
-				"macAddress": "10:03:3d:70:64:2d",
-				"switchInterface": {
-					"switch": "",
-					"port": 17
-				},
-				"password": "WelcomeDrac***"
-			}
-		},
-		"realm": "Browserlab"
-	}
+    "name": "cr85-XXX",
+    "serialNumber": "FVSMVXX",
+    "location": {
+        "rack": "cr85XX",
+        "zone": "ZONE_ATL97"
+    },
+    "tags": ["dell", "8g"],
+    "chromeBrowserMachine": {
+        "displayName": "cr85-XXX",
+        "chromePlatform": "Dell_R720",
+        "deploymentTicket": "846026XX",
+        "description": "adding a machine cr85-XXX",
+        "kvmInterface": {
+            "kvm": "ax101-kvm1",
+            "port": 34
+        },
+        "rpmInterface": {
+            "rpm": "rpm-23",
+            "port": 65
+        },
+        "nicObjects": [{
+            "name": "cr85-XXX:eth0",
+            "macAddress": "ec:f4:bb:c4:6e:qq",
+            "switchInterface": {
+                "switch": "eq082.atl97",
+                "portName": "11"
+            },
+            "tags": ["dell", "8g"]
+        }],
+        "dracObject": {
+            "name": "lin64-38-m0-dracXXX",
+            "displayName": "cr85-XXX:drac",
+            "macAddress": "5c:f9:dd:fd:6d:ff",
+            "switchInterface": {
+                "switch": "eq082.atl97",
+                "portName": "41"
+            },
+            "password": "WelcomeDrac***",
+            "tags": ["dell", "8g"]
+        }
+    }
 }
 
 Example OS machine creation request:
 {
-	"machine": {
-		"name": "machine-OSLAB-example",
-		"location": {
-			"zone": "ZONE_ATLANTA",
-			"aisle": "1",
-			"row": "2",
-			"rack": "Rack-42",
-			"rackNumber": "42",
-			"shelf": "3",
-			"position": "5"
-		},
-		"serialNumber" : "XXX",
-		"chromeosMachine": {},
-		"realm": "OSlab"
-	}
+    "name": "machine-OSLAB-example",
+    "location": {
+        "zone": "ZONE_ATLANTA",
+        "aisle": "1",
+        "row": "2",
+        "rack": "Rack-42",
+        "rackNumber": "42",
+        "shelf": "3",
+        "position": "5"
+    },
+    "serialNumber": "XXX",
+    "chromeosMachine": {}
 }
+
 
 The protobuf definition can be found here:
 Machine:
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/machine.proto
 
-Nic and Drac:
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+Drac:
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto
+
+Nic:
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/network.proto`
 
 	// MachineFileText description for machine file input
 	MachineFileText string = `Path to a file containing machine specification in JSON format.
@@ -300,43 +295,43 @@ This file must contain one machine JSON message
 
 Example Browser machine:
 {
-	"name": "machine-BROWSERLAB-example",
-	"location": {
-		"zone": "ZONE_MTV97",
-		"rack": "RackName"
-	},
-	"serialNumber" : "XXX",
-	"chromeBrowserMachine": {
-		"displayName": "ax105-34-230",
-		"chromePlatform": "Dell R230",
-		"kvmInterface": {
-			"kvm": "kvm.mtv97",
-			"port": 34
-		},
-		"rpmInterface": {
-			"rpm": "rpm.mtv97",
-			"port": 65
-		},
-		"deploymentTicket": "846026"
-	},
-	"realm": "Browserlab"
+    "name": "cr85-XXX",
+    "serialNumber": "FVSMVXX",
+    "location": {
+        "rack": "cr85XX",
+        "zone": "ZONE_ATL97"
+    },
+    "tags": ["dell", "8g"],
+    "chromeBrowserMachine": {
+        "displayName": "cr85-XXX",
+        "chromePlatform": "Dell_R720",
+        "deploymentTicket": "846026XX",
+        "description": "adding a machine cr85-XXX",
+        "kvmInterface": {
+            "kvm": "ax101-kvm1",
+            "port": 34
+        },
+        "rpmInterface": {
+            "rpm": "rpm-23",
+            "port": 65
+        }
+    }
 }
 
 Example OS machine:
 {
-	"name": "machine-OSLAB-example",
-	"location": {
-		"zone": "ZONE_ATLANTA",
-		"aisle": "1",
-		"row": "2",
-		"rack": "Rack-42",
-		"rackNumber": "42",
-		"shelf": "3",
-		"position": "5"
-	},
-	"serialNumber" : "XXX",
-	"chromeosMachine": {},
-	"realm": "OSlab"
+    "name": "machine-OSLAB-example",
+    "location": {
+        "zone": "ZONE_ATLANTA",
+        "aisle": "1",
+        "row": "2",
+        "rack": "Rack-42",
+        "rackNumber": "42",
+        "shelf": "3",
+        "position": "5"
+    },
+    "serialNumber" : "XXX",
+    "chromeosMachine": {}
 }
 
 The protobuf definition of machine is part of
@@ -383,156 +378,151 @@ This file must contain one machine deployment JSON message
 
 Example host for a browser machine:
 {
-	"name": "A-Browser-Host-1",
-	"machineLsePrototype": "browser-lab:vm",
-	"hostname": "A-Browser-Host-1",
-	"chromeBrowserMachineLse": {
-		"vms": [
-			{
-				"name": "Windows8.0",
-				"osVersion": {
-					"value": "8.0",
-				},
-				"macAddress": "2.44.65.23",
-				"hostname": "Windows8-lab1"
-			},
-			{
-				"name": "Linux3.4",
-				"osVersion": {
-					"value": "3.4",
-				},
-				"macAddress": "32.45.12.32",
-				"hostname": "Ubuntu-lab2"
-			}
-		],
-		"vmCapacity": 3,
-		"osVersion": {
-			"value": "3.4",
-		},
-	}
+    "name": "esx-380XXX",
+    "machineLsePrototype": "browser-lab:vm",
+    "hostname": "esx-380XXX",
+    "tags": ["dell", "8g"],
+    "nic": "cr151-16-macproXXX:eth0",
+    "chromeBrowserMachineLse": {
+        "vms": [{
+            "name": "vm991-m4XXX",
+            "osVersion": {
+                "value": "macOS_10.13.6_(17G65)",
+                "description": "Windows Server"
+            },
+            "macAddress": "ab:cd:ab:cd:ab:cd",
+            "hostname": "vm991-m4XXX",
+            "tags": ["dell", "8g"]
+        }],
+        "vmCapacity": 3,
+        "osVersion": {
+            "value": "ESXi_6.7.0XXX",
+            "description": "Windows Server"
+        }
+    }
 }
 
 Example host(DUT) for an OS machine:
 {
-	"name": "chromeos3-row2-rack3-host5",
-	"machineLsePrototype": "acs-lab:wifi",
-	"hostname": "chromeos3-row2-rack3-host5",
-	"chromeosMachineLse": {
-		"deviceLse": {
-			"dut": {
-				"hostname": "chromeos3-row2-rack3-host5",
-				"peripherals": {
-					"servo": {
-						"servoHostname": "chromeos3-row6-rack6-labstation6",
-						"servoPort": 12,
-						"servoSerial": "1234",
-						"servoType": "V3"
-					},
-					"chameleon": {
-						"chameleonPeripherals": [
-							"CHAMELEON_TYPE_HDMI",
-							"CHAMELEON_TYPE_BT_BLE_HID"
-						],
-						"audioBoard": true
-					},
-					"rpm": {
-						"powerunitName": "rpm-1",
-						"powerunitOutlet": "23"
-					},
-					"connectedCamera": [{
-							"cameraType": "CAMERA_HUDDLY"
-						},
-						{
-							"cameraType": "CAMERA_PTZPRO2"
-						},
-						{
-							"cameraType": "CAMERA_HUDDLY"
-						}
-					],
-					"audio": {
-						"audioBox": true,
-						"atrus": true
-					},
-					"wifi": {
-						"wificell": true,
-						"antennaConn": "CONN_OTA",
-						"router": "ROUTER_802_11AX"
-					},
-					"touch": {
-						"mimo": true
-					},
-					"carrier": "Att",
-					"camerabox": true,
-					"chaos": true,
-					"cable": [{
-							"type": "CABLE_USBAUDIO"
-						},
-						{
-							"type": "CABLE_USBPRINTING"
-						}
-					],
-					"cameraboxInfo": {
-						"facing": "FACING_FRONT"
-					}
-				},
-				"pools": [
-					"ATL-LAB_POOL",
-					"ACS_QUOTA"
-				]
-			},
-			"rpmInterface": {
-				"rpm": "rpm-asset-tag-123",
-				"port": 23
-			},
-			"networkDeviceInterface": {
-				"switch": "switch-1",
-				"port": 23
-			}
-		}
-	}
+    "name": "chromeos3-row2-rack3-host5",
+    "machineLsePrototype": "acs-lab:wifi",
+    "hostname": "chromeos3-row2-rack3-host5",
+    "chromeosMachineLse": {
+        "deviceLse": {
+            "dut": {
+                "hostname": "chromeos3-row2-rack3-host5",
+                "peripherals": {
+                    "servo": {
+                        "servoHostname": "chromeos3-row6-rack6-labstation6",
+                        "servoPort": 12,
+                        "servoSerial": "1234",
+                        "servoType": "V3"
+                    },
+                    "chameleon": {
+                        "chameleonPeripherals": [
+                            "CHAMELEON_TYPE_HDMI",
+                            "CHAMELEON_TYPE_BT_BLE_HID"
+                        ],
+                        "audioBoard": true
+                    },
+                    "rpm": {
+                        "powerunitName": "rpm-1",
+                        "powerunitOutlet": "23"
+                    },
+                    "connectedCamera": [{
+                            "cameraType": "CAMERA_HUDDLY"
+                        },
+                        {
+                            "cameraType": "CAMERA_PTZPRO2"
+                        },
+                        {
+                            "cameraType": "CAMERA_HUDDLY"
+                        }
+                    ],
+                    "audio": {
+                        "audioBox": true,
+                        "atrus": true
+                    },
+                    "wifi": {
+                        "wificell": true,
+                        "antennaConn": "CONN_OTA",
+                        "router": "ROUTER_802_11AX"
+                    },
+                    "touch": {
+                        "mimo": true
+                    },
+                    "carrier": "Att",
+                    "camerabox": true,
+                    "chaos": true,
+                    "cable": [{
+                            "type": "CABLE_USBAUDIO"
+                        },
+                        {
+                            "type": "CABLE_USBPRINTING"
+                        }
+                    ],
+                    "cameraboxInfo": {
+                        "facing": "FACING_FRONT"
+                    }
+                },
+                "pools": [
+                    "ATL-LAB_POOL",
+                    "ACS_QUOTA"
+                ]
+            },
+            "rpmInterface": {
+                "rpm": "rpm-asset-tag-123",
+                "port": 23
+            },
+            "networkDeviceInterface": {
+                "switch": "switch-1",
+                "port": 23
+            }
+        }
+    }
 }
 
 Example host(Labstation) for an OS machine:
 {
-	"name": "chromeos3-row6-rack6-labstation6",
-	"hostname": "chromeos3-row6-rack6-labstation6",
-	"chromeosMachineLse": {
-		"deviceLse": {
-			"labstation": {
-				"hostname": "chromeos3-row6-rack6-labstation6",
-				"servos": [],
-				"rpm": {
-					"powerunitName": "rpm-1",
-					"powerunitOutlet": "23"
-				},
-				"pools": [
-					"ACS_POOL",
-					"ACS_QUOTA"
-				]
-			},
-			"rpmInterface": {
-				"rpm": "rpm-asset-tag-123",
-				"port": 23
-			},
-			"networkDeviceInterface": {
-				"switch": "switch-1",
-				"port": 23
-			}
-		}
-	}
+    "name": "chromeos3-row6-rack6-labstation6",
+    "hostname": "chromeos3-row6-rack6-labstation6",
+    "chromeosMachineLse": {
+        "deviceLse": {
+            "labstation": {
+                "hostname": "chromeos3-row6-rack6-labstation6",
+                "servos": [],
+                "rpm": {
+                    "powerunitName": "rpm-1",
+                    "powerunitOutlet": "23"
+                },
+                "pools": [
+                    "ACS_POOL",
+                    "ACS_QUOTA"
+                ]
+            },
+            "rpmInterface": {
+                "rpm": "rpm-asset-tag-123",
+                "port": 23
+            },
+            "networkDeviceInterface": {
+                "switch": "switch-1",
+                "port": 23
+            }
+        }
+    }
 }
 
 Example host(Caching server/Dev server/VM server) for an OS machine:
 {
-	"name": "A-ChromeOS-Server",
-	"machineLsePrototype": "acs-lab:qwer",
-	"hostname": "DevServer-1",
-	"chromeosMachineLse": {
-		"serverLse": {
-			"supportedRestrictedVlan": "vlan-1",
-			"service_port": 23
-		}
-	}
+    "name": "A-ChromeOS-Server",
+    "machineLsePrototype": "acs-lab:qwer",
+    "hostname": "DevServer-1",
+    "chromeosMachineLse": {
+        "serverLse": {
+            "supportedRestrictedVlan": "vlan-1",
+            "service_port": 23
+        }
+    }
 }
 
 The protobuf definition of a deployed machine is part of
@@ -591,18 +581,19 @@ This file must contain one machine prototype JSON message
 
 Example prototype for machine deployment:
 {
-	"name": "browser-lab:vm",
-	"peripheralRequirements": [{
-		"peripheralType": "PERIPHERAL_TYPE_SWITCH",
-		"min": 5,
-		"max": 7
-	}],
-	"occupiedCapacityRu": 32,
-	"virtualRequirements": [{
-		"virtualType": "VIRTUAL_TYPE_VM",
-		"min": 3,
-		"max": 4
-	}]
+    "name": "browser-lab:vm",
+    "peripheralRequirements": [{
+        "peripheralType": "PERIPHERAL_TYPE_SWITCH",
+        "min": 5,
+        "max": 7
+    }],
+    "occupiedCapacityRu": 32,
+    "virtualRequirements": [{
+        "virtualType": "VIRTUAL_TYPE_VM",
+        "min": 3,
+        "max": 4
+    }],
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of prototype for machine deployment is part of
@@ -648,12 +639,13 @@ This file must contain one rack prototype JSON message
 
 Example prototype for rack deployment:
 {
-	"name": "browser-lab:vm",
-	"peripheralRequirements": [{
-		"peripheralType": "PERIPHERAL_TYPE_SWITCH",
-		"min": 5,
-		"max": 7
-	}]
+    "name": "browser-lab:vm",
+    "peripheralRequirements": [{
+        "peripheralType": "PERIPHERAL_TYPE_SWITCH",
+        "min": 5,
+        "max": 7
+    }],
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of prototype for rack deployment is part of
@@ -741,10 +733,10 @@ This file must contain one platform JSON message
 
 Example platform configuration:
 {
-	"name": "Dell_Signia",
-	"manufacturer": "Dell",
-	"description": "Dell x86 platform",
-	"tags": ["dell", "8g"]
+    "name": "Dell_Signia",
+    "manufacturer": "Dell",
+    "description": "Dell x86 platform",
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of platform configuration for browser machine is part of
@@ -785,16 +777,17 @@ This file must contain one nic JSON message
 
 Example nic:
 {
-	"name": "nic-23",
-	"macAddress": "00:0d:5d:10:64:8d",
-	"switchInterface": {
-		"switch": "switch-12",
-		"port": 15
-	}
+    "name": "nic-23",
+    "macAddress": "00:0d:5d:10:64:8d",
+    "switchInterface": {
+        "switch": "switch-12",
+        "port": 15
+    },
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of nic is part of
-https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/peripherals.proto`
+https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/network.proto`
 
 	// AddDracLongDesc long description for AddDracCmd
 	AddDracLongDesc string = `Add a drac to UFS.
@@ -838,14 +831,15 @@ This file must contain one drac JSON message
 
 Example drac:
 {
-	"name": "drac-23",
-	"displayName": "Cisco Drac",
-	"macAddress": "00:0d:5d:10:64:8d",
-	"switchInterface": {
-		"switch": "switch-12",
-		"port": 15
-	},
-	"password": "WelcomeDrac***"
+    "name": "drac-23",
+    "displayName": "Cisco Drac",
+    "macAddress": "00:0d:5d:10:64:8d",
+    "switchInterface": {
+        "switch": "switch-12",
+        "port": 15
+    },
+    "password": "WelcomeDrac***",
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of drac is part of
@@ -886,10 +880,11 @@ This file must contain one kvm JSON message
 
 Example kvm:
 {
-	"name": "kvm-23",
-	"macAddress": "00:0d:5d:10:64:8d",
-	"chromePlatform": "Gigabyte_R181-T92",
-	"capacityPort": 48
+    "name": "cx101-kvm1XXX",
+    "macAddress": "00:0d:5d:0f:54:ed",
+    "chromePlatform": "Raritan_DKX3",
+    "capacityPort": 48,
+    "tags": ["dell", "8g"]
 }
 
 The protobuf definition of kvm is part of
@@ -936,35 +931,48 @@ Fetches 5 racks and prints the output in JSON format
 	RackRegistrationFileText string = `[JSON Mode] Path to a file containing rack creation request specification in JSON format.
 This file must contain required rack field and optional switches/kvms/rpms fields.
 
-Example rack creation request:
+Example browser rack creation request:
 {
-	"rack": {
-		"name": "rack-23",
-		"location": {
-			"zone": "ZONE_MTV97"
-		},
-		"capacity_ru": 5,
-		"chromeBrowserRack": {
-			"switchObjects": [{
-					"name": "switch-23",
-					"capacityPort": 456
-				}
-			],
-			"kvmObjects": [{
-					"name": "kvm-23",
-					"macAddress": "00:0d:5d:10:64:8d",
-					"chromePlatform": "Gigabyte_R181-T92",
-					"capacityPort": 48
-				}
-			],
-			"rpmObjects": [{
-				"name": "rpm-23",
-				"macAddress": "00:0d:5d:10:64:8d",
-				"capacityPort": 48
-			}]
-		},
-		"realm": "Browserlab"
-	}
+    "name": "cr82",
+    "location": {
+        "rack": "cr82",
+        "zone": "ZONE_ATL97"
+    },
+    "capacity_ru": 5,
+    "tags": ["dell", "8g"],
+    "chromeBrowserRack": {
+        "kvmObjects": [{
+            "name": "cr82-kvm1",
+            "macAddress": "00:0d:5d:11:63:2a",
+            "chromePlatform": "Raritan_DKX3",
+            "capacityPort": 48,
+            "tags": ["dell", "8g"]
+        }],
+        "switchObjects": [{
+            "name": "eq079.atl97",
+            "capacityPort": 48,
+            "description": "Arista Networks DCS-7050T-52",
+            "tags": ["dell", "8g"]
+        }],
+        "rpmObjects": [{
+            "name": "rpm-23",
+            "macAddress": "00:0d:5d:10:64:8d",
+            "capacityPort": 48,
+            "tags": ["dell", "8g"]
+        }]
+    }
+}
+
+Example OS rack:
+{
+    "name": "cr82XXX",
+    "location": {
+        "rack": "cr82XXX",
+        "zone": "ZONE_CHROMEOS1"
+    },
+    "capacity_ru": 5,
+    "tags": ["dell", "8g"],
+    "chromeosRack": {}
 }
 
 The protobuf definition can be found here:
@@ -980,23 +988,26 @@ This file must contain one rack JSON message
 
 Example Browser rack:
 {
-	"name": "rack-BROWSERLAB-example",
-	"location": {
-		"zone": "ZONE_MTV97"
-	},
-	"capacity_ru": 5,
-	"chromeBrowserRack": {},
-	"realm": "Browserlab"
+    "name": "cr82XXX",
+    "location": {
+        "rack": "cr82XXX",
+        "zone": "ZONE_ATL97"
+    },
+    "capacity_ru": 5,
+    "tags": ["dell", "8g"],
+    "chromeBrowserRack": {}
 }
 
+Example OS rack:
 {
-	"name": "rack-OSLAB-example",
-	"location": {
-		"zone": "ZONE_CHROMEOS1"
-	},
-	"capacity_ru": 5,
-	"chromeosRack": {},
-	"realm": "OSlab"
+    "name": "cr82XXX",
+    "location": {
+        "rack": "cr82XXX",
+        "zone": "ZONE_CHROMEOS1"
+    },
+    "capacity_ru": 5,
+    "tags": ["dell", "8g"],
+    "chromeosRack": {}
 }
 
 The protobuf definition of rack is part of
@@ -1086,20 +1097,20 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEPrototypeFilterHelp help text for list MachineLSEPrototype filtering
-	MachineLSEPrototypeFilterHelp string = FilterText + `You can filter machineprototypes by tag` +
-		`Filter format Egs:
+	MachineLSEPrototypeFilterHelp string = FilterText + `You can filter machineprototypes by tag
+Filter format Egs:
 'tag=acs,wificell'
 'tag=browser` + FilterCondition
 
 	// RackLSEPrototypeFilterHelp help text for list RackLSEPrototype filtering
-	RackLSEPrototypeFilterHelp string = FilterText + `You can filter rackprototypes by tag` +
-		`Filter format Egs:
+	RackLSEPrototypeFilterHelp string = FilterText + `You can filter rackprototypes by tag
+Filter format Egs:
 'tag=acs'
 'tag=browser` + FilterCondition
 
 	// ChromePlatformFilterHelp help text for list ChromePlatform filtering
-	ChromePlatformFilterHelp string = FilterText + `You can filter platforms by man(manufacturer)/tag` +
-		`Filter format Egs:
+	ChromePlatformFilterHelp string = FilterText + `You can filter platforms by man(manufacturer)/tag
+Filter format Egs:
 'tag=dell, 8g'
 'tag=iphone & man=Apple` + FilterCondition
 
