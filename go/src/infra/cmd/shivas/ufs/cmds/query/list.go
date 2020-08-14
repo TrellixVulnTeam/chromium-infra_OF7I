@@ -31,8 +31,10 @@ type list struct {
 var ListCmd = &subcommands.Command{
 	UsageLine: "list <sub-command>",
 	ShortDesc: "List entries for hardware asset/deployed asset/configuration",
-	LongDesc: `List entries for hardware asset(machine/rack/kvm/rpm/switch/drac/nic)
-or deployed machine/rack or configuration(machine-prototype/rack-prototype/chromeplatform)`,
+	LongDesc: `List entries for:
+	machine/rack/kvm/rpm/switch/drac/nic
+	host/vm/vm-slots
+	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &list{}
 		return c

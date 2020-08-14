@@ -122,12 +122,14 @@ func (c *getSwitch) printFull(ctx context.Context, ic ufsAPI.FleetClient, sw *uf
 func (c *getSwitch) print(sw *ufspb.Switch) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(sw)
-	} else {
-		if !c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.SwitchTitle)
-		}
-		utils.PrintSwitches([]*ufspb.Switch{sw}, false)
+		return nil
 	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVSwitches([]*ufspb.Switch{sw}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.SwitchTitle)
+	utils.PrintSwitches([]*ufspb.Switch{sw}, false)
 	return nil
 }
 

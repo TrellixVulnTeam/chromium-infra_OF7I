@@ -81,7 +81,7 @@ func (c *listChromePlatform) innerRun(a subcommands.Application, args []string, 
 	return utils.PrintListTableFormat(ctx, ic, printChromePlatforms, false, int32(c.pageSize), c.filter, c.keysOnly, utils.ChromePlatformTitle, c.outputFlags.Tsv())
 }
 
-func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListChromePlatformsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,6 +94,8 @@ func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool,
 	}
 	if json {
 		utils.PrintChromePlatformsJSON(res.ChromePlatforms)
+	} else if tsv {
+		utils.PrintTSVPlatforms(res.ChromePlatforms, keysOnly)
 	} else {
 		utils.PrintChromePlatforms(res.ChromePlatforms, keysOnly)
 	}

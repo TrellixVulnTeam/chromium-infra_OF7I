@@ -31,8 +31,10 @@ type get struct {
 var GetCmd = &subcommands.Command{
 	UsageLine: "get <sub-command>",
 	ShortDesc: "Get details of asset/configuration by name or deployed machine/rack by hostname",
-	LongDesc: `Get details of an asset(machine/rack/kvm/rpm/switch/drac/nic)
-or configuration(machine-prototype/rack-prototype/chromeplatform) by name or a deployed machine/rack by hostname.`,
+	LongDesc: `Get details for
+	machine/rack/kvm/rpm/switch/drac/nic
+	host/vm
+	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &get{}
 		return c

@@ -114,12 +114,14 @@ func (c *getHost) printFull(ctx context.Context, ic ufsAPI.FleetClient, lse *ufs
 func (c *getHost) print(lse *ufspb.MachineLSE) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(lse)
-	} else {
-		if !c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.MachineLSETitle)
-		}
-		utils.PrintMachineLSEs([]*ufspb.MachineLSE{lse}, false)
+		return nil
 	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVMachineLSEs([]*ufspb.MachineLSE{lse}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.MachineLSETitle)
+	utils.PrintMachineLSEs([]*ufspb.MachineLSE{lse}, false)
 	return nil
 }
 

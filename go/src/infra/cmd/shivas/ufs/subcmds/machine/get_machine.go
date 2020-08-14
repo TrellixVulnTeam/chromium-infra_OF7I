@@ -7,7 +7,7 @@ package machine
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	//"fmt"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"
@@ -71,7 +71,7 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 	}
 	e := c.envFlags.Env()
 	if c.commonFlags.Verbose() {
-		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+		//fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
@@ -106,11 +106,11 @@ func (c *getMachine) printFull(ctx context.Context, ic ufsAPI.FleetClient, machi
 	res, err := ic.ListMachineLSEs(ctx, req)
 	if err != nil {
 		if c.commonFlags.Verbose() {
-			fmt.Printf("Failed to get host for the machine: %s", err)
+			//fmt.Printf("Failed to get host for the machine: %s", err)
 		}
 	} else {
 		if c.commonFlags.Verbose() && len(res.MachineLSEs) > 1 {
-			fmt.Printf("More than one host associated with this machine. Data discrepancy warning.\n%s\n", res.MachineLSEs)
+			//fmt.Printf("More than one host associated with this machine. Data discrepancy warning.\n%s\n", res.MachineLSEs)
 		}
 		if len(res.GetMachineLSEs()) > 0 {
 			lse = res.GetMachineLSEs()[0]
@@ -139,14 +139,16 @@ func (c *getMachine) print(machine *ufspb.Machine) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(machine)
 	} else {
-		if !c.outputFlags.Tsv() {
+		if c.outputFlags.Tsv() {
+			utils.PrintTSVMachines([]*ufspb.Machine{machine}, false)
+		} else {
 			if machine.GetChromeBrowserMachine() != nil {
 				utils.PrintTitle(utils.MachineTitle)
 			} else if machine.GetChromeosMachine() != nil {
 				utils.PrintTitle(utils.OSMachineFullTitle)
 			}
+			utils.PrintMachines([]*ufspb.Machine{machine}, false)
 		}
-		utils.PrintMachines([]*ufspb.Machine{machine}, false)
 	}
 	return nil
 }
@@ -184,11 +186,11 @@ func printMachineJSONFull(machine *ufspb.Machine, machinelse *ufspb.MachineLSE, 
 	}
 	machineout["rack"] = rackout
 
-	outputJSON, err := json.MarshalIndent(machineout, "", "\t")
-	if err != nil {
-		return errors.Annotate(err, "Failed to marshal final machine output").Err()
-	}
-	fmt.Printf("%s", outputJSON)
-	fmt.Println()
+	//outputJSON, err := json.MarshalIndent(machineout, "", "\t")
+	//if err != nil {
+	//	return errors.Annotate(err, "Failed to marshal final machine output").Err()
+	//}
+	//fmt.Printf("%s", outputJSON)
+	//fmt.Println()
 	return nil
 }

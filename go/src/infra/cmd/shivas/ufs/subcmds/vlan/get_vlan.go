@@ -83,14 +83,20 @@ func (c *getVlan) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	return c.print(res)
+}
+
+func (c *getVlan) print(vlan *ufspb.Vlan) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(res)
-	} else {
-		if !c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.VlanTitle)
-		}
-		utils.PrintVlans([]*ufspb.Vlan{res}, false)
+		utils.PrintProtoJSON(vlan)
+		return nil
 	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVVlans([]*ufspb.Vlan{vlan}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.VlanTitle)
+	utils.PrintVlans([]*ufspb.Vlan{vlan}, false)
 	return nil
 }
 

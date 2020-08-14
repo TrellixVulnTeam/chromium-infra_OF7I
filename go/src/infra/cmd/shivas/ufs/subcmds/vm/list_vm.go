@@ -79,7 +79,7 @@ func (c *listVM) innerRun(a subcommands.Application, args []string, env subcomma
 	return utils.PrintListJSONFormat(ctx, ic, printVMs, true, int32(c.pageSize), c.filter, c.keysOnly)
 }
 
-func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListVMsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -90,10 +90,12 @@ func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize in
 	if err != nil {
 		return "", err
 	}
-	if !json {
-		utils.PrintVMs(res.GetVms(), keysOnly)
-	} else {
+	if json {
 		utils.PrintVMsJSON(res.GetVms())
+	} else if tsv {
+		utils.PrintTSVVMs(res.GetVms(), keysOnly)
+	} else {
+		utils.PrintVMs(res.GetVms(), keysOnly)
 	}
 	return res.GetNextPageToken(), nil
 }

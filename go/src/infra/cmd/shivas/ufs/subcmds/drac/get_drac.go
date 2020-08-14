@@ -111,10 +111,12 @@ func (c *getDrac) print(drac *ufspb.Drac) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(drac)
 	} else {
-		if !c.outputFlags.Tsv() {
+		if c.outputFlags.Tsv() {
+			utils.PrintTSVDracs([]*ufspb.Drac{drac}, false)
+		} else {
 			utils.PrintTitle(utils.DracTitle)
+			utils.PrintDracs([]*ufspb.Drac{drac}, false)
 		}
-		utils.PrintDracs([]*ufspb.Drac{drac}, false)
 	}
 	return nil
 }

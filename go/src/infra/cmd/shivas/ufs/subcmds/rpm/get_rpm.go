@@ -15,6 +15,7 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -34,6 +35,7 @@ Gets the rpm and prints the output in JSON format.`,
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
+		c.outputFlags.Register(&c.Flags)
 		return c
 	},
 }
@@ -43,6 +45,7 @@ type getRPM struct {
 	authFlags   authcli.Flags
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
+	outputFlags site.OutputFlags
 }
 
 func (c *getRPM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -79,8 +82,20 @@ func (c *getRPM) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
-	fmt.Println()
+	return c.print(res)
+}
+
+func (c *getRPM) print(rpm *ufspb.RPM) error {
+	if c.outputFlags.JSON() {
+		utils.PrintProtoJSON(rpm)
+		return nil
+	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVRPMs([]*ufspb.RPM{rpm}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.RpmTitle)
+	utils.PrintRPMs([]*ufspb.RPM{rpm}, false)
 	return nil
 }
 

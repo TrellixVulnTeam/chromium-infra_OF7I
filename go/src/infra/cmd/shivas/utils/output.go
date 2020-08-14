@@ -54,7 +54,7 @@ var (
 	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Zone", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Rack", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
-	MachineLSETFullitle = []string{"Host", "OS Version", "Machine", "Zone", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -66,7 +66,7 @@ var tw = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 // The io writer for json output
 var bw = bufio.NewWriter(os.Stdout)
 
-type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool) (string, error)
+type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool) (string, error)
 
 // PrintListJSONFormat prints the list output in JSON format
 func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, keysOnly bool) error {
@@ -74,7 +74,7 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 	fmt.Print("[")
 	if pageSize == 0 {
 		for {
-			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly)
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly, false)
 			if err != nil {
 				return err
 			}
@@ -92,7 +92,7 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 			} else {
 				size = ufsUtil.MaxPageSize
 			}
-			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly)
+			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly, false)
 			if err != nil {
 				return err
 			}
@@ -120,7 +120,7 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 	var pageToken string
 	if pageSize == 0 {
 		for {
-			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly)
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly, tsv)
 			if err != nil {
 				return err
 			}
@@ -137,7 +137,7 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 			} else {
 				size = ufsUtil.MaxPageSize
 			}
-			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly)
+			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly, tsv)
 			if err != nil {
 				return err
 			}
@@ -198,22 +198,31 @@ func PrintSwitchFull(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) {
 	fmt.Fprintln(tw, out)
 }
 
-func printSwitch(s *ufspb.Switch, keysOnly bool) {
-	if keysOnly {
-		fmt.Fprintln(tw, ufsUtil.RemovePrefix(s.Name))
-		return
-	}
+func switchOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Switch)
 	var ts string
-	if t, err := ptypes.Timestamp(s.GetUpdateTime()); err == nil {
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	s.Name = ufsUtil.RemovePrefix(s.Name)
-	out := fmt.Sprintf("%s\t", s.GetName())
-	out += fmt.Sprintf("%d\t", s.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", s.GetZone())
-	out += fmt.Sprintf("%s\t", s.GetRack())
-	out += fmt.Sprintf("%s\t", s.GetState())
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		fmt.Sprintf("%d", m.GetCapacityPort()),
+		m.GetZone(),
+		m.GetRack(),
+		m.GetState(),
+		ts,
+	}
+}
+
+func printSwitch(sw *ufspb.Switch, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(sw.Name))
+		return
+	}
+	var out string
+	for _, s := range switchOutputStrs(sw) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -258,23 +267,33 @@ func PrintKVMs(kvms []*ufspb.KVM, keysOnly bool) {
 	}
 }
 
+func kvmOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.KVM)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetMacAddress(),
+		m.GetChromePlatform(),
+		fmt.Sprintf("%d", m.GetCapacityPort()),
+		m.GetZone(),
+		m.GetRack(),
+		m.GetState(),
+		ts,
+	}
+}
+
 func printKVM(kvm *ufspb.KVM, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(kvm.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(kvm.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range kvmOutputStrs(kvm) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(kvm.Name))
-	out += fmt.Sprintf("%s\t", kvm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", kvm.GetChromePlatform())
-	out += fmt.Sprintf("%d\t", kvm.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", kvm.GetZone())
-	out += fmt.Sprintf("%s\t", kvm.GetRack())
-	out += fmt.Sprintf("%s\t", kvm.GetState())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -299,19 +318,32 @@ func PrintRPMs(rpms []*ufspb.RPM, keysOnly bool) {
 	}
 }
 
+func rpmOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.RPM)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetMacAddress(),
+		fmt.Sprintf("%d", m.GetCapacityPort()),
+		m.GetZone(),
+		m.GetRack(),
+		m.GetState(),
+		ts,
+	}
+}
+
 func printRPM(rpm *ufspb.RPM, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(rpm.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(rpm.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range rpmOutputStrs(rpm) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(rpm.Name))
-	out += fmt.Sprintf("%s\t", rpm.GetMacAddress())
-	out += fmt.Sprintf("%d\t", rpm.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -357,25 +389,35 @@ func PrintDracs(dracs []*ufspb.Drac, keysOnly bool) {
 	}
 }
 
+func dracOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Drac)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.Name),
+		m.GetDisplayName(),
+		m.GetMacAddress(),
+		m.GetSwitchInterface().GetSwitch(),
+		m.GetSwitchInterface().GetPortName(),
+		m.GetPassword(),
+		m.GetZone(),
+		m.GetRack(),
+		m.GetMachine(),
+		ts,
+	}
+}
+
 func printDrac(drac *ufspb.Drac, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(drac.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(drac.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range dracOutputStrs(drac) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(drac.Name))
-	out += fmt.Sprintf("%s\t", drac.GetDisplayName())
-	out += fmt.Sprintf("%s\t", drac.GetMacAddress())
-	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetSwitch())
-	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetPortName())
-	out += fmt.Sprintf("%s\t", drac.GetPassword())
-	out += fmt.Sprintf("%s\t", drac.GetZone())
-	out += fmt.Sprintf("%s\t", drac.GetRack())
-	out += fmt.Sprintf("%s\t", drac.GetMachine())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -421,23 +463,33 @@ func PrintNics(nics []*ufspb.Nic, keysOnly bool) {
 	}
 }
 
+func nicOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Nic)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetMacAddress(),
+		m.GetSwitchInterface().GetSwitch(),
+		m.GetSwitchInterface().GetPortName(),
+		m.GetZone(),
+		m.GetRack(),
+		m.GetMachine(),
+		ts,
+	}
+}
+
 func printNic(nic *ufspb.Nic, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(nic.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(nic.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range nicOutputStrs(nic) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(nic.Name))
-	out += fmt.Sprintf("%s\t", nic.GetMacAddress())
-	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetSwitch())
-	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetPortName())
-	out += fmt.Sprintf("%s\t", nic.GetZone())
-	out += fmt.Sprintf("%s\t", nic.GetRack())
-	out += fmt.Sprintf("%s\t", nic.GetMachine())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -509,28 +561,37 @@ func PrintMachines(machines []*ufspb.Machine, keysOnly bool) {
 	}
 }
 
-func printMachine(m *ufspb.Machine, keysOnly bool) {
-	m.Name = ufsUtil.RemovePrefix(m.Name)
-	if keysOnly {
-		fmt.Fprintln(tw, m.GetName())
-		return
-	}
+func machineOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Machine)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetSerialNumber())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")))
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDracObject().GetName())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDeploymentTicket())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDescription())
-	out += fmt.Sprintf("%s\t", m.GetState())
-	out += fmt.Sprintf("%s\t", m.GetRealm())
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetSerialNumber(),
+		m.GetLocation().GetZone().String(),
+		m.GetLocation().GetRack(),
+		m.GetChromeBrowserMachine().GetChromePlatform(),
+		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")),
+		m.GetChromeBrowserMachine().GetDracObject().GetName(),
+		m.GetChromeBrowserMachine().GetDeploymentTicket(),
+		m.GetChromeBrowserMachine().GetDescription(),
+		m.GetState(),
+		m.GetRealm(),
+		ts,
+	}
+}
+
+func printMachine(m *ufspb.Machine, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
+	var out string
+	for _, s := range machineOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -555,32 +616,41 @@ func PrintMachineLSEPrototypes(msleps []*ufspb.MachineLSEPrototype, keysOnly boo
 	}
 }
 
-func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype, keysOnly bool) {
-	if keysOnly {
-		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
-		return
-	}
+func machineLSEPrototypeOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.MachineLSEPrototype)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	m.Name = ufsUtil.RemovePrefix(m.Name)
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%d\t", m.GetOccupiedCapacityRu())
+	res := []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		fmt.Sprintf("%d", m.GetOccupiedCapacityRu()),
+	}
 	prs := m.GetPeripheralRequirements()
 	var peripheralTypes string
 	for _, pr := range prs {
 		peripheralTypes += fmt.Sprintf("%s,", pr.GetPeripheralType())
 	}
-	out += fmt.Sprintf("%s\t", strings.TrimSuffix(peripheralTypes, ","))
-	vms := m.GetVirtualRequirements()
+	res = append(res, strings.TrimSuffix(peripheralTypes, ","))
 	var virtualTypes string
-	for _, vm := range vms {
+	for _, vm := range m.GetVirtualRequirements() {
 		virtualTypes += fmt.Sprintf("%s,", vm.GetVirtualType())
 	}
-	out += fmt.Sprintf("%s\t", strings.TrimSuffix(virtualTypes, ","))
-	out += fmt.Sprintf("%s\t", m.GetTags())
-	out += fmt.Sprintf("%s\t", ts)
+	res = append(res, strings.TrimSuffix(virtualTypes, ","))
+	res = append(res, fmt.Sprintf("%s", m.GetTags()))
+	res = append(res, ts)
+	return res
+}
+
+func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype, keysOnly bool) {
+	if keysOnly {
+		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
+		return
+	}
+	var out string
+	for _, s := range machineLSEPrototypeOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -605,25 +675,32 @@ func PrintRackLSEPrototypes(msleps []*ufspb.RackLSEPrototype, keysOnly bool) {
 	}
 }
 
+func rackLSEPrototypeOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.RackLSEPrototype)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	res := []string{ufsUtil.RemovePrefix(m.GetName())}
+	var peripheralTypes string
+	for _, pr := range m.GetPeripheralRequirements() {
+		peripheralTypes += fmt.Sprintf("%s,", pr.GetPeripheralType())
+	}
+	res = append(res, strings.TrimSuffix(peripheralTypes, ","))
+	res = append(res, fmt.Sprintf("%s", m.GetTags()))
+	res = append(res, ts)
+	return res
+}
+
 func printRackLSEPrototype(m *ufspb.RackLSEPrototype, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range rackLSEPrototypeOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	m.Name = ufsUtil.RemovePrefix(m.Name)
-	out := fmt.Sprintf("%s\t", m.GetName())
-	prs := m.GetPeripheralRequirements()
-	var peripheralTypes string
-	for _, pr := range prs {
-		peripheralTypes += fmt.Sprintf("%s,", pr.GetPeripheralType())
-	}
-	out += fmt.Sprintf("%s\t", strings.TrimSuffix(peripheralTypes, ","))
-	out += fmt.Sprintf("%s\t", m.GetTags())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -661,22 +738,31 @@ func PrintVlans(vs []*ufspb.Vlan, keysOnly bool) {
 	}
 }
 
+func vlanOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Vlan)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetVlanAddress(),
+		fmt.Sprintf("%d", m.GetCapacityIp()),
+		m.GetDescription(),
+		m.GetState(),
+		ts,
+	}
+}
+
 func printVlan(m *ufspb.Vlan, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range vlanOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	m.Name = ufsUtil.RemovePrefix(m.Name)
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetVlanAddress())
-	out += fmt.Sprintf("%d\t", m.GetCapacityIp())
-	out += fmt.Sprintf("%s\t", m.GetDescription())
-	out += fmt.Sprintf("%s\t", m.GetState())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -688,20 +774,29 @@ func PrintChromePlatforms(msleps []*ufspb.ChromePlatform, keysOnly bool) {
 	}
 }
 
+func platformOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.ChromePlatform)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetManufacturer(),
+		m.GetDescription(),
+		ts,
+	}
+}
+
 func printChromePlatform(m *ufspb.ChromePlatform, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range platformOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	m.Name = ufsUtil.RemovePrefix(m.Name)
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetManufacturer())
-	out += fmt.Sprintf("%s\t", m.GetDescription())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -740,6 +835,7 @@ func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *uf
 	}
 	out := fmt.Sprintf("%s\t", lse.GetName())
 	out += fmt.Sprintf("%s\t", lse.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
+	out += fmt.Sprintf("%s\t", lse.GetManufacturer())
 	out += fmt.Sprintf("%s\t", machine.GetName())
 	out += fmt.Sprintf("%s\t", lse.GetZone())
 	out += fmt.Sprintf("%s\t", lse.GetRack())
@@ -762,24 +858,34 @@ func PrintMachineLSEs(machinelses []*ufspb.MachineLSE, keysOnly bool) {
 	}
 }
 
+func machineLSEOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.MachineLSE)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
+		m.GetZone(),
+		m.GetRack(),
+		m.GetNic(),
+		m.GetState(),
+		fmt.Sprintf("%d", m.GetChromeBrowserMachineLse().GetVmCapacity()),
+		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachineLse().GetVms(), "Name")),
+		ts,
+	}
+}
+
 func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(m.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range machineLSEOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
-	out += fmt.Sprintf("%s\t", m.GetZone())
-	out += fmt.Sprintf("%s\t", m.GetRack())
-	out += fmt.Sprintf("%s\t", m.GetNic())
-	out += fmt.Sprintf("%s\t", m.GetState())
-	out += fmt.Sprintf("%d\t", m.GetChromeBrowserMachineLse().GetVmCapacity())
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachineLse().GetVms(), "Name")))
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -833,24 +939,34 @@ func PrintVMs(vms []*ufspb.VM, keysOnly bool) {
 	}
 }
 
+func vmOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.VM)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetOsVersion().GetValue(),
+		m.GetOsVersion().GetDescription(),
+		m.GetMacAddress(),
+		m.GetZone(),
+		m.GetMachineLseId(),
+		m.GetVlan(),
+		m.GetState(),
+		ts,
+	}
+}
+
 func printVM(vm *ufspb.VM, keysOnly bool) {
 	if keysOnly {
 		fmt.Fprintln(tw, ufsUtil.RemovePrefix(vm.Name))
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(vm.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range vmOutputStrs(vm) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	out := fmt.Sprintf("%s\t", vm.GetName())
-	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
-	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
-	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", vm.GetZone())
-	out += fmt.Sprintf("%s\t", vm.GetMachineLseId())
-	out += fmt.Sprintf("%s\t", vm.GetVlan())
-	out += fmt.Sprintf("%s\t", vm.GetState())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 
@@ -875,25 +991,35 @@ func PrintRacks(racks []*ufspb.Rack, keysOnly bool) {
 	}
 }
 
+func rackOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Rack)
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetLocation().GetZone().String(),
+		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetKvmObjects(), "Name")),
+		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetSwitchObjects(), "Name")),
+		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetRpmObjects(), "Name")),
+		fmt.Sprintf("%d", m.GetCapacityRu()),
+		m.GetState(),
+		m.GetRealm(),
+		ts,
+	}
+}
+
 func printRack(m *ufspb.Rack, keysOnly bool) {
 	m.Name = ufsUtil.RemovePrefix(m.Name)
 	if keysOnly {
 		fmt.Fprintln(tw, m.GetName())
 		return
 	}
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+	var out string
+	for _, s := range rackOutputStrs(m) {
+		out += fmt.Sprintf("%s\t", s)
 	}
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetKvmObjects(), "Name")))
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetSwitchObjects(), "Name")))
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetRpmObjects(), "Name")))
-	out += fmt.Sprintf("%d\t", m.GetCapacityRu())
-	out += fmt.Sprintf("%s\t", m.GetState())
-	out += fmt.Sprintf("%s\t", m.GetRealm())
-	out += fmt.Sprintf("%s\t", ts)
 	fmt.Fprintln(tw, out)
 }
 

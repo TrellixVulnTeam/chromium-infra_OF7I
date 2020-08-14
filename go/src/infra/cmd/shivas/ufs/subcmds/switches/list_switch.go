@@ -81,7 +81,7 @@ func (c *listSwitch) innerRun(a subcommands.Application, args []string, env subc
 	return utils.PrintListTableFormat(ctx, ic, printSwitches, false, int32(c.pageSize), c.filter, c.keysOnly, utils.SwitchTitle, c.outputFlags.Tsv())
 }
 
-func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListSwitchesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,6 +94,8 @@ func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSi
 	}
 	if json {
 		utils.PrintSwitchesJSON(res.Switches)
+	} else if tsv {
+		utils.PrintTSVSwitches(res.Switches, keysOnly)
 	} else {
 		utils.PrintSwitches(res.Switches, keysOnly)
 	}

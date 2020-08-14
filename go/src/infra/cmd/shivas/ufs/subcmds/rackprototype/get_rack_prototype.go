@@ -81,14 +81,20 @@ func (c *getRackLSEPrototype) innerRun(a subcommands.Application, args []string,
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	return c.print(res)
+}
+
+func (c *getRackLSEPrototype) print(lp *ufspb.RackLSEPrototype) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(res)
-	} else {
-		if !c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.RacklseprototypeTitle)
-		}
-		utils.PrintRackLSEPrototypes([]*ufspb.RackLSEPrototype{res}, false)
+		utils.PrintProtoJSON(lp)
+		return nil
 	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVRackLSEPrototypes([]*ufspb.RackLSEPrototype{lp}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.RacklseprototypeTitle)
+	utils.PrintRackLSEPrototypes([]*ufspb.RackLSEPrototype{lp}, false)
 	return nil
 }
 

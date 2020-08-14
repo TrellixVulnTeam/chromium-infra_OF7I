@@ -81,14 +81,20 @@ func (c *getMachineLSEPrototype) innerRun(a subcommands.Application, args []stri
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	return c.print(res)
+}
+
+func (c *getMachineLSEPrototype) print(res *ufspb.MachineLSEPrototype) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(res)
-	} else {
-		if !c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.MachinelseprototypeTitle)
-		}
-		utils.PrintMachineLSEPrototypes([]*ufspb.MachineLSEPrototype{res}, false)
+		return nil
 	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVMachineLSEPrototypes([]*ufspb.MachineLSEPrototype{res}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.MachinelseprototypeTitle)
+	utils.PrintMachineLSEPrototypes([]*ufspb.MachineLSEPrototype{res}, false)
 	return nil
 }
 

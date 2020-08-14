@@ -81,7 +81,7 @@ func (c *listRackLSEPrototype) innerRun(a subcommands.Application, args []string
 	return utils.PrintListTableFormat(ctx, ic, printRackLSEPrototypes, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RacklseprototypeTitle, c.outputFlags.Tsv())
 }
 
-func printRackLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printRackLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListRackLSEPrototypesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,6 +94,8 @@ func printRackLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json boo
 	}
 	if json {
 		utils.PrintRackLSEPrototypesJSON(res.RackLSEPrototypes)
+	} else if tsv {
+		utils.PrintTSVRackLSEPrototypes(res.RackLSEPrototypes, keysOnly)
 	} else {
 		utils.PrintRackLSEPrototypes(res.RackLSEPrototypes, keysOnly)
 	}

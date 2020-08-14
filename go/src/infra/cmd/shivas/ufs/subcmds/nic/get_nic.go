@@ -124,10 +124,12 @@ func (c *getNic) print(nic *ufspb.Nic) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(nic)
 	} else {
-		if !c.outputFlags.Tsv() {
+		if c.outputFlags.Tsv() {
+			utils.PrintTSVNics([]*ufspb.Nic{nic}, false)
+		} else {
 			utils.PrintTitle(utils.NicTitle)
+			utils.PrintNics([]*ufspb.Nic{nic}, false)
 		}
-		utils.PrintNics([]*ufspb.Nic{nic}, false)
 	}
 	return nil
 }

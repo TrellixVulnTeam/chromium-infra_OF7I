@@ -83,7 +83,7 @@ func (c *listHost) innerRun(a subcommands.Application, args []string, env subcom
 	return utils.PrintListJSONFormat(ctx, ic, printMachineLSEs, true, int32(c.pageSize), c.filter, c.keysOnly)
 }
 
-func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListMachineLSEsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,10 +94,12 @@ func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pag
 	if err != nil {
 		return "", err
 	}
-	if !json {
-		utils.PrintMachineLSEs(res.MachineLSEs, keysOnly)
-	} else {
+	if json {
 		utils.PrintMachineLSEsJSON(res.MachineLSEs)
+	} else if tsv {
+		utils.PrintTSVMachineLSEs(res.MachineLSEs, keysOnly)
+	} else {
+		utils.PrintMachineLSEs(res.MachineLSEs, keysOnly)
 	}
 	return res.GetNextPageToken(), nil
 }

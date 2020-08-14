@@ -81,7 +81,7 @@ func (c *listVlan) innerRun(a subcommands.Application, args []string, env subcom
 	return utils.PrintListTableFormat(ctx, ic, printVlans, false, int32(c.pageSize), c.filter, c.keysOnly, utils.VlanTitle, c.outputFlags.Tsv())
 }
 
-func printVlans(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printVlans(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListVlansRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,6 +94,8 @@ func printVlans(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize 
 	}
 	if json {
 		utils.PrintVlansJSON(res.Vlans)
+	} else if tsv {
+		utils.PrintTSVVlans(res.Vlans, keysOnly)
 	} else {
 		utils.PrintVlans(res.Vlans, keysOnly)
 	}

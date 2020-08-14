@@ -82,7 +82,7 @@ func (c *listRack) innerRun(a subcommands.Application, args []string, env subcom
 	return utils.PrintListTableFormat(ctx, ic, printRacks, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RackTitle, c.outputFlags.Tsv())
 }
 
-func printRacks(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printRacks(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListRacksRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -95,6 +95,8 @@ func printRacks(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize 
 	}
 	if json {
 		utils.PrintRacksJSON(res.Racks)
+	} else if tsv {
+		utils.PrintTSVRacks(res.Racks, keysOnly)
 	} else {
 		utils.PrintRacks(res.Racks, keysOnly)
 	}

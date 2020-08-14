@@ -81,7 +81,7 @@ func (c *listRPM) innerRun(a subcommands.Application, args []string, env subcomm
 	return utils.PrintListTableFormat(ctx, ic, printRPMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RpmTitle, c.outputFlags.Tsv())
 }
 
-func printRPMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printRPMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListRPMsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,6 +94,8 @@ func printRPMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize i
 	}
 	if json {
 		utils.PrintRPMsJSON(res.RPMs)
+	} else if tsv {
+		utils.PrintTSVRPMs(res.RPMs, keysOnly)
 	} else {
 		utils.PrintRPMs(res.RPMs, keysOnly)
 	}

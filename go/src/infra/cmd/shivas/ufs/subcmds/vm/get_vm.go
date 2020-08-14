@@ -102,12 +102,14 @@ func (c *getVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, vm *ufspb.
 func (c *getVM) print(vm *ufspb.VM) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(vm)
-	} else {
-		if !c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.VMTitle)
-		}
-		utils.PrintVMs([]*ufspb.VM{vm}, false)
+		return nil
 	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVVMs([]*ufspb.VM{vm}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.VMTitle)
+	utils.PrintVMs([]*ufspb.VM{vm}, false)
 	return nil
 }
 

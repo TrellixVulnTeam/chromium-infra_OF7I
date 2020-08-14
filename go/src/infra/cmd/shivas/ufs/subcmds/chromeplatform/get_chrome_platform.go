@@ -83,14 +83,20 @@ func (c *getChromePlatform) innerRun(a subcommands.Application, args []string, e
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	return c.print(res)
+}
+
+func (c *getChromePlatform) print(res *ufspb.ChromePlatform) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(res)
-	} else {
-		if !c.outputFlags.Tsv() {
-			utils.PrintTitle(utils.ChromePlatformTitle)
-		}
-		utils.PrintChromePlatforms([]*ufspb.ChromePlatform{res}, false)
+		return nil
 	}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVPlatforms([]*ufspb.ChromePlatform{res}, false)
+		return nil
+	}
+	utils.PrintTitle(utils.ChromePlatformTitle)
+	utils.PrintChromePlatforms([]*ufspb.ChromePlatform{res}, false)
 	return nil
 }
 

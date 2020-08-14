@@ -81,7 +81,7 @@ func (c *listKVM) innerRun(a subcommands.Application, args []string, env subcomm
 	return utils.PrintListTableFormat(ctx, ic, printKVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.KvmTitle, c.outputFlags.Tsv())
 }
 
-func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListKVMsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,6 +94,8 @@ func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize i
 	}
 	if json {
 		utils.PrintKVMsJSON(res.KVMs)
+	} else if tsv {
+		utils.PrintTSVKVMs(res.KVMs, keysOnly)
 	} else {
 		utils.PrintKVMs(res.KVMs, keysOnly)
 	}

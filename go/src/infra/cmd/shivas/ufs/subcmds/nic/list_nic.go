@@ -82,7 +82,7 @@ func (c *listNic) innerRun(a subcommands.Application, args []string, env subcomm
 	return utils.PrintListTableFormat(ctx, ic, printNics, false, int32(c.pageSize), c.filter, c.keysOnly, utils.NicTitle, c.outputFlags.Tsv())
 }
 
-func printNics(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool) (string, error) {
+func printNics(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
 	req := &ufsAPI.ListNicsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -95,6 +95,8 @@ func printNics(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize i
 	}
 	if json {
 		utils.PrintNicsJSON(res.Nics)
+	} else if tsv {
+		utils.PrintTSVNics(res.Nics, keysOnly)
 	} else {
 		utils.PrintNics(res.Nics, keysOnly)
 	}

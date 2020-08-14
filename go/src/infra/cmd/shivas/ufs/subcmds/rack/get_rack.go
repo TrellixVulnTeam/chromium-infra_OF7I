@@ -91,10 +91,12 @@ func (c *getRack) print(rack *ufspb.Rack) error {
 	if c.outputFlags.JSON() {
 		utils.PrintProtoJSON(rack)
 	} else {
-		if !c.outputFlags.Tsv() {
+		if c.outputFlags.Tsv() {
+			utils.PrintTSVRacks([]*ufspb.Rack{rack}, false)
+		} else {
 			utils.PrintTitle(utils.RackTitle)
+			utils.PrintRacks([]*ufspb.Rack{rack}, false)
 		}
-		utils.PrintRacks([]*ufspb.Rack{rack}, false)
 	}
 	return nil
 }
