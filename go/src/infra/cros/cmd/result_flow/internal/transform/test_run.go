@@ -67,7 +67,7 @@ func LoadTestRunnerBuild(ctx context.Context, parentUID string, b *bbpb.Build, b
 	op := prop.GetFields()
 	if rValue, ok := op["request"]; ok {
 		if c.req, err = structPBToTestRunnerRequest(rValue); err != nil {
-			return nil, errors.Annotate(err, "failed to extract CTP request").Err()
+			return nil, errors.Annotate(err, "failed to extract test runner request").Err()
 		}
 	}
 	v, ok := getOutputPropertiesValue(b, "compressed_result")

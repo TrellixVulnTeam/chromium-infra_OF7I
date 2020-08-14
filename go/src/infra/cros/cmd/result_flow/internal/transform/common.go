@@ -46,7 +46,8 @@ func unmarshalStructPB(from *structpb.Value, to proto.Message) (proto.Message, e
 	if err != nil {
 		return nil, errors.Annotate(err, "unmarshal Struct PB").Err()
 	}
-	if err := jsonpb.UnmarshalString(json, to); err != nil {
+	unmarshaler := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	if err := unmarshaler.Unmarshal(bytes.NewReader([]byte(json)), to); err != nil {
 		return nil, errors.Annotate(err, "unmarshal Struct PB").Err()
 	}
 	return to, nil
