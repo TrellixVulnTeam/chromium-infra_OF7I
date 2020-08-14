@@ -234,15 +234,19 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 }
 
 // ToMachineLSEs converts crimson data to UFS LSEs.
-func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine) ([]*ufspb.MachineLSE, []*ufspb.VM, []*ufspb.IP, []*ufspb.DHCPConfig) {
+func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine, platforms []*crimson.Platform) ([]*ufspb.MachineLSE, []*ufspb.VM, []*ufspb.IP, []*ufspb.DHCPConfig) {
 	hostToVMs := make(map[string][]*ufspb.VM, 0)
 	ufsVMs := make([]*ufspb.VM, 0)
 	ips := make([]*ufspb.IP, 0)
 	dhcps := make([]*ufspb.DHCPConfig, 0)
 	machineMap := make(map[string]*crimson.Machine, len(machines))
+	platformMap := make(map[string]*crimson.Platform, len(platforms))
 	hostToMachine := make(map[string]*crimson.Machine, len(hosts))
 	for _, machine := range machines {
 		machineMap[machine.GetName()] = machine
+	}
+	for _, p := range platforms {
+		platformMap[p.GetName()] = p
 	}
 	for _, h := range hosts {
 		hostToMachine[h.GetName()] = machineMap[h.GetMachine()]
@@ -294,6 +298,10 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		} else {
 			lsePrototype = "browser-lab:no-vm"
 		}
+		var manufacturer string
+		if machine.GetPlatform() != "" {
+			manufacturer = platformMap[machine.GetPlatform()].GetManufacturer()
+		}
 		lse := &ufspb.MachineLSE{
 			Name:                name,
 			MachineLsePrototype: lsePrototype,
@@ -308,10 +316,11 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 					},
 				},
 			},
-			Rack:  rack,
-			Zone:  zone,
-			Nic:   GetNicName(h.GetNic(), h.GetMachine()),
-			State: ToState(h.GetState()).String(),
+			Rack:         rack,
+			Zone:         zone,
+			Nic:          GetNicName(h.GetNic(), h.GetMachine()),
+			State:        ToState(h.GetState()).String(),
+			Manufacturer: manufacturer,
 		}
 		lses = append(lses, lse)
 		ip := FormatIP(h.GetVlan(), h.GetIpv4(), true)

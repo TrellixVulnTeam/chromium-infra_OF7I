@@ -412,8 +412,12 @@ func (fs *FleetServerImpl) ImportMachineLSEs(ctx context.Context, req *ufsAPI.Im
 	if err := ufsAPI.ValidateResourceKey(machines.GetMachines(), "Name"); err != nil {
 		return nil, errors.Annotate(err, "machines has invalid chars").Err()
 	}
+	platforms, err := mdbClient.ListPlatforms(ctx, &crimson.ListPlatformsRequest{})
+	if err != nil {
+		return nil, machineDBServiceFailureStatus("ListPlatforms").Err()
+	}
 	pageSize := fs.getImportPageSize()
-	res, err := controller.ImportMachineLSEs(ctx, hosts.GetHosts(), vms.GetVms(), machines.GetMachines(), pageSize)
+	res, err := controller.ImportMachineLSEs(ctx, hosts.GetHosts(), vms.GetVms(), machines.GetMachines(), platforms.GetPlatforms(), pageSize)
 	s := processImportDatastoreRes(res, err)
 	if s.Err() != nil {
 		return s.Proto(), s.Err()

@@ -892,7 +892,7 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 // PrintFreeVMs prints the all free slots in table form.
 func PrintFreeVMs(ctx context.Context, ic ufsAPI.FleetClient, hosts []*ufspb.MachineLSE) {
 	defer tw.Flush()
-	PrintTitle([]string{"Host", "Os Version", "Vlan", "Zone", "Free slots"})
+	PrintTitle([]string{"Host", "Os Version", "Manufacturer", "Vlan", "Zone", "Free slots", "State"})
 	for _, h := range hosts {
 		h.Name = ufsUtil.RemovePrefix(h.Name)
 		printFreeVM(ctx, ic, h)
@@ -905,9 +905,11 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 	})
 	out := fmt.Sprintf("%s\t", host.GetName())
 	out += fmt.Sprintf("%s\t", host.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
+	out += fmt.Sprintf("%s\t", host.GetManufacturer())
 	out += fmt.Sprintf("%s\t", res.GetVlan())
 	out += fmt.Sprintf("%s\t", host.GetZone())
 	out += fmt.Sprintf("%d\t", host.GetChromeBrowserMachineLse().GetVmCapacity())
+	out += fmt.Sprintf("%s\t", host.GetState())
 	fmt.Fprintln(tw, out)
 }
 

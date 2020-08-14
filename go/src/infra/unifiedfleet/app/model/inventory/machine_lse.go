@@ -75,7 +75,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		ServoID:               servoID,
 		Rack:                  p.GetRack(),
 		Zone:                  p.GetZone(),
-		Manufacturer:          p.GetManufacturer(),
+		Manufacturer:          strings.ToLower(p.GetManufacturer()),
 		State:                 p.GetState(),
 		OS:                    ufsds.GetOSIndex(p.GetChromeBrowserMachineLse().GetOsVersion().GetValue()),
 		MachineLSE:            machineLSE,

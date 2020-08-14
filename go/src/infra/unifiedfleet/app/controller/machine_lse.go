@@ -528,7 +528,7 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 //      * the first error that it meets
 //
 // The function will stop at the very first error.
-func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine, pageSize int) (*ufsds.OpResults, error) {
+func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []*crimson.Machine, platforms []*crimson.Platform, pageSize int) (*ufsds.OpResults, error) {
 	allRes := make(ufsds.OpResults, 0)
 	logging.Infof(ctx, "Importing the basic lse prototypes for browser lab")
 	lps := []*ufspb.MachineLSEPrototype{
@@ -562,7 +562,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	}
 	allRes = append(allRes, *res...)
 
-	lses, ufsVMs, ips, dhcps := util.ToMachineLSEs(hosts, vms, machines)
+	lses, ufsVMs, ips, dhcps := util.ToMachineLSEs(hosts, vms, machines, platforms)
 	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "browser-lab")
 	logging.Infof(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
