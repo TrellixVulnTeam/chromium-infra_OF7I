@@ -372,6 +372,17 @@ func parseVerdict(verdict string) skylab_test_runner.Result_Autotest_TestCase_Ve
 	return skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL
 }
 
+func requiresDutReset(v skylab_test_runner.Result_Autotest_TestCase_Verdict) bool {
+	switch v {
+	case skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS:
+		return false
+	case skylab_test_runner.Result_Autotest_TestCase_VERDICT_NO_VERDICT:
+		return false
+	default:
+		return true
+	}
+}
+
 // getDutState returns the state of the DUT after the prejob and test run.
 func getDutState(prejob skylab_test_runner.Result_Prejob, tests skylab_test_runner.Result_Autotest) string {
 	for _, s := range prejob.Step {
@@ -383,7 +394,7 @@ func getDutState(prejob skylab_test_runner.Result_Prejob, tests skylab_test_runn
 		return dutStateNeedsReset
 	}
 	for _, tc := range tests.TestCases {
-		if tc.GetVerdict() != skylab_test_runner.Result_Autotest_TestCase_VERDICT_PASS {
+		if requiresDutReset(tc.GetVerdict()) {
 			return dutStateNeedsReset
 		}
 	}
