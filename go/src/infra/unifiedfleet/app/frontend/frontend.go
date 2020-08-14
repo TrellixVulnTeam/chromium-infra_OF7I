@@ -29,14 +29,15 @@ func InstallServices(apiServer *prpc.Server) {
 // checkAccess verifies that the request is from an authorized user.
 func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.Context, error) {
 	logging.Debugf(ctx, "Check access for %s", rpcName)
+	// TODO: Re-org the permissions with luci-realm
 	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs", "mdb/hwops-nsi"}
 	switch rpcName {
 	case "CreateMachineLSE", "UpdateMachineLSE", "CreateVM", "UpdateVM":
-		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-setup-label-write-access"}
-	case "DeleteMachineLSE", "CreateVlan", "UpdateVlan", "GetVlan", "ListVlans", "DeleteVlan", "DeleteVM":
+		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-setup-label-write-access", "machine-db-writers"}
+	case "DeleteMachineLSE", "CreateVlan", "UpdateVlan", "DeleteVlan", "DeleteVM":
 		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-privileged-access"}
-	case "ListMachineLSEs", "GetMachineLSE", "ListVMs", "GetVM":
-		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team"}
+	case "ListMachineLSEs", "GetMachineLSE", "ListVMs", "GetVM", "GetVlan", "ListVlans":
+		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "machine-db-readers"}
 	case "ListMachines", "DeleteMachine":
 		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-privileged-access")
 	case "GetMachine", "GetState":
