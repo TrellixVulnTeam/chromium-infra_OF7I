@@ -6,10 +6,8 @@ package machine
 
 import (
 	"context"
-	"encoding/json"
-	//"fmt"
+	"fmt"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
@@ -71,7 +69,7 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 	}
 	e := c.envFlags.Env()
 	if c.commonFlags.Verbose() {
-		//fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
+		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
@@ -106,11 +104,11 @@ func (c *getMachine) printFull(ctx context.Context, ic ufsAPI.FleetClient, machi
 	res, err := ic.ListMachineLSEs(ctx, req)
 	if err != nil {
 		if c.commonFlags.Verbose() {
-			//fmt.Printf("Failed to get host for the machine: %s", err)
+			fmt.Printf("Failed to get host for the machine: %s", err)
 		}
 	} else {
 		if c.commonFlags.Verbose() && len(res.MachineLSEs) > 1 {
-			//fmt.Printf("More than one host associated with this machine. Data discrepancy warning.\n%s\n", res.MachineLSEs)
+			fmt.Printf("More than one host associated with this machine. Data discrepancy warning.\n%s\n", res.MachineLSEs)
 		}
 		if len(res.GetMachineLSEs()) > 0 {
 			lse = res.GetMachineLSEs()[0]
@@ -121,9 +119,7 @@ func (c *getMachine) printFull(ctx context.Context, ic ufsAPI.FleetClient, machi
 		Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, machine.GetLocation().GetRack()),
 	})
 	rack.Name = ufsUtil.RemovePrefix(rack.Name)
-	if c.outputFlags.JSON() {
-		return printMachineJSONFull(machine, lse, rack)
-	}
+
 	if !c.outputFlags.Tsv() {
 		if machine.GetChromeBrowserMachine() != nil {
 			utils.PrintTitle(utils.BrowserMachineFullTitle)
@@ -150,47 +146,5 @@ func (c *getMachine) print(machine *ufspb.Machine) error {
 			utils.PrintMachines([]*ufspb.Machine{machine}, false)
 		}
 	}
-	return nil
-}
-
-func printMachineJSONFull(machine *ufspb.Machine, machinelse *ufspb.MachineLSE, rack *ufspb.Rack) error {
-	jm := jsonpb.Marshaler{
-		EnumsAsInts: false,
-		Indent:      "\t",
-	}
-	machineJSON, err := jm.MarshalToString(machine)
-	if err != nil {
-		return errors.Annotate(err, "Failed to marshal machineJSON").Err()
-	}
-	machinelseJSON, err := jm.MarshalToString(machinelse)
-	if err != nil {
-		return errors.Annotate(err, "Failed to marshal machineLSEJSON").Err()
-	}
-	machineout := map[string]interface{}{}
-	if err := json.Unmarshal([]byte(machineJSON), &machineout); err != nil {
-		return errors.Annotate(err, "Failed to unmarshal machineJSON").Err()
-	}
-	machinelseout := map[string]interface{}{}
-	if err := json.Unmarshal([]byte(machinelseJSON), &machinelseout); err != nil {
-		return errors.Annotate(err, "Failed to unmarshal machinelseJSON").Err()
-	}
-	machineout["host"] = machinelseout
-
-	rackJSON, err := jm.MarshalToString(rack)
-	if err != nil {
-		return errors.Annotate(err, "Failed to marshal rackJSON").Err()
-	}
-	rackout := map[string]interface{}{}
-	if err := json.Unmarshal([]byte(rackJSON), &rackout); err != nil {
-		return errors.Annotate(err, "Failed to unmarshal rackJSON").Err()
-	}
-	machineout["rack"] = rackout
-
-	//outputJSON, err := json.MarshalIndent(machineout, "", "\t")
-	//if err != nil {
-	//	return errors.Annotate(err, "Failed to marshal final machine output").Err()
-	//}
-	//fmt.Printf("%s", outputJSON)
-	//fmt.Println()
 	return nil
 }
