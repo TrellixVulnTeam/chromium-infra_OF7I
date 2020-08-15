@@ -21,6 +21,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/proto/gerrit"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 )
 
 // GerritClient is a fake implementation of the gerrit.GerritClient interface.
@@ -32,7 +33,7 @@ type GerritClient struct {
 // GerritChange captures information about a single gerrit change created via
 // GerritClient.CreateChange()
 type GerritChange struct {
-	gerrit.ChangeInfo
+	*gerrit.ChangeInfo
 	GerritChangeEdit
 	IsSubmitted bool
 }
@@ -51,8 +52,7 @@ type GerritChangeEdit struct {
 func (gc *GerritClient) GetChange(ctx context.Context, in *gerrit.GetChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error) {
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
-			ret := c.ChangeInfo
-			return &ret, nil
+			return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
 		}
 	}
 	return nil, fmt.Errorf("No change for %+v", in)
@@ -61,7 +61,7 @@ func (gc *GerritClient) GetChange(ctx context.Context, in *gerrit.GetChangeReque
 // CreateChange implements the gerrit.GerritClient interface.
 func (gc *GerritClient) CreateChange(ctx context.Context, in *gerrit.CreateChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error) {
 	c := &GerritChange{
-		ChangeInfo: gerrit.ChangeInfo{
+		ChangeInfo: &gerrit.ChangeInfo{
 			Number:          gc.nextNumber,
 			Project:         in.Project,
 			Ref:             in.Ref,
@@ -74,9 +74,7 @@ func (gc *GerritClient) CreateChange(ctx context.Context, in *gerrit.CreateChang
 	gc.nextNumber++
 	gc.Changes = append(gc.Changes, c)
 
-	// return a copy
-	ret := c.ChangeInfo
-	return &ret, nil
+	return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
 }
 
 // ChangeEditFileContent implements the gerrit.GerritClient interface.
@@ -124,9 +122,7 @@ func (gc *GerritClient) SubmitChange(ctx context.Context, in *gerrit.SubmitChang
 		if in.Number == c.Number {
 			c.IsSubmitted = true
 			c.ChangeInfo.Status = gerrit.ChangeInfo_MERGED
-			// return a copy
-			ret := c.ChangeInfo
-			return &ret, nil
+			return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
 		}
 	}
 	return nil, fmt.Errorf("No change for %+v", in)
@@ -137,9 +133,7 @@ func (gc *GerritClient) AbandonChange(ctx context.Context, in *gerrit.AbandonCha
 	for _, c := range gc.Changes {
 		if in.Number == c.Number {
 			c.IsAbandoned = true
-			// return a copy
-			ret := c.ChangeInfo
-			return &ret, nil
+			return proto.Clone(c.ChangeInfo).(*gerrit.ChangeInfo), nil
 		}
 	}
 	return nil, fmt.Errorf("No change for %+v", in)
@@ -153,4 +147,15 @@ func (gc *GerritClient) GetMergeable(ctx context.Context, req *gerrit.GetMergeab
 // ListFiles implements the gerrit.GerritClient interface.
 func (gc *GerritClient) ListFiles(ctx context.Context, req *gerrit.ListFilesRequest, opts ...grpc.CallOption) (*gerrit.ListFilesResponse, error) {
 	return nil, fmt.Errorf("Fake ListFiles not yet implemented")
+}
+
+// ListChanges that match a query.
+//
+// Note, although the Gerrit API supports multiple queries, for which
+// it can return multiple lists of changes, this is not a foreseen use-case
+// so this API just includes one query with one returned list of changes.
+//
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#list-changes
+func (gc *GerritClient) ListChanges(ctx context.Context, in *gerrit.ListChangesRequest, opts ...grpc.CallOption) (*gerrit.ListChangesResponse, error) {
+	return nil, fmt.Errorf("Fake ListChanges not yet implemented")
 }

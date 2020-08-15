@@ -16,7 +16,6 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/system/environ"
-	"go.chromium.org/luci/common/testing/testfs"
 
 	. "github.com/smartystreets/goconvey/convey"
 	. "go.chromium.org/luci/common/testing/assertions"
@@ -35,7 +34,9 @@ func TestResolveSelf(t *testing.T) {
 		t.Fatalf("failed to stat the real executable %q: %s", realExec, err)
 	}
 
-	Convey(`With a temporary directory`, t, testfs.MustWithTempDir(t, "resolve_self", func(tdir string) {
+	Convey(`With a temporary directory`, t, func() {
+		tdir, err := ioutil.TempDir(t.TempDir(), "resolve_self")
+		So(err, ShouldBeNil)
 		// Set up a base probe.
 		probe := SystemProbe{
 			Target: "git",
@@ -58,7 +59,7 @@ func TestResolveSelf(t *testing.T) {
 			So(probe.self, ShouldEqual, symSelf)
 			So(os.SameFile(probe.selfStat, realExecStat), ShouldBeTrue)
 		})
-	}))
+	})
 }
 
 // TestFindSystemGit tests the ability to locate the "git" command in PATH.
@@ -73,7 +74,10 @@ func TestSystemProbe(t *testing.T) {
 		envBase.Set("PATHEXT", strings.Join([]string{".com", ".exe", ".bat", ".ohai"}, string(os.PathListSeparator)))
 	}
 
-	Convey(`With a fake PATH setup`, t, testfs.MustWithTempDir(t, "system_probe", func(tdir string) {
+	Convey(`With a fake PATH setup`, t, func() {
+		tdir, err := ioutil.TempDir(t.TempDir(), "system_probe")
+		So(err, ShouldBeNil)
+
 		c := baseTestContext()
 
 		createExecutable := func(relPath string) (dir string, path string) {
@@ -236,7 +240,7 @@ func TestSystemProbe(t *testing.T) {
 				So(wrapperChecks, ShouldEqual, 1)
 			})
 		})
-	}))
+	})
 }
 
 func shouldBeSameFileAs(actual interface{}, expected ...interface{}) string {

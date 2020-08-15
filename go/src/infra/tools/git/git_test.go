@@ -25,7 +25,6 @@ import (
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/system/environ"
 	"go.chromium.org/luci/common/system/filesystem"
-	"go.chromium.org/luci/common/testing/testfs"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -111,7 +110,10 @@ func TestGitCommand(t *testing.T) {
 		t.Fatalf("failed to get self executable: %s", err)
 	}
 
-	Convey(`Using a test setup for "Git" command`, t, testfs.MustWithTempDir(t, "git_command", func(tdir string) {
+	Convey(`Using a test setup for "Git" command`, t, func() {
+		tdir, err := ioutil.TempDir(t.TempDir(), "git_command")
+		So(err, ShouldBeNil)
+
 		var in testAgentRequest
 		var out testAgentResponse
 		gc := GitCommand{
@@ -560,7 +562,7 @@ func TestGitCommand(t *testing.T) {
 				So(pathExists(dest), ShouldBeTrue)
 			})
 		})
-	}))
+	})
 
 	Convey(`Unittests`, t, func() {
 		Convey(`For windows`, func() {

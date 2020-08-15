@@ -22,7 +22,6 @@ import (
 	"go.chromium.org/luci/common/system/environ"
 	"go.chromium.org/luci/common/system/exitcode"
 	"go.chromium.org/luci/common/system/filesystem"
-	"go.chromium.org/luci/common/testing/testfs"
 
 	"golang.org/x/net/context"
 
@@ -198,7 +197,15 @@ func (tc *testCase) getDelegateCommand(c context.Context, root string, env envir
 func (tc *testCase) run(t *testing.T, env environ.Env) {
 	t.Parallel()
 
-	Convey(fmt.Sprintf(`Testing %q`, tc), t, testfs.MustWithTempDir(t, "vpython", func(td string) {
+	Convey(fmt.Sprintf(`Testing %q`, tc), t, func() {
+		td, err := ioutil.TempDir(t.TempDir(), "vpython")
+		So(err, ShouldBeNil)
+		defer func() {
+			if err := filesystem.RemoveAll(td); err != nil {
+				t.Logf("Failed to remove test dir %q: %s", td, err)
+			}
+		}()
+
 		// Make sure the process is killed via defer.
 		c, cancelFunc := context.WithCancel(context.Background())
 		defer cancelFunc()
@@ -216,7 +223,7 @@ func (tc *testCase) run(t *testing.T, env environ.Env) {
 		default:
 			tc.runCommon(c, t, td, env, 0)
 		}
-	}))
+	})
 }
 
 func (tc *testCase) runCommon(c context.Context, t *testing.T, td string, env environ.Env, exitCode int) {

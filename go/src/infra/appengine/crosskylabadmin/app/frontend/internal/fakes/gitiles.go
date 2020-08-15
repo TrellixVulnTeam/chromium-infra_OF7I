@@ -200,6 +200,11 @@ func (g *GitilesClient) SetDeviceConfigs(ic *config.Inventory, configs []byte) e
 	return nil
 }
 
+// Projects retrieves list of available Gitiles projects
+func (g *GitilesClient) Projects(ctx context.Context, in *gitiles.ProjectsRequest, opts ...grpc.CallOption) (*gitiles.ProjectsResponse, error) {
+	panic("not implemented") // TODO: Implement
+}
+
 func projectRefKey(project, ref string) string {
 	// gitiles inconsistently expects the "refs/heads/" prefix. Always strip the
 	// prefix before storing refs.
