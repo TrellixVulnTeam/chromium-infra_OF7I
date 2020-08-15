@@ -21,6 +21,7 @@ var servoInV2 = lab.Servo{
 	ServoPort:     int32(9999),
 	ServoSerial:   "test_servo_serial",
 	ServoType:     "v3",
+	ServoSetup:    lab.ServoSetupType_SERVO_SETUP_DUAL_V4,
 }
 
 var devInV2 = lab.ChromeOSDevice{
@@ -253,6 +254,10 @@ common {
 	attributes {
 		key: "servo_type",
 		value: "v3",
+	}
+	attributes {
+		key: "servo_setup",
+		value: "DUAL_V4",
 	}
 	hostname: "test_host"
 	id: "test_dut"
@@ -663,7 +668,7 @@ func TestImportFromV1DutSpecs(t *testing.T) {
 		})
 		// Verify devices
 		So(len(devices), ShouldEqual, 1)
-		So(proto.Equal(devices[0], &devInV2), ShouldBeTrue)
+		So(devices[0], ShouldResemble, &devInV2)
 
 		// Verify labstations
 		So(len(labstations), ShouldEqual, 2)

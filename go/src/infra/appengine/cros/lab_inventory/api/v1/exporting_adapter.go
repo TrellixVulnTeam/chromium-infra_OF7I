@@ -425,7 +425,8 @@ func adaptV2DutToV1DutSpec(data *ExtendedDeviceData) (*inventory.DeviceUnderTest
 		append("servo_host", p.GetServo().GetServoHostname()).
 		append("servo_port", fmt.Sprintf("%v", p.GetServo().GetServoPort())).
 		append("servo_serial", p.GetServo().GetServoSerial()).
-		append("servo_type", p.GetServo().GetServoType())
+		append("servo_type", p.GetServo().GetServoType()).
+		append("servo_setup", p.GetServo().GetServoSetup().String()[len("SERVO_SETUP_"):])
 
 	osType := inventory.SchedulableLabels_OS_TYPE_INVALID
 	if board := lc.GetDeviceConfigId().GetPlatformId().GetValue(); board != "" {

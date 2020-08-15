@@ -99,6 +99,12 @@ func importServo(servo *lab.Servo, key string, value string) error {
 		servo.ServoSerial = value
 	case "servo_type":
 		servo.ServoType = value
+	case "servo_setup":
+		servoSetup := lab.ServoSetupType_SERVO_SETUP_REGULAR
+		if ss, ok := lab.ServoSetupType_value["SERVO_SETUP_"+value]; ok {
+			servoSetup = lab.ServoSetupType(ss)
+		}
+		servo.ServoSetup = servoSetup
 	}
 	return nil
 }
@@ -125,7 +131,7 @@ func importAttributes(attrs []*inventory.KeyValue) (string, *lab.Servo, *lab.RPM
 		switch key := attr.GetKey(); key {
 		case "HWID":
 			hwid = value
-		case "servo_host", "servo_port", "servo_serial", "servo_type":
+		case "servo_host", "servo_port", "servo_serial", "servo_type", "servo_setup":
 			if servo == nil {
 				servo = new(lab.Servo)
 			}
