@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"infra/cros/cmd/result_flow/internal/inventory"
-	"strings"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -35,7 +34,7 @@ type testRunnerBuild struct {
 	createTime *timestamp.Timestamp
 	startTime  *timestamp.Timestamp
 	endTime    *timestamp.Timestamp
-	botID      string
+	model      string
 
 	req *runner.Request
 	res *runner.Result
@@ -75,11 +74,10 @@ func LoadTestRunnerBuild(ctx context.Context, parentUID string, b *bbpb.Build, b
 		logging.Infof(ctx, "Build has no output properties yet, %d", b.GetId())
 		return c, nil
 	}
-	botID, ok := getOutputPropertiesValue(b, "bot_id")
-	if !ok {
-		logging.Infof(ctx, "Build has no bot ID attached, %d", b.GetId())
+
+	if c.model = fetchModelName(b); c.model == "" {
+		logging.Infof(ctx, "failed to find label-model from build %d", b.GetId())
 	}
-	c.botID = botID.GetStringValue()
 	setDefaultStructValues(b.GetOutput().GetProperties())
 	c.res, err = extractTestRunnerResult(v)
 	return c, err
@@ -114,7 +112,6 @@ func extractTestRunnerResult(rs *structpb.Value) (*runner.Result, error) {
 
 // ToTestRun derives a TestRun entity from a test runner build.
 func (c *testRunnerBuild) ToTestRun(ctx context.Context) *analytics.TestRun {
-	var err error
 	r := &analytics.TestRun{
 		BuildId:      c.id,
 		DisplayName:  c.req.GetTest().GetAutotest().GetDisplayName(),
@@ -125,12 +122,10 @@ func (c *testRunnerBuild) ToTestRun(ctx context.Context) *analytics.TestRun {
 			StartTime:  c.startTime,
 			EndTime:    c.endTime,
 		},
+		Model:  c.model,
 		Status: inferTestRunStatus(c.status),
 	}
 	if c.res != nil {
-		if r.Model, err = fetchModelName(ctx, c.invC, c.botID); err != nil {
-			logging.Errorf(ctx, "Failed to fetch model name, err: %v", err)
-		}
 		r.FullLogUrl = c.res.GetAutotestResult().GetSynchronousLogDataUrl()
 		r.Verdict = &analytics.Verdict{
 			Value: inferTestRunVerdict(c.status, c.res),
@@ -214,21 +209,12 @@ func (c *testRunnerBuild) ToTestCaseResults() []*analytics.TestCaseResult {
 	return r
 }
 
-func fetchModelName(ctx context.Context, c inventory.Client, bot string) (string, error) {
-	dutHostName, err := botIDToDutHostName(bot)
-	if err != nil {
-		return "", err
+func fetchModelName(b *bbpb.Build) string {
+	botDimensions := b.GetInfra().GetSwarming().GetBotDimensions()
+	for _, d := range botDimensions {
+		if d.GetKey() == "label-model" {
+			return d.GetValue()
+		}
 	}
-	dut, err := c.GetDutInfoFromHostname(ctx, dutHostName)
-	if err != nil {
-		return "", err
-	}
-	return dut.GetCommon().GetLabels().GetModel(), nil
-}
-
-func botIDToDutHostName(bot string) (string, error) {
-	if strings.HasPrefix(bot, "crossk-") {
-		return strings.TrimPrefix(bot, "crossk-"), nil
-	}
-	return "", fmt.Errorf("bot ID to DUT host name for %s: unknown bot prefix", bot)
+	return ""
 }

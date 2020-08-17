@@ -7,10 +7,9 @@ package transform_test
 import (
 	"context"
 	"fmt"
-	"infra/cros/cmd/result_flow/internal/inventory"
 	"infra/cros/cmd/result_flow/internal/transform"
-	libInv "infra/libs/skylab/inventory"
 	"sort"
+	"strings"
 	"testing"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -31,36 +30,12 @@ var (
 	}
 )
 
-type fakeInvClient struct {
-	dutToModel map[string]*string
-}
-
-func newFakeInventoryClient(dut, model string) inventory.Client {
-	return &fakeInvClient{
-		dutToModel: map[string]*string{
-			dut: &model,
-		},
-	}
-}
-
-func (f *fakeInvClient) GetDutInfoFromHostname(ctx context.Context, h string) (*libInv.DeviceUnderTest, error) {
-	return &libInv.DeviceUnderTest{
-		Common: &libInv.CommonDeviceSpecs{
-			Labels: &libInv.SchedulableLabels{
-				Model: f.dutToModel[h],
-			},
-		},
-	}, nil
-}
-
 type in struct {
 	label         string
 	status        bbpb.Status
 	prejobVerdict runner.Result_Prejob_Step_Verdict
 	incomplete    bool
-	host          string
-	dut           string
-	model         string
+	botDimensions []string
 	testCases     []*runner.Result_Autotest_TestCase
 }
 
@@ -86,9 +61,7 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 				status:        bbpb.Status_STARTED,
 				prejobVerdict: runner.Result_Prejob_Step_VERDICT_UNDEFINED,
 				incomplete:    false,
-				host:          "crossk-fake-dut",
-				dut:           "fake-dut",
-				model:         "fake-model",
+				botDimensions: []string{},
 				testCases:     []*runner.Result_Autotest_TestCase{},
 			},
 			&out{
@@ -107,9 +80,7 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 				status:        bbpb.Status_FAILURE,
 				prejobVerdict: runner.Result_Prejob_Step_VERDICT_FAIL,
 				incomplete:    false,
-				host:          "crossk-fake-dut",
-				dut:           "fake-dut",
-				model:         "fake-model",
+				botDimensions: []string{"label-model:fake-model"},
 				testCases:     []*runner.Result_Autotest_TestCase{},
 			},
 			&out{
@@ -128,9 +99,7 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 				status:        bbpb.Status_SUCCESS,
 				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
 				incomplete:    false,
-				host:          "crossk-fake-dut",
-				dut:           "fake-dut",
-				model:         "fake-model",
+				botDimensions: []string{"label-model:fake-model", "label-foo:fake-foo"},
 				testCases: []*runner.Result_Autotest_TestCase{
 					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
 					genFakeAutotestTestCase("hoo", runner.Result_Autotest_TestCase_VERDICT_FAIL),
@@ -155,9 +124,7 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 				status:        bbpb.Status_SUCCESS,
 				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
 				incomplete:    true,
-				host:          "crossk-fake-dut",
-				dut:           "fake-dut",
-				model:         "fake-model",
+				botDimensions: []string{"label-model:fake-model"},
 				testCases: []*runner.Result_Autotest_TestCase{
 					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
 				},
@@ -174,40 +141,13 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 			},
 		},
 		{
-			"Given an illegal bot name",
+			"Given an unrecognizable bot label",
 			&in{
 				label:         "hoo",
 				status:        bbpb.Status_SUCCESS,
 				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
 				incomplete:    false,
-				host:          "fake-pool-fake-dut",
-				dut:           "fake-dut",
-				model:         "fake-model",
-				testCases: []*runner.Result_Autotest_TestCase{
-					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
-				},
-			},
-			&out{
-				label:         "hoo",
-				prejobVerdict: "PASSED",
-				lifeCycle:     "COMPLETED",
-				verdict:       "PASSED",
-				model:         "",
-				testCases: []*analytics.TestCaseResult{
-					genFakeTestCaseResult("foo", "VERDICT_PASS"),
-				},
-			},
-		},
-		{
-			"Given an empty response from inventory service",
-			&in{
-				label:         "hoo",
-				status:        bbpb.Status_SUCCESS,
-				prejobVerdict: runner.Result_Prejob_Step_VERDICT_PASS,
-				incomplete:    false,
-				host:          "crossk-fake-dut",
-				dut:           "another-dut",
-				model:         "fake-dut",
+				botDimensions: []string{"fake-key:fake-value"},
 				testCases: []*runner.Result_Autotest_TestCase{
 					genFakeAutotestTestCase("foo", runner.Result_Autotest_TestCase_VERDICT_PASS),
 				},
@@ -233,7 +173,8 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 					"TestPlanRuns/fake-build-id/fake-test-run",
 					genFakeTestRunnerBuild(c.in),
 					fakeBuildbucketConfig,
-					newFakeInventoryClient(c.in.dut, c.in.model),
+					// This will be removed in next CL once we erase the inventory code.
+					nil,
 				)
 				got := build.ToTestRun(ctx)
 				So(got, ShouldNotBeNil)
@@ -317,13 +258,25 @@ func genFakeTestRunnerBuild(in *in) *bbpb.Build {
 			genFakeTestRunnerResult(in.prejobVerdict, in.incomplete, in.testCases...),
 			"compressed_result",
 		)
-		res.Output.Properties.Fields["bot_id"] = &structpb.Value{
-			Kind: &structpb.Value_StringValue{
-				StringValue: in.host,
-			},
-		}
+		res.Infra = genBuildInfra(in.botDimensions)
 	}
 	return res
+}
+
+func genBuildInfra(botDimensions []string) *bbpb.BuildInfra {
+	dimensions := make([]*bbpb.StringPair, len(botDimensions))
+	for i, d := range botDimensions {
+		substrings := strings.Split(d, ":")
+		dimensions[i] = &bbpb.StringPair{
+			Key:   substrings[0],
+			Value: substrings[1],
+		}
+	}
+	return &bbpb.BuildInfra{
+		Swarming: &bbpb.BuildInfra_Swarming{
+			BotDimensions: dimensions,
+		},
+	}
 }
 
 func testRunnerRequestsToInputField(request *runner.Request) *bbpb.Build_Input {
