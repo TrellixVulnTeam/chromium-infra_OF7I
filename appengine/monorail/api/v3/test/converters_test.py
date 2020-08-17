@@ -1259,14 +1259,17 @@ class ConverterFunctionsTest(unittest.TestCase):
         approvers_remove=['users/222'])
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
-    expected = tracker_pb2.ApprovalDelta(
+    expected_delta = tracker_pb2.ApprovalDelta(
         status=tracker_pb2.ApprovalStatus.NA,
         setter_id=self.user_1.user_id,
         set_on=int(CURRENT_TIME),
         approver_ids_add=[222, 333],
         approver_ids_remove=[222],
     )
-    self.assertEqual(actual, [expected])
+    expected_delta_specifications = [
+        (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
+    ]
+    self.assertEqual(actual, expected_delta_specifications)
 
   def testIngestApprovalDeltas_EmptyMask(self):
     av_name = (
@@ -1288,8 +1291,11 @@ class ConverterFunctionsTest(unittest.TestCase):
         approvers_remove=['users/222'])
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
-    expected = tracker_pb2.ApprovalDelta(approver_ids_remove=[222])
-    self.assertEqual(actual, [expected])
+    expected_delta = tracker_pb2.ApprovalDelta(approver_ids_remove=[222])
+    expected_delta_specifications = [
+        (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
+    ]
+    self.assertEqual(actual, expected_delta_specifications)
 
   def testIngestApprovalDeltas_FilterFieldValues(self):
     av_name = (
@@ -1339,13 +1345,16 @@ class ConverterFunctionsTest(unittest.TestCase):
     )
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
-    expected = tracker_pb2.ApprovalDelta(
+    expected_delta = tracker_pb2.ApprovalDelta(
         subfield_vals_add=[self.fv_6],
         subfield_vals_remove=[],
         labels_remove=[u'approval2field-enumval'],
         approver_ids_remove=[222],
     )
-    self.assertEqual(actual, [expected])
+    expected_delta_specifications = [
+        (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
+    ]
+    self.assertEqual(actual, expected_delta_specifications)
 
   def testIngestApprovalDeltas_WrongProject(self):
     approval_def_project2_name = 'project2_approval'
@@ -1403,9 +1412,15 @@ class ConverterFunctionsTest(unittest.TestCase):
     approval_delta = issues_pb2.ApprovalDelta(
         approval_value=issue_objects_pb2.ApprovalValue(name=av_name),
         update_mask=field_mask_pb2.FieldMask())
+
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
-    self.assertEqual(actual, [tracker_pb2.ApprovalDelta()])
+
+    expected_delta = tracker_pb2.ApprovalDelta()
+    expected_delta_specifications = [
+        (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
+    ]
+    self.assertEqual(actual, expected_delta_specifications)
 
   def testIngestApprovalDeltas_InvalidName(self):
     approval_delta = issues_pb2.ApprovalDelta(
@@ -1434,9 +1449,12 @@ class ConverterFunctionsTest(unittest.TestCase):
         approvers_remove=['users/222'])
     actual = self.converter.IngestApprovalDeltas(
         [approval_delta], self.user_1.user_id)
-    expected = tracker_pb2.ApprovalDelta(
+    expected_delta = tracker_pb2.ApprovalDelta(
         approver_ids_add=[333], approver_ids_remove=[222])
-    self.assertEqual(actual, [expected])
+    expected_delta_specifications = [
+        (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
+    ]
+    self.assertEqual(actual, expected_delta_specifications)
 
   def testIngestApprovalDeltas_ApproverRemoveDoesNotExist(self):
     av_name = (
@@ -1493,17 +1511,25 @@ class ConverterFunctionsTest(unittest.TestCase):
         update_mask=field_mask_pb2.FieldMask(paths=['status']))
     actual = self.converter.IngestApprovalDeltas(
         [delta_1, delta_2], self.user_1.user_id)
-    self.assertEqual(actual[0].status, tracker_pb2.ApprovalStatus.NA)
-    self.assertEqual(actual[1].status, tracker_pb2.ApprovalStatus.NOT_SET)
-    self.assertEqual(actual[0].setter_id, self.user_1.user_id)
-    self.assertEqual(actual[1].setter_id, self.user_1.user_id)
-    self.assertEqual(actual[0].approver_ids_add, [222])
-    self.assertEqual(actual[1].approver_ids_add, [])
+    self.assertEqual(len(actual), 2)
+    actual_iid_1, actual_approval_id_1, actual_delta_1 = actual[0]
+    actual_iid_2, actual_approval_id_2, actual_delta_2 = actual[1]
+    self.assertEqual(actual_iid_1, self.issue_1.issue_id)
+    self.assertEqual(actual_iid_2, self.issue_1.issue_id)
+    self.assertEqual(actual_approval_id_1, self.approval_def_1_id)
+    self.assertEqual(actual_approval_id_2, self.approval_def_1_id)
+
+    self.assertEqual(actual_delta_1.status, tracker_pb2.ApprovalStatus.NA)
+    self.assertEqual(actual_delta_2.status, tracker_pb2.ApprovalStatus.NOT_SET)
+    self.assertEqual(actual_delta_1.setter_id, self.user_1.user_id)
+    self.assertEqual(actual_delta_2.setter_id, self.user_1.user_id)
+    self.assertEqual(actual_delta_1.approver_ids_add, [222])
+    self.assertEqual(actual_delta_2.approver_ids_add, [])
     # We don't patch time.time, so these would be different if the set_on wasn't
     # passed in.
     # Note: More ideal/correct unit test would create a mock that forces
     # time.time to return an incremented value on its subsequent calls.
-    self.assertEqual(actual[0].set_on, actual[1].set_on)
+    self.assertEqual(actual_delta_1.set_on, actual_delta_2.set_on)
 
   def testIngestApprovalDeltas_DifferentProjects(self):
     # Create an ApprovalDef for project2
@@ -1560,7 +1586,11 @@ class ConverterFunctionsTest(unittest.TestCase):
         field_id=project2_field_id, str_value=u'p2', derived=False)
     expected_p2 = tracker_pb2.ApprovalDelta(subfield_vals_add=[expected_p2_fv])
     expected_p1 = tracker_pb2.ApprovalDelta(subfield_vals_add=[self.fv_6])
-    self.assertEqual(actual, [expected_p2, expected_p1])
+    expected_delta_specifications = [
+        (self.issue_2.issue_id, approval_def_project2_id, expected_p2),
+        (self.issue_1.issue_id, self.approval_def_1_id, expected_p1),
+    ]
+    self.assertEqual(actual, expected_delta_specifications)
 
   def testIngestIssue(self):
     ingest = issue_objects_pb2.Issue(

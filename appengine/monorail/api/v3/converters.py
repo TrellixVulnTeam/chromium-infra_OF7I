@@ -598,8 +598,9 @@ class Converter(object):
       setter_id: The ID for the user setting the deltas.
 
     Returns:
-      protorpc versions of approval_deltas, ignoring all OUTPUT_ONLY and masked
-      fields.
+      Sequence of (issue_id, approval_id, ApprovalDelta) tuples in the order
+      provided. The ApprovalDeltas ignore all OUTPUT_ONLY and masked fields.
+      The tuples are "delta_specifications;" they identify one requested change.
 
     Raises:
       InputException: if any fields in the approval_delta protos were invalid.
@@ -609,12 +610,12 @@ class Converter(object):
       NoSuchUserException: if any user value was provided with an invalid email.
           Note that users specified by ID are not checked for existence.
     """
-    ingested = []
+    delta_specifications = []
     set_on = int(time.time())  # Use the same timestamp for all deltas.
     for approval_delta in approval_deltas:
       approval_name = approval_delta.approval_value.name
       # TODO(crbug/monorail/8173): Aggregate errors.
-      project_id, _issue_id, approval_id = rnc.IngestApprovalValueName(
+      project_id, issue_id, approval_id = rnc.IngestApprovalValueName(
           self.cnxn, approval_name, self.services)
 
       if not approval_delta.HasField('update_mask'):
@@ -664,19 +665,18 @@ class Converter(object):
           labels_add, labels_remove, add_enums, remove_enums, config)
       assert len(add_enums) == 0  # ShiftEnumFieldsIntoLabels clears all enums.
       assert len(remove_enums) == 0
-
-      ingested.append(
-          tbo.MakeApprovalDelta(
-              status,
-              setter_id,
-              approver_ids_add,
-              approver_ids_remove,
-              sub_fvs_add,
-              sub_fvs_remove, [],
-              labels_add,
-              labels_remove,
-              set_on=set_on))
-    return ingested
+      delta = tbo.MakeApprovalDelta(
+          status,
+          setter_id,
+          approver_ids_add,
+          approver_ids_remove,
+          sub_fvs_add,
+          sub_fvs_remove, [],
+          labels_add,
+          labels_remove,
+          set_on=set_on)
+      delta_specifications.append((issue_id, approval_id, delta))
+    return delta_specifications
 
   def IngestIssue(self, issue, project_id):
     # type: (api_proto.issue_objects_pb2.Issue, int) -> proto.tracker_pb2.Issue
