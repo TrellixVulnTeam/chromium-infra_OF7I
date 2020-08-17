@@ -31,7 +31,6 @@ func importCrimson(ctx context.Context) error {
 		logging.Warningf(ctx, "Fail to generate sync diff: %s", err.Error())
 	}
 	logging.Infof(ctx, "Finish exporting diff from crimson to UFS to Google Storage")
-
 	sv := &frontend.FleetServerImpl{}
 	logging.Infof(ctx, "Importing chrome platforms")
 	respCP, err := sv.ImportChromePlatforms(ctx, &api.ImportChromePlatformsRequest{

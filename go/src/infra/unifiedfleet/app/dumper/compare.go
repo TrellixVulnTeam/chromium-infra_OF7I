@@ -213,7 +213,7 @@ func compareVMs(ctx context.Context, writer *storage.Writer, vms []*crimson.VM, 
 }
 
 func formatVM(name, ip, machine, os string, state ufspb.State) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", name, ip, machine, os, strings.ToLower(state.String()))
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", name, ip, machine, util.FormatResourceName(os), strings.ToLower(state.String()))
 }
 
 func compareHosts(ctx context.Context, writer *storage.Writer, hosts []*crimson.PhysicalHost, hostRes *fleetds.OpResults, stateMap map[string]ufspb.State, dhcpHostMap map[string]*ufspb.DHCPConfig) error {
@@ -237,7 +237,7 @@ func compareHosts(ctx context.Context, writer *storage.Writer, hosts []*crimson.
 }
 
 func formatHost(name, ip, machine, os string, vmSlots int32, state ufspb.State) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%d\t%s", name, ip, machine, os, vmSlots, strings.ToLower(state.String()))
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%d\t%s", name, ip, machine, util.FormatResourceName(os), vmSlots, strings.ToLower(state.String()))
 }
 
 func compareDracs(ctx context.Context, writer *storage.Writer, dracs []*crimson.DRAC, dracRes *fleetds.OpResults, dhcpMap map[string]*ufspb.DHCPConfig) error {
@@ -410,7 +410,7 @@ func logDiff(crimsonData, ufsData map[string]string, writer *storage.Writer, log
 			logs = append(logs, v)
 		}
 	}
-	logs = append(logs, "Resources in both UFS and crimson but has difference:")
+	logs = append(logs, "Resources in both UFS and crimson but has difference (crimson first):")
 	logs = append(logs, diffs...)
 	if _, err := fmt.Fprintf(writer, strings.Join(logs, "\n")); err != nil {
 		return err
