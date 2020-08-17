@@ -12,7 +12,7 @@ API_EXPLORER_CLIENT_ID = '292824132082.apps.googleusercontent.com'
 # Names of all modules.
 WATERFALL_BACKEND = 'waterfall-backend'
 FLAKE_DETECTION_BACKEND = 'flake-detection-backend'
-DISABLED_TEST_DETECTION_BACKEND = 'disabled-test-detection-backend'
+DISABLED_TEST_BACKEND = 'disabled-test-backend'
 AUTO_ACTION_BACKEND = 'auto-action-backend'
 
 # Names of all queues.

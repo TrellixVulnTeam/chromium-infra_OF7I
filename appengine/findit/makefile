@@ -12,7 +12,7 @@ PROTOC := "../../cipd/protoc"
 PROTO_PATH ?= "model/proto/"
 FINDIT_MODULES := default frontend waterfall-backend auto-action-backend findit-backend
 CODE_COVERAGE_MODULES := code-coverage-frontend code-coverage-backend
-FLAKE_PORTAL_MODULES := flake-detection-backend disabled-test-detection-backend
+FLAKE_PORTAL_MODULES := flake-detection-backend disabled-test-backend
 LOCAL_VERSION := `$(INFRAPYTHON) $(GAE_PY) version`
 LOCAL_HASH := `git rev-parse --short HEAD`
 # If there are multiple active versions just use the latest one.

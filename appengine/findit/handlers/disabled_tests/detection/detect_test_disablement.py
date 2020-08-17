@@ -23,7 +23,7 @@ class DetectTestDisablementCronJob(BaseHandler):
     taskqueue.add(
         method='GET',
         queue_name=constants.DISABLED_TEST_DETECTION_QUEUE,
-        target=constants.DISABLED_TEST_DETECTION_BACKEND,
+        target=constants.DISABLED_TEST_BACKEND,
         url='/disabled-tests/detection/task/detect-test-disablement')
     return {'return_code': 200}
 

@@ -12,10 +12,10 @@ dispatch:
     module: findit-backend
 
   - url: "*/disabled-tests/detection/cron/*"
-    module: disabled-test-detection-backend
+    module: disabled-test-backend
 
   - url: "*/disabled-tests/detection/task/*"
-    module: disabled-test-detection-backend
+    module: disabled-test-backend
 
   - url: "*/flake/detection/cron/*"
     module: flake-detection-backend

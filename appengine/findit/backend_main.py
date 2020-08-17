@@ -46,17 +46,17 @@ waterfall_backend_web_application = webapp2.WSGIApplication(
 if appengine_util.IsInProductionApp():
   gae_ts_mon.initialize(waterfall_backend_web_application)
 
-# "disabled-test-detection-backend" module.
-disabled_test_detection_backend_web_pages_handler_mappings = [
+# "disabled-test-backend" module.
+disabled_test_backend_web_pages_handler_mappings = [
     ('/disabled-tests/detection/cron/detect-test-disablement',
      detect_test_disablement.DetectTestDisablementCronJob),
     ('/disabled-tests/detection/task/detect-test-disablement',
      detect_test_disablement.DisabledTestDetection),
 ]
-disabled_test_detection_backend_web_application = webapp2.WSGIApplication(
-    disabled_test_detection_backend_web_pages_handler_mappings, debug=False)
+disabled_test_backend_web_application = webapp2.WSGIApplication(
+    disabled_test_backend_web_pages_handler_mappings, debug=False)
 if appengine_util.IsInProductionApp():
-  gae_ts_mon.initialize(disabled_test_detection_backend_web_application)
+  gae_ts_mon.initialize(disabled_test_backend_web_application)
 
 # "flake-detection-backend" module.
 flake_detection_backend_web_pages_handler_mappings = [
