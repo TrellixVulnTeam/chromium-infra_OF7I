@@ -530,7 +530,7 @@ func TestListVMs(t *testing.T) {
 			So(resp, ShouldResembleProto, vms)
 		})
 		Convey("List VMs - multiple filters", func() {
-			resp, _, err := ListVMs(ctx, 5, "", "vlan=vlan-2 & state=testing & zone=atlanta", false)
+			resp, _, err := ListVMs(ctx, 5, "", "vlan=vlan-2 & state=deployed_testing & zone=atlanta", false)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldHaveLength, 1)
