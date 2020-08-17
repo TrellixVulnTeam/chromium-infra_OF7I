@@ -7,7 +7,6 @@ package message_test
 import (
 	"context"
 	"infra/cros/cmd/result_flow/internal/message"
-	"sort"
 	"strconv"
 	"testing"
 
@@ -20,6 +19,12 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+type received struct {
+	buildID                 int64
+	parentUID               string
+	shouldPollForCompletion bool
+}
 
 func TestMessage(t *testing.T) {
 	fakeConfig := &result_flow.PubSubConfig{
@@ -35,34 +40,79 @@ func TestMessage(t *testing.T) {
 
 	setupPubSubServer(ctx, fakeConfig, newConnection(srv.Addr))
 
-	Convey("Given a list of build IDs, subscriber can parse them", t, func() {
-		var want []int64 = []int64{8878576942164330944, 8878576942164330945}
-		for _, bID := range want {
-			if err := message.PublishBuildID(ctx, bID, fakeConfig, option.WithGRPCConn(newConnection(srv.Addr))); err != nil {
+	mClient, err := message.NewClient(ctx, fakeConfig, 2, option.WithGRPCConn(newConnection(srv.Addr)))
+	if err != nil {
+		panic(err)
+	}
+
+	cases := []struct {
+		description string
+		in          map[string]string
+		expected    *received
+	}{
+		{
+			"CTP message with Build ID only",
+			map[string]string{
+				message.BuildIDKey: "8878576942164330944",
+			},
+			&received{
+				buildID: 8878576942164330944,
+			},
+		},
+		{
+			"CTP message sent after the execution step",
+			map[string]string{
+				message.BuildIDKey:                 "8878576942164330944",
+				message.ShouldPollForCompletionKey: "True",
+			},
+			&received{
+				buildID:                 8878576942164330944,
+				shouldPollForCompletion: true,
+			},
+		},
+		{
+			"Test runner message with Build ID and Parent UID",
+			map[string]string{
+				message.BuildIDKey:   "8878576942164330945",
+				message.ParentUIDKey: "TestPlanRun/foo/fake-test",
+			},
+			&received{
+				buildID:   8878576942164330945,
+				parentUID: "TestPlanRun/foo/fake-test",
+			},
+		},
+		{
+			"Test runner message sent after the execution step",
+			map[string]string{
+				message.BuildIDKey:                 "8878576942164330945",
+				message.ParentUIDKey:               "TestPlanRun/foo/fake-test",
+				message.ShouldPollForCompletionKey: "True",
+			},
+			&received{
+				buildID:                 8878576942164330945,
+				parentUID:               "TestPlanRun/foo/fake-test",
+				shouldPollForCompletion: true,
+			},
+		},
+	}
+	for _, c := range cases {
+		Convey(c.description, t, func() {
+			if err := message.PublishBuild(ctx, c.in, fakeConfig, option.WithGRPCConn(newConnection(srv.Addr))); err != nil {
 				panic(err)
 			}
-		}
-		mClient, err := message.NewClient(ctx, fakeConfig, 2, option.WithGRPCConn(newConnection(srv.Addr)))
-		if err != nil {
-			panic(err)
-		}
-		msgs, err := mClient.PullMessages(ctx)
-		if err != nil {
-			panic(err)
-		}
-		m := message.ExtractBuildIDMap(ctx, msgs)
-		var got []int64
-		for b := range m {
-			got = append(got, b)
-		}
-		So(len(want), ShouldEqual, len(got))
-		sort.Slice(want, func(i, j int) bool { return want[i] < want[j] })
-		sort.Slice(got, func(i, j int) bool { return got[i] < got[j] })
-		for i := 0; i < len(got); i++ {
-			So(want[i], ShouldEqual, got[i])
-		}
-
-	})
+			msgs, err := mClient.PullMessages(ctx)
+			mClient.AckMessages(ctx, msgs)
+			if err != nil {
+				panic(err)
+			}
+			got := message.ExtractBuildIDMap(ctx, msgs)
+			So(got, ShouldContainKey, c.expected.buildID)
+			So(got[c.expected.buildID].Message.Attributes[message.ParentUIDKey], ShouldEqual, c.expected.parentUID)
+			if c.expected.shouldPollForCompletion {
+				So(got[c.expected.buildID].Message.Attributes, ShouldContainKey, message.ShouldPollForCompletionKey)
+			}
+		})
+	}
 }
 
 func stringToInt64(s string) int64 {

@@ -45,8 +45,10 @@ type publishRun struct {
 	inputPath  string
 	outputPath string
 
-	buildID  int64
-	deadline time.Time
+	buildID                 int64
+	shouldPollForCompletion bool
+	parentUID               string
+	deadline                time.Time
 
 	config *result_flow.PubSubConfig
 
@@ -103,7 +105,7 @@ func (c *publishRun) runWithDeadline(ctx context.Context) (result_flow.State, er
 func (c *publishRun) pipelineRun(ctx context.Context, ch chan state) {
 	defer close(ch)
 
-	if err := message.PublishBuildID(ctx, c.buildID, c.config, c.clientOpts); err != nil {
+	if err := message.PublishBuild(ctx, c.genAttributeMap(), c.config, c.clientOpts); err != nil {
 		ch <- state{
 			result_flow.State_FAILED,
 			errors.Annotate(err, "failed to publish build ID %d", c.buildID).Err(),
@@ -128,12 +130,27 @@ func (c *publishRun) loadPublishRequest() error {
 	if c.buildID, err = getBuildID(r.GetBuildId()); err != nil {
 		return err
 	}
+	c.shouldPollForCompletion = r.GetShouldPollForCompletion()
+	c.parentUID = r.GetParentUid()
 	if r.GetDeadline() != nil {
 		c.deadline = google.TimeFromProto(r.GetDeadline())
 	} else {
 		c.deadline = time.Now().Add(time.Second * time.Duration(site.DefaultDeadlineSeconds))
 	}
 	return nil
+}
+
+func (c *publishRun) genAttributeMap() map[string]string {
+	m := map[string]string{
+		message.BuildIDKey: fmt.Sprintf("%d", c.buildID),
+	}
+	if c.parentUID != "" {
+		m[message.ParentUIDKey] = c.parentUID
+	}
+	if c.shouldPollForCompletion {
+		m[message.ShouldPollForCompletionKey] = "True"
+	}
+	return m
 }
 
 func getBuildID(bID int64) (int64, error) {

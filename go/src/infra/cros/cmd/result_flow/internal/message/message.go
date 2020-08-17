@@ -20,11 +20,17 @@ import (
 	pubsubpb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
-// BuildIDKeyName is the key name to store Build ID in message attributes.
-const BuildIDKeyName = "build_id"
+const (
+	// BuildIDKey is the key to store Build ID in message attributes.
+	BuildIDKey = "build_id"
+	// ParentUIDKey is the key to store parent UID.
+	ParentUIDKey = "parent_uid"
+	// ShouldPollForCompletionKey is the key to store flag should_poll_for_completion.
+	ShouldPollForCompletionKey = "should_poll_for_completion"
+)
 
-// PublishBuildID publishes a Build ID to PubSub.
-func PublishBuildID(ctx context.Context, bID int64, conf *result_flow.PubSubConfig, opts ...option.ClientOption) error {
+// PublishBuild publishes a Build to PubSub.
+func PublishBuild(ctx context.Context, attr map[string]string, conf *result_flow.PubSubConfig, opts ...option.ClientOption) error {
 	c, err := pubsub.NewPublisherClient(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create publisher client: %v", err)
@@ -34,18 +40,12 @@ func PublishBuildID(ctx context.Context, bID int64, conf *result_flow.PubSubConf
 	_, err = c.Publish(ctx, &pubsubpb.PublishRequest{
 		Topic: fmt.Sprintf("projects/%s/topics/%s", conf.Project, conf.Topic),
 		Messages: []*pubsubpb.PubsubMessage{
-			genPublishRequest(bID),
+			{
+				Attributes: attr,
+			},
 		},
 	})
 	return err
-}
-
-func genPublishRequest(bID int64) *pubsubpb.PubsubMessage {
-	return &pubsubpb.PubsubMessage{
-		Attributes: map[string]string{
-			BuildIDKeyName: fmt.Sprintf("%d", bID),
-		},
-	}
 }
 
 // Client defines an interface used to interact with pubsub
@@ -137,9 +137,9 @@ func ExtractParentUID(msg *pubsubpb.ReceivedMessage) (string, error) {
 }
 
 func extractBuildID(msg *pubsubpb.ReceivedMessage) (int64, error) {
-	bID, err := strconv.ParseInt(msg.Message.Attributes[BuildIDKeyName], 10, 64)
+	bID, err := strconv.ParseInt(msg.Message.Attributes[BuildIDKey], 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("Failed to parse build ID from: %s", msg.Message.Attributes[BuildIDKeyName])
+		return 0, fmt.Errorf("Failed to parse build ID from: %s", msg.Message.Attributes[BuildIDKey])
 	}
 	if bID == 0 {
 		return 0, fmt.Errorf("Build ID can not be 0")
