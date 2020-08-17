@@ -209,3 +209,11 @@ func fetchBuilds(ctx context.Context, expectedSize int, mClient message.Client, 
 	logging.Infof(ctx, "pulled %d messages from PubSub and %d builds from Buildbucket", len(msgs), len(builds))
 	return builds, msgsByBuildID, nil
 }
+
+func shouldSkipMessage(m *pubsubpb.ReceivedMessage, b *pb.Build) bool {
+	return message.ShouldPollForCompletion(m) && isIncomplete(b)
+}
+
+func isIncomplete(b *pb.Build) bool {
+	return int(b.GetStatus())&int(pb.Status_ENDED_MASK) == 0
+}

@@ -170,6 +170,10 @@ func (c *pipeTestRunnerDataRun) pipelineRun(ctx context.Context, ch chan state) 
 
 	var processed []*pubsubpb.ReceivedMessage
 	for _, build := range builds {
+		if shouldSkipMessage(msgsByBuildID[build.Id], build) {
+			logging.Infof(ctx, "skip build %d: the build finished running tests but is not marked complete yet", build.Id)
+			continue
+		}
 		p, err := message.ExtractParentUID(msgsByBuildID[build.Id])
 		if err != nil {
 			logging.Errorf(ctx, "Failed to extract parent TestPlanRun UID, err: %v", err)

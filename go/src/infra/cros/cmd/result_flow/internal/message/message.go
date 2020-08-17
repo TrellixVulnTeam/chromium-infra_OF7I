@@ -146,3 +146,14 @@ func extractBuildID(msg *pubsubpb.ReceivedMessage) (int64, error) {
 	}
 	return bID, nil
 }
+
+// ShouldPollForCompletion returns true if the message contains the attribute
+// "should_poll_for_completion" and its value is boolean true represented by
+// a string.
+func ShouldPollForCompletion(msg *pubsubpb.ReceivedMessage) bool {
+	if v, ok := msg.Message.Attributes[ShouldPollForCompletionKey]; ok {
+		b, err := strconv.ParseBool(v)
+		return b && err == nil
+	}
+	return false
+}

@@ -94,6 +94,19 @@ func TestMessage(t *testing.T) {
 				shouldPollForCompletion: true,
 			},
 		},
+		{
+			"Message with explicit false ShouldPollForCompletion in its attribute",
+			map[string]string{
+				message.BuildIDKey:                 "8878576942164330945",
+				message.ParentUIDKey:               "TestPlanRun/foo/fake-test",
+				message.ShouldPollForCompletionKey: "False",
+			},
+			&received{
+				buildID:                 8878576942164330945,
+				parentUID:               "TestPlanRun/foo/fake-test",
+				shouldPollForCompletion: false,
+			},
+		},
 	}
 	for _, c := range cases {
 		Convey(c.description, t, func() {
@@ -108,9 +121,7 @@ func TestMessage(t *testing.T) {
 			got := message.ExtractBuildIDMap(ctx, msgs)
 			So(got, ShouldContainKey, c.expected.buildID)
 			So(got[c.expected.buildID].Message.Attributes[message.ParentUIDKey], ShouldEqual, c.expected.parentUID)
-			if c.expected.shouldPollForCompletion {
-				So(got[c.expected.buildID].Message.Attributes, ShouldContainKey, message.ShouldPollForCompletionKey)
-			}
+			So(message.ShouldPollForCompletion(got[c.expected.buildID]), ShouldEqual, c.expected.shouldPollForCompletion)
 		})
 	}
 }
