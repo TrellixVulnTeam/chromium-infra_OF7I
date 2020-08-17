@@ -173,8 +173,6 @@ func TestRunnerOutputToTestRun(t *testing.T) {
 					"TestPlanRuns/fake-build-id/fake-test-run",
 					genFakeTestRunnerBuild(c.in),
 					fakeBuildbucketConfig,
-					// This will be removed in next CL once we erase the inventory code.
-					nil,
 				)
 				got := build.ToTestRun(ctx)
 				So(got, ShouldNotBeNil)

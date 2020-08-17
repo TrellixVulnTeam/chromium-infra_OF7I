@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"infra/cros/cmd/result_flow/internal/bb"
 	"infra/cros/cmd/result_flow/internal/bq"
-	"infra/cros/cmd/result_flow/internal/inventory"
 	"infra/cros/cmd/result_flow/internal/message"
 	"infra/cros/cmd/result_flow/internal/site"
 	"infra/cros/cmd/result_flow/internal/transform"
@@ -59,7 +58,6 @@ type pipeTestRunnerDataRun struct {
 	bbClient         bb.Client
 	bqTestRunClient  bq.Inserter
 	bqTestCaseClient bq.Inserter
-	invClient        inventory.Client
 }
 
 func (c *pipeTestRunnerDataRun) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -121,9 +119,6 @@ func (c *pipeTestRunnerDataRun) innerRun(a subcommands.Application, args []strin
 	}
 	defer c.bqTestRunClient.Close()
 
-	// Inventory client
-	c.invClient = inventory.NewInventoryClient(httpClient)
-
 	// Bigquery inserter for TestCaseResult.
 	c.bqTestCaseClient, err = bq.NewInserter(ctx,
 		bq.Options{
@@ -178,7 +173,7 @@ func (c *pipeTestRunnerDataRun) pipelineRun(ctx context.Context, ch chan state) 
 		if err != nil {
 			logging.Errorf(ctx, "Failed to extract parent TestPlanRun UID, err: %v", err)
 		}
-		runner, err := transform.LoadTestRunnerBuild(ctx, p, build, c.source.GetBb(), c.invClient)
+		runner, err := transform.LoadTestRunnerBuild(ctx, p, build, c.source.GetBb())
 		if err != nil {
 			logging.Errorf(ctx, "failed to extract data from build: %v", err)
 			continue

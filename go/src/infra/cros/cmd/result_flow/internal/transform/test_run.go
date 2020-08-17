@@ -7,7 +7,6 @@ package transform
 import (
 	"context"
 	"fmt"
-	"infra/cros/cmd/result_flow/internal/inventory"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -38,12 +37,10 @@ type testRunnerBuild struct {
 
 	req *runner.Request
 	res *runner.Result
-
-	invC inventory.Client
 }
 
 // LoadTestRunnerBuild loads a Test Runner build from Buildbucket response.
-func LoadTestRunnerBuild(ctx context.Context, parentUID string, b *bbpb.Build, bb *result_flow.BuildbucketConfig, invC inventory.Client) (TestRunnerBuild, error) {
+func LoadTestRunnerBuild(ctx context.Context, parentUID string, b *bbpb.Build, bb *result_flow.BuildbucketConfig) (TestRunnerBuild, error) {
 	if b == nil {
 		return nil, fmt.Errorf("empty build")
 	}
@@ -55,7 +52,6 @@ func LoadTestRunnerBuild(ctx context.Context, parentUID string, b *bbpb.Build, b
 		createTime: b.GetCreateTime(),
 		startTime:  b.GetStartTime(),
 		endTime:    b.GetEndTime(),
-		invC:       invC,
 	}
 	var err error
 	prop := b.GetInput().GetProperties()
