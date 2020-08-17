@@ -1535,7 +1535,7 @@ class WorkEnv(object):
   def BulkUpdateIssueApprovalsV3(
       self, delta_specifications, comment_content, send_email):
     # type: (Sequence[Tuple[int, int, tracker_pb2.ApprovalDelta]]], str,
-    #     Boolean -> Sequence[int]
+    #     Boolean -> Sequence[proto.tracker_pb2.ApprovalValue]
     """Executes the ApprovalDeltas.
 
     Args:
@@ -1544,9 +1544,8 @@ class WorkEnv(object):
       send_email: Whether to send an email on each change.
           TODO(crbug/monorail/8122): send bulk approval update email instead.
 
-    TODO(crbug/monorail/8174): Return ApprovalValues.
     Returns:
-      A list of issue_ids that were changed. Issue/approval combos in
+      A list of ApprovalValues that were changed. Issue/approval combos in
         `delta_specifications` that did not exist will be ignored.
 
     Raises:
@@ -1558,10 +1557,10 @@ class WorkEnv(object):
     if not self.mc.auth.user_id:
       raise permissions.PermissionException('Anon cannot make changes')
 
-    updated_issue_ids = []
+    updated_approval_values = []
     for (issue_id, approval_id, approval_delta) in delta_specifications:
       try:
-        self.UpdateIssueApproval(
+        updated_av, _comment = self.UpdateIssueApproval(
             issue_id,
             approval_id,
             approval_delta,
@@ -1569,12 +1568,12 @@ class WorkEnv(object):
             False,
             send_email=send_email,
             update_perms=True)
-        updated_issue_ids.append(issue_id)
+        updated_approval_values.append(updated_av)
       except exceptions.NoSuchIssueApprovalException as e:
         logging.info('Skipping issue %s, no approval: %s', issue_id, e)
       except permissions.PermissionException as e:
         logging.info('Skipping issue %s, update not allowed: %s', issue_id, e)
-    return updated_issue_ids
+    return updated_approval_values
 
   def UpdateIssueApproval(
       self,

@@ -1812,13 +1812,14 @@ class WorkEnvTest(unittest.TestCase):
 
   @mock.patch('businesslogic.work_env.WorkEnv.UpdateIssueApproval')
   def testBulkUpdateIssueApprovalsV3(self, mockUpdateIssueApproval):
-    updated_issues = [78901, 78901, 78901, 78901, 78902]
 
-    def side_effect(issue_id, *_args, **_kwargs):
+    def side_effect(issue_id, approval_id, *_args, **_kwargs):
       if issue_id in [78903]:
         raise permissions.PermissionException
       if issue_id in [78904, 78905]:
         raise exceptions.NoSuchIssueApprovalException
+      return tracker_pb2.ApprovalValue(
+          approval_id=approval_id), tracker_pb2.IssueComment(issue_id=issue_id)
 
     mockUpdateIssueApproval.side_effect = side_effect
 
@@ -1836,9 +1837,14 @@ class WorkEnvTest(unittest.TestCase):
         (78904, 24, approval_delta),
         (78905, 24, approval_delta),
     ]
-    issue_ids = self.work_env.BulkUpdateIssueApprovalsV3(
+    updated_approval_values = self.work_env.BulkUpdateIssueApprovalsV3(
         deltas_by_issue, 'xyz', send_email=True)
-    self.assertEqual(issue_ids, updated_issues)
+    expected_approval_ids = [1, 1, 2, 2, 24]
+    expected = [
+        tracker_pb2.ApprovalValue(approval_id=aid)
+        for aid in expected_approval_ids
+    ]
+    self.assertEqual(updated_approval_values, expected)
     updateIssueApprovalCalls = []
     for iid, aid, delta in deltas_by_issue:
       mock_call = mock.call(
