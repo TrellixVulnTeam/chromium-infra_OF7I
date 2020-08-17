@@ -186,6 +186,7 @@ func ListNics(ctx context.Context, pageSize int32, pageToken, filter string, key
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing nics").Err()
 		}
 	}
+	filterMap = resetZoneFilter(filterMap)
 	return registration.ListNics(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

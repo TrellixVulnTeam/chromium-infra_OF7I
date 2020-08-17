@@ -654,7 +654,7 @@ func TestListMachineLSEs(t *testing.T) {
 					Name:         "lse-vm-1",
 					Hostname:     "lse-vm-1",
 					Manufacturer: "apple",
-					Zone:         "mtv97",
+					Zone:         ufspb.Zone_ZONE_MTV97.String(),
 					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
 							VmCapacity: 2,
@@ -665,7 +665,7 @@ func TestListMachineLSEs(t *testing.T) {
 					Name:         "lse-vm-2",
 					Hostname:     "lse-vm-2",
 					Manufacturer: "apple",
-					Zone:         "mtv97",
+					Zone:         ufspb.Zone_ZONE_MTV97.String(),
 					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
 							VmCapacity: 3,
@@ -676,7 +676,7 @@ func TestListMachineLSEs(t *testing.T) {
 					Name:         "lse-vm-3",
 					Hostname:     "lse-vm-3",
 					Manufacturer: "apple",
-					Zone:         "mtv1234",
+					Zone:         ufspb.Zone_ZONE_ATLANTA.String(),
 					Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 						ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
 							VmCapacity: 2,

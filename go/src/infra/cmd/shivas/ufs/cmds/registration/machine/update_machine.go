@@ -37,7 +37,7 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.machineName, "name", "", "the name of the machine to update")
-		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]. ", strings.Join(utils.ValidZoneStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]. ", strings.Join(ufsUtil.ValidZoneStr(), ", ")))
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses. "+cmdhelp.ClearFieldHelpText)
@@ -131,9 +131,9 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 	machine.Name = c.machineName
 	machine.Location = &ufspb.Location{}
 	if c.zoneName == utils.ClearFieldValue {
-		machine.GetLocation().Zone = utils.ToUFSZone("")
+		machine.GetLocation().Zone = ufsUtil.ToUFSZone("")
 	} else {
-		machine.GetLocation().Zone = utils.ToUFSZone(c.zoneName)
+		machine.GetLocation().Zone = ufsUtil.ToUFSZone(c.zoneName)
 	}
 	if c.rackName == utils.ClearFieldValue {
 		machine.GetLocation().Rack = ""
@@ -178,6 +178,9 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 func (c *updateMachine) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
+	if c.zoneName != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.machineName == "" {

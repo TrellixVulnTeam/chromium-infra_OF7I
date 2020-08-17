@@ -273,6 +273,7 @@ func ListVMs(ctx context.Context, pageSize int32, pageToken, filter string, keys
 	}
 	filterMap = resetStateFilter(filterMap)
 	filterMap = resetOSFilter(filterMap)
+	filterMap = resetZoneFilter(filterMap)
 	return inventory.ListVMs(ctx, pageSize, pageSize, pageToken, filterMap, keysOnly, nil)
 }
 

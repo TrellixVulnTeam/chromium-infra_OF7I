@@ -183,3 +183,56 @@ func ToUFSState(state string) ufspb.State {
 	}
 	return ufspb.State(ufspb.State_value[v])
 }
+
+// StrToUFSZone refers a map between a string to a UFS defined map.
+var StrToUFSZone = map[string]string{
+	"atlanta":     "ZONE_ATLANTA",
+	"chromeos1":   "ZONE_CHROMEOS1",
+	"chromeos4":   "ZONE_CHROMEOS4",
+	"chromeos6":   "ZONE_CHROMEOS6",
+	"chromeos2":   "ZONE_CHROMEOS2",
+	"chromeos3":   "ZONE_CHROMEOS3",
+	"chromeos5":   "ZONE_CHROMEOS5",
+	"chromeos7":   "ZONE_CHROMEOS7",
+	"chromeos15":  "ZONE_CHROMEOS15",
+	"atl97":       "ZONE_ATL97",
+	"iad97":       "ZONE_IAD97",
+	"mtv96":       "ZONE_MTV96",
+	"mtv97":       "ZONE_MTV97",
+	"fuchsia":     "ZONE_FUCHSIA",
+	"unspecified": "ZONE_UNSPECIFIED",
+}
+
+// IsUFSZone checks if a string refers to a valid UFS zone.
+func IsUFSZone(zone string) bool {
+	_, ok := StrToUFSZone[zone]
+	return ok
+}
+
+// ValidZoneStr returns a valid str list for zone strings.
+func ValidZoneStr() []string {
+	ks := make([]string, 0, len(StrToUFSZone))
+	for k := range StrToUFSZone {
+		ks = append(ks, k)
+	}
+	return ks
+}
+
+// RemoveZonePrefix removes the "zone_" prefix from the string
+func RemoveZonePrefix(zone string) string {
+	zone = strings.ToLower(zone)
+	if idx := strings.Index(zone, "zone_"); idx != -1 {
+		zone = zone[idx+len("zone_"):]
+	}
+	return zone
+}
+
+// ToUFSZone converts zone string to a UFS zone enum.
+func ToUFSZone(zone string) ufspb.Zone {
+	zone = RemoveZonePrefix(zone)
+	v, ok := StrToUFSZone[zone]
+	if !ok {
+		return ufspb.Zone_ZONE_UNSPECIFIED
+	}
+	return ufspb.Zone(ufspb.Zone_value[v])
+}

@@ -44,6 +44,7 @@ func ListRPMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing rpms").Err()
 		}
 	}
+	filterMap = resetZoneFilter(filterMap)
 	return registration.ListRPMs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

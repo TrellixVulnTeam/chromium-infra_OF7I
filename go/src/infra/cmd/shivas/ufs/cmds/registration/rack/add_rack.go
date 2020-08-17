@@ -36,7 +36,7 @@ var AddRackCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.RackRegistrationFileText)
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to add")
-		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the rack to. Valid zone strings: [%s]", strings.Join(utils.ValidZoneStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the rack to. Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", ")))
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many machines can be added to this rack")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
@@ -74,7 +74,7 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 		if err := utils.ParseJSONFile(c.newSpecsFile, &rackRegistrationReq); err != nil {
 			return err
 		}
-		ufsZone := utils.ToUFSZone(c.zoneName)
+		ufsZone := ufsUtil.ToUFSZone(c.zoneName)
 		if rackRegistrationReq.GetRack().Location == nil {
 			rackRegistrationReq.GetRack().Location = &ufspb.Location{}
 		}
@@ -109,7 +109,7 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 }
 
 func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
-	ufsZone := utils.ToUFSZone(c.zoneName)
+	ufsZone := ufsUtil.ToUFSZone(c.zoneName)
 	req.Rack = &ufspb.Rack{
 		Name: c.rackName,
 		Location: &ufspb.Location{
@@ -134,7 +134,7 @@ func (c *addRack) validateArgs() error {
 	if c.zoneName == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required.")
 	}
-	if !utils.IsUFSZone(c.zoneName) {
+	if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 	}
 	if c.newSpecsFile != "" {

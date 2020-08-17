@@ -264,6 +264,7 @@ func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, ke
 		}
 	}
 	filterMap = resetStateFilter(filterMap)
+	filterMap = resetZoneFilter(filterMap)
 	return registration.ListRacks(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

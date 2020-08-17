@@ -161,6 +161,7 @@ func ListSwitches(ctx context.Context, pageSize int32, pageToken, filter string,
 		}
 	}
 	filterMap = resetStateFilter(filterMap)
+	filterMap = resetZoneFilter(filterMap)
 	return registration.ListSwitches(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

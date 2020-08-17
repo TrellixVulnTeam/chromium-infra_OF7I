@@ -1014,7 +1014,7 @@ The protobuf definition of rack is part of
 https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/unifiedfleet/api/v1/proto/rack.proto`
 
 	// ZoneFilterHelpText help text for zone filters for list command
-	ZoneFilterHelpText string = fmt.Sprintf("\nValid zone filters: [%s]\n", strings.Join(utils.ValidZoneStr(), ", "))
+	ZoneFilterHelpText string = fmt.Sprintf("\nValid zone filters: [%s]\n", strings.Join(ufsUtil.ValidZoneStr(), ", "))
 
 	// StateFilterHelpText help text for state filters for list command
 	StateFilterHelpText string = fmt.Sprintf("Valid state filters: [%s]\n", strings.Join(ufsUtil.ValidStateStr(), ", "))

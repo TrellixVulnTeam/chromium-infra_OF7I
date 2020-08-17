@@ -106,11 +106,6 @@ func (c *listVM) validateArgs() error {
 		if !ufsAPI.FilterRegex.MatchString(filter) {
 			return cmdlib.NewUsageError(c.Flags, ufsAPI.InvalidFilterFormat)
 		}
-		var err error
-		c.filter, err = utils.ReplaceZoneNames(filter)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

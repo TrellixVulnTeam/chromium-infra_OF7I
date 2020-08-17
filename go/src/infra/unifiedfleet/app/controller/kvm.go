@@ -209,6 +209,7 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 		}
 	}
 	filterMap = resetStateFilter(filterMap)
+	filterMap = resetZoneFilter(filterMap)
 	return registration.ListKVMs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

@@ -246,6 +246,7 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, ke
 			return nil, "", errors.Annotate(err, "Failed to read filter for listing dracs").Err()
 		}
 	}
+	filterMap = resetZoneFilter(filterMap)
 	return registration.ListDracs(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 

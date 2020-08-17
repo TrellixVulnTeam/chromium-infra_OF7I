@@ -376,6 +376,7 @@ func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter stri
 	}
 	filterMap = resetStateFilter(filterMap)
 	filterMap = resetOSFilter(filterMap)
+	filterMap = resetZoneFilter(filterMap)
 	if _, ok := filterMap[util.FreeVMFilterName]; ok {
 		delete(filterMap, util.FreeVMFilterName)
 		allVMs, err := inventory.GetAllVMs(ctx)

@@ -36,7 +36,7 @@ var AddMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineRegistrationFileText)
 
 		c.Flags.StringVar(&c.machineName, "name", "", "the name of the machine to add")
-		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]", strings.Join(utils.ValidZoneStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", ")))
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine")
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses")
@@ -97,7 +97,7 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 		if err = utils.ParseJSONFile(c.newSpecsFile, &machineRegistrationReq); err != nil {
 			return err
 		}
-		ufsZone := utils.ToUFSZone(c.zoneName)
+		ufsZone := ufsUtil.ToUFSZone(c.zoneName)
 		machineRegistrationReq.GetMachine().GetLocation().Zone = ufsZone
 		machineRegistrationReq.GetMachine().Realm = utils.ToUFSRealm(ufsZone.String())
 	} else {
@@ -114,7 +114,7 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 }
 
 func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
-	ufsZone := utils.ToUFSZone(c.zoneName)
+	ufsZone := ufsUtil.ToUFSZone(c.zoneName)
 	req.Machine = &ufspb.Machine{
 		Name: c.machineName,
 		Location: &ufspb.Location{
@@ -147,7 +147,7 @@ func (c *addMachine) validateArgs() error {
 	if c.zoneName == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required.")
 	}
-	if !utils.IsUFSZone(c.zoneName) {
+	if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 	}
 	if c.newSpecsFile != "" {

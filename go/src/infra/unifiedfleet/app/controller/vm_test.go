@@ -503,7 +503,7 @@ func TestListVMs(t *testing.T) {
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Zone:  "fake_zone",
+			Zone:  ufspb.Zone_ZONE_ATLANTA.String(),
 			Vlan:  "vlan-2",
 			State: ufspb.State_STATE_DEPLOYED_TESTING.String(),
 		},
@@ -530,7 +530,7 @@ func TestListVMs(t *testing.T) {
 			So(resp, ShouldResembleProto, vms)
 		})
 		Convey("List VMs - multiple filters", func() {
-			resp, _, err := ListVMs(ctx, 5, "", "vlan=vlan-2 & state=testing & zone=fake_zone", false)
+			resp, _, err := ListVMs(ctx, 5, "", "vlan=vlan-2 & state=testing & zone=atlanta", false)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldHaveLength, 1)
