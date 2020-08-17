@@ -1,3 +1,4 @@
+# coding: utf-8
 # Copyright 2018 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -77,18 +78,19 @@ class BigqueryHelperTest(unittest.TestCase):
     self.assertEqual(new_schema[0]['name'], 'field_name')
     self.assertEqual(new_schema[0]['nullable'], True)
     self.assertTrue('type_conversion_function' in new_schema[0])
-    self.assertEqual(new_schema[0]['type_conversion_function']('str'), 'str')
+    self.assertEqual(new_schema[0]['type_conversion_function'](u'non āscii'),
+                     'non āscii')
 
     schema = [{'type': 'STRING', 'name': 'field_name', 'mode': 'REPEATED'}]
     new_schema = bigquery_helper._SchemaResponseToDicts(schema)
     self.assertEqual(
         new_schema[0]['type_conversion_function']([{
-            'v': 'asdf1'
+            'v': 'ascii'
         }, {
-            'v': 'asdf2'
+            'v': u'non āscii'
         }],
                                                   repeated=True),
-        ['asdf1', 'asdf2'])
+        ['ascii', 'non āscii'])
 
     schema = [{'type': 'TIMESTAMP', 'name': 'field_name', 'mode': 'NULLABLE'}]
     new_schema = bigquery_helper._SchemaResponseToDicts(schema)

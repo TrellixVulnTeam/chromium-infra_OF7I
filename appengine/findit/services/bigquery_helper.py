@@ -74,8 +74,8 @@ def _SchemaResponseToDicts(schema):
     if nullable and val is None:
       return None
     if repeated:
-      return [str(x['v']) for x in val]
-    return str(val)
+      return [x['v'].encode('utf-8') for x in val]
+    return val.encode('utf-8')
 
   def _BooleanTypeConversion(val, nullable=False, repeated=False):
     if nullable and val is None:
