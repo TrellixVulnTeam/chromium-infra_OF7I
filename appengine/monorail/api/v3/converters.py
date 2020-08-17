@@ -603,7 +603,8 @@ class Converter(object):
 
     Raises:
       InputException: if any fields in the approval_delta protos were invalid.
-      ProjectNotFound: if the parent project of any ApprovalValue isn't found.
+      NoSuchProjectException: if the parent project of any ApprovalValue isn't
+          found.
       NoSuchIssueException: if the issue of any ApprovalValue isn't found.
       NoSuchUserException: if any user value was provided with an invalid email.
           Note that users specified by ID are not checked for existence.
@@ -690,7 +691,7 @@ class Converter(object):
 
     Raises:
       InputException: if any fields in the 'issue' proto were invalid.
-      ProjectNotFound: if 'project_id' is not found.
+      NoSuchProjectException: if 'project_id' is not found.
     """
     # Get config first. We can't ingest the issue if the project isn't found.
     config = self.services.config.GetProjectConfig(self.cnxn, project_id)

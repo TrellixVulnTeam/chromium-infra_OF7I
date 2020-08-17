@@ -248,3 +248,33 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
 
     return issues_pb2.ModifyIssuesResponse(
         issues=self.converter.ConvertIssues(issues))
+
+  @monorail_servicer.PRPCMethod
+  def ModifyIssueApprovalValues(self, mc, request):
+    # type: (MonorailContext, ModifyIssueApprovalRequest) ->
+    #     ModifyIssueApprovalResponse
+    """pRPC API method that implements ModifyIssueApprovalValues.
+
+    Raises:
+      InputException if any fields in the delta were invalid.
+      NoSuchIssueException: if the issue of any ApprovalValue isn't found.
+      NoSuchProjectException: if the parent project of any ApprovalValue isn't
+          found.
+      NoSuchUserException: if any user value provided isn't found.
+      PermissionException if user lacks sufficient permissions.
+    """
+    response = issues_pb2.ModifyIssueApprovalValuesResponse()
+    # TODO(crbug/monorail/7925): Refactor ingest to expected return type.
+    delta_specifications = self.converter.IngestApprovalDeltas(
+        request.deltas, mc.auth.user_id)
+    delta_specifications = []
+    send_email = self.converter.IngestNotifyType(request.notify_type)
+    with work_env.WorkEnv(mc, self.services) as we:
+      # NOTE(crbug/monorail/7614): Until the referenced cleanup is complete,
+      # all servicer methods that are scoped to a single Project need to call
+      # mc.LookupLoggedInUserPerms.
+      # This method does not because it may be scoped to multiple projects.
+      approval_values = we.BulkUpdateIssueApprovalsV3(
+          delta_specifications, request.comment_content, send_email=send_email)
+    response.approval_values.extend(approval_values)
+    return response

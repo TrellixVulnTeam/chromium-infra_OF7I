@@ -404,3 +404,19 @@ class IssuesServicerTest(unittest.TestCase):
     request = issues_pb2.ModifyIssuesRequest()
     response = self.CallWrapped(self.issues_svcr.ModifyIssues, mc, request)
     self.assertEqual(response, issues_pb2.ModifyIssuesResponse())
+
+  def testModifyIssueApprovalValues(self):
+    request = issues_pb2.ModifyIssueApprovalValuesRequest()
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    _response = self.CallWrapped(
+        self.issues_svcr.ModifyIssueApprovalValues, mc, request)
+    _expected = []  # TODO(crbug/monorail/7925): Implement test.
+
+  def testModifyIssueApprovalValues_Empty(self):
+    request = issues_pb2.ModifyIssueApprovalValuesRequest()
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyIssueApprovalValues, mc, request)
+    self.assertEqual(len(response.approval_values), 0)
