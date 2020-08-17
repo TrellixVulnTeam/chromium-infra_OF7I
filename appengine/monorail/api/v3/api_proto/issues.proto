@@ -43,6 +43,8 @@ service Issues {
   //   PERMISSION_DENIED if the requester is not allowed to view `parent`.
   rpc ListComments (ListCommentsRequest) returns (ListCommentsResponse) {}
   // Modifies Issues and creates a new Comment for each.
+  // Issues with NOOP changes and no comment_content will not be updated
+  // and will not be included in the response.
   // We do not offer a standard UpdateIssue because every issue change
   // must result in the side-effect of creating a new Comment, and may result in
   // the side effect of sending a notification. We also want to allow for any
@@ -288,8 +290,7 @@ enum NotifyType {
 // Next available tag: 4
 message ModifyIssuesRequest {
   // The issue changes to make.
-  repeated IssueDelta deltas = 1 [
-      (google.api.field_behavior) = REQUIRED ];
+  repeated IssueDelta deltas = 1;
   // The type of notification the modifications should trigger.
   NotifyType notify_type = 2;
   // The comment text that should be added to each issue in delta.

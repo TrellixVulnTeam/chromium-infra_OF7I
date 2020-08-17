@@ -221,3 +221,30 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       starred_issue = we.StarIssue(created_issue, True)
 
     return self.converter.ConvertIssue(starred_issue)
+
+  @monorail_servicer.PRPCMethod
+  def ModifyIssues(self, mc, request):
+    # type: (MonorailContext, ModifyIssuesRequest) -> ModifyIssuesResponse
+    """pRPC API method that implements ModifyIssues.
+
+    Raises:
+      InputException if any given names do not have a valid format or if any
+        fields in the requested issue were invalid.
+      NoSuchIssueException if some issues weren't found.
+      NoSuchProjectException if no project was found for some given issues.
+      FilterRuleException if proposed issue changes violate any filter rules
+        that shows error.
+      PermissionException if user lacks sufficient permissions.
+    """
+    if not request.deltas:
+      return issues_pb2.ModifyIssuesResponse()
+    iid_delta_pairs = self.converter.IngestIssueDeltas(request.deltas)
+    with work_env.WorkEnv(mc, self.services) as we:
+      issues = we.ModifyIssues(
+          iid_delta_pairs,
+          False,
+          comment_content=request.comment_content,
+          send_email=self.converter.IngestNotifyType(request.notify_type))
+
+    return issues_pb2.ModifyIssuesResponse(
+        issues=self.converter.ConvertIssues(issues))

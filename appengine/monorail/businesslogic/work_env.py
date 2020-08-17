@@ -1846,9 +1846,13 @@ class WorkEnv(object):
   def ModifyIssues(
       self, issue_id_delta_pairs, is_description, comment_content=None,
       send_email=True):
-    # type: (Tuple[int, IssueDelta], Boolean, Optional[str], Optional[bool])
-    #     -> None
-    """Modify issues by the given deltas."""
+    # type: (Sequence[Tuple[int, IssueDelta]], Boolean, Optional[str],
+    #     Optional[bool]) -> Sequence[Issue]
+    """Modify issues by the given deltas and returns all issues post-update.
+
+    Note: Issues with NOOP deltas and no comment_content to add will not be
+        updated and will not be returned.
+    """
 
     main_issue_ids = {issue_id for issue_id, _delta in issue_id_delta_pairs}
     issues_by_id = self.GetIssuesDict(main_issue_ids, use_cache=False)
@@ -1980,6 +1984,10 @@ class WorkEnv(object):
       send_notifications.PrepareAndSendIssueChangeNotification(
           issue_id, hostport, self.mc.auth.user_id, comment_id=comment_pb.id,
           send_email=send_email)
+
+    return [
+        issues_by_id[iid] for iid in main_issue_ids if iid in comments_by_iid
+    ]
 
   def _ModifyIssuesNotifyForDelta(
       self, issue, changes, comments_by_iid, hostport, send_email):

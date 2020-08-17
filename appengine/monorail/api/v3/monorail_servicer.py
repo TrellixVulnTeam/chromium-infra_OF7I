@@ -364,6 +364,9 @@ class MonorailServicer(object):
     elif exc_type == exceptions.InvalidComponentNameException:
       prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
       prpc_context.set_details('That component name is invalid.')
+    elif exc_type == exceptions.FilterRuleException:
+      prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
+      prpc_context.set_details('Violates filter rule that should error.')
     elif exc_type == exceptions.InputException:
       prpc_context.set_code(codes.StatusCode.INVALID_ARGUMENT)
       prpc_context.set_details(

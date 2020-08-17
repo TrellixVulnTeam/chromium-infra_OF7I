@@ -8,6 +8,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import copy
 import unittest
 import mock
 
@@ -23,6 +24,16 @@ from services import service_manager
 
 from google.appengine.ext import testbed
 from google.protobuf import timestamp_pb2
+from google.protobuf import field_mask_pb2
+
+
+def _Issue(project_id, local_id):
+  issue = tracker_pb2.Issue(owner_id=0)
+  issue.project_name = 'proj-%d' % project_id
+  issue.project_id = project_id
+  issue.local_id = local_id
+  issue.issue_id = project_id * 100 + local_id
+  return issue
 
 
 class IssuesServicerTest(unittest.TestCase):
@@ -350,3 +361,46 @@ class IssuesServicerTest(unittest.TestCase):
     self.assertEqual(response.cc_users[0].user, 'users/222')
     self.assertEqual(response.labels[0].label, 'foo-bar')
     self.assertEqual(response.star_count, 1)
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  def testModifyIssues(self, fake_notify):
+    issue = _Issue(780, 1)
+    self.services.project.TestAddProject(
+        issue.project_name, project_id=issue.project_id,
+        owner_ids=[self.owner.user_id])
+
+    issue.labels = ['keep-me', 'remove-me']
+    self.services.issue.TestAddIssue(issue)
+    exp_issue = copy.deepcopy(issue)
+
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+
+    request = issues_pb2.ModifyIssuesRequest(
+        deltas=[
+            issues_pb2.IssueDelta(
+                issue=issue_objects_pb2.Issue(
+                    name='projects/proj-780/issues/1',
+                    labels=[issue_objects_pb2.Issue.LabelValue(
+                        label='add-me')]),
+                update_mask=field_mask_pb2.FieldMask(paths=['labels']),
+                labels_remove=['remove-me'])],
+        comment_content='Release the chicken.',
+        notify_type=issues_pb2.NotifyType.Value('NO_NOTIFICATION'))
+
+    response = self.CallWrapped(
+        self.issues_svcr.ModifyIssues, mc, request)
+    exp_issue.labels = ['keep-me', 'add-me']
+    exp_api_issue = self.issues_svcr.converter.ConvertIssue(exp_issue)
+    self.assertEqual([iss for iss in response.issues], [exp_api_issue])
+    fake_notify.assert_called_once_with(
+        issue.issue_id, 'testing-app.appspot.com', self.owner.user_id,
+        comment_id=mock.ANY, old_owner_id=None, send_email=False)
+
+  def testModifyIssues_Empty(self):
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.ModifyIssuesRequest()
+    response = self.CallWrapped(self.issues_svcr.ModifyIssues, mc, request)
+    self.assertEqual(response, issues_pb2.ModifyIssuesResponse())

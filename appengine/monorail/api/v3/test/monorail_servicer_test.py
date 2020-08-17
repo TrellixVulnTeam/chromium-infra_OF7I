@@ -477,6 +477,10 @@ class MonorailServicerTest(unittest.TestCase):
         exceptions.InvalidComponentNameException(),
         codes.StatusCode.INVALID_ARGUMENT)
     self.CheckExceptionStatus(
+        exceptions.FilterRuleException(),
+        codes.StatusCode.INVALID_ARGUMENT,
+        details='Violates filter rule that should error.')
+    self.CheckExceptionStatus(
         exceptions.InputException('echoed values'),
         codes.StatusCode.INVALID_ARGUMENT,
         details='Invalid arguments: echoed values')

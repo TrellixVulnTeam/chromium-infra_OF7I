@@ -2868,8 +2868,11 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(self.user_1.user_id)
     send_email = False
     with self.work_env as we:
-      we.ModifyIssues(issue_delta_pairs, False, comment_content=content,
-                      send_email=send_email)
+      actual_issues = we.ModifyIssues(
+          issue_delta_pairs,
+          False,
+          comment_content=content,
+          send_email=send_email)
 
     # We expect all issues to have a description comment and the comment(s)
     # added from the ModifyIssues() changes.
@@ -2896,6 +2899,7 @@ class WorkEnvTest(unittest.TestCase):
         exp_amendments_block_b_imp)
 
     exp_issues = [exp_merge_a, exp_merge_b, exp_block_a, exp_block_b]
+    self.assertEqual(len(actual_issues), len(exp_issues))
     for exp_issue in exp_issues:
       # All updated issues should have been fetched from DB, skipping cache.
       # So we expect assume_stale=False was applied to all issues during the
@@ -2905,8 +2909,11 @@ class WorkEnvTest(unittest.TestCase):
       # the ApplyFilterRules path. (see filter_helpers._ComputeDerivedFields)
       exp_issue.derived_status = ''
       exp_issue.derived_owner_id = 0
+      # Check we successfully updated the issue in our services layer.
       self.assertEqual(exp_issue, self.services.issue.GetIssue(
         self.cnxn, exp_issue.issue_id))
+      # Check the issue was successfully returned.
+      self.assertTrue(exp_issue in actual_issues)
 
     # Check issues enqueued for indexing.
     reindex_iids = {issue.issue_id for issue in exp_issues}
@@ -3056,8 +3063,11 @@ class WorkEnvTest(unittest.TestCase):
     self.SignIn(self.user_1.user_id)
     send_email = True
     with self.work_env as we:
-      we.ModifyIssues(issue_delta_pairs, False, comment_content=content,
-                      send_email=send_email)
+      actual_issues = we.ModifyIssues(
+          issue_delta_pairs,
+          False,
+          comment_content=content,
+          send_email=send_email)
 
     # Check comments correct.
     # We expect all issues to have a description comment and the comment(s)
@@ -3110,6 +3120,7 @@ class WorkEnvTest(unittest.TestCase):
     expected_issues = [
         exp_issue_noop, exp_issue_empty, exp_issue_shared_a,
         exp_issue_shared_b, exp_issue_unique, exp_imp_issue]
+    # Check we successfully updated these in our services layer.
     for exp_issue in expected_issues:
       # All updated issues should have been fetched from DB, skipping cache.
       # So we expect assume_stale=False was applied to all issues during the
@@ -3121,9 +3132,16 @@ class WorkEnvTest(unittest.TestCase):
       if exp_issue != exp_issue_noop:
         exp_issue.derived_status = ''
         exp_issue.derived_owner_id = 0
-
       self.assertEqual(
         exp_issue, self.services.issue.GetIssue(self.cnxn, exp_issue.issue_id))
+    # Check the expected issues were successfully returned.
+    exp_actual_issues = [
+        exp_issue_noop, exp_issue_empty, exp_issue_shared_a, exp_issue_shared_b,
+        exp_issue_unique
+    ]
+    self.assertEqual(len(exp_actual_issues), len(actual_issues))
+    for issue in actual_issues:
+      self.assertTrue(issue in exp_actual_issues)
 
     # Check notifications sent.
     hostport = 'testing-app.appspot.com'
@@ -3218,7 +3236,8 @@ class WorkEnvTest(unittest.TestCase):
     content = None
     send_email = True
     with self.work_env as we:
-      we.ModifyIssues(issue_delta_pairs, False, send_email=send_email)
+      actual_issues = we.ModifyIssues(
+          issue_delta_pairs, False, send_email=send_email)
 
     # Check comments.
     # We expect all issues to have a description comment and the comment(s)
@@ -3246,8 +3265,11 @@ class WorkEnvTest(unittest.TestCase):
       # the ApplyFilterRules path. (see filter_helpers._ComputeDerivedFields)
       exp_issue.derived_status = ''
       exp_issue.derived_owner_id = 0
+      # Check we successfully updated these issues in our services layer.
       self.assertEqual(exp_issue, self.services.issue.GetIssue(
           self.cnxn, exp_issue.issue_id))
+      # Check the expected issues were successfully returned.
+      self.assertTrue(exp_issue in actual_issues)
 
     # Check issues enqueued for indexing.
     reindex_iids = {issue.issue_id for issue in exp_issues}
@@ -3337,8 +3359,9 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
     self.SignIn(self.user_1.user_id)
     with self.work_env as we:
-      we.ModifyIssues(issue_delta_pairs, False, send_email=True)
+      issues = we.ModifyIssues(issue_delta_pairs, False, send_email=True)
 
+    self.assertFalse(issues)
     self.services.issue.UpdateIssue.assert_not_called()
     self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
     self.services.issue.CreateIssueComment.assert_not_called()
@@ -3358,8 +3381,9 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.CreateIssueComment = mock.Mock()
     self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
     with self.work_env as we:
-      we.ModifyIssues([], False, comment_content='invisible chickens')
+      issues = we.ModifyIssues([], False, comment_content='invisible chickens')
 
+    self.assertFalse(issues)
     self.services.issue.UpdateIssue.assert_not_called()
     self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
     self.services.issue.CreateIssueComment.assert_not_called()
