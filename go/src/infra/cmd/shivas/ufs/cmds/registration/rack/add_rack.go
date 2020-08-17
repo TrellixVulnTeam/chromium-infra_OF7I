@@ -79,7 +79,7 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 			rackRegistrationReq.GetRack().Location = &ufspb.Location{}
 		}
 		rackRegistrationReq.GetRack().GetLocation().Zone = ufsZone
-		rackRegistrationReq.GetRack().Realm = utils.ToUFSRealm(ufsZone.String())
+		rackRegistrationReq.GetRack().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
 	} else {
 		c.parseArgs(&rackRegistrationReq)
 	}
@@ -116,7 +116,7 @@ func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
 			Zone: ufsZone,
 		},
 		CapacityRu: int32(c.capacity),
-		Realm:      utils.ToUFSRealm(c.zoneName),
+		Realm:      ufsUtil.ToUFSRealm(c.zoneName),
 		Tags:       utils.GetStringSlice(c.tags),
 	}
 	if ufsUtil.IsInBrowserZone(ufsZone.String()) {

@@ -99,7 +99,7 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 		}
 		ufsZone := ufsUtil.ToUFSZone(c.zoneName)
 		machineRegistrationReq.GetMachine().GetLocation().Zone = ufsZone
-		machineRegistrationReq.GetMachine().Realm = utils.ToUFSRealm(ufsZone.String())
+		machineRegistrationReq.GetMachine().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
 	} else {
 		c.parseArgs(&machineRegistrationReq)
 	}
@@ -121,7 +121,7 @@ func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
 			Zone: ufsZone,
 			Rack: c.rackName,
 		},
-		Realm:        utils.ToUFSRealm(c.zoneName),
+		Realm:        ufsUtil.ToUFSRealm(c.zoneName),
 		Tags:         utils.GetStringSlice(c.tags),
 		SerialNumber: c.serialNumber,
 	}

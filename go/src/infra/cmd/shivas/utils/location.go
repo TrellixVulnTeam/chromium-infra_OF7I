@@ -6,9 +6,6 @@ package utils
 
 import (
 	"regexp"
-
-	ufspb "infra/unifiedfleet/api/v1/proto"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 var locations = []*regexp.Regexp{
@@ -32,17 +29,4 @@ func IsLocation(iput string) bool {
 		}
 	}
 	return false
-}
-
-// ToUFSRealm returns the realm name based on zone string.
-func ToUFSRealm(zone string) string {
-	ufsZone := ufsUtil.ToUFSZone(zone)
-	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
-		return ufsUtil.BrowserLabAdminRealm
-	}
-	if ufsZone == ufspb.Zone_ZONE_CHROMEOS3 || ufsZone == ufspb.Zone_ZONE_CHROMEOS5 ||
-		ufsZone == ufspb.Zone_ZONE_CHROMEOS7 || ufsZone == ufspb.Zone_ZONE_CHROMEOS15 {
-		return ufsUtil.AcsLabAdminRealm
-	}
-	return ufsUtil.AtlLabAdminRealm
 }
