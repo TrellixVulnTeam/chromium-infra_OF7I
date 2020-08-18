@@ -81,6 +81,9 @@ func getBoardVersionMaps(
 			logging.Debugf(ctx, "buildTarget has blank version", version)
 			continue
 		}
+		if _, ok := out[bt]; !ok {
+			out[bt] = newBoardVersionMap()
+		}
 		out[bt].omahaVersion = version
 	}
 	return out
