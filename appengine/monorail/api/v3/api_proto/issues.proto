@@ -310,8 +310,7 @@ message ModifyIssuesResponse {
 // Next available tag: 4
 message ModifyIssueApprovalValuesRequest {
   // The ApprovalValue changes to make.
-  repeated ApprovalDelta deltas = 1 [
-      (google.api.field_behavior) = REQUIRED ];
+  repeated ApprovalDelta deltas = 1;
   // The type of notification the modifications should trigger.
   NotifyType notify_type = 2;
   // The `content` of the Comment created for each change in `deltas`.
