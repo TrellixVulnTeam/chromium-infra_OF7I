@@ -262,19 +262,21 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
           found.
       NoSuchUserException: if any user value provided isn't found.
       PermissionException if user lacks sufficient permissions.
+      # TODO(crbug/monorail/7925): Not all of these are yet thrown.
     """
     response = issues_pb2.ModifyIssueApprovalValuesResponse()
-    # TODO(crbug/monorail/7925): Refactor ingest to expected return type.
     delta_specifications = self.converter.IngestApprovalDeltas(
         request.deltas, mc.auth.user_id)
-    delta_specifications = []
     send_email = self.converter.IngestNotifyType(request.notify_type)
     with work_env.WorkEnv(mc, self.services) as we:
       # NOTE(crbug/monorail/7614): Until the referenced cleanup is complete,
       # all servicer methods that are scoped to a single Project need to call
       # mc.LookupLoggedInUserPerms.
       # This method does not because it may be scoped to multiple projects.
-      approval_values = we.BulkUpdateIssueApprovalsV3(
+      _approval_values = we.BulkUpdateIssueApprovalsV3(
           delta_specifications, request.comment_content, send_email=send_email)
-    response.approval_values.extend(approval_values)
+    # TODO(crbug/monorail/7925): Return approval values.
+    # api_avs = self.converter.ConvertApprovalValues(issue.approval_values,
+    #     issue.field_values, issue.phases, issue_id=issue_id)
+    # response.approval_values.extend(api_avs)
     return response

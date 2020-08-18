@@ -1577,6 +1577,7 @@ class WorkEnv(object):
             send_email=send_email,
             update_perms=True)
         updated_approval_values.append(updated_av)
+      # TODO(crbug/monorail/7925): Raise execeptions.
       except exceptions.NoSuchIssueApprovalException as e:
         logging.info('Skipping issue %s, no approval: %s', issue_id, e)
       except permissions.PermissionException as e:
@@ -1619,7 +1620,7 @@ class WorkEnv(object):
     config = self.GetProjectConfig(issue.project_id)
     # TODO(crbug/monorail/7614): Remove the need for this hack to update perms.
     if update_perms:
-      mc.LookupLoggedInUserPerms(project)
+      self.mc.LookupLoggedInUserPerms(project)
 
     if attachments:
       with self.mc.profiler.Phase('Accounting for quota'):

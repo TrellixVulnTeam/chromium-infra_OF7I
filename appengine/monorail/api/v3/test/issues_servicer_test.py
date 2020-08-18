@@ -36,6 +36,9 @@ def _Issue(project_id, local_id):
   return issue
 
 
+CURRENT_TIME = 12346.78
+
+
 class IssuesServicerTest(unittest.TestCase):
 
   def setUp(self):
@@ -57,7 +60,7 @@ class IssuesServicerTest(unittest.TestCase):
         usergroup=fake.UserGroupService())
     self.issues_svcr = issues_servicer.IssuesServicer(
         self.services, make_rate_limiter=False)
-    self.PAST_TIME = 12345
+    self.PAST_TIME = int(CURRENT_TIME - 1)
 
     self.owner = self.services.user.TestAddUser('owner@example.com', 111)
     self.user_2 = self.services.user.TestAddUser('user_2@example.com', 222)
@@ -405,13 +408,81 @@ class IssuesServicerTest(unittest.TestCase):
     response = self.CallWrapped(self.issues_svcr.ModifyIssues, mc, request)
     self.assertEqual(response, issues_pb2.ModifyIssuesResponse())
 
-  def testModifyIssueApprovalValues(self):
-    request = issues_pb2.ModifyIssueApprovalValuesRequest()
+  @mock.patch('time.time', mock.MagicMock(return_value=CURRENT_TIME))
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendApprovalChangeNotification')
+  def testModifyIssueApprovalValues(self, fake_notify):
+    self.services.issue.DeltaUpdateIssueApproval = mock.Mock()
+    config = fake.MakeTestConfig(self.project_1.project_id, [], [])
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    # Make testing approval def and its associated field def
+    field_id = 2
+    approval_field_def = fake.MakeTestFieldDef(
+        field_id,
+        self.project_1.project_id,
+        tracker_pb2.FieldTypes.APPROVAL_TYPE,
+        field_name='approval-gate-1')
+    self.services.config.TestAddFieldDef(approval_field_def)
+    ad = fake.MakeTestApprovalDef(field_id, approver_ids=[self.owner.user_id])
+    self.services.config.TestAddApprovalDef(ad, self.project_1.project_id)
+
+    # Make approval value
+    av = fake.MakeApprovalValue(
+        field_id,
+        status=tracker_pb2.ApprovalStatus.NEEDS_REVIEW,
+        set_on=self.PAST_TIME,
+        approver_ids=[self.owner.user_id],
+        setter_id=self.user_2.user_id)
+
+    issue = fake.MakeTestIssue(
+        self.project_1.project_id,
+        1237,
+        'sum',
+        'New',
+        self.owner.user_id,
+        project_name=self.project_1.project_name,
+        approval_values=[av])
+    self.services.issue.TestAddIssue(issue)
+
+    av_name = 'projects/%s/issues/%d/approvalValues/%d' % (
+        self.project_1.project_name, issue.local_id, ad.approval_id)
+    delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(
+            name=av_name,
+            status=issue_objects_pb2.ApprovalValue.ApprovalStatus.Value('NA')),
+        update_mask=field_mask_pb2.FieldMask(paths=['status']))
+
+    request = issues_pb2.ModifyIssueApprovalValuesRequest(deltas=[delta],)
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
     _response = self.CallWrapped(
         self.issues_svcr.ModifyIssueApprovalValues, mc, request)
-    _expected = []  # TODO(crbug/monorail/7925): Implement test.
+    expected_ingested_delta = tracker_pb2.ApprovalDelta(
+        status=tracker_pb2.ApprovalStatus.NA,
+        set_on=int(CURRENT_TIME),
+        setter_id=self.owner.user_id,
+    )
+    # TODO(crbug/monorail/7925): Convert ApprovalValues.
+    # self.assertEqual(len(response.approval_values), 1)
+
+    self.services.issue.DeltaUpdateIssueApproval.assert_called_once_with(
+        mc.cnxn,
+        self.owner.user_id,
+        config,
+        issue,
+        av,
+        expected_ingested_delta,
+        comment_content=u'',
+        is_description=False,
+        attachments=None,
+        kept_attachments=None)
+    fake_notify.assert_called_once_with(
+        issue.issue_id,
+        ad.approval_id,
+        'testing-app.appspot.com',
+        mock.ANY,
+        send_email=True)
 
   def testModifyIssueApprovalValues_Empty(self):
     request = issues_pb2.ModifyIssueApprovalValuesRequest()
