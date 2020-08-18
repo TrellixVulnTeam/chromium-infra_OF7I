@@ -86,10 +86,12 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 	if err != nil {
 		return errors.Annotate(err, "create authenticated transport").Err()
 	}
-	var gsc gslib.Client
-	if err := gsc.Init(ctx, t, utils.Unmarshaller); err != nil {
+	var gsc gslibClient
+	var gscImpl gslib.Client
+	if err := gscImpl.Init(ctx, t, utils.Unmarshaller); err != nil {
 		return err
 	}
+	gsc = &gscImpl
 
 	// Fetch up-to-date stable version based on omaha file
 	newCrosSV, err := getGSCrosSV(ctx, outDir, gsc)
@@ -112,46 +114,32 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 	if err != nil {
 		return err
 	}
-	updatedCros := compareCrosSV(ctx, newCrosSV, oldSV.GetCros())
-	updatedFirmwareSV, err := getGSFirmwareSV(ctx, gsc, outDir, updatedCros)
+
+	fvFunc := MakeFirmwareVersionFunc(gsc, outDir)
+	newSV, err := FileBuilder(ctx, oldSV, newCrosSV, fvFunc)
 	if err != nil {
 		return err
-	}
-
-	logging.Infof(ctx, "cros version to be updated: %#v", updatedCros)
-	logging.Infof(ctx, "firmware version to be updated: %#v", updatedFirmwareSV)
-	if len(updatedCros) == 0 && len(updatedFirmwareSV) == 0 {
-		logging.Infof(ctx, "stable_version: nothing to commit")
-		return nil
 	}
 
 	if c.dryRun {
-		logging.Infof(ctx, "dryrun: skip committing")
+		content, err := svlib.WriteSVToString(newSV)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s\n", content)
 		return nil
 	}
 
-	changeURL, err := commitNew(ctx, gc, updatedCros, updatedFirmwareSV, oldSV)
+	changeURL, err := commitNew(ctx, gc, newSV)
 	if err != nil {
 		return err
-	}
-	if c.outputPath == "" {
-		for _, u := range updatedCros {
-			logging.Debugf(ctx, "cros stable version: %v", u)
-		}
-		for _, u := range updatedFirmwareSV {
-			logging.Debugf(ctx, "firmware: %v", u)
-		}
-		logging.Infof(ctx, "Number of new SV: %d", len(newCrosSV))
-		logging.Infof(ctx, "Number of old SV: %d", len(oldSV.GetCros()))
-		logging.Infof(ctx, "Number of updated cros SV: %d", len(updatedCros))
-		logging.Infof(ctx, "Number of updated firmware SV: %d", len(updatedFirmwareSV))
 	}
 	logging.Debugf(ctx, "Update stable version CL: %s", changeURL)
 	return nil
 }
 
 // Get CrOS stable version from omaha status file.
-func getGSCrosSV(ctx context.Context, outDir string, gsc gslib.Client) ([]*sv.StableCrosVersion, error) {
+func getGSCrosSV(ctx context.Context, outDir string, gsc gslibClient) ([]*sv.StableCrosVersion, error) {
 	localOSFile := filepath.Join(outDir, cmd.OmahaStatusFile)
 	if err := gsc.Download(cmd.OmahaGSPath, localOSFile); err != nil {
 		return nil, err
@@ -167,12 +155,12 @@ func getGSCrosSV(ctx context.Context, outDir string, gsc gslib.Client) ([]*sv.St
 	return cros, nil
 }
 
+// getGitSV gets stable versions from the git client.
 func getGitSV(ctx context.Context, gc *gitlib.Client) (*sv.StableVersions, error) {
 	res, err := gc.GetFile(ctx, cmd.StableVersionConfigPath)
 	if err != nil {
 		return nil, err
 	}
-	// TODO(xixuan): make it a subcommand to check the config file's validity and call it in builder.
 	if res == "" {
 		logging.Warningf(ctx, "empty stable version config file: %s", cmd.StableVersionConfigPath)
 		return nil, err
@@ -192,67 +180,8 @@ func logInvalidCrosSV(ctx context.Context, crosSV []*sv.StableCrosVersion) {
 	}
 }
 
-func compareCrosSV(ctx context.Context, newCrosSV []*sv.StableCrosVersion, oldCrosSV []*sv.StableCrosVersion) []*sv.StableCrosVersion {
-	oldMap := make(map[string]string, len(oldCrosSV))
-	for _, csv := range oldCrosSV {
-		if err := svlib.ValidateCrOSVersion(csv.GetVersion()); err != nil {
-			continue
-		}
-		oldMap[csv.GetKey().GetBuildTarget().GetName()] = csv.GetVersion()
-	}
-	var updated []*sv.StableCrosVersion
-	for _, nsv := range newCrosSV {
-		k := nsv.GetKey().GetBuildTarget().GetName()
-		v, ok := oldMap[k]
-		if ok {
-			nv := nsv.GetVersion()
-			cp, err := svlib.CompareCrOSVersions(v, nv)
-			if err == nil && cp == -1 {
-				updated = append(updated, nsv)
-			} else {
-				logging.Debugf(ctx, "new version %s is not newer than existing version %s for board %s", nv, v, k)
-			}
-		} else {
-			updated = append(updated, nsv)
-		}
-	}
-	return updated
-}
-
-func getGSFirmwareSV(ctx context.Context, gsc gslib.Client, outDir string, updatedCros []*sv.StableCrosVersion) ([]*sv.StableFirmwareVersion, error) {
-	var res []*sv.StableFirmwareVersion
-	for _, newCros := range updatedCros {
-		lf := filepath.Join(outDir, localMetaFilePath(newCros))
-		remotePath := gslib.MetaFilePath(newCros)
-		if err := gsc.Download(remotePath, lf); err != nil {
-			logging.Debugf(ctx, "fail to download %s: %s", remotePath, err)
-			continue
-		}
-		bt, err := ioutil.ReadFile(lf)
-		if err != nil {
-			logging.Debugf(ctx, "fail to load meta file: %s", lf)
-			continue
-		}
-		firmwareSVs, err := gslib.ParseMetadata(bt)
-		if err != nil {
-			logging.Debugf(ctx, "fail to parse meta file: %s", err)
-			continue
-		}
-		for _, fsv := range firmwareSVs {
-			if fsv.GetVersion() != "" {
-				res = append(res, fsv)
-			}
-		}
-	}
-	return res, nil
-}
-
-func commitNew(ctx context.Context, gc *gitlib.Client, updatedCros []*sv.StableCrosVersion, updatedFirmwareSV []*sv.StableFirmwareVersion, old *sv.StableVersions) (string, error) {
-	newCros := svlib.AddUpdatedCros(old.Cros, updatedCros)
-	newFirmware := svlib.AddUpdatedFirmware(old.Firmware, updatedFirmwareSV)
-	old.Cros = newCros
-	old.Firmware = newFirmware
-	newContent, err := svlib.WriteSVToString(old)
+func commitNew(ctx context.Context, gc *gitlib.Client, sv *sv.StableVersions) (string, error) {
+	newContent, err := svlib.WriteSVToString(sv)
 	if err != nil {
 		return "", errors.Annotate(err, "convert change").Err()
 	}

@@ -139,6 +139,15 @@ func ParseStableVersions(contents []byte) (*labPlatform.StableVersions, error) {
 	return &allSV, nil
 }
 
+// ParseStableCrosVersion takes a byte array and attempts to parse a stable CrOS version
+func ParseStableCrosVersion(contents []byte) (*labPlatform.StableCrosVersion, error) {
+	var allSV labPlatform.StableCrosVersion
+	if err := unmarshaller.Unmarshal(bytes.NewReader(contents), &allSV); err != nil {
+		return nil, fmt.Errorf("JSON does not conform to schema: %s", err.Error())
+	}
+	return &allSV, nil
+}
+
 func validateStableVersions(sv *labPlatform.StableVersions) error {
 	if sv == nil {
 		return fmt.Errorf(FileJSONNull)
@@ -171,17 +180,18 @@ func shallowValidateCrosVersions(sv *labPlatform.StableVersions) error {
 	for i, cros := range sv.GetCros() {
 		bt := cros.GetKey().GetBuildTarget().GetName()
 		model := cros.GetKey().GetModelId().GetValue()
+		combined := fmt.Sprintf("%s;%s", bt, model)
 		version := cros.GetVersion()
 		if bt == "" {
 			return makeShallowlyMalformedCrosEntry("empty buildTarget", i, bt, model, version)
 		}
-		if model != "" {
-			return makeShallowlyMalformedCrosEntry("non-empty models are NOT supported in CrOS versions", i, bt, model, version)
+		if model == "" {
+			return makeShallowlyMalformedCrosEntry("empty model", i, bt, model, version)
 		}
-		if seen[bt] {
-			return makeShallowlyMalformedCrosEntry("duplicate entry for buildTarget", i, bt, model, version)
+		if seen[combined] {
+			return makeShallowlyMalformedCrosEntry("duplicate entry for buildTarget + model", i, bt, model, version)
 		}
-		seen[bt] = true
+		seen[combined] = true
 		// model is explicitly allowed to be "" for a CrOS version.
 		if err := stableversion.ValidateCrOSVersion(version); err != nil {
 			return makeShallowlyMalformedCrosEntry("invalid version", i, bt, model, version)

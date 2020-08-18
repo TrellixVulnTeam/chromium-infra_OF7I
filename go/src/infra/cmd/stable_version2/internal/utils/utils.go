@@ -48,3 +48,20 @@ func GetCrOSSVByBuildtarget(res []*sv.StableCrosVersion, b string) string {
 	}
 	return ""
 }
+
+// MakeSpecificCrOSSV makes a stable cros version object specific to the
+// model.
+func MakeSpecificCrOSSV(b, m, v string) *sv.StableCrosVersion {
+	return &sv.StableCrosVersion{
+		Key:     MakeStableVersionKey(b, m),
+		Version: v,
+	}
+}
+
+// MakeSpecificFirmwareVersion makes a firmware version specific to the model.
+func MakeSpecificFirmwareVersion(b, m, v string) *sv.StableFirmwareVersion {
+	return &sv.StableFirmwareVersion{
+		Key:     MakeStableVersionKey(b, m),
+		Version: v,
+	}
+}

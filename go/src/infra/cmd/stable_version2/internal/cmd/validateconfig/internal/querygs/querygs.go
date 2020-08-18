@@ -253,7 +253,7 @@ func (r *Reader) maybeDownloadFile(buildTarget string, crosVersion string) error
 	}
 	// TODO(gregorynisbet): Consider throwing an error or panicking if we encounter
 	// a duplicate when populating the cache.
-	for _, fw := range fws {
+	for _, fw := range fws.FirmwareVersions {
 		buildTarget := fw.GetKey().GetBuildTarget().GetName()
 		model := fw.GetKey().GetModelId().GetValue()
 		version := fw.GetVersion()

@@ -42,16 +42,27 @@ func ParseOmahaStatus(ctx context.Context, data []byte) ([]*sv.StableCrosVersion
 	return res, nil
 }
 
+// ParseMetadataResult is the information present in the Omaha metadata file.
+type ParseMetadataResult struct {
+	BuildTargets        []string
+	ModelInBuildTargets map[string][]string
+	FirmwareVersions    []*sv.StableFirmwareVersion
+}
+
 // ParseMetadata parses the build metadata.
-func ParseMetadata(data []byte) ([]*sv.StableFirmwareVersion, error) {
+func ParseMetadata(data []byte) (*ParseMetadataResult, error) {
 	var bm svdata.BuildMetadata
 	if err := utils.Unmarshaller.Unmarshal(bytes.NewReader(data), &bm); err != nil {
 		return nil, err
 	}
 	var res []*sv.StableFirmwareVersion
+	var buildTargets []string
+	modelInBuildTargets := make(map[string][]string)
 	if bm.GetUnibuild() {
 		for buildTarget, bm := range bm.GetBoardMetadata() {
+			buildTargets = append(buildTargets, buildTarget)
 			for model, mm := range bm.GetModels() {
+				modelInBuildTargets[buildTarget] = append(modelInBuildTargets[buildTarget], model)
 				key := utils.MakeStableVersionKey(buildTarget, model)
 				res = append(res, &sv.StableFirmwareVersion{
 					Key:     key,
@@ -61,6 +72,8 @@ func ParseMetadata(data []byte) ([]*sv.StableFirmwareVersion, error) {
 		}
 	} else {
 		for buildTarget, bm := range bm.GetBoardMetadata() {
+			buildTargets = append(buildTargets, buildTarget)
+			modelInBuildTargets[buildTarget] = append(modelInBuildTargets[buildTarget], buildTarget)
 			key := utils.MakeStableVersionKey(buildTarget, buildTarget)
 			res = append(res, &sv.StableFirmwareVersion{
 				Key:     key,
@@ -68,7 +81,11 @@ func ParseMetadata(data []byte) ([]*sv.StableFirmwareVersion, error) {
 			})
 		}
 	}
-	return res, nil
+	return &ParseMetadataResult{
+		buildTargets,
+		modelInBuildTargets,
+		res,
+	}, nil
 }
 
 func parseOne(od *svdata.OmahaData, m map[string]string) (string, string, error) {

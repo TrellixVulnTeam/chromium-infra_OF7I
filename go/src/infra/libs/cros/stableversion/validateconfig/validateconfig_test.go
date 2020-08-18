@@ -45,7 +45,7 @@ const wellformedStableVersion = `
 {
 	"cros": [{
 		"key": {
-			"modelId": {},
+			"modelId": {"value": "arkham"},
 			"buildTarget": {"name": "arkham"}
 		},
 		"version": "R77-12371.52.22"
@@ -74,14 +74,14 @@ const stableVersionsWithDuplicates = `
 	"cros": [
 		{
 			"key": {
-				"modelId": {},
+				"modelId": {"value": "arkham"},
 				"buildTarget": {"name": "arkham"}
 			},
 			"version": "R77-12371.52.22"
 		},
 		{
 			"key": {
-				"modelId": {},
+				"modelId": {"value": "arkham"},
 				"buildTarget": {"name": "arkham"}
 			},
 			"version": "R77-12371.52.22"
@@ -215,7 +215,7 @@ var testShallowValidateCrosVersionsData = []struct {
 	{
 		"c6ebed7d-670a-4d8a-be22-ad8d37419247",
 		stableVersionsWithDuplicates,
-		makeShallowlyMalformedCrosEntry("duplicate entry for buildTarget", 1, "arkham", "", "R77-12371.52.22").Error(),
+		makeShallowlyMalformedCrosEntry("duplicate entry for buildTarget + model", 1, "arkham", "arkham", "R77-12371.52.22").Error(),
 	},
 }
 

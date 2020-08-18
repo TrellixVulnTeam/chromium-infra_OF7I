@@ -63,10 +63,10 @@ func TestParseMetaData(t *testing.T) {
 
 			res, err := ParseMetadata(bt)
 			So(err, ShouldBeNil)
-			So(res, ShouldHaveLength, 1)
-			So(res[0].GetKey().GetBuildTarget().GetName(), ShouldEqual, "arkham")
-			So(res[0].GetKey().GetModelId().GetValue(), ShouldEqual, "arkham")
-			So(res[0].GetVersion(), ShouldEqual, "v1")
+			So(res.FirmwareVersions, ShouldHaveLength, 1)
+			So(res.FirmwareVersions[0].GetKey().GetBuildTarget().GetName(), ShouldEqual, "arkham")
+			So(res.FirmwareVersions[0].GetKey().GetModelId().GetValue(), ShouldEqual, "arkham")
+			So(res.FirmwareVersions[0].GetVersion(), ShouldEqual, "v1")
 		})
 
 		Convey("Parse unibuild", func() {
@@ -75,12 +75,12 @@ func TestParseMetaData(t *testing.T) {
 
 			res, err := ParseMetadata(bt)
 			So(err, ShouldBeNil)
-			So(res, ShouldHaveLength, 2)
-			So(res[0].GetKey().GetBuildTarget().GetName(), ShouldEqual, "reef")
-			So(res[1].GetKey().GetBuildTarget().GetName(), ShouldEqual, "reef")
+			So(res.FirmwareVersions, ShouldHaveLength, 2)
+			So(res.FirmwareVersions[0].GetKey().GetBuildTarget().GetName(), ShouldEqual, "reef")
+			So(res.FirmwareVersions[1].GetKey().GetBuildTarget().GetName(), ShouldEqual, "reef")
 			models := map[string]string{
-				res[0].GetKey().GetModelId().GetValue(): res[0].GetVersion(),
-				res[1].GetKey().GetModelId().GetValue(): res[1].GetVersion(),
+				res.FirmwareVersions[0].GetKey().GetModelId().GetValue(): res.FirmwareVersions[0].GetVersion(),
+				res.FirmwareVersions[1].GetKey().GetModelId().GetValue(): res.FirmwareVersions[1].GetVersion(),
 			}
 			So(models["model1"], ShouldEqual, "v1")
 			So(models["model2"], ShouldEqual, "v2")
