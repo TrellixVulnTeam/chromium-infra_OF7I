@@ -12,7 +12,8 @@ import os
 import sys
 
 # Enable third-party imports
-sys.path.append(os.path.join(os.path.dirname(__file__), 'third_party'))
+from google.appengine.ext import vendor
+vendor.add(os.path.join(os.path.dirname(__file__), 'third_party'))
 
 import httplib2
 import oauth2client
