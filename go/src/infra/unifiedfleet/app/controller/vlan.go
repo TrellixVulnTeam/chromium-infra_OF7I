@@ -7,6 +7,7 @@ package controller
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
@@ -79,11 +80,15 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 		if err != nil {
 			return errors.Annotate(err, "UpdateVlan - fail to get old vlan").Err()
 		}
+		oldVlanCopy := proto.Clone(oldVlan).(*ufspb.Vlan)
 
 		// Copy the not-allowed change fields
 		vlan.VlanAddress = oldVlan.GetVlanAddress()
 		vlan.CapacityIp = oldVlan.GetCapacityIp()
 		vlan.State = oldVlan.GetState()
+		if err := validateReservedIPs(ctx, vlan); err != nil {
+			return err
+		}
 
 		// Update new vlan's state if user specifically set the state
 		if s != ufspb.State_STATE_UNSPECIFIED && vlan.State != s.String() {
@@ -99,11 +104,14 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 				return errors.Annotate(err, "UpdateVlan - processing update mask failed").Err()
 			}
 		}
+		if err := updateIPTable(ctx, vlan.GetName(), oldVlanCopy.GetReservedIps(), vlan.GetReservedIps()); err != nil {
+			return err
+		}
 
 		if _, err := configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan}); err != nil {
 			return errors.Annotate(err, "UpdateVlan - unable to batch update vlan %s", vlan.Name).Err()
 		}
-		hc.LogVLANChanges(oldVlan, vlan)
+		hc.LogVLANChanges(oldVlanCopy, vlan)
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -436,11 +444,11 @@ func validateUpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.
 	if err := ResourceExist(ctx, []*Resource{GetVlanResource(vlan.Name)}, nil); err != nil {
 		return err
 	}
-	return validateVlanUpdateMask(vlan, mask)
+	return validateVlanUpdateMask(ctx, vlan, mask)
 }
 
 // validateVlanUpdateMask validates the update mask for vlan update
-func validateVlanUpdateMask(vlan *ufspb.Vlan, mask *field_mask.FieldMask) error {
+func validateVlanUpdateMask(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMask) error {
 	if mask != nil {
 		// validate the give field mask
 		for _, path := range mask.Paths {
@@ -455,6 +463,7 @@ func validateVlanUpdateMask(vlan *ufspb.Vlan, mask *field_mask.FieldMask) error 
 				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - cidr_block cannot be updated, delete and create a new vlan instead")
 			case "tags":
 				// valid fields, nothing to validate.
+			case "reserved_ips":
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateVlanUpdateMask - unsupported update mask path %q", path)
 			}
@@ -474,6 +483,8 @@ func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_ma
 			oldVlan.Description = vlan.GetDescription()
 		case "state":
 			oldVlan.State = vlan.GetState()
+		case "reserved_ips":
+			oldVlan.ReservedIps = mergeIPs(oldVlan.ReservedIps, vlan.GetReservedIps())
 		}
 	}
 	return oldVlan, nil
@@ -488,4 +499,36 @@ func getVlanHistoryClient(m *ufspb.Vlan) *HistoryClient {
 			Hostname: m.Name,
 		},
 	}
+}
+
+func updateIPTable(ctx context.Context, vlanName string, oldIPs, newIPs []string) error {
+	oldIPMap := make(map[string]bool, len(oldIPs))
+	for _, ip := range oldIPs {
+		oldIPMap[ip] = true
+	}
+	newIPMap := make(map[string]bool, len(newIPs))
+	for _, ip := range newIPs {
+		newIPMap[ip] = true
+	}
+	// Get ips from reserved => non-reserved
+	addBackIPs := make([]*ufspb.IP, 0)
+	for _, ip := range oldIPs {
+		if !newIPMap[ip] {
+			addBackIPs = append(addBackIPs, util.FormatIP(vlanName, ip, false))
+		}
+	}
+	// Get ips from non-reserved => reserved
+	toRemoveIPs := make([]string, 0)
+	for _, ip := range newIPs {
+		if !oldIPMap[ip] {
+			toRemoveIPs = append(toRemoveIPs, util.FormatIP(vlanName, ip, false).GetId())
+		}
+	}
+	if _, err := configuration.BatchUpdateIPs(ctx, addBackIPs); err != nil {
+		return err
+	}
+	if err := configuration.BatchDeleteIPs(ctx, toRemoveIPs); err != nil {
+		return err
+	}
+	return nil
 }

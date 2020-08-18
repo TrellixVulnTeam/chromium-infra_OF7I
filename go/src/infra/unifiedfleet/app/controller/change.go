@@ -387,6 +387,7 @@ func (hc *HistoryClient) LogVLANChanges(oldData, newData *ufspb.Vlan) {
 	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.vlan_address", oldData.GetVlanAddress(), newData.GetVlanAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.description", oldData.GetDescription(), newData.GetDescription())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.reserved_ips", oldData.GetReservedIps(), newData.GetReservedIps())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
 

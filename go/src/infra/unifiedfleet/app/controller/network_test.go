@@ -30,8 +30,8 @@ func TestGetFreeIP(t *testing.T) {
 		So(res.Failed(), ShouldHaveLength, 0)
 
 		occupiedIPs := []*ufspb.IP{
-			util.FormatIP(40, "192.168.40.3", true),
-			util.FormatIP(40, "192.168.40.5", true),
+			util.FormatIP("browser-lab:40", "192.168.40.3", true),
+			util.FormatIP("browser-lab:40", "192.168.40.5", true),
 		}
 		res, err = configuration.ImportIPs(ctx, occupiedIPs)
 		So(err, ShouldBeNil)

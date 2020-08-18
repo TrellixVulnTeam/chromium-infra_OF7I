@@ -270,7 +270,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		}
 		hostToVMs[vm.GetHost()] = append(hostToVMs[vm.GetHost()], v)
 		ufsVMs = append(ufsVMs, v)
-		ip := FormatIP(vm.GetVlan(), vm.GetIpv4(), true)
+		ip := FormatIP(GetBrowserLabName(Int64ToStr(vm.GetVlan())), vm.GetIpv4(), true)
 		if ip != nil {
 			ips = append(ips, ip)
 		}
@@ -323,7 +323,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Manufacturer: manufacturer,
 		}
 		lses = append(lses, lse)
-		ip := FormatIP(h.GetVlan(), h.GetIpv4(), true)
+		ip := FormatIP(GetBrowserLabName(Int64ToStr(h.GetVlan())), h.GetIpv4(), true)
 		if ip != nil {
 			ips = append(ips, ip)
 		}

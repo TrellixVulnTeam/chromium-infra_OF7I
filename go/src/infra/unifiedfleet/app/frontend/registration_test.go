@@ -6,9 +6,6 @@ package frontend
 
 import (
 	"fmt"
-	"math"
-	"strconv"
-	"strings"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -2324,13 +2321,4 @@ func TestDeleteSwitch(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
 		})
 	})
-}
-
-func getCapacity(cidr string) float64 {
-	cover := strings.Split(cidr, "/")[1]
-	coverN, err := strconv.Atoi(cover)
-	if err != nil {
-		return 0
-	}
-	return math.Exp2(32 - float64(coverN))
 }

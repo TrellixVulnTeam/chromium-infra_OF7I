@@ -75,7 +75,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
 	nwOpt := req.GetNetworkOptions()[req.MachineLSE.Name]
 	if nwOpt != nil {
-		var machinelse *ufspb.MachineLSE
+		machinelse := req.MachineLSE
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
 			machinelse, err = controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetStates()[req.MachineLSE.Name], req.UpdateMask)
@@ -86,7 +86,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 
 		// If network_option.delete is enabled, ignore network_option.vlan and return directly
 		if nwOpt.GetDelete() {
-			if err = controller.DeleteMachineLSEHost(ctx, machinelse.Name); err != nil {
+			if err = controller.DeleteMachineLSEHost(ctx, req.MachineLSE.Name); err != nil {
 				return nil, err
 			}
 			machinelse, err = controller.GetMachineLSE(ctx, req.MachineLSE.Name)
@@ -94,7 +94,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 				return nil, err
 			}
 		} else if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
-			machinelse, err = controller.UpdateMachineLSEHost(ctx, machinelse.Name, nwOpt)
+			machinelse, err = controller.UpdateMachineLSEHost(ctx, req.MachineLSE.Name, nwOpt)
 			if err != nil {
 				return nil, err
 			}
@@ -184,7 +184,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
 
 	if req.GetNetworkOption() != nil {
-		var vm *ufspb.VM
+		vm := req.Vm
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
 			vm, err = controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.GetState(), req.UpdateMask)
@@ -195,7 +195,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 
 		// If network_option.delete is enabled, ignore network_option.vlan and return directly
 		if req.GetNetworkOption().GetDelete() {
-			if err = controller.DeleteVMHost(ctx, vm.Name); err != nil {
+			if err = controller.DeleteVMHost(ctx, req.Vm.Name); err != nil {
 				return nil, err
 			}
 			vm, err = controller.GetVM(ctx, req.Vm.Name)
@@ -203,7 +203,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 				return nil, err
 			}
 		} else if req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "" {
-			vm, err = controller.UpdateVMHost(ctx, vm.Name, req.GetNetworkOption())
+			vm, err = controller.UpdateVMHost(ctx, req.Vm.Name, req.GetNetworkOption())
 			if err != nil {
 				return nil, err
 			}

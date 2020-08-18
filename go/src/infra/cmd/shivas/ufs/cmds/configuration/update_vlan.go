@@ -35,6 +35,7 @@ var UpdateVlanCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.name, "name", "", "name of the vlan")
 		c.Flags.StringVar(&c.description, "desc", "", "description for the vlan. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
+		c.Flags.StringVar(&c.reservedIPs, "reserved_ips", "", "comma separated ips. You can only append/add new ips here. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
 }
@@ -48,6 +49,7 @@ type updateVlan struct {
 	name        string
 	description string
 	state       string
+	reservedIPs string
 }
 
 func (c *updateVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -87,8 +89,9 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 	res, err := ic.UpdateVlan(ctx, &ufsAPI.UpdateVlanRequest{
 		Vlan: &Vlan,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"desc":  "description",
-			"state": "state",
+			"desc":         "description",
+			"state":        "state",
+			"reserved_ips": "reserved_ips",
 		}),
 		State: s,
 	})
@@ -108,13 +111,18 @@ func (c *updateVlan) parseArgs(vlan *ufspb.Vlan) {
 	} else {
 		vlan.Description = c.description
 	}
+	if c.reservedIPs == utils.ClearFieldValue {
+		vlan.ReservedIps = nil
+	} else {
+		vlan.ReservedIps = utils.GetStringSlice(c.reservedIPs)
+	}
 }
 
 func (c *updateVlan) validateArgs() error {
 	if c.name == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 	}
-	if c.state == "" && c.description == "" {
+	if c.state == "" && c.description == "" && c.reservedIPs == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {

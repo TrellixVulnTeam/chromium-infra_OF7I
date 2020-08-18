@@ -329,6 +329,20 @@ func mergeTags(oldTags, newTags []string) []string {
 	return oldTags
 }
 
+// TODO: merge this with mergeTags
+func mergeIPs(olds, news []string) []string {
+	// Clean up all tags if new input tags are empty
+	if len(news) == 0 {
+		return nil
+	}
+	for _, s := range news {
+		if s != "" {
+			olds = append(olds, s)
+		}
+	}
+	return olds
+}
+
 func validateMacAddress(ctx context.Context, assetName, macAddr string) error {
 	if macAddr == "" {
 		return nil
@@ -391,6 +405,33 @@ func validateSwitchPort(ctx context.Context, assetName string, switchInterface *
 			continue
 		}
 		return status.Errorf(codes.InvalidArgument, "switch port %s of %s is already occupied by drac %s", switchPort, switchID, drac.GetName())
+	}
+	return nil
+}
+
+func validateReservedIPs(ctx context.Context, vlan *ufspb.Vlan) error {
+	if len(vlan.GetReservedIps()) == 0 {
+		return nil
+	}
+	ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "Fail to parse the vlan cidr block %s", vlan.GetVlanAddress())
+	}
+	ipMap := make(map[string]bool)
+	for _, ip := range ips {
+		ipMap[ip.GetIpv4Str()] = true
+	}
+	for _, ip := range vlan.GetReservedIps() {
+		if !ipMap[ip] {
+			return status.Errorf(codes.InvalidArgument, "ip %s doesn't belong to vlan %s", ip, vlan.GetVlanAddress())
+		}
+		dhcps, err := configuration.QueryDHCPConfigByPropertyName(ctx, "ipv4", ip)
+		if err != nil {
+			return err
+		}
+		for _, dhcp := range dhcps {
+			return status.Errorf(codes.InvalidArgument, "ip %s is already occupied by hostname %s", dhcp.GetIp(), dhcp.GetHostname())
+		}
 	}
 	return nil
 }

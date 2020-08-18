@@ -194,11 +194,17 @@ func DeleteIPs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 // This is a non-atomic operation. Must be used within a transaction.
 // Will lead to partial deletes if not used in a transaction.
 func BatchDeleteIPs(ctx context.Context, ids []string) error {
-	protos := make([]proto.Message, len(ids))
-	for i, id := range ids {
-		protos[i] = &ufspb.IP{Id: id}
+	checkEntities := make([]*IPEntity, 0, len(ids))
+	for _, id := range ids {
+		entity := &IPEntity{
+			ID: id,
+		}
+		checkEntities = append(checkEntities, entity)
 	}
-	return ufsds.BatchDelete(ctx, protos, newDeleteIPEntity)
+	if err := datastore.Delete(ctx, checkEntities); err != nil {
+		return status.Errorf(codes.Internal, err.Error())
+	}
+	return nil
 }
 
 // GetIPIndexedFieldName returns the index name

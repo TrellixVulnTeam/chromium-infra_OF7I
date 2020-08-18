@@ -1145,7 +1145,7 @@ func TestCreateVlan(t *testing.T) {
 	vlan3 := mockVlan("")
 	Convey("CreateVlan", t, func() {
 		Convey("Create new vlan with vlan_id", func() {
-			vlan1.VlanAddress = "192.168.255.248/29"
+			vlan1.VlanAddress = "192.168.255.248/27"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan1,
 				VlanId: "Vlan-1",
@@ -1156,7 +1156,7 @@ func TestCreateVlan(t *testing.T) {
 		})
 
 		Convey("Create existing vlan", func() {
-			vlan3.VlanAddress = "192.168.255.248/29"
+			vlan3.VlanAddress = "192.168.255.248/27"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan3,
 				VlanId: "Vlan-1",
@@ -1212,7 +1212,7 @@ func TestUpdateVlan(t *testing.T) {
 	vlan4 := mockVlan("a.b)7&")
 	Convey("UpdateVlan", t, func() {
 		Convey("Update existing vlan", func() {
-			vlan1.VlanAddress = "3.3.3.3/30"
+			vlan1.VlanAddress = "3.3.3.3/27"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan1,
 				VlanId: "vlan-1",
@@ -1278,7 +1278,7 @@ func TestGetVlan(t *testing.T) {
 		tf, validate := newTestFixtureWithContext(ctx, t)
 		defer validate()
 		vlan1 := mockVlan("vlan-1")
-		vlan1.VlanAddress = "3.3.3.4/30"
+		vlan1.VlanAddress = "3.3.3.4/27"
 		req := &ufsAPI.CreateVlanRequest{
 			Vlan:   vlan1,
 			VlanId: "vlan-1",
@@ -1375,7 +1375,7 @@ func TestDeleteVlan(t *testing.T) {
 		defer validate()
 		Convey("Delete vlan by existing ID without references", func() {
 			vlan2 := mockVlan("")
-			vlan2.VlanAddress = "192.168.110.0/30"
+			vlan2.VlanAddress = "192.168.110.0/27"
 			req := &ufsAPI.CreateVlanRequest{
 				Vlan:   vlan2,
 				VlanId: "vlan-2",
@@ -1454,7 +1454,7 @@ func TestImportVlans(t *testing.T) {
 			So(ufsAPI.ParseResources(vlans, "Name"), ShouldResemble, []string{"browser-lab:144", "browser-lab:20", "browser-lab:40"})
 			vlan, err := configuration.GetVlan(ctx, "browser-lab:40")
 			So(err, ShouldBeNil)
-			expectedCapacity := getCapacity(vlan.GetVlanAddress())
+			expectedCapacity := util.GetCapacity(vlan.GetVlanAddress())
 			So(vlan.GetCapacityIp(), ShouldEqual, int32(expectedCapacity))
 			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": "browser-lab:40"})
 			So(err, ShouldBeNil)

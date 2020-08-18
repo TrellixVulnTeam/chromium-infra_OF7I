@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
@@ -20,6 +21,7 @@ import (
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/state"
+	"infra/unifiedfleet/app/util"
 )
 
 func mockVlan(id, cidr string) *ufspb.Vlan {
@@ -57,11 +59,11 @@ func TestCreateVlan(t *testing.T) {
 		})
 
 		Convey("Create vlan - happy path", func() {
-			resp, err := CreateVlan(ctx, mockVlan("create-vlan-1", "192.168.100.0/30"))
+			resp, err := CreateVlan(ctx, mockVlan("create-vlan-1", "192.168.100.0/27"))
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "create-vlan-1")
-			So(resp.GetVlanAddress(), ShouldEqual, "192.168.100.0/30")
-			So(resp.GetCapacityIp(), ShouldEqual, 4)
+			So(resp.GetVlanAddress(), ShouldEqual, "192.168.100.0/27")
+			So(resp.GetCapacityIp(), ShouldEqual, 21)
 			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
 
 			s, err := state.GetStateRecord(ctx, "vlans/create-vlan-1")
@@ -85,7 +87,7 @@ func TestCreateVlan(t *testing.T) {
 func TestUpdateVlan(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
-	configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{mockVlan("update-vlan-0", "4.4.4.4/30")})
+	configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{mockVlan("update-vlan-0", "4.4.4.4/27")})
 	Convey("UpdateVlan", t, func() {
 		Convey("Update vlan - with existing vlan", func() {
 			resp, err := UpdateVlan(ctx, mockVlan("update-vlan-non-exist", ""), nil, ufspb.State_STATE_UNSPECIFIED)
@@ -104,7 +106,7 @@ func TestUpdateVlan(t *testing.T) {
 		Convey("Update vlan - fully update cidr_block won't work", func() {
 			resp, err := UpdateVlan(ctx, mockVlan("update-vlan-0", "2.2.2.2/22"), nil, ufspb.State_STATE_UNSPECIFIED)
 			So(err, ShouldBeNil)
-			So(resp.GetVlanAddress(), ShouldEqual, "4.4.4.4/30")
+			So(resp.GetVlanAddress(), ShouldEqual, "4.4.4.4/27")
 		})
 
 		Convey("Update vlan - fully update description & state", func() {
@@ -113,13 +115,13 @@ func TestUpdateVlan(t *testing.T) {
 			resp, err := UpdateVlan(ctx, vlan2, nil, ufspb.State_STATE_SERVING)
 			So(err, ShouldBeNil)
 			So(resp.GetDescription(), ShouldEqual, "test fully update")
-			So(resp.GetVlanAddress(), ShouldEqual, "4.4.4.4/30")
+			So(resp.GetVlanAddress(), ShouldEqual, "4.4.4.4/27")
 			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
 
 			vlan, err := configuration.GetVlan(ctx, "update-vlan-0")
 			So(err, ShouldBeNil)
 			So(vlan.GetDescription(), ShouldEqual, "test fully update")
-			So(vlan.GetVlanAddress(), ShouldEqual, "4.4.4.4/30")
+			So(vlan.GetVlanAddress(), ShouldEqual, "4.4.4.4/27")
 			So(vlan.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
 			s, err := state.GetStateRecord(ctx, "vlans/update-vlan-0")
 			So(err, ShouldBeNil)
@@ -127,43 +129,92 @@ func TestUpdateVlan(t *testing.T) {
 		})
 
 		Convey("Update vlan - partial update description", func() {
-			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{mockVlan("update-vlan-1", "5.5.5.5/30")})
-			vlan2 := mockVlan("update-vlan-1", "2.2.2.2/30")
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{mockVlan("update-vlan-1", "5.5.5.5/27")})
+			vlan2 := mockVlan("update-vlan-1", "2.2.2.2/27")
 			vlan2.Description = "test partial update"
 			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"description"}}, ufspb.State_STATE_UNSPECIFIED)
 			So(err, ShouldBeNil)
 			So(resp.GetDescription(), ShouldEqual, "test partial update")
-			So(resp.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
+			So(resp.GetVlanAddress(), ShouldEqual, "5.5.5.5/27")
 			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
 
 			vlan, err := configuration.GetVlan(ctx, "update-vlan-1")
 			So(err, ShouldBeNil)
 			So(vlan.GetDescription(), ShouldEqual, "test partial update")
-			So(vlan.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
+			So(vlan.GetVlanAddress(), ShouldEqual, "5.5.5.5/27")
 			So(vlan.GetState(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
 		})
 
 		Convey("Update vlan - partial update state", func() {
-			vlan1 := mockVlan("update-vlan-2", "5.5.5.5/30")
+			vlan1 := mockVlan("update-vlan-2", "5.5.5.5/27")
 			vlan1.Description = "before update"
 			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
-			vlan2 := mockVlan("update-vlan-2", "2.2.2.2/30")
+			vlan2 := mockVlan("update-vlan-2", "2.2.2.2/27")
 			vlan2.Description = "after update"
 			resp, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"state"}}, ufspb.State_STATE_SERVING)
 			So(err, ShouldBeNil)
 			So(resp.GetDescription(), ShouldEqual, "before update")
-			So(resp.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
+			So(resp.GetVlanAddress(), ShouldEqual, "5.5.5.5/27")
 			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
 
 			vlan, err := configuration.GetVlan(ctx, "update-vlan-2")
 			So(err, ShouldBeNil)
 			So(vlan.GetDescription(), ShouldEqual, "before update")
-			So(vlan.GetVlanAddress(), ShouldEqual, "5.5.5.5/30")
+			So(vlan.GetVlanAddress(), ShouldEqual, "5.5.5.5/27")
 			So(vlan.GetState(), ShouldEqual, ufspb.State_STATE_SERVING.String())
 
 			s, err := state.GetStateRecord(ctx, "vlans/update-vlan-2")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+		})
+
+		Convey("Update vlan - partial update reserved_ips - invalid ips", func() {
+			vlan1 := mockVlan("update-vlan-3", "6.6.6.0/27")
+			vlan1.Description = "before update"
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.ReservedIps = []string{"6.6.6.48"}
+			_, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"reserved_ips"}}, ufspb.State_STATE_UNSPECIFIED)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "doesn't belong to vlan")
+		})
+
+		Convey("Update vlan - partial update reserved_ips - happy path", func() {
+			vlan1 := mockVlan("update-vlan-4", "6.6.6.0/27")
+			vlan1.Description = "before update"
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
+			ips, _, err := util.ParseVlan("update-vlan-4", "6.6.6.0/27")
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateIPs(ctx, ips)
+			So(err, ShouldBeNil)
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.ReservedIps = []string{"6.6.6.14"}
+			res, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"reserved_ips"}}, ufspb.State_STATE_UNSPECIFIED)
+			So(err, ShouldBeNil)
+			So(res.GetReservedIps(), ShouldResemble, []string{"6.6.6.14"})
+			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "6.6.6.14"})
+			So(err, ShouldBeNil)
+			So(resIPs, ShouldHaveLength, 0)
+		})
+
+		Convey("Update vlan - partial update reserved_ips - happy path with existing old reserved_ips", func() {
+			vlan1 := mockVlan("update-vlan-5", "6.6.5.0/27")
+			vlan1.ReservedIps = []string{"6.6.5.13"}
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
+			ips, _, err := util.ParseVlan("update-vlan-5", "6.6.5.0/27")
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateIPs(ctx, ips)
+			So(err, ShouldBeNil)
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.ReservedIps = nil
+			res, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"reserved_ips"}}, ufspb.State_STATE_UNSPECIFIED)
+			So(err, ShouldBeNil)
+			So(res.GetReservedIps(), ShouldHaveLength, 0)
+			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "6.6.5.13"})
+			So(err, ShouldBeNil)
+			So(resIPs, ShouldHaveLength, 1)
 		})
 	})
 }
