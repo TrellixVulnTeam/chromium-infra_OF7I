@@ -53,7 +53,7 @@ var (
 	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "State", "UpdateTime"}
 	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Zone", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Rack", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
 	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )
 
@@ -864,11 +864,19 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
+	machine := ""
+	if len(m.GetMachines()) == 1 {
+		machine = m.GetMachines()[0]
+	}
+	if len(m.GetMachines()) > 1 {
+		machine = strSlicesToStr(m.GetMachines())
+	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
 		m.GetZone(),
 		m.GetRack(),
+		machine,
 		m.GetNic(),
 		m.GetState(),
 		fmt.Sprintf("%d", m.GetChromeBrowserMachineLse().GetVmCapacity()),
