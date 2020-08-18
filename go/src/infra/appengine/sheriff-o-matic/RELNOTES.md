@@ -1,3 +1,26 @@
+# Release Notes sheriff-o-matic 2020-08-18
+
+- 5 commits, 3 bugs affected since 9d6af5b ()
+- 2 Authors:
+  - engeg@google.com
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [som-drawer: add infra, and new fleet oncalls](https://chromium-review.googlesource.com/c/infra/infra/+/2358865) (engeg@google.com)
+- [SoM: Add FAQs section](https://chromium-review.googlesource.com/c/infra/infra/+/2344550) (nqmtuan@google.com)
+- [SoM: A few more on code inclusion](https://chromium-review.googlesource.com/c/infra/infra/+/2335993) (nqmtuan@google.com)
+- [[SoM] Query for mastername from both mastername and builder_group](https://chromium-review.googlesource.com/c/infra/infra/+/2331967) (nqmtuan@google.com)
+- [[SoM] Release note 3 Aug](https://chromium-review.googlesource.com/c/infra/infra/+/2331970) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1107749](https://crbug.com/1107749)
+  -  [https://crbug.com/1109037](https://crbug.com/1109037)
+  -  [https://crbug.com/1111608](https://crbug.com/1111608)
+
+
 # Release Notes sheriff-o-matic 2020-08-03
 
 - 3 commits, 2 bugs affected since 6ca57b5 ()
