@@ -38,30 +38,6 @@ ParsedFieldDef = collections.namedtuple(
     'is_restricted_field')
 
 
-def ListApplicableFieldDefs(issues, config):
-  # type: (Sequence[proto.tracker_pb2.Issue],
-  #     proto.tracker_pb2.ProjectIssueConfig) ->
-  #     Sequence[proto.tracker_pb2.FieldDef]
-  """Return the applicable FieldDefs for the given issues. """
-  issue_labels = []
-  issue_approval_ids = []
-  for issue in issues:
-    issue_labels.extend(issue.labels)
-    issue_approval_ids.extend(
-        [approval.approval_id for approval in issue.approval_values])
-  labels_by_prefix = tracker_bizobj.LabelsByPrefix(list(set(issue_labels)), [])
-  types = set(labels_by_prefix.get('type', []))
-  types_lower = [t.lower() for t in types]
-  applicable_fds = []
-  for fd in config.field_defs:
-    if fd.field_id in issue_approval_ids:
-      applicable_fds.append(fd)
-    elif fd.field_type != tracker_pb2.FieldTypes.APPROVAL_TYPE and (
-        not fd.applicable_type or fd.applicable_type.lower() in types_lower):
-      applicable_fds.append(fd)
-  return applicable_fds
-
-
 def ParseFieldDefRequest(post_data, config):
   """Parse the user's HTML form data to update a field definition."""
   field_name = post_data.get('name', '')
@@ -279,20 +255,7 @@ def ParseFieldValues(cnxn, user_service, field_val_strs, phase_field_val_strs,
 
 
 def ValidateCustomFieldValue(cnxn, project, services, field_def, field_val):
-  # type: (MonorailConnection, proto.tracker_pb2.Project, Services,
-  #     proto.tracker_pb2.FieldDef, proto.tracker_pb2.FieldValue) -> str
-  """Validate one custom field value and return an error string or None.
-
-  Args:
-    cnxn: MonorailConnection object.
-    project: Project PB with info on the project the custom field belongs to.
-    services: Services object referencing services that can be queried.
-    field_def: FieldDef for the custom field we're validating against.
-    field_val: The value of the custom field.
-
-  Returns:
-    A string containing an error message if there was one.
-  """
+  """Validate one custom field value and return an error string or None."""
   if field_def.field_type == tracker_pb2.FieldTypes.INT_TYPE:
     if (field_def.min_value is not None and
         field_val.int_value < field_def.min_value):
@@ -348,63 +311,23 @@ def ValidateCustomFieldValue(cnxn, project, services, field_def, field_val):
 
   return None
 
+
 def ValidateCustomFields(
-    cnxn, services, field_values, config, project, ezt_errors=None, issue=None):
-  # type: (MonorailConnection, Services,
-  #     Collection[proto.tracker_pb2.FieldValue],
-  #     proto.tracker_pb2.ProjectConfig, proto.tracker_pb2.Project,
-  #     Optional[EZTError], Optional[proto.tracker_pb2.Issue]) ->
-  #     Sequence[str]
-  """Validate given fields and report problems in error messages."""
+    cnxn, services, field_values, config, project, ezt_errors=None):
+  # type: (MonorailConnection, Services, Collection[FieldValue],
+  #     ProjectConfig, Project, Optional[EZTError]) -> Sequence[str]
+  """Validate each of the given fields and report problems in error messages."""
   fds_by_id = {fd.field_id: fd for fd in config.field_defs}
   err_msgs = []
-
-  # Create a set of field_ids that have required values. If this set still
-  # contains items by the end of the function, there is an error.
-  required_fds = set()
-  if issue:
-    applicable_fds = ListApplicableFieldDefs([issue], config)
-
-    label_prefixes = tracker_bizobj.LabelsByPrefix(list(set(issue.labels)), [])
-
-    # Add applicable required fields to required_fds.
-    for fd in applicable_fds:
-      if not fd.is_required:
-        continue
-
-      if (fd.field_type is tracker_pb2.FieldTypes.ENUM_TYPE and
-          fd.field_name.lower() in label_prefixes):
-        # Handle custom enum fields - they're a special case because their
-        # values are stored in labels instead of FieldValues.
-        continue
-
-      required_fds.add(fd.field_id)
-
-  # Ensure that every field value entered is valid. ie: That users exist.
   for fv in field_values:
-    # Remove field_ids from the required set when found.
-    if fv.field_id in required_fds:
-      required_fds.remove(fv.field_id)
-
     fd = fds_by_id.get(fv.field_id)
     if fd:
       err_msg = ValidateCustomFieldValue(cnxn, project, services, fd, fv)
-
       if err_msg:
         err_msgs.append('Error for %r: %s' % (fv, err_msg))
         if ezt_errors:
           ezt_errors.SetCustomFieldError(fv.field_id, err_msg)
-
-  # Add errors for any fields still left in the required set.
-  for field_id in required_fds:
-    fd = fds_by_id.get(field_id)
-    err_msg = '%s field is required.' % (fd.field_name)
-    err_msgs.append(err_msg)
-    if ezt_errors:
-      ezt_errors.SetCustomFieldError(field_id, err_msg)
-
   return err_msgs
-
 
 def AssertCustomFieldsEditPerms(
     mr, config, field_vals, field_vals_remove, fields_clear, labels,

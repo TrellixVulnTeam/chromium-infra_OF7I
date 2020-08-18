@@ -522,19 +522,8 @@ def _MakeFieldValueItems(field_values, users_by_id):
   return result
 
 
-def MakeBounceFieldValueViews(
-    field_vals, phase_field_vals, config, applicable_fields=None):
-  # type: (Sequence[proto.tracker_pb2.FieldValue],
-  #     Sequence[proto.tracker_pb2.FieldValue],
-  #     proto.tracker_pb2.ProjectIssueConfig
-  #     Sequence[proto.tracker_pb2.FieldDef]) -> Sequence[FieldValueView]
+def MakeBounceFieldValueViews(field_vals, phase_field_vals, config):
   """Return a list of field values to display on a validation bounce page."""
-  applicable_set = set()
-  # Handle required fields
-  if applicable_fields:
-    for fd in applicable_fields:
-      applicable_set.add(fd.field_id)
-
   field_value_views = []
   for fd in config.field_defs:
     if fd.field_id in field_vals:
@@ -553,10 +542,6 @@ def MakeBounceFieldValueViews(
         field_value_views.append(FieldValueView(
             fd, config, val_items, [], None, applicable=False,
             phase_name=phase_name))
-    elif fd.is_required and fd.field_id in applicable_set:
-      # Show required fields that have no value set.
-      field_value_views.append(
-          FieldValueView(fd, config, [], [], None, applicable=True))
 
   return field_value_views
 

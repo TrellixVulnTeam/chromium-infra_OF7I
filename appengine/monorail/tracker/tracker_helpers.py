@@ -1446,24 +1446,14 @@ def AssertIssueChangesValid(
       if delta.status == '':
         err_agg.AddErrorMessage('{}: Status is required.', issue_ref)
       fvs_err_msgs = field_helpers.ValidateCustomFields(
-          cnxn, services, delta.field_vals_add, config, project, issue=issue)
+          cnxn, services, delta.field_vals_add, config, project)
       if fvs_err_msgs:
         err_agg.AddErrorMessage('{}: {}', issue_ref, '\n'.join(fvs_err_msgs))
 
 
 def AssertValidIssueForCreate(cnxn, services, issue, description):
   # type: (MonorailConnection, Services, Issue, str) -> None
-  """Assert that issue proto is valid for issue creation.
-
-  Args:
-    cnxn: A connection object to use services with.
-    services: An object containing services to use to look up relevant data.
-    issues: A PB containing the issue to validate.
-    description: The description for the issue.
-
-  Raises:
-    InputException if the issue is not valid.
-  """
+  """Assert that issue proto is valid for issue creation."""
   project = services.project.GetProject(cnxn, issue.project_id)
   config = services.config.GetProjectConfig(cnxn, issue.project_id)
 
@@ -1480,9 +1470,8 @@ def AssertValidIssueForCreate(cnxn, services, issue, description):
       err_agg.AddErrorMessage('Summary is too long')
     if len(description) > tracker_constants.MAX_COMMENT_CHARS:
       err_agg.AddErrorMessage('Description is too long')
-
     field_validity_errors = field_helpers.ValidateCustomFields(
-        cnxn, services, issue.field_values, config, project, issue=issue)
+        cnxn, services, issue.field_values, config, project)
     if field_validity_errors:
       err_agg.AddErrorMessage("\n".join(field_validity_errors))
     if not services.config.LookupStatusID(cnxn, issue.project_id, issue.status,
