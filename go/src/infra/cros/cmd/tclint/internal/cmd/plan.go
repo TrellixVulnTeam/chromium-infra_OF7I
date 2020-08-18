@@ -14,7 +14,7 @@ import (
 
 	"infra/cmdsupport/cmdlib"
 
-	plan "go.chromium.org/chromiumos/infra/proto/go/test/plan/v1"
+	plan "go.chromium.org/chromiumos/config/go/api/test/plan/v1"
 )
 
 // Plan subcommand: Lint test plan.
