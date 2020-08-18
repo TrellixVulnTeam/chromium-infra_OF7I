@@ -92,7 +92,6 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
         1.  ``eval `../../go/env.py` `` -- you'll need to run this in any shell you
             wish to use for developing Monorail. It will add some key directories to
             your `$PATH`.
-        1.  `npm install`
         1.  Install build requirements:
             1.  `sudo apt-get install build-essential automake`
     1. On MacOS
@@ -100,7 +99,9 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
             1.  `brew install nvm`
             1.   See the brew instructions on updating your shell's configuration
             1.  `nvm install 12.13.0`
-            1.  `npm install`
+1.  Install Python and JS dependencies:
+    1.  `make dev_deps`
+    1.  `make deps`
 1.  Run the app:
     1.  `make serve`
 1.  Browse the app at localhost:8080 your browser.

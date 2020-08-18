@@ -104,7 +104,7 @@ serve_remote_email: config_local
 
 run: serve
 
-deps: node_deps
+deps: node_deps python_deps
 	rm -f static/dist/*
 
 build_js:
@@ -114,9 +114,16 @@ clean_deps:
 	# TODO(dtu): Remove deployed_node_modules after deployment on 2020-08-17
 	rm -rf deployed_node_modules
 	rm -rf node_modules
+	rm -rf lib
 
 node_deps:
 	npm ci --no-save
+
+python_deps:
+	pip2 install -t lib -r requirements.py2.txt
+
+dev_deps
+  pip2 install -r requirements.dev.txt
 
 karma:
 	npx karma start --debug --coverage

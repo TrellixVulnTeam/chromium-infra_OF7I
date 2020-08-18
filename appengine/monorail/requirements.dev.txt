@@ -1,0 +1,2 @@
+# Python 2 packages needed for dev_appserver.py.
+mysqlclient==1.4.6
