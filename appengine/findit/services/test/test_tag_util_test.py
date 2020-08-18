@@ -171,6 +171,7 @@ class TestTagUtilTest(WaterfallTestCase):
             'directory::base/',
             'source::base/feature/url_test.cc',
             'component::root>a>b',
+            'team::abc@chromium.org',
             'parent_component::root>a>b',
             'parent_component::root>a',
             'parent_component::root',
@@ -179,6 +180,6 @@ class TestTagUtilTest(WaterfallTestCase):
     actual_tags = test_tag_util.GetTagsFromLocation(
         {'gerrit_project::chromium/src'},
         NDBTestLocation(file_path='base/feature/url_test.cc',), 'root>a>b',
-        watchlists)
+        'abc@chromium.org', watchlists)
 
     self.assertEqual(expected_tags, actual_tags)

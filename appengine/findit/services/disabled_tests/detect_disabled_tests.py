@@ -273,7 +273,8 @@ def _CreateLocationBasedTags(build_id, step_name, test_name,
   if location:
     component = test_tag_util.GetTestComponentFromLocation(
         location, component_mapping)
-    return test_tag_util.GetTagsFromLocation(set(), location, component,
+    team = test_tag_util.DEFAULT_VALUE
+    return test_tag_util.GetTagsFromLocation(set(), location, component, team,
                                              watchlists)
   return {
       'component::%s' % test_tag_util.DEFAULT_VALUE,

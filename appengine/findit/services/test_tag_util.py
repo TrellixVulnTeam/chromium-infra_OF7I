@@ -185,13 +185,14 @@ def GetTestTeamFromLocation(test_location, team_mapping):
   return DEFAULT_VALUE
 
 
-def GetTagsFromLocation(tags, test_location, component, watchlists):
+def GetTagsFromLocation(tags, test_location, component, team, watchlists):
   """Updates location-based tags for a test.
 
   Args:
     tags ([str]): Tags that specify the category of the test.
     test_location (TestLocation): The location of a test in the source tree.
     component (str): The component of the test.
+    team (str): Alias of the team responsible for test.
     watchlists (dict): Mapping from directories to watchlists.
   Returns:
     Alphabetically sorted tags for a test with updated location-based tags.
@@ -199,7 +200,7 @@ def GetTagsFromLocation(tags, test_location, component, watchlists):
   new_tags = set([
       t for t in (tags or [])
       if not t.startswith(('watchlist::', 'directory::', 'source::',
-                           'parent_component::', 'component::'))
+                           'parent_component::', 'component::', 'team::'))
   ])
 
   file_path = test_location.file_path
@@ -214,6 +215,7 @@ def GetTagsFromLocation(tags, test_location, component, watchlists):
     if re.search(pattern, file_path):
       new_tags.add('watchlist::%s' % watchlist)
 
+  new_tags.add('team::%s' % team)
   new_tags.add('component::%s' % component)
   new_tags.add('parent_component::%s' % component)
   index = len(component)

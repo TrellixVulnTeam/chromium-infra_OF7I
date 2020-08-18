@@ -296,7 +296,8 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
     )
     flake.last_test_location_based_tag_update_time = datetime(2019, 6, 1)
     self.assertFalse(
-        detect_flake_occurrences._UpdateTestLocationAndTags(flake, [], {}, {}))
+        detect_flake_occurrences._UpdateTestLocationAndTags(
+            flake, [], {}, {}, {}))
 
   @mock.patch.object(test_tag_util, 'GetTestLocation', return_value=None)
   def testUpdateTestLocationAndTagsNoComponent(self, *_):
@@ -311,6 +312,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
         'base/feature/': 'root>a>b',
         'base/feature/url': 'root>a>b>c',
     }
+    team_mapping = {}
     watchlist = {
         'feature': 'base/feature',
         'url': r'base/feature/url_test\.cc',
@@ -323,7 +325,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
     self.assertFalse(
         detect_flake_occurrences._UpdateTestLocationAndTags(
-            flake, occurrences, component_mapping, watchlist))
+            flake, occurrences, component_mapping, team_mapping, watchlist))
 
   @mock.patch.object(
       test_tag_util,
@@ -357,6 +359,8 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
         'base/feature/': 'root>a>b',
         'base/feature/url': 'root>a>b>c',
     }
+    team_mapping = {'base/feature/': 'abc@chromium.org'}
+
     watchlist = {
         'feature': 'base/feature',
         'url': r'base/feature/url_test\.cc',
@@ -374,7 +378,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
     self.assertTrue(
         detect_flake_occurrences._UpdateTestLocationAndTags(
-            flake, occurrences, component_mapping, watchlist))
+            flake, occurrences, component_mapping, team_mapping, watchlist))
     self.assertEqual(expected_tags, flake.tags)
 
   @mock.patch.object(
@@ -406,6 +410,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
         'base/feature/': 'root>a>b',
         'base/feature/url': 'root>a>b>c',
     }
+    team_mapping = {'base/feature/': 'abc@chromium.org'}
     watchlist = {
         'feature': 'base/feature',
         'url': r'base/feature/url_test\.cc',
@@ -421,7 +426,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
     self.assertTrue(
         detect_flake_occurrences._UpdateTestLocationAndTags(
-            flake, occurrences, component_mapping, watchlist))
+            flake, occurrences, component_mapping, team_mapping, watchlist))
     self.assertEqual(expected_tags, flake.tags)
 
   @mock.patch.object(
@@ -435,6 +440,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
           'directory::base/',
           'source::base/feature/url_test.cc',
           'component::root>a>b',
+          'team::abc@chromium.org',
           'parent_component::root>a>b',
           'parent_component::root>a',
           'parent_component::root',
@@ -460,6 +466,9 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
         'base/feature/': 'root>a>b',
         'base/feature/url': 'root>a>b>c',
     }
+    team_mapping = {
+        'base/feature/': 'abc@chromium.org',
+    }
     watchlist = {
         'feature': 'base/feature',
         'url': r'base/feature/url_test\.cc',
@@ -474,6 +483,7 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
         'directory::base/',
         'source::base/feature/url_test.cc',
         'component::root>a>b',
+        'team::abc@chromium.org',
         'parent_component::root>a>b',
         'parent_component::root>a',
         'parent_component::root',
@@ -485,12 +495,14 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
 
     self.assertTrue(
         detect_flake_occurrences._UpdateTestLocationAndTags(
-            flake, occurrences, component_mapping, watchlist))
+            flake, occurrences, component_mapping, team_mapping, watchlist))
     self.assertEqual(expected_tags, flake.tags)
 
   @mock.patch.object(test_tag_util, 'GetTestLocation', return_value=None)
   @mock.patch.object(
       test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   def testUpdateMetadataForFlakes(self, *_):
     luci_project = 'chromium'
@@ -650,6 +662,8 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
   @mock.patch.object(test_tag_util, 'GetTestLocation', return_value=None)
   @mock.patch.object(
       test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
   def testDetectCQHiddenFlakes(self, mocked_get_client, *_):
@@ -714,6 +728,8 @@ class DetectFlakesOccurrencesTest(WaterfallTestCase):
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(
       test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
   @mock.patch.object(
       build_util,
       'GetBuilderInfoForLUCIBuild',

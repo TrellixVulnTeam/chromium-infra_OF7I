@@ -505,6 +505,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
               'directory::base/',
               'source::base/feature/url_test.cc',
               'component::root>a>b',
+              'team::%s' % test_tag_util.DEFAULT_VALUE,
               'parent_component::root>a>b',
               'parent_component::root>a',
               'parent_component::root',

@@ -251,7 +251,7 @@ def _StoreMultipleLocalEntities(local_entities):
 
 
 def _UpdateTestLocationAndTags(flake, occurrences, component_mapping,
-                               watchlists):
+                               team_mapping, watchlists):
   """Updates the test location and tags of the given flake.
 
   Updates the test location and tags for gtests and webkit layout tests and
@@ -284,9 +284,11 @@ def _UpdateTestLocationAndTags(flake, occurrences, component_mapping,
 
     component = test_tag_util.GetTestComponentFromLocation(
         test_location, component_mapping)
+    team = test_tag_util.GetTestTeamFromLocation(test_location, team_mapping)
+
     flake.component = component
     flake.tags = test_tag_util.GetTagsFromLocation(flake.tags, test_location,
-                                                   component, watchlists)
+                                                   component, team, watchlists)
     flake.last_test_location_based_tag_update_time = time_util.GetUTCNow()
     updated = True
 
@@ -318,6 +320,7 @@ def _UpdateFlakeMetadata(all_occurrences):
 
   component_mapping = test_tag_util.GetChromiumDirectoryToComponentMapping(
   ) or {}
+  team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping() or {}
   watchlists = test_tag_util._GetChromiumWATCHLISTS() or {}
 
   for flake_key, occurrences in flake_key_to_occurrences.iteritems():
@@ -351,7 +354,7 @@ def _UpdateFlakeMetadata(all_occurrences):
 
     # The "gerrit_project:" tag should be updated first.
     updated = _UpdateTestLocationAndTags(flake, occurrences, component_mapping,
-                                         watchlists)
+                                         team_mapping, watchlists)
 
     if changed or updated:  # Avoid io if there was no update.
       flake.put()
