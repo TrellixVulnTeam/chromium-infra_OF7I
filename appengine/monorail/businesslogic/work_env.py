@@ -1874,7 +1874,7 @@ class WorkEnv(object):
     tracker_helpers.AssertIssueChangesValid(
         self.mc.cnxn, issue_delta_pairs, self.services,
         comment_content=comment_content)
-    # TODO(crbug.com/monorail/7657): Assert we do not update more than 100
+    # TODO(crbug.com/monorail/8074): Assert we do not update more than 100
     # issues at once.
 
     # PHASE 2: Organize data. tracker_helpers.GroupUniqueDeltaIssues()
