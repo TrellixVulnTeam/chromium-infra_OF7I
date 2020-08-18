@@ -255,7 +255,7 @@ export function init(
   loadLibraries?: string[],
   extraScopes?: string[]
 ) {
-  const callbackName = 'gapi' + Math.random();
+  const callbackName = 'gapi' + clientId;
   const gapiScript = document.createElement('script');
   gapiScript.src = 'https://apis.google.com/js/api.js?onload=' + callbackName;
 
