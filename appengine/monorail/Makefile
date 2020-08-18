@@ -122,8 +122,8 @@ node_deps:
 python_deps:
 	pip2 install -t lib -r requirements.py2.txt
 
-dev_deps
-  pip2 install -r requirements.dev.txt
+dev_deps:
+	pip2 install -r requirements.dev.txt
 
 karma:
 	npx karma start --debug --coverage
