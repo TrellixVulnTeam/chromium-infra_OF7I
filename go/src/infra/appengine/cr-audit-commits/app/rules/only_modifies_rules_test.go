@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 )
@@ -45,12 +46,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -80,12 +81,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -114,12 +115,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -155,12 +156,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -194,12 +195,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -233,12 +234,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -267,12 +268,12 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -327,12 +328,12 @@ func TestReleaseBotRules(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "b07c0de",
 				PageSize:   1,
 				TreeDiff:   true,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "b07c0de",
@@ -366,12 +367,12 @@ func TestReleaseBotRules(t *testing.T) {
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
-				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+				gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 					Project:    "a",
 					Committish: "b07c0de",
 					PageSize:   1,
 					TreeDiff:   true,
-				}).Return(&gitilespb.LogResponse{
+				})).Return(&gitilespb.LogResponse{
 					Log: []*git.Commit{
 						{
 							Id: "b07c0de",
@@ -405,12 +406,12 @@ func TestReleaseBotRules(t *testing.T) {
 				testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 					return gitilesMockClient, nil
 				}
-				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+				gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 					Project:    "a",
 					Committish: "b07c0de",
 					PageSize:   1,
 					TreeDiff:   true,
-				}).Return(&gitilespb.LogResponse{
+				})).Return(&gitilespb.LogResponse{
 					Log: []*git.Commit{
 						{
 							Id: "b07c0de",

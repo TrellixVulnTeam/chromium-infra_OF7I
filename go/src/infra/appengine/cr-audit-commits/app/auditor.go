@@ -160,7 +160,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 	}
 	oldHead := repoState.LastKnownCommit
 
-	logReq := gitilespb.LogRequest{
+	logReq := &gitilespb.LogRequest{
 		Project:            project,
 		ExcludeAncestorsOf: oldHead,
 		Committish:         newHead,
@@ -194,7 +194,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 
 	// Fetch log of newHead only
 	var newErr error
-	fl, newErr = gitiles.PagingLog(ctx, gc, gitilespb.LogRequest{
+	fl, newErr = gitiles.PagingLog(ctx, gc, &gitilespb.LogRequest{
 		Project:    project,
 		Committish: newHead,
 	}, 1)
@@ -205,7 +205,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 	}
 
 	// Fetch log of oldHead only
-	_, oldErr := gitiles.PagingLog(ctx, gc, gitilespb.LogRequest{
+	_, oldErr := gitiles.PagingLog(ctx, gc, &gitilespb.LogRequest{
 		Project:    project,
 		Committish: oldHead,
 	}, 1)

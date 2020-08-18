@@ -20,6 +20,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/gae/impl/memory"
 	ds "go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/router"
@@ -117,18 +118,18 @@ func TestAuditor(t *testing.T) {
 				})
 
 				Convey("No revisions", func() {
-					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
 						Project:  "dummy",
 						RefsPath: "refs/heads/master",
-					}).Return(&gitilespb.RefsResponse{
+					})).Return(&gitilespb.RefsResponse{
 						Revisions: strmap{"refs/heads/master/refs/heads/master": "123456"},
 					}, nil)
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:            "dummy",
 						Committish:         "123456",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
-					}).Return(&gitilespb.LogResponse{
+					})).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{},
 					}, nil)
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
@@ -141,18 +142,18 @@ func TestAuditor(t *testing.T) {
 					So(rs.LastRelevantCommit, ShouldEqual, "999999")
 				})
 				Convey("No interesting revisions", func() {
-					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
 						Project:  "dummy",
 						RefsPath: "refs/heads/master",
-					}).Return(&gitilespb.RefsResponse{
+					})).Return(&gitilespb.RefsResponse{
 						Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
 					}, nil)
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:            "dummy",
 						Committish:         "abcdef000123123",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
-					}).Return(&gitilespb.LogResponse{
+					})).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{{Id: "abcdef000123123"}},
 					}, nil)
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
@@ -165,18 +166,18 @@ func TestAuditor(t *testing.T) {
 					So(rs.LastRelevantCommit, ShouldEqual, "999999")
 				})
 				Convey("Interesting revisions", func() {
-					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
 						Project:  "dummy",
 						RefsPath: "refs/heads/master",
-					}).Return(&gitilespb.RefsResponse{
+					})).Return(&gitilespb.RefsResponse{
 						Revisions: strmap{"refs/heads/master/refs/heads/master": "deadbeef"},
 					}, nil)
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:            "dummy",
 						Committish:         "deadbeef",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
-					}).Return(&gitilespb.LogResponse{
+					})).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{
 							{Id: "deadbeef"},
 							{
@@ -209,30 +210,30 @@ func TestAuditor(t *testing.T) {
 					So(rc.PreviousRelevantCommit, ShouldEqual, "999999")
 				})
 				Convey("Force push", func() {
-					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
 						Project:  "dummy",
 						RefsPath: "refs/heads/master",
-					}).Return(&gitilespb.RefsResponse{
+					})).Return(&gitilespb.RefsResponse{
 						Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
 					}, nil)
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:            "dummy",
 						Committish:         "abcdef000123123",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
-					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:    "dummy",
 						Committish: "abcdef000123123",
 						PageSize:   1,
-					}).Return(&gitilespb.LogResponse{
+					})).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{{Id: "abcdef000123123"}},
 					}, nil)
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:    "dummy",
 						Committish: "123456",
 						PageSize:   1,
-					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
@@ -242,23 +243,23 @@ func TestAuditor(t *testing.T) {
 					So(rs.LastKnownCommit, ShouldEqual, "abcdef000123123")
 				})
 				Convey("Temporary new head not found error", func() {
-					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
 						Project:  "dummy",
 						RefsPath: "refs/heads/master",
-					}).Return(&gitilespb.RefsResponse{
+					})).Return(&gitilespb.RefsResponse{
 						Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
 					}, nil)
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:            "dummy",
 						Committish:         "abcdef000123123",
 						ExcludeAncestorsOf: "123456",
 						PageSize:           6000,
-					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
-					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:    "dummy",
 						Committish: "abcdef000123123",
 						PageSize:   1,
-					}).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 502)
@@ -279,18 +280,18 @@ func TestAuditor(t *testing.T) {
 				rsk := ds.KeyForObj(ctx, repoState)
 
 				So(err, ShouldBeNil)
-				gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+				gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
 					Project:  "dummy",
 					RefsPath: "refs/heads/master",
-				}).Return(&gitilespb.RefsResponse{
+				})).Return(&gitilespb.RefsResponse{
 					Revisions: strmap{"refs/heads/master/refs/heads/master": "222222"},
 				}, nil)
-				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+				gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 					Project:            "dummy",
 					Committish:         "222222",
 					ExcludeAncestorsOf: "222222",
 					PageSize:           6000,
-				}).Return(&gitilespb.LogResponse{
+				})).Return(&gitilespb.LogResponse{
 					Log: []*git.Commit{},
 				}, nil)
 

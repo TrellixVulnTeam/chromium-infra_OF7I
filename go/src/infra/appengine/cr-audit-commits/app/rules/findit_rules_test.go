@@ -18,6 +18,7 @@ import (
 	"go.chromium.org/gae/service/datastore"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/api/gerrit"
+	"go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	"google.golang.org/genproto/protobuf/field_mask"
@@ -86,11 +87,11 @@ func TestFinditRules(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "badc0de",
 				PageSize:   1,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "badc0de",
@@ -111,11 +112,11 @@ func TestFinditRules(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "badc0de",
 				PageSize:   1,
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "badc0de",
@@ -160,11 +161,11 @@ func TestFinditRules(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:    "a",
 				Committish: "badc0de",
 				PageSize:   1,
-			}).Return(nil, errors.New("Some error"))
+			})).Return(nil, errors.New("Some error"))
 
 			// Run rule.
 			rr, err := CulpritAge{}.Run(ctx, ap, rc, testClients)
@@ -216,9 +217,9 @@ func TestFinditRules(t *testing.T) {
 		})
 
 		Convey("Culprit in build", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id: 42,
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Number: 23,
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
@@ -233,9 +234,9 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id: 42,
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Number: 23,
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
@@ -250,14 +251,14 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
 					Bucket:  "ci",
 					Builder: "b",
 				},
 				BuildNumber: 22,
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Input: &buildbucketpb.Build_Input{
 					GitilesCommit: &buildbucketpb.GitilesCommit{
 						Project: "a",
@@ -270,11 +271,11 @@ func TestFinditRules(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:            "a",
 				Committish:         "c001c0de",
 				ExcludeAncestorsOf: "01dc0de",
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "c001c0de",
@@ -295,9 +296,9 @@ func TestFinditRules(t *testing.T) {
 
 		})
 		Convey("Culprit not in build", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id: 42,
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Number: 23,
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
@@ -312,9 +313,9 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id: 42,
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Number: 23,
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
@@ -329,14 +330,14 @@ func TestFinditRules(t *testing.T) {
 				},
 			}, nil)
 
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Builder: &buildbucketpb.BuilderID{
 					Project: "chromium",
 					Bucket:  "ci",
 					Builder: "b",
 				},
 				BuildNumber: 22,
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Input: &buildbucketpb.Build_Input{
 					GitilesCommit: &buildbucketpb.GitilesCommit{
 						Project: "a",
@@ -349,11 +350,11 @@ func TestFinditRules(t *testing.T) {
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
 				return gitilesMockClient, nil
 			}
-			gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+			gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 				Project:            "a",
 				Committish:         "c001c0de",
 				ExcludeAncestorsOf: "01dc0de",
-			}).Return(&gitilespb.LogResponse{
+			})).Return(&gitilespb.LogResponse{
 				Log: []*git.Commit{
 					{
 						Id: "c001c0de",
@@ -376,10 +377,10 @@ func TestFinditRules(t *testing.T) {
 
 		})
 		Convey("Failed build is compile failure Pass", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id:     42,
 				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
 						Name:   "compile",
@@ -391,10 +392,10 @@ func TestFinditRules(t *testing.T) {
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Failed build is compile failure Pass - Nested", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id:     42,
 				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
 						Name:   "Nesting step|compile",
@@ -406,10 +407,10 @@ func TestFinditRules(t *testing.T) {
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Failed build is compile failure Fail", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id:     42,
 				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
 						Name:   "compile",
@@ -423,10 +424,10 @@ func TestFinditRules(t *testing.T) {
 			So(rr.Message, ShouldContainSubstring, "compile")
 		})
 		Convey("Failed build is compile failure Fail - missing step", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id:     42,
 				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
 						Name:   "No-op (compilation skipped)",
@@ -440,10 +441,10 @@ func TestFinditRules(t *testing.T) {
 			So(rr.Message, ShouldContainSubstring, "compile")
 		})
 		Convey("Failed build is flaky failure Pass", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id:     42,
 				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
 						Name:   "dummy_step",
@@ -456,10 +457,10 @@ func TestFinditRules(t *testing.T) {
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 		})
 		Convey("Failed build is flaky failure Fail", func() {
-			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), &buildbucketpb.GetBuildRequest{
+			buildbucketMockClient.EXPECT().GetBuild(gomock.Any(), proto.MatcherEqual(&buildbucketpb.GetBuildRequest{
 				Id:     42,
 				Fields: &field_mask.FieldMask{Paths: []string{"steps"}},
-			}).Return(&buildbucketpb.Build{
+			})).Return(&buildbucketpb.Build{
 				Steps: []*buildbucketpb.Step{
 					{
 						Name:   "different_dummy_step",
