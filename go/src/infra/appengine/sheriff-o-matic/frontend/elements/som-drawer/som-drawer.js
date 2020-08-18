@@ -13,6 +13,10 @@ const ROTATIONS = {
   ],
   'chromeos': [
     {
+      name: 'Infra Triage (West)',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-infra-triage',
+    },
+    {
       name: 'Sheriff (West)',
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-sheriffs-west',
     },
@@ -29,8 +33,12 @@ const ROTATIONS = {
       url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-ci-apac',
     },
     {
-      name: 'Infra Deputy',
-      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chromeos-test-infra',
+      name: 'Fleet Datacenter',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-fleet-datacenter',
+    },
+    {
+      name: 'Fleet Software',
+      url: 'https://chrome-ops-rotation-proxy.appspot.com/current/oncallator:chrome-fleet-software',
     },
     {
       name: 'Gardener',
