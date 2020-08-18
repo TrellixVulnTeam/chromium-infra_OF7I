@@ -13,8 +13,11 @@ import (
 
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server"
+	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/auth/openid"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
+	"go.chromium.org/luci/server/router"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -50,6 +53,18 @@ func main() {
 		srv.Context = config.Use(srv.Context, cfgLoader.Config())
 		srv.RegisterUnaryServerInterceptor(versionInterceptor)
 		frontend.InstallServices(srv.PRPC)
+
+		// Add authenticator for handling JWT tokens. This is required to
+		// authenticate PubSub push responses sent as HTTP POST requests. See
+		// https://cloud.google.com/pubsub/docs/push?hl=en#authentication_and_authorization
+		openIDCheck := auth.Authenticator{
+			Methods: []auth.Method{
+				&openid.GoogleIDTokenAuthMethod{
+					AudienceCheck: openid.AudienceMatchesHost,
+				},
+			},
+		}
+		frontend.InstallHandlers(srv.Routes, router.NewMiddlewareChain(openIDCheck.GetMiddleware()))
 		return nil
 	})
 }

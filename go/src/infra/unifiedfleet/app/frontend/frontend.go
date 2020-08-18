@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/server/auth"
+	"go.chromium.org/luci/server/router"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -24,6 +25,20 @@ func InstallServices(apiServer *prpc.Server) {
 		Service: &FleetServerImpl{},
 		Prelude: checkAccess,
 	})
+}
+
+// InstallHandlers installs non PRPC handlers
+func InstallHandlers(r *router.Router, mc router.MiddlewareChain) {
+	mc = mc.Extend(func(ctx *router.Context, next router.Handler) {
+		context, err := checkAccess(ctx.Context, ctx.HandlerPath, nil)
+		ctx.Context = context
+		if err != nil {
+			logging.Errorf(ctx.Context, "Failed authorization %v", err)
+			return
+		}
+		next(ctx)
+	})
+	r.POST("/pubsub/hart", mc, HaRTPushHandler)
 }
 
 // checkAccess verifies that the request is from an authorized user.
@@ -44,6 +59,9 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 		group = append(group, "chromeos-inventory-readonly-access", "machine-db-readers")
 	case "UpdateState":
 		group = append(group, "chromeos-inventory-status-label-write-access")
+	case "/pubsub/hart":
+		//TODO(anushruth): Rename group to UFS-pubsub-push-access after removing functionality from IV2
+		group = append(group, "chromeos-inventory-pubsub-push-access")
 	}
 	if strings.HasPrefix(rpcName, "Import") {
 		group = []string{"mdb/chrome-fleet-software-team"}
