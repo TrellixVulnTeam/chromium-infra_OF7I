@@ -1365,7 +1365,12 @@ def GroupUniqueDeltaIssues(issue_delta_pairs):
 def _AssertNoConflictingDeltas(issue_delta_pairs, refs_dict, err_agg):
   # type: (Sequence[Tuple[Issue, IssueDelta]], Mapping[int, str],
   #     exceptions.ErrorAggregator) -> None
-  """Checks if any issue deltas conflict with each other or themselves."""
+  """Checks if any issue deltas conflict with each other or themselves.
+
+  Note: refs_dict should contain issue ref strings for all issues found
+      in issue_delta_pairs, including all issues found in
+      {blocked_on|blocking}_{add|remove}.
+  """
   err_message = 'Changes for {} conflict for {}'
 
   # Track all delta blocked_on_add and blocking_add in terms of
@@ -1413,6 +1418,21 @@ def AssertIssueChangesValid(
       iss.issue_id: '%s:%d' % (iss.project_name, iss.local_id)
       for iss, _delta in issue_delta_pairs
   }
+  # Add refs of deltas' blocking/blocked_on issues needed by
+  # _AssertNoConflictingDeltas.
+  relation_iids = set()
+  for _iss, delta in issue_delta_pairs:
+    relation_iids.update(
+        delta.blocked_on_remove + delta.blocking_remove + delta.blocked_on_add +
+        delta.blocking_add)
+  relation_issues_dict, misses = services.issue.GetIssuesDict(
+      cnxn, relation_iids)
+  if misses:
+    raise exceptions.NoSuchIssueException(
+        'Could not find issues with ids: %r' % misses)
+  for iid, iss in relation_issues_dict.items():
+    if iid not in refs_dict:
+      refs_dict[iid] = '%s:%d' % (iss.project_name, iss.local_id)
 
   with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
     if (comment_content and

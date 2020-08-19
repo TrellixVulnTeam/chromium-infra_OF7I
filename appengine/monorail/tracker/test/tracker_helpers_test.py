@@ -1942,36 +1942,49 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
   def testAssertIssueChangesValid_Valid(self):
     """We can assert when deltas are valid for issues."""
+    impacted_issue = _Issue('chicken', 101)
+    self.services.issue.TestAddIssue(impacted_issue)
+
     issue_1 = _Issue('chicken', 1)
-    delta_1 = tracker_pb2.IssueDelta(merged_into=78901)
+    self.services.issue.TestAddIssue(issue_1)
+    delta_1 = tracker_pb2.IssueDelta(merged_into=impacted_issue.issue_id)
 
     issue_2 = _Issue('chicken', 2)
-    delta_2 = tracker_pb2.IssueDelta(blocked_on_add=[78901])
+    self.services.issue.TestAddIssue(issue_2)
+    delta_2 = tracker_pb2.IssueDelta(blocked_on_add=[impacted_issue.issue_id])
 
     issue_3 = _Issue('chicken', 3)
+    self.services.issue.TestAddIssue(issue_3)
     delta_3 = tracker_pb2.IssueDelta()
 
     issue_4 = _Issue('chicken', 4)
+    self.services.issue.TestAddIssue(issue_4)
     delta_4 = tracker_pb2.IssueDelta(owner_id=self.project_member.user_id)
 
     issue_5 = _Issue('chicken', 5)
+    self.services.issue.TestAddIssue(issue_5)
     fv = tracker_bizobj.MakeFieldValue(
         self.int_fd.field_id, 998, None, None, None, None, False)
     delta_5 = tracker_pb2.IssueDelta(field_vals_add=[fv])
 
     issue_6 = _Issue('chicken', 6)
+    self.services.issue.TestAddIssue(issue_6)
     delta_6 = tracker_pb2.IssueDelta(
         summary='  ' + 's' * tracker_constants.MAX_SUMMARY_CHARS + '  ')
 
     issue_7 = _Issue('chicken', 7)
+    self.services.issue.TestAddIssue(issue_7)
     issue_8 = _Issue('chicken', 8)
+    self.services.issue.TestAddIssue(issue_8)
 
     # We are fine with duplicate/consistent deltas.
     delta_7 = tracker_pb2.IssueDelta(blocked_on_add=[issue_8.issue_id])
     delta_8 = tracker_pb2.IssueDelta(blocking_add=[issue_7.issue_id])
 
     issue_9 = _Issue('chicken', 9)
+    self.services.issue.TestAddIssue(issue_9)
     issue_10 = _Issue('chicken', 10)
+    self.services.issue.TestAddIssue(issue_10)
 
     delta_9 = tracker_pb2.IssueDelta(blocked_on_remove=[issue_10.issue_id])
     delta_10 = tracker_pb2.IssueDelta(blocking_remove=[issue_9.issue_id])
@@ -2006,6 +2019,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     expected_err_msgs.append('Comment is too long.')
 
     issue_1 = _Issue('chicken', 1)
+    self.services.issue.TestAddIssue(issue_1)
     issue_1_ref = getRef(issue_1)
 
     delta_1 = tracker_pb2.IssueDelta(
@@ -2026,6 +2040,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
         ])
 
     issue_2 = _Issue('chicken', 2)
+    self.services.issue.TestAddIssue(issue_2)
     issue_2_ref = getRef(issue_2)
 
     fv = tracker_bizobj.MakeFieldValue(
@@ -2057,14 +2072,19 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     expected_err_msgs = []
     issue_3 = _Issue('chicken', 3)
+    self.services.issue.TestAddIssue(issue_3)
     issue_3_ref = getRef(issue_3)
     issue_4 = _Issue('chicken', 4)
+    self.services.issue.TestAddIssue(issue_4)
     issue_4_ref = getRef(issue_4)
     issue_5 = _Issue('chicken', 5)
+    self.services.issue.TestAddIssue(issue_5)
     issue_5_ref = getRef(issue_5)
     issue_6 = _Issue('chicken', 6)
+    self.services.issue.TestAddIssue(issue_6)
     issue_6_ref = getRef(issue_6)
     issue_7 = _Issue('chicken', 7)
+    self.services.issue.TestAddIssue(issue_7)
     issue_7_ref = getRef(issue_7)
 
     delta_3 = tracker_pb2.IssueDelta(
@@ -2087,18 +2107,24 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     expected_err_msgs.append(
         'Changes for %s conflict for %s' % (issue_6_ref, issue_3_ref))
 
+    impacted_issue = _Issue('chicken', 11)
+    self.services.issue.TestAddIssue(impacted_issue)
+    impacted_issue_ref = getRef(impacted_issue)
     delta_7 = tracker_pb2.IssueDelta(
         blocking_remove=[issue_3.issue_id],
         blocking_add=[issue_3.issue_id],
-        blocked_on_remove=[issue_4.issue_id],
-        blocked_on_add=[issue_4.issue_id])
+        blocked_on_remove=[impacted_issue.issue_id],
+        blocked_on_add=[impacted_issue.issue_id])
     expected_err_msgs.append(
         'Changes for %s conflict for %s, %s' %
-        (issue_7_ref, issue_3_ref, issue_4_ref))
+        (issue_7_ref, issue_3_ref, impacted_issue_ref))
 
     issue_delta_pairs = [
-        (issue_3, delta_3), (issue_4, delta_4), (issue_5, delta_5),
-        (issue_6, delta_6), (issue_7, delta_7)
+        (issue_3, delta_3),
+        (issue_4, delta_4),
+        (issue_5, delta_5),
+        (issue_6, delta_6),
+        (issue_7, delta_7),
     ]
 
     with self.assertRaisesRegexp(exceptions.InputException,
