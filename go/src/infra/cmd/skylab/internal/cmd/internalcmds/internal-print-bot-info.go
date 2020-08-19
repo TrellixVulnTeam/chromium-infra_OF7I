@@ -11,13 +11,16 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/grpc/prpc"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	inv "infra/cmd/skylab/internal/inventory"
 	"infra/cmd/skylab/internal/site"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/cros/dutstate"
 	"infra/libs/skylab/inventory"
 	"infra/libs/skylab/inventory/swarming"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
 // PrintBotInfo subcommand: Print Swarming dimensions for a DUT.
@@ -68,10 +71,16 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 	if err != nil {
 		return err
 	}
+	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    siteEnv.UFSService,
+		Options: site.DefaultPRPCOptions,
+	})
+	dutStateInfo := dutstate.Read(ctx, ufsClient, d.GetCommon().GetHostname())
 
 	stderr := a.GetErr()
 	r := func(e error) { fmt.Fprintf(stderr, "sanitize dimensions: %s\n", err) }
-	bi := botInfoForDUT(d, r)
+	bi := botInfoForDUT(d, dutStateInfo, r)
 	enc, err := json.Marshal(bi)
 	if err != nil {
 		return err
@@ -87,9 +96,9 @@ type botInfo struct {
 
 type botState map[string][]string
 
-func botInfoForDUT(d *inventory.DeviceUnderTest, r swarming.ReportFunc) botInfo {
+func botInfoForDUT(d *inventory.DeviceUnderTest, ds dutstate.Info, r swarming.ReportFunc) botInfo {
 	return botInfo{
-		Dimensions: botDimensionsForDUT(d, r),
+		Dimensions: botDimensionsForDUT(d, ds, r),
 		State:      botStateForDUT(d),
 	}
 }
@@ -103,7 +112,7 @@ func botStateForDUT(d *inventory.DeviceUnderTest) botState {
 	return s
 }
 
-func botDimensionsForDUT(d *inventory.DeviceUnderTest, r swarming.ReportFunc) swarming.Dimensions {
+func botDimensionsForDUT(d *inventory.DeviceUnderTest, ds dutstate.Info, r swarming.ReportFunc) swarming.Dimensions {
 	c := d.GetCommon()
 	dims := swarming.Convert(c.GetLabels())
 	dims["dut_id"] = []string{c.GetId()}
@@ -117,6 +126,7 @@ func botDimensionsForDUT(d *inventory.DeviceUnderTest, r swarming.ReportFunc) sw
 	if v := c.GetLocation(); v != nil {
 		dims["location"] = []string{formatLocation(v)}
 	}
+	dims["dut_state"] = []string{string(ds.State)}
 	swarming.Sanitize(dims, r)
 	return dims
 }
