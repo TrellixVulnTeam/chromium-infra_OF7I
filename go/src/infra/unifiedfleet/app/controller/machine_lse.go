@@ -469,11 +469,15 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		}
 
 		// Delete vms
-		for _, m := range vms {
-			if err := inventory.DeleteVM(ctx, m.GetName()); err != nil {
+		vmIDs := make([]string, 0, len(vms))
+		for _, vm := range vms {
+			vmIDs = append(vmIDs, vm.GetName())
+			hc.LogVMChanges(&ufspb.VM{Name: vm.GetName()}, nil)
+		}
+		if vmIDs != nil && len(vmIDs) > 0 {
+			if err := inventory.BatchDeleteVMs(ctx, vmIDs); err != nil {
 				return err
 			}
-			hc.LogVMChanges(&ufspb.VM{Name: m.GetName()}, nil)
 		}
 
 		if err := inventory.DeleteMachineLSE(ctx, id); err != nil {

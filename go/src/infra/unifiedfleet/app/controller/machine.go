@@ -373,8 +373,10 @@ func DeleteMachine(ctx context.Context, id string) error {
 			if err != nil {
 				return err
 			}
-			if err = registration.BatchDeleteNics(ctx, nicIDs); err != nil {
-				return errors.Annotate(err, "DeleteMachine - failed to batch delete nics for machine %s", machine.GetName()).Err()
+			if nicIDs != nil && len(nicIDs) > 0 {
+				if err = registration.BatchDeleteNics(ctx, nicIDs); err != nil {
+					return errors.Annotate(err, "DeleteMachine - failed to batch delete nics for machine %s", machine.GetName()).Err()
+				}
 			}
 			if dracID != "" {
 				if err = registration.DeleteDrac(ctx, dracID); err != nil {

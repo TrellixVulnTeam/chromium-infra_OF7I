@@ -139,6 +139,18 @@ func DeleteVMs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	return ufsds.DeleteAll(ctx, protos, newVMEntity)
 }
 
+// BatchDeleteVMs deletes vms in datastore.
+//
+// This is a non-atomic operation. Must be used within a transaction.
+// Will lead to partial deletes if not used in a transaction.
+func BatchDeleteVMs(ctx context.Context, ids []string) error {
+	protos := make([]proto.Message, len(ids))
+	for i, id := range ids {
+		protos[i] = &ufspb.VM{Name: id}
+	}
+	return ufsds.BatchDelete(ctx, protos, newVMEntity)
+}
+
 // GetVM returns vms for the given id from datastore.
 func GetVM(ctx context.Context, id string) (*ufspb.VM, error) {
 	pm, err := ufsds.Get(ctx, &ufspb.VM{Name: id}, newVMEntity)

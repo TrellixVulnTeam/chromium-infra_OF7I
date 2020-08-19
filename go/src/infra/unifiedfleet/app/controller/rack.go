@@ -309,15 +309,20 @@ func DeleteRack(ctx context.Context, id string) error {
 			if err != nil {
 				return err
 			}
-
-			if err = registration.BatchDeleteSwitches(ctx, switchIDs); err != nil {
-				return errors.Annotate(err, "Failed to delete associated switches %s", switchIDs).Err()
+			if switchIDs != nil && len(switchIDs) > 0 {
+				if err = registration.BatchDeleteSwitches(ctx, switchIDs); err != nil {
+					return errors.Annotate(err, "Failed to delete associated switches %s", switchIDs).Err()
+				}
 			}
-			if err = registration.BatchDeleteKVMs(ctx, kvmIDs); err != nil {
-				return errors.Annotate(err, "Failed to delete associated KVMs %s", kvmIDs).Err()
+			if kvmIDs != nil && len(kvmIDs) > 0 {
+				if err = registration.BatchDeleteKVMs(ctx, kvmIDs); err != nil {
+					return errors.Annotate(err, "Failed to delete associated KVMs %s", kvmIDs).Err()
+				}
 			}
-			if err = registration.BatchDeleteRPMs(ctx, rpmIDs); err != nil {
-				return errors.Annotate(err, "Failed to delete associated RPMs %s", rpmIDs).Err()
+			if rpmIDs != nil && len(rpmIDs) > 0 {
+				if err = registration.BatchDeleteRPMs(ctx, rpmIDs); err != nil {
+					return errors.Annotate(err, "Failed to delete associated RPMs %s", rpmIDs).Err()
+				}
 			}
 		}
 
