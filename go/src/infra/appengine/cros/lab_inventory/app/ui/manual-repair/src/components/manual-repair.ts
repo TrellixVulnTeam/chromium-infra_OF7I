@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import '@material/mwc-top-app-bar-fixed';
+import './search-hostname';
 
 import {css, customElement, html, LitElement} from 'lit-element';
 
@@ -26,6 +27,9 @@ export class ManualRepair extends LitElement {
         <mwc-top-app-bar-fixed>
           <div slot="title">Manual Repair Records</div>
         </mwc-top-app-bar-fixed>
+        <div id="app-body">
+          <search-hostname></search-hostname>
+        </div>
       </div>
     `;
   }
