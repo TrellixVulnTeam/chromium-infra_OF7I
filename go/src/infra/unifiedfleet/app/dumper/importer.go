@@ -15,7 +15,10 @@ import (
 	frontend "infra/unifiedfleet/app/frontend"
 )
 
-func importCrimson(ctx context.Context) error {
+func importCrimson(ctx context.Context) (err error) {
+	defer func() {
+		dumpCrimsonTick.Add(ctx, 1, err == nil)
+	}()
 	machineDBConfigService := config.Get(ctx).MachineDbConfigService
 	if machineDBConfigService == "" {
 		machineDBConfigService = frontend.DefaultMachineDBService
