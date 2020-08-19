@@ -76,10 +76,10 @@ func (c *listVM) innerRun(a subcommands.Application, args []string, env subcomma
 	if !c.outputFlags.JSON() {
 		return utils.PrintListTableFormat(ctx, ic, printVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.VMTitle, c.outputFlags.Tsv())
 	}
-	return utils.PrintListJSONFormat(ctx, ic, printVMs, true, int32(c.pageSize), c.filter, c.keysOnly)
+	return utils.PrintListJSONFormat(ctx, ic, printVMs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 }
 
-func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListVMsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -91,7 +91,7 @@ func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize in
 		return "", err
 	}
 	if json {
-		utils.PrintVMsJSON(res.GetVms())
+		utils.PrintVMsJSON(res.GetVms(), emit)
 	} else if tsv {
 		utils.PrintTSVVMs(res.GetVms(), keysOnly)
 	} else {

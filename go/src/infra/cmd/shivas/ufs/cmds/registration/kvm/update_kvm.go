@@ -124,7 +124,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of kvm %s\n", res.Name)
 	}
@@ -133,7 +133,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 			Hostname: res.Name,
 		}); err == nil {
-			utils.PrintProtoJSON(dhcp)
+			utils.PrintProtoJSON(dhcp, false)
 			fmt.Println("Successfully added dhcp config to kvm: ", res.Name)
 		}
 	}

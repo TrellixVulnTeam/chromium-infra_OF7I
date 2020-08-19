@@ -141,7 +141,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		return errors.Annotate(err, "Unable to update the VM on the host").Err()
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of vm %s\n", vm.Name)
 	}
@@ -150,7 +150,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 			Hostname: vm.Name,
 		}); err == nil {
-			utils.PrintProtoJSON(dhcp)
+			utils.PrintProtoJSON(dhcp, false)
 			fmt.Println("Successfully added dhcp config to vm: ", vm.Name)
 		}
 	}

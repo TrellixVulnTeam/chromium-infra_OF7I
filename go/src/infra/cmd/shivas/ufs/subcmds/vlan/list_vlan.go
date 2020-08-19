@@ -76,12 +76,12 @@ func (c *listVlan) innerRun(a subcommands.Application, args []string, env subcom
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printVlans, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printVlans, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printVlans, false, int32(c.pageSize), c.filter, c.keysOnly, utils.VlanTitle, c.outputFlags.Tsv())
 }
 
-func printVlans(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printVlans(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListVlansRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -93,7 +93,7 @@ func printVlans(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize 
 		return "", err
 	}
 	if json {
-		utils.PrintVlansJSON(res.Vlans)
+		utils.PrintVlansJSON(res.Vlans, emit)
 	} else if tsv {
 		utils.PrintTSVVlans(res.Vlans, keysOnly)
 	} else {

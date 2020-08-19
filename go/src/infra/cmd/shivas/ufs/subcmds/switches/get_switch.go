@@ -110,7 +110,7 @@ func (c *getSwitch) printFull(ctx context.Context, ic ufsAPI.FleetClient, sw *uf
 	}
 	if c.outputFlags.JSON() {
 		// TODO: print nics/dracs json
-		utils.PrintProtoJSON(sw)
+		utils.PrintProtoJSON(sw, c.outputFlags.Emit())
 	}
 	if !c.outputFlags.Tsv() {
 		utils.PrintTitle(utils.SwitchFullTitle)
@@ -121,7 +121,7 @@ func (c *getSwitch) printFull(ctx context.Context, ic ufsAPI.FleetClient, sw *uf
 
 func (c *getSwitch) print(sw *ufspb.Switch) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(sw)
+		utils.PrintProtoJSON(sw, c.outputFlags.Emit())
 		return nil
 	}
 	if c.outputFlags.Tsv() {

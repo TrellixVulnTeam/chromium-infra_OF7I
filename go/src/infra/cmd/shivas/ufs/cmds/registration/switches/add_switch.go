@@ -108,7 +108,7 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully added the switch %s to rack %s\n", res.Name, c.rackName)
 	return nil
 }

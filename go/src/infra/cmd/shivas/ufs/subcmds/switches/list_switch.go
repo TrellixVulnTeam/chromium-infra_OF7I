@@ -76,12 +76,12 @@ func (c *listSwitch) innerRun(a subcommands.Application, args []string, env subc
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printSwitches, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printSwitches, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printSwitches, false, int32(c.pageSize), c.filter, c.keysOnly, utils.SwitchTitle, c.outputFlags.Tsv())
 }
 
-func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListSwitchesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -93,7 +93,7 @@ func printSwitches(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSi
 		return "", err
 	}
 	if json {
-		utils.PrintSwitchesJSON(res.Switches)
+		utils.PrintSwitchesJSON(res.Switches, emit)
 	} else if tsv {
 		utils.PrintTSVSwitches(res.Switches, keysOnly)
 	} else {

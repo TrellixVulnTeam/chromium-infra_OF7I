@@ -109,7 +109,7 @@ func (c *updateChromePlatform) innerRun(a subcommands.Application, args []string
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully updated the platform %s\n", res.Name)
 	return nil
 }

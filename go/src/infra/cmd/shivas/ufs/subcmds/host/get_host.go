@@ -113,7 +113,7 @@ func (c *getHost) printFull(ctx context.Context, ic ufsAPI.FleetClient, lse *ufs
 
 func (c *getHost) print(lse *ufspb.MachineLSE) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(lse)
+		utils.PrintProtoJSON(lse, c.outputFlags.Emit())
 		return nil
 	}
 	if c.outputFlags.Tsv() {

@@ -105,7 +105,7 @@ func (c *getKVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, kvm *ufsp
 
 func (c *getKVM) print(kvm *ufspb.KVM) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(kvm)
+		utils.PrintProtoJSON(kvm, c.outputFlags.Emit())
 		return nil
 	}
 	if c.outputFlags.Tsv() {

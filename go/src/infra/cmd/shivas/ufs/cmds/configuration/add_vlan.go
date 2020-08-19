@@ -86,7 +86,7 @@ func (c *addVlan) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully added the vlan %s\n", res.Name)
 	return nil
 }

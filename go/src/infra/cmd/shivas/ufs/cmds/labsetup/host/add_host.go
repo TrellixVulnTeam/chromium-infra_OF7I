@@ -130,14 +130,14 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Println("Successfully added the host: ", machinelse.GetName())
 	if c.vlanName != "" && c.nicName != "" {
 		// Log the assigned IP
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 			Hostname: res.GetHostname(),
 		}); err == nil {
-			utils.PrintProtoJSON(dhcp)
+			utils.PrintProtoJSON(dhcp, false)
 			fmt.Println("Successfully added dhcp config to host: ", machinelse.GetName())
 		}
 	}

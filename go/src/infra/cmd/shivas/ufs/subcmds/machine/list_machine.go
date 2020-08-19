@@ -77,12 +77,12 @@ func (c *listMachine) innerRun(a subcommands.Application, args []string, env sub
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printMachines, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printMachines, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printMachines, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachineTitle, c.outputFlags.Tsv())
 }
 
-func printMachines(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool, tsv bool) (string, error) {
+func printMachines(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly bool, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListMachinesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,7 +94,7 @@ func printMachines(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSi
 		return "", err
 	}
 	if json {
-		utils.PrintMachinesJSON(res.Machines)
+		utils.PrintMachinesJSON(res.Machines, emit)
 	} else if tsv {
 		utils.PrintTSVMachines(res.Machines, keysOnly)
 	} else {

@@ -76,12 +76,12 @@ func (c *listChromePlatform) innerRun(a subcommands.Application, args []string, 
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printChromePlatforms, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printChromePlatforms, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printChromePlatforms, false, int32(c.pageSize), c.filter, c.keysOnly, utils.ChromePlatformTitle, c.outputFlags.Tsv())
 }
 
-func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListChromePlatformsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -93,7 +93,7 @@ func printChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, json bool,
 		return "", err
 	}
 	if json {
-		utils.PrintChromePlatformsJSON(res.ChromePlatforms)
+		utils.PrintChromePlatformsJSON(res.ChromePlatforms, emit)
 	} else if tsv {
 		utils.PrintTSVPlatforms(res.ChromePlatforms, keysOnly)
 	} else {

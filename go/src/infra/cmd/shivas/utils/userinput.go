@@ -14,9 +14,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	fleet "infra/unifiedfleet/api/v1/proto"
 	chromeosLab "infra/unifiedfleet/api/v1/proto/chromeos/lab"
 	UfleetAPI "infra/unifiedfleet/api/v1/rpc"
@@ -2004,8 +2005,7 @@ func ParseJSONFile(jsonFile string, pm proto.Message) error {
 	if err != nil {
 		return errors.Annotate(err, "parse json file").Err()
 	}
-	err = jsonpb.Unmarshal(strings.NewReader(string(rawText)), pm)
-	return err
+	return protojson.Unmarshal(rawText, proto.MessageV2(pm))
 }
 
 // GetNextPage gets user input for to get next page of items

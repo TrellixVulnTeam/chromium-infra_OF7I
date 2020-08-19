@@ -89,7 +89,7 @@ func (c *getRack) innerRun(a subcommands.Application, args []string, env subcomm
 
 func (c *getRack) print(rack *ufspb.Rack) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(rack)
+		utils.PrintProtoJSON(rack, c.outputFlags.Emit())
 	} else {
 		if c.outputFlags.Tsv() {
 			utils.PrintTSVRacks([]*ufspb.Rack{rack}, false)

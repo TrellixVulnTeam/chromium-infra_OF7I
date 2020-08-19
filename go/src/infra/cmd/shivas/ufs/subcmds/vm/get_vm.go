@@ -101,7 +101,7 @@ func (c *getVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, vm *ufspb.
 
 func (c *getVM) print(vm *ufspb.VM) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(vm)
+		utils.PrintProtoJSON(vm, c.outputFlags.Emit())
 		return nil
 	}
 	if c.outputFlags.Tsv() {

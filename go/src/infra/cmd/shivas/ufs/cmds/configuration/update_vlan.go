@@ -99,7 +99,7 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully updated the vlan %s\n", res.Name)
 	return nil
 }

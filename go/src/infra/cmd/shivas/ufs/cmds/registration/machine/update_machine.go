@@ -122,7 +122,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Println("Successfully updated the machine: ", res.Name)
 	return nil
 }

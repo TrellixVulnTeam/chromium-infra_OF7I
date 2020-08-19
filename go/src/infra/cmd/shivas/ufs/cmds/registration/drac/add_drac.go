@@ -110,7 +110,7 @@ func (c *addDrac) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully added the drac %s to machine %s\n", res.Name, c.machineName)
 	return nil
 }

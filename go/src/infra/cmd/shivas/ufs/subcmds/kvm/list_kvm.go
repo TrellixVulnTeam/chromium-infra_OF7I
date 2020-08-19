@@ -76,12 +76,12 @@ func (c *listKVM) innerRun(a subcommands.Application, args []string, env subcomm
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printKVMs, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printKVMs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printKVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.KvmTitle, c.outputFlags.Tsv())
 }
 
-func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListKVMsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -93,7 +93,7 @@ func printKVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize i
 		return "", err
 	}
 	if json {
-		utils.PrintKVMsJSON(res.KVMs)
+		utils.PrintKVMsJSON(res.KVMs, emit)
 	} else if tsv {
 		utils.PrintTSVKVMs(res.KVMs, keysOnly)
 	} else {

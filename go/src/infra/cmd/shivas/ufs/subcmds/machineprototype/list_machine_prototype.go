@@ -76,12 +76,12 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachinelseprototypeTitle, c.outputFlags.Tsv())
 }
 
-func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListMachineLSEPrototypesRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -93,7 +93,7 @@ func printMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, json 
 		return "", err
 	}
 	if json {
-		utils.PrintMachineLSEPrototypesJSON(res.MachineLSEPrototypes)
+		utils.PrintMachineLSEPrototypesJSON(res.MachineLSEPrototypes, emit)
 	} else if tsv {
 		utils.PrintTSVMachineLSEPrototypes(res.MachineLSEPrototypes, keysOnly)
 	} else {

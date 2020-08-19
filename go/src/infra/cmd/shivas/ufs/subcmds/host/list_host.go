@@ -79,11 +79,10 @@ func (c *listHost) innerRun(a subcommands.Application, args []string, env subcom
 	if !c.outputFlags.JSON() {
 		return utils.PrintListTableFormat(ctx, ic, printMachineLSEs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachineLSETitle, c.outputFlags.Tsv())
 	}
-	// MachineLSE has large number of fields. Print only JSON format always.
-	return utils.PrintListJSONFormat(ctx, ic, printMachineLSEs, true, int32(c.pageSize), c.filter, c.keysOnly)
+	return utils.PrintListJSONFormat(ctx, ic, printMachineLSEs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 }
 
-func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListMachineLSEsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -95,7 +94,7 @@ func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pag
 		return "", err
 	}
 	if json {
-		utils.PrintMachineLSEsJSON(res.MachineLSEs)
+		utils.PrintMachineLSEsJSON(res.MachineLSEs, emit)
 	} else if tsv {
 		utils.PrintTSVMachineLSEs(res.MachineLSEs, keysOnly)
 	} else {

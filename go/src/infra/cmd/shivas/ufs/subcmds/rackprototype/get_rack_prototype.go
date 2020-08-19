@@ -86,7 +86,7 @@ func (c *getRackLSEPrototype) innerRun(a subcommands.Application, args []string,
 
 func (c *getRackLSEPrototype) print(lp *ufspb.RackLSEPrototype) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(lp)
+		utils.PrintProtoJSON(lp, c.outputFlags.Emit())
 		return nil
 	}
 	if c.outputFlags.Tsv() {

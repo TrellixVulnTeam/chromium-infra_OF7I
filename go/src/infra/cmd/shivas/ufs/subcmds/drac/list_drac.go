@@ -78,12 +78,12 @@ func (c *listDrac) innerRun(a subcommands.Application, args []string, env subcom
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printDracs, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printDracs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printDracs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.DracTitle, c.outputFlags.Tsv())
 }
 
-func printDracs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printDracs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListDracsRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -95,7 +95,7 @@ func printDracs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize 
 		return "", err
 	}
 	if json {
-		utils.PrintDracsJSON(res.Dracs)
+		utils.PrintDracsJSON(res.Dracs, emit)
 	} else if tsv {
 		utils.PrintTSVDracs(res.Dracs, keysOnly)
 	} else {

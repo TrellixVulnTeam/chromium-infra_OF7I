@@ -109,7 +109,7 @@ func (c *getDrac) printFull(ctx context.Context, ic ufsAPI.FleetClient, drac *uf
 
 func (c *getDrac) print(drac *ufspb.Drac) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(drac)
+		utils.PrintProtoJSON(drac, c.outputFlags.Emit())
 	} else {
 		if c.outputFlags.Tsv() {
 			utils.PrintTSVDracs([]*ufspb.Drac{drac}, false)

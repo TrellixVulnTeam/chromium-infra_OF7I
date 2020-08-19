@@ -12,9 +12,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
@@ -66,15 +66,15 @@ var tw = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 // The io writer for json output
 var bw = bufio.NewWriter(os.Stdout)
 
-type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool) (string, error)
+type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool, bool) (string, error)
 
 // PrintListJSONFormat prints the list output in JSON format
-func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, keysOnly bool) error {
+func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, keysOnly, emit bool) error {
 	var pageToken string
 	fmt.Print("[")
 	if pageSize == 0 {
 		for {
-			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly, false)
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly, false, emit)
 			if err != nil {
 				return err
 			}
@@ -92,7 +92,7 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 			} else {
 				size = ufsUtil.MaxPageSize
 			}
-			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly, false)
+			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly, false, emit)
 			if err != nil {
 				return err
 			}
@@ -120,7 +120,7 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 	var pageToken string
 	if pageSize == 0 {
 		for {
-			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly, tsv)
+			token, err := f(ctx, ic, json, ufsUtil.MaxPageSize, pageToken, filter, keysOnly, tsv, false)
 			if err != nil {
 				return err
 			}
@@ -137,7 +137,7 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 			} else {
 				size = ufsUtil.MaxPageSize
 			}
-			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly, tsv)
+			token, err := f(ctx, ic, json, size, pageToken, filter, keysOnly, tsv, false)
 			if err != nil {
 				return err
 			}
@@ -151,15 +151,17 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 }
 
 // PrintProtoJSON prints the output as json
-func PrintProtoJSON(pm proto.Message) {
+func PrintProtoJSON(pm proto.Message, emit bool) {
 	defer bw.Flush()
-	m := jsonpb.Marshaler{
-		EnumsAsInts: false,
-		Indent:      "\t",
+	m := protojson.MarshalOptions{
+		EmitUnpopulated: emit,
+		Indent:          "\t",
 	}
-	if err := m.Marshal(bw, pm); err != nil {
+	json, err := m.Marshal(proto.MessageV2(pm))
+	if err != nil {
 		fmt.Println("Failed to marshal JSON")
 	} else {
+		bw.Write(json)
 		fmt.Fprintf(bw, "\n")
 	}
 }
@@ -227,11 +229,11 @@ func printSwitch(sw *ufspb.Switch, keysOnly bool) {
 }
 
 // PrintSwitchesJSON prints the switch details in json format.
-func PrintSwitchesJSON(switches []*ufspb.Switch) {
+func PrintSwitchesJSON(switches []*ufspb.Switch, emit bool) {
 	len := len(switches) - 1
 	for i, s := range switches {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
-		PrintProtoJSON(s)
+		PrintProtoJSON(s, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -298,11 +300,11 @@ func printKVM(kvm *ufspb.KVM, keysOnly bool) {
 }
 
 // PrintKVMsJSON prints the kvm details in json format.
-func PrintKVMsJSON(kvms []*ufspb.KVM) {
+func PrintKVMsJSON(kvms []*ufspb.KVM, emit bool) {
 	len := len(kvms) - 1
 	for i, s := range kvms {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
-		PrintProtoJSON(s)
+		PrintProtoJSON(s, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -348,11 +350,11 @@ func printRPM(rpm *ufspb.RPM, keysOnly bool) {
 }
 
 // PrintRPMsJSON prints the rpm details in json format.
-func PrintRPMsJSON(rpms []*ufspb.RPM) {
+func PrintRPMsJSON(rpms []*ufspb.RPM, emit bool) {
 	len := len(rpms) - 1
 	for i, s := range rpms {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
-		PrintProtoJSON(s)
+		PrintProtoJSON(s, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -422,11 +424,11 @@ func printDrac(drac *ufspb.Drac, keysOnly bool) {
 }
 
 // PrintDracsJSON prints the drac details in json format.
-func PrintDracsJSON(dracs []*ufspb.Drac) {
+func PrintDracsJSON(dracs []*ufspb.Drac, emit bool) {
 	len := len(dracs) - 1
 	for i, s := range dracs {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
-		PrintProtoJSON(s)
+		PrintProtoJSON(s, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -494,11 +496,11 @@ func printNic(nic *ufspb.Nic, keysOnly bool) {
 }
 
 // PrintNicsJSON prints the nic details in json format.
-func PrintNicsJSON(nics []*ufspb.Nic) {
+func PrintNicsJSON(nics []*ufspb.Nic, emit bool) {
 	len := len(nics) - 1
 	for i, s := range nics {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
-		PrintProtoJSON(s)
+		PrintProtoJSON(s, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -596,11 +598,11 @@ func printMachine(m *ufspb.Machine, keysOnly bool) {
 }
 
 // PrintMachinesJSON prints the machine details in json format.
-func PrintMachinesJSON(machines []*ufspb.Machine) {
+func PrintMachinesJSON(machines []*ufspb.Machine, emit bool) {
 	len := len(machines) - 1
 	for i, m := range machines {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -655,11 +657,11 @@ func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype, keysOnly bool) {
 }
 
 // PrintMachineLSEPrototypesJSON prints the mslep details in json format.
-func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype) {
+func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype, emit bool) {
 	len := len(msleps) - 1
 	for i, m := range msleps {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -705,11 +707,11 @@ func printRackLSEPrototype(m *ufspb.RackLSEPrototype, keysOnly bool) {
 }
 
 // PrintRackLSEPrototypesJSON prints the mslep details in json format.
-func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype) {
+func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype, emit bool) {
 	len := len(rlseps) - 1
 	for i, m := range rlseps {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -718,11 +720,11 @@ func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype) {
 }
 
 // PrintVlansJSON prints the vlan details in json format.
-func PrintVlansJSON(vlans []*ufspb.Vlan) {
+func PrintVlansJSON(vlans []*ufspb.Vlan, emit bool) {
 	len := len(vlans) - 1
 	for i, m := range vlans {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -801,11 +803,11 @@ func printChromePlatform(m *ufspb.ChromePlatform, keysOnly bool) {
 }
 
 // PrintChromePlatformsJSON prints the mslep details in json format.
-func PrintChromePlatformsJSON(msleps []*ufspb.ChromePlatform) {
+func PrintChromePlatformsJSON(msleps []*ufspb.ChromePlatform, emit bool) {
 	len := len(msleps) - 1
 	for i, m := range msleps {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -814,11 +816,11 @@ func PrintChromePlatformsJSON(msleps []*ufspb.ChromePlatform) {
 }
 
 // PrintMachineLSEsJSON prints the machinelse details in json format.
-func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE) {
+func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE, emit bool) {
 	len := len(machinelses) - 1
 	for i, m := range machinelses {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -981,11 +983,11 @@ func printVM(vm *ufspb.VM, keysOnly bool) {
 }
 
 // PrintVMsJSON prints the vm details in json format.
-func PrintVMsJSON(vms []*ufspb.VM) {
+func PrintVMsJSON(vms []*ufspb.VM, emit bool) {
 	len := len(vms) - 1
 	for i, m := range vms {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()
@@ -1034,11 +1036,11 @@ func printRack(m *ufspb.Rack, keysOnly bool) {
 }
 
 // PrintRacksJSON prints the rack details in json format.
-func PrintRacksJSON(racks []*ufspb.Rack) {
+func PrintRacksJSON(racks []*ufspb.Rack, emit bool) {
 	len := len(racks) - 1
 	for i, m := range racks {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
-		PrintProtoJSON(m)
+		PrintProtoJSON(m, emit)
 		if i < len {
 			fmt.Print(",")
 			fmt.Println()

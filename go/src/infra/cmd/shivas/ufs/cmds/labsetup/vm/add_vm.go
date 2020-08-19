@@ -108,7 +108,7 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 	if err != nil {
 		return errors.Annotate(err, "Unable to add the VM to the host").Err()
 	}
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully added the vm %s to host %s\n", vm.GetName(), c.hostName)
 	return nil
 }

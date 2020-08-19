@@ -110,7 +110,7 @@ func (c *addNic) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res)
+	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully added the nic %s to machine %s\n", res.Name, c.machineName)
 	return nil
 }

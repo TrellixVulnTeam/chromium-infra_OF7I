@@ -77,12 +77,12 @@ func (c *listRack) innerRun(a subcommands.Application, args []string, env subcom
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printRacks, true, int32(c.pageSize), c.filter, c.keysOnly)
+		return utils.PrintListJSONFormat(ctx, ic, printRacks, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printRacks, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RackTitle, c.outputFlags.Tsv())
 }
 
-func printRacks(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv bool) (string, error) {
+func printRacks(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {
 	req := &ufsAPI.ListRacksRequest{
 		PageSize:  pageSize,
 		PageToken: pageToken,
@@ -94,7 +94,7 @@ func printRacks(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize 
 		return "", err
 	}
 	if json {
-		utils.PrintRacksJSON(res.Racks)
+		utils.PrintRacksJSON(res.Racks, emit)
 	} else if tsv {
 		utils.PrintTSVRacks(res.Racks, keysOnly)
 	} else {
