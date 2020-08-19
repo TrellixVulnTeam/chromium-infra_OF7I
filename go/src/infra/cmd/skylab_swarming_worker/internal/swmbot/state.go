@@ -6,50 +6,23 @@ package swmbot
 
 import (
 	"encoding/json"
+
+	"infra/libs/cros/dutstate"
 )
 
 // LocalState contains persistent bot information that is cached on the
 // Skylab drone.
 type LocalState struct {
-	HostState               HostState               `json:"state"`
+	HostState               dutstate.State          `json:"state"`
 	ProvisionableLabels     ProvisionableLabels     `json:"provisionable_labels"`
 	ProvisionableAttributes ProvisionableAttributes `json:"provisionable_attributes"`
 }
-
-// HostState is an enum for host state.
-type HostState string
 
 // ProvisionableLabels stores provisionable labels for a bot and host.
 type ProvisionableLabels map[string]string
 
 // ProvisionableAttributes stores provisionable attributes for a bot and host.
 type ProvisionableAttributes map[string]string
-
-// Valid values for HostState.
-const (
-	HostReady        HostState = "ready"
-	HostNeedsRepair  HostState = "needs_repair"
-	HostNeedsCleanup HostState = "needs_cleanup"
-	HostNeedsReset   HostState = "needs_reset"
-	HostRepairFailed HostState = "repair_failed"
-	// TODO(xixuan): https://bugs.chromium.org/p/chromium/issues/detail?id=1025040#c19
-	// This needs_deploy state may be lost and get changed to needs_repair when the
-	// local state file of each bot on drone gets wiped, which usually happens when bots
-	// get restarted. Drone container image upgrade, drone server memory overflow, or
-	// drone server restart can cause the swarming bots to restart.
-	HostNeedsDeploy HostState = "needs_deploy"
-	// Device reserved for analysis or hold by lab
-	HostReserved HostState = "reserved"
-	// Device under manual repair interaction by lab
-	HostManualRepair HostState = "manual_repair"
-	// Device required manual attention to be fixed
-	HostNeedsManualRepair HostState = "needs_manual_repair"
-	// Device is not fixable due issues with hardware and has to be replaced
-	HostNeedsReplacement HostState = "needs_replacement"
-
-	// Deprecated
-	HostRunning HostState = "running"
-)
 
 // Marshal returns the encoding of the BotInfo.
 func Marshal(bi *LocalState) ([]byte, error) {

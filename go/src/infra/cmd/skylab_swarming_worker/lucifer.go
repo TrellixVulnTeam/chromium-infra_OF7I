@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"infra/cmd/skylab_swarming_worker/internal/event"
-	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness"
+	"infra/libs/cros/dutstate"
 )
 
 type luciferResult struct {
@@ -49,18 +49,15 @@ func runLuciferCommand(ctx context.Context, cmd *exec.Cmd, i *harness.Info, abor
 // hostStateUpdates maps Events to the target runtime state of the
 // host.  Host events that don't need to be handled are left as
 // comment placeholders to aid cross-referencing.
-var hostStateUpdates = map[event.Event]swmbot.HostState{
-	event.HostClean:        swmbot.HostReady,
-	event.HostNeedsCleanup: swmbot.HostNeedsCleanup,
-	event.HostNeedsRepair:  swmbot.HostNeedsRepair,
-	event.HostNeedsReset:   swmbot.HostNeedsReset,
-	event.HostReady:        swmbot.HostReady,
-	// event.HostReadyToRun
-	// event.HostRunning
-	event.HostFailedRepair:      swmbot.HostRepairFailed,
-	event.HostNeedsDeploy:       swmbot.HostNeedsDeploy,
-	event.HostNeedsManualRepair: swmbot.HostNeedsManualRepair,
-	event.HostNeedsReplacement:  swmbot.HostNeedsReplacement,
+var hostStateUpdates = map[event.Event]dutstate.State{
+	event.HostClean:             dutstate.Ready,
+	event.HostNeedsRepair:       dutstate.NeedsRepair,
+	event.HostNeedsReset:        dutstate.NeedsReset,
+	event.HostReady:             dutstate.Ready,
+	event.HostFailedRepair:      dutstate.RepairFailed,
+	event.HostNeedsDeploy:       dutstate.NeedsDeploy,
+	event.HostNeedsManualRepair: dutstate.NeedsManualRepair,
+	event.HostNeedsReplacement:  dutstate.NeedsReplacement,
 }
 
 func isHostStatus(e event.Event) bool {

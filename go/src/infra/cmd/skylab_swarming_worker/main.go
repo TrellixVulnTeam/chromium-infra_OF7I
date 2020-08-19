@@ -49,6 +49,7 @@ import (
 	"infra/cmd/skylab_swarming_worker/internal/parser"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
 	"infra/cmd/skylab_swarming_worker/internal/swmbot/harness"
+	"infra/libs/cros/dutstate"
 )
 
 // Task names.
@@ -139,11 +140,11 @@ func mainInner(a *args) error {
 
 	switch a.taskName {
 	case setStateNeedsRepairTaskName:
-		i.BotInfo.HostState = swmbot.HostNeedsRepair
+		i.BotInfo.HostState = dutstate.NeedsRepair
 	case setStateReservedTaskName:
-		i.BotInfo.HostState = swmbot.HostReserved
+		i.BotInfo.HostState = dutstate.Reserved
 	case setStateManualRepairTaskName:
-		i.BotInfo.HostState = swmbot.HostManualRepair
+		i.BotInfo.HostState = dutstate.ManualRepair
 	default:
 		luciferErr = luciferFlow(ctx, a, i, annotWriter)
 	}

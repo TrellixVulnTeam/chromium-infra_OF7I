@@ -7,13 +7,15 @@ package swmbot
 import (
 	"reflect"
 	"testing"
+
+	"infra/libs/cros/dutstate"
 )
 
 // Test that Dumping and Loading a BotInfo struct returns an identical struct.
 func TestMarshalAndUnmarshal(t *testing.T) {
 	t.Parallel()
 	bi := LocalState{
-		HostState: HostReady,
+		HostState: dutstate.Ready,
 		ProvisionableLabels: ProvisionableLabels{
 			"cros-version":        "lumpy-release/R00-0.0.0.0",
 			"firmware-ro-version": "Google_000",
