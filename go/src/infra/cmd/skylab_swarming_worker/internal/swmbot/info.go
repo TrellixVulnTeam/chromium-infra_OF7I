@@ -21,6 +21,7 @@ type Info struct {
 	AutotestPath     string
 	DUTID            string
 	InventoryService string
+	UFSService       string
 	LuciferBinDir    string
 	ParserPath       string
 	SwarmingService  string
@@ -49,6 +50,7 @@ func GetInfo() *Info {
 		AutotestPath:     os.Getenv("AUTOTEST_DIR"),
 		DUTID:            os.Getenv("SKYLAB_DUT_ID"),
 		InventoryService: os.Getenv("INVENTORY_SERVICE"),
+		UFSService:       os.Getenv("UFS_SERVICE"),
 		LuciferBinDir:    os.Getenv("LUCIFER_TOOLS_DIR"),
 		ParserPath:       os.Getenv("PARSER_PATH"),
 		SwarmingService:  os.Getenv("SWARMING_SERVICE"),

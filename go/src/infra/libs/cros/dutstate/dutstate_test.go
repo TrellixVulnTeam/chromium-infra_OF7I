@@ -34,7 +34,6 @@ func (c *FakeUFSClient) GetState(ctx context.Context, req *ufsAPI.GetStateReques
 	}
 	return nil, c.getStateErr
 }
-
 func (c *FakeUFSClient) UpdateState(ctx context.Context, req *ufsAPI.UpdateStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error) {
 	if c.updateStateErr == nil {
 		c.updateStateMap[req.State.GetResourceName()] = req.State.GetState()

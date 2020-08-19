@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 
 	"infra/cmd/skylab_swarming_worker/internal/swmbot"
+	"infra/libs/cros/dutstate"
 )
 
 // Store holds a bot's botinfo and dut name, and adds a Close method.
@@ -47,6 +48,14 @@ func (s *Store) Close(ctx context.Context) error {
 		return errors.Annotate(err, "close botinfo").Err()
 	}
 	if err := ioutil.WriteFile(botinfoFilePath(s.bot, s.dutName), data, 0666); err != nil {
+		return errors.Annotate(err, "close botinfo").Err()
+	}
+	ufsClient, err := swmbot.UFSClient(ctx, s.bot)
+	if err != nil {
+		return err
+	}
+	err = dutstate.Update(ctx, ufsClient, s.dutName, s.LocalState.HostState)
+	if err != nil {
 		return errors.Annotate(err, "close botinfo").Err()
 	}
 	s.bot = nil

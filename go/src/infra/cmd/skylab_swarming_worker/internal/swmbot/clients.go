@@ -13,6 +13,8 @@ import (
 
 	invV2 "infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+
 	"infra/cmd/skylab_swarming_worker/internal/admin"
 )
 
@@ -64,5 +66,25 @@ func InventoryV2Client(ctx context.Context, b *Info) (invV2.InventoryClient, err
 	if err != nil {
 		return nil, errors.Annotate(err, "create inventory V2 client").Err()
 	}
+	return c, nil
+}
+
+// UFSClient returns a FleetClient to communicate with UFS service.
+// The context should use an explicit service account using
+// WithTaskAccount or WithSystemAccount; otherwise the default service
+// account is used.
+func UFSClient(ctx context.Context, b *Info) (ufsAPI.FleetClient, error) {
+	o := auth.Options{
+		Method: auth.LUCIContextMethod,
+		Scopes: []string{
+			auth.OAuthScopeEmail,
+			"https://www.googleapis.com/auth/cloud-platform",
+		},
+	}
+	pc, err := admin.NewPrpcClient(ctx, b.UFSService, o)
+	if err != nil {
+		return nil, errors.Annotate(err, "create UFS client").Err()
+	}
+	c := ufsAPI.NewFleetPRPCClient(pc)
 	return c, nil
 }
