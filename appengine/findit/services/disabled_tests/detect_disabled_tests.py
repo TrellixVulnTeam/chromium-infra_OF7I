@@ -44,6 +44,7 @@ _LOCATION_BASED_TAGS = [
     'source',
     'parent_component',
     'component',
+    'team',
 ]
 
 _STEP_BASED_TAGS = [
@@ -73,7 +74,8 @@ def _ExecuteQuery(parameters=None):
   for row in bigquery_helper.QueryResultIterator(
       appengine_util.GetApplicationId(), query, parameters=parameters):
     total_rows += 1
-    _CreateLocalTests(row, local_tests, component_mapping, watchlists)
+    _CreateLocalTests(row, local_tests, component_mapping, team_mapping,
+                      watchlists)
     bigquery_rows.append(
         _CreateBigqueryRow(row, component_mapping, team_mapping))
 
@@ -186,7 +188,7 @@ def _CreateDisabledVariant(build_id, builder_name, step_name):
 
 def _GetNewTestTags(test_tags, step_name, test_name, normalized_step_name,
                     normalized_test_name, build_id, component_mapping,
-                    watchlists):
+                    team_mapping, watchlists):
   """Gets new tags for a LuciTest-test variant pair.
 
   Args:
@@ -197,6 +199,7 @@ def _GetNewTestTags(test_tags, step_name, test_name, normalized_step_name,
     normalized_test_name (str): The normalized version of the test name.
     build_id (int): Build id of the build.
     component_mapping (dict): Mapping from directories to crbug components.
+    team_mapping (dict): Mapping from directories to teams.
     watchlists (dict): Mapping from directories to watchlists.
 
   Returns:
@@ -206,13 +209,14 @@ def _GetNewTestTags(test_tags, step_name, test_name, normalized_step_name,
   new_tags.update(
       _GetLocationBasedTags(test_tags, step_name, test_name,
                             normalized_step_name, normalized_test_name,
-                            build_id, component_mapping, watchlists))
+                            build_id, component_mapping, team_mapping,
+                            watchlists))
   return new_tags
 
 
 def _GetLocationBasedTags(test_tags, step_name, test_name, normalized_step_name,
                           normalized_test_name, build_id, component_mapping,
-                          watchlists):
+                          team_mapping, watchlists):
   """Gets location-based tags for a LuciTest.
 
   Only gets location-based tags if they do not already appear in test_tags.
@@ -231,6 +235,7 @@ def _GetLocationBasedTags(test_tags, step_name, test_name, normalized_step_name,
     normalized_test_name (str): The normalized version of the test name.
     build_id (int): Build id of the build.
     component_mapping (dict): Mapping from directories to crbug components.
+    team_mapping (dict): MApping from direcotores to teams.
     watchlists (dict): Mapping from directories to watchlists.
 
   Returns:
@@ -247,7 +252,7 @@ def _GetLocationBasedTags(test_tags, step_name, test_name, normalized_step_name,
     return tags_from_flake
   return _CreateLocationBasedTags(build_id, step_name, test_name,
                                   normalized_step_name, normalized_test_name,
-                                  component_mapping, watchlists)
+                                  component_mapping, team_mapping, watchlists)
 
 
 def _GetLocationBasedTagsFromFlake(luci_project, normalized_step_name,
@@ -265,7 +270,7 @@ def _GetLocationBasedTagsFromFlake(luci_project, normalized_step_name,
 
 def _CreateLocationBasedTags(build_id, step_name, test_name,
                              normalized_step_name, normalized_test_name,
-                             component_mapping, watchlists):
+                             component_mapping, team_mapping, watchlists):
   """Creates location-based tags for gtests and webkit layout tests."""
   location = test_tag_util.GetTestLocation(
       build_id, step_name, test_name, normalized_step_name
@@ -273,10 +278,11 @@ def _CreateLocationBasedTags(build_id, step_name, test_name,
   if location:
     component = test_tag_util.GetTestComponentFromLocation(
         location, component_mapping)
-    team = test_tag_util.DEFAULT_VALUE
+    team = test_tag_util.GetTestTeamFromLocation(location, team_mapping)
     return test_tag_util.GetTagsFromLocation(set(), location, component, team,
                                              watchlists)
   return {
+      'team::%s' % test_tag_util.DEFAULT_VALUE,
       'component::%s' % test_tag_util.DEFAULT_VALUE,
       'parent_component::%s' % test_tag_util.DEFAULT_VALUE
   }
@@ -312,7 +318,8 @@ def _CreateIssueKeys(bugs):
   return issue_keys
 
 
-def _CreateLocalTests(row, local_tests, component_mapping, watchlists):
+def _CreateLocalTests(row, local_tests, component_mapping, team_mapping,
+                      watchlists):
   """Creates a LuciTest key-test variant pair for a row fetched from BigQuery.
 
   Args:
@@ -321,6 +328,7 @@ def _CreateLocalTests(row, local_tests, component_mapping, watchlists):
       {LuciTest.key: {'disabled_test_variants : set(), issue_keys: set()},
       mutated by this function.
     component_mapping (dict): Mapping from directories to crbug components.
+    team_mapping (dict): Mapping from directories to teams.
     watchlists (dict): Mapping from directories to watchlists.
   """
   build_id = row['build_id']
@@ -349,7 +357,7 @@ def _CreateLocalTests(row, local_tests, component_mapping, watchlists):
   local_tests[test_key]['tags'].update(
       _GetNewTestTags(local_tests[test_key]['tags'], step_name, test_name,
                       normalized_step_name, normalized_test_name, build_id,
-                      component_mapping, watchlists))
+                      component_mapping, team_mapping, watchlists))
 
   disabled_variant = _CreateDisabledVariant(build_id, builder_name, step_name)
   local_tests[test_key]['disabled_test_variants'].add(disabled_variant)

@@ -276,7 +276,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
         'test_name': 'test_name1'
     }
     local_tests = {}
-    detect_disabled_tests._CreateLocalTests(row, local_tests, {}, {})
+    detect_disabled_tests._CreateLocalTests(row, local_tests, {}, {}, {})
     expected_local_test = {
         ndb.Key('LuciTest', 'chromium@normal_step_name@normal_test_name'): {
             'disabled_test_variants': {('config1',)},
@@ -354,7 +354,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
             'tags': {'mock_tag::mock_tag2'}
         }
     }
-    detect_disabled_tests._CreateLocalTests(row, local_tests, {}, {})
+    detect_disabled_tests._CreateLocalTests(row, local_tests, {}, {}, {})
     expected_local_tests = {
         ndb.Key('LuciTest', 'chromium@normal_step_name@normal_test_name'): {
             'disabled_test_variants': {('config2',), ('config1',)},
@@ -379,7 +379,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
         'test_name': 'test_name1'
     }]
     for row in rows:
-      detect_disabled_tests._CreateLocalTests(row, local_tests, {}, {})
+      detect_disabled_tests._CreateLocalTests(row, local_tests, {}, {}, {})
     self.assertEqual({}, local_tests)
 
   @mock.patch.object(test_tag_util, 'GetTestLocation')
@@ -431,7 +431,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                                          } if cases['has_flake'] else set()
     detect_disabled_tests._GetLocationBasedTags(cases['tags'], 'step', 'test',
                                                 cases['normalized_step_name'],
-                                                'normal_test', 123, {}, {})
+                                                'normal_test', 123, {}, {}, {})
     self.assertEqual(cases['mocked_for_gpu_test_calls'],
                      mocked_for_gpu_test.call_count)
     self.assertEqual(cases['mocked_get_from_flake_calls'],
@@ -447,9 +447,10 @@ class DetectTestDisablementTest(WaterfallTestCase):
     self.assertEqual(
         expected_tags,
         sorted(
-            detect_disabled_tests._GetNewTestTags(
-                existing_tags, 'step (with patch)', 'test', 'normal_step',
-                'normal_test', 123, {}, {})))
+            detect_disabled_tests._GetNewTestTags(existing_tags,
+                                                  'step (with patch)', 'test',
+                                                  'normal_step', 'normal_test',
+                                                  123, {}, {}, {})))
 
   def testGetTestLocationWithFlake(self):
     luci_project = detect_disabled_tests._DEFAULT_LUCI_PROJECT
@@ -489,9 +490,10 @@ class DetectTestDisablementTest(WaterfallTestCase):
     self.assertEqual(
         expected_tags,
         sorted(
-            detect_disabled_tests._GetNewTestTags(
-                {}, 'step (with patch)', 'test', normalized_step_name,
-                normalized_test_name, 123, {}, {})))
+            detect_disabled_tests._GetNewTestTags({}, 'step (with patch)',
+                                                  'test', normalized_step_name,
+                                                  normalized_test_name, 123, {},
+                                                  {}, {})))
 
   @parameterized.expand([
       (
@@ -518,6 +520,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
               'step::step (with patch)',
               'component::%s' % test_tag_util.DEFAULT_VALUE,
               'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+              'team::%s' % test_tag_util.DEFAULT_VALUE,
           },
       ),
   ])
@@ -533,12 +536,17 @@ class DetectTestDisablementTest(WaterfallTestCase):
         'base/feature/': 'root>a>b',
         'base/feature/url': 'root>a>b>c',
     }
+    team_mapping = {
+        '/base/feature/': 'abc@chromium.org',
+        '/base/feature/url': 'xyz@chromium.org',
+    }
     mock_get_location.return_value = location
     self.assertEqual(
         expected_tags,
         detect_disabled_tests._GetNewTestTags({}, 'step (with patch)', 'test',
                                               'normal_step', 'normal_test', 123,
-                                              component_mapping, watchlists))
+                                              component_mapping, team_mapping,
+                                              watchlists))
 
   @mock.patch.object(
       step_util, 'GetCanonicalStepName', return_value='depth_capture_tests')
@@ -556,7 +564,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
         existing_tags.union(
             detect_disabled_tests._GetNewTestTags(
                 existing_tags, 'depth_capture_tests', 'test_name',
-                'telemetry_gpu_integration_test', 'normal_test', 123, {}, {})))
+                'telemetry_gpu_integration_test', 'normal_test', 123, {}, {},
+                {})))
     self.assertEqual(expected_tags, actual_tags)
 
   @parameterized.expand([
@@ -801,6 +810,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -818,6 +828,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -834,6 +845,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -850,6 +862,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -871,6 +884,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -888,6 +902,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -927,6 +942,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
@@ -963,6 +979,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       tags=sorted({
                           'component::%s' % test_tag_util.DEFAULT_VALUE,
                           'parent_component::%s' % test_tag_util.DEFAULT_VALUE,
+                          'team::%s' % test_tag_util.DEFAULT_VALUE,
                           'step::step_name (full)',
                           'test_type::step_name',
                       }),
