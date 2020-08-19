@@ -144,9 +144,6 @@ func (c *addVM) validateArgs() error {
 		if c.macAddress == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac-address' is required, no mode ('-f') is specified.")
 		}
-		if c.osVersion == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-os-version' is required, no mode ('-f') is specified.")
-		}
 	}
 	return nil
 }
