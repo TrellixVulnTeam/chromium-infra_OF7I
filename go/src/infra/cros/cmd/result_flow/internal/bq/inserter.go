@@ -69,7 +69,7 @@ func NewInserter(ctx context.Context, op Options) (Inserter, error) {
 		burst        = 15
 		maxLeases    = 10
 		batchSize    = 100  // 100 BQ rows sent at once.
-		maxLiveItems = 1000 // At most these many items not yet currently leased for sending.
+		maxLiveItems = 5000 // At most these many items not yet currently leased for sending.
 	)
 	var err error
 	r := &ramBufferedBQInserter{
@@ -85,8 +85,8 @@ func NewInserter(ctx context.Context, op Options) (Inserter, error) {
 			Buffer: buffer.Options{
 				MaxLeases: maxLeases,
 				BatchSize: batchSize,
-				FullBehavior: &buffer.DropOldestBatch{
-					MaxLiveItems: maxLiveItems,
+				FullBehavior: &buffer.BlockNewItems{
+					MaxItems: maxLiveItems,
 				},
 				Retry: inserterRetry,
 			},
