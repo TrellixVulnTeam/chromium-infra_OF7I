@@ -1935,8 +1935,10 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.TestAddIssue(issue)
 
     delta = tracker_pb2.ApprovalDelta(
-        status=tracker_pb2.ApprovalStatus.REVIEW_REQUESTED, set_on=2345,
-        approver_ids_add=[222])
+        status=tracker_pb2.ApprovalStatus.REVIEW_REQUESTED,
+        set_on=2345,
+        approver_ids_add=[222],
+        setter_id=111)
 
     self.work_env.UpdateIssueApproval(78901, 24, delta, 'please review', False)
 
@@ -1962,7 +1964,7 @@ class WorkEnvTest(unittest.TestCase):
                                issue_id=78901, approval_values=[av_24])
     self.services.issue.TestAddIssue(issue)
 
-    delta = tracker_pb2.ApprovalDelta()
+    delta = tracker_pb2.ApprovalDelta(setter_id=111)
     self.work_env.UpdateIssueApproval(78901, 24, delta, 'better response', True)
 
     self.services.issue.DeltaUpdateIssueApproval.assert_called_once_with(
@@ -1989,8 +1991,10 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.TestAddIssue(issue)
 
     delta = tracker_pb2.ApprovalDelta(
-        status=tracker_pb2.ApprovalStatus.REVIEW_REQUESTED, set_on=2345,
-        approver_ids_add=[222])
+        status=tracker_pb2.ApprovalStatus.REVIEW_REQUESTED,
+        set_on=2345,
+        approver_ids_add=[222],
+        setter_id=111)
     attachments = []
     self.work_env.UpdateIssueApproval(78901, 24, delta, 'please review', False,
                                       attachments=attachments)
@@ -2022,7 +2026,7 @@ class WorkEnvTest(unittest.TestCase):
                                issue_id=78901, approval_values=[av_24])
     self.services.issue.TestAddIssue(issue)
 
-    delta = tracker_pb2.ApprovalDelta()
+    delta = tracker_pb2.ApprovalDelta(setter_id=111)
     with self.work_env as we:
       we.UpdateIssueApproval(
           78901, 24, delta, 'Another Desc', True, kept_attachments=[1, 2, 3])
@@ -2069,6 +2073,41 @@ class WorkEnvTest(unittest.TestCase):
     with self.assertRaises(exceptions.InputException):
       long_comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
       self.work_env.UpdateIssueApproval(78901, 24, delta, long_comment, False)
+
+  def testUpdateIssueApproval_NonExistentUsers(self):
+    """We raise an exception if adding an approver that does not exist."""
+    self.services.issue.DeltaUpdateIssueApproval = mock.Mock()
+
+    self.SignIn()
+
+    config = fake.MakeTestConfig(789, [], [])
+    self.services.config.StoreConfig('cnxn', config)
+
+    av_24 = tracker_pb2.ApprovalValue(
+        approval_id=24,
+        approver_ids=[111],
+        status=tracker_pb2.ApprovalStatus.NOT_SET,
+        set_on=1234,
+        setter_id=999)
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'summary',
+        'Available',
+        111,
+        issue_id=78901,
+        approval_values=[av_24])
+    self.services.issue.TestAddIssue(issue)
+
+    delta = tracker_pb2.ApprovalDelta(
+        status=tracker_pb2.ApprovalStatus.REVIEW_REQUESTED,
+        set_on=2345,
+        approver_ids_add=[9876])
+
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 'users/9876: User does not exist.'):
+      comment = 'stuff'
+      self.work_env.UpdateIssueApproval(78901, 24, delta, comment, False)
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')

@@ -1602,7 +1602,8 @@ class WorkEnv(object):
     """Update an issue's approval.
 
     Raises:
-      InputException: The comment content is too long.
+      InputException: The comment content is too long or additional approvers do
+      not exist.
       PermissionException: The user is lacking one of the permissions needed
       for the given delta.
       NoSuchIssueApprovalException: The issue/approval combo does not exist.
@@ -1648,6 +1649,11 @@ class WorkEnv(object):
           approval_value.approver_ids):
         raise permissions.PermissionException(
             'User not allowed to modify approvers of this approval.')
+
+    # Check additional approvers exist.
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      tracker_helpers.AssertUsersExist(
+          self.mc.cnxn, self.services, approval_delta.approver_ids_add, err_agg)
 
     with self.mc.profiler.Phase(
         'updating approval for issue %r, aprpoval %r' % (

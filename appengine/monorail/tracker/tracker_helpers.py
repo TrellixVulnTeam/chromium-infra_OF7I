@@ -1438,6 +1438,11 @@ def AssertIssueChangesValid(
             cnxn, project, delta.owner_id, services)
         if not parsed_owner_valid:
           err_agg.AddErrorMessage('{}: {}', issue_ref, msg)
+      # Owner already check by IsValidIssueOwner
+      all_users = delta.cc_ids_add
+      field_users = [fv.user_id for fv in delta.field_vals_add if fv.user_id]
+      all_users.extend(field_users)
+      AssertUsersExist(cnxn, services, all_users, err_agg)
       if (delta.summary and
           len(delta.summary.strip()) > tracker_constants.MAX_SUMMARY_CHARS):
         err_agg.AddErrorMessage('{}: Summary is too long.', issue_ref)
@@ -1449,6 +1454,20 @@ def AssertIssueChangesValid(
           cnxn, services, delta.field_vals_add, config, project)
       if fvs_err_msgs:
         err_agg.AddErrorMessage('{}: {}', issue_ref, '\n'.join(fvs_err_msgs))
+
+
+def AssertUsersExist(cnxn, services, user_ids, err_agg):
+  # type: (MonorailConnection, Services, Sequence[int], ErrorAggregator) -> None
+  """Assert that all users exist.
+
+    Has the side-effect of adding error messages to the input ErrorAggregator.
+  """
+  users_dict = services.user.GetUsersByIDs(cnxn, user_ids, skip_missed=True)
+  found_ids = set(users_dict.keys())
+  missing = [user_id for user_id in user_ids if user_id not in found_ids]
+  for missing_user_id in missing:
+    err_agg.AddErrorMessage(
+        'users/{}: User does not exist.'.format(missing_user_id))
 
 
 def AssertValidIssueForCreate(cnxn, services, issue, description):
@@ -1470,6 +1489,15 @@ def AssertValidIssueForCreate(cnxn, services, issue, description):
       err_agg.AddErrorMessage('Summary is too long')
     if len(description) > tracker_constants.MAX_COMMENT_CHARS:
       err_agg.AddErrorMessage('Description is too long')
+
+    # Check all users exist. Owner already check by IsValidIssueOwner.
+    all_users = issue.cc_ids
+    for av in issue.approval_values:
+      all_users.extend(av.approver_ids)
+    field_users = [fv.user_id for fv in issue.field_values if fv.user_id]
+    all_users.extend(field_users)
+    AssertUsersExist(cnxn, services, all_users, err_agg)
+
     field_validity_errors = field_helpers.ValidateCustomFields(
         cnxn, services, issue.field_values, config, project)
     if field_validity_errors:

@@ -1565,7 +1565,8 @@ class CreateIssueHelpersTest(unittest.TestCase):
         status='New',
         owner_id=111,
         project_id=789,
-        component_ids=[1])
+        component_ids=[1],
+        cc_ids=[999])
     tracker_helpers.AssertValidIssueForCreate(
         self.cnxn, self.services, input_issue, 'nonempty description')
 
@@ -1643,6 +1644,13 @@ class CreateIssueHelpersTest(unittest.TestCase):
         component_ids=[2])
     with self.assertRaisesRegexp(exceptions.InputException,
                                  'Undefined component with id: 2'):
+      tracker_helpers.AssertValidIssueForCreate(
+          self.cnxn, self.services, input_issue, 'nonempty description')
+
+  def testAssertValidIssueForCreate_ValidatesOwner(self):
+    input_issue = tracker_pb2.Issue(
+        summary='sum', status='New', owner_id=111, project_id=789, cc_ids=[123])
+    with self.assertRaisesRegexp(exceptions.InputException, 'users/123'):
       tracker_helpers.AssertValidIssueForCreate(
           self.cnxn, self.services, input_issue, 'nonempty description')
 
@@ -1968,11 +1976,14 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     delta_9 = tracker_pb2.IssueDelta(blocked_on_remove=[issue_10.issue_id])
     delta_10 = tracker_pb2.IssueDelta(blocking_remove=[issue_9.issue_id])
 
+    issue_11 = _Issue('chicken', 11)
+    delta_11 = tracker_pb2.IssueDelta(cc_ids_add=[222])
+
     issue_delta_pairs = [
         (issue_1, delta_1), (issue_2, delta_2), (issue_3, delta_3),
         (issue_4, delta_4), (issue_5, delta_5), (issue_6, delta_6),
         (issue_7, delta_7), (issue_8, delta_8), (issue_9, delta_9),
-        (issue_10, delta_10)
+        (issue_10, delta_10), (issue_11, delta_11)
     ]
     comment = '   ' + 'c' * tracker_constants.MAX_COMMENT_CHARS + '  '
     tracker_helpers.AssertIssueChangesValid(
@@ -1998,14 +2009,18 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_1_ref = getRef(issue_1)
 
     delta_1 = tracker_pb2.IssueDelta(
-        merged_into=issue_1.issue_id, blocked_on_add=[issue_1.issue_id],
-        summary='', status='')
+        merged_into=issue_1.issue_id,
+        blocked_on_add=[issue_1.issue_id],
+        summary='',
+        status='',
+        cc_ids_add=[9876])
 
     issue_delta_pairs.append((issue_1, delta_1))
     expected_err_msgs.extend(
         [
             '%s: Cannot merge an issue into itself.' % issue_1_ref,
             '%s: Cannot block an issue on itself.' % issue_1_ref,
+            'users/9876: User does not exist.',
             '%s: Summary required.' % issue_1_ref,
             '%s: Status is required.' % issue_1_ref
         ])
@@ -2345,3 +2360,29 @@ class IssueChangeImpactedIssuesTest(unittest.TestCase):
     expected_new_starrers = []
     self.assertEqual(actual_new_starrers, expected_new_starrers)
     self.assertEqual(impacted_issue, expected_issue)
+
+
+class AssertUsersExistTest(unittest.TestCase):
+
+  def setUp(self):
+    self.cnxn = 'fake cnxn'
+    self.services = service_manager.Services(user=fake.UserService())
+    for user_id in [1, 1001, 1002, 1003, 2001, 2002, 3002]:
+      self.services.user.TestAddUser('test%d' % user_id, user_id, add_user=True)
+
+  def test_AssertUsersExist_Passes(self):
+    existing = [1, 1001, 1002, 1003, 2001, 2002, 3002]
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      tracker_helpers.AssertUsersExist(
+          self.cnxn, self.services, existing, err_agg)
+
+  def test_AssertUsersExist(self):
+    dne_users = [2, 3]
+    existing = [1, 1001, 1002, 1003, 2001, 2002, 3002]
+    all_users = existing + dne_users
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'users/2: User does not exist.\nusers/3: User does not exist.'):
+      with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+        tracker_helpers.AssertUsersExist(
+            self.cnxn, self.services, all_users, err_agg)
