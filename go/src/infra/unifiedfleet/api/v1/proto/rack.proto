@@ -45,6 +45,8 @@ message Rack {
     string state = 9 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+    // A description of this rack.
+    string description = 11;
 }
 
 // ChromeBrowserRack refers to the rack in Chrome Browser lab

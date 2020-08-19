@@ -57,6 +57,9 @@ message KVM {
     string zone = 10 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // A description of this kvm.
+    string description = 11;
 }
 
 // Refer to one port of a given KVM

@@ -93,6 +93,11 @@ message MachineLSE {
     string zone = 14 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+   // The deployment ticket associated with this host.
+   string deployment_ticket = 15;
+   // A description of this host.
+   string description = 16;
 }
 
 // ChromeBrowserMachineLSE refers to the entity
@@ -143,6 +148,8 @@ message VM {
     string zone = 11 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+    // A description of this vm.
+    string description = 12;
 }
 
 // OSVersion refers to the version of Operating System

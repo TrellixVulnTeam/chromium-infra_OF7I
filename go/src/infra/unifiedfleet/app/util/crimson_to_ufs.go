@@ -31,6 +31,7 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 					// NetworkDeviceInterface is attached to the nics.
 					DisplayName:      o.Name,
 					ChromePlatform:   FormatResourceName(o.Platform),
+					Description:      o.GetDescription(),
 					DeploymentTicket: o.DeploymentTicket,
 				},
 			},
@@ -92,6 +93,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			Rack:           oldKVM.GetRack(),
 			Zone:           ToZone(strings.ToLower(dcName)).String(),
 			State:          ToState(oldKVM.GetState()).String(),
+			Description:    oldKVM.GetDescription(),
 		}
 		kvms = append(kvms, k)
 		rackName := oldKVM.GetRack()
@@ -134,7 +136,8 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			Rack: &ufspb.Rack_ChromeBrowserRack{
 				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 			},
-			State: ToState(old.GetState()).String(),
+			State:       ToState(old.GetState()).String(),
+			Description: old.GetDescription(),
 		}
 		rlse := &ufspb.RackLSE{
 			Name:             GetRackHostname(rackName),
@@ -267,6 +270,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Zone:         zone,
 			MachineLseId: vm.GetHost(),
 			State:        ToState(vm.GetState()).String(),
+			Description:  vm.GetDescription(),
 		}
 		hostToVMs[vm.GetHost()] = append(hostToVMs[vm.GetHost()], v)
 		ufsVMs = append(ufsVMs, v)
@@ -316,11 +320,13 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 					},
 				},
 			},
-			Rack:         rack,
-			Zone:         zone,
-			Nic:          GetNicName(h.GetNic(), h.GetMachine()),
-			State:        ToState(h.GetState()).String(),
-			Manufacturer: manufacturer,
+			Rack:             rack,
+			Zone:             zone,
+			Nic:              GetNicName(h.GetNic(), h.GetMachine()),
+			State:            ToState(h.GetState()).String(),
+			Manufacturer:     manufacturer,
+			Description:      h.GetDescription(),
+			DeploymentTicket: h.DeploymentTicket,
 		}
 		lses = append(lses, lse)
 		ip := FormatIP(GetBrowserLabName(Int64ToStr(h.GetVlan())), h.GetIpv4(), true)
