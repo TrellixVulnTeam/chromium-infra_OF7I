@@ -70,7 +70,7 @@ var (
 	// fileBugForTBRViolation is the notification function for manual-changes
 	// rules.
 	fileBugForTBRViolation = rules.CommentOrFileMonorailIssue{
-		Components: []string{"Infra>Audit"},
+		Components: []string{"Infra>Security>Audit"},
 		Labels:     []string{"CommitLog-Audit-Violation", "TBR-Violation"},
 	}
 )

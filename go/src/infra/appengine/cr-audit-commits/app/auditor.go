@@ -419,7 +419,7 @@ func reportAuditFailure(ctx context.Context, cfg *rules.RefConfig, rc *rules.Rel
 
 	var err error
 	issueID := int32(0)
-	issueID, err = rules.PostIssue(ctx, cfg, summary, description, cs, []string{"Infra>Audit"}, []string{"AuditFailure"})
+	issueID, err = rules.PostIssue(ctx, cfg, summary, description, cs, []string{"Infra>Security>Audit"}, []string{"AuditFailure"})
 	if err == nil {
 		rc.SetNotificationState("AuditFailure", fmt.Sprintf("BUG=%d", issueID))
 		// Do not sent further notifications for this commit. This needs
