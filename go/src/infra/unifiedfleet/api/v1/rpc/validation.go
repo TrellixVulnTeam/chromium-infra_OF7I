@@ -21,7 +21,7 @@ var (
 	NilEntity                     string = "Invalid input - No Entity to add/update."
 	EmptyID                       string = "Invalid input - Entity ID is empty."
 	EmptyName                     string = "Invalid input - Entity Name is empty."
-	ValidName                     string = "Name must contain only 3-63 characters, ASCII letters, numbers and special characters )(,_:."
+	ValidName                     string = "Name must match the regular expression `^[a-zA-Z0-9-)(,_:.]{3,63}$`"
 	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."

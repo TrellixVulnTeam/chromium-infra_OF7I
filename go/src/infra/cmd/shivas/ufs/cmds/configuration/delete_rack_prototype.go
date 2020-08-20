@@ -61,10 +61,6 @@ func (c *deleteRackLSEPrototype) innerRun(a subcommands.Application, args []stri
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the rack prototype: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
@@ -72,6 +68,13 @@ func (c *deleteRackLSEPrototype) innerRun(a subcommands.Application, args []stri
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingRackPrototype(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the rack prototype: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteRackLSEPrototype(ctx, &ufsAPI.DeleteRackLSEPrototypeRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.RackLSEPrototypeCollection, args[0]),
 	})

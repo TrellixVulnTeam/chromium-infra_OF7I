@@ -60,16 +60,19 @@ func (c *deleteSwitch) innerRun(a subcommands.Application, args []string, env su
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete Switch: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingSwitch(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete Switch: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteSwitch(ctx, &ufsAPI.DeleteSwitchRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, args[0]),
 	})

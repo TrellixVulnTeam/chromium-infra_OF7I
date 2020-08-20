@@ -61,10 +61,6 @@ func (c *deleteVlan) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the vlan: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	if c.commonFlags.Verbose() {
 		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
@@ -74,6 +70,13 @@ func (c *deleteVlan) innerRun(a subcommands.Application, args []string, env subc
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingVlan(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the vlan: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteVlan(ctx, &ufsAPI.DeleteVlanRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.VlanCollection, args[0]),
 	})

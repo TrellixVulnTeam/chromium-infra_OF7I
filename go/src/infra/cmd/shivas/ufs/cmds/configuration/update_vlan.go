@@ -79,15 +79,18 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 		Options: site.DefaultPRPCOptions,
 	})
 
-	var Vlan ufspb.Vlan
-	c.parseArgs(&Vlan)
-	Vlan.Name = ufsUtil.AddPrefix(ufsUtil.VlanCollection, Vlan.Name)
+	var vlan ufspb.Vlan
+	c.parseArgs(&vlan)
+	if err := utils.PrintExistingVlan(ctx, ic, vlan.Name); err != nil {
+		return err
+	}
+	vlan.Name = ufsUtil.AddPrefix(ufsUtil.VlanCollection, vlan.Name)
 	var s ufspb.State
 	if c.state != "" {
 		s = ufsUtil.ToUFSState(c.state)
 	}
 	res, err := ic.UpdateVlan(ctx, &ufsAPI.UpdateVlanRequest{
-		Vlan: &Vlan,
+		Vlan: &vlan,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"desc":         "description",
 			"state":        "state",
@@ -99,6 +102,7 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The vlan after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully updated the vlan %s\n", res.Name)
 	return nil

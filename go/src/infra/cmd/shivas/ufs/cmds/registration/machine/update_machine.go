@@ -105,6 +105,9 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			c.parseArgs(&machine)
 		}
 	}
+	if err := utils.PrintExistingMachine(ctx, ic, machine.Name); err != nil {
+		return err
+	}
 	machine.Name = ufsUtil.AddPrefix(ufsUtil.MachineCollection, machine.Name)
 	res, err := ic.UpdateMachine(ctx, &ufsAPI.UpdateMachineRequest{
 		Machine: &machine,
@@ -122,6 +125,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The machine after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Println("Successfully updated the machine: ", res.Name)
 	return nil

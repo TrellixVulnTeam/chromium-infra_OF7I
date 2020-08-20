@@ -100,6 +100,9 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 			c.parseArgs(&nic)
 		}
 	}
+	if err := utils.PrintExistingNic(ctx, ic, nic.Name); err != nil {
+		return err
+	}
 	nic.Name = ufsUtil.AddPrefix(ufsUtil.NicCollection, nic.Name)
 	res, err := ic.UpdateNic(ctx, &ufsAPI.UpdateNicRequest{
 		Nic:     &nic,
@@ -116,6 +119,7 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The nic after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully updated the nic %s\n", res.Name)
 	return nil

@@ -61,16 +61,19 @@ func (c *deleteNic) innerRun(a subcommands.Application, args []string, env subco
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete Nic: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingNic(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete Nic: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteNic(ctx, &ufsAPI.DeleteNicRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.NicCollection, args[0]),
 	})

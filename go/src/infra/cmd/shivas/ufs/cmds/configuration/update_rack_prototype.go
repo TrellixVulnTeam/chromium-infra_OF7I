@@ -78,6 +78,9 @@ func (c *updateRackLSEPrototype) innerRun(a subcommands.Application, args []stri
 			return err
 		}
 	}
+	if err := utils.PrintExistingRackPrototype(ctx, ic, racklsePrototype.Name); err != nil {
+		return err
+	}
 	racklsePrototype.Name = ufsUtil.AddPrefix(ufsUtil.RackLSEPrototypeCollection, racklsePrototype.Name)
 	res, err := ic.UpdateRackLSEPrototype(ctx, &ufsAPI.UpdateRackLSEPrototypeRequest{
 		RackLSEPrototype: &racklsePrototype,
@@ -86,6 +89,7 @@ func (c *updateRackLSEPrototype) innerRun(a subcommands.Application, args []stri
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The rack lse prototype after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Println()
 	return nil

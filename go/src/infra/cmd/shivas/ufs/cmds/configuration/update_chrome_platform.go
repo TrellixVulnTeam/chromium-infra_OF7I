@@ -96,6 +96,9 @@ func (c *updateChromePlatform) innerRun(a subcommands.Application, args []string
 			c.parseArgs(&chromePlatform)
 		}
 	}
+	if err := utils.PrintExistingPlatform(ctx, ic, chromePlatform.Name); err != nil {
+		return err
+	}
 	chromePlatform.Name = ufsUtil.AddPrefix(ufsUtil.ChromePlatformCollection, chromePlatform.Name)
 	res, err := ic.UpdateChromePlatform(ctx, &ufsAPI.UpdateChromePlatformRequest{
 		ChromePlatform: &chromePlatform,
@@ -109,6 +112,7 @@ func (c *updateChromePlatform) innerRun(a subcommands.Application, args []string
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The chrome platform after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully updated the platform %s\n", res.Name)
 	return nil

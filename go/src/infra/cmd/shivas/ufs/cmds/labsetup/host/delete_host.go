@@ -60,16 +60,20 @@ func (c *deleteHost) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the host: %s\n!!! All attached vms will be deleted automatically", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingHost(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the host together with its VMs: %s", args[0])) {
+		return nil
+	}
+
 	_, err = ic.DeleteMachineLSE(ctx, &ufsAPI.DeleteMachineLSERequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, args[0]),
 	})

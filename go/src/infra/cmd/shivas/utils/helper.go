@@ -398,5 +398,8 @@ func GetUpdateMask(set *flag.FlagSet, paths map[string]string) *field_mask.Field
 
 // GetStringSlice converts the comma separated string to a slice of strings
 func GetStringSlice(msg string) []string {
+	if msg == "" {
+		return nil
+	}
 	return strings.Split(strings.Replace(msg, " ", "", -1), ",")
 }

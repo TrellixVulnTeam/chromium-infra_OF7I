@@ -113,6 +113,9 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 	} else {
 		c.parseArgs(machinelse)
 	}
+	if err := utils.PrintExistingHost(ctx, ic, machinelse.Name); err != nil {
+		return err
+	}
 
 	var networkOptions map[string]*ufsAPI.NetworkOption
 	var states map[string]ufspb.State
@@ -155,6 +158,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The host after update:")
 	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of host %s\n", res.Name)

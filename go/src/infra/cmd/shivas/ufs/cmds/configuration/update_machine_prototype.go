@@ -78,6 +78,9 @@ func (c *updateMachineLSEPrototype) innerRun(a subcommands.Application, args []s
 			return err
 		}
 	}
+	if err := utils.PrintExistingMachinePrototype(ctx, ic, machinelsePrototype.Name); err != nil {
+		return err
+	}
 	machinelsePrototype.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSEPrototypeCollection, machinelsePrototype.Name)
 	res, err := ic.UpdateMachineLSEPrototype(ctx, &ufsAPI.UpdateMachineLSEPrototypeRequest{
 		MachineLSEPrototype: &machinelsePrototype,
@@ -86,6 +89,7 @@ func (c *updateMachineLSEPrototype) innerRun(a subcommands.Application, args []s
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The machine lse prototype after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Println()
 	return nil

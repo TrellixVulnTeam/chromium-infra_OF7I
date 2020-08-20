@@ -98,6 +98,9 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 			c.parseArgs(&s)
 		}
 	}
+	if err := utils.PrintExistingSwitch(ctx, ic, s.Name); err != nil {
+		return err
+	}
 	s.Name = ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name)
 	res, err := ic.UpdateSwitch(ctx, &ufsAPI.UpdateSwitchRequest{
 		Switch: &s,
@@ -113,6 +116,7 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The switch after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully updated the switch %s\n", res.Name)
 	return nil

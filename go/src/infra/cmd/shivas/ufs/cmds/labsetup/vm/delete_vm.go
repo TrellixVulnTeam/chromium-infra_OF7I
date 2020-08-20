@@ -61,17 +61,19 @@ func (c *deleteVM) innerRun(a subcommands.Application, args []string, env subcom
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the VM: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
+	if err := utils.PrintExistingVM(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the VM: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteVM(ctx, &ufsAPI.DeleteVMRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.VMCollection, args[0]),
 	})

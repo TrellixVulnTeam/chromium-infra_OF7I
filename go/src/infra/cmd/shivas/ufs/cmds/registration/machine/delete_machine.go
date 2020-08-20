@@ -63,11 +63,6 @@ func (c *deleteMachine) innerRun(a subcommands.Application, args []string, env s
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine: %s. "+
-		"This will also delete any nics and drac associated with the machine.", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	if c.commonFlags.Verbose() {
 		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
@@ -77,6 +72,14 @@ func (c *deleteMachine) innerRun(a subcommands.Application, args []string, env s
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingMachine(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine together with its nics & drac: %s. ", args[0])) {
+		return nil
+	}
+
 	_, err = ic.DeleteMachine(ctx, &ufsAPI.DeleteMachineRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, args[0]),
 	})

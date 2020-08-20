@@ -52,7 +52,7 @@ var (
 	VlanTitle           = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
 	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "State", "UpdateTime"}
 	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "UpdateTime"}
-	RackTitle           = []string{"Rack Name", "Zone", "Switches", "KVMs", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
+	RackTitle           = []string{"Rack Name", "Zone", "KVMs", "Switches", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
 	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
 )

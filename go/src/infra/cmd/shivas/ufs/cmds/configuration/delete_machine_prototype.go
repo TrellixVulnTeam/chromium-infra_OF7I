@@ -61,10 +61,6 @@ func (c *deleteMachineLSEPrototype) innerRun(a subcommands.Application, args []s
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine prototype: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
@@ -72,6 +68,13 @@ func (c *deleteMachineLSEPrototype) innerRun(a subcommands.Application, args []s
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingMachinePrototype(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine prototype: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteMachineLSEPrototype(ctx, &ufsAPI.DeleteMachineLSEPrototypeRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSEPrototypeCollection, args[0]),
 	})

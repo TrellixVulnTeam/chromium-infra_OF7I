@@ -98,6 +98,9 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 	} else {
 		c.parseArgs(&rack)
 	}
+	if err := utils.PrintExistingRack(ctx, ic, rack.Name); err != nil {
+		return err
+	}
 	rack.Name = ufsUtil.AddPrefix(ufsUtil.RackCollection, rack.Name)
 	res, err := ic.UpdateRack(ctx, &ufsAPI.UpdateRackRequest{
 		Rack: &rack,
@@ -111,6 +114,7 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The rack after update:")
 	utils.PrintProtoJSON(res, false)
 	fmt.Println("Successfully updated the rack: ", res.Name)
 	return nil

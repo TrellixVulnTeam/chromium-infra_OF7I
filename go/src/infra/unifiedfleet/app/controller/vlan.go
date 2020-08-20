@@ -116,7 +116,7 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 	}
 
 	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return nil, errors.Annotate(err, "UpdateVlan - unable to create vlan %s", vlan.Name).Err()
+		return nil, errors.Annotate(err, "UpdateVlan - unable to update vlan %s", vlan.Name).Err()
 	}
 	return vlan, nil
 }

@@ -104,6 +104,9 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 			c.parseArgs(&kvm)
 		}
 	}
+	if err := utils.PrintExistingKVM(ctx, ic, kvm.Name); err != nil {
+		return err
+	}
 	kvm.Name = ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name)
 	res, err := ic.UpdateKVM(ctx, &ufsAPI.UpdateKVMRequest{
 		KVM:  &kvm,
@@ -124,6 +127,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The kvm after update:")
 	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of kvm %s\n", res.Name)

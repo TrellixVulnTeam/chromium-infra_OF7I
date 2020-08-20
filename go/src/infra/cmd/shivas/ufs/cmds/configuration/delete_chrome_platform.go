@@ -61,10 +61,6 @@ func (c *deleteChromePlatform) innerRun(a subcommands.Application, args []string
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the platform: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	if c.commonFlags.Verbose() {
 		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
@@ -74,6 +70,13 @@ func (c *deleteChromePlatform) innerRun(a subcommands.Application, args []string
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingPlatform(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the platform: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteChromePlatform(ctx, &ufsAPI.DeleteChromePlatformRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.ChromePlatformCollection, args[0]),
 	})

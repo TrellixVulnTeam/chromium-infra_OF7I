@@ -106,6 +106,9 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 			c.parseArgs(&drac)
 		}
 	}
+	if err := utils.PrintExistingDrac(ctx, ic, drac.Name); err != nil {
+		return err
+	}
 	drac.Name = ufsUtil.AddPrefix(ufsUtil.DracCollection, drac.Name)
 	res, err := ic.UpdateDrac(ctx, &ufsAPI.UpdateDracRequest{
 		Drac:    &drac,
@@ -127,6 +130,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The drac after update:")
 	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of drac %s\n", res.Name)

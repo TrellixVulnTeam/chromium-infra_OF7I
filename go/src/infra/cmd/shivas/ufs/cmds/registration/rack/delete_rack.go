@@ -66,16 +66,20 @@ func (c *deleteRack) innerRun(a subcommands.Application, args []string, env subc
 	if c.commonFlags.Verbose() {
 		fmt.Printf("Using UFS service %s\n", e.UnifiedFleetService)
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the rack: %s. "+
-		"This will also delete switches, kvms and rpms associated with the rack.", args[0])) {
-		return nil
-	}
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingRack(ctx, ic, args[0]); err != nil {
+		return err
+	}
+
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete the rack: %s. "+
+		"This will also delete switches, kvms and rpms associated with the rack.", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteRack(ctx, &ufsAPI.DeleteRackRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, args[0]),
 	})

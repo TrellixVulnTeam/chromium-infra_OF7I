@@ -415,13 +415,16 @@ func validateReservedIPs(ctx context.Context, vlan *ufspb.Vlan) error {
 	}
 	ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "Fail to parse the vlan cidr block %s", vlan.GetVlanAddress())
+		return status.Errorf(codes.InvalidArgument, "Invalid %s: %s", vlan.GetVlanAddress(), err.Error())
 	}
 	ipMap := make(map[string]bool)
 	for _, ip := range ips {
 		ipMap[ip.GetIpv4Str()] = true
 	}
 	for _, ip := range vlan.GetReservedIps() {
+		if ip == "" {
+			continue
+		}
 		if !ipMap[ip] {
 			return status.Errorf(codes.InvalidArgument, "ip %s doesn't belong to vlan %s", ip, vlan.GetVlanAddress())
 		}

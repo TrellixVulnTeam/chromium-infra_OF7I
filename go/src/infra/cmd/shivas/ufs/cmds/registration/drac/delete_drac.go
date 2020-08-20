@@ -61,16 +61,19 @@ func (c *deleteDrac) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete Drac: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingDrac(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete Drac: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteDrac(ctx, &ufsAPI.DeleteDracRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.DracCollection, args[0]),
 	})

@@ -110,7 +110,9 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	} else {
 		c.parseArgs(&vm)
 	}
-
+	if err := utils.PrintExistingVM(ctx, ic, vm.Name); err != nil {
+		return err
+	}
 	var nwOpt *ufsAPI.NetworkOption
 	if c.deleteVlan || c.vlanName != "" || c.ip != "" {
 		nwOpt = &ufsAPI.NetworkOption{
@@ -141,6 +143,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		return errors.Annotate(err, "Unable to update the VM on the host").Err()
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	fmt.Println("The vm after update:")
 	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of vm %s\n", vm.Name)

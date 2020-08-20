@@ -60,16 +60,19 @@ func (c *deleteKVM) innerRun(a subcommands.Application, args []string, env subco
 	if err != nil {
 		return err
 	}
-	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete KVM: %s", args[0])) {
-		return nil
-	}
 	e := c.envFlags.Env()
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
+	if err := utils.PrintExistingKVM(ctx, ic, args[0]); err != nil {
+		return err
+	}
+	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
+	if !prompt(fmt.Sprintf("Are you sure you want to delete KVM: %s", args[0])) {
+		return nil
+	}
 	_, err = ic.DeleteKVM(ctx, &ufsAPI.DeleteKVMRequest{
 		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, args[0]),
 	})
