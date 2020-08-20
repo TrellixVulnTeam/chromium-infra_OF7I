@@ -37,7 +37,7 @@ func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, error) {
 	ones, _ := subnet.Mask.Size()
 	length := 1 << uint32(32-ones)
 	if length < reserveFirst+reserveLast {
-		return nil, 0, errors.Reason("cidr block %s at least needs to contain more than 11 ips", cidr).Err()
+		return nil, 0, nil
 	}
 	ips := make([]*ufspb.IP, length-reserveLast-reserveFirst)
 	startIP := binary.BigEndian.Uint32(ipv4)
