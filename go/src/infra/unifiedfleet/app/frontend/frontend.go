@@ -46,13 +46,17 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 	logging.Debugf(ctx, "Check access for %s", rpcName)
 	// TODO: Re-org the permissions with luci-realm
 	group := []string{"mdb/chrome-fleet-software-team", "mdb/chrome-labs", "mdb/hwops-nsi"}
+	if strings.HasPrefix(rpcName, "Import") {
+		group = []string{"mdb/chrome-fleet-software-team"}
+	}
+	if strings.HasPrefix(rpcName, "List") || strings.HasPrefix(rpcName, "Get") {
+		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "machine-db-readers"}
+	}
 	switch rpcName {
 	case "CreateMachineLSE", "UpdateMachineLSE", "CreateVM", "UpdateVM":
 		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-setup-label-write-access", "machine-db-writers"}
 	case "DeleteMachineLSE", "CreateVlan", "UpdateVlan", "DeleteVlan", "DeleteVM":
 		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "chromeos-inventory-privileged-access"}
-	case "ListMachineLSEs", "GetMachineLSE", "ListVMs", "GetVM", "GetVlan", "ListVlans", "ListMachines":
-		group = []string{"mdb/chrome-labs", "mdb/chrome-fleet-software-team", "machine-db-readers"}
 	case "DeleteMachine":
 		group = append(group, "mdb/hwops-nsi", "chromeos-inventory-privileged-access")
 	case "GetMachine", "GetState":
@@ -62,9 +66,6 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 	case "/pubsub/hart":
 		//TODO(anushruth): Rename group to UFS-pubsub-push-access after removing functionality from IV2
 		group = append(group, "chromeos-inventory-pubsub-push-access")
-	}
-	if strings.HasPrefix(rpcName, "Import") {
-		group = []string{"mdb/chrome-fleet-software-team"}
 	}
 	allow, err := auth.IsMember(ctx, group...)
 	if err != nil {

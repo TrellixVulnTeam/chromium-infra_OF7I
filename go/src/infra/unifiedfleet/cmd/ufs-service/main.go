@@ -113,7 +113,7 @@ func validateUserAgent(md metadata.MD) (string, bool, error) {
 		}
 		if major < SupportedClientMajorVersionNumber {
 			return "", ok, status.Errorf(codes.FailedPrecondition,
-				fmt.Sprintf("Unsupported client version. Please update your client version to v%d.X.X or above.", SupportedClientMajorVersionNumber))
+				fmt.Sprintf("Unsupported client version %d, Please update your client version to v%d.X.X or above.", major, SupportedClientMajorVersionNumber))
 		}
 	}
 	return version[0], ok, nil
