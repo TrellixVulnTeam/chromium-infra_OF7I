@@ -15,7 +15,7 @@ import (
 	"go.chromium.org/luci/common/cli"
 
 	"infra/cmd/stable_version2/internal/cmd"
-	"infra/cmd/stable_version2/internal/cmd/validateconfig/internal/querygs"
+	"infra/cmd/stable_version2/internal/cmd/validateconfig/querygs"
 	"infra/cmd/stable_version2/internal/site"
 	"infra/cmd/stable_version2/internal/utils"
 	gitlib "infra/libs/cros/git"
