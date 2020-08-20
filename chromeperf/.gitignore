@@ -1,3 +1,7 @@
 # Ignore any .egg-info directories created if/when the chromeperf package is
 # installed in 'edit' mode in local testing.
 *.egg-info*
+
+# Ignore cache directories created when testing locally with tox.
+.eggs
+.tox
