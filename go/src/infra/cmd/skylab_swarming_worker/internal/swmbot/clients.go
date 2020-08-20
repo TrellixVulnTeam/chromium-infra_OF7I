@@ -81,7 +81,7 @@ func UFSClient(ctx context.Context, b *Info) (ufsAPI.FleetClient, error) {
 			"https://www.googleapis.com/auth/cloud-platform",
 		},
 	}
-	pc, err := admin.NewPrpcClient(ctx, b.UFSService, o)
+	pc, err := admin.NewUFSClient(ctx, b.UFSService, o)
 	if err != nil {
 		return nil, errors.Annotate(err, "create UFS client").Err()
 	}

@@ -40,6 +40,21 @@ func NewPrpcClient(ctx context.Context, url string, o auth.Options) (*prpc.Clien
 	}, nil
 }
 
+// NewUFSClient creates a prpc client for UFS.
+func NewUFSClient(ctx context.Context, url string, o auth.Options) (*prpc.Client, error) {
+	hc, err := httpClient(ctx, o)
+	if err != nil {
+		return nil, errors.Annotate(err, "create UFS admin client").Err()
+	}
+	return &prpc.Client{
+		C:    hc,
+		Host: url,
+		Options: &prpc.Options{
+			UserAgent: "skylab_swarming_worker/3.0.0",
+		},
+	}, nil
+}
+
 // httpClient returns an HTTP client with authentication set up.
 func httpClient(ctx context.Context, o auth.Options) (*http.Client, error) {
 	a := auth.NewAuthenticator(ctx, auth.SilentLogin, o)
