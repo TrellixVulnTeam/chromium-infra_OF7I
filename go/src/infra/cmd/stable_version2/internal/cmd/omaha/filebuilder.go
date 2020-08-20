@@ -14,6 +14,7 @@ import (
 
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/luci/common/logging"
+	svlib "infra/libs/cros/stableversion"
 )
 
 // 1. Determine the map from board+model to CrOS version
@@ -46,6 +47,7 @@ func FileBuilder(
 	if err != nil {
 		return nil, err
 	}
+	svlib.SortSV(stableVersions)
 	return stableVersions, nil
 }
 

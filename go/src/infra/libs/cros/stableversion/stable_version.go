@@ -68,11 +68,12 @@ func faftSVKey(f *sv.StableFaftVersion) string {
 // WriteSVToString marshals stable version information into a string.
 func WriteSVToString(s *sv.StableVersions) (string, error) {
 	all := proto.Clone(s).(*sv.StableVersions)
-	sortSV(all)
+	SortSV(all)
 	return (&jsonpb.Marshaler{Indent: "\t"}).MarshalToString(all)
 }
 
-func sortSV(s *sv.StableVersions) {
+// SortSV sorts all the individual entries in a stable version config file.
+func SortSV(s *sv.StableVersions) {
 	if s == nil {
 		return
 	}
