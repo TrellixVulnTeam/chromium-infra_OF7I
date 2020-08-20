@@ -12,3 +12,8 @@ import (
 func noPrompt() bool {
 	return strings.ToLower(os.Getenv("NO_PROMPT")) == "true"
 }
+
+// FullMode checks if full mode is enabled
+func FullMode(full bool) bool {
+	return full || (strings.ToLower(os.Getenv("FULL_MODE")) == "true")
+}

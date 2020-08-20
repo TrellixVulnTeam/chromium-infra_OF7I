@@ -83,7 +83,7 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 		return errors.Annotate(err, "Failed to get machine").Err()
 	}
 	machine.Name = ufsUtil.RemovePrefix(machine.Name)
-	if c.outputFlags.Full() {
+	if utils.FullMode(c.outputFlags.Full()) {
 		return c.printFull(ctx, ic, machine)
 	}
 	return c.print(machine)

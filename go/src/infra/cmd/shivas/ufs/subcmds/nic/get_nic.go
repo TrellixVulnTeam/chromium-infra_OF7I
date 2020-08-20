@@ -83,7 +83,7 @@ func (c *getNic) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	if c.outputFlags.Full() {
+	if utils.FullMode(c.outputFlags.Full()) {
 		return c.printFull(ctx, ic, res)
 	}
 	return c.print(res)

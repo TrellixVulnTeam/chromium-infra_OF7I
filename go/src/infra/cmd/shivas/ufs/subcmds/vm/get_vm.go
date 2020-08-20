@@ -79,7 +79,7 @@ func (c *getVM) innerRun(a subcommands.Application, args []string, env subcomman
 	}
 	vm.Name = ufsUtil.RemovePrefix(vm.Name)
 
-	if c.outputFlags.Full() {
+	if utils.FullMode(c.outputFlags.Full()) {
 		return c.printFull(ctx, ic, vm)
 	}
 	return c.print(vm)

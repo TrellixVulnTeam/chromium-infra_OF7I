@@ -77,7 +77,7 @@ func (c *getHost) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	machinelse.Name = ufsUtil.RemovePrefix(machinelse.Name)
-	if c.outputFlags.Full() {
+	if utils.FullMode(c.outputFlags.Full()) {
 		return c.printFull(ctx, ic, machinelse)
 	}
 	return c.print(machinelse)
