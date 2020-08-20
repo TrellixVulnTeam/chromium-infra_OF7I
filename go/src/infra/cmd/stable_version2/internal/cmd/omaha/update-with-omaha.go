@@ -160,7 +160,7 @@ func validateFile(ctx context.Context, a subcommands.Application, t http.RoundTr
 		return fmt.Errorf("initializing Google Storage client: %s", err)
 	}
 
-	res, err := r.ValidateConfig(newSV)
+	res, err := r.ValidateConfig(ctx, newSV)
 	if err != nil {
 		return fmt.Errorf("valdating config using Google Storage: %s", err)
 	}

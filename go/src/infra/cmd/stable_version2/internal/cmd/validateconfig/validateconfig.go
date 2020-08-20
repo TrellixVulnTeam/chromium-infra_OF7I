@@ -104,7 +104,7 @@ func (c *command) innerRun(a subcommands.Application, args []string, env subcomm
 		return fmt.Errorf("initializing Google Storage client: %s", err)
 	}
 
-	res, err := r.ValidateConfig(sv)
+	res, err := r.ValidateConfig(ctx, sv)
 	if err != nil {
 		return fmt.Errorf("valdating config using Google Storage: %s", err)
 	}

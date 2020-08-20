@@ -15,6 +15,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/common/gcloud/gs"
+	"go.chromium.org/luci/common/logging"
 
 	gslib "infra/cmd/stable_version2/internal/gs"
 
@@ -92,8 +93,9 @@ type downloader func(gsPath gs.Path) ([]byte, error)
 
 // Reader reads metadata.json files from google storage and caches the result.
 type Reader struct {
-	dld   downloader
-	cache map[string]map[string]string
+	dld downloader
+	// buildTarget > version > model > version
+	cache *map[string]map[string]map[string]string
 }
 
 // Init creates a new Google Storage Client.
@@ -131,6 +133,8 @@ func combinedKey(board string, model string) string {
 	return fmt.Sprintf("%s;%s", board, model)
 }
 
+// TODO(gregorynisbet): remove this function! It is basically a no-op at this point
+// DEPRECATED
 // lookupBestVersion takes a list of cros versions that are either (a) or (b)
 // and a model and a board and returns the most specific version present or
 // an error.
@@ -142,14 +146,11 @@ func lookupBestVersion(cfgCrosVersions map[string]string, board string, model st
 	if value, ok := cfgCrosVersions[combined]; ok {
 		return value, nil
 	}
-	if value, ok := cfgCrosVersions[board]; ok {
-		return value, nil
-	}
 	return "", fmt.Errorf("no matching CrOS versions for board %q and model %q", board, model)
 }
 
 // ValidateConfig takes a stable version protobuf and attempts to validate every entry.
-func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResult, error) {
+func (r *Reader) ValidateConfig(ctx context.Context, sv *labPlatform.StableVersions) (*ValidationResult, error) {
 	var cfgCrosVersions = make(map[string]string, len(sv.GetCros()))
 	var out ValidationResult
 	if sv == nil {
@@ -169,7 +170,7 @@ func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResu
 			out.NonLowercaseEntries = append(out.NonLowercaseEntries, model)
 			continue
 		}
-		if _, err := r.getAllModelsForBuildTarget(bt, version); err != nil {
+		if _, err := r.getAllModelsForBuildTarget(ctx, bt, version); err != nil {
 			out.MissingBoards = append(out.MissingBoards, bt)
 			continue
 		}
@@ -185,13 +186,13 @@ func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResu
 			continue
 		}
 
-		cfgCrosVersion, err := lookupBestVersion(cfgCrosVersions, bt, model)
-		if err != nil {
+		cfgCrosVersion, ok := cfgCrosVersions[fmt.Sprintf("%s;%s", bt, model)]
+		if !ok {
 			out.FailedToLookup = append(out.FailedToLookup, &BoardModel{bt, model})
 			continue
 		}
 
-		realVersion, err := r.getFirmwareVersion(bt, model, cfgCrosVersion)
+		realVersion, err := r.getFirmwareVersion(ctx, bt, model, cfgCrosVersion)
 
 		if err != nil {
 			out.FailedToLookup = append(out.FailedToLookup, &BoardModel{bt, model})
@@ -206,39 +207,46 @@ func (r *Reader) ValidateConfig(sv *labPlatform.StableVersions) (*ValidationResu
 }
 
 // allModels returns a mapping from model names to fimrware versions given a buildTaret and CrOS version.
-func (r *Reader) getAllModelsForBuildTarget(buildTarget string, version string) (map[string]string, error) {
+func (r *Reader) getAllModelsForBuildTarget(ctx context.Context, buildTarget string, version string) (map[string]string, error) {
 	if err := r.maybeDownloadFile(buildTarget, version); err != nil {
+		logging.Infof(ctx, "failed to get contents for %q %q", buildTarget, version)
 		return nil, fmt.Errorf("AllModels: %s", err)
 	}
-	if _, ok := r.cache[buildTarget]; !ok {
-		return nil, fmt.Errorf("AllModels: buildTarget MUST be present (%s)", buildTarget)
+	m, err := getAllModels(r.cache, buildTarget, version)
+	if err != nil {
+		return nil, err
 	}
-	return r.cache[buildTarget], nil
+	return m, nil
 }
 
 // getFirmwareVersion returns the firmware version for a specific model given the buildTarget and CrOS version.
-func (r *Reader) getFirmwareVersion(buildTarget string, model string, version string) (string, error) {
+func (r *Reader) getFirmwareVersion(ctx context.Context, buildTarget string, model string, version string) (string, error) {
 	if err := r.maybeDownloadFile(buildTarget, version); err != nil {
+		logging.Infof(ctx, "failed to get contents for %q %q %q", buildTarget, version, model)
 		return "", fmt.Errorf("FirmwareVersion: %s", err)
 	}
-	if _, ok := r.cache[buildTarget]; !ok {
+	if r.cache == nil {
+		return "", fmt.Errorf("getFirmwareVersion: cache cannot be empty")
+	}
+	if _, ok := (*r.cache)[buildTarget]; !ok {
 		// If control makes it here, then maybeDownloadFile should have returned
 		// a non-nil error.
-		return "", fmt.Errorf("getFirmwareVersion: buildTarget MUST be present (%s)", buildTarget)
+		panic(fmt.Sprintf("getFirmwareVersion: buildTarget MUST be present (%s)", buildTarget))
 	}
-	version, ok := r.cache[buildTarget][model]
-	if !ok {
+	fwversion := get(r.cache, buildTarget, version, model)
+	if fwversion == "" {
 		return "", fmt.Errorf("no info for model (%s)", model)
 	}
-	return version, nil
+	return fwversion, nil
 }
 
 // maybeDownloadFile fetches a metadata.json corresponding to a buildTarget and version if it doesn't already exist in the cache.
 func (r *Reader) maybeDownloadFile(buildTarget string, crosVersion string) error {
 	if r.cache == nil {
-		r.cache = make(map[string]map[string]string)
+		v := make(map[string]map[string]map[string]string)
+		r.cache = &v
 	}
-	if _, ok := r.cache[buildTarget]; ok {
+	if m, _ := getAllModels(r.cache, buildTarget, crosVersion); m != nil {
 		return nil
 	}
 	// TODO(gregorynisbet): extend gslib with function to get path
@@ -254,13 +262,10 @@ func (r *Reader) maybeDownloadFile(buildTarget string, crosVersion string) error
 	// TODO(gregorynisbet): Consider throwing an error or panicking if we encounter
 	// a duplicate when populating the cache.
 	for _, fw := range fws.FirmwareVersions {
-		buildTarget := fw.GetKey().GetBuildTarget().GetName()
-		model := fw.GetKey().GetModelId().GetValue()
-		version := fw.GetVersion()
-		if _, ok := r.cache[buildTarget]; !ok {
-			r.cache[buildTarget] = make(map[string]string)
-		}
-		r.cache[buildTarget][model] = version
+		inferredBuildTarget := fw.GetKey().GetBuildTarget().GetName()
+		inferredModel := fw.GetKey().GetModelId().GetValue()
+		fwversion := fw.GetVersion()
+		set(r.cache, inferredBuildTarget, crosVersion, inferredModel, fwversion)
 	}
 	return nil
 }
@@ -275,4 +280,51 @@ func isLowercase(s string) bool {
 		}
 	}
 	return true
+}
+
+func set(m *map[string]map[string]map[string]string, board string, version string, model string, fwversion string) {
+	if m == nil {
+		v := make(map[string]map[string]map[string]string)
+		m = &v
+	}
+	if (*m)[board] == nil {
+		v := make(map[string]map[string]string)
+		(*m)[board] = v
+	}
+	if (*m)[board][version] == nil {
+		v := make(map[string]string)
+		(*m)[board][version] = v
+	}
+
+	(*m)[board][version][model] = fwversion
+}
+
+func get(m *map[string]map[string]map[string]string, board string, version string, model string) string {
+	if m == nil {
+		v := make(map[string]map[string]map[string]string)
+		m = &v
+	}
+	if (*m)[board] == nil {
+		v := make(map[string]map[string]string)
+		(*m)[board] = v
+	}
+	if (*m)[board][version] == nil {
+		v := make(map[string]string)
+		(*m)[board][version] = v
+	}
+
+	return (*m)[board][version][model]
+}
+
+func getAllModels(m *map[string]map[string]map[string]string, board string, version string) (map[string]string, error) {
+	if m == nil {
+		return nil, fmt.Errorf("map is nil")
+	}
+	if (*m)[board] == nil {
+		return nil, fmt.Errorf("board not present")
+	}
+	if (*m)[board][version] == nil {
+		return nil, fmt.Errorf("board+version submap is nil")
+	}
+	return (*m)[board][version], nil
 }
