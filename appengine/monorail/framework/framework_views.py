@@ -143,23 +143,28 @@ def StuffUserView(user_id, email, obscure_email):
   return UserView(user)
 
 
-def RevealAllEmailsToMembers(auth, project, users_by_id):
-  """Allow project members to see unobscured email addresses in that project.
+def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id):
+  # type: (MonorailConnection, Services, AuthData, Collection[user_pb2.User] ->
+  #     None)
+  """Reveal emails based on the authenticated user.
 
-  Non project member addresses will be obscured.
-  Site admins can see all email addresses unobscured.
+  The actual behavior can be determined by looking into
+  framework_bizobj.ShouldRevealEmail. Look at https://crbug.com/monorail/8030
+  for context.
+  This method should be deleted when endpoints and ezt pages are deprecated.
 
   Args:
-    auth: AuthInfo object for the signed in user.
-    project: Project PB for the current project.
-    users_by_id: dictionary of UserView's that will be displayed.
+    cnxn: MonorailConnection to the database.
+    services: Services object for connections to backend services.
+    auth: AuthData object that identifies the logged in user.
+    users_by_id: dictionary of UserView's that might be displayed.
 
   Returns:
     Nothing, but the UserViews in users_by_id may be modified to
     publish email address.
   """
   for user_view in users_by_id.values():
-    if framework_bizobj.ShouldRevealEmail(auth, project, user_view.email):
+    if framework_bizobj.ShouldRevealEmail(cnxn, services, auth, user_view):
       user_view.RevealEmail()
 
 

@@ -257,11 +257,10 @@ class Converter(object):
     #     -> Sequence[api_proto.issue_objects_pb2.Comment]
     """Convert protorpc IssueComments from issue into protoc Comments."""
     issue = self.services.issue.GetIssue(self.cnxn, issue_id)
-    project = self.services.project.GetProject(self.cnxn, issue.project_id)
     users_by_id = self.services.user.GetUsersByIDs(
         self.cnxn, tbo.UsersInvolvedInCommentList(comments))
     user_display_names = framework_bizobj.CreateUserDisplayNames(
-        self.user_auth, users_by_id.values(), project)
+        self.cnxn, self.services, self.user_auth, users_by_id.values())
     comment_names_dict = rnc.CreateCommentNames(
         issue.local_id, issue.project_name,
         [comment.sequence for comment in comments])
@@ -932,32 +931,27 @@ class Converter(object):
 
   # Users
 
-  def ConvertUser(self, user, project):
-    # type: (protorpc.User, protorpc.Project) -> api_proto.user_objects_pb2.User
+  def ConvertUser(self, user):
+    # type: (protorpc.User) -> api_proto.user_objects_pb2.User
     """Convert a protorpc User into a protoc User.
 
     Args:
       user: protorpc User object.
-      project: currently viewed project.
 
     Returns:
       The protoc User object.
     """
-    return self.ConvertUsers([user.user_id], project)[user.user_id]
+    return self.ConvertUsers([user.user_id])[user.user_id]
 
 
   # TODO(crbug/monorail/7238): Make this take in a full User object and
   # return a Sequence, rather than a map, after hotlist users are converted.
-  # TODO(crbug/monorail/7238): take a list of projects when
-  # CreateUserDisplayNames() can take in a list of projects.
-  def ConvertUsers(self, user_ids, project):
-    # type: (Sequence[int], protorpc.Project) ->
-    #   Map(int, api_proto.user_objects_pb2.User)
+  def ConvertUsers(self, user_ids):
+    # type: (Sequence[int]) -> Map(int, api_proto.user_objects_pb2.User)
     """Convert list of protorpc Users into list of protoc Users.
 
     Args:
       user_ids: List of User IDs.
-      project: currently viewed project.
 
     Returns:
       Dict of User IDs to User protos for given user_ids that could be found.
@@ -967,7 +961,7 @@ class Converter(object):
     # Get display names
     users_by_id = self.services.user.GetUsersByIDs(self.cnxn, user_ids)
     display_names_by_id = framework_bizobj.CreateUserDisplayNames(
-        self.user_auth, users_by_id.values(), project)
+        self.cnxn, self.services, self.user_auth, users_by_id.values())
 
     for user_id, user in users_by_id.items():
       name = rnc.ConvertUserNames([user_id]).get(user_id)

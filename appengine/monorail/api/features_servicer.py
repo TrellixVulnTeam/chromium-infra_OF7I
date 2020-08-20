@@ -50,7 +50,8 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
-      framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
+      framework_views.RevealAllEmailsToMembers(
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     converted_hotlists = [
         converters.ConvertHotlist(hotlist, users_by_id)
@@ -89,7 +90,8 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       users_involved = features_bizobj.UsersInvolvedInHotlists(project_hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
-      framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
+      framework_views.RevealAllEmailsToMembers(
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     converted_hotlists = [
         converters.ConvertHotlist(hotlist, users_by_id)
@@ -112,7 +114,8 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
-      framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
+      framework_views.RevealAllEmailsToMembers(
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     converted_hotlists = [
         converters.ConvertHotlist(hotlist, users_by_id)
@@ -134,7 +137,8 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       users_involved = features_bizobj.UsersInvolvedInHotlists(hotlists)
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
-      framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
+      framework_views.RevealAllEmailsToMembers(
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     converted_hotlists = [
         converters.ConvertHotlist(hotlist, users_by_id)
@@ -189,7 +193,8 @@ class FeaturesServicer(monorail_servicer.MonorailServicer):
       users_involved = features_bizobj.UsersInvolvedInHotlists([hotlist])
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved)
-      framework_views.RevealAllEmailsToMembers(mc.auth, None, users_by_id)
+      framework_views.RevealAllEmailsToMembers(
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     converted_hotlist = converters.ConvertHotlist(hotlist, users_by_id)
     return features_pb2.GetHotlistResponse(hotlist=converted_hotlist)

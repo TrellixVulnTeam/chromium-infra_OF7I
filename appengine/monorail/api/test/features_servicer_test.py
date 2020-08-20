@@ -133,7 +133,7 @@ class FeaturesServicerTest(unittest.TestCase):
     user_ref = common_pb2.UserRef(display_name='owner@example.com')
     request = features_pb2.ListHotlistsByUserRequest(user=user_ref)
 
-    # We're authenticated as 'foo@example.com'
+    # We're not authenticated
     mc = monorailcontext.MonorailContext(self.services, cnxn=self.cnxn)
 
     response = self.CallWrapped(self.features_svcr.ListHotlistsByUser, mc,
@@ -166,7 +166,8 @@ class FeaturesServicerTest(unittest.TestCase):
     self.assertEqual(1, len(response.hotlists))
     hotlist = response.hotlists[0]
     self.assertEqual(111, hotlist.owner_ref.user_id)
-    self.assertEqual('ow...@example.com', hotlist.owner_ref.display_name)
+    # User1 and user3 share self.project.
+    self.assertEqual('owner@example.com', hotlist.owner_ref.display_name)
     self.assertEqual('Fake-Hotlist', hotlist.name)
     self.assertEqual('Summary', hotlist.summary)
     self.assertEqual('Description', hotlist.description)
@@ -191,7 +192,8 @@ class FeaturesServicerTest(unittest.TestCase):
     self.assertEqual(1, len(response.hotlists))
     hotlist = response.hotlists[0]
     self.assertEqual(111, hotlist.owner_ref.user_id)
-    self.assertEqual('ow...@example.com', hotlist.owner_ref.display_name)
+    # User1 and user3 share self.project.
+    self.assertEqual('owner@example.com', hotlist.owner_ref.display_name)
     self.assertEqual('Fake-Hotlist', hotlist.name)
     self.assertEqual('Summary', hotlist.summary)
     self.assertEqual('Description', hotlist.description)
@@ -499,11 +501,11 @@ class FeaturesServicerTest(unittest.TestCase):
     expected_hotlists = [
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=self.user2.user_id,
-                display_name=testing_helpers.ObscuredEmail(self.user2.email)),
-            editor_refs=[common_pb2.UserRef(
-                user_id=self.user1.user_id,
-                display_name=self.user1.email)],
+                user_id=self.user2.user_id, display_name=self.user2.email),
+            editor_refs=[
+                common_pb2.UserRef(
+                    user_id=self.user1.user_id, display_name=self.user1.email)
+            ],
             name='Fake-Hotlist',
             summary='Summary',
             description='Description',
@@ -511,16 +513,17 @@ class FeaturesServicerTest(unittest.TestCase):
             default_col_spec='chicken'),
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=self.user1.user_id,
-                display_name=self.user1.email),
-            editor_refs=[common_pb2.UserRef(
-                user_id=self.user2.user_id,
-                display_name=testing_helpers.ObscuredEmail(self.user2.email))],
+                user_id=self.user1.user_id, display_name=self.user1.email),
+            editor_refs=[
+                common_pb2.UserRef(
+                    user_id=self.user2.user_id, display_name=self.user2.email)
+            ],
             name='Fake-Hotlist-2',
             summary='Summary',
             description='Description',
             is_private=False,
-            default_col_spec='honk')]
+            default_col_spec='honk')
+    ]
 
     # We don't have permission to see the last issue, because it is marked as
     # private and we're not owners or editors.
@@ -562,11 +565,11 @@ class FeaturesServicerTest(unittest.TestCase):
     expected_hotlists = [
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=self.user2.user_id,
-                display_name=testing_helpers.ObscuredEmail(self.user2.email)),
-            editor_refs=[common_pb2.UserRef(
-                user_id=self.user1.user_id,
-                display_name=self.user1.email)],
+                user_id=self.user2.user_id, display_name=self.user2.email),
+            editor_refs=[
+                common_pb2.UserRef(
+                    user_id=self.user1.user_id, display_name=self.user1.email)
+            ],
             name='Fake-Hotlist',
             summary='Summary',
             description='Description',
@@ -574,21 +577,18 @@ class FeaturesServicerTest(unittest.TestCase):
             default_col_spec='cow chicken'),
         features_objects_pb2.Hotlist(
             owner_ref=common_pb2.UserRef(
-                user_id=self.user1.user_id,
-                display_name=self.user1.email),
+                user_id=self.user1.user_id, display_name=self.user1.email),
             editor_refs=[
                 common_pb2.UserRef(
-                    user_id=self.user2.user_id,
-                    display_name=testing_helpers.ObscuredEmail(
-                        self.user2.email)),
+                    user_id=self.user2.user_id, display_name=self.user2.email),
                 common_pb2.UserRef(
-                    user_id=self.user3.user_id,
-                    display_name=testing_helpers.ObscuredEmail(
-                        self.user3.email))],
+                    user_id=self.user3.user_id, display_name=self.user3.email)
+            ],
             name='Fake-Hotlist-2',
             summary='Summary',
             description='Description',
-            is_private=False)]
+            is_private=False)
+    ]
 
     # We don't have permission to see the last issue, because it is marked as
     # private and we're not owners or editors.
