@@ -11,16 +11,7 @@ dispatch:
   - url: "*/findit/internal/*"
     module: findit-backend
 
-  - url: "*/disabled-tests/detection/cron/*"
-    module: disabled-test-backend
-
-  - url: "*/disabled-tests/detection/task/*"
-    module: disabled-test-backend
-
-  - url: "*/disabled-tests/export/cron/*"
-    module: disabled-test-backend
-
-  - url: "*/disabled-tests/export/task/*"
+  - url: "*/disabled-tests/*"
     module: disabled-test-backend
 
   - url: "*/flake/detection/cron/*"
