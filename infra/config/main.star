@@ -19,7 +19,6 @@ Includes CI configs for the following subprojects:
   * https://chromium.googlesource.com/chromium/tools/build
   * https://chromium.googlesource.com/chromium/tools/depot_tools
   * https://chromium.googlesource.com/infra/infra
-  * https://chromium.googlesource.com/infra/luci/gae
   * https://chromium.googlesource.com/infra/luci/luci-go
   * https://chromium.googlesource.com/infra/luci/luci-py
   * https://chromium.googlesource.com/infra/luci/recipes-py
@@ -154,7 +153,6 @@ exec("//subprojects/gatekeeper.star")
 exec("//subprojects/gsubtreed.star")
 exec("//subprojects/infra.star")
 exec("//subprojects/lkgr.star")
-exec("//subprojects/luci-gae.star")
 exec("//subprojects/luci-go.star")
 exec("//subprojects/luci-py.star")
 exec("//subprojects/recipe_engine.star")
