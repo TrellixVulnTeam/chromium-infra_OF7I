@@ -45,6 +45,12 @@ func main() {
 // [2] Non-INFRA_FAILUREs are suppressed (before they get to this top-level
 //     function)
 func luciEXEMain(ctx context.Context, input *bbpb.Build, userArgs []string, send exe.BuildSender) error {
+	// crbug.com/1112514: The input Build Status is not currently specified in
+	// the luciexe protocol. bbagent sets it, but recipe_engine's sub_build()
+	// doesn't. Play safe.
+	input.Status = bbpb.Status_STARTED
+	send()
+
 	ca, err := parseArgs(userArgs)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
