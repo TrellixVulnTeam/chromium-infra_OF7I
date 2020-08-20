@@ -127,7 +127,7 @@ func (c *addLabstationRun) innerRun(a subcommands.Application, args []string, en
 	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UFSService,
-		Options: site.DefaultPRPCOptions,
+		Options: site.UFSPRPCOptions,
 	})
 	fmt.Fprintf(a.GetOut(), "####### TESTING with ufs service: %s #######\n", e.UFSService)
 	if err := c.deployToUFS(ctx, ufsClient, specs); err != nil {

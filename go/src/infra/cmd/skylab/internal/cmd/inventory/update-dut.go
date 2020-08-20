@@ -127,7 +127,7 @@ func (c *updateDutRun) innerRun(a subcommands.Application, args []string, env su
 	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UFSService,
-		Options: site.DefaultPRPCOptions,
+		Options: site.UFSPRPCOptions,
 	})
 	err = c.redeployToUFS(ctx, ufsClient, newSpecs)
 	if c.commonFlags.Verbose() {

@@ -134,6 +134,11 @@ var DefaultPRPCOptions = &prpc.Options{
 	UserAgent: fmt.Sprintf("skylab/%s", VersionNumber),
 }
 
+// UFSPRPCOptions is used for UFS PRPC clients.
+var UFSPRPCOptions = &prpc.Options{
+	UserAgent: "skylab/3.0.0",
+}
+
 // SecretsDir returns an absolute path to a directory (in $HOME) to keep secret
 // files in (e.g. OAuth refresh tokens) or an empty string if $HOME can't be
 // determined (happens in some degenerate cases, it just disables auth token

@@ -92,7 +92,7 @@ func (c *removeDutsRun) innerRun(a subcommands.Application, args []string, env s
 	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UFSService,
-		Options: site.DefaultPRPCOptions,
+		Options: site.UFSPRPCOptions,
 	})
 	err = c.deleteFromUFS(ctx, ufsClient, hostnames)
 	if c.commonFlags.Verbose() {

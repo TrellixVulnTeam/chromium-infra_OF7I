@@ -74,7 +74,7 @@ func (c *printBotInfoRun) innerRun(a subcommands.Application, args []string, env
 	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    siteEnv.UFSService,
-		Options: site.DefaultPRPCOptions,
+		Options: site.UFSPRPCOptions,
 	})
 	dutStateInfo := dutstate.Read(ctx, ufsClient, d.GetCommon().GetHostname())
 
