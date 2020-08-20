@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/memcache"
 
 	"infra/appengine/arquebus/app/backend/model"
 	"infra/appengine/arquebus/app/config"

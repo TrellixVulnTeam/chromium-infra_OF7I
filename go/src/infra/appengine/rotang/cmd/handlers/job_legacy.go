@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/memcache"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/appengine/log"
 )

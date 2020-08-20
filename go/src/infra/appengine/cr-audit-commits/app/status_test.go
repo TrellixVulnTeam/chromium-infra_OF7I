@@ -16,8 +16,8 @@ import (
 	"context"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
-	ds "go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/gae/impl/memory"
+	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
 

@@ -11,9 +11,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock/testclock"
+	"go.chromium.org/luci/gae/service/datastore"
 )
 
 type getServiceTest struct {

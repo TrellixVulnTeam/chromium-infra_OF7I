@@ -9,10 +9,10 @@ import (
 
 	testhelper "infra/appengine/sheriff-o-matic/som/client/test"
 
-	"go.chromium.org/gae/impl/dummy"
-	"go.chromium.org/gae/service/info"
-	"go.chromium.org/gae/service/urlfetch"
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/gae/impl/dummy"
+	"go.chromium.org/luci/gae/service/info"
+	"go.chromium.org/luci/gae/service/urlfetch"
 
 	. "github.com/smartystreets/goconvey/convey"
 )

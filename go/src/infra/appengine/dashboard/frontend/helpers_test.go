@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/gae/service/datastore"
 	"golang.org/x/net/context"
 
 	dashpb "infra/appengine/dashboard/api/dashboard"

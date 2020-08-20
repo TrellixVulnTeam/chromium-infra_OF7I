@@ -10,8 +10,8 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
-	tq "go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/clock"
+	tq "go.chromium.org/luci/gae/service/taskqueue"
 
 	admin "infra/tricium/api/admin/v1"
 	tricium "infra/tricium/api/v1"

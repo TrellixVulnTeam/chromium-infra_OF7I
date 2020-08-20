@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/auth/identity"
+	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"

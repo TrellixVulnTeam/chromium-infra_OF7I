@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	luciconfig "go.chromium.org/luci/config"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/machine-db/api/common/v1"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 

@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	tq "go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	tq "go.chromium.org/luci/gae/service/taskqueue"
 	"go.chromium.org/luci/grpc/grpcutil"
 
 	admin "infra/tricium/api/admin/v1"

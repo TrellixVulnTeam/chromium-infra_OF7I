@@ -14,9 +14,9 @@ import (
 	"golang.org/x/net/context"
 
 	"cloud.google.com/go/storage"
-	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/memcache"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
 )

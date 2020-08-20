@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/gae/service/datastore"
 )
 
 type logEntry struct {

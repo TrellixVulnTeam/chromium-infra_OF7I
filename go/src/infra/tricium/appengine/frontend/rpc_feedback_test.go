@@ -11,8 +11,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	. "github.com/smartystreets/goconvey/convey"
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock/testclock"
+	ds "go.chromium.org/luci/gae/service/datastore"
 
 	"infra/tricium/api/v1"
 	"infra/tricium/appengine/common/track"

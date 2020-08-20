@@ -5,7 +5,7 @@ import (
 	"infra/appengine/rotang"
 	"net/http"
 
-	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

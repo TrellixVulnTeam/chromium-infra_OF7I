@@ -12,8 +12,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 	. "github.com/smartystreets/goconvey/convey"
 
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock/testclock"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/router"

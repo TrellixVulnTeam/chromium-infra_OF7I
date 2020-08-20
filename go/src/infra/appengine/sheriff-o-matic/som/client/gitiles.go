@@ -9,11 +9,11 @@ import (
 
 	"golang.org/x/net/context"
 
-	"go.chromium.org/gae/service/memcache"
-	"go.chromium.org/gae/service/urlfetch"
 	"go.chromium.org/luci/appengine/gaeauth/client"
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/memcache"
+	"go.chromium.org/luci/gae/service/urlfetch"
 )
 
 var (

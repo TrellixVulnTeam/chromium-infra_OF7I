@@ -19,14 +19,14 @@ package rotationproxy
 import (
 	"github.com/golang/protobuf/proto"
 
-	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/datastore"
 )
 
 var _ datastore.PropertyConverter = (*OncallPerson)(nil)
 
 // ToProperty implements datastore.PropertyConverter. It causes an embedded
 // 'OncallPerson' to serialize to an unindexed '[]byte' when used with the
-// "go.chromium.org/gae" library.
+// "go.chromium.org/luci/gae" library.
 func (p *OncallPerson) ToProperty() (prop datastore.Property, err error) {
 	data, err := proto.Marshal(p)
 	if err == nil {
@@ -36,7 +36,7 @@ func (p *OncallPerson) ToProperty() (prop datastore.Property, err error) {
 }
 
 // FromProperty implements datastore.PropertyConverter. It parses a '[]byte'
-// into an embedded 'OncallPerson' when used with the "go.chromium.org/gae" library.
+// into an embedded 'OncallPerson' when used with the "go.chromium.org/luci/gae" library.
 func (p *OncallPerson) FromProperty(prop datastore.Property) error {
 	data, err := prop.Project(datastore.PTBytes)
 	if err != nil {
@@ -49,7 +49,7 @@ var _ datastore.PropertyConverter = (*Rotation)(nil)
 
 // ToProperty implements datastore.PropertyConverter. It causes an embedded
 // 'Rotation' to serialize to an unindexed '[]byte' when used with the
-// "go.chromium.org/gae" library.
+// "go.chromium.org/luci/gae" library.
 func (p *Rotation) ToProperty() (prop datastore.Property, err error) {
 	data, err := proto.Marshal(p)
 	if err == nil {
@@ -59,7 +59,7 @@ func (p *Rotation) ToProperty() (prop datastore.Property, err error) {
 }
 
 // FromProperty implements datastore.PropertyConverter. It parses a '[]byte'
-// into an embedded 'Rotation' when used with the "go.chromium.org/gae" library.
+// into an embedded 'Rotation' when used with the "go.chromium.org/luci/gae" library.
 func (p *Rotation) FromProperty(prop datastore.Property) error {
 	data, err := prop.Project(datastore.PTBytes)
 	if err != nil {
@@ -72,7 +72,7 @@ var _ datastore.PropertyConverter = (*Shift)(nil)
 
 // ToProperty implements datastore.PropertyConverter. It causes an embedded
 // 'Shift' to serialize to an unindexed '[]byte' when used with the
-// "go.chromium.org/gae" library.
+// "go.chromium.org/luci/gae" library.
 func (p *Shift) ToProperty() (prop datastore.Property, err error) {
 	data, err := proto.Marshal(p)
 	if err == nil {
@@ -82,7 +82,7 @@ func (p *Shift) ToProperty() (prop datastore.Property, err error) {
 }
 
 // FromProperty implements datastore.PropertyConverter. It parses a '[]byte'
-// into an embedded 'Shift' when used with the "go.chromium.org/gae" library.
+// into an embedded 'Shift' when used with the "go.chromium.org/luci/gae" library.
 func (p *Shift) FromProperty(prop datastore.Property) error {
 	data, err := prop.Project(datastore.PTBytes)
 	if err != nil {

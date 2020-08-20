@@ -9,9 +9,9 @@ import (
 
 	"context"
 
-	"go.chromium.org/gae/service/mail"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
+	"go.chromium.org/luci/gae/service/mail"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
 )

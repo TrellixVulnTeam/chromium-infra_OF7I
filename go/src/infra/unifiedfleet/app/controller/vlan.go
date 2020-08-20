@@ -8,9 +8,9 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 	crimsonconfig "go.chromium.org/luci/machine-db/api/config/v1"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"

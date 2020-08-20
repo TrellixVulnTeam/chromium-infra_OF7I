@@ -112,14 +112,13 @@ LAYOUT = Layout(
     vendor_paths=[WORKSPACE],
     go_paths=[],
     go_deps_paths=[os.path.join(WORKSPACE, _p) for _p in (
-        'src/go.chromium.org/gae',
         'src/go.chromium.org/luci',
     )],
     go_install_tools=[
         # Note: please add only tools that really should be in PATH in default
         # dev environment.
         'github.com/golang/mock/mockgen',
-        'go.chromium.org/gae/tools/proto-gae',
+        'go.chromium.org/luci/gae/tools/proto-gae',
         'go.chromium.org/luci/grpc/cmd/...',
         'go.chromium.org/luci/luci_notify/cmd/...',
         'go.chromium.org/luci/tools/cmd/...',

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	ds "go.chromium.org/gae/service/datastore"
+	ds "go.chromium.org/luci/gae/service/datastore"
 )
 
 // AuditStatus is the enum for RelevantCommit.Status.

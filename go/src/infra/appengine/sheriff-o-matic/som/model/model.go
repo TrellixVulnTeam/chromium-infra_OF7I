@@ -21,11 +21,11 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/appengine"
 
-	"go.chromium.org/gae/service/datastore"
-	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/auth"
 	"golang.org/x/net/context"
 )

@@ -10,9 +10,9 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
-	ds "go.chromium.org/gae/service/datastore"
-	tq "go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/clock"
+	ds "go.chromium.org/luci/gae/service/datastore"
+	tq "go.chromium.org/luci/gae/service/taskqueue"
 	"google.golang.org/api/pubsub/v1"
 
 	admin "infra/tricium/api/admin/v1"

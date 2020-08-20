@@ -20,8 +20,8 @@ import (
 	"infra/appengine/crosskylabadmin/api/fleet/v1"
 
 	"github.com/google/uuid"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/gae/service/datastore"
 )
 
 // Status stores status of in-flight or completed deployment attempts.

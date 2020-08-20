@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/sync/parallel"
+	"go.chromium.org/luci/gae/service/datastore"
 	"golang.org/x/net/context"
 )
 

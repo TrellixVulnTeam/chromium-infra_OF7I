@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/gae/service/taskqueue"
 )
 
 func TestSuccessfulPushDuts(t *testing.T) {

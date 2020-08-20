@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"go.chromium.org/gae/service/memcache"
+	"go.chromium.org/luci/gae/service/memcache"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
 )

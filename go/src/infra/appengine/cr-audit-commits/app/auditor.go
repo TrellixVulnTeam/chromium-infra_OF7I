@@ -15,11 +15,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/ptypes"
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/cr-audit-commits/app/config"

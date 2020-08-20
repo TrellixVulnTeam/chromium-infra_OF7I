@@ -13,10 +13,10 @@ import (
 	"time"
 
 	ptypes "github.com/golang/protobuf/ptypes"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -70,7 +70,7 @@ func (rps *RotationProxyServer) BatchGetRotations(ctx context.Context, request *
 		return datastore.Get(ctx, rotations)
 	}, nil)
 	if err != nil {
-		// err should be MultiError, according to https://godoc.org/go.chromium.org/gae/service/datastore#Get
+		// err should be MultiError, according to https://godoc.org/go.chromium.org/luci/gae/service/datastore#Get
 		if firstErr := err.(errors.MultiError).First(); firstErr == datastore.ErrNoSuchEntity {
 			return nil, status.Errorf(codes.NotFound, "rotation not found: %v", firstErr)
 		}

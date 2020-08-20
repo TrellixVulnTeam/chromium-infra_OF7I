@@ -14,9 +14,9 @@ import (
 
 	"github.com/julienschmidt/httprouter"
 
-	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/gcloud/gs"
+	"go.chromium.org/luci/gae/service/memcache"
 	"go.chromium.org/luci/server/router"
 
 	. "github.com/smartystreets/goconvey/convey"

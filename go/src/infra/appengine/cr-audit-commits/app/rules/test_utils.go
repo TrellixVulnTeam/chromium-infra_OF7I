@@ -16,8 +16,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/api/gerrit"
+	ds "go.chromium.org/luci/gae/service/datastore"
 
 	mr "infra/monorail"
 )

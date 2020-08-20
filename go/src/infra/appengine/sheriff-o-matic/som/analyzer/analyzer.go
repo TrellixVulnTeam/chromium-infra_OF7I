@@ -12,7 +12,7 @@ import (
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/monitoring/messages"
 
-	"go.chromium.org/gae/service/info"
+	"go.chromium.org/luci/gae/service/info"
 )
 
 const (

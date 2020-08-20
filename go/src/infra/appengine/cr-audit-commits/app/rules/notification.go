@@ -12,8 +12,8 @@ import (
 
 	"context"
 
-	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/info"
 
 	"infra/monorail"
 )

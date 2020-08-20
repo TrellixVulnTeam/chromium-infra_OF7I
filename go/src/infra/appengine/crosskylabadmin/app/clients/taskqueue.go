@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/taskqueue"
 	"golang.org/x/net/context"
 )
 

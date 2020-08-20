@@ -5,7 +5,7 @@
 package main
 
 import (
-	"go.chromium.org/gae/service/info"
+	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
 )

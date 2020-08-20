@@ -26,10 +26,10 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 
-	"go.chromium.org/gae/service/info"
-	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/sync/parallel"
+	"go.chromium.org/luci/gae/service/info"
+	"go.chromium.org/luci/gae/service/memcache"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

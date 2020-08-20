@@ -11,9 +11,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes/struct"
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/impl/memory"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/logging/memlogger"
+	"go.chromium.org/luci/gae/impl/memory"
 
 	admin "infra/tricium/api/admin/v1"
 	"infra/tricium/api/v1"

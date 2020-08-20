@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"go.chromium.org/gae/impl/memory"
-	ds "go.chromium.org/gae/service/datastore"
-	tq "go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/clock/testclock"
 	"go.chromium.org/luci/common/logging/memlogger"
+	"go.chromium.org/luci/gae/impl/memory"
+	ds "go.chromium.org/luci/gae/service/datastore"
+	tq "go.chromium.org/luci/gae/service/taskqueue"
 
 	"infra/tricium/appengine/common"
 )

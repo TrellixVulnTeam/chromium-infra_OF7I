@@ -18,9 +18,9 @@ import (
 	"infra/appengine/sheriff-o-matic/som/model/gen"
 	"infra/monitoring/messages"
 
-	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/router"
 
 	"cloud.google.com/go/bigquery"

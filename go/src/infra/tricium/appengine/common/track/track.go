@@ -55,8 +55,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	ds "go.chromium.org/luci/gae/service/datastore"
 
 	tricium "infra/tricium/api/v1"
 )

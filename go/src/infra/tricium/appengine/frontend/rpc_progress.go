@@ -8,9 +8,9 @@ import (
 	"context"
 	"strconv"
 
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/grpc/grpcutil"
 
 	tricium "infra/tricium/api/v1"

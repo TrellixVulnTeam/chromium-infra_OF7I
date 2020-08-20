@@ -11,8 +11,8 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	. "github.com/smartystreets/goconvey/convey"
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/data/stringset"
+	ds "go.chromium.org/luci/gae/service/datastore"
 
 	"infra/qscheduler/qslib/tutils"
 	admin "infra/tricium/api/admin/v1"

@@ -19,14 +19,14 @@ package tricium
 import (
 	"github.com/golang/protobuf/proto"
 
-	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/datastore"
 )
 
 var _ datastore.PropertyConverter = (*Acl)(nil)
 
 // ToProperty implements datastore.PropertyConverter. It causes an embedded
 // 'Acl' to serialize to an unindexed '[]byte' when used with the
-// "go.chromium.org/gae" library.
+// "go.chromium.org/luci/gae" library.
 func (p *Acl) ToProperty() (prop datastore.Property, err error) {
 	data, err := proto.Marshal(p)
 	if err == nil {
@@ -36,7 +36,7 @@ func (p *Acl) ToProperty() (prop datastore.Property, err error) {
 }
 
 // FromProperty implements datastore.PropertyConverter. It parses a '[]byte'
-// into an embedded 'Acl' when used with the "go.chromium.org/gae" library.
+// into an embedded 'Acl' when used with the "go.chromium.org/luci/gae" library.
 func (p *Acl) FromProperty(prop datastore.Property) error {
 	data, err := prop.Project(datastore.PTBytes)
 	if err != nil {
@@ -49,7 +49,7 @@ var _ datastore.PropertyConverter = (*Data_File)(nil)
 
 // ToProperty implements datastore.PropertyConverter. It causes an embedded
 // 'Data_File' to serialize to an unindexed '[]byte' when used with the
-// "go.chromium.org/gae" library.
+// "go.chromium.org/luci/gae" library.
 func (p *Data_File) ToProperty() (prop datastore.Property, err error) {
 	data, err := proto.Marshal(p)
 	if err == nil {
@@ -59,7 +59,7 @@ func (p *Data_File) ToProperty() (prop datastore.Property, err error) {
 }
 
 // FromProperty implements datastore.PropertyConverter. It parses a '[]byte'
-// into an embedded 'Data_File' when used with the "go.chromium.org/gae" library.
+// into an embedded 'Data_File' when used with the "go.chromium.org/luci/gae" library.
 func (p *Data_File) FromProperty(prop datastore.Property) error {
 	data, err := prop.Project(datastore.PTBytes)
 	if err != nil {
@@ -72,7 +72,7 @@ var _ datastore.PropertyConverter = (*ProjectConfig)(nil)
 
 // ToProperty implements datastore.PropertyConverter. It causes an embedded
 // 'ProjectConfig' to serialize to an unindexed '[]byte' when used with the
-// "go.chromium.org/gae" library.
+// "go.chromium.org/luci/gae" library.
 func (p *ProjectConfig) ToProperty() (prop datastore.Property, err error) {
 	data, err := proto.Marshal(p)
 	if err == nil {
@@ -82,7 +82,7 @@ func (p *ProjectConfig) ToProperty() (prop datastore.Property, err error) {
 }
 
 // FromProperty implements datastore.PropertyConverter. It parses a '[]byte'
-// into an embedded 'ProjectConfig' when used with the "go.chromium.org/gae" library.
+// into an embedded 'ProjectConfig' when used with the "go.chromium.org/luci/gae" library.
 func (p *ProjectConfig) FromProperty(prop datastore.Property) error {
 	data, err := prop.Project(datastore.PTBytes)
 	if err != nil {
@@ -95,7 +95,7 @@ var _ datastore.PropertyConverter = (*ServiceConfig)(nil)
 
 // ToProperty implements datastore.PropertyConverter. It causes an embedded
 // 'ServiceConfig' to serialize to an unindexed '[]byte' when used with the
-// "go.chromium.org/gae" library.
+// "go.chromium.org/luci/gae" library.
 func (p *ServiceConfig) ToProperty() (prop datastore.Property, err error) {
 	data, err := proto.Marshal(p)
 	if err == nil {
@@ -105,7 +105,7 @@ func (p *ServiceConfig) ToProperty() (prop datastore.Property, err error) {
 }
 
 // FromProperty implements datastore.PropertyConverter. It parses a '[]byte'
-// into an embedded 'ServiceConfig' when used with the "go.chromium.org/gae" library.
+// into an embedded 'ServiceConfig' when used with the "go.chromium.org/luci/gae" library.
 func (p *ServiceConfig) FromProperty(prop datastore.Property) error {
 	data, err := prop.Project(datastore.PTBytes)
 	if err != nil {

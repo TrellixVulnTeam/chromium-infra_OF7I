@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"sync"
 
-	"go.chromium.org/gae/service/urlfetch"
+	"go.chromium.org/luci/gae/service/urlfetch"
 	"go.chromium.org/luci/server/router"
 )
 

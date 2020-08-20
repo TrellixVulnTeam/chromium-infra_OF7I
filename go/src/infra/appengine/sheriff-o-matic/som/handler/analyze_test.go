@@ -10,11 +10,11 @@ import (
 	"infra/appengine/sheriff-o-matic/som/analyzer"
 	"infra/monitoring/messages"
 
-	"go.chromium.org/gae/impl/dummy"
-	"go.chromium.org/gae/service/datastore"
-	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/gae/impl/dummy"
+	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/info"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/logging/gologger"

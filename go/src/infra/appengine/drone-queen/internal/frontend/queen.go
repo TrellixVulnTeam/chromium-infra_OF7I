@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/grpc/grpcutil"
 	"golang.org/x/net/context"
 

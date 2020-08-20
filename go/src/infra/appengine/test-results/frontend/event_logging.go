@@ -9,10 +9,10 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"golang.org/x/net/context"
 
-	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/common/bq"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/info"
 
 	"infra/appengine/test-results/model"
 	"infra/appengine/test-results/model/gen"

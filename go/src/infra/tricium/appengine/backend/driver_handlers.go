@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	ds "go.chromium.org/gae/service/datastore"
-	tq "go.chromium.org/gae/service/taskqueue"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	ds "go.chromium.org/luci/gae/service/datastore"
+	tq "go.chromium.org/luci/gae/service/taskqueue"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/api/pubsub/v1"
 	"google.golang.org/appengine"

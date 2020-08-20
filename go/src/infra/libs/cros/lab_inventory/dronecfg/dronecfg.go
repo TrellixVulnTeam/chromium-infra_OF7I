@@ -9,9 +9,9 @@ package dronecfg
 import (
 	"context"
 
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 
 	ds "infra/libs/cros/lab_inventory/datastore"
 )

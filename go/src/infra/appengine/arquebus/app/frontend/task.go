@@ -18,8 +18,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
 

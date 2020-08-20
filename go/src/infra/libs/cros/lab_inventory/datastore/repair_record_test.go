@@ -7,8 +7,8 @@ import (
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/gae/service/datastore"
 
 	invlibs "infra/libs/cros/lab_inventory/protos"
 )

@@ -10,9 +10,9 @@ import (
 	"sort"
 	"time"
 
-	"go.chromium.org/gae/service/mail"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/mail"
 	"go.chromium.org/luci/server/auth"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"

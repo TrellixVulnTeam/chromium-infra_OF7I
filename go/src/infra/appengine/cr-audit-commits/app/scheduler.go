@@ -12,8 +12,8 @@ import (
 	"os"
 	"time"
 
-	ds "go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/logging"
+	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"

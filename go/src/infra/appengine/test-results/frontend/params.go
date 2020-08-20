@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"go.chromium.org/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/datastore"
 
 	"infra/appengine/test-results/model"
 )

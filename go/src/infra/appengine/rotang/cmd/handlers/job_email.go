@@ -7,9 +7,9 @@ import (
 	"text/template"
 	"time"
 
-	"go.chromium.org/gae/service/mail"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/mail"
 	"go.chromium.org/luci/server/router"
 	"google.golang.org/appengine"
 	"google.golang.org/grpc/codes"

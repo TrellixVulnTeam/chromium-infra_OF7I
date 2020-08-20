@@ -15,11 +15,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"go.chromium.org/gae/service/datastore"
-	"go.chromium.org/gae/service/info"
-	"go.chromium.org/gae/service/memcache"
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/info"
+	"go.chromium.org/luci/gae/service/memcache"
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
 )

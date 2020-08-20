@@ -11,7 +11,7 @@ import (
 
 	"context"
 
-	"go.chromium.org/gae/service/mail"
+	"go.chromium.org/luci/gae/service/mail"
 	"go.chromium.org/luci/server/router"
 	"golang.org/x/oauth2"
 )

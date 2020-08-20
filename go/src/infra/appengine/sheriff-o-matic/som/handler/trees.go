@@ -17,10 +17,10 @@ import (
 
 	"infra/appengine/sheriff-o-matic/som/model"
 
-	"go.chromium.org/gae/service/datastore"
-	"go.chromium.org/gae/service/info"
 	"go.chromium.org/luci/appengine/gaeauth/server/gaesigner"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/server/router"
 )
 

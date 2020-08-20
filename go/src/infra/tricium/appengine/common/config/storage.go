@@ -7,7 +7,7 @@ package config
 import (
 	"context"
 
-	ds "go.chromium.org/gae/service/datastore"
+	ds "go.chromium.org/luci/gae/service/datastore"
 
 	tricium "infra/tricium/api/v1"
 )

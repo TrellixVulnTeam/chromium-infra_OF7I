@@ -12,8 +12,8 @@ import (
 	monorail "infra/monorailv2/api/api_proto"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"go.chromium.org/gae/service/datastore"
 	"go.chromium.org/luci/common/clock"
+	"go.chromium.org/luci/gae/service/datastore"
 )
 
 func TestBackend(t *testing.T) {

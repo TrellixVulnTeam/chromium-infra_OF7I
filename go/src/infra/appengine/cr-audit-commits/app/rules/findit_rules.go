@@ -14,11 +14,11 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	"github.com/golang/protobuf/ptypes"
-	ds "go.chromium.org/gae/service/datastore"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/api/gitiles"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	ds "go.chromium.org/luci/gae/service/datastore"
 )
 
 // Role is an enum describing the relationship between an email account and a
