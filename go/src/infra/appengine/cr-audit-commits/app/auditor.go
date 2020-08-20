@@ -232,67 +232,120 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 // to the handler in case the context given to this function expires before
 // reaching the end of the log.
 func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, repoState *rules.RepoState) error {
-	// Iterate the commit list in a chronological order.
-	// TODO(crbug/1112597): Time out problem. Suppose we have multiple branches
-	// and the context reaches the deadline before all the commits are scanned
-	// and saved in database, the LastKnownCommit could be a commit on one of
-	// the branch. In the next round, it is possible that some commits are
-	// scanned again.
-	for i := len(fl) - 1; i >= 0; i-- {
-		commit := fl[i]
-		relevant := false
+	// Prepare all the relevant commits.
+	var relevantCommits []*git.Commit
+	for _, commit := range fl {
 		for _, ruleSet := range cfg.Rules {
 			if ruleSet.MatchesCommit(commit) {
-				n, err := saveNewRelevantCommit(ctx, repoState, commit)
-				if err != nil {
-					return err
-				}
-				repoState.LastRelevantCommit = n.CommitHash
-				repoState.LastRelevantCommitTime = n.CommitTime
-				// If the commit matches one ruleSet that's
-				// enough. Break to move on to the next commit.
-				relevant = true
+				relevantCommits = append(relevantCommits, commit)
 				break
 			}
 		}
-		ScannedCommits.Add(ctx, 1, relevant, repoState.ConfigName)
-		repoState.LastKnownCommit = commit.Id
-		// Ignore possible error, this time is used for display purposes only.
-		if commit.Committer != nil {
-			ct, _ := ptypes.Timestamp(commit.Committer.Time)
-			repoState.LastKnownCommitTime = ct
+	}
+
+	// Split commits in batches and transactionally save each batch in
+	// datastore.
+	const batchSize = 100
+	for i := len(relevantCommits); i > 0; i -= batchSize {
+		batchBegin := i - batchSize
+		if batchBegin < 0 {
+			batchBegin = 0
 		}
 
+		prc := repoState.LastRelevantCommit
+		if i < len(relevantCommits) {
+			prc = relevantCommits[i].Id
+		}
+
+		err := saveNewRelevantCommits(ctx, repoState, relevantCommits[batchBegin:i], prc)
+		if err != nil {
+			logging.WithError(err).Errorf(ctx, "Failed to save relevant commits in ref %s",
+				repoState.ConfigName)
+			return err
+		}
 	}
+
+	// Update repoState.
+	if len(fl) > 0 {
+		repoState.LastKnownCommit = fl[0].Id
+		// Ignore possible error, this time is used for display purposes only.
+		if fl[0].Committer != nil {
+			ct, _ := ptypes.Timestamp(fl[0].Committer.Time)
+			repoState.LastKnownCommitTime = ct
+		}
+	}
+	if len(relevantCommits) > 0 {
+		repoState.LastRelevantCommit = relevantCommits[0].Id
+		if relevantCommits[0].Committer != nil {
+			ct, _ := ptypes.Timestamp(relevantCommits[0].Committer.Time)
+			repoState.LastKnownCommitTime = ct
+		}
+	}
+	repoState.LastUpdatedTime = time.Now().UTC()
+
+	if err := ds.Put(ctx, repoState); err != nil {
+		logging.WithError(err).Errorf(ctx, "Could not save repoState %s", repoState.ConfigName)
+		return err
+	}
+
 	return nil
 }
 
-func saveNewRelevantCommit(ctx context.Context, state *rules.RepoState, commit *git.Commit) (*rules.RelevantCommit, error) {
+func saveNewRelevantCommits(ctx context.Context, state *rules.RepoState, commits []*git.Commit, previousRelevantCommit string) error {
 	rk := ds.KeyForObj(ctx, state)
 
-	commitTime, err := ptypes.Timestamp(commit.GetCommitter().GetTime())
+	rcs := make([]*rules.RelevantCommit, len(commits))
+	for i, commit := range commits {
+		commitTime, err := ptypes.Timestamp(commit.GetCommitter().GetTime())
+		if err != nil {
+			logging.WithError(err).Errorf(ctx, "Invalid commit time: %s", commitTime)
+			return err
+		}
+
+		prc := previousRelevantCommit
+		if i < len(commits)-1 {
+			prc = commits[i+1].Id
+		}
+
+		rcs[i] = &rules.RelevantCommit{
+			RepoStateKey:           rk,
+			CommitHash:             commit.Id,
+			PreviousRelevantCommit: prc,
+			Status:                 rules.AuditScheduled,
+			CommitTime:             commitTime,
+			CommitterAccount:       commit.Committer.Email,
+			AuthorAccount:          commit.Author.Email,
+			CommitMessage:          commit.Message,
+		}
+	}
+
+	exists, err := ds.Exists(ctx, rcs)
 	if err != nil {
-		logging.WithError(err).Errorf(ctx, "Invalid commit time: %s", commitTime)
-		return nil, err
-	}
-	rc := &rules.RelevantCommit{
-		RepoStateKey:           rk,
-		CommitHash:             commit.Id,
-		PreviousRelevantCommit: state.LastRelevantCommit,
-		Status:                 rules.AuditScheduled,
-		CommitTime:             commitTime,
-		CommitterAccount:       commit.Committer.Email,
-		AuthorAccount:          commit.Author.Email,
-		CommitMessage:          commit.Message,
+		logging.WithError(err).Errorf(ctx, "Failed to check existence of commits in ref %s",
+			state.ConfigName)
+		return err
 	}
 
-	if err := ds.Put(ctx, rc, state); err != nil {
-		logging.WithError(err).Errorf(ctx, "Could not save %s", rc.CommitHash)
-		return nil, err
+	putLength := 0
+	for i, rc := range rcs {
+		if !exists.List(0)[i] {
+			rcs[putLength] = rc
+			putLength++
+		}
 	}
-	logging.Infof(ctx, "saved %s", rc)
 
-	return rc, nil
+	if putLength == 0 {
+		return nil
+	}
+
+	if err := ds.Put(ctx, rcs[:putLength]); err != nil {
+		logging.WithError(err).Errorf(ctx, "Could not save commits from %s to %s in ref %s",
+			rcs[0].CommitHash, rcs[putLength-1].CommitHash, state.ConfigName)
+		return err
+	}
+	logging.Infof(ctx, "Saved commits from %s to %s in ref %s",
+		rcs[0].CommitHash, rcs[putLength-1].CommitHash, state.ConfigName)
+	return nil
 }
 
 // saveAuditedCommits transactionally saves the records for the commits that

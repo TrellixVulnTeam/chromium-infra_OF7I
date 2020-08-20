@@ -268,6 +268,99 @@ func TestAuditor(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "123456")
 				})
+				Convey("Existed relevant commits", func() {
+					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+						Project:  "dummy",
+						RefsPath: "refs/heads/master",
+					}).Return(&gitilespb.RefsResponse{
+						Revisions: strmap{"refs/heads/master/refs/heads/master": "deadbeef"},
+					}, nil)
+					gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+						Project:            "dummy",
+						Committish:         "deadbeef",
+						ExcludeAncestorsOf: "123456",
+						PageSize:           6000,
+					}).Return(&gitilespb.LogResponse{
+						Log: []*git.Commit{
+							{Id: "deadbeef"},
+							{
+								Id: "000002",
+								Author: &git.Commit_User{
+									Email: "dummy@test.com",
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:56:34 2017"),
+								},
+								Committer: &git.Commit_User{
+									Email: "dummy@test.com",
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:56:34 2017"),
+								},
+							},
+							{
+								Id: "000001",
+								Author: &git.Commit_User{
+									Email: "dummy@test.com",
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:10:34 2017"),
+								},
+								Committer: &git.Commit_User{
+									Email: "dummy@test.com",
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:10:34 2017"),
+								},
+							},
+							{
+								Id: "000000",
+								Author: &git.Commit_User{
+									Email: "dummy@test.com",
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:00:34 2017"),
+								},
+								Committer: &git.Commit_User{
+									Email: "dummy@test.com",
+									Time:  rules.MustGitilesTime("Sun Sep 03 00:00:34 2017"),
+								},
+							},
+						},
+					}, nil)
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					rsk := ds.KeyForObj(ctx, rs)
+					ds.Put(ctx, []*rules.RelevantCommit{
+						{
+							RepoStateKey:           rsk,
+							CommitHash:             "999999",
+							Status:                 rules.AuditCompleted,
+							PreviousRelevantCommit: "999998",
+						},
+						{
+							RepoStateKey:           rsk,
+							CommitHash:             "000000",
+							Status:                 rules.AuditCompletedWithActionRequired,
+							PreviousRelevantCommit: "999999",
+						},
+						{
+							RepoStateKey:           rsk,
+							CommitHash:             "000001",
+							Status:                 rules.AuditCompletedWithActionRequired,
+							PreviousRelevantCommit: "000000",
+						},
+					})
+
+					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
+					So(err, ShouldBeNil)
+					So(resp.StatusCode, ShouldEqual, 200)
+					err = ds.Get(ctx, rs)
+					So(err, ShouldBeNil)
+					So(rs.LastKnownCommit, ShouldEqual, "deadbeef")
+					So(rs.LastRelevantCommit, ShouldEqual, "000002")
+
+					ds.GetTestable(ctx).CatchupIndexes()
+					var rcs []*rules.RelevantCommit
+					err = ds.GetAll(ctx, ds.NewQuery("RelevantCommit").Ancestor(rsk), &rcs)
+
+					So(err, ShouldBeNil)
+					So(rcs[0].PreviousRelevantCommit, ShouldEqual, "999999")
+					So(rcs[0].Status, ShouldEqual, rules.AuditCompletedWithActionRequired)
+					So(rcs[1].PreviousRelevantCommit, ShouldEqual, "000000")
+					So(rcs[1].Status, ShouldEqual, rules.AuditCompletedWithActionRequired)
+					So(rcs[2].PreviousRelevantCommit, ShouldEqual, "000001")
+					So(rcs[2].Status, ShouldEqual, rules.AuditCompleted)
+				})
 			})
 			Convey("Test auditing", func() {
 				repoState := &rules.RepoState{

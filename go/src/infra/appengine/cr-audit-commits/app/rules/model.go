@@ -139,6 +139,18 @@ type RepoState struct {
 	LastKnownCommitTime    time.Time
 	LastRelevantCommit     string
 	LastRelevantCommitTime time.Time
+
+	// LastUpdatedTime is the wall clock time when the last scan was
+	// successful.
+	LastUpdatedTime time.Time
+
+	// Paused indicates whether this ref paused begin audited. This pausing
+	// could be caused by: 1) A non-fast-forward update makes LastKnownCommit
+	// become an unaccessible commit; 2) Gitiles git.Log API returns too many
+	// commits or encounters some errors, which causes the time diff between
+	// current time and LastUpdatedTime to exceed staleHours.
+	Paused bool
+
 	// This is the key of the configuration in RuleMap that applies to
 	// this git ref. Note that each ref can only be matched to one such
 	// configuration.
