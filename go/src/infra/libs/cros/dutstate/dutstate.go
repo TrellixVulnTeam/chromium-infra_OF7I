@@ -61,6 +61,11 @@ type UFSClient interface {
 	UpdateState(ctx context.Context, req *ufsAPI.UpdateStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error)
 }
 
+// String provides string representation of the DUT state.
+func (s State) String() string {
+	return string(s)
+}
+
 // Read read state from UFS.
 //
 // If state not exist in the UFS the state will be default and time is 0.

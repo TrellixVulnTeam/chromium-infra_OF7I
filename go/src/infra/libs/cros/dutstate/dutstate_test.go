@@ -34,6 +34,7 @@ func (c *FakeUFSClient) GetState(ctx context.Context, req *ufsAPI.GetStateReques
 	}
 	return nil, c.getStateErr
 }
+
 func (c *FakeUFSClient) UpdateState(ctx context.Context, req *ufsAPI.UpdateStateRequest, opts ...grpc.CallOption) (*ufsProto.StateRecord, error) {
 	if c.updateStateErr == nil {
 		c.updateStateMap[req.State.GetResourceName()] = req.State.GetState()
@@ -187,6 +188,45 @@ func TestUFSResourceName(t *testing.T) {
 		t.Run(tc.in, func(t *testing.T) {
 			t.Parallel()
 			got := makeUFSResourceName(tc.in)
+			if diff := cmp.Diff(tc.out, got); diff != "" {
+				t.Errorf("output mismatch (-want +got): %s\n", diff)
+			}
+		})
+	}
+}
+
+func TestStateString(t *testing.T) {
+	t.Parallel()
+	testcases := []struct {
+		in  State
+		out string
+	}{
+		{
+			Ready,
+			"ready",
+		},
+		{
+			NeedsRepair,
+			"needs_repair",
+		},
+		{
+			NeedsReset,
+			"needs_reset",
+		},
+		{
+			Reserved,
+			"reserved",
+		},
+		{
+			State("Some custom"),
+			"Some custom",
+		},
+	}
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.in.String(), func(t *testing.T) {
+			t.Parallel()
+			got := tc.in.String()
 			if diff := cmp.Diff(tc.out, got); diff != "" {
 				t.Errorf("output mismatch (-want +got): %s\n", diff)
 			}
