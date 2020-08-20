@@ -86,7 +86,7 @@ func (c *getMachineLSEPrototype) innerRun(a subcommands.Application, args []stri
 
 func (c *getMachineLSEPrototype) print(res *ufspb.MachineLSEPrototype) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(res, c.outputFlags.Emit())
+		utils.PrintProtoJSON(res, !c.outputFlags.NoEmit())
 		return nil
 	}
 	if c.outputFlags.Tsv() {

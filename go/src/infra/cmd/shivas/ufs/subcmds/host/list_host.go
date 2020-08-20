@@ -79,7 +79,7 @@ func (c *listHost) innerRun(a subcommands.Application, args []string, env subcom
 	if !c.outputFlags.JSON() {
 		return utils.PrintListTableFormat(ctx, ic, printMachineLSEs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachineLSETitle, c.outputFlags.Tsv())
 	}
-	return utils.PrintListJSONFormat(ctx, ic, printMachineLSEs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+	return utils.PrintListJSONFormat(ctx, ic, printMachineLSEs, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 }
 
 func printMachineLSEs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {

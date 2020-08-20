@@ -76,7 +76,7 @@ func (c *listChromePlatform) innerRun(a subcommands.Application, args []string, 
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printChromePlatforms, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+		return utils.PrintListJSONFormat(ctx, ic, printChromePlatforms, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printChromePlatforms, false, int32(c.pageSize), c.filter, c.keysOnly, utils.ChromePlatformTitle, c.outputFlags.Tsv())
 }

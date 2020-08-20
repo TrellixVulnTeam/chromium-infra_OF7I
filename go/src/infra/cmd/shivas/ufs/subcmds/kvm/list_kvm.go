@@ -76,7 +76,7 @@ func (c *listKVM) innerRun(a subcommands.Application, args []string, env subcomm
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printKVMs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+		return utils.PrintListJSONFormat(ctx, ic, printKVMs, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printKVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.KvmTitle, c.outputFlags.Tsv())
 }

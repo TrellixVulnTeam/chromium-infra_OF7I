@@ -76,7 +76,7 @@ func (c *listRPM) innerRun(a subcommands.Application, args []string, env subcomm
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printRPMs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+		return utils.PrintListJSONFormat(ctx, ic, printRPMs, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printRPMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RpmTitle, c.outputFlags.Tsv())
 }

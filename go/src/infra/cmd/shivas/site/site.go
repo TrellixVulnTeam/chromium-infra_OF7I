@@ -57,10 +57,10 @@ func (f *CommonFlags) Verbose() bool {
 
 // OutputFlags controls output-related CLI flags.
 type OutputFlags struct {
-	json bool
-	tsv  bool
-	full bool
-	emit bool
+	json   bool
+	tsv    bool
+	full   bool
+	noemit bool
 }
 
 // Register sets up the output flags.
@@ -68,7 +68,7 @@ func (f *OutputFlags) Register(fl *flag.FlagSet) {
 	fl.BoolVar(&f.json, "json", false, "log output in json format")
 	fl.BoolVar(&f.tsv, "tsv", false, "log output in tsv format (without title)")
 	fl.BoolVar(&f.full, "full", false, "log full output in specified format, only works for GET command")
-	fl.BoolVar(&f.emit, "emit", false, "specifies whether to emit/print unpopulated fields in json format")
+	fl.BoolVar(&f.noemit, "noemit", false, "specifies NOT to emit/print unpopulated fields in json format")
 }
 
 // JSON returns if the output is logged in json format
@@ -86,9 +86,9 @@ func (f *OutputFlags) Full() bool {
 	return f.full
 }
 
-// Emit returns if output json should print/emit unpopulated fields
-func (f *OutputFlags) Emit() bool {
-	return f.emit
+// NoEmit returns if output json should NOT print/emit unpopulated fields
+func (f *OutputFlags) NoEmit() bool {
+	return f.noemit
 }
 
 // EnvFlags controls selection of the environment: either prod (default) or dev.

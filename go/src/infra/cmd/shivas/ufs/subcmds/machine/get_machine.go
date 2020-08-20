@@ -137,7 +137,7 @@ func (c *getMachine) printFull(ctx context.Context, ic ufsAPI.FleetClient, machi
 
 func (c *getMachine) print(machine *ufspb.Machine) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(machine, c.outputFlags.Emit())
+		utils.PrintProtoJSON(machine, !c.outputFlags.NoEmit())
 	} else {
 		if c.outputFlags.Tsv() {
 			utils.PrintTSVMachines([]*ufspb.Machine{machine}, false)

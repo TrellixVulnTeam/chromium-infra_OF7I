@@ -77,7 +77,7 @@ func (c *listRack) innerRun(a subcommands.Application, args []string, env subcom
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printRacks, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+		return utils.PrintListJSONFormat(ctx, ic, printRacks, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printRacks, false, int32(c.pageSize), c.filter, c.keysOnly, utils.RackTitle, c.outputFlags.Tsv())
 }

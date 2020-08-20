@@ -76,7 +76,7 @@ func (c *listVM) innerRun(a subcommands.Application, args []string, env subcomma
 	if !c.outputFlags.JSON() {
 		return utils.PrintListTableFormat(ctx, ic, printVMs, false, int32(c.pageSize), c.filter, c.keysOnly, utils.VMTitle, c.outputFlags.Tsv())
 	}
-	return utils.PrintListJSONFormat(ctx, ic, printVMs, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+	return utils.PrintListJSONFormat(ctx, ic, printVMs, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 }
 
 func printVMs(ctx context.Context, ic ufsAPI.FleetClient, json bool, pageSize int32, pageToken, filter string, keysOnly, tsv, emit bool) (string, error) {

@@ -76,7 +76,7 @@ func (c *listMachineLSEPrototype) innerRun(a subcommands.Application, args []str
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+		return utils.PrintListJSONFormat(ctx, ic, printMachineLSEPrototypes, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printMachineLSEPrototypes, false, int32(c.pageSize), c.filter, c.keysOnly, utils.MachinelseprototypeTitle, c.outputFlags.Tsv())
 }

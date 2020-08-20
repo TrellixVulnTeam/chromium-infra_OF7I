@@ -76,7 +76,7 @@ func (c *listSwitch) innerRun(a subcommands.Application, args []string, env subc
 		Options: site.DefaultPRPCOptions,
 	})
 	if c.outputFlags.JSON() {
-		return utils.PrintListJSONFormat(ctx, ic, printSwitches, true, int32(c.pageSize), c.filter, c.keysOnly, c.outputFlags.Emit())
+		return utils.PrintListJSONFormat(ctx, ic, printSwitches, true, int32(c.pageSize), c.filter, c.keysOnly, !c.outputFlags.NoEmit())
 	}
 	return utils.PrintListTableFormat(ctx, ic, printSwitches, false, int32(c.pageSize), c.filter, c.keysOnly, utils.SwitchTitle, c.outputFlags.Tsv())
 }
