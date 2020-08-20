@@ -132,7 +132,14 @@ func getCrosFirmwareVersion(
 	for model := range allModels {
 		crosv, err := versionMap.bestVersion(model)
 		if err != nil {
+			if _, ok := err.(skip); ok {
+				logging.Infof(ctx, "skipping model %q", model)
+				continue
+			}
 			return nil, nil, err
+		}
+		if crosv == "" {
+			panic(fmt.Sprintf("best version is blank for %s", model))
 		}
 
 		// allFirmwareVersions[crosv] will definitely exist
@@ -144,17 +151,29 @@ func getCrosFirmwareVersion(
 		// all the old firmware versions.
 		if firmwareEntry == nil {
 			logging.Infof(ctx, "Falling back to linear scan for model %q", model)
+			foundFw := false
+			foundCros := false
 			for _, fw := range oldSV.Firmware {
 				b := fw.GetKey().GetBuildTarget().GetName()
 				m := fw.GetKey().GetModelId().GetValue()
 				if b == board && m == model {
 					firmwareEntry = fw
-					// if we are falling back to the old version explicitly,
-					// then it is safe to assume that the oldBoardVersion that
-					// we were given is compatible with the entry in oldSV.
-					crosEntry = utils.MakeSpecificCrOSSV(b, m, versionMap.oldBoardVersion)
+					foundFw = true
 					break
 				}
+			}
+			for _, crosv := range oldSV.Cros {
+				b := crosv.GetKey().GetBuildTarget().GetName()
+				m := crosv.GetKey().GetModelId().GetValue()
+				if b == board && m == model {
+					crosEntry = crosv
+					foundCros = true
+					break
+				}
+			}
+			if !foundCros || !foundFw {
+				logging.Infof(ctx, "Linear scan failed for model %q", model)
+				continue
 			}
 		}
 		if firmwareEntry == nil {
@@ -225,6 +244,12 @@ func newBoardVersionMap() *boardVersionMap {
 	}
 }
 
+type skip struct{}
+
+func (s skip) Error() string {
+	return "SKIP"
+}
+
 // bestVersion determines the best available version for a given model
 // between the config file and Omaha.
 func (m *boardVersionMap) bestVersion(model string) (string, error) {
@@ -234,6 +259,13 @@ func (m *boardVersionMap) bestVersion(model string) (string, error) {
 		oldVersion = v
 	} else {
 		oldVersion = m.oldBoardVersion
+	}
+
+	// allow skipping some nonexistent boards like
+	// *_kernelnext if no version exists in the old file
+	// or in GS.
+	if newVersion == "" && oldVersion == "" {
+		return "", skip{}
 	}
 
 	newVersionValid := versionOk(newVersion)

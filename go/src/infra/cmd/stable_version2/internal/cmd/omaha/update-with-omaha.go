@@ -6,8 +6,10 @@ package omaha
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +28,8 @@ import (
 	svlib "infra/libs/cros/stableversion"
 
 	sv "go.chromium.org/chromiumos/infra/proto/go/lab_platform"
+
+	"infra/cmd/stable_version2/internal/cmd/validateconfig/querygs"
 )
 
 // UpdateWithOmaha subcommand: read stable version in omaha json file in GS.
@@ -121,13 +125,24 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 		return err
 	}
 
+	validateErr := validateFile(ctx, a, t, newSV)
+
 	if c.dryRun {
 		content, err := svlib.WriteSVToString(newSV)
+		if err == nil {
+			fmt.Printf("%s\n", content)
+		}
+		if validateErr != nil {
+			return validateErr
+		}
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s\n", content)
 		return nil
+	}
+
+	if validateErr != nil {
+		return validateErr
 	}
 
 	changeURL, err := commitNew(ctx, gc, newSV)
@@ -135,6 +150,31 @@ func (c *updateWithOmahaRun) innerRun(a subcommands.Application, args []string, 
 		return err
 	}
 	logging.Debugf(ctx, "Update stable version CL: %s", changeURL)
+	return nil
+}
+
+func validateFile(ctx context.Context, a subcommands.Application, t http.RoundTripper, newSV *sv.StableVersions) error {
+	// validate config before committing it
+	var r querygs.Reader
+	if err := r.Init(ctx, t, utils.Unmarshaller, "validate-config"); err != nil {
+		return fmt.Errorf("initializing Google Storage client: %s", err)
+	}
+
+	res, err := r.ValidateConfig(newSV)
+	if err != nil {
+		return fmt.Errorf("valdating config using Google Storage: %s", err)
+	}
+	res.RemoveAllowedDUTs()
+	msg, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		panic("failed to marshal JSON")
+	}
+
+	if count := res.AnomalyCount(); count > 0 {
+		fmt.Fprintf(a.GetErr(), "%s\n", msg)
+		return fmt.Errorf("(%d) errors detected: %s", count, msg)
+	}
+
 	return nil
 }
 
