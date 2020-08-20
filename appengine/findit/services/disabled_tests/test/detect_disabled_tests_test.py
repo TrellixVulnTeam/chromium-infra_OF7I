@@ -287,12 +287,14 @@ class DetectTestDisablementTest(WaterfallTestCase):
     self.assertEqual(expected_local_test, local_tests)
 
   @mock.patch.object(
+      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
+  @mock.patch.object(
+      test_tag_util, 'GetChromiumDirectoryToTeamMapping', return_value={})
+  @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
+  @mock.patch.object(
       test_tag_util,
       'GetTestLocation',
       return_value=TestLocation(file_path='path/a.cc'))
-  @mock.patch.object(step_util, 'GetOS', return_value='OS')
-  @mock.patch.object(
-      Flake, 'NormalizeStepName', return_value='telemetry_gpu_integration_test')
   @mock.patch.object(
       test_tag_util, 'GetTestDirectoryFromLocation', return_value='base/')
   @mock.patch.object(
@@ -301,33 +303,43 @@ class DetectTestDisablementTest(WaterfallTestCase):
       test_tag_util,
       'GetTestTeamFromLocation',
       return_value='infra-dev@chromium.org')
-  def testCreateBigqueryRow(self, *_):
-    row = {
-        'builder_name': 'builder1',
-        'build_id': 123,
-        'step_name': 'step_name',
-        'test_name': 'test_name1',
-        'bucket': 'bucket',
-        'project': 'chromium/src',
-    }
-    bqrow = detect_disabled_tests._CreateBigqueryRow(row, {}, {})
-    bqrow["insert_time"] = datetime(2019, 6, 29, 0, 0, 0)
+  @mock.patch.object(step_util, 'GetOS', return_value='os1')
+  @mock.patch.object(
+      time_util, 'GetUTCNow', return_value=datetime(2019, 6, 29, 0, 0, 0))
+  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
+  @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
+  def testStoreDisabledTestsInBigQuery(self, mocked_get_client,
+                                       mocked_report_rows, *_):
+    query_response = self._GetEmptyDisabledTestQueryResponse()
+    self._AddRowToDisabledTestQueryResponse(
+        query_response=query_response,
+        step_name='step_name (full)',
+        test_name='test_name1',
+        builder_name='msan_asan_builder1',
+        build_id=123)
+    mocked_client = mock.Mock()
+    mocked_get_client.return_value = mocked_client
+    mocked_client.jobs().query().execute.return_value = query_response
+    mocked_client.jobs().getQueryResults().execute.return_value = query_response
     expected_bqrow = {
         'test_location': "{'line_number': None, 'file_path': 'path/a.cc'}",
-        'step_name': 'step_name',
+        'component': 'root>a>b',
+        'builder_name': 'msan_asan_builder1',
         'test_name': 'test_name1',
         'build_id': 123,
-        'builder_name': 'builder1',
         'bucket': 'bucket',
-        'project': 'chromium/src',
-        'OS': 'OS',
-        'directory': 'base/',
-        'component': 'root>a>b',
+        'project': 'project',
+        'step_name': 'step_name (full)',
+        'insert_time': '2019-06-29 00:00:00.000000',
         'team': 'infra-dev@chromium.org',
-        'insert_time': datetime(2019, 6, 29, 0, 0, 0)
+        'directory': 'base/',
+        'OS': 'os1'
     }
-    self.assertEqual(expected_bqrow, bqrow)
 
+    detect_disabled_tests.StoreDisabledTestsInBigQuery()
+    mocked_report_rows.assert_called_with([expected_bqrow], 'findit-for-me',
+                                          'disabled_tests_summaries',
+                                          'disabled_tests')
 
   @mock.patch.object(
       detect_disabled_tests,
@@ -1039,11 +1051,6 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       last_updated_time=datetime(2019, 6, 28, 0, 0, 0))
           },),
   ])
-  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(
-      detect_disabled_tests, '_CreateBigqueryRow', return_value={})
-  @mock.patch.object(
-      test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
       test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
@@ -1054,7 +1061,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(
       time_util, 'GetUTCNow', return_value=datetime(2019, 6, 29, 0, 0, 0))
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
-  def testProcessQueryForDisabledTests(self, cases, mocked_get_client, *_):
+  def testStoreDisabledTestsInDatastore(self, cases, mocked_get_client, *_):
     cases['remote_test'].put()
     query_response = self._GetEmptyDisabledTestQueryResponse()
     self._AddRowToDisabledTestQueryResponse(
@@ -1070,7 +1077,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
     mocked_client.jobs().query().execute.return_value = query_response
     mocked_client.jobs().getQueryResults().execute.return_value = query_response
 
-    detect_disabled_tests.ProcessQueryForDisabledTests()
+    detect_disabled_tests.StoreDisabledTestsInDatastore()
     actual_remote_test = cases['remote_test'].key.get()
     self.assertEqual(cases['expected_remote_test'], actual_remote_test)
 
@@ -1142,9 +1149,6 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       last_updated_time=datetime(2019, 6, 29, 0, 0, 0))
           },),
   ])
-  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(
-      detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
       test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
@@ -1159,8 +1163,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(
       Flake, 'NormalizeStepName', return_value='telemetry_gpu_integration_test')
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
-  def testProcessQueryForDisabledTestsGPUTest(self, cases, mocked_get_client,
-                                              *_):
+  def testStoreDisabledTestsInDatastoreGPUTest(self, cases, mocked_get_client,
+                                               *_):
     cases['remote_test'].put()
     query_response = self._GetEmptyDisabledTestQueryResponse()
     self._AddRowToDisabledTestQueryResponse(
@@ -1176,7 +1180,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
     mocked_client.jobs().query().execute.return_value = query_response
     mocked_client.jobs().getQueryResults().execute.return_value = query_response
 
-    detect_disabled_tests.ProcessQueryForDisabledTests()
+    detect_disabled_tests.StoreDisabledTestsInDatastore()
     actual_remote_test = cases['remote_test'].key.get()
     self.assertEqual(cases['expected_remote_test'], actual_remote_test)
 
@@ -1246,9 +1250,6 @@ class DetectTestDisablementTest(WaterfallTestCase):
                       last_updated_time=datetime(2019, 6, 29, 0, 0, 0))
           },),
   ])
-  @mock.patch.object(bigquery_helper, 'ReportRowsToBigquery', return_value={})
-  @mock.patch.object(
-      detect_disabled_tests, '_CreateBigqueryRow', return_value={})
   @mock.patch.object(
       test_tag_util, 'GetChromiumDirectoryToComponentMapping', return_value={})
   @mock.patch.object(
@@ -1260,8 +1261,8 @@ class DetectTestDisablementTest(WaterfallTestCase):
       time_util, 'GetUTCNow', return_value=datetime(2019, 6, 29, 0, 0, 0))
   @mock.patch.object(test_name_util, 'GTEST_REGEX')
   @mock.patch.object(bigquery_helper, '_GetBigqueryClient')
-  def testProcessQueryForDisabledTestsGTests(self, cases, mocked_get_client,
-                                             mocked_gtest_regex, *_):
+  def testStoreDisabledTestsInDatastoreGTests(self, cases, mocked_get_client,
+                                              mocked_gtest_regex, *_):
     cases['remote_test'].put()
     query_response = self._GetEmptyDisabledTestQueryResponse()
     self._AddRowToDisabledTestQueryResponse(
@@ -1279,7 +1280,7 @@ class DetectTestDisablementTest(WaterfallTestCase):
 
     mocked_gtest_regex.match.return_value = True
 
-    detect_disabled_tests.ProcessQueryForDisabledTests()
+    detect_disabled_tests.StoreDisabledTestsInDatastore()
     actual_remote_test = cases['remote_test'].key.get()
     self.assertEqual(cases['expected_remote_test'], actual_remote_test)
 
@@ -1307,10 +1308,13 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(detect_disabled_tests, '_CreateLocalTests')
   @mock.patch.object(bigquery_helper, '_ReadQueryResultsPage')
-  def testExecuteQuery(self, local_tests, mock_local_call_count, paged_rows,
-                       mock_execute_query, mock_create_local, *_):
+  def testExecuteQueryAndReturnDataStoreEntities(self, local_tests,
+                                                 mock_local_call_count,
+                                                 paged_rows, mock_execute_query,
+                                                 mock_create_local, *_):
     mock_execute_query.side_effect = paged_rows
-    actual_local_tests = detect_disabled_tests._ExecuteQuery()
+    actual_local_tests = \
+      detect_disabled_tests._ExecuteQueryAndReturnDataStoreEntities()
     self.assertEqual(local_tests, actual_local_tests)
     self.assertEqual(mock_local_call_count, mock_create_local.call_count)
 
@@ -1325,11 +1329,13 @@ class DetectTestDisablementTest(WaterfallTestCase):
   @mock.patch.object(test_tag_util, '_GetChromiumWATCHLISTS', return_value={})
   @mock.patch.object(detect_disabled_tests, '_CreateLocalTests')
   @mock.patch.object(bigquery_helper, '_ReadQueryResultsPage')
-  def testExecuteQueryNoRows(self, mock_execute_query, mock_create_local, *_):
+  def testExecuteQueryAndReturnDataStoreEntities_NoRows(self,
+                                                        mock_execute_query,
+                                                        mock_create_local, *_):
     mock_execute_query.side_effect = [
         (True, [], None),
     ]
     with self.assertRaises(AssertionError):
-      detect_disabled_tests._ExecuteQuery()
+      detect_disabled_tests._ExecuteQueryAndReturnDataStoreEntities()
 
     self.assertFalse(mock_create_local.called)

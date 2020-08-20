@@ -53,8 +53,14 @@ cron:
   retry_parameters:
     job_retry_limit: 0
 
-- description: Query and store disabled tests.
+- description: Query and store disabled tests in datastore.
   url: /disabled-tests/detection/cron/detect-test-disablement
-  schedule: every 6 hours
+  schedule: every 24 hours
+  retry_parameters:
+    job_retry_limit: 0
+
+- description: Query and store disabled tests' info in bigquery.
+  url: /disabled-tests/export/cron/export-test-disablement
+  schedule: every 24 hours
   retry_parameters:
     job_retry_limit: 0

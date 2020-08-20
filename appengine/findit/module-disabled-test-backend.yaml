@@ -11,7 +11,7 @@ basic_scaling:
 
 handlers:
 # For cron jobs and task queues, enforce admin permission.
-- url: /disabled-tests/detection/(cron|task)/.*
+- url: /disabled-tests/(detection|export)/(cron|task)/.*
   script: backend_main.disabled_test_backend_web_application
   secure: always
   login: admin

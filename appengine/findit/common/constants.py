@@ -25,6 +25,7 @@ RERUN_TRYJOB_QUEUE = 'rerun-tryjob'
 AUTO_ACTION_QUEUE = 'auto-action-queue'
 FLAKE_DETECTION_MULTITASK_QUEUE = 'flake-detection-multitask-queue'
 DISABLED_TEST_DETECTION_QUEUE = 'disabled-test-detection-queue'
+DISABLED_TEST_EXPORT_QUEUE = 'disabled-test-export-queue'
 
 # Waterfall-related.
 WATERFALL_PROCESS_FAILURE_ANALYSIS_REQUESTS_URL = (

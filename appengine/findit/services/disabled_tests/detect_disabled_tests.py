@@ -53,29 +53,43 @@ _STEP_BASED_TAGS = [
 ]
 
 
-def _ExecuteQuery(parameters=None):
+def _GetQuery():
+  path = os.path.realpath(
+      os.path.join(__file__, os.path.pardir, 'disabled_tests.sql'))
+  with open(path) as f:
+    query = f.read()
+  return query
 
-  def GetQuery():
-    path = os.path.realpath(
-        os.path.join(__file__, os.path.pardir, 'disabled_tests.sql'))
-    with open(path) as f:
-      query = f.read()
-    return query
 
+def _ExecuteQueryAndReturnDataStoreEntities():
   component_mapping = test_tag_util.GetChromiumDirectoryToComponentMapping()
   team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping()
-
   watchlists = test_tag_util._GetChromiumWATCHLISTS()
-
-  query = GetQuery()
+  query = _GetQuery()
   local_tests = {}
   total_rows = 0
-  bigquery_rows = []
+
   for row in bigquery_helper.QueryResultIterator(
-      appengine_util.GetApplicationId(), query, parameters=parameters):
+      appengine_util.GetApplicationId(), query):
     total_rows += 1
     _CreateLocalTests(row, local_tests, component_mapping, team_mapping,
                       watchlists)
+
+  assert total_rows > 0, '0 rows fetched for disabled tests from BigQuery.'
+  logging.info('Total fetched %d rows for disabled tests from BigQuery.',
+               total_rows)
+  return local_tests
+
+
+def _ExecuteQueryAndStoreInBigQuery():
+  component_mapping = test_tag_util.GetChromiumDirectoryToComponentMapping()
+  team_mapping = test_tag_util.GetChromiumDirectoryToTeamMapping()
+  query = _GetQuery()
+  total_rows = 0
+  bigquery_rows = []
+  for row in bigquery_helper.QueryResultIterator(
+      appengine_util.GetApplicationId(), query):
+    total_rows += 1
     bigquery_rows.append(
         _CreateBigqueryRow(row, component_mapping, team_mapping))
 
@@ -86,7 +100,6 @@ def _ExecuteQuery(parameters=None):
   bigquery_helper.ReportRowsToBigquery(bigquery_rows, 'findit-for-me',
                                        'disabled_tests_summaries',
                                        'disabled_tests')
-  return local_tests
 
 
 def _CreateBigqueryRow(row, component_mapping, team_mapping):
@@ -550,8 +563,12 @@ def _UpdateNoLongerDisabledTests(currently_disabled_test_keys, query_time):
     _UpdateDatastore(no_longer_disabled_test_key, {}, query_time)
 
 
-def ProcessQueryForDisabledTests():
+def StoreDisabledTestsInDatastore():
   query_time = time_util.GetUTCNow()
-  local_tests = _ExecuteQuery()
+  local_tests = _ExecuteQueryAndReturnDataStoreEntities()
   _UpdateCurrentlyDisabledTests(local_tests, query_time)
   _UpdateNoLongerDisabledTests(local_tests.keys(), query_time)
+
+
+def StoreDisabledTestsInBigQuery():
+  _ExecuteQueryAndStoreInBigQuery()

@@ -16,6 +16,7 @@ from handlers import obscure_emails
 from handlers import process_failure_analysis_requests
 from handlers import process_flake_analysis_request
 from handlers.disabled_tests.detection import detect_test_disablement
+from handlers.disabled_tests.export import export_test_disablement
 from handlers.flake import update_open_flake_issues
 from handlers.flake.detection import detect_flakes
 from handlers.flake.detection import process_flakes
@@ -52,6 +53,10 @@ disabled_test_backend_web_pages_handler_mappings = [
      detect_test_disablement.DetectTestDisablementCronJob),
     ('/disabled-tests/detection/task/detect-test-disablement',
      detect_test_disablement.DisabledTestDetection),
+    ('/disabled-tests/export/cron/export-test-disablement',
+     export_test_disablement.ExportTestDisablementCronJob),
+    ('/disabled-tests/export/task/export-test-disablement',
+     export_test_disablement.DisabledTestExport),
 ]
 disabled_test_backend_web_application = webapp2.WSGIApplication(
     disabled_test_backend_web_pages_handler_mappings, debug=False)

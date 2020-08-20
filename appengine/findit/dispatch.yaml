@@ -17,6 +17,12 @@ dispatch:
   - url: "*/disabled-tests/detection/task/*"
     module: disabled-test-backend
 
+  - url: "*/disabled-tests/export/cron/*"
+    module: disabled-test-backend
+
+  - url: "*/disabled-tests/export/task/*"
+    module: disabled-test-backend
+
   - url: "*/flake/detection/cron/*"
     module: flake-detection-backend
 
