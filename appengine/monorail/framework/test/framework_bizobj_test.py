@@ -171,6 +171,47 @@ class ShoulRevealEmailTest(unittest.TestCase):
         framework_bizobj.ShouldRevealEmail(
             self.cnxn, self.services, self.user_auth, self.user_2))
 
+  # TODO(https://crbug.com/monorail/8192): Remove deprecated tests.
+  def testDeprecatedShouldRevealEmail_Anon(self):
+    anon = authdata.AuthData()
+    self.assertFalse(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            anon, self.project, self.user_1.email))
+    self.assertFalse(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            anon, self.project, self.user_2.email))
+
+  def testDeprecatedShouldRevealEmail_Self(self):
+    self.assertTrue(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            self.user_auth, self.project, self.user_auth.user_pb.email))
+
+  def testDeprecatedShouldRevealEmail_SiteAdmin(self):
+    self.user_auth.user_pb.is_site_admin = True
+    self.assertTrue(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            self.user_auth, self.project, self.user_1.email))
+    self.assertTrue(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            self.user_auth, self.project, self.user_2.email))
+
+  def testDeprecatedShouldRevealEmail_ProjectMember(self):
+    self.project.committer_ids.append(self.requester.user_id)
+    self.assertTrue(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            self.user_auth, self.project, self.user_1.email))
+    self.assertTrue(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            self.user_auth, self.project, self.user_2.email))
+
+  def testDeprecatedShouldRevealEmail_NonMember(self):
+    self.assertFalse(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            self.user_auth, self.project, self.user_1.email))
+    self.assertFalse(
+        framework_bizobj.DeprecatedShouldRevealEmail(
+            self.user_auth, self.project, self.user_2.email))
+
 
 class ArtifactTest(unittest.TestCase):
 

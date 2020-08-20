@@ -100,6 +100,40 @@ def ShouldRevealEmail(cnxn, services, user_auth, other_user):
   return False
 
 
+# TODO(https://crbug.com/monorail/8192): Remove this method.
+def DeprecatedShouldRevealEmail(user_auth, project, viewed_email):
+  # type: (AuthData, Project, str) -> bool
+  """
+  Deprecated V1 API logic to decide whether to publish a user's email
+  address. Avoid updating this method.
+
+  Args:
+    user_auth: The AuthData of the user viewing the email addresses.
+    project: The Project PB to which the viewed user belongs.
+    viewed_email: The email of the viewed user.
+
+  Returns:
+    True if email addresses should be published to the logged-in user.
+  """
+  # Case 1: Anon users don't see anything revealed.
+  if user_auth.user_pb is None:
+    return False
+
+  # Case 2: site admins always see unobscured email addresses.
+  if user_auth.user_pb.is_site_admin:
+    return True
+
+  # Case 3: Project members see the unobscured email of everyone in a project.
+  if project and UserIsInProject(project, user_auth.effective_ids):
+    return True
+
+  # Case 4: Do not obscure your own email.
+  if viewed_email and user_auth.user_pb.email == viewed_email:
+    return True
+
+  return False
+
+
 def ParseAndObscureAddress(email):
   # type: str -> str
   """Break the given email into username and domain, and obscure.

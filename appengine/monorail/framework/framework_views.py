@@ -143,9 +143,10 @@ def StuffUserView(user_id, email, obscure_email):
   return UserView(user)
 
 
-def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id):
-  # type: (MonorailConnection, Services, AuthData, Collection[user_pb2.User] ->
-  #     None)
+# TODO(https://crbug.com/monorail/8192): Remove optional project.
+def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id, project=None):
+  # type: (MonorailConnection, Services, AuthData, Collection[user_pb2.User],
+  #     Optional[project_pb2.Project] -> None)
   """Reveal emails based on the authenticated user.
 
   The actual behavior can be determined by looking into
@@ -158,14 +159,20 @@ def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id):
     services: Services object for connections to backend services.
     auth: AuthData object that identifies the logged in user.
     users_by_id: dictionary of UserView's that might be displayed.
+    project: Optional Project PB for the current project.
 
   Returns:
     Nothing, but the UserViews in users_by_id may be modified to
     publish email address.
   """
   for user_view in users_by_id.values():
-    if framework_bizobj.ShouldRevealEmail(cnxn, services, auth, user_view):
-      user_view.RevealEmail()
+    if project:
+      if framework_bizobj.DeprecatedShouldRevealEmail(auth, project,
+                                                      user_view.email):
+        user_view.RevealEmail()
+    else:
+      if framework_bizobj.ShouldRevealEmail(cnxn, services, auth, user_view):
+        user_view.RevealEmail()
 
 
 def RevealAllEmails(users_by_id):
