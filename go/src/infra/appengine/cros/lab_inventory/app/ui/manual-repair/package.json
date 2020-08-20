@@ -8,8 +8,11 @@
     "dev": "npm run webpack-dev-server -- --host 0.0.0.0 --port 5000"
   },
   "dependencies": {
+    "@chopsui/chops-signin": "^0.3.1",
+    "@chopsui/chops-signin-aware": "^0.3.1",
     "@chopsui/prpc-client": "^1.1.0",
     "@doubletrade/lit-datatable": "^0.4.0",
+    "@material/mwc-icon-button": "^0.17.2",
     "@material/mwc-textarea": "^0.17.2",
     "@material/mwc-textfield": "^0.17.2",
     "@material/mwc-top-app-bar-fixed": "^0.17.2",

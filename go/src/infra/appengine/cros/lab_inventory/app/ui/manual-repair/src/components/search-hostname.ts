@@ -10,6 +10,7 @@ import {connect} from 'pwa-helpers';
 import {getRecords} from '../state/actions';
 import {store} from '../state/store';
 
+
 @customElement('search-hostname')
 export default class SearchHostname extends connect
 (store)(LitElement) {
@@ -30,24 +31,26 @@ export default class SearchHostname extends connect
   @property({type: String}) input = '';
   @property({type: Boolean}) submitDisabled = false;
   @property({type: Array}) records = [];
+  @property({type: Object}) user;
 
   stateChanged(state) {
     this.records = state.records;
+    this.user = state.user;
   }
 
   render() {
     return html`
-        <mwc-textarea
-            id = "search-field"
-            outlined
-            rows=1
-            label="Enter a hostname"
-            helper="Enter a device hostname to add or update repair records."
-            ?disabled="${this.submitDisabled}"
-            @input="${this.handleInput}"
-            @keydown="${this.keyboardListener}">
-        </mwc-textarea>
-        `;
+      <mwc-textarea
+          id = "search-field"
+          outlined
+          rows=1
+          label="Enter a hostname"
+          helper="Enter a device hostname to add or update repair records."
+          ?disabled="${this.submitDisabled}"
+          @input="${this.handleInput}"
+          @keydown="${this.keyboardListener}">
+      </mwc-textarea>
+    `;
   }
 
   handleInput(e: InputEvent) {

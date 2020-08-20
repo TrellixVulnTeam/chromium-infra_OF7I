@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '@material/mwc-top-app-bar-fixed';
 import './search-hostname';
-
+import './top-bar';
 import {css, customElement, html, LitElement} from 'lit-element';
+
 
 @customElement('manual-repair')
 export class ManualRepair extends LitElement {
@@ -24,9 +24,7 @@ export class ManualRepair extends LitElement {
   render() {
     return html`
       <div slot="appContent">
-        <mwc-top-app-bar-fixed>
-          <div slot="title">Manual Repair Records</div>
-        </mwc-top-app-bar-fixed>
+        <top-bar></top-bar>
         <div id="app-body">
           <search-hostname></search-hostname>
         </div>
