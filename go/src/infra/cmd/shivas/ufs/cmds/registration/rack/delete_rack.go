@@ -76,7 +76,7 @@ func (c *deleteRack) innerRun(a subcommands.Application, args []string, env subc
 	}
 
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the rack: %s. "+
+	if prompt != nil && !prompt(fmt.Sprintf("Are you sure you want to delete the rack: %s. "+
 		"This will also delete switches, kvms and rpms associated with the rack.", args[0])) {
 		return nil
 	}

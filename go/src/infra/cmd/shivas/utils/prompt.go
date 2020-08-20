@@ -21,11 +21,15 @@ type PromptFunc func(string) bool
 
 // CLIPrompt returns a PromptFunc to prompt user on CLI.
 //
+// If user set environment NO_PROMPT=true, it will returns a nil PromptFunc
 // In case of erroneous input from user, the returned PromptFunc prompts the
 // user again.
 // defaultResponse is returned on empty response from the user.
 // In case of other system errors, the returned promptFunc returns false.
 func CLIPrompt(w io.Writer, r io.Reader, defaultResponse bool) PromptFunc {
+	if noPrompt() {
+		return nil
+	}
 	return func(reason string) bool {
 		if err := prompt(w, reason, defaultResponse); err != nil {
 			return escapeHatchResponse

@@ -72,7 +72,7 @@ func (c *deleteMachineLSEPrototype) innerRun(a subcommands.Application, args []s
 		return err
 	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine prototype: %s", args[0])) {
+	if prompt != nil && !prompt(fmt.Sprintf("Are you sure you want to delete the machine prototype: %s", args[0])) {
 		return nil
 	}
 	_, err = ic.DeleteMachineLSEPrototype(ctx, &ufsAPI.DeleteMachineLSEPrototypeRequest{

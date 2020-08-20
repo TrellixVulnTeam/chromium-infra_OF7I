@@ -70,7 +70,7 @@ func (c *deleteKVM) innerRun(a subcommands.Application, args []string, env subco
 		return err
 	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete KVM: %s", args[0])) {
+	if prompt != nil && !prompt(fmt.Sprintf("Are you sure you want to delete KVM: %s", args[0])) {
 		return nil
 	}
 	_, err = ic.DeleteKVM(ctx, &ufsAPI.DeleteKVMRequest{

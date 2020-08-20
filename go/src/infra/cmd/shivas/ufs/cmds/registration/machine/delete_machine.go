@@ -76,7 +76,7 @@ func (c *deleteMachine) innerRun(a subcommands.Application, args []string, env s
 		return err
 	}
 	prompt := utils.CLIPrompt(a.GetOut(), os.Stdin, false)
-	if !prompt(fmt.Sprintf("Are you sure you want to delete the machine together with its nics & drac: %s. ", args[0])) {
+	if prompt != nil && !prompt(fmt.Sprintf("Are you sure you want to delete the machine together with its nics & drac: %s. ", args[0])) {
 		return nil
 	}
 
