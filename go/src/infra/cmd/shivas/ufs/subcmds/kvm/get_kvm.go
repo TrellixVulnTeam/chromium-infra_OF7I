@@ -93,13 +93,12 @@ func (c *getKVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, kvm *ufsp
 	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 		Hostname: kvm.GetName(),
 	})
-	s, _ := ic.GetState(ctx, &ufsAPI.GetStateRequest{
-		ResourceName: ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.GetName()),
-	})
-	if !c.outputFlags.Tsv() {
-		utils.PrintTitle(utils.KvmFullTitle)
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVKVMFull(kvm, dhcp)
+		return nil
 	}
-	utils.PrintKVMFull(kvm, dhcp, s)
+	utils.PrintTitle(utils.KvmFullTitle)
+	utils.PrintKVMFull(kvm, dhcp)
 	return nil
 }
 

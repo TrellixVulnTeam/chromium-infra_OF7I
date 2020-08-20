@@ -90,20 +90,16 @@ func (c *getDrac) innerRun(a subcommands.Application, args []string, env subcomm
 }
 
 func (c *getDrac) printFull(ctx context.Context, ic ufsAPI.FleetClient, drac *ufspb.Drac) error {
-	machine, _ := ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, drac.GetMachine()),
-	})
-	if machine != nil {
-		machine.Name = ufsUtil.RemovePrefix(machine.Name)
-	}
 	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 		Hostname: drac.Name,
 	})
 	// JSON mode is disabled for full mode for now
-	if !c.outputFlags.Tsv() {
-		utils.PrintTitle(utils.DracFullTitle)
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVDracFull(drac, dhcp)
+		return nil
 	}
-	utils.PrintDracFull(drac, machine, dhcp)
+	utils.PrintTitle(utils.DracFullTitle)
+	utils.PrintDracFull(drac, dhcp)
 	return nil
 }
 

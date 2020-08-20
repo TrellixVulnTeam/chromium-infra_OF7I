@@ -113,10 +113,12 @@ func (c *getNic) printFull(ctx context.Context, ic ufsAPI.FleetClient, nic *ufsp
 		})
 	}
 	// JSON mode is disabled for full mode for now
-	if !c.outputFlags.Tsv() {
-		utils.PrintTitle(utils.NicFullTitle)
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVNicFull(nic, dhcp)
+		return nil
 	}
-	utils.PrintNicFull(nic, machine, dhcp)
+	utils.PrintTitle(utils.NicFullTitle)
+	utils.PrintNicFull(nic, dhcp)
 	return nil
 }
 

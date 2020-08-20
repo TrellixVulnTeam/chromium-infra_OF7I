@@ -104,9 +104,11 @@ func (c *getHost) printFull(ctx context.Context, ic ufsAPI.FleetClient, lse *ufs
 		Hostname: lse.GetHostname(),
 	})
 
-	if !c.outputFlags.Tsv() {
-		utils.PrintTitle(utils.MachineLSETFullitle)
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVHostFull(lse, machine, dhcp)
+		return nil
 	}
+	utils.PrintTitle(utils.MachineLSETFullitle)
 	utils.PrintMachineLSEFull(lse, machine, dhcp)
 	return nil
 }

@@ -182,21 +182,30 @@ func PrintSwitches(switches []*ufspb.Switch, keysOnly bool) {
 	}
 }
 
-// PrintSwitchFull prints the full related msg for a switch
-func PrintSwitchFull(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) {
-	defer tw.Flush()
+func switchFullOutputStrs(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(sw.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(sw.GetName()))
-	out += fmt.Sprintf("%d\t", sw.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", sw.GetZone())
-	out += fmt.Sprintf("%s\t", sw.GetRack())
-	out += fmt.Sprintf("%s\t", sw.GetState())
-	out += fmt.Sprintf("%s\t", ufsAPI.ParseResources(nics, "Name"))
-	out += fmt.Sprintf("%s\t", ufsAPI.ParseResources(dracs, "Name"))
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(sw.GetName()),
+		fmt.Sprintf("%d", sw.GetCapacityPort()),
+		sw.GetZone(),
+		sw.GetRack(),
+		sw.GetState(),
+		strSlicesToStr(ufsAPI.ParseResources(nics, "Name")),
+		strSlicesToStr(ufsAPI.ParseResources(dracs, "Name")),
+		ts,
+	}
+}
+
+// PrintSwitchFull prints the full related msg for a switch
+func PrintSwitchFull(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) {
+	defer tw.Flush()
+	var out string
+	for _, s := range switchFullOutputStrs(sw, nics, dracs) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -241,23 +250,32 @@ func PrintSwitchesJSON(switches []*ufspb.Switch, emit bool) {
 	}
 }
 
-// PrintKVMFull prints the full info for kvm
-func PrintKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
-	defer tw.Flush()
+func kvmFullOutputStrs(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(kvm.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(kvm.Name))
-	out += fmt.Sprintf("%s\t", kvm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", kvm.GetChromePlatform())
-	out += fmt.Sprintf("%d\t", kvm.GetCapacityPort())
-	out += fmt.Sprintf("%s\t", dhcp.GetIp())
-	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", s.GetState())
-	out += fmt.Sprintf("%s\t", kvm.GetZone())
-	out += fmt.Sprintf("%s\t", kvm.GetRack())
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(kvm.Name),
+		kvm.GetMacAddress(),
+		kvm.GetChromePlatform(),
+		fmt.Sprintf("%d", kvm.GetCapacityPort()),
+		dhcp.GetIp(),
+		dhcp.GetVlan(),
+		kvm.GetState(),
+		kvm.GetZone(),
+		kvm.GetRack(),
+		ts,
+	}
+}
+
+// PrintKVMFull prints the full info for kvm
+func PrintKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) {
+	defer tw.Flush()
+	var out string
+	for _, s := range kvmFullOutputStrs(kvm, dhcp) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -362,24 +380,33 @@ func PrintRPMsJSON(rpms []*ufspb.RPM, emit bool) {
 	}
 }
 
-// PrintDracFull prints the full related msg for drac
-func PrintDracFull(drac *ufspb.Drac, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
-	defer tw.Flush()
+func dracFullOutputStrs(m *ufspb.Drac, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
-	if t, err := ptypes.Timestamp(drac.GetUpdateTime()); err == nil {
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(drac.Name))
-	out += fmt.Sprintf("%s\t", drac.GetMacAddress())
-	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetSwitch())
-	out += fmt.Sprintf("%s\t", drac.GetSwitchInterface().GetPortName())
-	out += fmt.Sprintf("%s\t", dhcp.GetHostname())
-	out += fmt.Sprintf("%s\t", dhcp.GetIp())
-	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", drac.GetZone())
-	out += fmt.Sprintf("%s\t", drac.GetRack())
-	out += fmt.Sprintf("%s\t", drac.GetMachine())
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(m.Name),
+		m.GetMacAddress(),
+		m.GetSwitchInterface().GetSwitch(),
+		m.GetSwitchInterface().GetPortName(),
+		dhcp.GetHostname(),
+		dhcp.GetIp(),
+		dhcp.GetVlan(),
+		m.GetZone(),
+		m.GetRack(),
+		m.GetMachine(),
+		ts,
+	}
+}
+
+// PrintDracFull prints the full related msg for drac
+func PrintDracFull(drac *ufspb.Drac, dhcp *ufspb.DHCPConfig) {
+	defer tw.Flush()
+	var out string
+	for _, s := range dracFullOutputStrs(drac, dhcp) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -436,24 +463,33 @@ func PrintDracsJSON(dracs []*ufspb.Drac, emit bool) {
 	}
 }
 
-// PrintNicFull prints the full related msg for nic
-func PrintNicFull(nic *ufspb.Nic, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
-	defer tw.Flush()
+func nicFullOutputStrs(nic *ufspb.Nic, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(nic.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	out := fmt.Sprintf("%s\t", ufsUtil.RemovePrefix(nic.Name))
-	out += fmt.Sprintf("%s\t", nic.GetMacAddress())
-	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetSwitch())
-	out += fmt.Sprintf("%s\t", nic.GetSwitchInterface().GetPortName())
-	out += fmt.Sprintf("%s\t", dhcp.GetHostname())
-	out += fmt.Sprintf("%s\t", dhcp.GetIp())
-	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", nic.GetZone())
-	out += fmt.Sprintf("%s\t", nic.GetRack())
-	out += fmt.Sprintf("%s\t", nic.GetMachine())
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(nic.Name),
+		nic.GetMacAddress(),
+		nic.GetSwitchInterface().GetSwitch(),
+		nic.GetSwitchInterface().GetPortName(),
+		dhcp.GetHostname(),
+		dhcp.GetIp(),
+		dhcp.GetVlan(),
+		nic.GetZone(),
+		nic.GetRack(),
+		nic.GetMachine(),
+		ts,
+	}
+}
+
+// PrintNicFull prints the full related msg for nic
+func PrintNicFull(nic *ufspb.Nic, dhcp *ufspb.DHCPConfig) {
+	defer tw.Flush()
+	var out string
+	for _, s := range nicFullOutputStrs(nic, dhcp) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -511,48 +547,44 @@ func PrintNicsJSON(nics []*ufspb.Nic, emit bool) {
 // PrintMachineFull prints the full machine info.
 func PrintMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) {
 	defer tw.Flush()
+	var out string
+	for _, s := range machineFullOutputStrs(m, lse, rack) {
+		out += fmt.Sprintf("%s\t", s)
+	}
+	fmt.Fprintln(tw, out)
+}
+
+func machineFullOutputStrs(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) []string {
+	var ts string
+	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
+		ts = t.Format(timeFormat)
+	}
 	if m.GetChromeBrowserMachine() != nil {
-		printBrowserMachineFull(m, lse, rack)
+		return []string{
+			ufsUtil.RemovePrefix(m.GetName()),
+			m.GetSerialNumber(),
+			lse.GetName(),
+			m.GetLocation().GetZone().String(),
+			m.GetLocation().GetRack(),
+			m.GetChromeBrowserMachine().GetChromePlatform(),
+			strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")),
+			m.GetChromeBrowserMachine().GetDracObject().GetName(),
+			strSlicesToStr(ufsAPI.ParseResources(rack.GetChromeBrowserRack().GetKvmObjects(), "Name")),
+			strSlicesToStr(ufsAPI.ParseResources(rack.GetChromeBrowserRack().GetSwitchObjects(), "Name")),
+			m.GetChromeBrowserMachine().GetDeploymentTicket(),
+			m.GetChromeBrowserMachine().GetDescription(),
+			m.GetState(),
+			m.GetRealm(),
+			ts,
+		}
 	}
-	if m.GetChromeosMachine() != nil {
-		printOSMachineFull(m)
+	return []string{
+		ufsUtil.RemovePrefix(m.GetName()),
+		m.GetLocation().GetZone().String(),
+		m.GetLocation().GetRack(),
+		m.GetLocation().GetBarcodeName(),
+		ts,
 	}
-}
-
-func printBrowserMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) {
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
-	}
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetSerialNumber())
-	out += fmt.Sprintf("%s\t", lse.GetName())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetChromePlatform())
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")))
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDracObject().GetName())
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(rack.GetChromeBrowserRack().GetKvmObjects(), "Name")))
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(rack.GetChromeBrowserRack().GetSwitchObjects(), "Name")))
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDeploymentTicket())
-	out += fmt.Sprintf("%s\t", m.GetChromeBrowserMachine().GetDescription())
-	out += fmt.Sprintf("%s\t", m.GetState())
-	out += fmt.Sprintf("%s\t", m.GetRealm())
-	out += fmt.Sprintf("%s\t", ts)
-	fmt.Fprintln(tw, out)
-}
-
-func printOSMachineFull(m *ufspb.Machine) {
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
-	}
-	out := fmt.Sprintf("%s\t", m.GetName())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetZone())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetRack())
-	out += fmt.Sprintf("%s\t", m.GetLocation().GetBarcodeName())
-	out += fmt.Sprintf("%s\t", ts)
-	fmt.Fprintln(tw, out)
 }
 
 // PrintMachines prints the all machines in table form.
@@ -828,26 +860,35 @@ func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE, emit bool) {
 	}
 }
 
-// PrintMachineLSEFull prints the full info for a host
-func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
-	defer tw.Flush()
+func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(lse.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	out := fmt.Sprintf("%s\t", lse.GetName())
-	out += fmt.Sprintf("%s\t", lse.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
-	out += fmt.Sprintf("%s\t", lse.GetManufacturer())
-	out += fmt.Sprintf("%s\t", machine.GetName())
-	out += fmt.Sprintf("%s\t", lse.GetZone())
-	out += fmt.Sprintf("%s\t", lse.GetRack())
-	out += fmt.Sprintf("%s\t", lse.GetNic())
-	out += fmt.Sprintf("%s\t", dhcp.GetIp())
-	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", lse.GetState())
-	out += fmt.Sprintf("%d\t", lse.GetChromeBrowserMachineLse().GetVmCapacity())
-	out += fmt.Sprintf("%s\t", strSlicesToStr(ufsAPI.ParseResources(lse.GetChromeBrowserMachineLse().GetVms(), "Name")))
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(lse.GetName()),
+		lse.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
+		lse.GetManufacturer(),
+		machine.GetName(),
+		lse.GetZone(),
+		lse.GetRack(),
+		lse.GetNic(),
+		dhcp.GetIp(),
+		dhcp.GetVlan(),
+		lse.GetState(),
+		fmt.Sprintf("%d", lse.GetChromeBrowserMachineLse().GetVmCapacity()),
+		strSlicesToStr(ufsAPI.ParseResources(lse.GetChromeBrowserMachineLse().GetVms(), "Name")),
+		ts,
+	}
+}
+
+// PrintMachineLSEFull prints the full info for a host
+func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
+	defer tw.Flush()
+	var out string
+	for _, s := range machineLSEFullOutputStrs(lse, machine, dhcp) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 
@@ -923,23 +964,32 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 	fmt.Fprintln(tw, out)
 }
 
-// PrintVMFull prints the full info for vm
-func PrintVMFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig, s *ufspb.StateRecord) {
-	defer tw.Flush()
+func vmFullOutputStrs(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(vm.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
 	}
-	out := fmt.Sprintf("%s\t", vm.GetName())
-	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetValue())
-	out += fmt.Sprintf("%s\t", vm.GetOsVersion().GetDescription())
-	out += fmt.Sprintf("%s\t", vm.GetMacAddress())
-	out += fmt.Sprintf("%s\t", vm.GetZone())
-	out += fmt.Sprintf("%s\t", vm.GetMachineLseId())
-	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
-	out += fmt.Sprintf("%s\t", dhcp.GetIp())
-	out += fmt.Sprintf("%s\t", s.GetState())
-	out += fmt.Sprintf("%s\t", ts)
+	return []string{
+		ufsUtil.RemovePrefix(vm.GetName()),
+		vm.GetOsVersion().GetValue(),
+		vm.GetOsVersion().GetDescription(),
+		vm.GetMacAddress(),
+		vm.GetZone(),
+		vm.GetMachineLseId(),
+		dhcp.GetVlan(),
+		dhcp.GetIp(),
+		vm.GetState(),
+		ts,
+	}
+}
+
+// PrintVMFull prints the full info for vm
+func PrintVMFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) {
+	defer tw.Flush()
+	var out string
+	for _, s := range vmFullOutputStrs(vm, dhcp) {
+		out += fmt.Sprintf("%s\t", s)
+	}
 	fmt.Fprintln(tw, out)
 }
 

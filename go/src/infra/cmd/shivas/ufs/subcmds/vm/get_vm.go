@@ -89,13 +89,12 @@ func (c *getVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, vm *ufspb.
 	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 		Hostname: vm.GetName(),
 	})
-	s, _ := ic.GetState(ctx, &ufsAPI.GetStateRequest{
-		ResourceName: ufsUtil.AddPrefix(ufsUtil.VMCollection, vm.GetName()),
-	})
-	if !c.outputFlags.Tsv() {
-		utils.PrintTitle(utils.VMFullTitle)
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVVmFull(vm, dhcp)
+		return nil
 	}
-	utils.PrintVMFull(vm, dhcp, s)
+	utils.PrintTitle(utils.VMFullTitle)
+	utils.PrintVMFull(vm, dhcp)
 	return nil
 }
 

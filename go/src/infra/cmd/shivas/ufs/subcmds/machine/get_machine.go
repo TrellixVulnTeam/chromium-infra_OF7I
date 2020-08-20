@@ -120,12 +120,14 @@ func (c *getMachine) printFull(ctx context.Context, ic ufsAPI.FleetClient, machi
 	})
 	rack.Name = ufsUtil.RemovePrefix(rack.Name)
 
-	if !c.outputFlags.Tsv() {
-		if machine.GetChromeBrowserMachine() != nil {
-			utils.PrintTitle(utils.BrowserMachineFullTitle)
-		} else if machine.GetChromeosMachine() != nil {
-			utils.PrintTitle(utils.OSMachineFullTitle)
-		}
+	if c.outputFlags.Tsv() {
+		utils.PrintTSVMachineFull(machine, lse, rack)
+		return nil
+	}
+	if machine.GetChromeBrowserMachine() != nil {
+		utils.PrintTitle(utils.BrowserMachineFullTitle)
+	} else if machine.GetChromeosMachine() != nil {
+		utils.PrintTitle(utils.OSMachineFullTitle)
 	}
 	utils.PrintMachineFull(machine, lse, rack)
 	return nil

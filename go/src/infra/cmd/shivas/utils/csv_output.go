@@ -25,6 +25,55 @@ func NewCSVWriter() *CSVWriter {
 	return w
 }
 
+// PrintTSVDracFull prints the full related msg for drac in tsv mode
+func PrintTSVDracFull(drac *ufspb.Drac, dhcp *ufspb.DHCPConfig) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.Write(dracFullOutputStrs(drac, dhcp))
+}
+
+// PrintTSVHostFull prints the full related msg for host in tsv mode
+func PrintTSVHostFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.Write(machineLSEFullOutputStrs(lse, machine, dhcp))
+}
+
+// PrintTSVKVMFull prints the full related msg for kvm in tsv mode
+func PrintTSVKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.Write(kvmFullOutputStrs(kvm, dhcp))
+}
+
+// PrintTSVMachineFull prints the full related msg for machine in tsv mode
+func PrintTSVMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.Write(machineFullOutputStrs(m, lse, rack))
+}
+
+// PrintTSVNicFull prints the full related msg for nic in tsv mode
+func PrintTSVNicFull(nic *ufspb.Nic, dhcp *ufspb.DHCPConfig) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.Write(nicFullOutputStrs(nic, dhcp))
+}
+
+// PrintTSVSwitchFull prints the full related msg for switch in tsv mode
+func PrintTSVSwitchFull(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.Write(switchFullOutputStrs(sw, nics, dracs))
+}
+
+// PrintTSVVmFull prints the full related msg for vm in tsv mode
+func PrintTSVVmFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.Write(vmFullOutputStrs(vm, dhcp))
+}
+
 // printTSVs prints tsv format of entities
 func printTSVs(res []proto.Message, keysOnly bool, outputFunc func(proto.Message) []string) {
 	csw := NewCSVWriter()
