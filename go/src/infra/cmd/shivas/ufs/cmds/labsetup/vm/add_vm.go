@@ -19,6 +19,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // AddVMCmd add a vm on a host.
@@ -31,7 +32,7 @@ Examples:
 shivas add-vm -new-json-file vm.json -host host1
 Add a VM on a host by reading a JSON file input.
 
-shivas add-vm -name vm1 -host host1 -mac-address 12:34:56 -os-version chrome-version-1
+shivas add-vm -name vm1 -host host1 -mac-address 12:34:56 -os chrome-version-1
 Add a VM by parameters.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addVM{}
@@ -43,7 +44,7 @@ Add a VM by parameters.`,
 		c.Flags.StringVar(&c.hostName, "host", "", "hostname of the host to add the VM")
 		c.Flags.StringVar(&c.vmName, "name", "", "hostname/name of the VM")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM")
-		c.Flags.StringVar(&c.osVersion, "os-version", "", "os version of the VM")
+		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
 	},
@@ -108,6 +109,7 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 	if err != nil {
 		return errors.Annotate(err, "Unable to add the VM to the host").Err()
 	}
+	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res, false)
 	fmt.Printf("Successfully added the vm %s to host %s\n", vm.GetName(), c.hostName)
 	return nil

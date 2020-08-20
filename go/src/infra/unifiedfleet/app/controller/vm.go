@@ -33,6 +33,8 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 		vm.MachineLseId = host
 		vm.Zone = lse.Zone
 		vm.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		formatOsVersion(vm.GetOsVersion())
+
 		// Update states
 		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING); err != nil {
 			return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
@@ -79,6 +81,7 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 		vm.Zone = oldVM.GetZone()
 		vm.State = oldVM.GetState()
 		vm.Vlan = oldVM.GetVlan()
+		formatOsVersion(vm.GetOsVersion())
 
 		// Check if user provided new host to associate the vm
 		if host != "" && oldVM.MachineLseId != host {

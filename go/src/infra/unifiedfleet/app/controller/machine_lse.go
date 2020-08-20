@@ -110,6 +110,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 		}
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
+		formatOsVersion(lse.GetChromeBrowserMachineLse().GetOsVersion())
 
 		// Assign ip configs
 		if (nwOpt.GetVlan() != "" || nwOpt.GetIp() != "") && nwOpt.GetNic() != "" {
@@ -125,11 +126,12 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 
 		// Create the machinelse
 		if vms != nil {
+			for _, vm := range vms {
+				formatOsVersion(vm.GetOsVersion())
+				hc.LogVMChanges(nil, vm)
+			}
 			if _, err := inventory.BatchUpdateVMs(ctx, vms); err != nil {
 				return errors.Annotate(err, "Failed to BatchUpdate vms for host %s", lse.Name).Err()
-			}
-			for _, vm := range vms {
-				hc.LogVMChanges(nil, vm)
 			}
 			lse.GetChromeBrowserMachineLse().Vms = nil
 		}
@@ -209,6 +211,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		machinelse.Manufacturer = oldMachinelse.GetManufacturer()
 		machinelse.State = oldMachinelse.GetState()
 		machinelse.Nic = oldMachinelse.GetNic()
+		formatOsVersion(machinelse.GetChromeBrowserMachineLse().GetOsVersion())
 
 		// Do not let updating from browser to os or vice versa change for MachineLSE.
 		if oldMachinelse.GetChromeBrowserMachineLse() != nil && machinelse.GetChromeosMachineLse() != nil {

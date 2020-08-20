@@ -41,7 +41,7 @@ var AddHostCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.hostName, "name", "", "name of the host")
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host")
-		c.Flags.StringVar(&c.osVersion, "os-version", "", "name of the os version of the machine (browser lab only)")
+		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only)")
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only)")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c

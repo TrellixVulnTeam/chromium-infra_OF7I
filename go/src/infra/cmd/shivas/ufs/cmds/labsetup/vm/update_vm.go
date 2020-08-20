@@ -32,7 +32,7 @@ Examples:
 shivas update-vm -f vm.json -h {Hostname}
 Update a VM on a host by reading a JSON file input.
 
-shivas update-vm -name cr22 -os-version windows
+shivas update-vm -name cr22 -os windows
 Partial update a vm by parameters. Only specified parameters will be updated in the vm.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &updateVM{}
@@ -45,7 +45,7 @@ Partial update a vm by parameters. Only specified parameters will be updated in 
 		c.Flags.StringVar(&c.hostName, "host", "", "hostname of the host to add the VM")
 		c.Flags.StringVar(&c.vmName, "name", "", "hostname/name of the VM")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.osVersion, "os-version", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
@@ -133,7 +133,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 			"host":        "machinelseName",
 			"state":       "state",
 			"mac-address": "macAddress",
-			"os-version":  "osVersion",
+			"os":          "osVersion",
 			"tags":        "tags",
 		}),
 	})

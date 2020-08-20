@@ -44,7 +44,7 @@ var UpdateHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the host to")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host.")
-		c.Flags.StringVar(&c.osVersion, "os-version", "", "name of the os version of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only). "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		return c
@@ -145,7 +145,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"machine":     "machine",
 			"prototype":   "mlseprototype",
-			"os-version":  "osVersion",
+			"os":          "osVersion",
 			"vm-capacity": "vmCapacity",
 			"tags":        "tags",
 			"state":       "state",

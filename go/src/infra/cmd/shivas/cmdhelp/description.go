@@ -360,7 +360,7 @@ Updates a host by reading a JSON file input.
 shivas update-host -f host.json -m {Machine name}
 Update a host by reading a JSON file input and associate the host with a different machine.
 
-shivas update-host -name cr22 -os-version windows
+shivas update-host -name cr22 -os windows
 Partial update a host by parameters. Only specified parameters will be updated in the host.
 
 shivas update-host -name host0 -delete-vlan
