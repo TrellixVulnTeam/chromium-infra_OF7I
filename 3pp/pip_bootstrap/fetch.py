@@ -15,6 +15,9 @@ def _get_wheel_url(pkgname, version):
   r = requests.get('https://pypi.org/pypi/%s/json' % pkgname)
   r.raise_for_status()
   for filedata in r.json()['releases'][version]:
+    # Skip python3 only releases for now.
+    if filedata['python_version'] == 'py3':
+      continue
     if filedata['packagetype'] == 'bdist_wheel':
       return filedata['url'], filedata['filename']
   raise AssertionError('could not find wheel for %s @ %s' % (pkgname, version))
