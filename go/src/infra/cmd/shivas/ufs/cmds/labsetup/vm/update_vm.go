@@ -48,6 +48,7 @@ Partial update a vm by parameters. Only specified parameters will be updated in 
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.description, "desc", "", "description for the vm")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
@@ -65,15 +66,16 @@ type updateVM struct {
 
 	newSpecsFile string
 
-	hostName   string
-	vmName     string
-	vlanName   string
-	deleteVlan bool
-	ip         string
-	state      string
-	macAddress string
-	osVersion  string
-	tags       string
+	hostName    string
+	vmName      string
+	vlanName    string
+	deleteVlan  bool
+	ip          string
+	state       string
+	macAddress  string
+	osVersion   string
+	tags        string
+	description string
 }
 
 func (c *updateVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -139,6 +141,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 			"mac-address": "macAddress",
 			"os":          "osVersion",
 			"tags":        "tags",
+			"desc":        "description",
 		}),
 	})
 	if err != nil {
@@ -181,6 +184,7 @@ func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	} else {
 		vm.Tags = utils.GetStringSlice(c.tags)
 	}
+	vm.Description = c.description
 }
 
 func (c *updateVM) validateArgs() error {
@@ -189,7 +193,7 @@ func (c *updateVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" &&
-			c.hostName == "" && c.osVersion == "" && c.macAddress == "" && c.tags == "" {
+			c.hostName == "" && c.osVersion == "" && c.macAddress == "" && c.tags == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}

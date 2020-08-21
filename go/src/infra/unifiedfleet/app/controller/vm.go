@@ -234,6 +234,8 @@ func processVMUpdateMask(oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMa
 			}
 		case "tags":
 			oldVM.Tags = mergeTags(oldVM.GetTags(), vm.GetTags())
+		case "description":
+			oldVM.Description = vm.Description
 		}
 	}
 	// return existing/old vm with new updated values
@@ -357,6 +359,7 @@ func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
 					return status.Error(codes.InvalidArgument, "validateUpdateVM - Osversion cannot be empty/nil.")
 				}
 			case "tags":
+			case "description":
 			case "state":
 				// valid fields, nothing to validate.
 			default:
