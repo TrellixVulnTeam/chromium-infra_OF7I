@@ -30,6 +30,7 @@ import (
 	"infra/cmd/shivas/ufs/cmds/registration/nic"
 	"infra/cmd/shivas/ufs/cmds/registration/rack"
 	"infra/cmd/shivas/ufs/cmds/registration/switches"
+	"infra/cmd/shivas/ufs/cmds/state"
 )
 
 func getApplication() *cli.Application {
@@ -95,6 +96,7 @@ func getApplication() *cli.Application {
 			q.ListCmd,
 			subcommands.Section("State"),
 			sw_cmds.ReserveDutsCmd,
+			state.DutStateCmd,
 		},
 	}
 }
