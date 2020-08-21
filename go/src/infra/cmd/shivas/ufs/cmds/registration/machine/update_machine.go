@@ -6,7 +6,6 @@ package machine
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -37,7 +36,7 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
 		c.Flags.StringVar(&c.machineName, "name", "", "the name of the machine to update")
-		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]. ", strings.Join(ufsUtil.ValidZoneStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses. "+cmdhelp.ClearFieldHelpText)
@@ -101,6 +100,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			if err = utils.ParseJSONFile(c.newSpecsFile, &machine); err != nil {
 				return err
 			}
+			machine.Realm = ufsUtil.ToUFSRealm(machine.GetLocation().GetZone().String())
 		} else {
 			c.parseArgs(&machine)
 		}
@@ -177,14 +177,38 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 			machine.GetChromeBrowserMachine().GetKvmInterface().Kvm = c.kvm
 		}
 	}
+	machine.Realm = ufsUtil.ToUFSRealm(machine.GetLocation().GetZone().String())
 }
 
 func (c *updateMachine) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
 	}
-	if c.zoneName != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
+	if c.newSpecsFile != "" || c.interactive {
+		if c.machineName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
+		}
+		if c.rackName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-rack' cannot be specified at the same time.")
+		}
+		if c.zoneName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-zone' cannot be specified at the same time.")
+		}
+		if c.platform != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-platform' cannot be specified at the same time.")
+		}
+		if c.kvm != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-kvm' cannot be specified at the same time.")
+		}
+		if c.deploymentTicket != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-ticket' cannot be specified at the same time.")
+		}
+		if c.serialNumber != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-serial' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.machineName == "" {
@@ -192,6 +216,9 @@ func (c *updateMachine) validateArgs() error {
 		}
 		if c.zoneName == "" && c.rackName == "" && c.tags == "" && c.platform == "" && c.deploymentTicket == "" && c.kvm == "" && c.serialNumber == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+		}
+		if c.zoneName != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 		}
 	}
 	return nil

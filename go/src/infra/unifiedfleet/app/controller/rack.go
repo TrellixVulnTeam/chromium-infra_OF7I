@@ -187,6 +187,7 @@ func processRackUpdateMask(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb
 				oldRack.Location = &ufspb.Location{}
 			}
 			oldRack.GetLocation().Zone = rack.GetLocation().GetZone()
+			oldRack.Realm = rack.GetRealm()
 		case "capacity":
 			oldRack.CapacityRu = rack.GetCapacityRu()
 		case "tags":

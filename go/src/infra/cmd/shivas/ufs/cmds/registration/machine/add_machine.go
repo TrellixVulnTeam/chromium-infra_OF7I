@@ -6,7 +6,6 @@ package machine
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -36,7 +35,7 @@ var AddMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineRegistrationFileText)
 
 		c.Flags.StringVar(&c.machineName, "name", "", "the name of the machine to add")
-		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the machine to. Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine")
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses")
@@ -97,8 +96,7 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 		if err = utils.ParseJSONFile(c.newSpecsFile, &machineRegistrationReq); err != nil {
 			return err
 		}
-		ufsZone := ufsUtil.ToUFSZone(c.zoneName)
-		machineRegistrationReq.GetMachine().GetLocation().Zone = ufsZone
+		ufsZone := machineRegistrationReq.GetMachine().GetLocation().GetZone()
 		machineRegistrationReq.GetMachine().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
 	} else {
 		c.parseArgs(&machineRegistrationReq)
@@ -144,19 +142,40 @@ func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
 }
 
 func (c *addMachine) validateArgs() error {
-	if c.zoneName == "" {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required.")
-	}
-	if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
-	}
 	if c.newSpecsFile != "" {
 		if c.machineName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
 		}
+		if c.rackName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-rack' cannot be specified at the same time.")
+		}
+		if c.zoneName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-zone' cannot be specified at the same time.")
+		}
+		if c.platform != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-platform' cannot be specified at the same time.")
+		}
+		if c.kvm != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-kvm' cannot be specified at the same time.")
+		}
+		if c.deploymentTicket != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-ticket' cannot be specified at the same time.")
+		}
+		if c.serialNumber != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-serial' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
 	} else {
 		if c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is setup.")
+		}
+		if c.zoneName == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required, no mode ('-f') is setup.")
+		}
+		if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 		}
 	}
 	return nil

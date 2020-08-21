@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -89,15 +90,21 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 		Options: site.DefaultPRPCOptions,
 	})
 	var nic ufspb.Nic
+	var machineName string
 	if c.interactive {
-		c.machineName = utils.GetNicInteractiveInput(ctx, ic, &nic, true)
+		machineName = utils.GetNicInteractiveInput(ctx, ic, &nic, true)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &nic); err != nil {
 				return err
 			}
+			if nic.GetMachine() == "" {
+				return errors.New(fmt.Sprintf("machine field is empty in json. It is a required parameter for json input."))
+			}
+			machineName = nic.GetMachine()
 		} else {
 			c.parseArgs(&nic)
+			machineName = c.machineName
 		}
 	}
 	if err := utils.PrintExistingNic(ctx, ic, nic.Name); err != nil {
@@ -106,7 +113,7 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 	nic.Name = ufsUtil.AddPrefix(ufsUtil.NicCollection, nic.Name)
 	res, err := ic.UpdateNic(ctx, &ufsAPI.UpdateNicRequest{
 		Nic:     &nic,
-		Machine: c.machineName,
+		Machine: machineName,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"machine":     "machine",
 			"mac-address": "macAddress",
@@ -165,6 +172,9 @@ func (c *updateNic) validateArgs() error {
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
+		if c.machineName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-machine' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {

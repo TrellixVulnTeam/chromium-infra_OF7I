@@ -6,7 +6,6 @@ package rack
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
@@ -36,7 +35,7 @@ var AddRackCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.RackRegistrationFileText)
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to add")
-		c.Flags.StringVar(&c.zoneName, "zone", "", fmt.Sprintf("the name of the zone to add the rack to. Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", ")))
+		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many machines can be added to this rack")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
@@ -74,11 +73,7 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 		if err := utils.ParseJSONFile(c.newSpecsFile, &rackRegistrationReq); err != nil {
 			return err
 		}
-		ufsZone := ufsUtil.ToUFSZone(c.zoneName)
-		if rackRegistrationReq.GetRack().Location == nil {
-			rackRegistrationReq.GetRack().Location = &ufspb.Location{}
-		}
-		rackRegistrationReq.GetRack().GetLocation().Zone = ufsZone
+		ufsZone := rackRegistrationReq.GetRack().GetLocation().GetZone()
 		rackRegistrationReq.GetRack().Realm = ufsUtil.ToUFSRealm(ufsZone.String())
 	} else {
 		c.parseArgs(&rackRegistrationReq)
@@ -131,19 +126,28 @@ func (c *addRack) parseArgs(req *ufsAPI.RackRegistrationRequest) {
 }
 
 func (c *addRack) validateArgs() error {
-	if c.zoneName == "" {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required.")
-	}
-	if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
-	}
 	if c.newSpecsFile != "" {
 		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-name' cannot be specified at the same time.")
 		}
+		if c.zoneName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-zone' cannot be specified at the same time.")
+		}
+		if c.capacity != 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-capacity' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
 	} else {
 		if c.rackName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is setup.")
+		}
+		if c.zoneName == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required, no mode ('-f') is setup.")
+		}
+		if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
 		}
 	}
 	return nil

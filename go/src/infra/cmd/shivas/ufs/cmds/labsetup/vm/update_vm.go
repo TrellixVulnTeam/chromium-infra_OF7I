@@ -30,8 +30,10 @@ var UpdateVMCmd = &subcommands.Command{
 	LongDesc: `Update a VM on a host
 
 Examples:
-shivas update-vm -f vm.json -h {Hostname}
+shivas update-vm -f vm.json
 Update a VM on a host by reading a JSON file input.
+[WARNING]: machineLseId is a required field in json, all other output only fields will be ignored.
+Specify additional settings, e.g. vlan, ip, state via command line parameters along with JSON input
 
 shivas update-vm -name cr22 -os windows
 Partial update a vm by parameters. Only specified parameters will be updated in the vm.`,
@@ -48,12 +50,12 @@ Partial update a vm by parameters. Only specified parameters will be updated in 
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.description, "desc", "", "description for the vm")
-		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
+		c.Flags.StringVar(&c.description, "desc", "", "description for the vm. "+cmdhelp.ClearFieldHelpText)
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the vm to")
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -107,12 +109,18 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 
 	// Parse the josn input
 	var vm ufspb.VM
+	var machineLSEID string
 	if c.newSpecsFile != "" {
 		if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
 			return err
 		}
+		if vm.GetMachineLseId() == "" {
+			return errors.New(fmt.Sprintf("machineLseId field is empty in json. It is a required parameter for json input."))
+		}
+		machineLSEID = vm.GetMachineLseId()
 	} else {
 		c.parseArgs(&vm)
+		machineLSEID = c.hostName
 	}
 	if err := utils.PrintExistingVM(ctx, ic, vm.Name); err != nil {
 		return err
@@ -132,7 +140,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	vm.Name = ufsUtil.AddPrefix(ufsUtil.VMCollection, vm.Name)
 	res, err := ic.UpdateVM(ctx, &ufsAPI.UpdateVMRequest{
 		Vm:            &vm,
-		MachineLSEId:  c.hostName,
+		MachineLSEId:  machineLSEID,
 		NetworkOption: nwOpt,
 		State:         s,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
@@ -184,7 +192,11 @@ func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	} else {
 		vm.Tags = utils.GetStringSlice(c.tags)
 	}
-	vm.Description = c.description
+	if c.description == utils.ClearFieldValue {
+		vm.Description = ""
+	} else {
+		vm.Description = c.description
+	}
 }
 
 func (c *updateVM) validateArgs() error {
@@ -195,6 +207,25 @@ func (c *updateVM) validateArgs() error {
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" &&
 			c.hostName == "" && c.osVersion == "" && c.macAddress == "" && c.tags == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+		}
+	} else {
+		if c.vmName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.hostName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-host' cannot be specified at the same time.")
+		}
+		if c.macAddress != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
+		if c.osVersion != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")
+		}
+		if c.description != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {

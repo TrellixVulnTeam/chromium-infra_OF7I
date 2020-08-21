@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -90,28 +91,34 @@ func (c *addNic) innerRun(a subcommands.Application, args []string, env subcomma
 	})
 
 	var nic ufspb.Nic
+	var machineName string
 	if c.interactive {
-		c.machineName = utils.GetNicInteractiveInput(ctx, ic, &nic, false)
+		machineName = utils.GetNicInteractiveInput(ctx, ic, &nic, false)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &nic); err != nil {
 				return err
 			}
+			if nic.GetMachine() == "" {
+				return errors.New(fmt.Sprintf("machine field is empty in json. It is a required parameter for json input."))
+			}
+			machineName = nic.GetMachine()
 		} else {
 			c.parseArgs(&nic)
+			machineName = c.machineName
 		}
 	}
 	res, err := ic.CreateNic(ctx, &ufsAPI.CreateNicRequest{
 		Nic:     &nic,
 		NicId:   nic.GetName(),
-		Machine: c.machineName,
+		Machine: machineName,
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res, false)
-	fmt.Printf("Successfully added the nic %s to machine %s\n", res.Name, c.machineName)
+	fmt.Printf("Successfully added the nic %s to machine %s\n", res.Name, machineName)
 	return nil
 }
 
@@ -126,6 +133,9 @@ func (c *addNic) parseArgs(nic *ufspb.Nic) {
 }
 
 func (c *addNic) validateArgs() error {
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
 	if c.newSpecsFile != "" || c.interactive {
 		if c.nicName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
@@ -142,13 +152,8 @@ func (c *addNic) validateArgs() error {
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
-	}
-	if c.newSpecsFile != "" {
-		if c.interactive {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
-		}
-		if c.machineName == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required for JSON mode.")
+		if c.machineName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-machine' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {

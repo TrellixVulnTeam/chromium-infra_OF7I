@@ -178,6 +178,7 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 				oldMachine.Location = &ufspb.Location{}
 			}
 			oldMachine.GetLocation().Zone = machine.GetLocation().GetZone()
+			oldMachine.Realm = machine.GetRealm()
 		case "rack":
 			if machine.GetLocation().GetRack() == oldMachine.GetLocation().GetRack() {
 				continue

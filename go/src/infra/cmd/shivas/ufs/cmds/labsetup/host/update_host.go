@@ -36,9 +36,9 @@ var UpdateHostCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineLSEFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
+
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to associate the host")
 		c.Flags.StringVar(&c.hostName, "name", "", "name of the host")
-		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host.")
 		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only). "+"To clear this field set it to -1.")
@@ -48,6 +48,8 @@ var UpdateHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the host")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the host to")
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
+
 		return c
 	},
 }
@@ -101,6 +103,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		Options: site.DefaultPRPCOptions,
 	})
 	machinelse := &ufspb.MachineLSE{}
+	var machines []string
 	if c.interactive {
 		return errors.New("Interactive mode for this " +
 			"command is not yet implemented yet. Use JSON input mode.")
@@ -111,8 +114,15 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		if err = utils.ParseJSONFile(c.newSpecsFile, machinelse); err != nil {
 			return err
 		}
+		machines = machinelse.GetMachines()
+		if machines == nil || len(machines) <= 0 {
+			return errors.New(fmt.Sprintf("machines field is empty in json. It is a required parameter for json input."))
+		}
 	} else {
 		c.parseArgs(machinelse)
+		if c.machineName != "" {
+			machines = append(machines, c.machineName)
+		}
 	}
 	if err := utils.PrintExistingHost(ctx, ic, machinelse.Name); err != nil {
 		return err
@@ -136,14 +146,10 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		}
 	}
 
-	var machineNames []string
-	if c.machineName != "" {
-		machineNames = append(machineNames, c.machineName)
-	}
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE:     machinelse,
-		Machines:       machineNames,
+		Machines:       machines,
 		NetworkOptions: networkOptions,
 		States:         states,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
@@ -228,6 +234,26 @@ func (c *updateHost) parseNetworkOpt(lseName string) map[string]*ufsAPI.NetworkO
 func (c *updateHost) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
+	if c.newSpecsFile != "" || c.interactive {
+		if c.hostName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.machineName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-machine' cannot be specified at the same time.")
+		}
+		if c.prototype != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-prototype' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
+		if c.vmCapacity != 0 {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-vm-capacity' cannot be specified at the same time.")
+		}
+		if c.osVersion != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.hostName == "" {

@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -35,14 +36,16 @@ var UpdateKVMCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.KVMFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
 
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the kvm to")
+		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the kvm")
+		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the kvm to")
+
 		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm.")
 		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm to update")
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the kvm to update")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to update. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
-		c.Flags.StringVar(&c.vlanName, "vlan", "", "the vlan to assign the kvm to")
-		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the kvm")
-		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the kvm to")
+
 		return c
 	},
 }
@@ -93,15 +96,21 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		Options: site.DefaultPRPCOptions,
 	})
 	var kvm ufspb.KVM
+	var rackName string
 	if c.interactive {
-		c.rackName = utils.GetKVMInteractiveInput(ctx, ic, &kvm, true)
+		rackName = utils.GetKVMInteractiveInput(ctx, ic, &kvm, true)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
 				return err
 			}
+			if kvm.GetRack() == "" {
+				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
+			}
+			rackName = kvm.GetRack()
 		} else {
 			c.parseArgs(&kvm)
+			rackName = c.rackName
 		}
 	}
 	if err := utils.PrintExistingKVM(ctx, ic, kvm.Name); err != nil {
@@ -110,7 +119,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 	kvm.Name = ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name)
 	res, err := ic.UpdateKVM(ctx, &ufsAPI.UpdateKVMRequest{
 		KVM:  &kvm,
-		Rack: c.rackName,
+		Rack: rackName,
 		NetworkOption: &ufsAPI.NetworkOption{
 			Vlan:   c.vlanName,
 			Delete: c.deleteVlan,
@@ -162,6 +171,23 @@ func (c *updateKVM) parseArgs(kvm *ufspb.KVM) {
 func (c *updateKVM) validateArgs() error {
 	if c.newSpecsFile != "" && c.interactive {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
+	if c.newSpecsFile != "" || c.interactive {
+		if c.kvmName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.platform != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-platform' cannot be specified at the same time.")
+		}
+		if c.macAddress != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+		}
+		if c.tags != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
+		if c.rackName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.kvmName == "" {

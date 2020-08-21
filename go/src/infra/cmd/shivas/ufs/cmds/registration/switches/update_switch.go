@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -87,6 +88,7 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		Options: site.DefaultPRPCOptions,
 	})
 	var s ufspb.Switch
+	var rackName string
 	if c.interactive {
 		c.rackName = utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
 	} else {
@@ -94,8 +96,13 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
 				return err
 			}
+			if s.GetRack() == "" {
+				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
+			}
+			rackName = s.GetRack()
 		} else {
 			c.parseArgs(&s)
+			rackName = c.rackName
 		}
 	}
 	if err := utils.PrintExistingSwitch(ctx, ic, s.Name); err != nil {
@@ -104,7 +111,7 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 	s.Name = ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name)
 	res, err := ic.UpdateSwitch(ctx, &ufsAPI.UpdateSwitchRequest{
 		Switch: &s,
-		Rack:   c.rackName,
+		Rack:   rackName,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"rack":     "rack",
 			"capacity": "capacity",
@@ -157,6 +164,9 @@ func (c *updateSwitch) validateArgs() error {
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
+		}
+		if c.rackName == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {

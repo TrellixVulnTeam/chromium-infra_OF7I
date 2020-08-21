@@ -30,8 +30,10 @@ var AddVMCmd = &subcommands.Command{
 	LongDesc: `Add a VM on a host
 
 Examples:
-shivas add-vm -new-json-file vm.json -host host1
+shivas add-vm -f vm.json
 Add a VM on a host by reading a JSON file input.
+[WARNING]: machineLseId is a required field in json, all other output only fields will be ignored.
+Specify additional settings, e.g. vlan, ip via command line parameters along with JSON input
 
 shivas add-vm -name vm1 -host host1 -mac-address 12:34:56 -os chrome-version-1
 Add a VM by parameters.`,
@@ -100,17 +102,22 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 
 	// Parse input json
 	var vm ufspb.VM
+	var machineLSEID string
 	if c.newSpecsFile != "" {
 		if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
 			return err
 		}
+		if vm.GetMachineLseId() == "" {
+			return errors.New(fmt.Sprintf("machineLseId field is empty in json. It is a required parameter for json input."))
+		}
+		machineLSEID = vm.GetMachineLseId()
 	} else {
 		c.parseArgs(&vm)
+		machineLSEID = c.hostName
 	}
-
 	res, err := ic.CreateVM(ctx, &ufsAPI.CreateVMRequest{
 		Vm:            &vm,
-		MachineLSEId:  c.hostName,
+		MachineLSEId:  machineLSEID,
 		NetworkOption: c.parseNetworkOpt(),
 	})
 	if err != nil {
@@ -124,7 +131,7 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 func (c *addVM) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.VM) {
 	fmt.Println("The newly added vm:")
 	utils.PrintProtoJSON(res, false)
-	fmt.Printf("Successfully added the vm %s to host %s\n", res.Name, c.hostName)
+	fmt.Printf("Successfully added the vm %s to host %s\n", res.Name, res.GetMachineLseId())
 	if c.vlanName != "" || c.ip != "" {
 		// Log the assigned IP
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
@@ -165,12 +172,12 @@ func (c *addVM) parseNetworkOpt() *ufsAPI.NetworkOption {
 }
 
 func (c *addVM) validateArgs() error {
-	if c.hostName == "" {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-host' is required.")
-	}
 	if c.newSpecsFile != "" {
 		if c.vmName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
+		}
+		if c.hostName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-host' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
@@ -178,7 +185,13 @@ func (c *addVM) validateArgs() error {
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
+		if c.osVersion != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")
+		}
 	} else {
+		if c.hostName == "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-host' is required.")
+		}
 		if c.vmName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}

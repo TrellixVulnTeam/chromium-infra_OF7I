@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -88,6 +89,7 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 	})
 
 	var kvm ufspb.KVM
+	var rackName string
 	if c.interactive {
 		c.rackName = utils.GetKVMInteractiveInput(ctx, ic, &kvm, false)
 	} else {
@@ -95,14 +97,19 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 			if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
 				return err
 			}
+			if kvm.GetRack() == "" {
+				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
+			}
+			rackName = kvm.GetRack()
 		} else {
 			c.parseArgs(&kvm)
+			rackName = c.rackName
 		}
 	}
 	res, err := ic.CreateKVM(ctx, &ufsAPI.CreateKVMRequest{
 		KVM:   &kvm,
 		KVMId: kvm.GetName(),
-		Rack:  c.rackName,
+		Rack:  rackName,
 	})
 	if err != nil {
 		return err
@@ -121,6 +128,9 @@ func (c *addKVM) parseArgs(kvm *ufspb.KVM) {
 }
 
 func (c *addKVM) validateArgs() error {
+	if c.newSpecsFile != "" && c.interactive {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
+	}
 	if c.newSpecsFile != "" || c.interactive {
 		if c.kvmName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
@@ -134,13 +144,8 @@ func (c *addKVM) validateArgs() error {
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
-	}
-	if c.newSpecsFile != "" {
-		if c.interactive {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive & JSON mode cannot be specified at the same time.")
-		}
-		if c.rackName == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required for JSON mode.")
+		if c.rackName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {

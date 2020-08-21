@@ -20,8 +20,9 @@ var (
 	AddSwitchLongDesc string = `Create a switch to UFS.
 
 Examples:
-shivas add-switch -f switch.json -r {Rack name}
+shivas add-switch -f switch.json
 Adds a switch by reading a JSON file input.
+[WARNING]: rack is a required field in json, all other output only fields will be ignored.
 
 shivas add-switch -rack {Rack name} -name {switch name} -capacity {50} -description {description}
 Adds a switch by specifying several attributes directly.
@@ -35,9 +36,7 @@ Adds a switch by reading input through interactive mode.`
 Examples:
 shivas update-switch -f switch.json
 Update a switch by reading a JSON file input.
-
-shivas update-switch -f drac.json -r {Rack name}
-Update a switch by reading a JSON file input and associate the switch with a different rack.
+[WARNING]: rack is a required field in json, all other output only fields will be ignored.
 
 shivas update-switch -i
 Update a switch by reading input through interactive mode.
@@ -71,7 +70,8 @@ Example switch:
     "name": "eq079.atl97",
     "capacityPort": 48,
     "description": "Arista Networks DCS-7050T-52",
-    "tags": ["dell", "8g"]
+    "tags": ["dell", "8g"],
+    "rack": "cr-22"
 }
 
 The protobuf definition of switch is part of
@@ -90,7 +90,8 @@ Example VM:
     },
     "macAddress": "2.44.65.23",
     "hostname": "Windows8.0",
-    "tags": ["dell", "8g"]
+    "tags": ["dell", "8g"],
+    "machineLseId" : "adb-1"
 }
 
 The protobuf definition of VM is part of
@@ -183,7 +184,7 @@ You can create a machine with required parameters to UFS, and later add nics/dra
 You can also provide the optional nics and drac information to create the nics and drac associated with this machine by specifying a json file as input.
 
 Examples:
-shivas add-machine -f machinerequest.json -zone mtv97
+shivas add-machine -f machinerequest.json
 Creates a machine by reading a JSON file input.
 
 shivas add-machine -name machine1 -zone mtv97 -rack rack1 -ticket b/1234 -platform platform1 -kvm kvm1
@@ -341,8 +342,10 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
 
 Examples:
-shivas add-host -f host.json -machine machine0
+shivas add-host -f host.json
 Adds a host by reading a JSON file input.
+[WARNING]: machines is a required field in json, all other output only fields will be ignored.
+Specify additional settings, e.g. vlan, nic, ip via command line parameters along with JSON input
 
 shivas add-host -machine machine0 -name host0 -prototype browser-lab:no-vm  -osversion chrome-version-0 -vm-capacity 3
 Adds a host by parameters without adding vms.
@@ -356,9 +359,8 @@ Adds a host by reading input through interactive mode.`
 Examples:
 shivas update-host -f host.json
 Updates a host by reading a JSON file input.
-
-shivas update-host -f host.json -m {Machine name}
-Update a host by reading a JSON file input and associate the host with a different machine.
+[WARNING]: machines is a required field in json, all other output only fields will be ignored.
+Specify additional settings, e.g. vlan, ip, nic, state via command line parameters along with JSON input
 
 shivas update-host -name cr22 -os windows
 Partial update a host by parameters. Only specified parameters will be updated in the host.
@@ -383,6 +385,7 @@ Example host for a browser machine:
     "hostname": "esx-380XXX",
     "tags": ["dell", "8g"],
     "nic": "cr151-16-macproXXX:eth0",
+    "machines": ["cr205-19-230"],
     "chromeBrowserMachineLse": {
         "vms": [{
             "name": "vm991-m4XXX",
@@ -407,6 +410,7 @@ Example host(DUT) for an OS machine:
     "name": "chromeos3-row2-rack3-host5",
     "machineLsePrototype": "acs-lab:wifi",
     "hostname": "chromeos3-row2-rack3-host5",
+    "machines": ["cr205-19-230"],
     "chromeosMachineLse": {
         "deviceLse": {
             "dut": {
@@ -486,6 +490,7 @@ Example host(Labstation) for an OS machine:
 {
     "name": "chromeos3-row6-rack6-labstation6",
     "hostname": "chromeos3-row6-rack6-labstation6",
+    "machines": ["cr205-19-230"],
     "chromeosMachineLse": {
         "deviceLse": {
             "labstation": {
@@ -517,6 +522,7 @@ Example host(Caching server/Dev server/VM server) for an OS machine:
     "name": "A-ChromeOS-Server",
     "machineLsePrototype": "acs-lab:qwer",
     "hostname": "DevServer-1",
+    "machines": ["cr205-19-230"],
     "chromeosMachineLse": {
         "serverLse": {
             "supportedRestrictedVlan": "vlan-1",
@@ -746,8 +752,9 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddNicLongDesc string = `Add a nic to UFS.
 
 Examples:
-shivas add-nic -f nic.json -m machine0
+shivas add-nic -f nic.json
 Add a nic by reading a JSON file input.
+[WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
 shivas add-nic -name machine0:eth0 -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
 Add a nic by specifying several attributes directly.
@@ -761,9 +768,7 @@ Add a nic by reading input through interactive mode.`
 Examples:
 shivas update-nic -f nic.json
 Update a nic by reading a JSON file input.
-
-shivas update-nic -f nic.json -m {Machine name}
-Update a nic by reading a JSON file input and associate the nic with a different machine.
+[WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
 shivas update-nic -i
 Update a nic by reading input through interactive mode.
@@ -783,7 +788,8 @@ Example nic:
         "switch": "switch-12",
         "port": 15
     },
-    "tags": ["dell", "8g"]
+    "tags": ["dell", "8g"],
+    "machine": "mac-1"
 }
 
 The protobuf definition of nic is part of
@@ -793,8 +799,9 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddDracLongDesc string = `Add a drac to UFS.
 
 Examples:
-shivas add-drac -f drac.json -m machine0
+shivas add-drac -f drac.json
 Add a drac by reading a JSON file input.
+[WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
 shivas add-drac -name machine0:drac -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
 Add a drac by specifying several attributes directly.
@@ -809,9 +816,7 @@ Add a drac by reading input through interactive mode.
 Examples:
 shivas update-drac -f drac.json
 Update a drac by reading a JSON file input.
-
-shivas update-drac -f drac.json -m {Machine name}
-Update a drac by reading a JSON file input and associate the drac with a different machine.
+[WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
 shivas update-drac -name machine0:drac -switch switch0 -mac-address 123456
 Partial update a drac by parameters. Only specified parameters will be updated in the drac.
@@ -839,7 +844,8 @@ Example drac:
         "port": 15
     },
     "password": "WelcomeDrac***",
-    "tags": ["dell", "8g"]
+    "tags": ["dell", "8g"],
+    "machine": "mac-1"
 }
 
 The protobuf definition of drac is part of
@@ -849,8 +855,9 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddKVMLongDesc string = `Add a kvm to UFS.
 
 Examples:
-shivas add-kvm -new-json-file kvm.json -rack {Rack name}
+shivas add-kvm -f kvm.json
 Add a kvm by reading a JSON file input.
+[WARNING]: rack is a required field in json, all other output only fields will be ignored.
 
 shivas add-kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
 Add a kvm by specifying several attributes directly.
@@ -864,9 +871,8 @@ Add a kvm by reading input through interactive mode.`
 Examples:
 shivas update-kvm -f kvm.json
 Update a kvm by reading a JSON file input.
-
-shivas update-kvm -f kvm.json -r {Rack name}
-Update a kvm by reading a JSON file input and associate the kvm with a different rack.
+[WARNING]: rack is a required field in json, all other output only fields will be ignored.
+Specify additional settings, e.g. vlan, ip via command line parameters along with JSON input
 
 shivas update-kvm -i
 Update a kvm by reading input through interactive mode.
@@ -884,7 +890,8 @@ Example kvm:
     "macAddress": "00:0d:5d:0f:54:ed",
     "chromePlatform": "Raritan_DKX3",
     "capacityPort": 48,
-    "tags": ["dell", "8g"]
+    "tags": ["dell", "8g"],
+    "rack": "cr-22"
 }
 
 The protobuf definition of kvm is part of
@@ -897,7 +904,7 @@ You can create a rack with name and zone to UFS, and later add kvm/switch/rpm se
 You can also provide the optional switches, kvms and rpms information to create the switches, kvms and rpms associated with this rack by specifying a json file as input.
 
 Examples:
-shivas add-rack -f rackrequest.json -zone lab01
+shivas add-rack -f rackrequest.json
 Creates a rack by reading a JSON file input.
 
 shivas add-rack -name rack-123 -zone lab01 -capacity 10
@@ -1122,6 +1129,11 @@ Filter format Egs:
 	// StateHelp help text for filter '-state'
 	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"
 
-	//ClearFieldHelpText hep text to clear field using field mask in update cmds
+	//ClearFieldHelpText help text to clear field using field mask in update cmds
 	ClearFieldHelpText string = "To clear this field and set it to empty, assign '" + utils.ClearFieldValue + "'"
+
+	//ZoneHelpText help text for zone command line options
+	ZoneHelpText string = fmt.Sprintf("the name of the zone. "+
+		"You can either use the below strings or prefix \"ZONE_\" to the below strings(for JSON input) to specify the exact enum name. "+
+		"Valid zone strings: [%s]", strings.Join(ufsUtil.ValidZoneStr(), ", "))
 )

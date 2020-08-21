@@ -61,7 +61,9 @@ message MachineLSE {
         (google.api.field_behavior) = OUTPUT_ONLY];
 
     // The nic used to associate with the hostname, as one machine/host may contain multiple nics.
-    string nic = 8;
+    string nic = 8 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 
     // Refers to Lab
     string lab = 9 [
