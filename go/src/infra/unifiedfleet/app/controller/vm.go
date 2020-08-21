@@ -211,7 +211,7 @@ func processVMUpdateMask(oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMa
 	// update the fields in the existing vm
 	for _, path := range mask.Paths {
 		switch path {
-		case "host":
+		case "machinelseName":
 			// In the previous step we have already checked for host != ""
 			// and got the new values for OUTPUT only fields in new vm object,
 			// assign them to oldVM.
