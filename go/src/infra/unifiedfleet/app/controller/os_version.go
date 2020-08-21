@@ -13,7 +13,6 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/util"
 )
 
 // ImportOSes inserts chrome os_version to datastore.
@@ -54,10 +53,4 @@ func deleteNonExistingOSes(ctx context.Context, oses []*ufspb.OSVersion, pageSiz
 	}
 	logging.Debugf(ctx, "Deleting %d non-existing oses", len(toDelete))
 	return deleteByPage(ctx, toDelete, pageSize, configuration.DeleteOSes), nil
-}
-
-func formatOsVersion(osVersion *ufspb.OSVersion) {
-	if osVersion != nil {
-		osVersion.Value = util.FormatResourceName(osVersion.Value)
-	}
 }

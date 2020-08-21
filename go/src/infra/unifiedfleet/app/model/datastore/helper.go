@@ -19,9 +19,13 @@ func GetServoID(servoHostname string, servoPort int32) string {
 
 // GetOSIndex returns a slics of strings for a given string
 func GetOSIndex(osversion string) []string {
-	str := strings.TrimSpace(osversion)
-	str = strings.ToLower(str)
-	str = strings.Replace(str, " ", "_", -1)
+	lowerStr := strings.ToLower(osversion)
+	str := strings.Replace(lowerStr, " ", "_", -1)
 	str = strings.Replace(str, ",", "_", -1)
-	return strings.Split(str, "_")
+	index := strings.Split(str, "_")
+	if index == nil {
+		return []string{lowerStr}
+	}
+	index = append(index, lowerStr)
+	return index
 }

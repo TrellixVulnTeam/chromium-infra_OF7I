@@ -68,7 +68,7 @@ func ToOses(old []*crimson.OS) []*ufspb.OSVersion {
 	newOSes := make([]*ufspb.OSVersion, len(old))
 	for i, p := range old {
 		newOSes[i] = &ufspb.OSVersion{
-			Value:       FormatResourceName(p.GetName()),
+			Value:       p.GetName(),
 			Description: p.GetDescription(),
 		}
 	}
@@ -263,7 +263,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		v := &ufspb.VM{
 			Name: name,
 			OsVersion: &ufspb.OSVersion{
-				Value: FormatResourceName(vm.GetOs()),
+				Value: vm.GetOs(),
 			},
 			Hostname:     name,
 			Vlan:         GetBrowserLabName(Int64ToStr(vm.GetVlan())),
@@ -316,7 +316,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 					Vms:        vms,
 					VmCapacity: h.GetVmSlots(),
 					OsVersion: &ufspb.OSVersion{
-						Value: FormatResourceName(h.GetOs()),
+						Value: h.GetOs(),
 					},
 					VirtualDatacenter: h.GetVirtualDatacenter(),
 				},
