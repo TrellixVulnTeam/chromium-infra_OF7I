@@ -50,8 +50,8 @@ var (
 		"Tags", "UpdateTime"}
 	ChromePlatformTitle = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
 	VlanTitle           = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
-	VMTitle             = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "State", "UpdateTime"}
-	VMFullTitle         = []string{"VM Name", "OS Version", "OS Desc", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "UpdateTime"}
+	VMTitle             = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "State", "Description", "UpdateTime"}
+	VMFullTitle         = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "Description", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Zone", "KVMs", "Switches", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
 	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
@@ -972,13 +972,13 @@ func vmFullOutputStrs(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) []string {
 	return []string{
 		ufsUtil.RemovePrefix(vm.GetName()),
 		vm.GetOsVersion().GetValue(),
-		vm.GetOsVersion().GetDescription(),
 		vm.GetMacAddress(),
 		vm.GetZone(),
 		vm.GetMachineLseId(),
 		dhcp.GetVlan(),
 		dhcp.GetIp(),
 		vm.GetState(),
+		vm.GetDescription(),
 		ts,
 	}
 }
@@ -1010,12 +1010,12 @@ func vmOutputStrs(pm proto.Message) []string {
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetOsVersion().GetValue(),
-		m.GetOsVersion().GetDescription(),
 		m.GetMacAddress(),
 		m.GetZone(),
 		m.GetMachineLseId(),
 		m.GetVlan(),
 		m.GetState(),
+		m.GetDescription(),
 		ts,
 	}
 }
