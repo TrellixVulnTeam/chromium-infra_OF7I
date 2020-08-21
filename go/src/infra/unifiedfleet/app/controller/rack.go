@@ -575,6 +575,10 @@ func validateRackRegistration(ctx context.Context, rack *ufspb.Rack) error {
 			if chromePlatformID := kvm.GetChromePlatform(); chromePlatformID != "" {
 				resourcesNotFound = append(resourcesNotFound, GetChromePlatformResource(chromePlatformID))
 			}
+
+			if err := validateMacAddress(ctx, kvm.GetName(), kvm.GetMacAddress()); err != nil {
+				return err
+			}
 		}
 	}
 

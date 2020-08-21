@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -306,6 +307,9 @@ func (r *MachineRegistrationRequest) Validate() error {
 					errorMsg := fmt.Sprintf("Nic %s has invalid characters in the name.", id)
 					return status.Errorf(codes.InvalidArgument, errorMsg+InvalidCharacters)
 				}
+				if err := validateNic(nic); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -318,6 +322,9 @@ func (r *MachineRegistrationRequest) Validate() error {
 				}
 				if !IDRegex.MatchString(id) {
 					return status.Errorf(codes.InvalidArgument, "Drac "+InvalidCharacters)
+				}
+				if err := validateDrac(drac); err != nil {
+					return err
 				}
 			}
 		}
@@ -556,20 +563,24 @@ func (r *CreateNicRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
-	if r.GetNic().GetName() == "" {
-		return status.Errorf(codes.InvalidArgument, "nic name cannot be empty")
-	}
-	if r.GetNic().GetMacAddress() == "" {
-		return status.Errorf(codes.InvalidArgument, "nic macAddress cannot be empty")
-	}
-	if r.GetNic().GetSwitchInterface().GetSwitch() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch name for the nic cannot be empty")
-	}
-	if r.GetNic().GetSwitchInterface().GetPortName() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch port for the nic cannot be empty")
+	if err := validateNic(r.GetNic()); err != nil {
+		return err
 	}
 	if r.Machine == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
+	}
+	return nil
+}
+
+func validateNic(nic *ufspb.Nic) error {
+	if nic.GetMacAddress() == "" {
+		return status.Errorf(codes.InvalidArgument, "nic macAddress cannot be empty")
+	}
+	if nic.GetSwitchInterface().GetSwitch() == "" {
+		return status.Errorf(codes.InvalidArgument, "the attached switch name for the nic cannot be empty")
+	}
+	if nic.GetSwitchInterface().GetPortName() == "" {
+		return status.Errorf(codes.InvalidArgument, "the attached switch port for the nic cannot be empty")
 	}
 	return nil
 }
@@ -720,20 +731,24 @@ func (r *CreateDracRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
-	if r.GetDrac().GetName() == "" {
-		return status.Errorf(codes.InvalidArgument, "drac name cannot be empty")
-	}
-	if r.GetDrac().GetMacAddress() == "" {
-		return status.Errorf(codes.InvalidArgument, "drac macAddress cannot be empty")
-	}
-	if r.GetDrac().GetSwitchInterface().GetSwitch() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch name for the drac cannot be empty")
-	}
-	if r.GetDrac().GetSwitchInterface().GetPortName() == "" {
-		return status.Errorf(codes.InvalidArgument, "the attached switch port for the drac cannot be empty")
+	if err := validateDrac(r.GetDrac()); err != nil {
+		return err
 	}
 	if r.Machine == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
+	}
+	return nil
+}
+
+func validateDrac(drac *ufspb.Drac) error {
+	if drac.GetMacAddress() == "" {
+		return status.Errorf(codes.InvalidArgument, "drac macAddress cannot be empty")
+	}
+	if drac.GetSwitchInterface().GetSwitch() == "" {
+		return status.Errorf(codes.InvalidArgument, "the attached switch name for the drac cannot be empty")
+	}
+	if drac.GetSwitchInterface().GetPortName() == "" {
+		return status.Errorf(codes.InvalidArgument, "the attached switch port for the drac cannot be empty")
 	}
 	return nil
 }

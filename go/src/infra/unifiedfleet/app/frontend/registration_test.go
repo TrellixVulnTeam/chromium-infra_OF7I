@@ -106,12 +106,16 @@ func TestMachineRegistration(t *testing.T) {
 	defer validate()
 	Convey("Machine Registration", t, func() {
 		Convey("Register machine - happy path", func() {
-			nics := []*ufspb.Nic{{
-				Name: "nic-X",
-			}}
-			drac := &ufspb.Drac{
-				Name: "drac-X",
-			}
+			s := mockSwitch("")
+			s.Name = "test-switch"
+			_, err := registration.CreateSwitch(ctx, s)
+			So(err, ShouldBeNil)
+
+			nic := mockNic("")
+			nic.Name = "nic-X"
+			nics := []*ufspb.Nic{nic}
+			drac := mockDrac("")
+			drac.Name = "drac-X"
 			machine := &ufspb.Machine{
 				Name: "machine-X",
 				Device: &ufspb.Machine_ChromeBrowserMachine{

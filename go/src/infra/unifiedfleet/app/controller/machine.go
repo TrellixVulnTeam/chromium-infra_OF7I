@@ -599,6 +599,13 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 		if switchID := nic.GetSwitchInterface().GetSwitch(); switchID != "" {
 			resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
 		}
+
+		if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
+			return err
+		}
+		if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+			return err
+		}
 	}
 	if drac != nil {
 		// Aggregate resources to check if drac already exists
@@ -607,6 +614,13 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 		// Aggregate resources to check if resources referenced by the drac exists
 		if switchID := drac.GetSwitchInterface().GetSwitch(); switchID != "" {
 			resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
+		}
+
+		if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+			return err
+		}
+		if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
+			return err
 		}
 	}
 	// Aggregate resources referenced by the machine to check if they do not exist
