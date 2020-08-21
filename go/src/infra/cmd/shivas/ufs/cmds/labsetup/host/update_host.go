@@ -5,6 +5,7 @@
 package host
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -35,18 +36,18 @@ var UpdateHostCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.newSpecsFile, "f", "", cmdhelp.MachineLSEFileText)
 		c.Flags.BoolVar(&c.interactive, "i", false, "enable interactive mode for input")
-
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to associate the host")
-		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this host to")
-		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
 		c.Flags.StringVar(&c.hostName, "name", "", "name of the host")
-		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the host")
-		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the host to")
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host.")
 		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only). "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this host to")
+		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
+		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the host")
+		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the host to")
 		return c
 	},
 }
@@ -158,21 +159,26 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	c.printRes(ctx, ic, res)
+	return nil
+}
+
+func (c *updateHost) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.MachineLSE) {
 	fmt.Println("The host after update:")
 	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
-		fmt.Printf("Successfully deleted vlan of host %s\n", res.Name)
+		fmt.Printf("Successfully deleted vlan & ip of host %s\nPlease run `shivas get host -full %s` to further check\n", res.Name, res.Name)
 	}
 	if c.vlanName != "" || c.ip != "" {
 		// Log the assigned IP
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 			Hostname: res.Name,
 		}); err == nil {
+			fmt.Println("Newly added DHCP config:")
 			utils.PrintProtoJSON(dhcp, false)
-			fmt.Println("Successfully added dhcp config to host: ", res.Name)
+			fmt.Printf("Successfully added dhcp config %s to host %s\nPlease run `shivas get host -full %s` to further check\n", dhcp.GetIp(), res.Name, res.Name)
 		}
 	}
-	return nil
 }
 
 func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
@@ -201,6 +207,22 @@ func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 			lse.GetChromeBrowserMachineLse().GetOsVersion().Value = c.osVersion
 		}
 	}
+}
+
+func (c *updateHost) parseNetworkOpt(lseName string) map[string]*ufsAPI.NetworkOption {
+	var networkOptions map[string]*ufsAPI.NetworkOption
+	if c.deleteVlan || c.vlanName != "" || c.ip != "" {
+		fmt.Println("Setting network option parameters")
+		networkOptions = map[string]*ufsAPI.NetworkOption{
+			lseName: {
+				Delete: c.deleteVlan,
+				Vlan:   c.vlanName,
+				Nic:    c.nicName,
+				Ip:     c.ip,
+			},
+		}
+	}
+	return networkOptions
 }
 
 func (c *updateHost) validateArgs() error {

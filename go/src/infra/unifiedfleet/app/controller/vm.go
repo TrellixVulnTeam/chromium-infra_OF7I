@@ -26,6 +26,9 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(vm)
 
+		if err := validateCreateVM(ctx, vm, host, nwOpt); err != nil {
+			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
+		}
 		lse, err := inventory.GetMachineLSE(ctx, host)
 		if err != nil {
 			return errors.Annotate(err, "Fail to get host by %s", host).Err()
@@ -296,9 +299,31 @@ func getVMHistoryClient(m *ufspb.VM) *HistoryClient {
 	}
 }
 
+// validateCreateVM validates if a vm can be created
+func validateCreateVM(ctx context.Context, vm *ufspb.VM, machinelseName string, nwOpt *ufsAPI.NetworkOption) error {
+	// Aggregate resource to check if vm does not exist
+	if err := resourceAlreadyExists(ctx, []*Resource{GetVMResource(vm.Name)}, nil); err != nil {
+		return err
+	}
+
+	resourcesNotFound := make([]*Resource, 0)
+	// Aggregate resource to check if machinelseName does not exist
+	if machinelseName != "" {
+		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(machinelseName))
+	}
+	if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
+		if nwOpt.GetVlan() != "" {
+			resourcesNotFound = append(resourcesNotFound, GetVlanResource(nwOpt.GetVlan()))
+		}
+	}
+	// check if resources does not exist
+	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 // validateUpdateVM validates if a vm can be updated
-//
-// checks if vm, machine and resources referecned by the vm does not exist
 func validateUpdateVM(ctx context.Context, vm *ufspb.VM, machinelseName string, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if vm does not exist
 	resourcesNotFound := []*Resource{GetVMResource(vm.Name)}

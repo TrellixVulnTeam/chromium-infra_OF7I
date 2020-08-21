@@ -5,6 +5,7 @@
 package vm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -47,10 +48,11 @@ Partial update a vm by parameters. Only specified parameters will be updated in 
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
+
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the vm to")
-		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -143,21 +145,26 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		return errors.Annotate(err, "Unable to update the VM on the host").Err()
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	c.printRes(ctx, ic, res)
+	return nil
+}
+
+func (c *updateVM) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.VM) {
 	fmt.Println("The vm after update:")
 	utils.PrintProtoJSON(res, false)
 	if c.deleteVlan {
-		fmt.Printf("Successfully deleted vlan of vm %s\n", vm.Name)
+		fmt.Printf("Successfully deleted vlan & ip of vm %s\nPlease run `shivas get vm -full %s` to further check\n", res.Name, res.Name)
 	}
 	if c.vlanName != "" || c.ip != "" {
 		// Log the assigned IP
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
-			Hostname: vm.Name,
+			Hostname: res.Name,
 		}); err == nil {
+			fmt.Println("Newly added DHCP config:")
 			utils.PrintProtoJSON(dhcp, false)
-			fmt.Println("Successfully added dhcp config to vm: ", vm.Name)
+			fmt.Printf("Successfully added dhcp config %s to vm %s\nPlease run `shivas get vm -full %s` to further check\n", dhcp.GetIp(), res.Name, res.Name)
 		}
 	}
-	return nil
 }
 
 func (c *updateVM) parseArgs(vm *ufspb.VM) {

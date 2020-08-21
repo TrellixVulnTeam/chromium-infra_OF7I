@@ -5,6 +5,7 @@
 package host
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -38,6 +39,7 @@ var AddHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to associate the host")
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this host to")
 		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
+		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the host to")
 
 		c.Flags.StringVar(&c.hostName, "name", "", "name of the host")
 		c.Flags.StringVar(&c.prototype, "prototype", "", "name of the prototype to be used to deploy this host")
@@ -60,6 +62,7 @@ type addHost struct {
 	machineName string
 	vlanName    string
 	nicName     string
+	ip          string
 	hostName    string
 	prototype   string
 	osVersion   string
@@ -114,15 +117,10 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 	}
 
 	req := &ufsAPI.CreateMachineLSERequest{
-		MachineLSE:   &machinelse,
-		MachineLSEId: machinelse.GetName(),
-		Machines:     []string{c.machineName},
-	}
-	if c.vlanName != "" && c.nicName != "" {
-		req.NetworkOption = &ufsAPI.NetworkOption{
-			Vlan: c.vlanName,
-			Nic:  c.nicName,
-		}
+		MachineLSE:    &machinelse,
+		MachineLSEId:  machinelse.GetName(),
+		Machines:      []string{c.machineName},
+		NetworkOption: c.parseNetworkOpt(),
 	}
 
 	res, err := ic.CreateMachineLSE(ctx, req)
@@ -130,18 +128,23 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
+	c.printRes(ctx, ic, res)
+	return nil
+}
+
+func (c *addHost) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.MachineLSE) {
+	fmt.Println("The newly added host:")
 	utils.PrintProtoJSON(res, false)
-	fmt.Println("Successfully added the host: ", machinelse.GetName())
 	if c.vlanName != "" && c.nicName != "" {
 		// Log the assigned IP
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
 			Hostname: res.GetHostname(),
 		}); err == nil {
+			fmt.Println("Newly added DHCP config:")
 			utils.PrintProtoJSON(dhcp, false)
-			fmt.Println("Successfully added dhcp config to host: ", machinelse.GetName())
+			fmt.Printf("Successfully added dhcp config %s to vm %s\nPlease run `shivas get host -full %s` to further check\n", dhcp.GetIp(), res.Name, res.Name)
 		}
 	}
-	return nil
 }
 
 func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsZone ufspb.Zone) {
@@ -163,6 +166,29 @@ func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsZone ufspb.Zone) {
 			ChromeosMachineLse: &ufspb.ChromeOSMachineLSE{},
 		}
 	}
+}
+
+func (c *addHost) parseNetworkOpt() *ufsAPI.NetworkOption {
+	if c.ip != "" || c.vlanName != "" {
+		fmt.Println("Setting network option parameters")
+		if c.nicName == "" {
+			fmt.Println("[WARNING] ignore the network options as the nic name to attach to the ip/vlan is not specified")
+			return nil
+		}
+		if c.ip != "" {
+			return &ufsAPI.NetworkOption{
+				Ip:  c.ip,
+				Nic: c.nicName,
+			}
+		}
+		if c.vlanName != "" {
+			return &ufsAPI.NetworkOption{
+				Vlan: c.vlanName,
+				Nic:  c.nicName,
+			}
+		}
+	}
+	return nil
 }
 
 func (c *addHost) validateArgs() error {

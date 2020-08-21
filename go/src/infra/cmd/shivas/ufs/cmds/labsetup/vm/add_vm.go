@@ -5,6 +5,7 @@
 package vm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/maruel/subcommands"
@@ -46,6 +47,9 @@ Add a VM by parameters.`,
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM")
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+
+		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
+		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the vm to")
 		return c
 	},
 }
@@ -63,6 +67,8 @@ type addVM struct {
 	macAddress string
 	osVersion  string
 	tags       string
+	vlanName   string
+	ip         string
 }
 
 func (c *addVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -103,16 +109,32 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 	}
 
 	res, err := ic.CreateVM(ctx, &ufsAPI.CreateVMRequest{
-		Vm:           &vm,
-		MachineLSEId: c.hostName,
+		Vm:            &vm,
+		MachineLSEId:  c.hostName,
+		NetworkOption: c.parseNetworkOpt(),
 	})
 	if err != nil {
 		return errors.Annotate(err, "Unable to add the VM to the host").Err()
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res, false)
-	fmt.Printf("Successfully added the vm %s to host %s\n", vm.GetName(), c.hostName)
+	c.printRes(ctx, ic, res)
 	return nil
+}
+
+func (c *addVM) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.VM) {
+	fmt.Println("The newly added vm:")
+	utils.PrintProtoJSON(res, false)
+	fmt.Printf("Successfully added the vm %s to host %s\n", res.Name, c.hostName)
+	if c.vlanName != "" || c.ip != "" {
+		// Log the assigned IP
+		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+			Hostname: res.Name,
+		}); err == nil {
+			fmt.Println("Newly added DHCP config:")
+			utils.PrintProtoJSON(dhcp, false)
+			fmt.Printf("Successfully added dhcp config %s to vm %s\nPlease run `shivas get vm -full %s` to further check\n", dhcp.GetIp(), res.Name, res.Name)
+		}
+	}
 }
 
 func (c *addVM) parseArgs(vm *ufspb.VM) {
@@ -123,6 +145,23 @@ func (c *addVM) parseArgs(vm *ufspb.VM) {
 		Value: c.osVersion,
 	}
 	vm.Tags = utils.GetStringSlice(c.tags)
+}
+
+func (c *addVM) parseNetworkOpt() *ufsAPI.NetworkOption {
+	if c.ip != "" || c.vlanName != "" {
+		fmt.Println("Setting network option parameters")
+		if c.ip != "" {
+			return &ufsAPI.NetworkOption{
+				Ip: c.ip,
+			}
+		}
+		if c.vlanName != "" {
+			return &ufsAPI.NetworkOption{
+				Vlan: c.vlanName,
+			}
+		}
+	}
+	return nil
 }
 
 func (c *addVM) validateArgs() error {
