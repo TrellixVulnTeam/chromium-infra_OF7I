@@ -8,6 +8,7 @@ import os
 import re
 import sys
 
+import pkg_resources
 import requests
 
 
@@ -15,9 +16,6 @@ def _get_wheel_url(pkgname, version):
   r = requests.get('https://pypi.org/pypi/%s/json' % pkgname)
   r.raise_for_status()
   for filedata in r.json()['releases'][version]:
-    # Skip python3 only releases for now.
-    if filedata['python_version'] == 'py3':
-      continue
     if filedata['packagetype'] == 'bdist_wheel':
       return filedata['url'], filedata['filename']
   raise AssertionError('could not find wheel for %s @ %s' % (pkgname, version))
@@ -26,7 +24,15 @@ def _get_wheel_url(pkgname, version):
 def _get_version(pkgname):
   r = requests.get('https://pypi.org/pypi/%s/json' % pkgname)
   r.raise_for_status()
-  return r.json()['info']['version']
+  # Find the latest python2-compatible version.
+  releases = r.json()['releases']
+  versions = [pkg_resources.parse_version(v) for v in releases.keys()]
+  for version in sorted(versions, reverse=True):
+    for filedata in releases[str(version)]:
+      if (filedata['packagetype'] == 'bdist_wheel' and
+          not filedata['yanked'] and filedata['python_version'] != 'py3'):
+        return version
+  raise AssertionError('could not find a compatible version for %s' % pkgname)
 
 
 def do_latest():
