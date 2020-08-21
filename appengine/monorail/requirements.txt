@@ -1,1 +1,2 @@
 # Python 3 packages.
+mysqlclient==2.0.1 --hash=sha256:fb2f75aea14722390d2d8ddf384ad99da708c707a96656210a7be8af20a2c5e5

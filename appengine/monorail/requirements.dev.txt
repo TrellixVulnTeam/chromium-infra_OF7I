@@ -1,2 +1,4 @@
-# Python 2 packages needed for dev_appserver.py.
-mysqlclient==1.4.6
+# Python 2 packages needed for dev_appserver.py. During deployment, these
+# packages are built into App Engine and included by declaring them in app.yaml.
+# https://cloud.google.com/appengine/docs/standard/python/tools/using-libraries-python-27#local_development
+mysqlclient==1.4.6 --hash=sha256:f3fdaa9a38752a3b214a6fe79d7cae3653731a53e577821f9187e67cbecb2e16
