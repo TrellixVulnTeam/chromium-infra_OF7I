@@ -10,10 +10,10 @@ import (
 )
 
 func noPrompt() bool {
-	return strings.ToLower(os.Getenv("NO_PROMPT")) == "true"
+	return strings.ToLower(os.Getenv("SHIVAS_NO_PROMPT")) == "true" || strings.ToLower(os.Getenv("SHIVAS_NO_PROMPT")) == "1"
 }
 
 // FullMode checks if full mode is enabled
 func FullMode(full bool) bool {
-	return full || (strings.ToLower(os.Getenv("FULL_MODE")) == "true")
+	return full || (strings.ToLower(os.Getenv("SHIVAS_FULL_MODE")) == "true") || strings.ToLower(os.Getenv("SHIVAS_FULL_MODE")) == "1"
 }
