@@ -21,26 +21,30 @@ def _get_wheel_url(pkgname, version):
   raise AssertionError('could not find wheel for %s @ %s' % (pkgname, version))
 
 
-def _get_version(pkgname):
+def _get_version(pkgname, bad_versions=()):
   r = requests.get('https://pypi.org/pypi/%s/json' % pkgname)
   r.raise_for_status()
   # Find the latest python2-compatible version.
   releases = r.json()['releases']
   versions = [pkg_resources.parse_version(v) for v in releases.keys()]
   for version in sorted(versions, reverse=True):
-    for filedata in releases[str(version)]:
-      if (filedata['packagetype'] == 'bdist_wheel' and
+    version_str = str(version)
+    for filedata in releases[version_str]:
+      if (version_str not in bad_versions and
+          filedata['packagetype'] == 'bdist_wheel' and
           not filedata['yanked'] and filedata['python_version'] != 'py3'):
-        return version
+        return version_str
   raise AssertionError('could not find a compatible version for %s' % pkgname)
 
 
 def do_latest():
-  print 'pip%s.setuptools%s.wheel%s' % (
-    _get_version('pip'),
-    _get_version('setuptools'),
-    _get_version('wheel')
-  )
+  setuptools_bad_versions = frozenset([
+      '45.0.0',  # Advertises python_version='py2.py3', but also requires >= 3.5
+  ])
+
+  print 'pip%s.setuptools%s.wheel%s' % (_get_version(
+      'pip'), _get_version('setuptools', bad_versions=setuptools_bad_versions),
+                                        _get_version('wheel'))
 
 
 def do_checkout(version, checkout_path):
