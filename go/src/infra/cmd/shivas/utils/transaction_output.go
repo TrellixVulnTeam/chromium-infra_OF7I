@@ -130,6 +130,7 @@ func PrintExistingHost(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The host before delete/update:")
 	PrintProtoJSON(res, false)
+	printDHCP(ctx, ic, name)
 	return nil
 }
 
@@ -147,7 +148,20 @@ func PrintExistingVM(ctx context.Context, ic ufsAPI.FleetClient, name string) er
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The vm before delete/update:")
 	PrintProtoJSON(res, false)
+	printDHCP(ctx, ic, name)
 	return nil
+}
+
+func printDHCP(ctx context.Context, ic ufsAPI.FleetClient, hostname string) {
+	dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
+		Hostname: hostname,
+	})
+	if err == nil && dhcp != nil {
+		fmt.Println("Associated dhcp:")
+		PrintProtoJSON(dhcp, false)
+	} else {
+		fmt.Println("Associated dhcp: None")
+	}
 }
 
 // PrintExistingVlan prints the old vlan update/delete operations
