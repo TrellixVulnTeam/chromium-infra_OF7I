@@ -96,10 +96,10 @@ message MachineLSE {
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
-   // The deployment ticket associated with this host.
-   string deployment_ticket = 15;
-   // A description of this host.
-   string description = 16;
+    // The deployment ticket associated with this host.
+    string deployment_ticket = 15;
+    // A description of this host.
+    string description = 16;
 }
 
 // ChromeBrowserMachineLSE refers to the entity
@@ -112,6 +112,8 @@ message ChromeBrowserMachineLSE {
    int32 vm_capacity = 2;
    // Indicate the os version of the machine itself.
    OSVersion os_version = 3;
+   // The virtual datacenter VMs deployed on this host belong to.
+   string virtual_datacenter = 4;
 }
 
 message VM {

@@ -41,6 +41,7 @@ type MachineLSEEntity struct {
 	Tags                  []string `gae:"tags"`
 	State                 string   `gae:"state"`
 	OS                    []string `gae:"os"`
+	VirtualDatacenter     string   `gae:"virtualdatacenter"`
 	// ufspb.MachineLSE cannot be directly used as it contains pointer.
 	MachineLSE []byte `gae:",noindex"`
 }
@@ -78,6 +79,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		Manufacturer:          strings.ToLower(p.GetManufacturer()),
 		State:                 p.GetState(),
 		OS:                    ufsds.GetOSIndex(p.GetChromeBrowserMachineLse().GetOsVersion().GetValue()),
+		VirtualDatacenter:     p.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
 		MachineLSE:            machineLSE,
 	}, nil
 }
@@ -318,8 +320,10 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "state"
 	case util.OSFilterName:
 		field = "os"
+	case util.VirtualDatacenterFilterName:
+		field = "virtualdatacenter"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/zone/rack/switch/man/free/tag/state/os", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
 	}
 	return field, nil
 }

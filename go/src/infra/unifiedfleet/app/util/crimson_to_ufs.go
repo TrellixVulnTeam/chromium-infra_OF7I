@@ -318,6 +318,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 					OsVersion: &ufspb.OSVersion{
 						Value: FormatResourceName(h.GetOs()),
 					},
+					VirtualDatacenter: h.GetVirtualDatacenter(),
 				},
 			},
 			Rack:             rack,

@@ -1045,7 +1045,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'zone=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
 
 	// VMSlotFilterHelp help text for list free vm slots filtering
-	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/zone/rack/state/machine/os` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
+	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/zone/rack/state/machine/os/vdc(virtualdatacenter)` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'zone=atl97'
 'man=apple'
@@ -1072,7 +1072,7 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/zone/rack/switch/tag/state/man(manufacturer)/os` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
+	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/zone/rack/switch/tag/state/man(manufacturer)/os/vdc(virtualdatacenter)` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
 'zone=atl97'
 'os=esxi,6.7.0'
