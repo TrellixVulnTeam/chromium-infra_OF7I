@@ -46,6 +46,8 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 			if _, err := registration.BatchUpdateNics(ctx, nics); err != nil {
 				return errors.Annotate(err, "MachineRegistration - unable to batch update nics").Err()
 			}
+			// We do not save nic objects in machine table
+			machine.GetChromeBrowserMachine().NicObjects = nil
 		}
 
 		// Create drac
@@ -57,6 +59,8 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 			if _, err := registration.BatchUpdateDracs(ctx, []*ufspb.Drac{drac}); err != nil {
 				return errors.Annotate(err, "MachineRegistration - unable to batch update drac").Err()
 			}
+			// We do not save drac object in machine table
+			machine.GetChromeBrowserMachine().DracObject = nil
 		}
 
 		// Create the machine

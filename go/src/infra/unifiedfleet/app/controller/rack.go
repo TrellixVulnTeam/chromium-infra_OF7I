@@ -46,6 +46,8 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 			if _, err := registration.BatchUpdateSwitches(ctx, switches); err != nil {
 				return errors.Annotate(err, "Failed to create switches").Err()
 			}
+			// We do not save switch objects in rack table
+			rack.GetChromeBrowserRack().SwitchObjects = nil
 		}
 
 		// Create kvms
@@ -58,6 +60,8 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 			if _, err := registration.BatchUpdateKVMs(ctx, kvms); err != nil {
 				return errors.Annotate(err, "Failed to create KVMs").Err()
 			}
+			// We do not save kvm objects in rack table
+			rack.GetChromeBrowserRack().KvmObjects = nil
 		}
 
 		// Create rpms
@@ -70,6 +74,8 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 			if _, err := registration.BatchUpdateRPMs(ctx, rpms); err != nil {
 				return errors.Annotate(err, "Failed to create RPMs").Err()
 			}
+			// we do not save rpm objects in rack table
+			rack.GetChromeBrowserRack().RpmObjects = nil
 		}
 
 		// Create rack

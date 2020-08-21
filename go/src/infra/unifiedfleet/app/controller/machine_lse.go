@@ -133,6 +133,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 			if _, err := inventory.BatchUpdateVMs(ctx, vms); err != nil {
 				return errors.Annotate(err, "Failed to BatchUpdate vms for host %s", lse.Name).Err()
 			}
+			// We do not save vm objects in machinelse table
 			lse.GetChromeBrowserMachineLse().Vms = nil
 		}
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
