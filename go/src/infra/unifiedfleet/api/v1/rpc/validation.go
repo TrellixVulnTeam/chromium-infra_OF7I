@@ -21,7 +21,7 @@ var (
 	NilEntity                     string = "Invalid input - No Entity to add/update."
 	EmptyID                       string = "Invalid input - Entity ID is empty."
 	EmptyName                     string = "Invalid input - Entity Name is empty."
-	ValidName                     string = "Name must match the regular expression `^[a-zA-Z0-9-)(,_:.]{3,63}$`"
+	ValidName                     string = "Name must match the regular expression `^[a-zA-Z0-9-)(_:.]{3,63}$`"
 	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
@@ -52,7 +52,7 @@ var (
 )
 
 // IDRegex regular expression for checking resource Name/ID
-var IDRegex = regexp.MustCompile(`^[a-zA-Z0-9-)(,_:.]{3,63}$`)
+var IDRegex = regexp.MustCompile(`^[a-zA-Z0-9-)(_:.]{3,63}$`)
 var chromePlatformRegex = regexp.MustCompile(`chromeplatforms\.*`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)

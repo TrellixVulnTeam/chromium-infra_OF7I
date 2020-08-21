@@ -287,7 +287,7 @@ message CreateVMRequest {
 
   // The host id to add this VM to.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
   string machineLSE_id = 2 [(google.api.field_behavior) = REQUIRED];
 
@@ -301,7 +301,7 @@ message UpdateVMRequest {
   // The host id to update this VM to.
   //
   // TODO: We need to change this regex pattern as it changes over time.
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
   string machineLSE_id = 2 [(google.api.field_behavior) = REQUIRED];
 
@@ -378,7 +378,7 @@ message CreateChromePlatformRequest {
   // The ID to use for the ChromePlatform, which will become the final component of
   // the ChromePlatform's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string chromePlatform_id = 2;
 }
@@ -502,7 +502,7 @@ message CreateMachineLSEPrototypeRequest {
   // The ID to use for the MachineLSEPrototype, which will become the final component of
   // the MachineLSEPrototype's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string machineLSEPrototype_id = 2;
 }
@@ -571,7 +571,7 @@ message CreateRackLSEPrototypeRequest {
   // The ID to use for the RackLSEPrototype, which will become the final component of
   // the RackLSEPrototype's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string rackLSEPrototype_id = 2;
 }
@@ -719,7 +719,7 @@ message CreateRackRequest {
   // The ID to use for the Rack, which will become the final component of
   // the Rack's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string rack_id = 2;
 }
@@ -788,7 +788,7 @@ message CreateMachineLSERequest {
   // The ID to use for the MachineLSE, which will become the final component of
   // the MachineLSE's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
   string machineLSE_id = 2;
 
@@ -898,7 +898,7 @@ message CreateRackLSERequest {
   // The ID to use for the RackLSE, which will become the final component of
   // the RackLSE's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string rackLSE_id = 2;
 }
@@ -967,7 +967,7 @@ message CreateNicRequest {
   // The ID to use for the Nic, which will become the final component of
   // the Nic's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string nic_id = 2;
 
@@ -1068,7 +1068,7 @@ message CreateKVMRequest {
   // The ID to use for the KVM, which will become the final component of
   // the KVM's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string KVM_id = 2;
 
@@ -1157,7 +1157,7 @@ message CreateRPMRequest {
   // The ID to use for the RPM, which will become the final component of
   // the RPM's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string RPM_id = 2;
 }
@@ -1226,7 +1226,7 @@ message CreateDracRequest {
   // The ID to use for the Drac, which will become the final component of
   // the Drac's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string drac_id = 2;
 
@@ -1315,7 +1315,7 @@ message CreateSwitchRequest {
   // The ID to use for the Switch, which will become the final component of
   // the Switch's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string switch_id = 2;
 
@@ -1402,7 +1402,7 @@ message CreateVlanRequest {
   // The ID to use for the Vlan, which will become the final component of
   // the Vlan's resource name.
   //
-  // This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
   // contains only ASCII letters, numbers, dash and underscore.
    string vlan_id = 2;
 }

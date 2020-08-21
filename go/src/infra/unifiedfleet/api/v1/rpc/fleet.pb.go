@@ -49,7 +49,7 @@ type CreateVMRequest struct {
 	Vm *proto1.VM `protobuf:"bytes,1,opt,name=vm,proto3" json:"vm,omitempty"`
 	// The host id to add this VM to.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	MachineLSEId  string         `protobuf:"bytes,2,opt,name=machineLSE_id,json=machineLSEId,proto3" json:"machineLSE_id,omitempty"`
 	NetworkOption *NetworkOption `protobuf:"bytes,3,opt,name=network_option,json=networkOption,proto3" json:"network_option,omitempty"`
@@ -118,7 +118,7 @@ type UpdateVMRequest struct {
 	// The host id to update this VM to.
 	//
 	// TODO: We need to change this regex pattern as it changes over time.
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	MachineLSEId string `protobuf:"bytes,2,opt,name=machineLSE_id,json=machineLSEId,proto3" json:"machineLSE_id,omitempty"`
 	// The list of fields to be updated.
@@ -493,7 +493,7 @@ type CreateChromePlatformRequest struct {
 	// The ID to use for the ChromePlatform, which will become the final component of
 	// the ChromePlatform's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	ChromePlatformId string `protobuf:"bytes,2,opt,name=chromePlatform_id,json=chromePlatformId,proto3" json:"chromePlatform_id,omitempty"`
 }
@@ -1261,7 +1261,7 @@ type CreateMachineLSEPrototypeRequest struct {
 	// The ID to use for the MachineLSEPrototype, which will become the final component of
 	// the MachineLSEPrototype's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	MachineLSEPrototypeId string `protobuf:"bytes,2,opt,name=machineLSEPrototype_id,json=machineLSEPrototypeId,proto3" json:"machineLSEPrototype_id,omitempty"`
 }
@@ -1618,7 +1618,7 @@ type CreateRackLSEPrototypeRequest struct {
 	// The ID to use for the RackLSEPrototype, which will become the final component of
 	// the RackLSEPrototype's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	RackLSEPrototypeId string `protobuf:"bytes,2,opt,name=rackLSEPrototype_id,json=rackLSEPrototypeId,proto3" json:"rackLSEPrototype_id,omitempty"`
 }
@@ -2502,7 +2502,7 @@ type CreateRackRequest struct {
 	// The ID to use for the Rack, which will become the final component of
 	// the Rack's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	RackId string `protobuf:"bytes,2,opt,name=rack_id,json=rackId,proto3" json:"rack_id,omitempty"`
 }
@@ -2859,7 +2859,7 @@ type CreateMachineLSERequest struct {
 	// The ID to use for the MachineLSE, which will become the final component of
 	// the MachineLSE's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	MachineLSEId string `protobuf:"bytes,2,opt,name=machineLSE_id,json=machineLSEId,proto3" json:"machineLSE_id,omitempty"`
 	// A host/MachineLSE cannot be added without being associated with a Machine/s.
@@ -3424,7 +3424,7 @@ type CreateRackLSERequest struct {
 	// The ID to use for the RackLSE, which will become the final component of
 	// the RackLSE's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	RackLSEId string `protobuf:"bytes,2,opt,name=rackLSE_id,json=rackLSEId,proto3" json:"rackLSE_id,omitempty"`
 }
@@ -3781,7 +3781,7 @@ type CreateNicRequest struct {
 	// The ID to use for the Nic, which will become the final component of
 	// the Nic's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	NicId string `protobuf:"bytes,2,opt,name=nic_id,json=nicId,proto3" json:"nic_id,omitempty"`
 	// A nic cannot be added without being associated with a Machine.
@@ -4319,7 +4319,7 @@ type CreateKVMRequest struct {
 	// The ID to use for the KVM, which will become the final component of
 	// the KVM's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	KVMId string `protobuf:"bytes,2,opt,name=KVM_id,json=KVMId,proto3" json:"KVM_id,omitempty"`
 	// A KVM cannot be added without being associated with a Rack.
@@ -4705,7 +4705,7 @@ type CreateRPMRequest struct {
 	// The ID to use for the RPM, which will become the final component of
 	// the RPM's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	RPMId string `protobuf:"bytes,2,opt,name=RPM_id,json=RPMId,proto3" json:"RPM_id,omitempty"`
 }
@@ -5062,7 +5062,7 @@ type CreateDracRequest struct {
 	// The ID to use for the Drac, which will become the final component of
 	// the Drac's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	DracId string `protobuf:"bytes,2,opt,name=drac_id,json=dracId,proto3" json:"drac_id,omitempty"`
 	// A drac cannot be added without being associated with a Machine.
@@ -5448,7 +5448,7 @@ type CreateSwitchRequest struct {
 	// The ID to use for the Switch, which will become the final component of
 	// the Switch's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	SwitchId string `protobuf:"bytes,2,opt,name=switch_id,json=switchId,proto3" json:"switch_id,omitempty"`
 	// A switch cannot be added without being associated with a Rack.
@@ -5826,7 +5826,7 @@ type CreateVlanRequest struct {
 	// The ID to use for the Vlan, which will become the final component of
 	// the Vlan's resource name.
 	//
-	// This value should follow the regex "^[a-zA-Z0-9-_]{4,63}$" (4-63 characters,
+	// This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
 	// contains only ASCII letters, numbers, dash and underscore.
 	VlanId string `protobuf:"bytes,2,opt,name=vlan_id,json=vlanId,proto3" json:"vlan_id,omitempty"`
 }
