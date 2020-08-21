@@ -367,7 +367,10 @@ class IssuesServicerTest(unittest.TestCase):
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
-  def testModifyIssues(self, fake_notify):
+  @mock.patch('time.time')
+  def testModifyIssues(self, fake_time, fake_notify):
+    fake_time.return_value = 12345
+
     issue = _Issue(780, 1)
     self.services.project.TestAddProject(
         issue.project_name, project_id=issue.project_id,
@@ -395,6 +398,7 @@ class IssuesServicerTest(unittest.TestCase):
     response = self.CallWrapped(
         self.issues_svcr.ModifyIssues, mc, request)
     exp_issue.labels = ['keep-me', 'add-me']
+    exp_issue.modified_timestamp = 12345
     exp_api_issue = self.issues_svcr.converter.ConvertIssue(exp_issue)
     self.assertEqual([iss for iss in response.issues], [exp_api_issue])
     fake_notify.assert_called_once_with(

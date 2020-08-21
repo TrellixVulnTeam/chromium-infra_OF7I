@@ -79,7 +79,17 @@ class WorkEnvTest(unittest.TestCase):
         spam=fake.SpamService())
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, committer_ids=[111])
+    self.component_id_1 = self.services.config.CreateComponentDef(
+        self.cnxn, self.project.project_id, 'Component', 'Docstring', False, [],
+        [], 0, 111, [])
+    self.component_id_2 = self.services.config.CreateComponentDef(
+        self.cnxn, self.project.project_id, 'Component>Test', 'Docstring',
+        False, [], [], 0, 111, [])
+
     config = fake.MakeTestConfig(self.project.project_id, [], [])
+    config.well_known_statuses = [
+        tracker_pb2.StatusDef(status='Fixed', means_open=False)
+    ]
     self.services.config.StoreConfig(self.cnxn, config)
     self.admin_user = self.services.user.TestAddUser(
         'admin@example.com', 444)
@@ -2891,8 +2901,12 @@ class WorkEnvTest(unittest.TestCase):
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
-  def testModifyIssues_WeirdDeltas(self, fake_bulk_notify, fake_notify):
+  @mock.patch('time.time')
+  def testModifyIssues_WeirdDeltas(
+      self, fake_time, fake_bulk_notify, fake_notify):
     """Test that ModifyIssues does not panic with weird deltas."""
+    fake_time.return_value = self.PAST_TIME
+
     # Issues merge into each other.
     issue_merge_a = _Issue(789, 1)
     issue_merge_b = _Issue(789, 2)
@@ -3006,6 +3020,9 @@ class WorkEnvTest(unittest.TestCase):
       # the ApplyFilterRules path. (see filter_helpers._ComputeDerivedFields)
       exp_issue.derived_status = ''
       exp_issue.derived_owner_id = 0
+
+      exp_issue.modified_timestamp = self.PAST_TIME
+
       # Check we successfully updated the issue in our services layer.
       self.assertEqual(exp_issue, self.services.issue.GetIssue(
         self.cnxn, exp_issue.issue_id))
@@ -3021,27 +3038,59 @@ class WorkEnvTest(unittest.TestCase):
     hostport = 'testing-app.appspot.com'
     expected_notify_calls = [
         # Notifications for main changes.
-        mock.call(issue_merge_a.issue_id, hostport, self.user_1.user_id,
-                  old_owner_id=None, comment_id=comment_merge_a.id,
-                  send_email=send_email),
-        mock.call(issue_merge_b.issue_id, hostport, self.user_1.user_id,
-                  old_owner_id=None, comment_id=comment_merge_b.id,
-                  send_email=send_email),
-        mock.call(issue_block_a.issue_id, hostport, self.user_1.user_id,
-                  old_owner_id=None, comment_id=comment_block_a.id,
-                  send_email=send_email),
-        mock.call(issue_block_b.issue_id, hostport, self.user_1.user_id,
-                  old_owner_id=None, comment_id=comment_block_b.id,
-                  send_email=send_email),
+        mock.call(
+            issue_merge_a.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=comment_merge_a.id,
+            send_email=send_email),
+        mock.call(
+            issue_merge_b.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=comment_merge_b.id,
+            send_email=send_email),
+        mock.call(
+            issue_block_a.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=comment_block_a.id,
+            send_email=send_email),
+        mock.call(
+            issue_block_b.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=comment_block_b.id,
+            send_email=send_email),
         # Notifications for impacted changes.
-        mock.call(issue_merge_a.issue_id, hostport, self.user_1.user_id,
-                  comment_id=comment_merge_a_imp.id, send_email=send_email),
-        mock.call(issue_merge_b.issue_id, hostport, self.user_1.user_id,
-                  comment_id=comment_merge_b_imp.id, send_email=send_email),
-        mock.call(issue_block_a.issue_id, hostport, self.user_1.user_id,
-                  comment_id=comment_block_a_imp.id, send_email=send_email),
-         mock.call(issue_block_b.issue_id, hostport, self.user_1.user_id,
-                   comment_id=comment_block_b_imp.id, send_email=send_email),
+        mock.call(
+            issue_merge_a.issue_id,
+            hostport,
+            self.user_1.user_id,
+            comment_id=comment_merge_a_imp.id,
+            send_email=send_email),
+        mock.call(
+            issue_merge_b.issue_id,
+            hostport,
+            self.user_1.user_id,
+            comment_id=comment_merge_b_imp.id,
+            send_email=send_email),
+        mock.call(
+            issue_block_a.issue_id,
+            hostport,
+            self.user_1.user_id,
+            comment_id=comment_block_a_imp.id,
+            send_email=send_email),
+        mock.call(
+            issue_block_b.issue_id,
+            hostport,
+            self.user_1.user_id,
+            comment_id=comment_block_b_imp.id,
+            send_email=send_email),
     ]
     fake_notify.assert_has_calls(expected_notify_calls, any_order=True)
     fake_bulk_notify.assert_not_called()
@@ -3049,7 +3098,10 @@ class WorkEnvTest(unittest.TestCase):
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
-  def testModifyIssues(self, fake_bulk_notify, fake_notify):
+  @mock.patch('time.time')
+  def testModifyIssues(self, fake_time, fake_bulk_notify, fake_notify):
+    fake_time.return_value = self.PAST_TIME
+
     # A main issue with noop delta.
     issue_noop = _Issue(789, 1)
     issue_noop.labels = ['chicken']
@@ -3073,6 +3125,7 @@ class WorkEnvTest(unittest.TestCase):
         owner_id=self.user_1.user_id, blocked_on_add=[issue_empty.issue_id])
 
     exp_issue_shared_a = copy.deepcopy(issue_shared_a)
+    exp_issue_shared_a.owner_modified_timestamp = self.PAST_TIME
     exp_issue_shared_a.owner_id = self.user_1.user_id
     exp_issue_shared_a.blocked_on_iids.append(issue_empty.issue_id)
     # By default new blocked_on issues that appear in blocked_on_iids
@@ -3091,6 +3144,7 @@ class WorkEnvTest(unittest.TestCase):
     issue_shared_b = _Issue(789, 4)
 
     exp_issue_shared_b = copy.deepcopy(issue_shared_b)
+    exp_issue_shared_b.owner_modified_timestamp = self.PAST_TIME
     exp_issue_shared_b.owner_id = delta_shared.owner_id
     exp_issue_shared_b.blocked_on_iids.append(issue_empty.issue_id)
     exp_issue_shared_b.blocked_on_ranks = [0]
@@ -3229,6 +3283,9 @@ class WorkEnvTest(unittest.TestCase):
       if exp_issue != exp_issue_noop:
         exp_issue.derived_status = ''
         exp_issue.derived_owner_id = 0
+
+      exp_issue.modified_timestamp = self.PAST_TIME
+
       self.assertEqual(
         exp_issue, self.services.issue.GetIssue(self.cnxn, exp_issue.issue_id))
     # Check the expected issues were successfully returned.
@@ -3244,23 +3301,43 @@ class WorkEnvTest(unittest.TestCase):
     hostport = 'testing-app.appspot.com'
     expected_notify_calls = [
         # Notified as a main issue update.
-        mock.call(issue_noop.issue_id, hostport, self.user_1.user_id,
-                  old_owner_id=None,  comment_id=comment_noop.id,
-                  send_email=send_email),
+        mock.call(
+            issue_noop.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=comment_noop.id,
+            send_email=send_email),
         # Notified as a main issue update.
-        mock.call(issue_empty.issue_id, hostport, self.user_1.user_id,
-                  old_owner_id=None, comment_id=comment_empty.id,
-                  send_email=send_email),
+        mock.call(
+            issue_empty.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=comment_empty.id,
+            send_email=send_email),
         # Notified as a main issue update.
-        mock.call(issue_unique.issue_id, hostport, self.user_1.user_id,
-                  old_owner_id=None, comment_id=unique_comment.id,
-                  send_email=send_email),
+        mock.call(
+            issue_unique.issue_id,
+            hostport,
+            self.user_1.user_id,
+            old_owner_id=None,
+            comment_id=unique_comment.id,
+            send_email=send_email),
         # Notified as an impacted issue update.
-        mock.call(issue_empty.issue_id,  hostport, self.user_1.user_id,
-                  comment_id=comment_empty_imp.id, send_email=send_email),
+        mock.call(
+            issue_empty.issue_id,
+            hostport,
+            self.user_1.user_id,
+            comment_id=comment_empty_imp.id,
+            send_email=send_email),
         # Notified as an impacted issue update.
-        mock.call(imp_issue.issue_id,  hostport, self.user_1.user_id,
-                  comment_id=imp_comment.id, send_email=send_email),
+        mock.call(
+            imp_issue.issue_id,
+            hostport,
+            self.user_1.user_id,
+            comment_id=imp_comment.id,
+            send_email=send_email),
     ]
     fake_notify.assert_has_calls(expected_notify_calls)
     old_owner_ids = []
@@ -3277,6 +3354,99 @@ class WorkEnvTest(unittest.TestCase):
         self.mr.cnxn, reindex_iids, commit=False)
     self.mr.cnxn.Commit.assert_called_once()
 
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
+  @mock.patch('time.time')
+  def testModifyIssues_ComponentModified(
+      self, fake_time, fake_bulk_notify, fake_notify):
+    fake_time.return_value = self.PAST_TIME
+
+    issue = _Issue(789, 1)
+    issue.component_ids = [self.component_id_1]
+    delta = tracker_pb2.IssueDelta(
+        comp_ids_add=[self.component_id_2],
+        comp_ids_remove=[self.component_id_1])
+
+    exp_issue = copy.deepcopy(issue)
+
+    self.services.issue.TestAddIssue(issue)
+
+    issue_delta_pairs = [(issue.issue_id, delta)]
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    content = 'Modifying component'
+    self.SignIn(self.user_1.user_id)
+    send_email = True
+
+    with self.work_env as we:
+      we.ModifyIssues(
+          issue_delta_pairs,
+          False,
+          comment_content=content,
+          send_email=send_email)
+
+    exp_issue.modified_timestamp = self.PAST_TIME
+    exp_issue.component_modified_timestamp = self.PAST_TIME
+    exp_issue.component_ids = [self.component_id_2]
+
+    exp_issue.derived_status = ''
+    exp_issue.derived_owner_id = 0
+    exp_issue.assume_stale = False
+
+    self.assertEqual(
+        exp_issue, self.services.issue.GetIssue(self.cnxn, exp_issue.issue_id))
+
+    fake_bulk_notify.assert_not_called()
+    fake_notify.assert_called()
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
+  @mock.patch('time.time')
+  def testModifyIssues_StatusModified(
+      self, fake_time, fake_bulk_notify, fake_notify):
+    fake_time.return_value = self.PAST_TIME
+
+    issue = _Issue(789, 1)
+    issue.status = 'New'
+    delta = tracker_pb2.IssueDelta(status='Fixed')
+
+    exp_issue = copy.deepcopy(issue)
+
+    self.services.issue.TestAddIssue(issue)
+
+    issue_delta_pairs = [(issue.issue_id, delta)]
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    content = 'Modifying status'
+    self.SignIn(self.user_1.user_id)
+    send_email = True
+
+    with self.work_env as we:
+      we.ModifyIssues(
+          issue_delta_pairs,
+          False,
+          comment_content=content,
+          send_email=send_email)
+
+    exp_issue.modified_timestamp = self.PAST_TIME
+    exp_issue.status_modified_timestamp = self.PAST_TIME
+    exp_issue.closed_timestamp = self.PAST_TIME
+    exp_issue.status = 'Fixed'
+
+    exp_issue.derived_status = ''
+    exp_issue.derived_owner_id = 0
+    exp_issue.assume_stale = False
+
+    self.assertEqual(
+        exp_issue, self.services.issue.GetIssue(self.cnxn, exp_issue.issue_id))
+
+    fake_bulk_notify.assert_not_called()
+    fake_notify.assert_called()
+
   # We must redirect the testing environment's default domain to a
   # non-appspot.com one, in order for the per-project branded domains to get
   # used. See framework_helpers.GetNeededDomain().
@@ -3288,7 +3458,10 @@ class WorkEnvTest(unittest.TestCase):
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
   @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
-  def testModifyIssues_MultiProjectChanges(self, fake_bulk_notify, fake_notify):
+  @mock.patch('time.time')
+  def testModifyIssues_MultiProjectChanges(
+      self, fake_time, fake_bulk_notify, fake_notify):
+    fake_time.return_value = self.PAST_TIME
     self.services.project.TestAddProject(
         'proj-783', project_id=783, committer_ids=[self.user_1.user_id])
     self.services.project.TestAddProject(
@@ -3300,8 +3473,9 @@ class WorkEnvTest(unittest.TestCase):
     def setUpIssue(pid, local_id):
       issue = _Issue(pid, local_id)
       exp_amendments = [tracker_bizobj.MakeCcAmendment(delta.cc_ids_add, [])]
-      exp_issue =  copy.deepcopy(issue)
+      exp_issue = copy.deepcopy(issue)
       exp_issue.cc_ids.extend(delta.cc_ids_add)
+      exp_issue.modified_timestamp = self.PAST_TIME
       return issue, exp_amendments, exp_issue
 
     # We expect fake_bulk_notify to send these issues' notifications.
@@ -3377,8 +3551,12 @@ class WorkEnvTest(unittest.TestCase):
     # Check notifications.
     p2_hostport = '782.com'
     fake_notify.assert_called_once_with(
-        issue_p2.issue_id, p2_hostport, self.user_1.user_id,
-        old_owner_id=None, comment_id=comment_p2.id, send_email=send_email)
+        issue_p2.issue_id,
+        p2_hostport,
+        self.user_1.user_id,
+        old_owner_id=None,
+        comment_id=comment_p2.id,
+        send_email=send_email)
 
     p1_hostport = '781.com'
     p1_amendments = exp_amendments_p1a + exp_amendments_p1b
@@ -3442,6 +3620,13 @@ class WorkEnvTest(unittest.TestCase):
     self.services.issue.TestAddIssue(issue_noop_shared_a)
     self.services.issue.TestAddIssue(issue_noop_shared_b)
 
+    exp_issues = [
+        copy.deepcopy(issue_empty),
+        copy.deepcopy(issue_noop),
+        copy.deepcopy(issue_noop_shared_a),
+        copy.deepcopy(issue_noop_shared_b)
+    ]
+
     issue_delta_pairs = [(issue_empty.issue_id, delta_empty),
                          (issue_noop.issue_id, delta_noop),
                          (issue_noop_shared_a.issue_id, delta_noop_shared),
@@ -3458,6 +3643,13 @@ class WorkEnvTest(unittest.TestCase):
     with self.work_env as we:
       issues = we.ModifyIssues(issue_delta_pairs, False, send_email=True)
 
+    for exp_issue in exp_issues:
+      exp_issue.assume_stale = False
+      # Check issues remained the same with no changes.
+      self.assertEqual(
+          exp_issue,
+          self.services.issue.GetIssue(self.cnxn, exp_issue.issue_id))
+
     self.assertFalse(issues)
     self.services.issue.UpdateIssue.assert_not_called()
     self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
@@ -3466,6 +3658,51 @@ class WorkEnvTest(unittest.TestCase):
     fake_bulk_notify.assert_not_called()
     fake_notify.assert_not_called()
     self.mr.cnxn.Commit.assert_not_called()
+
+  @mock.patch(
+      'features.send_notifications.PrepareAndSendIssueChangeNotification')
+  @mock.patch('features.send_notifications.SendIssueBulkChangeNotification')
+  @mock.patch('time.time')
+  def testModifyIssues_CommentWithNoChanges(
+      self, fake_time, fake_bulk_notify, fake_notify):
+    fake_time.return_value = self.PAST_TIME
+
+    issue = _Issue(789, 1)
+    delta_empty = tracker_pb2.IssueDelta()
+
+    exp_issue = copy.deepcopy(issue)
+    exp_issue.modified_timestamp = self.PAST_TIME
+    exp_issue.assume_stale = False
+
+    self.services.issue.TestAddIssue(issue)
+
+    issue_delta_pairs = [(issue.issue_id, delta_empty)]
+
+    self.mr.cnxn = mock.Mock()
+    self.mr.cnxn.Commit = mock.Mock()
+    self.services.issue.UpdateIssue = mock.Mock()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate = mock.Mock()
+    self.services.issue.CreateIssueComment = mock.Mock()
+    self.services.issue.EnqueueIssuesForIndexing = mock.Mock()
+    self.SignIn(self.user_1.user_id)
+
+    with self.work_env as we:
+      issues = we.ModifyIssues(
+          issue_delta_pairs, False, comment_content='invisible chickens')
+
+    self.assertEqual(len(issues), 1)
+    self.assertEqual(exp_issue, issues[0])
+    self.assertEqual(
+        exp_issue, self.services.issue.GetIssue(self.cnxn, exp_issue.issue_id))
+
+    self.services.issue.UpdateIssue.assert_not_called()
+    self.services.issue_star.SetStarsBatch_SkipIssueUpdate.assert_not_called()
+    self.services.issue.CreateIssueComment.assert_called()
+    self.services.issue.EnqueueIssuesForIndexing.assert_called()
+
+    fake_bulk_notify.assert_not_called()
+    fake_notify.assert_called()
+    self.mr.cnxn.Commit.assert_called()
 
   @mock.patch(
       'features.send_notifications.PrepareAndSendIssueChangeNotification')
@@ -3488,6 +3725,7 @@ class WorkEnvTest(unittest.TestCase):
     fake_bulk_notify.assert_not_called()
     fake_notify.assert_not_called()
     self.mr.cnxn.Commit.assert_not_called()
+
 
   def testModifyIssuesBulkNotifyForDelta(self):
     # Integrate tested in ModifyIssues tests as the main concern is

@@ -16,6 +16,7 @@ import collections
 import itertools
 import logging
 import re
+import time
 import urllib
 
 from google.appengine.api import app_identity
@@ -1255,10 +1256,12 @@ def _GetEnumFieldValuesAndDocstrings(field_def, config):
 _IssueChangesTuple = collections.namedtuple(
     '_IssueChangesTuple', [
         'issues_to_update_dict', 'merged_from_add_by_iid', 'amendments_by_iid',
-        'imp_amendments_by_iid', 'old_owners_by_iid', 'new_starrers_by_iid'
+        'imp_amendments_by_iid', 'old_owners_by_iid', 'old_statuses_by_iid',
+        'old_components_by_iid', 'new_starrers_by_iid'
     ])
 # type: (Mapping[int, Issue], DefaultDict[int, Sequence[int]],
 #     Mapping[int, Amendment], Mapping[int, Amendment], Mapping[int, int],
+#     Mapping[int, str], Mapping[int, Sequence[int]],
 #     Mapping[int, Sequence[int]])-> None
 
 
@@ -1280,7 +1283,6 @@ def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
     Returns:
       An _IssueChangesTuple named tuple.
   """
-
   impacted_tracker = _IssueChangeImpactedIssues()
   project_ids = {issue.project_id for issue, _delta in issue_delta_pairs}
   configs_by_pid = services.config.GetProjectConfigs(cnxn, list(project_ids))
@@ -1291,10 +1293,23 @@ def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
 
   amendments_by_iid = {}
   old_owners_by_iid = {}
+  old_statuses_by_iid = {}
+  old_components_by_iid = {}
   # PHASE 3: Update the main issues in RAM (not indirectly, impacted issues).
   for issue, delta in issue_delta_pairs:
-    if issue.owner_id and issue.owner_id != delta.owner_id:
-      old_owners_by_iid[issue.issue_id] = issue.owner_id
+    # Cache old data that will be used by future computations.
+    old_owner = tracker_bizobj.GetOwnerId(issue)
+    old_status = tracker_bizobj.GetStatus(issue)
+    if delta.owner_id is not None and delta.owner_id != old_owner:
+      old_owners_by_iid[issue.issue_id] = old_owner
+    if delta.status is not None and delta.status != old_status:
+      old_statuses_by_iid[issue.issue_id] = old_status
+    new_components = set(issue.component_ids)
+    new_components.update(delta.comp_ids_add or [])
+    new_components.difference_update(delta.comp_ids_remove or [])
+    if set(issue.component_ids) != new_components:
+      old_components_by_iid[issue.issue_id] = issue.component_ids
+
     impacted_tracker.TrackImpactedIssues(issue, delta)
     config = configs_by_pid.get(issue.project_id)
     amendments, _impacted_iids = tracker_bizobj.ApplyIssueDelta(
@@ -1326,7 +1341,44 @@ def ApplyAllIssueChanges(cnxn, issue_delta_pairs, services):
   return _IssueChangesTuple(
       issues_to_update_dict, impacted_tracker.merged_from_add,
       amendments_by_iid, imp_amendments_by_iid, old_owners_by_iid,
-      new_starrers_by_iid)
+      old_statuses_by_iid, old_components_by_iid, new_starrers_by_iid)
+
+
+def UpdateClosedTimestamp(config, issue, old_effective_status):
+  # type: (proto.tracker_pb2.ProjectIssueConfig, proto.tracker_pb2.Issue, str)
+  #     -> None
+  """Sets or unsets the closed_timestamp based based on status changes.
+
+  If the status is changing from open to closed, the closed_timestamp is set to
+  the current time.
+
+  If the status is changing form closed to open, the close_timestamp is unset.
+
+  If the status is changing from one closed to another closed, or from one
+  open to another open, no operations are performed.
+
+  Args:
+    config: the project configuration
+    issue: the issue being updated (a protocol buffer)
+    old_effective_status: the old issue status string. E.g., 'New'
+
+  SIDE EFFECTS:
+    Updated issue in place with new closed timestamp.
+  """
+  old_effective_status = old_effective_status or ''
+  # open -> closed
+  if (MeansOpenInProject(old_effective_status, config) and
+      not MeansOpenInProject(tracker_bizobj.GetStatus(issue), config)):
+
+    issue.closed_timestamp = int(time.time())
+    return
+
+  # closed -> open
+  if (not MeansOpenInProject(old_effective_status, config) and
+      MeansOpenInProject(tracker_bizobj.GetStatus(issue), config)):
+
+    issue.reset('closed_timestamp')
+    return
 
 
 def GroupUniqueDeltaIssues(issue_delta_pairs):

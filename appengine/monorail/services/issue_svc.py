@@ -1518,7 +1518,7 @@ class IssueService(object):
     # Update the closed timestamp before filter rules so that rules
     # can test for closed_timestamp, and also after filter rules
     # so that closed_timestamp will be set if the issue is closed by the rule.
-    _UpdateClosedTimestamp(config, issue, old_effective_status)
+    tracker_helpers.UpdateClosedTimestamp(config, issue, old_effective_status)
     if rules is None:
       logging.info('Rules were not given')
       rules = services.features.GetFilterRules(cnxn, config.project_id)
@@ -1527,7 +1527,7 @@ class IssueService(object):
 
     filterrules_helpers.ApplyGivenRules(
         cnxn, services, issue, config, rules, predicate_asts)
-    _UpdateClosedTimestamp(config, issue, old_effective_status)
+    tracker_helpers.UpdateClosedTimestamp(config, issue, old_effective_status)
     if old_effective_owner != tracker_bizobj.GetOwnerId(issue):
       issue.owner_modified_timestamp = timestamp
     if old_effective_status != tracker_bizobj.GetStatus(issue):
@@ -2891,40 +2891,3 @@ class IssueService(object):
         cnxn, cc_id=user_ids, commit=commit, limit=limit)
 
     return list(set(affected_issue_ids))
-
-
-def _UpdateClosedTimestamp(config, issue, old_effective_status):
-  """Sets or unsets the closed_timestamp based based on status changes.
-
-  If the status is changing from open to closed, the closed_timestamp is set to
-  the current time.
-
-  If the status is changing form closed to open, the close_timestamp is unset.
-
-  If the status is changing from one closed to another closed, or from one
-  open to another open, no operations are performed.
-
-  Args:
-    config: the project configuration
-    issue: the issue being updated (a protocol buffer)
-    old_effective_status: the old issue status string. E.g., 'New'
-  """
-  # open -> closed
-  if (tracker_helpers.MeansOpenInProject(old_effective_status, config)
-      and not tracker_helpers.MeansOpenInProject(
-          tracker_bizobj.GetStatus(issue), config)):
-
-    logging.info('setting closed_timestamp on issue: %d', issue.local_id)
-
-    issue.closed_timestamp = int(time.time())
-    return
-
-  # closed -> open
-  if (not tracker_helpers.MeansOpenInProject(old_effective_status, config)
-      and tracker_helpers.MeansOpenInProject(
-          tracker_bizobj.GetStatus(issue), config)):
-
-    logging.info('clearing closed_timestamp on issue: %s', issue.local_id)
-
-    issue.reset('closed_timestamp')
-    return

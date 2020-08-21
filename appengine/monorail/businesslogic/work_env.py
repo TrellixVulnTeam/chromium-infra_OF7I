@@ -1865,6 +1865,16 @@ class WorkEnv(object):
 
     Note: Issues with NOOP deltas and no comment_content to add will not be
         updated and will not be returned.
+
+    Args:
+      issue_id_delta_pairs: List of Tuples containing IDs and IssueDeltas, one
+        for each issue to modify.
+      is_description: Whether this is a description update or not.
+      comment_content: The text for the comment this issue change will use.
+      send_email: Whether this change sends an email or not.
+
+    Returns:
+      List of modified issues.
     """
 
     main_issue_ids = {issue_id for issue_id, _delta in issue_id_delta_pairs}
@@ -1890,7 +1900,6 @@ class WorkEnv(object):
     # PHASE 3-4: Modify issues in RAM.
     changes = tracker_helpers.ApplyAllIssueChanges(
         self.mc.cnxn, issue_delta_pairs, self.services)
-    # TODO(crbug.com/monorail/8111): Update *_timestamp fields.
 
     # PHASE 5: Apply filter rules.
     inflight_issues = changes.issues_to_update_dict.values()
@@ -1901,14 +1910,60 @@ class WorkEnv(object):
     with exceptions.ErrorAggregator(exceptions.FilterRuleException) as err_agg:
       for issue in inflight_issues:
         config = configs_by_id[issue.project_id]
-        # TODO(crbug.com/monorail/8182): Update closed_timestamp.
+
+        # Update closed timestamp before filter rules because filter rules
+        # may affect them.
+        old_effective_status = changes.old_statuses_by_iid.get(issue.issue_id)
+        tracker_helpers.UpdateClosedTimestamp(
+            config, issue, old_effective_status)
+
         filterrules_helpers.ApplyFilterRules(
               self.mc.cnxn, self.services, issue, config)
         if issue.derived_errors:
           err_agg.AddErrorMessage('/n'.join(issue.derived_errors))
-        # TODO(crbug.com/monorail/8182): Update closed_timestamp.
 
-    # PHASE 6: Apply changes to DB: update issues, combine starrers
+        # Update closed timestamp after filter rules because filter rules
+        # could change effective status.
+        tracker_helpers.UpdateClosedTimestamp(
+            config, issue, old_effective_status)
+
+    # PHASE 6: Update modified timestamps for issues in RAM.
+    all_involved_iids = main_issue_ids.union(
+        changes.issues_to_update_dict.keys())
+
+    now_timestamp = int(time.time())
+    # Add modified timestamps for issues with amendments.
+    for iid in all_involved_iids:
+      issue = changes.issues_to_update_dict.get(iid, issues_by_id.get(iid))
+      issue_modified = iid in changes.issues_to_update_dict
+
+      if not (issue_modified or comment_content):
+        # Skip issues that have neither amendments or comment changes.
+        continue
+
+      old_owner = changes.old_owners_by_iid.get(issue.issue_id)
+      old_status = changes.old_statuses_by_iid.get(issue.issue_id)
+      old_components = changes.old_components_by_iid.get(issue.issue_id)
+
+      # Adding this issue to issues_to_update, so its modified_timestamp gets
+      # updated in PHASE 7's UpdateIssues() call.
+      changes.issues_to_update_dict[issue.issue_id] = issue
+
+      issue.modified_timestamp = now_timestamp
+
+      if (iid in changes.old_owners_by_iid and
+          old_owner != tracker_bizobj.GetOwnerId(issue)):
+        issue.owner_modified_timestamp = now_timestamp
+
+      if (iid in changes.old_statuses_by_iid and
+          old_status != tracker_bizobj.GetStatus(issue)):
+        issue.status_modified_timestamp = now_timestamp
+
+      if (iid in changes.old_components_by_iid and
+          set(old_components) != set(issue.component_ids)):
+        issue.component_modified_timestamp = now_timestamp
+
+    # PHASE 7: Apply changes to DB: update issues, combine starrers
     # for merged issues, create issue comments, enqueue issues for
     # re-indexing.
     if changes.issues_to_update_dict:
@@ -1916,16 +1971,11 @@ class WorkEnv(object):
           self.mc.cnxn, changes.issues_to_update_dict.values(), commit=False)
     comments_by_iid = {}
     impacted_comments_by_iid = {}
-    # changes.issues_to_update includes all main issues or impacted
-    # issues with updated fields. However, it does not contain main issues
-    # where there were no field value changes, but should still have
-    # new comments with `comment_content` added. So we combine iids
-    # in issues_to_update and main_issue_ids.
-    all_involved_iids = main_issue_ids.union(
-        changes.issues_to_update_dict.keys())
-    for iid in all_involved_iids:
-      issue = changes.issues_to_update_dict.get(iid, issues_by_id.get(iid))
 
+    # changes.issues_to_update includes all main issues or impacted
+    # issues with updated fields and main issues that had noop changes
+    # but still need a comment created for `comment_content`.
+    for iid, issue in changes.issues_to_update_dict.items():
       # Update starrers for merged issues.
       new_starrers = changes.new_starrers_by_iid.get(iid)
       if new_starrers:
@@ -1941,6 +1991,7 @@ class WorkEnv(object):
             commit=False)
 
       # Create new issue comment for impacted issue changes.
+      # ie: when an issue is marked as blockedOn another or similar.
       imp_amendments = changes.imp_amendments_by_iid.get(iid)
       if imp_amendments:
         impacted_comments_by_iid[iid] = self.services.issue.CreateIssueComment(
@@ -1955,14 +2006,15 @@ class WorkEnv(object):
       # means there were no updates that need a commit.
       self.mc.cnxn.Commit()
 
-    # PHASE 7: Send notifications for each group of issues from Phase 2.
+    # PHASE 8: Send notifications for each group of issues from Phase 2.
     # Fetch hostports.
     hostports_by_pid = {}
-    for iid in all_involved_iids:
+    for iid, issue in changes.issues_to_update_dict.items():
       # Note: issues_to_update only include issues with changes in metadata.
       # If iid is not in issues_to_update, the issue may still have a new
       # comment that we want to send notifications for.
       issue = changes.issues_to_update_dict.get(iid, issues_by_id.get(iid))
+
       if issue.project_id not in hostports_by_pid:
         hostports_by_pid[issue.project_id] = framework_helpers.GetHostPort(
             project_name=issue.project_name)
@@ -1974,17 +2026,20 @@ class WorkEnv(object):
       issues_by_pid = collections.defaultdict(set)
       for issue in issues:
         issues_by_pid[issue.project_id].add(issue)
-      for pid, project_issues in issues_by_pid.items():
-        hostport = hostports_by_pid[pid]
+      for project_issues in issues_by_pid.values():
         # Send one email to involved users for the issue.
         if len(project_issues) == 1:
           (project_issue,) = project_issues
           self._ModifyIssuesNotifyForDelta(
-              project_issue, changes, comments_by_iid, hostport, send_email)
+              project_issue, changes, comments_by_iid, hostports_by_pid,
+              send_email)
         # Send one bulk email for users involved in all updated issues.
         else:
           self._ModifyIssuesBulkNotifyForDelta(
-              project_issues, changes, hostport, send_email,
+              project_issues,
+              changes,
+              hostports_by_pid,
+              send_email,
               comment_content=comment_content)
 
     # Send emails for changes to impacted issues.
@@ -2003,14 +2058,15 @@ class WorkEnv(object):
     ]
 
   def _ModifyIssuesNotifyForDelta(
-      self, issue, changes, comments_by_iid, hostport, send_email):
+      self, issue, changes, comments_by_iid, hostports_by_pid, send_email):
     # type: (Issue, tracker_helpers._IssueChangesTuple,
-    #     Mapping[int, IssueComment], str, bool) -> None
+    #     Mapping[int, IssueComment], Mapping[int, str], bool) -> None
     comment_pb = comments_by_iid.get(issue.issue_id)
     # Existence of a comment_pb means there were updates to the issue or
     # comment_content added to the issue that should trigger
     # notifications.
     if comment_pb:
+      hostport = hostports_by_pid[issue.project_id]
       old_owner_id = changes.old_owners_by_iid.get(issue.issue_id)
       send_notifications.PrepareAndSendIssueChangeNotification(
           issue.issue_id,
@@ -2021,8 +2077,9 @@ class WorkEnv(object):
           send_email=send_email)
 
   def _ModifyIssuesBulkNotifyForDelta(
-      self, issues, changes, hostport, send_email, comment_content=None):
-    # type: (Collection[Issue], _IssueChangesTuple, str, bool,
+      self, issues, changes, hostports_by_pid, send_email,
+      comment_content=None):
+    # type: (Collection[Issue], _IssueChangesTuple, Mapping[int, str], bool,
     #     Optional[str]) -> None
     iids = {issue.issue_id for issue in issues}
     old_owner_ids = [
@@ -2044,6 +2101,7 @@ class WorkEnv(object):
       users_by_id = framework_views.MakeAllUserViews(
           self.mc.cnxn, self.services.user, old_owner_ids,
           tracker_bizobj.UsersInvolvedInAmendments(amendments))
+      hostport = hostports_by_pid[issues.pop().project_id]
       send_notifications.SendIssueBulkChangeNotification(
           iids, hostport, old_owner_ids, comment_content,
           self.mc.auth.user_id, amendments, send_email, users_by_id)

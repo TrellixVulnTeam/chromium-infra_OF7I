@@ -1691,6 +1691,8 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     expected_amendments = {}
     expected_imp_amendments = {}
     expected_old_owners = {}
+    expected_old_statuses = {}
+    expected_old_components = {}
     expected_merged_from_add = {}
     expected_new_starrers = {}
 
@@ -1867,7 +1869,7 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     expected_tuple = tracker_helpers._IssueChangesTuple(
         expected_issues_to_update, expected_merged_from_add,
         expected_amendments, expected_imp_amendments, expected_old_owners,
-        expected_new_starrers)
+        expected_old_statuses, expected_old_components, expected_new_starrers)
     self.assertEqual(actual_tuple, expected_tuple)
 
     self.assertEqual(missing_1, expected_missing_1)
@@ -1897,7 +1899,8 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     actual_tuple = tracker_helpers.ApplyAllIssueChanges(
         self.cnxn, issue_delta_pairs, self.services)
-    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {}, {})
+    expected_tuple = tracker_helpers._IssueChangesTuple(
+        {}, {}, {}, {}, {}, {}, {}, {})
     self.assertEqual(actual_tuple, expected_tuple)
 
     self.assertEqual(noop_issue, expected_noop_issue)
@@ -1906,8 +1909,48 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_delta_pairs = []
     actual_tuple = tracker_helpers.ApplyAllIssueChanges(
         self.cnxn, issue_delta_pairs, self.services)
-    expected_tuple = tracker_helpers._IssueChangesTuple({}, {}, {}, {}, {}, {})
+    expected_tuple = tracker_helpers._IssueChangesTuple(
+        {}, {}, {}, {}, {}, {}, {}, {})
     self.assertEqual(actual_tuple, expected_tuple)
+
+  def testUpdateClosedTimestamp(self):
+    config = tracker_pb2.ProjectIssueConfig()
+    config.well_known_statuses.append(
+        tracker_pb2.StatusDef(status='New', means_open=True))
+    config.well_known_statuses.append(
+        tracker_pb2.StatusDef(status='Accepted', means_open=True))
+    config.well_known_statuses.append(
+        tracker_pb2.StatusDef(status='Old', means_open=False))
+    config.well_known_statuses.append(
+        tracker_pb2.StatusDef(status='Closed', means_open=False))
+
+    issue = tracker_pb2.Issue()
+    issue.local_id = 1234
+    issue.status = 'New'
+
+    # ensure the default value is undef
+    self.assertTrue(not issue.closed_timestamp)
+
+    # ensure transitioning to the same and other open states
+    # doesn't set the timestamp
+    issue.status = 'New'
+    tracker_helpers.UpdateClosedTimestamp(config, issue, 'New')
+    self.assertTrue(not issue.closed_timestamp)
+
+    issue.status = 'Accepted'
+    tracker_helpers.UpdateClosedTimestamp(config, issue, 'New')
+    self.assertTrue(not issue.closed_timestamp)
+
+    # ensure transitioning from open to closed sets the timestamp
+    issue.status = 'Closed'
+    tracker_helpers.UpdateClosedTimestamp(config, issue, 'Accepted')
+    self.assertTrue(issue.closed_timestamp)
+
+    # ensure that the timestamp is cleared when transitioning from
+    # closed to open
+    issue.status = 'New'
+    tracker_helpers.UpdateClosedTimestamp(config, issue, 'Closed')
+    self.assertTrue(not issue.closed_timestamp)
 
   def testGroupUniqueDeltaIssues(self):
     """We can identify unique IssueDeltas and group Issues by their deltas."""
