@@ -20,16 +20,8 @@ import (
 	"infra/cmd/shivas/query"
 	"infra/cmd/shivas/site"
 	sw_cmds "infra/cmd/shivas/swarming/cmds"
-	"infra/cmd/shivas/ufs/cmds/configuration"
-	"infra/cmd/shivas/ufs/cmds/labsetup/host"
-	"infra/cmd/shivas/ufs/cmds/labsetup/vm"
+	"infra/cmd/shivas/ufs/cmds/operations"
 	q "infra/cmd/shivas/ufs/cmds/query"
-	"infra/cmd/shivas/ufs/cmds/registration/drac"
-	"infra/cmd/shivas/ufs/cmds/registration/kvm"
-	"infra/cmd/shivas/ufs/cmds/registration/machine"
-	"infra/cmd/shivas/ufs/cmds/registration/nic"
-	"infra/cmd/shivas/ufs/cmds/registration/rack"
-	"infra/cmd/shivas/ufs/cmds/registration/switches"
 	"infra/cmd/shivas/ufs/cmds/state"
 )
 
@@ -52,46 +44,10 @@ func getApplication() *cli.Application {
 			subcommands.Section("ChromeOS Lab (only) audit"),
 			audit.AuditCmd,
 			query.GetAssetsCmd,
-			subcommands.Section("Registration Management"),
-			machine.AddMachineCmd,
-			machine.UpdateMachineCmd,
-			machine.DeleteMachineCmd,
-			nic.AddNicCmd,
-			nic.UpdateNicCmd,
-			nic.DeleteNicCmd,
-			drac.AddDracCmd,
-			drac.UpdateDracCmd,
-			drac.DeleteDracCmd,
-			rack.AddRackCmd,
-			rack.UpdateRackCmd,
-			rack.DeleteRackCmd,
-			switches.AddSwitchCmd,
-			switches.UpdateSwitchCmd,
-			switches.DeleteSwitchCmd,
-			kvm.AddKVMCmd,
-			kvm.UpdateKVMCmd,
-			kvm.DeleteKVMCmd,
-			subcommands.Section("Lab Setup Management"),
-			host.AddHostCmd,
-			host.UpdateHostCmd,
-			host.DeleteHostCmd,
-			vm.AddVMCmd,
-			vm.UpdateVMCmd,
-			vm.DeleteVMCmd,
-			subcommands.Section("Configuration Management"),
-			configuration.AddVlanCmd,
-			configuration.DeleteVlanCmd,
-			configuration.UpdateVlanCmd,
-			configuration.AddMachineLSEPrototypeCmd,
-			configuration.UpdateMachineLSEPrototypeCmd,
-			configuration.DeleteMachineLSEPrototypeCmd,
-			configuration.AddRackLSEPrototypeCmd,
-			configuration.UpdateRackLSEPrototypeCmd,
-			configuration.DeleteRackLSEPrototypeCmd,
-			configuration.AddChromePlatformCmd,
-			configuration.UpdateChromePlatformCmd,
-			configuration.DeleteChromePlatformCmd,
-			subcommands.Section("Query Unified Fleet"),
+			subcommands.Section("Resource Management"),
+			operations.AddCmd,
+			operations.UpdateCmd,
+			operations.DeleteCmd,
 			q.GetCmd,
 			q.ListCmd,
 			subcommands.Section("State"),

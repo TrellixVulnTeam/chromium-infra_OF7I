@@ -20,28 +20,28 @@ var (
 	AddSwitchLongDesc string = `Create a switch to UFS.
 
 Examples:
-shivas add-switch -f switch.json
+shivas add switch -f switch.json
 Adds a switch by reading a JSON file input.
 [WARNING]: rack is a required field in json, all other output only fields will be ignored.
 
-shivas add-switch -rack {Rack name} -name {switch name} -capacity {50} -description {description}
+shivas add switch -rack {Rack name} -name {switch name} -capacity {50} -description {description}
 Adds a switch by specifying several attributes directly.
 
-shivas add-switch -i
+shivas add switch -i
 Adds a switch by reading input through interactive mode.`
 
 	// UpdateSwitchLongDesc long description for UpdateSwitchCmd
 	UpdateSwitchLongDesc string = `Update a switch by name.
 
 Examples:
-shivas update-switch -f switch.json
+shivas update switch -f switch.json
 Update a switch by reading a JSON file input.
 [WARNING]: rack is a required field in json, all other output only fields will be ignored.
 
-shivas update-switch -i
+shivas update switch -i
 Update a switch by reading input through interactive mode.
 
-shivas update-switch -rack {Rack name} -name {switch name} -capacity {50} -description {description}
+shivas update switch -rack {Rack name} -name {switch name} -capacity {50} -description {description}
 Partial updates a switch by parameters. Only specified parameters will be udpated in the switch.`
 
 	// ListSwitchLongDesc long description for ListSwitchCmd
@@ -179,28 +179,28 @@ Fetches 50 nics and prints the output in JSON format
 	// AddMachineLongDesc long description for AddMachineCmd
 	AddMachineLongDesc string = `Create a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) to UFS.
 
-You can create a machine with required parameters to UFS, and later add nics/drac separately by using add-nic/add-drac commands.
+You can create a machine with required parameters to UFS, and later add nics/drac separately by using add nic/add drac commands.
 
 You can also provide the optional nics and drac information to create the nics and drac associated with this machine by specifying a json file as input.
 
 Examples:
-shivas add-machine -f machinerequest.json
+shivas add machine -f machinerequest.json
 Creates a machine by reading a JSON file input.
 
-shivas add-machine -name machine1 -zone mtv97 -rack rack1 -ticket b/1234 -platform platform1 -kvm kvm1
+shivas add machine -name machine1 -zone mtv97 -rack rack1 -ticket b/1234 -platform platform1 -kvm kvm1
 Creates a machine by parameters without adding nic/drac.`
 
 	// UpdateMachineLongDesc long description for UpdateMachineCmd
 	UpdateMachineLongDesc string = `Update a machine(Hardware asset: ChromeBook, Bare metal server, Macbook.) by name.
 
 Examples:
-shivas update-machine -f machine.json
+shivas update machine -f machine.json
 Update a machine by reading a JSON file input.
 
-shivas update-machine -i
+shivas update machine -i
 Update a machine by reading input through interactive mode.
 
-shivas update-machine -name machine1 -zone mtv97 -rack rack1
+shivas update machine -name machine1 -zone mtv97 -rack rack1
 Partial updates a machine by parameters. Only specified parameters will be udpated in the machine.`
 
 	// ListMachineLongDesc long description for ListMachineCmd
@@ -342,36 +342,36 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddHostLongDesc string = `Add a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
 
 Examples:
-shivas add-host -f host.json
+shivas add host -f host.json
 Adds a host by reading a JSON file input.
 [WARNING]: machines is a required field in json, all other output only fields will be ignored.
 Specify additional settings, e.g. vlan, nic, ip via command line parameters along with JSON input
 
-shivas add-host -machine machine0 -name host0 -prototype browser-lab:no-vm  -osversion chrome-version-0 -vm-capacity 3
+shivas add host -machine machine0 -name host0 -prototype browser-lab:no-vm  -osversion chrome-version-0 -vm-capacity 3
 Adds a host by parameters without adding vms.
 
-shivas add-host -i
+shivas add host -i
 Adds a host by reading input through interactive mode.`
 
 	// UpdateHostLongDesc long description for UpdateHostCmd
 	UpdateHostLongDesc string = `Update a host(DUT, Labstation, Dev Server, Caching Server, VM Server, Host OS...) on a machine
 
 Examples:
-shivas update-host -f host.json
+shivas update host -f host.json
 Updates a host by reading a JSON file input.
 [WARNING]: machines is a required field in json, all other output only fields will be ignored.
 Specify additional settings, e.g. vlan, ip, nic, state via command line parameters along with JSON input
 
-shivas update-host -name cr22 -os windows
+shivas update host -name cr22 -os windows
 Partial update a host by parameters. Only specified parameters will be updated in the host.
 
-shivas update-host -name host0 -delete-vlan
+shivas update host -name host0 -delete-vlan
 Remove the ip for host
 
-shivas update-host -name host0 -vlan browser-lab:11 -nic eth0
+shivas update host -name host0 -vlan browser-lab:11 -nic eth0
 Assign ip to the host
 
-shivas update-host -i
+shivas update host -i
 Updates a host by reading input through interactive mode.`
 
 	// MachineLSEFileText description for machinelse/host file input
@@ -551,20 +551,20 @@ Valid states[" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"
 	AddMachineLSEPrototypeLongDesc string = `Add prototype for machine deployment.
 
 Examples:
-shivas add-machine-prototype -f machineprototype.json
+shivas add machine-prototype -f machineprototype.json
 Adds a machine prototype by reading a JSON file input.
 
-shivas add-machine-prototype -i
+shivas add machine-prototype -i
 Adds a machine prototype by reading input through interactive mode.`
 
 	// UpdateMachineLSEPrototypeLongDesc long description for UpdateMachineLSEPrototypeCmd
 	UpdateMachineLSEPrototypeLongDesc string = `Update prototype for machine deployment.
 
 Examples:
-shivas update-machine-prototype -f machineprototype.json
+shivas update machine-prototype -f machineprototype.json
 Updates a machine prototype by reading a JSON file input.
 
-shivas update-machine-prototype -i
+shivas update machine-prototype -i
 Updates a machine prototype by reading input through interactive mode.`
 
 	// ListMachineLSEPrototypeLongDesc long description for ListMachineLSEPrototypeCmd
@@ -609,20 +609,20 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddRackLSEPrototypeLongDesc string = `Add prototype for rack deployment.
 
 Examples:
-shivas add-rack-prototype -f rackprototype.json
+shivas add rack-prototype -f rackprototype.json
 Adds a rack prototype by reading a JSON file input.
 
-shivas add-rack-prototype -i
+shivas add rack-prototype -i
 Adds a rack prototype by reading input through interactive mode.`
 
 	// UpdateRackLSEPrototypeLongDesc long description for UpdateRackLSEPrototypeCmd
 	UpdateRackLSEPrototypeLongDesc string = `Update prototype for rack deployment.
 
 Examples:
-shivas update-rack-prototype -f rackprototype.json
+shivas update rack-prototype -f rackprototype.json
 Updates a rack prototype by reading a JSON file input.
 
-shivas update-rack-prototype -i
+shivas update rack-prototype -i
 Updates a rack prototype by reading input through interactive mode.`
 
 	// ListRackLSEPrototypeLongDesc long description for ListRackLSEPrototypeCmd
@@ -661,33 +661,33 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddChromePlatformLongDesc string = `Add platform configuration for browser machine.
 
 Examples:
-shivas add-platform -f platform.json
+shivas add platform -f platform.json
 Adds a platform by reading a JSON file input.
 
-shivas add-platform -i
+shivas add platform -i
 Adds a platform by reading input through interactive mode.
 
-shivas add-platform -name DELL_R320 -manufacturer Dell -tags 'dell,8g' -desc 'Dell platform'
+shivas add platform -name DELL_R320 -manufacturer Dell -tags 'dell,8g' -desc 'Dell platform'
 Adds a platform by specifying several attributes directly`
 
 	// AddVlanLongDesc long description for AddVlanCmd
 	AddVlanLongDesc string = `Add vlans.
 
 Examples:
-shivas add-vlan -name browser-lab:100 -cidr-block A.B.C.D/24 -desc "atl97-vlan"
+shivas add vlan -name browser-lab:100 -cidr-block A.B.C.D/24 -desc "atl97-vlan"
 Adds a vlan by specifying several attributes directly`
 
 	// UpdateChromePlatformLongDesc long description for UpdateChromePlatformCmd
 	UpdateChromePlatformLongDesc string = `Update platform configuration for browser machine.
 
 Examples:
-shivas update-platform -f platform.json
+shivas update platform -f platform.json
 Updates a platform by reading a JSON file input.
 
-shivas update-platform -i
+shivas update platform -i
 Updates a platform by reading input through interactive mode.
 
-shivas update-platform -name DELL_R320 -manufacturer Dell -tags -'
+shivas update platform -name DELL_R320 -manufacturer Dell -tags -'
 Updates a platform partially, only specified field values will be updated, with other values remaining the same.
 You can clear/empty a field value by providing a - for value as shown for -tags`
 
@@ -715,7 +715,7 @@ only description and state are allowed to update. cidr_block is not allowed to b
 
 Examples:
 
-shivas update-vlan -name vlan_name -desc test -state serving'
+shivas update vlan -name vlan_name -desc test -state serving'
 Updates a vlan partially, only specified field values will be updated, with other values remaining the same.
 You can clear/empty a field value by providing a "-"`
 
@@ -752,28 +752,28 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddNicLongDesc string = `Add a nic to UFS.
 
 Examples:
-shivas add-nic -f nic.json
+shivas add nic -f nic.json
 Add a nic by reading a JSON file input.
 [WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
-shivas add-nic -name machine0:eth0 -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
+shivas add nic -name machine0:eth0 -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
 Add a nic by specifying several attributes directly.
 
-shivas add-nic -i
+shivas add nic -i
 Add a nic by reading input through interactive mode.`
 
 	// UpdateNicLongDesc long description for UpdateNicCmd
 	UpdateNicLongDesc string = `Update a nic by name.
 
 Examples:
-shivas update-nic -f nic.json
+shivas update nic -f nic.json
 Update a nic by reading a JSON file input.
 [WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
-shivas update-nic -i
+shivas update nic -i
 Update a nic by reading input through interactive mode.
 
-shivas update-nic -name machine0:eth0 -switch switch0 -mac-address 12345
+shivas update nic -name machine0:eth0 -switch switch0 -mac-address 12345
 Partial update a nic by parameters. Only specified parameters will be updated in the nic.`
 
 	// NicFileText description for nic file input
@@ -799,14 +799,14 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddDracLongDesc string = `Add a drac to UFS.
 
 Examples:
-shivas add-drac -f drac.json
+shivas add drac -f drac.json
 Add a drac by reading a JSON file input.
 [WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
-shivas add-drac -name machine0:drac -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
+shivas add drac -name machine0:drac -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
 Add a drac by specifying several attributes directly.
 
-shivas add-drac -i
+shivas add drac -i
 Add a drac by reading input through interactive mode.
 `
 
@@ -814,20 +814,20 @@ Add a drac by reading input through interactive mode.
 	UpdateDracLongDesc string = `Update a drac by name.
 
 Examples:
-shivas update-drac -f drac.json
+shivas update drac -f drac.json
 Update a drac by reading a JSON file input.
 [WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
-shivas update-drac -name machine0:drac -switch switch0 -mac-address 123456
+shivas update drac -name machine0:drac -switch switch0 -mac-address 123456
 Partial update a drac by parameters. Only specified parameters will be updated in the drac.
 
-shivas update-drac -name drac0 -delete-vlan
+shivas update drac -name drac0 -delete-vlan
 Remove the ip for drac0
 
-shivas update-drac -name drac0 -vlan browser-lab:11
+shivas update drac -name drac0 -vlan browser-lab:11
 Assign ip to the drac
 
-shivas update-drac -i
+shivas update drac -i
 Update a drac by reading input through interactive mode.`
 
 	// DracFileText description for drac file input
@@ -855,29 +855,29 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	AddKVMLongDesc string = `Add a kvm to UFS.
 
 Examples:
-shivas add-kvm -f kvm.json
+shivas add kvm -f kvm.json
 Add a kvm by reading a JSON file input.
 [WARNING]: rack is a required field in json, all other output only fields will be ignored.
 
-shivas add-kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
+shivas add kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
 Add a kvm by specifying several attributes directly.
 
-shivas add-kvm -i
+shivas add kvm -i
 Add a kvm by reading input through interactive mode.`
 
 	// UpdateKVMLongDesc long description for UpdateKVMCmd
 	UpdateKVMLongDesc string = `Update a kvm by name.
 
 Examples:
-shivas update-kvm -f kvm.json
+shivas update kvm -f kvm.json
 Update a kvm by reading a JSON file input.
 [WARNING]: rack is a required field in json, all other output only fields will be ignored.
 Specify additional settings, e.g. vlan, ip via command line parameters along with JSON input
 
-shivas update-kvm -i
+shivas update kvm -i
 Update a kvm by reading input through interactive mode.
 
-shivas update-kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
+shivas update kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
 Partial updates a kvm by parameters. Only specified parameters will be udpated in the kvm.`
 
 	// KVMFileText description for kvm file input
@@ -899,28 +899,28 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 
 	// AddRackLongDesc long description for AddRackCmd
 	AddRackLongDesc string = `Create a rack to UFS.
-You can create a rack with name and zone to UFS, and later add kvm/switch/rpm separately by using add-switch/add-kvm/add-rpm commands.
+You can create a rack with name and zone to UFS, and later add kvm/switch/rpm separately by using add switch/add kvm/add rpm commands.
 
 You can also provide the optional switches, kvms and rpms information to create the switches, kvms and rpms associated with this rack by specifying a json file as input.
 
 Examples:
-shivas add-rack -f rackrequest.json
+shivas add rack -f rackrequest.json
 Creates a rack by reading a JSON file input.
 
-shivas add-rack -name rack-123 -zone lab01 -capacity 10
+shivas add rack -name rack-123 -zone lab01 -capacity 10
 Creates a rack by parameters without adding kvm/switch/rpm.`
 
 	// UpdateRackLongDesc long description for UpdateRackCmd
 	UpdateRackLongDesc string = `Update a rack by name.
 
 Examples:
-shivas update-rack -f rack.json
+shivas update rack -f rack.json
 Update a rack by reading a JSON file input.
 
-shivas update-rack -i
+shivas update rack -i
 Update a rack by reading input through interactive mode.
 
-shivas update-rack -name rack-123 -zone lab01 -capacity 10
+shivas update rack -name rack-123 -zone lab01 -capacity 10
 Partial updates a rack by parameters. Only specified parameters will be udpated in the rack.`
 
 	// ListRackLongDesc long description for ListRackCmd

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package query
+package operations
 
 import (
 	"github.com/maruel/subcommands"
@@ -17,62 +17,59 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/nic"
 	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
-	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
 )
 
-type list struct {
+type delete struct {
 	subcommands.CommandRunBase
 }
 
-// ListCmd contains list command specification
-var ListCmd = &subcommands.Command{
-	UsageLine: "list <sub-command>",
-	ShortDesc: "List entries for resources/entities",
-	LongDesc: `List entries for:
+// DeleteCmd contains delete command specification
+var DeleteCmd = &subcommands.Command{
+	UsageLine: "delete <sub-command>",
+	ShortDesc: "Delete a resource/entity",
+	LongDesc: `Delete a
 	machine/rack/kvm/rpm/switch/drac/nic
-	host/vm/vm-slots
+	host/vm
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &list{}
+		c := &delete{}
 		return c
 	},
 }
 
-type listApp struct {
+type deleteApp struct {
 	cli.Application
 }
 
 // Run implementing subcommands.CommandRun interface
-func (c *list) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *delete) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	d := a.(*cli.Application)
-	return subcommands.Run(&listApp{*d}, args)
+	return subcommands.Run(&deleteApp{*d}, args)
 }
 
-// GetCommands lists all the subcommands under list
-func (c listApp) GetCommands() []*subcommands.Command {
+// GetCommands lists all the subcommands under delete
+func (c deleteApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
-		machine.ListMachineCmd,
-		host.ListHostCmd,
-		kvm.ListKVMCmd,
-		rpm.ListRPMCmd,
-		switches.ListSwitchCmd,
-		drac.ListDracCmd,
-		nic.ListNicCmd,
-		vm.ListVMCmd,
-		vm.ListVMSlotCmd,
-		vlan.ListVlanCmd,
-		rack.ListRackCmd,
-		machineprototype.ListMachineLSEPrototypeCmd,
-		rackprototype.ListRackLSEPrototypeCmd,
-		chromeplatform.ListChromePlatformCmd,
+		machine.DeleteMachineCmd,
+		host.DeleteHostCmd,
+		kvm.DeleteKVMCmd,
+		switches.DeleteSwitchCmd,
+		drac.DeleteDracCmd,
+		nic.DeleteNicCmd,
+		vm.DeleteVMCmd,
+		rack.DeleteRackCmd,
+		machineprototype.DeleteMachineLSEPrototypeCmd,
+		rackprototype.DeleteRackLSEPrototypeCmd,
+		chromeplatform.DeleteChromePlatformCmd,
+		vlan.DeleteVlanCmd,
 	}
 }
 
 // GetName is cli.Application interface implementation
-func (c listApp) GetName() string {
-	return "list"
+func (c deleteApp) GetName() string {
+	return "delete"
 }

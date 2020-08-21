@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package query
+package operations
 
 import (
 	"github.com/maruel/subcommands"
@@ -17,62 +17,59 @@ import (
 	"infra/cmd/shivas/ufs/subcmds/nic"
 	"infra/cmd/shivas/ufs/subcmds/rack"
 	"infra/cmd/shivas/ufs/subcmds/rackprototype"
-	"infra/cmd/shivas/ufs/subcmds/rpm"
 	"infra/cmd/shivas/ufs/subcmds/switches"
 	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
 )
 
-type list struct {
+type add struct {
 	subcommands.CommandRunBase
 }
 
-// ListCmd contains list command specification
-var ListCmd = &subcommands.Command{
-	UsageLine: "list <sub-command>",
-	ShortDesc: "List entries for resources/entities",
-	LongDesc: `List entries for:
+// AddCmd contains add command specification
+var AddCmd = &subcommands.Command{
+	UsageLine: "add <sub-command>",
+	ShortDesc: "Add details of a resource/entity",
+	LongDesc: `Add details for
 	machine/rack/kvm/rpm/switch/drac/nic
-	host/vm/vm-slots
+	host/vm
 	machine-prototype/rack-prototype/chromeplatform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
-		c := &list{}
+		c := &add{}
 		return c
 	},
 }
 
-type listApp struct {
+type addApp struct {
 	cli.Application
 }
 
 // Run implementing subcommands.CommandRun interface
-func (c *list) Run(a subcommands.Application, args []string, env subcommands.Env) int {
+func (c *add) Run(a subcommands.Application, args []string, env subcommands.Env) int {
 	d := a.(*cli.Application)
-	return subcommands.Run(&listApp{*d}, args)
+	return subcommands.Run(&addApp{*d}, args)
 }
 
-// GetCommands lists all the subcommands under list
-func (c listApp) GetCommands() []*subcommands.Command {
+// GetCommands lists all the subcommands under add
+func (c addApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
-		machine.ListMachineCmd,
-		host.ListHostCmd,
-		kvm.ListKVMCmd,
-		rpm.ListRPMCmd,
-		switches.ListSwitchCmd,
-		drac.ListDracCmd,
-		nic.ListNicCmd,
-		vm.ListVMCmd,
-		vm.ListVMSlotCmd,
-		vlan.ListVlanCmd,
-		rack.ListRackCmd,
-		machineprototype.ListMachineLSEPrototypeCmd,
-		rackprototype.ListRackLSEPrototypeCmd,
-		chromeplatform.ListChromePlatformCmd,
+		machine.AddMachineCmd,
+		host.AddHostCmd,
+		kvm.AddKVMCmd,
+		switches.AddSwitchCmd,
+		drac.AddDracCmd,
+		nic.AddNicCmd,
+		vm.AddVMCmd,
+		rack.AddRackCmd,
+		machineprototype.AddMachineLSEPrototypeCmd,
+		rackprototype.AddRackLSEPrototypeCmd,
+		chromeplatform.AddChromePlatformCmd,
+		vlan.AddVlanCmd,
 	}
 }
 
 // GetName is cli.Application interface implementation
-func (c listApp) GetName() string {
-	return "list"
+func (c addApp) GetName() string {
+	return "add"
 }

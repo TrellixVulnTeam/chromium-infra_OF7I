@@ -30,7 +30,7 @@ type get struct {
 // GetCmd contains get command specification
 var GetCmd = &subcommands.Command{
 	UsageLine: "get <sub-command>",
-	ShortDesc: "Get details of asset/configuration by name or deployed machine/rack by hostname",
+	ShortDesc: "Get details of a resource/entity",
 	LongDesc: `Get details for
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
