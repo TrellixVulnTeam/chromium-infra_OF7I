@@ -43,6 +43,7 @@ var UpdateHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only). "+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only). "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.description, "desc", "", "description for the vm. "+cmdhelp.ClearFieldHelpText)
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this host to")
 		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
@@ -74,6 +75,7 @@ type updateHost struct {
 	osVersion   string
 	vmCapacity  int
 	tags        string
+	description string
 }
 
 func (c *updateHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -159,6 +161,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 			"vm-capacity": "vmCapacity",
 			"tags":        "tags",
 			"state":       "state",
+			"desc":        "description",
 		}),
 	})
 	if err != nil {
@@ -213,6 +216,11 @@ func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 			lse.GetChromeBrowserMachineLse().GetOsVersion().Value = c.osVersion
 		}
 	}
+	if c.description == utils.ClearFieldValue {
+		lse.Description = ""
+	} else {
+		lse.Description = c.description
+	}
 }
 
 func (c *updateHost) parseNetworkOpt(lseName string) map[string]*ufsAPI.NetworkOption {
@@ -254,13 +262,16 @@ func (c *updateHost) validateArgs() error {
 		if c.osVersion != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")
 		}
+		if c.description != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.hostName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" &&
-			c.osVersion == "" && c.prototype == "" && c.tags == "" && c.vmCapacity == 0 {
+			c.osVersion == "" && c.prototype == "" && c.tags == "" && c.vmCapacity == 0 && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}

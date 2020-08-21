@@ -53,8 +53,8 @@ var (
 	VMTitle             = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "State", "Description", "UpdateTime"}
 	VMFullTitle         = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "Description", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Zone", "KVMs", "Switches", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "VMs", "UpdateTime"}
-	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "UpdateTime"}
+	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "VMs", "Description", "UpdateTime"}
+	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "Description", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -879,6 +879,7 @@ func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhc
 		lse.GetState(),
 		fmt.Sprintf("%d", lse.GetChromeBrowserMachineLse().GetVmCapacity()),
 		strSlicesToStr(ufsAPI.ParseResources(lse.GetChromeBrowserMachineLse().GetVms(), "Name")),
+		lse.GetDescription(),
 		ts,
 	}
 }
@@ -926,6 +927,7 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 		m.GetState(),
 		fmt.Sprintf("%d", m.GetChromeBrowserMachineLse().GetVmCapacity()),
 		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachineLse().GetVms(), "Name")),
+		m.GetDescription(),
 		ts,
 	}
 }

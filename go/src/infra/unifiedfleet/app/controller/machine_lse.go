@@ -349,6 +349,8 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 			oldMachinelse.State = machinelse.GetState()
 		case "tags":
 			oldMachinelse.Tags = mergeTags(oldMachinelse.GetTags(), machinelse.GetTags())
+		case "description":
+			oldMachinelse.Description = machinelse.Description
 		}
 	}
 	// return existing/old machinelse with new updated values
@@ -1021,6 +1023,7 @@ func validateMachineLSEUpdateMask(machinelse *ufspb.MachineLSE, mask *field_mask
 					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - browser machine lse cannot be empty/nil.")
 				}
 			case "tags":
+			case "description":
 			case "state":
 				// valid fields, nothing to validate.
 			default:
