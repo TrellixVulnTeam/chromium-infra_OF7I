@@ -1876,12 +1876,10 @@ class WorkEnvTest(unittest.TestCase):
   def testBulkUpdateIssueApprovalsV3(self, mockUpdateIssueApproval):
 
     def side_effect(issue_id, approval_id, *_args, **_kwargs):
-      if issue_id in [78903]:
-        raise permissions.PermissionException
-      if issue_id in [78904, 78905]:
-        raise exceptions.NoSuchIssueApprovalException
-      return tracker_pb2.ApprovalValue(
-          approval_id=approval_id), tracker_pb2.IssueComment(issue_id=issue_id)
+      return (
+          tracker_pb2.ApprovalValue(approval_id=approval_id),
+          tracker_pb2.IssueComment(issue_id=issue_id),
+          tracker_pb2.Issue(issue_id=issue_id))
 
     mockUpdateIssueApproval.side_effect = side_effect
 
@@ -1895,17 +1893,16 @@ class WorkEnvTest(unittest.TestCase):
         (78901, 2, approval_delta),
         (78901, 2, approval_delta_2),
         (78902, 24, approval_delta),
-        (78903, 24, approval_delta),
-        (78904, 24, approval_delta),
-        (78905, 24, approval_delta),
     ]
     updated_approval_values = self.work_env.BulkUpdateIssueApprovalsV3(
         deltas_by_issue, 'xyz', send_email=True)
-    expected_approval_ids = [1, 1, 2, 2, 24]
-    expected = [
-        tracker_pb2.ApprovalValue(approval_id=aid)
-        for aid in expected_approval_ids
-    ]
+    expected = []
+    for iid, aid, _delta in deltas_by_issue:
+      issue_approval_value_pair = (
+          tracker_pb2.Issue(issue_id=iid),
+          tracker_pb2.ApprovalValue(approval_id=aid))
+      expected.append(issue_approval_value_pair)
+
     self.assertEqual(updated_approval_values, expected)
     updateIssueApprovalCalls = []
     for iid, aid, delta in deltas_by_issue:
@@ -1915,9 +1912,25 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(mockUpdateIssueApproval.call_count, len(deltas_by_issue))
     mockUpdateIssueApproval.assert_has_calls(updateIssueApprovalCalls)
 
-  def testBulkUpdateIssueApprovalsV3_AnonUser(self):
+  @mock.patch('businesslogic.work_env.WorkEnv.UpdateIssueApproval')
+  def testBulkUpdateIssueApprovalsV3_PermError(self, mockUpdateIssueApproval):
+    mockUpdateIssueApproval.side_effect = mock.Mock(
+        side_effect=permissions.PermissionException())
+    approval_delta = tracker_pb2.ApprovalDelta()
+    deltas_by_issue = [(78901, 1, approval_delta)]
     with self.assertRaises(permissions.PermissionException):
-      self.work_env.BulkUpdateIssueApprovalsV3([], 'comment', send_email=True)
+      self.work_env.BulkUpdateIssueApprovalsV3(
+          deltas_by_issue, 'comment', send_email=True)
+
+  @mock.patch('businesslogic.work_env.WorkEnv.UpdateIssueApproval')
+  def testBulkUpdateIssueApprovalsV3_NotFound(self, mockUpdateIssueApproval):
+    mockUpdateIssueApproval.side_effect = mock.Mock(
+        side_effect=exceptions.NoSuchIssueApprovalException())
+    approval_delta = tracker_pb2.ApprovalDelta()
+    deltas_by_issue = [(78901, 1, approval_delta)]
+    with self.assertRaises(exceptions.NoSuchIssueApprovalException):
+      self.work_env.BulkUpdateIssueApprovalsV3(
+          deltas_by_issue, 'comment', send_email=True)
 
   def testBulkUpdateIssueApprovalsV3_UserLacksViewPerms(self):
     self.SignIn(222)

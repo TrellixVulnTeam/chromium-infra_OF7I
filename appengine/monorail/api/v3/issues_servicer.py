@@ -273,10 +273,15 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       # all servicer methods that are scoped to a single Project need to call
       # mc.LookupLoggedInUserPerms.
       # This method does not because it may be scoped to multiple projects.
-      _approval_values = we.BulkUpdateIssueApprovalsV3(
+      issue_approval_values = we.BulkUpdateIssueApprovalsV3(
           delta_specifications, request.comment_content, send_email=send_email)
-    # TODO(crbug/monorail/7925): Return approval values.
-    # api_avs = self.converter.ConvertApprovalValues(issue.approval_values,
-    #     issue.field_values, issue.phases, issue_id=issue_id)
-    # response.approval_values.extend(api_avs)
+    api_avs = []
+    for issue, approval_value in issue_approval_values:
+      api_avs.extend(
+          self.converter.ConvertApprovalValues(
+              [approval_value],
+              issue.field_values,
+              issue.phases,
+              issue_id=issue.issue_id))
+    response.approval_values.extend(api_avs)
     return response

@@ -460,16 +460,18 @@ class IssuesServicerTest(unittest.TestCase):
     request = issues_pb2.ModifyIssueApprovalValuesRequest(deltas=[delta],)
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
-    _response = self.CallWrapped(
+    response = self.CallWrapped(
         self.issues_svcr.ModifyIssueApprovalValues, mc, request)
     expected_ingested_delta = tracker_pb2.ApprovalDelta(
         status=tracker_pb2.ApprovalStatus.NA,
         set_on=int(CURRENT_TIME),
         setter_id=self.owner.user_id,
     )
-    # TODO(crbug/monorail/7925): Convert ApprovalValues.
-    # self.assertEqual(len(response.approval_values), 1)
-
+    # NOTE: Because we mock out DeltaUpdateIssueApproval, the ApprovalValues
+    # returned haven't been changed in this test. We can't test that it was
+    # changed correctly, but we can make sure it's for the right ApprovalValue.
+    self.assertEqual(len(response.approval_values), 1)
+    self.assertEqual(response.approval_values[0].name, av_name)
     self.services.issue.DeltaUpdateIssueApproval.assert_called_once_with(
         mc.cnxn,
         self.owner.user_id,

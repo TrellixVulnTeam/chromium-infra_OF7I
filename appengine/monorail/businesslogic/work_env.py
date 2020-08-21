@@ -1553,35 +1553,27 @@ class WorkEnv(object):
           TODO(crbug/monorail/8122): send bulk approval update email instead.
 
     Returns:
-      A list of ApprovalValues that were changed. Issue/approval combos in
-        `delta_specifications` that did not exist will be ignored.
+      A list of (Issue, ApprovalValue) pairs corresponding to each
+      specification provided in `delta_specifications`.
 
     Raises:
       InputException: If a comment is too long.
-      PermissionException: Anon users and users will get permission denied.
-        Missing permissions to update individual issues will not throw
-        exceptions. Issues will just not be updated.
+      NoSuchIssueApprovalException: If any of the approvals specified
+          does not exist.
+      PermissionException: If the current user lacks permissions to execute
+          any of the deltas provided.
     """
-    if not self.mc.auth.user_id:
-      raise permissions.PermissionException('Anon cannot make changes')
-
     updated_approval_values = []
     for (issue_id, approval_id, approval_delta) in delta_specifications:
-      try:
-        updated_av, _comment = self.UpdateIssueApproval(
-            issue_id,
-            approval_id,
-            approval_delta,
-            comment_content,
-            False,
-            send_email=send_email,
-            update_perms=True)
-        updated_approval_values.append(updated_av)
-      # TODO(crbug/monorail/7925): Raise execeptions.
-      except exceptions.NoSuchIssueApprovalException as e:
-        logging.info('Skipping issue %s, no approval: %s', issue_id, e)
-      except permissions.PermissionException as e:
-        logging.info('Skipping issue %s, update not allowed: %s', issue_id, e)
+      updated_av, _comment, issue = self.UpdateIssueApproval(
+          issue_id,
+          approval_id,
+          approval_delta,
+          comment_content,
+          False,
+          send_email=send_email,
+          update_perms=True)
+      updated_approval_values.append((issue, updated_av))
     return updated_approval_values
 
   def UpdateIssueApproval(
@@ -1669,7 +1661,7 @@ class WorkEnv(object):
           issue_id, approval_id, hostport, comment_pb.id,
           send_email=send_email)
 
-    return approval_value, comment_pb
+    return approval_value, comment_pb, issue
 
   def ConvertIssueApprovalsTemplate(
       self, config, issue, template_name, comment_content, send_email=True):

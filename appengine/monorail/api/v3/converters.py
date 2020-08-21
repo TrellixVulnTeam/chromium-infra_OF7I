@@ -589,7 +589,7 @@ class Converter(object):
 
   def IngestApprovalDeltas(self, approval_deltas, setter_id):
     # type: (Sequence[api_proto.issues_pb2.ApprovalDelta], int) ->
-    #     Sequence[proto.tracker_pb2.ApprovalDelta]
+    #     Sequence[Tuple[int, int, proto.tracker_pb2.ApprovalDelta]]
     """Ingests protoc ApprovalDeltas into protorpc ApprovalDeltas.
 
     Args:

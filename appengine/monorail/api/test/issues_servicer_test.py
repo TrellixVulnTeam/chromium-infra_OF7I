@@ -1169,7 +1169,9 @@ class IssuesServicerTest(unittest.TestCase):
             status=tracker_pb2.ApprovalStatus.REVIEW_REQUESTED,
             setter_id=333,
             approver_ids=[333, 222]),
-        'comment_pb']
+        'comment_pb',
+        {},  # Fake issue.
+    ]
 
     actual = self.CallWrapped(self.issues_svcr.UpdateApproval, mc, request)
 
@@ -1227,7 +1229,9 @@ class IssuesServicerTest(unittest.TestCase):
 
     mockUpdateIssueApproval.return_value = [
         tracker_pb2.ApprovalValue(approval_id=3),
-        'comment_pb']
+        'comment_pb',
+        {},  # Fake issue.
+    ]
 
     actual = self.CallWrapped(self.issues_svcr.UpdateApproval, mc, request)
 
@@ -1272,7 +1276,10 @@ class IssuesServicerTest(unittest.TestCase):
         auth=self.auth)
 
     mockUpdateIssueApproval.return_value = [
-        tracker_pb2.ApprovalValue(approval_id=3), 'comment_pb']
+        tracker_pb2.ApprovalValue(approval_id=3),
+        'comment_pb',
+        {},  # Fake issue.
+    ]
 
     actual = self.CallWrapped(self.issues_svcr.UpdateApproval, mc, request)
 
