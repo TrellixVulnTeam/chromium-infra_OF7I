@@ -120,7 +120,7 @@ func TestMessage(t *testing.T) {
 			}
 			got := message.ExtractBuildIDMap(ctx, msgs)
 			So(got, ShouldContainKey, c.expected.buildID)
-			So(got[c.expected.buildID].Message.Attributes[message.ParentUIDKey], ShouldEqual, c.expected.parentUID)
+			So(message.GetParentUID(got[c.expected.buildID]), ShouldEqual, c.expected.parentUID)
 			So(message.ShouldPollForCompletion(got[c.expected.buildID]), ShouldEqual, c.expected.shouldPollForCompletion)
 		})
 	}

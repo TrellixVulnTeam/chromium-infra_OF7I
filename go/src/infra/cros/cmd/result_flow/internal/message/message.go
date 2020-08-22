@@ -122,6 +122,7 @@ func ExtractBuildIDMap(ctx context.Context, msgs []*pubsubpb.ReceivedMessage) ma
 }
 
 // ExtractParentUID extracts the parent request UID from the pubsub message.
+// TODO(crbug/1120849): remove this function once all the messages are sent by test runner recipe.
 func ExtractParentUID(msg *pubsubpb.ReceivedMessage) (string, error) {
 	msgBody := struct {
 		UserData string `json:"user_data"`
@@ -134,6 +135,11 @@ func ExtractParentUID(msg *pubsubpb.ReceivedMessage) (string, error) {
 		return "", errors.Annotate(err, "could not extract Parent UID").Err()
 	}
 	return msgPayload.ParentRequestUID, nil
+}
+
+// GetParentUID reads the parent request UID from the message's attributes.
+func GetParentUID(msg *pubsubpb.ReceivedMessage) string {
+	return msg.Message.Attributes[ParentUIDKey]
 }
 
 func extractBuildID(msg *pubsubpb.ReceivedMessage) (int64, error) {
