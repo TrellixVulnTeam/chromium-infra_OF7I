@@ -21,7 +21,7 @@ func main() {
 
 	application := cli.Application{
 		Name:  "result_adapter",
-		Title: "A CLI tool to convert test results to ResultDB native format then upload them.",
+		Title: "A CLI tool to convert test results to ResultSink native format then upload them to ResultDB via ResultSink.",
 		Context: func(ctx context.Context) context.Context {
 			logCfg := gologger.LoggerConfig{
 				Format: `%{message}`,
@@ -30,8 +30,8 @@ func main() {
 			return logCfg.Use(ctx)
 		},
 		Commands: []*subcommands.Command{
-			// TODO(crbug.com/1108016): add subcommands.
-			// cmdGtest(),
+			cmdGtest(),
+			// TODO(crbug.com/1108016): add cmdJson.
 			// cmdJson(),
 
 			{}, // a separator
