@@ -1,6 +1,5 @@
 {
   "ignored_steps": [
-    "slave steps",
     "Run Clank Test Annotator",
     "*(experimental)*"
   ],
