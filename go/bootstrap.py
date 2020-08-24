@@ -544,7 +544,7 @@ def bootstrap(layout, logging_level, args=None):
   # make sure cross-compilation mode is disabled during bootstrap. Restore it
   # back once bootstrap is finished.
   prev_environ = {}
-  for k in ('GOOS', 'GOARCH', 'GOARM'):
+  for k in ('GOOS', 'GOARCH', 'GOARM', 'GO111MODULE'):
     prev_environ[k] = os.environ.pop(k, None)
 
   try:
