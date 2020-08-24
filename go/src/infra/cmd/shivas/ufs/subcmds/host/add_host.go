@@ -177,10 +177,6 @@ func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsZone ufspb.Zone) {
 func (c *addHost) parseNetworkOpt() *ufsAPI.NetworkOption {
 	if c.ip != "" || c.vlanName != "" {
 		fmt.Println("Setting network option parameters")
-		if c.nicName == "" {
-			fmt.Println("[WARNING] ignore the network options as the nic name to attach to the ip/vlan is not specified")
-			return nil
-		}
 		if c.ip != "" {
 			return &ufsAPI.NetworkOption{
 				Ip:  c.ip,

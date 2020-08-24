@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"go.chromium.org/luci/common/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -403,10 +404,8 @@ func (r *CreateMachineLSERequest) Validate() error {
 	if r.Machines == nil {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 	}
-	if opt := r.GetNetworkOption(); opt != nil {
-		if !opt.GetDelete() && opt.GetVlan() == "" {
-			return status.Errorf(codes.InvalidArgument, "Network option for host %s doesn't set delete or vlan.", r.GetMachineLSE().GetName())
-		}
+	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
+		return err
 	}
 	for _, machineName := range r.Machines {
 		if machineName == "" {
@@ -422,8 +421,8 @@ func (r *UpdateMachineLSERequest) Validate() error {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
 	for k, v := range r.GetNetworkOptions() {
-		if !v.Delete && v.Vlan == "" && v.GetIp() == "" {
-			return status.Errorf(codes.InvalidArgument, "Network option for host %s doesn't set delete OR vlan OR ip.", k)
+		if err := validateNetworkOption(v); err != nil {
+			return errors.Annotate(err, "fail to validate host %s", k).Err()
 		}
 	}
 	return validateResourceName(machineLSERegex, MachineLSENameFormat, r.MachineLSE.GetName())
@@ -471,10 +470,18 @@ func (r *CreateVMRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, "Host name is invalid: %s", InvalidCharacters)
 	}
-	if opt := r.GetNetworkOption(); opt != nil {
-		if !opt.GetDelete() && opt.GetVlan() == "" && opt.GetIp() == "" {
-			return status.Errorf(codes.InvalidArgument, "Network option for the vm %s doesn't set delete or vlan or ip.", r.GetVm().GetName())
-		}
+	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateNetworkOption(opt *NetworkOption) error {
+	if opt == nil {
+		return nil
+	}
+	if !opt.GetDelete() && opt.GetVlan() == "" && opt.GetIp() == "" {
+		return status.Errorf(codes.InvalidArgument, "Network option doesn't set delete or vlan or ip.")
 	}
 	return nil
 }
@@ -484,10 +491,8 @@ func (r *UpdateVMRequest) Validate() error {
 	if r.GetVm() == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
-	if opt := r.GetNetworkOption(); opt != nil {
-		if !opt.GetDelete() && opt.GetVlan() == "" && opt.GetIp() == "" {
-			return status.Errorf(codes.InvalidArgument, "Network option for the vm %s doesn't set delete or vlan or ip.", r.GetVm().GetName())
-		}
+	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
+		return err
 	}
 	return validateResourceName(vmRegex, VMNameFormat, r.Vm.GetName())
 }

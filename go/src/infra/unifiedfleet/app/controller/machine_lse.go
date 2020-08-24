@@ -108,6 +108,9 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", machineNames[0]).Err()
 		}
+		if err := setNicIfNeeded(ctx, lse, machine, nwOpt); err != nil {
+			return err
+		}
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
 
@@ -782,10 +785,10 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	for _, machineName := range machineNames {
 		resourcesNotfound = append(resourcesNotfound, GetMachineResource(machineName))
 	}
-	if (nwOpt.GetVlan() != "" || nwOpt.GetIp() != "") && nwOpt.GetNic() != "" {
-		if nwOpt.GetVlan() != "" {
-			resourcesNotfound = append(resourcesNotfound, GetVlanResource(nwOpt.GetVlan()))
-		}
+	if nwOpt.GetVlan() != "" {
+		resourcesNotfound = append(resourcesNotfound, GetVlanResource(nwOpt.GetVlan()))
+	}
+	if nwOpt.GetNic() != "" {
 		resourcesNotfound = append(resourcesNotfound, GetNicResource(nwOpt.GetNic()))
 	}
 	// Aggregate resources referenced by the machinelse to check if they do not exist
@@ -848,6 +851,9 @@ func UpdateMachineLSEHost(ctx context.Context, machinelseName string, nwOpt *ufs
 		}
 		// this is for logging changes
 		oldMachinelse = proto.Clone(machinelse).(*ufspb.MachineLSE)
+		if err := setNicIfNeeded(ctx, machinelse, nil, nwOpt); err != nil {
+			return err
+		}
 
 		// Find free ip, set IP and DHCP config
 		if err := hc.netUdt.addLseHostHelper(ctx, nwOpt, machinelse); err != nil {
@@ -1056,6 +1062,30 @@ func validateDeleteMachineLSE(ctx context.Context, id string) error {
 			logging.Errorf(ctx, errorMsg)
 			return status.Errorf(codes.FailedPrecondition, errorMsg)
 		}
+	}
+	return nil
+}
+
+func setNicIfNeeded(ctx context.Context, lse *ufspb.MachineLSE, machine *ufspb.Machine, nwOpt *ufsAPI.NetworkOption) error {
+	if (nwOpt.GetVlan() != "" || nwOpt.GetIp() != "") && nwOpt.GetNic() == "" {
+		var err error
+		if machine == nil {
+			machine, err = GetMachine(ctx, lse.GetMachines()[0])
+			if err != nil {
+				return errors.Annotate(err, "unable to get machine of host %s", lse.GetName()).Err()
+			}
+		}
+		nics := machine.GetChromeBrowserMachine().GetNicObjects()
+		if len(nics) > 1 {
+			return status.Errorf(codes.InvalidArgument,
+				"The attached machine %s has more than 1 nic (%s), please specify the nic for ip assignment",
+				machine.GetName(),
+				strings.Join(ufsAPI.ParseResources(nics, "Name"), ","))
+		}
+		if len(nics) == 0 {
+			return status.Errorf(codes.InvalidArgument, "The attached machine %s has no nic for ip assignment", machine.GetName())
+		}
+		nwOpt.Nic = machine.GetChromeBrowserMachine().GetNicObjects()[0].GetName()
 	}
 	return nil
 }

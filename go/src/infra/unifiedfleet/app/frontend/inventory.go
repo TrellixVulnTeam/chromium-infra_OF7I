@@ -29,7 +29,7 @@ func verifyLSEPrototype(ctx context.Context, lse *ufspb.MachineLSE) error {
 		}
 		resp, err := controller.GetMachineLSEPrototype(ctx, lse.GetMachineLsePrototype())
 		if err != nil {
-			return err
+			return grpcStatus.Errorf(codes.InvalidArgument, "Prototype %s doesn't exist", lse.GetMachineLsePrototype())
 		}
 		for _, v := range resp.GetVirtualRequirements() {
 			if v.GetVirtualType() == ufspb.VirtualType_VIRTUAL_TYPE_VM {
