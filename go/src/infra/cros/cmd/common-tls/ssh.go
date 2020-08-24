@@ -27,7 +27,7 @@ import (
 // The user should Close the pool after use, to free any SSH clients
 // in the pool.
 type sshClientPool struct {
-	sync.Mutex
+	mu     sync.Mutex
 	pool   map[string][]*ssh.Client
 	config *ssh.ClientConfig
 }
@@ -40,26 +40,25 @@ func newSSHClientPool(c *ssh.ClientConfig) *sshClientPool {
 }
 
 func (p *sshClientPool) Get(host string) (*ssh.Client, error) {
-	p.Lock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	if n := len(p.pool[host]); n > 0 {
 		c := p.pool[host][n-1]
 		p.pool[host] = p.pool[host][:n-1]
-		p.Unlock()
 		return c, nil
 	}
-	p.Unlock()
 	return ssh.Dial("tcp", host, p.config)
 }
 
 func (p *sshClientPool) Put(host string, c *ssh.Client) {
-	p.Lock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	p.pool[host] = append(p.pool[host], c)
-	p.Unlock()
 }
 
 func (p *sshClientPool) Close() error {
-	p.Lock()
-	defer p.Unlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	for hostname, clients := range p.pool {
 		for _, c := range clients {
 			go c.Close()
