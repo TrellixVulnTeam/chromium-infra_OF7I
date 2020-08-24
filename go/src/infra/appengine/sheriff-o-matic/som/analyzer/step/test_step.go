@@ -5,8 +5,6 @@
 package step
 
 import (
-	"strings"
-
 	te "infra/appengine/sheriff-o-matic/som/testexpectations"
 	"infra/monitoring/messages"
 )
@@ -29,52 +27,4 @@ type TestWithResult struct {
 	SuspectedCLs []messages.SuspectCL       `json:"suspected_cls"`
 	Expectations []*te.ExpectationStatement `json:"expectations"`
 	Artifacts    []ArtifactLink             `json:"artifacts"`
-}
-
-// GetTestSuite returns the name of the test suite executed in a step. Currently, it has
-// a bunch of custom logic to parse through all the suffixes added by various recipe code.
-// Eventually, it should just read something structured from the step.
-// https://bugs.chromium.org/p/chromium/issues/detail?id=674708
-func GetTestSuite(bs *messages.BuildStep) string {
-	testSuite := bs.Step.Name
-	s := strings.Split(bs.Step.Name, " ")
-
-	if bs.Master.Name() == "chromium.perf" {
-		found := false
-		// If a step has a swarming.summary log, then we assume it's a test
-		for _, b := range bs.Step.Logs {
-			if len(b) > 1 && b[0] == "chromium_swarming.summary" {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return ""
-		}
-	} else if !(strings.HasSuffix(s[0], "tests") || strings.HasSuffix(s[0], "test_apk")) {
-		// Some test steps have names like "webkit_tests iOS(dbug)" so we look at the first
-		// term before the space, if there is one.
-		return testSuite
-	}
-
-	// Recipes add a suffix to steps of the OS that it's run on, when the test
-	// is swarmed. The step name is formatted like this: "<task title> on <OS>".
-	// Added in this code:
-	// https://chromium.googlesource.com/chromium/tools/build/+/9ef66559727c320b3263d7e82fb3fcd1b6a3bd55/scripts/slave/recipe_modules/swarming/api.py#846
-	if len(s) > 2 && s[1] == "on" {
-		testSuite = s[0]
-	}
-
-	return testSuite
-}
-
-func contains(haystack []string, needle string) bool {
-	for _, itm := range haystack {
-		if itm == needle {
-			return true
-		}
-	}
-
-	return false
 }
