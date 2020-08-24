@@ -170,6 +170,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
+      "GOMAXPROCS": "4",
       "INTEGRATION_TESTS": "1"
     },
     "infra_step": true,
@@ -203,6 +204,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
+      "GOMAXPROCS": "4",
       "INTEGRATION_TESTS": "1"
     },
     "name": "go build"
@@ -218,6 +220,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
+      "GOMAXPROCS": "4",
       "INTEGRATION_TESTS": "1"
     },
     "name": "go test"
@@ -234,6 +237,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
+      "GOMAXPROCS": "4",
       "INTEGRATION_TESTS": "1"
     },
     "name": "go test -race"

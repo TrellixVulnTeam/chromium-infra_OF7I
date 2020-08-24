@@ -42,6 +42,13 @@ def RunSteps(api, GOARCH, run_integration_tests):
     env['GOARCH'] = GOARCH
   if run_integration_tests:
     env['INTEGRATION_TESTS'] = '1'
+  # Workaround excessive memory usage in the tests. go.chromium.org/luci has a
+  # large number of tests, and go test runs all the executable in parallel,
+  # independent of the -parallel flag. Limiting GOMAXPROCS significantly
+  # improves the situation, enough for the builder to not get
+  # "fatal error: runtime: out of memory". See https://crbug.com/1121198 for
+  # details.
+  env['GOMAXPROCS'] = max(api.platform.cpu_count / 2, 2)
 
   with api.context(env=env), api.osx_sdk('mac'):
     co.ensure_go_env()
