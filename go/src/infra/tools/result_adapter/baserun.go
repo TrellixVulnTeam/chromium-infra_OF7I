@@ -8,11 +8,14 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/system/signals"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/lucictx"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
@@ -72,7 +75,24 @@ func (r *baseRun) initSinkClient(ctx context.Context) (err error) {
 // runTestCmd waits for test cmd to complete.
 // TODO(crbug.com/1108016): Implement.
 func (r *baseRun) runTestCmd(ctx context.Context, args []string) (err error) {
-	return errors.New("not implemented yet")
+	// Kill the subprocess if is asked to stop.
+	// Subprocess exiting will unblock result_uploader and will stop soon.
+	cmdCtx, cancelCmd := context.WithCancel(ctx)
+	defer cancelCmd()
+	defer signals.HandleInterrupt(func() {
+		logging.Warningf(ctx, "result_uploader: interrupt signal received; killing the subprocess")
+		cancelCmd()
+	})()
+
+	cmd := exec.CommandContext(cmdCtx, args[0], args[1:]...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return errors.Annotate(err, "cmd.start").Err()
+	}
+	return cmd.Wait()
 }
 
 func (r *baseRun) done(err error) int {
