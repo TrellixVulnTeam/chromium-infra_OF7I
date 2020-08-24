@@ -13,6 +13,7 @@ import (
 
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/lucictx"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
 )
@@ -54,9 +55,18 @@ func (r *baseRun) validate() (err error) {
 }
 
 // initSinkClient initializes the result sink client.
-// TODO(crbug.com/1108016): Implement.
 func (r *baseRun) initSinkClient(ctx context.Context) (err error) {
-	return errors.New("not implemented yet")
+	r.sinkCtx = lucictx.GetResultSink(ctx)
+	if r.sinkCtx == nil {
+		return errors.Reason("no result sink info found in $LUCI_CONTEXT").Err()
+	}
+
+	r.sinkC = sinkpb.NewSinkPRPCClient(&prpc.Client{
+		Host:    r.sinkCtx.Address,
+		Options: &prpc.Options{Insecure: true},
+	})
+
+	return nil
 }
 
 // runTestCmd waits for test cmd to complete.
