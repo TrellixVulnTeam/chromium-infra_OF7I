@@ -144,7 +144,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 
 	// Get the tip of the repo
 	branchName := cfg.BranchName
-	if !strings.HasPrefix(branchName, "refs/heads") {
+	if !strings.HasPrefix(branchName, "refs/") {
 		branchName = "refs/heads/" + branchName
 	}
 	logging.Debugf(ctx, "branchName: %s", branchName)
