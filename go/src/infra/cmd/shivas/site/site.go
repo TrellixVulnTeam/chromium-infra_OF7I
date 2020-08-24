@@ -67,8 +67,8 @@ type OutputFlags struct {
 func (f *OutputFlags) Register(fl *flag.FlagSet) {
 	fl.BoolVar(&f.json, "json", false, "log output in json format")
 	fl.BoolVar(&f.tsv, "tsv", false, "log output in tsv format (without title)")
-	fl.BoolVar(&f.full, "full", false, "log full output in specified format, only works for GET command")
-	fl.BoolVar(&f.noemit, "noemit", false, "specifies NOT to emit/print unpopulated fields in json format")
+	fl.BoolVar(&f.full, "full", false, "log full output in specified format, only works for GET command. Users can also set os env SHIVAS_FULL_MODE to enable this.")
+	fl.BoolVar(&f.noemit, "noemit", false, "specifies NOT to emit/print unpopulated fields in json format. Users can also set os env SHIVAS_NO_JSON_EMIT to enable this.")
 }
 
 // JSON returns if the output is logged in json format

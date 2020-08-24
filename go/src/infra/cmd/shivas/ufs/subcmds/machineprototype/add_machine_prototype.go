@@ -86,7 +86,7 @@ func (c *addMachineLSEPrototype) innerRun(a subcommands.Application, args []stri
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Println()
 	return nil
 }

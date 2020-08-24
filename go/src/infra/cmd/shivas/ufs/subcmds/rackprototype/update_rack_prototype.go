@@ -90,7 +90,7 @@ func (c *updateRackLSEPrototype) innerRun(a subcommands.Application, args []stri
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The rack lse prototype after update:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Println()
 	return nil
 }

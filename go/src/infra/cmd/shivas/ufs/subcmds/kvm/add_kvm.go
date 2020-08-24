@@ -115,7 +115,7 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Printf("Successfully added the kvm %s to rack %s\n", res.Name, c.rackName)
 	return nil
 }

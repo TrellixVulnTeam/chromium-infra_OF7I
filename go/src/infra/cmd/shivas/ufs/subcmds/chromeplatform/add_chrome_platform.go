@@ -104,7 +104,7 @@ func (c *addChromePlatform) innerRun(a subcommands.Application, args []string, e
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Printf("Successfully added the platform %s\n", res.Name)
 	return nil
 }

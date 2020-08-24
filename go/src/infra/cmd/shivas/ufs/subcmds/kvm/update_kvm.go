@@ -137,7 +137,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The kvm after update:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of kvm %s\n", res.Name)
 	}

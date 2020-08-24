@@ -124,7 +124,7 @@ func (c *getNic) printFull(ctx context.Context, ic ufsAPI.FleetClient, nic *ufsp
 
 func (c *getNic) print(nic *ufspb.Nic) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(nic, !c.outputFlags.NoEmit())
+		utils.PrintProtoJSON(nic, !utils.NoEmitMode(c.outputFlags.NoEmit()))
 	} else {
 		if c.outputFlags.Tsv() {
 			utils.PrintTSVNics([]*ufspb.Nic{nic}, false)

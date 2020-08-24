@@ -106,7 +106,7 @@ func (c *addMachine) innerRun(a subcommands.Application, args []string, env subc
 	if err != nil {
 		return err
 	}
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Println("Successfully added the machine: ", res.GetName())
 	return nil
 }

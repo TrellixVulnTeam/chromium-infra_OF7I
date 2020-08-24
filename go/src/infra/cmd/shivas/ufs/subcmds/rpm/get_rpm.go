@@ -87,7 +87,7 @@ func (c *getRPM) innerRun(a subcommands.Application, args []string, env subcomma
 
 func (c *getRPM) print(rpm *ufspb.RPM) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(rpm, !c.outputFlags.NoEmit())
+		utils.PrintProtoJSON(rpm, !utils.NoEmitMode(c.outputFlags.NoEmit()))
 		return nil
 	}
 	if c.outputFlags.Tsv() {

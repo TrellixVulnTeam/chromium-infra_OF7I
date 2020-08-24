@@ -162,7 +162,7 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 
 func (c *updateVM) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.VM) {
 	fmt.Println("The vm after update:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan & ip of vm %s\nPlease run `shivas get vm -full %s` to further check\n", res.Name, res.Name)
 	}

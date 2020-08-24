@@ -115,7 +115,7 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The rack after update:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Println("Successfully updated the rack: ", res.Name)
 	return nil
 }

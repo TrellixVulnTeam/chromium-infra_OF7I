@@ -124,7 +124,7 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The switch after update:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Printf("Successfully updated the switch %s\n", res.Name)
 	return nil
 }

@@ -139,7 +139,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The drac after update:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	if c.deleteVlan {
 		fmt.Printf("Successfully deleted vlan of drac %s\n", res.Name)
 	}

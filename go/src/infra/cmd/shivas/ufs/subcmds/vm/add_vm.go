@@ -130,7 +130,7 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 
 func (c *addVM) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.VM) {
 	fmt.Println("The newly added vm:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Printf("Successfully added the vm %s to host %s\n", res.Name, res.GetMachineLseId())
 	if c.vlanName != "" || c.ip != "" {
 		// Log the assigned IP

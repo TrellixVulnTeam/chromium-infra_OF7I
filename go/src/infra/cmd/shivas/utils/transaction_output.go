@@ -27,7 +27,7 @@ func PrintExistingMachine(ctx context.Context, ic ufsAPI.FleetClient, name strin
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The machine before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -44,7 +44,7 @@ func PrintExistingDrac(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The drac before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -61,7 +61,7 @@ func PrintExistingNic(ctx context.Context, ic ufsAPI.FleetClient, name string) e
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The nic before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -78,7 +78,7 @@ func PrintExistingRack(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The rack before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -95,7 +95,7 @@ func PrintExistingKVM(ctx context.Context, ic ufsAPI.FleetClient, name string) e
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The kvm before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -112,7 +112,7 @@ func PrintExistingSwitch(ctx context.Context, ic ufsAPI.FleetClient, name string
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The switch before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -129,7 +129,7 @@ func PrintExistingHost(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The host before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	printDHCP(ctx, ic, name)
 	return nil
 }
@@ -147,7 +147,7 @@ func PrintExistingVM(ctx context.Context, ic ufsAPI.FleetClient, name string) er
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The vm before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	printDHCP(ctx, ic, name)
 	return nil
 }
@@ -177,7 +177,7 @@ func PrintExistingVlan(ctx context.Context, ic ufsAPI.FleetClient, name string) 
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The vlan before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -194,7 +194,7 @@ func PrintExistingPlatform(ctx context.Context, ic ufsAPI.FleetClient, name stri
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The chrome platform before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -211,7 +211,7 @@ func PrintExistingMachinePrototype(ctx context.Context, ic ufsAPI.FleetClient, n
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The machine lse prototype before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }
 
@@ -228,6 +228,6 @@ func PrintExistingRackPrototype(ctx context.Context, ic ufsAPI.FleetClient, name
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The rack lse prototype before delete/update:")
-	PrintProtoJSON(res, false)
+	PrintProtoJSON(res, !NoEmitMode(false))
 	return nil
 }

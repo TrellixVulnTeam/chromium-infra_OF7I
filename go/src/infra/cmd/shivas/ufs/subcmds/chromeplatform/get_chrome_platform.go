@@ -88,7 +88,7 @@ func (c *getChromePlatform) innerRun(a subcommands.Application, args []string, e
 
 func (c *getChromePlatform) print(res *ufspb.ChromePlatform) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(res, !c.outputFlags.NoEmit())
+		utils.PrintProtoJSON(res, !utils.NoEmitMode(c.outputFlags.NoEmit()))
 		return nil
 	}
 	if c.outputFlags.Tsv() {

@@ -127,7 +127,7 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	fmt.Println("The nic after update:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Printf("Successfully updated the nic %s\n", res.Name)
 	return nil
 }

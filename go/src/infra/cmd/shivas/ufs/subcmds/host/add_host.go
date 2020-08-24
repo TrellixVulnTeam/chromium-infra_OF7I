@@ -140,7 +140,7 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 
 func (c *addHost) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufspb.MachineLSE) {
 	fmt.Println("The newly added host:")
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	if c.vlanName != "" && c.nicName != "" {
 		// Log the assigned IP
 		if dhcp, err := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{

@@ -88,7 +88,7 @@ func (c *getVlan) innerRun(a subcommands.Application, args []string, env subcomm
 
 func (c *getVlan) print(vlan *ufspb.Vlan) error {
 	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(vlan, !c.outputFlags.NoEmit())
+		utils.PrintProtoJSON(vlan, !utils.NoEmitMode(c.outputFlags.NoEmit()))
 		return nil
 	}
 	if c.outputFlags.Tsv() {

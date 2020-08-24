@@ -98,7 +98,7 @@ func (c *addRack) innerRun(a subcommands.Application, args []string, env subcomm
 	if err != nil {
 		return err
 	}
-	utils.PrintProtoJSON(res, false)
+	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
 	fmt.Println("Successfully added the rack: ", res.GetName())
 	return nil
 }
