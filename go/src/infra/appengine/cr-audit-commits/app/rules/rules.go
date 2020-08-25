@@ -44,6 +44,9 @@ type RefConfig struct { // These are expected to be hard-coded.
 	Rules              map[string]AccountRules
 	NotifierEmail      string
 	DynamicRefFunction DynamicRefFunc
+	// OverwriteLastKnownCommit is used for unpausing a ref. Oncall should
+	// modify this configuration to help resume the scanning.
+	OverwriteLastKnownCommit string
 }
 
 // BranchInfo represents the main branch information of a specific Chrome release

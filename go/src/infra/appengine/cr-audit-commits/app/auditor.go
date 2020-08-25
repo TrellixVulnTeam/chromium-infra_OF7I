@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -29,6 +30,9 @@ import (
 // Tests can put mock clients here, prod code will ignore this global.
 var auditorTestClients *rules.Clients
 
+// pauseRefErr is used to indicate that a ref needs to be paused.
+var errPauseRef = errors.New("ref needs to be paused")
+
 // Auditor is the main entry point for scanning the commits on a given ref and
 // auditing those that are relevant to the configuration.
 //
@@ -41,11 +45,11 @@ var auditorTestClients *rules.Clients
 func Auditor(rc *router.Context) {
 	outerCtx, resp := rc.Context, rc.Writer
 
-	// Create a derived context with a 4:30 timeout s.t. we have enough
+	// Create a derived context with a 9:30 timeout s.t. we have enough
 	// time to save results for at least some of the audited commits,
-	// considering that a run of this handler will be scheduled every 5
+	// considering that a run of this handler will be scheduled every 10
 	// minutes.
-	ctx, cancelInnerCtx := context.WithTimeout(outerCtx, time.Second*time.Duration(4*60+30))
+	ctx, cancelInnerCtx := context.WithTimeout(outerCtx, 9*time.Minute+30*time.Second)
 	defer cancelInnerCtx()
 
 	cfg, repoState, err := loadConfig(rc.Context, rc.Request.FormValue("refUrl"))
@@ -71,9 +75,44 @@ func Auditor(rc *router.Context) {
 		}
 	}
 
+	// Pause the ref if it stops auditing for a long time.
+	if !repoState.Paused && time.Now().Sub(repoState.LastUpdatedTime) > config.StuckScannerDuration {
+		err = pauseRefAuditing(ctx, cfg, repoState, cs)
+		if err != nil {
+			http.Error(resp, err.Error(), 502)
+			return
+		}
+		http.Error(resp, fmt.Sprintf("Ref %s is paused", cfg.RepoURL()), 409)
+		return
+	}
+
+	// If the ref is paused, check if we can unpause it.
+	if repoState.Paused {
+		if cfg.OverwriteLastKnownCommit != "" && repoState.AcceptedOverwriteLastKnownCommit != cfg.OverwriteLastKnownCommit {
+			repoState.AcceptedOverwriteLastKnownCommit = cfg.OverwriteLastKnownCommit
+			repoState.LastKnownCommit = cfg.OverwriteLastKnownCommit
+			repoState.Paused = false
+		} else {
+			http.Error(resp, fmt.Sprintf("Ref %s is paused", cfg.RepoURL()), 409)
+			return
+		}
+	}
+
 	fl, err := getCommitLog(ctx, cfg, repoState, cs)
-	if err != nil {
+	switch {
+	case err == errPauseRef:
+		if err := pauseRefAuditing(ctx, cfg, repoState, cs); err != nil {
+			http.Error(resp, err.Error(), 502)
+		}
+		http.Error(resp, err.Error(), 409)
+		return
+	case err != nil:
 		http.Error(resp, err.Error(), 502)
+		return
+	}
+
+	if repoState.Paused {
+		http.Error(resp, fmt.Sprintf("Ref %s is paused", cfg.RepoURL()), 409)
 		return
 	}
 
@@ -84,12 +123,6 @@ func Auditor(rc *router.Context) {
 	if err != nil && err != context.DeadlineExceeded {
 		logging.WithError(err).Errorf(ctx, "Could not save new relevant commit")
 		http.Error(resp, err.Error(), 503)
-		return
-	}
-	// Save progress with an unexpired context.
-	if putErr := ds.Put(outerCtx, repoState); putErr != nil {
-		logging.WithError(putErr).Errorf(outerCtx, "Could not save last known/interesting commits")
-		http.Error(resp, putErr.Error(), 503)
 		return
 	}
 	if err == context.DeadlineExceeded {
@@ -131,15 +164,19 @@ func Auditor(rc *router.Context) {
 // of the ref in reverse chronological (as per git parentage) order.
 func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) ([]*git.Commit, error) {
 
+	// Fetch git log from gitiles with a timeout of 5 minutes.
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
 	host, project, err := gitiles.ParseRepoURL(cfg.BaseRepoURL)
 	if err != nil {
-		return []*git.Commit{}, err
+		return nil, err
 	}
 
 	gc, err := cs.NewGitilesClient(host)
 	if err != nil {
 		logging.WithError(err).Errorf(ctx, "Could not create new gitiles client for %s", host)
-		return []*git.Commit{}, err
+		return nil, err
 	}
 
 	// Get the tip of the repo
@@ -151,12 +188,11 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 	resp, err := gc.Refs(ctx, &gitilespb.RefsRequest{Project: project, RefsPath: branchName})
 	if err != nil {
 		logging.WithError(err).Errorf(ctx, "Could not get the tip of the ref %s", project)
-		return []*git.Commit{}, err
+		return nil, err
 	}
 	newHead, ok := resp.Revisions[fmt.Sprintf("%s/%s", branchName, branchName)]
 	if !ok {
-		return []*git.Commit{},
-			fmt.Errorf("Could not get the branch %s in ref %s", branchName, project)
+		return nil, fmt.Errorf("Could not get the branch %s in ref %s", branchName, project)
 	}
 	oldHead := repoState.LastKnownCommit
 
@@ -166,9 +202,13 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 		Committish:         newHead,
 	}
 
-	fl, err := gitiles.PagingLog(ctx, gc, logReq, 6000)
+	fl, err := gitiles.PagingLog(ctx, gc, logReq, config.MaxCommitsPerRefUpdate)
 	switch status.Code(err) {
 	case codes.OK:
+		// If fetched too many commits, pause auditing.
+		if len(fl) >= config.MaxCommitsPerRefUpdate {
+			return nil, errPauseRef
+		}
 		return fl, nil
 	case codes.NotFound:
 		// Handled below
@@ -177,7 +217,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 		// Gitiles accidental error
 		logging.WithError(err).Errorf(ctx, "Could not get children of revision %s from gitiles",
 			oldHead)
-		return []*git.Commit{}, err
+		return nil, err
 	}
 
 	// Either:
@@ -185,9 +225,8 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 	//  (2) newHead is no longer known in gitiles (eventual consistency,
 	//     or concurrent force push executed just now, or ACLs change)
 	//  (3) gitiles accidental 404, aka fluke.
-	// We can assume that case (1) should be an extreme case. When it appears,
-	// it is acceptable for Audit App to ignore some commits and start further
-	// auditing directly from newHead.
+	// In case (1), the ref will stop auditing and a bug will be filed for
+	// oncalls to handle the problem.
 	// In cases (2) and (3), retries should clear the problem, while (1) we
 	// should handle now.
 	// Reference: https://source.chromium.org/chromium/infra/infra/+/master:go/src/go.chromium.org/luci/scheduler/appengine/task/gitiles/gitiles.go;drc=d4602d5e3619fed71b1a22ae426580d7ffb7fc87;l=425?originalUrl=https:%2F%2Fcs.chromium.org%2F
@@ -201,7 +240,7 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 	if newErr != nil {
 		// case (2) or (3)
 		logging.WithError(newErr).Errorf(ctx, "Could not get gitiles log from revision %s", newHead)
-		return []*git.Commit{}, newErr
+		return nil, newErr
 	}
 
 	// Fetch log of oldHead only
@@ -212,16 +251,15 @@ func getCommitLog(ctx context.Context, cfg *rules.RefConfig, repoState *rules.Re
 	switch status.Code(oldErr) {
 	case codes.NotFound:
 		// case (1)
-		logging.Infof(ctx, "Force push detected; start auditing from new head %s", newHead)
-		return fl, nil
+		return nil, errPauseRef
 	case codes.OK:
-		return []*git.Commit{},
+		return nil,
 			fmt.Errorf("Weirdly, log(%s) and log(%s) work, but not log(%s..%s)",
 				oldHead, newHead, oldHead, newHead)
 	default:
 		// case (3)
 		logging.WithError(oldErr).Errorf(ctx, "Could not get gitiles log from revision %s", oldHead)
-		return []*git.Commit{}, oldErr
+		return nil, oldErr
 	}
 }
 
@@ -260,7 +298,7 @@ func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, re
 		err := saveNewRelevantCommits(ctx, repoState, relevantCommits[batchBegin:i], prc)
 		if err != nil {
 			logging.WithError(err).Errorf(ctx, "Failed to save relevant commits in ref %s",
-				repoState.ConfigName)
+				cfg.RepoURL())
 			return err
 		}
 	}
@@ -284,7 +322,7 @@ func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, re
 	repoState.LastUpdatedTime = time.Now().UTC()
 
 	if err := ds.Put(ctx, repoState); err != nil {
-		logging.WithError(err).Errorf(ctx, "Could not save repoState %s", repoState.ConfigName)
+		logging.WithError(err).Errorf(ctx, "Could not save repoState %s", cfg.RepoURL())
 		return err
 	}
 
@@ -388,7 +426,7 @@ func saveAuditedCommits(ctx context.Context, auditedCommits map[string]*rules.Re
 		}
 		for _, c := range commitsToPut {
 			if c.Status != rules.AuditScheduled {
-				AuditedCommits.Add(ctx, 1, c.Status.ToShortString(), repoState.ConfigName)
+				AuditedCommits.Add(ctx, 1, c.Status.ToShortString(), cfg.RepoURL())
 			}
 		}
 		return nil
@@ -454,6 +492,46 @@ func notifyAboutViolations(ctx context.Context, cfg *rules.RefConfig, repoState 
 		}
 		return nil
 	})
+}
+
+// pauseRefAuditing pauses auditing of a ref and file a bug for it.
+func pauseRefAuditing(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) error {
+	return ds.RunInTransaction(ctx, func(ctx context.Context) error {
+		err := reportRefFailure(ctx, cfg, repoState, cs)
+		if err != nil {
+			logging.WithError(err).Errorf(ctx,
+				"Could not file a bug for ref %s which stops auditing", cfg.RepoURL())
+			return err
+		}
+
+		logging.Infof(ctx, "Pausing ref %s", cfg.RepoURL())
+		repoState.Paused = true
+		err = ds.Put(ctx, repoState)
+		if err != nil {
+			logging.WithError(err).Errorf(ctx, "Could not save repoState for ref %s", cfg.RepoURL())
+			return err
+		}
+		return nil
+	}, nil)
+}
+
+// reportRefFailure is meant to file a bug when a ref stops auditing for a long
+// time or when a non-fast-forwarded update happens.
+func reportRefFailure(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) error {
+	summary := fmt.Sprintf("Failed to get commits from %s", repoState.ConfigName)
+	description := fmt.Sprintf(`Failed to get commit from %s. This could
+		possibly be caused by: 1) A non-fast-forward update makes
+		LastKnownCommit become an unaccessible commit; 2) Gitiles git.Log API
+		returns too many commits or encounters some errors, which causes the
+		time diff between current time and LastUpdatedTime to exceed staleHours.
+		\n\n
+		LastUpdatedTime: %s\n
+		LastKnownCommit: %s\n`, cfg.RepoURL(), repoState.LastUpdatedTime,
+		cfg.LinkToCommit(repoState.LastKnownCommit))
+
+	_, err := rules.PostIssue(ctx, cfg, summary, description, cs,
+		[]string{"Infra>Security>Audit"}, []string{"GetRefCommitFailure"})
+	return err
 }
 
 // reportAuditFailure is meant to file a bug about a revision that has

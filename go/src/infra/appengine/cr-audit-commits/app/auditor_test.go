@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"context"
 
@@ -27,6 +28,7 @@ import (
 
 	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
+	"infra/monorail"
 )
 
 type errorRule struct{}
@@ -115,6 +117,7 @@ func TestAuditor(t *testing.T) {
 					ConfigName:         "dummy-repo",
 					LastKnownCommit:    "123456",
 					LastRelevantCommit: "999999",
+					LastUpdatedTime:    time.Now().UTC(),
 				})
 
 				Convey("No revisions", func() {
@@ -128,7 +131,7 @@ func TestAuditor(t *testing.T) {
 						Project:            "dummy",
 						Committish:         "123456",
 						ExcludeAncestorsOf: "123456",
-						PageSize:           6000,
+						PageSize:           int32(config.MaxCommitsPerRefUpdate),
 					})).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{},
 					}, nil)
@@ -140,6 +143,7 @@ func TestAuditor(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "123456")
 					So(rs.LastRelevantCommit, ShouldEqual, "999999")
+					So(rs.Paused, ShouldEqual, false)
 				})
 				Convey("No interesting revisions", func() {
 					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
@@ -152,7 +156,7 @@ func TestAuditor(t *testing.T) {
 						Project:            "dummy",
 						Committish:         "abcdef000123123",
 						ExcludeAncestorsOf: "123456",
-						PageSize:           6000,
+						PageSize:           int32(config.MaxCommitsPerRefUpdate),
 					})).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{{Id: "abcdef000123123"}},
 					}, nil)
@@ -164,6 +168,7 @@ func TestAuditor(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "abcdef000123123")
 					So(rs.LastRelevantCommit, ShouldEqual, "999999")
+					So(rs.Paused, ShouldEqual, false)
 				})
 				Convey("Interesting revisions", func() {
 					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
@@ -176,7 +181,7 @@ func TestAuditor(t *testing.T) {
 						Project:            "dummy",
 						Committish:         "deadbeef",
 						ExcludeAncestorsOf: "123456",
-						PageSize:           6000,
+						PageSize:           int32(config.MaxCommitsPerRefUpdate),
 					})).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{
 							{Id: "deadbeef"},
@@ -201,6 +206,7 @@ func TestAuditor(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "deadbeef")
 					So(rs.LastRelevantCommit, ShouldEqual, "c001c0de")
+					So(rs.Paused, ShouldEqual, false)
 					rc := &rules.RelevantCommit{
 						RepoStateKey: ds.KeyForObj(ctx, rs),
 						CommitHash:   "c001c0de",
@@ -220,7 +226,7 @@ func TestAuditor(t *testing.T) {
 						Project:            "dummy",
 						Committish:         "abcdef000123123",
 						ExcludeAncestorsOf: "123456",
-						PageSize:           6000,
+						PageSize:           int32(config.MaxCommitsPerRefUpdate),
 					})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:    "dummy",
@@ -234,13 +240,22 @@ func TestAuditor(t *testing.T) {
 						Committish: "123456",
 						PageSize:   1,
 					})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
+					auditorTestClients.Monorail = rules.MockMonorailClient{
+						Ii: &monorail.InsertIssueResponse{
+							Issue: &monorail.Issue{
+								Id: 12345,
+							},
+						},
+					}
+
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
-					So(resp.StatusCode, ShouldEqual, 200)
+					So(resp.StatusCode, ShouldEqual, 409)
 					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
-					So(rs.LastKnownCommit, ShouldEqual, "abcdef000123123")
+					So(rs.LastKnownCommit, ShouldEqual, "123456")
+					So(rs.Paused, ShouldEqual, true)
 				})
 				Convey("Temporary new head not found error", func() {
 					gitilesMockClient.EXPECT().Refs(gomock.Any(), proto.MatcherEqual(&gitilespb.RefsRequest{
@@ -253,7 +268,7 @@ func TestAuditor(t *testing.T) {
 						Project:            "dummy",
 						Committish:         "abcdef000123123",
 						ExcludeAncestorsOf: "123456",
-						PageSize:           6000,
+						PageSize:           int32(config.MaxCommitsPerRefUpdate),
 					})).Return(nil, grpc.Errorf(codes.NotFound, "not found"))
 					gitilesMockClient.EXPECT().Log(gomock.Any(), proto.MatcherEqual(&gitilespb.LogRequest{
 						Project:    "dummy",
@@ -267,6 +282,7 @@ func TestAuditor(t *testing.T) {
 					err = ds.Get(ctx, rs)
 					So(err, ShouldBeNil)
 					So(rs.LastKnownCommit, ShouldEqual, "123456")
+					So(rs.Paused, ShouldEqual, false)
 				})
 				Convey("Existed relevant commits", func() {
 					gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
@@ -279,7 +295,7 @@ func TestAuditor(t *testing.T) {
 						Project:            "dummy",
 						Committish:         "deadbeef",
 						ExcludeAncestorsOf: "123456",
-						PageSize:           6000,
+						PageSize:           int32(config.MaxCommitsPerRefUpdate),
 					}).Return(&gitilespb.LogResponse{
 						Log: []*git.Commit{
 							{Id: "deadbeef"},
@@ -368,6 +384,7 @@ func TestAuditor(t *testing.T) {
 					RepoURL:            "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
 					LastKnownCommit:    "222222",
 					LastRelevantCommit: "222222",
+					LastUpdatedTime:    time.Now().UTC(),
 				}
 				err := ds.Put(ctx, repoState)
 				rsk := ds.KeyForObj(ctx, repoState)
@@ -383,7 +400,7 @@ func TestAuditor(t *testing.T) {
 					Project:            "dummy",
 					Committish:         "222222",
 					ExcludeAncestorsOf: "222222",
-					PageSize:           6000,
+					PageSize:           int32(config.MaxCommitsPerRefUpdate),
 				})).Return(&gitilespb.LogResponse{
 					Log: []*git.Commit{},
 				}, nil)
@@ -453,6 +470,86 @@ func TestAuditor(t *testing.T) {
 						}
 					})
 
+				})
+			})
+			Convey("Test unpausing", func() {
+				gitilesMockClient.EXPECT().Refs(gomock.Any(), &gitilespb.RefsRequest{
+					Project:  "dummy",
+					RefsPath: "refs/heads/master",
+				}).Return(&gitilespb.RefsResponse{
+					Revisions: strmap{"refs/heads/master/refs/heads/master": "abcdef000123123"},
+				}, nil)
+				gitilesMockClient.EXPECT().Log(gomock.Any(), &gitilespb.LogRequest{
+					Project:            "dummy",
+					Committish:         "abcdef000123123",
+					ExcludeAncestorsOf: "999999",
+					PageSize:           int32(config.MaxCommitsPerRefUpdate),
+				}).Return(&gitilespb.LogResponse{
+					Log: []*git.Commit{},
+				}, nil)
+
+				auditorTestClients.Monorail = rules.MockMonorailClient{
+					Ii: &monorail.InsertIssueResponse{
+						Issue: &monorail.Issue{
+							Id: 12345,
+						},
+					},
+				}
+				Convey("Unpausing successfully", func() {
+					ds.Put(ctx, &rules.RepoState{
+						RepoURL:            "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
+						ConfigName:         "dummy-repo",
+						LastKnownCommit:    "123456",
+						LastRelevantCommit: "999999",
+						LastUpdatedTime:    time.Now().Add(time.Duration(-config.StuckScannerDuration-1) * time.Hour).UTC(),
+					})
+
+					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
+					So(err, ShouldBeNil)
+					So(resp.StatusCode, ShouldEqual, 409)
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					err = ds.Get(ctx, rs)
+					So(err, ShouldBeNil)
+					So(rs.LastKnownCommit, ShouldEqual, "123456")
+					So(rs.Paused, ShouldEqual, true)
+
+					config.GetRuleMap()["dummy-repo"].OverwriteLastKnownCommit = "999999"
+					resp, err = client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
+					So(err, ShouldBeNil)
+					So(resp.StatusCode, ShouldEqual, 200)
+					rs = &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					err = ds.Get(ctx, rs)
+					So(err, ShouldBeNil)
+					So(rs.LastKnownCommit, ShouldEqual, "999999")
+					So(rs.Paused, ShouldEqual, false)
+				})
+				Convey("An OverwriteLastKnownCommit will not be used twice", func() {
+					ds.Put(ctx, &rules.RepoState{
+						RepoURL:                          "https://dummy.googlesource.com/dummy.git/+/refs/heads/master",
+						ConfigName:                       "dummy-repo",
+						LastKnownCommit:                  "123456",
+						LastRelevantCommit:               "999999",
+						LastUpdatedTime:                  time.Now().Add(time.Duration(-config.StuckScannerDuration-1) * time.Hour).UTC(),
+						AcceptedOverwriteLastKnownCommit: "999999",
+					})
+					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
+					So(err, ShouldBeNil)
+					So(resp.StatusCode, ShouldEqual, 409)
+					rs := &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					err = ds.Get(ctx, rs)
+					So(err, ShouldBeNil)
+					So(rs.LastKnownCommit, ShouldEqual, "123456")
+					So(rs.Paused, ShouldEqual, true)
+
+					config.GetRuleMap()["dummy-repo"].OverwriteLastKnownCommit = "999999"
+					resp, err = client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
+					So(err, ShouldBeNil)
+					So(resp.StatusCode, ShouldEqual, 409)
+					rs = &rules.RepoState{RepoURL: "https://dummy.googlesource.com/dummy.git/+/refs/heads/master"}
+					err = ds.Get(ctx, rs)
+					So(err, ShouldBeNil)
+					So(rs.LastKnownCommit, ShouldEqual, "123456")
+					So(rs.Paused, ShouldEqual, true)
 				})
 			})
 			srv.Close()

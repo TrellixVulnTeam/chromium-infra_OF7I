@@ -1,4 +1,4 @@
 cron:
 - description: "Schedule async audits"
   url: /_cron/scheduler
-  schedule: every 5 minutes
+  schedule: every 10 minutes

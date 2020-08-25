@@ -6,8 +6,19 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"infra/appengine/cr-audit-commits/app/rules"
+)
+
+var (
+	// StuckScannerDuration refers how many hours after a ref stops auditing,
+	// a bug will be filed.
+	StuckScannerDuration = 2 * time.Hour
+
+	// MaxCommitsPerRefUpdate is the maximum commits that the Gitiles git.Log
+	// API should return every time it is called.
+	MaxCommitsPerRefUpdate = 6000
 )
 
 var (
