@@ -59,7 +59,11 @@ class TaskPublishNotification(webapp2.RequestHandler):
     }
     attrs = {'build_id': str(build.key.id())}
     if body['mode'] == 'callback':
-      topic = build.pubsub_callback.topic
+      # NOTE this is a workaround for crbug.com/1121657 ; Some user code set
+      # pubsub_callback topics with surrounding quotes accidentally. We strip
+      # them here to allow our notification taskqueue to drain without further
+      # errors.
+      topic = build.pubsub_callback.topic.strip('"')
       message['user_data'] = build.pubsub_callback.user_data
       attrs['auth_token'] = build.pubsub_callback.auth_token
     else:
