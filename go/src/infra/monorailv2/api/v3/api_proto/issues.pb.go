@@ -153,7 +153,7 @@ type BatchGetIssuesRequest struct {
 	// The project name from which to batch get issues. If included, the parent
 	// of all the issues specified in `names` must match this field.
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
-	// The names of the issues to request.
+	// The issues to request. Maximum of 100 can be retrieved.
 	Names []string `protobuf:"bytes,2,rep,name=names,proto3" json:"names,omitempty"`
 }
 
@@ -271,8 +271,8 @@ type SearchIssuesRequest struct {
 	Query string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
 	// The maximum number of items to return. The service may return fewer than
 	// this value.
-	// If unspecified, at most 1000 items will be returned.
-	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	// If unspecified, at most 100 items will be returned.
+	// The maximum value is 100; values above 100 will be coerced to 100.
 	PageSize int32 `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// A page token, received from a previous `SearchIssues` call.
 	// Provide this to retrieve the subsequent page.
@@ -425,8 +425,8 @@ type ListCommentsRequest struct {
 	Parent string `protobuf:"bytes,1,opt,name=parent,proto3" json:"parent,omitempty"`
 	// The maximum number of items to return. The service may return fewer than
 	// this value.
-	// If unspecified, at most 1000 items will be returned.
-	// The maximum value is 1000; values above 1000 will be coerced to 1000.
+	// If unspecified, at most 100 items will be returned.
+	// The maximum value is 100; values above 100 will be coerced to 100.
 	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	// A page token, received from a previous `ListComments` call.
 	// Provide this to retrieve the subsequent page.
@@ -769,7 +769,11 @@ type ModifyIssuesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The issue changes to make.
+	// The issue changes to make. A maximum of 100 issue changes can be requested.
+	// There is also a constraint of 50 additional 'impacted issues' per
+	// ModifyIssuesRequest. 'Impacted issues' are issues that are adding/removing
+	// `blocked_on`, `blocking`, or `merge`
+	// If you encounter this error, consider significantly smaller batches.
 	Deltas []*IssueDelta `protobuf:"bytes,1,rep,name=deltas,proto3" json:"deltas,omitempty"`
 	// The type of notification the modifications should trigger.
 	NotifyType NotifyType `protobuf:"varint,2,opt,name=notify_type,json=notifyType,proto3,enum=monorail.v3.NotifyType" json:"notify_type,omitempty"`
@@ -888,7 +892,7 @@ type ModifyIssueApprovalValuesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The ApprovalValue changes to make.
+	// The ApprovalValue changes to make. Maximum of 100 deltas can be requested.
 	Deltas []*ApprovalDelta `protobuf:"bytes,1,rep,name=deltas,proto3" json:"deltas,omitempty"`
 	// The type of notification the modifications should trigger.
 	NotifyType NotifyType `protobuf:"varint,2,opt,name=notify_type,json=notifyType,proto3,enum=monorail.v3.NotifyType" json:"notify_type,omitempty"`

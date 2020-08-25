@@ -95,7 +95,7 @@ type BatchGetUsersRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The name of the users to request.
+	// The name of the users to request. At most 100 may be requested.
 	Names []string `protobuf:"bytes,1,rep,name=names,proto3" json:"names,omitempty"`
 }
 
@@ -145,6 +145,7 @@ type BatchGetUsersResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The users that were requested.
 	Users []*User `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
 }
 
