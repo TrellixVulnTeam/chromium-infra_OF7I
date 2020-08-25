@@ -98,7 +98,7 @@ def generate_skew_test_config_lines(library, version):
   milestone = version[:version.index('.')]
   args_tmpl = CLIENT_ARGS_TMPL if library == CLIENT else IMPL_ARGS_TMPL
   id_tmpl = CLIENT_ID_TMPL if library == CLIENT else IMPL_ID_TMPL
-  INDENT_SIZE = 8
+  INDENT_SIZE = 4
   lines.extend(
       ' ' * INDENT_SIZE + v.rstrip()
       for v in  args_tmpl.format(milestone=milestone).splitlines())
@@ -341,36 +341,36 @@ def RunSteps(api):
 
 def GenTests(api):
   TEST_VARIANTS_PYL = """{
-    'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {
-      'args': [
-        '--test-runner-outdir',
-        '.',
+  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {
+    'args': [
+      '--test-runner-outdir',
+      '.',
+    ],
+    'swarming': {
+      'cipd_packages': [
+        {
+          'cipd_package': 'chromium/testing/weblayer-x86',
+          'revision': 'version:83.0.4103.56',
+        },
       ],
-      'swarming': {
-        'cipd_packages': [
-          {
-            'cipd_package': 'chromium/testing/weblayer-x86',
-            'revision': 'version:83.0.4103.56',
-          },
-        ],
-      },
-      'identifier': 'M83_Client_Library_Tests',
     },
-    'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_ONE_MILESTONE': {
-      'args': [
-        '--test-runner-outdir',
-        '.',
+    'identifier': 'M83_Client_Library_Tests',
+  },
+  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_ONE_MILESTONE': {
+    'args': [
+      '--test-runner-outdir',
+      '.',
+    ],
+    'swarming': {
+      'cipd_packages': [
+        {
+          'cipd_package': 'chromium/testing/weblayer-x86',
+          'revision': 'version:82.0.6666.45',
+        },
       ],
-      'swarming': {
-        'cipd_packages': [
-          {
-            'cipd_package': 'chromium/testing/weblayer-x86',
-            'revision': 'version:82.0.6666.45',
-          },
-        ],
-      },
-      'identifier': 'M82_Client_Library_Tests',
     },
+    'identifier': 'M82_Client_Library_Tests',
+  },
 }
 """
   yield (api.test('basic') +
