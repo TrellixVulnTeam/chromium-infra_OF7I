@@ -16,9 +16,9 @@ import (
 
 // Update subcommand: Update shivas tool.
 var Update = &subcommands.Command{
-	UsageLine: "update",
-	ShortDesc: "update shivas",
-	LongDesc: `Update shivas.
+	UsageLine: "upgrade", // we have a separate update cmd under UFS, so changing this to upgrade.
+	ShortDesc: "upgrade shivas",
+	LongDesc: `Upgrade shivas.
 
 This is a thin wrapper around CIPD.`,
 	CommandRun: func() subcommands.CommandRun {
