@@ -5,6 +5,9 @@
 package main
 
 import (
+	"context"
+	"os"
+
 	"github.com/maruel/subcommands"
 	"google.golang.org/grpc/metadata"
 
@@ -49,11 +52,11 @@ func (r *gtestRun) Run(a subcommands.Application, args []string, env subcommands
 	err := r.runTestCmd(ctx, args)
 	ec, ok := exitcode.Get(err)
 	if !ok {
-		return r.done(errors.Annotate(err, "result_adapter: test command failed").Err())
+		return r.done(errors.Annotate(err, "test command failed").Err())
 	}
 
 	var trs []*sinkpb.TestResult
-	trs, err = r.generateTestResults()
+	trs, err = r.generateTestResults(ctx)
 	if err != nil {
 		return r.done(err)
 	}
@@ -67,7 +70,22 @@ func (r *gtestRun) Run(a subcommands.Application, args []string, env subcommands
 }
 
 // generateTestResults converts test results from results file to sinkpb.TestResult.
-// TODO(crbug.com/1108016): Implement.
-func (r *gtestRun) generateTestResults() ([]*sinkpb.TestResult, error) {
-	return nil, errors.New("not implemented yet")
+func (r *gtestRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResult, error) {
+	f, err := os.Open(r.resultFile)
+	if err != nil {
+		return nil, errors.Annotate(err, "open result file").Err()
+	}
+	defer f.Close()
+
+	// convert the results to ResultSink native format.
+	gtestFormat := &GTestResults{}
+	if err = gtestFormat.ConvertFromJSON(f); err != nil {
+		return nil, errors.Annotate(err, "did not recognize as GTest").Err()
+	}
+
+	trs, err := gtestFormat.ToProtos(ctx)
+	if err != nil {
+		return nil, errors.Annotate(err, "converting as GTest results format").Err()
+	}
+	return trs, nil
 }

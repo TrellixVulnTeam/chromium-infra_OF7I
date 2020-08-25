@@ -97,7 +97,7 @@ func (r *baseRun) runTestCmd(ctx context.Context, args []string) (err error) {
 
 func (r *baseRun) done(err error) int {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "result_adapter: %s\n", err)
 		return ExitCodeCommandFailure
 	}
 	return 0
