@@ -1,17 +1,17 @@
 package main
 
 import (
-	"infra/appengine/cr-rev/common"
+	"infra/appengine/cr-rev/models"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGitilesRedirect(t *testing.T) {
-	commit := common.GitCommit{
+	commit := models.Commit{
 		Host:       "foo.googlesource.com",
 		Repository: "bar/baz",
-		Sha1:       "1234567890123456789012345678901234567890",
+		CommitHash: "1234567890123456789012345678901234567890",
 	}
 	redirect := &gitilesRedirect{}
 	Convey("Commit redirect", t, func() {
@@ -38,10 +38,10 @@ func TestGitilesRedirect(t *testing.T) {
 
 	Convey("Diff redirect", t, func() {
 		Convey("identical repositories", func() {
-			commit2 := common.GitCommit{
+			commit2 := models.Commit{
 				Host:       "foo.googlesource.com",
 				Repository: "bar/baz",
-				Sha1:       "0000000000000000000000000000000000000000",
+				CommitHash: "0000000000000000000000000000000000000000",
 			}
 			url, err := redirect.diff(commit, commit2)
 			So(err, ShouldBeNil)
@@ -53,20 +53,20 @@ func TestGitilesRedirect(t *testing.T) {
 		})
 
 		Convey("different repositories", func() {
-			commit2 := common.GitCommit{
+			commit2 := models.Commit{
 				Host:       "foo.googlesource.com",
 				Repository: "bar/baz/baq",
-				Sha1:       "0000000000000000000000000000000000000000",
+				CommitHash: "0000000000000000000000000000000000000000",
 			}
 			_, err := redirect.diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
 		})
 
 		Convey("different host repositories", func() {
-			commit2 := common.GitCommit{
+			commit2 := models.Commit{
 				Host:       "bar.googlesource.com",
 				Repository: "bar/baz",
-				Sha1:       "0000000000000000000000000000000000000000",
+				CommitHash: "0000000000000000000000000000000000000000",
 			}
 			_, err := redirect.diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
@@ -77,10 +77,10 @@ func TestGitilesRedirect(t *testing.T) {
 func TestCodesearchRedirect(t *testing.T) {
 	redirect := &codesearchRedirect{}
 	Convey("Test commit redirect", t, func() {
-		commit := common.GitCommit{
+		commit := models.Commit{
 			Host:       "chromium.googlesource.com",
 			Repository: "bar/baz",
-			Sha1:       "1234567890123456789012345678901234567890",
+			CommitHash: "1234567890123456789012345678901234567890",
 		}
 		Convey("no path provided", func() {
 			url, err := redirect.commit(commit, "")
@@ -104,16 +104,16 @@ func TestCodesearchRedirect(t *testing.T) {
 	})
 
 	Convey("Diff redirect", t, func() {
-		commit := common.GitCommit{
+		commit := models.Commit{
 			Host:       "chromium.googlesource.com",
 			Repository: "bar/baz",
-			Sha1:       "1234567890123456789012345678901234567890",
+			CommitHash: "1234567890123456789012345678901234567890",
 		}
 		Convey("identical repositories", func() {
-			commit2 := common.GitCommit{
+			commit2 := models.Commit{
 				Host:       "chromium.googlesource.com",
 				Repository: "bar/baz",
-				Sha1:       "0000000000000000000000000000000000000000",
+				CommitHash: "0000000000000000000000000000000000000000",
 			}
 			url, err := redirect.diff(commit, commit2)
 			So(err, ShouldBeNil)
@@ -125,20 +125,20 @@ func TestCodesearchRedirect(t *testing.T) {
 		})
 
 		Convey("different repositories", func() {
-			commit2 := common.GitCommit{
+			commit2 := models.Commit{
 				Host:       "chromium.googlesource.com",
 				Repository: "bar/baz/baq",
-				Sha1:       "0000000000000000000000000000000000000000",
+				CommitHash: "0000000000000000000000000000000000000000",
 			}
 			_, err := redirect.diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
 		})
 
 		Convey("different host repositories", func() {
-			commit2 := common.GitCommit{
+			commit2 := models.Commit{
 				Host:       "foo.googlesource.com",
 				Repository: "bar/baz",
-				Sha1:       "0000000000000000000000000000000000000000",
+				CommitHash: "0000000000000000000000000000000000000000",
 			}
 			_, err := redirect.diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
@@ -146,7 +146,7 @@ func TestCodesearchRedirect(t *testing.T) {
 	})
 
 	Convey("Test not supported GoB hosts", t, func() {
-		commit := common.GitCommit{
+		commit := models.Commit{
 			Host:       "foo",
 			Repository: "bar/baz",
 		}
@@ -155,7 +155,7 @@ func TestCodesearchRedirect(t *testing.T) {
 			So(err, ShouldEqual, errNotSupportedRepository)
 		})
 		Convey("no diff redirect", func() {
-			commit2 := common.GitCommit{
+			commit2 := models.Commit{
 				Host:       "foo",
 				Repository: "bar/baz",
 			}

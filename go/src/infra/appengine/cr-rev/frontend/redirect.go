@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"infra/appengine/cr-rev/common"
+	"infra/appengine/cr-rev/models"
 )
 
 var errNotIdenticalRepositories = errors.New("Not identical repositories")
@@ -15,51 +15,47 @@ var codesearchMapping = map[string]string{
 	"chromium.googlesource.com": "https://source.chromium.org/chromium/",
 }
 
-func areIdenticalRepositories(c1, c2 common.GitCommit) bool {
-	return c1.Host == c2.Host && c1.Repository == c2.Repository
-}
-
 type gitRedirect interface {
-	commit(common.GitCommit, string) (string, error)
-	diff(common.GitCommit, common.GitCommit) (string, error)
+	commit(models.Commit, string) (string, error)
+	diff(models.Commit, models.Commit) (string, error)
 }
 
 type gitilesRedirect struct{}
 
-func (r *gitilesRedirect) commit(c common.GitCommit, path string) (string, error) {
-	url := fmt.Sprintf("https://%s/%s/+/%s", c.Host, c.Repository, c.Sha1)
+func (r *gitilesRedirect) commit(c models.Commit, path string) (string, error) {
+	url := fmt.Sprintf("https://%s/%s/+/%s", c.Host, c.Repository, c.CommitHash)
 	if path != "" {
 		url += "/" + path
 	}
 	return url, nil
 }
 
-func (r *gitilesRedirect) diff(c1, c2 common.GitCommit) (string, error) {
-	if !areIdenticalRepositories(c1, c2) {
+func (r *gitilesRedirect) diff(c1, c2 models.Commit) (string, error) {
+	if !c1.SameRepoAs(c2) {
 		return "", errNotIdenticalRepositories
 	}
 	url := fmt.Sprintf(
 		"https://%s/%s/+/%s...%s",
-		c1.Host, c1.Repository, c1.Sha1, c2.Sha1)
+		c1.Host, c1.Repository, c1.CommitHash, c2.CommitHash)
 	return url, nil
 }
 
 type codesearchRedirect struct{}
 
-func (r *codesearchRedirect) commit(c common.GitCommit, path string) (string, error) {
+func (r *codesearchRedirect) commit(c models.Commit, path string) (string, error) {
 	url, ok := codesearchMapping[c.Host]
 	if !ok {
 		return "", errNotSupportedRepository
 	}
-	url += fmt.Sprintf("%s/+/%s", c.Repository, c.Sha1)
+	url += fmt.Sprintf("%s/+/%s", c.Repository, c.CommitHash)
 	if path != "" {
 		url += ":" + path
 	}
 	return url, nil
 }
 
-func (r *codesearchRedirect) diff(c1, c2 common.GitCommit) (string, error) {
-	if !areIdenticalRepositories(c1, c2) {
+func (r *codesearchRedirect) diff(c1, c2 models.Commit) (string, error) {
+	if !c1.SameRepoAs(c2) {
 		return "", errNotIdenticalRepositories
 	}
 
@@ -70,6 +66,6 @@ func (r *codesearchRedirect) diff(c1, c2 common.GitCommit) (string, error) {
 
 	url = fmt.Sprintf(
 		"%s%s/+/%s...%s",
-		url, c1.Repository, c1.Sha1, c2.Sha1)
+		url, c1.Repository, c1.CommitHash, c2.CommitHash)
 	return url, nil
 }

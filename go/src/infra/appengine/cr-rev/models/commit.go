@@ -27,3 +27,9 @@ type Commit struct {
 	// non-zero.
 	PositionNumber int
 }
+
+// SameRepoAs compares itself against commit c2 and returns true if host and
+// repository are identical.
+func (c1 Commit) SameRepoAs(c2 Commit) bool {
+	return c1.Host == c2.Host && c1.Repository == c2.Repository
+}
