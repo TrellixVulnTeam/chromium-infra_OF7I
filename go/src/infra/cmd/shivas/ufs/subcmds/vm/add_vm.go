@@ -102,7 +102,6 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 
 	// Parse input json
 	var vm ufspb.VM
-	var machineLSEID string
 	if c.newSpecsFile != "" {
 		if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
 			return err
@@ -110,14 +109,11 @@ func (c *addVM) innerRun(a subcommands.Application, args []string, env subcomman
 		if vm.GetMachineLseId() == "" {
 			return errors.New(fmt.Sprintf("machineLseId field is empty in json. It is a required parameter for json input."))
 		}
-		machineLSEID = vm.GetMachineLseId()
 	} else {
 		c.parseArgs(&vm)
-		machineLSEID = c.hostName
 	}
 	res, err := ic.CreateVM(ctx, &ufsAPI.CreateVMRequest{
 		Vm:            &vm,
-		MachineLSEId:  machineLSEID,
 		NetworkOption: c.parseNetworkOpt(),
 	})
 	if err != nil {
@@ -148,6 +144,7 @@ func (c *addVM) parseArgs(vm *ufspb.VM) {
 	vm.Name = c.vmName
 	vm.Hostname = c.vmName
 	vm.MacAddress = c.macAddress
+	vm.MachineLseId = c.hostName
 	vm.OsVersion = &ufspb.OSVersion{
 		Value: c.osVersion,
 	}
@@ -187,6 +184,9 @@ func (c *addVM) validateArgs() error {
 		}
 		if c.osVersion != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")
+		}
+		if c.hostName != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-host' cannot be specified at the same time.")
 		}
 	} else {
 		if c.hostName == "" {

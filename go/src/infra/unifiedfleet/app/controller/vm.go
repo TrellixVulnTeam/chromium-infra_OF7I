@@ -22,18 +22,17 @@ import (
 )
 
 // CreateVM creates a new vm in datastore.
-func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.NetworkOption) (*ufspb.VM, error) {
+func CreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) (*ufspb.VM, error) {
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(vm)
 
-		if err := validateCreateVM(ctx, vm, host, nwOpt); err != nil {
+		if err := validateCreateVM(ctx, vm, nwOpt); err != nil {
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
-		lse, err := inventory.GetMachineLSE(ctx, host)
+		lse, err := inventory.GetMachineLSE(ctx, vm.GetMachineLseId())
 		if err != nil {
-			return errors.Annotate(err, "Fail to get host by %s", host).Err()
+			return errors.Annotate(err, "Fail to get host by %s", vm.GetMachineLseId()).Err()
 		}
-		vm.MachineLseId = host
 		vm.Zone = lse.Zone
 		vm.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 
@@ -63,12 +62,12 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 }
 
 // UpdateVM updates an existing vm in datastore.
-func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, mask *field_mask.FieldMask) (*ufspb.VM, error) {
+func UpdateVM(ctx context.Context, vm *ufspb.VM, mask *field_mask.FieldMask) (*ufspb.VM, error) {
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(vm)
 
 		// Validate input
-		if err := validateUpdateVM(ctx, vm, host, mask); err != nil {
+		if err := validateUpdateVM(ctx, vm, mask); err != nil {
 			return errors.Annotate(err, "UpdateVM - validation failed").Err()
 		}
 
@@ -78,28 +77,26 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, mask *field_mask.F
 			return errors.Annotate(err, "Fail to get existing vm by %s", vm.GetName()).Err()
 		}
 		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
-		// Copy the machinelseid/state/zone to vm OUTPUT only fields from already existing vm
-		vm.MachineLseId = oldVM.GetMachineLseId()
+		// Copy the vlan/zone to vm OUTPUT only fields from already existing vm
 		vm.Zone = oldVM.GetZone()
 		vm.Vlan = oldVM.GetVlan()
 
-		// Check if user provided new host to associate the vm
-		if host != "" && oldVM.MachineLseId != host {
-			lse, err := inventory.GetMachineLSE(ctx, host)
-			if err != nil {
-				return errors.Annotate(err, "UpdateVM - fail to get host by %s", host).Err()
-			}
-			// update the host associated with the vm
-			vm.MachineLseId = host
-			// update the zone info for vm for vm table indexing
-			vm.Zone = lse.Zone
-		}
-
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
-			vm, err = processVMUpdateMask(oldVM, vm, mask)
+			vm, err = processVMUpdateMask(ctx, oldVM, vm, mask)
 			if err != nil {
 				return errors.Annotate(err, "UpdateVM - processing update mask failed").Err()
+			}
+		} else {
+			// This is for complete object input
+			// Check if user provided new host to associate the vm
+			if vm.MachineLseId != oldVM.MachineLseId {
+				lse, err := inventory.GetMachineLSE(ctx, vm.MachineLseId)
+				if err != nil {
+					return errors.Annotate(err, "UpdateVM - fail to get host by %s", vm.MachineLseId).Err()
+				}
+				// update the zone info for vm for vm table indexing
+				vm.Zone = lse.Zone
 			}
 		}
 
@@ -201,16 +198,17 @@ func DeleteVMHost(ctx context.Context, vmName string) error {
 
 // processVMUpdateMask process update field mask to get only specific update
 // fields and return a complete vm object with updated and existing fields
-func processVMUpdateMask(oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMask) (*ufspb.VM, error) {
+func processVMUpdateMask(ctx context.Context, oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMask) (*ufspb.VM, error) {
 	// update the fields in the existing vm
 	for _, path := range mask.Paths {
 		switch path {
-		case "machinelseName":
-			// In the previous step we have already checked for host != ""
-			// and got the new values for OUTPUT only fields in new vm object,
-			// assign them to oldVM.
+		case "machineLseId":
+			lse, err := inventory.GetMachineLSE(ctx, vm.GetMachineLseId())
+			if err != nil {
+				return nil, errors.Annotate(err, "fail to get host by %s", vm.GetMachineLseId()).Err()
+			}
 			oldVM.MachineLseId = vm.GetMachineLseId()
-			oldVM.Zone = vm.GetZone()
+			oldVM.Zone = lse.GetZone()
 		case "macAddress":
 			oldVM.MacAddress = vm.GetMacAddress()
 		case "resourceState":
@@ -293,16 +291,16 @@ func getVMHistoryClient(m *ufspb.VM) *HistoryClient {
 }
 
 // validateCreateVM validates if a vm can be created
-func validateCreateVM(ctx context.Context, vm *ufspb.VM, machinelseName string, nwOpt *ufsAPI.NetworkOption) error {
+func validateCreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) error {
 	// Aggregate resource to check if vm does not exist
 	if err := resourceAlreadyExists(ctx, []*Resource{GetVMResource(vm.Name)}, nil); err != nil {
 		return err
 	}
 
 	resourcesNotFound := make([]*Resource, 0)
-	// Aggregate resource to check if machinelseName does not exist
-	if machinelseName != "" {
-		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(machinelseName))
+	// Aggregate resource to check if machinelse does not exist
+	if vm.GetMachineLseId() != "" {
+		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(vm.GetMachineLseId()))
 	}
 	if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
 		if nwOpt.GetVlan() != "" {
@@ -317,12 +315,12 @@ func validateCreateVM(ctx context.Context, vm *ufspb.VM, machinelseName string, 
 }
 
 // validateUpdateVM validates if a vm can be updated
-func validateUpdateVM(ctx context.Context, vm *ufspb.VM, machinelseName string, mask *field_mask.FieldMask) error {
+func validateUpdateVM(ctx context.Context, vm *ufspb.VM, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if vm does not exist
 	resourcesNotFound := []*Resource{GetVMResource(vm.Name)}
-	// Aggregate resource to check if machinelseName does not exist
-	if machinelseName != "" {
-		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(machinelseName))
+	// Aggregate resource to check if machinelse does not exist
+	if vm.GetMachineLseId() != "" {
+		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(vm.GetMachineLseId()))
 	}
 
 	// check if resources does not exist
@@ -343,7 +341,7 @@ func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
 				return status.Error(codes.InvalidArgument, "validateVMUpdateMask - name cannot be updated, delete and create a new vm instead")
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateVMUpdateMask - update_time cannot be updated, it is a output only field")
-			case "machinelseName":
+			case "machineLseId":
 			case "macAddress":
 			case "osVersion":
 				if vm.GetOsVersion() == nil {

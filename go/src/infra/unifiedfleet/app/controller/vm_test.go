@@ -33,9 +33,10 @@ func TestCreateVM(t *testing.T) {
 		})
 		Convey("Create new VM", func() {
 			vm1 := &ufspb.VM{
-				Name: "vm-create-1",
+				Name:         "vm-create-1",
+				MachineLseId: "create-host",
 			}
-			resp, err := CreateVM(ctx, vm1, "create-host", nil)
+			resp, err := CreateVM(ctx, vm1, nil)
 			So(err, ShouldBeNil)
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
@@ -59,9 +60,10 @@ func TestCreateVM(t *testing.T) {
 			setupTestVlan(ctx)
 
 			vm1 := &ufspb.VM{
-				Name: "vm-create-2",
+				Name:         "vm-create-2",
+				MachineLseId: "create-host",
 			}
-			resp, err := CreateVM(ctx, vm1, "create-host", &ufsAPI.NetworkOption{
+			resp, err := CreateVM(ctx, vm1, &ufsAPI.NetworkOption{
 				Vlan: "vlan-1",
 			})
 			So(err, ShouldBeNil)
@@ -113,9 +115,10 @@ func TestCreateVM(t *testing.T) {
 			setupTestVlan(ctx)
 
 			vm1 := &ufspb.VM{
-				Name: "vm-create-3",
+				Name:         "vm-create-3",
+				MachineLseId: "create-host",
 			}
-			resp, err := CreateVM(ctx, vm1, "create-host", &ufsAPI.NetworkOption{
+			resp, err := CreateVM(ctx, vm1, &ufsAPI.NetworkOption{
 				Ip: "192.168.40.9",
 			})
 			So(err, ShouldBeNil)
@@ -176,9 +179,10 @@ func TestUpdateVM(t *testing.T) {
 		})
 		Convey("Update non-existing VM", func() {
 			vm1 := &ufspb.VM{
-				Name: "vm-update-1",
+				Name:         "vm-update-1",
+				MachineLseId: "create-host",
 			}
-			resp, err := UpdateVM(ctx, vm1, "create-host", nil)
+			resp, err := UpdateVM(ctx, vm1, nil)
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no ChromeVM with ChromeVMID vm-update-1 in the system")
@@ -192,9 +196,10 @@ func TestUpdateVM(t *testing.T) {
 			setupTestVlan(ctx)
 
 			vm1 := &ufspb.VM{
-				Name: "vm-update-2",
+				Name:         "vm-update-2",
+				MachineLseId: "update-host",
 			}
-			_, err := CreateVM(ctx, vm1, "update-host", nil)
+			_, err := CreateVM(ctx, vm1, nil)
 			resp, err := UpdateVMHost(ctx, vm1.Name, &ufsAPI.NetworkOption{
 				Vlan: "vlan-1",
 			})
@@ -251,9 +256,10 @@ func TestUpdateVM(t *testing.T) {
 		Convey("Update VM - happy path with ip deletion", func() {
 			setupTestVlan(ctx)
 			vm1 := &ufspb.VM{
-				Name: "vm-update-3",
+				Name:         "vm-update-3",
+				MachineLseId: "update-host",
 			}
-			_, err := CreateVM(ctx, vm1, "update-host", nil)
+			_, err := CreateVM(ctx, vm1, nil)
 			So(err, ShouldBeNil)
 
 			_, err = UpdateVMHost(ctx, vm1.Name, &ufsAPI.NetworkOption{
@@ -310,11 +316,12 @@ func TestUpdateVM(t *testing.T) {
 			setupTestVlan(ctx)
 
 			vm1 := &ufspb.VM{
-				Name: "vm-update-4",
+				Name:         "vm-update-4",
+				MachineLseId: "update-host",
 			}
-			_, err := CreateVM(ctx, vm1, "update-host", nil)
+			_, err := CreateVM(ctx, vm1, nil)
 			vm1.ResourceState = ufspb.State_STATE_NEEDS_REPAIR
-			resp, err := UpdateVM(ctx, vm1, "update-host", nil)
+			resp, err := UpdateVM(ctx, vm1, nil)
 			So(err, ShouldBeNil)
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR)
 			So(resp.GetMachineLseId(), ShouldEqual, "update-host")
@@ -356,16 +363,17 @@ func TestUpdateVM(t *testing.T) {
 				OsVersion: &ufspb.OSVersion{
 					Value: "windows",
 				},
-				Tags: []string{"tag-1"},
+				Tags:         []string{"tag-1"},
+				MachineLseId: "update-host",
 			}
-			_, err := CreateVM(ctx, vm, "update-host", nil)
+			_, err := CreateVM(ctx, vm, nil)
 			So(err, ShouldBeNil)
 
 			vm1 := &ufspb.VM{
 				Name: "vm-7",
 				Tags: []string{"tag-2"},
 			}
-			resp, err := UpdateVM(ctx, vm1, "", &field_mask.FieldMask{Paths: []string{"tags"}})
+			resp, err := UpdateVM(ctx, vm1, &field_mask.FieldMask{Paths: []string{"tags"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetTags(), ShouldResemble, []string{"tag-1", "tag-2"})
@@ -394,9 +402,10 @@ func TestDeleteVM(t *testing.T) {
 		Convey("Delete VM - happy path", func() {
 			setupTestVlan(ctx)
 			vm1 := &ufspb.VM{
-				Name: "vm-delete-1",
+				Name:         "vm-delete-1",
+				MachineLseId: "delete-host",
 			}
-			_, err := CreateVM(ctx, vm1, "delete-host", &ufsAPI.NetworkOption{
+			_, err := CreateVM(ctx, vm1, &ufsAPI.NetworkOption{
 				Ip: "192.168.40.7",
 			})
 			So(err, ShouldBeNil)

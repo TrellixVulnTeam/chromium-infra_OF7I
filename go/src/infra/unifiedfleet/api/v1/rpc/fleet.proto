@@ -285,11 +285,8 @@ message CreateVMRequest {
   // The vm to create.
   proto.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // The host id to add this VM to.
-  //
-  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
-  // contains only ASCII letters, numbers, dash and underscore.
-  string machineLSE_id = 2 [(google.api.field_behavior) = REQUIRED];
+  reserved 2;
+  reserved "machineLSE_id";
 
   NetworkOption network_option = 3;
 }
@@ -298,12 +295,8 @@ message UpdateVMRequest {
   // The VM to update.
   proto.VM vm = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // The host id to update this VM to.
-  //
-  // TODO: We need to change this regex pattern as it changes over time.
-  // This value should follow the regex "^[a-zA-Z0-9-)(_:.]{3,63}$" (3-63 characters,
-  // contains only ASCII letters, numbers, dash and underscore.
-  string machineLSE_id = 2 [(google.api.field_behavior) = REQUIRED];
+  reserved 2;
+  reserved "machineLSE_id";
 
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 3;

@@ -164,7 +164,7 @@ func (fs *FleetServerImpl) CreateVM(ctx context.Context, req *ufsAPI.CreateVMReq
 		return nil, err
 	}
 	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
-	vm, err := controller.CreateVM(ctx, req.GetVm(), req.GetMachineLSEId(), req.GetNetworkOption())
+	vm, err := controller.CreateVM(ctx, req.GetVm(), req.GetNetworkOption())
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 		vm := req.Vm
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
-			vm, err = controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.UpdateMask)
+			vm, err = controller.UpdateVM(ctx, req.Vm, req.UpdateMask)
 			if err != nil {
 				return nil, err
 			}
@@ -214,7 +214,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 		return vm, nil
 	}
 
-	vm, err := controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.UpdateMask)
+	vm, err := controller.UpdateVM(ctx, req.Vm, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

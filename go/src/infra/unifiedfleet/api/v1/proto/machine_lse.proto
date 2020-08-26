@@ -138,8 +138,7 @@ message VM {
     string machine_lse_id = 7 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/MachineLSE"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        }
     ];
     reserved 8;
     reserved "state";

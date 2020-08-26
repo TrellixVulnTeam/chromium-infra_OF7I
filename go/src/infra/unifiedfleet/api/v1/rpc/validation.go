@@ -460,7 +460,7 @@ func (r *CreateVMRequest) Validate() error {
 	if r.GetVm().GetVlan() != "" {
 		return status.Errorf(codes.InvalidArgument, "Cannot set vlan when adding vm")
 	}
-	id := strings.TrimSpace(r.MachineLSEId)
+	id := strings.TrimSpace(r.GetVm().GetMachineLseId())
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyHostName)
 	}

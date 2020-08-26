@@ -109,7 +109,6 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 
 	// Parse the josn input
 	var vm ufspb.VM
-	var machineLSEID string
 	if c.newSpecsFile != "" {
 		if err = utils.ParseJSONFile(c.newSpecsFile, &vm); err != nil {
 			return err
@@ -117,10 +116,8 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		if vm.GetMachineLseId() == "" {
 			return errors.New(fmt.Sprintf("machineLseId field is empty in json. It is a required parameter for json input."))
 		}
-		machineLSEID = vm.GetMachineLseId()
 	} else {
 		c.parseArgs(&vm)
-		machineLSEID = c.hostName
 	}
 	if err := utils.PrintExistingVM(ctx, ic, vm.Name); err != nil {
 		return err
@@ -137,10 +134,9 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 	vm.Name = ufsUtil.AddPrefix(ufsUtil.VMCollection, vm.Name)
 	res, err := ic.UpdateVM(ctx, &ufsAPI.UpdateVMRequest{
 		Vm:            &vm,
-		MachineLSEId:  machineLSEID,
 		NetworkOption: nwOpt,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"host":        "machinelseName",
+			"host":        "machineLseId",
 			"state":       "resourceState",
 			"mac-address": "macAddress",
 			"os":          "osVersion",
@@ -179,6 +175,7 @@ func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	vm.MacAddress = c.macAddress
 	vm.OsVersion = &ufspb.OSVersion{}
 	vm.ResourceState = ufsUtil.ToUFSState(c.state)
+	vm.MachineLseId = c.hostName
 	if c.osVersion == utils.ClearFieldValue {
 		vm.GetOsVersion().Value = ""
 	} else {

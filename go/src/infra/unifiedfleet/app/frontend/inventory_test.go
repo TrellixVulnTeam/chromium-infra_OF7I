@@ -259,11 +259,11 @@ func TestCreateVM(t *testing.T) {
 		})
 		Convey("Create new VM - happy path", func() {
 			vm1 := &ufspb.VM{
-				Name: "inventory-create-vm1",
+				Name:         "inventory-create-vm1",
+				MachineLseId: "inventory-create-host",
 			}
 			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-create-host",
+				Vm: vm1,
 			})
 			So(err, ShouldBeNil)
 
@@ -295,11 +295,11 @@ func TestCreateVM(t *testing.T) {
 		Convey("Create new VM - assign ip", func() {
 			setupTestVlan(ctx)
 			vm1 := &ufspb.VM{
-				Name: "inventory-create-vm2",
+				Name:         "inventory-create-vm2",
+				MachineLseId: "inventory-create-host",
 			}
 			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-create-host",
+				Vm: vm1,
 				NetworkOption: &ufsAPI.NetworkOption{
 					Vlan: "vlan-1",
 				},
@@ -333,11 +333,11 @@ func TestUpdateVM(t *testing.T) {
 		})
 		Convey("Update existing VM", func() {
 			vm1 := &ufspb.VM{
-				Name: "inventory-update-vm1",
+				Name:         "inventory-update-vm1",
+				MachineLseId: "inventory-update-host",
 			}
 			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-update-host",
+				Vm: vm1,
 			})
 			So(err, ShouldBeNil)
 			vm, err := tf.Fleet.GetVM(ctx, &ufsAPI.GetVMRequest{
@@ -347,8 +347,7 @@ func TestUpdateVM(t *testing.T) {
 			vm.UpdateTime = nil
 
 			req := &ufsAPI.UpdateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-update-host",
+				Vm: vm1,
 			}
 			resp, err := tf.Fleet.UpdateVM(tf.C, req)
 			So(err, ShouldBeNil)
@@ -358,18 +357,17 @@ func TestUpdateVM(t *testing.T) {
 
 		Convey("Update existing VMs with states", func() {
 			vm1 := &ufspb.VM{
-				Name: "inventory-update-vm2",
+				Name:         "inventory-update-vm2",
+				MachineLseId: "inventory-update-host",
 			}
 			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-update-host",
+				Vm: vm1,
 			})
 			So(err, ShouldBeNil)
 
 			vm1.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
 			req := &ufsAPI.UpdateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-update-host",
+				Vm: vm1,
 			}
 			resp, err := tf.Fleet.UpdateVM(tf.C, req)
 			So(err, ShouldBeNil)
@@ -392,9 +390,9 @@ func TestUpdateVM(t *testing.T) {
 		Convey("Update VM - Invalid input empty name", func() {
 			req := &ufsAPI.UpdateVMRequest{
 				Vm: &ufspb.VM{
-					Name: "",
+					Name:         "",
+					MachineLseId: "inventory-update-host",
 				},
-				MachineLSEId: "inventory-update-host",
 			}
 			resp, err := tf.Fleet.UpdateVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -405,9 +403,9 @@ func TestUpdateVM(t *testing.T) {
 		Convey("Update VM - Invalid input invalid characters", func() {
 			req := &ufsAPI.UpdateVMRequest{
 				Vm: &ufspb.VM{
-					Name: util.AddPrefix(util.VMCollection, "a.b)7&"),
+					Name:         util.AddPrefix(util.VMCollection, "a.b)7&"),
+					MachineLseId: "inventory-update-host",
 				},
-				MachineLSEId: "inventory-update-host",
 			}
 			resp, err := tf.Fleet.UpdateVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -429,11 +427,11 @@ func TestDeleteVM(t *testing.T) {
 		})
 		Convey("Delete vm by existing ID", func() {
 			vm1 := &ufspb.VM{
-				Name: "inventory-delete-vm1",
+				Name:         "inventory-delete-vm1",
+				MachineLseId: "inventory-delete-host",
 			}
 			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-delete-host",
+				Vm: vm1,
 			})
 			So(err, ShouldBeNil)
 
@@ -455,11 +453,11 @@ func TestDeleteVM(t *testing.T) {
 		Convey("Delete vm by existing ID with assigned ip", func() {
 			setupTestVlan(ctx)
 			vm1 := &ufspb.VM{
-				Name: "inventory-delete-vm2",
+				Name:         "inventory-delete-vm2",
+				MachineLseId: "inventory-delete-host",
 			}
 			_, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
-				Vm:           vm1,
-				MachineLSEId: "inventory-delete-host",
+				Vm: vm1,
 				NetworkOption: &ufsAPI.NetworkOption{
 					Ip: "192.168.40.18",
 				},
