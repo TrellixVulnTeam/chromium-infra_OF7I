@@ -48,6 +48,6 @@ func main() {
 	authOpts.Scopes = append(
 		authOpts.Scopes,
 		serverauth.CloudOAuthScopes...)
-	authOpts.Method = auth.UserCredentialsMethod
+	authOpts.Method = auth.LUCIContextMethod
 	os.Exit(subcommands.Run(getApplication(authOpts), nil))
 }
