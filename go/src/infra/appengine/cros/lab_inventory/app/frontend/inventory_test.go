@@ -1268,11 +1268,11 @@ func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime 
 		ServoVerifierFailureDescription: "Mock Servo verifier failure description.",
 		Diagnosis:                       "Mock diagnosis.",
 		RepairProcedure:                 "Mock repair procedure.",
-		ManualRepairActions: []invlibs.DeviceManualRepairRecord_ManualRepairAction{
-			invlibs.DeviceManualRepairRecord_ACTION_FIX_SERVO,
-			invlibs.DeviceManualRepairRecord_ACTION_FIX_YOSHI_CABLE,
-			invlibs.DeviceManualRepairRecord_ACTION_VISUAL_INSPECTION,
-			invlibs.DeviceManualRepairRecord_ACTION_REIMAGE_DUT,
+		LabstationRepairActions: []invlibs.LabstationRepairAction{
+			invlibs.LabstationRepairAction_LABSTATION_POWER_CYCLE,
+			invlibs.LabstationRepairAction_LABSTATION_REIMAGE,
+			invlibs.LabstationRepairAction_LABSTATION_UPDATE_CONFIG,
+			invlibs.LabstationRepairAction_LABSTATION_REPLACE,
 		},
 		IssueFixed:    true,
 		UserLdap:      "testing-account",

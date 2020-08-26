@@ -10,7 +10,7 @@ option go_package = "infra/libs/cros/lab_inventory/protos;invlibs";
 
 import "google/protobuf/timestamp.proto";
 
-// Next tag: 20
+// Next tag: 30
 message DeviceManualRepairRecord {
   string hostname = 1;
   string asset_tag = 2;
@@ -43,19 +43,20 @@ message DeviceManualRepairRecord {
   // Chromium bug tracking https://crbug.com/XXXXXXX.
   string chromium_bug_url = 6;
   // DUT repair failure description.
-  string dut_repair_failure_description = 7;
+  string dut_repair_failure_description = 7 [deprecated = true];
   // The last DUT repair verifier that failed.
-  string dut_verifier_failure_description = 8;
+  string dut_verifier_failure_description = 8 [deprecated = true];
   // Servo repair failure description.
-  string servo_repair_failure_description = 9;
+  string servo_repair_failure_description = 9 [deprecated = true];
   // The last Servo repair verifier that failed.
-  string servo_verifier_failure_description = 10;
+  string servo_verifier_failure_description = 10 [deprecated = true];
   // Diagnosis of what is wrong with the device.
   string diagnosis = 11;
   // The procedure that fixed the device. This can be a best guess. Assumption
   // is that admin/skylab repairs will run to verify the repair post fix.
   string repair_procedure = 12;
 
+  // DEPRECATED: Using more granular actions instead.
   // Standard manual repair actions taken to fix the device.
   // Next tag: 7
   enum ManualRepairAction {
@@ -74,19 +75,29 @@ message DeviceManualRepairRecord {
     // Reimage / Reflash DUT
     ACTION_REIMAGE_DUT = 6;
   }
-  repeated ManualRepairAction manual_repair_actions = 13;
+  repeated ManualRepairAction manual_repair_actions = 13 [deprecated = true];
+
+  repeated LabstationRepairAction labstation_repair_actions = 20;
+  repeated ServoRepairAction servo_repair_actions = 21;
+  repeated YoshiRepairAction yoshi_repair_actions = 22;
+  repeated ChargerRepairAction charger_repair_actions = 23;
+  repeated UsbStickRepairAction  usb_stick_repair_actions = 24;
+  repeated CableRepairAction cable_repair_actions = 25;
+  repeated RpmRepairAction rpm_repair_actions = 26;
+  repeated DutRepairAction dut_repair_actions = 27;
 
   // Boolean value of whether the primary issue has been fixed or not.
   bool issue_fixed = 18;
-  // User ldap of who started the device repair
+  // Technician ldap of who started the device repair.
   string user_ldap = 19;
+  // Whether a replacement was requested for this device.
+  bool replacement_requested = 29;
 
-  // Input by Lab Tech as a best guess on how much time (in minutes) it took to
-  // investigate and resolve the repair. This is to give a better repair time
-  // estimate that excludes time spent waiting. Record updations may not happen
-  // right after a repair is completed so calculating from other timestamps may
-  // not accurately portray the time a Lab Tech spent actually investigating and
-  // repairing the device.
+  // Time taken will be calculated based on the types of repair actions take.
+  // This is to give a better repair time estimate that excludes time spent
+  // waiting. Record updations may not happen right after a repair is completed
+  // so calculating from other timestamps may not accurately portray the time a
+  // Lab Tech spent actually investigating and repairing the device.
   int32 time_taken = 14;
   // Timestamp when repair record was created.
   google.protobuf.Timestamp created_time = 15;
@@ -94,4 +105,95 @@ message DeviceManualRepairRecord {
   google.protobuf.Timestamp updated_time = 16;
   // Timestamp when repair record was marked completed.
   google.protobuf.Timestamp completed_time = 17;
+
+  // Additional comments if needed to capture repair status.
+  string additional_comments = 28;
+}
+
+// Standard manual repair actions taken to fix the labstation.
+// Next tag: 6
+enum LabstationRepairAction {
+  LABSTATION_NA = 0;
+  LABSTATION_POWER_CYCLE = 1;
+  LABSTATION_REIMAGE = 2;
+  LABSTATION_UPDATE_CONFIG = 3;
+  LABSTATION_REPLACE = 4;
+  LABSTATION_OTHER = 5;
+}
+
+// Standard manual repair actions taken to fix the servo (servo_v4, servo_v3).
+// Next tag: 7
+enum ServoRepairAction {
+  SERVO_NA = 0;
+  SERVO_POWER_CYCLE = 1;
+  SERVO_REPLUG_USB_TO_DUT = 2;
+  SERVO_REPLUG_TO_SERVO_HOST = 3;
+  SERVO_UPDATE_CONFIG = 4;
+  SERVO_REPLACE = 5;
+  SERVO_OTHER = 6;
+}
+
+// Standard manual repair actions taken to fix the yoshi cable (ribbon cable or
+// servo_micro).
+// Next tag: 5
+enum YoshiRepairAction {
+  YOSHI_NA = 0;
+  YOSHI_REPLUG_ON_DUT = 1;
+  YOSHI_REPLUG_TO_SERVO = 2;
+  YOSHI_REPLACE = 3;
+  YOSHI_OTHER = 4;
+}
+
+// Standard manual repair actions taken to fix the charger.
+// Next tag: 4
+enum ChargerRepairAction {
+  CHARGER_NA = 0;
+  CHARGER_REPLUG = 1;
+  CHARGER_REPLACE = 2;
+  CHARGER_OTHER = 3;
+}
+
+// Standard manual repair actions taken to fix the usb stick on the servo.
+// Next tag: 5
+enum UsbStickRepairAction {
+  USB_STICK_NA = 0;
+  USB_STICK_REPLUG = 1;
+  USB_STICK_REPLACE = 2;
+  USB_STICK_MISSED = 3;
+  USB_STICK_OTHER = 4;
+}
+
+// Standard manual repair actions taken to fix any other cables.
+// Next tag: 5
+enum CableRepairAction {
+  CABLE_NA = 0;
+  CABLE_SERVO_HOST_SERVO = 1;
+  CABLE_SERVO_DUT = 2;
+  CABLE_SERVO_SERVO_MICRO = 3;
+  CABLE_OTHER = 4;
+}
+
+// Standard manual repair actions taken to fix the rpm.
+// Next tag: 5
+enum RpmRepairAction {
+  RPM_NA = 0;
+  RPM_UPDATE_DHCP = 1;
+  RPM_UPDATE_DUT_CONFIG = 2;
+  RPM_REPLACE = 3;
+  RPM_OTHER = 4;
+}
+
+// Standard manual repair actions taken to fix the dut.
+// Next tag: 10
+enum DutRepairAction {
+  DUT_NA = 0;
+  DUT_REIMAGE_DEV = 1;
+  DUT_REIMAGE_PROD = 2;
+  DUT_POWER_CYCLE_RPM = 3;
+  DUT_POWER_CYCLE_DUT = 4;
+  DUT_REBOOT_EC = 5;
+  DUT_NOT_PRESENT = 6;
+  DUT_REFLASH = 7;
+  DUT_REPLACE = 8;
+  DUT_OTHER = 9;
 }
