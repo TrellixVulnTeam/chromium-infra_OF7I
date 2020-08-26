@@ -38,7 +38,7 @@ func getApplication(authOpts auth.Options) *cli.Application {
 
 			subcommands.Section("Operations"),
 			cmd.Load(authOpts),
-			cmd.Save(authOpts),
+			cmd.Save(),
 		},
 	}
 }
