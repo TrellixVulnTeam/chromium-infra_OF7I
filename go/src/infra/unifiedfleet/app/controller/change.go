@@ -193,7 +193,7 @@ func (hc *HistoryClient) LogVMChanges(oldData *ufspb.VM, newData *ufspb.VM) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.vlan", oldData.GetVlan(), newData.GetVlan())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.machine_lse_id", oldData.GetMachineLseId(), newData.GetMachineLseId())...)
-	hc.changes = append(hc.changes, logCommon(resourceName, "vm.state", approxState(oldData.GetState()), approxState(newData.GetState()))...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vm.resource_state", oldData.GetResourceState().String(), newData.GetResourceState().String())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
 

@@ -121,7 +121,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 			}
 		}
 
-		lse.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		lse.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 		if err := hc.stUdt.addLseStateHelper(ctx, lse); err != nil {
 			return errors.Annotate(err, "Fail to update host state").Err()
 		}
@@ -155,7 +155,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 }
 
 // UpdateMachineLSE updates machinelse in datastore.
-func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, s ufspb.State, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
+func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
 	// MachineLSEs name and hostname must always be the same
 	// Overwrite the hostname with name as partial updates get only name
 	machinelse.Hostname = machinelse.GetName()
@@ -211,7 +211,6 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		machinelse.Zone = oldMachinelse.GetZone()
 		machinelse.Machines = oldMachinelse.GetMachines()
 		machinelse.Manufacturer = oldMachinelse.GetManufacturer()
-		machinelse.State = oldMachinelse.GetState()
 		machinelse.Nic = oldMachinelse.GetNic()
 
 		// Do not let updating from browser to os or vice versa change for MachineLSE.
@@ -235,20 +234,17 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			}
 		}
 
-		// check if user provided a new state for the host
-		if s != ufspb.State_STATE_UNSPECIFIED && machinelse.State != s.String() {
-			machinelse.State = s.String()
-			if err := hc.stUdt.updateStateHelper(ctx, s); err != nil {
-				return errors.Annotate(err, "Fail to update state to host %s", machinelse.GetName()).Err()
-			}
-		}
-
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
 			machinelse, err = processMachineLSEUpdateMask(ctx, oldMachinelse, machinelse, mask)
 			if err != nil {
 				return errors.Annotate(err, "UpdateMachineLSE - processing update mask failed").Err()
 			}
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, machinelse.GetResourceState()); err != nil {
+			return errors.Annotate(err, "Fail to update state to host %s", machinelse.GetName()).Err()
 		}
 
 		// Update machinelse entry
@@ -345,11 +341,8 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 				}
 			}
 			oldMachinelse.GetChromeBrowserMachineLse().VmCapacity = machinelse.GetChromeBrowserMachineLse().GetVmCapacity()
-		case "state":
-			// In the previous step we have already checked for state != ufspb.State_STATE_UNSPECIFIED
-			// and got the new values for OUTPUT only fields in new machinelse object,
-			// assign them to oldMachinelse.
-			oldMachinelse.State = machinelse.GetState()
+		case "resourceState":
+			oldMachinelse.ResourceState = machinelse.GetResourceState()
 		case "tags":
 			oldMachinelse.Tags = mergeTags(oldMachinelse.GetTags(), machinelse.GetTags())
 		case "description":
@@ -907,7 +900,7 @@ func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 		}
 		lseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
 		lse.Nic = ""
-		lse.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		lse.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
 			return errors.Annotate(err, "Failed to update host %q", machinelseName).Err()
 		}
@@ -1030,7 +1023,7 @@ func validateMachineLSEUpdateMask(machinelse *ufspb.MachineLSE, mask *field_mask
 				}
 			case "tags":
 			case "description":
-			case "state":
+			case "resourceState":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateMachineLSEUpdateMask - unsupported update mask path %q", path)
@@ -1097,7 +1090,7 @@ func setOutputField(ctx context.Context, machine *ufspb.Machine, lse *ufspb.Mach
 	for _, vm := range lse.GetChromeBrowserMachineLse().GetVms() {
 		vm.Zone = machine.GetLocation().GetZone().String()
 		vm.MachineLseId = lse.GetName()
-		vm.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		vm.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 	}
 	if pName := machine.GetChromeBrowserMachine().GetChromePlatform(); pName != "" {
 		platform, err := configuration.GetChromePlatform(ctx, pName)

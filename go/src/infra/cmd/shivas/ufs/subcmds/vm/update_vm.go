@@ -133,19 +133,15 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 			Ip:     c.ip,
 		}
 	}
-	var s ufspb.State
-	if c.state != "" {
-		s = ufsUtil.ToUFSState(c.state)
-	}
+
 	vm.Name = ufsUtil.AddPrefix(ufsUtil.VMCollection, vm.Name)
 	res, err := ic.UpdateVM(ctx, &ufsAPI.UpdateVMRequest{
 		Vm:            &vm,
 		MachineLSEId:  machineLSEID,
 		NetworkOption: nwOpt,
-		State:         s,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"host":        "machinelseName",
-			"state":       "state",
+			"state":       "resourceState",
 			"mac-address": "macAddress",
 			"os":          "osVersion",
 			"tags":        "tags",
@@ -182,6 +178,7 @@ func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	vm.Name = c.vmName
 	vm.MacAddress = c.macAddress
 	vm.OsVersion = &ufspb.OSVersion{}
+	vm.ResourceState = ufsUtil.ToUFSState(c.state)
 	if c.osVersion == utils.ClearFieldValue {
 		vm.GetOsVersion().Value = ""
 	} else {
@@ -208,6 +205,9 @@ func (c *updateVM) validateArgs() error {
 			c.hostName == "" && c.osVersion == "" && c.macAddress == "" && c.tags == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
+		}
 	} else {
 		if c.vmName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-name' cannot be specified at the same time.")
@@ -227,9 +227,9 @@ func (c *updateVM) validateArgs() error {
 		if c.description != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
-	}
-	if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+		}
 	}
 	return nil
 }

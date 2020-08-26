@@ -265,12 +265,12 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			OsVersion: &ufspb.OSVersion{
 				Value: vm.GetOs(),
 			},
-			Hostname:     name,
-			Vlan:         GetBrowserLabName(Int64ToStr(vm.GetVlan())),
-			Zone:         zone,
-			MachineLseId: vm.GetHost(),
-			State:        ToState(vm.GetState()).String(),
-			Description:  vm.GetDescription(),
+			Hostname:      name,
+			Vlan:          GetBrowserLabName(Int64ToStr(vm.GetVlan())),
+			Zone:          zone,
+			MachineLseId:  vm.GetHost(),
+			ResourceState: ToState(vm.GetState()),
+			Description:   vm.GetDescription(),
 		}
 		hostToVMs[vm.GetHost()] = append(hostToVMs[vm.GetHost()], v)
 		ufsVMs = append(ufsVMs, v)
@@ -324,7 +324,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Rack:             rack,
 			Zone:             zone,
 			Nic:              GetNicName(h.GetNic(), h.GetMachine()),
-			State:            ToState(h.GetState()).String(),
+			ResourceState:    ToState(h.GetState()),
 			Manufacturer:     manufacturer,
 			Description:      h.GetDescription(),
 			DeploymentTicket: h.DeploymentTicket,

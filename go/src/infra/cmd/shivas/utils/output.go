@@ -876,7 +876,7 @@ func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhc
 		lse.GetNic(),
 		dhcp.GetIp(),
 		dhcp.GetVlan(),
-		lse.GetState(),
+		lse.GetResourceState().String(),
 		fmt.Sprintf("%d", lse.GetChromeBrowserMachineLse().GetVmCapacity()),
 		strSlicesToStr(ufsAPI.ParseResources(lse.GetChromeBrowserMachineLse().GetVms(), "Name")),
 		lse.GetDescription(),
@@ -924,7 +924,7 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 		m.GetRack(),
 		machine,
 		m.GetNic(),
-		m.GetState(),
+		m.GetResourceState().String(),
 		fmt.Sprintf("%d", m.GetChromeBrowserMachineLse().GetVmCapacity()),
 		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachineLse().GetVms(), "Name")),
 		m.GetDescription(),
@@ -964,7 +964,7 @@ func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.Machine
 	out += fmt.Sprintf("%s\t", res.GetVlan())
 	out += fmt.Sprintf("%s\t", host.GetZone())
 	out += fmt.Sprintf("%d\t", host.GetChromeBrowserMachineLse().GetVmCapacity())
-	out += fmt.Sprintf("%s\t", host.GetState())
+	out += fmt.Sprintf("%s\t", host.GetResourceState().String())
 	fmt.Fprintln(tw, out)
 }
 
@@ -981,7 +981,7 @@ func vmFullOutputStrs(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) []string {
 		vm.GetMachineLseId(),
 		dhcp.GetVlan(),
 		dhcp.GetIp(),
-		vm.GetState(),
+		vm.GetResourceState().String(),
 		vm.GetDescription(),
 		ts,
 	}
@@ -1018,7 +1018,7 @@ func vmOutputStrs(pm proto.Message) []string {
 		m.GetZone(),
 		m.GetMachineLseId(),
 		m.GetVlan(),
-		m.GetState(),
+		m.GetResourceState().String(),
 		m.GetDescription(),
 		ts,
 	}

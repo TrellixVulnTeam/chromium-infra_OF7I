@@ -63,7 +63,7 @@ func newVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 		OSVersion: p.GetOsVersion().GetValue(),
 		Vlan:      p.GetVlan(),
 		HostID:    p.GetMachineLseId(),
-		State:     p.GetState(),
+		State:     p.GetResourceState().String(),
 		Zone:      p.GetZone(),
 		Tags:      p.GetTags(),
 		OS:        ufsds.GetOSIndex(p.GetOsVersion().GetValue()),

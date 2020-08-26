@@ -131,7 +131,6 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 	}
 
 	var networkOptions map[string]*ufsAPI.NetworkOption
-	var states map[string]ufspb.State
 	if c.deleteVlan || c.vlanName != "" || c.ip != "" {
 		networkOptions = map[string]*ufsAPI.NetworkOption{
 			machinelse.Name: {
@@ -142,25 +141,19 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 			},
 		}
 	}
-	if c.state != "" {
-		states = map[string]ufspb.State{
-			machinelse.Name: ufsUtil.ToUFSState(c.state),
-		}
-	}
 
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE:     machinelse,
 		Machines:       machines,
 		NetworkOptions: networkOptions,
-		States:         states,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"machine":     "machine",
 			"prototype":   "mlseprototype",
 			"os":          "osVersion",
 			"vm-capacity": "vmCapacity",
 			"tags":        "tags",
-			"state":       "state",
+			"state":       "resourceState",
 			"desc":        "description",
 		}),
 	})
@@ -194,6 +187,7 @@ func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 	lse.Name = c.hostName
 	lse.Hostname = c.hostName
 	lse.MachineLsePrototype = c.prototype
+	lse.ResourceState = ufsUtil.ToUFSState(c.state)
 	if c.tags == utils.ClearFieldValue {
 		lse.Tags = nil
 	} else {
@@ -265,6 +259,9 @@ func (c *updateHost) validateArgs() error {
 		if c.description != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.hostName == "" {
@@ -274,9 +271,9 @@ func (c *updateHost) validateArgs() error {
 			c.osVersion == "" && c.prototype == "" && c.tags == "" && c.vmCapacity == 0 && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
-	}
-	if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
-		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
+		}
 	}
 	return nil
 }

@@ -78,7 +78,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 		machinelse := req.MachineLSE
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
-			machinelse, err = controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetStates()[req.MachineLSE.Name], req.UpdateMask)
+			machinelse, err = controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.UpdateMask)
 			if err != nil {
 				return nil, err
 			}
@@ -105,7 +105,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 		return machinelse, nil
 	}
 
-	machinelse, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetStates()[req.MachineLSE.Name], req.UpdateMask)
+	machinelse, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 		vm := req.Vm
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
-			vm, err = controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.GetState(), req.UpdateMask)
+			vm, err = controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.UpdateMask)
 			if err != nil {
 				return nil, err
 			}
@@ -214,7 +214,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 		return vm, nil
 	}
 
-	vm, err := controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.GetState(), req.UpdateMask)
+	vm, err := controller.UpdateVM(ctx, req.Vm, req.GetMachineLSEId(), req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

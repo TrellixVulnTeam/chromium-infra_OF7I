@@ -311,8 +311,8 @@ message UpdateVMRequest {
   // The network option to set the VM
   NetworkOption network_option = 4;
 
-  // The state to update to
-  proto.State state = 5;
+  reserved 5;
+  reserved "state";
 }
 
 message GetVMRequest {
@@ -823,8 +823,8 @@ message UpdateMachineLSERequest {
   // mapping of the name to the corresponding network options.
   map<string, NetworkOption> network_options = 4;
 
-  // The state to update to host/vm
-  map<string, proto.State> states = 5;
+  reserved 5;
+  reserved "states";
 }
 
 message GetMachineLSERequest {

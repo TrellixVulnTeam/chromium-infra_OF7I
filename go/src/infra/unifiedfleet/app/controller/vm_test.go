@@ -37,7 +37,7 @@ func TestCreateVM(t *testing.T) {
 			}
 			resp, err := CreateVM(ctx, vm1, "create-host", nil)
 			So(err, ShouldBeNil)
-			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
 			So(resp.GetZone(), ShouldEqual, "fake_zone")
 
@@ -65,7 +65,7 @@ func TestCreateVM(t *testing.T) {
 				Vlan: "vlan-1",
 			})
 			So(err, ShouldBeNil)
-			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
 			dhcp, err := configuration.GetDHCPConfig(ctx, "vm-create-2")
 			So(err, ShouldBeNil)
@@ -119,7 +119,7 @@ func TestCreateVM(t *testing.T) {
 				Ip: "192.168.40.9",
 			})
 			So(err, ShouldBeNil)
-			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
 			dhcp, err := configuration.GetDHCPConfig(ctx, "vm-create-3")
 			So(err, ShouldBeNil)
@@ -178,7 +178,7 @@ func TestUpdateVM(t *testing.T) {
 			vm1 := &ufspb.VM{
 				Name: "vm-update-1",
 			}
-			resp, err := UpdateVM(ctx, vm1, "create-host", ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateVM(ctx, vm1, "create-host", nil)
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no ChromeVM with ChromeVMID vm-update-1 in the system")
@@ -199,7 +199,7 @@ func TestUpdateVM(t *testing.T) {
 				Vlan: "vlan-1",
 			})
 			So(err, ShouldBeNil)
-			So(resp.GetState(), ShouldEqual, "STATE_DEPLOYED_PRE_SERVING")
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 			s, err := state.GetStateRecord(ctx, "vms/vm-update-2")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
@@ -313,9 +313,10 @@ func TestUpdateVM(t *testing.T) {
 				Name: "vm-update-4",
 			}
 			_, err := CreateVM(ctx, vm1, "update-host", nil)
-			resp, err := UpdateVM(ctx, vm1, "update-host", ufspb.State_STATE_NEEDS_REPAIR, nil)
+			vm1.ResourceState = ufspb.State_STATE_NEEDS_REPAIR
+			resp, err := UpdateVM(ctx, vm1, "update-host", nil)
 			So(err, ShouldBeNil)
-			So(resp.GetState(), ShouldEqual, "STATE_NEEDS_REPAIR")
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_NEEDS_REPAIR)
 			So(resp.GetMachineLseId(), ShouldEqual, "update-host")
 			s, err := state.GetStateRecord(ctx, "vms/vm-update-4")
 			So(err, ShouldBeNil)
@@ -364,7 +365,7 @@ func TestUpdateVM(t *testing.T) {
 				Name: "vm-7",
 				Tags: []string{"tag-2"},
 			}
-			resp, err := UpdateVM(ctx, vm1, "", ufspb.State_STATE_UNSPECIFIED, &field_mask.FieldMask{Paths: []string{"tags"}})
+			resp, err := UpdateVM(ctx, vm1, "", &field_mask.FieldMask{Paths: []string{"tags"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetTags(), ShouldResemble, []string{"tag-1", "tag-2"})
@@ -479,33 +480,33 @@ func TestListVMs(t *testing.T) {
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-1",
 			},
-			Vlan:  "vlan-1",
-			State: ufspb.State_STATE_SERVING.String(),
+			Vlan:          "vlan-1",
+			ResourceState: ufspb.State_STATE_SERVING,
 		},
 		{
 			Name: "vm-list-2",
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-1",
 			},
-			Vlan:  "vlan-2",
-			State: ufspb.State_STATE_SERVING.String(),
+			Vlan:          "vlan-2",
+			ResourceState: ufspb.State_STATE_SERVING,
 		},
 		{
 			Name: "vm-list-3",
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Vlan:  "vlan-1",
-			State: ufspb.State_STATE_SERVING.String(),
+			Vlan:          "vlan-1",
+			ResourceState: ufspb.State_STATE_SERVING,
 		},
 		{
 			Name: "vm-list-4",
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Zone:  ufspb.Zone_ZONE_ATLANTA.String(),
-			Vlan:  "vlan-2",
-			State: ufspb.State_STATE_DEPLOYED_TESTING.String(),
+			Zone:          ufspb.Zone_ZONE_ATLANTA.String(),
+			Vlan:          "vlan-2",
+			ResourceState: ufspb.State_STATE_DEPLOYED_TESTING,
 		},
 	}
 	Convey("ListVMs", t, func() {

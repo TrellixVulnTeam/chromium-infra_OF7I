@@ -17,12 +17,13 @@ import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 import "infra/unifiedfleet/api/v1/proto/chromeos/lab/device.proto";
+import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 // MachineLSE is the Machine Lab Setup Environment.
 // It refers to the entity in the lab which has Machine(s) associated
 // with it. It also has other components associated with it.
 //
-// Next tag: 9
+// Next tag: 18
 message MachineLSE {
     option (google.api.resource) = {
         type: "unified-fleet-system.appspot.com/MachineLSE"
@@ -87,9 +88,8 @@ message MachineLSE {
     // tags user can attach for easy querying/searching
     repeated string tags = 12;
 
-    string state = 13 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 13;
+    reserved "state";
 
     // Refers to Zone
     string zone = 14 [
@@ -100,6 +100,9 @@ message MachineLSE {
     string deployment_ticket = 15;
     // A description of this host.
     string description = 16;
+
+    // State of the host resource
+    State resource_state = 17;
 }
 
 // ChromeBrowserMachineLSE refers to the entity
@@ -138,9 +141,8 @@ message VM {
         },
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
-    string state = 8 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 8;
+    reserved "state";
     // Record the last update timestamp of this VM (In UTC timezone)
     google.protobuf.Timestamp update_time = 9 [
         (google.api.field_behavior) = OUTPUT_ONLY];
@@ -154,6 +156,9 @@ message VM {
     ];
     // A description of this vm.
     string description = 12;
+
+    // State of the vm resource
+    State resource_state = 13;
 }
 
 // OSVersion refers to the version of Operating System

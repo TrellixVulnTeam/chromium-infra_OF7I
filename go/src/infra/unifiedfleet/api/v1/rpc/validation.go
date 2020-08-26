@@ -457,9 +457,6 @@ func (r *CreateVMRequest) Validate() error {
 	if r.GetVm().GetZone() != "" {
 		return status.Errorf(codes.InvalidArgument, "Zone for vm is output-only")
 	}
-	if r.GetVm().GetState() != "" {
-		return status.Errorf(codes.InvalidArgument, "Cannot set state when adding vm")
-	}
 	if r.GetVm().GetVlan() != "" {
 		return status.Errorf(codes.InvalidArgument, "Cannot set vlan when adding vm")
 	}

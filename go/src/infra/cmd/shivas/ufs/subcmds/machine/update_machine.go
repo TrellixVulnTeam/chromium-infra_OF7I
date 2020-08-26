@@ -157,11 +157,7 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 	} else {
 		machine.SerialNumber = c.serialNumber
 	}
-	if c.state == utils.ClearFieldValue {
-		machine.ResourceState = ufsUtil.ToUFSState("")
-	} else {
-		machine.ResourceState = ufsUtil.ToUFSState(c.state)
-	}
+	machine.ResourceState = ufsUtil.ToUFSState(c.state)
 	if c.platform != "" || c.deploymentTicket != "" || c.kvm != "" {
 		machine.Device = &ufspb.Machine_ChromeBrowserMachine{
 			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{

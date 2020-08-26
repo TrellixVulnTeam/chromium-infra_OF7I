@@ -579,7 +579,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 	Convey("UpdateMachineLSE for a DUT", t, func() {
 		Convey("Update non-existing machineLSE DUT", func() {
 			dutMachinelse := mockDutMachineLSE("DUTMachineLSE-23")
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse, nil, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse, nil, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no MachineLSE with MachineLSEID DUTMachineLSE-23 in the system.")
@@ -595,7 +595,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-21")
 			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse3)
@@ -621,7 +621,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse3 := mockDutMachineLSE("DUTMachineLSE-22")
 			dutMachinelse3.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals3
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse3, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse3)
@@ -672,7 +672,7 @@ func TestUpdateMachineLSEDUT(t *testing.T) {
 			}
 			dutMachinelse2 := mockDutMachineLSE("DUTMachineLSE-17")
 			dutMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetDut().Peripherals = peripherals2
-			resp, err := UpdateMachineLSE(ctx, dutMachinelse2, nil, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, dutMachinelse2, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, dutMachinelse2)
@@ -715,7 +715,7 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 				ServoPort:     22,
 			}
 			labstationMachinelse2.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Servos = []*chromeosLab.Servo{servo}
-			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Servos are not allowed to be updated")
@@ -734,7 +734,7 @@ func TestUpdateMachineLSELabstation(t *testing.T) {
 			inventory.CreateMachineLSE(ctx, labstationMachinelse1)
 
 			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-11")
-			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse2)
@@ -789,7 +789,8 @@ func TestUpdateMachineLSE(t *testing.T) {
 			machineLSE1.GetChromeBrowserMachineLse().OsVersion = &ufspb.OSVersion{
 				Value: "new_os",
 			}
-			m, err := UpdateMachineLSE(ctx, machineLSE1, nil, ufspb.State_STATE_DEPLOYED_TESTING, nil)
+			machineLSE1.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
+			m, err := UpdateMachineLSE(ctx, machineLSE1, nil, nil)
 			So(err, ShouldBeNil)
 			So(m.GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 2)
 			// State remains unchanged as vm1 is not updated
@@ -999,7 +1000,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			labstationMachinelse2 := mockLabstationMachineLSE("RedLabstation-11")
-			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, labstationMachinelse2, nil, nil)
 			So(resp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, labstationMachinelse2)
@@ -1046,7 +1047,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 				Name:     "machinelse-4",
 				Hostname: "machinelse-4",
 			}
-			resp, err := UpdateMachineLSE(ctx, machineLSE, []string{"machine-5"}, ufspb.State_STATE_UNSPECIFIED, nil)
+			resp, err := UpdateMachineLSE(ctx, machineLSE, []string{"machine-5"}, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "there is another host machinelse-5 which is referring this machine machine-5")
@@ -1078,7 +1079,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 				Name: "lse-7",
 				Tags: []string{"tag-2"},
 			}
-			resp, err := UpdateMachineLSE(ctx, lse1, nil, ufspb.State_STATE_UNSPECIFIED, &field_mask.FieldMask{Paths: []string{"tags"}})
+			resp, err := UpdateMachineLSE(ctx, lse1, nil, &field_mask.FieldMask{Paths: []string{"tags"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetTags(), ShouldResemble, []string{"tag-1", "tag-2"})

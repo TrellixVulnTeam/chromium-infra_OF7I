@@ -150,11 +150,9 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			machineLSE := mockMachineLSE("machineLSE-state")
+			machineLSE.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
 			req := &ufsAPI.UpdateMachineLSERequest{
 				MachineLSE: machineLSE,
-				States: map[string]ufspb.State{
-					"machineLSE-state": ufspb.State_STATE_DEPLOYED_TESTING,
-				},
 			}
 			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
@@ -276,7 +274,7 @@ func TestCreateVM(t *testing.T) {
 			So(resp.GetName(), ShouldEqual, "vms/inventory-create-vm1")
 			So(resp.GetZone(), ShouldEqual, "fake_zone")
 			So(resp.GetMachineLseId(), ShouldEqual, "inventory-create-host")
-			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
 
 			s, err := state.GetStateRecord(ctx, "vms/inventory-create-vm1")
 			So(err, ShouldBeNil)
@@ -368,14 +366,14 @@ func TestUpdateVM(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
+			vm1.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
 			req := &ufsAPI.UpdateVMRequest{
 				Vm:           vm1,
 				MachineLSEId: "inventory-update-host",
-				State:        ufspb.State_STATE_DEPLOYED_TESTING,
 			}
 			resp, err := tf.Fleet.UpdateVM(tf.C, req)
 			So(err, ShouldBeNil)
-			So(resp.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING.String())
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING)
 			s, err := state.GetStateRecord(ctx, "vms/inventory-update-vm2")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING)
@@ -527,33 +525,33 @@ func TestListVMs(t *testing.T) {
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-1",
 			},
-			Vlan:  "vlan-1",
-			State: ufspb.State_STATE_SERVING.String(),
+			Vlan:          "vlan-1",
+			ResourceState: ufspb.State_STATE_SERVING,
 		},
 		{
 			Name: "vm-list-2",
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-1",
 			},
-			Vlan:  "vlan-2",
-			State: ufspb.State_STATE_SERVING.String(),
+			Vlan:          "vlan-2",
+			ResourceState: ufspb.State_STATE_SERVING,
 		},
 		{
 			Name: "vm-list-3",
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Vlan:  "vlan-1",
-			State: ufspb.State_STATE_SERVING.String(),
+			Vlan:          "vlan-1",
+			ResourceState: ufspb.State_STATE_SERVING,
 		},
 		{
 			Name: "vm-list-4",
 			OsVersion: &ufspb.OSVersion{
 				Value: "os-2",
 			},
-			Zone:  "fake_zone",
-			Vlan:  "vlan-2",
-			State: ufspb.State_STATE_DEPLOYED_TESTING.String(),
+			Zone:          "fake_zone",
+			Vlan:          "vlan-2",
+			ResourceState: ufspb.State_STATE_DEPLOYED_TESTING,
 		},
 	}
 	Convey("ListVMs", t, func() {

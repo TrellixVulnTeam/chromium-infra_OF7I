@@ -35,7 +35,7 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 		}
 		vm.MachineLseId = host
 		vm.Zone = lse.Zone
-		vm.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		vm.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 
 		// Update states
 		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING); err != nil {
@@ -63,7 +63,7 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, host string, nwOpt *ufsAPI.Netw
 }
 
 // UpdateVM updates an existing vm in datastore.
-func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mask *field_mask.FieldMask) (*ufspb.VM, error) {
+func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, mask *field_mask.FieldMask) (*ufspb.VM, error) {
 	f := func(ctx context.Context) error {
 		hc := getVMHistoryClient(vm)
 
@@ -81,7 +81,6 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 		// Copy the machinelseid/state/zone to vm OUTPUT only fields from already existing vm
 		vm.MachineLseId = oldVM.GetMachineLseId()
 		vm.Zone = oldVM.GetZone()
-		vm.State = oldVM.GetState()
 		vm.Vlan = oldVM.GetVlan()
 
 		// Check if user provided new host to associate the vm
@@ -96,20 +95,17 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, host string, s ufspb.State, mas
 			vm.Zone = lse.Zone
 		}
 
-		// check if user provided a new state for the vm
-		if s != ufspb.State_STATE_UNSPECIFIED && vm.State != s.String() {
-			vm.State = s.String()
-			if err := hc.stUdt.updateStateHelper(ctx, s); err != nil {
-				return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
-			}
-		}
-
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
 			vm, err = processVMUpdateMask(oldVM, vm, mask)
 			if err != nil {
 				return errors.Annotate(err, "UpdateVM - processing update mask failed").Err()
 			}
+		}
+
+		// update state
+		if err := hc.stUdt.updateStateHelper(ctx, vm.GetResourceState()); err != nil {
+			return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
 		}
 
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm}); err != nil {
@@ -187,7 +183,7 @@ func DeleteVMHost(ctx context.Context, vmName string) error {
 		}
 		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
 		oldVM.Vlan = ""
-		oldVM.State = ufspb.State_STATE_DEPLOYED_PRE_SERVING.String()
+		oldVM.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{oldVM}); err != nil {
 			return errors.Annotate(err, "Failed to update vm %q", vmName).Err()
 		}
@@ -217,11 +213,8 @@ func processVMUpdateMask(oldVM *ufspb.VM, vm *ufspb.VM, mask *field_mask.FieldMa
 			oldVM.Zone = vm.GetZone()
 		case "macAddress":
 			oldVM.MacAddress = vm.GetMacAddress()
-		case "state":
-			// In the previous step we have already checked for state != ufspb.State_STATE_UNSPECIFIED
-			// and got the new values for OUTPUT only fields in new vm object,
-			// assign them to oldVM.
-			oldVM.State = vm.GetState()
+		case "resourceState":
+			oldVM.ResourceState = vm.GetResourceState()
 		case "osVersion":
 			if oldVM.GetOsVersion() == nil {
 				oldVM.OsVersion = &ufspb.OSVersion{
@@ -358,7 +351,7 @@ func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
 				}
 			case "tags":
 			case "description":
-			case "state":
+			case "resourceState":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateUpdateVM - unsupported update mask path %q", path)
