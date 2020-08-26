@@ -12,8 +12,8 @@ handlers:
     static_dir: css
     secure: always
 
-  - url: /static
-    static_dir: static
+  - url: /static/dist
+    static_dir: static/dist
     secure: always
 
   - url: /cron/.*
