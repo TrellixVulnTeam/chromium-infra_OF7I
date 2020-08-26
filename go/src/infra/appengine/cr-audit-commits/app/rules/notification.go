@@ -13,7 +13,7 @@ import (
 	"context"
 
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/gae/service/info"
+	"go.chromium.org/luci/server/auth"
 
 	"infra/monorail"
 )
@@ -59,9 +59,13 @@ func (c CommentOrFileMonorailIssue) Notify(ctx context.Context, cfg *RefConfig, 
 	labels := append([]string{"Restrict-View-Google"}, c.Labels...)
 	if fileBug && state == "" {
 		issueID := int32(0)
-		sa, err := info.ServiceAccount(ctx)
-		if err != nil {
-			return "", err
+		sa := ""
+		if signer := auth.GetSigner(ctx); signer != nil {
+			info, err := signer.ServiceInfo(ctx)
+			if err != nil {
+				return "", err
+			}
+			sa = info.ServiceAccountName
 		}
 
 		existingIssue, err := getIssueBySummaryAndAccount(ctx, cfg, summary, sa, cs)
