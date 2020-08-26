@@ -386,7 +386,7 @@
       "    arg_names, **additional_args)",
       "  File \"RECIPE_REPO[recipe_engine]/recipe_engine/internal/property_invoker.py\", in _invoke_with_properties",
       "    return callable_obj(*props, **additional_args)",
-      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py\", line 339, in RunSteps",
+      "  File \"RECIPE_REPO[infra]/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py\", line 342, in RunSteps",
       "    maybe_update_variants_pyl(api, variants_lines, variants_pyl_path)",
       "  File \"RECIPE_REPO[infra]/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py\", line 240, in maybe_update_variants_pyl",
       "    build_cipd_pkgs(api, cipd_pkgs_to_create)",

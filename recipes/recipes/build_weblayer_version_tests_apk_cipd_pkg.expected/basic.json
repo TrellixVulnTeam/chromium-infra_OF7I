@@ -857,8 +857,10 @@
       "RECIPE_REPO[depot_tools]/git_cl.py",
       "upload",
       "--force",
+      "--tbr-owners",
+      "--use-commit-queue",
       "--message-file",
-      "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 83.0.4103.96\n2, 84.0.4147.89\n\nR=rmhasan@google.com, estaab@chromium.org\nBug:1041619\n"
+      "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 83.0.4103.96\n2, 84.0.4147.89\n\nBug:1041619\n"
     ],
     "cwd": "[START_DIR]/src",
     "name": "git_cl upload"

@@ -17,6 +17,7 @@ DEPS = [
   'recipe_engine/file',
   'recipe_engine/json',
   'recipe_engine/path',
+  'recipe_engine/properties',
   'recipe_engine/python',
   'recipe_engine/url'
 ]
@@ -26,7 +27,6 @@ CL_DESC = """weblayer: Add skew tests for new versions released in beta
 Skew tests are being added for the following versions:
 %s
 
-R=rmhasan@google.com, estaab@chromium.org
 Bug:1041619
 """
 
@@ -302,8 +302,11 @@ def upload_changes(api, new_variants_lines, variants_pyl_path,
   description = CL_DESC % '\n'.join(
       '%d, %s' % (idx + 1, ver)
       for idx, ver in enumerate(cipd_pkgs_to_create))
-  # TODO(rmhasan): Add code to automatically submit CL
-  api.git_cl.upload(description, upload_args=['--force'])
+  # TODO(rmhasan): Add code to wait for CL to be submitted.
+  upload_args = ['--force', '--tbr-owners']
+  if api.properties.get('submit_cl'):
+    upload_args.append('--use-commit-queue')
+  api.git_cl.upload(description, upload_args=upload_args)
 
 
 def RunSteps(api):
@@ -374,6 +377,7 @@ def GenTests(api):
 }
 """
   yield (api.test('basic') +
+         api.properties(submit_cl=True) +
          api.step_data('Read variants.pyl',
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
