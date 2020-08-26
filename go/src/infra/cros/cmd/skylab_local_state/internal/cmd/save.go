@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,16 +14,21 @@ import (
 	"time"
 
 	"github.com/maruel/subcommands"
+	"go.chromium.org/luci/auth"
+	"go.chromium.org/luci/auth/client/authcli"
+	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
 
 	"go.chromium.org/chromiumos/infra/proto/go/lab_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_local_state"
 
 	"infra/cros/cmd/skylab_local_state/internal/location"
+	"infra/cros/cmd/skylab_local_state/internal/ufs"
+	"infra/libs/cros/dutstate"
 )
 
 // Save subcommand: Update the bot state json file.
-func Save() *subcommands.Command {
+func Save(authOpts auth.Options) *subcommands.Command {
 	return &subcommands.Command{
 		UsageLine: "save -input_json /path/to/input.json",
 		ShortDesc: "Update the DUT state json file.",
@@ -34,6 +40,8 @@ and provisionable labels and attributes from the host info file.
 		CommandRun: func() subcommands.CommandRun {
 			c := &saveRun{}
 
+			c.authFlags.Register(&c.Flags, authOpts)
+
 			c.Flags.StringVar(&c.inputPath, "input_json", "", "Path to JSON SaveRequest to read.")
 			return c
 		},
@@ -42,6 +50,8 @@ and provisionable labels and attributes from the host info file.
 
 type saveRun struct {
 	subcommands.CommandRunBase
+
+	authFlags authcli.Flags
 
 	inputPath string
 }
@@ -102,7 +112,8 @@ func (c *saveRun) innerRun(a subcommands.Application, args []string, env subcomm
 		}
 	}
 
-	return nil
+	ctx := cli.GetContext(a, c, env)
+	return updateDutStateToUFS(ctx, &c.authFlags, request.Config.CrosUfsService, request.DutName, request.DutState)
 }
 
 func validateSaveRequest(request *skylab_local_state.SaveRequest) error {
@@ -224,6 +235,19 @@ func sealResultsDir(dir string) error {
 	}
 	if err := ioutil.WriteFile(tsFile, ts, 0666); err != nil {
 		return errors.Annotate(err, "seal results dir %s", dir).Err()
+	}
+	return nil
+}
+
+// updateDutStateToUFS send DUT state to the UFS service.
+func updateDutStateToUFS(ctx context.Context, authFlags *authcli.Flags, crosUfsService, dutName, dutState string) error {
+	ufsClient, err := ufs.NewClient(ctx, crosUfsService, authFlags)
+	if err != nil {
+		return errors.Annotate(err, "save local state").Err()
+	}
+	err = dutstate.Update(ctx, ufsClient, dutName, dutstate.State(dutState))
+	if err != nil {
+		return errors.Annotate(err, "save local state").Err()
 	}
 	return nil
 }
