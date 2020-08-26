@@ -318,7 +318,14 @@ else:
     db_cloud_project = app_id
     branded_domains = branded_domains_staging
     domain_to_default_project = domain_to_default_project_staging
-    redis_host = '10.238.120.43'
+    # For each of these redis_hosts, they must match the corresponding
+    # HOST address of the redis instance for the environment. You can use
+    # the following command to find it.
+    # ```
+    # gcloud redis instances list --project monorail-staging \
+    #   --region us-central1
+    # ````
+    redis_host = '10.252.150.83'
 
   elif app_id == 'monorail-dev':
     site_name = 'Monorail Dev'
@@ -327,6 +334,7 @@ else:
     db_cloud_project = app_id
     branded_domains = branded_domains_dev
     domain_to_default_project = domain_to_default_project_dev
+    # See comment above on how to find this address.
     redis_host = '10.150.170.251'
 
   elif app_id == 'monorail-prod':
@@ -338,6 +346,7 @@ else:
     domain_to_default_project = domain_to_default_project_prod
     # Use replicas created in response to replication failures 2019-11-04
     db_replica_names = ['%s-next' % name for name in db_replica_names]
+    # See comment above on how to find this address.
     redis_host = None  # None until server is setup
 
 if local_mode:
