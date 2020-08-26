@@ -14,8 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const jsonHeader = "application/json"
-
 type jsonMember struct {
 	Name  string
 	Email string
