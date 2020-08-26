@@ -36,6 +36,12 @@ SETUP_LOCAL_ATTACH=(
   "$DEPS_PREFIX/lib/libcrypto.a"
 )
 
+if [[ $_3PP_PLATFORM == mac* ]]; then
+    CONFIGURE_FFI="--with-system-ffi"
+else
+    CONFIGURE_FFI="--without-system-ffi"
+fi
+
 # First see if we have to build a runnable python; we'll need it later.
 INTERP=python2
 if [[ $_3PP_PLATFORM == "$_3PP_TOOL_PLATFORM" ]]; then  # not cross compiling
@@ -46,7 +52,7 @@ if [[ $_3PP_PLATFORM == "$_3PP_TOOL_PLATFORM" ]]; then  # not cross compiling
   autoconf
 
   ./configure --prefix="$(pwd)/host_interp" \
-    --disable-shared --without-system-ffi --enable-ipv6
+    --disable-shared ${CONFIGURE_FFI} --enable-ipv6
 
   # We need a couple of modules explicitly, so edit Modules/Setup
 
@@ -97,6 +103,9 @@ if [[ $_3PP_PLATFORM == mac* ]]; then
   # rather than search all of the paths for a ".dylib" and then, failing
   # that, do a second sweep for ".a".
   LDFLAGS="$LDFLAGS -Wl,-search_paths_first"
+
+  # Statically linking the _ctypes module requires linking against libffi.
+  SETUP_LOCAL_ATTACH+=('_ctypes::-lffi')
 
   # Our builder system is missing X11 headers, so this module does not build.
   SETUP_LOCAL_SKIP+=(_tkinter)
@@ -160,7 +169,7 @@ export LDLAST
 # We're going to use our system python interpreter to generate our static module
 # list.
 ./configure --prefix "$PREFIX" --host="$CROSS_TRIPLE" \
-  --disable-shared --without-system-ffi --enable-ipv6 \
+  --disable-shared ${CONFIGURE_FFI} --enable-ipv6 \
   --enable-py-version-override="$PY_VERSION" \
   --enable-unicode=$UNICODE_TYPE \
   $EXTRA_CONFIGURE_ARGS

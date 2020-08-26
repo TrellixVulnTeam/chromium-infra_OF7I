@@ -1,6 +1,6 @@
 create {
   verify { test: "python_test.py" }
-  source { patch_version: "chromium.24" }
+  source { patch_version: "chromium.25" }
 }
 
 create {
@@ -25,6 +25,10 @@ create {
 
 create {
   platform_re: "mac-.*"
+  source {
+    patch_dir: "patches"
+    patch_dir: "mac_patches"
+  }
   build {
     dep: "bzip2"
     dep: "readline"
