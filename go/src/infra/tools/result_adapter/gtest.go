@@ -126,6 +126,13 @@ func (r *GTestResults) ConvertFromJSON(reader io.Reader) error {
 func (r *GTestResults) ToProtos(ctx context.Context) ([]*sinkpb.TestResult, error) {
 	var ret []*sinkpb.TestResult
 	var testNames []string
+
+	globalTags := make([]*pb.StringPair, len(r.GlobalTags)+1)
+	for i, tag := range r.GlobalTags {
+		globalTags[i] = pbutil.StringPair("gtest_global_tag", tag)
+	}
+	globalTags[len(r.GlobalTags)] = pbutil.StringPair(originalFormatTagKey, formatGTest)
+
 	for _, data := range r.PerIterationData {
 		// Sort the test name to make the output deterministic.
 		testNames = testNames[:0]
@@ -151,6 +158,7 @@ func (r *GTestResults) ToProtos(ctx context.Context) ([]*sinkpb.TestResult, erro
 					return nil, errors.Annotate(err,
 						"iteration %d of test %s failed to convert run result", i, name).Err()
 				}
+				rpb.Tags = append(rpb.Tags, globalTags...)
 
 				ret = append(ret, rpb)
 			}

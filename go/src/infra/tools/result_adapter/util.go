@@ -13,6 +13,15 @@ import (
 	"github.com/golang/protobuf/ptypes/duration"
 )
 
+const (
+	// originalFormatTagKey is a key of the tag indicating the format of the
+	// source data. Possible values: FormatJTR, FormatGTest.
+	originalFormatTagKey = "orig_format"
+
+	// FormatGTest is Chromium's GTest format.
+	formatGTest = "chromium_gtest"
+)
+
 // summaryTmpl is used to generate SummaryHTML in GTest and JTR-based test
 // results.
 var summaryTmpl = template.Must(template.New("summary").Parse(`

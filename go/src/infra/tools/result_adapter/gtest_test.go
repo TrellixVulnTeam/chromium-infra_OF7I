@@ -299,6 +299,9 @@ func TestGTestConversions(t *testing.T) {
 	Convey(`ToProtos`, t, func() {
 		Convey("Works", func() {
 			results := &GTestResults{
+				GlobalTags: []string{
+					"OS_LINUX",
+				},
 				PerIterationData: []map[string][]*GTestRunResult{
 					{
 						"BazTest.DoesQux": {
@@ -358,6 +361,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "BazTest.DoesQux",
 						"gtest_status", "SUCCESS",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 				{
@@ -367,6 +372,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "BazTest.DoesQux",
 						"gtest_status", "FAILURE",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 				{
@@ -376,6 +383,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "FooTest.DoesBar",
 						"gtest_status", "EXCESSIVE_OUTPUT",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 				{
@@ -385,6 +394,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "FooTest.DoesBar",
 						"gtest_status", "FAILURE_ON_EXIT",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 
@@ -397,6 +408,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "BazTest.DoesQux",
 						"gtest_status", "SUCCESS",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 				{
@@ -407,6 +420,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "BazTest.DoesQux",
 						"gtest_status", "SUCCESS",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 				{
@@ -416,6 +431,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "FooTest.DoesBar",
 						"gtest_status", "FAILURE",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 				{
@@ -425,6 +442,8 @@ func TestGTestConversions(t *testing.T) {
 						"test_name", "FooTest.DoesBar",
 						"gtest_status", "FAILURE_ON_EXIT",
 						"lossless_snippet", "false",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
 					),
 				},
 			}
