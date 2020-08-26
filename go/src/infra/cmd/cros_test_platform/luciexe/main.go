@@ -35,21 +35,24 @@ func main() {
 //
 // At the moment, this binary replaces only the skylab-execute step
 // of cros_test_platform.
-//
-// All errors in skylab-execute step are interpreted as infrastructure
-// failures by the recipe.
-// Test failures and user errors are reported in other recipe steps.
-//
-// Thus,
-// [1] All errors from this binary are tagged as INFRA_FAILURE
-// [2] Non-INFRA_FAILUREs are suppressed (before they get to this top-level
-//     function)
-func luciEXEMain(ctx context.Context, input *bbpb.Build, userArgs []string, send exe.BuildSender) error {
+func luciEXEMain(ctx context.Context, input *bbpb.Build, userArgs []string, send exe.BuildSender) (merr error) {
 	// crbug.com/1112514: The input Build Status is not currently specified in
 	// the luciexe protocol. bbagent sets it, but recipe_engine's sub_build()
 	// doesn't. Play safe.
 	input.Status = bbpb.Status_STARTED
 	send()
+
+	// All errors in skylab-execute step are interpreted as infrastructure
+	// failures by the recipe.
+	// Test failures and user errors are reported in other recipe steps.
+	//
+	// Thus,
+	// [1] All errors from this binary are tagged as INFRA_FAILURE
+	// [2] Non-INFRA_FAILUREs are suppressed (before they get to this top-level
+	//     function)
+	defer func() {
+		merr = exe.InfraErrorTag.Apply(merr)
+	}()
 
 	ca, err := parseArgs(userArgs)
 	if err != nil {
@@ -68,8 +71,9 @@ func luciEXEMain(ctx context.Context, input *bbpb.Build, userArgs []string, send
 		Send:  send,
 	}); err != nil {
 		logApplicationError(ctx, err)
+		return err
 	}
-	return err
+	return nil
 }
 
 func setupLogging(ctx context.Context) context.Context {
