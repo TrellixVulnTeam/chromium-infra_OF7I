@@ -9,9 +9,11 @@ import (
 func TestGitCommit(t *testing.T) {
 	Convey("ID generation", t, func() {
 		commit := &GitCommit{
-			Host:       "foo",
-			Repository: "bar",
-			Sha1:       "0000000000000000000000000000000000000000",
+			Repository: GitRepository{
+				Host: "foo",
+				Name: "bar",
+			},
+			Hash: "0000000000000000000000000000000000000000",
 		}
 		So(commit.ID(), ShouldEqual, "foo-bar-0000000000000000000000000000000000000000")
 	})
@@ -55,7 +57,7 @@ func TestGitCommit(t *testing.T) {
 				CommitMessage: "foo",
 			}
 			_, err := commit.GetPositionNumber()
-			So(err, ShouldEqual, errNoPositionFooter)
+			So(err, ShouldEqual, ErrNoPositionFooter)
 		})
 
 		Convey("gitnumberer syntax", func() {
@@ -83,7 +85,7 @@ func TestGitCommit(t *testing.T) {
 				CommitMessage: "foo\n\n>Cr-Commit-Position: refs/heads/master@{#42}",
 			}
 			_, err := commit.GetPositionNumber()
-			So(err, ShouldEqual, errNoPositionFooter)
+			So(err, ShouldEqual, ErrNoPositionFooter)
 		})
 
 		Convey("gitnumberer syntax with quoted text", func() {
@@ -120,7 +122,7 @@ func TestGitCommit(t *testing.T) {
 				CommitMessage: "foo\n\nCr-Commit-Position: foo",
 			}
 			_, err := commit.GetPositionNumber()
-			So(err, ShouldEqual, errInvalidPositionFooter)
+			So(err, ShouldEqual, ErrInvalidPositionFooter)
 		})
 	})
 }
