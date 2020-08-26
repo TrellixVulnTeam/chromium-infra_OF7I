@@ -29,47 +29,42 @@ import (
 )
 
 // CreateMachineLSE creates a new machinelse in datastore.
-func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpt *ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
+func CreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
 	// MachineLSE name and hostname must always be the same
 	// Overwrite the name with hostname
 	machinelse.Name = machinelse.GetHostname()
 
-	// Overwrite the OUTPUT_ONLY fields
-	// This is output only field. User is not allowed to set its value.
-	// machine association to machinelse and machine indexing for machinelse table
-	machinelse.Machines = machineNames
-
 	// Labstation
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
-		return createLabstation(ctx, machinelse, machineNames)
+		return createLabstation(ctx, machinelse)
 	}
 
 	// DUT
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 		// ChromeOSMachineLSE for a DUT
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = machinelse.GetHostname()
-		return createDUT(ctx, machinelse, machineNames)
+		return createDUT(ctx, machinelse)
 	}
 
 	// Browser lab servers
-	return createBrowserServer(ctx, machinelse, machineNames, nwOpt)
+	return createBrowserServer(ctx, machinelse, nwOpt)
 }
 
-func createLabstation(ctx context.Context, lse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
+func createLabstation(ctx context.Context, lse *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(lse)
 
 		// Validate input
-		err := validateCreateMachineLSE(ctx, lse, machineNames, nil)
+		err := validateCreateMachineLSE(ctx, lse, nil)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
 
 		// Get machine to get zone and rack info for machinelse table indexing
-		machine, err := GetMachine(ctx, machineNames[0])
+		machine, err := GetMachine(ctx, lse.GetMachines()[0])
 		if err != nil {
-			return errors.Annotate(err, "unable to get machine %s", machineNames[0]).Err()
+			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
 		}
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
@@ -92,21 +87,21 @@ func createLabstation(ctx context.Context, lse *ufspb.MachineLSE, machineNames [
 	return lse, nil
 }
 
-func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineNames []string, nwOpt *ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
+func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsAPI.NetworkOption) (*ufspb.MachineLSE, error) {
 	vms := lse.GetChromeBrowserMachineLse().GetVms()
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(lse)
 
 		// Validate input
-		err := validateCreateMachineLSE(ctx, lse, machineNames, nwOpt)
+		err := validateCreateMachineLSE(ctx, lse, nwOpt)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to create MachineLSE").Err()
 		}
 
 		// Get machine to get zone and rack info for machinelse table indexing
-		machine, err := GetMachine(ctx, machineNames[0])
+		machine, err := GetMachine(ctx, lse.GetMachines()[0])
 		if err != nil {
-			return errors.Annotate(err, "unable to get machine %s", machineNames[0]).Err()
+			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
 		}
 		if err := setNicIfNeeded(ctx, lse, machine, nwOpt); err != nil {
 			return err
@@ -155,7 +150,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, machineName
 }
 
 // UpdateMachineLSE updates machinelse in datastore.
-func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
+func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_mask.FieldMask) (*ufspb.MachineLSE, error) {
 	// MachineLSEs name and hostname must always be the same
 	// Overwrite the hostname with name as partial updates get only name
 	machinelse.Hostname = machinelse.GetName()
@@ -166,17 +161,11 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().Hostname = machinelse.GetHostname()
 	}
 
-	// Overwrite the OUTPUT_ONLY fields
-	// This is output only field. User is not allowed to set its value.
-	if machineNames != nil && len(machineNames) > 0 {
-		machinelse.Machines = machineNames
-	}
-
 	// If its a DUT
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut() != nil {
 		// ChromeOSMachineLSE for a DUT
 		machinelse.GetChromeosMachineLse().GetDeviceLse().GetDut().Hostname = machinelse.GetHostname()
-		return updateDUT(ctx, machinelse, machineNames)
+		return updateDUT(ctx, machinelse)
 	}
 
 	var oldMachinelse *ufspb.MachineLSE
@@ -186,7 +175,7 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 		hc := getHostHistoryClient(machinelse)
 
 		// Validate the input
-		err := validateUpdateMachineLSE(ctx, machinelse, machineNames, mask)
+		err := validateUpdateMachineLSE(ctx, machinelse, mask)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update MachineLSE").Err()
 		}
@@ -206,10 +195,9 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
 		}
 		oldMachinelseCopy := proto.Clone(oldMachinelse).(*ufspb.MachineLSE)
-		// Copy the rack/state/zone/manufacturer/machines to machinelse OUTPUT only fields from already existing machinelse
+		// Copy the rack/state/zone/manufacturer to machinelse OUTPUT only fields from already existing machinelse
 		machinelse.Rack = oldMachinelse.GetRack()
 		machinelse.Zone = oldMachinelse.GetZone()
-		machinelse.Machines = oldMachinelse.GetMachines()
 		machinelse.Manufacturer = oldMachinelse.GetManufacturer()
 		machinelse.Nic = oldMachinelse.GetNic()
 
@@ -221,24 +209,28 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machine
 			return status.Error(codes.InvalidArgument, "UpdateMachine - cannot update an os host to browser host. Please delete the os host and create a new browser host")
 		}
 
-		// check if user is trying to associate this host with a different browser machine.
-		if len(machineNames) > 0 && machineNames[0] != "" && len(machinelse.GetMachines()) > 0 && machineNames[0] != machinelse.GetMachines()[0] {
-			// Get machine to get zone and rack info for machinelse table indexing
-			machine, err := GetMachine(ctx, machineNames[0])
-			if err != nil {
-				return errors.Annotate(err, "Unable to get machine %s", machineNames[0]).Err()
-			}
-			setOutputField(ctx, machine, machinelse)
-			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
-				return errors.Annotate(err, "failed to update zone indexing").Err()
-			}
-		}
-
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
 			machinelse, err = processMachineLSEUpdateMask(ctx, oldMachinelse, machinelse, mask)
 			if err != nil {
 				return errors.Annotate(err, "UpdateMachineLSE - processing update mask failed").Err()
+			}
+		} else {
+			// This is for the compelte object
+			if machinelse.GetMachines() == nil || len(machinelse.GetMachines()) == 0 || machinelse.GetMachines()[0] == "" {
+				return status.Error(codes.InvalidArgument, "machines field cannot be empty/nil.")
+			}
+			// check if user is trying to associate this host with a different browser machine.
+			if len(oldMachinelse.GetMachines()) > 0 && len(machinelse.GetMachines()) > 0 && oldMachinelse.GetMachines()[0] != machinelse.GetMachines()[0] {
+				// Get machine to get zone and rack info for machinelse table indexing
+				machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
+				if err != nil {
+					return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
+				}
+				setOutputField(ctx, machine, machinelse)
+				if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
+					return errors.Annotate(err, "failed to update zone indexing").Err()
+				}
 			}
 		}
 
@@ -309,14 +301,15 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 	// update the fields in the existing machinelse
 	for _, path := range mask.Paths {
 		switch path {
-		case "machine":
-			// In the previous step we have already checked for machine != ""
-			// and got the new values for OUTPUT only fields in new machinelse object,
-			// assign them to oldMachinelse.
+		case "machines":
+			// Get machine to get zone and rack info for machinelse table indexing
+			machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
+			if err != nil {
+				return oldMachinelse, errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
+			}
 			oldMachinelse.Machines = machinelse.GetMachines()
-			oldMachinelse.Zone = machinelse.GetZone()
-			oldMachinelse.Rack = machinelse.GetRack()
-			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machinelse.GetZone()}); err != nil {
+			setOutputField(ctx, machine, oldMachinelse)
+			if err := updateIndexingForMachineLSEResources(ctx, oldMachinelse, map[string]string{"zone": machine.GetLocation().GetZone().String()}); err != nil {
 				return oldMachinelse, errors.Annotate(err, "failed to update zone indexing").Err()
 			}
 		case "mlseprototype":
@@ -757,7 +750,7 @@ func removeServoEntryFromLabstation(servo *chromeosLab.Servo, labstationMachinel
 }
 
 // validateCreateMachineLSE validates if a machinelse can be created in the datastore.
-func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, nwOpt *ufsAPI.NetworkOption) error {
+func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, nwOpt *ufsAPI.NetworkOption) error {
 	//1. Check for servos for Labstation deployment
 	if machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation() != nil {
 		newServos := machinelse.GetChromeosMachineLse().GetDeviceLse().GetLabstation().GetServos()
@@ -775,7 +768,7 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	// 3. Check if resources does not exist
 	var resourcesNotfound []*Resource
 	// Aggregate resource to check if machines does not exist
-	for _, machineName := range machineNames {
+	for _, machineName := range machinelse.GetMachines() {
 		resourcesNotfound = append(resourcesNotfound, GetMachineResource(machineName))
 	}
 	if nwOpt.GetVlan() != "" {
@@ -797,7 +790,7 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 
 	// 4. Check if any machine is already associated with another MachineLSE
 	// A machine cannot be associated with multiple hosts/machinelses
-	for _, machineName := range machineNames {
+	for _, machineName := range machinelse.GetMachines() {
 		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machineName, true)
 		if err != nil {
 			return errors.Annotate(err, "Failed to query machinelses for machine %s", machineName).Err()
@@ -917,7 +910,7 @@ func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 }
 
 // validateUpdateMachineLSE validates if a machinelse can be updated in the datastore.
-func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string, mask *field_mask.FieldMask) error {
+func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *field_mask.FieldMask) error {
 	// 1. This check is only for a Labstation
 	// Check if labstation MachineLSE is updating any servo information
 	// It is also not allowed to update the servo Hostname and servo Port of any servo.
@@ -940,7 +933,7 @@ func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	// Aggregate resource to check if machinelse does not exist
 	resourcesNotfound := []*Resource{GetMachineLSEResource(machinelse.Name)}
 	// Aggregate resource to check if machines does not exist
-	for _, machineName := range machineNames {
+	for _, machineName := range machinelse.GetMachines() {
 		if machineName != "" {
 			resourcesNotfound = append(resourcesNotfound, GetMachineResource(machineName))
 		}
@@ -963,7 +956,7 @@ func validateUpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 
 	// 3. Check if any machine is already associated with another MachineLSE
 	// A machine cannot be associated with multiple hosts/machinelses
-	for _, machineName := range machineNames {
+	for _, machineName := range machinelse.GetMachines() {
 		machinelses, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", machineName, true)
 		if err != nil {
 			return errors.Annotate(err, "Failed to query machinelses for machine %s", machineName).Err()
@@ -1008,7 +1001,10 @@ func validateMachineLSEUpdateMask(machinelse *ufspb.MachineLSE, mask *field_mask
 				return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - name cannot be updated, delete and create a new machinelse instead")
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - update_time cannot be updated, it is a Output only field")
-			case "machine":
+			case "machines":
+				if machinelse.GetMachines() == nil || len(machinelse.GetMachines()) == 0 || machinelse.GetMachines()[0] == "" {
+					return status.Error(codes.InvalidArgument, "machines field cannot be empty/nil.")
+				}
 			case "mlseprototype":
 			case "osVersion":
 				if machinelse.GetChromeBrowserMachineLse() == nil {
@@ -1086,7 +1082,6 @@ func setNicIfNeeded(ctx context.Context, lse *ufspb.MachineLSE, machine *ufspb.M
 func setOutputField(ctx context.Context, machine *ufspb.Machine, lse *ufspb.MachineLSE) error {
 	lse.Rack = machine.GetLocation().GetRack()
 	lse.Zone = machine.GetLocation().GetZone().String()
-	lse.Machines = []string{machine.GetName()}
 	for _, vm := range lse.GetChromeBrowserMachineLse().GetVms() {
 		vm.Zone = machine.GetLocation().GetZone().String()
 		vm.MachineLseId = lse.GetName()

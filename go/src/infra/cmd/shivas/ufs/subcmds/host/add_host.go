@@ -98,7 +98,6 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 	})
 
 	var machinelse ufspb.MachineLSE
-	var machines []string
 	if c.interactive {
 		return errors.New("Interactive mode for this " +
 			"command is not yet implemented yet. Use JSON input mode.")
@@ -109,8 +108,7 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 		if err = utils.ParseJSONFile(c.newSpecsFile, &machinelse); err != nil {
 			return err
 		}
-		machines = machinelse.GetMachines()
-		if machines == nil || len(machines) <= 0 {
+		if machinelse.GetMachines() == nil || len(machinelse.GetMachines()) <= 0 {
 			return errors.New(fmt.Sprintf("machines field is empty in json. It is a required parameter for json input."))
 		}
 	} else {
@@ -119,13 +117,11 @@ func (c *addHost) innerRun(a subcommands.Application, args []string, env subcomm
 			return errors.New(fmt.Sprintf("Fail to find machine %s", c.machineName))
 		}
 		c.parseArgs(&machinelse, machine.GetLocation().GetZone())
-		machines = append(machines, c.machineName)
 	}
 
 	req := &ufsAPI.CreateMachineLSERequest{
 		MachineLSE:    &machinelse,
 		MachineLSEId:  machinelse.GetName(),
-		Machines:      machines,
 		NetworkOption: c.parseNetworkOpt(),
 	}
 
@@ -158,6 +154,7 @@ func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsZone ufspb.Zone) {
 	lse.Name = c.hostName
 	lse.MachineLsePrototype = c.prototype
 	lse.Tags = utils.GetStringSlice(c.tags)
+	lse.Machines = []string{c.machineName}
 	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
 		lse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
 			ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{

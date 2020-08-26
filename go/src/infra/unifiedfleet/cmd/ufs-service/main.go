@@ -32,7 +32,7 @@ import (
 //
 // any client with major version number lower than this number will get an
 // error to update their client to this major version or above.
-const SupportedClientMajorVersionNumber = 3
+const SupportedClientMajorVersionNumber = 4
 
 func main() {
 	modules := []module.Module{

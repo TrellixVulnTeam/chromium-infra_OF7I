@@ -52,10 +52,10 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			machineLSE1 := mockMachineLSE("machineLSE-1")
+			machineLSE1.Machines = []string{"machine-1"}
 			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   machineLSE1,
 				MachineLSEId: "machinelse-1",
-				Machines:     []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
@@ -65,7 +65,6 @@ func TestCreateMachineLSE(t *testing.T) {
 		Convey("Create new machineLSE - Invalid input nil", func() {
 			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE: nil,
-				Machines:   []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -77,7 +76,6 @@ func TestCreateMachineLSE(t *testing.T) {
 			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   mockMachineLSE("machineLSE-3"),
 				MachineLSEId: "",
-				Machines:     []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -89,7 +87,6 @@ func TestCreateMachineLSE(t *testing.T) {
 			req := &ufsAPI.CreateMachineLSERequest{
 				MachineLSE:   mockMachineLSE("machineLSE-4"),
 				MachineLSEId: "a.b)7&",
-				Machines:     []string{"machine-1"},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -109,10 +106,11 @@ func TestCreateMachineLSE(t *testing.T) {
 		})
 
 		Convey("Create new machineLSE - Invalid input empty machines", func() {
+			mlse := mockMachineLSE("machineLSE-4")
+			mlse.Machines = []string{""}
 			req := &ufsAPI.CreateMachineLSERequest{
-				MachineLSE:   mockMachineLSE("machineLSE-4"),
+				MachineLSE:   mlse,
 				MachineLSEId: "machineLSE-4",
-				Machines:     []string{""},
 			}
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -129,12 +127,20 @@ func TestUpdateMachineLSE(t *testing.T) {
 	defer validate()
 	Convey("UpdateMachineLSEs", t, func() {
 		Convey("Update existing machineLSEs", func() {
-			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name: "machineLSE-1",
+			machine := &ufspb.Machine{
+				Name: "machine-0",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machineLSE-1",
+				Machines: []string{"machine-0"},
 			})
 			So(err, ShouldBeNil)
 
 			machineLSE := mockMachineLSE("machineLSE-1")
+			machineLSE.Machines = []string{"machine-0"}
 			req := &ufsAPI.UpdateMachineLSERequest{
 				MachineLSE: machineLSE,
 			}
@@ -144,12 +150,20 @@ func TestUpdateMachineLSE(t *testing.T) {
 		})
 
 		Convey("Update existing machineLSEs with states", func() {
-			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name: "machineLSE-state",
+			machine := &ufspb.Machine{
+				Name: "machine-1",
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
+				Name:     "machineLSE-state",
+				Machines: []string{"machine-1"},
 			})
 			So(err, ShouldBeNil)
 
 			machineLSE := mockMachineLSE("machineLSE-state")
+			machineLSE.Machines = []string{"machine-1"}
 			machineLSE.ResourceState = ufspb.State_STATE_DEPLOYED_TESTING
 			req := &ufsAPI.UpdateMachineLSERequest{
 				MachineLSE: machineLSE,

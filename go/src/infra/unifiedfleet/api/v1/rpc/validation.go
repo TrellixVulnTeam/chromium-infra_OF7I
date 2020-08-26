@@ -401,13 +401,13 @@ func (r *CreateMachineLSERequest) Validate() error {
 	if r.MachineLSE.GetHostname() == "" {
 		return status.Errorf(codes.InvalidArgument, "Hostname cannot be empty for a host.")
 	}
-	if r.Machines == nil {
+	if r.MachineLSE.GetMachines() == nil || len(r.MachineLSE.GetMachines()) == 0 {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 	}
 	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
 		return err
 	}
-	for _, machineName := range r.Machines {
+	for _, machineName := range r.MachineLSE.GetMachines() {
 		if machineName == "" {
 			return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 		}

@@ -89,6 +89,9 @@ func UpdateVM(ctx context.Context, vm *ufspb.VM, mask *field_mask.FieldMask) (*u
 			}
 		} else {
 			// This is for complete object input
+			if vm.MachineLseId == "" {
+				return status.Error(codes.InvalidArgument, "UpdateVM - machineLseId cannot be empty/nil.")
+			}
 			// Check if user provided new host to associate the vm
 			if vm.MachineLseId != oldVM.MachineLseId {
 				lse, err := inventory.GetMachineLSE(ctx, vm.MachineLseId)
@@ -205,7 +208,7 @@ func processVMUpdateMask(ctx context.Context, oldVM *ufspb.VM, vm *ufspb.VM, mas
 		case "machineLseId":
 			lse, err := inventory.GetMachineLSE(ctx, vm.GetMachineLseId())
 			if err != nil {
-				return nil, errors.Annotate(err, "fail to get host by %s", vm.GetMachineLseId()).Err()
+				return oldVM, errors.Annotate(err, "fail to get host by %s", vm.GetMachineLseId()).Err()
 			}
 			oldVM.MachineLseId = vm.GetMachineLseId()
 			oldVM.Zone = lse.GetZone()
@@ -342,6 +345,9 @@ func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateVMUpdateMask - update_time cannot be updated, it is a output only field")
 			case "machineLseId":
+				if vm.MachineLseId == "" {
+					return status.Error(codes.InvalidArgument, "validateVMUpdateMask - machineLseId cannot be empty/nil.")
+				}
 			case "macAddress":
 			case "osVersion":
 				if vm.GetOsVersion() == nil {

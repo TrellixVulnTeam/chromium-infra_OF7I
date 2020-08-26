@@ -55,7 +55,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *ufsAPI.Cre
 		return nil, err
 	}
 	req.MachineLSE.Name = req.MachineLSEId
-	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.Machines, req.GetNetworkOption())
+	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.GetNetworkOption())
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 		machinelse := req.MachineLSE
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
-			machinelse, err = controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.UpdateMask)
+			machinelse, err = controller.UpdateMachineLSE(ctx, req.MachineLSE, req.UpdateMask)
 			if err != nil {
 				return nil, err
 			}
@@ -105,7 +105,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 		return machinelse, nil
 	}
 
-	machinelse, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.Machines, req.UpdateMask)
+	machinelse, err := controller.UpdateMachineLSE(ctx, req.MachineLSE, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

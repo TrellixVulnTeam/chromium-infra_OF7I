@@ -19,20 +19,20 @@ import (
 //
 // creates one MachineLSE for DUT and updates another MachineLSE for the
 // Labstation(with new Servo info from DUT)
-func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
+func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
 		machinelses := []*ufspb.MachineLSE{machinelse}
 		// Validate input
-		err := validateCreateMachineLSE(ctx, machinelse, machineNames, nil)
+		err := validateCreateMachineLSE(ctx, machinelse, nil)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to Create ChromeOSMachineLSEDUT").Err()
 		}
 
 		// Get machine to get zone and rack info for machinelse table indexing
-		machine, err := GetMachine(ctx, machineNames[0])
+		machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
 		if err != nil {
-			return errors.Annotate(err, "Unable to get machine %s", machineNames[0]).Err()
+			return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
 		}
 
 		setOutputField(ctx, machine, machinelse)
@@ -86,12 +86,12 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames [
 // If DUT is connected to a different labstation, then old servo info of DUT
 // is removed from old Labstation and new servo info from the DUT is added
 // to the new labstation.
-func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames []string) (*ufspb.MachineLSE, error) {
+func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.MachineLSE, error) {
 	// TODO(eshwarn) : provide partial update for dut.
 	f := func(ctx context.Context) error {
 		hc := getHostHistoryClient(machinelse)
 		// Validate the input
-		err := validateUpdateMachineLSE(ctx, machinelse, machineNames, nil)
+		err := validateUpdateMachineLSE(ctx, machinelse, nil)
 		if err != nil {
 			return errors.Annotate(err, "Validation error - Failed to update ChromeOSMachineLSEDUT").Err()
 		}
@@ -102,11 +102,6 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE, machineNames [
 			return errors.Annotate(err, "Failed to get existing MachineLSE").Err()
 		}
 
-		if machineNames == nil || len(machineNames) == 0 {
-			// Overwrite the OUTPUT_ONLY fields
-			// This is output only field. Assign already existing values.
-			machinelse.Machines = oldMachinelse.GetMachines()
-		}
 		if len(machinelse.GetMachines()) > 0 {
 			// Get machine to get lab and rack info for machinelse table indexing
 			machine, err := GetMachine(ctx, machinelse.GetMachines()[0])

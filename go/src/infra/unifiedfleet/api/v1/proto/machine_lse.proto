@@ -54,8 +54,7 @@ message MachineLSE {
     repeated string machines = 6 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Machine"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        }
     ];
     // Record the last update timestamp of this MachineLSE (In UTC timezone)
     google.protobuf.Timestamp update_time = 7 [

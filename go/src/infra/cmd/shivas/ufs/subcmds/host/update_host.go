@@ -105,7 +105,6 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		Options: site.DefaultPRPCOptions,
 	})
 	machinelse := &ufspb.MachineLSE{}
-	var machines []string
 	if c.interactive {
 		return errors.New("Interactive mode for this " +
 			"command is not yet implemented yet. Use JSON input mode.")
@@ -116,15 +115,11 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 		if err = utils.ParseJSONFile(c.newSpecsFile, machinelse); err != nil {
 			return err
 		}
-		machines = machinelse.GetMachines()
-		if machines == nil || len(machines) <= 0 {
+		if machinelse.GetMachines() == nil || len(machinelse.GetMachines()) <= 0 {
 			return errors.New(fmt.Sprintf("machines field is empty in json. It is a required parameter for json input."))
 		}
 	} else {
 		c.parseArgs(machinelse)
-		if c.machineName != "" {
-			machines = append(machines, c.machineName)
-		}
 	}
 	if err := utils.PrintExistingHost(ctx, ic, machinelse.Name); err != nil {
 		return err
@@ -145,10 +140,9 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 	machinelse.Name = ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, machinelse.Name)
 	res, err := ic.UpdateMachineLSE(ctx, &ufsAPI.UpdateMachineLSERequest{
 		MachineLSE:     machinelse,
-		Machines:       machines,
 		NetworkOptions: networkOptions,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"machine":     "machine",
+			"machine":     "machines",
 			"prototype":   "mlseprototype",
 			"os":          "osVersion",
 			"vm-capacity": "vmCapacity",
@@ -188,6 +182,7 @@ func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 	lse.Hostname = c.hostName
 	lse.MachineLsePrototype = c.prototype
 	lse.ResourceState = ufsUtil.ToUFSState(c.state)
+	lse.Machines = []string{c.machineName}
 	if c.tags == utils.ClearFieldValue {
 		lse.Tags = nil
 	} else {
