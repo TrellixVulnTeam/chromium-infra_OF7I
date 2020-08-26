@@ -35,8 +35,8 @@ func ToChromeMachines(old []*crimson.Machine, machineToNics map[string][]string,
 					DeploymentTicket: o.DeploymentTicket,
 				},
 			},
-			Realm: BrowserLabAdminRealm,
-			State: ToState(o.GetState()).String(),
+			Realm:         BrowserLabAdminRealm,
+			ResourceState: ToState(o.GetState()),
 		}
 	}
 	return newObjects

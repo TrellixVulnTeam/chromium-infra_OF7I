@@ -14,6 +14,7 @@ import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/proto/location.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 import "infra/unifiedfleet/api/v1/proto/network.proto";
+import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 // Machine refers to the devices or bare metal servers
 // which serves the tests directly.
@@ -49,10 +50,11 @@ message Machine {
     // tags user can attach for easy querying/searching
     repeated string tags = 8;
 
+    reserved 9;
+    reserved "state";
+
     // State of the machine
-    string state = 9 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    State resource_state = 10;
 }
 
 // ChromeBrowserMachine refers to bare metal servers in Chrome Browser lab

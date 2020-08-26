@@ -43,6 +43,7 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -64,6 +65,7 @@ type updateMachine struct {
 	deploymentTicket string
 	tags             string
 	serialNumber     string
+	state            string
 }
 
 func (c *updateMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -119,6 +121,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			"ticket":   "ticket",
 			"tags":     "tags",
 			"serial":   "serialNumber",
+			"state":    "resourceState",
 		}),
 	})
 	if err != nil {
@@ -153,6 +156,11 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 		machine.SerialNumber = ""
 	} else {
 		machine.SerialNumber = c.serialNumber
+	}
+	if c.state == utils.ClearFieldValue {
+		machine.ResourceState = ufsUtil.ToUFSState("")
+	} else {
+		machine.ResourceState = ufsUtil.ToUFSState(c.state)
 	}
 	if c.platform != "" || c.deploymentTicket != "" || c.kvm != "" {
 		machine.Device = &ufspb.Machine_ChromeBrowserMachine{
@@ -209,16 +217,24 @@ func (c *updateMachine) validateArgs() error {
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.zoneName == "" && c.rackName == "" && c.tags == "" && c.platform == "" && c.deploymentTicket == "" && c.kvm == "" && c.serialNumber == "" {
+		if c.zoneName == "" && c.rackName == "" && c.state == "" &&
+			c.tags == "" && c.platform == "" && c.deploymentTicket == "" &&
+			c.kvm == "" && c.serialNumber == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.zoneName != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
+		}
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 		}
 	}
 	return nil

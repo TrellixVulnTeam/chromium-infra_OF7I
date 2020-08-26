@@ -10,7 +10,7 @@ option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 
 import "google/protobuf/timestamp.proto";
 
-// Next tag: 12
+// Next tag: 14
 enum State {
   STATE_UNSPECIFIED = 0;
   // Equlavant to the concept in ChromeOS lab: needs_deploy
@@ -35,6 +35,10 @@ enum State {
   STATE_RESERVED = 7;
   // Decommissioned from the prod infrastructure, but still leave in UFS record.
   STATE_DECOMMISSIONED = 8;
+  // Deploying the resource with required configs just before it is READY
+  STATE_DEPLOYING = 12;
+  // Resource is ready for use or free to use
+  STATE_READY = 13;
 }
 
 // There's no exposed API for users to directly retrieve a state record.

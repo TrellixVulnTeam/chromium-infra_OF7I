@@ -573,7 +573,7 @@ func machineFullOutputStrs(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.
 			strSlicesToStr(ufsAPI.ParseResources(rack.GetChromeBrowserRack().GetSwitchObjects(), "Name")),
 			m.GetChromeBrowserMachine().GetDeploymentTicket(),
 			m.GetChromeBrowserMachine().GetDescription(),
-			m.GetState(),
+			m.GetResourceState().String(),
 			m.GetRealm(),
 			ts,
 		}
@@ -611,7 +611,7 @@ func machineOutputStrs(pm proto.Message) []string {
 		m.GetChromeBrowserMachine().GetDracObject().GetName(),
 		m.GetChromeBrowserMachine().GetDeploymentTicket(),
 		m.GetChromeBrowserMachine().GetDescription(),
-		m.GetState(),
+		m.GetResourceState().String(),
 		m.GetRealm(),
 		ts,
 	}

@@ -154,6 +154,8 @@ var StrToUFSState = map[string]string{
 	"disabled":             "STATE_DISABLED",
 	"reserved":             "STATE_RESERVED",
 	"decommissioned":       "STATE_DECOMMISSIONED",
+	"deploying":            "STATE_DEPLOYING",
+	"ready":                "STATE_READY",
 }
 
 // IsUFSState checks if a string refers to a valid UFS state.

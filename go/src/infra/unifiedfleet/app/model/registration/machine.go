@@ -70,7 +70,7 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 		Zone:             p.GetLocation().GetZone().String(),
 		Tags:             p.GetTags(),
 		Machine:          machine,
-		State:            p.GetState(),
+		State:            p.GetResourceState().String(),
 	}, nil
 }
 

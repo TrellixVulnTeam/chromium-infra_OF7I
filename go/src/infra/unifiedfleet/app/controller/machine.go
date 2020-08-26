@@ -64,7 +64,7 @@ func MachineRegistration(ctx context.Context, machine *ufspb.Machine) (*ufspb.Ma
 		}
 
 		// Create the machine
-		machine.State = ufspb.State_STATE_REGISTERED.String()
+		machine.ResourceState = ufspb.State_STATE_REGISTERED
 		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
 			return errors.Annotate(err, "MachineRegistration - unable to batch update machine").Err()
 		}
@@ -115,8 +115,6 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 		if err != nil {
 			return errors.Annotate(err, "UpdateMachine - get machine %s failed", machine.GetName()).Err()
 		}
-		// Fill the OUTPUT only fields with existing values
-		machine.State = oldMachine.GetState()
 
 		// Do not let updating from browser to os or vice versa change for machine.
 		if oldMachine.GetChromeBrowserMachine() != nil && machine.GetChromeosMachine() != nil {
@@ -143,6 +141,11 @@ func UpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *field_mask
 			if err = updateIndexingForMachineResources(ctx, oldMachine, indexMap, oldIndexMap, hc); err != nil {
 				return errors.Annotate(err, "UpdateMachine - update zone and rack indexing failed").Err()
 			}
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, machine.GetResourceState()); err != nil {
+			return errors.Annotate(err, "Fail to update state of machine %s", machine.GetName()).Err()
 		}
 
 		// update the machine
@@ -224,6 +227,8 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 			oldMachine.Tags = mergeTags(oldMachine.GetTags(), machine.GetTags())
 		case "serialNumber":
 			oldMachine.SerialNumber = machine.GetSerialNumber()
+		case "resourceState":
+			oldMachine.ResourceState = machine.GetResourceState()
 		}
 	}
 	// return existing/old machine with new updated values
@@ -707,6 +712,7 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 				}
 			case "tags":
 			case "serialNumber":
+			case "resourceState":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateMachineUpdateMask - unsupported update mask path %q", path)
