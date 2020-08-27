@@ -179,6 +179,18 @@ func TestGTestConversions(t *testing.T) {
 				})
 				So(tr.SummaryHtml, ShouldEqual, "")
 			})
+
+			Convey("stack trace in artifact", func() {
+				tr := convert(&GTestRunResult{
+					Status:              "FAILURE",
+					LosslessSnippet:     true,
+					OutputSnippetBase64: "WyBSVU4gICAgICBdIEZvb1Rlc3QuVGVzdERvQmFyCigxMCBtcyk=",
+				})
+				So(tr.SummaryHtml, ShouldEqual, "Please check stack_trace artifact for details.")
+				So(tr.Artifacts, ShouldHaveLength, 1)
+				So(tr.Artifacts["stack_trace"].ContentType, ShouldEqual, "text/plain")
+				So(tr.Artifacts["stack_trace"].GetContents(), ShouldResemble, []byte("<div><pre>[ RUN      ] FooTest.TestDoBar\n(10 ms)</pre></div>"))
+			})
 		})
 
 		Convey("testLocations", func() {

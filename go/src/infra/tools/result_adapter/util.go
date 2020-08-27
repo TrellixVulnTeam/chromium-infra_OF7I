@@ -20,6 +20,9 @@ const (
 
 	// FormatGTest is Chromium's GTest format.
 	formatGTest = "chromium_gtest"
+
+	// maxSummaryLength is the maximum length of summaryHtml.
+	maxSummaryLength = 4000
 )
 
 // summaryTmpl is used to generate SummaryHTML in GTest and JTR-based test
