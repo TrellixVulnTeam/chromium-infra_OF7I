@@ -1511,7 +1511,7 @@ def AssertIssueChangesValid(
         if not parsed_owner_valid:
           err_agg.AddErrorMessage('{}: {}', issue_ref, msg)
       # Owner already check by IsValidIssueOwner
-      all_users = delta.cc_ids_add
+      all_users = [uid for uid in delta.cc_ids_add]
       field_users = [fv.user_id for fv in delta.field_vals_add if fv.user_id]
       all_users.extend(field_users)
       AssertUsersExist(cnxn, services, all_users, err_agg)
@@ -1563,7 +1563,7 @@ def AssertValidIssueForCreate(cnxn, services, issue, description):
       err_agg.AddErrorMessage('Description is too long')
 
     # Check all users exist. Owner already check by IsValidIssueOwner.
-    all_users = issue.cc_ids
+    all_users = [uid for uid in issue.cc_ids]
     for av in issue.approval_values:
       all_users.extend(av.approver_ids)
     field_users = [fv.user_id for fv in issue.field_values if fv.user_id]

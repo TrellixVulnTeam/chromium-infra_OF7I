@@ -1647,12 +1647,35 @@ class CreateIssueHelpersTest(unittest.TestCase):
       tracker_helpers.AssertValidIssueForCreate(
           self.cnxn, self.services, input_issue, 'nonempty description')
 
-  def testAssertValidIssueForCreate_ValidatesOwner(self):
+  def testAssertValidIssueForCreate_ValidatesUsers(self):
+    user_fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.INT_TYPE, None, '', False,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.services.config.TestAddFieldDef(user_fd)
+
     input_issue = tracker_pb2.Issue(
-        summary='sum', status='New', owner_id=111, project_id=789, cc_ids=[123])
-    with self.assertRaisesRegexp(exceptions.InputException, 'users/123'):
+        summary='sum',
+        status='New',
+        owner_id=111,
+        project_id=789,
+        cc_ids=[123],
+        field_values=[
+            tracker_bizobj.MakeFieldValue(
+                user_fd.field_id, None, None, 124, None, None, False)
+        ])
+    copied_issue = copy.deepcopy(input_issue)
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 r'users/123: .+\nusers/124: .+'):
       tracker_helpers.AssertValidIssueForCreate(
           self.cnxn, self.services, input_issue, 'nonempty description')
+    self.assertEqual(input_issue, copied_issue)
+
+    self.services.user.TestAddUser('a@test.com', 123)
+    self.services.user.TestAddUser('a@test.com', 124)
+    tracker_helpers.AssertValidIssueForCreate(
+        self.cnxn, self.services, input_issue, 'nonempty description')
+    self.assertEqual(input_issue, copied_issue)
 
 
 class ModifyIssuesHelpersTest(unittest.TestCase):
@@ -1991,29 +2014,35 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     issue_1 = _Issue('chicken', 1)
     self.services.issue.TestAddIssue(issue_1)
     delta_1 = tracker_pb2.IssueDelta(merged_into=impacted_issue.issue_id)
+    exp_d1 = copy.deepcopy(delta_1)
 
     issue_2 = _Issue('chicken', 2)
     self.services.issue.TestAddIssue(issue_2)
     delta_2 = tracker_pb2.IssueDelta(blocked_on_add=[impacted_issue.issue_id])
+    exp_d2 = copy.deepcopy(delta_2)
 
     issue_3 = _Issue('chicken', 3)
     self.services.issue.TestAddIssue(issue_3)
     delta_3 = tracker_pb2.IssueDelta()
+    exp_d3 = copy.deepcopy(delta_3)
 
     issue_4 = _Issue('chicken', 4)
     self.services.issue.TestAddIssue(issue_4)
     delta_4 = tracker_pb2.IssueDelta(owner_id=self.project_member.user_id)
+    exp_d4 = copy.deepcopy(delta_4)
 
     issue_5 = _Issue('chicken', 5)
     self.services.issue.TestAddIssue(issue_5)
     fv = tracker_bizobj.MakeFieldValue(
         self.int_fd.field_id, 998, None, None, None, None, False)
     delta_5 = tracker_pb2.IssueDelta(field_vals_add=[fv])
+    exp_d5 = copy.deepcopy(delta_5)
 
     issue_6 = _Issue('chicken', 6)
     self.services.issue.TestAddIssue(issue_6)
     delta_6 = tracker_pb2.IssueDelta(
         summary='  ' + 's' * tracker_constants.MAX_SUMMARY_CHARS + '  ')
+    exp_d6 = copy.deepcopy(delta_6)
 
     issue_7 = _Issue('chicken', 7)
     self.services.issue.TestAddIssue(issue_7)
@@ -2022,7 +2051,9 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
 
     # We are fine with duplicate/consistent deltas.
     delta_7 = tracker_pb2.IssueDelta(blocked_on_add=[issue_8.issue_id])
+    exp_d7 = copy.deepcopy(delta_7)
     delta_8 = tracker_pb2.IssueDelta(blocking_add=[issue_7.issue_id])
+    exp_d8 = copy.deepcopy(delta_8)
 
     issue_9 = _Issue('chicken', 9)
     self.services.issue.TestAddIssue(issue_9)
@@ -2030,10 +2061,24 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     self.services.issue.TestAddIssue(issue_10)
 
     delta_9 = tracker_pb2.IssueDelta(blocked_on_remove=[issue_10.issue_id])
+    exp_d9 = copy.deepcopy(delta_9)
     delta_10 = tracker_pb2.IssueDelta(blocking_remove=[issue_9.issue_id])
+    exp_d10 = copy.deepcopy(delta_10)
 
     issue_11 = _Issue('chicken', 11)
-    delta_11 = tracker_pb2.IssueDelta(cc_ids_add=[222])
+    user_fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.USER_TYPE, None, '', False,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.services.config.TestAddFieldDef(user_fd)
+    a_user = self.services.user.TestAddUser('a_user@test.com', 123)
+    delta_11 = tracker_pb2.IssueDelta(
+        cc_ids_add=[222],
+        field_vals_add=[
+            tracker_bizobj.MakeFieldValue(
+                user_fd.field_id, None, None, a_user.user_id, None, None, False)
+        ])
+    exp_d11 = copy.deepcopy(delta_11)
 
     issue_delta_pairs = [
         (issue_1, delta_1), (issue_2, delta_2), (issue_3, delta_3),
@@ -2048,6 +2093,14 @@ class ModifyIssuesHelpersTest(unittest.TestCase):
     # Check we can handle None `comment_content`.
     tracker_helpers.AssertIssueChangesValid(
         self.cnxn, issue_delta_pairs, self.services)
+    self.assertEqual(
+        [
+            exp_d1, exp_d2, exp_d3, exp_d4, exp_d5, exp_d6, exp_d7, exp_d8,
+            exp_d9, exp_d10, exp_d11
+        ], [
+            delta_1, delta_2, delta_3, delta_4, delta_5, delta_6, delta_7,
+            delta_8, delta_9, delta_10, delta_11
+        ])
 
   def testAssertIssueChangesValid_Invalid(self):
     """We can raise exceptions when deltas are not valid for issues. """
