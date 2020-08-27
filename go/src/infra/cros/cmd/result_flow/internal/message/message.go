@@ -6,9 +6,7 @@ package message
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"infra/libs/skylab/request"
 	"strconv"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/result_flow"
@@ -119,22 +117,6 @@ func ExtractBuildIDMap(ctx context.Context, msgs []*pubsubpb.ReceivedMessage) ma
 		m[bID] = msg
 	}
 	return m
-}
-
-// ExtractParentUID extracts the parent request UID from the pubsub message.
-// TODO(crbug/1120849): remove this function once all the messages are sent by test runner recipe.
-func ExtractParentUID(msg *pubsubpb.ReceivedMessage) (string, error) {
-	msgBody := struct {
-		UserData string `json:"user_data"`
-	}{}
-	if err := json.Unmarshal(msg.GetMessage().GetData(), &msgBody); err != nil {
-		return "", errors.Annotate(err, "could not parse pubsub message data").Err()
-	}
-	msgPayload := request.MessagePayload{}
-	if err := json.Unmarshal([]byte(msgBody.UserData), &msgPayload); err != nil {
-		return "", errors.Annotate(err, "could not extract Parent UID").Err()
-	}
-	return msgPayload.ParentRequestUID, nil
 }
 
 // GetParentUID reads the parent request UID from the message's attributes.

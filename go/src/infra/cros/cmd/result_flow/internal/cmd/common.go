@@ -39,7 +39,7 @@ func runWithDeadline(ctx context.Context, f func(chan state)) (result_flow.State
 	go f(ch)
 	select {
 	case <-ctx.Done():
-		return result_flow.State_TIMED_OUT, fmt.Errorf("ctp command hit the deadline")
+		return result_flow.State_TIMED_OUT, fmt.Errorf("pipeline hit the deadline")
 	case res := <-ch:
 		return res.r, res.e
 	}

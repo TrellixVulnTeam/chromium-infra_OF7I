@@ -171,11 +171,7 @@ func (c *pipeTestRunnerDataRun) pipelineRun(ctx context.Context, ch chan state) 
 		}
 		p := message.GetParentUID(msgsByBuildID[build.Id])
 		if p == "" {
-			// TODO(crbug/1120849): remove this function once all the messages are sent by test runner recipe.
-			p, err = message.ExtractParentUID(msgsByBuildID[build.Id])
-			if err != nil {
-				logging.Errorf(ctx, "Failed to extract parent TestPlanRun UID, err: %v", err)
-			}
+			logging.Errorf(ctx, "failed to extract parent TestPlanRun UID from msg by Build %d", build.Id)
 		}
 		runner, err := transform.LoadTestRunnerBuild(ctx, p, build, c.source.GetBb())
 		if err != nil {
