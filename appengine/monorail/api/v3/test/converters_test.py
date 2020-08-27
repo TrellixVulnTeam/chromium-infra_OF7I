@@ -2099,11 +2099,11 @@ class ConverterFunctionsTest(unittest.TestCase):
     approvers = [rnc.ConvertUserName(self.user_2.user_id)]
     status = issue_objects_pb2.ApprovalValue.ApprovalStatus.Value(
         'NOT_SET')
-    set_time = timestamp_pb2.Timestamp()
-    set_time.FromSeconds(self.PAST_TIME)
     setter = rnc.ConvertUserName(self.user_1.user_id)
     api_fvs = self.converter.ConvertFieldValues(
         [self.fv_6], self.project_1.project_id, [self.phase_1])
+    # Check we can handle converting a None `set_on`.
+    self.av_1.set_on = None
 
     output = self.converter.ConvertApprovalValues(
         [self.av_1], [self.fv_1, self.fv_6], [self.phase_1],
@@ -2113,7 +2113,6 @@ class ConverterFunctionsTest(unittest.TestCase):
         approval_def=approval_def_name,
         approvers=approvers,
         status=status,
-        set_time=set_time,
         setter=setter,
         phase=self.phase_1.name,
         field_values=api_fvs)

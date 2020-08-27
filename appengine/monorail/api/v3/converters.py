@@ -1425,8 +1425,6 @@ class Converter(object):
       approval_def = ad_names_dict.get(av.approval_id)
       approvers = rnc.ConvertUserNames(av.approver_ids).values()
       status = self._ComputeApprovalValueStatus(av.status)
-      set_time = timestamp_pb2.Timestamp()
-      set_time.FromSeconds(av.set_on)
       setter = rnc.ConvertUserName(av.setter_id)
       phase = phase_names_by_id.get(av.phase_id)
 
@@ -1438,10 +1436,11 @@ class Converter(object):
           approval_def=approval_def,
           approvers=approvers,
           status=status,
-          set_time=set_time,
           setter=setter,
           field_values=field_values,
           phase=phase)
+      if av.set_on:
+        api_item.set_time.FromSeconds(av.set_on)
       api_avs.append(api_item)
 
     return api_avs
