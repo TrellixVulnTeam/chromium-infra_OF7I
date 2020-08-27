@@ -69,6 +69,7 @@ var (
 		"chang",         // person name
 		"claus",         // person name
 		"copyable",      // used in C++, e.g. is_trivially_copyable
+		"cloneable",     // accepted usage
 		"couldnt",       // contraction, may appear in variable names
 		"crasher",       // something that causes a crash
 		"crate",         // Rust keyword
