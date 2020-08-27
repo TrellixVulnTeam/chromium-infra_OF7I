@@ -3,17 +3,18 @@
 # found in the LICENSE file.
 
 DEPS = [
-  'depot_tools/osx_sdk',
-  'infra_checkout',
-  'infra_system',
-  'recipe_engine/buildbucket',
-  'recipe_engine/context',
-  'recipe_engine/path',
-  'recipe_engine/platform',
-  'recipe_engine/python',
-  'recipe_engine/raw_io',
-  'recipe_engine/runtime',
-  'recipe_engine/step',
+    'depot_tools/osx_sdk',
+    'infra_checkout',
+    'infra_system',
+    'recipe_engine/buildbucket',
+    'recipe_engine/context',
+    'recipe_engine/file',
+    'recipe_engine/path',
+    'recipe_engine/platform',
+    'recipe_engine/python',
+    'recipe_engine/raw_io',
+    'recipe_engine/runtime',
+    'recipe_engine/step',
 ]
 
 
@@ -45,6 +46,15 @@ def RunSteps(api):
     with api.step.defer_results():
       with api.context(cwd=co.path.join(patch_root)):
         if api.platform.arch != 'arm':
+          with api.context(
+              cwd=api.path['checkout'].join('appengine', 'monorail')):
+            api.file.rmtree('monorail clean python deps', 'lib')
+            # For more context on why: https://crbug.com/1117193#c3
+            api.python('monorail pip install', '-m', [
+                'pip', 'install', '--require-hashes', '-t', 'lib', '-r',
+                'requirements.py2.txt'
+            ])
+
           api.python('python tests', 'test.py', ['test'])
           # To preserve high CQ coverage vs very low coverage in infra_internal,
           # test CQ separately. But only if CQ code is modified.
