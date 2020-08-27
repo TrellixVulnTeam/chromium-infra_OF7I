@@ -14,7 +14,7 @@ import (
 )
 
 // DefaultDeadlineSeconds is the default command deadline in seconds.
-const DefaultDeadlineSeconds = 600
+const DefaultDeadlineSeconds = 1800
 
 const (
 	// CTPBatchSize is the size of one single Buildbucket batch request to fetch
