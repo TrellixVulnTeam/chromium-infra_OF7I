@@ -67,38 +67,14 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 		return status.Errorf(codes.FailedPrecondition, err.Error())
 	}
 
-	var c *ssh.Client
-	clientOk := false
-	defer func() {
-		if c == nil {
-			return
-		}
-		if clientOk {
-			s.clientPool.Put(addr, c)
-		} else {
-			go c.Close()
-		}
-	}()
-
-	var session *ssh.Session
-
-	// Retry once, in case we get a bad SSH client out of the pool.
-	for i := 0; i < 2; i++ {
-		c, err = s.clientPool.Get(addr)
-		if err != nil {
-			resp.ExitInfo.ErrorMessage = err.Error()
-			_ = stream.Send(resp)
-			return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
-		}
-		session, err = c.NewSession()
-		if err != nil {
-			// This client is probably bad, so close and stop using it.
-			go c.Close()
-			continue
-		}
-		break
+	c, err := s.clientPool.Get(addr)
+	if err != nil {
+		resp.ExitInfo.ErrorMessage = err.Error()
+		_ = stream.Send(resp)
+		return status.Errorf(codes.FailedPrecondition, fmt.Sprintf("ExecDutCommand %s %#v: %s", req.GetName(), req.GetCommand(), err))
 	}
-
+	defer s.clientPool.Put(addr, c)
+	session, err := c.NewSession()
 	if err != nil {
 		resp.ExitInfo.ErrorMessage = err.Error()
 		_ = stream.Send(resp)
@@ -168,14 +144,14 @@ func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Commo
 	case nil:
 		resp.ExitInfo.Status = 0
 	case *ssh.ExitError:
-		clientOk = true
+		c.knownGood = true
 		resp.ExitInfo.Status = int32(err.Waitmsg.ExitStatus())
 		if err.Waitmsg.Signal() != "" {
 			resp.ExitInfo.Signaled = true
 		}
 		resp.ExitInfo.ErrorMessage = err.Error()
 	case *ssh.ExitMissingError:
-		clientOk = true
+		c.knownGood = true
 		resp.ExitInfo.ErrorMessage = err.Error()
 	default:
 		resp.ExitInfo.ErrorMessage = err.Error()

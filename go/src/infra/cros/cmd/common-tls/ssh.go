@@ -10,6 +10,22 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// client is used by sshClientPool to help users close connections.
+type client struct {
+	*ssh.Client
+	// knownGood is used in deciding if the client can be Put back
+	// into the pool.
+	knownGood bool
+}
+
+func (c *client) close() {
+	if c.Client == nil {
+		return
+	}
+	c.Close()
+	c.Client = nil
+}
+
 // sshClientPool is a pool of SSH clients to reuse.
 // Clients are pooled by the hostname they are connected to.
 //
@@ -19,49 +35,72 @@ import (
 // e.g., the connection may have broken while the client was in the pool.
 // The user should Put the client back into the pool after use.
 //
-// If the client appears to be bad, the user should not Put the
-// client back into the pool.
-// The user should Close the bad client to make sure all resources are
-// freed.
+// The user should Put the client back into the pool after use.
+// If the user knows the client is still usable, it should set client.knownGood
+// to be true before the client is Put back.
+// The user should not close the client as sshClientPool will close it.
 //
 // The user should Close the pool after use, to free any SSH clients
 // in the pool.
 type sshClientPool struct {
 	mu     sync.Mutex
-	pool   map[string][]*ssh.Client
+	pool   map[string][]*client
 	config *ssh.ClientConfig
 }
 
 func newSSHClientPool(c *ssh.ClientConfig) *sshClientPool {
 	return &sshClientPool{
-		pool:   make(map[string][]*ssh.Client),
+		pool:   make(map[string][]*client),
 		config: c,
 	}
 }
 
-func (p *sshClientPool) Get(host string) (*ssh.Client, error) {
+// Get returns a client with knownGood as false.
+// The user should:
+//  1) defer a Put back of the client.
+//  2) set the client.knownGood to be true before the client is Put back if the
+//     client is usable.
+func (p *sshClientPool) Get(host string) (*client, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if n := len(p.pool[host]); n > 0 {
-		c := p.pool[host][n-1]
-		p.pool[host] = p.pool[host][:n-1]
+	for n := len(p.pool[host]) - 1; n >= 0; n-- {
+		c := p.pool[host][n]
+		p.pool[host] = p.pool[host][:n]
+		if _, err := c.NewSession(); err != nil {
+			// This client is probably bad, so close and stop using it.
+			go c.close()
+			continue
+		}
+		// knownGood is set to false as the user is responsible for
+		// returning a good client into the pool.
+		c.knownGood = false
 		return c, nil
 	}
-	return ssh.Dial("tcp", host, p.config)
+	c, err := ssh.Dial("tcp", host, p.config)
+	return &client{c, false}, err
 }
 
-func (p *sshClientPool) Put(host string, c *ssh.Client) {
+// Put puts the client back into the pool if client.knownGood is true.
+// Otherwise, the client is closed.
+func (p *sshClientPool) Put(host string, c *client) {
+	if c == nil {
+		return
+	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.pool[host] = append(p.pool[host], c)
+	if c.knownGood {
+		p.pool[host] = append(p.pool[host], c)
+	} else {
+		c.close()
+	}
 }
 
 func (p *sshClientPool) Close() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	for hostname, clients := range p.pool {
-		for _, c := range clients {
-			go c.Close()
+	for hostname, cs := range p.pool {
+		for _, c := range cs {
+			go c.close()
 		}
 		delete(p.pool, hostname)
 	}
