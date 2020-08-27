@@ -193,6 +193,46 @@
   },
   {
     "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "rmtree",
+      "[CACHE]/infra_internal_gclient_with_go/infra_internal/appengine/monorail/lib"
+    ],
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/appengine/monorail",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
+    "infra_step": true,
+    "name": "monorail clean python deps"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "-m",
+      "pip",
+      "install",
+      "--require-hashes",
+      "-t",
+      "[CACHE]/infra_internal_gclient_with_go/infra_internal/appengine/monorail/lib",
+      "-r",
+      "requirements.py2.txt"
+    ],
+    "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal/appengine/monorail",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
+    "name": "monorail pip install"
+  },
+  {
+    "cmd": [
       "python",
       "-u",
       "test.py",

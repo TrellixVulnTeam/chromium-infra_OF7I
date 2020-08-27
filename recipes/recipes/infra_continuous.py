@@ -227,6 +227,16 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
 
 def run_python_tests(api, project_name):
   with api.step.defer_results():
+    monorail_dir = api.path['checkout'].join('appengine', 'monorail')
+    with api.context(cwd=monorail_dir):
+      monorail_lib_dir = monorail_dir.join('lib')
+      api.file.rmtree('monorail clean python deps', monorail_lib_dir)
+      # For more context on why: https://crbug.com/1117193#c3
+      api.python('monorail pip install', '-m', [
+          'pip', 'install', '--require-hashes', '-t', monorail_lib_dir, '-r',
+          'requirements.py2.txt'
+      ])
+
     with api.context(cwd=api.path['checkout']):
       # Run Linux tests everywhere, Windows tests only on public CI.
       if api.platform.is_linux or project_name == 'infra':
