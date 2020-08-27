@@ -15,18 +15,9 @@ per-file goma_hello_world.py=vadimsh@chromium.org
 per-file gsubtreed.py=iannucci@chromium.org
 per-file gsubtreed.py=tandrii@chromium.org
 
-# For Go changes.
 per-file infra_*.py=iannucci@chromium.org
 per-file infra_*.py=tandrii@chromium.org
 per-file infra_*.py=vadimsh@chromium.org
-# For Python changes.
-per-file infra_*.py=dtu@google.com
-per-file infra_*.py=andrewjc@google.com
-per-file infra_*.py=jessan@google.com
-per-file infra_*.py=jojwang@google.com
-per-file infra_*.py=kweng@google.com
-per-file infra_*.py=pawalls@google.com
-per-file infra_*.py=zhangtiff@google.com
 
 per-file lkgr_finder.py=machenbach@chromium.org
 
