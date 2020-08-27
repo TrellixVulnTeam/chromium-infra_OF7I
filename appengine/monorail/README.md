@@ -55,24 +55,6 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
                 1.  We set the host to 172.17.0.1 to match the docker container. Your docker container may be at a different IP, you use `docker network inspect bridge` from another terminal to verify your container's IP.
         1. Exit the docker container
             1.  `exit`
-1.  Install Python MySQLdb.
-    1.  On Debian, use apt-get:
-        1. `sudo apt-get install python-mysqldb`
-    1.  On MacOS, use pip
-        1. `export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
-        1.  Check if you have pip, if you don't, install it first
-            1.  `sudo easy_install pip`
-        1. `pip install MYSQL-python`
-    1.  Otherwise, download from http://sourceforge.net/projects/mysql-python/
-        1.  Follow instructions to install.
-        1.  If needed, add these lines to your ~/.profile file and restart on MacOS 10.8:
-            1.  setenv DYLD_LIBRARY_PATH /usr/local/mysql/lib/
-            1.  setenv VERSIONER_PYTHON_PREFER_64_BIT no
-            1.  setenv VERSIONER_PYTHON_PREFER_32_BIT yes
-        1.  In Mac OSX 10.11.1, if you see errors about failing to import MySQLdb or that _mysql.so references an untrusted relative path, then run:
-  `sudo install_name_tool -change libmysqlclient.18.dylib \
-  /usr/local/mysql/lib/libmysqlclient.18.dylib \
-  /Library/Python/2.7/site-packages/_mysql.so`
 1.  Set up one primary SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
     1. On Debian
         1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
@@ -101,6 +83,7 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
             1.  `nvm install 12.13.0`
 1.  Install Python and JS dependencies:
     1.  `make dev_deps`
+        1. For Python 2.7 on OSX: mysqlclient 1.4.6 [requires libssl to build](https://github.com/PyMySQL/mysqlclient-python/issues/74). Before running `make dev_deps`, run `brew install openssl; export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
     1.  `make deps`
 1.  Run the app:
     1.  `make serve`
