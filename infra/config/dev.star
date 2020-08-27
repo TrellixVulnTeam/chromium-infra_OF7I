@@ -79,6 +79,7 @@ luci.project(
             ],
         ),
     ],
+    enforce_realms_in = ["luci-scheduler-dev"],
 )
 
 luci.logdog(gs_bucket = "chromium-luci-logdog")
