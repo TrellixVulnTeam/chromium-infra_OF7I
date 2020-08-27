@@ -191,7 +191,15 @@ func (h *State) rota(ctx *router.Context) (*rotang.Configuration, error) {
 
 func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) (string, error) {
 	return map[string]func(ctx *router.Context, file string) (string, error){
+		// Trooper files.
+		"trooper.json":        h.legacyTrooper,
+		"current_trooper.txt": h.legacyTrooper,
+
 		// Sheriff files.
+		"sheriff.js":                  h.buildSheriff,
+		"sheriff_gpu.js":              h.legacySheriff,
+		"sheriff_android.js":          h.androidSheriff,
+		"sheriff_ios.js":              h.legacySheriff,
 		"sheriff.json":                h.buildSheriff,
 		"sheriff_perf.json":           h.legacySheriff,
 		"sheriff_gpu.json":            h.legacySheriff,
@@ -199,6 +207,8 @@ func buildLegacyMap(h *State) map[string]func(ctx *router.Context, file string) 
 		"sheriff_ios.json":            h.legacySheriff,
 		"sheriff_perfbot.json":        h.legacySheriff,
 		"sheriff_flutter_engine.json": h.legacySheriff,
+		// All rotations
+		"all_rotations.js": h.legacyAllRotations,
 	}
 }
 
