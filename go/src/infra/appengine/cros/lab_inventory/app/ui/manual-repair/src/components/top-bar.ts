@@ -6,7 +6,7 @@ import '@material/mwc-top-app-bar-fixed';
 import '@material/mwc-icon-button';
 import '@chopsui/chops-signin';
 import '@chopsui/chops-signin-aware/chops-signin-aware';
-
+import {Drawer} from '@material/mwc-drawer';
 import {customElement, html, LitElement} from 'lit-element';
 import {connect} from 'pwa-helpers';
 
@@ -19,6 +19,8 @@ import {store} from '../state/store';
   render() {
     return html`
       <mwc-top-app-bar-fixed>
+        <mwc-icon-button slot="navigationIcon" icon="menu" @click=${
+        this.toggleMenu}></mwc-icon-button>
         <div slot="title">Manual Repair Records</div>
         <chops-signin
           slot="actionItems"
@@ -39,5 +41,10 @@ import {store} from '../state/store';
       authHeaders: e.srcElement.authHeaders
     };
     store.dispatch(receiveUser(user));
+  }
+
+  toggleMenu() {
+    let menu = <Drawer>(<Element>this.getRootNode()).querySelector('#menu');
+    menu.open = !menu.open;
   }
 }

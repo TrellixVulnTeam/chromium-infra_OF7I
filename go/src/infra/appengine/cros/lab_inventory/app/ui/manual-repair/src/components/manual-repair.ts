@@ -2,10 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import '@material/mwc-list';
+import '@material/mwc-list/mwc-list-item';
+import '@material/mwc-drawer';
 import './repair-form';
 import './search-hostname';
 import './top-bar';
-import {css, customElement, html, LitElement} from 'lit-element';
+
+import {Drawer} from '@material/mwc-drawer';
+import {css, customElement, html, LitElement, property} from 'lit-element';
+import {TemplateResult} from 'lit-html';
+import {installRouter} from 'pwa-helpers/router.js';
 
 
 @customElement('manual-repair')
@@ -20,18 +27,56 @@ export class ManualRepair extends LitElement {
         flex-direction: column;
         justify-content: center;
       }
+
+      .page-link {
+        text-decoration: none;
+      }
     `];
+  }
+
+  static TITLE: Array<String> = ['Home', 'Repairs'];
+
+  @property({type: String}) path = '';
+
+  constructor() {
+    super();
+    installRouter((loc) => {
+      this.path = loc.pathname;
+    });
+  }
+
+  pageLinks() {
+    let menu: Array<TemplateResult> = [];
+    for (let i = 0; i < ManualRepair.TITLE.length; i++) {
+      let link = '/' + ManualRepair.TITLE[i].toLowerCase();
+      menu.push(html`
+                <a href=${link} @click=${this.toggleMenu} class="page-link">
+                    <mwc-list-item>${ManualRepair.TITLE[i]}</mwc-list-item>
+                </a>
+            `);
+    }
+    return html`<mwc-list activatable>${menu}</mwc-list>`;
+  }
+
+  toggleMenu() {
+    let menu = <Drawer>this.shadowRoot!.querySelector('#menu');
+    menu.open = !menu.open;
   }
 
   render() {
     return html`
-      <div slot="appContent">
-        <top-bar></top-bar>
-        <div id="app-body">
-          <search-hostname></search-hostname>
-          <repair-form></repair-form>
+      <mwc-drawer hasHeader type="modal" id="menu">
+        <span slot="title">Menu</span>
+        <span slot="subtitle">Welcome</span>
+        ${this.pageLinks()}
+        <div slot="appContent">
+          <top-bar></top-bar>
+          <div id="app-body">
+            <search-hostname></search-hostname>
+            <repair-form></repair-form>
+          </div>
         </div>
-      </div>
+      </mwc-drawer>
     `;
   }
 }

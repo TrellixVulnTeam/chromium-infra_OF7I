@@ -200,13 +200,13 @@ import {store} from '../state/store';
               label="Verifier Failure Description (Servo)"
             ></mwc-textfield>
             <mwc-textfield
-              label="Failure Description (Servo)"
+              label="Repair Action Failure Description (Servo)"
             ></mwc-textfield>
             <mwc-textfield
               label="Verifier Failure Description (DUT)"
             ></mwc-textfield>
             <mwc-textfield
-              label="Failure Description (DUT)"
+              label="Repair Action Failure Description (DUT)"
             ></mwc-textfield>
             <mwc-textfield
               label="Diagnosis"
@@ -274,14 +274,23 @@ import {store} from '../state/store';
             ></mwc-textarea>
           </div>
         </div>
-        <mwc-fab extended label="Add / Update Record"></mwc-fab>
+        <mwc-fab extended label="Create / Update Record" @click=${
+        this.handleFormSubmission}></mwc-fab>
       </div>
     `;
   }
 
+  displayError() {
+    console.log('No device!');
+  }
+
+  handleFormSubmission() {
+    console.log('Nice! You clicked a button!')
+  }
+
   render() {
     return html`
-      ${isEmpty(this.deviceInfo) ? null : this.displayForm()}
+      ${isEmpty(this.deviceInfo) ? this.displayError() : this.displayForm()}
     `;
   }
 }
