@@ -43,11 +43,11 @@ func checkAccess(ctx context.Context, rpcName string, _ proto.Message) (context.
 	cfg := config.Get(ctx)
 	var accessGroup *config.LuciAuthGroup
 	switch rpcName {
-	case "AddCrosDevices", "UpdateCrosDevicesSetup", "BatchUpdateDevices":
+	case "AddCrosDevices", "UpdateCrosDevicesSetup", "BatchUpdateDevices", "CreateDeviceManualRepairRecord", "UpdateDeviceManualRepairRecord":
 		accessGroup = cfg.GetSetupWriters()
 	case "GetCrosDevices", "DeviceConfigsExists", "ListCrosDevicesLabConfig", "GetDeviceManualRepairRecord":
 		accessGroup = cfg.GetReaders()
-	case "UpdateDutsStatus", "CreateDeviceManualRepairRecord", "UpdateDeviceManualRepairRecord":
+	case "UpdateDutsStatus":
 		accessGroup = cfg.GetStatusWriters()
 	case "DeleteCrosDevices":
 		accessGroup = cfg.GetPrivilegedWriters()
