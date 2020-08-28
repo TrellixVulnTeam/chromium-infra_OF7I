@@ -5,6 +5,8 @@
 import {PrpcClient} from '@chopsui/prpc-client';
 
 export const prpcClient = new PrpcClient({
-  host: 'cros-lab-inventory.appspot.com',
+  host: process.env.NODE_ENV === 'development' ?
+      'cros-lab-inventory-dev.appspot.com' :
+      'cros-lab-inventory.appspot.com',
   insecure: false,
 });

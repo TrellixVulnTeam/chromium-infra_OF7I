@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/main.ts',
@@ -34,6 +35,13 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
   },
+  plugins: [
+    new webpack.EnvironmentPlugin({
+      // use 'development' unless process.env.NODE_ENV is defined
+      NODE_ENV: 'development',
+      DEBUG: true
+    }),
+  ],
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),

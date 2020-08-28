@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import '@material/mwc-textarea';
+import '@material/mwc-textfield';
 
 import {css, customElement, html, LitElement, property} from 'lit-element';
 import {connect} from 'pwa-helpers';
 
-import {getRecords} from '../state/actions';
+import {getRepairRecord} from '../state/actions';
 import {store} from '../state/store';
 
 
@@ -20,6 +20,7 @@ export default class SearchHostname extends connect
         width: 100%;
         display: flex;
         justify-content: center;
+        margin-bottom: 2em;
       }
 
       #search-field {
@@ -30,26 +31,27 @@ export default class SearchHostname extends connect
 
   @property({type: String}) input = '';
   @property({type: Boolean}) submitDisabled = false;
-  @property({type: Array}) records = [];
+  @property({type: Object}) deviceInfo;
+  @property({type: Object}) recordInfo;
   @property({type: Object}) user;
 
   stateChanged(state) {
-    this.records = state.records;
+    this.deviceInfo = state.repairRecord.deviceInfo;
+    this.recordInfo = state.repairRecord.recordInfo;
     this.user = state.user;
   }
 
   render() {
     return html`
-      <mwc-textarea
-          id = "search-field"
+      <mwc-textfield
+          id="search-field"
           outlined
-          rows=1
           label="Enter a hostname"
           helper="Enter a device hostname to add or update repair records."
           ?disabled="${this.submitDisabled}"
           @input="${this.handleInput}"
           @keydown="${this.keyboardListener}">
-      </mwc-textarea>
+      </mwc-textfield>
     `;
   }
 
@@ -60,12 +62,14 @@ export default class SearchHostname extends connect
   keyboardListener(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       // TODO: Disabled search when submitting hostname.
+      // TODO: Display errors in UI.
       e.preventDefault();
-      if (this.input) {
-        store.dispatch(getRecords(this.input));
-      } else {
-        // TODO: Replace console log with error in UI.
-        console.log('Please enter a hostname!');
+      if (this.input && this.user.signedIn) {
+        store.dispatch(getRepairRecord(this.input, this.user.authHeaders));
+      } else if (!this.input) {
+        console.error('Please enter a hostname!');
+      } else if (!this.user.signedIn) {
+        console.error('Please sign in to continue!');
       }
     }
   }

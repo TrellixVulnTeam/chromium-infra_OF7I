@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import './repair-form';
 import './search-hostname';
 import './top-bar';
 import {css, customElement, html, LitElement} from 'lit-element';
@@ -14,8 +15,9 @@ export class ManualRepair extends LitElement {
       #app-body {
         width: 70%;
         margin: auto;
-        padding: 20px 0;
+        padding: 1.8em 0 3em 0;
         display: flex;
+        flex-direction: column;
         justify-content: center;
       }
     `];
@@ -27,6 +29,7 @@ export class ManualRepair extends LitElement {
         <top-bar></top-bar>
         <div id="app-body">
           <search-hostname></search-hostname>
+          <repair-form></repair-form>
         </div>
       </div>
     `;
