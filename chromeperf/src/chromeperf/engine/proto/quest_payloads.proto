@@ -1,0 +1,18 @@
+// Task payloads for the current (i.e. legacy) list of "quests" in Pinpoint.
+syntax = "proto3";
+
+package chromeperf.engine.task_payload;
+
+message FindIsolate {
+  // ...
+}
+
+
+message RunTest {
+  // ...
+}
+
+
+message ReadValues {
+  // ...
+}

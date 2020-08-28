@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+
+package chromeperf.engine;
+
+// Event instances are generated when an external (or synthesized) event is
+// encountered by the service and is meant to handle the execution.
+//
+// Events are always tied to a specific graph and are optionally targeted to a
+// specific task in that graph. The targeting is opt-in, and evaluators
+// determine whether to honour the targeting or whether to ignore it. Evaluators
+// are also allowed to completely ignore the event input, depending on the
+// situation.
+message Event {
+  // A globally unique event ID.
+  string id = 1;
+
+  // The type indicates a semantic label for the Event.
+  // For example, "initiate" events can be indicators to
+  // start any PENDING tasks, while an "update" event indicates
+  // whether this is meant for an ONGOING task. Interpreting
+  // these types is up to the Evaluator implementation handling
+  // the event.
+  string type = 2;
+  google.protobuf.Timestamp timestamp = 3;
+  string workflow_id = 4;
+  string target_task = 5;  // can be empty, meaning "any" task.
+
+  // TODO: why not a google.protobuf.Any?
+  google.protobuf.Any payload = 6;
+  // oneof payload {
+  //   BuildEvent build_payload = 6;
+  //   SwarmingEvent swarming_payload = 7;
+  //   PinpointEvent pinpoint_payload = 8;
+  // }
+}
+

@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+import "graph.proto";
+
+package chromeperf.engine;
+
+
+message GraphTemplateSpec {
+  string graph_template_id = 1;
+  string revision_id = 2;  // Identifies the version of the template.
+}
+
+message Workflow {
+  // A unique ID for referring to a workflow.
+  string id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  google.protobuf.Struct inputs = 3;
+
+  enum WorkflowStatus {
+    UNSPECIFIED = 0;
+    ACTIVE = 1;
+    ARCHIVED = 2;
+  }
+
+  WorkflowStatus status = 4;
+  string requesting_user = 5;
+  string service_account = 6;
+
+  // We need to preserve the workflow template used to
+  // create the workflow, because that lets us create Task
+  // entities consistent with this workflow provided a spec.
+  GraphTemplateSpec graph_template_spec = 7;
+
+  // It's optional that a Graph be actually associated with
+  // a workflow object, since APIs by default will only
+  // return the metadata for a Workflow.
+  Graph graph = 8;
+
+  // If it's archived, we'll have a reference to the stable
+  // form of the associated graph instead.
+  string archive_link = 9;
+}
+

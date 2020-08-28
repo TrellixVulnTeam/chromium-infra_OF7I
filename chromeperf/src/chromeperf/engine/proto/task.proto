@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+package chromeperf.engine;
+
+
+// A Task is a representation of work with payload (either input or output), a
+// status, and a type.
+message Task {
+  // A per-graph unique ID.
+  string id = 1;
+
+  enum TaskState {
+    UNKNOWN_TASKSTATE = 0;
+    PENDING = 1;
+    ONGOING = 2;
+    FAILED = 3;
+    COMPLETED = 4;
+  }
+  TaskState state = 2;
+
+  // This is used as a discriminant in a discriminated union (e.g. variant type)
+  // which indicates which of the supported payloads is present.
+  // See <TODO> for the list of possible task types.
+  // TODO: remove this?  It appears redundant with the payload Any's type_url.
+  // This 'type' field also appears to have a confusingly different meaning to
+  // Event.type, which isn't tightly coupled to the Event.payload's type.
+  string type = 3;
+
+  // TODO: why not a google.protobuf.Any?
+  google.protobuf.Any payload = 4;
+  // oneof payload {
+  //   // Each of the message types here represent the
+  //   // current list of "quests" in Pinpoint.
+  //   FindIsolate find_isolate_payload = 4;
+  //   RunTest run_test_payload = 5;
+  //   ReadValues read_values_payload = 6;
+
+  //   // And the different kinds of workflows we can represent as tasks.
+  //   PerformanceBisection performance_bisection_payload = 7;
+  //   PerformanceTryjob performance_tryjob_payload = 8;
+
+  //   // Along with some utility tasks that represent the
+  //   // actions that Pinpoint will typically perform.
+  //   UpdateMonorailIssue update_monorail_issue_payload = 9;
+  //   UpdateGerritCL update_gerrit_cl_payload = 10;
+  //   EmailResults email_results_payload = 11;
+  // }
+}
+

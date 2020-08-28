@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+import "task.proto";
+
+package chromeperf.engine;
+
+// The workflow graph.
+//
+// A directed graph of Task vertices with well-defined states and state
+// transitions, and Dependency edges which represent an evaluation ordering
+// guarantee. A Graph is defined with an initial state of each Task vertex
+// (which we call payload) and the edges which represent the dependency
+// information.
+message Graph {
+  int64 id = 1;
+
+  // Each task instance is associated with an identifier.
+  map<string, Task> tasks = 2;
+
+  // Dependencies are always directed edges in the graph.
+  message Dependency {
+    string from_ = 1;
+    string to = 2;
+  }
+
+  repeated Dependency dependencies = 3;
+}
+
