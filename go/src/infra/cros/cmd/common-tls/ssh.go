@@ -66,11 +66,13 @@ func (p *sshClientPool) Get(host string) (*client, error) {
 	for n := len(p.pool[host]) - 1; n >= 0; n-- {
 		c := p.pool[host][n]
 		p.pool[host] = p.pool[host][:n]
-		if _, err := c.NewSession(); err != nil {
+		s, err := c.NewSession()
+		if err != nil {
 			// This client is probably bad, so close and stop using it.
 			go c.close()
 			continue
 		}
+		s.Close()
 		// knownGood is set to false as the user is responsible for
 		// returning a good client into the pool.
 		c.knownGood = false
