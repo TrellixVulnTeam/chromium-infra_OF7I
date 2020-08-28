@@ -7,6 +7,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import unittest
+import mock
 
 from google.protobuf import empty_pb2
 
@@ -82,6 +83,15 @@ class UsersServicerTest(unittest.TestCase):
     ]
     self.assertEqual(
         response, users_pb2.BatchGetUsersResponse(users=expected_users))
+
+  @mock.patch('api.v3.api_constants.MAX_BATCH_USERS', 2)
+  def testBatchGetUsers_TooMany(self):
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.user_1.email)
+    request = users_pb2.BatchGetUsersRequest(
+        names=['users/222', 'users/333', 'users/444'])
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.users_svcr.BatchGetUsers, mc, request)
 
   def testStarProject(self):
     request = users_pb2.StarProjectRequest(project='projects/proj')

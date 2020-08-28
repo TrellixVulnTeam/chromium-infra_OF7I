@@ -54,12 +54,6 @@ NOT_USED_IN_GRID_AXES = [
     'OwnerModified', 'StatusModified', 'ComponentModified',
     'OwnerLastVisit', 'AllLabels']
 
-# Max comments per page in the ListComment API.
-MAX_COMMENTS_PER_PAGE = 1000
-
-# Max issues per page in the SearchIssues API.
-MAX_ISSUES_PER_PAGE = 1000
-
 # Issues per page in the issue list
 DEFAULT_RESULTS_PER_PAGE = 100
 

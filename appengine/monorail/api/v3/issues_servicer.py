@@ -8,6 +8,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 from api import resource_name_converters as rnc
+from api.v3 import api_constants
 from api.v3 import converters
 from api.v3 import monorail_servicer
 from api.v3 import paginator
@@ -16,7 +17,6 @@ from api.v3.api_proto import issue_objects_pb2
 from api.v3.api_proto import issues_prpc_pb2
 from businesslogic import work_env
 from framework import exceptions
-from tracker import tracker_constants
 
 
 class IssuesServicer(monorail_servicer.MonorailServicer):
@@ -58,6 +58,10 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       PermissionException If the requester does not have permission to view one
           (or more) of the given issues.
     """
+    if len(request.names) > api_constants.MAX_BATCH_ISSUES:
+      raise exceptions.InputException(
+          'Requesting %d issues when the allowed maximum is %d issues.' %
+          (len(request.names), api_constants.MAX_BATCH_ISSUES))
     if request.parent:
       parent_match = rnc._GetResourceNameMatch(
           request.parent, rnc.PROJECT_NAME_RE)
@@ -92,7 +96,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       InputException: if any given names in `projects` are invalid.
     """
     page_size = paginator.CoercePageSize(
-        request.page_size, tracker_constants.MAX_ISSUES_PER_PAGE)
+        request.page_size, api_constants.MAX_ISSUES_PER_PAGE)
     pager = paginator.Paginator(projects=request.projects, page_size=page_size)
 
     project_names = []
@@ -132,7 +136,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     """
     issue_id = rnc.IngestIssueName(mc.cnxn, request.parent, self.services)
     page_size = paginator.CoercePageSize(
-        request.page_size, tracker_constants.MAX_COMMENTS_PER_PAGE)
+        request.page_size, api_constants.MAX_COMMENTS_PER_PAGE)
     pager = paginator.Paginator(parent=request.parent, page_size=page_size)
 
     with work_env.WorkEnv(mc, self.services) as we:
@@ -238,6 +242,23 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     """
     if not request.deltas:
       return issues_pb2.ModifyIssuesResponse()
+    if len(request.deltas) > api_constants.MAX_MODIFY_ISSUES:
+      raise exceptions.InputException(
+          'Requesting %d updates when the allowed maximum is %d updates.' %
+          (len(request.deltas), api_constants.MAX_MODIFY_ISSUES))
+    impacted_issues_count = 0
+    for delta in request.deltas:
+      impacted_issues_count += (
+          len(delta.blocked_on_issues_remove) +
+          len(delta.blocking_issues_remove) +
+          len(delta.issue.blocking_issue_refs) +
+          len(delta.issue.blocked_on_issue_refs))
+      if 'merged_into_issue_ref' in delta.update_mask.paths:
+        impacted_issues_count += 1
+    if impacted_issues_count > api_constants.MAX_MODIFY_IMPACTED_ISSUES:
+      raise exceptions.InputException(
+          'Updates include %d impacted issues when the allowed maximum is %d.' %
+          (impacted_issues_count, api_constants.MAX_MODIFY_IMPACTED_ISSUES))
     iid_delta_pairs = self.converter.IngestIssueDeltas(request.deltas)
     with work_env.WorkEnv(mc, self.services) as we:
       issues = we.ModifyIssues(
@@ -264,6 +285,10 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       PermissionException if user lacks sufficient permissions.
       # TODO(crbug/monorail/7925): Not all of these are yet thrown.
     """
+    if len(request.deltas) > api_constants.MAX_MODIFY_APPROVAL_VALUES:
+      raise exceptions.InputException(
+          'Requesting %d updates when the allowed maximum is %d updates.' %
+          (len(request.deltas), api_constants.MAX_MODIFY_APPROVAL_VALUES))
     response = issues_pb2.ModifyIssueApprovalValuesResponse()
     delta_specifications = self.converter.IngestApprovalDeltas(
         request.deltas, mc.auth.user_id)

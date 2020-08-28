@@ -192,8 +192,21 @@ class IssuesServicerTest(unittest.TestCase):
         'Invalid resource name: projects/cow/badformat/1235.'):
       self.CallWrapped(self.issues_svcr.BatchGetIssues, mc, request)
 
+  @mock.patch('api.v3.api_constants.MAX_BATCH_ISSUES', 2)
+  def testBatchGetIssues(self):
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.BatchGetIssuesRequest(
+        parent='projects/cow',
+        names=[
+            'projects/cow/issues/1235', 'projects/chicken/issues/1234',
+            'projects/cow/issues/1233'
+        ])
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.issues_svcr.BatchGetIssues, mc, request)
+
   @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
-  @mock.patch('tracker.tracker_constants.MAX_ISSUES_PER_PAGE', 2)
+  @mock.patch('api.v3.api_constants.MAX_ISSUES_PER_PAGE', 2)
   def testSearchIssues(self, mock_pipeline):
     """We can search for issues in some projects."""
     request = issues_pb2.SearchIssuesRequest(
@@ -412,6 +425,41 @@ class IssuesServicerTest(unittest.TestCase):
     response = self.CallWrapped(self.issues_svcr.ModifyIssues, mc, request)
     self.assertEqual(response, issues_pb2.ModifyIssuesResponse())
 
+  @mock.patch('api.v3.api_constants.MAX_MODIFY_ISSUES', 2)
+  @mock.patch('api.v3.api_constants.MAX_MODIFY_IMPACTED_ISSUES', 4)
+  def testModifyIssues_TooMany(self):
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.ModifyIssuesRequest(
+        deltas=[
+            issues_pb2.IssueDelta(),
+            issues_pb2.IssueDelta(),
+            issues_pb2.IssueDelta()
+        ])
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Requesting 3 updates when the allowed maximum is 2 updates.'):
+      self.CallWrapped(self.issues_svcr.ModifyIssues, mc, request)
+
+    issue_ref_list = [issue_objects_pb2.IssueRef()]
+    request = issues_pb2.ModifyIssuesRequest(
+        deltas=[
+            issues_pb2.IssueDelta(
+                issue=issue_objects_pb2.Issue(
+                    blocked_on_issue_refs=issue_ref_list),
+                blocked_on_issues_remove=issue_ref_list,
+                update_mask=field_mask_pb2.FieldMask(
+                    paths=['merged_into_issue_ref'])),
+            issues_pb2.IssueDelta(
+                issue=issue_objects_pb2.Issue(
+                    blocking_issue_refs=issue_ref_list),
+                blocking_issues_remove=issue_ref_list)
+        ])
+    with self.assertRaisesRegexp(
+        exceptions.InputException,
+        'Updates include 5 impacted issues when the allowed maximum is 4.'):
+      self.CallWrapped(self.issues_svcr.ModifyIssues, mc, request)
+
   @mock.patch('time.time', mock.MagicMock(return_value=CURRENT_TIME))
   @mock.patch(
       'features.send_notifications.PrepareAndSendApprovalChangeNotification')
@@ -489,6 +537,19 @@ class IssuesServicerTest(unittest.TestCase):
         'testing-app.appspot.com',
         mock.ANY,
         send_email=True)
+
+  @mock.patch('api.v3.api_constants.MAX_MODIFY_APPROVAL_VALUES', 2)
+  def testModifyIssueApprovalValues_TooMany(self):
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    request = issues_pb2.ModifyIssueApprovalValuesRequest(
+        deltas=[
+            issues_pb2.ApprovalDelta(),
+            issues_pb2.ApprovalDelta(),
+            issues_pb2.ApprovalDelta()
+        ])
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.issues_svcr.ModifyIssueApprovalValues, mc, request)
 
   def testModifyIssueApprovalValues_Empty(self):
     request = issues_pb2.ModifyIssueApprovalValuesRequest()

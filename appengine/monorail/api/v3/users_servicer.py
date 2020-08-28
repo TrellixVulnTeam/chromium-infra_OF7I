@@ -10,10 +10,12 @@ from google.protobuf import empty_pb2
 
 from api import resource_name_converters as rnc
 from api.v3 import monorail_servicer
+from api.v3 import api_constants
 from api.v3.api_proto import users_pb2
 from api.v3.api_proto import user_objects_pb2
 from api.v3.api_proto import users_prpc_pb2
 from businesslogic import work_env
+from framework import exceptions
 
 
 class UsersServicer(monorail_servicer.MonorailServicer):
@@ -52,6 +54,10 @@ class UsersServicer(monorail_servicer.MonorailServicer):
         InputException if a name in request.names is invalid.
         NoSuchUserException if a User is not found.
     """
+    if len(request.names) > api_constants.MAX_BATCH_USERS:
+      raise exceptions.InputException(
+          'Requesting %d users when the allowed maximum is %d users.' %
+          (len(request.names), api_constants.MAX_BATCH_USERS))
     user_ids = rnc.IngestUserNames(mc.cnxn, request.names, self.services)
 
     with work_env.WorkEnv(mc, self.services) as we:
