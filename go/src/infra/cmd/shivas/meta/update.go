@@ -42,7 +42,7 @@ func (c *updateRun) Run(a subcommands.Application, args []string, env subcommand
 }
 
 func (c *updateRun) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := cipd.UpdatePackage(site.CipdInstalledPath, a.GetOut(), a.GetErr()); err != nil {
+	if err := cipd.UpdatePackageToProd(site.CipdInstalledPath, a.GetOut(), a.GetErr()); err != nil {
 		return err
 	}
 	fmt.Fprintf(a.GetErr(), "%s: You may need to run shivas login again after the update\n", a.GetName())
