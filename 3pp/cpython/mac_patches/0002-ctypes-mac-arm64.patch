@@ -1,14 +1,14 @@
-From 510ecf208ed1ec155908b301b91b99ea22f0c396 Mon Sep 17 00:00:00 2001
+From 3ad2ad5578279403def80e4e79e7ce64adc5c549 Mon Sep 17 00:00:00 2001
 From: Brian Ryner <bryner@google.com>
-Date: Wed, 26 Aug 2020 11:39:42 +1000
-Subject: [PATCH 2/2] Backport of https://github.com/python/cpython/pull/21249
+Date: Fri, 28 Aug 2020 13:07:53 +1000
+Subject: [PATCH 2/4] Backport of https://github.com/python/cpython/pull/21249 
  "ctypes fixes for arm64 Mac OS".
 
 ---
  Lib/test/test_str.py                          |    1 +
  Lib/test/test_unicode.py                      |    2 +
  Modules/_ctypes/callbacks.c                   |   37 +-
- Modules/_ctypes/callproc.c                    |  104 +-
+ Modules/_ctypes/callproc.c                    |   75 +-
  Modules/_ctypes/ctypes.h                      |    8 +
  Modules/_ctypes/libffi_osx/LICENSE            |   20 -
  Modules/_ctypes/libffi_osx/README             |  500 -----
@@ -31,8 +31,8 @@ Subject: [PATCH 2/2] Backport of https://github.com/python/cpython/pull/21249
  Modules/_ctypes/libffi_osx/x86/x86-ffi64.c    |  734 -------
  .../_ctypes/libffi_osx/x86/x86-ffi_darwin.c   |  438 ----
  Modules/_ctypes/malloc_closure.c              |   15 +-
- setup.py                                      |   77 +-
- 27 files changed, 177 insertions(+), 6708 deletions(-)
+ setup.py                                      |   72 +-
+ 27 files changed, 146 insertions(+), 6705 deletions(-)
  delete mode 100644 Modules/_ctypes/libffi_osx/LICENSE
  delete mode 100644 Modules/_ctypes/libffi_osx/README
  delete mode 100644 Modules/_ctypes/libffi_osx/README.pyobjc
@@ -158,7 +158,7 @@ index ef1f0019db..fd62b81fa5 100644
          PyErr_Format(PyExc_RuntimeError,
                       "ffi_prep_closure failed with %d", result);
 diff --git a/Modules/_ctypes/callproc.c b/Modules/_ctypes/callproc.c
-index 066fefc0cc..2c242460be 100644
+index 066fefc0cc..2a687ce976 100644
 --- a/Modules/_ctypes/callproc.c
 +++ b/Modules/_ctypes/callproc.c
 @@ -63,6 +63,8 @@
@@ -170,18 +170,7 @@ index 066fefc0cc..2c242460be 100644
  #ifdef MS_WIN32
  #include <windows.h>
  #include <tchar.h>
-@@ -70,6 +72,10 @@
- #include "ctypes_dlfcn.h"
- #endif
- 
-+#if __APPLE__ && HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
-+#include <mach-o/dyld.h>
-+#endif
-+
- #ifdef MS_WIN32
- #include <malloc.h>
- #endif
-@@ -773,7 +779,8 @@ static int _call_function_pointer(int flags,
+@@ -773,7 +775,8 @@ static int _call_function_pointer(int flags,
                                    ffi_type **atypes,
                                    ffi_type *restype,
                                    void *resmem,
@@ -191,7 +180,7 @@ index 066fefc0cc..2c242460be 100644
  {
  #ifdef WITH_THREAD
      PyThreadState *_save = NULL; /* For Py_BLOCK_THREADS and Py_UNBLOCK_THREADS */
-@@ -801,14 +808,63 @@ static int _call_function_pointer(int flags,
+@@ -801,14 +804,63 @@ static int _call_function_pointer(int flags,
      if ((flags & FUNCFLAG_CDECL) == 0)
          cc = FFI_STDCALL;
  #endif
@@ -263,7 +252,7 @@ index 066fefc0cc..2c242460be 100644
      }
  
      if (flags & (FUNCFLAG_USE_ERRNO | FUNCFLAG_USE_LASTERROR)) {
-@@ -1181,9 +1237,8 @@ PyObject *_ctypes_callproc(PPROC pProc,
+@@ -1181,9 +1233,8 @@ PyObject *_ctypes_callproc(PPROC pProc,
  
      if (-1 == _call_function_pointer(flags, pProc, avalues, atypes,
                                       rtype, resbuf,
@@ -275,45 +264,6 @@ index 066fefc0cc..2c242460be 100644
          goto cleanup;
  
  #ifdef WORDS_BIGENDIAN
-@@ -1416,6 +1471,28 @@ copy_com_pointer(PyObject *self, PyObject *args)
- }
- #else
- 
-+#if __APPLE__ && HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
-+static PyObject *py_dyld_shared_cache_contains_path(PyObject *self, PyObject *args)
-+{
-+    if (__builtin_available(macos 11, ios 14, watchos 7, tvos 14, *)) {
-+        char *name;
-+        if (!PyArg_ParseTuple(args, "z", &name))
-+            return NULL;
-+
-+        if (name == NULL)
-+            Py_RETURN_FALSE;
-+
-+        if(_dyld_shared_cache_contains_path(name))
-+            Py_RETURN_TRUE;
-+        else
-+            Py_RETURN_FALSE;
-+    } else {
-+        PyErr_SetString(PyExc_NotImplementedError, "_dyld_shared_cache_contains_path symbol is missing");
-+        return NULL;
-+    }
-+}
-+#endif
-+
- static PyObject *py_dl_open(PyObject *self, PyObject *args)
- {
-     char *name;
-@@ -1940,6 +2017,9 @@ PyMethodDef _ctypes_module_methods[] = {
-      "dlopen(name, flag={RTLD_GLOBAL|RTLD_LOCAL}) open a shared library"},
-     {"dlclose", py_dl_close, METH_VARARGS, "dlclose a library"},
-     {"dlsym", py_dl_sym, METH_VARARGS, "find symbol in shared library"},
-+#endif
-+#if __APPLE__ && HAVE_DYLD_SHARED_CACHE_CONTAINS_PATH
-+    {"_dyld_shared_cache_contains_path", py_dyld_shared_cache_contains_path, METH_VARARGS, "check if path is in the shared cache"},
- #endif
-     {"alignment", align_func, METH_O, alignment_doc},
-     {"sizeof", sizeof_func, METH_O, sizeof_doc},
 diff --git a/Modules/_ctypes/ctypes.h b/Modules/_ctypes/ctypes.h
 index 12b56c4342..c74392d4ed 100644
 --- a/Modules/_ctypes/ctypes.h
@@ -7136,7 +7086,7 @@ index 248c6a6702..5e7c999ede 100644
      if (!free_list)
          more_core();
 diff --git a/setup.py b/setup.py
-index f764223d06..5901b6f6b8 100644
+index f764223d06..60c36b3d31 100644
 --- a/setup.py
 +++ b/setup.py
 @@ -15,6 +15,7 @@ from distutils.core import Extension, setup
@@ -7147,26 +7097,7 @@ index f764223d06..5901b6f6b8 100644
  from distutils.spawn import find_executable
  
  cross_compiling = "_PYTHON_HOST_PLATFORM" in os.environ
-@@ -1780,8 +1781,7 @@ class PyBuildExt(build_ext):
- 
-             exts.append( Extension('_Qt', ['qt/_Qtmodule.c'],
-                         extra_compile_args=carbon_extra_compile_args,
--                        extra_link_args=['-framework', 'QuickTime',
--                                     '-framework', 'Carbon']) )
-+                        extra_link_args=['-framework', 'Carbon']) )
- 
- 
-         self.extensions.extend(exts)
-@@ -1881,7 +1881,7 @@ class PyBuildExt(build_ext):
-         # For 8.4a2, the X11 headers are not included. Rather than include a
-         # complicated search, this is a hard-coded path. It could bail out
-         # if X11 libs are not found...
--        include_dirs.append('/usr/X11R6/include')
-+        include_dirs.append(join(sysroot, F[1:], 'Tk.framework/Headers'))
-         frameworks = ['-framework', 'Tcl', '-framework', 'Tk']
- 
-         # All existing framework builds of Tcl/Tk don't support 64-bit
-@@ -2035,37 +2035,10 @@ class PyBuildExt(build_ext):
+@@ -2035,37 +2036,10 @@ class PyBuildExt(build_ext):
          # *** Uncomment these for TOGL extension only:
          #       -lGL -lGLU -lXext -lXmu \
  
@@ -7205,7 +7136,7 @@ index f764223d06..5901b6f6b8 100644
  
              srcdir = sysconfig.get_config_var('srcdir')
              ffi_builddir = os.path.join(self.build_temp, 'libffi')
-@@ -2128,12 +2101,12 @@ class PyBuildExt(build_ext):
+@@ -2128,12 +2102,12 @@ class PyBuildExt(build_ext):
          depends = ['_ctypes/ctypes.h']
  
          if host_platform == 'darwin':
@@ -7220,7 +7151,7 @@ index f764223d06..5901b6f6b8 100644
  
          elif host_platform == 'sunos5':
              # XXX This shouldn't be necessary; it appears that some
-@@ -2163,16 +2136,21 @@ class PyBuildExt(build_ext):
+@@ -2163,16 +2137,21 @@ class PyBuildExt(build_ext):
          if not '--with-system-ffi' in sysconfig.get_config_var("CONFIG_ARGS"):
              return
  
@@ -7251,7 +7182,7 @@ index f764223d06..5901b6f6b8 100644
              with open(ffi_h) as f:
                  for line in f:
                      line = line.strip()
-@@ -2183,15 +2161,24 @@ class PyBuildExt(build_ext):
+@@ -2183,15 +2162,24 @@ class PyBuildExt(build_ext):
                      ffi_inc = None
                      print('Header file {} does not define LIBFFI_H or '
                            'ffi_wrapper_h'.format(ffi_h))
@@ -7280,5 +7211,5 @@ index f764223d06..5901b6f6b8 100644
              self.use_system_libffi = True
  
 -- 
-2.28.0.297.g1956fa8f8d-goog
+2.28.0.402.g5ffc5be6b7-goog
 
