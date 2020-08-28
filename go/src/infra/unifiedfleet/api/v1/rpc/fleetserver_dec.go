@@ -894,6 +894,23 @@ func (s *DecoratedFleet) GetKVM(ctx context.Context, req *GetKVMRequest) (rsp *p
 	return
 }
 
+func (s *DecoratedFleet) BatchGetKVMs(ctx context.Context, req *BatchGetKVMsRequest) (rsp *BatchGetKVMsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetKVMs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetKVMs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetKVMs", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) ListKVMs(ctx context.Context, req *ListKVMsRequest) (rsp *ListKVMsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
@@ -1366,6 +1383,23 @@ func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRe
 	}
 	if s.Postlude != nil {
 		err = s.Postlude(ctx, "GetDHCPConfig", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetDHCPConfigs(ctx context.Context, req *BatchGetDHCPConfigsRequest) (rsp *BatchGetDHCPConfigsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetDHCPConfigs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetDHCPConfigs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetDHCPConfigs", rsp, err)
 	}
 	return
 }

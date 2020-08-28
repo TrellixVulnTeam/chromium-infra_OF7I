@@ -121,6 +121,28 @@ func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
 	return nil, err
 }
 
+func getKVMID(pm proto.Message) string {
+	p := pm.(*ufspb.KVM)
+	return p.GetName()
+}
+
+// BatchGetKVM returns a batch of KVMs from datastore.
+func BatchGetKVM(ctx context.Context, ids []string) ([]*ufspb.KVM, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.KVM{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newKVMEntity, getKVMID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.KVM, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.KVM)
+	}
+	return res, nil
+}
+
 // ListKVMs lists the KVMs
 //
 // Does a query over KVM entities. Returns up to pageSize entities, plus non-nil cursor (if

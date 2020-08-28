@@ -180,6 +180,8 @@ service Fleet {
   // Get retrieves the details of the KVM
   rpc GetKVM(GetKVMRequest) returns (proto.KVM);
 
+  rpc BatchGetKVMs(BatchGetKVMsRequest) returns (BatchGetKVMsResponse);
+
   // List gets all the KVMs
   rpc ListKVMs(ListKVMsRequest) returns (ListKVMsResponse);
 
@@ -264,6 +266,9 @@ service Fleet {
 
   // GetDHCPConfig retrieves a dhcp record.
   rpc GetDHCPConfig(GetDHCPConfigRequest) returns (proto.DHCPConfig);
+
+  // BatchGetDHCPConfigs retrieves a batch of dhcp records.
+  rpc BatchGetDHCPConfigs(BatchGetDHCPConfigsRequest) returns (BatchGetDHCPConfigsResponse);
 
   // CreateVM creates a new VM
   rpc CreateVM(CreateVMRequest) returns (proto.VM);
@@ -1505,4 +1510,29 @@ message NetworkOption {
 
   // The user-specified ip, if it's setup, other options will be ignored.
   string ip = 4;
+}
+
+message BatchGetKVMsRequest {
+  // The parent resource shared by all kvms being retrieved.
+  string parent = 1;
+  // The names of the kvms to retrieve.
+  // Format: kvms/{kvm}
+  repeated string names = 2;
+}
+
+message BatchGetKVMsResponse {
+  // The KVMs from datastore.
+  repeated proto.KVM KVMs = 1;
+}
+
+message BatchGetDHCPConfigsRequest {
+  // The parent resource shared by all dhcp configs being retrieved.
+  string parent = 1;
+  // The hostnames of the dhcp configs to retrieve.
+  repeated string names = 2;
+}
+
+message BatchGetDHCPConfigsResponse {
+  // The KVMs from datastore.
+  repeated proto.DHCPConfig dhcp_configs = 1;
 }

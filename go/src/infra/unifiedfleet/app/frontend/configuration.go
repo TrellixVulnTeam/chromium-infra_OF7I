@@ -119,6 +119,20 @@ func (fs *FleetServerImpl) GetDHCPConfig(ctx context.Context, req *ufsAPI.GetDHC
 	return dhcp, err
 }
 
+// BatchGetDHCPConfigs gets a batch of dhcp records from database.
+func (fs *FleetServerImpl) BatchGetDHCPConfigs(ctx context.Context, req *ufsAPI.BatchGetDHCPConfigsRequest) (rsp *ufsAPI.BatchGetDHCPConfigsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	dhcps, err := controller.BatchGetDhcpConfigs(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	return &ufsAPI.BatchGetDHCPConfigsResponse{
+		DhcpConfigs: dhcps,
+	}, nil
+}
+
 // ListChromePlatforms list the chromeplatforms information from database.
 func (fs *FleetServerImpl) ListChromePlatforms(ctx context.Context, req *ufsAPI.ListChromePlatformsRequest) (rsp *ufsAPI.ListChromePlatformsResponse, err error) {
 	defer func() {

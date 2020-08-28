@@ -66,6 +66,62 @@ var tw = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 // The io writer for json output
 var bw = bufio.NewWriter(os.Stdout)
 
+type listAll func(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error)
+type printJSONFunc func(res []proto.Message, emit bool)
+type printFullFunc func(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Message, tsv bool) error
+type printNormalFunc func(res []proto.Message, tsv, keysOnly bool) error
+
+// PrintEntities a batch of entities based on user parameters
+func PrintEntities(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Message, printJSON printJSONFunc, printFull printFullFunc, printNormal printNormalFunc, json, emit, full, tsv, keysOnly bool) error {
+	if json {
+		printJSON(res, emit)
+		return nil
+	}
+	if full {
+		return printFull(ctx, ic, res, tsv)
+	}
+	printNormal(res, tsv, keysOnly)
+	return nil
+}
+
+// DoList lists the outputs
+func DoList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, pageSize int32, filter string, keysOnly bool) ([]proto.Message, error) {
+	var pageToken string
+	res := make([]proto.Message, 0)
+	if pageSize == 0 {
+		for {
+			protos, token, err := listFunc(ctx, ic, ufsUtil.MaxPageSize, pageToken, filter, keysOnly)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, protos...)
+			if token == "" {
+				break
+			}
+			pageToken = token
+		}
+	} else {
+		for i := int32(0); i < pageSize; i = i + ufsUtil.MaxPageSize {
+			var size int32
+			if pageSize-i < ufsUtil.MaxPageSize {
+				size = pageSize % ufsUtil.MaxPageSize
+			} else {
+				size = ufsUtil.MaxPageSize
+			}
+			protos, token, err := listFunc(ctx, ic, size, pageToken, filter, keysOnly)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, protos...)
+			if token == "" {
+				break
+			}
+			pageToken = token
+		}
+	}
+	return res, nil
+}
+
 type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool, bool) (string, error)
 
 // PrintListJSONFormat prints the list output in JSON format
@@ -106,6 +162,17 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 	}
 	fmt.Println("]")
 	return nil
+}
+
+// PrintTableTitle prints the table title with parameters
+func PrintTableTitle(title []string, tsv, keysOnly bool) {
+	if !tsv {
+		if keysOnly {
+			PrintTitle(title[0:1])
+		} else {
+			PrintTitle(title)
+		}
+	}
 }
 
 // PrintListTableFormat prints list output in Table format
@@ -270,17 +337,23 @@ func kvmFullOutputStrs(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) []string {
 }
 
 // PrintKVMFull prints the full info for kvm
-func PrintKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) {
+func PrintKVMFull(kvms []*ufspb.KVM, dhcps map[string]*ufspb.DHCPConfig) {
 	defer tw.Flush()
-	var out string
-	for _, s := range kvmFullOutputStrs(kvm, dhcp) {
-		out += fmt.Sprintf("%s\t", s)
+	for i := range kvms {
+		var out string
+		for _, s := range kvmFullOutputStrs(kvms[i], dhcps[kvms[i].GetName()]) {
+			out += fmt.Sprintf("%s\t", s)
+		}
+		fmt.Fprintln(tw, out)
 	}
-	fmt.Fprintln(tw, out)
 }
 
 // PrintKVMs prints the all kvms in table form.
-func PrintKVMs(kvms []*ufspb.KVM, keysOnly bool) {
+func PrintKVMs(res []proto.Message, keysOnly bool) {
+	kvms := make([]*ufspb.KVM, len(res))
+	for i, r := range res {
+		kvms[i] = r.(*ufspb.KVM)
+	}
 	defer tw.Flush()
 	for _, kvm := range kvms {
 		printKVM(kvm, keysOnly)
@@ -318,16 +391,21 @@ func printKVM(kvm *ufspb.KVM, keysOnly bool) {
 }
 
 // PrintKVMsJSON prints the kvm details in json format.
-func PrintKVMsJSON(kvms []*ufspb.KVM, emit bool) {
-	len := len(kvms) - 1
+func PrintKVMsJSON(res []proto.Message, emit bool) {
+	kvms := make([]*ufspb.KVM, len(res))
+	for i, r := range res {
+		kvms[i] = r.(*ufspb.KVM)
+	}
+	fmt.Print("[")
 	for i, s := range kvms {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
-		if i < len {
+		if i < len(kvms)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintRPMs prints the all rpms in table form.

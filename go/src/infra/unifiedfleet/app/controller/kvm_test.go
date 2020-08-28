@@ -542,3 +542,39 @@ func TestListKVMs(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetKVMs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetKVMs", t, func() {
+		Convey("Batch get kvms - happy path", func() {
+			kvms := make([]*ufspb.KVM, 0, 4)
+			for i := 0; i < 4; i++ {
+				kvm := mockKVM(fmt.Sprintf("kvm-batchGet-%d", i))
+				resp, err := registration.CreateKVM(ctx, kvm)
+				So(err, ShouldBeNil)
+				kvms = append(kvms, resp)
+			}
+			resp, err := registration.BatchGetKVM(ctx, []string{"kvm-batchGet-0", "kvm-batchGet-1", "kvm-batchGet-2", "kvm-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, kvms)
+		})
+		Convey("Batch get kvms - missing id", func() {
+			resp, err := registration.BatchGetKVM(ctx, []string{"kvm-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "kvm-batchGet-non-existing")
+		})
+		Convey("Batch get kvms - empty input", func() {
+			resp, err := registration.BatchGetKVM(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = registration.BatchGetKVM(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

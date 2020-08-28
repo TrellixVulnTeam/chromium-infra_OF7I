@@ -7,6 +7,7 @@ package datastore
 import (
 	"context"
 	"fmt"
+	"go.chromium.org/luci/grpc/grpcutil"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
@@ -36,6 +37,9 @@ type NewFunc func(context.Context, proto.Message) (FleetEntity, error)
 
 // QueryAllFunc queries all entities for a given table.
 type QueryAllFunc func(context.Context) ([]FleetEntity, error)
+
+// GetIDFunc gets the id of a fleet entity
+type GetIDFunc func(pm proto.Message) string
 
 // Exists checks if a list of fleet entities exist in datastore.
 func Exists(ctx context.Context, entities []FleetEntity) ([]bool, error) {
@@ -264,38 +268,39 @@ func GetAll(ctx context.Context, qf QueryAllFunc) (*OpResults, error) {
 }
 
 // BatchGet returns all entities in table for given IDs.
-func BatchGet(ctx context.Context, es []proto.Message, nf NewFunc) *OpResults {
-	// TODO: (eshwarn)return array of Machines
-	allRes := make(OpResults, len(es))
-	checkRes := make(OpResults, 0, len(es))
-	entities := make([]FleetEntity, 0, len(es))
+func BatchGet(ctx context.Context, es []proto.Message, nf NewFunc, getID GetIDFunc) ([]proto.Message, error) {
+	if len(es) == 0 {
+		return nil, nil
+	}
+	res := make([]proto.Message, 0)
+	entities := make([]FleetEntity, len(es))
+	ids := make([]string, len(es))
 	for i, e := range es {
-		allRes[i] = &OpResult{}
 		entity, err := nf(ctx, e)
 		if err != nil {
-			allRes[i].LogError(err)
-			continue
+			return nil, err
 		}
-		entities = append(entities, entity)
-		checkRes = append(checkRes, allRes[i])
+		entities[i] = entity
+		ids[i] = getID(e)
 	}
 
 	if err := datastore.Get(ctx, entities); err != nil {
 		for i, e := range err.(errors.MultiError) {
 			if e != nil {
-				checkRes[i].LogError(e)
+				logging.Debugf(ctx, "BatchGet for %s: %s", ids[i], e.Error())
+				return nil, errors.Annotate(e, "Fail to get asset %q", ids[i]).Tag(grpcutil.FailedPreconditionTag).Err()
 			}
 		}
 	}
 
-	for i, e := range entities {
+	for _, e := range entities {
 		pm, err := e.GetProto()
 		if err != nil {
-			checkRes[i].LogError(err)
+			return nil, err
 		}
-		checkRes[i].Data = pm
+		res = append(res, pm)
 	}
-	return &allRes
+	return res, nil
 }
 
 // BatchDelete removes the entities from the datastore

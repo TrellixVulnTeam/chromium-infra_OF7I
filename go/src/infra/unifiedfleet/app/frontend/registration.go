@@ -507,6 +507,24 @@ func (fs *FleetServerImpl) GetKVM(ctx context.Context, req *ufsAPI.GetKVMRequest
 	return kvm, err
 }
 
+// BatchGetKVMs gets the kvm information in batch from database.
+func (fs *FleetServerImpl) BatchGetKVMs(ctx context.Context, req *ufsAPI.BatchGetKVMsRequest) (rsp *ufsAPI.BatchGetKVMsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	kvms, err := controller.BatchGetKVMs(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, kvm := range kvms {
+		kvm.Name = util.AddPrefix(util.KVMCollection, kvm.Name)
+	}
+	return &ufsAPI.BatchGetKVMsResponse{
+		KVMs: kvms,
+	}, nil
+}
+
 // ListKVMs list the kvms information from database.
 func (fs *FleetServerImpl) ListKVMs(ctx context.Context, req *ufsAPI.ListKVMsRequest) (rsp *ufsAPI.ListKVMsResponse, err error) {
 	defer func() {

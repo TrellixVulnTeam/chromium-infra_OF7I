@@ -15,3 +15,8 @@ import (
 func GetDHCPConfig(ctx context.Context, hostname string) (*ufspb.DHCPConfig, error) {
 	return configuration.GetDHCPConfig(ctx, hostname)
 }
+
+// BatchGetDhcpConfigs returns a batch of dhcp records
+func BatchGetDhcpConfigs(ctx context.Context, hostnames []string) ([]*ufspb.DHCPConfig, error) {
+	return configuration.BatchGetDHCPConfigs(ctx, hostnames)
+}

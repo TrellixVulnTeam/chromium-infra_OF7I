@@ -198,6 +198,11 @@ func GetKVM(ctx context.Context, id string) (*ufspb.KVM, error) {
 	return registration.GetKVM(ctx, id)
 }
 
+// BatchGetKVMs returns a batch of kvms based on ids.
+func BatchGetKVMs(ctx context.Context, ids []string) ([]*ufspb.KVM, error) {
+	return registration.BatchGetKVM(ctx, ids)
+}
+
 // ListKVMs lists the kvms
 func ListKVMs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.KVM, string, error) {
 	var filterMap map[string][]interface{}

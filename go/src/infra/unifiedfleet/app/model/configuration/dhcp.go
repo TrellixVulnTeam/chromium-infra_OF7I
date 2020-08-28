@@ -61,6 +61,11 @@ func newDHCPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 	}, nil
 }
 
+func getDHCPHostname(pm proto.Message) string {
+	p := pm.(*ufspb.DHCPConfig)
+	return p.GetHostname()
+}
+
 // GetDHCPConfig returns dhcp config for the given id from datastore.
 func GetDHCPConfig(ctx context.Context, id string) (*ufspb.DHCPConfig, error) {
 	pm, err := ufsds.Get(ctx, &ufspb.DHCPConfig{Hostname: id}, newDHCPEntity)
@@ -68,6 +73,23 @@ func GetDHCPConfig(ctx context.Context, id string) (*ufspb.DHCPConfig, error) {
 		return pm.(*ufspb.DHCPConfig), err
 	}
 	return nil, err
+}
+
+// BatchGetDHCPConfigs returns a batch of dhcp configs
+func BatchGetDHCPConfigs(ctx context.Context, ids []string) ([]*ufspb.DHCPConfig, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.DHCPConfig{Hostname: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newDHCPEntity, getDHCPHostname)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.DHCPConfig, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.DHCPConfig)
+	}
+	return res, nil
 }
 
 // QueryDHCPConfigByPropertyName query dhcp entity in the datastore.

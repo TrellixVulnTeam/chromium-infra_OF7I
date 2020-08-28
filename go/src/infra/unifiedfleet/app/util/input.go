@@ -102,6 +102,17 @@ func GetPageSize(pageSize int32) int32 {
 	}
 }
 
+// FormatInputNames formats a given array of resource names
+func FormatInputNames(names []string) []string {
+	var res []string
+	for _, n := range names {
+		if n != "" {
+			res = append(res, RemovePrefix(n))
+		}
+	}
+	return res
+}
+
 // RemovePrefix extracts string appearing after a "/"
 func RemovePrefix(name string) string {
 	// Get substring after a string.

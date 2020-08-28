@@ -134,12 +134,8 @@ func PrintTSVSwitches(res []*ufspb.Switch, keysOnly bool) {
 }
 
 // PrintTSVKVMs prints the tsv format of kvms
-func PrintTSVKVMs(res []*ufspb.KVM, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
-	printTSVs(msgs, keysOnly, kvmOutputStrs)
+func PrintTSVKVMs(res []proto.Message, keysOnly bool) {
+	printTSVs(res, keysOnly, kvmOutputStrs)
 }
 
 // PrintTSVRPMs prints the tsv format of rpms

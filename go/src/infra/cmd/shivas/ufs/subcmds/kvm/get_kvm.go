@@ -8,11 +8,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
@@ -37,6 +41,16 @@ Gets the kvm and prints the output in JSON format.`,
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
+
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
+
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.platforms), "platform", "Name(s) of a platform to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.macs), "mac", "Name(s) of a mac to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
 	},
 }
@@ -47,6 +61,17 @@ type getKVM struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 	outputFlags site.OutputFlags
+
+	// Filters
+	zones     []string
+	racks     []string
+	platforms []string
+	tags      []string
+	macs      []string
+	states    []string
+
+	pageSize int
+	keysOnly bool
 }
 
 func (c *getKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -58,9 +83,6 @@ func (c *getKVM) Run(a subcommands.Application, args []string, env subcommands.E
 }
 
 func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(); err != nil {
-		return err
-	}
 	ctx := cli.GetContext(a, c, env)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
@@ -75,50 +97,122 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-
-	res, err := ic.GetKVM(ctx, &ufsAPI.GetKVMRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.KVMCollection, args[0]),
-	})
+	var res []proto.Message
+	if len(args) > 0 {
+		res, err = c.batchGet(ctx, ic, args)
+	} else {
+		res, err = c.batchList(ctx, ic, c.formatFilters())
+	}
 	if err != nil {
 		return err
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	if utils.FullMode(c.outputFlags.Full()) {
-		return c.printFull(ctx, ic, res)
-	}
-	return c.print(res)
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
+	return utils.PrintEntities(ctx, ic, res, utils.PrintKVMsJSON, printKVMFull, printKVMNormal,
+		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
-func (c *getKVM) printFull(ctx context.Context, ic ufsAPI.FleetClient, kvm *ufspb.KVM) error {
-	dhcp, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
-		Hostname: kvm.GetName(),
+func (c *getKVM) formatFilters() []string {
+	filters := make([]string, 0)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("platform", c.platforms)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("mac", c.macs)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	return filters
+}
+
+func (c *getKVM) batchList(ctx context.Context, ic ufsAPI.FleetClient, filters []string) ([]proto.Message, error) {
+	errs := make(map[string]error)
+	res := make([]proto.Message, 0)
+	for _, filter := range filters {
+		protos, err := utils.DoList(ctx, ic, listKVMs, int32(c.pageSize), filter, c.keysOnly)
+		if err != nil {
+			errs[filter] = err
+		}
+		res = append(res, protos...)
+		if c.pageSize > 0 && len(res) >= c.pageSize {
+			res = res[0:c.pageSize]
+			break
+		}
+	}
+	if len(errs) > 0 {
+		fmt.Println("Fail to do some queries:")
+		resErr := make([]error, 0, len(errs))
+		for f, err := range errs {
+			fmt.Printf("Filter %s: %s\n", f, err.Error())
+			resErr = append(resErr, err)
+		}
+		return nil, errors.MultiError(resErr)
+	}
+	return res, nil
+}
+
+func (c *getKVM) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
+	res, err := ic.BatchGetKVMs(ctx, &ufsAPI.BatchGetKVMsRequest{
+		Names: names,
 	})
-	if c.outputFlags.Tsv() {
-		utils.PrintTSVKVMFull(kvm, dhcp)
+	if err != nil {
+		return nil, err
+	}
+	protos := make([]proto.Message, len(res.GetKVMs()))
+	for i, r := range res.GetKVMs() {
+		protos[i] = r
+	}
+	return protos, nil
+}
+
+func printKVMFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
+	kvms := make([]*ufspb.KVM, len(msgs))
+	names := make([]string, len(msgs))
+	for i, r := range msgs {
+		kvms[i] = r.(*ufspb.KVM)
+		kvms[i].Name = ufsUtil.RemovePrefix(kvms[i].Name)
+		names[i] = kvms[i].GetName()
+	}
+	res, _ := ic.BatchGetDHCPConfigs(ctx, &ufsAPI.BatchGetDHCPConfigsRequest{
+		Names: names,
+	})
+	dhcpMap := make(map[string]*ufspb.DHCPConfig, 0)
+	for _, d := range res.GetDhcpConfigs() {
+		dhcpMap[d.GetHostname()] = d
+	}
+	if tsv {
+		for _, kvm := range kvms {
+			utils.PrintTSVKVMFull(kvm, dhcpMap[kvm.GetName()])
+		}
 		return nil
 	}
 	utils.PrintTitle(utils.KvmFullTitle)
-	utils.PrintKVMFull(kvm, dhcp)
+	utils.PrintKVMFull(kvms, dhcpMap)
 	return nil
 }
 
-func (c *getKVM) print(kvm *ufspb.KVM) error {
-	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(kvm, !utils.NoEmitMode(c.outputFlags.NoEmit()))
+func printKVMNormal(kvms []proto.Message, tsv, keysOnly bool) error {
+	if tsv {
+		utils.PrintTSVKVMs(kvms, false)
 		return nil
 	}
-	if c.outputFlags.Tsv() {
-		utils.PrintTSVKVMs([]*ufspb.KVM{kvm}, false)
-		return nil
-	}
-	utils.PrintTitle(utils.KvmTitle)
-	utils.PrintKVMs([]*ufspb.KVM{kvm}, false)
+	utils.PrintTableTitle(utils.KvmTitle, tsv, keysOnly)
+	utils.PrintKVMs(kvms, keysOnly)
 	return nil
 }
 
-func (c *getKVM) validateArgs() error {
-	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the kvm name.")
+func listKVMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+	req := &ufsAPI.ListKVMsRequest{
+		PageSize:  pageSize,
+		PageToken: pageToken,
+		Filter:    filter,
+		KeysOnly:  keysOnly,
 	}
-	return nil
+	res, err := ic.ListKVMs(ctx, req)
+	if err != nil {
+		return nil, "", err
+	}
+	protos := make([]proto.Message, len(res.GetKVMs()))
+	for i, kvm := range res.GetKVMs() {
+		protos[i] = kvm
+	}
+	return protos, res.GetNextPageToken(), nil
 }
