@@ -131,7 +131,7 @@
       "/path/to/tmp/json"
     ],
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "infra_step": true,
     "name": "ensure_installed",
@@ -161,7 +161,7 @@
       "[CACHE]/osx_sdk/XCode.app"
     ],
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "infra_step": true,
     "name": "install xcode"
@@ -174,7 +174,7 @@
       "[CACHE]/osx_sdk/XCode.app"
     ],
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "infra_step": true,
     "name": "select XCode"
@@ -188,7 +188,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "infra_step": true,
     "name": "init infra go env",
@@ -221,7 +221,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "name": "go build"
   },
@@ -236,7 +236,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "name": "go test"
   },
@@ -252,7 +252,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "name": "go test -race"
   },
@@ -263,7 +263,7 @@
       "--reset"
     ],
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "infra_step": true,
     "name": "reset XCode"

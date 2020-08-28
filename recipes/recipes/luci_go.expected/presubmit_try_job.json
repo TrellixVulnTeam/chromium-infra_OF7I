@@ -186,7 +186,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOMAXPROCS": "2"
+      "GOMAXPROCS": "4"
     },
     "infra_step": true,
     "name": "init infra go env",
@@ -236,7 +236,7 @@
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
     "env": {
-      "GOMAXPROCS": "2",
+      "GOMAXPROCS": "4",
       "PRESUBMIT_BUILDER": "1"
     },
     "name": "presubmit"
