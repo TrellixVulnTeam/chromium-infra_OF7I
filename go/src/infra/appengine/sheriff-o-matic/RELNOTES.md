@@ -1,3 +1,30 @@
+# Release Notes sheriff-o-matic 2020-08-28
+
+- 7 commits, 3 bugs affected since ed920e7 ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - iannucci@chromium.org
+
+## Changes in this release
+
+- [[SoM] Change feedback URL](https://chromium-review.googlesource.com/c/infra/infra/+/2374833) (nqmtuan@google.com)
+- [[SoM] Remove test-helper](https://chromium-review.googlesource.com/c/infra/infra/+/2371544) (nqmtuan@google.com)
+- [[SoM] Remove test-data.js](https://chromium-review.googlesource.com/c/infra/infra/+/2370850) (nqmtuan@google.com)
+- [[SoM] Remove GetTestSuite func](https://chromium-review.googlesource.com/c/infra/infra/+/2370848) (nqmtuan@google.com)
+- [[SoM] Remove slave steps in config.json](https://chromium-review.googlesource.com/c/infra/infra/+/2370847) (nqmtuan@google.com)
+- [Roll infra/go/src/go.chromium.org/luci/ b9ea2483d..85629364b (320 commits)](https://chromium-review.googlesource.com/c/infra/infra/+/2366129) (iannucci@chromium.org)
+- [Release note 18 Aug](https://chromium-review.googlesource.com/c/infra/infra/+/2360107) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- iannucci@chromium.org:
+  -  [https://crbug.com/1119934](https://crbug.com/1119934)
+  
+- nqmtuan@google.com:
+  -  [https://crbug.com/1095694](https://crbug.com/1095694)
+  -  [https://crbug.com/1107749](https://crbug.com/1107749)
+  
+
 # Release Notes sheriff-o-matic 2020-08-18
 
 - 5 commits, 3 bugs affected since 9d6af5b ()
