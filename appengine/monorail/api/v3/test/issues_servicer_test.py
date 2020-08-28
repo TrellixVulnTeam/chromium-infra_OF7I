@@ -273,12 +273,27 @@ class IssuesServicerTest(unittest.TestCase):
   # for every issue.
   def testListComments(self):
     """We can list comments."""
-    request = issues_pb2.ListCommentsRequest(parent=self.issue_1_resource_name)
+    comment_2 = tracker_pb2.IssueComment(
+        id=123,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='comment 2')
+    self.services.issue.TestAddComment(comment_2, self.issue_1.local_id)
+    request = issues_pb2.ListCommentsRequest(
+        parent=self.issue_1_resource_name, page_size=1)
     mc = monorailcontext.MonorailContext(
         self.services, cnxn=self.cnxn, requester=self.owner.email)
     actual_response = self.CallWrapped(
         self.issues_svcr.ListComments, mc, request)
     self.assertEqual(1, len(actual_response.comments))
+
+    # Check the `next_page_token` can be used to get the next page of results
+    request.page_token = actual_response.next_page_token
+    next_actual_response = self.CallWrapped(
+        self.issues_svcr.ListComments, mc, request)
+    self.assertEqual(1, len(next_actual_response.comments))
+    self.assertEqual(next_actual_response.comments[0].content, 'comment 2')
 
   def testListApprovalValues(self):
     config = fake.MakeTestConfig(self.project_2.project_id, [], [])
