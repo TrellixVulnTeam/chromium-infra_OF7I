@@ -12,6 +12,7 @@ import zlib
 from components import auth
 from components import datastore_utils
 from components import utils
+from google.appengine.api import app_identity
 from google.appengine.ext import ndb
 from google.appengine.ext.ndb import msgprop
 from google.protobuf import struct_pb2
@@ -133,6 +134,12 @@ class Build(ndb.Model):
   # => builder is stuck for days.
   # We workaround this problem by setting a timeout.
   _memcache_timeout = 600  # 10m
+
+  @classmethod
+  def _use_memcache(cls, _):
+    # Fallback in case memcache is still enabled (observed in v1 API handlers).
+    # See main.py for reasons why memcache is being disabled.
+    return not app_identity.get_application_id().endswith('-dev')
 
   # Stores the build proto. The primary property of this entity.
   # Majority of the other properties are either derivatives of this field or
@@ -390,6 +397,12 @@ class BuildDetailEntity(ndb.Model):
 
   Entity key: Parent is Build entity key. ID is 1.
   """
+
+  @classmethod
+  def _use_memcache(cls, _):
+    # Fallback in case memcache is still enabled (observed in v1 API handlers).
+    # See main.py for reasons why memcache is being disabled.
+    return not app_identity.get_application_id().endswith('-dev')
 
   @classmethod
   def key_for(cls, build_key):  # pragma: no cover
