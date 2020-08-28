@@ -62,6 +62,7 @@ func Run(ctx context.Context, args Args) error {
 	if err != nil {
 		return err
 	}
+	logging.Infof(ctx, "Execution deadline: %s", deadline.String())
 
 	ea := execution.Args{
 		Request:      request,
@@ -247,7 +248,20 @@ func runWithDeadline(ctx context.Context, f func(context.Context) error, deadlin
 // reached then it is due to a timeout lower in the stack.
 func isGlobalTimeoutError(ctx context.Context, err error) bool {
 	d, ok := ctx.Deadline()
-	return ok && time.Now().After(d) && isDeadlineExceededError(err)
+	if !ok {
+		logging.Infof(ctx, "Not a global timeout: no deadline set")
+		return false
+	}
+	if !isDeadlineExceededError(err) {
+		logging.Infof(ctx, "Not a global timeout: error is not a deadline exceeded error")
+		return false
+	}
+	now := time.Now()
+	if now.Before(d) {
+		logging.Infof(ctx, "Not a global timeout: Current time (%s) is before deadline (%s)", now.String(), d.String())
+		return false
+	}
+	return true
 }
 
 func isDeadlineExceededError(err error) bool {
