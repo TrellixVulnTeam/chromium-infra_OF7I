@@ -1,4 +1,4 @@
-From cead34998f2ecc7119311f5635dce87f8a23c226 Mon Sep 17 00:00:00 2001
+From a9cf159b0888a2e4d29b482128d85846f20d3ddf Mon Sep 17 00:00:00 2001
 From: Brian Ryner <bryner@google.com>
 Date: Fri, 28 Aug 2020 13:58:31 +1000
 Subject: [PATCH 5/5] Backport of https://github.com/python/cpython/pull/21241
@@ -11,13 +11,13 @@ on the filesystem.   ctypes.util.find_library should check the
 shared cache in order to behave consistently across Mac OS 10.15
 and earlier and Mac OS 11.0 and later.
 ---
- Lib/ctypes/macholib/dyld.py      | 12 +++++++++++
- Lib/ctypes/test/test_macholib.py | 15 ++++++++-----
- Modules/_ctypes/callproc.c       | 37 ++++++++++++++++++++++++++++++++
- configure                        |  9 ++++++++
+ Lib/ctypes/macholib/dyld.py      | 12 ++++++++++++
+ Lib/ctypes/test/test_macholib.py | 15 ++++++++++-----
+ Modules/_ctypes/callproc.c       | 29 +++++++++++++++++++++++++++++
+ configure                        |  9 +++++++++
  configure.ac                     |  4 ++++
  pyconfig.h.in                    |  3 +++
- 6 files changed, 75 insertions(+), 5 deletions(-)
+ 6 files changed, 67 insertions(+), 5 deletions(-)
 
 diff --git a/Lib/ctypes/macholib/dyld.py b/Lib/ctypes/macholib/dyld.py
 index 1fdf8d648f..b218db47fd 100644
@@ -83,7 +83,7 @@ index 9779b2f3f4..6759568269 100644
  if __name__ == "__main__":
      unittest.main()
 diff --git a/Modules/_ctypes/callproc.c b/Modules/_ctypes/callproc.c
-index 2a687ce976..adebbec479 100644
+index 2a687ce976..2c242460be 100644
 --- a/Modules/_ctypes/callproc.c
 +++ b/Modules/_ctypes/callproc.c
 @@ -72,6 +72,10 @@
@@ -97,7 +97,7 @@ index 2a687ce976..adebbec479 100644
  #ifdef MS_WIN32
  #include <malloc.h>
  #endif
-@@ -1467,6 +1471,36 @@ copy_com_pointer(PyObject *self, PyObject *args)
+@@ -1467,6 +1471,28 @@ copy_com_pointer(PyObject *self, PyObject *args)
  }
  #else
  
@@ -105,22 +105,14 @@ index 2a687ce976..adebbec479 100644
 +static PyObject *py_dyld_shared_cache_contains_path(PyObject *self, PyObject *args)
 +{
 +    if (__builtin_available(macos 11, ios 14, watchos 7, tvos 14, *)) {
-+        PyObject *name, *name2;
-+        char *name_str;
-+        if (!PyArg_ParseTuple(args, "O", &name))
++        char *name;
++        if (!PyArg_ParseTuple(args, "z", &name))
 +            return NULL;
 +
-+        if (name == Py_None)
++        if (name == NULL)
 +            Py_RETURN_FALSE;
 +
-+        if (PyUnicode_FSConverter(name, &name2) == 0)
-+            return NULL;
-+        if (PyBytes_Check(name2))
-+            name_str = PyBytes_AS_STRING(name2);
-+        else
-+            name_str = PyByteArray_AS_STRING(name2);
-+
-+        if(_dyld_shared_cache_contains_path(name_str))
++        if(_dyld_shared_cache_contains_path(name))
 +            Py_RETURN_TRUE;
 +        else
 +            Py_RETURN_FALSE;
@@ -134,7 +126,7 @@ index 2a687ce976..adebbec479 100644
  static PyObject *py_dl_open(PyObject *self, PyObject *args)
  {
      char *name;
-@@ -1991,6 +2025,9 @@ PyMethodDef _ctypes_module_methods[] = {
+@@ -1991,6 +2017,9 @@ PyMethodDef _ctypes_module_methods[] = {
       "dlopen(name, flag={RTLD_GLOBAL|RTLD_LOCAL}) open a shared library"},
      {"dlclose", py_dl_close, METH_VARARGS, "dlclose a library"},
      {"dlsym", py_dl_sym, METH_VARARGS, "find symbol in shared library"},
