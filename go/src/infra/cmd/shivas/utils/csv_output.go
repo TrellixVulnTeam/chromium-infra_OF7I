@@ -46,13 +46,6 @@ func PrintTSVKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) {
 	csw.Write(kvmFullOutputStrs(kvm, dhcp))
 }
 
-// PrintTSVMachineFull prints the full related msg for machine in tsv mode
-func PrintTSVMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) {
-	csw := NewCSVWriter()
-	defer csw.Flush()
-	csw.Write(machineFullOutputStrs(m, lse, rack))
-}
-
 // PrintTSVNicFull prints the full related msg for nic in tsv mode
 func PrintTSVNicFull(nic *ufspb.Nic, dhcp *ufspb.DHCPConfig) {
 	csw := NewCSVWriter()
@@ -89,11 +82,7 @@ func printTSVs(res []proto.Message, keysOnly bool, outputFunc func(proto.Message
 }
 
 // PrintTSVMachines prints the tsv format of machines
-func PrintTSVMachines(res []*ufspb.Machine, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVMachines(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, machineOutputStrs)
 }
 

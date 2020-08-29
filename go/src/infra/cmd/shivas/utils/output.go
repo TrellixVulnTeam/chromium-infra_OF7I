@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
+	"go.chromium.org/luci/common/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
@@ -23,38 +24,26 @@ import (
 
 // Titles for printing table format list
 var (
-	SwitchTitle     = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
-	SwitchFullTitle = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "nics", "dracs", "UpdateTime"}
-	KvmTitle        = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
-	KvmFullTitle    = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Zone", "Rack", "UpdateTime"}
-	RpmTitle        = []string{"RPM Name", "MAC Address", "CapacityPort",
-		"UpdateTime"}
-	DracTitle = []string{"Drac Name", "Display name", "MAC Address", "Switch",
-		"Switch Port", "Password", "Zone", "Rack", "Machine", "UpdateTime"}
-	DracFullTitle = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
-	NicTitle      = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
-	NicFullTitle  = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
-	MachineTitle  = []string{"Machine Name", "Serial Number", "Zone", "Rack", "ChromePlatform",
-		"Nics", "Drac", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
-	BrowserMachineFullTitle = []string{
-		"Machine Name", "Serial Number", "Host", "Zone", "Rack", "ChromePlatform",
-		"Nics", "Drac", "kvms", "switches", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime",
-	}
-	OSMachineFullTitle = []string{
-		"Machine Name", "Zone", "Rack", "Barcode", "UpdateTime",
-	}
-	MachinelseprototypeTitle = []string{"Machine Prototype Name",
-		"Occupied Capacity", "PeripheralTypes", "VirtualTypes",
-		"Tags", "UpdateTime"}
-	RacklseprototypeTitle = []string{"Rack Prototype Name", "PeripheralTypes",
-		"Tags", "UpdateTime"}
-	ChromePlatformTitle = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
-	VlanTitle           = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
-	VMTitle             = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "State", "Description", "UpdateTime"}
-	VMFullTitle         = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "Description", "UpdateTime"}
-	RackTitle           = []string{"Rack Name", "Zone", "KVMs", "Switches", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "Description", "UpdateTime"}
-	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
+	SwitchTitle              = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
+	SwitchFullTitle          = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "nics", "dracs", "UpdateTime"}
+	KvmTitle                 = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
+	KvmFullTitle             = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Zone", "Rack", "UpdateTime"}
+	RpmTitle                 = []string{"RPM Name", "MAC Address", "CapacityPort", "UpdateTime"}
+	DracTitle                = []string{"Drac Name", "Display name", "MAC Address", "Switch", "Switch Port", "Password", "Zone", "Rack", "Machine", "UpdateTime"}
+	DracFullTitle            = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
+	NicTitle                 = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
+	NicFullTitle             = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
+	BrowserMachineTitle      = []string{"Machine Name", "Serial Number", "Zone", "Rack", "ChromePlatform", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
+	OSMachineTitle           = []string{"Machine Name", "Zone", "Rack", "Barcode", "UpdateTime"}
+	MachinelseprototypeTitle = []string{"Machine Prototype Name", "Occupied Capacity", "PeripheralTypes", "VirtualTypes", "Tags", "UpdateTime"}
+	RacklseprototypeTitle    = []string{"Rack Prototype Name", "PeripheralTypes", "Tags", "UpdateTime"}
+	ChromePlatformTitle      = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
+	VlanTitle                = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
+	VMTitle                  = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "State", "Description", "UpdateTime"}
+	VMFullTitle              = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "Description", "UpdateTime"}
+	RackTitle                = []string{"Rack Name", "Zone", "KVMs", "Switches", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
+	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "Description", "UpdateTime"}
+	MachineLSETFullitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -82,6 +71,33 @@ func PrintEntities(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Messa
 	}
 	printNormal(res, tsv, keysOnly)
 	return nil
+}
+
+// BatchList returns the all listed entities by filters
+func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, filters []string, pageSize int, keysOnly bool) ([]proto.Message, error) {
+	errs := make(map[string]error)
+	res := make([]proto.Message, 0)
+	for _, filter := range filters {
+		protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filter, keysOnly)
+		if err != nil {
+			errs[filter] = err
+		}
+		res = append(res, protos...)
+		if pageSize > 0 && len(res) >= pageSize {
+			res = res[0:pageSize]
+			break
+		}
+	}
+	if len(errs) > 0 {
+		fmt.Println("Fail to do some queries:")
+		resErr := make([]error, 0, len(errs))
+		for f, err := range errs {
+			fmt.Printf("Filter %s: %s\n", f, err.Error())
+			resErr = append(resErr, err)
+		}
+		return nil, errors.MultiError(resErr)
+	}
+	return res, nil
 }
 
 // DoList lists the outputs
@@ -622,17 +638,8 @@ func PrintNicsJSON(nics []*ufspb.Nic, emit bool) {
 	}
 }
 
-// PrintMachineFull prints the full machine info.
-func PrintMachineFull(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) {
-	defer tw.Flush()
-	var out string
-	for _, s := range machineFullOutputStrs(m, lse, rack) {
-		out += fmt.Sprintf("%s\t", s)
-	}
-	fmt.Fprintln(tw, out)
-}
-
-func machineFullOutputStrs(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.Rack) []string {
+func machineOutputStrs(pm proto.Message) []string {
+	m := pm.(*ufspb.Machine)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
@@ -641,14 +648,9 @@ func machineFullOutputStrs(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.
 		return []string{
 			ufsUtil.RemovePrefix(m.GetName()),
 			m.GetSerialNumber(),
-			lse.GetName(),
 			m.GetLocation().GetZone().String(),
 			m.GetLocation().GetRack(),
 			m.GetChromeBrowserMachine().GetChromePlatform(),
-			strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")),
-			m.GetChromeBrowserMachine().GetDracObject().GetName(),
-			strSlicesToStr(ufsAPI.ParseResources(rack.GetChromeBrowserRack().GetKvmObjects(), "Name")),
-			strSlicesToStr(ufsAPI.ParseResources(rack.GetChromeBrowserRack().GetSwitchObjects(), "Name")),
 			m.GetChromeBrowserMachine().GetDeploymentTicket(),
 			m.GetChromeBrowserMachine().GetDescription(),
 			m.GetResourceState().String(),
@@ -666,32 +668,14 @@ func machineFullOutputStrs(m *ufspb.Machine, lse *ufspb.MachineLSE, rack *ufspb.
 }
 
 // PrintMachines prints the all machines in table form.
-func PrintMachines(machines []*ufspb.Machine, keysOnly bool) {
+func PrintMachines(res []proto.Message, keysOnly bool) {
+	machines := make([]*ufspb.Machine, len(res))
+	for i, r := range res {
+		machines[i] = r.(*ufspb.Machine)
+	}
 	defer tw.Flush()
 	for _, m := range machines {
 		printMachine(m, keysOnly)
-	}
-}
-
-func machineOutputStrs(pm proto.Message) []string {
-	m := pm.(*ufspb.Machine)
-	var ts string
-	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
-	}
-	return []string{
-		ufsUtil.RemovePrefix(m.GetName()),
-		m.GetSerialNumber(),
-		m.GetLocation().GetZone().String(),
-		m.GetLocation().GetRack(),
-		m.GetChromeBrowserMachine().GetChromePlatform(),
-		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachine().GetNicObjects(), "Name")),
-		m.GetChromeBrowserMachine().GetDracObject().GetName(),
-		m.GetChromeBrowserMachine().GetDeploymentTicket(),
-		m.GetChromeBrowserMachine().GetDescription(),
-		m.GetResourceState().String(),
-		m.GetRealm(),
-		ts,
 	}
 }
 
@@ -708,16 +692,21 @@ func printMachine(m *ufspb.Machine, keysOnly bool) {
 }
 
 // PrintMachinesJSON prints the machine details in json format.
-func PrintMachinesJSON(machines []*ufspb.Machine, emit bool) {
-	len := len(machines) - 1
+func PrintMachinesJSON(res []proto.Message, emit bool) {
+	machines := make([]*ufspb.Machine, len(res))
+	for i, r := range res {
+		machines[i] = r.(*ufspb.Machine)
+	}
+	fmt.Print("[")
 	for i, m := range machines {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(machines)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintMachineLSEPrototypes prints the all msleps in table form.
