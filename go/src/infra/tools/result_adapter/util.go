@@ -5,6 +5,7 @@
 package main
 
 import (
+	"path"
 	"strings"
 	"text/template"
 	"time"
@@ -18,8 +19,11 @@ const (
 	// source data. Possible values: FormatJTR, FormatGTest.
 	originalFormatTagKey = "orig_format"
 
-	// FormatGTest is Chromium's GTest format.
+	// formatGTest is Chromium's GTest format.
 	formatGTest = "chromium_gtest"
+
+	// formatJTR is Chromium's JSON Test Results format.
+	formatJTR = "chromium_json_test_results"
 
 	// maxSummaryLength is the maximum length of summaryHtml.
 	maxSummaryLength = 4000
@@ -56,4 +60,9 @@ func msToDuration(t float64) *duration.Duration {
 // ensureLeadingDoubleSlash ensures that the path starts with "//".
 func ensureLeadingDoubleSlash(path string) string {
 	return "//" + strings.TrimLeft(path, "/")
+}
+
+// normalizePath converts the artifact path to the canonical form.
+func normalizePath(p string) string {
+	return path.Clean(strings.ReplaceAll(p, "\\", "/"))
 }

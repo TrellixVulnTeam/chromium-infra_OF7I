@@ -11,10 +11,12 @@ import (
 	"os/exec"
 
 	"github.com/maruel/subcommands"
+	"google.golang.org/grpc/metadata"
 
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/system/exitcode"
 	"go.chromium.org/luci/common/system/signals"
 	"go.chromium.org/luci/grpc/prpc"
 	"go.chromium.org/luci/lucictx"
@@ -36,6 +38,8 @@ type baseRun struct {
 	sinkCtx *lucictx.ResultSink
 	sinkC   sinkpb.SinkClient
 }
+
+type converter func(ctx context.Context) ([]*sinkpb.TestResult, error)
 
 func (r *baseRun) RegisterGlobalFlags() {
 	r.Flags.StringVar(&r.artifactDir, "artifact-directory", "", text.Doc(`
@@ -101,4 +105,31 @@ func (r *baseRun) done(err error) int {
 		return ExitCodeCommandFailure
 	}
 	return 0
+}
+
+func (r *baseRun) run(ctx context.Context, args []string, f converter) (ret int) {
+	if err := r.validate(); err != nil {
+		return r.done(err)
+	}
+
+	if err := r.initSinkClient(ctx); err != nil {
+		return r.done(err)
+	}
+
+	err := r.runTestCmd(ctx, args)
+	ec, ok := exitcode.Get(err)
+	if !ok {
+		return r.done(errors.Annotate(err, "test command failed").Err())
+	}
+
+	trs, err := f(ctx)
+	if err != nil {
+		return r.done(err)
+	}
+
+	ctx = metadata.AppendToOutgoingContext(ctx, "Authorization", "ResultSink "+r.sinkCtx.AuthToken)
+	if _, err := r.sinkC.ReportTestResults(ctx, &sinkpb.ReportTestResultsRequest{TestResults: trs}); err != nil {
+		return r.done(err)
+	}
+	return ec
 }

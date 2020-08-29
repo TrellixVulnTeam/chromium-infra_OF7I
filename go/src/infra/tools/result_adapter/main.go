@@ -31,8 +31,7 @@ func main() {
 		},
 		Commands: []*subcommands.Command{
 			cmdGtest(),
-			// TODO(crbug.com/1108016): add cmdJson.
-			// cmdJson(),
+			cmdJSON(),
 
 			{}, // a separator
 			subcommands.CmdHelp,
