@@ -53,8 +53,8 @@ var (
 	VMTitle             = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "State", "Description", "UpdateTime"}
 	VMFullTitle         = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "Description", "UpdateTime"}
 	RackTitle           = []string{"Rack Name", "Zone", "KVMs", "Switches", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "VMs", "Description", "UpdateTime"}
-	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "State", "VM capacity", "VMs", "Description", "UpdateTime"}
+	MachineLSETitle     = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "Description", "UpdateTime"}
+	MachineLSETFullitle = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -926,19 +926,24 @@ func PrintChromePlatformsJSON(msleps []*ufspb.ChromePlatform, emit bool) {
 }
 
 // PrintMachineLSEsJSON prints the machinelse details in json format.
-func PrintMachineLSEsJSON(machinelses []*ufspb.MachineLSE, emit bool) {
-	len := len(machinelses) - 1
+func PrintMachineLSEsJSON(res []proto.Message, emit bool) {
+	machinelses := make([]*ufspb.MachineLSE, len(res))
+	for i, r := range res {
+		machinelses[i] = r.(*ufspb.MachineLSE)
+	}
+	fmt.Print("[")
 	for i, m := range machinelses {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(machinelses)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
-func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) []string {
+func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(lse.GetUpdateTime()); err == nil {
 		ts = t.Format(timeFormat)
@@ -947,35 +952,41 @@ func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhc
 		ufsUtil.RemovePrefix(lse.GetName()),
 		lse.GetChromeBrowserMachineLse().GetOsVersion().GetValue(),
 		lse.GetManufacturer(),
-		machine.GetName(),
+		strSlicesToStr(lse.GetMachines()),
 		lse.GetZone(),
 		lse.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
 		lse.GetRack(),
 		lse.GetNic(),
 		dhcp.GetIp(),
 		dhcp.GetVlan(),
+		dhcp.GetMacAddress(),
 		lse.GetResourceState().String(),
 		fmt.Sprintf("%d", lse.GetChromeBrowserMachineLse().GetVmCapacity()),
-		strSlicesToStr(ufsAPI.ParseResources(lse.GetChromeBrowserMachineLse().GetVms(), "Name")),
 		lse.GetDescription(),
 		ts,
 	}
 }
 
 // PrintMachineLSEFull prints the full info for a host
-func PrintMachineLSEFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
+func PrintMachineLSEFull(entities []*ufspb.MachineLSE, dhcps map[string]*ufspb.DHCPConfig) {
 	defer tw.Flush()
-	var out string
-	for _, s := range machineLSEFullOutputStrs(lse, machine, dhcp) {
-		out += fmt.Sprintf("%s\t", s)
+	for i := range entities {
+		var out string
+		for _, s := range machineLSEFullOutputStrs(entities[i], dhcps[entities[i].GetName()]) {
+			out += fmt.Sprintf("%s\t", s)
+		}
+		fmt.Fprintln(tw, out)
 	}
-	fmt.Fprintln(tw, out)
 }
 
 // PrintMachineLSEs prints the all machinelses in table form.
-func PrintMachineLSEs(machinelses []*ufspb.MachineLSE, keysOnly bool) {
+func PrintMachineLSEs(res []proto.Message, keysOnly bool) {
+	entities := make([]*ufspb.MachineLSE, len(res))
+	for i, r := range res {
+		entities[i] = r.(*ufspb.MachineLSE)
+	}
 	defer tw.Flush()
-	for _, m := range machinelses {
+	for _, m := range entities {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		printMachineLSE(m, keysOnly)
 	}
@@ -1004,7 +1015,6 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 		m.GetNic(),
 		m.GetResourceState().String(),
 		fmt.Sprintf("%d", m.GetChromeBrowserMachineLse().GetVmCapacity()),
-		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserMachineLse().GetVms(), "Name")),
 		m.GetDescription(),
 		ts,
 	}

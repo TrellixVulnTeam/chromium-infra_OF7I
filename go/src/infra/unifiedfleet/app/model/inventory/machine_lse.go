@@ -42,6 +42,7 @@ type MachineLSEEntity struct {
 	State                 string   `gae:"state"`
 	OS                    []string `gae:"os"`
 	VirtualDatacenter     string   `gae:"virtualdatacenter"`
+	Nic                   string   `gae:"nic"`
 	// ufspb.MachineLSE cannot be directly used as it contains pointer.
 	MachineLSE []byte `gae:",noindex"`
 }
@@ -80,6 +81,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		State:                 p.GetResourceState().String(),
 		OS:                    ufsds.GetOSIndex(p.GetChromeBrowserMachineLse().GetOsVersion().GetValue()),
 		VirtualDatacenter:     p.GetChromeBrowserMachineLse().GetVirtualDatacenter(),
+		Nic:                   p.GetNic(),
 		MachineLSE:            machineLSE,
 	}, nil
 }
@@ -133,6 +135,28 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 		return pm.(*ufspb.MachineLSE), err
 	}
 	return nil, err
+}
+
+func getLSEID(pm proto.Message) string {
+	p := pm.(*ufspb.MachineLSE)
+	return p.GetName()
+}
+
+// BatchGetMachineLSEs returns a batch of machine lses from datastore.
+func BatchGetMachineLSEs(ctx context.Context, ids []string) ([]*ufspb.MachineLSE, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.MachineLSE{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newMachineLSEEntity, getLSEID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.MachineLSE, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.MachineLSE)
+	}
+	return res, nil
 }
 
 // ListMachineLSEs lists the machine lses
@@ -322,8 +346,10 @@ func GetMachineLSEIndexedFieldName(input string) (string, error) {
 		field = "os"
 	case util.VirtualDatacenterFilterName:
 		field = "virtualdatacenter"
+	case util.NicFilterName:
+		field = "nic"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are machine/machineprototype/rpm/vlan/servo/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for host are nic/machine/machineprototype/rpm/vlan/servo/zone/rack/switch/man/free/tag/state/os/vdc(virtualdatacenter)", input)
 	}
 	return field, nil
 }

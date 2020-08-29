@@ -356,6 +356,16 @@ func GetMachineLSE(ctx context.Context, id string) (*ufspb.MachineLSE, error) {
 	return lse, nil
 }
 
+// BatchGetMachineLSEs returns a batch of machine lses
+func BatchGetMachineLSEs(ctx context.Context, ids []string) ([]*ufspb.MachineLSE, error) {
+	lses, err := inventory.BatchGetMachineLSEs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	// Not set vms to save time
+	return lses, nil
+}
+
 // ListMachineLSEs lists the machinelses
 func ListMachineLSEs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.MachineLSE, string, error) {
 	var filterMap map[string][]interface{}

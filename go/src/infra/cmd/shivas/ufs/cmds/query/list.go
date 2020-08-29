@@ -10,7 +10,6 @@ import (
 
 	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
-	"infra/cmd/shivas/ufs/subcmds/host"
 	"infra/cmd/shivas/ufs/subcmds/machine"
 	"infra/cmd/shivas/ufs/subcmds/machineprototype"
 	"infra/cmd/shivas/ufs/subcmds/nic"
@@ -55,7 +54,6 @@ func (c listApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
 		machine.ListMachineCmd,
-		host.ListHostCmd,
 		rpm.ListRPMCmd,
 		switches.ListSwitchCmd,
 		drac.ListDracCmd,

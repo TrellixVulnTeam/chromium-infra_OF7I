@@ -33,10 +33,10 @@ func PrintTSVDracFull(drac *ufspb.Drac, dhcp *ufspb.DHCPConfig) {
 }
 
 // PrintTSVHostFull prints the full related msg for host in tsv mode
-func PrintTSVHostFull(lse *ufspb.MachineLSE, machine *ufspb.Machine, dhcp *ufspb.DHCPConfig) {
+func PrintTSVHostFull(lse *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) {
 	csw := NewCSVWriter()
 	defer csw.Flush()
-	csw.Write(machineLSEFullOutputStrs(lse, machine, dhcp))
+	csw.Write(machineLSEFullOutputStrs(lse, dhcp))
 }
 
 // PrintTSVKVMFull prints the full related msg for kvm in tsv mode
@@ -148,11 +148,7 @@ func PrintTSVRPMs(res []*ufspb.RPM, keysOnly bool) {
 }
 
 // PrintTSVMachineLSEs prints the tsv format of machine lses
-func PrintTSVMachineLSEs(res []*ufspb.MachineLSE, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVMachineLSEs(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, machineLSEOutputStrs)
 }
 

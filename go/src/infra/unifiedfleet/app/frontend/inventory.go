@@ -132,6 +132,24 @@ func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *ufsAPI.GetMac
 	return machineLSE, err
 }
 
+// BatchGetMachineLSEs gets a batch of machineLSE information from database.
+func (fs *FleetServerImpl) BatchGetMachineLSEs(ctx context.Context, req *ufsAPI.BatchGetMachineLSEsRequest) (rsp *ufsAPI.BatchGetMachineLSEsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	lses, err := controller.BatchGetMachineLSEs(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, lse := range lses {
+		lse.Name = util.AddPrefix(util.MachineLSECollection, lse.Name)
+	}
+	return &ufsAPI.BatchGetMachineLSEsResponse{
+		MachineLses: lses,
+	}, nil
+}
+
 // ListMachineLSEs list the machineLSEs information from database.
 func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *ufsAPI.ListMachineLSEsRequest) (rsp *ufsAPI.ListMachineLSEsResponse, err error) {
 	defer func() {

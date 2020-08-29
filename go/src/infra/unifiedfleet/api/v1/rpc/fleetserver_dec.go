@@ -1488,3 +1488,20 @@ func (s *DecoratedFleet) ListVMs(ctx context.Context, req *ListVMsRequest) (rsp 
 	}
 	return
 }
+
+func (s *DecoratedFleet) BatchGetMachineLSEs(ctx context.Context, req *BatchGetMachineLSEsRequest) (rsp *BatchGetMachineLSEsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetMachineLSEs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetMachineLSEs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetMachineLSEs", rsp, err)
+	}
+	return
+}

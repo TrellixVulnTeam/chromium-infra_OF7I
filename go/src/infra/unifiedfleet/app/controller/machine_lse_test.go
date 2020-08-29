@@ -1384,3 +1384,41 @@ func TestListMachineLSEs(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetMachineLSEs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetMachineLSEs", t, func() {
+		Convey("Batch get machine lses - happy path", func() {
+			lses := make([]*ufspb.MachineLSE, 4)
+			for i := 0; i < 4; i++ {
+				lse := &ufspb.MachineLSE{
+					Name: fmt.Sprintf("lse-batchGet-%d", i),
+				}
+				lses[i] = lse
+			}
+			_, err := inventory.BatchUpdateMachineLSEs(ctx, lses)
+			So(err, ShouldBeNil)
+			resp, err := inventory.BatchGetMachineLSEs(ctx, []string{"lse-batchGet-0", "lse-batchGet-1", "lse-batchGet-2", "lse-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, lses)
+		})
+		Convey("Batch get machine lses - missing id", func() {
+			resp, err := inventory.BatchGetMachineLSEs(ctx, []string{"lse-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "lse-batchGet-non-existing")
+		})
+		Convey("Batch get machine lses - empty input", func() {
+			resp, err := inventory.BatchGetMachineLSEs(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = inventory.BatchGetMachineLSEs(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

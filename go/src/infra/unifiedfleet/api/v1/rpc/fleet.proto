@@ -284,6 +284,9 @@ service Fleet {
 
   // List gets all the machineLSEs
   rpc ListVMs(ListVMsRequest) returns (ListVMsResponse);
+
+  // BatchGetMachineLSEs retrieves a batch of the machineLSE
+  rpc BatchGetMachineLSEs(BatchGetMachineLSEsRequest) returns (BatchGetMachineLSEsResponse);
 }
 
 message CreateVMRequest {
@@ -1535,4 +1538,17 @@ message BatchGetDHCPConfigsRequest {
 message BatchGetDHCPConfigsResponse {
   // The KVMs from datastore.
   repeated proto.DHCPConfig dhcp_configs = 1;
+}
+
+message BatchGetMachineLSEsRequest {
+  // The parent resource shared by all machine lses being retrieved.
+  string parent = 1;
+  // The names of the machine lses to retrieve.
+  // Format: machinelses/{name}
+  repeated string names = 2;
+}
+
+message BatchGetMachineLSEsResponse {
+  // The Machine lses from datastore.
+  repeated proto.MachineLSE machine_lses = 1;
 }

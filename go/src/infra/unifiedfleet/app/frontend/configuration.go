@@ -194,9 +194,11 @@ func (fs *FleetServerImpl) ImportChromePlatforms(ctx context.Context, req *ufsAP
 		cfgInterface := fs.newCfgInterface(ctx)
 		fetchedConfigs, err := cfgInterface.GetConfig(ctx, luciconfig.ServiceSet(configSource.ConfigServiceName), configSource.FileName, false)
 		if err != nil {
+			logging.Debugf(ctx, "Fail to fetch configs: %s", err.Error())
 			return nil, configServiceFailureStatus.Err()
 		}
 		if err := luciproto.UnmarshalTextML(fetchedConfigs.Content, oldP); err != nil {
+			logging.Debugf(ctx, "Fail to unmarshal configs: %s", err.Error())
 			return nil, invalidConfigFileContentStatus.Err()
 		}
 	}
