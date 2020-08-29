@@ -180,8 +180,6 @@ service Fleet {
   // Get retrieves the details of the KVM
   rpc GetKVM(GetKVMRequest) returns (proto.KVM);
 
-  rpc BatchGetKVMs(BatchGetKVMsRequest) returns (BatchGetKVMsResponse);
-
   // List gets all the KVMs
   rpc ListKVMs(ListKVMsRequest) returns (ListKVMsResponse);
 
@@ -267,9 +265,6 @@ service Fleet {
   // GetDHCPConfig retrieves a dhcp record.
   rpc GetDHCPConfig(GetDHCPConfigRequest) returns (proto.DHCPConfig);
 
-  // BatchGetDHCPConfigs retrieves a batch of dhcp records.
-  rpc BatchGetDHCPConfigs(BatchGetDHCPConfigsRequest) returns (BatchGetDHCPConfigsResponse);
-
   // CreateVM creates a new VM
   rpc CreateVM(CreateVMRequest) returns (proto.VM);
 
@@ -285,8 +280,47 @@ service Fleet {
   // List gets all the machineLSEs
   rpc ListVMs(ListVMsRequest) returns (ListVMsResponse);
 
-  // BatchGetMachineLSEs retrieves a batch of the machineLSE
+  // BatchGetKVMs retrieves a batch of kvms 
+  rpc BatchGetKVMs(BatchGetKVMsRequest) returns (BatchGetKVMsResponse);
+
+  // BatchGetDHCPConfigs retrieves a batch of dhcp records.
+  rpc BatchGetDHCPConfigs(BatchGetDHCPConfigsRequest) returns (BatchGetDHCPConfigsResponse);
+
+  // BatchGetMachineLSEs retrieves a batch of machineLSEs
   rpc BatchGetMachineLSEs(BatchGetMachineLSEsRequest) returns (BatchGetMachineLSEsResponse);
+
+  // BatchGetMachines retrieves a batch of machines
+  rpc BatchGetMachines(BatchGetMachinesRequest) returns (BatchGetMachinesResponse);
+
+  // BatchGetSwitches retrieves a batch of switches
+  rpc BatchGetSwitches(BatchGetSwitchesRequest) returns (BatchGetSwitchesResponse);
+
+  // BatchGetRPMs retrieves a batch of rpms
+  rpc BatchGetRPMs(BatchGetRPMsRequest) returns (BatchGetRPMsResponse);
+
+  // BatchGetDracs retrieves a batch of dracs
+  rpc BatchGetDracs(BatchGetDracsRequest) returns (BatchGetDracsResponse);
+
+  // BatchGetNics retrieves a batch of nics
+  rpc BatchGetNics(BatchGetNicsRequest) returns (BatchGetNicsResponse);
+
+  // BatchGetVMs retrieves a batch of vms
+  rpc BatchGetVMs(BatchGetVMsRequest) returns (BatchGetVMsResponse);
+
+  // BatchGetVlans retrieves a batch of vlans
+  rpc BatchGetVlans(BatchGetVlansRequest) returns (BatchGetVlansResponse);
+
+  // BatchGetRacks retrieves a batch of racks
+  rpc BatchGetRacks(BatchGetRacksRequest) returns (BatchGetRacksResponse);
+
+  // BatchGetChromePlatforms retrieves a batch of chrome platforms
+  rpc BatchGetChromePlatforms(BatchGetChromePlatformsRequest) returns (BatchGetChromePlatformsResponse);
+
+  // BatchGetMachineLSEPrototypes retrieves a batch of machine lse prototypes
+  rpc BatchGetMachineLSEPrototypes(BatchGetMachineLSEPrototypesRequest) returns (BatchGetMachineLSEPrototypesResponse);
+
+  // BatchGetRackLSEPrototypes retrieves a batch of rack lse prototypes
+  rpc BatchGetRackLSEPrototypes(BatchGetRackLSEPrototypesRequest) returns (BatchGetRackLSEPrototypesResponse);
 }
 
 message CreateVMRequest {
@@ -1551,4 +1585,148 @@ message BatchGetMachineLSEsRequest {
 message BatchGetMachineLSEsResponse {
   // The Machine lses from datastore.
   repeated proto.MachineLSE machine_lses = 1;
+}
+
+message BatchGetMachinesRequest {
+  // The parent resource shared by all machines being retrieved.
+  string parent = 1;
+  // The names of the machines to retrieve.
+  // Format: machines/{name}
+  repeated string names = 2;
+}
+
+message BatchGetMachinesResponse {
+  // The machines from datastore.
+  repeated proto.Machine machines = 1;
+}
+
+message BatchGetSwitchesRequest {
+  // The parent resource shared by all switches being retrieved.
+  string parent = 1;
+  // The names of the switches to retrieve.
+  // Format: switches/{name}
+  repeated string names = 2;
+}
+
+message BatchGetSwitchesResponse {
+  // The switches from datastore.
+  repeated proto.Switch switches = 1;
+}
+
+message BatchGetRPMsRequest {
+  // The parent resource shared by all rpms being retrieved.
+  string parent = 1;
+  // The names of the rpms to retrieve.
+  // Format: rpms/{name}
+  repeated string names = 2;
+}
+
+message BatchGetRPMsResponse {
+  // The rpms from datastore.
+  repeated proto.RPM rpms = 1;
+}
+
+
+message BatchGetDracsRequest {
+  // The parent resource shared by all dracs being retrieved.
+  string parent = 1;
+  // The names of the dracs to retrieve.
+  // Format: dracs/{name}
+  repeated string names = 2;
+}
+
+message BatchGetDracsResponse {
+  // The dracs from datastore.
+  repeated proto.Drac dracs = 1;
+}
+
+message BatchGetNicsRequest {
+  // The parent resource shared by all nics being retrieved.
+  string parent = 1;
+  // The names of the nics to retrieve.
+  // Format: nics/{name}
+  repeated string names = 2;
+}
+
+message BatchGetNicsResponse {
+  // The nics from datastore.
+  repeated proto.Nic nics = 1;
+}
+
+message BatchGetVMsRequest {
+  // The parent resource shared by all vms being retrieved.
+  string parent = 1;
+  // The names of the vms to retrieve.
+  // Format: vms/{name}
+  repeated string names = 2;
+}
+
+message BatchGetVMsResponse {
+  // The vms from datastore.
+  repeated proto.VM vms = 1;
+}
+
+message BatchGetVlansRequest {
+  // The parent resource shared by all vlans being retrieved.
+  string parent = 1;
+  // The names of the vlans to retrieve.
+  // Format: vlans/{name}
+  repeated string names = 2;
+}
+
+message BatchGetVlansResponse {
+  // The vlans from datastore.
+  repeated proto.Vlan vlans = 1;
+}
+
+message BatchGetRacksRequest {
+  // The parent resource shared by all racks being retrieved.
+  string parent = 1;
+  // The names of the racks to retrieve.
+  // Format: racks/{name}
+  repeated string names = 2;
+}
+
+message BatchGetRacksResponse {
+  // The racks from datastore.
+  repeated proto.Rack racks = 1;
+}
+
+message BatchGetChromePlatformsRequest {
+  // The parent resource shared by all chrome platforms being retrieved.
+  string parent = 1;
+  // The names of the chrome platforms to retrieve.
+  // Format: chromeplatforms/{name}
+  repeated string names = 2;
+}
+
+message BatchGetChromePlatformsResponse {
+  // The chrome platforms from datastore.
+  repeated proto.ChromePlatform chrome_platforms = 1;
+}
+
+message BatchGetMachineLSEPrototypesRequest {
+  // The parent resource shared by all machine lse prototypes being retrieved.
+  string parent = 1;
+  // The names of the machine lse prototypes to retrieve.
+  // Format: machineLSEPrototypes/{name}
+  repeated string names = 2;
+}
+
+message BatchGetMachineLSEPrototypesResponse {
+  // The machine lse prototypes from datastore.
+  repeated proto.MachineLSEPrototype machine_lse_prototypes = 1;
+}
+
+message BatchGetRackLSEPrototypesRequest {
+  // The parent resource shared by all rack lse prototypes being retrieved.
+  string parent = 1;
+  // The names of the rack lse prototypes to retrieve.
+  // Format: rackLSEPrototypes/{name}
+  repeated string names = 2;
+}
+
+message BatchGetRackLSEPrototypesResponse {
+  // The rack lse prototypes from datastore.
+  repeated proto.RackLSEPrototype rack_lse_prototypes = 1;
 }

@@ -90,6 +90,28 @@ func GetNic(ctx context.Context, id string) (*ufspb.Nic, error) {
 	return nil, err
 }
 
+func getNicID(pm proto.Message) string {
+	p := pm.(*ufspb.Nic)
+	return p.GetName()
+}
+
+// BatchGetNics returns a batch of nics from datastore.
+func BatchGetNics(ctx context.Context, ids []string) ([]*ufspb.Nic, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.Nic{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newNicEntity, getNicID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.Nic, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.Nic)
+	}
+	return res, nil
+}
+
 // QueryNicByPropertyName query's Nic Entity in the datastore
 //
 // If keysOnly is true, then only key field is populated in returned nics

@@ -894,23 +894,6 @@ func (s *DecoratedFleet) GetKVM(ctx context.Context, req *GetKVMRequest) (rsp *p
 	return
 }
 
-func (s *DecoratedFleet) BatchGetKVMs(ctx context.Context, req *BatchGetKVMsRequest) (rsp *BatchGetKVMsResponse, err error) {
-	if s.Prelude != nil {
-		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "BatchGetKVMs", req)
-		if err == nil {
-			ctx = newCtx
-		}
-	}
-	if err == nil {
-		rsp, err = s.Service.BatchGetKVMs(ctx, req)
-	}
-	if s.Postlude != nil {
-		err = s.Postlude(ctx, "BatchGetKVMs", rsp, err)
-	}
-	return
-}
-
 func (s *DecoratedFleet) ListKVMs(ctx context.Context, req *ListKVMsRequest) (rsp *ListKVMsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
@@ -1387,23 +1370,6 @@ func (s *DecoratedFleet) GetDHCPConfig(ctx context.Context, req *GetDHCPConfigRe
 	return
 }
 
-func (s *DecoratedFleet) BatchGetDHCPConfigs(ctx context.Context, req *BatchGetDHCPConfigsRequest) (rsp *BatchGetDHCPConfigsResponse, err error) {
-	if s.Prelude != nil {
-		var newCtx context.Context
-		newCtx, err = s.Prelude(ctx, "BatchGetDHCPConfigs", req)
-		if err == nil {
-			ctx = newCtx
-		}
-	}
-	if err == nil {
-		rsp, err = s.Service.BatchGetDHCPConfigs(ctx, req)
-	}
-	if s.Postlude != nil {
-		err = s.Postlude(ctx, "BatchGetDHCPConfigs", rsp, err)
-	}
-	return
-}
-
 func (s *DecoratedFleet) CreateVM(ctx context.Context, req *CreateVMRequest) (rsp *proto1.VM, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
@@ -1489,6 +1455,40 @@ func (s *DecoratedFleet) ListVMs(ctx context.Context, req *ListVMsRequest) (rsp 
 	return
 }
 
+func (s *DecoratedFleet) BatchGetKVMs(ctx context.Context, req *BatchGetKVMsRequest) (rsp *BatchGetKVMsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetKVMs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetKVMs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetKVMs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetDHCPConfigs(ctx context.Context, req *BatchGetDHCPConfigsRequest) (rsp *BatchGetDHCPConfigsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetDHCPConfigs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetDHCPConfigs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetDHCPConfigs", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) BatchGetMachineLSEs(ctx context.Context, req *BatchGetMachineLSEsRequest) (rsp *BatchGetMachineLSEsResponse, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context
@@ -1502,6 +1502,193 @@ func (s *DecoratedFleet) BatchGetMachineLSEs(ctx context.Context, req *BatchGetM
 	}
 	if s.Postlude != nil {
 		err = s.Postlude(ctx, "BatchGetMachineLSEs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetMachines(ctx context.Context, req *BatchGetMachinesRequest) (rsp *BatchGetMachinesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetMachines", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetMachines(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetMachines", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetSwitches(ctx context.Context, req *BatchGetSwitchesRequest) (rsp *BatchGetSwitchesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetSwitches", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetSwitches(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetSwitches", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetRPMs(ctx context.Context, req *BatchGetRPMsRequest) (rsp *BatchGetRPMsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetRPMs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetRPMs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetRPMs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetDracs(ctx context.Context, req *BatchGetDracsRequest) (rsp *BatchGetDracsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetDracs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetDracs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetDracs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetNics(ctx context.Context, req *BatchGetNicsRequest) (rsp *BatchGetNicsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetNics", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetNics(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetNics", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetVMs(ctx context.Context, req *BatchGetVMsRequest) (rsp *BatchGetVMsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetVMs", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetVMs(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetVMs", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetVlans(ctx context.Context, req *BatchGetVlansRequest) (rsp *BatchGetVlansResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetVlans", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetVlans(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetVlans", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetRacks(ctx context.Context, req *BatchGetRacksRequest) (rsp *BatchGetRacksResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetRacks", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetRacks(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetRacks", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetChromePlatforms(ctx context.Context, req *BatchGetChromePlatformsRequest) (rsp *BatchGetChromePlatformsResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetChromePlatforms", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetChromePlatforms(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetChromePlatforms", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetMachineLSEPrototypes(ctx context.Context, req *BatchGetMachineLSEPrototypesRequest) (rsp *BatchGetMachineLSEPrototypesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetMachineLSEPrototypes", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetMachineLSEPrototypes(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetMachineLSEPrototypes", rsp, err)
+	}
+	return
+}
+
+func (s *DecoratedFleet) BatchGetRackLSEPrototypes(ctx context.Context, req *BatchGetRackLSEPrototypesRequest) (rsp *BatchGetRackLSEPrototypesResponse, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "BatchGetRackLSEPrototypes", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.BatchGetRackLSEPrototypes(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "BatchGetRackLSEPrototypes", rsp, err)
 	}
 	return
 }

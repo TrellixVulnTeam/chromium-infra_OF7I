@@ -176,6 +176,11 @@ func GetNic(ctx context.Context, id string) (*ufspb.Nic, error) {
 	return registration.GetNic(ctx, id)
 }
 
+// BatchGetNics returns a batch of nics from datastore.
+func BatchGetNics(ctx context.Context, ids []string) ([]*ufspb.Nic, error) {
+	return registration.BatchGetNics(ctx, ids)
+}
+
 // ListNics lists the nics
 func ListNics(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Nic, string, error) {
 	var filterMap map[string][]interface{}

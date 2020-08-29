@@ -302,3 +302,40 @@ func TestDeleteVlan(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetVlans(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetVlans", t, func() {
+		Convey("Batch get vlans - happy path", func() {
+			entities := make([]*ufspb.Vlan, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.Vlan{
+					Name: fmt.Sprintf("vlan-batchGet-%d", i),
+				}
+			}
+			_, err := configuration.BatchUpdateVlans(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := configuration.BatchGetVlans(ctx, []string{"vlan-batchGet-0", "vlan-batchGet-1", "vlan-batchGet-2", "vlan-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get vlans  - missing id", func() {
+			resp, err := configuration.BatchGetVlans(ctx, []string{"vlan-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "vlan-batchGet-non-existing")
+		})
+		Convey("Batch get vlans  - empty input", func() {
+			resp, err := configuration.BatchGetVlans(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = configuration.BatchGetVlans(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

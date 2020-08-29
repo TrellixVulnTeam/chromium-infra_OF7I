@@ -118,6 +118,28 @@ func GetRack(ctx context.Context, id string) (*ufspb.Rack, error) {
 	return nil, err
 }
 
+func getRackID(pm proto.Message) string {
+	p := pm.(*ufspb.Rack)
+	return p.GetName()
+}
+
+// BatchGetRacks returns a batch of racks from datastore.
+func BatchGetRacks(ctx context.Context, ids []string) ([]*ufspb.Rack, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.Rack{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newRackEntity, getRackID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.Rack, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.Rack)
+	}
+	return res, nil
+}
+
 // ListRacks lists the racks
 // Does a query over Rack entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.

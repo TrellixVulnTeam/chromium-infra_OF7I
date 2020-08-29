@@ -94,6 +94,28 @@ func GetChromePlatform(ctx context.Context, id string) (*ufspb.ChromePlatform, e
 	return nil, err
 }
 
+func getChromePlatformID(pm proto.Message) string {
+	p := pm.(*ufspb.ChromePlatform)
+	return p.GetName()
+}
+
+// BatchGetChromePlatforms returns a batch of chrome platforms from datastore.
+func BatchGetChromePlatforms(ctx context.Context, ids []string) ([]*ufspb.ChromePlatform, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.ChromePlatform{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newChromePlatformEntity, getChromePlatformID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.ChromePlatform, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.ChromePlatform)
+	}
+	return res, nil
+}
+
 // ListChromePlatforms lists the chromePlatforms
 // Does a query over ChromePlatform entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.

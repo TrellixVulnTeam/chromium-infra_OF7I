@@ -329,6 +329,11 @@ func GetMachine(ctx context.Context, id string) (*ufspb.Machine, error) {
 	return machine, nil
 }
 
+// BatchGetMachines returns a batch of machines from datastore.
+func BatchGetMachines(ctx context.Context, ids []string) ([]*ufspb.Machine, error) {
+	return registration.BatchGetMachines(ctx, ids)
+}
+
 // ListMachines lists the machines
 func ListMachines(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Machine, string, error) {
 	var filterMap map[string][]interface{}

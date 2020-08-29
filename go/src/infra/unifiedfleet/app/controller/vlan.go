@@ -126,6 +126,11 @@ func GetVlan(ctx context.Context, id string) (*ufspb.Vlan, error) {
 	return configuration.GetVlan(ctx, id)
 }
 
+// BatchGetVlans returns a batch of vlans from datastore.
+func BatchGetVlans(ctx context.Context, ids []string) ([]*ufspb.Vlan, error) {
+	return configuration.BatchGetVlans(ctx, ids)
+}
+
 // ListVlans lists the vlans
 func ListVlans(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Vlan, string, error) {
 	var filterMap map[string][]interface{}

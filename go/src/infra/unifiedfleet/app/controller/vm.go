@@ -282,6 +282,11 @@ func GetVM(ctx context.Context, id string) (*ufspb.VM, error) {
 	return inventory.GetVM(ctx, id)
 }
 
+// BatchGetVMs returns a batch of vms from datastore.
+func BatchGetVMs(ctx context.Context, ids []string) ([]*ufspb.VM, error) {
+	return inventory.BatchGetVMs(ctx, ids)
+}
+
 func getVMHistoryClient(m *ufspb.VM) *HistoryClient {
 	return &HistoryClient{
 		stUdt: &stateUpdater{

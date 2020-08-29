@@ -150,6 +150,11 @@ func GetSwitch(ctx context.Context, id string) (*ufspb.Switch, error) {
 	return registration.GetSwitch(ctx, id)
 }
 
+// BatchGetSwitches returns a batch of switches from datastore.
+func BatchGetSwitches(ctx context.Context, ids []string) ([]*ufspb.Switch, error) {
+	return registration.BatchGetSwitches(ctx, ids)
+}
+
 // ListSwitches lists the switches
 func ListSwitches(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Switch, string, error) {
 	var filterMap map[string][]interface{}

@@ -96,6 +96,28 @@ func GetVlan(ctx context.Context, id string) (*ufspb.Vlan, error) {
 	return nil, err
 }
 
+func getVlanID(pm proto.Message) string {
+	p := pm.(*ufspb.Vlan)
+	return p.GetName()
+}
+
+// BatchGetVlans returns a batch of vlans from datastore.
+func BatchGetVlans(ctx context.Context, ids []string) ([]*ufspb.Vlan, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.Vlan{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newVlanEntity, getVlanID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.Vlan, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.Vlan)
+	}
+	return res, nil
+}
+
 // ListVlans lists the vlans
 //
 // Does a query over Vlan entities. Returns up to pageSize entities, plus non-nil cursor (if

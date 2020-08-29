@@ -595,3 +595,40 @@ func TestListMachines(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetMachines(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetMachines", t, func() {
+		Convey("Batch get machine - happy path", func() {
+			entities := make([]*ufspb.Machine, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.Machine{
+					Name: fmt.Sprintf("machine-batchGet-%d", i),
+				}
+			}
+			_, err := registration.BatchUpdateMachines(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := registration.BatchGetMachines(ctx, []string{"machine-batchGet-0", "machine-batchGet-1", "machine-batchGet-2", "machine-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get machines  - missing id", func() {
+			resp, err := registration.BatchGetMachines(ctx, []string{"machine-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "machine-batchGet-non-existing")
+		})
+		Convey("Batch get machines  - empty input", func() {
+			resp, err := registration.BatchGetMachines(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = registration.BatchGetMachines(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

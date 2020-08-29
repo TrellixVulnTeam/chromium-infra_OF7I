@@ -441,3 +441,40 @@ func TestListRacks(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetRacks(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetRacks", t, func() {
+		Convey("Batch get racks - happy path", func() {
+			entities := make([]*ufspb.Rack, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.Rack{
+					Name: fmt.Sprintf("rack-batchGet-%d", i),
+				}
+			}
+			_, err := registration.BatchUpdateRacks(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := registration.BatchGetRacks(ctx, []string{"rack-batchGet-0", "rack-batchGet-1", "rack-batchGet-2", "rack-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get racks  - missing id", func() {
+			resp, err := registration.BatchGetRacks(ctx, []string{"rack-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "rack-batchGet-non-existing")
+		})
+		Convey("Batch get racks  - empty input", func() {
+			resp, err := registration.BatchGetRacks(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = registration.BatchGetRacks(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

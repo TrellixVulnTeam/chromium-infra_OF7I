@@ -82,6 +82,28 @@ func GetRPM(ctx context.Context, id string) (*ufspb.RPM, error) {
 	return nil, err
 }
 
+func getRPMID(pm proto.Message) string {
+	p := pm.(*ufspb.RPM)
+	return p.GetName()
+}
+
+// BatchGetRPMs returns a batch of rpms from datastore.
+func BatchGetRPMs(ctx context.Context, ids []string) ([]*ufspb.RPM, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.RPM{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newRPMEntity, getRPMID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.RPM, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.RPM)
+	}
+	return res, nil
+}
+
 // QueryRPMByPropertyName query's RPM Entity in the datastore
 //
 // If keysOnly is true, then only key field is populated in returned rpms

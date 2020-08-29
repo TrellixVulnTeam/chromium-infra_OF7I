@@ -109,6 +109,11 @@ func GetChromePlatform(ctx context.Context, id string) (*ufspb.ChromePlatform, e
 	return configuration.GetChromePlatform(ctx, id)
 }
 
+// BatchGetChromePlatforms returns a batch of chrome platforms from datastore.
+func BatchGetChromePlatforms(ctx context.Context, ids []string) ([]*ufspb.ChromePlatform, error) {
+	return configuration.BatchGetChromePlatforms(ctx, ids)
+}
+
 // ListChromePlatforms lists the chromeplatforms
 func ListChromePlatforms(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.ChromePlatform, string, error) {
 	var filterMap map[string][]interface{}

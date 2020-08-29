@@ -34,6 +34,11 @@ func GetRPM(ctx context.Context, id string) (*ufspb.RPM, error) {
 	return registration.GetRPM(ctx, id)
 }
 
+// BatchGetRPMs returns a batch of rpms from datastore.
+func BatchGetRPMs(ctx context.Context, ids []string) ([]*ufspb.RPM, error) {
+	return registration.BatchGetRPMs(ctx, ids)
+}
+
 // ListRPMs lists the rpms
 func ListRPMs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.RPM, string, error) {
 	var filterMap map[string][]interface{}

@@ -125,6 +125,28 @@ func GetMachine(ctx context.Context, id string) (*ufspb.Machine, error) {
 	return nil, err
 }
 
+func getMachineID(pm proto.Message) string {
+	p := pm.(*ufspb.Machine)
+	return p.GetName()
+}
+
+// BatchGetMachines returns a batch of machines from datastore.
+func BatchGetMachines(ctx context.Context, ids []string) ([]*ufspb.Machine, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.Machine{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newMachineEntity, getMachineID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.Machine, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.Machine)
+	}
+	return res, nil
+}
+
 // ListMachines lists the machines
 // Does a query over Machine entities. Returns up to pageSize entities, plus non-nil cursor (if
 // there are more results). pageSize must be positive.

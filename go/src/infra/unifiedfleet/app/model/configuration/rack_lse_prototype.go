@@ -68,6 +68,25 @@ func UpdateRackLSEPrototype(ctx context.Context, rackLSEPrototype *ufspb.RackLSE
 	return putRackLSEPrototype(ctx, rackLSEPrototype, true)
 }
 
+// BatchUpdateRackLSEPrototypes updates rackLSEPrototype in datastore.
+//
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateRackLSEPrototypes(ctx context.Context, prototypes []*ufspb.RackLSEPrototype) ([]*ufspb.RackLSEPrototype, error) {
+	protos := make([]proto.Message, len(prototypes))
+	updateTime := ptypes.TimestampNow()
+	for i, p := range prototypes {
+		p.UpdateTime = updateTime
+		protos[i] = p
+	}
+	_, err := ufsds.PutAll(ctx, protos, newRackLSEPrototypeEntity, true)
+	if err == nil {
+		return prototypes, err
+	}
+	return nil, err
+}
+
 // GetRackLSEPrototype returns rackLSEPrototype for the given id from datastore.
 func GetRackLSEPrototype(ctx context.Context, id string) (*ufspb.RackLSEPrototype, error) {
 	pm, err := ufsds.Get(ctx, &ufspb.RackLSEPrototype{Name: id}, newRackLSEPrototypeEntity)
@@ -75,6 +94,28 @@ func GetRackLSEPrototype(ctx context.Context, id string) (*ufspb.RackLSEPrototyp
 		return pm.(*ufspb.RackLSEPrototype), err
 	}
 	return nil, err
+}
+
+func getRackLSEPrototypeID(pm proto.Message) string {
+	p := pm.(*ufspb.RackLSEPrototype)
+	return p.GetName()
+}
+
+// BatchGetRackLSEPrototypes returns a batch of rack lse prototypes from datastore.
+func BatchGetRackLSEPrototypes(ctx context.Context, ids []string) ([]*ufspb.RackLSEPrototype, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.RackLSEPrototype{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newRackLSEPrototypeEntity, getRackLSEPrototypeID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.RackLSEPrototype, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.RackLSEPrototype)
+	}
+	return res, nil
 }
 
 // ListRackLSEPrototypes lists the rackLSEPrototypes

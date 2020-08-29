@@ -84,6 +84,28 @@ func GetSwitch(ctx context.Context, id string) (*ufspb.Switch, error) {
 	return nil, err
 }
 
+func getSwitchID(pm proto.Message) string {
+	p := pm.(*ufspb.Switch)
+	return p.GetName()
+}
+
+// BatchGetSwitches returns a batch of switches from datastore.
+func BatchGetSwitches(ctx context.Context, ids []string) ([]*ufspb.Switch, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.Switch{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newSwitchEntity, getSwitchID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.Switch, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.Switch)
+	}
+	return res, nil
+}
+
 // QuerySwitchByPropertyName query's Switch Entity in the datastore
 //
 // If keysOnly is true, then only key field is populated in returned switches

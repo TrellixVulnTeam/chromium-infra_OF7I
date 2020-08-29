@@ -548,6 +548,42 @@ func TestListVMs(t *testing.T) {
 		})
 	})
 }
+func TestBatchGetVMs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetVMs", t, func() {
+		Convey("Batch get vms - happy path", func() {
+			entities := make([]*ufspb.VM, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.VM{
+					Name: fmt.Sprintf("vm-batchGet-%d", i),
+				}
+			}
+			_, err := inventory.BatchUpdateVMs(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := inventory.BatchGetVMs(ctx, []string{"vm-batchGet-0", "vm-batchGet-1", "vm-batchGet-2", "vm-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get vms  - missing id", func() {
+			resp, err := inventory.BatchGetVMs(ctx, []string{"vm-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "vm-batchGet-non-existing")
+		})
+		Convey("Batch get vms  - empty input", func() {
+			resp, err := inventory.BatchGetVMs(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = inventory.BatchGetVMs(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}
 
 func setupTestVlan(ctx context.Context) {
 	vlan := &ufspb.Vlan{

@@ -123,6 +123,28 @@ func GetDrac(ctx context.Context, id string) (*ufspb.Drac, error) {
 	return nil, err
 }
 
+func getDracID(pm proto.Message) string {
+	p := pm.(*ufspb.Drac)
+	return p.GetName()
+}
+
+// BatchGetDracs returns a batch of dracs from datastore.
+func BatchGetDracs(ctx context.Context, ids []string) ([]*ufspb.Drac, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.Drac{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newDracEntity, getDracID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.Drac, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.Drac)
+	}
+	return res, nil
+}
+
 // ListDracs lists the dracs
 //
 // Does a query over Drac entities. Returns up to pageSize entities, plus non-nil cursor (if

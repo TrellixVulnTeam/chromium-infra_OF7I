@@ -236,6 +236,11 @@ func GetDrac(ctx context.Context, id string) (*ufspb.Drac, error) {
 	return registration.GetDrac(ctx, id)
 }
 
+// BatchGetDracs returns a batch of dracs from datastore.
+func BatchGetDracs(ctx context.Context, ids []string) ([]*ufspb.Drac, error) {
+	return registration.BatchGetDracs(ctx, ids)
+}
+
 // ListDracs lists the dracs
 func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Drac, string, error) {
 	var filterMap map[string][]interface{}

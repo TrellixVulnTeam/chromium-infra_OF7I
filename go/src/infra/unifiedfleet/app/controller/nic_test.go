@@ -548,3 +548,40 @@ func TestListNics(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetNics(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetNics", t, func() {
+		Convey("Batch get nics - happy path", func() {
+			entities := make([]*ufspb.Nic, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.Nic{
+					Name: fmt.Sprintf("nic-batchGet-%d", i),
+				}
+			}
+			_, err := registration.BatchUpdateNics(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := registration.BatchGetNics(ctx, []string{"nic-batchGet-0", "nic-batchGet-1", "nic-batchGet-2", "nic-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get nics  - missing id", func() {
+			resp, err := registration.BatchGetNics(ctx, []string{"nic-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "nic-batchGet-non-existing")
+		})
+		Convey("Batch get nics  - empty input", func() {
+			resp, err := registration.BatchGetNics(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = registration.BatchGetNics(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

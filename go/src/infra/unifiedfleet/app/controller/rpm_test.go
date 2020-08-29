@@ -124,3 +124,40 @@ func TestListRPMs(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetRPMs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetRPMs", t, func() {
+		Convey("Batch get rpms - happy path", func() {
+			entities := make([]*ufspb.RPM, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.RPM{
+					Name: fmt.Sprintf("rpm-batchGet-%d", i),
+				}
+			}
+			_, err := registration.BatchUpdateRPMs(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := registration.BatchGetRPMs(ctx, []string{"rpm-batchGet-0", "rpm-batchGet-1", "rpm-batchGet-2", "rpm-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get rpms  - missing id", func() {
+			resp, err := registration.BatchGetRPMs(ctx, []string{"rpm-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "rpm-batchGet-non-existing")
+		})
+		Convey("Batch get rpms  - empty input", func() {
+			resp, err := registration.BatchGetRPMs(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = registration.BatchGetRPMs(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

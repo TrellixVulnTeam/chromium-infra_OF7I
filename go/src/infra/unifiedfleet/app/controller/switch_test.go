@@ -346,3 +346,40 @@ func TestListSwitches(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetSwitches(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetSwitches", t, func() {
+		Convey("Batch get switches - happy path", func() {
+			entities := make([]*ufspb.Switch, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.Switch{
+					Name: fmt.Sprintf("switch-batchGet-%d", i),
+				}
+			}
+			_, err := registration.BatchUpdateSwitches(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := registration.BatchGetSwitches(ctx, []string{"switch-batchGet-0", "switch-batchGet-1", "switch-batchGet-2", "switch-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get switches  - missing id", func() {
+			resp, err := registration.BatchGetSwitches(ctx, []string{"switch-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "switch-batchGet-non-existing")
+		})
+		Convey("Batch get switches  - empty input", func() {
+			resp, err := registration.BatchGetSwitches(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = registration.BatchGetSwitches(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

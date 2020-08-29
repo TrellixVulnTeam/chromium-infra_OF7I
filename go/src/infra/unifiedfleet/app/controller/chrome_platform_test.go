@@ -165,3 +165,40 @@ func TestUpdateChromePlatforms(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetChromePlatforms(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetChromePlatforms", t, func() {
+		Convey("Batch get chrome platforms - happy path", func() {
+			platforms := make([]*ufspb.ChromePlatform, 4)
+			for i := 0; i < 4; i++ {
+				platforms[i] = &ufspb.ChromePlatform{
+					Name: fmt.Sprintf("platform-batchGet-%d", i),
+				}
+			}
+			_, err := configuration.BatchUpdateChromePlatforms(ctx, platforms)
+			So(err, ShouldBeNil)
+			resp, err := configuration.BatchGetChromePlatforms(ctx, []string{"platform-batchGet-0", "platform-batchGet-1", "platform-batchGet-2", "platform-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, platforms)
+		})
+		Convey("Batch get chrome platforms  - missing id", func() {
+			resp, err := configuration.BatchGetChromePlatforms(ctx, []string{"platform-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "platform-batchGet-non-existing")
+		})
+		Convey("Batch get chrome platforms  - empty input", func() {
+			resp, err := configuration.BatchGetChromePlatforms(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = configuration.BatchGetChromePlatforms(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

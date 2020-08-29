@@ -34,6 +34,11 @@ func GetRackLSEPrototype(ctx context.Context, id string) (*ufspb.RackLSEPrototyp
 	return configuration.GetRackLSEPrototype(ctx, id)
 }
 
+// BatchGetRackLSEPrototypes returns a batch of rack lse prototypes from datastore.
+func BatchGetRackLSEPrototypes(ctx context.Context, ids []string) ([]*ufspb.RackLSEPrototype, error) {
+	return configuration.BatchGetRackLSEPrototypes(ctx, ids)
+}
+
 // ListRackLSEPrototypes lists the racklseprototypes
 func ListRackLSEPrototypes(ctx context.Context, pageSize int32, pageToken string, filter string, keysOnly bool) ([]*ufspb.RackLSEPrototype, string, error) {
 	var filterMap map[string][]interface{}

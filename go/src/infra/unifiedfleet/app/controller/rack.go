@@ -260,6 +260,11 @@ func GetRack(ctx context.Context, id string) (*ufspb.Rack, error) {
 	return rack, nil
 }
 
+// BatchGetRacks returns a batch of racks from datastore.
+func BatchGetRacks(ctx context.Context, ids []string) ([]*ufspb.Rack, error) {
+	return registration.BatchGetRacks(ctx, ids)
+}
+
 // ListRacks lists the racks
 func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.Rack, string, error) {
 	var filterMap map[string][]interface{}

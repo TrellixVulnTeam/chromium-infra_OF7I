@@ -91,3 +91,40 @@ func TestDeleteRackLSEPrototype(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetRackLSEPrototypes(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetRackLSEPrototypes", t, func() {
+		Convey("Batch get rack lse prototypes - happy path", func() {
+			entities := make([]*ufspb.RackLSEPrototype, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.RackLSEPrototype{
+					Name: fmt.Sprintf("racklseprototype-batchGet-%d", i),
+				}
+			}
+			_, err := configuration.BatchUpdateRackLSEPrototypes(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := configuration.BatchGetRackLSEPrototypes(ctx, []string{"racklseprototype-batchGet-0", "racklseprototype-batchGet-1", "racklseprototype-batchGet-2", "racklseprototype-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get rack lse prototypes  - missing id", func() {
+			resp, err := configuration.BatchGetRackLSEPrototypes(ctx, []string{"racklseprototype-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "racklseprototype-batchGet-non-existing")
+		})
+		Convey("Batch get rack lse prototypes  - empty input", func() {
+			resp, err := configuration.BatchGetRackLSEPrototypes(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = configuration.BatchGetRackLSEPrototypes(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

@@ -34,6 +34,11 @@ func GetMachineLSEPrototype(ctx context.Context, id string) (*ufspb.MachineLSEPr
 	return configuration.GetMachineLSEPrototype(ctx, id)
 }
 
+// BatchGetMachineLSEPrototypes returns a batch of machine lse prototypes from datastore.
+func BatchGetMachineLSEPrototypes(ctx context.Context, ids []string) ([]*ufspb.MachineLSEPrototype, error) {
+	return configuration.BatchGetMachineLSEPrototypes(ctx, ids)
+}
+
 // ListMachineLSEPrototypes lists the machinelseprototypes
 func ListMachineLSEPrototypes(ctx context.Context, pageSize int32, pageToken, filter string, keysOnly bool) ([]*ufspb.MachineLSEPrototype, string, error) {
 	var filterMap map[string][]interface{}

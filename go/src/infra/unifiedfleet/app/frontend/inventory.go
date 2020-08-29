@@ -272,6 +272,24 @@ func (fs *FleetServerImpl) GetVM(ctx context.Context, req *ufsAPI.GetVMRequest) 
 	return vm, err
 }
 
+// BatchGetVMs gets a batch of vms from database.
+func (fs *FleetServerImpl) BatchGetVMs(ctx context.Context, req *ufsAPI.BatchGetVMsRequest) (rsp *ufsAPI.BatchGetVMsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	vms, err := controller.BatchGetVMs(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range vms {
+		v.Name = util.AddPrefix(util.VMCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetVMsResponse{
+		Vms: vms,
+	}, nil
+}
+
 // ListVMs list the vms information from database.
 func (fs *FleetServerImpl) ListVMs(ctx context.Context, req *ufsAPI.ListVMsRequest) (rsp *ufsAPI.ListVMsResponse, err error) {
 	defer func() {

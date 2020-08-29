@@ -68,6 +68,25 @@ func UpdateMachineLSEPrototype(ctx context.Context, machineLSEPrototype *ufspb.M
 	return putMachineLSEPrototype(ctx, machineLSEPrototype, true)
 }
 
+// BatchUpdateMachineLSEPrototypes updates machineLSEPrototype in datastore.
+//
+// This is a non-atomic operation and doesnt check if the object already exists before
+// update. Must be used within a Transaction where objects are checked before update.
+// Will lead to partial updates if not used in a transaction.
+func BatchUpdateMachineLSEPrototypes(ctx context.Context, machineLSEPrototypes []*ufspb.MachineLSEPrototype) ([]*ufspb.MachineLSEPrototype, error) {
+	protos := make([]proto.Message, len(machineLSEPrototypes))
+	updateTime := ptypes.TimestampNow()
+	for i, p := range machineLSEPrototypes {
+		p.UpdateTime = updateTime
+		protos[i] = p
+	}
+	_, err := ufsds.PutAll(ctx, protos, newMachineLSEPrototypeEntity, true)
+	if err == nil {
+		return machineLSEPrototypes, err
+	}
+	return nil, err
+}
+
 // GetMachineLSEPrototype returns machineLSEPrototype for the given id from datastore.
 func GetMachineLSEPrototype(ctx context.Context, id string) (*ufspb.MachineLSEPrototype, error) {
 	pm, err := ufsds.Get(ctx, &ufspb.MachineLSEPrototype{Name: id}, newMachineLSEPrototypeEntity)
@@ -75,6 +94,28 @@ func GetMachineLSEPrototype(ctx context.Context, id string) (*ufspb.MachineLSEPr
 		return pm.(*ufspb.MachineLSEPrototype), err
 	}
 	return nil, err
+}
+
+func getMachineLSEPrototypeID(pm proto.Message) string {
+	p := pm.(*ufspb.MachineLSEPrototype)
+	return p.GetName()
+}
+
+// BatchGetMachineLSEPrototypes returns a batch of machine lse prototypes from datastore.
+func BatchGetMachineLSEPrototypes(ctx context.Context, ids []string) ([]*ufspb.MachineLSEPrototype, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.MachineLSEPrototype{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newMachineLSEPrototypeEntity, getMachineLSEPrototypeID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.MachineLSEPrototype, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.MachineLSEPrototype)
+	}
+	return res, nil
 }
 
 // ListMachineLSEPrototypes lists the machineLSEPrototypes

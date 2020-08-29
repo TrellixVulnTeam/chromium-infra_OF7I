@@ -88,6 +88,24 @@ func (fs *FleetServerImpl) GetMachine(ctx context.Context, req *ufsAPI.GetMachin
 	return machine, err
 }
 
+// BatchGetMachines gets a batch of machines in batch from database.
+func (fs *FleetServerImpl) BatchGetMachines(ctx context.Context, req *ufsAPI.BatchGetMachinesRequest) (rsp *ufsAPI.BatchGetMachinesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	machines, err := controller.BatchGetMachines(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range machines {
+		v.Name = util.AddPrefix(util.MachineCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetMachinesResponse{
+		Machines: machines,
+	}, nil
+}
+
 // ListMachines list the machines information from database.
 func (fs *FleetServerImpl) ListMachines(ctx context.Context, req *ufsAPI.ListMachinesRequest) (rsp *ufsAPI.ListMachinesResponse, err error) {
 	defer func() {
@@ -208,6 +226,24 @@ func (fs *FleetServerImpl) GetRack(ctx context.Context, req *ufsAPI.GetRackReque
 	return rack, err
 }
 
+// BatchGetRacks gets racks in batch from database.
+func (fs *FleetServerImpl) BatchGetRacks(ctx context.Context, req *ufsAPI.BatchGetRacksRequest) (rsp *ufsAPI.BatchGetRacksResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	racks, err := controller.BatchGetRacks(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range racks {
+		v.Name = util.AddPrefix(util.RackCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetRacksResponse{
+		Racks: racks,
+	}, nil
+}
+
 // ListRacks list the racks information from database.
 func (fs *FleetServerImpl) ListRacks(ctx context.Context, req *ufsAPI.ListRacksRequest) (rsp *ufsAPI.ListRacksResponse, err error) {
 	defer func() {
@@ -296,6 +332,24 @@ func (fs *FleetServerImpl) GetNic(ctx context.Context, req *ufsAPI.GetNicRequest
 	// https://aip.dev/122 - as per AIP guideline
 	nic.Name = util.AddPrefix(util.NicCollection, nic.Name)
 	return nic, err
+}
+
+// BatchGetNics gets nics in batch from database.
+func (fs *FleetServerImpl) BatchGetNics(ctx context.Context, req *ufsAPI.BatchGetNicsRequest) (rsp *ufsAPI.BatchGetNicsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	nics, err := controller.BatchGetNics(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range nics {
+		v.Name = util.AddPrefix(util.NicCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetNicsResponse{
+		Nics: nics,
+	}, nil
 }
 
 // ListNics list the nics information from database.
@@ -615,6 +669,24 @@ func (fs *FleetServerImpl) GetRPM(ctx context.Context, req *ufsAPI.GetRPMRequest
 	return rpm, err
 }
 
+// BatchGetRPMs gets rpms in batch from database.
+func (fs *FleetServerImpl) BatchGetRPMs(ctx context.Context, req *ufsAPI.BatchGetRPMsRequest) (rsp *ufsAPI.BatchGetRPMsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	rpms, err := controller.BatchGetRPMs(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range rpms {
+		v.Name = util.AddPrefix(util.RPMCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetRPMsResponse{
+		Rpms: rpms,
+	}, nil
+}
+
 // ListRPMs list the rpms information from database.
 func (fs *FleetServerImpl) ListRPMs(ctx context.Context, req *ufsAPI.ListRPMsRequest) (rsp *ufsAPI.ListRPMsResponse, err error) {
 	defer func() {
@@ -739,6 +811,24 @@ func (fs *FleetServerImpl) GetDrac(ctx context.Context, req *ufsAPI.GetDracReque
 	return drac, err
 }
 
+// BatchGetDracs gets a batch of dracs in batch from database.
+func (fs *FleetServerImpl) BatchGetDracs(ctx context.Context, req *ufsAPI.BatchGetDracsRequest) (rsp *ufsAPI.BatchGetDracsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	dracs, err := controller.BatchGetDracs(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range dracs {
+		v.Name = util.AddPrefix(util.DracCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetDracsResponse{
+		Dracs: dracs,
+	}, nil
+}
+
 // ListDracs list the dracs information from database.
 func (fs *FleetServerImpl) ListDracs(ctx context.Context, req *ufsAPI.ListDracsRequest) (rsp *ufsAPI.ListDracsResponse, err error) {
 	defer func() {
@@ -827,6 +917,24 @@ func (fs *FleetServerImpl) GetSwitch(ctx context.Context, req *ufsAPI.GetSwitchR
 	// https://aip.dev/122 - as per AIP guideline
 	s.Name = util.AddPrefix(util.SwitchCollection, s.Name)
 	return s, err
+}
+
+// BatchGetSwitches gets switches in batch from database.
+func (fs *FleetServerImpl) BatchGetSwitches(ctx context.Context, req *ufsAPI.BatchGetSwitchesRequest) (rsp *ufsAPI.BatchGetSwitchesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	switches, err := controller.BatchGetSwitches(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range switches {
+		v.Name = util.AddPrefix(util.SwitchCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetSwitchesResponse{
+		Switches: switches,
+	}, nil
 }
 
 // ListSwitches list the switches information from database.

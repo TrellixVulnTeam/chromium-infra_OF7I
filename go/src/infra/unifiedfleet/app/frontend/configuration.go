@@ -104,6 +104,24 @@ func (fs *FleetServerImpl) GetChromePlatform(ctx context.Context, req *ufsAPI.Ge
 	return chromePlatform, err
 }
 
+// BatchGetChromePlatforms gets chrome platforms from database.
+func (fs *FleetServerImpl) BatchGetChromePlatforms(ctx context.Context, req *ufsAPI.BatchGetChromePlatformsRequest) (rsp *ufsAPI.BatchGetChromePlatformsResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	platforms, err := controller.BatchGetChromePlatforms(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range platforms {
+		v.Name = util.AddPrefix(util.ChromePlatformCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetChromePlatformsResponse{
+		ChromePlatforms: platforms,
+	}, nil
+}
+
 // GetDHCPConfig gets a dhcp record from database.
 func (fs *FleetServerImpl) GetDHCPConfig(ctx context.Context, req *ufsAPI.GetDHCPConfigRequest) (rsp *ufspb.DHCPConfig, err error) {
 	defer func() {
@@ -299,6 +317,24 @@ func (fs *FleetServerImpl) GetMachineLSEPrototype(ctx context.Context, req *ufsA
 	return machineLSEPrototype, err
 }
 
+// BatchGetMachineLSEPrototypes gets machine lse prototypes from database.
+func (fs *FleetServerImpl) BatchGetMachineLSEPrototypes(ctx context.Context, req *ufsAPI.BatchGetMachineLSEPrototypesRequest) (rsp *ufsAPI.BatchGetMachineLSEPrototypesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	prototypes, err := controller.BatchGetMachineLSEPrototypes(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range prototypes {
+		v.Name = util.AddPrefix(util.MachineLSEPrototypeCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetMachineLSEPrototypesResponse{
+		MachineLsePrototypes: prototypes,
+	}, nil
+}
+
 // ListMachineLSEPrototypes list the machinelseprototypes information from database.
 func (fs *FleetServerImpl) ListMachineLSEPrototypes(ctx context.Context, req *ufsAPI.ListMachineLSEPrototypesRequest) (rsp *ufsAPI.ListMachineLSEPrototypesResponse, err error) {
 	defer func() {
@@ -389,6 +425,24 @@ func (fs *FleetServerImpl) GetRackLSEPrototype(ctx context.Context, req *ufsAPI.
 	return rackLSEPrototype, err
 }
 
+// BatchGetRackLSEPrototypes gets rack lse prototypes from database.
+func (fs *FleetServerImpl) BatchGetRackLSEPrototypes(ctx context.Context, req *ufsAPI.BatchGetRackLSEPrototypesRequest) (rsp *ufsAPI.BatchGetRackLSEPrototypesResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	prototypes, err := controller.BatchGetRackLSEPrototypes(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range prototypes {
+		v.Name = util.AddPrefix(util.RackLSEPrototypeCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetRackLSEPrototypesResponse{
+		RackLsePrototypes: prototypes,
+	}, nil
+}
+
 // ListRackLSEPrototypes list the racklseprototypes information from database.
 func (fs *FleetServerImpl) ListRackLSEPrototypes(ctx context.Context, req *ufsAPI.ListRackLSEPrototypesRequest) (rsp *ufsAPI.ListRackLSEPrototypesResponse, err error) {
 	defer func() {
@@ -477,6 +531,24 @@ func (fs *FleetServerImpl) GetVlan(ctx context.Context, req *ufsAPI.GetVlanReque
 	// https://aip.dev/122 - as per AIP guideline
 	vlan.Name = util.AddPrefix(util.VlanCollection, vlan.Name)
 	return vlan, err
+}
+
+// BatchGetVlans gets a batch of vlans from database.
+func (fs *FleetServerImpl) BatchGetVlans(ctx context.Context, req *ufsAPI.BatchGetVlansRequest) (rsp *ufsAPI.BatchGetVlansResponse, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	vlans, err := controller.BatchGetVlans(ctx, util.FormatInputNames(req.GetNames()))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	for _, v := range vlans {
+		v.Name = util.AddPrefix(util.VlanCollection, v.Name)
+	}
+	return &ufsAPI.BatchGetVlansResponse{
+		Vlans: vlans,
+	}, nil
 }
 
 // ListVlans list the vlans information from database.

@@ -160,6 +160,28 @@ func GetVM(ctx context.Context, id string) (*ufspb.VM, error) {
 	return nil, err
 }
 
+func getVMID(pm proto.Message) string {
+	p := pm.(*ufspb.VM)
+	return p.GetName()
+}
+
+// BatchGetVMs returns a batch of vms from datastore.
+func BatchGetVMs(ctx context.Context, ids []string) ([]*ufspb.VM, error) {
+	protos := make([]proto.Message, len(ids))
+	for i, n := range ids {
+		protos[i] = &ufspb.VM{Name: n}
+	}
+	pms, err := ufsds.BatchGet(ctx, protos, newVMEntity, getVMID)
+	if err != nil {
+		return nil, err
+	}
+	res := make([]*ufspb.VM, len(pms))
+	for i, pm := range pms {
+		res[i] = pm.(*ufspb.VM)
+	}
+	return res, nil
+}
+
 // BatchUpdateVMs updates vms in datastore.
 //
 // This is a non-atomic operation and doesnt check if the object already exists before

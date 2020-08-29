@@ -91,3 +91,40 @@ func TestDeleteMachineLSEPrototype(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetMachineLSEPrototypes(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetMachineLSEPrototypes", t, func() {
+		Convey("Batch get machine lse prototypes - happy path", func() {
+			entities := make([]*ufspb.MachineLSEPrototype, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.MachineLSEPrototype{
+					Name: fmt.Sprintf("machinelseprototype-batchGet-%d", i),
+				}
+			}
+			_, err := configuration.BatchUpdateMachineLSEPrototypes(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := configuration.BatchGetMachineLSEPrototypes(ctx, []string{"machinelseprototype-batchGet-0", "machinelseprototype-batchGet-1", "machinelseprototype-batchGet-2", "machinelseprototype-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get machine lse prototypes  - missing id", func() {
+			resp, err := configuration.BatchGetMachineLSEPrototypes(ctx, []string{"machinelseprototype-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "machinelseprototype-batchGet-non-existing")
+		})
+		Convey("Batch get machine lse prototypes  - empty input", func() {
+			resp, err := configuration.BatchGetMachineLSEPrototypes(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = configuration.BatchGetMachineLSEPrototypes(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}

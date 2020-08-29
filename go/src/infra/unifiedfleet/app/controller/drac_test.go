@@ -582,3 +582,40 @@ func TestListDracs(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchGetDracs(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("BatchGetDracs", t, func() {
+		Convey("Batch get dracs - happy path", func() {
+			entities := make([]*ufspb.Drac, 4)
+			for i := 0; i < 4; i++ {
+				entities[i] = &ufspb.Drac{
+					Name: fmt.Sprintf("drac-batchGet-%d", i),
+				}
+			}
+			_, err := registration.BatchUpdateDracs(ctx, entities)
+			So(err, ShouldBeNil)
+			resp, err := registration.BatchGetDracs(ctx, []string{"drac-batchGet-0", "drac-batchGet-1", "drac-batchGet-2", "drac-batchGet-3"})
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
+			So(resp, ShouldResembleProto, entities)
+		})
+		Convey("Batch get dracs  - missing id", func() {
+			resp, err := registration.BatchGetDracs(ctx, []string{"drac-batchGet-non-existing"})
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+			So(err.Error(), ShouldContainSubstring, "drac-batchGet-non-existing")
+		})
+		Convey("Batch get dracs  - empty input", func() {
+			resp, err := registration.BatchGetDracs(ctx, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+
+			input := make([]string, 0)
+			resp, err = registration.BatchGetDracs(ctx, input)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 0)
+		})
+	})
+}
