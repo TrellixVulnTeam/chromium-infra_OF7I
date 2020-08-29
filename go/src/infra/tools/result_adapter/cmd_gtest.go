@@ -21,7 +21,8 @@ func cmdGtest() *subcommands.Command {
 		UsageLine: `gtest [flags] TEST_CMD [TEST_ARG]...`,
 		ShortDesc: "Batch upload results of the gtest execution to ResultSink",
 		LongDesc: text.Doc(`
-			Runs the test command, then reads the gtest test results, converts them to ResultSink native format and uploads them to ResultDB via ResultSink.
+			Runs the test command and waits for it to finish, then converts the gtest
+			test results to ResultSink native format and uploads them to ResultDB via ResultSink.
 		`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &gtestRun{}

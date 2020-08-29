@@ -118,7 +118,7 @@ func (r *JSONTestResults) ConvertFromJSON(reader io.Reader) error {
 // ToProtos converts test results in r to []*sinkpb.TestResult.
 //
 // Does not populate TestResult.Name, TestResult.ResultId or TestResult.TestLocation.
-func (r *JSONTestResults) ToProtos(ctx context.Context, availableArtifacts stringset.Set, normPathToFullPath map[string]string) ([]*sinkpb.TestResult, error) {
+func (r *JSONTestResults) ToProtos(ctx context.Context, availableArtifacts stringset.Set, normPathToFullPath map[string]string, testLocations bool) ([]*sinkpb.TestResult, error) {
 	if r.Version != 3 {
 		return nil, errors.Reason("unknown JSON Test Results version %d", r.Version).Err()
 	}
@@ -151,7 +151,7 @@ func (r *JSONTestResults) ToProtos(ctx context.Context, availableArtifacts strin
 	buf := &strings.Builder{}
 	for _, name := range testNames {
 		// Populate protos.
-		if err := r.Tests[name].toProtos(ctx, &ret, name, buf, globalTags, availableArtifacts, normPathToFullPath); err != nil {
+		if err := r.Tests[name].toProtos(ctx, &ret, name, buf, globalTags, availableArtifacts, normPathToFullPath, testLocations); err != nil {
 			return nil, errors.Annotate(err, "test %q failed to convert run fields", name).Err()
 		}
 	}
@@ -296,7 +296,7 @@ func fromJSONStatus(s string) (pb.TestStatus, error) {
 // appends them to dest.
 //
 // Logs unresolved artifacts.
-func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, testName string, buf *strings.Builder, globalTags []*pb.StringPair, availableArtifacts stringset.Set, normPathToFullPath map[string]string) error {
+func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, testName string, buf *strings.Builder, globalTags []*pb.StringPair, availableArtifacts stringset.Set, normPathToFullPath map[string]string, testLocations bool) error {
 	// Process statuses.
 	actualStatuses := strings.Split(f.Actual, " ")
 
@@ -353,8 +353,13 @@ func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, t
 			TestId:   testName,
 			Expected: expectedSet.Has(runStatus),
 			Status:   status,
-			// TODO(crbug.com/1108016): update sink to prepend locationPrefix.
-			Tags: tags,
+			Tags:     tags,
+		}
+		if testLocations {
+			tr.TestLocation = &pb.TestLocation{
+				// TODO(crbug.com/1108016): update sink to prepend locationPrefix.
+				FileName: testName,
+			}
 		}
 
 		if container, ok := arts[i]; ok {
@@ -419,10 +424,9 @@ func (f *TestFields) parseArtifacts(ctx context.Context, testID string, availabl
 			if key := findArtifact(availableArtifacts, normPath); key != "" {
 				if fullPath, ok := normPathToFullPath[normPath]; ok {
 					// TODO(crbug.com/1108016): set ContentType in sink.
-					a := &sinkpb.Artifact{
+					container.artifacts[name] = &sinkpb.Artifact{
 						Body: &sinkpb.Artifact_FilePath{FilePath: fullPath},
 					}
-					container.artifacts[name] = a
 				}
 				continue
 			}

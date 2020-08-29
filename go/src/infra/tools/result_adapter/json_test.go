@@ -228,7 +228,7 @@ func TestJSONConversions(t *testing.T) {
 			"relative/path/to/diff.png": "/artifacts/relative/path/to/diff.png",
 		}
 
-		testResults, err := results.ToProtos(ctx, availableArtifacts, normPathToFullPath)
+		testResults, err := results.ToProtos(ctx, availableArtifacts, normPathToFullPath, true)
 		So(err, ShouldBeNil)
 
 		assertTestResultsResemble(testResults, []*sinkpb.TestResult{
@@ -251,6 +251,9 @@ func TestJSONConversions(t *testing.T) {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/harness/log.txt"},
 					},
 				},
+				TestLocation: &pb.TestLocation{
+					FileName: "c1/c2/t1.html",
+				},
 			},
 			{
 				TestId:   "c1/c2/t1.html",
@@ -269,6 +272,9 @@ func TestJSONConversions(t *testing.T) {
 					"isolate_object_list": {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/harness/retry_1/log.txt"},
 					},
+				},
+				TestLocation: &pb.TestLocation{
+					FileName: "c1/c2/t1.html",
 				},
 			},
 			{
@@ -289,6 +295,9 @@ func TestJSONConversions(t *testing.T) {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/harness/retry_2/log.txt"},
 					},
 				},
+				TestLocation: &pb.TestLocation{
+					FileName: "c1/c2/t1.html",
+				},
 			},
 
 			// Test 2.
@@ -305,6 +314,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c1/c2/t2.html",
+				},
 			},
 			{
 				TestId:   "c1/c2/t2.html",
@@ -319,6 +331,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c1/c2/t2.html",
+				},
 			},
 			{
 				TestId:   "c1/c2/t2.html",
@@ -333,6 +348,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c1/c2/t2.html",
+				},
 			},
 			{
 				TestId:   "c1/c2/t2.html",
@@ -347,6 +365,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c1/c2/t2.html",
+				},
 			},
 
 			// Test 3
@@ -371,6 +392,9 @@ func TestJSONConversions(t *testing.T) {
 						Body: &sinkpb.Artifact_FilePath{FilePath: "/artifacts/relative/path/to/log.txt"},
 					},
 				},
+				TestLocation: &pb.TestLocation{
+					FileName: "c2/t3.html",
+				},
 			},
 
 			// Test 4
@@ -386,6 +410,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "ubuntu",
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR),
+				TestLocation: &pb.TestLocation{
+					FileName: "c2/t4.html",
+				},
 			},
 			{
 				TestId:   "c2/t4.html",
@@ -399,6 +426,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c2/t4.html",
+				},
 			},
 			{
 				TestId:   "c2/t4.html",
@@ -412,6 +442,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c2/t4.html",
+				},
 			},
 
 			// Test 5
@@ -427,6 +460,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c2/t5.html",
+				},
 			},
 
 			// Test 6
@@ -442,6 +478,9 @@ func TestJSONConversions(t *testing.T) {
 					"json_format_tag", "desktop",
 					originalFormatTagKey, formatJTR,
 				),
+				TestLocation: &pb.TestLocation{
+					FileName: "c2/t6.html",
+				},
 			},
 		})
 	})

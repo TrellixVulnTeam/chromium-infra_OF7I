@@ -23,11 +23,18 @@ func cmdJSON() *subcommands.Command {
 		UsageLine: `json [flags] TEST_CMD [TEST_ARG]...`,
 		ShortDesc: "Batch upload results of json test result format to ResultSink",
 		LongDesc: text.Doc(`
-			Runs the test command, then reads the json test results when it's done, converts the results to ResultSink native format and uploads them to ResultDB via ResultSink.
+			Runs the test command and waits for it to finish, then converts the json
+			test results to ResultSink native format and uploads them to ResultDB via ResultSink.
 		`),
 		CommandRun: func() subcommands.CommandRun {
 			r := &jsonRun{}
 			r.baseRun.RegisterGlobalFlags()
+			r.Flags.BoolVar(&r.testLocations, "test-location", false, text.Doc(`
+				Flag for set testLocation in each TestResult.
+				If true, testIds will be used as testLocations.
+
+				It only makes sense to set the flag for blink_web_tests and webgl_conformance_tests.
+			`))
 			return r
 		},
 	}
@@ -35,6 +42,8 @@ func cmdJSON() *subcommands.Command {
 
 type jsonRun struct {
 	baseRun
+
+	testLocations bool
 }
 
 func (r *jsonRun) Run(a subcommands.Application, args []string, env subcommands.Env) (ret int) {
@@ -63,7 +72,7 @@ func (r *jsonRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResult
 	}
 
 	// Convert the results to ResultSink native format.
-	trs, err := jsonFormat.ToProtos(ctx, available, normPathToFullPath)
+	trs, err := jsonFormat.ToProtos(ctx, available, normPathToFullPath, r.testLocations)
 	if err != nil {
 		return nil, errors.Annotate(err, "converting as json results format").Err()
 	}
