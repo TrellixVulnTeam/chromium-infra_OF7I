@@ -140,9 +140,11 @@ def RunSteps(api):
     raise ValueError(
         'This recipe is not intended for builder %s. ' % buildername)
 
+  internal = project_name == 'infra_internal'
+
   co = api.infra_checkout.checkout(
       gclient_config_name=project_name,
-      internal=(project_name=='infra_internal'))
+      internal=internal)
 
   # Prefix the system binary path to PATH so that all Python invocations will
   # use the system Python. This will ensure that packages built will be built
@@ -162,10 +164,11 @@ def RunSteps(api):
     # api.buildbucket.gitiles_commit.id except when the build was triggered
     # manually (commit id is empty in that case).
     rev = co.bot_update_step.presentation.properties['got_revision']
-    build_main(api, co, buildername, project_name, repo_url, rev)
+    build_main(api, co, buildername, project_name, repo_url, rev, internal)
 
 
-def build_main(api, checkout, buildername, project_name, repo_url, rev):
+def build_main(api, checkout, buildername, project_name, repo_url, rev,
+               internal):
   is_packager = 'packager' in buildername
 
   # Do not run python tests on packager builders, since most of them are
@@ -173,7 +176,7 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
   # from api.infra_cipd.test() below, when testing packages that pack python
   # code.
   if api.platform.arch != 'arm' and not is_packager:
-    run_python_tests(api, project_name)
+    run_python_tests(api, project_name, internal)
 
   # Some third_party go packages on OSX rely on cgo and thus a configured
   # clang toolchain.
@@ -225,17 +228,18 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
             api.infra_cipd.upload(api.infra_cipd.tags(repo_url, rev))
 
 
-def run_python_tests(api, project_name):
+def run_python_tests(api, project_name, internal):
   with api.step.defer_results():
-    monorail_dir = api.path['checkout'].join('appengine', 'monorail')
-    with api.context(cwd=monorail_dir):
-      monorail_lib_dir = monorail_dir.join('lib')
-      api.file.rmtree('monorail clean python deps', monorail_lib_dir)
-      # For more context on why: https://crbug.com/1117193#c3
-      api.python('monorail pip install', '-m', [
-          'pip', 'install', '--require-hashes', '-t', monorail_lib_dir, '-r',
-          'requirements.py2.txt'
-      ])
+    if not internal:
+      monorail_dir = api.path['checkout'].join('appengine', 'monorail')
+      with api.context(cwd=monorail_dir):
+        monorail_lib_dir = monorail_dir.join('lib')
+        api.file.rmtree('monorail clean python deps', monorail_lib_dir)
+        # For more context on why: https://crbug.com/1117193#c3
+        api.python('monorail pip install', '-m', [
+            'pip', 'install', '--require-hashes', '-t', monorail_lib_dir, '-r',
+            'requirements.py2.txt'
+        ])
 
     with api.context(cwd=api.path['checkout']):
       # Run Linux tests everywhere, Windows tests only on public CI.

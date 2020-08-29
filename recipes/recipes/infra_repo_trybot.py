@@ -45,15 +45,16 @@ def RunSteps(api):
 
     with api.step.defer_results():
       if api.platform.arch != 'arm':
-        monorail_dir = api.path['checkout'].join('appengine', 'monorail')
-        with api.context(cwd=monorail_dir):
-          monorail_lib_dir = monorail_dir.join('lib')
-          api.file.rmtree('monorail clean python deps', monorail_lib_dir)
-          # For more context on why: https://crbug.com/1117193#c3
-          api.python('monorail pip install', '-m', [
-              'pip', 'install', '--require-hashes', '-t', monorail_lib_dir,
-              '-r', 'requirements.py2.txt'
-          ])
+        if not internal:
+          monorail_dir = api.path['checkout'].join('appengine', 'monorail')
+          with api.context(cwd=monorail_dir):
+            monorail_lib_dir = monorail_dir.join('lib')
+            api.file.rmtree('monorail clean python deps', monorail_lib_dir)
+            # For more context on why: https://crbug.com/1117193#c3
+            api.python('monorail pip install', '-m', [
+                'pip', 'install', '--require-hashes', '-t', monorail_lib_dir,
+                '-r', 'requirements.py2.txt'
+            ])
 
         with api.context(cwd=co.path.join(patch_root)):
           api.python('python tests', 'test.py', ['test'])
