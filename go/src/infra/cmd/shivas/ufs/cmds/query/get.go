@@ -34,7 +34,7 @@ var GetCmd = &subcommands.Command{
 	LongDesc: `Get details for
 	machine/rack/kvm/rpm/switch/drac/nic
 	host/vm
-	machine-prototype/rack-prototype/chromeplatform/vlan`,
+	machine-prototype/rack-prototype/platform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &get{}
 		return c

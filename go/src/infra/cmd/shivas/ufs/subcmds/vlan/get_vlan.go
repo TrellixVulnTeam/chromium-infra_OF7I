@@ -5,37 +5,49 @@
 package vlan
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetVlanCmd get vlan by given name.
 var GetVlanCmd = &subcommands.Command{
-	UsageLine: "vlan {Vlan Name}",
-	ShortDesc: "Get vlan details by name",
-	LongDesc: `Get vlan details by name.
+	UsageLine: "vlan ...",
+	ShortDesc: "Get vlan details by filters",
+	LongDesc: `Get vlan details by filters.
 
 Example:
 
-shivas get vlan {Vlan Name}
-Gets the vlan and prints the output.`,
+shivas get vlan name1 name2
+
+shivas get vlan
+
+shivas get vlan -state serving
+
+Gets the vlan and prints the output in the user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getVlan{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
+
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
+
+		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
 	},
 }
@@ -46,6 +58,12 @@ type getVlan struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 	outputFlags site.OutputFlags
+
+	// Filters
+	states []string
+
+	pageSize int
+	keysOnly bool
 }
 
 func (c *getVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -57,9 +75,6 @@ func (c *getVlan) Run(a subcommands.Application, args []string, env subcommands.
 }
 
 func (c *getVlan) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(); err != nil {
-		return err
-	}
 	ctx := cli.GetContext(a, c, env)
 	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
@@ -70,39 +85,78 @@ func (c *getVlan) innerRun(a subcommands.Application, args []string, env subcomm
 	if c.commonFlags.Verbose() {
 		fmt.Printf("Using UnifiedFleet service %s\n", e.UnifiedFleetService)
 	}
-
 	ic := ufsAPI.NewFleetPRPCClient(&prpc.Client{
 		C:       hc,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetVlan(ctx, &ufsAPI.GetVlanRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.VlanCollection, args[0]),
-	})
+
+	var res []proto.Message
+	if len(args) > 0 {
+		res, err = c.batchGet(ctx, ic, args)
+	} else {
+		res, err = utils.BatchList(ctx, ic, listVlans, c.formatFilters(), c.pageSize, c.keysOnly)
+	}
 	if err != nil {
 		return err
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	return c.print(res)
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
+	return utils.PrintEntities(ctx, ic, res, utils.PrintVlansJSON, printVlanFull, printVlanNormal,
+		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
-func (c *getVlan) print(vlan *ufspb.Vlan) error {
-	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(vlan, !utils.NoEmitMode(c.outputFlags.NoEmit()))
-		return nil
-	}
-	if c.outputFlags.Tsv() {
-		utils.PrintTSVVlans([]*ufspb.Vlan{vlan}, false)
-		return nil
-	}
-	utils.PrintTitle(utils.VlanTitle)
-	utils.PrintVlans([]*ufspb.Vlan{vlan}, false)
-	return nil
+func (c *getVlan) formatFilters() []string {
+	filters := make([]string, 0)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	return filters
 }
 
-func (c *getVlan) validateArgs() error {
-	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the vlan name.")
+func (c *getVlan) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
+	res, err := ic.BatchGetVlans(ctx, &ufsAPI.BatchGetVlansRequest{
+		Names: names,
+	})
+	if err != nil {
+		return nil, err
 	}
+	protos := make([]proto.Message, len(res.GetVlans()))
+	for i, r := range res.GetVlans() {
+		protos[i] = r
+	}
+	return protos, nil
+}
+
+func listVlans(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+	req := &ufsAPI.ListVlansRequest{
+		PageSize:  pageSize,
+		PageToken: pageToken,
+		Filter:    filter,
+		KeysOnly:  keysOnly,
+	}
+	res, err := ic.ListVlans(ctx, req)
+	if err != nil {
+		return nil, "", err
+	}
+	protos := make([]proto.Message, len(res.GetVlans()))
+	for i, m := range res.GetVlans() {
+		protos[i] = m
+	}
+	return protos, res.GetNextPageToken(), nil
+}
+
+func printVlanFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
+	return printVlanNormal(msgs, tsv, false)
+}
+
+func printVlanNormal(entities []proto.Message, tsv, keysOnly bool) error {
+	if len(entities) == 0 {
+		return nil
+	}
+	if tsv {
+		utils.PrintTSVVlans(entities, false)
+		return nil
+	}
+	utils.PrintTableTitle(utils.VlanTitle, tsv, keysOnly)
+	utils.PrintVlans(entities, keysOnly)
 	return nil
 }

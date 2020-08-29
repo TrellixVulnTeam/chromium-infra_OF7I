@@ -1036,14 +1036,6 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 	// FilterCondition Common filter condition for all list filter option
 	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
 
-	// MachineFilterHelp help text for list machine filtering
-	MachineFilterHelp string = FilterText + `You can filter machines by kvm/rpm/zone/rack/platform/tag/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'nic=nic-1,nic-2'
-'zone=atl97 & nic=nic-1'
-'zone=atl97 & nic=nic-1 & kvm=kvm-1,kvm-2'` + FilterCondition
-
 	// VMSlotFilterHelp help text for list free vm slots filtering
 	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/zone/rack/state/machine/os/vdc(virtualdatacenter)` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
 		`Filter format Egs:
@@ -1052,30 +1044,10 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'os=macos,10.13.6'
 'zone=atl97 & man=apple'` + FilterCondition
 
-	// RackFilterHelp help text for list rack filtering
-	RackFilterHelp string = FilterText + `You can filter racks by tag/zone/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'kvm=kvm-1,kvm-2'
-'zone=atl97 & kvm=kvm-1'` + FilterCondition
-
-	// NicFilterHelp help text for list rack filtering
-	NicFilterHelp string = FilterText + `You can filter nics by zone/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + ZoneFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'zone=atl97 & rack=rack-1'` + FilterCondition
-
 	// DracFilterHelp help text for list rack filtering
 	DracFilterHelp string = FilterText + `You can filter dracs by zone/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + ZoneFilterHelpText +
 		`Filter format Egs:
 'zone=atl97'
-'zone=atl97 & rack=rack-1'` + FilterCondition
-
-	// MachineLSEFilterHelp help text for list machinelse filtering
-	MachineLSEFilterHelp string = FilterText + `You can filter hosts by machine/machineprototype/rpm/vlan/servo/zone/rack/switch/tag/state/man(manufacturer)/os/vdc(virtualdatacenter)` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'os=esxi,6.7.0'
 'zone=atl97 & rack=rack-1'` + FilterCondition
 
 	// VMFilterHelp help text for list vm filtering
@@ -1084,47 +1056,6 @@ Operation will be faster as only primary keys/ids will be retrieved from the ser
 'zone=atl97'
 'os=esxi,6.7.0'
 'zone=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
-
-	// KVMFilterHelp help text for list rack filtering
-	KVMFilterHelp string = FilterText + `You can filter kvms by zone/rack/platform/tag/mac(macaddress)/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'zone=atl97 & rack=rack-1 & platform=p-1'` + FilterCondition
-
-	// RPMFilterHelp help text for list rack filtering
-	RPMFilterHelp string = FilterText + `You can filter rpms by zone/rack/tag/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'zone=atl97 & rack=rack-1'` + FilterCondition
-
-	// SwitchFilterHelp help text for list rack filtering
-	SwitchFilterHelp string = FilterText + `You can filter switches by zone/rack/tag/state` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'zone=atl97 & rack=rack-1'` + FilterCondition
-
-	// MachineLSEPrototypeFilterHelp help text for list MachineLSEPrototype filtering
-	MachineLSEPrototypeFilterHelp string = FilterText + `You can filter machineprototypes by tag
-Filter format Egs:
-'tag=acs,wificell'
-'tag=browser` + FilterCondition
-
-	// RackLSEPrototypeFilterHelp help text for list RackLSEPrototype filtering
-	RackLSEPrototypeFilterHelp string = FilterText + `You can filter rackprototypes by tag
-Filter format Egs:
-'tag=acs'
-'tag=browser` + FilterCondition
-
-	// ChromePlatformFilterHelp help text for list ChromePlatform filtering
-	ChromePlatformFilterHelp string = FilterText + `You can filter platforms by man(manufacturer)/tag
-Filter format Egs:
-'tag=dell, 8g'
-'tag=iphone & man=Apple` + FilterCondition
-
-	// VlanFilterHelp help text for list vlan filtering
-	VlanFilterHelp string = FilterText + `You can filter vlans by state` + StateFilterHelpText +
-		`Filter format Egs:
-'state=serving'` + FilterCondition
 
 	// StateHelp help text for filter '-state'
 	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"

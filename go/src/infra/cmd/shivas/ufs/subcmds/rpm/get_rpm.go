@@ -5,37 +5,52 @@
 package rpm
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetRPMCmd get rpm by given name.
 var GetRPMCmd = &subcommands.Command{
-	UsageLine: "rpm {RPM Name}",
-	ShortDesc: "Get rpm details by name",
-	LongDesc: `Get rpm details by name.
+	UsageLine: "rpm ...",
+	ShortDesc: "Get rpm details by filters",
+	LongDesc: `Get rpm details by filters.
 
 Example:
 
-shivas get rpm {RPM Name}
-Gets the rpm and prints the output in JSON format.`,
+shivas get rpm name1 name2
+
+shivas get rpm -n 10
+
+shivas get rpm -tag tag1 -zone zone2
+
+Gets the rpm and prints the output in the user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getRPM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
+
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
+
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
 	},
 }
@@ -46,6 +61,15 @@ type getRPM struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 	outputFlags site.OutputFlags
+
+	// Filters
+	zones  []string
+	racks  []string
+	tags   []string
+	states []string
+
+	pageSize int
+	keysOnly bool
 }
 
 func (c *getRPM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -57,9 +81,6 @@ func (c *getRPM) Run(a subcommands.Application, args []string, env subcommands.E
 }
 
 func (c *getRPM) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(); err != nil {
-		return err
-	}
 	ctx := cli.GetContext(a, c, env)
 	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
@@ -75,33 +96,76 @@ func (c *getRPM) innerRun(a subcommands.Application, args []string, env subcomma
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetRPM(ctx, &ufsAPI.GetRPMRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.RPMCollection, args[0]),
-	})
+
+	var res []proto.Message
+	if len(args) > 0 {
+		res, err = c.batchGet(ctx, ic, args)
+	} else {
+		res, err = utils.BatchList(ctx, ic, listRPMs, c.formatFilters(), c.pageSize, c.keysOnly)
+	}
 	if err != nil {
 		return err
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	return c.print(res)
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
+	return utils.PrintEntities(ctx, ic, res, utils.PrintRPMsJSON, printRPMFull, printRPMNormal,
+		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
-func (c *getRPM) print(rpm *ufspb.RPM) error {
-	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(rpm, !utils.NoEmitMode(c.outputFlags.NoEmit()))
-		return nil
-	}
-	if c.outputFlags.Tsv() {
-		utils.PrintTSVRPMs([]*ufspb.RPM{rpm}, false)
-		return nil
-	}
-	utils.PrintTitle(utils.RpmTitle)
-	utils.PrintRPMs([]*ufspb.RPM{rpm}, false)
-	return nil
+func (c *getRPM) formatFilters() []string {
+	filters := make([]string, 0)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	return filters
 }
 
-func (c *getRPM) validateArgs() error {
-	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the rpm name.")
+func (c *getRPM) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
+	res, err := ic.BatchGetRPMs(ctx, &ufsAPI.BatchGetRPMsRequest{
+		Names: names,
+	})
+	if err != nil {
+		return nil, err
 	}
+	protos := make([]proto.Message, len(res.GetRpms()))
+	for i, r := range res.GetRpms() {
+		protos[i] = r
+	}
+	return protos, nil
+}
+
+func listRPMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+	req := &ufsAPI.ListRPMsRequest{
+		PageSize:  pageSize,
+		PageToken: pageToken,
+		Filter:    filter,
+		KeysOnly:  keysOnly,
+	}
+	res, err := ic.ListRPMs(ctx, req)
+	if err != nil {
+		return nil, "", err
+	}
+	protos := make([]proto.Message, len(res.GetRPMs()))
+	for i, m := range res.GetRPMs() {
+		protos[i] = m
+	}
+	return protos, res.GetNextPageToken(), nil
+}
+
+func printRPMFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
+	return printRPMNormal(msgs, tsv, false)
+}
+
+func printRPMNormal(entities []proto.Message, tsv, keysOnly bool) error {
+	if len(entities) == 0 {
+		return nil
+	}
+	if tsv {
+		utils.PrintTSVRPMs(entities, false)
+		return nil
+	}
+	utils.PrintTableTitle(utils.RpmTitle, tsv, keysOnly)
+	utils.PrintRPMs(entities, keysOnly)
 	return nil
 }

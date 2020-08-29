@@ -25,9 +25,9 @@ import (
 
 // GetMachineCmd get machine by given name.
 var GetMachineCmd = &subcommands.Command{
-	UsageLine: "machine {Machine name}",
-	ShortDesc: "Get machine details by name",
-	LongDesc: `Get machine details by name.
+	UsageLine: "machine ...",
+	ShortDesc: "Get machine details by filters",
+	LongDesc: `Get machine details by filters.
 
 Example:
 
@@ -35,7 +35,7 @@ shivas get machine {name1} {name2}
 
 shivas get machine -platform platform1 -state serving -state needs_repair -zone atl97
 
-Gets the machine and prints the output in the specified format.`,
+Gets the machine and prints the output in the user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getMachine{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -46,11 +46,11 @@ Gets the machine and prints the output in the specified format.`,
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 
-		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
-		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name of a rack to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.platforms), "platform", "Name of a platform to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name of a tag to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.platforms), "platform", "Name(s) of a platform to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
 	},
 }
@@ -144,7 +144,7 @@ func printMachineNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVMachines(entities, false)
+		utils.PrintTSVPlatforms(entities, false)
 		return nil
 	}
 	machine := entities[0].(*ufspb.Machine)

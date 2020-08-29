@@ -8,34 +8,49 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetSwitchCmd get Switch by given name.
 var GetSwitchCmd = &subcommands.Command{
-	UsageLine: "switch {Switch Name}",
-	ShortDesc: "get switch details by name",
-	LongDesc: `get switch details by name.
+	UsageLine: "switch ...",
+	ShortDesc: "get switch details by filters",
+	LongDesc: `get switch details by filters.
 
 Example:
-shivas get switch {Switch Name}
-Gets the switch and prints the output in JSON format.`,
+
+shivas get switch name1 name2
+
+shivas get switch -n 10
+
+shivas get switch -rack rack1 -rack rack2 -state serving
+
+Gets the switch and prints the output in user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getSwitch{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
+
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
+
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
 	},
 }
@@ -46,6 +61,15 @@ type getSwitch struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 	outputFlags site.OutputFlags
+
+	// Filters
+	zones  []string
+	racks  []string
+	tags   []string
+	states []string
+
+	pageSize int
+	keysOnly bool
 }
 
 func (c *getSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -57,9 +81,6 @@ func (c *getSwitch) Run(a subcommands.Application, args []string, env subcommand
 }
 
 func (c *getSwitch) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(); err != nil {
-		return err
-	}
 	ctx := cli.GetContext(a, c, env)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
 	if err != nil {
@@ -74,70 +95,76 @@ func (c *getSwitch) innerRun(a subcommands.Application, args []string, env subco
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetSwitch(ctx, &ufsAPI.GetSwitchRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, args[0]),
-	})
+
+	var res []proto.Message
+	if len(args) > 0 {
+		res, err = c.batchGet(ctx, ic, args)
+	} else {
+		res, err = utils.BatchList(ctx, ic, listSwitches, c.formatFilters(), c.pageSize, c.keysOnly)
+	}
 	if err != nil {
 		return err
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	if utils.FullMode(c.outputFlags.Full()) {
-		return c.printFull(ctx, ic, res)
-	}
-	return c.print(res)
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
+	return utils.PrintEntities(ctx, ic, res, utils.PrintSwitchesJSON, printSwitchFull, printSwitchNormal,
+		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
-func (c *getSwitch) printFull(ctx context.Context, ic ufsAPI.FleetClient, sw *ufspb.Switch) error {
-	resp, err := ic.ListNics(ctx, &ufsAPI.ListNicsRequest{
-		Filter: "switch=" + sw.GetName(),
+func (c *getSwitch) formatFilters() []string {
+	filters := make([]string, 0)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	return filters
+}
+
+func (c *getSwitch) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
+	res, err := ic.BatchGetSwitches(ctx, &ufsAPI.BatchGetSwitchesRequest{
+		Names: names,
 	})
-	nics := resp.GetNics()
-	if err != nil && c.commonFlags.Verbose() {
-		fmt.Printf("Failed to get nic for the switch: %s", err)
+	if err != nil {
+		return nil, err
 	}
-	for _, nic := range nics {
-		nic.Name = ufsUtil.RemovePrefix(nic.Name)
+	protos := make([]proto.Message, len(res.GetSwitches()))
+	for i, r := range res.GetSwitches() {
+		protos[i] = r
 	}
-	resp2, err := ic.ListDracs(ctx, &ufsAPI.ListDracsRequest{
-		Filter: "switch=" + sw.GetName(),
-	})
-	dracs := resp2.GetDracs()
-	if err != nil && c.commonFlags.Verbose() {
-		fmt.Printf("Failed to get drac for the switch: %s", err)
-	}
-	for _, drac := range dracs {
-		drac.Name = ufsUtil.RemovePrefix(drac.Name)
-	}
-	if c.outputFlags.JSON() {
-		// TODO: print nics/dracs json
-		utils.PrintProtoJSON(sw, !utils.NoEmitMode(c.outputFlags.NoEmit()))
-	}
-	if c.outputFlags.Tsv() {
-		utils.PrintTSVSwitchFull(sw, nics, dracs)
-		return nil
-	}
-	utils.PrintTitle(utils.SwitchFullTitle)
-	utils.PrintSwitchFull(sw, nics, dracs)
-	return nil
+	return protos, nil
 }
 
-func (c *getSwitch) print(sw *ufspb.Switch) error {
-	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(sw, !utils.NoEmitMode(c.outputFlags.NoEmit()))
-		return nil
+func listSwitches(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+	req := &ufsAPI.ListSwitchesRequest{
+		PageSize:  pageSize,
+		PageToken: pageToken,
+		Filter:    filter,
+		KeysOnly:  keysOnly,
 	}
-	if c.outputFlags.Tsv() {
-		utils.PrintTSVSwitches([]*ufspb.Switch{sw}, false)
-		return nil
+	res, err := ic.ListSwitches(ctx, req)
+	if err != nil {
+		return nil, "", err
 	}
-	utils.PrintTitle(utils.SwitchTitle)
-	utils.PrintSwitches([]*ufspb.Switch{sw}, false)
-	return nil
+	protos := make([]proto.Message, len(res.GetSwitches()))
+	for i, m := range res.GetSwitches() {
+		protos[i] = m
+	}
+	return protos, res.GetNextPageToken(), nil
 }
 
-func (c *getSwitch) validateArgs() error {
-	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the switch name")
+func printSwitchFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
+	return printSwitchNormal(msgs, tsv, false)
+}
+
+func printSwitchNormal(entities []proto.Message, tsv, keysOnly bool) error {
+	if len(entities) == 0 {
+		return nil
 	}
+	if tsv {
+		utils.PrintTSVSwitches(entities, false)
+		return nil
+	}
+	utils.PrintTableTitle(utils.SwitchTitle, tsv, keysOnly)
+	utils.PrintSwitches(entities, keysOnly)
 	return nil
 }

@@ -25,14 +25,12 @@ import (
 // Titles for printing table format list
 var (
 	SwitchTitle              = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
-	SwitchFullTitle          = []string{"Switch Name", "CapacityPort", "Zone", "Rack", "State", "nics", "dracs", "UpdateTime"}
 	KvmTitle                 = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "Zone", "Rack", "State", "UpdateTime"}
 	KvmFullTitle             = []string{"KVM Name", "MAC Address", "ChromePlatform", "CapacityPort", "IP", "Vlan", "State", "Zone", "Rack", "UpdateTime"}
 	RpmTitle                 = []string{"RPM Name", "MAC Address", "CapacityPort", "UpdateTime"}
 	DracTitle                = []string{"Drac Name", "Display name", "MAC Address", "Switch", "Switch Port", "Password", "Zone", "Rack", "Machine", "UpdateTime"}
 	DracFullTitle            = []string{"Drac Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
 	NicTitle                 = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Zone", "Rack", "Machine", "UpdateTime"}
-	NicFullTitle             = []string{"Nic Name", "MAC Address", "Switch", "Switch Port", "Attached Host", "IP", "Vlan", "Zone", "Rack", "Machine", "UpdateTime"}
 	BrowserMachineTitle      = []string{"Machine Name", "Serial Number", "Zone", "Rack", "ChromePlatform", "DeploymentTicket", "Description", "State", "Realm", "UpdateTime"}
 	OSMachineTitle           = []string{"Machine Name", "Zone", "Rack", "Barcode", "UpdateTime"}
 	MachinelseprototypeTitle = []string{"Machine Prototype Name", "Occupied Capacity", "PeripheralTypes", "VirtualTypes", "Tags", "UpdateTime"}
@@ -41,7 +39,7 @@ var (
 	VlanTitle                = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
 	VMTitle                  = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "State", "Description", "UpdateTime"}
 	VMFullTitle              = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "Description", "UpdateTime"}
-	RackTitle                = []string{"Rack Name", "Zone", "KVMs", "Switches", "RPMs", "Capacity", "State", "Realm", "UpdateTime"}
+	RackTitle                = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "State", "VM capacity", "Description", "UpdateTime"}
 	MachineLSETFullitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
 )
@@ -77,6 +75,16 @@ func PrintEntities(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Messa
 func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, filters []string, pageSize int, keysOnly bool) ([]proto.Message, error) {
 	errs := make(map[string]error)
 	res := make([]proto.Message, 0)
+	if len(filters) == 0 {
+		protos, err := DoList(ctx, ic, listFunc, int32(pageSize), "", keysOnly)
+		if err != nil {
+			errs["emptyFilter"] = err
+		}
+		res = append(res, protos...)
+		if pageSize > 0 && len(res) >= pageSize {
+			res = res[0:pageSize]
+		}
+	}
 	for _, filter := range filters {
 		protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filter, keysOnly)
 		if err != nil {
@@ -258,38 +266,15 @@ func PrintTitle(title []string) {
 }
 
 // PrintSwitches prints the all switches in table form.
-func PrintSwitches(switches []*ufspb.Switch, keysOnly bool) {
+func PrintSwitches(res []proto.Message, keysOnly bool) {
+	switches := make([]*ufspb.Switch, len(res))
+	for i, r := range res {
+		switches[i] = r.(*ufspb.Switch)
+	}
 	defer tw.Flush()
 	for _, s := range switches {
 		printSwitch(s, keysOnly)
 	}
-}
-
-func switchFullOutputStrs(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) []string {
-	var ts string
-	if t, err := ptypes.Timestamp(sw.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
-	}
-	return []string{
-		ufsUtil.RemovePrefix(sw.GetName()),
-		fmt.Sprintf("%d", sw.GetCapacityPort()),
-		sw.GetZone(),
-		sw.GetRack(),
-		sw.GetState(),
-		strSlicesToStr(ufsAPI.ParseResources(nics, "Name")),
-		strSlicesToStr(ufsAPI.ParseResources(dracs, "Name")),
-		ts,
-	}
-}
-
-// PrintSwitchFull prints the full related msg for a switch
-func PrintSwitchFull(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) {
-	defer tw.Flush()
-	var out string
-	for _, s := range switchFullOutputStrs(sw, nics, dracs) {
-		out += fmt.Sprintf("%s\t", s)
-	}
-	fmt.Fprintln(tw, out)
 }
 
 func switchOutputStrs(pm proto.Message) []string {
@@ -321,16 +306,21 @@ func printSwitch(sw *ufspb.Switch, keysOnly bool) {
 }
 
 // PrintSwitchesJSON prints the switch details in json format.
-func PrintSwitchesJSON(switches []*ufspb.Switch, emit bool) {
-	len := len(switches) - 1
+func PrintSwitchesJSON(res []proto.Message, emit bool) {
+	switches := make([]*ufspb.Switch, len(res))
+	for i, r := range res {
+		switches[i] = r.(*ufspb.Switch)
+	}
+	fmt.Print("[")
 	for i, s := range switches {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
-		if i < len {
+		if i < len(switches)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 func kvmFullOutputStrs(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) []string {
@@ -425,7 +415,11 @@ func PrintKVMsJSON(res []proto.Message, emit bool) {
 }
 
 // PrintRPMs prints the all rpms in table form.
-func PrintRPMs(rpms []*ufspb.RPM, keysOnly bool) {
+func PrintRPMs(res []proto.Message, keysOnly bool) {
+	rpms := make([]*ufspb.RPM, len(res))
+	for i, r := range res {
+		rpms[i] = r.(*ufspb.RPM)
+	}
 	defer tw.Flush()
 	for _, rpm := range rpms {
 		printRPM(rpm, keysOnly)
@@ -462,16 +456,21 @@ func printRPM(rpm *ufspb.RPM, keysOnly bool) {
 }
 
 // PrintRPMsJSON prints the rpm details in json format.
-func PrintRPMsJSON(rpms []*ufspb.RPM, emit bool) {
-	len := len(rpms) - 1
+func PrintRPMsJSON(res []proto.Message, emit bool) {
+	rpms := make([]*ufspb.RPM, len(res))
+	for i, r := range res {
+		rpms[i] = r.(*ufspb.RPM)
+	}
+	fmt.Print("[")
 	for i, s := range rpms {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
-		if i < len {
+		if i < len(rpms)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 func dracFullOutputStrs(m *ufspb.Drac, dhcp *ufspb.DHCPConfig) []string {
@@ -557,38 +556,12 @@ func PrintDracsJSON(dracs []*ufspb.Drac, emit bool) {
 	}
 }
 
-func nicFullOutputStrs(nic *ufspb.Nic, dhcp *ufspb.DHCPConfig) []string {
-	var ts string
-	if t, err := ptypes.Timestamp(nic.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
-	}
-	return []string{
-		ufsUtil.RemovePrefix(nic.Name),
-		nic.GetMacAddress(),
-		nic.GetSwitchInterface().GetSwitch(),
-		nic.GetSwitchInterface().GetPortName(),
-		dhcp.GetHostname(),
-		dhcp.GetIp(),
-		dhcp.GetVlan(),
-		nic.GetZone(),
-		nic.GetRack(),
-		nic.GetMachine(),
-		ts,
-	}
-}
-
-// PrintNicFull prints the full related msg for nic
-func PrintNicFull(nic *ufspb.Nic, dhcp *ufspb.DHCPConfig) {
-	defer tw.Flush()
-	var out string
-	for _, s := range nicFullOutputStrs(nic, dhcp) {
-		out += fmt.Sprintf("%s\t", s)
-	}
-	fmt.Fprintln(tw, out)
-}
-
 // PrintNics prints the all nics in table form.
-func PrintNics(nics []*ufspb.Nic, keysOnly bool) {
+func PrintNics(res []proto.Message, keysOnly bool) {
+	nics := make([]*ufspb.Nic, len(res))
+	for i, r := range res {
+		nics[i] = r.(*ufspb.Nic)
+	}
 	defer tw.Flush()
 	for _, nic := range nics {
 		printNic(nic, keysOnly)
@@ -626,12 +599,15 @@ func printNic(nic *ufspb.Nic, keysOnly bool) {
 }
 
 // PrintNicsJSON prints the nic details in json format.
-func PrintNicsJSON(nics []*ufspb.Nic, emit bool) {
-	len := len(nics) - 1
+func PrintNicsJSON(res []proto.Message, emit bool) {
+	nics := make([]*ufspb.Nic, len(res))
+	for i, r := range res {
+		nics[i] = r.(*ufspb.Nic)
+	}
 	for i, s := range nics {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
-		if i < len {
+		if i < len(nics)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
@@ -710,9 +686,14 @@ func PrintMachinesJSON(res []proto.Message, emit bool) {
 }
 
 // PrintMachineLSEPrototypes prints the all msleps in table form.
-func PrintMachineLSEPrototypes(msleps []*ufspb.MachineLSEPrototype, keysOnly bool) {
+func PrintMachineLSEPrototypes(res []proto.Message, keysOnly bool) {
+	entities := make([]*ufspb.MachineLSEPrototype, len(res))
+	for i, r := range res {
+		entities[i] = r.(*ufspb.MachineLSEPrototype)
+	}
 	defer tw.Flush()
-	for _, m := range msleps {
+	for _, m := range entities {
+		m.Name = ufsUtil.RemovePrefix(m.Name)
 		printMachineLSEPrototype(m, keysOnly)
 	}
 }
@@ -756,9 +737,14 @@ func printMachineLSEPrototype(m *ufspb.MachineLSEPrototype, keysOnly bool) {
 }
 
 // PrintMachineLSEPrototypesJSON prints the mslep details in json format.
-func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype, emit bool) {
-	len := len(msleps) - 1
-	for i, m := range msleps {
+func PrintMachineLSEPrototypesJSON(res []proto.Message, emit bool) {
+	entities := make([]*ufspb.MachineLSEPrototype, len(res))
+	for i, r := range res {
+		entities[i] = r.(*ufspb.MachineLSEPrototype)
+	}
+	len := len(entities) - 1
+	fmt.Print("[")
+	for i, m := range entities {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
 		if i < len {
@@ -766,12 +752,17 @@ func PrintMachineLSEPrototypesJSON(msleps []*ufspb.MachineLSEPrototype, emit boo
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintRackLSEPrototypes prints the all msleps in table form.
-func PrintRackLSEPrototypes(msleps []*ufspb.RackLSEPrototype, keysOnly bool) {
+func PrintRackLSEPrototypes(res []proto.Message, keysOnly bool) {
+	rlseps := make([]*ufspb.RackLSEPrototype, len(res))
+	for i, r := range res {
+		rlseps[i] = r.(*ufspb.RackLSEPrototype)
+	}
 	defer tw.Flush()
-	for _, m := range msleps {
+	for _, m := range rlseps {
 		printRackLSEPrototype(m, keysOnly)
 	}
 }
@@ -806,35 +797,49 @@ func printRackLSEPrototype(m *ufspb.RackLSEPrototype, keysOnly bool) {
 }
 
 // PrintRackLSEPrototypesJSON prints the mslep details in json format.
-func PrintRackLSEPrototypesJSON(rlseps []*ufspb.RackLSEPrototype, emit bool) {
-	len := len(rlseps) - 1
+func PrintRackLSEPrototypesJSON(res []proto.Message, emit bool) {
+	rlseps := make([]*ufspb.RackLSEPrototype, len(res))
+	for i, r := range res {
+		rlseps[i] = r.(*ufspb.RackLSEPrototype)
+	}
+	fmt.Print("[")
 	for i, m := range rlseps {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(rlseps)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintVlansJSON prints the vlan details in json format.
-func PrintVlansJSON(vlans []*ufspb.Vlan, emit bool) {
-	len := len(vlans) - 1
+func PrintVlansJSON(res []proto.Message, emit bool) {
+	vlans := make([]*ufspb.Vlan, len(res))
+	for i, r := range res {
+		vlans[i] = r.(*ufspb.Vlan)
+	}
+	fmt.Print("[")
 	for i, m := range vlans {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(vlans)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintVlans prints the all vlans in table form.
-func PrintVlans(vs []*ufspb.Vlan, keysOnly bool) {
+func PrintVlans(res []proto.Message, keysOnly bool) {
+	vlans := make([]*ufspb.Vlan, len(res))
+	for i, r := range res {
+		vlans[i] = r.(*ufspb.Vlan)
+	}
 	defer tw.Flush()
-	for _, v := range vs {
+	for _, v := range vlans {
 		printVlan(v, keysOnly)
 	}
 }
@@ -868,9 +873,13 @@ func printVlan(m *ufspb.Vlan, keysOnly bool) {
 }
 
 // PrintChromePlatforms prints the all msleps in table form.
-func PrintChromePlatforms(msleps []*ufspb.ChromePlatform, keysOnly bool) {
+func PrintChromePlatforms(res []proto.Message, keysOnly bool) {
+	platforms := make([]*ufspb.ChromePlatform, len(res))
+	for i, r := range res {
+		platforms[i] = r.(*ufspb.ChromePlatform)
+	}
 	defer tw.Flush()
-	for _, m := range msleps {
+	for _, m := range platforms {
 		printChromePlatform(m, keysOnly)
 	}
 }
@@ -902,16 +911,21 @@ func printChromePlatform(m *ufspb.ChromePlatform, keysOnly bool) {
 }
 
 // PrintChromePlatformsJSON prints the mslep details in json format.
-func PrintChromePlatformsJSON(msleps []*ufspb.ChromePlatform, emit bool) {
-	len := len(msleps) - 1
-	for i, m := range msleps {
+func PrintChromePlatformsJSON(res []proto.Message, emit bool) {
+	platforms := make([]*ufspb.ChromePlatform, len(res))
+	for i, r := range res {
+		platforms[i] = r.(*ufspb.ChromePlatform)
+	}
+	fmt.Print("[")
+	for i, m := range platforms {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(platforms)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintMachineLSEsJSON prints the machinelse details in json format.
@@ -1127,7 +1141,11 @@ func PrintVMsJSON(vms []*ufspb.VM, emit bool) {
 }
 
 // PrintRacks prints the all racks in table form.
-func PrintRacks(racks []*ufspb.Rack, keysOnly bool) {
+func PrintRacks(res []proto.Message, keysOnly bool) {
+	racks := make([]*ufspb.Rack, len(res))
+	for i, r := range res {
+		racks[i] = r.(*ufspb.Rack)
+	}
 	defer tw.Flush()
 	for _, m := range racks {
 		printRack(m, keysOnly)
@@ -1143,9 +1161,6 @@ func rackOutputStrs(pm proto.Message) []string {
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetLocation().GetZone().String(),
-		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetKvmObjects(), "Name")),
-		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetSwitchObjects(), "Name")),
-		strSlicesToStr(ufsAPI.ParseResources(m.GetChromeBrowserRack().GetRpmObjects(), "Name")),
 		fmt.Sprintf("%d", m.GetCapacityRu()),
 		m.GetState(),
 		m.GetRealm(),
@@ -1167,16 +1182,21 @@ func printRack(m *ufspb.Rack, keysOnly bool) {
 }
 
 // PrintRacksJSON prints the rack details in json format.
-func PrintRacksJSON(racks []*ufspb.Rack, emit bool) {
-	len := len(racks) - 1
+func PrintRacksJSON(res []proto.Message, emit bool) {
+	racks := make([]*ufspb.Rack, len(res))
+	for i, r := range res {
+		racks[i] = r.(*ufspb.Rack)
+	}
+	fmt.Print("[")
 	for i, m := range racks {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(racks)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 func strSlicesToStr(slices []string) string {

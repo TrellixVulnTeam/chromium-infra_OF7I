@@ -5,36 +5,49 @@
 package rackprototype
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
+	"infra/cmd/shivas/cmdhelp"
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
-	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetRackLSEPrototypeCmd get RackLSEPrototype by given name.
 var GetRackLSEPrototypeCmd = &subcommands.Command{
-	UsageLine: "rackprototype {Rack Prototype Name}",
-	ShortDesc: "Get rack prototype details by name",
-	LongDesc: `Get rack prototype details by name.
+	UsageLine: "rack-prototype ...",
+	ShortDesc: "Get rack prototype details by filters",
+	LongDesc: `Get rack prototype details by filters.
 
 Example:
-shivas get rackprototype {Rack Prototype Name}
-Gets the rack prototype and prints the output in JSON format.`,
+
+shivas get rack-prototype name1 name2
+
+shivas get rack-prototype
+
+shivas get rack-prototype -tag tag1
+
+Gets the rack prototype and prints the output in the user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getRackLSEPrototype{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
 		c.commonFlags.Register(&c.Flags)
 		c.outputFlags.Register(&c.Flags)
+
+		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
+		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
+
+		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		return c
 	},
 }
@@ -45,6 +58,12 @@ type getRackLSEPrototype struct {
 	envFlags    site.EnvFlags
 	commonFlags site.CommonFlags
 	outputFlags site.OutputFlags
+
+	// Filters
+	tags []string
+
+	pageSize int
+	keysOnly bool
 }
 
 func (c *getRackLSEPrototype) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -56,9 +75,6 @@ func (c *getRackLSEPrototype) Run(a subcommands.Application, args []string, env 
 }
 
 func (c *getRackLSEPrototype) innerRun(a subcommands.Application, args []string, env subcommands.Env) error {
-	if err := c.validateArgs(); err != nil {
-		return err
-	}
 	ctx := cli.GetContext(a, c, env)
 	ctx = utils.SetupContext(ctx)
 	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
@@ -74,33 +90,73 @@ func (c *getRackLSEPrototype) innerRun(a subcommands.Application, args []string,
 		Host:    e.UnifiedFleetService,
 		Options: site.DefaultPRPCOptions,
 	})
-	res, err := ic.GetRackLSEPrototype(ctx, &ufsAPI.GetRackLSEPrototypeRequest{
-		Name: ufsUtil.AddPrefix(ufsUtil.RackLSEPrototypeCollection, args[0]),
-	})
+
+	var res []proto.Message
+	if len(args) > 0 {
+		res, err = c.batchGet(ctx, ic, args)
+	} else {
+		res, err = utils.BatchList(ctx, ic, listRPMs, c.formatFilters(), c.pageSize, c.keysOnly)
+	}
 	if err != nil {
 		return err
 	}
-	res.Name = ufsUtil.RemovePrefix(res.Name)
-	return c.print(res)
+	emit := !utils.NoEmitMode(c.outputFlags.NoEmit())
+	full := utils.FullMode(c.outputFlags.Full())
+	return utils.PrintEntities(ctx, ic, res, utils.PrintRackLSEPrototypesJSON, printRackLSEPrototypeFull, printRackLSEPrototypeNormal,
+		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
-func (c *getRackLSEPrototype) print(lp *ufspb.RackLSEPrototype) error {
-	if c.outputFlags.JSON() {
-		utils.PrintProtoJSON(lp, !utils.NoEmitMode(c.outputFlags.NoEmit()))
-		return nil
-	}
-	if c.outputFlags.Tsv() {
-		utils.PrintTSVRackLSEPrototypes([]*ufspb.RackLSEPrototype{lp}, false)
-		return nil
-	}
-	utils.PrintTitle(utils.RacklseprototypeTitle)
-	utils.PrintRackLSEPrototypes([]*ufspb.RackLSEPrototype{lp}, false)
-	return nil
+func (c *getRackLSEPrototype) formatFilters() []string {
+	filters := make([]string, 0)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	return filters
 }
 
-func (c *getRackLSEPrototype) validateArgs() error {
-	if c.Flags.NArg() == 0 {
-		return cmdlib.NewUsageError(c.Flags, "Please provide the rack prototype name.")
+func (c *getRackLSEPrototype) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
+	res, err := ic.BatchGetRackLSEPrototypes(ctx, &ufsAPI.BatchGetRackLSEPrototypesRequest{
+		Names: names,
+	})
+	if err != nil {
+		return nil, err
 	}
+	protos := make([]proto.Message, len(res.GetRackLsePrototypes()))
+	for i, r := range res.GetRackLsePrototypes() {
+		protos[i] = r
+	}
+	return protos, nil
+}
+
+func listRPMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
+	req := &ufsAPI.ListRackLSEPrototypesRequest{
+		PageSize:  pageSize,
+		PageToken: pageToken,
+		Filter:    filter,
+		KeysOnly:  keysOnly,
+	}
+	res, err := ic.ListRackLSEPrototypes(ctx, req)
+	if err != nil {
+		return nil, "", err
+	}
+	protos := make([]proto.Message, len(res.GetRackLSEPrototypes()))
+	for i, m := range res.GetRackLSEPrototypes() {
+		protos[i] = m
+	}
+	return protos, res.GetNextPageToken(), nil
+}
+
+func printRackLSEPrototypeFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
+	return printRackLSEPrototypeNormal(msgs, tsv, false)
+}
+
+func printRackLSEPrototypeNormal(entities []proto.Message, tsv, keysOnly bool) error {
+	if len(entities) == 0 {
+		return nil
+	}
+	if tsv {
+		utils.PrintTSVRackLSEPrototypes(entities, false)
+		return nil
+	}
+	utils.PrintTableTitle(utils.RacklseprototypeTitle, tsv, keysOnly)
+	utils.PrintRackLSEPrototypes(entities, keysOnly)
 	return nil
 }

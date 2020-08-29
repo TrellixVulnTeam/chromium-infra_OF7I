@@ -46,20 +46,6 @@ func PrintTSVKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) {
 	csw.Write(kvmFullOutputStrs(kvm, dhcp))
 }
 
-// PrintTSVNicFull prints the full related msg for nic in tsv mode
-func PrintTSVNicFull(nic *ufspb.Nic, dhcp *ufspb.DHCPConfig) {
-	csw := NewCSVWriter()
-	defer csw.Flush()
-	csw.Write(nicFullOutputStrs(nic, dhcp))
-}
-
-// PrintTSVSwitchFull prints the full related msg for switch in tsv mode
-func PrintTSVSwitchFull(sw *ufspb.Switch, nics []*ufspb.Nic, dracs []*ufspb.Drac) {
-	csw := NewCSVWriter()
-	defer csw.Flush()
-	csw.Write(switchFullOutputStrs(sw, nics, dracs))
-}
-
 // PrintTSVVmFull prints the full related msg for vm in tsv mode
 func PrintTSVVmFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) {
 	csw := NewCSVWriter()
@@ -96,29 +82,17 @@ func PrintTSVDracs(dracs []*ufspb.Drac, keysOnly bool) {
 }
 
 // PrintTSVNics prints the tsv format of nics
-func PrintTSVNics(res []*ufspb.Nic, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVNics(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, nicOutputStrs)
 }
 
 // PrintTSVRacks prints the tsv format of racks
-func PrintTSVRacks(res []*ufspb.Rack, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVRacks(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, rackOutputStrs)
 }
 
 // PrintTSVSwitches prints the tsv format of switches
-func PrintTSVSwitches(res []*ufspb.Switch, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVSwitches(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, switchOutputStrs)
 }
 
@@ -128,11 +102,7 @@ func PrintTSVKVMs(res []proto.Message, keysOnly bool) {
 }
 
 // PrintTSVRPMs prints the tsv format of rpms
-func PrintTSVRPMs(res []*ufspb.RPM, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVRPMs(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, rpmOutputStrs)
 }
 
@@ -151,37 +121,21 @@ func PrintTSVVMs(res []*ufspb.VM, keysOnly bool) {
 }
 
 // PrintTSVVlans prints the tsv format of vlans
-func PrintTSVVlans(res []*ufspb.Vlan, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVVlans(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, vlanOutputStrs)
 }
 
 // PrintTSVRackLSEPrototypes prints the tsv format of rack lse prototypes
-func PrintTSVRackLSEPrototypes(res []*ufspb.RackLSEPrototype, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVRackLSEPrototypes(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, rackLSEPrototypeOutputStrs)
 }
 
 // PrintTSVMachineLSEPrototypes prints the tsv format of machine lse prototypes
-func PrintTSVMachineLSEPrototypes(res []*ufspb.MachineLSEPrototype, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVMachineLSEPrototypes(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, machineLSEPrototypeOutputStrs)
 }
 
 // PrintTSVPlatforms prints the tsv format of chrome platforms
-func PrintTSVPlatforms(res []*ufspb.ChromePlatform, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVPlatforms(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, platformOutputStrs)
 }

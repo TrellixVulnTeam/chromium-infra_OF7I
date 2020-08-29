@@ -8,15 +8,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/common/cli"
 
-	"infra/cmd/shivas/ufs/subcmds/chromeplatform"
 	"infra/cmd/shivas/ufs/subcmds/drac"
-	"infra/cmd/shivas/ufs/subcmds/machineprototype"
-	"infra/cmd/shivas/ufs/subcmds/nic"
-	"infra/cmd/shivas/ufs/subcmds/rack"
-	"infra/cmd/shivas/ufs/subcmds/rackprototype"
-	"infra/cmd/shivas/ufs/subcmds/rpm"
-	"infra/cmd/shivas/ufs/subcmds/switches"
-	"infra/cmd/shivas/ufs/subcmds/vlan"
 	"infra/cmd/shivas/ufs/subcmds/vm"
 )
 
@@ -28,10 +20,7 @@ type list struct {
 var ListCmd = &subcommands.Command{
 	UsageLine: "list <sub-command>",
 	ShortDesc: "List entries for resources/entities",
-	LongDesc: `List entries for:
-	machine/rack/kvm/rpm/switch/drac/nic
-	host/vm/vm-slots
-	machine-prototype/rack-prototype/chromeplatform/vlan`,
+	LongDesc:  `List entries for: drac/vm/vm-slots`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &list{}
 		return c
@@ -52,17 +41,9 @@ func (c *list) Run(a subcommands.Application, args []string, env subcommands.Env
 func (c listApp) GetCommands() []*subcommands.Command {
 	return []*subcommands.Command{
 		subcommands.CmdHelp,
-		rpm.ListRPMCmd,
-		switches.ListSwitchCmd,
 		drac.ListDracCmd,
-		nic.ListNicCmd,
 		vm.ListVMCmd,
 		vm.ListVMSlotCmd,
-		vlan.ListVlanCmd,
-		rack.ListRackCmd,
-		machineprototype.ListMachineLSEPrototypeCmd,
-		rackprototype.ListRackLSEPrototypeCmd,
-		chromeplatform.ListChromePlatformCmd,
 	}
 }
 
