@@ -49,7 +49,6 @@ func getApplication() *cli.Application {
 			operations.UpdateCmd,
 			operations.DeleteCmd,
 			q.GetCmd,
-			q.ListCmd,
 			subcommands.Section("State"),
 			sw_cmds.ReserveDutsCmd,
 			state.DutStateCmd,

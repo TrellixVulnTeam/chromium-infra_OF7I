@@ -1030,33 +1030,6 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	KeysOnlyText string = `get only the keys and not the entire object.
 Operation will be faster as only primary keys/ids will be retrieved from the service.`
 
-	// FilterText Common filter text for all list filter option
-	FilterText string = "filtering option to filter the results.\n"
-
-	// FilterCondition Common filter condition for all list filter option
-	FilterCondition string = "\nAll the filter options(separated by comma) are AND and not OR. If you need OR, please run separate list commands."
-
-	// VMSlotFilterHelp help text for list free vm slots filtering
-	VMSlotFilterHelp string = FilterText + `You can filter free vm slots by man(manufacturer)/zone/rack/state/machine/os/vdc(virtualdatacenter)` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'man=apple'
-'os=macos,10.13.6'
-'zone=atl97 & man=apple'` + FilterCondition
-
-	// DracFilterHelp help text for list rack filtering
-	DracFilterHelp string = FilterText + `You can filter dracs by zone/rack/switch/switchport/mac(macaddress)/machine/tag` + "\n" + ZoneFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'zone=atl97 & rack=rack-1'` + FilterCondition
-
-	// VMFilterHelp help text for list vm filtering
-	VMFilterHelp string = FilterText + `You can filter hosts by vlan/state/host/zone/tag/os` + "\n" + ZoneFilterHelpText + StateFilterHelpText +
-		`Filter format Egs:
-'zone=atl97'
-'os=esxi,6.7.0'
-'zone=atl97 & vlan=browser-lab:vlan-1'` + FilterCondition
-
 	// StateHelp help text for filter '-state'
 	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"
 

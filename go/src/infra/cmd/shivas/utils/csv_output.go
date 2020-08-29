@@ -73,11 +73,7 @@ func PrintTSVMachines(msgs []proto.Message, keysOnly bool) {
 }
 
 // PrintTSVDracs prints the tsv format of dracs
-func PrintTSVDracs(dracs []*ufspb.Drac, keysOnly bool) {
-	msgs := make([]proto.Message, len(dracs))
-	for i, d := range dracs {
-		msgs[i] = d
-	}
+func PrintTSVDracs(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, dracOutputStrs)
 }
 
@@ -112,11 +108,7 @@ func PrintTSVMachineLSEs(msgs []proto.Message, keysOnly bool) {
 }
 
 // PrintTSVVMs prints the tsv format of vms
-func PrintTSVVMs(res []*ufspb.VM, keysOnly bool) {
-	msgs := make([]proto.Message, len(res))
-	for i, d := range res {
-		msgs[i] = d
-	}
+func PrintTSVVMs(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, vmOutputStrs)
 }
 

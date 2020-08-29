@@ -6,13 +6,11 @@ package host
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
@@ -27,9 +25,9 @@ import (
 
 // GetHostCmd get host by given name.
 var GetHostCmd = &subcommands.Command{
-	UsageLine: "host {Host name}",
-	ShortDesc: "Get host details by name",
-	LongDesc: `Get host details by name.
+	UsageLine: "host ...",
+	ShortDesc: "Get host details by filters",
+	LongDesc: `Get host details by filters.
 
 Example:
 
@@ -37,7 +35,7 @@ shivas get host {name1} {name2}
 
 shivas get host -rack rack1 -rack2 -state serving -state needs_repair
 
-Gets the host and prints the output in JSON format.`,
+Gets the host and prints the output in user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getHost{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -47,16 +45,14 @@ Gets the host and prints the output in JSON format.`,
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 
-		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.machines), "machine", "Name(s) of a machine to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.prototypes), "prototype", "Name(s) of a host prototype to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.vlans), "vlan", "Name(s) of a vlan to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.manufacturers), "man", "Name(s) of a manufacturer to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.oses), "os", "Name(s) of an os to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.nics), "nic", "Name(s) of a nic to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.vdcs), "vdc", "Name(s) of a vdc to filter by. Can be specified multiple times.")
-		c.Flags.Var(flag.StringSlice(&c.switches), "switch", "Name(s) of a switch to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
@@ -74,12 +70,10 @@ type getHost struct {
 	racks         []string
 	machines      []string
 	prototypes    []string
-	vlans         []string
 	manufacturers []string
 	oses          []string
 	nics          []string
 	vdcs          []string
-	switches      []string
 	tags          []string
 	states        []string
 
@@ -112,7 +106,7 @@ func (c *getHost) innerRun(a subcommands.Application, args []string, env subcomm
 	if len(args) > 0 {
 		res, err = c.batchGet(ctx, ic, args)
 	} else {
-		res, err = c.batchList(ctx, ic, c.formatFilters())
+		res, err = utils.BatchList(ctx, ic, listHosts, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
 	if err != nil {
 		return err
@@ -136,32 +130,6 @@ func (c *getHost) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
 	return filters
-}
-
-func (c *getHost) batchList(ctx context.Context, ic ufsAPI.FleetClient, filters []string) ([]proto.Message, error) {
-	errs := make(map[string]error)
-	res := make([]proto.Message, 0)
-	for _, filter := range filters {
-		protos, err := utils.DoList(ctx, ic, listHosts, int32(c.pageSize), filter, c.keysOnly)
-		if err != nil {
-			errs[filter] = err
-		}
-		res = append(res, protos...)
-		if c.pageSize > 0 && len(res) >= c.pageSize {
-			res = res[0:c.pageSize]
-			break
-		}
-	}
-	if len(errs) > 0 {
-		fmt.Println("Fail to do some queries:")
-		resErr := make([]error, 0, len(errs))
-		for f, err := range errs {
-			fmt.Printf("Filter %s: %s\n", f, err.Error())
-			resErr = append(resErr, err)
-		}
-		return nil, errors.MultiError(resErr)
-	}
-	return res, nil
 }
 
 func (c *getHost) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {

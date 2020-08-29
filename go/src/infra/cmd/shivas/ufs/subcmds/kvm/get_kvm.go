@@ -12,7 +12,6 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
@@ -27,14 +26,17 @@ import (
 
 // GetKVMCmd get kvm by given name.
 var GetKVMCmd = &subcommands.Command{
-	UsageLine: "kvm {KVM Name}",
-	ShortDesc: "Get kvm details by name",
-	LongDesc: `Get kvm details by name.
+	UsageLine: "kvm ...",
+	ShortDesc: "Get kvm details by filters",
+	LongDesc: `Get kvm details by filters.
 
 Example:
 
-shivas get kvm {KVM Name}
-Gets the kvm and prints the output in JSON format.`,
+shivas get kvm {name1} {name2}
+
+shivas get kvm -platform platform1 -zone mtv97 -rack rack1 -rack rack2 -rack rack3
+
+Gets the kvm and prints the output in the user-specified format.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &getKVM{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
@@ -45,7 +47,7 @@ Gets the kvm and prints the output in JSON format.`,
 		c.Flags.IntVar(&c.pageSize, "n", 0, cmdhelp.ListPageSizeDesc)
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 
-		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.platforms), "platform", "Name(s) of a platform to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
@@ -101,7 +103,7 @@ func (c *getKVM) innerRun(a subcommands.Application, args []string, env subcomma
 	if len(args) > 0 {
 		res, err = c.batchGet(ctx, ic, args)
 	} else {
-		res, err = c.batchList(ctx, ic, c.formatFilters())
+		res, err = utils.BatchList(ctx, ic, listKVMs, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
 	if err != nil {
 		return err
@@ -121,32 +123,6 @@ func (c *getKVM) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("mac", c.macs)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
 	return filters
-}
-
-func (c *getKVM) batchList(ctx context.Context, ic ufsAPI.FleetClient, filters []string) ([]proto.Message, error) {
-	errs := make(map[string]error)
-	res := make([]proto.Message, 0)
-	for _, filter := range filters {
-		protos, err := utils.DoList(ctx, ic, listKVMs, int32(c.pageSize), filter, c.keysOnly)
-		if err != nil {
-			errs[filter] = err
-		}
-		res = append(res, protos...)
-		if c.pageSize > 0 && len(res) >= c.pageSize {
-			res = res[0:c.pageSize]
-			break
-		}
-	}
-	if len(errs) > 0 {
-		fmt.Println("Fail to do some queries:")
-		resErr := make([]error, 0, len(errs))
-		for f, err := range errs {
-			fmt.Printf("Filter %s: %s\n", f, err.Error())
-			resErr = append(resErr, err)
-		}
-		return nil, errors.MultiError(resErr)
-	}
-	return res, nil
 }
 
 func (c *getKVM) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {

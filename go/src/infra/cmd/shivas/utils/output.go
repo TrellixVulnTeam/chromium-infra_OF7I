@@ -494,17 +494,23 @@ func dracFullOutputStrs(m *ufspb.Drac, dhcp *ufspb.DHCPConfig) []string {
 }
 
 // PrintDracFull prints the full related msg for drac
-func PrintDracFull(drac *ufspb.Drac, dhcp *ufspb.DHCPConfig) {
+func PrintDracFull(entities []*ufspb.Drac, dhcps map[string]*ufspb.DHCPConfig) {
 	defer tw.Flush()
-	var out string
-	for _, s := range dracFullOutputStrs(drac, dhcp) {
-		out += fmt.Sprintf("%s\t", s)
+	for i := range entities {
+		var out string
+		for _, s := range dracFullOutputStrs(entities[i], dhcps[entities[i].GetName()]) {
+			out += fmt.Sprintf("%s\t", s)
+		}
+		fmt.Fprintln(tw, out)
 	}
-	fmt.Fprintln(tw, out)
 }
 
 // PrintDracs prints the all dracs in table form.
-func PrintDracs(dracs []*ufspb.Drac, keysOnly bool) {
+func PrintDracs(res []proto.Message, keysOnly bool) {
+	dracs := make([]*ufspb.Drac, len(res))
+	for i, r := range res {
+		dracs[i] = r.(*ufspb.Drac)
+	}
 	defer tw.Flush()
 	for _, drac := range dracs {
 		printDrac(drac, keysOnly)
@@ -544,16 +550,21 @@ func printDrac(drac *ufspb.Drac, keysOnly bool) {
 }
 
 // PrintDracsJSON prints the drac details in json format.
-func PrintDracsJSON(dracs []*ufspb.Drac, emit bool) {
-	len := len(dracs) - 1
+func PrintDracsJSON(res []proto.Message, emit bool) {
+	dracs := make([]*ufspb.Drac, len(res))
+	for i, r := range res {
+		dracs[i] = r.(*ufspb.Drac)
+	}
+	fmt.Print("[")
 	for i, s := range dracs {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
-		if i < len {
+		if i < len(dracs)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintNics prints the all nics in table form.
@@ -604,6 +615,7 @@ func PrintNicsJSON(res []proto.Message, emit bool) {
 	for i, r := range res {
 		nics[i] = r.(*ufspb.Nic)
 	}
+	fmt.Print("[")
 	for i, s := range nics {
 		s.Name = ufsUtil.RemovePrefix(s.Name)
 		PrintProtoJSON(s, emit)
@@ -612,6 +624,7 @@ func PrintNicsJSON(res []proto.Message, emit bool) {
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 func machineOutputStrs(pm proto.Message) []string {
@@ -742,12 +755,11 @@ func PrintMachineLSEPrototypesJSON(res []proto.Message, emit bool) {
 	for i, r := range res {
 		entities[i] = r.(*ufspb.MachineLSEPrototype)
 	}
-	len := len(entities) - 1
 	fmt.Print("[")
 	for i, m := range entities {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(entities)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
@@ -1036,23 +1048,20 @@ func printMachineLSE(m *ufspb.MachineLSE, keysOnly bool) {
 }
 
 // PrintFreeVMs prints the all free slots in table form.
-func PrintFreeVMs(ctx context.Context, ic ufsAPI.FleetClient, hosts []*ufspb.MachineLSE) {
+func PrintFreeVMs(entities []*ufspb.MachineLSE, dhcps map[string]*ufspb.DHCPConfig) {
 	defer tw.Flush()
 	PrintTitle([]string{"Host", "Os Version", "Manufacturer", "Vlan", "Zone", "Free slots", "State"})
-	for _, h := range hosts {
+	for _, h := range entities {
 		h.Name = ufsUtil.RemovePrefix(h.Name)
-		printFreeVM(ctx, ic, h)
+		printFreeVM(h, dhcps[h.Name])
 	}
 }
 
-func printFreeVM(ctx context.Context, ic ufsAPI.FleetClient, host *ufspb.MachineLSE) {
-	res, _ := ic.GetDHCPConfig(ctx, &ufsAPI.GetDHCPConfigRequest{
-		Hostname: host.GetName(),
-	})
+func printFreeVM(host *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) {
 	out := fmt.Sprintf("%s\t", host.GetName())
 	out += fmt.Sprintf("%s\t", host.GetChromeBrowserMachineLse().GetOsVersion().GetValue())
 	out += fmt.Sprintf("%s\t", host.GetManufacturer())
-	out += fmt.Sprintf("%s\t", res.GetVlan())
+	out += fmt.Sprintf("%s\t", dhcp.GetVlan())
 	out += fmt.Sprintf("%s\t", host.GetZone())
 	out += fmt.Sprintf("%d\t", host.GetChromeBrowserMachineLse().GetVmCapacity())
 	out += fmt.Sprintf("%s\t", host.GetResourceState().String())
@@ -1079,17 +1088,23 @@ func vmFullOutputStrs(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) []string {
 }
 
 // PrintVMFull prints the full info for vm
-func PrintVMFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) {
+func PrintVMFull(entities []*ufspb.VM, dhcps map[string]*ufspb.DHCPConfig) {
 	defer tw.Flush()
-	var out string
-	for _, s := range vmFullOutputStrs(vm, dhcp) {
-		out += fmt.Sprintf("%s\t", s)
+	for i := range entities {
+		var out string
+		for _, s := range vmFullOutputStrs(entities[i], dhcps[entities[i].GetName()]) {
+			out += fmt.Sprintf("%s\t", s)
+		}
+		fmt.Fprintln(tw, out)
 	}
-	fmt.Fprintln(tw, out)
 }
 
 // PrintVMs prints the all vms in table form.
-func PrintVMs(vms []*ufspb.VM, keysOnly bool) {
+func PrintVMs(res []proto.Message, keysOnly bool) {
+	vms := make([]*ufspb.VM, len(res))
+	for i, r := range res {
+		vms[i] = r.(*ufspb.VM)
+	}
 	defer tw.Flush()
 	for _, vm := range vms {
 		printVM(vm, keysOnly)
@@ -1128,16 +1143,21 @@ func printVM(vm *ufspb.VM, keysOnly bool) {
 }
 
 // PrintVMsJSON prints the vm details in json format.
-func PrintVMsJSON(vms []*ufspb.VM, emit bool) {
-	len := len(vms) - 1
+func PrintVMsJSON(res []proto.Message, emit bool) {
+	vms := make([]*ufspb.VM, len(res))
+	for i, r := range res {
+		vms[i] = r.(*ufspb.VM)
+	}
+	fmt.Print("[")
 	for i, m := range vms {
 		m.Name = ufsUtil.RemovePrefix(m.Name)
 		PrintProtoJSON(m, emit)
-		if i < len {
+		if i < len(vms)-1 {
 			fmt.Print(",")
 			fmt.Println()
 		}
 	}
+	fmt.Println("]")
 }
 
 // PrintRacks prints the all racks in table form.

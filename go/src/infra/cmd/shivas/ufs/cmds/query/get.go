@@ -33,7 +33,7 @@ var GetCmd = &subcommands.Command{
 	ShortDesc: "Get details of a resource/entity",
 	LongDesc: `Get details for
 	machine/rack/kvm/rpm/switch/drac/nic
-	host/vm
+	host/vm/vm-slots
 	machine-prototype/rack-prototype/platform/vlan`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &get{}
@@ -63,6 +63,7 @@ func (c getApp) GetCommands() []*subcommands.Command {
 		drac.GetDracCmd,
 		nic.GetNicCmd,
 		vm.GetVMCmd,
+		vm.ListVMSlotCmd,
 		rack.GetRackCmd,
 		machineprototype.GetMachineLSEPrototypeCmd,
 		rackprototype.GetRackLSEPrototypeCmd,
