@@ -1,9 +1,6 @@
 <script>
   'use strict';
   const AlertTypes = {
-    // StaleMaster indicates that we have no recent updates from the master.
-    StaleMaster: 'stale-master',
-
     // HungBuilder indicates that a builder has been executing a step for too
     // long.
     HungBuilder: 'hung-builder',
@@ -26,8 +23,6 @@
 
   const AlertSeverity = {
     TreeCloser: 0,
-    // StaleMaster is an alert about stale master data.
-    StaleMaster: 1,
     // HungBuilder is an alert about a builder being hung (stuck running a
     // particular step)
     HungBuilder: 2,
@@ -57,8 +52,6 @@
   const SeverityTooltips = [
     // TreeCloser
     `Tree closers are high priority issues that closed the tree.`,
-    // StaleMaster
-    `Stale master alerts to notify you that a master machine has stale data. These should be handled by troopers.`,
     // HungBuilder
     `Hung builder alerts tell you about builders which are "hung" (stuck running a specific step). These alerts should be handled by troopers.`,
     // InfraFailure
@@ -77,7 +70,6 @@
 
   const TrooperAlertTypes = [
     AlertTypes.InfraFailure,
-    AlertTypes.StaleMaster,
     AlertTypes.OfflineBuilder,
     AlertTypes.HungBuilder,
     AlertTypes.IdleBuilder,

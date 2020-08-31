@@ -28,9 +28,6 @@ const (
 	// messages this package parses.
 	GoogleTimeZone = "UTC"
 
-	// AlertStaleMaster indicates that we have no recent updates from the master.
-	AlertStaleMaster = "stale-master"
-
 	// AlertHungBuilder indicates that a builder has been executing a step for too long.
 	AlertHungBuilder = "hung-builder"
 
@@ -89,8 +86,6 @@ type Severity int
 const (
 	// TreeCloser is an alert which closes the tree. Highest priority alert.
 	TreeCloser Severity = iota
-	// StaleMaster is an alert about stale master data.
-	StaleMaster
 	// HungBuilder is an alert about a builder being hung (stuck running a particular step)
 	HungBuilder
 	// InfraFailure is an infrastructure failure. It is higher severity than a reliable failure

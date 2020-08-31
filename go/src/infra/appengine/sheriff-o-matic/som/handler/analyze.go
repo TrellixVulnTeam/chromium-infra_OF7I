@@ -292,7 +292,6 @@ func putAlertsBigQuery(c context.Context, tree string, alertsSummary *messages.A
 
 var (
 	alertToEventType = map[messages.AlertType]gen.SOMAlertsEvent_Alert_AlertType{
-		messages.AlertStaleMaster:    gen.SOMAlertsEvent_Alert_STALE_MASTER,
 		messages.AlertHungBuilder:    gen.SOMAlertsEvent_Alert_HUNG_BUILDER,
 		messages.AlertOfflineBuilder: gen.SOMAlertsEvent_Alert_OFFLINE_BUILDER,
 		messages.AlertIdleBuilder:    gen.SOMAlertsEvent_Alert_IDLE_BUILDER,

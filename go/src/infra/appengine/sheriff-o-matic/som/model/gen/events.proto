@@ -38,8 +38,9 @@ message SOMAlertsEvent {
     // in the analyzer code with these enum values, this list will have to be
     // manually kept in sync.
     enum AlertType {
-      // STALE_MASTER indicates that we have no recent updates from the master.
-      STALE_MASTER = 0;
+      // This should not be used. It is here as a result of deleting some unused
+      // values, and in proto3, the first enum value must be zero
+      UNUSED = 0;
 
       // HUNG_BUILDER indicates that a builder has been executing a step for too long.
       HUNG_BUILDER = 1;
