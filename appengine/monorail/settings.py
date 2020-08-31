@@ -325,7 +325,7 @@ else:
     # gcloud redis instances list --project monorail-staging \
     #   --region us-central1
     # ````
-    redis_host = '10.252.150.83'
+    redis_host = '10.228.109.51'
 
   elif app_id == 'monorail-dev':
     site_name = 'Monorail Dev'
@@ -347,7 +347,7 @@ else:
     # Use replicas created in response to replication failures 2019-11-04
     db_replica_names = ['%s-next' % name for name in db_replica_names]
     # See comment above on how to find this address.
-    redis_host = None  # None until server is setup
+    redis_host = '10.190.48.180'
 
 if local_mode:
   site_name = 'Monorail Local'
