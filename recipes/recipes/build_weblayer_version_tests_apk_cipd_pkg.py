@@ -21,6 +21,9 @@ DEPS = [
   'recipe_engine/path',
   'recipe_engine/properties',
   'recipe_engine/python',
+  'recipe_engine/raw_io',
+  'recipe_engine/step',
+  'recipe_engine/time',
   'recipe_engine/url'
 ]
 
@@ -291,8 +294,11 @@ def build_cipd_pkgs(api, cipd_pkgs_to_create):
       api.zip.unzip('Uncompressing build files for version %s' % version,
                     zip_path, extract_dir)
       api.cipd.build(extract_dir, cipd_out, CIPD_PKG_NAME)
-      api.cipd.register(CIPD_PKG_NAME, cipd_out, tags={'version': version},
-                        refs=['m%s' % version[:version.index('.')]])
+      # User property below to tell recipe to not upload CIPD packages.
+      # TODO(rmhasan) Add code to check if CIPD package already exists.
+      if not api.properties.get('dont_upload_cipd_pkg'):
+        api.cipd.register(CIPD_PKG_NAME, cipd_out, tags={'version': version},
+                          refs=['m%s' % version[:version.index('.')]])
 
 
 def upload_changes(api, new_variants_lines, variants_pyl_path,
@@ -312,11 +318,34 @@ def upload_changes(api, new_variants_lines, variants_pyl_path,
   description = CL_DESC % '\n'.join(
       '%d, %s' % (idx + 1, ver)
       for idx, ver in enumerate(cipd_pkgs_to_create))
-  # TODO(rmhasan): Add code to wait for CL to be submitted.
+
   upload_args = ['--force', '--tbr-owners']
+  land_cl_arg = '--use-commit-queue'
   if api.properties.get('submit_cl'):
-    upload_args.append('--use-commit-queue')
+    upload_args.append(land_cl_arg)
   api.git_cl.upload(description, upload_args=upload_args)
+
+  if land_cl_arg in upload_args:
+    with api.step.nest('Landing CL'):
+      wait_for_cl_to_land(api)
+
+
+def wait_for_cl_to_land(api):
+  total_checks = api.properties.get('total_cq_checks')
+  # Time sleeping in between CL status checks
+  interval = api.properties.get('interval_between_checks_in_secs')
+  # Attempt to land the CL in total_cq_checks * interval_between_checks_in_secs
+  # seconds
+  for _ in range(total_checks):
+    status = api.git_cl('status', ['--field', 'status'], 'git cl status',
+                        stdout=api.git_cl.m.raw_io.output()).stdout.strip()
+    # TODO(rmhasan) Add code to differentiate between CL's that were
+    # merged and CL's that were abandoned.
+    if status == 'closed':
+      return
+    api.time.sleep(interval)
+  api.git_cl('set-close', [])
+  api.python.failing_step('CQ timed out', 'CQ timed out; Abandoned CL')
 
 
 def RunSteps(api):
@@ -387,7 +416,9 @@ def GenTests(api):
 }
 """
   yield (api.test('basic') +
-         api.properties(submit_cl=True) +
+         api.properties(submit_cl=True,
+                        total_cq_checks=2,
+                        interval_between_checks_in_secs=60) +
          api.step_data('Read variants.pyl',
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
@@ -404,7 +435,27 @@ def GenTests(api):
              api.file.read_text('a=83\nb=0\nc=4103\nd=96'))  +
          api.path.exists(api.path['cleanup'].join('apk_build_files')) +
          api.step_data('Reading //chrome/VERSION (2)',
-             api.file.read_text('a=84\nb=0\nc=4147\nd=89')))
+                       api.file.read_text('a=84\nb=0\nc=4147\nd=89')) +
+         api.step_data(
+             'Landing CL.git cl status',
+             api.raw_io.stream_output('commit', stream='stdout')) +
+         api.step_data(
+             'Landing CL.git cl status (2)',
+             api.raw_io.stream_output('closed', stream='stdout')))
+
+  yield (api.test('abandon-cl-after-time-out') +
+         api.properties(submit_cl=True,
+                        total_cq_checks=2,
+                        interval_between_checks_in_secs=60) +
+         api.step_data('Read variants.pyl',
+             api.file.read_text(TEST_VARIANTS_PYL)) +
+         api.url.json('Getting Android beta channel releases',
+                      [{'hashes':{'chromium':'abcd'}}]) +
+         api.url.json('Fetch information on commit abcd',
+                      {'deployment': {'beta': '84.0.4147.89'}}) +
+         api.step_data('Reading //chrome/VERSION',
+             api.file.read_text('a=84\nb=0\nc=4147\nd=89'))  +
+         api.path.exists(api.path['cleanup'].join('apk_build_files')))
 
   yield (api.test('malformed-chromium-version') +
          api.expect_exception('ValueError') +

@@ -792,31 +792,33 @@ To build a new package for all platforms:
 &mdash; **def [RunSteps](/recipes/recipes/build_gsutil_cipd_pkg.py#52)(api):**
 ### *recipes* / [build\_weblayer\_version\_tests\_apk\_cipd\_pkg](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py)
 
-[DEPS](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#10): [build/chromium][build/recipe_modules/chromium], [build/zip][build/recipe_modules/zip], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/url][recipe_engine/recipe_modules/url]
+[DEPS](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#10): [build/chromium][build/recipe_modules/chromium], [build/zip][build/recipe_modules/zip], [depot\_tools/bot\_update][depot_tools/recipe_modules/bot_update], [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [depot\_tools/git][depot_tools/recipe_modules/git], [depot\_tools/git\_cl][depot_tools/recipe_modules/git_cl], [recipe\_engine/cipd][recipe_engine/recipe_modules/cipd], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/json][recipe_engine/recipe_modules/json], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/properties][recipe_engine/recipe_modules/properties], [recipe\_engine/python][recipe_engine/recipe_modules/python], [recipe\_engine/raw\_io][recipe_engine/recipe_modules/raw_io], [recipe\_engine/step][recipe_engine/recipe_modules/step], [recipe\_engine/time][recipe_engine/recipe_modules/time], [recipe\_engine/url][recipe_engine/recipe_modules/url]
 
-&mdash; **def [RunSteps](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#322)(api):**
+&mdash; **def [RunSteps](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#351)(api):**
 
-&mdash; **def [build\_cipd\_pkgs](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#256)(api, cipd_pkgs_to_create):**
+&mdash; **def [build\_cipd\_pkgs](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#259)(api, cipd_pkgs_to_create):**
 
-&mdash; **def [check\_correct\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#160)(api, version):**
+&mdash; **def [check\_correct\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#163)(api, version):**
 
-&emsp; **@contextlib.contextmanager**<br>&mdash; **def [checkout\_chromium\_version\_and\_sync\_3p\_repos](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#141)(api, version):**
+&emsp; **@contextlib.contextmanager**<br>&mdash; **def [checkout\_chromium\_version\_and\_sync\_3p\_repos](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#144)(api, version):**
 
-&mdash; **def [commit\_url](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#120)(hash_value, api):**
+&mdash; **def [commit\_url](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#123)(hash_value, api):**
 
-&mdash; **def [generate\_skew\_test\_config\_lines](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#98)(library, version):**
+&mdash; **def [generate\_skew\_test\_config\_lines](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#101)(library, version):**
 
-&mdash; **def [get\_chromium\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#125)(api, hash_value):**
+&mdash; **def [get\_chromium\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#128)(api, hash_value):**
 
-&mdash; **def [get\_chromium\_versions\_to\_add](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#172)(api):**
+&mdash; **def [get\_chromium\_versions\_to\_add](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#175)(api):**
 
-&mdash; **def [is\_higher\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#134)(version, query_version):**
+&mdash; **def [is\_higher\_version](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#137)(version, query_version):**
 
-&mdash; **def [maybe\_update\_variants\_pyl](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#199)(api, variants_lines, variants_pyl_path):**
+&mdash; **def [maybe\_update\_variants\_pyl](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#202)(api, variants_lines, variants_pyl_path):**
 
-&mdash; **def [releases\_url](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#115)(platform, channel, num, api):**
+&mdash; **def [releases\_url](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#118)(platform, channel, num, api):**
 
-&mdash; **def [upload\_changes](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#298)(api, new_variants_lines, variants_pyl_path, cipd_pkgs_to_create):**
+&mdash; **def [upload\_changes](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#304)(api, new_variants_lines, variants_pyl_path, cipd_pkgs_to_create):**
+
+&mdash; **def [wait\_for\_cl\_to\_land](/recipes/recipes/build_weblayer_version_tests_apk_cipd_pkg.py#333)(api):**
 ### *recipes* / [build\_wheels](/recipes/recipes/build_wheels.py)
 
 [DEPS](/recipes/recipes/build_wheels.py#5): [depot\_tools/gclient][depot_tools/recipe_modules/gclient], [recipe\_engine/context][recipe_engine/recipe_modules/context], [recipe\_engine/file][recipe_engine/recipe_modules/file], [recipe\_engine/path][recipe_engine/recipe_modules/path], [recipe\_engine/python][recipe_engine/recipe_modules/python]

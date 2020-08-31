@@ -284,34 +284,6 @@
     "cmd": [
       "vpython",
       "-u",
-      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
-      "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=efgh",
-      "--status-json",
-      "/path/to/tmp/json",
-      "--outfile",
-      "/path/to/tmp/json"
-    ],
-    "name": "Fetch information on commit efgh"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
-      "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=ijkl",
-      "--status-json",
-      "/path/to/tmp/json",
-      "--outfile",
-      "/path/to/tmp/json"
-    ],
-    "name": "Fetch information on commit ijkl"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
       "--json-output",
       "/path/to/tmp/json",
@@ -326,7 +298,7 @@
     "cmd": [
       "git",
       "checkout",
-      "83.0.4103.96"
+      "84.0.4147.89"
     ],
     "cwd": "[START_DIR]/src",
     "infra_step": true,
@@ -357,10 +329,10 @@
     "infra_step": true,
     "name": "Reading //chrome/VERSION",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@VERSION@a=83@@@",
+      "@@@STEP_LOG_LINE@VERSION@a=84@@@",
       "@@@STEP_LOG_LINE@VERSION@b=0@@@",
-      "@@@STEP_LOG_LINE@VERSION@c=4103@@@",
-      "@@@STEP_LOG_LINE@VERSION@d=96@@@",
+      "@@@STEP_LOG_LINE@VERSION@c=4147@@@",
+      "@@@STEP_LOG_LINE@VERSION@d=89@@@",
       "@@@STEP_LOG_END@VERSION@@@"
     ]
   },
@@ -450,7 +422,7 @@
       "RECIPE_MODULE[build::zip]/resources/unzip.py"
     ],
     "cwd": "[START_DIR]/src",
-    "name": "Uncompressing build files for version 83.0.4103.96",
+    "name": "Uncompressing build files for version 84.0.4147.89",
     "stdin": "{\"output\": \"[CLEANUP]/apk_build_files\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_2/build_config.zip\"}"
   },
   {
@@ -462,7 +434,7 @@
       "-name",
       "chromium/testing/weblayer-x86",
       "-out",
-      "[START_DIR]/src/out/Release/skew_test_apk_83_0_4103_96.cipd",
+      "[START_DIR]/src/out/Release/skew_test_apk_84_0_4147_89.cipd",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -484,11 +456,11 @@
     "cmd": [
       "cipd",
       "pkg-register",
-      "[START_DIR]/src/out/Release/skew_test_apk_83_0_4103_96.cipd",
+      "[START_DIR]/src/out/Release/skew_test_apk_84_0_4147_89.cipd",
       "-ref",
-      "m83",
+      "m84",
       "-tag",
-      "version:83.0.4103.96",
+      "version:84.0.4147.89",
       "-json-output",
       "/path/to/tmp/json"
     ],
@@ -537,209 +509,6 @@
     ],
     "cwd": "[START_DIR]/src",
     "infra_step": true,
-    "name": "Cleaning 83.0.4103.96 build files"
-  },
-  {
-    "cmd": [
-      "git",
-      "checkout",
-      "84.0.4147.89"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git checkout (4)"
-  },
-  {
-    "cmd": [
-      "git",
-      "clean",
-      "-fd"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git clean (3)"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "[START_DIR]/src/chrome/VERSION",
-      "/path/to/tmp/"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "Reading //chrome/VERSION (2)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@VERSION@a=84@@@",
-      "@@@STEP_LOG_LINE@VERSION@b=0@@@",
-      "@@@STEP_LOG_LINE@VERSION@c=4147@@@",
-      "@@@STEP_LOG_LINE@VERSION@d=89@@@",
-      "@@@STEP_LOG_END@VERSION@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_REPO[depot_tools]/gclient.py",
-      "sync",
-      "--verbose",
-      "--nohooks",
-      "-j8",
-      "--reset",
-      "--force",
-      "--upstream",
-      "--no-nag-max",
-      "--with_branch_heads",
-      "--with_tags",
-      "--delete_unversioned_trees",
-      "--output-json",
-      "/path/to/tmp/json"
-    ],
-    "cwd": "[START_DIR]/src",
-    "env_suffixes": {
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "infra_step": true,
-    "name": "gclient sync (2)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"solutions\": {}@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_REPO[depot_tools]/gclient.py",
-      "runhooks"
-    ],
-    "cwd": "[START_DIR]/src",
-    "env_suffixes": {
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "name": "gclient runhooks (2)"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "[START_DIR]/src/tools/mb/mb.py",
-      "zip",
-      "--master=dummy.master",
-      "--builder=dummy.builder",
-      "--config-file=[CLEANUP]/tmp_tmp_1/mb_config.pyl",
-      "out/Release",
-      "weblayer_instrumentation_test_apk",
-      "[CLEANUP]/tmp_tmp_3/build_config.zip"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "Generating build files for weblayer_instrumentation_test_apk (2)"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[build::zip]/resources/unzip.py"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "Uncompressing build files for version 84.0.4147.89",
-    "stdin": "{\"output\": \"[CLEANUP]/apk_build_files\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_3/build_config.zip\"}"
-  },
-  {
-    "cmd": [
-      "cipd",
-      "pkg-build",
-      "-in",
-      "[CLEANUP]/apk_build_files",
-      "-name",
-      "chromium/testing/weblayer-x86",
-      "-out",
-      "[START_DIR]/src/out/Release/skew_test_apk_84_0_4147_89.cipd",
-      "-hash-algo",
-      "sha256",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "build weblayer-x86 (2)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"chromium/testing/weblayer-x86\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "pkg-register",
-      "[START_DIR]/src/out/Release/skew_test_apk_84_0_4147_89.cipd",
-      "-ref",
-      "m84",
-      "-tag",
-      "version:84.0.4147.89",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "register chromium/testing/weblayer-x86 (2)",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"chromium/testing/weblayer-x86\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@chromium/testing/weblayer-x86@https://chrome-infra-packages.appspot.com/p/chromium/testing/weblayer-x86/+/40-chars-fake-of-the-package-instance_id@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "checkout",
-      "origin/master"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git checkout (5)"
-  },
-  {
-    "cmd": [
-      "git",
-      "clean",
-      "-fd"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git clean (4)"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "rmtree",
-      "[START_DIR]/src/out/Release"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
     "name": "Cleaning 84.0.4147.89 build files"
   },
   {
@@ -774,7 +543,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\n  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {\n    'args': [\n      '--test-runner-outdir',\n      '.',\n      '--client-outdir',\n      '../../weblayer_instrumentation_test_M84/out/Release',\n      '--implementation-outdir',\n      '.',\n      '--test-expectations',\n      '../../weblayer/browser/android/javatests/skew/expectations.txt',\n      '--client-version=84',\n    ],\n    'identifier': 'M84_Client_Library_Tests',\n    'swarming': {\n      'cipd_packages': [\n        {\n          'cipd_package': 'chromium/testing/weblayer-x86',\n          'location': 'weblayer_instrumentation_test_M84',\n          'revision': 'version:84.0.4147.89',\n        }\n      ],\n    },\n  },\n  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_ONE_MILESTONE': {\n    'args': [\n      '--test-runner-outdir',\n      '.',\n      '--client-outdir',\n      '../../weblayer_instrumentation_test_M83/out/Release',\n      '--implementation-outdir',\n      '.',\n      '--test-expectations',\n      '../../weblayer/browser/android/javatests/skew/expectations.txt',\n      '--client-version=83',\n    ],\n    'identifier': 'M83_Client_Library_Tests',\n    'swarming': {\n      'cipd_packages': [\n        {\n          'cipd_package': 'chromium/testing/weblayer-x86',\n          'location': 'weblayer_instrumentation_test_M83',\n          'revision': 'version:83.0.4103.96',\n        }\n      ],\n    },\n  },\n}",
+      "{\n  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {\n    'args': [\n      '--test-runner-outdir',\n      '.',\n      '--client-outdir',\n      '../../weblayer_instrumentation_test_M84/out/Release',\n      '--implementation-outdir',\n      '.',\n      '--test-expectations',\n      '../../weblayer/browser/android/javatests/skew/expectations.txt',\n      '--client-version=84',\n    ],\n    'identifier': 'M84_Client_Library_Tests',\n    'swarming': {\n      'cipd_packages': [\n        {\n          'cipd_package': 'chromium/testing/weblayer-x86',\n          'location': 'weblayer_instrumentation_test_M84',\n          'revision': 'version:84.0.4147.89',\n        }\n      ],\n    },\n  },\n  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_ONE_MILESTONE': {\n    'args': [\n      '--test-runner-outdir',\n      '.',\n    ],\n    'swarming': {\n      'cipd_packages': [\n        {\n          'cipd_package': 'chromium/testing/weblayer-x86',\n          'revision': 'version:82.0.6666.45',\n        },\n      ],\n    },\n    'identifier': 'M82_Client_Library_Tests',\n  },\n}",
       "[START_DIR]/src/testing/buildbot/variants.pyl"
     ],
     "infra_step": true,
@@ -808,24 +577,16 @@
       "@@@STEP_LOG_LINE@variants.pyl@    'args': [@@@",
       "@@@STEP_LOG_LINE@variants.pyl@      '--test-runner-outdir',@@@",
       "@@@STEP_LOG_LINE@variants.pyl@      '.',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--client-outdir',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '../../weblayer_instrumentation_test_M83/out/Release',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--implementation-outdir',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '.',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--test-expectations',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '../../weblayer/browser/android/javatests/skew/expectations.txt',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--client-version=83',@@@",
       "@@@STEP_LOG_LINE@variants.pyl@    ],@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'identifier': 'M83_Client_Library_Tests',@@@",
       "@@@STEP_LOG_LINE@variants.pyl@    'swarming': {@@@",
       "@@@STEP_LOG_LINE@variants.pyl@      'cipd_packages': [@@@",
       "@@@STEP_LOG_LINE@variants.pyl@        {@@@",
       "@@@STEP_LOG_LINE@variants.pyl@          'cipd_package': 'chromium/testing/weblayer-x86',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'location': 'weblayer_instrumentation_test_M83',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'revision': 'version:83.0.4103.96',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@        }@@@",
+      "@@@STEP_LOG_LINE@variants.pyl@          'revision': 'version:82.0.6666.45',@@@",
+      "@@@STEP_LOG_LINE@variants.pyl@        },@@@",
       "@@@STEP_LOG_LINE@variants.pyl@      ],@@@",
       "@@@STEP_LOG_LINE@variants.pyl@    },@@@",
+      "@@@STEP_LOG_LINE@variants.pyl@    'identifier': 'M82_Client_Library_Tests',@@@",
       "@@@STEP_LOG_LINE@variants.pyl@  },@@@",
       "@@@STEP_LOG_LINE@variants.pyl@}@@@",
       "@@@STEP_LOG_END@variants.pyl@@@"
@@ -860,14 +621,17 @@
       "--tbr-owners",
       "--use-commit-queue",
       "--message-file",
-      "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 83.0.4103.96\n2, 84.0.4147.89\n\nBug:1041619\n"
+      "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 84.0.4147.89\n\nBug:1041619\n"
     ],
     "cwd": "[START_DIR]/src",
     "name": "git_cl upload"
   },
   {
     "cmd": [],
-    "name": "Landing CL"
+    "name": "Landing CL",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
   },
   {
     "cmd": [
@@ -900,6 +664,36 @@
     ]
   },
   {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_REPO[depot_tools]/git_cl.py",
+      "set-close"
+    ],
+    "cwd": "[START_DIR]/src",
+    "name": "Landing CL.git_cl set-close",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "import sys; sys.exit(1)"
+    ],
+    "name": "Landing CL.CQ timed out",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_TEXT@CQ timed out; Abandoned CL@@@",
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
+    "failure": {
+      "failure": {},
+      "humanReason": "Step('Landing CL.CQ timed out') (retcode: 1)"
+    },
     "name": "$result"
   }
 ]
