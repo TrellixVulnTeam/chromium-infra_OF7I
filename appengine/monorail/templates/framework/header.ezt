@@ -1,4 +1,4 @@
-[# This is the master header file that is included in all Monorail servlets that render a page.
+[# This is the main header file that is included in all Monorail servlets that render a page.
 
    Args:
      arg0: Can be "showtabs", "showusertabs" or "showusergrouptabs" to select which top-plevel tabs are shown.

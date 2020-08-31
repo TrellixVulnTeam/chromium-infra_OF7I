@@ -291,7 +291,7 @@ class ArtifactTest(unittest.TestCase):
     # Multi-part exclusive prefixes only filter labels that match whole prefix.
     self.config.exclusive_label_prefixes.append('Branch-Name')
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
-        ['Branch-Name-Master'],
+        ['Branch-Name-xyz'],
         ['Branch-Prediction', 'Branch-Name-Beta'], [], self.config)
     self.assertEqual(merged_labels, ['Branch-Prediction', 'Branch-Name-Beta'])
     self.assertEqual(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
@@ -345,7 +345,7 @@ class ArtifactTest(unittest.TestCase):
 
     # Multi-part enum names only filter labels that match whole name.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
-        ['Branch-Name-Master'],
+        ['Branch-Name-xyz'],
         ['Branch-Prediction', 'Branch-Name-Beta'], [], self.config)
     self.assertEqual(merged_labels, ['Branch-Prediction', 'Branch-Name-Beta'])
     self.assertEqual(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
@@ -414,11 +414,11 @@ class ArtifactTest(unittest.TestCase):
 
     # Multi-part enum names don't mess up anything.
     (merged_labels, update_add, update_remove) = framework_bizobj.MergeLabels(
-        ['Branch-Name-Master'],
+        ['Branch-Name-xyz'],
         ['Branch-Prediction', 'Branch-Name-Beta'], [], self.config)
     self.assertEqual(
         merged_labels,
-        ['Branch-Name-Master', 'Branch-Prediction', 'Branch-Name-Beta'])
+        ['Branch-Name-xyz', 'Branch-Prediction', 'Branch-Name-Beta'])
     self.assertEqual(update_add, ['Branch-Prediction', 'Branch-Name-Beta'])
     self.assertEqual(update_remove, [])
 
