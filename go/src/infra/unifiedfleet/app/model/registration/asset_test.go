@@ -194,3 +194,32 @@ func TestListAssets(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchUpdateAssets(t *testing.T) {
+	t.Parallel()
+	Convey("BatchUpdateAssets", t, func() {
+		ctx := gaetesting.TestingContextWithAppID("go-test")
+		datastore.GetTestable(ctx).Consistent(true)
+		assets := make([]*ufspb.Asset, 0, 4)
+		for i := 0; i < 4; i++ {
+			asset := mockAsset(fmt.Sprintf("C0000%d0", i), "DUT", "eve", fmt.Sprintf("cros4-row3-rack5-host%d", i))
+			resp, err := CreateAsset(ctx, asset)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, asset)
+			asset.Model = "krane"
+			assets = append(assets, resp)
+		}
+		Convey("BatchUpdate all assets", func() {
+			resp, err := BatchUpdateAssets(ctx, assets)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, assets)
+		})
+		Convey("BatchUpdate existing and invalid assets", func() {
+			asset := mockAsset("", "DUT", "krane", "cros4-row3-rack5-host4")
+			assets = append(assets, asset)
+			resp, err := BatchUpdateAssets(ctx, assets)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+		})
+	})
+}

@@ -138,3 +138,18 @@ func ListAssets(ctx context.Context, pageSize int32, pageToken string, filterMap
 	}
 	return
 }
+
+// BatchUpdateAssets updates the assets to the datastore
+func BatchUpdateAssets(ctx context.Context, assets []*ufspb.Asset) ([]*ufspb.Asset, error) {
+	protos := make([]proto.Message, len(assets))
+	updateTime := ptypes.TimestampNow()
+	for i, asset := range assets {
+		asset.UpdateTime = updateTime
+		protos[i] = asset
+	}
+	_, err := ufsds.PutAll(ctx, protos, newAssetEntity, false)
+	if err == nil {
+		return assets, nil
+	}
+	return nil, err
+}
