@@ -45,7 +45,7 @@ var (
 )
 
 // TimeFormat for all timestamps handled by shivas
-var timeFormat = "2006-01-02T15:04:05Z"
+var timeFormat = "02 Jan 06 15:04 MST"
 
 // The tab writer which defines the write format
 var tw = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
@@ -281,7 +281,7 @@ func switchOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.Switch)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -326,7 +326,7 @@ func PrintSwitchesJSON(res []proto.Message, emit bool) {
 func kvmFullOutputStrs(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(kvm.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(kvm.Name),
@@ -370,7 +370,7 @@ func kvmOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.KVM)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -430,7 +430,7 @@ func rpmOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.RPM)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -476,7 +476,7 @@ func PrintRPMsJSON(res []proto.Message, emit bool) {
 func dracFullOutputStrs(m *ufspb.Drac, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.Name),
@@ -521,7 +521,7 @@ func dracOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.Drac)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.Name),
@@ -583,7 +583,7 @@ func nicOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.Nic)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -631,7 +631,7 @@ func machineOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.Machine)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	if m.GetChromeBrowserMachine() != nil {
 		return []string{
@@ -715,7 +715,7 @@ func machineLSEPrototypeOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.MachineLSEPrototype)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	res := []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -783,7 +783,7 @@ func rackLSEPrototypeOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.RackLSEPrototype)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	res := []string{ufsUtil.RemovePrefix(m.GetName())}
 	var peripheralTypes string
@@ -860,7 +860,7 @@ func vlanOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.Vlan)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -900,7 +900,7 @@ func platformOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.ChromePlatform)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -961,7 +961,7 @@ func PrintMachineLSEsJSON(res []proto.Message, emit bool) {
 func machineLSEFullOutputStrs(lse *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(lse.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(lse.GetName()),
@@ -1011,7 +1011,7 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.MachineLSE)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	machine := ""
 	if len(m.GetMachines()) == 1 {
@@ -1072,7 +1072,7 @@ func printFreeVM(host *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) {
 func vmFullOutputStrs(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) []string {
 	var ts string
 	if t, err := ptypes.Timestamp(vm.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(vm.GetName()),
@@ -1116,7 +1116,7 @@ func vmOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.VM)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
@@ -1177,7 +1177,7 @@ func rackOutputStrs(pm proto.Message) []string {
 	m := pm.(*ufspb.Rack)
 	var ts string
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
-		ts = t.Format(timeFormat)
+		ts = t.Local().Format(timeFormat)
 	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
