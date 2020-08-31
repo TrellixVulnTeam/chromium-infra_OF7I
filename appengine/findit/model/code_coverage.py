@@ -195,6 +195,12 @@ class PresubmitCoverageData(ndb.Model):
   # are shared between equivalent patchsets, such as trivial-rebase.
   based_on = ndb.IntegerProperty(indexed=True)
 
+  # Timestamp this coverage report got created.
+  insert_timestamp = ndb.DateTimeProperty(auto_now_add=True)
+
+  # Timestamp this coverage report was last updated.
+  update_timestamp = ndb.DateTimeProperty(auto_now=True)
+
   @classmethod
   def _CreateKey(cls, server_host, change, patchset):
     return ndb.Key(cls, '%s$%s$%s' % (server_host, change, patchset))

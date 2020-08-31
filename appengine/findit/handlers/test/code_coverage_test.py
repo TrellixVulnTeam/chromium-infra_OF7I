@@ -3,12 +3,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import datetime
+from datetime import datetime
 import json
 import mock
 import webapp2
 
 from google.appengine.ext import ndb
+
 
 from gae_libs.handlers.base_handler import BaseHandler
 from handlers import code_coverage
@@ -73,7 +74,7 @@ def _CreateSamplePostsubmitReport(manifest=None,
       revision='aaaaa',
       bucket='coverage',
       builder=builder_name,
-      commit_timestamp=datetime.datetime(2018, 1, 1),
+      commit_timestamp=datetime(2018, 1, 1),
       manifest=manifest,
       summary_metrics=_CreateSampleCoverageSummaryMetric(),
       build_id=123456789,
@@ -354,10 +355,19 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
         data=coverage_data['files'])
     expected_entity.absolute_percentages = abs_percentages
     expected_entity.incremental_percentages = inc_percentages
+    expected_entity.insert_timestamp = datetime.now()
+    expected_entity.update_timestamp = datetime.now()
     fetched_entities = PresubmitCoverageData.query().fetch()
 
     self.assertEqual(1, len(fetched_entities))
-    self.assertEqual(expected_entity, fetched_entities[0])
+    self.assertEqual(expected_entity.cl_patchset,
+                     fetched_entities[0].cl_patchset)
+    self.assertEqual(expected_entity.data, fetched_entities[0].data)
+    self.assertEqual(expected_entity.absolute_percentages,
+                     fetched_entities[0].absolute_percentages)
+    self.assertEqual(expected_entity.incremental_percentages,
+                     fetched_entities[0].incremental_percentages)
+    self.assertEqual(expected_entity.based_on, fetched_entities[0].based_on)
 
   @mock.patch.object(code_coverage_util, 'CalculateIncrementalPercentages')
   @mock.patch.object(code_coverage_util, 'CalculateAbsolutePercentages')
@@ -453,7 +463,14 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
     mocked_abs_percentages.assert_called_with(expected_entity.data)
     self.assertEqual(1, len(fetched_entities))
-    self.assertEqual(expected_entity, fetched_entities[0])
+    self.assertEqual(expected_entity.cl_patchset,
+                     fetched_entities[0].cl_patchset)
+    self.assertEqual(expected_entity.data, fetched_entities[0].data)
+    self.assertEqual(expected_entity.absolute_percentages,
+                     fetched_entities[0].absolute_percentages)
+    self.assertEqual(expected_entity.incremental_percentages,
+                     fetched_entities[0].incremental_percentages)
+    self.assertEqual(expected_entity.based_on, fetched_entities[0].based_on)
 
 
   @mock.patch.object(
@@ -502,7 +519,7 @@ class ProcessCodeCoverageDataTest(WaterfallTestCase):
 
     # Mock Gitiles API to get change log.
     change_log = mock.Mock()
-    change_log.committer.time = datetime.datetime(2018, 1, 1)
+    change_log.committer.time = datetime(2018, 1, 1)
     mocked_get_change_log.return_value = change_log
 
     # Mock retrieve manifest.
