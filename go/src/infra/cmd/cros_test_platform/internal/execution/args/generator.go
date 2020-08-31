@@ -13,6 +13,7 @@ import (
 	"infra/libs/skylab/inventory/autotest/labels"
 	"infra/libs/skylab/request"
 	"infra/libs/skylab/worker"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,6 +40,8 @@ type Generator struct {
 	WorkerConfig *config.Config_SkylabWorker
 	// ParentTaskID is the Swarming ID of the CTP task.
 	ParentTaskID string
+	// ParentBuildID is the Buildbucket ID of the CTP build.
+	ParentBuildID int64
 	// ParentRequestUID is the UID of the CTP request which kicked off this
 	// test run. This is needed for the analytics usage. Test execution
 	// does not require this parameter.
@@ -381,6 +384,10 @@ func (g *Generator) swarmingTags(ctx context.Context, kv map[string]string, cmd 
 	tags := []string{
 		"luci_project:" + g.WorkerConfig.LuciProject,
 		"log_location:" + cmd.LogDogAnnotationURL,
+	}
+	// CTP "builds" triggered by `led` don't have a buildbucket ID.
+	if g.ParentBuildID != 0 {
+		tags = append(tags, "parent_buildbucket_id:"+strconv.FormatInt(g.ParentBuildID, 10))
 	}
 	tags = append(tags, "display_name:"+g.displayName(ctx, kv))
 	if qa := g.Params.GetScheduling().GetQsAccount(); qa != "" {

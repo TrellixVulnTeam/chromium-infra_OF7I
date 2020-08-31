@@ -25,6 +25,7 @@ import (
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/config"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps/execute"
 	bbpb "go.chromium.org/luci/buildbucket/proto"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
@@ -42,9 +43,10 @@ import (
 var (
 	noDeadline        time.Time
 	fakeTaskSetConfig = &execution.TaskSetConfig{
-		"foo-parent-task-id",
-		"TestPlanRuns/12345678/foo",
-		noDeadline,
+		ParentTaskID:  "foo-parent-task-id",
+		ParentBuildID: 42,
+		RequestUID:    "TestPlanRuns/12345678/foo",
+		Deadline:      noDeadline,
 	}
 )
 
@@ -214,6 +216,9 @@ func runWithParams(ctx context.Context, skylab skylab.Client, params *test_platf
 						AutotestInvocations: invs,
 					},
 				},
+			},
+			Build: &execute.Build{
+				Id: 42,
 			},
 		},
 		WorkerConfig: &config.Config_SkylabWorker{
@@ -435,11 +440,12 @@ func TestRequestArguments(t *testing.T) {
 			So(skylab.launchCalls, ShouldHaveLength, 1)
 			launchArgs := skylab.launchCalls[0]
 
+			So(launchArgs.SwarmingTags, ShouldContain, "parent_buildbucket_id:42")
 			So(launchArgs.SwarmingTags, ShouldContain, "luci_project:foo-luci-project")
 			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag1")
 			So(launchArgs.SwarmingTags, ShouldContain, "foo-tag2")
 			So(launchArgs.ParentTaskID, ShouldEqual, "foo-parent-task-id")
-			So(launchArgs.ParentRequestUID, ShouldEqual, "TestPlanRuns/0/12345678/foo")
+			So(launchArgs.ParentRequestUID, ShouldEqual, "TestPlanRuns/42/12345678/foo")
 
 			So(launchArgs.Priority, ShouldEqual, 79)
 

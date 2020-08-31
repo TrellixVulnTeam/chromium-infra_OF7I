@@ -43,9 +43,10 @@ type RequestTaskSet struct {
 
 // TaskSetConfig is a wrapper for the parameters common to the testTaskSets.
 type TaskSetConfig struct {
-	ParentTaskID string
-	RequestUID   string
-	Deadline     time.Time
+	ParentTaskID  string
+	ParentBuildID int64
+	RequestUID    string
+	Deadline      time.Time
 }
 
 // NewRequestTaskSet creates a new RequestTaskSet.
@@ -72,6 +73,7 @@ func NewRequestTaskSet(
 			Params:           params,
 			WorkerConfig:     workerConfig,
 			ParentTaskID:     tc.ParentTaskID,
+			ParentBuildID:    tc.ParentBuildID,
 			ParentRequestUID: tc.RequestUID,
 			Deadline:         tc.Deadline,
 		}

@@ -51,6 +51,7 @@ func Run(ctx context.Context, c skylab.Client, args Args) (map[string]*steps.Exe
 			args.WorkerConfig,
 			&TaskSetConfig{
 				args.ParentTaskID,
+				args.Request.GetBuild().GetId(),
 				constructRequestUID(args.Request.GetBuild().GetId(), t),
 				args.Deadline,
 			},
