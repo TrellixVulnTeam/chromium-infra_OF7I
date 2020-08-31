@@ -228,6 +228,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 		}
 	}
 
+	deleteInvalidIPs(ctx, pageSize)
 	logging.Infof(ctx, "Importing %d ips", len(IPs))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(IPs))
@@ -241,6 +242,23 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 		}
 	}
 	return &allRes, nil
+}
+
+func deleteInvalidIPs(ctx context.Context, pageSize int) {
+	resp, err := configuration.GetAllIPs(ctx)
+	if err != nil {
+		logging.Debugf(ctx, "Fail to get all ips: %s", err.Error())
+		return
+	}
+	var toDeleteIP []string
+	for _, sr := range resp.Passed() {
+		s := sr.Data.(*ufspb.IP)
+		if s.GetIpv4Str() == "" {
+			toDeleteIP = append(toDeleteIP, s.GetId())
+		}
+	}
+	logging.Infof(ctx, "Deleting %d invalid ips ", len(toDeleteIP))
+	deleteByPage(ctx, toDeleteIP, pageSize, configuration.DeleteIPs)
 }
 
 func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize int) (*ufsds.OpResults, error) {

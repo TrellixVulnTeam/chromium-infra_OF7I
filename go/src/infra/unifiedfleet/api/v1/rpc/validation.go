@@ -454,12 +454,6 @@ func (r *CreateVMRequest) Validate() error {
 	if !IDRegex.MatchString(r.GetVm().GetName()) {
 		return status.Errorf(codes.InvalidArgument, "VM name is invalid: %s", InvalidCharacters)
 	}
-	if r.GetVm().GetZone() != "" {
-		return status.Errorf(codes.InvalidArgument, "Zone for vm is output-only")
-	}
-	if r.GetVm().GetVlan() != "" {
-		return status.Errorf(codes.InvalidArgument, "Cannot set vlan when adding vm")
-	}
 	id := strings.TrimSpace(r.GetVm().GetMachineLseId())
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyHostName)

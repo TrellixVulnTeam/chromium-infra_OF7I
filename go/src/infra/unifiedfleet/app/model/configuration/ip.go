@@ -169,6 +169,24 @@ func ListIPs(ctx context.Context, pageSize int32, pageToken string, filterMap ma
 	return
 }
 
+func queryAllIP(ctx context.Context) ([]ufsds.FleetEntity, error) {
+	var entities []*IPEntity
+	q := datastore.NewQuery(IPKind)
+	if err := datastore.GetAll(ctx, q, &entities); err != nil {
+		return nil, err
+	}
+	fe := make([]ufsds.FleetEntity, len(entities))
+	for i, e := range entities {
+		fe[i] = e
+	}
+	return fe, nil
+}
+
+// GetAllIPs returns all ips in datastore.
+func GetAllIPs(ctx context.Context) (*ufsds.OpResults, error) {
+	return ufsds.GetAll(ctx, queryAllIP)
+}
+
 // ImportIPs creates or updates a batch of ips in datastore
 func ImportIPs(ctx context.Context, ips []*ufspb.IP) (*ufsds.OpResults, error) {
 	protos := make([]proto.Message, len(ips))

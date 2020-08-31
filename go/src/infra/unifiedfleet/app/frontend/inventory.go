@@ -173,6 +173,19 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *ufsAPI.List
 	}, nil
 }
 
+func updateNetworkOpt(userVlan string, nwOpt *ufsAPI.NetworkOption) *ufsAPI.NetworkOption {
+	if userVlan == "" {
+		return nwOpt
+	}
+	if nwOpt == nil {
+		return &ufsAPI.NetworkOption{
+			Vlan: userVlan,
+		}
+	}
+	nwOpt.Vlan = userVlan
+	return nwOpt
+}
+
 // CreateVM creates a vm entry in database.
 func (fs *FleetServerImpl) CreateVM(ctx context.Context, req *ufsAPI.CreateVMRequest) (rsp *ufspb.VM, err error) {
 	defer func() {
@@ -182,6 +195,7 @@ func (fs *FleetServerImpl) CreateVM(ctx context.Context, req *ufsAPI.CreateVMReq
 		return nil, err
 	}
 	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
+	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.GetNetworkOption())
 	vm, err := controller.CreateVM(ctx, req.GetVm(), req.GetNetworkOption())
 	if err != nil {
 		return nil, err
@@ -200,7 +214,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 		return nil, err
 	}
 	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
-
+	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.GetNetworkOption())
 	if req.GetNetworkOption() != nil {
 		vm := req.Vm
 		var err error
