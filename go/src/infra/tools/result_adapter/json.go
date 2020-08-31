@@ -118,7 +118,7 @@ func (r *JSONTestResults) ConvertFromJSON(reader io.Reader) error {
 // ToProtos converts test results in r to []*sinkpb.TestResult.
 //
 // Does not populate TestResult.Name, TestResult.ResultId or TestResult.TestLocation.
-func (r *JSONTestResults) ToProtos(ctx context.Context, availableArtifacts stringset.Set, normPathToFullPath map[string]string, testLocations bool) ([]*sinkpb.TestResult, error) {
+func (r *JSONTestResults) ToProtos(ctx context.Context, normPathToFullPath map[string]string, testLocations bool) ([]*sinkpb.TestResult, error) {
 	if r.Version != 3 {
 		return nil, errors.Reason("unknown JSON Test Results version %d", r.Version).Err()
 	}
@@ -151,7 +151,7 @@ func (r *JSONTestResults) ToProtos(ctx context.Context, availableArtifacts strin
 	buf := &strings.Builder{}
 	for _, name := range testNames {
 		// Populate protos.
-		if err := r.Tests[name].toProtos(ctx, &ret, name, buf, globalTags, availableArtifacts, normPathToFullPath, testLocations); err != nil {
+		if err := r.Tests[name].toProtos(ctx, &ret, name, buf, globalTags, normPathToFullPath, testLocations); err != nil {
 			return nil, errors.Annotate(err, "test %q failed to convert run fields", name).Err()
 		}
 	}
@@ -296,7 +296,7 @@ func fromJSONStatus(s string) (pb.TestStatus, error) {
 // appends them to dest.
 //
 // Logs unresolved artifacts.
-func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, testName string, buf *strings.Builder, globalTags []*pb.StringPair, availableArtifacts stringset.Set, normPathToFullPath map[string]string, testLocations bool) error {
+func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, testName string, buf *strings.Builder, globalTags []*pb.StringPair, normPathToFullPath map[string]string, testLocations bool) error {
 	// Process statuses.
 	actualStatuses := strings.Split(f.Actual, " ")
 
@@ -329,7 +329,7 @@ func (f *TestFields) toProtos(ctx context.Context, dest *[]*sinkpb.TestResult, t
 	// should match the number of actual runs. Because the arts are a map from run index to
 	// *sinkpb.Artifacts slice, we will not error if artifacts are missing for a run, but log a warning
 	// in case the number of runs do not match each other for further investigation.
-	arts := f.parseArtifacts(ctx, testName, availableArtifacts, normPathToFullPath)
+	arts := f.parseArtifacts(ctx, testName, normPathToFullPath)
 	if len(arts) > 0 && len(actualStatuses) != len(arts) {
 		logging.Infof(ctx,
 			"Test %s generated %d statuses (%v); does not match number of runs generated from artifacts (%d)",
@@ -396,7 +396,7 @@ type parsedArtifacts struct {
 //   - look for them in the outputs represented as sinkpb.Artifacts
 //   - check if they're a known special case
 //   - fail to process and mark them as `unresolvedArtifacts`
-func (f *TestFields) parseArtifacts(ctx context.Context, testID string, availableArtifacts stringset.Set, normPathToFullPath map[string]string) map[int]*parsedArtifacts {
+func (f *TestFields) parseArtifacts(ctx context.Context, testID string, normPathToFullPath map[string]string) map[int]*parsedArtifacts {
 	artifacts := map[int]*parsedArtifacts{}
 
 	for name, paths := range f.Artifacts {
@@ -421,12 +421,10 @@ func (f *TestFields) parseArtifacts(ctx context.Context, testID string, availabl
 
 			// Look for the path in outputs.
 			// TODO(crbug/1032779): Track outputs that were processed.
-			if key := findArtifact(availableArtifacts, normPath); key != "" {
-				if fullPath, ok := normPathToFullPath[normPath]; ok {
-					// TODO(crbug.com/1108016): set ContentType in sink.
-					container.artifacts[name] = &sinkpb.Artifact{
-						Body: &sinkpb.Artifact_FilePath{FilePath: fullPath},
-					}
+			if fullPath := findArtifactFullPath(normPathToFullPath, normPath); fullPath != "" {
+				// TODO(crbug.com/1108016): set ContentType in sink.
+				container.artifacts[name] = &sinkpb.Artifact{
+					Body: &sinkpb.Artifact_FilePath{FilePath: fullPath},
 				}
 				continue
 			}
@@ -463,21 +461,20 @@ func artifactRunID(path string) (int, error) {
 	return 0, nil
 }
 
-// findArtifact looks for an artifact key by path.
+// findArtifactFullPath looks for an artifact's full path.
 // Checks the root directory as well as known possible subdirectories.
-// Returns an artifact key.
-func findArtifact(available stringset.Set, normPath string) string {
+func findArtifactFullPath(normToFull map[string]string, normPath string) string {
 	// Check root.
-	if available.Has(normPath) {
-		return normPath
+	if fullPath, ok := normToFull[normPath]; ok {
+		return fullPath
 	}
 
 	// Check known candidate subdirectories.
 	// TODO(1027708,1031296): Remove.
 	for _, dir := range artifactDirectories {
 		key := path.Join(dir, normPath)
-		if available.Has(key) {
-			return key
+		if fullPath, ok := normToFull[key]; ok {
+			return fullPath
 		}
 	}
 

@@ -12,7 +12,6 @@ import (
 	"github.com/maruel/subcommands"
 
 	"go.chromium.org/luci/common/cli"
-	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/data/text"
 	"go.chromium.org/luci/common/errors"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
@@ -54,7 +53,7 @@ func (r *jsonRun) Run(a subcommands.Application, args []string, env subcommands.
 // generateTestResults converts test results from results file to sinkpb.TestResult.
 func (r *jsonRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResult, error) {
 	// Get artifacts.
-	available, normPathToFullPath, err := r.processArtifacts()
+	normPathToFullPath, err := r.processArtifacts()
 	if err != nil {
 		return nil, errors.Annotate(err, "open artifact directory").Err()
 	}
@@ -72,16 +71,15 @@ func (r *jsonRun) generateTestResults(ctx context.Context) ([]*sinkpb.TestResult
 	}
 
 	// Convert the results to ResultSink native format.
-	trs, err := jsonFormat.ToProtos(ctx, available, normPathToFullPath, r.testLocations)
+	trs, err := jsonFormat.ToProtos(ctx, normPathToFullPath, r.testLocations)
 	if err != nil {
 		return nil, errors.Annotate(err, "converting as json results format").Err()
 	}
 	return trs, nil
 }
 
-// processArtifacts walks the files in r.artifactDir then returns available artifacts and a map to full paths.
-func (r *jsonRun) processArtifacts() (available stringset.Set, normPathToFullPath map[string]string, err error) {
-	available = stringset.Set{}
+// processArtifacts walks the files in r.artifactDir then returns a map from normalized relative path to full path.
+func (r *jsonRun) processArtifacts() (normPathToFullPath map[string]string, err error) {
 	normPathToFullPath = map[string]string{}
 	err = filepath.Walk(r.artifactDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -95,13 +93,12 @@ func (r *jsonRun) processArtifacts() (available stringset.Set, normPathToFullPat
 			}
 			normPath := normalizePath(relPath)
 			normPathToFullPath[normPath] = path
-			available.Add(normPath)
 		}
 		return nil
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return available, normPathToFullPath, err
+	return normPathToFullPath, err
 }

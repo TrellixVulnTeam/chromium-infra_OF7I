@@ -23,8 +23,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes/duration"
 
-	"go.chromium.org/luci/common/data/stringset"
-
 	"go.chromium.org/luci/resultdb/pbutil"
 	pb "go.chromium.org/luci/resultdb/proto/v1"
 	sinkpb "go.chromium.org/luci/resultdb/sink/proto/v1"
@@ -212,14 +210,6 @@ func TestJSONConversions(t *testing.T) {
 			},
 		}
 
-		availableArtifacts := stringset.NewFromSlice(
-			"harness/log.txt",
-			"harness/retry_1/log.txt",
-			"harness/retry_2/log.txt",
-			"relative/path/to/log.txt",
-			"relative/path/to/diff.png",
-		)
-
 		normPathToFullPath := map[string]string{
 			"harness/log.txt":           "/artifacts/harness/log.txt",
 			"harness/retry_1/log.txt":   "/artifacts/harness/retry_1/log.txt",
@@ -228,7 +218,7 @@ func TestJSONConversions(t *testing.T) {
 			"relative/path/to/diff.png": "/artifacts/relative/path/to/diff.png",
 		}
 
-		testResults, err := results.ToProtos(ctx, availableArtifacts, normPathToFullPath, true)
+		testResults, err := results.ToProtos(ctx, normPathToFullPath, true)
 		So(err, ShouldBeNil)
 
 		assertTestResultsResemble(testResults, []*sinkpb.TestResult{
@@ -499,12 +489,6 @@ func TestArtifactUtils(t *testing.T) {
 	Convey(`Checking subdirs`, t, func() {
 		ctx := context.Background()
 
-		available := stringset.NewFromSlice(
-			"artifacts/a/stdout.txt",
-			"artifacts/b/stderr.txt",
-			"layout-test-results/c/stderr.txt",
-			"d/stderr.txt",
-		)
 		normToFull := map[string]string{
 			"artifacts/a/stdout.txt":           "/root/artifacts/a/stdout.txt",
 			"artifacts/b/stderr.txt":           "\\root\\artifacts\\b\\stderr.txt",
@@ -518,7 +502,7 @@ func TestArtifactUtils(t *testing.T) {
 			"d": {"d/stderr.txt"},
 		}}
 
-		artifactsPerRun := f.parseArtifacts(ctx, "testID", available, normToFull)
+		artifactsPerRun := f.parseArtifacts(ctx, "testID", normToFull)
 		So(artifactsPerRun, ShouldHaveLength, 1)
 
 		arts := artifactsPerRun[0].artifacts
