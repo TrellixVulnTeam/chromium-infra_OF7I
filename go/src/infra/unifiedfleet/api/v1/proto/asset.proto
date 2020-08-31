@@ -8,11 +8,24 @@ package unifiedfleet.api.v1.proto;
 
 option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 
+import "google/protobuf/timestamp.proto";
+import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
+import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "infra/unifiedfleet/api/v1/proto/location.proto";
+import "infra/unifiedfleet/api/v1/proto/assetinfo.proto";
 
-// Next Tag: 3
-message ChopsAsset {
-  // Asset's state and location
-  string id = 1;
-  Location location = 2;
+// Asset stores location and some basic info about the asset
+message asset {
+  option (google.api.resource) = {
+        type: "unified-fleet-system.appspot.com/Asset"
+        pattern: "assets/{asset}"
+    };
+  string name = 1; // Asset tag or an unique identifier for the asset
+  string type = 2; // DUT, servo, switch, RPM, etc,.
+  string model = 3; // Model of the asset
+  Location location = 4; // Last known location of the asset
+  AssetInfo info = 5; // Some info about the asset
+  // Record the last update timestamp of this asset (In UTC timezone)
+  google.protobuf.Timestamp update_time = 6 [
+      (google.api.field_behavior) = OUTPUT_ONLY];
 }
