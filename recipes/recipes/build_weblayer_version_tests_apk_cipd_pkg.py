@@ -5,6 +5,8 @@
 import contextlib
 import re
 
+from recipe_engine import post_process
+
 DEPS = [
   'build/chromium',
   'build/zip',
@@ -214,15 +216,17 @@ def maybe_update_variants_pyl(api, variants_lines, variants_pyl_path):
     for version, tmpl in versions_to_variants_id_tmpl:
       for library in [CLIENT, IMPL]:
         variants_id = tmpl % library
+
         if variants_id in variants_lines[lineno]:
           new_variants_lines.append(variants_lines[lineno])
-          new_variants_lines.extend(
-              generate_skew_test_config_lines(library, version))
           contains_current_version = False
           open_bracket_count = 1
           lineno += 1
+          current_config_lines = []
+
           while open_bracket_count:
             contains_current_version |= version in variants_lines[lineno]
+            current_config_lines.append(variants_lines[lineno])
             for c in variants_lines[lineno]:
               if c == '{':
                 open_bracket_count += 1
@@ -230,8 +234,14 @@ def maybe_update_variants_pyl(api, variants_lines, variants_pyl_path):
                 open_bracket_count -= 1
             if open_bracket_count:
               lineno += 1
+
           if not contains_current_version:
             cipd_pkgs_to_create.add(version)
+            new_variants_lines.extend(
+                generate_skew_test_config_lines(library, version))
+          else:
+            new_variants_lines.extend(current_config_lines)
+
     new_variants_lines.append(variants_lines[lineno])
     lineno += 1
 
@@ -405,7 +415,8 @@ def GenTests(api):
          api.url.json('Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
          api.step_data('Reading //chrome/VERSION',
-             api.file.read_text('a=abd\nb=0\nc=4147\nd=89\n')))
+             api.file.read_text('a=abd\nb=0\nc=4147\nd=89\n')) +
+         api.post_process(post_process.DropExpectation))
 
   yield (api.test('build-no-cipd-pkgs') +
          api.step_data('Read variants.pyl',
