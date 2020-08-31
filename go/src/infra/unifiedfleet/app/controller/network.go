@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/configuration"
@@ -17,6 +18,9 @@ func getFreeIP(ctx context.Context, vlanName string, pageSize int) ([]*ufspb.IP,
 	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": vlanName, "occupied": "false"})
 	if err != nil {
 		return nil, err
+	}
+	if len(ips) == 0 {
+		return nil, fmt.Errorf("No non-occupied ips in vlan %s", vlanName)
 	}
 	res := make([]*ufspb.IP, pageSize)
 	count := 0

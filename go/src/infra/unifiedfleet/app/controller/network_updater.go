@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/grpc/grpcutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -41,7 +42,7 @@ func (nu *networkUpdater) logChanges(changes []*ufspb.ChangeEvent, msg *history.
 func (nu *networkUpdater) deleteDHCPHelper(ctx context.Context) error {
 	dhcp, err := configuration.GetDHCPConfig(ctx, nu.Hostname)
 	if util.IsInternalError(err) {
-		return errors.Annotate(err, "Fail to query dhcpHost").Err()
+		return errors.Annotate(err, "Fail to query dhcp for host %s", nu.Hostname).Tag(grpcutil.FailedPreconditionTag).Err()
 	}
 	if err == nil && dhcp != nil {
 		if err := nu.deleteHostHelper(ctx, dhcp); err != nil {
@@ -58,12 +59,12 @@ func (nu *networkUpdater) deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCP
 	logging.Debugf(ctx, "Found existing dhcp configs for host %s", dhcp.GetHostname())
 	logging.Debugf(ctx, "Deleting dhcp %s (%s)", dhcp.GetHostname(), dhcp.GetIp())
 	if err := configuration.DeleteDHCP(ctx, dhcp.GetHostname()); err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to delete dhcp: hostname %q, ip %q", dhcp.GetHostname(), dhcp.GetIp())).Err()
+		return errors.Annotate(err, "deleteHostHelper - Fail to delete dhcp for hostname %q", dhcp.GetHostname()).Tag(grpcutil.FailedPreconditionTag).Err()
 	}
 	nu.logChanges(LogDHCPChanges(dhcp, nil))
 	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": dhcp.GetIp()})
 	if err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to query ip by ipv4 str: %q", dhcp.GetIp())).Err()
+		return errors.Annotate(err, "deleteHostHelper - Fail to query ip by ipv4 str: %q", dhcp.GetIp()).Tag(grpcutil.FailedPreconditionTag).Err()
 	}
 	if ips == nil {
 		return nil
@@ -72,7 +73,7 @@ func (nu *networkUpdater) deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCP
 	ips[0].Occupied = false
 	logging.Debugf(ctx, "Update ip %s to non-occupied", ips[0].GetIpv4Str())
 	if _, err := configuration.BatchUpdateIPs(ctx, ips); err != nil {
-		return errors.Annotate(err, fmt.Sprintf("Fail to update ip: %q (ipv4: %q, vlan %q)", ips[0].GetId(), ips[0].GetIpv4Str(), ips[0].GetVlan())).Err()
+		return errors.Annotate(err, "deleteHostHelper - Fail to update ip: %q (ipv4: %q, vlan %q)", ips[0].GetId(), ips[0].GetIpv4Str(), ips[0].GetVlan()).Tag(grpcutil.FailedPreconditionTag).Err()
 	}
 	nu.Changes = append(nu.Changes, LogIPChanges(oldIP, ips[0])...)
 	return nil
@@ -81,10 +82,10 @@ func (nu *networkUpdater) deleteHostHelper(ctx context.Context, dhcp *ufspb.DHCP
 func getFreeIPHelper(ctx context.Context, vlanName string) (*ufspb.IP, error) {
 	ips, err := getFreeIP(ctx, vlanName, 1)
 	if err != nil {
-		return nil, errors.Annotate(err, "Failed to find new IP").Err()
+		return nil, errors.Annotate(err, "GetFreeIP").Err()
 	}
 	if ips[0].GetIpv4Str() == "" {
-		return nil, errors.New(fmt.Sprintf("No empty ip is found. Found ip id %q, ipv4 %q, vlan %q", ips[0].GetId(), ips[0].GetIpv4(), ips[0].GetVlan()))
+		return nil, fmt.Errorf("Found invalid ip %q (ipv4 %q) in vlan %s", ips[0].GetId(), ips[0].GetIpv4(), vlanName)
 	}
 	logging.Debugf(ctx, "Get free ip %s", ips[0].GetIpv4Str())
 	return ips[0], nil
@@ -117,18 +118,18 @@ func (nu *networkUpdater) addHostHelper(ctx context.Context, vlanName, ipv4Str, 
 	var err error
 	if ipv4Str != "" {
 		if ip, err = getSpecifiedIP(ctx, ipv4Str); err != nil {
-			return nil, err
+			return nil, errors.Annotate(err, "addHostHelper").Tag(grpcutil.FailedPreconditionTag).Err()
 		}
 	} else {
 		if ip, err = getFreeIPHelper(ctx, vlanName); err != nil {
-			return nil, err
+			return nil, errors.Annotate(err, "addHostHelper").Tag(grpcutil.FailedPreconditionTag).Err()
 		}
 	}
 
 	oldIP := proto.Clone(ip).(*ufspb.IP)
 	ip.Occupied = true
 	if _, err := configuration.BatchUpdateIPs(ctx, []*ufspb.IP{ip}); err != nil {
-		return nil, errors.Annotate(err, "Failed to update IP %s (%s)", ip.GetId(), ip.GetIpv4Str()).Err()
+		return nil, errors.Annotate(err, "addHostHelper - Failed to update IP %s (%s)", ip.GetId(), ip.GetIpv4Str()).Tag(grpcutil.FailedPreconditionTag).Err()
 	}
 	nu.Changes = append(nu.Changes, LogIPChanges(oldIP, ip)...)
 	oldDhcp, err := configuration.GetDHCPConfig(ctx, nu.Hostname)
@@ -139,7 +140,7 @@ func (nu *networkUpdater) addHostHelper(ctx context.Context, vlanName, ipv4Str, 
 		MacAddress: macAddress,
 	}
 	if _, err := configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{dhcp}); err != nil {
-		return nil, errors.Annotate(err, "Failed to update dhcp configs for host %s and mac address %s", nu.Hostname, macAddress).Err()
+		return nil, errors.Annotate(err, "addHostHelper - Failed to update dhcp for host %s (mac %s)", nu.Hostname, macAddress).Tag(grpcutil.FailedPreconditionTag).Err()
 	}
 	nu.logChanges(LogDHCPChanges(oldDhcp, dhcp))
 	return dhcp, nil
