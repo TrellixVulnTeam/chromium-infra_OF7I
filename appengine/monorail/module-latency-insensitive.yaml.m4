@@ -75,6 +75,18 @@ includes:
 
 env_variables:
   VERSION_ID: '_VERSION'
+  GAE_USE_SOCKETS_HTTPLIB : ''
+
+vpc_access_connector:
+ifdef(`DEV',`
+  name: "projects/monorail-dev/locations/us-central1/connectors/redis-connector"
+')
+ifdef(`STAGING',`
+  name: "projects/monorail-staging/locations/us-central1/connectors/redis-connector"
+')
+ifdef(`PROD', `
+  name: "projects/monorail-prod/locations/us-central1/connectors/redis-connector"
+')
 
 skip_files:
 - ^(.*/)?#.*#$
