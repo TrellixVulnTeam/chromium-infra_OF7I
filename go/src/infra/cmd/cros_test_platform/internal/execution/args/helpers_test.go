@@ -13,8 +13,6 @@ import (
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 )
 
-var noDeadline time.Time
-
 func basicInvocation() *steps.EnumerationResponse_AutotestInvocation {
 	return &steps.EnumerationResponse_AutotestInvocation{
 		Test: &build_api.AutotestTest{

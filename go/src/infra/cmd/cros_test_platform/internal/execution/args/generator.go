@@ -31,31 +31,19 @@ import (
 
 // Generator defines the set of inputs for creating a request.Args object.
 type Generator struct {
-	// invocation describes test harness-level data and metadata.
-	invocation *steps.EnumerationResponse_AutotestInvocation
-	// params describes scheduling parameters and task-level metadata.
-	params *test_platform.Request_Params
-	// workerConfig describes the skylab_swarming_worker-specific environment.
-	workerConfig *config.Config_SkylabWorker
-	// parentTaskID is the Swarming ID of the CTP task.
-	parentTaskID string
-	// parentRequestUID is the UID of the CTP request which kicked off this
+	// Invocation describes test harness-level data and metadata.
+	Invocation *steps.EnumerationResponse_AutotestInvocation
+	// Params describes scheduling parameters and task-level metadata.
+	Params *test_platform.Request_Params
+	// WorkerConfig describes the skylab_swarming_worker-specific environment.
+	WorkerConfig *config.Config_SkylabWorker
+	// ParentTaskID is the Swarming ID of the CTP task.
+	ParentTaskID string
+	// ParentRequestUID is the UID of the CTP request which kicked off this
 	// test run. This is needed for the analytics usage. Test execution
 	// does not require this parameter.
-	parentRequestUID string
-	deadline         time.Time
-}
-
-// NewGenerator constructs an args Generator.
-func NewGenerator(invocation *steps.EnumerationResponse_AutotestInvocation, params *test_platform.Request_Params, workerConfig *config.Config_SkylabWorker, parentTaskID, parentReqUID string, deadline time.Time) *Generator {
-	return &Generator{
-		invocation:       invocation,
-		params:           params,
-		workerConfig:     workerConfig,
-		parentTaskID:     parentTaskID,
-		parentRequestUID: parentReqUID,
-		deadline:         deadline,
-	}
+	ParentRequestUID string
+	Deadline         time.Time
 }
 
 // CheckConsistency checks the internal consistency of the various inputs to the
@@ -63,13 +51,13 @@ func NewGenerator(invocation *steps.EnumerationResponse_AutotestInvocation, para
 func (g *Generator) CheckConsistency() error {
 	el := g.enumerationInventoryLabels()
 
-	rb := g.params.GetSoftwareAttributes().GetBuildTarget().GetName()
+	rb := g.Params.GetSoftwareAttributes().GetBuildTarget().GetName()
 	eb := el.GetBoard()
 	if nonEmptyAndDifferent(rb, eb) {
 		return errors.Reason("incompatible board dependency: request (%s) vs. enumeration (%s)", rb, eb).Err()
 	}
 
-	rm := g.params.GetHardwareAttributes().GetModel()
+	rm := g.Params.GetHardwareAttributes().GetModel()
 	em := el.GetModel()
 	if nonEmptyAndDifferent(rm, em) {
 		return errors.Reason("incompatible model dependency: request (%s) vs. enumeration (%s)", rm, em).Err()
@@ -88,7 +76,7 @@ func nonEmptyAndDifferent(a, b string) bool {
 }
 
 func (g *Generator) enumerationInventoryLabels() *inventory.SchedulableLabels {
-	deps := g.invocation.Test.Dependencies
+	deps := g.Invocation.Test.Dependencies
 	flatDims := make([]string, len(deps))
 	for i, dep := range deps {
 		flatDims[i] = dep.Label
@@ -98,8 +86,8 @@ func (g *Generator) enumerationInventoryLabels() *inventory.SchedulableLabels {
 
 func (g *Generator) getUnsupportedDependencies() []string {
 	el := g.enumerationInventoryLabels()
-	unsupported := stringset.New(len(g.invocation.Test.Dependencies))
-	for _, dep := range g.invocation.Test.Dependencies {
+	unsupported := stringset.New(len(g.Invocation.Test.Dependencies))
+	for _, dep := range g.Invocation.Test.Dependencies {
 		unsupported.Add(dep.Label)
 	}
 	for _, label := range labels.Convert(el) {
@@ -141,13 +129,13 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 
 	cmd := &worker.Command{
 		ClientTest:      isClient,
-		Deadline:        g.deadline,
+		Deadline:        g.Deadline,
 		Keyvals:         kv,
 		OutputToIsolate: true,
-		TaskName:        g.invocation.Test.Name,
-		TestArgs:        g.invocation.TestArgs,
+		TaskName:        g.Invocation.Test.Name,
+		TestArgs:        g.Invocation.TestArgs,
 	}
-	cmd.Config(wrap(g.workerConfig))
+	cmd.Config(wrap(g.WorkerConfig))
 
 	labels, err := g.inventoryLabels()
 	if err != nil {
@@ -162,13 +150,13 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 	return request.Args{
 		Cmd:                              *cmd,
 		SchedulableLabels:                labels,
-		Dimensions:                       g.params.GetFreeformAttributes().GetSwarmingDimensions(),
-		ParentTaskID:                     g.parentTaskID,
-		ParentRequestUID:                 g.parentRequestUID,
-		Priority:                         g.params.GetScheduling().GetPriority(),
+		Dimensions:                       g.Params.GetFreeformAttributes().GetSwarmingDimensions(),
+		ParentTaskID:                     g.ParentTaskID,
+		ParentRequestUID:                 g.ParentRequestUID,
+		Priority:                         g.Params.GetScheduling().GetPriority(),
 		ProvisionableDimensions:          provisionableDimensions,
 		ProvisionableDimensionExpiration: provisionableDimensionExpiration,
-		StatusTopic:                      g.params.GetNotification().GetPubsubTopic(),
+		StatusTopic:                      g.Params.GetNotification().GetPubsubTopic(),
 		SwarmingTags:                     g.swarmingTags(ctx, kv, cmd),
 		TestRunnerRequest:                trr,
 		Timeout:                          timeout,
@@ -177,13 +165,13 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 }
 
 func (g *Generator) isClientTest() (bool, error) {
-	switch g.invocation.Test.ExecutionEnvironment {
+	switch g.Invocation.Test.ExecutionEnvironment {
 	case build_api.AutotestTest_EXECUTION_ENVIRONMENT_CLIENT:
 		return true, nil
 	case build_api.AutotestTest_EXECUTION_ENVIRONMENT_SERVER:
 		return false, nil
 	default:
-		return false, errors.Reason("unknown exec environment %s", g.invocation.Test.ExecutionEnvironment).Err()
+		return false, errors.Reason("unknown exec environment %s", g.Invocation.Test.ExecutionEnvironment).Err()
 	}
 }
 
@@ -202,20 +190,20 @@ var poolMap = map[test_platform.Request_Params_Scheduling_ManagedPool]inventory.
 
 func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 	inv := g.enumerationInventoryLabels()
-	if g.params.GetSoftwareAttributes().GetBuildTarget() != nil {
-		*inv.Board = g.params.SoftwareAttributes.BuildTarget.Name
+	if g.Params.GetSoftwareAttributes().GetBuildTarget() != nil {
+		*inv.Board = g.Params.SoftwareAttributes.BuildTarget.Name
 	}
-	if g.params.GetHardwareAttributes().GetModel() != "" {
-		*inv.Model = g.params.HardwareAttributes.Model
+	if g.Params.GetHardwareAttributes().GetModel() != "" {
+		*inv.Model = g.Params.HardwareAttributes.Model
 	}
 
-	priority := g.params.GetScheduling().GetPriority()
-	qs := g.params.GetScheduling().GetQsAccount()
+	priority := g.Params.GetScheduling().GetPriority()
+	qs := g.Params.GetScheduling().GetQsAccount()
 	if priority > 0 && qs != "" {
 		panic(fmt.Sprintf("Priority and QsAccount should not both be set. Got Priority: %d and QsAccount: %s", priority, qs))
 	}
 
-	if p := g.params.GetScheduling().GetPool(); p != nil {
+	if p := g.Params.GetScheduling().GetPool(); p != nil {
 		switch v := p.(type) {
 		case *test_platform.Request_Params_Scheduling_ManagedPool_:
 			pool, ok := poolMap[v.ManagedPool]
@@ -229,7 +217,7 @@ func (g *Generator) inventoryLabels() (*inventory.SchedulableLabels, error) {
 		// Scheduling.QsAccount instead.
 		case *test_platform.Request_Params_Scheduling_QuotaAccount:
 			if qs != "" {
-				panic(fmt.Sprintf("QsAccount and QuotaAccount should not both be set. Got Scheduling_QuotaAccount: %s and QsAccount: %s", g.params.GetScheduling().GetQuotaAccount(), qs))
+				panic(fmt.Sprintf("QsAccount and QuotaAccount should not both be set. Got Scheduling_QuotaAccount: %s and QsAccount: %s", g.Params.GetScheduling().GetQuotaAccount(), qs))
 			}
 			inv.CriticalPools = append(inv.CriticalPools, inventory.SchedulableLabels_DUT_POOL_QUOTA)
 		default:
@@ -248,7 +236,7 @@ const (
 )
 
 func (g *Generator) provisionableDimensions() ([]string, error) {
-	deps := g.params.SoftwareDependencies
+	deps := g.Params.SoftwareDependencies
 	builds, err := extractBuilds(deps)
 	if err != nil {
 		return nil, errors.Annotate(err, "get provisionable dimensions").Err()
@@ -268,7 +256,7 @@ func (g *Generator) provisionableDimensions() ([]string, error) {
 }
 
 func (g *Generator) provisionableLabels() (map[string]string, error) {
-	deps := g.params.SoftwareDependencies
+	deps := g.Params.SoftwareDependencies
 	builds, err := extractBuilds(deps)
 	if err != nil {
 		return nil, errors.Annotate(err, "get provisionable labels").Err()
@@ -288,10 +276,10 @@ func (g *Generator) provisionableLabels() (map[string]string, error) {
 }
 
 func (g *Generator) timeout() (time.Duration, error) {
-	if g.params.Time == nil {
+	if g.Params.Time == nil {
 		return 0, errors.Reason("get timeout: nil params.time").Err()
 	}
-	duration, err := ptypes.Duration(g.params.Time.MaximumDuration)
+	duration, err := ptypes.Duration(g.Params.Time.MaximumDuration)
 	if err != nil {
 		return 0, errors.Annotate(err, "get timeout").Err()
 	}
@@ -299,8 +287,8 @@ func (g *Generator) timeout() (time.Duration, error) {
 }
 
 func (g *Generator) displayName(ctx context.Context, kv map[string]string) string {
-	if g.invocation.DisplayName != "" {
-		return g.invocation.DisplayName
+	if g.Invocation.DisplayName != "" {
+		return g.Invocation.DisplayName
 	}
 	return g.constructDisplayNameFromRequestParams(ctx, kv)
 }
@@ -315,8 +303,8 @@ const (
 // TODO(crbug.com/1003490): Drop this once result reporting is updated to stop
 // parsing the "label" keyval.
 func (g *Generator) constructDisplayNameFromRequestParams(ctx context.Context, kv map[string]string) string {
-	testName := g.invocation.GetTest().GetName()
-	builds, err := extractBuilds(g.params.SoftwareDependencies)
+	testName := g.Invocation.GetTest().GetName()
+	builds, err := extractBuilds(g.Params.SoftwareDependencies)
 	if err != nil {
 		logging.Warningf(ctx,
 			"Failed to get build due to error %s\n Defaulting to test name as display name: %s",
@@ -348,7 +336,7 @@ func (g *Generator) keyvals(ctx context.Context) map[string]string {
 }
 
 func (g *Generator) updateWithInvocationKeyvals(kv map[string]string) {
-	for k, v := range g.invocation.GetResultKeyvals() {
+	for k, v := range g.Invocation.GetResultKeyvals() {
 		if _, ok := kv[k]; !ok {
 			kv[k] = v
 		}
@@ -357,19 +345,19 @@ func (g *Generator) updateWithInvocationKeyvals(kv map[string]string) {
 
 func (g *Generator) baseKeyvals() map[string]string {
 	keyvals := make(map[string]string)
-	for k, v := range g.params.GetDecorations().GetAutotestKeyvals() {
+	for k, v := range g.Params.GetDecorations().GetAutotestKeyvals() {
 		keyvals[k] = v
 	}
-	if g.parentTaskID != "" {
+	if g.ParentTaskID != "" {
 		// This keyval is inspected by some downstream results consumers such as
 		// goldeneye and stainless.
 		// TODO(akeshet): Consider whether parameter-specified parent_job_id
 		// should be respected if it was specified.
-		keyvals["parent_job_id"] = g.parentTaskID
+		keyvals["parent_job_id"] = g.ParentTaskID
 	}
 	// These build related keyvals are used by gs_offlaoder's CTS results
 	// offload hook.
-	for _, sd := range g.params.GetSoftwareDependencies() {
+	for _, sd := range g.Params.GetSoftwareDependencies() {
 		if b := sd.GetChromeosBuild(); b != "" {
 			keyvals["build"] = b
 		}
@@ -391,20 +379,20 @@ var reservedTags = map[string]bool{
 
 func (g *Generator) swarmingTags(ctx context.Context, kv map[string]string, cmd *worker.Command) []string {
 	tags := []string{
-		"luci_project:" + g.workerConfig.LuciProject,
+		"luci_project:" + g.WorkerConfig.LuciProject,
 		"log_location:" + cmd.LogDogAnnotationURL,
 	}
 	tags = append(tags, "display_name:"+g.displayName(ctx, kv))
-	if qa := g.params.GetScheduling().GetQsAccount(); qa != "" {
+	if qa := g.Params.GetScheduling().GetQsAccount(); qa != "" {
 		tags = append(tags, "qs_account:"+qa)
 	} else {
 		// TODO(crbug/1059076) Drop this after migration, as
 		// Scheduling.QsAccount should be the only field for quota account.
-		if qa := g.params.GetScheduling().GetQuotaAccount(); qa != "" {
+		if qa := g.Params.GetScheduling().GetQuotaAccount(); qa != "" {
 			tags = append(tags, "qs_account:"+qa)
 		}
 	}
-	tags = append(tags, removeReservedTags(g.params.GetDecorations().GetTags())...)
+	tags = append(tags, removeReservedTags(g.Params.GetDecorations().GetTags())...)
 	return tags
 }
 
@@ -467,7 +455,7 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 	}
 	kv := g.keyvals(ctx)
 	return &skylab_test_runner.Request{
-		Deadline: google.NewTimestamp(g.deadline),
+		Deadline: google.NewTimestamp(g.Deadline),
 		Prejob: &skylab_test_runner.Request_Prejob{
 			ProvisionableLabels: pl,
 		},
@@ -476,19 +464,19 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 				Autotest: &skylab_test_runner.Request_Test_Autotest{
 					DisplayName:  g.displayName(ctx, kv),
 					IsClientTest: isClient,
-					Name:         g.invocation.Test.Name,
+					Name:         g.Invocation.Test.Name,
 					Keyvals:      kv,
-					TestArgs:     g.invocation.TestArgs,
+					TestArgs:     g.Invocation.TestArgs,
 				},
 			},
 			Offload: g.offloadOptions(),
 		},
-		ParentRequestUid: g.parentRequestUID,
+		ParentRequestUid: g.ParentRequestUID,
 	}, nil
 }
 
 func (g *Generator) offloadOptions() *skylab_test_runner.Request_Test_OffloadOptions {
-	if g.params.GetMigrations().GetEnableSynchronousOffload() {
+	if g.Params.GetMigrations().GetEnableSynchronousOffload() {
 		return &skylab_test_runner.Request_Test_OffloadOptions{
 			SynchronousGsEnable: true,
 		}

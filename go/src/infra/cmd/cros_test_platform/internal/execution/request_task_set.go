@@ -67,7 +67,15 @@ func NewRequestTaskSet(
 	for i, test := range tests {
 		iid := types.NewInvocationID(i, test)
 		invocationIDs[i] = iid
-		argsGenerators[iid] = args.NewGenerator(test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
+		argsGenerators[iid] = &args.Generator{
+			Invocation:       test,
+			Params:           params,
+			WorkerConfig:     workerConfig,
+			ParentTaskID:     tc.ParentTaskID,
+			ParentRequestUID: tc.RequestUID,
+			Deadline:         tc.Deadline,
+		}
+		// test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
 		invocationResponses[iid] = response.NewInvocation(test.GetTest().GetName())
 		invocationSteps[iid] = step.NewInvocationStep(test.GetTest().GetName())
 		tm[iid] = test

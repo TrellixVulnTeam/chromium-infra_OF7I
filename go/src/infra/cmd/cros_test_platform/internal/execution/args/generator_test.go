@@ -27,7 +27,12 @@ func TestDisplayNameTagsForUnamedRequest(t *testing.T) {
 		setRequestKeyval(&params, "suite", "foo-suite")
 		setRequestMaximumDuration(&params, 1000)
 		Convey("when generating a test runner request's args", func() {
-			g := NewGenerator(inv, &params, dummyWorkerConfig, "", "TestPlanRuns/12345678/foo", noDeadline)
+			g := Generator{
+				Invocation:       inv,
+				Params:           &params,
+				WorkerConfig:     dummyWorkerConfig,
+				ParentRequestUID: "TestPlanRuns/12345678/foo",
+			}
 			got, err := g.GenerateArgs(ctx)
 			So(err, ShouldBeNil)
 			Convey("the display name tag is generated correctly.", func() {
