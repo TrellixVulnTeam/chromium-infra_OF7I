@@ -904,11 +904,14 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			// nic info is changed
+			So(changes, ShouldHaveLength, 2)
+			// nic & vlan info is changed
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
 			So(changes[0].GetNewValue(), ShouldEqual, "eth0")
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse.vlan")
+			So(changes[1].GetOldValue(), ShouldEqual, "")
+			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
@@ -993,11 +996,14 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host-user")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 1)
-			// nic info is changed
+			So(changes, ShouldHaveLength, 2)
+			// nic & vlan info is changed
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
 			So(changes[0].GetNewValue(), ShouldEqual, "eth0-user")
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse.vlan")
+			So(changes[1].GetOldValue(), ShouldEqual, "")
+			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host-user")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)

@@ -195,12 +195,14 @@ func (nu *networkUpdater) addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.Ne
 	}
 
 	// 4. Get free ip, update the dhcp config and ip.occupied to true
-	if _, err := nu.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), nic.GetMacAddress()); err != nil {
+	dhcp, err := nu.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), nic.GetMacAddress())
+	if err != nil {
 		return err
 	}
 
-	// 5. Update lse to contain the nic which is used to map to the ip.
+	// 5. Update lse to contain the nic which is used to map to the ip and vlan.
 	lse.Nic = nic.Name
+	lse.Vlan = dhcp.GetVlan()
 	return nil
 }
 

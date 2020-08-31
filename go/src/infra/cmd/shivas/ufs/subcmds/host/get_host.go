@@ -54,6 +54,7 @@ Gets the host and prints the output in user-specified format.`,
 		c.Flags.Var(flag.StringSlice(&c.nics), "nic", "Name(s) of a nic to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.vdcs), "vdc", "Name(s) of a vdc to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.vlans), "vlan", "Name(s) of a vlan to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
 		return c
 	},
@@ -76,6 +77,7 @@ type getHost struct {
 	vdcs          []string
 	tags          []string
 	states        []string
+	vlans         []string
 
 	pageSize int
 	keysOnly bool
@@ -128,6 +130,7 @@ func (c *getHost) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("nic", c.nics)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("vdc", c.vdcs)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("vlan", c.vlans)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
 	return filters
 }

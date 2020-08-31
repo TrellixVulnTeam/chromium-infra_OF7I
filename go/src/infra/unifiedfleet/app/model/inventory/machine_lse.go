@@ -73,7 +73,7 @@ func newMachineLSEEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEnti
 		MachineLSEProtoTypeID: p.GetMachineLsePrototype(),
 		SwitchID:              p.GetChromeosMachineLse().GetDeviceLse().GetNetworkDeviceInterface().GetSwitch(),
 		RPMID:                 p.GetChromeosMachineLse().GetDeviceLse().GetRpmInterface().GetRpm(),
-		VlanID:                p.GetChromeosMachineLse().GetServerLse().GetSupportedRestrictedVlan(),
+		VlanID:                p.GetVlan(),
 		ServoID:               servoID,
 		Rack:                  p.GetRack(),
 		Zone:                  p.GetZone(),

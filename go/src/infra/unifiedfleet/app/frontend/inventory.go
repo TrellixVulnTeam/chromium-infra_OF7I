@@ -55,6 +55,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *ufsAPI.Cre
 		return nil, err
 	}
 	req.MachineLSE.Name = req.MachineLSEId
+	req.NetworkOption = updateNetworkOpt(req.MachineLSE.GetVlan(), req.GetNetworkOption())
 	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.GetNetworkOption())
 	if err != nil {
 		return nil, err
@@ -74,6 +75,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 	}
 	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
 	nwOpt := req.GetNetworkOptions()[req.MachineLSE.Name]
+	nwOpt = updateNetworkOpt(req.MachineLSE.GetVlan(), nwOpt)
 	if nwOpt != nil {
 		machinelse := req.MachineLSE
 		var err error

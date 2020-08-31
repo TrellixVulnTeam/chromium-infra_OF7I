@@ -255,21 +255,9 @@ func TestDeleteVlan(t *testing.T) {
 			resp, cerr := configuration.CreateVlan(ctx, vlan1)
 			So(cerr, ShouldBeNil)
 			So(resp, ShouldResembleProto, vlan1)
-			chromeosServerLse := &ufspb.ChromeOSServerLSE{
-				SupportedRestrictedVlan: "vlan-1",
-			}
-			chromeoslse := &ufspb.ChromeOSMachineLSE_ServerLse{
-				ServerLse: chromeosServerLse,
-			}
-			chromeosMachineLse := &ufspb.ChromeOSMachineLSE{
-				ChromeosLse: chromeoslse,
-			}
-			lse := &ufspb.MachineLSE_ChromeosMachineLse{
-				ChromeosMachineLse: chromeosMachineLse,
-			}
 			machineLSE1 := &ufspb.MachineLSE{
 				Name: "machineLSE-1",
-				Lse:  lse,
+				Vlan: "vlan-1",
 			}
 			mresp, merr := inventory.CreateMachineLSE(ctx, machineLSE1)
 			So(merr, ShouldBeNil)

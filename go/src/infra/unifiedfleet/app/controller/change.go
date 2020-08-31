@@ -156,9 +156,12 @@ func (hc *HistoryClient) LogMachineLSEChanges(oldData *ufspb.MachineLSE, newData
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.hostname", oldData.GetHostname(), newData.GetHostname())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.machines", oldData.GetMachines(), newData.GetMachines())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.nic", oldData.GetNic(), newData.GetNic())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.vlan", oldData.GetVlan(), newData.GetVlan())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.rack", oldData.GetRack(), newData.GetRack())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.manufacturer", oldData.GetManufacturer(), newData.GetManufacturer())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.deployment_ticket", oldData.GetDeploymentTicket(), newData.GetDeploymentTicket())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "machine_lse.description", oldData.GetDescription(), newData.GetDescription())...)
 	if newData.GetChromeBrowserMachineLse() != nil {
 		hc.changes = append(hc.changes, logChromeBrowserMachineLse(resourceName, oldData.GetChromeBrowserMachineLse(), newData.GetChromeBrowserMachineLse())...)
 	}
@@ -193,6 +196,7 @@ func (hc *HistoryClient) LogVMChanges(oldData *ufspb.VM, newData *ufspb.VM) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.vlan", oldData.GetVlan(), newData.GetVlan())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.machine_lse_id", oldData.GetMachineLseId(), newData.GetMachineLseId())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vm.description", oldData.GetDescription(), newData.GetDescription())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.resource_state", oldData.GetResourceState().String(), newData.GetResourceState().String())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
@@ -220,6 +224,7 @@ func (hc *HistoryClient) LogRackChanges(oldData *ufspb.Rack, newData *ufspb.Rack
 	hc.changes = append(hc.changes, logCommon(resourceName, "rack.location", oldData.GetLocation(), newData.GetLocation())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "rack.capacity_ru", oldData.GetCapacityRu(), newData.GetCapacityRu())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "rack.realm", oldData.GetRealm(), newData.GetRealm())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "rack.description", oldData.GetDescription(), newData.GetDescription())...)
 	if newData.GetChromeBrowserRack() != nil {
 		hc.changes = append(hc.changes, logChromeBrowserRack(resourceName, oldData.GetChromeBrowserRack(), newData.GetChromeBrowserRack())...)
 	}
@@ -308,6 +313,7 @@ func (hc *HistoryClient) LogKVMChanges(oldData, newData *ufspb.KVM) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.capacity_port", oldData.GetCapacityPort(), newData.GetCapacityPort())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.zone", approxZone(oldData.GetZone()), approxZone(newData.GetZone()))...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.rack", oldData.GetRack(), newData.GetRack())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "kvm.description", oldData.GetDescription(), newData.GetDescription())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
 
@@ -464,6 +470,7 @@ func logChromeBrowserMachineLse(resourceName string, oldData, newData *ufspb.Chr
 	changes := make([]*ufspb.ChangeEvent, 0)
 	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_browser_machine_lse.vm_capacity", oldData.GetVmCapacity(), newData.GetVmCapacity())...)
 	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_browser_machine_lse.os_version", oldData.GetOsVersion(), newData.GetOsVersion())...)
+	changes = append(changes, logCommon(resourceName, "machine_lse.chrome_browser_machine_lse.virtual_datacenter", oldData.GetVirtualDatacenter(), newData.GetVirtualDatacenter())...)
 	return changes
 }
 

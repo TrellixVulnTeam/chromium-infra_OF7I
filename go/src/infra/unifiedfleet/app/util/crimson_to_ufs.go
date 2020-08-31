@@ -324,6 +324,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Rack:             rack,
 			Zone:             zone,
 			Nic:              GetNicName(h.GetNic(), h.GetMachine()),
+			Vlan:             GetBrowserLabName(Int64ToStr(h.GetVlan())),
 			ResourceState:    ToState(h.GetState()),
 			Manufacturer:     manufacturer,
 			Description:      h.GetDescription(),

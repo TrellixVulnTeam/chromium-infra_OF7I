@@ -103,13 +103,15 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
 		}
-		if err := setNicIfNeeded(ctx, lse, machine, nwOpt); err != nil {
-			return err
-		}
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
 
 		// Assign ip configs
+		if err := setNicIfNeeded(ctx, lse, machine, nwOpt); err != nil {
+			return err
+		}
+		lse.Nic = ""
+		lse.Vlan = ""
 		if (nwOpt.GetVlan() != "" || nwOpt.GetIp() != "") && nwOpt.GetNic() != "" {
 			if err := hc.netUdt.addLseHostHelper(ctx, nwOpt, lse); err != nil {
 				return errors.Annotate(err, "Fail to assign ip to host %s", lse.GetName()).Err()
@@ -195,11 +197,12 @@ func UpdateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE, mask *f
 			return errors.Annotate(err, "Failed to get old MachineLSE").Err()
 		}
 		oldMachinelseCopy := proto.Clone(oldMachinelse).(*ufspb.MachineLSE)
-		// Copy the rack/state/zone/manufacturer to machinelse OUTPUT only fields from already existing machinelse
+		// Copy the rack/zone/manufacturer/nic/vlan to machinelse OUTPUT only fields from already existing machinelse
 		machinelse.Rack = oldMachinelse.GetRack()
 		machinelse.Zone = oldMachinelse.GetZone()
 		machinelse.Manufacturer = oldMachinelse.GetManufacturer()
 		machinelse.Nic = oldMachinelse.GetNic()
+		machinelse.Vlan = oldMachinelse.GetVlan()
 
 		// Do not let updating from browser to os or vice versa change for MachineLSE.
 		if oldMachinelse.GetChromeBrowserMachineLse() != nil && machinelse.GetChromeosMachineLse() != nil {
@@ -903,6 +906,7 @@ func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 		}
 		lseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
 		lse.Nic = ""
+		lse.Vlan = ""
 		lse.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
 			return errors.Annotate(err, "Failed to update host %q", machinelseName).Err()
