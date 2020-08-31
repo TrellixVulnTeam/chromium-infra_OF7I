@@ -400,7 +400,7 @@ func structPBToResponses(from *structpb.Value) (*steps.ExecuteResponses, error) 
 		return nil, errors.Annotate(err, "structPBToResponses").Err()
 	}
 	responses := &steps.ExecuteResponses{}
-	if err := jsonpb.UnmarshalString(json, responses); err != nil {
+	if err := unmarshalString(json, responses); err != nil {
 		return nil, errors.Annotate(err, "structPBToResponses").Err()
 	}
 	return responses, nil
@@ -425,7 +425,7 @@ func structPBToExecuteResponse(from *structpb.Value) (*steps.ExecuteResponse, er
 		return nil, errors.Annotate(err, "structPBToExecuteResponse").Err()
 	}
 	response := &steps.ExecuteResponse{}
-	if err := jsonpb.UnmarshalString(json, response); err != nil {
+	if err := unmarshalString(json, response); err != nil {
 		return nil, errors.Annotate(err, "structPBToExecuteResponse").Err()
 	}
 	return response, nil
@@ -493,7 +493,7 @@ func structPBToRequest(from *structpb.Value) (*test_platform.Request, error) {
 		return nil, errors.Annotate(err, "structPBToExecuteRequest").Err()
 	}
 	request := &test_platform.Request{}
-	if err := jsonpb.UnmarshalString(json, request); err != nil {
+	if err := unmarshalString(json, request); err != nil {
 		return nil, errors.Annotate(err, "structPBToExecuteRequest").Err()
 	}
 	return request, nil
@@ -506,7 +506,7 @@ func requestToStructPB(from *test_platform.Request) (*structpb.Value, error) {
 		return nil, err
 	}
 	reqStruct := &structpb.Struct{}
-	if err := jsonpb.UnmarshalString(jsonStr, reqStruct); err != nil {
+	if err := unmarshalString(jsonStr, reqStruct); err != nil {
 		return nil, err
 	}
 	return &structpb.Value{
@@ -534,4 +534,9 @@ func requestsToStructPB(from map[string]*test_platform.Request) (*structpb.Value
 
 func isFinal(status buildbucket_pb.Status) bool {
 	return (status & buildbucket_pb.Status_ENDED_MASK) == buildbucket_pb.Status_ENDED_MASK
+}
+
+func unmarshalString(s string, m proto.Message) error {
+	u := jsonpb.Unmarshaler{AllowUnknownFields: true}
+	return u.Unmarshal(strings.NewReader(s), m)
 }
