@@ -479,6 +479,7 @@ func (g *Generator) testRunnerRequest(ctx context.Context) (*skylab_test_runner.
 			Offload: g.offloadOptions(),
 		},
 		ParentRequestUid: g.ParentRequestUID,
+		ParentBuildId:    g.ParentBuildID,
 	}, nil
 }
 

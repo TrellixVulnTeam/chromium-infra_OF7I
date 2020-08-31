@@ -407,3 +407,21 @@ func TestParentUID(t *testing.T) {
 		})
 	})
 }
+
+func TestParentBuildID(t *testing.T) {
+	Convey("Given a parent UID", t, func() {
+		ctx := context.Background()
+		Convey("when generating a test runner request", func() {
+			g := Generator{
+				Invocation:    basicInvocation(),
+				Params:        &test_platform.Request_Params{},
+				ParentBuildID: 43,
+			}
+			got, err := g.testRunnerRequest(ctx)
+			So(err, ShouldBeNil)
+			Convey("the parent build ID is propagated correctly.", func() {
+				So(got.ParentBuildId, ShouldEqual, 43)
+			})
+		})
+	})
+}
