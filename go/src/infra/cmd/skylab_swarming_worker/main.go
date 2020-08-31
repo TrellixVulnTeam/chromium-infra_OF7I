@@ -54,12 +54,14 @@ import (
 
 // Task names.
 const (
-	repairTaskName               = "repair"
-	deployTaskName               = "deploy"
-	auditTaskName                = "audit"
-	setStateNeedsRepairTaskName  = "set_needs_repair"
-	setStateReservedTaskName     = "set_reserved"
-	setStateManualRepairTaskName = "set_manual_repair"
+	repairTaskName                    = "repair"
+	deployTaskName                    = "deploy"
+	auditTaskName                     = "audit"
+	setStateNeedsRepairTaskName       = "set_needs_repair"
+	setStateReservedTaskName          = "set_reserved"
+	setStateManualRepairTaskName      = "set_manual_repair"
+	setStateNeedsReplacementTaskName  = "set_needs_replacement"
+	setStateNeedsManualRepairTaskName = "set_needs_manual_repair"
 )
 
 const gcpProject = "chromeos-skylab"
@@ -145,6 +147,10 @@ func mainInner(a *args) error {
 		i.BotInfo.HostState = dutstate.Reserved
 	case setStateManualRepairTaskName:
 		i.BotInfo.HostState = dutstate.ManualRepair
+	case setStateNeedsReplacementTaskName:
+		i.BotInfo.HostState = dutstate.NeedsReplacement
+	case setStateNeedsManualRepairTaskName:
+		i.BotInfo.HostState = dutstate.NeedsManualRepair
 	default:
 		luciferErr = luciferFlow(ctx, a, i, annotWriter)
 	}
