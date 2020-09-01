@@ -85,25 +85,25 @@ type Severity int
 
 const (
 	// TreeCloser is an alert which closes the tree. Highest priority alert.
-	TreeCloser Severity = iota
+	TreeCloser Severity = 0
 	// HungBuilder is an alert about a builder being hung (stuck running a particular step)
-	HungBuilder
+	HungBuilder Severity = 2
 	// InfraFailure is an infrastructure failure. It is higher severity than a reliable failure
 	// because if there is an infrastructure failure, the test code is not even run,
 	// and so we are losing data about if the tests pass or not.
-	InfraFailure
+	InfraFailure Severity = 3
 	// ReliableFailure is a failure which has shown up multiple times.
-	ReliableFailure
+	ReliableFailure Severity = 4
 	// NewFailure is a failure which just started happening.
-	NewFailure
+	NewFailure Severity = 5
 	// IdleBuilder is a builder which is "idle" (buildbot term) and which has above
 	// a certain threshold of pending builds.
-	IdleBuilder
+	IdleBuilder Severity = 6
 	// OfflineBuilder is a builder which is offline.
-	OfflineBuilder
+	OfflineBuilder Severity = 7
 	// NoSeverity is a placeholder Severity value which means nothing. Used by analysis
 	// to indicate that it doesn't have a particular Severity to assign to an alert.
-	NoSeverity
+	NoSeverity Severity = 8
 )
 
 // Alert represents a condition that should be examined by a human.
