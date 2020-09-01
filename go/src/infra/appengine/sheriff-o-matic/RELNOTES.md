@@ -1,3 +1,23 @@
+# Release Notes sheriff-o-matic 2020-09-01
+
+- 4 commits, 2 bugs affected since 2570473 ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SoM] Add project filter for bigquery_analyzer](https://chromium-review.googlesource.com/c/infra/infra/+/2383538) (nqmtuan@google.com)
+- [[SoM] Remove unused alert type StaleMaster](https://chromium-review.googlesource.com/c/infra/infra/+/2381334) (nqmtuan@google.com)
+- [[SoM] Remove som-builder-results](https://chromium-review.googlesource.com/c/infra/infra/+/2381335) (nqmtuan@google.com)
+- [SoM: Release note 28 Aug](https://chromium-review.googlesource.com/c/infra/infra/+/2379461) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1107749](https://crbug.com/1107749)
+  -  [https://crbug.com/1123176](https://crbug.com/1123176)
+  
+
 # Release Notes sheriff-o-matic 2020-08-28
 
 - 7 commits, 3 bugs affected since ed920e7 ()
