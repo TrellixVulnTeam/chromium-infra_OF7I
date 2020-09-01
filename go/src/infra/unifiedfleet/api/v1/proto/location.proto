@@ -79,4 +79,5 @@ enum Zone {
     ZONE_MTV96 = 13; // "mtv96" // US-MTV-41 // 1-1M0
     ZONE_MTV97 = 14; // "mtv97" // US-MTV-1950 // 1-144
     ZONE_FUCHSIA = 15; // "lab01" // Building ? Room ?
+    ZONE_GOOGLER_DESK = 16; // "desk" // For assets given to googlers
 }

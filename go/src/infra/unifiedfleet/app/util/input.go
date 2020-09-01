@@ -205,21 +205,22 @@ func ToUFSState(state string) ufspb.State {
 
 // StrToUFSZone refers a map between a string to a UFS defined map.
 var StrToUFSZone = map[string]string{
-	"atlanta":     "ZONE_ATLANTA",
-	"chromeos1":   "ZONE_CHROMEOS1",
-	"chromeos4":   "ZONE_CHROMEOS4",
-	"chromeos6":   "ZONE_CHROMEOS6",
-	"chromeos2":   "ZONE_CHROMEOS2",
-	"chromeos3":   "ZONE_CHROMEOS3",
-	"chromeos5":   "ZONE_CHROMEOS5",
-	"chromeos7":   "ZONE_CHROMEOS7",
-	"chromeos15":  "ZONE_CHROMEOS15",
-	"atl97":       "ZONE_ATL97",
-	"iad97":       "ZONE_IAD97",
-	"mtv96":       "ZONE_MTV96",
-	"mtv97":       "ZONE_MTV97",
-	"fuchsia":     "ZONE_FUCHSIA",
-	"unspecified": "ZONE_UNSPECIFIED",
+	"atlanta":      "ZONE_ATLANTA",
+	"chromeos1":    "ZONE_CHROMEOS1",
+	"chromeos4":    "ZONE_CHROMEOS4",
+	"chromeos6":    "ZONE_CHROMEOS6",
+	"chromeos2":    "ZONE_CHROMEOS2",
+	"chromeos3":    "ZONE_CHROMEOS3",
+	"chromeos5":    "ZONE_CHROMEOS5",
+	"chromeos7":    "ZONE_CHROMEOS7",
+	"chromeos15":   "ZONE_CHROMEOS15",
+	"atl97":        "ZONE_ATL97",
+	"iad97":        "ZONE_IAD97",
+	"mtv96":        "ZONE_MTV96",
+	"mtv97":        "ZONE_MTV97",
+	"fuchsia":      "ZONE_FUCHSIA",
+	"unspecified":  "ZONE_UNSPECIFIED",
+	"googler_desk": "ZONE_GOOGLER_DESK",
 }
 
 // IsUFSZone checks if a string refers to a valid UFS zone.
