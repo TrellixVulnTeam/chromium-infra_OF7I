@@ -146,9 +146,7 @@ config_prod:
 	m4 -DPROD < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
 	m4 -DPROD < module-api.yaml.m4 > module-api.yaml
 
-# Generate yaml files used by spinnaker. Spinnaker uses *.prod.yaml to differentiate
-# the yaml files for monorail-prod/monorail-staging and the *.yaml files for deploying
-# monorail-dev.
+# Generate yaml files used by spinnaker.
 config_prod_cloud:
 	m4 -DPROD < app.yaml.m4 > app.prod.yaml
 	m4 -DPROD < module-besearch.yaml.m4 > besearch.prod.yaml
@@ -160,6 +158,12 @@ config_staging:
 	m4 -DSTAGING < module-besearch.yaml.m4 > module-besearch.yaml
 	m4 -DSTAGING < module-latency-insensitive.yaml.m4 > module-latency-insensitive.yaml
 	m4 -DSTAGING < module-api.yaml.m4 > module-api.yaml
+
+config_staging_cloud:
+	m4 -DSTAGING < app.yaml.m4 > app.staging.yaml
+        m4 -DSTAGING < module-besearch.yaml.m4 > module-besearch.staging.yaml
+	m4 -DSTAGING < module-latency-insensitive.yaml.m4 > module-latency-insensitive.staging.yaml
+        m4 -DSTAGING < module-api.yaml.m4 > module-api.staging.yaml
 
 config_dev:
 	m4 -DDEV < app.yaml.m4 > app.yaml
