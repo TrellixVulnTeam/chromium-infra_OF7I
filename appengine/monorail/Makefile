@@ -161,9 +161,9 @@ config_staging:
 
 config_staging_cloud:
 	m4 -DSTAGING < app.yaml.m4 > app.staging.yaml
-	m4 -DSTAGING < module-besearch.yaml.m4 > module-besearch.staging.yaml
-	m4 -DSTAGING < module-latency-insensitive.yaml.m4 > module-latency-insensitive.staging.yaml
-	m4 -DSTAGING < module-api.yaml.m4 > module-api.staging.yaml
+	m4 -DSTAGING < module-besearch.yaml.m4 > besearch.staging.yaml
+	m4 -DSTAGING < module-latency-insensitive.yaml.m4 > latency-insensitive.staging.yaml
+	m4 -DSTAGING < module-api.yaml.m4 > api.staging.yaml
 
 config_dev:
 	m4 -DDEV < app.yaml.m4 > app.yaml
