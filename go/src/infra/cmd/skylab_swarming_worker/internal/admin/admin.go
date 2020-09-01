@@ -32,11 +32,9 @@ func NewPrpcClient(ctx context.Context, url string, o auth.Options) (*prpc.Clien
 		return nil, errors.Annotate(err, "create inventory admin client").Err()
 	}
 	return &prpc.Client{
-		C:    hc,
-		Host: url,
-		Options: &prpc.Options{
-			UserAgent: "SkylabSwarmingWorker/1.0.0",
-		},
+		C:       hc,
+		Host:    url,
+		Options: prpcOptionWithUserAgent("SkylabSwarmingWorker/1.0.0"),
 	}, nil
 }
 
@@ -47,11 +45,9 @@ func NewUFSClient(ctx context.Context, url string, o auth.Options) (*prpc.Client
 		return nil, errors.Annotate(err, "create UFS admin client").Err()
 	}
 	return &prpc.Client{
-		C:    hc,
-		Host: url,
-		Options: &prpc.Options{
-			UserAgent: "skylab_swarming_worker/3.0.0",
-		},
+		C:       hc,
+		Host:    url,
+		Options: prpcOptionWithUserAgent("skylab_swarming_worker/3.0.0"),
 	}, nil
 }
 
@@ -64,4 +60,13 @@ func httpClient(ctx context.Context, o auth.Options) (*http.Client, error) {
 	}
 	return c, nil
 
+}
+
+// prpcOptionWithUserAgent create prpc option with custom UserAgent.
+//
+// DefaultOptions provides Retry ability in case we have issue with service.
+func prpcOptionWithUserAgent(userAgent string) *prpc.Options {
+	options := prpc.DefaultOptions()
+	options.UserAgent = userAgent
+	return options
 }
