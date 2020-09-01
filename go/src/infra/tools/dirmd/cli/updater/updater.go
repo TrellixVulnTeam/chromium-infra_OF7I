@@ -127,6 +127,8 @@ func upload(ctx context.Context, obj *storage.ObjectHandle, data []byte) error {
 		w.Close()
 		cancel()
 	}()
+
+	w.PredefinedACL = "publicRead"
 	if _, err := w.Write(data); err != nil {
 		cancel() // cancel writing before closing
 		return err
