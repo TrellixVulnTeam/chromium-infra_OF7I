@@ -12,6 +12,7 @@ import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
+import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 message Nic {
     option (google.api.resource) = {
@@ -32,8 +33,7 @@ message Nic {
     string machine = 5 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Machine"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        }
     ];
 
     // Refers to Lab
@@ -53,15 +53,16 @@ message Nic {
     // tags user can attach for easy querying/searching
     repeated string tags = 8;
 
-    // State of the nic
-    string state = 9 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 9;
+    reserved "state";
 
     // Refers to Zone
     string zone = 10 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // State of the nic
+    State resource_state = 11;
 }
 
 message Vlan {

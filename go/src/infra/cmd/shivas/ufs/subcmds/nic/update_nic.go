@@ -90,9 +90,8 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 		Options: site.DefaultPRPCOptions,
 	})
 	var nic ufspb.Nic
-	var machineName string
 	if c.interactive {
-		machineName = utils.GetNicInteractiveInput(ctx, ic, &nic, true)
+		utils.GetNicInteractiveInput(ctx, ic, &nic, true)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &nic); err != nil {
@@ -101,10 +100,8 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 			if nic.GetMachine() == "" {
 				return errors.New(fmt.Sprintf("machine field is empty in json. It is a required parameter for json input."))
 			}
-			machineName = nic.GetMachine()
 		} else {
 			c.parseArgs(&nic)
-			machineName = c.machineName
 		}
 	}
 	if err := utils.PrintExistingNic(ctx, ic, nic.Name); err != nil {
@@ -112,8 +109,7 @@ func (c *updateNic) innerRun(a subcommands.Application, args []string, env subco
 	}
 	nic.Name = ufsUtil.AddPrefix(ufsUtil.NicCollection, nic.Name)
 	res, err := ic.UpdateNic(ctx, &ufsAPI.UpdateNicRequest{
-		Nic:     &nic,
-		Machine: machineName,
+		Nic: &nic,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"machine":     "machine",
 			"mac-address": "macAddress",
@@ -136,6 +132,7 @@ func (c *updateNic) parseArgs(nic *ufspb.Nic) {
 	nic.Name = c.nicName
 	nic.MacAddress = c.macAddress
 	nic.SwitchInterface = &ufspb.SwitchInterface{}
+	nic.Machine = c.machineName
 	if c.switchName == utils.ClearFieldValue {
 		nic.GetSwitchInterface().Switch = ""
 	} else {

@@ -38,9 +38,10 @@ func TestCreateNic(t *testing.T) {
 	Convey("CreateNics", t, func() {
 		Convey("Create new nic with non existing machine", func() {
 			nic1 := &ufspb.Nic{
-				Name: "nic-1",
+				Name:    "nic-1",
+				Machine: "machine-5",
 			}
-			resp, err := CreateNic(ctx, nic1, "machine-5")
+			resp, err := CreateNic(ctx, nic1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-5 in the system.")
@@ -67,13 +68,14 @@ func TestCreateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic2 := &ufspb.Nic{
-				Name: "nic-create-2",
+				Name:    "nic-create-2",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "nic-create-switch-1",
 					PortName: "25",
 				},
 			}
-			_, err = CreateNic(ctx, nic2, "machine-1")
+			_, err = CreateNic(ctx, nic2)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "switch port 25 of nic-create-switch-1 is already occupied")
 		})
@@ -91,9 +93,10 @@ func TestCreateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic := &ufspb.Nic{
-				Name: "nic-20",
+				Name:    "nic-20",
+				Machine: "machine-10",
 			}
-			resp, err := CreateNic(ctx, nic, "machine-10")
+			resp, err := CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
 
@@ -130,9 +133,10 @@ func TestCreateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic := &ufspb.Nic{
-				Name: "nic-25",
+				Name:    "nic-25",
+				Machine: "machine-15",
 			}
-			resp, err := CreateNic(ctx, nic, "machine-15")
+			resp, err := CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
 
@@ -146,12 +150,13 @@ func TestCreateNic(t *testing.T) {
 
 		Convey("Create new nic with non existing switch", func() {
 			nic1 := &ufspb.Nic{
-				Name: "nic-1",
+				Name:    "nic-1",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-1",
 				},
 			}
-			resp, err := CreateNic(ctx, nic1, "machine-1")
+			resp, err := CreateNic(ctx, nic1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
@@ -172,12 +177,13 @@ func TestCreateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic2 := &ufspb.Nic{
-				Name: "nic-2",
+				Name:    "nic-2",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-2",
 				},
 			}
-			resp, err := CreateNic(ctx, nic2, "machine-1")
+			resp, err := CreateNic(ctx, nic2)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic2)
 
@@ -202,9 +208,10 @@ func TestUpdateNic(t *testing.T) {
 			registration.CreateMachine(ctx, machine1)
 
 			nic := &ufspb.Nic{
-				Name: "nic-1",
+				Name:    "nic-1",
+				Machine: "machine-1",
 			}
-			resp, err := UpdateNic(ctx, nic, "machine-1", nil)
+			resp, err := UpdateNic(ctx, nic, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Nic with NicID nic-1 in the system")
@@ -222,12 +229,13 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic2 := &ufspb.Nic{
-				Name: "nic-2",
+				Name:    "nic-2",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-1",
 				},
 			}
-			resp, err := UpdateNic(ctx, nic2, "machine-1", nil)
+			resp, err := UpdateNic(ctx, nic2, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
@@ -267,7 +275,7 @@ func TestUpdateNic(t *testing.T) {
 				Name:    "nic-3",
 				Machine: "machine-4",
 			}
-			resp, err := UpdateNic(ctx, nic, "machine-4", nil)
+			resp, err := UpdateNic(ctx, nic, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, nic)
@@ -286,9 +294,10 @@ func TestUpdateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			nic = &ufspb.Nic{
-				Name: "nic-6",
+				Name:    "nic-6",
+				Machine: "machine-6",
 			}
-			resp, err := UpdateNic(ctx, nic, "machine-6", nil)
+			resp, err := UpdateNic(ctx, nic, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
@@ -316,7 +325,7 @@ func TestUpdateNic(t *testing.T) {
 					PortName: "75",
 				},
 			}
-			resp, err := UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"portName", "macAddress"}})
+			resp, err := UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"portName", "macAddress"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
@@ -340,7 +349,7 @@ func TestUpdateNic(t *testing.T) {
 				Name:       "nic-8",
 				MacAddress: "nic-8-address",
 			}
-			nic, err = UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			nic, err = UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldBeNil)
 			So(nic.GetMacAddress(), ShouldEqual, "nic-8-address")
 		})
@@ -370,7 +379,7 @@ func TestUpdateNic(t *testing.T) {
 				Name:       "nic-8.1",
 				MacAddress: "nic-8.2-address",
 			}
-			_, err = UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			_, err = UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "mac_address nic-8.2-address is already occupied")
 		})
@@ -391,7 +400,7 @@ func TestUpdateNic(t *testing.T) {
 				Name:       "nic-9",
 				MacAddress: "nic-9-address",
 			}
-			_, err = UpdateNic(ctx, nic1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			_, err = UpdateNic(ctx, nic1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldBeNil)
 		})
 
@@ -420,23 +429,34 @@ func TestUpdateNic(t *testing.T) {
 				Name:       "nic-full-update",
 				MacAddress: "nic-full-update-address2",
 			}
-			_, err = UpdateNic(ctx, nic1, "", nil)
+			_, err = UpdateNic(ctx, nic1, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "mac_address nic-full-update-address2 is already occupied")
 		})
 
 		Convey("Update nic mac address - happy path", func() {
-			nic := &ufspb.Nic{
-				Name: "nic-10",
+			machine := &ufspb.Machine{
+				Name: "machine-7",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
 			}
-			_, err := registration.CreateNic(ctx, nic)
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			nic := &ufspb.Nic{
+				Name:    "nic-10",
+				Machine: "machine-7",
+			}
+			_, err = registration.CreateNic(ctx, nic)
 			So(err, ShouldBeNil)
 
 			nic1 := &ufspb.Nic{
 				Name:       "nic-10",
+				Machine:    "machine-7",
 				MacAddress: "nic-10-address",
 			}
-			res, _ := UpdateNic(ctx, nic1, "", nil)
+			res, _ := UpdateNic(ctx, nic1, nil)
 			So(res, ShouldNotBeNil)
 			So(res, ShouldResembleProto, nic1)
 		})

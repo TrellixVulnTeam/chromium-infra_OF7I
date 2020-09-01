@@ -11,6 +11,7 @@ option go_package = "infra/unifiedfleet/api/v1/proto;ufspb";
 import "google/protobuf/timestamp.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
+import "infra/unifiedfleet/api/v1/proto/state.proto";
 
 message KVM {
     option (google.api.resource) = {
@@ -210,8 +211,7 @@ message Drac {
     string machine = 7 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Machine"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        }
     ];
 
     // Refers to Lab
@@ -231,13 +231,14 @@ message Drac {
     // tags user can attach for easy querying/searching
     repeated string tags = 10;
 
-    // State of the drac
-    string state = 11 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 11;
+    reserved "state";
 
     // Refers to Zone
     string zone = 12 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // State of the drac
+    State resource_state = 13;
 }

@@ -38,9 +38,10 @@ func TestCreateDrac(t *testing.T) {
 	Convey("CreateDrac", t, func() {
 		Convey("Create new drac with non existing machine", func() {
 			drac1 := &ufspb.Drac{
-				Name: "drac-1",
+				Name:    "drac-1",
+				Machine: "machine-5",
 			}
-			resp, err := CreateDrac(ctx, drac1, "machine-5")
+			resp, err := CreateDrac(ctx, drac1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-5 in the system.")
@@ -67,13 +68,14 @@ func TestCreateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			drac2 := &ufspb.Drac{
-				Name: "drac-create-2",
+				Name:    "drac-create-2",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch:   "drac-create-switch-1",
 					PortName: "25",
 				},
 			}
-			_, err = CreateDrac(ctx, drac2, "machine-1")
+			_, err = CreateDrac(ctx, drac2)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "switch port 25 of drac-create-switch-1 is already occupied")
 		})
@@ -95,9 +97,10 @@ func TestCreateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			drac := &ufspb.Drac{
-				Name: "drac-20",
+				Name:    "drac-20",
+				Machine: "machine-10",
 			}
-			_, err = CreateDrac(ctx, drac, "machine-10")
+			_, err = CreateDrac(ctx, drac)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is already a drac drac-5 associated with machine machine-10")
 
@@ -117,9 +120,10 @@ func TestCreateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			drac := &ufspb.Drac{
-				Name: "drac-25",
+				Name:    "drac-25",
+				Machine: "machine-15",
 			}
-			resp, err := CreateDrac(ctx, drac, "machine-15")
+			resp, err := CreateDrac(ctx, drac)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac)
 
@@ -133,12 +137,13 @@ func TestCreateDrac(t *testing.T) {
 
 		Convey("Create new drac with non existing switch", func() {
 			drac1 := &ufspb.Drac{
-				Name: "drac-1",
+				Name:    "drac-1",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-1",
 				},
 			}
-			resp, err := CreateDrac(ctx, drac1, "machine-1")
+			resp, err := CreateDrac(ctx, drac1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
@@ -156,12 +161,13 @@ func TestCreateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			drac2 := &ufspb.Drac{
-				Name: "drac-2",
+				Name:    "drac-2",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-2",
 				},
 			}
-			resp, err := CreateDrac(ctx, drac2, "machine-1")
+			resp, err := CreateDrac(ctx, drac2)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, drac2)
 		})
@@ -178,9 +184,10 @@ func TestUpdateDrac(t *testing.T) {
 			}
 			registration.CreateMachine(ctx, machine1)
 			drac := &ufspb.Drac{
-				Name: "drac-1",
+				Name:    "drac-1",
+				Machine: "machine-1",
 			}
-			resp, err := UpdateDrac(ctx, drac, "machine-1", nil)
+			resp, err := UpdateDrac(ctx, drac, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Drac with DracID drac-1 in the system.")
@@ -198,12 +205,13 @@ func TestUpdateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			drac2 := &ufspb.Drac{
-				Name: "drac-2",
+				Name:    "drac-2",
+				Machine: "machine-1",
 				SwitchInterface: &ufspb.SwitchInterface{
 					Switch: "switch-1",
 				},
 			}
-			resp, err := UpdateDrac(ctx, drac2, "machine-1", nil)
+			resp, err := UpdateDrac(ctx, drac2, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1")
@@ -245,7 +253,8 @@ func TestUpdateDrac(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			_, err = UpdateDrac(ctx, drac, "machine-4", nil)
+			drac.Machine = "machine-4"
+			_, err = UpdateDrac(ctx, drac, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is already a drac drac-4 associated with machine machine-4")
 
@@ -275,8 +284,9 @@ func TestUpdateDrac(t *testing.T) {
 			drac = &ufspb.Drac{
 				Name:       "drac-5",
 				MacAddress: "ab:cd:ef",
+				Machine:    "machine-5",
 			}
-			resp, err := UpdateDrac(ctx, drac, "machine-5", nil)
+			resp, err := UpdateDrac(ctx, drac, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, drac)
@@ -298,9 +308,10 @@ func TestUpdateDrac(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			drac = &ufspb.Drac{
-				Name: "drac-6",
+				Name:    "drac-6",
+				Machine: "machine-6",
 			}
-			resp, err := UpdateDrac(ctx, drac, "machine-6", nil)
+			resp, err := UpdateDrac(ctx, drac, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-6 in the system.")
@@ -328,7 +339,7 @@ func TestUpdateDrac(t *testing.T) {
 					PortName: "75",
 				},
 			}
-			resp, err := UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"portName", "macAddress"}})
+			resp, err := UpdateDrac(ctx, drac1, &field_mask.FieldMask{Paths: []string{"portName", "macAddress"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetSwitchInterface().GetSwitch(), ShouldResemble, "switch-7")
@@ -352,7 +363,7 @@ func TestUpdateDrac(t *testing.T) {
 				Name:       "drac-8",
 				MacAddress: "drac-8-address",
 			}
-			drac, err = UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			drac, err = UpdateDrac(ctx, drac1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldBeNil)
 			So(drac.GetMacAddress(), ShouldEqual, "drac-8-address")
 		})
@@ -382,7 +393,7 @@ func TestUpdateDrac(t *testing.T) {
 				Name:       "drac-8.1",
 				MacAddress: "drac-8.2-address",
 			}
-			_, err = UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			_, err = UpdateDrac(ctx, drac1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "mac_address drac-8.2-address is already occupied")
 		})
@@ -403,7 +414,7 @@ func TestUpdateDrac(t *testing.T) {
 				Name:       "drac-9",
 				MacAddress: "drac-9-address",
 			}
-			_, err = UpdateDrac(ctx, drac1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			_, err = UpdateDrac(ctx, drac1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldBeNil)
 		})
 
@@ -432,27 +443,10 @@ func TestUpdateDrac(t *testing.T) {
 				Name:       "drac-full",
 				MacAddress: "drac-full-address-2",
 			}
-			_, err = UpdateDrac(ctx, drac1, "", nil)
+			_, err = UpdateDrac(ctx, drac1, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "mac_address drac-full-address-2 is already occupied")
 		})
-
-		Convey("Update drac mac address - happy path", func() {
-			drac := &ufspb.Drac{
-				Name: "drac-10",
-			}
-			_, err := registration.CreateDrac(ctx, drac)
-			So(err, ShouldBeNil)
-
-			drac1 := &ufspb.Drac{
-				Name:       "drac-10",
-				MacAddress: "efgh",
-			}
-			res, _ := UpdateDrac(ctx, drac1, "", nil)
-			So(res, ShouldNotBeNil)
-			So(res, ShouldResembleProto, drac1)
-		})
-
 	})
 }
 

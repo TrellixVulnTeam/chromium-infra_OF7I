@@ -97,9 +97,8 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 		Options: site.DefaultPRPCOptions,
 	})
 	var drac ufspb.Drac
-	var machineName string
 	if c.interactive {
-		machineName = utils.GetDracInteractiveInput(ctx, ic, &drac, true)
+		utils.GetDracInteractiveInput(ctx, ic, &drac, true)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &drac); err != nil {
@@ -108,10 +107,8 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 			if drac.GetMachine() == "" {
 				return errors.New(fmt.Sprintf("machine field is empty in json. It is a required parameter for json input."))
 			}
-			machineName = drac.GetMachine()
 		} else {
 			c.parseArgs(&drac)
-			machineName = c.machineName
 		}
 	}
 	if err := utils.PrintExistingDrac(ctx, ic, drac.Name); err != nil {
@@ -119,8 +116,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 	}
 	drac.Name = ufsUtil.AddPrefix(ufsUtil.DracCollection, drac.Name)
 	res, err := ic.UpdateDrac(ctx, &ufsAPI.UpdateDracRequest{
-		Drac:    &drac,
-		Machine: machineName,
+		Drac: &drac,
 		NetworkOption: &ufsAPI.NetworkOption{
 			Vlan:   c.vlanName,
 			Delete: c.deleteVlan,
@@ -159,6 +155,7 @@ func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
 	drac.Name = c.dracName
 	drac.MacAddress = c.macAddress
 	drac.SwitchInterface = &ufspb.SwitchInterface{}
+	drac.Machine = c.machineName
 	if c.switchName == utils.ClearFieldValue {
 		drac.GetSwitchInterface().Switch = ""
 	} else {

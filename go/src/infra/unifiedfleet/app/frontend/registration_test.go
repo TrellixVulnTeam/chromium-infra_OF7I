@@ -838,10 +838,10 @@ func TestCreateNic(t *testing.T) {
 	Convey("CreateNic", t, func() {
 		Convey("Create new nic with nic_id", func() {
 			nic := mockNic("")
+			nic.Machine = "machine-1"
 			req := &ufsAPI.CreateNicRequest{
-				Nic:     nic,
-				NicId:   "nic-1",
-				Machine: "machine-1",
+				Nic:   nic,
+				NicId: "nic-1",
 			}
 			resp, err := tf.Fleet.CreateNic(tf.C, req)
 			So(err, ShouldBeNil)
@@ -860,10 +860,10 @@ func TestCreateNic(t *testing.T) {
 
 		Convey("Create new nic - Invalid input empty ID", func() {
 			nic := mockNic("")
+			nic.Machine = "machine-1"
 			req := &ufsAPI.CreateNicRequest{
-				Nic:     nic,
-				NicId:   "",
-				Machine: "machine-1",
+				Nic:   nic,
+				NicId: "",
 			}
 			resp, err := tf.Fleet.CreateNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -873,10 +873,10 @@ func TestCreateNic(t *testing.T) {
 
 		Convey("Create new nic - Invalid input invalid characters", func() {
 			nic := mockNic("")
+			nic.Machine = "machine-1"
 			req := &ufsAPI.CreateNicRequest{
-				Nic:     nic,
-				NicId:   "a.b)7&",
-				Machine: "machine-1",
+				Nic:   nic,
+				NicId: "a.b)7&",
 			}
 			resp, err := tf.Fleet.CreateNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -921,9 +921,9 @@ func TestUpdateNic(t *testing.T) {
 
 			nic2 := mockNic("nic-1")
 			nic2.SwitchInterface = nil
+			nic2.Machine = "machine-1"
 			ureq := &ufsAPI.UpdateNicRequest{
-				Nic:     nic2,
-				Machine: "machine-1",
+				Nic: nic2,
 			}
 			resp, err := tf.Fleet.UpdateNic(tf.C, ureq)
 			So(err, ShouldBeNil)
@@ -943,9 +943,9 @@ func TestUpdateNic(t *testing.T) {
 		Convey("Update nic - Invalid input empty name", func() {
 			nic := mockNic("")
 			nic.Name = ""
+			nic.Machine = "machine-1"
 			req := &ufsAPI.UpdateNicRequest{
-				Nic:     nic,
-				Machine: "machine-1",
+				Nic: nic,
 			}
 			resp, err := tf.Fleet.UpdateNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -955,9 +955,9 @@ func TestUpdateNic(t *testing.T) {
 
 		Convey("Update nic - Invalid input invalid characters", func() {
 			nic := mockNic("a.b)7&")
+			nic.Machine = "machine-1"
 			req := &ufsAPI.UpdateNicRequest{
-				Nic:     nic,
-				Machine: "machine-1",
+				Nic: nic,
 			}
 			resp, err := tf.Fleet.UpdateNic(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1793,10 +1793,10 @@ func TestCreateDrac(t *testing.T) {
 	Convey("CreateDrac", t, func() {
 		Convey("Create new drac with drac_id", func() {
 			drac := mockDrac("")
+			drac.Machine = "machine-1"
 			req := &ufsAPI.CreateDracRequest{
-				Drac:    drac,
-				DracId:  "Drac-1",
-				Machine: "machine-1",
+				Drac:   drac,
+				DracId: "Drac-1",
 			}
 			resp, err := tf.Fleet.CreateDrac(tf.C, req)
 			So(err, ShouldBeNil)
@@ -1815,10 +1815,10 @@ func TestCreateDrac(t *testing.T) {
 
 		Convey("Create new drac - Invalid input empty ID", func() {
 			drac := mockDrac("")
+			drac.Machine = "machine-1"
 			req := &ufsAPI.CreateDracRequest{
-				Drac:    drac,
-				DracId:  "",
-				Machine: "machine-1",
+				Drac:   drac,
+				DracId: "",
 			}
 			resp, err := tf.Fleet.CreateDrac(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1828,10 +1828,10 @@ func TestCreateDrac(t *testing.T) {
 
 		Convey("Create new drac - Invalid input invalid characters", func() {
 			drac := mockDrac("")
+			drac.Machine = "machine-1"
 			req := &ufsAPI.CreateDracRequest{
-				Drac:    drac,
-				DracId:  "a.b)7&",
-				Machine: "machine-1",
+				Drac:   drac,
+				DracId: "a.b)7&",
 			}
 			resp, err := tf.Fleet.CreateDrac(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1876,9 +1876,9 @@ func TestUpdateDrac(t *testing.T) {
 
 			drac2 := mockDrac("drac-1")
 			drac2.SwitchInterface = nil
+			drac2.Machine = "machine-1"
 			ureq := &ufsAPI.UpdateDracRequest{
-				Drac:    drac2,
-				Machine: "machine-1",
+				Drac: drac2,
 			}
 			resp, err = tf.Fleet.UpdateDrac(tf.C, ureq)
 			So(err, ShouldBeNil)
@@ -1898,9 +1898,9 @@ func TestUpdateDrac(t *testing.T) {
 		Convey("Update drac - Invalid input empty name", func() {
 			drac := mockDrac("")
 			drac.Name = ""
+			drac.Machine = "machine-1"
 			req := &ufsAPI.UpdateDracRequest{
-				Drac:    drac,
-				Machine: "machine-1",
+				Drac: drac,
 			}
 			resp, err := tf.Fleet.UpdateDrac(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1910,9 +1910,9 @@ func TestUpdateDrac(t *testing.T) {
 
 		Convey("Update drac - Invalid input invalid characters", func() {
 			drac := mockDrac("a.b)7&")
+			drac.Machine = "machine-1"
 			req := &ufsAPI.UpdateDracRequest{
-				Drac:    drac,
-				Machine: "machine-1",
+				Drac: drac,
 			}
 			resp, err := tf.Fleet.UpdateDrac(tf.C, req)
 			So(resp, ShouldBeNil)

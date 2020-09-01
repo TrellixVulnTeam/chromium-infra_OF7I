@@ -26,23 +26,22 @@ import (
 //
 // Checks if the resources referenced by the Drac input already exists
 // in the system before creating a new Drac
-func CreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufspb.Drac, error) {
+func CreateDrac(ctx context.Context, drac *ufspb.Drac) (*ufspb.Drac, error) {
 	f := func(ctx context.Context) error {
 		hc := &HistoryClient{}
 		hc.LogDracChanges(nil, drac)
 		// 1. Validate input
-		if err := validateCreateDrac(ctx, drac, machineName); err != nil {
+		if err := validateCreateDrac(ctx, drac); err != nil {
 			return errors.Annotate(err, "CreateDrac - validation failed").Err()
 		}
 
 		// Get browser machine to associate the drac
-		machine, err := getBrowserMachine(ctx, machineName)
+		machine, err := getBrowserMachine(ctx, drac.GetMachine())
 		if err != nil {
-			return errors.Annotate(err, "CreateDrac - failed to get machine %s", machineName).Err()
+			return errors.Annotate(err, "CreateDrac - failed to get machine %s", drac.GetMachine()).Err()
 		}
 
-		// Fill the machine/rack/zone to drac OUTPUT only fields for drac table indexing
-		drac.Machine = machine.GetName()
+		// Fill the rack/zone to drac OUTPUT only fields for drac table indexing
 		drac.Rack = machine.GetLocation().GetRack()
 		drac.Zone = machine.GetLocation().GetZone().String()
 
@@ -66,11 +65,11 @@ func CreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) (*ufs
 //
 // Checks if the resources referenced by the Drac input already exists
 // in the system before updating a Drac
-func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
+func UpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
 	f := func(ctx context.Context) error {
 		hc := &HistoryClient{}
 		// 1. Validate the input
-		if err := validateUpdateDrac(ctx, drac, machineName, mask); err != nil {
+		if err := validateUpdateDrac(ctx, drac, mask); err != nil {
 			return errors.Annotate(err, "UpdateDrac - validation failed").Err()
 		}
 
@@ -80,50 +79,43 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 			return errors.Annotate(err, "UpdateDrac - get drac %s failed", drac.GetName()).Err()
 		}
 		oldDracCopy := proto.Clone(oldDrac).(*ufspb.Drac)
-		// Copy the machine/rack/zone to drac OUTPUT only fields from already existing drac
-		drac.Machine = oldDrac.GetMachine()
+		// Copy the rack/zone to drac OUTPUT only fields from already existing drac
 		drac.Rack = oldDrac.GetRack()
 		drac.Zone = oldDrac.GetZone()
-		drac.State = oldDrac.GetState()
-
-		if machineName != "" {
-			// Get the old browser machine associated with drac
-			oldMachine, err := getBrowserMachine(ctx, oldDrac.GetMachine())
-			if err != nil {
-				return errors.Annotate(err, "UpdateDrac - failed to get machine %s", machineName).Err()
-			}
-
-			// User is trying to associate this drac with a different browser machine.
-			if oldMachine.Name != machineName {
-				// A machine can have only one drac. If there is a old drac associated with this machine already, error out.
-				// A drac cannot exist in the system without being associated to a machine.
-				dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machineName, true)
-				if err != nil {
-					return errors.Annotate(err, "UpdateDrac - failed to query old drac for machine %s", machineName).Err()
-				}
-				if dracs != nil && len(dracs) > 0 {
-					return status.Error(codes.InvalidArgument, fmt.Sprintf("validateUpdateDrac - There is already a drac %s associated with machine %s.\n"+
-						"Please delete that drac and then associate this drac to the machine.", dracs[0].GetName(), machineName))
-				}
-
-				// Get new browser machine to associate the drac
-				machine, err := getBrowserMachine(ctx, machineName)
-				if err != nil {
-					return errors.Annotate(err, "UpdateDrac - get browser machine %s failed", machineName).Err()
-				}
-
-				// Fill the machine/rack/zone to drac OUTPUT only fields
-				drac.Machine = machine.GetName()
-				drac.Rack = machine.GetLocation().GetRack()
-				drac.Zone = machine.GetLocation().GetZone().String()
-			}
-		}
 
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
-			drac, err = processDracUpdateMask(oldDrac, drac, mask)
+			drac, err = processDracUpdateMask(ctx, oldDrac, drac, mask)
 			if err != nil {
 				return errors.Annotate(err, "UpdateDrac - processing update mask failed").Err()
+			}
+		} else {
+			// This is for complete object input
+			if drac.GetMachine() == "" {
+				return status.Error(codes.InvalidArgument, "Machine cannot be empty for updating a drac")
+			}
+			// Check if user provided new machine to associate the drac
+			if drac.GetMachine() != oldDrac.GetMachine() {
+				// A machine can have only one drac. If there is a old drac associated with this machine already, error out.
+				// A drac cannot exist in the system without being associated to a machine.
+				dracs, err := registration.QueryDracByPropertyName(ctx, "machine", drac.GetMachine(), true)
+				if err != nil {
+					return errors.Annotate(err, "UpdateDrac - failed to query old drac for machine %s", drac.GetMachine()).Err()
+				}
+				if dracs != nil && len(dracs) > 0 {
+					return status.Error(codes.InvalidArgument, fmt.Sprintf("validateUpdateDrac - There is already a drac %s associated with machine %s.\n"+
+						"Please delete that drac and then associate this drac to the machine.", dracs[0].GetName(), drac.GetMachine()))
+				}
+
+				// Get new browser machine to associate the drac
+				machine, err := getBrowserMachine(ctx, drac.GetMachine())
+				if err != nil {
+					return errors.Annotate(err, "UpdateDrac - get browser machine %s failed", drac.GetMachine()).Err()
+				}
+
+				// Fill the rack/zone to drac OUTPUT only fields
+				drac.Rack = machine.GetLocation().GetRack()
+				drac.Zone = machine.GetLocation().GetZone().String()
 			}
 		}
 
@@ -145,17 +137,34 @@ func UpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask 
 
 // processDracUpdateMask process update field mask to get only specific update
 // fields and return a complete drac object with updated and existing fields
-func processDracUpdateMask(oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
+func processDracUpdateMask(ctx context.Context, oldDrac *ufspb.Drac, drac *ufspb.Drac, mask *field_mask.FieldMask) (*ufspb.Drac, error) {
 	// update the fields in the existing drac
 	for _, path := range mask.Paths {
 		switch path {
 		case "machine":
-			// In the previous step we have already checked for machineName != ""
-			// and got the new values for OUTPUT only fields in new drac object,
-			// assign them to oldDrac.
-			oldDrac.Machine = drac.GetMachine()
-			oldDrac.Rack = drac.GetRack()
-			oldDrac.Zone = drac.GetZone()
+			// Check if user provided new machine to associate the drac
+			if drac.GetMachine() != oldDrac.GetMachine() {
+				// A machine can have only one drac. If there is a old drac associated with this machine already, error out.
+				// A drac cannot exist in the system without being associated to a machine.
+				dracs, err := registration.QueryDracByPropertyName(ctx, "machine", drac.GetMachine(), true)
+				if err != nil {
+					return oldDrac, errors.Annotate(err, "UpdateDrac - failed to query old drac for machine %s", drac.GetMachine()).Err()
+				}
+				if dracs != nil && len(dracs) > 0 {
+					return oldDrac, status.Error(codes.InvalidArgument, fmt.Sprintf("validateUpdateDrac - There is already a drac %s associated with machine %s.\n"+
+						"Please delete that drac and then associate this drac to the machine.", dracs[0].GetName(), drac.GetMachine()))
+				}
+
+				// Get new browser machine to associate the drac
+				machine, err := getBrowserMachine(ctx, drac.GetMachine())
+				if err != nil {
+					return oldDrac, errors.Annotate(err, "UpdateDrac - get browser machine %s failed", drac.GetMachine()).Err()
+				}
+				oldDrac.Machine = drac.GetMachine()
+				// Fill the rack/zone to drac OUTPUT only fields
+				oldDrac.Rack = machine.GetLocation().GetRack()
+				oldDrac.Zone = machine.GetLocation().GetZone().String()
+			}
 		case "macAddress":
 			oldDrac.MacAddress = drac.GetMacAddress()
 		case "switch":
@@ -321,7 +330,7 @@ func getBrowserMachineForDrac(ctx context.Context, dracName string) (*ufspb.Mach
 //
 // check if the drac already exists
 // checks if the machine and resources referenced by the drac does not exist
-func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName string) error {
+func validateCreateDrac(ctx context.Context, drac *ufspb.Drac) error {
 	// Check if Drac already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetDracResource(drac.Name)}, nil); err != nil {
 		return err
@@ -329,13 +338,13 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 
 	// A machine can have only one drac. If there is a old drac associated with this machine already, error out.
 	// A drac cannot exist in the system without being associated to a machine.
-	dracs, err := registration.QueryDracByPropertyName(ctx, "machine", machineName, true)
+	dracs, err := registration.QueryDracByPropertyName(ctx, "machine", drac.GetMachine(), true)
 	if err != nil {
-		return errors.Annotate(err, "validateCreateDrac - failed to query old drac for machine %s", machineName).Err()
+		return errors.Annotate(err, "validateCreateDrac - failed to query old drac for machine %s", drac.GetMachine()).Err()
 	}
 	if dracs != nil && len(dracs) > 0 {
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("validateCreateDrac - There is already a drac %s associated with machine %s.\n"+
-			"Please delete that drac and then add the new drac to the machine.", dracs[0].GetName(), machineName))
+			"Please delete that drac and then add the new drac to the machine.", dracs[0].GetName(), drac.GetMachine()))
 	}
 
 	if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
@@ -345,7 +354,7 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 		return err
 	}
 	// Aggregate resource to check if machine does not exist
-	resourcesNotFound := []*Resource{GetMachineResource(machineName)}
+	resourcesNotFound := []*Resource{GetMachineResource(drac.GetMachine())}
 	// Aggregate resource to check if resources referenced by the drac does not exist
 	if switchID := drac.GetSwitchInterface().GetSwitch(); switchID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
@@ -357,12 +366,12 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac, machineName strin
 // validateUpdateDrac validates if a drac can be updated
 //
 // checks if drac, machine and resources referecned by the drac does not exist
-func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, machineName string, mask *field_mask.FieldMask) error {
+func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if drac does not exist
 	resourcesNotFound := []*Resource{GetDracResource(drac.Name)}
 	// Aggregate resource to check if machine does not exist
-	if machineName != "" {
-		resourcesNotFound = append(resourcesNotFound, GetMachineResource(machineName))
+	if drac.GetMachine() != "" {
+		resourcesNotFound = append(resourcesNotFound, GetMachineResource(drac.GetMachine()))
 	}
 	// Aggregate resource to check if resources referenced by the drac does not exist
 	if switchID := drac.GetSwitchInterface().GetSwitch(); switchID != "" {
@@ -406,6 +415,9 @@ func validateDracUpdateMask(ctx context.Context, drac *ufspb.Drac, mask *field_m
 					return err
 				}
 			case "machine":
+				if drac.GetMachine() == "" {
+					status.Error(codes.InvalidArgument, "validateDracUpdateMask - machine cannot be empty")
+				}
 			case "macAddress":
 				if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
 					return err

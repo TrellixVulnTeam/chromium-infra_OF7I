@@ -91,9 +91,8 @@ func (c *addNic) innerRun(a subcommands.Application, args []string, env subcomma
 	})
 
 	var nic ufspb.Nic
-	var machineName string
 	if c.interactive {
-		machineName = utils.GetNicInteractiveInput(ctx, ic, &nic, false)
+		utils.GetNicInteractiveInput(ctx, ic, &nic, false)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &nic); err != nil {
@@ -102,28 +101,26 @@ func (c *addNic) innerRun(a subcommands.Application, args []string, env subcomma
 			if nic.GetMachine() == "" {
 				return errors.New(fmt.Sprintf("machine field is empty in json. It is a required parameter for json input."))
 			}
-			machineName = nic.GetMachine()
 		} else {
 			c.parseArgs(&nic)
-			machineName = c.machineName
 		}
 	}
 	res, err := ic.CreateNic(ctx, &ufsAPI.CreateNicRequest{
-		Nic:     &nic,
-		NicId:   nic.GetName(),
-		Machine: machineName,
+		Nic:   &nic,
+		NicId: nic.GetName(),
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
-	fmt.Printf("Successfully added the nic %s to machine %s\n", res.Name, machineName)
+	fmt.Printf("Successfully added the nic %s to machine %s\n", res.Name, res.GetMachine())
 	return nil
 }
 
 func (c *addNic) parseArgs(nic *ufspb.Nic) {
 	nic.Name = c.nicName
+	nic.Machine = c.machineName
 	nic.MacAddress = c.macAddress
 	nic.SwitchInterface = &ufspb.SwitchInterface{
 		Switch:   c.switchName,

@@ -289,7 +289,7 @@ func (fs *FleetServerImpl) CreateNic(ctx context.Context, req *ufsAPI.CreateNicR
 		return nil, err
 	}
 	req.Nic.Name = req.NicId
-	nic, err := controller.CreateNic(ctx, req.Nic, req.Machine)
+	nic, err := controller.CreateNic(ctx, req.Nic)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func (fs *FleetServerImpl) UpdateNic(ctx context.Context, req *ufsAPI.UpdateNicR
 		return nil, err
 	}
 	req.Nic.Name = util.RemovePrefix(req.Nic.Name)
-	nic, err := controller.UpdateNic(ctx, req.Nic, req.Machine, req.UpdateMask)
+	nic, err := controller.UpdateNic(ctx, req.Nic, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
@@ -732,7 +732,7 @@ func (fs *FleetServerImpl) CreateDrac(ctx context.Context, req *ufsAPI.CreateDra
 		return nil, err
 	}
 	req.Drac.Name = req.DracId
-	drac, err := controller.CreateDrac(ctx, req.Drac, req.Machine)
+	drac, err := controller.CreateDrac(ctx, req.Drac)
 	if err != nil {
 		return nil, err
 	}
@@ -751,11 +751,12 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *ufsAPI.UpdateDra
 	}
 	req.Drac.Name = util.RemovePrefix(req.Drac.Name)
 
-	if req.GetNetworkOption() != nil {
+	if req.GetNetworkOption() != nil &&
+		(req.GetNetworkOption().GetDelete() || req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "") {
 		var drac *ufspb.Drac
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
-			drac, err = controller.UpdateDrac(ctx, req.Drac, req.Machine, req.UpdateMask)
+			drac, err = controller.UpdateDrac(ctx, req.Drac, req.UpdateMask)
 			if err != nil {
 				return nil, err
 			}
@@ -784,7 +785,7 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *ufsAPI.UpdateDra
 		return drac, nil
 	}
 
-	drac, err := controller.UpdateDrac(ctx, req.Drac, req.Machine, req.UpdateMask)
+	drac, err := controller.UpdateDrac(ctx, req.Drac, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

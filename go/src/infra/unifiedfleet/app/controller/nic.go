@@ -28,22 +28,21 @@ import (
 //
 // Checks if the resources referenced by the Nic input already exists
 // in the system before creating a new Nic
-func CreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.Nic, error) {
+func CreateNic(ctx context.Context, nic *ufspb.Nic) (*ufspb.Nic, error) {
 	f := func(ctx context.Context) error {
 		hc := getNicHistoryClient(nic)
 		// 1. Validate the input
-		if err := validateCreateNic(ctx, nic, machineName); err != nil {
+		if err := validateCreateNic(ctx, nic); err != nil {
 			return errors.Annotate(err, "CreateNic - validation failed").Err()
 		}
 
 		// Get browser machine to associate the nic
-		machine, err := getBrowserMachine(ctx, machineName)
+		machine, err := getBrowserMachine(ctx, nic.GetMachine())
 		if err != nil {
-			return errors.Annotate(err, "CreateNic - failed to get machine %s", machineName).Err()
+			return errors.Annotate(err, "CreateNic - failed to get machine %s", nic.GetMachine()).Err()
 		}
 
-		// Fill the machine/rack/zone to nic OUTPUT only fields for indexing nic table
-		nic.Machine = machine.GetName()
+		// Fill the rack/zone to nic OUTPUT only fields for indexing nic table
 		nic.Rack = machine.GetLocation().GetRack()
 		nic.Zone = machine.GetLocation().GetZone().String()
 
@@ -68,11 +67,11 @@ func CreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) (*ufspb.
 //
 // Checks if the resources referenced by the Nic input already exists
 // in the system before updating a Nic
-func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
+func UpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
 	f := func(ctx context.Context) error {
 		hc := getNicHistoryClient(nic)
 		// 1. Validate the input
-		if err := validateUpdateNic(ctx, nic, machineName, mask); err != nil {
+		if err := validateUpdateNic(ctx, nic, mask); err != nil {
 			return errors.Annotate(err, "UpdateNic - validation failed").Err()
 		}
 
@@ -82,43 +81,36 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 			return errors.Annotate(err, "UpdateNic - get nic %s failed", nic.GetName()).Err()
 		}
 		oldNicCopy := proto.Clone(oldNic).(*ufspb.Nic)
-		// Copy the machine/rack/zone to nic OUTPUT only fields from already existing nic
-		nic.Machine = oldNic.GetMachine()
+		// Copy the rack/zone to nic OUTPUT only fields from already existing nic
 		nic.Rack = oldNic.GetRack()
 		nic.Zone = oldNic.GetZone()
-		nic.State = oldNic.GetState()
 
-		if machineName != "" {
-			// Get the old browser machine associated with nic
-			oldMachine, err := getBrowserMachine(ctx, oldNic.GetMachine())
+		// Partial update by field mask
+		if mask != nil && len(mask.Paths) > 0 {
+			nic, err = processNicUpdateMask(ctx, oldNic, nic, mask)
 			if err != nil {
-				return errors.Annotate(err, "UpdateNic - failed to get machine %s", machineName).Err()
+				return errors.Annotate(err, "UpdateNic - processing update mask failed").Err()
 			}
-
-			// User is trying to associate this nic with a different browser machine.
-			if oldMachine.Name != machineName {
+		} else {
+			// This is for complete object input
+			if nic.GetMachine() == "" {
+				return status.Error(codes.InvalidArgument, "Machine cannot be empty for updating a drac")
+			}
+			// Check if user provided new machine to associate the nic
+			if nic.GetMachine() != oldNic.GetMachine() {
 				// Get browser machine to associate the nic
-				machine, err := getBrowserMachine(ctx, machineName)
+				machine, err := getBrowserMachine(ctx, nic.GetMachine())
 				if err != nil {
-					return errors.Annotate(err, "UpdateNic - failed to get browser machine %s", machineName).Err()
+					return errors.Annotate(err, "UpdateNic - failed to get browser machine %s", nic.GetMachine()).Err()
 				}
 
-				// Fill the machine/rack/zone to nic OUTPUT only fields
-				nic.Machine = machine.GetName()
+				// Fill the rack/zone to nic OUTPUT only fields
 				nic.Rack = machine.GetLocation().GetRack()
 				nic.Zone = machine.GetLocation().GetZone().String()
 			}
 		}
 
-		// Partial update by field mask
-		if mask != nil && len(mask.Paths) > 0 {
-			nic, err = processNicUpdateMask(oldNic, nic, mask)
-			if err != nil {
-				return errors.Annotate(err, "UpdateNic - processing update mask failed").Err()
-			}
-		}
-
-		// 6. Update nic entry
+		// Update nic entry
 		if _, err := registration.BatchUpdateNics(ctx, []*ufspb.Nic{nic}); err != nil {
 			return errors.Annotate(err, "UpdateNic - unable to batch update nic %s", nic.Name).Err()
 		}
@@ -134,17 +126,19 @@ func UpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *fi
 
 // processNicUpdateMask process update field mask to get only specific update
 // fields and return a complete nic object with updated and existing fields
-func processNicUpdateMask(oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
+func processNicUpdateMask(ctx context.Context, oldNic *ufspb.Nic, nic *ufspb.Nic, mask *field_mask.FieldMask) (*ufspb.Nic, error) {
 	// update the fields in the existing/old nic
 	for _, path := range mask.Paths {
 		switch path {
 		case "machine":
-			// In the previous step we have already checked for machineName != ""
-			// and got the new values for OUTPUT only fields in new nic object,
-			// assign them to oldnic.
+			machine, err := getBrowserMachine(ctx, nic.GetMachine())
+			if err != nil {
+				return oldNic, errors.Annotate(err, "failed to get browser machine %s", nic.GetMachine()).Err()
+			}
 			oldNic.Machine = nic.GetMachine()
-			oldNic.Rack = nic.GetRack()
-			oldNic.Zone = nic.GetZone()
+			// Fill the rack/zone to nic OUTPUT only fields
+			oldNic.Rack = machine.GetLocation().GetRack()
+			oldNic.Zone = machine.GetLocation().GetZone().String()
 		case "macAddress":
 			oldNic.MacAddress = nic.GetMacAddress()
 		case "switch":
@@ -355,7 +349,7 @@ func validateDeleteNic(ctx context.Context, nicName string) error {
 //
 // check if the nic already exists
 // checks if the machine and resources referenced by the nic does not exist
-func validateCreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) error {
+func validateCreateNic(ctx context.Context, nic *ufspb.Nic) error {
 	// 1. Check if nic already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetNicResource(nic.Name)}, nil); err != nil {
 		return err
@@ -367,7 +361,7 @@ func validateCreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) 
 		return err
 	}
 	// Aggregate resource to check if machine does not exist
-	resourcesNotFound := []*Resource{GetMachineResource(machineName)}
+	resourcesNotFound := []*Resource{GetMachineResource(nic.GetMachine())}
 	// Aggregate resource to check if resources referenced by the nic does not exist
 	if switchID := nic.GetSwitchInterface().GetSwitch(); switchID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
@@ -379,12 +373,12 @@ func validateCreateNic(ctx context.Context, nic *ufspb.Nic, machineName string) 
 // validateUpdateNic validates if a nic can be updated
 //
 // checks if nic, machine and resources referecned by the nic does not exist
-func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, machineName string, mask *field_mask.FieldMask) error {
+func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if nic does not exist
 	resourcesNotFound := []*Resource{GetNicResource(nic.Name)}
 	// Aggregate resource to check if machine does not exist
-	if machineName != "" {
-		resourcesNotFound = append(resourcesNotFound, GetMachineResource(machineName))
+	if nic.GetMachine() != "" {
+		resourcesNotFound = append(resourcesNotFound, GetMachineResource(nic.GetMachine()))
 	}
 	// Aggregate resource to check if resources referenced by the nic does not exist
 	if switchID := nic.GetSwitchInterface().GetSwitch(); switchID != "" {
@@ -415,6 +409,9 @@ func validateNicUpdateMask(ctx context.Context, nic *ufspb.Nic, mask *field_mask
 					return err
 				}
 			case "machine":
+				if nic.GetMachine() == "" {
+					status.Error(codes.InvalidArgument, "validateNicUpdateMask - machine cannot be empty")
+				}
 			case "macAddress":
 				if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
 					return err

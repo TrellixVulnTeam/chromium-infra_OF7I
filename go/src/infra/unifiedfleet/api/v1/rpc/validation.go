@@ -562,7 +562,7 @@ func (r *CreateNicRequest) Validate() error {
 	if err := validateNic(r.GetNic()); err != nil {
 		return err
 	}
-	if r.Machine == "" {
+	if r.GetNic().GetMachine() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 	}
 	return nil
@@ -730,7 +730,7 @@ func (r *CreateDracRequest) Validate() error {
 	if err := validateDrac(r.GetDrac()); err != nil {
 		return err
 	}
-	if r.Machine == "" {
+	if r.GetDrac().GetMachine() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
 	}
 	return nil
