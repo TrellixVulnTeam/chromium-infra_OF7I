@@ -24,25 +24,24 @@ import (
 )
 
 // CreateSwitch creates switch in datastore.
-func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb.Switch, error) {
+func CreateSwitch(ctx context.Context, s *ufspb.Switch) (*ufspb.Switch, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(s)
 		// Validate the input
-		if err := validateCreateSwitch(ctx, s, rackName); err != nil {
+		if err := validateCreateSwitch(ctx, s); err != nil {
 			return err
 		}
 
 		// Get rack to associate the switch
-		rack, err := GetRack(ctx, rackName)
+		rack, err := GetRack(ctx, s.GetRack())
 		if err != nil {
 			return err
 		}
 
-		// Fill the rack/zone to switch OUTPUT only fields for indexing
-		s.Rack = rack.GetName()
+		// Fill the zone to switch OUTPUT only fields for indexing
 		s.Zone = rack.GetLocation().GetZone().String()
-		s.State = ufspb.State_STATE_SERVING.String()
+		s.ResourceState = ufspb.State_STATE_SERVING
 
 		// Create a switch entry
 		// we use this func as it is a non-atomic operation and can be used to
@@ -68,12 +67,12 @@ func CreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) (*ufspb
 }
 
 // UpdateSwitch updates switch in datastore.
-func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *field_mask.FieldMask) (*ufspb.Switch, error) {
+func UpdateSwitch(ctx context.Context, s *ufspb.Switch, mask *field_mask.FieldMask) (*ufspb.Switch, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(s)
 		// Validate the input
-		if err := validateUpdateSwitch(ctx, s, rackName, mask); err != nil {
+		if err := validateUpdateSwitch(ctx, s, mask); err != nil {
 			return errors.Annotate(err, "UpdateSwitch - validation failed").Err()
 		}
 
@@ -82,27 +81,36 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 			return errors.Annotate(err, "UpdateSwitch - get switch %s failed", s.GetName()).Err()
 		}
 		oldSwitchCopy := proto.Clone(oldS).(*ufspb.Switch)
-		// Fill the rack/zone to switch OUTPUT only fields
-		s.Rack = oldS.GetRack()
+		// Fill the zone to switch OUTPUT only fields
 		s.Zone = oldS.GetZone()
-		s.State = oldS.GetState()
-
-		if rackName != "" && oldS.GetRack() != rackName {
-			// User is trying to associate this switch with a different rack.
-			// Get rack to associate the switch
-			rack, err := GetRack(ctx, rackName)
-			if err != nil {
-				return errors.Annotate(err, "UpdateSwitch - get rack %s failed", rackName).Err()
-			}
-
-			// Fill the rack/zone to switch OUTPUT only fields for indexing
-			s.Rack = rack.GetName()
-			s.Zone = rack.GetLocation().GetZone().String()
-		}
 
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
-			s = processSwitchUpdateMask(oldS, s, mask)
+			s, err = processSwitchUpdateMask(ctx, oldS, s, mask)
+			if err != nil {
+				return errors.Annotate(err, "processing update mask failed").Err()
+			}
+		} else {
+			// This is for complete object input
+			if s.GetRack() == "" {
+				return status.Error(codes.InvalidArgument, "rack cannot be empty for updating a switch")
+			}
+			if oldS.GetRack() != s.GetRack() {
+				// User is trying to associate this switch with a different rack.
+				// Get rack to associate the switch
+				rack, err := GetRack(ctx, s.GetRack())
+				if err != nil {
+					return errors.Annotate(err, "UpdateSwitch - get rack %s failed", s.GetRack()).Err()
+				}
+
+				// Fill the zone to switch OUTPUT only fields for indexing
+				s.Zone = rack.GetLocation().GetZone().String()
+			}
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, s.GetResourceState()); err != nil {
+			return errors.Annotate(err, "Fail to update state to switch %s", s.GetName()).Err()
 		}
 
 		// Update switch entry
@@ -123,16 +131,24 @@ func UpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *f
 
 // processSwitchUpdateMask process update field mask to get only specific update
 // fields and return a complete switch object with updated and existing fields
-func processSwitchUpdateMask(oldSwitch *ufspb.Switch, s *ufspb.Switch, mask *field_mask.FieldMask) *ufspb.Switch {
+func processSwitchUpdateMask(ctx context.Context, oldSwitch *ufspb.Switch, s *ufspb.Switch, mask *field_mask.FieldMask) (*ufspb.Switch, error) {
 	// update the fields in the existing/old switch
 	for _, path := range mask.Paths {
 		switch path {
 		case "rack":
-			// In the previous step we have already checked for rackName != ""
-			// and got the new values for OUTPUT only fields in new switch object,
-			// assign them to oldswitch.
-			oldSwitch.Rack = s.GetRack()
-			oldSwitch.Zone = s.GetZone()
+			if oldSwitch.GetRack() != s.GetRack() {
+				// User is trying to associate this switch with a different rack.
+				// Get rack to associate the switch
+				rack, err := GetRack(ctx, s.GetRack())
+				if err != nil {
+					return oldSwitch, errors.Annotate(err, "UpdateSwitch - get rack %s failed", s.GetRack()).Err()
+				}
+				oldSwitch.Rack = s.GetRack()
+				// Fill the zone to switch OUTPUT only fields for indexing
+				oldSwitch.Zone = rack.GetLocation().GetZone().String()
+			}
+		case "resourceState":
+			oldSwitch.ResourceState = s.GetResourceState()
 		case "description":
 			oldSwitch.Description = s.GetDescription()
 		case "capacity":
@@ -142,7 +158,7 @@ func processSwitchUpdateMask(oldSwitch *ufspb.Switch, s *ufspb.Switch, mask *fie
 		}
 	}
 	// return existing/old switch with new updated values
-	return oldSwitch
+	return oldSwitch, nil
 }
 
 // GetSwitch returns switch for the given id from datastore.
@@ -266,35 +282,35 @@ func validateDeleteSwitch(ctx context.Context, id string) error {
 //
 // check if the switch already exists
 // check if the rack does not exist
-func validateCreateSwitch(ctx context.Context, s *ufspb.Switch, rackName string) error {
+func validateCreateSwitch(ctx context.Context, s *ufspb.Switch) error {
 	// 1. Check if switch already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetSwitchResource(s.Name)}, nil); err != nil {
 		return err
 	}
 	// 2. Check if rack does not exist
-	return ResourceExist(ctx, []*Resource{GetRackResource(rackName)}, nil)
+	return ResourceExist(ctx, []*Resource{GetRackResource(s.GetRack())}, nil)
 }
 
 // validateUpdateSwitch validates if a switch can be updated
 //
 // check if switch and rack does not exist
-func validateUpdateSwitch(ctx context.Context, s *ufspb.Switch, rackName string, mask *field_mask.FieldMask) error {
+func validateUpdateSwitch(ctx context.Context, s *ufspb.Switch, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if switch does not exist
 	resourcesNotFound := []*Resource{GetSwitchResource(s.Name)}
 	// Aggregate resource to check if rack does not exist
-	if rackName != "" {
-		resourcesNotFound = append(resourcesNotFound, GetRackResource(rackName))
+	if s.GetRack() != "" {
+		resourcesNotFound = append(resourcesNotFound, GetRackResource(s.GetRack()))
 	}
 	// check if resources does not exist
 	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
 		return err
 	}
 
-	return validateSwitchUpdateMask(mask)
+	return validateSwitchUpdateMask(s, mask)
 }
 
 // validateSwitchUpdateMask validates the update mask for switch update
-func validateSwitchUpdateMask(mask *field_mask.FieldMask) error {
+func validateSwitchUpdateMask(s *ufspb.Switch, mask *field_mask.FieldMask) error {
 	if mask != nil {
 		// validate the give field mask
 		for _, path := range mask.Paths {
@@ -304,9 +320,13 @@ func validateSwitchUpdateMask(mask *field_mask.FieldMask) error {
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateUpdateSwitch - update_time cannot be updated, it is a Output only field")
 			case "rack":
+				if s.GetRack() == "" {
+					return status.Error(codes.InvalidArgument, "rack cannot be empty for updating a switch")
+				}
 			case "capacity":
 			case "description":
 			case "tags":
+			case "resourceState":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateUpdateSwitch - unsupported update mask path %q", path)

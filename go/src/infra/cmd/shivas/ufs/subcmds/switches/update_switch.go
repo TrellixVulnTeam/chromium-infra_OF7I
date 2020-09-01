@@ -41,6 +41,7 @@ var UpdateSwitchCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.description, "desc", "", "the description of the switch to update ."+cmdhelp.ClearFieldHelpText)
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many ports this switch support. "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -59,6 +60,7 @@ type updateSwitch struct {
 	description string
 	capacity    int
 	tags        string
+	state       string
 }
 
 func (c *updateSwitch) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -88,9 +90,8 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 		Options: site.DefaultPRPCOptions,
 	})
 	var s ufspb.Switch
-	var rackName string
 	if c.interactive {
-		c.rackName = utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
+		utils.GetSwitchInteractiveInput(ctx, ic, &s, true)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
@@ -99,10 +100,8 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 			if s.GetRack() == "" {
 				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
 			}
-			rackName = s.GetRack()
 		} else {
 			c.parseArgs(&s)
-			rackName = c.rackName
 		}
 	}
 	if err := utils.PrintExistingSwitch(ctx, ic, s.Name); err != nil {
@@ -111,12 +110,12 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 	s.Name = ufsUtil.AddPrefix(ufsUtil.SwitchCollection, s.Name)
 	res, err := ic.UpdateSwitch(ctx, &ufsAPI.UpdateSwitchRequest{
 		Switch: &s,
-		Rack:   rackName,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"rack":     "rack",
 			"capacity": "capacity",
 			"tags":     "tags",
 			"desc":     "description",
+			"state":    "resourceState",
 		}),
 	})
 	if err != nil {
@@ -131,6 +130,8 @@ func (c *updateSwitch) innerRun(a subcommands.Application, args []string, env su
 
 func (c *updateSwitch) parseArgs(s *ufspb.Switch) {
 	s.Name = c.switchName
+	s.Rack = c.rackName
+	s.ResourceState = ufsUtil.ToUFSState(c.state)
 	if c.description == utils.ClearFieldValue {
 		s.Description = ""
 	} else {
@@ -165,16 +166,22 @@ func (c *updateSwitch) validateArgs() error {
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
 		}
-		if c.rackName == "" {
+		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
+		}
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.switchName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.rackName == "" && c.capacity == 0 && c.description == "" && c.tags == "" {
+		if c.rackName == "" && c.capacity == 0 && c.description == "" && c.tags == "" && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+		}
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 		}
 	}
 	return nil

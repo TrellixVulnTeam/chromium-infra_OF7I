@@ -482,7 +482,7 @@ func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *ufsAPI.CreateKVMR
 		return nil, err
 	}
 	req.KVM.Name = req.KVMId
-	kvm, err := controller.CreateKVM(ctx, req.KVM, req.Rack)
+	kvm, err := controller.CreateKVM(ctx, req.KVM)
 	if err != nil {
 		return nil, err
 	}
@@ -501,11 +501,12 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *ufsAPI.UpdateKVMR
 	}
 	req.KVM.Name = util.RemovePrefix(req.KVM.Name)
 
-	if req.GetNetworkOption() != nil {
+	if req.GetNetworkOption() != nil &&
+		(req.GetNetworkOption().GetDelete() || req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "") {
 		var kvm *ufspb.KVM
 		var err error
 		if req.UpdateMask != nil && len(req.UpdateMask.Paths) > 0 {
-			kvm, err = controller.UpdateKVM(ctx, req.KVM, req.Rack, req.UpdateMask)
+			kvm, err = controller.UpdateKVM(ctx, req.KVM, req.UpdateMask)
 			if err != nil {
 				return nil, err
 			}
@@ -534,7 +535,7 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *ufsAPI.UpdateKVMR
 		return kvm, nil
 	}
 
-	kvm, err := controller.UpdateKVM(ctx, req.KVM, req.Rack, req.UpdateMask)
+	kvm, err := controller.UpdateKVM(ctx, req.KVM, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}
@@ -875,7 +876,7 @@ func (fs *FleetServerImpl) CreateSwitch(ctx context.Context, req *ufsAPI.CreateS
 		return nil, err
 	}
 	req.Switch.Name = req.SwitchId
-	s, err := controller.CreateSwitch(ctx, req.Switch, req.Rack)
+	s, err := controller.CreateSwitch(ctx, req.Switch)
 	if err != nil {
 		return nil, err
 	}
@@ -893,7 +894,7 @@ func (fs *FleetServerImpl) UpdateSwitch(ctx context.Context, req *ufsAPI.UpdateS
 		return nil, err
 	}
 	req.Switch.Name = util.RemovePrefix(req.Switch.Name)
-	s, err := controller.UpdateSwitch(ctx, req.Switch, req.Rack, req.UpdateMask)
+	s, err := controller.UpdateSwitch(ctx, req.Switch, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

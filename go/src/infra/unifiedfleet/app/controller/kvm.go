@@ -24,26 +24,25 @@ import (
 )
 
 // CreateKVM creates a new kvm in datastore.
-func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM, error) {
+func CreateKVM(ctx context.Context, kvm *ufspb.KVM) (*ufspb.KVM, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getKVMHistoryClient(kvm)
 		hc.LogKVMChanges(nil, kvm)
 		// Validate the input
-		if err := validateCreateKVM(ctx, kvm, rackName); err != nil {
+		if err := validateCreateKVM(ctx, kvm); err != nil {
 			return err
 		}
 
 		// Get rack to associate the kvm
-		rack, err := GetRack(ctx, rackName)
+		rack, err := GetRack(ctx, kvm.GetRack())
 		if err != nil {
 			return err
 		}
 
-		// Fill the rack/zone to kvm OUTPUT only fields for indexing
-		kvm.Rack = rack.GetName()
+		// Fill the zone to kvm OUTPUT only fields for indexing
 		kvm.Zone = rack.GetLocation().GetZone().String()
-		kvm.State = ufspb.State_STATE_REGISTERED.String()
+		kvm.ResourceState = ufspb.State_STATE_REGISTERED
 
 		// Create a kvm entry
 		// we use this func as it is a non-atomic operation and can be used to
@@ -53,7 +52,7 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 			return errors.Annotate(err, "Unable to create kvm %s", kvm.Name).Err()
 		}
 
-		// 5. Update state
+		// Update state
 		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
 			return err
 		}
@@ -68,13 +67,13 @@ func CreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) (*ufspb.KVM
 }
 
 // UpdateKVM updates kvm in datastore.
-func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field_mask.FieldMask) (*ufspb.KVM, error) {
+func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, mask *field_mask.FieldMask) (*ufspb.KVM, error) {
 	// TODO(eshwarn): Add logic for Chrome OS
 	f := func(ctx context.Context) error {
 		hc := getKVMHistoryClient(kvm)
 
 		// Validate the input
-		if err := validateUpdateKVM(ctx, kvm, rackName, mask); err != nil {
+		if err := validateUpdateKVM(ctx, kvm, mask); err != nil {
 			return errors.Annotate(err, "UpdateKVM - validation failed").Err()
 		}
 
@@ -83,30 +82,36 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 			return errors.Annotate(err, "UpdateKVM - get kvm %s failed", kvm.GetName()).Err()
 		}
 		oldKVMCopy := proto.Clone(oldKVM).(*ufspb.KVM)
-		// Fill the rack/zone to kvm OUTPUT only fields
-		kvm.Rack = oldKVM.GetRack()
+		// Fill the zone to kvm OUTPUT only fields
 		kvm.Zone = oldKVM.GetZone()
-		kvm.State = oldKVM.GetState()
-
-		if rackName != "" && oldKVM.GetRack() != rackName {
-			// User is trying to associate this kvm with a different rack.
-			// Get rack to associate the kvm
-			rack, err := GetRack(ctx, rackName)
-			if err != nil {
-				return errors.Annotate(err, "UpdateKVM - get rack %s failed", rackName).Err()
-			}
-
-			// Fill the rack/zone to kvm OUTPUT only fields
-			kvm.Rack = rack.GetName()
-			kvm.Zone = rack.GetLocation().GetZone().String()
-		}
 
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
-			kvm, err = processKVMUpdateMask(oldKVM, kvm, mask)
+			kvm, err = processKVMUpdateMask(ctx, oldKVM, kvm, mask)
 			if err != nil {
 				return errors.Annotate(err, "UpdateKVM - processing update mask failed").Err()
 			}
+		} else {
+			// This is for complete object input
+			if kvm.GetRack() == "" {
+				return status.Error(codes.InvalidArgument, "rack cannot be empty for updating a KVM")
+			}
+			if oldKVM.GetRack() != kvm.GetRack() {
+				// User is trying to associate this kvm with a different rack.
+				// Get rack to associate the kvm
+				rack, err := GetRack(ctx, kvm.GetRack())
+				if err != nil {
+					return errors.Annotate(err, "UpdateKVM - get rack %s failed", kvm.GetRack()).Err()
+				}
+
+				// Fill the zone to kvm OUTPUT only fields
+				kvm.Zone = rack.GetLocation().GetZone().String()
+			}
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, kvm.GetResourceState()); err != nil {
+			return errors.Annotate(err, "Fail to update state to kvm %s", kvm.GetName()).Err()
 		}
 
 		// Update kvm entry
@@ -127,16 +132,24 @@ func UpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field
 
 // processKVMUpdateMask process update field mask to get only specific update
 // fields and return a complete kvm object with updated and existing fields
-func processKVMUpdateMask(oldKVM *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.FieldMask) (*ufspb.KVM, error) {
+func processKVMUpdateMask(ctx context.Context, oldKVM *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.FieldMask) (*ufspb.KVM, error) {
 	// update the fields in the existing/old kvm
 	for _, path := range mask.Paths {
 		switch path {
 		case "rack":
-			// In the previous step we have already checked for rackName != ""
-			// and got the new values for OUTPUT only fields in new kvm object,
-			// assign them to oldkvm.
-			oldKVM.Rack = kvm.GetRack()
-			oldKVM.Zone = kvm.GetZone()
+			if oldKVM.GetRack() != kvm.GetRack() {
+				// User is trying to associate this kvm with a different rack.
+				// Get rack to associate the kvm
+				rack, err := GetRack(ctx, kvm.GetRack())
+				if err != nil {
+					return oldKVM, errors.Annotate(err, "UpdateKVM - get rack %s failed", kvm.GetRack()).Err()
+				}
+				oldKVM.Rack = kvm.GetRack()
+				// Fill the zone to kvm OUTPUT only fields
+				oldKVM.Zone = rack.GetLocation().GetZone().String()
+			}
+		case "resourceState":
+			oldKVM.ResourceState = kvm.GetResourceState()
 		case "platform":
 			oldKVM.ChromePlatform = kvm.GetChromePlatform()
 		case "macAddress":
@@ -221,12 +234,6 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 }
 
 // DeleteKVM deletes the kvm in datastore
-//
-// For referential data intergrity,
-// 1. Validate if this kvm is not referenced by other resources in the datastore.
-// 2. Delete the kvm
-// 3. Get the rack associated with this kvm
-// 4. Update the rack by removing the association with this kvm
 func DeleteKVM(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
 		kvm := &ufspb.KVM{Name: id}
@@ -313,7 +320,7 @@ func validateDeleteKVM(ctx context.Context, id string) error {
 //
 // check if the kvm already exists
 // check if the rack and resources referenced by kvm does not exist
-func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) error {
+func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM) error {
 	// 1. Check if kvm already exists
 	if err := resourceAlreadyExists(ctx, []*Resource{GetKVMResource(kvm.Name)}, nil); err != nil {
 		return err
@@ -323,7 +330,7 @@ func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) err
 	}
 
 	// Aggregate resource to check if rack does not exist
-	resourcesNotFound := []*Resource{GetRackResource(rackName)}
+	resourcesNotFound := []*Resource{GetRackResource(kvm.GetRack())}
 	// Aggregate resource to check if resources referenced by the kvm does not exist
 	if chromePlatformID := kvm.GetChromePlatform(); chromePlatformID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetChromePlatformResource(chromePlatformID))
@@ -335,12 +342,12 @@ func validateCreateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string) err
 // validateUpdateKVM validates if a kvm can be updated
 //
 // check if kvm, rack and resources referenced kvm does not exist
-func validateUpdateKVM(ctx context.Context, kvm *ufspb.KVM, rackName string, mask *field_mask.FieldMask) error {
+func validateUpdateKVM(ctx context.Context, kvm *ufspb.KVM, mask *field_mask.FieldMask) error {
 	// Aggregate resource to check if kvm does not exist
 	resourcesNotFound := []*Resource{GetKVMResource(kvm.Name)}
 	// Aggregate resource to check if rack does not exist
-	if rackName != "" {
-		resourcesNotFound = append(resourcesNotFound, GetRackResource(rackName))
+	if kvm.GetRack() != "" {
+		resourcesNotFound = append(resourcesNotFound, GetRackResource(kvm.GetRack()))
 	}
 	// Aggregate resource to check if resources referenced by the kvm does not exist
 	if chromePlatformID := kvm.GetChromePlatform(); chromePlatformID != "" {
@@ -369,9 +376,13 @@ func validateKVMUpdateMask(ctx context.Context, kvm *ufspb.KVM, mask *field_mask
 					return err
 				}
 			case "rack":
+				if kvm.GetRack() == "" {
+					return status.Error(codes.InvalidArgument, "rack cannot be empty for updating a KVM")
+				}
 			case "platform":
 			case "description":
 			case "tags":
+			case "resourceState":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateUpdateKVM - unsupported update mask path %q", path)

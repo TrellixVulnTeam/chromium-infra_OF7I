@@ -89,9 +89,8 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 	})
 
 	var s ufspb.Switch
-	var rackName string
 	if c.interactive {
-		c.rackName = utils.GetSwitchInteractiveInput(ctx, ic, &s, false)
+		utils.GetSwitchInteractiveInput(ctx, ic, &s, false)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &s); err != nil {
@@ -100,28 +99,26 @@ func (c *addSwitch) innerRun(a subcommands.Application, args []string, env subco
 			if s.GetRack() == "" {
 				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
 			}
-			rackName = s.GetRack()
 		} else {
 			c.parseArgs(&s)
-			rackName = c.rackName
 		}
 	}
 	res, err := ic.CreateSwitch(ctx, &ufsAPI.CreateSwitchRequest{
 		Switch:   &s,
 		SwitchId: s.GetName(),
-		Rack:     rackName,
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
-	fmt.Printf("Successfully added the switch %s to rack %s\n", res.Name, rackName)
+	fmt.Printf("Successfully added the switch %s to rack %s\n", res.Name, res.GetRack())
 	return nil
 }
 
 func (c *addSwitch) parseArgs(s *ufspb.Switch) {
 	s.Name = c.switchName
+	s.Rack = c.rackName
 	s.Description = c.description
 	s.CapacityPort = int32(c.capacity)
 	s.Tags = utils.GetStringSlice(c.tags)

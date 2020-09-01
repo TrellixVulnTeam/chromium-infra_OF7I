@@ -92,7 +92,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			ChromePlatform: FormatResourceName(oldKVM.GetPlatform()),
 			Rack:           oldKVM.GetRack(),
 			Zone:           ToZone(strings.ToLower(dcName)).String(),
-			State:          ToState(oldKVM.GetState()).String(),
+			ResourceState:  ToState(oldKVM.GetState()),
 			Description:    oldKVM.GetDescription(),
 		}
 		kvms = append(kvms, k)
@@ -109,12 +109,12 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 		switchNames := make([]string, 0)
 		for _, crimsonSwitch := range old.GetSwitch() {
 			s := &ufspb.Switch{
-				Name:         crimsonSwitch.GetName(),
-				CapacityPort: crimsonSwitch.GetPorts(),
-				Description:  crimsonSwitch.GetDescription(),
-				Rack:         rackName,
-				Zone:         ToZone(strings.ToLower(dcName)).String(),
-				State:        ToState(crimsonSwitch.GetState()).String(),
+				Name:          crimsonSwitch.GetName(),
+				CapacityPort:  crimsonSwitch.GetPorts(),
+				Description:   crimsonSwitch.GetDescription(),
+				Rack:          rackName,
+				Zone:          ToZone(strings.ToLower(dcName)).String(),
+				ResourceState: ToState(crimsonSwitch.GetState()),
 			}
 			switches = append(switches, s)
 			switchNames = append(switchNames, s.GetName())
@@ -136,8 +136,8 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			Rack: &ufspb.Rack_ChromeBrowserRack{
 				ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
 			},
-			State:       ToState(old.GetState()).String(),
-			Description: old.GetDescription(),
+			ResourceState: ToState(old.GetState()),
+			Description:   old.GetDescription(),
 		}
 		rlse := &ufspb.RackLSE{
 			Name:             GetRackHostname(rackName),

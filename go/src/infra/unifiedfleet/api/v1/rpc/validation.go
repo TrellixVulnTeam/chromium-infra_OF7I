@@ -642,7 +642,7 @@ func (r *CreateKVMRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
-	if r.Rack == "" {
+	if r.GetKVM().GetRack() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyRackName)
 	}
 	return nil
@@ -787,7 +787,7 @@ func (r *CreateSwitchRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
 	}
-	if r.Rack == "" {
+	if r.GetSwitch().GetRack() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyRackName)
 	}
 	return nil

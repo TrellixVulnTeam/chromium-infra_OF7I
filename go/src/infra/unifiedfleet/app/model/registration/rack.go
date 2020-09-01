@@ -62,7 +62,7 @@ func newRackEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 		Zone:  p.GetLocation().GetZone().String(),
 		Tags:  p.GetTags(),
 		Rack:  rack,
-		State: p.GetState(),
+		State: p.GetResourceState().String(),
 	}, nil
 }
 

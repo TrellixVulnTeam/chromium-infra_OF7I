@@ -46,6 +46,7 @@ var UpdateKVMCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to update. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the kvm. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 
 		return c
 	},
@@ -69,6 +70,7 @@ type updateKVM struct {
 	platform    string
 	tags        string
 	description string
+	state       string
 }
 
 func (c *updateKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -98,9 +100,8 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 		Options: site.DefaultPRPCOptions,
 	})
 	var kvm ufspb.KVM
-	var rackName string
 	if c.interactive {
-		rackName = utils.GetKVMInteractiveInput(ctx, ic, &kvm, true)
+		utils.GetKVMInteractiveInput(ctx, ic, &kvm, true)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
@@ -109,10 +110,8 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 			if kvm.GetRack() == "" {
 				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
 			}
-			rackName = kvm.GetRack()
 		} else {
 			c.parseArgs(&kvm)
-			rackName = c.rackName
 		}
 	}
 	if err := utils.PrintExistingKVM(ctx, ic, kvm.Name); err != nil {
@@ -120,8 +119,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 	}
 	kvm.Name = ufsUtil.AddPrefix(ufsUtil.KVMCollection, kvm.Name)
 	res, err := ic.UpdateKVM(ctx, &ufsAPI.UpdateKVMRequest{
-		KVM:  &kvm,
-		Rack: rackName,
+		KVM: &kvm,
 		NetworkOption: &ufsAPI.NetworkOption{
 			Vlan:   c.vlanName,
 			Delete: c.deleteVlan,
@@ -133,6 +131,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 			"mac-address": "macAddress",
 			"tags":        "tags",
 			"desc":        "description",
+			"state":       "resourceState",
 		}),
 	})
 	if err != nil {
@@ -158,6 +157,8 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 
 func (c *updateKVM) parseArgs(kvm *ufspb.KVM) {
 	kvm.Name = c.kvmName
+	kvm.Rack = c.rackName
+	kvm.ResourceState = ufsUtil.ToUFSState(c.state)
 	kvm.MacAddress = c.macAddress
 	if c.platform == utils.ClearFieldValue {
 		kvm.ChromePlatform = ""
@@ -199,15 +200,21 @@ func (c *updateKVM) validateArgs() error {
 		if c.description != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
 		}
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.kvmName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified")
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
-			c.rackName == "" && c.platform == "" &&
-			c.macAddress == "" && c.tags == "" && c.description == "" {
+			c.rackName == "" && c.platform == "" && c.description == "" &&
+			c.macAddress == "" && c.tags == "" && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
+		}
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 		}
 	}
 	return nil

@@ -288,7 +288,7 @@ func switchOutputStrs(pm proto.Message) []string {
 		fmt.Sprintf("%d", m.GetCapacityPort()),
 		m.GetZone(),
 		m.GetRack(),
-		m.GetState(),
+		m.GetResourceState().String(),
 		ts,
 	}
 }
@@ -335,7 +335,7 @@ func kvmFullOutputStrs(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) []string {
 		fmt.Sprintf("%d", kvm.GetCapacityPort()),
 		dhcp.GetIp(),
 		dhcp.GetVlan(),
-		kvm.GetState(),
+		kvm.GetResourceState().String(),
 		kvm.GetZone(),
 		kvm.GetRack(),
 		ts,
@@ -379,7 +379,7 @@ func kvmOutputStrs(pm proto.Message) []string {
 		fmt.Sprintf("%d", m.GetCapacityPort()),
 		m.GetZone(),
 		m.GetRack(),
-		m.GetState(),
+		m.GetResourceState().String(),
 		ts,
 	}
 }
@@ -438,7 +438,7 @@ func rpmOutputStrs(pm proto.Message) []string {
 		fmt.Sprintf("%d", m.GetCapacityPort()),
 		m.GetZone(),
 		m.GetRack(),
-		m.GetState(),
+		m.GetResourceState().String(),
 		ts,
 	}
 }
@@ -1183,7 +1183,7 @@ func rackOutputStrs(pm proto.Message) []string {
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetLocation().GetZone().String(),
 		fmt.Sprintf("%d", m.GetCapacityRu()),
-		m.GetState(),
+		m.GetResourceState().String(),
 		m.GetRealm(),
 		ts,
 	}

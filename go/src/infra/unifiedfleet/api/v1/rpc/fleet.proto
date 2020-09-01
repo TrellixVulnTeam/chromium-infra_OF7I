@@ -1083,14 +1083,8 @@ message CreateKVMRequest {
   // contains only ASCII letters, numbers, dash and underscore.
    string KVM_id = 2;
 
-  // A KVM cannot be added without being associated with a Rack.
-  // Refers to the rack to associate this KVM.
-  string rack = 3 [
-      (google.api.resource_reference) = {
-          type: "unified-fleet-system.appspot.com/Rack"
-      },
-      (google.api.field_behavior) = REQUIRED
-  ];
+  reserved 3;
+  reserved "rack";
 }
 
 message UpdateKVMRequest {
@@ -1100,14 +1094,8 @@ message UpdateKVMRequest {
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
 
-  // Refers to the rack to associate this KVM.
-  // When it is empty, KVM will be associated with the same rack
-  // and we dont update association between rack and KVM.
-  string rack = 3 [
-      (google.api.resource_reference) = {
-          type: "unified-fleet-system.appspot.com/Rack"
-      }
-  ];
+  reserved 3;
+  reserved "rack";
 
   NetworkOption network_option = 4;
 }
@@ -1318,14 +1306,8 @@ message CreateSwitchRequest {
   // contains only ASCII letters, numbers, dash and underscore.
    string switch_id = 2;
 
-  // A switch cannot be added without being associated with a Rack.
-  // Refers to the rack to associate this switch.
-  string rack = 3 [
-      (google.api.resource_reference) = {
-          type: "unified-fleet-system.appspot.com/Rack"
-      },
-      (google.api.field_behavior) = REQUIRED
-  ];
+  reserved 3;
+  reserved "rack";
 }
 
 message UpdateSwitchRequest {
@@ -1335,14 +1317,8 @@ message UpdateSwitchRequest {
   // The list of fields to be updated.
   google.protobuf.FieldMask update_mask = 2;
 
-  // Refers to the rack to associate this switch.
-  // When it is empty, switch will be associated with the same rack
-  // and we dont update association between rack and switch.
-  string rack = 3 [
-      (google.api.resource_reference) = {
-          type: "unified-fleet-system.appspot.com/Rack"
-      }
-  ];
+  reserved 3;
+  reserved "rack";
 }
 
 message GetSwitchRequest {

@@ -65,7 +65,7 @@ func newKVMEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, err
 		Rack:             p.GetRack(),
 		Tags:             p.GetTags(),
 		MacAddress:       p.GetMacAddress(),
-		State:            p.GetState(),
+		State:            p.GetResourceState().String(),
 	}, nil
 }
 

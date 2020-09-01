@@ -61,7 +61,7 @@ func newSwitchEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, 
 		Zone:   p.GetZone(),
 		Rack:   p.GetRack(),
 		Tags:   p.GetTags(),
-		State:  p.GetState(),
+		State:  p.GetResourceState().String(),
 	}, nil
 }
 

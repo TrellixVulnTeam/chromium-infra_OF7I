@@ -1207,10 +1207,10 @@ func TestCreateKVM(t *testing.T) {
 	Convey("CreateKVM", t, func() {
 		Convey("Create new KVM with KVM_id", func() {
 			KVM1 := mockKVM("")
+			KVM1.Rack = "rack-1"
 			req := &ufsAPI.CreateKVMRequest{
 				KVM:   KVM1,
 				KVMId: "KVM-1",
-				Rack:  "rack-1",
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(err, ShouldBeNil)
@@ -1219,8 +1219,7 @@ func TestCreateKVM(t *testing.T) {
 
 		Convey("Create new KVM - Invalid input nil", func() {
 			req := &ufsAPI.CreateKVMRequest{
-				KVM:  nil,
-				Rack: "rack-1",
+				KVM: nil,
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1229,10 +1228,11 @@ func TestCreateKVM(t *testing.T) {
 		})
 
 		Convey("Create new KVM - Invalid input empty ID", func() {
+			KVM1 := mockKVM("")
+			KVM1.Rack = "rack-1"
 			req := &ufsAPI.CreateKVMRequest{
-				KVM:   mockKVM(""),
+				KVM:   KVM1,
 				KVMId: "",
-				Rack:  "rack-1",
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1241,10 +1241,11 @@ func TestCreateKVM(t *testing.T) {
 		})
 
 		Convey("Create new KVM - Invalid input invalid characters", func() {
+			KVM1 := mockKVM("")
+			KVM1.Rack = "rack-1"
 			req := &ufsAPI.CreateKVMRequest{
-				KVM:   mockKVM(""),
+				KVM:   KVM1,
 				KVMId: "a.b)7&",
-				Rack:  "rack-1",
 			}
 			resp, err := tf.Fleet.CreateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1286,9 +1287,9 @@ func TestUpdateKVM(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			KVM2 := mockKVM("KVM-1")
+			KVM2.Rack = "rack-1"
 			ureq := &ufsAPI.UpdateKVMRequest{
-				KVM:  KVM2,
-				Rack: "rack-1",
+				KVM: KVM2,
 			}
 			resp, err = tf.Fleet.UpdateKVM(tf.C, ureq)
 			So(err, ShouldBeNil)
@@ -1297,8 +1298,7 @@ func TestUpdateKVM(t *testing.T) {
 
 		Convey("Update KVM - Invalid input nil", func() {
 			req := &ufsAPI.UpdateKVMRequest{
-				KVM:  nil,
-				Rack: "rack-1",
+				KVM: nil,
 			}
 			resp, err := tf.Fleet.UpdateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -1309,9 +1309,9 @@ func TestUpdateKVM(t *testing.T) {
 		Convey("Update KVM - Invalid input empty name", func() {
 			KVM3 := mockKVM("KVM-3")
 			KVM3.Name = ""
+			KVM3.Rack = "rack-1"
 			req := &ufsAPI.UpdateKVMRequest{
-				KVM:  KVM3,
-				Rack: "rack-1",
+				KVM: KVM3,
 			}
 			resp, err := tf.Fleet.UpdateKVM(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2062,10 +2062,10 @@ func TestCreateSwitch(t *testing.T) {
 	Convey("CreateSwitch", t, func() {
 		Convey("Create new switch with switch_id", func() {
 			switch1 := mockSwitch("")
+			switch1.Rack = "rack-1"
 			req := &ufsAPI.CreateSwitchRequest{
 				Switch:   switch1,
 				SwitchId: "Switch-1",
-				Rack:     "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(err, ShouldBeNil)
@@ -2075,7 +2075,6 @@ func TestCreateSwitch(t *testing.T) {
 		Convey("Create new switch - Invalid input nil", func() {
 			req := &ufsAPI.CreateSwitchRequest{
 				Switch: nil,
-				Rack:   "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2084,10 +2083,11 @@ func TestCreateSwitch(t *testing.T) {
 		})
 
 		Convey("Create new switch - Invalid input empty ID", func() {
+			switch1 := mockSwitch("")
+			switch1.Rack = "rack-1"
 			req := &ufsAPI.CreateSwitchRequest{
-				Switch:   mockSwitch(""),
+				Switch:   switch1,
 				SwitchId: "",
-				Rack:     "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2096,10 +2096,11 @@ func TestCreateSwitch(t *testing.T) {
 		})
 
 		Convey("Create new switch - Invalid input invalid characters", func() {
+			switch1 := mockSwitch("")
+			switch1.Rack = "rack-1"
 			req := &ufsAPI.CreateSwitchRequest{
-				Switch:   mockSwitch(""),
+				Switch:   switch1,
 				SwitchId: "a.b)7&",
-				Rack:     "rack-1",
 			}
 			resp, err := tf.Fleet.CreateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2141,9 +2142,9 @@ func TestUpdateSwitch(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			switch2 := mockSwitch("switch-1")
+			switch2.Rack = "rack-1"
 			ureq := &ufsAPI.UpdateSwitchRequest{
 				Switch: switch2,
-				Rack:   "rack-1",
 			}
 			resp, err = tf.Fleet.UpdateSwitch(tf.C, ureq)
 			So(err, ShouldBeNil)
@@ -2153,7 +2154,6 @@ func TestUpdateSwitch(t *testing.T) {
 		Convey("Update switch - Invalid input nil", func() {
 			req := &ufsAPI.UpdateSwitchRequest{
 				Switch: nil,
-				Rack:   "rack-1",
 			}
 			resp, err := tf.Fleet.UpdateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)
@@ -2164,9 +2164,9 @@ func TestUpdateSwitch(t *testing.T) {
 		Convey("Update switch - Invalid input empty name", func() {
 			switch1 := mockSwitch("")
 			switch1.Name = ""
+			switch1.Rack = "rack-1"
 			req := &ufsAPI.UpdateSwitchRequest{
 				Switch: switch1,
-				Rack:   "rack-1",
 			}
 			resp, err := tf.Fleet.UpdateSwitch(tf.C, req)
 			So(resp, ShouldBeNil)

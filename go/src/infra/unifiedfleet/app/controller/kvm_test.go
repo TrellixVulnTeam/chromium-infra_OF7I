@@ -44,7 +44,7 @@ func TestCreateKVM(t *testing.T) {
 			}
 			_, err := registration.CreateKVM(ctx, kvm1)
 
-			resp, err := CreateKVM(ctx, kvm1, "rack-5")
+			resp, err := CreateKVM(ctx, kvm1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "KVM kvm-1 already exists in the system")
@@ -58,8 +58,9 @@ func TestCreateKVM(t *testing.T) {
 			kvm2 := &ufspb.KVM{
 				Name:           "kvm-2",
 				ChromePlatform: "chromePlatform-1",
+				Rack:           "rack-1",
 			}
-			resp, err := CreateKVM(ctx, kvm2, "rack-1")
+			resp, err := CreateKVM(ctx, kvm2)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no ChromePlatform with ChromePlatformID chromePlatform-1 in the system")
@@ -79,8 +80,9 @@ func TestCreateKVM(t *testing.T) {
 			kvm2 := &ufspb.KVM{
 				Name:           "kvm-2",
 				ChromePlatform: "chromePlatform-2",
+				Rack:           "rack-1",
 			}
-			resp, err := CreateKVM(ctx, kvm2, "rack-1")
+			resp, err := CreateKVM(ctx, kvm2)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, kvm2)
 			s, err := state.GetStateRecord(ctx, "kvms/kvm-2")
@@ -108,8 +110,9 @@ func TestCreateKVM(t *testing.T) {
 			kvm2 := &ufspb.KVM{
 				Name:       "kvm-2-mac2",
 				MacAddress: "kvm-2-address",
+				Rack:       "rack-1",
 			}
-			_, err = CreateKVM(ctx, kvm2, "rack-1")
+			_, err = CreateKVM(ctx, kvm2)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "mac_address kvm-2-address is already occupied")
 		})
@@ -126,8 +129,9 @@ func TestCreateKVM(t *testing.T) {
 
 			kvm1 := &ufspb.KVM{
 				Name: "kvm-20",
+				Rack: "rack-10",
 			}
-			resp, err := CreateKVM(ctx, kvm1, "rack-10")
+			resp, err := CreateKVM(ctx, kvm1)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, kvm1)
 
@@ -162,8 +166,9 @@ func TestUpdateKVM(t *testing.T) {
 
 			kvm1 := &ufspb.KVM{
 				Name: "kvm-1",
+				Rack: "rack-1",
 			}
-			resp, err := UpdateKVM(ctx, kvm1, "rack-1", nil)
+			resp, err := UpdateKVM(ctx, kvm1, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no KVM with KVMID kvm-1 in the system")
@@ -199,7 +204,8 @@ func TestUpdateKVM(t *testing.T) {
 			_, err = registration.CreateKVM(ctx, kvm3)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateKVM(ctx, kvm3, "rack-4", nil)
+			kvm3.Rack = "rack-4"
+			resp, err := UpdateKVM(ctx, kvm3, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, kvm3)
@@ -227,13 +233,14 @@ func TestUpdateKVM(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			kvm1 := &ufspb.KVM{
-				Name: "kvm-5",
-				Rack: "rack-5",
+				Name:       "kvm-5",
+				Rack:       "rack-5",
+				MacAddress: "kvm-10-address",
 			}
 			_, err = registration.CreateKVM(ctx, kvm1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateKVM(ctx, kvm1, "rack-5", nil)
+			resp, err := UpdateKVM(ctx, kvm1, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, kvm1)
@@ -255,7 +262,8 @@ func TestUpdateKVM(t *testing.T) {
 			_, err := registration.CreateKVM(ctx, kvm1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateKVM(ctx, kvm1, "rack-6", nil)
+			kvm1.Rack = "rack-6"
+			resp, err := UpdateKVM(ctx, kvm1, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-6 in the system.")
@@ -285,7 +293,7 @@ func TestUpdateKVM(t *testing.T) {
 				MacAddress:     "efgh",
 				ChromePlatform: "chromePlatform-8",
 			}
-			resp, err := UpdateKVM(ctx, kvm1, "", &field_mask.FieldMask{Paths: []string{"platform", "macAddress"}})
+			resp, err := UpdateKVM(ctx, kvm1, &field_mask.FieldMask{Paths: []string{"platform", "macAddress"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromePlatform(), ShouldResemble, "chromePlatform-8")
@@ -311,7 +319,7 @@ func TestUpdateKVM(t *testing.T) {
 				Name:       "kvm-8",
 				MacAddress: "kvm-8.2-address",
 			}
-			_, err = UpdateKVM(ctx, kvm1, "", &field_mask.FieldMask{Paths: []string{"macAddress"}})
+			_, err = UpdateKVM(ctx, kvm1, &field_mask.FieldMask{Paths: []string{"macAddress"}})
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "mac_address kvm-8.2-address is already occupied")
 		})
@@ -334,25 +342,9 @@ func TestUpdateKVM(t *testing.T) {
 				Name:       "kvm-9",
 				MacAddress: "kvm-9.2-address",
 			}
-			_, err = UpdateKVM(ctx, kvm1, "", nil)
+			_, err = UpdateKVM(ctx, kvm1, nil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "mac_address kvm-9.2-address is already occupied")
-		})
-
-		Convey("Update kvm mac address - happy path", func() {
-			kvm := &ufspb.KVM{
-				Name: "kvm-10",
-			}
-			_, err := registration.CreateKVM(ctx, kvm)
-			So(err, ShouldBeNil)
-
-			kvm1 := &ufspb.KVM{
-				Name:       "kvm-10",
-				MacAddress: "kvm-10-address",
-			}
-			res, _ := UpdateKVM(ctx, kvm1, "", nil)
-			So(res, ShouldNotBeNil)
-			So(res, ShouldResembleProto, kvm1)
 		})
 
 	})

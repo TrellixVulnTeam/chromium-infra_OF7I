@@ -132,8 +132,6 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 		if err != nil {
 			return errors.Annotate(err, "UpdateRack - get rack %s failed", rack.GetName()).Err()
 		}
-		// Fill the OUTPUT only fields with existing values
-		rack.State = oldRack.GetState()
 
 		// Do not let updating from browser to os or vice versa change for rack.
 		if oldRack.GetChromeBrowserRack() != nil && rack.GetChromeosRack() != nil {
@@ -157,6 +155,11 @@ func UpdateRack(ctx context.Context, rack *ufspb.Rack, mask *field_mask.FieldMas
 			if err = updateIndexingForRackResources(ctx, rack.GetName(), indexMap, oldIndexMap, hc); err != nil {
 				return errors.Annotate(err, "UpdateRack - update zone indexing failed").Err()
 			}
+		}
+
+		// Update state
+		if err := hc.stUdt.updateStateHelper(ctx, rack.GetResourceState()); err != nil {
+			return errors.Annotate(err, "Fail to update state of machine %s", rack.GetName()).Err()
 		}
 
 		// Update the rack
@@ -198,6 +201,8 @@ func processRackUpdateMask(ctx context.Context, oldRack *ufspb.Rack, rack *ufspb
 			oldRack.CapacityRu = rack.GetCapacityRu()
 		case "tags":
 			oldRack.Tags = mergeTags(oldRack.GetTags(), rack.GetTags())
+		case "resourceState":
+			oldRack.ResourceState = rack.GetResourceState()
 		}
 	}
 	// return existing/old rack with new updated values
@@ -629,6 +634,7 @@ func validateRackUpdateMask(rack *ufspb.Rack, mask *field_mask.FieldMask) error 
 				}
 			case "capacity":
 			case "tags":
+			case "resourceState":
 				// valid fields, nothing to validate.
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateUpdateRack - unsupported update mask path %q", path)

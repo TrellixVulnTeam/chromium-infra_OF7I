@@ -39,10 +39,11 @@ func TestCreateSwitch(t *testing.T) {
 		Convey("Create new switch with already existing switch - error", func() {
 			switch1 := &ufspb.Switch{
 				Name: "switch-1",
+				Rack: "rack-5",
 			}
 			_, err := registration.CreateSwitch(ctx, switch1)
 
-			resp, err := CreateSwitch(ctx, switch1, "rack-5")
+			resp, err := CreateSwitch(ctx, switch1)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "Switch switch-1 already exists in the system")
@@ -55,8 +56,9 @@ func TestCreateSwitch(t *testing.T) {
 		Convey("Create new switch with non existing rack", func() {
 			switch2 := &ufspb.Switch{
 				Name: "switch-2",
+				Rack: "rack-5",
 			}
-			resp, err := CreateSwitch(ctx, switch2, "rack-5")
+			resp, err := CreateSwitch(ctx, switch2)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-5 in the system.")
@@ -78,8 +80,9 @@ func TestCreateSwitch(t *testing.T) {
 
 			switch1 := &ufspb.Switch{
 				Name: "switch-25",
+				Rack: "rack-15",
 			}
-			resp, err := CreateSwitch(ctx, switch1, "rack-15")
+			resp, err := CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, switch1)
 
@@ -110,8 +113,9 @@ func TestUpdateSwitch(t *testing.T) {
 
 			switch1 := &ufspb.Switch{
 				Name: "switch-1",
+				Rack: "rack-1",
 			}
-			resp, err := UpdateSwitch(ctx, switch1, "rack-1", nil)
+			resp, err := UpdateSwitch(ctx, switch1, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Switch with SwitchID switch-1 in the system")
@@ -147,7 +151,8 @@ func TestUpdateSwitch(t *testing.T) {
 			_, err = registration.CreateSwitch(ctx, switch3)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateSwitch(ctx, switch3, "rack-4", nil)
+			switch3.Rack = "rack-4"
+			resp, err := UpdateSwitch(ctx, switch3, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, switch3)
@@ -181,7 +186,7 @@ func TestUpdateSwitch(t *testing.T) {
 			_, err = registration.CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateSwitch(ctx, switch1, "rack-5", nil)
+			resp, err := UpdateSwitch(ctx, switch1, nil)
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, switch1)
@@ -203,7 +208,8 @@ func TestUpdateSwitch(t *testing.T) {
 			_, err := registration.CreateSwitch(ctx, switch1)
 			So(err, ShouldBeNil)
 
-			resp, err := UpdateSwitch(ctx, switch1, "rack-6", nil)
+			switch1.Rack = "rack-6"
+			resp, err := UpdateSwitch(ctx, switch1, nil)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, "There is no Rack with RackID rack-6 in the system.")
@@ -226,7 +232,7 @@ func TestUpdateSwitch(t *testing.T) {
 				Name:         "switch-7",
 				CapacityPort: 44,
 			}
-			resp, err := UpdateSwitch(ctx, switch1, "", &field_mask.FieldMask{Paths: []string{"capacity"}})
+			resp, err := UpdateSwitch(ctx, switch1, &field_mask.FieldMask{Paths: []string{"capacity"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetDescription(), ShouldResemble, "Hello Switch")

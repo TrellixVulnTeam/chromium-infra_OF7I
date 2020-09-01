@@ -42,17 +42,14 @@ message KVM {
     string rack = 7 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Rack"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        }
     ];
 
     // tags user can attach for easy querying/searching
     repeated string tags = 8;
 
-    // State of the kvm
-    string state = 9 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 9;
+    reserved "state";
 
     // Refers to Zone
     string zone = 10 [
@@ -61,6 +58,9 @@ message KVM {
 
     // A description of this kvm.
     string description = 11;
+
+    // State of the kvm
+    State resource_state = 12;
 }
 
 // Refer to one port of a given KVM
@@ -100,22 +100,23 @@ message RPM {
     string rack = 6 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Rack"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        }
     ];
 
     // tags user can attach for easy querying/searching
     repeated string tags = 7;
 
     // State of the rpm
-    string state = 9 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 9;
+    reserved "state";
 
     // Refers to Zone
     string zone = 10 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // State of the rpm
+    State resource_state = 11;
 }
 
 // Refer to one port of a given RPM
@@ -161,22 +162,23 @@ message Switch {
     string rack = 6 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Rack"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY
+        }
     ];
 
     // tags user can attach for easy querying/searching
     repeated string tags = 7;
 
     // State of the switch
-    string state = 8 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 8;
+    reserved "state";
 
     // Refers to Zone
     string zone = 9 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+
+    // State of the switch
+    State resource_state = 10;
 }
 
 // Refer to one port of a given switch

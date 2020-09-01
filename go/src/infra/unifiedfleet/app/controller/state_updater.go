@@ -149,7 +149,7 @@ func (su *stateUpdater) addRackStateHelper(ctx context.Context, rack *ufspb.Rack
 			ResourceName: util.AddPrefix(util.SwitchCollection, m.Name),
 			User:         util.CurrentUser(ctx),
 		}
-		m.State = ufspb.State_STATE_SERVING.String()
+		m.ResourceState = ufspb.State_STATE_SERVING
 		stateRecords = append(stateRecords, s)
 		su.logChanges(LogStateChanges(nil, s))
 	}
@@ -160,7 +160,7 @@ func (su *stateUpdater) addRackStateHelper(ctx context.Context, rack *ufspb.Rack
 			User:         util.CurrentUser(ctx),
 		}
 		stateRecords = append(stateRecords, s)
-		m.State = ufspb.State_STATE_SERVING.String()
+		m.ResourceState = ufspb.State_STATE_SERVING
 		su.logChanges(LogStateChanges(nil, s))
 	}
 	for _, m := range rack.GetChromeBrowserRack().GetRpmObjects() {
@@ -170,7 +170,7 @@ func (su *stateUpdater) addRackStateHelper(ctx context.Context, rack *ufspb.Rack
 			User:         util.CurrentUser(ctx),
 		}
 		stateRecords = append(stateRecords, s)
-		m.State = ufspb.State_STATE_SERVING.String()
+		m.ResourceState = ufspb.State_STATE_SERVING
 		su.logChanges(LogStateChanges(nil, s))
 	}
 	newS := &ufspb.StateRecord{
@@ -178,7 +178,7 @@ func (su *stateUpdater) addRackStateHelper(ctx context.Context, rack *ufspb.Rack
 		ResourceName: util.AddPrefix(util.RackCollection, rack.GetName()),
 		User:         util.CurrentUser(ctx),
 	}
-	rack.State = ufspb.State_STATE_SERVING.String()
+	rack.ResourceState = ufspb.State_STATE_SERVING
 	stateRecords = append(stateRecords, newS)
 	su.logChanges(LogStateChanges(nil, newS))
 	if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {

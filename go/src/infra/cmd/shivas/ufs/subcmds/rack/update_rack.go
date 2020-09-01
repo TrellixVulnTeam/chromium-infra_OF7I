@@ -40,6 +40,7 @@ var UpdateRackCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
 		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many machines can be added to this rack. "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
 	},
 }
@@ -57,6 +58,7 @@ type updateRack struct {
 	zoneName string
 	capacity int
 	tags     string
+	state    string
 }
 
 func (c *updateRack) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -108,6 +110,7 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 			"zone":     "zone",
 			"capacity": "capacity",
 			"tags":     "tags",
+			"state":    "resourceState",
 		}),
 	})
 	if err != nil {
@@ -122,6 +125,7 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 
 func (c *updateRack) parseArgs(rack *ufspb.Rack) {
 	rack.Name = c.rackName
+	rack.ResourceState = ufsUtil.ToUFSState(c.state)
 	rack.Location = &ufspb.Location{}
 	if c.zoneName == utils.ClearFieldValue {
 		rack.GetLocation().Zone = ufsUtil.ToUFSZone("")
@@ -158,16 +162,22 @@ func (c *updateRack) validateArgs() error {
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-tags' cannot be specified at the same time.")
 		}
+		if c.state != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.rackName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.zoneName == "" && c.capacity == 0 && c.tags == "" {
+		if c.zoneName == "" && c.capacity == 0 && c.tags == "" && c.state == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.zoneName != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", c.zoneName)
+		}
+		if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
 		}
 	}
 	return nil

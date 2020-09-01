@@ -89,9 +89,8 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 	})
 
 	var kvm ufspb.KVM
-	var rackName string
 	if c.interactive {
-		c.rackName = utils.GetKVMInteractiveInput(ctx, ic, &kvm, false)
+		utils.GetKVMInteractiveInput(ctx, ic, &kvm, false)
 	} else {
 		if c.newSpecsFile != "" {
 			if err = utils.ParseJSONFile(c.newSpecsFile, &kvm); err != nil {
@@ -100,23 +99,20 @@ func (c *addKVM) innerRun(a subcommands.Application, args []string, env subcomma
 			if kvm.GetRack() == "" {
 				return errors.New(fmt.Sprintf("rack field is empty in json. It is a required parameter for json input."))
 			}
-			rackName = kvm.GetRack()
 		} else {
 			c.parseArgs(&kvm)
-			rackName = c.rackName
 		}
 	}
 	res, err := ic.CreateKVM(ctx, &ufsAPI.CreateKVMRequest{
 		KVM:   &kvm,
 		KVMId: kvm.GetName(),
-		Rack:  rackName,
 	})
 	if err != nil {
 		return err
 	}
 	res.Name = ufsUtil.RemovePrefix(res.Name)
 	utils.PrintProtoJSON(res, !utils.NoEmitMode(false))
-	fmt.Printf("Successfully added the kvm %s to rack %s\n", res.Name, c.rackName)
+	fmt.Printf("Successfully added the kvm %s to rack %s\n", res.Name, res.GetRack())
 	return nil
 }
 
@@ -125,6 +121,7 @@ func (c *addKVM) parseArgs(kvm *ufspb.KVM) {
 	kvm.ChromePlatform = c.platform
 	kvm.MacAddress = c.macAddress
 	kvm.Tags = utils.GetStringSlice(c.tags)
+	kvm.Rack = c.rackName
 }
 
 func (c *addKVM) validateArgs() error {
