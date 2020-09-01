@@ -38,7 +38,7 @@ var AddKVMCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm")
 		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm to add")
-		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the kvm to add")
+		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the kvm to add")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to add")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 		return c
@@ -136,7 +136,7 @@ func (c *addKVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-platform' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
@@ -153,7 +153,7 @@ func (c *addKVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-platform' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.macAddress == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac-address' is required, no mode ('-f' or '-i') is specified.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.rackName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nRack name (-rack) is required.")

@@ -42,7 +42,7 @@ var UpdateKVMCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.rackName, "rack", "", "name of the rack to associate the kvm.")
 		c.Flags.StringVar(&c.kvmName, "name", "", "the name of the kvm to update")
-		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the kvm to update")
+		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the kvm to update"+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to update. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the kvm. "+cmdhelp.ClearFieldHelpText)
@@ -126,12 +126,12 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 			Ip:     c.ip,
 		},
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"rack":        "rack",
-			"platform":    "platform",
-			"mac-address": "macAddress",
-			"tags":        "tags",
-			"desc":        "description",
-			"state":       "resourceState",
+			"rack":     "rack",
+			"platform": "platform",
+			"mac":      "macAddress",
+			"tags":     "tags",
+			"desc":     "description",
+			"state":    "resourceState",
 		}),
 	})
 	if err != nil {
@@ -159,7 +159,11 @@ func (c *updateKVM) parseArgs(kvm *ufspb.KVM) {
 	kvm.Name = c.kvmName
 	kvm.Rack = c.rackName
 	kvm.ResourceState = ufsUtil.ToUFSState(c.state)
-	kvm.MacAddress = c.macAddress
+	if c.macAddress == utils.ClearFieldValue {
+		kvm.MacAddress = ""
+	} else {
+		kvm.MacAddress = c.macAddress
+	}
 	if c.platform == utils.ClearFieldValue {
 		kvm.ChromePlatform = ""
 	} else {
@@ -189,7 +193,7 @@ func (c *updateKVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-platform' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")

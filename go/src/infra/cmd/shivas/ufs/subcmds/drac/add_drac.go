@@ -38,7 +38,7 @@ var AddDracCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to associate the drac")
 		c.Flags.StringVar(&c.dracName, "name", "", "the name of the drac to add")
-		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the drac to add")
+		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the drac to add")
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to")
 		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this drac is connected to")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
@@ -144,7 +144,7 @@ func (c *addDrac) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
@@ -161,7 +161,7 @@ func (c *addDrac) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-switch' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.macAddress == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac-address' is required, no mode ('-f' or '-i') is specified.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac' is required, no mode ('-f' or '-i') is specified.")
 		}
 		if c.machineName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nMachine name (-machine) is required.")

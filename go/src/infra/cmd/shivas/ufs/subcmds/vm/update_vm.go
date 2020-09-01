@@ -47,7 +47,7 @@ Partial update a vm by parameters. Only specified parameters will be updated in 
 
 		c.Flags.StringVar(&c.hostName, "host", "", "hostname of the host to add the VM")
 		c.Flags.StringVar(&c.vmName, "name", "", "hostname/name of the VM")
-		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.macAddress, "mac", "", "mac address of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the vm. "+cmdhelp.ClearFieldHelpText)
@@ -136,12 +136,12 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		Vm:            &vm,
 		NetworkOption: nwOpt,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"host":        "machineLseId",
-			"state":       "resourceState",
-			"mac-address": "macAddress",
-			"os":          "osVersion",
-			"tags":        "tags",
-			"desc":        "description",
+			"host":  "machineLseId",
+			"state": "resourceState",
+			"mac":   "macAddress",
+			"os":    "osVersion",
+			"tags":  "tags",
+			"desc":  "description",
 		}),
 	})
 	if err != nil {
@@ -172,7 +172,11 @@ func (c *updateVM) printRes(ctx context.Context, ic ufsAPI.FleetClient, res *ufs
 
 func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	vm.Name = c.vmName
-	vm.MacAddress = c.macAddress
+	if c.macAddress == utils.ClearFieldValue {
+		vm.MacAddress = ""
+	} else {
+		vm.MacAddress = c.macAddress
+	}
 	vm.OsVersion = &ufspb.OSVersion{}
 	vm.ResourceState = ufsUtil.ToUFSState(c.state)
 	vm.MachineLseId = c.hostName
@@ -213,7 +217,7 @@ func (c *updateVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-host' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")

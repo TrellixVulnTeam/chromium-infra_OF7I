@@ -42,7 +42,7 @@ var UpdateDracCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.machineName, "machine", "", "name of the machine to update the association of the drac to a different machine")
 		c.Flags.StringVar(&c.dracName, "name", "", "name of the drac to update")
-		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the drac to add.")
+		c.Flags.StringVar(&c.macAddress, "mac", "", "the mac address of the drac to add."+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.switchName, "switch", "", "the name of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.switchPort, "switch-port", "", "the port of the switch that this drac is connected to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
@@ -124,7 +124,7 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 		},
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"machine":     "machine",
-			"mac-address": "macAddress",
+			"mac":         "macAddress",
 			"switch":      "switch",
 			"switch-port": "portName",
 			"tags":        "tags",
@@ -153,7 +153,11 @@ func (c *updateDrac) innerRun(a subcommands.Application, args []string, env subc
 
 func (c *updateDrac) parseArgs(drac *ufspb.Drac) {
 	drac.Name = c.dracName
-	drac.MacAddress = c.macAddress
+	if c.macAddress == utils.ClearFieldValue {
+		drac.MacAddress = ""
+	} else {
+		drac.MacAddress = c.macAddress
+	}
 	drac.SwitchInterface = &ufspb.SwitchInterface{}
 	drac.Machine = c.machineName
 	if c.switchName == utils.ClearFieldValue {
@@ -188,7 +192,7 @@ func (c *updateDrac) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-switch-port' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")

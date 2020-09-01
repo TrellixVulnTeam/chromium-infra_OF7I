@@ -35,7 +35,7 @@ Add a VM on a host by reading a JSON file input.
 [WARNING]: machineLseId is a required field in json, all other output only fields will be ignored.
 Specify additional settings, e.g. vlan, ip via command line parameters along with JSON input
 
-shivas add vm -name vm1 -host host1 -mac-address 12:34:56 -os chrome-version-1
+shivas add vm -name vm1 -host host1 -mac 12:34:56 -os chrome-version-1
 Add a VM by parameters.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &addVM{}
@@ -46,7 +46,7 @@ Add a VM by parameters.`,
 
 		c.Flags.StringVar(&c.hostName, "host", "", "hostname of the host to add the VM")
 		c.Flags.StringVar(&c.vmName, "name", "", "hostname/name of the VM")
-		c.Flags.StringVar(&c.macAddress, "mac-address", "", "mac address of the VM")
+		c.Flags.StringVar(&c.macAddress, "mac", "", "mac address of the VM")
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
 
@@ -177,7 +177,7 @@ func (c *addVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-host' cannot be specified at the same time.")
 		}
 		if c.macAddress != "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac-address' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-mac' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-tags' cannot be specified at the same time.")
@@ -196,7 +196,7 @@ func (c *addVM) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
 		if c.macAddress == "" {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac-address' is required, no mode ('-f') is specified.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-mac' is required, no mode ('-f') is specified.")
 		}
 	}
 	return nil

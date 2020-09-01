@@ -756,7 +756,7 @@ shivas add nic -f nic.json
 Add a nic by reading a JSON file input.
 [WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
-shivas add nic -name machine0:eth0 -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
+shivas add nic -name machine0:eth0 -switch switch0 -mac 123456 -machine machine0 -switch-port 1
 Add a nic by specifying several attributes directly.
 
 shivas add nic -i
@@ -773,7 +773,7 @@ Update a nic by reading a JSON file input.
 shivas update nic -i
 Update a nic by reading input through interactive mode.
 
-shivas update nic -name machine0:eth0 -switch switch0 -mac-address 12345
+shivas update nic -name machine0:eth0 -switch switch0 -mac 12345
 Partial update a nic by parameters. Only specified parameters will be updated in the nic.`
 
 	// NicFileText description for nic file input
@@ -803,7 +803,7 @@ shivas add drac -f drac.json
 Add a drac by reading a JSON file input.
 [WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
-shivas add drac -name machine0:drac -switch switch0 -mac-address 123456 -machine machine0 -switch-port 1
+shivas add drac -name machine0:drac -switch switch0 -mac 123456 -machine machine0 -switch-port 1
 Add a drac by specifying several attributes directly.
 
 shivas add drac -i
@@ -818,7 +818,7 @@ shivas update drac -f drac.json
 Update a drac by reading a JSON file input.
 [WARNING]: machine is a required field in json, all other output only fields will be ignored.
 
-shivas update drac -name machine0:drac -switch switch0 -mac-address 123456
+shivas update drac -name machine0:drac -switch switch0 -mac 123456
 Partial update a drac by parameters. Only specified parameters will be updated in the drac.
 
 shivas update drac -name drac0 -delete-vlan
@@ -859,7 +859,7 @@ shivas add kvm -f kvm.json
 Add a kvm by reading a JSON file input.
 [WARNING]: rack is a required field in json, all other output only fields will be ignored.
 
-shivas add kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
+shivas add kvm -rack {Rack name} -name {kvm name} -mac {mac} -platform {platform}
 Add a kvm by specifying several attributes directly.
 
 shivas add kvm -i
@@ -877,7 +877,7 @@ Specify additional settings, e.g. vlan, ip via command line parameters along wit
 shivas update kvm -i
 Update a kvm by reading input through interactive mode.
 
-shivas update kvm -rack {Rack name} -name {kvm name} -mac-address {mac} -platform {platform}
+shivas update kvm -rack {Rack name} -name {kvm name} -mac {mac} -platform {platform}
 Partial updates a kvm by parameters. Only specified parameters will be udpated in the kvm.`
 
 	// KVMFileText description for kvm file input
