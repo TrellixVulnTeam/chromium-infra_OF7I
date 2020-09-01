@@ -44,6 +44,8 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
+		c.Flags.StringVar(&c.description, "desc", "", "description for the machine. "+cmdhelp.ClearFieldHelpText)
+
 		return c
 	},
 }
@@ -66,6 +68,7 @@ type updateMachine struct {
 	tags             string
 	serialNumber     string
 	state            string
+	description      string
 }
 
 func (c *updateMachine) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -122,6 +125,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			"tags":     "tags",
 			"serial":   "serialNumber",
 			"state":    "resourceState",
+			"desc":     "description",
 		}),
 	})
 	if err != nil {
@@ -158,7 +162,7 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 		machine.SerialNumber = c.serialNumber
 	}
 	machine.ResourceState = ufsUtil.ToUFSState(c.state)
-	if c.platform != "" || c.deploymentTicket != "" || c.kvm != "" {
+	if c.platform != "" || c.deploymentTicket != "" || c.kvm != "" || c.description != "" {
 		machine.Device = &ufspb.Machine_ChromeBrowserMachine{
 			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 				DisplayName:  c.machineName,
@@ -179,6 +183,11 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 			machine.GetChromeBrowserMachine().GetKvmInterface().Kvm = ""
 		} else {
 			machine.GetChromeBrowserMachine().GetKvmInterface().Kvm = c.kvm
+		}
+		if c.description == utils.ClearFieldValue {
+			machine.GetChromeBrowserMachine().Description = ""
+		} else {
+			machine.GetChromeBrowserMachine().Description = c.description
 		}
 	}
 	machine.Realm = ufsUtil.ToUFSRealm(machine.GetLocation().GetZone().String())
@@ -216,6 +225,9 @@ func (c *updateMachine) validateArgs() error {
 		if c.state != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
 		}
+		if c.description != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.machineName == "" {
@@ -223,7 +235,7 @@ func (c *updateMachine) validateArgs() error {
 		}
 		if c.zoneName == "" && c.rackName == "" && c.state == "" &&
 			c.tags == "" && c.platform == "" && c.deploymentTicket == "" &&
-			c.kvm == "" && c.serialNumber == "" {
+			c.kvm == "" && c.serialNumber == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.zoneName != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {

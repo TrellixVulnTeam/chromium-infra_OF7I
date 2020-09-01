@@ -45,6 +45,7 @@ var UpdateKVMCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.macAddress, "mac-address", "", "the mac address of the kvm to update")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of the kvm to update. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.description, "desc", "", "description for the kvm. "+cmdhelp.ClearFieldHelpText)
 
 		return c
 	},
@@ -59,14 +60,15 @@ type updateKVM struct {
 	newSpecsFile string
 	interactive  bool
 
-	rackName   string
-	vlanName   string
-	kvmName    string
-	deleteVlan bool
-	ip         string
-	macAddress string
-	platform   string
-	tags       string
+	rackName    string
+	vlanName    string
+	kvmName     string
+	deleteVlan  bool
+	ip          string
+	macAddress  string
+	platform    string
+	tags        string
+	description string
 }
 
 func (c *updateKVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -130,6 +132,7 @@ func (c *updateKVM) innerRun(a subcommands.Application, args []string, env subco
 			"platform":    "platform",
 			"mac-address": "macAddress",
 			"tags":        "tags",
+			"desc":        "description",
 		}),
 	})
 	if err != nil {
@@ -166,6 +169,11 @@ func (c *updateKVM) parseArgs(kvm *ufspb.KVM) {
 	} else {
 		kvm.Tags = utils.GetStringSlice(c.tags)
 	}
+	if c.description == utils.ClearFieldValue {
+		kvm.Description = ""
+	} else {
+		kvm.Description = c.description
+	}
 }
 
 func (c *updateKVM) validateArgs() error {
@@ -188,6 +196,9 @@ func (c *updateKVM) validateArgs() error {
 		if c.rackName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-rack' cannot be specified at the same time.")
 		}
+		if c.description != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-desc' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.kvmName == "" {
@@ -195,7 +206,7 @@ func (c *updateKVM) validateArgs() error {
 		}
 		if c.vlanName == "" && !c.deleteVlan && c.ip == "" &&
 			c.rackName == "" && c.platform == "" &&
-			c.macAddress == "" && c.tags == "" {
+			c.macAddress == "" && c.tags == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 	}

@@ -143,6 +143,8 @@ func processKVMUpdateMask(oldKVM *ufspb.KVM, kvm *ufspb.KVM, mask *field_mask.Fi
 			oldKVM.MacAddress = kvm.GetMacAddress()
 		case "tags":
 			oldKVM.Tags = mergeTags(oldKVM.GetTags(), kvm.GetTags())
+		case "description":
+			oldKVM.Description = kvm.GetDescription()
 		}
 	}
 	// return existing/old kvm with new updated values
@@ -368,6 +370,7 @@ func validateKVMUpdateMask(ctx context.Context, kvm *ufspb.KVM, mask *field_mask
 				}
 			case "rack":
 			case "platform":
+			case "description":
 			case "tags":
 				// valid fields, nothing to validate.
 			default:
