@@ -358,7 +358,7 @@ func ToState(state crimsoncommon.State) ufspb.State {
 	case crimsoncommon.State_PRERELEASE:
 		return ufspb.State_STATE_DEPLOYED_PRE_SERVING
 	case crimsoncommon.State_FREE:
-		return ufspb.State_STATE_REGISTERED
+		return ufspb.State_STATE_READY
 	}
 	return ufspb.State_STATE_UNSPECIFIED
 }
