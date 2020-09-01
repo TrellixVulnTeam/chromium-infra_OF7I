@@ -715,6 +715,7 @@ func (is *InventoryServerImpl) GetDeviceManualRepairRecord(ctx context.Context, 
 
 	rsp = &api.GetDeviceManualRepairRecordResponse{
 		DeviceRepairRecord: r.Record,
+		Id:                 r.Entity.ID,
 	}
 	return rsp, err
 }

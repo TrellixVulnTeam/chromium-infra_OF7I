@@ -261,6 +261,7 @@ message GetDeviceManualRepairRecordRequest {
 
 message GetDeviceManualRepairRecordResponse {
   inventory.libs.protos.DeviceManualRepairRecord device_repair_record = 1;
+  string id = 2;
 }
 
 message CreateDeviceManualRepairRecordRequest {
