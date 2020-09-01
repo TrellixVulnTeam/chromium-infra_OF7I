@@ -72,6 +72,9 @@ LIMIT
 `
 
 var androidFilterFunc = func(r failureRow) bool {
+	if r.Project != "chrome" && r.Project != "chromium" {
+		return false
+	}
 	masterName := r.MasterName.String()
 	if sliceContains([]string{"internal.client.clank", "internal.client.clank_tot", "chromium.android"}, masterName) {
 		return true
@@ -99,6 +102,10 @@ var androidFilterFunc = func(r failureRow) bool {
 }
 
 var chromiumFilterFunc = func(r failureRow) bool {
+	if r.Project != "chrome" && r.Project != "chromium" {
+		return false
+	}
+
 	masterName := r.MasterName.String()
 
 	validMasterNames := []string{
@@ -114,6 +121,10 @@ var chromiumFilterFunc = func(r failureRow) bool {
 }
 
 var chromiumGPUFilterFunc = func(r failureRow) bool {
+	if r.Project != "chrome" && r.Project != "chromium" {
+		return false
+	}
+
 	validMasterNames := []string{
 		"chromium.gpu",
 		"chromium.gpu.fyi",
@@ -123,6 +134,10 @@ var chromiumGPUFilterFunc = func(r failureRow) bool {
 }
 
 var chromiumPerfFilterFunc = func(r failureRow) bool {
+	if r.Project != "chrome" && r.Project != "chromium" {
+		return false
+	}
+
 	if strings.Contains(r.Builder, "bisect") {
 		return false
 	}
@@ -134,6 +149,10 @@ var chromiumPerfFilterFunc = func(r failureRow) bool {
 }
 
 var iosFilterFunc = func(r failureRow) bool {
+	if r.Project != "chrome" && r.Project != "chromium" {
+		return false
+	}
+
 	if r.Project == "chrome" && r.MasterName.String() == "internal.bling.main" {
 		return true
 	}
@@ -150,6 +169,7 @@ var iosFilterFunc = func(r failureRow) bool {
 }
 
 var chromeBrowserReleaseFilterFunc = func(r failureRow) bool {
+	// TODO (nqmtuan): Need update once crbug.com/1123446 is fixed
 	return r.Project == "chromium" && strings.HasPrefix(r.Bucket, "ci-m")
 }
 
