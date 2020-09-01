@@ -144,7 +144,7 @@ func printMachineNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVPlatforms(entities, false)
+		utils.PrintTSVMachines(entities, false)
 		return nil
 	}
 	machine := entities[0].(*ufspb.Machine)
