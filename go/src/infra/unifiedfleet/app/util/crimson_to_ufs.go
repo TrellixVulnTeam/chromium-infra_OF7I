@@ -313,7 +313,6 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Machines:            []string{h.GetMachine()},
 			Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
 				ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
-					Vms:        vms,
 					VmCapacity: h.GetVmSlots(),
 					OsVersion: &ufspb.OSVersion{
 						Value: h.GetOs(),

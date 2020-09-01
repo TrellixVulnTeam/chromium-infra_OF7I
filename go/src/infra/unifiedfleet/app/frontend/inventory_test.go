@@ -1176,8 +1176,11 @@ func TestImportMachineLSEs(t *testing.T) {
 			So(lse, ShouldHaveLength, 1)
 			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "browser-lab:vm")
 			So(lse[0].GetHostname(), ShouldEqual, "esx-8")
-			So(lse[0].GetChromeBrowserMachineLse().GetVms(), ShouldHaveLength, 1)
-			So(lse[0].GetChromeBrowserMachineLse().GetVms()[0].GetHostname(), ShouldEqual, "vm578-m4")
+
+			vms, err := inventory.QueryVMByPropertyName(ctx, "host_id", "esx-8", false)
+			So(err, ShouldBeNil)
+			So(vms, ShouldHaveLength, 1)
+			So(vms[0].GetHostname(), ShouldEqual, "vm578-m4")
 
 			// Verify DHCPs
 			dhcp, err := configuration.GetDHCPConfig(ctx, lse[0].GetHostname())
