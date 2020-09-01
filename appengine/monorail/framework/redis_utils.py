@@ -26,7 +26,10 @@ def CreateRedisClient():
         host=settings.redis_host,
         port=settings.redis_port,
         max_connections=1,
-        timeout=2)
+        # When Redis is not available, calls hang indefinitely without these.
+        socket_connect_timeout=2,
+        socket_timeout=2,
+    )
   return redis.Redis(connection_pool=connection_pool)
 
 
@@ -47,7 +50,6 @@ def FormatRedisKey(key, prefix=None):
       prefix += ':'
     formatted_key += prefix
   return formatted_key + str(key)
-
 
 def VerifyRedisConnection(redis_client, msg=None):
   # type: (redis.Redis or FakeRedis, str) -> Bool
