@@ -228,7 +228,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
 		})
-		Convey("Adds a file in whitelisted dir", func() {
+		Convey("Adds a file in allowlisted dir", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
@@ -262,7 +262,7 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
 			So(rr.Message, ShouldEqual, "")
 		})
-		Convey("Deletes a file in whitelisted dir", func() {
+		Convey("Deletes a file in allowlisted dir", func() {
 			// Inject gitiles log response
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
 			testClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
