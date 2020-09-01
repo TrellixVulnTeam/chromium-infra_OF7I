@@ -17,9 +17,7 @@ import (
 )
 
 // prpcOptions is used for UFS PRPC clients.
-var prpcOptions = &prpc.Options{
-	UserAgent: "skylab_local_state/3.0.0",
-}
+var prpcOptions = prpcOptionWithUserAgent("skylab_local_state/3.0.0")
 
 // NewClient initialize and return new client to work with UFS service.
 func NewClient(ctx context.Context, ufsService string, authFlags *authcli.Flags) (ufsAPI.FleetClient, error) {
@@ -41,4 +39,13 @@ func NewClient(ctx context.Context, ufsService string, authFlags *authcli.Flags)
 		Options: prpcOptions,
 	})
 	return ufsClient, nil
+}
+
+// prpcOptionWithUserAgent create prpc option with custom UserAgent.
+//
+// DefaultOptions provides Retry ability in case we have issue with service.
+func prpcOptionWithUserAgent(userAgent string) *prpc.Options {
+	options := *prpc.DefaultOptions()
+	options.UserAgent = userAgent
+	return &options
 }
