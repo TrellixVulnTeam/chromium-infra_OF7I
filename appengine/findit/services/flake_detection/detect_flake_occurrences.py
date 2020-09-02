@@ -737,7 +737,12 @@ def ProcessBuildForFlakes(task_param):
   luci_project = build_pb.builder.project
   luci_bucket = build_pb.builder.bucket
   luci_builder = build_pb.builder.builder
-  legacy_master_name = build_pb.input.properties['mastername']
+  # TODO(https://crbug.com/1109276) Once builds with the mastername property are
+  # beyond horizon that we care about, don't check mastername
+  legacy_master_name = (
+      build_pb.input.properties['builder_group']
+      if 'builder_group' in build_pb.input.properties else
+      build_pb.input.properties['mastername'])
   legacy_build_number = build_pb.number
   gerrit_changes = build_pb.input.gerrit_changes
 

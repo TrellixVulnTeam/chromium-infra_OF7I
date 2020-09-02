@@ -1560,7 +1560,7 @@ class FinditApiTest(testing.EndpointsTestCase):
         builder=BuilderID(
             project='chromium', bucket='ci', builder=builder_name),
         number=build_number)
-    mock_build2.output.properties['mastername'] = master_name
+    mock_build2.output.properties['builder_group'] = master_name
     mock_get_build_by_number.return_value = mock_build2
 
     analysis = WfAnalysis.Create(master_name, builder_name, build_number)

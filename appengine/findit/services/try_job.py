@@ -253,7 +253,7 @@ def GetBuildProperties(pipeline_input, try_job_type):
           pipeline_input.good_revision,
       'bad_revision':
           pipeline_input.bad_revision,
-      'target_mastername':
+      'target_builder_group':
           master_name,
       'referenced_build_url':
           buildbot.CreateBuildbucketUrl(master_name, builder_name,
@@ -298,10 +298,10 @@ def TriggerTryJob(master_name, builder_name, tryserver_mastername,
       could trigger only one try job.
   """
 
-  # This could be a bucket name. Recipe code should use 'target_mastername' to
-  # configure the recipe, 'mastername' may still be used by some code paths and
-  # bucket is the logical successor to mastername.
-  properties['mastername'] = tryserver_mastername
+  # This could be a bucket name. Recipe code should use 'target_builder_group'
+  # to configure the recipe, 'builder_group' may still be used by some code
+  # paths and bucket is the logical successor to builder_group.
+  properties['builder_group'] = tryserver_mastername
 
   try_job = buildbucket_client.TryJob(tryserver_mastername,
                                       tryserver_buildername, properties, [],

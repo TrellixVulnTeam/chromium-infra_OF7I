@@ -135,12 +135,18 @@ class ChromiumProjectAPI(ProjectAPI):
     build = buildbucket_client.GetV2Build(
         analyzed_build_id,
         fields=FieldMask(paths=['input.properties', 'builder']))
-    # The recipe depends on the mastername being set.
+    # The recipe depends on the builder_group being set.
     # TODO(crbug.com/1008119): Fix the recipe so that it populates this property
     # based on target_builder.
-    properties['mastername'] = build.input.properties['mastername']
+    # TODO(https://crbug.com/1109276) Once builds with the mastername property
+    # are beyond horizon that we care about, don't check mastername
+    builder_group = (
+        build.input.properties['builder_group']
+        if 'builder_group' in build.input.properties else
+        build.input.properties['mastername'])
+    properties['builder_group'] = builder_group
     properties['target_builder'] = {
-        'master': build.input.properties['mastername'],
+        'group': builder_group,
         'builder': build.builder.builder
     }
     properties['compile_targets'] = list(all_targets)
@@ -151,11 +157,17 @@ class ChromiumProjectAPI(ProjectAPI):
     build = buildbucket_client.GetV2Build(
         analyzed_build_id,
         fields=FieldMask(paths=['input.properties', 'builder']))
+    # TODO(https://crbug.com/1109276) Once builds with the mastername property
+    # are beyond horizon that we care about, don't check mastername
+    builder_group = (
+        build.input.properties['builder_group']
+        if 'builder_group' in build.input.properties else
+        build.input.properties['mastername'])
+    properties['builder_group'] = builder_group
     properties['target_builder'] = {
-        'master': build.input.properties['mastername'],
+        'group': builder_group,
         'builder': build.builder.builder
     }
-    properties['mastername'] = build.input.properties['mastername']
     properties['tests'] = {
         s: [t['name'] for t in tests_in_suite['tests']
            ] for s, tests_in_suite in tests.iteritems()
@@ -168,13 +180,19 @@ class ChromiumProjectAPI(ProjectAPI):
     # As per common/waterfall/failure_type.py
     LEGACY_TEST_TYPE = 0x10
 
-    build_info = build_util.GetBuildInfo(build.input.properties['mastername'],
-                                         build.builder.builder, build.number)
+    # TODO(https://crbug.com/1109276) Once builds with the mastername property
+    # are beyond horizon that we care about, don't check mastername
+    builder_group = (
+        build.input.properties['builder_group']
+        if 'builder_group' in build.input.properties else
+        build.input.properties['mastername'])
+    build_info = build_util.GetBuildInfo(builder_group, build.builder.builder,
+                                         build.number)
 
     result = {
         'failed_steps': {},
         'master_name':
-            build.input.properties['mastername'],
+            builder_group,
         'builder_name':
             build.builder.builder,
         'build_number':
@@ -225,6 +243,11 @@ class ChromiumProjectAPI(ProjectAPI):
     # As per common/waterfall/failure_type.py
     LEGACY_COMPILE_TYPE = 0x08
 
+    # TODO(https://crbug.com/1109276) Once builds with the mastername property
+    # are beyond horizon that we care about, don't check mastername
+    builder_group = (
+        build.input.properties.get('builder_group') or
+        build.input.properties['mastername'])
     return CompileFailureInfo.FromSerializable({
         'failed_steps': {
             'compile': {
@@ -240,7 +263,7 @@ class ChromiumProjectAPI(ProjectAPI):
             },
         },
         'master_name':
-            build.input.properties['mastername'],
+            builder_group,
         'builder_name':
             build.builder.builder,
         'build_number':

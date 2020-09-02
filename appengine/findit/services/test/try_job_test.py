@@ -428,7 +428,7 @@ class TryJobTest(wf_testcase.WaterfallTestCase):
         'recipe': 'findit/chromium/compile',
         'good_revision': '1',
         'bad_revision': '2',
-        'target_mastername': master_name,
+        'target_builder_group': master_name,
         'referenced_build_url': build_url,
         'suspected_revisions': ['rev']
     }
@@ -504,7 +504,7 @@ class TryJobTest(wf_testcase.WaterfallTestCase):
         None, None, 'pipeline_id')
 
     self.assertEqual('luci.chromium.findit',
-                     mock_client.TryJob.call_args[0][2]['mastername'])
+                     mock_client.TryJob.call_args[0][2]['builder_group'])
     self.assertEqual(build_id, '1')
     self.assertIsNone(error)
 

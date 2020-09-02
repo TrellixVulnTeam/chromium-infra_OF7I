@@ -1023,7 +1023,7 @@ class TestTryJobTest(wf_testcase.WaterfallTestCase):
         'recipe': 'findit/chromium/test',
         'good_revision': '1',
         'bad_revision': '2',
-        'target_mastername': master_name,
+        'target_builder_group': master_name,
         'target_testername': 'b',
         'suspected_revisions': [],
         'referenced_build_url': build_url,

@@ -37,7 +37,7 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     mock_build = Build()
     mock_build.id = 8945610992972640896
     mock_build.status = 12
-    mock_build.output.properties['mastername'] = 'chromium.linux'
+    mock_build.output.properties['builder_group'] = 'chromium.linux'
     mock_build.output.properties['buildername'] = 'Linux Builder'
     mock_build.output.properties.get_or_create_struct(
         'swarm_hashes_ref/heads/mockmaster(at){#123}'
@@ -175,7 +175,7 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     mock_build = Build()
     mock_build.id = 8945610992972640896
     mock_build.status = 12
-    mock_build.output.properties['mastername'] = 'chromium.linux'
+    mock_build.output.properties['builder_group'] = 'chromium.linux'
     mock_build.output.properties['buildername'] = 'Linux Tester'
     gitiles_commit = mock_build.input.gitiles_commit
     gitiles_commit.host = 'gitiles.host'
@@ -273,9 +273,9 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
     mock_build = Build()
     mock_build.id = 8945610992972640896
     mock_build.status = 12
-    mock_build.output.properties['mastername'] = 'luci.chromium.findit'
+    mock_build.output.properties['builder_group'] = 'luci.chromium.findit'
     mock_build.output.properties['buildername'] = ('findit_variable')
-    mock_build.output.properties['target_mastername'] = 'chromium.linux'
+    mock_build.output.properties['target_builder_group'] = 'chromium.linux'
     mock_build.output.properties['target_buildername'] = (
         'linux_chromium_compile_dbg_ng')
     mock_build.output.properties.get_or_create_struct(
@@ -381,7 +381,7 @@ class CompletedBuildPubsubIngestorTest(AppengineTestCase):
                                                     mock_enqueue):
     build_id = 8000000123
     mock_build = Build(id=build_id, number=123)
-    mock_build.output.properties['mastername'] = 'chromium.linux'
+    mock_build.output.properties['builder_group'] = 'chromium.linux'
     mock_get_build.return_value = mock_build
 
     completed_build_pubsub_ingestor._TriggerV1AnalysisForChromiumBuildIfNeeded(

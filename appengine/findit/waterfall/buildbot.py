@@ -124,15 +124,22 @@ def _ComputeCacheKeyForLuciBuilder(func, args, kwargs, namespace):
     key_generator=_ComputeCacheKeyForLuciBuilder)
 def _GetBuildbotMasterName(project, bucket_name, builder_name, build_number):
   """Gets buildbot master name using builder_info and build_number."""
+  # TODO(https://crbug.com/1109276) Once builds with the mastername property are
+  # beyond horizon that we care about, don't check mastername
   build = buildbucket_client.GetV2BuildByBuilderAndBuildNumber(
       project, bucket_name, builder_name, build_number,
-      FieldMask(paths=['input.properties.fields.mastername']))
+      FieldMask(paths=[
+          'input.properties.fields.builder_group',
+          'input.properties.fields.mastername'
+      ]))
   if not build:
     logging.error('Failed to get mastername for %s::%s::%s::%d', project,
                   bucket_name, builder_name, build_number)
     return None
 
-  return build.input.properties['mastername']
+  return (build.input.properties['builder_group']
+          if 'builder_group' in build.input.properties else
+          build.input.properties['mastername'])
 
 
 # TODO(crbug/802940): Remove this when the API of getting LUCI build is ready.
@@ -199,13 +206,16 @@ def ParseBuildUrl(url):
     return None
 
   input_properties = json_format.MessageToDict(build.input.properties)
-  master_name = input_properties.get('mastername')
+  # TODO(https://crbug.com/1109276) Once builds with the mastername property are
+  # beyond horizon that we care about, don't check mastername
+  master_name = (
+      input_properties.get('builder_group') or
+      input_properties.get('mastername'))
   if not master_name:
     logging.error('No master name for build %d', build_id)
     return None
 
-  return build.input.properties[
-      'mastername'], build.builder.builder, build.number
+  return master_name, build.builder.builder, build.number
 
 
 def ParseStepUrl(url):
@@ -344,7 +354,9 @@ def ExtractBuildInfoFromV2Build(master_name, builder_name, build_number, build):
   build_info.completed = bool(build_info.build_end_time)
   build_info.result = build.status
   build_info.parent_buildername = input_properties.get('parent_buildername')
-  build_info.parent_mastername = input_properties.get('parent_mastername')
+  build_info.parent_mastername = (
+      input_properties.get('parent_builder_group') or
+      input_properties.get('parent_mastername'))
   build_info.buildbucket_id = str(build.id)
   build_info.buildbucket_bucket = build.builder.bucket
   build_info.is_luci = runtime.get('is_luci')

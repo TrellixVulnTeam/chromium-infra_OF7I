@@ -66,7 +66,7 @@ class BuildBotTest(wf_testcase.WaterfallTestCase):
         id=8000000000000001,
         number=321,
         builder=BuilderID(project='chromium', bucket='ci', builder='b'))
-    build.input.properties['mastername'] = 'm'
+    build.input.properties['builder_group'] = 'm'
     mock_build.return_value = build
 
     cases = {
@@ -97,6 +97,29 @@ class BuildBotTest(wf_testcase.WaterfallTestCase):
   @mock.patch.object(buildbot.buildbucket_client,
                      'GetV2BuildByBuilderAndBuildNumber')
   def testParseBuildLongUrl(self, mock_get_master):
+
+    master_name = 'chromium.sandbox'
+    mock_build = Build()
+    mock_build.input.properties['builder_group'] = master_name
+    mock_get_master.return_value = mock_build
+
+    cases = {
+        'https://ci.chromium.org/p/chromium/builders/luci.chromium.ci'
+        '/Linux%20Tests%20SANDBOX/3932':
+            (master_name, 'Linux Tests SANDBOX', 3932),
+        'https://luci-milo.appspot.com/p/chromium/builders'
+        '/luci.chromium.ci/b2/111': (master_name, 'b2', 111),
+        'https://luci-milo.appspot.com/p/chromium/builders/ci/b2/111':
+            (master_name, 'b2', 111),
+    }
+
+    for url, expected_result in cases.iteritems():
+      result = buildbot.ParseBuildUrl(url)
+      self.assertEqual(expected_result, result)
+
+  @mock.patch.object(buildbot.buildbucket_client,
+                     'GetV2BuildByBuilderAndBuildNumber')
+  def testParseBuildLongUrlMasterNameProperty(self, mock_get_master):
 
     master_name = 'chromium.sandbox'
     mock_build = Build()
@@ -187,7 +210,7 @@ class BuildBotTest(wf_testcase.WaterfallTestCase):
     build.input.gitiles_commit.id = gitiles_id
     build.input.properties['$recipe_engine/runtime'] = {'is_luci': True}
     build.input.properties['parent_buildername'] = 'Linux Builder'
-    build.input.properties['parent_mastername'] = 'chromium.linux'
+    build.input.properties['parent_builder_group'] = 'chromium.linux'
 
     build.create_time.FromDatetime(build_start_time)
     build.end_time.FromDatetime(build_end_time)
@@ -249,7 +272,7 @@ class BuildBotTest(wf_testcase.WaterfallTestCase):
     build.input.gitiles_commit.id = gitiles_id
     build.input.properties['$recipe_engine/runtime'] = {'is_luci': True}
     build.input.properties['parent_buildername'] = 'Linux Builder'
-    build.input.properties['parent_mastername'] = 'chromium.linux'
+    build.input.properties['parent_builder_group'] = 'chromium.linux'
 
     build.create_time.FromDatetime(build_start_time)
     build.end_time.FromDatetime(build_end_time)

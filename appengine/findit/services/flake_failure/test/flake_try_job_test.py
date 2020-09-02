@@ -331,7 +331,7 @@ class FlakeTryJobServiceTest(TestCase):
 
     expected_properties = {
         'recipe': 'findit/chromium/compile_isolate',
-        'target_mastername': master_name,
+        'target_builder_group': master_name,
         'target_testername': builder_name,
         'revision': revision,
         'isolated_targets': [isolate_target_name],

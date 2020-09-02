@@ -81,7 +81,7 @@ WITH
           FROM UNNEST(build.steps) AS step
           WHERE LOWER(step.name) = 'findit flakiness') AS with_flakiness_metadata,
       build.number AS legacy_build_number,
-      JSON_EXTRACT_SCALAR(build.input.properties,  '$.mastername') AS legacy_master_name,
+    COALESCE(JSON_EXTRACT_SCALAR(build.input.properties,  '$.builder_group'), JSON_EXTRACT_SCALAR(build.input.properties,  '$.mastername')) AS legacy_master_name,
       JSON_EXTRACT_SCALAR(build.output.properties,  '$.patch_project') AS patch_project,
       JSON_EXTRACT_SCALAR(build.output.properties,  '$.repository') AS gitiles_repository,
       JSON_EXTRACT_SCALAR(build.output.properties, '$.got_revision_cp') AS gitiles_revision_cp

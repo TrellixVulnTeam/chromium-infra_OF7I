@@ -166,8 +166,12 @@ def _IngestProto(build_id):
     logging.debug('Build %d does not have swarm_hashes property', build_id)
     return
 
-  master_name = properties.get('target_mastername',
-                               properties.get('mastername'))
+  # TODO(https://crbug.com/1109276) Once all builders use builder_group
+  # property, do not check the mastername property
+  master_name = (
+      properties.get('target_builder_group') or
+      properties.get('target_mastername') or properties.get('builder_group') or
+      properties.get('mastername'))
   if not master_name:
     logging.error('Build %d does not have expected "mastername" property',
                   build_id)
@@ -248,8 +252,12 @@ def _TriggerV1AnalysisForChromiumBuildIfNeeded(bucket, builder_name, build_id,
 
   # Converts the Struct to standard dict, to use .get, .iteritems etc.
   properties = json_format.MessageToDict(build.output.properties)
-  master_name = properties.get('target_mastername',
-                               properties.get('mastername'))
+  # TODO(https://crbug.com/1109276) Once all builders use builder_group
+  # property, do not check the mastername property
+  master_name = (
+      properties.get('target_builder_group') or
+      properties.get('target_mastername') or properties.get('builder_group') or
+      properties.get('mastername'))
   if not master_name:
     logging.error('Build %d does not have expected "mastername" property',
                   build_id)

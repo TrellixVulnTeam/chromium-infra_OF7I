@@ -176,11 +176,11 @@ def TriggerBuildAhead(wf_master, wf_builder, bot):
           'recipe': recipe,
           'bad_revision': bad_revision,
           'good_revision': good_revision,
-          'target_mastername': wf_master,
+          'target_builder_group': wf_master,
           'target_buildername': wf_builder,
           # Setting this explicitly for backwards compatibility with pre-luci
           # recipe code, which may expect it to be set.
-          'mastername': master_name,
+          'builder_group': master_name,
           'suspected_revisions': [],
       },
       tags=[],

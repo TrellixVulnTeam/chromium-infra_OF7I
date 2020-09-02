@@ -242,6 +242,27 @@ class ChromiumProjectAPITest(WaterfallTestCase):
     build.input.gitiles_commit.project = 'project/name'
     build.input.gitiles_commit.ref = 'ref/heads/master'
     build.input.gitiles_commit.id = 'git_sha'
+    build.input.properties['builder_group'] = master
+    build.builder.builder = builder
+    for d in (dimensions or []):
+      new_d = build.infra.swarming.task_dimensions.add()
+      new_d.key = d['key']
+      new_d.value = d['value']
+    return build
+
+  def _CreateBuildbucketBuildWithMasternameProperty(
+      self,
+      build_id,
+      build_number,
+      master='master',
+      builder='builder',
+      dimensions=None,
+  ):
+    build = Build(id=build_id, number=build_number)
+    build.input.gitiles_commit.host = 'gitiles.host.com'
+    build.input.gitiles_commit.project = 'project/name'
+    build.input.gitiles_commit.ref = 'ref/heads/master'
+    build.input.gitiles_commit.id = 'git_sha'
     build.input.properties['mastername'] = master
     build.builder.builder = builder
     for d in (dimensions or []):
@@ -490,10 +511,24 @@ class ChromiumProjectAPITest(WaterfallTestCase):
         'compile': ['bad_target1', 'bad_tests']
     }, 800000001234)
     self.assertEqual(props['target_builder'], {
-        'master': 'chromium.linux',
+        'group': 'chromium.linux',
         'builder': 'Linux Builder'
     })
-    self.assertEqual(props['mastername'], 'chromium.linux')
+    self.assertEqual(props['builder_group'], 'chromium.linux')
+    self.assertEqual(
+        sorted(props['compile_targets']), ['bad_target1', 'bad_tests'])
+
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
+  def testGetCompileRerunBuildInputPropertiesMasternameProperty(self, mock_bb):
+    mock_bb.return_value = self._CreateBuildbucketBuildWithMasternameProperty(
+        800000001234, 1234, 'chromium.linux', 'Linux Builder')
+    props = ChromiumProjectAPI().GetCompileRerunBuildInputProperties(
+        {'compile': ['bad_target1', 'bad_tests']}, 800000001234)
+    self.assertEqual(props['target_builder'], {
+        'group': 'chromium.linux',
+        'builder': 'Linux Builder'
+    })
+    self.assertEqual(props['builder_group'], 'chromium.linux')
     self.assertEqual(
         sorted(props['compile_targets']), ['bad_target1', 'bad_tests'])
 
@@ -523,10 +558,45 @@ class ChromiumProjectAPITest(WaterfallTestCase):
         },
     }, 800000009999)
     self.assertEqual(props['target_builder'], {
-        'master': 'chromium.linux',
+        'group': 'chromium.linux',
         'builder': 'Linux Tests'
     })
-    self.assertEqual(props['mastername'], 'chromium.linux')
+    self.assertEqual(props['builder_group'], 'chromium.linux')
+    self.assertEqual(props['tests'], {
+        'complexitor_tests': ['TestTrueNatureOf42', 'ValidateFTLCommunication']
+    })
+
+  @mock.patch.object(buildbucket_client, 'GetV2Build')
+  def testGetTestRerunBuildInputPropertiesMasternameProperty(self, mock_bb):
+    mock_bb.return_value = self._CreateBuildbucketBuildWithMasternameProperty(
+        800000009999, 9999, 'chromium.linux', 'Linux Tests')
+    props = ChromiumProjectAPI().GetTestRerunBuildInputProperties(
+        {
+            'complexitor_tests': {
+                'tests': [
+                    {
+                        'name': 'TestTrueNatureOf42',
+                        'properties': {
+                            'ignored': 'at the moment'
+                        }
+                    },
+                    {
+                        'name': 'ValidateFTLCommunication',
+                        'properties': {
+                            'ignored': 'also'
+                        }
+                    },
+                ],
+                'properties': {
+                    'this is': 'ignored',
+                },
+            },
+        }, 800000009999)
+    self.assertEqual(props['target_builder'], {
+        'group': 'chromium.linux',
+        'builder': 'Linux Tests'
+    })
+    self.assertEqual(props['builder_group'], 'chromium.linux')
     self.assertEqual(props['tests'], {
         'complexitor_tests': ['TestTrueNatureOf42', 'ValidateFTLCommunication']
     })

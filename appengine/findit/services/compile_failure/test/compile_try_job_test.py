@@ -1238,7 +1238,7 @@ class CompileTryJobTest(wf_testcase.WaterfallTestCase):
         'recipe': 'findit/chromium/compile',
         'good_revision': '1',
         'bad_revision': '2',
-        'target_mastername': master_name,
+        'target_builder_group': master_name,
         'target_buildername': 'b',
         'suspected_revisions': [],
         'referenced_build_url': build_url,

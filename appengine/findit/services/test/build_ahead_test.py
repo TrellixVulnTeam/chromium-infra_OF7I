@@ -37,8 +37,8 @@ class BuildAheadTest(wf_testcase.WaterfallTestCase):
             properties={
                 'recipe': 'findit/chromium/compile',
                 'good_revision': 'HEAD~1',
-                'target_mastername': 'master2',
-                'mastername': 'luci.chromium.findit',
+                'target_builder_group': 'master2',
+                'builder_group': 'luci.chromium.findit',
                 'suspected_revisions': [],
                 'target_buildername': 'builder5',
                 'bad_revision': 'HEAD'
@@ -64,8 +64,8 @@ class BuildAheadTest(wf_testcase.WaterfallTestCase):
             properties={
                 'recipe': 'findit/chromium/compile',
                 'good_revision': 'HEAD~1',
-                'target_mastername': 'master2',
-                'mastername': 'luci.chromium.findit',
+                'target_builder_group': 'master2',
+                'builder_group': 'luci.chromium.findit',
                 'suspected_revisions': [],
                 'target_buildername': 'builder5',
                 'bad_revision': 'HEAD'

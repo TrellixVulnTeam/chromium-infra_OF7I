@@ -892,8 +892,12 @@ class FindItApi(remote.Service):
 
     properties = json_format.MessageToDict(build.output.properties)
     build_number = build.number
-    master_name = properties.get('target_mastername',
-                                 properties.get('mastername'))
+    # TODO(https://crbug.com/1109276) Once builds with mastername property
+    # are beyond horizon we care about, don't check mastername
+    master_name = (
+        properties.get('target_builder_group') or
+        properties.get('target_mastername') or
+        properties.get('builder_group') or properties.get('mastername'))
     if not build_number or not master_name:
       logging.error('Missing master_name or build_number for build %d',
                     build.id)

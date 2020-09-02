@@ -95,21 +95,16 @@ class SwarmbucketTest(testing.AppengineTestCase):
                     'name':
                         'Linux Tests',
                     'properties_json':
-                        json.dumps({
-                            'mastername': 'chromium.linux'
-                        })
+                        json.dumps({'builder_group': 'chromium.linux'})
                 },
                 {
                     'name':
                         'Mac Tests',
                     'properties_json':
-                        json.dumps({
-                            'mastername': 'chromium.mac'
-                        })
+                        json.dumps({'builder_group': 'chromium.mac'})
                 },
             ],
-            'name':
-                'luci.chromium.ci'
+            'name': 'luci.chromium.ci'
         },]
     })
     mock_fetch.return_value = collections.namedtuple(

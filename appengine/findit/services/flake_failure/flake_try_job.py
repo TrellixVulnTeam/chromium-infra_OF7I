@@ -247,7 +247,7 @@ def GetBuildProperties(target_master_name, target_builder_name,
   """
   return {
       'recipe': 'findit/chromium/compile_isolate',
-      'target_mastername': target_master_name,
+      'target_builder_group': target_master_name,
       'target_testername': target_builder_name,
       'revision': revision,
       'isolated_targets': [isolate_target_name],

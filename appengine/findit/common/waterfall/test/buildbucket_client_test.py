@@ -232,7 +232,7 @@ class BuildBucketClientTest(testing.AppengineTestCase):
     mock_build = Build()
     mock_build.id = int(build_id)
     mock_build.status = 12
-    mock_build.output.properties['mastername'] = 'chromium.linux'
+    mock_build.output.properties['builder_group'] = 'chromium.linux'
     mock_build.output.properties['buildername'] = 'Linux Builder'
     mock_build.output.properties.get_or_create_struct(
         'swarm_hashes_ref/heads/mockmaster(at){#123}'
@@ -263,7 +263,7 @@ class BuildBucketClientTest(testing.AppengineTestCase):
     mock_build = Build()
     mock_build.id = build_id
     mock_build.status = 12
-    mock_build.output.properties['mastername'] = 'chromium.linux'
+    mock_build.output.properties['builder_group'] = 'chromium.linux'
     mock_build.output.properties['buildername'] = 'Linux Builder'
     mock_build.output.properties['buildnumber'] = expected_build_number
     mock_build.output.properties.get_or_create_struct(
@@ -288,14 +288,14 @@ class BuildBucketClientTest(testing.AppengineTestCase):
     master_name = 'tryserver.chromium.win'
 
     mock_build = Build()
-    mock_build.input.properties['mastername'] = master_name
+    mock_build.input.properties['builder_group'] = master_name
     mock_headers = {'X-Prpc-Grpc-Code': '0'}
     binary_data = mock_build.SerializeToString()
     mock_post.return_value = (200, binary_data, mock_headers)
 
     build = buildbucket_client.GetV2BuildByBuilderAndBuildNumber(
         'chromium', 'try', 'win10_chromium_x64_rel_ng', 123)
-    self.assertEqual(master_name, build.input.properties['mastername'])
+    self.assertEqual(master_name, build.input.properties['builder_group'])
 
   @mock.patch.object(FinditHttpClient, 'Post')
   def testGetV2BuildByBuilderAndBuildNumberRequestFail(self, mock_post):

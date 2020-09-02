@@ -123,6 +123,9 @@ def GetMasters(bucket, service_url=_DEFAULT_SWARMBUCKET_SERVICE_URL):
   masters = set()
   for b in response['buckets'][0]['builders']:
     properties = json.loads(b.get('properties_json') or '{}')
-    if properties.get('mastername'):
-      masters.add(properties['mastername'])
+    # TODO(https://crbug.com/1109276) Once all builders use builder_group
+    # property, do not check the mastername property
+    master = properties.get('builder_group') or properties.get('mastername')
+    if master:
+      masters.add(master)
   return list(masters)
