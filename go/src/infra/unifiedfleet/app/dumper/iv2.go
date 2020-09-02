@@ -311,7 +311,7 @@ func LabToZone(lab string) ufspb.Zone {
 	default:
 		for _, r := range googlers {
 			if r.MatchString(lab) {
-				return ufspb.Zone_ZONE_GOOGLER_DESK
+				return ufspb.Zone_ZONE_CROS_GOOGLER_DESK
 			}
 		}
 		return ufspb.Zone_ZONE_UNSPECIFIED
@@ -346,7 +346,7 @@ func CreateAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.Asset
 	}
 
 	a.Location.Zone = LabToZone(asset.GetLocation().GetLab())
-	if a.Location.Zone == ufspb.Zone_ZONE_GOOGLER_DESK && hostname == "" {
+	if a.Location.Zone == ufspb.Zone_ZONE_CROS_GOOGLER_DESK && hostname == "" {
 		a.Location.BarcodeName = asset.GetLocation().GetLab()
 	}
 	// Construct rack name as `chromeos[$zone]`-row`$row`-rack`$rack`
