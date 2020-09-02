@@ -65,6 +65,7 @@ func (imp *gitilesImporter) Run(ctx context.Context) error {
 		refsPaths = imp.config.Refs
 	}
 
+	logging.Debugf(ctx, "Running import of %s/%s", imp.repo.Host, imp.repo.Name)
 	return imp.leaser.WithLease(ctx, func(ctx context.Context) error {
 		return imp.scanRefsPaths(ctx, refsPaths)
 	})

@@ -47,12 +47,12 @@ func newLeaser(repo common.GitRepository) *leaser {
 // cancels context passed to the function.
 // Lease document will be removed iff there is error during import and lease
 // was not broken.
-func (imp *leaser) WithLease(ctx context.Context, f func(ctx context.Context) error) error {
-	err := imp.acquireLease(ctx)
+func (l *leaser) WithLease(ctx context.Context, f func(ctx context.Context) error) error {
+	err := l.acquireLease(ctx)
 	if err != nil {
 		return err
 	}
-	logging.Debugf(ctx, "Lock acquired, running import of %s/%s", imp.repo.Host, imp.repo.Name)
+	logging.Debugf(ctx, "Lease acquired for %s/%s", l.repo.Host, l.repo.Name)
 	// Wait for go routine to finish before returning result
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -63,14 +63,14 @@ func (imp *leaser) WithLease(ctx context.Context, f func(ctx context.Context) er
 	go func() {
 		// Refresh lock periodically, and check ownership.
 		defer wg.Done()
-		timer := clock.Get(ctx).NewTimer(ctx)
+		timer := clock.NewTimer(ctx)
 		timer.Reset(leaseUpdateDuration)
 		for {
 			select {
 			case <-cctx.Done():
 				return
 			case <-timer.GetC():
-				err := imp.refreshLease(cctx)
+				err := l.refreshLease(cctx)
 				if err != nil {
 					logging.WithError(err).Errorf(ctx, "Datastore repository state is not expected")
 					cancel()
@@ -87,30 +87,32 @@ func (imp *leaser) WithLease(ctx context.Context, f func(ctx context.Context) er
 	wg.Wait()
 
 	if err != nil && cleanupOnError {
-		datastore.Delete(ctx, imp.doc)
+		logging.Debugf(ctx, "Releasing lease %s/%s, error: %s", l.repo.Host, l.repo.Name, err.Error())
+		datastore.Delete(ctx, l.doc)
 		return err
 	}
 
+	logging.Debugf(ctx, "Releasing lease %s/%s, no error", l.repo.Host, l.repo.Name)
 	// Indexing is completed, so stop goroutine for refreshing lock.
-	imp.doc.SetIndexingCompleted(clock.Get(ctx).Now().UTC().Round(time.Millisecond))
-	return datastore.Put(ctx, imp.doc)
+	l.doc.SetIndexingCompleted(clock.Now(ctx).UTC().Round(time.Millisecond))
+	return datastore.Put(ctx, l.doc)
 }
 
 // acquireLease attempts to acquire a lease which is stored in Datastore. If
 // there is already an active lease, such lease may be broken only if stale
 // (not renewed in deadline).
-func (imp *leaser) acquireLease(ctx context.Context) error {
+func (l *leaser) acquireLease(ctx context.Context) error {
 	return datastore.RunInTransaction(ctx, func(ctx context.Context) error {
-		if err := datastore.Get(ctx, imp.doc); err != nil && err != datastore.ErrNoSuchEntity {
+		if err := datastore.Get(ctx, l.doc); err != nil && err != datastore.ErrNoSuchEntity {
 			return fmt.Errorf("error reading from datastore: %w", err)
 		}
-		now := clock.Get(ctx).Now().UTC().Round(time.Millisecond)
-		if !imp.doc.FullScanLastRun.IsZero() && !imp.doc.IsFullScanStalled(now) {
+		now := clock.Now(ctx).UTC().Round(time.Millisecond)
+		if !l.doc.FullScanLastRun.IsZero() && !l.doc.IsFullScanStalled(now) {
 			return errors.New("the repository is scanned by another process")
 		}
-		imp.doc.FullScanLastRun, imp.doc.FullScanLeaseStartTime = now, now
-		imp.doc.FullScanLeaseHostname = os.Getenv("GAE_INSTANCE")
-		if err := datastore.Put(ctx, imp.doc); err != nil {
+		l.doc.FullScanLastRun, l.doc.FullScanLeaseStartTime = now, now
+		l.doc.FullScanLeaseHostname = os.Getenv("GAE_INSTANCE")
+		if err := datastore.Put(ctx, l.doc); err != nil {
 			return fmt.Errorf("error writing to datastore: %w", err)
 		}
 		return nil
@@ -119,20 +121,20 @@ func (imp *leaser) acquireLease(ctx context.Context) error {
 
 // refreshLease attempts to extend the lease. If the document is modified by
 // external process, the lease won't be renewed and error will be returned.
-func (imp *leaser) refreshLease(ctx context.Context) error {
+func (l *leaser) refreshLease(ctx context.Context) error {
 	dst := models.Repository{
-		ID: imp.doc.ID,
+		ID: l.doc.ID,
 	}
 
 	return datastore.RunInTransaction(ctx, func(ctx context.Context) error {
 		if err := datastore.Get(ctx, &dst); err != nil {
 			return err
 		}
-		if !reflect.DeepEqual(*imp.doc, dst) {
+		if !reflect.DeepEqual(*l.doc, dst) {
 			return errors.New("some other process claimed the lock, aborting import")
 		}
-		imp.doc.FullScanLastRun = clock.Get(ctx).Now().UTC().Round(time.Millisecond)
-		return datastore.Put(ctx, imp.doc)
+		l.doc.FullScanLastRun = clock.Now(ctx).UTC().Round(time.Millisecond)
+		return datastore.Put(ctx, l.doc)
 	}, nil)
 
 }
