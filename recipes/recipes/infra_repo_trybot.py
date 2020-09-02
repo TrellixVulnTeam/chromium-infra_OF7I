@@ -52,8 +52,8 @@ def RunSteps(api):
             api.file.rmtree('monorail clean python deps', monorail_lib_dir)
             # For more context on why: https://crbug.com/1117193#c3
             api.python('monorail pip install', '-m', [
-                'pip', 'install', '--require-hashes', '-t', monorail_lib_dir,
-                '-r', 'requirements.py2.txt'
+                'pip', 'install', '--no-deps', '--require-hashes', '-t',
+                monorail_lib_dir, '-r', 'requirements.py2.txt'
             ])
 
         with api.context(cwd=co.path.join(patch_root)):
