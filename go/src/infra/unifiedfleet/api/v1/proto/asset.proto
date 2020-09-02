@@ -21,11 +21,19 @@ message asset {
         pattern: "assets/{asset}"
     };
   string name = 1; // Asset tag or an unique identifier for the asset
-  string type = 2; // DUT, servo, switch, RPM, etc,.
+  AssetType type = 2; // DUT, servo, labstation, etc,.
   string model = 3; // Model of the asset
   Location location = 4; // Last known location of the asset
   AssetInfo info = 5; // Some info about the asset
   // Record the last update timestamp of this asset (In UTC timezone)
   google.protobuf.Timestamp update_time = 6 [
       (google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// AssetType determines the type of asset
+enum AssetType {
+  UNDEFINED = 0;
+  DUT = 1;
+  SERVO = 2;
+  LABSTATION = 3;
 }

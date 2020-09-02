@@ -18,7 +18,7 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 )
 
-func mockAsset(name, assettype, model, host string) *ufspb.Asset {
+func mockAsset(name, model, host string, assettype ufspb.AssetType) *ufspb.Asset {
 	return &ufspb.Asset{
 		Name:  name,
 		Type:  assettype,
@@ -37,12 +37,11 @@ func TestCreateAsset(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	asset1 := mockAsset("C001001", "DUT", "krane", "cros4-row3-rack5-host4")
-	asset2 := mockAsset("C001001", "Servo", "Servo V4", "cros5-row3-rack5-host4")
-	asset3 := mockAsset("", "DUT", "eve", "cros6-row3-rack5-host4")
-	asset4 := mockAsset("C002002", "", "eve", "cros7-row3-rack5-host4")
-	asset5 := mockAsset("C003003", "DUT", "", "cros8-row3-rack5-host4")
-	asset6 := mockAsset("C004004", "DUT", "eve", "cros9-row3-rack5-host4")
+	asset1 := mockAsset("C001001", "krane", "cros4-row3-rack5-host4", ufspb.AssetType_DUT)
+	asset2 := mockAsset("C001001", "Servo V4", "cros5-row3-rack5-host4", ufspb.AssetType_SERVO)
+	asset3 := mockAsset("", "eve", "cros6-row3-rack5-host4", ufspb.AssetType_DUT)
+	asset4 := mockAsset("C002002", "eve", "cros7-row3-rack5-host4", ufspb.AssetType_UNDEFINED)
+	asset6 := mockAsset("C004004", "eve", "cros9-row3-rack5-host4", ufspb.AssetType_DUT)
 	asset6.Location = nil
 	Convey("CreateAsset", t, func() {
 		Convey("Create new asset", func() {
@@ -62,10 +61,6 @@ func TestCreateAsset(t *testing.T) {
 			_, err := CreateAsset(ctx, asset4)
 			So(err, ShouldNotBeNil)
 		})
-		Convey("Create asset without model", func() {
-			_, err := CreateAsset(ctx, asset5)
-			So(err, ShouldNotBeNil)
-		})
 		Convey("Create asset without location", func() {
 			_, err := CreateAsset(ctx, asset6)
 			So(err, ShouldNotBeNil)
@@ -77,10 +72,10 @@ func TestUpdateAsset(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	datastore.GetTestable(ctx).Consistent(true)
-	asset1 := mockAsset("C001001", "DUT", "krane", "cros4-row3-rack5-host4")
-	asset2 := mockAsset("C001001", "Servo", "Servo V3", "cros6-row3-rack5-host4")
-	asset3 := mockAsset("C002002", "Labstation", "Whizz", "cros6-row3-rack5-host4")
-	asset4 := mockAsset("", "LabNotStation", "Whizz-Labstation", "cros6-row3-rack5-host4")
+	asset1 := mockAsset("C001001", "krane", "cros4-row3-rack5-host4", ufspb.AssetType_DUT)
+	asset2 := mockAsset("C001001", "Servo V3", "cros6-row3-rack5-host4", ufspb.AssetType_SERVO)
+	asset3 := mockAsset("C002002", "Whizz", "cros6-row3-rack5-host4", ufspb.AssetType_LABSTATION)
+	asset4 := mockAsset("", "Whizz-Labstation", "cros6-row3-rack5-host4", ufspb.AssetType_UNDEFINED)
 	Convey("UpdateAsset", t, func() {
 		Convey("Update existing Asset", func() {
 			resp, err := CreateAsset(ctx, asset1)
@@ -106,7 +101,7 @@ func TestUpdateAsset(t *testing.T) {
 func TestGetAsset(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
-	asset1 := mockAsset("C001001", "DUT", "krane", "cros4-row3-rack5-host4")
+	asset1 := mockAsset("C001001", "krane", "cros4-row3-rack5-host4", ufspb.AssetType_DUT)
 	Convey("GetAsset", t, func() {
 		Convey("Get asset by existing name", func() {
 			resp, err := CreateAsset(ctx, asset1)
@@ -132,7 +127,7 @@ func TestGetAsset(t *testing.T) {
 func TestDeleteAsset(t *testing.T) {
 	t.Parallel()
 	ctx := gaetesting.TestingContextWithAppID("go-test")
-	asset1 := mockAsset("C001001", "DUT", "krane", "cros4-row3-rack5-host4")
+	asset1 := mockAsset("C001001", "krane", "cros4-row3-rack5-host4", ufspb.AssetType_DUT)
 	Convey("DeleteAsset", t, func() {
 		Convey("Delete asset by existing name", func() {
 			resp, cerr := CreateAsset(ctx, asset1)
@@ -160,7 +155,7 @@ func TestListAssets(t *testing.T) {
 	ctx := gaetesting.TestingContextWithAppID("go-test")
 	assets := make([]*ufspb.Asset, 0, 10)
 	for i := 0; i < 10; i++ {
-		asset := mockAsset(fmt.Sprintf("C00000%d", i), "DUT", "eve", fmt.Sprintf("cros4-row3-rack5-host%d", i))
+		asset := mockAsset(fmt.Sprintf("C00000%d", i), "eve", fmt.Sprintf("cros4-row3-rack5-host%d", i), ufspb.AssetType_DUT)
 		resp, _ := CreateAsset(ctx, asset)
 		assets = append(assets, resp)
 	}
@@ -202,7 +197,7 @@ func TestBatchUpdateAssets(t *testing.T) {
 		datastore.GetTestable(ctx).Consistent(true)
 		assets := make([]*ufspb.Asset, 0, 4)
 		for i := 0; i < 4; i++ {
-			asset := mockAsset(fmt.Sprintf("C0000%d0", i), "DUT", "eve", fmt.Sprintf("cros4-row3-rack5-host%d", i))
+			asset := mockAsset(fmt.Sprintf("C0000%d0", i), "eve", fmt.Sprintf("cros4-row3-rack5-host%d", i), ufspb.AssetType_DUT)
 			resp, err := CreateAsset(ctx, asset)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, asset)
@@ -215,7 +210,7 @@ func TestBatchUpdateAssets(t *testing.T) {
 			So(resp, ShouldResembleProto, assets)
 		})
 		Convey("BatchUpdate existing and invalid assets", func() {
-			asset := mockAsset("", "DUT", "krane", "cros4-row3-rack5-host4")
+			asset := mockAsset("", "krane", "cros4-row3-rack5-host4", ufspb.AssetType_DUT)
 			assets = append(assets, asset)
 			resp, err := BatchUpdateAssets(ctx, assets)
 			So(resp, ShouldBeNil)

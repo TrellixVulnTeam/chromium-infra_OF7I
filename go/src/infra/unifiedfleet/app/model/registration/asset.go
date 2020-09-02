@@ -54,7 +54,7 @@ func newAssetEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, e
 	return &AssetEntity{
 		Name:  a.GetName(),
 		Zone:  a.GetLocation().GetZone().String(),
-		Type:  a.GetType(),
+		Type:  a.GetType().String(),
 		Model: a.GetModel(),
 		Asset: asset,
 	}, nil
@@ -76,7 +76,7 @@ func DeleteAsset(ctx context.Context, id string) error {
 
 // CreateAsset creates an asset record in the datastore using the given asset proto.
 func CreateAsset(ctx context.Context, asset *ufspb.Asset) (*ufspb.Asset, error) {
-	if asset == nil || asset.Name == "" || asset.Type == "" || asset.Model == "" || asset.Location == nil {
+	if asset == nil || asset.Name == "" || asset.Type == ufspb.AssetType_UNDEFINED || asset.Location == nil {
 		return nil, errors.Reason("Invalid Asset [Asset is empty or one or more required fields are missing]").Err()
 	}
 	asset.UpdateTime = ptypes.TimestampNow()
