@@ -113,13 +113,11 @@ func (c *testRunnerBuild) ToTestRun(ctx context.Context) *analytics.TestRun {
 		DisplayName:  c.req.GetTest().GetAutotest().GetDisplayName(),
 		ExecutionUrl: inferExecutionURL(c.bb, c.id),
 		ParentUid:    c.parentID,
-		Timeline: &analytics.Timeline{
-			CreateTime: c.createTime,
-			StartTime:  c.startTime,
-			EndTime:    c.endTime,
-		},
-		Model:  c.model,
-		Status: inferTestRunStatus(c.status),
+		CreateTime:   c.createTime,
+		StartTime:    c.startTime,
+		EndTime:      c.endTime,
+		Model:        c.model,
+		Status:       inferTestRunStatus(c.status),
 	}
 	if c.res != nil {
 		r.FullLogUrl = c.res.GetAutotestResult().GetSynchronousLogDataUrl()
@@ -200,6 +198,7 @@ func (c *testRunnerBuild) ToTestCaseResults() []*analytics.TestCaseResult {
 				Value: v.GetVerdict().String(),
 			},
 			HumanReadableSummary: v.GetHumanReadableSummary(),
+			CreateTime:           c.endTime,
 		})
 	}
 	return r

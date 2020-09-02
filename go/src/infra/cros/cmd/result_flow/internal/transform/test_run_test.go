@@ -202,13 +202,15 @@ func genFakeTestRun(out *out) *analytics.TestRun {
 		),
 		Model:      out.model,
 		ParentUid:  "TestPlanRuns/fake-build-id/fake-test-run",
-		Timeline:   genAnalyticTimeline(),
 		FullLogUrl: "gs://fakeLogURL",
 		Prejob: &analytics.TestRun_Prejob{
 			Verdict: &analytics.Verdict{
 				Value: out.prejobVerdict,
 			},
 		},
+		CreateTime: fakeCreateTime,
+		StartTime:  fakeStartTime,
+		EndTime:    fakeEndTime,
 		Status: &analytics.Status{
 			Value: out.lifeCycle,
 		},
@@ -237,6 +239,7 @@ func genFakeTestCaseResult(label, verdict string) *analytics.TestCaseResult {
 			Value: verdict,
 		},
 		HumanReadableSummary: fmt.Sprintf("fake summary for %s", label),
+		CreateTime:           fakeEndTime,
 	}
 }
 
@@ -332,10 +335,12 @@ func checkTestRunEquality(want, got *analytics.TestRun) {
 	So(got.ExecutionUrl, ShouldEqual, want.ExecutionUrl)
 	So(got.ParentUid, ShouldEqual, want.ParentUid)
 	So(got.Model, ShouldEqual, want.Model)
+	So(got.CreateTime, ShouldEqual, want.CreateTime)
+	So(got.StartTime, ShouldEqual, want.StartTime)
+	So(got.EndTime, ShouldEqual, want.EndTime)
 	So(got.GetVerdict().GetValue(), ShouldEqual, want.GetVerdict().GetValue())
 	So(got.GetStatus().GetValue(), ShouldEqual, want.GetStatus().GetValue())
 	So(got.GetPrejob().GetVerdict().GetValue(), ShouldEqual, want.GetPrejob().GetVerdict().GetValue())
-	So(got.Timeline, ShouldResemble, want.Timeline)
 }
 
 func checkTestCaseEquality(want, got *analytics.TestCaseResult) {
@@ -344,4 +349,5 @@ func checkTestCaseEquality(want, got *analytics.TestCaseResult) {
 	So(got.ParentBuildId, ShouldEqual, want.ParentBuildId)
 	So(got.GetVerdict().GetValue(), ShouldEqual, want.GetVerdict().GetValue())
 	So(got.HumanReadableSummary, ShouldEqual, want.HumanReadableSummary)
+	So(got.CreateTime, ShouldEqual, want.CreateTime)
 }
