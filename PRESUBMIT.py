@@ -329,8 +329,12 @@ def PylintChecks(input_api, output_api, only_changed):  # pragma: no cover
 
   files_to_check = ['.*\.py$']
   files_to_skip = list(input_api.DEFAULT_FILES_TO_SKIP)
+  # FIXME: files_to_skip are regexes, but DISABLED_PROJECTS aren't.
   files_to_skip += DISABLED_PROJECTS
-  files_to_skip += ['.*\.pyc$', '.*_pb2\.py']
+  files_to_skip += [
+    '.*_pb2\.py',
+    'chromeperf/.*',  # TODO(crbug.com/1123486): pylint for Python3
+  ]
   # TODO(phajdan.jr): pylint recipes-py code (http://crbug.com/617939).
   files_to_skip += [r'^recipes/recipes\.py$']
   files_to_skip += IgnoredPaths(input_api)
