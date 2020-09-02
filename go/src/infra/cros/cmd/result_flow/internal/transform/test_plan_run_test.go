@@ -210,7 +210,9 @@ func genFakeTestPlanRun(out *testPlanRun) *analytics.TestPlanRun {
 		DutPool:       out.pool,
 		BuildTarget:   out.buildTarget,
 		ChromeosBuild: out.crosBuild,
-		Timeline:      genAnalyticTimeline(),
+		CreateTime:    fakeCreateTime,
+		StartTime:     fakeStartTime,
+		EndTime:       fakeEndTime,
 		Status: &analytics.Status{
 			Value: out.status,
 		},
@@ -268,14 +270,6 @@ func setLegacySuite(req *test_platform.Request, suite string) {
 	}
 }
 
-func genAnalyticTimeline() *analytics.Timeline {
-	return &analytics.Timeline{
-		CreateTime: fakeCreateTime,
-		StartTime:  fakeStartTime,
-		EndTime:    fakeEndTime,
-	}
-}
-
 func genFakeUID(b string) string {
 	return fmt.Sprintf("TestPlanRuns/%d/%s", fakeBuildID, b)
 }
@@ -317,7 +311,9 @@ func checkTestPlanRunEquality(want, got *analytics.TestPlanRun) {
 	So(want.BuildTarget, ShouldEqual, got.BuildTarget)
 	So(want.ChromeosBuild, ShouldEqual, got.ChromeosBuild)
 	So(want.GetStatus().GetValue(), ShouldEqual, got.GetStatus().GetValue())
-	So(want.Timeline, ShouldResemble, got.Timeline)
+	So(got.CreateTime, ShouldEqual, want.CreateTime)
+	So(got.StartTime, ShouldEqual, want.StartTime)
+	So(got.EndTime, ShouldEqual, want.EndTime)
 }
 
 func ctpRequestsToInputField(requests map[string]*test_platform.Request) *bbpb.Build_Input {

@@ -98,7 +98,9 @@ func (c *ctpBuild) genTestPlanRun(ctx context.Context, key string) *analytics.Te
 		BuildTarget:   c.getBuildTarget(key),
 		ChromeosBuild: c.getChromeosBuild(key),
 		Status:        c.inferTestPlanStatus(key),
-		Timeline:      c.getTimeline(),
+		CreateTime:    c.createTime,
+		StartTime:     c.startTime,
+		EndTime:       c.endTime,
 	}
 }
 
@@ -159,14 +161,6 @@ func (c *ctpBuild) inferTestPlanStatus(key string) *analytics.Status {
 	}
 	return &analytics.Status{
 		Value: m[resp.GetState().GetLifeCycle()],
-	}
-}
-
-func (c *ctpBuild) getTimeline() *analytics.Timeline {
-	return &analytics.Timeline{
-		CreateTime: c.createTime,
-		StartTime:  c.startTime,
-		EndTime:    c.endTime,
 	}
 }
 
