@@ -1,1 +1,1 @@
-google-cloud-ndb>=1.5.0
+google-cloud-datastore>=1.15.0

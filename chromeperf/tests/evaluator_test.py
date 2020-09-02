@@ -5,7 +5,6 @@
 import collections
 import logging
 import functools
-import unittest
 import sys
 
 from chromeperf.engine import evaluator

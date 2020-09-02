@@ -7,4 +7,5 @@ setup(
     name='chromeperf',
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    setup_requires=['pytest-runner'])
+    setup_requires=['pytest-runner'],
+)

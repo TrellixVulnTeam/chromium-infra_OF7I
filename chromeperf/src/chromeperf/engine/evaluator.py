@@ -4,6 +4,7 @@
 
 import collections
 import copy
+import dataclasses
 import logging
 
 from chromeperf.engine import actions
@@ -14,12 +15,15 @@ from chromeperf.engine import actions
 _NOT_EVALUATED, _CHILDREN_PENDING, _EVALUATION_DONE = (0, 1, 2)
 
 
-class TaskVertex(
-    collections.namedtuple('TaskVertex',
-                           ('id', 'vertex_type', 'state', 'payload'))):
-  __slots__ = ()
+@dataclasses.dataclass
+class TaskVertex:
+  id: str
+  vertex_type: str
+  payload: str
+  state: str = 'unknown'
 
 
+# TODO(fancl): Migrate all these namedtuple to dataclass
 class Dependency(collections.namedtuple('Dependency', ('from_', 'to'))):
   __slots__ = ()
 
