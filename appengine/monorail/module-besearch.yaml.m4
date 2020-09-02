@@ -74,9 +74,6 @@ ifdef(`DEV',`
 ifdef(`STAGING',`
   name: "projects/monorail-staging/locations/us-central1/connectors/redis-connector"
 ')
-ifdef(`PROD', `
-  name: "projects/monorail-prod/locations/us-central1/connectors/redis-connector"
-')
 
 skip_files:
 - ^(.*/)?#.*#$
