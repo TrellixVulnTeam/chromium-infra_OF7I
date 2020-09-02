@@ -9,6 +9,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/model/registration"
 )
 
@@ -18,9 +19,9 @@ import (
 // This function only checks for the assets that have Device info missing or
 // the last update on the device was 48 hours ago.
 func SyncAssetInfoFromHaRT(ctx context.Context) error {
-	//TODO(anushruth): Add these to config and get project and topic from there
-	proj := "hardware-request-tracker"
-	topic := "assetInfoRequest"
+	conf := config.Get(ctx).GetHart()
+	proj := conf.GetProject()
+	topic := conf.GetTopic()
 	client, err := pubsub.NewClient(ctx, proj)
 	if err != nil {
 		logging.Errorf(ctx, "Unable to create pubsub client %v", err)
@@ -28,24 +29,17 @@ func SyncAssetInfoFromHaRT(ctx context.Context) error {
 	}
 	top := client.Topic(topic)
 
-	res, err := registration.GetAllMachines(ctx)
+	res, err := registration.GetAllAssets(ctx)
 	if err != nil {
-		logging.Errorf(ctx, "Unable to get machines %v", err)
+		logging.Errorf(ctx, "Unable to get assets %v", err)
 		return err
 	}
-	var ids []string
-	for _, r := range *res {
-		if r.Err == nil {
-			if machine, ok := r.Data.(*ufspb.Machine); ok && machine != nil {
-				// Check if it's a ChromeOS machine that hasn't been updated for 48 hours, or we don't know
-				if crosmac := machine.GetChromeosMachine(); (crosmac != nil &&
-					time.Since(machine.UpdateTime.AsTime()).Hours() > 48.00) || machine.Device == nil {
-					//TODO(anushruth): Need a way to verify if it's cros device if machine.Device == nil
-					ids = append(ids, machine.Name)
-				}
-			}
-		} else {
-			logging.Warningf(ctx, "Failure getting a machine %v", r.Err)
+	ids := make([]string, 0, len(res))
+	for _, r := range res {
+		// Request an update, if we don't have asset info or the last update
+		// was more than 2 days ago.
+		if r.Info == nil || time.Since(r.UpdateTime.AsTime()).Hours() > 48.00 {
+			ids = append(ids, r.Name)
 		}
 	}
 	logging.Infof(ctx, "Updating %v devices", len(ids))

@@ -69,6 +69,32 @@ func GetAsset(ctx context.Context, name string) (*ufspb.Asset, error) {
 	return pm.(*ufspb.Asset), err
 }
 
+// GetAllAssets returns all assets currently in the datastore.
+func GetAllAssets(ctx context.Context) ([]*ufspb.Asset, error) {
+	resp, err := ufsds.GetAll(ctx, func(ctx context.Context) ([]ufsds.FleetEntity, error) {
+		var entities []*AssetEntity
+		q := datastore.NewQuery(AssetKind)
+		if err := datastore.GetAll(ctx, q, &entities); err != nil {
+			return nil, err
+		}
+		fe := make([]ufsds.FleetEntity, len(entities))
+		for i, e := range entities {
+			fe[i] = e
+		}
+		return fe, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	assets := make([]*ufspb.Asset, 0, len(*resp))
+	for _, a := range *resp {
+		if b, ok := a.Data.(*ufspb.Asset); ok && a.Err == nil {
+			assets = append(assets, b)
+		}
+	}
+	return assets, nil
+}
+
 // DeleteAsset deletes the asset corresponding to id from datastore.
 func DeleteAsset(ctx context.Context, id string) error {
 	return ufsds.Delete(ctx, &ufspb.Asset{Name: id}, newAssetEntity)

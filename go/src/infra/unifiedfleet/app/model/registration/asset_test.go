@@ -218,3 +218,28 @@ func TestBatchUpdateAssets(t *testing.T) {
 		})
 	})
 }
+
+func TestGetAllAssets(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+	Convey("GetAllAssets", t, func() {
+		Convey("GetAllAssets - Emtpy database", func() {
+			resp, err := GetAllAssets(ctx)
+			So(len(resp), ShouldEqual, 0)
+			So(err, ShouldBeNil)
+		})
+		Convey("GetAllAssets - non-empty database", func() {
+			assets := make([]*ufspb.Asset, 0, 10)
+			for i := 0; i < 10; i++ {
+				asset := mockAsset(fmt.Sprintf("C000300%d", i), "eve", fmt.Sprintf("cros6-row7-rack5-host%d", i), ufspb.AssetType_DUT)
+				resp, err := CreateAsset(ctx, asset)
+				So(err, ShouldBeNil)
+				assets = append(assets, resp)
+			}
+			resp, err := GetAllAssets(ctx)
+			So(len(resp), ShouldEqual, 10)
+			So(err, ShouldBeNil)
+		})
+	})
+}

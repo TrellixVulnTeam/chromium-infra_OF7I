@@ -17,6 +17,7 @@ message Config {
   string machine_db_host = 7;
   string cros_inventory_host = 5;
   string self_storage_bucket = 6;
+  PubSub hart = 8;
 }
 
 message OSNetworkConfig {
@@ -33,3 +34,7 @@ message OSNetworkConfig {
   repeated OSNetworkTopology cros_network_topology = 4;
 }
 
+message PubSub {
+  string project = 1;
+  string topic = 2;
+}
