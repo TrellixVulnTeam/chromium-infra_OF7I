@@ -35,3 +35,13 @@ gae_ts_mon.initialize(app)
 
 endpoints = endpoints_webapp2.api_server(
     [api_svc_v1.MonorailApi, api_svc_v1.ClientConfigApi])
+
+# TODO(crbug/monorail/8221): Remove this code during this milestone.
+# It only serves as a safe way to begin connecting to redis without risking
+# user facing problems.
+try:
+  logging.info('Starting initial redis connection verification.')
+  from framework import redis_utils
+  redis_utils.AsyncVerifyRedisConnection()
+except:  # pylint: disable=bare-except
+  logging.exception('Exception when instantiating redis connection.')
