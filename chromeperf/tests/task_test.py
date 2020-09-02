@@ -11,6 +11,7 @@ from google.cloud import datastore
 
 from chromeperf.engine import evaluator as evaluator_module
 from chromeperf.pinpoint.models import task as task_module
+from chromeperf.pinpoint.actions import updates
 
 FakeEvent = collections.namedtuple('Event', ('type', 'status', 'payload'))
 
@@ -46,7 +47,7 @@ def testPopulateAndEvaluateAdderGraph():
   accumulator = evaluator_module.evaluate_graph(
       {},
       AdderEvaluator,
-      task_module.TaskGraphLoader(client, job),
+      task_module.task_graph_loader(client, job),
   )
   assert accumulator.get('plus') == 1
 
@@ -115,7 +116,7 @@ def testPopulateEvaluateCallCounts():
   evaluator_module.evaluate_graph(
       'test',
       CallCountEvaluator,
-      task_module.TaskGraphLoader(client, job),
+      task_module.task_graph_loader(client, job),
   )
   assert calls == {
       'leaf_0': 1,
@@ -135,7 +136,7 @@ def testPopulateEmptyGraph(mocker):
     evaluator_module.evaluate_graph(
         'test',
         evaluator,
-        task_module.TaskGraphLoader(client, job),
+        task_module.task_graph_loader(client, job),
     )
 
 
@@ -161,7 +162,7 @@ def testPopulateCycles(mocker):
     evaluator_module.evaluate_graph(
         'test',
         evaluator,
-        task_module.TaskGraphLoader(client, job),
+        task_module.task_graph_loader(client, job),
     )
 
 
@@ -172,7 +173,7 @@ def testPopulateIslands():
 
 def update_task(job, task_id, new_state, _):
   logging.debug('Updating task "%s" to "%s"', task_id, new_state)
-  task_module.update_task(datastore.Client(), job, task_id, new_state=new_state)
+  updates.update_task(datastore.Client(), job, task_id, new_state=new_state)
 
 
 def TransitionEvaluator(job, task, event, accumulator):
@@ -217,7 +218,7 @@ class SetupGraph():
             ],
         ),
     )
-    self.graph = task_module.TaskGraphLoader(client, self.job)
+    self.graph = task_module.task_graph_loader(client, self.job)
 
 
 @pytest.fixture
@@ -281,7 +282,7 @@ def testEvaluateStateTransitionProgressions(setupGraph):
 
 
 def testEvaluateInvalidTransition(setupGraph):
-  with pytest.raises(task_module.InvalidTransition):
+  with pytest.raises(updates.InvalidTransition):
     assert evaluator_module.evaluate_graph(
         {
             'target': 'task_0',
@@ -308,13 +309,13 @@ def testEvaluateInvalidTransition(setupGraph):
 
 
 def testEvaluateInvalidAmendment_ExistingTask(setupGraph):
-  with pytest.raises(task_module.InvalidAmendment):
+  with pytest.raises(updates.InvalidAmendment):
 
     def AddExistingTaskEvaluator(task, event, _):
       if event.get('target') == task.id:
 
         def GraphExtender(_):
-          task_module.extend_task_graph(
+          updates.extend_task_graph(
               datastore.Client(),
               setupGraph.job,
               vertices=[
@@ -342,7 +343,7 @@ def testEvaluateInvalidAmendment_BrokenDependency(setupGraph):
       if event.get('target') == task.id:
 
         def GraphExtender(_):
-          task_module.extend_task_graph(
+          updates.extend_task_graph(
               datastore.Client(),
               setupGraph.job,
               vertices=[],
