@@ -220,7 +220,9 @@ func (c *pipeTestRunnerDataRun) loadTestRunnerRequest() error {
 
 func toTestRunRow(ctx context.Context, b transform.TestRunnerBuild) bigquery.ValueSaver {
 	row := b.ToTestRun(ctx)
-	return &lucibq.Row{Message: row, InsertID: fmt.Sprintf("%d", row.GetBuildId())}
+	// Reflect status in the InsertID, because for some build its pre-execution and
+	// post-execution messages may get processed at same time.
+	return &lucibq.Row{Message: row, InsertID: fmt.Sprintf("%d/%s", row.GetBuildId(), row.GetStatus().GetValue())}
 }
 
 func toTestCaseRows(b transform.TestRunnerBuild) []bigquery.ValueSaver {

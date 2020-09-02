@@ -199,7 +199,9 @@ func (c *pipeCTPDataRun) loadCTPRequest() error {
 func toRows(ctx context.Context, b transform.CTPBuildResults) []bigquery.ValueSaver {
 	var rows []bigquery.ValueSaver
 	for _, t := range b.ToTestPlanRuns(ctx) {
-		rows = append(rows, &lucibq.Row{Message: t, InsertID: t.GetUid()})
+		// Reflect status in the InsertID, because for some build its pre-execution and
+		// post-execution messages may get processed at same time.
+		rows = append(rows, &lucibq.Row{Message: t, InsertID: fmt.Sprintf("%s/%s", t.GetUid(), t.GetStatus().GetValue())})
 	}
 	return rows
 }
