@@ -188,9 +188,7 @@ class RevealEmailsToMembersTest(unittest.TestCase):
         owner_ids=[111],
         committer_ids=[222],
         contrib_ids=[333, 888])
-
-    user = user_pb2.User()
-    user.is_site_admin = False
+    user = self.services.user.TestAddUser('test@example.com', 1000)
     self.mr.auth.user_pb = user
 
   def CheckRevealAllToMember(
@@ -259,8 +257,9 @@ class RevealEmailsToMembersTest(unittest.TestCase):
       self.CheckRevealAllToMember(100001, False)
 
   def testRevealEmailToSelf(self):
-    self.mr.auth.user_pb.email = 'user@example.com'
-    self.CheckRevealAllToMember(100001, True)
+    logged_in_user = self.services.user.TestAddUser('user@example.com', 333)
+    self.mr.auth.user_pb = logged_in_user
+    self.CheckRevealAllToMember(333, True)
 
   def testRevealAllEmailsToMembers_Collaborators(self):
     self.CheckRevealAllToMember(0, False)

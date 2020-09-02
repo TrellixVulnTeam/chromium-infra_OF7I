@@ -13,6 +13,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import functools
+import itertools
 import re
 import string
 
@@ -31,6 +33,73 @@ RE_COLUMN_NAME = r'\w+[\w+-.]*\w+'
 RE_COLUMN_SPEC = re.compile('(%s(\s%s)*)*$' % (RE_COLUMN_NAME, RE_COLUMN_NAME))
 
 
+def WhichUsersShareAProject(cnxn, services, user_effective_ids, other_users):
+  # type: (MonorailConnection, Services, Sequence[int],
+  #     Collection[user_pb2.User]) -> Collection[user_pb2.User]
+  """Returns a list of users that share a project with given user_effective_ids.
+
+  Args:
+    cnxn: MonorailConnection to the database.
+    services: Services object for connections to backend services.
+    user_effective_ids: The user's set of effective_ids.
+    other_users: The list of users to be filtered for email visibility.
+
+  Returns:
+    Collection of users that share a project with at least one effective_id.
+  """
+
+  projects_by_user_effective_id = services.project.GetProjectMemberships(
+      cnxn, user_effective_ids)
+  authed_user_projects = set(
+      itertools.chain.from_iterable(projects_by_user_effective_id.values()))
+
+  other_user_ids = [other_user.user_id for other_user in other_users]
+  all_other_user_effective_ids = GetEffectiveIds(cnxn, services, other_user_ids)
+  users_that_share_project = []
+  for other_user in other_users:
+    other_user_effective_ids = all_other_user_effective_ids[other_user.user_id]
+
+    # Do not filter yourself.
+    if any(uid in user_effective_ids for uid in other_user_effective_ids):
+      users_that_share_project.append(other_user)
+      continue
+
+    other_user_proj_by_effective_ids = services.project.GetProjectMemberships(
+        cnxn, other_user_effective_ids)
+    other_user_projects = itertools.chain.from_iterable(
+        other_user_proj_by_effective_ids.values())
+    if any(project in authed_user_projects for project in other_user_projects):
+      users_that_share_project.append(other_user)
+  return users_that_share_project
+
+
+def FilterViewableEmails(cnxn, services, user_auth, other_users):
+  # type: (MonorailConnection, Services, AuthData,
+  #     Collection[user_pb2.User]) -> Collection[user_pb2.User]
+  """Returns a list of users with emails visible to `user_auth`.
+
+  Args:
+    cnxn: MonorailConnection to the database.
+    services: Services object for connections to backend services.
+    user_auth: The AuthData of the user viewing the email addresses.
+    other_users: The list of users to be filtered for email visibility.
+
+  Returns:
+    Collection of user that should reveal their emails.
+  """
+  # Case 1: Anon users don't see anything revealed.
+  if user_auth.user_pb is None:
+    return []
+
+  # Case 2: site admins always see unobscured email addresses.
+  if user_auth.user_pb.is_site_admin:
+    return other_users
+
+  # Case 3: Users see unobscured emails as long as they share a common Project.
+  return WhichUsersShareAProject(
+      cnxn, services, user_auth.effective_ids, other_users)
+
+
 def DoUsersShareAProject(cnxn, services, user_effective_ids, other_user_id):
   # type: (MonorailConnection, Services, Sequence[int], int) -> bool
   """Determine whether two users share at least one Project.
@@ -47,57 +116,19 @@ def DoUsersShareAProject(cnxn, services, user_effective_ids, other_user_id):
   Returns:
     True if one or more Projects are shared between the Users.
   """
-  (
-      authed_owned_project_ids, authed_membered_project_ids,
-      authed_contrib_project_ids) = services.project.GetUserRolesInAllProjects(
-          cnxn, user_effective_ids)
-  authed_user_projects = authed_owned_project_ids.union(
-      authed_membered_project_ids).union(authed_contrib_project_ids)
+  projects_by_user_effective_id = services.project.GetProjectMemberships(
+      cnxn, user_effective_ids)
+  authed_user_projects = itertools.chain.from_iterable(
+      projects_by_user_effective_id.values())
 
   # Get effective ids for other user to handle transitive Project membership.
   other_user_effective_ids = GetEffectiveIds(cnxn, services, other_user_id)
-  (
-      other_owned_project_ids, other_membered_project_ids,
-      other_contrib_project_ids) = services.project.GetUserRolesInAllProjects(
-          cnxn, other_user_effective_ids)
-  other_user_projects = other_owned_project_ids.union(
-      other_membered_project_ids).union(other_contrib_project_ids)
+  projects_by_other_user_effective_ids = services.project.GetProjectMemberships(
+      cnxn, other_user_effective_ids)
+  other_user_projects = itertools.chain.from_iterable(
+      projects_by_other_user_effective_ids.values())
 
-  return not authed_user_projects.isdisjoint(other_user_projects)
-
-
-def ShouldRevealEmail(cnxn, services, user_auth, other_user):
-  # type: (MonorailConnection, Services, AuthData, user_pb2.User) -> bool
-  """Decide whether to publish a user's email address.
-
-  Args:
-    cnxn: MonorailConnection to the database.
-    services: Services object for connections to backend services.
-    user_auth: The AuthData of the user viewing the email addresses.
-    other_user: The User PB of the viewed user.
-
-  Returns:
-    True if email addresses should be published to the logged-in user.
-  """
-  # Case 1: Anon users don't see anything revealed.
-  if user_auth.user_pb is None:
-    return False
-
-  # Case 2: site admins always see unobscured email addresses.
-  if user_auth.user_pb.is_site_admin:
-    return True
-
-  # Case 3: Do not obscure your own email.
-  if user_auth.user_pb.email == other_user.email:
-    return True
-
-  user_effective_ids = user_auth.effective_ids
-  other_user_id = other_user.user_id
-  # Case 4: Users see unobscured emails as long as they share a common Project.
-  if DoUsersShareAProject(cnxn, services, user_effective_ids, other_user_id):
-    return True
-
-  return False
+  return any(project in authed_user_projects for project in other_user_projects)
 
 
 # TODO(https://crbug.com/monorail/8192): Remove this method.
@@ -177,6 +208,9 @@ def CreateUserDisplayNames(cnxn, services, user_auth, users):
       the email will be an empty string.
   """
   display_names = {}
+
+  # Do a pass on simple display cases.
+  maybe_revealed_users = []
   for user in users:
     if user.user_id == framework_constants.DELETED_USER_ID:
       display_names[user.user_id] = framework_constants.DELETED_USER_NAME
@@ -185,14 +219,20 @@ def CreateUserDisplayNames(cnxn, services, user_auth, users):
     elif user.email in client_config_svc.GetServiceAccountMap():
       display_names[user.user_id] = client_config_svc.GetServiceAccountMap()[
           user.email]
-    elif ShouldRevealEmail(cnxn, services, user_auth,
-                           user) or not user.obscure_email:
+    elif not user.obscure_email:
       display_names[user.user_id] = user.email
     else:
+      # Default to hiding user email.
       (_username, _domain, _obs_username,
        obs_email) = ParseAndObscureAddress(user.email)
       display_names[user.user_id] = obs_email
+      maybe_revealed_users.append(user)
 
+  # Reveal viewable emails.
+  viewable_users = FilterViewableEmails(
+      cnxn, services, user_auth, maybe_revealed_users)
+  for user in viewable_users:
+    display_names[user.user_id] = user.email
   return display_names
 
 
@@ -388,35 +428,51 @@ def IsCorpUser(cnxn, services, user_id):
   return corp_mode
 
 
-def _AddEffectiveIDsOfLinkedAccounts(
-    cnxn, services, effective_ids, linked_account_id):
-  # type: (MonorailConnection, Services, Collection[int], int) -> None
-  """Add any linked account IDs to the current user's effective_ids."""
-  effective_ids.add(linked_account_id)
-  linked_memberships = services.usergroup.LookupMemberships(
-      cnxn, linked_account_id)
-  effective_ids.update(linked_memberships)
+def GetEffectiveIds(cnxn, services, user_ids):
+  # type: (MonorailConnection, Services, Collection[int]) ->
+  #   Mapping[int, Collection[int]]
+  """
+  Given a set of user IDs, it returns a mapping of user_id to a set of effective
+  IDs that include the user's ID and all of their user groups. This mapping
+  will be contain only the user_id anonymous users.
+  """
+  # Get direct memberships for user_ids.
+  effective_ids_by_user_id = services.usergroup.LookupAllMemberships(
+      cnxn, user_ids)
+  # Add user_id to list of effective_ids.
+  for user_id, effective_ids in effective_ids_by_user_id.items():
+    effective_ids.add(user_id)
+  # Get User objects for user_ids.
+  users_by_id = services.user.GetUsersByIDs(cnxn, user_ids)
+  for user_id, user in users_by_id.items():
+    if user and user.email:
+      effective_ids_by_user_id[user_id].update(
+          _ComputeMembershipsByEmail(cnxn, services, user.email))
+
+      # Add related parent and child ids.
+      related_ids = []
+      if user.linked_parent_id:
+        related_ids.append(user.linked_parent_id)
+      if user.linked_child_ids:
+        related_ids.extend(user.linked_child_ids)
+
+      # Add any related efective_ids.
+      if related_ids:
+        effective_ids_by_user_id[user_id].update(related_ids)
+        effective_ids_by_related_id = services.usergroup.LookupAllMemberships(
+            cnxn, related_ids)
+        related_effective_ids = functools.reduce(
+            set.union, effective_ids_by_related_id.values(), set())
+        effective_ids_by_user_id[user_id].update(related_effective_ids)
+  return effective_ids_by_user_id
 
 
-def GetEffectiveIds(cnxn, services, user_id):
-  # type: (MonorailConnection, Services, int) -> Collection[int]
+def _ComputeMembershipsByEmail(cnxn, services, email):
+  # type: (MonorailConnection, Services, str) -> Collection[int]
   """
-  Returns a set of effective IDs that include the user's ID and the user IDs of
-  all of their user groups. This will be empty for anonymous users.
+  Given an user email, it returns a list [group_id] of computed user groups.
   """
-  direct_memberships = services.usergroup.LookupMemberships(cnxn, user_id)
-  effective_ids = direct_memberships.copy()
-  effective_ids.add(user_id)
-  user_pb = services.user.GetUser(cnxn, user_id)
-  if user_pb and user_pb.email:
-    (_username, user_email_domain, _obs_username,
-     _obs_email) = ParseAndObscureAddress(user_pb.email)
-    computed_memberships = services.usergroup.LookupComputedMemberships(
-        cnxn, user_email_domain)
-    effective_ids.update(computed_memberships)
-    if user_pb.linked_parent_id:
-      _AddEffectiveIDsOfLinkedAccounts(
-          cnxn, services, effective_ids, user_pb.linked_parent_id)
-    for child_id in user_pb.linked_child_ids:
-      _AddEffectiveIDsOfLinkedAccounts(cnxn, services, effective_ids, child_id)
-  return effective_ids
+  # Get the user email domain to compute memberships of the user.
+  (_username, user_email_domain, _obs_username,
+   _obs_email) = ParseAndObscureAddress(email)
+  return services.usergroup.LookupComputedMemberships(cnxn, user_email_domain)

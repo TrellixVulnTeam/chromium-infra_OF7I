@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import absolute_import
 
 import collections
+import itertools
 import logging
 import re
 import sys
@@ -1173,6 +1174,21 @@ class ProjectService(object):
         contrib_project_ids.add(project.project_id)
 
     return owned_project_ids, membered_project_ids, contrib_project_ids
+
+  def GetProjectMemberships(self, _cnxn, effective_ids, use_cache=True):
+    # type: MonorailConnection, Collection[int], bool ->
+    #     Mapping[int, Collection[int]]
+    projects_by_user_id = collections.defaultdict(set)
+
+    for project in self.projects_by_id.values():
+      member_ids = set(
+          itertools.chain(
+              project.owner_ids, project.committer_ids,
+              project.contributor_ids))
+      for user_id in effective_ids:
+        if user_id in member_ids:
+          projects_by_user_id[user_id].add(project.project_id)
+    return projects_by_user_id
 
   def ExpungeUsersInProjects(self, cnxn, user_ids, limit=None):
     for project in self.projects_by_id.values():

@@ -140,6 +140,55 @@ class ProjectTwoLevelCache(caches.AbstractTwoLevelCache):
     return retrieved_dict
 
 
+class UserToProjectIdTwoLevelCache(caches.AbstractTwoLevelCache):
+  """Class to manage both RAM and memcache for project_ids.
+
+  Keys for this cache are int, user_ids, which might correspond to a group.
+  This cache should be used to fetch a set of project_ids that the user_id
+  is a member of.
+  """
+
+  def __init__(self, cachemanager, project_service):
+    # type: cachemanager_svc.CacheManager, ProjectService -> None
+    super(UserToProjectIdTwoLevelCache, self).__init__(
+        cachemanager, 'project_id', 'project_id:', pb_class=None)
+    self.project_service = project_service
+
+    # Store the last time the table was fetched for rate limit purposes.
+    self.last_fetched = 0
+
+  def FetchItems(self, cnxn, keys):
+    # type MonorailConnection, Collection[int] -> Mapping[int, Collection[int]]
+    """On RAM and memcache miss, hit the database to get missing user_ids."""
+
+    # Unlike with other caches, we fetch and store the entire table.
+    # Thus, for cache misses we limit the rate we re-fetch the table to 60s.
+    now = self._GetCurrentTime()
+    result_dict = collections.defaultdict(set)
+
+    if (now - self.last_fetched) > 60:
+      project_to_user_rows = self.project_service.user2project_tbl.Select(
+          cnxn, cols=['project_id', 'user_id'])
+      self.last_fetched = now
+      # Cache the whole User2Project table.
+      for project_id, user_id in project_to_user_rows:
+        result_dict[user_id].add(project_id)
+
+    # Assume any requested user missing from result is not in any project.
+    result_dict.update(
+        (user_id, set()) for user_id in keys if user_id not in result_dict)
+
+    return result_dict
+
+  def _GetCurrentTime(self):
+    """ Returns the current time. We made a separate method for this to make it
+    easier to unit test. This was a better solution than @mock.patch because
+    the test had several unrelated time.time() calls. Modifying those calls
+    would be more onerous, having to fix calls for this test.
+    """
+    return time.time()
+
+
 class ProjectService(object):
   """The persistence layer for project data."""
 
@@ -160,6 +209,9 @@ class ProjectService(object):
 
     # Like a dictionary {project_id: project}
     self.project_2lc = ProjectTwoLevelCache(cache_manager, self)
+    # A dictionary of user_id to a set of project ids.
+    # Mapping[int, Collection[int]]
+    self.user_to_project_2lc = UserToProjectIdTwoLevelCache(cache_manager, self)
 
     # The project name to ID cache can never be invalidated by individual
     # project changes because it is keyed by strings instead of ints.  In
@@ -492,6 +544,8 @@ class ProjectService(object):
 
     cnxn.Commit()
     self.project_2lc.InvalidateKeys(cnxn, [project_id])
+    updated_user_ids = owner_ids + committer_ids + contributor_ids
+    self.user_to_project_2lc.InvalidateKeys(cnxn, updated_user_ids)
 
   def MarkProjectDeletable(self, cnxn, project_id, config_service):
     """Update the project's state to make it DELETABLE and free up the name.
@@ -511,6 +565,7 @@ class ProjectService(object):
     # So, tell every job to just drop the whole cache.  It should refill
     # efficiently and incrementally from memcache.
     self.project_2lc.InvalidateAllRamEntries(cnxn)
+    self.user_to_project_2lc.InvalidateAllRamEntries(cnxn)
     config_service.InvalidateMemcacheForEntireProject(project_id)
 
   def UpdateRecentActivity(self, cnxn, project_id, now=None):
@@ -520,7 +575,7 @@ class ProjectService(object):
     if now > project.recent_activity + RECENT_ACTIVITY_THRESHOLD:
       self.UpdateProject(cnxn, project_id, recent_activity=now)
 
-  ### Roles and extra perms
+  ### Roles, memberships, and extra perms
 
   def GetUserRolesInAllProjects(self, cnxn, effective_ids):
     """Return three sets of project IDs where the user has a role."""
@@ -544,6 +599,18 @@ class ProjectService(object):
         logging.warn('Unexpected role name %r', role_name)
 
     return owned_project_ids, membered_project_ids, contrib_project_ids
+
+  def GetProjectMemberships(self, cnxn, effective_ids, use_cache=True):
+    # type: MonorailConnection, Collection[int], Optional[bool] ->
+    #     Mapping[int, Collection[int]]
+    """Return a list of project IDs where the user has a membership."""
+    project_id_dict, missed_ids = self.user_to_project_2lc.GetAll(
+        cnxn, effective_ids, use_cache=use_cache)
+
+    # Users that were missed are assumed to not have any projects.
+    assert not missed_ids
+
+    return project_id_dict
 
   def UpdateExtraPerms(
       self, cnxn, project_id, member_id, extra_perms, now=None):

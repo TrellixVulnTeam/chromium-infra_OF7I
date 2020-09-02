@@ -111,7 +111,7 @@ class ParseAndObscureAddressTest(unittest.TestCase):
     self.assertEqual(obscured_email, 'sir.chic...@farm.test')
 
 
-class ShoulRevealEmailTest(unittest.TestCase):
+class FilterViewableEmailsTest(unittest.TestCase):
 
   def setUp(self):
     self.cnxn = fake.MonorailConnection()
@@ -131,47 +131,60 @@ class ShoulRevealEmailTest(unittest.TestCase):
     self.project = self.services.project.TestAddProject(
         'proj', project_id=789, owner_ids=[111], committer_ids=[222])
 
-  def testShouldRevealEmail_Anon(self):
+  def testFilterViewableEmail_Anon(self):
     anon = authdata.AuthData()
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, anon, self.user_1))
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, anon, self.user_2))
+    other_users = [self.user_1, self.user_2]
+    filtered_users = framework_bizobj.FilterViewableEmails(
+        self.cnxn, self.services, anon, other_users)
+    self.assertEqual(filtered_users, [])
 
-  def testShouldRevealEmail_Self(self):
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.requester))
+  def testFilterViewableEmail_Self(self):
+    filtered_users = framework_bizobj.FilterViewableEmails(
+        self.cnxn, self.services, self.user_auth, [self.user_auth.user_pb])
+    self.assertEqual(filtered_users, [self.user_auth.user_pb])
 
-  def testShouldRevealEmail_SiteAdmin(self):
+  def testFilterViewableEmail_SiteAdmin(self):
     self.user_auth.user_pb.is_site_admin = True
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_1))
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_2))
+    other_users = [self.user_1, self.user_2]
+    filtered_users = framework_bizobj.FilterViewableEmails(
+        self.cnxn, self.services, self.user_auth, other_users)
+    self.assertEqual(filtered_users, other_users)
 
-  def testShouldRevealEmail_ProjectMember(self):
+  def testFilterViewableEmail_NonMember(self):
+    other_users = [self.user_1, self.user_2]
+    filtered_users = framework_bizobj.FilterViewableEmails(
+        self.cnxn, self.services, self.user_auth, other_users)
+    self.assertEqual(filtered_users, [])
+
+  def testFilterViewableEmail_ProjectMember(self):
     self.project.committer_ids.append(self.requester.user_id)
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_1))
-    self.assertTrue(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_2))
+    other_users = [self.user_1, self.user_2]
+    filtered_users = framework_bizobj.FilterViewableEmails(
+        self.cnxn, self.services, self.user_auth, other_users)
+    self.assertEqual(filtered_users, other_users)
 
-  def testShouldRevealEmail_NonMember(self):
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_1))
-    self.assertFalse(
-        framework_bizobj.ShouldRevealEmail(
-            self.cnxn, self.services, self.user_auth, self.user_2))
 
-  # TODO(https://crbug.com/monorail/8192): Remove deprecated tests.
+# TODO(https://crbug.com/monorail/8192): Remove deprecated tests.
+class DeprecatedShouldRevealEmailTest(unittest.TestCase):
+
+  def setUp(self):
+    self.cnxn = fake.MonorailConnection()
+    self.services = service_manager.Services(
+        project=fake.ProjectService(),
+        user=fake.UserService(),
+        usergroup=fake.UserGroupService())
+    self.user_1 = self.services.user.TestAddUser(
+        'user_1@test.com', 111, obscure_email=True)
+    self.user_2 = self.services.user.TestAddUser(
+        'user_2@test.com', 222, obscure_email=False)
+    self.requester = self.services.user.TestAddUser(
+        'user_5@test.com', 555, obscure_email=True)
+    self.user_auth = authdata.AuthData(
+        user_id=self.requester.user_id, email=self.requester.email)
+    self.user_auth.user_pb.email = self.user_auth.email
+    self.project = self.services.project.TestAddProject(
+        'proj', project_id=789, owner_ids=[111], committer_ids=[222])
+
   def testDeprecatedShouldRevealEmail_Anon(self):
     anon = authdata.AuthData()
     self.assertFalse(
@@ -549,23 +562,23 @@ class GetEffectiveIdsTest(unittest.TestCase):
   def testNoMemberships(self):
     """No user groups means effective_ids == {user_id}."""
     effective_ids = framework_bizobj.GetEffectiveIds(
-        self.cnxn, self.services, 111)
-    self.assertEqual(effective_ids, {111})
+        self.cnxn, self.services, [111])
+    self.assertEqual(effective_ids, {111: {111}})
 
   def testNormalMemberships(self):
     """effective_ids should be {user_id, group_id...}."""
     self.services.usergroup.TestAddMembers(888, [111])
     self.services.usergroup.TestAddMembers(999, [111])
     effective_ids = framework_bizobj.GetEffectiveIds(
-        self.cnxn, self.services, 111)
-    self.assertEqual(effective_ids, {111, 888, 999})
+        self.cnxn, self.services, [111])
+    self.assertEqual(effective_ids, {111: {111, 888, 999}})
 
   def testComputedUserGroup(self):
     """effective_ids should be {user_id, group_id...}."""
     self.services.usergroup.TestAddGroupSettings(888, 'everyone@example.com')
     effective_ids = framework_bizobj.GetEffectiveIds(
-        self.cnxn, self.services, 111)
-    self.assertEqual(effective_ids, {111, 888})
+        self.cnxn, self.services, [111])
+    self.assertEqual(effective_ids, {111: {111, 888}})
 
   def testAccountHasParent(self):
     """The parent's effective_ids are added to child's."""
@@ -574,14 +587,14 @@ class GetEffectiveIdsTest(unittest.TestCase):
     parent = self.services.user.TestAddUser('parent@example.com', 222)
     parent.linked_child_ids = [111]
     effective_ids = framework_bizobj.GetEffectiveIds(
-        self.cnxn, self.services, 111)
-    self.assertEqual(effective_ids, {111, 222})
+        self.cnxn, self.services, [111])
+    self.assertEqual(effective_ids, {111: {111, 222}})
 
     self.services.usergroup.TestAddMembers(888, [111])
     self.services.usergroup.TestAddMembers(999, [222])
     effective_ids = framework_bizobj.GetEffectiveIds(
-        self.cnxn, self.services, 111)
-    self.assertEqual(effective_ids, {111, 222, 888, 999})
+        self.cnxn, self.services, [111])
+    self.assertEqual(effective_ids, {111: {111, 222, 888, 999}})
 
   def testAccountHasChildren(self):
     """All linked child effective_ids are added to parent's."""
@@ -593,11 +606,11 @@ class GetEffectiveIdsTest(unittest.TestCase):
     parent.linked_child_ids = [111, 222]
 
     effective_ids = framework_bizobj.GetEffectiveIds(
-        self.cnxn, self.services, 333)
-    self.assertEqual(effective_ids, {111, 222, 333})
+        self.cnxn, self.services, [333])
+    self.assertEqual(effective_ids, {333: {111, 222, 333}})
 
     self.services.usergroup.TestAddMembers(888, [111])
     self.services.usergroup.TestAddMembers(999, [222])
     effective_ids = framework_bizobj.GetEffectiveIds(
-        self.cnxn, self.services, 333)
-    self.assertEqual(effective_ids, {111, 222, 333, 888, 999})
+        self.cnxn, self.services, [333])
+    self.assertEqual(effective_ids, {333: {111, 222, 333, 888, 999}})

@@ -89,6 +89,98 @@ class ProjectTwoLevelCacheTest(unittest.TestCase):
     self.assertEqual(True, project_dict[234].issue_notify_always_detailed)
 
 
+class UserToProjectIdTwoLevelCacheTest(unittest.TestCase):
+
+  def setUp(self):
+    self.testbed = testbed.Testbed()
+    self.testbed.activate()
+    self.testbed.init_memcache_stub()
+
+    self.cnxn = fake.MonorailConnection()
+    self.cache_manager = fake.CacheManager()
+    self.mox = mox.Mox()
+    self.project_service = MakeProjectService(self.cache_manager, self.mox)
+    self.user_to_project_2lc = self.project_service.user_to_project_2lc
+
+    # Set up DB query mocks.
+    self.cached_user_ids = [100, 101]
+    self.from_db_user_ids = [102, 103]
+    test_table = [
+        (900, self.cached_user_ids[0]),  # Project 900, User 100
+        (900, self.cached_user_ids[1]),  # Project 900, User 101
+        (901, self.cached_user_ids[0]),  # Project 901, User 101
+        (902, self.from_db_user_ids[0]),  # Project 902, User 102
+        (902, self.from_db_user_ids[1]),  # Project 902, User 103
+        (903, self.from_db_user_ids[0]),  # Project 903, User 102
+    ]
+    self.project_service.user2project_tbl.Select = mock.Mock(
+        return_value=test_table)
+
+  def tearDown(self):
+    # memcache.flush_all()
+    self.testbed.deactivate()
+    self.mox.UnsetStubs()
+    self.mox.ResetAll()
+
+  def testGetAll(self):
+    # Cache user 100 and 101.
+    self.user_to_project_2lc.CacheItem(self.cached_user_ids[0], set([900, 901]))
+    self.user_to_project_2lc.CacheItem(self.cached_user_ids[1], set([900]))
+    # Test that other project_ids and user_ids get returned by DB queries.
+    first_hit, first_misses = self.user_to_project_2lc.GetAll(
+        self.cnxn, self.cached_user_ids + self.from_db_user_ids)
+
+    self.project_service.user2project_tbl.Select.assert_called_once_with(
+        self.cnxn, cols=['project_id', 'user_id'])
+
+    self.assertEqual(
+        first_hit, {
+            100: set([900, 901]),
+            101: set([900]),
+            102: set([902, 903]),
+            103: set([902]),
+        })
+    self.assertEqual([], first_misses)
+
+  def testGetAllRateLimit(self):
+    test_now = time.time()
+    # Initial request that queries table.
+    self.user_to_project_2lc._GetCurrentTime = mock.Mock(
+        return_value=test_now + 60)
+    self.user_to_project_2lc.GetAll(
+        self.cnxn, self.cached_user_ids + self.from_db_user_ids)
+
+    # Request a user with no projects right after the last request.
+    self.user_to_project_2lc._GetCurrentTime = mock.Mock(
+        return_value=test_now + 61)
+    second_hit, second_misses = self.user_to_project_2lc.GetAll(
+        self.cnxn, [104])
+
+    # Request one more user without project that should make a DB request
+    # because the required rate limit time has passed.
+    self.user_to_project_2lc._GetCurrentTime = mock.Mock(
+        return_value=test_now + 121)
+    third_hit, third_misses = self.user_to_project_2lc.GetAll(self.cnxn, [105])
+
+    # Queried only twice because the second request was rate limited.
+    self.assertEqual(self.project_service.user2project_tbl.Select.call_count, 2)
+
+    # Rate limited response will not return the full table.
+    self.assertEqual(second_hit, {
+        104: set([]),
+    })
+    self.assertEqual([], second_misses)
+    self.assertEqual(
+        third_hit, {
+            100: set([900, 901]),
+            101: set([900]),
+            102: set([902, 903]),
+            103: set([902]),
+            105: set([]),
+        })
+    self.assertEqual([], third_misses)
+
+
 class ProjectServiceTest(unittest.TestCase):
 
   def setUp(self):

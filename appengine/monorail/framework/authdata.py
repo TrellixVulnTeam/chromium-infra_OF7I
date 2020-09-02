@@ -132,8 +132,9 @@ class AuthData(object):
   @classmethod
   def _FinishInitialization(cls, cnxn, auth, services, user_pb=None):
     """Fill in the test of the fields based on the user_id."""
-    auth.effective_ids = framework_bizobj.GetEffectiveIds(
-        cnxn, services, auth.user_id)
+    effective_ids_dict = framework_bizobj.GetEffectiveIds(
+        cnxn, services, [auth.user_id])
+    auth.effective_ids = effective_ids_dict[auth.user_id]
     auth.user_pb = user_pb or services.user.GetUser(cnxn, auth.user_id)
     if auth.user_pb:
       auth.user_view = framework_views.UserView(auth.user_pb)

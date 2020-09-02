@@ -165,14 +165,16 @@ def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id, project=None):
     Nothing, but the UserViews in users_by_id may be modified to
     publish email address.
   """
-  for user_view in users_by_id.values():
-    if project:
+  if project:
+    for user_view in users_by_id.values():
       if framework_bizobj.DeprecatedShouldRevealEmail(auth, project,
                                                       user_view.email):
         user_view.RevealEmail()
-    else:
-      if framework_bizobj.ShouldRevealEmail(cnxn, services, auth, user_view):
-        user_view.RevealEmail()
+  else:
+    viewable_users = framework_bizobj.FilterViewableEmails(
+        cnxn, services, auth, users_by_id.values())
+    for user_view in viewable_users:
+      user_view.RevealEmail()
 
 
 def RevealAllEmails(users_by_id):
