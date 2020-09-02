@@ -545,16 +545,24 @@ class SomAlertView extends Polymer.mixinBehaviors(
     }
 
     let copy = Object.assign({}, groupRange);
+    let branch = this._parseCommitBranch(groupRange.positions[0])
     copy.positions = [lower, upper].map((cp) => {
-      return 'refs/heads/master@{#' + cp + '}';
+      return branch + '@{#' + cp + '}';
     });
     return copy;
   }
 
   _parseCommitPosition(pos) {
-    let groups = /refs\/heads\/master@{#([0-9]+)}/.exec(pos);
+    let groups = /.*@{#([0-9]+)}/.exec(pos);
     if (groups && groups.length == 2) {
       return Number(groups[1]);
+    }
+  }
+
+  _parseCommitBranch(pos) {
+    let groups = /(.*)@{#[0-9]+}/.exec(pos);
+    if (groups && groups.length == 2) {
+      return groups[1];
     }
   }
 
@@ -894,7 +902,6 @@ class SomAlertView extends Polymer.mixinBehaviors(
   _getCategoryTitle(category, trees) {
     return {
       0: 'Tree closers',
-      1: 'Stale masters',
       2: 'Probably hung builders',
       3: 'Infra failures',
       4: 'Consistent failures',

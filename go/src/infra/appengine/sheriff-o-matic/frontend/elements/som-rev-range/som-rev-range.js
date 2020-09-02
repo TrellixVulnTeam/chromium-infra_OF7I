@@ -131,9 +131,9 @@ class SomRevRange extends Polymer.Element {
   }
 
   _parseCommitPosition(pos) {
-    let groups = /refs\/heads\/master@{#([0-9]+)}/.exec(pos);
+    let groups = /.*@{#([0-9]+)}/.exec(pos);
     if (groups && groups.length == 2) {
-      return groups[1];
+      return Number(groups[1]);
     }
   }
 

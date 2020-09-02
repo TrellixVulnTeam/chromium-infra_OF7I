@@ -53,8 +53,8 @@ const TEST_ALERTS = {
         "regression_ranges": [
           {
             "positions": [
-              "refs/heads/master@{#394679}",
-              "refs/heads/master@{#394687}"
+              "HEAD@{#394679}",
+              "HEAD@{#394687}"
             ],
             "repo": "chromium",
             "revisions": null,
@@ -109,52 +109,52 @@ const TEST_ALERTS = {
         "regression_ranges": [
           {
             "positions": [
-              "refs/heads/master@{#394495}",
-              "refs/heads/master@{#394509}",
-              "refs/heads/master@{#394525}",
-              "refs/heads/master@{#394529}",
-              "refs/heads/master@{#394556}",
-              "refs/heads/master@{#394568}",
-              "refs/heads/master@{#394579}",
-              "refs/heads/master@{#394592}",
-              "refs/heads/master@{#394594}",
-              "refs/heads/master@{#394605}",
-              "refs/heads/master@{#394619}",
-              "refs/heads/master@{#394632}",
-              "refs/heads/master@{#394639}",
-              "refs/heads/master@{#394643}",
-              "refs/heads/master@{#394652}",
-              "refs/heads/master@{#394663}",
-              "refs/heads/master@{#394674}",
-              "refs/heads/master@{#394696}",
-              "refs/heads/master@{#394701}",
-              "refs/heads/master@{#394705}",
-              "refs/heads/master@{#394711}",
-              "refs/heads/master@{#394717}",
-              "refs/heads/master@{#394721}",
-              "refs/heads/master@{#394724}",
-              "refs/heads/master@{#394726}",
-              "refs/heads/master@{#394730}",
-              "refs/heads/master@{#394736}",
-              "refs/heads/master@{#394746}",
-              "refs/heads/master@{#394747}",
-              "refs/heads/master@{#394754}",
-              "refs/heads/master@{#394759}",
-              "refs/heads/master@{#394765}",
-              "refs/heads/master@{#394770}",
-              "refs/heads/master@{#394775}",
-              "refs/heads/master@{#394785}",
-              "refs/heads/master@{#394798}",
-              "refs/heads/master@{#394805}",
-              "refs/heads/master@{#394812}",
-              "refs/heads/master@{#394820}",
-              "refs/heads/master@{#394827}",
-              "refs/heads/master@{#394842}",
-              "refs/heads/master@{#394849}",
-              "refs/heads/master@{#394851}",
-              "refs/heads/master@{#394878}",
-              "refs/heads/master@{#394886}",
-              "refs/heads/master@{#394892}"
+              "HEAD@{#394495}",
+              "HEAD@{#394509}",
+              "HEAD@{#394525}",
+              "HEAD@{#394529}",
+              "HEAD@{#394556}",
+              "HEAD@{#394568}",
+              "HEAD@{#394579}",
+              "HEAD@{#394592}",
+              "HEAD@{#394594}",
+              "HEAD@{#394605}",
+              "HEAD@{#394619}",
+              "HEAD@{#394632}",
+              "HEAD@{#394639}",
+              "HEAD@{#394643}",
+              "HEAD@{#394652}",
+              "HEAD@{#394663}",
+              "HEAD@{#394674}",
+              "HEAD@{#394696}",
+              "HEAD@{#394701}",
+              "HEAD@{#394705}",
+              "HEAD@{#394711}",
+              "HEAD@{#394717}",
+              "HEAD@{#394721}",
+              "HEAD@{#394724}",
+              "HEAD@{#394726}",
+              "HEAD@{#394730}",
+              "HEAD@{#394736}",
+              "HEAD@{#394746}",
+              "HEAD@{#394747}",
+              "HEAD@{#394754}",
+              "HEAD@{#394759}",
+              "HEAD@{#394765}",
+              "HEAD@{#394770}",
+              "HEAD@{#394775}",
+              "HEAD@{#394785}",
+              "HEAD@{#394798}",
+              "HEAD@{#394805}",
+              "HEAD@{#394812}",
+              "HEAD@{#394820}",
+              "HEAD@{#394827}",
+              "HEAD@{#394842}",
+              "HEAD@{#394849}",
+              "HEAD@{#394851}",
+              "HEAD@{#394878}",
+              "HEAD@{#394886}",
+              "HEAD@{#394892}"
             ],
             "repo": "chromium",
             "revisions": null,
@@ -214,9 +214,9 @@ const TEST_ALERTS = {
         "regression_ranges": [
           {
             "positions": [
-              "refs/heads/master@{#394802}",
-              "refs/heads/master@{#394827}",
-              "refs/heads/master@{#394859}"
+              "HEAD@{#394802}",
+              "HEAD@{#394827}",
+              "HEAD@{#394859}"
             ],
             "repo": "chromium",
             "revisions": null,
@@ -280,8 +280,8 @@ const TEST_ALERTS = {
         "regression_ranges": [
           {
             "positions": [
-              "refs/heads/master@{#394901}",
-              "refs/heads/master@{#394908}"
+              "HEAD@{#394901}",
+              "HEAD@{#394908}"
             ],
             "repo": "chromium",
             "revisions": null,
@@ -335,7 +335,7 @@ const TEST_ALERTS = {
         "regression_ranges": [
           {
             "positions": [
-              "refs/heads/master@{#394845}"
+              "HEAD@{#394845}"
             ],
             "repo": "chromium",
             "revisions": null,
@@ -389,7 +389,7 @@ const TEST_ALERTS = {
         "regression_ranges": [
           {
             "positions": [
-              "refs/heads/master@{#394861}"
+              "HEAD@{#394861}"
             ],
             "repo": "chromium",
             "revisions": null,
@@ -443,7 +443,7 @@ const TEST_ALERTS = {
         "regression_ranges": [
           {
             "positions": [
-              "refs/heads/master@{#394897}"
+              "HEAD@{#394897}"
             ],
             "repo": "chromium",
             "revisions": null,

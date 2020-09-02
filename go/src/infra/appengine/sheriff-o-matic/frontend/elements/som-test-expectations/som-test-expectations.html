@@ -117,7 +117,7 @@
               <input placeholder="Filter" value="{{_filterFileName::input}}" focus-target>
             </vaadin-grid-filter>
           </template>
-          <template><a target="_blank" href="https://chromium.googlesource.com/chromium/src/+/master/[[item.FileName]]#[[item.LineNumber]]">[[_shortFileName(item.FileName)]]</a></template>
+          <template><a target="_blank" href="https://chromium.googlesource.com/chromium/src/+/HEAD/[[item.FileName]]#[[item.LineNumber]]">[[_shortFileName(item.FileName)]]</a></template>
         </vaadin-grid-column>
         <vaadin-grid-column width="400px" flex>
           <template class="header">
@@ -128,7 +128,7 @@
           </template>
           <template>
             <div class="test-name-cell">
-            <a target="_blank" title="[[item.TestName]]" href="https://chromium.googlesource.com/chromium/src/+/master/third_party/blink/web_tests/[[item.TestName]]">[[item.TestName]]</a>
+            <a target="_blank" title="[[item.TestName]]" href="https://chromium.googlesource.com/chromium/src/+/HEAD/third_party/blink/web_tests/[[item.TestName]]">[[item.TestName]]</a>
             </div>
           </template>
         </vaadin-grid-column>

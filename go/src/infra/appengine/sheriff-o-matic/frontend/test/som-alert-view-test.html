@@ -646,19 +646,19 @@
       group.regression_ranges = [
         {
           repo: 'foo',
-          positions: ['refs/heads/master@{#1}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#1}', 'HEAD@{#4}'],
         },
       ];
       alert.regression_ranges = [
         {
           repo: 'foo',
-          positions: ['refs/heads/master@{#2}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#2}', 'HEAD@{#4}'],
         },
       ];
       element._mergeRegressionRanges(group, alert);
       assert.deepEqual(group.regression_ranges, [{
           repo: 'foo',
-          positions: ['refs/heads/master@{#2}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#2}', 'HEAD@{#4}'],
         }]
       );
       assert.deepEqual(alert, alert);
@@ -670,40 +670,40 @@
       group.regression_ranges = [
         {
           repo: 'foo',
-          positions: ['refs/heads/master@{#1}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#1}', 'HEAD@{#4}'],
         },
         {
           repo: 'bar',
-          positions: ['refs/heads/master@{#1}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#1}', 'HEAD@{#4}'],
         },
         {
           repo: 'baz',
-          positions: ['refs/heads/master@{#1}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#1}', 'HEAD@{#4}'],
         },
       ];
       alert.regression_ranges = [
         {
           repo: 'foo',
-          positions: ['refs/heads/master@{#2}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#2}', 'HEAD@{#4}'],
         },
         {
           repo: 'bar',
-          positions: ['refs/heads/master@{#2}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#2}', 'HEAD@{#4}'],
         },
       ];
       element._mergeRegressionRanges(group, alert);
       assert.deepEqual(group.regression_ranges, [
         {
           repo: 'foo',
-          positions: ['refs/heads/master@{#2}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#2}', 'HEAD@{#4}'],
         },
         {
           repo: 'bar',
-          positions: ['refs/heads/master@{#2}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#2}', 'HEAD@{#4}'],
         },
         {
           repo: 'baz',
-          positions: ['refs/heads/master@{#1}', 'refs/heads/master@{#4}'],
+          positions: ['HEAD@{#1}', 'HEAD@{#4}'],
         },
       ]
       );
@@ -714,7 +714,7 @@
       let toS = (cps) => {
         return {
           positions: cps.map((num) => {
-            return 'refs/heads/master@{#' + num + '}'
+            return 'HEAD@{#' + num + '}'
           })
         };
       };
