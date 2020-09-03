@@ -229,13 +229,13 @@ def maybe_update_variants_pyl(api, variants_lines, variants_pyl_path):
 
           while open_bracket_count:
             contains_current_version |= version in variants_lines[lineno]
-            current_config_lines.append(variants_lines[lineno])
             for c in variants_lines[lineno]:
               if c == '{':
                 open_bracket_count += 1
               elif c == '}':
                 open_bracket_count -= 1
             if open_bracket_count:
+              current_config_lines.append(variants_lines[lineno])
               lineno += 1
 
           if not contains_current_version:
@@ -413,6 +413,21 @@ def GenTests(api):
     },
     'identifier': 'M82_Client_Library_Tests',
   },
+  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_TWO_MILESTONE': {
+    'args': [
+      '--test-runner-outdir',
+      '.',
+    ],
+    'swarming': {
+      'cipd_packages': [
+        {
+          'cipd_package': 'chromium/testing/weblayer-x86',
+          'revision': 'version:81.0.1111.40',
+        },
+      ],
+    },
+    'identifier': 'M81_Client_Library_Tests',
+  }
 }
 """
   yield (api.test('basic') +
@@ -424,13 +439,16 @@ def GenTests(api):
          api.url.json('Getting Android beta channel releases',
                       [{'hashes':{'chromium':'abcd'}},
                        {'hashes':{'chromium':'efgh'}},
-                       {'hashes':{'chromium':'ijkl'}}]) +
+                       {'hashes':{'chromium':'ijkl'}},
+                       {'hashes':{'chromium':'mnop'}}]) +
          api.url.json('Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
          api.url.json('Fetch information on commit efgh',
                       {'deployment': {'beta': '84.0.4147.56'}}) +
          api.url.json('Fetch information on commit ijkl',
                       {'deployment': {'beta': '83.0.4103.96'}}) +
+         api.url.json('Fetch information on commit mnop',
+                      {'deployment': {'beta': '81.0.1111.40'}}) +
          api.step_data('Reading //chrome/VERSION',
              api.file.read_text('a=83\nb=0\nc=4103\nd=96'))  +
          api.path.exists(api.path['cleanup'].join('apk_build_files')) +
