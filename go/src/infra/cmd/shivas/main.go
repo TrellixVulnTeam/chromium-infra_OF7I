@@ -21,7 +21,6 @@ import (
 	"infra/cmd/shivas/site"
 	sw_cmds "infra/cmd/shivas/swarming/cmds"
 	"infra/cmd/shivas/ufs/cmds/operations"
-	q "infra/cmd/shivas/ufs/cmds/query"
 	"infra/cmd/shivas/ufs/cmds/state"
 )
 
@@ -48,7 +47,7 @@ func getApplication() *cli.Application {
 			operations.AddCmd,
 			operations.UpdateCmd,
 			operations.DeleteCmd,
-			q.GetCmd,
+			operations.GetCmd,
 			subcommands.Section("State"),
 			sw_cmds.ReserveDutsCmd,
 			state.DutStateCmd,
