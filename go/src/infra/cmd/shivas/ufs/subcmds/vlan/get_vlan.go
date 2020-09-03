@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetVlanCmd get vlan by given name.
@@ -93,7 +94,7 @@ func (c *getVlan) innerRun(a subcommands.Application, args []string, env subcomm
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listVlans, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -112,18 +113,10 @@ func (c *getVlan) formatFilters() []string {
 	return filters
 }
 
-func (c *getVlan) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetVlans(ctx, &ufsAPI.BatchGetVlansRequest{
-		Names: names,
+func (c *getVlan) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetVlan(ctx, &ufsAPI.GetVlanRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.VlanCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetVlans()))
-	for i, r := range res.GetVlans() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listVlans(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

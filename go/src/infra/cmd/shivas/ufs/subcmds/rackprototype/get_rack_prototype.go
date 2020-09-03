@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetRackLSEPrototypeCmd get RackLSEPrototype by given name.
@@ -93,7 +94,7 @@ func (c *getRackLSEPrototype) innerRun(a subcommands.Application, args []string,
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listRPMs, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -112,18 +113,10 @@ func (c *getRackLSEPrototype) formatFilters() []string {
 	return filters
 }
 
-func (c *getRackLSEPrototype) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetRackLSEPrototypes(ctx, &ufsAPI.BatchGetRackLSEPrototypesRequest{
-		Names: names,
+func (c *getRackLSEPrototype) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetRackLSEPrototype(ctx, &ufsAPI.GetRackLSEPrototypeRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.RackLSEPrototypeCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetRackLsePrototypes()))
-	for i, r := range res.GetRackLsePrototypes() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listRPMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

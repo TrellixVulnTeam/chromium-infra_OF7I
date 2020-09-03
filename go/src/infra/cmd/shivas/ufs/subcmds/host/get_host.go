@@ -106,7 +106,7 @@ func (c *getHost) innerRun(a subcommands.Application, args []string, env subcomm
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listHosts, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -135,18 +135,10 @@ func (c *getHost) formatFilters() []string {
 	return filters
 }
 
-func (c *getHost) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetMachineLSEs(ctx, &ufsAPI.BatchGetMachineLSEsRequest{
-		Names: names,
+func (c *getHost) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetMachineLSE(ctx, &ufsAPI.GetMachineLSERequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSECollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetMachineLses()))
-	for i, r := range res.GetMachineLses() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listHosts(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

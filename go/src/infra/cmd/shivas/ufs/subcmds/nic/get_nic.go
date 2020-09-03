@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetNicCmd get nic by given name.
@@ -105,7 +106,7 @@ func (c *getNic) innerRun(a subcommands.Application, args []string, env subcomma
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listNics, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -130,18 +131,10 @@ func (c *getNic) formatFilters() []string {
 	return filters
 }
 
-func (c *getNic) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetNics(ctx, &ufsAPI.BatchGetNicsRequest{
-		Names: names,
+func (c *getNic) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetNic(ctx, &ufsAPI.GetNicRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.NicCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetNics()))
-	for i, r := range res.GetNics() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listNics(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

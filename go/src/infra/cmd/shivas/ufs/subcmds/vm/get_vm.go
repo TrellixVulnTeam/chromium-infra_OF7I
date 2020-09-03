@@ -96,7 +96,7 @@ func (c *getVM) innerRun(a subcommands.Application, args []string, env subcomman
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listVMs, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -120,18 +120,10 @@ func (c *getVM) formatFilters() []string {
 	return filters
 }
 
-func (c *getVM) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetVMs(ctx, &ufsAPI.BatchGetVMsRequest{
-		Names: names,
+func (c *getVM) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetVM(ctx, &ufsAPI.GetVMRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.VMCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetVms()))
-	for i, r := range res.GetVms() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listVMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

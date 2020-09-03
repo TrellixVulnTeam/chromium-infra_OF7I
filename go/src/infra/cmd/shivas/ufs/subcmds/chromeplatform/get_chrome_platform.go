@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetChromePlatformCmd get chrome platform by given name.
@@ -96,7 +97,7 @@ func (c *getChromePlatform) innerRun(a subcommands.Application, args []string, e
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listChromePlatforms, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -116,18 +117,10 @@ func (c *getChromePlatform) formatFilters() []string {
 	return filters
 }
 
-func (c *getChromePlatform) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetChromePlatforms(ctx, &ufsAPI.BatchGetChromePlatformsRequest{
-		Names: names,
+func (c *getChromePlatform) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetChromePlatform(ctx, &ufsAPI.GetChromePlatformRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.ChromePlatformCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetChromePlatforms()))
-	for i, r := range res.GetChromePlatforms() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listChromePlatforms(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetMachineLSEPrototypeCmd get MachineLSEPrototype by given name.
@@ -92,7 +93,7 @@ func (c *getMachineLSEPrototype) innerRun(a subcommands.Application, args []stri
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listMachineLSEPrototypes, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -111,18 +112,10 @@ func (c *getMachineLSEPrototype) formatFilters() []string {
 	return filters
 }
 
-func (c *getMachineLSEPrototype) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetMachineLSEPrototypes(ctx, &ufsAPI.BatchGetMachineLSEPrototypesRequest{
-		Names: names,
+func (c *getMachineLSEPrototype) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetMachineLSEPrototype(ctx, &ufsAPI.GetMachineLSEPrototypeRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineLSEPrototypeCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetMachineLsePrototypes()))
-	for i, r := range res.GetMachineLsePrototypes() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listMachineLSEPrototypes(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

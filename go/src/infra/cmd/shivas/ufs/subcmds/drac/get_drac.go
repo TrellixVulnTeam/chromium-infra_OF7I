@@ -105,7 +105,7 @@ func (c *getDrac) innerRun(a subcommands.Application, args []string, env subcomm
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listDracs, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -130,18 +130,10 @@ func (c *getDrac) formatFilters() []string {
 	return filters
 }
 
-func (c *getDrac) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetDracs(ctx, &ufsAPI.BatchGetDracsRequest{
-		Names: names,
+func (c *getDrac) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetDrac(ctx, &ufsAPI.GetDracRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.DracCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetDracs()))
-	for i, r := range res.GetDracs() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listDracs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

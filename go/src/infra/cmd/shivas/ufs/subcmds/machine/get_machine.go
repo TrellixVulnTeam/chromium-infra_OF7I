@@ -21,6 +21,7 @@ import (
 	"infra/cmdsupport/cmdlib"
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetMachineCmd get machine by given name.
@@ -98,7 +99,7 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 	})
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listMachines, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -111,6 +112,12 @@ func (c *getMachine) innerRun(a subcommands.Application, args []string, env subc
 		c.outputFlags.JSON(), emit, full, c.outputFlags.Tsv(), c.keysOnly)
 }
 
+func (c *getMachine) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetMachine(ctx, &ufsAPI.GetMachineRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.MachineCollection, name),
+	})
+}
+
 func (c *getMachine) formatFilters() []string {
 	filters := make([]string, 0)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
@@ -119,20 +126,6 @@ func (c *getMachine) formatFilters() []string {
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
 	return filters
-}
-
-func (c *getMachine) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetMachines(ctx, &ufsAPI.BatchGetMachinesRequest{
-		Names: names,
-	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetMachines()))
-	for i, r := range res.GetMachines() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func printMachineFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {

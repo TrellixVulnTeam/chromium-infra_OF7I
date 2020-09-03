@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/golang/protobuf/proto"
@@ -57,6 +58,8 @@ type listAll func(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pa
 type printJSONFunc func(res []proto.Message, emit bool)
 type printFullFunc func(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Message, tsv bool) error
 type printNormalFunc func(res []proto.Message, tsv, keysOnly bool) error
+type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool, bool) (string, error)
+type getSingleFunc func(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error)
 
 // PrintEntities a batch of entities based on user parameters
 func PrintEntities(ctx context.Context, ic ufsAPI.FleetClient, res []proto.Message, printJSON printJSONFunc, printFull printFullFunc, printNormal printNormalFunc, json, emit, full, tsv, keysOnly bool) error {
@@ -146,7 +149,25 @@ func DoList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, pageSi
 	return res, nil
 }
 
-type printAll func(context.Context, ufsAPI.FleetClient, bool, int32, string, string, bool, bool, bool) (string, error)
+// ConcurrentGet runs multiple goroutines making Get calls to UFS
+func ConcurrentGet(ctx context.Context, ic ufsAPI.FleetClient, names []string, getSingle getSingleFunc) []proto.Message {
+	var res []proto.Message
+	var wg sync.WaitGroup
+	wg.Add(len(names))
+	for i := 0; i < len(names); i++ {
+		go func(i int) {
+			defer wg.Done()
+			m, err := getSingle(ctx, ic, names[i])
+			if err != nil {
+				fmt.Println(err.Error() + " => " + names[i])
+			} else {
+				res = append(res, m)
+			}
+		}(i)
+	}
+	wg.Wait()
+	return res
+}
 
 // PrintListJSONFormat prints the list output in JSON format
 func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll, json bool, pageSize int32, filter string, keysOnly, emit bool) error {

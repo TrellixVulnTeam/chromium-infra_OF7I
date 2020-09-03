@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetRackCmd get rack by given name.
@@ -96,7 +97,7 @@ func (c *getRack) innerRun(a subcommands.Application, args []string, env subcomm
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listRacks, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -117,18 +118,10 @@ func (c *getRack) formatFilters() []string {
 	return filters
 }
 
-func (c *getRack) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetRacks(ctx, &ufsAPI.BatchGetRacksRequest{
-		Names: names,
+func (c *getRack) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetRack(ctx, &ufsAPI.GetRackRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.RackCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetRacks()))
-	for i, r := range res.GetRacks() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listRacks(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {

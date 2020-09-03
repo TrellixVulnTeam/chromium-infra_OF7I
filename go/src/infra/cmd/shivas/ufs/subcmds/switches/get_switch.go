@@ -20,6 +20,7 @@ import (
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // GetSwitchCmd get Switch by given name.
@@ -98,7 +99,7 @@ func (c *getSwitch) innerRun(a subcommands.Application, args []string, env subco
 
 	var res []proto.Message
 	if len(args) > 0 {
-		res, err = c.batchGet(ctx, ic, args)
+		res = utils.ConcurrentGet(ctx, ic, args, c.getSingle)
 	} else {
 		res, err = utils.BatchList(ctx, ic, listSwitches, c.formatFilters(), c.pageSize, c.keysOnly)
 	}
@@ -120,18 +121,10 @@ func (c *getSwitch) formatFilters() []string {
 	return filters
 }
 
-func (c *getSwitch) batchGet(ctx context.Context, ic ufsAPI.FleetClient, names []string) ([]proto.Message, error) {
-	res, err := ic.BatchGetSwitches(ctx, &ufsAPI.BatchGetSwitchesRequest{
-		Names: names,
+func (c *getSwitch) getSingle(ctx context.Context, ic ufsAPI.FleetClient, name string) (proto.Message, error) {
+	return ic.GetSwitch(ctx, &ufsAPI.GetSwitchRequest{
+		Name: ufsUtil.AddPrefix(ufsUtil.SwitchCollection, name),
 	})
-	if err != nil {
-		return nil, err
-	}
-	protos := make([]proto.Message, len(res.GetSwitches()))
-	for i, r := range res.GetSwitches() {
-		protos[i] = r
-	}
-	return protos, nil
 }
 
 func listSwitches(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageToken, filter string, keysOnly bool) ([]proto.Message, string, error) {
