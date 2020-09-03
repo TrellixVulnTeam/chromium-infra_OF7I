@@ -60,7 +60,7 @@
       <table>
         <thead>
           <tr class="coverage-header">
-            {% if user_info and user_info.is_admin %}
+            {% if show_invisible_report %}
               <th colspan="8">{{gitiles_commit.project}}</th>
             {% else %}
               <th colspan="7">{{gitiles_commit.project}}</th>
@@ -74,7 +74,7 @@
               <th title="{{ m.detail }}">{{ m.name | capitalize }} </th>
             {% endfor %}
             <th title="Link to the build that generated this report.">Data Source</th>
-            {% if user_info and user_info.is_admin %}
+            {% if show_invisible_report %}
               <th>Is Visible</th>
             {% endif %}
           </tr>
@@ -82,7 +82,7 @@
 
         <tbody>
         {% for datum in data %}
-          {% if user_info and user_info.is_admin or datum.visible %}
+          {% if show_invisible_report or datum.visible %}
             <tr>
               <td>
                 <a href="/p/chromium/coverage/dir?host={{datum.gitiles_commit.server_host}}&project={{datum.gitiles_commit.project}}&ref={{datum.gitiles_commit.ref}}&revision={{datum.gitiles_commit.revision}}&path=//&platform={{platform}}">Link</a>
@@ -113,7 +113,7 @@
               <td>
                 <a href="https://ci.chromium.org/b/{{datum.build_id}}">Build</a>
               </td>
-              {% if user_info and user_info.is_admin %}
+              {% if show_invisible_report %}
                 <td>{{datum.visible}}</td>
               {% endif %}
             </tr>

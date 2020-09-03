@@ -1303,6 +1303,9 @@ class ServeCodeCoverageData(BaseHandler):
           'visible': entity.visible,
       })
 
+    current_user = users.get_current_user()
+    show_invisible_report = (
+        current_user.email().endswith('@google.com') if current_user else False)
     return {
         'data': {
             'luci_project':
@@ -1331,6 +1334,8 @@ class ServeCodeCoverageData(BaseHandler):
                                     None, platform),
             'banner':
                 _GetBanner(project),
+            'show_invisible_report':
+                show_invisible_report,
             'next_cursor':
                 next_cursor,
             'prev_cursor':
