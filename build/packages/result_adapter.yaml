@@ -1,0 +1,22 @@
+package: infra/tools/result_adapter/${platform}
+description: resultdb_adapter convert test results to ResultSink native format then upload them to ResultDB via ResultSink.
+platforms:
+  - linux-386
+  - linux-amd64
+  - linux-arm64
+  - linux-armv6l
+  - linux-mipsle
+  - linux-mips64
+  - linux-mips64le
+  - linux-ppc64
+  - linux-ppc64le
+  - linux-s390x
+  - mac-amd64
+  - windows-386
+  - windows-amd64
+go_packages:
+  - infra/tools/result_adapter
+root: ../../go/bin
+data:
+  - file: result_adapter${exe_suffix}
+  - version_file: .versions/result_adapter${exe_suffix}.cipd_version
