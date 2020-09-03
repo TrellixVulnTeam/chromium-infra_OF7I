@@ -925,8 +925,8 @@ class ProcessCodeCoverageData(BaseHandler):
       patch = build.input.gerrit_changes[0]
       self._ProcessCLPatchData(patch, data['files'])
     else:
-      # For postsubmit coverage, we save the data by file and directory.
-      if not self._IsGitilesCommitAvailable(build.input.gitiles_commit):
+      if (properties.get('coverage_override_gitiles_commit', False) or
+          not self._IsGitilesCommitAvailable(build.input.gitiles_commit)):
         self._SetGitilesCommitFromOutputProperty(build, properties)
 
       assert self._IsGitilesCommitAvailable(build.input.gitiles_commit), (
