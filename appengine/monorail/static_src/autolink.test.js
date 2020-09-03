@@ -426,6 +426,18 @@ describe('autolink', () => {
       assert.deepEqual(actualMatches, [' omg/123', ' b/1234']);
     });
 
+    it('test fuchsia short links', () => {
+      const shortNumLinkRE = refRegs[1];
+      const str = 'ignore fxr/123 fxrev/789 fxb/456 tqr/123 ';
+      let match;
+      const actualMatches = [];
+      while ((match = shortNumLinkRE.exec(str)) !== null) {
+        actualMatches.push(match[0]);
+      }
+      assert.deepEqual(actualMatches, [' fxr/123', ' fxrev/789', ' fxb/456',
+        ' tqr/123']);
+    });
+
     it('test implied link regex string', () => {
       const impliedLinkRE = refRegs[2];
       const str = 'incomplete.com .help.com hey.net/other="(blah)"';
@@ -436,6 +448,19 @@ describe('autolink', () => {
       }
       assert.deepEqual(
           actualMatches, ['incomplete.com', ' hey.net/other="(blah)"']);
+    });
+
+    it('test implied link alternate domains', () => {
+      const impliedLinkRE = refRegs[2];
+      const str = 'what.net hey.edu google.org fuchsia.dev ignored.domain';
+      let match;
+      const actualMatches = [];
+      while ((match = impliedLinkRE.exec(str)) !== null) {
+        actualMatches.push(match[0]);
+      }
+      assert.deepEqual(
+          actualMatches, ['what.net', ' hey.edu', ' google.org',
+            ' fuchsia.dev']);
     });
 
     it('Replace URL plain text', () => {

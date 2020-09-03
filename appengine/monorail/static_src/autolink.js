@@ -5,6 +5,7 @@
 'use strict';
 import {prpcClient} from 'prpc-client-instance.js';
 
+/* eslint-disable max-len */
 // When crbug links don't specify a project, the default project is Chromium.
 const CRBUG_DEFAULT_PROJECT = 'chromium';
 const CRBUG_LINK_RE = /(\b(https?:\/\/)?crbug\.com\/)((\b[-a-z0-9]+)(\/))?(\d+)\b(\#c[0-9]+)?/gi;
@@ -16,12 +17,12 @@ const PROJECT_LOCALID_RE = /((\b(issue|bug)[ \t]*(:|=)?[ \t]*|\bfixed[ \t]*:[ \t
 const PROJECT_COMMENT_BUG_RE = /(((\b(issue|bug)[ \t]*(:|=)?[ \t]*)(\#?)(\d+)[ \t*])?((\b((comment)[ \t]*(:|=)?[ \t]*(\#?))|(\B((\#))(c)))(\d+)))/gi;
 const PROJECT_LOCALID_RE_PROJECT_GROUP = 6;
 const PROJECT_LOCALID_RE_ID_GROUP = 8;
-const IMPLIED_EMAIL_RE = /\b[a-z]((-|\.)?[a-z0-9])+@[a-z]((-|\.)?[a-z0-9])+\.(com|net|org|edu)\b/gi;
+const IMPLIED_EMAIL_RE = /\b[a-z]((-|\.)?[a-z0-9])+@[a-z]((-|\.)?[a-z0-9])+\.(com|net|org|edu|dev)\b/gi;
 // TODO(zhangtiff): Replace (^|[^-/._]) with (?<![-/._]) on the 3 Regexes below
 // once Firefox supports lookaheads.
 const SHORT_LINK_RE = /(^|[^-\/._])\b(https?:\/\/|ftp:\/\/|mailto:)?(go|g|shortn|who|teams)\/([^\s<]+)/gi;
-const NUMERIC_SHORT_LINK_RE = /(^|[^-\/._])\b(https?:\/\/|ftp:\/\/)?(b|t|o|omg|cl|cr)\/([0-9]+)/gi;
-const IMPLIED_LINK_RE = /(^|[^-\/._])\b[a-z]((-|\.)?[a-z0-9])+\.(com|net|org|edu)\b(\/[^\s<]*)?/gi;
+const NUMERIC_SHORT_LINK_RE = /(^|[^-\/._])\b(https?:\/\/|ftp:\/\/)?(b|t|o|omg|cl|cr|fxr|fxrev|fxb|tqr)\/([0-9]+)/gi;
+const IMPLIED_LINK_RE = /(^|[^-\/._])\b[a-z]((-|\.)?[a-z0-9])+\.(com|net|org|edu|dev)\b(\/[^\s<]*)?/gi;
 const IS_LINK_RE = /()\b(https?:\/\/|ftp:\/\/|mailto:)([^\s<]+)/gi;
 const GIT_HASH_RE = /\b(r(evision\s+#?)?)?([a-f0-9]{40})\b/gi;
 const SVN_REF_RE = /\b(r(evision\s+#?)?)([0-9]{4,7})\b/gi;
@@ -42,7 +43,8 @@ const LINK_TRAILING_CHARS = [
   ['\'', '\''],
   ['"', '"'],
 ];
-const GOOG_SHORT_LINK_RE = /^(b|t|o|omg|cl|cr|go|g|shortn|who|teams)\/.*/gi;
+const GOOG_SHORT_LINK_RE = /^(b|t|o|omg|cl|cr|go|g|shortn|who|teams|fxr|fxrev|fxb|tqr)\/.*/gi;
+/* eslint-enable max-len */
 
 const Components = new Map();
 // TODO(zosha): Combine functions of Component 00 with 01 so that
