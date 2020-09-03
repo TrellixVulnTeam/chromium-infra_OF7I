@@ -23,6 +23,7 @@ from google.appengine.ext import ndb
 from google.protobuf.field_mask_pb2 import FieldMask
 from google.protobuf import json_format
 
+from common import constants
 from common import monitoring
 from common.findit_http_client import FinditHttpClient
 from common.waterfall.buildbucket_client import GetV2Build
@@ -42,6 +43,7 @@ from model.code_coverage import FileCoverageData
 from model.code_coverage import PresubmitCoverageData
 from model.code_coverage import SummaryCoverageData
 from services.code_coverage import code_coverage_util
+from services.code_coverage import per_cl_metrics
 from services import bigquery_helper as bq
 from services import test_tag_util
 from waterfall import waterfall_config
@@ -1586,3 +1588,29 @@ class ServeCodeCoverageData(BaseHandler):
         },
         'template': template,
     }
+
+
+class GeneratePerClCoverageMetricsCron(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def HandleGet(self):
+    # Cron jobs run independently of each other. Therefore, there is no
+    # guarantee that they will run either sequentially or simultaneously.
+    #
+    # Executing per CL metrics concurrently doesn't bring much
+    # benefits, so use task queue to enforce that at most one  task
+    # can be executed at any time.
+    taskqueue.add(
+        method='GET',
+        queue_name=constants.PER_CL_COVERAGE_METRICS_QUEUE,
+        target=constants.CODE_COVERAGE_BACKEND,
+        url='/coverage/task/per-cl-coverage')
+    return {'return_code': 200}
+
+
+class GeneratePerClCoverageMetrics(BaseHandler):
+  PERMISSION_LEVEL = Permission.APP_SELF
+
+  def HandleGet(self):
+    per_cl_metrics.ExportPerClCoverageMetrics()
+    return {'return_code': 200}

@@ -14,6 +14,7 @@ WATERFALL_BACKEND = 'waterfall-backend'
 FLAKE_DETECTION_BACKEND = 'flake-detection-backend'
 DISABLED_TEST_BACKEND = 'disabled-test-backend'
 AUTO_ACTION_BACKEND = 'auto-action-backend'
+CODE_COVERAGE_BACKEND = 'code-coverage-backend'
 
 # Names of all queues.
 DEFAULT_QUEUE = 'default'
@@ -26,6 +27,7 @@ AUTO_ACTION_QUEUE = 'auto-action-queue'
 FLAKE_DETECTION_MULTITASK_QUEUE = 'flake-detection-multitask-queue'
 DISABLED_TEST_DETECTION_QUEUE = 'disabled-test-detection-queue'
 DISABLED_TEST_EXPORT_QUEUE = 'disabled-test-export-queue'
+PER_CL_COVERAGE_METRICS_QUEUE = 'per-cl-coverage-metrics-queue'
 
 # Waterfall-related.
 WATERFALL_PROCESS_FAILURE_ANALYSIS_REQUESTS_URL = (
