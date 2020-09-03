@@ -152,19 +152,42 @@ func DoList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, pageSi
 // ConcurrentGet runs multiple goroutines making Get calls to UFS
 func ConcurrentGet(ctx context.Context, ic ufsAPI.FleetClient, names []string, getSingle getSingleFunc) []proto.Message {
 	var res []proto.Message
+	// buffered channel to append data to a slice in a thread safe env
+	queue := make(chan proto.Message, 1)
+	// waitgroup for multiple goroutines
 	var wg sync.WaitGroup
+	// number of goroutines/threads in the wait group to run concurrently
 	wg.Add(len(names))
 	for i := 0; i < len(names); i++ {
+		// goroutine for each id/name
 		go func(i int) {
-			defer wg.Done()
+			// single Get request call to UFS
 			m, err := getSingle(ctx, ic, names[i])
 			if err != nil {
 				fmt.Println(err.Error() + " => " + names[i])
+				// inform waitgroup that thread is completed
+				wg.Done()
 			} else {
-				res = append(res, m)
+				// send the proto to the buffered channel
+				queue <- m
 			}
 		}(i)
 	}
+
+	// goroutine to append data to slice
+	go func() {
+		// receive proto on queue channel
+		for pm := range queue {
+			// append proto message to slice
+			res = append(res, pm)
+			// inform waitgroup that one more goroutine/thread is completed.
+			wg.Done()
+		}
+	}()
+
+	// defer closing the channel
+	defer close(queue)
+	// wait for all goroutines in the waitgroup to complete
 	wg.Wait()
 	return res
 }
