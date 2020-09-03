@@ -2,3 +2,7 @@ cron:
 - description: "Schedule async audits"
   url: /_cron/scheduler
   schedule: every 10 minutes
+
+- description: "Update configs from luci-config"
+  url: /_cron/update-config
+  schedule: every 10 minutes

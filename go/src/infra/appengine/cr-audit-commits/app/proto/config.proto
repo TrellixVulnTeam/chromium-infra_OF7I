@@ -1,0 +1,30 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package cr_audit_commits.configpb;
+
+option go_package = "infra/appengine/cr-audit-commits/app/configpb";
+
+message Config {
+    map<string, RefConfig> ref_configs = 1;
+}
+
+message RefConfig {
+    string gerrit_host = 1;
+    string gerrit_repo = 2;
+    string ref = 3;
+    string starting_commit = 4;
+    string monorail_project = 5;
+    string notifier_email = 6;
+
+    // Used for unpausing a ref. Oncall should modify this configuration
+    // to help resume the scanning.
+    string overwrite_last_known_commit = 7;
+
+    // TODO: AccountRules
+    // TODO: DynamicRefFunction
+}
+

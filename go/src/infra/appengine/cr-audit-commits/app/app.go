@@ -11,6 +11,8 @@ import (
 	"go.chromium.org/luci/server/module"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
+
+	"infra/appengine/cr-audit-commits/app/config"
 )
 
 func main() {
@@ -19,7 +21,7 @@ func main() {
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
-		basemw := router.NewMiddlewareChain()
+		basemw := router.NewMiddlewareChain().Extend(config.Middleware)
 
 		templatesmw := basemw.Extend(templates.WithTemplates(&templates.Bundle{
 			Loader:  templates.FileSystemLoader("templates"),
@@ -40,6 +42,10 @@ func main() {
 
 		srv.Routes.GET("/_cron/scheduler", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
 			Scheduler(c)
+		})
+
+		srv.Routes.GET("/_cron/update-config", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
+			config.Update(c)
 		})
 
 		srv.Routes.GET("/admin/smoketest", basemw, func(c *router.Context) {
