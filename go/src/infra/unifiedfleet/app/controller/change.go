@@ -198,6 +198,7 @@ func (hc *HistoryClient) LogVMChanges(oldData *ufspb.VM, newData *ufspb.VM) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.machine_lse_id", oldData.GetMachineLseId(), newData.GetMachineLseId())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.description", oldData.GetDescription(), newData.GetDescription())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vm.resource_state", oldData.GetResourceState().String(), newData.GetResourceState().String())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vm.deployment_ticket", oldData.GetDeploymentTicket(), newData.GetDeploymentTicket())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
 

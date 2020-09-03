@@ -44,6 +44,7 @@ var UpdateHostCmd = &subcommands.Command{
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only). "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the vm. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this host. "+cmdhelp.ClearFieldHelpText)
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this host to")
 		c.Flags.StringVar(&c.nicName, "nic", "", "name of the nic to associate the ip to")
@@ -64,18 +65,19 @@ type updateHost struct {
 	newSpecsFile string
 	interactive  bool
 
-	machineName string
-	hostName    string
-	vlanName    string
-	nicName     string
-	deleteVlan  bool
-	ip          string
-	state       string
-	prototype   string
-	osVersion   string
-	vmCapacity  int
-	tags        string
-	description string
+	machineName      string
+	hostName         string
+	vlanName         string
+	nicName          string
+	deleteVlan       bool
+	ip               string
+	state            string
+	prototype        string
+	osVersion        string
+	vmCapacity       int
+	tags             string
+	description      string
+	deploymentTicket string
 }
 
 func (c *updateHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -149,6 +151,7 @@ func (c *updateHost) innerRun(a subcommands.Application, args []string, env subc
 			"tags":        "tags",
 			"state":       "resourceState",
 			"desc":        "description",
+			"ticket":      "deploymentTicket",
 		}),
 	})
 	if err != nil {
@@ -187,6 +190,11 @@ func (c *updateHost) parseArgs(lse *ufspb.MachineLSE) {
 		lse.Tags = nil
 	} else {
 		lse.Tags = utils.GetStringSlice(c.tags)
+	}
+	if c.deploymentTicket == utils.ClearFieldValue {
+		lse.DeploymentTicket = ""
+	} else {
+		lse.DeploymentTicket = c.deploymentTicket
 	}
 	if c.osVersion != "" || c.vmCapacity != 0 {
 		lse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
@@ -257,12 +265,15 @@ func (c *updateHost) validateArgs() error {
 		if c.state != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
 		}
+		if c.deploymentTicket != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-ticket' cannot be specified at the same time.")
+		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {
 		if c.hostName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" &&
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" && c.deploymentTicket == "" &&
 			c.osVersion == "" && c.prototype == "" && c.tags == "" && c.vmCapacity == 0 && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}

@@ -46,6 +46,7 @@ var AddHostCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.osVersion, "os", "", "name of the os version of the machine (browser lab only)")
 		c.Flags.IntVar(&c.vmCapacity, "vm-capacity", 0, "the number of the vms that this machine supports (browser lab only)")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this host")
 		return c
 	},
 }
@@ -59,15 +60,16 @@ type addHost struct {
 	newSpecsFile string
 	interactive  bool
 
-	machineName string
-	vlanName    string
-	nicName     string
-	ip          string
-	hostName    string
-	prototype   string
-	osVersion   string
-	vmCapacity  int
-	tags        string
+	machineName      string
+	vlanName         string
+	nicName          string
+	ip               string
+	hostName         string
+	prototype        string
+	osVersion        string
+	vmCapacity       int
+	tags             string
+	deploymentTicket string
 }
 
 func (c *addHost) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -155,6 +157,7 @@ func (c *addHost) parseArgs(lse *ufspb.MachineLSE, ufsZone ufspb.Zone) {
 	lse.MachineLsePrototype = c.prototype
 	lse.Tags = utils.GetStringSlice(c.tags)
 	lse.Machines = []string{c.machineName}
+	lse.DeploymentTicket = c.deploymentTicket
 	if ufsUtil.IsInBrowserZone(ufsZone.String()) {
 		lse.Lse = &ufspb.MachineLSE_ChromeBrowserMachineLse{
 			ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{
@@ -212,6 +215,9 @@ func (c *addHost) validateArgs() error {
 		}
 		if c.osVersion != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-os' cannot be specified at the same time.")
+		}
+		if c.deploymentTicket != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-ticket' cannot be specified at the same time.")
 		}
 	}
 	if c.newSpecsFile == "" && !c.interactive {

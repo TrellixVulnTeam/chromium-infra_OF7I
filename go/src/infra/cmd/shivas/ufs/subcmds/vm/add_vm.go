@@ -49,6 +49,7 @@ Add a VM by parameters.`,
 		c.Flags.StringVar(&c.macAddress, "mac", "", "mac address of the VM")
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
+		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this vm")
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.StringVar(&c.ip, "ip", "", "the ip to assign the vm to")
@@ -64,13 +65,14 @@ type addVM struct {
 
 	newSpecsFile string
 
-	hostName   string
-	vmName     string
-	macAddress string
-	osVersion  string
-	tags       string
-	vlanName   string
-	ip         string
+	hostName         string
+	vmName           string
+	macAddress       string
+	osVersion        string
+	tags             string
+	vlanName         string
+	ip               string
+	deploymentTicket string
 }
 
 func (c *addVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -149,6 +151,7 @@ func (c *addVM) parseArgs(vm *ufspb.VM) {
 		Value: c.osVersion,
 	}
 	vm.Tags = utils.GetStringSlice(c.tags)
+	vm.DeploymentTicket = c.deploymentTicket
 }
 
 func (c *addVM) parseNetworkOpt() *ufsAPI.NetworkOption {
@@ -187,6 +190,9 @@ func (c *addVM) validateArgs() error {
 		}
 		if c.hostName != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-host' cannot be specified at the same time.")
+		}
+		if c.deploymentTicket != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON mode is specified. '-ticket' cannot be specified at the same time.")
 		}
 	} else {
 		if c.hostName == "" {

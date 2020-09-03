@@ -216,7 +216,7 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 				oldMachine.GetChromeBrowserMachine().KvmInterface = &ufspb.KVMInterface{}
 			}
 			oldMachine.GetChromeBrowserMachine().GetKvmInterface().Kvm = machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm()
-		case "ticket":
+		case "deploymentTicket":
 			if oldMachine.GetChromeBrowserMachine() == nil {
 				oldMachine.Device = &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
@@ -713,7 +713,7 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 				if machine.GetChromeBrowserMachine().GetKvmInterface() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - kvm interface cannot be empty/nil.")
 				}
-			case "ticket":
+			case "deploymentTicket":
 				if machine.GetChromeBrowserMachine() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - browser machine cannot be empty/nil.")
 				}

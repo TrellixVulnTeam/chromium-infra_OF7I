@@ -228,6 +228,8 @@ func processVMUpdateMask(ctx context.Context, oldVM *ufspb.VM, vm *ufspb.VM, mas
 			oldVM.Tags = mergeTags(oldVM.GetTags(), vm.GetTags())
 		case "description":
 			oldVM.Description = vm.Description
+		case "deploymentTicket":
+			oldVM.DeploymentTicket = vm.GetDeploymentTicket()
 		}
 	}
 	// return existing/old vm with new updated values
@@ -358,6 +360,7 @@ func validateVMUpdateMask(vm *ufspb.VM, mask *field_mask.FieldMask) error {
 				if vm.GetOsVersion() == nil {
 					return status.Error(codes.InvalidArgument, "validateUpdateVM - Osversion cannot be empty/nil.")
 				}
+			case "deploymentTicket":
 			case "tags":
 			case "description":
 			case "resourceState":

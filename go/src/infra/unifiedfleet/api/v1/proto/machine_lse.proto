@@ -165,6 +165,9 @@ message VM {
 
     // State of the vm resource
     State resource_state = 13;
+
+    // The deployment ticket associated with this vm.
+    string deployment_ticket = 14;
 }
 
 // OSVersion refers to the version of Operating System

@@ -51,6 +51,7 @@ Partial update a vm by parameters. Only specified parameters will be updated in 
 		c.Flags.StringVar(&c.osVersion, "os", "", "os version of the VM. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.description, "desc", "", "description for the vm. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this vm. "+cmdhelp.ClearFieldHelpText)
 
 		c.Flags.StringVar(&c.vlanName, "vlan", "", "name of the vlan to assign this vm to")
 		c.Flags.BoolVar(&c.deleteVlan, "delete-vlan", false, "if deleting the ip assignment for the vm")
@@ -68,16 +69,17 @@ type updateVM struct {
 
 	newSpecsFile string
 
-	hostName    string
-	vmName      string
-	vlanName    string
-	deleteVlan  bool
-	ip          string
-	state       string
-	macAddress  string
-	osVersion   string
-	tags        string
-	description string
+	hostName         string
+	vmName           string
+	vlanName         string
+	deleteVlan       bool
+	ip               string
+	state            string
+	macAddress       string
+	osVersion        string
+	tags             string
+	description      string
+	deploymentTicket string
 }
 
 func (c *updateVM) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -136,12 +138,13 @@ func (c *updateVM) innerRun(a subcommands.Application, args []string, env subcom
 		Vm:            &vm,
 		NetworkOption: nwOpt,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"host":  "machineLseId",
-			"state": "resourceState",
-			"mac":   "macAddress",
-			"os":    "osVersion",
-			"tags":  "tags",
-			"desc":  "description",
+			"host":   "machineLseId",
+			"state":  "resourceState",
+			"mac":    "macAddress",
+			"os":     "osVersion",
+			"tags":   "tags",
+			"desc":   "description",
+			"ticket": "deploymentTicket",
 		}),
 	})
 	if err != nil {
@@ -195,6 +198,11 @@ func (c *updateVM) parseArgs(vm *ufspb.VM) {
 	} else {
 		vm.Description = c.description
 	}
+	if c.deploymentTicket == utils.ClearFieldValue {
+		vm.DeploymentTicket = ""
+	} else {
+		vm.DeploymentTicket = c.deploymentTicket
+	}
 }
 
 func (c *updateVM) validateArgs() error {
@@ -202,7 +210,7 @@ func (c *updateVM) validateArgs() error {
 		if c.vmName == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f') is specified.")
 		}
-		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" &&
+		if c.vlanName == "" && !c.deleteVlan && c.ip == "" && c.state == "" && c.deploymentTicket == "" &&
 			c.hostName == "" && c.osVersion == "" && c.macAddress == "" && c.tags == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
@@ -230,6 +238,9 @@ func (c *updateVM) validateArgs() error {
 		}
 		if c.state != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-state' cannot be specified at the same time.")
+		}
+		if c.deploymentTicket != "" {
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe JSON input file is already specified. '-ticket' cannot be specified at the same time.")
 		}
 	}
 	return nil

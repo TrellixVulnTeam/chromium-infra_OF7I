@@ -343,6 +343,8 @@ func processMachineLSEUpdateMask(ctx context.Context, oldMachinelse *ufspb.Machi
 			oldMachinelse.Tags = mergeTags(oldMachinelse.GetTags(), machinelse.GetTags())
 		case "description":
 			oldMachinelse.Description = machinelse.Description
+		case "deploymentTicket":
+			oldMachinelse.DeploymentTicket = machinelse.GetDeploymentTicket()
 		}
 	}
 	// return existing/old machinelse with new updated values
@@ -1031,6 +1033,7 @@ func validateMachineLSEUpdateMask(machinelse *ufspb.MachineLSE, mask *field_mask
 				if machinelse.GetChromeBrowserMachineLse() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineLSEUpdateMask - browser machine lse cannot be empty/nil.")
 				}
+			case "deploymentTicket":
 			case "tags":
 			case "description":
 			case "resourceState":

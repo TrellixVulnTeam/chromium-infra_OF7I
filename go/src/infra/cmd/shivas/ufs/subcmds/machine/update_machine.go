@@ -121,7 +121,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			"rack":     "rack",
 			"platform": "platform",
 			"kvm":      "kvm",
-			"ticket":   "ticket",
+			"ticket":   "deploymentTicket",
 			"tags":     "tags",
 			"serial":   "serialNumber",
 			"state":    "resourceState",
