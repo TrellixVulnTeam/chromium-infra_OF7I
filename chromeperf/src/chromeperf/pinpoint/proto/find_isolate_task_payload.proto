@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "change.proto";
+
+package chromeperf.pinpoint;
+
+
+message FindIsolateTaskPayload {
+  chromeperf.pinpoint.Change change = 1;
+  chromeperf.pinpoint.GerritPatch patch = 2;
+  string builder = 3;
+  string target = 4;
+  string isolate_server = 5;
+  string isolate_hash = 6;
+}

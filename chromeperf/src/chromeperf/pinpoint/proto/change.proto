@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package chromeperf.pinpoint;
+
+
+// A patch in Gerrit.
+//
+// Refer to the Gerrit API documentation for details on the formats of these
+// fields.
+// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html#idS
+//
+// TODO: perhaps reconcile this with GerritChange in
+// go/src/infra/chromeperf/pinpoint/pinpoint.proto?
+//
+// pinpoint.proto's GerritChange uses int64 for change and patchset.  Whereas
+// GerritPatch from catapult/dashboard/dashboard/pinpoint/models/change/patch.py
+// (which this is currently derived from) uses canonical ID strings, apparently
+// to ensure precise lookups?  We should decide which representation makes
+// sense.  Perhaps the external API should offer convenience/shorthand
+// representations and the internal should always use a normalised form?  But
+// then when presenting state in the UI the shorter forms are probably more
+// appropriate...
+message GerritPatch {
+  string server = 1;
+
+  // A change ID of the format '<project>~<branch>~<Change-Id>'.
+  string change = 2;
+
+  // A commit ID.
+  string revision = 3;
+}
+
+
+// A git repository pinned to a particular commit.
+message Commit {
+  string repository = 1;
+  string git_hash = 2;
+}
+
+
+// A particular set of Commits with or without an additional patch applied.
+message Change {
+  // First element is the base commit, subsequent are deps.
+  repeated Commit commits = 1;
+  GerritPatch patch = 2;
+}
