@@ -104,7 +104,7 @@ serve_remote_email: config_local
 
 run: serve
 
-deps: node_deps python_deps
+deps: node_deps
 	rm -f static/dist/*
 
 build_js:
@@ -118,9 +118,6 @@ clean_deps:
 
 node_deps:
 	npm ci --no-save
-
-python_deps:
-	python -m pip install -t lib -r requirements.py2.txt
 
 dev_deps:
 	python -m pip install -r requirements.dev.txt
