@@ -7,7 +7,7 @@ Please see [VPython and You] for a brief tutorial on how to use vpython.
 
 If there's a wheel you need which is missing, please [file a bug][bug].
 
-[bug]: https://bugs.chromium.org/p/chromium/issues/entry?summary=Need%20VPython%20Wheel&description=Link%20to%20PyPI:%20%0AWheel%20Name:%20%0AVersion:%20%0APlatform%28s%29%20Required:&components=Infra%3EPlatform%3EAdmin
+[bug]: https://bugs.chromium.org/p/chromium/issues/entry?summary=Need%20VPython%20Wheel&description=Link%20to%20PyPI:%20%0AWheel%20Name:%20%0AVersion:%20%0APlatform%28s%29%20Required:&components=Infra%3EThirdPartySoftware
 [VPython and You]: https://chromium.googlesource.com/infra/infra/+/master/doc/users/vpython_one_page.md
 
 [TOC]
