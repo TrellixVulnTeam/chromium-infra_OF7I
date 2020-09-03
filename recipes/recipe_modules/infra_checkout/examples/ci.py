@@ -3,19 +3,23 @@
 # found in the LICENSE file.
 
 DEPS = [
-    'infra_checkout',
     'recipe_engine/buildbucket',
     'recipe_engine/context',
     'recipe_engine/platform',
     'recipe_engine/python',
     'recipe_engine/runtime',
     'recipe_engine/step',
+    'recipe_engine/properties',
+
+    'infra_checkout',
 ]
 
 
 def RunSteps(api):
-  co = api.infra_checkout.checkout(gclient_config_name='infra',
-                                   patch_root='infra')
+  co = api.infra_checkout.checkout(
+      gclient_config_name='infra',
+      patch_root='infra',
+      generate_env_with_system_python=api.properties.get('sys_env', False))
   co.gclient_runhooks()
   co.ensure_go_env()
   _ = co.bot_update_step  # coverage...
@@ -44,3 +48,35 @@ def GenTests(api):
             git_repo='https://chromium.googlesource.com/infra/infra',
         )
     )
+
+  yield api.test(
+      'sys_env',
+      api.properties(sys_env=True),
+      api.buildbucket.ci_build(
+          project='infra',
+          bucket='ci',
+          git_repo='https://chromium.googlesource.com/infra/infra',
+      )
+  )
+
+  yield api.test(
+      'sys_env win',
+      api.properties(sys_env=True),
+      api.platform('win', 64),
+      api.buildbucket.ci_build(
+          project='infra',
+          bucket='ci',
+          git_repo='https://chromium.googlesource.com/infra/infra',
+      )
+  )
+
+  yield api.test(
+      'sys_env arm',
+      api.properties(sys_env=True),
+      api.platform('linux', 64, 'arm'),
+      api.buildbucket.ci_build(
+          project='infra',
+          bucket='ci',
+          git_repo='https://chromium.googlesource.com/infra/infra',
+      )
+  )

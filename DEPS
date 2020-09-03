@@ -1,6 +1,16 @@
 vars = {
   "chromium_git": "https://chromium.googlesource.com",
   "external_github": "https://chromium.googlesource.com/external/github.com",
+
+  # This can be used to override the python used for generating the ENV python
+  # environment. Unfortunately, some bots need this as they are attempting to
+  # build the "infra/infra_python/${platform}" package which includes
+  # a virtualenv which needs to point to a fixed, pre-deployed, python
+  # interpreter on the system.
+  #
+  # This package is an awful way to distribute software, so if you see an
+  # opportunity to kill it, please do so.
+  "infra_env_python": "python",
 }
 
 deps = {
@@ -118,10 +128,11 @@ hooks = [
       "python", "-u", "./infra/bootstrap/remove_orphaned_pycs.py",
     ],
   },
+
   {
     "pattern": ".",
     "action": [
-      "python", "-u", "./infra/bootstrap/bootstrap.py",
+      Var("infra_env_python"), "-u", "./infra/bootstrap/bootstrap.py",
       "--deps_file", "infra/bootstrap/deps.pyl", "infra/ENV"
     ],
   },

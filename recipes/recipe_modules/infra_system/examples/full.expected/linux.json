@@ -1,20 +1,10 @@
 [
   {
     "cmd": [
-      "echo"
+      "echo",
+      "/opt/infra-system/bin"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "name": "dump env"
-  },
-  {
-    "cmd": [
-      "echo"
-    ],
-    "name": "dump env (sane)"
   },
   {
     "name": "$result"

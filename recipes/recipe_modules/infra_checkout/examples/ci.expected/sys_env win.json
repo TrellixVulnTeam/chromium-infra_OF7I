@@ -21,6 +21,8 @@
       "RECIPE_MODULE[depot_tools::bot_update]\\resources\\bot_update.py",
       "--spec-path",
       "cache_dir = '[CACHE]\\\\git'\nsolutions = [{'custom_vars': {'infra_env_python': 'C:\\\\infra-system\\\\bin\\\\python.exe'}, 'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
+      "--patch_root",
+      "infra",
       "--revision_mapping_file",
       "{\"got_revision\": \"infra\"}",
       "--git-cache-dir",
@@ -91,11 +93,16 @@
     "cmd": [
       "python",
       "-u",
-      "test.py",
-      "test"
+      "RECIPE_REPO[depot_tools]\\gclient.py",
+      "runhooks"
     ],
-    "cwd": "[CACHE]\\infra_gclient_with_go\\infra",
-    "name": "infra python tests"
+    "cwd": "[CACHE]\\infra_gclient_with_go",
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "name": "gclient runhooks"
   },
   {
     "cmd": [
@@ -127,57 +134,42 @@
   },
   {
     "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]\\infra_gclient_with_go\\infra\\go\\env.py",
+      "go",
+      "test",
+      "infra/..."
+    ],
+    "cwd": "[CACHE]\\infra_gclient_with_go",
+    "env": {
+      "GOPATH": "[CACHE]\\infra_gclient_with_go\\infra\\go",
+      "GOROOT": "[CACHE]\\infra_gclient_with_go\\golang\\go"
+    },
+    "env_prefixes": {
+      "PATH": [
+        "[CACHE]\\infra_gclient_with_go\\golang\\go",
+        "[CACHE]\\infra_gclient_with_go\\infra\\go\\bin"
+      ]
+    },
+    "name": "go test"
+  },
+  {
+    "cmd": [
       "python",
-      "[CACHE]\\infra_gclient_with_go\\infra\\go\\test.py"
+      "-u",
+      "test.py",
+      "test",
+      "infra"
     ],
-    "name": "infra go tests"
+    "cwd": "[CACHE]\\infra_gclient_with_go\\infra",
+    "name": "python tests"
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
-      "[CACHE]\\infra_gclient_with_go\\infra\\build\\build.py",
-      "--builder",
-      "infra-continuous-win10-64"
+      "\n        import sys, os\n        print '\n'.join(os.listdir('./'))\n    "
     ],
-    "name": "cipd - build packages"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]\\infra_gclient_with_go\\infra\\build\\test_packages.py"
-    ],
-    "name": "cipd - test packages integrity"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]\\infra_gclient_with_go\\infra\\build\\build.py",
-      "--builder",
-      "infra-continuous-win10-64"
-    ],
-    "env": {
-      "GOARCH": "386",
-      "GOOS": "windows"
-    },
-    "name": "[GOOS:windows GOARCH:386]cipd - build packages"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "[CACHE]\\infra_gclient_with_go\\infra\\build\\test_packages.py"
-    ],
-    "env": {
-      "GOARCH": "386",
-      "GOOS": "windows"
-    },
-    "name": "[GOOS:windows GOARCH:386]cipd - test packages integrity"
+    "cwd": "[CACHE]\\infra_gclient_with_go",
+    "name": "dirs"
   },
   {
     "name": "$result"

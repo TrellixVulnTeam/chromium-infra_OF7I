@@ -19,21 +19,3 @@ class InfraSystemApi(recipe_api.RecipeApi):
     return self._properties.get('sys_bin_path', (
         'C:\\infra-system\\bin' if self.m.platform.is_win
         else '/opt/infra-system/bin'))
-
-  @contextlib.contextmanager
-  def system_env(self, enabled=True):
-    """Yields a context modified to operate on system paths.
-
-    If `enabled` is False, this is a noop.
-    """
-    if not enabled:
-      yield
-      return
-
-    sys_bin_path = self.sys_bin_path
-    self.m.path.mock_add_paths(sys_bin_path)
-    assert self.m.path.exists(sys_bin_path), (
-        'System binary path does not exist: %r' % (sys_bin_path,))
-
-    with self.m.context(env_prefixes={'PATH': [sys_bin_path]}):
-      yield
