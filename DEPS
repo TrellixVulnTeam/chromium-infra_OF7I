@@ -137,6 +137,14 @@ hooks = [
       "python", "-u", "./infra/bootstrap/get_gcloud.py", "--dest=.",
     ],
   },
+  {
+    "pattern": ".",
+    "action": [
+      "python", "-u", "-m", "pip", "install", "--no-deps", "--require-hashes",
+      "-t", "./infra/appengine/monorail/lib",
+      "-r", "./infra/appengine/monorail/requirements.py2.txt",
+    ],
+  },
 ]
 
 recursedeps = ['build', 'infra/luci']
