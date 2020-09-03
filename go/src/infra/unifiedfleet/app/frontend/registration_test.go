@@ -62,7 +62,7 @@ func mockRack(id string, rackCapactiy int32) *ufspb.Rack {
 func mockNic(id string) *ufspb.Nic {
 	return &ufspb.Nic{
 		Name:       util.AddPrefix(util.NicCollection, id),
-		MacAddress: "12:ab",
+		MacAddress: "12:ab:34:56:78:90",
 		SwitchInterface: &ufspb.SwitchInterface{
 			Switch:   "test-switch",
 			PortName: "1",
@@ -85,7 +85,7 @@ func mockRPM(id string) *ufspb.RPM {
 func mockDrac(id string) *ufspb.Drac {
 	return &ufspb.Drac{
 		Name:       util.AddPrefix(util.DracCollection, id),
-		MacAddress: "12:ab",
+		MacAddress: "12:ab:34:56:78:90",
 		SwitchInterface: &ufspb.SwitchInterface{
 			Switch:   "test-switch",
 			PortName: "1",
@@ -858,6 +858,19 @@ func TestCreateNic(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
+		Convey("Create new nic - Invalid mac", func() {
+			nic := mockNic("createNic-0")
+			nic.MacAddress = "123"
+			req := &ufsAPI.CreateNicRequest{
+				Nic:   nic,
+				NicId: "createNic-0",
+			}
+			resp, err := tf.Fleet.CreateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
+		})
+
 		Convey("Create new nic - Invalid input empty ID", func() {
 			nic := mockNic("")
 			nic.Machine = "machine-1"
@@ -938,6 +951,19 @@ func TestUpdateNic(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
+		})
+
+		Convey("Update nic - Invalid mac", func() {
+			nic := mockNic("updateNic-0")
+			nic.MacAddress = "123"
+			nic.Machine = "machine-1"
+			req := &ufsAPI.UpdateNicRequest{
+				Nic: nic,
+			}
+			resp, err := tf.Fleet.UpdateNic(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
 		})
 
 		Convey("Update nic - Invalid input empty name", func() {
@@ -1227,6 +1253,20 @@ func TestCreateKVM(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
+		Convey("Create kvm - Invalid mac", func() {
+			kvm := mockKVM("createKVM-0")
+			kvm.MacAddress = "123"
+			kvm.Rack = "rack-1"
+			req := &ufsAPI.CreateKVMRequest{
+				KVM:   kvm,
+				KVMId: "createKVM-0",
+			}
+			resp, err := tf.Fleet.CreateKVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
+		})
+
 		Convey("Create new KVM - Invalid input empty ID", func() {
 			KVM1 := mockKVM("")
 			KVM1.Rack = "rack-1"
@@ -1304,6 +1344,19 @@ func TestUpdateKVM(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
+		})
+
+		Convey("Update kvm - Invalid mac", func() {
+			kvm := mockKVM("updateKVM-0")
+			kvm.MacAddress = "123"
+			kvm.Rack = "rack-1"
+			req := &ufsAPI.UpdateKVMRequest{
+				KVM: kvm,
+			}
+			resp, err := tf.Fleet.UpdateKVM(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
 		})
 
 		Convey("Update KVM - Invalid input empty name", func() {
@@ -1813,6 +1866,19 @@ func TestCreateDrac(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
 		})
 
+		Convey("Create new mac - Invalid mac", func() {
+			drac := mockDrac("createDrac-0")
+			drac.MacAddress = "123"
+			req := &ufsAPI.CreateDracRequest{
+				Drac:   drac,
+				DracId: "createDrac-0",
+			}
+			resp, err := tf.Fleet.CreateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
+		})
+
 		Convey("Create new drac - Invalid input empty ID", func() {
 			drac := mockDrac("")
 			drac.Machine = "machine-1"
@@ -1893,6 +1959,19 @@ func TestUpdateDrac(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
+		})
+
+		Convey("Update drac - Invalid mac", func() {
+			drac := mockDrac("updateDrac-0")
+			drac.MacAddress = "123"
+			drac.Machine = "machine-1"
+			req := &ufsAPI.UpdateDracRequest{
+				Drac: drac,
+			}
+			resp, err := tf.Fleet.UpdateDrac(tf.C, req)
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
 		})
 
 		Convey("Update drac - Invalid input empty name", func() {

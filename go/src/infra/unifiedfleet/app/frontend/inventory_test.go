@@ -306,6 +306,19 @@ func TestCreateVM(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, ufsAPI.EmptyHostName)
 		})
 
+		Convey("Create vm - Invalid mac", func() {
+			resp, err := tf.Fleet.CreateVM(ctx, &ufsAPI.CreateVMRequest{
+				Vm: &ufspb.VM{
+					Name:         "createvm-0",
+					MacAddress:   "123",
+					MachineLseId: "inventory-create-host",
+				},
+			})
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
+		})
+
 		Convey("Create new VM - assign ip", func() {
 			setupTestVlan(ctx)
 			vm1 := &ufspb.VM{
@@ -399,6 +412,18 @@ func TestUpdateVM(t *testing.T) {
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, ufsAPI.NilEntity)
+		})
+
+		Convey("Update vm - Invalid mac", func() {
+			resp, err := tf.Fleet.UpdateVM(ctx, &ufsAPI.UpdateVMRequest{
+				Vm: &ufspb.VM{
+					Name:       "updatevm-0",
+					MacAddress: "123",
+				},
+			})
+			So(resp, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidMac)
 		})
 
 		Convey("Update VM - Invalid input empty name", func() {

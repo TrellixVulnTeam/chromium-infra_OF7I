@@ -23,6 +23,7 @@ var (
 	NilEntity                     string = "Invalid input - No Entity to add/update."
 	EmptyID                       string = "Invalid input - Entity ID is empty."
 	EmptyName                     string = "Invalid input - Entity Name is empty."
+	InvalidMac                    string = "invalid mac address"
 	ValidName                     string = "Name must match the regular expression `^[a-zA-Z0-9-)(_:.]{3,63}$`"
 	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
@@ -461,6 +462,13 @@ func (r *CreateVMRequest) Validate() error {
 	if !IDRegex.MatchString(id) {
 		return status.Errorf(codes.InvalidArgument, "Host name is invalid: %s", InvalidCharacters)
 	}
+	if r.Vm.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.Vm.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.Vm.MacAddress = newMac
+	}
 	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
 		return err
 	}
@@ -481,6 +489,13 @@ func validateNetworkOption(opt *NetworkOption) error {
 func (r *UpdateVMRequest) Validate() error {
 	if r.GetVm() == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if r.Vm.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.Vm.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.Vm.MacAddress = newMac
 	}
 	if err := validateNetworkOption(r.GetNetworkOption()); err != nil {
 		return err
@@ -572,6 +587,11 @@ func validateNic(nic *ufspb.Nic) error {
 	if nic.GetMacAddress() == "" {
 		return status.Errorf(codes.InvalidArgument, "nic macAddress cannot be empty")
 	}
+	newMac, err := util.ParseMac(nic.GetMacAddress())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	nic.MacAddress = newMac
 	if nic.GetSwitchInterface().GetSwitch() == "" {
 		return status.Errorf(codes.InvalidArgument, "the attached switch name for the nic cannot be empty")
 	}
@@ -609,6 +629,13 @@ func (r *UpdateNicRequest) Validate() error {
 	if r.Nic == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
+	if r.Nic.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.Nic.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.Nic.MacAddress = newMac
+	}
 	return validateResourceName(nicRegex, NicNameFormat, r.Nic.GetName())
 }
 
@@ -645,6 +672,13 @@ func (r *CreateKVMRequest) Validate() error {
 	if r.GetKVM().GetRack() == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyRackName)
 	}
+	if r.KVM.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.KVM.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.KVM.MacAddress = newMac
+	}
 	return nil
 }
 
@@ -652,6 +686,13 @@ func (r *CreateKVMRequest) Validate() error {
 func (r *UpdateKVMRequest) Validate() error {
 	if r.KVM == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if r.KVM.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.KVM.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.KVM.MacAddress = newMac
 	}
 	return validateResourceName(kvmRegex, KVMNameFormat, r.KVM.GetName())
 }
@@ -740,6 +781,11 @@ func validateDrac(drac *ufspb.Drac) error {
 	if drac.GetMacAddress() == "" {
 		return status.Errorf(codes.InvalidArgument, "drac macAddress cannot be empty")
 	}
+	newMac, err := util.ParseMac(drac.GetMacAddress())
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	drac.MacAddress = newMac
 	if drac.GetSwitchInterface().GetSwitch() == "" {
 		return status.Errorf(codes.InvalidArgument, "the attached switch name for the drac cannot be empty")
 	}
@@ -753,6 +799,13 @@ func validateDrac(drac *ufspb.Drac) error {
 func (r *UpdateDracRequest) Validate() error {
 	if r.Drac == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
+	}
+	if r.Drac.GetMacAddress() != "" {
+		newMac, err := util.ParseMac(r.Drac.GetMacAddress())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, err.Error())
+		}
+		r.Drac.MacAddress = newMac
 	}
 	return validateResourceName(dracRegex, DracNameFormat, r.Drac.GetName())
 }

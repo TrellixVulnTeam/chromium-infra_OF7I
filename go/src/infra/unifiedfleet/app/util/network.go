@@ -104,3 +104,33 @@ func GetCapacity(cidr string) float64 {
 	}
 	return math.Max(math.Exp2(32-float64(coverN))-reserveFirst-reserveLast, 0)
 }
+
+// ParseMac returns a valid mac address after parsing user input.
+func ParseMac(userMac string) (string, error) {
+	newUserMac := formatMac(userMac)
+	m, err := net.ParseMAC(newUserMac)
+	if err != nil || len(m) != 6 {
+		return "", errors.Reason("invalid mac address %q (before parsing %q)", newUserMac, userMac).Err()
+	}
+	bytes := make([]byte, 8)
+	copy(bytes[2:], m)
+	mac := make(net.HardwareAddr, 8)
+	binary.BigEndian.PutUint64(mac, binary.BigEndian.Uint64(bytes))
+	return mac[2:].String(), nil
+}
+
+func formatMac(userMac string) string {
+	if strings.Contains(userMac, ":") {
+		return userMac
+	}
+
+	var newMac string
+	for i := 0; ; i += 2 {
+		if i+2 > len(userMac)-1 {
+			newMac += userMac[i:]
+			break
+		}
+		newMac += userMac[i:i+2] + ":"
+	}
+	return newMac
+}
