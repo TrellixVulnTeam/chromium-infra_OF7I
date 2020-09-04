@@ -11,7 +11,11 @@ DEPS = [
 
 
 def RunSteps(api):
-  api.step('dump env', ['echo', api.infra_system.sys_bin_path])
+  with api.infra_system.system_env():
+    api.step('dump env', ['echo'])
+
+  with api.infra_system.system_env(enabled=False):
+    api.step('dump env (sane)', ['echo'])
 
 
 def GenTests(api):

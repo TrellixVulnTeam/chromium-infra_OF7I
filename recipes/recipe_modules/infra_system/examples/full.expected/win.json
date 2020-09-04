@@ -1,10 +1,20 @@
 [
   {
     "cmd": [
-      "echo",
-      "C:\\infra-system\\bin"
+      "echo"
     ],
+    "env_prefixes": {
+      "PATH": [
+        "C:\\infra-system\\bin"
+      ]
+    },
     "name": "dump env"
+  },
+  {
+    "cmd": [
+      "echo"
+    ],
+    "name": "dump env (sane)"
   },
   {
     "name": "$result"

@@ -19,7 +19,6 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
                path=None,
                internal=False,
                named_cache=None,
-               generate_env_with_system_python=False,
                **kwargs):
     """Fetches infra gclient checkout into a given path OR named_cache.
 
@@ -41,16 +40,6 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
           prioritize bots which actually have this cache populated by prior
           runs. Otherwise, using named cache isn't particularly useful, unless
           your pool of builders is very small.
-      * generate_env_with_system_python uses the bot "infra_system" python to
-        generate infra.git's ENV. This is needed for bots which build the
-        "infra/infra_python/${platform}" CIPD packages because they incorporate
-        the checkout's VirtualEnv inside the package. This, in turn, results in
-        the CIPD package containing absolute paths to the Python that was used
-        to create it. In order to enable this madness to work, we ensure that
-        the Python is a system Python, which resides at a fixed path.
-
-        No effect on arm64 because the arm64 bots have no such python
-        available.
       * kwargs - passed as is to bot_update.ensure_checkout.
 
     Returns:
@@ -63,19 +52,8 @@ class InfraCheckoutApi(recipe_api.RecipeApi):
     path = path or self.m.path['cache'].join(named_cache)
     self.m.file.ensure_directory('ensure builder dir', path)
 
-    # arm64 bots don't have this system python stuff
-    if generate_env_with_system_python and (
-        self.m.platform.arch == 'arm' and self.m.platform.bits == 64):
-      generate_env_with_system_python = False
-
     with self.m.context(cwd=path):
       self.m.gclient.set_config(gclient_config_name)
-      if generate_env_with_system_python:
-        sys_py = self.m.path.join(self.m.infra_system.sys_bin_path, 'python')
-        if self.m.platform.is_win:
-          sys_py += '.exe'
-        self.m.gclient.c.solutions[0].custom_vars['infra_env_python'] = sys_py
-
       bot_update_step = self.m.bot_update.ensure_checkout(
           patch_root=patch_root, **kwargs)
 

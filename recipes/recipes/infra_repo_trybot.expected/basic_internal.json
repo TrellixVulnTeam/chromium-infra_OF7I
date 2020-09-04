@@ -64,7 +64,7 @@
       "-u",
       "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
       "--spec-path",
-      "cache_dir = '[CACHE]/git'\nsolutions = [{'custom_vars': {'infra_env_python': '/opt/infra-system/bin/python'}, 'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra_internal', 'url': 'https://chrome-internal.googlesource.com/infra/infra_internal.git'}]",
+      "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra_internal', 'url': 'https://chrome-internal.googlesource.com/infra/infra_internal.git'}]",
       "--patch_root",
       "infra_internal",
       "--revision_mapping_file",
@@ -157,6 +157,11 @@
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -173,6 +178,11 @@
       "HEAD~"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "get change list",
     "~followup_annotations": [
@@ -189,6 +199,11 @@
       "test"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go/infra_internal",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "python tests"
   },
   {
@@ -199,6 +214,11 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -228,6 +248,11 @@
       "[CACHE]/infra_internal_gclient_with_go/infra_internal/go/test.py"
     ],
     "cwd": "[CACHE]/infra_internal_gclient_with_go",
+    "env_prefixes": {
+      "PATH": [
+        "/opt/infra-system/bin"
+      ]
+    },
     "name": "go tests"
   },
   {

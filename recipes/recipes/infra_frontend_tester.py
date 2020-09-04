@@ -3,6 +3,9 @@
 # found in the LICENSE file.
 
 DEPS = [
+  'depot_tools/bot_update',
+  'depot_tools/gclient',
+  'infra_checkout',
   'recipe_engine/buildbucket',
   'recipe_engine/cipd',
   'recipe_engine/context',
@@ -10,9 +13,6 @@ DEPS = [
   'recipe_engine/platform',
   'recipe_engine/properties',
   'recipe_engine/step',
-
-  'depot_tools/bot_update',
-  'depot_tools/gclient',
 ]
 
 def RunSteps(api):

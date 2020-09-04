@@ -25,6 +25,7 @@ DEPS = [
 
   'infra_checkout',
   'infra_cipd',
+  'infra_system',
 ]
 
 
@@ -141,14 +142,27 @@ def RunSteps(api):
 
   co = api.infra_checkout.checkout(
       gclient_config_name=project_name,
-      internal=(project_name == 'infra_internal'),
-      generate_env_with_system_python=True)
+      internal=(project_name == 'infra_internal'))
 
-  # Whatever is checked out by bot_update. It is usually equal to
-  # api.buildbucket.gitiles_commit.id except when the build was triggered
-  # manually (commit id is empty in that case).
-  rev = co.bot_update_step.presentation.properties['got_revision']
-  build_main(api, co, buildername, project_name, repo_url, rev)
+  # Prefix the system binary path to PATH so that all Python invocations will
+  # use the system Python. This will ensure that packages built will be built
+  # aginst the system Python's paths.
+  #
+  # This is needed by the "infra_python" CIPD package, which incorporates the
+  # checkout's VirtualEnv into its packages. This, in turn, results in the CIPD
+  # package containing a reference to the Python that was used to create it. In
+  # order to control for this, we ensure that the Python is a system Python,
+  # which resides at a fixed path.
+  #
+  # Our arm64 bots do not have the "system env" python available.
+  with api.infra_system.system_env(enabled=api.platform.arch != 'arm'):
+    co.gclient_runhooks()
+
+    # Whatever is checked out by bot_update. It is usually equal to
+    # api.buildbucket.gitiles_commit.id except when the build was triggered
+    # manually (commit id is empty in that case).
+    rev = co.bot_update_step.presentation.properties['got_revision']
+    build_main(api, co, buildername, project_name, repo_url, rev)
 
 
 def build_main(api, checkout, buildername, project_name, repo_url, rev):
