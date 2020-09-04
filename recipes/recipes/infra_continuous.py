@@ -143,6 +143,7 @@ def RunSteps(api):
       gclient_config_name=project_name,
       internal=(project_name == 'infra_internal'),
       generate_env_with_system_python=True)
+  co.gclient_runhooks()
 
   # Whatever is checked out by bot_update. It is usually equal to
   # api.buildbucket.gitiles_commit.id except when the build was triggered
