@@ -120,7 +120,7 @@ node_deps:
 	npm ci --no-save
 
 dev_deps:
-	python -m pip install --no-deps -r requirements.dev.txt
+	python -m pip install -r requirements.dev.txt
 
 karma:
 	npx karma start --debug --coverage

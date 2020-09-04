@@ -3,7 +3,6 @@ include = appengine/monorail/*
 omit =
     # Add monorail's third-party packages and worst offenders
     ./appengine/monorail/third_party/*
-    ./appengine/monorail/lib/*
     ./appengine/monorail/testing/*
     ./appengine/monorail/**/test/*
 [report]
