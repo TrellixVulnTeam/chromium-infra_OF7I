@@ -214,7 +214,7 @@ func (tc *TaskCreator) AuditTask(ctx context.Context, host, actions string, expi
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
 			Command:              c.Args(),
 			Dimensions:           dims,
-			ExecutionTimeoutSecs: 5400,
+			ExecutionTimeoutSecs: 28800,
 		},
 		WaitForCapacity: true,
 	}}
