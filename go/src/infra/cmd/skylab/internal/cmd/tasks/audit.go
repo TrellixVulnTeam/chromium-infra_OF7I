@@ -21,22 +21,22 @@ import (
 
 // Audit subcommand: Audit hosts.
 var Audit = &subcommands.Command{
-	UsageLine: "audit [HOST...]",
+	UsageLine: "audit [flags...] [HOST...]",
 	ShortDesc: "create audit tasks",
 	LongDesc: `Create audit tasks.
 
 This command does not wait for the tasks to start running.
-By default all actions runnings. To run specified action provide it via flags.`,
+By default no action runnings. Please specified action to run them via flags.`,
 	CommandRun: func() subcommands.CommandRun {
 		c := &auditRun{}
 		c.authFlags.Register(&c.Flags, site.DefaultAuthOptions)
 		c.envFlags.Register(&c.Flags)
-		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 10, "The expiration minutes of the repair request.")
-		c.Flags.BoolVar(&c.runVerifyServoUSB, "run-verify-servo-usb", false, "Run the verifier for servo usb drive.")
+		c.Flags.IntVar(&c.expirationMins, "expiration-mins", 10, "The expiration minutes of the audit request.")
+		c.Flags.BoolVar(&c.runVerifyServoUSB, "run-verify-servo-usb", false, "Run the verifier for Servo USB drive.")
 		c.Flags.BoolVar(&c.runVerifyDUTStorage, "run-verify-dut-storage", false, "Run the verifier for DUT storage.")
-		c.Flags.BoolVar(&c.runVerifyServoFw, "run-verify-servo-fw", false, "Run the verifier for servo firmware update.")
+		c.Flags.BoolVar(&c.runVerifyServoFw, "run-verify-servo-fw", false, "Run the verifier for Servo firmware update.")
 		c.Flags.BoolVar(&c.runFlashServoKeyboardMap, "run-flash-servo-keyboard-map", false, "Run the action to flash Servo keyboard map to the DUT.")
-		c.Flags.BoolVar(&c.runVerifyDutMacaddr, "run-verify-dut-macaddr", false, "Ru the verifier to check and update mac address of DUT NIC to Servo.")
+		c.Flags.BoolVar(&c.runVerifyDutMacaddr, "run-verify-dut-macaddr", false, "Run the verifier to check and cache mac address of DUT NIC to Servo.")
 		return c
 	},
 }
