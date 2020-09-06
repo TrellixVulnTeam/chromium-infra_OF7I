@@ -44,11 +44,20 @@
       });
     });
 
-    test('display name release branch', function(done) {
+    test('display name release branch with non ci bucket', function(done) {
       element.tree = 'chrome_browser_release';
-      const builder = {name: 'dummy builder 1', bucket:'my_bucket'};
+      const builder = {name: 'dummy builder 1', bucket:'my_bucket', project:'abc'};
       flush(() => {
         assert.equal(element._displayName(builder), 'my_bucket.dummy builder 1');
+        done();
+      });
+    });
+
+    test('display name release branch with ci bucket', function(done) {
+      element.tree = 'chrome_browser_release';
+      const builder = {name: 'dummy builder 1', bucket:'ci', project:'chromium-m86'};
+      flush(() => {
+        assert.equal(element._displayName(builder), 'chromium-m86.dummy builder 1');
         done();
       });
     });

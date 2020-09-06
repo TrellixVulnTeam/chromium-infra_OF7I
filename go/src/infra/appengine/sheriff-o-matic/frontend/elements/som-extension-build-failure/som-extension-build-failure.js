@@ -98,7 +98,11 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
 
   _displayName(builder) {
     if (this.tree === 'chrome_browser_release') {
-      return builder.bucket + '.' + builder.name;
+      if (builder.bucket != 'ci') { // For M85 and before
+        return builder.bucket + '.' + builder.name;
+      } else { // For M86 onwards
+        return builder.project + '.' + builder.name;
+      }
     }
     return builder.name;
   }

@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW `APP_ID.PROJECT_NAME.failing_steps`
+CREATE OR REPLACE VIEW `APP_ID.chrome.failing_steps`
 AS
 /*
 Failing steps table.
@@ -23,9 +23,10 @@ WITH
   OFFSET
     (0)] latest
   FROM
-    `cr-buildbucket.PROJECT_NAME.builds` AS b
+    `cr-buildbucket.raw.completed_builds_prod` AS b
   WHERE
     create_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
+    AND (b.builder.project = "chrome" or b.builder.project="chromium" or b.builder.project LIKE "chromium-m%")
   GROUP BY
     1,
     2,
