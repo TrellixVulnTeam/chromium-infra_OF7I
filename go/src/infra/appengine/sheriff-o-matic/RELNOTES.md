@@ -1,3 +1,22 @@
+# Release Notes sheriff-o-matic 2020-09-07
+
+- 3 commits, 2 bugs affected since 4f143e2 ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SoM] Change Chrome Browser Release filter func](https://chromium-review.googlesource.com/c/infra/infra/+/2387888) (nqmtuan@google.com)
+- [[SoM] Remove more master references](https://chromium-review.googlesource.com/c/infra/infra/+/2386690) (nqmtuan@google.com)
+- [[SoM] Release note 1 Sep](https://chromium-review.googlesource.com/c/infra/infra/+/2386687) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1107749](https://crbug.com/1107749)
+  -  [https://crbug.com/1123176](https://crbug.com/1123176)
+
+
 # Release Notes sheriff-o-matic 2020-09-01
 
 - 4 commits, 2 bugs affected since 2570473 ()
