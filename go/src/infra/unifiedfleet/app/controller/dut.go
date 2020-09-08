@@ -7,12 +7,14 @@ package controller
 import (
 	"context"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 )
 
 // createDUT creates ChromeOSMachineLSE entities for a DUT.
@@ -34,7 +36,8 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		if err != nil {
 			return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
 		}
-
+		oldMachine := proto.Clone(machine).(*ufspb.Machine)
+		machine.ResourceState = ufspb.State_STATE_SERVING
 		setOutputField(ctx, machine, machinelse)
 
 		// Check if the DUT has Servo information.
@@ -57,7 +60,12 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			machinelses = append(machinelses, labstationMachinelse)
 		}
 
-		// BatchUpdate both DUT and Labstation
+		// BatchUpdate both DUT (and its machine), and Labstation
+		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return errors.Annotate(err, "Fail to update machine %s", machine.GetName()).Err()
+		}
+		hc.LogMachineChanges(oldMachine, machine)
+		machinelse.ResourceState = ufspb.State_STATE_REGISTERED
 		_, err = inventory.BatchUpdateMachineLSEs(ctx, machinelses)
 		if err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs").Err()
@@ -66,7 +74,7 @@ func createDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		hc.LogMachineLSEChanges(nil, machinelse)
 
 		// Update states
-		if err := hc.stUdt.addLseStateHelper(ctx, machinelse); err != nil {
+		if err := hc.stUdt.addLseStateHelper(ctx, machinelse, machine); err != nil {
 			return err
 		}
 		return hc.SaveChangeEvents(ctx)
@@ -102,9 +110,10 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 			return errors.Annotate(err, "Failed to get existing MachineLSE").Err()
 		}
 
+		var machine *ufspb.Machine
 		if len(machinelse.GetMachines()) > 0 {
 			// Get machine to get lab and rack info for machinelse table indexing
-			machine, err := GetMachine(ctx, machinelse.GetMachines()[0])
+			machine, err = GetMachine(ctx, machinelse.GetMachines()[0])
 			if err != nil {
 				return errors.Annotate(err, "Unable to get machine %s", machinelse.GetMachines()[0]).Err()
 			}
@@ -160,7 +169,7 @@ func updateDUT(ctx context.Context, machinelse *ufspb.MachineLSE) (*ufspb.Machin
 		hc.LogMachineLSEChanges(oldMachinelse, machinelse)
 
 		// Update states
-		if err := hc.stUdt.addLseStateHelper(ctx, machinelse); err != nil {
+		if err := hc.stUdt.addLseStateHelper(ctx, machinelse, machine); err != nil {
 			return err
 		}
 		return hc.SaveChangeEvents(ctx)

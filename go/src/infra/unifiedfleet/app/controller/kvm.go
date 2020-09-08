@@ -171,6 +171,9 @@ func DeleteKVMHost(ctx context.Context, kvmName string) error {
 		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
 			return err
 		}
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_REGISTERED); err != nil {
+			return errors.Annotate(err, "Fail to update state to kvm %s", kvmName).Err()
+		}
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -197,6 +200,10 @@ func UpdateKVMHost(ctx context.Context, kvm *ufspb.KVM, nwOpt *ufsAPI.NetworkOpt
 		// 3. Find free ip, set IP and DHCP config
 		if _, err := hc.netUdt.addHostHelper(ctx, nwOpt.GetVlan(), nwOpt.GetIp(), kvm.GetMacAddress()); err != nil {
 			return err
+		}
+
+		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYING); err != nil {
+			return errors.Annotate(err, "Fail to update state to kvm %s", kvm.GetName()).Err()
 		}
 		return hc.SaveChangeEvents(ctx)
 	}

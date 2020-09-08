@@ -39,7 +39,7 @@ func TestRackRegistration(t *testing.T) {
 			So(resp.GetChromeBrowserRack().GetSwitchObjects(), ShouldBeNil)
 			s, err := state.GetStateRecord(ctx, "racks/rack-1")
 			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-1")
 			So(err, ShouldBeNil)
@@ -69,7 +69,7 @@ func TestRackRegistration(t *testing.T) {
 			So(resp.GetChromeBrowserRack(), ShouldNotBeNil)
 			s, err := state.GetStateRecord(ctx, "racks/rack-1")
 			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-2")
 			So(err, ShouldBeNil)

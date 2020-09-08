@@ -42,6 +42,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 				// Fill the rack/zone to switch OUTPUT only fields for indexing
 				sw.Rack = rack.GetName()
 				sw.Zone = rack.GetLocation().GetZone().String()
+				if sw.GetResourceState() == ufspb.State_STATE_UNSPECIFIED {
+					sw.ResourceState = ufspb.State_STATE_SERVING
+				}
 			}
 			if _, err := registration.BatchUpdateSwitches(ctx, switches); err != nil {
 				return errors.Annotate(err, "Failed to create switches").Err()
@@ -56,6 +59,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 				// Fill the rack/zone to kvm OUTPUT only fields for indexing
 				kvm.Rack = rack.GetName()
 				kvm.Zone = rack.GetLocation().GetZone().String()
+				if kvm.GetResourceState() == ufspb.State_STATE_UNSPECIFIED {
+					kvm.ResourceState = ufspb.State_STATE_REGISTERED
+				}
 			}
 			if _, err := registration.BatchUpdateKVMs(ctx, kvms); err != nil {
 				return errors.Annotate(err, "Failed to create KVMs").Err()
@@ -70,6 +76,9 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 				// Fill the rack/zone to rpm OUTPUT only fields for indexing
 				rpm.Rack = rack.GetName()
 				rpm.Zone = rack.GetLocation().GetZone().String()
+				if rpm.GetResourceState() == ufspb.State_STATE_UNSPECIFIED {
+					rpm.ResourceState = ufspb.State_STATE_REGISTERED
+				}
 			}
 			if _, err := registration.BatchUpdateRPMs(ctx, rpms); err != nil {
 				return errors.Annotate(err, "Failed to create RPMs").Err()
@@ -82,6 +91,7 @@ func RackRegistration(ctx context.Context, rack *ufspb.Rack) (*ufspb.Rack, error
 		// we use this func as it is a non-atomic operation and can be used to
 		// run within a transaction to make it atomic. Datastore doesnt allow
 		// nested transactions.
+		rack.ResourceState = ufspb.State_STATE_REGISTERED
 		if _, err := registration.BatchUpdateRacks(ctx, []*ufspb.Rack{rack}); err != nil {
 			return errors.Annotate(err, "Failed to create rack %s", rack.Name).Err()
 		}

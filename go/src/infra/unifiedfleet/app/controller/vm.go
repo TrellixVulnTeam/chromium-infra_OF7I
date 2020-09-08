@@ -35,11 +35,8 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) (*
 			return errors.Annotate(err, "Fail to get host by %s", vm.GetMachineLseId()).Err()
 		}
 		vm.Zone = lse.Zone
-		vm.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
-
-		// Update states
-		if err := hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING); err != nil {
-			return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
+		if vm.ResourceState == ufspb.State_STATE_UNSPECIFIED {
+			vm.ResourceState = ufspb.State_STATE_REGISTERED
 		}
 
 		// Update ip configs
@@ -47,10 +44,16 @@ func CreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOption) (*
 			if err := hc.netUdt.addVMHostHelper(ctx, nwOpt, vm); err != nil {
 				return errors.Annotate(err, "Fail to assign ip to vm %s", vm.GetName()).Err()
 			}
+			vm.ResourceState = ufspb.State_STATE_DEPLOYING
 		}
 
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm}); err != nil {
 			return errors.Annotate(err, "Failed to create vm %q", vm.GetName()).Err()
+		}
+
+		// Update states
+		if err := hc.stUdt.updateStateHelper(ctx, vm.ResourceState); err != nil {
+			return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
 		}
 		hc.LogVMChanges(nil, vm)
 		return hc.SaveChangeEvents(ctx)
@@ -144,6 +147,10 @@ func UpdateVMHost(ctx context.Context, vmName string, nwOpt *ufsAPI.NetworkOptio
 		if err := hc.netUdt.addVMHostHelper(ctx, nwOpt, vm); err != nil {
 			return errors.Annotate(err, "Fail to assign ip to vm %s", vm.Name).Err()
 		}
+		vm.ResourceState = ufspb.State_STATE_DEPLOYING
+		if err := hc.stUdt.updateStateHelper(ctx, vm.ResourceState); err != nil {
+			return errors.Annotate(err, "Fail to update state to vm %s", vm.GetName()).Err()
+		}
 
 		// update vm with new vlan info set in prev step by addVMHostHelper
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{vm}); err != nil {
@@ -187,11 +194,11 @@ func DeleteVMHost(ctx context.Context, vmName string) error {
 		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
 		oldVM.Vlan = ""
 		oldVM.Ip = ""
-		oldVM.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
+		oldVM.ResourceState = ufspb.State_STATE_REGISTERED
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{oldVM}); err != nil {
 			return errors.Annotate(err, "Failed to update vm %q", vmName).Err()
 		}
-		hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+		hc.stUdt.updateStateHelper(ctx, oldVM.ResourceState)
 		hc.LogVMChanges(oldVMCopy, oldVM)
 		return hc.SaveChangeEvents(ctx)
 	}

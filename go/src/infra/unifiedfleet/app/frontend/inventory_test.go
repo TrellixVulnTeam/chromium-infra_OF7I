@@ -345,11 +345,11 @@ func TestCreateVM(t *testing.T) {
 			So(resp.GetName(), ShouldEqual, "vms/inventory-create-vm1")
 			So(resp.GetZone(), ShouldEqual, "fake_zone")
 			So(resp.GetMachineLseId(), ShouldEqual, "inventory-create-host")
-			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 
 			s, err := state.GetStateRecord(ctx, "vms/inventory-create-vm1")
 			So(err, ShouldBeNil)
-			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+			So(s.GetState(), ShouldEqual, ufspb.State_STATE_REGISTERED)
 		})
 
 		Convey("Create new VM - missing host ", func() {

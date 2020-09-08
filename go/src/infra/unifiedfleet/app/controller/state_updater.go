@@ -70,23 +70,21 @@ func (su *stateUpdater) replaceStateHelper(ctx context.Context, oldR string) err
 	return nil
 }
 
-func (su *stateUpdater) addLseStateHelper(ctx context.Context, lse *ufspb.MachineLSE) error {
+func (su *stateUpdater) addLseStateHelper(ctx context.Context, lse *ufspb.MachineLSE, machine *ufspb.Machine) error {
 	stateRecords := make([]*ufspb.StateRecord, 0)
-	for _, m := range lse.Machines {
-		rn := util.AddPrefix(util.MachineCollection, m)
-		s := &ufspb.StateRecord{
-			State:        ufspb.State_STATE_SERVING,
-			ResourceName: rn,
-			User:         util.CurrentUser(ctx),
-		}
-		oldS, _ := state.GetStateRecord(ctx, rn)
-		stateRecords = append(stateRecords, s)
-		su.logChanges(LogStateChanges(oldS, s))
+	rn := util.AddPrefix(util.MachineCollection, machine.GetName())
+	s := &ufspb.StateRecord{
+		State:        machine.GetResourceState(),
+		ResourceName: rn,
+		User:         util.CurrentUser(ctx),
 	}
+	oldS, _ := state.GetStateRecord(ctx, rn)
+	stateRecords = append(stateRecords, s)
+	su.logChanges(LogStateChanges(oldS, s))
 	for _, vm := range lse.GetChromeBrowserMachineLse().GetVms() {
 		rn := util.AddPrefix(util.VMCollection, vm.GetName())
 		s := &ufspb.StateRecord{
-			State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+			State:        vm.GetResourceState(),
 			ResourceName: rn,
 			User:         util.CurrentUser(ctx),
 		}
@@ -95,7 +93,7 @@ func (su *stateUpdater) addLseStateHelper(ctx context.Context, lse *ufspb.Machin
 		su.logChanges(LogStateChanges(oldS, s))
 	}
 	newS := &ufspb.StateRecord{
-		State:        ufspb.State_STATE_DEPLOYED_PRE_SERVING,
+		State:        lse.GetResourceState(),
 		ResourceName: util.AddPrefix(util.HostCollection, lse.GetName()),
 		User:         util.CurrentUser(ctx),
 	}
@@ -107,23 +105,23 @@ func (su *stateUpdater) addLseStateHelper(ctx context.Context, lse *ufspb.Machin
 	return nil
 }
 
-func (su *stateUpdater) deleteLseStateHelper(ctx context.Context, lse *ufspb.MachineLSE) error {
+func (su *stateUpdater) deleteLseStateHelper(ctx context.Context, lse *ufspb.MachineLSE, machine *ufspb.Machine) error {
 	stateRecords := make([]*ufspb.StateRecord, 0)
 	su.ResourceName = util.AddPrefix(util.HostCollection, lse.GetName())
 	// Update attached machines' state to registered
-	for _, m := range lse.Machines {
-		rn := util.AddPrefix(util.MachineCollection, m)
+	if machine != nil {
+		rn := util.AddPrefix(util.MachineCollection, machine.GetName())
 		s := &ufspb.StateRecord{
-			State:        ufspb.State_STATE_REGISTERED,
+			State:        machine.GetResourceState(),
 			ResourceName: rn,
 			User:         util.CurrentUser(ctx),
 		}
 		oldS, _ := state.GetStateRecord(ctx, rn)
 		stateRecords = append(stateRecords, s)
 		su.logChanges(LogStateChanges(oldS, s))
-	}
-	if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
-		return err
+		if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {
+			return err
+		}
 	}
 
 	// Delete host & vm states
@@ -145,40 +143,36 @@ func (su *stateUpdater) addRackStateHelper(ctx context.Context, rack *ufspb.Rack
 	stateRecords := make([]*ufspb.StateRecord, 0)
 	for _, m := range rack.GetChromeBrowserRack().GetSwitchObjects() {
 		s := &ufspb.StateRecord{
-			State:        ufspb.State_STATE_SERVING,
+			State:        m.GetResourceState(),
 			ResourceName: util.AddPrefix(util.SwitchCollection, m.Name),
 			User:         util.CurrentUser(ctx),
 		}
-		m.ResourceState = ufspb.State_STATE_SERVING
 		stateRecords = append(stateRecords, s)
 		su.logChanges(LogStateChanges(nil, s))
 	}
 	for _, m := range rack.GetChromeBrowserRack().GetKvmObjects() {
 		s := &ufspb.StateRecord{
-			State:        ufspb.State_STATE_SERVING,
+			State:        m.GetResourceState(),
 			ResourceName: util.AddPrefix(util.KVMCollection, m.GetName()),
 			User:         util.CurrentUser(ctx),
 		}
 		stateRecords = append(stateRecords, s)
-		m.ResourceState = ufspb.State_STATE_SERVING
 		su.logChanges(LogStateChanges(nil, s))
 	}
 	for _, m := range rack.GetChromeBrowserRack().GetRpmObjects() {
 		s := &ufspb.StateRecord{
-			State:        ufspb.State_STATE_SERVING,
+			State:        m.GetResourceState(),
 			ResourceName: util.AddPrefix(util.RPMCollection, m.GetName()),
 			User:         util.CurrentUser(ctx),
 		}
 		stateRecords = append(stateRecords, s)
-		m.ResourceState = ufspb.State_STATE_SERVING
 		su.logChanges(LogStateChanges(nil, s))
 	}
 	newS := &ufspb.StateRecord{
-		State:        ufspb.State_STATE_SERVING,
+		State:        rack.GetResourceState(),
 		ResourceName: util.AddPrefix(util.RackCollection, rack.GetName()),
 		User:         util.CurrentUser(ctx),
 	}
-	rack.ResourceState = ufspb.State_STATE_SERVING
 	stateRecords = append(stateRecords, newS)
 	su.logChanges(LogStateChanges(nil, newS))
 	if _, err := state.BatchUpdateStates(ctx, stateRecords); err != nil {

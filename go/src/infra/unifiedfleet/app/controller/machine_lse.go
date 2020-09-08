@@ -26,6 +26,7 @@ import (
 	"infra/unifiedfleet/app/model/configuration"
 	ufsds "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/inventory"
+	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
 
@@ -67,16 +68,23 @@ func createLabstation(ctx context.Context, lse *ufspb.MachineLSE) (*ufspb.Machin
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
 		}
+		oldMachine := proto.Clone(machine).(*ufspb.Machine)
+		machine.ResourceState = ufspb.State_STATE_SERVING
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
 
-		if err := hc.stUdt.addLseStateHelper(ctx, lse); err != nil {
-			return errors.Annotate(err, "Fail to update host state").Err()
-		}
-
 		// Create the machinelse
+		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return errors.Annotate(err, "Fail to update machine %s", machine.GetName()).Err()
+		}
+		hc.LogMachineChanges(oldMachine, machine)
+		lse.ResourceState = ufspb.State_STATE_REGISTERED
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs %s", lse.Name).Err()
+		}
+
+		if err := hc.stUdt.addLseStateHelper(ctx, lse, machine); err != nil {
+			return errors.Annotate(err, "Fail to update host state").Err()
 		}
 		hc.LogMachineLSEChanges(nil, lse)
 		return hc.SaveChangeEvents(ctx)
@@ -104,6 +112,8 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 		if err != nil {
 			return errors.Annotate(err, "unable to get machine %s", lse.GetMachines()[0]).Err()
 		}
+		oldMachine := proto.Clone(machine).(*ufspb.Machine)
+		machine.ResourceState = ufspb.State_STATE_SERVING
 		// Fill the rack/zone OUTPUT only fields for indexing machinelse table/vm table
 		setOutputField(ctx, machine, lse)
 
@@ -117,14 +127,12 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 			if err := hc.netUdt.addLseHostHelper(ctx, nwOpt, lse); err != nil {
 				return errors.Annotate(err, "Fail to assign ip to host %s", lse.GetName()).Err()
 			}
+			lse.ResourceState = ufspb.State_STATE_DEPLOYING
+		} else {
+			lse.ResourceState = ufspb.State_STATE_REGISTERED
 		}
 
-		lse.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
-		if err := hc.stUdt.addLseStateHelper(ctx, lse); err != nil {
-			return errors.Annotate(err, "Fail to update host state").Err()
-		}
-
-		// Create the machinelse
+		// Create the vms, update machine, update machine lses
 		if vms != nil {
 			for _, vm := range vms {
 				hc.LogVMChanges(nil, vm)
@@ -135,6 +143,10 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 			// We do not save vm objects in machinelse table
 			lse.GetChromeBrowserMachineLse().Vms = nil
 		}
+		if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+			return errors.Annotate(err, "Fail to update machine %s", machine.GetName()).Err()
+		}
+		hc.LogMachineChanges(oldMachine, machine)
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs %s", lse.Name).Err()
 		}
@@ -142,6 +154,10 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 		if machine.GetChromeBrowserMachine() != nil {
 			// We fill the machinelse object with newly created vms
 			lse.GetChromeBrowserMachineLse().Vms = vms
+		}
+
+		if err := hc.stUdt.addLseStateHelper(ctx, lse, machine); err != nil {
+			return errors.Annotate(err, "Fail to update host state").Err()
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -467,7 +483,21 @@ func DeleteMachineLSE(ctx context.Context, id string) error {
 		setVMsToLSE(existingMachinelse, vms)
 
 		// Delete states
-		if err := hc.stUdt.deleteLseStateHelper(ctx, existingMachinelse); err != nil {
+		var machine *ufspb.Machine
+		if len(existingMachinelse.GetMachines()) > 0 {
+			machine, err = GetMachine(ctx, existingMachinelse.GetMachines()[0])
+			if err != nil {
+				return errors.Annotate(err, "Unable to get machine %s", existingMachinelse.GetMachines()[0]).Err()
+			}
+			oldMachine := proto.Clone(machine).(*ufspb.Machine)
+			machine.ResourceState = ufspb.State_STATE_REGISTERED
+			if _, err := registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine}); err != nil {
+				return errors.Annotate(err, "Fail to update machine %s", machine.GetName()).Err()
+			}
+			hc.LogMachineChanges(oldMachine, machine)
+		}
+
+		if err := hc.stUdt.deleteLseStateHelper(ctx, existingMachinelse, machine); err != nil {
 			return errors.Annotate(err, "Fail to delete lse-related states").Err()
 		}
 
@@ -866,6 +896,10 @@ func UpdateMachineLSEHost(ctx context.Context, machinelseName string, nwOpt *ufs
 		if err := hc.netUdt.addLseHostHelper(ctx, nwOpt, machinelse); err != nil {
 			return errors.Annotate(err, "Fail to assign ip to host %s", machinelse.Name).Err()
 		}
+		machinelse.ResourceState = ufspb.State_STATE_DEPLOYING
+		if err := hc.stUdt.updateStateHelper(ctx, machinelse.ResourceState); err != nil {
+			return errors.Annotate(err, "Fail to update state to host %s", machinelse.GetName()).Err()
+		}
 
 		// Update machinelse with new nic info which set/updated in prev func addLseHostHelper
 		if _, err = inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{machinelse}); err != nil {
@@ -921,11 +955,11 @@ func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 		lse.Nic = ""
 		lse.Vlan = ""
 		lse.Ip = ""
-		lse.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
+		lse.ResourceState = ufspb.State_STATE_REGISTERED
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
 			return errors.Annotate(err, "Failed to update host %q", machinelseName).Err()
 		}
-		hc.stUdt.updateStateHelper(ctx, ufspb.State_STATE_DEPLOYED_PRE_SERVING)
+		hc.stUdt.updateStateHelper(ctx, lse.ResourceState)
 		hc.LogMachineLSEChanges(lseCopy, lse)
 		return hc.SaveChangeEvents(ctx)
 	}
@@ -1114,7 +1148,7 @@ func setOutputField(ctx context.Context, machine *ufspb.Machine, lse *ufspb.Mach
 	for _, vm := range lse.GetChromeBrowserMachineLse().GetVms() {
 		vm.Zone = machine.GetLocation().GetZone().String()
 		vm.MachineLseId = lse.GetName()
-		vm.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
+		vm.ResourceState = ufspb.State_STATE_REGISTERED
 	}
 	if pName := machine.GetChromeBrowserMachine().GetChromePlatform(); pName != "" {
 		platform, err := configuration.GetChromePlatform(ctx, pName)
