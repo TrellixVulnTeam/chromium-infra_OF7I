@@ -4,16 +4,17 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import os
 import sys
+import urllib
 
-import requests
 
 BASE_URL = 'https://dl.google.com/dl/cloudsdk/channels/rapid'
 
 
 def do_latest():
-  print requests.get(BASE_URL + '/components-2.json').json()['version']
+  print json.load(urllib.urlopen(BASE_URL + '/components-2.json'))['version']
 
 
 def do_checkout(version, platform, checkout_path):
@@ -31,12 +32,8 @@ def do_checkout(version, platform, checkout_path):
       'ext': ext
     })
   print >>sys.stderr, "fetching", download_url
-  r = requests.get(download_url, stream=True)
-  r.raise_for_status()
-  outfile = 'archive.'+ext
-  with open(os.path.join(checkout_path, outfile), 'wb') as f:
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(download_url, os.path.join(checkout_path,
+                                                'archive.' + ext))
 
 
 def main():

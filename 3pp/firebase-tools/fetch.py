@@ -4,14 +4,14 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import sys
-
-import requests
+import urllib
 
 
 def do_latest():
-  data = requests.get('https://registry.npmjs.org/firebase-tools').json()
-  print data['dist-tags']['latest']
+  print json.load(urllib.urlopen(
+      'https://registry.npmjs.org/firebase-tools'))['dist-tags']['latest']
 
 
 def main():

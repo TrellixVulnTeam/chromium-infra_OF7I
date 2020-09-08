@@ -4,14 +4,14 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import os
 import re
 import subprocess
 import sys
+import urllib
 
 from pkg_resources import parse_version
-
-import requests
 
 
 def get_webinstaller_suffix(platform):
@@ -32,21 +32,19 @@ def do_latest(platform):
   version folders."""
   suf = get_webinstaller_suffix(platform)
   # Find the highest version e.g. 3.8.0.
-  r = requests.get('https://www.python.org/ftp/python/')
-  r.raise_for_status()
+  page_data = urllib.urlopen('https://www.python.org/ftp/python/')
   highest = None
   href_re = re.compile(r'href="(\d+\.\d+\.\d+)/"')
-  for m in href_re.finditer(r.text):
+  for m in href_re.finditer(page_data.read()):
     v = parse_version(m.group(1))
     if v < _VERSION_LIMIT:
       if not highest or v > highest:
         highest = v
-  r = requests.get('https://www.python.org/ftp/python/%s/' % highest)
-  r.raise_for_status()
+  page_data = urllib.urlopen('https://www.python.org/ftp/python/%s/' % highest)
   # Find the highest release e.g. 3.8.0a4.
   highest = None
   href_re = re.compile(r'href="python-(\d+\.\d+\.\d+((a|b|rc)\d+)?)%s"' % suf)
-  for m in href_re.finditer(r.text):
+  for m in href_re.finditer(page_data.read()):
     v = parse_version(m.group(1))
     if v < _VERSION_LIMIT:
       if not highest or v > highest:
@@ -66,16 +64,11 @@ def do_checkout(version, platform, checkout_path):
     % {'short': short, 'ver': version, 'suf': get_webinstaller_suffix(platform)}
   )
   print >>sys.stderr, 'fetching %r' % (download_url,)
-  outfile = 'install.exe'
-  with open(os.path.join(checkout_path, outfile), 'wb') as f:
-    r = requests.get(download_url, stream=True)
-    r.raise_for_status()
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  outfile = os.path.join(checkout_path, 'install.exe')
+  urllib.urlretrieve(download_url, outfile)
 
   # downloads all the *.msi files locally.
-  subprocess.check_call([
-    os.path.join(checkout_path, outfile), '/layout', checkout_path, '/quiet'])
+  subprocess.check_call([outfile, '/layout', checkout_path, '/quiet'])
 
 
 def main():

@@ -7,8 +7,7 @@ import argparse
 import json
 import os
 import sys
-
-import requests
+import urllib
 
 
 # https://developer.github.com/v3/repos/releases/#get-the-latest-release
@@ -54,18 +53,13 @@ PROTOC_PLATFORMS = {
 
 
 def do_latest():
-  r = requests.get(LATEST)
-  r.raise_for_status()
-  print json.loads(r.text)['tag_name'][1:] # e.g. v3.8.0 -> 3.8.0
+  print json.load(
+      urllib.urlopen(LATEST))['tag_name'][1:]  # e.g. v3.8.0 -> 3.8.0
 
 
 def fetch(url, outfile):
   print >>sys.stderr, 'fetching %r' % url
-  with open(outfile, 'wb') as f:
-    r = requests.get(url, stream=True)
-    r.raise_for_status()
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(url, outfile)
 
 
 def do_checkout(version, platform, checkout_path):
@@ -73,9 +67,7 @@ def do_checkout(version, platform, checkout_path):
     raise ValueError('unsupported platform %s' % platform)
   name = 'protoc-%s-%s.zip' % (version, PROTOC_PLATFORMS[platform])
 
-  r = requests.get(TAGGED_RELEASE % version)
-  r.raise_for_status()
-  rsp = json.loads(r.text)
+  rsp = json.load(urllib.urlopen(TAGGED_RELEASE % version))
   actual_tag = rsp['tag_name'][1:]
   if version != actual_tag:
     raise ValueError('expected %s, actual is %s' % (version, actual_tag))

@@ -4,28 +4,28 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import os
 import re
 import sys
+import urllib
 
 import pkg_resources
-import requests
 
 
 def _get_wheel_url(pkgname, version):
-  r = requests.get('https://pypi.org/pypi/%s/json' % pkgname)
-  r.raise_for_status()
-  for filedata in r.json()['releases'][version]:
+  for filedata in json.load(
+      urllib.urlopen('https://pypi.org/pypi/%s/json' %
+                     pkgname))['releases'][version]:
     if filedata['packagetype'] == 'bdist_wheel':
       return filedata['url'], filedata['filename']
   raise AssertionError('could not find wheel for %s @ %s' % (pkgname, version))
 
 
 def _get_version(pkgname, bad_versions=()):
-  r = requests.get('https://pypi.org/pypi/%s/json' % pkgname)
-  r.raise_for_status()
   # Find the latest python2-compatible version.
-  releases = r.json()['releases']
+  releases = json.load(
+      urllib.urlopen('https://pypi.org/pypi/%s/json' % pkgname))['releases']
   versions = [pkg_resources.parse_version(v) for v in releases.keys()]
   for version in sorted(versions, reverse=True):
     version_str = str(version)
@@ -60,11 +60,7 @@ def do_checkout(version, checkout_path):
   for pkgname, vers in versions.iteritems():
     url, name = _get_wheel_url(pkgname, vers)
     print >>sys.stderr, "fetching", url
-    r = requests.get(url, stream=True)
-    r.raise_for_status()
-    with open(os.path.join(checkout_path, name), 'wb') as f:
-      for chunk in r.iter_content(1024**2):
-        f.write(chunk)
+    urllib.urlretrieve(url, os.path.join(checkout_path, name))
 
 
 def main():

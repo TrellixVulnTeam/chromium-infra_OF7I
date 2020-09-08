@@ -6,8 +6,7 @@
 import argparse
 import os
 import sys
-
-import requests
+import urllib
 
 
 # This is hardcoded to 2.7.18. It seems unlikely that we'll need to release
@@ -34,12 +33,7 @@ def do_checkout(version, platform, checkout_path):
     'v': version, 'suf': get_installer_suffix(platform),
   }
   print >>sys.stderr, 'fetching %r' % (url,)
-  outfile = 'install.msi'
-  with open(os.path.join(checkout_path, outfile), 'wb') as f:
-    r = requests.get(url, stream=True)
-    r.raise_for_status()
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(url, os.path.join(checkout_path, 'install.msi'))
 
 
 def main():

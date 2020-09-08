@@ -4,12 +4,12 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import os
 import sys
+import urllib
 
 from pkg_resources import parse_version
-
-import requests
 
 
 def _gae_platform():
@@ -26,9 +26,7 @@ def do_latest():
   BASE_URL = 'https://www.googleapis.com/storage/v1/b/appengine-sdks/o/'
   url = BASE_URL+'?prefix=featured/%s&delimiter=/' % ZIP_PREFIX
   print >>sys.stderr, "Hitting %r" % url
-  r = requests.get(url)
-  r.raise_for_status()
-  data = r.json()
+  data = json.load(urllib.urlopen(url))
   max_ver, max_string = parse_version(''), ''
   for obj in data['items']:
     ver_string = obj['name'].split('/')[-1].lstrip(ZIP_PREFIX).rstrip('.zip')
@@ -52,12 +50,7 @@ def do_checkout(version, checkout_path):
     'o/featured%%2F%s%s.zip?alt=media' % (ZIP_PREFIX, version)
   )
   print >>sys.stderr, "fetching", URL
-  r = requests.get(URL, stream=True)
-  r.raise_for_status()
-  outfile = 'archive.zip'
-  with open(os.path.join(checkout_path, outfile), 'wb') as f:
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(URL, os.path.join(checkout_path, 'archive.zip'))
 
 
 def main():

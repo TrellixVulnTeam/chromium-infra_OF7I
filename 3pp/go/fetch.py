@@ -4,17 +4,17 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import os
 import sys
+import urllib
 
 from pkg_resources import parse_version
-
-import requests
 
 
 def do_latest():
   versions = []
-  for release in requests.get('https://golang.org/dl/?mode=json').json():
+  for release in json.load(urllib.urlopen('https://golang.org/dl/?mode=json')):
     versions.append(parse_version(release['version'].replace('go', '')))
   versions.sort()
   print versions[-1]
@@ -37,12 +37,7 @@ def do_checkout(version, platform, kind, checkout_path):
       'https://storage.googleapis.com/golang/go%s.src.tar.gz' % (version,))
 
   print >>sys.stderr, 'fetching', download_url
-  r = requests.get(download_url, stream=True)
-  r.raise_for_status()
-  outfile = 'archive.'+ext
-  with open(os.path.join(checkout_path, outfile), 'wb') as f:
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(download_url, os.path.join(checkout_path, 'archive' + ext))
 
 
 def main():

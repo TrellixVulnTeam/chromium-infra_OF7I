@@ -4,11 +4,11 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import os
 import re
 import sys
-
-import requests
+import urllib
 
 
 # A regex for a name of the release asset to package, available at
@@ -17,22 +17,20 @@ WINDOWS_ASSET_RE = re.compile(r'^lessmsi-v.*\.zip$')
 
 
 def do_latest():
-  r = requests.get(
-    'https://api.github.com/repos/activescott/lessmsi/releases/latest')
-  r.raise_for_status()
-  print r.json()['tag_name'].lstrip('v')
+  print json.load(
+      urllib.urlopen(
+          'https://api.github.com/repos/activescott/lessmsi/releases/latest')
+  )['tag_name'].lstrip('v')
 
 
 def do_checkout(version, checkout_path):
-  r = requests.get(
-    'https://api.github.com/repos/activescott/lessmsi/releases')
-  r.raise_for_status()
-
   download_url = None
   asset_name = None
 
   target_tag = 'v%s' % (version,)
-  for release in r.json():
+  for release in json.load(
+      urllib.urlopen(
+          'https://api.github.com/repos/activescott/lessmsi/releases')):
     if str(release['tag_name']) == target_tag:
       for asset in release['assets']:
         asset_name = str(asset['name'])
@@ -44,11 +42,7 @@ def do_checkout(version, checkout_path):
     raise Exception('could not find download_url')
 
   print >>sys.stderr, "fetching", download_url
-  r = requests.get(download_url, stream=True)
-  r.raise_for_status()
-  with open(os.path.join(checkout_path, asset_name), 'wb') as f:
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(download_url, os.path.join(checkout_path, asset_name))
 
 
 def main():

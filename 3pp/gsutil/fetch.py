@@ -6,28 +6,20 @@
 import argparse
 import os
 import sys
-
-import requests
+import urllib
 
 
 def do_latest():
-  r = requests.get(
-    'https://raw.githubusercontent.com/'
-    'GoogleCloudPlatform/gsutil/master/VERSION')
-  r.raise_for_status()
-  print r.content.strip()
+  print urllib.urlopen(
+      'https://raw.githubusercontent.com/'
+      'GoogleCloudPlatform/gsutil/master/VERSION').read().strip()
 
 
 def do_checkout(version, checkout_path):
   download_url = (
     'https://storage.googleapis.com/pub/gsutil_%s.tar.gz' % version)
-  print >>sys.stderr, 'fetching %r' % (download_url,)
-  outfile = 'archive.tar.gz'
-  with open(os.path.join(checkout_path, outfile), 'wb') as f:
-    r = requests.get(download_url, stream=True)
-    r.raise_for_status()
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(download_url, os.path.join(checkout_path,
+                                                'archive.tar.gz'))
 
 
 def main():

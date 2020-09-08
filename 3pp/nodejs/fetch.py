@@ -4,17 +4,17 @@
 # found in the LICENSE file.
 
 import argparse
+import json
 import os
 import sys
-
-import requests
+import urllib
 
 from pkg_resources import parse_version
 
 BASE_URL = 'https://nodejs.org/dist/'
 
 def do_latest():
-  data = requests.get(BASE_URL + 'index.json').json()
+  data = json.load(urllib.urlopen(BASE_URL + 'index.json'))
   max_version, max_string = parse_version('0'), '0'
   for release in data:
     s = release['version'].lstrip('v')
@@ -48,12 +48,8 @@ def do_checkout(version, platform, checkout_path):
       'ext': ext
     })
   print >>sys.stderr, "fetching", download_url
-  r = requests.get(download_url, stream=True)
-  r.raise_for_status()
-  outfile = 'archive.'+ext
-  with open(os.path.join(checkout_path, outfile), 'wb') as f:
-    for chunk in r.iter_content(1024**2):
-      f.write(chunk)
+  urllib.urlretrieve(download_url, os.path.join(checkout_path,
+                                                'archive.' + ext))
 
 
 def main():
