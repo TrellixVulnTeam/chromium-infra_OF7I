@@ -142,7 +142,7 @@
       "wheel-build",
       "--upload"
     ],
-    "cwd": "[CACHE]/builder/solution",
+    "cwd": "[CACHE]/builder/solution/infra",
     "name": "dockerbuild"
   },
   {

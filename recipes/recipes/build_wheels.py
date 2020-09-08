@@ -20,6 +20,7 @@ def RunSteps(api):
     api.gclient.checkout(timeout=10 * 60)
     api.gclient.runhooks()
 
+  with api.context(cwd=solution_path.join('infra')):
     api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
         'infra.tools.dockerbuild', '--upload-sources', 'wheel-build', '--upload'
     ])
