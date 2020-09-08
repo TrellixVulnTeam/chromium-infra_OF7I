@@ -20,9 +20,9 @@ def RunSteps(api):
     api.gclient.checkout(timeout=10 * 60)
     api.gclient.runhooks()
 
-  api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
-      'infra.tools.dockerbuild', '--upload-sources', 'wheel-build', '--upload'
-  ])
+    api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
+        'infra.tools.dockerbuild', '--upload-sources', 'wheel-build', '--upload'
+    ])
 
   # TODO: Update README.wheels.md as well?
 

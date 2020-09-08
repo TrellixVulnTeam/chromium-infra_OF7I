@@ -142,6 +142,7 @@
       "wheel-build",
       "--upload"
     ],
+    "cwd": "[CACHE]/builder/solution",
     "name": "dockerbuild"
   },
   {
