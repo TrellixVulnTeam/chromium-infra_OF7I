@@ -206,6 +206,8 @@ def get_backend_routes():  # pragma: no cover
                     UnregisterBuilders),
       webapp2.Route(r'/internal/task/buildbucket/notify/<build_id:\d+>',
                     notifications.TaskPublishNotification),
+      webapp2.Route(r'/internal/task/bq/export/<build_id:\d+>',
+                    bq.TaskExport),
       webapp2.Route(r'/internal/task/resultdb/finalize/<build_id:\d+>',
                     resultdb.FinalizeInvocation),
   ] + (bulkproc.get_routes() + prpc_server.get_routes()
