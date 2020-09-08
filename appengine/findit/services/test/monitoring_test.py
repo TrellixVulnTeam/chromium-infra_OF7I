@@ -131,10 +131,8 @@ class MonitoringTest(wf_testcase.WaterfallTestCase):
 
   @mock.patch.object(common_monitoring.flake_detection_issues, 'increment')
   def testOnFlakeDetectionCreateOrUpdateIssues(self, mock_common_monitoring):
-    monitoring.OnFlakeDetectionCreateOrUpdateIssues('create')
-    parameters = {
-        'operation': 'create',
-    }
+    monitoring.OnFlakeDetectionCreateOrUpdateIssues('create', 'test_suite')
+    parameters = {'operation': 'create', 'test_suite': 'test_suite'}
     mock_common_monitoring.assert_called_once_with(parameters)
 
   @mock.patch.object(common_monitoring.cq_flake_responses, 'increment_by')

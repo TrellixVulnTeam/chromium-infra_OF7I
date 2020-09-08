@@ -330,6 +330,7 @@ class FlakeReportUtilTest(WaterfallTestCase):
     })
     flake = Flake.query().fetch()[0]
     flake.tags.append('component::Blink')
+    flake.canonical_step_name = 'testCreateIssue'
     flake.put()
     occurrences = FlakeOccurrence.query(
         FlakeOccurrence.flake_type.IN(
@@ -536,6 +537,7 @@ Automatically posted by Flake Portal (https://goo.gl/Ne6KtC).""").format(
       self, mock_issue, mock_create_bug_fn, mock_update_bug_fn,
       mock_get_merged_issue):
     flake = Flake.query().fetch()[0]
+    flake.canonical_step_name = 'canonical_step_name'
     flake_issue = FlakeIssue.Create(monorail_project='chromium', issue_id=12345)
     flake_issue.put()
     flake.flake_issue_key = flake_issue.key

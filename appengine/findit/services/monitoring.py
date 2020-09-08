@@ -124,13 +124,17 @@ def OnFlakeDetectionDetectNewOccurrences(flake_type, num_occurrences):
       num_occurrences, {'flake_type': flake_type})
 
 
-def OnFlakeDetectionCreateOrUpdateIssues(operation):
+def OnFlakeDetectionCreateOrUpdateIssues(operation, test_suite):
   """Used to monitor issues created or updated by Flake Detection.
 
   Args:
     operation: Type of the operation: create and update.
+    test_suite: Test suite of the reported flakes.
   """
-  monitoring.flake_detection_issues.increment({'operation': operation})
+  monitoring.flake_detection_issues.increment({
+      'operation': operation,
+      'test_suite': test_suite
+  })
 
 
 def OnCqFlakeResponses(is_flaky, num_tests):

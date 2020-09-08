@@ -138,6 +138,7 @@ flake_detection_issues = gae_ts_mon.CounterMetric(
     'findit/flake-detection-issues',
     'Number of issues created or updated by Flake Detection', [
         gae_ts_mon.StringField('operation'),
+        gae_ts_mon.StringField('test_suite'),
     ])
 
 cq_flake_responses = gae_ts_mon.CounterMetric(

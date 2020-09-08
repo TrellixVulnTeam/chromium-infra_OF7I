@@ -533,7 +533,7 @@ class FlakeDetectionIssueGenerator(FlakyTestIssueGenerator):
     self._num_occurrences = num_occurrences
 
   def GetStepName(self):
-    return self._flake.canonical_step_name
+    return self._flake.normalized_step_name
 
   def GetTestName(self):
     return self._flake.normalized_test_name
@@ -592,10 +592,12 @@ class FlakeDetectionIssueGenerator(FlakyTestIssueGenerator):
     return flaky_test_labels
 
   def OnIssueCreated(self):
-    monitoring.OnFlakeDetectionCreateOrUpdateIssues('create')
+    monitoring.OnFlakeDetectionCreateOrUpdateIssues('create',
+                                                    self.GetStepName())
 
   def OnIssueUpdated(self):
-    monitoring.OnFlakeDetectionCreateOrUpdateIssues('updated')
+    monitoring.OnFlakeDetectionCreateOrUpdateIssues('updated',
+                                                    self.GetStepName())
 
   def _GetLinkForFlake(self):
     """Given a flake, gets a link to the flake on flake detection UI.
@@ -778,8 +780,13 @@ class FlakeDetectionGroupIssueGenerator(BaseFlakeIssueGenerator):
       flaky_test_labels.remove(issue_constants.SHERIFF_CHROMIUM_LABEL)
     return flaky_test_labels
 
+  def _GetNormalizedStepName(self):
+    return self._flakes[0].normalized_step_name
+
   def OnIssueCreated(self):
-    monitoring.OnFlakeDetectionCreateOrUpdateIssues('create')
+    monitoring.OnFlakeDetectionCreateOrUpdateIssues(
+        'create', self._GetNormalizedStepName())
 
   def OnIssueUpdated(self):
-    monitoring.OnFlakeDetectionCreateOrUpdateIssues('updated')
+    monitoring.OnFlakeDetectionCreateOrUpdateIssues(
+        'updated', self._GetNormalizedStepName())
