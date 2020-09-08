@@ -979,7 +979,8 @@ def run(
     service_url,
     tags,
     service_account_json,
-    json_output):
+    json_output,
+    want_refresh_python):
   """Rebuilds python and Go universes and CIPD packages.
 
   Args:
@@ -995,6 +996,7 @@ def run(
     tags: a list of tags to attach to uploaded package instances.
     service_account_json: path to *.json service account credential.
     json_output: path to *.json file to write info about built packages to.
+    want_refresh_python: want a refreshed python ENV.
 
   Returns:
     0 on success, 1 or error.
@@ -1090,7 +1092,12 @@ def run(
 
   # Build the world.
   if build:
-    build_callback(packages_to_visit)
+    should_refresh_python = (
+      want_refresh_python and
+      any(p.uses_python_env for p in packages_to_visit) and
+      not is_cross_compiling())
+
+    build_callback(packages_to_visit, should_refresh_python)
 
   # Package it.
   failed = []
@@ -1141,14 +1148,13 @@ def run(
   return 1 if failed else 0
 
 
-def build_infra(pkg_defs):
+def build_infra(pkg_defs, should_refresh_python):
   """Builds infra.git multiverse.
 
   Args:
     pkg_defs: list of PackageDef instances for packages being built.
   """
-  # Skip building python if not used or if cross-compiling.
-  if any(p.uses_python_env for p in pkg_defs) and not is_cross_compiling():
+  if should_refresh_python:
     print_title('Making sure python virtual environment is fresh')
     run_python(
         script=os.path.join(ROOT, 'bootstrap', 'bootstrap.py'),
@@ -1193,6 +1199,11 @@ def main(
   parser.add_argument(
       '--tags', metavar='KEY:VALUE', type=str, dest='tags', nargs='*',
       help='tags to attach to uploaded package instances')
+  parser.add_argument(
+      '--no-freshen-python-env', action='store_false', dest='refresh_python',
+      default=True, help=(
+        'skip freshening the python env. '+
+        'Only use if you know the env is clean.'))
   args = parser.parse_args(args)
   if not args.build and not args.upload:
     parser.error('--no-rebuild doesn\'t make sense without --upload')
@@ -1208,7 +1219,8 @@ def main(
       args.service_url,
       args.tags or [],
       args.service_account_json,
-      args.json_output)
+      args.json_output,
+      args.refresh_python)
 
 
 if __name__ == '__main__':
