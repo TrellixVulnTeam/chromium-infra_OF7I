@@ -1212,7 +1212,7 @@ func TestImportDatacenters(t *testing.T) {
 			rlse, err := inventory.QueryRackLSEByPropertyName(ctx, "rack_ids", "cr20", false)
 			So(err, ShouldBeNil)
 			So(rlse, ShouldHaveLength, 1)
-			So(rlse[0].GetRackLsePrototype(), ShouldEqual, "browser-lab:normal")
+			So(rlse[0].GetRackLsePrototype(), ShouldEqual, "browser:normal")
 			So(rlse[0].GetChromeBrowserRackLse().GetKvms(), ShouldResemble, []string{"cr20-kvm1"})
 			So(rlse[0].GetChromeBrowserRackLse().GetSwitches(), ShouldResemble, []string{"eq017.atl97"})
 		})

@@ -1239,7 +1239,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			// Verify machine lse prototypes
 			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"browser-lab:no-vm", "browser-lab:vm"})
+			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"browser:no-vm", "browser:vm"})
 
 			// Verify machine lses
 			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false)
@@ -1256,7 +1256,7 @@ func TestImportMachineLSEs(t *testing.T) {
 			lse, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "machine1", false)
 			So(err, ShouldBeNil)
 			So(lse, ShouldHaveLength, 1)
-			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "browser-lab:vm")
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "browser:vm")
 			So(lse[0].GetHostname(), ShouldEqual, "esx-8")
 
 			vms, err := inventory.QueryVMByPropertyName(ctx, "host_id", "esx-8", false)
@@ -1306,7 +1306,7 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			// Verify machine lse prototypes
 			lps, _, err := configuration.ListMachineLSEPrototypes(ctx, 100, "", nil, false)
 			So(err, ShouldBeNil)
-			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"acs-lab:camera", "acs-lab:wificell", "atl-lab:labstation", "atl-lab:standard"})
+			So(ufsAPI.ParseResources(lps, "Name"), ShouldResemble, []string{"acs:camera", "acs:wificell", "atl:labstation", "atl:standard"})
 
 			// Verify machine lses
 			machineLSEs, _, err := inventory.ListMachineLSEs(ctx, 100, "", nil, false)
@@ -1326,22 +1326,22 @@ func TestImportOSMachineLSEs(t *testing.T) {
 			lse, err := inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_dut_id", false)
 			So(err, ShouldBeNil)
 			So(lse, ShouldHaveLength, 1)
-			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "atl-lab:standard")
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "atl:standard")
 			So(lse[0].GetHostname(), ShouldEqual, "chromeos2-test_host")
 			lse, err = inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_camera_dut_id", false)
 			So(err, ShouldBeNil)
 			So(lse, ShouldHaveLength, 1)
-			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "acs-lab:camera")
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "acs:camera")
 			So(lse[0].GetHostname(), ShouldEqual, "chromeos3-test_host")
 			lse, err = inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_wifi_dut_id", false)
 			So(err, ShouldBeNil)
 			So(lse, ShouldHaveLength, 1)
-			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "acs-lab:wificell")
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "acs:wificell")
 			So(lse[0].GetHostname(), ShouldEqual, "chromeos5-test_host")
 			lse, err = inventory.QueryMachineLSEByPropertyName(ctx, "machine_ids", "mock_labstation_id", false)
 			So(err, ShouldBeNil)
 			So(lse, ShouldHaveLength, 1)
-			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "atl-lab:labstation")
+			So(lse[0].GetMachineLsePrototype(), ShouldEqual, "atl:labstation")
 			So(lse[0].GetHostname(), ShouldEqual, "test_servo")
 		})
 	})

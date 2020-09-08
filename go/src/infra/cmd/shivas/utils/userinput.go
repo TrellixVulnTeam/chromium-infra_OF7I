@@ -54,9 +54,9 @@ const (
 	Unknown                   string = "Unknown"
 	maxPageSize               int32  = 1000
 	YesNo                     string = " (y/n)"
-	ATLLab                    string = "atl-lab:"
-	ACSLab                    string = "acs-lab:"
-	BrowserLab                string = "browser-lab:"
+	ATLLab                    string = "atl:"
+	ACSLab                    string = "acs:"
+	BrowserLab                string = "browser:"
 	MinMaxError               string = "Maximum value must be greater than or equal to Minimum value."
 )
 

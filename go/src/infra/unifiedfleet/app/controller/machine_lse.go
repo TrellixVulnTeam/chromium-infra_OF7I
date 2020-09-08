@@ -548,7 +548,7 @@ func ImportOSMachineLSEs(ctx context.Context, labConfigs []*invV2Api.ListCrosDev
 	allRes = append(allRes, *res...)
 
 	lses := util.ToOSMachineLSEs(labConfigs)
-	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "os-lab")
+	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "os")
 	logging.Infof(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(lses))
@@ -576,7 +576,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	logging.Infof(ctx, "Importing the basic lse prototypes for browser lab")
 	lps := []*ufspb.MachineLSEPrototype{
 		{
-			Name: "browser-lab:no-vm",
+			Name: "browser:no-vm",
 			VirtualRequirements: []*ufspb.VirtualRequirement{
 				{
 					VirtualType: ufspb.VirtualType_VIRTUAL_TYPE_VM,
@@ -587,7 +587,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 			Tags: []string{"browser", "no-vm"},
 		},
 		{
-			Name: "browser-lab:vm",
+			Name: "browser:vm",
 			VirtualRequirements: []*ufspb.VirtualRequirement{
 				{
 					VirtualType: ufspb.VirtualType_VIRTUAL_TYPE_VM,
@@ -606,7 +606,7 @@ func ImportMachineLSEs(ctx context.Context, hosts []*crimson.PhysicalHost, vms [
 	allRes = append(allRes, *res...)
 
 	lses, ufsVMs, ips, dhcps := util.ToMachineLSEs(hosts, vms, machines, platforms)
-	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "browser-lab")
+	deleteNonExistingMachineLSEs(ctx, lses, pageSize, "browser")
 	logging.Infof(ctx, "Importing %d lses", len(lses))
 	for i := 0; ; i += pageSize {
 		end := util.Min(i+pageSize, len(lses))
@@ -675,10 +675,10 @@ func deleteNonExistingMachineLSEs(ctx context.Context, machineLSEs []*ufspb.Mach
 	var toDeleteDHCPHost []string
 	for _, sr := range resp.Passed() {
 		s := sr.Data.(*ufspb.MachineLSE)
-		if lseType == "browser-lab" && s.GetChromeosMachineLse() != nil {
+		if lseType == "browser" && s.GetChromeosMachineLse() != nil {
 			continue
 		}
-		if lseType == "os-lab" && s.GetChromeBrowserMachineLse() != nil {
+		if lseType == "os" && s.GetChromeBrowserMachineLse() != nil {
 			continue
 		}
 		if _, ok := resMap[s.GetName()]; !ok {

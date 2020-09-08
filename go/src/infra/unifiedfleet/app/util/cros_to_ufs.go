@@ -20,10 +20,10 @@ import (
 )
 
 const (
-	standardLSEPrototype   = "atl-lab:standard"
-	labstationLSEPrototype = "atl-lab:labstation"
-	cameraLSEPrototype     = "acs-lab:camera"
-	wifiLSEPrototype       = "acs-lab:wificell"
+	standardLSEPrototype   = "atl:standard"
+	labstationLSEPrototype = "atl:labstation"
+	cameraLSEPrototype     = "acs:camera"
+	wifiLSEPrototype       = "acs:wificell"
 )
 
 // ToOSMachineLSEs converts cros inventory data to UFS LSEs for ChromeOS machines.

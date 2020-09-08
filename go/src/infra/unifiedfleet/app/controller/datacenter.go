@@ -32,7 +32,7 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 	logging.Infof(ctx, "Importing the basic lse prototypes for browser lab")
 	lps := []*ufspb.RackLSEPrototype{
 		{
-			Name: "browser-lab:normal",
+			Name: "browser:normal",
 			PeripheralRequirements: []*ufspb.PeripheralRequirement{
 				{
 					PeripheralType: ufspb.PeripheralType_PERIPHERAL_TYPE_KVM,

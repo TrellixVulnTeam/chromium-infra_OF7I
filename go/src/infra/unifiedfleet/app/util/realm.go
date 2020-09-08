@@ -11,13 +11,13 @@ import (
 )
 
 // BrowserLabAdminRealm is the admin realm for browser lab.
-const BrowserLabAdminRealm = "chromium:ufs/browser-lab-admin"
+const BrowserLabAdminRealm = "chromium:ufs/browser-admin"
 
 // AtlLabAdminRealm is the admin realm for atl lab.
-const AtlLabAdminRealm = "chromium:ufs/atl-lab-admin"
+const AtlLabAdminRealm = "chromium:ufs/atl-admin"
 
-// AcsLabAdminRealm is the admin realm for atl lab.
-const AcsLabAdminRealm = "chromium:ufs/atl-lab-admin"
+// AcsLabAdminRealm is the admin realm for acs lab.
+const AcsLabAdminRealm = "chromium:ufs/acs-admin"
 
 // CurrentUser returns the current user
 func CurrentUser(ctx context.Context) string {

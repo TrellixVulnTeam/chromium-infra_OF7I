@@ -141,7 +141,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 		}
 		rlse := &ufspb.RackLSE{
 			Name:             GetRackHostname(rackName),
-			RackLsePrototype: "browser-lab:normal",
+			RackLsePrototype: "browser:normal",
 			Lse: &ufspb.RackLSE_ChromeBrowserRackLse{
 				ChromeBrowserRackLse: &ufspb.ChromeBrowserRackLSE{
 					// Still keep them as they are potential hostnames
@@ -299,9 +299,9 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		name := FormatDHCPHostname(h.GetName())
 		vms := hostToVMs[name]
 		if len(vms) > 0 {
-			lsePrototype = "browser-lab:vm"
+			lsePrototype = "browser:vm"
 		} else {
-			lsePrototype = "browser-lab:no-vm"
+			lsePrototype = "browser:no-vm"
 		}
 		var manufacturer string
 		if machine.GetPlatform() != "" {

@@ -347,7 +347,7 @@ Adds a host by reading a JSON file input.
 [WARNING]: machines is a required field in json, all other output only fields will be ignored.
 Specify additional settings, e.g. vlan, nic, ip via command line parameters along with JSON input
 
-shivas add host -machine machine0 -name host0 -prototype browser-lab:no-vm  -osversion chrome-version-0 -vm-capacity 3
+shivas add host -machine machine0 -name host0 -prototype browser:no-vm  -osversion chrome-version-0 -vm-capacity 3
 Adds a host by parameters without adding vms.
 
 shivas add host -i
@@ -381,7 +381,7 @@ This file must contain one machine deployment JSON message
 Example host for a browser machine:
 {
     "name": "esx-380XXX",
-    "machineLsePrototype": "browser-lab:vm",
+    "machineLsePrototype": "browser:vm",
     "hostname": "esx-380XXX",
     "tags": ["dell", "8g"],
     "nic": "cr151-16-macproXXX:eth0",
@@ -408,7 +408,7 @@ Example host for a browser machine:
 Example host(DUT) for an OS machine:
 {
     "name": "chromeos3-row2-rack3-host5",
-    "machineLsePrototype": "acs-lab:wifi",
+    "machineLsePrototype": "acs:wifi",
     "hostname": "chromeos3-row2-rack3-host5",
     "machines": ["cr205-19-230"],
     "chromeosMachineLse": {
@@ -520,7 +520,7 @@ Example host(Labstation) for an OS machine:
 Example host(Caching server/Dev server/VM server) for an OS machine:
 {
     "name": "A-ChromeOS-Server",
-    "machineLsePrototype": "acs-lab:qwer",
+    "machineLsePrototype": "acs:qwer",
     "hostname": "DevServer-1",
     "machines": ["cr205-19-230"],
     "chromeosMachineLse": {
@@ -587,7 +587,7 @@ This file must contain one machine prototype JSON message
 
 Example prototype for machine deployment:
 {
-    "name": "browser-lab:vm",
+    "name": "browser:vm",
     "peripheralRequirements": [{
         "peripheralType": "PERIPHERAL_TYPE_SWITCH",
         "min": 5,
@@ -645,7 +645,7 @@ This file must contain one rack prototype JSON message
 
 Example prototype for rack deployment:
 {
-    "name": "browser-lab:vm",
+    "name": "browser:vm",
     "peripheralRequirements": [{
         "peripheralType": "PERIPHERAL_TYPE_SWITCH",
         "min": 5,
