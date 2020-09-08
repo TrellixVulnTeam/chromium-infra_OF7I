@@ -14,9 +14,9 @@ from handlers import code_coverage
 code_coverage_backend_handler_mappings = [
     ('.*/coverage/task/fetch-source-file', code_coverage.FetchSourceFile),
     ('.*/coverage/task/process-data/.*', code_coverage.ProcessCodeCoverageData),
-    ('.*/coverage/cron/per-cl-coverage/.*',
+    ('.*/coverage/cron/per-cl-coverage',
      code_coverage.GeneratePerClCoverageMetricsCron),
-    ('.*/coverage/task/per-cl-coverage/.*',
+    ('.*/coverage/task/per-cl-coverage',
      code_coverage.GeneratePerClCoverageMetrics),
 ]
 code_coverage_backend_web_application = webapp2.WSGIApplication(
