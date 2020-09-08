@@ -12,8 +12,6 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"google.golang.org/api/iterator"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
@@ -24,6 +22,7 @@ import (
 	"infra/unifiedfleet/app/config"
 	"infra/unifiedfleet/app/controller"
 	"infra/unifiedfleet/app/model/registration"
+	"infra/unifiedfleet/app/util"
 )
 
 var macAddress = regexp.MustCompile(`^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$`)
@@ -136,64 +135,37 @@ func registerRacksForAsset(ctx context.Context, asset *ufspb.Asset) error {
 	return err
 }
 
-// SyncMachinesFromIV2 update machines table in UFS with data from IV2.
+// SyncMachinesFromAssets updates machines table from assets table
 //
-// Gathering data from Asset and AssetInfo entities in inventory DB to get
-// location and ChromeOSMachine data. Also uses assets_in_swarming BQ table
-// to estimate barcode_name.
-func SyncMachinesFromIV2(ctx context.Context) error {
-	ctx = logging.SetLevel(ctx, logging.Info)
-	logging.Infof(ctx, "SyncMachinesFromIV2")
-	host := strings.TrimSuffix(config.Get(ctx).CrosInventoryHost, ".appspot.com")
-	client, err := datastore.NewClient(ctx, host)
+// Checks all the DUT and Labstation assets and creates/updates machines if required.
+func SyncMachinesFromAssets(ctx context.Context) error {
+	logging.Infof(ctx, "SyncMachinesFromAssets")
+	assets, err := registration.GetAllAssets(ctx)
 	if err != nil {
 		return err
 	}
-	// BQ Client to get asset tag to hostname mapping
-	bqClient := ctx.Value(contextKey).(*bigquery.Client)
-
-	assets, err := GetAllAssets(ctx, client)
-	if err != nil {
-		return err
-	}
-	assetInfos, err := GetAllAssetInfo(ctx, client)
-	if err != nil {
-		return err
-	}
-	assetsToHostname, err := GetAssetToHostnameMap(ctx, bqClient)
-	if err != nil {
-		logging.Warningf(ctx, "Unable to get hostnames [%v], will"+
-			"continue sync ignoring hostnames", err)
-	}
-
 	for _, asset := range assets {
-		if assetInfos[asset.GetId()] != nil {
-			iv2Machine := GetMachineFromAssets(asset,
-				assetInfos[asset.GetId()], assetsToHostname[asset.GetId()])
-			ufsMachine, err := controller.GetMachine(ctx, asset.GetId())
-			if err == nil && assetsToHostname == nil && ufsMachine.Location != nil {
-				// If we failed to read from BQ, machine hostname/barcode name is not known.
-				// Copy the hostname from existing ufsMachine to avoid updating it.
-				iv2Machine.Location.BarcodeName = ufsMachine.GetLocation().GetBarcodeName()
-			}
-			if err != nil && status.Code(err) == codes.NotFound && ufsMachine == nil {
-				// Machine doesn't exist, create a new one
-				logging.Debugf(ctx, "Adding %v [%v] to machines data",
-					iv2Machine.Name, iv2Machine.Location.BarcodeName)
-				controller.MachineRegistration(ctx, iv2Machine)
+		// Store DUTs and Labstations as machines
+		if asset.GetType() == ufspb.AssetType_DUT || asset.GetType() == ufspb.AssetType_LABSTATION {
+			aMachine := CreateMachineFromAsset(asset)
+			if aMachine == nil {
 				continue
 			}
-			if err == nil && !Compare(iv2Machine, ufsMachine) {
-				// Machine exists, but was updated in IV2
-				controller.UpdateMachine(ctx, iv2Machine, nil)
-				continue
-			}
-			if err != nil {
-				logging.Warningf(ctx, "Error retriving machine: %v", err)
+			ufsMachine, err := controller.GetMachine(ctx, asset.GetName())
+			if err != nil && util.IsNotFoundError(err) {
+				// Create a new machine
+				_, err := controller.MachineRegistration(ctx, aMachine)
+				if err != nil {
+					logging.Warningf(ctx, "Unable to create machine %v %v", aMachine, err)
+				}
+			} else if ufsMachine != nil && !Compare(aMachine, ufsMachine) {
+				_, err := controller.UpdateMachine(ctx, aMachine, nil)
+				if err != nil {
+					logging.Warningf(ctx, "Failed to update machine %v %v", aMachine, err)
+				}
 			}
 		}
 	}
-
 	return nil
 }
 
@@ -390,77 +362,39 @@ func CreateAssetsFromChopsAsset(asset *iv2pr.ChopsAsset, assetinfo *iv2pr2.Asset
 	return a, nil
 }
 
-// GetMachineFromAssets returns Machine proto constructed from ChopsAsset
-// and AssetInfo
+// CreateMachineFromAsset creates machine from asset
 //
-// Machine object is constructed by directly assigning most of the data. Lab in
-// Location is converted from string to enum using a switch case and
-// hostname is used for BarcodeName. If hostname is empty, Lab name is used for
-// BarcodeName
-func GetMachineFromAssets(asset *iv2pr.ChopsAsset, assetInfo *iv2pr2.AssetInfo, hostname string) *ufspb.Machine {
-	device := &ufspb.ChromeOSMachine{
-		ReferenceBoard: assetInfo.GetReferenceBoard(),
-		BuildTarget:    assetInfo.GetBuildTarget(),
-		Model:          assetInfo.GetModel(),
-		GoogleCodeName: assetInfo.GetGoogleCodeName(),
-		MacAddress:     assetInfo.GetEthernetMacAddress(),
-		Sku:            assetInfo.GetSku(),
-		Phase:          assetInfo.GetPhase(),
-		CostCenter:     assetInfo.GetCostCenter(),
+// If the asset is either a DUT or Labstation, machine is returned, nil otherwise.
+func CreateMachineFromAsset(asset *ufspb.Asset) *ufspb.Machine {
+	if asset == nil {
+		return nil
 	}
-	if strings.Contains(hostname, "labstation") ||
-		strings.Contains(device.GoogleCodeName, "Labstation") {
-		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_LABSTATION
-	} else if strings.Contains(device.GoogleCodeName, "Servo") ||
-		macAddress.MatchString(asset.GetId()) {
-		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_SERVO
-	} else {
-		// TODO(anushruth): Default cannot be chromebook, But currently
-		// we don't have data to determine this.
+	device := &ufspb.ChromeOSMachine{
+		ReferenceBoard: asset.GetInfo().GetReferenceBoard(),
+		BuildTarget:    asset.GetInfo().GetBuildTarget(),
+		Model:          asset.GetInfo().GetModel(),
+		GoogleCodeName: asset.GetInfo().GetGoogleCodeName(),
+		MacAddress:     asset.GetInfo().GetEthernetMacAddress(),
+		Sku:            asset.GetInfo().GetSku(),
+		Phase:          asset.GetInfo().GetPhase(),
+		CostCenter:     asset.GetInfo().GetCostCenter(),
+	}
+	switch asset.GetType() {
+	case ufspb.AssetType_DUT:
 		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_CHROMEBOOK
+	case ufspb.AssetType_LABSTATION:
+		device.DeviceType = ufspb.ChromeOSDeviceType_DEVICE_LABSTATION
+	default:
+		// Only DUTs and Labstations are stored as machines
+		return nil
 	}
 	machine := &ufspb.Machine{
-		Name:         asset.GetId(),
-		SerialNumber: assetInfo.GetSerialNumber(),
-		Location: &ufspb.Location{
-			Aisle:       asset.GetLocation().GetAisle(),
-			Row:         asset.GetLocation().GetRow(),
-			Rack:        asset.GetLocation().GetRack(),
-			Shelf:       asset.GetLocation().GetShelf(),
-			Position:    asset.GetLocation().GetPosition(),
-			BarcodeName: hostname,
-		},
+		Name:         asset.GetName(),
+		SerialNumber: asset.GetInfo().GetSerialNumber(),
+		Location:     asset.GetLocation(),
 		Device: &ufspb.Machine_ChromeosMachine{
 			ChromeosMachine: device,
 		},
-		UpdateTime: ptypes.TimestampNow(),
 	}
-	if hostname == "" {
-		machine.Location.BarcodeName = asset.GetLocation().GetLab()
-	}
-	// Mapping: chromeos1 => Santiam; chromeos2 => Atlantis;
-	// chromeos4 => Destiny; chromeos6 => Prometheus;
-	// chromeos{3,5,7,9,15} => Linda Vista
-	switch asset.GetLocation().GetLab() {
-	case "chromeos1":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS1
-	case "chromeos2":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS2
-	case "chromeos3":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS3
-	case "chromeos4":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS4
-	case "chromeos5":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS5
-	case "chromeos6":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS6
-	case "chromeos7":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS7
-	case "chromeos15":
-		machine.Location.Zone = ufspb.Zone_ZONE_CHROMEOS15
-	default:
-		machine.Location.Zone = ufspb.Zone_ZONE_UNSPECIFIED
-	}
-
 	return machine
 }
