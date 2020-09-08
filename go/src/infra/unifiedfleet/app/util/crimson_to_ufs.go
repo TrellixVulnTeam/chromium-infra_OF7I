@@ -85,7 +85,7 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 	kvms := make([]*ufspb.KVM, 0)
 	dhcps := make([]*ufspb.DHCPConfig, 0)
 	for _, oldKVM := range dc.GetKvm() {
-		name := oldKVM.GetName()
+		name := FormatDHCPHostname(oldKVM.GetName())
 		k := &ufspb.KVM{
 			Name:           name,
 			MacAddress:     oldKVM.GetMacAddress(),
@@ -208,7 +208,7 @@ func ProcessNetworkInterfaces(nics []*crimson.NIC, dracs []*crimson.DRAC, machin
 			rack = machine.GetRack()
 			zone = ToZone(strings.ToLower(machine.GetDatacenter())).String()
 		}
-		hostname := FormatResourceName(drac.GetName())
+		hostname := FormatDHCPHostname(FormatResourceName(drac.GetName()))
 		d := &ufspb.Drac{
 			Name: hostname,
 			// Inject machine name to display name
@@ -255,7 +255,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 		hostToMachine[h.GetName()] = machineMap[h.GetMachine()]
 	}
 	for _, vm := range vms {
-		name := vm.GetName()
+		name := FormatDHCPHostname(vm.GetName())
 		var zone string
 		if machine, ok := hostToMachine[vm.GetHost()]; ok {
 			zone = ToZone(strings.ToLower(machine.GetDatacenter())).String()
@@ -268,7 +268,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			Hostname:         name,
 			Vlan:             GetBrowserLabName(Int64ToStr(vm.GetVlan())),
 			Zone:             zone,
-			MachineLseId:     vm.GetHost(),
+			MachineLseId:     FormatDHCPHostname(vm.GetHost()),
 			ResourceState:    ToState(vm.GetState()),
 			Description:      vm.GetDescription(),
 			DeploymentTicket: vm.GetDeploymentTicket(),
@@ -296,7 +296,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 			rack = machine.GetRack()
 			zone = ToZone(strings.ToLower(machine.GetDatacenter())).String()
 		}
-		name := h.GetName()
+		name := FormatDHCPHostname(h.GetName())
 		vms := hostToVMs[name]
 		if len(vms) > 0 {
 			lsePrototype = "browser-lab:vm"

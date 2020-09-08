@@ -213,7 +213,7 @@ func compareVMs(ctx context.Context, writer *storage.Writer, vms []*crimson.VM, 
 }
 
 func formatVM(name, ip, machine, os string, state ufspb.State) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", name, ip, machine, os, strings.ToLower(state.String()))
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", util.FormatDHCPHostname(name), ip, machine, os, strings.ToLower(state.String()))
 }
 
 func compareHosts(ctx context.Context, writer *storage.Writer, hosts []*crimson.PhysicalHost, hostRes *fleetds.OpResults, stateMap map[string]ufspb.State, dhcpHostMap map[string]*ufspb.DHCPConfig) error {
@@ -237,7 +237,7 @@ func compareHosts(ctx context.Context, writer *storage.Writer, hosts []*crimson.
 }
 
 func formatHost(name, ip, machine, os string, vmSlots int32, state ufspb.State) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%d\t%s", name, ip, machine, os, vmSlots, strings.ToLower(state.String()))
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%d\t%s", util.FormatDHCPHostname(name), ip, machine, os, vmSlots, strings.ToLower(state.String()))
 }
 
 func compareDracs(ctx context.Context, writer *storage.Writer, dracs []*crimson.DRAC, dracRes *fleetds.OpResults, dhcpMap map[string]*ufspb.DHCPConfig) error {
@@ -257,7 +257,7 @@ func compareDracs(ctx context.Context, writer *storage.Writer, dracs []*crimson.
 }
 
 func formatDrac(name, macAddr, sw, port string, ip string) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", name, macAddr, sw, port, ip)
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", util.FormatDHCPHostname(name), macAddr, sw, port, ip)
 }
 
 func compareNics(ctx context.Context, writer *storage.Writer, nics []*crimson.NIC, nicRes *fleetds.OpResults) error {
@@ -343,7 +343,7 @@ func compareKVMs(ctx context.Context, writer *storage.Writer, kvms []*crimson.KV
 }
 
 func formatKVM(name, platform, macAddr string, state ufspb.State) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s", name, util.FormatResourceName(platform), macAddr, strings.ToLower(state.String()))
+	return fmt.Sprintf("%s\t%s\t%s\t%s", util.FormatDHCPHostname(name), util.FormatResourceName(platform), macAddr, strings.ToLower(state.String()))
 }
 
 func compareMachines(ctx context.Context, writer *storage.Writer, machines []*crimson.Machine, machineRes *fleetds.OpResults, stateMap map[string]ufspb.State) error {

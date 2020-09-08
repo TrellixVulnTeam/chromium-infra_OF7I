@@ -130,6 +130,7 @@ func (fs *FleetServerImpl) GetDHCPConfig(ctx context.Context, req *ufsAPI.GetDHC
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+	req.Hostname = util.FormatDHCPHostname(req.Hostname)
 	dhcp, err := controller.GetDHCPConfig(ctx, req.GetHostname())
 	if err != nil {
 		return nil, err
@@ -142,7 +143,7 @@ func (fs *FleetServerImpl) BatchGetDHCPConfigs(ctx context.Context, req *ufsAPI.
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	dhcps, err := controller.BatchGetDhcpConfigs(ctx, util.FormatInputNames(req.GetNames()))
+	dhcps, err := controller.BatchGetDhcpConfigs(ctx, util.FormatDHCPHostnames(util.FormatInputNames(req.GetNames())))
 	if err != nil {
 		return nil, err
 	}

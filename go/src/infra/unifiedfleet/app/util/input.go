@@ -113,6 +113,19 @@ func FormatInputNames(names []string) []string {
 	return res
 }
 
+// FormatDHCPHostname formats a name which will be a dhcp host
+func FormatDHCPHostname(old string) string {
+	return strings.ToLower(old)
+}
+
+// FormatDHCPHostnames formats a given array of resource names which could be used as dhcp hostnames
+func FormatDHCPHostnames(names []string) []string {
+	for i, n := range names {
+		names[i] = FormatDHCPHostname(n)
+	}
+	return names
+}
+
 // RemovePrefix extracts string appearing after a "/"
 func RemovePrefix(name string) string {
 	// Get substring after a string.

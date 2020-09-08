@@ -30,6 +30,16 @@ func (fs *FleetServerImpl) RackRegistration(ctx context.Context, req *ufsAPI.Rac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+	for _, kvm := range req.GetRack().GetChromeBrowserRack().GetKvmObjects() {
+		if kvm != nil {
+			kvm.Name = util.FormatDHCPHostname(util.RemovePrefix(kvm.Name))
+		}
+	}
+	for _, rpm := range req.GetRack().GetChromeBrowserRack().GetRpmObjects() {
+		if rpm != nil {
+			rpm.Name = util.FormatDHCPHostname(util.RemovePrefix(rpm.Name))
+		}
+	}
 	rack, err := controller.RackRegistration(ctx, req.Rack)
 	if err != nil {
 		return nil, err
@@ -44,6 +54,9 @@ func (fs *FleetServerImpl) MachineRegistration(ctx context.Context, req *ufsAPI.
 	}()
 	if err := req.Validate(); err != nil {
 		return nil, err
+	}
+	if drac := req.GetMachine().GetChromeBrowserMachine().GetDracObject(); drac != nil {
+		drac.Name = util.FormatDHCPHostname(util.RemovePrefix(drac.Name))
 	}
 	machine, err := controller.MachineRegistration(ctx, req.Machine)
 	if err != nil {
@@ -481,7 +494,7 @@ func (fs *FleetServerImpl) CreateKVM(ctx context.Context, req *ufsAPI.CreateKVMR
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.KVM.Name = req.KVMId
+	req.KVM.Name = util.FormatDHCPHostname(req.KVMId)
 	kvm, err := controller.CreateKVM(ctx, req.KVM)
 	if err != nil {
 		return nil, err
@@ -499,7 +512,7 @@ func (fs *FleetServerImpl) UpdateKVM(ctx context.Context, req *ufsAPI.UpdateKVMR
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.KVM.Name = util.RemovePrefix(req.KVM.Name)
+	req.KVM.Name = util.FormatDHCPHostname(util.RemovePrefix(req.KVM.Name))
 
 	if req.GetNetworkOption() != nil &&
 		(req.GetNetworkOption().GetDelete() || req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "") {
@@ -552,7 +565,7 @@ func (fs *FleetServerImpl) GetKVM(ctx context.Context, req *ufsAPI.GetKVMRequest
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	kvm, err := controller.GetKVM(ctx, name)
 	if err != nil {
 		return nil, err
@@ -567,7 +580,7 @@ func (fs *FleetServerImpl) BatchGetKVMs(ctx context.Context, req *ufsAPI.BatchGe
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	kvms, err := controller.BatchGetKVMs(ctx, util.FormatInputNames(req.GetNames()))
+	kvms, err := controller.BatchGetKVMs(ctx, util.FormatDHCPHostnames(util.FormatInputNames(req.GetNames())))
 	if err != nil {
 		return nil, err
 	}
@@ -611,7 +624,7 @@ func (fs *FleetServerImpl) DeleteKVM(ctx context.Context, req *ufsAPI.DeleteKVMR
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	err = controller.DeleteKVM(ctx, name)
 	return &empty.Empty{}, err
 }
@@ -624,7 +637,7 @@ func (fs *FleetServerImpl) CreateRPM(ctx context.Context, req *ufsAPI.CreateRPMR
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.RPM.Name = req.RPMId
+	req.RPM.Name = util.FormatDHCPHostname(req.RPMId)
 	rpm, err := controller.CreateRPM(ctx, req.RPM)
 	if err != nil {
 		return nil, err
@@ -642,7 +655,7 @@ func (fs *FleetServerImpl) UpdateRPM(ctx context.Context, req *ufsAPI.UpdateRPMR
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.RPM.Name = util.RemovePrefix(req.RPM.Name)
+	req.RPM.Name = util.FormatDHCPHostname(util.RemovePrefix(req.RPM.Name))
 	rpm, err := controller.UpdateRPM(ctx, req.RPM)
 	if err != nil {
 		return nil, err
@@ -660,7 +673,7 @@ func (fs *FleetServerImpl) GetRPM(ctx context.Context, req *ufsAPI.GetRPMRequest
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	rpm, err := controller.GetRPM(ctx, name)
 	if err != nil {
 		return nil, err
@@ -675,7 +688,7 @@ func (fs *FleetServerImpl) BatchGetRPMs(ctx context.Context, req *ufsAPI.BatchGe
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	rpms, err := controller.BatchGetRPMs(ctx, util.FormatInputNames(req.GetNames()))
+	rpms, err := controller.BatchGetRPMs(ctx, util.FormatDHCPHostnames(util.FormatInputNames(req.GetNames())))
 	if err != nil {
 		return nil, err
 	}
@@ -719,7 +732,7 @@ func (fs *FleetServerImpl) DeleteRPM(ctx context.Context, req *ufsAPI.DeleteRPMR
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	err = controller.DeleteRPM(ctx, name)
 	return &empty.Empty{}, err
 }
@@ -732,7 +745,7 @@ func (fs *FleetServerImpl) CreateDrac(ctx context.Context, req *ufsAPI.CreateDra
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.Drac.Name = req.DracId
+	req.Drac.Name = util.FormatDHCPHostname(req.DracId)
 	drac, err := controller.CreateDrac(ctx, req.Drac)
 	if err != nil {
 		return nil, err
@@ -750,7 +763,7 @@ func (fs *FleetServerImpl) UpdateDrac(ctx context.Context, req *ufsAPI.UpdateDra
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.Drac.Name = util.RemovePrefix(req.Drac.Name)
+	req.Drac.Name = util.FormatDHCPHostname(util.RemovePrefix(req.Drac.Name))
 
 	if req.GetNetworkOption() != nil &&
 		(req.GetNetworkOption().GetDelete() || req.GetNetworkOption().GetVlan() != "" || req.GetNetworkOption().GetIp() != "") {
@@ -803,7 +816,7 @@ func (fs *FleetServerImpl) GetDrac(ctx context.Context, req *ufsAPI.GetDracReque
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	drac, err := controller.GetDrac(ctx, name)
 	if err != nil {
 		return nil, err
@@ -818,7 +831,7 @@ func (fs *FleetServerImpl) BatchGetDracs(ctx context.Context, req *ufsAPI.BatchG
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	dracs, err := controller.BatchGetDracs(ctx, util.FormatInputNames(req.GetNames()))
+	dracs, err := controller.BatchGetDracs(ctx, util.FormatDHCPHostnames(util.FormatInputNames(req.GetNames())))
 	if err != nil {
 		return nil, err
 	}
@@ -862,7 +875,7 @@ func (fs *FleetServerImpl) DeleteDrac(ctx context.Context, req *ufsAPI.DeleteDra
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	err = controller.DeleteDrac(ctx, name)
 	return &empty.Empty{}, err
 }

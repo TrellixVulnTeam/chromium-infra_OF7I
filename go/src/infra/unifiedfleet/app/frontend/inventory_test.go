@@ -134,7 +134,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name:     "machineLSE-1",
+				Name:     "machinelse-1",
 				Machines: []string{"machine-0"},
 			})
 			So(err, ShouldBeNil)
@@ -157,7 +157,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			_, err = inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name:     "machineLSE-state",
+				Name:     "machinelse-state",
 				Machines: []string{"machine-1"},
 			})
 			So(err, ShouldBeNil)
@@ -171,7 +171,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			resp, err := tf.Fleet.UpdateMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, machineLSE)
-			s, err := state.GetStateRecord(ctx, "hosts/machineLSE-state")
+			s, err := state.GetStateRecord(ctx, "hosts/machinelse-state")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYED_TESTING)
 		})
@@ -219,13 +219,13 @@ func TestGetMachineLSE(t *testing.T) {
 	Convey("GetMachineLSE", t, func() {
 		Convey("Get machineLSE by existing ID", func() {
 			machineLSE1, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name: "machineLSE-1",
+				Name: "machinelse-1",
 			})
 			So(err, ShouldBeNil)
 			machineLSE1.Name = util.AddPrefix(util.MachineLSECollection, machineLSE1.Name)
 
 			req := &ufsAPI.GetMachineLSERequest{
-				Name: util.AddPrefix(util.MachineLSECollection, "machineLSE-1"),
+				Name: util.AddPrefix(util.MachineLSECollection, "machinelse-1"),
 			}
 			resp, err := tf.Fleet.GetMachineLSE(tf.C, req)
 			So(err, ShouldBeNil)
@@ -766,8 +766,8 @@ func TestDeleteMachineLSE(t *testing.T) {
 	Convey("DeleteMachineLSE", t, func() {
 		Convey("Delete machineLSE by existing ID", func() {
 			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name:     "machineLSE-1",
-				Hostname: "machineLSE-1",
+				Name:     "machinelse-1",
+				Hostname: "machinelse-1",
 			})
 			So(err, ShouldBeNil)
 
@@ -784,14 +784,14 @@ func TestDeleteMachineLSE(t *testing.T) {
 		})
 		Convey("Delete machineLSE by existing ID with assigned ip", func() {
 			_, err := inventory.CreateMachineLSE(ctx, &ufspb.MachineLSE{
-				Name:     "machineLSE-with-ip",
-				Hostname: "machineLSE-with-ip",
+				Name:     "machinelse-with-ip",
+				Hostname: "machinelse-with-ip",
 				Nic:      "eth0",
 			})
 			So(err, ShouldBeNil)
 			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
 				{
-					Hostname: "machineLSE-with-ip",
+					Hostname: "machinelse-with-ip",
 					Ip:       "1.2.3.4",
 				},
 			})

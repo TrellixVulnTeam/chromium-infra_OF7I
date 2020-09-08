@@ -54,7 +54,8 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *ufsAPI.Cre
 	if err := verifyLSEPrototype(ctx, req.GetMachineLSE()); err != nil {
 		return nil, err
 	}
-	req.MachineLSE.Name = req.MachineLSEId
+	req.MachineLSE.Name = util.FormatDHCPHostname(req.MachineLSEId)
+	req.MachineLSE.Hostname = util.FormatDHCPHostname(req.MachineLSE.Hostname)
 	req.NetworkOption = updateNetworkOpt(req.MachineLSE.GetVlan(), req.GetNetworkOption())
 	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.GetNetworkOption())
 	if err != nil {
@@ -73,7 +74,8 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.MachineLSE.Name = util.RemovePrefix(req.MachineLSE.Name)
+	req.MachineLSE.Name = util.FormatDHCPHostname(util.RemovePrefix(req.MachineLSE.Name))
+	req.MachineLSE.Hostname = util.FormatDHCPHostname(req.MachineLSE.Hostname)
 	nwOpt := req.GetNetworkOptions()[req.MachineLSE.Name]
 	nwOpt = updateNetworkOpt(req.MachineLSE.GetVlan(), nwOpt)
 	if nwOpt != nil {
@@ -124,7 +126,7 @@ func (fs *FleetServerImpl) GetMachineLSE(ctx context.Context, req *ufsAPI.GetMac
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	machineLSE, err := controller.GetMachineLSE(ctx, name)
 	if err != nil {
 		return nil, err
@@ -139,7 +141,7 @@ func (fs *FleetServerImpl) BatchGetMachineLSEs(ctx context.Context, req *ufsAPI.
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	lses, err := controller.BatchGetMachineLSEs(ctx, util.FormatInputNames(req.GetNames()))
+	lses, err := controller.BatchGetMachineLSEs(ctx, util.FormatDHCPHostnames(util.FormatInputNames(req.GetNames())))
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +177,19 @@ func (fs *FleetServerImpl) ListMachineLSEs(ctx context.Context, req *ufsAPI.List
 	}, nil
 }
 
+// DeleteMachineLSE deletes the machineLSE from database.
+func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *ufsAPI.DeleteMachineLSERequest) (rsp *empty.Empty, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
+	err = controller.DeleteMachineLSE(ctx, name)
+	return &empty.Empty{}, err
+}
+
 func updateNetworkOpt(userVlan string, nwOpt *ufsAPI.NetworkOption) *ufsAPI.NetworkOption {
 	if userVlan == "" {
 		return nwOpt
@@ -196,7 +211,9 @@ func (fs *FleetServerImpl) CreateVM(ctx context.Context, req *ufsAPI.CreateVMReq
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
+	req.Vm.Name = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Name))
+	req.Vm.Hostname = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Hostname))
+	req.Vm.MachineLseId = util.FormatDHCPHostname(req.Vm.MachineLseId)
 	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.GetNetworkOption())
 	vm, err := controller.CreateVM(ctx, req.GetVm(), req.GetNetworkOption())
 	if err != nil {
@@ -215,7 +232,9 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	req.Vm.Name = util.RemovePrefix(req.Vm.Name)
+	req.Vm.Name = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Name))
+	req.Vm.Hostname = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Hostname))
+	req.Vm.MachineLseId = util.FormatDHCPHostname(req.Vm.MachineLseId)
 	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.GetNetworkOption())
 	if req.GetNetworkOption() != nil {
 		vm := req.Vm
@@ -265,7 +284,7 @@ func (fs *FleetServerImpl) DeleteVM(ctx context.Context, req *ufsAPI.DeleteVMReq
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	err = controller.DeleteVM(ctx, name)
 	return &empty.Empty{}, err
 }
@@ -278,7 +297,7 @@ func (fs *FleetServerImpl) GetVM(ctx context.Context, req *ufsAPI.GetVMRequest) 
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	name := util.RemovePrefix(req.Name)
+	name := util.FormatDHCPHostname(util.RemovePrefix(req.Name))
 	vm, err := controller.GetVM(ctx, name)
 	if err != nil {
 		return nil, err
@@ -293,7 +312,7 @@ func (fs *FleetServerImpl) BatchGetVMs(ctx context.Context, req *ufsAPI.BatchGet
 	defer func() {
 		err = grpcutil.GRPCifyAndLogErr(ctx, err)
 	}()
-	vms, err := controller.BatchGetVMs(ctx, util.FormatInputNames(req.GetNames()))
+	vms, err := controller.BatchGetVMs(ctx, util.FormatDHCPHostnames(util.FormatInputNames(req.GetNames())))
 	if err != nil {
 		return nil, err
 	}
@@ -323,19 +342,6 @@ func (fs *FleetServerImpl) ListVMs(ctx context.Context, req *ufsAPI.ListVMsReque
 		Vms:           result,
 		NextPageToken: nextPageToken,
 	}, nil
-}
-
-// DeleteMachineLSE deletes the machineLSE from database.
-func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *ufsAPI.DeleteMachineLSERequest) (rsp *empty.Empty, err error) {
-	defer func() {
-		err = grpcutil.GRPCifyAndLogErr(ctx, err)
-	}()
-	if err := req.Validate(); err != nil {
-		return nil, err
-	}
-	name := util.RemovePrefix(req.Name)
-	err = controller.DeleteMachineLSE(ctx, name)
-	return &empty.Empty{}, err
 }
 
 // CreateRackLSE creates rackLSE entry in database.

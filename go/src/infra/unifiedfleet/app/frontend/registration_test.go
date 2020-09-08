@@ -1321,7 +1321,7 @@ func TestUpdateKVM(t *testing.T) {
 	Convey("UpdateKVM", t, func() {
 		Convey("Update existing KVM", func() {
 			KVM1 := &ufspb.KVM{
-				Name: "KVM-1",
+				Name: "kvm-1",
 			}
 			resp, err := registration.CreateKVM(tf.C, KVM1)
 			So(err, ShouldBeNil)
@@ -1392,11 +1392,11 @@ func TestGetKVM(t *testing.T) {
 		defer validate()
 		Convey("Get KVM by existing ID", func() {
 			KVM1 := &ufspb.KVM{
-				Name: "KVM-1",
+				Name: "kvm-1",
 			}
 			_, err := registration.CreateKVM(tf.C, KVM1)
 			So(err, ShouldBeNil)
-			KVM1.Name = util.AddPrefix(util.KVMCollection, "KVM-1")
+			KVM1.Name = util.AddPrefix(util.KVMCollection, "kvm-1")
 
 			req := &ufsAPI.GetKVMRequest{
 				Name: util.AddPrefix(util.KVMCollection, "KVM-1"),
@@ -1496,7 +1496,7 @@ func TestDeleteKVM(t *testing.T) {
 	Convey("DeleteKVM", t, func() {
 		Convey("Delete KVM by existing ID without references", func() {
 			KVM2 := &ufspb.KVM{
-				Name: "KVM-2",
+				Name: "kvm-2",
 			}
 			_, err := registration.CreateKVM(tf.C, KVM2)
 			So(err, ShouldBeNil)

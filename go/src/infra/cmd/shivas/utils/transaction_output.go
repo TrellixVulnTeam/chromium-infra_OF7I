@@ -160,7 +160,7 @@ func printDHCP(ctx context.Context, ic ufsAPI.FleetClient, hostname string) {
 		fmt.Println("Associated dhcp:")
 		PrintProtoJSON(dhcp, false)
 	} else {
-		fmt.Println("Associated dhcp: None")
+		fmt.Printf("Associated dhcp: Not found for host %s (err: %s)\n", hostname, err.Error())
 	}
 }
 
