@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\ntask.proto\x12\x11\x63hromeperf.engine\x1a\x19google/protobuf/any.proto\"\xd2\x01\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\t\x12\x30\n\x05state\x18\x02 \x01(\x0e\x32!.chromeperf.engine.Task.TaskState\x12\x0c\n\x04type\x18\x03 \x01(\t\x12%\n\x07payload\x18\x04 \x01(\x0b\x32\x14.google.protobuf.Any\"W\n\tTaskState\x12\x15\n\x11UNKNOWN_TASKSTATE\x10\x00\x12\x0b\n\x07PENDING\x10\x01\x12\x0b\n\x07ONGOING\x10\x02\x12\n\n\x06\x46\x41ILED\x10\x03\x12\r\n\tCOMPLETED\x10\x04\x62\x06proto3'
+  serialized_pb=b'\n\ntask.proto\x12\x11\x63hromeperf.engine\x1a\x19google/protobuf/any.proto\"\xe5\x01\n\x04Task\x12\n\n\x02id\x18\x01 \x01(\t\x12\x30\n\x05state\x18\x02 \x01(\x0e\x32!.chromeperf.engine.Task.TaskState\x12\x0c\n\x04type\x18\x03 \x01(\t\x12%\n\x07payload\x18\x04 \x01(\x0b\x32\x14.google.protobuf.Any\"j\n\tTaskState\x12\x19\n\x15UNSPECIFIED_TASKSTATE\x10\x00\x12\x0b\n\x07PENDING\x10\x01\x12\x0b\n\x07ONGOING\x10\x02\x12\n\n\x06\x46\x41ILED\x10\x03\x12\r\n\tCOMPLETED\x10\x04\x12\r\n\tCANCELLED\x10\x05\x62\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_any__pb2.DESCRIPTOR,])
 
@@ -34,7 +34,7 @@ _TASK_TASKSTATE = _descriptor.EnumDescriptor(
   create_key=_descriptor._internal_create_key,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='UNKNOWN_TASKSTATE', index=0, number=0,
+      name='UNSPECIFIED_TASKSTATE', index=0, number=0,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
@@ -58,11 +58,16 @@ _TASK_TASKSTATE = _descriptor.EnumDescriptor(
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='CANCELLED', index=5, number=5,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
   ],
   containing_type=None,
   serialized_options=None,
   serialized_start=184,
-  serialized_end=271,
+  serialized_end=290,
 )
 _sym_db.RegisterEnumDescriptor(_TASK_TASKSTATE)
 
@@ -117,7 +122,7 @@ _TASK = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=61,
-  serialized_end=271,
+  serialized_end=290,
 )
 
 _TASK.fields_by_name['state'].enum_type = _TASK_TASKSTATE

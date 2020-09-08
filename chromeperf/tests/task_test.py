@@ -8,6 +8,10 @@ import logging
 import pytest
 
 from google.cloud import datastore
+from google.protobuf import any_pb2
+from google.protobuf import empty_pb2
+from google.protobuf import struct_pb2
+from google.protobuf import wrappers_pb2
 
 from chromeperf.engine import evaluator as evaluator_module
 from chromeperf.pinpoint.models import task as task_module
@@ -17,6 +21,29 @@ FakeEvent = collections.namedtuple('Event', ('type', 'status', 'payload'))
 
 MockJob = collections.namedtuple('MockJob', ('key'))
 
+def _Int32Payload(i):
+  payload = any_pb2.Any()
+  payload.Pack(wrappers_pb2.Int32Value(value=i))
+  return payload
+
+def _SimpleDictPayload(**kwargs):
+  """Simple conversion of kwargs to Any-packed google.protobuf.Struct messages.
+
+  Values need to be implicitly convertible to google.protobuf.Value messages
+  (e.g. scalars like ints and strings are fine, classes and dicts probably not).
+  """
+  payload = any_pb2.Any()
+  struct = struct_pb2.Struct()
+  for key, value in kwargs.items():
+    struct[key] = value
+  payload.Pack(struct)
+  return payload
+
+def _EmptyPayload():
+  payload = any_pb2.Any()
+  payload.Pack(empty_pb2.Empty())
+  return payload
+
 
 def testPopulateAndEvaluateAdderGraph():
   client = datastore.Client()
@@ -24,22 +51,24 @@ def testPopulateAndEvaluateAdderGraph():
   task_graph = evaluator_module.TaskGraph(
       vertices=[
           evaluator_module.TaskVertex(
-              id='input0', vertex_type='constant', payload={'value': 0}),
+              id='input2', vertex_type='constant', payload=_Int32Payload(2)),
           evaluator_module.TaskVertex(
-              id='input1', vertex_type='constant', payload={'value': 1}),
+              id='input3', vertex_type='constant', payload=_Int32Payload(3)),
           evaluator_module.TaskVertex(
-              id='plus', vertex_type='operator+', payload={}),
+              id='plus', vertex_type='operator+', payload=_EmptyPayload()),
       ],
       edges=[
-          evaluator_module.Dependency(from_='plus', to='input0'),
-          evaluator_module.Dependency(from_='plus', to='input1'),
+          evaluator_module.Dependency(from_='plus', to='input2'),
+          evaluator_module.Dependency(from_='plus', to='input3'),
       ],
   )
   task_module.populate_task_graph(client, job, task_graph)
 
   def AdderEvaluator(task, _, accumulator):
     if task.task_type == 'constant':
-      accumulator[task.id] = task.payload.get('value', 0)
+      int_payload = wrappers_pb2.Int32Value()
+      assert task.payload.Unpack(int_payload)
+      accumulator[task.id] = int_payload.value
     elif task.task_type == 'operator+':
       inputs = [accumulator.get(dep) for dep in task.dependencies]
       accumulator[task.id] = functools.reduce(lambda a, v: a + v, inputs)
@@ -49,7 +78,7 @@ def testPopulateAndEvaluateAdderGraph():
       AdderEvaluator,
       task_module.task_graph_loader(client, job),
   )
-  assert accumulator.get('plus') == 1
+  assert accumulator.get('plus') == 5
 
 
 def testPouplateAndEvaluateGrowingGraph():
@@ -63,19 +92,16 @@ def testPouplateAndEvaluateGrowingGraph():
               evaluator_module.TaskVertex(
                   id='rev_0',
                   vertex_type='revision',
-                  payload={
-                      'revision': '0',
-                      'position': 0
-                  }),
+                  payload=_SimpleDictPayload(revision='0', position=0),
+                  ),
               evaluator_module.TaskVertex(
                   id='rev_100',
                   vertex_type='revision',
-                  payload={
-                      'revision': '100',
-                      'position': 100
-                  }),
+                  payload=_SimpleDictPayload(revision='100', position=100),
+                  ),
               evaluator_module.TaskVertex(
-                  id='bisection', vertex_type='bisection', payload={}),
+                  id='bisection', vertex_type='bisection',
+                  payload=_EmptyPayload()),
           ],
           edges=[
               evaluator_module.Dependency(from_='bisection', to='rev_0'),
@@ -94,11 +120,11 @@ def testPopulateEvaluateCallCounts():
       evaluator_module.TaskGraph(
           vertices=[
               evaluator_module.TaskVertex(
-                  id='leaf_0', vertex_type='node', payload={}),
+                  id='leaf_0', vertex_type='node', payload=_EmptyPayload()),
               evaluator_module.TaskVertex(
-                  id='leaf_1', vertex_type='node', payload={}),
+                  id='leaf_1', vertex_type='node', payload=_EmptyPayload()),
               evaluator_module.TaskVertex(
-                  id='parent', vertex_type='node', payload={}),
+                  id='parent', vertex_type='node', payload=_EmptyPayload()),
           ],
           edges=[
               evaluator_module.Dependency(from_='parent', to='leaf_0'),
@@ -146,9 +172,9 @@ def testPopulateCycles(mocker):
   task_graph = evaluator_module.TaskGraph(
       vertices=[
           evaluator_module.TaskVertex(
-              id='node_0', vertex_type='process', payload={}),
+              id='node_0', vertex_type='process', payload=_EmptyPayload()),
           evaluator_module.TaskVertex(
-              id='node_1', vertex_type='process', payload={})
+              id='node_1', vertex_type='process', payload=_EmptyPayload())
       ],
       edges=[
           evaluator_module.Dependency(from_='node_0', to='node_1'),
@@ -206,11 +232,11 @@ class SetupGraph():
         evaluator_module.TaskGraph(
             vertices=[
                 evaluator_module.TaskVertex(
-                    id='task_0', vertex_type='task', payload={}),
+                    id='task_0', vertex_type='task', payload=_EmptyPayload()),
                 evaluator_module.TaskVertex(
-                    id='task_1', vertex_type='task', payload={}),
+                    id='task_1', vertex_type='task', payload=_EmptyPayload()),
                 evaluator_module.TaskVertex(
-                    id='task_2', vertex_type='task', payload={}),
+                    id='task_2', vertex_type='task', payload=_EmptyPayload()),
             ],
             edges=[
                 evaluator_module.Dependency(from_='task_2', to='task_0'),
@@ -320,7 +346,7 @@ def testEvaluateInvalidAmendment_ExistingTask(setupGraph):
               setupGraph.job,
               vertices=[
                   evaluator_module.TaskVertex(
-                      id=task.id, vertex_type='duplicate', payload={})
+                      id=task.id, vertex_type='duplicate', payload=_EmptyPayload())
               ],
               dependencies=[
                   evaluator_module.Dependency(from_='task_2', to=task.id)

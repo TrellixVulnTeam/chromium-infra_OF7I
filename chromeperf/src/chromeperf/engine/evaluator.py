@@ -6,6 +6,9 @@ import collections
 import copy
 import dataclasses
 import logging
+import typing
+
+from google.protobuf import any_pb2
 
 from chromeperf.engine import actions
 
@@ -19,19 +22,23 @@ _NOT_EVALUATED, _CHILDREN_PENDING, _EVALUATION_DONE = (0, 1, 2)
 class TaskVertex:
   id: str
   vertex_type: str
-  payload: str
+  payload: any_pb2.Any
   state: str = 'unknown'
 
 
+@dataclasses.dataclass(frozen=True)
+class Dependency:
+  from_: str
+  to: str
+
+
+@dataclasses.dataclass
+class TaskGraph:
+  vertices: typing.List[TaskVertex]
+  edges: typing.List[Dependency]
+
+
 # TODO(fancl): Migrate all these namedtuple to dataclass
-class Dependency(collections.namedtuple('Dependency', ('from_', 'to'))):
-  __slots__ = ()
-
-
-class TaskGraph(collections.namedtuple('TaskGraph', ('vertices', 'edges'))):
-  __slots__ = ()
-
-
 class _AdjacencyPair(
     collections.namedtuple('_AdjacencyPair', ('task', 'dependencies'))):
   __slots__ = ()
@@ -69,14 +76,14 @@ def _preprocess_graph(graph):
       vertex.id: _AdjacencyPair(task=vertex, dependencies=[])
       for vertex in graph.vertices
   }
-  for from_, to in graph.edges:
-    if from_ not in vertices:
+  for dep in graph.edges:
+    if dep.from_ not in vertices:
       raise InvalidDependencyError(
-          'Invalid dependency: {} not a known vertex'.format(from_))
-    if to not in vertices:
+          'Invalid dependency: {} not a known vertex'.format(dep.from_))
+    if dep.to not in vertices:
       raise InvalidDependencyError(
-          'Invalid dependency: {} not a known vertex'.format(to))
-    vertices[from_].dependencies.append(to)
+          'Invalid dependency: {} not a known vertex'.format(dep.to))
+    vertices[dep.from_].dependencies.append(dep.to)
   has_dependents = set()
   for _, deps in vertices.values():
     has_dependents |= set(deps)
@@ -97,7 +104,7 @@ def evaluate_graph(event, evaluator, load_graph):
   dependencies) and call the `evaluator` function with a representation of the
   task in the graph, an `event` as input, and an accumulator argument.
 
-  `load_graph` is a callable which turns a `TaskGraph` instance, or one that
+  `load_graph` is a callable which returns a `TaskGraph` instance, or one that
   has similar properties.
 
   The `evaluator` must be a callable which accepts three arguments:
