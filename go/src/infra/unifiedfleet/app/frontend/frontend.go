@@ -38,7 +38,7 @@ func InstallHandlers(r *router.Router, mc router.MiddlewareChain) {
 		}
 		next(ctx)
 	})
-	r.POST("/pubsub/hart", mc, HaRTPushHandler)
+	r.GET("/pubsub/hart", mc, HaRTPushHandler)
 }
 
 // checkAccess verifies that the request is from an authorized user.
