@@ -78,6 +78,7 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 	errs := make(map[string]error)
 	res := make([]proto.Message, 0)
 	if len(filters) == 0 {
+		// No filters, single DoList call
 		protos, err := DoList(ctx, ic, listFunc, int32(pageSize), "", keysOnly)
 		if err != nil {
 			errs["emptyFilter"] = err
@@ -86,8 +87,8 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 		if pageSize > 0 && len(res) >= pageSize {
 			res = res[0:pageSize]
 		}
-	}
-	if pageSize > 0 {
+	} else if pageSize > 0 {
+		// Filters with a pagesize limit
 		// If user specifies a limit, calling DoList without concrrency avoids non-required list calls to UFS
 		for _, filter := range filters {
 			protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filter, keysOnly)
@@ -102,9 +103,11 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 			}
 		}
 	} else {
+		// Filters without pagesize limit
 		// If user doesnt specify any limit, call DoList for each filter concurrently to improve latency
 		res, errs = concurrentList(ctx, ic, listFunc, filters, pageSize, keysOnly)
 	}
+
 	if len(errs) > 0 {
 		fmt.Println("Fail to do some queries:")
 		resErr := make([]error, 0, len(errs))
