@@ -76,7 +76,7 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 			"continue sync ignoring hostnames", err)
 	}
 
-	assetsToUpdate := make([]*ufspb.Asset, len(assets))
+	assetsToUpdate := make([]*ufspb.Asset, 0, len(assets))
 	for _, asset := range assets {
 		var iv2Asset *ufspb.Asset
 		ufsAsset, err := registration.GetAsset(ctx, asset.GetId())
@@ -104,6 +104,7 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 			assetsToUpdate = append(assetsToUpdate, iv2Asset)
 		}
 	}
+	logging.Infof(ctx, "Updating: %v", assetsToUpdate)
 	_, err = registration.BatchUpdateAssets(ctx, assetsToUpdate)
 	return err
 

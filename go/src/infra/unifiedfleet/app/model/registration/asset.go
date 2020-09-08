@@ -43,7 +43,10 @@ func (a *AssetEntity) GetProto() (proto.Message, error) {
 
 // newAssetEntity creates a new asset entity object from proto message.
 func newAssetEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, error) {
-	a := pm.(*ufspb.Asset)
+	a, ok := pm.(*ufspb.Asset)
+	if !ok {
+		return nil, errors.Reason("Invalid asset (proto message is probably not asset or nil)").Err()
+	}
 	if a.GetName() == "" {
 		return nil, errors.Reason("Empty Asset ID").Err()
 	}
@@ -170,8 +173,10 @@ func BatchUpdateAssets(ctx context.Context, assets []*ufspb.Asset) ([]*ufspb.Ass
 	protos := make([]proto.Message, len(assets))
 	updateTime := ptypes.TimestampNow()
 	for i, asset := range assets {
-		asset.UpdateTime = updateTime
-		protos[i] = asset
+		if asset != nil {
+			asset.UpdateTime = updateTime
+			protos[i] = asset
+		}
 	}
 	_, err := ufsds.PutAll(ctx, protos, newAssetEntity, false)
 	if err == nil {
