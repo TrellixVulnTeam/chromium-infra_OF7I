@@ -91,7 +91,7 @@ func TestCreateMachineLSE(t *testing.T) {
 			resp, err := tf.Fleet.CreateMachineLSE(tf.C, req)
 			So(resp, ShouldBeNil)
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidCharacters)
+			So(err.Error(), ShouldContainSubstring, ufsAPI.InvalidHostname)
 		})
 
 		Convey("Create new machineLSE - Invalid input nil machines", func() {

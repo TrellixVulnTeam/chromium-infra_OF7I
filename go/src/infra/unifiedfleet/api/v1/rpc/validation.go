@@ -25,7 +25,9 @@ var (
 	EmptyName                     string = "Invalid input - Entity Name is empty."
 	InvalidMac                    string = "invalid mac address"
 	ValidName                     string = "Name must match the regular expression `^[a-zA-Z0-9-)(_:.]{3,63}$`"
+	HostnamePattern               string = "Name must match the regular expression `^[a-zA-Z0-9-.]{1,63}$`"
 	InvalidCharacters             string = fmt.Sprintf("%s%s", "Invalid input - ", ValidName)
+	InvalidHostname               string = fmt.Sprintf("%s%s", "Invalid input - ", HostnamePattern)
 	InvalidPageSize               string = "Invalid input - PageSize should be non-negative."
 	MachineNameFormat             string = "Invalid input - Entity Name pattern should be machines/{machine}."
 	RackNameFormat                string = "Invalid input - Entity Name pattern should be racks/{rack}."
@@ -56,6 +58,9 @@ var (
 
 // IDRegex regular expression for checking resource Name/ID
 var IDRegex = regexp.MustCompile(`^[a-zA-Z0-9-)(_:.]{3,63}$`)
+
+// HostnameRegex regular expression for checking hostname for host/vm
+var HostnameRegex = regexp.MustCompile(`^[a-zA-Z0-9-.]{1,63}$`)
 var chromePlatformRegex = regexp.MustCompile(`chromeplatforms\.*`)
 var machineRegex = regexp.MustCompile(`machines\.*`)
 var rackRegex = regexp.MustCompile(`racks\.*`)
@@ -396,11 +401,14 @@ func (r *CreateMachineLSERequest) Validate() error {
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyID)
 	}
-	if !IDRegex.MatchString(id) {
-		return status.Errorf(codes.InvalidArgument, InvalidCharacters)
+	if !HostnameRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, InvalidHostname)
 	}
 	if r.MachineLSE.GetHostname() == "" {
-		return status.Errorf(codes.InvalidArgument, "Hostname cannot be empty for a host.")
+		return status.Errorf(codes.InvalidArgument, "Hostname cannot be empty for a host. It must be same as name of the host")
+	}
+	if !HostnameRegex.MatchString(r.MachineLSE.GetHostname()) {
+		return status.Errorf(codes.InvalidArgument, InvalidHostname)
 	}
 	if r.MachineLSE.GetMachines() == nil || len(r.MachineLSE.GetMachines()) == 0 {
 		return status.Errorf(codes.InvalidArgument, EmptyMachineName)
@@ -452,15 +460,15 @@ func (r *CreateVMRequest) Validate() error {
 	if r.GetVm() == nil {
 		return status.Errorf(codes.InvalidArgument, NilEntity)
 	}
-	if !IDRegex.MatchString(r.GetVm().GetName()) {
-		return status.Errorf(codes.InvalidArgument, "VM name is invalid: %s", InvalidCharacters)
+	if !HostnameRegex.MatchString(r.GetVm().GetName()) {
+		return status.Errorf(codes.InvalidArgument, "VM name is invalid: %s", InvalidHostname)
 	}
 	id := strings.TrimSpace(r.GetVm().GetMachineLseId())
 	if id == "" {
 		return status.Errorf(codes.InvalidArgument, EmptyHostName)
 	}
-	if !IDRegex.MatchString(id) {
-		return status.Errorf(codes.InvalidArgument, "Host name is invalid: %s", InvalidCharacters)
+	if !HostnameRegex.MatchString(id) {
+		return status.Errorf(codes.InvalidArgument, "Host name is invalid: %s", InvalidHostname)
 	}
 	if r.Vm.GetMacAddress() != "" {
 		newMac, err := util.ParseMac(r.Vm.GetMacAddress())
