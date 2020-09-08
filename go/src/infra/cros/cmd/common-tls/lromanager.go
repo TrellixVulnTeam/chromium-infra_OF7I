@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/google/uuid"
 	"go.chromium.org/chromiumos/config/go/api/test/tls/dependencies/longrunning"
@@ -27,7 +28,7 @@ func newLROManager() *lroManager {
 	}
 }
 
-func (m *lroManager) newOperation() *longrunning.Operation {
+func (m *lroManager) new() *longrunning.Operation {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	// Loop few times until a unique UUID is created.
@@ -43,8 +44,19 @@ func (m *lroManager) newOperation() *longrunning.Operation {
 			Name: name,
 		}
 		m.operations[name] = op
-		return op
+		return proto.Clone(op).(*longrunning.Operation)
 	}
+}
+
+func (m *lroManager) update(newOp *longrunning.Operation) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	name := newOp.Name
+	if _, ok := m.operations[name]; !ok {
+		return fmt.Errorf("lroManager update: unknown name %s", name)
+	}
+	m.operations[name] = proto.Clone(newOp).(*longrunning.Operation)
+	return nil
 }
 
 func (m *lroManager) ListOperations(ctx context.Context, in *longrunning.ListOperationsRequest) (*longrunning.ListOperationsResponse, error) {

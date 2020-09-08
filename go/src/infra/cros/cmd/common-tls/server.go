@@ -46,6 +46,13 @@ func (s *server) Serve(l net.Listener) error {
 	return server.Serve(l)
 }
 
+func (s *server) Provision(ctx context.Context, req *tls.ProvisionRequest) (*longrunning.Operation, error) {
+	op := s.lroMgr.new()
+	go s.provision(req, op)
+
+	return op, status.Error(codes.OK, "Provisioning started")
+}
+
 func (s *server) ExecDutCommand(req *tls.ExecDutCommandRequest, stream tls.Common_ExecDutCommandServer) error {
 	// Batch size of stdout, stderr.
 	const messageSize = 5000
