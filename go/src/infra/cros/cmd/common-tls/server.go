@@ -39,6 +39,7 @@ func (s *server) Serve(l net.Listener) error {
 	s.clientPool = newSSHClientPool(s.sshConfig)
 	defer s.clientPool.Close()
 	s.lroMgr = newLROManager()
+	defer s.lroMgr.Close()
 
 	server := grpc.NewServer()
 	tls.RegisterCommonServer(server, s)

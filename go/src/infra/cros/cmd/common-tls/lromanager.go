@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -16,16 +17,41 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// operation is used by lroManager to hold extra metadata.
+type operation struct {
+	op           *longrunning.Operation
+	creationTime time.Time
+}
+
 type lroManager struct {
 	mu sync.Mutex
 	// Mapping of Operation name to Operation.
-	operations map[string]*longrunning.Operation
+	operations map[string]*operation
+	// expiryStopper signals the expiration goroutine to terminate.
+	expiryStopper chan struct{}
 }
 
+// newLROManager returns a new lroManager which must be closed after use.
 func newLROManager() *lroManager {
-	return &lroManager{
-		operations: make(map[string]*longrunning.Operation),
+	m := &lroManager{
+		operations:    make(map[string]*operation),
+		expiryStopper: make(chan struct{}),
 	}
+	go func() {
+		for {
+			select {
+			case <-m.expiryStopper:
+				return
+			case <-time.After(time.Hour):
+				m.deleteExpiredOperations()
+			}
+		}
+	}()
+	return m
+}
+
+func (m *lroManager) Close() {
+	close(m.expiryStopper)
 }
 
 func (m *lroManager) new() *longrunning.Operation {
@@ -40,11 +66,34 @@ func (m *lroManager) new() *longrunning.Operation {
 		if _, ok := m.operations[name]; ok {
 			continue
 		}
-		op := &longrunning.Operation{
-			Name: name,
+		m.operations[name] = &operation{
+			op: &longrunning.Operation{
+				Name: name,
+			},
+			creationTime: time.Now(),
 		}
-		m.operations[name] = op
-		return proto.Clone(op).(*longrunning.Operation)
+		return proto.Clone(m.operations[name].op).(*longrunning.Operation)
+	}
+}
+
+func (m *lroManager) delete(name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.operations[name]; !ok {
+		return fmt.Errorf("lroManager delete: unkown name %s", name)
+	}
+	delete(m.operations, name)
+	return nil
+}
+
+func (m *lroManager) deleteExpiredOperations() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cutoff := time.Now().Add(-24 * time.Hour)
+	for name, op := range m.operations {
+		if op.creationTime.Before(cutoff) {
+			delete(m.operations, name)
+		}
 	}
 }
 
@@ -55,7 +104,7 @@ func (m *lroManager) update(newOp *longrunning.Operation) error {
 	if _, ok := m.operations[name]; !ok {
 		return fmt.Errorf("lroManager update: unknown name %s", name)
 	}
-	m.operations[name] = proto.Clone(newOp).(*longrunning.Operation)
+	m.operations[name].op = proto.Clone(newOp).(*longrunning.Operation)
 	return nil
 }
 
@@ -69,19 +118,16 @@ func (m *lroManager) GetOperation(ctx context.Context, in *longrunning.GetOperat
 	defer m.mu.Unlock()
 	v, ok := m.operations[name]
 	if !ok {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("GetOperation: Operation name %#v does not exist", name))
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("GetOperation: Operation name %s does not exist", name))
 	}
-	return v, nil
+	return v.op, nil
 }
 
 func (m *lroManager) DeleteOperation(ctx context.Context, in *longrunning.DeleteOperationRequest) (*empty.Empty, error) {
 	name := in.Name
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if _, ok := m.operations[name]; !ok {
-		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("DeleteOperation: Operation name %#v does not exist", name))
+	if err := m.delete(name); err != nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("DeleteOperation: failed to delete Operation name %s, %s", name, err))
 	}
-	delete(m.operations, name)
 	return &empty.Empty{}, nil
 }
 
