@@ -911,7 +911,7 @@ func vlanOutputStrs(pm proto.Message) []string {
 		m.GetVlanAddress(),
 		fmt.Sprintf("%d", m.GetCapacityIp()),
 		m.GetDescription(),
-		m.GetState(),
+		m.GetResourceState().String(),
 		ts,
 	}
 }

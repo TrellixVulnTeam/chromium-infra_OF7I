@@ -43,7 +43,7 @@ func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 			return errors.Annotate(err, "CreateVlan").Err()
 		}
 		vlan.CapacityIp = int32(length)
-		vlan.State = ufspb.State_STATE_SERVING.String()
+		vlan.ResourceState = ufspb.State_STATE_SERVING
 
 		if _, err = configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan}); err != nil {
 			return err
@@ -69,7 +69,7 @@ func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 }
 
 // UpdateVlan updates vlan in datastore.
-func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMask, s ufspb.State) (*ufspb.Vlan, error) {
+func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMask) (*ufspb.Vlan, error) {
 	f := func(ctx context.Context) error {
 		hc := getVlanHistoryClient(vlan)
 		if err := validateUpdateVlan(ctx, vlan, mask); err != nil {
@@ -85,18 +85,11 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 		// Copy the not-allowed change fields
 		vlan.VlanAddress = oldVlan.GetVlanAddress()
 		vlan.CapacityIp = oldVlan.GetCapacityIp()
-		vlan.State = oldVlan.GetState()
+
 		if err := validateReservedIPs(ctx, vlan); err != nil {
 			return err
 		}
 
-		// Update new vlan's state if user specifically set the state
-		if s != ufspb.State_STATE_UNSPECIFIED && vlan.State != s.String() {
-			vlan.State = s.String()
-			if err := hc.stUdt.updateStateHelper(ctx, ufspb.State(ufspb.State_value[vlan.GetState()])); err != nil {
-				return err
-			}
-		}
 		// Partial update by field mask
 		if mask != nil && len(mask.Paths) > 0 {
 			vlan, err = processVlanUpdateMask(oldVlan, vlan, mask)
@@ -104,6 +97,12 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 				return errors.Annotate(err, "UpdateVlan - processing update mask failed").Err()
 			}
 		}
+
+		// update state
+		if err := hc.stUdt.updateStateHelper(ctx, vlan.GetResourceState()); err != nil {
+			return errors.Annotate(err, "Fail to update state to vlan %s", vlan.GetName()).Err()
+		}
+
 		if err := updateIPTable(ctx, vlan.GetName(), oldVlanCopy.GetReservedIps(), vlan.GetReservedIps()); err != nil {
 			return err
 		}
@@ -206,11 +205,11 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 			IPs = append(IPs, ip)
 		}
 		vs[i] = &ufspb.Vlan{
-			Name:        vlanName,
-			Description: vlan.GetAlias(),
-			CapacityIp:  int32(length),
-			VlanAddress: vlan.GetCidrBlock(),
-			State:       util.ToState(vlan.GetState()).String(),
+			Name:          vlanName,
+			Description:   vlan.GetAlias(),
+			CapacityIp:    int32(length),
+			VlanAddress:   vlan.GetCidrBlock(),
+			ResourceState: util.ToState(vlan.GetState()),
 		}
 	}
 	deleteNonExistingVlans(ctx, vs, pageSize)
@@ -481,7 +480,7 @@ func validateVlanUpdateMask(ctx context.Context, vlan *ufspb.Vlan, mask *field_m
 			case "update_time":
 				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - update_time cannot be updated, it is a Output only field")
 			case "description":
-			case "state":
+			case "resourceState":
 			case "cidr_block":
 				return status.Error(codes.InvalidArgument, "validateVlanUpdateMask - cidr_block cannot be updated, delete and create a new vlan instead")
 			case "tags":
@@ -504,8 +503,8 @@ func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_ma
 		switch path {
 		case "description":
 			oldVlan.Description = vlan.GetDescription()
-		case "state":
-			oldVlan.State = vlan.GetState()
+		case "resourceState":
+			oldVlan.ResourceState = vlan.GetResourceState()
 		case "reserved_ips":
 			oldVlan.ReservedIps = mergeIPs(oldVlan.ReservedIps, vlan.GetReservedIps())
 		}

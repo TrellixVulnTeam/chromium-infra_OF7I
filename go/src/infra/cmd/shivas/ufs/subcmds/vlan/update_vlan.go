@@ -85,18 +85,13 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 		return err
 	}
 	vlan.Name = ufsUtil.AddPrefix(ufsUtil.VlanCollection, vlan.Name)
-	var s ufspb.State
-	if c.state != "" {
-		s = ufsUtil.ToUFSState(c.state)
-	}
 	res, err := ic.UpdateVlan(ctx, &ufsAPI.UpdateVlanRequest{
 		Vlan: &vlan,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
 			"desc":         "description",
-			"state":        "state",
+			"state":        "resourceState",
 			"reserved_ips": "reserved_ips",
 		}),
-		State: s,
 	})
 	if err != nil {
 		return err
@@ -110,6 +105,7 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 
 func (c *updateVlan) parseArgs(vlan *ufspb.Vlan) {
 	vlan.Name = c.name
+	vlan.ResourceState = ufsUtil.ToUFSState(c.state)
 	if c.description == utils.ClearFieldValue {
 		vlan.Description = ""
 	} else {

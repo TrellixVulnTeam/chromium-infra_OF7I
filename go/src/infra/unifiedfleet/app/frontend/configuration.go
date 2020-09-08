@@ -506,7 +506,7 @@ func (fs *FleetServerImpl) UpdateVlan(ctx context.Context, req *ufsAPI.UpdateVla
 		return nil, err
 	}
 	req.Vlan.Name = util.RemovePrefix(req.Vlan.Name)
-	vlan, err := controller.UpdateVlan(ctx, req.Vlan, req.UpdateMask, req.GetState())
+	vlan, err := controller.UpdateVlan(ctx, req.Vlan, req.UpdateMask)
 	if err != nil {
 		return nil, err
 	}

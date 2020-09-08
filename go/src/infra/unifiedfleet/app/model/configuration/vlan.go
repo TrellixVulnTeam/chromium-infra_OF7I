@@ -54,7 +54,7 @@ func newVlanEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 	}
 	return &VlanEntity{
 		ID:        p.GetName(),
-		State:     p.GetState(),
+		State:     p.GetResourceState().String(),
 		CidrBlock: p.GetVlanAddress(),
 		Vlan:      vlan,
 	}, nil

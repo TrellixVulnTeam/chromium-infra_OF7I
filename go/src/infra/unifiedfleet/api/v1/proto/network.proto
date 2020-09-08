@@ -84,15 +84,16 @@ message Vlan {
     // The description of the vlan.
     string description = 5;
 
-    // State of the vlan
-    string state = 6 [
-        (google.api.field_behavior) = OUTPUT_ONLY
-    ];
+    reserved 6;
+    reserved "state";
 
     // The ips that cannot be used by normal host in this vlan.
     // By default, the first 10 and last 1 ip in the vlan is automatically reserved.
     // No need to specify them here.
     repeated string reserved_ips = 7;
+
+    // State of the vlan
+    State resource_state = 8;
 }
 
 message DHCPConfig {
