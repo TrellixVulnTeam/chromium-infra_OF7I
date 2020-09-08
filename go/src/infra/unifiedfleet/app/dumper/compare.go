@@ -185,13 +185,17 @@ func compareCrimson(ctx context.Context, machineDBHost string) error {
 	if err != nil {
 		return err
 	}
-	if err := compareVMs(ctx, writer, vmResp.Vms, hostRes, stateMap, dhcpHostMap); err != nil {
+	vmRes, err := inventory.GetAllVMs(ctx)
+	if vmRes == nil {
+		return errors.New("vm entity corrupted")
+	}
+	if err := compareVMs(ctx, writer, vmResp.Vms, vmRes, stateMap, dhcpHostMap); err != nil {
 		return err
 	}
 	return nil
 }
 
-func compareVMs(ctx context.Context, writer *storage.Writer, vms []*crimson.VM, hostRes *fleetds.OpResults, stateMap map[string]ufspb.State, dhcpHostMap map[string]*ufspb.DHCPConfig) error {
+func compareVMs(ctx context.Context, writer *storage.Writer, vms []*crimson.VM, vmRes *fleetds.OpResults, stateMap map[string]ufspb.State, dhcpHostMap map[string]*ufspb.DHCPConfig) error {
 	logs := []string{"\n\n######## get-vm diff ############"}
 	crimsonVMs := make(map[string]string)
 	for _, r := range vms {
@@ -199,21 +203,17 @@ func compareVMs(ctx context.Context, writer *storage.Writer, vms []*crimson.VM, 
 		crimsonVMs[name] = formatVM(name, r.GetIpv4(), r.GetHost(), r.GetOs(), util.ToState(r.GetState()))
 	}
 	ufsVMs := make(map[string]string)
-	for _, r := range hostRes.Passed() {
-		m := r.Data.(*ufspb.MachineLSE)
-		if m.GetChromeBrowserMachineLse() != nil {
-			for _, v := range m.GetChromeBrowserMachineLse().GetVms() {
-				vmName := v.GetName()
-				resourceName := util.AddPrefix(util.VMCollection, vmName)
-				ufsVMs[vmName] = formatVM(vmName, dhcpHostMap[vmName].GetIp(), m.GetName(), v.GetOsVersion().GetValue(), stateMap[resourceName])
-			}
-		}
+	for _, r := range vmRes.Passed() {
+		v := r.Data.(*ufspb.VM)
+		vmName := v.GetName()
+		resourceName := util.AddPrefix(util.VMCollection, vmName)
+		ufsVMs[vmName] = formatVM(vmName, dhcpHostMap[vmName].GetIp(), v.GetMachineLseId(), v.GetOsVersion().GetValue(), stateMap[resourceName])
 	}
 	return logDiff(crimsonVMs, ufsVMs, writer, logs)
 }
 
-func formatVM(name, ip, machine, os string, state ufspb.State) string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", util.FormatDHCPHostname(name), ip, machine, os, strings.ToLower(state.String()))
+func formatVM(name, ip, machinelse, os string, state ufspb.State) string {
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", util.FormatDHCPHostname(name), ip, util.FormatDHCPHostname(machinelse), os, strings.ToLower(state.String()))
 }
 
 func compareHosts(ctx context.Context, writer *storage.Writer, hosts []*crimson.PhysicalHost, hostRes *fleetds.OpResults, stateMap map[string]ufspb.State, dhcpHostMap map[string]*ufspb.DHCPConfig) error {
