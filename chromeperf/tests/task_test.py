@@ -5,13 +5,13 @@
 import collections
 import functools
 import logging
-import pytest
 
 from google.cloud import datastore
 from google.protobuf import any_pb2
 from google.protobuf import empty_pb2
 from google.protobuf import struct_pb2
 from google.protobuf import wrappers_pb2
+import pytest
 
 from chromeperf.engine import evaluator as evaluator_module
 from chromeperf.pinpoint.models import task as task_module
@@ -45,9 +45,21 @@ def _EmptyPayload():
   return payload
 
 
-def testPopulateAndEvaluateAdderGraph():
-  client = datastore.Client()
-  job = MockJob(client.key('Job', 'key'))
+@pytest.fixture
+def client(request):
+  """A datastore.Client with a psuedorandom suffix appended to its project.
+
+  The suffix is derived from the test name.  Use this to get some isolation
+  between tests using datastore, even when running tests in parallel.
+  """
+  # Project IDs are pretty constrained (6-30 chars, only lowercase, digits and
+  # hyphen), so append a hex string of the hash of the test name to get a
+  # sufficiently unique name that is still valid.
+  return datastore.Client(project='chromeperf-' + hex(hash(request.node.name)))
+
+
+def testPopulateAndEvaluateAdderGraph(client):
+  job = MockJob(client.key('Job', 'Key'))
   task_graph = evaluator_module.TaskGraph(
       vertices=[
           evaluator_module.TaskVertex(
@@ -81,8 +93,7 @@ def testPopulateAndEvaluateAdderGraph():
   assert accumulator.get('plus') == 5
 
 
-def testPouplateAndEvaluateGrowingGraph():
-  client = datastore.Client()
+def testPouplateAndEvaluateGrowingGraph(client):
   job = MockJob(client.key('Job', 'key'))
   task_module.populate_task_graph(
       client,
@@ -111,8 +122,7 @@ def testPouplateAndEvaluateGrowingGraph():
   )
 
 
-def testPopulateEvaluateCallCounts():
-  client = datastore.Client()
+def testPopulateEvaluateCallCounts(client):
   job = MockJob(client.key('Job', 'key'))
   task_module.populate_task_graph(
       client,
@@ -151,8 +161,7 @@ def testPopulateEvaluateCallCounts():
   }
 
 
-def testPopulateEmptyGraph(mocker):
-  client = datastore.Client()
+def testPopulateEmptyGraph(mocker, client):
   job = MockJob(client.key('Job', 'key'))
   task_graph = evaluator_module.TaskGraph(vertices=[], edges=[])
   task_module.populate_task_graph(client, job, task_graph)
@@ -166,8 +175,7 @@ def testPopulateEmptyGraph(mocker):
     )
 
 
-def testPopulateCycles(mocker):
-  client = datastore.Client()
+def testPopulateCycles(mocker, client):
   job = MockJob(client.key('Job', 'key'))
   task_graph = evaluator_module.TaskGraph(
       vertices=[
@@ -197,34 +205,34 @@ def testPopulateIslands():
   pass
 
 
-def update_task(job, task_id, new_state, _):
+def update_task(client, job, task_id, new_state, _):
   logging.debug('Updating task "%s" to "%s"', task_id, new_state)
-  updates.update_task(datastore.Client(), job, task_id, new_state=new_state)
+  updates.update_task(client, job, task_id, new_state=new_state)
 
 
-def TransitionEvaluator(job, task, event, accumulator):
+def TransitionEvaluator(client, job, task, event, accumulator):
   accumulator[task.id] = task.state
   if task.id != event.get('target'):
     if task.dependencies and any(
         accumulator.get(dep) == 'ongoing'
         for dep in task.dependencies) and task.state != 'ongoing':
-      return [functools.partial(update_task, job, task.id, 'ongoing')]
+      return [functools.partial(update_task, client, job, task.id, 'ongoing')]
     if len(task.dependencies) and all(
         accumulator.get(dep) == 'completed'
         for dep in task.dependencies) and task.state != 'completed':
-      return [functools.partial(update_task, job, task.id, 'completed')]
+      return [functools.partial(update_task, client, job, task.id, 'completed')]
     return None
 
   if task.state == event.get('current_state'):
     return [
-        functools.partial(update_task, job, task.id, event.get('new_state'))
+        functools.partial(update_task, client, job, task.id,
+                          event.get('new_state'))
     ]
 
 
 class SetupGraph():
 
-  def __init__(self):
-    client = datastore.Client()
+  def __init__(self, client):
     self.job = MockJob(client.key('Job', 'key'))
     task_module.populate_task_graph(
         client,
@@ -248,18 +256,18 @@ class SetupGraph():
 
 
 @pytest.fixture
-def setupGraph():
-  return SetupGraph()
+def setupGraph(client):
+  return SetupGraph(client)
 
 
-def testEvaluateStateTransitionProgressions(setupGraph):
+def testEvaluateStateTransitionProgressions(setupGraph, client):
   assert evaluator_module.evaluate_graph(
       {
           'target': 'task_0',
           'current_state': 'pending',
           'new_state': 'ongoing'
       },
-      functools.partial(TransitionEvaluator, setupGraph.job),
+      functools.partial(TransitionEvaluator, client, setupGraph.job),
       setupGraph.graph,
   ) == {
       'task_0': 'ongoing',
@@ -272,7 +280,7 @@ def testEvaluateStateTransitionProgressions(setupGraph):
           'current_state': 'pending',
           'new_state': 'ongoing'
       },
-      functools.partial(TransitionEvaluator, setupGraph.job),
+      functools.partial(TransitionEvaluator, client, setupGraph.job),
       setupGraph.graph,
   ) == {
       'task_0': 'ongoing',
@@ -285,7 +293,7 @@ def testEvaluateStateTransitionProgressions(setupGraph):
           'current_state': 'ongoing',
           'new_state': 'completed'
       },
-      functools.partial(TransitionEvaluator, setupGraph.job),
+      functools.partial(TransitionEvaluator, client, setupGraph.job),
       setupGraph.graph,
   ) == {
       'task_0': 'completed',
@@ -298,7 +306,7 @@ def testEvaluateStateTransitionProgressions(setupGraph):
           'current_state': 'ongoing',
           'new_state': 'completed'
       },
-      functools.partial(TransitionEvaluator, setupGraph.job),
+      functools.partial(TransitionEvaluator, client, setupGraph.job),
       setupGraph.graph,
   ) == {
       'task_0': 'completed',
@@ -307,7 +315,7 @@ def testEvaluateStateTransitionProgressions(setupGraph):
   }
 
 
-def testEvaluateInvalidTransition(setupGraph):
+def testEvaluateInvalidTransition(setupGraph, client):
   with pytest.raises(updates.InvalidTransition):
     assert evaluator_module.evaluate_graph(
         {
@@ -315,7 +323,7 @@ def testEvaluateInvalidTransition(setupGraph):
             'current_state': 'pending',
             'new_state': 'failed'
         },
-        functools.partial(TransitionEvaluator, setupGraph.job),
+        functools.partial(TransitionEvaluator, client, setupGraph.job),
         setupGraph.graph,
     ) == {
         'task_0': 'failed',
@@ -329,12 +337,12 @@ def testEvaluateInvalidTransition(setupGraph):
             'current_state': 'failed',
             'new_state': 'ongoing'
         },
-        functools.partial(TransitionEvaluator, setupGraph.job),
+        functools.partial(TransitionEvaluator, client, setupGraph.job),
         setupGraph.graph,
     )
 
 
-def testEvaluateInvalidAmendment_ExistingTask(setupGraph):
+def testEvaluateInvalidAmendment_ExistingTask(setupGraph, client):
   with pytest.raises(updates.InvalidAmendment):
 
     def AddExistingTaskEvaluator(task, event, _):
@@ -342,11 +350,13 @@ def testEvaluateInvalidAmendment_ExistingTask(setupGraph):
 
         def GraphExtender(_):
           updates.extend_task_graph(
-              datastore.Client(),
+              client,
               setupGraph.job,
               vertices=[
                   evaluator_module.TaskVertex(
-                      id=task.id, vertex_type='duplicate', payload=_EmptyPayload())
+                      id=task.id,
+                      vertex_type='duplicate',
+                      payload=_EmptyPayload())
               ],
               dependencies=[
                   evaluator_module.Dependency(from_='task_2', to=task.id)
@@ -362,7 +372,7 @@ def testEvaluateInvalidAmendment_ExistingTask(setupGraph):
     )
 
 
-def testEvaluateInvalidAmendment_BrokenDependency(setupGraph):
+def testEvaluateInvalidAmendment_BrokenDependency(setupGraph, client):
   with pytest.raises(ValueError):
 
     def AddExistingTaskEvaluator(task, event, _):
@@ -370,7 +380,7 @@ def testEvaluateInvalidAmendment_BrokenDependency(setupGraph):
 
         def GraphExtender(_):
           updates.extend_task_graph(
-              datastore.Client(),
+              client,
               setupGraph.job,
               vertices=[],
               dependencies=[
