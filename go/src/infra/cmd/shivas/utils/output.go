@@ -88,16 +88,23 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 			res = res[0:pageSize]
 		}
 	}
-	for _, filter := range filters {
-		protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filter, keysOnly)
-		if err != nil {
-			errs[filter] = err
+	if pageSize > 0 {
+		// If user specifies a limit, calling DoList without concrrency avoids non-required list calls to UFS
+		for _, filter := range filters {
+			protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filter, keysOnly)
+			if err != nil {
+				errs[filter] = err
+			} else {
+				res = append(res, protos...)
+				if len(res) >= pageSize {
+					res = res[0:pageSize]
+					break
+				}
+			}
 		}
-		res = append(res, protos...)
-		if pageSize > 0 && len(res) >= pageSize {
-			res = res[0:pageSize]
-			break
-		}
+	} else {
+		// If user doesnt specify any limit, call DoList for each filter concurrently to improve latency
+		res, errs = concurrentList(ctx, ic, listFunc, filters, pageSize, keysOnly)
 	}
 	if len(errs) > 0 {
 		fmt.Println("Fail to do some queries:")
@@ -109,6 +116,58 @@ func BatchList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, fil
 		return nil, errors.MultiError(resErr)
 	}
 	return res, nil
+}
+
+// concurrentList calls Dolist concurrently for each filter
+func concurrentList(ctx context.Context, ic ufsAPI.FleetClient, listFunc listAll, filters []string, pageSize int, keysOnly bool) ([]proto.Message, map[string]error) {
+	// buffered channel to append data to a slice in a thread safe env
+	queue := make(chan []proto.Message, 1)
+	// waitgroup for multiple goroutines
+	var wg sync.WaitGroup
+	// number of goroutines/threads in the wait group to run concurrently
+	wg.Add(len(filters))
+	// sync map to store the errors
+	var merr sync.Map
+	errs := make(map[string]error)
+	res := make([]proto.Message, 0)
+	for i := 0; i < len(filters); i++ {
+		// goroutine for each filter
+		go func(i int) {
+			protos, err := DoList(ctx, ic, listFunc, int32(pageSize), filters[i], keysOnly)
+			if err != nil {
+				// store the err in sync map
+				merr.Store(filters[i], err)
+				// inform waitgroup that thread is completed
+				wg.Done()
+			} else {
+				// send the protos to the buffered channel
+				queue <- protos
+			}
+		}(i)
+	}
+
+	// goroutine to append data to slice
+	go func() {
+		// receive protos on queue channel
+		for pm := range queue {
+			// append proto messages to slice
+			res = append(res, pm...)
+			// inform waitgroup that one more goroutine/thread is completed.
+			wg.Done()
+		}
+	}()
+
+	// defer closing the channel
+	defer close(queue)
+	// wait for all goroutines in the waitgroup to complete
+	wg.Wait()
+
+	// iterate over sync map to copy data to a normal map for filter->errors
+	merr.Range(func(key, value interface{}) bool {
+		errs[fmt.Sprint(key)] = value.(error)
+		return true
+	})
+	return res, errs
 }
 
 // DoList lists the outputs
