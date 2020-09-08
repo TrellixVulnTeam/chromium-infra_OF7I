@@ -88,7 +88,7 @@ libraries:
   version: "latest"
 - name: pycrypto
   version: "2.6"
-- name: ssl  # needed for google.auth.transport
+- name: ssl # needed for google.auth.transport and GAE_USE_SOCKETS_HTTPLIB
   version: "2.7.11"
 
 includes:
@@ -104,6 +104,9 @@ ifdef(`DEV',`
 ')
 ifdef(`STAGING',`
   name: "projects/monorail-staging/locations/us-central1/connectors/redis-connector"
+')
+ifdef(`PROD', `
+  name: "projects/monorail-prod/locations/us-central1/connectors/redis-connector"
 ')
 
 skip_files:
