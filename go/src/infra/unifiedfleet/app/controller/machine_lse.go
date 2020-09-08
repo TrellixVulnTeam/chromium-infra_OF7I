@@ -13,6 +13,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/grpc/grpcutil"
 	crimson "go.chromium.org/luci/machine-db/api/crimson/v1"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
@@ -792,6 +793,11 @@ func validateCreateMachineLSE(ctx context.Context, machinelse *ufspb.MachineLSE,
 	if nwOpt.GetNic() != "" {
 		resourcesNotfound = append(resourcesNotfound, GetNicResource(nwOpt.GetNic()))
 	}
+	if nwOpt.GetIp() != "" {
+		if _, err := util.IPv4StrToInt(nwOpt.GetIp()); err != nil {
+			return errors.Annotate(err, "Validate create host").Tag(grpcutil.InvalidArgumentTag).Err()
+		}
+	}
 	// Aggregate resources referenced by the machinelse to check if they do not exist
 	if machineLSEPrototypeID := machinelse.GetMachineLsePrototype(); machineLSEPrototypeID != "" {
 		resourcesNotfound = append(resourcesNotfound, GetMachineLSEProtoTypeResource(machineLSEPrototypeID))
@@ -891,6 +897,11 @@ func validateUpdateMachineLSEHost(ctx context.Context, machinelseName string, nw
 	if nwOpt.GetNic() != "" {
 		resourcesNotFound = append(resourcesNotFound, GetNicResource(nwOpt.GetNic()))
 	}
+	if nwOpt.GetIp() != "" {
+		if _, err := util.IPv4StrToInt(nwOpt.GetIp()); err != nil {
+			return errors.Annotate(err, "Validate update host").Tag(grpcutil.InvalidArgumentTag).Err()
+		}
+	}
 	// Check if resources does not exist
 	return ResourceExist(ctx, resourcesNotFound, nil)
 }
@@ -909,6 +920,7 @@ func DeleteMachineLSEHost(ctx context.Context, machinelseName string) error {
 		lseCopy := proto.Clone(lse).(*ufspb.MachineLSE)
 		lse.Nic = ""
 		lse.Vlan = ""
+		lse.Ip = ""
 		lse.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 		if _, err := inventory.BatchUpdateMachineLSEs(ctx, []*ufspb.MachineLSE{lse}); err != nil {
 			return errors.Annotate(err, "Failed to update host %q", machinelseName).Err()

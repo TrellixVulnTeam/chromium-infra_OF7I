@@ -18,7 +18,6 @@ import (
 	"infra/cmd/shivas/site"
 	"infra/cmd/shivas/utils"
 	"infra/cmdsupport/cmdlib"
-	ufspb "infra/unifiedfleet/api/v1/proto"
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	ufsUtil "infra/unifiedfleet/app/util"
 )
@@ -145,29 +144,7 @@ func listVMs(ctx context.Context, ic ufsAPI.FleetClient, pageSize int32, pageTok
 }
 
 func printVMFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Message, tsv bool) error {
-	entities := make([]*ufspb.VM, len(msgs))
-	names := make([]string, len(msgs))
-	for i, r := range msgs {
-		entities[i] = r.(*ufspb.VM)
-		entities[i].Name = ufsUtil.RemovePrefix(entities[i].Name)
-		names[i] = entities[i].GetName()
-	}
-	res, _ := ic.BatchGetDHCPConfigs(ctx, &ufsAPI.BatchGetDHCPConfigsRequest{
-		Names: names,
-	})
-	dhcpMap := make(map[string]*ufspb.DHCPConfig, 0)
-	for _, d := range res.GetDhcpConfigs() {
-		dhcpMap[d.GetHostname()] = d
-	}
-	if tsv {
-		for _, e := range entities {
-			utils.PrintTSVVmFull(e, dhcpMap[e.GetName()])
-		}
-		return nil
-	}
-	utils.PrintTitle(utils.VMFullTitle)
-	utils.PrintVMFull(entities, dhcpMap)
-	return nil
+	return printVMNormal(msgs, tsv, false)
 }
 
 func printVMNormal(msgs []proto.Message, tsv, keysOnly bool) error {

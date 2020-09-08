@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
+	"go.chromium.org/luci/grpc/grpcutil"
 	"google.golang.org/genproto/protobuf/field_mask"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -149,7 +150,6 @@ func UpdateVMHost(ctx context.Context, vmName string, nwOpt *ufsAPI.NetworkOptio
 			return errors.Annotate(err, "Failed to update vm %q", vm.GetName()).Err()
 		}
 		hc.LogVMChanges(oldVM, vm)
-
 		return hc.SaveChangeEvents(ctx)
 	}
 
@@ -163,6 +163,9 @@ func UpdateVMHost(ctx context.Context, vmName string, nwOpt *ufsAPI.NetworkOptio
 // validateUpdateVMHost validates if an ip can be assigned to the VM
 func validateUpdateVMHost(ctx context.Context, vmName string, vlanName, ipv4Str string) error {
 	if ipv4Str != "" {
+		if _, err := util.IPv4StrToInt(ipv4Str); err != nil {
+			return errors.Annotate(err, "Validate create host").Tag(grpcutil.InvalidArgumentTag).Err()
+		}
 		return nil
 	}
 	// Check if resources does not exist
@@ -183,6 +186,7 @@ func DeleteVMHost(ctx context.Context, vmName string) error {
 		}
 		oldVMCopy := proto.Clone(oldVM).(*ufspb.VM)
 		oldVM.Vlan = ""
+		oldVM.Ip = ""
 		oldVM.ResourceState = ufspb.State_STATE_DEPLOYED_PRE_SERVING
 		if _, err := inventory.BatchUpdateVMs(ctx, []*ufspb.VM{oldVM}); err != nil {
 			return errors.Annotate(err, "Failed to update vm %q", vmName).Err()
@@ -312,9 +316,12 @@ func validateCreateVM(ctx context.Context, vm *ufspb.VM, nwOpt *ufsAPI.NetworkOp
 	if vm.GetMachineLseId() != "" {
 		resourcesNotFound = append(resourcesNotFound, GetMachineLSEResource(vm.GetMachineLseId()))
 	}
-	if nwOpt.GetVlan() != "" || nwOpt.GetIp() != "" {
-		if nwOpt.GetVlan() != "" {
-			resourcesNotFound = append(resourcesNotFound, GetVlanResource(nwOpt.GetVlan()))
+	if nwOpt.GetVlan() != "" {
+		resourcesNotFound = append(resourcesNotFound, GetVlanResource(nwOpt.GetVlan()))
+	}
+	if nwOpt.GetIp() != "" {
+		if _, err := util.IPv4StrToInt(nwOpt.GetIp()); err != nil {
+			return errors.Annotate(err, "Validate create vm").Tag(grpcutil.InvalidArgumentTag).Err()
 		}
 	}
 	// check if resources does not exist

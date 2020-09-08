@@ -56,7 +56,7 @@ func (fs *FleetServerImpl) CreateMachineLSE(ctx context.Context, req *ufsAPI.Cre
 	}
 	req.MachineLSE.Name = util.FormatDHCPHostname(req.MachineLSEId)
 	req.MachineLSE.Hostname = util.FormatDHCPHostname(req.MachineLSE.Hostname)
-	req.NetworkOption = updateNetworkOpt(req.MachineLSE.GetVlan(), req.GetNetworkOption())
+	req.NetworkOption = updateNetworkOpt(req.MachineLSE.GetVlan(), req.MachineLSE.GetIp(), req.GetNetworkOption())
 	machineLSE, err := controller.CreateMachineLSE(ctx, req.MachineLSE, req.GetNetworkOption())
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (fs *FleetServerImpl) UpdateMachineLSE(ctx context.Context, req *ufsAPI.Upd
 	req.MachineLSE.Name = util.FormatDHCPHostname(util.RemovePrefix(req.MachineLSE.Name))
 	req.MachineLSE.Hostname = util.FormatDHCPHostname(req.MachineLSE.Hostname)
 	nwOpt := req.GetNetworkOptions()[req.MachineLSE.Name]
-	nwOpt = updateNetworkOpt(req.MachineLSE.GetVlan(), nwOpt)
+	nwOpt = updateNetworkOpt(req.MachineLSE.GetVlan(), req.MachineLSE.GetIp(), nwOpt)
 	if nwOpt != nil {
 		machinelse := req.MachineLSE
 		var err error
@@ -190,16 +190,18 @@ func (fs *FleetServerImpl) DeleteMachineLSE(ctx context.Context, req *ufsAPI.Del
 	return &empty.Empty{}, err
 }
 
-func updateNetworkOpt(userVlan string, nwOpt *ufsAPI.NetworkOption) *ufsAPI.NetworkOption {
-	if userVlan == "" {
+func updateNetworkOpt(userVlan, ip string, nwOpt *ufsAPI.NetworkOption) *ufsAPI.NetworkOption {
+	if userVlan == "" && ip == "" {
 		return nwOpt
 	}
 	if nwOpt == nil {
 		return &ufsAPI.NetworkOption{
 			Vlan: userVlan,
+			Ip:   ip,
 		}
 	}
 	nwOpt.Vlan = userVlan
+	nwOpt.Ip = ip
 	return nwOpt
 }
 
@@ -214,7 +216,7 @@ func (fs *FleetServerImpl) CreateVM(ctx context.Context, req *ufsAPI.CreateVMReq
 	req.Vm.Name = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Name))
 	req.Vm.Hostname = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Hostname))
 	req.Vm.MachineLseId = util.FormatDHCPHostname(req.Vm.MachineLseId)
-	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.GetNetworkOption())
+	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.Vm.GetIp(), req.GetNetworkOption())
 	vm, err := controller.CreateVM(ctx, req.GetVm(), req.GetNetworkOption())
 	if err != nil {
 		return nil, err
@@ -235,7 +237,7 @@ func (fs *FleetServerImpl) UpdateVM(ctx context.Context, req *ufsAPI.UpdateVMReq
 	req.Vm.Name = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Name))
 	req.Vm.Hostname = util.FormatDHCPHostname(util.RemovePrefix(req.Vm.Hostname))
 	req.Vm.MachineLseId = util.FormatDHCPHostname(req.Vm.MachineLseId)
-	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.GetNetworkOption())
+	req.NetworkOption = updateNetworkOpt(req.Vm.GetVlan(), req.Vm.GetIp(), req.GetNetworkOption())
 	if req.GetNetworkOption() != nil {
 		vm := req.Vm
 		var err error

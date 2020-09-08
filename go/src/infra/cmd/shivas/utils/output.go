@@ -38,10 +38,9 @@ var (
 	RacklseprototypeTitle    = []string{"Rack Prototype Name", "PeripheralTypes", "Tags", "UpdateTime"}
 	ChromePlatformTitle      = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
 	VlanTitle                = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
-	VMTitle                  = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "State", "DeploymentTicket", "Description", "UpdateTime"}
-	VMFullTitle              = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "Description", "UpdateTime"}
+	VMTitle                  = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
 	RackTitle                = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
-	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
+	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
 	MachineLSETFullitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
 )
 
@@ -1132,6 +1131,7 @@ func machineLSEOutputStrs(pm proto.Message) []string {
 		machine,
 		m.GetNic(),
 		m.GetVlan(),
+		m.GetIp(),
 		m.GetResourceState().String(),
 		fmt.Sprintf("%d", m.GetChromeBrowserMachineLse().GetVmCapacity()),
 		m.GetDeploymentTicket(),
@@ -1173,37 +1173,6 @@ func printFreeVM(host *ufspb.MachineLSE, dhcp *ufspb.DHCPConfig) {
 	fmt.Fprintln(tw, out)
 }
 
-func vmFullOutputStrs(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) []string {
-	var ts string
-	if t, err := ptypes.Timestamp(vm.GetUpdateTime()); err == nil {
-		ts = t.Local().Format(timeFormat)
-	}
-	return []string{
-		ufsUtil.RemovePrefix(vm.GetName()),
-		vm.GetOsVersion().GetValue(),
-		vm.GetMacAddress(),
-		vm.GetZone(),
-		vm.GetMachineLseId(),
-		dhcp.GetVlan(),
-		dhcp.GetIp(),
-		vm.GetResourceState().String(),
-		vm.GetDescription(),
-		ts,
-	}
-}
-
-// PrintVMFull prints the full info for vm
-func PrintVMFull(entities []*ufspb.VM, dhcps map[string]*ufspb.DHCPConfig) {
-	defer tw.Flush()
-	for i := range entities {
-		var out string
-		for _, s := range vmFullOutputStrs(entities[i], dhcps[entities[i].GetName()]) {
-			out += fmt.Sprintf("%s\t", s)
-		}
-		fmt.Fprintln(tw, out)
-	}
-}
-
 // PrintVMs prints the all vms in table form.
 func PrintVMs(res []proto.Message, keysOnly bool) {
 	vms := make([]*ufspb.VM, len(res))
@@ -1229,6 +1198,7 @@ func vmOutputStrs(pm proto.Message) []string {
 		m.GetZone(),
 		m.GetMachineLseId(),
 		m.GetVlan(),
+		m.GetIp(),
 		m.GetResourceState().String(),
 		m.GetDeploymentTicket(),
 		m.GetDescription(),

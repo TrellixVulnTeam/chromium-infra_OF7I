@@ -46,13 +46,6 @@ func PrintTSVKVMFull(kvm *ufspb.KVM, dhcp *ufspb.DHCPConfig) {
 	csw.Write(kvmFullOutputStrs(kvm, dhcp))
 }
 
-// PrintTSVVmFull prints the full related msg for vm in tsv mode
-func PrintTSVVmFull(vm *ufspb.VM, dhcp *ufspb.DHCPConfig) {
-	csw := NewCSVWriter()
-	defer csw.Flush()
-	csw.Write(vmFullOutputStrs(vm, dhcp))
-}
-
 // printTSVs prints tsv format of entities
 func printTSVs(res []proto.Message, keysOnly bool, outputFunc func(proto.Message) []string) {
 	csw := NewCSVWriter()

@@ -65,11 +65,16 @@ message MachineLSE {
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
     // It refers to which vlan the host is in.
-    // User can also specify it for auto-assigning a host's IP.
+    // Please note that user can also specify it for auto-assigning a host's IP.
     string vlan = 18 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/Vlan"
         },
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+    // It refers to which ip the host is assigned to.
+    // Please note that user can also specify it for assigning ip.
+    string ip = 19 [
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
@@ -138,6 +143,12 @@ message VM {
         },
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
+    // It refers to which ip the vm is assigned to.
+    // Please note that user can also specify it for assigning ip.
+    string ip = 15 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
+
     string lab = 6 [
         (google.api.field_behavior) = OUTPUT_ONLY,
         deprecated = true

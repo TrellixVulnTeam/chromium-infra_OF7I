@@ -38,6 +38,63 @@ func mockRackLSE(id string) *ufspb.RackLSE {
 	}
 }
 
+func TestUpdateNetworkOpt(t *testing.T) {
+	input := &ufsAPI.NetworkOption{
+		Vlan: "vlan1",
+		Ip:   "",
+		Nic:  "eth0",
+	}
+	Convey("No vlan & ip, empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("", "", nil)
+		So(nwOpt, ShouldBeNil)
+	})
+	Convey("No vlan & ip, non-empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("", "", input)
+		So(nwOpt, ShouldResembleProto, input)
+	})
+	Convey("Have vlan, no ip, empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("vlan1", "", nil)
+		So(nwOpt, ShouldResembleProto, &ufsAPI.NetworkOption{
+			Vlan: "vlan1",
+		})
+	})
+	Convey("Have vlan, no ip, non-empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("vlan2", "", input)
+		So(nwOpt, ShouldResembleProto, &ufsAPI.NetworkOption{
+			Vlan: "vlan2",
+			Nic:  "eth0",
+		})
+	})
+	Convey("no vlan, have ip, empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("", "0.0.0.0", nil)
+		So(nwOpt, ShouldResembleProto, &ufsAPI.NetworkOption{
+			Ip: "0.0.0.0",
+		})
+	})
+	Convey("no vlan, have ip, non-empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("", "0.0.0.0", input)
+		So(nwOpt, ShouldResembleProto, &ufsAPI.NetworkOption{
+			Ip:  "0.0.0.0",
+			Nic: "eth0",
+		})
+	})
+	Convey("have vlan, have ip, empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("vlan1", "0.0.0.0", nil)
+		So(nwOpt, ShouldResembleProto, &ufsAPI.NetworkOption{
+			Ip:   "0.0.0.0",
+			Vlan: "vlan1",
+		})
+	})
+	Convey("have vlan, have ip, non-empty nwOpt", t, func() {
+		nwOpt := updateNetworkOpt("vlan2", "0.0.0.0", input)
+		So(nwOpt, ShouldResembleProto, &ufsAPI.NetworkOption{
+			Ip:   "0.0.0.0",
+			Vlan: "vlan2",
+			Nic:  "eth0",
+		})
+	})
+}
+
 func TestCreateMachineLSE(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()

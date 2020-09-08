@@ -904,14 +904,17 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 2)
-			// nic & vlan info is changed
+			So(changes, ShouldHaveLength, 3)
+			// nic & vlan & ip info are changed
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
 			So(changes[0].GetNewValue(), ShouldEqual, "eth0")
 			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse.vlan")
 			So(changes[1].GetOldValue(), ShouldEqual, "")
 			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
+			So(changes[2].GetEventLabel(), ShouldEqual, "machine_lse.ip")
+			So(changes[2].GetOldValue(), ShouldEqual, "")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.0")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)
@@ -936,6 +939,120 @@ func TestUpdateMachineLSE(t *testing.T) {
 			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/machinelse-update-host")
 			So(err, ShouldBeNil)
 			So(msgs, ShouldHaveLength, 1)
+		})
+
+		Convey("Update machineLSE by deleting ip for host", func() {
+			_, err := registration.CreateNic(ctx, &ufspb.Nic{
+				Name:    "eth0-delete",
+				Machine: "machine-update-host-delete-ip",
+			})
+			So(err, ShouldBeNil)
+			machine1 := &ufspb.Machine{
+				Name: "machine-update-host-delete-ip",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			machineLSE1 := &ufspb.MachineLSE{
+				Name:     "machinelse-update-host-delete-ip",
+				Hostname: "machinelse-update-host-delete-ip",
+				Machines: []string{"machine-update-host-delete-ip"},
+				Lse: &ufspb.MachineLSE_ChromeBrowserMachineLse{
+					ChromeBrowserMachineLse: &ufspb.ChromeBrowserMachineLSE{},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine1)
+			So(err, ShouldBeNil)
+			_, err = inventory.CreateMachineLSE(ctx, machineLSE1)
+			So(err, ShouldBeNil)
+			vlan := &ufspb.Vlan{
+				Name:        "vlan-1",
+				VlanAddress: "192.168.40.0/22",
+			}
+			_, err = configuration.CreateVlan(ctx, vlan)
+			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			So(err, ShouldBeNil)
+			// Only import the first 20 as one single transaction cannot import all.
+			_, err = configuration.ImportIPs(ctx, ips[0:20])
+			So(err, ShouldBeNil)
+			_, err = UpdateMachineLSEHost(ctx, machineLSE1.Name, &ufsAPI.NetworkOption{
+				Vlan: "vlan-1",
+				Ip:   "192.168.40.1",
+				Nic:  "eth0-delete",
+			})
+			So(err, ShouldBeNil)
+			oldIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.1"})
+			So(err, ShouldBeNil)
+			So(oldIPs, ShouldHaveLength, 1)
+			So(oldIPs[0].GetOccupied(), ShouldBeTrue)
+
+			err = DeleteMachineLSEHost(ctx, machineLSE1.Name)
+			So(err, ShouldBeNil)
+			_, err = configuration.GetDHCPConfig(ctx, "machinelse-update-host-delete-ip")
+			// Not found error
+			So(err, ShouldNotBeNil)
+			ip2, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.1"})
+			So(err, ShouldBeNil)
+			So(ip2, ShouldHaveLength, 1)
+			So(ip2[0].GetOccupied(), ShouldBeFalse)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host-delete-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 6)
+			// nic & vlan & ip info are changed
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "eth0-delete")
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse.vlan")
+			So(changes[1].GetOldValue(), ShouldEqual, "")
+			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
+			So(changes[2].GetEventLabel(), ShouldEqual, "machine_lse.ip")
+			So(changes[2].GetOldValue(), ShouldEqual, "")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.1")
+			// From deleting host
+			So(changes[3].GetEventLabel(), ShouldEqual, "machine_lse.nic")
+			So(changes[3].GetOldValue(), ShouldEqual, "eth0-delete")
+			So(changes[3].GetNewValue(), ShouldEqual, "")
+			So(changes[4].GetEventLabel(), ShouldEqual, "machine_lse.vlan")
+			So(changes[4].GetOldValue(), ShouldEqual, "vlan-1")
+			So(changes[4].GetNewValue(), ShouldEqual, "")
+			So(changes[5].GetEventLabel(), ShouldEqual, "machine_lse.ip")
+			So(changes[5].GetOldValue(), ShouldEqual, "192.168.40.1")
+			So(changes[5].GetNewValue(), ShouldEqual, "")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host-delete-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetEventLabel(), ShouldEqual, "state_record.state")
+			So(changes[0].GetOldValue(), ShouldEqual, ufspb.State_STATE_UNSPECIFIED.String())
+			So(changes[0].GetNewValue(), ShouldEqual, ufspb.State_STATE_DEPLOYED_PRE_SERVING.String())
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/machinelse-update-host-delete-ip")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[0].GetOldValue(), ShouldEqual, "")
+			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.1")
+			So(changes[1].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
+			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.1")
+			So(changes[1].GetNewValue(), ShouldEqual, "")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", oldIPs[0].GetId()))
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[0].GetOldValue(), ShouldEqual, "false")
+			So(changes[0].GetNewValue(), ShouldEqual, "true")
+			So(changes[1].GetEventLabel(), ShouldEqual, "ip.occupied")
+			So(changes[1].GetOldValue(), ShouldEqual, "true")
+			So(changes[1].GetNewValue(), ShouldEqual, "false")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/machinelse-update-host-delete-ip")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "states/hosts/machinelse-update-host-delete-ip")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dhcps/machinelse-update-host-delete-ip")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 2)
+			So(msgs[1].Delete, ShouldBeTrue)
 		})
 
 		Convey("Update machineLSE by setting ip by user for host", func() {
@@ -996,14 +1113,17 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "hosts/machinelse-update-host-user")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 2)
-			// nic & vlan info is changed
+			So(changes, ShouldHaveLength, 3)
+			// nic & vlan & ip info are changed
 			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.nic")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
 			So(changes[0].GetNewValue(), ShouldEqual, "eth0-user")
 			So(changes[1].GetEventLabel(), ShouldEqual, "machine_lse.vlan")
 			So(changes[1].GetOldValue(), ShouldEqual, "")
 			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
+			So(changes[2].GetEventLabel(), ShouldEqual, "machine_lse.ip")
+			So(changes[2].GetOldValue(), ShouldEqual, "")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.9")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host-user")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 0)

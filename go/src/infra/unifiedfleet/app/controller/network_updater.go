@@ -162,6 +162,7 @@ func (nu *networkUpdater) addVMHostHelper(ctx context.Context, nwOpt *ufsAPI.Net
 		return err
 	}
 	vm.Vlan = dhcp.GetVlan()
+	vm.Ip = dhcp.GetIp()
 	return nil
 }
 
@@ -203,6 +204,7 @@ func (nu *networkUpdater) addLseHostHelper(ctx context.Context, nwOpt *ufsAPI.Ne
 	// 5. Update lse to contain the nic which is used to map to the ip and vlan.
 	lse.Nic = nic.Name
 	lse.Vlan = dhcp.GetVlan()
+	lse.Ip = dhcp.GetIp()
 	return nil
 }
 

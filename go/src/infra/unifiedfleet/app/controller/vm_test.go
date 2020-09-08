@@ -218,10 +218,17 @@ func TestUpdateVM(t *testing.T) {
 			// Come from CreateVM+UpdateVMHost
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-update-2")
 			So(err, ShouldBeNil)
-			So(changes, ShouldHaveLength, 2)
+			// VM created & vlan, ip changes
+			So(changes, ShouldHaveLength, 3)
 			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
 			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
 			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[1].GetEventLabel(), ShouldEqual, "vm.vlan")
+			So(changes[1].GetOldValue(), ShouldEqual, "")
+			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
+			So(changes[2].GetEventLabel(), ShouldEqual, "vm.ip")
+			So(changes[2].GetOldValue(), ShouldEqual, "")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.0")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/vms/vm-update-2")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
@@ -253,7 +260,7 @@ func TestUpdateVM(t *testing.T) {
 			So(msgs, ShouldHaveLength, 1)
 		})
 
-		Convey("Update VM - happy path with ip deletion", func() {
+		Convey("Update VM - happy path with ip specification & deletion", func() {
 			setupTestVlan(ctx)
 			vm1 := &ufspb.VM{
 				Name:         "vm-update-3",
@@ -277,8 +284,28 @@ func TestUpdateVM(t *testing.T) {
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeFalse)
 
-			// Come from UpdateVM
-			changes, err := history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-update-3")
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "vms/vm-update-3")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 5)
+			So(changes[0].GetEventLabel(), ShouldEqual, "vm")
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRegistration)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRegistration)
+			// vlan & ip info are changed
+			So(changes[1].GetEventLabel(), ShouldEqual, "vm.vlan")
+			So(changes[1].GetOldValue(), ShouldEqual, "")
+			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
+			So(changes[2].GetEventLabel(), ShouldEqual, "vm.ip")
+			So(changes[2].GetOldValue(), ShouldEqual, "")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.9")
+			// From deleting vm's ip
+			So(changes[3].GetEventLabel(), ShouldEqual, "vm.vlan")
+			So(changes[3].GetOldValue(), ShouldEqual, "vlan-1")
+			So(changes[3].GetNewValue(), ShouldEqual, "")
+			So(changes[4].GetEventLabel(), ShouldEqual, "vm.ip")
+			So(changes[4].GetOldValue(), ShouldEqual, "192.168.40.9")
+			So(changes[4].GetNewValue(), ShouldEqual, "")
+			// log dhcp changes
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "dhcps/vm-update-3")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 2)
 			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
