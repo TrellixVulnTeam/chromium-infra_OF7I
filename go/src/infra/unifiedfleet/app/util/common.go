@@ -12,16 +12,12 @@ import (
 
 // message for filtering
 const (
-	FilterConditionSeparator string = ":"
-	Lab                      string = "lab"
-	ATL                      string = "atl"
-	ACS                      string = "acs"
-	Browser                  string = "browser"
-	CrOS                     string = "cros"
-	ATLLab                   string = "atl-lab"
-	ACSLab                   string = "acs-lab"
-	BrowserLab               string = "browser-lab"
-	CrOSLab                  string = "cros-lab"
+	ColonSeparator string = ":"
+	Lab            string = "lab"
+	ATL            string = "atl"
+	ACS            string = "acs"
+	Browser        string = "browser"
+	CrOS           string = "cros"
 	// https://cloud.google.com/datastore/docs/concepts/limits
 	OperationPageSize int = 500
 )
@@ -29,69 +25,26 @@ const (
 // Key is a type for use in adding values to context. It is not recommended to use plain string as key.
 type Key string
 
-var validLabs = []string{ATLLab, ACSLab, BrowserLab, CrOSLab}
-
-// GetBrowserLabName return a resource name with browser lab prefix and a given user-specified raw name.
+// GetBrowserLabName return a resource name with browser prefix and a given user-specified raw name.
 func GetBrowserLabName(raw string) string {
-	return fmt.Sprintf("%s%s%s", BrowserLab, FilterConditionSeparator, raw)
+	return fmt.Sprintf("%s%s%s", Browser, ColonSeparator, raw)
 }
 
-// GetATLLabName returns a resource name with atl-lab prefix and a given user-specified raw name.
+// GetATLLabName returns a resource name with atl prefix and a given user-specified raw name.
 func GetATLLabName(raw string) string {
-	return fmt.Sprintf("%s%s%s", ATLLab, FilterConditionSeparator, raw)
+	return fmt.Sprintf("%s%s%s", ATL, ColonSeparator, raw)
 }
 
-// GetCrOSLabName returns a resource name with ChromeOS lab prefix and a given user-specified raw name.
+// GetCrOSLabName returns a resource name with ChromeOS prefix and a given user-specified raw name.
 func GetCrOSLabName(raw string) string {
-	return fmt.Sprintf("%s%s%s", CrOSLab, FilterConditionSeparator, raw)
-}
-
-// GetLabPrefix returns the lab prefix for the given lab filter
-func GetLabPrefix(filter string) string {
-	switch filter {
-	case Lab + FilterConditionSeparator + Browser:
-		return BrowserLab
-	case Lab + FilterConditionSeparator + ATL:
-		return ATLLab
-	case Lab + FilterConditionSeparator + ACS:
-		return ACSLab
-	default:
-		return ""
-	}
-}
-
-// FormatLabFilter returns a lab filter based on user-specified string name
-func FormatLabFilter(userFilter string) string {
-	return Lab + FilterConditionSeparator + userFilter
-}
-
-// IsInBrowserLab check if a given name(resource or lab name) indicates it's in browser lab.
-func IsInBrowserLab(name string) bool {
-	// check if it has a browser lab prefix
-	s := strings.Split(name, FilterConditionSeparator)
-	if len(s) >= 2 && s[0] == BrowserLab {
-		return true
-	}
-
-	// check the actual lab name
-	switch name {
-	case "LAB_CHROME_ATLANTA",
-		"LAB_DATACENTER_ATL97",
-		"LAB_DATACENTER_IAD97",
-		"LAB_DATACENTER_MTV96",
-		"LAB_DATACENTER_MTV97",
-		"LAB_DATACENTER_FUCHSIA":
-		return true
-	default:
-		return false
-	}
+	return fmt.Sprintf("%s%s%s", CrOS, ColonSeparator, raw)
 }
 
 // IsInBrowserZone check if a given name(resource or zone name) indicates it's in browser zone.
 func IsInBrowserZone(name string) bool {
 	// check if it has a browser zone prefix
-	s := strings.Split(name, FilterConditionSeparator)
-	if len(s) >= 2 && s[0] == BrowserLab {
+	s := strings.Split(name, ColonSeparator)
+	if len(s) >= 2 && s[0] == Browser {
 		return true
 	}
 
@@ -112,16 +65,6 @@ func IsInBrowserZone(name string) bool {
 // GetIPName returns a formatted IP name
 func GetIPName(vlanName, ipv4Str string) string {
 	return fmt.Sprintf("%s/%s", vlanName, ipv4Str)
-}
-
-// IsValidFilter checks if a filter is valid
-func IsValidFilter(filter string) bool {
-	for _, lab := range validLabs {
-		if strings.Split(lab, "-")[0] == filter {
-			return true
-		}
-	}
-	return false
 }
 
 // Min returns the smaller integer of the two inputs.

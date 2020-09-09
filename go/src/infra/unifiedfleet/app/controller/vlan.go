@@ -6,6 +6,7 @@ package controller
 
 import (
 	"context"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/luci/common/errors"
@@ -44,6 +45,7 @@ func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 		}
 		vlan.CapacityIp = int32(length)
 		vlan.ResourceState = ufspb.State_STATE_SERVING
+		vlan.VlanNumber = util.GetSuffixAfterSeparator(vlan.GetName(), ":")
 
 		if _, err = configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan}); err != nil {
 			return err
@@ -85,6 +87,7 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 		// Copy the not-allowed change fields
 		vlan.VlanAddress = oldVlan.GetVlanAddress()
 		vlan.CapacityIp = oldVlan.GetCapacityIp()
+		vlan.VlanNumber = oldVlan.GetVlanNumber()
 
 		if err := validateReservedIPs(ctx, vlan); err != nil {
 			return err
@@ -210,6 +213,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 			CapacityIp:    int32(length),
 			VlanAddress:   vlan.GetCidrBlock(),
 			ResourceState: util.ToState(vlan.GetState()),
+			VlanNumber:    util.GetSuffixAfterSeparator(vlanName, ":"),
 		}
 	}
 	deleteNonExistingVlans(ctx, vs, pageSize)
@@ -273,7 +277,7 @@ func deleteNonExistingVlans(ctx context.Context, vlans []*ufspb.Vlan, pageSize i
 	var toDeleteIP []string
 	for _, sr := range resp.Passed() {
 		s := sr.Data.(*ufspb.Vlan)
-		if util.IsInBrowserZone(s.GetName()) {
+		if util.IsInBrowserZone(s.GetName()) || strings.Contains(s.GetName(), "browser-lab") {
 			if _, ok := resMap[s.GetName()]; !ok {
 				toDelete = append(toDelete, s.GetName())
 				ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": s.GetName()})

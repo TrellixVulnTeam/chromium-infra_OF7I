@@ -282,3 +282,19 @@ func ToUFSRealm(zone string) string {
 	}
 	return AtlLabAdminRealm
 }
+
+// GetSuffixAfterSeparator extracts the string appearing after the separator
+//
+// returns the suffix after the first found separator
+func GetSuffixAfterSeparator(name, seprator string) string {
+	name = strings.TrimSpace(name)
+	pos := strings.Index(name, seprator)
+	if pos == -1 {
+		return ""
+	}
+	adjustedPos := pos + len(seprator)
+	if adjustedPos >= len(name) {
+		return ""
+	}
+	return name[adjustedPos:]
+}

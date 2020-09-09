@@ -54,12 +54,12 @@ func TestParseATLTopology(t *testing.T) {
 			for k, vlan := range topology {
 				switch k {
 				case "100.115.224.0":
-					So(vlan.GetName(), ShouldEqual, "atl-lab:201")
+					So(vlan.GetName(), ShouldEqual, "atl:201")
 					So(vlan.GetCapacityIp(), ShouldEqual, 510)
 					So(vlan.GetVlanAddress(), ShouldEqual, "100.115.224.0/23")
 					So(vlan.GetDescription(), ShouldEqual, "ATL-DUT-Row1_2")
 				case "100.115.226.0":
-					So(vlan.GetName(), ShouldEqual, "atl-lab:202")
+					So(vlan.GetName(), ShouldEqual, "atl:202")
 					So(vlan.GetCapacityIp(), ShouldEqual, 510)
 					So(vlan.GetVlanAddress(), ShouldEqual, "100.115.226.0/23")
 					So(vlan.GetDescription(), ShouldEqual, "ATL-DUT-Row3_4")
@@ -88,18 +88,18 @@ func TestParseOSDhcpdConf(t *testing.T) {
 				ipMaps[ip.GetId()] = ip
 			}
 			So(len(ipMaps), ShouldEqual, 510)
-			ip, ok := ipMaps["atl-lab:201/100.115.224.1"]
+			ip, ok := ipMaps["atl:201/100.115.224.1"]
 			So(ok, ShouldBeTrue)
 			So(ip.GetOccupied(), ShouldBeTrue)
-			So(ip.GetVlan(), ShouldEqual, "atl-lab:201")
-			ip2, ok := ipMaps["atl-lab:201/100.115.224.2"]
+			So(ip.GetVlan(), ShouldEqual, "atl:201")
+			ip2, ok := ipMaps["atl:201/100.115.224.2"]
 			So(ok, ShouldBeTrue)
 			So(ip2.GetOccupied(), ShouldBeTrue)
-			So(ip2.GetVlan(), ShouldEqual, "atl-lab:201")
-			ip3, ok := ipMaps["atl-lab:201/100.115.224.3"]
+			So(ip2.GetVlan(), ShouldEqual, "atl:201")
+			ip3, ok := ipMaps["atl:201/100.115.224.3"]
 			So(ok, ShouldBeTrue)
 			So(ip3.GetOccupied(), ShouldBeTrue)
-			So(ip3.GetVlan(), ShouldEqual, "atl-lab:201")
+			So(ip3.GetVlan(), ShouldEqual, "atl:201")
 
 			So(parsed.ValidDHCPs, ShouldHaveLength, 3)
 			for _, dhcp := range parsed.ValidDHCPs {

@@ -94,6 +94,10 @@ message Vlan {
 
     // State of the vlan
     State resource_state = 8;
+
+    // vlan_number is same as the vlan name without prefix(browser/atl/cros)
+    string vlan_number = 9 [
+        (google.api.field_behavior) = OUTPUT_ONLY];
 }
 
 message DHCPConfig {

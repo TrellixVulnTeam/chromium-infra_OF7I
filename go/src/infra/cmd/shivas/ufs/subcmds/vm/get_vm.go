@@ -32,7 +32,7 @@ Example:
 
 shivas get vm {name1} {name2}
 
-shivas get vm -zone atl97 -vlan browser-lab:vlan-1
+shivas get vm -zone atl97 -vlan browser:vlan-1
 
 Gets the vm and prints the output in the specified format.`,
 	CommandRun: func() subcommands.CommandRun {

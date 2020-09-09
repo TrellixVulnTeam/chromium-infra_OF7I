@@ -368,7 +368,7 @@ Partial update a host by parameters. Only specified parameters will be updated i
 shivas update host -name host0 -delete-vlan
 Remove the ip for host
 
-shivas update host -name host0 -vlan browser-lab:11 -nic eth0
+shivas update host -name host0 -vlan browser:11 -nic eth0
 Assign ip to the host
 
 shivas update host -i
@@ -674,7 +674,7 @@ Adds a platform by specifying several attributes directly`
 	AddVlanLongDesc string = `Add vlans.
 
 Examples:
-shivas add vlan -name browser-lab:100 -cidr-block A.B.C.D/24 -desc "atl97-vlan"
+shivas add vlan -name browser:100 -cidr-block A.B.C.D/24 -desc "atl97-vlan"
 Adds a vlan by specifying several attributes directly`
 
 	// UpdateChromePlatformLongDesc long description for UpdateChromePlatformCmd
@@ -824,7 +824,7 @@ Partial update a drac by parameters. Only specified parameters will be updated i
 shivas update drac -name drac0 -delete-vlan
 Remove the ip for drac0
 
-shivas update drac -name drac0 -vlan browser-lab:11
+shivas update drac -name drac0 -vlan browser:11
 Assign ip to the drac
 
 shivas update drac -i

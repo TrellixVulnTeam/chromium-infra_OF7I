@@ -446,12 +446,14 @@ func parseSubnetAndMaskLine(line string, topology map[string]*ufspb.Vlan) (strin
 		}
 		vlan.VlanAddress = cidr
 	} else {
+		name := GetCrOSLabName(subnet)
 		vlan = &ufspb.Vlan{
 			// Use subnet as part of name and randomly assign vlan's name to CrOS lab
-			Name:        GetCrOSLabName(subnet),
+			Name:        name,
 			VlanAddress: cidr,
 			// OS lab-specific, 2 last ips are reserved
 			CapacityIp: int32(capacity - 2),
+			VlanNumber: GetSuffixAfterSeparator(name, ":"),
 		}
 	}
 	return subnet, vlan, notMatchTopology
@@ -471,6 +473,7 @@ func parseTopologyRow(header []string, rowValue []*sheets.CellData) (string, *uf
 		case "VLAN #", "VLAN":
 			if cell.FormattedValue != "" {
 				vlan.Name = GetATLLabName(cell.FormattedValue)
+				vlan.VlanNumber = GetSuffixAfterSeparator(vlan.Name, ":")
 			}
 		case "Allocated Size":
 			vlan.CapacityIp = int32(*cell.EffectiveValue.NumberValue)

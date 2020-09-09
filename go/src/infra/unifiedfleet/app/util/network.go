@@ -22,7 +22,7 @@ const reserveLast = 1
 
 // ParseVlan parses vlan to a list of IPs
 //
-// vlanName here is a full vlan name, e.g. browser-lab:123
+// vlanName here is a full vlan name, e.g. browser:123
 // The first 10 and last 1 ip of this cidr block will be reserved and not returned to users
 // for further operations
 func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, error) {
