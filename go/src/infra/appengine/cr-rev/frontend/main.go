@@ -25,7 +25,7 @@ func handleIndex(c *router.Context) {
 }
 
 func handleRedirect(redirect *redirectRules, c *router.Context) {
-	url, err := redirect.findRedirectURL(c.Request.RequestURI)
+	url, err := redirect.findRedirectURL(c.Context, c.Request.RequestURI)
 	switch err {
 	case nil:
 		http.Redirect(

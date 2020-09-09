@@ -12,7 +12,7 @@ var errNotSupportedRepository = errors.New("Repository is not supported")
 
 // Maps GoB hosts to Codesearch URL
 var codesearchMapping = map[string]string{
-	"chromium.googlesource.com": "https://source.chromium.org/chromium/",
+	"chromium": "https://source.chromium.org/chromium/",
 }
 
 type gitRedirect interface {
@@ -23,7 +23,7 @@ type gitRedirect interface {
 type gitilesRedirect struct{}
 
 func (r *gitilesRedirect) commit(c models.Commit, path string) (string, error) {
-	url := fmt.Sprintf("https://%s/%s/+/%s", c.Host, c.Repository, c.CommitHash)
+	url := fmt.Sprintf("https://%s.googlesource.com/%s/+/%s", c.Host, c.Repository, c.CommitHash)
 	if path != "" {
 		url += "/" + path
 	}
@@ -35,7 +35,7 @@ func (r *gitilesRedirect) diff(c1, c2 models.Commit) (string, error) {
 		return "", errNotIdenticalRepositories
 	}
 	url := fmt.Sprintf(
-		"https://%s/%s/+/%s...%s",
+		"https://%s.googlesource.com/%s/+/%s...%s",
 		c1.Host, c1.Repository, c1.CommitHash, c2.CommitHash)
 	return url, nil
 }

@@ -30,5 +30,9 @@ func Get(ctx context.Context) (*Config, error) {
 		return nil, err
 	}
 	return cfg.(*Config), nil
+}
 
+// Override sets config to desired value. Only useful for testing.
+func Override(ctx context.Context, cfg *Config) error {
+	return cachedCfg.Set(ctx, cfg, nil)
 }

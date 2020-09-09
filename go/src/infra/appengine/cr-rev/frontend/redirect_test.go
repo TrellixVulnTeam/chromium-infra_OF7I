@@ -9,7 +9,7 @@ import (
 
 func TestGitilesRedirect(t *testing.T) {
 	commit := models.Commit{
-		Host:       "foo.googlesource.com",
+		Host:       "foo",
 		Repository: "bar/baz",
 		CommitHash: "1234567890123456789012345678901234567890",
 	}
@@ -39,7 +39,7 @@ func TestGitilesRedirect(t *testing.T) {
 	Convey("Diff redirect", t, func() {
 		Convey("identical repositories", func() {
 			commit2 := models.Commit{
-				Host:       "foo.googlesource.com",
+				Host:       "foo",
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
@@ -54,7 +54,7 @@ func TestGitilesRedirect(t *testing.T) {
 
 		Convey("different repositories", func() {
 			commit2 := models.Commit{
-				Host:       "foo.googlesource.com",
+				Host:       "foo",
 				Repository: "bar/baz/baq",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
@@ -64,7 +64,7 @@ func TestGitilesRedirect(t *testing.T) {
 
 		Convey("different host repositories", func() {
 			commit2 := models.Commit{
-				Host:       "bar.googlesource.com",
+				Host:       "bar",
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
@@ -78,7 +78,7 @@ func TestCodesearchRedirect(t *testing.T) {
 	redirect := &codesearchRedirect{}
 	Convey("Test commit redirect", t, func() {
 		commit := models.Commit{
-			Host:       "chromium.googlesource.com",
+			Host:       "chromium",
 			Repository: "bar/baz",
 			CommitHash: "1234567890123456789012345678901234567890",
 		}
@@ -105,13 +105,13 @@ func TestCodesearchRedirect(t *testing.T) {
 
 	Convey("Diff redirect", t, func() {
 		commit := models.Commit{
-			Host:       "chromium.googlesource.com",
+			Host:       "chromium",
 			Repository: "bar/baz",
 			CommitHash: "1234567890123456789012345678901234567890",
 		}
 		Convey("identical repositories", func() {
 			commit2 := models.Commit{
-				Host:       "chromium.googlesource.com",
+				Host:       "chromium",
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
@@ -126,7 +126,7 @@ func TestCodesearchRedirect(t *testing.T) {
 
 		Convey("different repositories", func() {
 			commit2 := models.Commit{
-				Host:       "chromium.googlesource.com",
+				Host:       "chromium",
 				Repository: "bar/baz/baq",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
@@ -136,7 +136,7 @@ func TestCodesearchRedirect(t *testing.T) {
 
 		Convey("different host repositories", func() {
 			commit2 := models.Commit{
-				Host:       "foo.googlesource.com",
+				Host:       "foo",
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
