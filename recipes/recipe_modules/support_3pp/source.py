@@ -292,8 +292,12 @@ def _do_checkout(api, workdir, spec, version, source_hash=''):
 
   # TODO: Split checkout into fetch_raw and unpack
   with api.step.nest('upload source to cipd'):
-    _source_upload(api, spec.source_cache, checkout_dir, method_name,
+    try:
+      _source_upload(api, spec.source_cache, checkout_dir, method_name,
                    source_hash, version)
+    except api.step.StepFailure:  # pragma: no cover
+      api.step.active_result.presentation.status = api.step.FAILURE
+      api.step.active_result.presentation.step_text = 'Could not upload source.'
   if source_pb.unpack_archive:
     with api.step.nest('unpack_archive'):
       paths = api.file.glob_paths(
