@@ -66,34 +66,23 @@ message ChromeBrowserMachine {
     string chrome_platform = 2 [(google.api.resource_reference) = {
         type: "unified-fleet-system.appspot.com/ChromePlatform"
     }];
-    // Refers to Nic name
-    string nic = 3 [
-        (google.api.resource_reference) = {
-            type: "unified-fleet-system.appspot.com/Nic"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
-    // Refers to multiple Nic names
-    repeated string nics = 10 [
-        (google.api.resource_reference) = {
-            type: "unified-fleet-system.appspot.com/Nic"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+
+    reserved 3;
+    reserved "nic";
+
+    reserved 10;
+    reserved "nics";
+
     // Interface of its connected devices.
     KVMInterface kvm_interface = 4;
     RPMInterface rpm_interface = 5;
-    SwitchInterface network_device_interface = 6 [deprecated = true];
-    // Refers to Drac name
-    string drac = 7 [
-        (google.api.resource_reference) = {
-            type: "unified-fleet-system.appspot.com/Drac"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+
+    reserved 6;
+    reserved "network_device_interface";
+
+    reserved 7;
+    reserved "drac";
+
     // Usually it's a buganizer bug.
     string deployment_ticket = 8;
     // Can be covered by deployment_ticket

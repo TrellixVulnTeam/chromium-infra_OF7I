@@ -36,11 +36,8 @@ message Nic {
         }
     ];
 
-    // Refers to Lab
-    string lab = 6 [
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 6;
+    reserved "lab";
 
     // Refers to Rack name
     string rack = 7 [

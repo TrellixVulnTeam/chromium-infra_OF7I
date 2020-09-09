@@ -200,7 +200,8 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 					Desc: fmt.Sprintf("%s%s", ChooseLab, createKeyValuePairs(fleet.Lab_name)),
 				}
 			case "Lab":
-				if value == "" || value == "0" {
+				// TODO(eshwarn): revisit this logic with zone instead of lab
+				/*if value == "" || value == "0" {
 					input = &Input{
 						Key:      "Browser/OS LAB",
 						Desc:     fmt.Sprintf("%s%s", ChooseLab, BroswerOrOSLab),
@@ -230,7 +231,7 @@ func GetMachineInteractiveInput(ctx context.Context, ic UfleetAPI.FleetClient, m
 							Required: true,
 						}
 					}
-				}
+				}*/
 			case "Browser/OS LAB":
 				if value == "1" {
 					// Chrome Browser lab

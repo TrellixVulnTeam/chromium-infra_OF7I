@@ -84,9 +84,7 @@ func TestCreateNic(t *testing.T) {
 			machine := &ufspb.Machine{
 				Name: "machine-10",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
-					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
-						Nics: []string{"nic-5"},
-					},
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
 				},
 			}
 			_, err := registration.CreateMachine(ctx, machine)
@@ -100,9 +98,9 @@ func TestCreateNic(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp, ShouldResembleProto, nic)
 
-			mresp, err := registration.GetMachine(ctx, "machine-10")
+			mresp, err := GetMachine(ctx, "machine-10")
 			So(err, ShouldBeNil)
-			So(mresp.GetChromeBrowserMachine().GetNics(), ShouldResemble, []string{"nic-5"})
+			So(mresp.GetChromeBrowserMachine().GetNicObjects()[0].GetName(), ShouldResemble, "nic-20")
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "nics/nic-20")
 			So(err, ShouldBeNil)

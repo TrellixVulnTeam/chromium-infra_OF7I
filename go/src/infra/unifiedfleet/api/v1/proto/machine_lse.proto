@@ -78,11 +78,8 @@ message MachineLSE {
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
-    // Refers to Lab
-    string lab = 9 [
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 9;
+    reserved "lab";
 
     // Refers to Rack name
     string rack = 10 [
@@ -149,10 +146,9 @@ message VM {
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
-    string lab = 6 [
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 6;
+    reserved "lab";
+
     string machine_lse_id = 7 [
         (google.api.resource_reference) = {
             type: "unified-fleet-system.appspot.com/MachineLSE"

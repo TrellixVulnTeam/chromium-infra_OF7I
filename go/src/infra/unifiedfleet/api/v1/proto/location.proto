@@ -14,8 +14,8 @@ import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 // For Browser machine, lab and rack are the only field to fill in.
 // The fine-grained location is mainly for OS machine as we care about rack, row, shelf.
 message Location {
-    // Different labs in the chrome org. Required.
-    Lab lab = 1 [deprecated = true];
+    reserved 1;
+    reserved "lab";
     // Each lab has many aisles.
     // This field refers to the aisle number/name in the lab.
     string aisle = 2;

@@ -32,11 +32,8 @@ message KVM {
     google.protobuf.Timestamp update_time = 5 [
             (google.api.field_behavior) = OUTPUT_ONLY];
 
-    // Refers to Lab
-    string lab = 6 [
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 6;
+    reserved "lab";
 
     // Refers to Rack name
     string rack = 7 [
@@ -90,11 +87,8 @@ message RPM {
     google.protobuf.Timestamp update_time = 4 [
             (google.api.field_behavior) = OUTPUT_ONLY];
 
-    // Refers to Lab
-    string lab = 5 [
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 5;
+    reserved "lab";
 
     // Refers to Rack name
     string rack = 6 [
@@ -152,11 +146,8 @@ message Switch {
     // Usually describe the model of the switch
     string description = 4;
 
-    // Refers to Lab
-    string lab = 5 [
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 5;
+    reserved "lab";
 
     // Refers to Rack name
     string rack = 6 [
@@ -168,7 +159,6 @@ message Switch {
     // tags user can attach for easy querying/searching
     repeated string tags = 7;
 
-    // State of the switch
     reserved 8;
     reserved "state";
 
@@ -216,11 +206,8 @@ message Drac {
         }
     ];
 
-    // Refers to Lab
-    string lab = 8 [
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 8;
+    reserved "lab";
 
     // Refers to Rack name
     string rack = 9 [

@@ -54,30 +54,12 @@ message Rack {
 
 // ChromeBrowserRack refers to the rack in Chrome Browser lab
 message ChromeBrowserRack {
-    // RPMs in the rack
-    repeated string rpms = 1 [
-        (google.api.resource_reference) = {
-            type: "unified-fleet-system.appspot.com/RPM"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
-    // KVMs in the rack, they're also used as the hostnames in dhcp configs
-    repeated string kvms = 2 [
-        (google.api.resource_reference) = {
-            type: "unified-fleet-system.appspot.com/KVM"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
-    // Switches in the rack
-    repeated string switches = 3 [
-        (google.api.resource_reference) = {
-            type: "unified-fleet-system.appspot.com/Switch"
-        },
-        (google.api.field_behavior) = OUTPUT_ONLY,
-        deprecated = true
-    ];
+    reserved 1;
+    reserved "rpms";
+    reserved 2;
+    reserved "kvms";
+    reserved 3;
+    reserved "switches";
     repeated RPM rpm_objects = 4;
     repeated KVM kvm_objects = 5;
     repeated Switch switch_objects = 6;
