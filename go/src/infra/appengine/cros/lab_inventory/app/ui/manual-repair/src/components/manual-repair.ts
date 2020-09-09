@@ -5,7 +5,7 @@
 import '@material/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-drawer';
-import './repair-form';
+import './repair-form/repair-form';
 import './search-hostname';
 import './top-bar';
 

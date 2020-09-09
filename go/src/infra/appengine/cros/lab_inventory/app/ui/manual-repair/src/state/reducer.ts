@@ -9,6 +9,7 @@ const INITIAL_STATE = {
   repairRecord: {
     deviceInfo: null,
     recordInfo: null,
+    recordId: null,
   },
   errors: {
     deviceInfoError: null,
@@ -17,7 +18,7 @@ const INITIAL_STATE = {
 };
 
 // TODO: Split this reducer into multiple reducers.
-export const reducer = (state = INITIAL_STATE, action) => {
+export function reducer(state = INITIAL_STATE, action) {
   switch (action.type) {
     case RECEIVE_USER:
       return {...state, user: action.user};
@@ -27,6 +28,7 @@ export const reducer = (state = INITIAL_STATE, action) => {
         repairRecord: {
           deviceInfo: action.deviceInfo,
           recordInfo: state.repairRecord.recordInfo,
+          recordId: state.repairRecord.recordId,
         }
       };
     case RECEIVE_RECORD_INFO:
@@ -34,7 +36,8 @@ export const reducer = (state = INITIAL_STATE, action) => {
         ...state,
         repairRecord: {
           deviceInfo: state.repairRecord.deviceInfo,
-          recordInfo: action.recordInfo,
+          recordInfo: action.recordInfo.deviceRepairRecord,
+          recordId: action.recordInfo.id,
         }
       };
     case RECEIVE_RECORD_INFO_ERROR:
@@ -49,5 +52,5 @@ export const reducer = (state = INITIAL_STATE, action) => {
       };
     default:
       return state;
-  }
-}
+  };
+};
