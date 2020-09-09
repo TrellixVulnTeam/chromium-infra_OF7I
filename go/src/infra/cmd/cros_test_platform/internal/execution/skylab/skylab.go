@@ -9,7 +9,9 @@ import (
 	"context"
 	"fmt"
 	"infra/libs/skylab/request"
+	"strings"
 
+	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
@@ -203,28 +205,22 @@ func (t *Task) testCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
 // Task object. In order to get the latest result, FetchResult needs to be
 // called first.
 func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
-	logURL := fmt.Sprintf(
-		"https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-%s/",
-		t.swarmingTaskID,
-	)
-	gsURL := fmt.Sprintf(
-		"gs://chromeos-autotest-results/swarming-%s/",
-		t.swarmingTaskID,
-	)
-
-	return &steps.ExecuteResponse_TaskResult{
+	r := &steps.ExecuteResponse_TaskResult{
 		Name: t.name(),
 		State: &test_platform.TaskState{
 			LifeCycle: t.lifeCycle,
 			Verdict:   t.verdict(),
 		},
-		TaskUrl: t.url,
-		LogUrl:  logURL,
-		LogData: &common.TaskLogData{
-			GsUrl: gsURL,
-		},
+		TaskUrl:   t.url,
 		TestCases: t.testCases(),
 	}
+	if ld := t.result.GetLogData(); ld != nil {
+		r.LogData = proto.Clone(ld).(*common.TaskLogData)
+		if g := r.LogData.GetGsUrl(); strings.HasPrefix(g, "gs://") {
+			r.LogUrl = fmt.Sprintf("https://stainless.corp.google.com/browse/%s", strings.TrimPrefix(g, "gs://"))
+		}
+	}
+	return r
 }
 
 // Retry creates a new task to retry the current task.

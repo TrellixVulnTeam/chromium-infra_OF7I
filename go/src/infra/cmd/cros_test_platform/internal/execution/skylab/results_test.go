@@ -16,6 +16,7 @@ import (
 	. "go.chromium.org/luci/common/testing/assertions"
 
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
+	"go.chromium.org/chromiumos/infra/proto/go/test_platform/common"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/skylab_test_runner"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/steps"
 )
@@ -70,9 +71,8 @@ func TestResultBeforeRefresh(t *testing.T) {
 			So(r.State, ShouldNotBeNil)
 			So(r.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_PENDING)
 			So(r.State.Verdict, ShouldEqual, test_platform.TaskState_VERDICT_UNSPECIFIED)
-			So(r.LogUrl, ShouldNotBeEmpty)
-			So(r.LogData, ShouldNotBeNil)
-			So(r.LogData.GsUrl, ShouldNotBeEmpty)
+			So(r.LogUrl, ShouldBeEmpty)
+			So(r.LogData, ShouldBeNil)
 			So(r.TestCases, ShouldHaveLength, 0)
 		})
 	})
@@ -198,8 +198,11 @@ func TestSingleAutotestTaskResults(t *testing.T) {
 					So(result, ShouldNotBeNil)
 					So(result.State.LifeCycle, ShouldEqual, test_platform.TaskState_LIFE_CYCLE_COMPLETED)
 					So(result.State.Verdict, ShouldEqual, c.expectVerdict)
-					So(result.LogData.GsUrl, ShouldEqual, "gs://chromeos-autotest-results/swarming-foo-task-ID/")
-					So(result.LogUrl, ShouldEqual, "https://stainless.corp.google.com/browse/chromeos-autotest-results/swarming-foo-task-ID/")
+					So(result.LogData, ShouldNotBeNil)
+					if result.LogData != nil {
+						So(result.LogData.GsUrl, ShouldEqual, "gs://some-url")
+					}
+					So(result.LogUrl, ShouldEqual, "https://stainless.corp.google.com/browse/some-url")
 				})
 			})
 		}
@@ -293,6 +296,9 @@ func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.E
 		result: &skylab_test_runner.Result{
 			Harness: &skylab_test_runner.Result_AutotestResult{
 				AutotestResult: autotestResult,
+			},
+			LogData: &common.TaskLogData{
+				GsUrl: "gs://some-url",
 			},
 		},
 		lifeCycle:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,
