@@ -20,7 +20,7 @@
       "-u",
       "RECIPE_MODULE[depot_tools::bot_update]/resources/bot_update.py",
       "--spec-path",
-      "cache_dir = '[CACHE]/git'\nsolutions = [{'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
+      "cache_dir = '[CACHE]/git'\nsolutions = [{'custom_vars': {'infra_env_python': '/opt/infra-system/bin/python'}, 'deps_file': '.DEPS.git', 'managed': True, 'name': 'infra', 'url': 'https://chromium.googlesource.com/infra/infra.git'}]",
       "--revision_mapping_file",
       "{\"got_revision\": \"infra\"}",
       "--git-cache-dir",
@@ -95,11 +95,6 @@
       "runhooks"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -120,11 +115,6 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "infra_step": true,
     "name": "ensure_installed",
     "~followup_annotations": [
@@ -152,11 +142,6 @@
       "-output-dir",
       "[CACHE]/osx_sdk/XCode.app"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "infra_step": true,
     "name": "install xcode"
   },
@@ -167,11 +152,6 @@
       "--switch",
       "[CACHE]/osx_sdk/XCode.app"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "infra_step": true,
     "name": "select XCode"
   },
@@ -183,11 +163,6 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[CACHE]/infra_gclient_with_go",
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "infra_step": true,
     "name": "init infra go env",
     "~followup_annotations": [
@@ -216,11 +191,6 @@
       "python",
       "[CACHE]/infra_gclient_with_go/infra/go/test.py"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "name": "infra go tests"
   },
   {
@@ -232,11 +202,6 @@
       "--builder",
       "infra-packager-mac-64"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "name": "cipd - build packages"
   },
   {
@@ -245,11 +210,6 @@
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/build/test_packages.py"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "name": "cipd - test packages integrity"
   },
   {
@@ -262,11 +222,6 @@
       "xcode-select",
       "--reset"
     ],
-    "env_prefixes": {
-      "PATH": [
-        "/opt/infra-system/bin"
-      ]
-    },
     "infra_step": true,
     "name": "reset XCode"
   },

@@ -28,73 +28,75 @@ def RunSteps(api):
 
   co = api.infra_checkout.checkout(
       gclient_config_name=patch_root, patch_root=patch_root,
-      internal=internal)
+      internal=internal,
+      generate_env_with_system_python=True)
   co.commit_change()
+  co.gclient_runhooks()
 
-  # See 'infra_continuous' recipe for explanation of system_env interaction
-  # with the infra repo.
-  with api.infra_system.system_env(enabled=api.platform.arch != 'arm'):
-    co.gclient_runhooks()
 
-    files = co.get_changed_files()
-    is_deps_roll = bool(files.intersection([
-        'DEPS',
-        api.path.join('bootstrap', 'deps.pyl'),
-        api.path.join('go', 'deps.lock')
-    ]))
+  files = co.get_changed_files()
+  is_deps_roll = bool(files.intersection([
+      'DEPS',
+      api.path.join('bootstrap', 'deps.pyl'),
+      api.path.join('go', 'deps.lock')
+  ]))
 
-    with api.step.defer_results():
-      if api.platform.arch != 'arm':
-        with api.context(cwd=co.path.join(patch_root)):
-          api.python('python tests', 'test.py', ['test'])
-          # To preserve high CQ coverage vs very low coverage in infra_internal,
-          # test CQ separately. But only if CQ code is modified.
-          # Note that this will run CQ tests once again.
-          if internal and any(f.startswith('infra_internal/services/cq')
-                              for f in files):
-            api.python('python cq tests', 'test.py',
-                       ['test', 'infra_internal/services/cq'])
+  with api.step.defer_results():
+    if api.platform.arch != 'arm':
+      with api.context(cwd=co.path.join(patch_root)):
+        api.python('python tests', 'test.py', ['test'])
+        # To preserve high CQ coverage vs very low coverage in infra_internal,
+        # test CQ separately. But only if CQ code is modified.
+        # Note that this will run CQ tests once again.
+        if internal and any(f.startswith('infra_internal/services/cq')
+                            for f in files):
+          api.python('python cq tests', 'test.py',
+                     ['test', 'infra_internal/services/cq'])
 
-      if not internal:
-        # TODO(phajdan.jr): should we make recipe tests run on other platforms?
-        # TODO(tandrii): yes, they should run on Mac as well.
-        if api.platform.is_linux and api.platform.bits == 64:
-          api.python(
-              'recipe test',
-              co.path.join('infra', 'recipes', 'recipes.py'),
-              ['test', 'run'])
-          api.python(
-              'recipe lint',
-              co.path.join('infra', 'recipes', 'recipes.py'),
-              ['lint'])
-
-    # Some third_party go packages on OSX rely on cgo and thus a configured
-    # clang toolchain.
-    with api.osx_sdk('mac'):
-      # Ensure go is bootstrapped as a separate step.
-      co.ensure_go_env()
-
-      # Note: go/env.py knows how to expand 'python' into sys.executable
-      # (perhaps 'vpython').
-      co.go_env_step(
-          'python', str(co.path.join(patch_root, 'go', 'test.py')),
-          name='go tests')
-
-      # Do slow *.cipd packaging tests only when touching build/* or DEPS. This
-      # will build all registered packages (without uploading them), and run
-      # package tests from build/tests/.
-      if any(f.startswith('build/') for f in files) or is_deps_roll:
+    if not internal:
+      # TODO(phajdan.jr): should we make recipe tests run on other platforms?
+      # TODO(tandrii): yes, they should run on Mac as well.
+      if api.platform.is_linux and api.platform.bits == 64:
         api.python(
             'cipd - build packages',
             co.path.join( patch_root, 'build', 'build.py'),
             ['--no-freshen-python-env'],
             venv=True)
         api.python(
-            'cipd - test packages integrity',
-            co.path.join(patch_root, 'build', 'test_packages.py'),
-            venv=True)
-      else:
-        api.step('skipping slow cipd packaging tests', cmd=None)
+            'recipe test',
+            co.path.join('infra', 'recipes', 'recipes.py'),
+            ['test', 'run'])
+        api.python(
+            'recipe lint',
+            co.path.join('infra', 'recipes', 'recipes.py'),
+            ['lint'])
+
+  # Some third_party go packages on OSX rely on cgo and thus a configured
+  # clang toolchain.
+  with api.osx_sdk('mac'):
+    # Ensure go is bootstrapped as a separate step.
+    co.ensure_go_env()
+
+    # Note: go/env.py knows how to expand 'python' into sys.executable
+    # (perhaps 'vpython').
+    co.go_env_step(
+        'python', str(co.path.join(patch_root, 'go', 'test.py')),
+        name='go tests')
+
+    # Do slow *.cipd packaging tests only when touching build/* or DEPS. This
+    # will build all registered packages (without uploading them), and run
+    # package tests from build/tests/.
+    if any(f.startswith('build/') for f in files) or is_deps_roll:
+      api.python(
+          'cipd - build packages',
+          co.path.join(patch_root, 'build', 'build.py'),
+          venv=True)
+      api.python(
+          'cipd - test packages integrity',
+          co.path.join(patch_root, 'build', 'test_packages.py'),
+          venv=True)
+    else:
+      api.step('skipping slow cipd packaging tests', cmd=None)
 
 
 def GenTests(api):
