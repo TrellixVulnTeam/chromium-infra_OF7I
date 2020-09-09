@@ -21,8 +21,8 @@ import (
 
 var errNoMatch = errors.New("no match found")
 
-var numberRedirectRegex = regexp.MustCompile(`^/(\d{1,8})$`)
-var fullCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})$`)
+var numberRedirectRegex = regexp.MustCompile(`^/(\d{1,8})(?:/(.*))?$`)
+var fullCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})(?:/(.*))?$`)
 
 // List of valid positions refs for numberRedirectRule
 var chromiumPositionRefs = stringset.Set{
@@ -116,7 +116,11 @@ func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (strin
 
 	for _, commit := range commits {
 		if chromiumPositionRefs.Has(commit.PositionRef) {
-			return r.gitRedirect.commit(commit, "")
+			path := ""
+			if len(result) == 3 {
+				path = result[2]
+			}
+			return r.gitRedirect.commit(commit, path)
 		}
 	}
 	return "", errNoMatch
@@ -148,7 +152,11 @@ func (r *fullCommitHashRule) getRedirect(ctx context.Context, url string) (strin
 		return "", errNoMatch
 	}
 
-	return r.gitRedirect.commit(*commit, "")
+	path := ""
+	if len(result) == 3 {
+		path = result[2]
+	}
+	return r.gitRedirect.commit(*commit, path)
 }
 
 type redirectRules struct {

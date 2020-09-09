@@ -167,8 +167,13 @@ func TestRedirects(t *testing.T) {
 				_, err := r.findRedirectURL(ctx, "/291563")
 				So(err, ShouldEqual, errNoMatch)
 			})
-
 		})
+		Convey("with path", func() {
+			url, err := r.findRedirectURL(ctx, "/291560/foo/bar")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/0000000000000000000000000000000000291560/foo/bar")
+		})
+
 	})
 
 	Convey("full hash redirect", t, func() {
@@ -247,6 +252,13 @@ func TestRedirects(t *testing.T) {
 				ctx, "/0000000000000000000000000000000000000002")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "https://foo.googlesource.com/baz/not/indexed/+/0000000000000000000000000000000000000002")
+		})
+
+		Convey("with path", func() {
+			url, err := r.findRedirectURL(
+				ctx, "/0000000000000000000000000000000000000000/foo/bar")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://foo.googlesource.com/bar/+/0000000000000000000000000000000000000000/foo/bar")
 		})
 	})
 
