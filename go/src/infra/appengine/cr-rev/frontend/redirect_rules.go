@@ -12,14 +12,26 @@ import (
 	"infra/appengine/cr-rev/config"
 	"infra/appengine/cr-rev/models"
 	"regexp"
+	"strconv"
 
+	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
 var errNoMatch = errors.New("no match found")
+
 var numberRedirectRegex = regexp.MustCompile(`^/(\d{1,8})$`)
 var fullCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})$`)
+
+// List of valid positions refs for numberRedirectRule
+var chromiumPositionRefs = stringset.Set{
+	"refs/heads/main":                         struct{}{},
+	"refs/heads/master":                       struct{}{},
+	"svn://svn.chromium.org/chrome":           struct{}{},
+	"svn://svn.chromium.org/chrome/trunk":     struct{}{},
+	"svn://svn.chromium.org/chrome/trunk/src": struct{}{},
+}
 
 // findBestCommit finds the best commit to redirect to based on configuration:
 // * if commit's repository has a priority set, it's returned immedietely
@@ -76,7 +88,9 @@ type redirectRule interface {
 
 // numberRedirectRule redirects from sequential numbers to the git commit in
 // chromium/src.
-type numberRedirectRule struct{}
+type numberRedirectRule struct {
+	gitRedirect gitRedirect
+}
 
 func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (string,
 	error) {
@@ -84,9 +98,28 @@ func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (strin
 	if len(result) == 0 {
 		return "", errNoMatch
 	}
+	id, err := strconv.Atoi(result[1])
+	if err != nil {
+		return "", err
+	}
 
-	// TODO(https://crbug.com/1109315): Implement
-	return "", errors.New("number redirect not implemented")
+	commits := []models.Commit{}
+	q := datastore.NewQuery("Commit").
+		Eq("PositionNumber", id).
+		Eq("Host", "chromium").
+		Eq("Repository", "chromium/src")
+
+	err = datastore.GetAll(ctx, q, &commits)
+	if err != nil {
+		return "", err
+	}
+
+	for _, commit := range commits {
+		if chromiumPositionRefs.Has(commit.PositionRef) {
+			return r.gitRedirect.commit(commit, "")
+		}
+	}
+	return "", errNoMatch
 }
 
 // fullCommitHashRule finds a commit across all indexed repositories and, if
@@ -124,11 +157,14 @@ type redirectRules struct {
 
 // TODO(https://crbug.com/1109315): pass redirect struct
 func newRedirectRules() *redirectRules {
+	redirect := &gitilesRedirect{}
 	return &redirectRules{
 		rules: []redirectRule{
-			&numberRedirectRule{},
+			&numberRedirectRule{
+				gitRedirect: redirect,
+			},
 			&fullCommitHashRule{
-				gitRedirect: &gitilesRedirect{},
+				gitRedirect: redirect,
 			},
 		},
 	}
