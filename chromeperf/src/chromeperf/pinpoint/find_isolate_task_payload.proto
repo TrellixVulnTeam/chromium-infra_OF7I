@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "change.proto";
+import "chromeperf/pinpoint/change.proto";
 
 package chromeperf.pinpoint;
 

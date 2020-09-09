@@ -8,8 +8,7 @@ all: regenerate
 $(INFRA)/cipd/protoc:
 	cd $(INFRA) && gclient runhooks
 
-regenerate: $(INFRA)/cipd/protoc ./proto/*.proto
+regenerate: $(INFRA)/cipd/protoc chromeperf/engine/*.proto chromeperf/pinpoint/*.proto
 	$(INFRA)/cipd/protoc \
-		--proto_path ./proto \
-		./proto/*.proto \
-		--python_out ./pb
+		chromeperf/engine/*.proto chromeperf/pinpoint/*.proto \
+		--python_out .

@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-import "graph.proto";
+import "chromeperf/engine/graph.proto";
 
 package chromeperf.engine;
 

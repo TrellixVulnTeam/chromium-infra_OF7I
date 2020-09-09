@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "task.proto";
+import "chromeperf/engine/task.proto";
 
 package chromeperf.engine;
 
