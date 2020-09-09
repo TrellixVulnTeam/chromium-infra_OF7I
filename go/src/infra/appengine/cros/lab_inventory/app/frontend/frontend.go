@@ -29,6 +29,7 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 			grpcutil.UnaryServerPanicCatcherInterceptor,
 		),
 	}
+	s.AccessControl = prpc.AllowOriginAll
 	api.RegisterInventoryServer(&s, &api.DecoratedInventory{
 		Service: &InventoryServerImpl{},
 		Prelude: checkAccess,
