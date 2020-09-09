@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import ast
 import contextlib
 import re
 
@@ -199,16 +200,33 @@ def get_chromium_versions_to_add(api):
   return recent_milestone_versions
 
 
-def maybe_update_variants_pyl(api, variants_lines, variants_pyl_path):
+def get_existing_cipd_tags(variants_pyl_content, variant_name_tmpls):
+  variants = ast.literal_eval(variants_pyl_content)
+  tags = set()
+  for tmpl in variant_name_tmpls:
+    for lib in [CLIENT, IMPL]:
+      variant_name = tmpl % lib
+      if variant_name in variants:
+        cipd_tag = variants[
+          variant_name]['swarming']['cipd_packages'][0]['revision']
+        tags.add(cipd_tag)
+  return tags
+
+
+def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
   # Get recent milestone versions
   recent_milestone_versions = get_chromium_versions_to_add(api)
+  variants_lines = variants_pyl_content.splitlines()
 
+  variants_name_tmpls = [
+      WEBLAYER_NTH_TMPL, WEBLAYER_NTH_MINUS_ONE_TMPL,
+      WEBLAYER_NTH_MINUS_TWO_TMPL]
   # Map Chromium versions to variants.pyl identifiers
   versions_to_variants_id_tmpl = zip(
-      recent_milestone_versions,
-      [WEBLAYER_NTH_TMPL, WEBLAYER_NTH_MINUS_ONE_TMPL,
-       WEBLAYER_NTH_MINUS_TWO_TMPL])
+      recent_milestone_versions, variants_name_tmpls)
 
+  existing_cipd_tags = get_existing_cipd_tags(variants_pyl_content,
+                                              variants_name_tmpls)
   # TODO(crbug.com/1041619): Add presubmit check for variants.pyl
   # that checks if variants.pyl follows a format which allows the code
   # below to overwrite skew test configurations
@@ -222,13 +240,14 @@ def maybe_update_variants_pyl(api, variants_lines, variants_pyl_path):
 
         if variants_id in variants_lines[lineno]:
           new_variants_lines.append(variants_lines[lineno])
-          contains_current_version = False
+          contains_recent_milestone_version = False
           open_bracket_count = 1
           lineno += 1
           current_config_lines = []
 
           while open_bracket_count:
-            contains_current_version |= version in variants_lines[lineno]
+            contains_recent_milestone_version |= (
+                version in variants_lines[lineno])
             for c in variants_lines[lineno]:
               if c == '{':
                 open_bracket_count += 1
@@ -238,8 +257,9 @@ def maybe_update_variants_pyl(api, variants_lines, variants_pyl_path):
               current_config_lines.append(variants_lines[lineno])
               lineno += 1
 
-          if not contains_current_version:
-            cipd_pkgs_to_create.add(version)
+          if not contains_recent_milestone_version:
+            if 'version:%s' % version not in existing_cipd_tags:
+              cipd_pkgs_to_create.add(version)
             new_variants_lines.extend(
                 generate_skew_test_config_lines(library, version))
           else:
@@ -375,10 +395,10 @@ def RunSteps(api):
   # Read variants.pyl
   variants_pyl_path = api.path['checkout'].join(
       'testing', 'buildbot', 'variants.pyl')
-  variants_lines = api.file.read_text(
-      'Read variants.pyl', variants_pyl_path).splitlines()
+  variants_pyl_content = api.file.read_text(
+      'Read variants.pyl', variants_pyl_path)
 
-  maybe_update_variants_pyl(api, variants_lines, variants_pyl_path)
+  maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path)
 
 
 def GenTests(api):
@@ -454,6 +474,26 @@ def GenTests(api):
          api.path.exists(api.path['cleanup'].join('apk_build_files')) +
          api.step_data('Reading //chrome/VERSION (2)',
                        api.file.read_text('a=84\nb=0\nc=4147\nd=89')) +
+         api.step_data(
+             'Landing CL.git cl status',
+             api.raw_io.stream_output('commit', stream='stdout')) +
+         api.step_data(
+             'Landing CL.git cl status (2)',
+             api.raw_io.stream_output('closed', stream='stdout')))
+
+  yield (api.test('only-build-new-milestone-released') +
+         api.properties(submit_cl=True,
+                        total_cq_checks=2,
+                        interval_between_checks_in_secs=60) +
+         api.step_data('Read variants.pyl',
+             api.file.read_text(TEST_VARIANTS_PYL)) +
+         api.url.json('Getting Android beta channel releases',
+                      [{'hashes':{'chromium':'abcd'}}]) +
+         api.url.json('Fetch information on commit abcd',
+                      {'deployment': {'beta': '84.0.4147.89'}}) +
+         api.step_data('Reading //chrome/VERSION',
+             api.file.read_text('a=84\nb=0\nc=4147\nd=89'))  +
+         api.path.exists(api.path['cleanup'].join('apk_build_files')) +
          api.step_data(
              'Landing CL.git cl status',
              api.raw_io.stream_output('commit', stream='stdout')) +
