@@ -287,7 +287,8 @@
     "cmd": [
       "vpython",
       "-u",
-      "[CACHE]/infra_gclient_with_go/infra/build/build.py/--no-freshen-python-env"
+      "[CACHE]/infra_gclient_with_go/infra/build/build.py",
+      "--no-freshen-python-env"
     ],
     "env_prefixes": {
       "PATH": [
