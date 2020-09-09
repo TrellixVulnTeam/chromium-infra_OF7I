@@ -89,6 +89,10 @@ func (w *prodDirWriter) WriteDir(ctx context.Context) error {
 			logging.Debugf(ctx, "path %s is a directory", src)
 			return nil
 		}
+		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			logging.Debugf(ctx, "path %s is a symlink", src)
+			return nil
+		}
 		relPath, err := filepath.Rel(w.localRootDir, src)
 		if err != nil {
 			return errors.Annotate(err, "writing from %s to %s/<?>", src, w.gsRootDir).Err()
