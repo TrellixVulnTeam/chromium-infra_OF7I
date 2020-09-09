@@ -266,6 +266,7 @@ func ToMachineLSEs(hosts []*crimson.PhysicalHost, vms []*crimson.VM, machines []
 				Value: vm.GetOs(),
 			},
 			Hostname:         name,
+			MacAddress:       parseMacFromDesp(vm.GetDescription()),
 			Vlan:             GetBrowserLabName(Int64ToStr(vm.GetVlan())),
 			Ip:               vm.GetIpv4(),
 			Zone:             zone,
@@ -407,4 +408,15 @@ func ToZone(datacenter string) ufspb.Zone {
 // GetNicName formats a nic name with its attached machine
 func GetNicName(nicName, machineName string) string {
 	return fmt.Sprintf("%s:%s", machineName, nicName)
+}
+
+func parseMacFromDesp(desp string) string {
+	if !strings.HasPrefix(desp, "MAC") {
+		return ""
+	}
+	mac := desp[4:]
+	if parsedMac, err := ParseMac(mac); err == nil {
+		return parsedMac
+	}
+	return ""
 }
