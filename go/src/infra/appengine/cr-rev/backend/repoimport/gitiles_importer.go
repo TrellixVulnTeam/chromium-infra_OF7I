@@ -39,9 +39,9 @@ type gitilesImporter struct {
 	importedCommits stringset.Set
 }
 
-// newGitilesImporter initializes gitilesImporter struct and returns its
+// NewGitilesImporter initializes gitilesImporter struct and returns its
 // pointer.
-func newGitilesImporter(ctx context.Context, repo common.GitRepository) importer {
+func NewGitilesImporter(ctx context.Context, repo common.GitRepository) Importer {
 	return &gitilesImporter{
 		gitiesClient:    gitiles.GetClient(ctx),
 		leaser:          newLeaser(repo),
@@ -185,7 +185,7 @@ func (imp *gitilesImporter) persist(ctx context.Context, commits []*common.GitCo
 			docs[i].PositionRef = position.Name
 			docs[i].PositionNumber = position.Number
 		case common.ErrNoPositionFooter:
-			logging.Infof(ctx, "No position footer for commit: %s", docs[i].ID)
+			logging.Debugf(ctx, "No position footer for commit: %s", docs[i].ID)
 		case common.ErrInvalidPositionFooter:
 			logging.Warningf(ctx, "Malformed position footer for commit: %s", docs[i].ID)
 		}

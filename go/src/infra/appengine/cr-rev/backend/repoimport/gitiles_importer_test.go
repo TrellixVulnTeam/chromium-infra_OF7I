@@ -35,7 +35,7 @@ func TestGitilesImporter(t *testing.T) {
 		},
 	}
 
-	prepareEnvironment := func() (context.Context, *gitilesProto.GitilesFake, importer) {
+	prepareEnvironment := func() (context.Context, *gitilesProto.GitilesFake, Importer) {
 		ctx := gaetesting.TestingContext()
 		ds := datastore.GetTestable(ctx)
 		ds.Consistent(true)
@@ -47,7 +47,7 @@ func TestGitilesImporter(t *testing.T) {
 		client := &gitilesProto.GitilesFake{}
 		ctx = gitiles.SetClient(ctx, client)
 
-		imp := newGitilesImporter(ctx, repo)
+		imp := NewGitilesImporter(ctx, repo)
 		return ctx, client, imp
 	}
 

@@ -1,3 +1,9 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+//go:generate mockgen -source=controller.go -package repoimport -destination controller.mock.go Controller
+
 package repoimport
 
 import (
@@ -21,12 +27,12 @@ type Controller interface {
 
 type controller struct {
 	ch              chan common.GitRepository
-	importerFactory importerFactory
+	importerFactory ImporterFactory
 }
 
 // NewController creates import controller that can import desired repositories
 // one at the time.
-func NewController(f importerFactory) Controller {
+func NewController(f ImporterFactory) Controller {
 	// Channel should be large enough not to block when new items are added.
 	// cr-rev scans about 2000 repositories and we expect that many items
 	// to be in the queue only when database is completely empty.
@@ -51,7 +57,8 @@ func (c *controller) Start(ctx context.Context) {
 			importer := c.importerFactory(ctx, repo)
 			err := importer.Run(ctx)
 			if err != nil {
-				logging.WithError(err).Errorf(ctx, "failed to import repository")
+				logging.WithError(err).Errorf(
+					ctx, "failed to import repository: %s/%s", repo.Host, repo.Name)
 			}
 
 		case <-ctx.Done():

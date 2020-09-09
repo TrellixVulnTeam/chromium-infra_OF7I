@@ -11,8 +11,8 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func factoryFunc(m map[common.GitRepository]importer) importerFactory {
-	return func(ctx context.Context, repo common.GitRepository) importer {
+func factoryFunc(m map[common.GitRepository]Importer) ImporterFactory {
+	return func(ctx context.Context, repo common.GitRepository) Importer {
 		return m[repo]
 	}
 }
@@ -31,7 +31,7 @@ func TestController(t *testing.T) {
 				return nil
 			}).Times(1)
 
-			c := NewController(factoryFunc(map[common.GitRepository]importer{
+			c := NewController(factoryFunc(map[common.GitRepository]Importer{
 				repo: mock,
 			}))
 			c.Index(repo)
@@ -51,7 +51,7 @@ func TestController(t *testing.T) {
 				cancel()
 				return nil
 			}).Times(1)
-			c := NewController(factoryFunc(map[common.GitRepository]importer{
+			c := NewController(factoryFunc(map[common.GitRepository]Importer{
 				repo1: mock1,
 				repo2: mock2,
 			}))
@@ -70,7 +70,7 @@ func TestController(t *testing.T) {
 				cancel()
 				return errors.New("Error")
 			}).Times(1)
-			c := NewController(factoryFunc(map[common.GitRepository]importer{
+			c := NewController(factoryFunc(map[common.GitRepository]Importer{
 				repo: mock,
 			}))
 			c.Index(repo)
@@ -90,7 +90,7 @@ func TestController(t *testing.T) {
 				cancel()
 				return nil
 			}).Times(1)
-			c := NewController(factoryFunc(map[common.GitRepository]importer{
+			c := NewController(factoryFunc(map[common.GitRepository]Importer{
 				repo1: mock1,
 				repo2: mock2,
 			}))

@@ -11,9 +11,11 @@ import (
 	"infra/appengine/cr-rev/common"
 )
 
-type importer interface {
-	// Starts importing desired repository
+// Importer defines interface for importing a repository.
+type Importer interface {
+	// Run starts importing desired repository.
 	Run(context.Context) error
 }
 
-type importerFactory func(context.Context, common.GitRepository) importer
+// ImporterFactory returns Importer for given repository.
+type ImporterFactory func(context.Context, common.GitRepository) Importer

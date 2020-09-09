@@ -33,7 +33,13 @@ func main() {
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
-		// TODO(https://crbug.com/1109358): Consume pubsub
+		cfg, err := config.Get(srv.Context)
+		if err != nil {
+			panic("Couldn't load configuration file")
+		}
+
+		setupImport(srv.Context, cfg)
+
 		srv.Routes.GET("/_ah/start", mw, handleStartup)
 		srv.Routes.GET("/internal/cron/import-config", cron, func(c *router.Context) {
 			if err := config.Set(c.Context); err != nil {
