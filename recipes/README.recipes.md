@@ -286,9 +286,11 @@ Essentially a shim around scripts in
 https://chromium.googlesource.com/infra/infra.git/+/master/build/
 and its internal counterpart.
 
-&mdash; **def [build](/recipes/recipe_modules/infra_cipd/api.py#63)(self):**
+&mdash; **def [build\_without\_env\_refresh](/recipes/recipe_modules/infra_cipd/api.py#63)(self):**
 
 Builds packages.
+
+Prevents build.py from refreshing the python ENV.
 
 &emsp; **@contextlib.contextmanager**<br>&mdash; **def [context](/recipes/recipe_modules/infra_cipd/api.py#23)(self, path_to_repo, goos=None, goarch=None):**
 
@@ -302,15 +304,15 @@ Arguments:
 
 Doesn't support nesting.
 
-&mdash; **def [tags](/recipes/recipe_modules/infra_cipd/api.py#105)(self, git_repo_url, revision):**
+&mdash; **def [tags](/recipes/recipe_modules/infra_cipd/api.py#111)(self, git_repo_url, revision):**
 
 Returns tags to be attached to uploaded CIPD packages.
 
-&mdash; **def [test](/recipes/recipe_modules/infra_cipd/api.py#71)(self):**
+&mdash; **def [test](/recipes/recipe_modules/infra_cipd/api.py#77)(self):**
 
 Tests previously built packages integrity.
 
-&mdash; **def [upload](/recipes/recipe_modules/infra_cipd/api.py#78)(self, tags, step_test_data=None):**
+&mdash; **def [upload](/recipes/recipe_modules/infra_cipd/api.py#84)(self, tags, step_test_data=None):**
 
 Uploads previously built packages.
 ### *recipe_modules* / [infra\_system](/recipes/recipe_modules/infra_system)

@@ -215,7 +215,7 @@ def build_main(api, checkout, buildername, project_name, repo_url, rev):
         goos, goarch = plat.split('-', 1)
 
       with api.infra_cipd.context(api.path['checkout'], goos, goarch):
-        api.infra_cipd.build()
+        api.infra_cipd.build_without_env_refresh()
         if 'test' in options:
           api.infra_cipd.test()
         if is_packager:

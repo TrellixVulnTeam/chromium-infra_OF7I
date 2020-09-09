@@ -228,6 +228,7 @@
       "vpython",
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/build/build.py",
+      "--no-freshen-python-env",
       "--builder",
       "infra-packager-mac-64"
     ],

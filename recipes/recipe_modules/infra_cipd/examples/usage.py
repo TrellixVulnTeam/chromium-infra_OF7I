@@ -31,7 +31,7 @@ def RunSteps(api):
       path_to_repo=path,
       goos=api.properties.get('goos'),
       goarch=api.properties.get('goarch')):
-    api.infra_cipd.build()
+    api.infra_cipd.build_without_env_refresh()
     api.infra_cipd.test()
     if not api.properties.get('no_buildnumbers'):
       api.infra_cipd.upload(api.infra_cipd.tags(url, rev))

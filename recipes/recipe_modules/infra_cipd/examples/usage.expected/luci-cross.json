@@ -4,6 +4,7 @@
       "vpython",
       "-u",
       "[CACHE]/builder/assume/infra/build/build.py",
+      "--no-freshen-python-env",
       "--builder",
       "cross"
     ],

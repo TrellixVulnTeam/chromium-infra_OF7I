@@ -145,6 +145,7 @@
       "vpython",
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/build/build.py",
+      "--no-freshen-python-env",
       "--builder",
       "infra-continuous-trusty-64"
     ],
@@ -163,6 +164,7 @@
       "vpython",
       "-u",
       "[CACHE]/infra_gclient_with_go/infra/build/build.py",
+      "--no-freshen-python-env",
       "--builder",
       "infra-continuous-trusty-64"
     ],

@@ -86,7 +86,8 @@ def RunSteps(api):
       if any(f.startswith('build/') for f in files) or is_deps_roll:
         api.python(
             'cipd - build packages',
-            co.path.join(patch_root, 'build', 'build.py'),
+            co.path.join(
+                patch_root, 'build', 'build.py', '--no-freshen-python-env'),
             venv=True)
         api.python(
             'cipd - test packages integrity',
