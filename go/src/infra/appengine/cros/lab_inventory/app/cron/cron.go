@@ -80,6 +80,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevicesHandler))
 }
 
+const pageSize = 500
+
 func importServiceConfig(c *router.Context) error {
 	return config.Import(c.Context)
 }
@@ -250,39 +252,52 @@ func dumpChangeHistoryToBQCronHandler(c *router.Context) error {
 
 // dumpInventorySnapshot takes a snapshot of the inventory at the current time and
 // uploads it to bigquery.
-func dumpInventorySnapshot(c *router.Context) error {
+func dumpInventorySnapshot(c *router.Context) (err error) {
 	ctx := c.Context
+	defer func() {
+		dumpInventorySnapshotTick.Add(ctx, 1, err == nil)
+	}()
+
 	logging.Infof(c.Context, "Start dumping inventory snapshot")
 	project := info.AppID(ctx)
 	dataset := "inventory"
 	curTimeStr := bqlib.GetPSTTimeStamp(time.Now())
 	client, err := bigquery.NewClient(ctx, project)
+	labconfigUploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab$%s", curTimeStr))
+	stateUploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("stateconfig$%s", curTimeStr))
+
 	if err != nil {
 		return fmt.Errorf("bq client: %s", err)
 	}
 
 	logging.Debugf(ctx, "getting all devices")
-	allDevices, err := datastore.GetAllDevices(ctx)
-	logging.Debugf(ctx, "got devices (%d)", len(allDevices))
-	if err != nil {
-		return fmt.Errorf("gathering devices: %s", err)
-	}
-	labconfigs, stateconfigs, err := converter.DeviceToBQMsgsSeq(allDevices)
-	if es := err.(errors.MultiError); len(es) > 0 {
-		for _, e := range es {
-			logging.Errorf(ctx, "failed to get devices: %s", e)
+	for curPageToken := ""; ; {
+		devices, nextPageToken, err := datastore.ListDevices(ctx, pageSize, curPageToken)
+		if err != nil {
+			return fmt.Errorf("gathering devices: %s", err)
 		}
-	}
-
-	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (lab)", dataset)
-	uploader := bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("lab$%s", curTimeStr))
-	if err := uploader.Put(ctx, labconfigs...); err != nil {
-		return fmt.Errorf("labconfig put: %s", err)
-	}
-	logging.Debugf(ctx, "uploading to bigquery dataset (%s) table (stateconfig)", dataset)
-	uploader = bqlib.InitBQUploaderWithClient(ctx, client, dataset, fmt.Sprintf("stateconfig$%s", curTimeStr))
-	if err := uploader.Put(ctx, stateconfigs...); err != nil {
-		return fmt.Errorf("stateconfig put: %s", err)
+		labconfigs, stateconfigs, err := converter.DeviceToBQMsgsSeq(devices)
+		if es := err.(errors.MultiError); len(es) > 0 {
+			for _, e := range es {
+				logging.Errorf(ctx, "failed to get devices: %s", e)
+			}
+		}
+		if len(labconfigs) > 0 {
+			logging.Debugf(ctx, "uploading %d lab configs to bigquery dataset (%s) table (lab)", len(labconfigs), dataset)
+			if err := labconfigUploader.Put(ctx, labconfigs...); err != nil {
+				return fmt.Errorf("labconfig put: %s", err)
+			}
+		}
+		if len(stateconfigs) > 0 {
+			logging.Debugf(ctx, "uploading %d state configs to bigquery dataset (%s) table (stateconfig)", len(stateconfigs), dataset)
+			if err := stateUploader.Put(ctx, stateconfigs...); err != nil {
+				return fmt.Errorf("stateconfig put: %s", err)
+			}
+		}
+		if nextPageToken == "" {
+			break
+		}
+		curPageToken = nextPageToken
 	}
 
 	logging.Debugf(ctx, "successfully uploaded lab inventory to bigquery")

@@ -372,7 +372,7 @@ func TestGetDevices(t *testing.T) {
 		})
 	})
 	Convey("Get devices from a non-empty datastore", t, func() {
-		dut1 := mockDut("dut1", "", "labstation1")
+		dut1 := mockDut("dut1", "dut_asset123", "labstation1")
 		labstation1 := mockLabstation("labstation1", "ASSET_ID_123")
 		dut1.DeviceConfigId = &device.ConfigId{
 			ModelId: &device.ModelId{Value: "model1"},
@@ -408,6 +408,24 @@ func TestGetDevices(t *testing.T) {
 			So(result.Passed(), ShouldHaveLength, 1)
 			So(result.Passed()[0].Entity.Hostname, ShouldEqual, "dut1")
 			So(result.Failed(), ShouldHaveLength, 0)
+		})
+		Convey("List", func() {
+			count := 0
+			var hostnames []string
+			for curPageToken := ""; ; {
+				result, nextPageToken, err := ListDevices(ctx, 1, curPageToken)
+				So(err, ShouldBeNil)
+				count += len(result)
+				for _, r := range result {
+					hostnames = append(hostnames, r.Entity.Hostname)
+				}
+				if nextPageToken == "" {
+					break
+				}
+				curPageToken = nextPageToken
+			}
+			So(count, ShouldEqual, len(devsToAdd))
+			So(hostnames, ShouldResemble, []string{"labstation1", "dut1"})
 		})
 	})
 }

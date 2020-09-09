@@ -400,6 +400,48 @@ func GetAllDevices(ctx context.Context) (DeviceOpResults, error) {
 	return DeviceOpResults(result), nil
 }
 
+// ListDevices lists the devices
+//
+// Does a query over device entities. Returns up to pageSize entities, plus non-nil cursor (if
+// there are more results). pageSize must be positive.
+func ListDevices(ctx context.Context, pageSize int32, pageToken string) (res []DeviceOpResult, nextPageToken string, err error) {
+	q := datastore.NewQuery(DeviceKind).Ancestor(fakeAcestorKey(ctx)).Limit(pageSize).FirestoreMode(true)
+	var cursor datastore.Cursor
+	if pageToken != "" {
+		cursor, err = datastore.DecodeCursor(ctx, pageToken)
+		if err != nil {
+			logging.Errorf(ctx, "Failed to DecodeCursor from pageToken: %s", err)
+			return nil, "", errors.Annotate(err, "ListDevices").Err()
+		}
+	}
+	if cursor != nil {
+		q = q.Start(cursor)
+	}
+
+	res = make([]DeviceOpResult, 0)
+	var nextCur datastore.Cursor
+	err = datastore.Run(ctx, q, func(ent *DeviceEntity, cb datastore.CursorCB) error {
+		res = append(res, DeviceOpResult{
+			Entity: ent,
+		})
+		if len(res) >= int(pageSize) {
+			if nextCur, err = cb(); err != nil {
+				return err
+			}
+			return datastore.Stop
+		}
+		return nil
+	})
+	if err != nil {
+		logging.Errorf(ctx, "Failed to List devices %s", err)
+		return nil, "", errors.Annotate(err, "ListDevices").Err()
+	}
+	if nextCur != nil {
+		nextPageToken = nextCur.String()
+	}
+	return
+}
+
 // GetDevicesByModels returns all device entities of models.
 //
 // TODO(guocb) optimize for performance if needed.
