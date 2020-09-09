@@ -61,12 +61,9 @@ func ValidateDependencies(ctx context.Context, c Client, argsGenerator ArgsGener
 
 // Task represents an individual test task.
 type Task struct {
-	argsGenerator ArgsGenerator
-	args          request.Args
-	// Note: If we ever begin supporting other harnesses's result formats
-	// then this field will change to a *skylab_test_runner.Result.
-	// For now, the autotest-specific variant is more convenient.
-	autotestResult *skylab_test_runner.Result_Autotest
+	argsGenerator  ArgsGenerator
+	args           request.Args
+	result         *skylab_test_runner.Result
 	lifeCycle      test_platform.TaskState_LifeCycle
 	swarmingTaskID string
 	taskReference  TaskReference
@@ -98,6 +95,10 @@ func (t *Task) name() string {
 	return t.args.Cmd.TaskName
 }
 
+func (t *Task) autotestResult() *skylab_test_runner.Result_Autotest {
+	return t.result.GetAutotestResult()
+}
+
 // LifeCyclesWithResults lists all task states which have a chance of producing
 // test cases results. E.g. this excludes killed tasks.
 var LifeCyclesWithResults = map[test_platform.TaskState_LifeCycle]bool{
@@ -121,16 +122,16 @@ func (t *Task) verdict() test_platform.TaskState_Verdict {
 	if !t.Completed() {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	if t.autotestResult == nil {
+	if t.autotestResult() == nil {
 		return test_platform.TaskState_VERDICT_UNSPECIFIED
 	}
-	if t.autotestResult.Incomplete {
+	if t.autotestResult().Incomplete {
 		return test_platform.TaskState_VERDICT_FAILED
 	}
 
 	// By default (if no test cases ran), then there is no verdict.
 	verdict := test_platform.TaskState_VERDICT_NO_VERDICT
-	for _, c := range t.autotestResult.GetTestCases() {
+	for _, c := range t.autotestResult().GetTestCases() {
 		switch c.Verdict {
 		case skylab_test_runner.Result_Autotest_TestCase_VERDICT_FAIL:
 			// Any case failing means the flat verdict is a failure.
@@ -162,11 +163,14 @@ func (t *Task) Refresh(ctx context.Context, c Client) error {
 		return nil
 	}
 
-	t.autotestResult = resp.Result.GetAutotestResult()
-
-	// If the result is missing, treat the task as incomplete.
-	if t.autotestResult == nil {
-		t.autotestResult = &skylab_test_runner.Result_Autotest{Incomplete: true}
+	t.result = resp.Result
+	// If the autotest result is missing, treat the task as incomplete.
+	if t.autotestResult() == nil {
+		t.result = &skylab_test_runner.Result{
+			Harness: &skylab_test_runner.Result_AutotestResult{
+				AutotestResult: &skylab_test_runner.Result_Autotest{Incomplete: true},
+			},
+		}
 	}
 
 	return nil
@@ -179,7 +183,7 @@ var liftTestCaseRunnerVerdict = map[skylab_test_runner.Result_Autotest_TestCase_
 
 // testCases unpacks test cases contained in the results of a task.
 func (t *Task) testCases() []*steps.ExecuteResponse_TaskResult_TestCaseResult {
-	tcs := t.autotestResult.GetTestCases()
+	tcs := t.autotestResult().GetTestCases()
 	if len(tcs) == 0 {
 		// Prefer a nil over an empty slice since it's the proto default.
 		return nil
