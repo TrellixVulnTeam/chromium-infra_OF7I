@@ -26,6 +26,7 @@ import (
 type getAllFunc func(ctx context.Context) ([]proto.Message, error)
 
 var registrationDumpToolkit = map[string]getAllFunc{
+	"assets":   getAllAssetMsgs,
 	"machines": getAllMachineMsgs,
 	"racks":    getAllRackMsgs,
 	"kvms":     getAllKVMMsgs,
@@ -232,6 +233,26 @@ func getAllRackMsgs(ctx context.Context) ([]proto.Message, error) {
 		for _, r := range res {
 			msgs = append(msgs, &apibq.RackRow{
 				Rack: r,
+			})
+		}
+		if nextToken == "" {
+			break
+		}
+		startToken = nextToken
+	}
+	return msgs, nil
+}
+
+func getAllAssetMsgs(ctx context.Context) ([]proto.Message, error) {
+	msgs := make([]proto.Message, 0)
+	for startToken := ""; ; {
+		res, nextToken, err := registration.ListAssets(ctx, pageSize, startToken, nil, false)
+		if err != nil {
+			return nil, errors.Annotate(err, "get all assets").Err()
+		}
+		for _, r := range res {
+			msgs = append(msgs, &apibq.AssetRow{
+				Asset: r,
 			})
 		}
 		if nextToken == "" {
