@@ -16,7 +16,7 @@ def RunSteps(api):
   api.file.ensure_directory("init cache if it doesn't exist", solution_path)
   with api.context(cwd=solution_path):
     api.gclient.set_config('infra')
-    api.gclient.c.solutions[0].revision = 'origin/deployed'
+    api.gclient.c.solutions[0].revision = 'origin/master'
     api.gclient.checkout(timeout=10 * 60)
     api.gclient.runhooks()
 
