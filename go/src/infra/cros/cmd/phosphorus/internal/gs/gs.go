@@ -83,23 +83,21 @@ type Path gcgs.Path
 // WriteDir Write all files in the subtree of the local path to the corresponding places
 //  in the subtree of the GS path
 func (w *prodDirWriter) WriteDir(ctx context.Context) error {
-	logging.Debugf(ctx, "writing %s and subtree", w.localRootDir)
+	logging.Debugf(ctx, "Writing %s and subtree to %s.", w.localRootDir, w.gsRootDir)
 	writeOne := func(src string, info os.FileInfo, err error) error {
 		if info.IsDir() {
-			logging.Debugf(ctx, "path %s is a directory", src)
 			return nil
 		}
 		if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-			logging.Debugf(ctx, "path %s is a symlink", src)
+			logging.Debugf(ctx, "Skipped %s because it is a symlink.", src)
 			return nil
 		}
 		relPath, err := filepath.Rel(w.localRootDir, src)
 		if err != nil {
-			return errors.Annotate(err, "writing from %s to %s/<?>", src, w.gsRootDir).Err()
+			return errors.Annotate(err, "writing from %s to %s", src, w.gsRootDir).Err()
 		}
 		gsDest := w.gsRootDir.Concat(relPath)
 		dest := Path(gsDest)
-		logging.Debugf(ctx, "writing from %s to %s", src, dest)
 		f, err := os.Open(src)
 		if err != nil {
 			return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
@@ -127,7 +125,6 @@ func (w *prodDirWriter) WriteDir(ctx context.Context) error {
 		if err != nil {
 			return errors.Annotate(err, "writer for %s failed to close", dest).Err()
 		}
-		logging.Debugf(ctx, "wrote %d bytes to %s", n, dest)
 		return nil
 	}
 	if err := filepath.Walk(w.localRootDir, writeOne); err != nil {

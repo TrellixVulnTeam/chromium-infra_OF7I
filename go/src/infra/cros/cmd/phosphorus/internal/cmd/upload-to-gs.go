@@ -122,18 +122,18 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 				err, dirList(localPath),
 			)
 		}
+		logging.Debugf(ctx, "Successfully deleted local directory.")
 	}()
 	path := gs.Path(r.GetGsDirectory())
 	w, err := createDirWriter(ctx, localPath, path, &authFlags)
 	if err != nil {
 		return "", err
 	}
-	logging.Debugf(ctx, "writing %s", localPath)
 	if err = w.WriteDir(ctx); err != nil {
-		logging.Debugf(ctx, dirList(localPath))
+		logging.Debugf(ctx, "Directory listing for failed upload: %s", dirList(localPath))
 		return "", err
 	}
-	logging.Debugf(ctx, dirList(localPath))
+	logging.Infof(ctx, "All files uploaded.")
 	return r.GetGsDirectory(), nil
 }
 
