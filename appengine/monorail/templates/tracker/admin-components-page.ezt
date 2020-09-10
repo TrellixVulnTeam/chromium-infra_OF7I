@@ -54,6 +54,7 @@
    <tbody>
      <tr>
        [if-any perms.EditProject]<th></th>[end]
+       <th>ID</th>
        <th>Name</th>
        <th>Administrators</th>
        <th>Auto Cc</th>
@@ -77,6 +78,9 @@
              <input type="checkbox" data-path="[component_defs.path]" class="checkRangeSelect">
            </td>
          [end]
+         <td>
+            [component_defs.component_id]
+         </td>
          <td class="id">
            <a style="white-space:nowrap" href="[detail_url]">[component_defs.path]</a>
          </td>

@@ -135,7 +135,7 @@ message UserSettings {
 message UserSavedQuery {
   option (google.api.resource) = {
     type: "api.crbug.com/UserSavedQuery"
-    pattern: "users/{user_id}/savedQueries/{savedQuery}"
+    pattern: "users/{user_id}/savedQueries/{saved_query_id}"
   };
 
   // Resource name of this saved query.

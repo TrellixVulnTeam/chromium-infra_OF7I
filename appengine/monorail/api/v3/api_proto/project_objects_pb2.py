@@ -24,7 +24,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n&api/v3/api_proto/project_objects.proto\x12\x0bmonorail.v3\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a$api/v3/api_proto/issue_objects.proto\x1a)api/v3/api_proto/permission_objects.proto\"\x8a\x01\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x15\n\rthumbnail_url\x18\x04 \x01(\t:.\xea\x41+\n\x15\x61pi.crbug.com/Project\x12\x12projects/{project}\"\xa0\x03\n\tStatusDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x32\n\x04type\x18\x03 \x01(\x0e\x32$.monorail.v3.StatusDef.StatusDefType\x12\x0c\n\x04rank\x18\x04 \x01(\r\x12\x11\n\tdocstring\x18\x05 \x01(\t\x12\x34\n\x05state\x18\x06 \x01(\x0e\x32%.monorail.v3.StatusDef.StatusDefState\"R\n\rStatusDefType\x12\x1f\n\x1bSTATUS_DEF_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04OPEN\x10\x01\x12\n\n\x06\x43LOSED\x10\x02\x12\n\n\x06MERGED\x10\x03\"N\n\x0eStatusDefState\x12 \n\x1cSTATUS_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:G\xea\x41\x44\n\x17\x61pi.crbug.com/StatusDef\x12)projects/{project}/statusDefs/{statusDef}\"\x82\x02\n\x08LabelDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\x32\n\x05state\x18\x04 \x01(\x0e\x32#.monorail.v3.LabelDef.LabelDefState\"L\n\rLabelDefState\x12\x1f\n\x1bLABEL_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:D\xea\x41\x41\n\x16\x61pi.crbug.com/LabelDef\x12\'projects/{project}/labelDefs/{labelDef}\"\xc7\r\n\x08\x46ieldDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12-\n\x04type\x18\x04 \x01(\x0e\x32\x1a.monorail.v3.FieldDef.TypeB\x03\xe0\x41\x05\x12\x1d\n\x15\x61pplicable_issue_type\x18\x05 \x01(\t\x12\'\n\x06\x61\x64mins\x18\x06 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12,\n\x06traits\x18\x07 \x03(\x0e\x32\x1c.monorail.v3.FieldDef.Traits\x12:\n\x0f\x61pproval_parent\x18\x08 \x01(\tB!\xfa\x41\x1b\n\x19\x61pi.crbug.com/ApprovalDef\xe0\x41\x05\x12=\n\renum_settings\x18\t \x01(\x0b\x32&.monorail.v3.FieldDef.EnumTypeSettings\x12;\n\x0cint_settings\x18\n \x01(\x0b\x32%.monorail.v3.FieldDef.IntTypeSettings\x12;\n\x0cstr_settings\x18\x0b \x01(\x0b\x32%.monorail.v3.FieldDef.StrTypeSettings\x12=\n\ruser_settings\x18\x0c \x01(\x0b\x32&.monorail.v3.FieldDef.UserTypeSettings\x12=\n\rdate_settings\x18\r \x01(\x0b\x32&.monorail.v3.FieldDef.DateTypeSettings\x12(\n\x07\x65\x64itors\x18\x0e \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x1a~\n\x10\x45numTypeSettings\x12>\n\x07\x63hoices\x18\x01 \x03(\x0b\x32-.monorail.v3.FieldDef.EnumTypeSettings.Choice\x1a*\n\x06\x43hoice\x12\r\n\x05value\x18\x01 \x01(\t\x12\x11\n\tdocstring\x18\x02 \x01(\t\x1a\x37\n\x0fIntTypeSettings\x12\x11\n\tmin_value\x18\x01 \x01(\x05\x12\x11\n\tmax_value\x18\x02 \x01(\x05\x1a \n\x0fStrTypeSettings\x12\r\n\x05regex\x18\x01 \x01(\t\x1a\x92\x03\n\x10UserTypeSettings\x12N\n\x0fnotify_triggers\x18\x01 \x01(\x0e\x32\x35.monorail.v3.FieldDef.UserTypeSettings.NotifyTriggers\x12R\n\x11role_requirements\x18\x02 \x01(\x0e\x32\x37.monorail.v3.FieldDef.UserTypeSettings.RoleRequirements\x12\x13\n\x0bgrants_perm\x18\x03 \x01(\t\x12\x12\n\nneeds_perm\x18\x04 \x01(\t\"M\n\x0eNotifyTriggers\x12\x1f\n\x1bNOTIFY_TRIGGERS_UNSPECIFIED\x10\x00\x12\t\n\x05NEVER\x10\x01\x12\x0f\n\x0b\x41NY_COMMENT\x10\x02\"b\n\x10RoleRequirements\x12!\n\x1dROLE_REQUIREMENTS_UNSPECIFIED\x10\x00\x12\x17\n\x13NO_ROLE_REQUIREMENT\x10\x01\x12\x12\n\x0ePROJECT_MEMBER\x10\x02\x1a\xbf\x01\n\x10\x44\x61teTypeSettings\x12\x46\n\x0b\x64\x61te_action\x18\x01 \x01(\x0e\x32\x31.monorail.v3.FieldDef.DateTypeSettings.DateAction\"c\n\nDateAction\x12\x1b\n\x17\x44\x41TE_ACTION_UNSPECIFIED\x10\x00\x12\r\n\tNO_ACTION\x10\x01\x12\x10\n\x0cNOTIFY_OWNER\x10\x02\x12\x17\n\x13NOTIFY_PARTICIPANTS\x10\x03\"U\n\x04Type\x12\x14\n\x10TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04\x45NUM\x10\x01\x12\x07\n\x03INT\x10\x02\x12\x07\n\x03STR\x10\x03\x12\x08\n\x04USER\x10\x04\x12\x08\n\x04\x44\x41TE\x10\x05\x12\x07\n\x03URL\x10\x06\"n\n\x06Traits\x12\x16\n\x12TRAITS_UNSPECIFIED\x10\x00\x12\x0c\n\x08REQUIRED\x10\x01\x12\x12\n\x0e\x44\x45\x46\x41ULT_HIDDEN\x10\x02\x12\x0f\n\x0bMULTIVALUED\x10\x03\x12\t\n\x05PHASE\x10\x04\x12\x0e\n\nRESTRICTED\x10\x05:D\xea\x41\x41\n\x16\x61pi.crbug.com/FieldDef\x12\'projects/{project}/fieldDefs/{fieldDef}\"\xc8\x04\n\x0c\x43omponentDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\'\n\x06\x61\x64mins\x18\x04 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12$\n\x03\x63\x63s\x18\x05 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12:\n\x05state\x18\x06 \x01(\x0e\x32+.monorail.v3.ComponentDef.ComponentDefState\x12+\n\x07\x63reator\x18\x07 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12,\n\x08modifier\x18\x08 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\t \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x34\n\x0bmodify_time\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x0e\n\x06labels\x18\x0b \x03(\t\"T\n\x11\x43omponentDefState\x12#\n\x1f\x43OMPONENT_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:P\xea\x41M\n\x1a\x61pi.crbug.com/ComponentDef\x12/projects/{project}/componentDefs/{componentDef}\"\xfd\x01\n\x0b\x41pprovalDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\x0e\n\x06survey\x18\x04 \x01(\t\x12*\n\tapprovers\x18\x05 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\'\n\x06\x61\x64mins\x18\x06 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User:M\xea\x41J\n\x19\x61pi.crbug.com/ApprovalDef\x12-projects/{project}/approvalDefs/{approvalDef}\"\x9a\x01\n\x11ProjectSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t:R\xea\x41O\n\x1f\x61pi.crbug.com/ProjectSavedQuery\x12,projects/{project}/savedQueries/{savedQuery}\"\xe8\x04\n\rIssueTemplate\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12!\n\x05issue\x18\x03 \x01(\x0b\x32\x12.monorail.v3.Issue\x12\x33\n\x0f\x61pproval_values\x18\t \x03(\x0b\x32\x1a.monorail.v3.ApprovalValue\x12\x1e\n\x16summary_must_be_edited\x18\x04 \x01(\x08\x12\x44\n\x10template_privacy\x18\x05 \x01(\x0e\x32*.monorail.v3.IssueTemplate.TemplatePrivacy\x12>\n\rdefault_owner\x18\x06 \x01(\x0e\x32\'.monorail.v3.IssueTemplate.DefaultOwner\x12\x1a\n\x12\x63omponent_required\x18\x07 \x01(\x08\x12\'\n\x06\x61\x64mins\x18\x08 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\"Q\n\x0fTemplatePrivacy\x12 \n\x1cTEMPLATE_PRIVACY_UNSPECIFIED\x10\x00\x12\x10\n\x0cMEMBERS_ONLY\x10\x01\x12\n\n\x06PUBLIC\x10\x02\"J\n\x0c\x44\x65\x66\x61ultOwner\x12\x1d\n\x19\x44\x45\x46\x41ULT_OWNER_UNSPECIFIED\x10\x00\x12\x1b\n\x17PROJECT_MEMBER_REPORTER\x10\x01:L\xea\x41I\n\x1b\x61pi.crbug.com/IssueTemplate\x12*projects/{project}/templates/{template_id}\"\xb0\x04\n\rProjectConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12 \n\x18\x65xclusive_label_prefixes\x18\x02 \x03(\t\x12\x1c\n\x14member_default_query\x18\x03 \x01(\t\x12\x14\n\x0c\x64\x65\x66\x61ult_sort\x18\x04 \x01(\t\x12\x36\n\x0f\x64\x65\x66\x61ult_columns\x18\x05 \x03(\x0b\x32\x1d.monorail.v3.IssuesListColumn\x12\x46\n\x13project_grid_config\x18\x06 \x01(\x0b\x32).monorail.v3.ProjectConfig.GridViewConfig\x12<\n\x17member_default_template\x18\x07 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x41\n\x1cnon_members_default_template\x18\x08 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x1b\n\x13revision_url_format\x18\t \x01(\t\x12\x1e\n\x16\x63ustom_issue_entry_url\x18\n \x01(\t\x1a@\n\x0eGridViewConfig\x12\x16\n\x0e\x64\x65\x66\x61ult_x_attr\x18\x01 \x01(\t\x12\x16\n\x0e\x64\x65\x66\x61ult_y_attr\x18\x02 \x01(\t:;\xea\x41\x38\n\x1b\x61pi.crbug.com/ProjectConfig\x12\x19projects/{project}/config\"\xaf\x03\n\rProjectMember\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x34\n\x04role\x18\x02 \x01(\x0e\x32&.monorail.v3.ProjectMember.ProjectRole\x12/\n\x0estandard_perms\x18\x03 \x03(\x0e\x32\x17.monorail.v3.Permission\x12\x14\n\x0c\x63ustom_perms\x18\x04 \x03(\t\x12\r\n\x05notes\x18\x05 \x01(\t\x12R\n\x17include_in_autocomplete\x18\x06 \x01(\x0e\x32\x31.monorail.v3.ProjectMember.AutocompleteVisibility\"V\n\x0bProjectRole\x12\x1c\n\x18PROJECT_ROLE_UNSPECIFIED\x10\x00\x12\t\n\x05OWNER\x10\x01\x12\r\n\tCOMMITTER\x10\x02\x12\x0f\n\x0b\x43ONTRIBUTOR\x10\x03\"X\n\x16\x41utocompleteVisibility\x12\'\n#AUTOCOMPLETE_VISIBILITY_UNSPECIFIED\x10\x00\x12\n\n\x06HIDDEN\x10\x01\x12\t\n\x05SHOWN\x10\x02\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+  serialized_pb=b'\n&api/v3/api_proto/project_objects.proto\x12\x0bmonorail.v3\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a$api/v3/api_proto/issue_objects.proto\x1a)api/v3/api_proto/permission_objects.proto\"\x8a\x01\n\x07Project\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12\x0f\n\x07summary\x18\x03 \x01(\t\x12\x15\n\rthumbnail_url\x18\x04 \x01(\t:.\xea\x41+\n\x15\x61pi.crbug.com/Project\x12\x12projects/{project}\"\xa1\x03\n\tStatusDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x32\n\x04type\x18\x03 \x01(\x0e\x32$.monorail.v3.StatusDef.StatusDefType\x12\x0c\n\x04rank\x18\x04 \x01(\r\x12\x11\n\tdocstring\x18\x05 \x01(\t\x12\x34\n\x05state\x18\x06 \x01(\x0e\x32%.monorail.v3.StatusDef.StatusDefState\"R\n\rStatusDefType\x12\x1f\n\x1bSTATUS_DEF_TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04OPEN\x10\x01\x12\n\n\x06\x43LOSED\x10\x02\x12\n\n\x06MERGED\x10\x03\"N\n\x0eStatusDefState\x12 \n\x1cSTATUS_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:H\xea\x41\x45\n\x17\x61pi.crbug.com/StatusDef\x12*projects/{project}/statusDefs/{status_def}\"\x83\x02\n\x08LabelDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\x32\n\x05state\x18\x04 \x01(\x0e\x32#.monorail.v3.LabelDef.LabelDefState\"L\n\rLabelDefState\x12\x1f\n\x1bLABEL_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:E\xea\x41\x42\n\x16\x61pi.crbug.com/LabelDef\x12(projects/{project}/labelDefs/{label_def}\"\xcb\r\n\x08\x46ieldDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12-\n\x04type\x18\x04 \x01(\x0e\x32\x1a.monorail.v3.FieldDef.TypeB\x03\xe0\x41\x05\x12\x1d\n\x15\x61pplicable_issue_type\x18\x05 \x01(\t\x12\'\n\x06\x61\x64mins\x18\x06 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12,\n\x06traits\x18\x07 \x03(\x0e\x32\x1c.monorail.v3.FieldDef.Traits\x12:\n\x0f\x61pproval_parent\x18\x08 \x01(\tB!\xfa\x41\x1b\n\x19\x61pi.crbug.com/ApprovalDef\xe0\x41\x05\x12=\n\renum_settings\x18\t \x01(\x0b\x32&.monorail.v3.FieldDef.EnumTypeSettings\x12;\n\x0cint_settings\x18\n \x01(\x0b\x32%.monorail.v3.FieldDef.IntTypeSettings\x12;\n\x0cstr_settings\x18\x0b \x01(\x0b\x32%.monorail.v3.FieldDef.StrTypeSettings\x12=\n\ruser_settings\x18\x0c \x01(\x0b\x32&.monorail.v3.FieldDef.UserTypeSettings\x12=\n\rdate_settings\x18\r \x01(\x0b\x32&.monorail.v3.FieldDef.DateTypeSettings\x12(\n\x07\x65\x64itors\x18\x0e \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x1a~\n\x10\x45numTypeSettings\x12>\n\x07\x63hoices\x18\x01 \x03(\x0b\x32-.monorail.v3.FieldDef.EnumTypeSettings.Choice\x1a*\n\x06\x43hoice\x12\r\n\x05value\x18\x01 \x01(\t\x12\x11\n\tdocstring\x18\x02 \x01(\t\x1a\x37\n\x0fIntTypeSettings\x12\x11\n\tmin_value\x18\x01 \x01(\x05\x12\x11\n\tmax_value\x18\x02 \x01(\x05\x1a \n\x0fStrTypeSettings\x12\r\n\x05regex\x18\x01 \x01(\t\x1a\x92\x03\n\x10UserTypeSettings\x12N\n\x0fnotify_triggers\x18\x01 \x01(\x0e\x32\x35.monorail.v3.FieldDef.UserTypeSettings.NotifyTriggers\x12R\n\x11role_requirements\x18\x02 \x01(\x0e\x32\x37.monorail.v3.FieldDef.UserTypeSettings.RoleRequirements\x12\x13\n\x0bgrants_perm\x18\x03 \x01(\t\x12\x12\n\nneeds_perm\x18\x04 \x01(\t\"M\n\x0eNotifyTriggers\x12\x1f\n\x1bNOTIFY_TRIGGERS_UNSPECIFIED\x10\x00\x12\t\n\x05NEVER\x10\x01\x12\x0f\n\x0b\x41NY_COMMENT\x10\x02\"b\n\x10RoleRequirements\x12!\n\x1dROLE_REQUIREMENTS_UNSPECIFIED\x10\x00\x12\x17\n\x13NO_ROLE_REQUIREMENT\x10\x01\x12\x12\n\x0ePROJECT_MEMBER\x10\x02\x1a\xbf\x01\n\x10\x44\x61teTypeSettings\x12\x46\n\x0b\x64\x61te_action\x18\x01 \x01(\x0e\x32\x31.monorail.v3.FieldDef.DateTypeSettings.DateAction\"c\n\nDateAction\x12\x1b\n\x17\x44\x41TE_ACTION_UNSPECIFIED\x10\x00\x12\r\n\tNO_ACTION\x10\x01\x12\x10\n\x0cNOTIFY_OWNER\x10\x02\x12\x17\n\x13NOTIFY_PARTICIPANTS\x10\x03\"U\n\x04Type\x12\x14\n\x10TYPE_UNSPECIFIED\x10\x00\x12\x08\n\x04\x45NUM\x10\x01\x12\x07\n\x03INT\x10\x02\x12\x07\n\x03STR\x10\x03\x12\x08\n\x04USER\x10\x04\x12\x08\n\x04\x44\x41TE\x10\x05\x12\x07\n\x03URL\x10\x06\"n\n\x06Traits\x12\x16\n\x12TRAITS_UNSPECIFIED\x10\x00\x12\x0c\n\x08REQUIRED\x10\x01\x12\x12\n\x0e\x44\x45\x46\x41ULT_HIDDEN\x10\x02\x12\x0f\n\x0bMULTIVALUED\x10\x03\x12\t\n\x05PHASE\x10\x04\x12\x0e\n\nRESTRICTED\x10\x05:H\xea\x41\x45\n\x16\x61pi.crbug.com/FieldDef\x12+projects/{project}/fieldDefs/{field_def_id}\"\xcc\x04\n\x0c\x43omponentDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\'\n\x06\x61\x64mins\x18\x04 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12$\n\x03\x63\x63s\x18\x05 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12:\n\x05state\x18\x06 \x01(\x0e\x32+.monorail.v3.ComponentDef.ComponentDefState\x12+\n\x07\x63reator\x18\x07 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12,\n\x08modifier\x18\x08 \x01(\tB\x1a\xfa\x41\x14\n\x12\x61pi.crbug.com/User\xe0\x41\x03\x12\x34\n\x0b\x63reate_time\x18\t \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x34\n\x0bmodify_time\x18\n \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x03\xe0\x41\x03\x12\x0e\n\x06labels\x18\x0b \x03(\t\"T\n\x11\x43omponentDefState\x12#\n\x1f\x43OMPONENT_DEF_STATE_UNSPECIFIED\x10\x00\x12\x0e\n\nDEPRECATED\x10\x01\x12\n\n\x06\x41\x43TIVE\x10\x02:T\xea\x41Q\n\x1a\x61pi.crbug.com/ComponentDef\x12\x33projects/{project}/componentDefs/{component_def_id}\"\x81\x02\n\x0b\x41pprovalDef\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12\x11\n\tdocstring\x18\x03 \x01(\t\x12\x0e\n\x06survey\x18\x04 \x01(\t\x12*\n\tapprovers\x18\x05 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\x12\'\n\x06\x61\x64mins\x18\x06 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User:Q\xea\x41N\n\x19\x61pi.crbug.com/ApprovalDef\x12\x31projects/{project}/approvalDefs/{approval_def_id}\"\x9e\x01\n\x11ProjectSavedQuery\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x14\n\x0c\x64isplay_name\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t:V\xea\x41S\n\x1f\x61pi.crbug.com/ProjectSavedQuery\x12\x30projects/{project}/savedQueries/{saved_query_id}\"\xe8\x04\n\rIssueTemplate\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x19\n\x0c\x64isplay_name\x18\x02 \x01(\tB\x03\xe0\x41\x05\x12!\n\x05issue\x18\x03 \x01(\x0b\x32\x12.monorail.v3.Issue\x12\x33\n\x0f\x61pproval_values\x18\t \x03(\x0b\x32\x1a.monorail.v3.ApprovalValue\x12\x1e\n\x16summary_must_be_edited\x18\x04 \x01(\x08\x12\x44\n\x10template_privacy\x18\x05 \x01(\x0e\x32*.monorail.v3.IssueTemplate.TemplatePrivacy\x12>\n\rdefault_owner\x18\x06 \x01(\x0e\x32\'.monorail.v3.IssueTemplate.DefaultOwner\x12\x1a\n\x12\x63omponent_required\x18\x07 \x01(\x08\x12\'\n\x06\x61\x64mins\x18\x08 \x03(\tB\x17\xfa\x41\x14\n\x12\x61pi.crbug.com/User\"Q\n\x0fTemplatePrivacy\x12 \n\x1cTEMPLATE_PRIVACY_UNSPECIFIED\x10\x00\x12\x10\n\x0cMEMBERS_ONLY\x10\x01\x12\n\n\x06PUBLIC\x10\x02\"J\n\x0c\x44\x65\x66\x61ultOwner\x12\x1d\n\x19\x44\x45\x46\x41ULT_OWNER_UNSPECIFIED\x10\x00\x12\x1b\n\x17PROJECT_MEMBER_REPORTER\x10\x01:L\xea\x41I\n\x1b\x61pi.crbug.com/IssueTemplate\x12*projects/{project}/templates/{template_id}\"\xb0\x04\n\rProjectConfig\x12\x0c\n\x04name\x18\x01 \x01(\t\x12 \n\x18\x65xclusive_label_prefixes\x18\x02 \x03(\t\x12\x1c\n\x14member_default_query\x18\x03 \x01(\t\x12\x14\n\x0c\x64\x65\x66\x61ult_sort\x18\x04 \x01(\t\x12\x36\n\x0f\x64\x65\x66\x61ult_columns\x18\x05 \x03(\x0b\x32\x1d.monorail.v3.IssuesListColumn\x12\x46\n\x13project_grid_config\x18\x06 \x01(\x0b\x32).monorail.v3.ProjectConfig.GridViewConfig\x12<\n\x17member_default_template\x18\x07 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x41\n\x1cnon_members_default_template\x18\x08 \x01(\tB\x1b\xfa\x41\x18\n\x16\x61pi.crbug.com/Template\x12\x1b\n\x13revision_url_format\x18\t \x01(\t\x12\x1e\n\x16\x63ustom_issue_entry_url\x18\n \x01(\t\x1a@\n\x0eGridViewConfig\x12\x16\n\x0e\x64\x65\x66\x61ult_x_attr\x18\x01 \x01(\t\x12\x16\n\x0e\x64\x65\x66\x61ult_y_attr\x18\x02 \x01(\t:;\xea\x41\x38\n\x1b\x61pi.crbug.com/ProjectConfig\x12\x19projects/{project}/config\"\xaf\x03\n\rProjectMember\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x34\n\x04role\x18\x02 \x01(\x0e\x32&.monorail.v3.ProjectMember.ProjectRole\x12/\n\x0estandard_perms\x18\x03 \x03(\x0e\x32\x17.monorail.v3.Permission\x12\x14\n\x0c\x63ustom_perms\x18\x04 \x03(\t\x12\r\n\x05notes\x18\x05 \x01(\t\x12R\n\x17include_in_autocomplete\x18\x06 \x01(\x0e\x32\x31.monorail.v3.ProjectMember.AutocompleteVisibility\"V\n\x0bProjectRole\x12\x1c\n\x18PROJECT_ROLE_UNSPECIFIED\x10\x00\x12\t\n\x05OWNER\x10\x01\x12\r\n\tCOMMITTER\x10\x02\x12\x0f\n\x0b\x43ONTRIBUTOR\x10\x03\"X\n\x16\x41utocompleteVisibility\x12\'\n#AUTOCOMPLETE_VISIBILITY_UNSPECIFIED\x10\x00\x12\n\n\x06HIDDEN\x10\x01\x12\t\n\x05SHOWN\x10\x02\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_issue__objects__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_permission__objects__pb2.DESCRIPTOR,])
 
@@ -120,8 +120,8 @@ _LABELDEF_LABELDEFSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=902,
-  serialized_end=978,
+  serialized_start=903,
+  serialized_end=979,
 )
 _sym_db.RegisterEnumDescriptor(_LABELDEF_LABELDEFSTATE)
 
@@ -150,8 +150,8 @@ _FIELDDEF_USERTYPESETTINGS_NOTIFYTRIGGERS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2146,
-  serialized_end=2223,
+  serialized_start=2148,
+  serialized_end=2225,
 )
 _sym_db.RegisterEnumDescriptor(_FIELDDEF_USERTYPESETTINGS_NOTIFYTRIGGERS)
 
@@ -180,8 +180,8 @@ _FIELDDEF_USERTYPESETTINGS_ROLEREQUIREMENTS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2225,
-  serialized_end=2323,
+  serialized_start=2227,
+  serialized_end=2325,
 )
 _sym_db.RegisterEnumDescriptor(_FIELDDEF_USERTYPESETTINGS_ROLEREQUIREMENTS)
 
@@ -215,8 +215,8 @@ _FIELDDEF_DATETYPESETTINGS_DATEACTION = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2418,
-  serialized_end=2517,
+  serialized_start=2420,
+  serialized_end=2519,
 )
 _sym_db.RegisterEnumDescriptor(_FIELDDEF_DATETYPESETTINGS_DATEACTION)
 
@@ -265,8 +265,8 @@ _FIELDDEF_TYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2519,
-  serialized_end=2604,
+  serialized_start=2521,
+  serialized_end=2606,
 )
 _sym_db.RegisterEnumDescriptor(_FIELDDEF_TYPE)
 
@@ -310,8 +310,8 @@ _FIELDDEF_TRAITS = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=2606,
-  serialized_end=2716,
+  serialized_start=2608,
+  serialized_end=2718,
 )
 _sym_db.RegisterEnumDescriptor(_FIELDDEF_TRAITS)
 
@@ -340,8 +340,8 @@ _COMPONENTDEF_COMPONENTDEFSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3207,
-  serialized_end=3291,
+  serialized_start=3213,
+  serialized_end=3297,
 )
 _sym_db.RegisterEnumDescriptor(_COMPONENTDEF_COMPONENTDEFSTATE)
 
@@ -370,8 +370,8 @@ _ISSUETEMPLATE_TEMPLATEPRIVACY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4170,
-  serialized_end=4251,
+  serialized_start=4188,
+  serialized_end=4269,
 )
 _sym_db.RegisterEnumDescriptor(_ISSUETEMPLATE_TEMPLATEPRIVACY)
 
@@ -395,8 +395,8 @@ _ISSUETEMPLATE_DEFAULTOWNER = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4253,
-  serialized_end=4327,
+  serialized_start=4271,
+  serialized_end=4345,
 )
 _sym_db.RegisterEnumDescriptor(_ISSUETEMPLATE_DEFAULTOWNER)
 
@@ -430,8 +430,8 @@ _PROJECTMEMBER_PROJECTROLE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=5226,
-  serialized_end=5312,
+  serialized_start=5244,
+  serialized_end=5330,
 )
 _sym_db.RegisterEnumDescriptor(_PROJECTMEMBER_PROJECTROLE)
 
@@ -460,8 +460,8 @@ _PROJECTMEMBER_AUTOCOMPLETEVISIBILITY = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=5314,
-  serialized_end=5402,
+  serialized_start=5332,
+  serialized_end=5420,
 )
 _sym_db.RegisterEnumDescriptor(_PROJECTMEMBER_AUTOCOMPLETEVISIBILITY)
 
@@ -577,14 +577,14 @@ _STATUSDEF = _descriptor.Descriptor(
     _STATUSDEF_STATUSDEFTYPE,
     _STATUSDEF_STATUSDEFSTATE,
   ],
-  serialized_options=b'\352AD\n\027api.crbug.com/StatusDef\022)projects/{project}/statusDefs/{statusDef}',
+  serialized_options=b'\352AE\n\027api.crbug.com/StatusDef\022*projects/{project}/statusDefs/{status_def}',
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
   serialized_start=371,
-  serialized_end=787,
+  serialized_end=788,
 )
 
 
@@ -631,14 +631,14 @@ _LABELDEF = _descriptor.Descriptor(
   enum_types=[
     _LABELDEF_LABELDEFSTATE,
   ],
-  serialized_options=b'\352AA\n\026api.crbug.com/LabelDef\022\'projects/{project}/labelDefs/{labelDef}',
+  serialized_options=b'\352AB\n\026api.crbug.com/LabelDef\022(projects/{project}/labelDefs/{label_def}',
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=790,
-  serialized_end=1048,
+  serialized_start=791,
+  serialized_end=1050,
 )
 
 
@@ -676,8 +676,8 @@ _FIELDDEF_ENUMTYPESETTINGS_CHOICE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1785,
-  serialized_end=1827,
+  serialized_start=1787,
+  serialized_end=1829,
 )
 
 _FIELDDEF_ENUMTYPESETTINGS = _descriptor.Descriptor(
@@ -707,8 +707,8 @@ _FIELDDEF_ENUMTYPESETTINGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1701,
-  serialized_end=1827,
+  serialized_start=1703,
+  serialized_end=1829,
 )
 
 _FIELDDEF_INTTYPESETTINGS = _descriptor.Descriptor(
@@ -745,8 +745,8 @@ _FIELDDEF_INTTYPESETTINGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1829,
-  serialized_end=1884,
+  serialized_start=1831,
+  serialized_end=1886,
 )
 
 _FIELDDEF_STRTYPESETTINGS = _descriptor.Descriptor(
@@ -776,8 +776,8 @@ _FIELDDEF_STRTYPESETTINGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1886,
-  serialized_end=1918,
+  serialized_start=1888,
+  serialized_end=1920,
 )
 
 _FIELDDEF_USERTYPESETTINGS = _descriptor.Descriptor(
@@ -830,8 +830,8 @@ _FIELDDEF_USERTYPESETTINGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1921,
-  serialized_end=2323,
+  serialized_start=1923,
+  serialized_end=2325,
 )
 
 _FIELDDEF_DATETYPESETTINGS = _descriptor.Descriptor(
@@ -862,8 +862,8 @@ _FIELDDEF_DATETYPESETTINGS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2326,
-  serialized_end=2517,
+  serialized_start=2328,
+  serialized_end=2519,
 )
 
 _FIELDDEF = _descriptor.Descriptor(
@@ -980,14 +980,14 @@ _FIELDDEF = _descriptor.Descriptor(
     _FIELDDEF_TYPE,
     _FIELDDEF_TRAITS,
   ],
-  serialized_options=b'\352AA\n\026api.crbug.com/FieldDef\022\'projects/{project}/fieldDefs/{fieldDef}',
+  serialized_options=b'\352AE\n\026api.crbug.com/FieldDef\022+projects/{project}/fieldDefs/{field_def_id}',
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1051,
-  serialized_end=2786,
+  serialized_start=1053,
+  serialized_end=2792,
 )
 
 
@@ -1083,14 +1083,14 @@ _COMPONENTDEF = _descriptor.Descriptor(
   enum_types=[
     _COMPONENTDEF_COMPONENTDEFSTATE,
   ],
-  serialized_options=b'\352AM\n\032api.crbug.com/ComponentDef\022/projects/{project}/componentDefs/{componentDef}',
+  serialized_options=b'\352AQ\n\032api.crbug.com/ComponentDef\0223projects/{project}/componentDefs/{component_def_id}',
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2789,
-  serialized_end=3373,
+  serialized_start=2795,
+  serialized_end=3383,
 )
 
 
@@ -1150,14 +1150,14 @@ _APPROVALDEF = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=b'\352AJ\n\031api.crbug.com/ApprovalDef\022-projects/{project}/approvalDefs/{approvalDef}',
+  serialized_options=b'\352AN\n\031api.crbug.com/ApprovalDef\0221projects/{project}/approvalDefs/{approval_def_id}',
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3376,
-  serialized_end=3629,
+  serialized_start=3386,
+  serialized_end=3643,
 )
 
 
@@ -1196,14 +1196,14 @@ _PROJECTSAVEDQUERY = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
   ],
-  serialized_options=b'\352AO\n\037api.crbug.com/ProjectSavedQuery\022,projects/{project}/savedQueries/{savedQuery}',
+  serialized_options=b'\352AS\n\037api.crbug.com/ProjectSavedQuery\0220projects/{project}/savedQueries/{saved_query_id}',
   is_extendable=False,
   syntax='proto3',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3632,
-  serialized_end=3786,
+  serialized_start=3646,
+  serialized_end=3804,
 )
 
 
@@ -1292,8 +1292,8 @@ _ISSUETEMPLATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3789,
-  serialized_end=4405,
+  serialized_start=3807,
+  serialized_end=4423,
 )
 
 
@@ -1331,8 +1331,8 @@ _PROJECTCONFIG_GRIDVIEWCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4843,
-  serialized_end=4907,
+  serialized_start=4861,
+  serialized_end=4925,
 )
 
 _PROJECTCONFIG = _descriptor.Descriptor(
@@ -1425,8 +1425,8 @@ _PROJECTCONFIG = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4408,
-  serialized_end=4968,
+  serialized_start=4426,
+  serialized_end=4986,
 )
 
 
@@ -1494,8 +1494,8 @@ _PROJECTMEMBER = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4971,
-  serialized_end=5402,
+  serialized_start=4989,
+  serialized_end=5420,
 )
 
 _STATUSDEF.fields_by_name['type'].enum_type = _STATUSDEF_STATUSDEFTYPE

@@ -48,7 +48,7 @@ message Project {
 message StatusDef {
   option (google.api.resource) = {
     type: "api.crbug.com/StatusDef"
-    pattern: "projects/{project}/statusDefs/{statusDef}"
+    pattern: "projects/{project}/statusDefs/{status_def}"
   };
 
   // Type of this status.
@@ -99,7 +99,7 @@ message LabelDef {
 
   option (google.api.resource) = {
     type: "api.crbug.com/LabelDef"
-    pattern: "projects/{project}/labelDefs/{labelDef}"
+    pattern: "projects/{project}/labelDefs/{label_def}"
   };
 
   // State of this label.
@@ -126,11 +126,12 @@ message LabelDef {
 // Custom fields defined for the project.
 //
 // See monorail/doc/userguide/concepts.md#issue-fields-and-labels.
+// Check crbug.com/p/{project}/adminLabels to see the FieldDef IDs.
 // Next available tag: 15
 message FieldDef {
   option (google.api.resource) = {
     type: "api.crbug.com/FieldDef"
-    pattern: "projects/{project}/fieldDefs/{fieldDef}"
+    pattern: "projects/{project}/fieldDefs/{field_def_id}"
   };
 
   // Resource name of the field.
@@ -288,11 +289,12 @@ message FieldDef {
 // A high level definition of the part of the software affected by an issue.
 //
 // See monorail/doc/userguide/project-owners.md#how-to-configure-components.
+// Check crbug.com/p/{project}/adminComponents to see the ComponenttDef IDs.
 // Next available tag: 12
 message ComponentDef {
   option (google.api.resource) = {
     type: "api.crbug.com/ComponentDef"
-    pattern: "projects/{project}/componentDefs/{componentDef}"
+    pattern: "projects/{project}/componentDefs/{component_def_id}"
   };
 
   // The current state of the component definition.
@@ -347,11 +349,12 @@ message ComponentDef {
 // Defines approvals that issues within the project may need.
 // See monorail/doc/userguide/concepts.md#issue-approvals-and-gates and
 // monorail/doc/userguide/project-owners.md#How-to-configure-approvals
+// Check crbug.com/p/{project}/adminLabels to see the ApprovalDef IDs.
 // Next available tag: 7
 message ApprovalDef {
   option (google.api.resource) = {
     type: "api.crbug.com/ApprovalDef"
-    pattern: "projects/{project}/approvalDefs/{approvalDef}"
+    pattern: "projects/{project}/approvalDefs/{approval_def_id}"
   };
 
   // Resource name of the approval.
@@ -381,7 +384,7 @@ message ApprovalDef {
 message ProjectSavedQuery {
   option (google.api.resource) = {
     type: "api.crbug.com/ProjectSavedQuery"
-    pattern: "projects/{project}/savedQueries/{savedQuery}"
+    pattern: "projects/{project}/savedQueries/{saved_query_id}"
   };
 
   // Resource name of this saved query.
