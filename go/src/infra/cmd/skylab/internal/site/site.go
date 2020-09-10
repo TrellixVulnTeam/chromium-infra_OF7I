@@ -130,14 +130,10 @@ const VersionNumber = "2.1.0"
 // default value is used.  See prpc.Options for details.
 //
 // This is provided so it can be overridden for testing.
-var DefaultPRPCOptions = &prpc.Options{
-	UserAgent: fmt.Sprintf("skylab/%s", VersionNumber),
-}
+var DefaultPRPCOptions = prpcOptionWithUserAgent(fmt.Sprintf("skylab/%s", VersionNumber))
 
 // UFSPRPCOptions is used for UFS PRPC clients.
-var UFSPRPCOptions = &prpc.Options{
-	UserAgent: "skylab/3.0.0",
-}
+var UFSPRPCOptions = prpcOptionWithUserAgent("skylab/3.0.0")
 
 // SecretsDir returns an absolute path to a directory (in $HOME) to keep secret
 // files in (e.g. OAuth refresh tokens) or an empty string if $HOME can't be
@@ -149,4 +145,13 @@ func SecretsDir() string {
 		configDir = filepath.Join(os.Getenv("HOME"), ".cache")
 	}
 	return filepath.Join(configDir, "skylab", "auth")
+}
+
+// prpcOptionWithUserAgent create prpc option with custom UserAgent.
+//
+// DefaultOptions provides Retry ability in case we have issue with service.
+func prpcOptionWithUserAgent(userAgent string) *prpc.Options {
+	options := *prpc.DefaultOptions()
+	options.UserAgent = userAgent
+	return &options
 }
