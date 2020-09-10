@@ -378,6 +378,10 @@ type User struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Resource name of the user.
+	// The API will always return User names with format: users/<user_id>.
+	// However the API will accept User names with formats: users/<user_id> or users/<email>.
+	// To fetch the display_name for any users/<user_id> returned by the API,
+	// you can call {Batch}GetUser{s}.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Obscured or un-obscured user email or name to show other users using the site.
 	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
