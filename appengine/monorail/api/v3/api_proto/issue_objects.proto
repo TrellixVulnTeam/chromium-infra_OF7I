@@ -150,7 +150,7 @@ message FieldValue {
 message Issue {
   option (google.api.resource) = {
     type: "api.crbug.com/Issue"
-    pattern: "project/{project}/issues/{issue}"
+    pattern: "projects/{project}/issues/{issue}"
   };
 
   // A possibly rule-derived component for the issue.
@@ -296,7 +296,7 @@ message IssueRef {
 message ApprovalValue {
   option (google.api.resource) = {
      type: "api.crbug.com/ApprovalValue"
-     pattern: "project/{project}/issues/{issue}/approvalValues/{approval}"
+     pattern: "projects/{project}/issues/{issue}/approvalValues/{approval}"
    };
 
   // Potential states for an approval. Note that these statuses cause different
