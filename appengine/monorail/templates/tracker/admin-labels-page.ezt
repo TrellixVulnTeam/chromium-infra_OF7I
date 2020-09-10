@@ -59,6 +59,7 @@
   <table cellspacing="0" cellpadding="2" border="0" class="results striped vt" id="resultstable" width="100%">
   <tbody>
     <tr>
+      <th>ID</th>
       <th>Name</th>
       <th>Type</th>
       <th>Required</th>
@@ -85,6 +86,9 @@
       [is field_defs.type_name "URL_TYPE"][define pretty_type_name]Url[end][end]
       [is field_defs.type_name "APPROVAL_TYPE"][define pretty_type_name]Approval[end][end]
       <tr data-url="[detail_url]">
+        <td>
+          [field_defs.field_def.field_id]
+        </td>
         <td class="id" style="white-space:nowrap">
           <a href="[detail_url]">[field_defs.field_name]</a></td>
         <td style="white-space:nowrap">
