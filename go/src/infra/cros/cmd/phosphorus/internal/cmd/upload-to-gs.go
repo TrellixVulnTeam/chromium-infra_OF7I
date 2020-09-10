@@ -114,16 +114,6 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 			r.GetConfig().GetTask().GetSynchronousOffloadDir(),
 		)
 	}
-	defer func() {
-		err := os.RemoveAll(localPath)
-		if err != nil {
-			fmt.Fprintf(errorFile,
-				"error removing temp dir: %s\n dir contents: %s\n",
-				err, dirList(localPath),
-			)
-		}
-		logging.Debugf(ctx, "Successfully deleted local directory.")
-	}()
 	path := gs.Path(r.GetGsDirectory())
 	w, err := createDirWriter(ctx, localPath, path, &authFlags)
 	if err != nil {
