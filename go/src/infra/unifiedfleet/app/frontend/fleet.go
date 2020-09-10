@@ -105,7 +105,9 @@ func (cs *FleetServerImpl) newSheetInterface(ctx context.Context) (sheet.ClientI
 	if cs.sheetInterfaceFactory != nil {
 		return cs.sheetInterfaceFactory(ctx)
 	}
-	t, err := auth.GetRPCTransport(ctx, auth.AsSelf, auth.WithScopes(spreadSheetScope...))
+	// Testing sheet-access@unified-fleet-system-dev.iam.gserviceaccount.com, if works, will move it to config file.
+	t, err := auth.GetRPCTransport(ctx, auth.AsActor, auth.WithServiceAccount("sheet-access@unified-fleet-system-dev.iam.gserviceaccount.com"),
+		auth.WithScopes(spreadSheetScope...))
 	if err != nil {
 		return nil, err
 	}
