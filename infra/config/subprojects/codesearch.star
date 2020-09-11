@@ -38,6 +38,7 @@ def builder(
         os = None,
         cpu_cores = None,
         properties = None,
+        builder_group_property_name = "mastername",
         caches = None,
         execution_timeout = None,
 
@@ -56,6 +57,8 @@ def builder(
       os: the target OS dimension.
       cpu_cores: the CPU cores count dimension (as string).
       properties: a dict with properties to pass to the recipe.
+      builder_group_property_name: the name of the property to set with the
+        builder group.
       caches: a list of swarming.cache(...).
       execution_timeout: how long it is allowed to run.
       category: the console category to put the builder under.
@@ -67,7 +70,7 @@ def builder(
     # Add mastername property so that the gen recipes can find the right
     # config in mb_config.pyl.
     properties = properties or {}
-    properties["mastername"] = "chromium.infra.codesearch"
+    properties[builder_group_property_name] = "chromium.infra.codesearch"
 
     properties["$build/goma"] = {
         "server_host": "goma.chromium.org",
@@ -105,6 +108,7 @@ def chromium_genfiles(short_name, name, os = None, cpu_cores = None):
     builder(
         name = name,
         executable = build.recipe("chromium_codesearch"),
+        builder_group_property_name = "builder_group",
         os = os,
         cpu_cores = cpu_cores,
         caches = [swarming.cache(
@@ -168,6 +172,7 @@ def update_submodules_mirror(
 builder(
     name = "codesearch-gen-chromium-initiator",
     executable = build.recipe("chromium_codesearch_initiator"),
+    builder_group_property_name = "builder_group",
     execution_timeout = 5 * time.hour,
     category = "gen|init",
     schedule = "0 */4 * * *",
