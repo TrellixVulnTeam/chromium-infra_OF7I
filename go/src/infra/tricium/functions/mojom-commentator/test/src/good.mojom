@@ -32,3 +32,17 @@ enum AlsoNeedsNoComment {
   ONE = 1,
   TWO = 2,
 };
+
+// This stable interface is OK.
+[Stable]
+interface StableInterface {
+  // Method is also commented.
+  [Sync]
+  LookAtThat();
+};
+
+// Another stable interface.
+[Stable] interface StableInterface2 {
+  // Comment.
+  Foo();
+};

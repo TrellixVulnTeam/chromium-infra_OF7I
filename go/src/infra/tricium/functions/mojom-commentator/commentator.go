@@ -61,11 +61,14 @@ func main() {
 	log.Printf("Wrote RESULTS data to path %q.", path)
 }
 
-var interfacePattern = regexp.MustCompile(`interface\s+(\w+)\s*{`)
+var (
+	interfacePattern = regexp.MustCompile(`interface\s+(\w+)\s*{`)
+	annotationLine   = regexp.MustCompile(`^\[.*\]$`)
+)
 
 func analyzeFile(scanner *bufio.Scanner, path string) (results []*tricium.Data_Comment) {
 	// Tracks if the previous and current line are comments.
-	prevLineIsComment := false
+	hasCommentAbove := false
 	lineIsComment := false
 
 	// Tracks whether the parser is in a meaningful context for analysis.
@@ -83,8 +86,14 @@ func analyzeFile(scanner *bufio.Scanner, path string) (results []*tricium.Data_C
 		// Remove leading indent whitespace.
 		line = strings.TrimLeft(line, " \t")
 
+		// If the line is an interface-level annotation like [Stable], skip over
+		// the line to use the previous line's comment detection.
+		if !inInterface && annotationLine.MatchString(line) {
+			continue
+		}
+
 		// Rotate the comment detector flags.
-		prevLineIsComment = lineIsComment
+		hasCommentAbove = lineIsComment
 		commentIndex := strings.Index(line, "//")
 		lineIsComment = commentIndex == 0
 		if commentIndex != -1 {
@@ -113,13 +122,13 @@ func analyzeFile(scanner *bufio.Scanner, path string) (results []*tricium.Data_C
 			}
 			inInterface = true
 
-			if !prevLineIsComment {
+			if !hasCommentAbove {
 				comment := makeComment(path, lineNumber, "interface",
 					fmt.Sprintf("Interface %q should have a top-level comment that at minimum describes the caller and callee and the high-level purpose.", interfaceName))
 				results = append(results, comment)
 			}
 		} else if inInterface {
-			if !prevLineIsComment && !inMethod {
+			if !hasCommentAbove && !inMethod {
 				comment := makeComment(path, lineNumber, "method",
 					"This method should have a comment describing its behavior, inputs, and outputs.")
 				results = append(results, comment)

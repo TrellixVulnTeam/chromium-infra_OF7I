@@ -86,6 +86,18 @@ func TestMojomCommentator(t *testing.T) {
 				StartLine: 16,
 				Path:      path,
 			},
+			{
+				Category:  "MojomCommentator/interface",
+				Message:   `Interface "Bar"` + interfaceErrorFragment,
+				StartLine: 20,
+				Path:      path,
+			},
+			{
+				Category:  "MojomCommentator/interface",
+				Message:   `Interface "Baz"` + interfaceErrorFragment,
+				StartLine: 25,
+				Path:      path,
+			},
 		})
 	})
 }

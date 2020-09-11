@@ -15,3 +15,14 @@ interface          Another{
 
   NotOkay();
 };
+
+[Stable]
+interface Bar {
+  // The method is ok.
+  ThisIsOK();
+};
+
+[Stable] interface Baz {
+  // The method is ok.
+  Method();
+};
