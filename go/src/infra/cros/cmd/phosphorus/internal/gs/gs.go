@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go.chromium.org/luci/common/sync/parallel"
+
 	"go.chromium.org/luci/auth"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
@@ -80,25 +82,30 @@ func verifyPaths(localPath string, gsPath string) error {
 // Path Google Storage path, to file or directory
 type Path gcgs.Path
 
+const maxConcurrentUploads = 10
+
 // WriteDir Write all files in the subtree of the local path to the corresponding places
 //  in the subtree of the GS path
 func (w *prodDirWriter) WriteDir(ctx context.Context) error {
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", w.localRootDir, w.gsRootDir)
-	merr := errors.MultiError{}
-	filepath.Walk(w.localRootDir, func(src string, info os.FileInfo, err error) error {
-		// Continue walking the directory tree on errors so that we upload as
-		// many files as possible.
-		if err != nil {
-			merr = append(merr, err)
+	err := parallel.WorkPool(maxConcurrentUploads, func(items chan<- func() error) {
+		filepath.Walk(w.localRootDir, func(src string, info os.FileInfo, err error) error {
+			// Continue walking the directory tree on errors so that we upload as
+			// many files as possible.
+			if err != nil {
+				items <- func() error {
+					return err
+				}
+				return nil
+			}
+			items <- func() error {
+				return w.writeOne(ctx, src, info)
+			}
 			return nil
-		}
-		if err := w.writeOne(ctx, src, info); err != nil {
-			merr = append(merr, err)
-		}
-		return nil
+		})
 	})
-	if merr.First() != nil {
-		return errors.Annotate(merr, "writing dir %s to %s", w.localRootDir, w.gsRootDir).Err()
+	if err != nil {
+		return errors.Annotate(err, "writing dir %s to %s", w.localRootDir, w.gsRootDir).Err()
 	}
 	return nil
 }
