@@ -1,0 +1,24 @@
+env: standard
+runtime: nodejs12
+service: manual-repair
+
+handlers:
+- url: /scripts/wc/js/(.*)
+  static_files: dist/scripts/wc/\1
+  upload: dist/scripts/wc/(.*)
+  secure: always
+- url: /(.*\.(js|json|ico))$
+  static_files: dist/\1
+  upload: dist/.*\.(js|json|ico)$
+  secure: always
+- url: /
+  static_files: dist/index.html
+  upload: dist/index.html
+  secure: always
+- url: /.*
+  static_files: dist/index.html
+  upload: dist/index.html
+  secure: always
+
+env_variables:
+  NODE_ENV: staging
