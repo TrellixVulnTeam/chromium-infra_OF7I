@@ -14,7 +14,7 @@ import {css, customElement, html, LitElement, property, TemplateResult} from 'li
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
-import {createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/actions';
+import {createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/reducers/repair-record';
 import {store, thunkDispatch} from '../../state/store';
 import {TYPE_DUT, TYPE_LABSTATION, TYPE_UNKNOWN} from '../constants';
 
@@ -118,11 +118,12 @@ enum FormAction {
   @property({type: Number}) formAction;
 
   stateChanged(state) {
-    this.deviceInfo = state.repairRecord.deviceInfo;
-    this.recordInfo = state.repairRecord.recordInfo;
-    this.recordId = state.repairRecord.recordId;
+    this.deviceInfo = state.record.info.deviceInfo;
+    this.recordInfo = state.record.info.recordInfo;
+    this.recordId = state.record.info.recordId;
     this.user = state.user;
-    this.formAction = this.recordInfo ? FormAction.UPDATE : FormAction.CREATE;
+    this.formAction =
+        isEmpty(this.recordInfo) ? FormAction.CREATE : FormAction.UPDATE;
     this.initRecordObject();
   }
 
@@ -131,7 +132,7 @@ enum FormAction {
    * returns a type constant defined in ../constants.
    */
   checkDeviceType(): string {
-    if (!this.deviceInfo) return TYPE_UNKNOWN;
+    if (isEmpty(this.deviceInfo)) return TYPE_UNKNOWN;
 
     if (TYPE_DUT in this.deviceInfo.labConfig) {
       return TYPE_DUT;
@@ -146,7 +147,7 @@ enum FormAction {
    * if hostname is not found.
    */
   getHostname(): string {
-    if (!this.deviceInfo) return '';
+    if (isEmpty(this.deviceInfo)) return '';
 
     if (this.checkDeviceType() === TYPE_DUT) {
       return this.deviceInfo.labConfig.dut.hostname;
@@ -189,9 +190,9 @@ enum FormAction {
    * the appropriate record object.
    */
   initRecordObject(): void {
-    if (this.deviceInfo && !this.recordInfo) {
+    if (!isEmpty(this.deviceInfo) && isEmpty(this.recordInfo)) {
       this.recordObj = this.getBaseRecordObj();
-    } else if (this.deviceInfo && this.recordInfo) {
+    } else if (!isEmpty(this.deviceInfo) && !isEmpty(this.recordInfo)) {
       this.recordObj = this.getExistingRecordObj();
     }
   }
@@ -679,16 +680,7 @@ enum FormAction {
         });
   }
 
-  /**
-   * TODO: Error display component. To be implemented and as a separate
-   * component.
-   */
-  displayError() {
-    console.log('No device!');
-  }
-
   render() {
-    return html`${
-        isEmpty(this.deviceInfo) ? this.displayError() : this.displayForm()}`;
+    return html`${isEmpty(this.deviceInfo) ? null : this.displayForm()}`;
   }
 }

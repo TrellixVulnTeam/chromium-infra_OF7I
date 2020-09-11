@@ -10,7 +10,7 @@ import {Drawer} from '@material/mwc-drawer';
 import {customElement, html, LitElement} from 'lit-element';
 import {connect} from 'pwa-helpers';
 
-import {receiveUser} from '../state/actions';
+import {receiveUser} from '../state/reducers/user';
 import {store} from '../state/store';
 
 

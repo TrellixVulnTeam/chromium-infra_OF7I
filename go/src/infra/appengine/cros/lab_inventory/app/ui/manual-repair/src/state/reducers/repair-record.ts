@@ -5,21 +5,19 @@
 import {Action} from 'redux';
 import {ThunkAction} from 'redux-thunk';
 
-import {prpcClient} from './prpc';
-import {AppThunk, AppThunkDispatch, RootState} from './store';
+import {prpcClient} from '../prpc';
+import {AppThunk, AppThunkDispatch} from '../store';
+
+import {ApplicationState} from './index';
 
 /**
  * Synchronous Redux actions to update state store.
  */
-export const RECEIVE_USER = 'RECEIVE_USER';
 export const RECEIVE_DEVICE_INFO = 'RECEIVE_DEVICE_INFO';
 export const RECEIVE_RECORD_INFO = 'RECEIVE_RECORD_INFO';
 export const RECEIVE_RECORD_INFO_ERROR = 'RECEIVE_RECORD_INFO_ERROR';
 export const RECEIVE_DEVICE_INFO_ERROR = 'RECEIVE_DEVICE_INFO_ERROR';
 
-export function receiveUser(user: object) {
-  return {type: RECEIVE_USER, user};
-};
 export function receiveRecordInfo(recordInfo: object) {
   return {type: RECEIVE_RECORD_INFO, recordInfo};
 };
@@ -54,7 +52,7 @@ export function getRepairRecord(
   return function(dispatch: AppThunkDispatch) {
     return Promise.all([
       dispatch(getDeviceInfo(hostname, headers)),
-      dispatch(getRecordInfo(hostname, headers))
+      dispatch(getRecordInfo(hostname, headers)),
     ]);
   };
 };
@@ -70,7 +68,7 @@ export function getRepairRecord(
  */
 export function getRecordInfo(
     hostname: string, headers: {[key: string]: string}):
-    ThunkAction<void, RootState, unknown, Action<string>> {
+    ThunkAction<void, ApplicationState, unknown, Action<string>> {
   return function(dispatch: AppThunkDispatch) {
     const recordMsg: {[key: string]: string} = {'hostname': hostname};
     return prpcClient
@@ -79,7 +77,8 @@ export function getRecordInfo(
             headers)
         .then(
             res => dispatch(receiveRecordInfo(res)),
-            err => dispatch(receiveRecordInfoError(err)));
+            err => dispatch(receiveRecordInfoError(err)),
+        );
   };
 };
 
@@ -93,7 +92,8 @@ export function getRecordInfo(
  * @returns         The response from the RPC.
  */
 export function getDeviceInfo(
-    hostname: string, headers: {[key: string]: string}) {
+    hostname: string, headers: {[key: string]: string}):
+    ThunkAction<void, ApplicationState, unknown, Action<string>> {
   return function(dispatch: AppThunkDispatch) {
     const deviceMsg: {[key: string]: Array<{[key: string]: string}>} = {
       'ids': [{'hostname': hostname}]
@@ -101,8 +101,9 @@ export function getDeviceInfo(
     return prpcClient
         .call('inventory.Inventory', 'GetCrosDevices', deviceMsg, headers)
         .then(
-            res => dispatch(receiveDeviceInfo(res.data[0])),
-            err => dispatch(receiveDeviceInfoError(err)));
+            res => dispatch(receiveDeviceInfo(res.data?.[0])),
+            err => dispatch(receiveDeviceInfoError(err)),
+        );
   };
 };
 
@@ -124,7 +125,10 @@ export function createRepairRecord(
         .call(
             'inventory.Inventory', 'CreateDeviceManualRepairRecord', recordMsg,
             headers)
-        .then(res => res, err => dispatch(receiveRecordInfoError(err)));
+        .then(
+            res => res,
+            err => dispatch(receiveRecordInfoError(err)),
+        );
   };
 };
 
@@ -150,6 +154,84 @@ export function updateRepairRecord(
         .call(
             'inventory.Inventory', 'UpdateDeviceManualRepairRecord', recordMsg,
             headers)
-        .then(res => res, err => dispatch(receiveRecordInfoError(err)));
+        .then(
+            res => res,
+            err => dispatch(receiveRecordInfoError(err)),
+        );
+  };
+};
+
+export type RepairRecordStateType = {
+  info: {
+    deviceInfo: object,
+    recordInfo: object,
+    recordId: string,
+  },
+  errors: {
+    deviceInfoError: object,
+    recordInfoError: object,
+  },
+}
+
+const emptyState: RepairRecordStateType = {
+  info: {
+    deviceInfo: {},
+    recordInfo: {},
+    recordId: '',
+  },
+  errors: {
+    deviceInfoError: {},
+    recordInfoError: {},
+  },
+};
+
+export function repairRecordReducer(state = emptyState, action) {
+  switch (action.type) {
+    case RECEIVE_DEVICE_INFO:
+      return {
+        ...state,
+        info: {
+          deviceInfo: action.deviceInfo,
+          recordInfo: state.info.recordInfo,
+          recordId: state.info.recordId,
+        }
+      };
+    case RECEIVE_RECORD_INFO:
+      return {
+        ...state,
+        info: {
+          deviceInfo: state.info.deviceInfo,
+          recordInfo: action.recordInfo.deviceRepairRecord,
+          recordId: action.recordInfo.id,
+        }
+      };
+    case RECEIVE_RECORD_INFO_ERROR:
+      return {
+        ...state,
+        info: {
+          deviceInfo: state.info.deviceInfo,
+          recordInfo: {},
+          recordId: '',
+        },
+        errors: {
+          ...state.errors,
+          recordInfoError: action.error,
+        },
+      };
+    case RECEIVE_DEVICE_INFO_ERROR:
+      return {
+        ...state,
+        info: {
+          deviceInfo: {},
+          recordInfo: state.info.recordInfo,
+          recordId: '',
+        },
+        errors: {
+          ...state.errors,
+          deviceInfoError: action.error,
+        },
+      };
+    default:
+      return state;
   };
 };

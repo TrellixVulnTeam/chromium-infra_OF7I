@@ -7,7 +7,7 @@ import {lazyReducerEnhancer} from 'pwa-helpers/lazy-reducer-enhancer';
 import {applyMiddleware, combineReducers, compose, createStore, StoreEnhancer} from 'redux';
 import thunk, {ThunkAction, ThunkDispatch} from 'redux-thunk';
 
-import {reducer} from './reducer';
+import {ApplicationState, reducers} from './reducers/index';
 
 // Sets up a Chrome extension for time travel debugging.
 // See https://github.com/zalmoxisus/redux-devtools-extension for more
@@ -28,14 +28,13 @@ const devCompose: <Ext0, Ext1, StateExt0, StateExt1>(
 // lazily add reducers after the store has been created) and redux-thunk (so
 // that we can dispatch async actions).
 export const store = createStore(
-    reducer,
+    reducers,
     devCompose(lazyReducerEnhancer(combineReducers), applyMiddleware(thunk)));
 
-export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-export type AppThunkDispatch = ThunkDispatch<RootState, void, Action>;
+export type AppThunkDispatch = ThunkDispatch<ApplicationState, void, Action>;
 export type AppThunk<ReturnType = void> =
-    ThunkAction<ReturnType, RootState, unknown, Action<string>>;
+    ThunkAction<ReturnType, ApplicationState, unknown, Action<string>>;
 
 // TODO: This is a possibly not a good fix to as we cast store.dispatch as Thunk
 // dispatch. Will investigate.

@@ -7,8 +7,8 @@ import '@material/mwc-textfield';
 import {css, customElement, html, LitElement, property} from 'lit-element';
 import {connect} from 'pwa-helpers';
 
-import {getRepairRecord} from '../state/actions';
-import {store} from '../state/store';
+import {getRepairRecord} from '../state/reducers/repair-record';
+import {store, thunkDispatch} from '../state/store';
 
 
 @customElement('search-hostname')
@@ -30,14 +30,14 @@ export default class SearchHostname extends connect
   }
 
   @property({type: String}) input = '';
-  @property({type: Boolean}) submitDisabled = false;
   @property({type: Object}) deviceInfo;
   @property({type: Object}) recordInfo;
   @property({type: Object}) user;
+  @property({type: Boolean}) submitting = false;
 
   stateChanged(state) {
-    this.deviceInfo = state.repairRecord.deviceInfo;
-    this.recordInfo = state.repairRecord.recordInfo;
+    this.deviceInfo = state.record.info.deviceInfo;
+    this.recordInfo = state.record.info.recordInfo;
     this.user = state.user;
   }
 
@@ -48,7 +48,7 @@ export default class SearchHostname extends connect
           outlined
           label="Enter a hostname"
           helper="Enter a device hostname to add or update repair records."
-          ?disabled="${this.submitDisabled}"
+          ?disabled="${this.submitting}"
           @input="${this.handleInput}"
           @keydown="${this.keyboardListener}">
       </mwc-textfield>
@@ -61,15 +61,18 @@ export default class SearchHostname extends connect
 
   keyboardListener(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      // TODO: Disabled search when submitting hostname.
-      // TODO: Display errors in UI.
+      // TODO: Move console.error to messaging component
       e.preventDefault();
       if (this.input && this.user.signedIn) {
-        store.dispatch(getRepairRecord(this.input, this.user.authHeaders));
-      } else if (!this.input) {
-        console.error('Please enter a hostname!');
+        this.submitting = true;
+        thunkDispatch(getRepairRecord(this.input, this.user.authHeaders))
+            .finally(() => {
+              this.submitting = false;
+            });
       } else if (!this.user.signedIn) {
         console.error('Please sign in to continue!');
+      } else if (!this.input) {
+        console.error('Please enter a hostname!');
       }
     }
   }
