@@ -287,18 +287,19 @@ enum FormAction {
   buildRepairDropdown(configObj: repairConst.DropdownActionsConfig) {
     const componentName: string = configObj.componentName;
     const stateName: string = configObj.stateName;
-    const actionsList: Map<string, number> = configObj.actionList;
+    const actionsList: Map<string, {[key: string]: number}> =
+        configObj.actionList;
     const actionsListHtml: Array<TemplateResult> = [];
     const helperText: string = configObj.helperText || '';
-    const idName: string = componentName.toLowerCase().split(/\s/).join('-');
 
-    for (const [key, value] of actionsList.entries()) {
+    for (const [key, obj] of actionsList.entries()) {
       actionsListHtml.push(html`
         <mwc-list-item
           .name="${stateName}"
-          value="${value}"
-          ?selected="${this.recordObj[stateName].has(value)}"
-          ?activated="${this.recordObj[stateName].has(value)}"
+          timeValue="${obj.timeVal}"
+          value="${obj.enumVal}"
+          ?selected="${this.recordObj[stateName].has(obj.enumVal)}"
+          ?activated="${this.recordObj[stateName].has(obj.enumVal)}"
           @click="${this.handleRepairDropdown}">
           ${key}
         </mwc-list-item>
@@ -306,7 +307,7 @@ enum FormAction {
     }
 
     return html`
-      <div id="${idName}-repair-actions" class="repair-dropdown">
+      <div id="${stateName}" class="repair-dropdown">
         <mwc-select
           label="${componentName}"
           ?disabled="${this.submitting}"
@@ -325,19 +326,20 @@ enum FormAction {
    * @returns         Lit HTML for the dropdown.
    */
   buildRepairCheckboxes(configObj: repairConst.CheckboxActionsConfig) {
-    const idName: string = configObj.idName;
     const stateName: string = configObj.stateName;
-    const actionsList: Map<string, number> = configObj.actionList;
+    const actionsList: Map<string, {[key: string]: number}> =
+        configObj.actionList;
     const actionsListHtml: Array<TemplateResult> = [];
 
-    for (const [key, value] of actionsList.entries()) {
+    for (const [key, obj] of actionsList.entries()) {
       actionsListHtml.push(html`
         <mwc-formfield label="${key}">
           <mwc-checkbox
             .name="${stateName}"
-            value="${value}"
+            timeValue="${obj.timeVal}"
+            value="${obj.enumVal}"
             ?disabled="${this.submitting}"
-            ?checked="${this.recordObj[stateName].has(value)}"
+            ?checked="${this.recordObj[stateName].has(obj.enumVal)}"
             @change="${this.handleRepairCheckboxes}">
           </mwc-checkbox>
         </mwc-formfield>
@@ -345,7 +347,7 @@ enum FormAction {
     }
 
     return html`
-      <div id="${idName}-repair-actions" class="repair-checkboxes">
+      <div id="${stateName}" class="repair-checkboxes">
         ${actionsListHtml}
       </div>
     `
@@ -354,16 +356,34 @@ enum FormAction {
   /** Form input handlers */
 
   handleRepairDropdown(e: InputEvent) {
-    this.recordObj[(<HTMLSelectElement>e.target!).name] =
-        [parseInt((<HTMLSelectElement>e.target!).value)];
+    const el = (<HTMLSelectElement>e.target!);
+    this.recordObj[el.name] = [parseInt(el.value)];
+
+    // Subtract old value from timeTaken.
+    const prevTimeVal: string =
+        this.shadowRoot!
+            .querySelector(`#${el.name} > mwc-select > mwc-list-item[selected]`)
+            ?.getAttribute('timeValue') ||
+        '0';
+    this.recordObj.timeTaken -= parseInt(prevTimeVal);
+
+    // Add newly selected value to timeTaken.
+    this.recordObj.timeTaken += parseInt(el.getAttribute('timeValue') || '0');
   };
 
   handleRepairCheckboxes(e: InputEvent) {
     const t: any = e.target;
     const v: number = parseInt(t.value);
+    const timeVal: number = parseInt(t.getAttribute('timeValue'));
     const n: string = t.name;
 
-    t.checked ? this.recordObj[n].add(v) : this.recordObj[n].delete(v);
+    if (t.checked) {
+      this.recordObj[n].add(v);
+      this.recordObj.timeTaken += timeVal;
+    } else {
+      this.recordObj[n].delete(v);
+      this.recordObj.timeTaken -= timeVal;
+    };
   };
 
   handleCheckboxChange(field: string, e: InputEvent) {

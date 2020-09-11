@@ -81,7 +81,7 @@ message DeviceManualRepairRecord {
   repeated ServoRepairAction servo_repair_actions = 21;
   repeated YoshiRepairAction yoshi_repair_actions = 22;
   repeated ChargerRepairAction charger_repair_actions = 23;
-  repeated UsbStickRepairAction  usb_stick_repair_actions = 24;
+  repeated UsbStickRepairAction usb_stick_repair_actions = 24;
   repeated CableRepairAction cable_repair_actions = 25;
   repeated RpmRepairAction rpm_repair_actions = 26;
   repeated DutRepairAction dut_repair_actions = 27;
@@ -111,7 +111,7 @@ message DeviceManualRepairRecord {
 }
 
 // Standard manual repair actions taken to fix the labstation.
-// Next tag: 6
+// Next tag: 7
 enum LabstationRepairAction {
   LABSTATION_NA = 0;
   LABSTATION_POWER_CYCLE = 1;
@@ -119,6 +119,7 @@ enum LabstationRepairAction {
   LABSTATION_UPDATE_CONFIG = 3;
   LABSTATION_REPLACE = 4;
   LABSTATION_OTHER = 5;
+  LABSTATION_FLASH = 6;
 }
 
 // Standard manual repair actions taken to fix the servo (servo_v4, servo_v3).
@@ -189,7 +190,6 @@ enum DutRepairAction {
   DUT_NA = 0;
   DUT_REIMAGE_DEV = 1;
   DUT_REIMAGE_PROD = 2;
-  DUT_POWER_CYCLE_RPM = 3;
   DUT_POWER_CYCLE_DUT = 4;
   DUT_REBOOT_EC = 5;
   DUT_NOT_PRESENT = 6;
