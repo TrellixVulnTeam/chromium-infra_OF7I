@@ -25,6 +25,7 @@ import (
 	invV2Api "infra/appengine/cros/lab_inventory/api/v1"
 	"infra/libs/cros/git"
 	"infra/libs/cros/sheet"
+	"infra/unifiedfleet/app/config"
 )
 
 const (
@@ -106,8 +107,11 @@ func (cs *FleetServerImpl) newSheetInterface(ctx context.Context) (sheet.ClientI
 		return cs.sheetInterfaceFactory(ctx)
 	}
 	// Testing sheet-access@unified-fleet-system-dev.iam.gserviceaccount.com, if works, will move it to config file.
-	t, err := auth.GetRPCTransport(ctx, auth.AsActor, auth.WithServiceAccount("sheet-access@unified-fleet-system-dev.iam.gserviceaccount.com"),
-		auth.WithScopes(spreadSheetScope...))
+	sheetSA := config.Get(ctx).GetSheetServiceAccount()
+	if sheetSA == "" {
+		return nil, status.Errorf(codes.FailedPrecondition, "sheet service account is not specified in config")
+	}
+	t, err := auth.GetRPCTransport(ctx, auth.AsActor, auth.WithServiceAccount(sheetSA), auth.WithScopes(spreadSheetScope...))
 	if err != nil {
 		return nil, err
 	}

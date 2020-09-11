@@ -18,6 +18,7 @@ message Config {
   string cros_inventory_host = 5;
   string self_storage_bucket = 6;
   PubSub hart = 8;
+  string sheet_service_account = 9;
 }
 
 message OSNetworkConfig {
