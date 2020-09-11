@@ -84,16 +84,26 @@ type Path gcgs.Path
 //  in the subtree of the GS path
 func (w *prodDirWriter) WriteDir(ctx context.Context) error {
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", w.localRootDir, w.gsRootDir)
-	err := filepath.Walk(w.localRootDir, func(src string, info os.FileInfo, err error) error {
-		return w.writeOne(ctx, src, info, err)
+	merr := errors.MultiError{}
+	filepath.Walk(w.localRootDir, func(src string, info os.FileInfo, err error) error {
+		// Continue walking the directory tree on errors so that we upload as
+		// many files as possible.
+		if err != nil {
+			merr = append(merr, err)
+			return nil
+		}
+		if err := w.writeOne(ctx, src, info); err != nil {
+			merr = append(merr, err)
+		}
+		return nil
 	})
-	if err != nil {
-		return errors.Annotate(err, "writing dir %s to %s", w.localRootDir, w.gsRootDir).Err()
+	if merr.First() != nil {
+		return errors.Annotate(merr, "writing dir %s to %s", w.localRootDir, w.gsRootDir).Err()
 	}
 	return nil
 }
 
-func (w *prodDirWriter) writeOne(ctx context.Context, src string, info os.FileInfo, err error) error {
+func (w *prodDirWriter) writeOne(ctx context.Context, src string, info os.FileInfo) error {
 	if info.IsDir() {
 		return nil
 	}
