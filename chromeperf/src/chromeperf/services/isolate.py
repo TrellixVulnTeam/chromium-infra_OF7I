@@ -16,29 +16,29 @@ from chromeperf.services import request
 
 
 def retrieve(server, digest):
-  # TODO(dberris): Migrate this to return a file-like object, so that we can do
-  # incremental decoding and decompression, instead of attempting to load data
-  # in memory for processing.
-  url = server + '/_ah/api/isolateservice/v1/retrieve'
-  body = {
-      'namespace': {
-          'namespace': 'default-gzip'
-      },
-      'digest': digest,
-  }
+    # TODO(dberris): Migrate this to return a file-like object, so that we can
+    # do incremental decoding and decompression, instead of attempting to load
+    # data in memory for processing.
+    url = server + '/_ah/api/isolateservice/v1/retrieve'
+    body = {
+        'namespace': {
+            'namespace': 'default-gzip'
+        },
+        'digest': digest,
+    }
 
-  isolate_info = request.request_json(url, 'POST', body)
+    isolate_info = request.request_json(url, 'POST', body)
 
-  if 'url' in isolate_info:
-    # TODO(dberris): If this is a URL for a file in Google Cloud Storage, we
-    # should use the file interface instead.
-    return zlib.decompress(request.request(isolate_info['url'], 'GET'))
+    if 'url' in isolate_info:
+        # TODO(dberris): If this is a URL for a file in Google Cloud Storage,
+        # we should use the file interface instead.
+        return zlib.decompress(request.request(isolate_info['url'], 'GET'))
 
-  if 'content' in isolate_info:
-    # TODO(dberris): If the data is inline in the response, then we should use
-    # an adapter (like io.StringIO).
-    return zlib.decompress(base64.b64decode(isolate_info['content']))
+    if 'content' in isolate_info:
+        # TODO(dberris): If the data is inline in the response, then we should
+        # use an adapter (like io.StringIO).
+        return zlib.decompress(base64.b64decode(isolate_info['content']))
 
-  raise NotImplementedError(
-      'Isolate information for %s is in an unknown format: %s' %
-      (digest, json.dumps(isolate_info)))
+    raise NotImplementedError(
+        'Isolate information for %s is in an unknown format: %s' %
+        (digest, json.dumps(isolate_info)))
