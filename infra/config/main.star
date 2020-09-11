@@ -135,6 +135,25 @@ luci.bucket(
     ],
 )
 
+# Allow to run LED jobs in project's realms.
+luci.binding(
+    roles = "role/swarming.taskTriggerer",
+    groups = "flex-ci-led-users",
+    realm = [
+        "ci",
+        "codesearch",
+        "cron",
+    ],
+)
+
+luci.binding(
+    roles = "role/swarming.taskTriggerer",
+    groups = "flex-try-led-users",
+    realm = [
+        "try",
+    ],
+)
+
 luci.notifier_template(
     name = "status",
     body = "{{ stepNames .MatchingFailedSteps }} on {{ buildUrl . }} {{ .Build.Builder.Builder }}{{ if .Build.Output.GitilesCommit }} from {{ .Build.Output.GitilesCommit.Id }}{{end}}",
