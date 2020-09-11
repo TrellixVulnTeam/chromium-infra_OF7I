@@ -6,6 +6,7 @@ package main
 
 import (
 	"go.chromium.org/luci/appengine/gaemiddleware"
+	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
 	"go.chromium.org/luci/server/module"
@@ -18,11 +19,12 @@ import (
 func main() {
 	modules := []module.Module{
 		gaeemulation.NewModuleFromFlags(),
+		cfgmodule.NewModuleFromFlags(),
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
-		basemw := router.NewMiddlewareChain().Extend(config.Middleware)
-
+		basemw := router.NewMiddlewareChain()
+		configmw := basemw.Extend(config.Middleware)
 		templatesmw := basemw.Extend(templates.WithTemplates(&templates.Bundle{
 			Loader:  templates.FileSystemLoader("templates"),
 			FuncMap: templateFuncs,
@@ -36,11 +38,11 @@ func main() {
 			Status(c)
 		})
 
-		srv.Routes.GET("/_task/auditor", basemw.Extend(gaemiddleware.RequireTaskQueue("default")), func(c *router.Context) {
+		srv.Routes.GET("/_task/auditor", configmw.Extend(gaemiddleware.RequireTaskQueue("default")), func(c *router.Context) {
 			Auditor(c)
 		})
 
-		srv.Routes.GET("/_cron/scheduler", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
+		srv.Routes.GET("/_cron/scheduler", configmw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
 			Scheduler(c)
 		})
 
