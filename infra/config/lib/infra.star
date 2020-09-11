@@ -77,6 +77,7 @@ def builder(
         gatekeeper_group = None,
         schedule = None,
         extra_dimensions = None,
+        use_realms = False,
 
         # Triggering relations.
         triggered_by = None,
@@ -102,6 +103,7 @@ def builder(
       gatekeeper_group: a gatekeeper group to put it under.
       schedule: a string with builder schedule for cron-like builders.
       extra_dimensions: a dict with additional Swarming dimensions.
+      use_realms: True to launch realms-aware builds.
       triggered_by: builders that trigger this one.
       notifies: what luci.notifier(...) to notify when its done.
     """
@@ -131,6 +133,10 @@ def builder(
             fail("specify 'cpu', 'os', or 'pool' directly")
         dimensions.update(extra_dimensions)
 
+    experiments = {}
+    if use_realms:
+        experiments["luci.use_realms"] = 100
+
     luci.builder(
         name = name,
         bucket = bucket,
@@ -139,6 +145,7 @@ def builder(
         service_account = service_account,
         properties = properties,
         caches = caches,
+        experiments = experiments,
         build_numbers = build_numbers,
         schedule = schedule,
         task_template_canary_percentage = 30,
