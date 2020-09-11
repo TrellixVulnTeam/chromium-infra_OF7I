@@ -2,7 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import {Action} from 'redux';
+import {ThunkAction} from 'redux-thunk';
+
 import {prpcClient} from './prpc';
+import {AppThunk, AppThunkDispatch, RootState} from './store';
 
 /**
  * Synchronous Redux actions to update state store.
@@ -47,7 +51,7 @@ export function receiveDeviceInfo(deviceInfo: Array<Object>) {
  */
 export function getRepairRecord(
     hostname: string, headers: {[key: string]: string}) {
-  return function(dispatch) {
+  return function(dispatch: AppThunkDispatch) {
     return Promise.all([
       dispatch(getDeviceInfo(hostname, headers)),
       dispatch(getRecordInfo(hostname, headers))
@@ -65,17 +69,17 @@ export function getRepairRecord(
  * @returns         The response from the RPC.
  */
 export function getRecordInfo(
-    hostname: string, headers: {[key: string]: string}) {
-  return async function(dispatch) {
+    hostname: string, headers: {[key: string]: string}):
+    ThunkAction<void, RootState, unknown, Action<string>> {
+  return function(dispatch: AppThunkDispatch) {
     const recordMsg: {[key: string]: string} = {'hostname': hostname};
-    try {
-      const res = await prpcClient.call(
-          'inventory.Inventory', 'GetDeviceManualRepairRecord', recordMsg,
-          headers);
-      return dispatch(receiveRecordInfo(res));
-    } catch (err) {
-      return dispatch(receiveRecordInfoError(err));
-    }
+    return prpcClient
+        .call(
+            'inventory.Inventory', 'GetDeviceManualRepairRecord', recordMsg,
+            headers)
+        .then(
+            res => dispatch(receiveRecordInfo(res)),
+            err => dispatch(receiveRecordInfoError(err)));
   };
 };
 
@@ -90,17 +94,15 @@ export function getRecordInfo(
  */
 export function getDeviceInfo(
     hostname: string, headers: {[key: string]: string}) {
-  return async function(dispatch) {
+  return function(dispatch: AppThunkDispatch) {
     const deviceMsg: {[key: string]: Array<{[key: string]: string}>} = {
       'ids': [{'hostname': hostname}]
     };
-    try {
-      const res = await prpcClient.call(
-          'inventory.Inventory', 'GetCrosDevices', deviceMsg, headers);
-      return dispatch(receiveDeviceInfo(res.data[0]));
-    } catch (err) {
-      return dispatch(receiveDeviceInfoError(err));
-    }
+    return prpcClient
+        .call('inventory.Inventory', 'GetCrosDevices', deviceMsg, headers)
+        .then(
+            res => dispatch(receiveDeviceInfo(res.data[0])),
+            err => dispatch(receiveDeviceInfoError(err)));
   };
 };
 
@@ -114,16 +116,15 @@ export function getDeviceInfo(
  * @returns       The response from the RPC.
  */
 export function createRepairRecord(
-    record: Object, headers: {[key: string]: string}) {
-  return async function(dispatch) {
+    record: Object,
+    headers: {[key: string]: string}): AppThunk<Promise<object>> {
+  return function(dispatch: AppThunkDispatch) {
     const recordMsg: {[key: string]: Object} = {'device_repair_record': record};
-    try {
-      return prpcClient.call(
-          'inventory.Inventory', 'CreateDeviceManualRepairRecord', recordMsg,
-          headers);
-    } catch (err) {
-      return dispatch(receiveRecordInfoError(err));
-    }
+    return prpcClient
+        .call(
+            'inventory.Inventory', 'CreateDeviceManualRepairRecord', recordMsg,
+            headers)
+        .then(res => res, err => dispatch(receiveRecordInfoError(err)));
   };
 };
 
@@ -135,21 +136,20 @@ export function createRepairRecord(
  * @param record    Record object of the record to be updated in datastore.
  * @param headers   The additional HTML headers to be passed. These will include
  *     auth headers for user auth.
- * @returns       The response from the RPC.
+ * @returns         The response from the RPC.
  */
 export function updateRepairRecord(
-    recordId: string, record: Object, headers: {[key: string]: string}) {
-  return async function(dispatch) {
+    recordId: string, record: Object,
+    headers: {[key: string]: string}): AppThunk<Promise<object>> {
+  return function(dispatch: AppThunkDispatch) {
     const recordMsg: {[key: string]: Object} = {
       'id': recordId,
       'device_repair_record': record,
     };
-    try {
-      return prpcClient.call(
-          'inventory.Inventory', 'UpdateDeviceManualRepairRecord', recordMsg,
-          headers);
-    } catch (err) {
-      return dispatch(receiveRecordInfoError(err));
-    }
+    return prpcClient
+        .call(
+            'inventory.Inventory', 'UpdateDeviceManualRepairRecord', recordMsg,
+            headers)
+        .then(res => res, err => dispatch(receiveRecordInfoError(err)));
   };
 };

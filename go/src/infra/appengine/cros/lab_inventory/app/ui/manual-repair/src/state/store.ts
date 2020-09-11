@@ -2,9 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import {Action} from '@reduxjs/toolkit';
 import {lazyReducerEnhancer} from 'pwa-helpers/lazy-reducer-enhancer';
 import {applyMiddleware, combineReducers, compose, createStore, StoreEnhancer} from 'redux';
-import thunk from 'redux-thunk';
+import thunk, {ThunkAction, ThunkDispatch} from 'redux-thunk';
 
 import {reducer} from './reducer';
 
@@ -29,3 +30,13 @@ const devCompose: <Ext0, Ext1, StateExt0, StateExt1>(
 export const store = createStore(
     reducer,
     devCompose(lazyReducerEnhancer(combineReducers), applyMiddleware(thunk)));
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+export type AppThunkDispatch = ThunkDispatch<RootState, void, Action>;
+export type AppThunk<ReturnType = void> =
+    ThunkAction<ReturnType, RootState, unknown, Action<string>>;
+
+// TODO: This is a possibly not a good fix to as we cast store.dispatch as Thunk
+// dispatch. Will investigate.
+export const thunkDispatch = store.dispatch as AppThunkDispatch;

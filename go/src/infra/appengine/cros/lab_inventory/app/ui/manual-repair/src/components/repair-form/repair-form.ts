@@ -14,8 +14,8 @@ import {css, customElement, html, LitElement, property, TemplateResult} from 'li
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
-import {createRepairRecord, updateRepairRecord} from '../../state/actions';
-import {store} from '../../state/store';
+import {createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/actions';
+import {store, thunkDispatch} from '../../state/store';
 import {TYPE_DUT, TYPE_LABSTATION, TYPE_UNKNOWN} from '../constants';
 
 import * as repairConst from './repair-form-constants';
@@ -104,7 +104,7 @@ enum FormAction {
     `];
   }
 
-  @property({type: Boolean}) submitDisabled = false;
+  @property({type: Boolean}) submitting = false;
   @property({type: Object}) user;
   // Device information received from RPC.
   @property({type: Object}) deviceInfo;
@@ -194,7 +194,6 @@ enum FormAction {
     } else if (this.deviceInfo && this.recordInfo) {
       this.recordObj = this.getExistingRecordObj();
     }
-    console.log('Record Object', this.recordObj);
   }
 
   /**
@@ -310,6 +309,7 @@ enum FormAction {
       <div id="${idName}-repair-actions" class="repair-dropdown">
         <mwc-select
           label="${componentName}"
+          ?disabled="${this.submitting}"
           helper="${helperText}">
           ${actionsListHtml}
         </mwc-select>
@@ -336,6 +336,7 @@ enum FormAction {
           <mwc-checkbox
             .name="${stateName}"
             value="${value}"
+            ?disabled="${this.submitting}"
             ?checked="${this.recordObj[stateName].has(value)}"
             @change="${this.handleRepairCheckboxes}">
           </mwc-checkbox>
@@ -508,27 +509,33 @@ enum FormAction {
           <div id="repair-info">
             <mwc-textfield
               label="Buganizer Bug"
+              ?disabled="${this.submitting}"
               value="${this.recordObj.buganizerBugUrl}"
               @input="${this.handleBuganizerChange}"
             ></mwc-textfield>
             <mwc-textfield
               label="Diagnosis"
+              ?disabled="${this.submitting}"
               value="${this.recordObj.diagnosis}"
               @input="${this.handleDiagnosisChange}"
             ></mwc-textfield>
             <mwc-textfield
               label="Fix Procedure"
+              ?disabled="${this.submitting}"
               value="${this.recordObj.repairProcedure}"
               @input="${this.handleProcedureChange}"
             ></mwc-textfield>
             <mwc-formfield label="Fixed Primary Issue">
               <mwc-checkbox
+                id="issueFixed"
+                ?disabled="${this.submitting}"
                 ?checked="${this.recordObj.issueFixed}"
                 @change="${this.handleIssueFixedChange}">
               </mwc-checkbox>
             </mwc-formfield>
             <mwc-formfield label="Replacement Requested">
               <mwc-checkbox
+                ?disabled="${this.submitting}"
                 ?checked="${this.recordObj.replacementRequested}"
                 @change="${this.handleReplacementRequestedChange}">
               </mwc-checkbox>
@@ -556,6 +563,7 @@ enum FormAction {
             <mwc-textarea
               label="Additional Comments"
               rows=6
+              ?disabled="${this.submitting}"
               value="${this.recordObj.additionalComments}"
               @input="${this.handleCommentsChange}"
             ></mwc-textarea>
@@ -563,6 +571,7 @@ enum FormAction {
         </div>
         <mwc-fab
           extended
+          ?disabled="${this.submitting}"
           label="${
         this.formAction === FormAction.CREATE ? 'Create Record' :
                                                 'Update Record'}"
@@ -625,19 +634,29 @@ enum FormAction {
 
   /**
    * Form submission handler. Uses the created payload object and submits it to
-   * RPC through store dispatch.
+   * RPC through store dispatch. The form submission will disable the form until
+   * the thunk is complete.
    */
   handleFormSubmission() {
+    this.submitting = true;
     const toSubmit = this.createPayloadObj();
 
-    console.log('Record State', this.recordObj);
-    console.log('Submitting Record', toSubmit);
+    let submitRes: Promise<any>;
     if (this.formAction === FormAction.CREATE) {
-      store.dispatch(createRepairRecord(toSubmit, this.user.authHeaders));
+      submitRes =
+          thunkDispatch(createRepairRecord(toSubmit, this.user.authHeaders));
     } else {
-      store.dispatch(
+      submitRes = thunkDispatch(
           updateRepairRecord(this.recordId, toSubmit, this.user.authHeaders));
     }
+
+    submitRes
+        .then(
+            () => thunkDispatch(
+                getRepairRecord(toSubmit.hostname, this.user.authHeaders)))
+        .finally(() => {
+          this.submitting = false;
+        });
   }
 
   /**

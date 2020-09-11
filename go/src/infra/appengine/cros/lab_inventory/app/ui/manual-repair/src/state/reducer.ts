@@ -43,11 +43,21 @@ export function reducer(state = INITIAL_STATE, action) {
     case RECEIVE_RECORD_INFO_ERROR:
       return {
         ...state,
+        repairRecord: {
+          deviceInfo: state.repairRecord.deviceInfo,
+          recordInfo: null,
+          recordId: null,
+        },
         errors: {...state.errors, recordInfoError: action.error}
       };
     case RECEIVE_DEVICE_INFO_ERROR:
       return {
         ...state,
+        repairRecord: {
+          deviceInfo: null,
+          recordInfo: state.repairRecord.recordInfo,
+          recordId: null,
+        },
         errors: {...state.errors, deviceInfoError: action.error}
       };
     default:
