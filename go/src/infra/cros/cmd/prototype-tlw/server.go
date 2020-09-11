@@ -11,6 +11,7 @@ import (
 	"go.chromium.org/chromiumos/config/go/api/test/tls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
 
@@ -20,6 +21,8 @@ type server struct {
 
 func (s server) Serve(l net.Listener) error {
 	server := grpc.NewServer()
+	// Register reflection service to support grpc_cli usage.
+	reflection.Register(server)
 	tls.RegisterWiringServer(server, &s)
 	return server.Serve(l)
 }
