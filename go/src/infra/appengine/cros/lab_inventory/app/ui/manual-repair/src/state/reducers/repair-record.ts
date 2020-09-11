@@ -9,6 +9,7 @@ import {prpcClient} from '../prpc';
 import {AppThunk, AppThunkDispatch} from '../store';
 
 import {ApplicationState} from './index';
+import {receiveAppMessage} from './message';
 
 /**
  * Synchronous Redux actions to update state store.
@@ -102,7 +103,10 @@ export function getDeviceInfo(
         .call('inventory.Inventory', 'GetCrosDevices', deviceMsg, headers)
         .then(
             res => dispatch(receiveDeviceInfo(res.data?.[0])),
-            err => dispatch(receiveDeviceInfoError(err)),
+            err => Promise.all([
+              dispatch(receiveDeviceInfoError(err)),
+              dispatch(receiveAppMessage(err.description)),
+            ]),
         );
   };
 };
@@ -127,7 +131,10 @@ export function createRepairRecord(
             headers)
         .then(
             res => res,
-            err => dispatch(receiveRecordInfoError(err)),
+            err => Promise.all([
+              dispatch(receiveRecordInfoError(err)),
+              dispatch(receiveAppMessage(err.description)),
+            ]),
         );
   };
 };
@@ -156,7 +163,10 @@ export function updateRepairRecord(
             headers)
         .then(
             res => res,
-            err => dispatch(receiveRecordInfoError(err)),
+            err => Promise.all([
+              dispatch(receiveRecordInfoError(err)),
+              dispatch(receiveAppMessage(err.description)),
+            ]),
         );
   };
 };

@@ -4,16 +4,19 @@
 
 import {combineReducers, Reducer} from 'redux';
 
+import {messageReducer, MessageStateType} from './message';
 import {repairRecordReducer, RepairRecordStateType} from './repair-record';
 import {userReducer, UserStateType} from './user';
 
 export interface ApplicationState {
   record: RepairRecordStateType;
   user: UserStateType;
+  message: MessageStateType;
 }
 
 export const reducers: Reducer<ApplicationState> =
     combineReducers<ApplicationState>({
       record: repairRecordReducer,
       user: userReducer,
+      message: messageReducer,
     });

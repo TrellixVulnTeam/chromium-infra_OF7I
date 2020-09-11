@@ -5,8 +5,10 @@
 import '@material/mwc-textfield';
 
 import {css, customElement, html, LitElement, property} from 'lit-element';
+import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {clearAppMessage, receiveAppMessage} from '../state/reducers/message';
 import {getRepairRecord} from '../state/reducers/repair-record';
 import {store, thunkDispatch} from '../state/store';
 
@@ -59,20 +61,37 @@ export default class SearchHostname extends connect
     this.input = (<HTMLTextAreaElement>e.target!).value;
   }
 
+  getResultMessaging() {
+    if (isEmpty(this.deviceInfo)) {
+      return thunkDispatch(receiveAppMessage(`Device not found for hostname '${
+          this.input}'. Please enter a hostname again.`));
+    } else if (!isEmpty(this.deviceInfo) && isEmpty(this.recordInfo)) {
+      return thunkDispatch(
+          receiveAppMessage(`Existing record not found for hostname '${
+              this.input}'. Please create a new record.`));
+    } else if (!isEmpty(this.deviceInfo) && !isEmpty(this.recordInfo)) {
+      return thunkDispatch(receiveAppMessage(
+          `Existing repair record found for hostname '${this.input}'.`));
+    }
+    return null;
+  }
+
   keyboardListener(e: KeyboardEvent) {
     if (e.key === 'Enter') {
-      // TODO: Move console.error to messaging component
+      thunkDispatch(clearAppMessage());
+
       e.preventDefault();
       if (this.input && this.user.signedIn) {
         this.submitting = true;
         thunkDispatch(getRepairRecord(this.input, this.user.authHeaders))
+            .then(() => this.getResultMessaging())
             .finally(() => {
               this.submitting = false;
             });
       } else if (!this.user.signedIn) {
-        console.error('Please sign in to continue!');
+        thunkDispatch(receiveAppMessage('Please sign in to continue!'));
       } else if (!this.input) {
-        console.error('Please enter a hostname!');
+        thunkDispatch(receiveAppMessage('Please enter a hostname!'));
       }
     }
   }

@@ -14,6 +14,7 @@ import {css, customElement, html, LitElement, property, TemplateResult} from 'li
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {receiveAppMessage} from '../../state/reducers/message';
 import {createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/reducers/repair-record';
 import {store, thunkDispatch} from '../../state/store';
 import {TYPE_DUT, TYPE_LABSTATION, TYPE_UNKNOWN} from '../constants';
@@ -665,10 +666,25 @@ enum FormAction {
     let submitRes: Promise<any>;
     if (this.formAction === FormAction.CREATE) {
       submitRes =
-          thunkDispatch(createRepairRecord(toSubmit, this.user.authHeaders));
+          thunkDispatch(createRepairRecord(toSubmit, this.user.authHeaders))
+              .then(
+                  () => thunkDispatch(
+                      receiveAppMessage(`Successfully created record for '${
+                          toSubmit.hostname}'.`)))
+              .catch(
+                  () => thunkDispatch(
+                      receiveAppMessage('Failed to create record.')));
     } else {
-      submitRes = thunkDispatch(
-          updateRepairRecord(this.recordId, toSubmit, this.user.authHeaders));
+      submitRes =
+          thunkDispatch(updateRepairRecord(
+                            this.recordId, toSubmit, this.user.authHeaders))
+              .then(
+                  () => thunkDispatch(
+                      receiveAppMessage(`Successfully updated record for '${
+                          toSubmit.hostname}'.`)))
+              .catch(
+                  () => thunkDispatch(
+                      receiveAppMessage('Failed to update record.')));
     }
 
     submitRes

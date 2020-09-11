@@ -8,6 +8,7 @@ import '@material/mwc-drawer';
 import './repair-form/repair-form';
 import './search-hostname';
 import './top-bar';
+import './message-display';
 
 import {Drawer} from '@material/mwc-drawer';
 import {css, customElement, html, LitElement, property} from 'lit-element';
@@ -75,6 +76,7 @@ export class ManualRepair extends LitElement {
             <search-hostname></search-hostname>
             <repair-form></repair-form>
           </div>
+          <message-display></message-display>
         </div>
       </mwc-drawer>
     `;
