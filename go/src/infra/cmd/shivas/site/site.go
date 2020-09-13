@@ -147,9 +147,16 @@ const Patch = 0
 // default value is used.  See prpc.Options for details.
 //
 // This is provided so it can be overridden for testing.
-var DefaultPRPCOptions = &prpc.Options{
-	UserAgent: fmt.Sprintf("shivas/%s", VersionNumber),
-}
+var DefaultPRPCOptions = prpcOptionWithUserAgent(fmt.Sprintf("shivas/%s", VersionNumber))
 
 // CipdInstalledPath is the installed path for shivas package.
 var CipdInstalledPath = "infra/shivas/"
+
+// prpcOptionWithUserAgent create prpc option with custom UserAgent.
+//
+// DefaultOptions provides Retry ability in case we have issue with service.
+func prpcOptionWithUserAgent(userAgent string) *prpc.Options {
+	options := *prpc.DefaultOptions()
+	options.UserAgent = userAgent
+	return &options
+}

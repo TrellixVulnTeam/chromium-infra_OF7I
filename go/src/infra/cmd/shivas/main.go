@@ -26,8 +26,11 @@ import (
 
 func getApplication() *cli.Application {
 	return &cli.Application{
-		Name:  "shivas",
-		Title: "Unified Fleet System Management",
+		Name: "shivas",
+		Title: `Unified Fleet System Management
+
+Tool uses a default RPC retry strategy with five attempts and exponential backoff.
+Full documentation http://go/shivas-cli`,
 		Context: func(ctx context.Context) context.Context {
 			return ctx
 		},
