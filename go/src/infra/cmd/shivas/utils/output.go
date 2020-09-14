@@ -45,7 +45,7 @@ var (
 )
 
 // TimeFormat for all timestamps handled by shivas
-var timeFormat = "02 Jan 06 15:04 MST"
+var timeFormat = "2006-01-02_15:04:05_MST"
 
 // The tab writer which defines the write format
 var tw = tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
