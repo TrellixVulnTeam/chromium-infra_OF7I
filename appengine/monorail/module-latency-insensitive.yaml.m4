@@ -63,8 +63,6 @@ ifdef(`STAGING', `
 libraries:
 - name: endpoints
   version: 1.0
-- name: grpcio
-  version: 1.0.0
 - name: MySQLdb
   version: "latest"
 - name: pycrypto
