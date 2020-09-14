@@ -26,7 +26,7 @@ deps = {
 
   "infra/luci":
      "{chromium_git}/infra/luci/luci-py@" +
-     "e778b0ef6d83bc1c194ab51eb3fee84027c42f55",
+     "67570db3469d8fe8b7819477129615a7b523ca5b",
 
   # This unpinned dependency is present because it is used by the trybots for
   # the recipes-py repo; They check out infra with this at HEAD, and then apply
