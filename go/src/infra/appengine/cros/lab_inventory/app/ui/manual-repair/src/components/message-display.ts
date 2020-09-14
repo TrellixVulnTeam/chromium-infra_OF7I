@@ -10,7 +10,7 @@ import {connect} from 'pwa-helpers';
 
 import {store} from '../state/store';
 
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 10000;
 
 @customElement('message-display')
 export default class MessageDisplay extends connect
@@ -26,6 +26,8 @@ export default class MessageDisplay extends connect
 
     const snackbarEl = <Snackbar>this.shadowRoot!.querySelector('#msgSnackbar');
     if (state.message.applicationMessage) {
+      // Close any previous message first and display new one.
+      snackbarEl?.close();
       snackbarEl?.show();
     } else {
       snackbarEl?.close();

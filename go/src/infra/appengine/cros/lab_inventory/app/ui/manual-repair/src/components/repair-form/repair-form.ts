@@ -22,8 +22,8 @@ import {TYPE_DUT, TYPE_LABSTATION, TYPE_UNKNOWN} from '../constants';
 import * as repairConst from './repair-form-constants';
 
 enum FormAction {
-  CREATE,
-  UPDATE,
+  CREATE = 'Create',
+  UPDATE = 'Update',
 }
 
 @customElement('repair-form') export default class RepairForm extends connect
@@ -97,10 +97,22 @@ enum FormAction {
         margin: 0 0.8em 0.5em 0;
       }
 
-      mwc-fab {
+      #form-btn-group {
         position: fixed;
         right: 2em;
         bottom: 2em;
+
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      #form-btn-group mwc-fab {
+        margin-top: 0.8em;
+      }
+
+      mwc-fab.complete-btn {
+        --mdc-theme-secondary: #1E8E3E;
       }
     `];
   }
@@ -116,7 +128,7 @@ enum FormAction {
   // State of the form record object.
   @property({type: Object}) recordObj;
   // Action to be executed on form submission.
-  @property({type: Number}) formAction;
+  @property({type: String}) formAction;
 
   stateChanged(state) {
     this.deviceInfo = state.record.info.deviceInfo;
@@ -392,10 +404,6 @@ enum FormAction {
     this.recordObj[field] = (<Checkbox>e.target!).checked;
   };
 
-  handleIssueFixedChange(e: InputEvent) {
-    this.handleCheckboxChange('issueFixed', e);
-  };
-
   handleReplacementRequestedChange(e: InputEvent) {
     this.handleCheckboxChange('replacementRequested', e);
   };
@@ -420,6 +428,12 @@ enum FormAction {
     this.handleFieldChange('additionalComments', e);
   };
 
+  handleLinkClick(e: MouseEvent, url: string) {
+    e.preventDefault();
+    const redirectWindow = window.open(url, '_blank');
+    redirectWindow?.location;
+  }
+
   /** End form input handlers */
 
   /**
@@ -428,6 +442,9 @@ enum FormAction {
    * TODO: Missing Labstation Board.
    */
   displayDeviceInfo() {
+    const swarmingLink = `https://chromeos-swarming.appspot.com/bot?id=crossk-${
+        this.recordObj.hostname}`;
+
     return html`
       <div class="form-slot">
         <h3 class="form-subtitle">Device Info</h3>
@@ -474,7 +491,48 @@ enum FormAction {
             ></mwc-textfield>
             ` :
             null}
+          <mwc-textfield
+            disabled
+            helperPersistent
+            iconTrailing="link"
+            helper="Click to visit Swarming Bot page"
+            label="Swarming Link"
+            value="${swarmingLink}"
+            @click="${
+        (e: MouseEvent) => this.handleLinkClick(e, swarmingLink)}">
+          </mwc-textfield>
         </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Button group indicating available actions.
+   *  - For new records, the action will be Create Record.
+   *  - For existing records, there will be two actions
+   *    1. Update Record - This will perform a normal update without changing
+   * RepairState.
+   *    2. Fixed Issue & Close Record - This will set issueFixed to true and
+   * update the record, which will set the RepairState to complete.
+   */
+  displayFormBtnGroup() {
+    return html`
+      <div id="form-btn-group">
+        <mwc-fab
+          extended
+          ?disabled="${this.submitting}"
+          label="${this.formAction} Record"
+          @click="${this.handleFormSubmission}">
+        </mwc-fab>
+        ${this.formAction === FormAction.CREATE ? null : html`
+          <mwc-fab
+            class="complete-btn"
+            extended
+            ?disabled="${this.submitting}"
+            label="Fixed Issue & Close Record"
+            @click ="${this.handleCompleteRecord}">
+          </mwc-fab>
+        `}
       </div>
     `;
   }
@@ -485,7 +543,7 @@ enum FormAction {
   displayForm() {
     return html`
       <div id='repair-form'>
-        <h2 class='form-title'>Manual Repair Record for ${
+        <h2 class='form-title'>${this.formAction} Manual Repair Record for ${
         this.getHostname()}</h2>
         ${this.displayDeviceInfo()}
 
@@ -547,14 +605,6 @@ enum FormAction {
               value="${this.recordObj.repairProcedure}"
               @input="${this.handleProcedureChange}"
             ></mwc-textfield>
-            <mwc-formfield label="Fixed Primary Issue">
-              <mwc-checkbox
-                id="issueFixed"
-                ?disabled="${this.submitting}"
-                ?checked="${this.recordObj.issueFixed}"
-                @change="${this.handleIssueFixedChange}">
-              </mwc-checkbox>
-            </mwc-formfield>
             <mwc-formfield label="Replacement Requested">
               <mwc-checkbox
                 ?disabled="${this.submitting}"
@@ -591,14 +641,7 @@ enum FormAction {
             ></mwc-textarea>
           </div>
         </div>
-        <mwc-fab
-          extended
-          ?disabled="${this.submitting}"
-          label="${
-        this.formAction === FormAction.CREATE ? 'Create Record' :
-                                                'Update Record'}"
-          @click =${this.handleFormSubmission}>
-        </mwc-fab>
+        ${this.displayFormBtnGroup()}
       </div>`;
   }
 
@@ -659,6 +702,11 @@ enum FormAction {
    * RPC through store dispatch. The form submission will disable the form until
    * the thunk is complete.
    */
+  handleCompleteRecord() {
+    this.recordObj['issueFixed'] = true;
+    this.handleFormSubmission();
+  };
+
   handleFormSubmission() {
     this.submitting = true;
     const toSubmit = this.createPayloadObj();

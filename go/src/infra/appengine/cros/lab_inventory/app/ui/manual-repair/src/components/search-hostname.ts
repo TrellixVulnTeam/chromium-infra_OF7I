@@ -66,12 +66,13 @@ export default class SearchHostname extends connect
       return thunkDispatch(receiveAppMessage(`Device not found for hostname '${
           this.input}'. Please enter a hostname again.`));
     } else if (!isEmpty(this.deviceInfo) && isEmpty(this.recordInfo)) {
-      return thunkDispatch(
-          receiveAppMessage(`Existing record not found for hostname '${
-              this.input}'. Please create a new record.`));
+      return thunkDispatch(receiveAppMessage(
+          `Please fill the form to create a new repair record for host '${
+              this.input}'.`));
     } else if (!isEmpty(this.deviceInfo) && !isEmpty(this.recordInfo)) {
       return thunkDispatch(receiveAppMessage(
-          `Existing repair record found for hostname '${this.input}'.`));
+          `Please continue to update existing repair record for host '${
+              this.input}'.`));
     }
     return null;
   }
