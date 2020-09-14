@@ -1027,8 +1027,10 @@ https://chromium.googlesource.com/infra/infra/+/refs/heads/master/go/src/infra/u
 	StateFilterHelpText string = fmt.Sprintf("Valid state filters: [%s]\n", strings.Join(ufsUtil.ValidStateStr(), ", "))
 
 	// KeysOnlyText help text for keysOnly option
-	KeysOnlyText string = `get only the keys and not the entire object.
-Operation will be faster as only primary keys/ids will be retrieved from the service.`
+	KeysOnlyText string = `prints only the keys in table format (without title)
+-keys -json prints the entire JSON object, but only name/id field will be filled, other fields will be empty
+-keys -json -noemit prints JSON object with only name/id field.
+Operation will be faster as only name/id will be retrieved from the service.`
 
 	// StateHelp help text for filter '-state'
 	StateHelp string = "the state to assign this entity to. Valid state strings: [" + strings.Join(ufsUtil.ValidStateStr(), ", ") + "]"

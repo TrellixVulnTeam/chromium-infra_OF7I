@@ -295,12 +295,8 @@ func PrintListJSONFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll,
 
 // PrintTableTitle prints the table title with parameters
 func PrintTableTitle(title []string, tsv, keysOnly bool) {
-	if !tsv {
-		if keysOnly {
-			PrintTitle(title[0:1])
-		} else {
-			PrintTitle(title)
-		}
+	if !tsv && !keysOnly {
+		PrintTitle(title)
 	}
 }
 

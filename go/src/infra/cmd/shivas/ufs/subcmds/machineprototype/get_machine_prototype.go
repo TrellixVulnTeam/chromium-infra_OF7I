@@ -145,7 +145,7 @@ func printMachineLSEPrototypesNormal(entities []proto.Message, tsv, keysOnly boo
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVMachineLSEPrototypes(entities, false)
+		utils.PrintTSVMachineLSEPrototypes(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.MachinelseprototypeTitle, tsv, keysOnly)

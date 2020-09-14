@@ -182,7 +182,7 @@ func printDracFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Mess
 
 func printDracNormal(msgs []proto.Message, tsv, keysOnly bool) error {
 	if tsv {
-		utils.PrintTSVDracs(msgs, false)
+		utils.PrintTSVDracs(msgs, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.DracTitle, tsv, keysOnly)

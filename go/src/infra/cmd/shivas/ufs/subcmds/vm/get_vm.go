@@ -149,7 +149,7 @@ func printVMFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Messag
 
 func printVMNormal(msgs []proto.Message, tsv, keysOnly bool) error {
 	if tsv {
-		utils.PrintTSVVMs(msgs, false)
+		utils.PrintTSVVMs(msgs, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.VMTitle, tsv, keysOnly)

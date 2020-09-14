@@ -146,7 +146,7 @@ func printVlanNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVVlans(entities, false)
+		utils.PrintTSVVlans(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.VlanTitle, tsv, keysOnly)

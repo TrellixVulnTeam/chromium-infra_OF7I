@@ -155,7 +155,7 @@ func printRPMNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVRPMs(entities, false)
+		utils.PrintTSVRPMs(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.RpmTitle, tsv, keysOnly)

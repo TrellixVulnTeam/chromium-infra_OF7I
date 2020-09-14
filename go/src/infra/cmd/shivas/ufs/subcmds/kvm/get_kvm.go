@@ -159,7 +159,7 @@ func printKVMFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Messa
 
 func printKVMNormal(kvms []proto.Message, tsv, keysOnly bool) error {
 	if tsv {
-		utils.PrintTSVKVMs(kvms, false)
+		utils.PrintTSVKVMs(kvms, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.KvmTitle, tsv, keysOnly)

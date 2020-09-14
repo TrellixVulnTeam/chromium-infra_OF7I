@@ -164,7 +164,7 @@ func printNicNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVNics(entities, false)
+		utils.PrintTSVNics(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.NicTitle, tsv, keysOnly)

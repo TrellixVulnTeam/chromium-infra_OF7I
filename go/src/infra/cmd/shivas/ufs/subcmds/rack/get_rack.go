@@ -151,7 +151,7 @@ func printRackNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVRacks(entities, false)
+		utils.PrintTSVRacks(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.RackTitle, tsv, keysOnly)

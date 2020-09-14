@@ -154,7 +154,7 @@ func printSwitchNormal(entities []proto.Message, tsv, keysOnly bool) error {
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVSwitches(entities, false)
+		utils.PrintTSVSwitches(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.SwitchTitle, tsv, keysOnly)

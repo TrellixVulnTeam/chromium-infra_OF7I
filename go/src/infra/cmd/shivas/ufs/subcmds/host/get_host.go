@@ -187,7 +187,7 @@ func printHostFull(ctx context.Context, ic ufsAPI.FleetClient, msgs []proto.Mess
 
 func printHostNormal(msgs []proto.Message, tsv, keysOnly bool) error {
 	if tsv {
-		utils.PrintTSVMachineLSEs(msgs, false)
+		utils.PrintTSVMachineLSEs(msgs, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.MachineLSETitle, tsv, keysOnly)

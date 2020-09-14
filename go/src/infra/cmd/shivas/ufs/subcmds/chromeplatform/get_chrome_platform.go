@@ -150,7 +150,7 @@ func printChromePlatformNormal(entities []proto.Message, tsv, keysOnly bool) err
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVPlatforms(entities, false)
+		utils.PrintTSVPlatforms(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.ChromePlatformTitle, tsv, keysOnly)

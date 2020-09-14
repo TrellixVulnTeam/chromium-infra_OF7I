@@ -146,7 +146,7 @@ func printRackLSEPrototypeNormal(entities []proto.Message, tsv, keysOnly bool) e
 		return nil
 	}
 	if tsv {
-		utils.PrintTSVRackLSEPrototypes(entities, false)
+		utils.PrintTSVRackLSEPrototypes(entities, keysOnly)
 		return nil
 	}
 	utils.PrintTableTitle(utils.RacklseprototypeTitle, tsv, keysOnly)
