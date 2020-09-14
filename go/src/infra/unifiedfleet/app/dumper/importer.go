@@ -15,6 +15,8 @@ import (
 	frontend "infra/unifiedfleet/app/frontend"
 )
 
+const stopImport = false
+
 func importCrimson(ctx context.Context) (err error) {
 	defer func() {
 		dumpCrimsonTick.Add(ctx, 1, err == nil)
@@ -34,6 +36,12 @@ func importCrimson(ctx context.Context) (err error) {
 		logging.Warningf(ctx, "Fail to generate sync diff: %s", err.Error())
 	}
 	logging.Infof(ctx, "Finish exporting diff from crimson to UFS to Google Storage")
+
+	if stopImport {
+		logging.Infof(ctx, "Syncing from crimson is stopped")
+		return nil
+	}
+
 	sv := &frontend.FleetServerImpl{}
 	logging.Infof(ctx, "Importing chrome platforms")
 	respCP, err := sv.ImportChromePlatforms(ctx, &api.ImportChromePlatformsRequest{
