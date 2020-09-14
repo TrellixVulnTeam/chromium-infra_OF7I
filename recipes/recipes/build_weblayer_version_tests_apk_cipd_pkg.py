@@ -288,6 +288,12 @@ def build_cipd_pkgs(api, cipd_pkgs_to_create):
 
   # Create CIPD packages for all chromium versions added to variants.pyl
   for version in cipd_pkgs_to_create:
+    # Check if CIPD package exists before building it and uploading it.
+    # If a previous build failed or timed out right after uploading CIPD
+    # packages, then this recipe would upload duplicate CIPD packages if
+    # there was no check.
+    if api.cipd.search(CIPD_PKG_NAME, 'version:%s' % version):
+      continue
 
     # Checkout chromium version
     with api.context(cwd=api.path['checkout']), \
@@ -314,11 +320,8 @@ def build_cipd_pkgs(api, cipd_pkgs_to_create):
       api.zip.unzip('Uncompressing build files for version %s' % version,
                     zip_path, extract_dir)
       api.cipd.build(extract_dir, cipd_out, CIPD_PKG_NAME)
-      # User property below to tell recipe to not upload CIPD packages.
-      # TODO(rmhasan) Add code to check if CIPD package already exists.
-      if not api.properties.get('dont_upload_cipd_pkg'):
-        api.cipd.register(CIPD_PKG_NAME, cipd_out, tags={'version': version},
-                          refs=['m%s' % version[:version.index('.')]])
+      api.cipd.register(CIPD_PKG_NAME, cipd_out, tags={'version': version},
+                        refs=['m%s' % version[:version.index('.')]])
 
 
 def upload_changes(api, new_variants_lines, variants_pyl_path,
@@ -469,9 +472,15 @@ def GenTests(api):
                       {'deployment': {'beta': '83.0.4103.96'}}) +
          api.url.json('Fetch information on commit mnop',
                       {'deployment': {'beta': '81.0.1111.40'}}) +
+         api.step_data(
+             'cipd search %s version:%s' % (CIPD_PKG_NAME, '83.0.4103.96'),
+             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
          api.step_data('Reading //chrome/VERSION',
              api.file.read_text('a=83\nb=0\nc=4103\nd=96'))  +
          api.path.exists(api.path['cleanup'].join('apk_build_files')) +
+         api.step_data(
+             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
+             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
          api.step_data('Reading //chrome/VERSION (2)',
                        api.file.read_text('a=84\nb=0\nc=4147\nd=89')) +
          api.step_data(
@@ -491,9 +500,32 @@ def GenTests(api):
                       [{'hashes':{'chromium':'abcd'}}]) +
          api.url.json('Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
+         api.step_data(
+             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
+             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
          api.step_data('Reading //chrome/VERSION',
              api.file.read_text('a=84\nb=0\nc=4147\nd=89'))  +
          api.path.exists(api.path['cleanup'].join('apk_build_files')) +
+         api.step_data(
+             'Landing CL.git cl status',
+             api.raw_io.stream_output('commit', stream='stdout')) +
+         api.step_data(
+             'Landing CL.git cl status (2)',
+             api.raw_io.stream_output('closed', stream='stdout')))
+
+  yield (api.test('version-already-exists-only-upload-cl') +
+         api.properties(submit_cl=True,
+                        total_cq_checks=2,
+                        interval_between_checks_in_secs=60) +
+         api.step_data('Read variants.pyl',
+             api.file.read_text(TEST_VARIANTS_PYL)) +
+         api.url.json('Getting Android beta channel releases',
+                      [{'hashes':{'chromium':'abcd'}}]) +
+         api.url.json('Fetch information on commit abcd',
+                      {'deployment': {'beta': '84.0.4147.89'}}) +
+         api.step_data(
+             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
+             api.cipd.example_search(CIPD_PKG_NAME, instances=1)) +
          api.step_data(
              'Landing CL.git cl status',
              api.raw_io.stream_output('commit', stream='stdout')) +
@@ -511,6 +543,9 @@ def GenTests(api):
                       [{'hashes':{'chromium':'abcd'}}]) +
          api.url.json('Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
+         api.step_data(
+             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
+             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
          api.step_data('Reading //chrome/VERSION',
              api.file.read_text('a=84\nb=0\nc=4147\nd=89'))  +
          api.path.exists(api.path['cleanup'].join('apk_build_files')))
@@ -523,6 +558,9 @@ def GenTests(api):
                       [{'hashes':{'chromium':'abcd'}}]) +
          api.url.json('Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
+         api.step_data(
+             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
+             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
          api.step_data('Reading //chrome/VERSION',
              api.file.read_text('a=abd\nb=0\nc=4147\nd=89\n')) +
          api.post_process(post_process.DropExpectation))

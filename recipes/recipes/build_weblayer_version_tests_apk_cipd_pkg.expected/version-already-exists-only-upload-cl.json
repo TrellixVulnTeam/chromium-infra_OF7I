@@ -322,227 +322,15 @@
     "name": "cipd search chromium/testing/weblayer-x86 version:84.0.4147.89",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": []@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@    {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"resolved-instance_id-of-instance_id_1---\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"package\": \"chromium/testing/weblayer-x86\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }@@@",
+      "@@@STEP_LOG_LINE@json.output@  ]@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
-  },
-  {
-    "cmd": [
-      "git",
-      "checkout",
-      "84.0.4147.89"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git checkout (2)"
-  },
-  {
-    "cmd": [
-      "git",
-      "clean",
-      "-fd"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git clean"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "copy",
-      "[START_DIR]/src/chrome/VERSION",
-      "/path/to/tmp/"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "Reading //chrome/VERSION",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@VERSION@a=84@@@",
-      "@@@STEP_LOG_LINE@VERSION@b=0@@@",
-      "@@@STEP_LOG_LINE@VERSION@c=4147@@@",
-      "@@@STEP_LOG_LINE@VERSION@d=89@@@",
-      "@@@STEP_LOG_END@VERSION@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_REPO[depot_tools]/gclient.py",
-      "sync",
-      "--verbose",
-      "--nohooks",
-      "-j8",
-      "--reset",
-      "--force",
-      "--upstream",
-      "--no-nag-max",
-      "--with_branch_heads",
-      "--with_tags",
-      "--delete_unversioned_trees",
-      "--output-json",
-      "/path/to/tmp/json"
-    ],
-    "cwd": "[START_DIR]/src",
-    "env_suffixes": {
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "infra_step": true,
-    "name": "gclient sync",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"solutions\": {}@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_REPO[depot_tools]/gclient.py",
-      "runhooks"
-    ],
-    "cwd": "[START_DIR]/src",
-    "env_suffixes": {
-      "PATH": [
-        "RECIPE_REPO[depot_tools]"
-      ]
-    },
-    "name": "gclient runhooks"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "rmtree",
-      "[CLEANUP]/apk_build_files"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "Cleaning up build files from last build"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "[START_DIR]/src/tools/mb/mb.py",
-      "zip",
-      "--master=dummy.master",
-      "--builder=dummy.builder",
-      "--config-file=[CLEANUP]/tmp_tmp_1/mb_config.pyl",
-      "out/Release",
-      "weblayer_instrumentation_test_apk",
-      "[CLEANUP]/tmp_tmp_2/build_config.zip"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "Generating build files for weblayer_instrumentation_test_apk"
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "RECIPE_MODULE[build::zip]/resources/unzip.py"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "Uncompressing build files for version 84.0.4147.89",
-    "stdin": "{\"output\": \"[CLEANUP]/apk_build_files\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_2/build_config.zip\"}"
-  },
-  {
-    "cmd": [
-      "cipd",
-      "pkg-build",
-      "-in",
-      "[CLEANUP]/apk_build_files",
-      "-name",
-      "chromium/testing/weblayer-x86",
-      "-out",
-      "[START_DIR]/src/out/Release/skew_test_apk_84_0_4147_89.cipd",
-      "-hash-algo",
-      "sha256",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "build weblayer-x86",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"chromium/testing/weblayer-x86\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "pkg-register",
-      "[START_DIR]/src/out/Release/skew_test_apk_84_0_4147_89.cipd",
-      "-ref",
-      "m84",
-      "-tag",
-      "version:84.0.4147.89",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "register chromium/testing/weblayer-x86",
-    "~followup_annotations": [
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"chromium/testing/weblayer-x86\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@chromium/testing/weblayer-x86@https://chrome-infra-packages.appspot.com/p/chromium/testing/weblayer-x86/+/40-chars-fake-of-the-package-instance_id@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "checkout",
-      "origin/master"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git checkout (3)"
-  },
-  {
-    "cmd": [
-      "git",
-      "clean",
-      "-fd"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git clean (2)"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "rmtree",
-      "[START_DIR]/src/out/Release"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "Cleaning 84.0.4147.89 build files"
   },
   {
     "cmd": [
@@ -676,10 +464,7 @@
   },
   {
     "cmd": [],
-    "name": "Landing CL",
-    "~followup_annotations": [
-      "@@@STEP_FAILURE@@@"
-    ]
+    "name": "Landing CL"
   },
   {
     "cmd": [
@@ -712,36 +497,6 @@
     ]
   },
   {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "set-close"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "Landing CL.git_cl set-close",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "python",
-      "-u",
-      "import sys; sys.exit(1)"
-    ],
-    "name": "Landing CL.CQ timed out",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_TEXT@CQ timed out; Abandoned CL@@@",
-      "@@@STEP_FAILURE@@@"
-    ]
-  },
-  {
-    "failure": {
-      "failure": {},
-      "humanReason": "Step('Landing CL.CQ timed out') (retcode: 1)"
-    },
     "name": "$result"
   }
 ]

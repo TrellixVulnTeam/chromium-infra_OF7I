@@ -311,6 +311,24 @@
   },
   {
     "cmd": [
+      "cipd",
+      "search",
+      "chromium/testing/weblayer-x86",
+      "-tag",
+      "version:84.0.4147.89",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "name": "cipd search chromium/testing/weblayer-x86 version:84.0.4147.89",
+    "~followup_annotations": [
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": []@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
       "git",
       "checkout",
       "84.0.4147.89"
