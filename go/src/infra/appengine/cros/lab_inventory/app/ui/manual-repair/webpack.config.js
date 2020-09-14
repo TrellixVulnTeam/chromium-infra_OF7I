@@ -78,8 +78,8 @@ const prodConfig = {
   devtool: 'source-map',
 };
 
-module.exports = () => {
-  switch (process.env.NODE_ENV) {
+module.exports = env => {
+  switch (env.NODE_ENV) {
     case 'staging':
       return merge(commonConfig, stageConfig);
     case 'production':

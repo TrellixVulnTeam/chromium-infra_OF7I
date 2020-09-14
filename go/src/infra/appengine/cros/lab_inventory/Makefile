@@ -106,18 +106,19 @@ mr-dev:
 .PHONY: mr-deps
 mr-deps:
 	cd $(MR_APP_PATH); \
-	npm install --no-save; \
-	npm run build
+	npm install --no-save
 
 .PHONY: mr-up-dev
 mr-up-dev: mr-deps
 	cd $(MR_APP_PATH); \
+	npm run build-stage; \
 	gcloud app deploy --promote $(MR_APP_PATH)/app.stage.yaml \
 	$(PROJECT_PATH)/app/dispatch.yaml --project $(GCP_PROJECT_DEV)
 
 .PHONY: mr-up-prod
 mr-up-prod: mr-deps
 	cd $(MR_APP_PATH); \
+	npm run build-prod; \
 	gcloud app deploy --no-promote $(MR_APP_PATH)/app.prod.yaml \
 	$(PROJECT_PATH)/app/dispatch.yaml --project $(GCP_PROJECT)
 
