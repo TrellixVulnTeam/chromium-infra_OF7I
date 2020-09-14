@@ -33,13 +33,12 @@ def enqueue_bq_export_async(build):
   assert build.is_ended
 
   task_def = {
-      'method': 'PULL',
+      'url': '/internal/task/bq/export/%d' % build.key.id(),
       'payload': {'id': build.key.id()},
   }
-  return tq.enqueue_async('bq-export', [task_def])
+  return tq.enqueue_async('backend-default', [task_def])
 
 
-# TODO(crbug/1042991): Switch enqueue_bq_export_async to use handler.
 class TaskExport(webapp2.RequestHandler):  # pragma: no cover
   """Exports builds to a BigQuery table."""
 

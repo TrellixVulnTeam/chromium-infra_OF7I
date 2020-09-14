@@ -56,10 +56,10 @@ class BigQueryExportTest(testing.AppengineTestCase):
         lambda: bq.enqueue_bq_export_async(build).get_result())()
 
     task_def = {
-        'method': 'PULL',
+        'url': '/internal/task/bq/export/1',
         'payload': {'id': 1},
     }
-    enqueue_async.assert_any_call('bq-export', [task_def])
+    enqueue_async.assert_any_call('backend-default', [task_def])
 
   @unittest.skip('queues are defined in luci-go')
   def test_cron_export_builds_to_bq(self):
