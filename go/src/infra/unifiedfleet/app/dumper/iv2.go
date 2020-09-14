@@ -81,7 +81,7 @@ func SyncAssetsFromIV2(ctx context.Context) error {
 		ufsAsset, err := registration.GetAsset(ctx, asset.GetId())
 		iv2Asset, convErr := CreateAssetsFromChopsAsset(asset, assetInfos[asset.GetId()], assetsToHostname[asset.GetId()])
 		if convErr != nil {
-			logging.Warningf(ctx, "Unable to create asset %v: %v", asset, err)
+			logging.Warningf(ctx, "Unable to create asset %v: %v", asset, convErr)
 			continue
 		}
 		if err != nil {
