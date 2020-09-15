@@ -34,8 +34,8 @@ import (
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/clients/mock"
 	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore/fakes"
 	"infra/libs/cros/git"
 	"infra/libs/skylab/inventory"
 

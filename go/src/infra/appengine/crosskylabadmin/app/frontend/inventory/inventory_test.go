@@ -25,8 +25,8 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/config"
 	dataSV "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/fakes"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore/fakes"
 	"infra/libs/skylab/inventory"
 )
 
