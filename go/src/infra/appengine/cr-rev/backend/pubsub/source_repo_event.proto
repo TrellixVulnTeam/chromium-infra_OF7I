@@ -6,7 +6,7 @@ syntax = "proto3";
 
 package pubsub;
 
-option go_package = "infra/appengine/cr-rev/pubsub";
+option go_package = "infra/appengine/cr-rev/backend/pubsub";
 
 // Cloud Pub/Sub message payload for all events in Source Repo API.
 message SourceRepoEvent {
