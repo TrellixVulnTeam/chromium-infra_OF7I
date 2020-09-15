@@ -25,8 +25,6 @@ import (
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
-	"go.chromium.org/luci/common/proto/gerrit"
-	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
 	"golang.org/x/net/context"
 
@@ -97,10 +95,10 @@ func newTestFixtureWithContext(ctx context.Context, t *testing.T) (testFixture, 
 	tf.MockSwarming = mock.NewMockSwarmingClient(mc)
 	tf.MockTracker = fleet.NewMockTrackerServer(mc)
 	tf.Inventory = &ServerImpl{
-		GerritFactory: func(context.Context, string) (gerrit.GerritClient, error) {
+		GerritFactory: func(context.Context, string) (gitstore.GerritClient, error) {
 			return tf.FakeGerrit, nil
 		},
-		GitilesFactory: func(context.Context, string) (gitiles.GitilesClient, error) {
+		GitilesFactory: func(context.Context, string) (gitstore.GitilesClient, error) {
 			return tf.FakeGitiles, nil
 		},
 		SwarmingFactory: func(context.Context, string) (clients.SwarmingClient, error) {

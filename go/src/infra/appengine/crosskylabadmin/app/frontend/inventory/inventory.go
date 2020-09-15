@@ -32,8 +32,6 @@ import (
 	gitilesApi "go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/gerrit"
-	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/common/retry"
 	"go.chromium.org/luci/common/retry/transient"
 	"go.chromium.org/luci/grpc/grpcutil"
@@ -60,10 +58,10 @@ var prettyConfig = &pretty.Config{
 }
 
 // GerritFactory is a contsructor for a GerritClient
-type GerritFactory func(c context.Context, host string) (gerrit.GerritClient, error)
+type GerritFactory func(c context.Context, host string) (gitstore.GerritClient, error)
 
 // GitilesFactory is a contsructor for a GerritClient
-type GitilesFactory func(c context.Context, host string) (gitiles.GitilesClient, error)
+type GitilesFactory func(c context.Context, host string) (gitstore.GitilesClient, error)
 
 // SwarmingFactory is a constructor for a SwarmingClient.
 type SwarmingFactory func(c context.Context, host string) (clients.SwarmingClient, error)
@@ -133,14 +131,14 @@ func transientErrorRetries() retry.Factory {
 	return transient.Only(next)
 }
 
-func (is *ServerImpl) newGerritClient(c context.Context, host string) (gerrit.GerritClient, error) {
+func (is *ServerImpl) newGerritClient(c context.Context, host string) (gitstore.GerritClient, error) {
 	if is.GerritFactory != nil {
 		return is.GerritFactory(c, host)
 	}
 	return clients.NewGerritClient(c, host)
 }
 
-func (is *ServerImpl) newGitilesClient(c context.Context, host string) (gitiles.GitilesClient, error) {
+func (is *ServerImpl) newGitilesClient(c context.Context, host string) (gitstore.GitilesClient, error) {
 	if is.GitilesFactory != nil {
 		return is.GitilesFactory(c, host)
 	}

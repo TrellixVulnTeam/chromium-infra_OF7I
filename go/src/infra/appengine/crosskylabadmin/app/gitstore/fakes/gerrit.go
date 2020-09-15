@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// GerritClient is a fake implementation of the gerrit.GerritClient interface.
+// GerritClient is a fake implementation of the gitstore.GerritClient interface.
 type GerritClient struct {
 	nextNumber int64
 	Changes    []*GerritChange

@@ -30,8 +30,6 @@ import (
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/gerrit"
-	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/server/router"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
@@ -39,6 +37,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend"
 	"infra/appengine/crosskylabadmin/app/frontend/inventory"
+	"infra/appengine/crosskylabadmin/app/gitstore"
 )
 
 // InstallHandlers installs handlers for cron jobs that are part of this app.
@@ -275,10 +274,10 @@ func balancePoolCronHandler(c *router.Context) (err error) {
 func createInventoryServer(c *router.Context) *inventory.ServerImpl {
 	tracker := &frontend.TrackerServerImpl{}
 	return &inventory.ServerImpl{
-		GerritFactory: func(c context.Context, host string) (gerrit.GerritClient, error) {
+		GerritFactory: func(c context.Context, host string) (gitstore.GerritClient, error) {
 			return clients.NewGerritClientAsSelf(c, host)
 		},
-		GitilesFactory: func(c context.Context, host string) (gitiles.GitilesClient, error) {
+		GitilesFactory: func(c context.Context, host string) (gitstore.GitilesClient, error) {
 			return clients.NewGitilesClientAsSelf(c, host)
 		},
 		TrackerFactory: func() fleet.TrackerServer {

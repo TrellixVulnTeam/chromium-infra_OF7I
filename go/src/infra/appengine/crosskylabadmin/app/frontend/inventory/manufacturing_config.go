@@ -20,7 +20,6 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
 
 	"infra/appengine/crosskylabadmin/app/config"
@@ -30,7 +29,7 @@ import (
 )
 
 // GetManufacturingConfig fetch manufacturing configs from git.
-func GetManufacturingConfig(ctx context.Context, gitilesC gitiles.GitilesClient) (map[string]*manufacturing.Config, error) {
+func GetManufacturingConfig(ctx context.Context, gitilesC gitstore.GitilesClient) (map[string]*manufacturing.Config, error) {
 	cfg := config.Get(ctx).Inventory
 	gf := gitstore.FilesSpec{
 		Project: cfg.ManufacturingConfigProject,

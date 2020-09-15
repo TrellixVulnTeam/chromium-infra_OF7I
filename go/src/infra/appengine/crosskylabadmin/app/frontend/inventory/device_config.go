@@ -21,17 +21,15 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
-	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
 	"golang.org/x/net/context"
 
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/libs/skylab/inventory"
-
-	"go.chromium.org/chromiumos/infra/proto/go/device"
 )
 
 // DeviceConfigID includes required info to form a device config ID.
@@ -98,7 +96,7 @@ func UpdateLabelsWithDeviceConfig(ctx context.Context, sl *inventory.Schedulable
 }
 
 // GetDeviceConfig fetch device configs from git.
-func GetDeviceConfig(ctx context.Context, gitilesC gitiles.GitilesClient) (map[string]*device.Config, error) {
+func GetDeviceConfig(ctx context.Context, gitilesC gitstore.GitilesClient) (map[string]*device.Config, error) {
 	cfg := config.Get(ctx).Inventory
 	gf := gitstore.FilesSpec{
 		Project: cfg.DeviceConfigProject,

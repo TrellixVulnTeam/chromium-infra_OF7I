@@ -31,7 +31,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// GitilesClient is a fake implementation of the gitiles.GitilesClient
+// GitilesClient is a fake implementation of the gitstore.GitilesClient
 // interface.
 type GitilesClient struct {
 	Archived map[string][]byte

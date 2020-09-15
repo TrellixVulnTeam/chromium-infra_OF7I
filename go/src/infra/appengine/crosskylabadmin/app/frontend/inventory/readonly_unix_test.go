@@ -24,10 +24,9 @@ import (
 	"time"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
+	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/appengine/crosskylabadmin/app/gitstore/fakes"
 
-	"go.chromium.org/luci/common/proto/gerrit"
-	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
 )
 
@@ -38,7 +37,7 @@ func TestGetDutInfoAfterUpdating(t *testing.T) {
 
 	gc := fakes.NewGitilesClient()
 	inv := fakeServer()
-	inv.GitilesFactory = func(context.Context, string) (gitiles.GitilesClient, error) {
+	inv.GitilesFactory = func(context.Context, string) (gitstore.GitilesClient, error) {
 		return gc, nil
 	}
 	setGitilesDUTs(ctx, gc, []testInventoryDut{
@@ -76,10 +75,10 @@ func fakeServer() *ServerImpl {
 	}
 }
 
-func gerritFactory(context.Context, string) (gerrit.GerritClient, error) {
+func gerritFactory(context.Context, string) (gitstore.GerritClient, error) {
 	return &fakes.GerritClient{}, nil
 }
 
-func gitilesFactory(context.Context, string) (gitiles.GitilesClient, error) {
+func gitilesFactory(context.Context, string) (gitstore.GitilesClient, error) {
 	return fakes.NewGitilesClient(), nil
 }
