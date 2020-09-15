@@ -17,7 +17,7 @@ from chromeperf.engine import evaluator as evaluator_module
 
 __all__ = (
     'populate_task_graph',
-    'append_task_log',
+    'task_graph_loader',
 )
 
 
@@ -88,8 +88,8 @@ def populate_task_graph(client, job, graph):
 
 
 def task_graph_loader(
-    client: datastore.Client,
-    job: typing.Any,
+        client: datastore.Client,
+        job: typing.Any,
 ) -> typing.Callable[[], evaluator_module.TaskGraph]:
     def load_task_graph() -> evaluator_module.TaskGraph:
         with client.transaction():
