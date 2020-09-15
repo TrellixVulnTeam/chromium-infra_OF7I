@@ -24,7 +24,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore/fakes"
+	"infra/appengine/crosskylabadmin/app/gitstore/fakes"
 	"infra/libs/skylab/inventory"
 
 	"github.com/golang/protobuf/proto"

@@ -47,7 +47,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/dronecfg"
 	dataSV "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/appengine/drone-queen/api"
 	"infra/libs/cros/git"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"

@@ -35,7 +35,7 @@ import (
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/freeduts"
 	dsinventory "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/inventory"
 	dssv "infra/appengine/crosskylabadmin/app/frontend/internal/datastore/stableversion"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/libs/cros/lab_inventory/utilization"
 	"infra/libs/skylab/inventory"
 )

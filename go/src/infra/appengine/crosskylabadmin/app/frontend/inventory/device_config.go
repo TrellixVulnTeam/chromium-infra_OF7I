@@ -27,10 +27,11 @@ import (
 	"go.chromium.org/luci/gae/service/datastore"
 	"golang.org/x/net/context"
 
-	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/libs/skylab/inventory"
+
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 )
 
 // DeviceConfigID includes required info to form a device config ID.

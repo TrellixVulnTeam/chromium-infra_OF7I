@@ -21,18 +21,19 @@ import (
 	"sort"
 	"strconv"
 
-	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"infra/appengine/cros/lab_inventory/api/v1"
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/clients"
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/deploy"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/swarming"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/worker"
+	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/libs/cros/lab_inventory/utils"
 	protos "infra/libs/fleet/protos"
 	"infra/libs/skylab/inventory"
+
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"

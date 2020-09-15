@@ -21,7 +21,7 @@ import (
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/gitstore"
 	"infra/libs/skylab/inventory"
 
 	"github.com/golang/protobuf/proto"

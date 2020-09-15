@@ -22,8 +22,8 @@ import (
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/appengine/crosskylabadmin/app/frontend/internal/datastore/deploy"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore/fakes"
+	"infra/appengine/crosskylabadmin/app/gitstore"
+	"infra/appengine/crosskylabadmin/app/gitstore/fakes"
 	"infra/libs/skylab/inventory"
 
 	"github.com/golang/mock/gomock"

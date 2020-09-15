@@ -24,7 +24,7 @@ import (
 	"time"
 
 	fleet "infra/appengine/crosskylabadmin/api/fleet/v1"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore/fakes"
+	"infra/appengine/crosskylabadmin/app/gitstore/fakes"
 
 	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"

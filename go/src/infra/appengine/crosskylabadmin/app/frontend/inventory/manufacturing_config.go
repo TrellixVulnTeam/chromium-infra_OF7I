@@ -23,9 +23,10 @@ import (
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
 
-	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"infra/appengine/crosskylabadmin/app/config"
-	"infra/appengine/crosskylabadmin/app/frontend/internal/gitstore"
+	"infra/appengine/crosskylabadmin/app/gitstore"
+
+	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 )
 
 // GetManufacturingConfig fetch manufacturing configs from git.
