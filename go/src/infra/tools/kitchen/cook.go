@@ -424,9 +424,11 @@ func (c *cookRun) run(ctx context.Context, args []string, env environ.Env) (*bui
 	if c.buildSecrets, err = readBuildSecrets(ctx); err != nil {
 		return fail(errors.Annotate(err, "failed to read build secrets").Err())
 	}
-
 	// Get resultdb parameters from the buildbucket property and build secrets.
-	ctx = c.setResultDBContext(ctx)
+	ctx = c.syncResultDBInfo(ctx)
+	if err != nil {
+		return fail(errors.Annotate(err, "failed to sync resultdb info").Err())
+	}
 
 	// Create systemAuth and recipeAuth authentication contexts, since we are
 	// about to start making authenticated requests now.
@@ -961,9 +963,11 @@ func (c *cookRun) getLogDogStreamServer(ctx context.Context) (*streamserver.Stre
 	return streamserver.New(ctx, filepath.Join(c.TempDir, "ld.sock"))
 }
 
-// setResultDBContext copies resultdb's parameters from the build proto and the
-// buils secrets onto the appropriate section of lucictx.
-func (c *cookRun) setResultDBContext(ctx context.Context) context.Context {
+// syncResultDBInfo syncs resultDB info in build proto and lucictx.
+// If there are resultdb's parameters in the build proto, copies them and the
+// build secrets onto the appropriate section of lucictx (for buildbucket builds).
+// Otherwise copies resultdb data from lucictx and update build proto (for led builds).
+func (c *cookRun) syncResultDBInfo(ctx context.Context) context.Context {
 	if bbProp, ok := c.engine.properties["$recipe_engine/buildbucket"]; ok {
 		// The "build" value of the property above was parsed from json encoded text.
 		// Marshal it to a byte array and then populate a proto from it with jsonpb.
@@ -977,14 +981,30 @@ func (c *cookRun) setResultDBContext(ctx context.Context) context.Context {
 				panic("Impossible unmarshaling error")
 			}
 
-			// Set resultdb parameters in the luci context.
-			return lucictx.SetResultDB(ctx, &lucictx.ResultDB{
-				Hostname: buildProto.GetInfra().GetResultdb().GetHostname(),
-				CurrentInvocation: &lucictx.ResultDBInvocation{
-					Name:        buildProto.GetInfra().GetResultdb().GetInvocation(),
-					UpdateToken: c.buildSecrets.ResultdbInvocationUpdateToken,
-				},
-			})
+			if buildProto.GetInfra().GetResultdb().GetInvocation() != "" {
+				log.Infof(ctx, "found invocation in build proto: %s", buildProto.GetInfra().GetResultdb().GetInvocation())
+				return lucictx.SetResultDB(ctx, &lucictx.ResultDB{
+					Hostname: buildProto.GetInfra().GetResultdb().GetHostname(),
+					CurrentInvocation: &lucictx.ResultDBInvocation{
+						Name:        buildProto.GetInfra().GetResultdb().GetInvocation(),
+						UpdateToken: c.buildSecrets.ResultdbInvocationUpdateToken,
+					},
+				})
+			} else if resultDBCtx := lucictx.GetResultDB(ctx); resultDBCtx != nil {
+				log.Infof(ctx, "found invocation in lucictx: %s", resultDBCtx.CurrentInvocation.Name)
+				buildProto.Infra.Resultdb = &buildbucketpb.BuildInfra_ResultDB{
+					Hostname:   resultDBCtx.Hostname,
+					Invocation: resultDBCtx.CurrentInvocation.Name,
+				}
+				buf := &bytes.Buffer{}
+				if err := (&jsonpb.Marshaler{}).Marshal(buf, buildProto); err != nil {
+					panic("Failed to marshal build proto")
+				}
+				if err := json.Unmarshal(buf.Bytes(), &buildMap); err != nil {
+					panic("Failed to unmarshal json")
+				}
+				c.engine.properties["$recipe_engine/buildbucket"].(map[string]interface{})["build"] = buildMap
+			}
 		}
 	}
 	return ctx

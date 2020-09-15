@@ -116,7 +116,19 @@ func TestCook(t *testing.T) {
 			So(os.Chdir(tdir), ShouldBeNil)
 			defer os.Chdir(cwd)
 
-			run := func(mockRecipeResult *recipe_engine.Result, recipeExitCode int) (*buildbucketpb.Build, int) {
+			run := func(mockRecipeResult *recipe_engine.Result, recipeExitCode int, withResultDBContext bool) (*buildbucketpb.Build, int) {
+				// Set lucictx.
+				ctx := c
+				if withResultDBContext {
+					ctx = lucictx.SetResultDB(c, &lucictx.ResultDB{
+						Hostname: "test.results.cr.dev",
+						CurrentInvocation: &lucictx.ResultDBInvocation{
+							Name:        "invocations/build:1",
+							UpdateToken: "UpdateToken",
+						},
+					})
+				}
+
 				// Mock recipes.py result
 				mockedRecipeResultPath := filepath.Join(tdir, "expected_result.json")
 				m := jsonpb.Marshaler{}
@@ -128,6 +140,15 @@ func TestCook(t *testing.T) {
 
 				// Prepare arguments
 				recipeInputPath := filepath.Join(tdir, "recipe_input.json")
+				resultDBProperty := fmt.Sprintf(`
+					"resultdb": {
+						"invocation": "invocations/build:1",
+						"hostname":   "test.results.cr.dev"
+					}
+				`)
+				if withResultDBContext {
+					resultDBProperty = ""
+				}
 				propertiesJSON := fmt.Sprintf(`{
 					"recipe_mock_cfg": {
 						"input_path": %s,
@@ -137,10 +158,7 @@ func TestCook(t *testing.T) {
 					"$recipe_engine/buildbucket": {
 						"build": {
 							"infra": {
-								"resultdb": {
-									"invocation": "invocations/build:1",
-									"hostname":   "test.results.cr.dev"
-								}
+								%s
 							}
 						}
 					},
@@ -148,7 +166,7 @@ func TestCook(t *testing.T) {
 						"git_auth": true,
 						"emulate_gce": true
 					}
-				}`, strconv.Quote(recipeInputPath), recipeExitCode, strconv.Quote(mockedRecipeResultPath))
+				}`, strconv.Quote(recipeInputPath), recipeExitCode, strconv.Quote(mockedRecipeResultPath), resultDBProperty)
 				args := []string{
 					"-recipe", "kitchen_test",
 					"-properties", string(propertiesJSON),
@@ -165,7 +183,7 @@ func TestCook(t *testing.T) {
 				// Cook.
 				err = cook.Flags.Parse(args)
 				So(err, ShouldBeNil)
-				result, outputExitCode := cook.run(c, nil, env)
+				result, outputExitCode := cook.run(ctx, nil, env)
 
 				// Log results
 				t.Logf("cook result:\n%s\n", proto.MarshalTextString(result))
@@ -230,7 +248,7 @@ func TestCook(t *testing.T) {
 						JsonResult: `{"foo": "bar"}`,
 					},
 				}
-				result, exitCode := run(recipeResult, 0)
+				result, exitCode := run(recipeResult, 0, false)
 				So(exitCode, ShouldEqual, 0)
 				So(result.Status, ShouldEqual, buildbucketpb.Status_SUCCESS)
 			})
@@ -247,7 +265,7 @@ func TestCook(t *testing.T) {
 						},
 					},
 				}
-				result, exitCode := run(recipeResult, 1)
+				result, exitCode := run(recipeResult, 1, false)
 				So(exitCode, ShouldEqual, 1)
 				So(result.Status, ShouldEqual, buildbucketpb.Status_FAILURE)
 				So(result.SummaryMarkdown, ShouldEqual, recipeResult.GetFailure().HumanReason)
@@ -265,11 +283,21 @@ func TestCook(t *testing.T) {
 						},
 					},
 				}
-				result, exitCode := run(recipeResult, 1)
+				result, exitCode := run(recipeResult, 1, false)
 				So(exitCode, ShouldEqual, 1)
 				So(result.Status, ShouldEqual, buildbucketpb.Status_FAILURE)
 				expectedSummary := recipeResult.GetFailure().HumanReason[:maxSummaryLength-3] + "..."
 				So(result.SummaryMarkdown, ShouldEqual, expectedSummary)
+			})
+			Convey("recipe success with resultdb context", func() {
+				recipeResult := &recipe_engine.Result{
+					OneofResult: &recipe_engine.Result_JsonResult{
+						JsonResult: `{"foo": "bar"}`,
+					},
+				}
+				result, exitCode := run(recipeResult, 0, true)
+				So(exitCode, ShouldEqual, 0)
+				So(result.Status, ShouldEqual, buildbucketpb.Status_SUCCESS)
 			})
 		})
 	})
