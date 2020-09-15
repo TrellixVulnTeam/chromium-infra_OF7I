@@ -379,6 +379,7 @@ func (is *InventoryServerImpl) UpdateDutsStatus(ctx context.Context, req *api.Up
 		meta[d.GetChromeosDeviceId()] = datastore.DutMeta{
 			SerialNumber: d.GetSerialNumber(),
 			HwID:         d.GetHwID(),
+			DeviceSku:    d.GetDeviceSku(),
 		}
 	}
 	metaUpdateResults, err := datastore.UpdateDutMeta(ctx, meta)

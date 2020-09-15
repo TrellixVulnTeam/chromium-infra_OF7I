@@ -169,6 +169,7 @@ message DutMeta {
   string chromeos_device_id = 1;
   string serial_number = 2;
   string hwID = 3;
+  string device_sku = 4;
 }
 
 message LabMeta {

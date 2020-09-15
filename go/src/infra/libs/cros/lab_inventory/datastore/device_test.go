@@ -29,6 +29,11 @@ func mockDut(hostname, id, servoHost string) *lab.ChromeOSDevice {
 		Id: &lab.ChromeOSDeviceID{
 			Value: id,
 		},
+		DeviceConfigId: &device.ConfigId{
+			PlatformId: &device.PlatformId{
+				Value: "fake_board",
+			},
+		},
 		Device: &lab.ChromeOSDevice_Dut{
 			Dut: &lab.DeviceUnderTest{
 				Hostname: hostname,
@@ -573,6 +578,7 @@ func TestUpdateDutMeta(t *testing.T) {
 				"UUID:01": {
 					SerialNumber: "serial2",
 					HwID:         "hwid2",
+					DeviceSku:    "12345",
 				},
 				"UUID:ghost": {},
 			}
@@ -587,6 +593,7 @@ func TestUpdateDutMeta(t *testing.T) {
 			passed[0].Entity.GetCrosDeviceProto(&p)
 			So(p.GetSerialNumber(), ShouldEqual, "serial2")
 			So(p.GetManufacturingId().GetValue(), ShouldEqual, "hwid2")
+			So(p.GetDeviceConfigId().GetVariantId().GetValue(), ShouldEqual, "12345")
 
 			failed := result.Failed()
 			So(failed, ShouldHaveLength, 1)
@@ -597,6 +604,7 @@ func TestUpdateDutMeta(t *testing.T) {
 				"UUID:01": {
 					SerialNumber: "serial2",
 					HwID:         "hwid2",
+					DeviceSku:    "12345",
 				},
 			}
 			result, err := UpdateDutMeta(ctx, meta)
@@ -611,6 +619,36 @@ func TestUpdateDutMeta(t *testing.T) {
 			So(failed, ShouldHaveLength, 1)
 			So(failed[0].Entity.ID, ShouldEqual, "UUID:01")
 			So(failed[0].Err.Error(), ShouldContainSubstring, "meta is not changed")
+		})
+		Convey("Update the empty hwid - not accept", func() {
+			meta := map[string]DutMeta{
+				"UUID:01": {
+					SerialNumber: "serial2",
+					HwID:         "hwid2",
+					DeviceSku:    "12345",
+				},
+			}
+			result, err := UpdateDutMeta(ctx, meta)
+			if err != nil {
+				t.Fatal(err)
+			}
+			passed := result.Passed()
+			So(passed, ShouldHaveLength, 1)
+
+			meta2 := map[string]DutMeta{
+				"UUID:01": {
+					SerialNumber: "serial2",
+					HwID:         "hwid2",
+				},
+			}
+			result, err = UpdateDutMeta(ctx, meta2)
+			passed = result.Passed()
+			So(passed, ShouldHaveLength, 1)
+			So(passed[0].Entity.ID, ShouldEqual, "UUID:01")
+			var p lab.ChromeOSDevice
+			passed[0].Entity.GetCrosDeviceProto(&p)
+			// It's not allowed to wipe the device sku for now
+			So(p.GetDeviceConfigId().GetVariantId().GetValue(), ShouldEqual, "12345")
 		})
 	})
 }

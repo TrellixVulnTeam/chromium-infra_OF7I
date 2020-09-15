@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
+	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
 	"go.chromium.org/chromiumos/infra/proto/go/manufacturing"
 	"go.chromium.org/luci/common/data/stringset"
@@ -622,6 +623,7 @@ func UpdateDeviceSetup(ctx context.Context, devices []*lab.ChromeOSDevice, assig
 type DutMeta struct {
 	SerialNumber string
 	HwID         string
+	DeviceSku    string
 }
 
 // UpdateDutMeta updates dut serial number and hwid for a given host.
@@ -647,8 +649,10 @@ func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResult
 			continue
 		}
 		hid := string(r.Entity.ID)
-		if labData.SerialNumber == meta[hid].SerialNumber && labData.ManufacturingId != nil && labData.GetManufacturingId().GetValue() == meta[hid].HwID {
-			r.logError(errors.New(fmt.Sprintf("meta is not changed. Old serial number %s, old hwid %s", meta[hid].SerialNumber, meta[hid].HwID)))
+		if labData.SerialNumber == meta[hid].SerialNumber && labData.ManufacturingId != nil &&
+			labData.GetManufacturingId().GetValue() == meta[hid].HwID &&
+			labData.GetDeviceConfigId().GetVariantId().GetValue() == meta[hid].DeviceSku {
+			r.logError(errors.New(fmt.Sprintf("meta is not changed. Old serial number %q, old hwid %q, old device-sku %q", meta[hid].SerialNumber, meta[hid].HwID, meta[hid].DeviceSku)))
 			failedResults = append(failedResults, r)
 			continue
 		}
@@ -659,6 +663,16 @@ func UpdateDutMeta(ctx context.Context, meta map[string]DutMeta) (DeviceOpResult
 			}
 		} else {
 			labData.ManufacturingId.Value = meta[hid].HwID
+		}
+		if labData.GetDeviceConfigId() != nil {
+			if labData.GetDeviceConfigId().GetVariantId().GetValue() != "" && meta[hid].DeviceSku == "" {
+				// Will remove this check after device sku are populated.
+				logging.Debugf(ctx, "skip wiping device sku for DUT %s", hid)
+			} else {
+				labData.DeviceConfigId.VariantId = &device.VariantId{
+					Value: meta[hid].DeviceSku,
+				}
+			}
 		}
 
 		r := DeviceOpResult{
