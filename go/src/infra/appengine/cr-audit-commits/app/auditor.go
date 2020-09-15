@@ -316,7 +316,7 @@ func scanCommits(ctx context.Context, fl []*git.Commit, cfg *rules.RefConfig, re
 		repoState.LastRelevantCommit = relevantCommits[0].Id
 		if relevantCommits[0].Committer != nil {
 			ct, _ := ptypes.Timestamp(relevantCommits[0].Committer.Time)
-			repoState.LastKnownCommitTime = ct
+			repoState.LastRelevantCommitTime = ct
 		}
 	}
 	repoState.LastUpdatedTime = time.Now().UTC()
@@ -519,14 +519,13 @@ func pauseRefAuditing(ctx context.Context, cfg *rules.RefConfig, repoState *rule
 // time or when a non-fast-forwarded update happens.
 func reportRefFailure(ctx context.Context, cfg *rules.RefConfig, repoState *rules.RepoState, cs *rules.Clients) error {
 	summary := fmt.Sprintf("Failed to get commits from %s", repoState.ConfigName)
-	description := fmt.Sprintf(`Failed to get commit from %s. This could
-		possibly be caused by: 1) A non-fast-forward update makes
-		LastKnownCommit become an unaccessible commit; 2) Gitiles git.Log API
-		returns too many commits or encounters some errors, which causes the
-		time diff between current time and LastUpdatedTime to exceed staleHours.
-		\n\n
-		LastUpdatedTime: %s\n
-		LastKnownCommit: %s\n`, cfg.RepoURL(), repoState.LastUpdatedTime,
+	description := fmt.Sprintf(`Failed to get commit from %s. This could possibly be caused by:
+1) A non-fast-forward update makes LastKnownCommit become an unaccessible commit;
+2) Gitiles git.Log API returns too many commits or encounters some errors, which
+causes the time diff between current time and LastUpdatedTime to exceed staleHours.
+
+LastUpdatedTime: %s
+LastKnownCommit: %s`, cfg.RepoURL(), repoState.LastUpdatedTime,
 		cfg.LinkToCommit(repoState.LastKnownCommit))
 
 	_, err := rules.PostIssue(ctx, cfg, summary, description, cs,
