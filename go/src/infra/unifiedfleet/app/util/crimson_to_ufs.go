@@ -76,11 +76,10 @@ func ToOses(old []*crimson.OS) []*ufspb.OSVersion {
 }
 
 // ProcessDatacenters converts datacenters to several UFS objects
-func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.RackLSE, []*ufspb.KVM, []*ufspb.Switch, []*ufspb.DHCPConfig) {
+func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.KVM, []*ufspb.Switch, []*ufspb.DHCPConfig) {
 	dcName := dc.GetName()
 	switches := make([]*ufspb.Switch, 0)
 	racks := make([]*ufspb.Rack, 0)
-	rackLSEs := make([]*ufspb.RackLSE, 0)
 	rackToKvms := make(map[string][]string, 0)
 	kvms := make([]*ufspb.KVM, 0)
 	dhcps := make([]*ufspb.DHCPConfig, 0)
@@ -139,22 +138,9 @@ func ProcessDatacenters(dc *crimsonconfig.Datacenter) ([]*ufspb.Rack, []*ufspb.R
 			ResourceState: ToState(old.GetState()),
 			Description:   old.GetDescription(),
 		}
-		rlse := &ufspb.RackLSE{
-			Name:             GetRackHostname(rackName),
-			RackLsePrototype: "browser:normal",
-			Lse: &ufspb.RackLSE_ChromeBrowserRackLse{
-				ChromeBrowserRackLse: &ufspb.ChromeBrowserRackLSE{
-					// Still keep them as they are potential hostnames
-					Kvms:     rackToKvms[rackName],
-					Switches: switchNames,
-				},
-			},
-			Racks: []string{rackName},
-		}
 		racks = append(racks, r)
-		rackLSEs = append(rackLSEs, rlse)
 	}
-	return racks, rackLSEs, kvms, switches, dhcps
+	return racks, kvms, switches, dhcps
 }
 
 // ProcessNetworkInterfaces converts nics and dracs to several UFS formats for further importing

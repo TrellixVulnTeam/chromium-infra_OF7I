@@ -15,7 +15,6 @@ import (
 	api "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	"infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
@@ -57,25 +56,20 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 	allRes = append(allRes, *res...)
 
 	racks := make([]*ufspb.Rack, 0)
-	rackLSEs := make([]*ufspb.RackLSE, 0)
 	kvms := make([]*ufspb.KVM, 0)
 	switches := make([]*ufspb.Switch, 0)
 	dhcps := make([]*ufspb.DHCPConfig, 0)
 	for _, dc := range dcs {
-		rackRes, lseRes, kvmRes, switchRes, dhcpRes := util.ProcessDatacenters(dc)
+		rackRes, kvmRes, switchRes, dhcpRes := util.ProcessDatacenters(dc)
 		racks = append(racks, rackRes...)
-		rackLSEs = append(rackLSEs, lseRes...)
 		kvms = append(kvms, kvmRes...)
 		switches = append(switches, switchRes...)
 		dhcps = append(dhcps, dhcpRes...)
 	}
 
-	logging.Infof(ctx, "Got %d racks, %d fack LSEs, %d kvms, %d switches, %d dhcp configs", len(racks), len(rackLSEs), len(kvms), len(switches), len(dhcps))
+	logging.Infof(ctx, "Got %d racks, %d kvms, %d switches, %d dhcp configs", len(racks), len(kvms), len(switches), len(dhcps))
 	if err := api.ValidateResourceKey(racks, "Name"); err != nil {
 		return nil, errors.Annotate(err, "racks has invalid chars").Err()
-	}
-	if err := api.ValidateResourceKey(rackLSEs, "Name"); err != nil {
-		return nil, errors.Annotate(err, "rackLSEs has invalid chars").Err()
 	}
 	if err := api.ValidateResourceKey(kvms, "Name"); err != nil {
 		return nil, errors.Annotate(err, "kvms has invalid chars").Err()
@@ -101,18 +95,6 @@ func ImportDatacenter(ctx context.Context, dcs []*crimsonconfig.Datacenter, page
 			return &allRes, err
 		}
 		if i+pageSize >= len(racks) {
-			break
-		}
-	}
-	logging.Infof(ctx, "Importing %d rack LSEs", len(rackLSEs))
-	for i := 0; ; i += pageSize {
-		end := util.Min(i+pageSize, len(rackLSEs))
-		res, err := inventory.ImportRackLSEs(ctx, rackLSEs[i:end])
-		allRes = append(allRes, *res...)
-		if err != nil {
-			return &allRes, err
-		}
-		if i+pageSize >= len(rackLSEs) {
 			break
 		}
 	}

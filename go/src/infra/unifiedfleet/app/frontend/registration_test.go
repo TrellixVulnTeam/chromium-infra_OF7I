@@ -17,7 +17,6 @@ import (
 	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
-	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
 	"infra/unifiedfleet/app/util"
 )
@@ -1206,15 +1205,6 @@ func TestImportDatacenters(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(switches, ShouldHaveLength, 4)
 			So(ufsAPI.ParseResources(switches, "Name"), ShouldResemble, []string{"eq017.atl97", "eq041.atl97", "eq050.atl97", "eq113.atl97"})
-			rackLSEs, _, err := inventory.ListRackLSEs(ctx, 100, "", nil, false)
-			So(err, ShouldBeNil)
-			So(rackLSEs, ShouldHaveLength, 2)
-			rlse, err := inventory.QueryRackLSEByPropertyName(ctx, "rack_ids", "cr20", false)
-			So(err, ShouldBeNil)
-			So(rlse, ShouldHaveLength, 1)
-			So(rlse[0].GetRackLsePrototype(), ShouldEqual, "browser:normal")
-			So(rlse[0].GetChromeBrowserRackLse().GetKvms(), ShouldResemble, []string{"cr20-kvm1"})
-			So(rlse[0].GetChromeBrowserRackLse().GetSwitches(), ShouldResemble, []string{"eq017.atl97"})
 		})
 	})
 }
