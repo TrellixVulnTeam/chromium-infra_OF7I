@@ -91,56 +91,33 @@ will likely still reference the old version, and it's good to keep wheels.md
 as a full registry of available versions.
 ***
 
-[Authenticated to GCloud Container
-Registry](https://cloud.google.com/container-registry/docs/advanced-authentication)
-with
-
-    gcloud auth configure-docker
-
-(otherwise dockerbuild will create containers from scratch, which takes time.)
-
-
-Finally, we need to build it:
-
-    path/to/infra.git/run.py         \
-       infra.tools.dockerbuild       \
-       --logs-debug --upload-sources \
-       wheel-build                   \
-       --wheel 'scandir-1.9.0'       \
-       --upload
-
-Notable options (check `--help` for details):
-  * `--wheel_re` - Use in place of `--wheel` to run for multiple wheels or
-    versions.
-  * `--platform` - Specify a specific platform to build for.
-  * If you don't have upload permission, you can still check your change to
-    `wheels.py` by omitting the two "upload" flags above.
-
-This command will build (into path/to/infra.git/.dockerbuild) all of the .whl
-files, and then upload them to CIPD (for use by vpython).
-
 And update the wheel.md documentation:
 
     path/to/infra.git/run.py         \
        infra.tools.dockerbuild       \
        wheel-dump
 
-NOTE: If this shows a change for `infra_libs` it means that someone modified
-`infra_libs` without uploading it to CIPD. To fix this, run:
+Now, test that your wheel builds successfully using the following:
 
     path/to/infra.git/run.py         \
        infra.tools.dockerbuild       \
-       --logs-debug --upload-sources \
+       --logs-debug                  \
        wheel-build                   \
-       --wheel_re 'infra_libs.*'     \
-       --upload
+       --wheel 'scandir-1.9.0'       \
+
+Notable options (check `--help` for details):
+  * `--wheel_re` - Use in place of `--wheel` to run for multiple wheels or
+    versions.
+  * `--platform` - Specify a specific platform to build for.
 
 Then you upload your CL and commit as usual.
 
-Since the 'wheel-build' command is executed locally (i.e. not by a bot) we
-typically TBR these changes to an OWNER as long as they're only touching
-wheels.py and wheels.md (since 'wheel-build' pushes the wheels directly to
-CIPD/prod).
+Once your CL is committed, the wheels will be automatically built and uploaded
+by the following builders:
+
+* [Linux](https://ci.chromium.org/p/infra-internal/builders/prod/Linux%20wheel%20builder)
+* [Mac](https://ci.chromium.org/p/infra-internal/builders/prod/Mac%20wheel%20builder)
+* [Windows](https://ci.chromium.org/p/infra-internal/builders/prod/Windows%20wheel%20builder)
 
 ## Custom patches
 
