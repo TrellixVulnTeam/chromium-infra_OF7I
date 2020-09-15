@@ -15,11 +15,15 @@ import {css, customElement, html, LitElement, property} from 'lit-element';
 import {TemplateResult} from 'lit-html';
 import {installRouter} from 'pwa-helpers/router.js';
 
+import {SHARED_STYLES} from '../shared/shared-styles';
+
 
 @customElement('manual-repair')
 export class ManualRepair extends LitElement {
   static get styles() {
-    return [css`
+    return [
+      SHARED_STYLES,
+      css`
       #app-body {
         width: 70%;
         margin: auto;
@@ -32,7 +36,8 @@ export class ManualRepair extends LitElement {
       .page-link {
         text-decoration: none;
       }
-    `];
+    `,
+    ];
   }
 
   static TITLE: Array<String> = ['Home', 'Repairs'];

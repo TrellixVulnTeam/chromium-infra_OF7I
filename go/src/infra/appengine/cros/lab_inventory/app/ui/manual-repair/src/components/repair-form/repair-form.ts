@@ -14,6 +14,7 @@ import {css, customElement, html, LitElement, property, TemplateResult} from 'li
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {SHARED_STYLES} from '../../shared/shared-styles';
 import {receiveAppMessage} from '../../state/reducers/message';
 import {createRepairRecord, getRepairRecord, updateRepairRecord} from '../../state/reducers/repair-record';
 import {store, thunkDispatch} from '../../state/store';
@@ -29,22 +30,22 @@ enum FormAction {
 @customElement('repair-form') export default class RepairForm extends connect
 (store)(LitElement) {
   static get styles() {
-    return [css`
+    return [
+      SHARED_STYLES,
+      css`
       :host {
         width: 100%;
         display: flex;
         justify-content: center;
       }
 
-      h1, h2, h3, h4 {
-        margin: 0 0 1em 0;
-        font-family: Roboto;
-        font-weight: 500;
-      }
-
       .form-slot {
         display: flex;
         flex-direction: row;
+      }
+
+      .form-title, .form-subtitle {
+        margin: 0 0 1em 0;
       }
 
       .form-title {
@@ -114,7 +115,8 @@ enum FormAction {
       mwc-fab.complete-btn {
         --mdc-theme-secondary: #1E8E3E;
       }
-    `];
+    `,
+    ];
   }
 
   @property({type: Boolean}) submitting = false;

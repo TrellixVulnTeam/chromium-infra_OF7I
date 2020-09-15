@@ -10,18 +10,25 @@ import {Drawer} from '@material/mwc-drawer';
 import {customElement, html, LitElement} from 'lit-element';
 import {connect} from 'pwa-helpers';
 
+import {SHARED_STYLES} from '../shared/shared-styles';
 import {receiveUser} from '../state/reducers/user';
 import {store} from '../state/store';
 
 
 @customElement('top-bar') export class TopBar extends connect
 (store)(LitElement) {
+  static get styles() {
+    return [
+      SHARED_STYLES,
+    ]
+  }
+
   render() {
     return html`
       <mwc-top-app-bar-fixed>
         <mwc-icon-button slot="navigationIcon" icon="menu" @click=${
         this.toggleMenu}></mwc-icon-button>
-        <div slot="title">Manual Repair Records</div>
+        <h3 slot="title">Manual Repair Records</h3>
         <chops-signin
           slot="actionItems"
           client-id="974141142451-7804s4o2kugouvi6vndg3pm91jqfmmh1.apps.googleusercontent.com">

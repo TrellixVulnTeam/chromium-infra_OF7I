@@ -8,6 +8,7 @@ import {css, customElement, html, LitElement, property} from 'lit-element';
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {SHARED_STYLES} from '../shared/shared-styles';
 import {clearAppMessage, receiveAppMessage} from '../state/reducers/message';
 import {getRepairRecord} from '../state/reducers/repair-record';
 import {store, thunkDispatch} from '../state/store';
@@ -17,18 +18,21 @@ import {store, thunkDispatch} from '../state/store';
 export default class SearchHostname extends connect
 (store)(LitElement) {
   static get styles() {
-    return [css`
+    return [
+      SHARED_STYLES,
+      css`
       :host {
         width: 100%;
         display: flex;
         justify-content: center;
-        margin-bottom: 2em;
+        margin-bottom: 1.5em;
       }
 
       #search-field {
         width: 80%
       }
-    `];
+    `,
+    ];
   }
 
   @property({type: String}) input = '';

@@ -5,9 +5,10 @@
 import '@material/mwc-snackbar';
 
 import {Snackbar} from '@material/mwc-snackbar';
-import {css, customElement, html, LitElement, property} from 'lit-element';
+import {customElement, html, LitElement, property} from 'lit-element';
 import {connect} from 'pwa-helpers';
 
+import {SHARED_STYLES} from '../shared/shared-styles';
 import {store} from '../state/store';
 
 const TIMEOUT_MS = 10000;
@@ -16,7 +17,9 @@ const TIMEOUT_MS = 10000;
 export default class MessageDisplay extends connect
 (store)(LitElement) {
   static get styles() {
-    return [css``];
+    return [
+      SHARED_STYLES,
+    ];
   }
 
   @property({type: String}) applicationMessage;
