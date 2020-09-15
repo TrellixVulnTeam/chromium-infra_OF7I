@@ -29,16 +29,18 @@ message Repository {
     bool priority = 3;
   }
 
-  // A list of refs to be indexed, specified as a list of regular expressions.
-  // Each regex is automatically wrapped in ^ and $.
+  // A list of refs to be indexed, specified as a list of ref paths. If provided
+  // path is not a leaf, it will include all its children.
   //
   // Examples:
   //   # All heads
-  //   "refs/heads/.*"
+  //   "refs/heads"
   //   # All branch-heads
-  //   "refs/branch-heads/.*"
+  //   "refs/branch-heads"
+  //   # main only
+  //   "refs/heads/main"
   //
-  // Defaults to ["refs/heads/.*"]
+  // Defaults to ["refs/heads"]
   repeated string refs = 6;
 
   // A list of git refs to ignore even when they match a ref included above.
@@ -54,6 +56,10 @@ message Host {
   // Should be specified only for repositories that need to override default
   // attributes.
   repeated Repository repos = 2;
+
+  // Name of pubsub topic for the host which is used to update individual
+  // repositories. If not present, new commits won't be indexed.
+  string pubsub_subscription = 3;
 }
 
 message Config {
