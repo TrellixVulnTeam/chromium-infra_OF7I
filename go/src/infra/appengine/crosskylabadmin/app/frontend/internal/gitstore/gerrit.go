@@ -36,7 +36,7 @@ import (
 // fileContents maps file paths in the repo to the new contents at those paths.
 //
 // commitFileContents returns the gerrit change number for the commit.
-func commitFileContents(ctx context.Context, client gerrit.GerritClient, project string, branch string, baseCommitSha string, reason string, fileContents map[string]string) (int, error) {
+func commitFileContents(ctx context.Context, client GerritClient, project string, branch string, baseCommitSha string, reason string, fileContents map[string]string) (int, error) {
 	var changeInfo *gerrit.ChangeInfo
 	defer func() {
 		if changeInfo != nil {
@@ -149,7 +149,7 @@ func changeSubject(ctx context.Context, reason string) string {
 	return fmt.Sprintf("%s by %s for %s", reason, info.AppID(ctx), user)
 }
 
-func abandonChange(ctx context.Context, client gerrit.GerritClient, ci *gerrit.ChangeInfo) {
+func abandonChange(ctx context.Context, client GerritClient, ci *gerrit.ChangeInfo) {
 	if _, err := client.AbandonChange(ctx, &gerrit.AbandonChangeRequest{
 		Number:  ci.Number,
 		Project: ci.Project,

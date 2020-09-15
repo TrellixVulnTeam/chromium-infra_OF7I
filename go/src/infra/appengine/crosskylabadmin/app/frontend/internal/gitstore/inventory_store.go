@@ -22,10 +22,12 @@ import (
 	"infra/appengine/crosskylabadmin/app/config"
 	"infra/libs/skylab/inventory"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/gerrit"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 // InventoryStore exposes skylab inventory data in git.
@@ -38,16 +40,40 @@ type InventoryStore struct {
 	*inventory.Lab
 	*inventory.Infrastructure
 
-	gerritC     gerrit.GerritClient
-	gitilesC    gitiles.GitilesClient
+	gerritC     GerritClient
+	gitilesC    GitilesClient
 	latestFiles map[string]string
 	latestSHA1  string
+}
+
+// GerritClient is a client interface for Gerrit API.
+//
+// This is a subset of the interface defined at luci/common/proto/gerrit.
+type GerritClient interface {
+	GetChange(ctx context.Context, in *gerrit.GetChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
+	CreateChange(ctx context.Context, in *gerrit.CreateChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
+	SubmitChange(ctx context.Context, in *gerrit.SubmitChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
+	AbandonChange(ctx context.Context, in *gerrit.AbandonChangeRequest, opts ...grpc.CallOption) (*gerrit.ChangeInfo, error)
+
+	ChangeEditFileContent(ctx context.Context, in *gerrit.ChangeEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	DeleteEditFileContent(ctx context.Context, in *gerrit.DeleteEditFileContentRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	ChangeEditPublish(ctx context.Context, in *gerrit.ChangeEditPublishRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+
+	SetReview(ctx context.Context, in *gerrit.SetReviewRequest, opts ...grpc.CallOption) (*gerrit.ReviewResult, error)
+}
+
+// GitilesClient is a client interface for Gitiles API.
+//
+// This is a subset of the interface defined at luci/common/proto/gitiles.
+type GitilesClient interface {
+	Log(ctx context.Context, req *gitiles.LogRequest, opts ...grpc.CallOption) (*gitiles.LogResponse, error)
+	Archive(ctx context.Context, in *gitiles.ArchiveRequest, opts ...grpc.CallOption) (*gitiles.ArchiveResponse, error)
 }
 
 // NewInventoryStore returns a new InventoryStore.
 //
 // The returned store is not refreshed, hence all inventory data is empty.
-func NewInventoryStore(gerritC gerrit.GerritClient, gitilesC gitiles.GitilesClient) *InventoryStore {
+func NewInventoryStore(gerritC GerritClient, gitilesC GitilesClient) *InventoryStore {
 	store := &InventoryStore{
 		gerritC:  gerritC,
 		gitilesC: gitilesC,

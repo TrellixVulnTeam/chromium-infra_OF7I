@@ -36,7 +36,7 @@ type FilesSpec struct {
 }
 
 // FetchFiles download files from gitiles.
-func FetchFiles(ctx context.Context, gc gitiles.GitilesClient, fs FilesSpec) (map[string]string, error) {
+func FetchFiles(ctx context.Context, gc GitilesClient, fs FilesSpec) (map[string]string, error) {
 	sha1, err := fetchLatestSHA1(ctx, gc, fs.Project, fs.Branch)
 	if err != nil {
 		return nil, errors.Annotate(err, "fail to fetch latest SHA1").Err()
@@ -49,7 +49,7 @@ func FetchFiles(ctx context.Context, gc gitiles.GitilesClient, fs FilesSpec) (ma
 }
 
 // fetchLatestSHA1 fetches the SHA1 for the latest commit on a branch.
-func fetchLatestSHA1(ctx context.Context, gc gitiles.GitilesClient, project string, branch string) (string, error) {
+func fetchLatestSHA1(ctx context.Context, gc GitilesClient, project string, branch string) (string, error) {
 	resp, err := gc.Log(ctx, &gitiles.LogRequest{
 		Project:    project,
 		Committish: fmt.Sprintf("refs/heads/%s", branch),
@@ -72,7 +72,7 @@ func fetchLatestSHA1(ctx context.Context, gc gitiles.GitilesClient, project stri
 //
 // The return is a map from path in the git project to the
 // contents of the file at that path for each requested path
-func fetchAllFromGitiles(ctx context.Context, gc gitiles.GitilesClient, project string, ref string, additionalPaths map[string]bool) (map[string]string, error) {
+func fetchAllFromGitiles(ctx context.Context, gc GitilesClient, project string, ref string, additionalPaths map[string]bool) (map[string]string, error) {
 	res := make(map[string]string)
 	contents, err := obtainGitilesBytes(ctx, gc, project, ref)
 	if err != nil {
@@ -96,7 +96,7 @@ func fetchAllFromGitiles(ctx context.Context, gc gitiles.GitilesClient, project 
 // contents of the file at that path for each requested path.
 //
 // TODO(xixuan): remove this after per-file inventory is landed and tested.
-func fetchFilesFromGitiles(ctx context.Context, gc gitiles.GitilesClient, project string, ref string, paths []string) (map[string]string, error) {
+func fetchFilesFromGitiles(ctx context.Context, gc GitilesClient, project string, ref string, paths []string) (map[string]string, error) {
 	contents, err := obtainGitilesBytes(ctx, gc, project, ref)
 	if err != nil {
 		return make(map[string]string), err
@@ -114,7 +114,7 @@ func fetchFilesFromGitiles(ctx context.Context, gc gitiles.GitilesClient, projec
 	return extractGitilesArchive(ctx, contents, pathFilter)
 }
 
-func obtainGitilesBytes(ctx context.Context, gc gitiles.GitilesClient, project string, ref string) (contents []byte, err error) {
+func obtainGitilesBytes(ctx context.Context, gc GitilesClient, project string, ref string) (contents []byte, err error) {
 	req := &gitiles.ArchiveRequest{
 		Project: project,
 		Ref:     ref,
