@@ -7,6 +7,7 @@
 package main
 
 import (
+	"infra/appengine/cr-rev/frontend/redirect"
 	"net/http"
 
 	"go.chromium.org/luci/config/server/cfgmodule"
@@ -24,13 +25,13 @@ func handleIndex(c *router.Context) {
 		c.Context, c.Writer, "pages/index.html", templates.Args{})
 }
 
-func handleRedirect(redirect *redirectRules, c *router.Context) {
-	url, err := redirect.findRedirectURL(c.Context, c.Request.RequestURI)
+func handleRedirect(redirectRules *redirect.Rules, c *router.Context) {
+	url, _, err := redirectRules.FindRedirectURL(c.Context, c.Request.RequestURI)
 	switch err {
 	case nil:
 		http.Redirect(
 			c.Writer, c.Request, url, http.StatusPermanentRedirect)
-	case errNoMatch:
+	case redirect.ErrNoMatch:
 		http.NotFound(c.Writer, c.Request)
 	default:
 		http.Error(
@@ -51,7 +52,7 @@ func main() {
 	}
 
 	server.Main(nil, modules, func(srv *server.Server) error {
-		redirect := newRedirectRules()
+		redirect := redirect.NewRules(redirect.NewGitilesRedirect())
 
 		srv.Routes.GET("/", mw, handleIndex)
 		// NotFound is used as catch-all.

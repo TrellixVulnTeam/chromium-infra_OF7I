@@ -4,6 +4,12 @@
 
 package models
 
+import (
+	"context"
+
+	"go.chromium.org/luci/gae/service/datastore"
+)
+
 // Commit represents a document in datastore. Commit is generated and persisted
 // exclusively by the backend service, during initial repository import or
 // while receiving pubsub messages. Once persisted, commit document shouldn't
@@ -32,4 +38,16 @@ type Commit struct {
 // repository are identical.
 func (c1 Commit) SameRepoAs(c2 Commit) bool {
 	return c1.Host == c2.Host && c1.Repository == c2.Repository
+}
+
+// FindCommitsByHash returns all commits that match exact hash. Same hash is
+// likely to happen only on mirrors and forks.
+func FindCommitsByHash(ctx context.Context, hash string) ([]*Commit, error) {
+	commits := []*Commit{}
+	q := datastore.NewQuery("Commit").Eq("CommitHash", hash)
+	err := datastore.GetAll(ctx, q, &commits)
+	if err != nil {
+		return nil, err
+	}
+	return commits, nil
 }

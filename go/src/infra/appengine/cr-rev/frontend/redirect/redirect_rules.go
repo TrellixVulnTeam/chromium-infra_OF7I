@@ -2,24 +2,22 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// To define a new rule, create a new struct which implements interface
-// redirectRule. Then, add it to newRedirectRules.
-package main
+// Package redirect contains logic for resovling ambiquios redirects and
+// generic Git Web UI URLs.
+// To define a new redirect rule, create a new struct which implements interface
+// redirectRule. Then, add it to NewRules.
+package redirect
 
 import (
 	"context"
-	"errors"
-	"infra/appengine/cr-rev/config"
 	"infra/appengine/cr-rev/models"
+	"infra/appengine/cr-rev/utils"
 	"regexp"
 	"strconv"
 
 	"go.chromium.org/luci/common/data/stringset"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 )
-
-var errNoMatch = errors.New("no match found")
 
 var numberRedirectRegex = regexp.MustCompile(`^/(\d{1,8})(?:/(.*))?$`)
 var fullCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})(?:/(.*))?$`)
@@ -33,77 +31,32 @@ var chromiumPositionRefs = stringset.Set{
 	"svn://svn.chromium.org/chrome/trunk/src": struct{}{},
 }
 
-// findBestCommit finds the best commit to redirect to based on configuration:
-// * if commit's repository has a priority set, it's returned immedietely
-// * if commit's repository has do not index, it won't be returned unless it's
-// only available commit
-// If config can't be retrieved, very first commit is returned.
-func findBestCommit(ctx context.Context, commits []models.Commit) *models.Commit {
-	if len(commits) == 0 {
-		return nil
-	}
-
-	cfg, err := config.Get(ctx)
-	if err != nil {
-		logging.Errorf(ctx, "Couldn't get config, using first commit as the best")
-		return &commits[0]
-	}
-	repoPriorityMap := map[string]map[string]*config.Repository{}
-	for _, host := range cfg.Hosts {
-		m := map[string]*config.Repository{}
-		for _, repo := range host.GetRepos() {
-			m[repo.GetName()] = repo
-		}
-		repoPriorityMap[host.GetName()] = m
-	}
-	ret := &commits[0]
-
-	for _, commit := range commits {
-		m, ok := repoPriorityMap[commit.Host]
-		if !ok {
-			continue
-		}
-		cfg, ok := m[commit.Repository]
-		if !ok {
-			continue
-		}
-		if cfg.GetPriority() {
-			return &commit
-		}
-		if cfg.GetDoNotIndex() {
-			continue
-		}
-		ret = &commit
-	}
-	return ret
-}
-
 type redirectRule interface {
 	// (redirect url, error) is returned if redirect rule is able to handle
 	// requested URL. If there is no match, error=noMatchFound is returned.
 	// All other errors indicate dependency issues (e.g. database
 	// connectivity).
-	getRedirect(ctx context.Context, url string) (string, error)
+	getRedirect(ctx context.Context, url string) (string, *models.Commit, error)
 }
 
 // numberRedirectRule redirects from sequential numbers to the git commit in
 // chromium/src.
 type numberRedirectRule struct {
-	gitRedirect gitRedirect
+	gitRedirect GitRedirect
 }
 
 func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (string,
-	error) {
+	*models.Commit, error) {
 	result := numberRedirectRegex.FindStringSubmatch(url)
 	if len(result) == 0 {
-		return "", errNoMatch
+		return "", nil, ErrNoMatch
 	}
 	id, err := strconv.Atoi(result[1])
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	commits := []models.Commit{}
+	commits := []*models.Commit{}
 	q := datastore.NewQuery("Commit").
 		Eq("PositionNumber", id).
 		Eq("Host", "chromium").
@@ -111,7 +64,7 @@ func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (strin
 
 	err = datastore.GetAll(ctx, q, &commits)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	for _, commit := range commits {
@@ -120,10 +73,14 @@ func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (strin
 			if len(result) == 3 {
 				path = result[2]
 			}
-			return r.gitRedirect.commit(commit, path)
+			url, err = r.gitRedirect.Commit(*commit, path)
+			if err != nil {
+				return "", nil, err
+			}
+			return url, commit, nil
 		}
 	}
-	return "", errNoMatch
+	return "", nil, ErrNoMatch
 }
 
 // fullCommitHashRule finds a commit across all indexed repositories and, if
@@ -131,42 +88,46 @@ func (r *numberRedirectRule) getRedirect(ctx context.Context, url string) (strin
 // and forks), it uses repo priority to determine where user should be
 // redirected.
 type fullCommitHashRule struct {
-	gitRedirect gitRedirect
+	gitRedirect GitRedirect
 }
 
-func (r *fullCommitHashRule) getRedirect(ctx context.Context, url string) (string, error) {
+func (r *fullCommitHashRule) getRedirect(ctx context.Context, url string) (string,
+	*models.Commit, error) {
 	result := fullCommitHashRegex.FindStringSubmatch(url)
 	if len(result) == 0 {
-		return "", errNoMatch
+		return "", nil, ErrNoMatch
 	}
-
-	commits := []models.Commit{}
-	q := datastore.NewQuery("Commit").Eq("CommitHash", result[1])
-	err := datastore.GetAll(ctx, q, &commits)
+	commits, err := models.FindCommitsByHash(ctx, result[1])
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	commit := findBestCommit(ctx, commits)
+	commit := utils.FindBestCommit(ctx, commits)
 	if commit == nil {
-		return "", errNoMatch
+		return "", nil, ErrNoMatch
 	}
 
 	path := ""
 	if len(result) == 3 {
 		path = result[2]
 	}
-	return r.gitRedirect.commit(*commit, path)
+	url, err = r.gitRedirect.Commit(*commit, path)
+	if err != nil {
+		return "", nil, err
+	}
+	return url, commit, nil
 }
 
-type redirectRules struct {
+// Rules holds all available redirect rules. The order of rules
+// matter, so generic / catch-all rules should be last.
+type Rules struct {
 	rules []redirectRule
 }
 
-// TODO(https://crbug.com/1109315): pass redirect struct
-func newRedirectRules() *redirectRules {
-	redirect := &gitilesRedirect{}
-	return &redirectRules{
+// NewRules creates new instance of RedirectRules with hardcoded rules.
+// New rules should be added here.
+func NewRules(redirect GitRedirect) *Rules {
+	return &Rules{
 		rules: []redirectRule{
 			&numberRedirectRule{
 				gitRedirect: redirect,
@@ -178,15 +139,15 @@ func newRedirectRules() *redirectRules {
 	}
 }
 
-// findRedirectURL returns destination URL on the first matching redirectRule.
+// FindRedirectURL returns destination URL on the first matching redirectRule.
 // If nothing is found, errNoMatch is returned.
-func (r *redirectRules) findRedirectURL(ctx context.Context, url string) (string, error) {
+func (r *Rules) FindRedirectURL(ctx context.Context, url string) (string, *models.Commit, error) {
 	for _, rule := range r.rules {
-		url, err := rule.getRedirect(ctx, url)
-		if err == errNoMatch {
+		url, commit, err := rule.getRedirect(ctx, url)
+		if err == ErrNoMatch {
 			continue
 		}
-		return url, err
+		return url, commit, err
 	}
-	return "", errNoMatch
+	return "", nil, ErrNoMatch
 }

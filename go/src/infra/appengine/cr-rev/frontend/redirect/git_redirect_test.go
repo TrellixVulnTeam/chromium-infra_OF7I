@@ -1,4 +1,8 @@
-package main
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+package redirect
 
 import (
 	"infra/appengine/cr-rev/models"
@@ -16,7 +20,7 @@ func TestGitilesRedirect(t *testing.T) {
 	redirect := &gitilesRedirect{}
 	Convey("Commit redirect", t, func() {
 		Convey("no path provided", func() {
-			url, err := redirect.commit(commit, "")
+			url, err := redirect.Commit(commit, "")
 			So(err, ShouldBeNil)
 			So(
 				url,
@@ -26,7 +30,7 @@ func TestGitilesRedirect(t *testing.T) {
 		})
 
 		Convey("path provided", func() {
-			url, err := redirect.commit(commit, "README.md")
+			url, err := redirect.Commit(commit, "README.md")
 			So(err, ShouldBeNil)
 			So(
 				url,
@@ -43,7 +47,7 @@ func TestGitilesRedirect(t *testing.T) {
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
-			url, err := redirect.diff(commit, commit2)
+			url, err := redirect.Diff(commit, commit2)
 			So(err, ShouldBeNil)
 			So(
 				url,
@@ -58,7 +62,7 @@ func TestGitilesRedirect(t *testing.T) {
 				Repository: "bar/baz/baq",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
-			_, err := redirect.diff(commit, commit2)
+			_, err := redirect.Diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
 		})
 
@@ -68,7 +72,7 @@ func TestGitilesRedirect(t *testing.T) {
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
-			_, err := redirect.diff(commit, commit2)
+			_, err := redirect.Diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
 		})
 	})
@@ -83,7 +87,7 @@ func TestCodesearchRedirect(t *testing.T) {
 			CommitHash: "1234567890123456789012345678901234567890",
 		}
 		Convey("no path provided", func() {
-			url, err := redirect.commit(commit, "")
+			url, err := redirect.Commit(commit, "")
 			So(err, ShouldBeNil)
 			So(
 				url,
@@ -93,7 +97,7 @@ func TestCodesearchRedirect(t *testing.T) {
 		})
 
 		Convey("path provided", func() {
-			url, err := redirect.commit(commit, "README.md")
+			url, err := redirect.Commit(commit, "README.md")
 			So(err, ShouldBeNil)
 			So(
 				url,
@@ -115,7 +119,7 @@ func TestCodesearchRedirect(t *testing.T) {
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
-			url, err := redirect.diff(commit, commit2)
+			url, err := redirect.Diff(commit, commit2)
 			So(err, ShouldBeNil)
 			So(
 				url,
@@ -130,7 +134,7 @@ func TestCodesearchRedirect(t *testing.T) {
 				Repository: "bar/baz/baq",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
-			_, err := redirect.diff(commit, commit2)
+			_, err := redirect.Diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
 		})
 
@@ -140,7 +144,7 @@ func TestCodesearchRedirect(t *testing.T) {
 				Repository: "bar/baz",
 				CommitHash: "0000000000000000000000000000000000000000",
 			}
-			_, err := redirect.diff(commit, commit2)
+			_, err := redirect.Diff(commit, commit2)
 			So(err, ShouldEqual, errNotIdenticalRepositories)
 		})
 	})
@@ -151,7 +155,7 @@ func TestCodesearchRedirect(t *testing.T) {
 			Repository: "bar/baz",
 		}
 		Convey("no commit redirect", func() {
-			_, err := redirect.commit(commit, "")
+			_, err := redirect.Commit(commit, "")
 			So(err, ShouldEqual, errNotSupportedRepository)
 		})
 		Convey("no diff redirect", func() {
@@ -159,7 +163,7 @@ func TestCodesearchRedirect(t *testing.T) {
 				Host:       "foo",
 				Repository: "bar/baz",
 			}
-			_, err := redirect.diff(commit, commit2)
+			_, err := redirect.Diff(commit, commit2)
 			So(err, ShouldEqual, errNotSupportedRepository)
 		})
 	})
