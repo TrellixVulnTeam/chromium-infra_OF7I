@@ -128,7 +128,8 @@ func registerRacksForAsset(ctx context.Context, asset *ufspb.Asset) error {
 			BarcodeName: l.GetRack(),
 			Zone:        l.GetZone(),
 		},
-		Description: "Added from IV2 by SyncAssetsFromIV2",
+		Description:   "Added from IV2 by SyncAssetsFromIV2",
+		ResourceState: ufspb.State_STATE_SERVING,
 	}
 	logging.Infof(ctx, "Add rack: %v", rack)
 	_, err := controller.RackRegistration(ctx, rack)
