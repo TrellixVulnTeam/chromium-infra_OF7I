@@ -158,6 +158,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				},
 			},
 		},
+		OverwriteLastKnownCommit: "3abe288b37baa9aaa68bc6aba6fce7169cf9251a",
 	},
 	"chromium-infra": {
 		BaseRepoURL: "https://chromium.googlesource.com/infra/infra",
@@ -182,6 +183,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				nil,
 			),
 		},
+		OverwriteLastKnownCommit: "ee5143202092142870b37f7950f9adb3255dc3c2",
 	},
 	"chromium-infra-luci-go": {
 		BaseRepoURL: "https://chromium.googlesource.com/infra/luci/luci-go",
@@ -201,6 +203,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				Notification: fileBugForTBRViolation,
 			},
 		},
+		OverwriteLastKnownCommit: "a0bb160410724106d9a5799af81d181568da7e1e",
 	},
 	"chromium-infra-config": {
 		BaseRepoURL: "https://chrome-internal.googlesource.com/infradata/config.git",
@@ -228,6 +231,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				[]string{"images"},
 			),
 		},
+		OverwriteLastKnownCommit: "3f78c0ad316c448178d41ff39bd52aa8b91e9631",
 	},
 	"chromium-infra-internal": {
 		BaseRepoURL: "https://chrome-internal.googlesource.com/infra/infra_internal.git",
@@ -247,6 +251,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				Notification: fileBugForTBRViolation,
 			},
 		},
+		OverwriteLastKnownCommit: "a4beb2be3d337aa260602e4a990101cb8d9b5930",
 	},
 	"chromium-src-release-branches": {
 		BaseRepoURL:     "https://chromium.googlesource.com/chromium/src.git",
@@ -350,6 +355,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		Rules: map[string]rules.AccountRules{
 			"autoroll-rules-skia": rules.AutoRollRules("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com", []string{"manifest/skia"}, nil),
 		},
+		OverwriteLastKnownCommit: "d56fc21874e8fafbed8e1dee3990c3b09d118ec2",
 	},
 
 	// Skia
@@ -371,6 +377,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				[]string{skiaAsset("go_deps"), skiaAsset("skp"), "go.mod", "go.sum", "infra/bots/tasks.json"},
 				nil),
 		},
+		OverwriteLastKnownCommit: "04b9443274cfe8c58ea2d5be25df63bdc2f41177",
 	},
 	"skia-lottie-ci": {
 		BaseRepoURL: "https://skia.googlesource.com/lottie-ci.git",
@@ -384,6 +391,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		Rules: map[string]rules.AccountRules{
 			"autoroll-rules-skia": rules.AutoRollRules("skia-autoroll@skia-public.iam.gserviceaccount.com", []string{"DEPS", "go.mod", "go.sum", "infra/bots/tasks.json"}, nil),
 		},
+		OverwriteLastKnownCommit: "75b310f345734d0d08f519d25f7b8360b38a5551",
 	},
 }
 
