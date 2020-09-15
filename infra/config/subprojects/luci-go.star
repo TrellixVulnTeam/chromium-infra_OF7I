@@ -72,8 +72,7 @@ try_builder(name = "luci-go-try-xenial-64", os = "Ubuntu-16.04", properties = {
     "run_integration_tests": True,
 })
 
-# TODO(tandrii): bump to 10.15 once available.
-try_builder(name = "luci-go-try-mac", os = "Mac-10.13")
+try_builder(name = "luci-go-try-mac", os = "Mac-10.15")
 try_builder(name = "luci-go-try-win", os = "Windows-10")
 
 try_builder(

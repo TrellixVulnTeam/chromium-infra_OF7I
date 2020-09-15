@@ -119,7 +119,7 @@ try_builder(
 )
 try_builder(name = "infra-try-trusty-64", os = "Ubuntu-14.04")
 
-try_builder(name = "infra-try-mac", os = "Mac-10.13")
+try_builder(name = "infra-try-mac", os = "Mac-10.15")
 try_builder(name = "infra-try-win", os = "Windows-10")
 try_builder(name = "infra-try-frontend", os = "Ubuntu-16.04", recipe = "infra_frontend_tester")
 
