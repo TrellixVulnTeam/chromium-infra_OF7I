@@ -17,9 +17,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='go.chromium.org/luci/cv/api/recipe/v1/cq.proto',
   package='cq.recipe',
   syntax='proto3',
-  serialized_options=b'Z,go.chromium.org/luci/cq/api/recipe/v1;recipe',
+  serialized_options=b'Z,go.chromium.org/luci/cv/api/recipe/v1;recipe',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n.go.chromium.org/luci/cv/api/recipe/v1/cq.proto\x12\tcq.recipe\"Q\n\x05Input\x12\x0e\n\x06\x61\x63tive\x18\x01 \x01(\x08\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x14\n\x0c\x65xperimental\x18\x03 \x01(\x08\x12\x11\n\ttop_level\x18\x04 \x01(\x08\x42.Z,go.chromium.org/luci/cq/api/recipe/v1;recipeb\x06proto3'
+  serialized_pb=b'\n.go.chromium.org/luci/cv/api/recipe/v1/cq.proto\x12\tcq.recipe\"Q\n\x05Input\x12\x0e\n\x06\x61\x63tive\x18\x01 \x01(\x08\x12\x0f\n\x07\x64ry_run\x18\x02 \x01(\x08\x12\x14\n\x0c\x65xperimental\x18\x03 \x01(\x08\x12\x11\n\ttop_level\x18\x04 \x01(\x08\x42.Z,go.chromium.org/luci/cv/api/recipe/v1;recipeb\x06proto3'
 )
 
 
