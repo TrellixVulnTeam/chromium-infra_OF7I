@@ -5,6 +5,8 @@
 
 """Convenience script for expect_tests"""
 
+from __future__ import absolute_import
+from __future__ import print_function
 assert __name__ == '__main__'
 
 import os
@@ -35,7 +37,7 @@ WIN_ENABLED_PACKAGES = [
 
 
 def usage():
-  print """\nUsage: %s <action> [<test names>] [<expect_tests options>]
+  print("""\nUsage: %s <action> [<test names>] [<expect_tests options>]
 
   where <action> is one of: list, test, train, debug.
 
@@ -51,7 +53,7 @@ def usage():
     ./test.py test infra/libs/git2/test:*testCommitBogus
 
   See expect_tests documentation for more details
-  """ % sys.argv[0]
+  """ % sys.argv[0])
 
 
 def get_modules_with_coveragerc(root_module):
@@ -137,7 +139,7 @@ if sys.platform == 'win32' and '--force-coverage' not in flags:
 exit_code = 0
 failed_modules = []
 for module in modules:
-  print 'Running %s...' % module
+  print('Running %s...' % module)
   module_flags = flags[:]
   # Remove any test glob, which comes after semicolon (:) and convert to a path.
   module_path = module.split(':')[0].replace('/', os.sep)
@@ -153,12 +155,12 @@ for module in modules:
     failed_modules.append(module)
 
 if exit_code:
-  print
-  print 'Tests failed in modules:\n  %s' % '\n  '.join(failed_modules)
+  print()
+  print('Tests failed in modules:\n  %s' % '\n  '.join(failed_modules))
   if '--html-report' not in flags:
-    print '\nFor detailed coverage report and per-line branch coverage,'
-    print 'rerun with --html-report <dir>'
+    print('\nFor detailed coverage report and per-line branch coverage,')
+    print('rerun with --html-report <dir>')
 else:
-  print 'All tests passed.'
+  print('All tests passed.')
 
 sys.exit(exit_code)
