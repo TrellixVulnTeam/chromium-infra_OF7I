@@ -53,7 +53,8 @@ func (c *reserveDuts) innerRun(a subcommands.Application, args []string, env sub
 		return errors.Reason("at least one hostname has to be provided").Err()
 	}
 	ctx := cli.GetContext(a, c, env)
-	creator, err := swarming.NewTaskCreator(ctx, &c.authFlags, c.envFlags.Env().SwarmingService)
+	e := c.envFlags.Env()
+	creator, err := swarming.NewTaskCreator(ctx, &c.authFlags, e.SwarmingService)
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,8 @@ func (c *reserveDuts) innerRun(a subcommands.Application, args []string, env sub
 	successMap := make(map[string]*swarming.TaskInfo)
 	errorMap := make(map[string]error)
 	for _, host := range args {
-		task, err := creator.ReserveDUT(ctx, host)
+		// TODO(crbug/1128496): update state directly in the UFS without creating the swarming task
+		task, err := creator.ReserveDUT(ctx, e.SwarmingServiceAccount, host)
 		if err != nil {
 			errorMap[host] = err
 		} else {

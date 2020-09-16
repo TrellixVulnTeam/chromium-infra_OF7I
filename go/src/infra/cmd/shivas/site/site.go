@@ -20,9 +20,10 @@ import (
 
 // Environment contains environment specific values.
 type Environment struct {
-	InventoryService    string
-	UnifiedFleetService string
-	SwarmingService     string
+	InventoryService       string
+	UnifiedFleetService    string
+	SwarmingService        string
+	SwarmingServiceAccount string
 }
 
 // Prod is the environment for prod.
@@ -31,6 +32,8 @@ var Prod = Environment{
 	//TODO(eshwarn) : Change it to prod during release
 	UnifiedFleetService: "ufs.api.cr.dev",
 	SwarmingService:     "https://chromeos-swarming.appspot.com/",
+	// TODO(crbug/1128496): remove when fixed
+	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts.iam.gserviceaccount.com",
 }
 
 // Dev is the environment for dev.
@@ -38,6 +41,8 @@ var Dev = Environment{
 	InventoryService:    "cros-lab-inventory-dev.appspot.com",
 	UnifiedFleetService: "staging.ufs.api.cr.dev",
 	SwarmingService:     "https://chromium-swarm-dev.appspot.com/",
+	// TODO(crbug/1128496): remove when fixed
+	SwarmingServiceAccount: "skylab-admin-task@chromeos-service-accounts-dev.iam.gserviceaccount.com",
 }
 
 // CommonFlags controls some commonly-used CLI flags.

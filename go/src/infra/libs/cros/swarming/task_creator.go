@@ -62,12 +62,12 @@ func NewTaskCreator(ctx context.Context, authFlags *authcli.Flags, swarmingServi
 }
 
 // ReserveDUT schedule task to change DUT state to reserved
-func (tc *TaskCreator) ReserveDUT(ctx context.Context, host string) (*TaskInfo, error) {
-	return tc.schedule(ctx, tc.reserveDUTRequest(host))
+func (tc *TaskCreator) ReserveDUT(ctx context.Context, serviceAccount, host string) (*TaskInfo, error) {
+	return tc.schedule(ctx, tc.reserveDUTRequest(serviceAccount, host))
 }
 
 // ReserveDUTRequest creates task request to change DUT state to reserved
-func (tc *TaskCreator) reserveDUTRequest(host string) *swarming_api.SwarmingRpcsNewTaskRequest {
+func (tc *TaskCreator) reserveDUTRequest(serviceAccount, host string) *swarming_api.SwarmingRpcsNewTaskRequest {
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 2 * 60 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
@@ -85,8 +85,9 @@ func (tc *TaskCreator) reserveDUTRequest(host string) *swarming_api.SwarmingRpcs
 			[]string{
 				fmt.Sprintf("dut-name:%s", host),
 			}),
-		TaskSlices: slices,
-		Priority:   defaultTaskPriority,
+		TaskSlices:     slices,
+		Priority:       defaultTaskPriority,
+		ServiceAccount: serviceAccount,
 	}
 }
 
