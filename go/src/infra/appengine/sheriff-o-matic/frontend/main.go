@@ -235,8 +235,11 @@ func getUncachedBugsHandler(ctx *router.Context) {
 
 func newAnnotationHandler(ctx *router.Context) *handler.AnnotationHandler {
 	bqh := newBugQueueHandler(ctx.Context)
+	// TODO (nqmtuan): Handle error here
+	monorailV3Client, _ := client.NewMonorailV3Client(ctx.Context)
 	return &handler.AnnotationHandler{
-		Bqh: bqh,
+		Bqh:                 bqh,
+		MonorailIssueClient: monorailv3.NewIssuesPRPCClient(monorailV3Client),
 	}
 }
 

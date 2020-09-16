@@ -10,14 +10,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"google.golang.org/appengine"
+	"google.golang.org/grpc"
 
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
+	monorailv3 "infra/monorailv2/api/v3/api_proto"
 
 	"golang.org/x/net/context"
 
@@ -39,15 +40,29 @@ const (
 	maxMonorailQuerySize = 100
 )
 
+// AnnotationsIssueClient is for testing purpose
+type AnnotationsIssueClient interface {
+	BatchGetIssues(context.Context, *monorailv3.BatchGetIssuesRequest, ...grpc.CallOption) (*monorailv3.BatchGetIssuesResponse, error)
+}
+
 // AnnotationHandler handles annotation-related requests.
 type AnnotationHandler struct {
-	Bqh *BugQueueHandler
+	Bqh                 *BugQueueHandler
+	MonorailIssueClient AnnotationsIssueClient
+}
+
+// MonorailBugData wrap around monorailv3.Issue to send to frontend.
+type MonorailBugData struct {
+	BugID     string `json:"id,omitempty"`
+	ProjectID string `json:"projectId,omitempty"`
+	Summary   string `json:"summary,omitempty"`
+	Status    string `json:"status,omitempty"`
 }
 
 // AnnotationResponse ... The Annotation object extended with cached bug data.
 type AnnotationResponse struct {
 	model.Annotation
-	BugData map[string]monorail.Issue `json:"bug_data"`
+	BugData map[string]MonorailBugData `json:"bug_data"`
 }
 
 func convertAnnotationsNonGroupingToAnnotations(annotationsNonGrouping []*model.AnnotationNonGrouping, annotations *[]*model.Annotation) {
@@ -106,15 +121,32 @@ func datastoreDeleteAnnotations(c context.Context, annotations []*model.Annotati
 	return datastore.Delete(c, annotationsNonGrouping)
 }
 
+func convertBugData(bugData *monorailv3.Issue) (MonorailBugData, error) {
+	projectID, bugID, err := client.ParseMonorailIssueName(bugData.Name)
+	if err != nil {
+		return MonorailBugData{}, err
+	}
+	return MonorailBugData{
+		BugID:     bugID,
+		ProjectID: projectID,
+		Status:    bugData.Status.Status,
+		Summary:   bugData.Summary,
+	}, nil
+}
+
 // Convert data from model.Annotation type to AnnotationResponse type by populating monorail data.
-func makeAnnotationResponse(annotations *model.Annotation, meta map[string]monorail.Issue) *AnnotationResponse {
-	bugs := make(map[string]monorail.Issue)
+func makeAnnotationResponse(annotations *model.Annotation, meta map[string]*monorailv3.Issue) (*AnnotationResponse, error) {
+	bugs := make(map[string]MonorailBugData)
 	for _, b := range annotations.Bugs {
 		if bugData, ok := meta[b.BugID]; ok {
-			bugs[b.BugID] = bugData
+			mbd, err := convertBugData(bugData)
+			if err != nil {
+				return nil, err
+			}
+			bugs[b.BugID] = mbd
 		}
 	}
-	return &AnnotationResponse{*annotations, bugs}
+	return &AnnotationResponse{*annotations, bugs}, nil
 }
 
 func filterAnnotations(annotations []*model.Annotation, activeKeys map[string]interface{}) []*model.Annotation {
@@ -165,7 +197,12 @@ func (ah *AnnotationHandler) GetAnnotationsHandler(ctx *router.Context, activeKe
 
 	response := make([]*AnnotationResponse, len(annotations))
 	for i, a := range annotations {
-		response[i] = makeAnnotationResponse(a, meta)
+		resp, err := makeAnnotationResponse(a, meta)
+		if err != nil {
+			errStatus(c, w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		response[i] = resp
 	}
 
 	data, err := json.Marshal(response)
@@ -178,10 +215,10 @@ func (ah *AnnotationHandler) GetAnnotationsHandler(ctx *router.Context, activeKe
 	w.Write(data)
 }
 
-func (ah *AnnotationHandler) getAnnotationsMetaData(ctx *router.Context) (map[string]monorail.Issue, error) {
+func (ah *AnnotationHandler) getAnnotationsMetaData(ctx *router.Context) (map[string]*monorailv3.Issue, error) {
 	c := ctx.Context
 	item, err := memcache.GetKey(c, annotationsCacheKey)
-	val := make(map[string]monorail.Issue)
+	val := make(map[string]*monorailv3.Issue)
 
 	if err == memcache.ErrCacheMiss {
 		logging.Warningf(c, "No annotation metadata in memcache, refreshing...")
@@ -220,9 +257,9 @@ func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 }
 
 // Builds a map keyed by projectId (i.e "chromium", "fuchsia"), value contains
-// the monorail query string.
+// the chunks for the projectId. Each chunk contains at most 100 bugID.
 // Monorail only returns a maximum of 100 bugs at a time, so we need to break queries into chunks.
-func constructQueryFromBugList(bugs []model.MonorailBug, chunkSize int) map[string][]string {
+func createProjectChunksMapping(bugs []model.MonorailBug, chunkSize int) map[string][][]string {
 	projectIDToBugIDMap := make(map[string][]string)
 	for _, bug := range bugs {
 		if bugList, ok := projectIDToBugIDMap[bug.ProjectID]; ok {
@@ -231,16 +268,11 @@ func constructQueryFromBugList(bugs []model.MonorailBug, chunkSize int) map[stri
 			projectIDToBugIDMap[bug.ProjectID] = []string{bug.BugID}
 		}
 	}
-	queries := make(map[string][]string)
+	result := make(map[string][][]string)
 	for projectID, bugIDs := range projectIDToBugIDMap {
-		queries[projectID] = []string{}
-		bugChunks := breakToChunks(bugIDs, chunkSize)
-		for _, chunk := range bugChunks {
-			str := "id:" + strings.Join(chunk, ",")
-			queries[projectID] = append(queries[projectID], str)
-		}
+		result[projectID] = breakToChunks(bugIDs, chunkSize)
 	}
-	return queries
+	return result
 }
 
 func breakToChunks(bugIDs []string, chunkSize int) [][]string {
@@ -267,8 +299,26 @@ func filterDuplicateBugs(bugs []model.MonorailBug) []model.MonorailBug {
 	return filteredBugs
 }
 
+func (ah *AnnotationHandler) batchQueryBugs(c context.Context, projectID string, bugIDs []string) (*monorailv3.BatchGetIssuesResponse, error) {
+	logging.Infof(c, "Query monorail for project: %q, bugs: %v", projectID, bugIDs)
+	projectResourceName := client.GetMonorailProjectResourceName(projectID)
+	var issueResourceNames []string
+	for _, bugID := range bugIDs {
+		issueResourceNames = append(issueResourceNames, client.GetMonorailIssueResourceName(projectID, bugID))
+	}
+	req := &monorailv3.BatchGetIssuesRequest{
+		Parent: projectResourceName,
+		Names:  issueResourceNames,
+	}
+	resp, err := ah.MonorailIssueClient.BatchGetIssues(c, req)
+	if err == nil {
+		logging.Infof(c, "Got %d bugs", len(resp.Issues))
+	}
+	return resp, err
+}
+
 // Update the cache for annotation bug data.
-func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.Annotation) (map[string]monorail.Issue, error) {
+func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.Annotation) (map[string]*monorailv3.Issue, error) {
 	c := ctx.Context
 	q := datastoreCreateAnnotationQuery()
 	results := []*model.Annotation{}
@@ -285,19 +335,22 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 	}
 
 	allBugs = filterDuplicateBugs(allBugs)
-
-	queries := constructQueryFromBugList(allBugs, maxMonorailQuerySize)
-	m := make(map[string]monorail.Issue)
-	for project, queriesForProj := range queries {
-		for _, query := range queriesForProj {
-			issues, err := ah.Bqh.getBugsFromMonorail(c, query, project, monorail.IssuesListRequest_ALL)
+	projectChunkMap := createProjectChunksMapping(allBugs, maxMonorailQuerySize)
+	m := make(map[string]*monorailv3.Issue)
+	for projectID, chunkList := range projectChunkMap {
+		for _, chunks := range chunkList {
+			issues, err := ah.batchQueryBugs(c, projectID, chunks)
 			if err != nil {
 				logging.Errorf(c, "error getting bugs from monorail: %v", err)
 				return nil, err
 			}
-			for _, b := range issues.Items {
-				key := fmt.Sprintf("%d", b.Id)
-				m[key] = *b
+			for _, b := range issues.Issues {
+				_, bugID, err := client.ParseMonorailIssueName(b.Name)
+				if err != nil {
+					return nil, err
+				}
+				// TODO (crbug.com/1127471) Key should also include projectID
+				m[bugID] = b
 			}
 		}
 	}
@@ -396,7 +449,7 @@ func (ah *AnnotationHandler) PostAnnotationsHandler(ctx *router.Context) {
 		return
 	}
 
-	var m map[string]monorail.Issue
+	var m map[string]*monorailv3.Issue
 	// Refresh the annotation cache on a write. Note that we want the rest of the
 	// code to still run even if this fails.
 	if needRefresh {
@@ -410,10 +463,15 @@ func (ah *AnnotationHandler) PostAnnotationsHandler(ctx *router.Context) {
 		if err != nil {
 			logging.Errorf(c, "while getting annotation metadata: %s", err)
 		}
-
 	}
 
-	resp, err := json.Marshal(makeAnnotationResponse(annotation, m))
+	annotationResp, err := makeAnnotationResponse(annotation, m)
+	if err != nil {
+		errStatus(c, w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	resp, err := json.Marshal(annotationResp)
 	if err != nil {
 		errStatus(c, w, http.StatusInternalServerError, err.Error())
 		return

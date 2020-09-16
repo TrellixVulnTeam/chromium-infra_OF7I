@@ -6,6 +6,7 @@ package client
 
 import (
 	"fmt"
+	"regexp"
 
 	"go.chromium.org/luci/gae/service/info"
 	"golang.org/x/net/context"
@@ -33,4 +34,25 @@ func GetMonorailPriorityField(c context.Context, projectID string) (string, erro
 		return "", fmt.Errorf("Invalid ProjectID %q", projectID)
 	}
 	return val, nil
+}
+
+// GetMonorailProjectResourceName generates Monorail project resource from projectID
+func GetMonorailProjectResourceName(projectID string) string {
+	return "projects/" + projectID
+}
+
+// GetMonorailIssueResourceName generates Monorail issue resource from projectID
+// and bugID
+func GetMonorailIssueResourceName(projectID string, bugID string) string {
+	return fmt.Sprintf("projects/%s/issues/%s", projectID, bugID)
+}
+
+// ParseMonorailIssueName gets projectID, bugID from issue resource name
+func ParseMonorailIssueName(issueName string) (string, string, error) {
+	rgx := regexp.MustCompile("projects/(.+)/issues/(\\d+)")
+	rs := rgx.FindStringSubmatch(issueName)
+	if len(rs) != 3 {
+		return "", "", fmt.Errorf("Invalid resource %q", issueName)
+	}
+	return rs[1], rs[2], nil
 }

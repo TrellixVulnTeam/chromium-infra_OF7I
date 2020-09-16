@@ -11,20 +11,19 @@ import (
 	"testing"
 	"time"
 
-	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
-	"infra/monorail"
+	monorailv3 "infra/monorailv2/api/v3/api_proto"
 
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/clock/testclock"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/common/logging/gologger"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/router"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -97,7 +96,7 @@ func TestFilterDuplicateBugs(t *testing.T) {
 	})
 }
 
-func TestConstructQueryFromBugList(t *testing.T) {
+func TestCreateProjectChunksMapping(t *testing.T) {
 	Convey("Test construct query from bug list", t, func() {
 		bugs := []model.MonorailBug{
 			{
@@ -122,25 +121,25 @@ func TestConstructQueryFromBugList(t *testing.T) {
 			},
 		}
 
-		result := constructQueryFromBugList(bugs, 100)
+		result := createProjectChunksMapping(bugs, 100)
 		So(
 			result,
 			ShouldResemble,
-			map[string][]string{
-				"project_1": {"id:bug_1,bug_3,bug_5"},
-				"project_2": {"id:bug_2"},
-				"project_3": {"id:bug_4"},
+			map[string][][]string{
+				"project_1": {{"bug_1", "bug_3", "bug_5"}},
+				"project_2": {{"bug_2"}},
+				"project_3": {{"bug_4"}},
 			},
 		)
 
-		result = constructQueryFromBugList(bugs, 2)
+		result = createProjectChunksMapping(bugs, 2)
 		So(
 			result,
 			ShouldResemble,
-			map[string][]string{
-				"project_1": {"id:bug_1,bug_3", "id:bug_5"},
-				"project_2": {"id:bug_2"},
-				"project_3": {"id:bug_4"},
+			map[string][][]string{
+				"project_1": {{"bug_1", "bug_3"}, {"bug_5"}},
+				"project_2": {{"bug_2"}},
+				"project_3": {{"bug_4"}},
 			},
 		)
 	})
@@ -160,6 +159,90 @@ func TestBreakToChunk(t *testing.T) {
 	})
 }
 
+func TestMakeAnnotationResponse(t *testing.T) {
+	Convey("Test make annotation response successful", t, func() {
+		annotations := &model.Annotation{
+			Bugs: []model.MonorailBug{
+				{BugID: "123", ProjectID: "chromium"},
+				{BugID: "456", ProjectID: "chromium"},
+			},
+		}
+		meta := map[string]*monorailv3.Issue{
+			"123": {
+				Name: "projects/chromium/issues/123",
+				Status: &monorailv3.Issue_StatusValue{
+					Status: "Assigned",
+				},
+				Summary: "Sum1",
+			},
+			"456": {
+				Name: "projects/chromium/issues/456",
+				Status: &monorailv3.Issue_StatusValue{
+					Status: "Fixed",
+				},
+				Summary: "Sum2",
+			},
+		}
+		expected := &AnnotationResponse{
+			Annotation: *annotations,
+			BugData: map[string]MonorailBugData{
+				"123": {
+					BugID:     "123",
+					ProjectID: "chromium",
+					Summary:   "Sum1",
+					Status:    "Assigned",
+				},
+				"456": {
+					BugID:     "456",
+					ProjectID: "chromium",
+					Summary:   "Sum2",
+					Status:    "Fixed",
+				},
+			},
+		}
+		actual, err := makeAnnotationResponse(annotations, meta)
+		So(err, ShouldBeNil)
+		So(actual, ShouldResemble, expected)
+	})
+	Convey("Test make annotation response failed", t, func() {
+		annotations := &model.Annotation{
+			Bugs: []model.MonorailBug{
+				{BugID: "123", ProjectID: "chromium"},
+			},
+		}
+		meta := map[string]*monorailv3.Issue{
+			"123": {
+				Name: "invalid",
+			},
+		}
+		_, err := makeAnnotationResponse(annotations, meta)
+		So(err, ShouldNotBeNil)
+	})
+}
+
+type FakeIC struct{}
+
+func (ic FakeIC) BatchGetIssues(c context.Context, req *monorailv3.BatchGetIssuesRequest, ops ...grpc.CallOption) (*monorailv3.BatchGetIssuesResponse, error) {
+	if req.Parent == "projects/chromium" {
+		return &monorailv3.BatchGetIssuesResponse{
+			Issues: []*monorailv3.Issue{
+				{Name: "projects/chromium/issues/333"},
+				{Name: "projects/chromium/issues/444"},
+			},
+		}, nil
+	}
+	if req.Parent == "projects/fuchsia" {
+		return &monorailv3.BatchGetIssuesResponse{
+			Issues: []*monorailv3.Issue{
+				{Name: "projects/fuchsia/issues/555"},
+				{Name: "projects/fuchsia/issues/666"},
+			},
+		}, nil
+	}
+
+	return nil, nil
+}
+
 func TestAnnotations(t *testing.T) {
 	newContext := func() (context.Context, testclock.TestClock) {
 		c := gaetesting.TestingContext()
@@ -177,44 +260,9 @@ func TestAnnotations(t *testing.T) {
 		tok, err := xsrf.Token(c)
 		So(err, ShouldBeNil)
 
-		monorailMux := http.NewServeMux()
-		monorailResponse := func(w http.ResponseWriter, r *http.Request) {
-			logging.Errorf(c, "got monorailMux request")
-			query := r.FormValue("q")
-			res := &monorail.IssuesListResponse{
-				Items:        []*monorail.Issue{},
-				TotalResults: 0,
-			}
-			if query == "id:333,444" {
-				res = &monorail.IssuesListResponse{
-					Items:        []*monorail.Issue{{Id: 333}, {Id: 444}},
-					TotalResults: 2,
-				}
-			}
-			if query == "id:555,666" {
-				res = &monorail.IssuesListResponse{
-					Items:        []*monorail.Issue{{Id: 555}, {Id: 666}},
-					TotalResults: 2,
-				}
-			}
-
-			bytes, err := json.Marshal(res)
-			if err != nil {
-				logging.Errorf(c, "error marshaling response: %v", err)
-			}
-			w.Write(bytes)
-		}
-		monorailMux.HandleFunc("/", monorailResponse)
-
-		monorailServer := httptest.NewServer(monorailMux)
-		defer monorailServer.Close()
-		Monorail := client.NewMonorail(c, monorailServer.URL)
-
-		Bqh := &BugQueueHandler{
-			Monorail: Monorail,
-		}
 		ah := &AnnotationHandler{
-			Bqh: Bqh,
+			Bqh:                 &BugQueueHandler{},
+			MonorailIssueClient: FakeIC{},
 		}
 
 		Convey("GET", func() {
@@ -451,10 +499,10 @@ func TestAnnotations(t *testing.T) {
 				var result map[string]interface{}
 				json.Unmarshal(b, &result)
 				expected := map[string]interface{}{
-					"333": map[string]interface{}{"id": float64(333)},
-					"444": map[string]interface{}{"id": float64(444)},
-					"555": map[string]interface{}{"id": float64(555)},
-					"666": map[string]interface{}{"id": float64(666)},
+					"333": map[string]interface{}{"name": "projects/chromium/issues/333"},
+					"444": map[string]interface{}{"name": "projects/chromium/issues/444"},
+					"555": map[string]interface{}{"name": "projects/fuchsia/issues/555"},
+					"666": map[string]interface{}{"name": "projects/fuchsia/issues/666"},
 				}
 				So(result, ShouldResemble, expected)
 			})
