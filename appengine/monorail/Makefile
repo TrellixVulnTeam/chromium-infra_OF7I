@@ -111,10 +111,7 @@ build_js:
 	$(WEBPACK_PATH) --mode=production
 
 clean_deps:
-	# TODO(dtu): Remove deployed_node_modules after deployment on 2020-08-17
-	rm -rf deployed_node_modules
 	rm -rf node_modules
-	rm -rf lib
 
 node_deps:
 	npm ci --no-save
