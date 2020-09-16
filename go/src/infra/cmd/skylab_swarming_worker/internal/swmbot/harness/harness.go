@@ -254,7 +254,8 @@ func getStatesFromLabel(dutID string, l *inventory.SchedulableLabels) *lab.DutSt
 	return &state
 }
 
-func getMetaFromAttributes(dutID string, attr []*inventory.KeyValue) *invV2.DutMeta {
+func getMetaFromSpecs(dutID string, specs *inventory.CommonDeviceSpecs) *invV2.DutMeta {
+	attr := specs.GetAttributes()
 	dutMeta := invV2.DutMeta{
 		ChromeosDeviceId: dutID,
 	}
@@ -266,6 +267,7 @@ func getMetaFromAttributes(dutID string, attr []*inventory.KeyValue) *invV2.DutM
 			dutMeta.HwID = kv.GetValue()
 		}
 	}
+	dutMeta.DeviceSku = specs.GetLabels().GetSku()
 	return &dutMeta
 }
 
@@ -289,8 +291,8 @@ func (u labelUpdater) updateV2(ctx context.Context, dutID string, old, new *inve
 	}
 	oldState := getStatesFromLabel(dutID, old.GetCommon().GetLabels())
 	newState := getStatesFromLabel(dutID, new.GetCommon().GetLabels())
-	oldMeta := getMetaFromAttributes(dutID, old.GetCommon().GetAttributes())
-	newMeta := getMetaFromAttributes(dutID, new.GetCommon().GetAttributes())
+	oldMeta := getMetaFromSpecs(dutID, old.GetCommon())
+	newMeta := getMetaFromSpecs(dutID, new.GetCommon())
 	oldLabMeta := getLabMetaFromLabel(dutID, old.GetCommon().GetLabels())
 	newLabMeta := getLabMetaFromLabel(dutID, new.GetCommon().GetLabels())
 	if proto.Equal(newState, oldState) && proto.Equal(oldMeta, newMeta) && proto.Equal(oldLabMeta, newLabMeta) {
