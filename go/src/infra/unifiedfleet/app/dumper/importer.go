@@ -15,7 +15,7 @@ import (
 	frontend "infra/unifiedfleet/app/frontend"
 )
 
-const stopImport = false
+const stopImport = true
 
 func importCrimson(ctx context.Context) (err error) {
 	defer func() {
