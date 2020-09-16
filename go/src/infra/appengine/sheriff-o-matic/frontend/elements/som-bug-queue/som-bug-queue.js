@@ -6,7 +6,10 @@ const TREENAME_TO_PROJECT_MAPPING = {
   'chromium': 'chromium',
 };
 
-class SomBugQueue extends Polymer.Element {
+class SomBugQueue extends Polymer.mixinBehaviors([
+  BugManagerBehavior,
+],
+Polymer.Element) {
   static get is() {
     return 'som-bug-queue';
   }
@@ -185,20 +188,6 @@ class SomBugQueue extends Polymer.Element {
       }
     }
     return this.UNSET_PRIORITY;
-  }
-
-  _computeProject(bug) {
-    const match = bug.name.match(/^projects\/(.+)\/issues\/(.+)$/);
-    if (match) {
-      return match[1];
-    }
-  }
-
-  _computeBugId(bug) {
-    const match = bug.name.match(/^projects\/(.+)\/issues\/(.+)$/);
-    if (match) {
-      return match[2];
-    }
   }
 
   _computeShowNoBugs(bugs, bugsLoaded, error) {

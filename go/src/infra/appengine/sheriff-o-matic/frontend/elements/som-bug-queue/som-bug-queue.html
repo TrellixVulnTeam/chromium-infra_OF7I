@@ -5,6 +5,7 @@
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
 
+<link rel="import" href="../../elements/som-bug-manager-behavior.html">
 <link rel="import" href="../../elements/som-header-styles.html">
 <link rel="import" href="../../elements/som-utility-styles.html">
 
@@ -101,13 +102,13 @@
             <template is="dom-repeat" items="[[bucket.bugs]]" as="bug">
               <div class="bug">
                 <div class="summary-box">
-                  <a href="http://crbug.com/[[_computeProject(bug)]]/[[_computeBugId(bug)]]" target="_blank" title="[[bug.summary]]" class="summary">[[bug.summary]]</a>
+                  <a href="http://crbug.com/[[computeProject(bug)]]/[[computeBugID(bug)]]" target="_blank" title="[[bug.summary]]" class="summary">[[bug.summary]]</a>
                   <template is="dom-repeat" items="[[_filterBugLabels(bug.labels, bugQueueLabel)]]" as="label">
-                    <a href="https://bugs.chromium.org/p/[[_computeProject(bug)]]/issues/list?q=label:[[label]]"
+                    <a href="https://bugs.chromium.org/p/[[computeProject(bug)]]/issues/list?q=label:[[label]]"
                       class="bug-label" target="_blank">[[label]]</a>
                   </template>
                 </div>
-                <a href="http://crbug.com/[[_computeProject(bug)]]/[[_computeBugId(bug)]]" target="_blank">Bug [[_computeBugId(bug)]]</a>
+                <a href="http://crbug.com/[[computeProject(bug)]]/[[computeBugID(bug)]]" target="_blank">Bug [[computeBugID(bug)]]</a>
                 ([[bug.status.status]]<template is="dom-if" if="[[bug.owner.name]]">,
                 [[bug.owner.name]]</template>)
                 <template is="dom-if" if="[[_validPriority(bucket.priority)]]">

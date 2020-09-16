@@ -1,10 +1,23 @@
 <script>
-  BugManagerBehavior = {
+  const bugNameRegex = /^projects\/(.+)\/issues\/(.+)$/;
+  BugManagerBehavior = {    
     computeBugs: function(annotation) {
       // bugData is a map with the bug ids used as keys.
       let bugs = annotation.bugs;
       if (!bugs) return [];
       return bugs.map((bug) => annotation.bugData[bug.id] && annotation.bugData[bug.id] || bug);
-    }
+    },
+    computeProject(bug) {
+      const match = bug.name.match(bugNameRegex);
+      if (match) {
+        return match[1];
+      }
+    },
+    computeBugID(bug) {
+      const match = bug.name.match(bugNameRegex);
+      if (match) {
+        return match[2];
+      }
+    }    
   }
 </script>

@@ -243,6 +243,17 @@ func (ic FakeIC) BatchGetIssues(c context.Context, req *monorailv3.BatchGetIssue
 	return nil, nil
 }
 
+func (ic FakeIC) MakeIssue(c context.Context, req *monorailv3.MakeIssueRequest, opts ...grpc.CallOption) (*monorailv3.Issue, error) {
+	projectRes := req.Parent
+	return &monorailv3.Issue{
+		Name:    fmt.Sprintf("%s/issues/123", projectRes),
+		Summary: req.Issue.Summary,
+		Status:  req.Issue.Status,
+		Labels:  req.Issue.Labels,
+		CcUsers: req.Issue.CcUsers,
+	}, nil
+}
+
 func TestAnnotations(t *testing.T) {
 	newContext := func() (context.Context, testclock.TestClock) {
 		c := gaetesting.TestingContext()
@@ -325,6 +336,15 @@ func TestAnnotations(t *testing.T) {
 			})
 		})
 
+		addXSRFToken := func(data map[string]interface{}, tok string) string {
+			change, err := json.Marshal(map[string]interface{}{
+				"xsrf_token": tok,
+				"data":       data,
+			})
+			So(err, ShouldBeNil)
+			return string(change)
+		}
+
 		Convey("POST", func() {
 			Convey("invalid action", func() {
 				ah.PostAnnotationsHandler(&router.Context{
@@ -356,19 +376,11 @@ func TestAnnotations(t *testing.T) {
 			}
 			cl.Add(time.Hour)
 
-			makeChange := func(data map[string]interface{}, tok string) string {
-				change, err := json.Marshal(map[string]interface{}{
-					"xsrf_token": tok,
-					"data":       data,
-				})
-				So(err, ShouldBeNil)
-				return string(change)
-			}
 			Convey("add, bad xsrf token", func() {
 				ah.PostAnnotationsHandler(&router.Context{
 					Context: c,
 					Writer:  w,
-					Request: makePostRequest(makeChange(map[string]interface{}{
+					Request: makePostRequest(addXSRFToken(map[string]interface{}{
 						"snoozeTime": 123123,
 					}, "no good token")),
 					Params: makeParams("annKey", "foobar", "action", "add"),
@@ -389,7 +401,7 @@ func TestAnnotations(t *testing.T) {
 					ah.PostAnnotationsHandler(&router.Context{
 						Context: c,
 						Writer:  w,
-						Request: makePostRequest(makeChange(map[string]interface{}{
+						Request: makePostRequest(addXSRFToken(map[string]interface{}{
 							"snoozeTime": 123123,
 							"key":        "foobar",
 						}, tok)),
@@ -407,7 +419,7 @@ func TestAnnotations(t *testing.T) {
 					ah.PostAnnotationsHandler(&router.Context{
 						Context: c,
 						Writer:  w,
-						Request: makePostRequest(makeChange(change, tok)),
+						Request: makePostRequest(addXSRFToken(change, tok)),
 						Params:  makeParams("action", "add", "tree", "tree.unknown"),
 					})
 
@@ -423,7 +435,7 @@ func TestAnnotations(t *testing.T) {
 					ah.PostAnnotationsHandler(&router.Context{
 						Context: c,
 						Writer:  w,
-						Request: makePostRequest(makeChange(map[string]interface{}{"key": "foobar"}, tok)),
+						Request: makePostRequest(addXSRFToken(map[string]interface{}{"key": "foobar"}, tok)),
 						Params:  makeParams("action", "remove", "tree", "tree.unknown"),
 					})
 
@@ -439,7 +451,7 @@ func TestAnnotations(t *testing.T) {
 					ah.PostAnnotationsHandler(&router.Context{
 						Context: c,
 						Writer:  w,
-						Request: makePostRequest(makeChange(map[string]interface{}{
+						Request: makePostRequest(addXSRFToken(map[string]interface{}{
 							"key":        "foobar",
 							"snoozeTime": true,
 						}, tok)),
@@ -505,6 +517,37 @@ func TestAnnotations(t *testing.T) {
 					"666": map[string]interface{}{"name": "projects/fuchsia/issues/666"},
 				}
 				So(result, ShouldResemble, expected)
+			})
+		})
+		Convey("file bug", func() {
+			c, _ := newContext()
+			ah.FileBugHandler(&router.Context{
+				Context: c,
+				Writer:  w,
+				Request: makePostRequest(addXSRFToken(map[string]interface{}{
+					"ProjectId":   "chromium",
+					"Description": "des",
+					"Labels":      []string{"label1"},
+					"Cc":          []string{"abc@google.com"},
+					"Summary":     "my summary",
+				}, tok)),
+			})
+
+			b, err := ioutil.ReadAll(w.Body)
+			So(err, ShouldBeNil)
+			So(w.Code, ShouldEqual, 200)
+			res := &monorailv3.Issue{}
+			err = json.Unmarshal(b, res)
+			So(res, ShouldResemble, &monorailv3.Issue{
+				Name:    "projects/chromium/issues/123",
+				Summary: "my summary",
+				Status:  &monorailv3.Issue_StatusValue{Status: "Untriaged"},
+				CcUsers: []*monorailv3.Issue_UserValue{
+					{User: "users/abc@google.com"},
+				},
+				Labels: []*monorailv3.Issue_LabelValue{
+					{Label: "label1"},
+				},
 			})
 		})
 	})

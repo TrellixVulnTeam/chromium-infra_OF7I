@@ -17,7 +17,6 @@ import (
 
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
-	"infra/monorail"
 	monorailv3 "infra/monorailv2/api/v3/api_proto"
 
 	"golang.org/x/net/context"
@@ -43,6 +42,7 @@ const (
 // AnnotationsIssueClient is for testing purpose
 type AnnotationsIssueClient interface {
 	BatchGetIssues(context.Context, *monorailv3.BatchGetIssuesRequest, ...grpc.CallOption) (*monorailv3.BatchGetIssuesResponse, error)
+	MakeIssue(ctx context.Context, in *monorailv3.MakeIssueRequest, opts ...grpc.CallOption) (*monorailv3.Issue, error)
 }
 
 // AnnotationHandler handles annotation-related requests.
@@ -522,7 +522,7 @@ func flushOldAnnotations(c context.Context) (int, error) {
 }
 
 // FileBugHandler files a new bug in monorail.
-func FileBugHandler(ctx *router.Context) {
+func (ah *AnnotationHandler) FileBugHandler(ctx *router.Context) {
 	c, w, r := ctx.Context, ctx.Writer, ctx.Request
 
 	req := &postRequest{}
@@ -549,11 +549,6 @@ func FileBugHandler(ctx *router.Context) {
 		errStatus(c, w, http.StatusBadRequest, fmt.Sprintf("while decoding request: %s", err))
 	}
 
-	ccList := make([]*monorail.AtomPerson, len(rawJSON.Cc))
-	for i, cc := range rawJSON.Cc {
-		ccList[i] = &monorail.AtomPerson{Name: cc}
-	}
-
 	sa, err := info.ServiceAccount(c)
 	if err != nil {
 		logging.Errorf(c, "failed to get service account: %v", err)
@@ -565,31 +560,40 @@ func FileBugHandler(ctx *router.Context) {
 	description := fmt.Sprintf("Filed by %s on behalf of %s\n\n%s", sa, user.Email(),
 		rawJSON.Description)
 
-	fileBugReq := &monorail.InsertIssueRequest{
-		Issue: &monorail.Issue{
-			ProjectId:   rawJSON.ProjectID,
-			Cc:          ccList,
-			Summary:     rawJSON.Summary,
-			Description: description,
-			Status:      "Untriaged",
-			Labels:      rawJSON.Labels,
+	reqCCUsers := make([]*monorailv3.Issue_UserValue, len(rawJSON.Cc))
+	for i, user := range rawJSON.Cc {
+		reqCCUsers[i] = &monorailv3.Issue_UserValue{
+			User: "users/" + user,
+		}
+	}
+
+	reqLabels := make([]*monorailv3.Issue_LabelValue, len(rawJSON.Labels))
+	for i, label := range rawJSON.Labels {
+		reqLabels[i] = &monorailv3.Issue_LabelValue{
+			Label: label,
+		}
+	}
+
+	issueReq := &monorailv3.MakeIssueRequest{
+		Parent:      client.GetMonorailProjectResourceName(rawJSON.ProjectID),
+		Description: description,
+		Issue: &monorailv3.Issue{
+			Summary: rawJSON.Summary,
+			Status: &monorailv3.Issue_StatusValue{
+				Status: "Untriaged",
+			},
+			Labels:  reqLabels,
+			CcUsers: reqCCUsers,
 		},
+		NotifyType: monorailv3.NotifyType_EMAIL,
 	}
-
-	var mr monorail.MonorailClient
-
-	if info.AppID(c) == "sheriff-o-matic" {
-		mr = client.NewMonorail(c, "https://monorail-prod.appspot.com")
-	} else {
-		mr = client.NewMonorail(c, "https://monorail-staging.appspot.com")
-	}
-
-	res, err := mr.InsertIssue(c, fileBugReq)
+	res, err := ah.MonorailIssueClient.MakeIssue(c, issueReq)
 	if err != nil {
 		logging.Errorf(c, "error inserting new Issue: %v", err)
-		errStatus(c, w, http.StatusBadRequest, err.Error())
+		errStatus(c, w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
 	out, err := json.Marshal(res)
 	if err != nil {
 		errStatus(c, w, http.StatusInternalServerError, err.Error())

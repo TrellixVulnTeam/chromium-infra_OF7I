@@ -263,6 +263,11 @@ func postAnnotationsHandler(ctx *router.Context) {
 	ah.PostAnnotationsHandler(ctx)
 }
 
+func fileBugHandler(ctx *router.Context) {
+	ah := newAnnotationHandler(ctx)
+	ah.FileBugHandler(ctx)
+}
+
 //// Routes.
 func init() {
 
@@ -281,7 +286,7 @@ func init() {
 
 	r.GET("/api/v1/annotations/:tree", protected, getAnnotationsHandler)
 	r.POST("/api/v1/annotations/:tree/:action", protected, postAnnotationsHandler)
-	r.POST("/api/v1/filebug/", protected, handler.FileBugHandler)
+	r.POST("/api/v1/filebug/", protected, fileBugHandler)
 	r.GET("/api/v1/bugqueue/:label", protected, getBugQueueHandler)
 	r.GET("/api/v1/bugqueue/:label/uncached/", protected, getUncachedBugsHandler)
 	r.GET("/api/v1/revrange/:host/:repo", basemw, handler.GetRevRangeHandler)

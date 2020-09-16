@@ -8,8 +8,15 @@
  * @customElement
  * @polymer
  */
-class SomFileBug extends Polymer.mixinBehaviors([AnnotationManagerBehavior, PostBehavior], Polymer.Element) {
-  static get is() { return 'som-file-bug'; }
+class SomFileBug extends Polymer.mixinBehaviors([
+  AnnotationManagerBehavior,
+  BugManagerBehavior,
+  PostBehavior,
+],
+Polymer.Element) {
+  static get is() {
+    return 'som-file-bug';
+  }
 
   static get properties() {
     return {
@@ -153,11 +160,11 @@ class SomFileBug extends Polymer.mixinBehaviors([AnnotationManagerBehavior, Post
   }
 
   _fileBugResponse(response) {
-    if (response.issue && response.issue.id) {
-      this.filedBugId = response.issue.id.toString();
+    const bugID = this.computeBugID(response);
+    if (bugID) {
+      this.filedBugId = bugID;
     } else {
-      this._fileBugErrorMessage = 'Error, no issue or issue id found: '
-        + response;
+      this._fileBugErrorMessage = 'Error, no issue id found: ' + response;
     }
 
     this.fire('success');
