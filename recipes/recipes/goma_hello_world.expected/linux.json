@@ -347,7 +347,6 @@
       "8945511751514863184",
       "--builder-id-json",
       "{\"bucket\": \"cron\", \"builder\": \"test_builder\", \"project\": \"project\"}",
-      "--is-luci",
       "--buildbot-buildername",
       "test_builder",
       "--buildbot-slavename",
