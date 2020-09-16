@@ -157,10 +157,7 @@ class Builder(object):
       for w in built_wheels:
         universal_wheel_path = os.path.join(tdir, w.universal_filename())
         shutil.copy(w.path(system), universal_wheel_path)
-      _, git_revision = system.check_run(
-          ['git', 'rev-parse', 'HEAD'],
-          cwd=system.root,
-      )
+      _, git_revision = system.check_run(['git', 'rev-parse', 'HEAD'])
       system.cipd.create_package(wheel.cipd_package(git_revision),
                                  tdir, pkg_path)
 

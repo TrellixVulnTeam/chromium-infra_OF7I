@@ -91,10 +91,7 @@ def _main_wheel_build(args, system):
 
   platforms, specs = _filter_platform_specs(args.platform, to_build)
 
-  _, git_revision = system.check_run(
-      ['git', 'rev-parse', 'HEAD'],
-      cwd=system.root,
-  )
+  _, git_revision = system.check_run(['git', 'rev-parse', 'HEAD'])
   for spec_name in specs:
     build = wheels.SPECS[spec_name]
 
