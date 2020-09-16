@@ -76,7 +76,7 @@ class TemplateDetail(servlet.Servlet):
       users_by_id = framework_views.MakeAllUserViews(
           mr.cnxn, self.services.user, users_involved)
       framework_views.RevealAllEmailsToMembers(
-          mr.cnxn, self.services, mr.auth, users_by_id, mr.project)
+          mr.cnxn, self.services, mr.auth, users_by_id)
     field_name_set = {fd.field_name.lower() for fd in config.field_defs
                       if fd.field_type is tracker_pb2.FieldTypes.ENUM_TYPE and
                       not fd.is_deleted}

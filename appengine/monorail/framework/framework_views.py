@@ -143,8 +143,7 @@ def StuffUserView(user_id, email, obscure_email):
   return UserView(user)
 
 
-# TODO(https://crbug.com/monorail/8192): Remove optional project.
-def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id, project=None):
+def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id):
   # type: (MonorailConnection, Services, AuthData, Collection[user_pb2.User],
   #     Optional[project_pb2.Project] -> None)
   """Reveal emails based on the authenticated user.
@@ -165,16 +164,10 @@ def RevealAllEmailsToMembers(cnxn, services, auth, users_by_id, project=None):
     Nothing, but the UserViews in users_by_id may be modified to
     publish email address.
   """
-  if project:
-    for user_view in users_by_id.values():
-      if framework_bizobj.DeprecatedShouldRevealEmail(auth, project,
-                                                      user_view.email):
-        user_view.RevealEmail()
-  else:
-    viewable_users = framework_bizobj.FilterViewableEmails(
-        cnxn, services, auth, users_by_id.values())
-    for user_view in viewable_users:
-      user_view.RevealEmail()
+  viewable_users = framework_bizobj.FilterViewableEmails(
+      cnxn, services, auth, users_by_id.values())
+  for user_view in viewable_users:
+    user_view.RevealEmail()
 
 
 def RevealAllEmails(users_by_id):

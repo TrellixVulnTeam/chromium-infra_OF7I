@@ -388,7 +388,7 @@ def convert_amendments(issue, amendments, mar, services):
   users_by_id = framework_views.MakeAllUserViews(
       mar.cnxn, services.user, amendments_user_ids)
   framework_views.RevealAllEmailsToMembers(
-      mar.cnxn, services, mar.auth, users_by_id, mar.project)
+      mar.cnxn, services, mar.auth, users_by_id)
 
   result = api_pb2_v1.Update(kind='monorail#issueCommentUpdate')
   for amendment in amendments:
@@ -438,7 +438,7 @@ def convert_approval_amendments(amendments, mar, services):
   users_by_id = framework_views.MakeAllUserViews(
       mar.cnxn, services.user, amendments_user_ids)
   framework_views.RevealAllEmailsToMembers(
-      mar.cnxn, services, mar.auth, users_by_id, mar.project)
+      mar.cnxn, services, mar.auth, users_by_id)
 
   result = api_pb2_v1.ApprovalUpdate(kind='monorail#approvalCommentUpdate')
   for amendment in amendments:

@@ -131,7 +131,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved_in_issue)
       framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, users_by_id, project)
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     with mc.profiler.Phase('converting to response objects'):
       response = issues_pb2.IssueResponse()
@@ -152,11 +152,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
           start, can, request.group_by_spec, request.sort_spec,
           use_cached_searches)
     with mc.profiler.Phase('reveal emails to members'):
-      projects = self.services.project.GetProjectsByName(
-          mc.cnxn, request.project_names)
-      for _, p in projects.items():
-        framework_views.RevealAllEmailsToMembers(
-            mc.cnxn, self.services, mc.auth, pipeline.users_by_id, p)
+      framework_views.RevealAllEmailsToMembers(
+          mc.cnxn, self.services, mc.auth, pipeline.users_by_id)
 
     converted_results = []
     with work_env.WorkEnv(mc, self.services) as we:
@@ -238,7 +235,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
   @monorail_servicer.PRPCMethod
   def UpdateIssue(self, mc, request):
     """Apply a delta and comment to the specified issue, then return it."""
-    project, issue, config = self._GetProjectIssueAndConfig(
+    _, issue, config = self._GetProjectIssueAndConfig(
         mc, request.issue_ref, use_cache=False)
 
     with work_env.WorkEnv(mc, self.services) as we:
@@ -259,7 +256,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved_in_issue)
       framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, users_by_id, project)
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     with mc.profiler.Phase('converting to response objects'):
       response = issues_pb2.IssueResponse()
@@ -330,7 +327,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved_in_comments)
       framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, users_by_id, project)
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     with mc.profiler.Phase('converting to response objects'):
       issue_perms = permissions.UpdateIssuePermissions(
@@ -366,9 +363,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     users_by_id = framework_views.MakeAllUserViews(
         mc.cnxn, self.services.user, [request.user_ref.user_id],
         tracker_bizobj.UsersInvolvedInCommentList(comments))
-    for project in project_dict.values():
-      framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, users_by_id, project)
+    framework_views.RevealAllEmailsToMembers(
+        mc.cnxn, self.services, mc.auth, users_by_id)
 
     issues_by_project = {}
     for issue in allowed_issues:
@@ -464,7 +460,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
   @monorail_servicer.PRPCMethod
   def UpdateApproval(self, mc, request):
     """Update and return an approval in a response proto."""
-    project, issue, config = self._GetProjectIssueAndConfig(
+    _, issue, config = self._GetProjectIssueAndConfig(
         mc, request.issue_ref, use_cache=False)
 
     approval_fd = tracker_bizobj.FindFieldDef(
@@ -494,7 +490,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, av.approver_ids, [av.setter_id])
       framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, users_by_id, project)
+          mc.cnxn, self.services, mc.auth, users_by_id)
       response = issues_pb2.UpdateApprovalResponse()
       response.approval.CopyFrom(converters.ConvertApproval(
           av, users_by_id, config))
@@ -511,7 +507,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     if not request.template_name:
       raise exceptions.InputException('Param `template_name` empty')
 
-    project, issue, config = self._GetProjectIssueAndConfig(
+    _, issue, config = self._GetProjectIssueAndConfig(
         mc, request.issue_ref, use_cache=False)
 
     with work_env.WorkEnv(mc, self.services) as we:
@@ -525,7 +521,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, users_involved_in_issue)
       framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, users_by_id, project)
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
     with mc.profiler.Phase('converting to response objects'):
       response = issues_pb2.ConvertIssueApprovalsTemplateResponse()
@@ -600,7 +596,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
   @monorail_servicer.PRPCMethod
   def PresubmitIssue(self, mc, request):
     """Provide the UI with warnings and suggestions."""
-    project, issue, config = self._GetProjectIssueAndConfig(
+    _, issue, config = self._GetProjectIssueAndConfig(
         mc, request.issue_ref, issue_required=False)
 
     with mc.profiler.Phase('making user views'):
@@ -638,7 +634,7 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
           mc.cnxn, self.services.user, [proposed_issue.derived_owner_id],
           proposed_issue.derived_cc_ids)
       framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, derived_users_by_id, project)
+          mc.cnxn, self.services, mc.auth, derived_users_by_id)
 
     with mc.profiler.Phase('pair derived values with rule explanations'):
       (derived_labels, derived_owners, derived_ccs, warnings, errors) = (

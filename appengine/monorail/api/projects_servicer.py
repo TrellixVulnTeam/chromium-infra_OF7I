@@ -88,7 +88,7 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
       users_by_id = framework_views.MakeAllUserViews(
           mc.cnxn, self.services.user, involved_user_ids)
       framework_views.RevealAllEmailsToMembers(
-          mc.cnxn, self.services, mc.auth, users_by_id, project)
+          mc.cnxn, self.services, mc.auth, users_by_id)
 
       label_ids = tracker_bizobj.LabelIDsInvolvedInConfig(config)
       labels_by_id = {
@@ -235,7 +235,7 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
         users_by_id = framework_views.MakeAllUserViews(
             mc.cnxn, self.services.user, users_involved)
         framework_views.RevealAllEmailsToMembers(
-            mc.cnxn, self.services, mc.auth, users_by_id, project)
+            mc.cnxn, self.services, mc.auth, users_by_id)
 
     with mc.profiler.Phase('looking up labels'):
       labels_by_id = {}

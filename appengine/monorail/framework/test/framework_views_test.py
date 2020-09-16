@@ -220,35 +220,6 @@ class RevealEmailsToMembersTest(unittest.TestCase):
       # Assert profile url still contains user ID.
       self.assertEqual('/u/%s/' % viewed_user_id, user_view.profile_url)
 
-  # TODO(https://crbug.com/monorail/8192): Remove this method and related test.
-  def DeprecatedCheckRevealAllToMember(
-      self, logged_in_user_id, expected, viewed_user_id=333, group_id=None):
-    user_view = framework_views.StuffUserView(
-        viewed_user_id, 'user@example.com', True)
-
-    if group_id:
-      pass  # xxx re-implement groups
-
-    users_by_id = {333: user_view}
-    self.mr.auth.user_id = logged_in_user_id
-    self.mr.auth.effective_ids = {logged_in_user_id}
-    # Assert display name is obscured before the reveal.
-    self.assertEqual('u...@example.com', user_view.display_name)
-    # Assert profile url contains user ID before the reveal.
-    self.assertEqual('/u/%s/' % viewed_user_id, user_view.profile_url)
-    framework_views.RevealAllEmailsToMembers(
-        self.cnxn, self.services, self.mr.auth, users_by_id, self.mr.project)
-    self.assertEqual(expected, not user_view.obscure_email)
-    if expected:
-      # Assert display name is now revealed.
-      self.assertEqual('user@example.com', user_view.display_name)
-      # Assert profile url contains the email.
-      self.assertEqual('/u/user@example.com/', user_view.profile_url)
-    else:
-      # Assert display name is still hidden.
-      self.assertEqual('u...@example.com', user_view.display_name)
-      # Assert profile url still contains user ID.
-      self.assertEqual('/u/%s/' % viewed_user_id, user_view.profile_url)
 
   def testDontRevealEmailsToPriviledgedDomain(self):
     """We no longer give this advantage based on email address domain."""
@@ -277,20 +248,6 @@ class RevealEmailsToMembersTest(unittest.TestCase):
 
     # Logged in user has indirect role in the project via a group.
     self.CheckRevealAllToMember(888, True)
-
-  def testDeprecatedRevealAllEmailsToMembers_Collaborators(self):
-    self.DeprecatedCheckRevealAllToMember(0, False)
-    self.DeprecatedCheckRevealAllToMember(111, True)
-    self.DeprecatedCheckRevealAllToMember(222, True)
-    self.DeprecatedCheckRevealAllToMember(333, True)
-    self.DeprecatedCheckRevealAllToMember(444, False)
-
-    # Viewed user has indirect role in the project via a group.
-    self.DeprecatedCheckRevealAllToMember(0, False, group_id=888)
-    self.DeprecatedCheckRevealAllToMember(111, True, group_id=888)
-
-    # Logged in user has indirect role in the project via a group.
-    self.DeprecatedCheckRevealAllToMember(888, True)
 
   def testRevealAllEmailsToMembers_Admins(self):
     self.CheckRevealAllToMember(555, False)

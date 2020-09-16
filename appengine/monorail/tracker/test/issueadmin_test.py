@@ -33,6 +33,7 @@ class TestBase(unittest.TestCase):
         project=fake.ProjectService(),
         config=fake.ConfigService(),
         user=fake.UserService(),
+        usergroup=fake.UserGroupService(),
         issue=fake.IssueService(),
         template=Mock(spec=template_svc.TemplateService),
         features=fake.FeaturesService())
