@@ -26,7 +26,7 @@ class SomBugQueue extends Polymer.Element {
       _activeRequests: Object,
       _bugsByPriority: {
         type: Array,
-        computed: '_computeBugsByPriority(bugs)',
+        computed: '_computeBugsByPriority(bugs, _priorityField)',
       },
       _bugQueueJson: {
         type: Object,
@@ -48,6 +48,10 @@ class SomBugQueue extends Polymer.Element {
         type: Boolean,
         value: true,
         computed: '_computeHideBugQueue(bugQueueLabel)',
+      },
+      _priorityField: {
+        type: String,
+        computed: '_computePriorityField(_bugQueueJson)',
       },
       _showNoBugs: {
         type: Boolean,
@@ -120,27 +124,27 @@ class SomBugQueue extends Polymer.Element {
   }
 
   _computeBugs(bugQueueJson, uncachedBugsJson) {
-    const hasBugJson = bugQueueJson && bugQueueJson.items;
+    const hasBugJson = bugQueueJson && bugQueueJson.issues;
 
-    const hasUncachedJson = uncachedBugsJson && uncachedBugsJson.items;
+    const hasUncachedJson = uncachedBugsJson && uncachedBugsJson.issues;
     if (!hasBugJson && !hasUncachedJson) {
       return [];
     } else if (!hasUncachedJson) {
-      return bugQueueJson.items;
+      return bugQueueJson.issues;
     }
-    return uncachedBugsJson.items;
+    return uncachedBugsJson.issues;
   }
 
-  _computeBugsByPriority(bugs) {
+  _computeBugsByPriority(bugs, priorityField) {
     // update last updated time as relative time
     for (let i = 0; i < bugs.length; i++) {
-      if (bugs[i].updated) {
-        bugs[i].updated = moment.tz(bugs[i].updated,
-            'Atlantic/Reykjavik').fromNow();
+      if (bugs[i].modify_time) {
+        bugs[i].modify_time = moment(
+            bugs[i].modify_time.seconds * 1000).fromNow();
       }
     }
     const buckets = bugs.reduce((function(obj, b) {
-      const p = this._computePriority(b);
+      const p = this._computePriority(b, priorityField);
       if (!(p in obj)) {
         obj[p] = [b];
       } else {
@@ -157,24 +161,44 @@ class SomBugQueue extends Polymer.Element {
     return result;
   }
 
+  _computePriorityField(bugQueueJson) {
+    if (bugQueueJson && bugQueueJson['extras']) {
+      return bugQueueJson['extras']['priority_field'];
+    }
+  }
+
   _computeHideBugQueue(bugQueueLabel) {
     // No loading or empty message is shown unless a bug queue exists.
     return !bugQueueLabel || bugQueueLabel === '' ||
       bugQueueLabel === 'Performance-Sheriff-BotHealth';
   }
 
-  _computePriority(bug) {
-    if (!bug || !bug.labels) {
+  _computePriority(bug, priorityField) {
+    if (!bug || !bug.field_values || !priorityField) {
       return this.UNSET_PRIORITY;
     }
-    for (let i = 0; i < bug.labels.length; i++) {
-      const match = bug.labels[i].match(/^Pri-(\d)$/);
-      if (match) {
-        const result = parseInt(match[1]);
+    for (let i = 0; i < bug.field_values.length; i++) {
+      const field = bug.field_values[i].field;
+      if (field == priorityField) {
+        const result = bug.field_values[i].value;
         return result !== NaN ? result : this.UNSET_PRIORITY;
       }
     }
     return this.UNSET_PRIORITY;
+  }
+
+  _computeProject(bug) {
+    const match = bug.name.match(/^projects\/(.+)\/issues\/(.+)$/);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  _computeBugId(bug) {
+    const match = bug.name.match(/^projects\/(.+)\/issues\/(.+)$/);
+    if (match) {
+      return match[2];
+    }
   }
 
   _computeShowNoBugs(bugs, bugsLoaded, error) {
@@ -187,9 +211,8 @@ class SomBugQueue extends Polymer.Element {
       return [];
     }
     bugQueueLabel = bugQueueLabel || '';
-    return labels.filter((label) => {
-      return label.toLowerCase() != bugQueueLabel.toLowerCase() &&
-        !label.match(/^Pri-(\d)$/);
+    return labels.map((label) => label.label).filter((label) => {
+      return label.toLowerCase() != bugQueueLabel.toLowerCase();
     });
   }
 

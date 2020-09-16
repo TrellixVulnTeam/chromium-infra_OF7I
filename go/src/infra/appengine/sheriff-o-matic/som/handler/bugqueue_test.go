@@ -2,9 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/model"
 	"infra/monorail"
+	monorailv3 "infra/monorailv2/api/v3/api_proto"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -19,9 +21,19 @@ import (
 	"go.chromium.org/luci/server/auth/authtest"
 	"go.chromium.org/luci/server/router"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+type FakeIssueClient struct{}
+
+func (ic FakeIssueClient) SearchIssues(context.Context, *monorailv3.SearchIssuesRequest, ...grpc.CallOption) (*monorailv3.SearchIssuesResponse, error) {
+	res := &monorailv3.SearchIssuesResponse{
+		Issues: []*monorailv3.Issue{},
+	}
+	return res, nil
+}
 
 func TestBugQueue(t *testing.T) {
 	Convey("/bugqueue", t, func() {
@@ -53,8 +65,11 @@ func TestBugQueue(t *testing.T) {
 		defer monorailServer.Close()
 		monorail := client.NewMonorail(c, monorailServer.URL)
 
+		issueClient := FakeIssueClient{}
+
 		bqh := &BugQueueHandler{
 			Monorail:               monorail,
+			MonorailIssueClient:    issueClient,
 			DefaultMonorailProject: "",
 		}
 

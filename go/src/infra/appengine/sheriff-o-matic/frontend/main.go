@@ -16,10 +16,9 @@ import (
 	"infra/appengine/sheriff-o-matic/som/client"
 	"infra/appengine/sheriff-o-matic/som/handler"
 	"infra/monorail"
+	monorailv3 "infra/monorailv2/api/v3/api_proto"
 
 	"google.golang.org/appengine"
-
-	"golang.org/x/net/context"
 
 	"go.chromium.org/luci/appengine/gaeauth/server"
 	"go.chromium.org/luci/appengine/gaemiddleware/standard"
@@ -30,6 +29,7 @@ import (
 	"go.chromium.org/luci/server/auth/xsrf"
 	"go.chromium.org/luci/server/portal"
 	"go.chromium.org/luci/server/router"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -208,8 +208,11 @@ func newBugQueueHandler(c context.Context) *handler.BugQueueHandler {
 	} else {
 		monorailClient = client.NewMonorail(c, "https://monorail-staging.appspot.com")
 	}
+	// TODO (nqmtuan): Handle error here
+	monorailV3Client, _ := client.NewMonorailV3Client(c)
 	bqh := &handler.BugQueueHandler{
 		Monorail:               monorailClient,
+		MonorailIssueClient:    monorailv3.NewIssuesPRPCClient(monorailV3Client),
 		DefaultMonorailProject: "",
 	}
 	return bqh

@@ -101,19 +101,19 @@
             <template is="dom-repeat" items="[[bucket.bugs]]" as="bug">
               <div class="bug">
                 <div class="summary-box">
-                  <a href="http://crbug.com/[[bug.projectId]]/[[bug.id]]" target="_blank" title="[[bug.summary]]" class="summary">[[bug.summary]]</a>
+                  <a href="http://crbug.com/[[_computeProject(bug)]]/[[_computeBugId(bug)]]" target="_blank" title="[[bug.summary]]" class="summary">[[bug.summary]]</a>
                   <template is="dom-repeat" items="[[_filterBugLabels(bug.labels, bugQueueLabel)]]" as="label">
-                    <a href="https://bugs.chromium.org/p/[[bug.projectId]]/issues/list?q=label:[[label]]"
+                    <a href="https://bugs.chromium.org/p/[[_computeProject(bug)]]/issues/list?q=label:[[label]]"
                       class="bug-label" target="_blank">[[label]]</a>
                   </template>
                 </div>
-                <a href="http://crbug.com/[[bug.projectId]]/[[bug.id]]" target="_blank">Bug [[bug.id]]</a>
-                ([[bug.status]]<template is="dom-if" if="[[bug.owner.name]]">,
+                <a href="http://crbug.com/[[_computeProject(bug)]]/[[_computeBugId(bug)]]" target="_blank">Bug [[_computeBugId(bug)]]</a>
+                ([[bug.status.status]]<template is="dom-if" if="[[bug.owner.name]]">,
                 [[bug.owner.name]]</template>)
                 <template is="dom-if" if="[[_validPriority(bucket.priority)]]">
                   (Pri-[[bucket.priority]])
                 </template>
-                <a target="_blank" title="[[bug.updated]]" class="updated">Last update: [[bug.updated]]</a>
+                <a target="_blank" title="[[bug.modify_time]]" class="modify_time">Last update: [[bug.modify_time]]</a>
               </div>
             </template>
           </iron-collapse>

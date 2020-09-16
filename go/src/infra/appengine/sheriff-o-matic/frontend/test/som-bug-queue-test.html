@@ -68,9 +68,9 @@
       assert.equal(false, element.$.main.hidden);
 
       element._bugQueueJson = {
-        items: [
-          { summary: 'foo', status: 'bar', id: 123, projectId: "chromium", labels:["Pri-1", "flaky"] },
-          { summary: 'baz', status: 'zippy', id: 456, projectId: "fuchsia", labels:["Pri-2", "sheriff"] },
+        issues: [
+          { name: 'projects/chromium/issues/123', summary: 'foo', status: {status: 'bar'}, labels: [{label: 'flaky'}]},
+          { name: 'projects/fuchsia/issues/456', summary: 'baz', status: {status: 'zippy'}, labels: [{label: 'sheriff'}]},
         ],
       };
       element._bugsLoaded = true;
@@ -90,13 +90,13 @@
 
     test('_computeBugs', function() {
       let bugQueueJson = {
-        items: [
+        issues: [
           { summary: 'foo', status: 'bar', id: 123 },
           { summary: 'baz', status: 'zippy', id: 456 },
         ],
       };
       let uncachedBugsJson = {
-        items: [
+        issues: [
           { summary: 'hello', status: 'world', id: 555 },
           { summary: 'let us', status: 'test', id: 987 },
         ],
@@ -120,36 +120,36 @@
 
     test('_computePriority parses priorities', function() {
       let bugs = [
-        { summary: 'foo', status: 'bar', id: 123, labels: ['Pri-2'] },
-        { summary: 'baz', status: 'zippy', id: 456, labels: ['Pri-0'] },
-        { summary: 'baz', status: 'zippy', id: 456, labels: ['Pri-1'] },
-        { summary: 'baz', status: 'zippy', id: 456, labels: [] },
+        { summary: 'foo', field_values:[{field: 'projects/abc/fieldDefs/11', value: '2'}] },
+        { summary: 'baz', field_values:[{field: 'projects/abc/fieldDefs/11', value: '0'}] },
+        { summary: 'baz', field_values:[{field: 'projects/abc/fieldDefs/11', value: '1'}] },
+        { summary: 'baz'},
       ];
-      assert.equal(2, element._computePriority(bugs[0]));
-      assert.equal(0, element._computePriority(bugs[1]));
-      assert.equal(1, element._computePriority(bugs[2]));
+      assert.equal(2, element._computePriority(bugs[0], 'projects/abc/fieldDefs/11'));
+      assert.equal(0, element._computePriority(bugs[1], 'projects/abc/fieldDefs/11'));
+      assert.equal(1, element._computePriority(bugs[2], 'projects/abc/fieldDefs/11'));
       assert.equal(element.UNSET_PRIORITY, element._computePriority(bugs[3]));
     });
 
     test('_computeBugsByPriority returns proper bug list', function() {
       let bugs = [
-        { summary: 'this is', labels: ['Pri-2'] },
-        { summary: 'hello', labels: ['Pri-0'] },
-        { summary: 'world', labels: ['Pri-1'] },
-        { summary: 'ordered', labels: [] },
+        { summary: 'this is', field_values:[{field: 'projects/abc/fieldDefs/11', value: '2'}] },
+        { summary: 'hello', field_values:[{field: 'projects/abc/fieldDefs/11', value: '0'}] },
+        { summary: 'world', field_values:[{field: 'projects/abc/fieldDefs/11', value: '1'}] },
+        { summary: 'ordered' },
       ];
 
 
-      let result = element._computeBugsByPriority(bugs);
+      let result = element._computeBugsByPriority(bugs, 'projects/abc/fieldDefs/11');
       assert.equal(0, result[0].priority);
       assert.equal(1, result[1].priority);
       assert.equal(2, result[2].priority);
       assert.equal(element.UNSET_PRIORITY, result[3].priority);
 
-      assert.deepEqual([{ summary: 'hello', labels: ['Pri-0'] }], result[0].bugs);
-      assert.deepEqual([{ summary: 'world', labels: ['Pri-1'] }], result[1].bugs);
-      assert.deepEqual([{ summary: 'this is', labels: ['Pri-2'] }], result[2].bugs);
-      assert.deepEqual([{ summary: 'ordered', labels: [] }], result[3].bugs);
+      assert.deepEqual([{ summary: 'hello', field_values:[{field: 'projects/abc/fieldDefs/11', value: '0'}] }], result[0].bugs);
+      assert.deepEqual([{ summary: 'world', field_values:[{field: 'projects/abc/fieldDefs/11', value: '1'}] }], result[1].bugs);
+      assert.deepEqual([{ summary: 'this is', field_values:[{field: 'projects/abc/fieldDefs/11', value: '2'}] }], result[2].bugs);
+      assert.deepEqual([{ summary: 'ordered' }], result[3].bugs);
     });
   });
 })();
