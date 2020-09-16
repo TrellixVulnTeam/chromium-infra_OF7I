@@ -20,12 +20,17 @@ def RunSteps(api):
     api.gclient.checkout(timeout=10 * 60)
     api.gclient.runhooks()
 
+  temp_path = api.path.mkdtemp('.dockerbuild')
+
   with api.context(cwd=solution_path.join('infra')):
     api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
-        'infra.tools.dockerbuild', '--upload-sources', 'wheel-build', '--upload'
+        'infra.tools.dockerbuild',
+        '--upload-sources',
+        'wheel-build',
+        '--upload',
+        '--root',
+        temp_path,
     ])
-
-  # TODO: Update README.wheels.md as well?
 
 
 def GenTests(api):

@@ -140,7 +140,9 @@
       "infra.tools.dockerbuild",
       "--upload-sources",
       "wheel-build",
-      "--upload"
+      "--upload",
+      "--root",
+      "[CLEANUP]/.dockerbuild_tmp_1"
     ],
     "cwd": "[CACHE]/builder/solution/infra",
     "name": "dockerbuild"
