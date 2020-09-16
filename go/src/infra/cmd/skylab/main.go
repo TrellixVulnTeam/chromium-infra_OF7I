@@ -27,8 +27,11 @@ import (
 
 func getApplication() *cli.Application {
 	return &cli.Application{
-		Name:  "skylab",
-		Title: "Universal tool for Chrome OS Infra Skylab",
+		Name: "skylab",
+		Title: `Universal tool for Chrome OS Infra Skylab
+
+Tool uses a default RPC retry strategy with five attempts and exponential backoff.
+Full documentation http://go/skylab-cli`,
 		Context: func(ctx context.Context) context.Context {
 			return gologger.StdConfig.Use(ctx)
 		},
