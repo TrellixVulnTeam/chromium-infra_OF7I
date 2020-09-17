@@ -37,6 +37,10 @@ type gtestRun struct {
 }
 
 func (r *gtestRun) Run(a subcommands.Application, args []string, env subcommands.Env) (ret int) {
+	if err := r.validate(); err != nil {
+		return r.done(err)
+	}
+
 	ctx := cli.GetContext(a, r, env)
 	return r.run(ctx, args, r.generateTestResults)
 }

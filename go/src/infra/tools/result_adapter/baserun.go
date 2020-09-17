@@ -52,9 +52,6 @@ func (r *baseRun) RegisterGlobalFlags() {
 
 // validate validates the command has required flags.
 func (r *baseRun) validate() (err error) {
-	if r.artifactDir == "" {
-		return errors.Reason("-artifact-directory is required").Err()
-	}
 	if r.resultFile == "" {
 		return errors.Reason("-result-file is required").Err()
 	}
@@ -108,10 +105,6 @@ func (r *baseRun) done(err error) int {
 }
 
 func (r *baseRun) run(ctx context.Context, args []string, f converter) (ret int) {
-	if err := r.validate(); err != nil {
-		return r.done(err)
-	}
-
 	if err := r.initSinkClient(ctx); err != nil {
 		return r.done(err)
 	}

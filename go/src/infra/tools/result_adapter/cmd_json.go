@@ -46,8 +46,19 @@ type jsonRun struct {
 }
 
 func (r *jsonRun) Run(a subcommands.Application, args []string, env subcommands.Env) (ret int) {
+	if err := r.validate(); err != nil {
+		return r.done(err)
+	}
+
 	ctx := cli.GetContext(a, r, env)
 	return r.run(ctx, args, r.generateTestResults)
+}
+
+func (r *jsonRun) validate() (err error) {
+	if r.artifactDir == "" {
+		return errors.Reason("-artifact-directory is required").Err()
+	}
+	return r.baseRun.validate()
 }
 
 // generateTestResults converts test results from results file to sinkpb.TestResult.
