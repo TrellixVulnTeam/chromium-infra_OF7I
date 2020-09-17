@@ -34,6 +34,7 @@ class FieldHelpersTest(unittest.TestCase):
         deprecated=True))
 
     self.services = service_manager.Services(
+        issue=fake.IssueService(),
         usergroup=fake.UserGroupService(),
         config=fake.ConfigService(),
         user=fake.UserService())
@@ -43,6 +44,92 @@ class FieldHelpersTest(unittest.TestCase):
     self.mr.cnxn = fake.MonorailConnection()
     self.errors = template_helpers.EZTError()
 
+  def testListApplicableFieldDefs(self):
+    issue_1 = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        issue_id=78901,
+        labels=['type-defect', 'other-label'])
+    issue_2 = fake.MakeTestIssue(
+        789,
+        2,
+        'sum',
+        'New',
+        111,
+        issue_id=78902,
+        labels=['type-feedback', 'other-label1'])
+    issue_3 = fake.MakeTestIssue(
+        789,
+        3,
+        'sum',
+        'New',
+        111,
+        issue_id=78903,
+        labels=['type-defect'],
+        approval_values=[
+            tracker_pb2.ApprovalValue(approval_id=3),
+            tracker_pb2.ApprovalValue(approval_id=5)
+        ])
+    issue_4 = fake.MakeTestIssue(
+        789, 4, 'sum', 'New', 111, issue_id=78904)  # test no labels at all
+    issue_5 = fake.MakeTestIssue(
+        789,
+        5,
+        'sum',
+        'New',
+        111,
+        issue_id=78905,
+        labels=['type'],  # test labels ignored
+        approval_values=[tracker_pb2.ApprovalValue(approval_id=5)])
+    self.services.issue.TestAddIssue(issue_1)
+    self.services.issue.TestAddIssue(issue_2)
+    self.services.issue.TestAddIssue(issue_3)
+    self.services.issue.TestAddIssue(issue_4)
+    self.services.issue.TestAddIssue(issue_5)
+    fd_1 = tracker_pb2.FieldDef(
+        field_name='FirstField',
+        field_id=1,
+        field_type=tracker_pb2.FieldTypes.STR_TYPE,
+        applicable_type='feedback')  # applicable
+    fd_2 = tracker_pb2.FieldDef(
+        field_name='SecField',
+        field_id=2,
+        field_type=tracker_pb2.FieldTypes.INT_TYPE,
+        applicable_type='no')  # not applicable
+    fd_3 = tracker_pb2.FieldDef(
+        field_name='LegalApproval',
+        field_id=3,
+        field_type=tracker_pb2.FieldTypes.APPROVAL_TYPE,
+        applicable_type='')  # applicable
+    fd_4 = tracker_pb2.FieldDef(
+        field_name='UserField',
+        field_id=4,
+        field_type=tracker_pb2.FieldTypes.USER_TYPE,
+        applicable_type='')  # applicable
+    fd_5 = tracker_pb2.FieldDef(
+        field_name='DogApproval',
+        field_id=5,
+        field_type=tracker_pb2.FieldTypes.APPROVAL_TYPE,
+        applicable_type='')  # applicable
+    fd_6 = tracker_pb2.FieldDef(
+        field_name='SixthField',
+        field_id=6,
+        field_type=tracker_pb2.FieldTypes.INT_TYPE,
+        applicable_type='Defect')  # applicable
+    fd_7 = tracker_pb2.FieldDef(
+        field_name='CatApproval',
+        field_id=7,
+        field_type=tracker_pb2.FieldTypes.APPROVAL_TYPE,
+        applicable_type='')  # not applicable
+    config = tracker_bizobj.MakeDefaultProjectIssueConfig(789)
+    config.field_defs = [fd_1, fd_2, fd_3, fd_4, fd_5, fd_6, fd_7]
+    issues = [issue_1, issue_2, issue_3, issue_4, issue_5]
+
+    actual_fds = field_helpers.ListApplicableFieldDefs(issues, config)
+    self.assertEqual(actual_fds, [fd_1, fd_3, fd_4, fd_5, fd_6])
 
   def testParseFieldDefRequest_Empty(self):
     post_data = fake.PostData()
@@ -597,6 +684,145 @@ class FieldHelpersTest(unittest.TestCase):
     self.assertEqual('Value must be <= 999.', custom_field_error.message)
     self.assertEqual(len(err_msgs), 1)
     self.assertTrue(re.search(r'Value must be <= 999.', err_msgs[0]))
+
+  def testValidateCustomFields_DeletedRequiredFields_Ignored(self):
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        issue_id=78901,
+        labels=['type-defect', 'other-label'])
+    fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.INT_TYPE, None, '', False,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', True)
+    self.config.field_defs.append(fd)
+
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr,
+        self.services, [],
+        self.config,
+        self.mr.project,
+        ezt_errors=self.errors,
+        issue=issue)
+    self.assertFalse(self.errors.AnyErrors())
+    self.assertEqual(err_msgs, [])
+
+  def testValidateCustomFields_RequiredFields_Normal(self):
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        issue_id=78901,
+        labels=['type-defect', 'other-label'])
+
+    required = True
+    fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.INT_TYPE, None, '', required,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.config.field_defs.append(fd)
+    fv1 = tracker_bizobj.MakeFieldValue(
+        123, 8086, None, None, None, None, False)
+    fv2 = tracker_bizobj.MakeFieldValue(123, 486, None, None, None, None, False)
+
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr,
+        self.services, [fv1, fv2],
+        self.config,
+        self.mr.project,
+        issue=issue)
+    self.assertEqual(len(err_msgs), 0)
+
+  def testValidateCustomFields_RequiredFields_ErrorsWhenMissing(self):
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        issue_id=78901,
+        labels=['type-defect', 'other-label'])
+
+    required = True
+    fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.INT_TYPE, None, '', required,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.config.field_defs.append(fd)
+
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr, self.services, [], self.config, self.mr.project, issue=issue)
+    self.assertEqual(len(err_msgs), 1)
+    self.assertTrue(re.search(r'CPU field is required.', err_msgs[0]))
+
+  def testValidateCustomFields_RequiredFields_EnumFieldNormal(self):
+    # Enums are a special case because their values are stored in labels.
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        issue_id=78901,
+        labels=['type-defect', 'other-label', 'CPU-enum-value'])
+    required = True
+    fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.ENUM_TYPE, None, '', required,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.config.field_defs.append(fd)
+
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr, self.services, [], self.config, self.mr.project, issue=issue)
+    self.assertEqual(len(err_msgs), 0)
+
+  def testValidateCustomFields_RequiredFields_EnumFieldMultiWord(self):
+    # Enum fields with dashes in them require special label prefix parsing.
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        issue_id=78901,
+        labels=['type-defect', 'other-label', 'an-enum-value'])
+    required = True
+    fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'an-enum', tracker_pb2.FieldTypes.ENUM_TYPE, None, '',
+        required, False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.config.field_defs.append(fd)
+
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr, self.services, [], self.config, self.mr.project, issue=issue)
+    self.assertEqual(len(err_msgs), 0)
+
+  def testValidateCustomFields_RequiredFields_EnumFieldError(self):
+    # Enums are a special case because their values are stored in labels.
+    issue = fake.MakeTestIssue(
+        789,
+        1,
+        'sum',
+        'New',
+        111,
+        issue_id=78901,
+        labels=['type-defect', 'other-label'])
+    required = True
+    fd = tracker_bizobj.MakeFieldDef(
+        123, 789, 'CPU', tracker_pb2.FieldTypes.ENUM_TYPE, None, '', required,
+        False, False, None, None, '', False, '', '',
+        tracker_pb2.NotifyTriggers.NEVER, 'no_action', 'doc', False)
+    self.config.field_defs.append(fd)
+
+    err_msgs = field_helpers.ValidateCustomFields(
+        self.mr, self.services, [], self.config, self.mr.project, issue=issue)
+    self.assertEqual(len(err_msgs), 1)
+    self.assertTrue(re.search(r'CPU field is required.', err_msgs[0]))
 
   def testAssertCustomFieldsEditPerms_Empty(self):
     self.assertIsNone(

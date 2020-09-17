@@ -315,14 +315,16 @@ class IssueEntry(servlet.Servlet):
       String URL to redirect the user to after processing.
     """
     config = self.services.config.GetProjectConfig(mr.cnxn, mr.project_id)
+
     parsed = tracker_helpers.ParseIssueRequest(
         mr.cnxn, post_data, self.services, mr.errors, mr.project_name)
-    bounce_labels = parsed.labels[:]
-    bounce_fields = tracker_views.MakeBounceFieldValueViews(
-        parsed.fields.vals, parsed.fields.phase_vals, config)
+
+    # Updates parsed.labels and parsed.fields in place.
     field_helpers.ShiftEnumFieldsIntoLabels(
         parsed.labels, parsed.labels_remove, parsed.fields.vals,
         parsed.fields.vals_remove, config)
+
+    labels = _DiscardUnusedTemplateLabelPrefixes(parsed.labels)
 
     is_member = framework_bizobj.UserIsInProject(
         mr.project, mr.auth.effective_ids)
@@ -333,6 +335,20 @@ class IssueEntry(servlet.Servlet):
      phases) = issue_tmpl_helpers.FilterApprovalsAndPhases(
          template.approval_values or [], template.phases, config)
 
+    # Issue PB with only approval_values and labels filled out, for the purpose
+    # of computing applicable fields.
+    partial_issue = tracker_pb2.Issue(
+        approval_values=approval_values, labels=labels)
+    applicable_fields = field_helpers.ListApplicableFieldDefs(
+        [partial_issue], config)
+
+    bounce_labels = parsed.labels[:]
+    bounce_fields = tracker_views.MakeBounceFieldValueViews(
+        parsed.fields.vals,
+        parsed.fields.phase_vals,
+        config,
+        applicable_fields=applicable_fields)
+
     phase_ids_by_name = {
         phase.name.lower(): [phase.phase_id] for phase in template.phases}
     field_values = field_helpers.ParseFieldValues(
@@ -340,7 +356,6 @@ class IssueEntry(servlet.Servlet):
         parsed.fields.phase_vals, config,
         phase_ids_by_name=phase_ids_by_name)
 
-    labels = _DiscardUnusedTemplateLabelPrefixes(parsed.labels)
     component_ids = tracker_helpers.LookupComponentIDs(
         parsed.components.paths, config, mr.errors)
 
@@ -375,9 +390,17 @@ class IssueEntry(servlet.Servlet):
         mr, config, field_values, labels, template.field_values,
         template.labels)
 
+    # This ValidateCustomFields call is redundant with work already done
+    # in CreateIssue. However, this instance passes in an ezt_errors object
+    # to allow showing related errors next to the fields they happen on.
     field_helpers.ValidateCustomFields(
-        mr.cnxn, self.services, field_values, config, mr.project,
-        ezt_errors=mr.errors)
+        mr.cnxn,
+        self.services,
+        field_values,
+        config,
+        mr.project,
+        ezt_errors=mr.errors,
+        issue=partial_issue)
 
     hotlist_pbs = ProcessParsedHotlistRefs(
         mr, self.services, parsed.hotlists.hotlist_refs)
@@ -440,6 +463,9 @@ class IssueEntry(servlet.Servlet):
 
         except exceptions.OverAttachmentQuota:
           mr.errors.attachments = 'Project attachment quota exceeded.'
+        except exceptions.InputException:
+          # Don't make the EZT page 400 on an InputException.
+          pass
 
     mr.template_name = parsed.template_name
     if mr.errors.AnyErrors():

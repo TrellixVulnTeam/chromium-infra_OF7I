@@ -1112,7 +1112,21 @@ class WorkEnv(object):
 
   def MakeIssue(self, issue, description, send_email):
     # type: (tracker_pb2.Issue, str, bool) -> tracker_pb2.Issue
-    """Check restricted field permissions and create issue."""
+    """Check restricted field permissions and create issue.
+
+    Args:
+      issue: Data for the created issue in a Protocol Bugger.
+      description: Description for the initial description comment created.
+      send_email: Whether this issue creation should email people.
+
+    Returns:
+      The created Issue PB.
+
+    Raises:
+      FilterRuleException if creation violates any filter rule that shows error.
+      InputException: The issue has invalid input, see validation below.
+      PermissionException if user lacks sufficient permissions.
+    """
     config = self.GetProjectConfig(issue.project_id)
     project = self.GetProject(issue.project_id)
     self._AssertUserCanEditFieldsAndEnumMaskedLabels(
@@ -1441,28 +1455,6 @@ class WorkEnv(object):
         tracker_helpers.GetAllowedOpenedAndClosedIssues(
             self.mc, issue_ids, self.services))
     return open_issues, closed_issues
-
-  def ListApplicableFieldDefs(self, issue_ids, config):
-    """Return the applicable FieldDefs for the given issue_ids."""
-    issues_dict = self.GetIssuesDict(issue_ids)
-    issue_labels = []
-    issue_approval_ids = []
-    for issue in issues_dict.values():
-      issue_labels.extend(issue.labels)
-      issue_approval_ids.extend(
-          [approval.approval_id for approval in issue.approval_values])
-    labels_by_prefix = tracker_bizobj.LabelsByPrefix(
-        list(set(issue_labels)), [])
-    types = set(labels_by_prefix.get('type', []))
-    types_lower = [t.lower() for t in types]
-    applicable_fds = []
-    for fd in config.field_defs:
-      if fd.field_id in issue_approval_ids:
-        applicable_fds.append(fd)
-      elif fd.field_type != tracker_pb2.FieldTypes.APPROVAL_TYPE and (
-          not fd.applicable_type or fd.applicable_type.lower() in types_lower):
-        applicable_fds.append(fd)
-    return applicable_fds
 
   def GetIssueByLocalID(
       self, project_id, local_id, use_cache=True,
@@ -1848,6 +1840,7 @@ class WorkEnv(object):
         send_notifications.PrepareAndSendIssueBlockingNotification(
             issue.issue_id, hostport, delta_blocked_on_iids,
             reporter_id, send_email=send_email)
+
   def ModifyIssues(
       self, issue_id_delta_pairs, is_description, comment_content=None,
       send_email=True):

@@ -27,6 +27,7 @@ from framework import framework_views
 from framework import permissions
 from proto import tracker_pb2
 from search import searchpipeline
+from tracker import field_helpers
 from tracker import tracker_bizobj
 from tracker import tracker_helpers
 
@@ -219,7 +220,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     _project, issue_ids, config = self._GetProjectIssueIDsAndConfig(
         mc, request.issue_refs)
     with work_env.WorkEnv(mc, self.services) as we:
-      fds = we.ListApplicableFieldDefs(issue_ids, config)
+      issues_dict = we.GetIssuesDict(issue_ids)
+      fds = field_helpers.ListApplicableFieldDefs(issues_dict.values(), config)
 
     users_by_id = {}
     with mc.profiler.Phase('converting to response objects'):
