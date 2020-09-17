@@ -6,7 +6,9 @@ package models
 
 import (
 	"context"
+	"infra/appengine/cr-rev/common"
 
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/gae/service/datastore"
 )
 
@@ -50,4 +52,30 @@ func FindCommitsByHash(ctx context.Context, hash string) ([]*Commit, error) {
 		return nil, err
 	}
 	return commits, nil
+}
+
+// PersistCommits converts list of commits to Datastore structs and stores them
+// in Datastore.
+func PersistCommits(ctx context.Context, commits []*common.GitCommit) error {
+	docs := make([]*Commit, len(commits), len(commits))
+	for i, commit := range commits {
+		docs[i] = &Commit{
+			ID:            commit.ID(),
+			CommitHash:    commit.Hash,
+			CommitMessage: commit.CommitMessage,
+			Host:          commit.Repository.Host,
+			Repository:    commit.Repository.Name,
+		}
+		position, err := commit.GetPositionNumber()
+		switch err {
+		case nil:
+			docs[i].PositionRef = position.Name
+			docs[i].PositionNumber = position.Number
+		case common.ErrNoPositionFooter:
+			logging.Debugf(ctx, "No position footer for commit: %s", docs[i].ID)
+		case common.ErrInvalidPositionFooter:
+			logging.Warningf(ctx, "Malformed position footer for commit: %s", docs[i].ID)
+		}
+	}
+	return datastore.Put(ctx, docs)
 }

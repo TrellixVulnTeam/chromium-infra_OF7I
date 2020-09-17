@@ -17,16 +17,11 @@ import (
 	"go.chromium.org/luci/common/data/stringset"
 	"go.chromium.org/luci/common/logging"
 	gitilesProto "go.chromium.org/luci/common/proto/gitiles"
-	"go.chromium.org/luci/gae/service/datastore"
 )
 
 const (
 	gitilesLogPageSize = 1000
 )
-
-var defaultRefsPaths = []string{
-	"refs/heads",
-}
 
 type gitilesImporter struct {
 	gitiesClient gitilesProto.GitilesClient
@@ -46,7 +41,6 @@ func NewGitilesImporter(ctx context.Context, repo common.GitRepository) Importer
 		gitiesClient:    gitiles.GetClient(ctx),
 		leaser:          newLeaser(repo),
 		repo:            repo,
-		config:          repo.Config,
 		importedRefs:    make(map[string]struct{}),
 		importedCommits: stringset.New(0),
 	}
@@ -60,9 +54,9 @@ func NewGitilesImporter(ctx context.Context, repo common.GitRepository) Importer
 // Importer will import all desired refs, as defined in repo.config.Refs.
 func (imp *gitilesImporter) Run(ctx context.Context) error {
 	logging.Infof(ctx, "Running import for: %s/%s", imp.repo.Host, imp.repo.Name)
-	refsPaths := defaultRefsPaths
-	if imp.config != nil && len(imp.config.Refs) > 0 {
-		refsPaths = imp.config.Refs
+	refsPaths := []string{common.DefaultIncludeRefs}
+	if imp.repo.Config != nil && len(imp.repo.Config.Refs) > 0 {
+		refsPaths = imp.repo.Config.Refs
 	}
 
 	logging.Debugf(ctx, "Running import of %s/%s", imp.repo.Host, imp.repo.Name)
@@ -117,6 +111,10 @@ func (imp *gitilesImporter) scanRefsPaths(ctx context.Context, refsPaths []strin
 // string -> byte, and we assume hex is always 40 bytes long). To import
 // chromium/src, which has close to 1M entries, we need 150MB of memory.
 func (imp *gitilesImporter) traverseRev(ctx context.Context, ref string) error {
+	if !imp.repo.ShouldIndex(ref) {
+		logging.Infof(ctx, "Skipping scanning ref %s of %s/%s/ (should not index)",
+			ref, imp.repo.Host, imp.repo.Name)
+	}
 	logging.Infof(ctx, "Scanning ref %s of %s/%s/",
 		ref, imp.repo.Host, imp.repo.Name)
 	in := &gitilesProto.LogRequest{
@@ -154,7 +152,7 @@ func (imp *gitilesImporter) traverseRev(ctx context.Context, ref string) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			imp.persist(ctx, commits)
+			models.PersistCommits(ctx, commits)
 		}()
 
 		if resp.GetNextPageToken() == "" {
@@ -165,30 +163,4 @@ func (imp *gitilesImporter) traverseRev(ctx context.Context, ref string) error {
 	}
 	wg.Wait()
 	return nil
-}
-
-// persist converts list of commits to Datastore structs and stores them in
-// Datastore.
-func (imp *gitilesImporter) persist(ctx context.Context, commits []*common.GitCommit) {
-	docs := make([]*models.Commit, len(commits), len(commits))
-	for i, commit := range commits {
-		docs[i] = &models.Commit{
-			ID:            commit.ID(),
-			CommitHash:    commit.Hash,
-			CommitMessage: commit.CommitMessage,
-			Host:          commit.Repository.Host,
-			Repository:    commit.Repository.Name,
-		}
-		position, err := commit.GetPositionNumber()
-		switch err {
-		case nil:
-			docs[i].PositionRef = position.Name
-			docs[i].PositionNumber = position.Number
-		case common.ErrNoPositionFooter:
-			logging.Debugf(ctx, "No position footer for commit: %s", docs[i].ID)
-		case common.ErrInvalidPositionFooter:
-			logging.Warningf(ctx, "Malformed position footer for commit: %s", docs[i].ID)
-		}
-	}
-	datastore.Put(ctx, docs)
 }
