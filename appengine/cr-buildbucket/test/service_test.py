@@ -36,7 +36,6 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
 
   def setUp(self):
     super(BuildBucketServiceTest, self).setUp()
-    user.clear_request_cache()
 
     self.current_identity = auth.Identity('service', 'unittest')
     self.patch(
@@ -50,29 +49,14 @@ class BuildBucketServiceTest(testing.AppengineTestCase):
     for b in self.TEST_BUCKETS:
       self.perms[b] = list(user.ALL_PERMISSIONS)
 
-    config.put_bucket(
-        'chromium',
-        'a' * 40,
-        test_util.parse_bucket_cfg(
-            '''
-            name: "try"
-            acls {
-              role: READER
-              identity: "anonymous:anonymous"
-            }
-            '''
-        ),
-    )
+    test_util.put_empty_bucket('chromium', 'try')
+
     config.put_bucket(
         'chromium',
         'a' * 40,
         test_util.parse_bucket_cfg(
             '''
             name: "luci"
-            acls {
-              role: READER
-              identity: "anonymous:anonymous"
-            }
             swarming {
               builders {
                 name: "linux"

@@ -39,10 +39,6 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
         return_value='cr-buildbucket.appspot.com'
     )
 
-    auth_testing.reset_local_state()
-    auth.bootstrap_group('all', [auth.Anonymous])
-    user.clear_request_cache()
-
     self.perms = mock_permissions(self)
 
     chromium_cfg = test_util.parse_bucket_cfg(
@@ -134,10 +130,7 @@ class SwarmbucketApiTest(testing.EndpointsTestCase):
     )
 
   def test_get_builders(self):
-    secret_cfg = 'name: "secret"'
-    config.put_bucket(
-        'secret', 'deadbeef', test_util.parse_bucket_cfg(secret_cfg)
-    )
+    test_util.put_empty_bucket('secret', 'secret')
 
     resp = self.call_api('get_builders').json_body
     self.assertEqual(

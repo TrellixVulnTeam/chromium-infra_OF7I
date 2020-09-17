@@ -199,6 +199,11 @@ def create_struct(props):  # pragma: no cover
   return s
 
 
+def put_empty_bucket(project, name):  # pragma: no cover
+  """Creates empty Bucket entity."""
+  config.put_bucket(project, 'a' * 40, project_config_pb2.Bucket(name=name))
+
+
 def mock_permissions(test):  # pragma: no cover
   """Mocks results of user.has_perm_async calls.
 

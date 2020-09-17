@@ -58,7 +58,8 @@ class V1ApiTest(testing.EndpointsTestCase):
     super(V1ApiTest, self).setUp()
     gae_ts_mon.reset_for_unittest(disable=True)
     auth.disable_process_cache()
-    user.clear_request_cache()
+
+    self.perms = test_util.mock_permissions(self)
 
     self.patch(
         'components.utils.utcnow', return_value=datetime.datetime(2017, 1, 1)
@@ -67,22 +68,14 @@ class V1ApiTest(testing.EndpointsTestCase):
     # future_ts is str because INT64 values are formatted as strings.
     self.future_ts = str(utils.datetime_to_timestamp(self.future_date))
 
-    config.put_bucket(
-        'chromium',
-        'a' * 40,
-        test_util.parse_bucket_cfg(
-            '''
-            name: "luci.chromium.try"
-            acls {
-              role: SCHEDULER
-              identity: "anonymous:anonymous"
-            }
-            '''
-        ),
-    )
+    self.make_bucket('chromium', 'try', user.ALL_PERMISSIONS)
 
     self.build_infra = test_util.build_bundle(id=1).infra
     self.build_infra.put()
+
+  def make_bucket(self, project, bucket, perms=None):
+    test_util.put_empty_bucket(project, bucket)
+    self.perms['%s/%s' % (project, bucket)] = list(perms or [])
 
   def expect_error(self, method_name, req, error_reason):
     res = self.call_api(method_name, req).json_body
@@ -465,20 +458,7 @@ class V1ApiTest(testing.EndpointsTestCase):
     self.expect_error('retry', {'id': 42}, 'BUILD_NOT_FOUND')
 
   def test_retry_forbidden(self):
-    config.put_bucket(
-        'chromium',
-        'a' * 40,
-        test_util.parse_bucket_cfg(
-            '''
-            name: "readonly"
-            acls {
-              role: READER
-              identity: "anonymous:anonymous"
-            }
-            '''
-        ),
-    )
-
+    self.make_bucket('chromium', 'readonly', [user.PERM_BUILDS_GET])
     test_util.build(
         id=1, builder=dict(project='chromium', bucket='readonly')
     ).put()
@@ -493,20 +473,6 @@ class V1ApiTest(testing.EndpointsTestCase):
 
     bundle1.infra.put()
     bundle2.infra.put()
-
-    config.put_bucket(
-        'chromium',
-        'a' * 40,
-        test_util.parse_bucket_cfg(
-            '''
-            name: "luci.chromium.try"
-            acls {
-              role: SCHEDULER
-              identity: "anonymous:anonymous"
-            }
-            '''
-        ),
-    )
 
     add_many_async.return_value = future([
         (bundle1.build, None),
@@ -597,17 +563,9 @@ class V1ApiTest(testing.EndpointsTestCase):
     )
 
   def test_put_batch_auth_error(self):
-    # Not a SCHEDULER role.
-    bucket_cfg = test_util.parse_bucket_cfg(
-        '''
-        name: "ci"
-        acls {
-          role: READER
-          identity: "anonymous:anonymous"
-        }
-        '''
+    self.make_bucket(
+        'chromium', 'ci', perms=user.ALL_PERMISSIONS - {user.PERM_BUILDS_ADD}
     )
-    config.put_bucket('chromium', 'deadbeef', bucket_cfg)
 
     req = {
         'builds': [
@@ -1023,23 +981,17 @@ class V1ApiTest(testing.EndpointsTestCase):
   def test_get_bucket(self, get_buildbucket_cfg_url):
     get_buildbucket_cfg_url.return_value = 'https://example.com/buildbucket.cfg'
 
-    bucket_cfg = test_util.parse_bucket_cfg(
-        '''
-        name: "master.tryserver.chromium.linux"
-        acls {
-          role: READER
-          identity: "anonymous:anonymous"
-        }
-        '''
-    )
+    bucket_cfg = test_util.parse_bucket_cfg('name: "buildbot.readonly"')
     config.put_bucket('chromium', 'deadbeef', bucket_cfg)
+    self.perms['chromium/buildbot.readonly'] = [user.PERM_BUCKETS_GET]
+
     req = {
-        'bucket': 'master.tryserver.chromium.linux',
+        'bucket': 'buildbot.readonly',
     }
     res = self.call_api('get_bucket', req).json_body
     self.assertEqual(
         res, {
-            'name': 'master.tryserver.chromium.linux',
+            'name': 'buildbot.readonly',
             'project_id': 'chromium',
             'config_file_content': text_format.MessageToString(bucket_cfg),
             'config_file_url': 'https://example.com/buildbucket.cfg',
@@ -1047,18 +999,19 @@ class V1ApiTest(testing.EndpointsTestCase):
         }
     )
 
-  @mock.patch('components.auth.is_admin', autospec=True)
-  def test_get_bucket_not_found(self, is_admin):
-    is_admin.return_value = True
-
+  def test_get_bucket_not_found(self):
     req = {
-        'bucket': 'non-existent',
+        'bucket': 'buildbot.not-found',
     }
     self.call_api('get_bucket', req, status=403)
 
   def test_get_bucket_with_auth_error(self):
+    bucket_cfg = test_util.parse_bucket_cfg('name: "buildbot.hidden"')
+    config.put_bucket('chromium', 'deadbeef', bucket_cfg)
+    self.perms['chromium/buildbot.hidden'] = []
+
     req = {
-        'bucket': 'secret-project',
+        'bucket': 'buildbot.hidden',
     }
     self.call_api('get_bucket', req, status=403)
 
@@ -1100,21 +1053,9 @@ class ConvertBucketTest(testing.AppengineTestCase):
 
   def setUp(self):
     super(ConvertBucketTest, self).setUp()
-    user.clear_request_cache()
-
-    config.put_bucket(
-        'chromium',
-        'a' * 40,
-        test_util.parse_bucket_cfg(
-            '''
-            name: "luci.chromium.try"
-            acls {
-              role: READER
-              identity: "anonymous:anonymous"
-            }
-            '''
-        ),
-    )
+    test_util.put_empty_bucket('chromium', 'try')
+    self.perms = test_util.mock_permissions(self)
+    self.perms['chromium/try'] = [user.PERM_BUCKETS_GET]
 
   def test_convert_bucket_native(self):
     self.assertEqual(api.convert_bucket('chromium/try'), 'chromium/try')
@@ -1127,11 +1068,7 @@ class ConvertBucketTest(testing.AppengineTestCase):
       api.convert_bucket('master.x')
 
   def test_convert_bucket_access_check(self):
-    config.put_bucket(
-        'chromium',
-        'a' * 40,
-        test_util.parse_bucket_cfg('name: "secret"'),
-    )
+    test_util.put_empty_bucket('chromium', 'secret')
     with self.assertRaises(auth.AuthorizationError):
       api.convert_bucket('secret')
 

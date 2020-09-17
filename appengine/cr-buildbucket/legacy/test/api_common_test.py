@@ -150,12 +150,7 @@ class ToBucketIDTest(testing.AppengineTestCase):
 
   def setUp(self):
     super(ToBucketIDTest, self).setUp()
-
-    config.put_bucket(
-        'chromium',
-        'a' * 40,
-        test_util.parse_bucket_cfg('name: "luci.chromium.try"'),
-    )
+    test_util.put_empty_bucket('chromium', 'luci.chromium.try')
 
   def to_bucket_id(self, bucket):
     return api_common.to_bucket_id_async(bucket).get_result()

@@ -34,7 +34,6 @@ class CreationTest(testing.AppengineTestCase):
 
   def setUp(self):
     super(CreationTest, self).setUp()
-    user.clear_request_cache()
 
     self.current_identity = auth.Identity('service', 'unittest')
     self.patch(

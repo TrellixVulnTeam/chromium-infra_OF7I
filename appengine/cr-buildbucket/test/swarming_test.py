@@ -59,7 +59,6 @@ class BaseTest(testing.AppengineTestCase):
 
   def setUp(self):
     super(BaseTest, self).setUp()
-    user.clear_request_cache()
 
     self.patch('tq.enqueue_async', autospec=True, return_value=future(None))
 
