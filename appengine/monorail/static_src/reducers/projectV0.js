@@ -567,9 +567,11 @@ const fetchTemplates = (projectName) => async (dispatch) => {
  */
 export const fetchFieldPerms = (projectName, fieldDefs) => async (dispatch) => {
   const fieldDefsNames = [];
-  fieldDefs.forEach((fd) => {
-    const fieldDefName = fieldDefToName(projectName, fd);
-    fieldDefsNames.push(fieldDefName);
-  });
+  if (fieldDefs) {
+    fieldDefs.forEach((fd) => {
+      const fieldDefName = fieldDefToName(projectName, fd);
+      fieldDefsNames.push(fieldDefName);
+    });
+  }
   await dispatch(permissions.batchGet(fieldDefsNames));
 };

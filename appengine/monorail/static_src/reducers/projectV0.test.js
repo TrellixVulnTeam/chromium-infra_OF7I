@@ -888,5 +888,20 @@ describe('helpers', () => {
           prpcClient.call, 'monorail.v3.Permissions',
           'BatchGetPermissionSets', args);
     });
+
+    it('fetch with no fieldDefs', async () => {
+      const config = {projectName: 'proj'};
+      const response = {};
+      prpcClient.call.returns(Promise.resolve(response));
+
+      // fieldDefs will be undefined.
+      await store.dispatch(projectV0.fetchFieldPerms(
+          config.projectName, config.fieldDefs));
+
+      const args = {names: []};
+      sinon.assert.calledWith(
+          prpcClient.call, 'monorail.v3.Permissions',
+          'BatchGetPermissionSets', args);
+    });
   });
 });
