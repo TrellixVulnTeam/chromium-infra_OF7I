@@ -165,9 +165,9 @@ enum FormAction {
     if (isEmpty(this.deviceInfo)) return '';
 
     if (this.checkDeviceType() === TYPE_DUT) {
-      return this.deviceInfo.labConfig.dut.hostname;
+      return this.deviceInfo.labConfig?.dut?.hostname;
     } else if (this.checkDeviceType() === TYPE_LABSTATION) {
-      return this.deviceInfo.labConfig.labstation.hostname;
+      return this.deviceInfo.labConfig?.labstation?.hostname;
     }
     return '';
   }
@@ -219,7 +219,7 @@ enum FormAction {
   getBaseRecordObj() {
     return {
       hostname: this.getHostname(),
-      assetTag: this.deviceInfo.labConfig.id.value,
+      assetTag: this.deviceInfo.labConfig?.id?.value,
       repairTargetType: this.getRepairTargetType(),
       repairState: repairConst.RepairState.STATE_IN_PROGRESS,
       buganizerBugUrl: '',
@@ -469,12 +469,12 @@ enum FormAction {
           <mwc-textfield
             disabled
             label="Model"
-            value="${this.deviceInfo.deviceConfig.id.modelId.value}"
+            value="${this.deviceInfo.deviceConfig?.id?.modelId?.value}"
           ></mwc-textfield>
           <mwc-textfield
             disabled
             label="Phase"
-            value="${this.deviceInfo.manufacturingConfig.devicePhase}"
+            value="${this.deviceInfo.manufacturingConfig?.devicePhase}"
           ></mwc-textfield>
           ${
         this.checkDeviceType() === TYPE_DUT ?
@@ -483,13 +483,14 @@ enum FormAction {
             disabled
             label="Servo Asset Tag"
             value="${
-                this.deviceInfo.labConfig.dut.peripherals.servo.servoSerial}"
+                this.deviceInfo.labConfig?.dut?.peripherals?.servo
+                    ?.servoSerial}"
             ></mwc-textfield>
             <mwc-textfield
               disabled
               label="Servo Type"
               value="${
-                this.deviceInfo.labConfig.dut.peripherals.servo.servoType}"
+                this.deviceInfo.labConfig?.dut?.peripherals?.servo?.servoType}"
             ></mwc-textfield>
             ` :
             null}
@@ -747,6 +748,11 @@ enum FormAction {
   }
 
   render() {
-    return html`${isEmpty(this.deviceInfo) ? null : this.displayForm()}`;
+    try {
+      return html`${isEmpty(this.deviceInfo) ? null : this.displayForm()}`;
+    } catch (e) {
+      thunkDispatch(receiveAppMessage('Form cannot be displayed: ' + e));
+      return;
+    }
   }
 }
