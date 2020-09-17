@@ -13,7 +13,10 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-type processPubsubMessage func(context.Context, *SourceRepoEvent) error
+// ProcessPubsubMessage handles SourceRepoEvent pubsub message. If error is
+// nil, the original message is acked and removed. Otherwise, the message will
+// be available for consumptions again.
+type ProcessPubsubMessage func(context.Context, *SourceRepoEvent) error
 
 type pubsubReceiver interface {
 	Receive(context.Context, func(context.Context, *pubsub.Message)) error
@@ -31,7 +34,7 @@ func NewClient(ctx context.Context, gaeProject, subscriptionName string) (*pubsu
 
 // Subscribe subscribes to pubsub and blocks until context is cancelled.
 func Subscribe(ctx context.Context, sub pubsubReceiver,
-	messageProcessor processPubsubMessage) error {
+	messageProcessor ProcessPubsubMessage) error {
 	return sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
 		var event SourceRepoEvent
 		err := jsonpb.Unmarshal(bytes.NewReader(m.Data), &event)

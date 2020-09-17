@@ -6,8 +6,8 @@ package pubsub
 
 import (
 	"context"
-	reflect "reflect"
-	sync "sync"
+	"reflect"
+	"sync"
 	"testing"
 	"time"
 	"unsafe"
