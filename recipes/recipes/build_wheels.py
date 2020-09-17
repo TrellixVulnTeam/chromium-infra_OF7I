@@ -25,11 +25,11 @@ def RunSteps(api):
   with api.context(cwd=solution_path.join('infra')):
     api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
         'infra.tools.dockerbuild',
+        '--root',
+        temp_path,
         '--upload-sources',
         'wheel-build',
         '--upload',
-        '--root',
-        temp_path,
     ])
 
 

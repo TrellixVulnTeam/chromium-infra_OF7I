@@ -138,11 +138,11 @@
       "-u",
       "[CACHE]/builder/solution/infra/run.py",
       "infra.tools.dockerbuild",
+      "--root",
+      "[CLEANUP]/.dockerbuild_tmp_1",
       "--upload-sources",
       "wheel-build",
-      "--upload",
-      "--root",
-      "[CLEANUP]/.dockerbuild_tmp_1"
+      "--upload"
     ],
     "cwd": "[CACHE]/builder/solution/infra",
     "name": "dockerbuild"
