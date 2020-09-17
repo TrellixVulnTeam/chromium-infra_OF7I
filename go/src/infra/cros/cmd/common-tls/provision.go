@@ -159,6 +159,12 @@ func getRootDev(c *client) (rootDev, error) {
 		return r, fmt.Errorf("get root device: failed to match partition number from %s", curRoot)
 	}
 	r.partNum = match[1]
+	switch r.partNum {
+	case partitionNumRootA, partitionNumRootB:
+		break
+	default:
+		return r, fmt.Errorf("get root device: invalid partition number %s", r.partNum)
+	}
 
 	// Example 1: "p3"
 	// Example 2: "3"
@@ -188,13 +194,7 @@ type partitionInfo struct {
 }
 
 // getPartitions returns the next kernel and root partitions to update.
-func getPartitions(c *client) (partitionInfo, error) {
-	var partInfo partitionInfo
-	r, err := getRootDev(c)
-	if err != nil {
-		return partInfo, fmt.Errorf("get partitions to update: failed to get root device, %s", err)
-	}
-
+func getPartitions(r rootDev) partitionInfo {
 	// Determine the next kernel and root.
 	rootDiskPartDelim := r.disk + r.partDelim
 	switch r.partNum {
@@ -204,17 +204,39 @@ func getPartitions(c *client) (partitionInfo, error) {
 			inactiveKernel: rootDiskPartDelim + partitionNumKernelB,
 			activeRoot:     rootDiskPartDelim + partitionNumRootA,
 			inactiveRoot:   rootDiskPartDelim + partitionNumRootB,
-		}, nil
+		}
 	case partitionNumRootB:
 		return partitionInfo{
 			activeKernel:   rootDiskPartDelim + partitionNumKernelB,
 			inactiveKernel: rootDiskPartDelim + partitionNumKernelA,
 			activeRoot:     rootDiskPartDelim + partitionNumRootB,
 			inactiveRoot:   rootDiskPartDelim + partitionNumRootA,
-		}, nil
+		}
 	default:
-		return partInfo, fmt.Errorf("get partitions to update: unexpected root partition number of %s", r.partNum)
+		panic(fmt.Sprintf("Unexpected root partition number of %s", r.partNum))
 	}
+}
+
+// clearInactiveDLCVerifiedMarks will clear the verified marks for all DLCs in the inactive slots.
+func clearInactiveDLCVerifiedMarks(c *client, r rootDev) error {
+	// Stop dlcservice daemon in order to not interfere with clearing inactive verified DLCs.
+	if err := runCmd(c, "stop dlcservice"); err != nil {
+		log.Printf("clear inactive verified DLC marks: failed to stop dlcservice daemon, %s", err)
+	}
+	defer func() {
+		if err := runCmd(c, "start dlcservice"); err != nil {
+			log.Printf("clear inactive verified DLC marks: failed to start dlcservice daemon, %s", err)
+		}
+	}()
+
+	activeSlot := r.getActiveDLCSlot()
+	inactiveSlot := getOtherDLCSlot(activeSlot)
+	err := runCmd(c, fmt.Sprintf("rm -f %s", path.Join(dlcCacheDir, "*", "*", string(inactiveSlot), dlcVerified)))
+	if err != nil {
+		return fmt.Errorf("clear inactive verified DLC marks: failed remove inactive verified DLCs, %s", err)
+	}
+
+	return nil
 }
 
 const (
@@ -344,14 +366,25 @@ func revertProvisionOS(c *client, partitions partitionInfo) {
 
 // provisionOS will provision the OS, but on failure it will set op.Result to longrunning.Operation_Error
 // and return the same error message
-func provisionOS(c *client, op *longrunning.Operation, imagePath string) error {
-	partitions, err := getPartitions(c)
+func provisionOS(c *client, op *longrunning.Operation, imagePath string, r rootDev) error {
+	stopSystemDaemons(c)
+
+	// Only clear the inactive verified DLC marks if the DLCs exist.
+	dlcsExist, err := pathExists(c, dlcLibDir)
 	if err != nil {
-		errMsg := fmt.Sprintf("provisionOS: failed to get kernel and root partitions, %s", err)
+		errMsg := fmt.Sprintf("provisionOS: failed to check if DLC is enabled, %s", err)
 		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
 		return errors.New(errMsg)
 	}
-	stopSystemDaemons(c)
+	if dlcsExist {
+		if err := clearInactiveDLCVerifiedMarks(c, r); err != nil {
+			errMsg := fmt.Sprintf("provisionOS: failed to clear inactive verified DLC marks, %s", err)
+			op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
+			return errors.New(errMsg)
+		}
+	}
+
+	partitions := getPartitions(r)
 	if errs := installPartitions(c, imagePath, partitions); len(errs) > 0 {
 		errMsg := fmt.Sprintf("provisionOS: failed to provision the OS, %s", errs)
 		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
@@ -389,6 +422,136 @@ func verifyOSProvision(c *client, op *longrunning.Operation, expectedBuilderPath
 	if actualBuilderPath != expectedBuilderPath {
 		errMsg := fmt.Sprintf("verify OS provision: DUT is on builder path %s when expected builder path is %s, %s",
 			actualBuilderPath, expectedBuilderPath, err)
+		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
+		return errors.New(errMsg)
+	}
+	return nil
+}
+
+type dlcSlot string
+
+const (
+	dlcSlotA dlcSlot = "dlc_a"
+	dlcSlotB dlcSlot = "dlc_b"
+)
+
+const (
+	dlcCacheDir    = "/var/cache/dlc"
+	dlcImage       = "dlc.img"
+	dlcLibDir      = "/var/lib/dlcservice/dlc"
+	dlcPackage     = "package"
+	dlcVerified    = "verified"
+	dlcserviceUtil = "dlcservice_util"
+)
+
+func pathExists(c *client, path string) (bool, error) {
+	exists, err := runCmdOutput(c, fmt.Sprintf("[ -e %s ] && echo -n 1 || echo -n 0", path))
+	if err != nil {
+		return false, fmt.Errorf("path exists: failed to check if %s exists, %s", path, err)
+	}
+	return exists == "1", nil
+}
+
+func (r rootDev) getActiveDLCSlot() dlcSlot {
+	switch r.partNum {
+	case partitionNumRootA:
+		return dlcSlotA
+	case partitionNumRootB:
+		return dlcSlotB
+	default:
+		panic(fmt.Sprintf("Invalid partition number %s", r.partNum))
+	}
+}
+
+func getOtherDLCSlot(slot dlcSlot) dlcSlot {
+	switch slot {
+	case dlcSlotA:
+		return dlcSlotB
+	case dlcSlotB:
+		return dlcSlotA
+	default:
+		panic(fmt.Sprintf("Invalid DLC slot %s", slot))
+	}
+}
+
+func isDLCVerified(c *client, spec *tls.ProvisionRequest_DLCSpec, slot dlcSlot) (bool, error) {
+	dlcID := spec.GetId()
+	verified, err := pathExists(c, path.Join(dlcLibDir, dlcID, string(slot), dlcVerified))
+	if err != nil {
+		return false, fmt.Errorf("is DLC verfied: failed to check if DLC %s is verified, %s", dlcID, err)
+	}
+	return verified, nil
+}
+
+func installDLC(c *client, spec *tls.ProvisionRequest_DLCSpec, imagePath, dlcOutputDir string, slot dlcSlot) error {
+	verified, err := isDLCVerified(c, spec, slot)
+	if err != nil {
+		return fmt.Errorf("install DLC: failed is DLC verified check, %s", err)
+	}
+
+	dlcID := spec.GetId()
+	// Skip installing the DLC if already verified.
+	if verified {
+		log.Printf("Provision DLC %s skipped as already verified", dlcID)
+		return nil
+	}
+
+	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
+	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
+	pathPrefix, err := getGsCacheURL(imagePath)
+	if err != nil {
+		return fmt.Errorf("install DLC: failed to get GS Cache server, %s", err)
+	}
+
+	dlcOutputSlotDir := path.Join(dlcOutputDir, string(slot))
+	dlcOutputImage := path.Join(dlcOutputSlotDir, dlcImage)
+	dlcArtifactURL := path.Join(pathPrefix, "dlc", dlcID, dlcPackage, dlcImage)
+	err = runCmd(c, fmt.Sprintf("mkdir -p %s && curl --output %s %s", dlcOutputSlotDir, dlcOutputImage, dlcArtifactURL))
+	if err != nil {
+		return fmt.Errorf("provision DLC: failed to provision DLC %s, %s", dlcID, err)
+	}
+	return nil
+}
+
+func provisionDLCs(c *client, op *longrunning.Operation, imagePath string, r rootDev, specs []*tls.ProvisionRequest_DLCSpec) error {
+	if len(specs) == 0 {
+		return nil
+	}
+
+	// Stop dlcservice daemon in order to not interfere with provisioning DLCs.
+	if err := runCmd(c, "stop dlcservice"); err != nil {
+		log.Printf("provision DLCs: failed to stop dlcservice daemon, %s", err)
+	}
+	defer func() {
+		if err := runCmd(c, "start dlcservice"); err != nil {
+			log.Printf("provision DLCs: failed to start dlcservice daemon, %s", err)
+		}
+	}()
+
+	activeSlot := r.getActiveDLCSlot()
+	errCh := make(chan error)
+	for _, spec := range specs {
+		go func(spec *tls.ProvisionRequest_DLCSpec) {
+			dlcID := spec.GetId()
+			if err := installDLC(c, spec, imagePath, path.Join(dlcCacheDir, dlcID, dlcPackage), activeSlot); err != nil {
+				errMsg := fmt.Sprintf("failed to install DLC %s, %s", dlcID, err)
+				errCh <- errors.New(errMsg)
+				return
+			}
+			errCh <- nil
+		}(spec)
+	}
+
+	var err error
+	for range specs {
+		errTmp := <-errCh
+		if errTmp == nil {
+			continue
+		}
+		err = fmt.Errorf("%s, %s", err, errTmp)
+	}
+	if err != nil {
+		errMsg := fmt.Sprintf("provision DLCs: failed to install the following DLCs (%s)", err)
 		op.Result = newOperationError(codes.Aborted, errMsg, tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
 		return errors.New(errMsg)
 	}
@@ -476,6 +639,16 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 	c.knownGood = true
 	defer s.clientPool.Put(addr, c)
 
+	// Get the root device.
+	r, err := getRootDev(c)
+	if err != nil {
+		op.Result = newOperationError(
+			codes.Aborted,
+			fmt.Sprintf("provision: failed to get root device from DUT, %s", err),
+			tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
+		return
+	}
+
 	// Provision the OS.
 	select {
 	case <-ctx.Done():
@@ -497,7 +670,7 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 	}
 	// Only provision the OS if the DUT is not on the requested OS.
 	if builderPath != targetBuilderPath {
-		if err := provisionOS(c, op, imagePath); err != nil {
+		if err := provisionOS(c, op, imagePath, r); err != nil {
 			return
 		}
 		// After a reboot, need a new client connection so close the old one.
@@ -518,9 +691,30 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 		if err := verifyOSProvision(c, op, targetBuilderPath); err != nil {
 			return
 		}
+		// Get the new root device after reboot.
+		r, err = getRootDev(c)
+		if err != nil {
+			op.Result = newOperationError(
+				codes.Aborted,
+				fmt.Sprintf("provision: failed to get root device from DUT after reboot, %s", err),
+				tls.ProvisionResponse_REASON_PROVISIONING_FAILED)
+			return
+		}
 	} else {
 		log.Printf("Provision skipped as DUT is already on builder path %s", builderPath)
 	}
 
-	// TODO(crbug.com/1077056): Provision DLCs.
+	// Provision DLCs.
+	select {
+	case <-ctx.Done():
+		op.Result = newOperationError(
+			codes.DeadlineExceeded,
+			"provision: timed out before provisioning DLCs",
+			tls.ProvisionResponse_REASON_PROVISIONING_TIMEDOUT)
+		return
+	default:
+	}
+	if err := provisionDLCs(c, op, imagePath, r, req.GetDlcSpecs()); err != nil {
+		return
+	}
 }
