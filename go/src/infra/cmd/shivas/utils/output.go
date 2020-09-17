@@ -7,8 +7,10 @@ package utils
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"text/tabwriter"
@@ -42,6 +44,8 @@ var (
 	RackTitle                = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
 	MachineLSETFullitle      = []string{"Host", "OS Version", "Manufacturer", "Machine", "Zone", "Virtual Datacenter", "Rack", "Nic", "IP", "Vlan", "MAC Address", "State", "VM capacity", "Description", "UpdateTime"}
+	ZoneTitle                = []string{"Name", "EnumName", "Department"}
+	StateTitle               = []string{"Name", "EnumName", "Description"}
 )
 
 // TimeFormat for all timestamps handled by shivas
@@ -338,6 +342,27 @@ func PrintListTableFormat(ctx context.Context, ic ufsAPI.FleetClient, f printAll
 			}
 			pageToken = token
 		}
+	}
+	return nil
+}
+
+// PrintJSON prints the interface output as json
+func PrintJSON(t interface{}) error {
+	switch reflect.TypeOf(t).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(t)
+		fmt.Print("[")
+		for i := 0; i < s.Len(); i++ {
+			e, err := json.MarshalIndent(s.Index(i).Interface(), "", "\t")
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(e))
+			if i != s.Len()-1 {
+				fmt.Println(",")
+			}
+		}
+		fmt.Println("]")
 	}
 	return nil
 }
@@ -1296,4 +1321,17 @@ func PrintRacksJSON(res []proto.Message, emit bool) {
 
 func strSlicesToStr(slices []string) string {
 	return strings.Join(slices, ",")
+}
+
+// PrintAllNormal prints a 2D slice with tabwriter
+func PrintAllNormal(title []string, res [][]string, keysOnly bool) {
+	defer tw.Flush()
+	PrintTableTitle(title, false, keysOnly)
+	for i := 0; i < len(res); i++ {
+		var out string
+		for _, s := range res[i] {
+			out += fmt.Sprintf("%s\t", s)
+		}
+		fmt.Fprintln(tw, out)
+	}
 }

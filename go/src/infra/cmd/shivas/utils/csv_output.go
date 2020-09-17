@@ -60,6 +60,13 @@ func printTSVs(res []proto.Message, keysOnly bool, outputFunc func(proto.Message
 	}
 }
 
+// PrintAllTSVs prints all in tsv format of the input
+func PrintAllTSVs(res [][]string) {
+	csw := NewCSVWriter()
+	defer csw.Flush()
+	csw.WriteAll(res)
+}
+
 // PrintTSVMachines prints the tsv format of machines
 func PrintTSVMachines(msgs []proto.Message, keysOnly bool) {
 	printTSVs(msgs, keysOnly, machineOutputStrs)

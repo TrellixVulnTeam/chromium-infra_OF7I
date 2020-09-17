@@ -182,6 +182,22 @@ var StrToUFSState = map[string]string{
 	"ready":                "STATE_READY",
 }
 
+// StateToDescription refers a map between a State to its description.
+var StateToDescription = map[string]string{
+	"registered":           "Needs deploy",
+	"deployed_pre_serving": "Deployed but not placed in prod",
+	"deployed_testing":     "Deployed to the prod, but for testing",
+	"serving":              "Deployed to the prod, serving",
+	"needs_reset":          "Deployed to the prod, but required cleanup and verify",
+	"needs_repair":         "Deployed to the prod, needs repair",
+	"repair_failed":        "Deployed to the prod, failed to be repaired in previous step and requires new repair attempt",
+	"disabled":             "Deployed to the prod, but disabled",
+	"reserved":             "Deployed to the prod, but reserved (e.g. locked)",
+	"decommissioned":       "Decommissioned from the prod, but still lives in UFS record",
+	"deploying":            "Deploying the resource with required configs just before it is READY",
+	"ready":                "Resource is ready for use or free to use",
+}
+
 // IsUFSState checks if a string refers to a valid UFS state.
 func IsUFSState(state string) bool {
 	_, ok := StrToUFSState[state]
@@ -281,6 +297,25 @@ func ToUFSRealm(zone string) string {
 		return AcsLabAdminRealm
 	}
 	return AtlLabAdminRealm
+}
+
+// ToUFSDept returns the dept name based on zone string.
+func ToUFSDept(zone string) string {
+	ufsZone := ToUFSZone(zone)
+	if IsInBrowserZone(ufsZone.String()) {
+		return Browser
+	}
+	return CrOS
+}
+
+// GetStateDescription returns the description for the state
+func GetStateDescription(state string) string {
+	state = RemoveStatePrefix(state)
+	v, ok := StateToDescription[state]
+	if !ok {
+		return ""
+	}
+	return v
 }
 
 // GetSuffixAfterSeparator extracts the string appearing after the separator
