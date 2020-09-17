@@ -462,12 +462,7 @@
     "name": "cipd search chromium/testing/weblayer-x86 version:84.0.4147.89",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@    {@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"resolved-instance_id-of-instance_id_1---\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"package\": \"chromium/testing/weblayer-x86\"@@@",
-      "@@@STEP_LOG_LINE@json.output@    }@@@",
-      "@@@STEP_LOG_LINE@json.output@  ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": []@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
     ]
@@ -475,26 +470,22 @@
   {
     "cmd": [
       "git",
-      "branch",
-      "-D",
-      "new-skew-tests"
+      "checkout",
+      "84.0.4147.89"
     ],
     "cwd": "[START_DIR]/src",
     "infra_step": true,
-    "name": "git branch"
+    "name": "git checkout (2)"
   },
   {
     "cmd": [
       "git",
-      "new-branch",
-      "new-skew-tests"
+      "clean",
+      "-fd"
     ],
     "cwd": "[START_DIR]/src",
-    "env": {
-      "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
-    },
     "infra_step": true,
-    "name": "git new-branch new-skew-tests"
+    "name": "git clean"
   },
   {
     "cmd": [
@@ -504,136 +495,103 @@
       "--json-output",
       "/path/to/tmp/json",
       "copy",
-      "{\n  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {\n    'args': [\n      '--test-runner-outdir',\n      '.',\n      '--client-outdir',\n      '../../weblayer_instrumentation_test_M84/out/Release',\n      '--implementation-outdir',\n      '.',\n      '--test-expectations',\n      '../../weblayer/browser/android/javatests/skew/expectations.txt',\n      '--client-version=84',\n    ],\n    'identifier': 'M84_Client_Library_Tests',\n    'swarming': {\n      'cipd_packages': [\n        {\n          'cipd_package': 'chromium/testing/weblayer-x86',\n          'location': 'weblayer_instrumentation_test_M84',\n          'revision': 'version:84.0.4147.89',\n        }\n      ],\n    },\n  },\n  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_ONE_MILESTONE': {\n    'args': [\n      '--test-runner-outdir',\n      '.',\n    ],\n    'swarming': {\n      'cipd_packages': [\n        {\n          'cipd_package': 'chromium/testing/weblayer-x86',\n          'revision': 'version:82.0.6666.45',\n        },\n      ],\n    },\n    'identifier': 'M82_Client_Library_Tests',\n  },\n  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_TWO_MILESTONE': {\n    'args': [\n      '--test-runner-outdir',\n      '.',\n    ],\n    'swarming': {\n      'cipd_packages': [\n        {\n          'cipd_package': 'chromium/testing/weblayer-x86',\n          'revision': 'version:81.0.1111.40',\n        },\n      ],\n    },\n    'identifier': 'M81_Client_Library_Tests',\n  }\n}",
-      "[START_DIR]/src/testing/buildbot/variants.pyl"
+      "[START_DIR]/src/chrome/VERSION",
+      "/path/to/tmp/"
     ],
+    "cwd": "[START_DIR]/src",
     "infra_step": true,
-    "name": "Write to variants.py",
+    "name": "Reading //chrome/VERSION",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@variants.pyl@{@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'args': [@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--test-runner-outdir',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '.',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--client-outdir',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '../../weblayer_instrumentation_test_M84/out/Release',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--implementation-outdir',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '.',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--test-expectations',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '../../weblayer/browser/android/javatests/skew/expectations.txt',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--client-version=84',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    ],@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'identifier': 'M84_Client_Library_Tests',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'swarming': {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      'cipd_packages': [@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@        {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'cipd_package': 'chromium/testing/weblayer-x86',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'location': 'weblayer_instrumentation_test_M84',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'revision': 'version:84.0.4147.89',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@        }@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      ],@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    },@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@  },@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_ONE_MILESTONE': {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'args': [@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--test-runner-outdir',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '.',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    ],@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'swarming': {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      'cipd_packages': [@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@        {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'cipd_package': 'chromium/testing/weblayer-x86',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'revision': 'version:82.0.6666.45',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@        },@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      ],@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    },@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'identifier': 'M82_Client_Library_Tests',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@  },@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MINUS_TWO_MILESTONE': {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'args': [@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '--test-runner-outdir',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      '.',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    ],@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'swarming': {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      'cipd_packages': [@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@        {@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'cipd_package': 'chromium/testing/weblayer-x86',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@          'revision': 'version:81.0.1111.40',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@        },@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@      ],@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    },@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@    'identifier': 'M81_Client_Library_Tests',@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@  }@@@",
-      "@@@STEP_LOG_LINE@variants.pyl@}@@@",
-      "@@@STEP_LOG_END@variants.pyl@@@"
+      "@@@STEP_LOG_LINE@VERSION@a=84@@@",
+      "@@@STEP_LOG_LINE@VERSION@b=0@@@",
+      "@@@STEP_LOG_LINE@VERSION@c=4147@@@",
+      "@@@STEP_LOG_LINE@VERSION@d=89@@@",
+      "@@@STEP_LOG_END@VERSION@@@"
     ]
   },
   {
     "cmd": [
       "python",
       "-u",
-      "[START_DIR]/src/testing/buildbot/generate_buildbot_json.py"
-    ],
-    "name": "Running generate_buildbot_json.py"
-  },
-  {
-    "cmd": [
-      "git",
-      "commit",
-      "-am",
-      "Adding skew tests for new versions"
-    ],
-    "cwd": "[START_DIR]/src",
-    "infra_step": true,
-    "name": "git commit"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "upload",
+      "RECIPE_REPO[depot_tools]/gclient.py",
+      "sync",
+      "--verbose",
+      "--nohooks",
+      "-j8",
+      "--reset",
       "--force",
-      "--tbr-owners",
-      "--use-commit-queue",
-      "--message-file",
-      "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 84.0.4147.89\n\nBug:1041619\n"
+      "--upstream",
+      "--no-nag-max",
+      "--with_branch_heads",
+      "--with_tags",
+      "--delete_unversioned_trees",
+      "--output-json",
+      "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]/src",
-    "name": "git_cl upload"
-  },
-  {
-    "cmd": [],
-    "name": "Landing CL"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "status",
-      "--field",
-      "status"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "Landing CL.git cl status",
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "infra_step": true,
+    "name": "gclient sync",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"solutions\": {}@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
     ]
   },
   {
     "cmd": [
-      "vpython",
+      "python",
       "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "status",
-      "--field",
-      "status"
+      "RECIPE_REPO[depot_tools]/gclient.py",
+      "runhooks"
     ],
     "cwd": "[START_DIR]/src",
-    "name": "Landing CL.git cl status (2)",
+    "env_suffixes": {
+      "PATH": [
+        "RECIPE_REPO[depot_tools]"
+      ]
+    },
+    "name": "gclient runhooks"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "rmtree",
+      "[CLEANUP]/apk_build_files"
+    ],
+    "cwd": "[START_DIR]/src",
+    "infra_step": true,
+    "name": "Cleaning up build files from last build"
+  },
+  {
+    "cmd": [
+      "python",
+      "-u",
+      "[START_DIR]/src/tools/mb/mb.py",
+      "zip",
+      "--master=dummy.master",
+      "--builder=dummy.builder",
+      "--goma-dir",
+      "[CACHE]/goma/client",
+      "--luci-auth",
+      "--config-file=[CLEANUP]/tmp_tmp_1/mb_config.pyl",
+      "out/Release",
+      "weblayer_instrumentation_test_apk",
+      "[CLEANUP]/tmp_tmp_2/build_config.zip"
+    ],
+    "cwd": "[START_DIR]/src",
+    "name": "Building weblayer_instrumentation_test_apk",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {
@@ -648,6 +606,7 @@
       "jsonstatus",
       "[TMP_BASE]/goma_jsonstatus.json"
     ],
+    "cwd": "[START_DIR]/src",
     "env": {
       "GOMACTL_CRASH_REPORT_ID_FILE": "[TMP_BASE]/crash_report_id",
       "GOMA_CACHE_DIR": "[CACHE]/goma/data",
@@ -680,6 +639,7 @@
       "[CACHE]/goma/client/goma_ctl.py",
       "stat"
     ],
+    "cwd": "[START_DIR]/src",
     "env": {
       "GOMACTL_CRASH_REPORT_ID_FILE": "[TMP_BASE]/crash_report_id",
       "GOMA_CACHE_DIR": "[CACHE]/goma/data",
@@ -701,6 +661,7 @@
       "[CACHE]/goma/client/goma_ctl.py",
       "stop"
     ],
+    "cwd": "[START_DIR]/src",
     "env": {
       "GOMACTL_CRASH_REPORT_ID_FILE": "[TMP_BASE]/crash_report_id",
       "GOMA_CACHE_DIR": "[CACHE]/goma/data",
@@ -736,7 +697,7 @@
       "--json-status",
       "[TMP_BASE]/goma_jsonstatus.json",
       "--build-exit-status",
-      "0",
+      "1",
       "--goma-stats-file",
       "[TMP_BASE]/goma_stats",
       "--goma-counterz-file",
@@ -748,6 +709,7 @@
       "--buildbot-slavename",
       "fake-bot-id"
     ],
+    "cwd": "[START_DIR]/src",
     "name": "postprocess_for_goma.upload_log",
     "timeout": 300,
     "~followup_annotations": [
@@ -773,6 +735,7 @@
       "--killed-pid-file",
       "[TMP_BASE]/cloudtail.pid"
     ],
+    "cwd": "[START_DIR]/src",
     "infra_step": true,
     "name": "postprocess_for_goma.stop cloudtail",
     "~followup_annotations": [
@@ -780,6 +743,44 @@
     ]
   },
   {
+    "cmd": [
+      "git",
+      "checkout",
+      "origin/master"
+    ],
+    "cwd": "[START_DIR]/src",
+    "infra_step": true,
+    "name": "git checkout (3)"
+  },
+  {
+    "cmd": [
+      "git",
+      "clean",
+      "-fd"
+    ],
+    "cwd": "[START_DIR]/src",
+    "infra_step": true,
+    "name": "git clean (2)"
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "rmtree",
+      "[START_DIR]/src/out/Release"
+    ],
+    "cwd": "[START_DIR]/src",
+    "infra_step": true,
+    "name": "Cleaning 84.0.4147.89 build files"
+  },
+  {
+    "failure": {
+      "failure": {},
+      "humanReason": "Step('Building weblayer_instrumentation_test_apk') (retcode: 1)"
+    },
     "name": "$result"
   }
 ]
