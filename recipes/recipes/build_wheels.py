@@ -22,7 +22,12 @@ def RunSteps(api):
 
   temp_path = api.path.mkdtemp('.dockerbuild')
 
-  with api.context(cwd=solution_path.join('infra')):
+  # Set MACOSX_DEPLOYMENT_TARGET to 10.13 to ensure compatibility regardless of
+  # the OS version the bot is running. This environment variable is unnecessary
+  # but harmless on other OSes, so we just set it unconditionally.
+  with api.context(
+      cwd=solution_path.join('infra'),
+      env={'MACOSX_DEPLOYMENT_TARGET': '10.13'}):
     api.python('dockerbuild', solution_path.join('infra', 'run.py'), [
         'infra.tools.dockerbuild',
         '--root',
