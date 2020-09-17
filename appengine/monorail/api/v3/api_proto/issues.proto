@@ -170,7 +170,7 @@ message SearchIssuesResponse {
 }
 
 // The request message for Issues.ListComments.
-// Next available tag: 4
+// Next available tag: 5
 message ListCommentsRequest {
   // The name of the issue for which to list comments.
   string parent = 1 [
@@ -187,8 +187,12 @@ message ListCommentsRequest {
   // When paginating, all other parameters provided to `ListComments` must
   // match the call that provided the page token.
   string page_token = 3;
-
-  // TODO(monorail:7187): Add filter.
+  // TODO(crbug/monorail/7187): Not yet implemented. ANY filter is an error.
+  // For our initial release this filter only supports filtering to comments
+  // related to a specific approval.
+  // For example `approval = "/projects/monorail/approvalDefs/1"`,
+  // Note that no further logical or comparison operators are supported
+  string filter = 4;
 }
 
 // The response message for Issues.ListComments

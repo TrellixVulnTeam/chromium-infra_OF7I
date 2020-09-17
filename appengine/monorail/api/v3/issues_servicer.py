@@ -131,13 +131,19 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     page_size = paginator.CoercePageSize(
         request.page_size, api_constants.MAX_COMMENTS_PER_PAGE)
     pager = paginator.Paginator(parent=request.parent, page_size=page_size)
+    # TODO(crbug/monorail/7187): Parse filter string for approval resource name.
+    approval_id = None
+    if request.filter:
+        raise exceptions.InputException(
+          'Invalid filter: filtering not yet supported.')
 
     with work_env.WorkEnv(mc, self.services) as we:
       # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.
       project = we.GetProjectByName(rnc.IngestProjectFromIssue(request.parent))
       mc.LookupLoggedInUserPerms(project)
       list_result = we.SafeListIssueComments(
-          issue_id, page_size, pager.GetStart(request.page_token))
+          issue_id, page_size, pager.GetStart(request.page_token),
+          approval_id=approval_id)
     return issues_pb2.ListCommentsResponse(
         comments=self.converter.ConvertComments(issue_id, list_result.items),
         next_page_token=pager.GenerateNextPageToken(list_result.next_start))

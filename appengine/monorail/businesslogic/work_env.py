@@ -2233,8 +2233,9 @@ class WorkEnv(object):
     return comments
 
 
-  def SafeListIssueComments(self, issue_id, max_items, start):
-    # type: (tracker_pb2.Issue, int, int) -> ListResult
+  def SafeListIssueComments(
+      self, issue_id, max_items, start, approval_id=None):
+    # type: (tracker_pb2.Issue, int, int, Optional[int]) -> ListResult
     """Return comments on the issue, filtering non-viewable content.
 
     TODO(crbug.com/monorail/7520): Rename to ListIssueComments.
@@ -2247,6 +2248,7 @@ class WorkEnv(object):
       issue_id: The issue for which we're listing comments.
       max_items: The maximum number of comments to return.
       start: The index of the start position in the list of comments.
+      approval_id: Whether to only return comments on this approval.
 
     Returns:
       A work_env.ListResult namedtuple with the comments for the issue.
@@ -2283,7 +2285,9 @@ class WorkEnv(object):
     end = start + max_items
     filtered_comments = []
     with self.mc.profiler.Phase('converting comments'):
-      for comment in comments[start:end]:
+      for comment in comments:
+        if approval_id and comment.approval_id != approval_id:
+          continue
         commenter = users_by_id[comment.user_id]
 
         _can_flag, is_flagged = permissions.CanFlagComment(
@@ -2318,9 +2322,9 @@ class WorkEnv(object):
             filtered_comment.inbound_message = comment.inbound_message
         filtered_comments.append(filtered_comment)
     next_start = None
-    if end < len(comments):
+    if end < len(filtered_comments):
       next_start = end
-    return ListResult(filtered_comments, next_start)
+    return ListResult(filtered_comments[start:end], next_start)
 
   # FUTURE: UpdateComment()
 

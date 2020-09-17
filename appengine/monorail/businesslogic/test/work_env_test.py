@@ -4021,6 +4021,16 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual('sum', actual_comments[0].content)
     self.assertEqual('more info', actual_comments[1].content)
 
+  def _Comment(self, issue, content, local_id, approval_id=None):
+    """Adds a comment to issue with reasonable defaults."""
+    comment = tracker_pb2.IssueComment(
+        project_id=issue.project_id,
+        content=content,
+        user_id=issue.reporter_id,
+        issue_id=issue.issue_id,
+        approval_id=approval_id)
+    self.services.issue.TestAddComment(comment, local_id)
+
   def testSafeListIssueComments_Normal(self):
     initial_description = 'sum'
     issue = fake.MakeTestIssue(
@@ -4032,12 +4042,7 @@ class WorkEnvTest(unittest.TestCase):
         issue_id=78901,
         project_name=self.project.project_name)
     self.services.issue.TestAddIssue(issue)
-    comment = tracker_pb2.IssueComment(
-        project_id=self.project.project_id,
-        content='more info',
-        user_id=self.user_1.user_id,
-        issue_id=issue.issue_id)
-    self.services.issue.TestAddComment(comment, 1)
+    self._Comment(issue, 'more info', 1)
 
     with self.work_env as we:
       list_result = we.SafeListIssueComments(issue.issue_id, 1000, 0)
@@ -4047,6 +4052,7 @@ class WorkEnvTest(unittest.TestCase):
     self.assertEqual(2, len(actual_comments))
     self.assertEqual(initial_description, actual_comments[0].content)
     self.assertEqual('more info', actual_comments[1].content)
+
 
   def testSafeListIssueComments_DeletedIssue(self):
     """Users without permissions cannot view comments on deleted issues."""
@@ -4262,12 +4268,7 @@ class WorkEnvTest(unittest.TestCase):
         issue_id=78901,
         project_name=self.project.project_name)
     self.services.issue.TestAddIssue(issue)
-    comment = tracker_pb2.IssueComment(
-        project_id=self.project.project_id,
-        content='more info',
-        user_id=self.user_1.user_id,
-        issue_id=issue.issue_id)
-    self.services.issue.TestAddComment(comment, 1)
+    self._Comment(issue, 'more info', 1)
 
     with self.work_env as we:
       list_result = we.SafeListIssueComments(issue.issue_id, 1, 0)
@@ -4288,12 +4289,7 @@ class WorkEnvTest(unittest.TestCase):
         issue_id=78901,
         project_name=self.project.project_name)
     self.services.issue.TestAddIssue(issue)
-    comment = tracker_pb2.IssueComment(
-        project_id=self.project.project_id,
-        content='more info',
-        user_id=self.user_1.user_id,
-        issue_id=issue.issue_id)
-    self.services.issue.TestAddComment(comment, 1)
+    self._Comment(issue, 'more info', 1)
 
     with self.work_env as we:
       list_result = we.SafeListIssueComments(issue.issue_id, 1000, 1)
@@ -4301,6 +4297,64 @@ class WorkEnvTest(unittest.TestCase):
     actual_comments = list_result.items
     self.assertEqual(1, len(actual_comments))
     self.assertEqual('more info', actual_comments[0].content)
+
+  def testSafeListIssueComments_ApprovalId(self):
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        'initial description',
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+
+    max_items = 2
+    # Create comments for testing.
+    self._Comment(issue, 'more info', 1)
+    self._Comment(issue, 'approval2 info', 2, approval_id=2)
+    # This would be after the max_items of 2, so we are ensuring that the
+    # max_items limit applies AFTER filtering rather than before.
+    self._Comment(issue, 'approval1 info1', 3, approval_id=1)
+    self._Comment(issue, 'approval1 info2', 4, approval_id=1)
+    self._Comment(issue, 'approval1 info3', 5, approval_id=1)
+
+    with self.work_env as we:
+      list_result = we.SafeListIssueComments(
+        issue.issue_id, max_items, 0, approval_id=1)
+    self.assertEqual(
+        2, list_result.next_start, 'We have a third approval comment')
+    actual_comments = list_result.items
+    self.assertEqual(2, len(actual_comments))
+    self.assertEqual('approval1 info1', actual_comments[0].content)
+    self.assertEqual('approval1 info2', actual_comments[1].content)
+
+  def testSafeListIssueComments_StartAndApprovalId(self):
+    issue = fake.MakeTestIssue(
+        self.project.project_id,
+        1,
+        'initial description',
+        'New',
+        self.user_1.user_id,
+        issue_id=78901,
+        project_name=self.project.project_name)
+    self.services.issue.TestAddIssue(issue)
+
+    # Create comments for testing.
+    self._Comment(issue, 'more info', 1)
+    self._Comment(issue, 'approval2 info', 2, approval_id=2)
+    self._Comment(issue, 'approval1 info1', 3, approval_id=1)
+    self._Comment(issue, 'approval1 info2', 4, approval_id=1)
+    self._Comment(issue, 'approval1 info3', 5, approval_id=1)
+
+    with self.work_env as we:
+      list_result = we.SafeListIssueComments(
+        issue.issue_id, 1000, 1, approval_id=1)
+    self.assertEqual(None, list_result.next_start)
+    actual_comments = list_result.items
+    self.assertEqual(2, len(actual_comments))
+    self.assertEqual('approval1 info2', actual_comments[0].content)
+    self.assertEqual('approval1 info3', actual_comments[1].content)
 
   # FUTURE: UpdateComment()
 
