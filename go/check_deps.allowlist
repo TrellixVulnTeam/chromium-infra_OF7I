@@ -49,6 +49,8 @@ github.com/gomodule/redigo/redis
 github.com/google/go-cmp/cmp
 github.com/gorhill/cronexpr
 github.com/julienschmidt/httprouter
+# TODO(crbug.com/894045): Remove this once the bug is fixed.
+github.com/klauspost/compress/zlib
 github.com/klauspost/compress/zstd
 github.com/kr/pretty
 github.com/kylelemons/godebug/pretty
