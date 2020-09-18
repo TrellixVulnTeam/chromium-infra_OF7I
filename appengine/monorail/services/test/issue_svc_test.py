@@ -1771,6 +1771,30 @@ class IssueServiceTest(unittest.TestCase):
                             oldvalue='New', newvalue='Accepted')]
     self.assertEqual(expected, actual)
 
+  def testConsolidateAmendments_BlockerRelations(self):
+    amendments = [
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID('BLOCKEDON'), newvalue='78901'),
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID('BLOCKEDON'), newvalue='-b/3 b/1 b/2'),
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID('BLOCKING'), newvalue='78902'),
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID('BLOCKING'), newvalue='-b/33 b/11 b/22')
+    ]
+
+    actual = self.services.issue._ConsolidateAmendments(amendments)
+
+    expected = [
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID('BLOCKEDON'),
+            newvalue='78901 -b/3 b/1 b/2'),
+        tracker_pb2.Amendment(
+            field=tracker_pb2.FieldID('BLOCKING'),
+            newvalue='78902 -b/33 b/11 b/22')
+    ]
+    self.assertEqual(expected, actual)
+
   def testConsolidateAmendments_CustomFields(self):
     amendments = [
       tracker_pb2.Amendment(field=tracker_pb2.FieldID('CUSTOM'),
@@ -2728,4 +2752,3 @@ Delete.assert_called_once_with(
 
     self.services.issue.issuesnapshot2cc_tbl.Delete.assert_called_once_with(
         self.cnxn, cc_id=user_ids, commit=commit, limit=limit)
-

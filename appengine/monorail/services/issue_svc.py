@@ -1946,7 +1946,15 @@ class IssueService(object):
       new_amendment.field = field
       for amendment in sorted_amendments:
         if amendment.newvalue is not None:
-          new_amendment.newvalue = amendment.newvalue
+          if new_amendment.newvalue is not None:
+            # NOTE: see crbug/monorail/8272. BLOCKEDON and BLOCKING changes
+            # are all stored in newvalue e.g. (newvalue = -b/123 b/124) and
+            # external bugs and monorail bugs are stored in separate amendments.
+            # Without this, the values of external bug amendments and monorail
+            # blocker bug amendments may overwrite each other.
+            new_amendment.newvalue += (' ' + amendment.newvalue)
+          else:
+            new_amendment.newvalue = amendment.newvalue
         if amendment.oldvalue is not None:
           new_amendment.oldvalue = amendment.oldvalue
         if amendment.added_user_ids:
