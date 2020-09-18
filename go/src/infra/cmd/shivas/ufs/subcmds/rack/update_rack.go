@@ -38,7 +38,7 @@ var UpdateRackCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.rackName, "name", "", "the name of the rack to update")
 		c.Flags.StringVar(&c.zoneName, "zone", "", cmdhelp.ZoneHelpText)
-		c.Flags.IntVar(&c.capacity, "capacity", 0, "indicate how many machines can be added to this rack. "+"To clear this field set it to -1.")
+		c.Flags.IntVar(&c.capacity, "capacity_ru", 0, "indicate the size of the rack in rack units (U). "+"To clear this field set it to -1.")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		return c
@@ -107,10 +107,10 @@ func (c *updateRack) innerRun(a subcommands.Application, args []string, env subc
 	res, err := ic.UpdateRack(ctx, &ufsAPI.UpdateRackRequest{
 		Rack: &rack,
 		UpdateMask: utils.GetUpdateMask(&c.Flags, map[string]string{
-			"zone":     "zone",
-			"capacity": "capacity",
-			"tags":     "tags",
-			"state":    "resourceState",
+			"zone":        "zone",
+			"capacity_ru": "capacity",
+			"tags":        "tags",
+			"state":       "resourceState",
 		}),
 	})
 	if err != nil {
@@ -157,7 +157,7 @@ func (c *updateRack) validateArgs() error {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-zone' cannot be specified at the same time.")
 		}
 		if c.capacity != 0 {
-			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-capacity' cannot be specified at the same time.")
+			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-capacity_ru' cannot be specified at the same time.")
 		}
 		if c.tags != "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nThe interactive/JSON input file is already specified. '-tags' cannot be specified at the same time.")
