@@ -17,7 +17,11 @@ import (
 	ufspb "infra/unifiedfleet/api/v1/proto"
 )
 
-const reserveFirst = 10
+// The first ip is the subnet ID
+// The next first 10 ips are reserved
+const reserveFirst = 11
+
+// The last ip is broadcast address.
 const reserveLast = 1
 
 // ParseVlan parses vlan to a list of IPs
@@ -40,7 +44,7 @@ func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, error) {
 		return nil, 0, nil
 	}
 	ips := make([]*ufspb.IP, length-reserveLast-reserveFirst)
-	startIP := binary.BigEndian.Uint32(ipv4)
+	startIP := binary.BigEndian.Uint32(ipv4) + reserveFirst
 	for i := reserveFirst; i < length-reserveLast; i++ {
 		ips[i-reserveFirst] = &ufspb.IP{
 			Id:      GetIPName(vlanName, Int64ToStr(int64(startIP))),

@@ -119,15 +119,15 @@ func TestCreateVM(t *testing.T) {
 				MachineLseId: "create-host",
 			}
 			resp, err := CreateVM(ctx, vm1, &ufsAPI.NetworkOption{
-				Ip: "192.168.40.9",
+				Ip: "192.168.40.19",
 			})
 			So(err, ShouldBeNil)
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_DEPLOYING)
 			So(resp.GetMachineLseId(), ShouldEqual, "create-host")
 			dhcp, err := configuration.GetDHCPConfig(ctx, "vm-create-3")
 			So(err, ShouldBeNil)
-			So(dhcp.GetIp(), ShouldEqual, "192.168.40.9")
-			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
+			So(dhcp.GetIp(), ShouldEqual, "192.168.40.19")
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.19"})
 			So(err, ShouldBeNil)
 			So(ip, ShouldHaveLength, 1)
 			So(ip[0].GetOccupied(), ShouldBeTrue)
@@ -149,7 +149,7 @@ func TestCreateVM(t *testing.T) {
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
-			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.9")
+			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.19")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ip[0].GetId()))
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
@@ -228,7 +228,7 @@ func TestUpdateVM(t *testing.T) {
 			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
 			So(changes[2].GetEventLabel(), ShouldEqual, "vm.ip")
 			So(changes[2].GetOldValue(), ShouldEqual, "")
-			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.0")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.11")
 			So(changes[3].GetEventLabel(), ShouldEqual, "vm.resource_state")
 			So(changes[3].GetOldValue(), ShouldEqual, "STATE_REGISTERED")
 			So(changes[3].GetNewValue(), ShouldEqual, "STATE_DEPLOYING")
@@ -276,7 +276,7 @@ func TestUpdateVM(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			_, err = UpdateVMHost(ctx, vm1.Name, &ufsAPI.NetworkOption{
-				Ip: "192.168.40.9",
+				Ip: "192.168.40.19",
 			})
 			So(err, ShouldBeNil)
 
@@ -285,7 +285,7 @@ func TestUpdateVM(t *testing.T) {
 			_, err = configuration.GetDHCPConfig(ctx, "vm-update-3")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
-			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.19"})
 			So(err, ShouldBeNil)
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeFalse)
@@ -302,7 +302,7 @@ func TestUpdateVM(t *testing.T) {
 			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
 			So(changes[2].GetEventLabel(), ShouldEqual, "vm.ip")
 			So(changes[2].GetOldValue(), ShouldEqual, "")
-			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.9")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.19")
 			So(changes[3].GetEventLabel(), ShouldEqual, "vm.resource_state")
 			So(changes[3].GetOldValue(), ShouldEqual, "STATE_REGISTERED")
 			So(changes[3].GetNewValue(), ShouldEqual, "STATE_DEPLOYING")
@@ -311,7 +311,7 @@ func TestUpdateVM(t *testing.T) {
 			So(changes[4].GetOldValue(), ShouldEqual, "vlan-1")
 			So(changes[4].GetNewValue(), ShouldEqual, "")
 			So(changes[5].GetEventLabel(), ShouldEqual, "vm.ip")
-			So(changes[5].GetOldValue(), ShouldEqual, "192.168.40.9")
+			So(changes[5].GetOldValue(), ShouldEqual, "192.168.40.19")
 			So(changes[5].GetNewValue(), ShouldEqual, "")
 			So(changes[6].GetEventLabel(), ShouldEqual, "vm.resource_state")
 			So(changes[6].GetOldValue(), ShouldEqual, "STATE_DEPLOYING")
@@ -322,9 +322,9 @@ func TestUpdateVM(t *testing.T) {
 			So(changes, ShouldHaveLength, 2)
 			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
-			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.9")
+			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.19")
 			So(changes[1].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
-			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.9")
+			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.19")
 			So(changes[1].GetNewValue(), ShouldEqual, "")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
 			So(err, ShouldBeNil)
@@ -445,7 +445,7 @@ func TestDeleteVM(t *testing.T) {
 				MachineLseId: "delete-host",
 			}
 			_, err := CreateVM(ctx, vm1, &ufsAPI.NetworkOption{
-				Ip: "192.168.40.7",
+				Ip: "192.168.40.17",
 			})
 			So(err, ShouldBeNil)
 
@@ -455,8 +455,8 @@ func TestDeleteVM(t *testing.T) {
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYING)
 			dhcp, err := configuration.GetDHCPConfig(ctx, "vm-delete-1")
 			So(err, ShouldBeNil)
-			So(dhcp.GetIp(), ShouldEqual, "192.168.40.7")
-			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.7"})
+			So(dhcp.GetIp(), ShouldEqual, "192.168.40.17")
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.17"})
 			So(err, ShouldBeNil)
 			So(ip, ShouldHaveLength, 1)
 			So(ip[0].GetOccupied(), ShouldBeTrue)
@@ -470,7 +470,7 @@ func TestDeleteVM(t *testing.T) {
 			_, err = configuration.GetDHCPConfig(ctx, "vm-delete-1")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
-			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.7"})
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.17"})
 			So(err, ShouldBeNil)
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeFalse)
@@ -491,7 +491,7 @@ func TestDeleteVM(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 2)
 			So(changes[1].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
-			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.7")
+			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.17")
 			So(changes[1].GetNewValue(), ShouldEqual, "")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
 			So(err, ShouldBeNil)

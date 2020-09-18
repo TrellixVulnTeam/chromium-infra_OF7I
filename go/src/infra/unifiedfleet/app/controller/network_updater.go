@@ -98,6 +98,9 @@ func getSpecifiedIP(ctx context.Context, ipv4Str string) (*ufspb.IP, error) {
 	if err != nil {
 		return nil, errors.Annotate(err, "Fail to query ip entity by %s", ipv4Str).Err()
 	}
+	if len(ips) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "Ip %s cannot be used, it may be reserved automatically", ipv4Str)
+	}
 	if ips[0].GetOccupied() {
 		dhcps, err := configuration.QueryDHCPConfigByPropertyName(ctx, "ipv4", ipv4Str)
 		if err != nil {

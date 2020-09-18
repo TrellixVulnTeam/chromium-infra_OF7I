@@ -10,6 +10,17 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func TestParseVlan(t *testing.T) {
+	Convey("ParseVlan - happy path", t, func() {
+		ips, l, err := ParseVlan("fake_vlan", "192.168.40.0/22")
+		So(err, ShouldBeNil)
+		So(l, ShouldEqual, 1012)
+		So(ips, ShouldHaveLength, 1012)
+		So(ips[0].GetIpv4Str(), ShouldEqual, "192.168.40.11")
+		So(ips[len(ips)-1].GetIpv4Str(), ShouldEqual, "192.168.43.254")
+	})
+}
+
 func TestParseMac(t *testing.T) {
 	Convey("ParseMac - happy path", t, func() {
 		mac, err := ParseMac("12:34:56:78:90:ab")

@@ -30,8 +30,8 @@ func TestGetFreeIP(t *testing.T) {
 		So(res.Failed(), ShouldHaveLength, 0)
 
 		occupiedIPs := []*ufspb.IP{
-			util.FormatIP("browser:40", "192.168.40.3", true),
-			util.FormatIP("browser:40", "192.168.40.5", true),
+			util.FormatIP("browser:40", "192.168.40.13", true),
+			util.FormatIP("browser:40", "192.168.40.15", true),
 		}
 		res, err = configuration.ImportIPs(ctx, occupiedIPs)
 		So(err, ShouldBeNil)
@@ -44,10 +44,10 @@ func TestGetFreeIP(t *testing.T) {
 		for i, ip := range newIPs {
 			ipStrs[i] = util.IPv4IntToStr(ip.GetIpv4())
 		}
-		So(ipStrs, ShouldNotContain, "192.168.40.3")
-		So(ipStrs, ShouldNotContain, "192.168.40.5")
-		So(ipStrs, ShouldContain, "192.168.40.4")
-		// The last ip, 192.168.40.0 - 192.168.40.101
-		So(ipStrs, ShouldContain, "192.168.40.101")
+		So(ipStrs, ShouldNotContain, "192.168.40.13")
+		So(ipStrs, ShouldNotContain, "192.168.40.15")
+		So(ipStrs, ShouldContain, "192.168.40.14")
+		// The last ip, 192.168.40.11 - 192.168.40.111
+		So(ipStrs, ShouldContain, "192.168.40.111")
 	})
 }

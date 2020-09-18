@@ -63,7 +63,7 @@ func TestCreateVlan(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "create-vlan-1")
 			So(resp.GetVlanAddress(), ShouldEqual, "192.168.100.0/27")
-			So(resp.GetCapacityIp(), ShouldEqual, 21)
+			So(resp.GetCapacityIp(), ShouldEqual, 20)
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_SERVING)
 
 			s, err := state.GetStateRecord(ctx, "vlans/create-vlan-1")

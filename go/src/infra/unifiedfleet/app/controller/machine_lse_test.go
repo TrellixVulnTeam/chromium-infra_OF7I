@@ -203,13 +203,13 @@ func TestCreateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 			machineLSE2.Nic = "eth0"
 			So(resp, ShouldResembleProto, machineLSE2)
-			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.0"})
+			ip, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.11"})
 			So(err, ShouldBeNil)
 			So(ip, ShouldHaveLength, 1)
 			So(ip[0].GetOccupied(), ShouldBeTrue)
 			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-with-ip")
 			So(err, ShouldBeNil)
-			So(dhcp.GetIp(), ShouldEqual, "192.168.40.0")
+			So(dhcp.GetIp(), ShouldEqual, "192.168.40.11")
 			s, err := state.GetStateRecord(ctx, "hosts/machinelse-with-ip")
 			So(err, ShouldBeNil)
 			So(s.GetState(), ShouldEqual, ufspb.State_STATE_DEPLOYING)
@@ -915,7 +915,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
 			So(changes[2].GetEventLabel(), ShouldEqual, "machine_lse.ip")
 			So(changes[2].GetOldValue(), ShouldEqual, "")
-			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.0")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.11")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
@@ -981,11 +981,11 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(err, ShouldBeNil)
 			_, err = UpdateMachineLSEHost(ctx, machineLSE1.Name, &ufsAPI.NetworkOption{
 				Vlan: "vlan-1",
-				Ip:   "192.168.40.1",
+				Ip:   "192.168.40.12",
 				Nic:  "eth0-delete",
 			})
 			So(err, ShouldBeNil)
-			oldIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.1"})
+			oldIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.12"})
 			So(err, ShouldBeNil)
 			So(oldIPs, ShouldHaveLength, 1)
 			So(oldIPs[0].GetOccupied(), ShouldBeTrue)
@@ -995,7 +995,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			_, err = configuration.GetDHCPConfig(ctx, "machinelse-update-host-delete-ip")
 			// Not found error
 			So(err, ShouldNotBeNil)
-			ip2, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.1"})
+			ip2, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.12"})
 			So(err, ShouldBeNil)
 			So(ip2, ShouldHaveLength, 1)
 			So(ip2[0].GetOccupied(), ShouldBeFalse)
@@ -1012,7 +1012,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
 			So(changes[2].GetEventLabel(), ShouldEqual, "machine_lse.ip")
 			So(changes[2].GetOldValue(), ShouldEqual, "")
-			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.1")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.12")
 			// From deleting host
 			So(changes[3].GetEventLabel(), ShouldEqual, "machine_lse.nic")
 			So(changes[3].GetOldValue(), ShouldEqual, "eth0-delete")
@@ -1021,7 +1021,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[4].GetOldValue(), ShouldEqual, "vlan-1")
 			So(changes[4].GetNewValue(), ShouldEqual, "")
 			So(changes[5].GetEventLabel(), ShouldEqual, "machine_lse.ip")
-			So(changes[5].GetOldValue(), ShouldEqual, "192.168.40.1")
+			So(changes[5].GetOldValue(), ShouldEqual, "192.168.40.12")
 			So(changes[5].GetNewValue(), ShouldEqual, "")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host-delete-ip")
 			So(err, ShouldBeNil)
@@ -1037,9 +1037,9 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes, ShouldHaveLength, 2)
 			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
-			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.1")
+			So(changes[0].GetNewValue(), ShouldEqual, "192.168.40.12")
 			So(changes[1].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
-			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.1")
+			So(changes[1].GetOldValue(), ShouldEqual, "192.168.40.12")
 			So(changes[1].GetNewValue(), ShouldEqual, "")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", oldIPs[0].GetId()))
 			So(err, ShouldBeNil)
@@ -1106,14 +1106,14 @@ func TestUpdateMachineLSE(t *testing.T) {
 
 			_, err = UpdateMachineLSEHost(ctx, machineLSE1.Name, &ufsAPI.NetworkOption{
 				Vlan: "vlan-1",
-				Ip:   "192.168.40.9",
+				Ip:   "192.168.40.19",
 				Nic:  "eth0-user",
 			})
 			So(err, ShouldBeNil)
 			dhcp, err := configuration.GetDHCPConfig(ctx, "machinelse-update-host-user")
 			So(err, ShouldBeNil)
-			So(dhcp.GetIp(), ShouldEqual, "192.168.40.9")
-			ips, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.9"})
+			So(dhcp.GetIp(), ShouldEqual, "192.168.40.19")
+			ips, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "192.168.40.19"})
 			So(err, ShouldBeNil)
 			So(ips, ShouldHaveLength, 1)
 			So(ips[0].GetOccupied(), ShouldBeTrue)
@@ -1130,7 +1130,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[1].GetNewValue(), ShouldEqual, "vlan-1")
 			So(changes[2].GetEventLabel(), ShouldEqual, "machine_lse.ip")
 			So(changes[2].GetOldValue(), ShouldEqual, "")
-			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.9")
+			So(changes[2].GetNewValue(), ShouldEqual, "192.168.40.19")
 			changes, err = history.QueryChangesByPropertyName(ctx, "name", "states/hosts/machinelse-update-host-user")
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
