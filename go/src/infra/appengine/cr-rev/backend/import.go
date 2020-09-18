@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"go.chromium.org/luci/common/logging"
 	gitilesProto "go.chromium.org/luci/common/proto/gitiles"
 	"golang.org/x/time/rate"
 
 	"infra/appengine/cr-rev/backend/gitiles"
+	"infra/appengine/cr-rev/backend/pubsub"
 	"infra/appengine/cr-rev/backend/repoimport"
 	"infra/appengine/cr-rev/common"
 	"infra/appengine/cr-rev/config"
@@ -36,7 +38,19 @@ func setupImport(ctx context.Context, cfg *config.Config) {
 		go importController.Start(ctx)
 
 		initialHostImport(ctx, importController, host)
-		// TODO(https://crbug.com/1109358): Consume pubsub
+
+		pubsubSubscription := host.GetPubsubSubscription()
+		if pubsubSubscription == "" {
+			logging.Warningf(ctx, "No pubsub subscription found for host: %s", host.GetName())
+			continue
+		}
+
+		pubsubClient, err := pubsub.NewClient(ctx, os.Getenv("GAE_SERVICE"), pubsubSubscription)
+		if err != nil {
+			logging.Errorf(ctx, "Couldn't subscribe to host %s, pubsub: %s", host.GetName(), pubsubSubscription)
+			continue
+		}
+		go pubsub.Subscribe(ctx, pubsubClient, pubsub.Processor(host))
 	}
 }
 
