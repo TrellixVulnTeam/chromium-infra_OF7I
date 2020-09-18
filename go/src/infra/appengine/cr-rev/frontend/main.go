@@ -7,6 +7,7 @@
 package main
 
 import (
+	"infra/appengine/cr-rev/frontend/api/v1"
 	"infra/appengine/cr-rev/frontend/redirect"
 	"net/http"
 
@@ -55,6 +56,10 @@ func main() {
 		redirect := redirect.NewRules(redirect.NewGitilesRedirect())
 
 		srv.Routes.GET("/", mw, handleIndex)
+
+		apiV1 := srv.Routes.Subrouter("/_ah/api/crrev/v1")
+		api.NewRESTServer(apiV1, api.NewServer(redirect))
+
 		// NotFound is used as catch-all.
 		srv.Routes.NotFound(mw, func(c *router.Context) {
 			handleRedirect(redirect, c)
