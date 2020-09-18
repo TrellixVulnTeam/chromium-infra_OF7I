@@ -9,6 +9,7 @@
 .PHONY: gen
 gen:
 	cproto config
+	cproto frontend/api/v1
 	protoc backend/pubsub/source_repo_event.proto --go_out=../../../
 
 .PHONY: test

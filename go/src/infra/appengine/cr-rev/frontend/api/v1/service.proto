@@ -1,0 +1,105 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// This proto file defines cr-rev API v1. It is based on previous version of
+// REST cr-rev API and it has the goal to keep clients fully compatible.
+// json fields are used to simplify conversion of legacy naming scheme.
+// API v2 needs be introduced to fix flaws in API v1 design.
+
+// All Request and Response parameters are required.
+
+syntax = "proto3";
+
+package crrev;
+
+option go_package = "infra/appengine/cr-rev/frontend/api/v1;api";
+
+message RedirectRequest {
+  // query is equal to URL path of crrev main redirect logic. For example, it
+  // can be "/3" (redirect to chromium/src commit with position 3) or
+  // /{some_commit_hash} (redirect to some repository based on
+  // some_commit_hash), etc.
+  string query = 1;
+}
+
+message RedirectResponse {
+  // git_hash is a full git commit hash of matched commit that is used for
+  // redirect.
+  string git_hash = 1 [json_name="git_sha"];
+  // host is googlesource host (e.g. chromium).
+  string host = 2 [json_name="project"];
+  // repository is Git repository (e.g. chromium/src)
+  string repository = 3 [json_name="repo"];
+  // redirect_url is Gitiles URL of the commit, the same URL that user is
+  // redirected to when using crrev's main redirect logic.
+  string redirect_url = 4;
+}
+
+message NumberingRequest {
+  // host is googlesource host (e.g. chromium).
+  string host = 1;
+  // repository is Git repository (e.g. chromium/src)
+  string repository = 2;
+  // position_ref is name of position defined in value of git-footer git-svn-id
+  // or Cr-Commit-Position (e.g. refs/heads/master,
+  // svn://svn.chromium.org/chrome/trunk/src)
+  string position_ref = 3;
+  // position_number is sequential identifier of commit in given branch
+  // (position_ref).
+  int64 position_number = 4;
+}
+
+message NumberingResponse {
+  // git_hash is a full git commit hash of matched commit that is used for
+  // redirect.
+  string git_hash = 1 [json_name="git_sha"];
+  // position_number matches NumberingRequest position_number. Probably useless
+  // to clients, but kept for backward compatibility.
+  int64 position_number = 2 [json_name="number"];
+
+  // host matches NumberingRequest host. Probably useless to clients, but kept
+  // for backward compatibility.
+  string host = 3 [json_name="project"];
+  // repository matches NumberingRequest repository. Probably useless to
+  // clients, but kept for backward compatibility.
+  string repository = 4 [json_name="repo"];
+}
+
+message CommitRequest {
+  // git_hash is a full git commit hash of desired commit.
+  string git_hash = 1;
+}
+
+message CommitResponse {
+  // git_hash is a full git commit hash of matched commit that is used for
+  // redirect.
+  string git_hash = 1 [json_name="git_sha"];
+  // host is googlesource host (e.g. chromium).
+  string host = 2 [json_name="project"];
+  // repository is Git repository (e.g. chromium/src)
+  string repository = 3 [json_name="repo"];
+  // position_number is sequential identifier of commit in given branch
+  // (position_ref).
+  int64 position_number = 4 [json_name="number"];
+  // redirect_url is Gitiles URL of the commit, the same URL that user is
+  // redirected to when using crrev's main redirect logic.
+  string redirect_url = 5;
+}
+
+service Crrev {
+  // Redirect implements the same logic as the main crrev redirect, but returns
+  // redirect and commit information in body instead of HTTP redirect.
+  rpc Redirect(RedirectRequest) returns (RedirectResponse);
+
+  // Numbering returns commit that matches desired position of commit, based on
+  // NumberingRequest parameters. Commit position is based on git-footer
+  // git-svn-id or Cr-Commit-Position.
+  rpc Numbering(NumberingRequest) returns (NumberingResponse);
+
+  // Commit returns commit with desired commit hash. If there are multiple
+  // commits with the same commit hash (which happens with forks and mirrors),
+  // it checks priorities based on config. It is possible that priorities are
+  // the same. In such case, there is no guarantee which one will be returned.
+  rpc Commit(CommitRequest) returns (CommitResponse);
+}
