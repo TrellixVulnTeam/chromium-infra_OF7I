@@ -472,6 +472,10 @@ class Converter(object):
         if not api_delta.HasField('update_mask'):
           err_agg.AddErrorMessage(
               '`update_mask` must be set for {} delta.', api_delta.issue.name)
+        elif not api_delta.update_mask.IsValidForDescriptor(
+            issue_objects_pb2.Issue.DESCRIPTOR):
+          err_agg.AddErrorMessage(
+              'Invalid `update_mask` for {} delta.', api_delta.issue.name)
 
     ingested = []
     for iid, api_delta in zip(issue_ids, issue_deltas):
@@ -620,6 +624,10 @@ class Converter(object):
       if not approval_delta.HasField('update_mask'):
         raise exceptions.InputException(
             '`update_mask` must be set for %s delta.' % approval_name)
+      elif not approval_delta.update_mask.IsValidForDescriptor(
+          issue_objects_pb2.ApprovalValue.DESCRIPTOR):
+        raise exceptions.InputException(
+            'Invalid `update_mask` for %s delta.' % approval_name)
       filtered_value = issue_objects_pb2.ApprovalValue()
       approval_delta.update_mask.MergeMessage(
           approval_delta.approval_value,

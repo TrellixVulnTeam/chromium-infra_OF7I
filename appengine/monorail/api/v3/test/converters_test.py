@@ -1132,18 +1132,22 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected = [(78001, expected_delta), (78002, expected_delta)]
     self.assertEqual(actual, expected)
 
-  def testIngestIssueDeltas_UpdateMaskNotSet(self):
+  def testIngestIssueDeltas_InvalidMask(self):
     self.services.project.TestAddProject('proj-780', project_id=780)
     issue_1 = self._Issue(780, 1)
     self.services.issue.TestAddIssue(issue_1)
     issue_2 = self._Issue(780, 2)
     self.services.issue.TestAddIssue(issue_2)
+    issue_3 = self._Issue(780, 3)
+    self.services.issue.TestAddIssue(issue_3)
     api_deltas = []
+    err_msgs = []
 
     api_issue_1 = issue_objects_pb2.Issue(name='projects/proj-780/issues/1')
     api_delta_1 = issues_pb2.IssueDelta(issue=api_issue_1)
     api_deltas.append(api_delta_1)
-    exp_err = '`update_mask` must be set for projects/proj-780/issues/1 delta.'
+    err_msgs.append(
+        '`update_mask` must be set for projects/proj-780/issues/1 delta.')
 
     api_issue_2 = issue_objects_pb2.Issue(name='projects/proj-780/issues/2')
     api_delta_2 = issues_pb2.IssueDelta(
@@ -1151,7 +1155,16 @@ class ConverterFunctionsTest(unittest.TestCase):
         update_mask=field_mask_pb2.FieldMask())  # Empty but set is fine.
     api_deltas.append(api_delta_2)
 
-    with self.assertRaisesRegexp(exceptions.InputException, exp_err):
+    api_issue_3 = issue_objects_pb2.Issue(name='projects/proj-780/issues/3')
+    api_delta_3 = issues_pb2.IssueDelta(
+        issue=api_issue_3,
+        update_mask=field_mask_pb2.FieldMask(paths=['chicken']))
+    api_deltas.append(api_delta_3)
+    err_msgs.append(
+        'Invalid `update_mask` for projects/proj-780/issues/3 delta.')
+
+    with self.assertRaisesRegexp(exceptions.InputException,
+                                 '\n'.join(err_msgs)):
       self.converter.IngestIssueDeltas(api_deltas)
 
   def testIngestIssueDeltas_OutputOnlyIgnored(self):
@@ -1292,6 +1305,16 @@ class ConverterFunctionsTest(unittest.TestCase):
         (self.issue_1.issue_id, self.approval_def_1_id, expected_delta)
     ]
     self.assertEqual(actual, expected_delta_specifications)
+
+  def testIngestApprovalDeltas_InvalidMask(self):
+    av_name = (
+        'projects/proj/issues/1/approvalValues/%d' % self.approval_def_1_id)
+    approval_delta = issues_pb2.ApprovalDelta(
+        approval_value=issue_objects_pb2.ApprovalValue(name=av_name),
+        update_mask=field_mask_pb2.FieldMask(paths=['chicken']))
+    expected_err = 'Invalid `update_mask` for %s delta' % av_name
+    with self.assertRaisesRegexp(exceptions.InputException, expected_err):
+      self.converter.IngestApprovalDeltas([approval_delta], self.user_1.user_id)
 
   def testIngestApprovalDeltas_FilterFieldValues(self):
     av_name = (
