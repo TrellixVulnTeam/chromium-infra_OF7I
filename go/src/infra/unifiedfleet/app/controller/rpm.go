@@ -11,12 +11,14 @@ import (
 
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/gae/service/datastore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
 	"infra/unifiedfleet/app/model/inventory"
 	"infra/unifiedfleet/app/model/registration"
+	ufsUtil "infra/unifiedfleet/app/util"
 )
 
 // CreateRPM creates a new rpm in datastore.
@@ -59,11 +61,37 @@ func ListRPMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 // Delete if this RPM is not referenced by other resources in the datastore.
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteRPM(ctx context.Context, id string) error {
-	err := validateDeleteRPM(ctx, id)
-	if err != nil {
-		return err
+	return deleteRPMHelper(ctx, id, true)
+}
+
+func deleteRPMHelper(ctx context.Context, id string, inTransaction bool) error {
+	f := func(ctx context.Context) error {
+		rpm := &ufspb.RPM{Name: id}
+		hc := getRPMHistoryClient(rpm)
+		hc.LogRPMChanges(rpm, nil)
+		// Validate input
+		if err := validateDeleteRPM(ctx, id); err != nil {
+			return errors.Annotate(err, "Validation failed - unable to delete rpm %s", id).Err()
+		}
+		if err := registration.DeleteRPM(ctx, id); err != nil {
+			return errors.Annotate(err, "Delete failed - unable to delete rpm %s", id).Err()
+		}
+		// Update state
+		hc.stUdt.deleteStateHelper(ctx)
+		// Delete ip configs
+		if err := hc.netUdt.deleteDHCPHelper(ctx); err != nil {
+			return err
+		}
+		return hc.SaveChangeEvents(ctx)
 	}
-	return registration.DeleteRPM(ctx, id)
+	if inTransaction {
+		if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+			logging.Errorf(ctx, "Failed to delete rpm in datastore: %s", err)
+			return err
+		}
+		return nil
+	}
+	return f(ctx)
 }
 
 // ReplaceRPM replaces an old RPM with new RPM in datastore
@@ -123,4 +151,15 @@ func validateDeleteRPM(ctx context.Context, id string) error {
 		return status.Errorf(codes.FailedPrecondition, errorMsg.String())
 	}
 	return nil
+}
+
+func getRPMHistoryClient(rpm *ufspb.RPM) *HistoryClient {
+	return &HistoryClient{
+		stUdt: &stateUpdater{
+			ResourceName: ufsUtil.AddPrefix(ufsUtil.RPMCollection, rpm.Name),
+		},
+		netUdt: &networkUpdater{
+			Hostname: rpm.Name,
+		},
+	}
 }

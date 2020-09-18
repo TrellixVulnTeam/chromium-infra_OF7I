@@ -13,6 +13,7 @@ import (
 	"google.golang.org/genproto/protobuf/field_mask"
 
 	ufspb "infra/unifiedfleet/api/v1/proto"
+	"infra/unifiedfleet/app/model/configuration"
 	. "infra/unifiedfleet/app/model/datastore"
 	"infra/unifiedfleet/app/model/history"
 	"infra/unifiedfleet/app/model/inventory"
@@ -235,19 +236,85 @@ func TestDeleteRack(t *testing.T) {
 			So(msgs[0].Delete, ShouldBeTrue)
 		})
 
-		Convey("Delete rack with switches, kvms and rpms - happy path", func() {
+		Convey("Delete rack with rpms - happy path", func() {
+			rpm := &ufspb.RPM{
+				Name: "rpm-6",
+				Rack: "rack-6",
+			}
+			_, err := registration.CreateRPM(ctx, rpm)
+			So(err, ShouldBeNil)
+
+			rack := &ufspb.Rack{
+				Name: "rack-6",
+				Rack: &ufspb.Rack_ChromeBrowserRack{
+					ChromeBrowserRack: &ufspb.ChromeBrowserRack{},
+				},
+			}
+			_, err = registration.CreateRack(ctx, rack)
+			So(err, ShouldBeNil)
+
+			_, err = state.BatchUpdateStates(ctx, []*ufspb.StateRecord{
+				{
+					ResourceName: "rpms/rpm-6",
+					State:        ufspb.State_STATE_SERVING,
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname: "rpm-6",
+					Ip:       "1.2.3.6",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateIPs(ctx, []*ufspb.IP{
+				{
+					Id:       "ip2",
+					Occupied: true,
+					Ipv4Str:  "1.2.3.6",
+					Vlan:     "fake_vlan",
+					Ipv4:     uint32(100),
+				},
+			})
+			So(err, ShouldBeNil)
+
+			err = DeleteRack(ctx, "rack-6")
+			So(err, ShouldBeNil)
+
+			_, err = registration.GetRack(ctx, "rack-6")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			_, err = registration.GetRPM(ctx, "rpm-6")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = configuration.GetDHCPConfig(ctx, "kvm-6")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "1.2.3.6"})
+			So(err, ShouldBeNil)
+			So(resIPs, ShouldHaveLength, 1)
+			So(resIPs[0].Occupied, ShouldBeFalse)
+
+			_, err = state.GetStateRecord(ctx, "racks/rack-6")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = state.GetStateRecord(ctx, "rpms/rpm-6")
+			So(err.Error(), ShouldContainSubstring, NotFound)
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-6")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRetire)
+			So(changes[0].GetEventLabel(), ShouldEqual, "rack")
+		})
+
+		Convey("Delete rack with switches, kvms - happy path", func() {
 			kvm := &ufspb.KVM{
 				Name: "kvm-5",
 				Rack: "rack-5",
 			}
 			_, err := registration.CreateKVM(ctx, kvm)
-			So(err, ShouldBeNil)
-
-			rpm := &ufspb.RPM{
-				Name: "rpm-5",
-				Rack: "rack-5",
-			}
-			_, err = registration.CreateRPM(ctx, rpm)
 			So(err, ShouldBeNil)
 
 			switch5 := &ufspb.Switch{
@@ -279,9 +346,22 @@ func TestDeleteRack(t *testing.T) {
 					ResourceName: "kvms/kvm-5",
 					State:        ufspb.State_STATE_SERVING,
 				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
 				{
-					ResourceName: "rpms/rpm-5",
-					State:        ufspb.State_STATE_SERVING,
+					Hostname: "kvm-5",
+					Ip:       "1.2.3.4",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateIPs(ctx, []*ufspb.IP{
+				{
+					Id:       "ip1",
+					Occupied: true,
+					Ipv4Str:  "1.2.3.4",
+					Vlan:     "fake_vlan",
+					Ipv4:     uint32(100),
 				},
 			})
 			So(err, ShouldBeNil)
@@ -296,10 +376,13 @@ func TestDeleteRack(t *testing.T) {
 			_, err = registration.GetKVM(ctx, "kvm-5")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
-
-			_, err = registration.GetRPM(ctx, "rpm-5")
+			_, err = configuration.GetDHCPConfig(ctx, "kvm-5")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "1.2.3.4"})
+			So(err, ShouldBeNil)
+			So(resIPs, ShouldHaveLength, 1)
+			So(resIPs[0].Occupied, ShouldBeFalse)
 
 			_, err = registration.GetSwitch(ctx, "switch-5")
 			So(err, ShouldNotBeNil)
@@ -310,8 +393,6 @@ func TestDeleteRack(t *testing.T) {
 			_, err = state.GetStateRecord(ctx, "switches/switch-5")
 			So(err.Error(), ShouldContainSubstring, NotFound)
 			_, err = state.GetStateRecord(ctx, "kvms/kvm-5")
-			So(err.Error(), ShouldContainSubstring, NotFound)
-			_, err = state.GetStateRecord(ctx, "rpms/rpm-5")
 			So(err.Error(), ShouldContainSubstring, NotFound)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "racks/rack-5")

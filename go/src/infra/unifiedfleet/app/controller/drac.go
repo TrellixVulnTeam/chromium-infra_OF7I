@@ -266,6 +266,10 @@ func ListDracs(ctx context.Context, pageSize int32, pageToken, filter string, ke
 
 // DeleteDrac deletes the drac in datastore
 func DeleteDrac(ctx context.Context, id string) error {
+	return deleteDracHelper(ctx, id, true)
+}
+
+func deleteDracHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
 		drac := &ufspb.Drac{Name: id}
 		hc := getDracHistoryClient(drac)
@@ -282,11 +286,13 @@ func DeleteDrac(ctx context.Context, id string) error {
 
 		return hc.SaveChangeEvents(ctx)
 	}
-
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return errors.Annotate(err, "DeleteDrac - failed to delete drac in datastore: %s", id).Err()
+	if inTransaction {
+		if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+			return errors.Annotate(err, "DeleteDrac - failed to delete drac in datastore: %s", id).Err()
+		}
+		return nil
 	}
-	return nil
+	return f(ctx)
 }
 
 // ImportDracs creates or updates a batch of dracs in datastore

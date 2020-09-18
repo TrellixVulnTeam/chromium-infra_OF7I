@@ -431,6 +431,24 @@ func TestDeleteMachine(t *testing.T) {
 			_, err = registration.CreateDrac(ctx, drac)
 			So(err, ShouldBeNil)
 
+			_, err = configuration.BatchUpdateDHCPs(ctx, []*ufspb.DHCPConfig{
+				{
+					Hostname: "drac-5",
+					Ip:       "1.2.3.5",
+				},
+			})
+			So(err, ShouldBeNil)
+			_, err = configuration.BatchUpdateIPs(ctx, []*ufspb.IP{
+				{
+					Id:       "ip3",
+					Occupied: true,
+					Ipv4Str:  "1.2.3.5",
+					Vlan:     "fake_vlan",
+					Ipv4:     uint32(100),
+				},
+			})
+			So(err, ShouldBeNil)
+
 			machine := &ufspb.Machine{
 				Name: "machine-5",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
@@ -454,6 +472,13 @@ func TestDeleteMachine(t *testing.T) {
 			_, err = registration.GetDrac(ctx, "drac-5")
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldContainSubstring, NotFound)
+			_, err = configuration.GetDHCPConfig(ctx, "drac-5")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "1.2.3.5"})
+			So(err, ShouldBeNil)
+			So(resIPs, ShouldHaveLength, 1)
+			So(resIPs[0].Occupied, ShouldBeFalse)
 
 			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-4")
 			So(err, ShouldBeNil)

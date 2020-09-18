@@ -9,20 +9,6 @@ import (
 	"infra/unifiedfleet/app/util"
 )
 
-// LogDeleteRackChanges logs the changes for deleting rack
-func (hc *HistoryClient) LogDeleteRackChanges(rackID string, switchIDs, kvmIDs, rpmIDs []string) {
-	hc.LogRackChanges(&ufspb.Rack{Name: rackID}, nil)
-	for _, m := range switchIDs {
-		hc.LogSwitchChanges(&ufspb.Switch{Name: m}, nil)
-	}
-	for _, m := range kvmIDs {
-		hc.LogKVMChanges(&ufspb.KVM{Name: m}, nil)
-	}
-	for _, m := range rpmIDs {
-		hc.LogRPMChanges(&ufspb.RPM{Name: m}, nil)
-	}
-}
-
 // LogAddRackChanges logs the changes for adding rack
 func (hc *HistoryClient) LogAddRackChanges(rack *ufspb.Rack, switches []*ufspb.Switch, kvms []*ufspb.KVM, rpms []*ufspb.RPM) {
 	hc.LogRackChanges(nil, rack)
@@ -34,17 +20,6 @@ func (hc *HistoryClient) LogAddRackChanges(rack *ufspb.Rack, switches []*ufspb.S
 	}
 	for _, m := range rpms {
 		hc.LogRPMChanges(nil, m)
-	}
-}
-
-// LogDeleteMachineChanges logs the changes for deleting machine
-func (hc *HistoryClient) LogDeleteMachineChanges(machineID string, nicIDs []string, dracID string) {
-	hc.LogMachineChanges(&ufspb.Machine{Name: machineID}, nil)
-	for _, m := range nicIDs {
-		hc.LogNicChanges(&ufspb.Nic{Name: m}, nil)
-	}
-	if dracID != "" {
-		hc.LogDracChanges(&ufspb.Drac{Name: dracID}, nil)
 	}
 }
 

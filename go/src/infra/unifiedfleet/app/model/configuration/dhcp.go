@@ -195,6 +195,8 @@ func DeleteDHCP(ctx context.Context, id string) error {
 }
 
 // DeleteDHCPs deletes a batch of dhcps
+//
+// This function doesn't throw exceptions if the resourceName doesn't exist.
 func DeleteDHCPs(ctx context.Context, resourceNames []string) *ufsds.OpResults {
 	protos := make([]proto.Message, len(resourceNames))
 	for i, m := range resourceNames {

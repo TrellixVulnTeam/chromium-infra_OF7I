@@ -363,7 +363,6 @@ func GetAllMachines(ctx context.Context) (*ufsds.OpResults, error) {
 // If there are any references, delete will be rejected and an error will be returned.
 func DeleteMachine(ctx context.Context, id string) error {
 	f := func(ctx context.Context) error {
-		hc := getMachineHistoryClient(&ufspb.Machine{Name: id})
 		// 1. Get the machine
 		machine, err := registration.GetMachine(ctx, id)
 		if status.Code(err) == codes.Internal {
@@ -390,14 +389,14 @@ func DeleteMachine(ctx context.Context, id string) error {
 			if err != nil {
 				return err
 			}
-			if nicIDs != nil && len(nicIDs) > 0 {
-				if err = registration.BatchDeleteNics(ctx, nicIDs); err != nil {
-					return errors.Annotate(err, "DeleteMachine - failed to batch delete nics for machine %s", machine.GetName()).Err()
+			for _, nicID := range nicIDs {
+				if err := deleteNicHelper(ctx, nicID, false); err != nil {
+					return errors.Annotate(err, "DeleteMachine - failed to delete associated nic %s", nicID).Err()
 				}
 			}
 			if dracID != "" {
-				if err = registration.DeleteDrac(ctx, dracID); err != nil {
-					return errors.Annotate(err, "DeleteMachine - failed to delete drac %s for machine %s", dracID, machine.GetName()).Err()
+				if err := deleteDracHelper(ctx, dracID, false); err != nil {
+					return errors.Annotate(err, "DeleteMachine - failed to delete associated drac %s", dracID).Err()
 				}
 			}
 		}
@@ -405,8 +404,9 @@ func DeleteMachine(ctx context.Context, id string) error {
 		if err := registration.DeleteMachine(ctx, id); err != nil {
 			return err
 		}
+		hc := getMachineHistoryClient(&ufspb.Machine{Name: id})
 		hc.stUdt.deleteStateHelper(ctx)
-		hc.LogDeleteMachineChanges(id, nicIDs, dracID)
+		hc.LogMachineChanges(&ufspb.Machine{Name: id}, nil)
 		return hc.SaveChangeEvents(ctx)
 	}
 

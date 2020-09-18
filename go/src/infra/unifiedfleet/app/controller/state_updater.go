@@ -180,30 +180,3 @@ func (su *stateUpdater) addRackStateHelper(ctx context.Context, rack *ufspb.Rack
 	}
 	return nil
 }
-
-func (su *stateUpdater) deleteRackStateHelper(ctx context.Context, rack *ufspb.Rack, switchIDs, kvmIDs, rpmIDs []string) error {
-	toDeleteResources := make([]string, 0)
-	for _, m := range switchIDs {
-		r := util.AddPrefix(util.SwitchCollection, m)
-		toDeleteResources = append(toDeleteResources, r)
-		oldS, _ := state.GetStateRecord(ctx, r)
-		su.logChanges(LogStateChanges(oldS, nil))
-	}
-	for _, m := range kvmIDs {
-		r := util.AddPrefix(util.KVMCollection, m)
-		toDeleteResources = append(toDeleteResources, r)
-		oldS, _ := state.GetStateRecord(ctx, r)
-		su.logChanges(LogStateChanges(oldS, nil))
-	}
-	for _, m := range rpmIDs {
-		r := util.AddPrefix(util.RPMCollection, m)
-		toDeleteResources = append(toDeleteResources, r)
-		oldS, _ := state.GetStateRecord(ctx, r)
-		su.logChanges(LogStateChanges(oldS, nil))
-	}
-	toDeleteResources = append(toDeleteResources, su.ResourceName)
-	oldS, _ := state.GetStateRecord(ctx, su.ResourceName)
-	su.logChanges(LogStateChanges(oldS, nil))
-	state.DeleteStates(ctx, toDeleteResources)
-	return nil
-}

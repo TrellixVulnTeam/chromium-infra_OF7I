@@ -194,6 +194,10 @@ func ListSwitches(ctx context.Context, pageSize int32, pageToken, filter string,
 // 3. Get the rack associated with this switch
 // 4. Update the rack by removing the association with this switch
 func DeleteSwitch(ctx context.Context, id string) error {
+	return deleteSwitchHelper(ctx, id, true)
+}
+
+func deleteSwitchHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
 		hc := getSwitchHistoryClient(&ufspb.Switch{Name: id})
 		hc.LogSwitchChanges(&ufspb.Switch{Name: id}, nil)
@@ -211,12 +215,14 @@ func DeleteSwitch(ctx context.Context, id string) error {
 		hc.stUdt.deleteStateHelper(ctx)
 		return hc.SaveChangeEvents(ctx)
 	}
-
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to delete switch in datastore: %s", err)
-		return err
+	if inTransaction {
+		if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+			logging.Errorf(ctx, "Failed to delete switch in datastore: %s", err)
+			return err
+		}
+		return nil
 	}
-	return nil
+	return f(ctx)
 }
 
 // ReplaceSwitch replaces an old Switch with new Switch in datastore

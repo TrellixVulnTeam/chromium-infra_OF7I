@@ -191,6 +191,10 @@ func ListNics(ctx context.Context, pageSize int32, pageToken, filter string, key
 
 // DeleteNic deletes the nic in datastore
 func DeleteNic(ctx context.Context, id string) error {
+	return deleteNicHelper(ctx, id, true)
+}
+
+func deleteNicHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
 		nic := &ufspb.Nic{Name: id}
 		hc := getNicHistoryClient(nic)
@@ -206,11 +210,13 @@ func DeleteNic(ctx context.Context, id string) error {
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
-
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		return errors.Annotate(err, "DeleteNic - failed to delete nic in datastore: %s", id).Err()
+	if inTransaction {
+		if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+			return errors.Annotate(err, "DeleteNic - failed to delete nic in datastore: %s", id).Err()
+		}
+		return nil
 	}
-	return nil
+	return f(ctx)
 }
 
 // ImportNetworkInterfaces creates or updates a batch of nics, dracs, and dhcps in datastore

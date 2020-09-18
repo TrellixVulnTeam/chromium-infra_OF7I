@@ -242,6 +242,10 @@ func ListKVMs(ctx context.Context, pageSize int32, pageToken, filter string, key
 
 // DeleteKVM deletes the kvm in datastore
 func DeleteKVM(ctx context.Context, id string) error {
+	return deleteKVMHelper(ctx, id, true)
+}
+
+func deleteKVMHelper(ctx context.Context, id string, inTransaction bool) error {
 	f := func(ctx context.Context) error {
 		kvm := &ufspb.KVM{Name: id}
 		hc := getKVMHistoryClient(kvm)
@@ -265,12 +269,14 @@ func DeleteKVM(ctx context.Context, id string) error {
 		}
 		return hc.SaveChangeEvents(ctx)
 	}
-
-	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
-		logging.Errorf(ctx, "Failed to delete kvm in datastore: %s", err)
-		return err
+	if inTransaction {
+		if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+			logging.Errorf(ctx, "Failed to delete kvm in datastore: %s", err)
+			return err
+		}
+		return nil
 	}
-	return nil
+	return f(ctx)
 }
 
 // ReplaceKVM replaces an old KVM with new KVM in datastore

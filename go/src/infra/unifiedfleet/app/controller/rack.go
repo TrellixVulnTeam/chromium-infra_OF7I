@@ -303,8 +303,6 @@ func ListRacks(ctx context.Context, pageSize int32, pageToken, filter string, ke
 func DeleteRack(ctx context.Context, id string) error {
 	// [TODO]: Add logic for Chrome OS
 	f := func(ctx context.Context) error {
-		hc := getRackClientHistory(&ufspb.Rack{Name: id})
-
 		// Get the rack
 		rack, err := registration.GetRack(ctx, id)
 		if status.Code(err) == codes.Internal {
@@ -336,19 +334,19 @@ func DeleteRack(ctx context.Context, id string) error {
 			if err != nil {
 				return err
 			}
-			if switchIDs != nil && len(switchIDs) > 0 {
-				if err = registration.BatchDeleteSwitches(ctx, switchIDs); err != nil {
-					return errors.Annotate(err, "Failed to delete associated switches %s", switchIDs).Err()
+			for _, switchID := range switchIDs {
+				if err := deleteSwitchHelper(ctx, switchID, false); err != nil {
+					return errors.Annotate(err, "Failed to delete associated switch %s", switchID).Err()
 				}
 			}
-			if kvmIDs != nil && len(kvmIDs) > 0 {
-				if err = registration.BatchDeleteKVMs(ctx, kvmIDs); err != nil {
-					return errors.Annotate(err, "Failed to delete associated KVMs %s", kvmIDs).Err()
+			for _, kvmID := range kvmIDs {
+				if err := deleteKVMHelper(ctx, kvmID, false); err != nil {
+					return errors.Annotate(err, "Failed to delete associated kvm %s", kvmID).Err()
 				}
 			}
-			if rpmIDs != nil && len(rpmIDs) > 0 {
-				if err = registration.BatchDeleteRPMs(ctx, rpmIDs); err != nil {
-					return errors.Annotate(err, "Failed to delete associated RPMs %s", rpmIDs).Err()
+			for _, rpmID := range rpmIDs {
+				if err := deleteRPMHelper(ctx, rpmID, false); err != nil {
+					return errors.Annotate(err, "Failed to delete associated rpm %s", rpmID).Err()
 				}
 			}
 		}
@@ -357,8 +355,9 @@ func DeleteRack(ctx context.Context, id string) error {
 		if err := registration.DeleteRack(ctx, id); err != nil {
 			return err
 		}
-		hc.LogDeleteRackChanges(id, switchIDs, kvmIDs, rpmIDs)
-		hc.stUdt.deleteRackStateHelper(ctx, rack, switchIDs, kvmIDs, rpmIDs)
+		hc := getRackClientHistory(&ufspb.Rack{Name: id})
+		hc.LogRackChanges(&ufspb.Rack{Name: id}, nil)
+		hc.stUdt.deleteStateHelper(ctx)
 		return hc.SaveChangeEvents(ctx)
 	}
 
