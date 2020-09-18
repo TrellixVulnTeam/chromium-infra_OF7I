@@ -136,6 +136,9 @@ banner_message = ''
 # User accounts with email addresses at these domains are all banned.
 banned_user_domains = []
 
+# We use this for specifying cloud task parent
+CLOUD_TASKS_REGION = 'us-central1'
+
 # We only send subscription notifications to users who have visited the
 # site in the last 6 months.
 subscription_timeout_secs = 180 * framework_constants.SECS_PER_DAY
@@ -308,6 +311,7 @@ analytics_id = 'UA-55762617-20'
 
 if unit_test_mode:
   db_cloud_project = ''  # No real database is used during unit testing.
+  app_id = ''
 else:
   app_id = app_identity.get_application_id()
 
@@ -353,6 +357,8 @@ if local_mode:
   site_name = 'Monorail Local'
   num_logical_shards = 10
   redis_host = 'localhost'
+  # Run cloud tasks emulator at port 9090
+  CLOUD_TASKS_EMULATOR_ADDRESS = '127.0.0.1:9090'
 
 # Combine the customized info above to make the name of the primary DB instance.
 db_instance = db_cloud_project + ':' + db_region + ':' + db_primary_name
