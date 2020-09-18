@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/maruel/subcommands"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform/phosphorus"
@@ -119,7 +120,12 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 	if err != nil {
 		return "", err
 	}
-	if err = w.WriteDir(ctx); err != nil {
+	// TODO(crbug.com/1130071) Set timeout from the recipe.
+	// Hard-coded here to stop the bleeding fast.
+	wCtx, cancel := context.WithTimeout(ctx, time.Hour)
+	defer cancel()
+
+	if err = w.WriteDir(wCtx); err != nil {
 		logging.Debugf(ctx, "Directory listing for failed upload: %s", dirList(localPath))
 		return "", err
 	}

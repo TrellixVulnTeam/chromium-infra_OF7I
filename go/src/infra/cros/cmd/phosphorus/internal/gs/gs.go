@@ -84,24 +84,33 @@ type Path gcgs.Path
 
 const maxConcurrentUploads = 10
 
-// WriteDir Write all files in the subtree of the local path to the corresponding places
-//  in the subtree of the GS path
+// WriteDir writes a local directory to Google Storage.
+//
+// If ctx is canceled, WriteDir() returns after completing in-flight uploads,
+// skipping remaining contents of the directory and returns ctx.Err().
 func (w *prodDirWriter) WriteDir(ctx context.Context) error {
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", w.localRootDir, w.gsRootDir)
 	err := parallel.WorkPool(maxConcurrentUploads, func(items chan<- func() error) {
 		filepath.Walk(w.localRootDir, func(src string, info os.FileInfo, err error) error {
-			// Continue walking the directory tree on errors so that we upload as
-			// many files as possible.
-			if err != nil {
-				items <- func() error {
+			var item func() error
+
+			if err == nil {
+				item = func() error {
+					return w.writeOne(ctx, src, info)
+				}
+			} else {
+				// Continue walking the directory tree on errors so that we upload as
+				// many files as possible.
+				item = func() error {
 					return err
 				}
+			}
+			select {
+			case items <- item:
 				return nil
+			case <-ctx.Done():
+				return ctx.Err()
 			}
-			items <- func() error {
-				return w.writeOne(ctx, src, info)
-			}
-			return nil
 		})
 	})
 	if err != nil {
