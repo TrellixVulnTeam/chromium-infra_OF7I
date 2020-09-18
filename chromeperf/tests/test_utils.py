@@ -16,7 +16,7 @@ BIGTABLE = 'bigtable'
 DATASTORE = 'datastore'
 PUBSUB = 'pubsub'
 EXTRA = {
-    DATASTORE: ("--no-store-on-disk", ),
+    DATASTORE: ("--no-store-on-disk", "--consistency=1.0"),
 }
 _DS_READY_LINE = b'[datastore] Dev App Server is now running.\n'
 _PS_READY_LINE_PREFIX = b'[pubsub] INFO: Server started, listening on '

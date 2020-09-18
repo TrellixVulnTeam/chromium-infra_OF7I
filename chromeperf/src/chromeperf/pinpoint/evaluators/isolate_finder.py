@@ -63,7 +63,8 @@ class InitiateEvaluator(object):
             logging.error('Payload type mismatch for task = %s', task.id)
             raise FatalError('Failed to unpack payload for task = %s', task.id)
         try:
-            change = change_module.Change.FromProto(payload.change)
+            change = change_module.Change.FromProto(self._datastore_client,
+                                                    payload.change)
             logging.debug('Looking up isolate for change = %s', change)
             payload.isolate_server, payload.isolate_hash = isolate_module.get(
                 payload.builder, change, payload.target,
@@ -115,7 +116,8 @@ class UpdateEvaluator(object):
             if not task.payload.Unpack(payload):
                 raise FatalError('Mismatched payload type for task %s',
                                  task.id)
-            change = change_module.Change.FromProto(payload.change)
+            change = change_module.Change.FromProto(self._datastore_client,
+                                                    payload.change)
             return [
                 builds.UpdateBuildStatus(
                     self._datastore_client,
@@ -214,7 +216,8 @@ def create_graph(options: TaskOptions) -> evaluator.TaskGraph:
         bucket=options.bucket,
         change=change_pb2.Change(
             commits=[
-                change_pb2.Commit(repository=c.repository, git_hash=c.git_hash)
+                change_pb2.Commit(repository=c.repository.name,
+                                  git_hash=c.git_hash)
                 for c in options.change.commits
             ],
             patch=(change_pb2.GerritPatch(

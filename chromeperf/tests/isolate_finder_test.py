@@ -69,8 +69,10 @@ def populate_job_tasks(request, pinpoint_seeded_data, datastore_client):
                 target='telemetry_perf_tests',
                 bucket='luci.bucket',
                 change=change_module.Change(commits=[
-                    commit_module.Commit(repository='chromium',
-                                         git_hash=git_hash)
+                    commit_module.Commit(
+                         repository=repository_module.Repository.FromName(
+                             datastore_client, 'chromium'),
+                         git_hash=git_hash)
                 ]))))
     return job
 
@@ -199,7 +201,9 @@ def test_IsolateFinder_Initiate_FoundIsolate(mocker, datastore_client,
                                              populate_job_tasks):
     # Seed the isolate for this change.
     change = change_module.Change(
-        commits=[commit_module.Commit('chromium', '7c7e90be')])
+        commits=[commit_module.Commit(
+            repository_module.Repository.FromName(datastore_client, 'chromium'),
+            '7c7e90be')])
     isolate_module.put((('Mac Builder', change, 'telemetry_perf_tests',
                          'https://isolate.server', '7c7e90be'), ),
                        datastore_client=datastore_client)

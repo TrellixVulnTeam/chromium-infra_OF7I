@@ -24,29 +24,28 @@ class Dep:
 
 @dataclasses.dataclass
 class Commit:
-    repository: str
+    repository: repository_module.Repository
     git_hash: str
 
     @classmethod
-    def FromProto(cls, proto: change_pb2.Commit):
-        return cls(proto.repository, proto.git_hash)
+    def FromProto(cls, datastore_client, proto: change_pb2.Commit):
+        repo = repository_module.Repository.FromName(datastore_client,
+                                                     proto.repository)
+        return cls(repo, proto.git_hash)
 
     def __str__(self):
         """Returns an informal short string representation of this Commit."""
-        return self.repository + '@' + self.git_hash[:7]
+        return self.repository.name + '@' + self.git_hash[:7]
 
     @property
     def id_string(self):
         """Returns a string that is unique to this repository and git hash."""
-        return self.repository + '@' + self.git_hash
+        return self.repository.name + '@' + self.git_hash
 
     def repository_url(self, datastore_client):
         """The HTTPS URL of the repository as passed to `git clone`."""
-        cached_url = getattr(self, '_repository_url', None)
-        if not cached_url:
-            self._repository_url = repository_module.repository_url(
-                datastore_client, self.repository)
-        return self._repository_url
+        del datastore_client
+        return self.repository.url
 
     def AsDict(self, datastore_client):
         d = {

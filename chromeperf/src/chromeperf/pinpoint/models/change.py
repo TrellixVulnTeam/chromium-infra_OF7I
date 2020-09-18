@@ -238,8 +238,9 @@ class Change:
     patch: GerritPatch = None
 
     @classmethod
-    def FromProto(cls, proto: change_pb2.Change):
-        return cls(commits=[commit.Commit.FromProto(c) for c in proto.commits],
+    def FromProto(cls, datastore_client, proto: change_pb2.Change):
+        return cls(commits=[commit.Commit.FromProto(datastore_client, c)
+                            for c in proto.commits],
                    patch=GerritPatch.FromProto(proto.patch))
 
     def __str__(self):

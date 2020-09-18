@@ -2,9 +2,48 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import dataclasses
 import datetime
 
 from google.cloud import datastore
+
+
+@dataclasses.dataclass(init=False, frozen=True)
+class Repository:
+    name: str
+    url: str
+
+    def __init__(self, name: str, url: str,
+                 _do_not_construct_directly: bool=False):
+        """Private constructor.  Don't call this directly.
+
+        Instead use Repository.FromName or Repository.FromUrl.
+        """
+        assert _do_not_construct_directly
+        # Bypass dataclass' frozen=True.
+        object.__setattr__(self, 'name', name)
+        object.__setattr__(self, 'url', url)
+
+    @classmethod
+    def FromName(cls, datastore_client, name) -> 'Repository':
+        """Construct a Repository from a short name.
+
+        Raises KeyError if name is not a known repository short name.
+        """
+        url = repository_url(datastore_client, name)
+        return cls(name, url, _do_not_construct_directly=True)
+
+    @classmethod
+    def FromUrl(cls, datastore_client, url) -> 'Repository':
+        """Construct a Repository from a URL.
+
+        Raises KeyError if URL is not a known repository.
+        """
+        name = repository_name(datastore_client, url)
+        # Repositories can have multiple URLs.  Call FromName to make sure we're
+        # using the canonical URL from datastore, regardless of which one
+        # FromUrl was called with.
+        return cls.FromName(datastore_client, name)
 
 
 def repository_url(datastore_client, name):
@@ -26,7 +65,7 @@ def repository_url(datastore_client, name):
                                                     name), )).fetch()
     for repo in repositories:
         return repo['url']
-    raise KeyError('Unknown repository name: ' + name)
+    raise KeyError(f'Unknown repository name: {name}')
 
 
 def repository_name(datastore_client, url, add_if_missing=False):
@@ -69,18 +108,18 @@ def repository_name(datastore_client, url, add_if_missing=False):
         return repo['name']
     if add_if_missing:
         name = url.split('/')[-1]
-        return add_repository(datastore_client, name, url)
+        return add_repository(datastore_client, name, url).name
 
-    raise KeyError('Unknown repository URL: %s' % url)
+    raise KeyError(f'Unknown repository URL: {url}')
 
 
-def add_repository(datastore_client, name, url):
+def add_repository(datastore_client, name, url) -> Repository:
     """Add a repository URL to the database with the default name mapping.
 
   The default short repository name is the last part of the URL.
 
   Returns:
-    The short repository name.
+    A Repository.
 
   Raises:
     AssertionError: The default name is already in the database.
@@ -98,4 +137,7 @@ def add_repository(datastore_client, name, url):
         'url': url,
     })
     datastore_client.put(repo)
-    return name
+    # This URL is by definition the canonical URL for this repository, as it is
+    # the newest, so we can just construct a Repository model object without
+    # consulting the datastore again.
+    return Repository(name, url, _do_not_construct_directly=True)
