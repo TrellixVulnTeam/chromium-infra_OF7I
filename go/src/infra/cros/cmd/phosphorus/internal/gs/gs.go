@@ -3,7 +3,6 @@ package gs
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,35 +11,27 @@ import (
 	"go.chromium.org/luci/common/sync/parallel"
 
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/common/gcloud/gs"
 	gcgs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
 )
 
 // DirWriter exposes methods to write a local directory to Google Storage.
 type DirWriter struct {
-	// Mockable means of carrying out file-level writes
-	client AuthedClient
+	client gsClient
 }
 
-// AuthedClient Mockable wrapper around the core "spin up subWriter" flow
-type AuthedClient interface {
-	NewWriter(p Path) (io.WriteCloser, error)
-}
-
-type realAuthedClient struct {
-	client gcgs.Client
-}
-
-var _ AuthedClient = &realAuthedClient{}
-
-func (c *realAuthedClient) NewWriter(p Path) (io.WriteCloser, error) {
-	return c.client.NewWriter(gcgs.Path(p))
+// gsClient is a Google Storage client.
+//
+// This interface is a subset of the gcgs.Client interface.
+type gsClient interface {
+	NewWriter(p gcgs.Path) (gs.Writer, error)
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
 func NewDirWriter(client gcgs.Client) *DirWriter {
 	return &DirWriter{
-		client: &realAuthedClient{client: client},
+		client: client,
 	}
 }
 
@@ -59,9 +50,6 @@ func verifyPaths(localPath string, gsPath string) error {
 	}
 	return nil
 }
-
-// Path Google Storage path, to file or directory
-type Path gcgs.Path
 
 const maxConcurrentUploads = 10
 
@@ -117,8 +105,7 @@ func (w *DirWriter) writeOne(ctx context.Context, srcDir string, dstDir gcgs.Pat
 	if err != nil {
 		return errors.Annotate(err, "writing from %s to %s", src, dstDir).Err()
 	}
-	gsDest := dstDir.Concat(relPath)
-	dest := Path(gsDest)
+	dest := dstDir.Concat(relPath)
 	f, err := os.Open(src)
 	if err != nil {
 		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
