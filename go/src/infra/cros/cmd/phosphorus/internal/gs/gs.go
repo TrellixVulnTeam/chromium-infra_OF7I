@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,8 +11,6 @@ import (
 
 	"go.chromium.org/luci/common/sync/parallel"
 
-	"go.chromium.org/luci/auth"
-	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/errors"
 	gcgs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
@@ -52,11 +49,11 @@ func (c *realAuthedClient) NewWriter(p Path) (io.WriteCloser, error) {
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
-func NewDirWriter(localPath string, gsPath Path, client AuthedClient) DirWriter {
+func NewDirWriter(localPath string, gsPath Path, client gcgs.Client) DirWriter {
 	return &prodDirWriter{
 		localRootDir: localPath,
 		gsRootDir:    gcgs.Path(gsPath),
-		client:       client,
+		client:       &realAuthedClient{client: client},
 	}
 }
 
@@ -187,30 +184,4 @@ func shouldSkipUpload(i os.FileInfo) (bool, string) {
 	default:
 		return true, "file is a non-file of unknown type"
 	}
-}
-
-func newAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.RoundTripper, error) {
-	o, err := f.Options()
-	if err != nil {
-		return nil, errors.Annotate(err, "creating authenticated transport").Err()
-	}
-	a := auth.NewAuthenticator(ctx, auth.SilentLogin, o)
-	rt, err := a.Transport()
-	if err != nil {
-		return nil, errors.Annotate(err, "creating authenticated transport").Err()
-	}
-	return rt, nil
-}
-
-// NewAuthedClient Create a client with the given auth flags
-func NewAuthedClient(ctx context.Context, f *authcli.Flags) (AuthedClient, error) {
-	t, err := newAuthenticatedTransport(ctx, f)
-	if err != nil {
-		return nil, errors.Annotate(err, "creating authenticated GS client").Err()
-	}
-	cli, err := gcgs.NewProdClient(ctx, t)
-	if err != nil {
-		return nil, errors.Annotate(err, "creating authenticated GS client").Err()
-	}
-	return &realAuthedClient{client: cli}, nil
 }

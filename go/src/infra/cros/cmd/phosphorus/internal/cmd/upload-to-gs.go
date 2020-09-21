@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"infra/cros/cmd/phosphorus/internal/gs"
 	"io"
 	"os"
 	"path/filepath"
@@ -20,8 +19,11 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	gcgs "go.chromium.org/luci/common/gcloud/gs"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/lucictx"
+
+	"infra/cros/cmd/phosphorus/internal/gs"
 )
 
 // UploadToGS subcommand: Upload selected directory to Google Storage.
@@ -116,10 +118,13 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 		)
 	}
 	path := gs.Path(r.GetGsDirectory())
-	w, err := createDirWriter(ctx, localPath, path, &authFlags)
+
+	gsC, err := newGSClient(ctx, &authFlags)
 	if err != nil {
 		return "", err
 	}
+	w := gs.NewDirWriter(localPath, path, gsC)
+
 	// TODO(crbug.com/1130071) Set timeout from the recipe.
 	// Hard-coded here to stop the bleeding fast.
 	wCtx, cancel := context.WithTimeout(ctx, time.Hour)
@@ -150,15 +155,6 @@ func useSystemAuth(ctx context.Context, authFlags *authcli.Flags, errorFile io.W
 	return ctx, nil
 }
 
-// createDirWriter creates a DirWriter for the given paths, first producing an authed client with the given context and flags
-func createDirWriter(ctx context.Context, localPath string, gsPath gs.Path, authFlags *authcli.Flags) (gs.DirWriter, error) {
-	cli, err := gs.NewAuthedClient(ctx, authFlags)
-	if err != nil {
-		return nil, errors.Annotate(err, "creating dir writer").Err()
-	}
-	return gs.NewDirWriter(localPath, gsPath, cli), nil
-}
-
 // Gives a list of files and directories under the given path. Intended for
 // debugging a failed tempdir removal.
 func dirList(absPath string) string {
@@ -186,4 +182,21 @@ func dirList(absPath string) string {
 	}
 	_ = filepath.Walk(absPath, fileName)
 	return strings.Join(files, ", ")
+}
+
+func newGSClient(ctx context.Context, f *authcli.Flags) (gcgs.Client, error) {
+	o, err := f.Options()
+	if err != nil {
+		return nil, errors.Annotate(err, "new Google Storage client").Err()
+	}
+	a := auth.NewAuthenticator(ctx, auth.SilentLogin, o)
+	rt, err := a.Transport()
+	if err != nil {
+		return nil, errors.Annotate(err, "new Google Storage client").Err()
+	}
+	cli, err := gcgs.NewProdClient(ctx, rt)
+	if err != nil {
+		return nil, errors.Annotate(err, "new Google Storage client").Err()
+	}
+	return cli, nil
 }
