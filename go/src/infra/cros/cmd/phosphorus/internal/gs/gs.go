@@ -16,12 +16,8 @@ import (
 	"go.chromium.org/luci/common/logging"
 )
 
-// DirWriter Mockable interface for writing whole directories at once
-type DirWriter interface {
-	WriteDir(ctx context.Context) error
-}
-
-type prodDirWriter struct {
+// DirWriter exposes methods to write a local directory to Google Storage.
+type DirWriter struct {
 	// The directory to be written from
 	localRootDir string
 	// The directory to be written to
@@ -30,8 +26,6 @@ type prodDirWriter struct {
 	// Mockable means of carrying out file-level writes
 	client AuthedClient
 }
-
-var _ DirWriter = &prodDirWriter{}
 
 // AuthedClient Mockable wrapper around the core "spin up subWriter" flow
 type AuthedClient interface {
@@ -49,8 +43,8 @@ func (c *realAuthedClient) NewWriter(p Path) (io.WriteCloser, error) {
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
-func NewDirWriter(localPath string, gsPath Path, client gcgs.Client) DirWriter {
-	return &prodDirWriter{
+func NewDirWriter(localPath string, gsPath Path, client gcgs.Client) *DirWriter {
+	return &DirWriter{
 		localRootDir: localPath,
 		gsRootDir:    gcgs.Path(gsPath),
 		client:       &realAuthedClient{client: client},
@@ -82,7 +76,7 @@ const maxConcurrentUploads = 10
 //
 // If ctx is canceled, WriteDir() returns after completing in-flight uploads,
 // skipping remaining contents of the directory and returns ctx.Err().
-func (w *prodDirWriter) WriteDir(ctx context.Context) error {
+func (w *DirWriter) WriteDir(ctx context.Context) error {
 	if err := verifyPaths(w.localRootDir, string(w.gsRootDir)); err != nil {
 		return err
 	}
@@ -117,7 +111,7 @@ func (w *prodDirWriter) WriteDir(ctx context.Context) error {
 	return nil
 }
 
-func (w *prodDirWriter) writeOne(ctx context.Context, src string, info os.FileInfo) error {
+func (w *DirWriter) writeOne(ctx context.Context, src string, info os.FileInfo) error {
 	if info.IsDir() {
 		return nil
 	}
