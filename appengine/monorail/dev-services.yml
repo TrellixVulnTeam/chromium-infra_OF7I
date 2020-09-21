@@ -1,0 +1,37 @@
+version: '3'
+services:
+  mysql:
+    image: 'mysql:5.6'
+    container_name: 'mysql'
+    ports:
+      - '3306:3306'
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: 'monorail'
+    command: mysqld --sql_mode="ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION"
+  redis:
+    image: 'redis:alpine'
+    container_name: 'redis'
+    ports:
+      - '6379:6379'
+  cloud-tasks-emulator:
+    # As of 9/18/2020 latest tag is built from source at
+    # https://github.com/aertje/cloud-tasks-emulator/commit/ff9a1afc8f3aeedbc6ca1f468b2c53b74c18a6e6
+    image: 'us.gcr.io/monorail-dev/cloud-tasks-emulator:latest'
+    container_name: 'cloud-tasks-emulator'
+    ports:
+      - '9090:9090'
+    environment:
+      APP_ENGINE_EMULATOR_HOST: 'http://host.docker.internal:8080'
+    command: >
+      --queue projects/monorail-staging/locations/us-central1/queues/componentexport
+      --queue projects/monorail-staging/locations/us-central1/queues/default
+      --queue projects/monorail-staging/locations/us-central1/queues/notifications
+      --queue projects/monorail-staging/locations/us-central1/queues/outboundemail
+      --queue projects/monorail-staging/locations/us-central1/queues/spamexport
+      --queue projects/monorail-staging/locations/us-central1/queues/wipeoutsendusers
+      --queue projects/monorail-staging/locations/us-central1/queues/wipeoutdeleteusers
+      --queue projects/monorail-staging/locations/us-central1/queues/deleteusers
+      --queue projects/monorail-staging/locations/us-central1/queues/pubsub-issueupdates
+      -host 0.0.0.0
+      -port 9090

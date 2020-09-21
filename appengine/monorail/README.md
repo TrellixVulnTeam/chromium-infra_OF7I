@@ -19,55 +19,21 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
 1.  Make sure you have the AppEngine SDK:
     1.  It should be fetched for you by step 1 above (during runhooks)
     1.  Otherwise, you can download it from https://developers.google.com/appengine/downloads#Google_App_Engine_SDK_for_Python
-1.  Install MySQL v5.6.
-    1. On a Debian derivative, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar):
-        1.  `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`
-    1. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
-    1. As of March 2020, MacOS MySQL setup will look something like this:
-        ```
-        1. Install docker
-        2. Run MySQL@5.6 in docker
-        3. Install MySQL locally (only needed for MySQL-python)
-        4. Set MySQL user passwords
-        5. Install MySQL-python
-        6. Initialize database with tables
-        7. Run the app locally
-        ```
-        1.  Install [docker for mac](https://docs.docker.com/docker-for-mac/install/).
-        1.  Start your docker container named mysql for MySQL v5.6.
-            1.  `docker run --name mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -p 3306:3306 -d mysql:5.6`
-        1. Use [homebrew](https://brew.sh/) to install MySQL v5.6 on your system for its configs to install MySQLdb later. We will be using the docker container's MySQL instance.
-            1.  `brew install mysql@5.6`
-    1. Otherwise, download from the [official page](http://dev.mysql.com/downloads/mysql/5.6.html#downloads).
-        1.  **Do not download v5.7 (as of April 2016)**
-1.  Get the database backend configured and running:
-    1. On Debian
-        1.  Allow passwordless authentication from non-root users:
-            1.  `sudo mysql -uroot mysql -e "UPDATE user SET host='%', plugin='' WHERE user='root'; FLUSH PRIVILEGES;"`
-        1.  Disable `STRICT_TRANS_TABLES`
-            1.  `echo -e "[mysqld]\nsql_mode = ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION" | sudo tee /etc/mysql/conf.d/99-sql-mode.cnf`
-        1.  `sudo /etc/init.d/mysql restart`
-    1. On MacOS
-        1.  Enter the docker container and update its authentication.
-            1.  `docker exec -it mysql bash`
-            1.  `mysqladmin -u root -p'my-secret-pw' password ''`
-            1.  `mysql -uroot mysql -e "UPDATE user SET host='172.17.0.1', plugin='' WHERE user='root'; FLUSH PRIVILEGES; exit;"`
-                1.  We set the host to 172.17.0.1 to match the docker container. Your docker container may be at a different IP, you use `docker network inspect bridge` from another terminal to verify your container's IP.
-        1. Exit the docker container
-            1.  `exit`
-1.  Set up one primary SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
-    1. On Debian
-        1.  `mysql --user=root -e 'CREATE DATABASE monorail;'`
+1.  Spin up dependent services.
+    1. We use docker and docker-compose to orchestrate. So install [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/) first. For glinux users see [go/docker](http://go/docker)
+    1. Run `docker-compose -f dev-services.yml up -d`. This should spin up:
+        1. MySQL v5.6
+        1. Redis
+        1. Cloud Tasks Emulator
+            1. [TODO](https://github.com/aertje/cloud-tasks-emulator/issues/4) host this publicly and remove section.
+            1. This will require you to authenticate to Google Container Registry to pull the docker image: `gcloud auth login` `gcloud auth configure-docker`. If you're an open source developer and do not have access to the monorail project and thereby its container registry you will need to start the Cloud Tasks Emulator from [source](https://github.com/aertje/cloud-tasks-emulator)
+1.  Set up SQL database. (You can keep the same sharding options in settings.py that you have configured for production.).
+    1. Copy setup schema into the docker container
+        1.  `docker cp schema/. mysql:/schema`
+        1.  `docker exec -it mysql bash`
         1.  `mysql --user=root monorail < schema/framework.sql`
         1.  `mysql --user=root monorail < schema/project.sql`
         1.  `mysql --user=root monorail < schema/tracker.sql`
-    1. On MacOS
-        1. Install your schema into the docker container
-            1.  `docker cp schema/. mysql:/schema`
-            1.  `docker exec -it mysql bash`
-            1.  `mysql --user=root monorail < schema/framework.sql`
-            1.  `mysql --user=root monorail < schema/project.sql`
-            1.  `mysql --user=root monorail < schema/tracker.sql`
 1.  Configure the site defaults in settings.py.  You can leave it as-is for now.
 1.  Set up the front-end development environment:
     1. On Debian
@@ -77,19 +43,23 @@ Here's how to run Monorail locally for development on MacOS and Debian stretch/b
         1.  Install build requirements:
             1.  `sudo apt-get install build-essential automake`
     1. On MacOS
-        1.  Install npm
-            1.  `brew install nvm`
-            1.   See the brew instructions on updating your shell's configuration
-            1.  `nvm install 12.13.0`
+        1.  Install node and npm
+            1.  Install node version manager `brew install nvm`
+            1.  See the brew instructions on updating your shell's configuration
+            1.  Install node and npm `nvm install 12.13.0`
 1.  Install Python and JS dependencies:
+    1.  Install MySQL, needed for mysqlclient
+        1. For mac: `brew install mysql@5.6`
+        1. For Debian derivatives, download and unpack [this bundle](https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar): `tar -xf mysql-server_5.6.40-1ubuntu14.04_amd64.deb-bundle.tar`. Install the packages in the order of `mysql-common`,`mysql-community-client`, `mysql-client`, then `mysql-community-server`.
+    1.  Mac only: install [libssl](https://github.com/PyMySQL/mysqlclient-python/issues/74), needed for mysqlclient.
+        1. `brew install openssl; export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
     1.  `make dev_deps`
-        1. For Python 2.7 on OSX: mysqlclient 1.4.6 [requires libssl to build](https://github.com/PyMySQL/mysqlclient-python/issues/74). Before running `make dev_deps`, run `brew install openssl; export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/openssl/lib/`
     1.  `make deps`
 1.  Run the app:
     1.  `make serve`
 1.  Browse the app at localhost:8080 your browser.
 1.  Optional: Create/modify your Monorail User row in the database and make that user a site admin. You will need to be a site admin to gain access to create projects through the UI.
-    1.  `mysql --user=root monorail -e "UPDATE User SET is_site_admin = TRUE WHERE email = 'test@example.com';"`
+    1.  `docker exec mysql mysql --user=root monorail -e "UPDATE User SET is_site_admin = TRUE WHERE email = 'test@example.com';"`
     1.  If the admin change isn't immediately apparent, you may need to restart your local dev appserver.
 
 Instructions for deploying Monorail to an existing instance or setting up a new instance are [here](doc/deployment.md).
