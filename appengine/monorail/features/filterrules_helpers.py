@@ -10,14 +10,13 @@ from __future__ import absolute_import
 
 import logging
 import re
-
 import six
+import urllib
 
 from six import string_types
 
-from google.appengine.api import taskqueue
-
 import settings
+from framework import cloud_tasks_helpers
 from framework import exceptions
 from framework import framework_bizobj
 from framework import framework_constants
@@ -70,14 +69,21 @@ def RecomputeAllDerivedFields(cnxn, services, project, config):
   shard_id = 0
   for step in steps:
     params = {
-      'project_id': project.project_id,
-      'lower_bound': step,
-      'upper_bound': min(step + BLOCK, highest_id + 1),
-      'shard_id': shard_id,
-      }
-    logging.info('adding task with params %r', params)
-    taskqueue.add(
-      url=urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do', params=params)
+        'project_id': project.project_id,
+        'lower_bound': step,
+        'upper_bound': min(step + BLOCK, highest_id + 1),
+        'shard_id': shard_id,
+    }
+    task = {
+        'app_engine_http_request':
+            {
+                'relative_uri':
+                    urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do?' +
+                    urllib.urlencode(params)
+            }
+    }
+    cloud_tasks_helpers.create_task(task)
+
     shard_id = (shard_id + 1) % settings.num_logical_shards
 
 

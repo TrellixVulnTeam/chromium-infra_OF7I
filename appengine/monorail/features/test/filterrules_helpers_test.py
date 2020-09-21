@@ -8,9 +8,10 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import mock
 import unittest
-
-import mox
+import urllib
+import urlparse
 
 from google.appengine.api import taskqueue
 
@@ -48,14 +49,6 @@ TEST_LABEL_IDS = {
   }
 
 
-class MockTaskQueue(object):
-  def __init__(self):
-    self.work_items = []
-
-  def add(self, **kwargs):
-    self.work_items.append(kwargs)
-
-
 class RecomputeAllDerivedFieldsTest(unittest.TestCase):
 
   BLOCK = filterrules_helpers.BLOCK
@@ -70,19 +63,12 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     self.project = fake.Project(project_name='proj')
     self.config = 'fake config'
     self.cnxn = 'fake cnxn'
-    self.mox = mox.Mox()
-    self.mock_task_queue = MockTaskQueue()
-    self.mox.StubOutWithMock(taskqueue, 'add')
 
-  def tearDown(self):
-    self.mox.UnsetStubs()
-    self.mox.ResetAll()
 
   def testRecomputeDerivedFields_Disabled(self):
     """Servlet should just call RecomputeAllDerivedFieldsNow with no bounds."""
     saved_flag = settings.recompute_derived_fields_in_worker
     settings.recompute_derived_fields_in_worker = False
-    self.mox.ReplayAll()
 
     filterrules_helpers.RecomputeAllDerivedFields(
         self.cnxn, self.services, self.project, self.config)
@@ -90,7 +76,6 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     self.assertTrue(self.services.issue.update_issues_called)
     self.assertTrue(self.services.issue.enqueue_issues_called)
 
-    self.mox.VerifyAll()
     settings.recompute_derived_fields_in_worker = saved_flag
 
   def testRecomputeDerivedFields_DisabledNextIDSet(self):
@@ -98,21 +83,18 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     saved_flag = settings.recompute_derived_fields_in_worker
     settings.recompute_derived_fields_in_worker = False
     self.services.issue.next_id = 1234
-    self.mox.ReplayAll()
 
     filterrules_helpers.RecomputeAllDerivedFields(
         self.cnxn, self.services, self.project, self.config)
     self.assertTrue(self.services.issue.get_all_issues_in_project_called)
     self.assertTrue(self.services.issue.enqueue_issues_called)
 
-    self.mox.VerifyAll()
     settings.recompute_derived_fields_in_worker = saved_flag
 
   def testRecomputeDerivedFields_NoIssues(self):
     """Servlet should not call because there is no work to do."""
     saved_flag = settings.recompute_derived_fields_in_worker
     settings.recompute_derived_fields_in_worker = True
-    self.mox.ReplayAll()
 
     filterrules_helpers.RecomputeAllDerivedFields(
         self.cnxn, self.services, self.project, self.config)
@@ -120,71 +102,101 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     self.assertFalse(self.services.issue.update_issues_called)
     self.assertFalse(self.services.issue.enqueue_issues_called)
 
-    self.mox.VerifyAll()
     settings.recompute_derived_fields_in_worker = saved_flag
 
-  def testRecomputeDerivedFields_SomeIssues(self):
+  @mock.patch('framework.cloud_tasks_helpers._get_client')
+  def testRecomputeDerivedFields_SomeIssues(self, get_client_mock):
     """Servlet should enqueue one work item rather than call directly."""
     saved_flag = settings.recompute_derived_fields_in_worker
     settings.recompute_derived_fields_in_worker = True
     self.services.issue.next_id = 1234
     num_calls = (self.services.issue.next_id // self.BLOCK + 1)
-    for _ in range(num_calls):
-      taskqueue.add(
-          params=mox.IsA(dict),
-          url='/_task/recomputeDerivedFields.do').WithSideEffects(
-              self.mock_task_queue.add)
-    self.mox.ReplayAll()
 
     filterrules_helpers.RecomputeAllDerivedFields(
         self.cnxn, self.services, self.project, self.config)
     self.assertFalse(self.services.issue.get_all_issues_in_project_called)
     self.assertFalse(self.services.issue.update_issues_called)
     self.assertFalse(self.services.issue.enqueue_issues_called)
-    work_items = self.mock_task_queue.work_items
-    self.assertEqual(num_calls, len(work_items))
 
-    self.mox.VerifyAll()
+    get_client_mock().queue_path.assert_any_call(
+        settings.app_id, settings.CLOUD_TASKS_REGION, 'default')
+    self.assertEqual(get_client_mock().queue_path.call_count, num_calls)
+    self.assertEqual(get_client_mock().create_task.call_count, num_calls)
+
+    parent = get_client_mock().queue_path()
+    highest_id = self.services.issue.GetHighestLocalID(
+        self.cnxn, self.project.project_id)
+    steps = list(range(1, highest_id + 1, self.BLOCK))
+    steps.reverse()
+    shard_id = 0
+    for step in steps:
+      params = {
+          'project_id': self.project.project_id,
+          'lower_bound': step,
+          'upper_bound': min(step + self.BLOCK, highest_id + 1),
+          'shard_id': shard_id,
+      }
+      task = {
+          'app_engine_http_request':
+              {
+                  'relative_uri':
+                      urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do?' +
+                      urllib.urlencode(params)
+              }
+      }
+      get_client_mock().create_task.assert_any_call(parent, task)
+      shard_id = (shard_id + 1) % settings.num_logical_shards
+
     settings.recompute_derived_fields_in_worker = saved_flag
 
-  def testRecomputeDerivedFields_LotsOfIssues(self):
+  @mock.patch('framework.cloud_tasks_helpers._get_client')
+  def testRecomputeDerivedFields_LotsOfIssues(self, get_client_mock):
     """Servlet should enqueue multiple work items."""
     saved_flag = settings.recompute_derived_fields_in_worker
     settings.recompute_derived_fields_in_worker = True
     self.services.issue.next_id = 12345
-    num_calls = (self.services.issue.next_id // self.BLOCK + 1)
-    for _ in range(num_calls):
-      taskqueue.add(
-          params=mox.IsA(dict),
-          url='/_task/recomputeDerivedFields.do').WithSideEffects(
-              self.mock_task_queue.add)
-    self.mox.ReplayAll()
 
     filterrules_helpers.RecomputeAllDerivedFields(
         self.cnxn, self.services, self.project, self.config)
+
     self.assertFalse(self.services.issue.get_all_issues_in_project_called)
     self.assertFalse(self.services.issue.update_issues_called)
     self.assertFalse(self.services.issue.enqueue_issues_called)
+    num_calls = (self.services.issue.next_id // self.BLOCK + 1)
+    get_client_mock().queue_path.assert_any_call(
+        settings.app_id, settings.CLOUD_TASKS_REGION, 'default')
+    self.assertEqual(get_client_mock().queue_path.call_count, num_calls)
+    self.assertEqual(get_client_mock().create_task.call_count, num_calls)
 
-    work_items = self.mock_task_queue.work_items
-    self.assertEqual(num_calls, len(work_items))
-    url, params = work_items[0]['url'], work_items[0]['params']
-    self.assertEqual(urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do', url)
-    self.assertEqual(self.project.project_id, params['project_id'])
-    self.assertEqual(12345 // self.BLOCK * self.BLOCK + 1,
-                     params['lower_bound'])
-    self.assertEqual(12345, params['upper_bound'])
+    ((_parent, called_task),
+     _kwargs) = get_client_mock().create_task.call_args_list[0]
+    relative_uri = called_task.get('app_engine_http_request').get(
+        'relative_uri')
+    parse_result = urlparse.urlparse(relative_uri)
+    self.assertEqual(
+        parse_result.path, urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do')
+    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
+    self.assertEqual(params['project_id'], str(self.project.project_id))
+    self.assertEqual(
+        params['lower_bound'], str(12345 // self.BLOCK * self.BLOCK + 1))
+    self.assertEqual(params['upper_bound'], str(12345))
 
-    url, params = work_items[-1]['url'], work_items[-1]['params']
-    self.assertEqual(urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do', url)
-    self.assertEqual(self.project.project_id, params['project_id'])
-    self.assertEqual(1, params['lower_bound'])
-    self.assertEqual(self.BLOCK + 1, params['upper_bound'])
+    ((_parent, called_task), _kwargs) = get_client_mock().create_task.call_args
+    relative_uri = called_task.get('app_engine_http_request').get(
+        'relative_uri')
+    parse_result = urlparse.urlparse(relative_uri)
+    self.assertEqual(
+        parse_result.path, urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do')
+    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
+    self.assertEqual(params['project_id'], str(self.project.project_id))
+    self.assertEqual(params['lower_bound'], str(1))
+    self.assertEqual(params['upper_bound'], str(self.BLOCK + 1))
 
-    self.mox.VerifyAll()
     settings.recompute_derived_fields_in_worker = saved_flag
 
-  def testRecomputeAllDerivedFieldsNow(self):
+  @mock.patch(
+      'features.filterrules_helpers.ApplyGivenRules', return_value=(True, {}))
+  def testRecomputeAllDerivedFieldsNow(self, apply_mock):
     """Servlet should reapply all filter rules to project's issues."""
     self.services.issue.next_id = 12345
     test_issue_1 = fake.MakeTestIssue(
@@ -199,13 +211,6 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     self.services.issue.TestAddIssue(test_issue_1)
     self.services.issue.TestAddIssue(test_issue_2)
 
-    self.mox.StubOutWithMock(filterrules_helpers, 'ApplyGivenRules')
-    for test_issue in test_issues:
-      filterrules_helpers.ApplyGivenRules(
-          self.cnxn, self.services, test_issue, self.config,
-          [], []).AndReturn((True, {}))
-    self.mox.ReplayAll()
-
     filterrules_helpers.RecomputeAllDerivedFieldsNow(
         self.cnxn, self.services, self.project, self.config)
 
@@ -215,7 +220,10 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     self.assertEqual(test_issues, self.services.issue.updated_issues)
     self.assertEqual([issue.issue_id for issue in test_issues],
                      self.services.issue.enqueued_issues)
-    self.mox.VerifyAll()
+    self.assertEqual(apply_mock.call_count, 2)
+    for test_issue in test_issues:
+      apply_mock.assert_any_call(
+          self.cnxn, self.services, test_issue, self.config, [], [])
 
 
 class FilterRulesHelpersTest(unittest.TestCase):
