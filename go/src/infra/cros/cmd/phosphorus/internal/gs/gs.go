@@ -123,10 +123,11 @@ func (w *prodDirWriter) writeOne(ctx context.Context, src string, info os.FileIn
 	if info.IsDir() {
 		return nil
 	}
-	if info.Mode()&os.ModeSymlink == os.ModeSymlink {
-		logging.Debugf(ctx, "Skipped %s because it is a symlink.", src)
+	if skip, reason := shouldSkipUpload(info); skip {
+		logging.Debugf(ctx, "Skipped %s because: %s.", reason)
 		return nil
 	}
+
 	relPath, err := filepath.Rel(w.localRootDir, src)
 	if err != nil {
 		return errors.Annotate(err, "writing from %s to %s", src, w.gsRootDir).Err()
@@ -161,6 +162,30 @@ func (w *prodDirWriter) writeOne(ctx context.Context, src string, info os.FileIn
 		return errors.Annotate(err, "writer for %s failed to close", dest).Err()
 	}
 	return nil
+}
+
+// shouldSkipUpload determines if a particular file should be skipped.
+//
+// Also returns a reason for skipping the file.
+func shouldSkipUpload(i os.FileInfo) (bool, string) {
+	if i.Mode()&os.ModeType == 0 {
+		return false, ""
+	}
+
+	switch {
+	case i.Mode()&os.ModeSymlink == os.ModeSymlink:
+		return true, "file is a symlink"
+	case i.Mode()&os.ModeDevice == os.ModeDevice:
+		return true, "file is a device"
+	case i.Mode()&os.ModeNamedPipe == os.ModeNamedPipe:
+		return true, "file is a named pipe"
+	case i.Mode()&os.ModeSocket == os.ModeSocket:
+		return true, "file is a unix domain socket"
+	case i.Mode()&os.ModeIrregular == os.ModeIrregular:
+		return true, "file is an irregular file of unknown type"
+	default:
+		return true, "file is a non-file of unknown type"
+	}
 }
 
 func newAuthenticatedTransport(ctx context.Context, f *authcli.Flags) (http.RoundTripper, error) {
