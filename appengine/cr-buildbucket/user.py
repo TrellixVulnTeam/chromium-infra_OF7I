@@ -109,8 +109,27 @@ def has_perm_async(perm, bucket_id):
   assert isinstance(perm, auth.Permission), perm
   assert perm in ALL_PERMISSIONS, perm
   config.validate_bucket_id(bucket_id)
+
+  # Convert to a realm ID (it uses ':' separator).
+  project, bucket = config.parse_bucket_id(bucket_id)
+  realm = '%s:%s' % (project, bucket)
+
+  # In buckets that have realm ACLs configured, enforce them.
+  if auth.should_enforce_realm_acl(realm):
+    logging.info('crbug.com/1091604: enforcing realm ACLs for %s', realm)
+    raise ndb.Return(auth.has_permission(perm, [realm]))
+
+  # Get the result of the legacy ACL check.
   role = yield get_role_async_deprecated(bucket_id)
-  raise ndb.Return(role is not None and role >= PERM_TO_MIN_ROLE[perm])
+  outcome = role is not None and role >= PERM_TO_MIN_ROLE[perm]
+
+  # Compare it to realm ACLs, logs the difference.
+  auth.has_permission_dryrun(
+      perm, [realm], expected_result=outcome, tracking_bug='crbug.com/1091604'
+  )
+
+  # But still use legacy ACLs.
+  raise ndb.Return(outcome)
 
 
 def has_perm(perm, bucket_id):

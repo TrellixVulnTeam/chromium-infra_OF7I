@@ -21,6 +21,13 @@ Bucket = project_config_pb2.Bucket
 Acl = project_config_pb2.Acl
 
 
+def perms_for_role(role):
+  return frozenset(
+      perm for perm, min_role in user.PERM_TO_MIN_ROLE.items()
+      if role >= min_role
+  )
+
+
 class UserTest(testing.AppengineTestCase):
 
   def setUp(self):
@@ -34,6 +41,35 @@ class UserTest(testing.AppengineTestCase):
     user.clear_request_cache()
 
     self.patch('components.auth.is_admin', autospec=True, return_value=False)
+    self.patch(
+        'components.auth.should_enforce_realm_acl',
+        autospec=True,
+        return_value=False
+    )
+    self.patch(
+        'components.auth.has_permission_dryrun',
+        autospec=True,
+        return_value=None
+    )
+
+    self.perms = {}  # realm -> [(group|identity, set of permissions it has)]
+
+    def has_permission(perm, realms):
+      assert isinstance(perm, auth.Permission)
+      assert isinstance(realms, list)
+      caller = auth.get_current_identity().to_bytes()
+      for r in realms:
+        for principal, granted in self.perms.get(r, []):
+          applies = caller == principal or auth.is_group_member(principal)
+          if applies and perm in granted:
+            return True
+      return False
+
+    self.patch(
+        'components.auth.has_permission',
+        autospec=True,
+        side_effect=has_permission
+    )
 
     config.put_bucket(
         'p1', 'ignored-rev',
@@ -45,6 +81,12 @@ class UserTest(testing.AppengineTestCase):
             ]
         )
     )
+    self.perms['p1:a'] = [
+        ('a-writers', perms_for_role(Acl.WRITER)),
+        ('a-readers', perms_for_role(Acl.READER)),
+        ('project:p1', perms_for_role(Acl.SCHEDULER)),  # implicit
+    ]
+
     config.put_bucket(
         'p2', 'ignored-rev',
         Bucket(
@@ -55,6 +97,12 @@ class UserTest(testing.AppengineTestCase):
             ]
         )
     )
+    self.perms['p2:b'] = [
+        ('b-writers', perms_for_role(Acl.WRITER)),
+        ('b-readers', perms_for_role(Acl.READER)),
+        ('project:p2', perms_for_role(Acl.SCHEDULER)),  # implicit
+    ]
+
     config.put_bucket(
         'p3', 'ignored-rev',
         Bucket(
@@ -67,12 +115,19 @@ class UserTest(testing.AppengineTestCase):
             ]
         )
     )
+    self.perms['p3:c'] = [
+        ('c-readers', perms_for_role(Acl.READER)),
+        ('user:a@example.com', perms_for_role(Acl.READER)),
+        ('c-writers', perms_for_role(Acl.WRITER)),
+        ('project:p1', perms_for_role(Acl.READER)),
+        ('project:p3', perms_for_role(Acl.SCHEDULER)),  # implicit
+    ]
 
   def get_role(self, bucket_id):
     return user.get_role_async_deprecated(bucket_id).get_result()
 
   @mock.patch('components.auth.is_group_member', autospec=True)
-  def test_get_role(self, is_group_member):
+  def test_get_role_deprecated(self, is_group_member):
     is_group_member.side_effect = lambda g, _=None: g == 'a-writers'
 
     self.assertEqual(self.get_role('p1/a'), Acl.WRITER)
@@ -84,13 +139,13 @@ class UserTest(testing.AppengineTestCase):
     user.clear_request_cache()
     self.assertEqual(self.get_role('p1/a'), Acl.WRITER)
 
-  def test_get_role_admin(self):
+  def test_get_role_admin_deprecated(self):
     auth.is_admin.return_value = True
     self.assertEqual(self.get_role('p1/a'), Acl.WRITER)
     self.assertEqual(self.get_role('p1/non.existing'), None)
 
   @mock.patch('components.auth.is_group_member', autospec=True)
-  def test_get_role_for_project(self, is_group_member):
+  def test_get_role_for_project_deprecated(self, is_group_member):
     is_group_member.side_effect = lambda g, _=None: False
 
     self.current_identity = auth.Identity.from_bytes('project:p1')
@@ -99,11 +154,16 @@ class UserTest(testing.AppengineTestCase):
     self.assertEqual(self.get_role('p3/c'), Acl.READER)  # via explicit ACL
 
   @parameterized.expand([
-      (user.PERM_BUILDS_GET, ['a-readers'], {'p1/a', 'p3/c'}),
-      (user.PERM_BUILDS_ADD, ['b-writers'], {'p2/b'}),
+      (user.PERM_BUILDS_GET, False, ['a-readers'], {'p1/a', 'p3/c'}),
+      (user.PERM_BUILDS_ADD, False, ['b-writers'], {'p2/b'}),
+      (user.PERM_BUILDS_GET, True, ['a-readers'], {'p1/a', 'p3/c'}),
+      (user.PERM_BUILDS_ADD, True, ['b-writers'], {'p2/b'}),
   ])
   @mock.patch('components.auth.is_group_member', autospec=True)
-  def test_buckets_by_perm_async(self, perm, groups, expected, is_group_member):
+  def test_buckets_by_perm_async(
+      self, perm, use_realms, groups, expected, is_group_member
+  ):
+    auth.should_enforce_realm_acl.return_value = use_realms
     is_group_member.side_effect = lambda g, _=None: g in groups
 
     # Cold caches.
@@ -119,8 +179,13 @@ class UserTest(testing.AppengineTestCase):
     buckets = user.buckets_by_perm_async(perm).get_result()
     self.assertEqual(buckets, expected)
 
+  @parameterized.expand([
+      (False,),
+      (True,),
+  ])
   @mock.patch('components.auth.is_group_member', autospec=True)
-  def test_buckets_by_perm_async_for_project(self, is_group_member):
+  def test_buckets_by_perm_async_for_project(self, use_realms, is_group_member):
+    auth.should_enforce_realm_acl.return_value = use_realms
     is_group_member.side_effect = lambda g, _=None: False
     self.current_identity = auth.Identity.from_bytes('project:p1')
 
@@ -136,20 +201,41 @@ class UserTest(testing.AppengineTestCase):
   def mock_role(self, role):
     self.patch('user.get_role_async_deprecated', return_value=future(role))
 
-  def test_has_perm(self):
+  def test_has_perm_deprecated(self):
     self.mock_role(Acl.READER)
 
     self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'proj/bucket'))
+    auth.has_permission_dryrun.assert_called_with(
+        user.PERM_BUILDS_GET,
+        ['proj:bucket'],
+        expected_result=True,
+        tracking_bug='crbug.com/1091604',
+    )
+
     self.assertFalse(user.has_perm(user.PERM_BUILDS_CANCEL, 'proj/bucket'))
     self.assertFalse(user.has_perm(user.PERM_BUILDERS_SET_NUM, 'proj/bucket'))
 
     # Memcache coverage
     self.assertFalse(user.has_perm(user.PERM_BUILDERS_SET_NUM, 'proj/bucket'))
 
-  def test_has_perm_no_roles(self):
+  def test_has_perm_no_roles_deprecated(self):
     self.mock_role(None)
     for perm in user.PERM_TO_MIN_ROLE:
       self.assertFalse(user.has_perm(perm, 'proj/bucket'))
+
+  @mock.patch('components.auth.is_group_member', autospec=True)
+  def test_has_perm(self, is_group_member):
+    auth.should_enforce_realm_acl.return_value = True
+
+    is_group_member.side_effect = lambda g: g == 'a-readers'
+    self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'p1/a'))
+    self.assertFalse(user.has_perm(user.PERM_BUILDS_ADD, 'p1/a'))
+    self.assertFalse(user.has_perm(user.PERM_BUILDS_GET, 'p2/b'))
+
+    is_group_member.side_effect = lambda g: g == 'a-writers'
+    self.assertTrue(user.has_perm(user.PERM_BUILDS_GET, 'p1/a'))
+    self.assertTrue(user.has_perm(user.PERM_BUILDS_ADD, 'p1/a'))
+    self.assertFalse(user.has_perm(user.PERM_BUILDS_GET, 'p2/b'))
 
   def test_has_perm_bad_input(self):
     with self.assertRaises(errors.InvalidInputError):
