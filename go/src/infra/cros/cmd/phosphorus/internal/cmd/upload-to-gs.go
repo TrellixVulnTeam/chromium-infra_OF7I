@@ -156,11 +156,7 @@ func createDirWriter(ctx context.Context, localPath string, gsPath gs.Path, auth
 	if err != nil {
 		return nil, errors.Annotate(err, "creating dir writer").Err()
 	}
-	dw, err := gs.NewDirWriter(localPath, gsPath, cli)
-	if err != nil {
-		return nil, errors.Annotate(err, "creating dir writer").Err()
-	}
-	return dw, nil
+	return gs.NewDirWriter(localPath, gsPath, cli), nil
 }
 
 // Gives a list of files and directories under the given path. Intended for

@@ -52,15 +52,12 @@ func (c *realAuthedClient) NewWriter(p Path) (io.WriteCloser, error) {
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
-func NewDirWriter(localPath string, gsPath Path, client AuthedClient) (DirWriter, error) {
-	if err := verifyPaths(localPath, string(gsPath)); err != nil {
-		return nil, err
-	}
+func NewDirWriter(localPath string, gsPath Path, client AuthedClient) DirWriter {
 	return &prodDirWriter{
 		localRootDir: localPath,
 		gsRootDir:    gcgs.Path(gsPath),
 		client:       client,
-	}, nil
+	}
 }
 
 func verifyPaths(localPath string, gsPath string) error {
@@ -89,6 +86,10 @@ const maxConcurrentUploads = 10
 // If ctx is canceled, WriteDir() returns after completing in-flight uploads,
 // skipping remaining contents of the directory and returns ctx.Err().
 func (w *prodDirWriter) WriteDir(ctx context.Context) error {
+	if err := verifyPaths(w.localRootDir, string(w.gsRootDir)); err != nil {
+		return err
+	}
+
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", w.localRootDir, w.gsRootDir)
 	err := parallel.WorkPool(maxConcurrentUploads, func(items chan<- func() error) {
 		filepath.Walk(w.localRootDir, func(src string, info os.FileInfo, err error) error {
