@@ -30,6 +30,7 @@ type MachineEntity struct {
 	// ufspb.Machine.Name
 	ID               string   `gae:"$id"`
 	KVMID            string   `gae:"kvm_id"`
+	KVMPort          string   `gae:"kvm_port"`
 	RPMID            string   `gae:"rpm_id"`
 	NicIDs           []string `gae:"nic_ids"` // deprecated. Do not use.
 	DracID           string   `gae:"drac_id"` // deprecated. Do not use.
@@ -64,6 +65,7 @@ func newMachineEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity,
 	return &MachineEntity{
 		ID:               p.GetName(),
 		KVMID:            p.GetChromeBrowserMachine().GetKvmInterface().GetKvm(),
+		KVMPort:          p.GetChromeBrowserMachine().GetKvmInterface().GetPortName(),
 		RPMID:            p.GetChromeBrowserMachine().GetRpmInterface().GetRpm(),
 		ChromePlatformID: p.GetChromeBrowserMachine().GetChromePlatform(),
 		Rack:             p.GetLocation().GetRack(),
@@ -284,8 +286,10 @@ func GetMachineIndexedFieldName(input string) (string, error) {
 		field = "tags"
 	case util.StateFilterName:
 		field = "state"
+	case util.KVMPortFilterName:
+		field = "kvm_port"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/rpm/zone/rack/platform/tag/state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for machine are kvm/kvmport/rpm/zone/rack/platform/tag/state", input)
 	}
 	return field, nil
 }

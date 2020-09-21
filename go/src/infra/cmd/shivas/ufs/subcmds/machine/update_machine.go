@@ -40,6 +40,7 @@ var UpdateMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.kvmPort, "kvm-port", "", "the port of the kvm that this machine uses"+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here. "+cmdhelp.ClearFieldHelpText)
@@ -64,6 +65,7 @@ type updateMachine struct {
 	rackName         string
 	platform         string
 	kvm              string
+	kvmPort          string
 	deploymentTicket string
 	tags             string
 	serialNumber     string
@@ -121,6 +123,7 @@ func (c *updateMachine) innerRun(a subcommands.Application, args []string, env s
 			"rack":     "rack",
 			"platform": "platform",
 			"kvm":      "kvm",
+			"kvm-port": "kvmport",
 			"ticket":   "deploymentTicket",
 			"tags":     "tags",
 			"serial":   "serialNumber",
@@ -162,7 +165,7 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 		machine.SerialNumber = c.serialNumber
 	}
 	machine.ResourceState = ufsUtil.ToUFSState(c.state)
-	if c.platform != "" || c.deploymentTicket != "" || c.kvm != "" || c.description != "" {
+	if c.platform != "" || c.deploymentTicket != "" || c.kvm != "" || c.kvmPort != "" || c.description != "" {
 		machine.Device = &ufspb.Machine_ChromeBrowserMachine{
 			ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 				DisplayName:  c.machineName,
@@ -183,6 +186,11 @@ func (c *updateMachine) parseArgs(machine *ufspb.Machine) {
 			machine.GetChromeBrowserMachine().GetKvmInterface().Kvm = ""
 		} else {
 			machine.GetChromeBrowserMachine().GetKvmInterface().Kvm = c.kvm
+		}
+		if c.kvmPort == utils.ClearFieldValue {
+			machine.GetChromeBrowserMachine().GetKvmInterface().PortName = ""
+		} else {
+			machine.GetChromeBrowserMachine().GetKvmInterface().PortName = c.kvmPort
 		}
 		if c.description == utils.ClearFieldValue {
 			machine.GetChromeBrowserMachine().Description = ""
@@ -235,7 +243,7 @@ func (c *updateMachine) validateArgs() error {
 		}
 		if c.zoneName == "" && c.rackName == "" && c.state == "" &&
 			c.tags == "" && c.platform == "" && c.deploymentTicket == "" &&
-			c.kvm == "" && c.serialNumber == "" && c.description == "" {
+			c.kvm == "" && c.kvmPort == "" && c.serialNumber == "" && c.description == "" {
 			return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 		}
 		if c.zoneName != "" && !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(c.zoneName)) {

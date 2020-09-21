@@ -187,6 +187,11 @@ func processDracUpdateMask(ctx context.Context, oldDrac *ufspb.Drac, drac *ufspb
 			oldDrac.Tags = mergeTags(oldDrac.GetTags(), drac.GetTags())
 		}
 	}
+	// For partial update, validate switch interface just before updating in case
+	// before we checks the incompleted interface.
+	if err := validateSwitchPort(ctx, oldDrac.GetName(), oldDrac.GetSwitchInterface()); err != nil {
+		return oldDrac, err
+	}
 	// return existing/old drac with new updated values
 	return oldDrac, nil
 }
@@ -389,7 +394,17 @@ func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.
 		return err
 	}
 
-	return validateDracUpdateMask(ctx, drac, mask)
+	// Check partial update first to avoid unnecessary validations
+	if err := validateDracUpdateMask(ctx, drac, mask); err != nil {
+		return err
+	}
+	if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+		return err
+	}
+	if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
+		return err
+	}
+	return nil
 }
 
 // validateUpdateDracHost validates if a host can be added to a drac
@@ -417,8 +432,9 @@ func validateDracUpdateMask(ctx context.Context, drac *ufspb.Drac, mask *field_m
 			case "switch":
 				fallthrough
 			case "portName":
-				if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
-					return err
+				// Check switch interface validity in processDracUpdateMask later.
+				if drac.GetSwitchInterface() == nil {
+					return status.Error(codes.InvalidArgument, "validateDracUpdateMask - switch interface cannot be empty/nil.")
 				}
 			case "machine":
 				if drac.GetMachine() == "" {
@@ -434,12 +450,6 @@ func validateDracUpdateMask(ctx context.Context, drac *ufspb.Drac, mask *field_m
 				return status.Errorf(codes.InvalidArgument, "validateDracUpdateMask - unsupported update mask path %q", path)
 			}
 		}
-	}
-	if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
-		return err
-	}
-	if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
-		return err
 	}
 	return nil
 }

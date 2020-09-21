@@ -161,7 +161,47 @@ func TestMachineRegistration(t *testing.T) {
 			So(changes, ShouldHaveLength, 0)
 		})
 
+		Convey("Register browser machine - duplicated kvm interface", func() {
+			_, err := registration.CreateKVM(ctx, &ufspb.KVM{
+				Name: "kvm-browser-duplicate",
+			})
+			So(err, ShouldBeNil)
+			machine := &ufspb.Machine{
+				Name: "machine-browser-duplicate1",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-browser-duplicate",
+							PortName: "A1",
+						},
+					},
+				},
+			}
+			m, err := MachineRegistration(ctx, machine)
+			So(err, ShouldBeNil)
+			So(m, ShouldResembleProto, machine)
+
+			machine2 := &ufspb.Machine{
+				Name: "machine-browser-duplicate2",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-browser-duplicate",
+							PortName: "A1",
+						},
+					},
+				},
+			}
+			_, err = MachineRegistration(ctx, machine2)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "kvm port A1 of kvm-browser-duplicate is already occupied")
+		})
+
 		Convey("Register browser machine happy path", func() {
+			_, err := registration.CreateKVM(ctx, &ufspb.KVM{
+				Name: "kvm-browser-3",
+			})
+			So(err, ShouldBeNil)
 			nics := []*ufspb.Nic{{
 				Name: "nic-browser-3",
 			}}
@@ -174,11 +214,14 @@ func TestMachineRegistration(t *testing.T) {
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						NicObjects: nics,
 						DracObject: drac,
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-browser-3",
+							PortName: "A1",
+						},
 					},
 				},
 			}
 			m, err := MachineRegistration(ctx, machine)
-			//nic.Name = "machine-browser-3" + "nic-browser-3"
 			So(err, ShouldBeNil)
 			So(m, ShouldResembleProto, machine)
 			s, err := state.GetStateRecord(ctx, "machines/machine-browser-3")
@@ -331,6 +374,42 @@ func TestUpdateMachine(t *testing.T) {
 			So(vm.GetZone(), ShouldEqual, ufspb.Zone_ZONE_CHROMEOS2.String())
 		})
 
+		Convey("Update machine kvm", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-update-kvm",
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS3,
+				},
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+
+			_, err = registration.CreateKVM(ctx, &ufspb.KVM{
+				Name: "kvm-update",
+			})
+			So(err, ShouldBeNil)
+
+			machine = &ufspb.Machine{
+				Name: "machine-update-kvm",
+				Location: &ufspb.Location{
+					Zone: ufspb.Zone_ZONE_CHROMEOS2,
+				},
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-update",
+							PortName: "A1",
+						},
+					},
+				},
+			}
+			resp, err := UpdateMachine(ctx, machine, nil)
+			So(err, ShouldBeNil)
+			So(resp, ShouldResembleProto, machine)
+		})
+
 		Convey("Partial Update machine", func() {
 			machine := &ufspb.Machine{
 				Name: "machine-3",
@@ -338,7 +417,8 @@ func TestUpdateMachine(t *testing.T) {
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-3",
 						KvmInterface: &ufspb.KVMInterface{
-							Kvm: "kvm-3",
+							Kvm:      "kvm-3",
+							PortName: "A1",
 						},
 					},
 				},
@@ -351,20 +431,77 @@ func TestUpdateMachine(t *testing.T) {
 			}
 			_, err = configuration.CreateChromePlatform(ctx, chromePlatform)
 			So(err, ShouldBeNil)
+			_, err = registration.CreateKVM(ctx, &ufspb.KVM{
+				Name: "kvm-4",
+			})
+			So(err, ShouldBeNil)
 
 			machine1 := &ufspb.Machine{
 				Name: "machine-3",
 				Device: &ufspb.Machine_ChromeBrowserMachine{
 					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
 						ChromePlatform: "chromePlatform-4",
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-4",
+							PortName: "A2",
+						},
 					},
 				},
 			}
-			resp, err := UpdateMachine(ctx, machine1, &field_mask.FieldMask{Paths: []string{"platform"}})
+			resp, err := UpdateMachine(ctx, machine1, &field_mask.FieldMask{Paths: []string{"platform", "kvm"}})
 			So(err, ShouldBeNil)
 			So(resp, ShouldNotBeNil)
 			So(resp.GetChromeBrowserMachine().GetChromePlatform(), ShouldResemble, "chromePlatform-4")
-			So(resp.GetChromeBrowserMachine().GetKvmInterface().GetKvm(), ShouldResemble, "kvm-3")
+			So(resp.GetChromeBrowserMachine().GetKvmInterface().GetKvm(), ShouldResemble, "kvm-4")
+			So(resp.GetChromeBrowserMachine().GetKvmInterface().GetPortName(), ShouldResemble, "A1")
+		})
+
+		Convey("Partial Update machine - duplicated kvm", func() {
+			_, err := registration.CreateKVM(ctx, &ufspb.KVM{
+				Name: "kvm-update-duplicate1",
+			})
+			So(err, ShouldBeNil)
+			machine := &ufspb.Machine{
+				Name: "machine-update-duplicate1",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-update-duplicate1",
+							PortName: "A1",
+						},
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+			machine2 := &ufspb.Machine{
+				Name: "machine-update-duplicate2",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-update-duplicate2",
+							PortName: "A1",
+						},
+					},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine2)
+			So(err, ShouldBeNil)
+
+			machine1 := &ufspb.Machine{
+				Name: "machine-update-duplicate2",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{
+						KvmInterface: &ufspb.KVMInterface{
+							Kvm:      "kvm-update-duplicate1",
+							PortName: "A1",
+						},
+					},
+				},
+			}
+			_, err = UpdateMachine(ctx, machine1, &field_mask.FieldMask{Paths: []string{"kvm"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "kvm port A1 of kvm-update-duplicate1 is already occupied")
 		})
 	})
 }

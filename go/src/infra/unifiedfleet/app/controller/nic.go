@@ -161,6 +161,11 @@ func processNicUpdateMask(ctx context.Context, oldNic *ufspb.Nic, nic *ufspb.Nic
 			oldNic.Tags = mergeTags(oldNic.GetTags(), nic.GetTags())
 		}
 	}
+	// For partial update, validate switch interface just before updating in case
+	// before we checks the incompleted interface
+	if err := validateSwitchPort(ctx, oldNic.GetName(), oldNic.GetSwitchInterface()); err != nil {
+		return oldNic, err
+	}
 	// return existing/old nic with new updated values
 	return oldNic, nil
 }
@@ -395,7 +400,17 @@ func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.Fie
 	if err := ResourceExist(ctx, resourcesNotFound, nil); err != nil {
 		return err
 	}
-	return validateNicUpdateMask(ctx, nic, mask)
+	// Check partial update first to avoid unnecessary validations
+	if err := validateNicUpdateMask(ctx, nic, mask); err != nil {
+		return err
+	}
+	if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
+		return err
+	}
+	if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+		return err
+	}
+	return nil
 }
 
 // validateNicUpdateMask validates the update mask for nic update
@@ -411,8 +426,9 @@ func validateNicUpdateMask(ctx context.Context, nic *ufspb.Nic, mask *field_mask
 			case "switch":
 				fallthrough
 			case "portName":
-				if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
-					return err
+				// Check switch interface validity in processNicUpdateMask later.
+				if nic.GetSwitchInterface() == nil {
+					return status.Error(codes.InvalidArgument, "validateNicUpdateMask - switch interface cannot be empty/nil.")
 				}
 			case "machine":
 				if nic.GetMachine() == "" {
@@ -428,12 +444,6 @@ func validateNicUpdateMask(ctx context.Context, nic *ufspb.Nic, mask *field_mask
 				return status.Errorf(codes.InvalidArgument, "validateNicUpdateMask - unsupported update mask path %q", path)
 			}
 		}
-	}
-	if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
-		return err
-	}
-	if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
-		return err
 	}
 	return nil
 }

@@ -39,6 +39,7 @@ var AddMachineCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.rackName, "rack", "", "the rack to add the machine to")
 		c.Flags.StringVar(&c.platform, "platform", "", "the platform of this machine")
 		c.Flags.StringVar(&c.kvm, "kvm", "", "the name of the kvm that this machine uses")
+		c.Flags.StringVar(&c.kvmPort, "kvm-port", "", "the port of the kvm that this machine uses")
 		c.Flags.StringVar(&c.deploymentTicket, "ticket", "", "the deployment ticket for this machine")
 		c.Flags.StringVar(&c.serialNumber, "serial", "", "the serial number for this machine")
 		c.Flags.StringVar(&c.tags, "tags", "", "comma separated tags. You can only append/add new tags here.")
@@ -59,6 +60,7 @@ type addMachine struct {
 	rackName         string
 	platform         string
 	kvm              string
+	kvmPort          string
 	deploymentTicket string
 	tags             string
 	serialNumber     string
@@ -130,8 +132,10 @@ func (c *addMachine) parseArgs(req *ufsAPI.MachineRegistrationRequest) {
 				ChromePlatform:   c.platform,
 				DeploymentTicket: c.deploymentTicket,
 				KvmInterface: &ufspb.KVMInterface{
-					Kvm: c.kvm,
+					Kvm:      c.kvm,
+					PortName: c.kvmPort,
 				},
+				RpmInterface: &ufspb.RPMInterface{},
 			},
 		}
 	} else {

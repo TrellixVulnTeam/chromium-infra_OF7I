@@ -49,6 +49,8 @@ Gets the machine and prints the output in the user-specified format.`,
 
 		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		c.Flags.Var(flag.StringSlice(&c.racks), "rack", "Name(s) of a rack to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.kvms), "kvm", "Name(s) of a kvm to filter by. Can be specified multiple times.")
+		c.Flags.Var(flag.StringSlice(&c.kvmPorts), "kvm-port", "Name(s) of a kvm port to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.platforms), "platform", "Name(s) of a platform to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.tags), "tag", "Name(s) of a tag to filter by. Can be specified multiple times.")
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
@@ -66,6 +68,8 @@ type getMachine struct {
 	// Filters
 	zones     []string
 	racks     []string
+	kvms      []string
+	kvmPorts  []string
 	platforms []string
 	tags      []string
 	states    []string
@@ -122,6 +126,8 @@ func (c *getMachine) formatFilters() []string {
 	filters := make([]string, 0)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("rack", c.racks)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("kvm", c.kvms)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("kvmport", c.kvmPorts)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("platform", c.platforms)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("tag", c.tags)...)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)

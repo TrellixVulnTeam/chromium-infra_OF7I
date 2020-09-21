@@ -409,6 +409,25 @@ func validateSwitchPort(ctx context.Context, assetName string, switchInterface *
 	return nil
 }
 
+func validateKVMPort(ctx context.Context, assetName string, kvmInterface *ufspb.KVMInterface) error {
+	if kvmInterface.GetKvm() == "" || kvmInterface.GetPortName() == "" {
+		return nil
+	}
+	kvmID := kvmInterface.GetKvm()
+	kvmPort := kvmInterface.GetPortName()
+	machines, _, err := ListMachines(ctx, -1, "", fmt.Sprintf("kvm=%s & kvmport=%s", kvmID, kvmPort), false)
+	if err != nil {
+		return err
+	}
+	for _, machine := range machines {
+		if machine.GetName() == assetName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "kvm port %s of %s is already occupied by machine %s", kvmPort, kvmID, machine.GetName())
+	}
+	return nil
+}
+
 func validateReservedIPs(ctx context.Context, vlan *ufspb.Vlan) error {
 	if len(vlan.GetReservedIps()) == 0 {
 		return nil

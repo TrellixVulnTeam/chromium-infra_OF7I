@@ -66,6 +66,7 @@ var (
 	NicFilterName               string = "nic"
 	DracFilterName              string = "drac"
 	KVMFilterName               string = "kvm"
+	KVMPortFilterName           string = "kvmport"
 	MacAddressFilterName        string = "mac"
 	RPMFilterName               string = "rpm"
 	SwitchFilterName            string = "switch"

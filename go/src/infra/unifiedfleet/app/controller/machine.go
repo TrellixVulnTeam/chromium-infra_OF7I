@@ -216,6 +216,16 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 				oldMachine.GetChromeBrowserMachine().KvmInterface = &ufspb.KVMInterface{}
 			}
 			oldMachine.GetChromeBrowserMachine().GetKvmInterface().Kvm = machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm()
+		case "kvmport":
+			if oldMachine.GetChromeBrowserMachine() == nil {
+				oldMachine.Device = &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				}
+			}
+			if oldMachine.GetChromeBrowserMachine().GetKvmInterface() == nil {
+				oldMachine.GetChromeBrowserMachine().KvmInterface = &ufspb.KVMInterface{}
+			}
+			oldMachine.GetChromeBrowserMachine().GetKvmInterface().PortName = machine.GetChromeBrowserMachine().GetKvmInterface().GetPortName()
 		case "deploymentTicket":
 			if oldMachine.GetChromeBrowserMachine() == nil {
 				oldMachine.Device = &ufspb.Machine_ChromeBrowserMachine{
@@ -232,6 +242,11 @@ func processMachineUpdateMask(ctx context.Context, oldMachine *ufspb.Machine, ma
 		case "description":
 			oldMachine.GetChromeBrowserMachine().Description = machine.GetChromeBrowserMachine().GetDescription()
 		}
+	}
+	// For partial update, validate kvm interface just before updating in case
+	// before we checks the incompleted interface
+	if err := validateKVMPort(ctx, oldMachine.GetName(), oldMachine.GetChromeBrowserMachine().GetKvmInterface()); err != nil {
+		return oldMachine, err
 	}
 	// return existing/old machine with new updated values
 	return oldMachine, nil
@@ -638,6 +653,9 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 	// Aggregate resources referenced by the machine to check if they do not exist
 	if kvmID := machine.GetChromeBrowserMachine().GetKvmInterface().GetKvm(); kvmID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetKVMResource(kvmID))
+		if err := validateKVMPort(ctx, machine.GetName(), machine.GetChromeBrowserMachine().GetKvmInterface()); err != nil {
+			return err
+		}
 	}
 	if rpmID := machine.GetChromeBrowserMachine().GetRpmInterface().GetRpm(); rpmID != "" {
 		resourcesNotFound = append(resourcesNotFound, GetRPMResource(rpmID))
@@ -680,8 +698,14 @@ func validateUpdateMachine(ctx context.Context, machine *ufspb.Machine, mask *fi
 	if err := ResourceExist(ctx, resourcesNotFound, &errorMsg); err != nil {
 		return err
 	}
-
-	return validateMachineUpdateMask(machine, mask)
+	// Validate partial update first to avoid unnecessary validations
+	if err := validateMachineUpdateMask(machine, mask); err != nil {
+		return err
+	}
+	if err := validateKVMPort(ctx, machine.GetName(), machine.GetChromeBrowserMachine().GetKvmInterface()); err != nil {
+		return err
+	}
+	return nil
 }
 
 // validateMachineUpdateMask validates the update mask for machine update
@@ -707,6 +731,9 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - browser machine cannot be empty/nil.")
 				}
 			case "kvm":
+				fallthrough
+			case "kvmport":
+				// Check kvm interface validity in processMachineUpdateMask later.
 				if machine.GetChromeBrowserMachine() == nil {
 					return status.Error(codes.InvalidArgument, "validateMachineUpdateMask - browser machine cannot be empty/nil.")
 				}
