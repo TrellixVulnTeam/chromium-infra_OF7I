@@ -13,6 +13,7 @@ import "go.chromium.org/luci/grpc/proto/google/api/field_behavior.proto";
 import "go.chromium.org/luci/grpc/proto/google/api/resource.proto";
 import "infra/unifiedfleet/api/v1/proto/peripherals.proto";
 import "infra/unifiedfleet/api/v1/proto/state.proto";
+import "infra/unifiedfleet/api/v1/proto/location.proto";
 
 message Nic {
     option (google.api.resource) = {
@@ -95,6 +96,9 @@ message Vlan {
     // vlan_number is same as the vlan name without prefix(browser/atl/cros)
     string vlan_number = 9 [
         (google.api.field_behavior) = OUTPUT_ONLY];
+
+    // The zone that this vlan serves. One vlan can serve multiple zones.
+    repeated Zone zones = 10;
 }
 
 message DHCPConfig {
