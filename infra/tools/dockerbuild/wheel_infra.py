@@ -30,17 +30,20 @@ class InfraPackage(Builder):
   def version_fn(self, system):
     if self._resolved_version is None:
       pkg_path = os.path.join(
-        os.path.dirname(system.root), 'packages', self._spec.name)
+          os.path.dirname(__file__), '..', '..', '..', 'packages',
+          self._spec.name)
       _, self._resolved_version = util.check_run(
           system,
           None,
           '.',
-          ['python', os.path.join(pkg_path, 'setup.py') , '--version']
+          ['python', os.path.join(pkg_path, 'setup.py'), '--version'],
+          cwd=pkg_path,
       )
     return self._resolved_version
 
   def build_fn(self, system, wheel):
-    path = os.path.join(os.path.dirname(system.root), 'packages',
-                        self._spec.name)
+    path = os.path.join(
+        os.path.dirname(__file__), '..', '..', '..', 'packages',
+        self._spec.name)
     src = source.local_directory(self._spec.name, wheel.spec.version, path)
     return builder.BuildPackageFromSource(system, wheel, src)
