@@ -18,11 +18,6 @@ import (
 
 // DirWriter exposes methods to write a local directory to Google Storage.
 type DirWriter struct {
-	// The directory to be written from
-	localRootDir string
-	// The directory to be written to
-	gsRootDir gcgs.Path
-
 	// Mockable means of carrying out file-level writes
 	client AuthedClient
 }
@@ -43,11 +38,9 @@ func (c *realAuthedClient) NewWriter(p Path) (io.WriteCloser, error) {
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
-func NewDirWriter(localPath string, gsPath Path, client gcgs.Client) *DirWriter {
+func NewDirWriter(client gcgs.Client) *DirWriter {
 	return &DirWriter{
-		localRootDir: localPath,
-		gsRootDir:    gcgs.Path(gsPath),
-		client:       &realAuthedClient{client: client},
+		client: &realAuthedClient{client: client},
 	}
 }
 
@@ -76,19 +69,19 @@ const maxConcurrentUploads = 10
 //
 // If ctx is canceled, WriteDir() returns after completing in-flight uploads,
 // skipping remaining contents of the directory and returns ctx.Err().
-func (w *DirWriter) WriteDir(ctx context.Context) error {
-	if err := verifyPaths(w.localRootDir, string(w.gsRootDir)); err != nil {
+func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Path) error {
+	if err := verifyPaths(srcDir, string(dstDir)); err != nil {
 		return err
 	}
 
-	logging.Debugf(ctx, "Writing %s and subtree to %s.", w.localRootDir, w.gsRootDir)
+	logging.Debugf(ctx, "Writing %s and subtree to %s.", srcDir, dstDir)
 	err := parallel.WorkPool(maxConcurrentUploads, func(items chan<- func() error) {
-		filepath.Walk(w.localRootDir, func(src string, info os.FileInfo, err error) error {
+		filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
 			var item func() error
 
 			if err == nil {
 				item = func() error {
-					return w.writeOne(ctx, src, info)
+					return w.writeOne(ctx, srcDir, dstDir, src, info)
 				}
 			} else {
 				// Continue walking the directory tree on errors so that we upload as
@@ -106,12 +99,12 @@ func (w *DirWriter) WriteDir(ctx context.Context) error {
 		})
 	})
 	if err != nil {
-		return errors.Annotate(err, "writing dir %s to %s", w.localRootDir, w.gsRootDir).Err()
+		return errors.Annotate(err, "writing dir %s to %s", srcDir, dstDir).Err()
 	}
 	return nil
 }
 
-func (w *DirWriter) writeOne(ctx context.Context, src string, info os.FileInfo) error {
+func (w *DirWriter) writeOne(ctx context.Context, srcDir string, dstDir gcgs.Path, src string, info os.FileInfo) error {
 	if info.IsDir() {
 		return nil
 	}
@@ -120,11 +113,11 @@ func (w *DirWriter) writeOne(ctx context.Context, src string, info os.FileInfo) 
 		return nil
 	}
 
-	relPath, err := filepath.Rel(w.localRootDir, src)
+	relPath, err := filepath.Rel(srcDir, src)
 	if err != nil {
-		return errors.Annotate(err, "writing from %s to %s", src, w.gsRootDir).Err()
+		return errors.Annotate(err, "writing from %s to %s", src, dstDir).Err()
 	}
-	gsDest := w.gsRootDir.Concat(relPath)
+	gsDest := dstDir.Concat(relPath)
 	dest := Path(gsDest)
 	f, err := os.Open(src)
 	if err != nil {

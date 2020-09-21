@@ -117,20 +117,20 @@ func runGSUploadStep(ctx context.Context, authFlags authcli.Flags, r phosphorus.
 			r.GetConfig().GetTask().GetSynchronousOffloadDir(),
 		)
 	}
-	path := gs.Path(r.GetGsDirectory())
+	path := gcgs.Path(r.GetGsDirectory())
 
 	gsC, err := newGSClient(ctx, &authFlags)
 	if err != nil {
 		return "", err
 	}
-	w := gs.NewDirWriter(localPath, path, gsC)
+	w := gs.NewDirWriter(gsC)
 
 	// TODO(crbug.com/1130071) Set timeout from the recipe.
 	// Hard-coded here to stop the bleeding fast.
 	wCtx, cancel := context.WithTimeout(ctx, time.Hour)
 	defer cancel()
 
-	if err = w.WriteDir(wCtx); err != nil {
+	if err = w.WriteDir(wCtx, localPath, path); err != nil {
 		logging.Debugf(ctx, "Directory listing for failed upload: %s", dirList(localPath))
 		return "", err
 	}
