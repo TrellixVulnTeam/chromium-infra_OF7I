@@ -10,6 +10,7 @@ package redirect
 
 import (
 	"context"
+	"infra/appengine/cr-rev/common"
 	"infra/appengine/cr-rev/models"
 	"infra/appengine/cr-rev/utils"
 	"regexp"
@@ -21,6 +22,9 @@ import (
 
 var numberRedirectRegex = regexp.MustCompile(`^/(\d{1,8})(?:/(.*))?$`)
 var fullCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})(?:/(.*))?$`)
+var shortCommitHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{6,39})(?:/(.*))?$`)
+var diffFullHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{40})(\.{2,3})([[:xdigit:]]{40})`)
+var diffShortHashRegex = regexp.MustCompile(`^/([[:xdigit:]]{6,39})(\.{2,3})([[:xdigit:]]{6,40})`)
 
 // List of valid positions refs for numberRedirectRule
 var chromiumPositionRefs = stringset.Set{
@@ -118,6 +122,114 @@ func (r *fullCommitHashRule) getRedirect(ctx context.Context, url string) (strin
 	return url, commit, nil
 }
 
+// shortCommitHashRule always redirects to chromium/src in hope that the commit
+// exists.
+// TODO Add support to query datastore by short hash. This may be done using
+// .Gte(hash) and .Lt(hash+1).
+type shortCommitHashRule struct {
+	gitRedirect GitRedirect
+}
+
+func (r *shortCommitHashRule) getRedirect(ctx context.Context, url string) (string,
+	*models.Commit, error) {
+	result := shortCommitHashRegex.FindStringSubmatch(url)
+	if len(result) == 0 {
+		return "", nil, ErrNoMatch
+	}
+	commit := models.Commit{
+		Host:       "chromium",
+		Repository: "chromium/src",
+		CommitHash: result[1],
+	}
+	path := ""
+	if len(result) == 3 {
+		path = result[2]
+	}
+	url, err := r.gitRedirect.Commit(commit, path)
+	if err != nil {
+		return "", nil, err
+	}
+	return url, &commit, nil
+}
+
+// diffFullHashRule finds two commits across all indexed repositories and, if
+// found, returns URL to the commit. If there are multiple matches (for mirrors
+// and forks), it uses repo priority to determine where user should be
+// redirected.
+type diffFullHashRule struct {
+	gitRedirect GitRedirect
+}
+
+func (r *diffFullHashRule) getRedirect(ctx context.Context, url string) (string,
+	*models.Commit, error) {
+	result := diffFullHashRegex.FindStringSubmatch(url)
+	if len(result) == 0 {
+		return "", nil, ErrNoMatch
+	}
+	commits, err := models.FindCommitsByHash(ctx, result[1])
+	if err != nil {
+		return "", nil, err
+	}
+
+	commit := utils.FindBestCommit(ctx, commits)
+	if commit == nil {
+		return "", nil, ErrNoMatch
+	}
+
+	gitCommit := common.GitCommit{
+		Repository: common.GitRepository{
+			Host: commit.Host,
+			Name: commit.Repository,
+		},
+		Hash: result[3],
+	}
+	commit2 := &models.Commit{
+		ID: gitCommit.ID(),
+	}
+	err = datastore.Get(ctx, commit2)
+	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return "", nil, ErrNoMatch
+		}
+		return "", nil, err
+	}
+
+	url, err = r.gitRedirect.Diff(*commit, *commit2)
+	if err != nil {
+		return "", nil, err
+	}
+	return url, commit, nil
+}
+
+// diffShortCommitHashRule always redirects to chromium/src in hope that
+// commits exist.
+type diffShortHashRule struct {
+	gitRedirect GitRedirect
+}
+
+func (r *diffShortHashRule) getRedirect(ctx context.Context, url string) (string,
+	*models.Commit, error) {
+	result := diffShortHashRegex.FindStringSubmatch(url)
+	if len(result) < 4 {
+		return "", nil, ErrNoMatch
+	}
+	commit1 := models.Commit{
+		Host:       "chromium",
+		Repository: "chromium/src",
+		CommitHash: result[1],
+	}
+	commit2 := models.Commit{
+		Host:       "chromium",
+		Repository: "chromium/src",
+		CommitHash: result[3],
+	}
+	url, err := r.gitRedirect.Diff(commit1, commit2)
+	if err != nil {
+		return "", nil, err
+	}
+	return url, &commit1, nil
+}
+
 // Rules holds all available redirect rules. The order of rules
 // matter, so generic / catch-all rules should be last.
 type Rules struct {
@@ -133,6 +245,15 @@ func NewRules(redirect GitRedirect) *Rules {
 				gitRedirect: redirect,
 			},
 			&fullCommitHashRule{
+				gitRedirect: redirect,
+			},
+			&shortCommitHashRule{
+				gitRedirect: redirect,
+			},
+			&diffFullHashRule{
+				gitRedirect: redirect,
+			},
+			&diffShortHashRule{
 				gitRedirect: redirect,
 			},
 		},

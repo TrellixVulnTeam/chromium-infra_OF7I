@@ -26,7 +26,7 @@ func redirectTestSetup() context.Context {
 
 func TestRedirects(t *testing.T) {
 	r := NewRules(NewGitilesRedirect())
-	Convey("number redirect", t, func() {
+	Convey("generic redirect", t, func() {
 		ctx := redirectTestSetup()
 		commits := []*models.Commit{
 			{
@@ -94,7 +94,7 @@ func TestRedirects(t *testing.T) {
 				PositionRef:    "refs/heads/master",
 			},
 			{
-				ID:             "foo-baz-0000000000000000000000000000000000291561",
+				ID:             "chromium-codesearch/chromium/src-0000000000000000000000000000000000291561",
 				CommitHash:     "0000000000000000000000000000000000291561",
 				Host:           "chromium",
 				Repository:     "codesearch/chromium/src",
@@ -102,7 +102,7 @@ func TestRedirects(t *testing.T) {
 				PositionRef:    "refs/heads/master",
 			},
 			{
-				ID:             "foo-baz-0000000000000000000000000000000000291562",
+				ID:             "chromium-chromium/src-0000000000000000000000000000000000291562",
 				CommitHash:     "0000000000000000000000000000000000291562",
 				Host:           "chromium",
 				Repository:     "chromium/src",
@@ -110,7 +110,7 @@ func TestRedirects(t *testing.T) {
 				PositionRef:    "refs/heads/main",
 			},
 			{
-				ID:             "foo-baz-0000000000000000000000000000000000291563",
+				ID:             "chromium-chromium/src-0000000000000000000000000000000000291563",
 				CommitHash:     "0000000000000000000000000000000000291563",
 				Host:           "chromium",
 				Repository:     "chromium/src",
@@ -156,9 +156,10 @@ func TestRedirects(t *testing.T) {
 				So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/0000000000000000000000000000000000291560")
 			})
 
-			Convey("not chromium repo", func() {
-				_, _, err := r.FindRedirectURL(ctx, "/291561")
-				So(err, ShouldEqual, ErrNoMatch)
+			Convey("not chromium repo, redirect to short hash", func() {
+				url, _, err := r.FindRedirectURL(ctx, "/291561")
+				So(err, ShouldBeNil)
+				So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/291561")
 			})
 
 			Convey("main branch", func() {
@@ -168,15 +169,29 @@ func TestRedirects(t *testing.T) {
 				So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/0000000000000000000000000000000000291562")
 			})
 
-			Convey("non default branch", func() {
-				_, _, err := r.FindRedirectURL(ctx, "/291563")
-				So(err, ShouldEqual, ErrNoMatch)
+			Convey("non default branch, redirect to short hash", func() {
+				url, _, err := r.FindRedirectURL(ctx, "/291563")
+				So(err, ShouldBeNil)
+				So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/291563")
 			})
 		})
 		Convey("with path", func() {
 			url, _, err := r.FindRedirectURL(ctx, "/291560/foo/bar")
 			So(err, ShouldBeNil)
 			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/0000000000000000000000000000000000291560/foo/bar")
+		})
+
+		Convey("full diff", func() {
+			Convey("existing commits", func() {
+				url, _, err := r.FindRedirectURL(ctx, "/0000000000000000000000000000000000291560...0000000000000000000000000000000000291562")
+				So(err, ShouldBeNil)
+				So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/0000000000000000000000000000000000291560...0000000000000000000000000000000000291562")
+			})
+
+			Convey("commit missing", func() {
+				_, _, err := r.FindRedirectURL(ctx, "/0000000000000000000000000000000000291560...0000000000000000000000000000000000291561")
+				So(err, ShouldEqual, ErrNoMatch)
+			})
 		})
 
 	})
@@ -268,6 +283,32 @@ func TestRedirects(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(commit, ShouldResemble, commits[0])
 			So(url, ShouldEqual, "https://foo.googlesource.com/bar/+/0000000000000000000000000000000000000000/foo/bar")
+		})
+	})
+
+	Convey("short hash redirect", t, func() {
+		ctx := redirectTestSetup()
+		Convey("without path", func() {
+			url, _, err := r.FindRedirectURL(
+				ctx, "/000000")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/000000")
+		})
+		Convey("with path", func() {
+			url, _, err := r.FindRedirectURL(
+				ctx, "/000fff/foo/bar")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/000fff/foo/bar")
+		})
+	})
+
+	Convey("short diff redirect", t, func() {
+		ctx := redirectTestSetup()
+		Convey("without path", func() {
+			url, _, err := r.FindRedirectURL(
+				ctx, "/000000..000001")
+			So(err, ShouldBeNil)
+			So(url, ShouldEqual, "https://chromium.googlesource.com/chromium/src/+/000000...000001")
 		})
 	})
 
