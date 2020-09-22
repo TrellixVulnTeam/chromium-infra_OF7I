@@ -5,7 +5,10 @@
 package main
 
 import (
+	"context"
+
 	"go.chromium.org/luci/appengine/gaemiddleware"
+	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
@@ -14,6 +17,10 @@ import (
 	"go.chromium.org/luci/server/templates"
 
 	"infra/appengine/cr-audit-commits/app/config"
+
+	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	gax "github.com/googleapis/gax-go/v2"
+	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
 func main() {
@@ -30,6 +37,20 @@ func main() {
 			FuncMap: templateFuncs,
 		}))
 
+		sched := &scheduler{
+			createTask: func(ctx context.Context, req *taskspb.CreateTaskRequest, opts ...gax.CallOption) (*taskspb.Task, error) {
+				// Create a new cloud task client
+				client, err := cloudtasks.NewClient(ctx)
+				if err != nil {
+					logging.WithError(err).Errorf(ctx, "Could not create cloud task client due to %s", err.Error())
+					return nil, err
+				}
+				defer client.Close()
+
+				return client.CreateTask(ctx, req)
+			},
+		}
+
 		srv.Routes.GET("/", templatesmw, func(c *router.Context) {
 			index(c)
 		})
@@ -43,7 +64,7 @@ func main() {
 		})
 
 		srv.Routes.GET("/_cron/scheduler", configmw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
-			Scheduler(c)
+			sched.Schedule(c)
 		})
 
 		srv.Routes.GET("/_cron/update-config", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {

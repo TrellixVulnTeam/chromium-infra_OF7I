@@ -16,27 +16,26 @@ import (
 	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 
-	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
+	gax "github.com/googleapis/gax-go/v2"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
 	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
+type taskCreator func(context.Context, *taskspb.CreateTaskRequest, ...gax.CallOption) (*taskspb.Task, error)
+
+type scheduler struct {
+	createTask taskCreator
+}
+
 // Scheduler is the periodic task that:
 //
 //   - Determines the concrete ref for every audit configuration configured.
 //   - Creates a new RepoState entry for any new refs.
 //   - Schedules an audit task for each active ref in the appropriate queue.
-func Scheduler(rc *router.Context) {
+func (s *scheduler) Schedule(rc *router.Context) {
 	ctx, resp := rc.Context, rc.Writer
-
-	// Create a new cloud task client
-	client, err := cloudtasks.NewClient(ctx)
-	if err != nil {
-		logging.WithError(err).Errorf(ctx, "Could not create cloud task client due to %s", err.Error())
-	}
-	defer client.Close()
 
 	// CreateTask call will fail without this timeout
 	ctx, cancel := context.WithTimeout(ctx, time.Second*25)
@@ -89,13 +88,17 @@ func Scheduler(rc *router.Context) {
 				},
 			}
 
-			_, err := client.CreateTask(ctx, req)
+			_, err := s.createTask(ctx, req)
 			if err != nil {
 				logging.WithError(err).Errorf(ctx, "Could not schedule audit for %s due to %s", refConfig.RepoURL(), err.Error())
 				RefAuditsDue.Add(ctx, 1, false)
+				http.Error(resp, err.Error(), 500)
+
 				continue
 			}
 			RefAuditsDue.Add(ctx, 1, true)
 		}
 	}
+
+	resp.WriteHeader(http.StatusOK)
 }
