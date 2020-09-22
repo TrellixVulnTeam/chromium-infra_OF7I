@@ -59,12 +59,12 @@ def _load_appengine_config(pretest_filename):
 # the script which execfiles this file.
 _fix_sys_path_for_appengine(pretest_filename)
 
+os.environ['SERVER_SOFTWARE'] = 'test ' + os.environ.get('SERVER_SOFTWARE', '')
+os.environ['CURRENT_VERSION_ID'] = 'test.123'
+os.environ.setdefault('NO_GCE_CHECK', 'True')
+
 # Load appengine_config from the appengine project to ensure that any changes to
 # configuration there are available to the tests (e.g. sys.path modifications,
 # namespaces, etc.). This is according to
 # https://cloud.google.com/appengine/docs/python/tools/localunittesting
 _load_appengine_config(pretest_filename)
-
-os.environ['SERVER_SOFTWARE'] = 'test ' + os.environ.get('SERVER_SOFTWARE', '')
-os.environ['CURRENT_VERSION_ID'] = 'test.123'
-os.environ.setdefault('NO_GCE_CHECK', 'True')

@@ -29,10 +29,13 @@ reload(six)
 
 import httplib2
 import oauth2client
+
 # Only need this for local development. gae_ts_mon.__init__.py inserting
 # protobuf_dir to front of sys.path seems to cause this problem.
 # See go/monorail-import-mystery for more context.
-from google.rpc import status_pb2
+import settings
+if settings.local_mode:
+  from google.rpc import status_pb2
 
 from components import utils
 utils.fix_protobuf_package()
