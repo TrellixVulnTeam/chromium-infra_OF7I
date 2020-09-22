@@ -1,3 +1,22 @@
+# Release Notes sheriff-o-matic 2020-09-22
+
+- 4 commits, 1 bugs affected since 51ecc8c ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SoM] Integrate Filebug with Monorail v3](https://chromium-review.googlesource.com/c/infra/infra/+/2407626) (nqmtuan@google.com)
+- [[SoM] Change refresh annotation to use monorail v3](https://chromium-review.googlesource.com/c/infra/infra/+/2407612) (nqmtuan@google.com)
+- [[SoM] Change bug queue to use Monorail v3](https://chromium-review.googlesource.com/c/infra/infra/+/2400198) (nqmtuan@google.com)
+- [[SoM] Release note 7 Sep](https://chromium-review.googlesource.com/c/infra/infra/+/2393410) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1126358](https://crbug.com/1126358)
+
+
 # Release Notes sheriff-o-matic 2020-09-07
 
 - 3 commits, 2 bugs affected since 4f143e2 ()
