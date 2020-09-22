@@ -9,32 +9,31 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import cgi
-import csv
-import logging
-import time
-import webapp2
 import cloudstorage
-import json
-from features.generate_dataset import build_component_dataset
-
 import datetime
+import logging
+import webapp2
 
+from google.appengine.api import app_identity
+
+from features.generate_dataset import build_component_dataset
+from framework import cloud_tasks_helpers
 from framework import servlet
 from framework import urls
-from google.appengine.api import taskqueue
-from google.appengine.api import app_identity
-from framework import gcs_helpers
 
 
 class ComponentTrainingDataExport(webapp2.RequestHandler):
   """Trigger a training data export task"""
   def get(self):
     logging.info('Training data export requested.')
-    taskqueue.add(url=urls.COMPONENT_DATA_EXPORT_TASK,
-                  method='GET',
-                  queue_name='componentexport')
-    logging.info('Added to task queue')
+    task = {
+        'app_engine_http_request':
+            {
+                'http_method': 'GET',
+                'relative_uri': urls.COMPONENT_DATA_EXPORT_TASK,
+            }
+    }
+    cloud_tasks_helpers.create_task(task, queue='componentexport')
 
 
 class ComponentTrainingDataExportTask(servlet.Servlet):
