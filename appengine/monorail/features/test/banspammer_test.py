@@ -9,10 +9,13 @@ from __future__ import division
 from __future__ import absolute_import
 
 import json
+import mock
 import os
 import unittest
+import urllib
 import webapp2
 
+import settings
 from features import banspammer
 from framework import framework_views
 from framework import permissions
@@ -21,9 +24,6 @@ from proto import tracker_pb2
 from services import service_manager
 from testing import fake
 from testing import testing_helpers
-
-from google.appengine.api import taskqueue
-from google.appengine.ext import testbed
 
 class BanSpammerTest(unittest.TestCase):
 
@@ -36,17 +36,9 @@ class BanSpammerTest(unittest.TestCase):
         spam=fake.SpamService(),
         user=fake.UserService())
     self.servlet = banspammer.BanSpammer('req', 'res', services=self.services)
-    self.testbed = testbed.Testbed()
-    self.testbed.activate()
-    self.testbed.init_taskqueue_stub()
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname( __file__ )))
 
-  def tearDown(self):
-    self.testbed.deactivate()
-
-  def testProcessFormData_noPermission(self):
+  @mock.patch('framework.cloud_tasks_helpers._get_client')
+  def testProcessFormData_noPermission(self, get_client_mock):
     self.servlet.services.user.TestAddUser('member', 222)
     self.servlet.services.user.TestAddUser('spammer@domain.com', 111)
     mr = testing_helpers.MakeMonorailRequest(
@@ -61,11 +53,11 @@ class BanSpammerTest(unittest.TestCase):
       self.servlet.ProcessFormData(mr, {})
     except permissions.PermissionException:
       pass
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.BAN_SPAMMER_TASK + '.do')
-    self.assertEqual(0, len(tasks))
+    self.assertEqual(get_client_mock().queue_path.call_count, 0)
+    self.assertEqual(get_client_mock().create_task.call_count, 0)
 
-  def testProcessFormData_ok(self):
+  @mock.patch('framework.cloud_tasks_helpers._get_client')
+  def testProcessFormData_ok(self, get_client_mock):
     self.servlet.services.user.TestAddUser('owner', 222)
     self.servlet.services.user.TestAddUser('spammer@domain.com', 111)
     mr = testing_helpers.MakeMonorailRequest(
@@ -73,10 +65,23 @@ class BanSpammerTest(unittest.TestCase):
         perms=permissions.ADMIN_PERMISSIONSET)
     mr.viewed_user_auth.user_view = framework_views.MakeUserView(mr.cnxn,
         self.servlet.services.user, 111)
-    self.servlet.ProcessFormData(mr, {})
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.BAN_SPAMMER_TASK + '.do')
-    self.assertEqual(1, len(tasks))
+    mr.viewed_user_auth.user_pb.user_id = 111
+    mr.auth.user_id = 222
+    self.servlet.ProcessFormData(mr, {'banned': 'non-empty'})
+
+    params = {'spammer_id': 111, 'reporter_id': 222, 'is_spammer': True}
+    task = {
+        'app_engine_http_request':
+            {
+                'relative_uri':
+                    urls.BAN_SPAMMER_TASK + '.do?' + urllib.urlencode(params)
+            }
+    }
+    get_client_mock().queue_path.assert_called_with(
+        settings.app_id, settings.CLOUD_TASKS_REGION, 'default')
+    get_client_mock().create_task.assert_called_once()
+    ((_parent, called_task), _kwargs) = get_client_mock().create_task.call_args
+    self.assertEqual(called_task, task)
 
 
 class BanSpammerTaskTest(unittest.TestCase):
@@ -131,4 +136,3 @@ class BanSpammerTaskTest(unittest.TestCase):
         self.servlet.services.issue.TestAddComment(comment, issue.local_id)
     self.servlet.HandleRequest(mr)
     self.assertEqual(self.res.body, json.dumps({'comments': 50, 'issues': 10}))
-

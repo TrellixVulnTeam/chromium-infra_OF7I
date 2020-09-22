@@ -9,22 +9,16 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
-import webapp2
 import json
 import time
+import urllib
 
-from datetime import date
-from datetime import datetime
-from datetime import timedelta
-
+from framework import cloud_tasks_helpers
 from framework import framework_helpers
 from framework import permissions
 from framework import jsonfeed
 from framework import servlet
 from framework import urls
-from google.appengine.api import taskqueue
-from google.appengine.api import app_identity
-from framework import gcs_helpers
 
 class BanSpammer(servlet.Servlet):
   """Ban a user and mark their content as spam"""
@@ -50,10 +44,19 @@ class BanSpammer(servlet.Servlet):
         mr.cnxn, self.services.user, post_data, mr.viewed_user_auth.user_id,
         mr.viewed_user_auth.user_pb)
 
-    # Now enqueue a task to mark all of their content as spam.
-    taskqueue.add(url=urls.BAN_SPAMMER_TASK + '.do',
-        params={'spammer_id': viewed_user_id, 'reporter_id': reporter_id,
-            'is_spammer': 'banned' in post_data})
+    params = {
+        'spammer_id': viewed_user_id,
+        'reporter_id': reporter_id,
+        'is_spammer': 'banned' in post_data
+    }
+    task = {
+        'app_engine_http_request':
+            {
+                'relative_uri':
+                    urls.BAN_SPAMMER_TASK + '.do?' + urllib.urlencode(params)
+            }
+    }
+    cloud_tasks_helpers.create_task(task)
 
     return framework_helpers.FormatAbsoluteURL(
         mr, mr.viewed_user_auth.user_view.profile_url, include_project=False,
@@ -98,5 +101,3 @@ class BanSpammerTask(jsonfeed.InternalTask):
       'comments': len(comments),
       'issues': len(issues),
     })
-
-
