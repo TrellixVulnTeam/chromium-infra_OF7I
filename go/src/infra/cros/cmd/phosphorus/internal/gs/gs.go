@@ -18,7 +18,8 @@ import (
 
 // DirWriter exposes methods to write a local directory to Google Storage.
 type DirWriter struct {
-	client gsClient
+	client               gsClient
+	maxConcurrentUploads int
 }
 
 // gsClient is a Google Storage client.
@@ -31,7 +32,8 @@ type gsClient interface {
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
 func NewDirWriter(client gcgs.Client) *DirWriter {
 	return &DirWriter{
-		client: client,
+		client:               client,
+		maxConcurrentUploads: maxConcurrentUploads,
 	}
 }
 
@@ -63,7 +65,7 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 	}
 
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", srcDir, dstDir)
-	err := parallel.WorkPool(maxConcurrentUploads, func(items chan<- func() error) {
+	err := parallel.WorkPool(w.maxConcurrentUploads, func(items chan<- func() error) {
 		filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
 			var item func() error
 
