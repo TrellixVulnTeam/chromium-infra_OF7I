@@ -225,6 +225,7 @@ type DeviceManualRepairRecordEntity struct {
 	Hostname    string `gae:"hostname"`
 	AssetTag    string `gae:"asset_tag"`
 	RepairState string `gae:"repair_state"`
+	UpdatedTime time.Time
 	Content     []byte `gae:",noindex"`
 }
 
@@ -238,6 +239,12 @@ func NewDeviceManualRepairRecordEntity(r *inv.DeviceManualRepairRecord) (*Device
 	hostname := r.GetHostname()
 	assetTag := r.GetAssetTag()
 	createdTime := ptypes.TimestampString(r.GetCreatedTime())
+
+	// Set default updatedTime to createdTime.
+	updatedTime, err := ptypes.Timestamp(r.GetCreatedTime())
+	if err != nil {
+		return nil, err
+	}
 
 	if hostname == "" {
 		return nil, errors.Reason("Hostname cannot be empty").Err()
@@ -261,6 +268,7 @@ func NewDeviceManualRepairRecordEntity(r *inv.DeviceManualRepairRecord) (*Device
 		Hostname:    hostname,
 		AssetTag:    assetTag,
 		RepairState: r.GetRepairState().String(),
+		UpdatedTime: updatedTime,
 		Content:     content,
 	}, nil
 }
@@ -288,6 +296,11 @@ func (e *DeviceManualRepairRecordEntity) UpdateDeviceManualRepairRecordEntity(r 
 		}
 		e.RepairState = r.GetRepairState().String()
 		e.Content = data
+
+		e.UpdatedTime, err = ptypes.Timestamp(r.GetUpdatedTime())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

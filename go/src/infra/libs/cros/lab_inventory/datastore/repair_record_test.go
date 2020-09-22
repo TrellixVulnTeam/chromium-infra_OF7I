@@ -37,7 +37,7 @@ func mockDeviceManualRepairRecord(hostname string, assetTag string, createdTime 
 		UserLdap:      "testing-account",
 		TimeTaken:     15,
 		CreatedTime:   &timestamp.Timestamp{Seconds: createdTime, Nanos: 0},
-		UpdatedTime:   &timestamp.Timestamp{Seconds: 222, Nanos: 0},
+		UpdatedTime:   &timestamp.Timestamp{Seconds: createdTime, Nanos: 0},
 		CompletedTime: &timestamp.Timestamp{Seconds: 222, Nanos: 0},
 	}
 }
@@ -66,8 +66,8 @@ func mockUpdatedRecord(hostname string, assetTag string, createdTime int64) *inv
 		UserLdap:      "testing-account",
 		TimeTaken:     30,
 		CreatedTime:   &timestamp.Timestamp{Seconds: createdTime, Nanos: 0},
-		UpdatedTime:   &timestamp.Timestamp{Seconds: 222, Nanos: 0},
-		CompletedTime: &timestamp.Timestamp{Seconds: 222, Nanos: 0},
+		UpdatedTime:   &timestamp.Timestamp{Seconds: 333, Nanos: 0},
+		CompletedTime: &timestamp.Timestamp{Seconds: 333, Nanos: 0},
 	}
 }
 
@@ -101,6 +101,9 @@ func TestAddRecord(t *testing.T) {
 				So(r.Entity.Hostname, ShouldEqual, records[i].GetHostname())
 				So(r.Entity.AssetTag, ShouldEqual, records[i].GetAssetTag())
 				So(r.Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
+
+				updatedTime, _ := ptypes.Timestamp(records[i].GetUpdatedTime())
+				So(r.Entity.UpdatedTime, ShouldEqual, updatedTime)
 			}
 
 			res = GetDeviceManualRepairRecords(ctx, ids1)
@@ -110,6 +113,9 @@ func TestAddRecord(t *testing.T) {
 				So(r.Entity.Hostname, ShouldEqual, records[i].GetHostname())
 				So(r.Entity.AssetTag, ShouldEqual, records[i].GetAssetTag())
 				So(r.Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
+
+				updatedTime, _ := ptypes.Timestamp(records[i].GetUpdatedTime())
+				So(r.Entity.UpdatedTime, ShouldEqual, updatedTime)
 			}
 		})
 		Convey("Add existing record to datastore", func() {
@@ -138,6 +144,9 @@ func TestAddRecord(t *testing.T) {
 				So(r.Entity.Hostname, ShouldEqual, req[i].GetHostname())
 				So(r.Entity.AssetTag, ShouldEqual, req[i].GetAssetTag())
 				So(r.Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
+
+				updatedTime, _ := ptypes.Timestamp(req[i].GetUpdatedTime())
+				So(r.Entity.UpdatedTime, ShouldResemble, updatedTime)
 			}
 		})
 		Convey("Add record without hostname to datastore", func() {
@@ -171,6 +180,9 @@ func TestGetRecord(t *testing.T) {
 			So(res[0].Err, ShouldBeNil)
 			So(res[1].Err, ShouldNotBeNil)
 			So(res[1].Err.Error(), ShouldContainSubstring, "datastore: no such entity")
+
+			updatedTime, _ := ptypes.Timestamp(record1.CreatedTime)
+			So(res[0].Entity.UpdatedTime, ShouldResemble, updatedTime)
 		})
 		Convey("Get record with empty id", func() {
 			res := GetDeviceManualRepairRecords(ctx, []string{""})
@@ -289,6 +301,9 @@ func TestUpdateRecord(t *testing.T) {
 			So(res[0].Err, ShouldBeNil)
 			So(res[0].Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
 
+			updatedTime1, _ := ptypes.Timestamp(record1.CreatedTime)
+			So(res[0].Entity.UpdatedTime, ShouldResemble, updatedTime1)
+
 			// Update and check
 			reqUpdate := map[string]*invlibs.DeviceManualRepairRecord{rec1ID: record1Update}
 			res, err = UpdateDeviceManualRepairRecords(ctx, reqUpdate)
@@ -300,6 +315,9 @@ func TestUpdateRecord(t *testing.T) {
 			So(res, ShouldHaveLength, 1)
 			So(res[0].Err, ShouldBeNil)
 			So(res[0].Entity.RepairState, ShouldEqual, "STATE_COMPLETED")
+
+			updatedTime1, _ = ptypes.Timestamp(&timestamp.Timestamp{Seconds: 333, Nanos: 0})
+			So(res[0].Entity.UpdatedTime, ShouldResemble, updatedTime1)
 		})
 		Convey("Update non-existent record in datastore", func() {
 			rec2ID, _ := generateRepairRecordID(record2.Hostname, record2.AssetTag, ptypes.TimestampString(record2.CreatedTime))
@@ -341,6 +359,12 @@ func TestUpdateRecord(t *testing.T) {
 			So(res[1].Err, ShouldBeNil)
 			So(res[0].Entity.RepairState, ShouldEqual, "STATE_COMPLETED")
 			So(res[1].Entity.RepairState, ShouldEqual, "STATE_NOT_STARTED")
+
+			updatedTime3, _ := ptypes.Timestamp(&timestamp.Timestamp{Seconds: 333, Nanos: 0})
+			So(res[0].Entity.UpdatedTime, ShouldResemble, updatedTime3)
+
+			updatedTime4, _ := ptypes.Timestamp(record4.CreatedTime)
+			So(res[1].Entity.UpdatedTime, ShouldResemble, updatedTime4)
 		})
 		Convey("Update record without ID to datastore", func() {
 			rec5ID, _ := generateRepairRecordID(record5.Hostname, record5.AssetTag, ptypes.TimestampString(record5.CreatedTime))
