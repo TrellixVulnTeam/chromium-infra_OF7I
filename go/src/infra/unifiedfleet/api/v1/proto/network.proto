@@ -90,6 +90,16 @@ message Vlan {
     // No need to specify them here.
     repeated string reserved_ips = 7;
 
+    // Define the free ip range of this vlan that can be automatically assigned.
+    // Any ips between the two ips are regarded as available ips.
+    // Any ips that not in this range will be marked as reserved.
+    // If they're empty, it means no ips in this vlan can be used as dhcp configs.
+    // The format of the ip ranges are ipv4 string format, e.g. 192.168.1.23.
+    // User can update reserved_ips to remove some of the available ips in the free range.
+    string free_start_ipv4Str = 11;
+    string free_end_ipv4Str = 12;
+
+
     // State of the vlan
     State resource_state = 8;
 
@@ -126,4 +136,6 @@ message IP {
     bool occupied = 4;
     // store the string ip address
     string ipv4_str = 5;
+    // Indicate if this IP is reserved (cannot be auto-assigned to any host)
+    bool reserve = 6;
 }
