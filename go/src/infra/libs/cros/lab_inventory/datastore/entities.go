@@ -5,6 +5,7 @@
 package datastore
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -321,3 +322,49 @@ func generateRepairRecordID(hostname string, assetTag string, createdTime string
 }
 
 /* Device Manual Repair Record Entity and helper functions end */
+
+/* Data layer entities and helpers for Manual Repair start */
+
+// MRMetadataEntity is a datastore entity that tracks miscellaneous information
+// used for data operations for a device repair record.
+type MRMetadataEntity struct {
+	_kind       string `gae:"$kind,MRMetadata"`
+	ID          string `gae:"$id"`
+	LastScanned time.Time
+}
+
+// MRMetadataEntityKind is the datastore entity kind for
+// MRMetadata entities.
+const MRMetadataEntityKind = "MRMetadata"
+
+// MRLastScannedID is the ID for the entity that will always store the last
+// scanned time.
+const MRLastScannedID = "ManualRepairLastScanned"
+
+// GetLastScannedTime returns a list of 1 with the entity with the latest
+// LastScanned time.
+func GetLastScannedTime(ctx context.Context) (*MRMetadataEntity, error) {
+	e := MRMetadataEntity{
+		ID: MRLastScannedID,
+	}
+	if err := datastore.Get(ctx, &e); err != nil {
+		return nil, err
+	}
+	return &e, nil
+}
+
+// SaveLastScannedTime saves the newest LastScanned time into an entity. If one
+// does not exist, it will create a new entity in the Datastore.
+func SaveLastScannedTime(ctx context.Context, lastScannedTime time.Time) error {
+	e := &MRMetadataEntity{
+		ID:          MRLastScannedID,
+		LastScanned: lastScannedTime,
+	}
+	if err := datastore.Put(ctx, e); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* Data layer entities and helpers for Manual Repair end */
