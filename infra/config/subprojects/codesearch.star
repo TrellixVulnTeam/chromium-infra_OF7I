@@ -23,13 +23,6 @@ luci.console_view(
     include_experimental_builds = True,
 )
 
-def chromium_src_poller():
-    return luci.gitiles_poller(
-        name = "codesearch-src-trigger",
-        bucket = "codesearch",
-        repo = "https://chromium.googlesource.com/chromium/src",
-    )
-
 def builder(
         name,
         executable,
@@ -122,24 +115,6 @@ def chromium_genfiles(short_name, name, os = None, cpu_cores = None):
         triggered_by = "codesearch-gen-chromium-initiator",
     )
 
-def sync_submodules(
-        name,
-        short_name,
-        source_repo,
-        extra_submodules = None,
-        triggered_by = None):
-    properties = {"source_repo": source_repo}
-    if extra_submodules:
-        properties["extra_submodules"] = extra_submodules
-    builder(
-        name = name,
-        executable = infra.recipe("sync_submodules"),
-        properties = properties,
-        category = "submodules",
-        short_name = short_name,
-        triggered_by = triggered_by,
-    )
-
 # buildifier: disable=function-docstring
 def update_submodules_mirror(
         name,
@@ -190,26 +165,6 @@ chromium_genfiles(
     cpu_cores = "16",
 )
 
-sync_submodules(
-    name = "codesearch-submodules-build",
-    short_name = "bld",
-    source_repo = "https://chromium.googlesource.com/chromium/tools/build",
-    triggered_by = build.poller(),
-)
-sync_submodules(
-    name = "codesearch-submodules-infra",
-    short_name = "inf",
-    source_repo = "https://chromium.googlesource.com/infra/infra",
-    triggered_by = infra.poller(),
-)
-sync_submodules(
-    name = "codesearch-submodules-chromium",
-    short_name = "src",
-    source_repo = "https://chromium.googlesource.com/chromium/src",
-    extra_submodules = "src/out=https://chromium.googlesource.com/chromium/src/out",
-    triggered_by = chromium_src_poller(),
-)
-
 update_submodules_mirror(
     name = "codesearch-update-submodules-mirror-src",
     short_name = "src",
@@ -221,7 +176,11 @@ update_submodules_mirror(
         "refs/branch-heads/4044",  # M81
         "refs/branch-heads/4103",  # M83
     ],
-    triggered_by = chromium_src_poller(),
+    triggered_by = luci.gitiles_poller(
+        name = "codesearch-src-trigger",
+        bucket = "codesearch",
+        repo = "https://chromium.googlesource.com/chromium/src",
+    ),
 )
 update_submodules_mirror(
     name = "codesearch-update-submodules-mirror-infra",
