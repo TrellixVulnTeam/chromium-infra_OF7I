@@ -1,0 +1,79 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found
+// in the LICENSE file.
+syntax = "proto3";
+
+import "chromeperf/engine/task.proto";
+import "chromeperf/pinpoint/change.proto";
+
+package chromeperf.pinpoint;
+
+message TestRunnerPayload {
+  message Dimension {
+     string key = 1;
+     string value = 2;
+  }
+
+  message Input {
+    string swarming_server = 1;
+    repeated Dimension dimensions = 2;
+    repeated string extra_args = 3;
+    chromeperf.pinpoint.Change change = 4;
+    string execution_timeout_secs=5;
+    string io_timeout_secs = 6;
+    string expiration_secs = 7;
+  }
+
+  message Output {
+    // FIXME: Depend on the Swarming request proto?
+    message SwarmingRequest {
+      string name = 1;
+      string user = 2;
+      string priority = 3;
+
+      message TaskSlice {
+        message Properties {
+          message InputsRef {
+            string isolate_server = 1;
+            string isolate_hash = 2;
+          }
+          InputsRef inputs_ref = 1;
+          repeated string extra_args = 2;
+          repeated Dimension dimensions = 3;
+          string execution_timeout_secs = 4;
+          string io_timeout_secs = 5;
+        }
+        Properties properties = 1;
+        string expiration_secs = 2;
+      }
+
+      repeated TaskSlice task_slices = 4;
+      repeated string tags = 5;
+      string pubsub_auth_token = 6;
+      string pubsub_topic = 7;
+      string pubsub_userdata = 8;
+      string service_account = 9;
+    }
+    SwarmingRequest swarming_request = 1;
+
+    message SwarmingResponse {
+      string task_id = 1;
+      string bot_id = 2;
+      string state = 3;
+      bool failure = 4;
+    }
+    SwarmingResponse swarming_response = 2;
+
+    message TaskOutput {
+      string isolate_server = 1;
+      string isolate_hash = 2;
+    }
+    TaskOutput task_output = 3;
+    int32 tries = 4;
+  }
+
+  Input input = 1;
+  Output output = 2;
+  int32 index = 3;
+  repeated chromeperf.engine.ErrorMessage errors = 4;
+}

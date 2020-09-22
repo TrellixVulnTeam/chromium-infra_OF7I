@@ -13,6 +13,8 @@ from google.auth import credentials
 from google.cloud import datastore
 
 from . import test_utils  # pylint: disable=relative-beyond-top-level
+from chromeperf.pinpoint.models import repository
+from chromeperf.pinpoint.models import change
 
 
 @pytest.fixture
@@ -34,6 +36,21 @@ def datastore_client(request, datastore_emulator):
     )
 
 
+@pytest.fixture(autouse=True)
+def pinpoint_seeded_data(datastore_client):
+    # Add some test repositories.
+    repository.add_repository(
+        datastore_client,
+        'catapult',
+        'https://chromium.googlesource.com/catapult',
+    )
+    repository.add_repository(
+        datastore_client,
+        'chromium',
+        test_utils.CHROMIUM_URL,
+    )
+
+
 @pytest.fixture
 def request_json(mocker):
     return mocker.patch('chromeperf.services.request.request_json')
@@ -50,3 +67,22 @@ def datastore_emulator(worker_id):
     port = 8081 + hash(worker_id) % 6000
     with test_utils.with_emulator('datastore', port) as envs:
         yield envs
+
+# What follows here are bisection-related fixtures, also useful for testing
+# individual evaluators.
+@pytest.fixture
+def start_change():
+    return change.reconstitute_change(
+        {'commits': [{
+            'repository': 'chromium',
+            'git_hash': 'commit_0'
+        }]})
+
+
+@pytest.fixture
+def end_change():
+    return change.reconstitute_change(
+        {'commits': [{
+            'repository': 'chromium',
+            'git_hash': 'commit_5'
+        }]})

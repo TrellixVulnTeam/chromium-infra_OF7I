@@ -13,6 +13,7 @@ import typing
 
 from chromeperf.pinpoint import errors
 from chromeperf.pinpoint.models import commit
+from chromeperf.pinpoint.models import repository as repository_module
 from chromeperf.pinpoint import change_pb2
 from chromeperf.services import gerrit_service
 
@@ -275,12 +276,16 @@ class Change:
         return tuple(self.commits[1:])
 
 
-def reconstitute_change(change):
+def reconstitute_change(datastore_client, change):
     return Change(
         commits=[
-            commit.Commit(repository=c.get('repository'),
-                          git_hash=c.get('git_hash'))
-            for c in change.get('commits')
+            commit.Commit(
+                repository=repository_module.Repository.FromName(
+                    datastore_client,
+                    c.get('repository'),
+                ),
+                git_hash=c.get('git_hash'),
+            ) for c in change.get('commits')
         ],
         patch=change.get('patch'),
     )

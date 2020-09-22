@@ -4,6 +4,11 @@ import "google/protobuf/any.proto";
 
 package chromeperf.engine;
 
+message ErrorMessage {
+  string reason = 1;
+  string message = 2;
+}
+
 
 // A Task is a representation of work with payload (either input or output), a
 // status, and a type.

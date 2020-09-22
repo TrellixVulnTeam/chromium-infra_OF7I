@@ -12,13 +12,12 @@ import typing
 
 from google.cloud import datastore
 from google.protobuf import any_pb2
+from google.protobuf import message
 
 from chromeperf.engine import evaluator as evaluator_module
+from chromeperf.engine import task_pb2
 
-__all__ = (
-    'populate_task_graph',
-    'task_graph_loader',
-)
+__all__ = ('populate_task_graph', 'task_graph_loader', 'PayloadUnpackingMixin')
 
 
 # These are internal-only models, used as an implementation detail of the
@@ -88,13 +87,13 @@ def populate_task_graph(client, job, graph):
 
 
 def task_graph_loader(
-        client: datastore.Client,
-        job: typing.Any,
+    datastore_client: datastore.Client,
+    job: typing.Any,
 ) -> typing.Callable[[], evaluator_module.TaskGraph]:
     def load_task_graph() -> evaluator_module.TaskGraph:
-        with client.transaction():
+        with datastore_client.transaction():
             task_entities = list(
-                client.query(kind='Task', ancestor=job.key).fetch())
+                datastore_client.query(kind='Task', ancestor=job.key).fetch())
         tasks = [Task.FromEntity(te) for te in task_entities]
 
         vertices = [
@@ -114,3 +113,25 @@ def task_graph_loader(
         )
 
     return load_task_graph
+
+
+class Error(Exception):
+    pass
+
+
+class FatalError(Error):
+    pass
+
+
+T = typing.TypeVar('T')
+
+
+class PayloadUnpackingMixin:
+    def unpack(self, proto_type: typing.Type[T], payload: any_pb2.Any) -> T:
+        result = proto_type()
+        if not payload.Unpack(result):
+            raise FatalError(
+                f'Mismatched payload type in {self.__class__.__name__} '
+                f'(expecting: {proto_type.__name__}, '
+                f'got: {payload.type_url})', )
+        return result

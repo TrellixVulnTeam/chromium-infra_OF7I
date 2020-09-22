@@ -57,13 +57,13 @@ class TaskPayloadLiftingEvaluator(object):
         self._include_keys = include_keys
         self._include_event_types = include_event_types
 
-    def __call__(self, task, event, accumulator):
+    def __call__(self, task, event, context):
         if (self._include_event_types is not None
                 and event.type not in self._include_event_types
             ) or event.type in self._exclude_event_types:
             return None
 
-        accumulator.update({
+        context.update({
             task.id:
             TaskContext(state=task.state, payload=task.payload),
         })

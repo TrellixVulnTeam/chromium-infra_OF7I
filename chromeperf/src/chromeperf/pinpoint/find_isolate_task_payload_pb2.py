@@ -13,6 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 from chromeperf.pinpoint import change_pb2 as chromeperf_dot_pinpoint_dot_change__pb2
+from chromeperf.engine import task_pb2 as chromeperf_dot_engine_dot_task__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
@@ -20,9 +21,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='chromeperf.pinpoint',
   syntax='proto3',
   serialized_options=None,
-  serialized_pb=_b('\n3chromeperf/pinpoint/find_isolate_task_payload.proto\x12\x13\x63hromeperf.pinpoint\x1a chromeperf/pinpoint/change.proto\"h\n\x10\x42uildBucketBuild\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0e\n\x06result\x18\x04 \x01(\t\x12\x1b\n\x13result_details_json\x18\x05 \x01(\t\"/\n\x0c\x45rrorMessage\x12\x0e\n\x06reason\x18\x01 \x01(\t\x12\x0f\n\x07message\x18\x02 \x01(\t\"\xd9\x02\n\x16\x46indIsolateTaskPayload\x12+\n\x06\x63hange\x18\x01 \x01(\x0b\x32\x1b.chromeperf.pinpoint.Change\x12/\n\x05patch\x18\x02 \x01(\x0b\x32 .chromeperf.pinpoint.GerritPatch\x12\x0f\n\x07\x62uilder\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\x16\n\x0eisolate_server\x18\x05 \x01(\t\x12\x14\n\x0cisolate_hash\x18\x06 \x01(\t\x12\x0e\n\x06\x62ucket\x18\x07 \x01(\t\x12\r\n\x05tries\x18\x08 \x01(\x05\x12@\n\x11\x62uildbucket_build\x18\t \x01(\x0b\x32%.chromeperf.pinpoint.BuildBucketBuild\x12\x31\n\x06\x65rrors\x18\n \x03(\x0b\x32!.chromeperf.pinpoint.ErrorMessage\"\xc3\x01\n\x0b\x42uildUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12:\n\x05state\x18\x02 \x01(\x0e\x32+.chromeperf.pinpoint.BuildUpdate.BuildState\"l\n\nBuildState\x12\x1a\n\x16UNSPECIFIED_BUILDSTATE\x10\x00\x12\x0b\n\x07PENDING\x10\x01\x12\x0b\n\x07RUNNING\x10\x02\x12\n\n\x06\x46\x41ILED\x10\x03\x12\r\n\tCOMPLETED\x10\x04\x12\r\n\tCANCELLED\x10\x05\x62\x06proto3')
+  serialized_pb=_b('\n3chromeperf/pinpoint/find_isolate_task_payload.proto\x12\x13\x63hromeperf.pinpoint\x1a chromeperf/pinpoint/change.proto\x1a\x1c\x63hromeperf/engine/task.proto\"h\n\x10\x42uildBucketBuild\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0b\n\x03url\x18\x02 \x01(\t\x12\x0e\n\x06status\x18\x03 \x01(\t\x12\x0e\n\x06result\x18\x04 \x01(\t\x12\x1b\n\x13result_details_json\x18\x05 \x01(\t\"\xd7\x02\n\x16\x46indIsolateTaskPayload\x12+\n\x06\x63hange\x18\x01 \x01(\x0b\x32\x1b.chromeperf.pinpoint.Change\x12/\n\x05patch\x18\x02 \x01(\x0b\x32 .chromeperf.pinpoint.GerritPatch\x12\x0f\n\x07\x62uilder\x18\x03 \x01(\t\x12\x0e\n\x06target\x18\x04 \x01(\t\x12\x16\n\x0eisolate_server\x18\x05 \x01(\t\x12\x14\n\x0cisolate_hash\x18\x06 \x01(\t\x12\x0e\n\x06\x62ucket\x18\x07 \x01(\t\x12\r\n\x05tries\x18\x08 \x01(\x05\x12@\n\x11\x62uildbucket_build\x18\t \x01(\x0b\x32%.chromeperf.pinpoint.BuildBucketBuild\x12/\n\x06\x65rrors\x18\n \x03(\x0b\x32\x1f.chromeperf.engine.ErrorMessage\"\xc3\x01\n\x0b\x42uildUpdate\x12\n\n\x02id\x18\x01 \x01(\t\x12:\n\x05state\x18\x02 \x01(\x0e\x32+.chromeperf.pinpoint.BuildUpdate.BuildState\"l\n\nBuildState\x12\x1a\n\x16UNSPECIFIED_BUILDSTATE\x10\x00\x12\x0b\n\x07PENDING\x10\x01\x12\x0b\n\x07RUNNING\x10\x02\x12\n\n\x06\x46\x41ILED\x10\x03\x12\r\n\tCOMPLETED\x10\x04\x12\r\n\tCANCELLED\x10\x05\x62\x06proto3')
   ,
-  dependencies=[chromeperf_dot_pinpoint_dot_change__pb2.DESCRIPTOR,])
+  dependencies=[chromeperf_dot_pinpoint_dot_change__pb2.DESCRIPTOR,chromeperf_dot_engine_dot_task__pb2.DESCRIPTOR,])
 
 
 
@@ -59,8 +60,8 @@ _BUILDUPDATE_BUILDSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=701,
-  serialized_end=809,
+  serialized_start=680,
+  serialized_end=788,
 )
 _sym_db.RegisterEnumDescriptor(_BUILDUPDATE_BUILDSTATE)
 
@@ -119,46 +120,8 @@ _BUILDBUCKETBUILD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=110,
-  serialized_end=214,
-)
-
-
-_ERRORMESSAGE = _descriptor.Descriptor(
-  name='ErrorMessage',
-  full_name='chromeperf.pinpoint.ErrorMessage',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='reason', full_name='chromeperf.pinpoint.ErrorMessage.reason', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='message', full_name='chromeperf.pinpoint.ErrorMessage.message', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=216,
-  serialized_end=263,
+  serialized_start=140,
+  serialized_end=244,
 )
 
 
@@ -251,8 +214,8 @@ _FINDISOLATETASKPAYLOAD = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=266,
-  serialized_end=611,
+  serialized_start=247,
+  serialized_end=590,
 )
 
 
@@ -290,18 +253,17 @@ _BUILDUPDATE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=614,
-  serialized_end=809,
+  serialized_start=593,
+  serialized_end=788,
 )
 
 _FINDISOLATETASKPAYLOAD.fields_by_name['change'].message_type = chromeperf_dot_pinpoint_dot_change__pb2._CHANGE
 _FINDISOLATETASKPAYLOAD.fields_by_name['patch'].message_type = chromeperf_dot_pinpoint_dot_change__pb2._GERRITPATCH
 _FINDISOLATETASKPAYLOAD.fields_by_name['buildbucket_build'].message_type = _BUILDBUCKETBUILD
-_FINDISOLATETASKPAYLOAD.fields_by_name['errors'].message_type = _ERRORMESSAGE
+_FINDISOLATETASKPAYLOAD.fields_by_name['errors'].message_type = chromeperf_dot_engine_dot_task__pb2._ERRORMESSAGE
 _BUILDUPDATE.fields_by_name['state'].enum_type = _BUILDUPDATE_BUILDSTATE
 _BUILDUPDATE_BUILDSTATE.containing_type = _BUILDUPDATE
 DESCRIPTOR.message_types_by_name['BuildBucketBuild'] = _BUILDBUCKETBUILD
-DESCRIPTOR.message_types_by_name['ErrorMessage'] = _ERRORMESSAGE
 DESCRIPTOR.message_types_by_name['FindIsolateTaskPayload'] = _FINDISOLATETASKPAYLOAD
 DESCRIPTOR.message_types_by_name['BuildUpdate'] = _BUILDUPDATE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
@@ -312,13 +274,6 @@ BuildBucketBuild = _reflection.GeneratedProtocolMessageType('BuildBucketBuild', 
   # @@protoc_insertion_point(class_scope:chromeperf.pinpoint.BuildBucketBuild)
   ))
 _sym_db.RegisterMessage(BuildBucketBuild)
-
-ErrorMessage = _reflection.GeneratedProtocolMessageType('ErrorMessage', (_message.Message,), dict(
-  DESCRIPTOR = _ERRORMESSAGE,
-  __module__ = 'chromeperf.pinpoint.find_isolate_task_payload_pb2'
-  # @@protoc_insertion_point(class_scope:chromeperf.pinpoint.ErrorMessage)
-  ))
-_sym_db.RegisterMessage(ErrorMessage)
 
 FindIsolateTaskPayload = _reflection.GeneratedProtocolMessageType('FindIsolateTaskPayload', (_message.Message,), dict(
   DESCRIPTOR = _FINDISOLATETASKPAYLOAD,

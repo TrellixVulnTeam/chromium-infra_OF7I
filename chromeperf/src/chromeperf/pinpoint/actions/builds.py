@@ -16,25 +16,16 @@ from google.protobuf import message
 from chromeperf.engine import event as event_module
 from chromeperf.engine import evaluator as evaluator_module
 from chromeperf.pinpoint import errors
-from chromeperf.engine import event_pb2
-from chromeperf.engine import task_pb2
 from chromeperf.pinpoint import find_isolate_task_payload_pb2
 from chromeperf.pinpoint.actions import updates
 from chromeperf.pinpoint.models import change as change_module
 from chromeperf.pinpoint.models import commit as commit_module
+from chromeperf.pinpoint.models import task as task_module
 from chromeperf.services import buildbucket_service
 from chromeperf.services import gerrit_service
 from chromeperf.services import request
 
 FAILURE_MAPPING = {'FAILURE': 'failed', 'CANCELLED': 'cancelled'}
-
-
-class Error(Exception):
-    pass
-
-
-class FatalError(Error):
-    pass
 
 
 def _request_build(datastore_client,
@@ -126,22 +117,9 @@ def _build_tags_from_job(job):
         ('pinpoint_url', job.url),
     ])
 
-T = typing.TypeVar('T')
-
-
-class PayloadUnpackingMixin:
-    def unpack(self, proto_type: typing.Type[T], payload: any_pb2.Any) -> T:
-        result = proto_type()
-        if not payload.Unpack(result):
-            raise FatalError(
-                f'Mismatched payload type in {self.__class__.__name__} '
-                f'(expecting: {proto_type.__name__}, '
-                f'got: {payload.type_url})', )
-        return result
-
 
 @dataclasses.dataclass
-class ScheduleBuildBucketBuild(PayloadUnpackingMixin):
+class ScheduleBuildBucketBuild(task_module.PayloadUnpackingMixin):
     """Action to schedule a build via BuildBucket.
 
     This action will schedule a build via the BuildBucket API, and ensure
@@ -155,7 +133,7 @@ class ScheduleBuildBucketBuild(PayloadUnpackingMixin):
 
     """
     job: typing.Any
-    task: task_pb2.Task
+    task: task_module.Task
     change: change_module.Change
     datastore_client: datastore.Client
 
@@ -198,7 +176,8 @@ class ScheduleBuildBucketBuild(PayloadUnpackingMixin):
 
 
 @dataclasses.dataclass
-class UpdateBuildStatus(PayloadUnpackingMixin):
+class UpdateBuildStatus(task_module.PayloadUnpackingMixin,
+                        updates.ErrorAppendingMixin):
     datastore_client: datastore.Client
     job: typing.Any
     task: evaluator_module.NormalizedTask
@@ -206,16 +185,14 @@ class UpdateBuildStatus(PayloadUnpackingMixin):
     event: event_module.Event
 
     def _append_error(self, task_payload, reason: str, message: str):
-        task_payload.errors.append(
-            find_isolate_task_payload_pb2.ErrorMessage(reason=reason,
-                                                       message=message))
-        self.task.payload.Pack(task_payload)
-        updates.update_task(self.datastore_client,
-                            self.job,
-                            self.task.id,
-                            new_state='failed',
-                            payload=self.task.payload)
-        return None
+        return self.update_task_with_error(
+            datastore_client=self.datastore_client,
+            job=self.job,
+            task=self.task,
+            payload=task_payload,
+            reason=reason,
+            message=message,
+        )
 
     @updates.log_transition_failures
     def __call__(self, accumulator):
@@ -241,18 +218,33 @@ class UpdateBuildStatus(PayloadUnpackingMixin):
 
         try:
             buildbucket_build = buildbucket_service.get(
-                task_payload.buildbucket_build.id).get('build', {})
+                task_payload.buildbucket_build.id).get(
+                    'build',
+                    {},
+                )
             task_payload.buildbucket_build.status = buildbucket_build.get(
-                'status', '')
+                'status',
+                '',
+            )
             task_payload.buildbucket_build.result = buildbucket_build.get(
-                'result', '')
+                'result',
+                '',
+            )
             task_payload.buildbucket_build.url = buildbucket_build.get(
-                'url', '')
+                'url',
+                '',
+            )
             task_payload.buildbucket_build.result_details_json = buildbucket_build.get(
-                'result_details_json', '')
+                'result_details_json',
+                '',
+            )
         except request.RequestError as e:
             logging.error('Failed getting Buildbucket Job status: %s', e)
-            return self._append_error(task_payload, reason=type(e).__name__, message=f'Service request error response: {e}')
+            return self._append_error(
+                task_payload,
+                reason=type(e).__name__,
+                message=f'Service request error response: {e}',
+            )
 
         logging.debug('buildbucket response: %s', buildbucket_build)
 

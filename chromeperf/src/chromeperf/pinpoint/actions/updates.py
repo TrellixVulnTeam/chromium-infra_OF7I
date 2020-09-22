@@ -7,8 +7,11 @@ import itertools
 import logging
 import typing
 
+from google.cloud import datastore
 from google.protobuf import any_pb2
+from google.protobuf import message
 
+from chromeperf.engine import task_pb2
 from chromeperf.pinpoint.models import task as task_module
 
 VALID_TRANSITIONS = {
@@ -36,7 +39,7 @@ class InvalidTransition(Error):
     pass
 
 
-def update_task(client,
+def update_task(datastore_client,
                 job,
                 task_id,
                 new_state=None,
@@ -54,26 +57,33 @@ def update_task(client,
         raise ValueError('Set one of `new_state` or `payload`.')
 
     if new_state and new_state not in VALID_TRANSITIONS:
-        raise InvalidTransition('Unknown state: %s' % (new_state,))
+        raise InvalidTransition('Unknown state: %s' % (new_state, ))
 
-    with client.transaction():
-        task = client.get(client.key('Task', task_id, parent=job.key))
+    with datastore_client.transaction():
+        task = datastore_client.get(
+            datastore_client.key(
+                'Task',
+                task_id,
+                parent=job.key,
+            ), )
         if not task:
             raise TaskNotFound('Task with id "%s" not found for job "%s".' %
                                (task_id, job.job_id))
 
         if new_state:
             valid_transitions = VALID_TRANSITIONS.get(task['status'])
+            task_status = task['status']
             if new_state not in valid_transitions:
                 raise InvalidTransition(
-                    'Attempting transition from "%s" to "%s" not in %s; task = %s' %
-                    (task['status'], new_state, valid_transitions, task))
+                    f'Attempting transition from "{task_status}"'
+                    f'to "{new_state}" not in {valid_transitions}'
+                    f'; task = {task}')
             task['status'] = new_state
 
         if payload:
             task['payload'] = payload.SerializeToString()
 
-        client.put(task)
+        datastore_client.put(task)
 
 
 def extend_task_graph(client, job, vertices, dependencies):
@@ -91,11 +101,11 @@ def extend_task_graph(client, job, vertices, dependencies):
 
     job_key = job.key
     amendment_task_graph = {
-        v.id: task_module.Task(
-            key=client.key('Task', v.id, parent=job_key),
-            task_type=v.vertex_type,
-            status='pending',
-            payload=v.payload) for v in vertices
+        v.id: task_module.Task(key=client.key('Task', v.id, parent=job_key),
+                               task_type=v.vertex_type,
+                               status='pending',
+                               payload=v.payload)
+        for v in vertices
     }
 
     with client.transaction():
@@ -106,7 +116,7 @@ def extend_task_graph(client, job, vertices, dependencies):
         overlap = new_task_keys & current_task_keys
         if overlap:
             raise InvalidAmendment('vertices (%r) already in task graph.' %
-                                   (overlap,))
+                                   (overlap, ))
 
         # Then we add the dependencies.
         current_task_graph = {t.key.id(): t for t in current_tasks}
@@ -120,7 +130,7 @@ def extend_task_graph(client, job, vertices, dependencies):
                 if current_task is None and amendment_task is None:
                     raise InvalidAmendment(
                         'dependency `from` (%s) not in amended graph.' %
-                        (dependency.from_,))
+                        (dependency.from_, ))
                 if current_task:
                     current_task_graph[dependency.from_].dependencies.append(
                         dependency_key)
@@ -130,11 +140,10 @@ def extend_task_graph(client, job, vertices, dependencies):
                 handled_dependencies.add(dependency)
                 update_filter.add(dependency.from_)
 
-        client.put_multi(
-            itertools.chain(amendment_task_graph.values(), [
-                t for id_, t in current_task_graph.items() if id_ in update_filter
-            ]),
-            use_cache=True)
+        client.put_multi(itertools.chain(amendment_task_graph.values(), [
+            t for id_, t in current_task_graph.items() if id_ in update_filter
+        ]),
+                         use_cache=True)
 
 
 def log_transition_failures(wrapped_action):
@@ -143,7 +152,6 @@ def log_transition_failures(wrapped_action):
   This is a convenience decorator to handle state transition failures, and
   suppress further exception propagation of the transition failure.
   """
-
     @functools.wraps(wrapped_action)
     def ActionWrapper(*args, **kwargs):
         try:
@@ -153,3 +161,26 @@ def log_transition_failures(wrapped_action):
             return None
 
     return ActionWrapper
+
+
+class ErrorAppendingMixin:
+    def update_task_with_error(
+        self,
+        datastore_client: datastore.Client,
+        job: typing.Any,
+        task: task_module.Task,
+        payload: message.Message,
+        reason: str,
+        message: str,
+    ):
+        # Here we're assuming that the payload message has an `errors` field.
+        payload.errors.append(
+            task_pb2.ErrorMessage(reason=reason, message=message))
+        task.payload.Pack(payload)
+        return update_task(
+            datastore_client,
+            job,
+            task.id,
+            new_state='failed',
+            payload=task.payload,
+        )

@@ -6,12 +6,17 @@ import contextlib
 import subprocess
 
 import psutil
+import dataclasses
 
+from google.protobuf import any_pb2
+from google.protobuf import message
+from google.cloud import datastore
 from google.cloud.environment_vars import BIGTABLE_EMULATOR
 from google.cloud.environment_vars import GCD_DATASET
 from google.cloud.environment_vars import GCD_HOST
 from google.cloud.environment_vars import PUBSUB_EMULATOR
 
+CHROMIUM_URL = 'https://chromium.googlesource.com/chromium/src'
 BIGTABLE = 'bigtable'
 DATASTORE = 'datastore'
 PUBSUB = 'pubsub'
@@ -111,3 +116,21 @@ def with_emulator(package, port):
         yield _wait_ready(package, proc_start)
     finally:
         _cleanup_emulator(proc_start.pid)
+
+
+@dataclasses.dataclass
+class MockJob:
+    key: datastore.Key
+    user: str = dataclasses.field(default='test-user@example.com')
+    url: str = dataclasses.field(default='https://pinpoint.service/job')
+    comparison_mode: str = dataclasses.field(default='performance')
+
+    @property
+    def job_id(self):
+        return str(self.key.id)
+
+
+def as_any(m: message.Message) -> any_pb2.Any:
+    result = any_pb2.Any()
+    result.Pack(m)
+    return result

@@ -26,15 +26,7 @@ from chromeperf.pinpoint.models import isolate as isolate_module
 from chromeperf.pinpoint.models import task as task_module
 
 
-class Error(Exception):
-    pass
-
-
-class FatalError(Error):
-    pass
-
-
-class InitiateEvaluator(object):
+class InitiateEvaluator(task_module.PayloadUnpackingMixin):
     def __init__(self, job, datastore_client):
         """Creates an InitiateEvaluator.
 
@@ -58,10 +50,8 @@ class InitiateEvaluator(object):
         #       with result for this task.
         #     - If not found, schedule a build for this revision, update the
         #       task payload with the build details, wait for updates.
-        payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
-        if not task.payload.Unpack(payload):
-            logging.error('Payload type mismatch for task = %s', task.id)
-            raise FatalError('Failed to unpack payload for task = %s', task.id)
+        payload = self.unpack(
+            find_isolate_task_payload_pb2.FindIsolateTaskPayload, task.payload)
         try:
             change = change_module.Change.FromProto(self._datastore_client,
                                                     payload.change)
@@ -97,7 +87,7 @@ class InitiateEvaluator(object):
         return None
 
 
-class UpdateEvaluator(object):
+class UpdateEvaluator(task_module.PayloadUnpackingMixin):
     def __init__(self, job, datastore_client):
         self._job = job
         self._datastore_client = datastore_client
@@ -112,10 +102,9 @@ class UpdateEvaluator(object):
         #         retry information)
         #       - Fail if failure is non-retryable or we've exceeded retries.
         if event.type == 'update':
-            payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
-            if not task.payload.Unpack(payload):
-                raise FatalError('Mismatched payload type for task %s',
-                                 task.id)
+            payload = self.unpack(
+                find_isolate_task_payload_pb2.FindIsolateTaskPayload,
+                task.payload)
             change = change_module.Change.FromProto(self._datastore_client,
                                                     payload.change)
             return [
@@ -151,52 +140,57 @@ class Evaluator(combinators.SequenceEvaluator):
         ))
 
 
-def BuildSerializer(task, _, context):
-    task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
-    if not task.payload.Unpack(task_payload):
-        return None
+class BuildSerializer(task_module.PayloadUnpackingMixin):
+    def __call__(self, task, _, context):
+        try:
+            task_payload = self.unpack(
+                find_isolate_task_payload_pb2.FindIsolateTaskPayload,
+                task.payload,
+            )
+        except:
+            return None
 
-    results = context.get(task.id, {})
-    results.update({
-        'completed':
-        task.state in {'completed', 'failed', 'cancelled'},
-        'exception':
-        ','.join(e.reason for e in task_payload.errors) or None,
-        'details': [{
-            'key': 'builder',
-            'value': task_payload.builder,
-            'url': task_payload.buildbucket_build.url or None,
-        }]
-    })
-
-    if task_payload.buildbucket_build.id:
-        results['details'].append({
-            'key':
-            'build',
-            'value':
-            task_payload.buildbucket_build.id,
-            'url':
-            task_payload.buildbucket_build.url or None
+        results = context.get(task.id, {})
+        results.update({
+            'completed':
+            task.state in {'completed', 'failed', 'cancelled'},
+            'exception':
+            ','.join(e.reason for e in task_payload.errors) or None,
+            'details': [{
+                'key': 'builder',
+                'value': task_payload.builder,
+                'url': task_payload.buildbucket_build.url or None,
+            }]
         })
 
-    if task_payload.isolate_server and task_payload.isolate_hash:
-        results['details'].append({
-            'key':
-            'isolate',
-            'value':
-            task_payload.isolate_hash,
-            'url':
-            f'{task_payload.isolate_server}/browse?digest={task_payload.isolate_hash}'
-        })
+        if task_payload.buildbucket_build.id:
+            results['details'].append({
+                'key':
+                'build',
+                'value':
+                task_payload.buildbucket_build.id,
+                'url':
+                task_payload.buildbucket_build.url or None
+            })
 
-    context.update({task.id: results})
+        if task_payload.isolate_server and task_payload.isolate_hash:
+            results['details'].append({
+                'key':
+                'isolate',
+                'value':
+                task_payload.isolate_hash,
+                'url':
+                f'{task_payload.isolate_server}/browse?digest={task_payload.isolate_hash}'
+            })
+
+        context.update({task.id: results})
 
 
 class Serializer(combinators.FilteringEvaluator):
     def __init__(self):
         super(Serializer,
               self).__init__(predicate=predicates.TaskTypeEq('find_isolate'),
-                             delegate=BuildSerializer)
+                             delegate=BuildSerializer())
 
 
 @dataclasses.dataclass
@@ -207,8 +201,15 @@ class TaskOptions:
     change: change_module.Change
 
 
+def change_id(change: change_module.Change) -> str:
+    return '_'.join(change.id_string.split(' '))
+
+
+def task_id(options: TaskOptions) -> str:
+    return f'find_isolate_{change_id(options.change)}'
+
+
 def create_graph(options: TaskOptions) -> evaluator.TaskGraph:
-    change_id = '_'.join(options.change.id_string.split(' '))
     # We create the proto payload from the options.
     task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload(
         builder=options.builder,
@@ -231,9 +232,11 @@ def create_graph(options: TaskOptions) -> evaluator.TaskGraph:
     encoded_payload.Pack(task_payload)
     return evaluator.TaskGraph(
         vertices=[
-            evaluator.TaskVertex(id=f'find_isolate_{change_id}',
-                                 vertex_type='find_isolate',
-                                 payload=encoded_payload)
+            evaluator.TaskVertex(
+                id=task_id(options),
+                vertex_type='find_isolate',
+                payload=encoded_payload,
+            )
         ],
         edges=[],
     )

@@ -21,9 +21,9 @@ class Event:
     payload: any_pb2.Any
 
 
-def build_event(payload: message.Message,
+def build_event(payload: typing.Optional[message.Message],
                 type: str,
-                target_task: typing.Union[str, None] = None) -> Event:
+                target_task: typing.Optional[str] = None) -> Event:
     encoded_payload = any_pb2.Any()
     encoded_payload.Pack(payload)
     return Event(id=str(uuid.uuid4()),

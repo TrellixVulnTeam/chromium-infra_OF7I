@@ -23,38 +23,12 @@ from chromeperf.pinpoint.models import isolate as isolate_module
 from chromeperf.pinpoint.models import repository as repository_module
 from chromeperf.pinpoint.models import task as task_module
 
-CHROMIUM_URL = 'https://chromium.googlesource.com/chromium/src'
-
-
-@dataclasses.dataclass
-class MockJob:
-    key: datastore.Key
-    user: str = dataclasses.field(default='test-user@example.com')
-    url: str = dataclasses.field(default='https://pinpoint.service/job')
-
-    @property
-    def job_id(self):
-        return str(self.key.id)
-
-
-@pytest.fixture(autouse=True)
-def pinpoint_seeded_data(datastore_client):
-    # Add some test repositories.
-    repository_module.add_repository(
-        datastore_client,
-        'catapult',
-        'https://chromium.googlesource.com/catapult',
-    )
-    repository_module.add_repository(
-        datastore_client,
-        'chromium',
-        CHROMIUM_URL,
-    )
+from . import test_utils
 
 
 @pytest.fixture
-def populate_job_tasks(request, pinpoint_seeded_data, datastore_client):
-    job = MockJob(datastore_client.key('Job', str(uuid.uuid4())))
+def populated_job(request, pinpoint_seeded_data, datastore_client):
+    job = test_utils.MockJob(datastore_client.key('Job', str(uuid.uuid4())))
     git_hash = request.node.get_closest_marker('git_hash')
     if not git_hash:
         git_hash = '7c7e90be'
@@ -149,7 +123,7 @@ def seed_changes(mocker, request):
                     },
                     'fetch': {
                         'http': {
-                            'url': CHROMIUM_URL,
+                            'url': test_utils.CHROMIUM_URL,
                             'ref': 'refs/changes/90/567890/5',
                         },
                     },
@@ -174,7 +148,7 @@ def seed_changes(mocker, request):
                     },
                     'fetch': {
                         'http': {
-                            'url': CHROMIUM_URL,
+                            'url': test_utils.CHROMIUM_URL,
                             'ref': 'refs/changes/90/567890/5',
                         },
                     },
@@ -198,7 +172,7 @@ def seed_changes(mocker, request):
 
 
 def test_IsolateFinder_Initiate_FoundIsolate(mocker, datastore_client,
-                                             populate_job_tasks):
+                                             populated_job):
     # Seed the isolate for this change.
     change = change_module.Change(
         commits=[commit_module.Commit(
@@ -217,8 +191,8 @@ def test_IsolateFinder_Initiate_FoundIsolate(mocker, datastore_client,
     )
     context = evaluator_module.evaluate_graph(
         event,
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
     assert context['find_isolate_chromium@7c7e90be'].payload.Unpack(payload)
@@ -228,7 +202,7 @@ def test_IsolateFinder_Initiate_FoundIsolate(mocker, datastore_client,
 
 @pytest.mark.git_hash('600dfeed')
 def test_IsolateFinder_Initiate_ScheduleBuild(mocker, put_job,
-                                              populate_job_tasks,
+                                              populated_job,
                                               datastore_client):
     # We then need to make sure that the buildbucket put was called.
     put_job.return_value = {'build': {'id': '345982437987234'}}
@@ -241,8 +215,8 @@ def test_IsolateFinder_Initiate_ScheduleBuild(mocker, put_job,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@600dfeed']
     task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
@@ -255,7 +229,7 @@ def test_IsolateFinder_Initiate_ScheduleBuild(mocker, put_job,
 
 def test_IsolateFinder_Update_BuildSuccessful(mocker, put_job,
                                               get_build_status,
-                                              populate_job_tasks,
+                                              populated_job,
                                               datastore_client):
     put_job.return_value = {
         'build': {
@@ -270,8 +244,8 @@ def test_IsolateFinder_Update_BuildSuccessful(mocker, put_job,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@7c7e90be']
     assert task_context.state == 'ongoing'
@@ -309,8 +283,8 @@ def test_IsolateFinder_Update_BuildSuccessful(mocker, put_job,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@7c7e90be']
     assert task_context.state == 'completed'
@@ -327,7 +301,7 @@ def test_IsolateFinder_Update_BuildSuccessful(mocker, put_job,
                 id=str(uuid.uuid4())),
         ),
         isolate_finder.Serializer(),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     assert context == {
         'find_isolate_chromium@7c7e90be': {
@@ -356,7 +330,7 @@ def test_IsolateFinder_Update_BuildSuccessful(mocker, put_job,
 
 
 @pytest.fixture
-def seed_build_data(mocker, populate_job_tasks, datastore_client, put_job,
+def seed_build_data(mocker, populated_job, datastore_client, put_job,
                     seed_changes, seed_commit_info, request):
     # Here we set up the pre-requisite for polling, where we've already had a
     # successful build scheduled.
@@ -373,8 +347,8 @@ def seed_build_data(mocker, populate_job_tasks, datastore_client, put_job,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     assert put_job.call_count == 1
     task_context = context[f'find_isolate_chromium@{git_hash}']
@@ -399,7 +373,7 @@ def seed_build_data(mocker, populate_job_tasks, datastore_client, put_job,
 def test_IsolateFinder_Update_BuildFailed_HardFailure(mocker, seed_build_data,
                                                       get_build_status,
                                                       datastore_client,
-                                                      populate_job_tasks):
+                                                      populated_job):
     get_build_status.return_value = {
         'build': {
             'status': 'COMPLETED',
@@ -416,8 +390,8 @@ def test_IsolateFinder_Update_BuildFailed_HardFailure(mocker, seed_build_data,
                 state=find_isolate_task_payload_pb2.BuildUpdate.BuildState.
                 COMPLETED),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     assert get_build_status.call_count == 1
     task_context = context['find_isolate_chromium@7c7e90be']
@@ -434,7 +408,7 @@ def test_IsolateFinder_Update_BuildFailed_HardFailure(mocker, seed_build_data,
                 id=str(uuid.uuid4())),
         ),
         isolate_finder.Serializer(),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     assert context == {
         'find_isolate_chromium@7c7e90be': {
@@ -458,7 +432,7 @@ def test_IsolateFinder_Update_BuildFailed_HardFailure(mocker, seed_build_data,
 def test_IsolateFinder_Update_BuildFailed_Cancelled(mocker, seed_build_data,
                                                     get_build_status,
                                                     datastore_client,
-                                                    populate_job_tasks):
+                                                    populated_job):
     get_build_status.return_value = {
         'build': {
             'status': 'COMPLETED',
@@ -473,8 +447,8 @@ def test_IsolateFinder_Update_BuildFailed_Cancelled(mocker, seed_build_data,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@7c7e90be']
     task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
@@ -487,7 +461,7 @@ def test_IsolateFinder_Update_BuildFailed_Cancelled(mocker, seed_build_data,
 def test_IsolateFinder_Update_MissingIsolates_Server(mocker, seed_build_data,
                                                      get_build_status,
                                                      datastore_client,
-                                                     populate_job_tasks):
+                                                     populated_job):
     json = """
     {
         "properties": {
@@ -510,8 +484,8 @@ def test_IsolateFinder_Update_MissingIsolates_Server(mocker, seed_build_data,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@7c7e90be']
     task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
@@ -524,7 +498,7 @@ def test_IsolateFinder_Update_MissingIsolates_Server(mocker, seed_build_data,
 def test_IsolateFinder_Update_MissingIsolates_Revision(mocker, seed_build_data,
                                                        get_build_status,
                                                        datastore_client,
-                                                       populate_job_tasks):
+                                                       populated_job):
     json = """
     {
         "properties": {
@@ -547,8 +521,8 @@ def test_IsolateFinder_Update_MissingIsolates_Revision(mocker, seed_build_data,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@7c7e90be']
     task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
@@ -561,7 +535,7 @@ def test_IsolateFinder_Update_MissingIsolates_Revision(mocker, seed_build_data,
 def test_IsolateFinder_Update_MissingIsolates_Hashes(mocker, seed_build_data,
                                                      get_build_status,
                                                      datastore_client,
-                                                     populate_job_tasks):
+                                                     populated_job):
     json = """
     {
       "properties": {
@@ -583,8 +557,8 @@ def test_IsolateFinder_Update_MissingIsolates_Hashes(mocker, seed_build_data,
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4())),
         ),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@7c7e90be']
     task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()
@@ -597,7 +571,7 @@ def test_IsolateFinder_Update_MissingIsolates_Hashes(mocker, seed_build_data,
 @pytest.mark.git_hash('600df00d')
 def test_IsolateFinder_Update_MissingIsolates_InvalidJson(
         mocker, seed_build_data, get_build_status, datastore_client,
-        populate_job_tasks):
+        populated_job):
     json = '{ invalid }'
     get_build_status.return_value = {
         'build': {
@@ -612,8 +586,8 @@ def test_IsolateFinder_Update_MissingIsolates_InvalidJson(
             target_task='find_isolate_chromium@600df00d',
             payload=find_isolate_task_payload_pb2.BuildUpdate(
                 id=str(uuid.uuid4()))),
-        isolate_finder.Evaluator(populate_job_tasks, datastore_client),
-        task_module.task_graph_loader(datastore_client, populate_job_tasks),
+        isolate_finder.Evaluator(populated_job, datastore_client),
+        task_module.task_graph_loader(datastore_client, populated_job),
     )
     task_context = context['find_isolate_chromium@600df00d']
     task_payload = find_isolate_task_payload_pb2.FindIsolateTaskPayload()

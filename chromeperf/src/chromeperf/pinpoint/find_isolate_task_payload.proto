@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "chromeperf/pinpoint/change.proto";
+import "chromeperf/engine/task.proto";
 
 package chromeperf.pinpoint;
 
@@ -13,11 +14,6 @@ message BuildBucketBuild {
   string result_details_json = 5;
 }
 
-message ErrorMessage {
-  string reason = 1;
-  string message = 2;
-}
-
 message FindIsolateTaskPayload {
   chromeperf.pinpoint.Change change = 1;
   chromeperf.pinpoint.GerritPatch patch = 2;
@@ -28,7 +24,7 @@ message FindIsolateTaskPayload {
   string bucket = 7;
   int32 tries = 8;
   BuildBucketBuild buildbucket_build = 9;
-  repeated ErrorMessage errors = 10;
+  repeated chromeperf.engine.ErrorMessage errors = 10;
 }
 
 message BuildUpdate {
