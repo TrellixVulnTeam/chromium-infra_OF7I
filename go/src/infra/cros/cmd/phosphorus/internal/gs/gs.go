@@ -65,8 +65,10 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 	}
 
 	logging.Debugf(ctx, "Writing %s and subtree to %s.", srcDir, dstDir)
+	var genErr error
 	err := parallel.WorkPool(w.maxConcurrentUploads, func(items chan<- func() error) {
-		filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
+		// genErr is captured.
+		genErr = filepath.Walk(srcDir, func(src string, info os.FileInfo, err error) error {
 			var item func() error
 
 			if err == nil {
@@ -88,8 +90,16 @@ func (w *DirWriter) WriteDir(ctx context.Context, srcDir string, dstDir gcgs.Pat
 			}
 		})
 	})
+
+	var merr errors.MultiError
 	if err != nil {
-		return errors.Annotate(err, "writing dir %s to %s", srcDir, dstDir).Err()
+		merr = append(merr, err)
+	}
+	if genErr != nil {
+		merr = append(merr, genErr)
+	}
+	if len(merr) > 0 {
+		return errors.Annotate(merr, "writing dir %s to %s", srcDir, dstDir).Err()
 	}
 	return nil
 }
