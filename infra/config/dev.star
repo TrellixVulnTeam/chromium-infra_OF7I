@@ -41,8 +41,6 @@ lucicfg.emit(
     data = io.read_file("tricium-dev.cfg"),
 )
 
-infra_led_users_group = "mdb/chrome-troopers"
-
 luci.project(
     name = "infra",
     dev = True,
@@ -71,77 +69,21 @@ luci.project(
         ),
     ],
     bindings = [
-        # Allow infra_led_users_group to launch tasks in any project realm.
+        # LED users.
         luci.binding(
             roles = "role/swarming.taskTriggerer",
-            groups = [
-                infra_led_users_group,
-            ],
+            groups = "mdb/chrome-troopers",
         ),
     ],
-    enforce_realms_in = ["luci-scheduler-dev"],
+    enforce_realms_in = [
+        "cr-buildbucket-dev",
+        "luci-scheduler-dev",
+    ],
 )
 
 luci.logdog(gs_bucket = "chromium-luci-logdog")
 
-luci.bucket(
-    name = "ci",
-    bindings = [
-        # TODO(crbug.com/1066839): remove after completed tests on dev.
-        # Allow chromium-swarm-dev-users to see the tasks in the realm.
-        luci.binding(
-            roles = "role/swarming.taskViewer",
-            groups = [
-                "chromium-swarm-dev-users",
-            ],
-        ),
-    ],
-)
-
-# ACLs for the Swarming pools used by builders in this config. See pools.cfg in
-# chromium-swarm-dev where pools are associated with realms.
-#
-# These ACLs are here only temporarily to simplify working on Realms roll out.
-# Eventually they'll be moved to chromium/src.
-luci.realm(
-    name = "pool/luci.chromium.ci",
-    bindings = [
-        luci.binding(
-            roles = "role/swarming.poolUser",
-            groups = [
-                # Who can directly submit tasks into the pool.
-                infra_led_users_group,
-            ],
-            projects = [
-                # Projects that use the pool through Buildbucket.
-                "chromium",
-                "infra",  # this is also implicit
-                "infra-experimental",
-            ],
-        ),
-    ],
-)
-luci.realm(
-    name = "pool/chromium.tests",
-    bindings = [
-        luci.binding(
-            roles = "role/swarming.poolUser",
-            groups = [
-                # Who can directly submit tasks into the pool.
-                # TODO(crbug.com/1066839): remove after completed tests on dev.
-                "chromium-swarm-dev-users",
-            ],
-        ),
-        luci.binding(
-            roles = "role/swarming.poolViewer",
-            groups = [
-                # Who can list tasks of the pool in the task list page.
-                # TODO(crbug.com/1066839): remove after completed tests on dev.
-                "chromium-swarm-dev-users",
-            ],
-        ),
-    ],
-)
+luci.bucket(name = "ci")
 
 luci.builder.defaults.execution_timeout.set(30 * time.minute)
 
