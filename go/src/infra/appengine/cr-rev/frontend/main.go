@@ -21,11 +21,32 @@ import (
 
 const templatePath = "templates"
 
+// handleIndex serves homepage of cr-rev
 func handleIndex(c *router.Context) {
 	templates.MustRender(
 		c.Context, c.Writer, "pages/index.html", templates.Args{})
 }
 
+// handlePublicGerritRedirect redirects user to a CL on chromium-review
+func handlePublicGerritRedirect(c *router.Context) {
+	id := c.Params.ByName("id")
+	url := "https://chromium-review.googlesource.com/c/" + id
+	http.Redirect(
+		c.Writer, c.Request, url, http.StatusPermanentRedirect)
+}
+
+// handleInternalGerritRedirect redirects user to a CL on
+// chrome-internal-review.
+func handleInternalGerritRedirect(c *router.Context) {
+	id := c.Params.ByName("id")
+	url := "https://chrome-internal-review.googlesource.com/c/" + id
+	http.Redirect(
+		c.Writer, c.Request, url, http.StatusPermanentRedirect)
+}
+
+// handleRedirect redirects user base on redirect rules. This is a catch-all
+// redirect handler (e.g. crrev.com/3, crrev.com/{commit hash}). To add more
+// rules, look at redirect package.
 func handleRedirect(redirectRules *redirect.Rules, c *router.Context) {
 	url, _, err := redirectRules.FindRedirectURL(c.Context, c.Request.RequestURI)
 	switch err {
@@ -55,6 +76,8 @@ func main() {
 	server.Main(nil, modules, func(srv *server.Server) error {
 		redirect := redirect.NewRules(redirect.NewGitilesRedirect())
 
+		srv.Routes.GET("/i/:id", mw, handleInternalGerritRedirect)
+		srv.Routes.GET("/c/:id", mw, handlePublicGerritRedirect)
 		srv.Routes.GET("/", mw, handleIndex)
 
 		apiV1 := srv.Routes.Subrouter("/_ah/api/crrev/v1")
