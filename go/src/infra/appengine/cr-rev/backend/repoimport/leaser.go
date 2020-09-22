@@ -107,11 +107,12 @@ func (l *leaser) acquireLease(ctx context.Context) error {
 			return fmt.Errorf("error reading from datastore: %w", err)
 		}
 		now := clock.Now(ctx).UTC().Round(time.Millisecond)
-		if !l.doc.FullScanLastRun.IsZero() && !l.doc.IsFullScanStalled(now) {
-			return errors.New("the repository is scanned by another process")
+
+		if !l.doc.IsScanRequired(now) {
+			return fmt.Errorf("the repository scan is not required (%+v)", l.doc)
 		}
-		l.doc.FullScanLastRun, l.doc.FullScanLeaseStartTime = now, now
-		l.doc.FullScanLeaseHostname = os.Getenv("GAE_INSTANCE")
+
+		l.doc.SetStartIndexing(now, os.Getenv("GAE_INSTANCE"))
 		if err := datastore.Put(ctx, l.doc); err != nil {
 			return fmt.Errorf("error writing to datastore: %w", err)
 		}
@@ -133,7 +134,7 @@ func (l *leaser) refreshLease(ctx context.Context) error {
 		if !reflect.DeepEqual(*l.doc, dst) {
 			return errors.New("some other process claimed the lock, aborting import")
 		}
-		l.doc.FullScanLastRun = clock.Now(ctx).UTC().Round(time.Millisecond)
+		l.doc.ExtendLease(clock.Now(ctx).UTC().Round(time.Millisecond))
 		return datastore.Put(ctx, l.doc)
 	}, nil)
 

@@ -127,32 +127,36 @@ func TestRepository(t *testing.T) {
 		currentTime := time.Now()
 		Convey("not started", func() {
 			So(
-				r.IsFullScanStalled(currentTime),
-				ShouldBeFalse,
+				r.IsScanRequired(currentTime),
+				ShouldBeTrue,
 			)
 		})
 
 		Convey("started", func() {
-			r.FullScanLeaseStartTime = currentTime
+			r.SetStartIndexing(currentTime, "hostname")
 			So(
-				r.IsFullScanStalled(currentTime),
+				r.IsScanRequired(currentTime),
 				ShouldBeFalse,
 			)
 		})
 
 		Convey("expired", func() {
-			r.FullScanLeaseStartTime = currentTime.Add(
+			indexingTime := currentTime.Add(
 				(RepositoryStaleIndexingDuration + time.Second) * -1)
+			r.SetStartIndexing(indexingTime, "hostname")
 			So(
-				r.IsFullScanStalled(currentTime),
-				ShouldBeFalse,
+				r.IsScanRequired(currentTime),
+				ShouldBeTrue,
 			)
 		})
 
 		Convey("completed", func() {
+			indexingTime := currentTime.Add(
+				(RepositoryStaleIndexingDuration + time.Second) * -1)
+			r.SetStartIndexing(indexingTime, "hostname")
 			r.SetIndexingCompleted(currentTime)
 			So(
-				r.IsFullScanStalled(currentTime),
+				r.IsScanRequired(currentTime),
 				ShouldBeFalse,
 			)
 		})

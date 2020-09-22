@@ -35,7 +35,7 @@ func NewClient(ctx context.Context, gaeProject, subscriptionName string) (*pubsu
 // Subscribe subscribes to pubsub and blocks until context is cancelled.
 func Subscribe(ctx context.Context, sub pubsubReceiver,
 	messageProcessor ProcessPubsubMessage) error {
-	return sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
+	err := sub.Receive(ctx, func(ctx context.Context, m *pubsub.Message) {
 		var event SourceRepoEvent
 		err := jsonpb.Unmarshal(bytes.NewReader(m.Data), &event)
 		if err != nil {
@@ -51,4 +51,8 @@ func Subscribe(ctx context.Context, sub pubsubReceiver,
 		}
 		m.Ack()
 	})
+	if err != nil {
+		logging.Errorf(ctx, "Pubsub error: %s", err.Error())
+	}
+	return err
 }

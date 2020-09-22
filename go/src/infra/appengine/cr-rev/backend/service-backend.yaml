@@ -5,6 +5,13 @@ runtime: go113
 
 service: backend
 
+automatic_scaling:
+  min_instances: 1
+  max_instances: 5
+
+inbound_services:
+  - warmup
+
 entrypoint: >
   main
   -config-service-host luci-config.appspot.com

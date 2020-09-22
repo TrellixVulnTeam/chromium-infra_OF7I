@@ -105,8 +105,8 @@ func TestGitilesImporter(t *testing.T) {
 			ctx, client, importer := prepareEnvironment()
 
 			refs := map[string]string{
-				"main":    "0000000000000000000000000000000000000000",
-				"release": "0000000000000000000000000000000000000000",
+				"refs/heads/main":    "0000000000000000000000000000000000000000",
+				"refs/heads/release": "0000000000000000000000000000000000000000",
 			}
 			commits := []*git.Commit{
 				{
@@ -130,12 +130,38 @@ Cr-Commit-Position: refs/heads/main@{#1}`,
 			So(docs[0].PositionNumber, ShouldEqual, 1)
 		})
 
+		Convey("not indexed branch", func() {
+			ctx, client, importer := prepareEnvironment()
+
+			refs := map[string]string{
+				"refs/for/refs/heads/main": "5",
+				"refs/heads/main":          "2",
+			}
+			commits := make([]*git.Commit, 5)
+			for i := 0; i < 5; i++ {
+				commits[i] = &git.Commit{
+					Id: strconv.Itoa(i + 1),
+				}
+				if i > 0 {
+					commits[i].Parents = []string{commits[i-1].GetId()}
+				}
+			}
+			client.SetRepository("bar", refs, commits)
+			err := importer.Run(ctx)
+			So(err, ShouldBeNil)
+
+			datastore.Get(ctx, doc)
+			So(doc.FullScanLeaseStartTime, ShouldEqual, time.Time{})
+			So(doc.FullScanLastRun, ShouldEqual, clock.Get(ctx).Now().UTC().Round(time.Millisecond))
+			assertCommitDocuments(ctx, 2)
+		})
+
 		Convey("diverged branches", func() {
 			ctx, client, importer := prepareEnvironment()
 
 			refs := map[string]string{
-				"main":    "5",
-				"release": "2",
+				"refs/heads/main":    "5",
+				"refs/heads/release": "2",
 			}
 			commits := make([]*git.Commit, 5)
 			for i := 0; i < 5; i++ {
@@ -161,8 +187,8 @@ Cr-Commit-Position: refs/heads/main@{#1}`,
 
 			// Require two Log pages for each branch
 			refs := map[string]string{
-				"main":    strconv.Itoa(gitilesLogPageSize + 2),
-				"release": strconv.Itoa(gitilesLogPageSize + 1),
+				"refs/heads/main":    strconv.Itoa(gitilesLogPageSize + 2),
+				"refs/heads/release": strconv.Itoa(gitilesLogPageSize + 1),
 			}
 			commits := make([]*git.Commit, gitilesLogPageSize+2)
 			for i := 0; i < gitilesLogPageSize+2; i++ {

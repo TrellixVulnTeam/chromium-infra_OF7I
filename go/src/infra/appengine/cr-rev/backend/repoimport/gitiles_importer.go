@@ -68,7 +68,7 @@ func (imp *gitilesImporter) Run(ctx context.Context) error {
 // scanRefsPaths returns a list of revisions of all references that match
 // refsPaths.
 func (imp *gitilesImporter) scanRefsPaths(ctx context.Context, refsPaths []string) error {
-	revsToScan := []string{}
+	refsToScan := []string{}
 	for _, refsPath := range refsPaths {
 		in := &gitilesProto.RefsRequest{
 			Project:  imp.repo.Name,
@@ -86,13 +86,13 @@ func (imp *gitilesImporter) scanRefsPaths(ctx context.Context, refsPaths []strin
 				logging.Warningf(ctx, "Reference %s points to empty commit in %s/%s", ref, imp.repo.Host, imp.repo.Name)
 				continue
 			}
-			revsToScan = append(revsToScan, rev)
+			refsToScan = append(refsToScan, ref)
 		}
 	}
 
 	logging.Infof(ctx, "Collected %d revisions from branches in %s/%s",
-		len(revsToScan), imp.repo.Host, imp.repo.Name)
-	for _, rev := range revsToScan {
+		len(refsToScan), imp.repo.Host, imp.repo.Name)
+	for _, rev := range refsToScan {
 		err := imp.traverseRev(ctx, rev)
 		if err != nil {
 			return err
@@ -114,6 +114,7 @@ func (imp *gitilesImporter) traverseRev(ctx context.Context, ref string) error {
 	if !imp.repo.ShouldIndex(ref) {
 		logging.Infof(ctx, "Skipping scanning ref %s of %s/%s/ (should not index)",
 			ref, imp.repo.Host, imp.repo.Name)
+		return nil
 	}
 	logging.Infof(ctx, "Scanning ref %s of %s/%s/",
 		ref, imp.repo.Host, imp.repo.Name)

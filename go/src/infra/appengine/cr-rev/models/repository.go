@@ -6,6 +6,7 @@ package models
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -78,20 +79,40 @@ type Repository struct {
 	FullScanLeaseHostname string `gae:",noindex"`
 }
 
-// IsFullScanStalled returns true if the indexing didn't update Repository
-// document more than RepositoryStaleIndexingDuration.
-func (r *Repository) IsFullScanStalled(currentTime time.Time) bool {
-	if r.FullScanLeaseStartTime.IsZero() {
+// IsScanRequired returns true if full repository scan is required. This
+// happens if repository was never indexed or if previous lease expired and
+// left this repository partially indexed.
+func (r *Repository) IsScanRequired(currentTime time.Time) bool {
+	if !r.FullScanLastRun.IsZero() {
 		return false
 	}
+	if r.FullScanLeaseStartTime.IsZero() {
+		return true
+	}
 
-	return r.FullScanLastRun.Add(RepositoryStaleIndexingDuration).After(currentTime)
+	deadline := r.FullScanLeaseStartTime.Add(RepositoryStaleIndexingDuration)
+	fmt.Printf("\n%v %v %v\n", currentTime, r.FullScanLeaseStartTime, deadline)
+	return currentTime.After(deadline)
 }
 
-// SetIndexingCompleted marks Repository as successfully indexed and sets
-// FullScanLock to zero-value.
+// SetIndexingCompleted marks Repository as successfully indexed and removes
+// lease.
 func (r *Repository) SetIndexingCompleted(currentTime time.Time) {
 	r.FullScanLastRun = currentTime
 	r.FullScanLeaseStartTime = time.Time{}
 	r.FullScanLeaseHostname = ""
+}
+
+// SetStartIndexing marks Repository for initial import and sets lease
+// information. It is on client to ensure lease is renewed periodically, by
+// calling ExtendLease
+func (r *Repository) SetStartIndexing(currentTime time.Time, hostname string) {
+	r.FullScanLastRun, r.FullScanLeaseStartTime = time.Time{}, currentTime
+	r.FullScanLeaseHostname = os.Getenv("GAE_INSTANCE")
+}
+
+// ExtendLease extends currently active lease. This function doesn't check
+// lease ownership.
+func (r *Repository) ExtendLease(currentTime time.Time) {
+	r.FullScanLeaseStartTime = currentTime
 }

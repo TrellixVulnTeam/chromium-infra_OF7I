@@ -41,6 +41,8 @@ func main() {
 		setupImport(srv.Context, cfg)
 
 		srv.Routes.GET("/_ah/start", mw, handleStartup)
+		// /_ah/warmup is required when min_instances is used
+		srv.Routes.GET("/_ah/warmup", mw, handleStartup)
 		srv.Routes.GET("/internal/cron/import-config", cron, func(c *router.Context) {
 			if err := config.Set(c.Context); err != nil {
 				errors.Log(c.Context, err)

@@ -45,7 +45,7 @@ func setupImport(ctx context.Context, cfg *config.Config) {
 			continue
 		}
 
-		pubsubClient, err := pubsub.NewClient(ctx, os.Getenv("GAE_SERVICE"), pubsubSubscription)
+		pubsubClient, err := pubsub.NewClient(ctx, os.Getenv("GOOGLE_CLOUD_PROJECT"), pubsubSubscription)
 		if err != nil {
 			logging.Errorf(ctx, "Couldn't subscribe to host %s, pubsub: %s", host.GetName(), pubsubSubscription)
 			continue
