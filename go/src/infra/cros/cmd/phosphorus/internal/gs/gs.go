@@ -109,7 +109,7 @@ func (w *DirWriter) writeOne(ctx context.Context, srcDir string, dstDir gcgs.Pat
 		return nil
 	}
 	if skip, reason := shouldSkipUpload(info); skip {
-		logging.Debugf(ctx, "Skipped %s because: %s.", reason)
+		logging.Debugf(ctx, "Skipped %s because: %s.", src, reason)
 		return nil
 	}
 
