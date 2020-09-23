@@ -618,6 +618,7 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 	}
 	// Aggregate resources to check if machine already exists
 	resourcesAlreadyExists = append(resourcesAlreadyExists, GetMachineResource(machine.Name))
+	switchToNicMap := make(map[string]string)
 	for _, nic := range nics {
 		// Aggregate resources to check if nic already exists
 		resourcesAlreadyExists = append(resourcesAlreadyExists, GetNicResource(nic.Name))
@@ -625,12 +626,20 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 		// Aggregate resources to check if resources referenced by the nic exists
 		if switchID := nic.GetSwitchInterface().GetSwitch(); switchID != "" {
 			resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
+
+			if switchPortName := nic.GetSwitchInterface().GetPortName(); switchPortName != "" {
+				prevNicID, ok := switchToNicMap[switchID+switchPortName]
+				if ok {
+					return status.Errorf(codes.InvalidArgument, "nic %s and %s share the same switch %s and port %s", prevNicID, nic.GetName(), switchID, switchPortName)
+				}
+				switchToNicMap[switchID+switchPortName] = nic.GetName()
+			}
 		}
 
 		if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
 			return err
 		}
-		if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+		if err := validateNicSwitchPort(ctx, nic.GetName(), machine.Name, nic.GetSwitchInterface()); err != nil {
 			return err
 		}
 	}
@@ -643,7 +652,7 @@ func validateMachineRegistration(ctx context.Context, machine *ufspb.Machine) er
 			resourcesNotFound = append(resourcesNotFound, GetSwitchResource(switchID))
 		}
 
-		if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+		if err := validateDracSwitchPort(ctx, drac.GetName(), machine.Name, drac.GetSwitchInterface()); err != nil {
 			return err
 		}
 		if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {

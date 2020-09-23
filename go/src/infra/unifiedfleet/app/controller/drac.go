@@ -189,7 +189,7 @@ func processDracUpdateMask(ctx context.Context, oldDrac *ufspb.Drac, drac *ufspb
 	}
 	// For partial update, validate switch interface just before updating in case
 	// before we checks the incompleted interface.
-	if err := validateSwitchPort(ctx, oldDrac.GetName(), oldDrac.GetSwitchInterface()); err != nil {
+	if err := validateDracSwitchPort(ctx, oldDrac.GetName(), oldDrac.GetMachine(), oldDrac.GetSwitchInterface()); err != nil {
 		return oldDrac, err
 	}
 	// return existing/old drac with new updated values
@@ -361,7 +361,7 @@ func validateCreateDrac(ctx context.Context, drac *ufspb.Drac) error {
 	if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {
 		return err
 	}
-	if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+	if err := validateDracSwitchPort(ctx, drac.GetName(), drac.GetMachine(), drac.GetSwitchInterface()); err != nil {
 		return err
 	}
 	// Aggregate resource to check if machine does not exist
@@ -398,7 +398,7 @@ func validateUpdateDrac(ctx context.Context, drac *ufspb.Drac, mask *field_mask.
 	if err := validateDracUpdateMask(ctx, drac, mask); err != nil {
 		return err
 	}
-	if err := validateSwitchPort(ctx, drac.GetName(), drac.GetSwitchInterface()); err != nil {
+	if err := validateDracSwitchPort(ctx, drac.GetName(), drac.GetMachine(), drac.GetSwitchInterface()); err != nil {
 		return err
 	}
 	if err := validateMacAddress(ctx, drac.GetName(), drac.GetMacAddress()); err != nil {

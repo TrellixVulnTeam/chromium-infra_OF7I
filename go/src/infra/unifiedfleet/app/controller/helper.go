@@ -380,8 +380,8 @@ func validateMacAddress(ctx context.Context, assetName, macAddr string) error {
 	return nil
 }
 
-func validateSwitchPort(ctx context.Context, assetName string, switchInterface *ufspb.SwitchInterface) error {
-	if switchInterface.GetSwitch() == "" || switchInterface.GetPortName() == "" {
+func validateDracSwitchPort(ctx context.Context, dracName, machineName string, switchInterface *ufspb.SwitchInterface) error {
+	if switchInterface.GetSwitch() == "" || switchInterface.GetPortName() == "" || machineName == "" {
 		return nil
 	}
 	switchID := switchInterface.GetSwitch()
@@ -391,7 +391,8 @@ func validateSwitchPort(ctx context.Context, assetName string, switchInterface *
 		return err
 	}
 	for _, nic := range nics {
-		if nic.GetName() == assetName {
+		// Nic and drac can share the same switch port within a machine.
+		if nic.GetMachine() == machineName {
 			continue
 		}
 		return status.Errorf(codes.InvalidArgument, "switch port %s of %s is already occupied by nic %s", switchPort, switchID, nic.GetName())
@@ -401,7 +402,37 @@ func validateSwitchPort(ctx context.Context, assetName string, switchInterface *
 		return err
 	}
 	for _, drac := range dracs {
-		if drac.GetName() == assetName {
+		if drac.GetName() == dracName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "switch port %s of %s is already occupied by drac %s", switchPort, switchID, drac.GetName())
+	}
+	return nil
+}
+
+func validateNicSwitchPort(ctx context.Context, nicName, machineName string, switchInterface *ufspb.SwitchInterface) error {
+	if switchInterface.GetSwitch() == "" || switchInterface.GetPortName() == "" || machineName == "" {
+		return nil
+	}
+	switchID := switchInterface.GetSwitch()
+	switchPort := switchInterface.GetPortName()
+	nics, _, err := ListNics(ctx, -1, "", fmt.Sprintf("switch=%s & switchPort=%s", switchID, switchPort), false)
+	if err != nil {
+		return err
+	}
+	for _, nic := range nics {
+		if nic.GetName() == nicName {
+			continue
+		}
+		return status.Errorf(codes.InvalidArgument, "switch port %s of %s is already occupied by nic %s", switchPort, switchID, nic.GetName())
+	}
+	dracs, _, err := ListDracs(ctx, -1, "", fmt.Sprintf("switch=%s & switchPort=%s", switchID, switchPort), false)
+	if err != nil {
+		return err
+	}
+	for _, drac := range dracs {
+		// Nic and drac can share the same switch port within a machine.
+		if drac.GetMachine() == machineName {
 			continue
 		}
 		return status.Errorf(codes.InvalidArgument, "switch port %s of %s is already occupied by drac %s", switchPort, switchID, drac.GetName())

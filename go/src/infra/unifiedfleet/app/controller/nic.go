@@ -163,7 +163,7 @@ func processNicUpdateMask(ctx context.Context, oldNic *ufspb.Nic, nic *ufspb.Nic
 	}
 	// For partial update, validate switch interface just before updating in case
 	// before we checks the incompleted interface
-	if err := validateSwitchPort(ctx, oldNic.GetName(), oldNic.GetSwitchInterface()); err != nil {
+	if err := validateNicSwitchPort(ctx, oldNic.GetName(), oldNic.GetMachine(), oldNic.GetSwitchInterface()); err != nil {
 		return oldNic, err
 	}
 	// return existing/old nic with new updated values
@@ -368,7 +368,7 @@ func validateCreateNic(ctx context.Context, nic *ufspb.Nic) error {
 	if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
 		return err
 	}
-	if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+	if err := validateNicSwitchPort(ctx, nic.GetName(), nic.GetMachine(), nic.GetSwitchInterface()); err != nil {
 		return err
 	}
 	// Aggregate resource to check if machine does not exist
@@ -407,7 +407,7 @@ func validateUpdateNic(ctx context.Context, nic *ufspb.Nic, mask *field_mask.Fie
 	if err := validateMacAddress(ctx, nic.GetName(), nic.GetMacAddress()); err != nil {
 		return err
 	}
-	if err := validateSwitchPort(ctx, nic.GetName(), nic.GetSwitchInterface()); err != nil {
+	if err := validateNicSwitchPort(ctx, nic.GetName(), nic.GetMachine(), nic.GetSwitchInterface()); err != nil {
 		return err
 	}
 	return nil
