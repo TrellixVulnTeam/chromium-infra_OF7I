@@ -5,10 +5,9 @@
 package main
 
 import (
-	"context"
+	"flag"
 
 	"go.chromium.org/luci/appengine/gaemiddleware"
-	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/gaeemulation"
@@ -19,11 +18,23 @@ import (
 	"infra/appengine/cr-audit-commits/app/config"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
-	gax "github.com/googleapis/gax-go/v2"
-	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 )
 
+var (
+	cloudTasksTimeoutMs = flag.Int("cloudtasks_timeout_ms", 30*1000, "Default cloudtasks rpc timeout in milliseconds.")
+)
+
+// app struct contains clients for services the app depends on.
+// This is a lo-fi form of dependency injection, similar to what
+// a tool like https://github.com/google/wire would use. Assign
+// fake implementations, doubles etc for testing.
+type app struct {
+	cloudTasksClient    *cloudtasks.Client
+	cloudTasksTimeoutMs int
+}
+
 func main() {
+	flag.Parse()
 	modules := []module.Module{
 		gaeemulation.NewModuleFromFlags(),
 		cfgmodule.NewModuleFromFlags(),
@@ -37,18 +48,15 @@ func main() {
 			FuncMap: templateFuncs,
 		}))
 
-		sched := &scheduler{
-			createTask: func(ctx context.Context, req *taskspb.CreateTaskRequest, opts ...gax.CallOption) (*taskspb.Task, error) {
-				// Create a new cloud task client
-				client, err := cloudtasks.NewClient(ctx)
-				if err != nil {
-					logging.WithError(err).Errorf(ctx, "Could not create cloud task client due to %s", err.Error())
-					return nil, err
-				}
-				defer client.Close()
+		client, err := cloudtasks.NewClient(srv.Context)
+		defer client.Close()
+		if err != nil {
+			return err
+		}
 
-				return client.CreateTask(ctx, req)
-			},
+		appServer := &app{
+			cloudTasksClient:    client,
+			cloudTasksTimeoutMs: *cloudTasksTimeoutMs,
 		}
 
 		srv.Routes.GET("/", templatesmw, func(c *router.Context) {
@@ -64,7 +72,7 @@ func main() {
 		})
 
 		srv.Routes.GET("/_cron/scheduler", configmw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {
-			sched.Schedule(c)
+			appServer.Schedule(c)
 		})
 
 		srv.Routes.GET("/_cron/update-config", basemw.Extend(gaemiddleware.RequireCron), func(c *router.Context) {

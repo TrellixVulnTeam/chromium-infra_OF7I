@@ -1,4 +1,4 @@
-// Copyright 20208 The Chromium Authors. All rights reserved.
+// Copyright 2020 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -15,9 +15,9 @@ import (
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/cr-audit-commits/app/config"
+	"infra/appengine/cr-audit-commits/app/fakecloudtasks"
 	"infra/appengine/cr-audit-commits/app/rules"
 
-	gax "github.com/googleapis/gax-go/v2"
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -61,22 +61,40 @@ func TestScheduler(t *testing.T) {
 		}
 
 		Convey("CreateTask fails", func() {
-			sched := &scheduler{
-				createTask: func(ctx context.Context, req *taskspb.CreateTaskRequest, opts ...gax.CallOption) (*taskspb.Task, error) {
-					return nil, fmt.Errorf("not implemented")
-				},
+			fakeCloudTasks := &fakecloudtasks.Server{
+				CreateTaskError: fmt.Errorf("default error for testing"),
 			}
-			sched.Schedule(c)
+			fakeServerAddr, fakeServer, err := fakecloudtasks.StartServer(ctx, fakeCloudTasks)
+			defer fakeServer.Stop()
+			So(err, ShouldBeNil)
+
+			tasksClient, err := fakecloudtasks.NewClient(ctx, fakeServerAddr)
+			So(err, ShouldBeNil)
+
+			appServer := &app{
+				cloudTasksClient:    tasksClient,
+				cloudTasksTimeoutMs: 30 * 1000,
+			}
+			appServer.Schedule(c)
 			So(w.Code, ShouldEqual, http.StatusInternalServerError)
 		})
 
 		Convey("CreateTask succeeds", func() {
-			sched := &scheduler{
-				createTask: func(ctx context.Context, req *taskspb.CreateTaskRequest, opts ...gax.CallOption) (*taskspb.Task, error) {
-					return &taskspb.Task{}, nil
-				},
+			fakeCloudTasks := &fakecloudtasks.Server{
+				CreateTaskResponse: &taskspb.Task{},
 			}
-			sched.Schedule(c)
+			fakeServerAddr, fakeServer, err := fakecloudtasks.StartServer(ctx, fakeCloudTasks)
+			defer fakeServer.Stop()
+			So(err, ShouldBeNil)
+
+			tasksClient, err := fakecloudtasks.NewClient(ctx, fakeServerAddr)
+			So(err, ShouldBeNil)
+			appServer := &app{
+				cloudTasksClient:    tasksClient,
+				cloudTasksTimeoutMs: 30 * 1000,
+			}
+			appServer.Schedule(c)
+
 			So(w.Code, ShouldEqual, http.StatusOK)
 		})
 	})
