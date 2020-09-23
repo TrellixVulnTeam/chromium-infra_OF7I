@@ -1,3 +1,22 @@
+# Release Notes sheriff-o-matic 2020-09-23
+
+- 3 commits, 2 bugs affected since bd98d2d ()
+- 1 Authors:
+  - nqmtuan@google.com
+
+## Changes in this release
+
+- [[SoM] Add type to chromium project when filing bug](https://chromium-review.googlesource.com/c/infra/infra/+/2423771) (nqmtuan@google.com)
+- [[SoM] Fix incorrect build count](https://chromium-review.googlesource.com/c/infra/infra/+/2421991) (nqmtuan@google.com)
+- [[SoM] Release note 22 Sept](https://chromium-review.googlesource.com/c/infra/infra/+/2421981) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1126181](https://crbug.com/1126181)
+  -  [https://crbug.com/1131146](https://crbug.com/1131146)
+
+
 # Release Notes sheriff-o-matic 2020-09-22
 
 - 4 commits, 1 bugs affected since 51ecc8c ()
