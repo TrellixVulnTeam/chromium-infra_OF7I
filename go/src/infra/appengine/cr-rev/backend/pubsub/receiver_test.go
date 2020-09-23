@@ -20,6 +20,7 @@ type mockPubsubReceiver struct {
 	messages []*pubsub.Message
 	calls    int
 	acked    int
+	nacked   int
 	mu       sync.Mutex
 }
 
@@ -35,10 +36,15 @@ func (m *mockPubsubReceiver) Receive(ctx context.Context, f func(ctx context.Con
 		mem := val.FieldByName("doneFunc")
 		ptrToMem := unsafe.Pointer(mem.UnsafeAddr())
 		realPtrToMem := (*func(string, bool, time.Time))(ptrToMem)
-		*realPtrToMem = func(string, bool, time.Time) {
+		*realPtrToMem = func(ackID string, ack bool, t time.Time) {
 			m.mu.Lock()
 			defer m.mu.Unlock()
-			m.acked++
+			if ack {
+				m.acked++
+			} else {
+				m.nacked++
+
+			}
 		}
 		f(ctx, message)
 	}
@@ -67,6 +73,7 @@ func TestPubsubSubscribe(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(mReceiver.calls, ShouldEqual, 0)
 		So(mReceiver.acked, ShouldEqual, 0)
+		So(mReceiver.nacked, ShouldEqual, 0)
 		So(mProcess.calls, ShouldEqual, 0)
 	})
 
@@ -85,6 +92,7 @@ func TestPubsubSubscribe(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(mReceiver.calls, ShouldEqual, 1)
 		So(mReceiver.acked, ShouldEqual, 0)
+		So(mReceiver.nacked, ShouldEqual, 1)
 		So(mProcess.calls, ShouldEqual, 0)
 	})
 
@@ -118,6 +126,7 @@ func TestPubsubSubscribe(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(mReceiver.calls, ShouldEqual, 1)
 		So(mReceiver.acked, ShouldEqual, 1)
+		So(mReceiver.nacked, ShouldEqual, 0)
 		So(mProcess.calls, ShouldEqual, 1)
 	})
 }

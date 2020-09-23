@@ -41,12 +41,14 @@ func Subscribe(ctx context.Context, sub pubsubReceiver,
 		if err != nil {
 			logging.WithError(err).Errorf(
 				ctx, "Error unmarshaling pubsub message")
+			m.Nack()
 			return
 		}
 		err = messageProcessor(ctx, &event)
 		if err != nil {
 			logging.WithError(err).Errorf(
 				ctx, "Error processing pubsub message")
+			m.Nack()
 			return
 		}
 		m.Ack()
