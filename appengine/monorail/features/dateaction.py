@@ -16,15 +16,15 @@ from __future__ import absolute_import
 
 import logging
 import time
+import urllib
 
 from third_party import ezt
-
-from google.appengine.api import taskqueue
 
 import settings
 
 from features import notify_helpers
 from features import notify_reasons
+from framework import cloud_tasks_helpers
 from framework import framework_constants
 from framework import framework_helpers
 from framework import framework_views
@@ -63,27 +63,33 @@ class DateActionCron(jsonfeed.InternalTask):
         ('Issue.id', []),
         ]
     while capped:
-        chunk_issue_ids, capped = self.services.issue.RunIssueQuery(
-            mr.cnxn, left_joins,
-            where + [('Issue.id > %s', [highest_iid_so_far])],
-            order_by)
-        if chunk_issue_ids:
-            logging.info('chunk_issue_ids = %r', chunk_issue_ids)
-            highest_iid_so_far = max(highest_iid_so_far, max(chunk_issue_ids))
-            for issue_id in chunk_issue_ids:
-                self.EnqueueDateAction(issue_id)
+      chunk_issue_ids, capped = self.services.issue.RunIssueQuery(
+          mr.cnxn, left_joins,
+          where + [('Issue.id > %s', [highest_iid_so_far])], order_by)
+      if chunk_issue_ids:
+        logging.info('chunk_issue_ids = %r', chunk_issue_ids)
+        highest_iid_so_far = max(highest_iid_so_far, max(chunk_issue_ids))
+        for issue_id in chunk_issue_ids:
+          self.EnqueueDateAction(issue_id)
 
   def EnqueueDateAction(self, issue_id):
-      """Create a task to notify users that an issue's date has arrived.
+    """Create a task to notify users that an issue's date has arrived.
 
       Args:
         issue_id: int ID of the issue that was changed.
 
       Returns nothing.
       """
-      params = {'issue_id': issue_id}
-      logging.info('adding date-action task with params %r', params)
-      taskqueue.add(url=urls.ISSUE_DATE_ACTION_TASK + '.do', params=params)
+    params = {'issue_id': issue_id}
+    task = {
+        'app_engine_http_request':
+            {
+                'relative_uri':
+                    urls.ISSUE_DATE_ACTION_TASK + '.do?' +
+                    urllib.urlencode(params)
+            }
+    }
+    cloud_tasks_helpers.create_task(task)
 
 
 def _GetTimestampRange(now):
