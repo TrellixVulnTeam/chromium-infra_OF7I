@@ -125,6 +125,8 @@ def MakeAllUserViews(
   """Make a dict {user_id: user_view, ...} for all user IDs given."""
   distinct_user_ids = set()
   distinct_user_ids.update(*list_of_user_id_lists)
+  if None in distinct_user_ids:
+    distinct_user_ids.remove(None)
   group_ids = kw.get('group_ids', [])
   user_dict = user_service.GetUsersByIDs(cnxn, distinct_user_ids)
   return {user_id: UserView(user_pb, is_group=user_id in group_ids)
