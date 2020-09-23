@@ -887,6 +887,53 @@ class WorkEnv(object):
       return templates
     return [template for template in templates if not template.members_only]
 
+  def CreateComponentDef(
+      self, project_id, path, description, admin_ids, cc_ids, labels):
+    # type: (int, str, str, Collection[int], Collection[int], Collection[str])
+    #     -> ComponentDef
+    """Creates a ComponentDef with the given information."""
+    project = self.GetProject(project_id)
+    config = self.GetProjectConfig(project_id)
+
+    # Validate new ComponentDef and check permissions.
+    ancestor_path, leaf_name = None, path
+    if '>' in path:
+      ancestor_path, leaf_name = path.rsplit('>', 1)
+      ancestor_def = tracker_bizobj.FindComponentDef(ancestor_path, config)
+      if not ancestor_def:
+        raise exceptions.InputException(
+            'Ancestor path %s is invalid.' % ancestor_path)
+      project_perms = permissions.GetPermissions(
+          self.mc.auth.user_pb, self.mc.auth.effective_ids, project)
+      if not permissions.CanEditComponentDef(
+          self.mc.auth.effective_ids, project_perms, project, ancestor_def,
+          config):
+        raise permissions.PermissionException(
+            'User is not allowed to create a subcomponent under %s.' %
+            ancestor_path)
+    else:
+      # A brand new top level component is being created.
+      self._AssertPermInProject(permissions.EDIT_PROJECT, project)
+
+    if not tracker_constants.COMPONENT_NAME_RE.match(leaf_name):
+      raise exceptions.InputException('Invalid component path: %s.' % leaf_name)
+
+    if tracker_bizobj.FindComponentDef(path, config):
+      raise exceptions.InputException(
+          'Component path %s already exists.' % path)
+
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      tracker_helpers.AssertUsersExist(
+          self.mc.cnxn, self.services, cc_ids + admin_ids, err_agg)
+
+    label_ids = self.services.config.LookupLabelIDs(
+        self.mc.cnxn, project_id, labels, autocreate=True)
+    self.services.config.CreateComponentDef(
+        self.mc.cnxn, project_id, path, description, False, admin_ids, cc_ids,
+        int(time.time()), self.mc.auth.user_id, label_ids)
+    updated_config = self.GetProjectConfig(project_id, use_cache=False)
+    return tracker_bizobj.FindComponentDef(path, updated_config)
+
   # FUTURE: labels, statuses, components, rules, templates, and views.
   # FUTURE: project saved queries.
   # FUTURE: GetProjectPermissionsForUser()

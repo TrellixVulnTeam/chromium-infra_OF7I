@@ -874,6 +874,124 @@ class WorkEnvTest(unittest.TestCase):
     self.services.template.GetProjectTemplates.assert_called_once_with(
         self.mr.cnxn, self.project.project_id)
 
+  @mock.patch('time.time')
+  def testCreateComponentDef(self, fake_time):
+    now = 123
+    fake_time.return_value = now
+    project = self.services.project.TestAddProject(
+        'Music', owner_ids=[self.user_1.user_id])
+    admin = self.services.user.TestAddUser('admin@test.com', 555)
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      actual = we.CreateComponentDef(
+          project.project_id, 'hanggai', 'hamtlag', [admin.user_id],
+          [self.user_2.user_id], ['taro', 'mowgli'])
+    self.assertEqual(actual.project_id, project.project_id)
+    self.assertEqual(actual.path, 'hanggai')
+    self.assertEqual(actual.docstring, 'hamtlag')
+    self.assertEqual(actual.admin_ids, [admin.user_id])
+    self.assertEqual(actual.cc_ids, [222])
+    self.assertFalse(actual.deprecated)
+    self.assertEqual(actual.created, now)
+    self.assertEqual(actual.creator_id, self.user_1.user_id)
+    self.assertEqual(
+        actual.label_ids,
+        self.services.config.LookupLabelIDs(
+            self.cnxn, project.project_id, ['taro', 'mowgli']))
+
+    # Test with ancestor.
+    self.SignIn(admin.user_id)
+    with self.work_env as we:
+      actual = we.CreateComponentDef(
+          project.project_id, 'hanggai>band', 'rock band',
+          [self.user_2.user_id], [], [])
+    self.assertEqual(actual.project_id, project.project_id)
+    self.assertEqual(actual.path, 'hanggai>band')
+    self.assertEqual(actual.docstring, 'rock band')
+    self.assertEqual(actual.admin_ids, [self.user_2.user_id])
+    self.assertFalse(actual.deprecated)
+    self.assertEqual(actual.created, now)
+    self.assertEqual(actual.creator_id, admin.user_id)
+
+  def testCreateComponentDef_InvalidUsers(self):
+    project = self.services.project.TestAddProject(
+        'Music', owner_ids=[self.user_1.user_id])
+    self.SignIn(self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'hanggai', 'hamtlag', [404], [404], [])
+
+  def testCreateComponentDef_InvalidLeaf(self):
+    project = self.services.project.TestAddProject(
+        'Music', owner_ids=[self.user_1.user_id])
+    self.SignIn(self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'music>hanggai.rockband', 'hamtlag', [], [], [])
+
+  def testCreateComponentDef_LeafAlreadyExists(self):
+    project = self.services.project.TestAddProject(
+        'Music', owner_ids=[self.user_1.user_id])
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      we.CreateComponentDef(
+          project.project_id, 'mowgli', 'favorite things',
+          [self.user_1.user_id], [], [])
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'mowgli', 'more favorite things', [], [], [])
+
+    # Test components with ancestors are also checked correctly
+    with self.work_env as we:
+      we.CreateComponentDef(
+          project.project_id, 'mowgli>food', 'lots of chicken', [], [], [])
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'mowgli>food', 'lots of salmon', [], [], [])
+
+  def testCreateComponentDef_AncestorNotFound(self):
+    project = self.services.project.TestAddProject(
+        'Music', owner_ids=[self.user_1.user_id])
+    self.SignIn(self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'mowgli>chicken', 'more favorite things', [],
+            [], [])
+
+  def testCreateComponentDef_PermissionDenied(self):
+    project = self.services.project.TestAddProject(
+        'Music', owner_ids=[self.user_1.user_id])
+    admin = self.services.user.TestAddUser('admin@test.com', 888)
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      we.CreateComponentDef(
+          project.project_id, 'mowgli', 'favorite things', [admin.user_id], [],
+          [])
+      we.CreateComponentDef(
+          project.project_id, 'mowgli>beef', 'favorite things', [], [], [])
+
+    user = self.services.user.TestAddUser('user@test.com', 777)
+    self.SignIn(user.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'bambi', 'spring time', [], [], [])
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'mowgli>chicken', 'more favorite things', [],
+            [], [])
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.CreateComponentDef(
+            project.project_id, 'mowgli>beef>rice', 'more favorite things', [],
+            [], [])
+
   # FUTURE: labels, statuses, components, rules, templates, and views.
   # FUTURE: project saved queries.
   # FUTURE: GetProjectPermissionsForUser()

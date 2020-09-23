@@ -2498,6 +2498,11 @@ class AssertUsersExistTest(unittest.TestCase):
       tracker_helpers.AssertUsersExist(
           self.cnxn, self.services, existing, err_agg)
 
+  def test_AssertUsersExist_Empty(self):
+    with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:
+      tracker_helpers.AssertUsersExist(
+          self.cnxn, self.services, [], err_agg)
+
   def test_AssertUsersExist(self):
     dne_users = [2, 3]
     existing = [1, 1001, 1002, 1003, 2001, 2002, 3002]
