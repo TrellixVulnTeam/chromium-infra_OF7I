@@ -11,11 +11,12 @@ from __future__ import absolute_import
 import json
 import logging
 import httplib2
+import urllib
 
 from google.appengine.api import app_identity
-from google.appengine.api import taskqueue
 
 from businesslogic import work_env
+from framework import cloud_tasks_helpers
 from framework import framework_constants
 from framework import jsonfeed
 from framework import urls
@@ -51,13 +52,25 @@ class WipeoutSyncCron(jsonfeed.InternalTask):
 
     for i in range(total_batches):
       params = dict(limit=batch_size, offset=i * batch_size)
-      taskqueue.add(
-          url=urls.SEND_WIPEOUT_USER_LISTS_TASK + '.do', params=params,
-          queue_name=framework_constants.QUEUE_SEND_WIPEOUT_USER_LISTS)
+      task = {
+          'app_engine_http_request':
+              {
+                  'relative_uri':
+                      urls.SEND_WIPEOUT_USER_LISTS_TASK + '.do?' +
+                      urllib.urlencode(params)
+              }
+      }
+      cloud_tasks_helpers.create_task(
+          task, queue=framework_constants.QUEUE_SEND_WIPEOUT_USER_LISTS)
 
-    taskqueue.add(
-        url=urls.DELETE_WIPEOUT_USERS_TASK + '.do',
-        queue_name=framework_constants.QUEUE_FETCH_WIPEOUT_DELETED_USERS)
+    task = {
+        'app_engine_http_request':
+            {
+                'relative_uri': urls.DELETE_WIPEOUT_USERS_TASK + '.do'
+            }
+    }
+    cloud_tasks_helpers.create_task(
+        task, queue=framework_constants.QUEUE_FETCH_WIPEOUT_DELETED_USERS)
 
 
 class SendWipeoutUserListsTask(jsonfeed.InternalTask):
@@ -104,9 +117,16 @@ class DeleteWipeoutUsersTask(jsonfeed.InternalTask):
       start = i * limit
       end = start + limit
       params = dict(emails=','.join(deleted_emails[start:end]))
-      taskqueue.add(
-          url=urls.DELETE_USERS_TASK + '.do', params=params,
-          queue_name=framework_constants.QUEUE_DELETE_USERS)
+      task = {
+          'app_engine_http_request':
+              {
+                  'relative_uri':
+                      urls.DELETE_USERS_TASK + '.do?' +
+                      urllib.urlencode(params)
+              }
+      }
+      cloud_tasks_helpers.create_task(
+          task, queue=framework_constants.QUEUE_DELETE_USERS)
 
   def fetchDeletedUsers(self, service):
     app_id = app_identity.get_application_id()
