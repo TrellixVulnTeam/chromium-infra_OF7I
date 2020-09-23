@@ -68,8 +68,11 @@ class SomExtensionBuildFailure extends Polymer.mixinBehaviors(
   }
 
   _failureCountText(builder) {
-    let numBuilds = this._failureCount(builder);
-    if (numBuilds == 1) {
+    const numBuilds = this._failureCount(builder);
+
+    // first_failure_build_number == 0 means we do not have information about
+    // the first failure. In this case, we do not want to display anything.
+    if (numBuilds == 1 || builder.first_failure_build_number == 0) {
       return '';
     }
 
