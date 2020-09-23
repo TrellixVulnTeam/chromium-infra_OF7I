@@ -55,7 +55,7 @@ func main() {
 			index(c)
 		})
 
-		srv.Routes.GET("/view/status", templatesmw, func(c *router.Context) {
+		srv.Routes.GET("/view/status", templatesmw.Extend(config.Middleware), func(c *router.Context) {
 			Status(c)
 		})
 

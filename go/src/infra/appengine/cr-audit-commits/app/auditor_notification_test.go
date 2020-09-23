@@ -15,6 +15,7 @@ import (
 	ds "go.chromium.org/luci/gae/service/datastore"
 
 	"infra/appengine/cr-audit-commits/app/config"
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/appengine/cr-audit-commits/app/rules"
 	"infra/monorail"
 )
@@ -48,8 +49,10 @@ func TestNotifier(t *testing.T) {
 						},
 					},
 					Notification: rules.CommentOrFileMonorailIssue{
-						Components: []string{"Tools>Test>Findit>Autorevert"},
-						Labels:     []string{"CommitLog-Audit-Violation"},
+						CommentOrFileMonorailIssue: &cpb.CommentOrFileMonorailIssue{
+							Components: []string{"Tools>Test>Findit>Autorevert"},
+							Labels:     []string{"CommitLog-Audit-Violation"},
+						},
 					},
 				}},
 			}
@@ -202,7 +205,7 @@ func TestNotifier(t *testing.T) {
 							},
 						},
 					},
-					Notification: rules.CommentOnBugToAcknowledgeMerge{},
+					Notification: &rules.CommentOnBugToAcknowledgeMerge{},
 				}},
 				Metadata: "MilestoneNumber:70",
 			}

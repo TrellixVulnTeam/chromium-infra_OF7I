@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/server/auth"
 
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/monorail"
 )
 
@@ -45,8 +46,7 @@ type Notification interface {
 // new bug if it hasn't. If a bug already exists this function will try to add
 // a comment and associate it to the bug.
 type CommentOrFileMonorailIssue struct {
-	Components []string
-	Labels     []string
+	*cpb.CommentOrFileMonorailIssue
 }
 
 // Notify implements Notification.
@@ -93,8 +93,7 @@ func (c CommentOrFileMonorailIssue) Notify(ctx context.Context, cfg *RefConfig, 
 // FileBugForMergeApprovalViolation is the notification function for
 // merge-approval-rules.
 type FileBugForMergeApprovalViolation struct {
-	Components []string
-	Labels     []string
+	*cpb.FileBugForMergeApprovalViolation
 }
 
 // Notify implements Notification.
@@ -121,8 +120,10 @@ func (f FileBugForMergeApprovalViolation) Notify(ctx context.Context, cfg *RefCo
 			}
 			labelsWithOs := append(labels, "OS-Windows", "OS-Mac", "OS-Linux", "OS-Android", "OS-iOS", "OS-Chrome")
 			c := CommentOrFileMonorailIssue{
-				Components: f.Components,
-				Labels:     labelsWithOs,
+				&cpb.CommentOrFileMonorailIssue{
+					Components: f.Components,
+					Labels:     labelsWithOs,
+				},
 			}
 			return c.Notify(ctx, cfg, rc, cs, state)
 		}
@@ -132,7 +133,9 @@ func (f FileBugForMergeApprovalViolation) Notify(ctx context.Context, cfg *RefCo
 
 // CommentOnBugToAcknowledgeMerge is used as the notification function of
 // merge-ack-rule.
-type CommentOnBugToAcknowledgeMerge struct{}
+type CommentOnBugToAcknowledgeMerge struct {
+	*cpb.CommentOnBugToAcknowledgeMerge
+}
 
 // Notify implements Notification.
 func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConfig, rc *RelevantCommit, cs *Clients, state string) (string, error) {

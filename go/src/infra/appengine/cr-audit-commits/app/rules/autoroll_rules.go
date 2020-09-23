@@ -7,6 +7,8 @@ package rules
 import (
 	"fmt"
 	"strings"
+
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 // AutoRollRules returns an AccountRules instance for an account
@@ -22,8 +24,10 @@ func AutoRollRules(account string, files, dirs []string) AccountRules {
 			},
 		},
 		Notification: CommentOrFileMonorailIssue{
-			Components: []string{"Infra>Security>Audit>AutoRoller"},
-			Labels:     []string{"CommitLog-Audit-Violation"},
+			&cpb.CommentOrFileMonorailIssue{
+				Components: []string{"Infra>Security>Audit>AutoRoller"},
+				Labels:     []string{"CommitLog-Audit-Violation"},
+			},
 		},
 	}
 }

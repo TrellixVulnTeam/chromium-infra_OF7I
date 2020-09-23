@@ -26,10 +26,28 @@ var (
 		gerrit_host: "new.googlesource.com"
 		gerrit_repo: "new"
 		ref: "master"
-		gerrit_url: "https://new-review.googlesource.com"
 		starting_commit: "000000"
 		monorail_project: "fakeproject"
 		notifier_email: "notifier@cr-audit-commits-test.appspotmail.com"
+		rules: {
+			key: "manual-changes"
+			value: {
+				account: "*"
+				rules: {
+					changeReviewed: {
+					  	robots: "robot0@example.com"
+					  	robots: "robot1@example.com"
+					}
+				}
+				notifications: {
+					commentOrFileMonorailIssue: {
+						components: "Test>Component"
+						  labels: "CommitLog-Audit-Violation"
+						  labels: "TBR-Violation"
+					}
+				}
+			}
+		}
 	`
 )
 
@@ -56,8 +74,28 @@ func TestMiddleware(t *testing.T) {
 		}))
 
 		Middleware(&router.Context{Context: c}, func(c *router.Context) {
-			So(Get(c.Context).RefConfigs["fakeproject"].GerritHost, ShouldEqual, "new.googlesource.com")
-			So(Get(c.Context).RefConfigs["fakeproject"].GerritUrl, ShouldEqual, "https://new-review.googlesource.com")
+			refConfig := Get(c.Context).RefConfigs["fakeproject"]
+			So(refConfig.GerritHost, ShouldEqual, "new.googlesource.com")
+			So(refConfig.GerritRepo, ShouldEqual, "new")
+
+			accountRules := refConfig.Rules["manual-changes"]
+			So(accountRules.Account, ShouldEqual, "*")
+			_, ok := accountRules.Rules[0].Rule.(*cpb.Rule_ChangeReviewed)
+			So(ok, ShouldEqual, true)
+			So(accountRules.Rules[0].GetChangeReviewed().Robots, ShouldResemble, []string{
+				"robot0@example.com",
+				"robot1@example.com",
+			})
+			_, ok = accountRules.Notifications[0].Notification.(*cpb.Notification_CommentOrFileMonorailIssue)
+			So(ok, ShouldEqual, true)
+			So(accountRules.Notifications[0].GetCommentOrFileMonorailIssue().Components, ShouldResemble, []string{
+				"Test>Component",
+			})
+			So(accountRules.Notifications[0].GetCommentOrFileMonorailIssue().Labels, ShouldResemble, []string{
+				"CommitLog-Audit-Violation",
+				"TBR-Violation",
+			})
+
 			So(GetConfigRevision(c.Context), ShouldNotEqual, "")
 		})
 	})

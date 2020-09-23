@@ -501,7 +501,7 @@ func TestAuditor(t *testing.T) {
 						ConfigName:         "dummy-repo",
 						LastKnownCommit:    "123456",
 						LastRelevantCommit: "999999",
-						LastUpdatedTime:    time.Now().Add(time.Duration(-config.StuckScannerDuration-1) * time.Hour).UTC(),
+						LastUpdatedTime:    time.Now().Add(-config.StuckScannerDuration).UTC(),
 					})
 
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
@@ -529,7 +529,7 @@ func TestAuditor(t *testing.T) {
 						ConfigName:                       "dummy-repo",
 						LastKnownCommit:                  "123456",
 						LastRelevantCommit:               "999999",
-						LastUpdatedTime:                  time.Now().Add(time.Duration(-config.StuckScannerDuration-1) * time.Hour).UTC(),
+						LastUpdatedTime:                  time.Now().Add(-config.StuckScannerDuration).UTC(),
 						AcceptedOverwriteLastKnownCommit: "999999",
 					})
 					resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)

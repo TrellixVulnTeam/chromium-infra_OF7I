@@ -11,6 +11,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/common/api/gerrit"
+
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 func TestTBRRules(t *testing.T) {
@@ -134,7 +136,9 @@ func TestTBRRules(t *testing.T) {
 		})
 
 		c := ChangeReviewed{
-			Robots: []string{"robot1@example.com", "robot2@example.com"},
+			&cpb.ChangeReviewed{
+				Robots: []string{"robot1@example.com", "robot2@example.com"},
+			},
 		}
 		rr, _ := c.Run(ctx, ap, rc, testClients)
 		So(rr.RuleResultStatus, ShouldEqual, expectedStatus)

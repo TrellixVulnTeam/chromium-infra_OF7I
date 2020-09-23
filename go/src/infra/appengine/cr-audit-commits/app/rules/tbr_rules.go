@@ -14,6 +14,8 @@ import (
 
 	"go.chromium.org/luci/common/api/gerrit"
 	"go.chromium.org/luci/common/logging"
+
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 const (
@@ -52,7 +54,7 @@ func getMaxLabelValue(values map[string]string) (int, error) {
 // ChangeReviewed is a RuleFunc that verifies that someone other than the
 // owner has reviewed the change.
 type ChangeReviewed struct {
-	Robots []string
+	*cpb.ChangeReviewed
 }
 
 // GetName returns the name of the rule.

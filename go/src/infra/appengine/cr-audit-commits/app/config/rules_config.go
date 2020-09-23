@@ -5,20 +5,25 @@
 package config
 
 import (
+	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
-var (
+const (
 	// StuckScannerDuration refers how many hours after a ref stops auditing,
 	// a bug will be filed.
-	StuckScannerDuration = 2 * time.Hour
+	StuckScannerDuration = time.Duration(2) * time.Hour
 
 	// MaxCommitsPerRefUpdate is the maximum commits that the Gitiles git.Log
 	// API should return every time it is called.
 	MaxCommitsPerRefUpdate = 6000
+
+	monorailAPIURL = "https://monorail-prod.appspot.com/_ah/api/monorail/v1"
 )
 
 var (
@@ -81,8 +86,10 @@ var (
 	// fileBugForTBRViolation is the notification function for manual-changes
 	// rules.
 	fileBugForTBRViolation = rules.CommentOrFileMonorailIssue{
-		Components: []string{"Infra>Security>Audit"},
-		Labels:     []string{"CommitLog-Audit-Violation", "TBR-Violation"},
+		CommentOrFileMonorailIssue: &cpb.CommentOrFileMonorailIssue{
+			Components: []string{"Infra>Security>Audit"},
+			Labels:     []string{"CommitLog-Audit-Violation", "TBR-Violation"},
+		},
 	}
 )
 
@@ -101,7 +108,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "294151f22f1d8516abc4fb34c3d8e7e40972c60a",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
@@ -137,8 +144,10 @@ var ruleMap = map[string]*rules.RefConfig{
 					rules.OnlyCommitsOwnChange{},
 				},
 				Notification: rules.CommentOrFileMonorailIssue{
-					Components: []string{"Tools>Test>Findit>Autorevert"},
-					Labels:     []string{"CommitLog-Audit-Violation"},
+					CommentOrFileMonorailIssue: &cpb.CommentOrFileMonorailIssue{
+						Components: []string{"Tools>Test>Findit>Autorevert"},
+						Labels:     []string{"CommitLog-Audit-Violation"},
+					},
 				},
 			},
 			"release-bot-rules": {
@@ -153,8 +162,10 @@ var ruleMap = map[string]*rules.RefConfig{
 					},
 				},
 				Notification: rules.CommentOrFileMonorailIssue{
-					Components: []string{"Infra>Client>Chrome>Release"},
-					Labels:     []string{"CommitLog-Audit-Violation"},
+					CommentOrFileMonorailIssue: &cpb.CommentOrFileMonorailIssue{
+						Components: []string{"Infra>Client>Chrome>Release"},
+						Labels:     []string{"CommitLog-Audit-Violation"},
+					},
 				},
 			},
 		},
@@ -166,14 +177,16 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "5c5cd4c06f35cd650c0ce8dc769b9c2286428aaf",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
 				Rules: []rules.Rule{
-					rules.ChangeReviewed{Robots: chromiumRobots},
+					rules.ChangeReviewed{
+						ChangeReviewed: &cpb.ChangeReviewed{Robots: chromiumRobots},
+					},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -191,14 +204,16 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "48eb0a6f8f6a455b101e4e0e64ef5c8cbf21cbac",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
 				Rules: []rules.Rule{
-					rules.ChangeReviewed{Robots: chromiumRobots},
+					rules.ChangeReviewed{
+						ChangeReviewed: &cpb.ChangeReviewed{Robots: chromiumRobots},
+					},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -211,14 +226,16 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "174a9e06ba831b3dca2bedb57c5a67fea7ec7995",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
 				Rules: []rules.Rule{
-					rules.ChangeReviewed{Robots: chromiumRobots},
+					rules.ChangeReviewed{
+						ChangeReviewed: &cpb.ChangeReviewed{Robots: chromiumRobots},
+					},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -239,14 +256,16 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "a4beb2be3d337aa260602e4a990101cb8d9b5930",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
 				Rules: []rules.Rule{
-					rules.ChangeReviewed{Robots: chromiumRobots},
+					rules.ChangeReviewed{
+						ChangeReviewed: &cpb.ChangeReviewed{Robots: chromiumRobots},
+					},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -256,7 +275,7 @@ var ruleMap = map[string]*rules.RefConfig{
 	"chromium-src-release-branches": {
 		BaseRepoURL:     "https://chromium.googlesource.com/chromium/src.git",
 		GerritURL:       "https://chromium-review.googlesource.com",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
@@ -269,8 +288,10 @@ var ruleMap = map[string]*rules.RefConfig{
 					},
 				},
 				Notification: rules.FileBugForMergeApprovalViolation{
-					Components: []string{"Programs>PMO>Browser>Release"},
-					Labels:     []string{"CommitLog-Audit-Violation", "Merge-Without-Approval"},
+					FileBugForMergeApprovalViolation: &cpb.FileBugForMergeApprovalViolation{
+						Components: []string{"Programs>PMO>Browser>Release"},
+						Labels:     []string{"CommitLog-Audit-Violation", "Merge-Without-Approval"},
+					},
 				},
 			},
 			"merge-ack-rules": {
@@ -278,7 +299,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				Rules: []rules.Rule{
 					rules.AcknowledgeMerge{},
 				},
-				Notification: rules.CommentOnBugToAcknowledgeMerge{},
+				Notification: &rules.CommentOnBugToAcknowledgeMerge{},
 			},
 		},
 		DynamicRefFunction: rules.ReleaseConfig,
@@ -292,14 +313,16 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "b96a63a0d469c1d240e16be85e0c086a5d61e11e",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
 				Rules: []rules.Rule{
-					rules.ChangeReviewed{Robots: fuchsiaRobots},
+					rules.ChangeReviewed{
+						ChangeReviewed: &cpb.ChangeReviewed{Robots: fuchsiaRobots},
+					},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -311,14 +334,16 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "363cc579c331cd99385dcb538280395a20dc8524",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
 				Rules: []rules.Rule{
-					rules.ChangeReviewed{Robots: fuchsiaRobots},
+					rules.ChangeReviewed{
+						ChangeReviewed: &cpb.ChangeReviewed{Robots: fuchsiaRobots},
+					},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -330,14 +355,16 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "674d79765c372ef9b9389dc2e0d027732165f441",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"manual-changes": {
 				Account: "*",
 				Rules: []rules.Rule{
-					rules.ChangeReviewed{Robots: fuchsiaRobots},
+					rules.ChangeReviewed{
+						ChangeReviewed: &cpb.ChangeReviewed{Robots: fuchsiaRobots},
+					},
 				},
 				Notification: fileBugForTBRViolation,
 			},
@@ -349,7 +376,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "e49be669d88e7ba848ec60c194265280e4005bb6",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
@@ -366,7 +393,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "2cc126fc74270d5ebd3e477be422ba407b887ceb",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
@@ -385,7 +412,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		BranchName:  "refs/heads/master",
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "50f3badef1e2a2b123517f8991ebe4f8086e9654",
-		MonorailAPIURL:  "https://monorail-prod.appspot.com/_ah/api/monorail/v1",
+		MonorailAPIURL:  monorailAPIURL,
 		MonorailProject: "chromium",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
@@ -395,8 +422,86 @@ var ruleMap = map[string]*rules.RefConfig{
 	},
 }
 
+// getGerritURL converts proto's GerritHost to a gerrit url.
+func getGerritURL(gerritHost string) string {
+	gerritHostSlices := strings.Split(gerritHost, ".")
+	gerritHostSlices[0] = "https://" + gerritHostSlices[0] + "-review"
+	return strings.Join(gerritHostSlices, ".")
+}
+
+// getAccountRules converts proto's AccountRules to rules' AccountRules.
+func getAccountRules(protoAccountRules map[string]*cpb.AccountRules) map[string]rules.AccountRules {
+	accountRules := make(map[string]rules.AccountRules, len(protoAccountRules))
+	for k, v := range protoAccountRules {
+		// TODO: Currently the rules.AccountRules only contains 1 notification
+		// function, so here I only take the first notification function in the
+		// config. Will alter the logic when using multiple notification
+		// functions.
+		var notification rules.Notification
+		if len(v.Notifications) > 0 {
+			switch v.Notifications[0].Notification.(type) {
+			case *cpb.Notification_CommentOnBugToAcknowledgeMerge:
+				notification = &rules.CommentOnBugToAcknowledgeMerge{}
+			case *cpb.Notification_CommentOrFileMonorailIssue:
+				notification = rules.CommentOrFileMonorailIssue{
+					CommentOrFileMonorailIssue: v.Notifications[0].GetCommentOrFileMonorailIssue(),
+				}
+			case *cpb.Notification_FileBugForMergeApprovalViolation:
+				notification = rules.FileBugForMergeApprovalViolation{
+					FileBugForMergeApprovalViolation: v.Notifications[0].GetFileBugForMergeApprovalViolation(),
+				}
+			}
+		}
+
+		var rs []rules.Rule
+		for _, r := range v.Rules {
+			switch r.Rule.(type) {
+			case *cpb.Rule_ChangeReviewed:
+				rs = append(rs, rules.ChangeReviewed{
+					ChangeReviewed: r.GetChangeReviewed(),
+				})
+			}
+		}
+
+		accountRules[k] = rules.AccountRules{
+			Account:      v.Account,
+			Notification: notification,
+			Rules:        rs,
+		}
+	}
+	return accountRules
+}
+
+// GetUpdatedRuleMap returns a map of each monitored repository to a list of
+// account/rules structs.
+func GetUpdatedRuleMap(c context.Context) map[string]*rules.RefConfig {
+	updatedRuleMap := map[string]*rules.RefConfig{}
+	for k, v := range ruleMap {
+		updatedRuleMap[k] = v
+	}
+
+	// Use configs from LUCI-config service to update local ruleMap.
+	for k, refConfig := range Get(c).RefConfigs {
+		updatedRuleMap[k] = &rules.RefConfig{
+			BaseRepoURL:    "https://" + refConfig.GerritHost + "/" + refConfig.GerritRepo,
+			GerritURL:      getGerritURL(refConfig.GerritHost),
+			BranchName:     refConfig.Ref,
+			StartingCommit: refConfig.StartingCommit,
+			// TODO: For test environment, the MonorailAPIURL should be different.
+			MonorailAPIURL:  monorailAPIURL,
+			MonorailProject: refConfig.MonorailProject,
+			NotifierEmail:   refConfig.NotifierEmail,
+			Rules:           getAccountRules(refConfig.Rules),
+		}
+	}
+
+	return updatedRuleMap
+}
+
 // GetRuleMap returns a map of each monitored repository to a list of
 // account/rules structs.
+//
+// TODO: Replace all the use of GetRuleMap with GetUpdatedRuleMap.
 func GetRuleMap() map[string]*rules.RefConfig {
 	// TODO: Load from a configuration store.
 	return ruleMap

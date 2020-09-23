@@ -6,7 +6,10 @@ syntax = "proto3";
 
 package cr_audit_commits.configpb;
 
-option go_package = "infra/appengine/cr-audit-commits/app/configpb";
+option go_package = "infra/appengine/cr-audit-commits/app/proto;configpb";
+
+// The proto definitions are based on struct definitions in
+// https://source.chromium.org/chromium/infra/infra/+/master:go/src/infra/appengine/cr-audit-commits/app/rules/
 
 message Config {
     map<string, RefConfig> ref_configs = 1;
@@ -24,7 +27,43 @@ message RefConfig {
     // to help resume the scanning.
     string overwrite_last_known_commit = 7;
 
-    // TODO: AccountRules
+    map<string, AccountRules> rules = 8;
     // TODO: DynamicRefFunction
 }
 
+message AccountRules {
+    string account = 1;
+    repeated Rule rules = 2;
+    repeated Notification notifications = 3;
+}
+
+message Rule {
+    oneof rule {
+        ChangeReviewed changeReviewed = 4;
+    }
+}
+
+message ChangeReviewed {
+    repeated string robots = 1;
+}
+
+message Notification {
+    oneof notification {
+        CommentOnBugToAcknowledgeMerge commentOnBugToAcknowledgeMerge = 1;
+        CommentOrFileMonorailIssue commentOrFileMonorailIssue = 2;
+        FileBugForMergeApprovalViolation fileBugForMergeApprovalViolation = 3;
+    }
+}
+
+message CommentOnBugToAcknowledgeMerge {
+}
+
+message CommentOrFileMonorailIssue {
+    repeated string components = 1;
+    repeated string labels = 2;
+}
+
+message FileBugForMergeApprovalViolation {
+    repeated string components = 1;
+    repeated string labels = 2;
+}
