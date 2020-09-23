@@ -25,11 +25,30 @@ var monorailPriorityFieldMap = map[string]map[string]string{
 	},
 }
 
+var monorailTypeFieldMap = map[string]map[string]string{
+	"sheriff-o-matic": {
+		"chromium": "projects/chromium/fieldDefs/10",
+	},
+	"sheriff-o-matic-staging": {
+		"chromium": "projects/chromium/fieldDefs/10",
+	},
+}
+
 // GetMonorailPriorityField get the fieldName for priority.
 // TODO (nqmtuan): Put this in admin config.
 func GetMonorailPriorityField(c context.Context, projectID string) (string, error) {
+	return getFieldValue(c, projectID, monorailPriorityFieldMap)
+}
+
+// GetMonorailTypeField get the fieldName for type (e.g. Bug, Feature...).
+// TODO (nqmtuan): Put this in admin config.
+func GetMonorailTypeField(c context.Context, projectID string) (string, error) {
+	return getFieldValue(c, projectID, monorailTypeFieldMap)
+}
+
+func getFieldValue(c context.Context, projectID string, fieldMap map[string]map[string]string) (string, error) {
 	appID := info.AppID(c)
-	val, ok := monorailPriorityFieldMap[appID][projectID]
+	val, ok := fieldMap[appID][projectID]
 	if !ok {
 		return "", fmt.Errorf("Invalid ProjectID %q", projectID)
 	}

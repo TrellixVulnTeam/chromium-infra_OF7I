@@ -587,6 +587,7 @@ func (ah *AnnotationHandler) FileBugHandler(ctx *router.Context) {
 		},
 		NotifyType: monorailv3.NotifyType_EMAIL,
 	}
+	processIssueRequest(c, rawJSON.ProjectID, issueReq)
 	res, err := ah.MonorailIssueClient.MakeIssue(c, issueReq)
 	if err != nil {
 		logging.Errorf(c, "error inserting new Issue: %v", err)
@@ -603,4 +604,21 @@ func (ah *AnnotationHandler) FileBugHandler(ctx *router.Context) {
 	logging.Infof(c, "%v", out)
 	w.Header().Set("Content-Type", "applications/json")
 	w.Write(out)
+}
+
+func processIssueRequest(c context.Context, projectID string, req *monorailv3.MakeIssueRequest) error {
+	if projectID == "chromium" {
+		// For chromium project, we need to specify type
+		fieldName, err := client.GetMonorailTypeField(c, projectID)
+		if err != nil {
+			return err
+		}
+		req.Issue.FieldValues = []*monorailv3.FieldValue{
+			{
+				Field: fieldName,
+				Value: "Bug",
+			},
+		}
+	}
+	return nil
 }
