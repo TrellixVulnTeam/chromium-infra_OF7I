@@ -11,6 +11,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
+from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 from google.api import field_behavior_pb2 as google_dot_api_dot_field__behavior__pb2
 from google.api import resource_pb2 as google_dot_api_dot_resource__pb2
 from api.v3.api_proto import project_objects_pb2 as api_dot_v3_dot_api__proto_dot_project__objects__pb2
@@ -22,9 +23,9 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\020api/v3/api_proto',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x1f\x61pi/v3/api_proto/projects.proto\x12\x0bmonorail.v3\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a&api/v3/api_proto/project_objects.proto\"t\n\x15\x43reateFieldDefRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12,\n\x08\x66ielddef\x18\x02 \x01(\x0b\x32\x15.monorail.v3.FieldDefB\x03\xe0\x41\x02\"\x81\x01\n\x19\x43reateComponentDefRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12\x35\n\rcomponent_def\x18\x02 \x01(\x0b\x32\x19.monorail.v3.ComponentDefB\x03\xe0\x41\x02\"q\n\x19ListIssueTemplatesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"d\n\x1aListIssueTemplatesResponse\x12-\n\ttemplates\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.IssueTemplate\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"<\n\x13ListProjectsRequest\x12\x11\n\tpage_size\x18\x01 \x01(\x05\x12\x12\n\npage_token\x18\x02 \x01(\t\"W\n\x14ListProjectsResponse\x12&\n\x08projects\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Project\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xf4\x02\n\x08Projects\x12M\n\x0e\x43reateFieldDef\x12\".monorail.v3.CreateFieldDefRequest\x1a\x15.monorail.v3.FieldDef\"\x00\x12Y\n\x12\x43reateComponentDef\x12&.monorail.v3.CreateComponentDefRequest\x1a\x19.monorail.v3.ComponentDef\"\x00\x12g\n\x12ListIssueTemplates\x12&.monorail.v3.ListIssueTemplatesRequest\x1a\'.monorail.v3.ListIssueTemplatesResponse\"\x00\x12U\n\x0cListProjects\x12 .monorail.v3.ListProjectsRequest\x1a!.monorail.v3.ListProjectsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
+  serialized_pb=b'\n\x1f\x61pi/v3/api_proto/projects.proto\x12\x0bmonorail.v3\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a&api/v3/api_proto/project_objects.proto\"t\n\x15\x43reateFieldDefRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12,\n\x08\x66ielddef\x18\x02 \x01(\x0b\x32\x15.monorail.v3.FieldDefB\x03\xe0\x41\x02\"\x81\x01\n\x19\x43reateComponentDefRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xe0\x41\x02\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\x12\x35\n\rcomponent_def\x18\x02 \x01(\x0b\x32\x19.monorail.v3.ComponentDefB\x03\xe0\x41\x02\"M\n\x19\x44\x65leteComponentDefRequest\x12\x30\n\x04name\x18\x01 \x01(\tB\"\xe0\x41\x02\xfa\x41\x1c\n\x1a\x61pi.crbug.com/ComponentDef\"q\n\x19ListIssueTemplatesRequest\x12-\n\x06parent\x18\x01 \x01(\tB\x1d\xfa\x41\x17\n\x15\x61pi.crbug.com/Project\xe0\x41\x02\x12\x11\n\tpage_size\x18\x02 \x01(\x05\x12\x12\n\npage_token\x18\x03 \x01(\t\"d\n\x1aListIssueTemplatesResponse\x12-\n\ttemplates\x18\x01 \x03(\x0b\x32\x1a.monorail.v3.IssueTemplate\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t\"<\n\x13ListProjectsRequest\x12\x11\n\tpage_size\x18\x01 \x01(\x05\x12\x12\n\npage_token\x18\x02 \x01(\t\"W\n\x14ListProjectsResponse\x12&\n\x08projects\x18\x01 \x03(\x0b\x32\x14.monorail.v3.Project\x12\x17\n\x0fnext_page_token\x18\x02 \x01(\t2\xcc\x03\n\x08Projects\x12M\n\x0e\x43reateFieldDef\x12\".monorail.v3.CreateFieldDefRequest\x1a\x15.monorail.v3.FieldDef\"\x00\x12Y\n\x12\x43reateComponentDef\x12&.monorail.v3.CreateComponentDefRequest\x1a\x19.monorail.v3.ComponentDef\"\x00\x12V\n\x12\x44\x65leteComponentDef\x12&.monorail.v3.DeleteComponentDefRequest\x1a\x16.google.protobuf.Empty\"\x00\x12g\n\x12ListIssueTemplates\x12&.monorail.v3.ListIssueTemplatesRequest\x1a\'.monorail.v3.ListIssueTemplatesResponse\"\x00\x12U\n\x0cListProjects\x12 .monorail.v3.ListProjectsRequest\x1a!.monorail.v3.ListProjectsResponse\"\x00\x42\x12Z\x10\x61pi/v3/api_protob\x06proto3'
   ,
-  dependencies=[google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_project__objects__pb2.DESCRIPTOR,])
+  dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,google_dot_api_dot_field__behavior__pb2.DESCRIPTOR,google_dot_api_dot_resource__pb2.DESCRIPTOR,api_dot_v3_dot_api__proto_dot_project__objects__pb2.DESCRIPTOR,])
 
 
 
@@ -63,8 +64,8 @@ _CREATEFIELDDEFREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=148,
-  serialized_end=264,
+  serialized_start=177,
+  serialized_end=293,
 )
 
 
@@ -102,8 +103,40 @@ _CREATECOMPONENTDEFREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=267,
-  serialized_end=396,
+  serialized_start=296,
+  serialized_end=425,
+)
+
+
+_DELETECOMPONENTDEFREQUEST = _descriptor.Descriptor(
+  name='DeleteComponentDefRequest',
+  full_name='monorail.v3.DeleteComponentDefRequest',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='name', full_name='monorail.v3.DeleteComponentDefRequest.name', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=b'\340A\002\372A\034\n\032api.crbug.com/ComponentDef', file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=427,
+  serialized_end=504,
 )
 
 
@@ -148,8 +181,8 @@ _LISTISSUETEMPLATESREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=398,
-  serialized_end=511,
+  serialized_start=506,
+  serialized_end=619,
 )
 
 
@@ -187,8 +220,8 @@ _LISTISSUETEMPLATESRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=513,
-  serialized_end=613,
+  serialized_start=621,
+  serialized_end=721,
 )
 
 
@@ -226,8 +259,8 @@ _LISTPROJECTSREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=615,
-  serialized_end=675,
+  serialized_start=723,
+  serialized_end=783,
 )
 
 
@@ -265,8 +298,8 @@ _LISTPROJECTSRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=677,
-  serialized_end=764,
+  serialized_start=785,
+  serialized_end=872,
 )
 
 _CREATEFIELDDEFREQUEST.fields_by_name['fielddef'].message_type = api_dot_v3_dot_api__proto_dot_project__objects__pb2._FIELDDEF
@@ -275,6 +308,7 @@ _LISTISSUETEMPLATESRESPONSE.fields_by_name['templates'].message_type = api_dot_v
 _LISTPROJECTSRESPONSE.fields_by_name['projects'].message_type = api_dot_v3_dot_api__proto_dot_project__objects__pb2._PROJECT
 DESCRIPTOR.message_types_by_name['CreateFieldDefRequest'] = _CREATEFIELDDEFREQUEST
 DESCRIPTOR.message_types_by_name['CreateComponentDefRequest'] = _CREATECOMPONENTDEFREQUEST
+DESCRIPTOR.message_types_by_name['DeleteComponentDefRequest'] = _DELETECOMPONENTDEFREQUEST
 DESCRIPTOR.message_types_by_name['ListIssueTemplatesRequest'] = _LISTISSUETEMPLATESREQUEST
 DESCRIPTOR.message_types_by_name['ListIssueTemplatesResponse'] = _LISTISSUETEMPLATESRESPONSE
 DESCRIPTOR.message_types_by_name['ListProjectsRequest'] = _LISTPROJECTSREQUEST
@@ -294,6 +328,13 @@ CreateComponentDefRequest = _reflection.GeneratedProtocolMessageType('CreateComp
   # @@protoc_insertion_point(class_scope:monorail.v3.CreateComponentDefRequest)
   })
 _sym_db.RegisterMessage(CreateComponentDefRequest)
+
+DeleteComponentDefRequest = _reflection.GeneratedProtocolMessageType('DeleteComponentDefRequest', (_message.Message,), {
+  'DESCRIPTOR' : _DELETECOMPONENTDEFREQUEST,
+  '__module__' : 'api.v3.api_proto.projects_pb2'
+  # @@protoc_insertion_point(class_scope:monorail.v3.DeleteComponentDefRequest)
+  })
+_sym_db.RegisterMessage(DeleteComponentDefRequest)
 
 ListIssueTemplatesRequest = _reflection.GeneratedProtocolMessageType('ListIssueTemplatesRequest', (_message.Message,), {
   'DESCRIPTOR' : _LISTISSUETEMPLATESREQUEST,
@@ -329,6 +370,7 @@ _CREATEFIELDDEFREQUEST.fields_by_name['parent']._options = None
 _CREATEFIELDDEFREQUEST.fields_by_name['fielddef']._options = None
 _CREATECOMPONENTDEFREQUEST.fields_by_name['parent']._options = None
 _CREATECOMPONENTDEFREQUEST.fields_by_name['component_def']._options = None
+_DELETECOMPONENTDEFREQUEST.fields_by_name['name']._options = None
 _LISTISSUETEMPLATESREQUEST.fields_by_name['parent']._options = None
 
 _PROJECTS = _descriptor.ServiceDescriptor(
@@ -338,8 +380,8 @@ _PROJECTS = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=767,
-  serialized_end=1139,
+  serialized_start=875,
+  serialized_end=1335,
   methods=[
   _descriptor.MethodDescriptor(
     name='CreateFieldDef',
@@ -362,9 +404,19 @@ _PROJECTS = _descriptor.ServiceDescriptor(
     create_key=_descriptor._internal_create_key,
   ),
   _descriptor.MethodDescriptor(
+    name='DeleteComponentDef',
+    full_name='monorail.v3.Projects.DeleteComponentDef',
+    index=2,
+    containing_service=None,
+    input_type=_DELETECOMPONENTDEFREQUEST,
+    output_type=google_dot_protobuf_dot_empty__pb2._EMPTY,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
     name='ListIssueTemplates',
     full_name='monorail.v3.Projects.ListIssueTemplates',
-    index=2,
+    index=3,
     containing_service=None,
     input_type=_LISTISSUETEMPLATESREQUEST,
     output_type=_LISTISSUETEMPLATESRESPONSE,
@@ -374,7 +426,7 @@ _PROJECTS = _descriptor.ServiceDescriptor(
   _descriptor.MethodDescriptor(
     name='ListProjects',
     full_name='monorail.v3.Projects.ListProjects',
-    index=3,
+    index=4,
     containing_service=None,
     input_type=_LISTPROJECTSREQUEST,
     output_type=_LISTPROJECTSRESPONSE,

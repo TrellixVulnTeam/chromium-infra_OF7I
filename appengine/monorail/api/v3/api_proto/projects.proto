@@ -9,6 +9,7 @@ package monorail.v3;
 
 option go_package = "api/v3/api_proto";
 
+import "google/protobuf/empty.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "api/v3/api_proto/project_objects.proto";
@@ -33,6 +34,12 @@ service Projects {
   // Raises:
   //   TODO(crbug/monorail/8267): Add errors when implemented.
   rpc CreateComponentDef (CreateComponentDefRequest) returns (ComponentDef) {}
+
+  // Deletes a ComponentDef.
+  //
+  // Raises:
+  //   TODO(crbug/monorail/8346): Add errors when implemented.
+  rpc DeleteComponentDef (DeleteComponentDefRequest) returns (google.protobuf.Empty) {}
 
   // Returns all templates for specified project.
   //
@@ -66,6 +73,15 @@ message CreateComponentDefRequest {
     (google.api.resource_reference) = {type: "api.crbug.com/Project" }];
   // The component to create.
   ComponentDef component_def = 2 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// Request message for DeleteComponentDef method.
+// Next available tag: 2
+message DeleteComponentDefRequest {
+  // The component to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "api.crbug.com/ComponentDef"}];
 }
 
 // Request message for ListIssueTemplates
