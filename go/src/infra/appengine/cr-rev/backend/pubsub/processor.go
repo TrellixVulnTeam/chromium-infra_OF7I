@@ -51,7 +51,8 @@ func Processor(host *config.Host) ProcessPubsubMessage {
 			}
 			err := importCommits(ctx, repository, event.GetOldId(), event.GetNewId())
 			if err != nil {
-				return err
+				return fmt.Errorf("Error while importing %v %s..%s: %w",
+					repository, event.GetOldId(), event.GetNewId(), err)
 			}
 		}
 
