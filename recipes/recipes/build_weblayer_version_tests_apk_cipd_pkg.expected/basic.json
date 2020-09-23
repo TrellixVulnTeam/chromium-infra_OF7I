@@ -422,6 +422,10 @@
     "name": "Getting Android beta channel releases"
   },
   {
+    "cmd": [],
+    "name": "Converting hashes released in Beta to Chromium versions"
+  },
+  {
     "cmd": [
       "vpython",
       "-u",
@@ -433,7 +437,10 @@
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Fetch information on commit abcd"
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit abcd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -447,7 +454,10 @@
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Fetch information on commit efgh"
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit efgh",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -461,7 +471,10 @@
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Fetch information on commit ijkl"
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit ijkl",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -475,7 +488,10 @@
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Fetch information on commit mnop"
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit mnop",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [

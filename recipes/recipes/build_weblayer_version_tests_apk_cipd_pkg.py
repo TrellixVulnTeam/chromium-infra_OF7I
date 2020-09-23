@@ -181,10 +181,11 @@ def get_chromium_versions_to_add(api):
   beta_releases = api.url.get_json(
       releases_url('Android', 'Beta', NUM_RELEASES, api),
       step_name='Getting Android beta channel releases').output
-  # Convert hashes into chromium version numbers
-  chromium_versions = [get_chromium_version(
-                           api, beta_release['hashes']['chromium'])
-                       for beta_release in beta_releases]
+  with api.step.nest('Converting hashes released in Beta to Chromium versions'):
+    # Convert hashes into chromium version numbers
+    chromium_versions = [get_chromium_version(
+                             api, beta_release['hashes']['chromium'])
+                         for beta_release in beta_releases]
 
   # Map milestone number to milestone version numbers
   milestones_to_versions = {}
@@ -469,13 +470,17 @@ def GenTests(api):
                        {'hashes':{'chromium':'efgh'}},
                        {'hashes':{'chromium':'ijkl'}},
                        {'hashes':{'chromium':'mnop'}}]) +
-         api.url.json('Fetch information on commit abcd',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
-         api.url.json('Fetch information on commit efgh',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit efgh',
                       {'deployment': {'beta': '84.0.4147.56'}}) +
-         api.url.json('Fetch information on commit ijkl',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit ijkl',
                       {'deployment': {'beta': '83.0.4103.96'}}) +
-         api.url.json('Fetch information on commit mnop',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit mnop',
                       {'deployment': {'beta': '81.0.1111.40'}}) +
          api.step_data(
              'cipd search %s version:%s' % (CIPD_PKG_NAME, '83.0.4103.96'),
@@ -503,7 +508,8 @@ def GenTests(api):
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
                       [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Fetch information on commit abcd',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
          api.step_data(
              'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
@@ -526,7 +532,8 @@ def GenTests(api):
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
                       [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Fetch information on commit abcd',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
          api.step_data(
              'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
@@ -546,7 +553,8 @@ def GenTests(api):
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
                       [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Fetch information on commit abcd',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
          api.step_data(
              'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
@@ -565,7 +573,8 @@ def GenTests(api):
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
                       [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Fetch information on commit abcd',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
          api.step_data(
              'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
@@ -580,7 +589,8 @@ def GenTests(api):
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
                       [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Fetch information on commit abcd',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit abcd',
                       {'deployment': {'beta': '84.0.4147.89'}}) +
          api.step_data(
              'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
@@ -594,5 +604,6 @@ def GenTests(api):
              api.file.read_text(TEST_VARIANTS_PYL)) +
          api.url.json('Getting Android beta channel releases',
                       [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Fetch information on commit abcd',
+         api.url.json('Converting hashes released in Beta to Chromium versions.'
+                      'Fetch information on commit abcd',
                       {'deployment': {'beta': '83.0.4103.56'}}))

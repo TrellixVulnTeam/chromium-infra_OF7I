@@ -422,6 +422,10 @@
     "name": "Getting Android beta channel releases"
   },
   {
+    "cmd": [],
+    "name": "Converting hashes released in Beta to Chromium versions"
+  },
+  {
     "cmd": [
       "vpython",
       "-u",
@@ -433,7 +437,10 @@
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Fetch information on commit abcd"
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit abcd",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
