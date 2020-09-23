@@ -992,6 +992,87 @@ class WorkEnvTest(unittest.TestCase):
             project.project_id, 'mowgli>beef>rice', 'more favorite things', [],
             [], [])
 
+  def testDeleteComponentDef(self):
+    project = self.services.project.TestAddProject(
+        'Achilles', owner_ids=[self.user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    component_def = fake.MakeTestComponentDef(
+        project.project_id, 1, path='Chickens>Dickens')
+    config.component_defs = [component_def]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    self.SignIn(self.user_1.user_id)
+    with self.work_env as we:
+      we.DeleteComponentDef(project.project_id, component_def.component_id)
+
+    self.assertEqual(config.component_defs, [])
+
+  def testDeleteComponentDef_NotFound(self):
+    project = self.services.project.TestAddProject(
+        'Achilles', owner_ids=[self.user_1.user_id])
+
+    self.SignIn(self.user_1.user_id)
+    with self.assertRaises(exceptions.NoSuchComponentException):
+      with self.work_env as we:
+        we.DeleteComponentDef(project.project_id, 404)
+
+  def testDeleteComponentDef_CannotViewProject(self):
+    project = self.services.project.TestAddProject(
+        'Achilles',
+        owner_ids=[self.user_1.user_id],
+        access=project_pb2.ProjectAccess.MEMBERS_ONLY)
+
+    self.SignIn(self.user_2.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.DeleteComponentDef(project.project_id, 404)
+
+  def testDeleteComponentDef_SubcomponentFound(self):
+    project = self.services.project.TestAddProject(
+        'Achilles', owner_ids=[self.user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    dickens_comp = fake.MakeTestComponentDef(
+        project.project_id, 1, path='Chickens>Dickens')
+    chickens_comp = fake.MakeTestComponentDef(
+        project.project_id, 2, path='Chickens')
+    config.component_defs = [chickens_comp, dickens_comp]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    self.SignIn(self.user_1.user_id)
+    with self.assertRaises(exceptions.InputException):
+      with self.work_env as we:
+        we.DeleteComponentDef(project.project_id, chickens_comp.component_id)
+
+  def testDeleteComponentDef_NonComponentAdminsCannotDelete(self):
+    admin = self.services.user.TestAddUser('circe@test.com', 888)
+    user = self.services.user.TestAddUser('patroclus@test.com', 999)
+
+    project = self.services.project.TestAddProject(
+        'Achilles', owner_ids=[self.user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+
+    dickens_comp = fake.MakeTestComponentDef(
+        project.project_id,
+        1,
+        path='Chickens>Dickens',
+    )
+    dickens_comp.admin_ids = [admin.user_id]
+    chickens_comp = fake.MakeTestComponentDef(
+        project.project_id, 2, path='Chickens')
+
+    config.component_defs = [chickens_comp, dickens_comp]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    self.SignIn(admin.user_id)
+    with self.work_env as we:
+      we.DeleteComponentDef(project.project_id, dickens_comp.component_id)
+
+    self.SignIn(user.user_id)
+    with self.assertRaises(permissions.PermissionException):
+      with self.work_env as we:
+        we.DeleteComponentDef(project.project_id, chickens_comp.component_id)
+
+
   # FUTURE: labels, statuses, components, rules, templates, and views.
   # FUTURE: project saved queries.
   # FUTURE: GetProjectPermissionsForUser()

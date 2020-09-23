@@ -934,6 +934,31 @@ class WorkEnv(object):
     updated_config = self.GetProjectConfig(project_id, use_cache=False)
     return tracker_bizobj.FindComponentDef(path, updated_config)
 
+  def DeleteComponentDef(self, project_id, component_id):
+    # type: (MonorailConnection, int, int) -> None
+    """Deletes the given ComponentDef."""
+    project = self.GetProject(project_id)
+    config = self.GetProjectConfig(project_id)
+
+    component_def = tracker_bizobj.FindComponentDefByID(component_id, config)
+    if not component_def:
+      raise exceptions.NoSuchComponentException('The component does not exist.')
+
+    project_perms = permissions.GetPermissions(
+        self.mc.auth.user_pb, self.mc.auth.effective_ids, project)
+    if not permissions.CanEditComponentDef(
+        self.mc.auth.effective_ids, project_perms, project, component_def,
+        config):
+      raise permissions.PermissionException(
+          'User is not allowed to delete this component.')
+
+    if tracker_bizobj.FindDescendantComponents(config, component_def):
+      raise exceptions.InputException(
+          'Components with subcomponents cannot be deleted.')
+
+    self.services.config.DeleteComponentDef(
+        self.mc.cnxn, project_id, component_id)
+
   # FUTURE: labels, statuses, components, rules, templates, and views.
   # FUTURE: project saved queries.
   # FUTURE: GetProjectPermissionsForUser()
