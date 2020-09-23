@@ -14,8 +14,12 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "api/v3/api_proto/issue_objects.proto";
 
+// ***ONLY CALL rpcs WITH `status: {ALPHA|STABLE}`***
+// rpcs without `status` are not ready.
+
 // Issues service includes all methods needed for managing Issues.
 service Issues {
+  // status: ALPHA
   // Returns the requested Issue.
   //
   // Raises:
@@ -23,6 +27,8 @@ service Issues {
   //   NOT_FOUND if the issue does not exist.
   //   PERMISSION_DENIED if the requester is not allowed to view the issue.
   rpc GetIssue (GetIssueRequest) returns (Issue) {}
+
+  // status: ALPHA
   // Returns the requested Issues.
   //
   // Raises:
@@ -32,9 +38,13 @@ service Issues {
   //   PERMISSION_DENIED if the requester does not have permission to view one
   //       (or more) of the given issues.
   rpc BatchGetIssues(BatchGetIssuesRequest) returns (BatchGetIssuesResponse) {}
+
+  // status: ALPHA
   // Searches over issues within the specified projects.
   // TODO(monorail:6988): Document possible errors when implemented.
   rpc SearchIssues (SearchIssuesRequest) returns (SearchIssuesResponse) {}
+
+  // status: ALPHA
   // Lists comments for an issue.
   //
   // Raises:
@@ -42,6 +52,8 @@ service Issues {
   //   NOT_FOUND if `parent` does not exist.
   //   PERMISSION_DENIED if the requester is not allowed to view `parent`.
   rpc ListComments (ListCommentsRequest) returns (ListCommentsResponse) {}
+
+  // status: ALPHA
   // Modifies Issues and creates a new Comment for each.
   // Issues with NOOP changes and no comment_content will not be updated
   // and will not be included in the response.
@@ -57,6 +69,8 @@ service Issues {
   //   PERMISSION_DENIED if the requester is not allowed to make the
   //     requested change.
   rpc ModifyIssues (ModifyIssuesRequest) returns (ModifyIssuesResponse) {}
+
+  // status: ALPHA
   // Modifies ApprovalValues and creates a new Comment for each delta.
   // We do not offer a standard UpdateApprovalValue because changes result
   // in creating Comments on the parent Issue, and may have the side effect of
@@ -71,6 +85,8 @@ service Issues {
   //     requested changes.
   rpc ModifyIssueApprovalValues (ModifyIssueApprovalValuesRequest) returns
       (ModifyIssueApprovalValuesResponse) {}
+
+  // status: ALPHA
   // Lists approval values for an issue.
   //
   // Raises:
@@ -79,11 +95,14 @@ service Issues {
   //   PERMISSION_DENIED if the requester is not allowed to view parent issue.
   rpc ListApprovalValues (ListApprovalValuesRequest) returns
       (ListApprovalValuesResponse) {}
+
   // Makes an issue from an IssueTemplate and deltas.
   //
   // Raises:
   //   TODO(crbug/monorail/7197): Document errors when implemented
   rpc MakeIssueFromTemplate (MakeIssueFromTemplateRequest) returns (Issue) {}
+
+  // status: ALPHA
   // Makes a basic issue, does not support phases, approvals, or approval
   // fields.
   // We do not offer a standard CreateIssue because Issue descriptions are

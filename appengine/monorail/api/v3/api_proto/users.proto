@@ -14,20 +14,27 @@ import "api/v3/api_proto/user_objects.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 
+// ***ONLY CALL rpcs WITH `status: {ALPHA|STABLE}`***
+// rpcs without `status` are not ready.
+
 // Users service includes all methods needed for managing Users.
 service Users {
+  // status: ALPHA
   // Returns the requested User.
   //
   // Raises:
   //   NOT_FOUND is the user is not found.
   //   INVALID_ARGUMENT if the `name` is invalid.
   rpc GetUser (GetUserRequest) returns (User) {}
+
+  // status: ALPHA
   // Returns all of the requested Users.
   //
   // Raises:
   //   NOT_FOUND if any users are not found.
   //   INVALID_ARGUMENT if any `names` are invalid.
   rpc BatchGetUsers (BatchGetUsersRequest) returns (BatchGetUsersResponse) {}
+
   // Updates a User.
   //
   // Raises:
@@ -35,18 +42,21 @@ service Users {
   //   PERMISSION_DENIED if the requester is not allowed to update the user.
   //   INVALID_ARGUMENT if required fields are missing or fields are invalid.
   rpc UpdateUser (UpdateUserRequest) returns (User) {}
+
   // Stars a given project for the requestor.
   //
   // Raises:
   //   NOT_FOUND if the requested project is not found.
   //   INVALID_ARGUMENT if the given `project` is not valid.
   rpc StarProject (StarProjectRequest) returns (ProjectStar) {}
+
   // Unstars a given project for the requestor.
   //
   // Raises:
   //   NOT_FOUND if the requested project is not found.
   //   INVALID_ARGUMENT if the given `project` is not valid.
   rpc UnStarProject (UnStarProjectRequest) returns (google.protobuf.Empty) {}
+
   // Lists all of a user's starred projects.
   //
   // Raises:

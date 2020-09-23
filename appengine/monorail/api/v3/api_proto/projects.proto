@@ -13,6 +13,9 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "api/v3/api_proto/project_objects.proto";
 
+// ***ONLY CALL rpcs WITH `status: {ALPHA|STABLE}`***
+// rpcs without `status` are not ready.
+
 
 // Projects service includes all methods needed for managing Projects.
 service Projects {
@@ -25,12 +28,14 @@ service Projects {
   //   INVALID_INPUT if there was a problem with the input.
   //   PERMISSION_DENIED if the user cannot edit the project.
   rpc CreateFieldDef (CreateFieldDefRequest) returns (FieldDef) {}
+
   // Returns all templates for specified project.
   //
   // Raises:
   //   NOT_FOUND if the requested parent project is not found.
   //   INVALID_ARGUMENT if the given `parent` is not valid.
   rpc ListIssueTemplates (ListIssueTemplatesRequest) returns (ListIssueTemplatesResponse) {}
+
   // Returns all projects hosted on Monorail.
   rpc ListProjects (ListProjectsRequest) returns (ListProjectsResponse) {}
 }

@@ -13,6 +13,8 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "api/v3/api_proto/project_objects.proto";
 
+// ***DO NOT CALL rpcs IN THIS SERVICE.***
+// This service is for Monorail's frontend only.
 
 service Frontend {
   // Returns all project specific configurations needed for the SPA client.

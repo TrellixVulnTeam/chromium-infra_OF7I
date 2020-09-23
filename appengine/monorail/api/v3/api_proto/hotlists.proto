@@ -15,6 +15,8 @@ import "google/protobuf/empty.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 
+// ***ONLY CALL rpcs WITH `status: {ALPHA|STABLE}`***
+// rpcs without `status` are not ready.
 
 // Hotlists service includes all methods needed for managing Hotlists.
 service Hotlists {

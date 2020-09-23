@@ -768,12 +768,14 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type UsersClient interface {
+	// status: ALPHA
 	// Returns the requested User.
 	//
 	// Raises:
 	//   NOT_FOUND is the user is not found.
 	//   INVALID_ARGUMENT if the `name` is invalid.
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*User, error)
+	// status: ALPHA
 	// Returns all of the requested Users.
 	//
 	// Raises:
@@ -932,12 +934,14 @@ func (c *usersClient) ListProjectStars(ctx context.Context, in *ListProjectStars
 
 // UsersServer is the server API for Users service.
 type UsersServer interface {
+	// status: ALPHA
 	// Returns the requested User.
 	//
 	// Raises:
 	//   NOT_FOUND is the user is not found.
 	//   INVALID_ARGUMENT if the `name` is invalid.
 	GetUser(context.Context, *GetUserRequest) (*User, error)
+	// status: ALPHA
 	// Returns all of the requested Users.
 	//
 	// Raises:
