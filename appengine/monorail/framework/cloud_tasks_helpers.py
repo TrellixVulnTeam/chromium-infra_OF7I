@@ -14,6 +14,7 @@ from __future__ import print_function
 import logging
 
 from google.api_core import exceptions
+from google.api_core import retry
 
 import settings
 
@@ -22,6 +23,9 @@ if not settings.unit_test_mode:
   from google.cloud import tasks
 
 _client = None
+# Default exponential backoff retry config for enqueueing, not to be confused
+# with retry config for dispatching, which exists per queue.
+_DEFAULT_RETRY = retry.Retry(initial=.1, maximum=1.6, multiplier=2, deadline=10)
 
 
 def _get_client():
@@ -46,9 +50,6 @@ def create_task(task, queue='default', **kwargs):
   tasks.CloudTasksClient.create_task; see its documentation:
   https://googleapis.dev/python/cloudtasks/1.5.0/gapic/v2/api.html#google.cloud.tasks_v2.CloudTasksClient.create_task
 
-  To allow for local dev that does not run a cloud tasks emulator this catches
-  GoogleAPICallErrors.
-
   Args:
     task: A dict or Task describing the task to add.
     queue: A string indicating name of the queue to add task to.
@@ -70,11 +71,6 @@ def create_task(task, queue='default', **kwargs):
   parent = client.queue_path(
       settings.app_id, settings.CLOUD_TASKS_REGION, queue)
   target = task.get('app_engine_http_request').get('relative_uri')
+  kwargs.setdefault('retry', _DEFAULT_RETRY)
   logging.info('Enqueueing %s task to %s', target, parent)
-  try:
-    return client.create_task(parent, task, **kwargs)
-  except exceptions.ServiceUnavailable as err:
-    # TODO(crbug/monorail/8360): Remove try catch after formalizing local dev.
-    # We catch this exception to allow local dev that does not run a local
-    # cloud tasks emulator
-    logging.exception(err)
+  return client.create_task(parent, task, **kwargs)

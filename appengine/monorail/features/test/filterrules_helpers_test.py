@@ -17,6 +17,7 @@ from google.appengine.api import taskqueue
 
 import settings
 from features import filterrules_helpers
+from framework import cloud_tasks_helpers
 from framework import framework_constants
 from framework import template_helpers
 from framework import urls
@@ -144,7 +145,8 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
                       urllib.urlencode(params)
               }
       }
-      get_client_mock().create_task.assert_any_call(parent, task)
+      get_client_mock().create_task.assert_any_call(
+          parent, task, retry=cloud_tasks_helpers._DEFAULT_RETRY)
       shard_id = (shard_id + 1) % settings.num_logical_shards
 
     settings.recompute_derived_fields_in_worker = saved_flag

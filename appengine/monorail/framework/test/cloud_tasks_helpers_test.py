@@ -48,9 +48,10 @@ class CloudTasksHelpersTest(unittest.TestCase):
       cloud_tasks_helpers.create_task(task)
 
   @mock.patch('framework.cloud_tasks_helpers._get_client')
-  def test_create_task_catches(self, get_client_mock):
+  def test_create_task_retries(self, get_client_mock):
     task = {'app_engine_http_request': {}}
 
-    get_client_mock().create_task.side_effect = exceptions.ServiceUnavailable(
-        'oh no!')
     cloud_tasks_helpers.create_task(task)
+
+    (_args, kwargs) = get_client_mock().create_task.call_args
+    self.assertEqual(kwargs.get('retry'), cloud_tasks_helpers._DEFAULT_RETRY)
