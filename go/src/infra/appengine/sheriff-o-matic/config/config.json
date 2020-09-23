@@ -49,6 +49,12 @@
       "excluded_builders": [
         "Win10 Tests x64 (dbg)"
       ]
+    },
+    "internal.chromeos.fyi": {
+      "excluded_builders": [
+        "chromeos-betty-arc-r-chrome",
+        "chromeos-eve-arc-r-chrome"
+      ]
     }
   }
 }
