@@ -45,6 +45,33 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
         templates=self.converter.ConvertIssueTemplates(project_id, templates))
 
   @monorail_servicer.PRPCMethod
+  def CreateComponentDef(self, mc, request):
+    # type: (MonorailContext, CreateComponentDefRequest) ->
+    #   ComponentDef
+    """pRPC API method that implements CreateComponentDef.
+
+      Raises:
+        InputException if the request is invalid.
+        NoSuchUserException if any given component admins or ccs do not exist.
+        NoSuchProjectException if the parent project does not exist.
+        PermissionException if the requester is not allowed to create
+          this component.
+    """
+    project_id = rnc.IngestProjectName(mc.cnxn, request.parent, self.services)
+    admin_ids = rnc.IngestUserNames(
+        mc.cnxn, request.component_def.admins, self.services)
+    cc_ids = rnc.IngestUserNames(
+        mc.cnxn, request.component_def.ccs, self.services)
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      component_def = we.CreateComponentDef(
+          project_id, request.component_def.value,
+          request.component_def.docstring, admin_ids, cc_ids,
+          request.component_def.labels)
+
+    return self.converter.ConvertComponentDef(component_def)
+
+  @monorail_servicer.PRPCMethod
   def ListProjects(self, mc, _):
     # type: (MonorailContext, ListProjectsRequest) -> ListProjectsResponse
     """pRPC API method that implements ListProjects.

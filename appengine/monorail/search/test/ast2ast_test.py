@@ -66,6 +66,7 @@ class AST2ASTTest(unittest.TestCase):
     conds = [
         ast_pb2.MakeCond(ast_pb2.QueryOp.EQ, [open_field], [], []),
         ast_pb2.MakeCond(ast_pb2.QueryOp.EQ, [label_field], ['Hot'], [])]
+    self.services.config.TestAddLabelsDict({'Hot': 0})
 
     ast = ast_pb2.QueryAST()
     ast.conjunctions.append(ast_pb2.Conjunction(conds=conds))
@@ -493,9 +494,19 @@ class AST2ASTTest(unittest.TestCase):
     self.assertEqual([1, 2, 3], new_cond.int_values)
     self.assertEqual([], new_cond.str_values)
 
+    self.services.config.TestAddLabelsDict(
+        {
+            'Priority-Low': 0,
+            'Priority-High': 1
+        })
     cond = ast_pb2.MakeCond(
         ast_pb2.QueryOp.EQ, [label_field],
         ['Priority-Low', 'Priority-High'], [])
+    self.services.config.TestAddLabelsDict(
+        {
+            'Priority-Low': 0,
+            'Priority-High': 1
+        })
     new_cond = ast2ast._PreprocessLabelCond(
         self.cnxn, cond, [789], self.services, self.config, True)
     self.assertEqual(ast_pb2.QueryOp.EQ, new_cond.op)

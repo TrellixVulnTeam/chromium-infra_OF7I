@@ -3040,6 +3040,26 @@ class ConverterFunctionsTest(unittest.TestCase):
         project_objects_pb2.StatusDef.StatusDefState.Value('DEPRECATED'),
         actual[0].state)
 
+  def testConvertComponentDef(self):
+    now = 123
+    project = self.services.project.TestAddProject('comp-test', project_id=987)
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    component_def = fake.MakeTestComponentDef(
+        project.project_id, 1, path='Chickens>Dickens')
+    component_def.created = now
+    config.component_defs = [component_def]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    actual = self.converter.ConvertComponentDef(component_def)
+    expected = project_objects_pb2.ComponentDef(
+        name='projects/comp-test/componentDefs/1',
+        value='Chickens>Dickens',
+        state=project_objects_pb2.ComponentDef.ComponentDefState.Value(
+            'ACTIVE'),
+        create_time=timestamp_pb2.Timestamp(seconds=now),
+        modify_time=timestamp_pb2.Timestamp())
+    self.assertEqual(actual, expected)
+
   def testConvertComponentDefs(self):
     """We can convert ComponentDefs"""
     project_config = self.services.config.GetProjectConfig(
@@ -3066,7 +3086,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     self.assertEqual(
         project_objects_pb2.ComponentDef.ComponentDefState.Value('DEPRECATED'),
         actual[1].state)
-    # component_def 1 and 2 have the same admins, ccs, creator, and crate_time
+    # component_def 1 and 2 have the same admins, ccs, creator, and create_time
     expected_admins = [rnc.ConvertUserName(self.user_1.user_id)]
     self.assertEqual(expected_admins, actual[0].admins)
     expected_ccs = [rnc.ConvertUserName(self.user_2.user_id)]

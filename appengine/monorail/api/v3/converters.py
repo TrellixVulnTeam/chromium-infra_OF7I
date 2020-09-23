@@ -1827,6 +1827,13 @@ class Converter(object):
       api_sds.append(api_sd)
     return api_sds
 
+  def ConvertComponentDef(self, component_def):
+    # type: (proto.tracker_pb2.ComponentDef) ->
+    #     api_proto.project_objects.ComponentDef
+    """Convert a protorpc ComponentDef to a protoc ComponentDef."""
+    return self.ConvertComponentDefs([component_def],
+                                     component_def.project_id)[0]
+
   def ConvertComponentDefs(self, component_defs, project_id):
     # type: (Sequence[proto.tracker_pb2.ComponentDef], int) ->
     #     Sequence[api_proto.project_objects.ComponentDef]

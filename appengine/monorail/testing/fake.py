@@ -1254,7 +1254,21 @@ class ConfigService(object):
     return 1
 
   def LookupLabelIDs(self, cnxn, project_id, labels, autocreate=False):
-    return [idx for idx, _label in enumerate(labels)]
+    ids = []
+    next_label_id = 0
+    if self.id_to_label.keys():
+      existing_ids = self.id_to_label.keys()
+      existing_ids.sort()
+      next_label_id = existing_ids[-1] + 1
+    for label in labels:
+      if self.label_to_id.get(label) is not None:
+        ids.append(self.label_to_id[label])
+      elif autocreate:
+        self.label_to_id[label] = next_label_id
+        self.id_to_label[next_label_id] = label
+        ids.append(next_label_id)
+        next_label_id += 1
+    return ids
 
   def LookupIDsOfLabelsMatching(self, cnxn, project_id, regex):
     return [1, 2, 3]

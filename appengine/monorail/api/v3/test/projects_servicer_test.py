@@ -8,8 +8,10 @@ from __future__ import division
 from __future__ import absolute_import
 
 import unittest
+import mock
+import logging
 
-from mock import patch
+from google.protobuf import timestamp_pb2
 
 from api import resource_name_converters as rnc
 from api.v3 import projects_servicer
@@ -83,7 +85,45 @@ class ProjectsServicerTest(unittest.TestCase):
         response,
         projects_pb2.ListIssueTemplatesResponse(templates=[expected_template]))
 
-  @patch('project.project_helpers.GetThumbnailUrl')
+  @mock.patch('time.time')
+  def testCreateComponentDef(self, mockTime):
+    now = 123
+    mockTime.return_value = now
+
+    user_1 = self.services.user.TestAddUser('achilles@test.com', 981)
+    self.services.user.TestAddUser('patroclus@test.com', 982)
+    self.services.user.TestAddUser('circe@test.com', 983)
+
+    project = self.services.project.TestAddProject(
+        'chicken', project_id=987, owner_ids=[user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    expected = project_objects_pb2.ComponentDef(
+        value='circe',
+        docstring='You threw me to the crows',
+        admins=['users/983'],
+        ccs=['users/981', 'users/982'],
+        labels=['more-soup', 'beach-day'],
+    )
+    request = projects_pb2.CreateComponentDefRequest(
+        parent='projects/chicken', component_def=expected)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=user_1.email)
+    response = self.CallWrapped(
+        self.projects_svcr.CreateComponentDef, mc, request)
+
+    self.assertEqual(1, len(config.component_defs))
+    expected.name = 'projects/chicken/componentDefs/%d' % config.component_defs[
+        0].component_id
+    expected.state = project_objects_pb2.ComponentDef.ComponentDefState.Value(
+        'ACTIVE')
+    expected.creator = 'users/981'
+    expected.create_time.FromSeconds(now)
+    expected.modify_time.FromSeconds(0)
+    self.assertEqual(response, expected)
+
+  @mock.patch('project.project_helpers.GetThumbnailUrl')
   def testListProjects(self, mock_GetThumbnailUrl):
     mock_GetThumbnailUrl.return_value = 'xyz'
 
