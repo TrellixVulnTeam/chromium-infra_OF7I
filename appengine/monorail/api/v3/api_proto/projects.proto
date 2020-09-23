@@ -16,10 +16,9 @@ import "api/v3/api_proto/project_objects.proto";
 // ***ONLY CALL rpcs WITH `status: {ALPHA|STABLE}`***
 // rpcs without `status` are not ready.
 
-
 // Projects service includes all methods needed for managing Projects.
 service Projects {
-  // Creates a new fieldDef (custom field).
+  // Creates a new FieldDef (custom field).
   //
   // Raises:
   //   NOT_FOUND if some given users do not exist.
@@ -28,6 +27,12 @@ service Projects {
   //   INVALID_INPUT if there was a problem with the input.
   //   PERMISSION_DENIED if the user cannot edit the project.
   rpc CreateFieldDef (CreateFieldDefRequest) returns (FieldDef) {}
+
+  // Creates a new ComponentDef.
+  //
+  // Raises:
+  //   TODO(crbug/monorail/8267): Add errors when implemented.
+  rpc CreateComponentDef (CreateComponentDefRequest) returns (ComponentDef) {}
 
   // Returns all templates for specified project.
   //
@@ -50,6 +55,17 @@ message CreateFieldDefRequest {
   // The field to create.
   // It must have a display_name and a type with its corresponding settings.
   FieldDef fielddef = 2 [ (google.api.field_behavior) = REQUIRED ];
+}
+
+// Request message for CreateComponentDef method.
+// Next available tag: 3
+message CreateComponentDefRequest {
+  // The project resource where this component will be created.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "api.crbug.com/Project" }];
+  // The component to create.
+  ComponentDef component_def = 2 [ (google.api.field_behavior) = REQUIRED ];
 }
 
 // Request message for ListIssueTemplates
