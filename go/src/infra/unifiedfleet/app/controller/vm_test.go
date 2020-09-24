@@ -630,7 +630,7 @@ func setupTestVlan(ctx context.Context) {
 		VlanAddress: "192.168.40.0/22",
 	}
 	configuration.CreateVlan(ctx, vlan)
-	ips, _, _ := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+	ips, _, _, _, _ := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
 	// Only import the first 20 as one single transaction cannot import all.
 	configuration.ImportIPs(ctx, ips[0:20])
 }

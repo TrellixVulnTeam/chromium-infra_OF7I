@@ -15,7 +15,7 @@ import (
 
 // A helper function to get free IP based on a given vlan name. The vlan name's format is: <lab-prefix>:XXX
 func getFreeIP(ctx context.Context, vlanName string, pageSize int) ([]*ufspb.IP, error) {
-	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": vlanName, "occupied": "false"})
+	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": vlanName, "occupied": "false", "reserve": "false"})
 	if err != nil {
 		return nil, err
 	}

@@ -12,12 +12,21 @@ import (
 
 func TestParseVlan(t *testing.T) {
 	Convey("ParseVlan - happy path", t, func() {
-		ips, l, err := ParseVlan("fake_vlan", "192.168.40.0/22")
+		ips, l, freeStartIP, freeEndIP, err := ParseVlan("fake_vlan", "192.168.40.0/22")
 		So(err, ShouldBeNil)
-		So(l, ShouldEqual, 1012)
-		So(ips, ShouldHaveLength, 1012)
-		So(ips[0].GetIpv4Str(), ShouldEqual, "192.168.40.11")
-		So(ips[len(ips)-1].GetIpv4Str(), ShouldEqual, "192.168.43.254")
+		So(l, ShouldEqual, 1024)
+		So(ips, ShouldHaveLength, 1024)
+		for i, ip := range ips {
+			if i >= 0 && i < 11 {
+				So(ip.GetReserve(), ShouldBeTrue)
+			} else if i >= 1023 {
+				So(ip.GetReserve(), ShouldBeTrue)
+			} else {
+				So(ip.GetReserve(), ShouldBeFalse)
+			}
+		}
+		So(freeStartIP, ShouldEqual, "192.168.40.11")
+		So(freeEndIP, ShouldEqual, "192.168.43.254")
 	})
 }
 

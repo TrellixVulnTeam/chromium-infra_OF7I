@@ -12,6 +12,7 @@ import (
 	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/logging"
 	"go.chromium.org/luci/grpc/grpcutil"
+	"go.chromium.org/luci/server/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -109,6 +110,9 @@ func getSpecifiedIP(ctx context.Context, ipv4Str string) (*ufspb.IP, error) {
 		if dhcps != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "Ip %s is occupied by host %s", ipv4Str, dhcps[0].GetHostname())
 		}
+	}
+	if ips[0].GetReserve() {
+		logging.Debugf(ctx, "User %s trying to use reserved IP %s", auth.CurrentUser(ctx).Email, ips[0].GetIpv4Str())
 	}
 	return ips[0], nil
 }

@@ -33,19 +33,22 @@ func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 	var ips []*ufspb.IP
 	var length int
 	var err error
+	var freeStartIP, freeEndIP string
 	f := func(ctx context.Context) error {
 		hc := getVlanHistoryClient(vlan)
 		if err := validateCreateVlan(ctx, vlan); err != nil {
 			return errors.Annotate(err, "CreateVlan - validation failed").Err()
 		}
 
-		ips, length, err = util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+		ips, length, freeStartIP, freeEndIP, err = util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
 		if err != nil {
 			return errors.Annotate(err, "CreateVlan").Err()
 		}
 		vlan.CapacityIp = int32(length)
 		vlan.ResourceState = ufspb.State_STATE_SERVING
 		vlan.VlanNumber = util.GetSuffixAfterSeparator(vlan.GetName(), ":")
+		vlan.FreeStartIpv4Str = freeStartIP
+		vlan.FreeEndIpv4Str = freeEndIP
 
 		if _, err = configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan}); err != nil {
 			return err
@@ -200,7 +203,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	vs := make([]*ufspb.Vlan, len(vlans))
 	for i, vlan := range vlans {
 		vlanName := util.GetBrowserLabName(util.Int64ToStr(vlan.GetId()))
-		ips, length, err := util.ParseVlan(vlanName, vlan.GetCidrBlock())
+		ips, length, freeStartIP, freeEndIP, err := util.ParseVlan(vlanName, vlan.GetCidrBlock())
 		if err != nil {
 			return nil, err
 		}
@@ -208,12 +211,14 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 			IPs = append(IPs, ip)
 		}
 		vs[i] = &ufspb.Vlan{
-			Name:          vlanName,
-			Description:   vlan.GetAlias(),
-			CapacityIp:    int32(length),
-			VlanAddress:   vlan.GetCidrBlock(),
-			ResourceState: util.ToState(vlan.GetState()),
-			VlanNumber:    util.GetSuffixAfterSeparator(vlanName, ":"),
+			Name:             vlanName,
+			Description:      vlan.GetAlias(),
+			CapacityIp:       int32(length),
+			VlanAddress:      vlan.GetCidrBlock(),
+			ResourceState:    util.ToState(vlan.GetState()),
+			FreeStartIpv4Str: freeStartIP,
+			FreeEndIpv4Str:   freeEndIP,
+			VlanNumber:       util.GetSuffixAfterSeparator(vlanName, ":"),
 		}
 	}
 	deleteNonExistingVlans(ctx, vs, pageSize)

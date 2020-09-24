@@ -7,9 +7,7 @@ package util
 import (
 	"encoding/binary"
 	"fmt"
-	"math"
 	"net"
-	"strconv"
 	"strings"
 
 	"go.chromium.org/luci/common/errors"
@@ -29,32 +27,47 @@ const reserveLast = 1
 // vlanName here is a full vlan name, e.g. browser:123
 // The first 10 and last 1 ip of this cidr block will be reserved and not returned to users
 // for further operations
-func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, error) {
+func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, string, string, error) {
 	ip, subnet, err := net.ParseCIDR(cidr)
 	if err != nil {
-		return nil, 0, errors.Reason("invalid CIDR block %q for vlan %s", cidr, vlanName).Err()
+		return nil, 0, "", "", errors.Reason("invalid CIDR block %q for vlan %s", cidr, vlanName).Err()
 	}
 	ipv4 := ip.Mask(subnet.Mask).To4()
 	if ipv4 == nil {
-		return nil, 0, errors.Reason("invalid IPv4 CIDR block %q for vlan %s", cidr, vlanName).Err()
+		return nil, 0, "", "", errors.Reason("invalid IPv4 CIDR block %q for vlan %s", cidr, vlanName).Err()
 	}
 	ones, _ := subnet.Mask.Size()
 	length := 1 << uint32(32-ones)
-	if length < reserveFirst+reserveLast {
-		return nil, 0, nil
-	}
-	ips := make([]*ufspb.IP, length-reserveLast-reserveFirst)
-	startIP := binary.BigEndian.Uint32(ipv4) + reserveFirst
-	for i := reserveFirst; i < length-reserveLast; i++ {
-		ips[i-reserveFirst] = &ufspb.IP{
-			Id:      GetIPName(vlanName, Int64ToStr(int64(startIP))),
-			Ipv4:    startIP,
-			Ipv4Str: IPv4IntToStr(startIP),
-			Vlan:    vlanName,
+	ips := make([]*ufspb.IP, length)
+	startIP := binary.BigEndian.Uint32(ipv4)
+	freeStartIP := ""
+	freeEndIP := ""
+	for i := 0; i < length; i++ {
+		if i < reserveFirst || i >= length-reserveLast {
+			ips[i] = &ufspb.IP{
+				Id:      GetIPName(vlanName, Int64ToStr(int64(startIP))),
+				Ipv4:    startIP,
+				Ipv4Str: IPv4IntToStr(startIP),
+				Vlan:    vlanName,
+				Reserve: true,
+			}
+		} else {
+			ips[i] = &ufspb.IP{
+				Id:      GetIPName(vlanName, Int64ToStr(int64(startIP))),
+				Ipv4:    startIP,
+				Ipv4Str: IPv4IntToStr(startIP),
+				Vlan:    vlanName,
+			}
+			if i == reserveFirst {
+				freeStartIP = IPv4IntToStr(startIP)
+			}
+			if i == length-reserveLast-1 {
+				freeEndIP = IPv4IntToStr(startIP)
+			}
 		}
 		startIP++
 	}
-	return ips, length - reserveLast - reserveFirst, nil
+	return ips, length, freeStartIP, freeEndIP, nil
 }
 
 // FormatIP initialize an IP object
@@ -97,16 +110,6 @@ func parseCidrBlock(subnet, mask string) (string, int) {
 	maskAddr := maskIP.To4()
 	ones, sz := net.IPv4Mask(maskAddr[0], maskAddr[1], maskAddr[2], maskAddr[3]).Size()
 	return fmt.Sprintf("%s/%d", subnet, ones), 1 << uint32(sz-ones)
-}
-
-// GetCapacity returns the capacity of a vlan cidr block
-func GetCapacity(cidr string) float64 {
-	cover := strings.Split(cidr, "/")[1]
-	coverN, err := strconv.Atoi(cover)
-	if err != nil {
-		return 0
-	}
-	return math.Max(math.Exp2(32-float64(coverN))-reserveFirst-reserveLast, 0)
 }
 
 // ParseMac returns a valid mac address after parsing user input.

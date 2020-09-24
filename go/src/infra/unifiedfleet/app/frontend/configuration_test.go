@@ -1454,11 +1454,10 @@ func TestImportVlans(t *testing.T) {
 			So(ufsAPI.ParseResources(vlans, "Name"), ShouldResemble, []string{"browser:144", "browser:20", "browser:40"})
 			vlan, err := configuration.GetVlan(ctx, "browser:40")
 			So(err, ShouldBeNil)
-			expectedCapacity := util.GetCapacity(vlan.GetVlanAddress())
-			So(vlan.GetCapacityIp(), ShouldEqual, int32(expectedCapacity))
+			So(vlan.GetCapacityIp(), ShouldEqual, 1024)
 			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": "browser:40"})
 			So(err, ShouldBeNil)
-			So(len(ips), ShouldEqual, expectedCapacity)
+			So(len(ips), ShouldEqual, 1024)
 		})
 	})
 }

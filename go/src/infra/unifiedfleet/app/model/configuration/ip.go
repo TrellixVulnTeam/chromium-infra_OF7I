@@ -33,6 +33,7 @@ type IPEntity struct {
 	IPv4Str  string `gae:"ipv4_str"`
 	Vlan     string `gae:"vlan"`
 	Occupied bool   `gae:"occupied"`
+	Reserve  bool   `gae:"reserve"`
 }
 
 // GetProto returns the unmarshaled IP.
@@ -43,6 +44,7 @@ func (e *IPEntity) GetProto() (proto.Message, error) {
 		Ipv4Str:  e.IPv4Str,
 		Vlan:     e.Vlan,
 		Occupied: e.Occupied,
+		Reserve:  e.Reserve,
 	}, nil
 }
 
@@ -66,6 +68,7 @@ func newIPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, erro
 		IPv4Str:  p.GetIpv4Str(),
 		Vlan:     p.GetVlan(),
 		Occupied: p.GetOccupied(),
+		Reserve:  p.GetReserve(),
 	}, nil
 }
 
@@ -80,6 +83,7 @@ func newDeleteIPEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity
 		IPv4Str:  p.GetIpv4Str(),
 		Vlan:     p.GetVlan(),
 		Occupied: p.GetOccupied(),
+		Reserve:  p.GetReserve(),
 	}, nil
 }
 
@@ -100,6 +104,13 @@ func QueryIPByPropertyName(ctx context.Context, propertyMap map[string]string) (
 			b, err := strconv.ParseBool(id)
 			if err != nil {
 				logging.Errorf(ctx, "Failed to convert the property 'occupied' %s to bool", id)
+				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", ufsds.InvalidArgument, propertyName, err.Error())
+			}
+			q = q.Eq(propertyName, b)
+		case "reserve":
+			b, err := strconv.ParseBool(id)
+			if err != nil {
+				logging.Errorf(ctx, "Failed to convert the property 'reserve' %s to bool", id)
 				return nil, status.Errorf(codes.InvalidArgument, "%s for %q: %s", ufsds.InvalidArgument, propertyName, err.Error())
 			}
 			q = q.Eq(propertyName, b)

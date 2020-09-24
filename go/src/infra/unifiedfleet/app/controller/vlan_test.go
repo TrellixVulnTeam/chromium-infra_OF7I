@@ -63,8 +63,10 @@ func TestCreateVlan(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "create-vlan-1")
 			So(resp.GetVlanAddress(), ShouldEqual, "192.168.100.0/27")
-			So(resp.GetCapacityIp(), ShouldEqual, 20)
+			So(resp.GetCapacityIp(), ShouldEqual, 32)
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_SERVING)
+			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "192.168.100.11")
+			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "192.168.100.30")
 
 			s, err := state.GetStateRecord(ctx, "vlans/create-vlan-1")
 			So(err, ShouldBeNil)
@@ -185,7 +187,7 @@ func TestUpdateVlan(t *testing.T) {
 			vlan1 := mockVlan("update-vlan-4", "6.6.6.0/27")
 			vlan1.Description = "before update"
 			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
-			ips, _, err := util.ParseVlan("update-vlan-4", "6.6.6.0/27")
+			ips, _, _, _, err := util.ParseVlan("update-vlan-4", "6.6.6.0/27")
 			So(err, ShouldBeNil)
 			_, err = configuration.BatchUpdateIPs(ctx, ips)
 			So(err, ShouldBeNil)
@@ -204,7 +206,7 @@ func TestUpdateVlan(t *testing.T) {
 			vlan1 := mockVlan("update-vlan-5", "6.6.5.0/27")
 			vlan1.ReservedIps = []string{"6.6.5.13"}
 			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
-			ips, _, err := util.ParseVlan("update-vlan-5", "6.6.5.0/27")
+			ips, _, _, _, err := util.ParseVlan("update-vlan-5", "6.6.5.0/27")
 			So(err, ShouldBeNil)
 			_, err = configuration.BatchUpdateIPs(ctx, ips)
 			So(err, ShouldBeNil)

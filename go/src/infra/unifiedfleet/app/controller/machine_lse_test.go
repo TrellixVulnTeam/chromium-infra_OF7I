@@ -176,7 +176,7 @@ func TestCreateMachineLSE(t *testing.T) {
 				VlanAddress: "192.168.40.0/22",
 			}
 			_, err = configuration.CreateVlan(ctx, vlan)
-			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			ips, _, _, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
 			So(err, ShouldBeNil)
 			// Only import the first 20 as one single transaction cannot import all.
 			_, err = configuration.ImportIPs(ctx, ips[0:20])
@@ -885,7 +885,13 @@ func TestUpdateMachineLSE(t *testing.T) {
 				VlanAddress: "192.168.40.0/22",
 			}
 			_, err = configuration.CreateVlan(ctx, vlan)
-			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			ips, _, startFreeIP, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			var assignedIP *ufspb.IP
+			for _, ip := range ips {
+				if ip.GetIpv4Str() == startFreeIP {
+					assignedIP = ip
+				}
+			}
 			So(err, ShouldBeNil)
 			// Only import the first 20 as one single transaction cannot import all.
 			_, err = configuration.ImportIPs(ctx, ips[0:20])
@@ -928,7 +934,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 			So(changes[0].GetEventLabel(), ShouldEqual, "dhcp_config.ip")
 			So(changes[0].GetOldValue(), ShouldEqual, "")
 			So(changes[0].GetNewValue(), ShouldEqual, dhcp.GetIp())
-			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", ips[0].GetId()))
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", fmt.Sprintf("ips/%s", assignedIP.GetId()))
 			So(err, ShouldBeNil)
 			So(changes, ShouldHaveLength, 1)
 			So(changes[0].GetEventLabel(), ShouldEqual, "ip.occupied")
@@ -974,7 +980,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 				VlanAddress: "192.168.40.0/22",
 			}
 			_, err = configuration.CreateVlan(ctx, vlan)
-			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			ips, _, _, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
 			So(err, ShouldBeNil)
 			// Only import the first 20 as one single transaction cannot import all.
 			_, err = configuration.ImportIPs(ctx, ips[0:20])
@@ -1098,7 +1104,7 @@ func TestUpdateMachineLSE(t *testing.T) {
 				VlanAddress: "192.168.40.0/22",
 			}
 			_, err = configuration.CreateVlan(ctx, vlan)
-			ips, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+			ips, _, _, _, err := util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
 			So(err, ShouldBeNil)
 			// Only import the first 20 as one single transaction cannot import all.
 			_, err = configuration.ImportIPs(ctx, ips[0:20])
