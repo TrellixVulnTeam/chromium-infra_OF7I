@@ -7,6 +7,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+from google.protobuf import empty_pb2
+
 from api import resource_name_converters as rnc
 from api.v3 import monorail_servicer
 from api.v3.api_proto import projects_pb2
@@ -70,6 +72,26 @@ class ProjectsServicer(monorail_servicer.MonorailServicer):
           request.component_def.labels)
 
     return self.converter.ConvertComponentDef(component_def)
+
+  @monorail_servicer.PRPCMethod
+  def DeleteComponentDef(self, mc, request):
+    # type: (MonorailContext, DeleteComponentDefRequest) -> Empty
+    """pRPC API method that implements DeleteComponentDef.
+
+      Raises:
+        InputException if the request in invalid.
+        NoSuchComponentException if the component does not exist.
+        PermissionException if the requester is not allowed to delete
+          this component.
+        NoSuchProjectException if the parent project does not exist.
+    """
+    project_id, component_id = rnc.IngestComponentDefNames(
+        mc.cnxn, [request.name], self.services)[0]
+
+    with work_env.WorkEnv(mc, self.services) as we:
+      we.DeleteComponentDef(project_id, component_id)
+
+    return empty_pb2.Empty()
 
   @monorail_servicer.PRPCMethod
   def ListProjects(self, mc, _):

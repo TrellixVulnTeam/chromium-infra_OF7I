@@ -587,7 +587,9 @@ class ResourceNameConverterTest(unittest.TestCase):
         'projects/proj/componentDefs/%d' % self.component_def_2_id
     ]
     actual = rnc.IngestComponentDefNames(self.cnxn, names, self.services)
-    self.assertEqual(actual, [self.component_def_1_id, self.component_def_2_id])
+    self.assertEqual(actual, [
+        (self.project_1.project_id, self.component_def_1_id),
+        (self.project_1.project_id, self.component_def_2_id)])
 
   def testIngestComponentDefNames_NoSuchProjectException(self):
     names = ['projects/xyz/componentDefs/%d' % self.component_def_1_id]
@@ -623,7 +625,9 @@ class ResourceNameConverterTest(unittest.TestCase):
         'projects/goose/componentDefs/%d' % self.component_def_3_id
     ]
     actual = rnc.IngestComponentDefNames(self.cnxn, names, self.services)
-    self.assertEqual(actual, [self.component_def_1_id, self.component_def_3_id])
+    self.assertEqual(actual, [
+        (self.project_1.project_id, self.component_def_1_id),
+        (self.project_2.project_id, self.component_def_3_id)])
 
   def testConvertFieldDefNames(self):
     """Returns resource names for fields that exist and ignores others."""

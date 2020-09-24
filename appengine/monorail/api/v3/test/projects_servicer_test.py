@@ -12,6 +12,7 @@ import mock
 import logging
 
 from google.protobuf import timestamp_pb2
+from google.protobuf import empty_pb2
 
 from api import resource_name_converters as rnc
 from api.v3 import projects_servicer
@@ -122,6 +123,26 @@ class ProjectsServicerTest(unittest.TestCase):
     expected.create_time.FromSeconds(now)
     expected.modify_time.FromSeconds(0)
     self.assertEqual(response, expected)
+
+  def testDeleteComponentDef(self):
+    user_1 = self.services.user.TestAddUser('achilles@test.com', 981)
+    project = self.services.project.TestAddProject(
+        'chicken', project_id=987, owner_ids=[user_1.user_id])
+    config = fake.MakeTestConfig(project.project_id, [], [])
+    component_def = fake.MakeTestComponentDef(
+        project.project_id, 1, path='Chickens>Dickens')
+    config.component_defs = [component_def]
+    self.services.config.StoreConfig(self.cnxn, config)
+
+    request = projects_pb2.DeleteComponentDefRequest(
+        name='projects/chicken/componentDefs/1')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=user_1.email)
+    actual = self.CallWrapped(
+        self.projects_svcr.DeleteComponentDef, mc, request)
+    self.assertEqual(actual, empty_pb2.Empty())
+
+    self.assertEqual(config.component_defs, [])
 
   @mock.patch('project.project_helpers.GetThumbnailUrl')
   def testListProjects(self, mock_GetThumbnailUrl):

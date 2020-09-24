@@ -733,7 +733,8 @@ def ConvertComponentDefNames(cnxn, component_ids, project_id, services):
 
 
 def IngestComponentDefNames(cnxn, names, services):
-  # type: (MonorailConnection, Sequence[str], Services) -> Sequence[int]
+  # type: (MonorailConnection, Sequence[str], Services)
+  #     -> Sequence[Tuple[int, int]]
   """Takes a list of component resource names and returns their IDs.
 
   Args:
@@ -742,7 +743,7 @@ def IngestComponentDefNames(cnxn, names, services):
     services: Services object.
 
   Returns:
-    List of component IDs in the same order as names.
+    List of (project ID, component ID)s in the same order as names.
 
   Raises:
     InputException if a resource name does not have a valid format.
@@ -778,16 +779,16 @@ def IngestComponentDefNames(cnxn, names, services):
     compid_by_pid[pid] = {comp.component_id for comp in config.component_defs}
 
   # Find as many components as possible
-  component_ids = []
+  pid_cid_pairs = []
   with exceptions.ErrorAggregator(
       exceptions.NoSuchComponentException) as err_agg:
     for compid, pname in parsed_compid_projectnames:
       pid = project_ids_by_name[pname]
       if compid not in compid_by_pid[pid]:
         err_agg.AddErrorMessage('Component not found: %d.' % compid)
-      component_ids.append(compid)
+      pid_cid_pairs.append((pid, compid))
 
-  return component_ids
+  return pid_cid_pairs
 
 
 def ConvertFieldDefNames(cnxn, field_ids, project_id, services):

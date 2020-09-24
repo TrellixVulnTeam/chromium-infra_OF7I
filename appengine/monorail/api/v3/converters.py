@@ -536,8 +536,9 @@ class Converter(object):
       comp_names = [component for component in api_delta.components_remove] + [
           c_value.component for c_value in filtered_api_issue.components
       ]
-      comp_ids = rnc.IngestComponentDefNames(
+      project_comp_ids = rnc.IngestComponentDefNames(
           self.cnxn, comp_names, self.services)
+      comp_ids = [comp_id for (_pid, comp_id) in project_comp_ids]
       delta.comp_ids_remove = comp_ids[:len(api_delta.components_remove)]
       delta.comp_ids_add = comp_ids[len(api_delta.components_remove):]
 
@@ -725,8 +726,11 @@ class Converter(object):
 
       # Extract components.
       try:
-        ingestedDict['component_ids'] = rnc.IngestComponentDefNames(
+        project_comp_ids = ingestedDict[
+            'component_ids'] = rnc.IngestComponentDefNames(
             self.cnxn, [cv.component for cv in issue.components], self.services)
+        ingestedDict['component_ids'] = [
+            comp_id for (_pid, comp_id) in project_comp_ids]
       except (exceptions.InputException, exceptions.NoSuchProjectException,
               exceptions.NoSuchComponentException) as e:
         err_agg.AddErrorMessage('Error ingesting components: {}', e)

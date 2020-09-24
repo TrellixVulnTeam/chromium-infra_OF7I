@@ -753,7 +753,9 @@ type ProjectsClient interface {
 	// Deletes a ComponentDef.
 	//
 	// Raises:
-	//   TODO(crbug/monorail/8346): Add errors when implemented.
+	//   INVALID_INPUT if the request is invalid.
+	//   PERMISSION_DENIED if the user is not allowed to delete a/this component.
+	//   NOT_FOUND if the component or project is not found.
 	DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	// Returns all templates for specified project.
 	//
@@ -892,7 +894,9 @@ type ProjectsServer interface {
 	// Deletes a ComponentDef.
 	//
 	// Raises:
-	//   TODO(crbug/monorail/8346): Add errors when implemented.
+	//   INVALID_INPUT if the request is invalid.
+	//   PERMISSION_DENIED if the user is not allowed to delete a/this component.
+	//   NOT_FOUND if the component or project is not found.
 	DeleteComponentDef(context.Context, *DeleteComponentDefRequest) (*empty.Empty, error)
 	// Returns all templates for specified project.
 	//

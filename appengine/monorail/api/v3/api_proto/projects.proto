@@ -41,7 +41,9 @@ service Projects {
   // Deletes a ComponentDef.
   //
   // Raises:
-  //   TODO(crbug/monorail/8346): Add errors when implemented.
+  //   INVALID_INPUT if the request is invalid.
+  //   PERMISSION_DENIED if the user is not allowed to delete a/this component.
+  //   NOT_FOUND if the component or project is not found.
   rpc DeleteComponentDef (DeleteComponentDefRequest) returns (google.protobuf.Empty) {}
 
   // Returns all templates for specified project.
