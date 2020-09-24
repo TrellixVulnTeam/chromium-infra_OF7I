@@ -96,8 +96,8 @@ func TestFilterDuplicateBugs(t *testing.T) {
 	})
 }
 
-func TestCreateProjectChunksMapping(t *testing.T) {
-	Convey("Test construct query from bug list", t, func() {
+func TestCreateBugChunks(t *testing.T) {
+	Convey("Test create bug chunks", t, func() {
 		bugs := []model.MonorailBug{
 			{
 				BugID:     "bug_1",
@@ -121,25 +121,37 @@ func TestCreateProjectChunksMapping(t *testing.T) {
 			},
 		}
 
-		result := createProjectChunksMapping(bugs, 100)
+		result := createBugChunks(bugs, 100)
 		So(
 			result,
 			ShouldResemble,
-			map[string][][]string{
-				"project_1": {{"bug_1", "bug_3", "bug_5"}},
-				"project_2": {{"bug_2"}},
-				"project_3": {{"bug_4"}},
+			[][]string{
+				{
+					"projects/project_1/issues/bug_1",
+					"projects/project_2/issues/bug_2",
+					"projects/project_1/issues/bug_3",
+					"projects/project_3/issues/bug_4",
+					"projects/project_1/issues/bug_5",
+				},
 			},
 		)
 
-		result = createProjectChunksMapping(bugs, 2)
+		result = createBugChunks(bugs, 2)
 		So(
 			result,
 			ShouldResemble,
-			map[string][][]string{
-				"project_1": {{"bug_1", "bug_3"}, {"bug_5"}},
-				"project_2": {{"bug_2"}},
-				"project_3": {{"bug_4"}},
+			[][]string{
+				{
+					"projects/project_1/issues/bug_1",
+					"projects/project_2/issues/bug_2",
+				},
+				{
+					"projects/project_1/issues/bug_3",
+					"projects/project_3/issues/bug_4",
+				},
+				{
+					"projects/project_1/issues/bug_5",
+				},
 			},
 		)
 	})
@@ -223,24 +235,18 @@ func TestMakeAnnotationResponse(t *testing.T) {
 type FakeIC struct{}
 
 func (ic FakeIC) BatchGetIssues(c context.Context, req *monorailv3.BatchGetIssuesRequest, ops ...grpc.CallOption) (*monorailv3.BatchGetIssuesResponse, error) {
-	if req.Parent == "projects/chromium" {
-		return &monorailv3.BatchGetIssuesResponse{
-			Issues: []*monorailv3.Issue{
-				{Name: "projects/chromium/issues/333"},
-				{Name: "projects/chromium/issues/444"},
+	issues := make([]*monorailv3.Issue, len(req.Names))
+	for i, name := range req.Names {
+		issues[i] = &monorailv3.Issue{
+			Name: name,
+			Status: &monorailv3.Issue_StatusValue{
+				Status: "Untriaged",
 			},
-		}, nil
+		}
 	}
-	if req.Parent == "projects/fuchsia" {
-		return &monorailv3.BatchGetIssuesResponse{
-			Issues: []*monorailv3.Issue{
-				{Name: "projects/fuchsia/issues/555"},
-				{Name: "projects/fuchsia/issues/666"},
-			},
-		}, nil
-	}
-
-	return nil, nil
+	return &monorailv3.BatchGetIssuesResponse{
+		Issues: issues,
+	}, nil
 }
 
 func (ic FakeIC) MakeIssue(c context.Context, req *monorailv3.MakeIssueRequest, opts ...grpc.CallOption) (*monorailv3.Issue, error) {
@@ -511,10 +517,22 @@ func TestAnnotations(t *testing.T) {
 				var result map[string]interface{}
 				json.Unmarshal(b, &result)
 				expected := map[string]interface{}{
-					"333": map[string]interface{}{"name": "projects/chromium/issues/333"},
-					"444": map[string]interface{}{"name": "projects/chromium/issues/444"},
-					"555": map[string]interface{}{"name": "projects/fuchsia/issues/555"},
-					"666": map[string]interface{}{"name": "projects/fuchsia/issues/666"},
+					"333": map[string]interface{}{
+						"name":   "projects/chromium/issues/333",
+						"status": map[string]interface{}{"status": "Untriaged"},
+					},
+					"444": map[string]interface{}{
+						"name":   "projects/chromium/issues/444",
+						"status": map[string]interface{}{"status": "Untriaged"},
+					},
+					"555": map[string]interface{}{
+						"name":   "projects/fuchsia/issues/555",
+						"status": map[string]interface{}{"status": "Untriaged"},
+					},
+					"666": map[string]interface{}{
+						"name":   "projects/fuchsia/issues/666",
+						"status": map[string]interface{}{"status": "Untriaged"},
+					},
 				}
 				So(result, ShouldResemble, expected)
 			})

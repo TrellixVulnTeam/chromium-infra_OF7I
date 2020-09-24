@@ -256,33 +256,24 @@ func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 	w.Write(data)
 }
 
-// Builds a map keyed by projectId (i.e "chromium", "fuchsia"), value contains
-// the chunks for the projectId. Each chunk contains at most 100 bugID.
-// Monorail only returns a maximum of 100 bugs at a time, so we need to break queries into chunks.
-func createProjectChunksMapping(bugs []model.MonorailBug, chunkSize int) map[string][][]string {
-	projectIDToBugIDMap := make(map[string][]string)
-	for _, bug := range bugs {
-		if bugList, ok := projectIDToBugIDMap[bug.ProjectID]; ok {
-			projectIDToBugIDMap[bug.ProjectID] = append(bugList, bug.BugID)
-		} else {
-			projectIDToBugIDMap[bug.ProjectID] = []string{bug.BugID}
-		}
+// Returns chunks of issue resource names so we can query from Monorail
+// since Monorail only returns a maximum of 100 bugs at a time
+func createBugChunks(bugs []model.MonorailBug, chunkSize int) [][]string {
+	issueResourceNames := make([]string, len(bugs))
+	for i, bug := range bugs {
+		issueResourceNames[i] = client.GetMonorailIssueResourceName(bug.ProjectID, bug.BugID)
 	}
-	result := make(map[string][][]string)
-	for projectID, bugIDs := range projectIDToBugIDMap {
-		result[projectID] = breakToChunks(bugIDs, chunkSize)
-	}
-	return result
+	return breakToChunks(issueResourceNames, chunkSize)
 }
 
-func breakToChunks(bugIDs []string, chunkSize int) [][]string {
+func breakToChunks(items []string, chunkSize int) [][]string {
 	var result [][]string
-	for i := 0; i < len(bugIDs); i += chunkSize {
+	for i := 0; i < len(items); i += chunkSize {
 		end := i + chunkSize
-		if end > len(bugIDs) {
-			end = len(bugIDs)
+		if end > len(items) {
+			end = len(items)
 		}
-		result = append(result, bugIDs[i:end])
+		result = append(result, items[i:end])
 	}
 	return result
 }
@@ -299,16 +290,10 @@ func filterDuplicateBugs(bugs []model.MonorailBug) []model.MonorailBug {
 	return filteredBugs
 }
 
-func (ah *AnnotationHandler) batchQueryBugs(c context.Context, projectID string, bugIDs []string) (*monorailv3.BatchGetIssuesResponse, error) {
-	logging.Infof(c, "Query monorail for project: %q, bugs: %v", projectID, bugIDs)
-	projectResourceName := client.GetMonorailProjectResourceName(projectID)
-	var issueResourceNames []string
-	for _, bugID := range bugIDs {
-		issueResourceNames = append(issueResourceNames, client.GetMonorailIssueResourceName(projectID, bugID))
-	}
+func (ah *AnnotationHandler) batchQueryBugs(c context.Context, issueResourceNames []string) (*monorailv3.BatchGetIssuesResponse, error) {
+	logging.Infof(c, "Query monorail for bugs: %v", issueResourceNames)
 	req := &monorailv3.BatchGetIssuesRequest{
-		Parent: projectResourceName,
-		Names:  issueResourceNames,
+		Names: issueResourceNames,
 	}
 	resp, err := ah.MonorailIssueClient.BatchGetIssues(c, req)
 	if err == nil {
@@ -335,23 +320,21 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 	}
 
 	allBugs = filterDuplicateBugs(allBugs)
-	projectChunkMap := createProjectChunksMapping(allBugs, maxMonorailQuerySize)
+	bugChunks := createBugChunks(allBugs, maxMonorailQuerySize)
 	m := make(map[string]*monorailv3.Issue)
-	for projectID, chunkList := range projectChunkMap {
-		for _, chunks := range chunkList {
-			issues, err := ah.batchQueryBugs(c, projectID, chunks)
+	for _, chunks := range bugChunks {
+		resp, err := ah.batchQueryBugs(c, chunks)
+		if err != nil {
+			logging.Errorf(c, "error getting bugs from monorail: %v", err)
+			return nil, err
+		}
+		for _, b := range resp.Issues {
+			_, bugID, err := client.ParseMonorailIssueName(b.Name)
 			if err != nil {
-				logging.Errorf(c, "error getting bugs from monorail: %v", err)
 				return nil, err
 			}
-			for _, b := range issues.Issues {
-				_, bugID, err := client.ParseMonorailIssueName(b.Name)
-				if err != nil {
-					return nil, err
-				}
-				// TODO (crbug.com/1127471) Key should also include projectID
-				m[bugID] = b
-			}
+			// TODO (crbug.com/1127471) Key should also include projectID
+			m[bugID] = b
 		}
 	}
 
