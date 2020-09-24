@@ -939,7 +939,7 @@ class WorkEnvTest(unittest.TestCase):
       we.CreateComponentDef(
           project.project_id, 'mowgli', 'favorite things',
           [self.user_1.user_id], [], [])
-    with self.assertRaises(exceptions.InputException):
+    with self.assertRaises(exceptions.ComponentDefAlreadyExists):
       with self.work_env as we:
         we.CreateComponentDef(
             project.project_id, 'mowgli', 'more favorite things', [], [], [])
@@ -948,7 +948,7 @@ class WorkEnvTest(unittest.TestCase):
     with self.work_env as we:
       we.CreateComponentDef(
           project.project_id, 'mowgli>food', 'lots of chicken', [], [], [])
-    with self.assertRaises(exceptions.InputException):
+    with self.assertRaises(exceptions.ComponentDefAlreadyExists):
       with self.work_env as we:
         we.CreateComponentDef(
             project.project_id, 'mowgli>food', 'lots of salmon', [], [], [])

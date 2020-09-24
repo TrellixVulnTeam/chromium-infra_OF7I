@@ -745,7 +745,10 @@ type ProjectsClient interface {
 	// Creates a new ComponentDef.
 	//
 	// Raises:
-	//   TODO(crbug/monorail/8267): Add errors when implemented.
+	//   INVALID_INPUT if the request is invalid.
+	//   ALREADY_EXISTS if the component already exists.
+	//   PERMISSION_DENIED if the user is not allowed to create a/this component.
+	//   NOT_FOUND if the parent project or a component cc or admin is not found.
 	CreateComponentDef(ctx context.Context, in *CreateComponentDefRequest, opts ...grpc.CallOption) (*ComponentDef, error)
 	// Deletes a ComponentDef.
 	//
@@ -881,7 +884,10 @@ type ProjectsServer interface {
 	// Creates a new ComponentDef.
 	//
 	// Raises:
-	//   TODO(crbug/monorail/8267): Add errors when implemented.
+	//   INVALID_INPUT if the request is invalid.
+	//   ALREADY_EXISTS if the component already exists.
+	//   PERMISSION_DENIED if the user is not allowed to create a/this component.
+	//   NOT_FOUND if the parent project or a component cc or admin is not found.
 	CreateComponentDef(context.Context, *CreateComponentDefRequest) (*ComponentDef, error)
 	// Deletes a ComponentDef.
 	//

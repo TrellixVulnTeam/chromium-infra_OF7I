@@ -919,7 +919,7 @@ class WorkEnv(object):
       raise exceptions.InputException('Invalid component path: %s.' % leaf_name)
 
     if tracker_bizobj.FindComponentDef(path, config):
-      raise exceptions.InputException(
+      raise exceptions.ComponentDefAlreadyExists(
           'Component path %s already exists.' % path)
 
     with exceptions.ErrorAggregator(exceptions.InputException) as err_agg:

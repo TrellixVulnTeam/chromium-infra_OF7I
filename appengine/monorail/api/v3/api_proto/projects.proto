@@ -32,7 +32,10 @@ service Projects {
   // Creates a new ComponentDef.
   //
   // Raises:
-  //   TODO(crbug/monorail/8267): Add errors when implemented.
+  //   INVALID_INPUT if the request is invalid.
+  //   ALREADY_EXISTS if the component already exists.
+  //   PERMISSION_DENIED if the user is not allowed to create a/this component.
+  //   NOT_FOUND if the parent project or a component cc or admin is not found.
   rpc CreateComponentDef (CreateComponentDefRequest) returns (ComponentDef) {}
 
   // Deletes a ComponentDef.

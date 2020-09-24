@@ -71,6 +71,10 @@ class FieldDefAlreadyExists(Error):
   """Tried to create a custom field that already exists."""
 
 
+class ComponentDefAlreadyExists(Error):
+  """Tried to create a component that already exists."""
+
+
 class NoSuchProjectException(Error):
   """No project with the specified name exists."""
   pass
