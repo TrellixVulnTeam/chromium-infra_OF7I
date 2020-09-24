@@ -535,7 +535,7 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 				},
 				{
 					Path:      "test.txt",
-					Message:   `"faund" is a possible misspelling of "found".`,
+					Message:   `"faund" is a possible misspelling of "found" or "fund".`,
 					Category:  "SpellChecker",
 					StartLine: 2,
 					EndLine:   2,
@@ -548,6 +548,19 @@ func TestSpellCheckerAnalyzeFiles(t *testing.T) {
 								{
 									Path:        "test.txt",
 									Replacement: "found",
+									StartLine:   2,
+									EndLine:     2,
+									StartChar:   0,
+									EndChar:     5,
+								},
+							},
+						},
+						{
+							Description: "Misspelling fix suggestion",
+							Replacements: []*tricium.Data_Replacement{
+								{
+									Path:        "test.txt",
+									Replacement: "fund",
 									StartLine:   2,
 									EndLine:     2,
 									StartChar:   0,
