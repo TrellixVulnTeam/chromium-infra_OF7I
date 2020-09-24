@@ -149,8 +149,7 @@ def checkout_chromium_version_and_sync_3p_repos(api, version):
   api.git('clean', '-fd')
   try:
     check_correct_version(api, version)
-    src_cfg = api.gclient.make_config('android')
-    api.gclient.sync(src_cfg)
+    api.gclient.sync(api.gclient.c)
     api.gclient.runhooks()
     yield
   finally:
@@ -378,16 +377,14 @@ def wait_for_cl_to_land(api):
 
 
 def RunSteps(api):
-  # Set Gclient config to android
-  api.gclient.set_config('chromium')
-  # Turn it into a Android checkout
+  # Set gclient config
+  api.gclient.set_config('chromium_no_telemetry_dependencies')
   api.gclient.apply_config('android')
   # Checkout chromium/src at ToT
   api.bot_update.ensure_checkout(with_tags=True)
-
-  # Ensure that goma is installed
-  api.chromium.set_config('android', TARGET_PLATFORM='android')
-  api.chromium.ensure_goma()
+  # Ensure GOMA is installed
+  api.goma.ensure_goma()
+  # start the GOMA proxy
   api.goma.start()
 
   # Set up git config
