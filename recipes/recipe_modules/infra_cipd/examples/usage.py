@@ -15,7 +15,6 @@ DEPS = [
   'recipe_engine/path',
   'recipe_engine/properties',
   'recipe_engine/python',
-  'recipe_engine/runtime',
   'recipe_engine/step',
 
   'infra_cipd',
@@ -41,23 +40,16 @@ def RunSteps(api):
 
 
 def GenTests(api):
-  yield (
-    api.test('luci-native') +
-    api.buildbucket.ci_build('infra-internal', 'ci', 'native', build_number=5) +
-    api.runtime(is_luci=True, is_experimental=False))
-  yield (
-    api.test('luci-cross') +
-    api.properties(
+  yield (api.test('luci-native') + api.buildbucket.ci_build(
+      'infra-internal', 'ci', 'native', build_number=5))
+  yield (api.test('luci-cross') + api.properties(
       goos='linux',
       goarch='arm64',
-    ) +
-    api.buildbucket.ci_build('infra-internal', 'ci', 'cross', build_number=5) +
-    api.runtime(is_luci=True, is_experimental=False))
+  ) + api.buildbucket.ci_build('infra-internal', 'ci', 'cross', build_number=5))
   yield (
     api.test('no-buildnumbers') +
     api.properties(
       no_buildnumbers=True,
     ) +
     api.buildbucket.ci_build('infra-internal', 'ci', 'just-build-and-test') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.post_process(post_process.DropExpectation))

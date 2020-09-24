@@ -106,18 +106,14 @@ def GenTests(api):
 
   def test(name, internal=False, buildername='generic tester'):
     return (
-      api.test(name)
-      + api.runtime(is_luci=True, is_experimental=True)
-      + api.buildbucket.try_build(
-        project='infra-internal' if internal else 'infra',
-        builder=buildername,
-        git_repo=(
-          'https://chrome-internal.googlesource.com/infra/infra_internal'
-          if internal else
-          'https://chromium.googlesorce.com/infra/infra'
-        )
-      )
-    )
+        api.test(name) + api.runtime(is_experimental=True) +
+        api.buildbucket.try_build(
+            project='infra-internal' if internal else 'infra',
+            builder=buildername,
+            git_repo=(
+                'https://chrome-internal.googlesource.com/infra/infra_internal'
+                if internal else
+                'https://chromium.googlesorce.com/infra/infra')))
 
   yield (
     test('basic') +

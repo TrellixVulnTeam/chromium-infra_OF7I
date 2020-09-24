@@ -123,8 +123,6 @@ PUBLIC_REPO = 'https://chromium.googlesource.com/infra/infra'
 
 
 def RunSteps(api):
-  if not api.runtime.is_luci:  # pragma: no cover
-    raise ValueError('This recipe is not supported outside of LUCI.')
 
   buildername = api.buildbucket.builder_name
   if (buildername.startswith('infra-internal-continuous') or
@@ -230,14 +228,10 @@ def GenTests(api):
 
   def test(name, builder, repo, project, bucket, plat, is_experimental=False,
            arch='intel'):
-    return (
-        api.test(name) +
-        api.platform(plat, 64, arch) +
-        api.runtime(is_luci=True, is_experimental=is_experimental) +
-        api.buildbucket.ci_build(project, bucket, builder,
-                                 git_repo=repo,
-                                 build_number=123)
-    )
+    return (api.test(name) + api.platform(plat, 64, arch) +
+            api.runtime(is_experimental=is_experimental) +
+            api.buildbucket.ci_build(
+                project, bucket, builder, git_repo=repo, build_number=123))
 
   yield test('public-ci-linux', 'infra-continuous-trusty-64',
              PUBLIC_REPO, 'infra', 'ci', 'linux')

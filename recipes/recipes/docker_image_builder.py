@@ -13,7 +13,6 @@ DEPS = [
     'recipe_engine/path',
     'recipe_engine/properties',
     'recipe_engine/raw_io',
-    'recipe_engine/runtime',
     'recipe_engine/service_account',
     'recipe_engine/step',
     'recipe_engine/time',
@@ -65,11 +64,7 @@ def RunSteps(api, arch_type):
   build_script = api.path['checkout'].join('docker', dir_name, 'build.sh')
   api.step('build image', ['/bin/bash', build_script])
 
-  creds = api.service_account.from_credentials_json(
-      _CONTAINER_REGISTRY_CREDENTIAL_PATH) if not api.runtime.is_luci else None
-  api.docker.login(
-      server='gcr.io', project='chromium-container-registry',
-      service_account=creds)
+  api.docker.login(server='gcr.io', project='chromium-container-registry')
 
   # Tag the image with the registry's url and the date.
   registry_url = 'gcr.io/%s' % _CONTAINER_REGISTRY_PROJECT
@@ -102,7 +97,6 @@ def GenTests(api):
   yield (
       api.test('full_build_luci') +
       api.properties(container_name='swarm_docker') +
-      api.runtime(is_luci=True, is_experimental=False) +
       api.post_process(DoesNotRun, 'get access token for '
                        'service-account-container_registry_pusher.json') +
       api.post_process(MustRun, 'get access token for default account') +

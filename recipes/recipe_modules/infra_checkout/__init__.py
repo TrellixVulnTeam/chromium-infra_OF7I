@@ -11,7 +11,6 @@ DEPS = [
     'recipe_engine/platform',
     'recipe_engine/python',
     'recipe_engine/raw_io',
-    'recipe_engine/runtime',
     'recipe_engine/step',
 
     'depot_tools/bot_update',

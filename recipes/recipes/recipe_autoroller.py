@@ -9,7 +9,6 @@ DEPS = [
     'recipe_engine/json',
     'recipe_engine/properties',
     'recipe_engine/proto',
-    'recipe_engine/runtime',
     'recipe_engine/time',
 ]
 
@@ -42,7 +41,6 @@ def GenTests(api):
   def test(name):
     return (
         api.test(name) +
-        api.runtime(is_luci=True, is_experimental=False) +
         api.properties(projects=[
           ('build', 'https://example.com/build.git'),
         ])

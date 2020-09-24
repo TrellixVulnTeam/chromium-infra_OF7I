@@ -7,7 +7,6 @@ DEPS = [
     'recipe_engine/context',
     'recipe_engine/platform',
     'recipe_engine/python',
-    'recipe_engine/runtime',
     'recipe_engine/step',
     'recipe_engine/properties',
 
@@ -41,7 +40,6 @@ def GenTests(api):
     yield (
         api.test(plat) +
         api.platform(plat, 64) +
-        api.runtime(is_luci=True, is_experimental=False) +
         api.buildbucket.ci_build(
             project='infra',
             bucket='ci',

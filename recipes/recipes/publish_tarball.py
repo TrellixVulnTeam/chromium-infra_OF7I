@@ -24,7 +24,6 @@ DEPS = [
   'recipe_engine/properties',
   'recipe_engine/python',
   'recipe_engine/raw_io',
-  'recipe_engine/runtime',
   'recipe_engine/step',
   'omahaproxy',
 ]
@@ -389,7 +388,6 @@ def RunSteps(api):
 def GenTests(api):
   yield (
     api.test('basic') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.properties.generic(version='74.0.3729.169') +
     api.platform('linux', 64) +
     api.step_data('gsutil ls', stdout=api.raw_io.output('')) +
@@ -401,7 +399,6 @@ def GenTests(api):
 
   yield (
     api.test('dupe') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.properties.generic(version='74.0.3729.169') +
     api.platform('linux', 64) +
     api.step_data('gsutil ls', stdout=api.raw_io.output(
@@ -414,7 +411,6 @@ def GenTests(api):
 
   yield (
     api.test('clang-no-fuchsia') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.properties.generic(version='74.0.3729.169') +
     api.platform('linux', 64) +
     api.step_data('gsutil ls', stdout=api.raw_io.output('')) +
@@ -424,19 +420,19 @@ def GenTests(api):
         'third_party', 'node', 'node_modules.tar.gz.sha1'))
   )
 
-  yield (api.test('afdo-old-script') + api.runtime(
-      is_luci=True, is_experimental=False) + api.properties.generic(
-          version='84.0.4125.0') + api.platform('linux', 64) + api.step_data(
-              'gsutil ls', stdout=api.raw_io.output('')) + api.step_data(
-                  'get gn version', stdout=api.raw_io.output('1496 (0790d304)'))
-         + api.path.exists(api.path['checkout'].join(
+  yield (api.test('afdo-old-script') +
+         api.properties.generic(version='84.0.4125.0') +
+         api.platform('linux', 64) +
+         api.step_data('gsutil ls', stdout=api.raw_io.output('')) +
+         api.step_data(
+             'get gn version', stdout=api.raw_io.output('1496 (0790d304)')) +
+         api.path.exists(api.path['checkout'].join(
              'third_party', 'node', 'node_modules.tar.gz.sha1')) +
          api.path.exists(api.path['checkout'].join(
              'tools', 'download_cros_provided_profile.py')))
 
   yield (
     api.test('trigger') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.properties.generic() +
     api.platform('linux', 64) +
     api.step_data('gsutil ls', stdout=api.raw_io.output(''))
@@ -444,7 +440,6 @@ def GenTests(api):
 
   yield (
     api.test('basic-m76') +
-    api.runtime(is_luci=True, is_experimental=False) +
     api.properties.generic(version='76.0.3784.0') +
     api.platform('linux', 64) +
     api.post_process(post_process.StepCommandRE,

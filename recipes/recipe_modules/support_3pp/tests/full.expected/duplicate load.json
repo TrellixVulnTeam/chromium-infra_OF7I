@@ -153,7 +153,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/tests/full.py\", line 48, in RunSteps",
+      "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/tests/full.py\", line 47, in RunSteps",
       "    builder.join('dup_repo'))",
       "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/api.py\", line 571, in load_packages_from_path",
       "    raise DuplicatePackage(pkg)",

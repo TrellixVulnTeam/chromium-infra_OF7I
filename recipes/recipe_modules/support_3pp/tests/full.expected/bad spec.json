@@ -107,7 +107,7 @@
       "The recipe has crashed at point 'Uncaught exception'!",
       "",
       "Traceback (most recent call last):",
-      "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/tests/full.py\", line 39, in RunSteps",
+      "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/tests/full.py\", line 38, in RunSteps",
       "    builder.join('package_repo'))",
       "  File \"RECIPE_REPO[infra]/recipes/recipe_modules/support_3pp/api.py\", line 581, in load_packages_from_path",
       "    raise BadParse('While adding %r: %r' % (pkg, str(ex)))",

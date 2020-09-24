@@ -16,7 +16,6 @@ DEPS = [
   'recipe_engine/path',
   'recipe_engine/properties',
   'recipe_engine/python',
-  'recipe_engine/runtime',
   'recipe_engine/step',
 
   'depot_tools/git',
@@ -131,17 +130,13 @@ def RunSteps(api, package_locations, to_build, platform, force_build,
 
 def GenTests(api):
   def defaults():
-    return (
-      api.properties(
-        package_locations=[
-          {
+    return (api.properties(
+        package_locations=[{
             'repo': 'https://example.repo',
             'subdir': 'support_3pp',
-          }
-        ],
+        }],
         package_prefix='hello_world',
-      ) +
-      api.runtime(is_luci=True, is_experimental=False))
+    ))
 
   yield api.test('basic') + defaults()
 

@@ -104,7 +104,7 @@ led get-builder -canary 'luci.infra-internal.try:infra-internal-presubmit' | \
   # Remove 'infra-try-presubmit' properties
   led edit -p repo_name= -p runhooks | \
   # This is always experimental
-  led edit -p '$recipe_engine/runtime={"is_luci": true, "is_experimental": true}' | \
+  led edit -p '$recipe_engine/runtime={"is_experimental": true}' | \
   # Add our isolated recipes
   led edit-recipe-bundle | \
   # Add 3pp properties

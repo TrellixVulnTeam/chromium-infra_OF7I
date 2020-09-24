@@ -210,11 +210,8 @@ def GenTests(api):
         test_props_and_data(buildername)
     )
 
-  yield (
-      api.test('v8_experimental') +
-      test_props_and_data('V8 lkgr finder') +
-      api.runtime(is_luci=True, is_experimental=True)
-  )
+  yield (api.test('v8_experimental') + test_props_and_data('V8 lkgr finder') +
+         api.runtime(is_experimental=True))
 
   for retcode, suffix in [(0, ''), (1, '_failure'), (2, '_stale')]:
     yield (
@@ -229,7 +226,6 @@ def GenTests(api):
             repo='https://custom.googlesource.com/src',
             ref='refs/heads/lkgr',
             lkgr_status_gs_path='custom/lkgr-status') +
-        api.runtime(is_luci=True, is_experimental=False) +
         api.post_process(post_process.MustRun, 'calculate custom lkgr') +
         api.post_process(post_process.StatusCodeIn, 1 if retcode == 1 else 0)
     )
@@ -237,7 +233,6 @@ def GenTests(api):
   yield (
       api.test('missing_all_properties') +
       test_props('missing-lkgr-finder') +
-      api.runtime(is_luci=True, is_experimental=False) +
       api.post_process(post_process.MustRun, 'configuration missing') +
       api.post_process(post_process.DropExpectation)
   )
@@ -260,7 +255,6 @@ def GenTests(api):
               },
             },
           }) +
-      api.runtime(is_luci=True, is_experimental=False) +
       api.post_process(post_process.MustRun, 'calculate custom lkgr') +
       api.post_process(
           post_process.StepCommandContains,

@@ -15,7 +15,6 @@ DEPS = [
   'recipe_engine/properties',
   'recipe_engine/python',
   'recipe_engine/raw_io',
-  'recipe_engine/runtime',
   'recipe_engine/step',
 
   'depot_tools/bot_update',
@@ -437,7 +436,6 @@ def GenTests(api):
     }
     return (
       api.test(name)
-      + api.runtime(is_luci=True, is_experimental=False)
       + api.properties(
           upstream_id=upstream_id,
           upstream_url=repo_urls[upstream_id],

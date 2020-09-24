@@ -12,7 +12,6 @@ DEPS = [
   'recipe_engine/platform',
   'recipe_engine/properties',
   'recipe_engine/raw_io',
-  'recipe_engine/runtime',
   'recipe_engine/step',
 
   'support_3pp',
@@ -339,7 +338,6 @@ def GenTests(api):
     plat = '%s-%s' % (goos, goarch)
 
     test = (api.test('integration_test_%s-%s' % (goos, goarch))
-      + api.runtime(is_luci=True, is_experimental=False)
       + api.platform(plat_name, 64)  # assume all hosts are 64 bits.
       + api.properties(GOOS=goos, GOARCH=goarch)
       + api.buildbucket.ci_build()
