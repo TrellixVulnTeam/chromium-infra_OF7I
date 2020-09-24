@@ -179,3 +179,5 @@ blacklist:
     description: someone making tons of API calls over the rate limit
   - subnet: 122.97.222.231
     description: someone fuzzing our API
+  - subnet: 2607:f720:1300:1241:c050:ddff:fe1e:64c8
+    description: someone making lots of GetIssue requests
