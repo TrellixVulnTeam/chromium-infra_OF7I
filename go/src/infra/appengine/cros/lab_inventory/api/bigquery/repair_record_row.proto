@@ -1,0 +1,17 @@
+// Copyright 2020 The Chromium OS Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+syntax = "proto3";
+
+package apibq;
+
+option go_package = "infra/appengine/cros/lab_inventory/api/bigquery;apibq";
+
+import "infra/libs/cros/lab_inventory/protos/repair_record.proto";
+
+// Next tag: 3
+message DeviceManualRepairRecordRow {
+  string repair_record_id = 1;
+  inventory.libs.protos.DeviceManualRepairRecord repair_record = 2;
+}

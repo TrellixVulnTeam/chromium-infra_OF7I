@@ -169,3 +169,16 @@ if ! (bqschemaupdater -force \
   echo "and run this script again."
   exit 1
 fi
+
+if ! (bqschemaupdater -force \
+    -message apibq.DeviceManualRepairRecordRow \
+    -table "${APPID}".inventory.manual_repair_records); then
+  echo ""
+  echo ""
+  echo "Oh no! You may need to restart from scratch. You can do so with:"
+  echo ""
+  echo "  bq rm ${APPID}:inventory.manual_repair_records"
+  echo ""
+  echo "and run this script again."
+  exit 1
+fi
