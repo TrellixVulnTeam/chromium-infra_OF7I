@@ -1,3 +1,25 @@
+# Release Notes sheriff-o-matic 2020-09-24
+
+- 3 commits, 2 bugs affected since 287066b ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - bpastene@chromium.org
+
+## Changes in this release
+
+- [[SoM] Improve batch query issues](https://chromium-review.googlesource.com/c/infra/infra/+/2423769) (nqmtuan@google.com)
+- [[SoM] Release note 23 Sep](https://chromium-review.googlesource.com/c/infra/infra/+/2423832) (nqmtuan@google.com)
+- [s-o-m: Mark the two CrOS arc-r bots as excluded_builders.](https://chromium-review.googlesource.com/c/infra/infra/+/2426697) (bpastene@chromium.org)
+
+
+## Bugs updated, by author
+- bpastene@chromium.org:
+  -  [https://crbug.com/1130870](https://crbug.com/1130870)
+  
+- nqmtuan@google.com:
+  -  [https://crbug.com/1126358](https://crbug.com/1126358)
+
+
 # Release Notes sheriff-o-matic 2020-09-23
 
 - 3 commits, 2 bugs affected since bd98d2d ()
