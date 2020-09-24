@@ -75,11 +75,11 @@ class DateActionCron(jsonfeed.InternalTask):
   def EnqueueDateAction(self, issue_id):
     """Create a task to notify users that an issue's date has arrived.
 
-      Args:
-        issue_id: int ID of the issue that was changed.
+    Args:
+      issue_id: int ID of the issue that was changed.
 
-      Returns nothing.
-      """
+    Returns nothing.
+    """
     params = {'issue_id': issue_id}
     task = {
         'app_engine_http_request':

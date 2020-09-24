@@ -11,9 +11,6 @@ from __future__ import absolute_import
 import unittest
 import os
 
-from google.appengine.api import taskqueue
-from google.appengine.ext import testbed
-
 from features import notify_reasons
 from framework import emailfmt
 from framework import framework_views

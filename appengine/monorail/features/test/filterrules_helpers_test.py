@@ -13,8 +13,6 @@ import unittest
 import urllib
 import urlparse
 
-from google.appengine.api import taskqueue
-
 import settings
 from features import filterrules_helpers
 from framework import cloud_tasks_helpers

@@ -9,7 +9,6 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import cgi
 import csv
 import logging
 import webapp2
@@ -19,18 +18,24 @@ import json
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from google.appengine.api import app_identity
 
+from framework import cloud_tasks_helpers
+from framework import gcs_helpers
 from framework import servlet
 from framework import urls
-from google.appengine.api import taskqueue
-from google.appengine.api import app_identity
-from framework import gcs_helpers
 
 class TrainingDataExport(webapp2.RequestHandler):
   """Trigger a training data export task"""
   def get(self):
-    logging.info("Training data export requested.")
-    taskqueue.add(url=urls.SPAM_DATA_EXPORT_TASK + '.do')
+    task = {
+        'app_engine_http_request':
+            {
+                'relative_uri': urls.SPAM_DATA_EXPORT_TASK + '.do'
+            }
+    }
+    cloud_tasks_helpers.create_task(task)
+
 
 BATCH_SIZE = 1000
 
@@ -89,4 +94,3 @@ class TrainingDataExportTask(servlet.Servlet):
         "exported_issue_count": total_issues,
         "exported_comment_count": total_comments,
     })
-
