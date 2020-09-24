@@ -456,7 +456,7 @@ func (is *InventoryServerImpl) UpdateCrosDevicesSetup(ctx context.Context, req *
 		case *datastore.LabstationNotDeployedError:
 			return nil, errors.Annotate(e, "update device setup").Tag(grpcutil.InvalidArgumentTag).Err()
 		default:
-			return nil, errors.Annotate(e, "update device setup").Err()
+			return nil, errors.Annotate(e, "update device setup").Tag(grpcutil.FailedPreconditionTag).Err()
 		}
 	}
 
