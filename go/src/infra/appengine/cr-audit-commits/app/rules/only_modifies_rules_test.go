@@ -15,6 +15,7 @@ import (
 	"go.chromium.org/luci/common/proto"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 func TestOnlyModifiesPaths(t *testing.T) {
@@ -67,8 +68,10 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name:  "ruleName",
-				Files: []string{"somefile"},
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name:  "ruleName",
+					Files: []string{"somefile"},
+				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -102,8 +105,10 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name: "ruleName",
-				Dirs: []string{"somedir"},
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name: "ruleName",
+					Dirs: []string{"somedir"},
+				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -141,9 +146,11 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name:  "ruleName",
-				Dirs:  []string{"mydir"},
-				Files: []string{"a.txt"},
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name:  "ruleName",
+					Dirs:  []string{"mydir"},
+					Files: []string{"a.txt"},
+				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -182,9 +189,11 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name:  "ruleName",
-				Dirs:  []string{"mydir"},
-				Files: []string{"a.txt"},
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name:  "ruleName",
+					Dirs:  []string{"mydir"},
+					Files: []string{"a.txt"},
+				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
@@ -221,9 +230,11 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name:  "ruleName",
-				Dirs:  []string{"mydir"},
-				Files: []string{"a.txt"},
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name:  "ruleName",
+					Dirs:  []string{"mydir"},
+					Files: []string{"a.txt"},
+				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RuleFailed)
@@ -255,8 +266,10 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name: "ruleName",
-				Dirs: []string{"somedir"},
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name: "ruleName",
+					Dirs: []string{"somedir"},
+				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -289,8 +302,10 @@ func TestOnlyModifiesPaths(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name: "ruleName",
-				Dirs: []string{"somedir"},
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name: "ruleName",
+					Dirs: []string{"somedir"},
+				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
 			So(rr.RuleResultStatus, ShouldEqual, RulePassed)
@@ -349,10 +364,12 @@ func TestReleaseBotRules(t *testing.T) {
 			}, nil)
 			// Run rule
 			rr, _ := OnlyModifiesFilesAndDirsRule{
-				Name: "OnlyModifiesReleaseFiles",
-				Files: []string{
-					"chrome/MAJOR_BRANCH_DATE",
-					"chrome/VERSION",
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name: "OnlyModifiesReleaseFiles",
+					Files: []string{
+						"chrome/MAJOR_BRANCH_DATE",
+						"chrome/VERSION",
+					},
 				},
 			}.Run(ctx, ap, rc, testClients)
 			// Check result code
@@ -392,10 +409,12 @@ func TestReleaseBotRules(t *testing.T) {
 				}, nil)
 				// Run rule
 				rr, _ := OnlyModifiesFilesAndDirsRule{
-					Name: "OnlyModifiesReleaseFiles",
-					Files: []string{
-						"chrome/MAJOR_BRANCH_DATE",
-						"chrome/VERSION",
+					OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+						Name: "OnlyModifiesReleaseFiles",
+						Files: []string{
+							"chrome/MAJOR_BRANCH_DATE",
+							"chrome/VERSION",
+						},
 					},
 				}.Run(ctx, ap, rc, testClients)
 				// Check result code
@@ -427,10 +446,12 @@ func TestReleaseBotRules(t *testing.T) {
 				}, nil)
 				// Run rule
 				rr, _ := OnlyModifiesFilesAndDirsRule{
-					Name: "OnlyModifiesReleaseFiles",
-					Files: []string{
-						"chrome/MAJOR_BRANCH_DATE",
-						"chrome/VERSION",
+					OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+						Name: "OnlyModifiesReleaseFiles",
+						Files: []string{
+							"chrome/MAJOR_BRANCH_DATE",
+							"chrome/VERSION",
+						},
 					},
 				}.Run(ctx, ap, rc, testClients)
 				// Check result code

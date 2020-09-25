@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/monorail"
 )
 
@@ -41,8 +41,10 @@ func TestMergeApprovalRules(t *testing.T) {
 		}
 
 		r := OnlyMergeApprovedChange{
-			AllowedRobots: []string{"bot@example.com"},
-			AllowedUsers:  []string{"human@example.com"},
+			&cpb.OnlyMergeApprovedChange{
+				AllowedRobots: []string{"bot@example.com"},
+				AllowedUsers:  []string{"human@example.com"},
+			},
 		}
 		Convey("Change to commit has a valid bug with merge approval label in comment history", func() {
 			testClients.Monorail = MockMonorailClient{

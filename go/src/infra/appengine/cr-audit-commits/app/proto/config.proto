@@ -39,13 +39,55 @@ message AccountRules {
 
 message Rule {
     oneof rule {
+        AcknowledgeMerge acknowledgeMerge = 1;
+        AutoCommitsPerDay autoCommitsPerDay = 2;
+        AutoRevertsPerDay autoRevertsPerDay = 3;
         ChangeReviewed changeReviewed = 4;
+        CulpritAge culpritAge = 5;
+        CulpritInBuild culpritInBuild = 6;
+        FailedBuildIsAppropriateFailure failedBuildIsAppropriateFailure = 7;
+        OnlyCommitsOwnChange onlyCommitsOwnChange = 8;
+        OnlyMergeApprovedChange onlyMergeApprovedChange = 9;
+        OnlyModifiesFilesAndDirsRule onlyModifiesFilesAndDirsRule = 10;
+        RevertOfCulprit revertOfCulprit = 11;
     }
 }
+
+message AcknowledgeMerge {}
+
+message AutoCommitsPerDay {}
+
+message AutoRevertsPerDay {}
 
 message ChangeReviewed {
     repeated string robots = 1;
 }
+
+message CulpritAge {}
+
+message CulpritInBuild {}
+
+message FailedBuildIsAppropriateFailure {}
+
+message OnlyCommitsOwnChange {}
+
+message OnlyMergeApprovedChange {
+    // AllowedUsers is the list of users who are allowed to author and commit
+	// merges.
+    repeated string allowedUsers = 1;
+
+    // AllowedRobots is the list of robot accounts who are allowed to author
+	// merges.
+    repeated string allowedRobots = 2;
+}
+
+message OnlyModifiesFilesAndDirsRule {
+    string name = 1;
+    repeated string files = 2;
+    repeated string dirs = 3;
+}
+
+message RevertOfCulprit {}
 
 message Notification {
     oneof notification {
@@ -55,8 +97,7 @@ message Notification {
     }
 }
 
-message CommentOnBugToAcknowledgeMerge {
-}
+message CommentOnBugToAcknowledgeMerge {}
 
 message CommentOrFileMonorailIssue {
     repeated string components = 1;

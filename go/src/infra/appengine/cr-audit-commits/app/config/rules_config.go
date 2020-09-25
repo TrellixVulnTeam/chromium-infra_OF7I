@@ -154,10 +154,12 @@ var ruleMap = map[string]*rules.RefConfig{
 				Account: "chrome-release-bot@chromium.org",
 				Rules: []rules.Rule{
 					rules.OnlyModifiesFilesAndDirsRule{
-						Name: "OnlyModifiesReleaseFiles",
-						Files: []string{
-							"chrome/MAJOR_BRANCH_DATE",
-							"chrome/VERSION",
+						OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+							Name: "OnlyModifiesReleaseFiles",
+							Files: []string{
+								"chrome/MAJOR_BRANCH_DATE",
+								"chrome/VERSION",
+							},
 						},
 					},
 				},
@@ -283,8 +285,10 @@ var ruleMap = map[string]*rules.RefConfig{
 				Account: "*",
 				Rules: []rules.Rule{
 					rules.OnlyMergeApprovedChange{
-						AllowedRobots: chromeMergeRobots,
-						AllowedUsers:  chromeTPMs,
+						OnlyMergeApprovedChange: &cpb.OnlyMergeApprovedChange{
+							AllowedRobots: chromeMergeRobots,
+							AllowedUsers:  chromeTPMs,
+						},
 					},
 				},
 				Notification: rules.FileBugForMergeApprovalViolation{
@@ -456,10 +460,34 @@ func getAccountRules(protoAccountRules map[string]*cpb.AccountRules) map[string]
 		var rs []rules.Rule
 		for _, r := range v.Rules {
 			switch r.Rule.(type) {
+			case *cpb.Rule_AcknowledgeMerge:
+				rs = append(rs, rules.AcknowledgeMerge{})
+			case *cpb.Rule_AutoCommitsPerDay:
+				rs = append(rs, rules.AutoCommitsPerDay{})
+			case *cpb.Rule_AutoRevertsPerDay:
+				rs = append(rs, rules.AutoRevertsPerDay{})
 			case *cpb.Rule_ChangeReviewed:
 				rs = append(rs, rules.ChangeReviewed{
 					ChangeReviewed: r.GetChangeReviewed(),
 				})
+			case *cpb.Rule_CulpritAge:
+				rs = append(rs, rules.CulpritAge{})
+			case *cpb.Rule_CulpritInBuild:
+				rs = append(rs, rules.CulpritInBuild{})
+			case *cpb.Rule_FailedBuildIsAppropriateFailure:
+				rs = append(rs, rules.FailedBuildIsAppropriateFailure{})
+			case *cpb.Rule_OnlyCommitsOwnChange:
+				rs = append(rs, rules.OnlyCommitsOwnChange{})
+			case *cpb.Rule_OnlyMergeApprovedChange:
+				rs = append(rs, rules.OnlyMergeApprovedChange{
+					OnlyMergeApprovedChange: r.GetOnlyMergeApprovedChange(),
+				})
+			case *cpb.Rule_OnlyModifiesFilesAndDirsRule:
+				rs = append(rs, rules.OnlyModifiesFilesAndDirsRule{
+					OnlyModifiesFilesAndDirsRule: r.GetOnlyModifiesFilesAndDirsRule(),
+				})
+			case *cpb.Rule_RevertOfCulprit:
+				rs = append(rs, rules.RevertOfCulprit{})
 			}
 		}
 

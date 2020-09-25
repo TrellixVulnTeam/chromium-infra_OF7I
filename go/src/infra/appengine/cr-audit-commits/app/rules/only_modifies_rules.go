@@ -5,14 +5,14 @@
 package rules
 
 import (
+	"context"
 	"fmt"
 	"strings"
-
-	"context"
 
 	"go.chromium.org/luci/common/api/gitiles"
 	"go.chromium.org/luci/common/proto/git"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 const (
@@ -24,9 +24,7 @@ const (
 // verify that only the given files and directories are modified by the audited
 // CL.
 type OnlyModifiesFilesAndDirsRule struct {
-	Name  string
-	Files []string
-	Dirs  []string
+	*cpb.OnlyModifiesFilesAndDirsRule
 }
 
 // GetName returns the name of the rule, from the struct field 'Name'.

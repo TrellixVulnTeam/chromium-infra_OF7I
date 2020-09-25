@@ -18,13 +18,15 @@ func AutoRollRules(account string, files, dirs []string) AccountRules {
 		Account: account,
 		Rules: []Rule{
 			OnlyModifiesFilesAndDirsRule{
-				Name:  fmt.Sprintf("OnlyModifies_%s", strings.Join(append(files, dirs...), "+")),
-				Files: files,
-				Dirs:  dirs,
+				OnlyModifiesFilesAndDirsRule: &cpb.OnlyModifiesFilesAndDirsRule{
+					Name:  fmt.Sprintf("OnlyModifies_%s", strings.Join(append(files, dirs...), "+")),
+					Files: files,
+					Dirs:  dirs,
+				},
 			},
 		},
 		Notification: CommentOrFileMonorailIssue{
-			&cpb.CommentOrFileMonorailIssue{
+			CommentOrFileMonorailIssue: &cpb.CommentOrFileMonorailIssue{
 				Components: []string{"Infra>Security>Audit>AutoRoller"},
 				Labels:     []string{"CommitLog-Audit-Violation"},
 			},

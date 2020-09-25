@@ -15,7 +15,6 @@ import (
 	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/router"
 
-	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/appengine/cr-audit-commits/app/rules"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -55,20 +54,37 @@ func TestRulesConfig(t *testing.T) {
 
 			accountRule := refConfig.Rules["manual-changes"]
 			So(accountRule.Account, ShouldEqual, "*")
-			So(accountRule.Rules[0], ShouldResemble, rules.ChangeReviewed{
-				ChangeReviewed: &cpb.ChangeReviewed{
-					Robots: []string{
-						"robot0@example.com",
-						"robot1@example.com",
-					},
-				},
-			})
-			So(accountRule.Notification, ShouldResemble, rules.CommentOrFileMonorailIssue{
-				CommentOrFileMonorailIssue: &cpb.CommentOrFileMonorailIssue{
-					Components: []string{"Test>Component"},
-					Labels:     []string{"CommitLog-Audit-Violation", "TBR-Violation"},
-				},
-			})
+
+			_, ok := accountRule.Rules[0].(rules.AcknowledgeMerge)
+			So(ok, ShouldEqual, true)
+			_, ok = accountRule.Rules[1].(rules.AutoCommitsPerDay)
+			So(ok, ShouldEqual, true)
+			_, ok = accountRule.Rules[2].(rules.AutoRevertsPerDay)
+			So(ok, ShouldEqual, true)
+			_, ok = accountRule.Rules[3].(rules.ChangeReviewed)
+			So(ok, ShouldEqual, true)
+			So(accountRule.Rules[3].(rules.ChangeReviewed).GetRobots(), ShouldResemble, []string{"robot0@example.com", "robot1@example.com"})
+			_, ok = accountRule.Rules[4].(rules.CulpritAge)
+			So(ok, ShouldEqual, true)
+			_, ok = accountRule.Rules[5].(rules.CulpritInBuild)
+			So(ok, ShouldEqual, true)
+			_, ok = accountRule.Rules[6].(rules.FailedBuildIsAppropriateFailure)
+			So(ok, ShouldEqual, true)
+			_, ok = accountRule.Rules[7].(rules.OnlyCommitsOwnChange)
+			So(ok, ShouldEqual, true)
+			_, ok = accountRule.Rules[8].(rules.OnlyMergeApprovedChange)
+			So(ok, ShouldEqual, true)
+			So(accountRule.Rules[8].(rules.OnlyMergeApprovedChange).GetAllowedUsers(), ShouldResemble, []string{"user0@example.com"})
+			So(accountRule.Rules[8].(rules.OnlyMergeApprovedChange).GetAllowedRobots(), ShouldResemble, []string{"robot0@example.com"})
+			_, ok = accountRule.Rules[9].(rules.OnlyModifiesFilesAndDirsRule)
+			So(ok, ShouldEqual, true)
+			So(accountRule.Rules[9].(rules.OnlyModifiesFilesAndDirsRule).GetName(), ShouldEqual, "OnlyModifiesReleaseFiles")
+			So(accountRule.Rules[9].(rules.OnlyModifiesFilesAndDirsRule).GetFiles(), ShouldResemble, []string{"filea", "fileb"})
+			So(accountRule.Rules[9].(rules.OnlyModifiesFilesAndDirsRule).GetDirs(), ShouldResemble, []string{"dira"})
+			_, ok = accountRule.Rules[10].(rules.RevertOfCulprit)
+			So(ok, ShouldEqual, true)
+			So(accountRule.Notification.(rules.CommentOrFileMonorailIssue).GetComponents(), ShouldResemble, []string{"Test>Component"})
+			So(accountRule.Notification.(rules.CommentOrFileMonorailIssue).GetLabels(), ShouldResemble, []string{"CommitLog-Audit-Violation", "TBR-Violation"})
 		})
 	})
 }

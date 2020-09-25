@@ -8,9 +8,8 @@ import (
 	"context"
 	"testing"
 
-	"infra/monorail"
-
 	. "github.com/smartystreets/goconvey/convey"
+	"infra/monorail"
 )
 
 func TestMergeAckRules(t *testing.T) {

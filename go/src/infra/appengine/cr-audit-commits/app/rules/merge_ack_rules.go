@@ -6,11 +6,15 @@ package rules
 
 import (
 	"context"
+
 	"go.chromium.org/luci/common/logging"
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 // AcknowledgeMerge is a Rule that acknowledges any merge into a release branch.
-type AcknowledgeMerge struct{}
+type AcknowledgeMerge struct {
+	*cpb.AcknowledgeMerge
+}
 
 // GetName returns the name of the rule.
 func (rule AcknowledgeMerge) GetName() string {

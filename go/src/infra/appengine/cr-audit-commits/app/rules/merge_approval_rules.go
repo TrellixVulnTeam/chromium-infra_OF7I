@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"go.chromium.org/luci/common/logging"
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 const (
@@ -20,12 +21,7 @@ const (
 // OnlyMergeApprovedChange is a Rule that verifies that only approved changes
 // are merged into a release branch.
 type OnlyMergeApprovedChange struct {
-	// AllowedUsers is the list of users who are allowed to author and commit
-	// merges.
-	AllowedUsers []string
-	// AllowedRobots is the list of robot accounts who are allowed to author
-	// merges.
-	AllowedRobots []string
+	*cpb.OnlyMergeApprovedChange
 }
 
 // GetName returns the name of the rule.

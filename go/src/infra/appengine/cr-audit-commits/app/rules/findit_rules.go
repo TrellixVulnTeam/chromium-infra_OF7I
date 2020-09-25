@@ -5,13 +5,11 @@
 package rules
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"context"
-	"google.golang.org/genproto/protobuf/field_mask"
 
 	"github.com/golang/protobuf/ptypes"
 	buildbucketpb "go.chromium.org/luci/buildbucket/proto"
@@ -19,6 +17,8 @@ import (
 	"go.chromium.org/luci/common/api/gitiles"
 	gitilespb "go.chromium.org/luci/common/proto/gitiles"
 	ds "go.chromium.org/luci/gae/service/datastore"
+	"google.golang.org/genproto/protobuf/field_mask"
+	cpb "infra/appengine/cr-audit-commits/app/proto"
 )
 
 // Role is an enum describing the relationship between an email account and a
@@ -109,7 +109,9 @@ func countAuthoredBy(ctx context.Context, rc *RelevantCommit, cutoff time.Time, 
 // AutoCommitsPerDay is a Rule that verifies that at most
 // MaxAutoCommitsPerDay commits in the 24 hours preceding the triggering commit
 // were committed by the triggering account.
-type AutoCommitsPerDay struct{}
+type AutoCommitsPerDay struct {
+	*cpb.AutoCommitsPerDay
+}
 
 // GetName returns the name of the rule
 func (rule AutoCommitsPerDay) GetName() string {
@@ -138,7 +140,9 @@ func (rule AutoCommitsPerDay) Run(ctx context.Context, ap *AuditParams, rc *Rele
 // AutoRevertsPerDay is a Rule that verifies that at most
 // MaxAutoRevertsPerDay commits in the 24 hours preceding the triggering commit
 // were authored by the triggering account.
-type AutoRevertsPerDay struct{}
+type AutoRevertsPerDay struct {
+	*cpb.AutoRevertsPerDay
+}
 
 // GetName returns the name of the rule
 func (rule AutoRevertsPerDay) GetName() string {
@@ -166,7 +170,9 @@ func (rule AutoRevertsPerDay) Run(ctx context.Context, ap *AuditParams, rc *Rele
 
 // CulpritAge is a Rule that verifies that the culprit being reverted is
 // less than 24 hours older than the revert.
-type CulpritAge struct{}
+type CulpritAge struct {
+	*cpb.CulpritAge
+}
 
 // GetName returns the name of the rule
 func (rule CulpritAge) GetName() string {
@@ -224,7 +230,9 @@ func (rule CulpritAge) Run(ctx context.Context, ap *AuditParams, rc *RelevantCom
 
 // CulpritInBuild is a Rule that verifies that the culprit is included in
 // the list of changes of the failed build.
-type CulpritInBuild struct{}
+type CulpritInBuild struct {
+	*cpb.CulpritInBuild
+}
 
 // GetName returns the name of the rule
 func (rule CulpritInBuild) GetName() string {
@@ -316,7 +324,9 @@ func getRevertAndCulpritChanges(ctx context.Context, ap *AuditParams, rc *Releva
 
 // FailedBuildIsAppropriateFailure is a Rule that verifies that the referred
 // build contains a failed step appropriately named.
-type FailedBuildIsAppropriateFailure struct{}
+type FailedBuildIsAppropriateFailure struct {
+	*cpb.FailedBuildIsAppropriateFailure
+}
 
 // GetName returns the name of the rule
 func (rule FailedBuildIsAppropriateFailure) GetName() string {
@@ -360,7 +370,9 @@ func (rule FailedBuildIsAppropriateFailure) Run(ctx context.Context, ap *AuditPa
 
 // RevertOfCulprit is a Rule that verifies that the reverting commit is a
 // revert of the named culprit.
-type RevertOfCulprit struct{}
+type RevertOfCulprit struct {
+	*cpb.RevertOfCulprit
+}
 
 // GetName returns the name of the rule
 func (rule RevertOfCulprit) GetName() string {
@@ -404,7 +416,9 @@ func (rule RevertOfCulprit) Run(ctx context.Context, ap *AuditParams, rc *Releva
 
 // OnlyCommitsOwnChange is a Rule that verifies that commits landed by the
 // service account were also authored by that service account.
-type OnlyCommitsOwnChange struct{}
+type OnlyCommitsOwnChange struct {
+	*cpb.OnlyCommitsOwnChange
+}
 
 // GetName returns the name of the rule
 func (rule OnlyCommitsOwnChange) GetName() string {
