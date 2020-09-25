@@ -14,10 +14,6 @@ import mock
 import time
 import unittest
 
-import mox
-
-from google.appengine.api import taskqueue
-
 from features import dateaction
 from framework import cloud_tasks_helpers
 from framework import framework_constants
@@ -128,7 +124,6 @@ class IssueDateActionTaskTest(unittest.TestCase):
         issue_star=fake.IssueStarService())
     self.servlet = dateaction.IssueDateActionTask(
         'req', 'res', services=self.services)
-    self.mox = mox.Mox()
 
     self.config = self.services.config.GetProjectConfig('cnxn', 789)
     self.config.field_defs = [
@@ -152,10 +147,6 @@ class IssueDateActionTaskTest(unittest.TestCase):
     self.date_action_user = self.services.user.TestAddUser(
         'date-action-user@example.com', 555)
 
-  def tearDown(self):
-    self.mox.UnsetStubs()
-    self.mox.ResetAll()
-
   def testHandleRequest_IssueHasNoArrivedDates(self):
     _request, mr = testing_helpers.GetRequestObjects(
         path=urls.ISSUE_DATE_ACTION_TASK + '.do?issue_id=78901')
@@ -163,22 +154,13 @@ class IssueDateActionTaskTest(unittest.TestCase):
         789, 1, 'summary', 'New', 111, issue_id=78901))
     self.assertEqual(1, len(self.services.issue.GetCommentsForIssue(
         mr.cnxn, 78901)))
-    self.mox.ReplayAll()
 
     self.servlet.HandleRequest(mr)
     self.assertEqual(1, len(self.services.issue.GetCommentsForIssue(
         mr.cnxn, 78901)))
-    self.mox.VerifyAll()
 
-  def SetUpEnqueueOutboundEmailTask(self, num_emails):
-    self.mox.StubOutWithMock(taskqueue, 'add')
-    for _ in range(num_emails):
-      taskqueue.add(
-        queue_name='outboundemail',
-        url=urls.OUTBOUND_EMAIL_TASK + '.do',
-        payload=mox.IgnoreArg())
-
-  def testHandleRequest_IssueHasOneArriveDate(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testHandleRequest_IssueHasOneArriveDate(self, create_task_mock):
     _request, mr = testing_helpers.GetRequestObjects(
         path=urls.ISSUE_DATE_ACTION_TASK + '.do?issue_id=78901')
 
@@ -190,16 +172,21 @@ class IssueDateActionTaskTest(unittest.TestCase):
         tracker_bizobj.MakeFieldValue(123, None, None, None, now, None, False)]
     self.assertEqual(1, len(self.services.issue.GetCommentsForIssue(
         mr.cnxn, 78901)))
-    self.SetUpEnqueueOutboundEmailTask(1)
-    self.mox.ReplayAll()
 
     self.servlet.HandleRequest(mr)
-    self.mox.VerifyAll()
     comments = self.services.issue.GetCommentsForIssue(mr.cnxn, 78901)
     self.assertEqual(2, len(comments))
     self.assertEqual(
       'The NextAction date has arrived: %s' % date_str,
       comments[1].content)
+
+    self.assertEqual(create_task_mock.call_count, 1)
+
+    (args, kwargs) = create_task_mock.call_args
+    self.assertEqual(
+        args[0]['app_engine_http_request']['relative_uri'],
+        urls.OUTBOUND_EMAIL_TASK + '.do')
+    self.assertEqual(kwargs['queue'], 'outboundemail')
 
   def SetUpFieldValues(self, issue, now):
     issue.field_values = [
@@ -208,7 +195,8 @@ class IssueDateActionTaskTest(unittest.TestCase):
         tracker_bizobj.MakeFieldValue(125, None, None, None, now, None, False),
         ]
 
-  def testHandleRequest_IssueHasTwoArriveDates(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testHandleRequest_IssueHasTwoArriveDates(self, create_task_mock):
     _request, mr = testing_helpers.GetRequestObjects(
         path=urls.ISSUE_DATE_ACTION_TASK + '.do?issue_id=78901')
 
@@ -219,17 +207,22 @@ class IssueDateActionTaskTest(unittest.TestCase):
     self.SetUpFieldValues(issue, now)
     self.assertEqual(1, len(self.services.issue.GetCommentsForIssue(
         mr.cnxn, 78901)))
-    self.SetUpEnqueueOutboundEmailTask(1)
-    self.mox.ReplayAll()
 
     self.servlet.HandleRequest(mr)
-    self.mox.VerifyAll()
     comments = self.services.issue.GetCommentsForIssue(mr.cnxn, 78901)
     self.assertEqual(2, len(comments))
     self.assertEqual(
       'The EoL date has arrived: %s\n'
       'The NextAction date has arrived: %s' % (date_str, date_str),
       comments[1].content)
+
+    self.assertEqual(create_task_mock.call_count, 1)
+
+    (args, kwargs) = create_task_mock.call_args
+    self.assertEqual(
+        args[0]['app_engine_http_request']['relative_uri'],
+        urls.OUTBOUND_EMAIL_TASK + '.do')
+    self.assertEqual(kwargs['queue'], 'outboundemail')
 
   def MakePingComment(self):
     comment = tracker_pb2.IssueComment()

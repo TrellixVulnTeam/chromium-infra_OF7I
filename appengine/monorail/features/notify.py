@@ -23,8 +23,6 @@ import os
 from third_party import ezt
 
 from google.appengine.api import mail
-from google.appengine.api import taskqueue
-from google.appengine.api import urlfetch
 from google.appengine.runtime import apiproxy_errors
 
 import settings
@@ -957,7 +955,10 @@ class NotifyRulesDeletedTask(notify_helpers.NotifyTaskBase):
 
 
 class OutboundEmailTask(jsonfeed.InternalTask):
-  """JSON servlet that sends one email."""
+  """JSON servlet that sends one email.
+
+  Handles tasks enqueued from notify_helpers._EnqueueOutboundEmail.
+  """
 
   def HandleRequest(self, mr):
     """Process the task to send one email message.

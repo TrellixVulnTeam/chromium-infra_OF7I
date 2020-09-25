@@ -9,14 +9,9 @@ from __future__ import division
 from __future__ import absolute_import
 
 import json
-import logging
-import os
+import mock
 import unittest
 import webapp2
-import webtest
-
-from google.appengine.api import taskqueue
-from google.appengine.ext import testbed
 
 from features import notify
 from features import notify_reasons
@@ -45,12 +40,6 @@ def MakeTestIssue(project_id, local_id, owner_id, reporter_id, is_spam=False):
 class NotifyTaskHandleRequestTest(unittest.TestCase):
 
   def setUp(self):
-    self.testbed = testbed.Testbed()
-    self.testbed.activate()
-    self.testbed.init_taskqueue_stub()
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname( __file__ )))
     self.services = service_manager.Services(
         user=fake.UserService(),
         usergroup=fake.UserGroupService(),
@@ -77,9 +66,15 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
         lambda aid: 'signed_%d' % aid)
 
   def tearDown(self):
-    self.testbed.deactivate()
     cloudstorage.open = self._old_gcs_open
     attachment_helpers.SignAttachmentID = self.orig_sign_attachment_id
+
+  def get_filtered_task_call_args(self, create_task_mock, relative_uri):
+    return [
+        (args, kwargs)
+        for (args, kwargs) in create_task_mock.call_args_list
+        if args[0]['app_engine_http_request']['relative_uri'] == relative_uri
+    ]
 
   def VerifyParams(self, result, params):
     self.assertEqual(
@@ -103,7 +98,8 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.VerifyParams(result, params)
 
-  def testNotifyIssueChangeTask_Spam(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyIssueChangeTask_Spam(self, _create_task_mock):
     issue = MakeTestIssue(
         project_id=12345, local_id=1, owner_id=1, reporter_id=1,
         is_spam=True)
@@ -120,7 +116,8 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.assertEqual(0, len(result['notified']))
 
-  def testNotifyBlockingChangeTask_Normal(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyBlockingChangeTask_Normal(self, _create_task_mock):
     issue2 = MakeTestIssue(
         project_id=12345, local_id=2, owner_id=2, reporter_id=1)
     self.services.issue.TestAddIssue(issue2)
@@ -156,7 +153,8 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.assertEqual(0, len(result['notified']))
 
-  def testNotifyBulkChangeTask_Normal(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyBulkChangeTask_Normal(self, create_task_mock):
     """We generate email tasks for each user involved in the issues."""
     issue2 = MakeTestIssue(
         project_id=12345, local_id=2, owner_id=2, reporter_id=1)
@@ -176,19 +174,21 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.VerifyParams(result, params)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.OUTBOUND_EMAIL_TASK + '.do')
-    self.assertEqual(2, len(tasks))
-    for task in tasks:
-      task_params = json.loads(task.payload)
-      # obfuscated email for non-members
-      if 'user' in task_params['to']:
-        self.assertIn(u'\u2026', task_params['from_addr'])
-      # Full email for members
-      if 'member' in task_params['to']:
-        self.assertNotIn(u'\u2026', task_params['from_addr'])
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.OUTBOUND_EMAIL_TASK + '.do')
+    self.assertEqual(2, len(call_args_list))
 
-  def testNotifyBulkChangeTask_AlsoNotify(self):
+    for (args, _kwargs) in call_args_list:
+      task = args[0]
+      body = json.loads(task['app_engine_http_request']['body'].decode())
+      if 'user' in body['to']:
+        self.assertIn(u'\u2026', body['from_addr'])
+      # Full email for members
+      if 'member' in body['to']:
+        self.assertNotIn(u'\u2026', body['from_addr'])
+
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyBulkChangeTask_AlsoNotify(self, create_task_mock):
     """We generate email tasks for also-notify addresses."""
     self.issue1.derived_notify_addrs = [
         'mailing-list@example.com', 'member@example.com']
@@ -206,22 +206,25 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.VerifyParams(result, params)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.OUTBOUND_EMAIL_TASK + '.do')
-    self.assertEqual(3, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.OUTBOUND_EMAIL_TASK + '.do')
+    self.assertEqual(3, len(call_args_list))
+
     self.assertItemsEqual(
         ['user@example.com', 'mailing-list@example.com', 'member@example.com'],
         result['notified'])
-    for task in tasks:
-      task_params = json.loads(task.payload)
+    for (args, _kwargs) in call_args_list:
+      task = args[0]
+      body = json.loads(task['app_engine_http_request']['body'].decode())
       # obfuscated email for non-members
-      if 'user' in task_params['to']:
-        self.assertIn(u'\u2026', task_params['from_addr'])
+      if 'user' in body['to']:
+        self.assertIn(u'\u2026', body['from_addr'])
       # Full email for members
-      if 'member' in task_params['to']:
-        self.assertNotIn(u'\u2026', task_params['from_addr'])
+      if 'member' in body['to']:
+        self.assertNotIn(u'\u2026', body['from_addr'])
 
-  def testNotifyBulkChangeTask_ProjectNotify(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyBulkChangeTask_ProjectNotify(self, create_task_mock):
     """We generate email tasks for project.issue_notify_address."""
     self.project.issue_notify_address = 'mailing-list@example.com'
     task = notify.NotifyBulkChangeTask(
@@ -238,22 +241,26 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.VerifyParams(result, params)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.OUTBOUND_EMAIL_TASK + '.do')
-    self.assertEqual(2, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.OUTBOUND_EMAIL_TASK + '.do')
+    self.assertEqual(2, len(call_args_list))
+
     self.assertItemsEqual(
         ['user@example.com', 'mailing-list@example.com'],
         result['notified'])
-    for task in tasks:
-      task_params = json.loads(task.payload)
-      # obfuscated email for non-members
-      if 'user' in task_params['to']:
-        self.assertIn(u'\u2026', task_params['from_addr'])
-      # Full email for members
-      if 'member' in task_params['to']:
-        self.assertNotIn(u'\u2026', task_params['from_addr'])
 
-  def testNotifyBulkChangeTask_SubscriberGetsEmail(self):
+    for (args, _kwargs) in call_args_list:
+      task = args[0]
+      body = json.loads(task['app_engine_http_request']['body'].decode())
+      # obfuscated email for non-members
+      if 'user' in body['to']:
+        self.assertIn(u'\u2026', body['from_addr'])
+      # Full email for members
+      if 'member' in body['to']:
+        self.assertNotIn(u'\u2026', body['from_addr'])
+
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyBulkChangeTask_SubscriberGetsEmail(self, create_task_mock):
     """If a user subscription matches the issue, notify that user."""
     task = notify.NotifyBulkChangeTask(
         request=None, response=None, services=self.services)
@@ -275,11 +282,13 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.VerifyParams(result, params)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.OUTBOUND_EMAIL_TASK + '.do')
-    self.assertEqual(2, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.OUTBOUND_EMAIL_TASK + '.do')
+    self.assertEqual(2, len(call_args_list))
 
-  def testNotifyBulkChangeTask_CCAndSubscriberListsIssueOnce(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyBulkChangeTask_CCAndSubscriberListsIssueOnce(
+      self, create_task_mock):
     """If a user both CCs and subscribes, include issue only once."""
     task = notify.NotifyBulkChangeTask(
         request=None, response=None, services=self.services)
@@ -302,19 +311,22 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     result = task.HandleRequest(mr)
     self.VerifyParams(result, params)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.OUTBOUND_EMAIL_TASK + '.do')
-    self.assertEqual(2, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.OUTBOUND_EMAIL_TASK + '.do')
+    self.assertEqual(2, len(call_args_list))
+
     found = False
-    for task in tasks:
-      task_params = json.loads(task.payload)
-      if task_params['to'] == 'subscriber@example.com':
+    for (args, _kwargs) in call_args_list:
+      task = args[0]
+      body = json.loads(task['app_engine_http_request']['body'].decode())
+      if body['to'] == 'subscriber@example.com':
         found = True
-        body = task_params['body']
-        self.assertEqual(1, body.count('Issue %d' % self.issue1.local_id))
+        task_body = body['body']
+        self.assertEqual(1, task_body.count('Issue %d' % self.issue1.local_id))
     self.assertTrue(found)
 
-  def testNotifyBulkChangeTask_Spam(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyBulkChangeTask_Spam(self, _create_task_mock):
     """A spam issue is excluded from notification emails."""
     issue2 = MakeTestIssue(
         project_id=12345, local_id=2, owner_id=2, reporter_id=1,
@@ -423,7 +435,8 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
     self.assertIn('two summary', body)
     self.assertNotIn('test comment', body)
 
-  def testNotifyApprovalChangeTask_Normal(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyApprovalChangeTask_Normal(self, _create_task_mock):
     config = self.services.config.GetProjectConfig('cnxn', 12345)
     config.field_defs = [
         # issue's User field with any_comment is notified.
@@ -600,7 +613,8 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
         approval_value, comment, issue, [777], omit_ids=[444, 333])
     self.assertItemsEqual(rids, [111, 222, 555, 777])
 
-  def testNotifyRulesDeletedTask(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testNotifyRulesDeletedTask(self, _create_task_mock):
     self.services.project.TestAddProject(
         'proj', owner_ids=[777, 888], project_id=789)
     self.services.user.TestAddUser('owner1@test.com', 777)

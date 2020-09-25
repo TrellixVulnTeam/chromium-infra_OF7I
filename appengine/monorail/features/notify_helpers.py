@@ -16,14 +16,13 @@ import re
 from third_party import ezt
 from third_party import six
 
-from google.appengine.api import taskqueue
-
 from features import autolink
 from features import autolink_constants
 from features import features_constants
 from features import filterrules_helpers
 from features import savedqueries_helpers
 from features import notify_reasons
+from framework import cloud_tasks_helpers
 from framework import emailfmt
 from framework import framework_bizobj
 from framework import framework_constants
@@ -100,9 +99,20 @@ def _EnqueueOutboundEmail(message_dict):
   # in the dict being urlencoded, which can (worst case) triple the size of
   # an email body containing many characters which need to be escaped.
   payload = json.dumps(message_dict)
-  taskqueue.add(
-    url=urls.OUTBOUND_EMAIL_TASK + '.do', payload=payload,
-    queue_name=features_constants.QUEUE_OUTBOUND_EMAIL)
+  task = {
+      'app_engine_http_request':
+          {
+              'relative_uri': urls.OUTBOUND_EMAIL_TASK + '.do',
+              # Cloud Tasks expects body to be in bytes.
+              'body': payload.encode(),
+              # Cloud tasks default body content type is octet-stream.
+              'headers': {
+                  'Content-type': 'application/json'
+              }
+          }
+  }
+  cloud_tasks_helpers.create_task(
+      task, queue=features_constants.QUEUE_OUTBOUND_EMAIL)
 
 
 def AddAllEmailTasks(tasks):

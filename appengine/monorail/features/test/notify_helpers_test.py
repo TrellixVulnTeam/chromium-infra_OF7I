@@ -9,13 +9,12 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import json
 import mock
 import unittest
 import os
 
-from google.appengine.api import taskqueue
-from google.appengine.ext import testbed
-
+from features import features_constants
 from features import notify_helpers
 from features import notify_reasons
 from framework import emailfmt
@@ -33,24 +32,48 @@ REPLY_MAY_UPDATE = notify_reasons.REPLY_MAY_UPDATE
 
 class TaskQueueingFunctionsTest(unittest.TestCase):
 
-  def setUp(self):
-    self.testbed = testbed.Testbed()
-    self.testbed.activate()
-    self.testbed.init_taskqueue_stub()
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname( __file__ )))
-
-  def tearDown(self):
-    self.testbed.deactivate()
-
-  def testAddAllEmailTasks(self):
+  @mock.patch('framework.cloud_tasks_helpers._get_client')
+  def testAddAllEmailTasks(self, get_client_mock):
     notify_helpers.AddAllEmailTasks(
       tasks=[{'to': 'user'}, {'to': 'user2'}])
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.OUTBOUND_EMAIL_TASK + '.do')
-    self.assertEqual(2, len(tasks))
+    self.assertEqual(get_client_mock().create_task.call_count, 2)
+
+    queue_call_args = get_client_mock().queue_path.call_args_list
+    ((_app_id, _region, queue), _kwargs) = queue_call_args[0]
+    self.assertEqual(queue, features_constants.QUEUE_OUTBOUND_EMAIL)
+    ((_app_id, _region, queue), _kwargs) = queue_call_args[1]
+    self.assertEqual(queue, features_constants.QUEUE_OUTBOUND_EMAIL)
+
+    task_call_args = get_client_mock().create_task.call_args_list
+    ((_parent, task), _kwargs) = task_call_args[0]
+    expected_task = {
+        'app_engine_http_request':
+            {
+                'relative_uri': urls.OUTBOUND_EMAIL_TASK + '.do',
+                'body': json.dumps({
+                    'to': 'user'
+                }).encode(),
+                'headers': {
+                    'Content-type': 'application/json'
+                }
+            }
+    }
+    self.assertEqual(task, expected_task)
+    ((_parent, task), _kwargs) = task_call_args[1]
+    expected_task = {
+        'app_engine_http_request':
+            {
+                'relative_uri': urls.OUTBOUND_EMAIL_TASK + '.do',
+                'body': json.dumps({
+                    'to': 'user2'
+                }).encode(),
+                'headers': {
+                    'Content-type': 'application/json'
+                }
+            }
+    }
+    self.assertEqual(task, expected_task)
 
 
 class MergeLinkedAccountReasonsTest(unittest.TestCase):
