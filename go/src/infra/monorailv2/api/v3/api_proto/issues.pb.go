@@ -268,6 +268,20 @@ type SearchIssuesRequest struct {
 	// field search expressions.
 	// Please see https://bugs.chromium.org/p/chromium/issues/searchtips for more
 	// details of how the query string works.
+	//
+	// Canned queries have been deprecated in v3 in favor of search scoping using
+	// parentheses support.
+	// For clients who previously used canned queries, we're providing the
+	// mapping of legacy canned query IDs to Monorail search syntax:
+	//   - Format: (can_id, description, query_string)
+	//   - (1, 'All issues', '')
+	//   - (2, 'Open issues', 'is:open')
+	//   - (3, 'Open and owned by me', 'is:open owner:me')
+	//   - (4, 'Open and reported by me', 'is:open reporter:me')
+	//   - (5, 'Open and starred by me', 'is:open is:starred')
+	//   - (6, 'New issues', 'status:new')
+	//   - (7, 'Issues to verify', 'status=fixed,done')
+	//   - (8, 'Open with comment by me', 'is:open commentby:me')
 	Query string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
 	// The maximum number of items to return. The service may return fewer than
 	// this value.
@@ -1880,7 +1894,9 @@ type IssuesClient interface {
 	BatchGetIssues(ctx context.Context, in *BatchGetIssuesRequest, opts ...grpc.CallOption) (*BatchGetIssuesResponse, error)
 	// status: ALPHA
 	// Searches over issues within the specified projects.
-	// TODO(monorail:6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   INVALID_ARGUMENT if project names or search query are invalid.
 	SearchIssues(ctx context.Context, in *SearchIssuesRequest, opts ...grpc.CallOption) (*SearchIssuesResponse, error)
 	// status: ALPHA
 	// Lists comments for an issue.
@@ -2147,7 +2163,9 @@ type IssuesServer interface {
 	BatchGetIssues(context.Context, *BatchGetIssuesRequest) (*BatchGetIssuesResponse, error)
 	// status: ALPHA
 	// Searches over issues within the specified projects.
-	// TODO(monorail:6988): Document possible errors when implemented.
+	//
+	// Raises:
+	//   INVALID_ARGUMENT if project names or search query are invalid.
 	SearchIssues(context.Context, *SearchIssuesRequest) (*SearchIssuesResponse, error)
 	// status: ALPHA
 	// Lists comments for an issue.

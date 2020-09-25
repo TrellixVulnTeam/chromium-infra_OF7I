@@ -220,11 +220,20 @@ with the same prefix by using.</p>
 </form>
 
 
-<p>You can combine two separate queries into one using the <tt>OR</tt> operator.
-We do not support parentheses or complex boolean expressions, just top-level OR.</p>
+<p>You can combine two separate queries into one using the <tt>OR</tt> operator.</p>
 
 <form action="list" method="GET">
  <p><input type="text" size="45" name="q" value="Priority:High OR -has:owner">
+ <input type="submit" name="btn" value="Search"></p>
+</form>
+
+
+<p>You can create more complex <tt>OR</tt> queries using parentheses nesting to
+distribute search terms across <tt>OR</tt> clauses. A search query may contain as
+many sets of parentheses and levels of parentheses nesting as needed.</p>
+
+<form action="list" method="GET">
+ <p><input type="text" size="45" name="q" value="Pri:0,1 (status:Untriaged OR -has:owner)">
  <input type="submit" name="btn" value="Search"></p>
 </form>
 

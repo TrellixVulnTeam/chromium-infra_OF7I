@@ -93,7 +93,8 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     """pRPC API method that implements SearchIssue.
 
     Raises:
-      InputException: if any given names in `projects` are invalid.
+      InputException: if any given names in `projects` are invalid or if the
+        search query uses invalid syntax (ie: unmatched parentheses).
     """
     page_size = paginator.CoercePageSize(
         request.page_size, api_constants.MAX_ISSUES_PER_PAGE)
