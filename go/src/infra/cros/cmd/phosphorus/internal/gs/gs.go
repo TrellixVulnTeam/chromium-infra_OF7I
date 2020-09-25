@@ -1,3 +1,8 @@
+// Copyright 2020 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// Package gs exports helpers to upload log data to Google Storage.
 package gs
 
 import (
@@ -30,7 +35,7 @@ type gsClient interface {
 }
 
 // NewDirWriter creates an object which can write a directory and its subdirectories to the given Google Storage path
-func NewDirWriter(client gcgs.Client) *DirWriter {
+func NewDirWriter(client gsClient) *DirWriter {
 	return &DirWriter{
 		client:               client,
 		maxConcurrentUploads: maxConcurrentUploads,
@@ -41,8 +46,6 @@ func verifyPaths(localPath string, gsPath string) error {
 	problems := []string{}
 	if _, err := os.Stat(localPath); err != nil {
 		problems = append(problems, fmt.Sprintf("invalid local path (%s)", localPath))
-	} else if _, err := os.Open(localPath); err != nil {
-		problems = append(problems, fmt.Sprintf("unreadable local path (%s)", localPath))
 	}
 	if _, err := url.Parse(gsPath); err != nil {
 		problems = append(problems, fmt.Sprintf("invalid GS path (%s)", gsPath))
@@ -122,14 +125,15 @@ func (w *DirWriter) writeOne(ctx context.Context, srcDir string, dstDir gcgs.Pat
 	if err != nil {
 		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
 	}
+	defer f.Close()
+
 	writer, err := w.client.NewWriter(dest)
 	if err != nil {
 		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
 	}
 	// Ignore errors as we may have already closed writer by the time this runs.
-	defer func() {
-		_ = writer.Close()
-	}()
+	defer writer.Close()
+
 	bs := make([]byte, info.Size())
 	if _, err = f.Read(bs); err != nil {
 		return errors.Annotate(err, "writing from %s to %s", src, dest).Err()
