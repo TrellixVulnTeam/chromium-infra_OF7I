@@ -28,36 +28,24 @@ var rePartitionNumber = regexp.MustCompile(`.*([0-9]+)`)
 var reBuilderPath = regexp.MustCompile(`CHROMEOS_RELEASE_BUILDER_PATH=(.*)`)
 
 // runCmd interprets the given string command in a shell and returns the error if any.
-func runCmd(c *client, cmd string) error {
+func runCmd(c *ssh.Client, cmd string) error {
 	s, err := c.NewSession()
 	if err != nil {
 		return err
 	}
 	defer s.Close()
 	err = s.Run(cmd)
-	switch err.(type) {
-	case *ssh.ExitError, *ssh.ExitMissingError:
-		c.knownGood = true
-	default:
-		c.knownGood = false
-	}
 	return err
 }
 
 // runCmdOutput interprets the given string command in a shell and returns stdout and error if any.
-func runCmdOutput(c *client, cmd string) (string, error) {
+func runCmdOutput(c *ssh.Client, cmd string) (string, error) {
 	s, err := c.NewSession()
 	if err != nil {
 		return "", err
 	}
 	defer s.Close()
 	b, err := s.Output(cmd)
-	switch err.(type) {
-	case *ssh.ExitError, *ssh.ExitMissingError:
-		c.knownGood = true
-	default:
-		c.knownGood = false
-	}
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +76,7 @@ func newOperationError(c codes.Code, msg string, reason tls.ProvisionResponse_Re
 }
 
 // stopSystemDaemon stops system daemons than can interfere with provisioning.
-func stopSystemDaemons(c *client) {
+func stopSystemDaemons(c *ssh.Client) {
 	if err := runCmd(c, "stop ui"); err != nil {
 		log.Printf("Stop system daemon: failed to stop UI daemon, %s", err)
 	}
@@ -97,7 +85,7 @@ func stopSystemDaemons(c *client) {
 	}
 }
 
-func getBuilderPath(c *client) (string, error) {
+func getBuilderPath(c *ssh.Client) (string, error) {
 	// Read the /etc/lsb-release file.
 	lsbRelease, err := runCmdOutput(c, "cat /etc/lsb-release")
 	if err != nil {
@@ -133,7 +121,7 @@ type rootDev struct {
 	partNum   string
 }
 
-func getRootDev(c *client) (rootDev, error) {
+func getRootDev(c *ssh.Client) (rootDev, error) {
 	var r rootDev
 	// Example 1: "/dev/nvme0n1p3"
 	// Example 2: "/dev/sda3"
@@ -218,7 +206,7 @@ func getPartitions(r rootDev) partitionInfo {
 }
 
 // clearInactiveDLCVerifiedMarks will clear the verified marks for all DLCs in the inactive slots.
-func clearInactiveDLCVerifiedMarks(c *client, r rootDev) error {
+func clearInactiveDLCVerifiedMarks(c *ssh.Client, r rootDev) error {
 	// Stop dlcservice daemon in order to not interfere with clearing inactive verified DLCs.
 	if err := runCmd(c, "stop dlcservice"); err != nil {
 		log.Printf("clear inactive verified DLC marks: failed to stop dlcservice daemon, %s", err)
@@ -244,7 +232,7 @@ const (
 )
 
 // installKernel updates kernelPartition on disk.
-func installKernel(c *client, imagePath, kernPartition string) error {
+func installKernel(c *ssh.Client, imagePath, kernPartition string) error {
 	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
 	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
 	pathPrefix, err := getGsCacheURL(imagePath)
@@ -255,7 +243,7 @@ func installKernel(c *client, imagePath, kernPartition string) error {
 }
 
 // installRoot updates rootPartition on disk.
-func installRoot(c *client, imagePath, rootPartition string) error {
+func installRoot(c *ssh.Client, imagePath, rootPartition string) error {
 	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
 	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
 	pathPrefix, err := getGsCacheURL(imagePath)
@@ -271,7 +259,7 @@ const (
 )
 
 // installStateful updates the stateful partition on disk (finalized after a reboot).
-func installStateful(c *client, imagePath string) error {
+func installStateful(c *ssh.Client, imagePath string) error {
 	// TODO(crbug.com/1077056): Use CacheForDut from TLW server for images that
 	// need to be fetched. (e.g. kernel, root, stateful, DLCs, etc)
 	pathPrefix, err := getGsCacheURL(imagePath)
@@ -285,7 +273,7 @@ func installStateful(c *client, imagePath string) error {
 	}, " && "))
 }
 
-func revertStatefulInstall(c *client) {
+func revertStatefulInstall(c *ssh.Client) {
 	const (
 		varNew      = "var_new"
 		devImageNew = "dev_image_new"
@@ -296,7 +284,7 @@ func revertStatefulInstall(c *client) {
 	}
 }
 
-func installPartitions(c *client, imagePath string, partitions partitionInfo) []error {
+func installPartitions(c *ssh.Client, imagePath string, partitions partitionInfo) []error {
 	kernelErr := make(chan error)
 	rootErr := make(chan error)
 	statefulErr := make(chan error)
@@ -324,7 +312,7 @@ func installPartitions(c *client, imagePath string, partitions partitionInfo) []
 	return provisionErrs
 }
 
-func postInstall(c *client, partitions partitionInfo) error {
+func postInstall(c *ssh.Client, partitions partitionInfo) error {
 	return runCmd(c, strings.Join([]string{
 		"tmpmnt=$(mktemp -d)",
 		fmt.Sprintf("mount -o ro %s ${tmpmnt}", partitions.inactiveRoot),
@@ -334,17 +322,17 @@ func postInstall(c *client, partitions partitionInfo) error {
 	}, " && "))
 }
 
-func revertPostInstall(c *client, partitions partitionInfo) {
+func revertPostInstall(c *ssh.Client, partitions partitionInfo) {
 	if err := runCmd(c, fmt.Sprintf("/postinst %s 2>&1", partitions.activeRoot)); err != nil {
 		log.Printf("revert post install: failed to revert postinst, %s", err)
 	}
 }
 
-func clearTPM(c *client) error {
+func clearTPM(c *ssh.Client) error {
 	return runCmd(c, "crossystem clear_tpm_owner_request=1")
 }
 
-func runLabMachineAutoReboot(c *client) {
+func runLabMachineAutoReboot(c *ssh.Client) {
 	const (
 		labMachineFile = statefulPath + "/.labmachine"
 	)
@@ -354,19 +342,19 @@ func runLabMachineAutoReboot(c *client) {
 	}
 }
 
-func rebootDUT(c *client) error {
+func rebootDUT(c *ssh.Client) error {
 	// Reboot in the background, giving time for the ssh invocation to cleanly terminate.
 	return runCmd(c, "(sleep 2 && reboot) &")
 }
 
-func revertProvisionOS(c *client, partitions partitionInfo) {
+func revertProvisionOS(c *ssh.Client, partitions partitionInfo) {
 	revertStatefulInstall(c)
 	revertPostInstall(c, partitions)
 }
 
 // provisionOS will provision the OS, but on failure it will set op.Result to longrunning.Operation_Error
 // and return the same error message
-func provisionOS(c *client, op *longrunning.Operation, imagePath string, r rootDev) error {
+func provisionOS(c *ssh.Client, op *longrunning.Operation, imagePath string, r rootDev) error {
 	stopSystemDaemons(c)
 
 	// Only clear the inactive verified DLC marks if the DLCs exist.
@@ -412,7 +400,7 @@ func provisionOS(c *client, op *longrunning.Operation, imagePath string, r rootD
 	return nil
 }
 
-func verifyOSProvision(c *client, op *longrunning.Operation, expectedBuilderPath string) error {
+func verifyOSProvision(c *ssh.Client, op *longrunning.Operation, expectedBuilderPath string) error {
 	actualBuilderPath, err := getBuilderPath(c)
 	if err != nil {
 		errMsg := fmt.Sprintf("verify OS provision: failed to get builder path, %s", err)
@@ -444,7 +432,7 @@ const (
 	dlcserviceUtil = "dlcservice_util"
 )
 
-func pathExists(c *client, path string) (bool, error) {
+func pathExists(c *ssh.Client, path string) (bool, error) {
 	exists, err := runCmdOutput(c, fmt.Sprintf("[ -e %s ] && echo -n 1 || echo -n 0", path))
 	if err != nil {
 		return false, fmt.Errorf("path exists: failed to check if %s exists, %s", path, err)
@@ -474,7 +462,7 @@ func getOtherDLCSlot(slot dlcSlot) dlcSlot {
 	}
 }
 
-func isDLCVerified(c *client, spec *tls.ProvisionRequest_DLCSpec, slot dlcSlot) (bool, error) {
+func isDLCVerified(c *ssh.Client, spec *tls.ProvisionRequest_DLCSpec, slot dlcSlot) (bool, error) {
 	dlcID := spec.GetId()
 	verified, err := pathExists(c, path.Join(dlcLibDir, dlcID, string(slot), dlcVerified))
 	if err != nil {
@@ -483,7 +471,7 @@ func isDLCVerified(c *client, spec *tls.ProvisionRequest_DLCSpec, slot dlcSlot) 
 	return verified, nil
 }
 
-func installDLC(c *client, spec *tls.ProvisionRequest_DLCSpec, imagePath, dlcOutputDir string, slot dlcSlot) error {
+func installDLC(c *ssh.Client, spec *tls.ProvisionRequest_DLCSpec, imagePath, dlcOutputDir string, slot dlcSlot) error {
 	verified, err := isDLCVerified(c, spec, slot)
 	if err != nil {
 		return fmt.Errorf("install DLC: failed is DLC verified check, %s", err)
@@ -513,7 +501,7 @@ func installDLC(c *client, spec *tls.ProvisionRequest_DLCSpec, imagePath, dlcOut
 	return nil
 }
 
-func provisionDLCs(c *client, op *longrunning.Operation, imagePath string, r rootDev, specs []*tls.ProvisionRequest_DLCSpec) error {
+func provisionDLCs(c *ssh.Client, op *longrunning.Operation, imagePath string, r rootDev, specs []*tls.ProvisionRequest_DLCSpec) error {
 	if len(specs) == 0 {
 		return nil
 	}
@@ -636,7 +624,6 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 			tls.ProvisionResponse_REASON_DUT_UNREACHABLE_PRE_PROVISION)
 		return
 	}
-	c.knownGood = true
 	defer s.clientPool.Put(addr, c)
 
 	// Get the root device.
@@ -674,7 +661,7 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 			return
 		}
 		// After a reboot, need a new client connection so close the old one.
-		c.knownGood = false
+
 		// Try to reconnect for a least 300 seconds.
 		// TODO(kimjae): Make this connection verification into a function.
 		for i := 0; i < 300; i++ {
@@ -684,7 +671,6 @@ func (s *server) provision(req *tls.ProvisionRequest, op *longrunning.Operation)
 				time.Sleep(time.Second)
 				continue
 			}
-			c.knownGood = true
 			defer s.clientPool.Put(addr, c)
 			break
 		}
