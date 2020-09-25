@@ -13,6 +13,7 @@ DEPS = [
   'build/goma',
   'build/zip',
   'depot_tools/bot_update',
+  'depot_tools/depot_tools',
   'depot_tools/gclient',
   'depot_tools/git',
   'depot_tools/git_cl',
@@ -277,6 +278,11 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
                    cipd_pkgs_to_create)
 
 
+def env_with_depot_tools(api):
+  return {'PATH': api.path.pathsep.join(
+      ('%(PATH)s', str(api.depot_tools.root)))}
+
+
 def build_cipd_pkgs(api, cipd_pkgs_to_create):
   # Need to save mb_config.pyl for skew tests APK committed at ToT
   curr_path = api.path['checkout'].join(
@@ -297,7 +303,7 @@ def build_cipd_pkgs(api, cipd_pkgs_to_create):
       continue
 
     # Checkout chromium version
-    with api.context(cwd=api.path['checkout']), \
+    with api.context(cwd=api.path['checkout'], env=env_with_depot_tools(api)), \
       checkout_chromium_version_and_sync_3p_repos(api, version):
       zip_path = api.path.mkdtemp().join('build_config.zip')
       if api.path.exists(str(extract_dir)):

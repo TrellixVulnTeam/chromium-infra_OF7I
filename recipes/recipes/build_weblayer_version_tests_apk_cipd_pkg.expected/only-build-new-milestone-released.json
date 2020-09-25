@@ -481,6 +481,9 @@
       "84.0.4147.89"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "infra_step": true,
     "name": "git checkout (2)"
   },
@@ -491,6 +494,9 @@
       "-fd"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "infra_step": true,
     "name": "git clean"
   },
@@ -506,6 +512,9 @@
       "/path/to/tmp/"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "infra_step": true,
     "name": "Reading //chrome/VERSION",
     "~followup_annotations": [
@@ -536,6 +545,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -595,6 +607,9 @@
       "runhooks"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "env_suffixes": {
       "PATH": [
         "RECIPE_REPO[depot_tools]"
@@ -613,6 +628,9 @@
       "[CLEANUP]/apk_build_files"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "infra_step": true,
     "name": "Cleaning up build files from last build"
   },
@@ -633,6 +651,9 @@
       "[CLEANUP]/tmp_tmp_2/build_config.zip"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "name": "Building weblayer_instrumentation_test_apk"
   },
   {
@@ -642,6 +663,9 @@
       "RECIPE_MODULE[build::zip]/resources/unzip.py"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "name": "Uncompressing build files for version 84.0.4147.89",
     "stdin": "{\"output\": \"[CLEANUP]/apk_build_files\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_2/build_config.zip\"}"
   },
@@ -661,6 +685,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "name": "build weblayer-x86",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -685,6 +712,9 @@
       "/path/to/tmp/json"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "name": "register chromium/testing/weblayer-x86",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@json.output@{@@@",
@@ -704,6 +734,9 @@
       "origin/master"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "infra_step": true,
     "name": "git checkout (3)"
   },
@@ -714,6 +747,9 @@
       "-fd"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "infra_step": true,
     "name": "git clean (2)"
   },
@@ -728,6 +764,9 @@
       "[START_DIR]/src/out/Release"
     ],
     "cwd": "[START_DIR]/src",
+    "env": {
+      "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
+    },
     "infra_step": true,
     "name": "Cleaning 84.0.4147.89 build files"
   },
