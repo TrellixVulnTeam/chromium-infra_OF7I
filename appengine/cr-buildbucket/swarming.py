@@ -796,9 +796,10 @@ def _sync_build_with_task_result_in_memory(build, build_infra, task_result):
     sw = infra.swarming
     sw.ClearField('bot_dimensions')
     for d in (task_result or {}).get('bot_dimensions', []):
-      assert isinstance(d['value'], list)
-      for v in d['value']:
-        sw.bot_dimensions.add(key=d['key'], value=v)
+      if 'value' in d:
+        assert isinstance(d['value'], list)
+        for v in d['value']:
+          sw.bot_dimensions.add(key=d['key'], value=v)
     sw.bot_dimensions.sort(key=lambda d: (d.key, d.value))
 
   terminal_states = {

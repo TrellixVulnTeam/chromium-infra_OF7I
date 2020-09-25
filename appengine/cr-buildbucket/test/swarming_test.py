@@ -880,6 +880,7 @@ class SyncBuildTest(BaseTest):
                   {'key': 'os', 'value': ['Ubuntu', 'Trusty']},
                   {'key': 'pool', 'value': ['luci.chromium.try']},
                   {'key': 'id', 'value': ['bot1']},
+                  {'key': 'empty'},
               ],
           },
           'status': common_pb2.SUCCESS,
