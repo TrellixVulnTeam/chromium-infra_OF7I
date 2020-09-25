@@ -12,7 +12,8 @@ class CIPDSpecPool(object):
   """
   def __init__(self, api):
     self._spec_cache = {}
-    self._version_cache = {}
+    # TODO: Remove _version_cache as it could be (pkg, version) -> CIPDSpec.iid
+    self._version_cache = {}  # (pkg, symver) -> instance_id
     self._api = api
 
   def get(self, pkg, symver):
@@ -40,6 +41,7 @@ class CIPDSpec(object):
     self._symver = str(symver)
     # (pkg, symver) -> instance_id
     self._version_cache = version_cache
+    self._remote_tags = {}
     assert self._pkg != 'None'
     assert self._symver, 'what: %r %r' % (pkg, symver)
     assert 'None' not in self._symver
@@ -65,6 +67,20 @@ class CIPDSpec(object):
         'tag %r not found' % (self.tag,))
       return False
 
+  def _remote_describe(self):
+    # by default, make this return no tags in test mode.
+    desc = self._api.cipd.describe(
+      self._pkg, self.tag, test_data_tags=(), test_data_refs=())
+    self._api.step.active_result.presentation.step_text = (
+      'found %r' % desc.pin.instance_id)
+    tags = {}
+    for tag in desc.tags:
+      tag_instance = tag.tag
+      # 'version:1.5.0-rc1' will be mapped as {'version': '1.5.0-rc1'}
+      tags[
+          tag_instance.split(':', 1)[0]] = tag_instance.split(':', 1)[1]
+    return (desc.pin.instance_id, tags)
+
   def resolve(self):
     """Returns the instance_id for this CIPDSpec.
 
@@ -78,13 +94,29 @@ class CIPDSpec(object):
     server doesn't have this version.
     """
     if self._cache_key not in self._version_cache:
-      # by default, make this return no tags in test mode.
-      desc = self._api.cipd.describe(
-        self._pkg, self.tag, test_data_tags=(), test_data_refs=())
-      self._api.step.active_result.presentation.step_text = (
-        'found %r' % desc.pin.instance_id)
-      self._version_cache[self._cache_key] = desc.pin.instance_id
+      iid, tags = self._remote_describe()
+      self._version_cache[self._cache_key] = iid
+      self._remote_tags = tags
     return self._version_cache[self._cache_key]
+
+  def resolve_remote_tags(self):
+    """Returns a map of all associated tags for this CIPDSpec.
+
+    This will check the local cache to resolve all tags for this
+    CIPDSpec.
+
+    Returns a map of associated tags, as reported by CIPD.
+
+    Raises StepFailure if the CIPD server doesn't have this version.
+    Raises AssertionError if (pkg, symver) -> different iids between remote and
+    locally built package.
+    """
+    self.resolve()
+    if not self._remote_tags:  # pragma: no cover
+      iid, self._remote_tags = self._remote_describe()
+      if self._version_cache[self._cache_key] != iid:
+        raise AssertionError('Remote and local instance id does not match.')
+    return self._remote_tags
 
   def deploy(self, root):
     """Deploys the CIPD package to disk (at the given root).
@@ -150,7 +182,7 @@ class CIPDSpec(object):
 
     return ret
 
-  def build(self, root, install_mode, version_file):
+  def build(self, root, install_mode, version_file, exclusions=None):
     """Builds the CIPD package from local files.
 
     This will populate the local CIPD package cache, and will allow uploading
@@ -169,9 +201,12 @@ class CIPDSpec(object):
         a version JSON file when it deploys this package. This version file can
         be used by the application to inspect/display its own CIPD instance ID
         and package name.
+      * exclusions (list[str]) - A list of regexps to exclude when scanning the
+        given directory. These will be tested against the forward-slash path
+        to the file relative to `dir_path`.
     """
     pkg_def = self._api.cipd.PackageDefinition(self._pkg, root, install_mode)
-    pkg_def.add_dir(root)
+    pkg_def.add_dir(root, exclusions)
     if version_file:
       pkg_def.add_version_file(str(version_file))
 
@@ -210,3 +245,4 @@ class CIPDSpec(object):
     except self._api.step.StepFailure:
       self._api.step.active_result.presentation.status = self._api.step.SUCCESS
       self._api.cipd.register(self._pkg, pkg_path, tags=tags, refs=refs)
+      self._remote_tags = tags

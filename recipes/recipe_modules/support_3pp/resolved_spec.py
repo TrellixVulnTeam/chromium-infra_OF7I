@@ -234,6 +234,17 @@ class ResolvedSpec(object):
 
     return self._cipd_spec_pool.get(pkg_name, symver)
 
+  def source_cipd_spec(self, version):
+    """Returns a CIPDSpec object for the result of building this ResolvedSpec's
+    source package.
+
+    Args:
+      * version (str) - The symver of this package to get the CIPDSpec for.
+    """
+    pkg_name = self.source_cache
+
+    return self._cipd_spec_pool.get(pkg_name, version) if pkg_name else None
+
   @property
   def _sort_tuple(self):
     """Implementation detail of __cmp__, returns a sortable tuple that's

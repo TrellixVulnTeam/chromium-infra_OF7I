@@ -459,3 +459,61 @@ def GenTests(api):
           version='version:1.5.0-rc1', test_data_tags=['version:1.5.0-rc1']),
       )
   )
+
+  # test for git tag movement.
+  dep = '''
+  create {
+    platform_re: "linux-amd64|mac-.*"
+    source {
+      git {
+        repo: "https://chromium.googlesource.com/external/go.repo/dep"
+        tag_pattern: "v%s"
+      }
+    }
+    build {}
+  }
+  upload { pkg_prefix: "pkg" }
+  '''
+  tool = '''
+  create {
+    platform_re: "linux-amd64|mac-.*"
+    source {
+      git {
+        repo: "https://go.repo/tool"
+        version_restriction { op: LT val: "1.5rc" }
+        version_restriction { op: GE val: "1.4" }
+      }
+    }
+    build {
+      tool: "dep"
+    }
+  }
+  upload { pkg_prefix: "pkg" }
+  '''
+  unsupported = '''
+  create { verify { test: "verify.py" } }
+  '''
+  yield (api.test('catch git tag movement')
+      + api.properties(GOOS='linux', GOARCH='amd64')
+      + api.step_data(
+          'find package specs',
+          api.file.glob_paths(['[CACHE]/builder/package_repo/%s/3pp.pb' % pkg
+                               for pkg in ['dep', 'tool', 'unsupported']]))
+      + api.step_data(
+          "load package specs.read 'dep'",
+          api.file.read_text(dep))
+      + api.step_data(
+          "load package specs.read 'tool'",
+          api.file.read_text(tool))
+      + api.step_data(
+          "load package specs.read 'unsupported'",
+          api.file.read_text(unsupported))
+      + api.override_step_data(
+        ('building dep.fetch sources.cipd describe 3pp/'
+         'sources/git/go.repo/dep'),
+        api.cipd.example_describe(
+        '3pp/sources/git/go.repo/dep',
+        version='version:1.5.0-rc1',
+        test_data_tags=['version:1.5.0-rc1','external_hash:deadbeef']),
+      )
+  )

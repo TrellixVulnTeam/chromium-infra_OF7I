@@ -99,7 +99,7 @@
       "@@@STEP_LOG_LINE@3pp.pb@    platform_re: \"linux-amd64|mac-.*\"@@@",
       "@@@STEP_LOG_LINE@3pp.pb@    source {@@@",
       "@@@STEP_LOG_LINE@3pp.pb@      git {@@@",
-      "@@@STEP_LOG_LINE@3pp.pb@        repo: \"https://go.repo/dep\"@@@",
+      "@@@STEP_LOG_LINE@3pp.pb@        repo: \"https://chromium.googlesource.com/external/go.repo/dep\"@@@",
       "@@@STEP_LOG_LINE@3pp.pb@        tag_pattern: \"v%s\"@@@",
       "@@@STEP_LOG_LINE@3pp.pb@      }@@@",
       "@@@STEP_LOG_LINE@3pp.pb@    }@@@",
@@ -183,7 +183,7 @@
       "git",
       "ls-remote",
       "-t",
-      "https://go.repo/dep"
+      "https://chromium.googlesource.com/external/go.repo/dep"
     ],
     "cwd": "None",
     "env": {
@@ -261,14 +261,15 @@
     "cmd": [],
     "name": "building dep.fetch sources",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {
     "cmd": [
       "cipd",
       "describe",
-      "3pp/sources/git/https://go.repo/dep",
+      "3pp/sources/git/go.repo/dep",
       "-version",
       "version:1.5.0-rc1",
       "-json-output",
@@ -283,14 +284,50 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building dep.fetch sources.cipd describe 3pp/sources/git/https://go.repo/dep",
+    "name": "building dep.fetch sources.cipd describe 3pp/sources/git/go.repo/dep",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@found 'resolved-instance_id-of-version:1.5.0-rc'@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"pin\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"resolved-instance_id-of-version:1.5.0-rc\", @@@",
+      "@@@STEP_LOG_LINE@json.output@      \"package\": \"3pp/sources/git/go.repo/dep\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    }, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"refs\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"modified_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"modified_ts\": 1446574210, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"ref\": \"latest\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ], @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"registered_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"registered_ts\": 1446574210, @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"tags\": [@@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"registered_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"registered_ts\": 1446574210, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"tag\": \"version:1.5.0-rc1\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }, @@@",
+      "@@@STEP_LOG_LINE@json.output@      {@@@",
+      "@@@STEP_LOG_LINE@json.output@        \"registered_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"registered_ts\": 1446574210, @@@",
+      "@@@STEP_LOG_LINE@json.output@        \"tag\": \"external_hash:deadbeef\"@@@",
+      "@@@STEP_LOG_LINE@json.output@      }@@@",
+      "@@@STEP_LOG_LINE@json.output@    ]@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building dep.fetch sources.Verify External Hash",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_TEXT@resolved version: 1.5.0-rc1 has moved, current hash: hash, stored hash: deadbeef, please verify.@@@",
+      "@@@STEP_FAILURE@@@"
     ]
   },
   {
@@ -328,7 +365,7 @@
       "--path",
       "[START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/checkout",
       "--url",
-      "https://go.repo/dep"
+      "https://chromium.googlesource.com/external/go.repo/dep"
     ],
     "env": {
       "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
@@ -494,186 +531,6 @@
   },
   {
     "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/git/https://go.repo/dep",
-      "-version",
-      "version:1.5.0-rc1",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building dep.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/dep",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@tag 'version:1.5.0-rc1' not found@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "pkg-build",
-      "-pkg-def",
-      "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/https://go.repo/dep\", \"root\": \"[START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/checkout\"}",
-      "-out",
-      "[CLEANUP]/tmp_tmp_2",
-      "-hash-algo",
-      "sha256",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building dep.fetch sources.upload source to cipd.build 3pp/sources/git/https://go.repo/dep",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/dep\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "ensure-directory",
-      "--mode",
-      "0777",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/dep"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "name": "building dep.fetch sources.upload source to cipd.ensure cipd pkg cache exists",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "move",
-      "[CLEANUP]/tmp_tmp_2",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/dep/40-chars-fake-of-the-package-instance_id"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "name": "building dep.fetch sources.upload source to cipd.mv built cipd pkg to cache",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/sources/git/https://go.repo/dep",
-      "-version",
-      "version:1.5.0-rc1",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building dep.fetch sources.upload source to cipd.cipd describe 3pp/sources/git/https://go.repo/dep (2)",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "pkg-register",
-      "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/dep/40-chars-fake-of-the-package-instance_id",
-      "-tag",
-      "external_hash:hash",
-      "-tag",
-      "version:1.5.0-rc1",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building dep.fetch sources.upload source to cipd.register 3pp/sources/git/https://go.repo/dep",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/sources/git/https://go.repo/dep\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@",
-      "@@@STEP_LINK@3pp/sources/git/https://go.repo/dep@https://chrome-infra-packages.appspot.com/p/3pp/sources/git/https://go.repo/dep/+/40-chars-fake-of-the-package-instance_id@@@"
-    ]
-  },
-  {
-    "cmd": [
       "vpython",
       "-u",
       "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
@@ -702,8 +559,7 @@
     "cmd": [],
     "name": "building dep.run installation",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_NEST_LEVEL@1@@@"
     ]
   },
   {
@@ -796,8 +652,166 @@
     },
     "name": "building dep.run installation.install.sh [START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/out [START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/deps_prefix",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-build",
+      "-pkg-def",
+      "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/pkg/dep/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/out\"}",
+      "-out",
+      "[CLEANUP]/tmp_tmp_2",
+      "-hash-algo",
+      "sha256",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_PACKAGE_NAME": "dep",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "name": "building dep.build 3pp/pkg/dep/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/pkg/dep/linux-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "ensure-directory",
+      "--mode",
+      "0777",
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_PACKAGE_NAME": "dep",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "name": "building dep.ensure cipd pkg cache exists",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
+      "--json-output",
+      "/path/to/tmp/json",
+      "move",
+      "[CLEANUP]/tmp_tmp_2",
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/40-chars-fake-of-the-package-instance_id"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_PACKAGE_NAME": "dep",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "infra_step": true,
+    "name": "building dep.mv built cipd pkg to cache",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "building dep.do upload",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "describe",
+      "3pp/pkg/dep/linux-amd64",
+      "-version",
+      "version:1.5.0-rc1",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_PACKAGE_NAME": "dep",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "name": "building dep.do upload.cipd describe 3pp/pkg/dep/linux-amd64",
+    "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@2@@@",
-      "@@@STEP_FAILURE@@@"
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"error\": \"no such tag\", @@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": null@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "cipd",
+      "pkg-register",
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
+      "-ref",
+      "latest",
+      "-tag",
+      "3pp_ecosystem_hash:5428f29eb8e0873b4b5fd4ad30843f6b867b8ca49f9f22caaab8222bc4ef8841",
+      "-tag",
+      "version:1.5.0-rc1",
+      "-json-output",
+      "/path/to/tmp/json"
+    ],
+    "env": {
+      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
+      "GOARCH": "amd64",
+      "GOOS": "linux",
+      "_3PP_PACKAGE_NAME": "dep",
+      "_3PP_PLATFORM": "linux-amd64",
+      "_3PP_TOOL_PLATFORM": "linux-amd64",
+      "_3PP_VERSION": "1.5.0-rc1"
+    },
+    "name": "building dep.do upload.register 3pp/pkg/dep/linux-amd64",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@",
+      "@@@STEP_LOG_LINE@json.output@{@@@",
+      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/pkg/dep/linux-amd64\"@@@",
+      "@@@STEP_LOG_LINE@json.output@  }@@@",
+      "@@@STEP_LOG_LINE@json.output@}@@@",
+      "@@@STEP_LOG_END@json.output@@@",
+      "@@@STEP_LINK@3pp/pkg/dep/linux-amd64@https://chrome-infra-packages.appspot.com/p/3pp/pkg/dep/linux-amd64/+/40-chars-fake-of-the-package-instance_id@@@"
     ]
   },
   {
@@ -875,179 +889,10 @@
     ]
   },
   {
-    "cmd": [],
-    "name": "building tool.fetch sources.installing tools.building dep",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "git",
-      "ls-remote",
-      "-t",
-      "https://go.repo/dep"
-    ],
-    "cwd": "[START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/checkout",
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "name": "building tool.fetch sources.installing tools.building dep.git ls-remote",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@4@@@",
-      "@@@STEP_TEXT@resolved version: 1.5.0-rc1@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "describe",
-      "3pp/pkg/dep/linux-amd64",
-      "-version",
-      "version:1.5.0-rc1",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "dep",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building tool.fetch sources.installing tools.building dep.cipd describe 3pp/pkg/dep/linux-amd64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@4@@@",
-      "@@@STEP_TEXT@found 'resolved-instance_id-of-version:1.5.0-rc'@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"pin\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@      \"instance_id\": \"resolved-instance_id-of-version:1.5.0-rc\", @@@",
-      "@@@STEP_LOG_LINE@json.output@      \"package\": \"3pp/pkg/dep/linux-amd64\"@@@",
-      "@@@STEP_LOG_LINE@json.output@    }, @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"refs\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"instance_id\": \"resolved-instance_id-of-latest----------\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"modified_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"modified_ts\": 1446574210, @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"ref\": \"latest\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ], @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"registered_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"registered_ts\": 1446574210, @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"tags\": [@@@",
-      "@@@STEP_LOG_LINE@json.output@      {@@@",
-      "@@@STEP_LOG_LINE@json.output@        \"registered_by\": \"user:44-blablbla@developer.gserviceaccount.com\", @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"registered_ts\": 1446574210, @@@",
-      "@@@STEP_LOG_LINE@json.output@        \"tag\": \"version:1.5.0-rc1\"@@@",
-      "@@@STEP_LOG_LINE@json.output@      }@@@",
-      "@@@STEP_LOG_LINE@json.output@    ]@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "cipd",
-      "pkg-fetch",
-      "3pp/pkg/dep/linux-amd64",
-      "-version",
-      "version:1.5.0-rc1",
-      "-out",
-      "[CLEANUP]/tmp_tmp_3",
-      "-json-output",
-      "/path/to/tmp/json"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "name": "building tool.fetch sources.installing tools.cipd pkg-fetch 3pp/pkg/dep/linux-amd64",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@",
-      "@@@STEP_TEXT@3pp/pkg/dep/linux-amd64 resolved-instance_id-of-version:1.5.0-rc@@@",
-      "@@@STEP_LOG_LINE@json.output@{@@@",
-      "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version:1.5.0-rc\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"3pp/pkg/dep/linux-amd64\"@@@",
-      "@@@STEP_LOG_LINE@json.output@  }@@@",
-      "@@@STEP_LOG_LINE@json.output@}@@@",
-      "@@@STEP_LOG_END@json.output@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "ensure-directory",
-      "--mode",
-      "0777",
-      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "name": "building tool.fetch sources.installing tools.ensure cipd package cache exists",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
-    ]
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_MODULE[recipe_engine::file]/resources/fileutil.py",
-      "--json-output",
-      "/path/to/tmp/json",
-      "move",
-      "[CLEANUP]/tmp_tmp_3",
-      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc"
-    ],
-    "env": {
-      "CIPD_CACHE_DIR": "[CLEANUP]/tmp_tmp_1",
-      "GOARCH": "amd64",
-      "GOOS": "linux",
-      "_3PP_PACKAGE_NAME": "tool",
-      "_3PP_PLATFORM": "linux-amd64",
-      "_3PP_TOOL_PLATFORM": "linux-amd64",
-      "_3PP_VERSION": "1.5.0-rc1"
-    },
-    "infra_step": true,
-    "name": "building tool.fetch sources.installing tools.move fetched cipd package to cache",
-    "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@3@@@"
-    ]
-  },
-  {
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
       "-root",
       "[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/tools_prefix",
       "-json-output",
@@ -1062,13 +907,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "1.5.0-rc1"
     },
-    "name": "building tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+    "name": "building tool.fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.5.0-rc\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/40-ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/40-chars-fake-of-the-package-instance_id\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -1310,7 +1155,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/https://go.repo/tool\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_4",
+      "[CLEANUP]/tmp_tmp_3",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -1372,7 +1217,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_4",
+      "[CLEANUP]/tmp_tmp_3",
       "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -1586,7 +1431,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/pkg/tool/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/1.5.0-rc1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_5",
+      "[CLEANUP]/tmp_tmp_4",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -1648,7 +1493,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_5",
+      "[CLEANUP]/tmp_tmp_4",
       "[CACHE]/3pp_cipd/3pp/pkg/tool/linux-amd64/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -1837,7 +1682,7 @@
     "cmd": [
       "cipd",
       "pkg-deploy",
-      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+      "[CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
       "-root",
       "[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/tools_prefix",
       "-json-output",
@@ -1852,13 +1697,13 @@
       "_3PP_TOOL_PLATFORM": "linux-amd64",
       "_3PP_VERSION": "v1.4.1"
     },
-    "name": "building tool (2).fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/resolved-instance_id-of-version:1.5.0-rc",
+    "name": "building tool (2).fetch sources.installing tools.cipd pkg-deploy [CACHE]/3pp_cipd/3pp/pkg/dep/linux-amd64/40-chars-fake-of-the-package-instance_id",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@3@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
-      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/resol\", @@@",
-      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/resolved-instance_id-of-version:1.5.0-rc\"@@@",
+      "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"resolved-instance_id-of-version/of/40-ch\", @@@",
+      "@@@STEP_LOG_LINE@json.output@    \"package\": \"pkg/name/of/40-chars-fake-of-the-package-instance_id\"@@@",
       "@@@STEP_LOG_LINE@json.output@  }@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
       "@@@STEP_LOG_END@json.output@@@"
@@ -2129,7 +1974,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": [\"\\\\.git\"]}], \"install_mode\": \"\", \"package\": \"3pp/sources/git/https://go.repo/tool\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/checkout\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_6",
+      "[CLEANUP]/tmp_tmp_5",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -2191,7 +2036,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_6",
+      "[CLEANUP]/tmp_tmp_5",
       "[CACHE]/3pp_cipd/3pp/sources/git/https:/go.repo/tool/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -2405,7 +2250,7 @@
       "-pkg-def",
       "{\"data\": [{\"dir\": \".\", \"exclude\": []}], \"install_mode\": \"copy\", \"package\": \"3pp/pkg/tool/linux-amd64\", \"root\": \"[START_DIR]/3pp/wd/tool/linux-amd64/v1.4.1/out\"}",
       "-out",
-      "[CLEANUP]/tmp_tmp_7",
+      "[CLEANUP]/tmp_tmp_6",
       "-hash-algo",
       "sha256",
       "-json-output",
@@ -2467,7 +2312,7 @@
       "--json-output",
       "/path/to/tmp/json",
       "move",
-      "[CLEANUP]/tmp_tmp_7",
+      "[CLEANUP]/tmp_tmp_6",
       "[CACHE]/3pp_cipd/3pp/pkg/tool/linux-amd64/40-chars-fake-of-the-package-instance_id"
     ],
     "env": {
@@ -2558,10 +2403,6 @@
     ]
   },
   {
-    "failure": {
-      "failure": {},
-      "humanReason": "1 out of 3 aggregated steps failed: Step('building dep.run installation.install.sh [START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/out [START_DIR]/3pp/wd/dep/linux-amd64/1.5.0-rc1/deps_prefix') (retcode: 1)"
-    },
     "name": "$result"
   }
 ]

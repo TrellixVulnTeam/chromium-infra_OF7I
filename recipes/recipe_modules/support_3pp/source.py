@@ -209,41 +209,29 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
         for dep in spec.all_possible_deps
       ])
 
+  # Building a CIPDSpec for source package at resolved version
+  source_cipd_spec = spec.source_cipd_spec(version)
   if source_hash:
-    pkg_name = spec.source_cache
+    # See if source is already cached in cipd
     try:
-      # Looking for source file in source cache before anything
-      test_tags = ['version:1.5.0-rc1',
-                  'external_hash:abcdef0123456789abcdef0123456789abcdef01']
-      source_cache = api.cipd.describe(pkg_name,
-                                      'version:%s' % version,
-                                      test_data_tags=test_tags,
-                                      test_data_refs=())
+      all_tags = source_cipd_spec.resolve_remote_tags()
+    # When source cache miss happens, set step status SUCCESS
     except api.step.StepFailure:  # pragma: no cover
       api.step.active_result.presentation.status = api.step.SUCCESS
     else:
-      if source_cache:
-        tags = source_cache.tags
-        # Add step failure if hashes don't match.
-        step_hash = api.step('Verify External Hash', None)
-        if tags:
-          external_hash = ''
-          for tag in tags:
-            tag_instance = tag.tag
-            if tag_instance.strip().startswith('external_hash:'):
-              external_hash = tag_instance.split(':')[-1]
-              break
-        # TODO(akashmukherjee): Raise an error instead after verifying.
-        if external_hash != source_hash:
-          step_hash.presentation.status = 'FAILURE'
-          step_hash.presentation.step_text = (
-            'resolved version: %s has moved, current hash:%s, source tags: %r, '
-            'please verify.' % (version, source_hash, tags))
-        else:  # pragma: no cover
-          step_hash.presentation.step_text = (
-            'external source verification successful.')
+      external_hash = all_tags.get('external_hash', None)
+      step_hash = api.step('Verify External Hash', None)
+      # TODO(akashmukherjee): Raise an error instead after verifying.
+      if external_hash != source_hash:
+        step_hash.presentation.status = 'FAILURE'
+        step_hash.presentation.step_text = (
+          'resolved version: %s has moved, current hash: %s, stored hash: %s, '
+          'please verify.' % (version, source_hash, external_hash))
+      else:  # pragma: no cover
+        step_hash.presentation.step_text = (
+          'external source verification successful.')
 
-  _do_checkout(api, workdir, spec, version, source_hash)
+  _do_checkout(api, workdir, spec, version, source_hash, source_cipd_spec)
 
   # Iff we are going to do the 'build' operation, copy all the package
   # definition scripts into the checkout. If no build message is provided,
@@ -260,7 +248,8 @@ def fetch_source(api, workdir, spec, version, source_hash, spec_lookup,
 #### Private stuff
 
 
-def _do_checkout(api, workdir, spec, version, source_hash=''):
+def _do_checkout(api, workdir, spec, version, source_hash='',
+                 source_cipd_spec=None):
   method_name, source_method_pb = spec.source_method
   source_pb = spec.create_pb.source
 
@@ -293,8 +282,7 @@ def _do_checkout(api, workdir, spec, version, source_hash=''):
   # TODO: Split checkout into fetch_raw and unpack
   with api.step.nest('upload source to cipd'):
     try:
-      _source_upload(api, spec.source_cache, checkout_dir, method_name,
-                   source_hash, version)
+      _source_upload(checkout_dir, method_name, source_cipd_spec, source_hash)
     except api.step.StepFailure:  # pragma: no cover
       api.step.active_result.presentation.status = api.step.FAILURE
       api.step.active_result.presentation.step_text = 'Could not upload source.'
@@ -342,9 +330,8 @@ def _do_checkout(api, workdir, spec, version, source_hash=''):
       api.git('apply', '-v', *patches)
 
 
-def _source_upload(api, pkg_name, checkout_dir, method_name, external_hash,
-                   version):
-  """Uploads, registers and tags the copy of the source package we have on the
+def _source_upload(checkout_dir, method_name, source_cipd_spec, external_hash):
+  """Builds and uploads the copy of the source package we have on the
   local machine to the CIPD server.
 
   This method will upload source files into CIPD with `infra/3pp/sources`
@@ -353,25 +340,21 @@ def _source_upload(api, pkg_name, checkout_dir, method_name, external_hash,
   when building the same version of a package.
 
   Args:
-    * api: The ThirdPartyPackagesNGApi's `self.m` module collection.
-    * pkg_name: Current 3pp package source cache to use,
-      e.g. infra/3pp/sources/git/repo_url.
     * checkout_dir - The checkout directory we're going to checkout the
       source in.
-    * method_name: Source method in spec protobuf.
-    * external_hash: External source hash, eg. git hash of fetched revision.
-    * version (str) - The symver of the package we want to build (e.g. '1.2.3').
+    * method_name - Source method in spec protobuf.
+    * source_cipd_spec (spec) - CIPDSpec obj for source.
+    * external_hash - Tag the output package with this hash.
   """
   # TODO(akashmukherjee): Update enabling source cache for script and url.
   if method_name != 'git':
     return
-  tags = {'version': version}
-  if external_hash:
-    tags['external_hash'] = external_hash
-  try:
-    # Double check to see that we didn't get scooped by a concurrent recipe.
-    v_str = 'version:%s' % version
-    api.cipd.describe(pkg_name, v_str, test_data_tags=(), test_data_refs=())
-  except api.step.StepFailure:
-    api.step.active_result.presentation.status = api.step.SUCCESS
-    api.cipd.register(pkg_name, checkout_dir, tags=tags, refs=[])
+  # Double checking if source is uploaded by a concurrent recipe
+  if not source_cipd_spec.check():
+    # building the source CIPDSpec into a source type package
+    source_cipd_spec.build(root=checkout_dir,
+                           install_mode=None,
+                           version_file=None,
+                           exclusions=['\.git'])
+    extra_tags = {'external_hash': external_hash}
+    source_cipd_spec.ensure_uploaded(extra_tags=extra_tags)
