@@ -57,7 +57,7 @@ class PeopleList(servlet.Servlet):
       users_by_id = framework_views.MakeAllUserViews(
           mr.cnxn, self.services.user, all_members)
       framework_views.RevealAllEmailsToMembers(
-          mr.cnxn, self.services, mr.auth, users_by_id)
+          mr.cnxn, self.services, mr.auth, users_by_id, mr.project)
 
     # TODO(jrobbins): re-implement FindUntrustedGroups()
     untrusted_user_group_proxies = []
