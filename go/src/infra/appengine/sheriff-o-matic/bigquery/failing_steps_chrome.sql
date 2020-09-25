@@ -35,16 +35,12 @@ WITH
   recent_tests AS (
     SELECT
       SUBSTR(exported.id, 7) as build_id,
-      parent_tag.value as step_name,
-      my_tag.value as test_name,
+      (SELECT value FROM UNNEST((ARRAY_CONCAT(tags, parent.tags))) WHERE key = "step_name" limit 1) as step_name,
+      (SELECT value FROM UNNEST(tags) WHERE key = "test_name") as test_name,
     FROM
-      `RESULTDB_PROJECT.chromium.ci_test_results`,
-      unnest(parent.tags) as parent_tag,
-      unnest(tags) as my_tag
+      `RESULTDB_PROJECT.chromium.ci_test_results`
     WHERE
       partition_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 DAY)
-      AND parent_tag.key = "step_name"
-      AND my_tag.key = "test_name"
     GROUP BY
       build_id,
       step_name,
