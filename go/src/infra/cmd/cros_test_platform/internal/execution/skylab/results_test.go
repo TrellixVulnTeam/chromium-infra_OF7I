@@ -298,7 +298,8 @@ func callTaskResult(autotestResult *skylab_test_runner.Result_Autotest) *steps.E
 				AutotestResult: autotestResult,
 			},
 			LogData: &common.TaskLogData{
-				GsUrl: "gs://some-url",
+				GsUrl:        "gs://some-url",
+				StainlessUrl: "https://stainless.corp.google.com/browse/some-url",
 			},
 		},
 		lifeCycle:      test_platform.TaskState_LIFE_CYCLE_COMPLETED,

@@ -7,9 +7,7 @@ package skylab
 
 import (
 	"context"
-	"fmt"
 	"infra/libs/skylab/request"
-	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"go.chromium.org/chromiumos/infra/proto/go/test_platform"
@@ -216,9 +214,9 @@ func (t *Task) Result() *steps.ExecuteResponse_TaskResult {
 	}
 	if ld := t.result.GetLogData(); ld != nil {
 		r.LogData = proto.Clone(ld).(*common.TaskLogData)
-		if g := r.LogData.GetGsUrl(); strings.HasPrefix(g, "gs://") {
-			r.LogUrl = fmt.Sprintf("https://stainless.corp.google.com/browse/%s", strings.TrimPrefix(g, "gs://"))
-		}
+		// Clients use r.LogUrl to link to logs as it pre-dates the introduction
+		// of r.LogData.StainlessUrl
+		r.LogUrl = r.LogData.StainlessUrl
 	}
 	return r
 }
