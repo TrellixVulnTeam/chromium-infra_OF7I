@@ -227,7 +227,7 @@ func findOncallers(c context.Context, task *model.Task, oncall *config.Oncall, u
 			)
 			task.WriteLog(
 				c, "Found primary oncaller %s of %s",
-				shift.Primary, oncall.Rotation,
+				shift.Primary, name,
 			)
 		}
 	case config.Oncall_SECONDARY:
@@ -237,7 +237,7 @@ func findOncallers(c context.Context, task *model.Task, oncall *config.Oncall, u
 			)
 			task.WriteLog(
 				c, "Found secondary oncaller %s of %s",
-				secondary, oncall.Rotation,
+				secondary, name,
 			)
 		}
 	}
