@@ -25,6 +25,8 @@ type operation struct {
 
 type lroManager struct {
 	mu sync.Mutex
+	// Provide stubs for unimplemented methods
+	longrunning.UnimplementedOperationsServer
 	// Mapping of Operation name to Operation.
 	operations map[string]*operation
 	// expiryStopper signals the expiration goroutine to terminate.
