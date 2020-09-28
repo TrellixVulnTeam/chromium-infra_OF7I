@@ -16,7 +16,6 @@ def cron(name, recipe, execution_timeout = None):
             "cpu": "x86-64",
             "pool": "luci.infra.cron",
             "builderless": "1",
-            "cores": "4",
         },
         properties = {
             "mastername": "chromium.infra.cron",
@@ -36,5 +35,5 @@ def cron(name, recipe, execution_timeout = None):
 cron(
     name = "create-weblayer-skew-tests",
     recipe = "build_weblayer_version_tests_apk_cipd_pkg",
-    execution_timeout = 6 * time.hour,
+    execution_timeout = 2 * time.hour,
 )
