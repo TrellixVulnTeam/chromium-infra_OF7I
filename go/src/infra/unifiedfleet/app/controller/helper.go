@@ -343,6 +343,24 @@ func mergeIPs(olds, news []string) []string {
 	return olds
 }
 
+func mergeZones(oldz, newz []ufspb.Zone) []ufspb.Zone {
+	// Clean up all tags if new input zones are empty
+	if len(newz) == 0 {
+		return nil
+	}
+	zoneMap := make(map[string]ufspb.Zone, 0)
+	for _, z := range append(oldz, newz...) {
+		if z != ufspb.Zone_ZONE_UNSPECIFIED {
+			zoneMap[z.String()] = z
+		}
+	}
+	res := make([]ufspb.Zone, 0, len(zoneMap))
+	for _, v := range zoneMap {
+		res = append(res, v)
+	}
+	return res
+}
+
 func validateMacAddress(ctx context.Context, assetName, macAddr string) error {
 	if macAddr == "" {
 		return nil
@@ -509,8 +527,10 @@ func resetOSFilter(filterMap map[string][]interface{}) map[string][]interface{} 
 
 func resetZoneFilter(filterMap map[string][]interface{}) map[string][]interface{} {
 	if v, ok := filterMap["zone"]; ok {
-		s := util.ToUFSZone(fmt.Sprintf("%s", v[0]))
-		filterMap["zone"] = []interface{}{s.String()}
+		for i, vz := range v {
+			v[i] = util.ToUFSZone(fmt.Sprintf("%s", vz)).String()
+		}
+		filterMap["zone"] = v
 	}
 	return filterMap
 }

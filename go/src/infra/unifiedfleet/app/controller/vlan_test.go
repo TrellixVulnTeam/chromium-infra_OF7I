@@ -59,7 +59,9 @@ func TestCreateVlan(t *testing.T) {
 		})
 
 		Convey("Create vlan - happy path", func() {
-			resp, err := CreateVlan(ctx, mockVlan("create-vlan-1", "192.168.100.0/27"))
+			vlan1 := mockVlan("create-vlan-1", "192.168.100.0/27")
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+			resp, err := CreateVlan(ctx, vlan1)
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "create-vlan-1")
 			So(resp.GetVlanAddress(), ShouldEqual, "192.168.100.0/27")
@@ -67,6 +69,7 @@ func TestCreateVlan(t *testing.T) {
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_SERVING)
 			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "192.168.100.11")
 			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "192.168.100.30")
+			So(resp.GetZones(), ShouldHaveLength, 2)
 
 			s, err := state.GetStateRecord(ctx, "vlans/create-vlan-1")
 			So(err, ShouldBeNil)
@@ -220,6 +223,26 @@ func TestUpdateVlan(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(resIPs, ShouldHaveLength, 1)
 		})
+
+		Convey("Update vlan - partial update zones - happy path", func() {
+			vlan1 := mockVlan("update-vlan-6", "6.6.6.0/27")
+			vlan1.Description = "before update"
+			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_ATL97}
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.Zones = []ufspb.Zone{ufspb.Zone_ZONE_ATL97, ufspb.Zone_ZONE_MTV96}
+			res, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"zones"}})
+			So(err, ShouldBeNil)
+			So(res.GetZones(), ShouldHaveLength, 2)
+			So(res.GetZones(), ShouldContain, ufspb.Zone_ZONE_ATL97)
+			So(res.GetZones(), ShouldContain, ufspb.Zone_ZONE_MTV96)
+
+			vlan3 := mockVlan("update-vlan-6", "")
+			res, err = UpdateVlan(ctx, vlan3, &field_mask.FieldMask{Paths: []string{"zones"}})
+			So(err, ShouldBeNil)
+			So(res.GetZones(), ShouldHaveLength, 0)
+		})
 	})
 }
 
@@ -230,6 +253,10 @@ func TestListVlans(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		vlan1 := mockVlan("", "")
 		vlan1.Name = fmt.Sprintf("vlan-%d", i)
+		vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV96}
+		if i == 0 {
+			vlan1.Zones = append(vlan1.Zones, ufspb.Zone_ZONE_IAD97)
+		}
 		resp, _ := configuration.CreateVlan(ctx, vlan1)
 		vlans = append(vlans, resp)
 	}
@@ -244,6 +271,17 @@ func TestListVlans(t *testing.T) {
 			resp, _, _ := ListVlans(ctx, 5, "", "", false)
 			So(resp, ShouldNotBeNil)
 			So(resp, ShouldResembleProto, vlans)
+		})
+
+		Convey("ListVlans - list by zones - happy path", func() {
+			resp, _, err := ListVlans(ctx, 5, "", "zone = iad97", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 1)
+			So(resp[0].GetName(), ShouldEqual, "vlan-0")
+
+			resp, _, err = ListVlans(ctx, 5, "", "zone = mtv96", false)
+			So(err, ShouldBeNil)
+			So(resp, ShouldHaveLength, 4)
 		})
 	})
 }

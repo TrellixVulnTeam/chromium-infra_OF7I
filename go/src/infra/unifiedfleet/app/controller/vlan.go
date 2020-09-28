@@ -147,6 +147,7 @@ func ListVlans(ctx context.Context, pageSize int32, pageToken, filter string, ke
 		}
 	}
 	filterMap = resetStateFilter(filterMap)
+	filterMap = resetZoneFilter(filterMap)
 	return configuration.ListVlans(ctx, pageSize, pageToken, filterMap, keysOnly)
 }
 
@@ -495,6 +496,7 @@ func validateVlanUpdateMask(ctx context.Context, vlan *ufspb.Vlan, mask *field_m
 			case "tags":
 				// valid fields, nothing to validate.
 			case "reserved_ips":
+			case "zones":
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateVlanUpdateMask - unsupported update mask path %q", path)
 			}
@@ -516,6 +518,8 @@ func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_ma
 			oldVlan.ResourceState = vlan.GetResourceState()
 		case "reserved_ips":
 			oldVlan.ReservedIps = mergeIPs(oldVlan.ReservedIps, vlan.GetReservedIps())
+		case "zones":
+			oldVlan.Zones = mergeZones(oldVlan.GetZones(), vlan.GetZones())
 		}
 	}
 	return oldVlan, nil

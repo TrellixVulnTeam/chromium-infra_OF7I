@@ -26,10 +26,11 @@ const VlanKind string = "Vlan"
 
 // VlanEntity is a datastore entity that tvlans Vlan.
 type VlanEntity struct {
-	_kind     string `gae:"$kind,Vlan"`
-	ID        string `gae:"$id"`
-	State     string `gae:"state"`
-	CidrBlock string `gae:"cidr_block"`
+	_kind     string   `gae:"$kind,Vlan"`
+	ID        string   `gae:"$id"`
+	State     string   `gae:"state"`
+	CidrBlock string   `gae:"cidr_block"`
+	Zones     []string `gae:"zone"`
 	// ufspb.Vlan cannot be directly used as it contains pointer.
 	Vlan []byte `gae:",noindex"`
 }
@@ -52,10 +53,15 @@ func newVlanEntity(ctx context.Context, pm proto.Message) (ufsds.FleetEntity, er
 	if err != nil {
 		return nil, errors.Annotate(err, "fail to marshal Vlan %s", p).Err()
 	}
+	zones := make([]string, len(p.GetZones()))
+	for i, z := range p.GetZones() {
+		zones[i] = z.String()
+	}
 	return &VlanEntity{
 		ID:        p.GetName(),
 		State:     p.GetResourceState().String(),
 		CidrBlock: p.GetVlanAddress(),
+		Zones:     zones,
 		Vlan:      vlan,
 	}, nil
 }
@@ -251,8 +257,10 @@ func GetVlanIndexedFieldName(input string) (string, error) {
 	switch strings.ToLower(input) {
 	case util.StateFilterName:
 		field = "state"
+	case util.ZoneFilterName:
+		field = "zone"
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for vlan are state", input)
+		return "", status.Errorf(codes.InvalidArgument, "Invalid field name %s - field name for vlan are state/zone", input)
 	}
 	return field, nil
 }
