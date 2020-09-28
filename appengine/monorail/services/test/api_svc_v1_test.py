@@ -12,13 +12,11 @@ import datetime
 import endpoints
 import logging
 from mock import Mock, patch, ANY
-import os
 import time
 import unittest
 import webtest
 
 from google.appengine.api import oauth
-from google.appengine.ext import testbed
 from protorpc import messages
 from protorpc import message_types
 
@@ -175,10 +173,6 @@ class MonorailApiTest(testing.EndpointsTestCase):
   def setUp(self):
     super(MonorailApiTest, self).setUp()
     # Load queue.yaml.
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname( __file__ )))
-
     self.requester = RequesterMock(email='requester@example.com')
     self.mock(endpoints, 'get_current_user', lambda: self.requester)
     self.config = None
@@ -352,7 +346,8 @@ class MonorailApiTest(testing.EndpointsTestCase):
     with self.call_should_fail(403):
       self.call_api('issues_insert', self.request)
 
-  def testIssuesInsert_CreateIssue(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testIssuesInsert_CreateIssue(self, _create_task_mock):
     """Create an issue as requested."""
 
     self.services.project.TestAddProject(
@@ -393,7 +388,8 @@ class MonorailApiTest(testing.EndpointsTestCase):
         'fake cnxn', new_issue.issue_id)
     self.assertIn(111, starrers)
 
-  def testIssuesInsert_EmptyOwnerCcNames(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testIssuesInsert_EmptyOwnerCcNames(self, _create_task_mock):
     """Create an issue as requested."""
 
     self.services.project.TestAddProject(
@@ -671,7 +667,8 @@ class MonorailApiTest(testing.EndpointsTestCase):
     with self.call_should_fail(400):
       self.call_api('issues_comments_insert', self.request)
 
-  def testIssuesCommentsInsert_MergeInto(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testIssuesCommentsInsert_MergeInto(self, _create_task_mock):
     """Insert comment that merges an issue into another issue."""
 
     self.services.project.TestAddProject(

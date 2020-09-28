@@ -9,7 +9,6 @@ from __future__ import division
 from __future__ import absolute_import
 
 import mox
-import os
 import time
 import unittest
 
@@ -36,13 +35,9 @@ class IssueEntryTest(unittest.TestCase):
   def setUp(self):
     self.testbed = testbed.Testbed()
     self.testbed.activate()
-    self.testbed.init_taskqueue_stub()
     self.testbed.init_memcache_stub()
     self.testbed.init_datastore_v3_stub()
     # Load queue.yaml.
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname( __file__ )))
 
     self.services = service_manager.Services(
         config=fake.ConfigService(),
@@ -567,7 +562,8 @@ class IssueEntryTest(unittest.TestCase):
          'is_privileged_domain_user': None},
         help_data)
 
-  def testProcessFormData_RedirectToEnteredIssue(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_RedirectToEnteredIssue(self, _create_task_mock):
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/issues/entry', project=self.project)
     mr.auth.user_view = framework_views.StuffUserView(100, 'user@invalid', True)
@@ -585,7 +581,8 @@ class IssueEntryTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertTrue('/p/proj/issues/detail?id=' in url)
 
-  def testProcessFormData_AcceptWithFields(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_AcceptWithFields(self, _create_task_mock):
     """We can create new issues with custom fields (restricted or not)."""
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/issues/entry', project=self.project)
@@ -665,7 +662,9 @@ class IssueEntryTest(unittest.TestCase):
     self.assertEqual(field_values[0].int_value, 3)
     self.assertEqual(field_values[1].int_value, 7)
 
-  def testProcessFormData_AcceptEnforceTemplateRestrictedDefaultValues(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_AcceptEnforceTemplateRestrictedDefaultValues(
+      self, _create_task_mock):
     """The template applies default vals on fields that the user cannot edit."""
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/issues/entry', project=self.project)
@@ -940,7 +939,8 @@ class IssueEntryTest(unittest.TestCase):
     self.assertEqual('Not in your hotlist(s): U1:H2', mr.errors.hotlists)
     self.assertIsNone(url)
 
-  def testProcessFormData_TemplateNameMissing(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_TemplateNameMissing(self, _create_task_mock):
     """POST doesn't fail if no template_name is passed."""
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/issues/entry', project=self.project)
@@ -962,7 +962,8 @@ class IssueEntryTest(unittest.TestCase):
     self.mox.VerifyAll()
     self.assertTrue('/p/proj/issues/detail?id=' in url)
 
-  def testProcessFormData_AcceptsFederatedReferences(self):
+  @patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_AcceptsFederatedReferences(self, _create_task_mock):
     """ProcessFormData accepts federated references."""
     mr = testing_helpers.MakeMonorailRequest(
         path='/p/proj/issues/entry', project=self.project)

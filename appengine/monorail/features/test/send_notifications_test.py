@@ -8,11 +8,10 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import os
+import mock
 import unittest
 import urllib
-
-from google.appengine.ext import testbed
+import urlparse
 
 from features import send_notifications
 from framework import urls
@@ -21,18 +20,16 @@ from tracker import tracker_bizobj
 
 class SendNotificationTest(unittest.TestCase):
 
-  def setUp(self):
-    self.testbed = testbed.Testbed()
-    self.testbed.activate()
-    self.testbed.init_taskqueue_stub()
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname( __file__ )))
+  def get_filtered_task_call_args(self, create_task_mock, relative_uri):
+    return [
+        (args, _kwargs)
+        for (args, _kwargs) in create_task_mock.call_args_list
+        if args[0]['app_engine_http_request']['relative_uri'].startswith(
+            relative_uri)
+    ]
 
-  def tearDown(self):
-    self.testbed.deactivate()
-
-  def testPrepareAndSendIssueChangeNotification(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testPrepareAndSendIssueChangeNotification(self, create_task_mock):
     send_notifications.PrepareAndSendIssueChangeNotification(
         issue_id=78901,
         hostport='testbed-test.appspotmail.com',
@@ -40,11 +37,12 @@ class SendNotificationTest(unittest.TestCase):
         old_owner_id=2,
         send_email=True)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.NOTIFY_ISSUE_CHANGE_TASK + '.do')
-    self.assertEqual(1, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.NOTIFY_ISSUE_CHANGE_TASK + '.do')
+    self.assertEqual(1, len(call_args_list))
 
-  def testPrepareAndSendIssueBlockingNotification(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testPrepareAndSendIssueBlockingNotification(self, create_task_mock):
     send_notifications.PrepareAndSendIssueBlockingNotification(
         issue_id=78901,
         hostport='testbed-test.appspotmail.com',
@@ -52,9 +50,9 @@ class SendNotificationTest(unittest.TestCase):
         commenter_id=1,
         send_email=True)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do')
-    self.assertEqual(0, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do')
+    self.assertEqual(0, len(call_args_list))
 
     send_notifications.PrepareAndSendIssueBlockingNotification(
         issue_id=78901,
@@ -63,19 +61,21 @@ class SendNotificationTest(unittest.TestCase):
         commenter_id=1,
         send_email=True)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do')
-    self.assertEqual(1, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do')
+    self.assertEqual(1, len(call_args_list))
 
-  def testPrepareAndSendApprovalChangeNotification(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testPrepareAndSendApprovalChangeNotification(self, create_task_mock):
     send_notifications.PrepareAndSendApprovalChangeNotification(
         78901, 3, 'testbed-test.appspotmail.com', 55)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.NOTIFY_APPROVAL_CHANGE_TASK + '.do')
-    self.assertEqual(1, len(tasks))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.NOTIFY_APPROVAL_CHANGE_TASK + '.do')
+    self.assertEqual(1, len(call_args_list))
 
-  def testSendIssueBulkChangeNotification_CommentOnly(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testSendIssueBulkChangeNotification_CommentOnly(self, create_task_mock):
     send_notifications.SendIssueBulkChangeNotification(
         issue_ids=[78901],
         hostport='testbed-test.appspotmail.com',
@@ -86,15 +86,20 @@ class SendNotificationTest(unittest.TestCase):
         send_email=True,
         users_by_id=2)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.NOTIFY_BULK_CHANGE_TASK + '.do')
-    self.assertEqual(1, len(tasks))
-    params = dict(urllib.unquote_plus(item).split('=')
-                  for item in tasks[0].payload.split('&'))
-    self.assertEqual('comment', params['comment_text'])
-    self.assertEqual('', params['amendments'])
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.NOTIFY_BULK_CHANGE_TASK + '.do')
+    self.assertEqual(1, len(call_args_list))
+    (args, _kwargs) = call_args_list[0]
+    relative_uri = args[0]['app_engine_http_request']['relative_uri']
+    parse_result = urlparse.urlparse(relative_uri)
+    params = {
+        k: v[0] for k, v in urlparse.parse_qs(parse_result.query, True).items()
+    }
+    self.assertEqual(params['comment_text'], 'comment')
+    self.assertEqual(params['amendments'], '')
 
-  def testSendIssueBulkChangeNotification_Normal(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testSendIssueBulkChangeNotification_Normal(self, create_task_mock):
     send_notifications.SendIssueBulkChangeNotification(
         issue_ids=[78901],
         hostport='testbed-test.appspotmail.com',
@@ -109,27 +114,31 @@ class SendNotificationTest(unittest.TestCase):
         send_email=True,
         users_by_id=2)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.NOTIFY_BULK_CHANGE_TASK + '.do')
-    self.assertEqual(1, len(tasks))
-    params = dict(urllib.unquote_plus(item).split('=')
-                  for item in tasks[0].payload.split('&'))
-    self.assertEqual('comment', params['comment_text'])
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.NOTIFY_BULK_CHANGE_TASK + '.do')
+    self.assertEqual(1, len(call_args_list))
+    (args, _kwargs) = call_args_list[0]
+    relative_uri = args[0]['app_engine_http_request']['relative_uri']
+    parse_result = urlparse.urlparse(relative_uri)
+    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
+    self.assertEqual(params['comment_text'], 'comment')
     self.assertEqual(
-        ['    Status: New',
-         '    Labels: -Removed Added'],
-        params['amendments'].split('\n'))
+        params['amendments'].split('\n'),
+        ['    Status: New', '    Labels: -Removed Added'])
 
-  def testPrepareAndSendDeletedFilterRulesNotifications(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testPrepareAndSendDeletedFilterRulesNotifications(self, create_task_mock):
     filter_rule_strs = ['if yellow make orange', 'if orange make blue']
     send_notifications.PrepareAndSendDeletedFilterRulesNotification(
         789, 'testbed-test.appspotmail.com', filter_rule_strs)
 
-    tasks = self.taskqueue_stub.get_filtered_tasks(
-        url=urls.NOTIFY_RULES_DELETED_TASK + '.do')
-    self.assertEqual(1, len(tasks))
-    params = dict(urllib.unquote_plus(item).split('=')
-                  for item in tasks[0].payload.split('&'))
+    call_args_list = self.get_filtered_task_call_args(
+        create_task_mock, urls.NOTIFY_RULES_DELETED_TASK + '.do')
+    self.assertEqual(1, len(call_args_list))
+    (args, _kwargs) = call_args_list[0]
+    relative_uri = args[0]['app_engine_http_request']['relative_uri']
+    parse_result = urlparse.urlparse(relative_uri)
+    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
     self.assertEqual(params['project_id'], '789')
-    self.assertEqual(params['filter_rules'],
-                     'if yellow make orange,if orange make blue')
+    self.assertEqual(
+        params['filter_rules'], 'if yellow make orange,if orange make blue')

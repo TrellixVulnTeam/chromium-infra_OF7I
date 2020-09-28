@@ -8,12 +8,12 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import mock
 import os
 import unittest
 import webapp2
 
 from google.appengine.api import memcache
-from google.appengine.api import taskqueue
 from google.appengine.ext import testbed
 
 from framework import exceptions
@@ -59,12 +59,8 @@ class IssueBulkEditTest(unittest.TestCase):
 
     self.testbed = testbed.Testbed()
     self.testbed.activate()
-    self.testbed.init_taskqueue_stub()
     self.testbed.init_memcache_stub()
     self.testbed.init_datastore_v3_stub()
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname( __file__ )))
 
     self.mocked_methods = {}
 
@@ -209,7 +205,8 @@ class IssueBulkEditTest(unittest.TestCase):
     page_data = self.servlet.GatherPageData(mr)
     self.assertEqual(1, len(page_data['fields']))
 
-  def testProcessFormData(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData(self, _create_task_mock):
     """Test that PFD works in a normal no-corner-cases case."""
     created_issue_1 = fake.MakeTestIssue(
         789, 1, 'issue summary', 'New', 111, reporter_id=111)
@@ -352,7 +349,8 @@ class IssueBulkEditTest(unittest.TestCase):
     self.servlet.ProcessFormData(mr, post_data)
     self.assertEqual('User not found.', mr.errors.custom_fields[0].message)
 
-  def testProcessFormData_CustomFields(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_CustomFields(self, _create_task_mock):
     """Test PFD processes edits to custom fields."""
     created_issue_1 = fake.MakeTestIssue(
         789, 1, 'issue summary', 'New', 111, reporter_id=111)
@@ -386,7 +384,8 @@ class IssueBulkEditTest(unittest.TestCase):
         (tracker_pb2.FieldID.CUSTOM, '10'),
         self.GetFirstAmendment(789, local_id_1))
 
-  def testProcessFormData_RestrictedCustomFieldsAccept(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_RestrictedCustomFieldsAccept(self, _create_task_mock):
     """We accept edits to restricted fields by editors (or admins)."""
     created_issue_1 = fake.MakeTestIssue(
         789, 1, 'issue summary', 'New', 111, reporter_id=111)
@@ -627,7 +626,8 @@ class IssueBulkEditTest(unittest.TestCase):
     self.servlet.ProcessFormData(mr, post_data)
     self.assertEqual('Please enter an issue ID', mr.errors.merge_into_id)
 
-  def testProcessFormData_DuplicateStatus_Success(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_DuplicateStatus_Success(self, _create_task_mock):
     """Test PFD processes null/cleared status values."""
     created_issue_1 = fake.MakeTestIssue(
         789, 1, 'issue summary', 'New', 111, reporter_id=111)
@@ -708,7 +708,8 @@ class IssueBulkEditTest(unittest.TestCase):
                       self.services.issue_star.LookupItemStarrers(
                           self.cnxn, merge_into_issue.issue_id))
 
-  def testProcessFormData_ClearStatus(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_ClearStatus(self, _create_task_mock):
     """Test PFD processes null/cleared status values."""
     created_issue_1 = fake.MakeTestIssue(
         789, 1, 'issue summary', 'New', 111, reporter_id=111)
@@ -747,7 +748,8 @@ class IssueBulkEditTest(unittest.TestCase):
     self.servlet.ProcessFormData(mr, post_data)
     self.assertTrue(mr.errors.AnyErrors())
 
-  def testProcessFormData_MoveTo(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_MoveTo(self, _create_task_mock):
     """Test PFD processes move_to values."""
     created_issue_1 = fake.MakeTestIssue(
         789, 1, 'issue summary', 'New', 111, reporter_id=111)
@@ -826,7 +828,8 @@ class IssueBulkEditTest(unittest.TestCase):
     self.assertEqual('Cannot block an issue on itself.', mr.errors.blocked_on)
     self.assertEqual('Cannot block an issue on itself.', mr.errors.blocking)
 
-  def testProcessFormData_NormalBlockIssues(self):
+  @mock.patch('framework.cloud_tasks_helpers.create_task')
+  def testProcessFormData_NormalBlockIssues(self, _create_task_mock):
     """Test PFD processes blocked_on and blocking values."""
     created_issue_1 = fake.MakeTestIssue(
         789, 1, 'issue summary', 'New', 111, reporter_id=111)

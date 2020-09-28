@@ -10,10 +10,10 @@ from __future__ import absolute_import
 
 
 import logging
-
-from google.appengine.api import taskqueue
+import urllib
 
 from features import features_constants
+from framework import cloud_tasks_helpers
 from framework import framework_constants
 from framework import urls
 from tracker import tracker_bizobj
@@ -38,13 +38,25 @@ def PrepareAndSendIssueChangeNotification(
   params = dict(
       issue_id=issue_id, commenter_id=commenter_id, comment_id=comment_id,
       hostport=hostport, old_owner_id=old_owner_id, send_email=int(send_email))
-  logging.info('adding notify task with params %r', params)
-  taskqueue.add(
-      url=urls.NOTIFY_ISSUE_CHANGE_TASK + '.do', params=params,
-      queue_name=features_constants.QUEUE_NOTIFICATIONS)
-  taskqueue.add(
-      url=urls.PUBLISH_PUBSUB_ISSUE_CHANGE_TASK + '.do', params=params,
-      queue_name=features_constants.QUEUE_PUBSUB)
+  url_params = urllib.urlencode(params)
+  task = {
+      'app_engine_http_request':
+          {
+              'relative_uri':
+                  urls.NOTIFY_ISSUE_CHANGE_TASK + '.do?' + url_params
+          }
+  }
+  cloud_tasks_helpers.create_task(
+      task, queue=features_constants.QUEUE_NOTIFICATIONS)
+
+  task = {
+      'app_engine_http_request':
+          {
+              'relative_uri':
+                  urls.PUBLISH_PUBSUB_ISSUE_CHANGE_TASK + '.do?' + url_params
+          }
+  }
+  cloud_tasks_helpers.create_task(task, queue=features_constants.QUEUE_PUBSUB)
 
 
 def PrepareAndSendIssueBlockingNotification(
@@ -58,10 +70,16 @@ def PrepareAndSendIssueBlockingNotification(
       send_email=int(send_email),
       delta_blocker_iids=','.join(str(iid) for iid in delta_blocker_iids))
 
-  logging.info('adding blocking task with params %r', params)
-  taskqueue.add(
-      url=urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do', params=params,
-      queue_name=features_constants.QUEUE_NOTIFICATIONS)
+  task = {
+      'app_engine_http_request':
+          {
+              'relative_uri':
+                  urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do?' +
+                  urllib.urlencode(params)
+          }
+  }
+  cloud_tasks_helpers.create_task(
+      task, queue=features_constants.QUEUE_NOTIFICATIONS)
 
 
 def PrepareAndSendApprovalChangeNotification(
@@ -72,10 +90,16 @@ def PrepareAndSendApprovalChangeNotification(
       issue_id=issue_id, approval_id=approval_id, hostport=hostport,
       comment_id=comment_id, send_email=int(send_email))
 
-  logging.info('adding approval notify task with params %r', params)
-  taskqueue.add(
-      url=urls.NOTIFY_APPROVAL_CHANGE_TASK + '.do', params=params,
-      queue_name=features_constants.QUEUE_NOTIFICATIONS)
+  task = {
+      'app_engine_http_request':
+          {
+              'relative_uri':
+                  urls.NOTIFY_APPROVAL_CHANGE_TASK + '.do?' +
+                  urllib.urlencode(params)
+          }
+  }
+  cloud_tasks_helpers.create_task(
+      task, queue=features_constants.QUEUE_NOTIFICATIONS)
 
 
 def SendIssueBulkChangeNotification(
@@ -96,10 +120,16 @@ def SendIssueBulkChangeNotification(
       old_owner_ids=','.join(str(uid) for uid in old_owner_ids),
       comment_text=comment_text, amendments='\n'.join(amendment_lines))
 
-  logging.info('adding bulk task with params %r', params)
-  taskqueue.add(
-      url=urls.NOTIFY_BULK_CHANGE_TASK + '.do', params=params,
-      queue_name=features_constants.QUEUE_NOTIFICATIONS)
+  task = {
+      'app_engine_http_request':
+          {
+              'relative_uri':
+                  urls.NOTIFY_BULK_CHANGE_TASK + '.do?' +
+                  urllib.urlencode(params)
+          }
+  }
+  cloud_tasks_helpers.create_task(
+      task, queue=features_constants.QUEUE_NOTIFICATIONS)
 
 
 def PrepareAndSendDeletedFilterRulesNotification(
@@ -110,7 +140,13 @@ def PrepareAndSendDeletedFilterRulesNotification(
       project_id=project_id, filter_rules=','.join(filter_rule_strs),
       hostport=hostport)
 
-  logging.info('adding task with params %r', params)
-  taskqueue.add(
-      url=urls.NOTIFY_RULES_DELETED_TASK + '.do', params=params,
-      queue_name=features_constants.QUEUE_NOTIFICATIONS)
+  task = {
+      'app_engine_http_request':
+          {
+              'relative_uri':
+                  urls.NOTIFY_RULES_DELETED_TASK + '.do?' +
+                  urllib.urlencode(params)
+          }
+  }
+  cloud_tasks_helpers.create_task(
+      task, queue=features_constants.QUEUE_NOTIFICATIONS)
