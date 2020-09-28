@@ -509,81 +509,88 @@ def GenTests(api):
                   [s1] + [_create_step_data(h, v)
                           for h, v in zip(hashes, versions)])
 
-  yield (api.test('basic') +
-         api.properties(submit_cl=True,
-                        total_cq_checks=2,
-                        interval_between_checks_in_secs=60) +
-         api.step_data('Read %s' % VARIANTS_PYL_PATH,
-             api.file.read_text(TEST_VARIANTS_PYL)) +
-         url_lib_json_step_datas(
-             ['84.0.4147.89', '84.0.4147.56', '83.0.4103.96', '81.0.1111.40']) +
-         cipd_step_data('83.0.4103.96') +
-         chrome_version_step_data('83.0.4103.96') +
-         api.path.exists(api.path['cleanup'].join('binaries')) +
-         cipd_step_data('84.0.4147.89') +
-         chrome_version_step_data('84.0.4147.89') +
-         land_cl_step_datas(['commit', 'closed']))
+  yield api.test(
+      'basic',
+      api.properties(submit_cl=True,
+                     total_cq_checks=2,
+                     interval_between_checks_in_secs=60) +
+      api.step_data('Read %s' % VARIANTS_PYL_PATH,
+          api.file.read_text(TEST_VARIANTS_PYL)) +
+      url_lib_json_step_datas(
+          ['84.0.4147.89', '84.0.4147.56', '83.0.4103.96', '81.0.1111.40']) +
+      cipd_step_data('83.0.4103.96') +
+      chrome_version_step_data('83.0.4103.96') +
+      api.path.exists(api.path['cleanup'].join('binaries')) +
+      cipd_step_data('84.0.4147.89') +
+      chrome_version_step_data('84.0.4147.89') +
+      land_cl_step_datas(['commit', 'closed']))
 
-  yield (api.test('only-build-new-milestone-released') +
-         api.properties(submit_cl=True,
-                        total_cq_checks=2,
-                        interval_between_checks_in_secs=60) +
-         api.step_data('Read %s' % VARIANTS_PYL_PATH,
-             api.file.read_text(TEST_VARIANTS_PYL)) +
-         url_lib_json_step_datas(['84.0.4147.89']) +
-         cipd_step_data('84.0.4147.89') +
-         chrome_version_step_data('84.0.4147.89') +
-         api.path.exists(api.path['cleanup'].join('binaries')) +
-         land_cl_step_datas(['commit', 'closed']))
+  yield api.test(
+      'only-build-new-milestone-released',
+      api.properties(submit_cl=True,
+                     total_cq_checks=2,
+                     interval_between_checks_in_secs=60) +
+      api.step_data('Read %s' % VARIANTS_PYL_PATH,
+          api.file.read_text(TEST_VARIANTS_PYL)) +
+      url_lib_json_step_datas(['84.0.4147.89']) +
+      cipd_step_data('84.0.4147.89') +
+      chrome_version_step_data('84.0.4147.89') +
+      api.path.exists(api.path['cleanup'].join('binaries')) +
+      land_cl_step_datas(['commit', 'closed']))
 
-  yield (api.test('version-already-exists-only-upload-cl') +
-         api.properties(submit_cl=True,
-                        total_cq_checks=2,
-                        interval_between_checks_in_secs=60) +
-         api.step_data('Read %s' % VARIANTS_PYL_PATH,
-             api.file.read_text(TEST_VARIANTS_PYL)) +
-         url_lib_json_step_datas(['84.0.4147.89']) +
-         cipd_step_data('84.0.4147.89', 1) +
-         land_cl_step_datas(['commit', 'closed']))
+  yield api.test(
+      'version-already-exists-only-upload-cl',
+      api.properties(submit_cl=True,
+                     total_cq_checks=2,
+                     interval_between_checks_in_secs=60) +
+      api.step_data('Read %s' % VARIANTS_PYL_PATH,
+          api.file.read_text(TEST_VARIANTS_PYL)) +
+      url_lib_json_step_datas(['84.0.4147.89']) +
+      cipd_step_data('84.0.4147.89', 1) +
+      land_cl_step_datas(['commit', 'closed']))
 
-  yield (api.test('build-fails') +
-         api.properties(submit_cl=True,
-                        total_cq_checks=2,
-                        interval_between_checks_in_secs=60) +
-         api.step_data('Read %s' % VARIANTS_PYL_PATH,
-             api.file.read_text(TEST_VARIANTS_PYL)) +
-         url_lib_json_step_datas(['84.0.4147.89']) +
-         cipd_step_data('84.0.4147.89') +
-         chrome_version_step_data('84.0.4147.89') +
-         api.step_data(('Maybe build and upload CIPD package for %s.'
-                        'Building weblayer_instrumentation_test_apk') %
-                       '84.0.4147.89',
-                       retcode=1)  +
-         api.path.exists(api.path['cleanup'].join('binaries')))
+  yield api.test(
+      'build-fails',
+      api.properties(submit_cl=True,
+                     total_cq_checks=2,
+                     interval_between_checks_in_secs=60) +
+      api.step_data('Read %s' % VARIANTS_PYL_PATH,
+          api.file.read_text(TEST_VARIANTS_PYL)) +
+      url_lib_json_step_datas(['84.0.4147.89']) +
+      cipd_step_data('84.0.4147.89') +
+      chrome_version_step_data('84.0.4147.89') +
+      api.step_data(('Maybe build and upload CIPD package for %s.'
+                     'Building weblayer_instrumentation_test_apk') %
+                    '84.0.4147.89',
+                    retcode=1)  +
+      api.path.exists(api.path['cleanup'].join('binaries')))
 
-  yield (api.test('abandon-cl-after-time-out') +
-         api.properties(submit_cl=True,
-                        total_cq_checks=2,
-                        interval_between_checks_in_secs=60) +
-         api.step_data('Read %s' % VARIANTS_PYL_PATH,
-             api.file.read_text(TEST_VARIANTS_PYL)) +
-         url_lib_json_step_datas(['84.0.4147.89']) +
-         cipd_step_data('84.0.4147.89') +
-         chrome_version_step_data('84.0.4147.89') +
-         api.path.exists(api.path['cleanup'].join('binaries')))
+  yield api.test(
+      'abandon-cl-after-time-out',
+      api.properties(submit_cl=True,
+                     total_cq_checks=2,
+                     interval_between_checks_in_secs=60) +
+      api.step_data('Read %s' % VARIANTS_PYL_PATH,
+          api.file.read_text(TEST_VARIANTS_PYL)) +
+      url_lib_json_step_datas(['84.0.4147.89']) +
+      cipd_step_data('84.0.4147.89') +
+      chrome_version_step_data('84.0.4147.89') +
+      api.path.exists(api.path['cleanup'].join('binaries')))
 
-  yield (api.test('malformed-chromium-version') +
-         api.expect_exception('ValueError') +
-         api.step_data('Read %s' % VARIANTS_PYL_PATH,
-             api.file.read_text(TEST_VARIANTS_PYL)) +
-         url_lib_json_step_datas(['84.0.4147.89']) +
-         cipd_step_data('84.0.4147.89') +
-         api.step_data(('Maybe build and upload CIPD package for %s.'
-                        'Reading //chrome/VERSION') % '84.0.4147.89',
-                       api.file.read_text('=abd\n=0\n=4147\n=89')) +
-         api.post_process(post_process.DropExpectation))
+  yield api.test(
+      'malformed-chromium-version',
+      api.expect_exception('ValueError') +
+      api.step_data('Read %s' % VARIANTS_PYL_PATH,
+          api.file.read_text(TEST_VARIANTS_PYL)) +
+      url_lib_json_step_datas(['84.0.4147.89']) +
+      cipd_step_data('84.0.4147.89') +
+      api.step_data(('Maybe build and upload CIPD package for %s.'
+                     'Reading //chrome/VERSION') % '84.0.4147.89',
+                    api.file.read_text('=abd\n=0\n=4147\n=89')) +
+      api.post_process(post_process.DropExpectation))
 
-  yield (api.test('build-no-cipd-pkgs') +
-         api.step_data('Read %s' % VARIANTS_PYL_PATH,
-             api.file.read_text(TEST_VARIANTS_PYL)) +
-         url_lib_json_step_datas(['83.0.4103.56']))
+  yield api.test(
+      'build-no-cipd-pkgs',
+      api.step_data('Read %s' % VARIANTS_PYL_PATH,
+          api.file.read_text(TEST_VARIANTS_PYL)) +
+      url_lib_json_step_datas(['83.0.4103.56']))
