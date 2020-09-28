@@ -7,7 +7,6 @@
 package request
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -53,7 +52,7 @@ type Args struct {
 	Priority          int64
 	ParentTaskID      string
 	ParentRequestUID  string
-	//Pubsub Topic for status updates on the tests run for the request
+	// Pubsub Topic for status updates on the tests run for the request
 	StatusTopic string
 	// Test describes the test to be run.
 	TestRunnerRequest *skylab_test_runner.Request
@@ -89,7 +88,7 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 		return nil, errors.Annotate(err, "create bb request").Err()
 	}
 
-	return &buildbucket_pb.ScheduleBuildRequest{
+	br := &buildbucket_pb.ScheduleBuildRequest{
 		Builder:    b,
 		Properties: props,
 		Tags:       tags,
@@ -98,13 +97,13 @@ func (a *Args) NewBBRequest(b *buildbucket_pb.BuilderID) (*buildbucket_pb.Schedu
 		Swarming: &buildbucket_pb.ScheduleBuildRequest_Swarming{
 			ParentRunId: a.ParentTaskID,
 		},
-		Notify: newNotificationConfig(
-			a.StatusTopic,
-			constructMessagePayload(
-				&MessagePayload{a.ParentRequestUID},
-			),
-		),
-	}, nil
+	}
+	if a.StatusTopic != "" {
+		br.Notify = &buildbucket_pb.NotificationConfig{
+			PubsubTopic: a.StatusTopic,
+		}
+	}
+	return br, nil
 }
 
 // getBBDimensions returns both required and optional dimensions that will be
@@ -345,12 +344,4 @@ func schedulableLabelsToPairs(inv *inventory.SchedulableLabels) []*swarming.Swar
 		}
 	}
 	return pairs
-}
-
-func constructMessagePayload(p *MessagePayload) []byte {
-	data, err := json.Marshal(p)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to marshal the payload: %v", err))
-	}
-	return data
 }

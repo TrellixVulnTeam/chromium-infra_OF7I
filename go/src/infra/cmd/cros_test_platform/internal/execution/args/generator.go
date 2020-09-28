@@ -47,6 +47,8 @@ type Generator struct {
 	// does not require this parameter.
 	ParentRequestUID string
 	Deadline         time.Time
+	// PubSub channel to send test_runner status updates.
+	StatusUpdateChannel *config.Config_PubSub
 }
 
 // CheckConsistency checks the internal consistency of the various inputs to the
@@ -159,12 +161,19 @@ func (g *Generator) GenerateArgs(ctx context.Context) (request.Args, error) {
 		Priority:                         g.Params.GetScheduling().GetPriority(),
 		ProvisionableDimensions:          provisionableDimensions,
 		ProvisionableDimensionExpiration: provisionableDimensionExpiration,
-		StatusTopic:                      g.Params.GetNotification().GetPubsubTopic(),
+		StatusTopic:                      pubSubTopicFullName(g.StatusUpdateChannel),
 		SwarmingTags:                     g.swarmingTags(ctx, kv, cmd),
 		TestRunnerRequest:                trr,
 		Timeout:                          timeout,
 	}, nil
 
+}
+
+func pubSubTopicFullName(c *config.Config_PubSub) string {
+	if c == nil {
+		return ""
+	}
+	return fmt.Sprintf("projects/%s/topics/%s", c.Project, c.Topic)
 }
 
 func (g *Generator) isClientTest() (bool, error) {

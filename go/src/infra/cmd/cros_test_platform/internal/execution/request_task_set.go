@@ -43,10 +43,11 @@ type RequestTaskSet struct {
 
 // TaskSetConfig is a wrapper for the parameters common to the testTaskSets.
 type TaskSetConfig struct {
-	ParentTaskID  string
-	ParentBuildID int64
-	RequestUID    string
-	Deadline      time.Time
+	ParentTaskID        string
+	ParentBuildID       int64
+	RequestUID          string
+	Deadline            time.Time
+	StatusUpdateChannel *config.Config_PubSub
 }
 
 // NewRequestTaskSet creates a new RequestTaskSet.
@@ -69,13 +70,14 @@ func NewRequestTaskSet(
 		iid := types.NewInvocationID(i, test)
 		invocationIDs[i] = iid
 		argsGenerators[iid] = &args.Generator{
-			Invocation:       test,
-			Params:           params,
-			WorkerConfig:     workerConfig,
-			ParentTaskID:     tc.ParentTaskID,
-			ParentBuildID:    tc.ParentBuildID,
-			ParentRequestUID: tc.RequestUID,
-			Deadline:         tc.Deadline,
+			Invocation:          test,
+			Params:              params,
+			WorkerConfig:        workerConfig,
+			ParentTaskID:        tc.ParentTaskID,
+			ParentBuildID:       tc.ParentBuildID,
+			ParentRequestUID:    tc.RequestUID,
+			Deadline:            tc.Deadline,
+			StatusUpdateChannel: tc.StatusUpdateChannel,
 		}
 		// test, params, workerConfig, tc.ParentTaskID, tc.RequestUID, tc.Deadline)
 		invocationResponses[iid] = response.NewInvocation(test.GetTest().GetName())
