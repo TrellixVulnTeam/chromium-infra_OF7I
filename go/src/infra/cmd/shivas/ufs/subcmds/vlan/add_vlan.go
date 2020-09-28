@@ -10,6 +10,7 @@ import (
 	"github.com/maruel/subcommands"
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
+	"go.chromium.org/luci/common/flag"
 	"go.chromium.org/luci/grpc/prpc"
 
 	"infra/cmd/shivas/cmdhelp"
@@ -34,7 +35,8 @@ var AddVlanCmd = &subcommands.Command{
 
 		c.Flags.StringVar(&c.name, "name", "", "name of the vlan")
 		c.Flags.StringVar(&c.cidrBlock, "cidr-block", "", "the cidr block of the vlan")
-		c.Flags.StringVar(&c.description, "desc", "", "description for the vlan")
+		c.Flags.StringVar(&c.description, "desc", "", "description of the vlan")
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "zone of the vlan, can be specified multiple times."+cmdhelp.ZoneHelpText)
 		return c
 	},
 }
@@ -48,6 +50,7 @@ type addVlan struct {
 	name        string
 	cidrBlock   string
 	description string
+	zones       []string
 }
 
 func (c *addVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -92,9 +95,14 @@ func (c *addVlan) innerRun(a subcommands.Application, args []string, env subcomm
 }
 
 func (c *addVlan) parseArgs(vlan *ufspb.Vlan) {
+	ufsZones := make([]ufspb.Zone, len(c.zones))
+	for i, zone := range c.zones {
+		ufsZones[i] = ufsUtil.ToUFSZone(zone)
+	}
 	vlan.Name = c.name
 	vlan.VlanAddress = c.cidrBlock
 	vlan.Description = c.description
+	vlan.Zones = ufsZones
 }
 
 func (c *addVlan) validateArgs() error {
@@ -103,6 +111,14 @@ func (c *addVlan) validateArgs() error {
 	}
 	if c.cidrBlock == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-cidr-block' is required.")
+	}
+	if len(c.zones) == 0 {
+		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-zone' is required.")
+	}
+	for _, zone := range c.zones {
+		if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(zone)) {
+			cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", zone)
+		}
 	}
 	return nil
 }

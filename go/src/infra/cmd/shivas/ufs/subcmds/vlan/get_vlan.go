@@ -49,6 +49,7 @@ Gets the vlan and prints the output in the user-specified format.`,
 		c.Flags.BoolVar(&c.keysOnly, "keys", false, cmdhelp.KeysOnlyText)
 
 		c.Flags.Var(flag.StringSlice(&c.states), "state", "Name(s) of a state to filter by. Can be specified multiple times."+cmdhelp.StateFilterHelpText)
+		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "Name(s) of a zone to filter by. Can be specified multiple times."+cmdhelp.ZoneFilterHelpText)
 		return c
 	},
 }
@@ -62,6 +63,7 @@ type getVlan struct {
 
 	// Filters
 	states []string
+	zones  []string
 
 	pageSize int
 	keysOnly bool
@@ -110,6 +112,7 @@ func (c *getVlan) innerRun(a subcommands.Application, args []string, env subcomm
 func (c *getVlan) formatFilters() []string {
 	filters := make([]string, 0)
 	filters = utils.JoinFilters(filters, utils.PrefixFilters("state", c.states)...)
+	filters = utils.JoinFilters(filters, utils.PrefixFilters("zone", c.zones)...)
 	return filters
 }
 

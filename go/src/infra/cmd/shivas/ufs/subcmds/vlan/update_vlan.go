@@ -35,6 +35,7 @@ var UpdateVlanCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.name, "name", "", "name of the vlan")
 		c.Flags.StringVar(&c.description, "desc", "", "description for the vlan. "+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
+		c.Flags.StringVar(&c.zones, "zone", "", "comma separated zones, You can only append/add new zones here or clean it out."+cmdhelp.ZoneHelpText+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.reservedIPs, "reserved_ips", "", "comma separated ips. You can only append/add new ips here. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
@@ -50,6 +51,7 @@ type updateVlan struct {
 	description string
 	state       string
 	reservedIPs string
+	zones       string
 }
 
 func (c *updateVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -91,6 +93,7 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 			"desc":         "description",
 			"state":        "resourceState",
 			"reserved_ips": "reserved_ips",
+			"zone":         "zones",
 		}),
 	})
 	if err != nil {
@@ -116,17 +119,35 @@ func (c *updateVlan) parseArgs(vlan *ufspb.Vlan) {
 	} else {
 		vlan.ReservedIps = utils.GetStringSlice(c.reservedIPs)
 	}
+	if c.zones == utils.ClearFieldValue {
+		vlan.Zones = nil
+	} else {
+		zones := utils.GetStringSlice(c.zones)
+		ufsZones := make([]ufspb.Zone, len(zones))
+		for i, z := range zones {
+			ufsZones[i] = ufsUtil.ToUFSZone(z)
+		}
+		vlan.Zones = ufsZones
+	}
 }
 
 func (c *updateVlan) validateArgs() error {
 	if c.name == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 	}
-	if c.state == "" && c.description == "" && c.reservedIPs == "" {
+	if c.state == "" && c.description == "" && c.reservedIPs == "" && c.zones == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid state, please check help info for '-state'.", c.state)
+	}
+	if c.zones != "" && c.zones != utils.ClearFieldValue {
+		zones := utils.GetStringSlice(c.zones)
+		for _, zone := range zones {
+			if !ufsUtil.IsUFSZone(ufsUtil.RemoveZonePrefix(zone)) {
+				cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n%s is not a valid zone name, please check help info for '-zone'.", zone)
+			}
+		}
 	}
 	return nil
 }

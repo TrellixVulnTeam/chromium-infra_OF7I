@@ -39,7 +39,7 @@ var (
 	MachinelseprototypeTitle = []string{"Machine Prototype Name", "Occupied Capacity", "PeripheralTypes", "VirtualTypes", "Tags", "UpdateTime"}
 	RacklseprototypeTitle    = []string{"Rack Prototype Name", "PeripheralTypes", "Tags", "UpdateTime"}
 	ChromePlatformTitle      = []string{"Platform Name", "Manufacturer", "Description", "UpdateTime"}
-	VlanTitle                = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "UpdateTime"}
+	VlanTitle                = []string{"Vlan Name", "CIDR Block", "IP Capacity", "Description", "State", "Zones", "UpdateTime"}
 	VMTitle                  = []string{"VM Name", "OS Version", "MAC Address", "Zone", "Host", "Vlan", "IP", "State", "DeploymentTicket", "Description", "UpdateTime"}
 	RackTitle                = []string{"Rack Name", "Zone", "Capacity", "State", "Realm", "UpdateTime"}
 	MachineLSETitle          = []string{"Host", "OS Version", "Zone", "Virtual Datacenter", "Rack", "Machine(s)", "Nic", "Vlan", "IP", "State", "VM capacity", "DeploymentTicket", "Description", "UpdateTime"}
@@ -990,12 +990,17 @@ func vlanOutputStrs(pm proto.Message) []string {
 	if t, err := ptypes.Timestamp(m.GetUpdateTime()); err == nil {
 		ts = t.Local().Format(timeFormat)
 	}
+	zones := make([]string, len(m.GetZones()))
+	for i, z := range m.GetZones() {
+		zones[i] = z.String()
+	}
 	return []string{
 		ufsUtil.RemovePrefix(m.GetName()),
 		m.GetVlanAddress(),
 		fmt.Sprintf("%d", m.GetCapacityIp()),
 		m.GetDescription(),
 		m.GetResourceState().String(),
+		strSlicesToStr(zones),
 		ts,
 	}
 }
