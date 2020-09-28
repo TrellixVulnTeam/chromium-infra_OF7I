@@ -355,7 +355,7 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "Read variants.pyl",
+    "name": "Read src/testing/buildbot/variants.pyl",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@variants.pyl@{@@@",
       "@@@STEP_LOG_LINE@variants.pyl@  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {@@@",
@@ -431,13 +431,13 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=abcd",
+      "https://chromiumdash.appspot.com/fetch_commit?commit=-4043318065080222883",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit abcd",
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit -4043318065080222883",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -448,13 +448,13 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=efgh",
+      "https://chromiumdash.appspot.com/fetch_commit?commit=-4043318065083222875",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit efgh",
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit -4043318065083222875",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -465,13 +465,13 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=ijkl",
+      "https://chromiumdash.appspot.com/fetch_commit?commit=7288577996965909946",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit ijkl",
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit 7288577996965909946",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -482,13 +482,13 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=mnop",
+      "https://chromiumdash.appspot.com/fetch_commit?commit=-4498648010106864181",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit mnop",
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit -4498648010106864181",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -508,6 +508,10 @@
     "name": "Copying mb_config.pyl from main branch"
   },
   {
+    "cmd": [],
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96"
+  },
+  {
     "cmd": [
       "cipd",
       "search",
@@ -517,8 +521,9 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "name": "cipd search chromium/testing/weblayer-x86 version:83.0.4103.96",
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.cipd search chromium/testing/weblayer-x86 version:83.0.4103.96",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": []@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -536,7 +541,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git checkout (2)"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.git checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -549,7 +557,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git clean"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.git clean",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -567,12 +578,13 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Reading //chrome/VERSION",
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.Reading //chrome/VERSION",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@VERSION@a=83@@@",
-      "@@@STEP_LOG_LINE@VERSION@b=0@@@",
-      "@@@STEP_LOG_LINE@VERSION@c=4103@@@",
-      "@@@STEP_LOG_LINE@VERSION@d=96@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@VERSION@=83@@@",
+      "@@@STEP_LOG_LINE@VERSION@=0@@@",
+      "@@@STEP_LOG_LINE@VERSION@=4103@@@",
+      "@@@STEP_LOG_LINE@VERSION@=96@@@",
       "@@@STEP_LOG_END@VERSION@@@"
     ]
   },
@@ -605,8 +617,9 @@
       ]
     },
     "infra_step": true,
-    "name": "gclient sync",
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.gclient sync",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"solutions\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"src/\": {@@@",
@@ -666,7 +679,10 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "gclient runhooks"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.gclient runhooks",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -676,14 +692,17 @@
       "--json-output",
       "/path/to/tmp/json",
       "rmtree",
-      "[CLEANUP]/apk_build_files"
+      "[CLEANUP]/binaries"
     ],
     "cwd": "[START_DIR]/src",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Cleaning up build files from last build"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.Cleaning up binaries from the last build",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -699,13 +718,16 @@
       "--config-file=[CLEANUP]/tmp_tmp_1/mb_config.pyl",
       "out/Release",
       "weblayer_instrumentation_test_apk",
-      "[CLEANUP]/tmp_tmp_2/build_config.zip"
+      "[CLEANUP]/tmp_tmp_2/binaries.zip"
     ],
     "cwd": "[START_DIR]/src",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "Building weblayer_instrumentation_test_apk"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.Building weblayer_instrumentation_test_apk",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -717,15 +739,18 @@
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "Uncompressing build files for version 83.0.4103.96",
-    "stdin": "{\"output\": \"[CLEANUP]/apk_build_files\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_2/build_config.zip\"}"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.Uncompressing binaries",
+    "stdin": "{\"output\": \"[CLEANUP]/binaries\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_2/binaries.zip\"}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
       "cipd",
       "pkg-build",
       "-in",
-      "[CLEANUP]/apk_build_files",
+      "[CLEANUP]/binaries",
       "-name",
       "chromium/testing/weblayer-x86",
       "-out",
@@ -739,8 +764,9 @@
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "build weblayer-x86",
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.build weblayer-x86",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -766,8 +792,9 @@
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "register chromium/testing/weblayer-x86",
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.register chromium/testing/weblayer-x86",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -789,7 +816,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git checkout (3)"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.git checkout (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -802,7 +832,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git clean (2)"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.git clean (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -819,7 +852,14 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Cleaning 83.0.4103.96 build files"
+    "name": "Maybe build and upload CIPD package for 83.0.4103.96.Removing src/out/Release",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89"
   },
   {
     "cmd": [
@@ -831,8 +871,9 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "name": "cipd search chromium/testing/weblayer-x86 version:84.0.4147.89",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.cipd search chromium/testing/weblayer-x86 version:84.0.4147.89",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": []@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -850,7 +891,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git checkout (4)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -863,7 +907,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git clean (3)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git clean",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -881,12 +928,13 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Reading //chrome/VERSION (2)",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Reading //chrome/VERSION",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@VERSION@a=84@@@",
-      "@@@STEP_LOG_LINE@VERSION@b=0@@@",
-      "@@@STEP_LOG_LINE@VERSION@c=4147@@@",
-      "@@@STEP_LOG_LINE@VERSION@d=89@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@VERSION@=84@@@",
+      "@@@STEP_LOG_LINE@VERSION@=0@@@",
+      "@@@STEP_LOG_LINE@VERSION@=4147@@@",
+      "@@@STEP_LOG_LINE@VERSION@=89@@@",
       "@@@STEP_LOG_END@VERSION@@@"
     ]
   },
@@ -919,8 +967,9 @@
       ]
     },
     "infra_step": true,
-    "name": "gclient sync (2)",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.gclient sync",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"solutions\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"src/\": {@@@",
@@ -980,7 +1029,10 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "gclient runhooks (2)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.gclient runhooks",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -996,13 +1048,16 @@
       "--config-file=[CLEANUP]/tmp_tmp_1/mb_config.pyl",
       "out/Release",
       "weblayer_instrumentation_test_apk",
-      "[CLEANUP]/tmp_tmp_3/build_config.zip"
+      "[CLEANUP]/tmp_tmp_3/binaries.zip"
     ],
     "cwd": "[START_DIR]/src",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "Building weblayer_instrumentation_test_apk (2)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Building weblayer_instrumentation_test_apk",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -1014,15 +1069,18 @@
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "Uncompressing build files for version 84.0.4147.89",
-    "stdin": "{\"output\": \"[CLEANUP]/apk_build_files\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_3/build_config.zip\"}"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Uncompressing binaries",
+    "stdin": "{\"output\": \"[CLEANUP]/binaries\", \"quiet\": false, \"zip_file\": \"[CLEANUP]/tmp_tmp_3/binaries.zip\"}",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
       "cipd",
       "pkg-build",
       "-in",
-      "[CLEANUP]/apk_build_files",
+      "[CLEANUP]/binaries",
       "-name",
       "chromium/testing/weblayer-x86",
       "-out",
@@ -1036,8 +1094,9 @@
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "build weblayer-x86 (2)",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.build weblayer-x86",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -1063,8 +1122,9 @@
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "register chromium/testing/weblayer-x86 (2)",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.register chromium/testing/weblayer-x86",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"instance_id\": \"40-chars-fake-of-the-package-instance_id\", @@@",
@@ -1086,7 +1146,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git checkout (5)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git checkout (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -1099,7 +1162,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git clean (4)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git clean (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -1116,7 +1182,14 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Cleaning 84.0.4147.89 build files"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Removing src/out/Release",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
+  },
+  {
+    "cmd": [],
+    "name": "Submit changes to src/testing/buildbot/variants.pyl"
   },
   {
     "cmd": [
@@ -1127,7 +1200,10 @@
     ],
     "cwd": "[START_DIR]/src",
     "infra_step": true,
-    "name": "git branch"
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.git branch",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -1140,7 +1216,10 @@
       "PATH": "RECIPE_REPO[depot_tools]:<PATH>"
     },
     "infra_step": true,
-    "name": "git new-branch new-skew-tests"
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.git new-branch new-skew-tests",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -1154,8 +1233,9 @@
       "[START_DIR]/src/testing/buildbot/variants.pyl"
     ],
     "infra_step": true,
-    "name": "Write to variants.py",
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Write changes to src/testing/buildbot/variants.pyl",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@variants.pyl@{@@@",
       "@@@STEP_LOG_LINE@variants.pyl@  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {@@@",
       "@@@STEP_LOG_LINE@variants.pyl@    'args': [@@@",
@@ -1228,7 +1308,10 @@
       "-u",
       "[START_DIR]/src/testing/buildbot/generate_buildbot_json.py"
     ],
-    "name": "Running generate_buildbot_json.py"
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Running generate_buildbot_json.py",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -1239,7 +1322,10 @@
     ],
     "cwd": "[START_DIR]/src",
     "infra_step": true,
-    "name": "git commit"
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.git commit",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -1254,23 +1340,14 @@
       "weblayer: Add skew tests for new versions released in beta\n\nSkew tests are being added for the following versions:\n1, 83.0.4103.96\n2, 84.0.4147.89\n\nBug:1041619\n"
     ],
     "cwd": "[START_DIR]/src",
-    "name": "git_cl upload"
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.git_cl upload",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [],
-    "name": "Landing CL"
-  },
-  {
-    "cmd": [
-      "vpython",
-      "-u",
-      "RECIPE_REPO[depot_tools]/git_cl.py",
-      "status",
-      "--field",
-      "status"
-    ],
-    "cwd": "[START_DIR]/src",
-    "name": "Landing CL.git cl status",
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Landing CL",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -1285,9 +1362,24 @@
       "status"
     ],
     "cwd": "[START_DIR]/src",
-    "name": "Landing CL.git cl status (2)",
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Landing CL.git cl status",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
+    ]
+  },
+  {
+    "cmd": [
+      "vpython",
+      "-u",
+      "RECIPE_REPO[depot_tools]/git_cl.py",
+      "status",
+      "--field",
+      "status"
+    ],
+    "cwd": "[START_DIR]/src",
+    "name": "Submit changes to src/testing/buildbot/variants.pyl.Landing CL.git cl status (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {

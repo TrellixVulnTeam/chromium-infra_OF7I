@@ -355,7 +355,7 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "Read variants.pyl",
+    "name": "Read src/testing/buildbot/variants.pyl",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@variants.pyl@{@@@",
       "@@@STEP_LOG_LINE@variants.pyl@  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {@@@",
@@ -431,13 +431,13 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=abcd",
+      "https://chromiumdash.appspot.com/fetch_commit?commit=7288577996977909918",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit abcd",
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit 7288577996977909918",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]

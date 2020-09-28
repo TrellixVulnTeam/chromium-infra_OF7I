@@ -100,6 +100,8 @@ SWARMING_ARGS_TMPL = """'swarming': {{
 }},
 """
 
+VARIANTS_PYL_PATH = 'src/testing/buildbot/variants.pyl'
+
 
 def generate_skew_test_config_lines(library, version):
   lines = []
@@ -158,7 +160,7 @@ def checkout_chromium_version_and_sync_3p_repos(api, version):
     api.git('clean', '-fd')
     # TODO(rmhasan): Use api.gn.clean to clean up old build files
     api.file.rmtree(
-        'Cleaning %s build files' % version,
+        'Removing src/out/Release',
         api.path['checkout'].join('out', 'Release'))
 
 
@@ -272,7 +274,7 @@ def maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path):
 
   if cipd_pkgs_to_create:
     # Build CIPD packages for new versions that were released in beta
-    build_cipd_pkgs(api, cipd_pkgs_to_create)
+    maybe_build_cipd_pkgs(api, cipd_pkgs_to_create)
     # Upload changes to variants.pyl to Gerrit
     upload_changes(api, new_variants_lines, variants_pyl_path,
                    cipd_pkgs_to_create)
@@ -283,7 +285,7 @@ def env_with_depot_tools(api):
       ('%(PATH)s', str(api.depot_tools.root)))}
 
 
-def build_cipd_pkgs(api, cipd_pkgs_to_create):
+def maybe_build_cipd_pkgs(api, cipd_pkgs_to_create):
   # Need to save mb_config.pyl for skew tests APK committed at ToT
   curr_path = api.path['checkout'].join(
      'weblayer', 'browser', 'android', 'javatests',
@@ -291,48 +293,51 @@ def build_cipd_pkgs(api, cipd_pkgs_to_create):
   mb_config_path = api.path.mkdtemp().join('mb_config.pyl')
   api.file.copy('Copying mb_config.pyl from main branch',
                 curr_path, mb_config_path)
-  extract_dir = api.path['cleanup'].join('apk_build_files')
+  extract_dir = api.path['cleanup'].join('binaries')
 
   # Create CIPD packages for all chromium versions added to variants.pyl
   for version in cipd_pkgs_to_create:
-    # Check if CIPD package exists before building it and uploading it.
-    # If a previous build failed or timed out right after uploading CIPD
-    # packages, then this recipe would upload duplicate CIPD packages if
-    # there was no check.
-    if api.cipd.search(CIPD_PKG_NAME, 'version:%s' % version):
-      continue
+    with api.step.nest('Maybe build and upload CIPD package for %s' % version):
+      # Check if CIPD package exists before building it and uploading it.
+      # If a previous build failed or timed out right after uploading CIPD
+      # packages, then this recipe would upload duplicate CIPD packages if
+      # there was no check.
+      if api.cipd.search(CIPD_PKG_NAME, 'version:%s' % version):
+        continue
 
-    # Checkout chromium version
-    with api.context(cwd=api.path['checkout'], env=env_with_depot_tools(api)), \
-      checkout_chromium_version_and_sync_3p_repos(api, version):
-      zip_path = api.path.mkdtemp().join('build_config.zip')
-      if api.path.exists(str(extract_dir)):
-        api.file.rmtree('Cleaning up build files from last build', extract_dir)
-      cipd_out = api.path['checkout'].join(
-          'out', 'Release', 'skew_test_apk_%s.cipd' % version.replace('.', '_'))
+      # Checkout chromium version
+      with api.context(cwd=api.path['checkout'],
+                       env=env_with_depot_tools(api)), \
+        checkout_chromium_version_and_sync_3p_repos(api, version):
+        zip_path = api.path.mkdtemp().join('binaries.zip')
+        if api.path.exists(str(extract_dir)):
+          api.file.rmtree('Cleaning up binaries from the last build',
+                          extract_dir)
+        cipd_out = api.path['checkout'].join(
+            'out', 'Release',
+            'skew_test_apk_%s.cipd' % version.replace('.', '_'))
 
-      # Generate build files for weblayer instrumentation tests APK - x86
-      mb_path = api.path['checkout'].join('tools', 'mb')
-      mb_py_path = mb_path.join('mb.py')
-      mb_args = [
-         'zip', '--master=dummy.master', '--builder=dummy.builder',
-         '--goma-dir', str(api.path['cache'].join('goma', 'client')),
-         '--luci-auth',
-         '--config-file=%s' % str(mb_config_path), 'out/Release',
-         'weblayer_instrumentation_test_apk', str(zip_path)]
-      try:
-        api.python('Building weblayer_instrumentation_test_apk',
-                   mb_py_path, mb_args)
-      except api.step.StepFailure as e:
-        api.goma.stop(e.retcode)
-        raise e
+        # Generate build files for weblayer instrumentation tests APK - x86
+        mb_path = api.path['checkout'].join('tools', 'mb')
+        mb_py_path = mb_path.join('mb.py')
+        mb_args = [
+           'zip', '--master=dummy.master', '--builder=dummy.builder',
+           '--goma-dir', str(api.path['cache'].join('goma', 'client')),
+           '--luci-auth',
+           '--config-file=%s' % str(mb_config_path), 'out/Release',
+           'weblayer_instrumentation_test_apk', str(zip_path)]
+        try:
+          api.python('Building weblayer_instrumentation_test_apk',
+                     mb_py_path, mb_args)
+        except api.step.StepFailure as e:
+          api.goma.stop(e.retcode)
+          raise e
 
-      # Build weblayer instrumentation tests APK - x86 CIPD package
-      api.zip.unzip('Uncompressing build files for version %s' % version,
-                    zip_path, extract_dir)
-      api.cipd.build(extract_dir, cipd_out, CIPD_PKG_NAME)
-      api.cipd.register(CIPD_PKG_NAME, cipd_out, tags={'version': version},
-                        refs=['m%s' % version[:version.index('.')]])
+        # Build weblayer instrumentation tests APK - x86 CIPD package
+        api.zip.unzip('Uncompressing binaries', zip_path, extract_dir)
+        api.cipd.build(extract_dir, cipd_out, CIPD_PKG_NAME)
+        api.cipd.register(CIPD_PKG_NAME, cipd_out, tags={'version': version},
+                          refs=['m%s' % version[:version.index('.')]])
 
 
 def upload_changes(api, new_variants_lines, variants_pyl_path,
@@ -340,28 +345,29 @@ def upload_changes(api, new_variants_lines, variants_pyl_path,
   # New chromium versions were added to variants.pyl so we need to write
   # new changes to src/testing/buildbot/variants.pyl and commit them to the
   # main branch
-  api.git('branch', '-D', 'new-skew-tests', ok_ret='any')
-  api.git.new_branch('new-skew-tests')
-  api.file.write_text(
-      'Write to variants.py', variants_pyl_path,
-      '\n'.join(new_variants_lines))
-  api.python('Running generate_buildbot_json.py',
-             api.path['checkout'].join(
-                 'testing', 'buildbot', 'generate_buildbot_json.py'))
-  api.git('commit', '-am', 'Adding skew tests for new versions')
-  description = CL_DESC % '\n'.join(
-      '%d, %s' % (idx + 1, ver)
-      for idx, ver in enumerate(cipd_pkgs_to_create))
+  with api.step.nest('Submit changes to %s' % VARIANTS_PYL_PATH):
+    api.git('branch', '-D', 'new-skew-tests', ok_ret='any')
+    api.git.new_branch('new-skew-tests')
+    api.file.write_text(
+        'Write changes to %s' % VARIANTS_PYL_PATH, variants_pyl_path,
+        '\n'.join(new_variants_lines))
+    api.python('Running generate_buildbot_json.py',
+               api.path['checkout'].join(
+                   'testing', 'buildbot', 'generate_buildbot_json.py'))
+    api.git('commit', '-am', 'Adding skew tests for new versions')
+    description = CL_DESC % '\n'.join(
+        '%d, %s' % (idx + 1, ver)
+        for idx, ver in enumerate(cipd_pkgs_to_create))
 
-  upload_args = ['--force', '--tbr-owners']
-  land_cl_arg = '--use-commit-queue'
-  if api.properties.get('submit_cl'):
-    upload_args.append(land_cl_arg)
-  api.git_cl.upload(description, upload_args=upload_args)
+    upload_args = ['--force', '--tbr-owners']
+    land_cl_arg = '--use-commit-queue'
+    if api.properties.get('submit_cl'):
+      upload_args.append(land_cl_arg)
+    api.git_cl.upload(description, upload_args=upload_args)
 
-  if land_cl_arg in upload_args:
-    with api.step.nest('Landing CL'):
-      wait_for_cl_to_land(api)
+    if land_cl_arg in upload_args:
+      with api.step.nest('Landing CL'):
+        wait_for_cl_to_land(api)
 
 
 def wait_for_cl_to_land(api):
@@ -407,7 +413,7 @@ def RunSteps(api):
   variants_pyl_path = api.path['checkout'].join(
       'testing', 'buildbot', 'variants.pyl')
   variants_pyl_content = api.file.read_text(
-      'Read variants.pyl', variants_pyl_path)
+      'Read %s' % VARIANTS_PYL_PATH, variants_pyl_path)
 
   maybe_update_variants_pyl(api, variants_pyl_content, variants_pyl_path)
   api.goma.stop(0)
@@ -462,151 +468,122 @@ def GenTests(api):
   }
 }
 """
+
+  def cipd_step_data(version, instances=0):
+    return api.step_data(
+        ('Maybe build and upload CIPD package for %s.'
+         'cipd search %s version:%s') % (
+             version, CIPD_PKG_NAME, version),
+         api.cipd.example_search(CIPD_PKG_NAME, instances=instances))
+
+  def chrome_version_step_data(version):
+    return api.step_data(('Maybe build and upload CIPD package for %s.'
+                          'Reading //chrome/VERSION') % version,
+                         api.file.read_text(
+                             '\n'.join('='+str(v) for v in version.split('.'))))
+
+  def land_cl_step_datas(statuses):
+    def _create_step_data(status, iteration):
+      name = ('Submit changes to %s.'
+              'Landing CL.git cl status') % VARIANTS_PYL_PATH
+      if iteration:
+        name += ' (%d)' % (iteration + 1)
+      return api.step_data(
+          name,
+          api.raw_io.stream_output(status, stream='stdout'))
+
+    return reduce(lambda x, y: x + y,
+                  [_create_step_data(s, itr)
+                   for itr, s in enumerate(statuses)])
+
+  def url_lib_json_step_datas(versions):
+    hashes = [str(hash(s)) for s in versions]
+    s1 = api.url.json('Getting Android beta channel releases',
+                      [{'hashes':{'chromium': h}} for h in hashes])
+    def _create_step_data(h, v):
+      name = ('Converting hashes released in Beta to Chromium versions.'
+              'Fetch information on commit %s') % h
+      return api.url.json(name, {'deployment': {'beta': v}})
+
+    return reduce(lambda x, y: x + y,
+                  [s1] + [_create_step_data(h, v)
+                          for h, v in zip(hashes, versions)])
+
   yield (api.test('basic') +
          api.properties(submit_cl=True,
                         total_cq_checks=2,
                         interval_between_checks_in_secs=60) +
-         api.step_data('Read variants.pyl',
+         api.step_data('Read %s' % VARIANTS_PYL_PATH,
              api.file.read_text(TEST_VARIANTS_PYL)) +
-         api.url.json('Getting Android beta channel releases',
-                      [{'hashes':{'chromium':'abcd'}},
-                       {'hashes':{'chromium':'efgh'}},
-                       {'hashes':{'chromium':'ijkl'}},
-                       {'hashes':{'chromium':'mnop'}}]) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit abcd',
-                      {'deployment': {'beta': '84.0.4147.89'}}) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit efgh',
-                      {'deployment': {'beta': '84.0.4147.56'}}) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit ijkl',
-                      {'deployment': {'beta': '83.0.4103.96'}}) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit mnop',
-                      {'deployment': {'beta': '81.0.1111.40'}}) +
-         api.step_data(
-             'cipd search %s version:%s' % (CIPD_PKG_NAME, '83.0.4103.96'),
-             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
-         api.step_data('Reading //chrome/VERSION',
-             api.file.read_text('a=83\nb=0\nc=4103\nd=96'))  +
-         api.path.exists(api.path['cleanup'].join('apk_build_files')) +
-         api.step_data(
-             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
-             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
-         api.step_data('Reading //chrome/VERSION (2)',
-                       api.file.read_text('a=84\nb=0\nc=4147\nd=89')) +
-         api.step_data(
-             'Landing CL.git cl status',
-             api.raw_io.stream_output('commit', stream='stdout')) +
-         api.step_data(
-             'Landing CL.git cl status (2)',
-             api.raw_io.stream_output('closed', stream='stdout')))
+         url_lib_json_step_datas(
+             ['84.0.4147.89', '84.0.4147.56', '83.0.4103.96', '81.0.1111.40']) +
+         cipd_step_data('83.0.4103.96') +
+         chrome_version_step_data('83.0.4103.96') +
+         api.path.exists(api.path['cleanup'].join('binaries')) +
+         cipd_step_data('84.0.4147.89') +
+         chrome_version_step_data('84.0.4147.89') +
+         land_cl_step_datas(['commit', 'closed']))
 
   yield (api.test('only-build-new-milestone-released') +
          api.properties(submit_cl=True,
                         total_cq_checks=2,
                         interval_between_checks_in_secs=60) +
-         api.step_data('Read variants.pyl',
+         api.step_data('Read %s' % VARIANTS_PYL_PATH,
              api.file.read_text(TEST_VARIANTS_PYL)) +
-         api.url.json('Getting Android beta channel releases',
-                      [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit abcd',
-                      {'deployment': {'beta': '84.0.4147.89'}}) +
-         api.step_data(
-             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
-             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
-         api.step_data('Reading //chrome/VERSION',
-             api.file.read_text('a=84\nb=0\nc=4147\nd=89'))  +
-         api.path.exists(api.path['cleanup'].join('apk_build_files')) +
-         api.step_data(
-             'Landing CL.git cl status',
-             api.raw_io.stream_output('commit', stream='stdout')) +
-         api.step_data(
-             'Landing CL.git cl status (2)',
-             api.raw_io.stream_output('closed', stream='stdout')))
+         url_lib_json_step_datas(['84.0.4147.89']) +
+         cipd_step_data('84.0.4147.89') +
+         chrome_version_step_data('84.0.4147.89') +
+         api.path.exists(api.path['cleanup'].join('binaries')) +
+         land_cl_step_datas(['commit', 'closed']))
 
   yield (api.test('version-already-exists-only-upload-cl') +
          api.properties(submit_cl=True,
                         total_cq_checks=2,
                         interval_between_checks_in_secs=60) +
-         api.step_data('Read variants.pyl',
+         api.step_data('Read %s' % VARIANTS_PYL_PATH,
              api.file.read_text(TEST_VARIANTS_PYL)) +
-         api.url.json('Getting Android beta channel releases',
-                      [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit abcd',
-                      {'deployment': {'beta': '84.0.4147.89'}}) +
-         api.step_data(
-             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
-             api.cipd.example_search(CIPD_PKG_NAME, instances=1)) +
-         api.step_data(
-             'Landing CL.git cl status',
-             api.raw_io.stream_output('commit', stream='stdout')) +
-         api.step_data(
-             'Landing CL.git cl status (2)',
-             api.raw_io.stream_output('closed', stream='stdout')))
+         url_lib_json_step_datas(['84.0.4147.89']) +
+         cipd_step_data('84.0.4147.89', 1) +
+         land_cl_step_datas(['commit', 'closed']))
 
   yield (api.test('build-fails') +
          api.properties(submit_cl=True,
                         total_cq_checks=2,
                         interval_between_checks_in_secs=60) +
-         api.step_data('Read variants.pyl',
+         api.step_data('Read %s' % VARIANTS_PYL_PATH,
              api.file.read_text(TEST_VARIANTS_PYL)) +
-         api.url.json('Getting Android beta channel releases',
-                      [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit abcd',
-                      {'deployment': {'beta': '84.0.4147.89'}}) +
-         api.step_data(
-             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
-             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
-         api.step_data('Reading //chrome/VERSION',
-             api.file.read_text('a=84\nb=0\nc=4147\nd=89'))  +
-         api.step_data('Building weblayer_instrumentation_test_apk',
+         url_lib_json_step_datas(['84.0.4147.89']) +
+         cipd_step_data('84.0.4147.89') +
+         chrome_version_step_data('84.0.4147.89') +
+         api.step_data(('Maybe build and upload CIPD package for %s.'
+                        'Building weblayer_instrumentation_test_apk') %
+                       '84.0.4147.89',
                        retcode=1)  +
-         api.path.exists(api.path['cleanup'].join('apk_build_files')))
+         api.path.exists(api.path['cleanup'].join('binaries')))
 
   yield (api.test('abandon-cl-after-time-out') +
          api.properties(submit_cl=True,
                         total_cq_checks=2,
                         interval_between_checks_in_secs=60) +
-         api.step_data('Read variants.pyl',
+         api.step_data('Read %s' % VARIANTS_PYL_PATH,
              api.file.read_text(TEST_VARIANTS_PYL)) +
-         api.url.json('Getting Android beta channel releases',
-                      [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit abcd',
-                      {'deployment': {'beta': '84.0.4147.89'}}) +
-         api.step_data(
-             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
-             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
-         api.step_data('Reading //chrome/VERSION',
-             api.file.read_text('a=84\nb=0\nc=4147\nd=89'))  +
-         api.path.exists(api.path['cleanup'].join('apk_build_files')))
+         url_lib_json_step_datas(['84.0.4147.89']) +
+         cipd_step_data('84.0.4147.89') +
+         chrome_version_step_data('84.0.4147.89') +
+         api.path.exists(api.path['cleanup'].join('binaries')))
 
   yield (api.test('malformed-chromium-version') +
          api.expect_exception('ValueError') +
-         api.step_data('Read variants.pyl',
+         api.step_data('Read %s' % VARIANTS_PYL_PATH,
              api.file.read_text(TEST_VARIANTS_PYL)) +
-         api.url.json('Getting Android beta channel releases',
-                      [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit abcd',
-                      {'deployment': {'beta': '84.0.4147.89'}}) +
-         api.step_data(
-             'cipd search %s version:%s' % (CIPD_PKG_NAME, '84.0.4147.89'),
-             api.cipd.example_search(CIPD_PKG_NAME, instances=0)) +
-         api.step_data('Reading //chrome/VERSION',
-             api.file.read_text('a=abd\nb=0\nc=4147\nd=89\n')) +
+         url_lib_json_step_datas(['84.0.4147.89']) +
+         cipd_step_data('84.0.4147.89') +
+         api.step_data(('Maybe build and upload CIPD package for %s.'
+                        'Reading //chrome/VERSION') % '84.0.4147.89',
+                       api.file.read_text('=abd\n=0\n=4147\n=89')) +
          api.post_process(post_process.DropExpectation))
 
   yield (api.test('build-no-cipd-pkgs') +
-         api.step_data('Read variants.pyl',
+         api.step_data('Read %s' % VARIANTS_PYL_PATH,
              api.file.read_text(TEST_VARIANTS_PYL)) +
-         api.url.json('Getting Android beta channel releases',
-                      [{'hashes':{'chromium':'abcd'}}]) +
-         api.url.json('Converting hashes released in Beta to Chromium versions.'
-                      'Fetch information on commit abcd',
-                      {'deployment': {'beta': '83.0.4103.56'}}))
+         url_lib_json_step_datas(['83.0.4103.56']))

@@ -355,7 +355,7 @@
       "/path/to/tmp/"
     ],
     "infra_step": true,
-    "name": "Read variants.pyl",
+    "name": "Read src/testing/buildbot/variants.pyl",
     "~followup_annotations": [
       "@@@STEP_LOG_LINE@variants.pyl@{@@@",
       "@@@STEP_LOG_LINE@variants.pyl@  'WEBLAYER_CLIENT_SKEW_TESTS_NTH_MILESTONE': {@@@",
@@ -431,13 +431,13 @@
       "-u",
       "RECIPE_MODULE[recipe_engine::url]/resources/pycurl.py",
       "--url",
-      "https://chromiumdash.appspot.com/fetch_commit?commit=abcd",
+      "https://chromiumdash.appspot.com/fetch_commit?commit=-4043318065080222883",
       "--status-json",
       "/path/to/tmp/json",
       "--outfile",
       "/path/to/tmp/json"
     ],
-    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit abcd",
+    "name": "Converting hashes released in Beta to Chromium versions.Fetch information on commit -4043318065080222883",
     "~followup_annotations": [
       "@@@STEP_NEST_LEVEL@1@@@"
     ]
@@ -457,6 +457,13 @@
     "name": "Copying mb_config.pyl from main branch"
   },
   {
+    "cmd": [],
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89",
+    "~followup_annotations": [
+      "@@@STEP_FAILURE@@@"
+    ]
+  },
+  {
     "cmd": [
       "cipd",
       "search",
@@ -466,8 +473,9 @@
       "-json-output",
       "/path/to/tmp/json"
     ],
-    "name": "cipd search chromium/testing/weblayer-x86 version:84.0.4147.89",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.cipd search chromium/testing/weblayer-x86 version:84.0.4147.89",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"result\": []@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -485,7 +493,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git checkout (2)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git checkout",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -498,7 +509,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git clean"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git clean",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -516,12 +530,13 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Reading //chrome/VERSION",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Reading //chrome/VERSION",
     "~followup_annotations": [
-      "@@@STEP_LOG_LINE@VERSION@a=84@@@",
-      "@@@STEP_LOG_LINE@VERSION@b=0@@@",
-      "@@@STEP_LOG_LINE@VERSION@c=4147@@@",
-      "@@@STEP_LOG_LINE@VERSION@d=89@@@",
+      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_LOG_LINE@VERSION@=84@@@",
+      "@@@STEP_LOG_LINE@VERSION@=0@@@",
+      "@@@STEP_LOG_LINE@VERSION@=4147@@@",
+      "@@@STEP_LOG_LINE@VERSION@=89@@@",
       "@@@STEP_LOG_END@VERSION@@@"
     ]
   },
@@ -554,8 +569,9 @@
       ]
     },
     "infra_step": true,
-    "name": "gclient sync",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.gclient sync",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"solutions\": {@@@",
       "@@@STEP_LOG_LINE@json.output@    \"src/\": {@@@",
@@ -615,7 +631,10 @@
         "RECIPE_REPO[depot_tools]"
       ]
     },
-    "name": "gclient runhooks"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.gclient runhooks",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -625,14 +644,17 @@
       "--json-output",
       "/path/to/tmp/json",
       "rmtree",
-      "[CLEANUP]/apk_build_files"
+      "[CLEANUP]/binaries"
     ],
     "cwd": "[START_DIR]/src",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Cleaning up build files from last build"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Cleaning up binaries from the last build",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -648,20 +670,24 @@
       "--config-file=[CLEANUP]/tmp_tmp_1/mb_config.pyl",
       "out/Release",
       "weblayer_instrumentation_test_apk",
-      "[CLEANUP]/tmp_tmp_2/build_config.zip"
+      "[CLEANUP]/tmp_tmp_2/binaries.zip"
     ],
     "cwd": "[START_DIR]/src",
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "Building weblayer_instrumentation_test_apk",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Building weblayer_instrumentation_test_apk",
     "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@",
       "@@@STEP_FAILURE@@@"
     ]
   },
   {
     "cmd": [],
-    "name": "postprocess_for_goma"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.postprocess_for_goma",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -682,9 +708,9 @@
       "GOMA_SERVICE_ACCOUNT_JSON_FILE": "/creds/service_accounts/service-account-goma-client.json",
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "postprocess_for_goma.goma_jsonstatus",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.postprocess_for_goma.goma_jsonstatus",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"notice\": [@@@",
       "@@@STEP_LOG_LINE@json.output@    {@@@",
@@ -716,9 +742,9 @@
       "GOMA_SERVICE_ACCOUNT_JSON_FILE": "/creds/service_accounts/service-account-goma-client.json",
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "postprocess_for_goma.goma_stat",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.postprocess_for_goma.goma_stat",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -739,9 +765,9 @@
       "GOMA_SERVICE_ACCOUNT_JSON_FILE": "/creds/service_accounts/service-account-goma-client.json",
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "postprocess_for_goma.stop_goma",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.postprocess_for_goma.stop_goma",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -781,10 +807,10 @@
     "env": {
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
-    "name": "postprocess_for_goma.upload_log",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.postprocess_for_goma.upload_log",
     "timeout": 300,
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@",
+      "@@@STEP_NEST_LEVEL@2@@@",
       "@@@STEP_LOG_LINE@json.output@{@@@",
       "@@@STEP_LOG_LINE@json.output@  \"compiler_proxy_log\": \"https://chromium-build-stats.appspot.com/compiler_proxy_log/2017/03/30/build11-m1/compiler_proxy.exe.BUILD11-M1.chrome-bot.log.INFO.20170329-222936.4420.gz\"@@@",
       "@@@STEP_LOG_LINE@json.output@}@@@",
@@ -811,9 +837,9 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "postprocess_for_goma.stop cloudtail",
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.postprocess_for_goma.stop cloudtail",
     "~followup_annotations": [
-      "@@@STEP_NEST_LEVEL@1@@@"
+      "@@@STEP_NEST_LEVEL@2@@@"
     ]
   },
   {
@@ -827,7 +853,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git checkout (3)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git checkout (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -840,7 +869,10 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "git clean (2)"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.git clean (2)",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "cmd": [
@@ -857,12 +889,15 @@
       "PATH": "<PATH>:RECIPE_REPO[depot_tools]"
     },
     "infra_step": true,
-    "name": "Cleaning 84.0.4147.89 build files"
+    "name": "Maybe build and upload CIPD package for 84.0.4147.89.Removing src/out/Release",
+    "~followup_annotations": [
+      "@@@STEP_NEST_LEVEL@1@@@"
+    ]
   },
   {
     "failure": {
       "failure": {},
-      "humanReason": "Step('Building weblayer_instrumentation_test_apk') (retcode: 1)"
+      "humanReason": "Step('Maybe build and upload CIPD package for 84.0.4147.89.Building weblayer_instrumentation_test_apk') (retcode: 1)"
     },
     "name": "$result"
   }
