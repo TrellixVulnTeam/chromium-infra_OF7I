@@ -603,5 +603,35 @@ func processIssueRequest(c context.Context, projectID string, req *monorailv3.Ma
 			},
 		}
 	}
+	if projectID == "angleproject" {
+		// For angleproject, the status is "New" instead of "Untriaged"
+		req.Issue.Status.Status = "New"
+		// Angleproject has different way of assigning priority
+		mapping := map[string]string{
+			"Pri-0": "Critical",
+			"Pri-1": "High",
+			"Pri-2": "Medium",
+			"Pri-3": "Low",
+		}
+		fieldName, err := client.GetMonorailPriorityField(c, projectID)
+		if err != nil {
+			return err
+		}
+		for i, label := range req.Issue.Labels {
+			if val, ok := mapping[label.Label]; ok {
+				// Remove label
+				n := len(req.Issue.Labels)
+				req.Issue.Labels[i] = req.Issue.Labels[n-1]
+				req.Issue.Labels = req.Issue.Labels[:n-1]
+				req.Issue.FieldValues = []*monorailv3.FieldValue{
+					{
+						Field: fieldName,
+						Value: val,
+					},
+				}
+				return nil
+			}
+		}
+	}
 	return nil
 }

@@ -55,6 +55,9 @@ Polymer.Element) {
           {
             label: 'webrtc',
           },
+          {
+            label: 'angleproject',
+          },
         ],
       },
       /** The bug's labels. */

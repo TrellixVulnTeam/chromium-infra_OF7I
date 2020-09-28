@@ -84,7 +84,7 @@ func TestBugQueue(t *testing.T) {
 				b, err := ioutil.ReadAll(w.Body)
 				So(err, ShouldBeNil)
 				So(w.Code, ShouldEqual, 200)
-				So(string(b), ShouldEqual, "{}")
+				So(string(b), ShouldEqual, `{"extras":{"priority_field":"projects/chromium/fieldDefs/11"}}`)
 			})
 
 			Convey("refresh bug queue handler", func() {
@@ -97,7 +97,7 @@ func TestBugQueue(t *testing.T) {
 				b, err := ioutil.ReadAll(w.Body)
 				So(err, ShouldBeNil)
 				So(w.Code, ShouldEqual, 200)
-				So(string(b), ShouldEqual, "{}")
+				So(string(b), ShouldEqual, `{"extras":{"priority_field":"projects/chromium/fieldDefs/11"}}`)
 			})
 
 			Convey("refresh bug queue", func() {
@@ -123,7 +123,7 @@ func TestBugQueue(t *testing.T) {
 				b, err := ioutil.ReadAll(w.Body)
 				So(err, ShouldBeNil)
 				So(w.Code, ShouldEqual, 200)
-				So(string(b), ShouldEqual, "{}")
+				So(string(b), ShouldEqual, `{"extras":{"priority_field":"projects/chromium/fieldDefs/11"}}`)
 			})
 
 			Convey("get alternate email", func() {

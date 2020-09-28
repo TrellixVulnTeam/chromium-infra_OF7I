@@ -16,12 +16,19 @@ import (
 // in different projects and environment.
 var monorailPriorityFieldMap = map[string]map[string]string{
 	"sheriff-o-matic": {
-		"chromium": "projects/chromium/fieldDefs/11",
-		"fuchsia":  "projects/fuchsia/fieldDefs/168",
+		"chromium":     "projects/chromium/fieldDefs/11",
+		"fuchsia":      "projects/fuchsia/fieldDefs/168",
+		"angleproject": "projects/angleproject/fieldDefs/32",
 	},
 	"sheriff-o-matic-staging": {
-		"chromium": "projects/chromium/fieldDefs/11",
-		"fuchsia":  "projects/fuchsia/fieldDefs/246",
+		"chromium":     "projects/chromium/fieldDefs/11",
+		"fuchsia":      "projects/fuchsia/fieldDefs/246",
+		"angleproject": "projects/angleproject/fieldDefs/32",
+	},
+	"default": {
+		"chromium":     "projects/chromium/fieldDefs/11",
+		"fuchsia":      "projects/fuchsia/fieldDefs/246",
+		"angleproject": "projects/angleproject/fieldDefs/32",
 	},
 }
 
@@ -30,6 +37,9 @@ var monorailTypeFieldMap = map[string]map[string]string{
 		"chromium": "projects/chromium/fieldDefs/10",
 	},
 	"sheriff-o-matic-staging": {
+		"chromium": "projects/chromium/fieldDefs/10",
+	},
+	"default": {
 		"chromium": "projects/chromium/fieldDefs/10",
 	},
 }
@@ -48,6 +58,9 @@ func GetMonorailTypeField(c context.Context, projectID string) (string, error) {
 
 func getFieldValue(c context.Context, projectID string, fieldMap map[string]map[string]string) (string, error) {
 	appID := info.AppID(c)
+	if appID != "sheriff-o-matic" && appID != "sheriff-o-matic-staging" {
+		appID = "default"
+	}
 	val, ok := fieldMap[appID][projectID]
 	if !ok {
 		return "", fmt.Errorf("Invalid ProjectID %q", projectID)

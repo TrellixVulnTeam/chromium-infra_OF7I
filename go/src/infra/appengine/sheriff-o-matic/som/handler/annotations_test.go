@@ -569,4 +569,70 @@ func TestAnnotations(t *testing.T) {
 			})
 		})
 	})
+	Convey("Test process issue request", t, func() {
+		c, _ := newContext()
+		Convey("Test process issue request chromium", func() {
+			req := &monorailv3.MakeIssueRequest{
+				Parent: "projects/chromium",
+				Issue: &monorailv3.Issue{
+					Summary: "sum",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "Untriaged",
+					},
+				},
+			}
+			processIssueRequest(c, "chromium", req)
+			expected := &monorailv3.MakeIssueRequest{
+				Parent: "projects/chromium",
+				Issue: &monorailv3.Issue{
+					Summary: "sum",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "Untriaged",
+					},
+					FieldValues: []*monorailv3.FieldValue{
+						{
+							Field: "projects/chromium/fieldDefs/10",
+							Value: "Bug",
+						},
+					},
+				},
+			}
+			So(req, ShouldResemble, expected)
+		})
+		Convey("Test process issue request angleproject", func() {
+			req := &monorailv3.MakeIssueRequest{
+				Parent: "projects/angleproject",
+				Issue: &monorailv3.Issue{
+					Summary: "sum",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "Untriaged",
+					},
+					Labels: []*monorailv3.Issue_LabelValue{
+						{Label: "File-From-SoM"},
+						{Label: "Pri-3"},
+					},
+				},
+			}
+			processIssueRequest(c, "angleproject", req)
+			expected := &monorailv3.MakeIssueRequest{
+				Parent: "projects/angleproject",
+				Issue: &monorailv3.Issue{
+					Summary: "sum",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "New",
+					},
+					FieldValues: []*monorailv3.FieldValue{
+						{
+							Field: "projects/angleproject/fieldDefs/32",
+							Value: "Low",
+						},
+					},
+					Labels: []*monorailv3.Issue_LabelValue{
+						{Label: "File-From-SoM"},
+					},
+				},
+			}
+			So(req, ShouldResemble, expected)
+		})
+	})
 }

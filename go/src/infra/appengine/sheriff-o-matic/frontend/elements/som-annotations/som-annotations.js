@@ -10,7 +10,7 @@ const ONE_MIN_MS = 1000 * 60;
 
 // TODO(yuanzhi) Consider construct this list from a monorail query.
 const MONORAIL_PROJECTS = ['chromium',
-  'fuchsia', 'gn', 'monorail', 'v8', 'webrtc'];
+  'fuchsia', 'gn', 'monorail', 'v8', 'webrtc', 'angleproject'];
 
 class SomAnnotations extends Polymer.mixinBehaviors([
   AnnotationManagerBehavior,
