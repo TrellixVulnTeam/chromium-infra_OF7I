@@ -136,9 +136,9 @@ func printHumanizedInfoShort(w io.Writer, dut *inventory.DeviceUnderTest) (err e
 		l.Variant = nil
 	}
 
-	c, sa := extractServoAttributes(c)
+	sa := getAttributes(c)
 	if len(sa) > 0 {
-		fmt.Fprintf(tw, "Servo attributes:\n")
+		fmt.Fprintf(tw, "Attributes:\n")
 		for k, v := range sa {
 			fmt.Fprintf(tw, "\t%s\t%s\n", k, v)
 		}
@@ -171,22 +171,26 @@ func printProtoJSON(w io.Writer, dut *inventory.DeviceUnderTest) error {
 	return m.Marshal(w, dut)
 }
 
-var servoAttributeKeys = map[string]bool{
-	"servo_host":   true,
-	"servo_port":   true,
-	"servo_serial": true,
+// Explicitly show which attributes are allowed.
+// Some attributes such as servo topology attributes should be hidden.
+var attributeKeys = map[string]bool{
+	"HWID":               true,
+	"powerunit_hostname": true,
+	"powerunit_outlet":   true,
+	"serial_number":      true,
+	"servo_host":         true,
+	"servo_port":         true,
+	"servo_serial":       true,
+	"servo_type":         true,
+	"servo_setup":        true,
 }
 
-func extractServoAttributes(c *inventory.CommonDeviceSpecs) (*inventory.CommonDeviceSpecs, map[string]string) {
+func getAttributes(c *inventory.CommonDeviceSpecs) map[string]string {
 	sa := make(map[string]string)
-	others := make([]*inventory.KeyValue, 0, len(c.GetAttributes()))
 	for _, kv := range c.GetAttributes() {
-		if servoAttributeKeys[*kv.Key] {
+		if attributeKeys[*kv.Key] {
 			sa[*kv.Key] = *kv.Value
-		} else {
-			others = append(others, kv)
 		}
 	}
-	c.Attributes = others
-	return c, sa
+	return sa
 }
