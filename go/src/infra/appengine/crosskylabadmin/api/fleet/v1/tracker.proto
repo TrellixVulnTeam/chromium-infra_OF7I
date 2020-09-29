@@ -56,6 +56,8 @@ enum DutState {
   NeedsRepair = 3;
   NeedsReset = 4;
   RepairFailed = 5;
+  NeedsReplacement = 6;
+  NeedsManualRepair = 7;
 }
 
 enum Health {

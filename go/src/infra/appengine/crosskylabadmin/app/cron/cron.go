@@ -57,7 +57,10 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/push-bots-for-admin-tasks", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksHandler(fleet.DutState_NeedsRepair, fleet.DutState_NeedsReset)))
 
 	// Generate repair or reset jobs for repair_failed CrOS DUTs.
-	r.GET("/internal/cron/push-repair-failed-bots-for-admin-tasks", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksHandler(fleet.DutState_RepairFailed)))
+	r.GET("/internal/cron/push-repair-failed-bots-for-admin-tasks-hourly", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksHandler(fleet.DutState_RepairFailed)))
+
+	// Generate repair or reset jobs for needs_manual_repair CrOS DUTs.
+	r.GET("/internal/cron/push-repair-failed-bots-for-admin-tasks-daily", mwCron, logAndSetHTTPErr(pushBotsForAdminTasksHandler(fleet.DutState_NeedsManualRepair)))
 
 	// for repair jobs of labstation.
 	r.GET("/internal/cron/push-repair-jobs-for-labstations", mwCron, logAndSetHTTPErr(pushRepairJobsForLabstationsCronHandler))

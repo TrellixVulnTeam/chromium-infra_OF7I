@@ -13,13 +13,21 @@ cron:
     job_retry_limit: 1
 
 - description: push bots for admin tasks for repair_failed
-  url: /internal/cron/push-repair-failed-bots-for-admin-tasks
+  url: /internal/cron/push-repair-failed-bots-for-admin-tasks-hourly
   schedule: every 1 hours
   retry_parameters:
     # We see a small number of jobs fails with code 500 (internal failure of GAE).
     # As the handler is idempotent & has low time cost, retry won't cause any
     # side effect. If it fails, it can catch the next cron train.
     job_retry_limit: 1
+
+- description: push bots for admin tasks for needs_manual_repair
+  url: /internal/cron/push-repair-failed-bots-for-admin-tasks-daily
+  # Run every day at 1 AM California time so we avoid manual repairs as much as possible.
+  schedule: every day 01:00
+  timezone: America/Los_Angeles
+  retry_parameters:
+    job_retry_limit: 4
 
 - description: push bots for admin audit tasks
   url: /internal/cron/push-admin-audit-tasks-for-duts

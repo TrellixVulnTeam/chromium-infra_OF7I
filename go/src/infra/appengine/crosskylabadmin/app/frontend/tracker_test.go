@@ -92,6 +92,8 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 		bot1 := test.BotForDUT("dut_1", "needs_repair", "label-os_type:OS_TYPE_CROS;id:id1")
 		bot2 := test.BotForDUT("dut_2", "repair_failed", "label-os_type:OS_TYPE_CROS;id:id2")
 		bot3 := test.BotForDUT("dut_3", "needs_reset", "label-os_type:OS_TYPE_JETSTREAM;id:id3")
+		bot4 := test.BotForDUT("dut_4", "needs_manual_repair", "label-os_type:OS_TYPE_JETSTREAM;id:id4")
+		bot5 := test.BotForDUT("dut_5", "needs_replacement", "label-os_type:OS_TYPE_JETSTREAM;id:id5")
 		bot1LabStation := test.BotForDUT("dut_1l", "needs_repair", "label-os_type:OS_TYPE_LABSTATION;id:lab_id1")
 		appendPaths := func(paths map[string]*taskqueue.Task) (arr []string) {
 			for _, v := range paths {
@@ -170,6 +172,44 @@ func TestPushBotsForAdminTasks(t *testing.T) {
 
 			tasks := tqt.GetScheduledTasks()
 			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id2"})
+			validateTasksInQueue(tasks, resetQ, "reset", []string{})
+		})
+		Convey("run only for needs_manual_repair status", func() {
+			tqt.ResetTasks()
+			tf.MockSwarming.EXPECT().ListAliveIdleBotsInPool(
+				gomock.Any(),
+				gomock.Eq(config.Get(tf.C).Swarming.BotPool),
+				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"needs_manual_repair"}}),
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot4}, nil)
+			expectDefaultPerBotRefresh(tf)
+			request := fleet.PushBotsForAdminTasksRequest{
+				TargetDutState: fleet.DutState_NeedsManualRepair,
+			}
+			res, err := tf.Tracker.PushBotsForAdminTasks(tf.C, &request)
+			So(err, ShouldBeNil)
+			So(res, ShouldNotBeNil)
+
+			tasks := tqt.GetScheduledTasks()
+			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{"id4"})
+			validateTasksInQueue(tasks, resetQ, "reset", []string{})
+		})
+		Convey("don't run for needs_replacement status", func() {
+			tqt.ResetTasks()
+			tf.MockSwarming.EXPECT().ListAliveIdleBotsInPool(
+				gomock.Any(),
+				gomock.Eq(config.Get(tf.C).Swarming.BotPool),
+				gomock.Eq(strpair.Map{clients.DutStateDimensionKey: {"needs_replacement"}}),
+			).AnyTimes().Return([]*swarming.SwarmingRpcsBotInfo{bot5}, nil)
+			expectDefaultPerBotRefresh(tf)
+			request := fleet.PushBotsForAdminTasksRequest{
+				TargetDutState: fleet.DutState_NeedsReplacement,
+			}
+			res, err := tf.Tracker.PushBotsForAdminTasks(tf.C, &request)
+			So(err, ShouldBeNil)
+			So(res, ShouldNotBeNil)
+
+			tasks := tqt.GetScheduledTasks()
+			validateTasksInQueue(tasks, repairQ, "cros_repair", []string{})
 			validateTasksInQueue(tasks, resetQ, "reset", []string{})
 		})
 	})
