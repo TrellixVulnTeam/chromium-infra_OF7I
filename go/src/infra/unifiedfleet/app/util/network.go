@@ -71,7 +71,7 @@ func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, string, string, error) 
 }
 
 // FormatIP initialize an IP object
-func FormatIP(vlanName, ipAddress string, occupied bool) *ufspb.IP {
+func FormatIP(vlanName, ipAddress string, reserve, occupied bool) *ufspb.IP {
 	ipv4, err := IPv4StrToInt(ipAddress)
 	if err != nil {
 		return nil
@@ -82,6 +82,7 @@ func FormatIP(vlanName, ipAddress string, occupied bool) *ufspb.IP {
 		Ipv4Str:  ipAddress,
 		Vlan:     vlanName,
 		Occupied: occupied,
+		Reserve:  reserve,
 	}
 }
 

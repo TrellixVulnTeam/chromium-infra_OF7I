@@ -195,14 +195,21 @@ func TestUpdateVlan(t *testing.T) {
 			_, err = configuration.BatchUpdateIPs(ctx, ips)
 			So(err, ShouldBeNil)
 
+			// Before
+			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "6.6.6.14"})
+			So(err, ShouldBeNil)
+			So(resIPs, ShouldHaveLength, 1)
+			So(resIPs[0].GetReserve(), ShouldBeFalse)
+
 			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
 			vlan2.ReservedIps = []string{"6.6.6.14"}
 			res, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"reserved_ips"}})
 			So(err, ShouldBeNil)
 			So(res.GetReservedIps(), ShouldResemble, []string{"6.6.6.14"})
-			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "6.6.6.14"})
+			resIPs, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "6.6.6.14"})
 			So(err, ShouldBeNil)
-			So(resIPs, ShouldHaveLength, 0)
+			So(resIPs, ShouldHaveLength, 1)
+			So(resIPs[0].GetReserve(), ShouldBeTrue)
 		})
 
 		Convey("Update vlan - partial update reserved_ips - happy path with existing old reserved_ips", func() {
@@ -222,6 +229,7 @@ func TestUpdateVlan(t *testing.T) {
 			resIPs, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"ipv4_str": "6.6.5.13"})
 			So(err, ShouldBeNil)
 			So(resIPs, ShouldHaveLength, 1)
+			So(resIPs[0].GetReserve(), ShouldBeFalse)
 		})
 
 		Convey("Update vlan - partial update zones - happy path", func() {

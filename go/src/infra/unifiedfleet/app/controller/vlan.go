@@ -546,23 +546,19 @@ func updateIPTable(ctx context.Context, vlanName string, oldIPs, newIPs []string
 		newIPMap[ip] = true
 	}
 	// Get ips from reserved => non-reserved
-	addBackIPs := make([]*ufspb.IP, 0)
+	toUpdateIPs := make([]*ufspb.IP, 0)
 	for _, ip := range oldIPs {
 		if !newIPMap[ip] {
-			addBackIPs = append(addBackIPs, util.FormatIP(vlanName, ip, false))
+			toUpdateIPs = append(toUpdateIPs, util.FormatIP(vlanName, ip, false, false))
 		}
 	}
 	// Get ips from non-reserved => reserved
-	toRemoveIPs := make([]string, 0)
 	for _, ip := range newIPs {
 		if !oldIPMap[ip] {
-			toRemoveIPs = append(toRemoveIPs, util.FormatIP(vlanName, ip, false).GetId())
+			toUpdateIPs = append(toUpdateIPs, util.FormatIP(vlanName, ip, true, false))
 		}
 	}
-	if _, err := configuration.BatchUpdateIPs(ctx, addBackIPs); err != nil {
-		return err
-	}
-	if err := configuration.BatchDeleteIPs(ctx, toRemoveIPs); err != nil {
+	if _, err := configuration.BatchUpdateIPs(ctx, toUpdateIPs); err != nil {
 		return err
 	}
 	return nil
