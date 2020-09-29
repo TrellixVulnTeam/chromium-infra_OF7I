@@ -269,11 +269,11 @@ func identifyBots(ctx context.Context, bots []*swarming.SwarmingRpcsBotInfo) (re
 		}
 
 		s := clients.GetStateDimension(b.Dimensions)
-		if s == fleet.DutState_NeedsRepair || s == fleet.DutState_RepairFailed || s == fleet.DutState_NeedsManualRepair {
+		switch s {
+		case fleet.DutState_NeedsRepair, fleet.DutState_RepairFailed, fleet.DutState_NeedsManualRepair:
 			logging.Infof(ctx, "BOT: %s - Needs repair", id)
 			repairBOTs = append(repairBOTs, id)
-
-		} else if s == fleet.DutState_NeedsReset {
+		case fleet.DutState_NeedsReset:
 			logging.Infof(ctx, "BOT: %s - Needs reset", id)
 			resetBOTs = append(resetBOTs, id)
 		}
