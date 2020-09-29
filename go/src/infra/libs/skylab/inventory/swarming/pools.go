@@ -24,7 +24,9 @@ func poolsConverter(dims Dimensions, ls *inventory.SchedulableLabels) {
 func selfServePoolsConverter(dims Dimensions, ls *inventory.SchedulableLabels) {
 	vs := ls.GetSelfServePools()
 	for _, v := range vs {
-		appendDim(dims, "label-pool", v)
+		if v != "" {
+			appendDim(dims, "label-pool", v)
+		}
 	}
 }
 
