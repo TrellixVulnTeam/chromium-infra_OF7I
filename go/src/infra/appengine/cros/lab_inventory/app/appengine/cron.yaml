@@ -52,3 +52,7 @@ cron:
 - description: back-fill asset tags
   url: /internal/cron/backfill-asset-tags
   schedule: every 1 hours
+
+- description: Sync manual repair records to BQ
+  url: /internal/cron/sync-manual-repair-records-to-bq
+  schedule: every 1 hours

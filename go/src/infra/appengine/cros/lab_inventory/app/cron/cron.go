@@ -42,6 +42,7 @@ import (
 	"infra/libs/cros/lab_inventory/dronecfg"
 	"infra/libs/cros/lab_inventory/hart"
 	"infra/libs/cros/lab_inventory/manufacturingconfig"
+	invprotos "infra/libs/cros/lab_inventory/protos"
 )
 
 // InstallHandlers installs handlers for cron jobs that are part of this app.
@@ -78,6 +79,8 @@ func InstallHandlers(r *router.Router, mwBase router.MiddlewareChain) {
 	r.GET("/internal/cron/sync-asset-info-from-hart", mwCron, logAndSetHTTPErr(syncAssetInfoFromHaRT))
 
 	r.GET("/internal/cron/backfill-asset-tags", mwCron, logAndSetHTTPErr(backfillAssetTagsToDevicesHandler))
+
+	r.GET("/internal/cron/sync-manual-repair-records-to-bq", mwCron, logAndSetHTTPErr(syncManualRepairRecordsToBQCronHandler))
 }
 
 const pageSize = 500
@@ -483,6 +486,65 @@ func backfillAssetTagsToDevicesHandler(c *router.Context) error {
 			}
 		}
 	}
+	return nil
+}
+
+func syncManualRepairRecordsToBQCronHandler(c *router.Context) error {
+	ctx := c.Context
+	logging.Infof(c.Context, "Start to sync manual repair records to bigquery")
+	project := info.AppID(ctx)
+	dataset := "inventory"
+	table := "manual_repair_records"
+
+	client, err := bigquery.NewClient(ctx, project)
+	if err != nil {
+		return err
+	}
+	up := bq.NewUploader(ctx, client, dataset, table)
+	up.SkipInvalidRows = true
+	up.IgnoreUnknownValues = true
+
+	logging.Debugf(ctx, "Getting time last scanned for manual repair records")
+	metadataEntity, err := datastore.GetLastScannedTime(ctx)
+	if err != nil && err != ds.ErrNoSuchEntity {
+		return err
+	}
+	newScannedTime := time.Now().UTC()
+
+	// Set up query and find records that were updated after last scanned time.
+	logging.Debugf(ctx, "Getting newly updated manual repair records")
+	q := ds.NewQuery(datastore.DeviceManualRepairRecordEntityKind)
+	if metadataEntity != nil {
+		q = q.Gte("updated_time", metadataEntity.LastScanned)
+	}
+
+	var entities []*datastore.DeviceManualRepairRecordEntity
+	if err := ds.GetAll(ctx, q, &entities); err != nil {
+		return err
+	}
+
+	logging.Debugf(ctx, "Preparing manual repair records for BigQuery")
+	msgs := make([]proto.Message, len(entities))
+	for i, c := range entities {
+		var content invprotos.DeviceManualRepairRecord
+		if err := proto.Unmarshal(c.Content, &content); err != nil {
+			return err
+		}
+		msgs[i] = &apibq.DeviceManualRepairRecordRow{
+			RepairRecordId: c.ID,
+			RepairRecord:   &content,
+		}
+	}
+
+	logging.Debugf(ctx, "Uploading %d records of manual repair records", len(msgs))
+	if err := up.Put(ctx, msgs...); err != nil {
+		return err
+	}
+
+	if err := datastore.SaveLastScannedTime(ctx, newScannedTime); err != nil {
+		return err
+	}
+
 	return nil
 }
 
