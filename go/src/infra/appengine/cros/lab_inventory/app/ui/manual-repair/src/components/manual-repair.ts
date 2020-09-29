@@ -77,11 +77,17 @@ export default class ManualRepair extends connect
 
   static MiscLinks: Map<string, {[key: string]: string}> = new Map([
     [
-      'Feedback', {
-        link:
-            'https://bugs.chromium.org/p/chromium/issues/entry?status=Unassigned&summary=Manual%20Repair%20App%20Feedback%20-%20Summarize%20issue%20here&labels=Type-Bug,Pri-2,AdminRepair&comment=What%20feedback%20would%20you%20like%20to%20provide?&components=Infra%3EFleet%3ESoftware%3EAutomation,%20Infra%3EFleet%3ESoftware%3EInventory',
+      'Feature Requests', {
+        link: 'http://go/mrfeatures',
         target: '_blank',
         icon: 'feedback',
+      }
+    ],
+    [
+      'Report Blockers', {
+        link: 'http://go/mr-must-fix',
+        target: '_blank',
+        icon: 'warning',
       }
     ],
   ]);
