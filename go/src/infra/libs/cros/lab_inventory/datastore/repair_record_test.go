@@ -2,10 +2,11 @@ package datastore
 
 import (
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/appengine/gaetesting"
 	"go.chromium.org/luci/gae/service/datastore"
@@ -381,6 +382,51 @@ func TestUpdateRecord(t *testing.T) {
 			So(res, ShouldHaveLength, 1)
 			So(res[0].Err, ShouldNotBeNil)
 			So(res[0].Err.Error(), ShouldContainSubstring, "datastore: no such entity")
+		})
+	})
+}
+
+func TestManualRepairIndexes(t *testing.T) {
+	t.Parallel()
+	ctx := gaetesting.TestingContextWithAppID("go-test")
+	datastore.GetTestable(ctx).Consistent(true)
+
+	record1 := mockUpdatedRecord("chromeos-indexTest-aa", "indexTest-111", 1)
+	record2 := mockUpdatedRecord("chromeos-indexTest-bb", "indexTest-222", 1)
+	record3 := mockDeviceManualRepairRecord("chromeos-indexTest-cc", "indexTest-222", 1)
+	record4 := mockUpdatedRecord("chromeos-indexTest-dd", "indexTest-444", 1)
+
+	records := []*invlibs.DeviceManualRepairRecord{record1, record2, record3, record4}
+	_, _ = AddDeviceManualRepairRecords(ctx, records)
+
+	Convey("Query device manual repair record from datastore using indexes", t, func() {
+		Convey("Query by repair_state", func() {
+			q := datastore.NewQuery(DeviceManualRepairRecordEntityKind).
+				Eq("repair_state", invlibs.DeviceManualRepairRecord_STATE_COMPLETED.String())
+
+			var entities []*DeviceManualRepairRecordEntity
+			err := datastore.GetAll(ctx, q, &entities)
+
+			So(err, ShouldBeNil)
+			So(entities, ShouldHaveLength, 3)
+		})
+		Convey("Query by updated_time", func() {
+			rec4Update := mockUpdatedRecord("chromeos-indexTest-dd", "indexTest-444", 1)
+			rec4Update.UpdatedTime, _ = ptypes.TimestampProto(time.Unix(555, 0).UTC())
+
+			rec4ID, _ := generateRepairRecordID(rec4Update.Hostname, rec4Update.AssetTag, ptypes.TimestampString(rec4Update.CreatedTime))
+			reqUpdate := map[string]*invlibs.DeviceManualRepairRecord{rec4ID: rec4Update}
+			_, err := UpdateDeviceManualRepairRecords(ctx, reqUpdate)
+			So(err, ShouldBeNil)
+
+			q := datastore.NewQuery(DeviceManualRepairRecordEntityKind).
+				Gte("updated_time", time.Unix(500, 0).UTC())
+
+			var entities []*DeviceManualRepairRecordEntity
+			err = datastore.GetAll(ctx, q, &entities)
+			So(err, ShouldBeNil)
+			So(entities, ShouldHaveLength, 1)
+			So(entities[0].ID, ShouldEqual, rec4ID)
 		})
 	})
 }

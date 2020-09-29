@@ -221,13 +221,13 @@ func NewAssetInfo(a *ufs.AssetInfo) (*AssetInfoEntity, error) {
 // 	STATE_IN_PROGRESS = 2;
 // 	STATE_COMPLETED = 3;
 type DeviceManualRepairRecordEntity struct {
-	_kind       string `gae:"$kind,DeviceManualRepairRecord"`
-	ID          string `gae:"$id"`
-	Hostname    string `gae:"hostname"`
-	AssetTag    string `gae:"asset_tag"`
-	RepairState string `gae:"repair_state"`
-	UpdatedTime time.Time
-	Content     []byte `gae:",noindex"`
+	_kind       string    `gae:"$kind,DeviceManualRepairRecord"`
+	ID          string    `gae:"$id"`
+	Hostname    string    `gae:"hostname"`
+	AssetTag    string    `gae:"asset_tag"`
+	RepairState string    `gae:"repair_state"`
+	UpdatedTime time.Time `gae:"updated_time"`
+	Content     []byte    `gae:",noindex"`
 }
 
 // DeviceManualRepairRecordEntityKind is the datastore entity kind for
