@@ -5,12 +5,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
-	"time"
 
 	"go.chromium.org/luci/common/logging"
 	ds "go.chromium.org/luci/gae/service/datastore"
@@ -27,7 +25,7 @@ import (
 //   - Determines the concrete ref for every audit configuration configured.
 //   - Creates a new RepoState entry for any new refs.
 //   - Schedules an audit task for each active ref in the appropriate queue.
-func (s *app) Schedule(rc *router.Context) {
+func (a *app) Schedule(rc *router.Context) {
 	ctx, resp := rc.Context, rc.Writer
 
 	for configName, config := range config.GetRuleMap() {
@@ -77,10 +75,7 @@ func (s *app) Schedule(rc *router.Context) {
 				},
 			}
 
-			// CreateTask call will fail without this timeout
-			ctx, cancel := context.WithTimeout(ctx, time.Duration(s.cloudTasksTimeoutMs)*time.Millisecond)
-			defer cancel()
-			_, err = s.cloudTasksClient.CreateTask(ctx, req)
+			_, err = a.cloudTasksClient.CreateTask(ctx, req)
 
 			if err != nil {
 				logging.WithError(err).Errorf(ctx, "Could not schedule audit for %s due to %s", refConfig.RepoURL(), err.Error())

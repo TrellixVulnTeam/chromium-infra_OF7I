@@ -5,8 +5,6 @@
 package main
 
 import (
-	"flag"
-
 	"go.chromium.org/luci/appengine/gaemiddleware"
 	"go.chromium.org/luci/config/server/cfgmodule"
 	"go.chromium.org/luci/server"
@@ -16,12 +14,9 @@ import (
 	"go.chromium.org/luci/server/templates"
 
 	"infra/appengine/cr-audit-commits/app/config"
+	cloudtasksmodule "infra/libs/grpcclient/cloudtasks"
 
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
-)
-
-var (
-	cloudTasksTimeoutMs = flag.Int("cloudtasks_timeout_ms", 30*1000, "Default cloudtasks rpc timeout in milliseconds.")
 )
 
 // app struct contains clients for services the app depends on.
@@ -29,12 +24,12 @@ var (
 // a tool like https://github.com/google/wire would use. Assign
 // fake implementations, doubles etc for testing.
 type app struct {
-	cloudTasksClient    *cloudtasks.Client
-	cloudTasksTimeoutMs int
+	cloudTasksClient *cloudtasks.Client
 }
 
 func main() {
-	flag.Parse()
+	cloudtasksCfg := cloudtasksmodule.NewOptionsFromFlags()
+
 	modules := []module.Module{
 		gaeemulation.NewModuleFromFlags(),
 		cfgmodule.NewModuleFromFlags(),
@@ -48,15 +43,13 @@ func main() {
 			FuncMap: templateFuncs,
 		}))
 
-		client, err := cloudtasks.NewClient(srv.Context)
-		defer client.Close()
+		tasksClient, err := cloudtasksCfg.NewClient(srv.Context)
 		if err != nil {
 			return err
 		}
 
 		appServer := &app{
-			cloudTasksClient:    client,
-			cloudTasksTimeoutMs: *cloudTasksTimeoutMs,
+			cloudTasksClient: tasksClient,
 		}
 
 		srv.Routes.GET("/", templatesmw, func(c *router.Context) {

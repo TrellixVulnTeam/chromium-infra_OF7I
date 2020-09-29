@@ -15,8 +15,8 @@ import (
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/cr-audit-commits/app/config"
-	"infra/appengine/cr-audit-commits/app/fakecloudtasks"
 	"infra/appengine/cr-audit-commits/app/rules"
+	cloudtasksmodule "infra/libs/grpcclient/cloudtasks"
 
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
@@ -61,37 +61,35 @@ func TestScheduler(t *testing.T) {
 		}
 
 		Convey("CreateTask fails", func() {
-			fakeCloudTasks := &fakecloudtasks.Server{
+			fakeCloudTasks := &cloudtasksmodule.FakeServer{
 				CreateTaskError: fmt.Errorf("default error for testing"),
 			}
-			fakeServerAddr, fakeServer, err := fakecloudtasks.StartServer(ctx, fakeCloudTasks)
+			fakeServer, err := fakeCloudTasks.Start(ctx)
 			defer fakeServer.Stop()
 			So(err, ShouldBeNil)
 
-			tasksClient, err := fakecloudtasks.NewClient(ctx, fakeServerAddr)
+			tasksClient, err := fakeCloudTasks.NewClient(ctx)
 			So(err, ShouldBeNil)
 
 			appServer := &app{
-				cloudTasksClient:    tasksClient,
-				cloudTasksTimeoutMs: 30 * 1000,
+				cloudTasksClient: tasksClient,
 			}
 			appServer.Schedule(c)
 			So(w.Code, ShouldEqual, http.StatusInternalServerError)
 		})
 
 		Convey("CreateTask succeeds", func() {
-			fakeCloudTasks := &fakecloudtasks.Server{
+			fakeCloudTasks := &cloudtasksmodule.FakeServer{
 				CreateTaskResponse: &taskspb.Task{},
 			}
-			fakeServerAddr, fakeServer, err := fakecloudtasks.StartServer(ctx, fakeCloudTasks)
+			fakeServer, err := fakeCloudTasks.Start(ctx)
 			defer fakeServer.Stop()
 			So(err, ShouldBeNil)
 
-			tasksClient, err := fakecloudtasks.NewClient(ctx, fakeServerAddr)
+			tasksClient, err := fakeCloudTasks.NewClient(ctx)
 			So(err, ShouldBeNil)
 			appServer := &app{
-				cloudTasksClient:    tasksClient,
-				cloudTasksTimeoutMs: 30 * 1000,
+				cloudTasksClient: tasksClient,
 			}
 			appServer.Schedule(c)
 
