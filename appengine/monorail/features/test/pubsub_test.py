@@ -9,12 +9,9 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
-import os
 import unittest
 
 from mock import Mock
-
-from google.appengine.ext import testbed
 
 from features import pubsub
 from services import service_manager
@@ -25,13 +22,6 @@ from testing import testing_helpers
 class PublishPubsubIssueChangeTaskTest(unittest.TestCase):
 
   def setUp(self):
-    self.testbed = testbed.Testbed()
-    self.testbed.activate()
-    self.testbed.init_memcache_stub()
-    self.testbed.init_taskqueue_stub()
-    self.taskqueue_stub = self.testbed.get_stub(testbed.TASKQUEUE_SERVICE_NAME)
-    self.taskqueue_stub._root_path = os.path.dirname(
-        os.path.dirname(os.path.dirname(__file__)))
     self.services = service_manager.Services(
         user=fake.UserService(),
         project=fake.ProjectService(),
@@ -45,9 +35,6 @@ class PublishPubsubIssueChangeTaskTest(unittest.TestCase):
     # Stub the pubsub API (there is no pubsub testbed stub).
     self.pubsub_client_mock = Mock()
     pubsub.set_up_pubsub_api = Mock(return_value=self.pubsub_client_mock)
-
-  def tearDown(self):
-    self.testbed.deactivate()
 
   def testPublishPubsubIssueChangeTask_NoIssueIdParam(self):
     """Test case when issue_id param is not passed."""
