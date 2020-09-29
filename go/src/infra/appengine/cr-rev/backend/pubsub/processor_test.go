@@ -178,4 +178,40 @@ func TestPubsubProcessor(t *testing.T) {
 		So(len(datastoreCommits), ShouldEqual, 1)
 		So(datastoreCommits[0].CommitHash, ShouldEqual, "000000000000000000000000000000000000000D")
 	})
+
+	Convey("ignore messages with no oldid", t, func() {
+		m := &SourceRepoEvent{
+			Name: "projects/foo/repos/oldid",
+			Event: &SourceRepoEvent_RefUpdateEvent_{
+				RefUpdateEvent: &SourceRepoEvent_RefUpdateEvent{
+					RefUpdates: map[string]*SourceRepoEvent_RefUpdateEvent_RefUpdate{
+						"refs/heads/master": {
+							RefName: "refs/heads/master",
+							OldId:   "",
+							NewId:   "0000000000000000000000000000000000000001",
+						},
+					},
+				},
+			},
+		}
+		commits := []*git.Commit{
+			{
+				Id:      "0000000000000000000000000000000000000001",
+				Parents: []string{"0000000000000000000000000000000000000000"},
+			},
+			{
+				Id: "0000000000000000000000000000000000000000",
+			},
+		}
+		c := &gitilesProto.GitilesFake{}
+		c.SetRepository("oldid", nil, commits)
+		ctx := gitiles.SetClient(ctx, c)
+		err := p(ctx, m)
+		So(err, ShouldBeError)
+
+		datastoreCommits := []*models.Commit{}
+		q := datastore.NewQuery("Commit").Eq("Repository", "oldid")
+		datastore.GetAll(ctx, q, &datastoreCommits)
+		So(len(datastoreCommits), ShouldEqual, 0)
+	})
 }

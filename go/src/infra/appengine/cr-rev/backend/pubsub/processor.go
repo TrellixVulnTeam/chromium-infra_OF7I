@@ -49,6 +49,11 @@ func Processor(host *config.Host) ProcessPubsubMessage {
 				logging.Debugf(ctx, "Skipping indexing %v on ref %s", repository, ref)
 				continue
 			}
+			if event.GetOldId() == "" {
+				err := fmt.Errorf("Missing old id (%v, %s): event %v", repository, ref, event)
+				logging.Errorf(ctx, err.Error())
+				return err
+			}
 			err := importCommits(ctx, repository, event.GetOldId(), event.GetNewId())
 			if err != nil {
 				return fmt.Errorf("Error while importing %v %s..%s: %w",
