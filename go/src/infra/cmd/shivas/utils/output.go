@@ -229,7 +229,7 @@ func ConcurrentGet(ctx context.Context, ic ufsAPI.FleetClient, names []string, g
 			// single Get request call to UFS
 			m, err := getSingle(ctx, ic, names[i])
 			if err != nil {
-				fmt.Println(err.Error() + " => " + names[i])
+				fmt.Fprintln(os.Stderr, err.Error()+" => "+names[i])
 				// inform waitgroup that thread is completed
 				wg.Done()
 			} else {
