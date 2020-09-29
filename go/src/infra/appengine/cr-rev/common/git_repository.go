@@ -25,6 +25,10 @@ func (r *GitRepository) ShouldIndex(ref string) bool {
 	if r.Config == nil {
 		return strings.HasPrefix(ref, DefaultIncludeRefs)
 	}
+	if r.Config.GetDoNotIndex() {
+		return false
+	}
+
 	for _, excludedRef := range r.Config.GetExcludeRefs() {
 		if strings.HasPrefix(ref, excludedRef) {
 			return false

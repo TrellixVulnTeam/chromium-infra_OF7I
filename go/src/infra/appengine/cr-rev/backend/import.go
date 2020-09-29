@@ -30,6 +30,7 @@ func setupImport(ctx context.Context, cfg *config.Config) {
 		if err != nil {
 			panic(fmt.Sprintf("Error creating gitiles rest client: %v", err))
 		}
+		c = gitiles.NewRetriableClient(c)
 
 		ctx := gitiles.SetClient(ctx, c)
 
