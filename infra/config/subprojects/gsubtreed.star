@@ -39,20 +39,8 @@ def gsubtreed_cron(
     )
 
 gsubtreed_cron(
-    name = "gsubtreed-chromium",
-    target_repo = "https://chromium.googlesource.com/chromium/src",
-    # Re-bootstrapping chromium repo takes 1+ hours.
-    execution_timeout = 3 * time.hour,
-    # We want to have minimal delay.
-    schedule = "continuously",
-)
-gsubtreed_cron(
     name = "gsubtreed-chromiumos-platform2",
     target_repo = "https://chromium.googlesource.com/chromiumos/platform2",
-)
-gsubtreed_cron(
-    name = "gsubtreed-aosp-platform-system-core",
-    target_repo = "https://chromium.googlesource.com/aosp/platform/system/core",
 )
 gsubtreed_cron(
     name = "gsubtreed-llvm-clang",
@@ -65,10 +53,6 @@ gsubtreed_cron(
 gsubtreed_cron(
     name = "gsubtreed-selenium",
     target_repo = "https://chromium.googlesource.com/external/github.com/SeleniumHQ/selenium",
-)
-gsubtreed_cron(
-    name = "gsubtreed-infra",
-    target_repo = "https://chromium.googlesource.com/infra/infra",
 )
 gsubtreed_cron(
     name = "gsubtreed-luci-py",
