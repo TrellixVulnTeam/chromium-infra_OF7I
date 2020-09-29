@@ -25,6 +25,8 @@ const (
 	leaseUpdateDuration = 10 * time.Minute
 )
 
+var errImportNotRequired = errors.New("the repository scan is not required")
+
 type leaser struct {
 	repo common.GitRepository
 	doc  *models.Repository
@@ -109,7 +111,8 @@ func (l *leaser) acquireLease(ctx context.Context) error {
 		now := clock.Now(ctx).UTC().Round(time.Millisecond)
 
 		if !l.doc.IsScanRequired(now) {
-			return fmt.Errorf("the repository scan is not required (%+v)", l.doc)
+			logging.Debugf(ctx, "the repository scan is not required (%+v)", l.doc)
+			return errImportNotRequired
 		}
 
 		l.doc.SetStartIndexing(now, os.Getenv("GAE_INSTANCE"))

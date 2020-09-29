@@ -76,7 +76,7 @@ func initialHostImport(ctx context.Context, importController repoimport.Controll
 			}
 		}
 
-		logging.Infof(ctx, "scheduling scan for: %s/%s", host.Name, repo)
+		logging.Debugf(ctx, "scheduling scan for: %s/%s", host.Name, repo)
 		importController.Index(common.GitRepository{
 			Host:   host.Name,
 			Name:   repo,

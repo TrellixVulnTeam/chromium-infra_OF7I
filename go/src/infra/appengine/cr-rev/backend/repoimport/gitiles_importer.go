@@ -53,13 +53,12 @@ func NewGitilesImporter(ctx context.Context, repo common.GitRepository) Importer
 // error will be returned.
 // Importer will import all desired refs, as defined in repo.config.Refs.
 func (imp *gitilesImporter) Run(ctx context.Context) error {
-	logging.Infof(ctx, "Running import for: %s/%s", imp.repo.Host, imp.repo.Name)
+	logging.Debugf(ctx, "running import for: %s/%s", imp.repo.Host, imp.repo.Name)
 	refsPaths := []string{common.DefaultIncludeRefs}
 	if imp.repo.Config != nil && len(imp.repo.Config.Refs) > 0 {
 		refsPaths = imp.repo.Config.Refs
 	}
 
-	logging.Debugf(ctx, "Running import of %s/%s", imp.repo.Host, imp.repo.Name)
 	return imp.leaser.WithLease(ctx, func(ctx context.Context) error {
 		return imp.scanRefsPaths(ctx, refsPaths)
 	})
@@ -90,7 +89,7 @@ func (imp *gitilesImporter) scanRefsPaths(ctx context.Context, refsPaths []strin
 		}
 	}
 
-	logging.Infof(ctx, "Collected %d revisions from branches in %s/%s",
+	logging.Debugf(ctx, "Collected %d revisions from branches in %s/%s",
 		len(refsToScan), imp.repo.Host, imp.repo.Name)
 	for _, rev := range refsToScan {
 		err := imp.traverseRev(ctx, rev)
@@ -116,7 +115,7 @@ func (imp *gitilesImporter) traverseRev(ctx context.Context, ref string) error {
 			ref, imp.repo.Host, imp.repo.Name)
 		return nil
 	}
-	logging.Infof(ctx, "Scanning ref %s of %s/%s/",
+	logging.Debugf(ctx, "Scanning ref %s of %s/%s/",
 		ref, imp.repo.Host, imp.repo.Name)
 	in := &gitilesProto.LogRequest{
 		Project:    imp.repo.Name,
@@ -131,7 +130,7 @@ func (imp *gitilesImporter) traverseRev(ctx context.Context, ref string) error {
 			return fmt.Errorf("error querying Gitiles: %w", err)
 		}
 
-		logging.Infof(ctx, "Found %d commits in %s/%s, ref: %s",
+		logging.Debugf(ctx, "Found %d commits in %s/%s, ref: %s",
 			len(resp.GetLog()), imp.repo.Host, imp.repo.Name, ref)
 
 		commits := []*common.GitCommit{}

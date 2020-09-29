@@ -56,7 +56,12 @@ func (c *controller) Start(ctx context.Context) {
 		case repo := <-c.ch:
 			importer := c.importerFactory(ctx, repo)
 			err := importer.Run(ctx)
-			if err != nil {
+			switch err {
+			case nil:
+				logging.Infof(ctx, "repository %s/%s successfully imported", repo.Host, repo.Name)
+			case errImportNotRequired:
+				// do nothing, assume importer logged the reason why it's not required.
+			default:
 				logging.WithError(err).Errorf(
 					ctx, "failed to import repository: %s/%s", repo.Host, repo.Name)
 			}
