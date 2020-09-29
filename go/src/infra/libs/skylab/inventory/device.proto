@@ -455,11 +455,21 @@ enum PeripheralState {
 }
 
 // copy of enum from dut_state.proto
+// The states are using for DUT storage and USB-drive on servo.
+// Next Tag: 5
 enum HardwareState {
+  // keep for all unknown state by default.
   HARDWARE_UNKNOWN = 0;
+  // Hardware is in good shape and pass all verifiers.
   HARDWARE_NORMAL = 1;
+  // Hardware is still good but some not critical verifiers did not pass or provided border values.
+  // (used for DUT storage when usage reached 98%)
   HARDWARE_ACCEPTABLE = 2;
+  // Hardware is broken or bad (did not pass verifiers).
   HARDWARE_NEED_REPLACEMENT = 3;
+  // Hardware is not detected to run verifiers.
+  // (used for USB-drive when it expected but not detected on the device)
+  HARDWARE_NOT_DETECTED = 4;
 }
 
 // These labels are used by the CI system to provide test coverage hints to
