@@ -9,16 +9,14 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/luci/config"
 	"go.chromium.org/luci/config/cfgclient"
 	cfgmem "go.chromium.org/luci/config/impl/memory"
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/caching"
 	"go.chromium.org/luci/server/router"
-
 	cpb "infra/appengine/cr-audit-commits/app/proto"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
@@ -39,7 +37,7 @@ var (
 				rules: {
 					changeReviewed: {
 						robots: "robot0@example.com"
-					  	robots: "robot1@example.com"
+						robots: "robot1@example.com"
 					}
 				}
 				rules: {culpritAge: {}}
@@ -64,8 +62,8 @@ var (
 				notifications: {
 					commentOrFileMonorailIssue: {
 						components: "Test>Component"
-						  labels: "CommitLog-Audit-Violation"
-						  labels: "TBR-Violation"
+							labels: "CommitLog-Audit-Violation"
+							labels: "TBR-Violation"
 					}
 				}
 			}
@@ -73,10 +71,10 @@ var (
 	`
 )
 
-func createConfig() *cpb.Config {
+func createConfig(s string) *cpb.Config {
 	// returns a RefConfig with all required fields.
 	var cfg cpb.RefConfig
-	So(proto.UnmarshalText(sampleValidRefConfig, &cfg), ShouldBeNil)
+	proto.UnmarshalText(s, &cfg)
 
 	return &cpb.Config{
 		RefConfigs: map[string]*cpb.RefConfig{
@@ -85,15 +83,22 @@ func createConfig() *cpb.Config {
 	}
 }
 
+// getConfigTestingContext generates a test context to allow use config.
+func getConfigTestingContext(c context.Context, s string) context.Context {
+	// Put content from sampleValidRefConfig into cachedCfg.
+	c = caching.WithEmptyProcessCache(c)
+	c = cfgclient.Use(c, cfgmem.New(map[config.Set]cfgmem.Files{
+		"services/${appid}": {
+			cachedCfg.Path: createConfig(s).String(),
+		},
+	}))
+	return c
+}
+
 func TestMiddleware(t *testing.T) {
 	Convey("loads config and updates context", t, func() {
 		c := memory.Use(context.Background())
-		c = caching.WithEmptyProcessCache(c)
-		c = cfgclient.Use(c, cfgmem.New(map[config.Set]cfgmem.Files{
-			"services/${appid}": {
-				cachedCfg.Path: createConfig().String(),
-			},
-		}))
+		c = getConfigTestingContext(c, sampleValidRefConfig)
 
 		Middleware(&router.Context{Context: c}, func(c *router.Context) {
 			refConfig := Get(c.Context).RefConfigs["fakeproject"]

@@ -14,7 +14,6 @@ import (
 	"go.chromium.org/luci/gae/impl/memory"
 	"go.chromium.org/luci/server/router"
 
-	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 	cloudtasksmodule "infra/libs/grpcclient/cloudtasks"
 
@@ -33,32 +32,36 @@ func TestScheduler(t *testing.T) {
 		w := &httptest.ResponseRecorder{}
 		c := &router.Context{Context: ctx, Writer: w}
 
-		// Nil out DynamicRefFunctions so the Schedule call doesn't try to actually
-		// make network calls to them.
-		for _, cfg := range config.GetRuleMap() {
-			cfg.DynamicRefFunction = nil
-		}
-
-		config.GetRuleMap()["new-repo"] = &rules.RefConfig{
-			BaseRepoURL:    "https://new.googlesource.com/new.git",
-			GerritURL:      "https://new-review.googlesource.com",
-			BranchName:     "master",
-			StartingCommit: "000000",
-			Rules: map[string]rules.AccountRules{"rules": {
-				Account: "new@test.com",
-				Rules: []rules.Rule{
-					rules.DummyRule{
-						Name: "DummyRule",
-						Result: &rules.RuleResult{
-							RuleName:         "Dummy rule",
-							RuleResultStatus: rules.RulePassed,
-							Message:          "",
-							MetaData:         "",
+		// Mock global configuration.
+		expectedRuleMap := map[string]*rules.RefConfig{
+			"new-repo": {
+				BaseRepoURL:    "https://new.googlesource.com/new.git",
+				GerritURL:      "https://new-review.googlesource.com",
+				BranchName:     "master",
+				StartingCommit: "000000",
+				Rules: map[string]rules.AccountRules{"rules": {
+					Account: "new@test.com",
+					Rules: []rules.Rule{
+						rules.DummyRule{
+							Name: "DummyRule",
+							Result: &rules.RuleResult{
+								RuleName:         "Dummy rule",
+								RuleResultStatus: rules.RulePassed,
+								Message:          "",
+								MetaData:         "",
+							},
 						},
 					},
-				},
-			}},
+				}},
+			},
 		}
+		configGetOld := configGet
+		configGet = func(context.Context) map[string]*rules.RefConfig {
+			return expectedRuleMap
+		}
+		defer func() {
+			configGet = configGetOld
+		}()
 
 		Convey("CreateTask fails", func() {
 			fakeCloudTasks := &cloudtasksmodule.FakeServer{

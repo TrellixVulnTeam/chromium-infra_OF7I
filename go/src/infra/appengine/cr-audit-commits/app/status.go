@@ -5,18 +5,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
-
-	"context"
 
 	"go.chromium.org/luci/common/logging"
 	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
 	"go.chromium.org/luci/server/templates"
-
-	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
@@ -28,10 +25,11 @@ func Status(rctx *router.Context) {
 	if refURL == "" {
 		refURL = "https://chromium.googlesource.com/chromium/src.git/+/master"
 	}
+
 	cfg, repoState, err := loadConfig(ctx, refURL)
 	if err != nil {
 		args := templates.Args{
-			"RuleMap": config.GetRuleMap(),
+			"RuleMap": configGet(ctx),
 			"Error":   fmt.Sprintf("Unknown repository %s", refURL),
 		}
 		templates.MustRender(ctx, resp, "pages/status.html", args)

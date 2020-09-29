@@ -84,28 +84,38 @@ func TestAuditor(t *testing.T) {
 
 		})
 		Convey("Dummy Repo", func() {
-			// TODO: Do not mutate global state.
-			config.GetRuleMap()["dummy-repo"] = &rules.RefConfig{
-				BaseRepoURL:    "https://dummy.googlesource.com/dummy.git",
-				GerritURL:      "https://dummy-review.googlesource.com",
-				BranchName:     "refs/heads/master",
-				StartingCommit: "000000",
-				Rules: map[string]rules.AccountRules{"rules": {
-					Account: "dummy@test.com",
-					Rules: []rules.Rule{
-						rules.DummyRule{
-							Name: "Dummy rule",
-							Result: &rules.RuleResult{
-								RuleName:         "Dummy rule",
-								RuleResultStatus: rules.RulePassed,
-								Message:          "",
-								MetaData:         "",
+			// Mock global configuration.
+			expectedRuleMap := map[string]*rules.RefConfig{
+				"dummy-repo": {
+					BaseRepoURL:    "https://dummy.googlesource.com/dummy.git",
+					GerritURL:      "https://dummy-review.googlesource.com",
+					BranchName:     "refs/heads/master",
+					StartingCommit: "000000",
+					Rules: map[string]rules.AccountRules{"rules": {
+						Account: "dummy@test.com",
+						Rules: []rules.Rule{
+							rules.DummyRule{
+								Name: "Dummy rule",
+								Result: &rules.RuleResult{
+									RuleName:         "Dummy rule",
+									RuleResultStatus: rules.RulePassed,
+									Message:          "",
+									MetaData:         "",
+								},
 							},
 						},
-					},
-					Notification: dummyNotifier{},
-				}},
+						Notification: dummyNotifier{},
+					}},
+				},
 			}
+			configGetOld := configGet
+			configGet = func(context.Context) map[string]*rules.RefConfig {
+				return expectedRuleMap
+			}
+			defer func() {
+				configGet = configGetOld
+			}()
+
 			escapedRepoURL := url.QueryEscape("https://dummy.googlesource.com/dummy.git/+/refs/heads/master")
 			gitilesMockClient := gitilespb.NewMockGitilesClient(gomock.NewController(t))
 			auditorTestClients.GitilesFactory = func(host string, httpClient *http.Client) (gitilespb.GitilesClient, error) {
@@ -436,8 +446,7 @@ func TestAuditor(t *testing.T) {
 						}
 					})
 					Convey("Some fail", func() {
-						// TODO: Do not depend on global state.
-						dummyRuleTmp := config.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0].(rules.DummyRule)
+						dummyRuleTmp := expectedRuleMap["dummy-repo"].Rules["rules"].Rules[0].(rules.DummyRule)
 						dummyRuleTmp.Result.RuleResultStatus = rules.RuleFailed
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
@@ -453,8 +462,7 @@ func TestAuditor(t *testing.T) {
 						}
 					})
 					Convey("Some error", func() {
-						// TODO: Do not mutate global state.
-						config.GetRuleMap()["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
+						expectedRuleMap["dummy-repo"].Rules["rules"].Rules[0] = errorRule{}
 						resp, err := client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 						So(err, ShouldBeNil)
 						So(resp.StatusCode, ShouldEqual, 200)
@@ -513,7 +521,7 @@ func TestAuditor(t *testing.T) {
 					So(rs.LastKnownCommit, ShouldEqual, "123456")
 					So(rs.Paused, ShouldEqual, true)
 
-					config.GetRuleMap()["dummy-repo"].OverwriteLastKnownCommit = "999999"
+					expectedRuleMap["dummy-repo"].OverwriteLastKnownCommit = "999999"
 					resp, err = client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 200)
@@ -541,7 +549,7 @@ func TestAuditor(t *testing.T) {
 					So(rs.LastKnownCommit, ShouldEqual, "123456")
 					So(rs.Paused, ShouldEqual, true)
 
-					config.GetRuleMap()["dummy-repo"].OverwriteLastKnownCommit = "999999"
+					expectedRuleMap["dummy-repo"].OverwriteLastKnownCommit = "999999"
 					resp, err = client.Get(srv.URL + auditorPath + "?refUrl=" + escapedRepoURL)
 					So(err, ShouldBeNil)
 					So(resp.StatusCode, ShouldEqual, 409)

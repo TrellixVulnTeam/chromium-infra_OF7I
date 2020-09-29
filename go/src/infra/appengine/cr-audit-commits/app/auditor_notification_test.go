@@ -14,7 +14,6 @@ import (
 	"go.chromium.org/luci/gae/impl/memory"
 	ds "go.chromium.org/luci/gae/service/datastore"
 
-	"infra/appengine/cr-audit-commits/app/config"
 	cpb "infra/appengine/cr-audit-commits/app/proto"
 	"infra/appengine/cr-audit-commits/app/rules"
 	"infra/monorail"
@@ -56,8 +55,6 @@ func TestNotifier(t *testing.T) {
 					},
 				}},
 			}
-			// TODO: Do not mutate global state.
-			config.GetRuleMap()["old-repo"] = cfg
 			repoState := &rules.RepoState{
 				RepoURL:            "https://old.googlesource.com/old.git/+/master",
 				LastKnownCommit:    "123456",
@@ -209,8 +206,6 @@ func TestNotifier(t *testing.T) {
 				}},
 				Metadata: "MilestoneNumber:70",
 			}
-			// TODO: Do not mutate global state.
-			config.GetRuleMap()["old-repo-ack"] = cfg
 			repoState := &rules.RepoState{
 				RepoURL:            "https://old.googlesource.com/old-ack.git/+/master",
 				LastKnownCommit:    "123456",

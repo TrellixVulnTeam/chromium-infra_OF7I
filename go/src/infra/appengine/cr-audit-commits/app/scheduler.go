@@ -16,7 +16,6 @@ import (
 
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
 
-	"infra/appengine/cr-audit-commits/app/config"
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
@@ -28,7 +27,7 @@ import (
 func (a *app) Schedule(rc *router.Context) {
 	ctx, resp := rc.Context, rc.Writer
 
-	for configName, config := range config.GetRuleMap() {
+	for configName, config := range configGet(ctx) {
 		var refConfigs []*rules.RefConfig
 		var err error
 		if config.DynamicRefFunction != nil {

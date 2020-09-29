@@ -29,6 +29,7 @@ import (
 
 // Tests can put mock clients here, prod code will ignore this global.
 var auditorTestClients *rules.Clients
+var configGet = config.GetUpdatedRuleMap
 
 // pauseRefErr is used to indicate that a ref needs to be paused.
 var errPauseRef = errors.New("ref needs to be paused")
@@ -567,7 +568,7 @@ func loadConfig(ctx context.Context, refURL string) (*rules.RefConfig, *rules.Re
 		return nil, nil, err
 	}
 
-	cfg, ok := config.GetRuleMap()[rs.ConfigName]
+	cfg, ok := configGet(ctx)[rs.ConfigName]
 	if !ok {
 		return nil, nil, fmt.Errorf("Unknown or missing config %s", rs.ConfigName)
 	}

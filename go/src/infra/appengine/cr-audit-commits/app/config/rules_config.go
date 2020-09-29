@@ -525,12 +525,3 @@ func GetUpdatedRuleMap(c context.Context) map[string]*rules.RefConfig {
 
 	return updatedRuleMap
 }
-
-// GetRuleMap returns a map of each monitored repository to a list of
-// account/rules structs.
-//
-// TODO: Replace all the use of GetRuleMap with GetUpdatedRuleMap.
-func GetRuleMap() map[string]*rules.RefConfig {
-	// TODO: Load from a configuration store.
-	return ruleMap
-}
