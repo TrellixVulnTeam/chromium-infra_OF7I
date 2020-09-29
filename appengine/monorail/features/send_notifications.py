@@ -10,7 +10,6 @@ from __future__ import absolute_import
 
 
 import logging
-import urllib
 
 from features import features_constants
 from framework import cloud_tasks_helpers
@@ -38,24 +37,13 @@ def PrepareAndSendIssueChangeNotification(
   params = dict(
       issue_id=issue_id, commenter_id=commenter_id, comment_id=comment_id,
       hostport=hostport, old_owner_id=old_owner_id, send_email=int(send_email))
-  url_params = urllib.urlencode(params)
-  task = {
-      'app_engine_http_request':
-          {
-              'relative_uri':
-                  urls.NOTIFY_ISSUE_CHANGE_TASK + '.do?' + url_params
-          }
-  }
+  task = cloud_tasks_helpers.generate_simple_task(
+      urls.NOTIFY_ISSUE_CHANGE_TASK + '.do', params)
   cloud_tasks_helpers.create_task(
       task, queue=features_constants.QUEUE_NOTIFICATIONS)
 
-  task = {
-      'app_engine_http_request':
-          {
-              'relative_uri':
-                  urls.PUBLISH_PUBSUB_ISSUE_CHANGE_TASK + '.do?' + url_params
-          }
-  }
+  task = cloud_tasks_helpers.generate_simple_task(
+      urls.PUBLISH_PUBSUB_ISSUE_CHANGE_TASK + '.do', params)
   cloud_tasks_helpers.create_task(task, queue=features_constants.QUEUE_PUBSUB)
 
 
@@ -70,14 +58,8 @@ def PrepareAndSendIssueBlockingNotification(
       send_email=int(send_email),
       delta_blocker_iids=','.join(str(iid) for iid in delta_blocker_iids))
 
-  task = {
-      'app_engine_http_request':
-          {
-              'relative_uri':
-                  urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do?' +
-                  urllib.urlencode(params)
-          }
-  }
+  task = cloud_tasks_helpers.generate_simple_task(
+      urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do', params)
   cloud_tasks_helpers.create_task(
       task, queue=features_constants.QUEUE_NOTIFICATIONS)
 
@@ -90,14 +72,8 @@ def PrepareAndSendApprovalChangeNotification(
       issue_id=issue_id, approval_id=approval_id, hostport=hostport,
       comment_id=comment_id, send_email=int(send_email))
 
-  task = {
-      'app_engine_http_request':
-          {
-              'relative_uri':
-                  urls.NOTIFY_APPROVAL_CHANGE_TASK + '.do?' +
-                  urllib.urlencode(params)
-          }
-  }
+  task = cloud_tasks_helpers.generate_simple_task(
+      urls.NOTIFY_APPROVAL_CHANGE_TASK + '.do', params)
   cloud_tasks_helpers.create_task(
       task, queue=features_constants.QUEUE_NOTIFICATIONS)
 
@@ -120,14 +96,8 @@ def SendIssueBulkChangeNotification(
       old_owner_ids=','.join(str(uid) for uid in old_owner_ids),
       comment_text=comment_text, amendments='\n'.join(amendment_lines))
 
-  task = {
-      'app_engine_http_request':
-          {
-              'relative_uri':
-                  urls.NOTIFY_BULK_CHANGE_TASK + '.do?' +
-                  urllib.urlencode(params)
-          }
-  }
+  task = cloud_tasks_helpers.generate_simple_task(
+      urls.NOTIFY_BULK_CHANGE_TASK + '.do', params)
   cloud_tasks_helpers.create_task(
       task, queue=features_constants.QUEUE_NOTIFICATIONS)
 
@@ -140,13 +110,7 @@ def PrepareAndSendDeletedFilterRulesNotification(
       project_id=project_id, filter_rules=','.join(filter_rule_strs),
       hostport=hostport)
 
-  task = {
-      'app_engine_http_request':
-          {
-              'relative_uri':
-                  urls.NOTIFY_RULES_DELETED_TASK + '.do?' +
-                  urllib.urlencode(params)
-          }
-  }
+  task = cloud_tasks_helpers.generate_simple_task(
+      urls.NOTIFY_RULES_DELETED_TASK + '.do', params)
   cloud_tasks_helpers.create_task(
       task, queue=features_constants.QUEUE_NOTIFICATIONS)

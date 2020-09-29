@@ -10,7 +10,6 @@ from __future__ import absolute_import
 
 import mock
 import unittest
-import urllib
 import urlparse
 
 from features import send_notifications
@@ -20,13 +19,22 @@ from tracker import tracker_bizobj
 
 class SendNotificationTest(unittest.TestCase):
 
-  def get_filtered_task_call_args(self, create_task_mock, relative_uri):
+  def _get_filtered_task_call_args(self, create_task_mock, relative_uri):
     return [
         (args, _kwargs)
         for (args, _kwargs) in create_task_mock.call_args_list
         if args[0]['app_engine_http_request']['relative_uri'].startswith(
             relative_uri)
     ]
+
+  def _get_create_task_path_and_params(self, call):
+    (args, _kwargs) = call
+    relative_uri = args[0]['app_engine_http_request']['relative_uri']
+    parse_result = urlparse.urlparse(relative_uri)
+    params = {
+        k: v[0] for k, v in urlparse.parse_qs(parse_result.query, True).items()
+    }
+    return parse_result.path, params
 
   @mock.patch('framework.cloud_tasks_helpers.create_task')
   def testPrepareAndSendIssueChangeNotification(self, create_task_mock):
@@ -37,7 +45,7 @@ class SendNotificationTest(unittest.TestCase):
         old_owner_id=2,
         send_email=True)
 
-    call_args_list = self.get_filtered_task_call_args(
+    call_args_list = self._get_filtered_task_call_args(
         create_task_mock, urls.NOTIFY_ISSUE_CHANGE_TASK + '.do')
     self.assertEqual(1, len(call_args_list))
 
@@ -50,7 +58,7 @@ class SendNotificationTest(unittest.TestCase):
         commenter_id=1,
         send_email=True)
 
-    call_args_list = self.get_filtered_task_call_args(
+    call_args_list = self._get_filtered_task_call_args(
         create_task_mock, urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do')
     self.assertEqual(0, len(call_args_list))
 
@@ -61,7 +69,7 @@ class SendNotificationTest(unittest.TestCase):
         commenter_id=1,
         send_email=True)
 
-    call_args_list = self.get_filtered_task_call_args(
+    call_args_list = self._get_filtered_task_call_args(
         create_task_mock, urls.NOTIFY_BLOCKING_CHANGE_TASK + '.do')
     self.assertEqual(1, len(call_args_list))
 
@@ -70,7 +78,7 @@ class SendNotificationTest(unittest.TestCase):
     send_notifications.PrepareAndSendApprovalChangeNotification(
         78901, 3, 'testbed-test.appspotmail.com', 55)
 
-    call_args_list = self.get_filtered_task_call_args(
+    call_args_list = self._get_filtered_task_call_args(
         create_task_mock, urls.NOTIFY_APPROVAL_CHANGE_TASK + '.do')
     self.assertEqual(1, len(call_args_list))
 
@@ -86,15 +94,10 @@ class SendNotificationTest(unittest.TestCase):
         send_email=True,
         users_by_id=2)
 
-    call_args_list = self.get_filtered_task_call_args(
+    call_args_list = self._get_filtered_task_call_args(
         create_task_mock, urls.NOTIFY_BULK_CHANGE_TASK + '.do')
     self.assertEqual(1, len(call_args_list))
-    (args, _kwargs) = call_args_list[0]
-    relative_uri = args[0]['app_engine_http_request']['relative_uri']
-    parse_result = urlparse.urlparse(relative_uri)
-    params = {
-        k: v[0] for k, v in urlparse.parse_qs(parse_result.query, True).items()
-    }
+    _path, params = self._get_create_task_path_and_params(call_args_list[0])
     self.assertEqual(params['comment_text'], 'comment')
     self.assertEqual(params['amendments'], '')
 
@@ -114,13 +117,10 @@ class SendNotificationTest(unittest.TestCase):
         send_email=True,
         users_by_id=2)
 
-    call_args_list = self.get_filtered_task_call_args(
+    call_args_list = self._get_filtered_task_call_args(
         create_task_mock, urls.NOTIFY_BULK_CHANGE_TASK + '.do')
     self.assertEqual(1, len(call_args_list))
-    (args, _kwargs) = call_args_list[0]
-    relative_uri = args[0]['app_engine_http_request']['relative_uri']
-    parse_result = urlparse.urlparse(relative_uri)
-    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
+    _path, params = self._get_create_task_path_and_params(call_args_list[0])
     self.assertEqual(params['comment_text'], 'comment')
     self.assertEqual(
         params['amendments'].split('\n'),
@@ -132,13 +132,10 @@ class SendNotificationTest(unittest.TestCase):
     send_notifications.PrepareAndSendDeletedFilterRulesNotification(
         789, 'testbed-test.appspotmail.com', filter_rule_strs)
 
-    call_args_list = self.get_filtered_task_call_args(
+    call_args_list = self._get_filtered_task_call_args(
         create_task_mock, urls.NOTIFY_RULES_DELETED_TASK + '.do')
     self.assertEqual(1, len(call_args_list))
-    (args, _kwargs) = call_args_list[0]
-    relative_uri = args[0]['app_engine_http_request']['relative_uri']
-    parse_result = urlparse.urlparse(relative_uri)
-    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
+    _path, params = self._get_create_task_path_and_params(call_args_list[0])
     self.assertEqual(params['project_id'], '789')
     self.assertEqual(
         params['filter_rules'], 'if yellow make orange,if orange make blue')

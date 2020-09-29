@@ -11,7 +11,6 @@ from __future__ import absolute_import
 import logging
 import re
 import six
-import urllib
 
 from six import string_types
 
@@ -74,14 +73,8 @@ def RecomputeAllDerivedFields(cnxn, services, project, config):
         'upper_bound': min(step + BLOCK, highest_id + 1),
         'shard_id': shard_id,
     }
-    task = {
-        'app_engine_http_request':
-            {
-                'relative_uri':
-                    urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do?' +
-                    urllib.urlencode(params)
-            }
-    }
+    task = cloud_tasks_helpers.generate_simple_task(
+        urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do', params)
     cloud_tasks_helpers.create_task(task)
 
     shard_id = (shard_id + 1) % settings.num_logical_shards

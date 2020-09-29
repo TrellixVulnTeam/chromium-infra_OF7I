@@ -12,6 +12,7 @@ from __future__ import division
 from __future__ import print_function
 
 import logging
+import urllib
 
 from google.api_core import exceptions
 from google.api_core import retry
@@ -74,3 +75,17 @@ def create_task(task, queue='default', **kwargs):
   kwargs.setdefault('retry', _DEFAULT_RETRY)
   logging.info('Enqueueing %s task to %s', target, parent)
   return client.create_task(parent, task, **kwargs)
+
+
+def generate_simple_task(url, params):
+  # type: (str, dict) -> dict
+  """Construct a basic cloud tasks Task for an appengine handler.
+  Args:
+    url: Url path that handles the task.
+    params: Url query parameters dict.
+
+  Returns:
+    Dict representing a cloud tasks Task object.
+  """
+  relative_uri = (url + '?' + urllib.urlencode(params)) if params else url
+  return {'app_engine_http_request': {'relative_uri': relative_uri}}

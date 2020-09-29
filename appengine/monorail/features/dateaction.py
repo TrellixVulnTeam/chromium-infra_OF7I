@@ -16,7 +16,6 @@ from __future__ import absolute_import
 
 import logging
 import time
-import urllib
 
 from third_party import ezt
 
@@ -81,14 +80,8 @@ class DateActionCron(jsonfeed.InternalTask):
     Returns nothing.
     """
     params = {'issue_id': issue_id}
-    task = {
-        'app_engine_http_request':
-            {
-                'relative_uri':
-                    urls.ISSUE_DATE_ACTION_TASK + '.do?' +
-                    urllib.urlencode(params)
-            }
-    }
+    task = cloud_tasks_helpers.generate_simple_task(
+        urls.ISSUE_DATE_ACTION_TASK + '.do', params)
     cloud_tasks_helpers.create_task(task)
 
 

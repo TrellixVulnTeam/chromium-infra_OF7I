@@ -28,12 +28,8 @@ from framework import urls
 class TrainingDataExport(webapp2.RequestHandler):
   """Trigger a training data export task"""
   def get(self):
-    task = {
-        'app_engine_http_request':
-            {
-                'relative_uri': urls.SPAM_DATA_EXPORT_TASK + '.do'
-            }
-    }
+    task = cloud_tasks_helpers.generate_simple_task(
+        urls.SPAM_DATA_EXPORT_TASK + '.do', {})
     cloud_tasks_helpers.create_task(task)
 
 

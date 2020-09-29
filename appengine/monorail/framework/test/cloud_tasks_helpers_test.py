@@ -55,3 +55,24 @@ class CloudTasksHelpersTest(unittest.TestCase):
 
     (_args, kwargs) = get_client_mock().create_task.call_args
     self.assertEqual(kwargs.get('retry'), cloud_tasks_helpers._DEFAULT_RETRY)
+
+  def test_generate_simple_task(self):
+    actual = cloud_tasks_helpers.generate_simple_task(
+        '/alphabet/letters', {
+            'a': 'a',
+            'b': 'b'
+        })
+    expected = {
+        'app_engine_http_request': {
+            'relative_uri': '/alphabet/letters?a=a&b=b'
+        }
+    }
+    self.assertEqual(actual, expected)
+
+    actual = cloud_tasks_helpers.generate_simple_task('/alphabet/letters', {})
+    expected = {
+        'app_engine_http_request': {
+            'relative_uri': '/alphabet/letters'
+        }
+    }
+    self.assertEqual(actual, expected)

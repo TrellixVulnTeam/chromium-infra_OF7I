@@ -11,7 +11,6 @@ from __future__ import absolute_import
 import logging
 import json
 import time
-import urllib
 
 from framework import cloud_tasks_helpers
 from framework import framework_helpers
@@ -49,13 +48,8 @@ class BanSpammer(servlet.Servlet):
         'reporter_id': reporter_id,
         'is_spammer': 'banned' in post_data
     }
-    task = {
-        'app_engine_http_request':
-            {
-                'relative_uri':
-                    urls.BAN_SPAMMER_TASK + '.do?' + urllib.urlencode(params)
-            }
-    }
+    task = cloud_tasks_helpers.generate_simple_task(
+        urls.BAN_SPAMMER_TASK + '.do', params)
     cloud_tasks_helpers.create_task(task)
 
     return framework_helpers.FormatAbsoluteURL(
