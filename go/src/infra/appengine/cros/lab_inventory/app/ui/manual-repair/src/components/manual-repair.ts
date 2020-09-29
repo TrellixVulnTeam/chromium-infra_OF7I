@@ -56,6 +56,7 @@ export default class ManualRepair extends connect
 
   stateChanged(state) {
     this.user = state.user;
+    console.log(this.user);
   }
 
   static AppLinks: Map<string, {[key: string]: string}> = new Map([
@@ -119,9 +120,10 @@ export default class ManualRepair extends connect
 
   render() {
     const drawerTitle =
-        isEmpty(this.user.profile) ? 'Welcome' : this.user.profile.Ad;
-    const drawerSubtitle =
-        isEmpty(this.user.profile) ? 'Please log in!' : this.user.profile.$t;
+        isEmpty(this.user.profile) ? 'Welcome' : this.user.profile.getName();
+    const drawerSubtitle = isEmpty(this.user.profile) ?
+        'Please log in!' :
+        this.user.profile.getEmail();
 
     return html`
       <mwc-drawer hasHeader type="modal" id="menu">

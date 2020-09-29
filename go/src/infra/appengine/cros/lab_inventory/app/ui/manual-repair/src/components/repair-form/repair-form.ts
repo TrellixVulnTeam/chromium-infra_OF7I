@@ -236,7 +236,7 @@ enum FormAction {
       dutRepairActions: new Set([0]),
       issueFixed: false,
       replacementRequested: false,
-      userLdap: this.user.profile.$t,
+      userLdap: this.user.profile.getEmail(),
       timeTaken: 0,
       additionalComments: '',
     };
