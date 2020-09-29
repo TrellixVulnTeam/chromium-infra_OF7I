@@ -21,7 +21,7 @@ import (
 const (
 	InvalidPageToken string = "Invalid Page Token."
 	AlreadyExists    string = "Entity already exists."
-	NotFound         string = "Entity not found."
+	NotFound         string = "Entity not found"
 	InternalError    string = "Internal Server Error."
 	CannotDelete     string = "cannot be deleted"
 	InvalidArgument  string = "Invalid argument"
@@ -61,7 +61,8 @@ func Put(ctx context.Context, pm proto.Message, nf NewFunc, update bool) (proto.
 		existsResults, err := datastore.Exists(ctx, entity)
 		if err == nil {
 			if !existsResults.All() && update {
-				return status.Errorf(codes.NotFound, NotFound)
+				errorMsg := fmt.Sprintf("Entity not found %+v", entity)
+				return status.Errorf(codes.NotFound, errorMsg)
 			}
 			if existsResults.All() && !update {
 				return status.Errorf(codes.AlreadyExists, AlreadyExists)
@@ -130,7 +131,8 @@ func Get(ctx context.Context, pm proto.Message, nf NewFunc) (proto.Message, erro
 	}
 	if err = datastore.Get(ctx, entity); err != nil {
 		if datastore.IsErrNoSuchEntity(err) {
-			return nil, status.Errorf(codes.NotFound, NotFound)
+			errorMsg := fmt.Sprintf("Entity not found %+v", entity)
+			return nil, status.Errorf(codes.NotFound, errorMsg)
 		}
 		logging.Errorf(ctx, "Failed to get entity from datastore: %s", err)
 		return nil, status.Errorf(codes.Internal, InternalError)
@@ -177,7 +179,8 @@ func Delete(ctx context.Context, pm proto.Message, nf NewFunc) error {
 	existsResults, err := datastore.Exists(ctx, entity)
 	if err == nil {
 		if !existsResults.All() {
-			return status.Errorf(codes.NotFound, NotFound)
+			errorMsg := fmt.Sprintf("Entity not found %+v", entity)
+			return status.Errorf(codes.NotFound, errorMsg)
 		}
 	} else {
 		logging.Debugf(ctx, "Failed to check existence: %s", err)
