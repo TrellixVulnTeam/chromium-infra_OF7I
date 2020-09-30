@@ -272,7 +272,6 @@ class IssuesServicerTest(unittest.TestCase):
   # Note the 'empty' case doesn't make sense for ListComments, as one is created
   # for every issue.
   def testListComments(self):
-    """We can list comments."""
     comment_2 = tracker_pb2.IssueComment(
         id=123,
         issue_id=self.issue_1.issue_id,
@@ -286,14 +285,82 @@ class IssuesServicerTest(unittest.TestCase):
         self.services, cnxn=self.cnxn, requester=self.owner.email)
     actual_response = self.CallWrapped(
         self.issues_svcr.ListComments, mc, request)
-    self.assertEqual(1, len(actual_response.comments))
+    self.assertEqual(len(actual_response.comments), 1)
 
     # Check the `next_page_token` can be used to get the next page of results
     request.page_token = actual_response.next_page_token
     next_actual_response = self.CallWrapped(
         self.issues_svcr.ListComments, mc, request)
-    self.assertEqual(1, len(next_actual_response.comments))
+    self.assertEqual(len(next_actual_response.comments), 1)
     self.assertEqual(next_actual_response.comments[0].content, 'comment 2')
+
+  def testListComments_UnsupportedFilter(self):
+    """If anything other than approval is provided, it's an error."""
+    filter_str = 'content = "x"'
+    request = issues_pb2.ListCommentsRequest(
+        parent=self.issue_1_resource_name, page_size=1, filter=filter_str)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.issues_svcr.ListComments, mc, request)
+
+  def testListComments_TwoApprovalsErrors(self):
+    """If anything other than a single approval is provided, it's an error."""
+    filter_str = (
+        'approval = "projects/chicken/approvalDefs/404" OR '
+        'approval = "projects/chicken/approvalDefs/405')
+    request = issues_pb2.ListCommentsRequest(
+        parent=self.issue_1_resource_name, page_size=1, filter=filter_str)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.issues_svcr.ListComments, mc, request)
+
+  def testListComments_FilterTypoError(self):
+    """Even an extra space is an error."""
+    filter_str = 'approval = "projects/chicken/approvalDefs/404" '
+    request = issues_pb2.ListCommentsRequest(
+        parent=self.issue_1_resource_name, page_size=1, filter=filter_str)
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    with self.assertRaises(exceptions.InputException):
+      self.CallWrapped(self.issues_svcr.ListComments, mc, request)
+
+  def testListComments_UnknownApprovalInFilter(self):
+    """Filter with unknown approval returns no error and no comments."""
+    approval_comment = tracker_pb2.IssueComment(
+        id=123,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='comment 2 - approval 1',
+        approval_id=1)
+    self.services.issue.TestAddComment(approval_comment, self.issue_1.local_id)
+    request = issues_pb2.ListCommentsRequest(
+        parent=self.issue_1_resource_name, page_size=1,
+        filter='approval = "projects/chicken/approvalDefs/404"')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(self.issues_svcr.ListComments, mc, request)
+    self.assertEqual(len(response.comments), 0)
+
+  def testListComments_ApprovalInFilter(self):
+    approval_comment = tracker_pb2.IssueComment(
+        id=123,
+        issue_id=self.issue_1.issue_id,
+        project_id=self.issue_1.project_id,
+        user_id=self.owner.user_id,
+        content='comment 2 - approval 1',
+        approval_id=1)
+    self.services.issue.TestAddComment(approval_comment, self.issue_1.local_id)
+    request = issues_pb2.ListCommentsRequest(
+        parent=self.issue_1_resource_name, page_size=1,
+        filter='approval = "projects/chicken/approvalDefs/1"')
+    mc = monorailcontext.MonorailContext(
+        self.services, cnxn=self.cnxn, requester=self.owner.email)
+    response = self.CallWrapped(self.issues_svcr.ListComments, mc, request)
+    self.assertEqual(len(response.comments), 1)
+    self.assertEqual(response.comments[0].content, approval_comment.content)
 
   def testListApprovalValues(self):
     config = fake.MakeTestConfig(self.project_2.project_id, [], [])

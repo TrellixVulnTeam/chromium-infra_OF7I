@@ -7,6 +7,8 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import re
+
 from api import resource_name_converters as rnc
 from api.v3 import api_constants
 from api.v3 import converters
@@ -17,6 +19,11 @@ from api.v3.api_proto import issue_objects_pb2
 from api.v3.api_proto import issues_prpc_pb2
 from businesslogic import work_env
 from framework import exceptions
+
+# We accept only the following filter, and only on ListComments.
+# If we accept more complex filters in the future, introduce a library.
+_APPROVAL_DEF_FILTER_RE = re.compile(
+    r'approval = "(?P<approval_name>%s)"$' % rnc.APPROVAL_DEF_NAME_PATTERN)
 
 
 class IssuesServicer(monorail_servicer.MonorailServicer):
@@ -135,8 +142,13 @@ class IssuesServicer(monorail_servicer.MonorailServicer):
     # TODO(crbug/monorail/7187): Parse filter string for approval resource name.
     approval_id = None
     if request.filter:
+      match = _APPROVAL_DEF_FILTER_RE.match(request.filter)
+      if match:
+        approval_id = rnc.IngestApprovalDefName(
+            mc.cnxn, match.group('approval_name'), self.services)
+      if not match:
         raise exceptions.InputException(
-          'Invalid filter: filtering not yet supported.')
+            'Filtering other than approval not supported.')
 
     with work_env.WorkEnv(mc, self.services) as we:
       # TODO(crbug/monorail/7614): Eliminate the need to do this lookup.

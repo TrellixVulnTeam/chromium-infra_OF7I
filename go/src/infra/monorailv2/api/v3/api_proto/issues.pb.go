@@ -448,10 +448,9 @@ type ListCommentsRequest struct {
 	// When paginating, all other parameters provided to `ListComments` must
 	// match the call that provided the page token.
 	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	// TODO(crbug/monorail/7187): Not yet implemented. ANY filter is an error.
 	// For our initial release this filter only supports filtering to comments
 	// related to a specific approval.
-	// For example `approval = "/projects/monorail/approvalDefs/1"`,
+	// For example `approval = "projects/monorail/approvalDefs/1"`,
 	// Note that no further logical or comparison operators are supported
 	Filter string `protobuf:"bytes,4,opt,name=filter,proto3" json:"filter,omitempty"`
 }

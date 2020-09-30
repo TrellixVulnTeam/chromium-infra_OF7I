@@ -32,6 +32,10 @@ PROJECT_NAME_RE = re.compile(r'%s$' % PROJECT_NAME_PATTERN)
 FIELD_DEF_NAME_RE = re.compile(
     r'%s\/fieldDefs\/(?P<field_def>\d+)$' % (PROJECT_NAME_PATTERN))
 
+APPROVAL_DEF_NAME_PATTERN = (
+  r'%s\/approvalDefs\/(?P<approval_def>\d+)' % PROJECT_NAME_PATTERN)
+APPROVAL_DEF_NAME_RE = re.compile(r'%s$' % APPROVAL_DEF_NAME_PATTERN)
+
 HOTLIST_PATTERN = r'hotlists\/(?P<hotlist_id>\d+)'
 HOTLIST_NAME_RE = re.compile(r'%s$' % HOTLIST_PATTERN)
 HOTLIST_ITEM_NAME_RE = re.compile(
@@ -131,7 +135,7 @@ def IngestFieldDefName(cnxn, name, services):
     services: Services object for connections to backend services.
 
   Returns:
-    The Project's ID and the FieldDef's ID.
+    The Project's ID and the FieldDef's ID. FieldDef is not guaranteed to exist.
     TODO(jessan): This order should be consistent throughout the file.
 
   Raises:
@@ -259,6 +263,34 @@ def CreateCommentNames(issue_local_id, issue_project, comment_sequence_nums):
         comment_id=comment_sequence_num)
   return sequence_nums_to_names
 
+def IngestApprovalDefName(cnxn, name, services):
+  # type: (MonorailConnection, str, Services) -> int
+  """Ingests an ApprovalDef's resource name.
+
+  Args:
+    cnxn: MonorailConnection to the database.
+    name: Resource name of an ApprovalDef.
+    services: Services object for connections to backend services.
+
+  Returns:
+    The ApprovalDef ID specified in `name`.
+    The ApprovalDef is not guaranteed to exist.
+
+  Raises:
+    InputException if the given name does not have a valid format.
+    NoSuchProjectException if the given project name does not exist.
+  """
+  match = _GetResourceNameMatch(name, APPROVAL_DEF_NAME_RE)
+
+  # Project
+  project_name = match.group('project_name')
+  id_dict = services.project.LookupProjectIDs(cnxn, [project_name])
+  project_id = id_dict.get(project_name)
+  if project_id is None:
+    raise exceptions.NoSuchProjectException(
+        'Project not found: %s.' % project_name)
+
+  return int(match.group('approval_def'))
 
 def IngestApprovalValueName(cnxn, name, services):
   # type: (MonorailConnection, str, Services) -> Tuple[int, int, int]
