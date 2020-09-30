@@ -534,7 +534,7 @@ class NotifyTaskHandleRequestTest(unittest.TestCase):
         services=self.services)
     result = task.HandleRequest(mr)
     self.assertTrue('just a comment' in result['tasks'][0]['body'])
-    self.assertTrue('Approvers: -approver' in result['tasks'][0]['body'])
+    self.assertTrue('Approvers: -appro...' in result['tasks'][0]['body'])
     self.assertTrue('sploot.jpg' in result['tasks'][0]['body'])
     self.assertTrue(
         '/issues/attachment?aid=4567' in result['tasks'][0]['body'])

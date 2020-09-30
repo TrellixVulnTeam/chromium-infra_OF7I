@@ -107,8 +107,8 @@ class ParseAndObscureAddressTest(unittest.TestCase):
 
     self.assertEqual(username, 'sir.chicken')
     self.assertEqual(user_domain, 'farm.test')
-    self.assertEqual(obscured_username, 'sir.chic')
-    self.assertEqual(obscured_email, 'sir.chic...@farm.test')
+    self.assertEqual(obscured_username, 'sir.c')
+    self.assertEqual(obscured_email, 'sir.c...@farm.test')
 
 
 class FilterViewableEmailsTest(unittest.TestCase):

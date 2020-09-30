@@ -174,9 +174,9 @@ def ParseAndObscureAddress(email):
 
   Returns:
     A 4-tuple (username, domain, obscured_username, obscured_email).
-    The obscured_username is truncated the same way that Google Groups does it:
-    it truncates at 8 characters or truncates OFF 3 characters, whichever
-    results in a shorter obscured_username.
+    The obscured_username is truncated more aggressively than how Google Groups
+    does it: it truncates at 5 characters or truncates OFF 3 characters,
+    whichever results in a shorter obscured_username.
   """
   if '@' in email:
     username, user_domain = email.split('@', 1)
@@ -184,7 +184,7 @@ def ParseAndObscureAddress(email):
     username, user_domain = email, ''
 
   base_username = username.split('+')[0]
-  cutoff_point = min(8, max(1, len(base_username) - 3))
+  cutoff_point = min(5, max(1, len(base_username) - 3))
   obscured_username = base_username[:cutoff_point]
   obscured_email = '%s...@%s' %(obscured_username, user_domain)
 

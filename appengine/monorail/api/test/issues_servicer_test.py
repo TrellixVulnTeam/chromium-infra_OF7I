@@ -1790,13 +1790,14 @@ class IssuesServicerTest(unittest.TestCase):
     response = self.CallWrapped(self.issues_svcr.PresubmitIssue, mc, request)
 
     self.assertEqual(
-        [common_pb2.ValueAndWhy(
-            value='approv...@example.com',
-            why='Added by rule: IF Foo=Bar THEN ADD CC'),
-         common_pb2.ValueAndWhy(
-            value='approv...@example.com',
-            why='Added by rule: IF Foo=Bar THEN ADD CC')],
-        [vnw for vnw in response.derived_ccs])
+        [
+            common_pb2.ValueAndWhy(
+                value='appro...@example.com',
+                why='Added by rule: IF Foo=Bar THEN ADD CC'),
+            common_pb2.ValueAndWhy(
+                value='appro...@example.com',
+                why='Added by rule: IF Foo=Bar THEN ADD CC')
+        ], [vnw for vnw in response.derived_ccs])
 
   @patch('testing.fake.FeaturesService.GetFilterRules')
   def testPresubmitIssue_Warnings(self, mockGetFilterRules):
