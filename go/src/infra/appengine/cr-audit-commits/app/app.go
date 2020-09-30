@@ -25,6 +25,7 @@ import (
 // fake implementations, doubles etc for testing.
 type app struct {
 	cloudTasksClient *cloudtasks.Client
+	opts             *server.Options
 }
 
 func main() {
@@ -50,6 +51,7 @@ func main() {
 
 		appServer := &app{
 			cloudTasksClient: tasksClient,
+			opts:             &srv.Options,
 		}
 
 		srv.Routes.GET("/", templatesmw, func(c *router.Context) {

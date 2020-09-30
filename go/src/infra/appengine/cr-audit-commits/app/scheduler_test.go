@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"go.chromium.org/luci/gae/impl/memory"
+	"go.chromium.org/luci/server"
 	"go.chromium.org/luci/server/router"
 
 	"infra/appengine/cr-audit-commits/app/rules"
@@ -76,6 +77,7 @@ func TestScheduler(t *testing.T) {
 
 			appServer := &app{
 				cloudTasksClient: tasksClient,
+				opts:             &server.Options{},
 			}
 			appServer.Schedule(c)
 			So(w.Code, ShouldEqual, http.StatusInternalServerError)
@@ -93,6 +95,7 @@ func TestScheduler(t *testing.T) {
 			So(err, ShouldBeNil)
 			appServer := &app{
 				cloudTasksClient: tasksClient,
+				opts:             &server.Options{},
 			}
 			appServer.Schedule(c)
 

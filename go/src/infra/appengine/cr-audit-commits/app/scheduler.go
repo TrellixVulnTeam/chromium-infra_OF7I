@@ -8,14 +8,11 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 
 	"go.chromium.org/luci/common/logging"
 	ds "go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/server/router"
-
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2"
-
 	"infra/appengine/cr-audit-commits/app/rules"
 )
 
@@ -63,7 +60,7 @@ func (a *app) Schedule(rc *router.Context) {
 
 			// Build the Task payload.
 			req := &taskspb.CreateTaskRequest{
-				Parent: "projects/" + os.Getenv("GOOGLE_CLOUD_PROJECT") + "/locations/us-central1/queues/default",
+				Parent: "projects/" + a.opts.CloudProject + "/locations/" + a.opts.CloudRegion + "/queues/default",
 				Task: &taskspb.Task{
 					MessageType: &taskspb.Task_AppEngineHttpRequest{
 						AppEngineHttpRequest: &taskspb.AppEngineHttpRequest{
