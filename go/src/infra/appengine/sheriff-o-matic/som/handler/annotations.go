@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"google.golang.org/appengine"
@@ -23,6 +25,7 @@ import (
 
 	"go.chromium.org/luci/common/clock"
 	"go.chromium.org/luci/common/logging"
+	"go.chromium.org/luci/common/sync/parallel"
 	"go.chromium.org/luci/gae/service/datastore"
 	"go.chromium.org/luci/gae/service/info"
 	"go.chromium.org/luci/gae/service/memcache"
@@ -41,7 +44,7 @@ const (
 
 // AnnotationsIssueClient is for testing purpose
 type AnnotationsIssueClient interface {
-	BatchGetIssues(context.Context, *monorailv3.BatchGetIssuesRequest, ...grpc.CallOption) (*monorailv3.BatchGetIssuesResponse, error)
+	SearchIssues(context.Context, *monorailv3.SearchIssuesRequest, ...grpc.CallOption) (*monorailv3.SearchIssuesResponse, error)
 	MakeIssue(ctx context.Context, in *monorailv3.MakeIssueRequest, opts ...grpc.CallOption) (*monorailv3.Issue, error)
 }
 
@@ -256,14 +259,47 @@ func (ah *AnnotationHandler) RefreshAnnotationsHandler(ctx *router.Context) {
 	w.Write(data)
 }
 
-// Returns chunks of issue resource names so we can query from Monorail
-// since Monorail only returns a maximum of 100 bugs at a time
-func createBugChunks(bugs []model.MonorailBug, chunkSize int) [][]string {
-	issueResourceNames := make([]string, len(bugs))
-	for i, bug := range bugs {
-		issueResourceNames[i] = client.GetMonorailIssueResourceName(bug.ProjectID, bug.BugID)
+// Builds a map keyed by projectId (i.e "chromium", "fuchsia"), value contains
+// the chunks for the projectId. Each chunk contains at most 100 bugID.
+// Monorail only returns a maximum of 100 bugs at a time, so we need to break queries into chunks.
+func createProjectChunksMapping(bugs []model.MonorailBug, chunkSize int) map[string][][]string {
+	projectIDToBugIDMap := make(map[string][]string)
+	for _, bug := range bugs {
+		if bugList, ok := projectIDToBugIDMap[bug.ProjectID]; ok {
+			projectIDToBugIDMap[bug.ProjectID] = append(bugList, bug.BugID)
+		} else {
+			projectIDToBugIDMap[bug.ProjectID] = []string{bug.BugID}
+		}
 	}
-	return breakToChunks(issueResourceNames, chunkSize)
+	result := make(map[string][][]string)
+	for projectID, bugIDs := range projectIDToBugIDMap {
+		result[projectID] = breakToChunks(bugIDs, chunkSize)
+	}
+	return result
+}
+
+func generateQueryFromChunk(chunk []string) string {
+	bits := make([]string, len(chunk))
+	for i, bugID := range chunk {
+		bits[i] = "id=" + bugID
+	}
+	return strings.Join(bits, " OR ")
+}
+
+func createSearchIssueRequests(c context.Context, projectChunkMap map[string][][]string) []*monorailv3.SearchIssuesRequest {
+	reqs := []*monorailv3.SearchIssuesRequest{}
+	for projectID, chunkList := range projectChunkMap {
+		for _, chunk := range chunkList {
+			query := generateQueryFromChunk(chunk)
+			projectResourceName := client.GetMonorailProjectResourceName(projectID)
+			req := &monorailv3.SearchIssuesRequest{
+				Projects: []string{projectResourceName},
+				Query:    query,
+			}
+			reqs = append(reqs, req)
+		}
+	}
+	return reqs
 }
 
 func breakToChunks(items []string, chunkSize int) [][]string {
@@ -290,12 +326,9 @@ func filterDuplicateBugs(bugs []model.MonorailBug) []model.MonorailBug {
 	return filteredBugs
 }
 
-func (ah *AnnotationHandler) batchQueryBugs(c context.Context, issueResourceNames []string) (*monorailv3.BatchGetIssuesResponse, error) {
-	logging.Infof(c, "Query monorail for bugs: %v", issueResourceNames)
-	req := &monorailv3.BatchGetIssuesRequest{
-		Names: issueResourceNames,
-	}
-	resp, err := ah.MonorailIssueClient.BatchGetIssues(c, req)
+func (ah *AnnotationHandler) searchIssues(c context.Context, req *monorailv3.SearchIssuesRequest) (*monorailv3.SearchIssuesResponse, error) {
+	logging.Infof(c, "Query monorail for bugs: %v", req)
+	resp, err := ah.MonorailIssueClient.SearchIssues(c, req)
 	if err == nil {
 		logging.Infof(c, "Got %d bugs", len(resp.Issues))
 	}
@@ -320,22 +353,36 @@ func (ah *AnnotationHandler) refreshAnnotations(ctx *router.Context, a *model.An
 	}
 
 	allBugs = filterDuplicateBugs(allBugs)
-	bugChunks := createBugChunks(allBugs, maxMonorailQuerySize)
+	projectChunkMap := createProjectChunksMapping(allBugs, maxMonorailQuerySize)
+	reqs := createSearchIssueRequests(c, projectChunkMap)
 	m := make(map[string]*monorailv3.Issue)
-	for _, chunks := range bugChunks {
-		resp, err := ah.batchQueryBugs(c, chunks)
-		if err != nil {
-			logging.Errorf(c, "error getting bugs from monorail: %v", err)
-			return nil, err
-		}
-		for _, b := range resp.Issues {
-			_, bugID, err := client.ParseMonorailIssueName(b.Name)
-			if err != nil {
-				return nil, err
+	lock := sync.Mutex{}
+	err := parallel.WorkPool(8, func(taskC chan<- func() error) {
+		for i := 0; i < len(reqs); i++ {
+			req := reqs[i]
+			taskC <- func() error {
+				resp, err := ah.searchIssues(c, req)
+				if err != nil {
+					logging.Errorf(c, "error getting bugs from monorail: %v", err)
+					return err
+				}
+				for _, b := range resp.Issues {
+					_, bugID, err := client.ParseMonorailIssueName(b.Name)
+					if err != nil {
+						return err
+					}
+					// TODO (crbug.com/1127471) Key should also include projectID
+					lock.Lock()
+					m[bugID] = b
+					lock.Unlock()
+				}
+				return nil
 			}
-			// TODO (crbug.com/1127471) Key should also include projectID
-			m[bugID] = b
 		}
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	bytes, err := json.Marshal(m)

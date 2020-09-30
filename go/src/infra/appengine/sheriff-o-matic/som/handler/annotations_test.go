@@ -96,8 +96,8 @@ func TestFilterDuplicateBugs(t *testing.T) {
 	})
 }
 
-func TestCreateBugChunks(t *testing.T) {
-	Convey("Test create bug chunks", t, func() {
+func TestCreateProjectChunksMapping(t *testing.T) {
+	Convey("Test create project chunk mapping", t, func() {
 		bugs := []model.MonorailBug{
 			{
 				BugID:     "bug_1",
@@ -121,37 +121,25 @@ func TestCreateBugChunks(t *testing.T) {
 			},
 		}
 
-		result := createBugChunks(bugs, 100)
+		result := createProjectChunksMapping(bugs, 100)
 		So(
 			result,
 			ShouldResemble,
-			[][]string{
-				{
-					"projects/project_1/issues/bug_1",
-					"projects/project_2/issues/bug_2",
-					"projects/project_1/issues/bug_3",
-					"projects/project_3/issues/bug_4",
-					"projects/project_1/issues/bug_5",
-				},
+			map[string][][]string{
+				"project_1": {{"bug_1", "bug_3", "bug_5"}},
+				"project_2": {{"bug_2"}},
+				"project_3": {{"bug_4"}},
 			},
 		)
 
-		result = createBugChunks(bugs, 2)
+		result = createProjectChunksMapping(bugs, 2)
 		So(
 			result,
 			ShouldResemble,
-			[][]string{
-				{
-					"projects/project_1/issues/bug_1",
-					"projects/project_2/issues/bug_2",
-				},
-				{
-					"projects/project_1/issues/bug_3",
-					"projects/project_3/issues/bug_4",
-				},
-				{
-					"projects/project_1/issues/bug_5",
-				},
+			map[string][][]string{
+				"project_1": {{"bug_1", "bug_3"}, {"bug_5"}},
+				"project_2": {{"bug_2"}},
+				"project_3": {{"bug_4"}},
 			},
 		)
 	})
@@ -234,19 +222,44 @@ func TestMakeAnnotationResponse(t *testing.T) {
 
 type FakeIC struct{}
 
-func (ic FakeIC) BatchGetIssues(c context.Context, req *monorailv3.BatchGetIssuesRequest, ops ...grpc.CallOption) (*monorailv3.BatchGetIssuesResponse, error) {
-	issues := make([]*monorailv3.Issue, len(req.Names))
-	for i, name := range req.Names {
-		issues[i] = &monorailv3.Issue{
-			Name: name,
-			Status: &monorailv3.Issue_StatusValue{
-				Status: "Untriaged",
+func (ic FakeIC) SearchIssues(c context.Context, req *monorailv3.SearchIssuesRequest, ops ...grpc.CallOption) (*monorailv3.SearchIssuesResponse, error) {
+	if req.Projects[0] == "projects/chromium" {
+		return &monorailv3.SearchIssuesResponse{
+			Issues: []*monorailv3.Issue{
+				{
+					Name: "projects/chromium/issues/333",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "Untriaged",
+					},
+				},
+				{
+					Name: "projects/chromium/issues/444",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "Untriaged",
+					},
+				},
 			},
-		}
+		}, nil
 	}
-	return &monorailv3.BatchGetIssuesResponse{
-		Issues: issues,
-	}, nil
+	if req.Projects[0] == "projects/fuchsia" {
+		return &monorailv3.SearchIssuesResponse{
+			Issues: []*monorailv3.Issue{
+				{
+					Name: "projects/fuchsia/issues/555",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "Untriaged",
+					},
+				},
+				{
+					Name: "projects/fuchsia/issues/666",
+					Status: &monorailv3.Issue_StatusValue{
+						Status: "Untriaged",
+					},
+				},
+			},
+		}, nil
+	}
+	return nil, nil
 }
 
 func (ic FakeIC) MakeIssue(c context.Context, req *monorailv3.MakeIssueRequest, opts ...grpc.CallOption) (*monorailv3.Issue, error) {
