@@ -44,7 +44,6 @@ func TestRulesConfig(t *testing.T) {
 				// TODO: For test environment, the MonorailAPIURL should be different.
 				So(refConfig.MonorailAPIURL, ShouldEqual, "https://monorail-prod.appspot.com/_ah/api/monorail/v1")
 				So(refConfig.MonorailProject, ShouldEqual, "fakeproject")
-				So(refConfig.NotifierEmail, ShouldEqual, "notifier@cr-audit-commits-test.appspotmail.com")
 
 				accountRule := refConfig.Rules["manual-changes"]
 				So(accountRule.Account, ShouldEqual, "*")

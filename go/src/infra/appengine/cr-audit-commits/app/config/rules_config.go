@@ -518,7 +518,6 @@ func GetUpdatedRuleMap(c context.Context) map[string]*rules.RefConfig {
 			// TODO: For test environment, the MonorailAPIURL should be different.
 			MonorailAPIURL:  monorailAPIURL,
 			MonorailProject: refConfig.MonorailProject,
-			NotifierEmail:   refConfig.NotifierEmail,
 			Rules:           getAccountRules(refConfig.Rules),
 		}
 	}

@@ -21,7 +21,6 @@ message RefConfig {
     string ref = 3;
     string starting_commit = 4;
     string monorail_project = 5;
-    string notifier_email = 6;
 
     // Used for unpausing a ref. Oncall should modify this configuration
     // to help resume the scanning.
@@ -39,17 +38,17 @@ message AccountRules {
 
 message Rule {
     oneof rule {
-        AcknowledgeMerge acknowledgeMerge = 1;
-        AutoCommitsPerDay autoCommitsPerDay = 2;
-        AutoRevertsPerDay autoRevertsPerDay = 3;
-        ChangeReviewed changeReviewed = 4;
-        CulpritAge culpritAge = 5;
-        CulpritInBuild culpritInBuild = 6;
-        FailedBuildIsAppropriateFailure failedBuildIsAppropriateFailure = 7;
-        OnlyCommitsOwnChange onlyCommitsOwnChange = 8;
-        OnlyMergeApprovedChange onlyMergeApprovedChange = 9;
-        OnlyModifiesFilesAndDirsRule onlyModifiesFilesAndDirsRule = 10;
-        RevertOfCulprit revertOfCulprit = 11;
+        AcknowledgeMerge acknowledge_merge = 1;
+        AutoCommitsPerDay auto_commits_per_day = 2;
+        AutoRevertsPerDay auto_reverts_per_day = 3;
+        ChangeReviewed change_reviewed = 4;
+        CulpritAge culprit_age = 5;
+        CulpritInBuild culprit_in_build = 6;
+        FailedBuildIsAppropriateFailure failed_build_is_appropriate_failure = 7;
+        OnlyCommitsOwnChange only_commits_own_change = 8;
+        OnlyMergeApprovedChange only_merge_approved_change = 9;
+        OnlyModifiesFilesAndDirsRule only_modifies_files_and_dirs_rule = 10;
+        RevertOfCulprit revert_of_culprit = 11;
     }
 }
 
@@ -74,11 +73,11 @@ message OnlyCommitsOwnChange {}
 message OnlyMergeApprovedChange {
     // AllowedUsers is the list of users who are allowed to author and commit
 	// merges.
-    repeated string allowedUsers = 1;
+    repeated string allowed_users = 1;
 
     // AllowedRobots is the list of robot accounts who are allowed to author
 	// merges.
-    repeated string allowedRobots = 2;
+    repeated string allowed_robots = 2;
 }
 
 message OnlyModifiesFilesAndDirsRule {
@@ -91,9 +90,9 @@ message RevertOfCulprit {}
 
 message Notification {
     oneof notification {
-        CommentOnBugToAcknowledgeMerge commentOnBugToAcknowledgeMerge = 1;
-        CommentOrFileMonorailIssue commentOrFileMonorailIssue = 2;
-        FileBugForMergeApprovalViolation fileBugForMergeApprovalViolation = 3;
+        CommentOnBugToAcknowledgeMerge comment_on_bug_to_acknowledge_merge = 1;
+        CommentOrFileMonorailIssue comment_or_file_monorail_issue = 2;
+        FileBugForMergeApprovalViolation file_bug_for_merge_approval_violation = 3;
     }
 }
 

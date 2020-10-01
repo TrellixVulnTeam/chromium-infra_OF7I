@@ -24,46 +24,54 @@ var (
 		gerrit_host: "new.googlesource.com"
 		gerrit_repo: "new"
 		ref: "master"
-		starting_commit: "000000"
+		starting_commit: "123456f31f1d4556abc4fb34c3d8e7e40972c60a"
 		monorail_project: "fakeproject"
-		notifier_email: "notifier@cr-audit-commits-test.appspotmail.com"
 		rules: {
 			key: "manual-changes"
 			value: {
 				account: "*"
-				rules: {acknowledgeMerge: {}}
-				rules: {autoCommitsPerDay: {}}
-				rules: {autoRevertsPerDay: {}}
+				rules: {acknowledge_merge: {}}
+				rules: {auto_commits_per_day: {}}
+				rules: {auto_reverts_per_day: {}}
 				rules: {
-					changeReviewed: {
+					change_reviewed: {
 						robots: "robot0@example.com"
 						robots: "robot1@example.com"
 					}
 				}
-				rules: {culpritAge: {}}
-				rules: {culpritInBuild: {}}
-				rules: {failedBuildIsAppropriateFailure: {}}
-				rules: {onlyCommitsOwnChange: {}}
+				rules: {culprit_age: {}}
+				rules: {culprit_in_build: {}}
+				rules: {failed_build_is_appropriate_failure: {}}
+				rules: {only_commits_own_change: {}}
 				rules: {
-					onlyMergeApprovedChange: {
-						allowedUsers: "user0@example.com"
-						allowedRobots: "robot0@example.com"
+					only_merge_approved_change: {
+						allowed_users: "user0@example.com"
+						allowed_robots: "robot0@example.com"
 					}
 				}
 				rules: {
-					onlyModifiesFilesAndDirsRule: {
+					only_modifies_files_and_dirs_rule: {
 						name: "OnlyModifiesReleaseFiles"
 						files: "filea"
 						files: "fileb"
 						dirs: "dira"
 					}
 				}
-				rules: {revertOfCulprit: {}}
+				rules: {revert_of_culprit: {}}
 				notifications: {
-					commentOrFileMonorailIssue: {
+					comment_on_bug_to_acknowledge_merge: {}
+				}
+				notifications: {
+					comment_or_file_monorail_issue: {
 						components: "Test>Component"
 							labels: "CommitLog-Audit-Violation"
 							labels: "TBR-Violation"
+					}
+				}
+				notifications: {
+					file_bug_for_merge_approval_violation: {
+						components: "Test>Component"
+							labels: "CommitLog-Audit-Violation"
 					}
 				}
 			}
@@ -141,11 +149,19 @@ func TestMiddleware(t *testing.T) {
 			})
 			_, ok = accountRules.Rules[10].Rule.(*cpb.Rule_RevertOfCulprit)
 			So(ok, ShouldEqual, true)
-			_, ok = accountRules.Notifications[0].Notification.(*cpb.Notification_CommentOrFileMonorailIssue)
+			_, ok = accountRules.Notifications[0].Notification.(*cpb.Notification_CommentOnBugToAcknowledgeMerge)
 			So(ok, ShouldEqual, true)
-			So(accountRules.Notifications[0].GetCommentOrFileMonorailIssue(), ShouldResemble, &cpb.CommentOrFileMonorailIssue{
+			_, ok = accountRules.Notifications[1].Notification.(*cpb.Notification_CommentOrFileMonorailIssue)
+			So(ok, ShouldEqual, true)
+			So(accountRules.Notifications[1].GetCommentOrFileMonorailIssue(), ShouldResemble, &cpb.CommentOrFileMonorailIssue{
 				Components: []string{"Test>Component"},
 				Labels:     []string{"CommitLog-Audit-Violation", "TBR-Violation"},
+			})
+			_, ok = accountRules.Notifications[2].Notification.(*cpb.Notification_FileBugForMergeApprovalViolation)
+			So(ok, ShouldEqual, true)
+			So(accountRules.Notifications[2].GetFileBugForMergeApprovalViolation(), ShouldResemble, &cpb.FileBugForMergeApprovalViolation{
+				Components: []string{"Test>Component"},
+				Labels:     []string{"CommitLog-Audit-Violation"},
 			})
 			So(GetConfigRevision(c.Context), ShouldNotEqual, "")
 		})
