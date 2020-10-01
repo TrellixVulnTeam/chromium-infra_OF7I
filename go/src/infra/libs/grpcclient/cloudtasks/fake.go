@@ -18,6 +18,8 @@ import (
 // suitable for unit testing.
 type FakeServer struct {
 	taskspb.UnimplementedCloudTasksServer
+	// CreateTaskRequest is set by calls to CreateTask.
+	CreateTaskRequest *taskspb.CreateTaskRequest
 	// CreateTaskResponse is returned by calls to CreateTask.
 	CreateTaskResponse *taskspb.Task
 	// CreateTaskError is returned by calls to CreateTask
@@ -25,8 +27,9 @@ type FakeServer struct {
 	address         string
 }
 
-// CreateTask returns the return values set in s.
-func (s *FakeServer) CreateTask(context.Context, *taskspb.CreateTaskRequest) (*taskspb.Task, error) {
+// CreateTask stores a reference to req and returns the return values set in s.
+func (s *FakeServer) CreateTask(ctx context.Context, req *taskspb.CreateTaskRequest) (*taskspb.Task, error) {
+	s.CreateTaskRequest = req
 	return s.CreateTaskResponse, s.CreateTaskError
 }
 

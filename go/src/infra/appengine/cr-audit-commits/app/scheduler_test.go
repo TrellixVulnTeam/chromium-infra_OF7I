@@ -95,11 +95,18 @@ func TestScheduler(t *testing.T) {
 			So(err, ShouldBeNil)
 			appServer := &app{
 				cloudTasksClient: tasksClient,
-				opts:             &server.Options{},
+				opts: &server.Options{
+					CloudProject: "test-cloud-project",
+					CloudRegion:  "test-cloud-region",
+				},
 			}
 			appServer.Schedule(c)
 
 			So(w.Code, ShouldEqual, http.StatusOK)
+			So(fakeCloudTasks.CreateTaskRequest, ShouldNotBeNil)
+
+			So(fakeCloudTasks.CreateTaskRequest.Parent, ShouldContainSubstring, "test-cloud-project")
+			So(fakeCloudTasks.CreateTaskRequest.Parent, ShouldContainSubstring, "test-cloud-region")
 		})
 	})
 }
