@@ -37,6 +37,8 @@ var AddVlanCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.cidrBlock, "cidr-block", "", "the cidr block of the vlan")
 		c.Flags.StringVar(&c.description, "desc", "", "description of the vlan")
 		c.Flags.Var(flag.StringSlice(&c.zones), "zone", "zone of the vlan, can be specified multiple times."+cmdhelp.ZoneHelpText)
+		c.Flags.StringVar(&c.freeStartIP, "start-ip", "", "the start IPv4 string of the vlan's free DHCP range")
+		c.Flags.StringVar(&c.freeEndIP, "end-ip", "", "the end IPv4 string of the vlan's free DHCP range")
 		return c
 	},
 }
@@ -51,6 +53,8 @@ type addVlan struct {
 	cidrBlock   string
 	description string
 	zones       []string
+	freeStartIP string
+	freeEndIP   string
 }
 
 func (c *addVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -103,6 +107,8 @@ func (c *addVlan) parseArgs(vlan *ufspb.Vlan) {
 	vlan.VlanAddress = c.cidrBlock
 	vlan.Description = c.description
 	vlan.Zones = ufsZones
+	vlan.FreeStartIpv4Str = c.freeStartIP
+	vlan.FreeEndIpv4Str = c.freeEndIP
 }
 
 func (c *addVlan) validateArgs() error {

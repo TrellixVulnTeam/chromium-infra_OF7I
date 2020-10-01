@@ -100,15 +100,22 @@ func getSpecifiedIP(ctx context.Context, ipv4Str string) (*ufspb.IP, error) {
 		return nil, errors.Annotate(err, "Fail to query ip entity by %s", ipv4Str).Err()
 	}
 	if len(ips) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "Ip %s cannot be used, it may be reserved automatically", ipv4Str)
+		return nil, status.Errorf(codes.InvalidArgument, "IP %s does not exist", ipv4Str)
+	}
+	if len(ips) > 1 {
+		var vlans []string
+		for _, ip := range ips {
+			vlans = append(vlans, ip.GetVlan())
+		}
+		return nil, status.Errorf(codes.InvalidArgument, "IP %s exists in multiple vlans: %v", ipv4Str, vlans)
 	}
 	if ips[0].GetOccupied() {
 		dhcps, err := configuration.QueryDHCPConfigByPropertyName(ctx, "ipv4", ipv4Str)
 		if err != nil {
-			return nil, errors.Annotate(err, "ip %s is occupied, but fail to query the corresponding dhcp", ipv4Str).Err()
+			return nil, errors.Annotate(err, "IP %s is occupied, but fail to query the corresponding dhcp", ipv4Str).Err()
 		}
 		if dhcps != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Ip %s is occupied by host %s", ipv4Str, dhcps[0].GetHostname())
+			return nil, status.Errorf(codes.InvalidArgument, "IP %s is occupied by host %s", ipv4Str, dhcps[0].GetHostname())
 		}
 	}
 	if ips[0].GetReserve() {

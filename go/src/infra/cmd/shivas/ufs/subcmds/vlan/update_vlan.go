@@ -37,6 +37,8 @@ var UpdateVlanCmd = &subcommands.Command{
 		c.Flags.StringVar(&c.state, "state", "", cmdhelp.StateHelp)
 		c.Flags.StringVar(&c.zones, "zone", "", "comma separated zones, You can only append/add new zones here or clean it out."+cmdhelp.ZoneHelpText+cmdhelp.ClearFieldHelpText)
 		c.Flags.StringVar(&c.reservedIPs, "reserved_ips", "", "comma separated ips. You can only append/add new ips here. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.freeStartIP, "start-ip", "", "the start IPv4 string of the vlan's free DHCP range. "+cmdhelp.ClearFieldHelpText)
+		c.Flags.StringVar(&c.freeEndIP, "end-ip", "", "the end IPv4 string of the vlan's free DHCP range. "+cmdhelp.ClearFieldHelpText)
 		return c
 	},
 }
@@ -52,6 +54,8 @@ type updateVlan struct {
 	state       string
 	reservedIPs string
 	zones       string
+	freeStartIP string
+	freeEndIP   string
 }
 
 func (c *updateVlan) Run(a subcommands.Application, args []string, env subcommands.Env) int {
@@ -94,6 +98,8 @@ func (c *updateVlan) innerRun(a subcommands.Application, args []string, env subc
 			"state":        "resourceState",
 			"reserved_ips": "reserved_ips",
 			"zone":         "zones",
+			"start-ip":     "free_start_ip",
+			"end-ip":       "free_end_ip",
 		}),
 	})
 	if err != nil {
@@ -129,13 +135,23 @@ func (c *updateVlan) parseArgs(vlan *ufspb.Vlan) {
 		}
 		vlan.Zones = ufsZones
 	}
+	if c.freeStartIP == utils.ClearFieldValue {
+		vlan.FreeStartIpv4Str = ""
+	} else {
+		vlan.FreeStartIpv4Str = c.freeStartIP
+	}
+	if c.freeEndIP == utils.ClearFieldValue {
+		vlan.FreeEndIpv4Str = ""
+	} else {
+		vlan.FreeEndIpv4Str = c.freeEndIP
+	}
 }
 
 func (c *updateVlan) validateArgs() error {
 	if c.name == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\n'-name' is required, no mode ('-f' or '-i') is specified.")
 	}
-	if c.state == "" && c.description == "" && c.reservedIPs == "" && c.zones == "" {
+	if c.state == "" && c.description == "" && c.reservedIPs == "" && c.zones == "" && c.freeEndIP == "" && c.freeStartIP == "" {
 		return cmdlib.NewQuietUsageError(c.Flags, "Wrong usage!!\nNothing to update. Please provide any field to update")
 	}
 	if c.state != "" && !ufsUtil.IsUFSState(ufsUtil.RemoveStatePrefix(c.state)) {
