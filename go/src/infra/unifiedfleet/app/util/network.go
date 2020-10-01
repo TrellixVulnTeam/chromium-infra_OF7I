@@ -27,7 +27,7 @@ const reserveLast = 1
 // vlanName here is a full vlan name, e.g. browser:123
 // The first 10 and last 1 ip of this cidr block will be reserved and not returned to users
 // for further operations
-func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, string, string, error) {
+func ParseVlan(vlanName, cidr, freeStartIP, freeEndIP string) ([]*ufspb.IP, int, string, string, error) {
 	ip, subnet, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return nil, 0, "", "", errors.Reason("invalid CIDR block %q for vlan %s", cidr, vlanName).Err()
@@ -40,10 +40,28 @@ func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, string, string, error) 
 	length := 1 << uint32(32-ones)
 	ips := make([]*ufspb.IP, length)
 	startIP := binary.BigEndian.Uint32(ipv4)
-	freeStartIP := ""
-	freeEndIP := ""
+	freeStartIPInt := startIP + reserveFirst
+	freeEndIPInt := startIP + uint32(length-reserveLast-1)
+	if freeStartIP != "" {
+		ipInt, err := IPv4StrToInt(freeStartIP)
+		if err != nil {
+			return nil, 0, "", "", errors.Reason("invalid free start IP %q for vlan %s", freeStartIP, vlanName).Err()
+		}
+		freeStartIPInt = ipInt
+	} else {
+		freeStartIP = IPv4IntToStr(uint32(startIP + reserveFirst))
+	}
+	if freeEndIP != "" {
+		ipInt, err := IPv4StrToInt(freeEndIP)
+		if err != nil {
+			return nil, 0, "", "", errors.Reason("invalid free end IP %q for vlan %s", freeEndIP, vlanName).Err()
+		}
+		freeEndIPInt = ipInt
+	} else {
+		freeEndIP = IPv4IntToStr(startIP + uint32(length-reserveLast-1))
+	}
 	for i := 0; i < length; i++ {
-		if i < reserveFirst || i >= length-reserveLast {
+		if startIP < freeStartIPInt || startIP > freeEndIPInt {
 			ips[i] = &ufspb.IP{
 				Id:      GetIPName(vlanName, Int64ToStr(int64(startIP))),
 				Ipv4:    startIP,
@@ -57,12 +75,6 @@ func ParseVlan(vlanName, cidr string) ([]*ufspb.IP, int, string, string, error) 
 				Ipv4:    startIP,
 				Ipv4Str: IPv4IntToStr(startIP),
 				Vlan:    vlanName,
-			}
-			if i == reserveFirst {
-				freeStartIP = IPv4IntToStr(startIP)
-			}
-			if i == length-reserveLast-1 {
-				freeEndIP = IPv4IntToStr(startIP)
 			}
 		}
 		startIP++

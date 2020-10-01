@@ -397,6 +397,9 @@ func (hc *HistoryClient) LogVLANChanges(oldData, newData *ufspb.Vlan) {
 	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.vlan_address", oldData.GetVlanAddress(), newData.GetVlanAddress())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.description", oldData.GetDescription(), newData.GetDescription())...)
 	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.reserved_ips", oldData.GetReservedIps(), newData.GetReservedIps())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.zones", oldData.GetZones(), newData.GetZones())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.free_start_ip", oldData.GetFreeStartIpv4Str(), newData.GetFreeStartIpv4Str())...)
+	hc.changes = append(hc.changes, logCommon(resourceName, "vlan.free_end_ip", oldData.GetFreeEndIpv4Str(), newData.GetFreeEndIpv4Str())...)
 	hc.logMsgEntity(resourceName, false, newData)
 }
 
@@ -438,7 +441,9 @@ func LogIPChanges(oldData, newData *ufspb.IP) []*ufspb.ChangeEvent {
 	} else {
 		resourceName = util.AddPrefix(util.IPCollection, newData.GetId())
 	}
-	return logCommon(resourceName, "ip.occupied", oldData.GetOccupied(), newData.GetOccupied())
+	changes = append(changes, logCommon(resourceName, "ip.occupied", oldData.GetOccupied(), newData.GetOccupied())...)
+	changes = append(changes, logCommon(resourceName, "ip.reserved", oldData.GetReserve(), newData.GetReserve())...)
+	return changes
 }
 
 // LogStateChanges logs the change of the given state record.

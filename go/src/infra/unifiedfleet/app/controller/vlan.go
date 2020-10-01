@@ -40,7 +40,7 @@ func CreateVlan(ctx context.Context, vlan *ufspb.Vlan) (*ufspb.Vlan, error) {
 			return errors.Annotate(err, "CreateVlan - validation failed").Err()
 		}
 
-		ips, length, freeStartIP, freeEndIP, err = util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress())
+		ips, length, freeStartIP, freeEndIP, err = util.ParseVlan(vlan.GetName(), vlan.GetVlanAddress(), vlan.GetFreeStartIpv4Str(), vlan.GetFreeEndIpv4Str())
 		if err != nil {
 			return errors.Annotate(err, "CreateVlan").Err()
 		}
@@ -109,7 +109,8 @@ func UpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.FieldMas
 			return errors.Annotate(err, "Fail to update state to vlan %s", vlan.GetName()).Err()
 		}
 
-		if err := updateIPTable(ctx, vlan.GetName(), oldVlanCopy.GetReservedIps(), vlan.GetReservedIps()); err != nil {
+		// ip range of the vlan may be changed
+		if err := hc.netUdt.updateVlanAndIPTable(ctx, vlan); err != nil {
 			return err
 		}
 
@@ -204,7 +205,7 @@ func ImportVlans(ctx context.Context, vlans []*crimsonconfig.VLAN, pageSize int)
 	vs := make([]*ufspb.Vlan, len(vlans))
 	for i, vlan := range vlans {
 		vlanName := util.GetBrowserLabName(util.Int64ToStr(vlan.GetId()))
-		ips, length, freeStartIP, freeEndIP, err := util.ParseVlan(vlanName, vlan.GetCidrBlock())
+		ips, length, freeStartIP, freeEndIP, err := util.ParseVlan(vlanName, vlan.GetCidrBlock(), "", "")
 		if err != nil {
 			return nil, err
 		}
@@ -446,6 +447,12 @@ func validateCreateVlan(ctx context.Context, vlan *ufspb.Vlan) error {
 			return status.Errorf(codes.InvalidArgument, "cidr block %s is already occupied by %s", cidrBlock, vlans[0].GetName())
 		}
 	}
+	if err := validateFreeIPV4Str(vlan.FreeEndIpv4Str); err != nil {
+		return err
+	}
+	if err := validateFreeIPV4Str(vlan.FreeStartIpv4Str); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -476,7 +483,27 @@ func validateUpdateVlan(ctx context.Context, vlan *ufspb.Vlan, mask *field_mask.
 	if err := ResourceExist(ctx, []*Resource{GetVlanResource(vlan.Name)}, nil); err != nil {
 		return err
 	}
-	return validateVlanUpdateMask(ctx, vlan, mask)
+	if err := validateVlanUpdateMask(ctx, vlan, mask); err != nil {
+		return err
+	}
+	if mask == nil {
+		if err := validateFreeIPV4Str(vlan.FreeEndIpv4Str); err != nil {
+			return err
+		}
+		if err := validateFreeIPV4Str(vlan.FreeStartIpv4Str); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateFreeIPV4Str(ipv4 string) error {
+	if ipv4 != "" {
+		if _, err := util.IPv4StrToInt(ipv4); err != nil {
+			return status.Errorf(codes.InvalidArgument, "free ip %s is an invalid IP", ipv4)
+		}
+	}
+	return nil
 }
 
 // validateVlanUpdateMask validates the update mask for vlan update
@@ -497,6 +524,14 @@ func validateVlanUpdateMask(ctx context.Context, vlan *ufspb.Vlan, mask *field_m
 				// valid fields, nothing to validate.
 			case "reserved_ips":
 			case "zones":
+			case "free_start_ip":
+				if err := validateFreeIPV4Str(vlan.FreeStartIpv4Str); err != nil {
+					return err
+				}
+			case "free_end_ip":
+				if err := validateFreeIPV4Str(vlan.FreeEndIpv4Str); err != nil {
+					return err
+				}
 			default:
 				return status.Errorf(codes.InvalidArgument, "validateVlanUpdateMask - unsupported update mask path %q", path)
 			}
@@ -520,6 +555,10 @@ func processVlanUpdateMask(oldVlan *ufspb.Vlan, vlan *ufspb.Vlan, mask *field_ma
 			oldVlan.ReservedIps = mergeIPs(oldVlan.ReservedIps, vlan.GetReservedIps())
 		case "zones":
 			oldVlan.Zones = mergeZones(oldVlan.GetZones(), vlan.GetZones())
+		case "free_start_ip":
+			oldVlan.FreeStartIpv4Str = vlan.FreeStartIpv4Str
+		case "free_end_ip":
+			oldVlan.FreeEndIpv4Str = vlan.FreeEndIpv4Str
 		}
 	}
 	return oldVlan, nil
@@ -534,32 +573,4 @@ func getVlanHistoryClient(m *ufspb.Vlan) *HistoryClient {
 			Hostname: m.Name,
 		},
 	}
-}
-
-func updateIPTable(ctx context.Context, vlanName string, oldIPs, newIPs []string) error {
-	oldIPMap := make(map[string]bool, len(oldIPs))
-	for _, ip := range oldIPs {
-		oldIPMap[ip] = true
-	}
-	newIPMap := make(map[string]bool, len(newIPs))
-	for _, ip := range newIPs {
-		newIPMap[ip] = true
-	}
-	// Get ips from reserved => non-reserved
-	toUpdateIPs := make([]*ufspb.IP, 0)
-	for _, ip := range oldIPs {
-		if !newIPMap[ip] {
-			toUpdateIPs = append(toUpdateIPs, util.FormatIP(vlanName, ip, false, false))
-		}
-	}
-	// Get ips from non-reserved => reserved
-	for _, ip := range newIPs {
-		if !oldIPMap[ip] {
-			toUpdateIPs = append(toUpdateIPs, util.FormatIP(vlanName, ip, true, false))
-		}
-	}
-	if _, err := configuration.BatchUpdateIPs(ctx, toUpdateIPs); err != nil {
-		return err
-	}
-	return nil
 }

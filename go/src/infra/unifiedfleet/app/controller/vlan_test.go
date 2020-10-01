@@ -58,18 +58,41 @@ func TestCreateVlan(t *testing.T) {
 			So(err.Error(), ShouldContainSubstring, "invalid CIDR block")
 		})
 
+		Convey("Create vlan - invalid free ip range", func() {
+			vlan1 := mockVlan("create-vlan-1", "192.168.100.0/27")
+			vlan1.FreeStartIpv4Str = "1235"
+			_, err := CreateVlan(ctx, vlan1)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "free ip 1235 is an invalid IP")
+		})
+
 		Convey("Create vlan - happy path", func() {
 			vlan1 := mockVlan("create-vlan-1", "192.168.100.0/27")
 			vlan1.Zones = []ufspb.Zone{ufspb.Zone_ZONE_MTV97, ufspb.Zone_ZONE_MTV96}
+			vlan1.FreeStartIpv4Str = "192.168.100.6"
+			vlan1.FreeEndIpv4Str = "192.168.100.26"
 			resp, err := CreateVlan(ctx, vlan1)
 			So(err, ShouldBeNil)
 			So(resp.GetName(), ShouldEqual, "create-vlan-1")
 			So(resp.GetVlanAddress(), ShouldEqual, "192.168.100.0/27")
 			So(resp.GetCapacityIp(), ShouldEqual, 32)
 			So(resp.GetResourceState(), ShouldEqual, ufspb.State_STATE_SERVING)
-			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "192.168.100.11")
-			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "192.168.100.30")
+			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "192.168.100.6")
+			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "192.168.100.26")
 			So(resp.GetZones(), ShouldHaveLength, 2)
+
+			startIPInt, err := util.IPv4StrToInt("192.168.100.6")
+			endIPInt, err := util.IPv4StrToInt("192.168.100.26")
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": "create-vlan-1"})
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 32)
+			for _, ip := range ips {
+				if ip.GetIpv4() < startIPInt || ip.GetIpv4() > endIPInt {
+					So(ip.GetReserve(), ShouldBeTrue)
+				} else {
+					So(ip.GetReserve(), ShouldBeFalse)
+				}
+			}
 
 			s, err := state.GetStateRecord(ctx, "vlans/create-vlan-1")
 			So(err, ShouldBeNil)
@@ -190,7 +213,7 @@ func TestUpdateVlan(t *testing.T) {
 			vlan1 := mockVlan("update-vlan-4", "6.6.6.0/27")
 			vlan1.Description = "before update"
 			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
-			ips, _, _, _, err := util.ParseVlan("update-vlan-4", "6.6.6.0/27")
+			ips, _, _, _, err := util.ParseVlan("update-vlan-4", "6.6.6.0/27", vlan1.GetFreeStartIpv4Str(), vlan1.GetFreeEndIpv4Str())
 			So(err, ShouldBeNil)
 			_, err = configuration.BatchUpdateIPs(ctx, ips)
 			So(err, ShouldBeNil)
@@ -216,7 +239,7 @@ func TestUpdateVlan(t *testing.T) {
 			vlan1 := mockVlan("update-vlan-5", "6.6.5.0/27")
 			vlan1.ReservedIps = []string{"6.6.5.13"}
 			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
-			ips, _, _, _, err := util.ParseVlan("update-vlan-5", "6.6.5.0/27")
+			ips, _, _, _, err := util.ParseVlan("update-vlan-5", "6.6.5.0/27", vlan1.GetFreeStartIpv4Str(), vlan1.GetFreeEndIpv4Str())
 			So(err, ShouldBeNil)
 			_, err = configuration.BatchUpdateIPs(ctx, ips)
 			So(err, ShouldBeNil)
@@ -250,6 +273,90 @@ func TestUpdateVlan(t *testing.T) {
 			res, err = UpdateVlan(ctx, vlan3, &field_mask.FieldMask{Paths: []string{"zones"}})
 			So(err, ShouldBeNil)
 			So(res.GetZones(), ShouldHaveLength, 0)
+		})
+
+		Convey("Update vlan - partial update free ips - happy path", func() {
+			vlan1 := mockVlan("update-vlan-7", "7.7.7.0/27")
+			vlan1.Description = "before update"
+			resp, err := CreateVlan(ctx, vlan1)
+			So(err, ShouldBeNil)
+			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "7.7.7.11")
+			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "7.7.7.30")
+			startIPInt, err := util.IPv4StrToInt("7.7.7.11")
+			endIPInt, err := util.IPv4StrToInt("7.7.7.30")
+			ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": "update-vlan-7"})
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 32)
+			for _, ip := range ips {
+				if ip.GetIpv4() < startIPInt || ip.GetIpv4() > endIPInt {
+					So(ip.GetReserve(), ShouldBeTrue)
+				} else {
+					So(ip.GetReserve(), ShouldBeFalse)
+				}
+			}
+
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.FreeStartIpv4Str = "7.7.7.10"
+			vlan2.FreeEndIpv4Str = "7.7.7.29"
+			resp, err = UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"free_start_ip", "free_end_ip"}})
+			So(err, ShouldBeNil)
+			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "7.7.7.10")
+			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "7.7.7.29")
+
+			startIPInt, err = util.IPv4StrToInt("7.7.7.10")
+			endIPInt, err = util.IPv4StrToInt("7.7.7.29")
+			ips, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": "update-vlan-7"})
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 32)
+			for _, ip := range ips {
+				if ip.GetIpv4() < startIPInt || ip.GetIpv4() > endIPInt {
+					So(ip.GetReserve(), ShouldBeTrue)
+				} else {
+					So(ip.GetReserve(), ShouldBeFalse)
+				}
+			}
+
+			// Reset the start/end ip range with reserved ips
+			vlan3 := mockVlan("update-vlan-7", "")
+			vlan3.ReservedIps = []string{"7.7.7.16"}
+			resp, err = UpdateVlan(ctx, vlan3, &field_mask.FieldMask{Paths: []string{"free_start_ip", "free_end_ip", "reserved_ips"}})
+			So(err, ShouldBeNil)
+			So(resp.GetFreeStartIpv4Str(), ShouldEqual, "7.7.7.11")
+			So(resp.GetFreeEndIpv4Str(), ShouldEqual, "7.7.7.30")
+			startIPInt, err = util.IPv4StrToInt("7.7.7.11")
+			endIPInt, err = util.IPv4StrToInt("7.7.7.30")
+			ips, err = configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": "update-vlan-7"})
+			So(err, ShouldBeNil)
+			So(ips, ShouldHaveLength, 32)
+			for _, ip := range ips {
+				if ip.GetIpv4() < startIPInt || ip.GetIpv4() > endIPInt {
+					So(ip.GetReserve(), ShouldBeTrue)
+				} else if ip.GetIpv4Str() == "7.7.7.16" {
+					So(ip.GetReserve(), ShouldBeTrue)
+				} else {
+					So(ip.GetReserve(), ShouldBeFalse)
+				}
+			}
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "ips/update-vlan-7/117901066")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetEventLabel(), ShouldEqual, "ip.reserved")
+			So(changes[0].GetOldValue(), ShouldEqual, "true")
+			So(changes[0].GetNewValue(), ShouldEqual, "false")
+			So(changes[1].GetEventLabel(), ShouldEqual, "ip.reserved")
+			So(changes[1].GetOldValue(), ShouldEqual, "false")
+			So(changes[1].GetNewValue(), ShouldEqual, "true")
+		})
+
+		Convey("Update vlan - partial update free ips - invalid ip ranges", func() {
+			vlan1 := mockVlan("update-vlan-7.1", "7.7.8.0/27")
+			configuration.BatchUpdateVlans(ctx, []*ufspb.Vlan{vlan1})
+			vlan2 := proto.Clone(vlan1).(*ufspb.Vlan)
+			vlan2.FreeEndIpv4Str = "1235"
+			_, err := UpdateVlan(ctx, vlan2, &field_mask.FieldMask{Paths: []string{"free_start_ip", "free_end_ip"}})
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "free ip 1235 is an invalid IP")
 		})
 	})
 }

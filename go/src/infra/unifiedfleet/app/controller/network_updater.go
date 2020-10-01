@@ -229,3 +229,58 @@ func (nu *networkUpdater) deleteLseHostHelper(ctx context.Context, lse *ufspb.Ma
 	}
 	return nil
 }
+
+func (nu *networkUpdater) updateVlanAndIPTable(ctx context.Context, newVlan *ufspb.Vlan) error {
+	ips, err := configuration.QueryIPByPropertyName(ctx, map[string]string{"vlan": newVlan.GetName()})
+	if err != nil {
+		return err
+	}
+	toUpdateIPs := make([]*ufspb.IP, 0)
+
+	_, _, freeStartIP, freeEndIP, err := util.ParseVlan(newVlan.GetName(), newVlan.GetVlanAddress(), newVlan.GetFreeStartIpv4Str(), newVlan.GetFreeEndIpv4Str())
+	newVlan.FreeStartIpv4Str = freeStartIP
+	newVlan.FreeEndIpv4Str = freeEndIP
+
+	freeStartIPInt, err := util.IPv4StrToInt(freeStartIP)
+	if err != nil {
+		return err
+	}
+	freeEndIPInt, err := util.IPv4StrToInt(freeEndIP)
+	if err != nil {
+		return err
+	}
+	newIPs := newVlan.GetReservedIps()
+	newIPMap := make(map[string]bool, len(newIPs))
+	for _, ip := range newIPs {
+		newIPMap[ip] = true
+	}
+
+	for _, ip := range ips {
+		_, okNew := newIPMap[ip.GetIpv4Str()]
+		if ip.GetIpv4() < freeStartIPInt || ip.GetIpv4() > freeEndIPInt {
+			if !ip.GetReserve() {
+				oldIP := proto.Clone(ip).(*ufspb.IP)
+				ip.Reserve = true
+				toUpdateIPs = append(toUpdateIPs, ip)
+				nu.Changes = append(nu.Changes, LogIPChanges(oldIP, ip)...)
+			}
+		} else {
+			if okNew && !ip.GetReserve() {
+				oldIP := proto.Clone(ip).(*ufspb.IP)
+				ip.Reserve = true
+				toUpdateIPs = append(toUpdateIPs, ip)
+				nu.Changes = append(nu.Changes, LogIPChanges(oldIP, ip)...)
+			}
+			if !okNew && ip.GetReserve() {
+				oldIP := proto.Clone(ip).(*ufspb.IP)
+				ip.Reserve = false
+				toUpdateIPs = append(toUpdateIPs, ip)
+				nu.Changes = append(nu.Changes, LogIPChanges(oldIP, ip)...)
+			}
+		}
+	}
+	if _, err := configuration.BatchUpdateIPs(ctx, toUpdateIPs); err != nil {
+		return err
+	}
+	return nil
+}
