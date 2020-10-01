@@ -87,5 +87,13 @@ def generate_simple_task(url, params):
   Returns:
     Dict representing a cloud tasks Task object.
   """
-  relative_uri = (url + '?' + urllib.urlencode(params)) if params else url
-  return {'app_engine_http_request': {'relative_uri': relative_uri}}
+  return {
+      'app_engine_http_request':
+          {
+              'relative_uri': url,
+              'body': urllib.urlencode(params),
+              'headers': {
+                  'Content-type': 'application/x-www-form-urlencoded'
+              }
+          }
+  }

@@ -138,9 +138,12 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
       task = {
           'app_engine_http_request':
               {
-                  'relative_uri':
-                      urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do?' +
-                      urllib.urlencode(params)
+                  'relative_uri': urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do',
+                  'body': urllib.urlencode(params),
+                  'headers':
+                      {
+                          'Content-type': 'application/x-www-form-urlencoded'
+                      }
               }
       }
       get_client_mock().create_task.assert_any_call(
@@ -172,10 +175,9 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
      _kwargs) = get_client_mock().create_task.call_args_list[0]
     relative_uri = called_task.get('app_engine_http_request').get(
         'relative_uri')
-    parse_result = urlparse.urlparse(relative_uri)
-    self.assertEqual(
-        parse_result.path, urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do')
-    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
+    self.assertEqual(relative_uri, urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do')
+    encoded_params = called_task.get('app_engine_http_request').get('body')
+    params = {k: v[0] for k, v in urlparse.parse_qs(encoded_params).items()}
     self.assertEqual(params['project_id'], str(self.project.project_id))
     self.assertEqual(
         params['lower_bound'], str(12345 // self.BLOCK * self.BLOCK + 1))
@@ -184,10 +186,9 @@ class RecomputeAllDerivedFieldsTest(unittest.TestCase):
     ((_parent, called_task), _kwargs) = get_client_mock().create_task.call_args
     relative_uri = called_task.get('app_engine_http_request').get(
         'relative_uri')
-    parse_result = urlparse.urlparse(relative_uri)
-    self.assertEqual(
-        parse_result.path, urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do')
-    params = {k: v[0] for k, v in urlparse.parse_qs(parse_result.query).items()}
+    self.assertEqual(relative_uri, urls.RECOMPUTE_DERIVED_FIELDS_TASK + '.do')
+    encoded_params = called_task.get('app_engine_http_request').get('body')
+    params = {k: v[0] for k, v in urlparse.parse_qs(encoded_params).items()}
     self.assertEqual(params['project_id'], str(self.project.project_id))
     self.assertEqual(params['lower_bound'], str(1))
     self.assertEqual(params['upper_bound'], str(self.BLOCK + 1))

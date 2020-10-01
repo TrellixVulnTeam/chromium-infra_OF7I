@@ -63,16 +63,26 @@ class CloudTasksHelpersTest(unittest.TestCase):
             'b': 'b'
         })
     expected = {
-        'app_engine_http_request': {
-            'relative_uri': '/alphabet/letters?a=a&b=b'
-        }
+        'app_engine_http_request':
+            {
+                'relative_uri': '/alphabet/letters',
+                'body': 'a=a&b=b',
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
+            }
     }
     self.assertEqual(actual, expected)
 
     actual = cloud_tasks_helpers.generate_simple_task('/alphabet/letters', {})
     expected = {
-        'app_engine_http_request': {
-            'relative_uri': '/alphabet/letters'
-        }
+        'app_engine_http_request':
+            {
+                'relative_uri': '/alphabet/letters',
+                'body': '',
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
+            }
     }
     self.assertEqual(actual, expected)

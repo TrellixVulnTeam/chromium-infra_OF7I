@@ -86,8 +86,11 @@ class DateActionCronTest(unittest.TestCase):
     expected_task = {
         'app_engine_http_request':
             {
-                'relative_uri':
-                    urls.ISSUE_DATE_ACTION_TASK + '.do?issue_id=78901'
+                'relative_uri': urls.ISSUE_DATE_ACTION_TASK + '.do',
+                'body': 'issue_id=78901',
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
             }
     }
     get_client_mock().create_task.assert_any_call(
@@ -101,8 +104,11 @@ class DateActionCronTest(unittest.TestCase):
     expected_task = {
         'app_engine_http_request':
             {
-                'relative_uri':
-                    urls.ISSUE_DATE_ACTION_TASK + '.do?issue_id=78901'
+                'relative_uri': urls.ISSUE_DATE_ACTION_TASK + '.do',
+                'body': 'issue_id=78901',
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
             }
     }
     get_client_mock().create_task.assert_any_call(

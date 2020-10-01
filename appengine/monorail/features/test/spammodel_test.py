@@ -27,7 +27,11 @@ class TrainingDataExportTest(unittest.TestCase):
     task = {
         'app_engine_http_request':
             {
-                'relative_uri': urls.SPAM_DATA_EXPORT_TASK + '.do'
+                'relative_uri': urls.SPAM_DATA_EXPORT_TASK + '.do',
+                'body': '',
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
             }
     }
     get_client_mock().create_task.assert_called_once()

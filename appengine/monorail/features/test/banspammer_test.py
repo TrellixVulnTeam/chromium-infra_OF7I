@@ -73,8 +73,11 @@ class BanSpammerTest(unittest.TestCase):
     task = {
         'app_engine_http_request':
             {
-                'relative_uri':
-                    urls.BAN_SPAMMER_TASK + '.do?' + urllib.urlencode(params)
+                'relative_uri': urls.BAN_SPAMMER_TASK + '.do',
+                'body': urllib.urlencode(params),
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
             }
     }
     get_client_mock().queue_path.assert_called_with(

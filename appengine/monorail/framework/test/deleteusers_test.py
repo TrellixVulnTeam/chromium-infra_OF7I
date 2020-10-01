@@ -31,6 +31,18 @@ class TestWipeoutSyncCron(unittest.TestCase):
     self.user_2 = self.services.user.TestAddUser('user2@example.com', 222)
     self.user_3 = self.services.user.TestAddUser('user3@example.com', 333)
 
+  def generate_simple_task(self, url, body):
+    return {
+        'app_engine_http_request':
+            {
+                'relative_uri': url,
+                'body': body,
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
+            }
+    }
+
   @mock.patch('framework.cloud_tasks_helpers._get_client')
   def testHandleRequest(self, get_client_mock):
     mr = testing_helpers.MakeMonorailRequest(
@@ -40,36 +52,22 @@ class TestWipeoutSyncCron(unittest.TestCase):
 
     self.assertEqual(get_client_mock().create_task.call_count, 3)
 
-    expected_task = {
-        'app_engine_http_request':
-            {
-                'relative_uri':
-                    urls.SEND_WIPEOUT_USER_LISTS_TASK + '.do?limit=2&offset=0'
-            }
-    }
+    expected_task = self.generate_simple_task(
+        urls.SEND_WIPEOUT_USER_LISTS_TASK + '.do', 'limit=2&offset=0')
     get_client_mock().create_task.assert_any_call(
         get_client_mock().queue_path(),
         expected_task,
         retry=cloud_tasks_helpers._DEFAULT_RETRY)
 
-    expected_task = {
-        'app_engine_http_request':
-            {
-                'relative_uri':
-                    urls.SEND_WIPEOUT_USER_LISTS_TASK + '.do?limit=2&offset=2'
-            }
-    }
+    expected_task = self.generate_simple_task(
+        urls.SEND_WIPEOUT_USER_LISTS_TASK + '.do', 'limit=2&offset=2')
     get_client_mock().create_task.assert_any_call(
         get_client_mock().queue_path(),
         expected_task,
         retry=cloud_tasks_helpers._DEFAULT_RETRY)
 
-    expected_task = {
-        'app_engine_http_request':
-            {
-                'relative_uri': urls.DELETE_WIPEOUT_USERS_TASK + '.do'
-            }
-    }
+    expected_task = self.generate_simple_task(
+        urls.DELETE_WIPEOUT_USERS_TASK + '.do', '')
     get_client_mock().create_task.assert_any_call(
         get_client_mock().queue_path(),
         expected_task,
@@ -80,15 +78,9 @@ class TestWipeoutSyncCron(unittest.TestCase):
     mr = testing_helpers.MakeMonorailRequest(services=self.services)
     self.task.HandleRequest(mr)
 
-    expected_task = {
-        'app_engine_http_request':
-            {
-                'relative_uri':
-                    '{}.do?limit={}&offset=0'.format(
-                        urls.SEND_WIPEOUT_USER_LISTS_TASK,
-                        deleteusers.MAX_BATCH_SIZE)
-            }
-    }
+    expected_task = self.generate_simple_task(
+        urls.SEND_WIPEOUT_USER_LISTS_TASK + '.do',
+        'limit={}&offset=0'.format(deleteusers.MAX_BATCH_SIZE))
     get_client_mock().create_task.assert_any_call(
         get_client_mock().queue_path(),
         expected_task,
@@ -158,6 +150,18 @@ class DeleteWipeoutUsersTaskTest(unittest.TestCase):
         {'id': 'user3@gmail.com'}, {'id': 'user4@gmail.com'}]
     self.task.fetchDeletedUsers = mock.Mock(return_value=deleted_users)
 
+  def generate_simple_task(self, url, body):
+    return {
+        'app_engine_http_request':
+            {
+                'relative_uri': url,
+                'body': body,
+                'headers': {
+                    'Content-type': 'application/x-www-form-urlencoded'
+                }
+            }
+    }
+
   @mock.patch('framework.cloud_tasks_helpers._get_client')
   def testHandleRequest(self, get_client_mock):
     mr = testing_helpers.MakeMonorailRequest(path='url/url?limit=3')
@@ -173,24 +177,18 @@ class DeleteWipeoutUsersTaskTest(unittest.TestCase):
 
     query = urllib.urlencode(
         {'emails': 'user1@gmail.com,user2@gmail.com,user3@gmail.com'})
-    expected_task = {
-        'app_engine_http_request':
-            {
-                'relative_uri': urls.DELETE_USERS_TASK + '.do?' + query
-            }
-    }
+    expected_task = self.generate_simple_task(
+        urls.DELETE_USERS_TASK + '.do', query)
+
     get_client_mock().create_task.assert_any_call(
         get_client_mock().queue_path(),
         expected_task,
         retry=cloud_tasks_helpers._DEFAULT_RETRY)
 
     query = urllib.urlencode({'emails': 'user4@gmail.com'})
-    expected_task = {
-        'app_engine_http_request':
-            {
-                'relative_uri': urls.DELETE_USERS_TASK + '.do?' + query
-            }
-    }
+    expected_task = self.generate_simple_task(
+        urls.DELETE_USERS_TASK + '.do', query)
+
     get_client_mock().create_task.assert_any_call(
         get_client_mock().queue_path(),
         expected_task,
@@ -207,12 +205,9 @@ class DeleteWipeoutUsersTaskTest(unittest.TestCase):
 
     emails = 'user1@gmail.com,user2@gmail.com,user3@gmail.com,user4@gmail.com'
     query = urllib.urlencode({'emails': emails})
-    expected_task = {
-        'app_engine_http_request':
-            {
-                'relative_uri': urls.DELETE_USERS_TASK + '.do?' + query
-            }
-    }
+    expected_task = self.generate_simple_task(
+        urls.DELETE_USERS_TASK + '.do', query)
+
     get_client_mock().create_task.assert_any_call(
         get_client_mock().queue_path(),
         expected_task,

@@ -29,12 +29,12 @@ class SendNotificationTest(unittest.TestCase):
 
   def _get_create_task_path_and_params(self, call):
     (args, _kwargs) = call
-    relative_uri = args[0]['app_engine_http_request']['relative_uri']
-    parse_result = urlparse.urlparse(relative_uri)
+    path = args[0]['app_engine_http_request']['relative_uri']
+    encoded_params = args[0]['app_engine_http_request']['body']
     params = {
-        k: v[0] for k, v in urlparse.parse_qs(parse_result.query, True).items()
+        k: v[0] for k, v in urlparse.parse_qs(encoded_params, True).items()
     }
-    return parse_result.path, params
+    return path, params
 
   @mock.patch('framework.cloud_tasks_helpers.create_task')
   def testPrepareAndSendIssueChangeNotification(self, create_task_mock):
