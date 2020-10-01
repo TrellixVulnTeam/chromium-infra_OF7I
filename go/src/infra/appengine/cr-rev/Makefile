@@ -24,5 +24,5 @@ dev: gen
 # Deploy to production
 .PHONY: prod
 prod: prod
-	gae.py upload --app-id cr-rev-prod  --app-dir .
+	gae.py upload --app-id cr-rev  --app-dir .
 
