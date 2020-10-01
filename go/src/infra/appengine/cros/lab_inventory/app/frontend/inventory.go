@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	proto "github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/chromiumos/infra/proto/go/lab"
@@ -191,13 +192,18 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 	idToDevCfg := map[string]*device.Config{}
 	for _, d := range extendedData {
 		convertedID := deviceconfig.ConvertValidDeviceConfigID(d.LabConfig.GetDeviceConfigId())
-		if _, found := idToDevCfg[convertedID.String()]; found {
-			continue
-		}
+		fallbackID := getFallbackDeviceConfigID(convertedID)
 		logging.Debugf(ctx, "before convert: %s", d.LabConfig.DeviceConfigId.String())
 		logging.Debugf(ctx, "real device config ID: %s", convertedID.String())
-		devCfgIds = append(devCfgIds, convertedID)
-		idToDevCfg[convertedID.String()] = nil
+		logging.Debugf(ctx, "fallback device config ID: %s", fallbackID.String())
+
+		for _, cID := range []*device.ConfigId{convertedID, fallbackID} {
+			if _, found := idToDevCfg[cID.String()]; found {
+				continue
+			}
+			devCfgIds = append(devCfgIds, cID)
+			idToDevCfg[cID.String()] = nil
+		}
 	}
 
 	devCfgs, err := getDeviceConfigFunc(ctx, devCfgIds)
@@ -213,9 +219,22 @@ func getDeviceConfigData(ctx context.Context, extendedData []*api.ExtendedDevice
 	for i := range extendedData {
 		convertedID := deviceconfig.ConvertValidDeviceConfigID(extendedData[i].LabConfig.GetDeviceConfigId())
 		extendedData[i].DeviceConfig = idToDevCfg[convertedID.String()]
+		if extendedData[i].DeviceConfig == nil || extendedData[i].DeviceConfig.GetId() == nil {
+			fallbackID := getFallbackDeviceConfigID(convertedID)
+			extendedData[i].DeviceConfig = idToDevCfg[fallbackID.String()]
+		}
 		newExtendedData = append(newExtendedData, extendedData[i])
 	}
 	return newExtendedData, failedDevices
+}
+
+func getFallbackDeviceConfigID(oldConfigID *device.ConfigId) *device.ConfigId {
+	if oldConfigID.GetVariantId().GetValue() != "" {
+		fallbackID := proto.Clone(oldConfigID).(*device.ConfigId)
+		fallbackID.VariantId = nil
+		return fallbackID
+	}
+	return oldConfigID
 }
 
 func getManufacturingConfigData(ctx context.Context, extendedData []*api.ExtendedDeviceData) ([]*api.ExtendedDeviceData, []*api.DeviceOpResult) {

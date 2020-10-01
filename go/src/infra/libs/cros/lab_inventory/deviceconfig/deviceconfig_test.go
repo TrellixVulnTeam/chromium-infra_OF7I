@@ -12,6 +12,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"go.chromium.org/chromiumos/infra/proto/go/device"
 	"go.chromium.org/luci/appengine/gaetesting"
+	"go.chromium.org/luci/common/errors"
 	"go.chromium.org/luci/common/proto/gitiles"
 	"go.chromium.org/luci/gae/service/datastore"
 	"golang.org/x/net/context"
@@ -157,16 +158,36 @@ func TestGetCachedDeviceConfig(t *testing.T) {
 		})
 
 		Convey("Get nonexisting data", func() {
-			_, err := GetCachedConfig(ctx, []*device.ConfigId{
+			resp, err := GetCachedConfig(ctx, []*device.ConfigId{
 				{
 					PlatformId: &device.PlatformId{Value: "platform"},
 					ModelId:    &device.ModelId{Value: "model"},
 					VariantId:  &device.VariantId{Value: "variant-nonexisting"},
 					BrandId:    &device.BrandId{Value: "nonexisting"},
 				},
+				{
+					PlatformId: &device.PlatformId{Value: "platform"},
+					ModelId:    &device.ModelId{Value: "model"},
+					VariantId:  &device.VariantId{Value: "variant1"},
+					BrandId:    &device.BrandId{Value: "brand1"},
+				},
+				{
+					PlatformId: &device.PlatformId{Value: "platform"},
+					ModelId:    &device.ModelId{Value: "model"},
+					VariantId:  &device.VariantId{Value: "variant-nonexisting2"},
+					BrandId:    &device.BrandId{Value: "nonexisting"},
+				},
 			})
 			So(err, ShouldNotBeNil)
-			So(err.Error(), ShouldContainSubstring, "no such entity")
+			errs := err.(errors.MultiError)
+			So(errs, ShouldHaveLength, 3)
+			So(resp, ShouldHaveLength, 3)
+			So(errs[0].Error(), ShouldContainSubstring, "no such entity")
+			So(resp[0], ShouldBeNil)
+			So(errs[1], ShouldBeNil)
+			So(resp[1].(*device.Config), ShouldNotBeNil)
+			So(errs[2].Error(), ShouldContainSubstring, "no such entity")
+			So(resp[2], ShouldBeNil)
 		})
 	})
 }

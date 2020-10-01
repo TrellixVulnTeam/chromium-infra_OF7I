@@ -330,6 +330,9 @@ func TestGetCrosDevices(t *testing.T) {
 					ModelId: &device.ModelId{
 						Value: "falco_li",
 					},
+					VariantId: &device.VariantId{
+						Value: "123456",
+					},
 				},
 				Device: &lab.ChromeOSDevice_Dut{
 					Dut: &lab.DeviceUnderTest{Hostname: "real_dut1"},
@@ -360,16 +363,22 @@ func TestGetCrosDevices(t *testing.T) {
 					"slippy.falco.": {
 						GpuFamily: "real_gpu",
 					},
+					"oak.hana.": {
+						GpuFamily: "fake_gpu",
+					},
 				}
+				var errs errors.MultiError
 				fakeCfgs := make([]proto.Message, 0)
 				for _, id := range ids {
 					if dc, ok := m[deviceconfig.GetDeviceConfigIDStr(id)]; ok {
 						fakeCfgs = append(fakeCfgs, dc)
+						errs = append(errs, nil)
 					} else {
-						fakeCfgs = append(fakeCfgs, &device.Config{})
+						fakeCfgs = append(fakeCfgs, nil)
+						errs = append(errs, errors.Reason("no such entity").Err())
 					}
 				}
-				return fakeCfgs, nil
+				return fakeCfgs, errs
 			}
 			rsp, err := tf.Inventory.GetCrosDevices(tf.C, reqGet)
 			So(err, ShouldBeNil)
@@ -379,7 +388,7 @@ func TestGetCrosDevices(t *testing.T) {
 				resultM[d.GetLabConfig().GetDut().GetHostname()] = d.GetDeviceConfig().GetGpuFamily()
 			}
 			So(resultM["real_dut1"], ShouldEqual, "real_gpu")
-			So(resultM["real_dut2"], ShouldEqual, "")
+			So(resultM["real_dut2"], ShouldEqual, "fake_gpu")
 		})
 
 		Convey("Bad hwid server", func() {
