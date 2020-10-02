@@ -91,7 +91,6 @@ func (r *Repository) IsScanRequired(currentTime time.Time) bool {
 	}
 
 	deadline := r.FullScanLeaseStartTime.Add(RepositoryStaleIndexingDuration)
-	fmt.Printf("\n%v %v %v\n", currentTime, r.FullScanLeaseStartTime, deadline)
 	return currentTime.After(deadline)
 }
 

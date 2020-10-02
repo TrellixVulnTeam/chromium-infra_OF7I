@@ -55,8 +55,13 @@ func FindCommitsByHash(ctx context.Context, hash string) ([]*Commit, error) {
 }
 
 // PersistCommits converts list of commits to Datastore structs and stores them
-// in Datastore.
-func PersistCommits(ctx context.Context, commits []*common.GitCommit) error {
+// in Datastore. It returns (true, nil) if last commit in the list is already
+// in database, indicating that further traversal may not be needed.
+func PersistCommits(ctx context.Context, commits []*common.GitCommit) (bool, error) {
+	if len(commits) == 0 {
+		return true, nil
+	}
+
 	docs := make([]*Commit, len(commits), len(commits))
 	for i, commit := range commits {
 		docs[i] = &Commit{
@@ -77,5 +82,20 @@ func PersistCommits(ctx context.Context, commits []*common.GitCommit) error {
 			logging.Warningf(ctx, "Malformed position footer for commit: %s", docs[i].ID)
 		}
 	}
-	return datastore.Put(ctx, docs)
+
+	// If last entry is already in the database, it's safe to stop import.
+	safeToStopImport := true
+	lastDoc := &Commit{
+		ID: docs[len(docs)-1].ID,
+	}
+	err := datastore.Get(ctx, lastDoc)
+	if err == datastore.ErrNoSuchEntity || err != nil {
+		safeToStopImport = false
+	}
+
+	err = datastore.Put(ctx, docs)
+	if err != nil {
+		return false, err
+	}
+	return safeToStopImport, nil
 }

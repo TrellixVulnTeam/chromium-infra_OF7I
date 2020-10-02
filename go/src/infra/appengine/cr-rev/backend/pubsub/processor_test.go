@@ -5,6 +5,7 @@
 package pubsub
 
 import (
+	"fmt"
 	"infra/appengine/cr-rev/backend/gitiles"
 	"infra/appengine/cr-rev/config"
 	"infra/appengine/cr-rev/models"
@@ -39,12 +40,12 @@ func TestPubsubProcessor(t *testing.T) {
 			},
 		},
 	}
-	p := Processor(host)
+	processor := Processor(host)
 	Convey("invalid event name", t, func() {
 		m := &SourceRepoEvent{
 			Name: "invalid/name",
 		}
-		err := p(ctx, m)
+		err := processor(ctx, m)
 		So(err, ShouldBeError)
 	})
 
@@ -54,7 +55,7 @@ func TestPubsubProcessor(t *testing.T) {
 		}
 		// We don't expect any gitiles calls, therefore we are not
 		// setting gitiles fake to return anything.
-		err := p(ctx, m)
+		err := processor(ctx, m)
 		So(err, ShouldBeNil)
 	})
 
@@ -67,7 +68,7 @@ func TestPubsubProcessor(t *testing.T) {
 		}
 		// We don't expect any gitiles calls, therefore we are not
 		// setting gitiles fake to return anything.
-		err := p(ctx, m)
+		err := processor(ctx, m)
 		So(err, ShouldBeNil)
 	})
 
@@ -112,7 +113,7 @@ func TestPubsubProcessor(t *testing.T) {
 		c := &gitilesProto.GitilesFake{}
 		c.SetRepository("bar", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
-		err := p(ctx, m)
+		err := processor(ctx, m)
 		So(err, ShouldBeNil)
 
 		datastoreCommits := []*models.Commit{}
@@ -169,7 +170,7 @@ func TestPubsubProcessor(t *testing.T) {
 		c := &gitilesProto.GitilesFake{}
 		c.SetRepository("custom-refs", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
-		err := p(ctx, m)
+		err := processor(ctx, m)
 		So(err, ShouldBeNil)
 
 		datastoreCommits := []*models.Commit{}
@@ -179,16 +180,67 @@ func TestPubsubProcessor(t *testing.T) {
 		So(datastoreCommits[0].CommitHash, ShouldEqual, "000000000000000000000000000000000000000D")
 	})
 
-	Convey("ignore messages with no oldid", t, func() {
+	Convey("create ref", t, func() {
+		n := 2001
+		commits := make([]*git.Commit, n, n)
+		for i := 0; i < n; i++ {
+			commits[i] = &git.Commit{
+				Id: fmt.Sprintf("%040x", i),
+			}
+			if i > 0 {
+				commits[i].Parents = []string{commits[i-1].Id}
+			}
+		}
+		c := &gitilesProto.GitilesFake{}
+		c.SetRepository("createref", nil, commits)
+		ctx := gitiles.SetClient(ctx, c)
 		m := &SourceRepoEvent{
-			Name: "projects/foo/repos/oldid",
+			Name: "projects/foo/repos/createref",
 			Event: &SourceRepoEvent_RefUpdateEvent_{
 				RefUpdateEvent: &SourceRepoEvent_RefUpdateEvent{
 					RefUpdates: map[string]*SourceRepoEvent_RefUpdateEvent_RefUpdate{
 						"refs/heads/master": {
 							RefName: "refs/heads/master",
 							OldId:   "",
-							NewId:   "0000000000000000000000000000000000000001",
+							NewId:   commits[n-1].Id,
+						},
+					},
+				},
+			},
+		}
+		err := processor(ctx, m)
+		So(err, ShouldBeNil)
+
+		datastoreCommits := []*models.Commit{}
+		q := datastore.NewQuery("Commit").Eq("Repository", "createref")
+		datastore.GetAll(ctx, q, &datastoreCommits)
+		So(len(datastoreCommits), ShouldEqual, n)
+
+		// 3 Gitiles Log calls (2001..1001, 1001..1, 1..0)
+		So(len(c.GetCallLogs()), ShouldEqual, 3)
+
+		// Re-run indexing, we expect only one call to gitiles
+		err = processor(ctx, m)
+		So(err, ShouldBeNil)
+
+		datastoreCommits = []*models.Commit{}
+		datastore.GetAll(ctx, q, &datastoreCommits)
+		So(len(datastoreCommits), ShouldEqual, n)
+
+		So(len(c.GetCallLogs()), ShouldEqual, 4)
+	})
+
+	Convey("ignore deleted branch", t, func() {
+		m := &SourceRepoEvent{
+			Name: "projects/foo/repos/deleted_branch",
+			Event: &SourceRepoEvent_RefUpdateEvent_{
+				RefUpdateEvent: &SourceRepoEvent_RefUpdateEvent{
+					RefUpdates: map[string]*SourceRepoEvent_RefUpdateEvent_RefUpdate{
+						"refs/heads/master": {
+							RefName:    "refs/heads/master",
+							NewId:      "0000000000000000000000000000000000000001",
+							OldId:      "0000000000000000000000000000000000000000",
+							UpdateType: SourceRepoEvent_RefUpdateEvent_RefUpdate_DELETE,
 						},
 					},
 				},
@@ -206,11 +258,11 @@ func TestPubsubProcessor(t *testing.T) {
 		c := &gitilesProto.GitilesFake{}
 		c.SetRepository("oldid", nil, commits)
 		ctx := gitiles.SetClient(ctx, c)
-		err := p(ctx, m)
-		So(err, ShouldBeError)
+		err := processor(ctx, m)
+		So(err, ShouldBeNil)
 
 		datastoreCommits := []*models.Commit{}
-		q := datastore.NewQuery("Commit").Eq("Repository", "oldid")
+		q := datastore.NewQuery("Commit").Eq("Repository", "deleted_branch")
 		datastore.GetAll(ctx, q, &datastoreCommits)
 		So(len(datastoreCommits), ShouldEqual, 0)
 	})

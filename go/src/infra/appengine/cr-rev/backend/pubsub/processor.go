@@ -45,14 +45,13 @@ func Processor(host *config.Host) ProcessPubsubMessage {
 		for _, event := range events.GetRefUpdates() {
 			ref := event.GetRefName()
 
+			if event.UpdateType == SourceRepoEvent_RefUpdateEvent_RefUpdate_DELETE {
+				continue
+			}
+
 			if !repository.ShouldIndex(ref) {
 				logging.Debugf(ctx, "Skipping indexing %v on ref %s", repository, ref)
 				continue
-			}
-			if event.GetOldId() == "" {
-				err := fmt.Errorf("Missing old id (%v, %s): event %v", repository, ref, event)
-				logging.Errorf(ctx, err.Error())
-				return err
 			}
 			err := importCommits(ctx, repository, event.GetOldId(), event.GetNewId())
 			if err != nil {
@@ -65,6 +64,10 @@ func Processor(host *config.Host) ProcessPubsubMessage {
 	}
 }
 
+// importCommits persists all commits in range (from...to) found in given
+// repository. If commit is already found in database, it stops importing.
+// If `from` is zero value (case when reference is created, ie new branch), it
+// scans until the root is found or until commit is already found in database.
 func importCommits(ctx context.Context, repository common.GitRepository, from, to string) error {
 	c := gitiles.GetClient(ctx)
 	req := &gitilesProto.LogRequest{
@@ -90,11 +93,11 @@ func importCommits(ctx context.Context, repository common.GitRepository, from, t
 			}
 			commits = append(commits, commit)
 		}
-		err = models.PersistCommits(ctx, commits)
+		shouldStop, err := models.PersistCommits(ctx, commits)
 		if err != nil {
 			return fmt.Errorf("error persisting data: %w", err)
 		}
-		if resp.GetNextPageToken() == "" {
+		if resp.GetNextPageToken() == "" || shouldStop {
 			return nil
 		}
 		req.PageToken = resp.GetNextPageToken()
