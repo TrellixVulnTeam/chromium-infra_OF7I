@@ -639,6 +639,10 @@ func TestAnnotations(t *testing.T) {
 							Field: "projects/angleproject/fieldDefs/32",
 							Value: "Low",
 						},
+						{
+							Field: "projects/angleproject/fieldDefs/55",
+							Value: "Defect",
+						},
 					},
 					Labels: []*monorailv3.Issue_LabelValue{
 						{Label: "File-From-SoM"},

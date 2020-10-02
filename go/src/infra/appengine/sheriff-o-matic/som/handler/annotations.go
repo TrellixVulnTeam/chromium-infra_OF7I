@@ -676,9 +676,18 @@ func processIssueRequest(c context.Context, projectID string, req *monorailv3.Ma
 						Value: val,
 					},
 				}
-				return nil
+				break
 			}
 		}
+		// Angleproject require type field
+		typeFieldName, err := client.GetMonorailTypeField(c, projectID)
+		if err != nil {
+			return err
+		}
+		req.Issue.FieldValues = append(req.Issue.FieldValues, &monorailv3.FieldValue{
+			Field: typeFieldName,
+			Value: "Defect",
+		})
 	}
 	return nil
 }

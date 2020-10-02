@@ -34,13 +34,16 @@ var monorailPriorityFieldMap = map[string]map[string]string{
 
 var monorailTypeFieldMap = map[string]map[string]string{
 	"sheriff-o-matic": {
-		"chromium": "projects/chromium/fieldDefs/10",
+		"chromium":     "projects/chromium/fieldDefs/10",
+		"angleproject": "projects/angleproject/fieldDefs/55",
 	},
 	"sheriff-o-matic-staging": {
-		"chromium": "projects/chromium/fieldDefs/10",
+		"chromium":     "projects/chromium/fieldDefs/10",
+		"angleproject": "projects/angleproject/fieldDefs/55",
 	},
 	"default": {
-		"chromium": "projects/chromium/fieldDefs/10",
+		"chromium":     "projects/chromium/fieldDefs/10",
+		"angleproject": "projects/angleproject/fieldDefs/55",
 	},
 }
 
