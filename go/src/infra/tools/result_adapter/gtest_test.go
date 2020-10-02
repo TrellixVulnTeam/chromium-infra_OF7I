@@ -29,6 +29,9 @@ func TestGTestConversions(t *testing.T) {
 					"FooTest.TestDoBar",
 					"FooTest.TestDoBaz"
 				],
+				"disabled_tests": [
+					"FooTest.TestDoBarDisabled"
+				],
 				"global_tags": ["CPU_64_BITS","MODE_RELEASE","OS_WIN"],
 				"per_iteration_data": [{
 					"FooTest.TestDoBar": [
@@ -83,6 +86,7 @@ func TestGTestConversions(t *testing.T) {
 		err := results.ConvertFromJSON(bytes.NewReader(buf))
 		So(err, ShouldBeNil)
 		So(results.AllTests, ShouldResemble, []string{"FooTest.TestDoBar", "FooTest.TestDoBaz"})
+		So(results.DisabledTests, ShouldResemble, []string{"FooTest.TestDoBarDisabled"})
 		So(results.GlobalTags, ShouldResemble, []string{"CPU_64_BITS", "MODE_RELEASE", "OS_WIN"})
 		So(results.PerIterationData, ShouldResemble, []map[string][]*GTestRunResult{
 			{
@@ -311,6 +315,7 @@ func TestGTestConversions(t *testing.T) {
 	Convey(`ToProtos`, t, func() {
 		Convey("Works", func() {
 			results := &GTestResults{
+				DisabledTests: []string{"FooTest.TestDoBarDisabled"},
 				GlobalTags: []string{
 					"OS_LINUX",
 				},
@@ -364,6 +369,17 @@ func TestGTestConversions(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			expected := []*sinkpb.TestResult{
+				// Disabled tests.
+				{
+					TestId:   "FooTest.TestDoBarDisabled",
+					Expected: true,
+					Status:   pb.TestStatus_SKIP,
+					Tags: pbutil.StringPairs(
+						"test_name", "FooTest.TestDoBarDisabled",
+						"gtest_global_tag", "OS_LINUX",
+						"orig_format", "chromium_gtest",
+					),
+				},
 				// Iteration 1.
 				{
 					TestId:   "BazTest.DoesQux",
