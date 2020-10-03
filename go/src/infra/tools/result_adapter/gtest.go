@@ -150,6 +150,7 @@ func (r *GTestResults) ToProtos(ctx context.Context) ([]*sinkpb.TestResult, erro
 			Tags: pbutil.StringPairs(
 				// Store the original Gtest test name.
 				"test_name", name,
+				"disabled_test", "true",
 			),
 		}
 		tr.Tags = append(tr.Tags, globalTags...)

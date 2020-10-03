@@ -376,6 +376,7 @@ func TestGTestConversions(t *testing.T) {
 					Status:   pb.TestStatus_SKIP,
 					Tags: pbutil.StringPairs(
 						"test_name", "FooTest.TestDoBarDisabled",
+						"disabled_test", "true",
 						"gtest_global_tag", "OS_LINUX",
 						"orig_format", "chromium_gtest",
 					),
