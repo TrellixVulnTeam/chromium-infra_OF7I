@@ -9,15 +9,15 @@ these types of services are outlined here.
 
 ## Single-homed Cron
 
-Many services are deployed as Buildbot jobs on the
-[Infra Cron](https://build.chromium.org/p/chromium.infra.cron/builders)
-Buildbot waterfall. These services all have the same basic form:
+Many services are deployed as builds in the
+[Infra Cron](https://ci.chromium.org/p/infra/g/cron/builders)
+builder group. These services all have the same basic form:
 
 1. Check out infra.git and its dependencies
 2. Invoke the desired service
 3. Run the service in a tight loop until it fails too many times, or
    has run for (usually) 10 minutes.
-4. Stop the service, finish up the buildbot build, and repeat.
+4. Stop the service, finish up the build, and repeat.
 
 This strategy has a few ramifications for deployment:
 
@@ -52,7 +52,7 @@ Some of our services (in particular monitoring services such as sysmon
 and mastermon) are deployed across a wide variety of hosts.
 These services are not deployed via source checkouts. Instead, they are
 packaged by CIPD (the Chrome Infra Package Deployer). The CIPD packages are
-built for every green revision by the infra-packager-* builders in the
+built for every green revision by the infra-packager-\* builders in the
 [luci.infra-internal.prod bucket/pool](https://ci.chromium.org/p/infra-internal/builders).
 Selected versions of these packages (not the packages themselves) are
 deployed to specific hosts by Puppet. For instructions on how to update the

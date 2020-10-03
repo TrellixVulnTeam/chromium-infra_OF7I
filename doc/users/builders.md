@@ -1,8 +1,5 @@
 # Quick build system overview
 
-There is a good overview
-[here](https://chromium.googlesource.com/infra/infra/+/master/doc/users/services/buildbot/builders.pyl.md#Overview).
-
 # Adding a new builder
 
 There is a good overview

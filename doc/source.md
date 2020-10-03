@@ -10,11 +10,11 @@ Most of the chrome infra source code lives in these repos:
 * [infra_internal.git](https://chrome-internal.googlesource.com/infra/infra_internal):
   Google-internal counterpart of infra.git. Contains CQ.
 * [build](https://chromium.googlesource.com/chromium/tools/build/): legacy
-  repo. Contains Buildbot, recipes, gatekeeper-ng.
+  repo. Contains recipes, gatekeeper-ng.
 * [build_internal](https://chrome-internal.googlesource.com/chrome/tools/build):
   internal counterpart of build repo.
 * [build_limited](https://chrome-internal.googlesource.com/chrome/tools/build_limited/scripts/slave/):
-  minimal set of internal code that must be checked out on buildbot slaves
+  minimal set of internal code that must be checked out on builders
   that run internal builds.
 * [luci-py](https://github.com/luci/luci-py) on GitHub: chromium-independent
   reusable continuous integration services, written in Python.
