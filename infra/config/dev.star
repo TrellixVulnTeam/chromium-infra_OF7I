@@ -144,12 +144,6 @@ def adhoc_builder(
     )
 
 adhoc_builder(
-    name = "goma-hello-world-xenial-64",
-    os = "Ubuntu-16.04",
-    executable = infra.recipe("goma_hello_world"),
-    schedule = "with 10m interval",
-)
-adhoc_builder(
     name = "gerrit-hello-world-xenial-64",
     os = "Ubuntu-16.04",
     executable = infra.recipe("gerrit_hello_world", use_bbagent = True),
