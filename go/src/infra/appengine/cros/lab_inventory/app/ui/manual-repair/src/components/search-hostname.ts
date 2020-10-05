@@ -46,6 +46,7 @@ export default class SearchHostname extends connect
     this.deviceInfo = state.record.info.deviceInfo;
     this.recordInfo = state.record.info.recordInfo;
     this.user = state.user;
+    this.checkHostnameAndQuery(state.queryStore);
   }
 
   render() {
@@ -55,6 +56,7 @@ export default class SearchHostname extends connect
           outlined
           label="Enter a hostname"
           helper="Enter a device hostname to add or update repair records."
+          value="${this.input}"
           ?disabled="${this.submitting}"
           @input="${this.handleInput}"
           @keydown="${this.keyboardListener}">
@@ -62,8 +64,47 @@ export default class SearchHostname extends connect
     `;
   }
 
+  /**
+   * checkHostnameAndQuery executes query based on existing input and/or query
+   * string. There are multiple scenarios:
+   *
+   * 1. No input, query string exists - Update input field to use hostname from
+   * query string. Query on hostname. Set path to include query string.
+   * 2. Input exists, query string exists, but input not same as query string -
+   * Update input field to use hostname from query string. Query on hostname.
+   * Set path to include query string.
+   * 3. Else - Do nothing.
+   */
+  checkHostnameAndQuery(queryStore) {
+    if (this.user.signedIn &&
+        ((this.input === '' && queryStore?.hostname) ||
+         (this.input !== '' && queryStore?.hostname &&
+          this.input !== queryStore?.hostname))) {
+      this.input = queryStore?.hostname;
+      this.queryHostname(this.input);
+      this.setPath();
+    }
+  }
+
+  /**
+   * setPath pauses the router and changes the pathname to reflect what was
+   * inputted in the form of a query string.
+   */
+  setPath() {
+    router.pause();
+    if (this.input !== undefined) {
+      router.navigate(`/repairs?hostname=${this.input}`);
+    }
+    router.resume();
+  }
+
+  /**
+   * Handle input field InputEvents. Changing input field will update the query
+   * param 'hostname' as well.
+   */
   handleInput(e: InputEvent) {
     this.input = (<HTMLTextAreaElement>e.target!).value;
+    this.setPath();
   }
 
   getResultMessaging() {
@@ -82,19 +123,29 @@ export default class SearchHostname extends connect
     return null;
   }
 
+  /**
+   * Dispatch getRepairRecord action with entered hostname. Based on store
+   * state, determine application messaging. Input field is disabled while
+   * dispatching.
+   *
+   * @param hostname Hostname of DUT.
+   */
+  queryHostname(hostname: string) {
+    this.submitting = true;
+    thunkDispatch(getRepairRecord(hostname, this.user.authHeaders))
+        .then(() => this.getResultMessaging())
+        .finally(() => {
+          this.submitting = false;
+        });
+  }
+
   keyboardListener(e: KeyboardEvent) {
     if (e.key === 'Enter') {
       thunkDispatch(clearAppMessage());
 
       e.preventDefault();
       if (this.input && this.user.signedIn) {
-        this.submitting = true;
-        thunkDispatch(getRepairRecord(this.input, this.user.authHeaders))
-            .then(() => this.getResultMessaging())
-            .then(() => router.navigate('/repairs'))
-            .finally(() => {
-              this.submitting = false;
-            });
+        this.queryHostname(this.input);
       } else if (!this.user.signedIn) {
         thunkDispatch(receiveAppMessage('Please sign in to continue!'));
       } else if (!this.input) {

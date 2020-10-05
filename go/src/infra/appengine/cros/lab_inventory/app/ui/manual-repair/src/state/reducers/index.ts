@@ -5,6 +5,7 @@
 import {combineReducers, Reducer} from 'redux';
 
 import {messageReducer, MessageStateType} from './message';
+import {queryReducer, QueryStoreStateType} from './query';
 import {repairRecordReducer, RepairRecordStateType} from './repair-record';
 import {userReducer, UserStateType} from './user';
 
@@ -12,6 +13,7 @@ export interface ApplicationState {
   record: RepairRecordStateType;
   user: UserStateType;
   message: MessageStateType;
+  queryStore: QueryStoreStateType;
 }
 
 export const reducers: Reducer<ApplicationState> =
@@ -19,4 +21,5 @@ export const reducers: Reducer<ApplicationState> =
       record: repairRecordReducer,
       user: userReducer,
       message: messageReducer,
+      queryStore: queryReducer,
     });

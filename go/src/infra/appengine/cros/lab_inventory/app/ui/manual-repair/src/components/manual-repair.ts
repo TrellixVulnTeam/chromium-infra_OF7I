@@ -17,9 +17,11 @@ import {TemplateResult} from 'lit-html';
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {parseQueryStringToDict} from '../shared/helpers';
 import {router} from '../shared/router';
 import {SHARED_STYLES} from '../shared/shared-styles';
-import {store} from '../state/store';
+import {receiveQueryStore} from '../state/reducers/query';
+import {store, thunkDispatch} from '../state/store';
 
 
 @customElement('manual-repair')
@@ -45,13 +47,21 @@ export default class ManualRepair extends connect
     ];
   }
 
-  @property({type: String}) path = '';
   @property({type: Object}) user;
+  // this.route will be used to determine which view should be displayed based
+  // on the router path.
   @property({type: Object}) route;
 
   constructor() {
     super();
-    router.on('repairs', () => {this.route = html`<repair-form></repair-form>`})
+
+    // Router routes defined here.
+    router
+        .on('repairs',
+            (_, query) => {
+              this.route = html`<repair-form></repair-form>`;
+              thunkDispatch(receiveQueryStore(parseQueryStringToDict(query)));
+            })
         .on('*', () => {this.route = html`<home-view></home-view>`});
     router.resolve();
   }
