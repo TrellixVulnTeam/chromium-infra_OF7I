@@ -11,6 +11,11 @@ export const SHARED_STYLES = css`
     font-weight: 500;
   }
 
+  a, ol, ul, li, p {
+    font-family: Roboto;
+    font-weight: 300;
+  }
+
   span {
     font-family: Google Sans;
   }

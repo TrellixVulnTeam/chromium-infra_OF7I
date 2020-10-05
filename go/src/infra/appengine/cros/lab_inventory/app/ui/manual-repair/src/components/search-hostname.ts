@@ -8,6 +8,7 @@ import {css, customElement, html, LitElement, property} from 'lit-element';
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
 
+import {router} from '../shared/router';
 import {SHARED_STYLES} from '../shared/shared-styles';
 import {clearAppMessage, receiveAppMessage} from '../state/reducers/message';
 import {getRepairRecord} from '../state/reducers/repair-record';
@@ -90,6 +91,7 @@ export default class SearchHostname extends connect
         this.submitting = true;
         thunkDispatch(getRepairRecord(this.input, this.user.authHeaders))
             .then(() => this.getResultMessaging())
+            .then(() => router.navigate('/repairs'))
             .finally(() => {
               this.submitting = false;
             });

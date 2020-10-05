@@ -32,6 +32,7 @@
     "@webcomponents/webcomponentsjs": "=2.4.4",
     "lit-element": "=2.3.1",
     "lit-html": "=1.2.1",
+    "navigo": "=7.1.2",
     "paper-collapse-item": "=4.0.5",
     "pwa-helpers": "=0.9.1",
     "redux": "=4.0.5",

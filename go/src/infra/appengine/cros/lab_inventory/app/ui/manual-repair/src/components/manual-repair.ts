@@ -9,14 +9,15 @@ import './repair-form/repair-form';
 import './search-hostname';
 import './top-bar';
 import './message-display';
+import './home-view';
 
 import {Drawer} from '@material/mwc-drawer';
 import {css, customElement, html, LitElement, property} from 'lit-element';
 import {TemplateResult} from 'lit-html';
 import {isEmpty} from 'lodash';
 import {connect} from 'pwa-helpers';
-import {installRouter} from 'pwa-helpers/router.js';
 
+import {router} from '../shared/router';
 import {SHARED_STYLES} from '../shared/shared-styles';
 import {store} from '../state/store';
 
@@ -46,30 +47,30 @@ export default class ManualRepair extends connect
 
   @property({type: String}) path = '';
   @property({type: Object}) user;
+  @property({type: Object}) route;
 
   constructor() {
     super();
-    installRouter((loc) => {
-      this.path = loc.pathname;
-    });
+    router.on('repairs', () => {this.route = html`<repair-form></repair-form>`})
+        .on('*', () => {this.route = html`<home-view></home-view>`});
+    router.resolve();
   }
 
   stateChanged(state) {
     this.user = state.user;
-    console.log(this.user);
   }
 
   static AppLinks: Map<string, {[key: string]: string}> = new Map([
     [
       'Home', {
-        link: '/home',
+        link: '/#/home',
         target: '',
         icon: 'home',
       }
     ],
     [
       'Repairs', {
-        link: '/repairs',
+        link: '/#/repairs',
         target: '',
         icon: 'view_list',
       }
@@ -139,7 +140,7 @@ export default class ManualRepair extends connect
           <top-bar></top-bar>
           <div id="app-body">
             <search-hostname></search-hostname>
-            <repair-form></repair-form>
+            ${this.route}
           </div>
           <message-display></message-display>
         </div>
