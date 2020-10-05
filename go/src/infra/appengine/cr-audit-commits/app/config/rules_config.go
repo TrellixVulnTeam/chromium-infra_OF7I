@@ -303,7 +303,7 @@ var ruleMap = map[string]*rules.RefConfig{
 				Rules: []rules.Rule{
 					rules.AcknowledgeMerge{},
 				},
-				Notification: &rules.CommentOnBugToAcknowledgeMerge{},
+				Notification: rules.CommentOnBugToAcknowledgeMerge{},
 			},
 		},
 		DynamicRefFunction: rules.ReleaseConfig,
@@ -381,7 +381,7 @@ var ruleMap = map[string]*rules.RefConfig{
 		// No special meaning, ToT as of the time this line was added.
 		StartingCommit:  "e49be669d88e7ba848ec60c194265280e4005bb6",
 		MonorailAPIURL:  monorailAPIURL,
-		MonorailProject: "chromium",
+		MonorailProject: "fuchsia",
 		NotifierEmail:   "notifier@cr-audit-commits.appspotmail.com",
 		Rules: map[string]rules.AccountRules{
 			"autoroll-rules-skia": rules.AutoRollRules("skia-fuchsia-autoroll@skia-buildbots.google.com.iam.gserviceaccount.com", []string{"manifest/skia"}, nil),
@@ -445,7 +445,7 @@ func getAccountRules(protoAccountRules map[string]*cpb.AccountRules) map[string]
 		if len(v.Notifications) > 0 {
 			switch v.Notifications[0].Notification.(type) {
 			case *cpb.Notification_CommentOnBugToAcknowledgeMerge:
-				notification = &rules.CommentOnBugToAcknowledgeMerge{}
+				notification = rules.CommentOnBugToAcknowledgeMerge{}
 			case *cpb.Notification_CommentOrFileMonorailIssue:
 				notification = rules.CommentOrFileMonorailIssue{
 					CommentOrFileMonorailIssue: v.Notifications[0].GetCommentOrFileMonorailIssue(),
@@ -510,15 +510,21 @@ func GetUpdatedRuleMap(c context.Context) map[string]*rules.RefConfig {
 
 	// Use configs from LUCI-config service to update local ruleMap.
 	for k, refConfig := range Get(c).RefConfigs {
+		var dynamicRefFunc rules.DynamicRefFunc
+		if refConfig.UseDynamicRefFunc {
+			dynamicRefFunc = rules.ReleaseConfig
+		}
+
 		updatedRuleMap[k] = &rules.RefConfig{
 			BaseRepoURL:    "https://" + refConfig.GerritHost + "/" + refConfig.GerritRepo,
 			GerritURL:      getGerritURL(refConfig.GerritHost),
 			BranchName:     refConfig.Ref,
 			StartingCommit: refConfig.StartingCommit,
 			// TODO: For test environment, the MonorailAPIURL should be different.
-			MonorailAPIURL:  monorailAPIURL,
-			MonorailProject: refConfig.MonorailProject,
-			Rules:           getAccountRules(refConfig.Rules),
+			MonorailAPIURL:     monorailAPIURL,
+			MonorailProject:    refConfig.MonorailProject,
+			Rules:              getAccountRules(refConfig.Rules),
+			DynamicRefFunction: dynamicRefFunc,
 		}
 	}
 

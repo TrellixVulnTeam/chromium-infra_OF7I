@@ -6,33 +6,27 @@ package config
 
 import (
 	"context"
+	"io/ioutil"
 	"testing"
 
-	"go.chromium.org/luci/gae/impl/memory"
-	"go.chromium.org/luci/server/router"
-
-	"infra/appengine/cr-audit-commits/app/rules"
-
+	"github.com/golang/protobuf/proto"
 	. "github.com/smartystreets/goconvey/convey"
+	"go.chromium.org/luci/config"
+	"go.chromium.org/luci/config/cfgclient"
+	cfgmem "go.chromium.org/luci/config/impl/memory"
+	"go.chromium.org/luci/config/validation"
+	"go.chromium.org/luci/gae/impl/memory"
+	"go.chromium.org/luci/server/caching"
+	"go.chromium.org/luci/server/router"
+	cpb "infra/appengine/cr-audit-commits/app/proto"
+	"infra/appengine/cr-audit-commits/app/rules"
 )
 
 func TestRulesConfig(t *testing.T) {
-	t.Parallel()
 	Convey("Test RulesConfig", t, func() {
 		c := memory.Use(context.Background())
 		c = getConfigTestingContext(c, sampleValidRefConfig)
 
-		Convey("Ensure ruleMap keys are valid", func() {
-			Middleware(&router.Context{Context: c}, func(c *router.Context) {
-				for k := range GetUpdatedRuleMap(c.Context) {
-					// This is a special value.
-					So(k, ShouldNotEqual, "AuditFailure")
-					// ":" is used to separate config name from concrete ref
-					// when accepting ref patterns.
-					So(k, ShouldNotContainSubstring, ":")
-				}
-			})
-		})
 		Convey("Ensure cfg load from LUCI-config service can update ruleMap", func() {
 			Middleware(&router.Context{Context: c}, func(c *router.Context) {
 				updatedRuleMap := GetUpdatedRuleMap(c.Context)
@@ -76,9 +70,50 @@ func TestRulesConfig(t *testing.T) {
 				So(accountRule.Rules[9].(rules.OnlyModifiesFilesAndDirsRule).GetDirs(), ShouldResemble, []string{"dira"})
 				_, ok = accountRule.Rules[10].(rules.RevertOfCulprit)
 				So(ok, ShouldEqual, true)
-				So(accountRule.Notification.(rules.CommentOrFileMonorailIssue).GetComponents(), ShouldResemble, []string{"Test>Component"})
-				So(accountRule.Notification.(rules.CommentOrFileMonorailIssue).GetLabels(), ShouldResemble, []string{"CommitLog-Audit-Violation", "TBR-Violation"})
+				_, ok = accountRule.Notification.(rules.CommentOnBugToAcknowledgeMerge)
+				So(ok, ShouldEqual, true)
 			})
+		})
+	})
+}
+
+// TODO(crbug.com/1078072): will be deleted after removing local config.
+func TestDevConfig(t *testing.T) {
+	Convey("Ensure template.cfg is equal to local rule map", t, func() {
+		content, err := ioutil.ReadFile(
+			"../devcfg/config-template.cfg",
+		)
+		So(err, ShouldBeNil)
+
+		cfg := &cpb.Config{}
+		So(proto.UnmarshalText(string(content), cfg), ShouldBeNil)
+
+		validate := func(cfg *cpb.Config) error {
+			c := validation.Context{Context: context.Background()}
+			validateConfig(&c, cfg)
+			return c.Finalize()
+		}
+		So(validate(cfg), ShouldBeNil)
+
+		c := memory.Use(context.Background())
+		c = caching.WithEmptyProcessCache(c)
+		c = cfgclient.Use(c, cfgmem.New(map[config.Set]cfgmem.Files{
+			"services/${appid}": {
+				cachedCfg.Path: string(content),
+			},
+		}))
+
+		Middleware(&router.Context{Context: c}, func(c *router.Context) {
+			updatedRuleMap := GetUpdatedRuleMap(c.Context)
+
+			for key, value := range updatedRuleMap {
+				So(ruleMap[key].BaseRepoURL, ShouldEqual, value.BaseRepoURL)
+				So(ruleMap[key].GerritURL, ShouldEqual, value.GerritURL)
+				So(ruleMap[key].BranchName, ShouldEqual, value.BranchName)
+				So(ruleMap[key].StartingCommit, ShouldEqual, value.StartingCommit)
+				So(ruleMap[key].MonorailProject, ShouldEqual, value.MonorailProject)
+				So(ruleMap[key].Rules, ShouldResemble, value.Rules)
+			}
 		})
 	})
 }

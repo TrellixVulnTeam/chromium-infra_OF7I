@@ -33,12 +33,14 @@ func validateRefConfig(c *validation.Context, refConfig *cpb.RefConfig) {
 		c.Errorf("missing gerrit_repo")
 	}
 
-	if refConfig.Ref == "" {
+	if refConfig.Ref == "" && !refConfig.UseDynamicRefFunc {
 		c.Errorf("missing ref")
 	}
 
 	if refConfig.StartingCommit == "" {
-		c.Errorf("missing starting_commit")
+		if !refConfig.UseDynamicRefFunc {
+			c.Errorf("missing starting_commit")
+		}
 	} else if !commitRegex.MatchString(refConfig.StartingCommit) {
 		c.Errorf("invalid starting_commit: %s", refConfig.StartingCommit)
 	}

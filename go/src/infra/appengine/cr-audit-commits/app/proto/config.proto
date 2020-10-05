@@ -21,13 +21,13 @@ message RefConfig {
     string ref = 3;
     string starting_commit = 4;
     string monorail_project = 5;
+    bool use_dynamic_ref_func = 6;
 
     // Used for unpausing a ref. Oncall should modify this configuration
     // to help resume the scanning.
     string overwrite_last_known_commit = 7;
 
     map<string, AccountRules> rules = 8;
-    // TODO: DynamicRefFunction
 }
 
 message AccountRules {
