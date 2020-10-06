@@ -1943,6 +1943,7 @@ type IssuesClient interface {
 	//   NOT_FOUND if the parent issue does not exist.
 	//   PERMISSION_DENIED if the requester is not allowed to view parent issue.
 	ListApprovalValues(ctx context.Context, in *ListApprovalValuesRequest, opts ...grpc.CallOption) (*ListApprovalValuesResponse, error)
+	// status: NOT READY
 	// Makes an issue from an IssueTemplate and deltas.
 	//
 	// Raises:
@@ -2212,6 +2213,7 @@ type IssuesServer interface {
 	//   NOT_FOUND if the parent issue does not exist.
 	//   PERMISSION_DENIED if the requester is not allowed to view parent issue.
 	ListApprovalValues(context.Context, *ListApprovalValuesRequest) (*ListApprovalValuesResponse, error)
+	// status: NOT READY
 	// Makes an issue from an IssueTemplate and deltas.
 	//
 	// Raises:

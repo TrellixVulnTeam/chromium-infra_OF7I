@@ -98,6 +98,7 @@ service Issues {
   rpc ListApprovalValues (ListApprovalValuesRequest) returns
       (ListApprovalValuesResponse) {}
 
+  // status: NOT READY
   // Makes an issue from an IssueTemplate and deltas.
   //
   // Raises:

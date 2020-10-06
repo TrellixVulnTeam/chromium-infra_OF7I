@@ -523,6 +523,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type FrontendClient interface {
+	// status: DO NOT USE
 	// Returns all project specific configurations needed for the SPA client.
 	//
 	// Raises:
@@ -530,6 +531,7 @@ type FrontendClient interface {
 	//   NOT_FOUND if the parent project is not found.
 	//   PERMISSION_DENIED if user is not allowed to view this project.
 	GatherProjectEnvironment(ctx context.Context, in *GatherProjectEnvironmentRequest, opts ...grpc.CallOption) (*GatherProjectEnvironmentResponse, error)
+	// status: DO NOT USE
 	// Returns all of a given user's project memberships.
 	//
 	// Raises:
@@ -591,6 +593,7 @@ func (c *frontendClient) GatherProjectMembershipsForUser(ctx context.Context, in
 
 // FrontendServer is the server API for Frontend service.
 type FrontendServer interface {
+	// status: DO NOT USE
 	// Returns all project specific configurations needed for the SPA client.
 	//
 	// Raises:
@@ -598,6 +601,7 @@ type FrontendServer interface {
 	//   NOT_FOUND if the parent project is not found.
 	//   PERMISSION_DENIED if user is not allowed to view this project.
 	GatherProjectEnvironment(context.Context, *GatherProjectEnvironmentRequest) (*GatherProjectEnvironmentResponse, error)
+	// status: DO NOT USE
 	// Returns all of a given user's project memberships.
 	//
 	// Raises:

@@ -20,6 +20,7 @@ import "google/api/resource.proto";
 
 // Hotlists service includes all methods needed for managing Hotlists.
 service Hotlists {
+  // status: NOT READY
   // Creates a new hotlist.
   //
   // Raises:
@@ -28,6 +29,8 @@ service Hotlists {
   //   already exists.
   //   INVALID_ARGUMENT if a `hotlist.owner` is given.
   rpc CreateHotlist (CreateHotlistRequest) returns (Hotlist) {}
+
+  // status: NOT READY
   // Returns the requested Hotlist.
   //
   // Raises:
@@ -35,6 +38,8 @@ service Hotlists {
   //   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
   //   INVALID_ARGUMENT if the given resource name is not valid.
   rpc GetHotlist (GetHotlistRequest) returns (Hotlist) {}
+
+  // status: NOT READY
   // Updates a hotlist.
   //
   // Raises:
@@ -42,12 +47,16 @@ service Hotlists {
   //   PERMISSION_DENIED if the requester is not allowed to update the hotlist.
   //   INVALID_ARGUMENT if required fields are missing.
   rpc UpdateHotlist (UpdateHotlistRequest) returns (Hotlist) {}
+
+  // status: NOT READY
   // Deletes a hotlist.
   //
   // Raises:
   //   NOT_FOUND if the hotlist is not found.
   //   PERMISSION_DENIED if the requester is not allowed to delete the hotlist.
   rpc DeleteHotlist (GetHotlistRequest) returns (google.protobuf.Empty) {}
+
+  // status: NOT READY
   // Returns a list of all HotlistItems in the hotlist.
   //
   // Raises:
@@ -56,6 +65,8 @@ service Hotlists {
   //   INVALID_ARGUMENT if the page_token or given hotlist resource name is not
   //   valid.
   rpc ListHotlistItems (ListHotlistItemsRequest) returns (ListHotlistItemsResponse) {}
+
+  // status: NOT READY
   // Reranks a hotlist's items.
   //
   // Raises:
@@ -65,6 +76,8 @@ service Hotlists {
   //   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
   //   is empty or contains items not in the Hotlist.
   rpc RerankHotlistItems (RerankHotlistItemsRequest) returns (google.protobuf.Empty) {}
+
+  // status: NOT READY
   // Adds new items associated with given issues to a hotlist.
   //
   // Raises:
@@ -74,6 +87,8 @@ service Hotlists {
   //   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
   //   is empty or contains items not in the Hotlist.
   rpc AddHotlistItems (AddHotlistItemsRequest) returns (google.protobuf.Empty) {}
+
+  // status: NOT READY
   // Removes items associated with given issues from a hotlist.
   //
   // Raises:
@@ -83,6 +98,8 @@ service Hotlists {
   //   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
   //   is empty or contains items not in the Hotlist.
   rpc RemoveHotlistItems (RemoveHotlistItemsRequest) returns (google.protobuf.Empty) {}
+
+  // status: NOT READY
   // Removes editors assigned to a hotlist.
   //
   // Raises:
@@ -91,6 +108,8 @@ service Hotlists {
   //   editors from the hotlist.
   //   INVALID_ARGUMENT if any specified editors are not in the hotlist.
   rpc RemoveHotlistEditors (RemoveHotlistEditorsRequest) returns (google.protobuf.Empty) {}
+
+  // status: NOT READY
   // Gathers all viewable hotlists that a user is a member of.
   //
   // Raises:

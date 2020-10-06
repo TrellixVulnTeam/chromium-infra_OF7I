@@ -733,6 +733,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ProjectsClient interface {
+	// status: NOT READY
 	// Creates a new FieldDef (custom field).
 	//
 	// Raises:
@@ -742,6 +743,7 @@ type ProjectsClient interface {
 	//   INVALID_INPUT if there was a problem with the input.
 	//   PERMISSION_DENIED if the user cannot edit the project.
 	CreateFieldDef(ctx context.Context, in *CreateFieldDefRequest, opts ...grpc.CallOption) (*FieldDef, error)
+	// status: ALPHA
 	// Creates a new ComponentDef.
 	//
 	// Raises:
@@ -750,6 +752,7 @@ type ProjectsClient interface {
 	//   PERMISSION_DENIED if the user is not allowed to create a/this component.
 	//   NOT_FOUND if the parent project or a component cc or admin is not found.
 	CreateComponentDef(ctx context.Context, in *CreateComponentDefRequest, opts ...grpc.CallOption) (*ComponentDef, error)
+	// status: ALPHA
 	// Deletes a ComponentDef.
 	//
 	// Raises:
@@ -757,12 +760,14 @@ type ProjectsClient interface {
 	//   PERMISSION_DENIED if the user is not allowed to delete a/this component.
 	//   NOT_FOUND if the component or project is not found.
 	DeleteComponentDef(ctx context.Context, in *DeleteComponentDefRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// status: NOT READY
 	// Returns all templates for specified project.
 	//
 	// Raises:
 	//   NOT_FOUND if the requested parent project is not found.
 	//   INVALID_ARGUMENT if the given `parent` is not valid.
 	ListIssueTemplates(ctx context.Context, in *ListIssueTemplatesRequest, opts ...grpc.CallOption) (*ListIssueTemplatesResponse, error)
+	// status: NOT READY
 	// Returns all projects hosted on Monorail.
 	ListProjects(ctx context.Context, in *ListProjectsRequest, opts ...grpc.CallOption) (*ListProjectsResponse, error)
 }
@@ -874,6 +879,7 @@ func (c *projectsClient) ListProjects(ctx context.Context, in *ListProjectsReque
 
 // ProjectsServer is the server API for Projects service.
 type ProjectsServer interface {
+	// status: NOT READY
 	// Creates a new FieldDef (custom field).
 	//
 	// Raises:
@@ -883,6 +889,7 @@ type ProjectsServer interface {
 	//   INVALID_INPUT if there was a problem with the input.
 	//   PERMISSION_DENIED if the user cannot edit the project.
 	CreateFieldDef(context.Context, *CreateFieldDefRequest) (*FieldDef, error)
+	// status: ALPHA
 	// Creates a new ComponentDef.
 	//
 	// Raises:
@@ -891,6 +898,7 @@ type ProjectsServer interface {
 	//   PERMISSION_DENIED if the user is not allowed to create a/this component.
 	//   NOT_FOUND if the parent project or a component cc or admin is not found.
 	CreateComponentDef(context.Context, *CreateComponentDefRequest) (*ComponentDef, error)
+	// status: ALPHA
 	// Deletes a ComponentDef.
 	//
 	// Raises:
@@ -898,12 +906,14 @@ type ProjectsServer interface {
 	//   PERMISSION_DENIED if the user is not allowed to delete a/this component.
 	//   NOT_FOUND if the component or project is not found.
 	DeleteComponentDef(context.Context, *DeleteComponentDefRequest) (*empty.Empty, error)
+	// status: NOT READY
 	// Returns all templates for specified project.
 	//
 	// Raises:
 	//   NOT_FOUND if the requested parent project is not found.
 	//   INVALID_ARGUMENT if the given `parent` is not valid.
 	ListIssueTemplates(context.Context, *ListIssueTemplatesRequest) (*ListIssueTemplatesResponse, error)
+	// status: NOT READY
 	// Returns all projects hosted on Monorail.
 	ListProjects(context.Context, *ListProjectsRequest) (*ListProjectsResponse, error)
 }

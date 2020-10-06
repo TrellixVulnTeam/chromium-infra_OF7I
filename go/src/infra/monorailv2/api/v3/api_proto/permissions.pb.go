@@ -336,6 +336,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type PermissionsClient interface {
+	// status: DO NOT USE
 	// Returns the requester's permissions for the given resource.
 	//
 	// Raises:
@@ -343,6 +344,7 @@ type PermissionsClient interface {
 	//      requester does not have permission to view the resource's name space.
 	//  NOT_FOUND if the given resource does not exist.
 	GetPermissionSet(ctx context.Context, in *GetPermissionSetRequest, opts ...grpc.CallOption) (*PermissionSet, error)
+	// status: DO NOT USE
 	// Returns the requester's permissions for all the given resources.
 	//
 	// Raises:
@@ -406,6 +408,7 @@ func (c *permissionsClient) BatchGetPermissionSets(ctx context.Context, in *Batc
 
 // PermissionsServer is the server API for Permissions service.
 type PermissionsServer interface {
+	// status: DO NOT USE
 	// Returns the requester's permissions for the given resource.
 	//
 	// Raises:
@@ -413,6 +416,7 @@ type PermissionsServer interface {
 	//      requester does not have permission to view the resource's name space.
 	//  NOT_FOUND if the given resource does not exist.
 	GetPermissionSet(context.Context, *GetPermissionSetRequest) (*PermissionSet, error)
+	// status: DO NOT USE
 	// Returns the requester's permissions for all the given resources.
 	//
 	// Raises:

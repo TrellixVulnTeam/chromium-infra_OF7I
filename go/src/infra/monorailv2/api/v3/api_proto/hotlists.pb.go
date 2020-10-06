@@ -1110,6 +1110,7 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type HotlistsClient interface {
+	// status: NOT READY
 	// Creates a new hotlist.
 	//
 	// Raises:
@@ -1118,6 +1119,7 @@ type HotlistsClient interface {
 	//   already exists.
 	//   INVALID_ARGUMENT if a `hotlist.owner` is given.
 	CreateHotlist(ctx context.Context, in *CreateHotlistRequest, opts ...grpc.CallOption) (*Hotlist, error)
+	// status: NOT READY
 	// Returns the requested Hotlist.
 	//
 	// Raises:
@@ -1125,6 +1127,7 @@ type HotlistsClient interface {
 	//   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
 	//   INVALID_ARGUMENT if the given resource name is not valid.
 	GetHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*Hotlist, error)
+	// status: NOT READY
 	// Updates a hotlist.
 	//
 	// Raises:
@@ -1132,12 +1135,14 @@ type HotlistsClient interface {
 	//   PERMISSION_DENIED if the requester is not allowed to update the hotlist.
 	//   INVALID_ARGUMENT if required fields are missing.
 	UpdateHotlist(ctx context.Context, in *UpdateHotlistRequest, opts ...grpc.CallOption) (*Hotlist, error)
+	// status: NOT READY
 	// Deletes a hotlist.
 	//
 	// Raises:
 	//   NOT_FOUND if the hotlist is not found.
 	//   PERMISSION_DENIED if the requester is not allowed to delete the hotlist.
 	DeleteHotlist(ctx context.Context, in *GetHotlistRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// status: NOT READY
 	// Returns a list of all HotlistItems in the hotlist.
 	//
 	// Raises:
@@ -1146,6 +1151,7 @@ type HotlistsClient interface {
 	//   INVALID_ARGUMENT if the page_token or given hotlist resource name is not
 	//   valid.
 	ListHotlistItems(ctx context.Context, in *ListHotlistItemsRequest, opts ...grpc.CallOption) (*ListHotlistItemsResponse, error)
+	// status: NOT READY
 	// Reranks a hotlist's items.
 	//
 	// Raises:
@@ -1155,6 +1161,7 @@ type HotlistsClient interface {
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
 	RerankHotlistItems(ctx context.Context, in *RerankHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// status: NOT READY
 	// Adds new items associated with given issues to a hotlist.
 	//
 	// Raises:
@@ -1164,6 +1171,7 @@ type HotlistsClient interface {
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
 	AddHotlistItems(ctx context.Context, in *AddHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// status: NOT READY
 	// Removes items associated with given issues from a hotlist.
 	//
 	// Raises:
@@ -1173,6 +1181,7 @@ type HotlistsClient interface {
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
 	RemoveHotlistItems(ctx context.Context, in *RemoveHotlistItemsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// status: NOT READY
 	// Removes editors assigned to a hotlist.
 	//
 	// Raises:
@@ -1181,6 +1190,7 @@ type HotlistsClient interface {
 	//   editors from the hotlist.
 	//   INVALID_ARGUMENT if any specified editors are not in the hotlist.
 	RemoveHotlistEditors(ctx context.Context, in *RemoveHotlistEditorsRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// status: NOT READY
 	// Gathers all viewable hotlists that a user is a member of.
 	//
 	// Raises:
@@ -1386,6 +1396,7 @@ func (c *hotlistsClient) GatherHotlistsForUser(ctx context.Context, in *GatherHo
 
 // HotlistsServer is the server API for Hotlists service.
 type HotlistsServer interface {
+	// status: NOT READY
 	// Creates a new hotlist.
 	//
 	// Raises:
@@ -1394,6 +1405,7 @@ type HotlistsServer interface {
 	//   already exists.
 	//   INVALID_ARGUMENT if a `hotlist.owner` is given.
 	CreateHotlist(context.Context, *CreateHotlistRequest) (*Hotlist, error)
+	// status: NOT READY
 	// Returns the requested Hotlist.
 	//
 	// Raises:
@@ -1401,6 +1413,7 @@ type HotlistsServer interface {
 	//   PERMISSION_DENIED if the requester is not allowed to view the hotlist.
 	//   INVALID_ARGUMENT if the given resource name is not valid.
 	GetHotlist(context.Context, *GetHotlistRequest) (*Hotlist, error)
+	// status: NOT READY
 	// Updates a hotlist.
 	//
 	// Raises:
@@ -1408,12 +1421,14 @@ type HotlistsServer interface {
 	//   PERMISSION_DENIED if the requester is not allowed to update the hotlist.
 	//   INVALID_ARGUMENT if required fields are missing.
 	UpdateHotlist(context.Context, *UpdateHotlistRequest) (*Hotlist, error)
+	// status: NOT READY
 	// Deletes a hotlist.
 	//
 	// Raises:
 	//   NOT_FOUND if the hotlist is not found.
 	//   PERMISSION_DENIED if the requester is not allowed to delete the hotlist.
 	DeleteHotlist(context.Context, *GetHotlistRequest) (*empty.Empty, error)
+	// status: NOT READY
 	// Returns a list of all HotlistItems in the hotlist.
 	//
 	// Raises:
@@ -1422,6 +1437,7 @@ type HotlistsServer interface {
 	//   INVALID_ARGUMENT if the page_token or given hotlist resource name is not
 	//   valid.
 	ListHotlistItems(context.Context, *ListHotlistItemsRequest) (*ListHotlistItemsResponse, error)
+	// status: NOT READY
 	// Reranks a hotlist's items.
 	//
 	// Raises:
@@ -1431,6 +1447,7 @@ type HotlistsServer interface {
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
 	RerankHotlistItems(context.Context, *RerankHotlistItemsRequest) (*empty.Empty, error)
+	// status: NOT READY
 	// Adds new items associated with given issues to a hotlist.
 	//
 	// Raises:
@@ -1440,6 +1457,7 @@ type HotlistsServer interface {
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
 	AddHotlistItems(context.Context, *AddHotlistItemsRequest) (*empty.Empty, error)
+	// status: NOT READY
 	// Removes items associated with given issues from a hotlist.
 	//
 	// Raises:
@@ -1449,6 +1467,7 @@ type HotlistsServer interface {
 	//   INVALID_ARGUMENT if the `target_position` is invalid or `hotlist_items`
 	//   is empty or contains items not in the Hotlist.
 	RemoveHotlistItems(context.Context, *RemoveHotlistItemsRequest) (*empty.Empty, error)
+	// status: NOT READY
 	// Removes editors assigned to a hotlist.
 	//
 	// Raises:
@@ -1457,6 +1476,7 @@ type HotlistsServer interface {
 	//   editors from the hotlist.
 	//   INVALID_ARGUMENT if any specified editors are not in the hotlist.
 	RemoveHotlistEditors(context.Context, *RemoveHotlistEditorsRequest) (*empty.Empty, error)
+	// status: NOT READY
 	// Gathers all viewable hotlists that a user is a member of.
 	//
 	// Raises:

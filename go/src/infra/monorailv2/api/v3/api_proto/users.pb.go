@@ -782,6 +782,7 @@ type UsersClient interface {
 	//   NOT_FOUND if any users are not found.
 	//   INVALID_ARGUMENT if any `names` are invalid.
 	BatchGetUsers(ctx context.Context, in *BatchGetUsersRequest, opts ...grpc.CallOption) (*BatchGetUsersResponse, error)
+	// status: NOT READY
 	// Updates a User.
 	//
 	// Raises:
@@ -789,18 +790,21 @@ type UsersClient interface {
 	//   PERMISSION_DENIED if the requester is not allowed to update the user.
 	//   INVALID_ARGUMENT if required fields are missing or fields are invalid.
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*User, error)
+	// status: NOT READY
 	// Stars a given project for the requestor.
 	//
 	// Raises:
 	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	StarProject(ctx context.Context, in *StarProjectRequest, opts ...grpc.CallOption) (*ProjectStar, error)
+	// status: NOT READY
 	// Unstars a given project for the requestor.
 	//
 	// Raises:
 	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	UnStarProject(ctx context.Context, in *UnStarProjectRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// status: NOT READY
 	// Lists all of a user's starred projects.
 	//
 	// Raises:
@@ -948,6 +952,7 @@ type UsersServer interface {
 	//   NOT_FOUND if any users are not found.
 	//   INVALID_ARGUMENT if any `names` are invalid.
 	BatchGetUsers(context.Context, *BatchGetUsersRequest) (*BatchGetUsersResponse, error)
+	// status: NOT READY
 	// Updates a User.
 	//
 	// Raises:
@@ -955,18 +960,21 @@ type UsersServer interface {
 	//   PERMISSION_DENIED if the requester is not allowed to update the user.
 	//   INVALID_ARGUMENT if required fields are missing or fields are invalid.
 	UpdateUser(context.Context, *UpdateUserRequest) (*User, error)
+	// status: NOT READY
 	// Stars a given project for the requestor.
 	//
 	// Raises:
 	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	StarProject(context.Context, *StarProjectRequest) (*ProjectStar, error)
+	// status: NOT READY
 	// Unstars a given project for the requestor.
 	//
 	// Raises:
 	//   NOT_FOUND if the requested project is not found.
 	//   INVALID_ARGUMENT if the given `project` is not valid.
 	UnStarProject(context.Context, *UnStarProjectRequest) (*empty.Empty, error)
+	// status: NOT READY
 	// Lists all of a user's starred projects.
 	//
 	// Raises:

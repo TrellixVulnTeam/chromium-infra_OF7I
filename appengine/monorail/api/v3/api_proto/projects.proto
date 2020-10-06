@@ -19,6 +19,7 @@ import "api/v3/api_proto/project_objects.proto";
 
 // Projects service includes all methods needed for managing Projects.
 service Projects {
+  // status: NOT READY
   // Creates a new FieldDef (custom field).
   //
   // Raises:
@@ -29,6 +30,7 @@ service Projects {
   //   PERMISSION_DENIED if the user cannot edit the project.
   rpc CreateFieldDef (CreateFieldDefRequest) returns (FieldDef) {}
 
+  // status: ALPHA
   // Creates a new ComponentDef.
   //
   // Raises:
@@ -38,6 +40,7 @@ service Projects {
   //   NOT_FOUND if the parent project or a component cc or admin is not found.
   rpc CreateComponentDef (CreateComponentDefRequest) returns (ComponentDef) {}
 
+  // status: ALPHA
   // Deletes a ComponentDef.
   //
   // Raises:
@@ -46,6 +49,7 @@ service Projects {
   //   NOT_FOUND if the component or project is not found.
   rpc DeleteComponentDef (DeleteComponentDefRequest) returns (google.protobuf.Empty) {}
 
+  // status: NOT READY
   // Returns all templates for specified project.
   //
   // Raises:
@@ -53,6 +57,7 @@ service Projects {
   //   INVALID_ARGUMENT if the given `parent` is not valid.
   rpc ListIssueTemplates (ListIssueTemplatesRequest) returns (ListIssueTemplatesResponse) {}
 
+  // status: NOT READY
   // Returns all projects hosted on Monorail.
   rpc ListProjects (ListProjectsRequest) returns (ListProjectsResponse) {}
 }
