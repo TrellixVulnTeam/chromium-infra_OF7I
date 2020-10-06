@@ -6,6 +6,7 @@
 
 load("//lib/build.star", "build")
 load("//lib/infra.star", "infra")
+load("//lib/led.star", "led")
 
 luci.bucket(
     name = "codesearch",
@@ -15,6 +16,17 @@ luci.bucket(
             users = "luci-scheduler@appspot.gserviceaccount.com",
         ),
     ],
+)
+
+luci.realm(name = "pools/codesearch")
+
+led.users(
+    groups = [
+        "mdb/chrome-troopers",
+        "google/luci-task-force@google.com",
+    ],
+    task_realm = "codesearch",
+    pool_realm = "pools/codesearch",
 )
 
 luci.console_view(

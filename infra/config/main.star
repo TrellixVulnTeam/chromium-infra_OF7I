@@ -135,24 +135,7 @@ luci.bucket(
     ],
 )
 
-# Allow to run LED jobs in project's realms.
-luci.binding(
-    roles = "role/swarming.taskTriggerer",
-    groups = "flex-ci-led-users",
-    realm = [
-        "ci",
-        "codesearch",
-        "cron",
-    ],
-)
-
-luci.binding(
-    roles = "role/swarming.taskTriggerer",
-    groups = "flex-try-led-users",
-    realm = [
-        "try",
-    ],
-)
+luci.realm(name = "pools/cron")
 
 luci.notifier_template(
     name = "status",
@@ -160,6 +143,26 @@ luci.notifier_template(
 )
 
 luci.list_view(name = "cron")
+
+# Setup Swarming permissions (in particular for LED).
+
+load("//lib/led.star", "led")
+
+led.users(
+    groups = "flex-ci-led-users",
+    task_realm = "ci",
+)
+
+led.users(
+    groups = "flex-try-led-users",
+    task_realm = "try",
+)
+
+led.users(
+    groups = "mdb/chrome-troopers",
+    task_realm = "cron",
+    pool_realm = "pools/cron",
+)
 
 # Per-subproject resources. They may refer to the shared resources defined
 # above by name.
