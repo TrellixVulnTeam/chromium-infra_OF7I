@@ -311,6 +311,23 @@ func updateIndexingForMachineResources(ctx context.Context, oldMachine *ufspb.Ma
 			for _, vm := range vms {
 				vm.Zone = v
 			}
+		case "machine":
+			for _, machinelse := range machinelses {
+				machines := machinelse.GetMachines()
+				for i := range machines {
+					if machines[i] == oldIndexMap["machine"] {
+						machines[i] = v
+						break
+					}
+				}
+				machinelse.Machines = machines
+			}
+			for _, nic := range nics {
+				nic.Machine = v
+			}
+			for _, drac := range dracs {
+				drac.Machine = v
+			}
 		}
 	}
 
@@ -469,6 +486,59 @@ func deleteNonExistingMachines(ctx context.Context, machines []*ufspb.Machine, p
 	}
 	logging.Infof(ctx, "Deleting %d non-existing machines", len(toDelete))
 	return deleteByPage(ctx, toDelete, pageSize, registration.DeleteMachines), nil
+}
+
+// RenameMachine renames the machine and updates the associated nics, drac and machinelse in datastore
+func RenameMachine(ctx context.Context, oldName, newName string) (*ufspb.Machine, error) {
+	var machine *ufspb.Machine
+	var err error
+	f := func(ctx context.Context) error {
+		// validate
+		if err := validateRenameMachine(ctx, oldName, newName); err != nil {
+			return err
+		}
+
+		// Get the old machine
+		machine, err = registration.GetMachine(ctx, oldName)
+		if err != nil {
+			return err
+		}
+		oldMachineCopy := proto.Clone(machine).(*ufspb.Machine)
+		hc := getMachineHistoryClient(oldMachineCopy)
+
+		// Update indexing for MachineLSE/Drac/Nic with new Machine name
+		indexMap := map[string]string{"machine": newName}
+		oldIndexMap := map[string]string{"machine": oldName}
+		if err := updateIndexingForMachineResources(ctx, machine, indexMap, oldIndexMap, hc); err != nil {
+			return errors.Annotate(err, "failed to update indexing").Err()
+		}
+
+		// Delete old machine
+		err = registration.DeleteMachine(ctx, machine.Name)
+		if err != nil {
+			return err
+		}
+
+		// Create new machine
+		machine.Name = newName
+		_, err = registration.BatchUpdateMachines(ctx, []*ufspb.Machine{machine})
+		if err != nil {
+			return err
+		}
+
+		// Log history change events
+		hc.LogMachineChanges(oldMachineCopy, machine)
+		return hc.SaveChangeEvents(ctx)
+	}
+
+	if err := datastore.RunInTransaction(ctx, f, nil); err != nil {
+		return nil, errors.Annotate(err, "RenameMachine - failed to rename machine in datastore").Err()
+	}
+	// Nics or Drac info not associated with CrOS machines, yet.
+	if machine.GetChromeBrowserMachine() != nil {
+		setMachine(ctx, machine)
+	}
+	return machine, nil
 }
 
 // ReplaceMachine replaces an old Machine with new Machine in datastore
@@ -765,6 +835,19 @@ func validateMachineUpdateMask(machine *ufspb.Machine, mask *field_mask.FieldMas
 				return status.Errorf(codes.InvalidArgument, "validateMachineUpdateMask - unsupported update mask path %q", path)
 			}
 		}
+	}
+	return nil
+}
+
+// validateRenameMachine validates if a machine can be renames
+func validateRenameMachine(ctx context.Context, oldMachineName, newMachineName string) error {
+	// check if old machine name does not exist
+	if err := ResourceExist(ctx, []*Resource{GetMachineResource(oldMachineName)}, nil); err != nil {
+		return err
+	}
+	// Check if new machine name already exists
+	if err := resourceAlreadyExists(ctx, []*Resource{GetMachineResource(newMachineName)}, nil); err != nil {
+		return err
 	}
 	return nil
 }

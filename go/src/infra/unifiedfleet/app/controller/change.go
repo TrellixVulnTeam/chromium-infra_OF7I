@@ -81,6 +81,9 @@ const (
 
 	// LifeCycleRetire indicates the retirement of a device.
 	LifeCycleRetire = "RETIREMENT"
+
+	// LifeCycleRename indicates the renaming of a device.
+	LifeCycleRename = "RENAME"
 )
 
 // logLifeCycle logs the life cycle event of a ChromeOSDevice.
@@ -121,6 +124,16 @@ func (hc *HistoryClient) LogMachineChanges(oldData *ufspb.Machine, newData *ufsp
 		hc.changes = append(hc.changes, logLifeCycle(resourceName, "machine", LifeCycleRetire)...)
 		oldData.UpdateTime = ptypes.TimestampNow()
 		hc.logMsgEntity(resourceName, true, oldData)
+		return
+	}
+	if oldData.GetName() != newData.GetName() {
+		oldResourceName := util.AddPrefix(util.MachineCollection, oldData.GetName())
+		hc.changes = append(hc.changes, logLifeCycle(oldResourceName, "machine", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(oldResourceName, "machine.name", oldData.GetName(), newData.GetName())...)
+		hc.changes = append(hc.changes, logLifeCycle(resourceName, "machine", LifeCycleRename)...)
+		hc.changes = append(hc.changes, logCommon(resourceName, "machine.name", oldData.GetName(), newData.GetName())...)
+		hc.logMsgEntity(oldResourceName, true, oldData)
+		hc.logMsgEntity(resourceName, false, newData)
 		return
 	}
 	hc.changes = append(hc.changes, logCommon(resourceName, "machine.serial_number", oldData.GetSerialNumber(), newData.GetSerialNumber())...)

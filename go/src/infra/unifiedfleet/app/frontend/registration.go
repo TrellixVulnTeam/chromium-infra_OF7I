@@ -211,7 +211,13 @@ func (fs *FleetServerImpl) RenameMachine(ctx context.Context, req *ufsAPI.Rename
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
-	return nil, err
+	machine, err := controller.RenameMachine(ctx, util.RemovePrefix(req.Name), util.RemovePrefix(req.NewName))
+	if err != nil {
+		return nil, err
+	}
+	// https://aip.dev/122 - as per AIP guideline
+	machine.Name = util.AddPrefix(util.MachineCollection, machine.Name)
+	return machine, err
 }
 
 // UpdateRack updates the rack information in database.

@@ -64,6 +64,17 @@ func (hc *HistoryClient) LogMachineLocationChanges(lses []*ufspb.MachineLSE, nic
 			for _, vm := range vms {
 				hc.changes = append(hc.changes, logCommon(vm.GetName(), "vm.rack", old, v)...)
 			}
+		case "machine":
+			old := oldIndexMap["machine"]
+			for _, lse := range lses {
+				hc.changes = append(hc.changes, logCommon(lse.GetName(), "machine_lse.machine", approxZone(old), approxZone(v))...)
+			}
+			for _, nic := range nics {
+				hc.changes = append(hc.changes, logCommon(nic.GetName(), "nic.machine", approxZone(old), approxZone(v))...)
+			}
+			for _, drac := range dracs {
+				hc.changes = append(hc.changes, logCommon(drac.GetName(), "drac.machine", approxZone(old), approxZone(v))...)
+			}
 		}
 	}
 	for k, v := range indexMap {

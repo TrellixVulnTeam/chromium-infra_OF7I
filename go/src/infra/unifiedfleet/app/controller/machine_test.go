@@ -716,6 +716,143 @@ func TestReplaceMachine(t *testing.T) {
 	})
 }
 
+func TestRenameMachine(t *testing.T) {
+	t.Parallel()
+	ctx := testingContext()
+	Convey("RenameMachine", t, func() {
+		Convey("Rename a Machine with new machine name", func() {
+			nic := &ufspb.Nic{
+				Name:    "nic-10",
+				Machine: "machine-10",
+			}
+			_, err := registration.CreateNic(ctx, nic)
+			So(err, ShouldBeNil)
+			drac := &ufspb.Drac{
+				Name:    "drac-10",
+				Machine: "machine-10",
+			}
+			_, err = registration.CreateDrac(ctx, drac)
+			So(err, ShouldBeNil)
+			host := &ufspb.MachineLSE{
+				Name:     "machinelse-10",
+				Machines: []string{"machine-10"},
+			}
+			_, err = inventory.CreateMachineLSE(ctx, host)
+			So(err, ShouldBeNil)
+			machine := &ufspb.Machine{
+				Name: "machine-10",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			res, err := RenameMachine(ctx, "machine-10", "machine-202")
+			So(err, ShouldBeNil)
+			So(res.Name, ShouldEqual, "machine-202")
+
+			_, err = registration.GetMachine(ctx, "machine-10")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, NotFound)
+			nic, err = registration.GetNic(ctx, "nic-10")
+			So(err, ShouldBeNil)
+			So(nic.GetMachine(), ShouldEqual, "machine-202")
+			drac, err = registration.GetDrac(ctx, "drac-10")
+			So(err, ShouldBeNil)
+			So(drac.GetMachine(), ShouldEqual, "machine-202")
+			host, err = inventory.GetMachineLSE(ctx, "machinelse-10")
+			So(err, ShouldBeNil)
+			So(host.GetMachines(), ShouldResemble, []string{"machine-202"})
+
+			changes, err := history.QueryChangesByPropertyName(ctx, "name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+			So(changes[1].GetOldValue(), ShouldEqual, "machine-10")
+			So(changes[1].GetNewValue(), ShouldEqual, "machine-202")
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine.name")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machines/machine-202")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 2)
+			So(changes[0].GetOldValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetNewValue(), ShouldEqual, LifeCycleRename)
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine")
+			So(changes[1].GetOldValue(), ShouldEqual, "machine-10")
+			So(changes[1].GetNewValue(), ShouldEqual, "machine-202")
+			So(changes[1].GetEventLabel(), ShouldEqual, "machine.name")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "nic-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "machine-10")
+			So(changes[0].GetNewValue(), ShouldEqual, "machine-202")
+			So(changes[0].GetEventLabel(), ShouldEqual, "nic.machine")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "drac-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "machine-10")
+			So(changes[0].GetNewValue(), ShouldEqual, "machine-202")
+			So(changes[0].GetEventLabel(), ShouldEqual, "drac.machine")
+			changes, err = history.QueryChangesByPropertyName(ctx, "name", "machinelse-10")
+			So(err, ShouldBeNil)
+			So(changes, ShouldHaveLength, 1)
+			So(changes[0].GetOldValue(), ShouldEqual, "machine-10")
+			So(changes[0].GetNewValue(), ShouldEqual, "machine-202")
+			So(changes[0].GetEventLabel(), ShouldEqual, "machine_lse.machine")
+			msgs, err := history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeTrue)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "machines/machine-202")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "nics/nic-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "dracs/drac-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+			msgs, err = history.QuerySnapshotMsgByPropertyName(ctx, "resource_name", "hosts/machinelse-10")
+			So(err, ShouldBeNil)
+			So(msgs, ShouldHaveLength, 1)
+			So(msgs[0].Delete, ShouldBeFalse)
+		})
+		Convey("Rename a non-existing Machine", func() {
+			_, err := RenameMachine(ctx, "machine-11", "machine-211")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "There is no Machine with MachineID machine-11 in the system")
+		})
+		Convey("Rename a Machine to an already existing machine name", func() {
+			machine := &ufspb.Machine{
+				Name: "machine-12",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err := registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			machine = &ufspb.Machine{
+				Name: "machine-212",
+				Device: &ufspb.Machine_ChromeBrowserMachine{
+					ChromeBrowserMachine: &ufspb.ChromeBrowserMachine{},
+				},
+			}
+			_, err = registration.CreateMachine(ctx, machine)
+			So(err, ShouldBeNil)
+
+			_, err = RenameMachine(ctx, "machine-12", "machine-212")
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldContainSubstring, "Machine machine-212 already exists in the system")
+		})
+	})
+}
+
 func TestListMachines(t *testing.T) {
 	t.Parallel()
 	ctx := testingContext()
