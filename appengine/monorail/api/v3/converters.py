@@ -280,6 +280,9 @@ class Converter(object):
         state = issue_objects_pb2.IssueContentState.Value('DELETED')
       else:
         state = issue_objects_pb2.IssueContentState.Value('ACTIVE')
+      comment_type = issue_objects_pb2.Comment.Type.Value('COMMENT')
+      if comment.is_description:
+        comment_type = issue_objects_pb2.Comment.Type.Value('DESCRIPTION')
       converted_attachments = self._ConvertAttachments(
           comment.attachments, issue.project_name)
       converted_amendments = self._ConvertAmendments(
@@ -287,6 +290,7 @@ class Converter(object):
       converted_comment = issue_objects_pb2.Comment(
           name=comment_names_dict[comment.sequence],
           state=state,
+          type=comment_type,
           create_time=timestamp_pb2.Timestamp(seconds=comment.timestamp),
           attachments=converted_attachments,
           amendments=converted_amendments)

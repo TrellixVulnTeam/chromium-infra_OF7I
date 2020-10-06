@@ -564,6 +564,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_0 = issue_objects_pb2.Comment(
         name='projects/proj/issues/1/comments/0',
         state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+        type=issue_objects_pb2.Comment.Type.Value('DESCRIPTION'),
         content='initial description',
         commenter='users/111',
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
@@ -584,10 +585,12 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_1 = issue_objects_pb2.Comment(
         name='projects/proj/issues/1/comments/1',
         state=issue_objects_pb2.IssueContentState.Value('DELETED'),
+        type=issue_objects_pb2.Comment.Type.Value('COMMENT'),
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME))
     expected_2 = issue_objects_pb2.Comment(
         name='projects/proj/issues/1/comments/2',
         state=issue_objects_pb2.IssueContentState.Value('ACTIVE'),
+        type=issue_objects_pb2.Comment.Type.Value('COMMENT'),
         content='some amendments',
         commenter='users/111',
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
@@ -607,6 +610,7 @@ class ConverterFunctionsTest(unittest.TestCase):
     expected_3 = issue_objects_pb2.Comment(
         name='projects/proj/issues/1/comments/3',
         state=issue_objects_pb2.IssueContentState.Value('SPAM'),
+        type=issue_objects_pb2.Comment.Type.Value('COMMENT'),
         content='content',
         commenter='users/111',
         create_time=timestamp_pb2.Timestamp(seconds=self.PAST_TIME),
