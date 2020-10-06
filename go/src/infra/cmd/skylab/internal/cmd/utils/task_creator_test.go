@@ -282,3 +282,21 @@ func TestDeployTask(t *testing.T) {
 		})
 	})
 }
+
+func TestGetLeaseCommand(t *testing.T) {
+	t.Parallel()
+	Convey("Create command for lease tasks ", t, func() {
+		Convey("Task with update DUT state to needs_repair", func() {
+			cmd := getLeaseCommand(true)
+			So(cmd[0], ShouldEqual, "/bin/sh")
+			So(cmd[1], ShouldEqual, "-c")
+			So(cmd[2], ShouldEqual, `/opt/infra-tools/skylab_swarming_worker -task-name set_needs_repair; while true; do sleep 60; echo Zzz...; done`)
+		})
+		Convey("Task without update DUT state to needs_repair", func() {
+			cmd := getLeaseCommand(false)
+			So(cmd[0], ShouldEqual, "/bin/sh")
+			So(cmd[1], ShouldEqual, "-c")
+			So(cmd[2], ShouldEqual, `while true; do sleep 60; echo Zzz...; done`)
+		})
+	})
+}

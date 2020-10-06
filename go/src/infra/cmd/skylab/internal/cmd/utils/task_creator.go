@@ -239,7 +239,7 @@ func (tc *TaskCreator) AuditTask(ctx context.Context, host, actions string, expi
 }
 
 // LeaseByHostnameTask creates lease_task for particular DUT
-func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, durationSec int, reason string) (taskID string, err error) {
+func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, durationSec int, reason string, updateDutState bool) (taskID string, err error) {
 	dims, err := tc.dimsWithBotID(ctx, host)
 	if err != nil {
 		return "", errors.Annotate(err, "failed to get dimensions for %s", host).Err()
@@ -247,7 +247,7 @@ func (tc *TaskCreator) LeaseByHostnameTask(ctx context.Context, host string, dur
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command:              getLeaseCommand(),
+			Command:              getLeaseCommand(updateDutState),
 			Dimensions:           dims,
 			ExecutionTimeoutSecs: int64(durationSec),
 		},
@@ -282,7 +282,8 @@ func (tc *TaskCreator) LeaseByModelTask(ctx context.Context, model string, dims 
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 10 * 60,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: getLeaseCommand(),
+			// Lease by model is always leasing DUT with state ready.
+			Command: getLeaseCommand(true),
 			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: swarming.SkylabPool},
 				{Key: "label-model", Value: model},
@@ -328,7 +329,8 @@ func (tc *TaskCreator) LeaseByBoardTask(ctx context.Context, board string, dims 
 	slices := []*swarming_api.SwarmingRpcsTaskSlice{{
 		ExpirationSecs: 600,
 		Properties: &swarming_api.SwarmingRpcsTaskProperties{
-			Command: getLeaseCommand(),
+			// Lease by board is always leasing DUT with state ready.
+			Command: getLeaseCommand(true),
 			Dimensions: appendUniqueDimensions([]*swarming_api.SwarmingRpcsStringPair{
 				{Key: "pool", Value: swarming.SkylabPool},
 				{Key: "label-board", Value: board},
@@ -412,9 +414,12 @@ func (tc *TaskCreator) dutNameToBotID(ctx context.Context, host string) (string,
 
 // getLeaseCommand provides bash command to set dut state and run loop to keep DUT busy
 //
-// DUT state will be set as 'needs_repair'
-func getLeaseCommand() []string {
-	return []string{"/bin/sh", "-c", `/opt/infra-tools/skylab_swarming_worker -task-name set_needs_repair; while true; do sleep 60; echo Zzz...; done`}
+// DUT state will be set as 'needs_repair'.
+func getLeaseCommand(updateDutState bool) []string {
+	if updateDutState {
+		return []string{"/bin/sh", "-c", `/opt/infra-tools/skylab_swarming_worker -task-name set_needs_repair; while true; do sleep 60; echo Zzz...; done`}
+	}
+	return []string{"/bin/sh", "-c", `while true; do sleep 60; echo Zzz...; done`}
 }
 
 // appendUniqueTags takes a []string and adds items to it if they're unique

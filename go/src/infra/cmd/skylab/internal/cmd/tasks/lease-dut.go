@@ -14,6 +14,7 @@ import (
 	"go.chromium.org/luci/auth/client/authcli"
 	"go.chromium.org/luci/common/cli"
 	"go.chromium.org/luci/common/errors"
+	"go.chromium.org/luci/grpc/prpc"
 
 	skycmdlib "infra/cmd/skylab/internal/cmd/cmdlib"
 	"infra/cmd/skylab/internal/flagx"
@@ -21,7 +22,9 @@ import (
 	"infra/cmd/skylab/internal/site"
 	"infra/cmd/skylab/internal/userinput"
 	"infra/cmdsupport/cmdlib"
+	"infra/libs/cros/dutstate"
 	"infra/libs/skylab/swarming"
+	ufsAPI "infra/unifiedfleet/api/v1/rpc"
 )
 
 const dayInMinutes = 24 * 60
@@ -155,6 +158,10 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 	if err != nil {
 		return "", err
 	}
+	updateDutState, err := c.needUpdateDUTState(ctx, host)
+	if err != nil {
+		return "", err
+	}
 	// TODO(gregorynisbet): instead of just logging the model, actually pass it
 	// to LeaseByHostnameTask and use it to annotate the lease task.
 	fmt.Fprintf(a.GetErr(), "inferred model (%s)\n", model)
@@ -164,7 +171,7 @@ func (c *leaseDutRun) leaseDutByHostname(ctx context.Context, a subcommands.Appl
 		Client:      sc,
 		Environment: e,
 	}
-	id, err := creator.LeaseByHostnameTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason)
+	id, err := creator.LeaseByHostnameTask(ctx, host, int(leaseDuration.Seconds()), c.leaseReason, updateDutState)
 	if err != nil {
 		return "", err
 	}
@@ -277,6 +284,29 @@ func (c *leaseDutRun) getInventoryClient(ctx context.Context) (inv.Client, error
 	}
 	e := c.envFlags.Env()
 	return inv.NewInventoryClient(hc, e), nil
+}
+
+// needUpdateDUTState read DUT state from UFS service and tells is the state required to be changed to needs_reset by lease task.
+//
+// Do not need change the state when DUT state is needs_deploy or needs_replacement.
+func (c *leaseDutRun) needUpdateDUTState(ctx context.Context, host string) (bool, error) {
+	hc, err := cmdlib.NewHTTPClient(ctx, &c.authFlags)
+	if err != nil {
+		return false, err
+	}
+	e := c.envFlags.Env()
+	ufsClient := ufsAPI.NewFleetPRPCClient(&prpc.Client{
+		C:       hc,
+		Host:    e.UFSService,
+		Options: site.UFSPRPCOptions,
+	})
+	dutStateInfo := dutstate.Read(ctx, ufsClient, host)
+	switch dutStateInfo.State {
+	case dutstate.NeedsDeploy, dutstate.NeedsReplacement:
+		return false, nil
+	default:
+		return true, nil
+	}
 }
 
 // getModelForHost contacts the inventory v2 service and gets the model associated with
