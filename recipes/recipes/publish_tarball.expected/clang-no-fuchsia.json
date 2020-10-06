@@ -252,8 +252,7 @@
   },
   {
     "cmd": [
-      "[START_DIR]/src/tools/clang/scripts/update.py",
-      "--force-local-build",
+      "[START_DIR]/src/tools/clang/scripts/build.py",
       "--without-android",
       "--use-system-cmake",
       "--gcc-toolchain=/usr",

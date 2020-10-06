@@ -252,19 +252,11 @@ def publish_tarball(api):
       'copy clang-format', api.chromium.resource('clang-format'),
       api.path['checkout'].join('buildtools', 'linux64', 'clang-format'))
 
-  update_script = 'update.py'
-  update_args = ['--force-local-build']
-  if [int(x) for x in version.split('.')] >= [76, 0, 3784, 0]:
-    # After 76.0.3784.0, build.py is used instead of update.py to build clang.
-    update_script = 'build.py'
-    update_args = []
-
-  update_args.extend(['--without-android',
-                      '--use-system-cmake',
-                      '--gcc-toolchain=/usr',
-                      '--skip-build',
-                      '--without-fuchsia'])
-
+  update_script = 'build.py'
+  update_args = [
+      '--without-android', '--use-system-cmake', '--gcc-toolchain=/usr',
+      '--skip-build', '--without-fuchsia'
+  ]
   api.step('download clang sources', [
       api.path['checkout'].join('tools', 'clang', 'scripts', update_script)
       ] + update_args)
