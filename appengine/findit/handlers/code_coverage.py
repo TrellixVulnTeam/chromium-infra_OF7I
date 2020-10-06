@@ -1614,3 +1614,33 @@ class GeneratePerClCoverageMetrics(BaseHandler):
   def HandleGet(self):
     per_cl_metrics.ExportPerClCoverageMetrics()
     return {'return_code': 200}
+
+
+class UpdatePostsubmitReport(BaseHandler):
+  PERMISSION_LEVEL = Permission.CORP_USER
+
+  def HandlePost(self):
+
+    project = self.request.get('project')
+    host = self.request.get('host')
+    ref = self.request.get('ref')
+    revision = self.request.get('revision')
+    bucket = self.request.get('bucket')
+    builder = self.request.get('builder')
+    visible = self.request.get('visible').lower() == 'true'
+    report = PostsubmitReport.Get(
+        server_host=host,
+        project=project,
+        ref=ref,
+        revision=revision,
+        bucket=bucket,
+        builder=builder)
+
+    if not report:
+      return BaseHandler.CreateError('Report record not found', 404)
+
+    # At present, we only update visibility
+    report.visible = visible
+    report.put()
+
+    return {'return_code': 200}

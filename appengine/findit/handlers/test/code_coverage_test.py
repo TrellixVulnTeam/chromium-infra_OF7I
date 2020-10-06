@@ -12,6 +12,7 @@ from google.appengine.ext import ndb
 
 
 from gae_libs.handlers.base_handler import BaseHandler
+from gae_libs import token
 from handlers import code_coverage
 from libs.gitiles.gitiles_repository import GitilesRepository
 from model.code_coverage import CoveragePercentage
@@ -1156,3 +1157,48 @@ class GeneratePerClCoverageMetricsTest(WaterfallTestCase):
     response = self.test_app.get('/coverage/task/per-cl-coverage', status=200)
     self.assertEqual(1, mock_detect.call_count)
     self.assertEqual(200, response.status_int)
+
+
+class UpdatePostsubmitReportTest(WaterfallTestCase):
+  app_module = webapp2.WSGIApplication([
+      ('/coverage/task/postsubmit-report/update',
+       code_coverage.UpdatePostsubmitReport),
+  ],
+                                       debug=True)
+
+  @mock.patch.object(BaseHandler, 'IsRequestFromAppSelf', return_value=True)
+  def testPostsubmitReportUpdated(self, *_):
+    self.mock_current_user(user_email='test@google.com', is_admin=False)
+    manifest = _CreateSampleManifest()
+    server_host = 'chromium.googlesource.com'
+    project = 'chromium/src'
+    ref = 'refs/heads/master'
+    revision = '99999'
+    bucket = 'coverage'
+    builder = 'linux-code-coverage'
+
+    report = PostsubmitReport.Create(
+        server_host=server_host,
+        project=project,
+        ref=ref,
+        revision=revision,
+        bucket=bucket,
+        builder=builder,
+        commit_timestamp=datetime(2018, 1, 1),
+        manifest=manifest,
+        summary_metrics=_CreateSampleCoverageSummaryMetric(),
+        build_id=123456789,
+        visible=False)
+
+    report.put()
+
+    request_url = (
+        '/coverage/task/postsubmit-report/update?host=%s&project=%s&ref=%s'
+        '&revision=%s&bucket=%s&builder=%s&visible=%s') % (
+            server_host, project, ref, revision, bucket, builder, True)
+    response = self.test_app.post(request_url)
+
+    self.assertEqual(200, response.status_int)
+    updated = PostsubmitReport.Get(server_host, project, ref, revision, bucket,
+                                   builder)
+    self.assertTrue(updated.visible)

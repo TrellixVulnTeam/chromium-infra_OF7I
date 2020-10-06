@@ -18,6 +18,8 @@ code_coverage_backend_handler_mappings = [
      code_coverage.GeneratePerClCoverageMetricsCron),
     ('.*/coverage/task/per-cl-coverage',
      code_coverage.GeneratePerClCoverageMetrics),
+    ('.*/coverage/task/postsubmit-report/update',
+     code_coverage.UpdatePostsubmitReport),
 ]
 code_coverage_backend_web_application = webapp2.WSGIApplication(
     code_coverage_backend_handler_mappings, debug=False)
