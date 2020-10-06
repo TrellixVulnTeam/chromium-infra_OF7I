@@ -89,6 +89,9 @@ var defaultGitRetryRegexpSource = []string{
 
 	// b/158498614
 	`fetch-pack: protocol error: bad band #\d+`,
+
+	// b/170222146
+	`The requested URL returned error: 400`,
 }
 
 // DefaultGitRetryRegexp is the set of default transient regular expressions to
