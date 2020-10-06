@@ -151,7 +151,7 @@ func createBrowserServer(ctx context.Context, lse *ufspb.MachineLSE, nwOpt *ufsA
 			return errors.Annotate(err, "Failed to BatchUpdate MachineLSEs %s", lse.Name).Err()
 		}
 		hc.LogMachineLSEChanges(nil, lse)
-		if machine.GetChromeBrowserMachine() != nil {
+		if lse.GetChromeBrowserMachineLse() != nil {
 			// We fill the machinelse object with newly created vms
 			lse.GetChromeBrowserMachineLse().Vms = vms
 		}
