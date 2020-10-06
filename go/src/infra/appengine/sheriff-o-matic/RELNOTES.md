@@ -1,3 +1,27 @@
+# Release Notes sheriff-o-matic 2020-10-06
+
+- 6 commits, 3 bugs affected since f93bc31 ()
+- 2 Authors:
+  - nqmtuan@google.com
+  - jkop@google.com
+
+## Changes in this release
+
+- [[SoM] Set type field for angle project](https://chromium-review.googlesource.com/c/infra/infra/+/2437766) (nqmtuan@google.com)
+- [[SoM] Use SearchIssues instead of BatchGetIssues for annotations](https://chromium-review.googlesource.com/c/infra/infra/+/2434028) (nqmtuan@google.com)
+- [[SoM] Support filing Monorail bug for angle project](https://chromium-review.googlesource.com/c/infra/infra/+/2423764) (nqmtuan@google.com)
+- [Suppress LTS alerts from SoM](https://chromium-review.googlesource.com/c/infra/infra/+/2436493) (jkop@google.com)
+- [[SoM] Also get step_name from result-level tags](https://chromium-review.googlesource.com/c/infra/infra/+/2428653) (nqmtuan@google.com)
+- [[SoM] Release note 24 Sep](https://chromium-review.googlesource.com/c/infra/infra/+/2426030) (nqmtuan@google.com)
+
+
+## Bugs updated, by author
+- nqmtuan@google.com:
+  -  [https://crbug.com/1126358](https://crbug.com/1126358)
+  -  [https://crbug.com/1129412](https://crbug.com/1129412)
+  -  [https://crbug.com/1132090](https://crbug.com/1132090)
+
+
 # Release Notes sheriff-o-matic 2020-09-24
 
 - 3 commits, 2 bugs affected since 287066b ()
