@@ -174,10 +174,7 @@ def build_predicate_to_search_query(predicate):
       tags=[buildtags.unparse(p.key, p.value) for p in predicate.tags],
       created_by=predicate.created_by or None,
       include_experimental=predicate.include_experimental,
-      status=(
-          search.StatusFilter.COMPLETED
-          if predicate.status == common_pb2.ENDED_MASK else predicate.status
-      ),
+      status=predicate.status,
   )
 
   # Filter by builder.

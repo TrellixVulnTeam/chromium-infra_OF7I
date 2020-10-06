@@ -379,7 +379,9 @@ def _query_search_async(q):
   filter_if = lambda p, v: dq if v is None else dq.filter(p == v)
 
   expected_statuses_v1 = None
-  if not q.status_is_legacy:
+  if q.status == common_pb2.ENDED_MASK:
+    dq = dq.filter(model.Build.incomplete == False)
+  elif not q.status_is_legacy:
     dq = dq.filter(model.Build.status == q.status)
   elif q.status == StatusFilter.INCOMPLETE:
     expected_statuses_v1 = (
@@ -413,7 +415,9 @@ def _query_search_async(q):
   dq = dq.order(model.Build.key)
 
   def local_predicate(build):
-    if not q.status_is_legacy:
+    if q.status == common_pb2.ENDED_MASK:
+      pass  # once a build is ended, it status is immutable
+    elif not q.status_is_legacy:
       if build.status != q.status:  # pragma: no cover
         return False
     elif (expected_statuses_v1 and
@@ -558,7 +562,9 @@ def _tag_index_search_async(q):
       ('project', q.project),
   ]
   scalar_filters = [(a, v) for a, v in scalar_filters if v is not None]
-  if not q.status_is_legacy:
+  if q.status == common_pb2.ENDED_MASK:
+    scalar_filters.append(('incomplete', False))
+  elif not q.status_is_legacy:
     scalar_filters.append(('status', q.status))
   elif q.status == StatusFilter.INCOMPLETE:
     scalar_filters.append(('incomplete', True))

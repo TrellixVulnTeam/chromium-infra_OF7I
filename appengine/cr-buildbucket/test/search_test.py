@@ -254,6 +254,14 @@ class SearchTest(testing.AppengineTestCase):
     builds, _ = self.search(status=common_pb2.FAILURE)
     self.assertEqual(builds, [])
 
+    # test search by ENDED_MASK status
+    builds, _ = self.search(status=common_pb2.ENDED_MASK)
+    self.assertEqual(builds, [])
+
+    completed_build = self.put_build(status=common_pb2.SUCCESS)
+    builds, _ = self.search(status=common_pb2.ENDED_MASK)
+    self.assertEqual(builds, [completed_build])
+
   def test_filter_by_created_by(self):
     build1 = self.put_build(created_by='user:1@example.com')
     self.put_build(created_by='user:2@example.com')
@@ -514,6 +522,21 @@ class SearchTest(testing.AppengineTestCase):
     builds, _ = self.search(
         tags=['buildset:2'], bucket_ids=['chromium/try'], builder='linux-rel'
     )
+    self.assertEqual(builds, [build])
+
+  def test_filter_by_indexed_tag_ended_mask(self):
+    build = self.put_build(
+        builder=dict(project='chromium', bucket='try', builder='linux-rel'),
+        status=common_pb2.SUCCESS,
+        tags=[dict(key='buildset', value='2')]
+    )
+    self.put_build(
+        builder=dict(project='chromium', bucket='try', builder='mac-rel'),
+        status=common_pb2.STARTED,
+        tags=[dict(key='buildset', value='2')]
+    )
+
+    builds, _ = self.search(tags=['buildset:2'], status=common_pb2.ENDED_MASK)
     self.assertEqual(builds, [build])
 
   def test_filter_by_with_dup_tag_entries(self):
