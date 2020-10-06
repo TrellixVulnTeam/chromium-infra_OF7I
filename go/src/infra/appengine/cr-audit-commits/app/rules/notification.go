@@ -191,7 +191,7 @@ func (c CommentOnBugToAcknowledgeMerge) Notify(ctx context.Context, cfg *RefConf
 // PostIssue will create an issue based on the given parameters.
 func PostIssue(ctx context.Context, cfg *RefConfig, s, d string, cs *Clients, components, labels []string) (int32, error) {
 	// TODO: Replace monorail v1 api with v3.
-	labels = append(labels, "Pri-1", "Type-Bug-Security")
+	labels = append(labels, "Pri-1", "Type-Task")
 
 	// The components for the issue will be the additional components
 	// depending on which rules were violated, and the component defined
