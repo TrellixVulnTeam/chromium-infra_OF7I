@@ -366,6 +366,14 @@ func (r *DeleteMachineRequest) Validate() error {
 	return validateResourceName(machineRegex, MachineNameFormat, r.Name)
 }
 
+// Validate validates input requests of RenameMachine.
+func (r *RenameMachineRequest) Validate() error {
+	if err := validateResourceName(machineRegex, MachineNameFormat, r.GetName()); err != nil {
+		return err
+	}
+	return validateResourceName(machineRegex, MachineNameFormat, r.GetNewName())
+}
+
 // Validate validates input requests of UpdateRack.
 func (r *UpdateRackRequest) Validate() error {
 	if r.Rack == nil {

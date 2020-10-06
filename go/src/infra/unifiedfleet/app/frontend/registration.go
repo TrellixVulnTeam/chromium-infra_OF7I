@@ -203,6 +203,17 @@ func (fs *FleetServerImpl) ImportMachines(ctx context.Context, req *ufsAPI.Impor
 	return successStatus.Proto(), nil
 }
 
+// RenameMachine renames the machine in database.
+func (fs *FleetServerImpl) RenameMachine(ctx context.Context, req *ufsAPI.RenameMachineRequest) (rsp *ufspb.Machine, err error) {
+	defer func() {
+		err = grpcutil.GRPCifyAndLogErr(ctx, err)
+	}()
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	return nil, err
+}
+
 // UpdateRack updates the rack information in database.
 func (fs *FleetServerImpl) UpdateRack(ctx context.Context, req *ufsAPI.UpdateRackRequest) (rsp *ufspb.Rack, err error) {
 	defer func() {

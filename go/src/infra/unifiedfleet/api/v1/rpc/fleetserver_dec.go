@@ -435,6 +435,23 @@ func (s *DecoratedFleet) ImportMachines(ctx context.Context, req *ImportMachines
 	return
 }
 
+func (s *DecoratedFleet) RenameMachine(ctx context.Context, req *RenameMachineRequest) (rsp *proto1.Machine, err error) {
+	if s.Prelude != nil {
+		var newCtx context.Context
+		newCtx, err = s.Prelude(ctx, "RenameMachine", req)
+		if err == nil {
+			ctx = newCtx
+		}
+	}
+	if err == nil {
+		rsp, err = s.Service.RenameMachine(ctx, req)
+	}
+	if s.Postlude != nil {
+		err = s.Postlude(ctx, "RenameMachine", rsp, err)
+	}
+	return
+}
+
 func (s *DecoratedFleet) RackRegistration(ctx context.Context, req *RackRegistrationRequest) (rsp *proto1.Rack, err error) {
 	if s.Prelude != nil {
 		var newCtx context.Context

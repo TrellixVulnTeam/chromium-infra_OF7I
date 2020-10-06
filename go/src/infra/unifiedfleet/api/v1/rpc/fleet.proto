@@ -99,6 +99,9 @@ service Fleet {
   // package is not imported into chops go package.
   rpc ImportMachines(ImportMachinesRequest) returns (google.rpc.Status);
 
+  // Rename rename the machine
+  rpc RenameMachine(RenameMachineRequest) returns (proto.Machine);
+
   // RackRegistration creates a new rack/kvms/rpms/switches
   rpc RackRegistration(RackRegistrationRequest) returns (proto.Rack);
 
@@ -733,6 +736,20 @@ message ImportMachinesRequest {
     MachineDBSource machine_db_source = 1;
     ConfigSource config_source = 2;
   }
+}
+
+message RenameMachineRequest {
+  // The name of the Machine to rename
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Machine" }
+  ];
+
+  // The new name of the Machine
+  string new_name = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = { type: "unified-fleet-system.appspot.com/Machine" }
+  ];
 }
 
 message MachineDBSource {
