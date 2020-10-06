@@ -218,9 +218,7 @@ class IssuesServicerTest(unittest.TestCase):
         self.services, cnxn=self.cnxn, requester=self.user_2.email)
 
     instance = mock.Mock(
-        spec=True,
-        visible_results=[self.issue_1, self.issue_3],
-        allowed_results=[self.issue_1, self.issue_3, self.issue_2])
+        spec=True, total_count=3, visible_results=[self.issue_1, self.issue_3])
     mock_pipeline.return_value = instance
     instance.SearchForIIDs = mock.Mock()
     instance.MergeAndSortIssues = mock.Mock()

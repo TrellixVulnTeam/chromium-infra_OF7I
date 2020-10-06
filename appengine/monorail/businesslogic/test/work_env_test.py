@@ -1726,9 +1726,36 @@ class WorkEnvTest(unittest.TestCase):
       with self.work_env as we:
         we.CopyIssue(issue, target_project)
 
-  def testListIssues_Normal(self):
+  @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  def testSearchIssues(self, mocked_pipeline):
+    mocked_instance = mocked_pipeline.return_value
+    mocked_instance.total_count = 10
+    mocked_instance.visible_results = ['a', 'b']
+    with self.work_env as we:
+      actual = we.SearchIssues('', ['monorail'], 123, 20, 0, '')
+    expected = work_env.ListResult(['a', 'b'], None)
+    self.assertEqual(actual, expected)
+
+  @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  def testSearchIssues_paginates(self, mocked_pipeline):
+    mocked_instance = mocked_pipeline.return_value
+    mocked_instance.total_count = 50
+    mocked_instance.visible_results = ['a', 'b']
+    with self.work_env as we:
+      actual = we.SearchIssues('', ['monorail'], 123, 20, 0, '')
+    expected = work_env.ListResult(['a', 'b'], 20)
+    self.assertEqual(actual, expected)
+
+  @mock.patch('search.frontendsearchpipeline.FrontendSearchPipeline')
+  def testListIssues_Normal(self, mocked_pipeline):
     """We can do a query that generates some results."""
-    pass  # TODO(jrobbins): add unit test
+    mocked_instance = mocked_pipeline.return_value
+    with self.work_env as we:
+      actual = we.ListIssues('', ['a'], 123, 20, 0, 1, '', '', True)
+    self.assertEqual(actual, mocked_instance)
+    mocked_instance.SearchForIIDs.assert_called_once()
+    mocked_instance.MergeAndSortIssues.assert_called_once()
+    mocked_instance.Paginate.assert_called_once()
 
   def testListIssues_Error(self):
     """Errors are safely reported."""

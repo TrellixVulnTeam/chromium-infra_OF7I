@@ -1343,7 +1343,7 @@ class WorkEnv(object):
 
     end = paginate_start + items_per_page
     next_start = None
-    if end < len(pipeline.allowed_results):
+    if end < pipeline.total_count:
       next_start = end
     return ListResult(pipeline.visible_results, next_start)
 
